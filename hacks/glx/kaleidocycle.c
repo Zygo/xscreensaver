@@ -167,14 +167,7 @@ init_kaleidocycle (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   int i;
 
-  if (!bps) {
-    bps = (kaleidocycle_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (kaleidocycle_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

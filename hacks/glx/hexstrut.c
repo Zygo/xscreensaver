@@ -1,4 +1,4 @@
-/* hexstrut, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+/* hexstrut, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,6 +16,7 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define refresh_hexstrut 0
+# define release_hexstrut 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -196,7 +197,7 @@ tick_triangles (ModeInfo *mi)
           t->rot += step * (t->rot > 0 ? 1 : -1);
 
           t->ccolor++;
-          if (t->ccolor > bp->ncolors)
+          if (t->ccolor >= bp->ncolors)
             t->ccolor = 0;
 
           if (t->rot > 1 || t->rot < -1)
@@ -385,19 +386,14 @@ hexstrut_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_hexstrut (ModeInfo *mi);
+
 ENTRYPOINT void 
 init_hexstrut (ModeInfo *mi)
 {
   hexstrut_configuration *bp;
 
-  if (!bps) {
-    bps = (hexstrut_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (hexstrut_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_hexstrut);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -421,12 +417,9 @@ init_hexstrut (ModeInfo *mi)
 
 
   /* Let's tilt the scene a little. */
-  gltrackball_start (bp->trackball, 500, 500, 1000, 1000);
-  gltrackball_track (bp->trackball,
-                     350 + (random() % 300),
-                     350 + (random() % 300),
-                     1000, 1000);
-
+  gltrackball_reset (bp->trackball,
+                     -0.4 + frand(0.8),
+                     -0.4 + frand(0.8));
 
   if (thickness < 0.05) thickness = 0.05;
   if (thickness < 0.05) MI_IS_WIREFRAME(mi) = True;
@@ -495,8 +488,8 @@ draw_hexstrut (ModeInfo *mi)
 }
 
 
-ENTRYPOINT void
-release_hexstrut (ModeInfo *mi)
+static void
+free_hexstrut (ModeInfo *mi)
 {
   hexstrut_configuration *bp = &bps[MI_SCREEN(mi)];
   while (bp->triangles)

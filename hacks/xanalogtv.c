@@ -82,7 +82,7 @@ struct state {
   chansetting *cs;
 
   int change_now;
-
+  int colorbars_only_p;
 };
 
 
@@ -155,6 +155,7 @@ update_smpte_colorbars(analogtv_input *input)
   ypos=ANALOGTV_V/5;
   xpos=ANALOGTV_VIS_START + ANALOGTV_VIS_LEN/2;
 
+  if (! st->colorbars_only_p)
   {
     char localname[256];
     if (gethostname (localname, sizeof (localname))==0) {
@@ -169,8 +170,9 @@ update_smpte_colorbars(analogtv_input *input)
   }
   ypos += st->ugly_font.char_h*5/2;
 
-  analogtv_draw_xpm(st->tv, input,
-                    logo_50_xpm, xpos - 100, ypos);
+  if (! st->colorbars_only_p)
+    analogtv_draw_xpm(st->tv, input,
+                      logo_50_xpm, xpos - 100, ypos);
 
   ypos += 58;
 
@@ -180,6 +182,7 @@ update_smpte_colorbars(analogtv_input *input)
   ypos += st->ugly_font.char_h*4;
 #endif
 
+  if (! st->colorbars_only_p)
   {
     char timestamp[256];
     time_t t = time ((time_t *) 0);
@@ -246,6 +249,7 @@ static const char *xanalogtv_defaults [] = {
 
 static XrmOptionDescRec xanalogtv_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
+  { "-colorbars-only",	".colorbarsOnly",	XrmoptionNoArg, "True" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };
@@ -421,7 +425,8 @@ static void load_station_images(struct state *st)
     analogtv_input *input = st->stations[i];
 
     st->chansettings[i].image_loaded_p = True;
-    if (i == 0) {   /* station 0 is always colorbars */
+    if (i == 0 ||   /* station 0 is always colorbars */
+        st->colorbars_only_p) {
       input->updater = update_smpte_colorbars;
       input->do_teletext=1;
     }
@@ -456,6 +461,9 @@ xanalogtv_init (Display *dpy, Window window)
   st->dpy = dpy;
   st->window = window;
   st->tv=analogtv_allocate(dpy, window);
+
+  st->colorbars_only_p =
+    get_boolean_resource(dpy, "colorbarsOnly", "ColorbarsOnly");
 
   add_stations(st);
 

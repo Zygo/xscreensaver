@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -322,31 +322,24 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
      Oct 2016: Surprise, this trick no longer works on MacOS 10.12.  Sigh.
    */
 
-  // save our current level so we can restore it later
-  int oldLevel = [[nsview window] level]; 
+  CGWindowID windowNumber = (CGWindowID) nsview.window.windowNumber;
 
-# if 0
   {
-    FILE *f = fopen("/tmp/log.txt", "w");
     CFArrayRef L = CGWindowListCopyWindowInfo (kCGWindowListOptionOnScreenOnly,
                                                kCGNullWindowID);
 
-    fprintf(f, "# %d\n", [[nsview window] windowNumber]);
-
-    int n = CFArrayGetCount(L);
+    CFIndex n = CFArrayGetCount(L);
     for (int i = 0; i < n; i++) {
       NSDictionary *dict = (NSDictionary *) CFArrayGetValueAtIndex(L, i);
-      fprintf(f,
-              "%d \"%s\"\n",
-              (int) [dict objectForKey:kCGWindowNumber],
-              [(NSString *) [dict objectForKey:kCGWindowOwnerName]
-                cStringUsingEncoding:[NSString defaultCStringEncoding]]);
-    }
-    fclose(f);
-  }
-#endif
 
-  [[nsview window] setLevel:CGWindowLevelForKey(kCGPopUpMenuWindowLevelKey)];
+      // loginwindow creates multiple toplevel windows. Grab the lowest one.
+      if(![([dict objectForKey:(NSString *)kCGWindowOwnerName])
+           compare:@"loginwindow"]) {
+        windowNumber = ((NSNumber *)[dict objectForKey:
+                                     (NSString *)kCGWindowNumber]).intValue;
+      }
+    }
+  }
 
   // Grab a screen shot of those windows below this one
   // (hey, X11 can't do that!)
@@ -354,11 +347,8 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
   CGImageRef img = 
     CGWindowListCreateImage (cgrect,
                              kCGWindowListOptionOnScreenBelowWindow,
-                             [[nsview window] windowNumber],
+                             windowNumber,
                              kCGWindowImageDefault);
-
-  // put us back above the login windows so the screensaver is visible.
-  [[nsview window] setLevel:oldLevel];
 
   if (! img) return False;
 

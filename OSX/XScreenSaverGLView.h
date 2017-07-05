@@ -22,6 +22,7 @@
 # import <OpenGLES/ES1/gl.h>
 # import <OpenGLES/ES1/glext.h>
 # import <QuartzCore/QuartzCore.h>
+# import "jwzglesI.h"
 #else
 # import <AppKit/NSOpenGL.h>
 #endif
@@ -31,6 +32,7 @@
 # ifdef USE_IPHONE
   GLuint gl_depthbuffer;
   BOOL _suppressRotationAnimation;
+  jwzgles_state *_glesState;
 # endif /* USE_IPHONE */
 }
 

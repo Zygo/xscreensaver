@@ -407,14 +407,7 @@ init_bit (ModeInfo *mi)
   bit_configuration *bp;
   int i;
 
-  if (!bps) {
-    bps = (bit_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (bit_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

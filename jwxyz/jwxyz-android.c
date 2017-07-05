@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -38,6 +38,7 @@
 #include "jwxyz-android.h"
 #include "textclient.h"
 #include "grabscreen.h"
+#include "pow2.h"
 
 
 #define countof(x) (sizeof(x)/sizeof(*(x)))
@@ -47,6 +48,7 @@ extern struct xscreensaver_function_table *xscreensaver_function_table;
 struct function_table_entry {
   const char *progname;
   struct xscreensaver_function_table *xsft;
+  int api;
 };
 
 #include "gen/function-table.h"
@@ -143,20 +145,94 @@ static jmethodID entryGetKey, entryGetValue;
 static pthread_mutex_t mutg = PTHREAD_MUTEX_INITIALIZER;
 
 static void screenhack_do_fps (Display *, Window, fps_state *, void *);
+static char *get_string_resource_window (Window window, char *name);
+
+
+/* Also creates double-buffered windows. */
+static void
+create_pixmap (Window win, Drawable p)
+{
+  // See also:
+  // https://web.archive.org/web/20140213220709/http://blog.vlad1.com/2010/07/01/how-to-go-mad-while-trying-to-render-to-a-texture/
+  // https://software.intel.com/en-us/articles/using-opengl-es-to-accelerate-apps-with-legacy-2d-guis
+  // https://www.khronos.org/registry/egl/extensions/ANDROID/EGL_ANDROID_image_native_buffer.txt
+
+  Assert (p->frame.width, "p->frame.width");
+  Assert (p->frame.height, "p->frame.height");
+
+  struct running_hack *rh = win->window.rh;
+
+  if (rh->gl_fbo_p) {
+    glGenTextures (1, &p->texture);
+    glBindTexture (GL_TEXTURE_2D, p->texture);
+
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+                  to_pow2(p->frame.width), to_pow2(p->frame.height),
+                  0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  } else {
+    EGLint attribs[5];
+    attribs[0] = EGL_WIDTH;
+    attribs[1] = p->frame.width;
+    attribs[2] = EGL_HEIGHT;
+    attribs[3] = p->frame.height;
+    attribs[4] = EGL_NONE;
+
+    p->egl_surface = eglCreatePbufferSurface(rh->egl_display, rh->egl_config,
+                                           attribs);
+    Assert (p->egl_surface != EGL_NO_SURFACE,
+            "XCreatePixmap: got EGL_NO_SURFACE");
+  }
+}
+
+
+static void
+free_pixmap (struct running_hack *rh, Pixmap p)
+{
+  if (rh->gl_fbo_p) {
+    glDeleteTextures (1, &p->texture);
+  } else {
+    eglDestroySurface(rh->egl_display, p->egl_surface);
+  }
+}
+
+
+static void
+restore_surface (struct running_hack *rh)
+{
+  /* This is necessary because GLSurfaceView (in Java) will call
+     eglSwapBuffers under the (ordinarily reasonable) assumption that the EGL
+     surface associated with the EGL context hasn't been changed.
+   */
+  eglMakeCurrent (rh->egl_display, rh->egl_surface, rh->egl_surface,
+                  rh->egl_ctx);
+  rh->current_drawable = NULL;
+}
+
+
+static void
+get_egl_surface (struct running_hack *rh)
+{
+  rh->egl_surface = eglGetCurrentSurface(EGL_DRAW);
+  Assert(eglGetCurrentSurface(EGL_READ) == rh->egl_surface,
+         "doinit: EGL_READ != EGL_DRAW");
+}
 
 
 // Initialized OpenGL and runs the screenhack's init function.
 //
 static void
 doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
-        const struct function_table_entry *chosen, jint api, 
+        const struct function_table_entry *chosen,
         jobject defaults, jint w, jint h)
 {
   if (setjmp (jmp_target)) goto END;  // Jump here from jwxyz_abort and return.
 
   progname = chosen->progname;
   rh->xsft = chosen->xsft;
-  rh->api = api;
+  rh->api = chosen->api;
   rh->jni_env = env;
   rh->jobject = jwxyz_obj;  // update this every time we call into C
 
@@ -171,41 +247,10 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
   wnd->frame.height = h;
   wnd->type = WINDOW;
 
-  rh->egl_window_ctx = eglGetCurrentContext();
-  Assert(rh->egl_window_ctx != EGL_NO_CONTEXT, "doinit: EGL_NO_CONTEXT");
-
-  wnd->egl_surface = eglGetCurrentSurface(EGL_DRAW);
-  Assert(eglGetCurrentSurface(EGL_READ) == wnd->egl_surface,
-         "doinit: EGL_READ != EGL_DRAW");
-
-  rh->egl_display = eglGetCurrentDisplay();
-  Assert(rh->egl_display != EGL_NO_DISPLAY, "doinit: EGL_NO_DISPLAY");
-
-  EGLint config_attribs[3];
-  config_attribs[0] = EGL_CONFIG_ID;
-  eglQueryContext(rh->egl_display, rh->egl_window_ctx, EGL_CONFIG_ID,
-                  &config_attribs[1]);
-  config_attribs[2] = EGL_NONE;
-
-  EGLint num_config;
-  eglChooseConfig(rh->egl_display, config_attribs,
-                  &rh->egl_config, 1, &num_config);
-  Assert(num_config == 1, "no EGL config chosen");
-
-  rh->egl_xlib_ctx = eglCreateContext(rh->egl_display, rh->egl_config,
-                                      EGL_NO_CONTEXT, NULL);
-  Assert(rh->egl_xlib_ctx != EGL_NO_CONTEXT, "doinit: EGL_NO_CONTEXT");
-  Assert(rh->egl_xlib_ctx != rh->egl_window_ctx, "Only one context here?!");
-
   rh->window = wnd;
-  rh->dpy = jwxyz_make_display(wnd);
-  Assert(wnd == XRootWindow(rh->dpy, 0), "Wrong root window.");
-  // TODO: Zero looks right, but double-check that is the right number
-
   progclass = rh->xsft->progclass;
 
   if ((*env)->ExceptionOccurred(env)) abort();
-  jwzgles_reset();
 
   // This has to come before resource processing. It does not do graphics.
   if (rh->xsft->setup_cb)
@@ -223,14 +268,14 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
   if ((*env)->ExceptionOccurred(env)) abort();
 
   const struct { const char *key, *val; } default_defaults[] = {
-    { "doubleBuffer", "false" },
-    { "multiSample",  "false" },
+    { "doubleBuffer", "True" },
+    { "multiSample",  "False" },
     { "texFontCacheSize", "30" },
     { "textMode", "date" },
     { "textURL",
       "https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss" },
-    { "grabDesktopImages",  "true" },
-    { "chooseRandomImages", "true" },
+    { "grabDesktopImages",  "True" },
+    { "chooseRandomImages", "True" },
   };
 
   for (int i = 0; i < countof(default_defaults); i++) {
@@ -290,6 +335,110 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
   (*env)->DeleteLocalRef (env, c);
   if ((*env)->ExceptionOccurred(env)) abort();
 
+  // GL init. Must come after resource processing.
+
+  rh->egl_ctx = eglGetCurrentContext();
+  Assert(rh->egl_ctx != EGL_NO_CONTEXT, "doinit: EGL_NO_CONTEXT");
+
+  get_egl_surface (rh);
+
+  rh->egl_display = eglGetCurrentDisplay();
+  Assert(rh->egl_display != EGL_NO_DISPLAY, "doinit: EGL_NO_DISPLAY");
+
+  unsigned egl_major, egl_minor;
+  if (sscanf ((const char *)eglQueryString(rh->egl_display, EGL_VERSION),
+              "%u.%u", &egl_major, &egl_minor) < 2)
+  {
+    egl_major = 1;
+    egl_minor = 0;
+  }
+
+  EGLint config_attribs[3];
+  config_attribs[0] = EGL_CONFIG_ID;
+  eglQueryContext(rh->egl_display, rh->egl_ctx, EGL_CONFIG_ID,
+                  &config_attribs[1]);
+  config_attribs[2] = EGL_NONE;
+
+  EGLint num_config;
+  eglChooseConfig(rh->egl_display, config_attribs,
+                  &rh->egl_config, 1, &num_config);
+  Assert(num_config == 1, "no EGL config chosen");
+
+  const GLubyte *extensions = glGetString (GL_EXTENSIONS);
+  rh->gl_fbo_p = jwzgles_gluCheckExtension (
+    (const GLubyte *)"GL_OES_framebuffer_object", extensions);
+
+  if (rh->gl_fbo_p) {
+    PFNGLGENFRAMEBUFFERSOESPROC glGenFramebuffersOES =
+      (PFNGLGENFRAMEBUFFERSOESPROC)
+        eglGetProcAddress ("glGenFramebuffersOES");
+
+    rh->glBindFramebufferOES = (PFNGLBINDFRAMEBUFFEROESPROC)
+        eglGetProcAddress ("glBindFramebufferOES");
+    rh->glFramebufferTexture2DOES = (PFNGLFRAMEBUFFERTEXTURE2DOESPROC)
+      eglGetProcAddress ("glFramebufferTexture2DOES");
+
+    glGetIntegerv (GL_FRAMEBUFFER_BINDING_OES, &rh->fb_default);
+    Assert (!rh->fb_default, "default framebuffer not current framebuffer");
+    glGenFramebuffersOES (1, &rh->fb_pixmap);
+    wnd->texture = 0;
+  } else {
+    wnd->egl_surface = rh->egl_surface;
+  }
+
+  /* TODO: Maybe ask for EGL_SWAP_BEHAVIOR_PRESERVED_BIT on the Java side of
+           things via EGLConfigChooser. I (Dave) seem to automatically get
+           this (n = 1), but maybe other devices won't.
+   */
+  rh->frontbuffer_p = False;
+
+  if (rh->api == API_XLIB ||
+      (rh->api == API_GL &&
+       strcmp("True", get_string_resource_window(wnd, "doubleBuffer")))) {
+
+    rh->frontbuffer_p = True;
+
+# if 0 /* Might need to be 0 for Adreno...? */
+    if (egl_major > 1 || (egl_major == 1 && egl_minor >= 2)) {
+      EGLint surface_type;
+      eglGetConfigAttrib(rh->egl_display, rh->egl_config, EGL_SURFACE_TYPE,
+                         &surface_type);
+      if(surface_type & EGL_SWAP_BEHAVIOR_PRESERVED_BIT) {
+        eglSurfaceAttrib(rh->egl_display, rh->egl_surface, EGL_SWAP_BEHAVIOR,
+                         EGL_BUFFER_PRESERVED);
+        rh->frontbuffer_p = False;
+      }
+    }
+# endif
+
+    if (rh->frontbuffer_p) {
+      /* create_pixmap needs rh->gl_fbo_p and wnd->frame. */
+      create_pixmap (wnd, wnd);
+
+      /* No preserving backbuffers, so manual blit from back to "front". */
+      rh->frontbuffer.type = PIXMAP;
+      rh->frontbuffer.frame = wnd->frame;
+      rh->frontbuffer.pixmap.depth = visual_depth (NULL, NULL);
+
+      if(rh->gl_fbo_p) {
+        rh->frontbuffer.texture = 0;
+      } else {
+        Assert (wnd->egl_surface != rh->egl_surface,
+                "oops: wnd->egl_surface == rh->egl_surface");
+        rh->frontbuffer.egl_surface = rh->egl_surface;
+      }
+    }
+  }
+
+  rh->dpy = jwxyz_make_display(wnd);
+  Assert(wnd == XRootWindow(rh->dpy, 0), "Wrong root window.");
+  // TODO: Zero looks right, but double-check that is the right number
+
+  /* Requires valid rh->dpy. */
+  rh->copy_gc = XCreateGC (rh->dpy, &rh->frontbuffer, 0, NULL);
+ 
+  rh->gles_state = jwzgles_make_state();
+  restore_surface(rh);
  END: ;
 }
 
@@ -333,8 +482,11 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
      but the screen is getting filled with random bits.  So let's wait a
      few frames before really starting up.
    */
-  if (++rh->frame_count < 8)
+  if (++rh->frame_count < 8) {
+    /* glClearColor (1.0, 0.0, 1.0, 0.0); */
+    glClear (GL_COLOR_BUFFER_BIT); /* We always need to draw *something*. */
     goto END;
+  }
 
   prepare_context(rh);
 
@@ -358,9 +510,12 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
     rh->closure = init_cb (rh->dpy, rh->window, rh->xsft->setup_arg);
     rh->initted_p = True;
 
-    rh->ignore_rotation_p =
+    /* ignore_rotation_p doesn't quite work at the moment. */
+    rh->ignore_rotation_p = False;
+/*
       (rh->api == API_XLIB &&
        get_boolean_resource (rh->dpy, "ignoreRotation", "IgnoreRotation"));
+*/
 
     if (get_boolean_resource (rh->dpy, "doFPS", "DoFPS")) {
       rh->fpst = fps_init (rh->dpy, rh->window);
@@ -392,6 +547,14 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
 # endif
   if (rh->fpst && rh->xsft->fps_cb)
     rh->xsft->fps_cb (rh->dpy, rh->window, rh->fpst, rh->closure);
+
+  if (rh->frontbuffer_p) {
+    jwxyz_copy_area (rh->dpy, rh->window, &rh->frontbuffer, rh->copy_gc,
+                     0, 0, rh->window->frame.width, rh->window->frame.height,
+                     0, 0);
+  }
+
+  restore_surface (rh);
 
  END: ;
 
@@ -439,8 +602,7 @@ acquireClass (JNIEnv *env, const char *className, jobject *globalRef)
 //
 JNIEXPORT void JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeInit (JNIEnv *env, jobject thiz,
-                                            jstring jhack, jint api,
-                                            jobject defaults,
+                                            jstring jhack, jobject defaults,
                                             jint w, jint h)
 {
   pthread_mutex_lock(&mutg);
@@ -501,7 +663,7 @@ Java_org_jwz_xscreensaver_jwxyz_nativeInit (JNIEnv *env, jobject thiz,
 
   (*env)->ReleaseStringUTFChars(env, jhack, hack);
 
-  doinit (thiz, rh, env, &function_table[chosen], api, defaults, w, h);
+  doinit (thiz, rh, env, &function_table[chosen], defaults, w, h);
 
   pthread_mutex_unlock(&mutg);
 }
@@ -537,6 +699,16 @@ Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *env, jobject thiz,
     wnd->frame.height = h;
   }
 
+  get_egl_surface (rh);
+  if (rh->frontbuffer_p) {
+    free_pixmap (rh, wnd);
+    create_pixmap (wnd, wnd);
+
+    rh->frontbuffer.frame = wnd->frame;
+    if (!rh->gl_fbo_p)
+      rh->frontbuffer.egl_surface = rh->egl_surface;
+  }
+
   jwxyz_window_resized (rh->dpy);
   if (rh->initted_p)
     rh->xsft->reshape_cb (rh->dpy, rh->window, rh->closure,
@@ -547,6 +719,8 @@ Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *env, jobject thiz,
     glRotatef (-rot, 0, 0, 1);
     glMatrixMode (GL_MODELVIEW);
   }
+
+  restore_surface (rh);
 
  END:
   pthread_mutex_unlock(&mutg);
@@ -577,6 +751,8 @@ Java_org_jwz_xscreensaver_jwxyz_nativeDone (JNIEnv *env, jobject thiz)
 
   if (rh->initted_p)
     rh->xsft->free_cb (rh->dpy, rh->window, rh->closure);
+  XFreeGC (rh->dpy, rh->copy_gc);
+  jwzgles_free_state ();
   jwxyz_free_display(rh->dpy);
 
   free(rh);
@@ -733,11 +909,34 @@ Java_org_jwz_xscreensaver_jwxyz_sendKeyEvent (JNIEnv *env, jobject thiz,
 void
 prepare_context (struct running_hack *rh)
 {
-  Window w = rh->window;
-  eglMakeCurrent (rh->egl_display, w->egl_surface, w->egl_surface,
-                  rh->egl_window_ctx);
-  rh->current_drawable = rh->window;
+  /* Don't set matrices here; set them when an Xlib call triggers
+     jwxyz_bind_drawable/jwxyz_set_matrices.
+   */
+  rh->current_drawable = NULL;
+  jwzgles_make_current (rh->gles_state);
 }
+
+static void
+finish_bind_drawable (Display *dpy, Drawable dst)
+{
+  jwxyz_assert_gl ();
+
+  glViewport (0, 0, dst->frame.width, dst->frame.height);
+  jwxyz_set_matrices (dpy, dst->frame.width, dst->frame.height, False);
+}
+
+
+static void
+bind_drawable_fbo (struct running_hack *rh, Drawable d)
+{
+  rh->glBindFramebufferOES (GL_FRAMEBUFFER_OES,
+                            d->texture ? rh->fb_pixmap : rh->fb_default);
+  if (d->texture) {
+    rh->glFramebufferTexture2DOES (GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES,
+                                   GL_TEXTURE_2D, d->texture, 0);
+  }
+}
+
 
 void
 jwxyz_bind_drawable (Display *dpy, Window w, Drawable d)
@@ -746,16 +945,13 @@ jwxyz_bind_drawable (Display *dpy, Window w, Drawable d)
   JNIEnv *env = w->window.rh->jni_env;
   if ((*env)->ExceptionOccurred(env)) abort();
   if (rh->current_drawable != d) {
-    EGLContext ctx = d == w ? rh->egl_window_ctx : rh->egl_xlib_ctx;
-    eglMakeCurrent (rh->egl_display, d->egl_surface, d->egl_surface, ctx);
-    // Log("%p %p %p %p %p", rh->egl_display, d->egl_surface, ctx, w, d);
-    rh->current_drawable = d;
-    jwxyz_assert_gl ();
-
-    if (d != w) {
-      glViewport (0, 0, d->frame.width, d->frame.height);
-      jwxyz_set_matrices (dpy, d->frame.width, d->frame.height, False);
+    if (rh->gl_fbo_p) {
+      bind_drawable_fbo (rh, d);
+    } else {
+      eglMakeCurrent (rh->egl_display, d->egl_surface, d->egl_surface, rh->egl_ctx);
     }
+    finish_bind_drawable (dpy, d);
+    rh->current_drawable = d;
   }
 }
 
@@ -802,11 +998,46 @@ jwxyz_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
                  int src_x, int src_y, unsigned int width, unsigned int height,
                  int dst_x, int dst_y)
 {
-#if 0
-  // Hilarious display corruption ahoy!
-  jwxyz_gl_copy_area_copy_tex_image (dpy, src, dst, gc, src_x, src_y,
+  Window w = XRootWindow (dpy, 0);
+  struct running_hack *rh = w->window.rh;
+
+  if (rh->gl_fbo_p && src->texture && src != dst) {
+    bind_drawable_fbo (rh, dst);
+    finish_bind_drawable (dpy, dst);
+    rh->current_drawable = NULL;
+
+    glBindTexture (GL_TEXTURE_2D, src->texture);
+
+    jwxyz_gl_draw_image (GL_TEXTURE_2D, to_pow2(src->frame.width),
+                         to_pow2(src->frame.height),
+                         src_x, src->frame.height - src_y - height,
+                         width, height, dst_x, dst_y);
+    return;
+  }
+
+#if 1
+  // Kumppa: 0.24 FPS
+  // Hilarious display corruption ahoy! (Note to self: it's on the emulator.)
+  // TODO for Dave: Recheck behavior on the emulator with the better Pixmap support.
+
+  rh->current_drawable = NULL;
+  if (rh->gl_fbo_p)
+    bind_drawable_fbo (rh, src);
+  else
+    eglMakeCurrent (rh->egl_display, dst->egl_surface, src->egl_surface, rh->egl_ctx);
+
+  jwxyz_gl_copy_area_read_tex_image (dpy, src->frame.height, src_x, src_y,
                                      width, height, dst_x, dst_y);
+
+  if (rh->gl_fbo_p)
+    bind_drawable_fbo (rh, dst);
+  finish_bind_drawable (dpy, dst);
+
+  jwxyz_gl_copy_area_write_tex_image (dpy, gc, src_x, src_y, width, height,
+                                      dst_x, dst_y);
+
 #else
+  // Kumppa: 0.17 FPS
   jwxyz_gl_copy_area_read_pixels (dpy, src, dst, gc, src_x, src_y,
                                   width, height, dst_x, dst_y);
 #endif
@@ -832,11 +1063,6 @@ Pixmap
 XCreatePixmap (Display *dpy, Drawable d,
                unsigned int width, unsigned int height, unsigned int depth)
 {
-  // See also:
-  // https://web.archive.org/web/20140213220709/http://blog.vlad1.com/2010/07/01/how-to-go-mad-while-trying-to-render-to-a-texture/
-  // https://software.intel.com/en-us/articles/using-opengl-es-to-accelerate-apps-with-legacy-2d-guis
-  // https://www.khronos.org/registry/egl/extensions/ANDROID/EGL_ANDROID_image_native_buffer.txt
-
   Window win = XRootWindow(dpy, 0);
 
   Pixmap p = malloc(sizeof(*p));
@@ -850,19 +1076,9 @@ XCreatePixmap (Display *dpy, Drawable d,
          "XCreatePixmap: bad depth");
   p->pixmap.depth = depth;
 
-  // Native EGL is Android 2.3/API 9. EGL in Java is available from API 1.
-  struct running_hack *rh = win->window.rh;
-  EGLint attribs[5];
-  attribs[0] = EGL_WIDTH;
-  attribs[1] = width;
-  attribs[2] = EGL_HEIGHT;
-  attribs[3] = height;
-  attribs[4] = EGL_NONE;
-  p->egl_surface = eglCreatePbufferSurface(rh->egl_display, rh->egl_config,
-                                           attribs);
-  Assert(p->egl_surface != EGL_NO_SURFACE,
-         "XCreatePixmap: got EGL_NO_SURFACE");
+  create_pixmap (win, p);
 
+  /* For debugging. */
   jwxyz_bind_drawable (dpy, win, p);
   glClearColor (frand(1), frand(1), frand(1), 0);
   glClear (GL_COLOR_BUFFER_BIT);
@@ -877,7 +1093,8 @@ XFreePixmap (Display *d, Pixmap p)
   struct running_hack *rh = XRootWindow(d, 0)->window.rh;
   if (rh->current_drawable == p)
     rh->current_drawable = NULL;
-  eglDestroySurface(rh->egl_display, p->egl_surface);
+
+  free_pixmap (rh, p);
   free (p);
   return 0;
 }
@@ -912,10 +1129,9 @@ jstring_dup (JNIEnv *env, jstring str)
 }
 
 
-char *
-get_string_resource (Display *dpy, char *name, char *class)
+static char *
+get_string_resource_window (Window window, char *name)
 {
-  Window window = RootWindow (dpy, 0);
   JNIEnv *env = window->window.rh->jni_env;
   jobject obj = window->window.rh->jobject;
 
@@ -937,6 +1153,13 @@ get_string_resource (Display *dpy, char *name, char *class)
 
   Log("pref %s = %s", name, (ret ? ret : "(null)"));
   return ret;
+}
+
+
+char *
+get_string_resource (Display *dpy, char *name, char *class)
+{
+  return get_string_resource_window (RootWindow (dpy, 0), name);
 }
 
 
@@ -977,46 +1200,72 @@ textclient_mobile_url_string (Display *dpy, const char *url)
 }
 
 
+float
+jwxyz_scale (Window main_window)
+{
+  return 2;
+}
+
+
+const char *
+jwxyz_default_font_family (int require)
+{
+  /* Font families in XLFDs are totally ignored (for now). */
+  return "sans-serif";
+}
+
+
 void *
-jwxyz_load_native_font (Display *dpy, const char *name,
-                        char **native_name_ret, float *size_ret,
+jwxyz_load_native_font (Window window,
+                        int traits_jwxyz, int mask_jwxyz,
+                        const char *font_name_ptr, size_t font_name_length,
+                        int font_name_type, float size,
+                        char **family_name_ret,
                         int *ascent_ret, int *descent_ret)
 {
-  Window window = RootWindow (dpy, 0);
   JNIEnv *env = window->window.rh->jni_env;
   jobject obj = window->window.rh->jobject;
 
-  jstring jstr = (*env)->NewStringUTF (env, name);
+  jstring jname = NULL;
+  if (font_name_ptr) {
+    char *name_nul = malloc(font_name_length + 1);
+    memcpy(name_nul, font_name_ptr, font_name_length);
+    name_nul[font_name_length] = 0;
+    jname = (*env)->NewStringUTF (env, name_nul);
+    free(name_nul);
+  }
+
   jclass     c = (*env)->GetObjectClass (env, obj);
   jmethodID  m = (*env)->GetMethodID (env, c, "loadFont",
-                           "(Ljava/lang/String;)[Ljava/lang/Object;");
+                           "(IILjava/lang/String;IF)[Ljava/lang/Object;");
   if ((*env)->ExceptionOccurred(env)) abort();
 
   jobjectArray array = (m
-                        ? (*env)->CallObjectMethod (env, obj, m, jstr)
+                        ? (*env)->CallObjectMethod (env, obj, m, (jint)mask_jwxyz,
+                                                    (jint)traits_jwxyz, jname,
+                                                    (jint)font_name_type, (jfloat)size)
                         : NULL);
+
   (*env)->DeleteLocalRef (env, c);
-  (*env)->DeleteLocalRef (env, jstr);
-  jstr = 0;
 
   if (array) {
     jobject font = (*env)->GetObjectArrayElement (env, array, 0);
-    jobject name = (jstring) ((*env)->GetObjectArrayElement (env, array, 1));
-    jobject size = (*env)->GetObjectArrayElement (env, array, 2);
-    jobject asc  = (*env)->GetObjectArrayElement (env, array, 3);
-    jobject desc = (*env)->GetObjectArrayElement (env, array, 4);
+    jobject family_name =
+      (jstring) ((*env)->GetObjectArrayElement (env, array, 1));
+    jobject asc  = (*env)->GetObjectArrayElement (env, array, 2);
+    jobject desc = (*env)->GetObjectArrayElement (env, array, 3);
     if ((*env)->ExceptionOccurred(env)) abort();
 
-    *native_name_ret = jstring_dup (env, name);
+    if (family_name_ret)
+      *family_name_ret = jstring_dup (env, family_name);
 
     jobject paint = (*env)->NewGlobalRef (env, font);
     if ((*env)->ExceptionOccurred(env)) abort();
 
-    c = (*env)->GetObjectClass(env, size);
+    c = (*env)->GetObjectClass(env, asc);
     m = (*env)->GetMethodID (env, c, "floatValue", "()F");
     if ((*env)->ExceptionOccurred(env)) abort();
 
-    *size_ret    =       (*env)->CallFloatMethod (env, size, m);
     *ascent_ret  = (int) (*env)->CallFloatMethod (env, asc,  m);
     *descent_ret = (int) (*env)->CallFloatMethod (env, desc, m);
 
@@ -1176,6 +1425,10 @@ jwxyz_load_random_image (Display *dpy,
                          int *width_ret, int *height_ret,
                          char **name_ret)
 {
+
+  /* This function needs to be implemented for Android */
+  return 0;
+
   Window window = RootWindow (dpy, 0);
   struct running_hack *rh = window->window.rh;
   JNIEnv *env = rh->jni_env;

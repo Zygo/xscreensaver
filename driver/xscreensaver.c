@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -530,7 +530,7 @@ set_version_string (saver_info *si, int *argc, char **argv)
       *s = '_';
   }
 
-  si->version = (char *) malloc (5);
+  si->version = (char *) malloc (32);
   memcpy (si->version, screensaver_id + 17, 4);
   si->version [4] = 0;
 }
@@ -2324,7 +2324,6 @@ analyze_display (saver_info *si)
       char buf [255];
       int maj = 0, min = 0;
       int dummy1, dummy2, dummy3;
-      int j;
 
       /* Most of the extension version functions take 3 args,
          writing results into args 2 and 3, but some take more.
@@ -2337,7 +2336,6 @@ analyze_display (saver_info *si)
       if (!XQueryExtension (si->dpy, exts[i].name, &op, &event, &error))
         continue;
       sprintf (buf, "%s:   ", blurb());
-      j = strlen (buf);
       strcat (buf, exts[i].desc);
 
       if (!version_fn_2)

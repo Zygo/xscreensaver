@@ -116,10 +116,10 @@ decode_mask (unsigned int mask, unsigned int *pos_ret, unsigned int *size_ret)
 
 
 static unsigned long
-pixel_distance (Visual *v, unsigned long p1, unsigned long p2)
+pixel_distance (Screen *s, Visual *v, unsigned long p1, unsigned long p2)
 {
   static int initted_p = 0;
-  static unsigned int rmsk=0, gmsk=0, bmsk=0;
+  static unsigned long rmsk=0, gmsk=0, bmsk=0;
   static unsigned int rpos=0, gpos=0, bpos=0;
   static unsigned int rsiz=0, gsiz=0, bsiz=0;
 
@@ -130,9 +130,7 @@ pixel_distance (Visual *v, unsigned long p1, unsigned long p2)
   if (!p1 && !p2) return 0;
 
   if (! initted_p) {
-    rmsk = v->red_mask;
-    gmsk = v->green_mask;
-    bmsk = v->blue_mask;
+    visual_rgb_masks (s, v, &rmsk, &gmsk, &bmsk);
     decode_mask (rmsk, &rpos, &rsiz);
     decode_mask (gmsk, &gpos, &gsiz);
     decode_mask (bmsk, &bpos, &bsiz);
@@ -321,7 +319,8 @@ analyze (struct state *st)
           pixels[i++] = (x > 0 && y < h-1 ? XGetPixel (st->img, x-1, y+1) : 0);
 
           for (i = 1; i < countof(pixels); i++)
-            distance += pixel_distance (st->xgwa.visual, pixels[0], pixels[i]);
+            distance += pixel_distance (st->xgwa.screen, st->xgwa.visual,
+                                        pixels[0], pixels[i]);
           distance /= countof(pixels)-1;
           XPutPixel (st->delta, x, y, distance);
         }
@@ -780,15 +779,13 @@ get_deltap (struct state *st)
   XImage *dimg;
 
   Visual *v = st->xgwa.visual;
-  unsigned int rmsk=0, gmsk=0, bmsk=0;
+  unsigned long rmsk=0, gmsk=0, bmsk=0;
   unsigned int rpos=0, gpos=0, bpos=0;
   unsigned int rsiz=0, gsiz=0, bsiz=0;
 
   if (st->deltap) return st->deltap;
 
-  rmsk = v->red_mask;
-  gmsk = v->green_mask;
-  bmsk = v->blue_mask;
+  visual_rgb_masks (st->xgwa.screen, v, &rmsk, &gmsk, &bmsk);
   decode_mask (rmsk, &rpos, &rsiz);
   decode_mask (gmsk, &gpos, &gsiz);
   decode_mask (bmsk, &bpos, &bsiz);

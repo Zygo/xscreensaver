@@ -78,6 +78,7 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
 					"*wireframe:	False	\n"			\
 					"*suppressRotationAnimation: True\n" \
 
+# define release_superquadrics 0
 # define superquadrics_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -115,7 +116,7 @@ ENTRYPOINT ModeSpecOpt superquadrics_opts =
 
 #ifdef USE_MODULES
 ModStruct   superquadrics_description =
-{"superquadrics", "init_superquadrics", "draw_superquadrics", "release_superquadrics",
+{"superquadrics", "init_superquadrics", "draw_superquadrics", NULL,
  "refresh_superquadrics", "init_superquadrics", NULL, &superquadrics_opts,
  1000, 25, 40, 1, 4, 1.0, "",
  "Shows 3D mathematical shapes", 0, NULL};
@@ -726,11 +727,7 @@ init_superquadrics(ModeInfo * mi)
 
 	superquadricsstruct *sp;
 
-	if (superquadrics == NULL) {
-		if ((superquadrics = (superquadricsstruct *) calloc(MI_NUM_SCREENS(mi),
-				      sizeof (superquadricsstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, superquadrics, NULL);
 	sp = &superquadrics[screen];
 	sp->mono = (MI_IS_MONO(mi) ? 1 : 0);
 
@@ -790,16 +787,6 @@ ENTRYPOINT void
 reshape_superquadrics(ModeInfo * mi, int width, int height)
 {
   ReshapeSuperquadrics(MI_WIDTH(mi), MI_HEIGHT(mi));
-}
-
-ENTRYPOINT void
-release_superquadrics(ModeInfo * mi)
-{
-	if (superquadrics != NULL) {
-		(void) free((void *) superquadrics);
-		superquadrics = NULL;
-	}
-	FreeAllGL(mi);
 }
 
 

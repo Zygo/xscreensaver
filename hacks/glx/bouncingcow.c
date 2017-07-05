@@ -239,14 +239,7 @@ init_cow (ModeInfo *mi)
   int i;
   Bool tex_p = False;
 
-  if (!bps) {
-    bps = (cow_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (cow_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

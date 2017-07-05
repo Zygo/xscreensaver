@@ -181,6 +181,8 @@
 
 #include "jwzglesI.h"
 
+#include "pow2.h"
+
 #define STRINGIFY(X) #X
 
 #undef countof
@@ -324,7 +326,7 @@ typedef struct {
 } texgen_state;
 
 
-typedef struct {	/* global state */
+struct jwzgles_state {  /* global state */
 
   vert_set set;		/* set being built */
 
@@ -342,7 +344,7 @@ typedef struct {	/* global state */
   /* Implementing glPushClientAttrib? Don't forget about these! */
   draw_array varray, narray, carray, tarray;
 
-} jwzgles_state;
+};
 
 
 static jwzgles_state *state = 0;
@@ -618,10 +620,13 @@ make_room (const char *name, void **array, int span, int *count, int *size)
 
 
 void
-jwzgles_reset (void)
+jwzgles_free_state (void)
 {
-  if (! state)
-    state = (jwzgles_state *) calloc (1, sizeof (*state));
+  /* Tricky: jwzgles_make_state doesn't require an active GLES context, but
+     jwzgles_free_state does.
+   */
+
+  LOG1("jwzgles_free_state %p", state);
 
   if (state->lists.lists)
     {
@@ -636,12 +641,31 @@ jwzgles_reset (void)
   if (state->set.tex)     free (state->set.tex);
   if (state->set.color)   free (state->set.color);
 
-  memset (state, 0, sizeof(*state));
+  free (state);
+  state = NULL;
+}
 
-  state->s.mode = state->t.mode = state->r.mode = state->q.mode =
-    GL_EYE_LINEAR;
-  state->s.obj[0] = state->s.eye[0] = 1;  /* s = 1 0 0 0 */
-  state->t.obj[1] = state->t.eye[1] = 1;  /* t = 0 1 0 0 */
+
+jwzgles_state *
+jwzgles_make_state (void)
+{
+  jwzgles_state *s = (jwzgles_state *) calloc (1, sizeof (*s));
+
+  LOG1("jwzgles_make_state %p", s);
+
+  s->s.mode = s->t.mode = s->r.mode = s->q.mode = GL_EYE_LINEAR;
+  s->s.obj[0] = s->s.eye[0] = 1;  /* s = 1 0 0 0 */
+  s->t.obj[1] = s->t.eye[1] = 1;  /* t = 0 1 0 0 */
+
+  return s;
+}
+
+
+void
+jwzgles_make_current (jwzgles_state *s)
+{
+  LOG1("jwzgles_make_current %p", s);
+  state = s;
 }
 
 
@@ -2952,15 +2976,6 @@ jwzgles_glGenTextures (GLuint n, GLuint *ret)
 }
 
 
-/* return the next larger power of 2. */
-static int
-to_pow2 (int value)
-{
-  int i = 1;
-  while (i < value) i <<= 1;
-  return i;
-}
-
 void
 jwzgles_glTexImage1D (GLenum target, GLint level,
                       GLint internalFormat,
@@ -3289,8 +3304,8 @@ jwzgles_gluBuild2DMipmaps (GLenum target,
      Note that this required a corresponding hack in glTexParameterf().
    */
 
-  int w2 = to_pow2(width);
-  int h2 = to_pow2(height);
+  GLsizei w2 = (GLsizei)to_pow2(width);
+  GLsizei h2 = (GLsizei)to_pow2(height);
 
   void *d2 = (void *) data;
 

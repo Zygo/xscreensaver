@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002-2017 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -55,9 +55,10 @@ void gltrackball_mousewheel (trackball_state *ts,
  */
 extern void gltrackball_get_quaternion (trackball_state *ts, float q[4]);
 
-/* Reset the trackball to the default unrotated state.
+/* Reset the trackball to the default unrotated state,
+   plus an optional initial rotation.
  */
-extern void gltrackball_reset (trackball_state *ts);
+extern void gltrackball_reset (trackball_state *ts, float x, float y);
 
 /* A utility function for event-handler functions:
    Handles the various motion and click events related to trackballs.

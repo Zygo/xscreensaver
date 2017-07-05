@@ -1,4 +1,4 @@
-/* winduprobot, Copyright (c) 2014, 2015 Jamie Zawinski <jwz@jwz.org>
+/* winduprobot, Copyright (c) 2014-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -69,6 +69,7 @@
 #define WORDBUBBLES
 
 # define refresh_robot 0
+# define release_robot 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -237,7 +238,7 @@ reshape_robot (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  glViewport (0, 0, width, height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -245,7 +246,7 @@ reshape_robot (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  gluLookAt( 0, 20, 30,
+  gluLookAt( 0, 0, 30,
              0, 0, 0,
              0, 1, 0);
 
@@ -343,6 +344,7 @@ load_textures (ModeInfo *mi)
 static int unit_gear (ModeInfo *, GLfloat color[4]);
 static int draw_ground (ModeInfo *, GLfloat color[4]);
 static void init_walker (ModeInfo *, walker *);
+static void free_robot (ModeInfo *mi);
 
 static void
 parse_color (ModeInfo *mi, char *key, GLfloat color[4])
@@ -369,14 +371,7 @@ init_robot (ModeInfo *mi)
   robot_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
   int i;
-  if (!bps) {
-    bps = (robot_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (robot_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_robot);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -593,16 +588,13 @@ init_robot (ModeInfo *mi)
 
 # endif /* WORDBUBBLES */
 
-  /* Let's tilt the floor a little. */
 # ifdef DEBUG
   if (!debug_p)
 # endif
-    {
-      gltrackball_start (bp->user_trackball, 0, 500,  1000, 1000);
-      gltrackball_track (bp->user_trackball,
-                         0, 500 + (random() % 200) - 100,
-                         1000, 1000);
-    }
+    /* Let's tilt the floor a little. */
+    gltrackball_reset (bp->user_trackball,
+                       -0.6 + frand(1.2),
+                       -0.6 + frand(0.2));
 }
 
 
@@ -1683,10 +1675,20 @@ static int
 draw_ground (ModeInfo *mi, GLfloat color[4])
 {
   int wire = MI_IS_WIREFRAME(mi);
-  GLfloat i;
-  GLfloat cell_size = 0.9;
-  int cells = 1000 * size;
+  GLfloat i, j, k;
+
+  /* When using fog, iOS apparently doesn't like lines or quads that are
+     really long, and extend very far outside of the scene. Maybe?  If the
+     length of the line (cells * cell_size) is greater than 25 or so, lines
+     that are oriented steeply away from the viewer tend to disappear
+     (whether implemented as GL_LINES or as GL_QUADS).
+
+     So we do a bunch of smaller grids instead of one big one.
+  */
+  int cells = 30;
+  GLfloat cell_size = 0.8;
   int points = 0;
+  int grids = 12;
 
 # ifdef DEBUG
   if (debug_p) return 0;
@@ -1700,7 +1702,7 @@ draw_ground (ModeInfo *mi, GLfloat color[4])
     {
       GLfloat fog_color[4] = { 0, 0, 0, 1 };
 
-      glLineWidth (2);
+      glLineWidth (4);
       glEnable (GL_LINE_SMOOTH);
       glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
@@ -1708,25 +1710,36 @@ draw_ground (ModeInfo *mi, GLfloat color[4])
 
       glFogi (GL_FOG_MODE, GL_EXP2);
       glFogfv (GL_FOG_COLOR, fog_color);
-      glFogf (GL_FOG_DENSITY, 0.017);
-      glFogf (GL_FOG_START, -cells/2 * cell_size);
-# ifndef USE_IPHONE  /* #### Not working on iOS for some reason */
+      glFogf (GL_FOG_DENSITY, 0.015);
+      glFogf (GL_FOG_START, -cells/2 * cell_size * grids);
       glEnable (GL_FOG);
-# endif
     }
 
   glColor4fv (color);
   glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 
-  glBegin (GL_LINES);
-  for (i = -cells/2; i < cells/2; i++)
+  glTranslatef (-cells * grids * cell_size / 2,
+                -cells * grids * cell_size / 2, 0);
+
+  for (j = 0; j < grids; j++)
     {
-      GLfloat a = i * cell_size;
-      GLfloat b = cells/2 * cell_size;
-      glVertex3f (a, -b, 0); glVertex3f (a, b, 0); points++;
-      glVertex3f (-b, a, 0); glVertex3f (b, a, 0); points++;
+      glPushMatrix();
+      for (k = 0; k < grids; k++)
+        {
+          glBegin (GL_LINES);
+          for (i = -cells/2; i < cells/2; i++)
+            {
+              GLfloat a = i * cell_size;
+              GLfloat b = cells/2 * cell_size;
+              glVertex3f (a, -b, 0); glVertex3f (a, b, 0); points++;
+              glVertex3f (-b, a, 0); glVertex3f (b, a, 0); points++;
+            }
+          glEnd();
+          glTranslatef (cells * cell_size, 0, 0);
+        }
+      glPopMatrix();
+      glTranslatef (0, cells * cell_size, 0);
     }
-  glEnd();
 
   if (!wire)
     {
@@ -2295,21 +2308,12 @@ draw_robot (ModeInfo *mi)
   glPushMatrix ();
 
 # ifdef HAVE_MOBILE
-  {
-    int rot = current_device_rotation();
-
-    if (rot == 180 || rot == -180)		/* so much WTF */
-      glRotatef (-68, 1, 0, 0);
-    else if (rot == 90 || rot == -270)
-      glRotatef (68, 0, 1, 0);
-    else if (rot == -90 || rot == 270)
-      glRotatef (-68, 0, 1, 0);
-
-    glRotatef (rot, 0, 0, 1);  /* right side up */
-  }
+  glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
 # endif
 
   gltrackball_rotate (bp->user_trackball);
+
+  glTranslatef (0, -20, 0);  /* Move the horizon down the screen */
 
   robot_size = size * 7;
   glScalef (robot_size, robot_size, robot_size);
@@ -2457,7 +2461,6 @@ draw_robot (ModeInfo *mi)
     }
   free (sorted);
 
-
   glPopMatrix ();
 
   if (mi->fps_p) do_fps (mi);
@@ -2466,12 +2469,13 @@ draw_robot (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-ENTRYPOINT void
-release_robot (ModeInfo *mi)
+static void
+free_robot (ModeInfo *mi)
 {
 # ifdef WORDBUBBLES
   robot_configuration *bp = &bps[MI_SCREEN(mi)];
-  textclient_close (bp->tc);
+  if (bp->tc)
+    textclient_close (bp->tc);
 # endif
 }
 

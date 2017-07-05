@@ -136,6 +136,7 @@
 			"*wireframe:	False	\n" \
 
 # define refresh_juggle 0
+# define release_juggle 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -637,7 +638,9 @@ trajectory_destroy(Trajectory *t) {
 }
 
 static void
-free_juggle(jugglestruct *sp) {
+free_juggle(ModeInfo *mi) {
+  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
+
   if (sp->head != NULL) {
 	while (sp->head->next != sp->head) {
 	  trajectory_destroy(sp->head->next);
@@ -659,13 +662,14 @@ free_juggle(jugglestruct *sp) {
 }
 
 static Bool
-add_throw(jugglestruct *sp, char type, int h, Notation n, const char* name)
+add_throw(ModeInfo *mi, char type, int h, Notation n, const char* name)
 {
+  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
   Trajectory *t;
 
   ADD_ELEMENT(Trajectory, t, sp->head->prev);
   if(t == NULL){ /* Out of Memory */
-	free_juggle(sp);
+	free_juggle(mi);
 	return False;
   }
   t->object = NULL;
@@ -687,7 +691,6 @@ add_throw(jugglestruct *sp, char type, int h, Notation n, const char* name)
 static Bool
 program(ModeInfo *mi, const char *patn, const char *name, int cycles)
 {
-  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
   const char *p;
   int w, h, i, seen;
   Notation notation;
@@ -739,7 +742,7 @@ program(ModeInfo *mi, const char *patn, const char *name, int cycles)
 		case ' ':
 		  if (seen) {
 			i++;
-			if (!add_throw(sp, type, h, notation, title))
+			if (!add_throw(mi, type, h, notation, title))
 				return False;
 			title = NULL;
 			type=' ';
@@ -759,7 +762,7 @@ program(ModeInfo *mi, const char *patn, const char *name, int cycles)
 	  }
 	}
 	if (seen) { /* end of sequence */
-	  if (!add_throw(sp, type, h, notation, title))
+	  if (!add_throw(mi, type, h, notation, title))
 		return False;
 	  title = NULL;
 	}
@@ -860,8 +863,9 @@ name(jugglestruct *sp)
 /* ..nm.. -> .. LTn LC RTm RC .. */
 
 static Bool
-part(jugglestruct *sp)
+part(ModeInfo *mi)
 {
+  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
   Trajectory *t, *nt, *p;
   Hand hand = (LRAND() & 1) ? RIGHT : LEFT;
 
@@ -906,7 +910,7 @@ part(jugglestruct *sp)
 	  t->action = CATCH;
 	  ADD_ELEMENT(Trajectory, nt, p);
 	  if(nt == NULL){
-		free_juggle(sp);
+		free_juggle(mi);
 		return False;
 	  }
 	  nt->object = NULL;
@@ -2441,19 +2445,6 @@ show_bball(ModeInfo *mi, unsigned long color, Trace *s)
  **************************************************************************/
 
 
-ENTRYPOINT void
-release_juggle (ModeInfo * mi)
-{
-  if (juggles != NULL) {
-	int screen;
-
-	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-	  free_juggle(&juggles[screen]);
-	free(juggles);
-	juggles = (jugglestruct *) NULL;
-  }
-}
-
 /* FIXME: refill_juggle currently just appends new throws to the
  * programme.  This is fine if the programme is empty, but if there
  * are still some trajectories left then it really should take these
@@ -2570,7 +2561,7 @@ refill_juggle(ModeInfo * mi)
 
   name(sp);
 
-  if (!part(sp))
+  if (!part(mi))
 	return;
 
   lob(mi);
@@ -2580,7 +2571,7 @@ refill_juggle(ModeInfo * mi)
   positions(sp);
 
   if (!projectile(sp)) {
-	free_juggle(sp);
+	free_juggle(mi);
 	return;
   }
 
@@ -2645,14 +2636,7 @@ init_juggle (ModeInfo * mi)
   jugglestruct *sp = 0;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!juggles) {
-    juggles = (jugglestruct *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (jugglestruct));
-    if (!juggles) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, juggles, free_juggle);
 
   sp = &juggles[MI_SCREEN(mi)];
 
@@ -2746,14 +2730,14 @@ init_juggle (ModeInfo * mi)
 	/* create circular trajectory list */
 	ADD_ELEMENT(Trajectory, sp->head, sp->head);
 	if(sp->head == NULL){
-	  free_juggle(sp);
+	  free_juggle(mi);
 	  return;
 	}
 
 	/* create circular object list */
 	ADD_ELEMENT(Object, sp->objects, sp->objects);
 	if(sp->objects == NULL){
-	  free_juggle(sp);
+	  free_juggle(mi);
 	  return;
 	}
 
@@ -3023,7 +3007,6 @@ draw_juggle (ModeInfo *mi)
   if (future < sp->time + 100 * THROW_CATCH_INTERVAL) {
 	refill_juggle(mi);
   } else if (sp->time > 1<<30) { /* Hard Reset before the clock wraps */
-	release_juggle(mi);
 	init_juggle(mi);
   }
 

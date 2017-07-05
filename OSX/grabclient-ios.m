@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,120 +9,87 @@
  * implied warranty.
  */
 
-/* This iOS code to choose and return a random image from the user's
- * photo gallery.
- *
- * Much of the following written by:
- *
- *  Created by David Oster on 6/23/12.
- *  Copyright (c) 2012 Google. All rights reserved.
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+/* iOS 8+ code to choose and return a random image from the photo library.
  */
 
 #ifdef USE_IPHONE  // whole file
 
-#import <AssetsLibrary/AssetsLibrary.h>
+#import <Photos/Photos.h>
 #import "grabscreen.h"
 #import "yarandom.h"
-
-/* ALAssetsLibrary is an async API, so we need to fire it off and then
-   call a callback when it's done.  Fortunately, this fits the same
-   interaction model already used in xscreensaver by load_image_async(),
-   so it works out nicely.
- */
-
-typedef struct {
-  void (*callback) (void *uiimage, const char *fn, int width, int height,
-                    void *closure);
-  void *closure;
-
-  ALAssetsLibrary *library;
-  NSMutableArray *assets;
-
-} ios_loader_data;
-
-
-static void
-ios_random_image_done (ios_loader_data *d, BOOL ok)
-{
-  UIImage *img = 0;
-  const char *fn = 0;
-  NSUInteger n = ok ? [d->assets count] : 0;
-  if (n > 0) {
-    ALAsset *asset = [d->assets objectAtIndex: random() % n];
-    ALAssetRepresentation *rep = [asset defaultRepresentation];
-
-    // "fullScreenImage" returns a smaller image than "fullResolutionImage",
-    // but this function still takes a significant fraction of a second,
-    // causing a visible glitch in e.g. "glslideshow".
-    CGImageRef cgi = [rep fullScreenImage];
-    if (cgi) {
-      UIImageOrientation orient = (UIImageOrientation) 
-        [[asset valueForProperty:ALAssetPropertyOrientation] intValue];
-      img = [UIImage imageWithCGImage: cgi
-                     scale: 1
-                     orientation: orient];
-      if (img)
-        fn = [[[rep filename] stringByDeletingPathExtension]
-               cStringUsingEncoding:NSUTF8StringEncoding];
-    }
-  }
-
-  [d->assets release];
-  [d->library release];
-
-  d->callback (img, fn, [img size].width, [img size].height, d->closure);
-  free (d);
-}
-
 
 void
 ios_load_random_image (void (*callback) (void *uiimage, const char *fn,
                                          int width, int height,
                                          void *closure),
-                       void *closure)
+                       void *closure,
+                       int width, int height)
 {
-  ios_loader_data *d = (ios_loader_data *) calloc (1, sizeof(*d));
-  d->callback = callback;
-  d->closure = closure;
-
-  d->library = [[[ALAssetsLibrary alloc] init] retain];
-  d->assets = [[NSMutableArray array] retain];
-
-  // The closures passed in here are called later, after we have returned.
+  // If the user has not yet been asked for authoriziation, pop up the
+  // auth dialog now and re-invoke this function once it has been
+  // answered.  The callback will run once there has been a Yes or No.
+  // Otherwise, we'd return right away with colorbars even if the user
+  // then went on to answer Yes.
   //
-  [d->library enumerateGroupsWithTypes: ALAssetsGroupAll
-              usingBlock: ^(ALAssetsGroup *group, BOOL *stop) {
-    NSString *name = [group valueForProperty:ALAssetsGroupPropertyName];
-    if ([name length]) {
-      [group enumerateAssetsUsingBlock: ^(ALAsset *asset, NSUInteger index,
-                                          BOOL *stop) {
-        if ([[asset valueForProperty: ALAssetPropertyType]
-              isEqual: ALAssetTypePhoto]) {
-          [d->assets addObject:asset];
-        }
-      }];
-    }
+  PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+  if (status == PHAuthorizationStatusNotDetermined) {
+    [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+      ios_load_random_image (callback, closure, width, height);
+    }];
+    return;
+  }
 
-    if (! group) {   // done
-      ios_random_image_done (d, YES);
-    }
-  } failureBlock:^(NSError *error) {
-    // E.g., ALAssetsLibraryErrorDomain: "The user has denied the
-    // application access to their media."
-    NSLog(@"reading Photo Library: %@", error);
-    ios_random_image_done (d, NO);
-  }];
+  // The rest of this is synchronous.
+
+  PHFetchOptions *opt = [PHFetchOptions new];
+  opt.includeAssetSourceTypes = (PHAssetSourceTypeUserLibrary |
+                                 PHAssetSourceTypeCloudShared |
+                                 PHAssetSourceTypeiTunesSynced);
+  PHFetchResult *r = [PHAsset
+                       fetchAssetsWithMediaType: PHAssetMediaTypeImage
+                       options: opt];
+  NSUInteger n = [r count];
+  PHAsset *asset = n ? [r objectAtIndex: random() % n] : NULL;
+
+  __block UIImage *img = 0;
+  __block const char *fn = 0;
+
+  if (asset) {
+    PHImageRequestOptions *opt = [[PHImageRequestOptions alloc] init];
+    opt.synchronous = YES;
+
+    // Get the image bits.
+    //
+    int size = width > height ? width : height;
+    [[PHImageManager defaultManager]
+      requestImageForAsset: asset
+      targetSize: CGSizeMake (size, size)
+      contentMode: PHImageContentModeDefault
+      options: opt
+      resultHandler:^void (UIImage *image, NSDictionary *info) {
+        img = image;
+    }];
+
+    // Get the image name.
+    //
+    [[PHImageManager defaultManager]
+      requestImageDataForAsset: asset
+      options: opt
+      resultHandler:^(NSData *imageData, NSString *dataUTI,
+                      UIImageOrientation orientation, 
+                      NSDictionary *info) {
+        // Looks like UIImage is pre-rotated to compensate for 'orientation'.
+        NSString *path = [info objectForKey:@"PHImageFileURLKey"];
+        if (path)
+          fn = [[[path lastPathComponent] stringByDeletingPathExtension]
+                 cStringUsingEncoding:NSUTF8StringEncoding];
+    }];
+  }
+
+  if (img)
+    callback (img, fn, [img size].width, [img size].height, closure);
+  else
+    callback (0, 0, 0, 0, closure);
 }
 
 #endif  // USE_IPHONE - whole file

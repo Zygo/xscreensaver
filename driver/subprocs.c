@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -260,7 +260,6 @@ make_job (pid_t pid, int screen, const char *cmd)
   const char *in = cmd;
   char *out = name;
   int got_eq = 0;
-  int first = 1;
 
   clean_job_list();
 
@@ -275,7 +274,6 @@ make_job (pid_t pid, int screen, const char *cmd)
     {					/* then get the next token instead. */
       got_eq = 0;
       out = name;
-      first = 0;
       goto AGAIN;
     }
 

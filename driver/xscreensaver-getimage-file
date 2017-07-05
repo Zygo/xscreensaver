@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2016 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2017 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -45,10 +45,6 @@ import Fcntl ':mode' unless defined &S_ISUID;	# but it is here in Perl 5.8
 	# but in Perl 5.10, both of these load, and cause errors!
 	# So we have to check for S_ISUID instead of S_ISDIR?  WTF?
 
-use bytes;  # Larry can take Unicode and shove it up his ass sideways.
-            # Perl 5.8.0 causes us to start getting incomprehensible
-            # errors about UTF-8 all over the place without this.
-
 use Digest::MD5 qw(md5_base64);
 
 # Some Linux systems don't install LWP by default!
@@ -57,7 +53,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.40 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.43 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -254,7 +250,7 @@ sub read_cache($) {
     $dd = "$ENV{HOME}/.cache/xscreensaver";
     if (! -d $dd) { mkdir ($dd) || error ("mkdir $dd: $!"); }
     $cache_file_name = "$dd/xscreensaver-getimage.cache"
-  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/.tmp/ exists, use it.
+  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/tmp/ exists, use it.
     $cache_file_name = "$ENV{HOME}/tmp/.xscreensaver-getimage.cache";
   } else {
     $cache_file_name = "$ENV{HOME}/.xscreensaver-getimage.cache";
@@ -391,7 +387,7 @@ sub set_proxy($) {
 sub init_lwp() {
   if (! defined ($LWP::Simple::ua)) {
     error ("\n\n\tPerl is broken. Do this to repair it:\n" .
-           "\n\tsudo cpan LWP::Simple\n");
+           "\n\tsudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA\n");
   }
   set_proxy ($LWP::Simple::ua);
 }
@@ -408,9 +404,19 @@ sub parse_feed($) {
   $LWP::Simple::ua->agent ("$progname/$version");
   $LWP::Simple::ua->timeout (10);  # bail sooner than the default of 3 minutes
 
+
+  # Half the time, random Linux systems don't have Mozilla::CA installed,
+  # which results in "Can't verify SSL peers without knowning which
+  # Certificate Authorities to trust".
+  #
+  # In xscreensaver-text we just disabled certificate checks. However,
+  # malicious images really do exist, so for xscreensaver-getimage-file,
+  # let's actually require that SSL be installed properly.
+
+
   my $body = (LWP::Simple::get($url) || '');
 
-  if ($body !~ m@^<\?xml\s@si) {
+  if ($body !~ m@^\s*<(\?xml|rss)\b@si) {
     # Not an RSS/Atom feed.  Try RSS autodiscovery.
 
     # (Great news, everybody: Flickr no longer provides RSS for "Sets",
@@ -624,6 +630,10 @@ sub download_image($$$) {
   #     _q  square, 150x150
   #     _s  square,  75x75
   #
+  # Note: if we wanted to get the _k or _o version instead of the _b or _h
+  # version, we'd need to crack the DRM -- which is easy: see crack_secret
+  # in "https://www.jwz.org/hacks/galdown".
+  #
   $url =~ s@_[sqtmnzc](\.[a-z]+)$@_b$1@si
     if ($url =~ m@^https?://[^/?#&]*?flickr\.com/@si);
 
@@ -655,7 +665,7 @@ sub mirror_feed($) {
     if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
     $dir .= "/feeds";
     if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
-  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/.tmp/ exists, use it.
+  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/tmp/ exists, use it.
     $dir = "$ENV{HOME}/tmp/.xscreensaver-feeds";
   } else {
     $dir = "$ENV{HOME}/.xscreensaver-feeds";

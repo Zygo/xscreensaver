@@ -175,14 +175,7 @@ init_unk (ModeInfo *mi)
 {
   unk_configuration *bp;
 
-  if (!bps) {
-    bps = (unk_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (unk_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

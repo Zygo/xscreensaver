@@ -15,7 +15,7 @@
           low="0.01" high="5.0" default="1.0"/>
 
   <hgroup>
-   <number id="depth" type="spinbutton" arg="-depth %"
+   <number id="freq" type="spinbutton" arg="-depth %"
            _label="Depth" low="0" high="5" default="4"/>
    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
    <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>

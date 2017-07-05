@@ -444,14 +444,7 @@ init_noof (ModeInfo *mi)
   int i;
   noof_configuration *bp;
 
-  if (!bps) {
-    bps = (noof_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (noof_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

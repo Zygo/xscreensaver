@@ -206,6 +206,7 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
                             "*showFPS:    False \n" \
 
 # define refresh_romanboy 0
+# define release_romanboy 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */
@@ -225,7 +226,7 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
 #ifdef USE_MODULES
 ModStruct romanboy_description =
 {"romanboy", "init_romanboy", "draw_romanboy",
- "release_romanboy", "draw_romanboy", "change_romanboy",
+ NULL, "draw_romanboy", "change_romanboy",
  NULL, &romanboy_opts, 25000, 1, 1, 1, 1.0, 4, "",
  "Rotate a 3d immersion of the real projective plane in 3d or walk on it",
  0, NULL};
@@ -234,17 +235,12 @@ ModStruct romanboy_description =
 
 
 static char *mode;
-static int display_mode;
 static char *appear;
-static int appearance;
 static char *color_mode;
-static int colors;
 static char *view_mode;
-static int view;
 static Bool marks;
 static Bool deform;
 static char *proj;
-static int projection;
 static float speed_x;
 static float speed_y;
 static float speed_z;
@@ -328,6 +324,13 @@ ENTRYPOINT ModeSpecOpt romanboy_opts =
 typedef struct {
   GLint WindH, WindW;
   GLXContext *glx_context;
+  /* Options */
+  int display_mode;
+  int appearance;
+  int colors;
+  int view;
+  int projection;
+  Bool marks;
   /* 3D rotation angles */
   float alpha, beta, delta;
   /* Movement parameters */
@@ -470,12 +473,12 @@ static void quat_to_rotmat(float p[4], float m[3][3])
 
 
 /* Compute a fully saturated and bright color based on an angle. */
-static void color(double angle, float col[4])
+static void color(romanboystruct *pp, double angle, float col[4])
 {
   int s;
   double t;
 
-  if (colors == COLORS_TWOSIDED)
+  if (pp->colors == COLORS_TWOSIDED)
     return;
 
   if (angle >= 0.0)
@@ -519,7 +522,7 @@ static void color(double angle, float col[4])
       col[2] = 1.0-t;
       break;
   }
-  if (display_mode == DISP_TRANSPARENT)
+  if (pp->display_mode == DISP_TRANSPARENT)
     col[3] = 0.7;
   else
     col[3] = 1.0;
@@ -543,17 +546,17 @@ static void setup_roman_boy_color_texture(ModeInfo *mi, double umin,
     for (j=0; j<=numu; j++)
     {
       k = i*(numu+1)+j;
-      if (appearance != APPEARANCE_DIRECTION_BANDS)
+      if (pp->appearance != APPEARANCE_DIRECTION_BANDS)
         u = -ur*j/numu+umin;
       else
         u = ur*j/numu+umin;
       v = vr*i/numv+vmin;
-      if (colors == COLORS_DIRECTION)
-        color(2.0*M_PI-fmod(2.0*u,2.0*M_PI),&pp->col[4*k]);
-      else /* colors == COLORS_DISTANCE */
-        color(v*(5.0/6.0),&pp->col[4*k]);
+      if (pp->colors == COLORS_DIRECTION)
+        color(pp,2.0*M_PI-fmod(2.0*u,2.0*M_PI),&pp->col[4*k]);
+      else /* pp->colors == COLORS_DISTANCE */
+        color(pp,v*(5.0/6.0),&pp->col[4*k]);
       pp->tex[2*k+0] = -16*g*u/(2.0*M_PI);
-      if (appearance == APPEARANCE_DISTANCE_BANDS)
+      if (pp->appearance == APPEARANCE_DISTANCE_BANDS)
         pp->tex[2*k+1] = 32*v/(2.0*M_PI)-0.5;
       else
         pp->tex[2*k+1] = 32*v/(2.0*M_PI);
@@ -589,7 +592,7 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
   r = 1.0+d*d*(1.0/2.0+d*d*(1.0/6.0+d*d*(1.0/3.0)));
   radius = 1.0/r;
   oz = 0.5*r;
-  if (view == VIEW_WALK)
+  if (pp->view == VIEW_WALK)
   {
     u = pp->umove;
     v = pp->vmove;
@@ -738,10 +741,10 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
     mult_rotmat(r2,r1,mat);
   }
 
-  if (colors == COLORS_TWOSIDED)
+  if (pp->colors == COLORS_TWOSIDED)
   {
     glColor3fv(mat_diff_red);
-    if (display_mode == DISP_TRANSPARENT)
+    if (pp->display_mode == DISP_TRANSPARENT)
     {
       glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
       glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
@@ -758,11 +761,11 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
   vr = vmax-vmin;
 
   /* Set up the projective plane coordinates and normals. */
-  if (appearance != APPEARANCE_DIRECTION_BANDS)
+  if (pp->appearance != APPEARANCE_DIRECTION_BANDS)
   {
     for (i=0; i<=numv; i++)
     {
-      if (appearance == APPEARANCE_DISTANCE_BANDS &&
+      if (pp->appearance == APPEARANCE_DISTANCE_BANDS &&
           ((i & (NUMB-1)) >= NUMB/4+1) && ((i & (NUMB-1)) < 3*NUMB/4))
         continue;
       for (j=0; j<=numu; j++)
@@ -859,7 +862,7 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
       }
     }
   }
-  else /* appearance == APPEARANCE_DIRECTION_BANDS */
+  else /* pp->appearance == APPEARANCE_DIRECTION_BANDS */
   {
     for (j=0; j<=numu; j++)
     {
@@ -960,14 +963,14 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
     }
   }
 
-  if (appearance != APPEARANCE_DIRECTION_BANDS)
+  if (pp->appearance != APPEARANCE_DIRECTION_BANDS)
   {
     for (i=0; i<numv; i++)
     {
-      if (appearance == APPEARANCE_DISTANCE_BANDS &&
+      if (pp->appearance == APPEARANCE_DISTANCE_BANDS &&
           ((i & (NUMB-1)) >= NUMB/4) && ((i & (NUMB-1)) < 3*NUMB/4))
         continue;
-      if (display_mode == DISP_WIREFRAME)
+      if (pp->display_mode == DISP_WIREFRAME)
         glBegin(GL_QUAD_STRIP);
       else
         glBegin(GL_TRIANGLE_STRIP);
@@ -979,7 +982,7 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
           m = j;
           o = l*(numu+1)+m;
           glTexCoord2fv(&pp->tex[2*o]);
-          if (colors != COLORS_TWOSIDED)
+          if (pp->colors != COLORS_TWOSIDED)
           {
             glColor3fv(&pp->col[4*o]);
             glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
@@ -993,13 +996,13 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
       glEnd();
     }
   }
-  else /* appearance == APPEARANCE_DIRECTION_BANDS */
+  else /* pp->appearance == APPEARANCE_DIRECTION_BANDS */
   {
     for (j=0; j<numu; j++)
     {
       if ((j & (NUMB-1)) >= NUMB/2)
         continue;
-      if (display_mode == DISP_WIREFRAME)
+      if (pp->display_mode == DISP_WIREFRAME)
         glBegin(GL_QUAD_STRIP);
       else
         glBegin(GL_TRIANGLE_STRIP);
@@ -1011,7 +1014,7 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
           m = (j+k);
           o = l*(numu+1)+m;
           glTexCoord2fv(&pp->tex[2*o]);
-          if (colors != COLORS_TWOSIDED)
+          if (pp->colors != COLORS_TWOSIDED)
           {
             glColor3fv(&pp->col[4*o]);
             glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
@@ -1069,7 +1072,7 @@ static void init(ModeInfo *mi)
   if (walk_speed == 0.0)
     walk_speed = 20.0;
 
-  if (view == VIEW_TURN)
+  if (pp->view == VIEW_TURN)
   {
     pp->alpha = frand(360.0);
     pp->beta = frand(360.0);
@@ -1101,16 +1104,16 @@ static void init(ModeInfo *mi)
   gen_texture(mi);
   setup_roman_boy_color_texture(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,pp->g*NUMU,NUMV);
 
-  if (marks)
+  if (pp->marks)
     glEnable(GL_TEXTURE_2D);
   else
     glDisable(GL_TEXTURE_2D);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  if (projection == DISP_PERSPECTIVE || view == VIEW_WALK)
+  if (pp->projection == DISP_PERSPECTIVE || pp->view == VIEW_WALK)
   {
-    if (view == VIEW_WALK)
+    if (pp->view == VIEW_WALK)
       gluPerspective(60.0,1.0,0.01,10.0);
     else
       gluPerspective(60.0,1.0,0.1,10.0);
@@ -1123,11 +1126,11 @@ static void init(ModeInfo *mi)
   glLoadIdentity();
 
 # ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
-  if (display_mode == DISP_WIREFRAME)
-    display_mode = DISP_SURFACE;
+  if (pp->display_mode == DISP_WIREFRAME)
+    pp->display_mode = DISP_SURFACE;
 # endif
 
-  if (display_mode == DISP_SURFACE)
+  if (pp->display_mode == DISP_SURFACE)
   {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -1145,7 +1148,7 @@ static void init(ModeInfo *mi)
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
   }
-  else if (display_mode == DISP_TRANSPARENT)
+  else if (pp->display_mode == DISP_TRANSPARENT)
   {
     glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
@@ -1163,7 +1166,7 @@ static void init(ModeInfo *mi)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
   }
-  else  /* display_mode == DISP_WIREFRAME */
+  else  /* pp->display_mode == DISP_WIREFRAME */
   {
     glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_FLAT);
@@ -1196,7 +1199,7 @@ static void display_romanboy(ModeInfo *mi)
         pp->defdir = -pp->defdir;
       }
     }
-    if (view == VIEW_TURN)
+    if (pp->view == VIEW_TURN)
     {
       pp->alpha += speed_x * pp->speed_scale;
       if (pp->alpha >= 360.0)
@@ -1208,7 +1211,7 @@ static void display_romanboy(ModeInfo *mi)
       if (pp->delta >= 360.0)
         pp->delta -= 360.0;
     }
-    if (view == VIEW_WALK)
+    if (pp->view == VIEW_WALK)
     {
       pp->dvmove = (pp->dir*sin(walk_direction*M_PI/180.0)*
                     walk_speed*M_PI/4096.0);
@@ -1243,9 +1246,9 @@ static void display_romanboy(ModeInfo *mi)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  if (projection == DISP_PERSPECTIVE || view == VIEW_WALK)
+  if (pp->projection == DISP_PERSPECTIVE || pp->view == VIEW_WALK)
   {
-    if (view == VIEW_WALK)
+    if (pp->view == VIEW_WALK)
       gluPerspective(60.0,pp->aspect,0.01,10.0);
     else
       gluPerspective(60.0,pp->aspect,0.1,10.0);
@@ -1311,6 +1314,8 @@ ENTRYPOINT Bool romanboy_handle_event(ModeInfo *mi, XEvent *event)
  *-----------------------------------------------------------------------------
  */
 
+static void free_romanboy(ModeInfo *mi);
+
 /*
  *-----------------------------------------------------------------------------
  *    Initialize romanboy.  Called each time the window changes.
@@ -1321,13 +1326,7 @@ ENTRYPOINT void init_romanboy(ModeInfo *mi)
 {
   romanboystruct *pp;
 
-  if (romanboy == NULL)
-  {
-    romanboy =
-      (romanboystruct *)calloc(MI_NUM_SCREENS(mi),sizeof(romanboystruct));
-    if (romanboy == NULL)
-      return;
-  }
+  MI_INIT (mi, romanboy, free_romanboy);
   pp = &romanboy[MI_SCREEN(mi)];
 
   if (surface_order < 2)
@@ -1348,115 +1347,117 @@ ENTRYPOINT void init_romanboy(ModeInfo *mi)
   /* Set the display mode. */
   if (!strcasecmp(mode,"random"))
   {
-    display_mode = random() % NUM_DISPLAY_MODES;
+    pp->display_mode = random() % NUM_DISPLAY_MODES;
   }
   else if (!strcasecmp(mode,"wireframe"))
   {
-    display_mode = DISP_WIREFRAME;
+    pp->display_mode = DISP_WIREFRAME;
   }
   else if (!strcasecmp(mode,"surface"))
   {
-    display_mode = DISP_SURFACE;
+    pp->display_mode = DISP_SURFACE;
   }
   else if (!strcasecmp(mode,"transparent"))
   {
-    display_mode = DISP_TRANSPARENT;
+    pp->display_mode = DISP_TRANSPARENT;
   }
   else
   {
-    display_mode = random() % NUM_DISPLAY_MODES;
+    pp->display_mode = random() % NUM_DISPLAY_MODES;
   }
 
+  pp->marks = marks;
+
   /* Orientation marks don't make sense in wireframe mode. */
-  if (display_mode == DISP_WIREFRAME)
-    marks = False;
+  if (pp->display_mode == DISP_WIREFRAME)
+    pp->marks = False;
 
   /* Set the appearance. */
   if (!strcasecmp(appear,"random"))
   {
-    appearance = random() % NUM_APPEARANCES;
+    pp->appearance = random() % NUM_APPEARANCES;
   }
   else if (!strcasecmp(appear,"solid"))
   {
-    appearance = APPEARANCE_SOLID;
+    pp->appearance = APPEARANCE_SOLID;
   }
   else if (!strcasecmp(appear,"distance-bands"))
   {
-    appearance = APPEARANCE_DISTANCE_BANDS;
+    pp->appearance = APPEARANCE_DISTANCE_BANDS;
   }
   else if (!strcasecmp(appear,"direction-bands"))
   {
-    appearance = APPEARANCE_DIRECTION_BANDS;
+    pp->appearance = APPEARANCE_DIRECTION_BANDS;
   }
   else
   {
-    appearance = random() % NUM_APPEARANCES;
+    pp->appearance = random() % NUM_APPEARANCES;
   }
 
   /* Set the color mode. */
   if (!strcasecmp(color_mode,"random"))
   {
-    colors = random() % NUM_COLORS;
+    pp->colors = random() % NUM_COLORS;
   }
   else if (!strcasecmp(color_mode,"two-sided"))
   {
-    colors = COLORS_TWOSIDED;
+    pp->colors = COLORS_TWOSIDED;
   }
   else if (!strcasecmp(color_mode,"distance"))
   {
-    colors = COLORS_DISTANCE;
+    pp->colors = COLORS_DISTANCE;
   }
   else if (!strcasecmp(color_mode,"direction"))
   {
-    colors = COLORS_DIRECTION;
+    pp->colors = COLORS_DIRECTION;
   }
   else
   {
-    colors = random() % NUM_COLORS;
+    pp->colors = random() % NUM_COLORS;
   }
 
   /* Set the view mode. */
   if (!strcasecmp(view_mode,"random"))
   {
-    view = random() % NUM_VIEW_MODES;
+    pp->view = random() % NUM_VIEW_MODES;
   }
   else if (!strcasecmp(view_mode,"walk"))
   {
-    view = VIEW_WALK;
+    pp->view = VIEW_WALK;
   }
   else if (!strcasecmp(view_mode,"turn"))
   {
-    view = VIEW_TURN;
+    pp->view = VIEW_TURN;
   }
   else
   {
-    view = random() % NUM_VIEW_MODES;
+    pp->view = random() % NUM_VIEW_MODES;
   }
 
   /* Set the 3d projection mode. */
   if (!strcasecmp(proj,"random"))
   {
     /* Orthographic projection only makes sense in turn mode. */
-    if (view == VIEW_TURN)
-      projection = random() % NUM_DISP_MODES;
+    if (pp->view == VIEW_TURN)
+      pp->projection = random() % NUM_DISP_MODES;
     else
-      projection = DISP_PERSPECTIVE;
+      pp->projection = DISP_PERSPECTIVE;
   }
   else if (!strcasecmp(proj,"perspective"))
   {
-    projection = DISP_PERSPECTIVE;
+    pp->projection = DISP_PERSPECTIVE;
   }
   else if (!strcasecmp(proj,"orthographic"))
   {
-    projection = DISP_ORTHOGRAPHIC;
+    pp->projection = DISP_ORTHOGRAPHIC;
   }
   else
   {
     /* Orthographic projection only makes sense in turn mode. */
-    if (view == VIEW_TURN)
-      projection = random() % NUM_DISP_MODES;
+    if (pp->view == VIEW_TURN)
+      pp->projection = random() % NUM_DISP_MODES;
     else
-      projection = DISP_PERSPECTIVE;
+      pp->projection = DISP_PERSPECTIVE;
   }
 
   /* make multiple screens rotate at slightly different rates. */
@@ -1512,36 +1513,22 @@ ENTRYPOINT void draw_romanboy(ModeInfo *mi)
 /*
  *-----------------------------------------------------------------------------
  *    The display is being taken away from us.  Free up malloc'ed 
- *      memory and X resources that we've alloc'ed.  Only called
- *      once, we must zap everything for every screen.
+ *      memory and X resources that we've alloc'ed.
  *-----------------------------------------------------------------------------
  */
 
-ENTRYPOINT void release_romanboy(ModeInfo *mi)
+static void free_romanboy(ModeInfo *mi)
 {
-  if (romanboy != NULL)
-  {
-    int screen;
+  romanboystruct *pp = &romanboy[MI_SCREEN(mi)];
 
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      romanboystruct *pp = &romanboy[screen];
-
-      if (pp->glx_context)
-        pp->glx_context = (GLXContext *)NULL;
-      if (pp->pp)
-        (void) free((void *)pp->pp);
-      if (pp->pn)
-        (void) free((void *)pp->pn);
-      if (pp->col)
-        (void) free((void *)pp->col);
-      if (pp->tex)
-        (void) free((void *)pp->tex);
-    }
-    (void) free((void *)romanboy);
-    romanboy = (romanboystruct *)NULL;
-  }
-  FreeAllGL(mi);
+  if (pp->pp)
+    (void) free((void *)pp->pp);
+  if (pp->pn)
+    (void) free((void *)pp->pn);
+  if (pp->col)
+    (void) free((void *)pp->col);
+  if (pp->tex)
+    (void) free((void *)pp->tex);
 }
 
 #ifndef STANDALONE

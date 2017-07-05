@@ -41,6 +41,7 @@ static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
 				   "*ignoreRotation: True" \
 
 # define UNIFORM_COLORS
+# define release_braid 0
 # include "xlockmore.h"
 # include "erase.h"
 #else /* STANDALONE */
@@ -54,7 +55,7 @@ ENTRYPOINT ModeSpecOpt braid_opts = {0, NULL, 0, NULL, NULL};
 
 #ifdef USE_MODULES
 ModStruct   braid_description =
-{"braid", "init_braid", "draw_braid", "release_braid",
+{"braid", "init_braid", "draw_braid", (char *) NULL,
  "refresh_braid", "init_braid", (char *) NULL, &braid_opts,
  1000, 15, 100, 1, 64, 1.0, "",
  "Shows random braids and knots", 0, NULL};
@@ -170,11 +171,7 @@ init_braid(ModeInfo * mi)
 	int         i, count, comp, c;
 	float       min_length;
 
-	if (braids == NULL) {
-		if ((braids = (braidtype *) calloc(MI_NUM_SCREENS(mi),
-						sizeof (braidtype))) == NULL)
-			return;
-	}
+	MI_INIT (mi, braids, 0);
 	braid = &braids[MI_SCREEN(mi)];
 
 	braid->center_x = MI_WIDTH(mi) / 2;
@@ -289,6 +286,8 @@ draw_braid(ModeInfo * mi)
 #ifdef STANDALONE
     if (braid->eraser) {
       braid->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), braid->eraser);
+      if (!braid->eraser)
+        init_braid(mi);
       return;
     }
 #endif
@@ -441,8 +440,9 @@ draw_braid(ModeInfo * mi)
 	if (++braid->age > MI_CYCLES(mi)) {
 #ifdef STANDALONE
       braid->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), braid->eraser);
-#endif
+#else
 		init_braid(mi);
+#endif
 	}
 }
 
@@ -463,15 +463,6 @@ braid_handle_event (ModeInfo *mi, XEvent *event)
     }
 
   return False;
-}
-
-ENTRYPOINT void
-release_braid(ModeInfo * mi)
-{
-	if (braids != NULL) {
-		(void) free((void *) braids);
-		braids = (braidtype *) NULL;
-	}
 }
 
 ENTRYPOINT void

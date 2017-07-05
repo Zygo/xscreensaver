@@ -168,7 +168,6 @@ void UpdateSmoke_ScalarBase(global_info_t *global, flurry_info_t *flurry, SmokeV
                 if ((((i*4)+k) % flurry->numStreams) == j) {
                     f *= 1.0f + streamBias;
                 }
-                
                 mag = f / (float) sqrt(rsquared);
                 
                 deltax -= (dx * mag);

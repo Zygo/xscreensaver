@@ -46,6 +46,7 @@
                    "*wireframe:     False         \n"
 
 # define refresh_cube21 0
+# define release_cube21 0
 #include "xlockmore.h"
 
 #include "gltrackball.h"
@@ -128,7 +129,7 @@ ENTRYPOINT ModeSpecOpt cube21_opts = {countof(opts), opts, countof(vars), vars, 
 
 #ifdef USE_MODULES
 ModStruct   cube21_description =
-{ "cube21", "init_cube21", "draw_cube21", "release_cube21",
+{ "cube21", "init_cube21", "draw_cube21", NULL,
   "draw_cube21", "change_cube21", NULL, &cube21_opts,
   25000, 1, 1, 1, 1.0, 4, "",
   "Shows randomly shuffling Cube 21", 0, NULL
@@ -869,29 +870,10 @@ cube21_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-ENTRYPOINT void release_cube21(ModeInfo *mi) 
-{
-  if (cube21 != NULL) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      cube21_conf *cp = &cube21[screen];
-      if (cp->glx_context) {
-        cp->glx_context = NULL;
-      }
-    }
-    free((void *)cube21);
-    cube21 = NULL;
-  }
-  FreeAllGL(mi);
-}
-
 ENTRYPOINT void init_cube21(ModeInfo *mi) 
 {
   cube21_conf *cp;
-  if(!cube21) {
-    cube21 = (cube21_conf *)calloc(MI_NUM_SCREENS(mi), sizeof(cube21_conf));
-    if(!cube21) return;
-  }
+  MI_INIT(mi, cube21, NULL);
   cp = &cube21[MI_SCREEN(mi)];
 
   cp->trackball = gltrackball_init (False);
@@ -926,7 +908,7 @@ ENTRYPOINT void draw_cube21(ModeInfo * mi)
   mi->polygon_count = 0;
   glXMakeCurrent(display, window, *(cp->glx_context));
   if (!draw_main(mi, cp)) {
-    release_cube21(mi);
+    MI_ABORT(mi);
     return;
   }
   if (MI_IS_FPS(mi)) do_fps (mi);

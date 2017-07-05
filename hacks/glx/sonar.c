@@ -77,6 +77,7 @@
 
 
 # define refresh_sonar 0
+# define release_sonar 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -816,20 +817,14 @@ sonar_handle_event (ModeInfo *mi, XEvent *event)
   return False;
 }
 
+static void free_sonar (ModeInfo *mi);
 
 ENTRYPOINT void 
 init_sonar (ModeInfo *mi)
 {
   sonar_configuration *sp;
 
-  if (!sps) {
-    sps = (sonar_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (sonar_configuration));
-    if (!sps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, sps, free_sonar);
   sp = &sps[MI_SCREEN(mi)];
   sp->glx_context = init_GL(mi);
 
@@ -1223,8 +1218,8 @@ draw_sonar (ModeInfo *mi)
 # endif /* TEST_ASYNC_NETDB */
 }
 
-ENTRYPOINT void
-release_sonar (ModeInfo *mi)
+static void
+free_sonar (ModeInfo *mi)
 {
 #if 0
   sonar_configuration *sp = &sps[MI_SCREEN(mi)];

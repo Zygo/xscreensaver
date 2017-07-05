@@ -18,7 +18,7 @@ use strict;
 use File::Temp;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -76,6 +76,12 @@ sub set_icon ($$) {
   system (@cmd);
   $exit  = $? >> 8;
   exit ($exit) if $exit;
+}
+
+sub error($) {
+  my ($err) = @_;
+  print STDERR "$progname: $err\n";
+  exit 1;
 }
 
 sub usage() {

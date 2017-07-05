@@ -127,11 +127,7 @@ init_spiral(ModeInfo * mi)
 	spiralstruct *sp;
 	int         i;
 
-	if (spirals == NULL) {
-		if ((spirals = (spiralstruct *) calloc(MI_NUM_SCREENS(mi),
-					     sizeof (spiralstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, spirals, 0);
 	sp = &spirals[MI_SCREEN(mi)];
 
 #ifdef HAVE_JWXYZ

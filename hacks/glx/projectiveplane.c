@@ -220,6 +220,7 @@ static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/01 xlockmore";
                             "*showFPS:    False \n" \
 
 # define refresh_projectiveplane 0
+# define release_projectiveplane 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */
@@ -239,7 +240,7 @@ static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/01 xlockmore";
 #ifdef USE_MODULES
 ModStruct projectiveplane_description =
 {"projectiveplane", "init_projectiveplane", "draw_projectiveplane",
- "release_projectiveplane", "draw_projectiveplane", "change_projectiveplane",
+ NULL, "draw_projectiveplane", "change_projectiveplane",
  NULL, &projectiveplane_opts, 25000, 1, 1, 1, 1.0, 4, "",
  "Rotate a 4d embedding of the real projective plane in 4d or walk on it",
  0, NULL};
@@ -248,18 +249,12 @@ ModStruct projectiveplane_description =
 
 
 static char *mode;
-static int display_mode;
 static char *appear;
-static int appearance;
 static char *color_mode;
-static int colors;
 static char *view_mode;
-static int view;
 static Bool marks;
 static char *proj_3d;
-static int projection_3d;
 static char *proj_4d;
-static int projection_4d;
 static float speed_wx;
 static float speed_wy;
 static float speed_wz;
@@ -344,6 +339,14 @@ ENTRYPOINT ModeSpecOpt projectiveplane_opts =
 typedef struct {
   GLint      WindH, WindW;
   GLXContext *glx_context;
+  /* Options */
+  int display_mode;
+  int appearance;
+  int colors;
+  int view;
+  Bool marks;
+  int projection_3d;
+  int projection_4d;
   /* 4D rotation angles */
   float alpha, beta, delta, zeta, eta, theta;
   /* Movement parameters */
@@ -572,12 +575,12 @@ static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
 
 
 /* Compute a fully saturated and bright color based on an angle. */
-static void color(double angle, float col[4])
+static void color(projectiveplanestruct *pp, double angle, float col[4])
 {
   int s;
   double t;
 
-  if (colors == COLORS_TWOSIDED)
+  if (pp->colors == COLORS_TWOSIDED)
     return;
 
   if (angle >= 0.0)
@@ -621,7 +624,7 @@ static void color(double angle, float col[4])
       col[2] = 1.0-t;
       break;
   }
-  if (display_mode == DISP_TRANSPARENT)
+  if (pp->display_mode == DISP_TRANSPARENT)
     col[3] = 0.7;
   else
     col[3] = 1.0;
@@ -644,7 +647,7 @@ static void setup_projective_plane(ModeInfo *mi, double umin, double umax,
     for (j=0; j<=NUMU; j++)
     {
       k = i*(NUMU+1)+j;
-      if (appearance != APPEARANCE_DIRECTION_BANDS)
+      if (pp->appearance != APPEARANCE_DIRECTION_BANDS)
         u = -ur*j/NUMU+umin;
       else
         u = ur*j/NUMU+umin;
@@ -656,14 +659,14 @@ static void setup_projective_plane(ModeInfo *mi, double umin, double umax,
       sv2 = sin(0.5*v);
       cv4 = cos(0.25*v);
       sv4 = sin(0.25*v);
-      if (colors == COLORS_DEPTH)
-        color(((su*su*sv4*sv4-cv4*cv4)+1.0)*M_PI*2.0/3.0,pp->col[k]);
-      else if (colors == COLORS_DIRECTION)
-        color(2.0*M_PI+fmod(2.0*u,2.0*M_PI),pp->col[k]);
-      else /* colors == COLORS_DISTANCE */
-        color(v*(5.0/6.0),pp->col[k]);
+      if (pp->colors == COLORS_DEPTH)
+        color(pp,((su*su*sv4*sv4-cv4*cv4)+1.0)*M_PI*2.0/3.0,pp->col[k]);
+      else if (pp->colors == COLORS_DIRECTION)
+        color(pp,2.0*M_PI+fmod(2.0*u,2.0*M_PI),pp->col[k]);
+      else /* pp->colors == COLORS_DISTANCE */
+        color(pp,v*(5.0/6.0),pp->col[k]);
       pp->tex[k][0] = -32*u/(2.0*M_PI);
-      if (appearance != APPEARANCE_DISTANCE_BANDS)
+      if (pp->appearance != APPEARANCE_DISTANCE_BANDS)
         pp->tex[k][1] = 32*v/(2.0*M_PI);
       else
         pp->tex[k][1] = 32*v/(2.0*M_PI)-0.5;
@@ -708,7 +711,7 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
   float q1[4], q2[4], r1[4][4], r2[4][4];
   projectiveplanestruct *pp = &projectiveplane[MI_SCREEN(mi)];
 
-  if (view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
   {
     /* Compute the rotation that rotates the projective plane in 4D without
        the trackball rotations. */
@@ -750,7 +753,7 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
       yv[l] = (mat[l][0]*xxv[0]+mat[l][1]*xxv[1]+
                mat[l][2]*xxv[2]+mat[l][3]*xxv[3]);
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (pp->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
       {
@@ -825,7 +828,7 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
         r += mat[l][m]*xx[m];
       y[l] = r;
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (pp->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
         p[l] = y[l]+pp->offset4d[l];
@@ -869,7 +872,7 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
         yv[l] = (mat[l][0]*pp->xv[o][0]+mat[l][1]*pp->xv[o][1]+
                  mat[l][2]*pp->xv[o][2]+mat[l][3]*pp->xv[o][3]);
       }
-      if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+      if (pp->projection_4d == DISP_4D_ORTHOGRAPHIC)
       {
         for (l=0; l<3; l++)
         {
@@ -902,10 +905,10 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
     }
   }
 
-  if (colors == COLORS_TWOSIDED)
+  if (pp->colors == COLORS_TWOSIDED)
   {
     glColor3fv(mat_diff_red);
-    if (display_mode == DISP_TRANSPARENT)
+    if (pp->display_mode == DISP_TRANSPARENT)
     {
       glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
       glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
@@ -918,14 +921,14 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
   }
   glBindTexture(GL_TEXTURE_2D,pp->tex_name);
 
-  if (appearance != APPEARANCE_DIRECTION_BANDS)
+  if (pp->appearance != APPEARANCE_DIRECTION_BANDS)
   {
     for (i=0; i<NUMV; i++)
     {
-      if (appearance == APPEARANCE_DISTANCE_BANDS &&
+      if (pp->appearance == APPEARANCE_DISTANCE_BANDS &&
           ((i & (NUMB-1)) >= NUMB/4) && ((i & (NUMB-1)) < 3*NUMB/4))
         continue;
-      if (display_mode == DISP_WIREFRAME)
+      if (pp->display_mode == DISP_WIREFRAME)
         glBegin(GL_QUAD_STRIP);
       else
         glBegin(GL_TRIANGLE_STRIP);
@@ -938,7 +941,7 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
           o = l*(NUMU+1)+m;
           glNormal3fv(pp->pn[o]);
           glTexCoord2fv(pp->tex[o]);
-          if (colors != COLORS_TWOSIDED)
+          if (pp->colors != COLORS_TWOSIDED)
           {
             glColor3fv(pp->col[o]);
             glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,pp->col[o]);
@@ -950,13 +953,13 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
       glEnd();
     }
   }
-  else /* appearance == APPEARANCE_DIRECTION_BANDS */
+  else /* pp->appearance == APPEARANCE_DIRECTION_BANDS */
   {
     for (j=0; j<NUMU; j++)
     {
       if ((j & (NUMB-1)) >= NUMB/2)
         continue;
-      if (display_mode == DISP_WIREFRAME)
+      if (pp->display_mode == DISP_WIREFRAME)
         glBegin(GL_QUAD_STRIP);
       else
         glBegin(GL_TRIANGLE_STRIP);
@@ -969,7 +972,7 @@ static int projective_plane(ModeInfo *mi, double umin, double umax,
           o = l*(NUMU+1)+m;
           glNormal3fv(pp->pn[o]);
           glTexCoord2fv(pp->tex[o]);
-          if (colors != COLORS_TWOSIDED)
+          if (pp->colors != COLORS_TWOSIDED)
           {
             glColor3fv(pp->col[o]);
             glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,pp->col[o]);
@@ -1017,7 +1020,7 @@ static void init(ModeInfo *mi)
   if (walk_speed == 0.0)
     walk_speed = 20.0;
 
-  if (view == VIEW_TURN)
+  if (pp->view == VIEW_TURN)
   {
     pp->alpha = frand(360.0);
     pp->beta = frand(360.0);
@@ -1057,17 +1060,17 @@ static void init(ModeInfo *mi)
   gen_texture(mi);
   setup_projective_plane(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
 
-  if (marks)
+  if (pp->marks)
     glEnable(GL_TEXTURE_2D);
   else
     glDisable(GL_TEXTURE_2D);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  if (projection_3d == DISP_3D_PERSPECTIVE ||
-      view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (pp->projection_3d == DISP_3D_PERSPECTIVE ||
+      pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
   {
-    if (view == VIEW_WALK || view == VIEW_WALKTURN)
+    if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
       gluPerspective(60.0,1.0,0.01,10.0);
     else
       gluPerspective(60.0,1.0,0.1,10.0);
@@ -1080,11 +1083,11 @@ static void init(ModeInfo *mi)
   glLoadIdentity();
 
 # ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
-  if (display_mode == DISP_WIREFRAME)
-    display_mode = DISP_SURFACE;
+  if (pp->display_mode == DISP_WIREFRAME)
+    pp->display_mode = DISP_SURFACE;
 # endif
 
-  if (display_mode == DISP_SURFACE)
+  if (pp->display_mode == DISP_SURFACE)
   {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -1102,7 +1105,7 @@ static void init(ModeInfo *mi)
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
   }
-  else if (display_mode == DISP_TRANSPARENT)
+  else if (pp->display_mode == DISP_TRANSPARENT)
   {
     glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
@@ -1120,7 +1123,7 @@ static void init(ModeInfo *mi)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
   }
-  else  /* display_mode == DISP_WIREFRAME */
+  else  /* pp->display_mode == DISP_WIREFRAME */
   {
     glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_FLAT);
@@ -1139,7 +1142,7 @@ static void display_projectiveplane(ModeInfo *mi)
 
   if (!pp->button_pressed)
   {
-    if (view == VIEW_TURN)
+    if (pp->view == VIEW_TURN)
     {
       pp->alpha += speed_wx * pp->speed_scale;
       if (pp->alpha >= 360.0)
@@ -1160,7 +1163,7 @@ static void display_projectiveplane(ModeInfo *mi)
       if (pp->theta >= 360.0)
         pp->theta -= 360.0;
     }
-    if (view == VIEW_WALKTURN)
+    if (pp->view == VIEW_WALKTURN)
     {
       pp->zeta += speed_xy * pp->speed_scale;
       if (pp->zeta >= 360.0)
@@ -1172,7 +1175,7 @@ static void display_projectiveplane(ModeInfo *mi)
       if (pp->theta >= 360.0)
         pp->theta -= 360.0;
     }
-    if (view == VIEW_WALK || view == VIEW_WALKTURN)
+    if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
     {
       pp->dvmove = (pp->dir*sin(walk_direction*M_PI/180.0)*
                     walk_speed*M_PI/4096.0);
@@ -1207,10 +1210,10 @@ static void display_projectiveplane(ModeInfo *mi)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  if (projection_3d == DISP_3D_PERSPECTIVE ||
-      view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (pp->projection_3d == DISP_3D_PERSPECTIVE ||
+      pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
   {
-    if (view == VIEW_WALK || view == VIEW_WALKTURN)
+    if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
       gluPerspective(60.0,pp->aspect,0.01,10.0);
     else
       gluPerspective(60.0,pp->aspect,0.1,10.0);
@@ -1318,14 +1321,7 @@ ENTRYPOINT void init_projectiveplane(ModeInfo *mi)
 {
   projectiveplanestruct *pp;
 
-  if (projectiveplane == NULL)
-  {
-    projectiveplane =
-      (projectiveplanestruct *)calloc(MI_NUM_SCREENS(mi),
-                                      sizeof(projectiveplanestruct));
-    if (projectiveplane == NULL)
-      return;
-  }
+  MI_INIT(mi, projectiveplane, NULL);
   pp = &projectiveplane[MI_SCREEN(mi)];
 
   
@@ -1337,145 +1333,146 @@ ENTRYPOINT void init_projectiveplane(ModeInfo *mi)
   /* Set the display mode. */
   if (!strcasecmp(mode,"random"))
   {
-    display_mode = random() % NUM_DISPLAY_MODES;
+    pp->display_mode = random() % NUM_DISPLAY_MODES;
   }
   else if (!strcasecmp(mode,"wireframe"))
   {
-    display_mode = DISP_WIREFRAME;
+    pp->display_mode = DISP_WIREFRAME;
   }
   else if (!strcasecmp(mode,"surface"))
   {
-    display_mode = DISP_SURFACE;
+    pp->display_mode = DISP_SURFACE;
   }
   else if (!strcasecmp(mode,"transparent"))
   {
-    display_mode = DISP_TRANSPARENT;
+    pp->display_mode = DISP_TRANSPARENT;
   }
   else
   {
-    display_mode = random() % NUM_DISPLAY_MODES;
+    pp->display_mode = random() % NUM_DISPLAY_MODES;
   }
 
   /* Orientation marks don't make sense in wireframe mode. */
-  if (display_mode == DISP_WIREFRAME)
-    marks = False;
+  pp->marks = marks;
+  if (pp->display_mode == DISP_WIREFRAME)
+    pp->marks = False;
 
   /* Set the appearance. */
   if (!strcasecmp(appear,"random"))
   {
-    appearance = random() % NUM_APPEARANCES;
+    pp->appearance = random() % NUM_APPEARANCES;
   }
   else if (!strcasecmp(appear,"solid"))
   {
-    appearance = APPEARANCE_SOLID;
+    pp->appearance = APPEARANCE_SOLID;
   }
   else if (!strcasecmp(appear,"distance-bands"))
   {
-    appearance = APPEARANCE_DISTANCE_BANDS;
+    pp->appearance = APPEARANCE_DISTANCE_BANDS;
   }
   else if (!strcasecmp(appear,"direction-bands"))
   {
-    appearance = APPEARANCE_DIRECTION_BANDS;
+    pp->appearance = APPEARANCE_DIRECTION_BANDS;
   }
   else
   {
-    appearance = random() % NUM_APPEARANCES;
+    pp->appearance = random() % NUM_APPEARANCES;
   }
 
   /* Set the color mode. */
   if (!strcasecmp(color_mode,"random"))
   {
-    colors = random() % NUM_COLORS;
+    pp->colors = random() % NUM_COLORS;
   }
   else if (!strcasecmp(color_mode,"two-sided"))
   {
-    colors = COLORS_TWOSIDED;
+    pp->colors = COLORS_TWOSIDED;
   }
   else if (!strcasecmp(color_mode,"distance"))
   {
-    colors = COLORS_DISTANCE;
+    pp->colors = COLORS_DISTANCE;
   }
   else if (!strcasecmp(color_mode,"direction"))
   {
-    colors = COLORS_DIRECTION;
+    pp->colors = COLORS_DIRECTION;
   }
   else if (!strcasecmp(color_mode,"depth"))
   {
-    colors = COLORS_DEPTH;
+    pp->colors = COLORS_DEPTH;
   }
   else
   {
-    colors = random() % NUM_COLORS;
+    pp->colors = random() % NUM_COLORS;
   }
 
   /* Set the view mode. */
   if (!strcasecmp(view_mode,"random"))
   {
-    view = random() % NUM_VIEW_MODES;
+    pp->view = random() % NUM_VIEW_MODES;
   }
   else if (!strcasecmp(view_mode,"walk"))
   {
-    view = VIEW_WALK;
+    pp->view = VIEW_WALK;
   }
   else if (!strcasecmp(view_mode,"turn"))
   {
-    view = VIEW_TURN;
+    pp->view = VIEW_TURN;
   }
   else if (!strcasecmp(view_mode,"walk-turn"))
   {
-    view = VIEW_WALKTURN;
+    pp->view = VIEW_WALKTURN;
   }
   else
   {
-    view = random() % NUM_VIEW_MODES;
+    pp->view = random() % NUM_VIEW_MODES;
   }
 
   /* Set the 3d projection mode. */
   if (!strcasecmp(proj_3d,"random"))
   {
     /* Orthographic projection only makes sense in turn mode. */
-    if (view == VIEW_TURN)
-      projection_3d = random() % NUM_DISP_3D_MODES;
+    if (pp->view == VIEW_TURN)
+      pp->projection_3d = random() % NUM_DISP_3D_MODES;
     else
-      projection_3d = DISP_3D_PERSPECTIVE;
+      pp->projection_3d = DISP_3D_PERSPECTIVE;
   }
   else if (!strcasecmp(proj_3d,"perspective"))
   {
-    projection_3d = DISP_3D_PERSPECTIVE;
+    pp->projection_3d = DISP_3D_PERSPECTIVE;
   }
   else if (!strcasecmp(proj_3d,"orthographic"))
   {
-    projection_3d = DISP_3D_ORTHOGRAPHIC;
+    pp->projection_3d = DISP_3D_ORTHOGRAPHIC;
   }
   else
   {
     /* Orthographic projection only makes sense in turn mode. */
-    if (view == VIEW_TURN)
-      projection_3d = random() % NUM_DISP_3D_MODES;
+    if (pp->view == VIEW_TURN)
+      pp->projection_3d = random() % NUM_DISP_3D_MODES;
     else
-      projection_3d = DISP_3D_PERSPECTIVE;
+      pp->projection_3d = DISP_3D_PERSPECTIVE;
   }
 
   /* Set the 4d projection mode. */
   if (!strcasecmp(proj_4d,"random"))
   {
-    projection_4d = random() % NUM_DISP_4D_MODES;
+    pp->projection_4d = random() % NUM_DISP_4D_MODES;
   }
   else if (!strcasecmp(proj_4d,"perspective"))
   {
-    projection_4d = DISP_4D_PERSPECTIVE;
+    pp->projection_4d = DISP_4D_PERSPECTIVE;
   }
   else if (!strcasecmp(proj_4d,"orthographic"))
   {
-    projection_4d = DISP_4D_ORTHOGRAPHIC;
+    pp->projection_4d = DISP_4D_ORTHOGRAPHIC;
   }
   else
   {
-    projection_4d = random() % NUM_DISP_4D_MODES;
+    pp->projection_4d = random() % NUM_DISP_4D_MODES;
   }
 
   /* Modify the speeds to a useful range in walk-and-turn mode. */
-  if (view == VIEW_WALKTURN)
+  if (pp->view == VIEW_WALKTURN)
   {
     speed_wx *= 0.2;
     speed_wy *= 0.2;
@@ -1534,33 +1531,6 @@ ENTRYPOINT void draw_projectiveplane(ModeInfo *mi)
   glXSwapBuffers(display,window);
 }
 
-
-/*
- *-----------------------------------------------------------------------------
- *    The display is being taken away from us.  Free up malloc'ed 
- *      memory and X resources that we've alloc'ed.  Only called
- *      once, we must zap everything for every screen.
- *-----------------------------------------------------------------------------
- */
-
-ENTRYPOINT void release_projectiveplane(ModeInfo *mi)
-{
-  if (projectiveplane != NULL)
-  {
-    int screen;
-
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      projectiveplanestruct *pp = &projectiveplane[screen];
-
-      if (pp->glx_context)
-        pp->glx_context = (GLXContext *)NULL;
-    }
-    (void) free((void *)projectiveplane);
-    projectiveplane = (projectiveplanestruct *)NULL;
-  }
-  FreeAllGL(mi);
-}
 
 #ifndef STANDALONE
 ENTRYPOINT void change_projectiveplane(ModeInfo *mi)

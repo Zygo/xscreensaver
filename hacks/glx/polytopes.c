@@ -94,6 +94,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 			    "*suppressRotationAnimation: True\n" \
 
 # define refresh_polytopes 0
+# define release_polytopes 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */
@@ -109,7 +110,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 
 #ifdef USE_MODULES
 ModStruct   polytopes_description =
-{"polytopes", "init_polytopes", "draw_polytopes", "release_polytopes",
+{"polytopes", "init_polytopes", "draw_polytopes", NULL,
  "draw_polytopes", "change_polytopes", NULL, &polytopes_opts,
  25000, 1, 1, 1, 1.0, 4, "",
  "Shows one of the six regular 4d polytopes rotating in 4d", 0, NULL};
@@ -2948,13 +2949,7 @@ ENTRYPOINT void init_polytopes(ModeInfo *mi)
 {
   polytopesstruct *pp;
 
-  if (poly == NULL)
-  {
-    poly = (polytopesstruct *)calloc(MI_NUM_SCREENS(mi),
-                                     sizeof(polytopesstruct));
-    if (poly == NULL)
-      return;
-  }
+  MI_INIT(mi, poly, NULL);
   pp = &poly[MI_SCREEN(mi)];
 
   pp->trackballs[0] = gltrackball_init(True);
@@ -3169,33 +3164,6 @@ ENTRYPOINT void draw_polytopes(ModeInfo *mi)
   glXSwapBuffers(display,window);
 }
 
-
-/*
- *-----------------------------------------------------------------------------
- *    The display is being taken away from us.  Free up malloc'ed 
- *      memory and X resources that we've alloc'ed.  Only called
- *      once, we must zap everything for every screen.
- *-----------------------------------------------------------------------------
- */
-
-ENTRYPOINT void release_polytopes(ModeInfo *mi)
-{
-  if (poly != NULL)
-  {
-    int screen;
-
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      polytopesstruct *hp = &poly[screen];
-
-      if (hp->glx_context)
-        hp->glx_context = (GLXContext *)NULL;
-    }
-    (void) free((void *)poly);
-    poly = (polytopesstruct *)NULL;
-  }
-  FreeAllGL(mi);
-}
 
 #ifndef STANDALONE
 ENTRYPOINT void change_polytopes(ModeInfo *mi)

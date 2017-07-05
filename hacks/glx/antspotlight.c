@@ -20,6 +20,7 @@
                             "*useSHM:  True    \n"
 
 # define refresh_antspotlight 0
+# define release_antspotlight 0
 #include "xlockmore.h"
 #else
 #include "xlock.h"
@@ -49,7 +50,7 @@ ENTRYPOINT ModeSpecOpt antspotlight_opts = {
 #ifdef USE_MODULES
 ModStruct   antspotlight_description = {
   "antspotlight", "init_antspotlight", "draw_antspotlight", 
-  "release_antspotlight", "draw_antspotlight", "change_antspotlight", 
+  (char *) NULL, "draw_antspotlight", "change_antspotlight",
   (char *) NULL, &antspotlight_opts, 1000, 1, 1, 1, 4, 1.0, "",
   "draws an ant scoping the screen", 0, NULL
 };
@@ -617,18 +618,6 @@ static void pinit(void)
   glEnable(GL_DEPTH_TEST);
 }
 
-/* cleanup routine */
-ENTRYPOINT void release_antspotlight(ModeInfo * mi)
-{
-
-  if(antspotlight) {
-    free((void *) antspotlight);
-    antspotlight = (antspotlightstruct *) NULL;
-  }
-
-  FreeAllGL(mi);
-}
-
 #define MAX_MAGNIFICATION 10
 #define max(a, b) a < b ? b : a
 #define min(a, b) a < b ? a : b
@@ -708,11 +697,7 @@ ENTRYPOINT void init_antspotlight(ModeInfo *mi)
 
   antspotlightstruct *mp;
   
-  if(!antspotlight) {
-    if((antspotlight = (antspotlightstruct *) 
-	calloc(MI_NUM_SCREENS(mi), sizeof (antspotlightstruct))) == NULL)
-      return;
-  }
+  MI_INIT(mi, antspotlight, NULL);
   mp = &antspotlight[MI_SCREEN(mi)];
   mp->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
   mp->trackball = gltrackball_init (False);

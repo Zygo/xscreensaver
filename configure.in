@@ -1259,7 +1259,7 @@ AC_GETTIMEOFDAY_ARGS
 AC_SYS_LARGEFILE
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
-AC_CHECK_FUNCS(setlocale)
+AC_CHECK_FUNCS(setlocale sqrtf)
 AC_CHECK_FUNCS(getaddrinfo)
 AC_CHECK_MEMBERS([struct sockaddr.sa_len],,, [[#include <sys/socket.h>]])
 AC_CHECK_ICMP
@@ -1309,7 +1309,7 @@ AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE",
 		   generated code.])
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+ALL_LINGUAS="da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
 MKINSTALLDIRS="$INSTALL_DIRS"
 
@@ -2993,6 +2993,9 @@ if test "$with_gl" = yes; then
       #
       AC_MSG_RESULT(omitting "$libdir" from LDFLAGS)
       libdir=''
+
+      # Looks like as of OSX 10.12, gcc can't do ObjC.
+      OBJCC="clang -Wall"
 
     fi
 

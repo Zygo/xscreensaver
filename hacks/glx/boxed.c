@@ -46,6 +46,7 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 			"*wireframe: False   \n"
 
 # define refresh_boxed 0
+# define release_boxed 0
 # define boxed_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -97,7 +98,7 @@ ENTRYPOINT ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, N
 #ifdef USE_MODULES
 
 ModStruct   boxed_description = { 
-     "boxed", "init_boxed", "draw_boxed", "release_boxed",
+     "boxed", "init_boxed", "draw_boxed", NULL,
      "draw_boxed", "init_boxed", NULL, &boxed_opts,
      1000, 1, 2, 1, 4, 1.0, "",
      "Shows GL's boxed balls", 0, NULL};
@@ -1282,6 +1283,8 @@ pinit(ModeInfo * mi)
 
  
 
+static void free_boxed(ModeInfo * mi);
+
 ENTRYPOINT void
 init_boxed(ModeInfo * mi)
 {
@@ -1291,9 +1294,7 @@ init_boxed(ModeInfo * mi)
    /* Boolean     rgba, doublebuffer, cmap_installed; */
    boxedstruct *gp;
 
-   if (boxed == NULL) {
-      if ((boxed = (boxedstruct *) calloc(MI_NUM_SCREENS(mi),sizeof (boxedstruct))) == NULL) return;
-   }
+   MI_INIT(mi, boxed, free_boxed);
    gp = &boxed[screen];
    gp->window = MI_WINDOW(mi);
    
@@ -1334,37 +1335,27 @@ draw_boxed(ModeInfo * mi)
 }
 
 ENTRYPOINT void
-release_boxed(ModeInfo * mi)
+free_boxed(ModeInfo * mi)
 {
+   boxedstruct *gp = &boxed[MI_SCREEN(mi)];
    int i;
+
+   if (gp->glx_context) {
+      /* Display lists MUST be freed while their glXContext is current. */
+      glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
    
-   if (boxed != NULL) {
-      int screen;
-      
-      for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-	 boxedstruct *gp = &boxed[screen];
-	 
-	 if (gp->glx_context) {
-	    /* Display lists MUST be freed while their glXContext is current. */
-	    glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
-	    
-	    if (glIsList(gp->listobjects))
-	      glDeleteLists(gp->listobjects, 3);
-	    
-	    for (i=0;i<gp->bman.num_balls;i++) {
-	       if (gp->bman.balls[i].bounced) freetris(&gp->tman[i]);
-	    }
-	    free (gp->bman.balls);
-	    free (gp->tman);
-	    free (gp->tex1);
-		 
-	    
-	 }
+      if (glIsList(gp->listobjects))
+        glDeleteLists(gp->listobjects, 3);
+
+      for (i=0;i<gp->bman.num_balls;i++) {
+         if (gp->bman.balls[i].bounced) freetris(&gp->tman[i]);
       }
-      (void) free((void *) boxed);
-      boxed = NULL;
+      free (gp->bman.balls);
+      free (gp->tman);
+      free (gp->tex1);
+
+
    }
-   FreeAllGL(mi);
 }
 
 

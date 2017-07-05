@@ -25,6 +25,7 @@
 		   "*suppressRotationAnimation: True\n" \
 
 # define refresh_cubicgrid 0
+# define release_cubicgrid 0
 #include "xlockmore.h"
 
 #ifdef USE_GL
@@ -66,7 +67,7 @@ ENTRYPOINT ModeSpecOpt cubicgrid_opts = {countof(opts), opts, countof(vars), var
 
 #ifdef USE_MODULES
 ModStruct   cubicgrid_description =
-{ "cubicgrid", "init_cubicgrid", "draw_cubicgrid", "release_cubicgrid",
+{ "cubicgrid", "init_cubicgrid", "draw_cubicgrid", NULL,
   "draw_cubicgrid", "change_cubicgrid", NULL, &cubicgrid_opts,
   25000, 1, 1, 1, 1.0, 4, "",
   "Shows a rotating 3D lattice from inside", 0, NULL
@@ -201,29 +202,10 @@ ENTRYPOINT void reshape_cubicgrid(ModeInfo *mi, int width, int height)
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-ENTRYPOINT void release_cubicgrid(ModeInfo *mi) 
-{
-  if (cubicgrid != NULL) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      cubicgrid_conf *cp = &cubicgrid[screen];
-      if (cp->glx_context) {
-        cp->glx_context = NULL;
-      }
-    }
-    free((void *)cubicgrid);
-    cubicgrid = NULL;
-  }
-  FreeAllGL(mi);
-}
-
 ENTRYPOINT void init_cubicgrid(ModeInfo *mi) 
 {
   cubicgrid_conf *cp;
-  if(!cubicgrid) {
-    cubicgrid = (cubicgrid_conf *)calloc(MI_NUM_SCREENS(mi), sizeof(cubicgrid_conf));
-    if(!cubicgrid) return;
-  }
+  MI_INIT(mi, cubicgrid, NULL);
   cp = &cubicgrid[MI_SCREEN(mi)];
 
   if ((cp->glx_context = init_GL(mi)) != NULL) {
@@ -254,7 +236,7 @@ ENTRYPOINT void draw_cubicgrid(ModeInfo * mi)
   if (!cp->glx_context) return;
   glXMakeCurrent(display, window, *(cp->glx_context));
   if (!draw_main(mi)) {
-    release_cubicgrid(mi);
+    MI_ABORT(mi);
     return;
   }
   mi->polygon_count = cp->npoints;

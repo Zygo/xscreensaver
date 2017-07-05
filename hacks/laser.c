@@ -126,11 +126,7 @@ init_laser(ModeInfo * mi)
 	int         i, c = 0;
 	lasersstruct *lp;
 
-	if (lasers == NULL) {
-		if ((lasers = (lasersstruct *) calloc(MI_NUM_SCREENS(mi),
-					     sizeof (lasersstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, lasers, 0);
 	lp = &lasers[MI_SCREEN(mi)];
 
 	lp->width = MI_WIDTH(mi);

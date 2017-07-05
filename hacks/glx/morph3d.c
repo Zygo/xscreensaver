@@ -59,6 +59,7 @@ static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
 						"*suppressRotationAnimation: True\n" \
 
 # define refresh_morph3d 0
+# define release_morph3d 0
 # define morph3d_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -72,7 +73,7 @@ ENTRYPOINT ModeSpecOpt morph3d_opts =
 
 #ifdef USE_MODULES
 ModStruct   morph3d_description =
-{"morph3d", "init_morph3d", "draw_morph3d", "release_morph3d",
+{"morph3d", "init_morph3d", "draw_morph3d", (char *) NULL,
  "draw_morph3d", "change_morph3d", (char *) NULL, &morph3d_opts,
  1000, 0, 1, 1, 4, 1.0, "",
  "Shows GL morphing polyhedra", 0, NULL};
@@ -718,11 +719,7 @@ init_morph3d(ModeInfo * mi)
 {
 	morph3dstruct *mp;
 
-	if (morph3d == NULL) {
-		if ((morph3d = (morph3dstruct *) calloc(MI_NUM_SCREENS(mi),
-					    sizeof (morph3dstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, morph3d, NULL);
 	mp = &morph3d[MI_SCREEN(mi)];
 	mp->step = NRAND(90);
 	mp->VisibleSpikes = 1;
@@ -828,16 +825,6 @@ change_morph3d(ModeInfo * mi)
 	pinit(mi);
 }
 #endif /* !STANDALONE */
-
-ENTRYPOINT void
-release_morph3d(ModeInfo * mi)
-{
-	if (morph3d != NULL) {
-		(void) free((void *) morph3d);
-		morph3d = (morph3dstruct *) NULL;
-	}
-	FreeAllGL(mi);
-}
 
 #endif
 

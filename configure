@@ -5864,12 +5864,13 @@ _ACEOF
 fi
 done
 
-for ac_func in setlocale
+for ac_func in setlocale sqrtf
 do :
-  ac_fn_c_check_func "$LINENO" "setlocale" "ac_cv_func_setlocale"
-if test "x$ac_cv_func_setlocale" = xyes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_SETLOCALE 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -7651,7 +7652,7 @@ _ACEOF
 
 
 
-ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+ALL_LINGUAS="da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 
    for ac_header in locale.h
 do :
@@ -13082,6 +13083,9 @@ $as_echo "adding \"$osx_crud\" to GL_LIBS" >&6; }
 $as_echo "omitting \"$libdir\" from LDFLAGS" >&6; }
       libdir=''
 
+      # Looks like as of OSX 10.12, gcc can't do ObjC.
+      OBJCC="clang -Wall"
+
     fi
 
 
@@ -13307,7 +13311,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13314 "configure"
+#line 13318 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION

@@ -1010,14 +1010,7 @@ ENTRYPOINT void init_jigglypuff(ModeInfo *mi)
     jigglystruct *js;
     int subdivs;
 
-    if(!jss) {
-	jss = (jigglystruct*)
-	    calloc(MI_NUM_SCREENS(mi), sizeof(jigglystruct));
-	if(!jss) {
-	    fprintf(stderr, "%s: No..memory...must...abort..\n", progname);
-	    exit(1);
-	}
-    }
+    MI_INIT(mi, jss, NULL);
 
     js = &jss[MI_SCREEN(mi)];
 

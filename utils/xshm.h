@@ -17,6 +17,7 @@
  */
 
 #ifndef __XSCREENSAVER_XSHM_H__
+#define __XSCREENSAVER_XSHM_H__
 
 #ifdef HAVE_XSHM_EXTENSION
 
@@ -24,14 +25,30 @@
 # include <sys/shm.h>
 # include <X11/extensions/XShm.h>
 
+#else /* !HAVE_XSHM_EXTENSION */
+
+typedef struct {
+  int shmid; /* Always -1. */
+} dummy_segment_info;
+
+/* In case XShmSegmentInfo  */
+#undef XShmSegmentInfo
+#define XShmSegmentInfo dummy_segment_info
+
+#endif
+
 extern XImage *create_xshm_image (Display *dpy, Visual *visual,
-				  unsigned int depth,
-				  int format, char *data,
-				  XShmSegmentInfo *shm_info,
-				  unsigned int width, unsigned int height);
+                                  unsigned int depth,
+                                  int format, XShmSegmentInfo *shm_info,
+                                  unsigned int width, unsigned int height);
+extern Bool put_xshm_image (Display *dpy, Drawable d, GC gc, XImage *image,
+                            int src_x, int src_y, int dest_x, int dest_y,
+                            unsigned int width, unsigned int height,
+                            XShmSegmentInfo *shm_info);
+extern Bool get_xshm_image (Display *dpy, Drawable d, XImage *image,
+                            int x, int y, unsigned long plane_mask,
+                            XShmSegmentInfo *shm_info);
 extern void destroy_xshm_image (Display *dpy, XImage *image,
                                 XShmSegmentInfo *shm_info);
-
-#endif /* HAVE_XSHM_EXTENSION */
 
 #endif /* __XSCREENSAVER_XSHM_H__ */

@@ -9,25 +9,16 @@
  * implied warranty.
  *
  * Concept snarfed from Michael D. Bayne in
- * http://www.go2net.com/internet/deep/1997/04/16/body.html
+ * http://samskivert.com/internet/deep/1997/04/16/body.html
  */
 
 #include "screenhack.h"
-
-#undef HAVE_XSHM_EXTENSION  /* this is broken here at the moment */
-
-
-#ifdef HAVE_XSHM_EXTENSION
-# include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
+#include "xshm.h"
 
 struct state {
   Display *dpy;
   Window window;
-#ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm;
   XShmSegmentInfo shm_info;
-#endif /* HAVE_XSHM_EXTENSION */
 
   int delay;
   int offset;
@@ -60,10 +51,6 @@ moire_init_1 (struct state *st)
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   st->offset = get_integer_resource (st->dpy, "offset", "Integer");
   if (st->offset < 2) st->offset = 2;
-
-#ifdef HAVE_XSHM_EXTENSION
-  st->use_shm = get_boolean_resource(st->dpy, "useSHM", "Boolean");
-#endif /*  HAVE_XSHM_EXTENSION */
 
  MONO:
   if (st->colors)
@@ -170,24 +157,9 @@ moire_draw (Display *dpy, Window window, void *closure)
 
       st->depth = visual_depth(DefaultScreenOfDisplay(st->dpy), st->xgwa.visual);
 
-# ifdef HAVE_XSHM_EXTENSION
-      if (st->use_shm)
-        {
-          st->draw_image = create_xshm_image(st->dpy, st->xgwa.visual, 
-                                             st->depth, ZPixmap, 0,
-                                             &st->shm_info, st->xgwa.width, 1);
-          if (!st->draw_image)
-            st->use_shm = False;
-        }
-# endif /* HAVE_XSHM_EXTENSION */
-
-      if (!st->draw_image)
-        {
-          st->draw_image = XCreateImage (st->dpy, st->xgwa.visual,
-                                         st->depth, ZPixmap, 0,	    /* depth, format, offset */
-                                         0, st->xgwa.width, 1, 8, 0); /* data, w, h, pad, bpl */
-          st->draw_image->data = (char *) calloc(st->draw_image->height, st->draw_image->bytes_per_line);
-        }
+      st->draw_image = create_xshm_image(st->dpy, st->xgwa.visual,
+                                         st->depth, ZPixmap, &st->shm_info, /* depth, format, shm_info */
+                                         st->xgwa.width, chunk_size);       /* w, h */
     }
 
   /* for (y = 0; y < st->xgwa.height; y++) */
@@ -197,47 +169,27 @@ moire_draw (Display *dpy, Window window, void *closure)
       for (x = 0; x < st->xgwa.width; x++)
 	{
 	  double xx = x + st->draw_xo;
-	  double yy = st->draw_y + st->draw_yo;
+	  double yy = st->draw_y + ii + st->draw_yo;
 	  double i = ((xx * xx) + (yy * yy)) / (double) st->draw_factor;
 	  if (mono_p)
 	    gcv.foreground = ((((long) i) & 1) ? st->fg_pixel : st->bg_pixel);
 	  else
 	    gcv.foreground = st->colors[((long) i) % st->ncolors].pixel;
-	  XPutPixel (st->draw_image, x, 0, gcv.foreground);
+	  XPutPixel (st->draw_image, x, ii, gcv.foreground);
 	}
 
-# ifdef HAVE_XSHM_EXTENSION
-      if (st->use_shm)
-	XShmPutImage(st->dpy, st->window, st->gc, st->draw_image, 0, 0, 0, st->draw_y, st->xgwa.width, 1, False);
-      else
-# endif /*  HAVE_XSHM_EXTENSION */
-	XPutImage (st->dpy, st->window, st->gc, st->draw_image, 0, 0, 0, st->draw_y, st->xgwa.width, 1);
-
-      st->draw_y++;
-      if (st->draw_y >= st->xgwa.height)
+      if (st->draw_y + ii >= st->xgwa.height)
         break;
     }
 
+    put_xshm_image(st->dpy, st->window, st->gc, st->draw_image, 0, 0, 0, st->draw_y, st->xgwa.width, chunk_size, &st->shm_info);
+    st->draw_y += chunk_size;
 
     if (st->draw_y >= st->xgwa.height)
       {
         st->draw_y = 0;
 
-# ifdef HAVE_XSHM_EXTENSION
-        if (!st->use_shm)
-# endif /*  HAVE_XSHM_EXTENSION */
-          if (st->draw_image->data)
-            {
-              free(st->draw_image->data);
-              st->draw_image->data = 0;
-            }
-
-# ifdef HAVE_XSHM_EXTENSION
-        if (st->use_shm)
-          destroy_xshm_image (st->dpy, st->draw_image, &st->shm_info);
-        else
-# endif /*  HAVE_XSHM_EXTENSION */
-          XDestroyImage (st->draw_image);
+        destroy_xshm_image (st->dpy, st->draw_image, &st->shm_info);
         st->draw_image = 0;
 
         return st->delay * 1000000;
@@ -255,11 +207,7 @@ static const char *moire_defaults [] = {
   "*delay:		5",
   "*ncolors:		64",
   "*offset:		50",
-#ifdef HAVE_XSHM_EXTENSION
   "*useSHM:	      True",
-#else
-  "*useSHM:	      False",
-#endif
 #ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif

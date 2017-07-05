@@ -1,5 +1,5 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -562,6 +562,21 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
    We only do this when we'd be polling the mouse position anyway.
    This amounts to an assumption that machines with APM support also
    have /proc/interrupts.
+
+   Now here's a thing that sucks about this: if the user actually changes
+   the time of the machine, it will either trigger or delay the triggering
+   of a lock.  On most systems, that requires root, but I'll bet at least
+   some GUI configs let non-root do it.  Also, NTP attacks.
+
+   On Linux 2.6.39+ systems, there exists clock_gettime(CLOCK_BOOTTIME)
+   which would allow us to detect the "laptop CPU had been halted" state
+   independently of changes in wall-clock time.  But of course that's not
+   portable.
+
+   When the wall clock changes, what do Xt timers do, anyway?  If I have
+   a timer set for 30 seconds from now, and adjust the wall clock +15 seconds,
+   does the timer fire 30 seconds from now or 15?  I actually have no idea.
+   It does not appear to be specified.
  */
 static void
 check_for_clock_skew (saver_info *si)

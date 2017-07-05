@@ -78,7 +78,7 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/erase.c \
 		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c \
 		  $(UTILS_SRC)/textclient.c $(UTILS_SRC)/aligned_malloc.c \
-		  $(UTILS_SRC)/thread_util.c
+		  $(UTILS_SRC)/thread_util.c $(UTILS_SRC)/pow2.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
@@ -89,7 +89,7 @@ UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/xshm.o $(UTILS_BIN)/xdbe.o \
 		  $(UTILS_BIN)/colorbars.o \
 		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/aligned_malloc.o \
-		  $(UTILS_BIN)/thread_util.o \
+		  $(UTILS_BIN)/thread_util.o $(UTILS_BIN)/pow2.o \
 		  $(UTILS_BIN)/xft.o $(UTILS_BIN)/utf8wc.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
@@ -532,9 +532,11 @@ $(UTILS_BIN)/xdbe.o:		$(UTILS_SRC)/xdbe.c
 $(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
 $(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
 $(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
+$(UTILS_BIN)/pow2.o:		$(UTILS_SRC)/pow2.c
 
 $(UTIL_OBJS):
-	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 # How we build object files in this directory.
 .c.o:
@@ -553,12 +555,12 @@ LOGO		= $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o
 GRAB		= $(GRAB_OBJS)
 ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
-SHM		= $(XSHM_OBJS)
+SHM             = $(XSHM_OBJS) $(THREAD_OBJS)
 DBE		= $(XDBE_OBJS)
 BARS		= $(UTILS_BIN)/colorbars.o $(LOGO)
 THRO		= $(THREAD_OBJS)
 THRL		= $(THREAD_CFLAGS) $(THREAD_LIBS)
-ATV		= analogtv.o $(SHM) $(THRO)
+ATV             = analogtv.o $(SHM)
 APPLE2          = apple2.o $(ATV)
 TEXT            = $(UTILS_BIN)/textclient.o
 
@@ -584,8 +586,8 @@ attraction:	attraction.o	$(HACK_OBJS) $(COL) $(SPL)
 binaryring:  binaryring.o $(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM) $(XPM_LIBS)
+blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB) $(XPM) $(UTILS_BIN)/pow2.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM) $(UTILS_BIN)/pow2.o $(XPM_LIBS)
 
 bubbles:	bubbles.o	$(HACK_OBJS) bubbles-default.o $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) bubbles-default.o $(XPM) $(XPM_LIBS)
@@ -624,7 +626,7 @@ maze:		maze.o		$(HACK_OBJS) $(ERASE) $(LOGO)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ERASE) $(LOGO) $(HACK_LIBS)
 
 moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS) $(THRL)
 
 moire2:		moire2.o	$(HACK_OBJS) $(COL) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
@@ -660,7 +662,7 @@ munch:		munch.o		$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
 rd-bomb:	rd-bomb.o	$(HACK_OBJS) $(COL) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS) $(THRL)
 
 coral:	 	coral.o		$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
@@ -677,8 +679,8 @@ cynosure:  	cynosure.o	$(HACK_OBJS) $(COL)
 epicycle:  	epicycle.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRO)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRO) $(HACK_LIBS) $(THRL)
+interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(HACK_LIBS) $(THRL)
 
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -693,7 +695,7 @@ xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS) $(THRL)
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(THRL)
 
 kumppa:		kumppa.o	$(HACK_OBJS) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
@@ -714,7 +716,7 @@ squiral:	squiral.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 xflame:		xflame.o	$(HACK_OBJS) $(SHM) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(XPM) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(XPM) $(XPM_LIBS) $(THRL)
 
 wander:		wander.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
@@ -744,10 +746,10 @@ blaster:	blaster.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
 bumps:		bumps.o		$(HACK_OBJS) $(GRAB) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(THRL)
 
 ripples:	ripples.o	$(HACK_OBJS) $(SHM) $(COL) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(GRAB) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(GRAB) $(HACK_LIBS) $(THRL)
 
 xspirograph:	xspirograph.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
@@ -768,7 +770,7 @@ whirlwindwarp:	whirlwindwarp.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 rotzoomer:	rotzoomer.o	$(HACK_OBJS) $(GRAB) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(THRL)
 
 whirlygig:	whirlygig.o	$(HACK_OBJS) $(DBE) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(COL) $(HACK_LIBS)
@@ -780,7 +782,7 @@ vermiculate:	vermiculate.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 twang:		twang.o		$(HACK_OBJS) $(GRAB) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(THRL)
 
 fluidballs:	fluidballs.o	$(HACK_OBJS) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
@@ -825,7 +827,7 @@ anemotaxis:	anemotaxis.o	$(HACK_OBJS) $(COL) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
 memscroller:	memscroller.o	$(HACK_OBJS) $(SHM) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(COL) $(HACK_LIBS) $(THRL)
 
 substrate:	substrate.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -875,7 +877,8 @@ tessellimage:	tessellimage.o	delaunay.o $(HACK_OBJS) $(GRAB)
 testx11:	testx11.o	glx/rotator.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	glx/rotator.o $(HACK_OBJS) $(COL) $(HACK_LIBS)
 glx/rotator.o:	glx/rotator.c
-	$(MAKE) -C glx $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	cd glx ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -937,11 +940,11 @@ sphere:		sphere.o	$(XLOCK_OBJS)
 spiral:		spiral.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
-strange:	strange.o	$(XLOCK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+strange:	strange.o	$(XLOCK_OBJS) $(SHM) $(UTILS_BIN)/pow2.o
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(SHM) $(UTILS_BIN)/pow2.o $(HACK_LIBS) $(THRL)
 
 swirl:		swirl.o		$(XLOCK_OBJS) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(SHM) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(SHM) $(HACK_LIBS) $(THRL)
 
 fadeplot:	fadeplot.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -1176,6 +1179,7 @@ blitspin.o: $(srcdir)/screenhack.h
 blitspin.o: $(UTILS_SRC)/colors.h
 blitspin.o: $(UTILS_SRC)/grabscreen.h
 blitspin.o: $(UTILS_SRC)/hsv.h
+blitspin.o: $(UTILS_SRC)/pow2.h
 blitspin.o: $(UTILS_SRC)/resources.h
 blitspin.o: $(UTILS_SRC)/usleep.h
 blitspin.o: $(UTILS_SRC)/visual.h
@@ -1226,6 +1230,7 @@ bsod.o: ../config.h
 bsod.o: $(srcdir)/fps.h
 bsod.o: $(srcdir)/images/amiga.xpm
 bsod.o: $(srcdir)/images/android.xpm
+bsod.o: $(srcdir)/images/apple.xbm
 bsod.o: $(srcdir)/images/atari.xbm
 bsod.o: $(srcdir)/images/atm.xbm
 bsod.o: $(srcdir)/images/hmac.xpm
@@ -1316,6 +1321,7 @@ bumps.o: $(UTILS_SRC)/hsv.h
 bumps.o: $(UTILS_SRC)/resources.h
 bumps.o: $(UTILS_SRC)/usleep.h
 bumps.o: $(UTILS_SRC)/visual.h
+bumps.o: $(UTILS_SRC)/xshm.h
 bumps.o: $(UTILS_SRC)/yarandom.h
 ccurve.o: ../config.h
 ccurve.o: $(srcdir)/fps.h
@@ -1499,6 +1505,7 @@ distort.o: $(UTILS_SRC)/hsv.h
 distort.o: $(UTILS_SRC)/resources.h
 distort.o: $(UTILS_SRC)/usleep.h
 distort.o: $(UTILS_SRC)/visual.h
+distort.o: $(UTILS_SRC)/xshm.h
 distort.o: $(UTILS_SRC)/yarandom.h
 drift.o: ../config.h
 drift.o: $(srcdir)/fps.h
@@ -2055,6 +2062,7 @@ memscroller.o: $(UTILS_SRC)/hsv.h
 memscroller.o: $(UTILS_SRC)/resources.h
 memscroller.o: $(UTILS_SRC)/usleep.h
 memscroller.o: $(UTILS_SRC)/visual.h
+memscroller.o: $(UTILS_SRC)/xshm.h
 memscroller.o: $(UTILS_SRC)/yarandom.h
 metaballs.o: ../config.h
 metaballs.o: $(srcdir)/fps.h
@@ -2089,6 +2097,7 @@ moire.o: $(UTILS_SRC)/hsv.h
 moire.o: $(UTILS_SRC)/resources.h
 moire.o: $(UTILS_SRC)/usleep.h
 moire.o: $(UTILS_SRC)/visual.h
+moire.o: $(UTILS_SRC)/xshm.h
 moire.o: $(UTILS_SRC)/yarandom.h
 mountain.o: ../config.h
 mountain.o: $(srcdir)/fps.h
@@ -2377,6 +2386,7 @@ rd-bomb.o: $(UTILS_SRC)/hsv.h
 rd-bomb.o: $(UTILS_SRC)/resources.h
 rd-bomb.o: $(UTILS_SRC)/usleep.h
 rd-bomb.o: $(UTILS_SRC)/visual.h
+rd-bomb.o: $(UTILS_SRC)/xshm.h
 rd-bomb.o: $(UTILS_SRC)/yarandom.h
 recanim.o: ../config.h
 recanim.o: $(srcdir)/fps.h
@@ -2399,6 +2409,7 @@ ripples.o: $(UTILS_SRC)/hsv.h
 ripples.o: $(UTILS_SRC)/resources.h
 ripples.o: $(UTILS_SRC)/usleep.h
 ripples.o: $(UTILS_SRC)/visual.h
+ripples.o: $(UTILS_SRC)/xshm.h
 ripples.o: $(UTILS_SRC)/yarandom.h
 rocks.o: ../config.h
 rocks.o: $(srcdir)/fps.h
@@ -2446,6 +2457,7 @@ rotzoomer.o: $(UTILS_SRC)/hsv.h
 rotzoomer.o: $(UTILS_SRC)/resources.h
 rotzoomer.o: $(UTILS_SRC)/usleep.h
 rotzoomer.o: $(UTILS_SRC)/visual.h
+rotzoomer.o: $(UTILS_SRC)/xshm.h
 rotzoomer.o: $(UTILS_SRC)/yarandom.h
 screenhack.o: ../config.h
 screenhack.o: $(srcdir)/fps.h
@@ -2585,10 +2597,13 @@ starfish.o: $(UTILS_SRC)/yarandom.h
 strange.o: ../config.h
 strange.o: $(srcdir)/fps.h
 strange.o: $(srcdir)/screenhackI.h
+strange.o: $(UTILS_SRC)/aligned_malloc.h
 strange.o: $(UTILS_SRC)/colors.h
 strange.o: $(UTILS_SRC)/grabscreen.h
 strange.o: $(UTILS_SRC)/hsv.h
+strange.o: $(UTILS_SRC)/pow2.h
 strange.o: $(UTILS_SRC)/resources.h
+strange.o: $(UTILS_SRC)/thread_util.h
 strange.o: $(UTILS_SRC)/usleep.h
 strange.o: $(UTILS_SRC)/visual.h
 strange.o: $(UTILS_SRC)/xshm.h
@@ -2701,6 +2716,7 @@ twang.o: $(UTILS_SRC)/hsv.h
 twang.o: $(UTILS_SRC)/resources.h
 twang.o: $(UTILS_SRC)/usleep.h
 twang.o: $(UTILS_SRC)/visual.h
+twang.o: $(UTILS_SRC)/xshm.h
 twang.o: $(UTILS_SRC)/yarandom.h
 vermiculate.o: ../config.h
 vermiculate.o: $(srcdir)/fps.h
@@ -2827,6 +2843,7 @@ xflame.o: $(UTILS_SRC)/hsv.h
 xflame.o: $(UTILS_SRC)/resources.h
 xflame.o: $(UTILS_SRC)/usleep.h
 xflame.o: $(UTILS_SRC)/visual.h
+xflame.o: $(UTILS_SRC)/xshm.h
 xflame.o: $(UTILS_SRC)/yarandom.h
 xflame.o: $(srcdir)/xpm-pixmap.h
 xjack.o: ../config.h

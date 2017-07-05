@@ -822,14 +822,7 @@ init_matrix (ModeInfo *mi)
   if (wire)
     do_texture = False;
 
-  if (!mps) {
-    mps = (matrix_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (matrix_configuration));
-    if (!mps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, mps, NULL);
 
   mp = &mps[MI_SCREEN(mi)];
   mp->glx_context = init_GL(mi);

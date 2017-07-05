@@ -221,11 +221,7 @@ init_lissie (ModeInfo * mi)
 	lissstruct *lp;
 	unsigned char ball;
 
-	if (lisses == NULL) {
-		if ((lisses = (lissstruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (lissstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, lisses, 0);
 	lp = &lisses[MI_SCREEN(mi)];
 
 	lp->width = MI_WIDTH(mi);

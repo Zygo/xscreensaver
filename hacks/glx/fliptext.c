@@ -27,6 +27,7 @@
 		 "*program: xscreensaver-text --cols 0"  /* don't wrap */
 
 # define refresh_fliptext 0
+# define release_fliptext 0
 # define fliptext_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -87,6 +88,8 @@ typedef struct {
   texture_font_data *texfont;
   text_data *tc;
 
+  int alignment;
+
   char *buf;
   int buf_size;
   int buf_tail;
@@ -118,7 +121,7 @@ static int max_lines, min_lines;
 static float font_size;
 static int target_columns;
 static char *alignment_str;
-static int alignment, alignment_random_p;
+static int alignment_random_p;
 static GLfloat speed;
 
 static XrmOptionDescRec opts[] = {
@@ -291,8 +294,8 @@ get_one_line (fliptext_configuration *sc)
           {
             char *t = result;
             char *ut = untabify (t);
-            strip (ut, (alignment == 0), 1); /* if centering, strip
-                                                leading whitespace too */
+            strip (ut, (sc->alignment == 0), 1); /* if centering, strip
+                                                    leading whitespace too */
             result = ut;
             free (t);
           }
@@ -428,9 +431,9 @@ draw_line (ModeInfo *mi, line *line)
 
   glRotatef (line->cth, 0, 1, 0);
 
-  if (alignment == 1)
+  if (sc->alignment == 1)
     glTranslatef (-line->width, 0, 0);
-  else if (alignment == 0)
+  else if (sc->alignment == 0)
     glTranslatef (-line->width/2, 0, 0);
 
   glScalef (sc->font_scale, sc->font_scale, sc->font_scale);
@@ -684,11 +687,11 @@ reset_lines (ModeInfo *mi)
     maxh = maxy - miny;
       
   if (alignment_random_p)
-    alignment = (random() % 3) - 1;
+    sc->alignment = (random() % 3) - 1;
 
-  if      (alignment == -1) maxx -= maxw;
-  else if (alignment ==  1) minx += maxw;
-  else                      minx += maxw/2, maxx -= maxw/2;
+  if      (sc->alignment == -1) maxx -= maxw;
+  else if (sc->alignment ==  1) minx += maxw;
+  else                          minx += maxw/2, maxx -= maxw/2;
 
   miny += maxh/2;
   maxy -= maxh/2;
@@ -785,6 +788,9 @@ reshape_fliptext (ModeInfo *mi, int width, int height)
 }
 
 
+static void free_fliptext (ModeInfo *mi);
+
+
 ENTRYPOINT void 
 init_fliptext (ModeInfo *mi)
 {
@@ -792,19 +798,11 @@ init_fliptext (ModeInfo *mi)
 
   fliptext_configuration *sc;
 
-  if (!scs) {
-    scs = (fliptext_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (fliptext_configuration));
-    if (!scs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-
-    sc = &scs[MI_SCREEN(mi)];
-    sc->lines = (line **) calloc (max_lines+1, sizeof(char *));
-  }
+  MI_INIT(mi, scs, free_fliptext);
 
   sc = &scs[MI_SCREEN(mi)];
+  sc->lines = (line **) calloc (max_lines+1, sizeof(char *));
+
   sc->dpy = MI_DISPLAY(mi);
 
   if ((sc->glx_context = init_GL(mi)) != NULL) {
@@ -872,14 +870,14 @@ init_fliptext (ModeInfo *mi)
   alignment_random_p = False;
   if (!alignment_str || !*alignment_str ||
       !strcasecmp(alignment_str, "left"))
-    alignment = -1;
+    sc->alignment = -1;
   else if (!strcasecmp(alignment_str, "center") ||
            !strcasecmp(alignment_str, "middle"))
-    alignment = 0;
+    sc->alignment = 0;
   else if (!strcasecmp(alignment_str, "right"))
-    alignment = 1;
+    sc->alignment = 1;
   else if (!strcasecmp(alignment_str, "random"))
-    alignment = -1, alignment_random_p = True;
+    sc->alignment = -1, alignment_random_p = True;
 
   else
     {
@@ -984,22 +982,15 @@ draw_fliptext (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-ENTRYPOINT void
-release_fliptext (ModeInfo *mi)
+static void
+free_fliptext (ModeInfo *mi)
 {
-  if (scs) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      fliptext_configuration *sc = &scs[screen];
-      if (sc->tc)
-        textclient_close (sc->tc);
+  fliptext_configuration *sc = &scs[MI_SCREEN(mi)];
+  if (sc->tc)
+    textclient_close (sc->tc);
+  free(sc->lines);
 
-      /* #### there's more to free here */
-    }
-    free (scs);
-    scs = 0;
-  }
-  FreeAllGL(mi);
+  /* #### there's more to free here */
 }
 
 XSCREENSAVER_MODULE ("FlipText", fliptext)

@@ -1,4 +1,4 @@
-/* dangerball, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
+/* dangerball, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -204,15 +204,7 @@ init_ball (ModeInfo *mi)
   ball_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (ball_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (ball_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
-
+  MI_INIT (mi, bps, 0);
   bp = &bps[MI_SCREEN(mi)];
 
   bp->glx_context = init_GL(mi);

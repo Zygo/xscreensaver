@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -99,11 +99,19 @@
     _showAboutBox = showAboutBox;
 
     self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
-    self.wantsFullScreenLayout = YES;
+
+# ifndef __IPHONE_7_0
+    self.wantsFullScreenLayout = YES;    // Deprecated as of iOS 7
+# endif
   }
   return self;
 }
 
+- (BOOL) prefersStatusBarHidden
+{
+  // Requires UIViewControllerBasedStatusBarAppearance = true in plist
+  return YES;
+}
 
 - (void)dealloc
 {
@@ -347,12 +355,17 @@
                             withSize:parentView.bounds.size];
 
   if (! _saverView) {
-    [[[UIAlertView alloc] initWithTitle: _saverName
-                          message: @"Unable to load!"
-                          delegate: nil
-                          cancelButtonTitle: @"Bummer"
-                          otherButtonTitles: nil]
-     show];
+    UIAlertController *c = [UIAlertController
+                             alertControllerWithTitle:@"Unable to load!"
+                             message:@""
+                             preferredStyle:UIAlertControllerStyleAlert];
+    [c addAction: [UIAlertAction actionWithTitle: @"Bummer"
+                                 style: UIAlertActionStyleDefault
+                                 handler: ^(UIAlertAction *a) {
+      // #### Should expose the SaverListController...
+    }]];
+    [self presentViewController:c animated:YES completion:nil];
+
     return;
   }
 
@@ -551,8 +564,8 @@ static ScreenSaverView *
 find_saverView_child (NSView *v)
 {
   NSArray *kids = [v subviews];
-  int nkids = [kids count];
-  int i;
+  NSUInteger nkids = [kids count];
+  NSUInteger i;
   for (i = 0; i < nkids; i++) {
     NSObject *kid = [kids objectAtIndex:i];
     if ([kid isKindOfClass:[ScreenSaverView class]]) {
@@ -589,8 +602,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     [m setTitle: [[m title] stringByReplacingOccurrencesOfString:old_str
                             withString:new_str]];
     NSArray *kids = [m itemArray];
-    int nkids = [kids count];
-    int i;
+    NSUInteger nkids = [kids count];
+    NSUInteger i;
     for (i = 0; i < nkids; i++) {
       relabel_menus ([kids objectAtIndex:i], old_str, new_str);
     }
@@ -610,7 +623,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   if ([sender isKindOfClass:[NSView class]]) {	// Sent from button
     sv = find_saverView ((NSView *) sender);
   } else {
-    int i;
+    long i;
     NSWindow *w = 0;
     for (i = [windows count]-1; i >= 0; i--) {	// Sent from menubar
       w = [windows objectAtIndex:i];
@@ -628,7 +641,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
       modalDelegate:self
      didEndSelector:@selector(preferencesClosed:returnCode:contextInfo:)
         contextInfo:nil];
-  int code = [NSApp runModalForWindow:prefs];
+  NSUInteger code = [NSApp runModalForWindow:prefs];
   
   /* Restart the animation if the "OK" button was hit, but not if "Cancel".
      We have to restart *both* animations, because the xlockmore-style
@@ -665,13 +678,12 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
   CGSize size = [[UIScreen mainScreen] bounds].size;
 
-  // iOS 7: Needs to be the actual device orientation.
+  // iOS 7: Needs to be [[window rootViewController] interfaceOrientation].
   // iOS 8: Needs to be UIInterfaceOrientationPortrait.
+  // (interfaceOrientation deprecated in iOS 8)
 
-  UIInterfaceOrientation orient =
-    NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_7_1 ?
-    UIInterfaceOrientationPortrait /* iOS 8 broke -[UIScreen bounds]. */ :
-    [[window rootViewController] interfaceOrientation];
+  UIInterfaceOrientation orient = UIInterfaceOrientationPortrait;
+  /* iOS 8 broke -[UIScreen bounds]. */
 
   if (orient == UIInterfaceOrientationLandscapeLeft ||
       orient == UIInterfaceOrientationLandscapeRight) {
@@ -687,10 +699,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   // take the scale into consideration
   // On iOS prior to 4, fall back to use UIGraphicsBeginImageContext
 
-  if (UIGraphicsBeginImageContextWithOptions)
-    UIGraphicsBeginImageContextWithOptions (size, NO, 0);
-  else
-    UIGraphicsBeginImageContext (size);
+  UIGraphicsBeginImageContextWithOptions (size, NO, 0);
 
   CGContextRef ctx = UIGraphicsGetCurrentContext();
 
@@ -1577,7 +1586,7 @@ FAIL:
   if (!anim_timer) {
     Class ssm = NSClassFromString (@"ScreenSaverModule");
     if (ssm && [ssm instancesRespondToSelector:
-                      @selector(needsAnimationTimer)]) {
+                      NSSelectorFromString(@"needsAnimationTimer")]) {
       NSWindow *win = [windows objectAtIndex:0];
       ScreenSaverView *sv = find_saverView ([win contentView]);
       anim_timer = [NSTimer scheduledTimerWithTimeInterval:

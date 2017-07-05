@@ -15,6 +15,7 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define refresh_splodesic 0
+# define release_splodesic 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -75,7 +76,7 @@ static XrmOptionDescRec opts[] = {
   { "-spin",   ".spin",   XrmoptionNoArg, "True" },
   { "+spin",   ".spin",   XrmoptionNoArg, "False" },
   { "-speed",  ".speed",  XrmoptionSepArg, 0 },
-  { "-depth",  ".depth",  XrmoptionSepArg, 0 },
+  { "-depth",  ".freq",   XrmoptionSepArg, 0 },
   { "-wander", ".wander", XrmoptionNoArg, "True" },
   { "+wander", ".wander", XrmoptionNoArg, "False" }
 };
@@ -84,7 +85,7 @@ static argtype vars[] = {
   {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
   {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
   {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
-  {&depth_arg, "depth",  "Depth",  DEF_DEPTH,  t_Int},
+  {&depth_arg, "freq",   "Depth",  DEF_DEPTH,  t_Int},
 };
 
 ENTRYPOINT ModeSpecOpt splodesic_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -488,20 +489,15 @@ splodesic_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_splodesic (ModeInfo *mi);
+
 ENTRYPOINT void 
 init_splodesic (ModeInfo *mi)
 {
   splodesic_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (splodesic_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (splodesic_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_splodesic);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -623,8 +619,8 @@ draw_splodesic (ModeInfo *mi)
 }
 
 
-ENTRYPOINT void
-release_splodesic (ModeInfo *mi)
+static void
+free_splodesic (ModeInfo *mi)
 {
   splodesic_configuration *bp = &bps[MI_SCREEN(mi)];
   while (bp->triangles)

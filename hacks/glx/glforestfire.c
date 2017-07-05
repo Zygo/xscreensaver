@@ -931,14 +931,7 @@ init_fire(ModeInfo * mi)
 {
     firestruct *fs;
 
-    /* allocate the main fire table if needed */
-    if (fire == NULL) {
-	if ((fire = (firestruct *) calloc(MI_NUM_SCREENS(mi),
-					  sizeof(firestruct))) == NULL)
-	    return;
-    }
-
-    /* initialise the per screen fire structure */
+    MI_INIT (mi, fire, 0);
     fs = &fire[MI_SCREEN(mi)];
     fs->np = MI_COUNT(mi);
     fs->fog = do_fog;

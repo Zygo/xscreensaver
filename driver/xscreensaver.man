@@ -197,10 +197,18 @@ To replace gnome-screensaver with xscreensaver:
 .EX
 sudo apt-get remove gnome-screensaver
 .EE
+or possibly
+.EX
+sudo dpkg -P gnome-screensaver
+.EE
 .TP 3
 \fB2: Launch xscreensaver at login.\fP
 Select "\fIStartup Applications\fP" from the menu (or manually
 launch "\fIgnome-session-properties\fP") and add "\fIxscreensaver\fP".
+
+Do this as your normal user account, not as root.
+(This should go without saying, because you should never, ever, ever
+be logged in to the graphical desktop as user "root".)
 .TP 3
 \fB3: Make GNOME's "Lock Screen" use xscreensaver.\fP
 .EX
@@ -942,7 +950,7 @@ and a FAQ can always be found at https://www.jwz.org/xscreensaver/
 .BR xscreensaver\-getimage (1),
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
-Copyright \(co 1991-2015 by Jamie Zawinski.
+Copyright \(co 1991-2017 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

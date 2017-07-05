@@ -1,4 +1,4 @@
-# Auto-generated: Mon Oct 10 19:58:09 PDT 2016
+# Auto-generated: Wed Jul  5 10:52:59 PDT 2017
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -233,6 +233,7 @@ hacks/config/unicrud.xml
 hacks/config/unknownpleasures.xml
 hacks/config/vermiculate.xml
 hacks/config/vidwhacker.xml
+hacks/config/vigilance.xml
 hacks/config/vines.xml
 hacks/config/voronoi.xml
 hacks/config/wander.xml

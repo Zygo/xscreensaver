@@ -46,6 +46,7 @@ static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
 					"*ignoreRotation: True   \n" \
 
 # define UNIFORM_COLORS
+# define release_julia 0
 # include "xlockmore.h"				/* in xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* in xlockmore distribution */
@@ -152,6 +153,8 @@ incr(ModeInfo * mi, juliastruct * jp)
 	  }
 }
 
+static void free_julia (ModeInfo * mi);
+
 ENTRYPOINT void
 init_julia(ModeInfo * mi)
 {
@@ -161,11 +164,7 @@ init_julia(ModeInfo * mi)
 	XGCValues   gcv;
 	int         i;
 
-	if (julias == NULL) {
-		if ((julias = (juliastruct *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (juliastruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, julias, free_julia);
 	jp = &julias[MI_SCREEN(mi)];
 
 	jp->centerx = MI_WIN_WIDTH(mi) / 2;
@@ -414,35 +413,27 @@ draw_julia (ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-release_julia (ModeInfo * mi)
+static void
+free_julia (ModeInfo * mi)
 {
-	if (julias != NULL) {
-		int         screen;
+	Display    *display = MI_DISPLAY(mi);
+	juliastruct *jp = &julias[MI_SCREEN(mi)];
+	int         buffer;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			Display    *display = MI_DISPLAY(mi);
-			juliastruct *jp = &julias[screen];
-			int         buffer;
-
-			if (jp->pointBuffer) {
-				for (buffer = 0; buffer < jp->nbuffers; buffer++)
-					if (jp->pointBuffer[buffer])
-						(void) free((void *) jp->pointBuffer[buffer]);
-				(void) free((void *) jp->pointBuffer);
-			}
-			if (jp->stippledGC != None)
-				XFreeGC(display, jp->stippledGC);
-			if (jp->pixmap != None)
-				XFreePixmap(display, jp->pixmap);
-#ifndef HAVE_JWXYZ
-			if (jp->cursor)
-			  XFreeCursor (display, jp->cursor);
-#endif
-		}
-		(void) free((void *) julias);
-		julias = NULL;
+	if (jp->pointBuffer) {
+		for (buffer = 0; buffer < jp->nbuffers; buffer++)
+			if (jp->pointBuffer[buffer])
+				(void) free((void *) jp->pointBuffer[buffer]);
+		(void) free((void *) jp->pointBuffer);
 	}
+	if (jp->stippledGC != None)
+		XFreeGC(display, jp->stippledGC);
+	if (jp->pixmap != None)
+		XFreePixmap(display, jp->pixmap);
+#ifndef HAVE_JWXYZ
+	if (jp->cursor)
+	  XFreeCursor (display, jp->cursor);
+#endif
 }
 
 ENTRYPOINT void

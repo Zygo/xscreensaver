@@ -39,6 +39,7 @@ static const char sccsid[] = "@(#)thornbird.c	5.00 2000/11/01 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define BRIGHT_COLORS
+# define release_thornbird 0
 # define thornbird_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -52,7 +53,7 @@ ENTRYPOINT ModeSpecOpt thornbird_opts =
 
 #ifdef USE_MODULES
 ModStruct   thornbird_description =
-{"thornbird", "init_thornbird", "draw_thornbird", "release_thornbird",
+{"thornbird", "init_thornbird", "draw_thornbird", (char *) NULL,
  "refresh_thornbird", "init_thornbird", (char *) NULL, &thornbird_opts,
  1000, 800, 16, 1, 64, 1.0, "",
  "Shows an animated Bird in a Thorn Bush fractal map", 0, NULL};
@@ -91,8 +92,9 @@ typedef struct {
 static thornbirdstruct *thornbirds = (thornbirdstruct *) NULL;
 
 static void
-free_thornbird(thornbirdstruct *hp)
+free_thornbird(ModeInfo * mi)
 {
+	thornbirdstruct *hp = &thornbirds[MI_SCREEN(mi)];
 	if (hp->pointBuffer != NULL) {
 		int         buffer;
 
@@ -109,12 +111,7 @@ init_thornbird (ModeInfo * mi)
 {
 	thornbirdstruct *hp;
 
-	if (thornbirds == NULL) {
-		if ((thornbirds =
-		     (thornbirdstruct *) calloc(MI_NUM_SCREENS(mi),
-					  sizeof (thornbirdstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, thornbirds, free_thornbird);
 	hp = &thornbirds[MI_SCREEN(mi)];
 
 
@@ -132,14 +129,14 @@ init_thornbird (ModeInfo * mi)
 	if (hp->pointBuffer == NULL)
 		if ((hp->pointBuffer = (XPoint **) calloc(MI_CYCLES(mi),
 				sizeof (XPoint *))) == NULL) {
-			free_thornbird(hp);
+			free_thornbird(mi);
 			return;
 		}
 
 	if (hp->pointBuffer[0] == NULL)
 		if ((hp->pointBuffer[0] = (XPoint *) malloc(MI_COUNT(mi) *
 				sizeof (XPoint))) == NULL) {
-			free_thornbird(hp);
+			free_thornbird(mi);
 			return;
 		}
 
@@ -226,7 +223,7 @@ draw_thornbird(ModeInfo * mi)
 	if (hp->pointBuffer[erase] == NULL) {
 		if ((hp->pointBuffer[erase] = (XPoint *) malloc(MI_COUNT(mi) *
 				sizeof (XPoint))) == NULL) {
-			free_thornbird(hp);
+			free_thornbird(mi);
 			return;
 		}
 	} else {
@@ -256,19 +253,6 @@ reshape_thornbird(ModeInfo * mi, int width, int height)
 {
   XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
   init_thornbird (mi);
-}
-
-ENTRYPOINT void
-release_thornbird(ModeInfo * mi)
-{
-	if (thornbirds != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_thornbird(&thornbirds[screen]);
-		(void) free((void *) thornbirds);
-		thornbirds = (thornbirdstruct *) NULL;
-	}
 }
 
 ENTRYPOINT void

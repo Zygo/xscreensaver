@@ -62,6 +62,8 @@ typedef struct {
   trackball_state *trackball;
   Bool button_down_p;
 
+  GLfloat speed;
+
   GLuint ball_list;
   double ball_x,   ball_y,   ball_z,   ball_th;
   double ball_dx,  ball_dy,  ball_dz,  ball_dth;
@@ -429,10 +431,10 @@ tick_physics (ModeInfo *mi)
   bp->ball_x  += bp->ball_dx;
   if      (bp->ball_x < min) bp->ball_x = min, bp->ball_dx = -bp->ball_dx,
     bp->ball_dth = -bp->ball_dth,
-    bp->ball_dx += (frand(speed/2) - speed);
+    bp->ball_dx += (frand(bp->speed/2) - bp->speed);
   else if (bp->ball_x > max) bp->ball_x = max, bp->ball_dx = -bp->ball_dx,
     bp->ball_dth = -bp->ball_dth,
-    bp->ball_dx += (frand(speed/2) - speed);
+    bp->ball_dx += (frand(bp->speed/2) - bp->speed);
 
   bp->ball_dy += bp->ball_ddy;
   bp->ball_y  += bp->ball_dy;
@@ -500,14 +502,7 @@ init_boing (ModeInfo *mi)
   boing_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (boing_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (boing_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -568,16 +563,16 @@ init_boing (ModeInfo *mi)
 
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  speed = speed / 800.0;
+  bp->speed = speed / 800.0;
 
-  bp->ball_dth = (spin ? -speed * 7 * 360 : 0);
+  bp->ball_dth = (spin ? -bp->speed * 7 * 360 : 0);
 
   bp->ball_x   = 0.5 - ((ball_size/2) + frand(1-ball_size));
   bp->ball_y   = 0.2;
-  bp->ball_dx  = speed * 6 + frand(speed);
-  bp->ball_ddy = -speed;
+  bp->ball_dx  = bp->speed * 6 + frand(bp->speed);
+  bp->ball_ddy = -bp->speed;
 
-  bp->ball_dz  = speed * 6 + frand(speed);
+  bp->ball_dz  = bp->speed * 6 + frand(bp->speed);
 
   bp->trackball = gltrackball_init (False);
 }

@@ -48,6 +48,7 @@ static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define UNIFORM_COLORS
+# define release_galaxy 0
 # include "xlockmore.h"    /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"     /* from the xlockmore distribution */
@@ -158,8 +159,9 @@ x-axis */
 static unistruct *universes = NULL;
 
 static void
-free_galaxies(unistruct * gp)
+free_galaxies(ModeInfo * mi)
 {
+ unistruct  *gp = &universes[MI_SCREEN(mi)];
  if (gp->galaxies != NULL) {
   int         i;
 
@@ -191,7 +193,7 @@ startover(ModeInfo * mi)
  gp->rot_x = 0;
 
  if (MI_BATCHCOUNT(mi) < -MINGALAXIES)
-  free_galaxies(gp);
+  free_galaxies(mi);
  gp->ngalaxies = MI_BATCHCOUNT(mi);
  if (gp->ngalaxies < -MINGALAXIES)
   gp->ngalaxies = NRAND(-gp->ngalaxies - MINGALAXIES + 1) + MINGALAXIES;
@@ -306,11 +308,7 @@ init_galaxy(ModeInfo * mi)
 {
  unistruct  *gp;
 
- if (universes == NULL) {
-  if ((universes = (unistruct *) calloc(MI_NUM_SCREENS(mi),
-      sizeof (unistruct))) == NULL)
-   return;
- }
+ MI_INIT (mi, universes, free_galaxies);
  gp = &universes[MI_SCREEN(mi)];
 
 # ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
@@ -444,19 +442,6 @@ reshape_galaxy(ModeInfo * mi, int width, int height)
 {
   XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
   init_galaxy (mi);
-}
-
-ENTRYPOINT void
-release_galaxy(ModeInfo * mi)
-{
- if (universes != NULL) {
-  int         screen;
-
-  for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-   free_galaxies(&universes[screen]);
-  (void) free((void *) universes);
-  universes = NULL;
- }
 }
 
 ENTRYPOINT void

@@ -61,26 +61,6 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
  * 
  * There are other frame numbers for special cases (e.g. BOOM_FRAME).
  */
-struct sPosColor {   /* Position and color of the sproingie     */
-	int x, y, z;     /*   Position                              */
-	int frame;       /*   Current frame (0-5)                   */
-	int life;        /*   Life points                           */
-	GLfloat r, g, b; /*   Color RGB                             */
-	int direction;   /*   Direction of next hop (left or right) */
-};
-
-typedef struct {
-	int         rotx, roty, dist, wireframe, flatshade, groundlevel,
-	            maxsproingies, mono;
-	int         sframe, target_rx, target_ry, target_dist, target_count;
-	const struct gllist *sproingies[6];
-	const struct gllist *SproingieBoom;
-	GLuint TopsSides;
-	struct sPosColor *positions;
-} sp_instance;
-
-static sp_instance *si_list = NULL;
-static int  active_screens = 0;
 
 extern const struct gllist *s1_1;
 extern const struct gllist *s1_2;
@@ -352,9 +332,8 @@ AdvanceSproingie(int t, sp_instance * si)
 }
 
 static void
-NextSproingie(int screen)
+NextSproingie(sp_instance *si)
 {
-	sp_instance *si = &si_list[screen];
 	int         ddx, t;
 	struct sPosColor *thisSproingie = &(si->positions[0]);
 
@@ -689,9 +668,8 @@ ComputeGround(sp_instance * si)
 }
 
 void
-DisplaySproingies(int screen,int pause)
+DisplaySproingies(sp_instance *si)
 {
-	sp_instance *si = &si_list[screen];
 	int         t;
 	GLfloat     position[] =
 	{8.0, 5.0, -2.0, 0.1};
@@ -742,11 +720,11 @@ DisplaySproingies(int screen,int pause)
 }
 
 void
-NextSproingieDisplay(int screen,int pause)
+NextSproingieDisplay(sp_instance *si)
 {
-	NextSproingie(screen);
+	NextSproingie(si);
 /*        if (pause) usleep(pause);  don't do this! -jwz */
-	DisplaySproingies(screen,pause);
+	DisplaySproingies(si);
 }
 
 void
@@ -761,10 +739,8 @@ ReshapeSproingies(int w, int h)
 }
 
 void
-CleanupSproingies(int screen)
+CleanupSproingies(sp_instance *si)
 {
-	sp_instance *si = &si_list[screen];
-
     if (! si) return;
 
 /*
@@ -776,7 +752,6 @@ CleanupSproingies(int screen)
 		glDeleteLists(si->TopsSides, 2);
 		glDeleteLists(si->SproingieBoom, 1);
 
-		--active_screens;
 		si->SproingieBoom = 0;
 	}
 */
@@ -787,15 +762,11 @@ CleanupSproingies(int screen)
 		(void) free((void *) (si->positions));
 		si->positions = NULL;
 	}
-	if ((active_screens == 0) && si_list) {
-		(void) free((void *) (si_list));
-		si_list = NULL;
-	}
 }
 
 void
-InitSproingies(int wfmode, int grnd, int mspr, int smrtspr, 
-			   int screen, int numscreens, int mono)
+InitSproingies(sp_instance *si, int wfmode, int grnd, int mspr, int smrtspr,
+			   int mono)
 {
 	GLfloat     ambient[] =
 	{0.2, 0.2, 0.2, 1.0};
@@ -808,18 +779,9 @@ InitSproingies(int wfmode, int grnd, int mspr, int smrtspr,
 	GLfloat     mat_shininess[] =
 	{50.0};
 
-	sp_instance *si;
 	int         t;
 
-	active_screens++;
-	CleanupSproingies(screen);
-
-	if (si_list == NULL) {
-		if ((si_list = (sp_instance *) calloc(numscreens,
-					      sizeof (sp_instance))) == NULL)
-			return;
-	}
-	si = &si_list[screen];
+	memset (si, 0, sizeof(*si));
 
 	if (mspr < 0)
 		mspr = 0;

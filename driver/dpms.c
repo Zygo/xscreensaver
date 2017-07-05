@@ -1,5 +1,5 @@
 /* dpms.c --- syncing the X Display Power Management values
- * xscreensaver, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -266,6 +266,7 @@ monitor_power_on (saver_info *si, Bool on_p)
       XSync (si->dpy, False);
       DPMSForceLevel(si->dpy, (on_p ? DPMSModeOn : DPMSModeOff));
       XSync (si->dpy, False);
+      XSetErrorHandler (old_handler);
       /* Ignore error_handler_hit_p, just probe monitor instead */
 
       if ((!!on_p) != monitor_powered_on_p (si))  /* double-check */

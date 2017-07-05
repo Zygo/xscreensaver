@@ -1,4 +1,4 @@
-/* cityflow, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* cityflow, Copyright (c) 2014-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -182,7 +182,7 @@ cube_handle_event (ModeInfo *mi, XEvent *event)
     {
       reset_colors (mi);
       tweak_cubes (mi);
-      gltrackball_reset (cc->trackball);
+      gltrackball_reset (cc->trackball, 0, 0);
       return True;
     }
 
@@ -290,14 +290,7 @@ init_cube (ModeInfo *mi)
   int i;
   cube_configuration *cc;
 
-  if (!ccs) {
-    ccs = (cube_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (cube_configuration));
-    if (!ccs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, ccs, NULL);
 
   cc = &ccs[MI_SCREEN(mi)];
 
@@ -305,7 +298,7 @@ init_cube (ModeInfo *mi)
     reshape_cube (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
 
-  cc->trackball = gltrackball_init (True);
+  cc->trackball = gltrackball_init (False);
 
   cc->ncolors = 256;
   cc->colors = (XColor *) calloc(cc->ncolors, sizeof(XColor));
@@ -323,11 +316,12 @@ init_cube (ModeInfo *mi)
       /* Set the size to roughly cover a 2x2 square on average. */
       GLfloat scale = 1.8 / sqrt (cc->ncubes);
       cube *cube = &cc->cubes[i];
+      double th = -(skew ? frand(skew) : 0) * M_PI / 180;
+
       cube->x = (frand(1)-0.5);
       cube->y = (frand(1)-0.5);
 
       cube->z = frand(0.12);
-      double th = -(skew ? frand(skew) : 0) * M_PI / 180;
       cube->cth = cos(th);
       cube->sth = sin(th);
 
@@ -396,6 +390,7 @@ draw_cube (ModeInfo *mi)
 
   glPushMatrix ();
 
+  glRotatef(current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (cc->trackball);
   glRotatef (-180, 1, 0, 0);
 
@@ -404,7 +399,6 @@ draw_cube (ModeInfo *mi)
     glScalef (s, s, s);
   }
   glRotatef (-90, 1, 0, 0);
-  glRotatef(current_device_rotation(), 0, 1, 0);
 
   glTranslatef (-0.18, 0, -0.18);
   glRotatef (37, 1, 0, 0);

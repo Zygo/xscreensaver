@@ -40,6 +40,7 @@
 			"*showFPS:	False	\n"
 
 #define	refresh_lockward	0
+#define	release_lockward	0
 
 
 #define	NUMOF(x)	(sizeof ((x)) / sizeof ((*x)))
@@ -136,7 +137,7 @@ typedef struct lockward_context {
 /***************************************************************************
  * Prototypes.
  */
-static void free_lockward (lockward_context *ctx);
+static void free_lockward (ModeInfo *mi);
 
 
 /***************************************************************************
@@ -203,7 +204,11 @@ ENTRYPOINT ModeSpecOpt lockward_opts = {
 ENTRYPOINT void
 reshape_lockward (ModeInfo *mi, int width, int height)
 {
+	lockward_context *ctx = &g_ctx[MI_SCREEN (mi)];
 	GLfloat h = (GLfloat) height / (GLfloat) width;
+
+	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi),
+	                *(ctx->glx_context));
 
 	glViewport (0, 0, (GLint) width, (GLint) height);
 
@@ -827,15 +832,7 @@ init_lockward (ModeInfo *mi)
 	lockward_context	*ctx;
 	int		i, n;
 
-	if (!g_ctx) {
-		g_ctx = (lockward_context *) calloc (MI_NUM_SCREENS (mi),
-		                                   sizeof (lockward_context));
-		if (!g_ctx) {
-			fprintf (stderr, "%s: can't allocate context.\n",
-			         progname);
-			exit (1);
-		}
-	}
+	MI_INIT (mi, g_ctx, free_lockward);
 	ctx = &g_ctx[MI_SCREEN (mi)];
 
 	ctx->glx_context = init_GL (mi);
@@ -928,9 +925,16 @@ init_lockward (ModeInfo *mi)
 }
 
 static void
-free_lockward (lockward_context *ctx)
+free_lockward (ModeInfo *mi)
 {
+	lockward_context	*ctx = &g_ctx[MI_SCREEN (mi)];
 	int i;
+
+	if (!ctx->glx_context)
+		return;
+
+	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi),
+	                *(ctx->glx_context));
 
 	if (ctx->blink.noise)
 		free (ctx->blink.noise);
@@ -949,25 +953,6 @@ free_lockward (lockward_context *ctx)
 		if (ss->bladeidx)
 			free (ss->bladeidx);
 	}
-}
-
-ENTRYPOINT void
-release_lockward (ModeInfo *mi)
-{
-	int i;
-
-	if (!g_ctx)
-		return;
-
-	for (i = MI_NUM_SCREENS (mi);  --i >= 0; ) {
-		if (g_ctx[i].glx_context)
-			glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi),
-			                *(g_ctx[i].glx_context));
-		free_lockward (&g_ctx[i]);
-	}
-
-	FreeAllGL (mi);
-	free (g_ctx);  g_ctx = NULL;
 }
 
 

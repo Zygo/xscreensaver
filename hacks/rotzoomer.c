@@ -28,10 +28,7 @@
 
 #include <math.h>
 #include "screenhack.h"
-
-#ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
-#endif
 
 struct zoom_area {
   int w, h;		/* rectangle width and height */
@@ -69,10 +66,7 @@ struct state {
   async_load_state *img_loader;
   Pixmap pm;
 
-#ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm;
   XShmSegmentInfo shm_info;
-#endif
 };
 
 
@@ -331,13 +325,8 @@ update_position (struct zoom_area *za)
 static void
 DisplayImage (struct state *st, int x, int y, int w, int h)
 {
-#ifdef HAVE_XSHM_EXTENSION
-  if (st->use_shm)
-    XShmPutImage (st->dpy, st->window, st->gc, st->buffer_map, x, y, x, y,
-                  w, h, False);
-  else
-#endif /* HAVE_XSHM_EXTENSION */
-    XPutImage(st->dpy, st->window, st->gc, st->buffer_map, x, y, x, y, w, h);
+  put_xshm_image (st->dpy, st->window, st->gc, st->buffer_map, x, y, x, y,
+                  w, h, &st->shm_info);
 }
 
 
@@ -487,25 +476,8 @@ setup_X (struct state *st)
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                             st->pm, 0, 0);
 
-  st->buffer_map = 0;
-
-#ifdef HAVE_XSHM_EXTENSION
-  if (st->use_shm) {
-    st->buffer_map = create_xshm_image(st->dpy, xgwa.visual, depth,
-                                       ZPixmap, 0, &st->shm_info, st->width, st->height);
-    if (!st->buffer_map) {
-      st->use_shm = False;
-      fprintf(stderr, "create_xshm_image failed\n");
-    }
-  }
-#endif /* HAVE_XSHM_EXTENSION */
-
-  if (!st->buffer_map) {
-    st->buffer_map = XCreateImage(st->dpy, xgwa.visual,
-                                  depth, ZPixmap, 0, 0, st->width, st->height, 8, 0);
-    st->buffer_map->data = (char *)calloc (st->buffer_map->height,
-                                           st->buffer_map->bytes_per_line);
-  }
+  st->buffer_map = create_xshm_image(st->dpy, xgwa.visual, depth,
+                                     ZPixmap, &st->shm_info, st->width, st->height);
 }
 
 
@@ -515,9 +487,6 @@ rotzoomer_init (Display *dpy, Window window)
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   st->dpy = dpy;
   st->window = window;
-#ifdef HAVE_XSHM_EXTENSION
-  st->use_shm = get_boolean_resource (st->dpy, "useSHM", "Boolean");
-#endif
   st->num_zoom = get_integer_resource (st->dpy, "numboxes", "Integer");
 
   set_mode(st);

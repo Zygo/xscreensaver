@@ -518,11 +518,7 @@ init_lightning (ModeInfo * mi)
 {
 	Storm      *st;
 
-	if (Helga == NULL) {
-		if ((Helga = (Storm *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (Storm))) == NULL)
-			return;
-	}
+	MI_INIT (mi, Helga, 0);
 	st = &Helga[MI_SCREEN(mi)];
 
 	st->scr_width = MI_WIDTH(mi);

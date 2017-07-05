@@ -44,6 +44,7 @@ LOCAL_SRC_FILES += \
     utils/hsv.c \
     utils/logo.c \
     utils/minixpm.c \
+    utils/pow2.c \
     utils/resources.c \
     utils/spline.c \
     utils/textclient-mobile.c \
@@ -51,6 +52,7 @@ LOCAL_SRC_FILES += \
     utils/usleep.c \
     utils/utf8wc.c \
     utils/xft.c \
+    utils/xshm.c \
     utils/yarandom.c \
 
 # The source files of all of the currently active hacks:
@@ -100,6 +102,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/s1_5.c \
     hacks/glx/s1_6.c \
     hacks/glx/s1_b.c \
+    hacks/glx/seccam.c \
     hacks/glx/shark.c \
     hacks/glx/sonar-sim.c \
     hacks/glx/sonar-icmp.c \
@@ -128,7 +131,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/tunnel_draw.c \
     hacks/glx/whale.c \
 
-LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog -lEGL
+LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog -lEGL -latomic
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \

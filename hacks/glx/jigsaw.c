@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1378,14 +1378,7 @@ init_jigsaw (ModeInfo *mi)
   jigsaw_configuration *jc;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!sps) {
-    sps = (jigsaw_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (jigsaw_configuration));
-    if (!sps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, sps, NULL);
   jc = &sps[MI_SCREEN(mi)];
   jc->glx_context = init_GL(mi);
 

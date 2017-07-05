@@ -52,7 +52,8 @@ Sparkle.framework:
 # update-info-plist.pl runs this as needed.
 # Might be better to do this with curl, since that is installed by default.
 
-URL = https://www.jwz.org/xscreensaver/screenshots/
+BASE = xscreensaver/screenshots/
+URL = https://www.jwz.org/$(BASE)
 WGET = wget -q -U xscreensaver-build-osx
 CVT  = -thumbnail '200x150^' -gravity center -extent 200x150 \
      \( +clone  -alpha extract \
@@ -75,16 +76,20 @@ $(THUMBDIR)/%.png:
 	if [ ! -d $(THUMBDIR) ]; then mkdir -p $(THUMBDIR) ; fi ;	\
 	rm -f "$$FILE2" "$$TMP" ;					\
 	set +e ;							\
-	echo "downloading $$URL..." ;					\
-	$(WGET) -O"$$TMP" "$$URL" ;					\
-	if [ ! -s "$$TMP" ]; then					\
-	  echo "downloading $$URL2..." ;				\
-	  $(WGET) -O"$$TMP" "$$URL2" ;					\
-	fi ;								\
-	if [ ! -s "$$TMP" ]; then					\
-	  rm -f "$$TMP" ;						\
-	  echo "failed: $$URL" ;					\
-	  exit 1 ;							\
+	if [ -f "$$HOME/www/$(BASE)/$$FILE1" ]; then			\
+	  cp -p "$$HOME/www/$(BASE)/$$FILE1" "$$TMP" ;			\
+	else								\
+	  echo "downloading $$URL..." ;					\
+	  $(WGET) -O"$$TMP" "$$URL" ;					\
+	  if [ ! -s "$$TMP" ]; then					\
+	    echo "downloading $$URL2..." ;				\
+	    $(WGET) -O"$$TMP" "$$URL2" ;				\
+	  fi ;								\
+	  if [ ! -s "$$TMP" ]; then					\
+	    rm -f "$$TMP" ;						\
+	    echo "failed: $$URL" ;					\
+	    exit 1 ;							\
+	  fi ;								\
 	fi ;								\
 	rm -f "$$FILE2" ;						\
 	convert jpg:- $(CVT) "$$FILE2" < "$$TMP" ;			\

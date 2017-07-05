@@ -30,7 +30,7 @@ steps through a set of screens, each one a recreation of a different failure
 mode of an operating system.  Systems depicted include
 Windows 3.1, Windows 95, Windows NT, MS-DOS, AmigaDOS 1.3, Linux,
 SCO UNIX, BSD UNIX, HPUX, Solaris, Tru64, VMS, HVX/GCOS6, IBM OS/390, OS/2,
-MacOS (MacsBug, Bomb, Sad Mac, and OSX), Atari ST, Apple ][+, and
+MacOS (MacsBug, Bomb, Sad Mac, and OSX), Atari ST, Apple ][+, VMware and
 NCD X Terminals.
 .PP
 .SH OPTIONS
@@ -98,6 +98,7 @@ hacks are displayed and which aren't.
 .BR doMSDOS ,
 .BR doOS2 ,
 .BR doHVX ,
+.BR doVMware ,
 and
 .BR doATM .
 Each of these is a Boolean resource, they all default to true, except
@@ -126,7 +127,7 @@ registered trademark of Apple Computer.  Amiga is a registered trademark of
 Amiga International, Inc.  Atari ST is probably a trademark, too, but it's
 hard to tell who owns it.  Linux is a registered trademark of Linus Torvalds,
 but it isn't his fault. OS/2 is a registered trademark of International 
-Business Machines Corporation.
+Business Machines Corporation. VMware is a registered trademark of VMware, Inc.
 .SH COPYRIGHT
 Copyright \(co 1998-2003 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

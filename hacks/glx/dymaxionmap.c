@@ -22,6 +22,7 @@
 		    "*wireframe:	False	\n" \
 		    "*labelFont:  " LABEL_FONT "\n"
 # define refresh_planet 0
+# define release_planet 0
 # include "xlockmore.h"		    /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"		    /* from the xlockmore distribution */
@@ -88,7 +89,7 @@ ENTRYPOINT ModeSpecOpt planet_opts = {countof(opts), opts, countof(vars), vars, 
 
 #ifdef USE_MODULES
 ModStruct   planet_description =
-{"planet", "init_planet", "draw_planet", "release_planet",
+{"planet", "init_planet", "draw_planet", NULL,
  "draw_planet", "init_planet", NULL, &planet_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "Buckminster Fuller's unwrapped icosahedral globe", 0, NULL};
@@ -769,6 +770,9 @@ planet_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_planet (ModeInfo * mi);
+
+
 ENTRYPOINT void
 init_planet (ModeInfo * mi)
 {
@@ -776,11 +780,7 @@ init_planet (ModeInfo * mi)
   int screen = MI_SCREEN(mi);
   Bool wire = MI_IS_WIREFRAME(mi);
 
-  if (planets == NULL) {
-    if ((planets = (planetstruct *) calloc(MI_NUM_SCREENS(mi),
-					  sizeof (planetstruct))) == NULL)
-      return;
-  }
+  MI_INIT (mi, planets, free_planet);
   gp = &planets[screen];
 
   if ((gp->glx_context = init_GL(mi)) != NULL) {
@@ -1005,28 +1005,17 @@ draw_planet (ModeInfo * mi)
 }
 
 
-ENTRYPOINT void
-release_planet (ModeInfo * mi)
+static void
+free_planet (ModeInfo * mi)
 {
-  if (planets != NULL) {
-    int screen;
+  planetstruct *gp = &planets[MI_SCREEN(mi)];
 
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      planetstruct *gp = &planets[screen];
+  if (gp->glx_context) {
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));
 
-      if (gp->glx_context) {
-	/* Display lists MUST be freed while their glXContext is current. */
-	/* but this gets a BadMatch error. -jwz */
-	/*glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));*/
-
-	if (glIsList(gp->starlist))
-	  glDeleteLists(gp->starlist, 1);
-      }
-    }
-    (void) free((void *) planets);
-    planets = NULL;
+    if (glIsList(gp->starlist))
+      glDeleteLists(gp->starlist, 1);
   }
-  FreeAllGL(mi);
 }
 
 

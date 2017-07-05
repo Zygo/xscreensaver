@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -42,6 +42,7 @@
 @protocol XScreenSaverViewDelegate
 - (void) wantsFadeOut:(XScreenSaverView *)saverView;
 - (void) didShake:(XScreenSaverView *)saverView;
+- (void) openPreferences: (NSString *)which;
 @end
 
 @interface ScreenSaverView : NSView
@@ -82,6 +83,7 @@
   Window xwindow;
   void *xdata;
   fps_state *fpst;
+  void (*fps_cb) (Display *, Window, fps_state *, void *);
 
 # ifdef USE_IPHONE
   BOOL screenLocked;
@@ -92,6 +94,11 @@
   NSDictionary *function_tables;
 
   id<XScreenSaverViewDelegate> _delegate;
+
+  UIView *closeBox;
+  NSTimer *closeBoxTimer;
+
+  CGAffineTransform pinch_transform;
 
 # else // !USE_PHONE
 
@@ -107,7 +114,7 @@
 
 #  ifdef BACKBUFFER_OPENGL
   void *backbuffer_data;
-  size_t backbuffer_len;
+  GLsizei backbuffer_len;
 
   GLsizei gl_texture_w, gl_texture_h;
 

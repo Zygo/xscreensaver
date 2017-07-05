@@ -138,6 +138,7 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
                             "*showFPS:    False \n" \
 
 # define refresh_klein 0
+# define release_klein 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */
@@ -154,7 +155,7 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
 
 #ifdef USE_MODULES
 ModStruct   klein_description =
-{"klein", "init_klein", "draw_klein", "release_klein",
+{"klein", "init_klein", "draw_klein", NULL,
  "draw_klein", "change_klein", NULL, &klein_opts,
  25000, 1, 1, 1, 1.0, 4, "",
  "Rotate a Klein bottle in 4d or walk on it", 0, NULL};
@@ -163,20 +164,13 @@ ModStruct   klein_description =
 
 
 static char *klein_bottle;
-static int bottle_type;
 static char *mode;
-static int display_mode;
 static char *appear;
-static int appearance;
 static char *color_mode;
-static int colors;
 static char *view_mode;
-static int view;
 static Bool marks;
 static char *proj_3d;
-static int projection_3d;
 static char *proj_4d;
-static int projection_4d;
 static float speed_wx;
 static float speed_wy;
 static float speed_wz;
@@ -270,6 +264,14 @@ ENTRYPOINT ModeSpecOpt klein_opts =
 typedef struct {
   GLint      WindH, WindW;
   GLXContext *glx_context;
+  /* Options */
+  int bottle_type;
+  int display_mode;
+  int appearance;
+  int colors;
+  int view;
+  int projection_3d;
+  int projection_4d;
   /* 4D rotation angles */
   float alpha, beta, delta, zeta, eta, theta;
   /* Movement parameters */
@@ -498,12 +500,12 @@ static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
 
 
 /* Compute a fully saturated and bright color based on an angle. */
-static void color(double angle, float col[4])
+static void color(kleinstruct *kb, double angle, float col[4])
 {
   int s;
   double t;
 
-  if (colors == COLORS_TWOSIDED)
+  if (kb->colors == COLORS_TWOSIDED)
     return;
 
   if (angle >= 0.0)
@@ -547,7 +549,7 @@ static void color(double angle, float col[4])
       col[2] = 1.0-t;
       break;
   }
-  if (display_mode == DISP_TRANSPARENT)
+  if (kb->display_mode == DISP_TRANSPARENT)
     col[3] = 0.7;
   else
     col[3] = 1.0;
@@ -572,10 +574,10 @@ static void setup_figure8(ModeInfo *mi, double umin, double umax, double vmin,
       k = i*(NUMV+1)+j;
       u = -ur*j/NUMU+umin;
       v = vr*i/NUMV+vmin;
-      if (colors == COLORS_DEPTH)
-        color((cos(u)+1.0)*M_PI*2.0/3.0,kb->col[k]);
+      if (kb->colors == COLORS_DEPTH)
+        color(kb,(cos(u)+1.0)*M_PI*2.0/3.0,kb->col[k]);
       else
-        color(v,kb->col[k]);
+        color(kb,v,kb->col[k]);
       kb->tex[k][0] = -32*u/(2.0*M_PI);
       kb->tex[k][1] = 32*v/(2.0*M_PI);
       cu = cos(u);
@@ -629,10 +631,10 @@ static void setup_squeezed_torus(ModeInfo *mi, double umin, double umax,
       k = i*(NUMV+1)+j;
       u = -ur*j/NUMU+umin;
       v = vr*i/NUMV+vmin;
-      if (colors == COLORS_DEPTH)
-        color((sin(u)*sin(0.5*v)+1.0)*M_PI*2.0/3.0,kb->col[k]);
+      if (kb->colors == COLORS_DEPTH)
+        color(kb,(sin(u)*sin(0.5*v)+1.0)*M_PI*2.0/3.0,kb->col[k]);
       else
-        color(v,kb->col[k]);
+        color(kb,v,kb->col[k]);
       kb->tex[k][0] = -32*u/(2.0*M_PI);
       kb->tex[k][1] = 32*v/(2.0*M_PI);
       cu = cos(u);
@@ -682,10 +684,10 @@ static void setup_lawson(ModeInfo *mi, double umin, double umax, double vmin,
       k = i*(NUMU+1)+j;
       u = -ur*j/NUMU+umin;
       v = vr*i/NUMV+vmin;
-      if (colors == COLORS_DEPTH)
-        color((sin(u)*cos(0.5*v)+1.0)*M_PI*2.0/3.0,kb->col[k]);
+      if (kb->colors == COLORS_DEPTH)
+        color(kb,(sin(u)*cos(0.5*v)+1.0)*M_PI*2.0/3.0,kb->col[k]);
       else
-        color(v,kb->col[k]);
+        color(kb,v,kb->col[k]);
       kb->tex[k][0] = -32*u/(2.0*M_PI);
       kb->tex[k][1] = 32*v/(2.0*M_PI);
       cu = cos(u);
@@ -729,7 +731,7 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
   float q1[4], q2[4], r1[4][4], r2[4][4];
   kleinstruct *kb = &klein[MI_SCREEN(mi)];
 
-  if (view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
     /* Compute the rotation that rotates the Klein bottle in 4D without the
        trackball rotations. */
@@ -774,7 +776,7 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
       yv[l] = (mat[l][0]*xxv[0]+mat[l][1]*xxv[1]+
                mat[l][2]*xxv[2]+mat[l][3]*xxv[3]);
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
       {
@@ -853,7 +855,7 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
         r += mat[l][m]*xx[m];
       y[l] = r;
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
         p[l] = y[l]+kb->offset4d[l];
@@ -897,7 +899,7 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
         yv[l] = (mat[l][0]*kb->xv[o][0]+mat[l][1]*kb->xv[o][1]+
                  mat[l][2]*kb->xv[o][2]+mat[l][3]*kb->xv[o][3]);
       }
-      if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+      if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
       {
         for (l=0; l<3; l++)
         {
@@ -930,10 +932,10 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
     }
   }
 
-  if (colors == COLORS_TWOSIDED)
+  if (kb->colors == COLORS_TWOSIDED)
   {
     glColor3fv(mat_diff_red);
-    if (display_mode == DISP_TRANSPARENT)
+    if (kb->display_mode == DISP_TRANSPARENT)
     {
       glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
       glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
@@ -948,9 +950,9 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
 
   for (i=0; i<NUMU; i++)
   {
-    if (appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
+    if (kb->appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
       continue;
-    if (display_mode == DISP_WIREFRAME)
+    if (kb->display_mode == DISP_WIREFRAME)
       glBegin(GL_QUAD_STRIP);
     else
       glBegin(GL_TRIANGLE_STRIP);
@@ -963,7 +965,7 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
         o = l*(NUMV+1)+m;
         glNormal3fv(kb->pn[o]);
         glTexCoord2fv(kb->tex[o]);
-        if (colors != COLORS_TWOSIDED)
+        if (kb->colors != COLORS_TWOSIDED)
         {
           glColor3fv(kb->col[o]);
           glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,kb->col[o]);
@@ -997,7 +999,7 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
   float q1[4], q2[4], r1[4][4], r2[4][4];
   kleinstruct *kb = &klein[MI_SCREEN(mi)];
 
-  if (view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
     /* Compute the rotation that rotates the Klein bottle in 4D without the
        trackball rotations. */
@@ -1038,7 +1040,7 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
       yv[l] = (mat[l][0]*xxv[0]+mat[l][1]*xxv[1]+
                mat[l][2]*xxv[2]+mat[l][3]*xxv[3]);
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
       {
@@ -1115,7 +1117,7 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
         r += mat[l][m]*xx[m];
       y[l] = r;
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
         p[l] = y[l]+kb->offset4d[l];
@@ -1159,7 +1161,7 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
         yv[l] = (mat[l][0]*kb->xv[o][0]+mat[l][1]*kb->xv[o][1]+
                  mat[l][2]*kb->xv[o][2]+mat[l][3]*kb->xv[o][3]);
       }
-      if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+      if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
       {
         for (l=0; l<3; l++)
         {
@@ -1192,10 +1194,10 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
     }
   }
 
-  if (colors == COLORS_TWOSIDED)
+  if (kb->colors == COLORS_TWOSIDED)
   {
     glColor3fv(mat_diff_red);
-    if (display_mode == DISP_TRANSPARENT)
+    if (kb->display_mode == DISP_TRANSPARENT)
     {
       glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
       glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
@@ -1210,9 +1212,9 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
 
   for (i=0; i<NUMU; i++)
   {
-    if (appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
+    if (kb->appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
       continue;
-    if (display_mode == DISP_WIREFRAME)
+    if (kb->display_mode == DISP_WIREFRAME)
       glBegin(GL_QUAD_STRIP);
     else
       glBegin(GL_TRIANGLE_STRIP);
@@ -1225,7 +1227,7 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
         o = l*(NUMV+1)+m;
         glNormal3fv(kb->pn[o]);
         glTexCoord2fv(kb->tex[o]);
-        if (colors != COLORS_TWOSIDED)
+        if (kb->colors != COLORS_TWOSIDED)
         {
           glColor3fv(kb->col[o]);
           glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,kb->col[o]);
@@ -1259,7 +1261,7 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
   float q1[4], q2[4], r1[4][4], r2[4][4];
   kleinstruct *kb = &klein[MI_SCREEN(mi)];
 
-  if (view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
     /* Compute the rotation that rotates the Klein bottle in 4D without the
        trackball rotations. */
@@ -1294,7 +1296,7 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
       yv[l] = (mat[l][0]*xxv[0]+mat[l][1]*xxv[1]+
                mat[l][2]*xxv[2]+mat[l][3]*xxv[3]);
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
       {
@@ -1369,7 +1371,7 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
         r += mat[l][m]*xx[m];
       y[l] = r;
     }
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
     {
       for (l=0; l<3; l++)
         p[l] = y[l]+kb->offset4d[l];
@@ -1413,7 +1415,7 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
         yv[l] = (mat[l][0]*kb->xv[o][0]+mat[l][1]*kb->xv[o][1]+
                  mat[l][2]*kb->xv[o][2]+mat[l][3]*kb->xv[o][3]);
       }
-      if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+      if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
       {
         for (l=0; l<3; l++)
         {
@@ -1446,10 +1448,10 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
     }
   }
 
-  if (colors == COLORS_TWOSIDED)
+  if (kb->colors == COLORS_TWOSIDED)
   {
     glColor3fv(mat_diff_red);
-    if (display_mode == DISP_TRANSPARENT)
+    if (kb->display_mode == DISP_TRANSPARENT)
     {
       glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
       glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
@@ -1464,9 +1466,9 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
 
   for (i=0; i<NUMV; i++)
   {
-    if (appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
+    if (kb->appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
       continue;
-    if (display_mode == DISP_WIREFRAME)
+    if (kb->display_mode == DISP_WIREFRAME)
       glBegin(GL_QUAD_STRIP);
     else
       glBegin(GL_TRIANGLE_STRIP);
@@ -1479,7 +1481,7 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
         o = l*(NUMU+1)+m;
         glNormal3fv(kb->pn[o]);
         glTexCoord2fv(kb->tex[o]);
-        if (colors != COLORS_TWOSIDED)
+        if (kb->colors != COLORS_TWOSIDED)
         {
           glColor3fv(kb->col[o]);
           glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,kb->col[o]);
@@ -1525,7 +1527,7 @@ static void init(ModeInfo *mi)
   if (walk_speed == 0.0)
     walk_speed = 20.0;
 
-  if (view == VIEW_TURN)
+  if (kb->view == VIEW_TURN)
   {
     kb->alpha = frand(360.0);
     kb->beta = frand(360.0);
@@ -1538,8 +1540,8 @@ static void init(ModeInfo *mi)
     kb->delta = 0.0;
   }
   kb->zeta = 0.0;
-  if (bottle_type == KLEIN_BOTTLE_FIGURE_8 ||
-      bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+  if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8 ||
+      kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
     kb->eta = 0.0;
   else
     kb->eta = 45.0;
@@ -1550,7 +1552,7 @@ static void init(ModeInfo *mi)
   kb->dvmove = 0.0;
   kb->side = 1;
 
-  if (bottle_type == KLEIN_BOTTLE_FIGURE_8)
+  if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8)
   {
     kb->offset4d[0] = 0.0;
     kb->offset4d[1] = 0.0;
@@ -1558,13 +1560,13 @@ static void init(ModeInfo *mi)
     kb->offset4d[3] = 1.5;
     kb->offset3d[0] = 0.0;
     kb->offset3d[1] = 0.0;
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
       kb->offset3d[2] = -2.1;
     else
       kb->offset3d[2] = -1.9;
     kb->offset3d[3] = 0.0;
   }
-  else if (bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+  else if (kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
   {
     kb->offset4d[0] = 0.0;
     kb->offset4d[1] = 0.0;
@@ -1575,19 +1577,19 @@ static void init(ModeInfo *mi)
     kb->offset3d[2] = -2.0;
     kb->offset3d[3] = 0.0;
   }
-  else /* bottle_type == KLEIN_BOTTLE_LAWSON */
+  else /* kb->bottle_type == KLEIN_BOTTLE_LAWSON */
   {
     kb->offset4d[0] = 0.0;
     kb->offset4d[1] = 0.0;
     kb->offset4d[2] = 0.0;
-    if (projection_4d == DISP_4D_PERSPECTIVE &&
-        projection_3d == DISP_3D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_PERSPECTIVE &&
+        kb->projection_3d == DISP_3D_ORTHOGRAPHIC)
       kb->offset4d[3] = 1.5;
     else
       kb->offset4d[3] = 1.1;
     kb->offset3d[0] = 0.0;
     kb->offset3d[1] = 0.0;
-    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    if (kb->projection_4d == DISP_4D_ORTHOGRAPHIC)
       kb->offset3d[2] = -2.0;
     else
       kb->offset3d[2] = -5.0;
@@ -1595,11 +1597,11 @@ static void init(ModeInfo *mi)
   }
 
   gen_texture(mi);
-  if (bottle_type == KLEIN_BOTTLE_FIGURE_8)
+  if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8)
     setup_figure8(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else if (bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+  else if (kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
     setup_squeezed_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else /* bottle_type == KLEIN_BOTTLE_LAWSON */
+  else /* kb->bottle_type == KLEIN_BOTTLE_LAWSON */
     setup_lawson(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
 
   if (marks)
@@ -1609,10 +1611,10 @@ static void init(ModeInfo *mi)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  if (projection_3d == DISP_3D_PERSPECTIVE ||
-      view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (kb->projection_3d == DISP_3D_PERSPECTIVE ||
+      kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
-    if (view == VIEW_WALK || view == VIEW_WALKTURN)
+    if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
       gluPerspective(60.0,1.0,0.01,10.0);
     else
       gluPerspective(60.0,1.0,0.1,10.0);
@@ -1625,11 +1627,11 @@ static void init(ModeInfo *mi)
   glLoadIdentity();
 
 # ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
-  if (display_mode == DISP_WIREFRAME)
-    display_mode = DISP_SURFACE;
+  if (kb->display_mode == DISP_WIREFRAME)
+    kb->display_mode = DISP_SURFACE;
 # endif
 
-  if (display_mode == DISP_SURFACE)
+  if (kb->display_mode == DISP_SURFACE)
   {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -1647,7 +1649,7 @@ static void init(ModeInfo *mi)
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
   }
-  else if (display_mode == DISP_TRANSPARENT)
+  else if (kb->display_mode == DISP_TRANSPARENT)
   {
     glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
@@ -1665,7 +1667,7 @@ static void init(ModeInfo *mi)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
   }
-  else  /* display_mode == DISP_WIREFRAME */
+  else  /* kb->display_mode == DISP_WIREFRAME */
   {
     glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_FLAT);
@@ -1684,7 +1686,7 @@ static void display_klein(ModeInfo *mi)
 
   if (!kb->button_pressed)
   {
-    if (view == VIEW_TURN)
+    if (kb->view == VIEW_TURN)
     {
       kb->alpha += speed_wx * kb->speed_scale;
       if (kb->alpha >= 360.0)
@@ -1705,7 +1707,7 @@ static void display_klein(ModeInfo *mi)
       if (kb->theta >= 360.0)
         kb->theta -= 360.0;
     }
-    if (view == VIEW_WALKTURN)
+    if (kb->view == VIEW_WALKTURN)
     {
       kb->zeta += speed_xy * kb->speed_scale;
       if (kb->zeta >= 360.0)
@@ -1717,7 +1719,7 @@ static void display_klein(ModeInfo *mi)
       if (kb->theta >= 360.0)
         kb->theta -= 360.0;
     }
-    if (view == VIEW_WALK || view == VIEW_WALKTURN)
+    if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
     {
       kb->dvmove = cos(walk_direction*M_PI/180.0)*walk_speed*M_PI/4096.0;
       kb->vmove += kb->dvmove;
@@ -1739,10 +1741,10 @@ static void display_klein(ModeInfo *mi)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  if (projection_3d == DISP_3D_PERSPECTIVE ||
-      view == VIEW_WALK || view == VIEW_WALKTURN)
+  if (kb->projection_3d == DISP_3D_PERSPECTIVE ||
+      kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
-    if (view == VIEW_WALK || view == VIEW_WALKTURN)
+    if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
       gluPerspective(60.0,kb->aspect,0.01,10.0);
     else
       gluPerspective(60.0,kb->aspect,0.1,10.0);
@@ -1757,11 +1759,11 @@ static void display_klein(ModeInfo *mi)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  if (bottle_type == KLEIN_BOTTLE_FIGURE_8)
+  if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8)
     mi->polygon_count = figure8(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else if (bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+  else if (kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
     mi->polygon_count = squeezed_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else /* bottle_type == KLEIN_BOTTLE_LAWSON */
+  else /* kb->bottle_type == KLEIN_BOTTLE_LAWSON */
     mi->polygon_count = lawson(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
 }
 
@@ -1855,13 +1857,7 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
 {
   kleinstruct *kb;
 
-  if (klein == NULL)
-  {
-    klein = (kleinstruct *)calloc(MI_NUM_SCREENS(mi),
-                                              sizeof(kleinstruct));
-    if (klein == NULL)
-      return;
-  }
+  MI_INIT(mi, klein, NULL);
   kb = &klein[MI_SCREEN(mi)];
 
   
@@ -1873,159 +1869,159 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
   /* Set the Klein bottle. */
   if (!strcasecmp(klein_bottle,"random"))
   {
-    bottle_type = random() % NUM_KLEIN_BOTTLES;
+    kb->bottle_type = random() % NUM_KLEIN_BOTTLES;
   }
   else if (!strcasecmp(klein_bottle,"figure-8"))
   {
-    bottle_type = KLEIN_BOTTLE_FIGURE_8;
+    kb->bottle_type = KLEIN_BOTTLE_FIGURE_8;
   }
   else if (!strcasecmp(klein_bottle,"squeezed-torus"))
   {
-    bottle_type = KLEIN_BOTTLE_SQUEEZED_TORUS;
+    kb->bottle_type = KLEIN_BOTTLE_SQUEEZED_TORUS;
   }
   else if (!strcasecmp(klein_bottle,"lawson"))
   {
-    bottle_type = KLEIN_BOTTLE_LAWSON;
+    kb->bottle_type = KLEIN_BOTTLE_LAWSON;
   }
   else
   {
-    bottle_type = random() % NUM_KLEIN_BOTTLES;
+    kb->bottle_type = random() % NUM_KLEIN_BOTTLES;
   }
 
   /* Set the display mode. */
   if (!strcasecmp(mode,"random"))
   {
-    display_mode = random() % NUM_DISPLAY_MODES;
+    kb->display_mode = random() % NUM_DISPLAY_MODES;
   }
   else if (!strcasecmp(mode,"wireframe"))
   {
-    display_mode = DISP_WIREFRAME;
+    kb->display_mode = DISP_WIREFRAME;
   }
   else if (!strcasecmp(mode,"surface"))
   {
-    display_mode = DISP_SURFACE;
+    kb->display_mode = DISP_SURFACE;
   }
   else if (!strcasecmp(mode,"transparent"))
   {
-    display_mode = DISP_TRANSPARENT;
+    kb->display_mode = DISP_TRANSPARENT;
   }
   else
   {
-    display_mode = random() % NUM_DISPLAY_MODES;
+    kb->display_mode = random() % NUM_DISPLAY_MODES;
   }
 
   /* Orientation marks don't make sense in wireframe mode. */
-  if (display_mode == DISP_WIREFRAME)
+  if (kb->display_mode == DISP_WIREFRAME)
     marks = False;
 
   /* Set the appearance. */
   if (!strcasecmp(appear,"random"))
   {
-    appearance = random() % NUM_APPEARANCES;
+    kb->appearance = random() % NUM_APPEARANCES;
   }
   else if (!strcasecmp(appear,"solid"))
   {
-    appearance = APPEARANCE_SOLID;
+    kb->appearance = APPEARANCE_SOLID;
   }
   else if (!strcasecmp(appear,"bands"))
   {
-    appearance = APPEARANCE_BANDS;
+    kb->appearance = APPEARANCE_BANDS;
   }
   else
   {
-    appearance = random() % NUM_APPEARANCES;
+    kb->appearance = random() % NUM_APPEARANCES;
   }
 
   /* Set the color mode. */
   if (!strcasecmp(color_mode,"random"))
   {
-    colors = random() % NUM_COLORS;
+    kb->colors = random() % NUM_COLORS;
   }
   else if (!strcasecmp(color_mode,"two-sided"))
   {
-    colors = COLORS_TWOSIDED;
+    kb->colors = COLORS_TWOSIDED;
   }
   else if (!strcasecmp(color_mode,"rainbow"))
   {
-    colors = COLORS_RAINBOW;
+    kb->colors = COLORS_RAINBOW;
   }
   else if (!strcasecmp(color_mode,"depth"))
   {
-    colors = COLORS_DEPTH;
+    kb->colors = COLORS_DEPTH;
   }
   else
   {
-    colors = random() % NUM_COLORS;
+    kb->colors = random() % NUM_COLORS;
   }
 
   /* Set the view mode. */
   if (!strcasecmp(view_mode,"random"))
   {
-    view = random() % NUM_VIEW_MODES;
+    kb->view = random() % NUM_VIEW_MODES;
   }
   else if (!strcasecmp(view_mode,"walk"))
   {
-    view = VIEW_WALK;
+    kb->view = VIEW_WALK;
   }
   else if (!strcasecmp(view_mode,"turn"))
   {
-    view = VIEW_TURN;
+    kb->view = VIEW_TURN;
   }
   else if (!strcasecmp(view_mode,"walk-turn"))
   {
-    view = VIEW_WALKTURN;
+    kb->view = VIEW_WALKTURN;
   }
   else
   {
-    view = random() % NUM_VIEW_MODES;
+    kb->view = random() % NUM_VIEW_MODES;
   }
 
   /* Set the 3d projection mode. */
   if (!strcasecmp(proj_3d,"random"))
   {
     /* Orthographic projection only makes sense in turn mode. */
-    if (view == VIEW_TURN)
-      projection_3d = random() % NUM_DISP_3D_MODES;
+    if (kb->view == VIEW_TURN)
+      kb->projection_3d = random() % NUM_DISP_3D_MODES;
     else
-      projection_3d = DISP_3D_PERSPECTIVE;
+      kb->projection_3d = DISP_3D_PERSPECTIVE;
   }
   else if (!strcasecmp(proj_3d,"perspective"))
   {
-    projection_3d = DISP_3D_PERSPECTIVE;
+    kb->projection_3d = DISP_3D_PERSPECTIVE;
   }
   else if (!strcasecmp(proj_3d,"orthographic"))
   {
-    projection_3d = DISP_3D_ORTHOGRAPHIC;
+    kb->projection_3d = DISP_3D_ORTHOGRAPHIC;
   }
   else
   {
     /* Orthographic projection only makes sense in turn mode. */
-    if (view == VIEW_TURN)
-      projection_3d = random() % NUM_DISP_3D_MODES;
+    if (kb->view == VIEW_TURN)
+      kb->projection_3d = random() % NUM_DISP_3D_MODES;
     else
-      projection_3d = DISP_3D_PERSPECTIVE;
+      kb->projection_3d = DISP_3D_PERSPECTIVE;
   }
 
   /* Set the 4d projection mode. */
   if (!strcasecmp(proj_4d,"random"))
   {
-    projection_4d = random() % NUM_DISP_4D_MODES;
+    kb->projection_4d = random() % NUM_DISP_4D_MODES;
   }
   else if (!strcasecmp(proj_4d,"perspective"))
   {
-    projection_4d = DISP_4D_PERSPECTIVE;
+    kb->projection_4d = DISP_4D_PERSPECTIVE;
   }
   else if (!strcasecmp(proj_4d,"orthographic"))
   {
-    projection_4d = DISP_4D_ORTHOGRAPHIC;
+    kb->projection_4d = DISP_4D_ORTHOGRAPHIC;
   }
   else
   {
-    projection_4d = random() % NUM_DISP_4D_MODES;
+    kb->projection_4d = random() % NUM_DISP_4D_MODES;
   }
 
   /* Modify the speeds to a useful range in walk-and-turn mode. */
-  if (view == VIEW_WALKTURN)
+  if (kb->view == VIEW_WALKTURN)
   {
     speed_wx *= 0.2;
     speed_wy *= 0.2;
@@ -2084,33 +2080,6 @@ ENTRYPOINT void draw_klein(ModeInfo *mi)
   glXSwapBuffers(display,window);
 }
 
-
-/*
- *-----------------------------------------------------------------------------
- *    The display is being taken away from us.  Free up malloc'ed 
- *      memory and X resources that we've alloc'ed.  Only called
- *      once, we must zap everything for every screen.
- *-----------------------------------------------------------------------------
- */
-
-ENTRYPOINT void release_klein(ModeInfo *mi)
-{
-  if (klein != NULL)
-  {
-    int screen;
-
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      kleinstruct *kb = &klein[screen];
-
-      if (kb->glx_context)
-        kb->glx_context = (GLXContext *)NULL;
-    }
-    (void) free((void *)klein);
-    klein = (kleinstruct *)NULL;
-  }
-  FreeAllGL(mi);
-}
 
 #ifndef STANDALONE
 ENTRYPOINT void change_klein(ModeInfo *mi)

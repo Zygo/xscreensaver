@@ -55,6 +55,7 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 
 #	define UNIFORM_COLORS
 #	define BRIGHT_COLORS
+#	define release_pacman 0
 #   define pacman_handle_event 0
 #	include "xlockmore.h"   /* in xscreensaver distribution */
 #   include <assert.h>
@@ -148,7 +149,7 @@ ModStruct pacman_description = {
     "pacman",                   /* *cmdline_arg; */
     "init_pacman",              /* *init_name; */
     "draw_pacman",              /* *callback_name; */
-    "release_pacman",           /* *release_name; */
+    (char *) NULL,              /* *release_name; */
     "refresh_pacman",           /* *refresh_name; */
     "change_pacman",            /* *change_name; */
     (char *) NULL,              /* *unused_name; */
@@ -166,8 +167,10 @@ static void drawlevel (ModeInfo * mi);
 
 
 static void
-free_pacman (Display * display, pacmangamestruct * pp)
+free_pacman (ModeInfo * mi)
 {
+    Display * display = MI_DISPLAY (mi);
+    pacmangamestruct * pp = &pacman_games[MI_SCREEN (mi)];
     int dir, mouth, i, j, k;
 
     if (pp->ghosts != NULL) {
@@ -1487,12 +1490,7 @@ init_pacman (ModeInfo * mi)
     int dir, mouth;
 #endif
 
-    if (pacman_games == NULL) {
-        if ((pacman_games = (pacmangamestruct *)
-             calloc ((size_t) MI_NUM_SCREENS (mi),
-                     sizeof (pacmangamestruct))) == NULL)
-            return;
-    }
+    MI_INIT (mi, pacman_games, free_pacman);
     pp = &pacman_games[MI_SCREEN (mi)];
 
     pp->width = (unsigned short) MI_WIDTH (mi);
@@ -1562,7 +1560,7 @@ init_pacman (ModeInfo * mi)
         if ((pp->stippledGC = XCreateGC (display, window,
                                          GCForeground | GCBackground,
                                          &gcv)) == None) {
-            free_pacman (display, pp);
+            free_pacman (mi);
             return;
         }
     }
@@ -1578,7 +1576,7 @@ init_pacman (ModeInfo * mi)
     if ((pp->ghostPixmap[0][0][0] = XCreatePixmap (display, window,
                                                    pp->spritexs, pp->spriteys,
                                                    1)) == None) {
-        free_pacman (display, pp);
+        free_pacman (mi);
         return;
     }
 
@@ -1586,7 +1584,7 @@ init_pacman (ModeInfo * mi)
     gcv.background = 1;
     if ((bg_gc = XCreateGC (display, pp->ghostPixmap[0][0][0],
                             GCForeground | GCBackground, &gcv)) == None) {
-        free_pacman (display, pp);
+        free_pacman (mi);
         return;
     }
 
@@ -1595,7 +1593,7 @@ init_pacman (ModeInfo * mi)
     if ((fg_gc = XCreateGC (display, pp->ghostPixmap[0][0][0],
                             GCForeground | GCBackground, &gcv)) == None) {
         XFreeGC (display, bg_gc);
-        free_pacman (display, pp);
+        free_pacman (mi);
         return;
     }
 
@@ -1633,7 +1631,7 @@ init_pacman (ModeInfo * mi)
             if ((pp->pacmanPixmap[dir][mouth] =
                  XCreatePixmap (display, MI_WINDOW (mi), pp->spritexs,
                                 pp->spriteys, 1)) == None) {
-                free_pacman (display, pp);
+                free_pacman (mi);
                 return;
             }
             gcv.foreground = 1;
@@ -1641,7 +1639,7 @@ init_pacman (ModeInfo * mi)
             if ((fg_gc = XCreateGC (display, pp->pacmanPixmap[dir][mouth],
                                     GCForeground | GCBackground,
                                     &gcv)) == None) {
-                free_pacman (display, pp);
+                free_pacman (mi);
                 return;
             }
             gcv.foreground = 0;
@@ -1651,7 +1649,7 @@ init_pacman (ModeInfo * mi)
                                     GCForeground |
                                     GCBackground, &gcv)) == None) {
                 XFreeGC (display, fg_gc);
-                free_pacman (display, pp);
+                free_pacman (mi);
                 return;
             }
             XFillRectangle (display,
@@ -1688,7 +1686,7 @@ init_pacman (ModeInfo * mi)
         if ((pp->ghosts = (ghoststruct *) calloc ((size_t) pp->nghosts,
                                                   sizeof (ghoststruct))) ==
             NULL) {
-            free_pacman (display, pp);
+            free_pacman (mi);
             return;
         }
 
@@ -1748,20 +1746,6 @@ draw_pacman (ModeInfo * mi)
             pp->ghosts[g].delta.y = pp->ys + pp->incy;
     }
     pacman_tick (mi);
-}
-
-/* Releases resources. */
-ENTRYPOINT void
-release_pacman (ModeInfo * mi)
-{
-    if (pacman_games != NULL) {
-        int screen;
-
-        for (screen = 0; screen < MI_NUM_SCREENS (mi); screen++)
-            free_pacman (MI_DISPLAY (mi), &pacman_games[screen]);
-        free (pacman_games);
-        pacman_games = (pacmangamestruct *) NULL;
-    }
 }
 
 /* Refresh current level. */

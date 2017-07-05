@@ -161,17 +161,15 @@ typedef struct analogtv_s {
   int fakeit_scroll;
   int redraw_all;
 
-  int use_shm,use_cmap,use_color;
+  int use_cmap,use_color;
   int bilevel_signal;
 
-#ifdef HAVE_XSHM_EXTENSION
   XShmSegmentInfo shm_info;
-#endif
   int visdepth,visclass,visbits;
   int red_invprec, red_shift;
   int green_invprec, green_shift;
   int blue_invprec, blue_shift;
-  unsigned int red_mask, green_mask, blue_mask;
+  unsigned long red_mask, green_mask, blue_mask;
 
   Colormap colormap;
   int usewidth,useheight,xrepl,subwidth;

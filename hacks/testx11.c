@@ -1,4 +1,4 @@
-/* testx11.c, Copyright (c) 2015-2016 Dave Odell <dmo2118@gmail.com>
+/* testx11.c, Copyright (c) 2015-2017 Dave Odell <dmo2118@gmail.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -311,7 +311,7 @@ testx11_init (Display *dpy, Window win)
 
   st->copy_pix64 = XCreatePixmap(dpy, win, 64, 64, st->xgwa.depth);
 
-  st->primitives_mini_pix = XCreatePixmap (dpy, win, 16, 16, st->xgwa.depth);
+  st->primitives_mini_pix = XCreatePixmap (dpy, win, 16, 24, st->xgwa.depth);
 
   {
     static const char text[] = "Welcome from testx11_init().";
@@ -690,6 +690,7 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
     /* Box 2 */
     {
       XImage *image = XGetImage(st->dpy, t, 55, 55, 15, 15, 0xffffff, ZPixmap);
+      XPutPixel(image, 2, 0, 0x00000000);
       XPutImage (dpy, t, st->copy_gc, image, 0, 0, 88, 55, 15, 15);
       XDestroyImage(image);
     }
@@ -709,6 +710,7 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
       XDrawPoint (dpy, t, st->copy_gc, 104 + 8, 55 + 8);
 
       XDrawPoint (dpy, st->primitives_mini_pix, st->copy_gc, 0, 0);
+      XDrawPoint (dpy, st->primitives_mini_pix, st->copy_gc, 1, 0);
       XDrawPoint (dpy, st->primitives_mini_pix, st->copy_gc, 15, 15);
       XDrawRectangle (dpy, st->primitives_mini_pix, st->copy_gc,
                       1, 1, 13, 13);

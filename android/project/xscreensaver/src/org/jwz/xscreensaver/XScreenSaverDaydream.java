@@ -43,7 +43,6 @@ public class XScreenSaverDaydream extends DreamService
              Handler.Callback {
 
   private GLSurfaceView glview;
-  private int api;
   XScreenSaverRenderer renderer;
   private GestureDetector detector;
   boolean button_down_p;
@@ -55,9 +54,8 @@ public class XScreenSaverDaydream extends DreamService
            String.format (fmt, args));
   }
 
-  protected XScreenSaverDaydream (int api) {
+  protected XScreenSaverDaydream () {
     super();
-    this.api = api;
   }
 
   // Called when jwxyz_abort() is called, or other exceptions are thrown.
@@ -104,23 +102,11 @@ public class XScreenSaverDaydream extends DreamService
     setFullscreen (true);
     saveScreenshot();
 
-    // Extract the saver name from e.g. "BouncingCowDaydream"
-    String name = this.getClass().getSimpleName();
-    int index = name.lastIndexOf('$');
-    if (index != -1) {
-      index++;
-      name = name.substring (index, name.length() - index);
-    }
-    name = name.toLowerCase();
-
-    WindowManager wm = (WindowManager) getSystemService (WINDOW_SERVICE);
     glview = new GLSurfaceView (this);
     renderer =
-      new XScreenSaverRenderer (name, api, getApplicationContext(), wm,
-                                screenshot, this, glview);
-    glview.setEGLConfigChooser (8, 8, 8, 8, 16, 0);
-    glview.setRenderer (renderer);
-    glview.setRenderMode (GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+      new XScreenSaverRenderer (XScreenSaverRenderer.saverNameOf (this),
+                                getApplicationContext(), screenshot,
+                                this, glview);
     setContentView (glview);
 
     detector = new GestureDetector (this, this);

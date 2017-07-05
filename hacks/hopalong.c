@@ -61,6 +61,7 @@ static const char sccsid[] = "@(#)hop.c	5.00 2000/11/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define reshape_hop 0
+# define release_hop 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
 #else /* STANDALONE */
@@ -152,7 +153,7 @@ ENTRYPOINT ModeSpecOpt hop_opts =
 
 #ifdef USE_MODULES
 ModStruct   hop_description =
-{"hop", "init_hop", "draw_hop", "release_hop",
+{"hop", "init_hop", "draw_hop", (char *) NULL,
  "refresh_hop", "init_hop", (char *) NULL, &hop_opts,
  10000, 1000, 2500, 1, 64, 1.0, "",
  "Shows real plane iterated fractals", 0, NULL};
@@ -193,6 +194,8 @@ typedef struct {
 
 static hopstruct *hops = (hopstruct *) NULL;
 
+static void free_hop(ModeInfo * mi);
+
 ENTRYPOINT void
 init_hop(ModeInfo * mi)
 {
@@ -201,11 +204,7 @@ init_hop(ModeInfo * mi)
 	double      range;
 	hopstruct  *hp;
 
-	if (hops == NULL) {
-		if ((hops = (hopstruct *) calloc(MI_NUM_SCREENS(mi),
-						 sizeof (hopstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, hops, free_hop);
 	hp = &hops[MI_SCREEN(mi)];
 
 	hp->centerx = MI_WIDTH(mi) / 2;
@@ -412,6 +411,8 @@ draw_hop(ModeInfo * mi)
 #ifdef STANDALONE
     if (hp->eraser) {
       hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
+      if (!hp->eraser)
+        init_hop(mi);
       return;
     }
 #endif
@@ -546,26 +547,19 @@ draw_hop(ModeInfo * mi)
 	if (++hp->count > MI_CYCLES(mi)) {
 #ifdef STANDALONE
       hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
-#endif /* STANDALONE */
+#else /* !STANDALONE */
 		init_hop(mi);
+#endif
 	}
 }
 
-ENTRYPOINT void
-release_hop(ModeInfo * mi)
+static void
+free_hop(ModeInfo * mi)
 {
-	if (hops != NULL) {
-		int         screen;
+	hopstruct  *hp = &hops[MI_SCREEN(mi)];
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			hopstruct  *hp = &hops[screen];
-
-			if (hp->pointBuffer != NULL)
-				(void) free((void *) hp->pointBuffer);
-		}
-		(void) free((void *) hops);
-		hops = (hopstruct *) NULL;
-	}
+	if (hp->pointBuffer != NULL)
+		(void) free((void *) hp->pointBuffer);
 }
 
 ENTRYPOINT void

@@ -11,6 +11,7 @@
 		    "*wireframe:    False       \n" \
 
 # define refresh_crackberg 0
+# define release_crackberg 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -1166,23 +1167,19 @@ static inline double drunken_rando(double cur_val, double max, double width)
  ** */
 
 ENTRYPOINT void reshape_crackberg (ModeInfo *mi, int w, int h);
+static void free_crackberg (ModeInfo *mi);
 
 ENTRYPOINT void init_crackberg (ModeInfo *mi)
 {
     cberg_state *cberg;
 
-    if (!cbergs) {
-        nsubdivs %= 16; /* just in case.. */
+    nsubdivs %= 16; /* just in case.. */
 
-        if ( !(cbergs = calloc(MI_NUM_SCREENS(mi), sizeof(cberg_state)))) {
-            perror(progname);
-            exit(1);
-        }
+    MI_INIT(mi, cbergs, free_crackberg);
 
-        if (visibility > 1.0 || visibility < 0.2) {
-            printf("visibility must be in range [0.2 .. 1.0]\n");
-            visibility = 1.0;
-        }
+    if (visibility > 1.0 || visibility < 0.2) {
+        printf("visibility must be in range [0.2 .. 1.0]\n");
+        visibility = 1.0;
     }
 
     cberg = &cbergs[MI_SCREEN(mi)];
@@ -1460,19 +1457,12 @@ ENTRYPOINT void draw_crackberg (ModeInfo *mi)
 }
 
 /* uh */
-ENTRYPOINT void release_crackberg (ModeInfo *mi)
+static void free_crackberg (ModeInfo *mi)
 {
-  if (cbergs) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      cberg_state *cberg = &cbergs[screen];
-      if (cberg->norms)
-        free(cberg->norms);
-      free(cberg->heights);
-    }
-    free (cbergs);
-    cbergs = 0;
-  }
+  cberg_state *cberg = &cbergs[MI_SCREEN(mi)];
+  if (cberg->norms)
+    free(cberg->norms);
+  free(cberg->heights);
 }
 
 XSCREENSAVER_MODULE ("Crackberg", crackberg)

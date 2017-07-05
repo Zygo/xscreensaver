@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.36
-!                              10-Oct-2016
+!                              version 5.37
+!                              05-Jul-2017
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -380,7 +380,8 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				hydrostat -root				    \n\
 @GL_KLUDGE@ GL: 				raverhoop -root				    \n\
 @GL_KLUDGE@ GL: 				splodesic -root				    \n\
-@GL_KLUDGE@ GL: 				unicrud -root				    \n
+@GL_KLUDGE@ GL: 				unicrud -root				    \n\
+@GL_KLUDGE@ GL: 				vigilance -root				    \n
 
 
 
@@ -439,7 +440,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.uname:                  True
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright \251 1991-2016 by
+*splash.body.label:		Copyright \251 1991-2017 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help

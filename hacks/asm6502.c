@@ -29,7 +29,14 @@
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
-#include <inttypes.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+#if defined(HAVE_STDINT_H)
+# include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+# include <inttypes.h>
+#endif
 #include <unistd.h>
 
 #include "yarandom.h"

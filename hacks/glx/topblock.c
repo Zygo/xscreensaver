@@ -29,6 +29,7 @@ History
 #include <math.h>
 
 # define refresh_topBlock 0
+# define release_topBlock 0
 
 #define DEFAULTS	"*delay:	10000       \n" \
 			"*count:        30           \n" \
@@ -55,6 +56,10 @@ typedef struct
 {
   GLXContext *glx_context;
   trackball_state *trackball;
+  GLfloat rotateSpeed;
+  GLfloat dropSpeed;
+  int maxFalling;
+  int resolution;
   Bool button_down_p;
   int numFallingBlocks;
   GLfloat highest,highestFalling;
@@ -164,8 +169,8 @@ reshape_topBlock (ModeInfo *mi, int width, int height)
 }
 
 /* clean up on exit, not required ... */
-ENTRYPOINT void
-release_topBlock(ModeInfo *mi)
+static void
+free_topBlock(ModeInfo *mi)
 {
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
 	NODE *llCurrent, *llOld;
@@ -184,11 +189,7 @@ init_topBlock (ModeInfo *mi)
   topBlockSTATE *tb;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!tbs) {
-    tbs = (topBlockSTATE *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (topBlockSTATE));
-    if (!tbs) abort();
-  }
+  MI_INIT (mi, tbs, free_topBlock);
 
   tb = &tbs[MI_SCREEN(mi)];
 
@@ -204,27 +205,31 @@ init_topBlock (ModeInfo *mi)
 	tb->carpetWidth = 8 * size;
 	tb->carpetLength = tb->carpetWidth;
   
-  maxFalling*=size;
+  tb->maxFalling = maxFalling;
+  tb->maxFalling*=size;
 
 	if (spawn<4) { spawn=4; }
 	if (spawn>1000) { spawn=1000; }
 
-	if (rotateSpeed<1) {rotateSpeed=1; }
-	if (rotateSpeed>1000) {rotateSpeed=1000;}
-  rotateSpeed /= 100;
+	tb->rotateSpeed = rotateSpeed;
+	if (tb->rotateSpeed<1) {tb->rotateSpeed=1; }
+	if (tb->rotateSpeed>1000) {tb->rotateSpeed=1000;}
+  tb->rotateSpeed /= 100;
 
-	if (resolution<4) {resolution=4;}
-	if (resolution>20) {resolution=20;}
-  resolution*=2;
+	tb->resolution = resolution;
+	if (tb->resolution<4) {tb->resolution=4;}
+	if (tb->resolution>20) {tb->resolution=20;}
+  tb->resolution*=2;
 
 	if (maxColors<1) {maxColors=1;}
 	if (maxColors>8) {maxColors=8;}
 
-	if (dropSpeed<1) {dropSpeed=1;}
-	if (dropSpeed>9) {dropSpeed=9;} /* 10+ produces blocks that can pass through each other */
+	tb->dropSpeed = dropSpeed;
+	if (tb->dropSpeed<1) {tb->dropSpeed=1;}
+	if (tb->dropSpeed>9) {tb->dropSpeed=9;} /* 10+ produces blocks that can pass through each other */
   
-	dropSpeed = 80/dropSpeed;
-	dropSpeed = (blockHeight/dropSpeed); 
+	tb->dropSpeed = 80/tb->dropSpeed;
+	tb->dropSpeed = (blockHeight/tb->dropSpeed);
 
   reshape_topBlock (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   glClearDepth(1.0f);
@@ -303,7 +308,7 @@ draw_topBlock (ModeInfo *mi)
 
 	generateNewBlock(mi);
 
-	if (rotate && (!tb->button_down_p)) { tb->rotation += rotateSpeed; } 
+	if (rotate && (!tb->button_down_p)) { tb->rotation += tb->rotateSpeed; }
 	if (tb->rotation>=360) { tb->rotation=tb->rotation-360; } 
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		/* clear current */
@@ -409,7 +414,7 @@ draw_topBlock (ModeInfo *mi)
 	    spcN2y = 0;
 			if (llCurrent->height>tb->highestFalling) {tb->highestFalling=llCurrent->height;}
 			/* all blocks fall at the same rate to avoid mid air collisions */
-			llCurrent->height-=dropSpeed;
+			llCurrent->height-=tb->dropSpeed;
 			if (llCurrent->height<=0) {
 				llCurrent->falling=0;
 				if (tb->highest==0) { 
@@ -498,7 +503,7 @@ draw_topBlock (ModeInfo *mi)
   if (mi->fps_p) do_fps (mi);
   glFinish();
 
-	if (tb->highest>(5*maxFalling)) { drawCarpet=False; }
+	if (tb->highest>(5*tb->maxFalling)) { drawCarpet=False; }
   glXSwapBuffers(dpy, window);
 }
 
@@ -584,7 +589,7 @@ static void generateNewBlock(ModeInfo *mi)
                   llTail = llCurrent;
                   tb->blockNodeRoot = llCurrent; 
 		} else {
-			if (tb->numFallingBlocks>=maxFalling) {
+			if (tb->numFallingBlocks>=tb->maxFalling) {
 				/* recycle */
 				llCurrent=llTail->next;
 				tb->blockNodeRoot=llCurrent->next;
@@ -622,7 +627,7 @@ static void generateNewBlock(ModeInfo *mi)
 		llCurrent->y=(startOffy-(tb->carpetLength/2)) + getLocation(random() % ((tb->carpetLength/2)+endOffy) );
 		llCurrent->color=(random() % maxColors);
 		llCurrent->height=getHeight(tb->plusheight+tb->highest); 
-		if (tb->numFallingBlocks>=maxFalling) {
+		if (tb->numFallingBlocks>=tb->maxFalling) {
 			tb->numFallingBlocks--;
 			tb->numFallingBlocks--;
 		} 
@@ -702,7 +707,7 @@ static void buildCarpet(ModeInfo *mi)
                           tb->carpet_polys += tube(0, 0, -0.1,
                                                    0, 0, 0.26,
                                                    cylSize, 0,
-                                                   resolution, True, True,
+                                                   tb->resolution, True, True,
                                                    wire);
                           glRotatef(180, 0.0f, 1.0f, 0.0f); /* they are upside down */
                           glRotatef(180, 0.0f, 1.0f, 0.0f); /* recover */
@@ -758,7 +763,7 @@ static void buildBlock(ModeInfo *mi)
                           tb->block_polys += tube(0, 0, 0,
                                                   0, 0, 0.25,
                                                   cylSize, 0,
-                                                  resolution, True, True, 
+                                                  tb->resolution, True, True,
                                                   wire);
 				glTranslatef(0.0f,0.0f,0.25f);			/* move to the cylinder cap  */
 				glTranslatef(0.0f,0.0f,-0.25f);			/* move back from the cylinder cap  */
@@ -778,7 +783,7 @@ static void buildBlock(ModeInfo *mi)
                   tb->block_polys += tube(0, 0, 0.1,
                                           0, 0, 1.4,
                                           uddSize, 0,
-                                          resolution, True, True, wire);
+                                          tb->resolution, True, True, wire);
                   glTranslatef(0.0f,-1.0f,0.0f);		/* move to the center */	
 		}
 	}
@@ -798,11 +803,11 @@ static void buildBlobBlock(ModeInfo *mi)
 	glNewList(tb->block,GL_COMPILE);
 	glPushMatrix();
   glScalef(1.4,1.4,1.4);
-  unit_sphere (resolution/2,resolution, wire);
+  unit_sphere (tb->resolution/2,tb->resolution, wire);
   glPopMatrix();
   glTranslatef(0.0f,-2.0f,0.0f);
   glScalef(1.4,1.4,1.4);
-  unit_sphere (resolution/2,resolution, wire);
+  unit_sphere (tb->resolution/2,tb->resolution, wire);
 	glEndList();	
 }
 

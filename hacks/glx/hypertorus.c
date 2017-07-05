@@ -90,6 +90,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 			    "*suppressRotationAnimation: True\n" \
 
 # define refresh_hypertorus 0
+# define release_hypertorus 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"             /* from the xlockmore distribution */
@@ -102,7 +103,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 
 #ifdef USE_MODULES
 ModStruct   hypertorus_description =
-{"hypertorus", "init_hypertorus", "draw_hypertorus", "release_hypertorus",
+{"hypertorus", "init_hypertorus", "draw_hypertorus", NULL,
  "draw_hypertorus", "change_hypertorus", NULL, &hypertorus_opts,
  25000, 1, 1, 1, 1.0, 4, "",
  "Shows a hypertorus rotating in 4d", 0, NULL};
@@ -829,13 +830,7 @@ ENTRYPOINT void init_hypertorus(ModeInfo *mi)
 {
   hypertorusstruct *hp;
 
-  if (hyper == NULL)
-  {
-    hyper = (hypertorusstruct *)calloc(MI_NUM_SCREENS(mi),
-                                       sizeof(hypertorusstruct));
-    if (hyper == NULL)
-      return;
-  }
+  MI_INIT(mi, hyper, NULL);
   hp = &hyper[MI_SCREEN(mi)];
 
   
@@ -994,33 +989,6 @@ ENTRYPOINT void draw_hypertorus(ModeInfo *mi)
   glXSwapBuffers(display,window);
 }
 
-
-/*
- *-----------------------------------------------------------------------------
- *    The display is being taken away from us.  Free up malloc'ed 
- *      memory and X resources that we've alloc'ed.  Only called
- *      once, we must zap everything for every screen.
- *-----------------------------------------------------------------------------
- */
-
-ENTRYPOINT void release_hypertorus(ModeInfo *mi)
-{
-  if (hyper != NULL)
-  {
-    int screen;
-
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      hypertorusstruct *hp = &hyper[screen];
-
-      if (hp->glx_context)
-        hp->glx_context = (GLXContext *)NULL;
-    }
-    (void) free((void *)hyper);
-    hyper = (hypertorusstruct *)NULL;
-  }
-  FreeAllGL(mi);
-}
 
 #ifndef STANDALONE
 ENTRYPOINT void change_hypertorus(ModeInfo *mi)

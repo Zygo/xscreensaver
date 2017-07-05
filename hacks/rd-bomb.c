@@ -20,10 +20,7 @@
 #include <math.h>
 
 #include "screenhack.h"
-
-#ifdef HAVE_XSHM_EXTENSION
-# include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
+#include "xshm.h"
 
 /* costs ~6% speed */
 #define dither_when_mapped 1
@@ -52,10 +49,7 @@ struct state {
   char *pd;
   int array_width, array_height;
 
-#ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm;
   XShmSegmentInfo shm_info;
-#endif
 
   GC gc;
   XImage *image;
@@ -379,10 +373,6 @@ rd_init (Display *dpy, Window win)
 
   st->delay = get_integer_resource (st->dpy, "delay", "Float");
 
-#ifdef HAVE_XSHM_EXTENSION
-  st->use_shm = get_boolean_resource(st->dpy, "useSHM", "Boolean");
-#endif
-
   XGetWindowAttributes (st->dpy, win, &st->xgwa);
   st->visual = st->xgwa.visual;
   pixack_init(st, &st->width, &st->height);
@@ -485,35 +475,9 @@ rd_init (Display *dpy, Window win)
     }
   }
 
-  st->pd = malloc(st->npix * (st->pdepth == 1 ? 1 : (st->pdepth / 8)));
-  if (!st->pd) {
-    fprintf(stderr, "not enough memory for %d pixels.\n", st->npix);
-    exit(1);
-  }
-
-  st->image = 0;
-
-#ifdef HAVE_XSHM_EXTENSION
-  if (st->use_shm)
-    {
-      st->image = create_xshm_image(st->dpy, st->xgwa.visual, vdepth,
-				ZPixmap, 0, &st->shm_info, st->width, st->height);
-      if (!st->image)
-	st->use_shm = False;
-      else
-	{
-	  free(st->pd);
-	  st->pd = st->image->data;
-	}
-    }
-#endif /* HAVE_XSHM_EXTENSION */
-
-  if (!st->image)
-    {
-      st->image = XCreateImage(st->dpy, st->xgwa.visual, vdepth,
-			   ZPixmap, 0, st->pd,
-			   st->width, st->height, 8, 0);
-    }
+  st->image = create_xshm_image(st->dpy, st->xgwa.visual, vdepth,
+                                ZPixmap, &st->shm_info, st->width, st->height);
+  st->pd = st->image->data;
 
   return st;
 }
@@ -528,14 +492,8 @@ rd_draw (Display *dpy, Window win, void *closure)
   pixack_frame(st, st->pd);
   for (i = 0; i < st->array_width; i += st->width)
     for (j = 0; j < st->array_height; j += st->height)
-#ifdef HAVE_XSHM_EXTENSION
-      if (st->use_shm)
-        XShmPutImage(st->dpy, st->window, st->gc, st->image, 0, 0, i+st->array_x, j+st->array_y,
-                     st->width, st->height, False);
-      else
-#endif
-        XPutImage(st->dpy, win, st->gc, st->image, 0, 0, i+st->array_x, j+st->array_y,
-                  st->width, st->height);
+      put_xshm_image(st->dpy, st->window, st->gc, st->image, 0, 0, i+st->array_x, j+st->array_y,
+                     st->width, st->height, &st->shm_info);
 
   st->array_x += st->array_dx;
   st->array_y += st->array_dy;

@@ -1031,14 +1031,7 @@ init_tunnel (ModeInfo *mi)
   wire = 0;
 # endif
 
-  if (!tconf) {
-    tconf = (tunnel_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (tunnel_configuration));
-    if (!tconf) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, tconf, NULL);
 
   tc = &tconf[MI_SCREEN(mi)];
 

@@ -44,6 +44,7 @@ static const char sccsid[] = "@(#)atunnel.c	5.13 2004/05/25 xlockmore";
 								"*suppressRotationAnimation: True\n" \
 
 # define refresh_atunnel 0
+# define release_atunnel 0
 # define atunnel_handle_event 0
 #define MODE_atunnel
 # include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -118,7 +119,7 @@ ENTRYPOINT ModeSpecOpt atunnel_opts = {countof(opts), opts, countof(vars), vars,
 
 #ifdef USE_MODULES
 ModStruct   atunnel_description =
-{"atunnel", "init_atunnel", "draw_atunnel", "release_atunnel",
+{"atunnel", "init_atunnel", "draw_atunnel", NULL,
  "draw_atunnel", "init_atunnel", NULL, &atunnel_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL advanced tunnel screensaver", 0, NULL};
@@ -287,16 +288,15 @@ ENTRYPOINT void draw_atunnel(ModeInfo * mi)
 }
 
 
+static void free_atunnel(ModeInfo * mi);
+
 /* xscreensaver initialization routine */
 ENTRYPOINT void init_atunnel(ModeInfo * mi)
 {
   int screen = MI_SCREEN(mi);
   atunnelstruct *sa;
 
-  if (Atunnel == NULL) {
-	if ((Atunnel = (atunnelstruct *) calloc(MI_NUM_SCREENS(mi), sizeof (atunnelstruct))) == NULL)
-	  return;
-  }
+  MI_INIT(mi, Atunnel, free_atunnel);
   sa = &Atunnel[screen];
 
   sa->window = MI_WINDOW(mi);
@@ -310,19 +310,11 @@ ENTRYPOINT void init_atunnel(ModeInfo * mi)
 }
 
 /* all sorts of nice cleanup code should go here! */
-ENTRYPOINT void release_atunnel(ModeInfo * mi)
+static void free_atunnel(ModeInfo * mi)
 {
 #if 0
-  int screen;
-  if (Atunnel != NULL) {
-	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      atunnelstruct *sa = &Atunnel[screen];
-      FreeTunnel(sa->ts);
-	}
-	(void) free((void *) Atunnel);
-	Atunnel = NULL;
-  }
-  FreeAllGL(mi);
+  atunnelstruct *sa = &Atunnel[MI_SCREEN(mi)];
+  FreeTunnel(sa->ts);
 #endif
 }
 

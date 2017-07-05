@@ -681,11 +681,7 @@ init_lisa (ModeInfo * mi)
 	int         lctr;
 	lisacons   *lc;
 
-	if (Lisa == NULL) {
-		if ((Lisa = (lisacons *) calloc(MI_NUM_SCREENS(mi),
-				 sizeof (lisacons))) == NULL)
-			return;
-	}
+	MI_INIT (mi, Lisa, 0);
 	lc = &Lisa[MI_SCREEN(mi)];
 	lc->width = MI_WIDTH(mi);
 	lc->height = MI_HEIGHT(mi);

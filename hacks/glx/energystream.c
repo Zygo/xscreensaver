@@ -18,6 +18,7 @@
       "*wireframe:    False       \n" \
 
 # define refresh_stream 0
+# define release_stream 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -307,22 +308,15 @@ static void render_flare_stream (flare_stream *s, float cur_time, Vector *vx, Ve
   glEnd ();
 }
 
+static void free_stream (ModeInfo * mi);
+
 ENTRYPOINT void
 init_stream (ModeInfo *mi)
 {
   stream_configuration *es;
   streamtime current_time;
 
-  if (!ess)
-  {
-    ess = (stream_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (stream_configuration));
-    if (!ess)
-    {
-      fprintf (stderr, "%s: out of memory\n", progname);
-      exit (1);
-    }
-  }
+  MI_INIT (mi, ess, free_stream);
 
   es = &ess[MI_SCREEN(mi)];
 
@@ -370,15 +364,14 @@ init_stream (ModeInfo *mi)
   }
 }
 
-ENTRYPOINT void
-release_stream (ModeInfo * mi)
+static void
+free_stream (ModeInfo * mi)
 {
-  int screen;
+  stream_configuration *es = &ess[MI_SCREEN(mi)];
+  int i;
 
-  for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-  {
-    stream_configuration *es = &ess[screen];
-    int i;
+  if (es->glx_context) {
+    glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *(es->glx_context));
 
     for (i = 0; i < es->num_streams; i++) {
       free (es->streams[i].flares);
@@ -387,8 +380,6 @@ release_stream (ModeInfo * mi)
 
     free (es->streams);
   }
-
-  FreeAllGL (mi);
 }
 
 

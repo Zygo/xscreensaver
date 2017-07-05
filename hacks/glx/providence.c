@@ -20,6 +20,7 @@
 			    "*wireframe: False \n"
 
 # define refresh_providence 0
+# define release_providence 0
 #include "xlockmore.h"
 #else
 #include "xlock.h"
@@ -53,7 +54,7 @@ ENTRYPOINT ModeSpecOpt providence_opts = {
 #ifdef USE_MODULES
 ModStruct   providence_description = {
   "providence", "init_providence", "draw_providence", 
-  "release_providence", "draw_providence", "change_providence", 
+  (char *) NULL, "draw_providence", "change_providence", 
   (char *) NULL, &providence_opts, 1000, 1, 1, 1, 4, 1.0, "",
   "draws pyramid with glory", 0, NULL
 };
@@ -625,18 +626,6 @@ static void pinit(providencestruct *mp)
   glEndList();
 }
 
-/* cleanup routine */
-ENTRYPOINT void release_providence(ModeInfo * mi) 
-{
-
-  if(providence) {
-    free((void *) providence);
-    providence = (providencestruct *) NULL;
-  }
-
-  FreeAllGL(mi);
-}
-
 /* event handling */
 ENTRYPOINT Bool providence_handle_event(ModeInfo *mi, XEvent *event) 
 {
@@ -671,11 +660,7 @@ ENTRYPOINT void init_providence(ModeInfo *mi)
 {
   providencestruct *mp;
   
-  if(!providence) {
-    if((providence = (providencestruct *) 
-	calloc(MI_NUM_SCREENS(mi), sizeof (providencestruct))) == NULL)
-      return;
-  }
+  MI_INIT(mi, providence, NULL);
   mp = &providence[MI_SCREEN(mi)];
   mp->trackball = gltrackball_init (False);
 

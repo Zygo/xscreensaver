@@ -67,7 +67,7 @@ ENTRYPOINT ModeSpecOpt queens_opts = {countof(opts), opts, countof(vars), vars, 
 
 #ifdef USE_MODULES
 ModStruct   queens_description =
-{"queens", "init_queens", "draw_queens", "release_queens",
+{"queens", "init_queens", "draw_queens", NULL,
  "draw_queens", "init_queens", NULL, &queens_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "Queens", 0, NULL};
@@ -537,9 +537,7 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
   wire = 0;
 # endif
 
-  if(!qss && 
-     !(qss = (Queenscreen *) calloc(MI_NUM_SCREENS(mi), sizeof(Queenscreen))))
-    return;
+  MI_INIT (mi, qss, NULL);
   
   qs = &qss[screen];
   qs->window = MI_WINDOW(mi);

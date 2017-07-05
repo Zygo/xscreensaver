@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -64,6 +64,7 @@
 #include "images/atari.xbm"
 #include "images/mac.xbm"
 #include "images/macbomb.xbm"
+#include "images/apple.xbm"
 #include "images/atm.xbm"
 
 #undef countof
@@ -79,7 +80,7 @@ typedef enum { EOF=0,
                LEFT, CENTER, RIGHT, 
                LEFT_FULL, CENTER_FULL, RIGHT_FULL, 
                COLOR, INVERT, MOVETO, MARGINS,
-               CURSOR_BLOCK, CURSOR_LINE, RECT, COPY, PIXMAP, IMG, FONT,
+               CURSOR_BLOCK, CURSOR_LINE, RECT, LINE, COPY, PIXMAP, IMG, FONT,
                PAUSE, CHAR_DELAY, LINE_DELAY,
                LOOP, RESET
 } bsod_event_type;
@@ -231,6 +232,19 @@ struct bsod_state {
   (bst)->queue[(bst)->pos].arg3 = (void *) ((long) (y)); \
   (bst)->queue[(bst)->pos].arg4 = (void *) ((long) (w)); \
   (bst)->queue[(bst)->pos].arg5 = (void *) ((long) (h)); \
+  (bst)->pos++; \
+  } while (0)
+
+/* Draw a line.
+ */
+#define BSOD_LINE(bst,x,y,x2,y2,thick) do { \
+  ensure_queue (bst); \
+  (bst)->queue[(bst)->pos].type = LINE; \
+  (bst)->queue[(bst)->pos].arg1 = (void *) ((long) (x)); \
+  (bst)->queue[(bst)->pos].arg2 = (void *) ((long) (y)); \
+  (bst)->queue[(bst)->pos].arg3 = (void *) ((long) (x2)); \
+  (bst)->queue[(bst)->pos].arg4 = (void *) ((long) (y2)); \
+  (bst)->queue[(bst)->pos].arg5 = (void *) ((long) (thick)); \
   (bst)->pos++; \
   } while (0)
 
@@ -529,6 +543,20 @@ bsod_pop (struct bsod_state *bst)
         XFillRectangle (bst->dpy, bst->window, bst->gc, x, y, w, h);
       else
         XDrawRectangle (bst->dpy, bst->window, bst->gc, x, y, w, h);
+      bst->pos++;
+      return 0;
+    }
+  case LINE:
+    {
+      int x1 = (long) bst->queue[bst->pos].arg1;
+      int y1 = (long) bst->queue[bst->pos].arg2;
+      int x2 = (long) bst->queue[bst->pos].arg3;
+      int y2 = (long) bst->queue[bst->pos].arg4;
+      int t  = (long) bst->queue[bst->pos].arg5;
+      XGCValues gcv;
+      gcv.line_width = t;
+      XChangeGC (bst->dpy, bst->gc, GCLineWidth, &gcv);
+      XDrawLine (bst->dpy, bst->window, bst->gc, x1, y1, x2, y2);
       bst->pos++;
       return 0;
     }
@@ -870,6 +898,64 @@ windows_31 (Display *dpy, Window window)
   XClearWindow (dpy, window);
   return bst;
 }
+
+static struct bsod_state *
+vmware (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "vmware", "VMware");
+
+  unsigned long fg = bst->fg;
+  unsigned long bg = bst->bg;
+  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "vmware.foreground2",
+                                          "vmware.foreground");
+  BSOD_COLOR (bst, fg2, bg);
+  BSOD_TEXT   (bst, LEFT,
+		"VMware ESX Server [Releasebuild-98103]\n");
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT   (bst, LEFT,
+		"PCPU 1 locked up. Failed to ack TLB invalidate.\n"
+		"frame=0x3a37d98 ip=0x625e94 cr2=0x0 cr3=0x40c66000 cr4=0x16c\n"
+		"es=0xffffffff ds=0xffffffff fs=0xffffffff gs=0xffffffff\n"
+		"eax=0xffffffff ebx=0xffffffff ecx=0xffffffff edx=0xffffffff\n"
+		"ebp=0x3a37ef4 esi=0xffffffff edi=0xffffffff err=-1 eflags=0xffffffff\n"
+		"*0:1037/helper1-4 1:1107/vmm0:Fagi 2:1121/vmware-vm 3:1122/mks:Franc\n"
+		"0x3a37ef4:[0x625e94]Panic+0x17 stack: 0x833ab4, 0x3a37f10, 0x3a37f48\n"
+		"0x3a37f04:[0x625e94]Panic+0x17 stack: 0x833ab4, 0x1, 0x14a03a0\n"
+		"0x3a37f48:[0x64bfa4]TLBDoInvalidate+0x38f stack: 0x3a37f54, 0x40, 0x2\n"
+		"0x3a37f70:[0x66da4d]XMapForceFlush+0x64 stack: 0x0, 0x4d3a, 0x0\n"
+		"0x3a37fac:[0x652b8b]helpFunc+0x2d2 stack: 0x1, 0x14a4580, 0x0\n"
+		"0x3a37ffc:[0x750902]CpuSched_StartWorld+0x109 stack: 0x0, 0x0, 0x0\n"
+		"0x3a38000:[0x0]blk_dev+0xfd76461f stack: 0x0, 0x0, 0x0\n"
+		"VMK uptime: 7:05:43:45.014 TSC: 1751259712918392\n"
+		"Starting coredump to disk\n"); 
+  BSOD_CHAR_DELAY (bst, 10000);		
+  BSOD_TEXT (bst, LEFT,	"using slot 1 of 1... ");
+  BSOD_CHAR_DELAY (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "9876");
+  BSOD_CHAR_DELAY (bst, 3000000);
+  BSOD_TEXT (bst, LEFT, "66665");
+  BSOD_CHAR_DELAY (bst, 100000);
+  BSOD_TEXT (bst, LEFT, "4321");
+  BSOD_CHAR_DELAY (bst, 0);
+  BSOD_TEXT (bst, LEFT, "Disk dump successfull.\n"
+		"Waiting for Debugger (world 1037)\n"
+		"Debugger is listening on serial port ...\n");
+  BSOD_CHAR_DELAY (bst, 10000);
+  BSOD_TEXT (bst, LEFT, "Press Escape to enter local debugger\n");
+  BSOD_CHAR_DELAY (bst, 10000);
+  BSOD_TEXT (bst, LEFT, "Remote debugger activated. Local debugger no longer available.\n");
+
+/*  BSOD_CURSOR (bst, CURSOR_LINE, 240000, 999999);*/
+		
+/*  bst->y = ((bst->xgwa.height -
+             ((bst->font->ascent + bst->font->descent) * 9))
+            / 2);*/
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
 
 
 static struct bsod_state *
@@ -2069,21 +2155,107 @@ mac_diskfail (Display *dpy, Window window)
 }
 
 
+/* 2017 MacOS 10.12 interminable software update, by jwz.
+ */
+static struct bsod_state *
+macx_install (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "macinstall", "MacX");
+
+  Pixmap pixmap = 0;
+  int pix_w = apple_width;
+  int pix_h = apple_height;
+  int x, y;
+  int bw1, bh1;
+  int bw2, bh2;
+
+  unsigned long fg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "macinstall.foreground",
+                                         "Mac.Foreground");
+  unsigned long bg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "macinstall.background",
+                                         "Mac.Background");
+  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "macinstall.barForeground",
+                                         "Mac.Foreground");
+  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "macinstall.barBackground",
+                                         "Mac.Background");
+  char buf[1024];
+  int lh = bst->font->ascent + bst->font->descent;
+  int i, min;
+  double pct;
+
+  pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) apple_bits,
+                                        apple_width, apple_height,
+                                        fg, bg, bst->xgwa.depth);
+  bst->pixmap = pixmap;
+
+  x = (bst->xgwa.width - pix_w) / 2;
+  y = (bst->xgwa.height) / 2  - pix_h;
+  if (y < 0) y = 0;
+
+  XSetLineAttributes (dpy, bst->gc, 1, LineSolid, CapRound, JoinMiter);
+
+  BSOD_COLOR(bst, bg, bg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_COLOR(bst, fg, bg);
+  BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h, x, y);
+  y += pix_h * 2 - lh;
+
+  /* progress bar */
+  bw1 = pix_w * 2.5;
+  bh1 = lh * 0.66;
+  if (bh1 < 8) bh1 = 8;
+
+  x = (bst->xgwa.width - bw1) / 2;
+  BSOD_COLOR(bst, fg2, bg);
+  BSOD_LINE (bst, x,   y, x + bw1, y, bh1);
+
+  bw2 = bw1 - 1;
+  bh2 = bh1 - 4;
+  BSOD_COLOR(bst, bg2, bg);
+  BSOD_LINE (bst, x+1, y, x + bw2, y, bh2);
+
+  BSOD_COLOR(bst, fg, bg);
+  BSOD_LINE (bst, x,   y, x + 1, y, bh1);
+
+  pct = 5 + (random() % 40);
+  min = 5 + (random() % 40);
+
+  for (i = 0; i < 100; i++) {
+    pct += frand(0.3);
+    min += (random() % 3) - 1;  /* sometimes down, mostly up */
+
+    if (pct > 90) pct = 90;
+    BSOD_RECT (bst, True, x, y - bh1/2, bw1 * pct / 100, bh1);
+
+    sprintf (buf, "  Installing Software Update: about %d minutes.  ", min);
+    bst->y = y + lh * 3;
+    BSOD_TEXT (bst, CENTER, buf);
+    BSOD_PAUSE (bst, 1000000);
+  }
+
+  return bst;
+}
+
 
 static struct bsod_state *
 macx (Display *dpy, Window window)
 {
 # ifdef DO_XPM
-  switch (random() % 4) {
+  switch (1?4:random() % 5) {
   case 0: return macx_10_0 (dpy, window);        break;
   case 1: return macx_10_2 (dpy, window, False); break;
   case 2: return macx_10_2 (dpy, window, True);  break;
-  case 3: return mac_diskfail (dpy, window); break;
+  case 3: return mac_diskfail (dpy, window);     break;
+  case 4: return macx_install (dpy, window);     break;
   default: abort();
   }
 # else  /* !DO_XPM */
-  switch (random() % 2) {
+  switch (random() % 3) {
   case 0:  return macx_10_0 (dpy, window);    break;
+  case 1:  return macx_install (dpy, window); break;
   default: return mac_diskfail (dpy, window); break;
   }
 # endif /* !DO_XPM */
@@ -4289,6 +4461,7 @@ static const struct {
   { "ATM",		atm },
   { "GLaDOS",		glados },
   { "Android",		android },
+  { "VMware",		vmware },
 };
 
 
@@ -4599,6 +4772,7 @@ static const char *bsod_defaults [] = {
   "*doATM:		   True",
   "*doGLaDOS:		   True",
   "*doAndroid:		   True",
+  "*doVMware:		   True",
 
   ".foreground:		   White",
   ".background:		   Black",
@@ -4640,6 +4814,9 @@ static const char *bsod_defaults [] = {
   ".macx.textForeground:   White",
   ".macx.textBackground:   Black",
   ".macx.background:	   #888888",
+
+  ".macinstall.barForeground: #C0C0C0",
+  ".macinstall.barBackground: #888888",
 
   ".sco.foreground:	   White",
   ".sco.background:	   Black",
@@ -4693,6 +4870,10 @@ static const char *bsod_defaults [] = {
   ".android.color6:	   #66AA33", /* green3 */
   ".android.color7:	   #FF0000", /* red */
 
+  ".vmware.foreground:	   White",
+  ".vmware.foreground2:	   Yellow",
+  ".vmware.background:	   #a700a8",    /* purple */
+
   "*dontClearRoot:         True",
 
   ANALOGTV_DEFAULTS
@@ -4715,6 +4896,8 @@ static const char *bsod_defaults [] = {
   ".macsbug.font:	   Courier-Bold 8",
   ".macx.font:		   Courier-Bold 14",
   ".macdisk.font:	   Courier-Bold 14",
+  ".macinstall.font:	   Helvetica 12, Arial 12",
+  ".macinstall.bigFont:	   Helvetica 12, Arial 12",
   ".msdos.font:		   PxPlus IBM VGA8 32, Courier-Bold 28",
   ".nt.font:		   PxPlus IBM VGA8 12, Courier-Bold 10",
   ".win10.font:		   Arial 12, Helvetica 12",
@@ -4734,6 +4917,8 @@ static const char *bsod_defaults [] = {
   ".macsbug.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
   ".macx.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".macdisk.font:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".macinstall.font:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
+  ".macinstall.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
   ".msdos.font:		   PxPlus IBM VGA8 32",
   ".nt.font:		   PxPlus IBM VGA8 12",
 
@@ -4760,6 +4945,8 @@ static const char *bsod_defaults [] = {
   ".macx.bigFont:	   Courier-Bold 14",
   ".macdisk.font:	   Courier-Bold 9",
   ".macdisk.bigFont:	   Courier-Bold 18",
+  ".macinstall.font:	   Helvetica 24, Arial 24",
+  ".macinstall.bigFont:	   Helvetica 24, Arial 24",
 
   ".hvx.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
   ".hppalinux.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
@@ -4786,6 +4973,8 @@ static const char *bsod_defaults [] = {
 
   ".macdisk.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
   ".macdisk.bigFont:	   -*-courier-bold-r-*-*-*-100-*-*-m-*-*-*",
+  ".macinstall.font:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
+  ".macinstall.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
 
   ".sco.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".hvx.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
@@ -4877,6 +5066,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-glados",	".doGLaDOS",		XrmoptionNoArg,  "False" },
   { "-android",		".doAndroid",		XrmoptionNoArg,  "True"  },
   { "-no-android",	".doAndroid",		XrmoptionNoArg,  "False" },
+  { "-vmware",		".doVMware",		XrmoptionNoArg,  "True"  },
+  { "-no-vmware",	".doVMware",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

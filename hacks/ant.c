@@ -1013,11 +1013,7 @@ init_ant(ModeInfo * mi)
 	int         col, row, dir;
 	int         i;
 
-	if (antfarms == NULL) {
-		if ((antfarms = (antfarmstruct *) calloc(MI_NUM_SCREENS(mi),
-					    sizeof (antfarmstruct))) == NULL)
-			return;
-	}
+    MI_INIT (mi, antfarms, 0);
 	ap = &antfarms[MI_SCREEN(mi)];
 
 	ap->redrawing = 0;

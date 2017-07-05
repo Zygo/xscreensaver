@@ -19,6 +19,7 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define refresh_blocktube 0
+# define release_blocktube 0
 # define blocktube_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -109,7 +110,7 @@ ENTRYPOINT ModeSpecOpt blocktube_opts = {countof(opts), opts, countof(vars), var
 
 #ifdef USE_MODULES
 ModStruct blocktube_description =
-    {"blocktube", "init_blocktube", "draw_blocktube", "release_blocktube",
+    {"blocktube", "init_blocktube", "draw_blocktube", (char *)NULL,
      "draw_blocktube", "init_blocktube", (char *)NULL, &blocktube_opts,
      40000, 30, 1, 1, 64, 1.0, "",
      "A shifting tunnel of reflective blocks", 0, NULL};
@@ -204,6 +205,7 @@ static void tick(blocktube_configuration *lp)
 static int cube_vertices(float x, float y, float z, int wire);
 
 ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height);
+static void free_blocktube (ModeInfo *mi);
 
 ENTRYPOINT void init_blocktube (ModeInfo *mi)
 {
@@ -212,14 +214,7 @@ ENTRYPOINT void init_blocktube (ModeInfo *mi)
     blocktube_configuration *lp;
     int wire = MI_IS_WIREFRAME(mi);
 
-    if (!lps) {
-      lps = (blocktube_configuration *)
-        calloc (MI_NUM_SCREENS(mi), sizeof (blocktube_configuration));
-      if (!lps) {
-        fprintf(stderr, "%s: out of memory\n", progname);
-        exit(1);
-      }
-    }
+    MI_INIT(mi, lps, free_blocktube);
 
     lp = &lps[MI_SCREEN(mi)];
     lp->glx_context = init_GL(mi);
@@ -294,28 +289,27 @@ ENTRYPOINT void init_blocktube (ModeInfo *mi)
     glFlush();
 }
 
-ENTRYPOINT void release_blocktube (ModeInfo *mi)
+static void free_blocktube (ModeInfo *mi)
 {
-  if (lps) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      blocktube_configuration *lp = &lps[screen];
+  blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
 # if defined ( I_HAVE_XPM )
-      if (lp->envTexture)
-        glDeleteTextures(1, &lp->envTexture);
-      if (lp->texti)
-        XDestroyImage(lp->texti);
-# endif
-    }
-    free (lps);
-    lps = 0;
+  if (lp->glx_context) {
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
+
+    if (lp->envTexture)
+      glDeleteTextures(1, &lp->envTexture);
+    if (lp->texti)
+      XDestroyImage(lp->texti);
   }
-  FreeAllGL(mi);
+# endif
 }
 
 ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height)
 {
+    blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
     GLfloat h = (GLfloat) height / (GLfloat) width;
+
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
 
     glViewport(0, 0, (GLint) width, (GLint) height);
     glMatrixMode(GL_PROJECTION);

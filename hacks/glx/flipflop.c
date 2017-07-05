@@ -44,6 +44,7 @@
                        "*wireframe: False     \n"
 
 # define refresh_flipflop 0
+# define release_flipflop 0
 # include "xlockmore.h"
 
 #else
@@ -94,7 +95,7 @@ ENTRYPOINT ModeSpecOpt flipflop_opts = {countof(opts), opts, countof(vars), vars
 
 #ifdef USE_MODULES
 ModStruct   flipflop_description =
-    {"flipflop", "init_flipflop", "draw_flipflop", "release_flipflop",
+    {"flipflop", "init_flipflop", "draw_flipflop", NULL,
      "draw_flipflop", "init_flipflop", NULL, &flipflop_opts,
      1000, 1, 2, 1, 4, 1.0, "",
      "Flipflop", 0, NULL};
@@ -347,6 +348,8 @@ get_texture(ModeInfo *modeinfo)
                       image_loaded_cb, c);
 }
 
+static void free_flipflop(ModeInfo *mi);
+
 ENTRYPOINT void
 init_flipflop(ModeInfo *mi)
 {
@@ -392,9 +395,7 @@ init_flipflop(ModeInfo *mi)
     screen = MI_SCREEN(mi);
     wire = MI_IS_WIREFRAME(mi);
 
-    if(!qs &&
-       !(qs = (Flipflopcreen *) calloc(MI_NUM_SCREENS(mi), sizeof(Flipflopcreen))))
-        return;
+    MI_INIT(mi, qs, free_flipflop);
 
     c = &qs[screen];
     c->window = MI_WINDOW(mi);
@@ -464,28 +465,14 @@ draw_flipflop(ModeInfo *mi)
 
 }
 
-ENTRYPOINT void
-release_flipflop(ModeInfo *mi)
+static void
+free_flipflop(ModeInfo *mi)
 {
-  if(qs) {
-    int screen;
-
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      Flipflopcreen *c = &qs[MI_SCREEN(mi)];
-      if (c->glx_context)
-        c->glx_context = 0;
-      if (c->sheet) {
-        randsheet_free(c->sheet);
-        free (c->sheet);
-        c->sheet = 0;
-      }
-    }
-    free(qs);
-    qs = 0;
+  Flipflopcreen *c = &qs[MI_SCREEN(mi)];
+  if (c->sheet) {
+    randsheet_free(c->sheet);
+    free (c->sheet);
   }
-
-  FreeAllGL(mi);
 }
 
 /*** ADDED RANDSHEET FUNCTIONS ***/

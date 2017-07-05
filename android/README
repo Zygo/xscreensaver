@@ -190,7 +190,6 @@ TODO list, and known bugs:
   glhanoi       crashes emulator, but a few seconds in
   glplanet      crashes emulator
   glslideshow   images
-  goop          polygons
   halftone      XFillArc crash
   halo          XOR
   hypertorus    crashes emulator
@@ -206,7 +205,7 @@ TODO list, and known bugs:
   mountain      polygons
   munch         XOR
   noseguy       pixmaps
-  pacman	launches really slowly; fails at loading XPMs
+  pacman	launches really slowly
   pedal         polygons
   phosphor      pixmaps
   photopile     pixmaps
@@ -217,7 +216,6 @@ TODO list, and known bugs:
   pulsar        crashes emulator
   qix           polygons
   queens	crashes emulator
-  rocks         polygons
   skytentacles  crashes emulator
   slip          pixmaps
   sonar		crashes emulator

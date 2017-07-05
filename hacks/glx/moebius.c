@@ -80,6 +80,7 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 #ifdef STANDALONE
 # define MODE_moebius
 # define refresh_moebius 0
+# define release_moebius 0
 # define DEFAULTS			"*delay:		20000   \n"			\
 							"*showFPS:      False   \n"			\
 							"*suppressRotationAnimation: True\n" \
@@ -148,7 +149,7 @@ ENTRYPOINT ModeSpecOpt moebius_opts =
 
 #ifdef USE_MODULES
 ModStruct   moebius_description =
-{"moebius", "init_moebius", "draw_moebius", "release_moebius",
+{"moebius", "init_moebius", "draw_moebius", (char *) NULL,
  "draw_moebius", "change_moebius", (char *) NULL, &moebius_opts,
  1000, 1, 1, 1, 4, 1.0, "",
  "Shows Moebius Strip II, an Escher-like GL scene with ants", 0, NULL};
@@ -653,17 +654,6 @@ pinit(ModeInfo *mi)
 }
 
 
-
-ENTRYPOINT void
-release_moebius (ModeInfo * mi)
-{
-	if (moebius != NULL) {
-		(void) free((void *) moebius);
-		moebius = (moebiusstruct *) NULL;
-	}
-	FreeAllGL(mi);
-}
-
 ENTRYPOINT Bool
 moebius_handle_event (ModeInfo *mi, XEvent *event)
 {
@@ -683,11 +673,7 @@ init_moebius (ModeInfo * mi)
 {
 	moebiusstruct *mp;
 
-	if (moebius == NULL) {
-		if ((moebius = (moebiusstruct *) calloc(MI_NUM_SCREENS(mi),
-					    sizeof (moebiusstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, moebius, NULL);
 	mp = &moebius[MI_SCREEN(mi)];
 	mp->step = NRAND(90);
 	mp->ant_position = NRAND(90);
@@ -764,7 +750,7 @@ draw_moebius (ModeInfo * mi)
 
 	/* moebius */
 	if (!draw_moebius_strip(mi)) {
-		release_moebius(mi);
+		MI_ABORT(mi);
 		return;
 	}
 

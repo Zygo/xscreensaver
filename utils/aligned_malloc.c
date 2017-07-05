@@ -18,10 +18,12 @@ implied warranty.
 #include <stddef.h>
 #include <stdlib.h>
 
-#if !ALIGNED_MALLOC_HAS_MEMALIGN
-
 #include <assert.h>
 #include <errno.h>
+
+/* aligned_alloc() (C11) or posix_memalign() (POSIX) are other possibilities
+   for aligned_malloc().
+ */
 
 int aligned_malloc(void **ptr, unsigned alignment, size_t size)
 {
@@ -41,7 +43,6 @@ int aligned_malloc(void **ptr, unsigned alignment, size_t size)
 
 void aligned_free(void *ptr)
 {
-	free(((void **)(ptr))[-1]);
+	if(ptr)
+		free(((void **)(ptr))[-1]);
 }
-
-#endif

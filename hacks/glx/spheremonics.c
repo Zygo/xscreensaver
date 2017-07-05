@@ -695,14 +695,7 @@ init_spheremonics (ModeInfo *mi)
 {
   spheremonics_configuration *cc;
 
-  if (!ccs) {
-    ccs = (spheremonics_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (spheremonics_configuration));
-    if (!ccs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, ccs, NULL);
 
   cc = &ccs[MI_SCREEN(mi)];
 

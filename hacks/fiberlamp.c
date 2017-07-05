@@ -38,6 +38,7 @@ static const char sccsid[] = "@(#)fiberlamp.c	5.00 2000/11/01 xlockmore";
 					"*fpsTop: true  \n" \
 
 # define UNIFORM_COLORS
+# define release_fiberlamp 0
 # define fiberlamp_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -51,7 +52,7 @@ ENTRYPOINT ModeSpecOpt fiberlamp_opts =
 
 #ifdef USE_MODULES
 ModStruct   fiberlamp_description =
-{"fiberlamp", "init_fiberlamp", "draw_fiberlamp", "release_fiberlamp",
+{"fiberlamp", "init_fiberlamp", "draw_fiberlamp", (char *) NULL,
  "draw_fiberlamp", "change_fiberlamp", (char *) NULL, &fiberlamp_opts,
  1000, 500, 10000, 0, 64, 1.0, "", "Shows a Fiber Optic Lamp", 0, NULL};
 
@@ -142,8 +143,9 @@ free_fiber(fiberlampstruct *fl)
 }
 
 static void
-free_fiberlamp(ModeInfo *mi, fiberlampstruct *fl)
+free_fiberlamp(ModeInfo *mi)
 {
+    fiberlampstruct *fl = &fiberlamps[MI_SCREEN(mi)];
   	if (fl->buffer != None && fl->dbufp) {
                 XFreePixmap(MI_DISPLAY(mi), fl->buffer);
                 fl->buffer = None;
@@ -156,12 +158,7 @@ init_fiberlamp(ModeInfo * mi)
 {
   fiberlampstruct *fl;
 
-  if (fiberlamps == NULL) {
-	if ((fiberlamps =
-		 (fiberlampstruct *) calloc(MI_NUM_SCREENS(mi),
-			sizeof (fiberlampstruct))) == NULL)
-	  return;
-  }
+  MI_INIT (mi, fiberlamps, free_fiberlamp);
   fl = &fiberlamps[MI_SCREEN(mi)];
 
   /* Create or Resize double buffer */
@@ -178,7 +175,7 @@ init_fiberlamp(ModeInfo * mi)
     fl->buffer = XCreatePixmap(MI_DISPLAY(mi), MI_WINDOW(mi),
                                MI_WIDTH(mi), MI_HEIGHT(mi), MI_DEPTH(mi));
     if (fl->buffer == None) {
-      free_fiberlamp(mi, fl);
+      free_fiberlamp(mi);
       return;
     }
   } else {
@@ -197,7 +194,7 @@ init_fiberlamp(ModeInfo * mi)
   /* Allocate fibers */
   if((fl->fiber =
 	  (fiberstruct*) calloc(fl->nfibers, sizeof (fiberstruct))) == NULL) {
-	free_fiberlamp(mi, fl);
+	free_fiberlamp(mi);
 	return;
   } else {
 	int f;
@@ -207,7 +204,7 @@ init_fiberlamp(ModeInfo * mi)
 		  (nodestruct*) calloc(NODES, sizeof (nodestruct))) == NULL
 		 ||(fs->draw =
 			(XPoint*) calloc(NODES, sizeof (XPoint))) == NULL) {
-		free_fiberlamp(mi, fl);
+		free_fiberlamp(mi);
 		return;
 	  }
 	}
@@ -447,19 +444,6 @@ draw_fiberlamp (ModeInfo * mi)
   if(fl->count++ > MI_CYCLES(mi)) {
 	change_fiberlamp(mi);
   }
-}
-
-ENTRYPOINT void
-release_fiberlamp(ModeInfo * mi)
-{
-	if (fiberlamps != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_fiberlamp(mi, &fiberlamps[screen]);
-		free(fiberlamps);
-		fiberlamps = (fiberlampstruct *) NULL;
-	}
 }
 
 ENTRYPOINT void

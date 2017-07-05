@@ -19,15 +19,39 @@
    and iOS is in jwxyz.m.
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #ifdef HAVE_JWXYZ /* whole file */
 
+#include <stdarg.h>
+#include <stdio.h>
+
 #include "jwxyzI.h"
+#include "utf8wc.h"
+#include "xft.h"
 
 /* There's only one Window for a given jwxyz_Display. */
 #define assert_window(dpy, w) \
   Assert (w == RootWindow (dpy, 0), "not a window")
+
+
+struct jwxyz_Font {
+  Display *dpy;
+  void *native_font;
+  int refcount; // for deciding when to release the native font
+  int ascent, descent;
+  char *xa_font;
+
+  // In X11, "Font" is just an ID, and "XFontStruct" contains the metrics.
+  // But we need the metrics on both of them, so they go here.
+  XFontStruct metrics;
+};
+
+struct jwxyz_XFontSet {
+  XFontStruct *font;
+};
 
 
 void
@@ -54,20 +78,23 @@ XDisplayHeight (Display *dpy, int screen)
 
 
 /* XLFDs use dots per inch, but Xlib uses millimeters. Go figure. */
-static const unsigned dpi = 75;
+static int
+size_mm (Display *dpy, unsigned size)
+{
+  /* ((mm / inch) / (points / inch)) * dots / (dots / points) */
+  return (25.4 / 72) * size / jwxyz_scale (XRootWindow (dpy,0)) + 0.5;
+}
 
 int
 XDisplayWidthMM (Display *dpy, int screen)
 {
-  const unsigned denom = dpi * 10 / 2;
-  return (254 * XDisplayWidth (dpy, screen) + denom) / (2 * denom);
+  return size_mm (dpy, XDisplayWidth (dpy, screen));
 }
 
 int
 XDisplayHeightMM (Display *dpy, int screen)
 {
-  const unsigned denom = dpi * 10 / 2;
-  return (254 * XDisplayHeight (dpy, screen) + denom) / (2 * denom);
+  return size_mm (dpy, XDisplayHeight (dpy, screen));
 }
 
 
@@ -733,11 +760,26 @@ XDestroyImage (XImage *ximage)
 }
 
 
+XImage *
+XGetImage (Display *dpy, Drawable d, int x, int y,
+           unsigned int width, unsigned int height,
+           unsigned long plane_mask, int format)
+{
+  unsigned depth = jwxyz_drawable_depth (d);
+  XImage *image = XCreateImage (dpy, 0, depth, format, 0, 0, width, height,
+                                0, 0);
+  image->data = (char *) malloc (height * image->bytes_per_line);
+
+  return XGetSubImage (dpy, d, x, y, width, height, plane_mask, format,
+                       image, 0, 0);
+}
+
+
 Pixmap
 XCreatePixmapFromBitmapData (Display *dpy, Drawable drawable,
                              const char *data,
                              unsigned int w, unsigned int h,
-                             unsigned long fg, unsigned int bg,
+                             unsigned long fg, unsigned long bg,
                              unsigned int depth)
 {
   Pixmap p = XCreatePixmap (dpy, drawable, w, h, depth);
@@ -763,6 +805,637 @@ XGetAtomName (Display *dpy, Atom atom)
 
   // Note that atoms (that aren't predefined) are just char *.
   return strdup ((char *) atom);
+}
+
+
+// This is XQueryFont, but for the XFontStruct embedded in 'Font'
+//
+static void
+query_font (Font fid)
+{
+  Assert (fid && fid->native_font, "no native font in fid");
+
+  int first = 32;
+  int last = 255;
+
+  Display *dpy = fid->dpy;
+  void *native_font = fid->native_font;
+
+  XFontStruct *f = &fid->metrics;
+  XCharStruct *min = &f->min_bounds;
+  XCharStruct *max = &f->max_bounds;
+
+  f->fid               = fid;
+  f->min_char_or_byte2 = first;
+  f->max_char_or_byte2 = last;
+  f->default_char      = 'M';
+  f->ascent            = fid->ascent;
+  f->descent           = fid->descent;
+
+  min->width    = 32767;  // set to smaller values in the loop
+  min->ascent   = 32767;
+  min->descent  = 32767;
+  min->lbearing = 32767;
+  min->rbearing = 32767;
+
+  f->per_char = (XCharStruct *) calloc (last-first+2, sizeof (XCharStruct));
+
+  for (int i = first; i <= last; i++) {
+    XCharStruct *cs = &f->per_char[i-first];
+    char s = (char) i;
+    jwxyz_render_text (dpy, native_font, &s, 1, False, cs, 0);
+
+    max->width    = MAX (max->width,    cs->width);
+    max->ascent   = MAX (max->ascent,   cs->ascent);
+    max->descent  = MAX (max->descent,  cs->descent);
+    max->lbearing = MAX (max->lbearing, cs->lbearing);
+    max->rbearing = MAX (max->rbearing, cs->rbearing);
+
+    min->width    = MIN (min->width,    cs->width);
+    min->ascent   = MIN (min->ascent,   cs->ascent);
+    min->descent  = MIN (min->descent,  cs->descent);
+    min->lbearing = MIN (min->lbearing, cs->lbearing);
+    min->rbearing = MIN (min->rbearing, cs->rbearing);
+/*
+    Log (" %3d %c: w=%3d lb=%3d rb=%3d as=%3d ds=%3d "
+         " bb=%5.1f x %5.1f @ %5.1f %5.1f  adv=%5.1f %5.1f\n"
+         i, i, cs->width, cs->lbearing, cs->rbearing,
+         cs->ascent, cs->descent,
+         bbox.size.width, bbox.size.height,
+         bbox.origin.x, bbox.origin.y,
+         advancement.width, advancement.height);
+ */
+  }
+}
+
+
+// Since 'Font' includes the metrics, this just makes a copy of that.
+//
+XFontStruct *
+XQueryFont (Display *dpy, Font fid)
+{
+  // copy XFontStruct
+  XFontStruct *f = (XFontStruct *) calloc (1, sizeof(*f));
+  *f = fid->metrics;
+  f->fid = fid;
+
+  // build XFontProps
+  f->n_properties = 1;
+  f->properties = malloc (sizeof(*f->properties) * f->n_properties);
+  f->properties[0].name = XA_FONT;
+  Assert (sizeof (f->properties[0].card32) >= sizeof (char *),
+          "atoms probably needs a real implementation");
+  // If XInternAtom is ever implemented, use it here.
+  f->properties[0].card32 = (unsigned long)fid->xa_font;
+
+  // copy XCharStruct array
+  int size = (f->max_char_or_byte2 - f->min_char_or_byte2) + 1;
+  f->per_char = (XCharStruct *) calloc (size + 2, sizeof (XCharStruct));
+
+  memcpy (f->per_char, fid->metrics.per_char,
+          size * sizeof (XCharStruct));
+
+  return f;
+}
+
+
+static Font
+copy_font (Font fid)
+{
+  fid->refcount++;
+  return fid;
+}
+
+
+/* On Cocoa and iOS, fonts may be specified as "Georgia Bold 24" instead
+   of XLFD strings; also they can be comma-separated strings with multiple
+   font names.  First one that exists wins.
+ */
+static void
+try_native_font (Display *dpy, const char *name, Font fid)
+{
+  if (!name) return;
+  const char *spc = strrchr (name, ' ');
+  if (!spc) return;
+
+  char *token = strdup (name);
+  char *otoken = token;
+  char *name2;
+  char *lasts;
+
+  while ((name2 = strtok_r (token, ",", &lasts))) {
+    token = 0;
+
+    while (*name2 == ' ' || *name2 == '\t' || *name2 == '\n')
+      name2++;
+
+    spc = strrchr (name2, ' ');
+    if (!spc) continue;
+
+    int dsize = 0;
+    if (1 != sscanf (spc, " %d ", &dsize))
+      continue;
+    float size = dsize;
+
+    if (size < 4) continue;
+
+    name2[strlen(name2) - strlen(spc)] = 0;
+
+    fid->native_font = jwxyz_load_native_font(XRootWindow(dpy,0), 0, 0, name2,
+                                              strlen(name2) - strlen(spc),
+                                              JWXYZ_FONT_FACE, size, NULL,
+                                              &fid->ascent, &fid->descent);
+    if (fid->native_font) {
+      fid->xa_font = strdup (name); // Maybe this should be an XLFD?
+      break;
+    } else {
+      Log("No native font: \"%s\" %.0f", name2, size);
+    }
+  }
+
+  free (otoken);
+}
+
+
+static const char *
+xlfd_field_end (const char *s)
+{
+  const char *s2 = strchr(s, '-');
+  if (!s2)
+    s2 = s + strlen(s);
+  return s2;
+}
+
+
+static size_t
+xlfd_next (const char **s, const char **s2)
+{
+  if (!**s2) {
+    *s = *s2;
+  } else {
+    Assert (**s2 == '-', "xlfd parse error");
+    *s = *s2 + 1;
+    *s2 = xlfd_field_end (*s);
+  }
+
+  return *s2 - *s;
+}
+
+
+static void
+try_xlfd_font (Display *dpy, const char *name, Font fid)
+{
+  const char *family_name = NULL; /* Not NULL-terminated. */
+  size_t family_name_size = 0;
+  int require = 0,
+   // Default mask is for the built-in X11 font aliases.
+   mask = JWXYZ_STYLE_MONOSPACE | JWXYZ_STYLE_BOLD | JWXYZ_STYLE_ITALIC;
+  Bool rand  = False;
+  float size = 12; /* In points (1/72 in.) */
+
+  const char *s = (name ? name : "");
+
+  size_t L = strlen (s);
+# define CMP(STR) (L == strlen(STR) && !strncasecmp (s, (STR), L))
+# define UNSPEC   (L == 0 || (L == 1 && *s == '*'))
+  if      (CMP ("6x10"))     size = 8,  require |= JWXYZ_STYLE_MONOSPACE;
+  else if (CMP ("6x10bold")) size = 8,  require |= JWXYZ_STYLE_MONOSPACE | JWXYZ_STYLE_BOLD;
+  else if (CMP ("fixed"))    size = 12, require |= JWXYZ_STYLE_MONOSPACE;
+  else if (CMP ("9x15"))     size = 12, require |= JWXYZ_STYLE_MONOSPACE;
+  else if (CMP ("9x15bold")) size = 12, require |= JWXYZ_STYLE_MONOSPACE | JWXYZ_STYLE_BOLD;
+  else if (CMP ("vga"))      size = 12, require |= JWXYZ_STYLE_MONOSPACE;
+  else if (CMP ("console"))  size = 12, require |= JWXYZ_STYLE_MONOSPACE;
+  else if (CMP ("gallant"))  size = 12, require |= JWXYZ_STYLE_MONOSPACE;
+  else {
+
+    int forbid = 0;
+
+    // Incorrect fields are ignored.
+
+    if (*s == '-')
+      ++s;
+    const char *s2 = xlfd_field_end(s);
+
+    // Foundry (ignore)
+
+    L = xlfd_next (&s, &s2); // Family name
+    // This used to substitute Georgia for Times. Now it doesn't.
+    if (CMP ("random")) {
+      rand = True;
+    } else if (CMP ("fixed")) {
+      require |= JWXYZ_STYLE_MONOSPACE;
+      family_name = "Courier";
+      family_name_size = strlen(family_name);
+    } else if (!UNSPEC) {
+      family_name = s;
+      family_name_size = L;
+    }
+
+    L = xlfd_next (&s, &s2); // Weight name
+    if (CMP ("bold") || CMP ("demibold"))
+      require |= JWXYZ_STYLE_BOLD;
+    else if (CMP ("medium") || CMP ("regular"))
+      forbid |= JWXYZ_STYLE_BOLD;
+
+    L = xlfd_next (&s, &s2); // Slant
+    if (CMP ("i") || CMP ("o"))
+      require |= JWXYZ_STYLE_ITALIC;
+    else if (CMP ("r"))
+      forbid |= JWXYZ_STYLE_ITALIC;
+
+    xlfd_next (&s, &s2); // Set width name (ignore)
+    xlfd_next (&s, &s2); // Add style name (ignore)
+
+    L = xlfd_next (&s, &s2); // Pixel size
+    char *s3;
+    uintmax_t pxsize = strtoumax(s, &s3, 10);
+    if (UNSPEC || s2 != s3)
+      pxsize = UINTMAX_MAX; // i.e. it's invalid.
+
+    L = xlfd_next (&s, &s2); // Point size
+    uintmax_t ptsize = strtoumax(s, &s3, 10);
+    if (UNSPEC || s2 != s3)
+      ptsize = UINTMAX_MAX;
+
+    xlfd_next (&s, &s2); // Resolution X (ignore)
+    xlfd_next (&s, &s2); // Resolution Y (ignore)
+
+    L = xlfd_next (&s, &s2); // Spacing
+    if (CMP ("p"))
+      forbid |= JWXYZ_STYLE_MONOSPACE;
+    else if (CMP ("m") || CMP ("c"))
+      require |= JWXYZ_STYLE_MONOSPACE;
+
+    xlfd_next (&s, &s2); // Average width (ignore)
+
+    // -*-courier-bold-r-*-*-14-*-*-*-*-*-*-*         14 px
+    // -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*        14 pt
+    // -*-courier-bold-r-*-*-140-*                    14 pt, via wildcard
+    // -*-courier-bold-r-*-140-*                      14 pt, not handled
+    // -*-courier-bold-r-*-*-14-180-*-*-*-*-*-*       error
+
+    L = xlfd_next (&s, &s2); // Charset registry
+    if (ptsize != UINTMAX_MAX) {
+      // It was in the ptsize field, so that's definitely what it is.
+      size = ptsize / 10.0;
+    } else if (pxsize != UINTMAX_MAX) {
+      size = pxsize;
+      // If it's a fully qualified XLFD, then this really is the pxsize.
+      // Otherwise, this is probably point size with a multi-field wildcard.
+      if (L == 0)
+        size /= 10.0;
+    }
+
+    mask = require | forbid;
+  }
+# undef CMP
+# undef UNSPEC
+
+  if (!family_name && !rand) {
+    family_name = jwxyz_default_font_family (require);
+    family_name_size = strlen (family_name);
+  }
+
+  if (size < 6 || size > 1000)
+    size = 12;
+
+  char *family_name_ptr = NULL;
+  fid->native_font = jwxyz_load_native_font (XRootWindow(dpy,0),
+                                             require, mask,
+                                             family_name, family_name_size,
+                                             rand ? JWXYZ_FONT_RANDOM : JWXYZ_FONT_FAMILY,
+                                             size, &family_name_ptr,
+                                             &fid->ascent, &fid->descent);
+
+  if (fid->native_font) {
+    unsigned dpi_d = XDisplayHeightMM (dpy,0) * 10 / 2;
+    unsigned dpi = (254 * XDisplayHeight (dpy,0) + dpi_d) / (2 * dpi_d);
+    asprintf(&fid->xa_font, "-*-%s-%s-%c-*-*-%u-%u-%u-%u-%c-0-iso10646-1",
+             family_name_ptr,
+             (require & JWXYZ_STYLE_BOLD) ? "bold" : "medium",
+             (require & JWXYZ_STYLE_ITALIC) ? 'o' : 'r',
+             (unsigned)(dpi * size / 72.27 + 0.5),
+             (unsigned)(size * 10 + 0.5), dpi, dpi,
+             (require & JWXYZ_STYLE_MONOSPACE) ? 'm' : 'p');
+  }
+
+  free (family_name_ptr);
+}
+
+
+Font
+XLoadFont (Display *dpy, const char *name)
+{
+  Font fid = (Font) calloc (1, sizeof(*fid));
+
+  fid->refcount = 1;
+  fid->dpy = dpy;
+  try_native_font (dpy, name, fid);
+
+  if (!fid->native_font && name &&
+      strchr (name, ' ') &&
+      !strchr (name, '*')) {
+    // If name contains a space but no stars, it is a native font spec --
+    // return NULL so that we know it really didn't exist.  Else, it is an
+    //  XLFD font, so keep trying.
+    free (fid);
+    return 0;
+  }
+
+  if (! fid->native_font)
+    try_xlfd_font (dpy, name, fid);
+
+  //Log("parsed \"%s\" to %s %.1f", name, fid->ps_name, fid->size);
+
+  /*
+  fid->native_font = jwxyz_load_native_font (dpy, name,
+                                             &fid->ascent, &fid->descent);
+  if (!fid->native_font) {
+    free (fid);
+    return 0;
+  }
+   */
+  query_font (fid);
+
+  return fid;
+}
+
+
+XFontStruct *
+XLoadQueryFont (Display *dpy, const char *name)
+{
+  Font fid = XLoadFont (dpy, name);
+  if (!fid) return 0;
+  return XQueryFont (dpy, fid);
+}
+
+int
+XUnloadFont (Display *dpy, Font fid)
+{
+  if (--fid->refcount < 0) abort();
+  if (fid->refcount > 0) return 0;
+
+  if (fid->native_font)
+    jwxyz_release_native_font (fid->dpy, fid->native_font);
+
+  if (fid->metrics.per_char)
+    free (fid->metrics.per_char);
+
+  free (fid);
+  return 0;
+}
+
+int
+XFreeFontInfo (char **names, XFontStruct *info, int n)
+{
+  int i;
+  if (names) {
+    for (i = 0; i < n; i++)
+      if (names[i]) free (names[i]);
+    free (names);
+  }
+  if (info) {
+    for (i = 0; i < n; i++)
+      if (info[i].per_char) {
+        free (info[i].per_char);
+        free (info[i].properties);
+      }
+    free (info);
+  }
+  return 0;
+}
+
+int
+XFreeFont (Display *dpy, XFontStruct *f)
+{
+  Font fid = f->fid;
+  XFreeFontInfo (0, f, 1);
+  XUnloadFont (dpy, fid);
+  return 0;
+}
+
+
+int
+XSetFont (Display *dpy, GC gc, Font fid)
+{
+  XGCValues *gcv = jwxyz_gc_gcv(gc);
+  Font font2 = copy_font (fid);
+  if (gcv->font)
+    XUnloadFont (dpy, gcv->font);
+  gcv->font = font2;
+  return 0;
+}
+
+
+XFontSet
+XCreateFontSet (Display *dpy, char *name,
+                char ***missing_charset_list_return,
+                int *missing_charset_count_return,
+                char **def_string_return)
+{
+  char *name2 = strdup (name);
+  char *s = strchr (name, ',');
+  if (s) *s = 0;
+  XFontSet set = 0;
+  XFontStruct *f = XLoadQueryFont (dpy, name2);
+  if (f)
+  {
+    set = (XFontSet) calloc (1, sizeof(*set));
+    set->font = f;
+  }
+  free (name2);
+  if (missing_charset_list_return)  *missing_charset_list_return = 0;
+  if (missing_charset_count_return) *missing_charset_count_return = 0;
+  if (def_string_return) *def_string_return = 0;
+  return set;
+}
+
+
+void
+XFreeFontSet (Display *dpy, XFontSet set)
+{
+  XFreeFont (dpy, set->font);
+  free (set);
+}
+
+
+void
+XFreeStringList (char **list)
+{
+  int i;
+  if (!list) return;
+  for (i = 0; list[i]; i++)
+    XFree (list[i]);
+  XFree (list);
+}
+
+
+int
+XTextExtents (XFontStruct *f, const char *s, int length,
+              int *dir_ret, int *ascent_ret, int *descent_ret,
+              XCharStruct *cs)
+{
+  // Unfortunately, adding XCharStructs together to get the extents for a
+  // string doesn't work: Cocoa uses non-integral character advancements, but
+  // XCharStruct.width is an integer. Plus that doesn't take into account
+  // kerning pairs, alternate glyphs, and fun stuff like the word "Zapfino" in
+  // Zapfino.
+
+  Font ff = f->fid;
+  Display *dpy = ff->dpy;
+  jwxyz_render_text (dpy, ff->native_font, s, length, False, cs, 0);
+  *dir_ret = 0;
+  *ascent_ret  = f->ascent;
+  *descent_ret = f->descent;
+  return 0;
+}
+
+int
+XTextWidth (XFontStruct *f, const char *s, int length)
+{
+  int ascent, descent, dir;
+  XCharStruct cs;
+  XTextExtents (f, s, length, &dir, &ascent, &descent, &cs);
+  return cs.width;
+}
+
+
+int
+XTextExtents16 (XFontStruct *f, const XChar2b *s, int length,
+                int *dir_ret, int *ascent_ret, int *descent_ret,
+                XCharStruct *cs)
+{
+  // Bool latin1_p = True;
+  int i, utf8_len = 0;
+  char *utf8 = XChar2b_to_utf8 (s, &utf8_len);   // already sanitized
+
+  for (i = 0; i < length; i++)
+    if (s[i].byte1 > 0) {
+      // latin1_p = False;
+      break;
+    }
+
+  {
+    Font ff = f->fid;
+    Display *dpy = ff->dpy;
+    jwxyz_render_text (dpy, ff->native_font, utf8, strlen(utf8),
+                       True, cs, 0);
+  }
+
+  *dir_ret = 0;
+  *ascent_ret  = f->ascent;
+  *descent_ret = f->descent;
+  free (utf8);
+  return 0;
+}
+
+
+/* "Returns the distance in pixels in the primary draw direction from
+ the drawing origin to the origin of the next character to be drawn."
+
+ "overall_ink_return is set to the bbox of the string's character ink."
+
+ "The overall_ink_return for a nondescending, horizontally drawn Latin
+ character is conventionally entirely above the baseline; that is,
+ overall_ink_return.height <= -overall_ink_return.y."
+
+ [So this means that y is the top of the ink, and height grows down:
+ For above-the-baseline characters, y is negative.]
+
+ "The overall_ink_return for a nonkerned character is entirely at, and to
+ the right of, the origin; that is, overall_ink_return.x >= 0."
+
+ [So this means that x is the left of the ink, and width grows right.
+ For left-of-the-origin characters, x is negative.]
+
+ "A character consisting of a single pixel at the origin would set
+ overall_ink_return fields y = 0, x = 0, width = 1, and height = 1."
+ */
+int
+Xutf8TextExtents (XFontSet set, const char *str, int len,
+                  XRectangle *overall_ink_return,
+                  XRectangle *overall_logical_return)
+{
+  XCharStruct cs;
+  Font f = set->font->fid;
+
+  jwxyz_render_text (f->dpy, f->native_font, str, len, True, &cs, NULL);
+
+  /* "The overall_logical_return is the bounding box that provides minimum
+   spacing to other graphical features for the string. Other graphical
+   features, for example, a border surrounding the text, should not
+   intersect this rectangle."
+
+   So I think that means they're the same?  Or maybe "ink" is the bounding
+   box, and "logical" is the advancement?  But then why is the return value
+   the advancement?
+   */
+  if (overall_ink_return)
+    XCharStruct_to_XmbRectangle (cs, *overall_ink_return);
+  if (overall_logical_return)
+    XCharStruct_to_XmbRectangle (cs, *overall_logical_return);
+
+  return cs.width;
+}
+
+
+int
+XDrawString (Display *dpy, Drawable d, GC gc, int x, int y,
+             const char  *str, int len)
+{
+  return jwxyz_draw_string (dpy, d, gc, x, y, str, len, False);
+}
+
+
+int
+XDrawString16 (Display *dpy, Drawable d, GC gc, int x, int y,
+               const XChar2b *str, int len)
+{
+  XChar2b *b2 = malloc ((len + 1) * sizeof(*b2));
+  char *s2;
+  int ret;
+  memcpy (b2, str, len * sizeof(*b2));
+  b2[len].byte1 = b2[len].byte2 = 0;
+  s2 = XChar2b_to_utf8 (b2, 0);
+  free (b2);
+  ret = jwxyz_draw_string (dpy, d, gc, x, y, s2, strlen(s2), True);
+  free (s2);
+  return ret;
+}
+
+
+void
+Xutf8DrawString (Display *dpy, Drawable d, XFontSet set, GC gc,
+                 int x, int y, const char *str, int len)
+{
+  jwxyz_draw_string (dpy, d, gc, x, y, str, len, True);
+}
+
+
+int
+XDrawImageString (Display *dpy, Drawable d, GC gc, int x, int y,
+                  const char *str, int len)
+{
+  int ascent, descent, dir;
+  XCharStruct cs;
+  XTextExtents (&jwxyz_gc_gcv (gc)->font->metrics, str, len,
+                &dir, &ascent, &descent, &cs);
+  jwxyz_fill_rect (dpy, d, gc,
+                   x + MIN (0, cs.lbearing),
+                   y - MAX (0, ascent),
+                   MAX (MAX (0, cs.rbearing) -
+                        MIN (0, cs.lbearing),
+                        cs.width),
+                   MAX (0, ascent) + MAX (0, descent),
+                   jwxyz_gc_gcv(gc)->background);
+  return XDrawString (dpy, d, gc, x, y, str, len);
+}
+
+
+void *
+jwxyz_native_font (Font f)
+{
+  return f->native_font;
 }
 
 
@@ -953,22 +1626,24 @@ visual_class (Screen *s, Visual *v)
   return TrueColor;
 }
 
-int
-get_bits_per_pixel (Display *dpy, int depth)
+void
+visual_rgb_masks (Screen *s, Visual *v, unsigned long *red_mask,
+                  unsigned long *green_mask, unsigned long *blue_mask)
 {
-  Assert (depth == 32 || depth == 1, "unexpected depth");
-  return depth;
+  *red_mask = v->red_mask;
+  *green_mask = v->green_mask;
+  *blue_mask = v->blue_mask;
+}
+
+int
+visual_pixmap_depth (Screen *s, Visual *v)
+{
+  return 32;
 }
 
 int
 screen_number (Screen *screen)
 {
-  Display *dpy = DisplayOfScreen (screen);
-  int i;
-  for (i = 0; i < ScreenCount (dpy); i++)
-    if (ScreenOfDisplay (dpy, i) == screen)
-      return i;
-  abort ();
   return 0;
 }
 

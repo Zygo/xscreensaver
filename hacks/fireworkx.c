@@ -143,8 +143,8 @@ static void render_light_map(struct state *st, fireshell *fs)
 	{
 		for (x = 0; x < st->width; x += 2, v += SHELLCOUNT)
 		{
-			float f;
-			f = sqrtf((fs->cx - x) * (fs->cx - x) + (fs->cy - y) * (fs->cy - y)) + 4.0;
+			double f;
+			f = sqrt((fs->cx - x) * (fs->cx - x) + (fs->cy - y) * (fs->cy - y)) + 4.0;
 			f = FLASH_ZOOM / f;
 			f += pow(f,0.1) * frand(0.0001); /* dither */
 			st->light_map[v] = f;

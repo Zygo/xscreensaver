@@ -1079,11 +1079,7 @@ init_slideshow (ModeInfo *mi)
   slideshow_state *ss;
   int wire = MI_IS_WIREFRAME(mi);
   
-  if (sss == NULL) {
-    if ((sss = (slideshow_state *)
-         calloc (MI_NUM_SCREENS(mi), sizeof(slideshow_state))) == NULL)
-      return;
-  }
+  MI_INIT (mi, sss, NULL);
   ss = &sss[screen];
 
   if ((ss->glx_context = init_GL(mi)) != NULL) {

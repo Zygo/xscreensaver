@@ -103,12 +103,7 @@ init_vines(ModeInfo * mi)
 {
 	vinestruct *fp;
 
-	if (vines == NULL) {
-		if ((vines = (vinestruct *) calloc(MI_NUM_SCREENS(mi),
-					     sizeof (vinestruct))) == NULL) {
-			return;
-		}
-	}
+	MI_INIT (mi, vines, 0);
 	fp = &vines[MI_SCREEN(mi)];
 
 	fp->i = 0;

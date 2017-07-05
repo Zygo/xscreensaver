@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2016 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2017 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -34,10 +34,10 @@ BEGIN { eval 'use HTML::Entities;' }
 use Socket;
 use POSIX qw(strftime);
 use Text::Wrap qw(wrap);
-use bytes;
+#use bytes;  # This breaks shit.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.44 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.46 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -279,6 +279,7 @@ sub which($) {
 sub output() {
 
   binmode (STDOUT, ($latin1_p ? ':raw' : ':utf8'));
+  binmode (STDERR, ':utf8');
 
   # Do some basic sanity checking (null text, null file names, etc.)
   #
@@ -691,9 +692,27 @@ sub get_url_text($) {
 
   if (! $ua) {
     print STDOUT ("\n\tPerl is broken. Do this to repair it:\n" .
-                  "\n\tsudo cpan LWP::UserAgent\n\n");
+                  "\n\tsudo cpan LWP::UserAgent" .
+                  " LWP::Protocol::https Mozilla::CA\n\n");
     return;
   }
+
+  # Half the time, random Linux systems don't have Mozilla::CA installed,
+  # which results in "Can't verify SSL peers without knowning which
+  # Certificate Authorities to trust".
+  #
+  # I'm going to take a controversial stand here and say that, for the
+  # purposes of plain-text being displayed in a screen saver via RSS,
+  # the chances of a certificate-based man-in-the-middle attack having
+  # a malicious effect on anyone anywhere at any time is so close to
+  # zero that it can be discounted.  So, just don't bother validating
+  # SSL connections.
+  #
+  $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0;
+  eval {
+    $ua->ssl_opts (verify_hostname => 0, SSL_verify_mode => 0);
+  };
+
 
   set_proxy ($ua);
   $ua->agent ("$progname/$version");
@@ -714,7 +733,9 @@ sub get_url_text($) {
     $ct = 'text/plain';
   }
 
-  utf8::decode ($body);  # Pack multi-byte UTF-8 back into wide chars.
+  # This is not necessary, since HTTP::Message::decoded_content() has
+  # already done 'decode (<charset-header>, $body)'.
+  # utf8::decode ($body);  # Pack multi-byte UTF-8 back into wide chars.
 
   $ct = guess_content_type ($ct, $body);
   if ($ct eq 'html') {

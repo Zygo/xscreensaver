@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,20 +43,12 @@
 # define NSMakeSize   CGSizeMake
 # define NSBezierPath UIBezierPath
 # define colorWithDeviceRed colorWithRed
-
-# define NSFontTraitMask      UIFontDescriptorSymbolicTraits
-// The values for the flags for NSFontTraitMask and
-// UIFontDescriptorSymbolicTraits match up, not that it really matters here.
-# define NSBoldFontMask       UIFontDescriptorTraitBold
-# define NSFixedPitchFontMask UIFontDescriptorTraitMonoSpace
-# define NSItalicFontMask     UIFontDescriptorTraitItalic
 #else
 # import <Cocoa/Cocoa.h>
 #endif
 
 #import <CoreText/CTFont.h>
 #import <CoreText/CTLine.h>
-#import <CoreText/CTRun.h>
 
 #import "jwxyzI.h"
 #import "jwxyz-cocoa.h"
@@ -65,16 +57,10 @@
 #import "utf8wc.h"
 #import "xft.h"
 
-# undef MAX
-# undef MIN
-# define MAX(a,b) ((a)>(b)?(a):(b))
-# define MIN(a,b) ((a)<(b)?(a):(b))
-
 
 struct jwxyz_Display {
   Window main_window;
   Screen *screen;
-  int screen_count;
   struct jwxyz_sources_data *timers_data;
 
 # ifndef USE_IPHONE
@@ -95,29 +81,12 @@ struct jwxyz_Screen {
   CGBitmapInfo bitmap_info;
   unsigned long black, white;
   Visual *visual;
-  int screen_number;
 };
 
 struct jwxyz_GC {
   XGCValues gcv;
   unsigned int depth;
   CGImageRef clip_mask;  // CGImage copy of the Pixmap in gcv.clip_mask
-};
-
-struct jwxyz_Font {
-  Display *dpy;
-  char *ps_name;
-  NSFont *nsfont;
-  float size;   // points
-  char *xa_font;
-
-  // In X11, "Font" is just an ID, and "XFontStruct" contains the metrics.
-  // But we need the metrics on both of them, so they go here.
-  XFontStruct metrics;
-};
-
-struct jwxyz_XFontSet {
-  XFontStruct *font;
 };
 
 
@@ -362,26 +331,6 @@ query_color_float (Display *dpy, unsigned long pixel, float *rgba)
 }
 
 
-/* We keep a list of all of the Displays that have been created and not
-   yet freed so that they can have sensible display numbers.  If three
-   displays are created (0, 1, 2) and then #1 is closed, then the fourth
-   display will be given the now-unused display number 1. (Everything in
-   here assumes a 1:1 Display/Screen mapping.)
-
-   The size of this array is the most number of live displays at one time.
-   So if it's 20, then we'll blow up if the system has 19 monitors and also
-   has System Preferences open (the small preview window).
-
-   Note that xlockmore-style savers tend to allocate big structures, so
-   setting this to 1000 will waste a few megabytes.  Also some of them assume
-   that the number of screens never changes, so dynamically expanding this
-   array won't work.
- */
-# ifndef USE_IPHONE
-static Display *jwxyz_live_displays[20] = { 0, };
-# endif
-
-
 Display *
 jwxyz_make_display (Window w)
 {
@@ -391,24 +340,6 @@ jwxyz_make_display (Window w)
   d->screen = (Screen *) calloc (1, sizeof(Screen));
   d->screen->dpy = d;
   
-  d->screen_count = 1;
-  d->screen->screen_number = 0;
-# ifndef USE_IPHONE
-  {
-    // Find the first empty slot in live_displays and plug us in.
-    int size = sizeof(jwxyz_live_displays) / sizeof(*jwxyz_live_displays);
-    int i;
-    for (i = 0; i < size; i++) {
-      if (! jwxyz_live_displays[i])
-        break;
-    }
-    if (i >= size) abort();
-    jwxyz_live_displays[i] = d;
-    d->screen_count = size;
-    d->screen->screen_number = i;
-  }
-# endif // !USE_IPHONE
-
   d->screen->bitmap_info = CGBitmapContextGetBitmapInfo (cgc);
   d->screen->black = jwxyz_alloc_color (d, 0x0000, 0x0000, 0x0000, 0xFFFF);
   d->screen->white = jwxyz_alloc_color (d, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF);
@@ -447,7 +378,6 @@ jwxyz_make_display (Window w)
           (byte_order == kCGBitmapByteOrder32Little ||
            byte_order == kCGBitmapByteOrder32Big),
           "invalid bits per channel");
-  v->bits_per_rgb = 8;
   d->screen->visual = v;
   
   d->timers_data = jwxyz_sources_init (XtDisplayToApplicationContext (d));
@@ -465,21 +395,6 @@ jwxyz_free_display (Display *dpy)
 {
   jwxyz_sources_free (dpy->timers_data);
   
-# ifndef USE_IPHONE
-  {
-    // Find us in live_displays and clear that slot.
-    int size = ScreenCount(dpy);
-    int i;
-    for (i = 0; i < size; i++) {
-      if (dpy == jwxyz_live_displays[i]) {
-        jwxyz_live_displays[i] = 0;
-        break;
-      }
-    }
-    if (i >= size) abort();
-  }
-# endif // !USE_IPHONE
-
   free (dpy->screen->visual);
   free (dpy->screen);
   free (dpy);
@@ -594,13 +509,7 @@ XDisplayNumberOfScreen (Screen *s)
 int
 XScreenNumberOfScreen (Screen *s)
 {
-  return s? s->screen_number : 0;
-}
-
-int
-jwxyz_ScreenCount (Display *dpy)
-{
-  return dpy ? dpy->screen_count : 0;
+  return 0;
 }
 
 unsigned long
@@ -1449,9 +1358,10 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
 
 
 XImage *
-XGetImage (Display *dpy, Drawable d, int x, int y,
-           unsigned int width, unsigned int height,
-           unsigned long plane_mask, int format)
+XGetSubImage (Display *dpy, Drawable d, int x, int y,
+              unsigned int width, unsigned int height,
+              unsigned long plane_mask, int format,
+              XImage *image, int dest_x, int dest_y)
 {
   const unsigned char *data = 0;
   size_t depth, ibpp, ibpl;
@@ -1477,9 +1387,6 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
   data += (y * ibpl) + (x * (ibpp/8));
   
   format = (depth == 1 ? XYPixmap : ZPixmap);
-  XImage *image = XCreateImage (dpy, 0, (unsigned int) depth,
-                                format, 0, 0, width, height, 0, 0);
-  image->data = (char *) malloc (height * image->bytes_per_line);
   
   int obpl = image->bytes_per_line;
   
@@ -1504,13 +1411,14 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
         unsigned char r = *iline2++;  // use    B  or  G  or  G  or  R
         if (ibpp == 32) iline2++;     // ignore A  or  R  or  B  or  A
 
-        XPutPixel (image, xx, yy, (r ? 1 : 0));
+        XPutPixel (image, xx + dest_x, yy + dest_y, (r ? 1 : 0));
       }
       iline += ibpl;
     }
   } else {
     const unsigned char *iline = data;
-    unsigned char *oline = (unsigned char *) image->data;
+    unsigned char *oline = (unsigned char *) image->data + dest_y * obpl +
+                             dest_x * 4;
 
     mode = convert_mode_merge (mode,
              convert_mode_invert (
@@ -1756,838 +1664,6 @@ copy_pixmap (Display *dpy, Pixmap p)
 }
 
 
-/* Font metric terminology, as used by X11:
-
-   "lbearing" is the distance from the logical origin to the leftmost pixel.
-   If a character's ink extends to the left of the origin, it is negative.
-
-   "rbearing" is the distance from the logical origin to the rightmost pixel.
-
-   "descent" is the distance from the logical origin to the bottommost pixel.
-   For characters with descenders, it is positive.  For superscripts, it
-   is negative.
-
-   "ascent" is the distance from the logical origin to the topmost pixel.
-   It is the number of pixels above the baseline.
-
-   "width" is the distance from the logical origin to the position where
-   the logical origin of the next character should be placed.
-
-   If "rbearing" is greater than "width", then this character overlaps the
-   following character.  If smaller, then there is trailing blank space.
- */
-static void
-utf8_metrics (Font fid, NSString *nsstr, XCharStruct *cs)
-{
-  // Returns the metrics of the multi-character, single-line UTF8 string.
-
-  NSFont *nsfont = fid->nsfont;
-  Drawable d = XRootWindow (fid->dpy, 0);
-
-  CGContextRef cgc = d->cgc;
-  NSDictionary *attr =
-    [NSDictionary dictionaryWithObjectsAndKeys:
-                    nsfont, NSFontAttributeName,
-                  nil];
-  NSAttributedString *astr = [[NSAttributedString alloc]
-                               initWithString:nsstr
-                                   attributes:attr];
-  CTLineRef ctline = CTLineCreateWithAttributedString (
-                       (__bridge CFAttributedStringRef) astr);
-  CGContextSetTextPosition (cgc, 0, 0);
-  CGContextSetShouldAntialias (cgc, True);  // #### Guess?
-
-  memset (cs, 0, sizeof(*cs));
-
-  // "CTRun represents set of consecutive glyphs sharing the same
-  // attributes and direction".
-  //
-  // We also get multiple runs any time font subsitution happens:
-  // E.g., if the current font is Verdana-Bold, a &larr; character
-  // in the NSString will actually be rendered in LucidaGrande-Bold.
-  //
-  int count = 0;
-  for (id runid in (NSArray *)CTLineGetGlyphRuns(ctline)) {
-    CTRunRef run = (CTRunRef) runid;
-    CFRange r = { 0, };
-    CGRect bbox = CTRunGetImageBounds (run, cgc, r);
-    CGFloat ascent, descent, leading;
-    CGFloat advancement =
-      CTRunGetTypographicBounds (run, r, &ascent, &descent, &leading);
-
-# ifndef USE_IPHONE
-    // Only necessary for when LCD smoothing is enabled, which iOS doesn't do.
-    bbox.origin.x    -= 2.0/3.0;
-    bbox.size.width  += 4.0/3.0;
-    bbox.size.height += 1.0/2.0;
-# endif
-
-    // Create the metrics for this run:
-    XCharStruct cc;
-    cc.ascent   = ceil  (bbox.origin.y + bbox.size.height);
-    cc.descent  = ceil (-bbox.origin.y);
-    cc.lbearing = floor (bbox.origin.x);
-    cc.rbearing = ceil  (bbox.origin.x + bbox.size.width);
-    cc.width    = floor (advancement + 0.5);
-
-    // Add those metrics into the cumulative metrics:
-    if (count == 0)
-      *cs = cc;
-    else
-      {
-        cs->ascent   = MAX (cs->ascent,     cc.ascent);
-        cs->descent  = MAX (cs->descent,    cc.descent);
-        cs->lbearing = MIN (cs->lbearing,   cs->width + cc.lbearing);
-        cs->rbearing = MAX (cs->rbearing,   cs->width + cc.rbearing);
-        cs->width    = MAX (cs->width,      cs->width + cc.width);
-      }
-
-    // Why no y? What about vertical text?
-    // XCharStruct doesn't encapsulate that but XGlyphInfo does.
-
-    count++;
-  }
-
-  [astr release];
-  CFRelease (ctline);
-}
-
-
-
-// This is XQueryFont, but for the XFontStruct embedded in 'Font'
-//
-static void
-query_font (Font fid)
-{
-  if (!fid || !fid->nsfont) {
-    Assert (0, "no NSFont in fid");
-    return;
-  }
-  if (![fid->nsfont fontName]) {
-    Assert(0, "broken NSFont in fid");
-    return;
-  }
-
-  int first = 32;
-  int last = 255;
-
-  XFontStruct *f = &fid->metrics;
-  XCharStruct *min = &f->min_bounds;
-  XCharStruct *max = &f->max_bounds;
-
-  f->fid               = fid;
-  f->min_char_or_byte2 = first;
-  f->max_char_or_byte2 = last;
-  f->default_char      = 'M';
-  f->ascent            =  ceil ([fid->nsfont ascender]);
-  f->descent           = -floor ([fid->nsfont descender]);
-
-  min->width    = 32767;  // set to smaller values in the loop
-  min->ascent   = 32767;
-  min->descent  = 32767;
-  min->lbearing = 32767;
-  min->rbearing = 32767;
-
-  f->per_char = (XCharStruct *) calloc (last-first+2, sizeof (XCharStruct));
-
-  for (int i = first; i <= last; i++) {
-    XCharStruct *cs = &f->per_char[i-first];
-
-    char s2[2];
-    s2[0] = i;
-    s2[1] = 0;
-    NSString *nsstr = [NSString stringWithCString:s2
-                               encoding:NSISOLatin1StringEncoding];
-    utf8_metrics (fid, nsstr, cs);
-
-    max->width    = MAX (max->width,    cs->width);
-    max->ascent   = MAX (max->ascent,   cs->ascent);
-    max->descent  = MAX (max->descent,  cs->descent);
-    max->lbearing = MAX (max->lbearing, cs->lbearing);
-    max->rbearing = MAX (max->rbearing, cs->rbearing);
-
-    min->width    = MIN (min->width,    cs->width);
-    min->ascent   = MIN (min->ascent,   cs->ascent);
-    min->descent  = MIN (min->descent,  cs->descent);
-    min->lbearing = MIN (min->lbearing, cs->lbearing);
-    min->rbearing = MIN (min->rbearing, cs->rbearing);
-
-# if 0
-    fprintf(stderr, " %3d %c: w=%3d lb=%3d rb=%3d as=%3d ds=%3d "
-                    " bb=%5.1f x %5.1f @ %5.1f %5.1f  adv=%5.1f %5.1f\n",
-            i, i, cs->width, cs->lbearing, cs->rbearing, 
-            cs->ascent, cs->descent,
-            bbox.size.width, bbox.size.height,
-            bbox.origin.x, bbox.origin.y,
-            advancement.width, advancement.height);
-# endif // 0
-  }
-}
-
-
-// Since 'Font' includes the metrics, this just makes a copy of that.
-//
-XFontStruct *
-XQueryFont (Display *dpy, Font fid)
-{
-  // copy XFontStruct
-  XFontStruct *f = (XFontStruct *) calloc (1, sizeof(*f));
-  *f = fid->metrics;
-
-  // build XFontProps
-  f->n_properties = 1;
-  f->properties = malloc (sizeof(*f->properties) * f->n_properties);
-  f->properties[0].name = XA_FONT;
-  Assert (sizeof (f->properties[0].card32) >= sizeof (char *),
-          "atoms probably needs a real implementation");
-  // If XInternAtom is ever implemented, use it here.
-  f->properties[0].card32 = (unsigned long)fid->xa_font;
-
-  // copy XCharStruct array
-  int size = (f->max_char_or_byte2 - f->min_char_or_byte2) + 1;
-  f->per_char = (XCharStruct *) calloc (size + 2, sizeof (XCharStruct));
-  memcpy (f->per_char, fid->metrics.per_char,
-          size * sizeof (XCharStruct));
-
-  return f;
-}
-
-
-static Font
-copy_font (Font fid)
-{
-  // copy 'Font' struct
-  Font fid2 = (Font) malloc (sizeof(*fid2));
-  *fid2 = *fid;
-
-  // copy XCharStruct array
-  int size = fid->metrics.max_char_or_byte2 - fid->metrics.min_char_or_byte2;
-  fid2->metrics.per_char = (XCharStruct *) 
-    malloc ((size + 2) * sizeof (XCharStruct));
-  memcpy (fid2->metrics.per_char, fid->metrics.per_char, 
-          size * sizeof (XCharStruct));
-
-  // copy the other pointers
-  fid2->ps_name = strdup (fid->ps_name);
-  fid2->xa_font = strdup (fid->xa_font);
-//  [fid2->nsfont retain];
-  fid2->metrics.fid = fid2;
-
-  return fid2;
-}
-
-
-static NSArray *
-font_family_members (NSString *family_name)
-{
-# ifndef USE_IPHONE
-  return [[NSFontManager sharedFontManager]
-          availableMembersOfFontFamily:family_name];
-# else
-  return [UIFont fontNamesForFamilyName:family_name];
-# endif
-}
-
-
-static NSString *
-default_font_family (NSFontTraitMask require)
-{
-  return require & NSFixedPitchFontMask ? @"Courier" : @"Verdana";
-}
-
-
-static NSFont *
-try_font (NSFontTraitMask traits, NSFontTraitMask mask,
-          NSString *family_name, float size,
-          char **name_ret)
-{
-  Assert (size > 0, "zero font size");
-
-  NSArray *family_members = font_family_members (family_name);
-  if (!family_members.count)
-    family_members = font_family_members (default_font_family (traits));
-
-# ifndef USE_IPHONE
-  for (unsigned k = 0; k != family_members.count; ++k) {
-
-    NSArray *member = [family_members objectAtIndex:k];
-    NSFontTraitMask font_mask =
-    [(NSNumber *)[member objectAtIndex:3] unsignedIntValue];
-
-    if ((font_mask & mask) == traits) {
-
-      NSString *name = [member objectAtIndex:0];
-      NSFont *f = [NSFont fontWithName:name size:size];
-      if (!f)
-        break;
-
-      /* Don't use this font if it (probably) doesn't include ASCII characters.
-       */
-      NSStringEncoding enc = [f mostCompatibleStringEncoding];
-      if (! (enc == NSUTF8StringEncoding ||
-             enc == NSISOLatin1StringEncoding ||
-             enc == NSNonLossyASCIIStringEncoding ||
-             enc == NSISOLatin2StringEncoding ||
-             enc == NSUnicodeStringEncoding ||
-             enc == NSWindowsCP1250StringEncoding ||
-             enc == NSWindowsCP1252StringEncoding ||
-             enc == NSMacOSRomanStringEncoding)) {
-        // NSLog(@"skipping \"%@\": encoding = %d", name, enc);
-        break;
-      }
-      // NSLog(@"using \"%@\": %d", name, enc);
-
-      // *name_ret = strdup ([name cStringUsingEncoding:NSUTF8StringEncoding]);
-      *name_ret = strdup (name.UTF8String);
-      return f;
-    }
-  }
-# else // USE_IPHONE
-
-  // This trick needs iOS 3.1, see "Using SDK-Based Development".
-  Class has_font_descriptor = [UIFontDescriptor class];
-
-  for (NSString *fn in family_members) {
-# define MATCH(X) \
-         ([fn rangeOfString:X options:NSCaseInsensitiveSearch].location \
-         != NSNotFound)
-
-    NSFontTraitMask font_mask;
-    if (has_font_descriptor) {
-      // This only works on iOS 7 and later.
-      font_mask = [[UIFontDescriptor
-                    fontDescriptorWithFontAttributes:
-                    @{UIFontDescriptorNameAttribute:fn}]
-                   symbolicTraits];
-    } else {
-      font_mask = 0;
-      if (MATCH(@"Bold"))
-        font_mask |= NSBoldFontMask;
-      if (MATCH(@"Italic") || MATCH(@"Oblique"))
-        font_mask |= NSItalicFontMask;
-      if (MATCH(@"Courier"))
-        font_mask |= NSFixedPitchFontMask;
-    }
-
-    if ((font_mask & mask) == traits) {
-
-      /* Check if it can do ASCII.  No good way to accomplish this!
-         These are fonts present in iPhone Simulator as of June 2012
-         that don't include ASCII.
-       */
-      if (MATCH(@"AppleGothic") ||	// Korean
-          MATCH(@"Dingbats") ||		// Dingbats
-          MATCH(@"Emoji") ||		// Emoticons
-          MATCH(@"Geeza") ||		// Arabic
-          MATCH(@"Hebrew") ||		// Hebrew
-          MATCH(@"HiraKaku") ||		// Japanese
-          MATCH(@"HiraMin") ||		// Japanese
-          MATCH(@"Kailasa") ||		// Tibetan
-          MATCH(@"Ornaments") ||	// Dingbats
-          MATCH(@"STHeiti")		// Chinese
-       )
-         break;
-
-      *name_ret = strdup (fn.UTF8String);
-      return [UIFont fontWithName:fn size:size];
-    }
-# undef MATCH
-  }
-
-# endif
-
-  return NULL;
-}
-
-
-/* On Cocoa and iOS, fonts may be specified as "Georgia Bold 24" instead
-   of XLFD strings; also they can be comma-separated strings with multiple
-   font names.  First one that exists wins.
- */
-static NSFont *
-try_native_font (const char *name, float scale,
-                 char **name_ret, float *size_ret, char **xa_font)
-{
-  if (!name) return 0;
-  const char *spc = strrchr (name, ' ');
-  if (!spc) return 0;
-
-  NSFont *f = 0;
-  char *token = strdup (name);
-  char *otoken = token;
-  char *name2;
-  char *lasts;
-
-  while ((name2 = strtok_r (token, ",", &lasts))) {
-    token = 0;
-
-    while (*name2 == ' ' || *name2 == '\t' || *name2 == '\n')
-      name2++;
-
-    spc = strrchr (name2, ' ');
-    if (!spc) continue;
-
-    int dsize = 0;
-    if (1 != sscanf (spc, " %d ", &dsize))
-      continue;
-    float size = dsize;
-
-    if (size < 4) continue;
-
-    size *= scale;
-
-    name2[strlen(name2) - strlen(spc)] = 0;
-
-    NSString *nsname = [NSString stringWithCString:name2
-                                          encoding:NSUTF8StringEncoding];
-    f = [NSFont fontWithName:nsname size:size];
-    if (f) {
-      *name_ret = strdup (name2);
-      *size_ret = size;
-      *xa_font = strdup (name); // Maybe this should be an XLFD?
-      break;
-    } else {
-      NSLog(@"No native font: \"%@\" %.0f", nsname, size);
-# if 0
-      for (NSString *fam in [UIFont familyNames]) {
-        NSLog(@"Family: %@", fam);
-        for (NSString *f in [UIFont fontNamesForFamilyName:fam]) {
-          NSLog(@"  Font: %@", f);
-        }
-      }
-# endif
-    }
-  }
-
-  free (otoken);
-  return f;
-}
-
-
-/* Returns a random font in the given size and face.
- */
-static NSFont *
-random_font (NSFontTraitMask traits, NSFontTraitMask mask,
-             float size, NSString **family_ret, char **name_ret)
-{
-
-# ifndef USE_IPHONE
-  // Providing Unbold or Unitalic in the mask for availableFontNamesWithTraits
-  // returns an empty list, at least on a system with default fonts only.
-  NSArray *families = [[NSFontManager sharedFontManager]
-                       availableFontFamilies];
-  if (!families) return 0;
-# else
-  NSArray *families = [UIFont familyNames];
-
-  // There are many dups in the families array -- uniquify it.
-  {
-    NSArray *sorted_families =
-    [families sortedArrayUsingSelector:@selector(compare:)];
-    NSMutableArray *new_families =
-    [NSMutableArray arrayWithCapacity:sorted_families.count];
-
-    NSString *prev_family = @"";
-    for (NSString *family in sorted_families) {
-      if ([family compare:prev_family])
-        [new_families addObject:family];
-      prev_family = family;
-    }
-
-    families = new_families;
-  }
-# endif // USE_IPHONE
-
-  long n = [families count];
-  if (n <= 0) return 0;
-
-  int j;
-  for (j = 0; j < n; j++) {
-    int i = random() % n;
-    NSString *family_name = [families objectAtIndex:i];
-
-    NSFont *result = try_font (traits, mask, family_name, size, name_ret);
-    if (result) {
-      [*family_ret release];
-      *family_ret = family_name;
-      [*family_ret retain];
-      return result;
-    }
-  }
-
-  // None of the fonts support ASCII?
-  return 0;
-}
-
-
-static const char *
-xlfd_field_end (const char *s)
-{
-  const char *s2 = strchr(s, '-');
-  if (!s2)
-    s2 = s + strlen(s);
-  return s2;
-}
-
-
-static size_t
-xlfd_next (const char **s, const char **s2)
-{
-  if (!**s2) {
-    *s = *s2;
-  } else {
-    Assert (**s2 == '-', "xlfd parse error");
-    *s = *s2 + 1;
-    *s2 = xlfd_field_end (*s);
-  }
-
-  return *s2 - *s;
-}
-
-
-static NSFont *
-try_xlfd_font (Display *dpy, const char *name, float scale,
-               char **name_ret, float *size_ret, char **xa_font)
-{
-  NSFont *nsfont = 0;
-  NSString *family_name = nil;
-  NSFontTraitMask require = 0,
-   // Default mask is for the built-in X11 font aliases.
-   mask = NSFixedPitchFontMask | NSBoldFontMask | NSItalicFontMask;
-  BOOL rand  = NO;
-  float size = 12; /* In points (1/72 in.) */
-  char *ps_name = 0;
-
-  const char *s = (name ? name : "");
-
-  size_t L = strlen (s);
-# define CMP(STR) (L == strlen(STR) && !strncasecmp (s, (STR), L))
-# define UNSPEC   (L == 0 || L == 1 && *s == '*')
-  if      (CMP ("6x10"))     size = 8,  require |= NSFixedPitchFontMask;
-  else if (CMP ("6x10bold")) size = 8,  require |= NSFixedPitchFontMask | NSBoldFontMask;
-  else if (CMP ("fixed"))    size = 12, require |= NSFixedPitchFontMask;
-  else if (CMP ("9x15"))     size = 12, require |= NSFixedPitchFontMask;
-  else if (CMP ("9x15bold")) size = 12, require |= NSFixedPitchFontMask | NSBoldFontMask;
-  else if (CMP ("vga"))      size = 12, require |= NSFixedPitchFontMask;
-  else if (CMP ("console"))  size = 12, require |= NSFixedPitchFontMask;
-  else if (CMP ("gallant"))  size = 12, require |= NSFixedPitchFontMask;
-  else {
-
-    NSFontTraitMask forbid = 0;
-
-    // Incorrect fields are ignored.
-
-    if (*s == '-')
-      ++s;
-    const char *s2 = xlfd_field_end(s);
-
-    // Foundry (ignore)
-
-    L = xlfd_next (&s, &s2); // Family name
-    // This used to substitute Georgia for Times. Now it doesn't.
-    if (CMP ("random")) {
-      rand = YES;
-    } else if (CMP ("fixed")) {
-      require |= NSFixedPitchFontMask;
-      family_name = @"Courier";
-    } else if (!UNSPEC) {
-      family_name = [[[NSString alloc] initWithBytes:s
-                                              length:L
-                                            encoding:NSUTF8StringEncoding]
-                     autorelease];
-    }
-
-    L = xlfd_next (&s, &s2); // Weight name
-    if (CMP ("bold") || CMP ("demibold"))
-      require |= NSBoldFontMask;
-    else if (CMP ("medium") || CMP ("regular"))
-      forbid |= NSBoldFontMask;
-
-    L = xlfd_next (&s, &s2); // Slant
-    if (CMP ("i") || CMP ("o"))
-      require |= NSItalicFontMask;
-    else if (CMP ("r"))
-      forbid |= NSItalicFontMask;
-
-    xlfd_next (&s, &s2); // Set width name (ignore)
-    xlfd_next (&s, &s2); // Add style name (ignore)
-
-    L = xlfd_next (&s, &s2); // Pixel size (ignore)
-    char *s3;
-    uintmax_t pxsize = strtoumax(s, &s3, 10);
-    if (UNSPEC || s2 != s3)
-      pxsize = UINTMAX_MAX; // i.e. it's invalid.
-
-    L = xlfd_next (&s, &s2); // Point size
-    uintmax_t ptsize = strtoumax(s, &s3, 10);
-    if (UNSPEC || s2 != s3)
-      ptsize = UINTMAX_MAX;
-
-    xlfd_next (&s, &s2); // Resolution X (ignore)
-    xlfd_next (&s, &s2); // Resolution Y (ignore)
-
-    L = xlfd_next (&s, &s2); // Spacing
-    if (CMP ("p"))
-      forbid |= NSFixedPitchFontMask;
-    else if (CMP ("m") || CMP ("c"))
-      require |= NSFixedPitchFontMask;
-
-    xlfd_next (&s, &s2); // Average width (ignore)
-
-    // -*-courier-bold-r-*-*-14-*-*-*-*-*-*-*         14 px
-    // -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*        14 pt
-    // -*-courier-bold-r-*-*-140-*                    14 pt, via wildcard
-    // -*-courier-bold-r-*-140-*                      14 pt, not handled
-    // -*-courier-bold-r-*-*-14-180-*-*-*-*-*-*       error
-
-    L = xlfd_next (&s, &s2); // Charset registry
-    if (ptsize != UINTMAX_MAX) {
-      // It was in the ptsize field, so that's definitely what it is.
-      size = ptsize / 10.0;
-    } else if (pxsize != UINTMAX_MAX) {
-      size = pxsize;
-      // If it's a fully qualified XLFD, then this really is the pxsize.
-      // Otherwise, this is probably point size with a multi-field wildcard.
-      if (L == 0)
-        size /= 10.0;
-    }
-
-    mask = require | forbid;
-  }
-# undef CMP
-# undef UNSPEC
-
-  if (!family_name && !rand)
-    family_name = default_font_family (require);
-
-  if (size < 6 || size > 1000)
-    size = 12;
-
-  size *= scale;
-
-  if (rand) {
-    nsfont   = random_font (require, mask, size, &family_name, &ps_name);
-    [family_name autorelease];
-  }
-
-  if (!nsfont)
-    nsfont   = try_font (require, mask, family_name, size, &ps_name);
-
-  // if that didn't work, turn off attibutes until it does
-  // (e.g., there is no "Monaco-Bold".)
-  //
-  if (!nsfont && (mask & NSItalicFontMask)) {
-    require &= ~NSItalicFontMask;
-    mask &= ~NSItalicFontMask;
-    nsfont = try_font (require, mask, family_name, size, &ps_name);
-  }
-  if (!nsfont && (mask & NSBoldFontMask)) {
-    require &= ~NSBoldFontMask;
-    mask &= ~NSBoldFontMask;
-    nsfont = try_font (require, mask, family_name, size, &ps_name);
-  }
-  if (!nsfont && (mask & NSFixedPitchFontMask)) {
-    require &= ~NSFixedPitchFontMask;
-    mask &= ~NSFixedPitchFontMask;
-    nsfont = try_font (require, mask, family_name, size, &ps_name);
-  }
-
-  if (nsfont) {
-    unsigned dpi_d = XDisplayHeightMM (dpy,0) * 10 / 2;
-    unsigned dpi = (254 * XDisplayHeight (dpy,0) + dpi_d) / (2 * dpi_d);
-    *name_ret = ps_name;
-    *size_ret = size;
-    float actual_size = size / scale;
-    asprintf(xa_font, "-*-%s-%s-%c-*-*-%u-%u-%u-%u-%c-0-iso10646-1",
-             family_name.UTF8String,
-             (require & NSBoldFontMask) ? "bold" : "medium",
-             (require & NSItalicFontMask) ? 'o' : 'r',
-             (unsigned)(dpi * actual_size / 72.27 + 0.5),
-             (unsigned)(actual_size * 10 + 0.5), dpi, dpi,
-             (require & NSFixedPitchFontMask) ? 'm' : 'p');
-    return nsfont;
-  } else {
-    if (ps_name) free (ps_name);
-    return 0;
-  }
-}
-
-
-Font
-XLoadFont (Display *dpy, const char *name)
-{
-  Font fid = (Font) calloc (1, sizeof(*fid));
-
-  float scale = 1;
-
-# ifdef USE_IPHONE
-  /* Since iOS screens are physically smaller than desktop screens, scale up
-     the fonts to make them more readable.
-
-     Note that X11 apps on iOS also have the backbuffer sized in points
-     instead of pixels, resulting in an effective X11 screen size of 768x1024
-     or so, even if the display has significantly higher resolution.  That is
-     unrelated to this hack, which is really about DPI.
-   */
-  scale = dpy->main_window->window.view.hackedContentScaleFactor;
-  if (scale < 1) // iPad Pro magnifies the backbuffer by 3x, which makes text
-    scale = 1;   // excessively blurry in BSOD.
-# endif
-
-  fid->dpy = dpy;
-  fid->nsfont = try_native_font (name, scale, &fid->ps_name, &fid->size,
-                                 &fid->xa_font);
-
-  if (!fid->nsfont && name &&
-      strchr (name, ' ') &&
-      !strchr (name, '*')) {
-    // If name contains a space but no stars, it is a native font spec --
-    // return NULL so that we know it really didn't exist.  Else, it is an
-    //  XLFD font, so keep trying.
-    XUnloadFont (dpy, fid);
-    return 0;
-  }
-
-  if (! fid->nsfont)
-    fid->nsfont = try_xlfd_font (dpy, name, scale, &fid->ps_name, &fid->size,
-                                 &fid->xa_font);
-
-  // We should never return NULL for XLFD fonts.
-  if (!fid->nsfont) {
-    Assert (0, "no font");
-    return 0;
-  }
-  CFRetain (fid->nsfont);   // needed for garbage collection?
-
-  //NSLog(@"parsed \"%s\" to %s %.1f", name, fid->ps_name, fid->size);
-
-  query_font (fid);
-
-  return fid;
-}
-
-
-XFontStruct *
-XLoadQueryFont (Display *dpy, const char *name)
-{
-  Font fid = XLoadFont (dpy, name);
-  if (!fid) return 0;
-  return XQueryFont (dpy, fid);
-}
-
-int
-XUnloadFont (Display *dpy, Font fid)
-{
-  if (fid->ps_name)
-    free (fid->ps_name);
-  if (fid->metrics.per_char)
-    free (fid->metrics.per_char);
-
-  // #### DAMMIT!  I can't tell what's going wrong here, but I keep getting
-  //      crashes in [NSFont ascender] <- query_font, and it seems to go away
-  //      if I never release the nsfont.  So, fuck it, we'll just leak fonts.
-  //      They're probably not very big...
-  //
-  //  [fid->nsfont release];
-  //  CFRelease (fid->nsfont);
-
-  free (fid);
-  return 0;
-}
-
-int
-XFreeFontInfo (char **names, XFontStruct *info, int n)
-{
-  int i;
-  if (names) {
-    for (i = 0; i < n; i++)
-      if (names[i]) free (names[i]);
-    free (names);
-  }
-  if (info) {
-    for (i = 0; i < n; i++)
-      if (info[i].per_char) {
-        free (info[i].per_char);
-        free (info[i].properties);
-      }
-    free (info);
-  }
-  return 0;
-}
-
-int
-XFreeFont (Display *dpy, XFontStruct *f)
-{
-  Font fid = f->fid;
-  XFreeFontInfo (0, f, 1);
-  XUnloadFont (dpy, fid);
-  return 0;
-}
-
-
-int
-XSetFont (Display *dpy, GC gc, Font fid)
-{
-  if (gc->gcv.font)
-    XUnloadFont (dpy, gc->gcv.font);
-  gc->gcv.font = copy_font (fid);
-  [gc->gcv.font->nsfont retain];
-  CFRetain (gc->gcv.font->nsfont);   // needed for garbage collection?
-  return 0;
-}
-
-
-XFontSet
-XCreateFontSet (Display *dpy, char *name, 
-                char ***missing_charset_list_return,
-                int *missing_charset_count_return,
-                char **def_string_return)
-{
-  char *name2 = strdup (name);
-  char *s = strchr (name, ',');
-  if (s) *s = 0;
-  XFontSet set = 0;
-  XFontStruct *f = XLoadQueryFont (dpy, name2);
-  if (f)
-    {
-      set = (XFontSet) calloc (1, sizeof(*set));
-      set->font = f;
-    }
-  free (name2);
-  if (missing_charset_list_return)  *missing_charset_list_return = 0;
-  if (missing_charset_count_return) *missing_charset_count_return = 0;
-  if (def_string_return) *def_string_return = 0;
-  return set;
-}
-
-
-void
-XFreeFontSet (Display *dpy, XFontSet set)
-{
-  XFreeFont (dpy, set->font);
-  free (set);
-}
-
-
-const char *
-jwxyz_nativeFontName (Font f, float *size)
-{
-  if (size) *size = f->size;
-  return f->ps_name;
-}
-
-
-void
-XFreeStringList (char **list)
-{
-  int i;
-  if (!list) return;
-  for (i = 0; list[i]; i++)
-    XFree (list[i]);
-  XFree (list);
-}
-
-
 // Returns the verbose Unicode name of this character, like "agrave" or
 // "daggerdouble".  Used by fontglide debugMetrics.
 //
@@ -2595,9 +1671,10 @@ char *
 jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
 {
   char *ret = 0;
+  NSFont *nsfont = (NSFont *) jwxyz_native_font (fid);
   CTFontRef ctfont =
-    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
-                          [fid->nsfont pointSize],
+    CTFontCreateWithName ((CFStringRef) [nsfont fontName],
+                          [nsfont pointSize],
                           NULL);
   Assert (ctfont, "no CTFontRef for UIFont");
 
@@ -2615,153 +1692,12 @@ jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
 }
 
 
-// Given a UTF8 string, return an NSString.  Bogus UTF8 characters are ignored.
-// We have to do this because stringWithCString returns NULL if there are
-// any invalid characters at all.
-//
-static NSString *
-sanitize_utf8 (const char *in, int in_len, Bool *latin1_pP)
-{
-  int out_len = in_len * 4;   // length of string might increase
-  char *s2 = (char *) malloc (out_len);
-  char *out = s2;
-  const char *in_end  = in  + in_len;
-  const char *out_end = out + out_len;
-  Bool latin1_p = True;
-
-  while (in < in_end)
-    {
-      unsigned long uc;
-      long L1 = utf8_decode ((const unsigned char *) in, in_end - in, &uc);
-      long L2 = utf8_encode (uc, out, out_end - out);
-      in  += L1;
-      out += L2;
-      if (uc > 255) latin1_p = False;
-    }
-  *out = 0;
-  NSString *nsstr =
-    [NSString stringWithCString:s2 encoding:NSUTF8StringEncoding];
-  free (s2);
-  if (latin1_pP) *latin1_pP = latin1_p;
-  return (nsstr ? nsstr : @"");
-}
-
-
 int
-XTextExtents (XFontStruct *f, const char *s, int length,
-              int *dir_ret, int *ascent_ret, int *descent_ret,
-              XCharStruct *cs)
+jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
+                   const char *str, size_t len, int utf8_p)
 {
-  // Unfortunately, adding XCharStructs together to get the extents for a
-  // string doesn't work: Cocoa uses non-integral character advancements, but
-  // XCharStruct.width is an integer. Plus that doesn't take into account
-  // kerning pairs, alternate glyphs, and fun stuff like the word "Zapfino" in
-  // Zapfino.
+  NSString *nsstr = nsstring_from (str, len, utf8_p);
 
-  NSString *nsstr = [[[NSString alloc] initWithBytes:s
-                                              length:length
-                                            encoding:NSISOLatin1StringEncoding]
-                     autorelease];
-  utf8_metrics (f->fid, nsstr, cs);
-  *dir_ret = 0;
-  *ascent_ret  = f->ascent;
-  *descent_ret = f->descent;
-  return 0;
-}
-
-int
-XTextWidth (XFontStruct *f, const char *s, int length)
-{
-  int ascent, descent, dir;
-  XCharStruct cs;
-  XTextExtents (f, s, length, &dir, &ascent, &descent, &cs);
-  return cs.width;
-}
-
-
-int
-XTextExtents16 (XFontStruct *f, const XChar2b *s, int length,
-                int *dir_ret, int *ascent_ret, int *descent_ret,
-                XCharStruct *cs)
-{
-  // Bool latin1_p = True;
-  int i, utf8_len = 0;
-  char *utf8 = XChar2b_to_utf8 (s, &utf8_len);   // already sanitized
-
-  for (i = 0; i < length; i++)
-    if (s[i].byte1 > 0) {
-      // latin1_p = False;
-      break;
-    }
-
-  {
-    NSString *nsstr = [NSString stringWithCString:utf8
-                                encoding:NSUTF8StringEncoding];
-    utf8_metrics (f->fid, nsstr, cs);
-  }
-
-  *dir_ret = 0;
-  *ascent_ret  = f->ascent;
-  *descent_ret = f->descent;
-  free (utf8);
-  return 0;
-}
-
-
-/* "Returns the distance in pixels in the primary draw direction from
-   the drawing origin to the origin of the next character to be drawn."
-
-   "overall_ink_return is set to the bbox of the string's character ink."
-
-   "The overall_ink_return for a nondescending, horizontally drawn Latin
-   character is conventionally entirely above the baseline; that is,
-   overall_ink_return.height <= -overall_ink_return.y."
-
-     [So this means that y is the top of the ink, and height grows down:
-      For above-the-baseline characters, y is negative.]
-
-   "The overall_ink_return for a nonkerned character is entirely at, and to
-   the right of, the origin; that is, overall_ink_return.x >= 0."
-
-     [So this means that x is the left of the ink, and width grows right.
-      For left-of-the-origin characters, x is negative.]
-
-   "A character consisting of a single pixel at the origin would set
-   overall_ink_return fields y = 0, x = 0, width = 1, and height = 1."
- */
-int
-Xutf8TextExtents (XFontSet set, const char *str, int len,
-                  XRectangle *overall_ink_return,
-                  XRectangle *overall_logical_return)
-{
-  Bool latin1_p;
-  NSString *nsstr = sanitize_utf8 (str, len, &latin1_p);
-  XCharStruct cs;
-
-  utf8_metrics (set->font->fid, nsstr, &cs);
-
-  /* "The overall_logical_return is the bounding box that provides minimum
-     spacing to other graphical features for the string. Other graphical
-     features, for example, a border surrounding the text, should not
-     intersect this rectangle."
-
-     So I think that means they're the same?  Or maybe "ink" is the bounding
-     box, and "logical" is the advancement?  But then why is the return value
-     the advancement?
-   */
-  if (overall_ink_return)
-    XCharStruct_to_XmbRectangle (cs, *overall_ink_return);
-  if (overall_logical_return)
-    XCharStruct_to_XmbRectangle (cs, *overall_logical_return);
-
-  return cs.width;
-}
-
-
-static int
-draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
-             NSString *nsstr)
-{
   if (! nsstr) return 1;
 
   XRectangle wr = d->frame;
@@ -2790,7 +1726,7 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
 
   NSDictionary *attr =
     [NSDictionary dictionaryWithObjectsAndKeys:
-                    gc->gcv.font->nsfont, NSFontAttributeName,
+                    (NSFont *) jwxyz_native_font (gc->gcv.font), NSFontAttributeName,
                     fg, NSForegroundColorAttributeName,
                   nil];
 
@@ -2828,67 +1764,6 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
 
   invalidate_drawable_cache (d);
   return 0;
-}
-
-
-int
-XDrawString (Display *dpy, Drawable d, GC gc, int x, int y,
-             const char  *str, int len)
-{
-  char *s2 = (char *) malloc (len + 1);
-  strncpy (s2, str, len);
-  s2[len] = 0;
-  NSString *nsstr = [NSString stringWithCString:s2
-                                       encoding:NSISOLatin1StringEncoding];
-  int ret = draw_string (dpy, d, gc, x, y, nsstr);
-  free (s2);
-  return ret;
-}
-
-
-int
-XDrawString16 (Display *dpy, Drawable d, GC gc, int x, int y,
-             const XChar2b *str, int len)
-{
-  char *s2 = XChar2b_to_utf8 (str, 0);   // already sanitized
-  NSString *nsstr =
-    [NSString stringWithCString:s2 encoding:NSUTF8StringEncoding];
-  int ret = draw_string (dpy, d, gc, x, y, nsstr);
-  free (s2);
-  return ret;
-}
-
-
-void
-Xutf8DrawString (Display *dpy, Drawable d, XFontSet set, GC gc,
-                 int x, int y, const char *str, int len)
-{
-  char *s2 = (char *) malloc (len + 1);
-  strncpy (s2, str, len);
-  s2[len] = 0;
-  NSString *nsstr = sanitize_utf8 (str, len, 0);
-  draw_string (dpy, d, gc, x, y, nsstr);
-  free (s2);
-}
-
-
-int
-XDrawImageString (Display *dpy, Drawable d, GC gc, int x, int y,
-                  const char *str, int len)
-{
-  int ascent, descent, dir;
-  XCharStruct cs;
-  XTextExtents (&gc->gcv.font->metrics, str, len,
-                &dir, &ascent, &descent, &cs);
-  jwxyz_fill_rect (dpy, d, gc,
-                   x + MIN (0, cs.lbearing),
-                   y - MAX (0, ascent),
-                   MAX (MAX (0, cs.rbearing) -
-                        MIN (0, cs.lbearing),
-                        cs.width),
-                   MAX (0, ascent) + MAX (0, descent),
-                   gc->gcv.background);
-  return XDrawString (dpy, d, gc, x, y, str, len);
 }
 
 

@@ -15,10 +15,7 @@
 
 #include <math.h>
 #include "screenhack.h"
-
-#ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
-#endif
 
 #define FLOAT double
 
@@ -80,10 +77,7 @@ struct state {
   async_load_state *img_loader;
   Pixmap pm;
 
-  Bool useShm;		/* whether or not to use xshm */
-#ifdef HAVE_XSHM_EXTENSION
   XShmSegmentInfo shmInfo;
-#endif
 };
 
 
@@ -131,28 +125,12 @@ grabImage_done (struct state *st)
                                  st->windowWidth, st->windowHeight,
 			     ~0L, ZPixmap);
 
-    if (st->workImage) XDestroyImage (st->workImage);
-    st->workImage = NULL;
+    if (st->workImage) destroy_xshm_image (st->dpy, st->workImage,
+                                           &st->shmInfo);
 
-#ifdef HAVE_XSHM_EXTENSION
-    if (st->useShm) 
-    {
-	st->workImage = create_xshm_image (st->dpy, xwa.visual, xwa.depth,
-				       ZPixmap, 0, &st->shmInfo, 
-				       st->windowWidth, st->windowHeight);
-	if (!st->workImage) 
-	{
-	    st->useShm = False;
-	    fprintf (stderr, "create_xshm_image failed\n");
-	}
-    }
-
-    if (st->workImage == NULL)
-#endif /* HAVE_XSHM_EXTENSION */
-
-	/* just use XSubImage to acquire the right visual, depth, etc;
-	 * easier than the other alternatives */
-	st->workImage = XSubImage (st->sourceImage, 0, 0, st->windowWidth, st->windowHeight);
+    st->workImage = create_xshm_image (st->dpy, xwa.visual, xwa.depth,
+                                       ZPixmap, &st->shmInfo,
+                                       st->windowWidth, st->windowHeight);
 }
 
 /* set up the system */
@@ -537,14 +515,8 @@ static void renderFrame (struct state *st)
 	renderTile (st, st->sortedTiles[n]);
     }
 
-#ifdef HAVE_XSHM_EXTENSION
-    if (st->useShm)
-	XShmPutImage (st->dpy, st->window, st->backgroundGC, st->workImage, 0, 0, 0, 0,
-		      st->windowWidth, st->windowHeight, False);
-    else
-#endif /* HAVE_XSHM_EXTENSION */
-	XPutImage (st->dpy, st->window, st->backgroundGC, st->workImage, 
-		   0, 0, 0, 0, st->windowWidth, st->windowHeight);
+    put_xshm_image (st->dpy, st->window, st->backgroundGC, st->workImage, 0, 0, 0, 0,
+                    st->windowWidth, st->windowHeight, &st->shmInfo);
 }
 
 /* set up the model */
@@ -733,10 +705,6 @@ static void initParams (struct state *st)
 	fprintf (stderr, "error: transference must be in the range 0..1\n");
 	problems = 1;
     }
-
-#ifdef HAVE_XSHM_EXTENSION
-    st->useShm = get_boolean_resource (st->dpy, "useSHM", "Boolean");
-#endif
 
     if (problems)
     {

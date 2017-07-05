@@ -12,11 +12,8 @@
  */
 
 #include "screenhack.h"
-#include <stdio.h>
-
-#ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
-#endif
+#include <stdio.h>
 
 #undef countof
 #define countof(x) (sizeof(x)/sizeof(*(x)))
@@ -54,10 +51,7 @@ typedef struct {
   int nscrollers;
   scroller *scrollers;
 
-# ifdef HAVE_XSHM_EXTENSION
-  Bool shm_p;
   XShmSegmentInfo shm_info;
-# endif
 
   int delay;
 
@@ -199,29 +193,12 @@ memscroller_init (Display *dpy, Window window)
       sc->which = i;
       sc->speed = i+1;
 
-      sc->image = 0;
-# ifdef HAVE_XSHM_EXTENSION
-      st->shm_p = get_boolean_resource (dpy, "useSHM", "Boolean");
-      if (st->shm_p)
-        {
-          sc->image = create_xshm_image (st->dpy, st->xgwa.visual,
-                                         st->xgwa.depth,
-                                         ZPixmap, 0, &st->shm_info,
-                                         1, max_height);
-          if (! sc->image)
-            st->shm_p = False;
-        }
-# endif /* HAVE_XSHM_EXTENSION */
+      sc->image = create_xshm_image (st->dpy, st->xgwa.visual,
+                                     st->xgwa.depth,
+                                     ZPixmap, &st->shm_info,
+                                     1, max_height);
 
       if (!sc->image)
-        sc->image = XCreateImage (st->dpy, st->xgwa.visual, st->xgwa.depth,
-                                  ZPixmap, 0, 0, 1, max_height, 8, 0);
-
-      if (sc->image && !sc->image->data)
-        sc->image->data = (char *)
-          malloc (sc->image->bytes_per_line * sc->image->height + 1);
-
-      if (!sc->image || !sc->image->data)
         {
           fprintf (stderr, "%s: out of memory (allocating 1x%d image)\n",
                    progname, sc->image->height);
@@ -572,21 +549,12 @@ memscroller_draw (Display *dpy, Window window, void *closure)
 
       for (j = 0; j < sc->speed; j++)
         {
-# ifdef HAVE_XSHM_EXTENSION
-          if (st->shm_p)
-            XShmPutImage (st->dpy, st->window, st->draw_gc, sc->image,
+          put_xshm_image (st->dpy, st->window, st->draw_gc, sc->image,
                           0, 0,
                           sc->rect.x + sc->rect.width - sc->image->width - j,
                           sc->rect.y,
                           sc->rect.width, sc->rect.height,
-                          False);
-          else
-# endif /* HAVE_XSHM_EXTENSION */
-            XPutImage (st->dpy, st->window, st->draw_gc, sc->image,
-                       0, 0,
-                       sc->rect.x + sc->rect.width - sc->image->width - j,
-                       sc->rect.y,
-                       sc->rect.width, sc->rect.height);
+                          &st->shm_info);
         }
     }
 

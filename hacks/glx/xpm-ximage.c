@@ -395,7 +395,6 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
 
       /* Have to convert BGRA to ARGB */
       if (ximage) {
-        int x, y;
         for (y = 0; y < ximage->height; y++)
           for (x = 0; x < ximage->width; x++) {
             unsigned long p = XGetPixel (ximage, x, y);

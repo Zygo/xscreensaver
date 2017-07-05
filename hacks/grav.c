@@ -36,6 +36,7 @@ static const char sccsid[] = "@(#)grav.c	5.00 2000/11/01 xlockmore";
 					"*ignoreRotation: True \n" \
 
 #define BRIGHT_COLORS
+# define release_grav 0
 # define grav_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -73,7 +74,7 @@ ENTRYPOINT ModeSpecOpt grav_opts =
 
 #ifdef USE_MODULES
 ModStruct   grav_description =
-{"grav", "init_grav", "draw_grav", "release_grav",
+{"grav", "init_grav", "draw_grav", (char *) NULL,
  "refresh_grav", "init_grav", (char *) NULL, &grav_opts,
  10000, -12, 1, 1, 64, 1.0, "",
  "Shows orbiting planets", 0, NULL};
@@ -235,6 +236,8 @@ draw_planet(ModeInfo * mi, planetstruct * planet)
 	Planet(gp->x, gp->y);
 }
 
+static void free_grav(ModeInfo * mi);
+
 ENTRYPOINT void
 init_grav(ModeInfo * mi)
 {
@@ -243,11 +246,7 @@ init_grav(ModeInfo * mi)
 	unsigned char ball;
 	gravstruct *gp;
 
-	if (gravs == NULL) {
-		if ((gravs = (gravstruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (gravstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, gravs, free_grav);
 	gp = &gravs[MI_SCREEN(mi)];
 
 	gp->width = MI_WIDTH(mi);
@@ -336,21 +335,12 @@ reshape_grav(ModeInfo * mi, int width, int height)
     XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
 }
 
-ENTRYPOINT void
-release_grav(ModeInfo * mi)
+static void
+free_grav(ModeInfo * mi)
 {
-	if (gravs != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			gravstruct *gp = &gravs[screen];
-
-			if (gp->planets)
-				(void) free((void *) gp->planets);
-		}
-		(void) free((void *) gravs);
-		gravs = (gravstruct *) NULL;
-	}
+	gravstruct *gp = &gravs[MI_SCREEN(mi)];
+	if (gp->planets)
+		(void) free((void *) gp->planets);
 }
 
 ENTRYPOINT void

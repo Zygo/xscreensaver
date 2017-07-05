@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -184,8 +184,10 @@ pam_try_unlock(saver_info *si, Bool verbose_p,
   pam_handle_t *pamh = 0;
   int status = -1;
   struct pam_conv pc;
+# ifdef HAVE_SIGTIMEDWAIT
   sigset_t set;
   struct timespec timeout;
+# endif /* HAVE_SIGTIMEDWAIT */
 
   pc.conv = &pam_conversation;
   pc.appdata_ptr = (void *) si;
@@ -243,9 +245,12 @@ pam_try_unlock(saver_info *si, Bool verbose_p,
   if (verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ...\n", blurb());
 
+# ifdef HAVE_SIGTIMEDWAIT
   timeout.tv_sec = 0;
   timeout.tv_nsec = 1;
-  set = block_sigchld();
+  set =
+# endif /* HAVE_SIGTIMEDWAIT */
+    block_sigchld();
   status = pam_authenticate (pamh, 0);
 # ifdef HAVE_SIGTIMEDWAIT
   sigtimedwait (&set, NULL, &timeout);

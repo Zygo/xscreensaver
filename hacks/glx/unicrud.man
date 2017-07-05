@@ -10,6 +10,7 @@ unicrud - Bounces a random Unicode character on the screen.
 [\-delay \fInumber\fP]
 [\-speed \fInumber\fP]
 [\-block \fIstring\fP]
+[\-no-titles]
 [\-no-wander]
 [\-no-roll]
 [\-fps]
@@ -33,6 +34,9 @@ Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
 .TP 8
 .B \-speed \fInumber\fP
 Animation speed.  2.0 means twice as fast, 0.5 means half as fast.
+.TP 8
+.B \-titles | \-no-titles
+Whether to describe the character being shown. Default true.
 .TP 8
 .B \-wander | \-no-wander
 Whether the object should wander around the screen.

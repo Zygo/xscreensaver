@@ -122,7 +122,11 @@
 #endif
 
 
-extern void jwzgles_reset (void);
+typedef struct jwzgles_state jwzgles_state;
+
+extern jwzgles_state *jwzgles_make_state (void);
+extern void jwzgles_free_state (void);
+extern void jwzgles_make_current (jwzgles_state *);
 
 
 /* Prototypes for the things re-implemented in jwzgles.c 

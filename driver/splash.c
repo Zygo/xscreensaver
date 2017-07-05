@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2014, 2016
- * -Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -425,21 +424,6 @@ make_splash_dialog (saver_info *si)
 
   {
     int sx = 0, sy = 0, w, h;
-    int mouse_x = 0, mouse_y = 0;
-
-    {
-      Window pointer_root, pointer_child;
-      int root_x, root_y, win_x, win_y;
-      unsigned int mask;
-      if (XQueryPointer (si->dpy,
-                         RootWindowOfScreen (ssi->screen),
-                         &pointer_root, &pointer_child,
-                         &root_x, &root_y, &win_x, &win_y, &mask))
-        {
-          mouse_x = root_x;
-          mouse_y = root_y;
-        }
-    }
 
     x = ssi->x;
     y = ssi->y;
@@ -494,14 +478,13 @@ draw_splash_window (saver_info *si)
   splash_dialog_data *sp = si->sp_data;
   XGCValues gcv;
   GC gc1, gc2;
-  int hspacing, vspacing, height;
+  int vspacing, height;
   int x1, x2, x3, y1, y2;
   int sw;
 
 #ifdef PREFS_BUTTON
+  int hspacing;
   int nbuttons = 3;
-#else  /* !PREFS_BUTTON */
-  int nbuttons = 2;
 #endif /* !PREFS_BUTTON */
 
   height = (sp->heading_font->ascent + sp->heading_font->descent +
@@ -581,9 +564,11 @@ draw_splash_window (saver_info *si)
 	       (sp->button_font->ascent + sp->button_font->descent))
 	      / 2)
 	+ sp->button_font->ascent);
+#ifdef PREFS_BUTTON
   hspacing = ((sp->width - x1 - (sp->shadow_width * 2) -
 	       sp->internal_border - (sp->button_width * nbuttons))
 	      / 2);
+#endif
 
   x2 = x1 + ((sp->button_width - string_width(sp->button_font, sp->demo_label))
 	     / 2);

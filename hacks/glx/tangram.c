@@ -877,14 +877,7 @@ ENTRYPOINT void init_tangram(ModeInfo * mi)
 {
     tangram_configuration *tp;
 
-    if (!tps) {
-        tps = (tangram_configuration *)
-            calloc(MI_NUM_SCREENS(mi), sizeof(tangram_configuration));
-        if (!tps) {
-            fprintf(stderr, "%s: out of memory\n", progname);
-            exit(1);
-        }
-    }
+    MI_INIT (mi, tps, NULL);
 
     tp = &tps[MI_SCREEN(mi)];
 

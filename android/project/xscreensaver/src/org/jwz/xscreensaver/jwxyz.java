@@ -61,9 +61,15 @@ public class jwxyz {
 
   String hack;
   Context app;
-  public final static int API_XLIB = 0;
-  public final static int API_GL   = 1;
   Bitmap screenshot;
+
+  public final static int STYLE_BOLD      = 1;
+  public final static int STYLE_ITALIC    = 2;
+  public final static int STYLE_MONOSPACE = 4;
+
+  public final static int FONT_FAMILY = 0;
+  public final static int FONT_FACE   = 1;
+  public final static int FONT_RANDOM = 2;
 
   SharedPreferences prefs;
   Hashtable<String, String> defaults = new Hashtable<String, String>();
@@ -76,7 +82,7 @@ public class jwxyz {
 
   // These are defined in jwxyz-android.c:
   //
-  private native void nativeInit (String hack, int api,
+  private native void nativeInit (String hack,
                                   Hashtable<String,String> defaults,
                                   int w, int h);
   public native void nativeResize (int w, int h, double rot);
@@ -87,8 +93,7 @@ public class jwxyz {
   public native void sendKeyEvent (boolean down_p, int code, int mods);
 
   // Constructor
-  public jwxyz (String hack, int api, Context app, Bitmap screenshot,
-                int w, int h) {
+  public jwxyz (String hack, Context app, Bitmap screenshot, int w, int h) {
 
     this.hack = hack;
     this.app  = app;
@@ -99,7 +104,7 @@ public class jwxyz {
 
     prefs = app.getSharedPreferences (hack, 0);
     scanSystemFonts();
-    nativeInit (hack, api, defaults, w, h);
+    nativeInit (hack, defaults, w, h);
   }
 
 /*  TODO: Can't do this yet; nativeDone requires the OpenGL context to be set.
@@ -228,80 +233,33 @@ public class jwxyz {
   }
 
 
-  // Parses X Logical Font Descriptions, and a few standard X font names.
-  // Returns [ String name, Float size, Typeface ]
-  private Object[] parseXLFD (String name) {
-    float   size   = 12;
-    boolean bold   = false;
-    boolean italic = false;
+  // Parses family names from X Logical Font Descriptions, including a few
+  // standard X font names that aren't handled by try_xlfd_font().
+  // Returns [ String name, Typeface ]
+  private Object[] parseXLFD (int mask, int traits,
+                              String name, int name_type) {
     boolean fixed  = false;
     boolean serif  = false;
 
-    if      (name.equals("6x10"))     { size = 8;  fixed = true; }
-    else if (name.equals("6x10bold")) { size = 8;  fixed = true; bold = true; }
-    else if (name.equals("fixed"))    { size = 12; fixed = true; }
-    else if (name.equals("9x15"))     { size = 12; fixed = true; }
-    else if (name.equals("9x15bold")) { size = 12; fixed = true; bold = true; }
-    else if (name.equals("vga"))      { size = 12; fixed = true; }
-    else if (name.equals("console"))  { size = 12; fixed = true; }
-    else if (name.equals("gallant"))  { size = 12; fixed = true; }
-    else {
-      String[] tokens = name.split("-");	// XLFD
-      int L = tokens.length;
-      int i = 1;
-      String foundry  = (i < L ? tokens[i++] : "");
-      String family   = (i < L ? tokens[i++] : "");
-      String weight   = (i < L ? tokens[i++] : "");
-      String slant    = (i < L ? tokens[i++] : "");
-      String setwidth = (i < L ? tokens[i++] : "");
-      String adstyle  = (i < L ? tokens[i++] : "");
-      String pxsize   = (i < L ? tokens[i++] : "");
-      String ptsize   = (i < L ? tokens[i++] : "");
-      String resx     = (i < L ? tokens[i++] : "");
-      String resy     = (i < L ? tokens[i++] : "");
-      String spacing  = (i < L ? tokens[i++] : "");
-      String avgw     = (i < L ? tokens[i++] : "");
-      String charset  = (i < L ? tokens[i++] : "");
-      String registry = (i < L ? tokens[i++] : "");
+    int style_jwxyz = mask & traits;
 
-      if (spacing.equals("m") ||
-          family.equals("fixed") ||
-          family.equals("courier") ||
-          family.equals("console") ||
-          family.equals("lucidatypewriter")) {
+    if (name_type != FONT_RANDOM) {
+      if ((style_jwxyz & STYLE_BOLD) != 0 ||
+          name.equals("fixed") ||
+          name.equals("courier") ||
+          name.equals("console") ||
+          name.equals("lucidatypewriter") ||
+          name.equals("monospace")) {
         fixed = true;
-      } else if (family.equals("times") ||
-                 family.equals("georgia")) {
+      } else if (name.equals("times") ||
+                 name.equals("georgia") ||
+                 name.equals("serif")) {
+        serif = true;
+      } else if (name.equals("serif-monospace")) {
+        fixed = true;
         serif = true;
       }
-
-      if (weight.equals("bold") || weight.equals("demibold")) {
-        bold = true; 
-      }
-
-      if (slant.equals("i") || slant.equals("o")) {
-        italic = true;
-      }
-
-      // -*-courier-bold-r-*-*-14-*-*-*-*-*-*-*		14 px
-      // -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*	14 pt
-      // -*-courier-bold-r-*-*-140-*			14 pt, via wildcard
-      // -*-courier-bold-r-*-140-*			14 pt, not handled
-      // -*-courier-bold-r-*-*-14-180-*-*-*-*-*-*	error
-
-      if (!ptsize.equals("") && !ptsize.equals("*")) {
-        // It was in the ptsize field, so that's definitely what it is.
-        size = Float.valueOf(ptsize) / 10.0f;
-      } else if (!pxsize.equals("") && !pxsize.equals("*")) {
-        size = Float.valueOf(pxsize);
-        // If it's a fully qualified XLFD, then this really is the pxsize.
-        // Otherwise, this is probably point size with a multi-field wildcard.
-        if (registry.equals(""))   // not a fully qualified XLFD
-          size /= 10.0f;
-      }
-    }
-
-    if (name.equals("random")) {
+    } else {
       Random r = new Random();
       serif = r.nextBoolean();      // Not much to randomize here...
       fixed = (r.nextInt(8) == 0);
@@ -311,81 +269,57 @@ public class jwxyz {
             ? (serif ? "serif-monospace" : "monospace")
             : (serif ? "serif" : "sans-serif"));
 
-    Typeface font = Typeface.create (name,
-                                     (bold && italic ? Typeface.BOLD_ITALIC :
-                                      bold   ? Typeface.BOLD :
-                                      italic ? Typeface.ITALIC :
-                                      Typeface.NORMAL));
+    int style_android = 0;
+    if ((style_jwxyz & STYLE_BOLD) != 0)
+      style_android |= Typeface.BOLD;
+    if ((style_jwxyz & STYLE_ITALIC) != 0)
+      style_android |= Typeface.ITALIC;
 
-    Object ret[] = { name, new Float(size), font };
-    return ret;
+    return new Object[] { name, Typeface.create(name, style_android) };
   }
 
 
   // Parses "Native Font Name One 12, Native Font Name Two 14".
-  // Returns [ String name, Float size, Typeface ]
-  private Object[] parseNativeFont (String names) {
-    for (String name : names.split(",")) {
-      float size = 0;
-      name = name.trim();
-      if (name.equals("")) continue;
-      int spc = name.lastIndexOf(" ");
-      if (spc > 0) {
-        size = Float.valueOf (name.substring (spc + 1));
-        name = name.substring (0, spc);
-      }
-      if (size <= 0)
-        size = 12;
-
-      Object font = all_fonts.get (name);
-      if (font instanceof String)
-        font = Typeface.create (name, Typeface.NORMAL);
-
-      if (font != null) {
-        Object ret[] = { name, size, (Typeface) font };
-        return ret;
-      }
-    }
-
-    return null;
+  // Returns [ String name, Typeface ]
+  private Object[] parseNativeFont (String name) {
+    Object font2 = all_fonts.get (name);
+    if (font2 instanceof String)
+      font2 = Typeface.create (name, Typeface.NORMAL);
+    return new Object[] { name, (Typeface)font2 };
   }
 
 
-  // Returns [ Paint paint, String name, Float size, ascent, descent ]
-  public Object[] loadFont(String name) {
+  // Returns [ Paint paint, String family_name, Float ascent, Float descent ]
+  public Object[] loadFont(int mask, int traits, String name, int name_type,
+                           float size) {
     Object pair[];
 
-    if (name.equals("")) return null;
+    if (name_type != FONT_RANDOM && name.equals("")) return null;
 
-    if (name.contains(" ")) {
+    if (name_type == FONT_FACE) {
       pair = parseNativeFont (name);
     } else {
-      pair = parseXLFD (name);
+      pair = parseXLFD (mask, traits, name, name_type);
     }
 
-    if (pair == null) return null;
-
     String name2  = (String)   pair[0];
-    float size    = (Float)    pair[1];
-    Typeface font = (Typeface) pair[2];
+    Typeface font = (Typeface) pair[1];
 
     size *= 2;
 
-    name2 += (font.isBold() && font.isItalic() ? " bold italic" :
-              font.isBold()   ? " bold"   :
-              font.isItalic() ? " italic" :
-              "");
+    String suffix = (font.isBold() && font.isItalic() ? " bold italic" :
+                     font.isBold()   ? " bold"   :
+                     font.isItalic() ? " italic" :
+                     "");
     Paint paint = new Paint();
     paint.setTypeface (font);
     paint.setTextSize (size);
     paint.setColor (Color.argb (0xFF, 0xFF, 0xFF, 0xFF));
 
-    LOG ("load font \"%s\" = \"%s %.1f\"", name, name2, size);
+    LOG ("load font \"%s\" = \"%s %.1f\"", name, name2 + suffix, size);
 
     FontMetrics fm = paint.getFontMetrics();
-    Object ret[] = { paint, name2, new Float(size),
-                     new Float(-fm.ascent), new Float(fm.descent) };
-    return ret;
+    return new Object[] { paint, name2, -fm.ascent, fm.descent };
   }
 
 

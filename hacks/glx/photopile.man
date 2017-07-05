@@ -72,7 +72,7 @@ Whether to simulate images taken by an instant camera.  Default: yes.
 Whether to draw images with drop shadows.  Default: no.
 .TP 8
 .B \-font \fIfont-name\fP
-The font to use for the initial loading screen.
+The font to use for the initial loading screen and for image titles.
 .TP 8
 .B \-fps
 Display the current frame rate, CPU load, and polygon count.

@@ -87,7 +87,7 @@ scale_image (Display *dpy, Window window, XImage *in,
   int x, y, i;
   unsigned int rpos=0, gpos=0, bpos=0; /* bitfield positions */
   unsigned int rsiz=0, gsiz=0, bsiz=0;
-  unsigned int rmsk=0, gmsk=0, bmsk=0;
+  unsigned long rmsk=0, gmsk=0, bmsk=0;
   unsigned char spread_map[3][256];
   XWindowAttributes xgwa;
   XColor *colors = 0;
@@ -112,9 +112,7 @@ scale_image (Display *dpy, Window window, XImage *in,
     }
   else
     {
-      rmsk = xgwa.visual->red_mask;
-      gmsk = xgwa.visual->green_mask;
-      bmsk = xgwa.visual->blue_mask;
+      visual_rgb_masks (xgwa.screen, xgwa.visual, &rmsk, &gmsk, &bmsk);
       decode_mask (rmsk, &rpos, &rsiz);
       decode_mask (gmsk, &gpos, &gsiz);
       decode_mask (bmsk, &bpos, &bsiz);

@@ -1,6 +1,6 @@
 /* lavalite --- 3D Simulation a Lava Lite, written by jwz.
  *
- * This software Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
+ * This software Copyright (c) 2002-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1274,14 +1274,7 @@ init_lavalite (ModeInfo *mi)
   lavalite_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (lavalite_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (lavalite_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -1375,17 +1368,13 @@ init_lavalite (ModeInfo *mi)
                              False);
     bp->trackball = gltrackball_init (False);
 
-    /* move initial camera position up by around 15 degrees:
-       in other words, tilt the scene toward the viewer. */
-    gltrackball_start (bp->trackball, 50, 50, 100, 100);
-    gltrackball_track (bp->trackball, 50,  5, 100, 100);
-
-    /* Oh, but if it's the "Giant" model, tilt the scene away: make it
-       look like we're looking up at it instead of down at it! */
-    if (bp->style == GIANT)
-      gltrackball_track (bp->trackball, 50, -12, 100, 100);
-    else if (bp->style == ROCKET)  /* same for rocket, but not as much */
-      gltrackball_track (bp->trackball, 50, -4, 100, 100);
+    /* Tilt the scene a bit: lean the normal lamps toward the viewer,
+       and the huge lamps away. */
+    gltrackball_reset (bp->trackball,
+                       -0.3 + frand(0.6),
+                       (bp->style == ROCKET || bp->style == GIANT
+                        ?  frand (0.2)
+                        : -frand (0.6)));
   }
 
   switch (bp->style)
@@ -1495,6 +1484,9 @@ draw_lavalite (ModeInfo *mi)
                0, 1, 0);
 
     gltrackball_rotate (bp->trackball);	/* Apply mouse-based camera position */
+
+    glRotatef (-90, 1, 0, 0);  /* Right side up */
+
 
     /* Place the lights relative to the object, before the object has
        been rotated or wandered within the scene. */

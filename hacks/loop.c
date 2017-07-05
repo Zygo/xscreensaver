@@ -139,8 +139,8 @@ ModStruct   loop_description =
 
 #define LOOPBITS(n,w,h)\
   if ((lp->pixmaps[lp->init_bits]=\
-  XCreatePixmapFromBitmapData(display,window,(char *)n,w,h,1,0,1))==None){\
-  free_loop(display,lp); return;} else {lp->init_bits++;}
+  XCreatePixmapFromBitmapData(MI_DISPLAY(mi),window,(char *)n,w,h,1,0,1))==None){\
+  free_loop(mi); return;} else {lp->init_bits++;}
 
 static int  local_neighbors = 0;
 
@@ -917,8 +917,10 @@ free_list(loopstruct * lp)
 }
 
 static void
-free_loop(Display *display, loopstruct * lp)
+free_loop(ModeInfo * mi)
 {
+	Display    *display = MI_DISPLAY(mi);
+	loopstruct *lp = &loops[MI_SCREEN(mi)];
 	int         shade;
 
 	for (shade = 0; shade < lp->init_bits; shade++)
@@ -950,7 +952,7 @@ addtolist(ModeInfo * mi, int col, int row, unsigned char state)
 	if ((lp->cellList[state] = (CellList *) malloc(sizeof (CellList))) ==
 			NULL) {
 		lp->cellList[state] = current;
-		free_loop(MI_DISPLAY(mi), lp);
+		free_loop(mi);
 		return False;
 	}
 	lp->cellList[state]->pt.x = col;
@@ -1422,14 +1424,6 @@ do_gen(loopstruct * lp)
 ENTRYPOINT void
 release_loop (ModeInfo * mi)
 {
-	if (loops != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_loop(MI_DISPLAY(mi), &loops[screen]);
-		(void) free((void *) loops);
-		loops = (loopstruct *) NULL;
-	}
 	if (table != NULL) {
 		(void) free((void *) table);
 		table = (unsigned int *) NULL;
@@ -1442,17 +1436,12 @@ static void *stop_warning_about_triangleUnit_already;
 ENTRYPOINT void
 init_loop (ModeInfo * mi)
 {
-	Display    *display = MI_DISPLAY(mi);
 	int         i, size = MI_SIZE(mi);
 	loopstruct *lp;
 
     stop_warning_about_triangleUnit_already = (void *) &triangleUnit;
 
-	if (loops == NULL) {
-		if ((loops = (loopstruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (loopstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, loops, free_loop);
 	lp = &loops[MI_SCREEN(mi)];
 
 	lp->redrawing = 0;
@@ -1463,9 +1452,9 @@ init_loop (ModeInfo * mi)
           XGCValues   gcv;
         if (lp->stippledGC == None) {
 			gcv.fill_style = FillOpaqueStippled;
-			if ((lp->stippledGC = XCreateGC(display, window,
+			if ((lp->stippledGC = XCreateGC(MI_DISPLAY(mi), window,
 				 GCFillStyle, &gcv)) == None) {
-				free_loop(display, lp);
+				free_loop(mi);
 				return;
 			}
 		}
@@ -1574,7 +1563,7 @@ init_loop (ModeInfo * mi)
 	}
 	if ((lp->oldcells = (unsigned char *) calloc(lp->bncols * lp->bnrows,
 			sizeof (unsigned char))) == NULL) {
-		free_loop(display, lp);
+		free_loop(mi);
 		return;
 	}
 	if (lp->newcells != NULL) {
@@ -1583,7 +1572,7 @@ init_loop (ModeInfo * mi)
 	}
 	if ((lp->newcells = (unsigned char *) calloc(lp->bncols * lp->bnrows,
 			sizeof (unsigned char))) == NULL) {
-		free_loop(display, lp);
+		free_loop(mi);
 		return;
 	}
 	if (!init_table()) {
@@ -1653,7 +1642,7 @@ draw_loop (ModeInfo * mi)
 	}
 	for (i = 0; i < COLORS; i++)
 		if (!draw_state(mi, i)) {
-			free_loop(MI_DISPLAY(mi), lp);
+			free_loop(mi);
 			return;
 		}
 	if (++lp->generation > MI_CYCLES(mi) || lp->dead) {

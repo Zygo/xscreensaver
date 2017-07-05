@@ -480,11 +480,7 @@ init_photopile (ModeInfo *mi)
   photopile_state *ss;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (sss == NULL) {
-    if ((sss = (photopile_state *)
-         calloc (MI_NUM_SCREENS(mi), sizeof(photopile_state))) == NULL)
-      return;
-  }
+  MI_INIT (mi, sss, NULL);
   ss = &sss[screen];
   ss->mi = mi;
 

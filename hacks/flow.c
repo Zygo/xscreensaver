@@ -102,6 +102,7 @@ static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
 					"*cycles:      10000 \n" \
 					"*ncolors:     200   \n"
 
+# define release_flow 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -385,11 +386,12 @@ Iterate(dvector *p, dvector(*ODE)(Par par, double x, double y, double z),
 
 #define deallocate(p,t) if (p!=NULL) {free(p); p=(t*)NULL; }
 #define allocate(p,t,s) if ((p=(t*)malloc(sizeof(t)*s))==NULL)\
-{free_flow(sp);return;}
+{free_flow(mi);return;}
 
 static void
-free_flow(flowstruct *sp)
+free_flow(ModeInfo * mi)
 {
+	flowstruct *sp = &flows[MI_SCREEN(mi)];
 	deallocate(sp->csegs, XSegment);
 	deallocate(sp->cnsegs, int);
 	deallocate(sp->old_segs, XSegment);
@@ -624,11 +626,7 @@ init_flow (ModeInfo * mi)
 	flowstruct *sp;
 	char       *name;
 	
-	if (flows == NULL) {
-		if ((flows = (flowstruct *) calloc(MI_NUM_SCREENS(mi),
-										   sizeof (flowstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, flows, free_flow);
 	sp = &flows[MI_SCREEN(mi)];
 
 	sp->count2 = 0;
@@ -770,7 +768,6 @@ init_flow (ModeInfo * mi)
 
 	sp->count2 = 0; /* Reset search */
 
-	free_flow(sp);
 	sp->beecount = MI_COUNT(mi);
 	if (!sp->beecount) {
 		sp->beecount = 1; /* The camera requires 1 or more */
@@ -1205,19 +1202,6 @@ reshape_flow(ModeInfo * mi, int width, int height)
   init_flow (mi);
 }
 
-
-ENTRYPOINT void
-release_flow (ModeInfo * mi)
-{
-	if (flows != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_flow(&flows[screen]);
-		free(flows);
-		flows = (flowstruct *) NULL;
-	}
-}
 
 ENTRYPOINT void
 refresh_flow (ModeInfo * mi)

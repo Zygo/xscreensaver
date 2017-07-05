@@ -25,6 +25,7 @@
 			"*wireframe:    False       \n"
 
 # define refresh_stonerview 0
+# define release_stonerview 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -76,19 +77,16 @@ reshape_stonerview (ModeInfo *mi, int width, int height)
 }
 
 
+static void
+free_stonerview (ModeInfo *mi);
+
+
 ENTRYPOINT void 
 init_stonerview (ModeInfo *mi)
 {
   stonerview_configuration *bp;
 
-  if (!bps) {
-    bps = (stonerview_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (stonerview_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_stonerview);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -135,20 +133,12 @@ draw_stonerview (ModeInfo *mi)
   glXSwapBuffers(MI_DISPLAY (mi), MI_WINDOW(mi));
 }
 
-ENTRYPOINT void
-release_stonerview (ModeInfo *mi)
+static void
+free_stonerview (ModeInfo *mi)
 {
-  if (bps) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      stonerview_configuration *bp = &bps[screen];
-      if (bp->st)
-        stonerview_win_release (bp->st);
-    }
-    free (bps);
-    bps = 0;
-  }
-  FreeAllGL(mi);
+  stonerview_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (bp->st)
+    stonerview_win_release (bp->st);
 }
 
 ENTRYPOINT Bool

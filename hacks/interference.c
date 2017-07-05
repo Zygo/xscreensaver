@@ -39,6 +39,9 @@
  * Last modified: Tue Dec 30 16:43:33 2014, <dmo2118@gmail.com>
  *              Killed the black margin on the right and bottom.
  *              Reduced the default grid size to 2.
+ * Last modified: Sun Oct 9 11:20:48 2016, <dmo2118@gmail.com>
+ *              Updated for new xshm.c.
+ *              Ditched USE_BIG_XIMAGE.
  */
 
 #include <math.h>
@@ -82,10 +85,6 @@ quite a bit worse when gridsize = 1.
 /* It's a lot faster for me, though - D.O. */
 #define USE_XIMAGE
 
-/* i.e. make the XImage the size of the screen. This is much faster when
- * gridsize = 1. (And SHM is turned off.) */
-#define USE_BIG_XIMAGE
-
 /* Numbers are wave_table size, measured in # of unsigned integers.
  * FPS/radius = 50/radius = 800/radius = 1500/Big-O memory usage
  *
@@ -95,17 +94,13 @@ quite a bit worse when gridsize = 1.
 /* #define USE_FAST_SQRT_HACKISH */ /* 17.8 FPS/2873/4921/5395/O(lg(radius)) */
 #define USE_FAST_SQRT_BIGTABLE2 /* 26.1 FPS/156/2242/5386/O(radius^2) */
 
-#ifndef USE_XIMAGE
-# undef HAVE_XSHM_EXTENSION  /* only applicable when using XImages */
-#endif /* USE_XIMAGE */
-
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 # include "xdbe.h"
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
-#ifdef HAVE_XSHM_EXTENSION
+#ifdef USE_XIMAGE
 # include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
+#endif /* USE_XIMAGE */
 
 static const char *interference_defaults [] = {
   ".background:  black",
@@ -180,12 +175,10 @@ struct inter_context {
   GC       copy_gc;
 #ifdef USE_XIMAGE
   XImage  *ximage;
-#endif /* USE_XIMAGE */
 
-#ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm, shm_can_draw;
+  Bool shm_can_draw;
   XShmSegmentInfo shm_info;
-#endif /* HAVE_XSHM_EXTENSION */
+#endif /* USE_XIMAGE */
 
   /*
    * Resources
@@ -346,17 +339,7 @@ static void destroy_image(Display* dpy, struct inter_context* c)
 {
 #ifdef USE_XIMAGE
   if(c->ximage) {
-# ifdef HAVE_XSHM_EXTENSION
-    if(c->use_shm) {
-      destroy_xshm_image(dpy, c->ximage, &c->shm_info);
-    } else
-# endif
-    {
-      /* Don't let XDestroyImage free c->ximage->data. */
-      thread_free(c->ximage->data);
-      c->ximage->data = NULL;
-      XDestroyImage(c->ximage);
-    }
+    destroy_xshm_image(dpy, c->ximage, &c->shm_info);
   }
 #endif
 
@@ -383,7 +366,7 @@ static void inter_free(Display* dpy, struct inter_context* c)
 
   if(c->colors <= 2)
     free(c->pal);
-  else
+  else if(c->pal)
     free_colors(c->screen, c->cmap, c->pal, c->colors);
 
 #ifndef USE_XIMAGE
@@ -603,24 +586,9 @@ static void inter_thread_run(void* self_raw)
              c->ximage->data + (c->ximage->bytes_per_line * img_y),
              c->ximage->bytes_per_line);
 
-# ifndef USE_BIG_XIMAGE
-    /* Move the bits for this horizontal stripe to the server. */
-#  ifdef HAVE_XSHM_EXTENSION
-    if (!c->use_shm)
-#  endif /*  HAVE_XSHM_EXTENSION */
-      XPutImage(c->dpy, TARGET(c), c->copy_gc, c->ximage,
-                0, 0, 0, g*j, c->ximage->width, c->ximage->height);
-# endif
-
-# if defined HAVE_XSHM_EXTENSION && !defined USE_BIG_XIMAGE
-    if (c->use_shm)
-# endif
-    {
-# if defined HAVE_XSHM_EXTENSION || defined USE_BIG_XIMAGE
-      scanline = (char *)scanline + c->ximage->bytes_per_line * g * c->threadpool.count;
-      img_y += g * c->threadpool.count;
-# endif
-    }
+    scanline = (char *)scanline +
+                 c->ximage->bytes_per_line * g * c->threadpool.count;
+    img_y += g * c->threadpool.count;
 
 #endif /* USE_XIMAGE */
   }
@@ -637,74 +605,30 @@ static void create_image(
   /* Set the width so that each thread can work on a different line. */
   unsigned align = thread_memory_alignment(dpy) * 8 - 1;
   unsigned wbits, w, h;
+#endif /* USE_XIMAGE */
 
   c->w = xgwa->width;
   c->h = xgwa->height;
   c->w_div_g = (c->w + c->grid_size - 1) / c->grid_size;
   c->h_div_g = (c->h + c->grid_size - 1) / c->grid_size;
+
+#ifdef USE_XIMAGE
   w = c->w_div_g * c->grid_size;
   h = c->h_div_g * c->grid_size;
 
   /* The width of a scan line, in *bits*. */
   wbits = (w * c->bits_per_pixel + align) & ~align;
 
-# ifdef HAVE_XSHM_EXTENSION
-  /*
-   * Interference used to put one row at a time to the X server. This changes
-   * today.
-   *
-   * XShmPutImage is asynchronous; the contents of the XImage must not be
-   * modified until the server has placed the data on the screen. Waiting for
-   * an XShmCompletionEvent after every line of pixels is a little nutty, so
-   * shared-memory XImages will cover the entire screen, and it only has to be
-   * sent once per frame.
-   *
-   * The non-SHM code, on the other hand is noticeably slower when
-   * gridsize = 1 with one row at a time. If, on the other hand, gridsize >= 2,
-   * there's a slight speed increase with one row at a time.
-   *
-   * This uses a lot more RAM than the single line approach. Users with only
-   * 4 MB of RAM may wish to disable USE_BIG_XIMAGE and specify -no-shm on the
-   * command line. Since this is 2013 and desktop computers are shipping with
-   * 8 GB of RAM, I doubt that this will be a major issue. - D.O.
+  /* This uses a lot more RAM than the single line approach. Users without
+   * enough RAM to fit even a single framebuffer should consider an upgrade for
+   * their 386. - D.O.
    */
 
-  if (c->use_shm)
-    {
-      c->ximage = create_xshm_image(dpy, xgwa->visual, xgwa->depth,
-                                    ZPixmap, 0, &c->shm_info,
-                                    wbits / c->bits_per_pixel, h);
-      if (!c->ximage)
-        c->use_shm = False;
-      /* If create_xshm_image fails, it will not be attempted again. */
+  c->ximage = create_xshm_image(dpy, xgwa->visual, xgwa->depth,
+                                ZPixmap, &c->shm_info,
+                                wbits / c->bits_per_pixel, h);
 
-      c->shm_can_draw = True;
-    }
-# endif /* HAVE_XSHM_EXTENSION */
-
-  if (!c->ximage)
-    {
-      c->ximage =
-        XCreateImage(dpy, xgwa->visual,
-                     xgwa->depth, ZPixmap, 0, 0, /* depth, fmt, offset, data */
-                     w,                          /* width */
-# ifdef USE_BIG_XIMAGE
-                     h,                          /* height */
-# else
-                     c->grid_size,               /* height */
-# endif
-                     8, wbits / 8);              /* pad, bpl */
-
-      if(c->ximage)
-        {
-          if(thread_malloc((void **)&c->ximage->data, dpy,
-                           c->ximage->height * c->ximage->bytes_per_line))
-            {
-              XFree(c->ximage);
-              c->ximage = NULL;
-            }
-        }
-    }
+  c->shm_can_draw = True;
 
   check_no_mem(dpy, c, c->ximage);
 #endif /* USE_XIMAGE */
@@ -721,14 +645,14 @@ static void create_image(
       &c->threadpool,
       &cls,
       dpy,
-#if defined USE_XIMAGE && defined USE_BIG_XIMAGE
+#ifdef USE_XIMAGE
       hardware_concurrency(dpy)
 #else
       1
-      /* At least three issues with threads without USE_BIG_XIMAGE:
+      /* At least two issues with threads without USE_XIMAGE:
        * 1. Most of Xlib isn't thread safe without XInitThreads.
-       * 2. X(Un)LockDisplay would need to be called for each line, which is terrible.
-       * 3. There's only one XImage buffer at the moment.
+       * 2. X(Un)LockDisplay would need to be called for each line, which is
+       *    terrible.
        */
 #endif
       );
@@ -794,12 +718,8 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   XGetWindowAttributes(c->dpy, c->win, &xgwa);
   c->cmap = xgwa.colormap;
   c->screen = xgwa.screen;
-  c->bits_per_pixel = get_bits_per_pixel(c->dpy, xgwa.depth);
+  c->bits_per_pixel = visual_pixmap_depth(xgwa.screen, xgwa.visual);
   check_no_mem(dpy, c, (void *)(ptrdiff_t)c->bits_per_pixel);
-
-#ifdef HAVE_XSHM_EXTENSION
-  c->use_shm = get_boolean_resource(dpy, "useSHM", "Boolean");
-#endif /*  HAVE_XSHM_EXTENSION */
 
   val.function = GXcopy;
   c->copy_gc = XCreateGC(c->dpy, TARGET(c), GCFunction, &val);
@@ -868,12 +788,12 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
     c->pal[1].pixel = WhitePixel(c->dpy, DefaultScreen(c->dpy));
   }
 
-#ifdef HAVE_XSHM_EXTENSION
-  if(c->use_shm)
-    dbuf = False;
+#ifdef USE_XIMAGE
+  dbuf = False;
   /* Double-buffering doesn't work with MIT-SHM: XShmPutImage must draw to the
    * window. Otherwise, XShmCompletion events will have the XAnyEvent::window
-   * field set to the back buffer, and XScreenSaver will ignore the event. */
+   * field set to the back buffer, and XScreenSaver will ignore the event.
+   */
 #endif
 
   if (dbuf)
@@ -955,9 +875,9 @@ static unsigned long do_inter(struct inter_context* c)
   double now;
   float elapsed;
 
-#if defined USE_XIMAGE && defined HAVE_XSHM_EXTENSION
+#ifdef USE_XIMAGE
   /* Wait a little while for the XServer to become ready if necessary. */
-  if(c->use_shm && !c->shm_can_draw)
+  if(!c->shm_can_draw)
     return 2000;
 #endif
 
@@ -980,23 +900,10 @@ static unsigned long do_inter(struct inter_context* c)
   threadpool_run(&c->threadpool, inter_thread_run);
   threadpool_wait(&c->threadpool);
 
-#ifdef HAVE_XSHM_EXTENSION
-  if (c->use_shm)
-  {
-    XShmPutImage(c->dpy, c->win, c->copy_gc, c->ximage,
-                 0, 0, 0, 0, c->ximage->width, c->ximage->height,
-                 True);
-    c->shm_can_draw = False;
-  }
-#endif
-#if defined HAVE_XSHM_EXTENSION && defined USE_BIG_XIMAGE
-  else
-#endif
-#ifdef USE_BIG_XIMAGE
-  {
-    XPutImage(c->dpy, TARGET(c), c->copy_gc, c->ximage,
-              0, 0, 0, 0, c->ximage->width, c->ximage->height);
-  }
+#ifdef USE_XIMAGE
+  put_xshm_image(c->dpy, c->win, c->copy_gc, c->ximage, 0, 0, 0, 0,
+                 c->ximage->width, c->ximage->height, &c->shm_info);
+  /* c->shm_can_draw = False; */
 #endif
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
@@ -1070,7 +977,7 @@ interference_event (Display *dpy, Window window, void *closure, XEvent *event)
 #if HAVE_XSHM_EXTENSION
   struct inter_context *c = (struct inter_context *) closure;
 
-  if(c->use_shm && event->type == XShmGetEventBase(dpy) + ShmCompletion)
+  if(event->type == XShmGetEventBase(dpy) + ShmCompletion)
   {
     c->shm_can_draw = True;
     return True;

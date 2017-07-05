@@ -97,7 +97,8 @@ extern void ios_load_random_image (void (*callback) (void *uiimage,
                                                      const char *filename,
                                                      int w, int h,
                                                      void *closure),
-                                   void *closure);
+                                   void *closure,
+                                   int width, int height);
 #endif /* USE_IPHONE */
 
 #ifdef HAVE_ANDROID

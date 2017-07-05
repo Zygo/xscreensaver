@@ -48,6 +48,7 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
  			"*wireframe:  	False \n" \
 
 # define refresh_sballs 0
+# define release_sballs 0
 #define MODE_sballs
 #include "xlockmore.h"		/* from the xscreensaver distribution */
 #include "gltrackball.h"
@@ -117,7 +118,7 @@ ENTRYPOINT ModeSpecOpt sballs_opts =
 
 #ifdef USE_MODULES
 ModStruct sballs_description =
-    { "sballs", "init_sballs", "draw_sballs", "release_sballs",
+    { "sballs", "init_sballs", "draw_sballs", NULL,
     "draw_sballs", "change_sballs", (char *) NULL, &sballs_opts,
     /*
     delay,count,cycles,size,ncolors,sat
@@ -685,6 +686,8 @@ static void Init(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
+static void free_sballs(ModeInfo * mi);
+
 /*
  *-----------------------------------------------------------------------------
  *    Initialize sballs.  Called each time the window changes.
@@ -695,11 +698,7 @@ ENTRYPOINT void init_sballs(ModeInfo * mi)
 {
     sballsstruct *sb;
 
-    if (sballs == NULL) {
-	if ((sballs = (sballsstruct *) calloc(MI_NUM_SCREENS(mi),
-					  sizeof(sballsstruct))) == NULL)
-	    return;
-    }
+    MI_INIT(mi, sballs, free_sballs);
     sb = &sballs[MI_SCREEN(mi)];
 
     sb->trackball = gltrackball_init (True);
@@ -754,33 +753,27 @@ ENTRYPOINT void draw_sballs(ModeInfo * mi)
 /*
  *-----------------------------------------------------------------------------
  *    The display is being taken away from us.  Free up malloc'ed
- *      memory and X resources that we've alloc'ed.  Only called
- *      once, we must zap everything for every screen.
+ *      memory and X resources that we've alloc'ed.
  *-----------------------------------------------------------------------------
  */
 
-ENTRYPOINT void release_sballs(ModeInfo * mi)
+static void free_sballs(ModeInfo * mi)
 {
-    int screen;
-
-    if (sballs != NULL) {
-	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-	    sballsstruct *sb = &sballs[screen];
-	    if (sb->btexture)
-	    {
-		glDeleteTextures(1,&sb->backid);
-		XDestroyImage(sb->btexture);
-	    }
-	    if (sb->ftexture)
-	    {
-		glDeleteTextures(1,&sb->faceid);
-		XDestroyImage(sb->ftexture);
-	    }
+    sballsstruct *sb = &sballs[MI_SCREEN(mi)];
+    if (sb->glx_context)
+    {
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sb->glx_context));
+	if (sb->btexture)
+	{
+	    glDeleteTextures(1,&sb->backid);
+	    XDestroyImage(sb->btexture);
 	}
-	(void) free((void *) sballs);
-	sballs = (sballsstruct *) NULL;
+	if (sb->ftexture)
+	{
+	    glDeleteTextures(1,&sb->faceid);
+	    XDestroyImage(sb->ftexture);
+	}
     }
-    FreeAllGL(mi);
 }
 
 ENTRYPOINT Bool

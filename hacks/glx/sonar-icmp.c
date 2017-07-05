@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2016 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2017 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -165,7 +165,7 @@ typedef struct {
 
 
 /* Packs an IP address quad into bigendian network order. */
-static unsigned long
+static in_addr_t
 pack_addr (unsigned int a, unsigned int b, unsigned int c, unsigned int d)
 {
   unsigned long i = (((a & 255) << 24) |
@@ -243,6 +243,7 @@ resolve_bogie_hostname (ping_data *pd, sonar_bogie *sb, Bool resolve_p)
       if (!strcmp (sb->name, "ssh-rsa") ||
           !strcmp (sb->name, "ssh-dsa") ||
           !strcmp (sb->name, "ssh-dss") ||
+          !strncmp (sb->name, "ecdsa-", 6) ||
           strlen (sb->name) >= 80)
         return 0;
 
@@ -448,12 +449,12 @@ read_hosts_file (sonar_sensor_data *ssd, const char *filename)
   fp = fopen(filename, "r");
   if (!fp)
     {
-      char buf[1024];
-      sprintf(buf, "%s:  %s", progname, filename);
+      char buf2[1024];
+      sprintf(buf2, "%s:  %s", progname, filename);
 #ifdef HAVE_JWXYZ
       if (pd->debug_p)  /* on OSX don't syslog this */
 #endif
-        perror (buf);
+        perror (buf2);
       return 0;
     }
 
@@ -640,10 +641,10 @@ delete_duplicate_hosts (sonar_sensor_data *ssd, sonar_bogie *list)
 }
 
 
-static unsigned int
-width_mask (int width)
+static unsigned long
+width_mask (unsigned long width)
 {
-  unsigned int m = 0;
+  unsigned long m = 0;
   int i;
   for (i = 0; i < width; i++)
     m |= (1L << (31-i));
@@ -652,8 +653,8 @@ width_mask (int width)
 
 
 #ifdef HAVE_GETIFADDRS
-static int
-mask_width (unsigned int mask)
+static unsigned int
+mask_width (unsigned long mask)
 {
   int i;
   for (i = 0; i < 32; i++)
@@ -861,15 +862,15 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
   h_base = ntohl (n_base);
 
   if (desc_ret && !*desc_ret) {
-    char buf[255];
+    char buf2[255];
     unsigned int a, b, c, d;
     unsigned long bb = n_base & htonl(h_mask);
     unpack_addr (bb, &a, &b, &c, &d);
     if (subnet_width > 24)
-      sprintf (buf, "%u.%u.%u.%u/%d", a, b, c, d, subnet_width);
+      sprintf (buf2, "%u.%u.%u.%u/%d", a, b, c, d, subnet_width);
     else
-      sprintf (buf, "%u.%u.%u/%d", a, b, c, subnet_width);
-    *desc_ret = strdup (buf);
+      sprintf (buf2, "%u.%u.%u/%d", a, b, c, subnet_width);
+    *desc_ret = strdup (buf2);
   }
 
   for (i = 255; i >= 0; i--) {
@@ -928,9 +929,9 @@ send_ping (ping_data *pd, const sonar_bogie *b)
   const char *token = "org.jwz.xscreensaver.sonar";
   char *host_id;
 
-  int pcktsiz = (sizeof(struct ICMP) + sizeof(struct timeval) + 
+  unsigned long pcktsiz = (sizeof(struct ICMP) + sizeof(struct timeval) +
                  sizeof(socklen_t) + pb->addrlen +
-                 strlen(token) + 1 + 
+                 strlen(token) + 1 +
                  strlen(pd->version) + 1);
 
   /* Create the ICMP packet */
@@ -1105,7 +1106,7 @@ get_ping (sonar_sensor_data *ssd)
          From Valentijn Sessink <valentyn@openoffice.nl> */
       if (select(pd->icmpsock + 1, &rfds, 0, 0, &tv) >0)
         {
-          result = recvfrom (pd->icmpsock, packet, sizeof(packet),
+          result = (int)recvfrom (pd->icmpsock, packet, sizeof(packet),
                              0, &from, &fromlen);
 
           /* Check the packet */
@@ -1373,13 +1374,15 @@ ping_scan (sonar_sensor_data *ssd)
                     {
                       sonar_bogie *new_bogie = bogie_for_host (ssd, fallback,
                                                                NULL);
-                      new_bogie->next = *sbp;
+                      if (new_bogie) {
+                        new_bogie->next = *sbp;
 
-                      if (! ((ping_bogie *)new_bogie->closure)->lookup_addr &&
-                        ! find_duplicate_host(pd, &pd->targets, new_bogie))
-                        *sbp = new_bogie;
-                      else
-                        sonar_free_bogie (ssd, new_bogie);
+                        if (! ((ping_bogie *)new_bogie->closure)->lookup_addr &&
+                            ! find_duplicate_host(pd, &pd->targets, new_bogie))
+                          *sbp = new_bogie;
+                        else
+                          sonar_free_bogie (ssd, new_bogie);
+                      }
 
                       free (fallback);
                     }

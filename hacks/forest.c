@@ -33,6 +33,7 @@
 
 # include "xlockmore.h"     /* from the xscreensaver distribution */
 # define refresh_trees 0
+# define release_trees 0
 # define reshape_trees 0
 # define trees_handle_event 0
 #else  /* !STANDALONE */
@@ -68,17 +69,12 @@ static long colorV[12] = {0x0a0000, 0x0a0500, 0x0a0a00, 0x050a00,
 ENTRYPOINT void
 init_trees(ModeInfo * mi)
 {
-	unsigned long			pixels[20];
   treestruct       *tree;
   Display          *display = MI_DISPLAY(mi);
   GC                gc = MI_GC(mi);
   int               i;
 
   if (trees == NULL) {
-    trees = (treestruct *) calloc(MI_NUM_SCREENS(mi), sizeof (treestruct));
-    if (trees == NULL) {
-      return;
-    }
 		
     if (mi->npixels > 20) {
 			printf("%d colors selected. Setting limit to 20...\n", mi->npixels);
@@ -117,6 +113,8 @@ init_trees(ModeInfo * mi)
     XSetForeground(display, gc, colors[1].pixel);
   }
 
+  MI_INIT (mi, trees, 0);
+
   XClearWindow(display, MI_WINDOW(mi));
   XSetLineAttributes(display, gc, 2, LineSolid, CapButt, JoinMiter);
   tree = &trees[MI_SCREEN(mi)];
@@ -132,12 +130,7 @@ init_trees(ModeInfo * mi)
     colors[i].flags = DoRed | DoGreen | DoBlue;
   }
 
-	for (i = 0; i < color; i++)
-		pixels[i] = colors[i].pixel;
-			
-  XFreeColors(display, mi->xgwa.colormap, pixels, mi->npixels, 0L);
-
-	for (i = 0; i < mi->npixels; i++)
+  for (i = 0; i < mi->npixels; i++)
     if (!XAllocColor(display, mi->xgwa.colormap, &colors[i])) break;
 
   color = i;
@@ -247,14 +240,5 @@ draw_trees(ModeInfo * mi)
   draw_tree_rec(mi, tree->thick, tree->x, tree->y, rRand(-0.1, 0.1));
 }
 
-
-ENTRYPOINT void
-release_trees(ModeInfo * mi)
-{
-  if (trees != NULL) {
-    (void) free((void *) trees);
-    trees = NULL;
-  }
-}
 
 XSCREENSAVER_MODULE_2 ("Forest", forest, trees)

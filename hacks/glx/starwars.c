@@ -47,6 +47,7 @@
 		 "*program: xscreensaver-text --cols 0"  /* don't wrap */
 
 # define refresh_sws 0
+# define release_sws 0
 # define sws_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -716,6 +717,9 @@ gl_init (ModeInfo *mi)
 }
 
 
+static void free_sws (ModeInfo *mi);
+
+
 ENTRYPOINT void 
 init_sws (ModeInfo *mi)
 {
@@ -723,14 +727,7 @@ init_sws (ModeInfo *mi)
 
   sws_configuration *sc = 0;
 
-  if (!scs) {
-    scs = (sws_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (sws_configuration));
-    if (!scs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, scs, free_sws);
 
   sc = &scs[MI_SCREEN(mi)];
 
@@ -1054,22 +1051,14 @@ draw_sws (ModeInfo *mi)
   sc->star_theta += star_spin;
 }
 
-ENTRYPOINT void
-release_sws (ModeInfo *mi)
+static void
+free_sws (ModeInfo *mi)
 {
-  if (scs) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      sws_configuration *sc = &scs[screen];
-      if (sc->tc)
-        textclient_close (sc->tc);
+  sws_configuration *sc = &scs[MI_SCREEN(mi)];
+  if (sc->tc)
+    textclient_close (sc->tc);
 
-      /* #### there's more to free here */
-    }
-    free (scs);
-    scs = 0;
-  }
-  FreeAllGL(mi);
+  /* #### there's more to free here */
 }
 
 

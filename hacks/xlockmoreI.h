@@ -18,10 +18,7 @@
 #include <time.h>
 
 #include "screenhackI.h"
-
-#ifdef HAVE_XSHM_EXTENSION
-# include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
+#include "xshm.h"
 
 
 typedef struct ModeInfo ModeInfo;
@@ -80,6 +77,10 @@ extern void xlockmore_setup (struct xscreensaver_function_table *, void *);
 extern void xlockmore_do_fps (Display *, Window, fps_state *, void *);
 
 
+extern void xlockmore_mi_init (ModeInfo *, size_t, void **,
+                               void (*) (ModeInfo *));
+
+
 /* The xlockmore RNG API is implemented in utils/yarandom.h. */
 
 
@@ -88,7 +89,6 @@ struct ModeInfo {
   Display *dpy;
   Window window;
   Bool root_p;
-  int num_screens;
   int screen_number;
   int npixels;
   unsigned long *pixels;
@@ -117,11 +117,6 @@ struct ModeInfo {
   Bool fps_p;
   unsigned long polygon_count;  /* These values are for -fps display only */
   double recursion_depth;
-
-#ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm;
-  XShmSegmentInfo shm_info;
-#endif
 };
 
 typedef enum {  t_String, t_Float, t_Int, t_Bool } xlockmore_type;
@@ -158,11 +153,21 @@ struct xlockmore_function_table {
   void (*hack_draw) (ModeInfo *);
   void (*hack_reshape) (ModeInfo *, int, int);
   void (*hack_refresh) (ModeInfo *);
-  void (*hack_free) (ModeInfo *);
+  void (*hack_release) (ModeInfo *);
   Bool (*hack_handle_events) (ModeInfo *, XEvent *);
   ModeSpecOpt *opts;
 
-  unsigned int screen_count; /* Only used on the OS X and iOS ports. */
+  size_t state_size;
+  void **state_array;
+  void (*hack_free_state) (ModeInfo *);
+  unsigned long live_displays, got_init;
 };
+
+#ifdef HAVE_JWXYZ
+# define XLOCKMORE_NUM_SCREENS	\
+  (sizeof(((struct xlockmore_function_table *)0)->live_displays) * 8)
+#else
+# define XLOCKMORE_NUM_SCREENS	2 /* For DEBUG_PAIR. */
+#endif
 
 #endif /* __XLOCKMORE_INTERNAL_H__ */

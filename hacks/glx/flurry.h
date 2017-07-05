@@ -285,12 +285,15 @@ struct _global_info_t {
 	float sys_glWidth;
 	float sys_glHeight;
 
+	double gTimeCounter;
+	int first;
+	double oldFrameTime;
+
 	flurry_info_t *flurry;
 };
 
 #define kNumSpectrumEntries 512
 
-void OTSetup(void);
-double TimeInSecondsSinceStart(void);
+double TimeInSecondsSinceStart(const global_info_t *global);
 
 #endif /* Include/Define */

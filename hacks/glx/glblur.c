@@ -367,14 +367,7 @@ init_glblur (ModeInfo *mi)
   glblur_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (glblur_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (glblur_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

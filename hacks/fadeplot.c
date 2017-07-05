@@ -39,6 +39,7 @@ static const char sccsid[] = "@(#)fadeplot.c	5.00 2000/11/01 xlockmore";
 
 # define BRIGHT_COLORS
 # define UNIFORM_COLORS
+# define release_fadeplot 0
 # define fadeplot_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -52,7 +53,7 @@ ENTRYPOINT ModeSpecOpt fadeplot_opts =
 
 #ifdef USE_MODULES
 ModStruct   fadeplot_description =
-{"fadeplot", "init_fadeplot", "draw_fadeplot", "release_fadeplot",
+{"fadeplot", "init_fadeplot", "draw_fadeplot", (char *) NULL,
  "refresh_fadeplot", "init_fadeplot", (char *) NULL, &fadeplot_opts,
  30000, 10, 1500, 1, 64, 0.6, "",
  "Shows a fading plot of sine squared", 0, NULL};
@@ -75,8 +76,9 @@ typedef struct {
 static fadeplotstruct *fadeplots = (fadeplotstruct *) NULL;
 
 static void
-free_fadeplot(fadeplotstruct *fp)
+free_fadeplot(ModeInfo * mi)
 {
+	fadeplotstruct *fp = &fadeplots[MI_SCREEN(mi)];
 	if (fp->pts != NULL) {
 		(void) free((void *) fp->pts);
 		fp->pts = (XPoint *) NULL;
@@ -96,7 +98,7 @@ initSintab(ModeInfo * mi)
 
 	fp->angles = NRAND(950) + 250;
 	if ((fp->stab = (int *) malloc(fp->angles * sizeof (int))) == NULL) {
-		free_fadeplot(fp);
+		free_fadeplot(mi);
 		return False;
 	}
 	for (i = 0; i < fp->angles; i++) {
@@ -111,11 +113,7 @@ init_fadeplot (ModeInfo * mi)
 {
 	fadeplotstruct *fp;
 
-	if (fadeplots == NULL) {
-		if ((fadeplots = (fadeplotstruct *) calloc(MI_NUM_SCREENS(mi),
-					   sizeof (fadeplotstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, fadeplots, free_fadeplot);
 	fp = &fadeplots[MI_SCREEN(mi)];
 
 	fp->width = MI_WIDTH(mi);
@@ -143,7 +141,7 @@ init_fadeplot (ModeInfo * mi)
 	if (fp->pts == NULL) {
 		if ((fp->pts = (XPoint *) calloc(fp->maxpts, sizeof (XPoint))) ==
 				 NULL) {
-			free_fadeplot(fp);
+			free_fadeplot(mi);
 			return;
 		}
 	}
@@ -226,19 +224,6 @@ reshape_fadeplot(ModeInfo * mi, int width, int height)
 ENTRYPOINT void
 refresh_fadeplot (ModeInfo * mi)
 {
-}
-
-ENTRYPOINT void
-release_fadeplot (ModeInfo * mi)
-{
-	if (fadeplots != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_fadeplot(&fadeplots[screen]);
-		(void) free((void *) fadeplots);
-		fadeplots = (fadeplotstruct *) NULL;
-	}
 }
 
 XSCREENSAVER_MODULE ("FadePlot", fadeplot)

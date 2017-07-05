@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002-2017 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -41,6 +41,11 @@
 #include "trackball.h"
 #include "gltrackball.h"
 
+#if defined(USE_IPHONE) || defined(HAVE_ANDROID)
+  /* Surely this should be defined somewhere more centrally... */
+# define HAVE_MOBILE
+#endif
+
 /* Bah, copied from ../fps.h */
 #ifdef HAVE_MOBILE
   extern double current_device_rotation (void);
@@ -70,20 +75,6 @@ gltrackball_init (int ignore_device_rotation_p)
   trackball (ts->q, 0, 0, 0, 0);
   return ts;
 }
-
-/* Reset the trackball to the default unrotated state.
- */
-void
-gltrackball_reset (trackball_state *ts)
-{
-  int bd = ts->button_down_p;
-  int ig = ts->ignore_device_rotation_p;
-  memset (ts, 0, sizeof(*ts));
-  ts->button_down_p = bd;
-  ts->ignore_device_rotation_p = ig;
-  trackball (ts->q, 0, 0, 0, 0);
-}
-
 
 /* Device rotation interacts very strangely with mouse positions.
    I'm not entirely sure this is the right fix.
@@ -145,7 +136,8 @@ gltrackball_stop (trackball_state *ts)
 static void
 gltrackball_track_1 (trackball_state *ts,
                      double x, double y,
-                     int w, int h)
+                     int w, int h,
+                     int ignore_device_rotation_p)
 {
   double X = x;
   double Y = y;
@@ -158,9 +150,11 @@ gltrackball_track_1 (trackball_state *ts,
   ts->x = x;
   ts->y = y;
 
-  adjust_for_device_rotation (ts, &ox, &oy, &W,  &H);
-  adjust_for_device_rotation (ts, &X,  &Y,  &W2, &H2);
-
+  if (! ignore_device_rotation_p)
+    {
+      adjust_for_device_rotation (ts, &ox, &oy, &W,  &H);
+      adjust_for_device_rotation (ts, &X,  &Y,  &W2, &H2);
+    }
   trackball (q2,
              (2 * ox - W) / W,
              (H - 2 * oy) / H,
@@ -185,7 +179,7 @@ gltrackball_track (trackball_state *ts, int x, int y, int w, int h)
   ts->ddy = ts->dy * dampen;
   ts->ow = w;
   ts->oh = h;
-  gltrackball_track_1 (ts, x, y, w, h);
+  gltrackball_track_1 (ts, x, y, w, h, False);
 }
 
 
@@ -196,6 +190,21 @@ gltrackball_dampen (double *n, double *dn)
   *n -= *dn;
   if (pos != (*n > 0))
     *n = *dn = 0;
+}
+
+
+/* Reset the trackball to the default unrotated state,
+   plus an optional initial rotation.
+ */
+void
+gltrackball_reset (trackball_state *ts, float x, float y)
+{
+  int bd = ts->button_down_p;
+  int ig = ts->ignore_device_rotation_p;
+  memset (ts, 0, sizeof(*ts));
+  ts->button_down_p = bd;
+  ts->ignore_device_rotation_p = ig;
+  trackball (ts->q, 0, 0, x, y);
 }
 
 
@@ -214,7 +223,8 @@ gltrackball_rotate (trackball_state *ts)
       gltrackball_track_1 (ts, 
                            ts->x + ts->dx,
                            ts->y + ts->dy,
-                           ts->ow, ts->oh);
+                           ts->ow, ts->oh,
+                           False);
 
       /* Dampen inertia: gradually stop spinning. */
       gltrackball_dampen (&ts->dx, &ts->ddx);

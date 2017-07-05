@@ -20,6 +20,7 @@
 			    "*showFPS: False   \n"
 
 # define refresh_antinspect 0
+# define release_antinspect 0
 #include "xlockmore.h"
 #else
 #include "xlock.h"
@@ -65,7 +66,7 @@ ENTRYPOINT ModeSpecOpt antinspect_opts = {sizeof opts / sizeof opts[0],
 
 #ifdef USE_MODULES
 ModStruct   antinspect_description =
-  {"antinspect", "init_antinspect", "draw_antinspect", "release_antinspect",
+  {"antinspect", "init_antinspect", "draw_antinspect", (char *) NULL,
    "draw_antinspect", "change_antinspect", (char *) NULL, &antinspect_opts,
    1000, 1, 1, 1, 4, 1.0, "",
    "draws some ants", 0, NULL};
@@ -588,15 +589,6 @@ static void pinit(void)
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 }
 
-ENTRYPOINT void release_antinspect(ModeInfo * mi) 
-{
-  if(antinspect) {
-	free((void *) antinspect);
-	antinspect = (antinspectstruct *) NULL;
-  }
-  FreeAllGL(mi);
-}
-
 ENTRYPOINT Bool antinspect_handle_event (ModeInfo *mi, XEvent *event) 
 {
   antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
@@ -613,11 +605,7 @@ ENTRYPOINT void init_antinspect(ModeInfo * mi)
 {
   antinspectstruct *mp;
   
-  if(antinspect == NULL) {
-    if((antinspect = (antinspectstruct *) calloc(MI_NUM_SCREENS(mi),
-						 sizeof (antinspectstruct))) == NULL)
-      return;
-  }
+  MI_INIT(mi, antinspect, NULL);
   mp = &antinspect[MI_SCREEN(mi)];
   mp->step = NRAND(90);
   mp->ant_position = NRAND(90);
@@ -678,7 +666,7 @@ ENTRYPOINT void draw_antinspect(ModeInfo * mi)
   glRotatef(180.0, 0.0, 1.0, 0.0);
   
   if (!draw_antinspect_strip(mi)) {
-	release_antinspect(mi);
+	MI_ABORT(mi);
 	return;
   }
   

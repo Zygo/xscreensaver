@@ -142,13 +142,7 @@ init_glschool(ModeInfo *mi)
 	Bool					wire = MI_IS_WIREFRAME(mi);
 	glschool_configuration	*sc;
 
-	if (!scs) {
-		scs = (glschool_configuration *)calloc(MI_NUM_SCREENS(mi), sizeof(glschool_configuration));
-		if (!scs) {
-			perror("init_glschool: ");
-			exit(1);
-		}
-	}
+	MI_INIT (mi, scs, NULL);
 	sc = &scs[MI_SCREEN(mi)];
 
 	sc->drawGoal = DoDrawGoal;

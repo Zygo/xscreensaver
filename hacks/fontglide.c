@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2003-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2003-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -162,6 +162,34 @@ pick_font_size (state *s)
 
   return pixel;
 }
+
+
+#ifdef HAVE_JWXYZ
+
+static char *
+append_font_name(Display *dpy, char *dest, const XFontStruct *font)
+{
+  int i;
+  for (i = 0; i != font->n_properties; ++i) {
+    if (font->properties[i].name == XA_FONT) {
+      const char *suffix = XGetAtomName (dpy, font->properties[i].card32);
+      strcpy(dest, suffix);
+      return dest + strlen(suffix);
+    }
+  }
+
+  dest[0] = '?';
+  dest[1] = 0;
+  return dest + 1;
+
+/*
+  float s;
+  const char *n = jwxyz_nativeFontName (font->fid, &s);
+  return dest + sprintf (dest, "%s %.1f", n, s);
+ */
+}
+
+#endif
 
 
 /* Finds the set of scalable fonts on the system; picks one;
@@ -367,9 +395,12 @@ pick_font_1 (state *s, sentence *se)
   strcpy (pattern2, pattern);
 # ifdef HAVE_JWXYZ
   {
-    float s;
-    const char *n = jwxyz_nativeFontName (se->xftfont->xfont->fid, &s);
-    sprintf (pattern2 + strlen(pattern2), " (%s %.1f)", n, s);
+    char *out = pattern2 + strlen(pattern2);
+    out[0] = ' ';
+    out[1] = '(';
+    out = append_font_name (s->dpy, out + 2, se->xftfont->xfont);
+    out[0] = ')';
+    out[1] = 0;
   }
 # endif
 
@@ -1622,11 +1653,7 @@ fontglide_draw_metrics (state *s)
 
   strcpy (fn2, fn);
 # ifdef HAVE_JWXYZ
-  {
-    float ss;
-    const char *n = jwxyz_nativeFontName (s->metrics_xftfont->xfont->fid, &ss);
-    sprintf (fn2, "%s %.1f", n, ss);
-  }
+  append_font_name (s->dpy, fn2, s->metrics_xftfont->xfont);
 # endif
 
   xftdraw = XftDrawCreate (s->dpy, dest, s->xgwa.visual,

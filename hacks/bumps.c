@@ -20,12 +20,14 @@
  *  Essentially, it 3D-izes your desktop, based on color intensity.
  *
  * Modification History:
- *  [10/01/99] - Shane Smit: Creation
- *  [10/08/99] - Shane Smit: Port to C. (Ick)
- *  [03/08/02] - Shane Smit: New movement code.
- *  [09/12/02] - Shane Smit: MIT-SHM XImages.
- * 							 Thanks to Kennett Galbraith <http://www.Alpha-II.com/>
- * 							 for code optimization.
+ *  [10/01/1999] - Shane Smit: Creation
+ *  [10/08/1999] - Shane Smit: Port to C. (Ick)
+ *  [03/08/2002] - Shane Smit: New movement code.
+ *  [09/12/2002] - Shane Smit: MIT-SHM XImages.
+ *                             Thanks to Kennett Galbraith <http://www.Alpha-II.com/>
+ *                             for code optimization.
+ *  [10/09/2016] - Dave Odell: Updated for new xshm.c.
+ *                             Y2K compliance.
  */
 
 
@@ -33,10 +35,7 @@
 #include <time.h>
 #include <inttypes.h>
 #include "screenhack.h"
-
-#ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
 
 
 /* Defines: */
@@ -114,10 +113,7 @@ typedef struct
 	XColor *xColors;
 	unsigned long *aColors;
 	XImage *pXImage;
-#ifdef HAVE_XSHM_EXTENSION
 	XShmSegmentInfo XShmInfo;
-	Bool	bUseShm;
-#endif /* HAVE_XSHM_EXTENSION */
 
 	uint8_t nColorCount;				/* Number of colors used. */
 	uint8_t bytesPerPixel;
@@ -265,7 +261,6 @@ static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
 	pBumps->dpy = dpy;
 	pBumps->Win = NewWin;
     pBumps->screen = XWinAttribs.screen;
-	pBumps->pXImage = NULL;
 	
 	iDiameter = ( ( pBumps->iWinWidth < pBumps->iWinHeight ) ? pBumps->iWinWidth : pBumps->iWinHeight ) / 2;
 
@@ -273,26 +268,8 @@ static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
        constraining it to be a multiple of 8 seems to fix it. */
     iDiameter = ((iDiameter+7)/8)*8;
 
-#ifdef HAVE_XSHM_EXTENSION
-	pBumps->bUseShm = get_boolean_resource(dpy,  "useSHM", "Boolean" );
-
-	if( pBumps->bUseShm )
-	{
-		pBumps->pXImage = create_xshm_image( pBumps->dpy, XWinAttribs.visual, XWinAttribs.depth,
-											 ZPixmap, NULL, &pBumps->XShmInfo, iDiameter, iDiameter );
-		if( !pBumps->pXImage )
-		{
-			fprintf( stderr, "%s: Unable to create XShmImage.\n", progname );
-			pBumps->bUseShm = False;
-		}
-	}
-#endif /* HAVE_XSHM_EXTENSION */
-	if( !pBumps->pXImage )
-	{
-		pBumps->pXImage = XCreateImage( pBumps->dpy, XWinAttribs.visual, XWinAttribs.depth, 
-									ZPixmap, 0, NULL, iDiameter, iDiameter, BitmapPad( pBumps->dpy ), 0 );
-		pBumps->pXImage->data = malloc( pBumps->pXImage->bytes_per_line * pBumps->pXImage->height * sizeof(int8_t) );
-	}
+	pBumps->pXImage = create_xshm_image( pBumps->dpy, XWinAttribs.visual, XWinAttribs.depth,
+	                                     ZPixmap, &pBumps->XShmInfo, iDiameter, iDiameter );
 
 	/* For speed, access the XImage data directly using my own PutPixel routine. */
 	switch( pBumps->pXImage->bits_per_pixel )
@@ -319,12 +296,7 @@ static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
 
 		default:
 			fprintf( stderr, "%s: Unknown XImage depth.", progname );
-#ifdef HAVE_XSHM_EXTENSION
-			if( pBumps->bUseShm )
-				destroy_xshm_image( pBumps->dpy, pBumps->pXImage, &pBumps->XShmInfo );
-			else
-#endif /* HAVE_XSHM_EXTENSION */
-				XDestroyImage( pBumps->pXImage );
+			destroy_xshm_image( pBumps->dpy, pBumps->pXImage, &pBumps->XShmInfo );
 			exit( 1 );
 	}
 	
@@ -623,14 +595,8 @@ static void Execute( SBumps *pBumps )
 		nY -= ( nLightYPos + nY ) - pBumps->iWinHeight;
 	}
 	
-#ifdef HAVE_XSHM_EXTENSION
-	if( pBumps->bUseShm )
-		XShmPutImage( pBumps->dpy, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
-					  nX, nY, False);
-	else
-#endif /* HAVE_XSHM_EXTENSION */
-		XPutImage( pBumps->dpy, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
-				   nX, nY );
+	put_xshm_image( pBumps->dpy, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
+	                nX, nY, &pBumps->XShmInfo);
 }
 
 
@@ -642,12 +608,7 @@ static void DestroyBumps( SBumps *pBumps )
 	DestroySpotLight( &pBumps->SpotLight );
 	free( pBumps->aColors );
 	free( pBumps->aBumpMap );
-#ifdef HAVE_XSHM_EXTENSION
-	if( pBumps->bUseShm )
-		destroy_xshm_image( pBumps->dpy, pBumps->pXImage, &pBumps->XShmInfo );
-	else
-#endif /* HAVE_XSHM_EXTENSION */
-		XDestroyImage( pBumps->pXImage );
+	destroy_xshm_image( pBumps->dpy, pBumps->pXImage, &pBumps->XShmInfo );
 }
 
 

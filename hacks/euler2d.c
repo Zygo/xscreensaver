@@ -50,6 +50,7 @@ static const char sccsid[] = "@(#)euler2d.c	5.00 2000/11/01 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define SMOOTH_COLORS
+# define release_euler2d 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -89,7 +90,7 @@ ENTRYPOINT ModeSpecOpt euler2d_opts =
 
 #ifdef USE_MODULES
 ModStruct   euler2d_description = {
-	"euler2d", "init_euler2d", "draw_euler2d", "release_euler2d",
+	"euler2d", "init_euler2d", "draw_euler2d", (char *) NULL,
 	"refresh_euler2d", "init_euler2d", (char *) NULL, &euler2d_opts,
 	1000, 1024, 3000, 1, 64, 1.0, "",
 	"Simulates 2D incompressible invisid fluid.", 0, NULL
@@ -480,11 +481,12 @@ ode_solve(euler2dstruct *sp)
 
 #define deallocate(p,t) if (p!=NULL) {(void) free((void *) p); p=(t*)NULL; }
 #define allocate(p,t,s) if ((p=(t*)malloc(sizeof(t)*s))==NULL)\
-{free_euler2d(sp);return;}
+{free_euler2d(mi);return;}
 
 static void
-free_euler2d(euler2dstruct *sp)
+free_euler2d(ModeInfo * mi)
 {
+	euler2dstruct *sp = &euler2ds[MI_SCREEN(mi)];
 	deallocate(sp->csegs, XSegment);
 	deallocate(sp->old_segs, XSegment);
 	deallocate(sp->nold_segs, int);
@@ -520,11 +522,7 @@ init_euler2d (ModeInfo * mi)
 	delta_t = 0.001;
         if (power>1.0) delta_t *= pow(0.1,power-1);
 
-	if (euler2ds == NULL) {
-		if ((euler2ds = (euler2dstruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (euler2dstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, euler2ds, free_euler2d);
 	sp = &euler2ds[MI_SCREEN(mi)];
 
 #ifdef HAVE_JWXYZ
@@ -552,8 +550,6 @@ init_euler2d (ModeInfo * mi)
 	/* Clear the background. */
 	MI_CLEARWINDOW(mi);
 	 
-	free_euler2d(sp);
-
 	/* Allocate memory. */
 
 	if (sp->csegs == NULL) {
@@ -861,19 +857,6 @@ reshape_euler2d(ModeInfo * mi, int width, int height)
 {
   XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
   init_euler2d (mi);
-}
-
-ENTRYPOINT void
-release_euler2d (ModeInfo * mi)
-{
-	if (euler2ds != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_euler2d(&euler2ds[screen]);
-		(void) free((void *) euler2ds);
-		euler2ds = (euler2dstruct *) NULL;
-	}
 }
 
 ENTRYPOINT void

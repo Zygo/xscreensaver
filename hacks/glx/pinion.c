@@ -1315,14 +1315,7 @@ init_pinion (ModeInfo *mi)
 {
   pinion_configuration *pp;
 
-  if (!pps) {
-    pps = (pinion_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (pinion_configuration));
-    if (!pps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, pps, NULL);
 
   pp = &pps[MI_SCREEN(mi)];
 

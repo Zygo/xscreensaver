@@ -38,12 +38,9 @@ public class XScreenSaverRenderer implements GLSurfaceView.Renderer {
   jwxyz jwxyz_obj = null;
 
   String hack;
-  int api;
   Handler.Callback abort_callback;
 
-  Iterable<Map.Entry<String, String>> prefs;
   Context app;
-  WindowManager wm;
   Bitmap screenshot;
 
   GLSurfaceView glview;
@@ -68,21 +65,33 @@ public class XScreenSaverRenderer implements GLSurfaceView.Renderer {
     abort_callback.handleMessage (m);
   }
 
-  public XScreenSaverRenderer (String hack, int api,
-                               Context app, WindowManager wm,
+  public XScreenSaverRenderer (String hack,
+                               Context app,
                                Bitmap screenshot,
                                Handler.Callback abort_callback,
                                GLSurfaceView glview) {
     super();
     this.hack   = hack;
-    this.api    = api;
     this.app    = app;
-    this.wm     = wm;
-    this.prefs  = prefs;
     this.screenshot = screenshot;
     this.abort_callback = abort_callback;
     this.glview = glview;
-    LOG ("init %s %d", hack, api);
+    LOG ("init %s", hack);
+
+    this.glview.setEGLConfigChooser (8, 8, 8, 8, 16, 0);
+    this.glview.setRenderer (this);
+    this.glview.setRenderMode (GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+  }
+
+  static public String saverNameOf (Object obj) {
+    // Extract the saver name from e.g. "gen.Daydream$BouncingCow"
+    String name = obj.getClass().getSimpleName();
+    int index = name.lastIndexOf('$');
+    if (index != -1) {
+      index++;
+      name = name.substring (index, name.length() - index);
+    }
+    return name.toLowerCase();
   }
 
   public void onDrawFrame (GL10 gl) {
@@ -101,17 +110,18 @@ public class XScreenSaverRenderer implements GLSurfaceView.Renderer {
   public void onSurfaceChanged(GL10 gl, int w, int h) {
     try {
       if (jwxyz_obj == null)
-        jwxyz_obj = new jwxyz (hack, api, app, screenshot, w, h);
+        jwxyz_obj = new jwxyz (hack, app, screenshot, w, h);
 
-      double r;
+      double r = 0;
 
-      Display d = wm.getDefaultDisplay();
+      Display d = glview.getDisplay();
 
-      switch (d.getRotation()) {
-      case Surface.ROTATION_90:  r = 90;  break;
-      case Surface.ROTATION_180: r = 180; break;
-      case Surface.ROTATION_270: r = 270; break;
-      default: r = 0; break;
+      if (d != null) {
+        switch (d.getRotation()) {
+        case Surface.ROTATION_90:  r = 90;  break;
+        case Surface.ROTATION_180: r = 180; break;
+        case Surface.ROTATION_270: r = 270; break;
+        }
       }
 
       jwxyz_obj.nativeResize (w, h, r);

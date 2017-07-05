@@ -32,7 +32,7 @@ INSTALL_DIRS	= @INSTALL_DIRS@
 
 X_CFLAGS	= @X_CFLAGS@
 
-INCLUDES_1	= -I$(srcdir) -I..
+INCLUDES_1	= -I$(srcdir) -I.. -I../utils
 INCLUDES	= $(INCLUDES_1) @INCLUDES@
 
 SRCS		= jwxyz-android.c jwxyz-cocoa.m jwxyz-common.c jwxyz-gl.c \

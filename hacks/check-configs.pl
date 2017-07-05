@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2016 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2017 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.22 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.24 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -394,7 +394,7 @@ sub parse_xml($$$) {
         $res = $res2;
 
         $ctrl->{resource} = $res;
-        $ctrl->{convert} = 'invert' if ($val =~ m/false/i);
+        $ctrl->{convert} = 'invert' if ($val =~ m/off|false|no/i);
         $ctrl->{default} = ($ctrl->{convert} ? 'true' : 'false');
 
 #       $val = ($set ? "$res != $val" : "$res = $val");
@@ -707,6 +707,9 @@ sub build_android(@) {
   my $manifest = '';
   my $daydream_java = '';
   my $settings_java = '';
+  my $wallpaper_java = '';
+  my $fntable_h2 = '';
+  my $fntable_h3 = '';
   my $arrays   = '';
   my $strings  = '';
   my %write_files;
@@ -954,8 +957,30 @@ sub build_android(@) {
                   "  <meta-data android:name=\"android.service.dream\"\n" .
                   "    android:resource=\"\@xml/${saver}_dream\" />\n" .
                   "</service>\n" .
-                  "<activity android:name=\"" .
-                    "$package.gen.Settings\$$saver_class\" />\n"
+                  "<service android:label=\"" .
+                     $localize0->("${saver_underscore}_saver_title",
+                                  $saver_title) .
+                     "\"\n" .
+                  "  android:summary=\"" .
+                       $localize0->("${saver_underscore}_saver_desc",
+                                    $daydream_desc) . "\"\n" .
+                  "  android:name=\".gen.Wallpaper\$$saver_class\"\n" .
+                  "  android:permission=\"android.permission" .
+                       ".BIND_WALLPAPER\">\n" .
+                  "  <intent-filter>\n" .
+                  "    <action android:name=\"android.service.wallpaper" .
+                        ".WallpaperService\" />\n" .
+                  "    <category android:name=\"android.intent.category" .
+                        ".DEFAULT\" />\n" . # TODO: Is the DEFAULT category needed?
+                  "  </intent-filter>\n" .
+                  "  <meta-data android:name=\"android.service.wallpaper\"\n" .
+                  "    android:resource=\"\@xml/${saver}_wallpaper\" />\n" .
+                  "</service>\n" .
+                  "<activity android:label=\"" .
+                   $localize0->("${saver}_settings_title", $heading) . "\"\n" .
+                  "  android:name=\"$package.gen.Settings\$$saver_class\"\n" .
+                  "  android:exported=\"true\">\n" .
+                  "</activity>\n"
                  );
 
     my $dream = ("<dream xmlns:android=\"" .
@@ -964,11 +989,20 @@ sub build_android(@) {
                      "$package.gen.Settings\$$saver_class\" />\n");
     $write_files{"$xml_dir/${saver_underscore}_dream.xml"} = $dream;
 
+    my $wallpaper = ("<wallpaper xmlns:android=\"" .
+                       "http://schemas.android.com/apk/res/android\"\n" .
+                     "  android:settingsActivity=\"" .
+                     "$package.gen.Settings\$$saver_class\"\n" .
+                     "  android:thumbnail=\"\@drawable/${saver_underscore}\" />\n");
+    $write_files{"$xml_dir/${saver_underscore}_wallpaper.xml"} = $wallpaper;
+
     $daydream_java .=
       ("  public static class $saver_class extends XScreenSaverDaydream {\n" .
-       "    public $saver_class() {\n" .
-       "      super(jwxyz.API_" . ($gl_p ? 'GL' : 'XLIB') . ");\n" .
-       "    }\n" .
+       "  }\n" .
+       "\n");
+
+    $wallpaper_java .=
+      ("  public static class $saver_class extends XScreenSaverWallpaper {\n" .
        "  }\n" .
        "\n");
 
@@ -977,6 +1011,13 @@ sub build_android(@) {
        "    implements SharedPreferences.OnSharedPreferenceChangeListener {\n" .
        "  }\n" .
        "\n");
+
+    $fntable_h2 .= ",\n  " if $fntable_h2 ne '';
+    $fntable_h3 .= ",\n  " if $fntable_h3 ne '';
+
+    $fntable_h2 .= "${saver}_xscreensaver_function_table";
+    $fntable_h3 .= "{\"${saver}\", &${saver}_xscreensaver_function_table, " .
+                     'API_' . ($gl_p ? 'GL' : 'XLIB') . '}';
   }
 
   $arrays =~ s/^/  /gm;
@@ -1054,6 +1095,15 @@ sub build_android(@) {
                     $daydream_java .
                     "}\n");
 
+  $wallpaper_java = ("package org.jwz.xscreensaver.gen;\n" .
+                     "\n" .
+                     "import org.jwz.xscreensaver.XScreenSaverWallpaper;\n" .
+                     "import org.jwz.xscreensaver.jwxyz;\n" .
+                     "\n" .
+                     "public class Wallpaper {\n" .
+                     $wallpaper_java .
+                     "}\n");
+
   $settings_java = ("package org.jwz.xscreensaver.gen;\n" .
                     "\n" .
                     "import android.content.SharedPreferences;\n" .
@@ -1067,23 +1117,15 @@ sub build_android(@) {
   $write_files{"$values_dir/settings.xml"} = $arrays;
   $write_files{"$values_dir/strings.xml"}  = $strings;
   $write_files{"$java_dir/Daydream.java"}  = $daydream_java;
+  $write_files{"$java_dir/Wallpaper.java"} = $wallpaper_java;
   $write_files{"$java_dir/Settings.java"}  = $settings_java;
 
-  my @s2 = ();
-  foreach my $saver (sort @savers) {
-    push @s2, $saver unless ($saver =~ m/(-helper)$/);
-  }
-  my @s3 = @s2;
-
-  foreach (@s2) { s/^(.*)$/${1}_xscreensaver_function_table/s; }
-  foreach (@s3) { s/^(.*)$/{"$1", &${1}_xscreensaver_function_table}/s; }
-
   my $fntable_h = ("extern struct xscreensaver_function_table\n" .
-                   "  " . join(",\n  ", @s2) . ";\n" .
+                   "  " . $fntable_h2 . ";\n" .
                    "\n" .
                    "static const struct function_table_entry" .
                    " function_table[] = {\n" .
-                   "  " . join(",\n  ", @s3) . "\n" .
+                   "  " . $fntable_h3 . "\n" .
                    "};\n");
   $write_files{"$gen_dir/function-table.h"} = $fntable_h;
 
@@ -1121,7 +1163,7 @@ sub build_android(@) {
       next if ($f eq '.' || $f eq '..');
       $f = "$dd/$f";
       next if (defined ($write_files{$f}));
-      if ($f =~ m/_(settings|dream)\.xml$/s ||
+      if ($f =~ m/_(settings|wallpaper|dream)\.xml$/s ||
           $f =~ m/(Settings|Daydream)\.java$/s) {
         print STDERR "$progname: rm $f\n";
         unlink ($f) unless ($debug_p);

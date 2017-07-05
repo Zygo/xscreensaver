@@ -39,6 +39,7 @@
  * 31 Oct 1999: Added in lighting hack
  * 13 Nov 1999: Speed up tweaks
  *              Adjust "light" for different bits per colour (-water only)
+ * 09 Oct 2016: Updated for new xshm.c
  *
  */
 
@@ -47,9 +48,7 @@
 
 typedef enum {ripple_drop, ripple_blob, ripple_box, ripple_stir} ripple_mode;
 
-#ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
 
 #define TABLE 256
 
@@ -98,10 +97,7 @@ struct state {
 
   async_load_state *img_loader;
 
-#ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm;
   XShmSegmentInfo shm_info;
-#endif /* HAVE_XSHM_EXTENSION */
 };
 
 
@@ -243,8 +239,9 @@ draw_transparent_vanilla(struct state *st, short *src)
 
 
 static void
-set_mask(unsigned long color, unsigned long *mask, int *shift)
+set_mask(unsigned long *mask, int *shift)
 {
+  unsigned long color = *mask;
   *shift = 0;
   while (color != 0 && (color & 1) == 0) {
     (*shift)++;
@@ -546,40 +543,16 @@ setup_X(struct state *st)
     exit(1);
   }
 
-  st->buffer_map = 0;
-
-#ifdef HAVE_XSHM_EXTENSION
-  if (st->use_shm) {
-    st->buffer_map = create_xshm_image(st->dpy, xgwa.visual, depth,
-				   ZPixmap, 0, &st->shm_info, st->bigwidth, st->bigheight);
-    if (!st->buffer_map) {
-      st->use_shm = False;
-      fprintf(stderr, "create_xshm_image failed\n");
-    }
-  }
-#endif /* HAVE_XSHM_EXTENSION */
-
-  if (!st->buffer_map) {
-    st->buffer_map = XCreateImage(st->dpy, xgwa.visual,
-			      depth, ZPixmap, 0, 0,
-			      st->bigwidth, st->bigheight, 8, 0);
-    st->buffer_map->data = (char *)
-      calloc(st->buffer_map->height, st->buffer_map->bytes_per_line);
-  }
+  st->buffer_map = create_xshm_image(st->dpy, xgwa.visual, depth,
+                                     ZPixmap, &st->shm_info, st->bigwidth, st->bigheight);
 }
 
 
 static void
 DisplayImage(struct state *st)
 {
-#ifdef HAVE_XSHM_EXTENSION
-  if (st->use_shm)
-    XShmPutImage(st->dpy, st->window, st->gc, st->buffer_map, 0, 0, 0, 0,
-		 st->bigwidth, st->bigheight, False);
-  else
-#endif /* HAVE_XSHM_EXTENSION */
-    XPutImage(st->dpy, st->window, st->gc, st->buffer_map, 0, 0, 0, 0,
-	      st->bigwidth, st->bigheight);
+  put_xshm_image(st->dpy, st->window, st->gc, st->buffer_map, 0, 0, 0, 0,
+                 st->bigwidth, st->bigheight, &st->shm_info);
 }
 
 
@@ -968,9 +941,6 @@ ripples_init (Display *disp, Window win)
   st->fluidity = get_integer_resource(disp, "fluidity", "Integer");
   st->transparent = get_boolean_resource(disp, "water", "Boolean");
   st->grayscale_p = get_boolean_resource(disp, "grayscale", "Boolean");
-#ifdef HAVE_XSHM_EXTENSION
-  st->use_shm = get_boolean_resource(disp, "useSHM", "Boolean");
-#endif /* HAVE_XSHM_EXTENSION */
   st->light = get_integer_resource(disp, "light", "Integer");
 
   if (st->delay < 0) st->delay = 0;
@@ -997,9 +967,11 @@ ripples_init (Display *disp, Window win)
   if (st->transparent && st->light > 0) {
     int maxbits;
     st->draw_transparent = draw_transparent_light;
-    set_mask(st->visual->red_mask,   &st->rmask, &st->rshift);
-    set_mask(st->visual->green_mask, &st->gmask, &st->gshift);
-    set_mask(st->visual->blue_mask,  &st->bmask, &st->bshift);
+    visual_rgb_masks (st->screen, st->visual,
+                      &st->rmask, &st->gmask, &st->bmask);
+    set_mask(&st->rmask, &st->rshift);
+    set_mask(&st->gmask, &st->gshift);
+    set_mask(&st->bmask, &st->bshift);
     if (st->rmask == 0) st->draw_transparent = draw_transparent_vanilla;
 
     /* Adjust the shift value "light" when we don't have 8 bits per colour */
@@ -1009,9 +981,11 @@ ripples_init (Display *disp, Window win)
   } else {
     if (st->grayscale_p)
     { 
-      set_mask(st->visual->red_mask,   &st->rmask, &st->rshift);
-      set_mask(st->visual->green_mask, &st->gmask, &st->gshift);
-      set_mask(st->visual->blue_mask,  &st->bmask, &st->bshift);
+      visual_rgb_masks (st->screen, st->visual,
+                        &st->rmask, &st->gmask, &st->bmask);
+      set_mask(&st->rmask, &st->rshift);
+      set_mask(&st->gmask, &st->gshift);
+      set_mask(&st->bmask, &st->bshift);
     }
     st->draw_transparent = draw_transparent_vanilla;
   }

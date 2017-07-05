@@ -401,14 +401,7 @@ init_sponge (ModeInfo *mi)
   sponge_configuration *sp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!sps) {
-    sps = (sponge_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (sponge_configuration));
-    if (!sps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, sps, NULL);
 
   sp = &sps[MI_SCREEN(mi)];
 

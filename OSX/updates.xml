@@ -8,14 +8,25 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.36</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.36.dmg</link>
+   <description><![CDATA[&bull; New hacks, `discoball', `cubetwist', `cubestack', `splodesic' and `hexstrut'. <BR>&bull; OSX: loading image files works in `dymaxionmap', `glplanet', `lavalite', `pulsar', `gleidescope' and `extrusion'. <BR>&bull; Several new programs in `m6502'. <BR>&bull; `rotzoomer -mode circle'. <BR>&bull; Better titles in `photopile'.]]></description>
+   <pubDate>Mon, 10 Oct 2016 19:59:35 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.36.dmg"
+    sparkle:version="5.36"
+    sparkle:dsaSignature="MC0CFE0PgizuGmjl0jbR0M5eu1KLU/XhAhUAj/D/h9i70tfjBehPoCxMoBakBSA="
+    length="52105511"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.35</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-5.35.dmg</link>
-   <description><![CDATA[&bull; New hacks, `dymaxionmap', `unicrud', `energystream', `raverhoop' and `hydrostat'. <BR>&bull; Added Windows 10 to `bsod'. <BR>&bull; X11: ignore WM_USER_TIME property changes with days-old timestamps. Thanks, KDE. <BR>&bull; MacOS, iOS: Better fonts in 'BSOD' and 'memscroller'. <BR>&bull; MacOS 10.7 or later and iOS 6.0 or later are now required, since Xcode 6 can no longer build executables that work on older OSes. <BR>&bull; Many, many Android improvements. <BR>&bull; iOS: Fixed rotation to work with the new iOS 8+ API. <BR>&bull; X11: `pong' is now playable.]]></description>
-   <pubDate>Mon, 23 May 2016 21:08:11 -0700</pubDate>
+   <description><![CDATA[&bull; New hacks, `dymaxionmap', `unicrud', `energystream', `raverhoop' and `hydrostat'. <BR>&bull; Added Windows 10 to `bsod'. <BR>&bull; X11: ignore WM_USER_TIME property changes with days-old timestamps. Thanks, KDE. <BR>&bull; MacOS, iOS: Better fonts in `BSOD' and `memscroller'. <BR>&bull; MacOS 10.8 or later and iOS 6.0 or later are now required, since Xcode 6 can no longer build executables that work on older OSes. <BR>&bull; Many, many Android improvements. <BR>&bull; iOS: Fixed rotation to work with the new iOS 8+ API. <BR>&bull; X11: `pong' is now playable.]]></description>
+   <pubDate>Wed, 01 Jun 2016 09:50:57 -0700</pubDate>
    <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.35.dmg"
     sparkle:version="5.35"
-    sparkle:dsaSignature="MC4CFQC4E0tIMWvdSbiycSktRBSLdA18aQIVAJknRfXSqcFu6Dd5Lem7+fnsevDi"
-    length="50566210"
+    sparkle:dsaSignature="MCwCFHtw9iKA+rimsGIK4PiRj3fc42yxAhRKZHNuDAJ/uREQ2d0yjeyZeTLL+A=="
+    length="50552771"
     type="application/octet-stream" />
   </item>
   <item>
@@ -27,17 +38,6 @@
     sparkle:version="5.34"
     sparkle:dsaSignature="MCwCFAoZpMknlOVF0zFXlzFruzFvRXufAhQVKY0qlzelKcArrlC6k7EbHLTcyg=="
     length="58850776"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.33</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg</link>
-   <description><![CDATA[&bull; New hacks, `splitflap' and `romanboy'. <BR>&bull; Better detection of user activity on modern GNOME systems. <BR>&bull; Sonar now does asynchronous host name resolution. <BR>&bull; Improved Unicode support. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; Various minor fixes.]]></description>
-   <pubDate>Thu, 25 Jun 2015 12:45:10 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg"
-    sparkle:version="5.33"
-    sparkle:dsaSignature="MCwCFEd0Zr8mliQgeG30xb2yfmitxc3yAhQs6xnD7v8ho9wmyCv1yJFjexcfgA=="
-    length="58437761"
     type="application/octet-stream" />
   </item>
   <item>

@@ -41,6 +41,7 @@ static const char sccsid[] = "@(#)discrete.c	5.00 2000/11/01 xlockmore";
 				    "*ignoreRotation: True \n" \
 
 # define SMOOTH_COLORS
+# define release_discrete 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
 #else /* STANDALONE */
@@ -54,7 +55,7 @@ ENTRYPOINT ModeSpecOpt discrete_opts =
 
 #ifdef USE_MODULES
 ModStruct   discrete_description =
-{"discrete", "init_discrete", "draw_discrete", "release_discrete",
+{"discrete", "init_discrete", "draw_discrete", (char *) NULL,
  "refresh_discrete", "init_discrete", (char *) NULL, &discrete_opts,
  1000, 4096, 2500, 1, 64, 1.0, "",
  "Shows various discrete maps", 0, NULL};
@@ -109,18 +110,15 @@ typedef struct {
 
 static discretestruct *discretes = (discretestruct *) NULL;
 
+static void free_discrete(ModeInfo * mi);
+
 ENTRYPOINT void
 init_discrete (ModeInfo * mi)
 {
 	double      range;
 	discretestruct *hp;
 
-	if (discretes == NULL) {
-		if ((discretes =
-		     (discretestruct *) calloc(MI_NUM_SCREENS(mi),
-					   sizeof (discretestruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, discretes, free_discrete);
 	hp = &discretes[MI_SCREEN(mi)];
 
 	hp->maxx = MI_WIDTH(mi);
@@ -407,6 +405,8 @@ draw_discrete (ModeInfo * mi)
 
   if (hp->eraser) {
     hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
+    if (!hp->eraser)
+      init_discrete(mi);
     return;
   }
 
@@ -417,7 +417,6 @@ draw_discrete (ModeInfo * mi)
 
   if (hp->count > cycles) {
     hp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), hp->eraser);
-    init_discrete(mi);
   }
 }
 
@@ -431,22 +430,14 @@ reshape_discrete(ModeInfo * mi, int width, int height)
   XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
 }
 
-ENTRYPOINT void
-release_discrete(ModeInfo * mi)
+static void
+free_discrete(ModeInfo * mi)
 {
-	if (discretes != NULL) {
-		int         screen;
+	discretestruct *hp = &discretes[MI_SCREEN(mi)];
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			discretestruct *hp = &discretes[screen];
-
-			if (hp->pointBuffer != NULL) {
-				(void) free((void *) hp->pointBuffer);
-				/* hp->pointBuffer = NULL; */
-			}
-		}
-		(void) free((void *) discretes);
-		discretes = (discretestruct *) NULL;
+	if (hp->pointBuffer != NULL) {
+		(void) free((void *) hp->pointBuffer);
+		/* hp->pointBuffer = NULL; */
 	}
 }
 

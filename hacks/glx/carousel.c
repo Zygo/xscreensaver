@@ -563,11 +563,7 @@ init_carousel (ModeInfo *mi)
   carousel_state *ss;
   int wire = MI_IS_WIREFRAME(mi);
   
-  if (sss == NULL) {
-    if ((sss = (carousel_state *)
-         calloc (MI_NUM_SCREENS(mi), sizeof(carousel_state))) == NULL)
-      return;
-  }
+  MI_INIT (mi, sss, NULL);
   ss = &sss[screen];
 
   if ((ss->glx_context = init_GL(mi)) != NULL) {

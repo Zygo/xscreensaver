@@ -36,6 +36,7 @@
                "*componentFont: -*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*"
 
 # define refresh_circuit 0
+# define release_circuit 0
 # define circuit_handle_event 0
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -92,7 +93,7 @@ ENTRYPOINT ModeSpecOpt circuit_opts = {countof(opts), opts, countof(vars), vars,
 
 #ifdef USE_MODULES
 ModStruct   circuit_description =
-{"circuit", "init_circuit", "draw_circuit", "release_circuit",
+{"circuit", "init_circuit", "draw_circuit", NULL,
  "draw_circuit", "init_circuit", NULL, &circuit_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "Flying electronic components", 0, NULL};
@@ -2011,16 +2012,14 @@ ENTRYPOINT void reshape_circuit(ModeInfo *mi, int width, int height)
 }
 
 
+static void free_circuit(ModeInfo *mi);
+
 ENTRYPOINT void init_circuit(ModeInfo *mi)
 {
 int screen = MI_SCREEN(mi);
 Circuit *ci;
 
- if (circuit == NULL) {
-   if ((circuit = (Circuit *) calloc(MI_NUM_SCREENS(mi),
-                                        sizeof(Circuit))) == NULL)
-          return;
- }
+ MI_INIT(mi, circuit, free_circuit);
  ci = &circuit[screen];
  ci->window = MI_WINDOW(mi);
 
@@ -2077,7 +2076,7 @@ ENTRYPOINT void draw_circuit(ModeInfo *mi)
   glXSwapBuffers(disp, w);
 }
 
-ENTRYPOINT void release_circuit(ModeInfo *mi)
+static void free_circuit(ModeInfo *mi)
 {
   Circuit *ci = &circuit[MI_SCREEN(mi)];
   if (ci->font)

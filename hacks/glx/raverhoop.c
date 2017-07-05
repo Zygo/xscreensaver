@@ -649,14 +649,7 @@ init_hoop (ModeInfo *mi)
   hoop_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (hoop_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (hoop_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

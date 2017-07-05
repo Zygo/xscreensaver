@@ -28,6 +28,7 @@
 	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
 
 # define refresh_engine 0
+# define release_engine 0
 # include "xlockmore.h"              /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"                  /* from the xlockmore distribution */
@@ -78,7 +79,7 @@ ENTRYPOINT ModeSpecOpt engine_opts = {countof(opts), opts, countof(vars), vars, 
 
 #ifdef USE_MODULES
 ModStruct   engine_description =
-{"engine", "init_engine", "draw_engine", "release_engine",
+{"engine", "init_engine", "draw_engine", NULL,
  "draw_engine", "init_engine", NULL, &engine_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "A four stroke engine", 0, NULL};
@@ -862,11 +863,7 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
   int screen = MI_SCREEN(mi);
   Engine *e;
 
- if (engine == NULL) {
-   if ((engine = (Engine *) calloc(MI_NUM_SCREENS(mi),
-                                        sizeof(Engine))) == NULL)
-          return;
- }
+ MI_INIT(mi, engine, NULL);
  e = &engine[screen];
  e->window = MI_WINDOW(mi);
 
@@ -994,16 +991,6 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
-}
-
-ENTRYPOINT void
-release_engine(ModeInfo *mi) 
-{
-  if (engine != NULL) {
-   (void) free((void *) engine);
-   engine = NULL;
-  }
-  FreeAllGL(mi);
 }
 
 XSCREENSAVER_MODULE ("Engine", engine)

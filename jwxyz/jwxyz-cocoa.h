@@ -85,6 +85,8 @@ struct jwxyz_Drawable {
 
 #endif // JWXYZ_GL
 
+extern NSString *nsstring_from(const char *str, size_t len, int utf8_p);
+
 #ifdef USE_IPHONE
 extern void create_framebuffer (GLuint *gl_framebuffer,
                                 GLuint *gl_renderbuffer);

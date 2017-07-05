@@ -274,14 +274,14 @@ static inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b)
 #endif
 	break;
     case 16:
-	*b = (c & 0x1f) << 3; 
-	*g = ((c >> 5) & 0x3f) << 2;
-	*r = ((c >> 11) & 0x1f) << 3; 
+	*b = (int) (c & 0x1f) << 3;
+	*g = (int) ((c >> 5) & 0x3f) << 2;
+	*r = (int) ((c >> 11) & 0x1f) << 3;
 	break;
     case 15:
-	*b = (c & 0x1f) << 3;
-	*g = ((c >> 5) & 0x1f) << 3;
-	*r = ((c >> 10) & 0x1f) << 3;
+	*b = (int) (c & 0x1f) << 3;
+	*g = (int) ((c >> 5) & 0x1f) << 3;
+	*r = (int) ((c >> 10) & 0x1f) << 3;
 	break;
     }
 }

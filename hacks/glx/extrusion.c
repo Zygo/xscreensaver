@@ -116,7 +116,7 @@ ENTRYPOINT ModeSpecOpt extrusion_opts = {countof(opts), opts, countof(vars), var
 
 #ifdef USE_MODULES
 ModStruct   extrusion_description =
-{"extrusion", "init_extrusion", "draw_extrusion", "release_extrusion",
+{"extrusion", "init_extrusion", "draw_extrusion", NULL,
  "draw_extrusion", "init_extrusion", NULL, &extrusion_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL extrusion", 0, NULL};
@@ -530,11 +530,7 @@ init_extrusion (ModeInfo * mi)
 
   if (MI_IS_WIREFRAME(mi)) do_light = 0;
 
-  if (Extrusion == NULL) {
-	if ((Extrusion = (extrusionstruct *)
-         calloc(MI_NUM_SCREENS(mi), sizeof (extrusionstruct))) == NULL)
-	  return;
-  }
+  MI_INIT(mi, Extrusion, NULL);
   gp = &Extrusion[screen];
 
   gp->window = MI_WINDOW(mi);

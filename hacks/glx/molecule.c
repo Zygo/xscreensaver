@@ -1288,14 +1288,7 @@ init_molecule (ModeInfo *mi)
   molecule_configuration *mc;
   int wire;
 
-  if (!mcs) {
-    mcs = (molecule_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (molecule_configuration));
-    if (!mcs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, mcs, NULL);
 
   mc = &mcs[MI_SCREEN(mi)];
 

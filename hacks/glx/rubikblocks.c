@@ -23,6 +23,7 @@
 		   "*suppressRotationAnimation: True\n" \
 
 # define refresh_rubikblocks 0
+# define release_rubikblocks 0
 #include "xlockmore.h"
 #include "rotator.h"
 #include "gltrackball.h"
@@ -88,7 +89,7 @@ ENTRYPOINT ModeSpecOpt rubikblocks_opts = {countof(opts), opts, countof(vars), v
 
 #ifdef USE_MODULES
 ModStruct   rubikblocks_description =
-{ "rubikblocks", "init_rubikblocks", "draw_rubikblocks", "release_rubikblocks",
+{ "rubikblocks", "init_rubikblocks", "draw_rubikblocks", NULL,
   "draw_rubikblocks", "change_rubikblocks", NULL, &rubikblocks_opts,
   25000, 1, 1, 1, 1.0, 4, "",
   "Shows randomly shuffling Rubik's Mirror Blocks puzzle", 0, NULL
@@ -552,33 +553,10 @@ reshape_rubikblocks(ModeInfo *mi, int width, int height)
 }
 
 ENTRYPOINT void 
-release_rubikblocks(ModeInfo *mi) 
-{
-  if (rubikblocks != NULL) 
-  {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) 
-    {
-      rubikblocks_conf *cp = &rubikblocks[screen];
-      if (cp->glx_context) {
-        cp->glx_context = NULL;
-      }
-    }
-    free((void *)rubikblocks);
-    rubikblocks = NULL;
-  }
-  FreeAllGL(mi);
-}
-
-ENTRYPOINT void 
 init_rubikblocks(ModeInfo *mi) 
 {
   rubikblocks_conf *cp;
-  if(!rubikblocks) 
-  {
-    rubikblocks = (rubikblocks_conf *)calloc(MI_NUM_SCREENS(mi), sizeof(rubikblocks_conf));
-    if(!rubikblocks) return;
-  }
+  MI_INIT(mi, rubikblocks, NULL);
   cp = &rubikblocks[MI_SCREEN(mi)];
 
   if(tex)
@@ -611,7 +589,7 @@ draw_rubikblocks(ModeInfo * mi)
   glXMakeCurrent(display, window, *(cp->glx_context));
   if (!draw_main(mi, cp)) 
   {
-    release_rubikblocks(mi);
+    MI_ABORT(mi);
     return;
   }
   if (MI_IS_FPS(mi)) do_fps (mi);

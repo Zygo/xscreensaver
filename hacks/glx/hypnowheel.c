@@ -169,14 +169,7 @@ init_hypnowheel (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   int i;
 
-  if (!bps) {
-    bps = (hypnowheel_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (hypnowheel_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

@@ -80,7 +80,7 @@ UTILDIR_OBJS	= $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/xshm.o \
 		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/async_netdb.o \
 		  $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o \
-		  $(UTILS_BIN)/spline.o
+		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/pow2.o
 JWXYZ_OBJS	= $(JWXYZ_BIN)/jwzgles.o
 HACKDIR_OBJS	= $(HACK_SRC)/screenhack.o $(UTILS_SRC)/xlockmore.o \
 		  $(HACK_SRC)/fps.o
@@ -128,7 +128,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c fps-gl.c \
 		  cityflow.c romanboy.c splitflap.c splitflap_obj.c \
 		  dymaxionmap.c unicrud.c energystream.c raverhoop.c \
 		  hydrostat.c discoball.c cubetwist.c cubestack.c splodesic.c \
-		  hexstrut.c
+		  hexstrut.c vigilance.c seccam.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -173,7 +173,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o fps-gl.o \
 		  cityflow.o romanboy.o splitflap.o splitflap_obj.o \
 		  dymaxionmap.o unicrud.o energystream.o raverhoop.o \
 		  hydrostat.o discoball.o cubetwist.o cubestack.o splodesic.o \
-		  hexstrut.o
+		  hexstrut.o vigilance.o seccam.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -193,7 +193,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  geodesicgears projectiveplane winduprobot cityflow romanboy \
 		  splitflap dymaxionmap unicrud energystream raverhoop \
 		  hydrostat discoball cubetwist cubestack splodesic \
-		  hexstrut
+		  hexstrut vigilance
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -217,7 +217,7 @@ HACK_OBJS	= $(JWZGLES_OBJS) $(HACK_BIN)/screenhack.o @ANIM_OBJS@ \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/hsv.o \
 		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/async_netdb.o \
 		  $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o \
-		  $(UTILS_BIN)/utf8wc.o
+		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/pow2.o
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  grab-ximage.h tube.h sphere.h boxed.h \
@@ -256,7 +256,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cityflow.man romanboy.man splitflap.man dymaxionmap.man \
 		  unicrud.man energystream.man raverhoop.man hydrostat.man \
 		  discoball.man cubetwist.man cubestack.man splodesic.man \
-		  hexstrut.man
+		  hexstrut.man vigilance.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -502,16 +502,17 @@ $(UTILS_BIN)/async_netdb.o:	$(UTILS_SRC)/async_netdb.c
 $(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
 $(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
 $(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
+$(UTILS_BIN)/pow2.o:		$(UTILS_SRC)/pow2.c
 $(HACK_BIN)/screenhack.o:	$(HACK_SRC)/screenhack.c
 $(HACK_BIN)/xlockmore.o:	$(HACK_SRC)/xlockmore.c
 $(HACK_BIN)/fps.o:		$(HACK_SRC)/fps.c
 
 $(UTILDIR_OBJS):
-	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+	cd $(UTILS_BIN) ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
 $(JWXYZ_OBJS):
-	$(MAKE) -C $(JWXYZ_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+	cd $(JWXYZ_BIN) ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
 $(HACKDIR_OBJS):
-	$(MAKE) -C $(HACK_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+	cd $(HACK_BIN)  ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 
 # How we build object files in this directory.
@@ -725,6 +726,13 @@ winduprobot:			$(ROBO_OBJS)
 winduprobot_dxf::
 	./dxf2gl.pl --smooth --layers robot.dxf robot.c
 	./dxf2gl.pl --wireframe robot-wireframe.dxf robot-wireframe.c
+
+CAM_OBJS=seccam.o gllist.o vigilance.o $(HACK_TRACK_OBJS)
+vigilance:			$(CAM_OBJS)
+	$(CC_HACK) -o $@	$(CAM_OBJS) $(HACK_LIBS)
+
+seccam_dxf::
+	./dxf2gl.pl --smooth --layers seccam.dxf seccam.c
 
 glslideshow:	glslideshow.o	$(HACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_GRAB_OBJS) $(HACK_LIBS)
@@ -1947,7 +1955,7 @@ glut_swidth.o: $(srcdir)/glutstroke.h
 grab-ximage.o: ../../config.h
 grab-ximage.o: $(srcdir)/grab-ximage.h
 grab-ximage.o: $(UTILS_SRC)/grabscreen.h
-grab-ximage.o: $(UTILS_SRC)/resources.h
+grab-ximage.o: $(UTILS_SRC)/pow2.h
 grab-ximage.o: $(UTILS_SRC)/visual.h
 grab-ximage.o: $(UTILS_SRC)/xshm.h
 hexstrut.o: ../../config.h
@@ -2544,6 +2552,8 @@ sballs.o: $(UTILS_SRC)/yarandom.h
 sballs.o: $(HACK_SRC)/xlockmoreI.h
 sballs.o: $(HACK_SRC)/xlockmore.h
 sballs.o: $(srcdir)/xpm-ximage.h
+seccam.o: ../../config.h
+seccam.o: $(srcdir)/gllist.h
 shark.o: $(srcdir)/atlantis.h
 shark.o: ../../config.h
 shark.o: $(HACK_SRC)/fps.h
@@ -2848,6 +2858,7 @@ teapot.o: $(srcdir)/teapot.h
 texfont.o: ../../config.h
 texfont.o: $(HACK_SRC)/fps.h
 texfont.o: $(srcdir)/texfont.h
+texfont.o: $(UTILS_SRC)/pow2.h
 texfont.o: $(UTILS_SRC)/resources.h
 texfont.o: $(UTILS_SRC)/xft.h
 texfont.o: $(UTILS_SRC)/xshm.h
@@ -2982,6 +2993,23 @@ unknownpleasures.o: $(UTILS_SRC)/xshm.h
 unknownpleasures.o: $(UTILS_SRC)/yarandom.h
 unknownpleasures.o: $(HACK_SRC)/xlockmoreI.h
 unknownpleasures.o: $(HACK_SRC)/xlockmore.h
+vigilance.o: ../../config.h
+vigilance.o: $(HACK_SRC)/fps.h
+vigilance.o: $(srcdir)/gllist.h
+vigilance.o: $(srcdir)/gltrackball.h
+vigilance.o: $(srcdir)/normals.h
+vigilance.o: $(HACK_SRC)/screenhackI.h
+vigilance.o: $(UTILS_SRC)/colors.h
+vigilance.o: $(UTILS_SRC)/grabscreen.h
+vigilance.o: $(UTILS_SRC)/hsv.h
+vigilance.o: $(UTILS_SRC)/resources.h
+vigilance.o: $(UTILS_SRC)/usleep.h
+vigilance.o: $(UTILS_SRC)/visual.h
+vigilance.o: $(UTILS_SRC)/xshm.h
+vigilance.o: $(UTILS_SRC)/yarandom.h
+vigilance.o: $(HACK_SRC)/xlockmoreI.h
+vigilance.o: $(HACK_SRC)/xlockmore.h
+vigilance.o: $(srcdir)/xpm-ximage.h
 voronoi.o: ../../config.h
 voronoi.o: $(HACK_SRC)/fps.h
 voronoi.o: $(HACK_SRC)/screenhackI.h

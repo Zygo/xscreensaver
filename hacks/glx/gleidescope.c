@@ -78,6 +78,7 @@
 		"*suppressRotationAnimation: True\n" \
 
 # define refresh_gleidescope 0
+# define release_gleidescope 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -105,7 +106,7 @@ static Bool		rotate;			/* rotate in place */
 static Bool		norotate;		/* no rotate in place */
 static Bool		zoom;			/* zooming camera */
 static Bool		nozoom;			/* no zooming camera */
-static char		*image;			/* name of texture to load */
+static char		*image_str;		/* name of texture to load */
 static int		duration;		/* length of time to display grabbed image */
 
 #define MAX_CAM_SPEED			1.0
@@ -155,7 +156,7 @@ static argtype vars[] = {
 	{&norotate,		"norotate",	"noRotate",	DEF_NOROTATE,	t_Bool},
 	{&zoom,			"zoom",		"Zoom",		DEF_ZOOM,	t_Bool},
 	{&nozoom,		"nozoom",	"noZoom",	DEF_NOZOOM,	t_Bool},
-	{&image,		"image",	"Image",	DEF_IMAGE,	t_String},
+	{&image_str,		"image",	"Image",	DEF_IMAGE,	t_String},
 	{&duration,		"duration",	"Duration",	DEF_DURATION,		t_Int},
 };
 
@@ -181,7 +182,7 @@ ENTRYPOINT ModeSpecOpt gleidescope_opts = {
 
 #ifdef USE_MODULES
 ModStruct   gleidescope_description = { 
-     "gleidescope", "init_gleidescope", "draw_gleidescope", "release_gleidescope",
+     "gleidescope", "init_gleidescope", "draw_gleidescope", NULL,
      "draw_gleidescope", "init_gleidescope", NULL, &gleidescope_opts,
      1000, 1, 2, 1, 4, 1.0, "",
      "GL Kaleidescope", 0, NULL};
@@ -925,7 +926,7 @@ setup_texture(ModeInfo * mi, texture *texture)
 {
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 
-	if (!image || !*image || !strcmp(image, "DEFAULT")) {
+	if (!image_str || !*image_str || !strcmp(image_str, "DEFAULT")) {
     BUILTIN:
 		/* no image specified - use system settings */
 #ifdef DEBUG
@@ -933,7 +934,7 @@ setup_texture(ModeInfo * mi, texture *texture)
 #endif
 		getSnapshot(mi, texture);
 	} else {
-		if (strcmp(image, "GENERATE") == 0) {
+		if (strcmp(image_str, "GENERATE") == 0) {
 #ifdef DEBUG
 			printf("SetupTexture: random_texture\n");
 #endif
@@ -943,7 +944,7 @@ setup_texture(ModeInfo * mi, texture *texture)
 #ifdef DEBUG
 			printf("SetupTexture: file_texture\n");
 #endif
-			if (! setup_file_texture(mi, image, texture))
+			if (! setup_file_texture(mi, image_str, texture))
               goto BUILTIN;
 		}
 	}
@@ -1395,7 +1396,10 @@ draw(ModeInfo * mi)
  */
 ENTRYPOINT void reshape_gleidescope(ModeInfo *mi, int width, int height)
 {
+	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 	GLfloat		h = (GLfloat) height / (GLfloat) width;
+
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));
 
 	glViewport(0, 0, (GLint) width, (GLint) height);
 	glMatrixMode(GL_PROJECTION);
@@ -1521,18 +1525,15 @@ printf("phases [%d, %d, %d]\n", gp->cam_x_phase, gp->cam_y_phase, gp->cam_z_phas
 #endif
 }
 
+static void free_gleidescope(ModeInfo * mi);
+
 ENTRYPOINT void
 init_gleidescope(ModeInfo * mi)
 {
 	gleidestruct *gp;
 	int screen = MI_SCREEN(mi);
 
-	if (gleidescope == NULL) {
-		gleidescope = (gleidestruct *) calloc(MI_NUM_SCREENS(mi), sizeof (gleidestruct));
-		if (gleidescope == NULL) {
-			return;
-		}
-	}
+	MI_INIT(mi, gleidescope, free_gleidescope);
 	gp = &gleidescope[screen];
 	gp->window = MI_WINDOW(mi);
     gp->size = -1;
@@ -1600,28 +1601,18 @@ draw_gleidescope(ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-release_gleidescope(ModeInfo * mi)
+static void
+free_gleidescope(ModeInfo * mi)
 {
-	if (gleidescope != NULL) {
-		int screen;
+	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			gleidestruct *gp = &gleidescope[screen];
+	/* acd -  is this needed? */
+	if (gp->glx_context) {
+		/* Display lists MUST be freed while their glXContext is current. */
+		glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
 
-			/* acd -  is this needed? */
-			if (gp->glx_context) {
-				/* Display lists MUST be freed while their glXContext is current. */
-				glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
-
-				/* acd - was code here for freeing things that are no longer in struct */
-			}
-		}
-		(void) free((void *) gleidescope);
-		gleidescope = NULL;
+		/* acd - was code here for freeing things that are no longer in struct */
 	}
-	
-	FreeAllGL(mi);
 }
 
 XSCREENSAVER_MODULE ("Gleidescope", gleidescope)

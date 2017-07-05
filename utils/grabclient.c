@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -783,7 +783,12 @@ osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
                             (XtPointer) (XtInputReadMask | XtInputExceptMask),
                             xscreensaver_getimage_file_cb, (XtPointer) clo2);
 # else /* USE_IPHONE */
-  ios_load_random_image (ios_load_random_image_cb, clo2);
+  {
+    XWindowAttributes xgwa;
+    XGetWindowAttributes (DisplayOfScreen (screen), xwindow, &xgwa);
+    ios_load_random_image (ios_load_random_image_cb, clo2,
+                           xgwa.width, xgwa.height);
+  }
 # endif /* USE_IPHONE */
 }
 

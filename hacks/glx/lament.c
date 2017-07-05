@@ -1705,16 +1705,7 @@ init_lament (ModeInfo *mi)
 {
   lament_configuration *lc;
   int i;
-  if (!lcs)
-    {
-      lcs = (lament_configuration *)
-	calloc(MI_NUM_SCREENS(mi), sizeof (lament_configuration));
-      if (!lcs)
-	{
-	  fprintf(stderr, "%s: out of memory\n", progname);
-	  exit(1);
-	}
-    }
+  MI_INIT (mi, lcs, NULL);
 
   lc = &lcs[MI_SCREEN(mi)];
 

@@ -41,6 +41,7 @@
 
 #include "grab-ximage.h"
 #include "grabscreen.h"
+#include "pow2.h"
 #include "visual.h"
 
 /* If REFORMAT_IMAGE_DATA is defined, then we convert Pixmaps to textures
@@ -65,10 +66,7 @@
 #define REFORMAT_IMAGE_DATA
 
 
-#ifdef HAVE_XSHM_EXTENSION
-# include "resources.h"
-# include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
+#include "xshm.h"
 
 extern char *progname;
 
@@ -316,12 +314,10 @@ static XImage *
 pixmap_to_gl_ximage (Screen *screen, Window window, Pixmap pixmap)
 {
   Display *dpy = DisplayOfScreen (screen);
+  Visual *visual = DefaultVisualOfScreen (screen);
   unsigned int width, height, depth;
 
-# ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm = get_boolean_resource (dpy, "useSHM", "Boolean");
   XShmSegmentInfo shm_info;
-# endif /* HAVE_XSHM_EXTENSION */
 
   XImage *server_ximage = 0;
   XImage *client_ximage = 0;
@@ -338,31 +334,13 @@ pixmap_to_gl_ximage (Screen *screen, Window window, Pixmap pixmap)
 
   /* Convert the server-side Pixmap to a client-side GL-ordered XImage.
    */
-# ifdef HAVE_XSHM_EXTENSION
-  if (use_shm)
-    {
-      Visual *visual = DefaultVisualOfScreen (screen);
-      server_ximage = create_xshm_image (dpy, visual, depth,
-                                         ZPixmap, 0, &shm_info,
-                                         width, height);
-      if (server_ximage)
-        XShmGetImage (dpy, pixmap, server_ximage, 0, 0, ~0L);
-      else
-        use_shm = False;
-    }
-# endif /* HAVE_XSHM_EXTENSION */
-
-  if (!server_ximage)
-    server_ximage = XGetImage (dpy, pixmap, 0, 0, width, height, ~0L, ZPixmap);
+  server_ximage = create_xshm_image (dpy, visual, depth, ZPixmap, &shm_info,
+                                     width, height);
+  get_xshm_image (dpy, pixmap, server_ximage, 0, 0, ~0L, &shm_info);
 
   client_ximage = convert_ximage_to_rgba32 (screen, server_ximage);
 
-# ifdef HAVE_XSHM_EXTENSION
-  if (use_shm)
-    destroy_xshm_image (dpy, server_ximage, &shm_info);
-  else
-# endif /* HAVE_XSHM_EXTENSION */
-    XDestroyImage (server_ximage);
+  destroy_xshm_image (dpy, server_ximage, &shm_info);
 
   return client_ximage;
 }
@@ -532,16 +510,6 @@ double_time (void)
 }
 
 
-/* return the next larger power of 2. */
-static int
-to_pow2 (int value)
-{
-  int i = 1;
-  while (i < value) i <<= 1;
-  return i;
-}
-
-
 /* Loads the given XImage into GL's texture memory.
    The image may be of any size.
    If mipmap_p is true, then make mipmaps instead of just a single texture.
@@ -560,8 +528,8 @@ ximage_to_texture (XImage *ximage,
   GLenum err = 0;
   int orig_width = ximage->width;
   int orig_height = ximage->height;
-  int tex_width = 0;
-  int tex_height = 0;
+  GLsizei tex_width = 0;
+  GLsizei tex_height = 0;
 
  AGAIN:
 
@@ -585,8 +553,8 @@ ximage_to_texture (XImage *ximage,
          So first, create a texture of that size (but don't write any
          data into it.)
        */
-      tex_width  = to_pow2 (ximage->width);
-      tex_height = to_pow2 (ximage->height);
+      tex_width  = (GLsizei) to_pow2 (ximage->width);
+      tex_height = (GLsizei) to_pow2 (ximage->height);
 
       if (debug_p)
         fprintf (stderr, "%s: texture %d x %d (%d x %d)\n",

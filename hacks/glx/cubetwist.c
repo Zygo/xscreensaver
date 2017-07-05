@@ -1,4 +1,4 @@
-/* cubetwist, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+/* cubetwist, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +15,7 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define refresh_cube 0
+# define release_cube 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -130,7 +131,6 @@ draw_cubes (ModeInfo *mi, cube *c)
   int polys = 0;
   int i, j;
 
-  glPushMatrix();
   glColor4fv (c->color);
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, c->color);
 
@@ -153,6 +153,8 @@ draw_cubes (ModeInfo *mi, cube *c)
 
   if (c->next)
     {
+      /* This leaves rotations on the prevailing matrix stack, but since
+         this is a tail-call, that's fine.  Don't blow the matrix stack. */
       glRotatef (c->rot.x, 1, 0, 0);
       glRotatef (c->rot.y, 0, 1, 0);
       glRotatef (c->rot.z, 0, 0, 1);
@@ -161,8 +163,8 @@ draw_cubes (ModeInfo *mi, cube *c)
       c->next->rot = c->rot;
       polys += draw_cubes (mi, c->next);
     }
-  glPopMatrix();
 
+  check_gl_error("cubetwist");
   return polys;
 }
 
@@ -415,20 +417,15 @@ cube_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_cube (ModeInfo *mi);
+
 ENTRYPOINT void 
 init_cube (ModeInfo *mi)
 {
   cube_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (cube_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (cube_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_cube);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -569,8 +566,8 @@ draw_cube (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-ENTRYPOINT void
-release_cube (ModeInfo *mi)
+static void
+free_cube (ModeInfo *mi)
 {
   cube_configuration *bp = &bps[MI_SCREEN(mi)];
   while (bp->cubes)

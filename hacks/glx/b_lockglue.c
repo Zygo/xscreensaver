@@ -42,6 +42,7 @@ struct glb_config glb_config =
 			"*showFPS:      False   \n"
 
 # define refresh_bubble3d 0
+# define release_bubble3d 0
 # define bubble3d_handle_event 0
 #include "xlockmore.h"
 #else
@@ -79,7 +80,7 @@ ModStruct   bubbles3d_description =
 {"bubbles3d",
  "init_bubble3d",
  "draw_bubble3d",
- "release_bubble3d",
+ NULL,
  "change_bubble3d",
  "init_bubble3d",
  NULL,
@@ -155,6 +156,8 @@ do_display(struct context *c)
 	glb_draw_step(c->draw_context);
 }
 
+static void free_bubble3d(ModeInfo * mi);
+
 ENTRYPOINT void
 init_bubble3d(ModeInfo * mi)
 {
@@ -163,12 +166,7 @@ init_bubble3d(ModeInfo * mi)
 	int         screen = MI_SCREEN(mi);
 	struct context *c;
 
-	if (contexts == 0) {
-		contexts = (struct context *) calloc(sizeof (struct context), MI_NUM_SCREENS(mi));
-
-		if (contexts == 0)
-			return;
-	}
+	MI_INIT (mi, contexts, free_bubble3d);
 	c = &contexts[screen];
 	c->glx_context = init_GL(mi);
 	init_colors(mi);
@@ -226,20 +224,12 @@ change_bubble3d(ModeInfo * mi)
 }
 #endif /* !STANDALONE */
 
-ENTRYPOINT void
-release_bubble3d(ModeInfo * mi)
+static void
+free_bubble3d(ModeInfo * mi)
 {
-  if (contexts) {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-      struct context *c = &contexts[screen];
-      if (c->draw_context)
-        glb_draw_end(c->draw_context);
-    }
-    free (contexts);
-    contexts = 0;
-  }
-  FreeAllGL(mi);
+  struct context *c = &contexts[MI_SCREEN(mi)];
+  if (c->draw_context)
+    glb_draw_end(c->draw_context);
 }
 
 XSCREENSAVER_MODULE ("Bubble3D", bubble3d)

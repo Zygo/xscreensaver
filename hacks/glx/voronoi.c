@@ -478,14 +478,7 @@ init_voronoi (ModeInfo *mi)
 {
   voronoi_configuration *vp;
 
-  if (!vps) {
-    vps = (voronoi_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (voronoi_configuration));
-    if (!vps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, vps, NULL);
 
   vp = &vps[MI_SCREEN(mi)];
 

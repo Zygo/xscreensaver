@@ -97,6 +97,7 @@ export ANDROID_HACKS=		\
 	glschool		\
 	glsnake			\
 	gltext			\
+	goop			\
 	grav			\
 	greynetic		\
 	helix			\
@@ -141,6 +142,7 @@ export ANDROID_HACKS=		\
 	raverhoop		\
 	rd-bomb			\
 	ripples			\
+	rocks			\
 	romanboy		\
 	rorschach		\
 	rotzoomer		\
@@ -169,6 +171,7 @@ export ANDROID_HACKS=		\
 	twang			\
 	unknownpleasures	\
 	vermiculate		\
+	vigilance		\
 	voronoi			\
 	wander			\
 	whirlwindwarp		\
@@ -211,7 +214,6 @@ ANDROID_TODO=			\
 	glhanoi			\
 	glplanet		\
 	glslideshow		\
-	goop			\
 	halftone		\
 	halo			\
 	hypertorus		\
@@ -235,7 +237,6 @@ ANDROID_TODO=			\
 	pulsar			\
 	qix			\
 	queens			\
-	rocks			\
 	skytentacles		\
 	slip			\
 	speedmine		\
@@ -323,6 +324,7 @@ echo_tarfiles:
 		-o -name '*.keystore'		\
 		-o -name '*_dream.xml'		\
 		-o -name '*_settings.xml'	\
+		-o -name '*_wallpaper.xml'	\
 		-o -name AndroidManifest.xml	\
 		-o -name strings.xml		\
 		-o -name settings.xml		\

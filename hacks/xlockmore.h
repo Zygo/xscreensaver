@@ -35,8 +35,9 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
  */
 #define MI_DISPLAY(MI)		((MI)->dpy)
 #define MI_WINDOW(MI)		((MI)->window)
-#define MI_NUM_SCREENS(MI)	((MI)->num_screens)
+#define MI_NUM_SCREENS(MI)	XLOCKMORE_NUM_SCREENS
 #define MI_SCREEN(MI)		((MI)->screen_number)
+#define MI_SCREENPTR(MI)	((MI)->xgwa.screen)
 #define MI_WIN_WHITE_PIXEL(MI)	((MI)->white)
 #define MI_WIN_BLACK_PIXEL(MI)	((MI)->black)
 #define MI_NPIXELS(MI)		((MI)->npixels)
@@ -88,6 +89,43 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_IS_MOUSE(MI)		(False)
 
 #define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
+
+/* MI_INIT and MI_ABORT are XScreenSaver extensions. These exist primarily for
+   the sake of ports to macOS, iOS, and Android, all of which need to restart
+   individual screenhacks repeatedly in the same process. This requires
+   reusing MI_SCREEN() numbers; previously many xlockmore API hacks did not
+   support this the way they were supposed to.
+ */
+
+/* MI_INIT implements the following pattern, as seen in various forms at the
+   beginning of init_##():
+
+   if(!state_array) {
+     state_array = (state_t *)calloc(MI_NUM_SCREENS(mi), sizeof(state_t));
+     if(!state_array) {
+       fprintf(stderr, "%s: out of memory\n", progname);
+       return;
+     }
+   }
+   hack_free_state(mi);
+   memset(&state_array[MI_SCREEN(mi)], 0, sizeof(*state_array));
+
+   It also enables hack_free_state to run when a screen is no longer in use.
+   This is called at some point after the last call to draw_##, but before
+   release_##.
+ */
+
+#define MI_INIT(mi, state_array, hack_free_state) \
+  xlockmore_mi_init ((mi), sizeof(*(state_array)), (void **)&(state_array), \
+                     hack_free_state)
+
+/* Use MI_ABORT if an init_## or draw_## hook needs to shut everything down.
+   This replaces explicit calls to release_## hooks when things go wrong from
+   inside an xlockmore API screenhack.
+
+   At some point this may do something other than just abort().
+ */
+#define MI_ABORT(mi)		abort();
 
 #define FreeAllGL(dpy)		/* */
 
@@ -179,8 +217,7 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 	   refresh_ ## PREFIX,						\
 	   release_ ## PREFIX,						\
 	   PREFIX   ## _handle_event,					\
-	   & PREFIX ## _opts,						\
-	   0								\
+	   & PREFIX ## _opts						\
   };									\
 									\
   struct xscreensaver_function_table					\

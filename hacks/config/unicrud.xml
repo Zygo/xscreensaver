@@ -19,6 +19,7 @@
    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
    <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="titles"  _label="Show titles" arg-unset="-no-titles"/>
   </hgroup>
 
   <select id="block">

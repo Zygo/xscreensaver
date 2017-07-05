@@ -103,7 +103,6 @@
 #ifndef USE_IPHONE
 - (void) openPreferences: (id)sender;
 #else  // USE_IPHONE
-- (void) openPreferences: (NSString *)which;
 - (UIImage *) screenshot;
 - (NSString *) makeDesc:(NSString *)saver
                yearOnly:(BOOL) yearp;

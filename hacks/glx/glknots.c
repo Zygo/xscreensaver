@@ -257,14 +257,7 @@ init_knot (ModeInfo *mi)
   knot_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (knot_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (knot_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

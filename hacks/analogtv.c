@@ -64,6 +64,11 @@
    - removed unusable hashnoise code
  */
 
+/*
+  2016-10-09, Dave Odell <dmo2118@gmail.com>:
+  Updated for new xshm.c.
+*/
+
 #ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else /* !HAVE_JWXYZ */
@@ -217,8 +222,8 @@ analogtv_set_defaults(analogtv *it, char *prefix)
 
 #ifdef DEBUG
   printf("analogtv: prefix=%s\n",prefix);
-  printf("  use: shm=%d cmap=%d color=%d\n",
-         it->use_shm,it->use_cmap,it->use_color);
+  printf("  use: cmap=%d color=%d\n",
+         it->use_cmap,it->use_color);
   printf("  controls: tint=%g color=%g brightness=%g contrast=%g\n",
          it->tint_control, it->color_control, it->brightness_control,
          it->contrast_control);
@@ -228,8 +233,8 @@ analogtv_set_defaults(analogtv *it, char *prefix)
          it->horiz_desync, it->flutter_horiz_desync);
   printf("  hashnoise rpm: %g\n",
          it->hashnoise_rpm);
-  printf("  vis: %d %d %d\n",
-         it->visclass, it->visbits, it->visdepth);
+  printf("  vis: %d %d\n",
+         it->visclass, it->visdepth);
   printf("  shift: %d-%d %d-%d %d-%d\n",
          it->red_invprec,it->red_shift,
          it->green_invprec,it->green_shift,
@@ -262,15 +267,7 @@ static void
 analogtv_free_image(analogtv *it)
 {
   if (it->image) {
-    if (it->use_shm) {
-#ifdef HAVE_XSHM_EXTENSION
-      destroy_xshm_image(it->dpy, it->image, &it->shm_info);
-#endif
-    } else {
-      thread_free(it->image->data);
-      it->image->data = NULL;
-      XDestroyImage(it->image);
-    }
+    destroy_xshm_image(it->dpy, it->image, &it->shm_info);
     it->image=NULL;
   }
 }
@@ -280,31 +277,14 @@ analogtv_alloc_image(analogtv *it)
 {
   /* On failure, it->image is NULL. */
 
-  unsigned bits_per_pixel = get_bits_per_pixel(it->dpy, it->xgwa.depth);
+  unsigned bits_per_pixel = visual_pixmap_depth(it->screen, it->xgwa.visual);
   unsigned align = thread_memory_alignment(it->dpy) * 8 - 1;
   /* Width is in bits. */
   unsigned width = (it->usewidth * bits_per_pixel + align) & ~align;
 
-  if (it->use_shm) {
-#ifdef HAVE_XSHM_EXTENSION
-    it->image=create_xshm_image(it->dpy, it->xgwa.visual, it->xgwa.depth, ZPixmap, 0,
-                                &it->shm_info,
-                                width / bits_per_pixel, it->useheight);
-#endif
-    if (!it->image) it->use_shm=0;
-  }
-  if (!it->image) {
-    it->image = XCreateImage(it->dpy, it->xgwa.visual, it->xgwa.depth, ZPixmap, 0, 0,
-                             it->usewidth, it->useheight, 8, width / 8);
-    if (it->image) {
-      if(thread_malloc((void **)&it->image->data, it->dpy,
-                       it->image->height * it->image->bytes_per_line)) {
-        it->image->data = NULL;
-        XDestroyImage(it->image);
-        it->image = NULL;
-      }
-    }
-  }
+  it->image=create_xshm_image(it->dpy, it->xgwa.visual, it->xgwa.depth,
+                              ZPixmap, &it->shm_info,
+                              width / bits_per_pixel, it->useheight);
 
   if (it->image) {
     memset (it->image->data, 0, it->image->height * it->image->bytes_per_line);
@@ -508,18 +488,11 @@ analogtv_allocate(Display *dpy, Window window)
 
   it->n_colors=0;
 
-#ifdef HAVE_XSHM_EXTENSION
-  it->use_shm=1;
-#else
-  it->use_shm=0;
-#endif
-
   XGetWindowAttributes (it->dpy, it->window, &it->xgwa);
 
   it->screen=it->xgwa.screen;
   it->colormap=it->xgwa.colormap;
-  it->visclass=it->xgwa.visual->class;
-  it->visbits=it->xgwa.visual->bits_per_rgb;
+  it->visclass=visual_class(it->xgwa.screen, it->xgwa.visual);
   it->visdepth=it->xgwa.depth;
   if (it->visclass == TrueColor || it->visclass == DirectColor) {
     if (get_integer_resource (it->dpy, "use_cmap", "Integer")) {
@@ -538,9 +511,8 @@ analogtv_allocate(Display *dpy, Window window)
     it->use_color=0;
   }
 
-  it->red_mask=it->xgwa.visual->red_mask;
-  it->green_mask=it->xgwa.visual->green_mask;
-  it->blue_mask=it->xgwa.visual->blue_mask;
+  visual_rgb_masks (it->xgwa.screen, it->xgwa.visual,
+                    &it->red_mask, &it->green_mask, &it->blue_mask);
   it->red_shift=it->red_invprec=-1;
   it->green_shift=it->green_invprec=-1;
   it->blue_shift=it->blue_invprec=-1;
@@ -599,15 +571,7 @@ void
 analogtv_release(analogtv *it)
 {
   if (it->image) {
-    if (it->use_shm) {
-#ifdef HAVE_XSHM_EXTENSION
-      destroy_xshm_image(it->dpy, it->image, &it->shm_info);
-#endif
-    } else {
-      thread_free(it->image->data);
-      it->image->data = NULL;
-      XDestroyImage(it->image);
-    }
+    destroy_xshm_image(it->dpy, it->image, &it->shm_info);
     it->image=NULL;
   }
   if (it->gc) XFreeGC(it->dpy, it->gc);
@@ -1963,20 +1927,11 @@ analogtv_draw(analogtv *it, double noiselevel,
   }
 
   if (overall_bot > overall_top) {
-    if (it->use_shm) {
-#ifdef HAVE_XSHM_EXTENSION
-      XShmPutImage(it->dpy, it->window, it->gc, it->image,
+    put_xshm_image(it->dpy, it->window, it->gc, it->image,
                    0, overall_top,
                    it->screen_xo, it->screen_yo+overall_top,
                    it->usewidth, overall_bot - overall_top,
-                   False);
-#endif
-    } else {
-      XPutImage(it->dpy, it->window, it->gc, it->image,
-                0, overall_top,
-                it->screen_xo, it->screen_yo+overall_top,
-                it->usewidth, overall_bot - overall_top);
-    }
+                   &it->shm_info);
   }
 
 #ifdef DEBUG

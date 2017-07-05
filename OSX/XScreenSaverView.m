@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,7 @@
 #import "Updater.h"
 #import "screenhackI.h"
 #import "xlockmoreI.h"
+#import "pow2.h"
 #import "jwxyzI.h"
 #import "jwxyz-cocoa.h"
 #import "jwxyz-timers.h"
@@ -118,6 +119,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 
 
 @interface XScreenSaverView (Private)
+- (void) stopAndClose;
 - (void) stopAndClose:(Bool)relaunch;
 @end
 
@@ -603,8 +605,6 @@ add_default_options (const XrmOptionDescRec *opts,
 # ifdef USE_IPHONE
   [UIApplication sharedApplication].idleTimerDisabled =
     ([UIDevice currentDevice].batteryState != UIDeviceBatteryStateUnplugged);
-  [[UIApplication sharedApplication]
-    setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
 # endif
 
   xwindow = (Window) calloc (1, sizeof(*xwindow));
@@ -739,13 +739,14 @@ add_default_options (const XrmOptionDescRec *opts,
     [self lockFocus];       // in case something tries to draw from here
     [self prepareContext];
 
-    /* I considered just not even calling the free callback at all...
-       But webcollage-cocoa needs it, to kill the inferior webcollage
+    /* All of the xlockmore hacks need to have their release functions
+       called, or launching the same saver twice does not work.  Also
+       webcollage-cocoa needs it in order to kill the inferior webcollage
        processes (since the screen saver framework never generates a
-       SIGPIPE for them...)  Instead, I turned off the free call in
-       xlockmore.c, which is where all of the bogus calls are anyway.
+       SIGPIPE for them).
      */
-    xsft->free_cb (xdpy, xwindow, xdata);
+     if (xdata)
+       xsft->free_cb (xdpy, xwindow, xdata);
     [self unlockFocus];
 
     jwxyz_free_display (xdpy);
@@ -778,8 +779,6 @@ add_default_options (const XrmOptionDescRec *opts,
   //
 # ifdef USE_IPHONE
   [UIApplication sharedApplication].idleTimerDisabled = NO;
-  [[UIApplication sharedApplication]
-    setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
 # endif
 
   // Without this, the GL frame stays on screen when switching tabs
@@ -905,7 +904,8 @@ current_device_rotation (void)
           the opposite direction."
 	 */
     /* statusBarOrientation deprecated in iOS 9 */
-    o = [UIApplication sharedApplication].statusBarOrientation;
+    o = (UIDeviceOrientation)  // from UIInterfaceOrientation
+      [UIApplication sharedApplication].statusBarOrientation;
   }
 
   switch (o) {
@@ -917,29 +917,37 @@ current_device_rotation (void)
 }
 
 
-- (void)alertView:(UIAlertView *)av clickedButtonAtIndex:(NSInteger)i
-{
-  if (i == 0) exit (-1);	// Cancel
-  [self stopAndClose:NO];	// Keep going
-}
-
 - (void) handleException: (NSException *)e
 {
   NSLog (@"Caught exception: %@", e);
-  [[[UIAlertView alloc] initWithTitle:
-                          [NSString stringWithFormat: @"%s crashed!",
-                                    xsft->progclass]
-                        message:
-                          [NSString stringWithFormat:
-                                      @"The error message was:"
-                                    "\n\n%@\n\n"
-                                    "If it keeps crashing, try "
-                                    "resetting its options.",
-                                    e]
-                        delegate: self
-                        cancelButtonTitle: @"Exit"
-                        otherButtonTitles: @"Keep going", nil]
-    show];
+  UIAlertController *c = [UIAlertController
+                           alertControllerWithTitle:
+                             [NSString stringWithFormat: @"%s crashed!",
+                                       xsft->progclass]
+                           message: [NSString stringWithFormat:
+                                                @"The error message was:"
+                                              "\n\n%@\n\n"
+                                              "If it keeps crashing, try "
+                                              "resetting its options.",
+                                              e]
+                           preferredStyle:UIAlertControllerStyleAlert];
+
+  [c addAction: [UIAlertAction actionWithTitle: @"Exit"
+                               style: UIAlertActionStyleDefault
+                               handler: ^(UIAlertAction *a) {
+    exit (-1);
+  }]];
+  [c addAction: [UIAlertAction actionWithTitle: @"Keep going"
+                               style: UIAlertActionStyleDefault
+                               handler: ^(UIAlertAction *a) {
+    [self stopAndClose:NO];
+  }]];
+
+  UIViewController *vc =
+    [UIApplication sharedApplication].keyWindow.rootViewController;
+  while (vc.presentedViewController)
+    vc = vc.presentedViewController;
+  [vc presentViewController:c animated:YES completion:nil];
   [self stopAnimation];
 }
 
@@ -1064,31 +1072,6 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
-static GLsizei
-to_pow2 (size_t x)
-{
-  if (x <= 1)
-    return 1;
-
-  size_t mask = (size_t)-1;
-  unsigned bits = sizeof(x) * CHAR_BIT;
-  unsigned log2 = bits;
-
-  --x;
-  while (bits) {
-    if (!(x & mask)) {
-      log2 -= bits;
-      x <<= bits;
-    }
-
-    bits >>= 1;
-    mask <<= bits;
-  }
-
-  return 1 << log2;
-}
-
-
 #ifdef USE_IPHONE
 - (BOOL) suppressRotationAnimation
 {
@@ -1163,7 +1146,7 @@ to_pow2 (size_t x)
 
   CGContextRef ob = backbuffer;
   void *odata = backbuffer_data;
-  size_t olen = backbuffer_len;
+  GLsizei olen = backbuffer_len;
 
 # if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
   NSLog(@"backbuffer %.0fx%.0f",
@@ -1211,11 +1194,11 @@ to_pow2 (size_t x)
   if (!gl_limited_npot_p)
 # endif
   {
-    gl_texture_w = to_pow2 (gl_texture_w);
-    gl_texture_h = to_pow2 (gl_texture_h);
+    gl_texture_w = (GLsizei) to_pow2 (gl_texture_w);
+    gl_texture_h = (GLsizei) to_pow2 (gl_texture_h);
   }
 
-  size_t bytes_per_row = gl_texture_w * 4;
+  GLsizei bytes_per_row = gl_texture_w * 4;
 
 # if defined(BACKBUFFER_OPENGL) && !defined(USE_IPHONE)
   // APPLE_client_storage requires texture width to be aligned to 32 bytes, or
@@ -1623,10 +1606,11 @@ to_pow2 (size_t x)
 
     if (get_boolean_resource (xdpy, "doFPS", "DoFPS")) {
       fpst = fps_init (xdpy, xwindow);
-      if (! xsft->fps_cb) xsft->fps_cb = screenhack_do_fps;
+      fps_cb = xsft->fps_cb;
+      if (! fps_cb) fps_cb = screenhack_do_fps;
     } else {
       fpst = NULL;
-      xsft->fps_cb = 0;
+      fps_cb = 0;
     }
 
 # ifdef USE_IPHONE
@@ -1727,8 +1711,8 @@ to_pow2 (size_t x)
   // NSAssert(xdata, @"no xdata when drawing");
   if (! xdata) abort();
   unsigned long delay = xsft->draw_cb (xdpy, xwindow, xdata);
-  if (fpst && xsft->fps_cb)
-    xsft->fps_cb (xdpy, xwindow, fpst, xdata);
+  if (fpst && fps_cb)
+    fps_cb (xdpy, xwindow, fpst, xdata);
 
   gettimeofday (&tv, 0);
   now = tv.tv_sec + (tv.tv_usec / 1000000.0);
@@ -2021,7 +2005,7 @@ to_pow2 (size_t x)
                              [e deltaX] < 0 ? Button7 :
                              0);
       else
-        xe.xbutton.button = [e buttonNumber] + 1;
+        xe.xbutton.button = (unsigned int) [e buttonNumber] + 1;
       break;
     case MotionNotify:
       xe.xmotion.x = x;
@@ -2075,9 +2059,9 @@ to_pow2 (size_t x)
             case NSF12FunctionKey:	  k = XK_F12;	    break;
             default:
               {
-                const char *s =
+                const char *ss =
                   [ns cStringUsingEncoding:NSISOLatin1StringEncoding];
-                k = (s && *s ? *s : 0);
+                k = (ss && *ss ? *ss : 0);
               }
               break;
             }
@@ -2229,6 +2213,12 @@ to_pow2 (size_t x)
 #else  // USE_IPHONE
 
 
+- (void) stopAndClose
+{
+  [self stopAndClose:NO];
+}
+
+
 - (void) stopAndClose:(Bool)relaunch_p
 {
   if ([self isAnimating])
@@ -2260,11 +2250,10 @@ to_pow2 (size_t x)
 /* We distinguish between taps and drags.
 
    - Drags/pans (down, motion, up) are sent to the saver to handle.
-   - Single-taps exit the saver.
+   - Single-taps are sent to the saver to handle.
    - Double-taps are sent to the saver as a "Space" keypress.
    - Swipes (really, two-finger drags/pans) send Up/Down/Left/RightArrow keys.
-
-   This means a saver cannot respond to a single-tap.  Only a few try to.
+   - All taps expose the momentary "Close" button.
  */
 
 - (void)initGestures
@@ -2277,7 +2266,7 @@ to_pow2 (size_t x)
 
   UITapGestureRecognizer *stap = [[UITapGestureRecognizer alloc]
                                    initWithTarget:self
-                                   action:@selector(handleTap)];
+                                   action:@selector(handleTap:)];
   stap.numberOfTapsRequired = 1;
   stap.numberOfTouchesRequired = 1;
  
@@ -2305,10 +2294,16 @@ to_pow2 (size_t x)
   hold.numberOfTouchesRequired = 1;
   hold.minimumPressDuration = 0.25;   /* 1/4th second */
 
+  // Two finger pinch to zoom in on the view.
+  UIPinchGestureRecognizer *pinch = [[UIPinchGestureRecognizer alloc] 
+                                      initWithTarget:self 
+                                      action:@selector(handlePinch:)];
+
   [stap requireGestureRecognizerToFail: dtap];
   [stap requireGestureRecognizerToFail: hold];
   [dtap requireGestureRecognizerToFail: hold];
   [pan  requireGestureRecognizerToFail: hold];
+  [pan2 requireGestureRecognizerToFail: pinch];
 
   [self setMultipleTouchEnabled:YES];
 
@@ -2317,12 +2312,14 @@ to_pow2 (size_t x)
   [self addGestureRecognizer: pan];
   [self addGestureRecognizer: pan2];
   [self addGestureRecognizer: hold];
+  [self addGestureRecognizer: pinch];
 
   [dtap release];
   [stap release];
   [pan  release];
   [pan2 release];
   [hold release];
+  [pinch release];
 }
 
 
@@ -2363,7 +2360,7 @@ to_pow2 (size_t x)
 {
   CGFloat xx = p->x, yy = p->y;
 
-# if TARGET_IPHONE_SIMULATOR
+# if 0 // TARGET_IPHONE_SIMULATOR
   {
     XWindowAttributes xgwa;
     XGetWindowAttributes (xdpy, xwindow, &xgwa);
@@ -2422,7 +2419,7 @@ to_pow2 (size_t x)
   p->x = xx * s;
   p->y = yy * s;
 
-# if TARGET_IPHONE_SIMULATOR || !defined __OPTIMIZE__
+# if 0 // TARGET_IPHONE_SIMULATOR || !defined __OPTIMIZE__
   {
     XWindowAttributes xgwa;
     XGetWindowAttributes (xdpy, xwindow, &xgwa);
@@ -2441,9 +2438,36 @@ to_pow2 (size_t x)
 
 /* Single click exits saver.
  */
-- (void) handleTap
+- (void) handleTap:(UIGestureRecognizer *)sender
 {
-  [self stopAndClose:NO];
+  if (!xwindow)
+    return;
+
+  XEvent xe;
+  memset (&xe, 0, sizeof(xe));
+
+  [self showCloseButton];
+
+  CGPoint p = [sender locationInView:self];  // this is in points, not pixels
+  [self convertMouse:&p];
+  NSAssert (xwindow->type == WINDOW, @"not a window");
+  xwindow->window.last_mouse_x = p.x;
+  xwindow->window.last_mouse_y = p.y;
+
+  xe.xany.type = ButtonPress;
+  xe.xbutton.button = 1;
+  xe.xbutton.x = p.x;
+  xe.xbutton.y = p.y;
+
+  if (! [self sendEvent: &xe])
+    ; //[self beep];
+
+  xe.xany.type = ButtonRelease;
+  xe.xbutton.button = 1;
+  xe.xbutton.x = p.x;
+  xe.xbutton.y = p.y;
+
+  [self sendEvent: &xe];
 }
 
 
@@ -2452,6 +2476,8 @@ to_pow2 (size_t x)
 - (void) handleDoubleTap
 {
   if (!xsft->event_cb || !xwindow) return;
+
+  [self showCloseButton];
 
   XEvent xe;
   memset (&xe, 0, sizeof(xe));
@@ -2470,6 +2496,8 @@ to_pow2 (size_t x)
 - (void) handlePan:(UIGestureRecognizer *)sender
 {
   if (!xsft->event_cb || !xwindow) return;
+
+  [self showCloseButton];
 
   XEvent xe;
   memset (&xe, 0, sizeof(xe));
@@ -2527,6 +2555,8 @@ to_pow2 (size_t x)
 {
   if (!xsft->event_cb || !xwindow) return;
 
+  [self showCloseButton];
+
   if (sender.state != UIGestureRecognizerStateEnded)
     return;
 
@@ -2546,6 +2576,102 @@ to_pow2 (size_t x)
   BOOL ok2 = [self sendEvent: &xe];
   if (!(ok1 || ok2))
     [self beep];
+}
+
+
+/* Pinch with 2 fingers: zoom in around the center of the fingers.
+ */
+- (void) handlePinch:(UIPinchGestureRecognizer *)sender
+{
+  if (!xsft->event_cb || !xwindow) return;
+
+  [self showCloseButton];
+
+  if (sender.state == UIGestureRecognizerStateBegan)
+    pinch_transform = self.transform;  // Save the base transform
+
+  switch (sender.state) {
+  case UIGestureRecognizerStateBegan:
+  case UIGestureRecognizerStateChanged:
+    {
+      double scale = sender.scale;
+
+      if (scale < 1)
+        return;
+
+      self.transform = CGAffineTransformScale (pinch_transform, scale, scale);
+
+      CGPoint p = [sender locationInView: self];
+      p.x /= self.layer.bounds.size.width;
+      p.y /= self.layer.bounds.size.height;
+
+      CGPoint np = CGPointMake (self.bounds.size.width * p.x,
+                                self.bounds.size.height * p.y);
+      CGPoint op = CGPointMake (self.bounds.size.width *
+                                self.layer.anchorPoint.x, 
+                                self.bounds.size.height *
+                                self.layer.anchorPoint.y);
+      np = CGPointApplyAffineTransform (np, self.transform);
+      op = CGPointApplyAffineTransform (op, self.transform);
+
+      CGPoint pos = self.layer.position;
+      pos.x -= op.x;
+      pos.x += np.x;
+      pos.y -= op.y;
+      pos.y += np.y;
+      self.layer.position = pos;
+      self.layer.anchorPoint = p;
+    }
+    break;
+
+  case UIGestureRecognizerStateEnded:
+    {
+      // When released, snap back to the default zoom (but animate it).
+
+      CABasicAnimation *a1 = [CABasicAnimation
+                               animationWithKeyPath:@"position.x"];
+      a1.fromValue = [NSNumber numberWithFloat: self.layer.position.x];
+      a1.toValue   = [NSNumber numberWithFloat: self.bounds.size.width / 2];
+
+      CABasicAnimation *a2 = [CABasicAnimation
+                               animationWithKeyPath:@"position.y"];
+      a2.fromValue = [NSNumber numberWithFloat: self.layer.position.y];
+      a2.toValue   = [NSNumber numberWithFloat: self.bounds.size.height / 2];
+
+      CABasicAnimation *a3 = [CABasicAnimation
+                               animationWithKeyPath:@"anchorPoint.x"];
+      a3.fromValue = [NSNumber numberWithFloat: self.layer.anchorPoint.x];
+      a3.toValue   = [NSNumber numberWithFloat: 0.5];
+
+      CABasicAnimation *a4 = [CABasicAnimation
+                               animationWithKeyPath:@"anchorPoint.y"];
+      a4.fromValue = [NSNumber numberWithFloat: self.layer.anchorPoint.y];
+      a4.toValue   = [NSNumber numberWithFloat: 0.5];
+
+      CABasicAnimation *a5 = [CABasicAnimation
+                               animationWithKeyPath:@"transform.scale"];
+      a5.fromValue = [NSNumber numberWithFloat: sender.scale];
+      a5.toValue   = [NSNumber numberWithFloat: 1.0];
+
+      CAAnimationGroup *group = [CAAnimationGroup animation];
+      group.duration     = 0.3;
+      group.repeatCount  = 1;
+      group.autoreverses = NO;
+      group.animations = @[ a1, a2, a3, a4, a5 ];
+      group.timingFunction = [CAMediaTimingFunction
+                               functionWithName:
+                                 kCAMediaTimingFunctionEaseIn];
+      [self.layer addAnimation:group forKey:@"unpinch"];
+
+      self.transform = pinch_transform;
+      self.layer.anchorPoint = CGPointMake (0.5, 0.5);
+      self.layer.position = CGPointMake (self.bounds.size.width / 2,
+                                         self.bounds.size.height / 2);
+    }
+    break;
+  default:
+    abort();
+  }
 }
 
 
@@ -2570,6 +2696,105 @@ to_pow2 (size_t x)
 - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
 {
   [self stopAndClose:YES];
+}
+
+
+- (void) showCloseButton
+{
+  double iw = 24;
+  double ih = iw;
+  double off = 4;
+
+  if (!closeBox) {
+    int width = self.bounds.size.width;
+    closeBox = [[UIView alloc]
+                initWithFrame:CGRectMake(0, 0, width, ih + off)];
+    closeBox.backgroundColor = [UIColor clearColor];
+    closeBox.autoresizingMask =
+      UIViewAutoresizingFlexibleBottomMargin |
+      UIViewAutoresizingFlexibleWidth;
+
+    // Add the buttons to the bar
+    UIImage *img1 = [UIImage imageNamed:@"stop"];
+    UIImage *img2 = [UIImage imageNamed:@"settings"];
+
+    UIButton *button = [[UIButton alloc] init];
+    [button setFrame: CGRectMake(off, off, iw, ih)];
+    [button setBackgroundImage:img1 forState:UIControlStateNormal];
+    [button addTarget:self
+            action:@selector(stopAndClose)
+            forControlEvents:UIControlEventTouchUpInside];
+    [closeBox addSubview:button];
+    [button release];
+
+    button = [[UIButton alloc] init];
+    [button setFrame: CGRectMake(width - iw - off, off, iw, ih)];
+    [button setBackgroundImage:img2 forState:UIControlStateNormal];
+    [button addTarget:self
+            action:@selector(stopAndOpenSettings)
+            forControlEvents:UIControlEventTouchUpInside];
+    button.autoresizingMask =
+      UIViewAutoresizingFlexibleBottomMargin |
+      UIViewAutoresizingFlexibleLeftMargin;
+    [closeBox addSubview:button];
+    [button release];
+
+    [self addSubview:closeBox];
+  }
+
+  if (closeBox.layer.opacity <= 0) {  // Fade in
+
+    CABasicAnimation *anim = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    anim.duration     = 0.2;
+    anim.repeatCount  = 1;
+    anim.autoreverses = NO;
+    anim.fromValue    = [NSNumber numberWithFloat:0.0];
+    anim.toValue      = [NSNumber numberWithFloat:1.0];
+    [closeBox.layer addAnimation:anim forKey:@"animateOpacity"];
+    closeBox.layer.opacity = 1;
+  }
+
+  // Fade out N seconds from now.
+  if (closeBoxTimer)
+    [closeBoxTimer invalidate];
+  closeBoxTimer = [NSTimer scheduledTimerWithTimeInterval: 3
+                           target:self
+                           selector:@selector(closeBoxOff)
+                           userInfo:nil
+                           repeats:NO];
+}
+
+
+- (void)closeBoxOff
+{
+  if (closeBoxTimer) {
+    [closeBoxTimer invalidate];
+    closeBoxTimer = 0;
+  }
+  if (!closeBox)
+    return;
+
+  CABasicAnimation *anim = [CABasicAnimation animationWithKeyPath:@"opacity"];
+  anim.duration     = 0.2;
+  anim.repeatCount  = 1;
+  anim.autoreverses = NO;
+  anim.fromValue    = [NSNumber numberWithFloat: 1];
+  anim.toValue      = [NSNumber numberWithFloat: 0];
+  [closeBox.layer addAnimation:anim forKey:@"animateOpacity"];
+  closeBox.layer.opacity = 0;
+}
+
+
+- (void) stopAndOpenSettings
+{
+  NSString *s = [NSString stringWithCString:xsft->progclass
+                          encoding:NSISOLatin1StringEncoding];
+  if ([self isAnimating])
+    [self stopAnimation];
+  [self resignFirstResponder];
+  [_delegate wantsFadeOut:self];
+  [_delegate openPreferences: s];
+
 }
 
 

@@ -45,6 +45,13 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.37	* New hack, `vigilance'.
+	* Added Mac Software Update and VMware to `bsod'.
+	* OSX: Grabbing the desktop works again.
+	* OSX: Pinch to zoom.
+	* Android: Both Daydreams and Live Wallpapers are implemented.
+	* Updated `webcollage' for recent changes.
+	* Various bug fixes.
 5.36	* New hacks, `discoball', `cubetwist', `cubestack', `splodesic'
           and `hexstrut'.
 	* OSX: loading image files works in `dymaxionmap', `glplanet',

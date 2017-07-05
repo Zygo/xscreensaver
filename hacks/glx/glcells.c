@@ -37,6 +37,7 @@
 #define NUM_CELL_SHAPES 10
 
 #define refresh_glcells 0
+#define release_glcells 0
 #define glcells_handle_event 0
 
 #define DEF_DELAY     "20000"
@@ -1266,20 +1267,15 @@ reshape_glcells( ModeInfo *mi, int width, int height )
 # endif
 }
 
+static void free_glcells( ModeInfo *mi );
+
 ENTRYPOINT void 
 init_glcells( ModeInfo *mi )
 {
   int i, divisions;
   State *st=0;
   
-  if (!sstate) {
-    sstate = (State *)
-        calloc( MI_NUM_SCREENS(mi), sizeof(State) );
-    if (!sstate) {
-      fprintf( stderr, "%s: out of memory\n", progname );
-      exit(1);
-    }
-  }
+  MI_INIT(mi, sstate, free_glcells);
   st = &sstate[MI_SCREEN(mi)];
   
   st->glx_context = init_GL(mi);
@@ -1367,24 +1363,29 @@ draw_glcells( ModeInfo *mi )
   glXSwapBuffers( dpy, window );
 }
 
-ENTRYPOINT void 
-release_glcells( ModeInfo *mi )
+static void
+free_glcells( ModeInfo *mi )
 {
   int i;
   State *st  = &sstate[MI_SCREEN(mi)];
+
+  if (st->glx_context) {
+    glXMakeCurrent( MI_DISPLAY(mi), MI_WINDOW(mi),
+                    *(st->glx_context) );
   
-  /* nuke everything before exit */
-  if (st->sphere) free_Object( st->sphere );
-  if (st->food)   free( st->food );
-  for (i=0; i<NUM_CELL_SHAPES; ++i) {
-    if (st->cell_list[i] != -1) {
-      glDeleteLists( st->cell_list[i], 1 );
+    /* nuke everything before exit */
+    if (st->sphere) free_Object( st->sphere );
+    if (st->food)   free( st->food );
+    for (i=0; i<NUM_CELL_SHAPES; ++i) {
+      if (st->cell_list[i] != -1) {
+        glDeleteLists( st->cell_list[i], 1 );
+      }
     }
+    if (st->cell) free( st->cell );
+    free( st->disturbance );
+    glDeleteTextures( 1, &st->texture_name );
+    free( st->texture );
   }
-  if (st->cell) free( st->cell );
-  free( st->disturbance );
-  glDeleteTextures( 1, &st->texture_name );
-  free( st->texture );
 }
 
 XSCREENSAVER_MODULE( "GLCells", glcells )

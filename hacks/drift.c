@@ -39,6 +39,7 @@ static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
 				  "*ignoreRotation: True \n" \
 
 # define SMOOTH_COLORS
+# define release_drift 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
 #else /* STANDALONE */
@@ -81,7 +82,7 @@ ENTRYPOINT ModeSpecOpt drift_opts =
 
 #ifdef USE_MODULES
 ModStruct   drift_description =
-{"drift", "init_drift", "draw_drift", "release_drift",
+{"drift", "init_drift", "draw_drift", (char *) NULL,
  "refresh_drift", "init_drift", (char *) NULL, &drift_opts,
  10000, 30, 1, 1, 64, 1.0, "",
  "Shows cosmic drifting flame fractals", 0, NULL};
@@ -269,8 +270,9 @@ pick_df_coefs(ModeInfo * mi)
 }
 
 static void
-free_drift(driftstruct *dp)
+free_drift(ModeInfo * mi)
 {
+	driftstruct *dp = &drifts[MI_SCREEN(mi)];
 	if (dp->ncpoints != NULL) {
 		(void) free((void *) dp->ncpoints);
 		dp->ncpoints = (int *) NULL;
@@ -295,14 +297,14 @@ initfractal(ModeInfo * mi)
 	if (!dp->ncpoints) {
 		if ((dp->ncpoints = (int *) malloc(sizeof (int) * MI_NCOLORS(mi))) ==
 			NULL) {
-			free_drift(dp);
+			free_drift(mi);
 			return;
 		}
 	}
 	if (!dp->cpts) {
 		if ((dp->cpts = (XPoint *) malloc(MAXBATCH2 * sizeof (XPoint) *
 			 MI_NCOLORS(mi))) == NULL) {
-			free_drift(dp);
+			free_drift(mi);
 			return;
 		}
 	}
@@ -348,11 +350,7 @@ init_drift(ModeInfo * mi)
 {
 	driftstruct *dp;
 
-	if (drifts == NULL) {
-		if ((drifts = (driftstruct *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (driftstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, drifts, free_drift);
 	dp = &drifts[MI_SCREEN(mi)];
 
 	dp->width = MI_WIDTH(mi);
@@ -667,19 +665,6 @@ draw_drift(ModeInfo * mi)
 							dp->df[j][k][i] *= -1.0;
 					}
 				}
-	}
-}
-
-ENTRYPOINT void
-release_drift(ModeInfo * mi)
-{
-	if (drifts != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_drift(&drifts[screen]);
-		(void) free((void *) drifts);
-		drifts = (driftstruct *) NULL;
 	}
 }
 

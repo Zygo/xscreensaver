@@ -432,11 +432,7 @@ init_flag(ModeInfo * mi)
 	int         size = MI_SIZE(mi);
 	flagstruct *fp;
 
-	if (flags == NULL) {
-		if ((flags = (flagstruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (flagstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, flags, 0);
 	fp = &flags[MI_SCREEN(mi)];
 
 	make_flag_bits(mi);

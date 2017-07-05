@@ -272,11 +272,7 @@ init_worm (ModeInfo * mi)
 	int         size = MI_SIZE(mi);
 	int         i, j;
 
-	if (worms == NULL) {
-		if ((worms = (wormstruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (wormstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, worms, 0);
 	wp = &worms[MI_SCREEN(mi)];
 	if (MI_NPIXELS(mi) <= 2 || MI_WIN_IS_USE3D(mi))
 		wp->nc = 2;

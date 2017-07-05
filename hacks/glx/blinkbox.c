@@ -296,11 +296,7 @@ init_ball (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   blinkboxstruct *bp;
   
-  if(blinkbox == NULL) {
-    if((blinkbox = (blinkboxstruct *) calloc(MI_NUM_SCREENS(mi),
-                                             sizeof (blinkboxstruct))) == NULL)
-      return;
-  }
+  MI_INIT (mi, blinkbox, NULL);
   bp = &blinkbox[MI_SCREEN(mi)];
 
   if ((bp->glx_context = init_GL(mi)) != NULL) {

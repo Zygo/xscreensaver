@@ -21,6 +21,7 @@
 		"*font:  -*-helvetica-medium-r-normal-*-*-160-*-*-*-*-*-*\n" \
 
 # define refresh_geodesic 0
+# define release_geodesic 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -1315,7 +1316,10 @@ make_182 (ModeInfo *mi, const GLfloat *args)
 ENTRYPOINT void
 reshape_geodesic (ModeInfo *mi, int width, int height)
 {
+  geodesic_configuration *bp = &bps[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   glViewport (0, 0, (GLint) width, (GLint) height);
 
@@ -1398,6 +1402,7 @@ pick_shape (ModeInfo *mi, time_t last)
 }
 
 
+static void free_geodesic (ModeInfo *mi);
 
 ENTRYPOINT void 
 init_geodesic (ModeInfo *mi)
@@ -1405,14 +1410,7 @@ init_geodesic (ModeInfo *mi)
   geodesic_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (geodesic_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (geodesic_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_geodesic);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -1781,10 +1779,13 @@ draw_geodesic (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-ENTRYPOINT void
-release_geodesic (ModeInfo *mi)
+static void
+free_geodesic (ModeInfo *mi)
 {
   geodesic_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context)
+    return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
   free_texture_font (bp->font);
   free (bp->colors);
   free_sphere_gears (mi);

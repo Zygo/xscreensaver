@@ -47,6 +47,7 @@
 				   "*suppressRotationAnimation: True\n" \
 
 # define refresh_surface 0
+# define release_surface 0
 # include "xlockmore.h"     /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"         /* from the xlockmore distribution */
@@ -418,7 +419,10 @@ static void draw(ModeInfo *mi)
 /* new window size or exposure */
 ENTRYPOINT void reshape_surface(ModeInfo *mi, int width, int height)
 {
+  surfacestruct *sp = &surface[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
 
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
@@ -459,12 +463,7 @@ ENTRYPOINT void init_surface(ModeInfo *mi)
   int    screen = MI_SCREEN(mi);
   surfacestruct *sp;
 
-  if (surface == NULL)
-  {
-    if ((surface = (surfacestruct *) calloc(MI_NUM_SCREENS(mi),
-                                            sizeof(surfacestruct))) == NULL)
-      return;
-  }
+  MI_INIT (mi, surface, NULL);
   sp = &surface[screen];
 
   sp->window = MI_WINDOW(mi);
@@ -634,29 +633,6 @@ ENTRYPOINT void draw_surface(ModeInfo * mi)
     do_fps(mi);
   glFinish();
   glXSwapBuffers(display, window);
-}
-
-
-ENTRYPOINT void release_surface(ModeInfo * mi)
-{
-  if (surface != NULL)
-  {
-    int  screen;
-
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      surfacestruct *sp = &surface[screen];
-
-      if (sp->glx_context)
-      {
-        /* Display lists MUST be freed while their glXContext is current. */
-        glXMakeCurrent(MI_DISPLAY(mi), sp->window, *(sp->glx_context));
-      }
-    }
-    (void) free((void *)surface);
-    surface = NULL;
-  }
-  FreeAllGL(mi);
 }
 
 

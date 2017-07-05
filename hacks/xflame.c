@@ -41,6 +41,7 @@
 
    * 4-Oct-99, jwz: added support for packed-24bpp (versus 32bpp.)
    * 16-Jan-2002, jwz: added gdk_pixbuf support.
+   * 9-Oct-2016, Dave Odell <dmo2118@gmail.com>: Updated for new xshm.c.
 
  */
 
@@ -54,9 +55,7 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#ifdef HAVE_XSHM_EXTENSION
-# include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
+#include "xshm.h"
 
 #include "images/bob.xbm"
 
@@ -71,12 +70,9 @@ struct state {
   Colormap        colormap;
   Visual          *visual;
   Screen          *screen;
-  Bool            shared;
   Bool            bloom;
   XImage          *xim;
-#ifdef HAVE_XSHM_EXTENSION
   XShmSegmentInfo shminfo;
-#endif /* HAVE_XSHM_EXTENSION */
   GC              gc;
   int             ctab[256];
 
@@ -125,30 +121,15 @@ MakeImage(struct state *st)
 {
   XGCValues gcv;
 
-  /* #### This probably leaks SHM every time the window is resized. */
   if (st->xim)
-    XDestroyImage (st->xim);
+    destroy_xshm_image (st->dpy, st->xim, &st->shminfo);
 
-#ifdef HAVE_XSHM_EXTENSION
-  st->shared = True;
-  st->xim = create_xshm_image (st->dpy, st->visual, st->depth, ZPixmap, NULL,
-                           &st->shminfo, st->width, st->height);
-#else  /* !HAVE_XSHM_EXTENSION */
-  st->xim = 0;
-#endif /* !HAVE_XSHM_EXTENSION */
-
+  st->xim = create_xshm_image (st->dpy, st->visual, st->depth, ZPixmap,
+                               &st->shminfo, st->width, st->height);
   if (!st->xim)
     {
-      st->shared = False;
-      st->xim = XCreateImage (st->dpy, st->visual, st->depth, ZPixmap, 0, NULL,
-                          st->width, st->height, 32, 0);
-      if (st->xim)
-        st->xim->data = (char *) calloc(st->xim->height, st->xim->bytes_per_line);
-      if (!st->xim || !st->xim->data)
-        {
-          fprintf(stderr,"%s: out of memory.\n", progname);
-          exit(1);
-        }
+      fprintf(stderr,"%s: out of memory.\n", progname);
+      exit(1);
     }
 
   if (! st->gc)
@@ -203,14 +184,9 @@ InitColors(struct state *st)
 static void
 DisplayImage(struct state *st)
 {
-#ifdef HAVE_XSHM_EXTENSION
-  if (st->shared)
-    XShmPutImage(st->dpy, st->window, st->gc, st->xim, 0,(st->top - 1) << 1, 0,
-                 (st->top - 1) << 1, st->width, st->height - ((st->top - 1) << 1), False);
-  else
-#endif /* HAVE_XSHM_EXTENSION */
-    XPutImage(st->dpy, st->window, st->gc, st->xim, 0, (st->top - 1) << 1, 0,
-              (st->top - 1) << 1, st->width, st->height - ((st->top - 1) << 1));
+  put_xshm_image(st->dpy, st->window, st->gc, st->xim, 0,(st->top - 1) << 1, 0,
+                 (st->top - 1) << 1, st->width, st->height - ((st->top - 1) << 1),
+                 &st->shminfo);
 }
 
 

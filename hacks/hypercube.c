@@ -254,7 +254,6 @@ hypercube_draw (Display *dpy, Window window, void *closure)
       char moved[POINT_COUNT];
       int redraw;
       int stop;
-      int delay;
 
       icon = hs->hs_icon;
       resize = hs->hs_resize;
@@ -473,7 +472,6 @@ hypercube_draw (Display *dpy, Window window, void *closure)
 
     skip3:
       /* stop = hs->hs_stop; */
-      delay = hs->hs_delay;
       if (stop && this_delay < 10000)
 	this_delay = 10000;
     }

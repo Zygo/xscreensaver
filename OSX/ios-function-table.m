@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Sat Sep  3 00:49:37 2016 by build-fntable.pl 1.5.
+   Created: Thu Jun  1 17:53:59 2017 by build-fntable.pl 1.5.
  */
 
 #import <Foundation/Foundation.h>
@@ -212,6 +212,7 @@ extern struct xscreensaver_function_table
  unicrud_xscreensaver_function_table,
  unknownpleasures_xscreensaver_function_table,
  vermiculate_xscreensaver_function_table,
+ vigilance_xscreensaver_function_table,
  voronoi_xscreensaver_function_table,
  wander_xscreensaver_function_table,
  whirlwindwarp_xscreensaver_function_table,
@@ -443,6 +444,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&unicrud_xscreensaver_function_table], @"unicrud",
 	[NSValue valueWithPointer:&unknownpleasures_xscreensaver_function_table], @"unknownpleasures",
 	[NSValue valueWithPointer:&vermiculate_xscreensaver_function_table], @"vermiculate",
+	[NSValue valueWithPointer:&vigilance_xscreensaver_function_table], @"vigilance",
 	[NSValue valueWithPointer:&voronoi_xscreensaver_function_table], @"voronoi",
 	[NSValue valueWithPointer:&wander_xscreensaver_function_table], @"wander",
 	[NSValue valueWithPointer:&whirlwindwarp_xscreensaver_function_table], @"whirlwindwarp",

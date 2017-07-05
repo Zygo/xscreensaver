@@ -18,21 +18,21 @@ TARFILES	= README README.hacking README.VMS INSTALL \
 
 TAR		= tar
 
-MAKE_SUBDIR  = for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit 5; done
-MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do $(MAKE) -C $$dir $@ || exit 5; done
+MAKE_SUBDIR  = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
+MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do (cd $$dir; $(MAKE) $@) || exit 5; done
 
 default::
-	@$(MAKE_SUBDIR)
+	@+$(MAKE_SUBDIR)
 all::
-	@$(MAKE_SUBDIR)
+	@+$(MAKE_SUBDIR)
 install::
-	@$(MAKE_SUBDIR)
+	@+$(MAKE_SUBDIR)
 install-program::
-	@$(MAKE_SUBDIR)
+	@+$(MAKE_SUBDIR)
 install-man::
-	@$(MAKE_SUBDIR)
+	@+$(MAKE_SUBDIR)
 install-strip::
-	@$(MAKE_SUBDIR)
+	@+$(MAKE_SUBDIR)
 uninstall::
 	@$(MAKE_SUBDIR)
 uninstall-program::
@@ -44,7 +44,7 @@ depend::
 distdepend::
 	@$(MAKE) update_spec_version
 	@$(MAKE_SUBDIR2)
-	@$(MAKE) -C po update-po
+	@cd po ; $(MAKE) update-po
 
 TAGS:: tags
 tags::

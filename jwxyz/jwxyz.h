@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -46,7 +46,6 @@ typedef void * XPointer;
 typedef unsigned long Time;
 typedef unsigned int KeySym;
 typedef unsigned int KeyCode;
-typedef unsigned int VisualID;
 typedef unsigned long Atom; /* Must be as large as a char *. */
 
 typedef struct jwxyz_Display		Display;
@@ -93,6 +92,8 @@ typedef struct jwxyz_XtIntervalId *	XtIntervalId;
 typedef struct jwxyz_XtInputId *	XtInputId;
 typedef void *				XtPointer;
 typedef unsigned long			XtInputMask;
+typedef struct jwxyz_linked_point	linked_point;
+
 #define XtInputReadMask			(1L<<0)
 #define XtInputWriteMask		(1L<<1)
 #define XtInputExceptMask		(1L<<2)
@@ -311,9 +312,6 @@ typedef unsigned long			XtInputMask;
 #define XWidthMMOfScreen(s) (XDisplayWidthMM(DisplayOfScreen(s),0))
 #define XHeightMMOfScreen(s) (XDisplayHeightMM(DisplayOfScreen(s),0))
 
-#define ScreenCount(dpy) jwxyz_ScreenCount(dpy)
-extern int jwxyz_ScreenCount(Display *);
-
 extern Window XRootWindow (Display *, int screen);
 extern Screen *XDefaultScreenOfDisplay (Display *);
 extern Visual *XDefaultVisualOfScreen (Screen *);
@@ -430,6 +428,10 @@ extern int XDestroyImage (XImage *);
 extern int XPutImage (Display *, Drawable, GC, XImage *, 
                       int src_x, int src_y, int dest_x, int dest_y,
                       unsigned int w, unsigned int h);
+extern XImage *XGetSubImage (Display *dpy, Drawable d, int x, int y,
+                             unsigned int width, unsigned int height,
+                             unsigned long plane_mask, int format,
+                             XImage *dest_image, int dest_x, int dest_y);
 extern XImage *XGetImage (Display *, Drawable, int x, int y,
                           unsigned int w, unsigned int h,
                           unsigned long pm, int fmt);
@@ -437,7 +439,7 @@ extern Pixmap XCreatePixmapFromBitmapData (Display *, Drawable,
                                            const char *data,
                                            unsigned int w, unsigned int h,
                                            unsigned long fg,
-                                           unsigned int bg,
+                                           unsigned long bg,
                                            unsigned int depth);
 extern XPixmapFormatValues *XListPixmapFormats (Display *, int *count_ret);
 
@@ -479,7 +481,6 @@ extern int Xutf8TextExtents (XFontSet, const char *, int num_bytes,
                              XRectangle *overall_logical_return);
 extern void Xutf8DrawString (Display *, Drawable, XFontSet, GC,
                              int x, int y, const char *, int num_bytes);
-extern const char *jwxyz_nativeFontName (Font, float *size);
 
 extern Pixmap XCreatePixmap (Display *, Drawable,
                              unsigned int width, unsigned int height,
@@ -487,6 +488,15 @@ extern Pixmap XCreatePixmap (Display *, Drawable,
 extern int XFreePixmap (Display *, Pixmap);
 
 extern char *XGetAtomName (Display *, Atom);
+
+extern void set_points_list(XPoint *points, int npoints, linked_point *root);
+extern void traverse_points_list(linked_point * root);
+extern void draw_three_vertices(linked_point * a, Bool triangle);
+extern double compute_edge_length(linked_point * a, linked_point * b);
+extern double get_angle(double a, double b, double c);
+extern Bool is_same_slope(linked_point * a);
+extern Bool is_an_ear(linked_point * a);
+extern Bool is_three_point_loop(linked_point * head);
 
 // Log()/Logv(), for debugging JWXYZ. Screenhacks should still use
 // fprintf(stderr, ...).
@@ -521,9 +531,13 @@ extern void glXMakeCurrent (Display *, Window, GLXContext);
 // also declared in utils/visual.h
 extern int has_writable_cells (Screen *, Visual *);
 extern int visual_depth (Screen *, Visual *);
+extern int visual_pixmap_depth (Screen *, Visual *);
 extern int visual_cells (Screen *, Visual *);
 extern int visual_class (Screen *, Visual *);
-extern int get_bits_per_pixel (Display *, int);
+extern void visual_rgb_masks (Screen *screen, Visual *visual,
+                              unsigned long *red_mask,
+                              unsigned long *green_mask,
+                              unsigned long *blue_mask);
 extern int screen_number (Screen *);
 
 // also declared in utils/grabclient.h
@@ -533,12 +547,11 @@ extern Bool use_subwindow_mode_p (Screen *, Window);
 extern void clear_gl_error (void);
 extern void check_gl_error (const char *type);
 
+// A Visual is supposed to be an opaque type, even though Xlib.h defines it.
+// Only utils/xft.c uses this, out of necessity.
 struct jwxyz_Visual {
-  VisualID visualid;	/* visual id of this visual */
   int class;		/* class of screen (monochrome, etc.) */
   unsigned long red_mask, green_mask, blue_mask;	/* mask values */
-  int bits_per_rgb;	/* log base 2 of distinct color values */
-//  int map_entries;	/* color map entries */
 };
 
 struct jwxyz_XGCValues {

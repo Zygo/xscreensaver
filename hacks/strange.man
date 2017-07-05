@@ -32,6 +32,23 @@ or the id number (decimal or hex) of a specific visual.
 How many colors should be used (if possible).  Default 100.
 The colors are chosen randomly.
 .TP 8
+.B \-points \fIinteger\fP
+Change the number of points/iterations each frame.  Default 5500.  More than
+6000 activates the accumulator, which makes parts of the image brighter or
+darker depending on how often the attractor hits each pixel.
+.TP 8
+.B \-point-size \fIinteger\fP
+Changes the size of individual points.  Default 1.
+.TP 8
+.B \-zoom \fIfloat\fP
+Zooms in or out.  Default 0.9.
+.TP 8
+.B \-brightness \fIfloat\fP
+Adjusts the brightness for accumulator mode.  Default 1.0.
+.TP 8
+.B \-motion-blur \fIfloat\fP
+Adds motion blur.  Default 3.0, no motion blur is 1.0.
+.TP 8
 .B \-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT

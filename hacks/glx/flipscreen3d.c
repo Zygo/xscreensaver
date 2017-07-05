@@ -22,6 +22,7 @@
 		 "*suppressRotationAnimation: True\n" \
 
 # define refresh_screenflip 0
+# define release_screenflip 0
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 # include "gltrackball.h"
 #else  /* !STANDALONE */
@@ -70,7 +71,7 @@ ENTRYPOINT ModeSpecOpt screenflip_opts = {countof(opts), opts, countof(vars), va
 
 #ifdef USE_MODULES
 ModStruct   screenflip_description =
-{"screenflip", "init_screenflip", "draw_screenflip", "release_screenflip",
+{"screenflip", "init_screenflip", "draw_screenflip", NULL,
  "draw_screenflip", "init_screenflip", NULL, &screenflip_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "Screenflips", 0, NULL};
@@ -438,11 +439,7 @@ ENTRYPOINT void init_screenflip(ModeInfo *mi)
   int screen = MI_SCREEN(mi);
   Screenflip *c;
 
- if (screenflip == NULL) {
-   if ((screenflip = (Screenflip *) calloc(MI_NUM_SCREENS(mi),
-                                        sizeof(Screenflip))) == NULL)
-          return;
- }
+ MI_INIT(mi, screenflip, NULL);
  c = &screenflip[screen];
  c->window = MI_WINDOW(mi);
 
@@ -514,15 +511,6 @@ ENTRYPOINT void draw_screenflip(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
-}
-
-ENTRYPOINT void release_screenflip(ModeInfo *mi)
-{
-  if (screenflip != NULL) {
-   (void) free((void *) screenflip);
-   screenflip = NULL;
-  }
-  FreeAllGL(mi);
 }
 
 XSCREENSAVER_MODULE_2 ("FlipScreen3D", flipscreen3d, screenflip)

@@ -127,11 +127,7 @@ init_rotor (ModeInfo * mi)
 	unsigned char wasiconified;
 	rotorstruct *rp;
 
-	if (rotors == NULL) {
-		if ((rotors = (rotorstruct *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (rotorstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, rotors, 0);
 	rp = &rotors[MI_SCREEN(mi)];
 
 #ifdef HAVE_JWXYZ

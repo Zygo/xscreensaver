@@ -113,6 +113,7 @@ static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
 					"*suppressRotationAnimation: True\n" \
 
 # define refresh_rubik 0
+# define release_rubik 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -163,7 +164,7 @@ ENTRYPOINT ModeSpecOpt rubik_opts =
 
 #ifdef USE_MODULES
 ModStruct   rubik_description =
-{"rubik", "init_rubik", "draw_rubik", "release_rubik",
+{"rubik", "init_rubik", "draw_rubik", (char *) NULL,
  "draw_rubik", "change_rubik", (char *) NULL, &rubik_opts,
  10000, -30, 5, -6, 64, 1.0, "",
  "Shows an auto-solving Rubik's Cube", 0, NULL};
@@ -1869,8 +1870,9 @@ pinit(ModeInfo * mi)
 }
 
 static void
-free_rubik(rubikstruct *rp)
+free_rubik(ModeInfo *mi)
 {
+	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 	int         i;
 
 	for (i = 0; i < MAXFACES; i++)
@@ -1890,32 +1892,11 @@ free_rubik(rubikstruct *rp)
 }
 
 ENTRYPOINT void
-release_rubik(ModeInfo * mi)
-{
-	if (rubik != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			rubikstruct *rp = &rubik[screen];
-
-			free_rubik(rp);
-		}
-		(void) free((void *) rubik);
-		rubik = (rubikstruct *) NULL;
-	}
-	FreeAllGL(mi);
-}
-
-ENTRYPOINT void
 init_rubik(ModeInfo * mi)
 {
 	rubikstruct *rp;
 
-	if (rubik == NULL) {
-		if ((rubik = (rubikstruct *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (rubikstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, rubik, free_rubik);
 	rp = &rubik[MI_SCREEN(mi)];
 	rp->step = NRAND(90);
 	rp->PX = ((float) LRAND() / (float) MAXRAND) * 2.0 - 1.0;
@@ -1928,7 +1909,7 @@ init_rubik(ModeInfo * mi)
 		reshape_rubik(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!pinit(mi)) {
-			free_rubik(rp);
+			free_rubik(mi);
 			if (MI_IS_VERBOSE(mi)) {
 				(void) fprintf(stderr,
 					"Could not allocate memory for rubik\n");
@@ -2028,7 +2009,7 @@ draw_rubik(ModeInfo * mi)
 	glRotatef(rp->step * 90, 0, 0, 1);
 
 	if (!draw_cube(mi)) {
-		release_rubik(mi);
+		MI_ABORT(mi);
 		return;
 	}
         if (MI_IS_FPS(mi)) do_fps (mi);
@@ -2061,7 +2042,7 @@ draw_rubik(ModeInfo * mi)
 				rp->rotatestep += rp->anglestep;
 				if (rp->rotatestep > rp->degreeTurn) {
 					if (!evalmovement(mi, rp->movement)) {
-						free_rubik(rp);
+						free_rubik(mi);
 						if (MI_IS_VERBOSE(mi)) {
 							(void) fprintf(stderr,
 								"Could not allocate memory for rubik\n");
@@ -2077,7 +2058,7 @@ draw_rubik(ModeInfo * mi)
 		if (rp->done) {
 			if (++rp->rotatestep > DELAY_AFTER_SOLVING)
 				if (!shuffle(mi)) {
-					free_rubik(rp);
+					free_rubik(mi);
 					if (MI_IS_VERBOSE(mi)) {
 						(void) fprintf(stderr,
 							"Could not allocate memory for rubik\n");
@@ -2105,7 +2086,7 @@ draw_rubik(ModeInfo * mi)
 				rp->rotatestep += rp->anglestep;
 				if (rp->rotatestep > rp->degreeTurn) {
 					if (!evalmovement(mi, rp->movement)) {
-						free_rubik(rp);
+						free_rubik(mi);
 						if (MI_IS_VERBOSE(mi)) {
 							(void) fprintf(stderr,
 								"Could not allocate memory for rubik\n");
@@ -2139,7 +2120,7 @@ change_rubik(ModeInfo * mi)
 	if (!rp->glx_context)
 		return;
 	if (!pinit(mi)) {
-		free_rubik(rp);
+		free_rubik(mi);
 		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr,
 				"Could not allocate memory for rubik\n");

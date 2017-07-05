@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2014 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2017 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -339,16 +339,30 @@ pick_best_gl_visual (Screen *screen)
 }
 
 
-Visual *
-id_to_visual (Screen *screen, int id)
+static XVisualInfo *
+visual_info_id (Screen *screen, int id)
 {
   Display *dpy = DisplayOfScreen (screen);
-  XVisualInfo vi_in, *vi_out;
+  XVisualInfo vi_in;
   int out_count;
   vi_in.screen = screen_number (screen);
   vi_in.visualid = id;
-  vi_out = XGetVisualInfo (dpy, (VisualScreenMask | VisualIDMask),
-			   &vi_in, &out_count);
+  return XGetVisualInfo (dpy, VisualScreenMask | VisualIDMask,
+                         &vi_in, &out_count);
+}
+
+static XVisualInfo *
+visual_info (Screen *screen, Visual *visual)
+{
+  XVisualInfo *vi_out = visual_info_id (screen, XVisualIDFromVisual (visual));
+  if (! vi_out) abort ();
+  return vi_out;
+}
+
+Visual *
+id_to_visual (Screen *screen, int id)
+{
+  XVisualInfo *vi_out = visual_info_id (screen, id);
   if (vi_out)
     {
       Visual *v = vi_out[0].visual;
@@ -361,27 +375,34 @@ id_to_visual (Screen *screen, int id)
 int
 visual_depth (Screen *screen, Visual *visual)
 {
-  Display *dpy = DisplayOfScreen (screen);
-  XVisualInfo vi_in, *vi_out;
-  int out_count, d;
-  vi_in.screen = screen_number (screen);
-  vi_in.visualid = XVisualIDFromVisual (visual);
-  vi_out = XGetVisualInfo (dpy, VisualScreenMask|VisualIDMask,
-			   &vi_in, &out_count);
-  if (! vi_out) abort ();
-  d = vi_out [0].depth;
+  XVisualInfo *vi_out = visual_info (screen, visual);
+  int d = vi_out [0].depth;
   XFree ((char *) vi_out);
   return d;
 }
 
 
-#if 0
 /* You very probably don't want to be using this.
    Pixmap depth doesn't refer to the depths of pixmaps, but rather, to
    the depth of protocol-level on-the-wire pixmap data, that is, XImages.
    To get this info, you should be looking at XImage->bits_per_pixel
    instead.  (And allocating the data for your XImage structures by
    multiplying ximage->bytes_per_line by ximage->height.)
+
+   Still, it can be useful to know bits_per_pixel before the XImage exists.
+
+   XCreateImage calls _XGetBitsPerPixel to figure this out, but that function
+   is private to Xlib.
+
+   For some reason, _XGetBitsPerPixel tries a hard-coded list of depths if
+   it doesn't find a matching pixmap format, but I (Dave Odell) couldn't
+   find any justification for this in the X11 spec. And the XFree86 CVS
+   repository doesn't quite go back far enough to shed any light on what
+   the deal is with that.
+   http://cvsweb.xfree86.org/cvsweb/xc/lib/X11/ImUtil.c
+
+   The hard-coded list apparently was added between X11R5 and X11R6.
+   See <ftp://ftp.x.org/pub/>.
  */
 int
 visual_pixmap_depth (Screen *screen, Visual *visual)
@@ -405,21 +426,13 @@ visual_pixmap_depth (Screen *screen, Visual *visual)
     XFree (pfv);
   return pdepth;
 }
-#endif /* 0 */
 
 
 int
 visual_class (Screen *screen, Visual *visual)
 {
-  Display *dpy = DisplayOfScreen (screen);
-  XVisualInfo vi_in, *vi_out;
-  int out_count, c;
-  vi_in.screen = screen_number (screen);
-  vi_in.visualid = XVisualIDFromVisual (visual);
-  vi_out = XGetVisualInfo (dpy, VisualScreenMask|VisualIDMask,
-			   &vi_in, &out_count);
-  if (! vi_out) abort ();
-  c = vi_out [0].class;
+  XVisualInfo *vi_out = visual_info (screen, visual);
+  int c = vi_out [0].class;
   XFree ((char *) vi_out);
   return c;
 }
@@ -448,14 +461,7 @@ void
 describe_visual (FILE *f, Screen *screen, Visual *visual, Bool private_cmap_p)
 {
   char n[10];
-  Display *dpy = DisplayOfScreen (screen);
-  XVisualInfo vi_in, *vi_out;
-  int out_count;
-  vi_in.screen = screen_number (screen);
-  vi_in.visualid = XVisualIDFromVisual (visual);
-  vi_out = XGetVisualInfo (dpy, (VisualScreenMask | VisualIDMask),
-			   &vi_in, &out_count);
-  if (! vi_out) abort ();
+  XVisualInfo *vi_out = visual_info (screen, visual);
   if (private_cmap_p)
     sprintf(n, "%3d", vi_out->colormap_size);
   else
@@ -489,15 +495,8 @@ screen_number (Screen *screen)
 int
 visual_cells (Screen *screen, Visual *visual)
 {
-  Display *dpy = DisplayOfScreen (screen);
-  XVisualInfo vi_in, *vi_out;
-  int out_count, c;
-  vi_in.screen = screen_number (screen);
-  vi_in.visualid = XVisualIDFromVisual (visual);
-  vi_out = XGetVisualInfo (dpy, VisualScreenMask|VisualIDMask,
-			   &vi_in, &out_count);
-  if (! vi_out) abort ();
-  c = vi_out [0].colormap_size;
+  XVisualInfo *vi_out = visual_info (screen, visual);
+  int c = vi_out [0].colormap_size;
   XFree ((char *) vi_out);
   return c;
 }
@@ -544,46 +543,13 @@ find_similar_visual(Screen *screen, Visual *old_visual)
 }
 
 
-int
-get_bits_per_pixel(Display *dpy, int depth)
+void
+visual_rgb_masks (Screen *screen, Visual *visual, unsigned long *red_mask,
+                  unsigned long *green_mask, unsigned long *blue_mask)
 {
-  unsigned i = 0;
-  int count, result;
-  XPixmapFormatValues *formats = XListPixmapFormats(dpy, &count);
-
-  /* XCreateImage calls _XGetBitsPerPixel to figure this out, but that function
-     is private to Xlib.
-
-     For some reason, _XGetBitsPerPixel tries a hard-coded list of depths if
-     it doesn't find a matching pixmap format, but I (Dave Odell) couldn't
-     find any justification for this in the X11 spec. And the XFree86 CVS
-     repository doesn't quite go back far enough to shed any light on what
-     the deal is with that.
-     http://cvsweb.xfree86.org/cvsweb/xc/lib/X11/ImUtil.c
-
-     The hard-coded list apparently was added between X11R5 and X11R6.
-     See <ftp://ftp.x.org/pub/>.
-   */
-
-  if (!formats) return 0;
-
-  for (;;)
-    {
-      if (i == (unsigned)count)
-        {
-          result = 0;
-          break;
-        }
-
-      if (formats[i].depth == depth)
-        {
-          result = formats[i].bits_per_pixel;
-          break;
-        }
-
-      ++i;
-    }
-
-  XFree (formats);
-  return result;
+  XVisualInfo *vi_out = visual_info (screen, visual);
+  *red_mask = vi_out->red_mask;
+  *green_mask = vi_out->green_mask;
+  *blue_mask = vi_out->blue_mask;
+  XFree ((char *) vi_out);
 }

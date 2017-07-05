@@ -15,6 +15,7 @@
 			"*usePty:       False        \n" \
 
 # define refresh_text 0
+# define release_text 0
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
 #ifdef SMOOTH_TUBE
@@ -316,20 +317,16 @@ text_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_text(ModeInfo * mi);
+
+
 ENTRYPOINT void 
 init_text (ModeInfo *mi)
 {
   text_configuration *tp;
   int i;
 
-  if (!tps) {
-    tps = (text_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (text_configuration));
-    if (!tps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, tps, free_text);
 
   tp = &tps[MI_SCREEN(mi)];
 
@@ -627,21 +624,11 @@ draw_text (ModeInfo *mi)
 }
 
 ENTRYPOINT void
-release_text(ModeInfo * mi)
+free_text(ModeInfo * mi)
 {
-  if (tps)
-    {
-    int screen;
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-      {
-        text_configuration *tp = &tps[MI_SCREEN(mi)];
-        if (tp->tc)
-          textclient_close (tp->tc);
-      }
-    }
-  (void) free(tps);
-  tps = 0;
-  FreeAllGL(mi);
+  text_configuration *tp = &tps[MI_SCREEN(mi)];
+  if (tp->tc)
+    textclient_close (tp->tc);
 }
 
 

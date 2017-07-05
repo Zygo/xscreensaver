@@ -33,6 +33,7 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 									"*suppressRotationAnimation: True\n" \
 
 # define refresh_gasket 0
+# define release_gasket 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -77,7 +78,7 @@ ENTRYPOINT ModeSpecOpt gasket_opts = {countof(opts), opts, countof(vars), vars, 
 
 #ifdef USE_MODULES
 ModStruct   gasket_description =
-{"gasket", "init_gasket", "draw_gasket", "release_gasket",
+{"gasket", "init_gasket", "draw_gasket", NULL,
  "draw_gasket", "init_gasket", NULL, &gasket_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "Shows GL's Sierpinski gasket", 0, NULL};
@@ -466,18 +467,16 @@ gasket_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_gasket(ModeInfo * mi);
+
+
 ENTRYPOINT void
 init_gasket(ModeInfo *mi)
 {
   int           screen = MI_SCREEN(mi);
   gasketstruct *gp;
 
-  if (gasket == NULL)
-  {
-    if ((gasket = (gasketstruct *) calloc(MI_NUM_SCREENS(mi),
-					      sizeof (gasketstruct))) == NULL)
-	return;
-  }
+  MI_INIT (mi, gasket, free_gasket);
   gp = &gasket[screen];
 
   gp->window = MI_WINDOW(mi);
@@ -556,31 +555,20 @@ draw_gasket(ModeInfo * mi)
 }
 
 ENTRYPOINT void
-release_gasket(ModeInfo * mi)
+free_gasket(ModeInfo * mi)
 {
-  if (gasket != NULL)
+  gasketstruct *gp = &gasket[MI_SCREEN(mi)];
+
+  if (gp->glx_context)
   {
-    int         screen;
-
-    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-    {
-      gasketstruct *gp = &gasket[screen];
-
-      if (gp->glx_context)
-      {
 	/* Display lists MUST be freed while their glXContext is current. */
-        glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
 
-        if (glIsList(gp->gasket0)) glDeleteLists(gp->gasket0, 1);
-        if (glIsList(gp->gasket1)) glDeleteLists(gp->gasket1, 1);
-        if (glIsList(gp->gasket2)) glDeleteLists(gp->gasket2, 1);
-        if (glIsList(gp->gasket3)) glDeleteLists(gp->gasket3, 1);
-      }
-    }
-    (void) free((void *) gasket);
-    gasket = NULL;
+    if (glIsList(gp->gasket0)) glDeleteLists(gp->gasket0, 1);
+    if (glIsList(gp->gasket1)) glDeleteLists(gp->gasket1, 1);
+    if (glIsList(gp->gasket2)) glDeleteLists(gp->gasket2, 1);
+    if (glIsList(gp->gasket3)) glDeleteLists(gp->gasket3, 1);
   }
-  FreeAllGL(mi);
 }
 
 XSCREENSAVER_MODULE_2 ("Sierpinski3D", sierpinski3d, gasket)

@@ -34,6 +34,7 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define refresh_hydrostat 0
+# define release_hydrostat 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -640,6 +641,8 @@ hydrostat_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_hydrostat (ModeInfo *mi);
+
 ENTRYPOINT void 
 init_hydrostat (ModeInfo *mi)
 {
@@ -647,14 +650,7 @@ init_hydrostat (ModeInfo *mi)
   hydrostat_configuration *bp;
   int i;
 
-  if (!bps) {
-    bps = (hydrostat_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (hydrostat_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_hydrostat);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -763,11 +759,13 @@ draw_hydrostat (ModeInfo *mi)
 }
 
 
-ENTRYPOINT void
-release_hydrostat (ModeInfo *mi)
+static void
+free_hydrostat (ModeInfo *mi)
 {
   hydrostat_configuration *bp = &bps[MI_SCREEN(mi)];
   int i;
+  if (!bp->squids)
+    return;
   for (i = 0; i < MI_COUNT(mi); i++)
     free_squid (bp->squids[i]);
   free (bp->squids);

@@ -15,6 +15,7 @@
 			"*wireframe:    False       \n" \
 
 # define refresh_ball 0
+# define release_ball 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -537,20 +538,16 @@ ball_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static void free_ball (ModeInfo *mi);
+
+
 ENTRYPOINT void 
 init_ball (ModeInfo *mi)
 {
   ball_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  if (!bps) {
-    bps = (ball_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (ball_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, free_ball);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -689,8 +686,8 @@ draw_ball (ModeInfo *mi)
 }
 
 
-ENTRYPOINT void
-release_ball (ModeInfo *mi)
+static void
+free_ball (ModeInfo *mi)
 {
   ball_configuration *bp = &bps[MI_SCREEN(mi)];
   while (bp->tiles)

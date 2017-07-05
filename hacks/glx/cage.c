@@ -83,6 +83,7 @@ static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
 							"*suppressRotationAnimation: True\n" \
 
 # define refresh_cage 0
+# define release_cage 0
 # define cage_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -103,7 +104,7 @@ ENTRYPOINT ModeSpecOpt cage_opts =
 
 #ifdef USE_MODULES
 ModStruct   cage_description =
-{"cage", "init_cage", "draw_cage", "release_cage",
+{"cage", "init_cage", "draw_cage", NULL,
  "draw_cage", "change_cage", (char *) NULL, &cage_opts,
  25000, 1, 1, 1, 1.0, 4, "",
  "Shows the Impossible Cage, an Escher-like GL scene", 0, NULL};
@@ -382,34 +383,11 @@ pinit(ModeInfo *mi)
 }
 
 ENTRYPOINT void
-release_cage (ModeInfo * mi)
-{
-	if (cage != NULL) {
-		int screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			cagestruct *cp = &cage[screen];
-
-			if (cp->glx_context) {
-				cp->glx_context = (GLXContext *) NULL;
-			}
-		}
-		(void) free((void *) cage);
-		cage = (cagestruct *) NULL;
-	}
-	FreeAllGL(mi);
-}
-
-ENTRYPOINT void
 init_cage (ModeInfo * mi)
 {
 	cagestruct *cp;
 
-	if (cage == NULL) {
-		if ((cage = (cagestruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (cagestruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, cage, NULL);
 	cp = &cage[MI_SCREEN(mi)];
 
 	cp->step = NRAND(90);
@@ -469,7 +447,7 @@ draw_cage (ModeInfo * mi)
 	glRotatef(25 + cos(cp->step * 5) * 6, 1, 0, 0);
 	glRotatef(204.5 - sin(cp->step * 5) * 8, 0, 1, 0);
 	if (!draw_impossiblecage(mi, cp, MI_IS_WIREFRAME(mi))) {
-		release_cage(mi);
+		MI_ABORT(mi);
 		return;
 	}
 

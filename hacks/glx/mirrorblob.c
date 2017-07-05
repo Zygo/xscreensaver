@@ -45,6 +45,7 @@
 		 "*suppressRotationAnimation: True\n"                       \
 
 # define refresh_mirrorblob 0
+# define release_mirrorblob 0
 # include "xlockmore.h"
 #else /* !STANDALONE */
 # include "xlock.h"        /* from the xlockmore distribution */
@@ -177,7 +178,7 @@ ENTRYPOINT ModeSpecOpt mirrorblob_opts = {countof(opts), opts, countof(vars), va
 
 #ifdef USE_MODULES
 ModStruct   mirrorblob_description =
-{"mirrorblob", "init_mirrorblob", "draw_mirrorblob", "release_mirrorblob",
+{"mirrorblob", "init_mirrorblob", "draw_mirrorblob", NULL,
  "draw_mirrorblob", "init_mirrorblob", "handle_event", &mirrorblob_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL mirrorblob", 0, NULL};
@@ -1785,6 +1786,8 @@ mirrorblob_handle_event (ModeInfo * mi, XEvent * event)
   return False;
 }
 
+static void free_mirrorblob(ModeInfo * mi);
+
 /******************************************************************************
  *
  * XMirrorblob initialise entry
@@ -1796,14 +1799,7 @@ init_mirrorblob(ModeInfo * mi)
 
   mirrorblobstruct *gp;
 
-  if (Mirrorblob == NULL)
-    {
-      if ((Mirrorblob = (mirrorblobstruct *)
-           calloc(MI_NUM_SCREENS(mi), sizeof (mirrorblobstruct))) == NULL)
-        {
-          return;
-        }
-    }
+  MI_INIT(mi, Mirrorblob, free_mirrorblob);
   gp = &Mirrorblob[screen];
 
   gp->window = MI_WINDOW(mi);
@@ -1829,27 +1825,18 @@ init_mirrorblob(ModeInfo * mi)
  *
  * XMirrorblob cleanup entry
  */
-ENTRYPOINT void
-release_mirrorblob(ModeInfo * mi)
+static void
+free_mirrorblob(ModeInfo * mi)
 {
-  if (Mirrorblob != NULL) {
-    int i;
-    for (i = 0; i < MI_NUM_SCREENS(mi); i++) {
-      mirrorblobstruct *gp = &Mirrorblob[i];
-      if (gp->nodes) free(gp->nodes);
-      if (gp->faces) free(gp->faces);
-      if (gp->bump_data) free(gp->bump_data);
-      if (gp->colours) free(gp->colours);
-      if (gp->tex_coords) free(gp->tex_coords);
-      if (gp->dots) free(gp->dots);
-      if (gp->wall_shape) free(gp->wall_shape);
-      if (gp->bump_shape) free(gp->bump_shape);
-    }
-
-    free(Mirrorblob);
-    Mirrorblob = NULL;
-  }
-  FreeAllGL(mi);
+  mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
+  if (gp->nodes) free(gp->nodes);
+  if (gp->faces) free(gp->faces);
+  if (gp->bump_data) free(gp->bump_data);
+  if (gp->colours) free(gp->colours);
+  if (gp->tex_coords) free(gp->tex_coords);
+  if (gp->dots) free(gp->dots);
+  if (gp->wall_shape) free(gp->wall_shape);
+  if (gp->bump_shape) free(gp->bump_shape);
 }
 
 XSCREENSAVER_MODULE ("MirrorBlob", mirrorblob)

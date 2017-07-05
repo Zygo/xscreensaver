@@ -112,6 +112,7 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
 			 "*cycles:       100 \n" \
 			 "*size:        6000 \n" \
 			 "*wireframe:  False \n"
+# define release_atlantis 0
 # define atlantis_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -155,7 +156,7 @@ ENTRYPOINT ModeSpecOpt atlantis_opts =
 
 #ifdef USE_MODULES
 ModStruct   atlantis_description =
-{"atlantis", "init_atlantis", "draw_atlantis", "release_atlantis",
+{"atlantis", "init_atlantis", "draw_atlantis", NULL,
  "refresh_atlantis", "change_atlantis", NULL, &atlantis_opts,
  1000, NUM_SHARKS, SHARKSPEED, SHARKSIZE, 64, 1.0, "",
  "Shows moving sharks/whales/dolphin", 0, NULL};
@@ -434,6 +435,8 @@ AllDisplay(atlantisstruct * ap)
  *-----------------------------------------------------------------------------
  */
 
+static void free_atlantis(ModeInfo * mi);
+
 /*
  *-----------------------------------------------------------------------------
  *    Initialize atlantis.  Called each time the window changes.
@@ -448,11 +451,7 @@ init_atlantis(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 
-	if (atlantis == NULL) {
-		if ((atlantis = (atlantisstruct *) calloc(MI_NUM_SCREENS(mi),
-					   sizeof (atlantisstruct))) == NULL)
-			return;
-	}
+	MI_INIT(mi, atlantis, free_atlantis);
 	ap = &atlantis[screen];
 	ap->num_sharks = MI_COUNT(mi);
 	if (ap->sharks == NULL) {
@@ -531,28 +530,18 @@ draw_atlantis(ModeInfo * mi)
 /*
  *-----------------------------------------------------------------------------
  *    The display is being taken away from us.  Free up malloc'ed 
- *      memory and X resources that we've alloc'ed.  Only called
- *      once, we must zap everything for every screen.
+ *      memory and X resources that we've alloc'ed.
  *-----------------------------------------------------------------------------
  */
 
-ENTRYPOINT void
-release_atlantis(ModeInfo * mi)
+static void
+free_atlantis(ModeInfo * mi)
 {
 #if 0
-	int         screen;
+	atlantisstruct *ap = &atlantis[screen];
 
-	if (atlantis != NULL) {
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			atlantisstruct *ap = &atlantis[screen];
-
-			if (ap->sharks)
-				(void) free((void *) ap->sharks);
-		}
-		(void) free((void *) atlantis);
-		atlantis = NULL;
-	}
-	FreeAllGL(mi);
+	if (ap->sharks)
+		(void) free((void *) ap->sharks);
 #endif
 }
 

@@ -115,11 +115,7 @@ init_sphere(ModeInfo * mi)
 {
 	spherestruct *sp;
 
-	if (spheres == NULL) {
-		if ((spheres = (spherestruct *) calloc(MI_NUM_SCREENS(mi),
-					     sizeof (spherestruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, spheres, 0);
 	sp = &spheres[MI_SCREEN(mi)];
 
 	if (sp->points != NULL) {

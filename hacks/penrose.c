@@ -90,6 +90,7 @@ If one of these are hit penrose will reinitialize.
 					"*ignoreRotation: True \n" \
 
 # define refresh_penrose 0
+# define release_penrose 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -402,8 +403,9 @@ fived_to_loc(int fived[], tiling_c * tp, XPoint *pt)
 
 /* Mop up dynamic data for one screen. */
 static void
-free_penrose(tiling_c * tp)
+free_penrose(ModeInfo * mi)
 {
+	tiling_c * tp = &tilings[MI_SCREEN(mi)];
 	register fringe_node_c *fp1, *fp2;
 	register forced_node_c *lp1, *lp2;
 
@@ -433,11 +435,7 @@ init_penrose(ModeInfo * mi)
 	fringe_node_c *fp;
 	int         i, size;
 
-	if (tilings == NULL) {
-		if ((tilings = (tiling_c *) calloc(MI_NUM_SCREENS(mi),
-						 sizeof (tiling_c))) == NULL)
-			return;
-	}
+	MI_INIT (mi, tilings, free_penrose);
 	tp = &tilings[MI_SCREEN(mi)];
 
 #if 0 /* if you do this, then the -ammann and -no-ammann options don't work.
@@ -475,18 +473,18 @@ init_penrose(ModeInfo * mi)
 	tp->origin.y = (tp->height / 2 + NRAND(tp->height)) / 2;
 	tp->fringe.n_nodes = 2;
 	if (tp->fringe.nodes != NULL)
-		free_penrose(tp);
+		free_penrose(mi);
 	if (tp->fringe.nodes != NULL || tp->forced.first != 0) {
 		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in init_penrose()\n");
 			(void) fprintf(stderr, "tp->fringe.nodes = NULL && tp->forced.first = 0\n");
 		}
-		free_penrose(tp);	/* Try again */
+		free_penrose(mi);	/* Try again */
 		tp->done = True;
 	}
 	tp->forced.n_nodes = tp->forced.n_visible = 0;
 	if ((fp = tp->fringe.nodes = ALLOC_NODE(fringe_node_c)) == NULL) {
-		free_penrose(tp);
+		free_penrose(mi);
 		return;
 	}
 	if (fp == 0) {
@@ -495,7 +493,7 @@ init_penrose(ModeInfo * mi)
 			(void) fprintf(stderr, "fp = 0\n");
 		}
 		if ((fp = tp->fringe.nodes = ALLOC_NODE(fringe_node_c)) == NULL) {
-			free_penrose(tp);
+			free_penrose(mi);
 			return;
 		}
 		tp->done = True;
@@ -504,7 +502,7 @@ init_penrose(ModeInfo * mi)
 	fp->rule_mask = (1 << N_VERTEX_RULES) - 1;
 	fp->list_ptr = 0;
 	if  ((fp->prev = fp->next = ALLOC_NODE(fringe_node_c)) == NULL) {
-		free_penrose(tp);
+		free_penrose(mi);
 		return;
 	}
 	if (fp->next == 0) {
@@ -513,7 +511,7 @@ init_penrose(ModeInfo * mi)
 			(void) fprintf(stderr, "fp->next = 0\n");
 		}
 		if ((fp->prev = fp->next = ALLOC_NODE(fringe_node_c)) == NULL) {
-			free_penrose(tp);
+			free_penrose(mi);
 			return;
 		}
 		tp->done = True;
@@ -1250,7 +1248,7 @@ add_random_tile(fringe_node_c * vertex, ModeInfo * mi)
 		if (MI_IS_VERBOSE(mi)) {
 			(void) fprintf(stderr, "Weirdness in add_random_tile()\n");
 		}
-		free_penrose(tp);
+		free_penrose(mi);
 	}
 }
 
@@ -1285,7 +1283,7 @@ draw_penrose(ModeInfo * mi)
 		MI_CLEARWINDOW(mi);
 
 		if (!add_tile(mi, tp->fringe.nodes, S_LEFT, vtype))
-			free_penrose(tp);
+			free_penrose(mi);
 		return;
 	}
 	/* No visible nodes left. */
@@ -1334,20 +1332,6 @@ reshape_penrose(ModeInfo * mi, int width, int height)
 	tiling_c   *tp = &tilings[MI_SCREEN(mi)];
 	tp->width = width;
 	tp->height = height;
-}
-
-/* Total clean-up. */
-ENTRYPOINT void
-release_penrose(ModeInfo * mi)
-{
-	if (tilings != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_penrose(&tilings[screen]);
-		(void) free((void *) tilings);
-		tilings = (tiling_c *) NULL;
-	}
 }
 
 ENTRYPOINT Bool

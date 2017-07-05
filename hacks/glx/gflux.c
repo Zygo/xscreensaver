@@ -47,6 +47,7 @@
 										"*suppressRotationAnimation: True\n" \
 
 # define refresh_gflux 0
+# define release_gflux 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -168,7 +169,7 @@ ENTRYPOINT ModeSpecOpt gflux_opts = {countof(opts), opts, countof(vars), vars, d
 
 #ifdef USE_MODULES
 ModStruct   gflux_description =
-{"gflux", "init_gflux", "draw_gflux", "release_gflux",
+{"gflux", "init_gflux", "draw_gflux", NULL,
  "draw_gflux", "init_gflux", NULL, &gflux_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "GFlux: an OpenGL gflux", 0, NULL};
@@ -358,11 +359,7 @@ ENTRYPOINT void init_gflux(ModeInfo * mi)
     int screen = MI_SCREEN(mi);
     gfluxstruct *gp;
 
-    if (gfluxes == NULL) {
-        if ((gfluxes = (gfluxstruct *) 
-                 calloc(MI_NUM_SCREENS(mi), sizeof (gfluxstruct))) == NULL)
-            return;
-    }
+    MI_INIT(mi, gfluxes, NULL);
     gp = &gfluxes[screen];
 
     gp->trackball = gltrackball_init (True);
@@ -395,16 +392,6 @@ ENTRYPOINT void init_gflux(ModeInfo * mi)
     } else {
         MI_CLEARWINDOW(mi);
     }
-}
-
-/* cleanup code */
-ENTRYPOINT void release_gflux(ModeInfo * mi)
-{
-    if (gfluxes != NULL) {
-      free((void *) gfluxes);
-      gfluxes = NULL;
-    }
-    FreeAllGL(mi);
 }
 
 

@@ -16,38 +16,22 @@
 #include "../hacks/fps.h"
 
 #include <android/log.h>
+/* Native EGL is Android 2.3/API 9. EGL in Java is available from API 1. */
 #include <EGL/egl.h>
+#include <GLES/glext.h>
 #include <jni.h>
 
 /* Keep synchronized with check-configs.pl and jwxyz.java. */
 #define API_XLIB 0
 #define API_GL   1
 
-struct running_hack {
-  struct xscreensaver_function_table *xsft;
-  jint api;
-  Display *dpy;
-  Window window;
-  fps_state *fpst;
-  void *closure;
-  JNIEnv *jni_env;
-  jobject jobject;
-
-  EGLDisplay egl_display;
-  EGLConfig egl_config;
-  EGLContext egl_window_ctx, egl_xlib_ctx;
-  Drawable current_drawable;
-  Bool ignore_rotation_p;
-
-  unsigned long frame_count;
-  Bool initted_p;
-  struct event_queue *event_queue;
-};
-
 struct jwxyz_Drawable {
   enum { WINDOW, PIXMAP } type;
   XRectangle frame;
-  EGLSurface egl_surface;
+  union {
+    EGLSurface egl_surface;
+    GLuint texture; /* If this is 0, it's the default framebuffer. */
+  };
   union {
     struct {
       struct running_hack *rh;
@@ -59,6 +43,42 @@ struct jwxyz_Drawable {
   };
 };
 
+struct running_hack {
+  struct xscreensaver_function_table *xsft;
+  jint api;
+  Display *dpy;
+  Window window;
+  fps_state *fpst;
+  void *closure;
+  JNIEnv *jni_env;
+  jobject jobject;
+
+  /* These are set up in Java by the GLSurfaceView. */
+  EGLContext egl_ctx;
+  EGLSurface egl_surface;
+  EGLDisplay egl_display;
+  GLint fb_default;
+
+  EGLConfig egl_config;
+
+  PFNGLBINDFRAMEBUFFEROESPROC glBindFramebufferOES;
+  PFNGLFRAMEBUFFERTEXTURE2DOESPROC glFramebufferTexture2DOES;
+
+  struct jwxyz_Drawable frontbuffer;
+  GC copy_gc;
+  Bool gl_fbo_p, frontbuffer_p;
+  GLuint fb_pixmap;
+
+  Drawable current_drawable;
+  Bool ignore_rotation_p;
+
+  jwzgles_state *gles_state;
+
+  unsigned long frame_count;
+  Bool initted_p;
+  struct event_queue *event_queue;
+};
+
 
 extern void prepare_context (struct running_hack *rh);
 
@@ -67,7 +87,7 @@ extern void prepare_context (struct running_hack *rh);
 
 JNIEXPORT void JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeInit (JNIEnv *, jobject thiz,
-                                            jstring jhack, jint api,
+                                            jstring jhack,
                                             jobject defaults,
                                             jint w, jint h);
 

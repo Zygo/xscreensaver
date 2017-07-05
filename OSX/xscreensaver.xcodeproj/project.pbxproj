@@ -287,6 +287,7 @@
 				AF4F10F2143450C300E34F3F /* PBXTargetDependency */,
 				AF46E9ED1CBBA49A00240FBC /* PBXTargetDependency */,
 				AFDA65AA178A54690070D24B /* PBXTargetDependency */,
+				AF633C1F1EE0BCD300AB33BD /* PBXTargetDependency */,
 				AF0DCA5C0C4CBB4300D76972 /* PBXTargetDependency */,
 				AF39E2BA198A16920064A58D /* PBXTargetDependency */,
 			);
@@ -322,7 +323,14 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		5501D1961DBDCC3D00624BE9 /* xshm.c in Sources */ = {isa = PBXBuildFile; fileRef = 5501D1941DBDCC0200624BE9 /* xshm.c */; };
 		550FB6001AD64424001A4FA5 /* Media-iOS.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 550FB5FD1AD64424001A4FA5 /* Media-iOS.xcassets */; };
+		55374E321E1582C6005E2362 /* pow2.c in Sources */ = {isa = PBXBuildFile; fileRef = 55374E301E1582AA005E2362 /* pow2.c */; };
+		55374E331E1582D2005E2362 /* pow2.h in Headers */ = {isa = PBXBuildFile; fileRef = 55374E311E1582AA005E2362 /* pow2.h */; };
+		557BF07E1EE90D3B00846DCE /* settings@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 557BF07A1EE90C8B00846DCE /* settings@2x.png */; };
+		557BF07F1EE90D3B00846DCE /* settings@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 557BF07B1EE90C8B00846DCE /* settings@3x.png */; };
+		557BF0801EE90D3B00846DCE /* stop@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 557BF07C1EE90C8B00846DCE /* stop@2x.png */; };
+		557BF0811EE90D3B00846DCE /* stop@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 557BF07D1EE90C8B00846DCE /* stop@3x.png */; };
 		55EDCB3D1AD498A800251909 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 55EDCB3C1AD498A800251909 /* LaunchScreen.xib */; };
 		AF012918157C1E4C00C396E1 /* chessmodels.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA55E2309935F2B00F3E977 /* chessmodels.c */; };
 		AF0839A609930BAC00277BE9 /* atlantis.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258700988A468000655EE /* atlantis.xml */; };
@@ -374,6 +382,9 @@
 		AF0FAF2809CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2909CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF3C159BAC7C00BCE2F7 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF0FAF3B159BAC7B00BCE2F7 /* CoreText.framework */; };
+		AF142BAE1EE75DBF0005C0A8 /* settings.png in Resources */ = {isa = PBXBuildFile; fileRef = AF142BAC1EE75DBF0005C0A8 /* settings.png */; };
+		AF142BAF1EE75DBF0005C0A8 /* stop.png in Resources */ = {isa = PBXBuildFile; fileRef = AF142BAD1EE75DBF0005C0A8 /* stop.png */; };
+		AF142BB11EFEFBA20005C0A8 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF142BB01EFEFBA20005C0A8 /* Photos.framework */; };
 		AF1A17680D6D6EE3008AF328 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF1A177F0D6D6F3E008AF328 /* lcdscrub.c in Sources */ = {isa = PBXBuildFile; fileRef = AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */; };
 		AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF1A17800D6D6F62008AF328 /* lcdscrub.xml */; };
@@ -1776,6 +1787,21 @@
 		AF6048FB157C07C600CA21E4 /* jwzgles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6048F8157C07C600CA21E4 /* jwzgles.c */; };
 		AF6048FC157C07C600CA21E4 /* jwzgles.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048F9157C07C600CA21E4 /* jwzgles.h */; };
 		AF6048FD157C07C600CA21E4 /* jwzglesI.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048FA157C07C600CA21E4 /* jwzglesI.h */; };
+		AF633C081EE0BA6F00AB33BD /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF633C0A1EE0BA6F00AB33BD /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF633C0B1EE0BA6F00AB33BD /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF633C0C1EE0BA6F00AB33BD /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF633C0D1EE0BA6F00AB33BD /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF633C0E1EE0BA6F00AB33BD /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF633C0F1EE0BA6F00AB33BD /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF633C101EE0BA6F00AB33BD /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF633C1A1EE0BC5500AB33BD /* vigilance.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF633C181EE0BC4900AB33BD /* vigilance.xml */; };
+		AF633C1B1EE0BC5A00AB33BD /* vigilance.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF633C181EE0BC4900AB33BD /* vigilance.xml */; };
+		AF633C1C1EE0BCA100AB33BD /* vigilance.c in Sources */ = {isa = PBXBuildFile; fileRef = AF633C191EE0BC4A00AB33BD /* vigilance.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF633C1D1EE0BCA700AB33BD /* vigilance.c in Sources */ = {isa = PBXBuildFile; fileRef = AF633C191EE0BC4A00AB33BD /* vigilance.c */; };
+		AF633C211EE0BDCD00AB33BD /* seccam.c in Sources */ = {isa = PBXBuildFile; fileRef = AF633C201EE0BDCD00AB33BD /* seccam.c */; };
+		AF633C221EE0BDCD00AB33BD /* seccam.c in Sources */ = {isa = PBXBuildFile; fileRef = AF633C201EE0BDCD00AB33BD /* seccam.c */; };
+		AF633C231EE0BDCD00AB33BD /* seccam.c in Sources */ = {isa = PBXBuildFile; fileRef = AF633C201EE0BDCD00AB33BD /* seccam.c */; };
 		AF63A7F81AB4EDDB00593C75 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF63A7FA1AB4EDDB00593C75 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF63A7FB1AB4EDDB00593C75 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -4404,6 +4430,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF5C9AF91A0CCE6E00B0147A;
 			remoteInfo = Cityflow;
+		};
+		AF633C031EE0BA6F00AB33BD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF633C1E1EE0BCD300AB33BD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF633C011EE0BA6F00AB33BD;
+			remoteInfo = Vigilance;
 		};
 		AF63A7F31AB4EDDB00593C75 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -7227,7 +7267,15 @@
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* xscreensaver_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xscreensaver_Prefix.pch; sourceTree = "<group>"; };
+		5501D1941DBDCC0200624BE9 /* xshm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xshm.c; path = utils/xshm.c; sourceTree = "<group>"; };
+		5501D1951DBDCC0200624BE9 /* xshm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xshm.h; path = utils/xshm.h; sourceTree = "<group>"; };
 		550FB5FD1AD64424001A4FA5 /* Media-iOS.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Media-iOS.xcassets"; sourceTree = "<group>"; };
+		55374E301E1582AA005E2362 /* pow2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pow2.c; path = utils/pow2.c; sourceTree = "<group>"; };
+		55374E311E1582AA005E2362 /* pow2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pow2.h; path = utils/pow2.h; sourceTree = "<group>"; };
+		557BF07A1EE90C8B00846DCE /* settings@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "settings@2x.png"; sourceTree = "<group>"; };
+		557BF07B1EE90C8B00846DCE /* settings@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "settings@3x.png"; sourceTree = "<group>"; };
+		557BF07C1EE90C8B00846DCE /* stop@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "stop@2x.png"; sourceTree = "<group>"; };
+		557BF07D1EE90C8B00846DCE /* stop@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "stop@3x.png"; sourceTree = "<group>"; };
 		55EDCB3C1AD498A800251909 /* LaunchScreen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = LaunchScreen.xib; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* XScreenSaver.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = XScreenSaver.plist; sourceTree = "<group>"; };
 		AF01294C157D31DD00C396E1 /* iSaverRunner.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = iSaverRunner.plist; sourceTree = SOURCE_ROOT; };
@@ -7255,6 +7303,9 @@
 		AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-text"; path = "../driver/xscreensaver-text"; sourceTree = "<group>"; };
 		AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-getimage-file"; path = "../driver/xscreensaver-getimage-file"; sourceTree = "<group>"; };
 		AF0FAF3B159BAC7B00BCE2F7 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.1.sdk/System/Library/Frameworks/CoreText.framework; sourceTree = DEVELOPER_DIR; };
+		AF142BAC1EE75DBF0005C0A8 /* settings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings.png; sourceTree = "<group>"; };
+		AF142BAD1EE75DBF0005C0A8 /* stop.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = stop.png; sourceTree = "<group>"; };
+		AF142BB01EFEFBA20005C0A8 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.3.sdk/System/Library/Frameworks/Photos.framework; sourceTree = DEVELOPER_DIR; };
 		AF14EE300E3CEF1A004CBBD2 /* XScreenSaver.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = XScreenSaver.icns; sourceTree = "<group>"; };
 		AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LCDscrub.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lcdscrub.c; path = hacks/lcdscrub.c; sourceTree = "<group>"; };
@@ -7474,6 +7525,10 @@
 		AF6048F8157C07C600CA21E4 /* jwzgles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jwzgles.c; path = ../jwxyz/jwzgles.c; sourceTree = "<group>"; };
 		AF6048F9157C07C600CA21E4 /* jwzgles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzgles.h; path = ../jwxyz/jwzgles.h; sourceTree = "<group>"; };
 		AF6048FA157C07C600CA21E4 /* jwzglesI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzglesI.h; path = ../jwxyz/jwzglesI.h; sourceTree = "<group>"; };
+		AF633C161EE0BA6F00AB33BD /* Vigilance.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Vigilance.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF633C181EE0BC4900AB33BD /* vigilance.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vigilance.xml; sourceTree = "<group>"; };
+		AF633C191EE0BC4A00AB33BD /* vigilance.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vigilance.c; path = hacks/glx/vigilance.c; sourceTree = "<group>"; };
+		AF633C201EE0BDCD00AB33BD /* seccam.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = seccam.c; path = hacks/glx/seccam.c; sourceTree = "<group>"; };
 		AF63A8061AB4EDDB00593C75 /* RomanBoy.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RomanBoy.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF63A8081AB4EF5D00593C75 /* romanboy.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = romanboy.xml; sourceTree = "<group>"; };
 		AF63A8091AB4EF5D00593C75 /* romanboy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = romanboy.c; path = hacks/glx/romanboy.c; sourceTree = "<group>"; };
@@ -9255,6 +9310,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF633C091EE0BA6F00AB33BD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF633C0A1EE0BA6F00AB33BD /* libjwxyz.a in Frameworks */,
+				AF633C0B1EE0BA6F00AB33BD /* ScreenSaver.framework in Frameworks */,
+				AF633C0C1EE0BA6F00AB33BD /* QuartzCore.framework in Frameworks */,
+				AF633C0D1EE0BA6F00AB33BD /* Cocoa.framework in Frameworks */,
+				AF633C0E1EE0BA6F00AB33BD /* Carbon.framework in Frameworks */,
+				AF633C0F1EE0BA6F00AB33BD /* OpenGL.framework in Frameworks */,
+				AF633C101EE0BA6F00AB33BD /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF63A7F91AB4EDDB00593C75 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -9746,6 +9815,7 @@
 				AFEB9C3B1590054B003974F3 /* OpenGLES.framework in Frameworks */,
 				AFEB9C3915900514003974F3 /* UIKit.framework in Frameworks */,
 				AF561DF815969C5B007CA5ED /* AssetsLibrary.framework in Frameworks */,
+				AF142BB11EFEFBA20005C0A8 /* Photos.framework in Frameworks */,
 				AFEB9C3D15900558003974F3 /* Foundation.framework in Frameworks */,
 				AFEB9C401590056A003974F3 /* CoreGraphics.framework in Frameworks */,
 				AF0FAF3C159BAC7C00BCE2F7 /* CoreText.framework in Frameworks */,
@@ -11778,7 +11848,6 @@
 		080E96DDFE201D6D7F000001 /* libjwxyz */ = {
 			isa = PBXGroup;
 			children = (
-				AF561DF515969BC3007CA5ED /* grabclient-ios.m */,
 				AFE1FD410981E32E00F7970E /* InvertedSlider.h */,
 				AFE1FD420981E32E00F7970E /* InvertedSlider.m */,
 				AF2D8F301CEBA10300198014 /* jwxyz-timers.c */,
@@ -11793,6 +11862,7 @@
 				AF6048F8157C07C600CA21E4 /* jwzgles.c */,
 				AF6048F9157C07C600CA21E4 /* jwzgles.h */,
 				AF6048FA157C07C600CA21E4 /* jwzglesI.h */,
+				AF561DF515969BC3007CA5ED /* grabclient-ios.m */,
 				AF9D468E09B51567006E59CF /* grabclient-osx.m */,
 				AFE1FD470981E32E00F7970E /* PrefsReader.h */,
 				AFE1FD480981E32E00F7970E /* PrefsReader.m */,
@@ -12066,6 +12136,7 @@
 				AFEE10811D15EB0800AAC8F7 /* CubeStack.saver */,
 				AFEE10A01D17E20B00AAC8F7 /* Splodesic.saver */,
 				AF1B0FBC1D7AB4740011DBE4 /* Hexstrut.saver */,
+				AF633C161EE0BA6F00AB33BD /* Vigilance.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -12107,6 +12178,12 @@
 				AFEC68361BD6CA85004C1B64 /* OCRAStd.otf */,
 				AFEC68381BD6CDF9004C1B64 /* YearlReg.ttf */,
 				AFC43E731C68364B00C89999 /* PxPlus_IBM_VGA8.ttf */,
+				AF142BAC1EE75DBF0005C0A8 /* settings.png */,
+				557BF07A1EE90C8B00846DCE /* settings@2x.png */,
+				557BF07B1EE90C8B00846DCE /* settings@3x.png */,
+				AF142BAD1EE75DBF0005C0A8 /* stop.png */,
+				557BF07C1EE90C8B00846DCE /* stop@2x.png */,
+				557BF07D1EE90C8B00846DCE /* stop@3x.png */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -12114,6 +12191,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AF142BB01EFEFBA20005C0A8 /* Photos.framework */,
 				AF1ADA171850180E00932759 /* Sparkle.framework */,
 				AF78377C17DBA85D003B9FC0 /* libz.dylib */,
 				AF78369617DB9F25003B9FC0 /* libz.dylib */,
@@ -12537,6 +12615,8 @@
 				AF083A5D099312DB00277BE9 /* tunnel_draw.h */,
 				AF46E9E71CBBA3F900240FBC /* unicrud.c */,
 				AFDA65A4178A541A0070D24B /* unknownpleasures.c */,
+				AF633C191EE0BC4A00AB33BD /* vigilance.c */,
+				AF633C201EE0BDCD00AB33BD /* seccam.c */,
 				AF0DCA5F0C4CBB7300D76972 /* voronoi.c */,
 				AF0839AD09930C4900277BE9 /* whale.c */,
 				AF39E2A1198A13F50064A58D /* winduprobot.c */,
@@ -12778,6 +12858,7 @@
 				AFC2592A0988A469000655EE /* vines.xml */,
 				AF46E9E61CBBA3F900240FBC /* unicrud.xml */,
 				AFDA65A3178A541A0070D24B /* unknownpleasures.xml */,
+				AF633C181EE0BC4900AB33BD /* vigilance.xml */,
 				AF0DCA610C4CBB8E00D76972 /* voronoi.xml */,
 				AFC2592B0988A469000655EE /* wander.xml */,
 				AFC2592C0988A469000655EE /* webcollage.xml */,
@@ -12830,6 +12911,8 @@
 				AFA55865099324D800F3E977 /* minixpm.h */,
 				AFA55A93099336D800F3E977 /* normals.c */,
 				AFA55A94099336D800F3E977 /* normals.h */,
+				55374E301E1582AA005E2362 /* pow2.c */,
+				55374E311E1582AA005E2362 /* pow2.h */,
 				AF4775BE099D9E79001F091E /* resources.c */,
 				AF4775BF099D9E79001F091E /* resources.h */,
 				AF480EB7098F646400FB32B8 /* rotator.c */,
@@ -12868,6 +12951,8 @@
 				AF975C92099C929800B05160 /* xpm-pixmap.h */,
 				AF0839AE09930C4900277BE9 /* xpm-ximage.c */,
 				AF0839AF09930C4900277BE9 /* xpm-ximage.h */,
+				5501D1941DBDCC0200624BE9 /* xshm.c */,
+				5501D1951DBDCC0200624BE9 /* xshm.h */,
 				AFE1FD5B0981E3CB00F7970E /* yarandom.c */,
 				AFE1FD5C0981E3CB00F7970E /* yarandom.h */,
 			);
@@ -12893,6 +12978,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55374E331E1582D2005E2362 /* pow2.h in Headers */,
 				AFA55867099324D800F3E977 /* minixpm.h in Headers */,
 				AFA55A540993353500F3E977 /* gllist.h in Headers */,
 				AFA55A96099336D800F3E977 /* normals.h in Headers */,
@@ -14423,6 +14509,26 @@
 			name = Cityflow;
 			productName = DangerBall;
 			productReference = AF5C9B0D1A0CCE6E00B0147A /* Cityflow.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF633C011EE0BA6F00AB33BD /* Vigilance */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF633C131EE0BA6F00AB33BD /* Build configuration list for PBXNativeTarget "Vigilance" */;
+			buildPhases = (
+				AF633C041EE0BA6F00AB33BD /* Resources */,
+				AF633C061EE0BA6F00AB33BD /* Sources */,
+				AF633C091EE0BA6F00AB33BD /* Frameworks */,
+				AF633C111EE0BA6F00AB33BD /* Rez */,
+				AF633C121EE0BA6F00AB33BD /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF633C021EE0BA6F00AB33BD /* PBXTargetDependency */,
+			);
+			name = Vigilance;
+			productName = DangerBall;
+			productReference = AF633C161EE0BA6F00AB33BD /* Vigilance.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF63A7F11AB4EDDB00593C75 /* RomanBoy */ = {
@@ -18038,7 +18144,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0800;
+				LastUpgradeCheck = 0830;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -18278,6 +18384,9 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF5C9AF91A0CCE6E00B0147A = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AF633C011EE0BA6F00AB33BD = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF63A7F11AB4EDDB00593C75 = {
@@ -19081,6 +19190,7 @@
 				AF3581FB143330F900E09C51 /* TronBit */,
 				AF46E9CF1CBBA2B300240FBC /* Unicrud */,
 				AFDA658E178A52B70070D24B /* Unknown Pleasures */,
+				AF633C011EE0BA6F00AB33BD /* Vigilance */,
 				AF0DCA420C4CBB0D00D76972 /* Voronoi */,
 				AF39E282198A11F60064A58D /* WindupRobot */,
 				AF137D410F075C9B004DE3B2 /* Obsolete */,
@@ -19710,6 +19820,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF633C041EE0BA6F00AB33BD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF633C1B1EE0BC5A00AB33BD /* vigilance.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF63A7F41AB4EDDB00593C75 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -20018,6 +20136,12 @@
 				AFEC68371BD6CA85004C1B64 /* OCRAStd.otf in Resources */,
 				AFC43E741C68364B00C89999 /* PxPlus_IBM_VGA8.ttf in Resources */,
 				AFEC68391BD6CDF9004C1B64 /* YearlReg.ttf in Resources */,
+				AF142BAE1EE75DBF0005C0A8 /* settings.png in Resources */,
+				557BF07E1EE90D3B00846DCE /* settings@2x.png in Resources */,
+				557BF07F1EE90D3B00846DCE /* settings@3x.png in Resources */,
+				AF142BAF1EE75DBF0005C0A8 /* stop.png in Resources */,
+				557BF0801EE90D3B00846DCE /* stop@2x.png in Resources */,
+				557BF0811EE90D3B00846DCE /* stop@3x.png in Resources */,
 				AF918AB4158FC53D002B5D1E /* abstractile.xml in Resources */,
 				AF918AB5158FC53D002B5D1E /* anemone.xml in Resources */,
 				AF918AB6158FC53D002B5D1E /* anemotaxis.xml in Resources */,
@@ -20219,9 +20343,10 @@
 				AF918B7D158FC53E002B5D1E /* tronbit.xml in Resources */,
 				AF918B7E158FC53E002B5D1E /* truchet.xml in Resources */,
 				AF918B7F158FC53E002B5D1E /* twang.xml in Resources */,
-				AF918B80158FC53E002B5D1E /* vermiculate.xml in Resources */,
 				AF46E9EA1CBBA42F00240FBC /* unicrud.xml in Resources */,
 				AFDA65A6178A541A0070D24B /* unknownpleasures.xml in Resources */,
+				AF918B80158FC53E002B5D1E /* vermiculate.xml in Resources */,
+				AF633C1A1EE0BC5500AB33BD /* vigilance.xml in Resources */,
 				AF918B83158FC53E002B5D1E /* voronoi.xml in Resources */,
 				AF918B84158FC53E002B5D1E /* wander.xml in Resources */,
 				AF918B86158FC53E002B5D1E /* whirlwindwarp.xml in Resources */,
@@ -21918,6 +22043,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF633C111EE0BA6F00AB33BD /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF63A8011AB4EDDB00593C75 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -23404,6 +23536,21 @@
 			showEnvVarsInLog = 0;
 		};
 		AF5C9B091A0CCE6E00B0147A /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF633C121EE0BA6F00AB33BD /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -27608,7 +27755,9 @@
 				AF4808C7098C3BE600FB32B8 /* hsv.c in Sources */,
 				AFBF893E0E41D930006A2D66 /* fps.c in Sources */,
 				AFBF89AF0E423FC3006A2D66 /* fps-gl.c in Sources */,
+				5501D1961DBDCC3D00624BE9 /* xshm.c in Sources */,
 				AF4808C8098C3BE800FB32B8 /* InvertedSlider.m in Sources */,
+				AF633C211EE0BDCD00AB33BD /* seccam.c in Sources */,
 				AF4808C9098C3BEC00FB32B8 /* jwxyz.m in Sources */,
 				AF4808CA098C3BEE00FB32B8 /* PrefsReader.m in Sources */,
 				AFDA11251934424D003D397F /* aligned_malloc.c in Sources */,
@@ -27648,6 +27797,7 @@
 				AFC75930158D9A7A00C5458E /* textclient-ios.m in Sources */,
 				AF561DF615969BC3007CA5ED /* grabclient-ios.m in Sources */,
 				CE9289D319BD00E300961F22 /* async_netdb.c in Sources */,
+				55374E321E1582C6005E2362 /* pow2.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -27746,6 +27896,16 @@
 			files = (
 				AF5C9B131A0CCF4E00B0147A /* cityflow.c in Sources */,
 				AF5C9B001A0CCE6E00B0147A /* XScreenSaverSubclass.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF633C061EE0BA6F00AB33BD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF633C1D1EE0BCA700AB33BD /* vigilance.c in Sources */,
+				AF633C081EE0BA6F00AB33BD /* XScreenSaverSubclass.m in Sources */,
+				AF633C221EE0BDCD00AB33BD /* seccam.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -28330,6 +28490,7 @@
 				AF918A8D158FC417002B5D1E /* s1_6.c in Sources */,
 				AF918A8E158FC417002B5D1E /* s1_b.c in Sources */,
 				AF918A8F158FC417002B5D1E /* sballs.c in Sources */,
+				AF633C231EE0BDCD00AB33BD /* seccam.c in Sources */,
 				AF918A90158FC417002B5D1E /* shark.c in Sources */,
 				AF918A91158FC417002B5D1E /* sierpinski3d.c in Sources */,
 				AF918A92158FC417002B5D1E /* skytentacles.c in Sources */,
@@ -28374,6 +28535,7 @@
 				AF918AB1158FC47B002B5D1E /* tunnel_draw.c in Sources */,
 				AF46E9EB1CBBA43B00240FBC /* unicrud.c in Sources */,
 				AFDA65A8178A541A0070D24B /* unknownpleasures.c in Sources */,
+				AF633C1C1EE0BCA100AB33BD /* vigilance.c in Sources */,
 				AF918AB2158FC47B002B5D1E /* voronoi.c in Sources */,
 				AF918AB3158FC47B002B5D1E /* whale.c in Sources */,
 				AF39E2B8198A15EE0064A58D /* winduprobot.c in Sources */,
@@ -30319,6 +30481,16 @@
 			isa = PBXTargetDependency;
 			target = AF5C9AF91A0CCE6E00B0147A /* Cityflow */;
 			targetProxy = AF5C9B151A0CCF8000B0147A /* PBXContainerItemProxy */;
+		};
+		AF633C021EE0BA6F00AB33BD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF633C031EE0BA6F00AB33BD /* PBXContainerItemProxy */;
+		};
+		AF633C1F1EE0BCD300AB33BD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF633C011EE0BA6F00AB33BD /* Vigilance */;
+			targetProxy = AF633C1E1EE0BCD300AB33BD /* PBXContainerItemProxy */;
 		};
 		AF63A7F21AB4EDDB00593C75 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -33507,6 +33679,28 @@
 			};
 			name = Release;
 		};
+		AF633C141EE0BA6F00AB33BD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF633C151EE0BA6F00AB33BD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		AF63A8041AB4EDDB00593C75 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -33537,6 +33731,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.apple2";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"APPLE2_ONLY=1",
@@ -33561,6 +33756,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.apple2";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"APPLE2_ONLY=1",
@@ -33585,6 +33781,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.phosphor";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"PHOSPHOR_ONLY=1",
@@ -33609,6 +33806,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.phosphor";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"PHOSPHOR_ONLY=1",
@@ -33633,6 +33831,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.testX11";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"TESTX11_ONLY=1",
@@ -33657,6 +33856,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.testX11";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"TESTX11_ONLY=1",
@@ -34157,6 +34357,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"$(inherited)",
@@ -34180,6 +34381,7 @@
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"$(inherited)",
@@ -34650,12 +34852,14 @@
 		AFA3393E0B058505002B0E7D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COPY_PHASE_STRIP = NO;
 			};
 			name = Debug;
 		};
 		AFA3393F0B058505002B0E7D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COPY_PHASE_STRIP = NO;
 			};
 			name = Release;
 		};
@@ -35814,6 +36018,7 @@
 		AFBFE75C178642DC00432B21 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = SaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				"OTHER_CFLAGS[sdk=macosx*]" = "";
@@ -35825,6 +36030,7 @@
 		AFBFE75D178642DC00432B21 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = SaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				"OTHER_CFLAGS[sdk=macosx*]" = "";
@@ -35836,6 +36042,7 @@
 		AFBFE77C178647FE00432B21 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = SaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				"OTHER_CFLAGS[sdk=macosx*]" = "";
@@ -35847,6 +36054,7 @@
 		AFBFE77D178647FE00432B21 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = SaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				"OTHER_CFLAGS[sdk=macosx*]" = "";
@@ -36608,13 +36816,24 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = NO;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4627ATJELP;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = xscreensaver_Prefix.pch;
@@ -36650,8 +36869,8 @@
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
 				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
 				GCC_WARN_MISSING_PARENTHESES = YES;
-				GCC_WARN_SHADOW = NO;
 				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
@@ -36666,7 +36885,7 @@
 				);
 				INFOPLIST_FILE = XScreenSaver.plist;
 				INSTALL_PATH = "$(HOME)/Library/Screen Savers";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LIBRARY_SEARCH_PATHS = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
@@ -36691,13 +36910,24 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = NO;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jamie Zawinski (4627ATJELP)";
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "iPhone Distribution: Jamie Zawinski (4627ATJELP)";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application: Jamie Zawinski (4627ATJELP)";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4627ATJELP;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = xscreensaver_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -36731,8 +36961,8 @@
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
 				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
 				GCC_WARN_MISSING_PARENTHESES = YES;
-				GCC_WARN_SHADOW = NO;
 				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
@@ -36747,7 +36977,7 @@
 				);
 				INFOPLIST_FILE = XScreenSaver.plist;
 				INSTALL_PATH = "$(HOME)/Library/Screen Savers";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LIBRARY_SEARCH_PATHS = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				LLVM_LTO = NO;
 				"LLVM_LTO[sdk=macosx*]" = NO;
@@ -37498,6 +37728,15 @@
 			buildConfigurations = (
 				AF5C9B0B1A0CCE6E00B0147A /* Debug */,
 				AF5C9B0C1A0CCE6E00B0147A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF633C131EE0BA6F00AB33BD /* Build configuration list for PBXNativeTarget "Vigilance" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF633C141EE0BA6F00AB33BD /* Debug */,
+				AF633C151EE0BA6F00AB33BD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

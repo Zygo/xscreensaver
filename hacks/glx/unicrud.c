@@ -1,4 +1,4 @@
-/* unicrud, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+/* unicrud, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -33,6 +33,7 @@
 #define DEF_WANDER      "True"
 #define DEF_SPEED       "1.0"
 #define DEF_BLOCK       "ALL"
+#define DEF_TITLES      "True"
 
 typedef struct {
   GLXContext *glx_context;
@@ -56,6 +57,7 @@ static Bool do_spin;
 static GLfloat speed;
 static Bool do_wander;
 static char *do_block;
+static Bool do_titles;
 
 static XrmOptionDescRec opts[] = {
   { "-spin",   ".spin",   XrmoptionNoArg, "True" },
@@ -64,6 +66,8 @@ static XrmOptionDescRec opts[] = {
   { "+wander", ".wander", XrmoptionNoArg, "False" },
   { "-speed",  ".speed",  XrmoptionSepArg, 0 },
   { "-block",  ".block",  XrmoptionSepArg, 0 },
+  { "-titles", ".titles", XrmoptionNoArg, "True"  },
+  { "+titles", ".titles", XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {
@@ -71,6 +75,7 @@ static argtype vars[] = {
   {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
   {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
   {&do_block,  "block",  "Block",  DEF_BLOCK,  t_String},
+  {&do_titles, "titles", "Titles", DEF_TITLES, t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt unicrud_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -529,10 +534,10 @@ static const struct {
 };
 
 
-static char 
-*strip (char *s)
+static char *
+strip (char *s)
 {
-  int L;
+  unsigned long L;
   while (*s == ' ' || *s == '\t' || *s == '\n')
     s++;
   L = strlen (s);
@@ -625,7 +630,6 @@ pick_unichar (ModeInfo *mi)
   {
     XCharStruct e;
     char text[10];
-    int i;
     i = utf8_encode (bp->unichar, text, sizeof(text) - 1);
     text[i] = 0;
     texture_string_metrics (bp->char_font, text, &e, 0, 0);
@@ -685,9 +689,10 @@ draw_unichar (ModeInfo *mi)
   print_texture_string (bp->char_font, text);
 
   glColor3f (1, 1, 0);
-  print_texture_label (mi->dpy, bp->title_font,
-                       mi->xgwa.width, mi->xgwa.height,
-                       1, title);
+  if (do_titles)
+    print_texture_label (mi->dpy, bp->title_font,
+                         mi->xgwa.width, mi->xgwa.height,
+                         1, title);
 }
 
 
@@ -752,14 +757,7 @@ init_unicrud (ModeInfo *mi)
 {
   unicrud_configuration *bp;
 
-  if (!bps) {
-    bps = (unicrud_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (unicrud_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

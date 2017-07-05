@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2016 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2017 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.46 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.47 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -445,6 +445,9 @@ sub update($) {
                             "CFBundleLongVersionString",$copyright);
     $plist = set_plist_key ($filename, $plist,
                             "CFBundleGetInfoString",    $info_str);
+    $plist = set_plist_key ($filename, $plist,
+                            "CFBundleIdentifier",
+                            "org.jwz.xscreensaver." . $app_name);
 
     if ($oplist eq $plist) {
       print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);

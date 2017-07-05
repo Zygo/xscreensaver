@@ -2481,17 +2481,7 @@ init_juggle (ModeInfo * mi)
   jugglestruct *sp = 0;
   int i;
 
-  if (juggles == NULL) { /* First-time initialisation */
-
-	/* allocate jugglestruct */
-	if ((juggles =
-		 (jugglestruct *)calloc(MI_NUM_SCREENS(mi),
-								sizeof (jugglestruct))) == NULL) {
-	  release_juggle(mi);
-	  return;
-	}
-  }
-
+  MI_INIT (mi, juggles, 0);
   sp = &juggles[MI_SCREEN(mi)];
 
   if (only && *only && strcmp(only, " ")) {

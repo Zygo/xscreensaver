@@ -26,32 +26,35 @@ import android.os.Bundle;
 import android.view.View;
 import android.provider.Settings;
 
-public class XScreenSaverActivity extends Activity {
+public class XScreenSaverActivity extends Activity
+  implements View.OnClickListener {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    openList();
+    // openList();
     setContentView(R.layout.activity_xscreensaver);
 
-    findViewById(R.id.apply_wallpaper)
-      .setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-              openList();
-          }
-      });
-
+    findViewById(R.id.apply_wallpaper).setOnClickListener(this);
+    findViewById(R.id.apply_daydream).setOnClickListener(this);
   }
 
-  private void openList() {
-    Intent intent;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-        intent = new Intent(Settings.ACTION_DREAM_SETTINGS);
-    } else {
-        intent = new Intent(Settings.ACTION_DISPLAY_SETTINGS);
+  @Override
+  public void onClick(View v) {
+    switch (v.getId()) {
+    case R.id.apply_wallpaper:
+      startActivity(new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER));
+      break;
+
+    case R.id.apply_daydream:
+      String action;
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+        action = Settings.ACTION_DREAM_SETTINGS;
+      } else {
+        action = Settings.ACTION_DISPLAY_SETTINGS;
+      }
+      startActivity(new Intent(action));
+      break;
     }
-    startActivity(intent);
   }
-
 }

@@ -35,6 +35,7 @@ static const char sccsid[] = "@(#)slip.c	5.00 2000/11/01 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define refresh_slip 0
+# define release_slip 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -47,7 +48,7 @@ ENTRYPOINT ModeSpecOpt slip_opts =
 
 #ifdef USE_MODULES
 ModStruct   slip_description =
-{"slip", "init_slip", "draw_slip", "release_slip",
+{"slip", "init_slip", "draw_slip", (char *) NULL,
  "init_slip", "init_slip", (char *) NULL, &slip_opts,
  50000, 35, 50, 1, 64, 1.0, "",
  "Shows slipping blits", 0, NULL};
@@ -210,11 +211,7 @@ init_slip (ModeInfo * mi)
 {
 	slipstruct *sp;
 
-	if (slips == NULL) {
-		if ((slips = (slipstruct *) calloc(MI_NUM_SCREENS(mi),
-					       sizeof (slipstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, slips, 0);
 	sp = &slips[MI_SCREEN(mi)];
 
 	sp->nblits_remaining = 0;
@@ -350,15 +347,6 @@ X Error of failed request:  BadDrawable (invalid Pixmap or Window parameter)
 					break;
 			}
 		}
-	}
-}
-
-ENTRYPOINT void
-release_slip (ModeInfo * mi)
-{
-	if (slips != NULL) {
-		(void) free((void *) slips);
-		slips = (slipstruct *) NULL;
 	}
 }
 

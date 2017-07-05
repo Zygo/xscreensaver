@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 2001, 2006
- *  by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +20,7 @@
    needed, anyway.)
 
    If you don't have man pages for this extension, see
-   http://www.x.org/X11R6.8.1/docs/Xext/
+   https://www.x.org/releases/current/doc/xextproto/shm.html
 
    (This document seems not to ever remain available on the web in one place
    for very long; you can search for it by the title, "MIT-SHM -- The MIT
@@ -32,15 +31,19 @@
 
 #include "utils.h"
 
-#ifdef HAVE_XSHM_EXTENSION	/* whole file */
-
 /* #define DEBUG */
 
 #include <errno.h>		/* for perror() */
-#include <X11/Xutil.h>		/* for XDestroyImage() */
+
+#ifdef HAVE_JWXYZ
+# include "jwxyz.h"
+#else
+# include <X11/Xutil.h>		/* for XDestroyImage() */
+#endif
 
 #include "xshm.h"
 #include "resources.h"		/* for get_string_resource() */
+#include "thread_util.h"        /* for thread_malloc() */
 
 #ifdef DEBUG
 # include <X11/Xmu/Error.h>
@@ -55,6 +58,8 @@ extern char *progname;
    throws a BadAccess error.  So, we need to catch X errors around all
    of our XSHM calls, sigh.
  */
+
+#ifdef HAVE_XSHM_EXTENSION
 
 static Bool shm_got_x_error = False;
 XErrorHandler old_handler = 0;
@@ -87,28 +92,73 @@ shm_ehandler (Display *dpy, XErrorEvent *error)
     old_handler = 0;					\
 } while(0)
 
+#endif /* HAVE_XSHM_EXTENSION */
+
+
+static void
+print_error (int err)
+{
+  fprintf(stderr, "%s: %s\n", progname, strerror(err));
+}
+
+static XImage *
+create_fallback (Display *dpy, Visual *visual,
+                 unsigned int depth,
+                 int format, XShmSegmentInfo *shm_info,
+                 unsigned int width, unsigned int height)
+{
+  XImage *image = XCreateImage (dpy, visual, depth, format, 0, NULL,
+                                width, height, BitmapPad(dpy), 0);
+  shm_info->shmid = -1;
+
+  if (!image) {
+    print_error (ENOMEM);
+  } else {
+    /* Sometimes the XImage data needs to be aligned, such as for SIMD (SSE2
+       in Fireworkx), or multithreading (AnalogTV).
+     */
+    int error = thread_malloc ((void **)&image->data, dpy,
+                               image->height * image->bytes_per_line);
+    if (error) {
+      print_error (error);
+      XDestroyImage (image);
+      image = NULL;
+    } else {
+      memset (image->data, 0, image->height * image->bytes_per_line);
+    }
+  }
+
+  return image;
+}
+
 
 XImage *
 create_xshm_image (Display *dpy, Visual *visual,
 		   unsigned int depth,
-		   int format, char *data,
-		   XShmSegmentInfo *shm_info,
+		   int format, XShmSegmentInfo *shm_info,
 		   unsigned int width, unsigned int height)
 {
+#ifndef HAVE_XSHM_EXTENSION
+
+  return create_fallback (dpy, visual, depth, format, shm_info, width, height);
+
+#else /* HAVE_XSHM_EXTENSION */
+
   Status status;
   XImage *image = 0;
-  if (!get_boolean_resource(dpy, "useSHM", "Boolean"))
-    return 0;
-
-  if (!XShmQueryExtension (dpy))
-    return 0;
+  if (!get_boolean_resource(dpy, "useSHM", "Boolean") ||
+      !XShmQueryExtension (dpy)) {
+    return create_fallback (dpy, visual, depth, format, shm_info,
+                            width, height);
+  }
 
   CATCH_X_ERROR(dpy);
   image = XShmCreateImage(dpy, visual, depth,
-			  format, data, shm_info, width, height);
+                          format, NULL, shm_info, width, height);
   UNCATCH_X_ERROR(dpy);
   if (shm_got_x_error)
-    return 0;
+    return create_fallback (dpy, visual, depth, format, shm_info,
+                            width, height);
 
 #ifdef DEBUG
   fprintf(stderr, "\n%s: XShmCreateImage(... %d, %d)\n", progname,
@@ -184,13 +234,75 @@ create_xshm_image (Display *dpy, Visual *visual,
 #endif
     }
 
+  if (!image) {
+    return create_fallback (dpy, visual, depth, format, shm_info,
+                            width, height);
+  }
+
   return image;
+
+#endif /* HAVE_XSHM_EXTENSION */
+}
+
+
+Bool
+put_xshm_image (Display *dpy, Drawable d, GC gc, XImage *image,
+                int src_x, int src_y, int dest_x, int dest_y,
+                unsigned int width, unsigned int height,
+                XShmSegmentInfo *shm_info)
+{
+#ifdef HAVE_XSHM_EXTENSION
+  assert (shm_info); /* Don't just s/XShmPutImage/put_xshm_image/. */
+  if (shm_info->shmid != -1) {
+    /* XShmPutImage is asynchronous; the contents of the XImage must not be
+       modified until the server has placed the pixels on the screen and the
+       client has received an XShmCompletionEvent. Breaking this rule can cause
+       tearing. That said, put_xshm_image doesn't provide a send_event
+       parameter, so we're always breaking this rule. Not that it seems to
+       matter; everything (so far) looks fine without it.
+
+       ####: Add a send_event parameter. And fake it for XPutImage.
+     */
+    return XShmPutImage (dpy, d, gc, image, src_x, src_y, dest_x, dest_y,
+                         width, height, False);
+  }
+#endif /* HAVE_XSHM_EXTENSION */
+
+  return XPutImage (dpy, d, gc, image, src_x, src_y, dest_x, dest_y,
+                    width, height);
+}
+
+
+Bool
+get_xshm_image (Display *dpy, Drawable d, XImage *image, int x, int y,
+                unsigned long plane_mask, XShmSegmentInfo *shm_info)
+{
+#ifdef HAVE_XSHM_EXTENSION
+  if (shm_info->shmid != -1) {
+    return XShmGetImage (dpy, d, image, x, y, plane_mask);
+  }
+#endif /* HAVE_XSHM_EXTENSION */
+  return XGetSubImage (dpy, d, x, y, image->width, image->height, plane_mask,
+                       image->format, image, 0, 0) != NULL;
 }
 
 
 void
 destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
 {
+#ifdef HAVE_XSHM_EXTENSION
+  if (shm_info->shmid == -1) {
+#endif /* HAVE_XSHM_EXTENSION */
+
+    /* Don't let XDestroyImage free image->data. */
+    thread_free (image->data);
+    image->data = NULL;
+    XDestroyImage (image);
+    return;
+
+#ifdef HAVE_XSHM_EXTENSION
+  }
+
   Status status;
 
   CATCH_X_ERROR(dpy);
@@ -223,7 +335,6 @@ destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
 #endif
 
   XSync(dpy, False);
-}
-
 
 #endif /* HAVE_XSHM_EXTENSION */
+}

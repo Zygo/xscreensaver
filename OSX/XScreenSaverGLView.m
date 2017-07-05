@@ -121,7 +121,7 @@ extern void check_gl_error (const char *type);
   BOOL was_initted_p = initted_p;
   [super render_x11];
 
-  if (! was_initted_p)
+  if (! was_initted_p && xdpy)
     _suppressRotationAnimation =
       get_boolean_resource (xdpy,
                             "suppressRotationAnimation",
@@ -262,6 +262,31 @@ extern void check_gl_error (const char *type);
   return kCAGravityCenter;
 }
 
+- (void) startAnimation
+{
+  [super startAnimation];
+  if (ogl_ctx) /* Almost always true. */
+    _glesState = jwzgles_make_state ();
+}
+
+- (void) stopAnimation
+{
+  [super stopAnimation];
+#ifdef USE_IPHONE
+  if (_glesState) {
+    [EAGLContext setCurrentContext:ogl_ctx];
+    jwzgles_make_current (_glesState);
+    jwzgles_free_state ();
+  }
+#endif
+}
+
+- (void) prepareContext
+{
+  [super prepareContext];
+  jwzgles_make_current (_glesState);
+}
+
 #endif // !USE_IPHONE
 
 
@@ -306,10 +331,6 @@ init_GL (ModeInfo *mi)
              @"wrong view class: %@", view);
 
   // OpenGL initialization is in [XScreenSaverView startAnimation].
-
-# ifdef USE_IPHONE
-  jwzgles_reset ();
-# endif // USE_IPHONE
 
   // I don't know why this is necessary, but it beats randomly having some
   // textures be upside down.

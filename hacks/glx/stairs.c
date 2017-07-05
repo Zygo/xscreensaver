@@ -60,6 +60,7 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 							"*showFPS:      False   \n"
 
 # define refresh_stairs 0
+# define release_stairs 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"			/* from the xlockmore distribution */
@@ -83,7 +84,7 @@ ENTRYPOINT ModeSpecOpt stairs_opts =
 
 #ifdef USE_MODULES
 ModStruct   stairs_description =
-{"stairs", "init_stairs", "draw_stairs", "release_stairs",
+{"stairs", "init_stairs", "draw_stairs", NULL,
  "draw_stairs", "change_stairs", NULL, &stairs_opts,
  1000, 1, 1, 1, 4, 1.0, "",
  "Shows Infinite Stairs, an Escher-like scene", 0, NULL};
@@ -354,7 +355,7 @@ stairs_handle_event (ModeInfo *mi, XEvent *event)
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
       if (c == ' ' || c == '\t')
         {
-          gltrackball_reset (sp->trackball);
+          gltrackball_reset (sp->trackball, 0, 0);
           return True;
         }
     }
@@ -431,17 +432,15 @@ pinit(ModeInfo *mi)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 }
 
+static void free_stairs (ModeInfo * mi);
+
 ENTRYPOINT void
 init_stairs (ModeInfo * mi)
 {
 	int         screen = MI_SCREEN(mi);
 	stairsstruct *sp;
 
-	if (stairs == NULL) {
-		if ((stairs = (stairsstruct *) calloc(MI_NUM_SCREENS(mi),
-					     sizeof (stairsstruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, stairs, free_stairs);
 	sp = &stairs[screen];
 
 	sp->step = 0.0;
@@ -578,21 +577,13 @@ change_stairs (ModeInfo * mi)
 }
 #endif /* !STANDALONE */
 
-ENTRYPOINT void
-release_stairs (ModeInfo * mi)
+static void
+free_stairs (ModeInfo * mi)
 {
-	if (stairs != NULL) {
-      int i;
-      for (i = 0; i < MI_NUM_SCREENS(mi); i++) {
-        stairsstruct *sp = &stairs[i];
-        if (glIsList(sp->objects)) {
-          glDeleteLists(sp->objects, 1);
-        }
-      }
-      free(stairs);
-      stairs = NULL;
+	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
+	if (glIsList(sp->objects)) {
+		glDeleteLists(sp->objects, 1);
 	}
-	FreeAllGL(mi);
 }
 
 XSCREENSAVER_MODULE ("Stairs", stairs)

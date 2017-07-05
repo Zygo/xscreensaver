@@ -29,6 +29,7 @@
 				 "*wireframe: False\n"
 				 
 # define refresh_glhanoi 0
+# define release_glhanoi 0
 
 /* polygon resolution of poles and disks */
 #define NSLICE 32
@@ -235,7 +236,7 @@ ENTRYPOINT ModeSpecOpt glhanoi_opts = { countof(opts), opts, countof(vars), vars
 #ifdef USE_MODULES
 
 ModStruct glhanoi_description = {
-	"glhanoi", "init_glhanoi", "draw_glhanoi", "release_glhanoi",
+	"glhanoi", "init_glhanoi", "draw_glhanoi", NULL,
 	"draw_glhanoi", "init_glhanoi", NULL, &glhanoi_opts,
 	1000, 1, 2, 1, 4, 1.0, "",
 	"Towers of Hanoi", 0, NULL
@@ -1845,6 +1846,9 @@ static int drawTrails(glhcfg *glhanoi) {
  */
 ENTRYPOINT void reshape_glhanoi(ModeInfo * mi, int width, int height)
 {
+	glhcfg *glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glhanoi->glx_context));
+
 	glViewport(0, 0, (GLint) width, (GLint) height);
 
 	glMatrixMode(GL_PROJECTION);
@@ -1858,14 +1862,12 @@ ENTRYPOINT void reshape_glhanoi(ModeInfo * mi, int width, int height)
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
+static void free_glhanoi(ModeInfo * mi);
+
 ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 {
 	glhcfg *glhanoi;
-	if(!glhanoi_cfg) {
-		glhanoi_cfg =
-			(glhcfg *) calloc(MI_NUM_SCREENS(mi), sizeof(glhcfg));
-		checkAllocAndExit(!!glhanoi_cfg, "configuration");
-	}
+	MI_INIT(mi, glhanoi_cfg, free_glhanoi);
 
 	glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 	glhanoi->glx_context = init_GL(mi);
@@ -2050,31 +2052,27 @@ ENTRYPOINT Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
 	return False;
 }
 
-ENTRYPOINT void release_glhanoi(ModeInfo * mi)
+static void free_glhanoi(ModeInfo * mi)
 {
-	if(glhanoi_cfg != NULL) {
-		int screen;
-		for(screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			int i;
-			int j;
-			glhcfg *glh = &glhanoi_cfg[screen];
-			glDeleteLists(glh->floorList, 1);
-			glDeleteLists(glh->baseList, 1);
-			glDeleteLists(glh->poleList, 1);
-                        glDeleteLists(glh->textureNames[0], 2);
-			for(j = 0; j < glh->numberOfDisks; ++j) {
-				glDeleteLists(glh->disk[j].displayList, 1);
-			}
-			free(glh->disk);
-			for(i = 0; i < glh->numberOfPoles; i++) {
-				if(glh->pole[i].data != NULL) {
-					free(glh->pole[i].data);
-				}
+	int i;
+	int j;
+	glhcfg *glh = &glhanoi_cfg[MI_SCREEN(mi)];
+	if (glh->glx_context) {
+		glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glh->glx_context));
+		glDeleteLists(glh->floorList, 1);
+		glDeleteLists(glh->baseList, 1);
+		glDeleteLists(glh->poleList, 1);
+                glDeleteLists(glh->textureNames[0], 2);
+		for(j = 0; j < glh->numberOfDisks; ++j) {
+			glDeleteLists(glh->disk[j].displayList, 1);
+		}
+		free(glh->disk);
+		for(i = 0; i < glh->numberOfPoles; i++) {
+			if(glh->pole[i].data != NULL) {
+				free(glh->pole[i].data);
 			}
 		}
 	}
-	free(glhanoi_cfg);
-	glhanoi_cfg = NULL;
 }
 
 XSCREENSAVER_MODULE ("GLHanoi", glhanoi)

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2015 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2016 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -53,11 +53,10 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 use POSIX qw(strftime);
 use LWP::UserAgent;
-use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.173 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.176 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2015" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
@@ -75,14 +74,16 @@ my @search_methods = (
 
                       # So let's try Bing instead. No rate limiting yet!
                       #
-                        7, "bingphotos",    \&pick_from_bing_image_photos,
-                        6, "bingimgs",      \&pick_from_bing_images,
-                        6, "bingnums",      \&pick_from_bing_image_numbers,
+                       14, "bingphotos",    \&pick_from_bing_image_photos,
+                       12, "bingimgs",      \&pick_from_bing_images,
+                       11, "bingnums",      \&pick_from_bing_image_numbers,
 
                        21, "flickr_recent", \&pick_from_flickr_recent,
                        16, "flickr_random", \&pick_from_flickr_random,
-                       23, "instagram",     \&pick_from_instagram,
-                        4, "livejournal",   \&pick_from_livejournal_images,
+                        9, "livejournal",   \&pick_from_livejournal_images,
+
+                     # I ran out of usable access tokens, May 2017
+                     # 23, "instagram",     \&pick_from_instagram,
 
                      # No longer exists, as of Apr 2014
                      #  4, "yahoorand",     \&pick_from_yahoo_random_link,
@@ -245,6 +246,7 @@ my %warningless_sites = (
   "imgur.com"               => 1,
   "yfrog.com"               => 1,
   "cdninstagram.com"        => 1,
+  "encrypted-tbn3.gstatic.com" => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -988,26 +990,6 @@ sub pick_from_search_engine($$$) {
 
   my @subpages;
 
-  if ($body =~ m/^\{\"/s) {			# Google AJAX JSON response.
-
-    my @chunks = split (/"GsearchResultClass"/, $body);
-    shift @chunks;
-    my $body2 = '';
-    my $n = 1;
-    foreach (@chunks) {
-      my ($img) = m/"unescapedUrl":"(.*?)"/si;
-      my ($url) = m/"originalContextUrl":"(.*?)"/si;
-      next unless ($img && $url);
-      $url = ("/imgres" .
-              "?imgurl="    . url_quote($img) .
-              "&imgrefurl=" . url_quote($url) .
-              "&...");
-      $body2 .= "<A HREF=\"" . html_quote($url) . "\">$n</A>\n";
-      $n++;
-    }
-    $body = $body2 if $body2;
-  }
-
   my $search_count = "?";
   if ($body =~ m@found (approximately |about )?(<B>)?(\d+)(</B>)? image@) {
     $search_count = $3;
@@ -1056,14 +1038,18 @@ sub pick_from_search_engine($$$) {
   s/(<A )/\n$1/gi;
   foreach (split(/\n/)) {
     $href_count++;
-    my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
+    my ($u) = m@<A\s.*?\bHREF\s*=\s*([\"\'][^\"\'<>]+)@i;
     next unless $u;
+    my ($u2) = m@<IMG\s.*\bSRC\s*=\s*[\"\']([^\"\'<>]+)@i;
 
     if (m/\bm="\{(.*?)\}"/s) {		# Bing info is inside JSON crud
       my $json = html_unquote($1);
-      my ($href) = ($json =~ m/\bsurl:"(.*?)"/s);
-      my ($img)  = ($json =~ m/\bimgurl:"(.*?)"/s);
+      my ($href) = ($json =~ m/\b(?:surl|purl)\"?:\s*"(.*?)"/s);
+      my ($img)  = ($json =~ m/\b(?:imgurl|murl)\"?:\s*"(.*?)"/s);
       $u = "$img\t$href" if ($img && $href);
+
+    } elsif ($u2 && $u2 =~ m@://[^/]*\.gstatic\.com/@s) { $u = $u2;
+                                                          $u =~ s/^\"|\"$//s;
 
     } elsif ($u =~ m/^\"([^\"]*)\"/) { $u = $1   # quoted string
     } elsif ($u =~ m/^([^\s]*)\s/) { $u = $1;    # or token
@@ -1363,12 +1349,8 @@ sub pick_from_security_camera($) {
 #
 ############################################################################
 
-
-my $google_images_url =     "http://ajax.googleapis.com/ajax/services/" .
-                            "search/images" .
-                            "?v=1.0" .
-                            "&rsz=large" .
-                            "&q=";
+my $google_images_url = 'https://www.google.com/search' .
+			'?source=lnms&tbm=isch&tbs=isz:l&q=';
 
 # googleimgs
 sub pick_from_google_images($;$$) {
@@ -1385,34 +1367,21 @@ sub pick_from_google_images($;$$) {
     pick_from_search_engine ($timeout, $search_url, $words);
 
   my @candidates = ();
-  my %referers;
   foreach my $u (@subpages) {
-    next unless ($u =~ m@imgres\?imgurl@i);    #  All pics start with this
-    next if ($u =~ m@[/.]google\.com\b@i);     # skip google builtins
-
     $u = html_unquote($u);
-    if ($u =~ m@^/imgres\?imgurl=(.*?)&imgrefurl=(.*?)\&@) {
-      my $ref = $2;
-      my $img = $1;
-      $ref = url_decode($ref);
-      $img = url_decode($img);
-
-      $img = "http://$img" unless ($img =~ m/^https?:/i);
-
-      LOG ($verbose_filter, "  candidate: $ref");
-      push @candidates, $img;
-      $referers{$img} = $ref;
-    }
+    # next if ($u =~ m@^https?://[^.]*\.(google|youtube)\.com/@s);
+    next unless ($u =~ m@^https?://[^/]*\.gstatic\.com@s);
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
   }
 
   @candidates = depoison (@candidates);
   return () if ($#candidates < 0);
   my $i = int(rand($#candidates+1));
   my $img = $candidates[$i];
-  my $ref = $referers{$img};
 
-  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
-  return ($ref, $img);
+  LOG ($verbose_load, "picked image " . ($i+1) . ": $img");
+  return ($img, $img);
 }
 
 
@@ -1446,6 +1415,7 @@ sub pick_from_google_image_numbers($) {
 # Google Image Search.
 # By jwz, inspired by the excellent Random Personal Picture Finder
 # at http://www.diddly.com/random/
+# May 2017: Commented out a bunch of formats that have fallen out of favor.
 #
 ############################################################################
 
@@ -1454,32 +1424,32 @@ my @photomakers = (
   # Common digital camera file name formats, as described at
   # http://www.diddly.com/random/about.html
   #
-  sub { sprintf ("dcp%05d.jpg",  int(rand(4000))); },	# Kodak
+# sub { sprintf ("dcp%05d.jpg",  int(rand(4000))); },	# Kodak
   sub { sprintf ("dsc%05d.jpg",  int(rand(4000))); },	# Nikon
   sub { sprintf ("dscn%04d.jpg", int(rand(4000))); },	# Nikon
-  sub { sprintf ("mvc-%03d.jpg", int(rand(999)));  },	# Sony Mavica
-  sub { sprintf ("mvc%05d.jpg",  int(rand(9999))); },	# Sony Mavica
-  sub { sprintf ("P101%04d.jpg", int(rand(9999))); },	# Olympus w/ date=101
-  sub { sprintf ("P%x%02d%04d.jpg",			# Olympus
-                 int(rand(0xC)), int(rand(30))+1,
-                 rand(9999)); },
+# sub { sprintf ("mvc-%03d.jpg", int(rand(999)));  },	# Sony Mavica
+# sub { sprintf ("mvc%05d.jpg",  int(rand(9999))); },	# Sony Mavica
+# sub { sprintf ("P101%04d.jpg", int(rand(9999))); },	# Olympus w/ date=101
+# sub { sprintf ("P%x%02d%04d.jpg",			# Olympus
+#                int(rand(0xC)), int(rand(30))+1,
+#                rand(9999)); },
   sub { sprintf ("IMG_%03d.jpg",  int(rand(999))); },	# ?
-  sub { sprintf ("IMAG%04d.jpg",  int(rand(9999))); },	# RCA and Samsung
-  sub { my $n = int(rand(9999));			# Canon
-          sprintf ("1%02d-%04d.jpg", int($n/100), $n); },
-  sub { my $n = int(rand(9999));			# Canon
-          sprintf ("1%02d-%04d_IMG.jpg",
-                   int($n/100), $n); },
+# sub { sprintf ("IMAG%04d.jpg",  int(rand(9999))); },	# RCA and Samsung
+# sub { my $n = int(rand(9999));			# Canon
+#         sprintf ("1%02d-%04d.jpg", int($n/100), $n); },
+# sub { my $n = int(rand(9999));			# Canon
+#         sprintf ("1%02d-%04d_IMG.jpg",
+#                  int($n/100), $n); },
   sub { sprintf ("IMG_%04d.jpg", int(rand(9999))); },	# Canon
   sub { sprintf ("dscf%04d.jpg", int(rand(9999))); },	# Fuji Finepix
-  sub { sprintf ("pdrm%04d.jpg", int(rand(9999))); },	# Toshiba PDR
-  sub { sprintf ("IM%06d.jpg", int(rand(9999))); },	# HP Photosmart
-  sub { sprintf ("EX%06d.jpg", int(rand(9999))); },	# HP Photosmart
+# sub { sprintf ("pdrm%04d.jpg", int(rand(9999))); },	# Toshiba PDR
+# sub { sprintf ("IM%06d.jpg", int(rand(9999))); },	# HP Photosmart
+# sub { sprintf ("EX%06d.jpg", int(rand(9999))); },	# HP Photosmart
 #  sub { my $n = int(rand(3));				# Kodak DC-40,50,120
 #        sprintf ("DC%04d%s.jpg", int(rand(9999)),
 #                 $n == 0 ? 'S' : $n == 1 ? 'M' : 'L'); },
   sub { sprintf ("pict%04d.jpg", int(rand(9999))); },	# Minolta Dimage
-  sub { sprintf ("P%07d.jpg", int(rand(9999))); },	# Kodak DC290
+# sub { sprintf ("P%07d.jpg", int(rand(9999))); },	# Kodak DC290
 #  sub { sprintf ("%02d%02d%04d.jpg",			# Casio QV3000, QV4000
 #                 int(rand(12))+1, int(rand(31))+1,
 #                 int(rand(999))); },
@@ -1488,9 +1458,9 @@ my @photomakers = (
 #                 int(rand(12))+1, int(rand(31))+1,
 #                 int(rand(999))); },
   sub { sprintf ("IMGP%04d.jpg", int(rand(9999))); },	# Pentax Optio S
-  sub { sprintf ("PANA%04d.jpg", int(rand(9999))); },	# Panasonic vid still
+# sub { sprintf ("PANA%04d.jpg", int(rand(9999))); },	# Panasonic vid still
   sub { sprintf ("HPIM%04d.jpg", int(rand(9999))); },	# HP Photosmart
-  sub { sprintf ("PCDV%04d.jpg", int(rand(9999))); },	# ?
+# sub { sprintf ("PCDV%04d.jpg", int(rand(9999))); },	# ?
  );
 
 
@@ -2283,22 +2253,22 @@ sub pick_from_instagram($) {
   # Liberated access tokens.
   # jsdo.it search for: instagram client_id
   # Google search for: instagram "&client_id=" site:jsfiddle.net
-  my @tokens = ('b59fbe4563944b6c88cced13495c0f49', # gramfeed.com
-                'fa26679250df49c48a33fbcf30aae989', # instac.at
-                'd9494686198d4dfeb954979a3e270e5e', # iconosquare.com
-                '793ef48bb18e4197b61afce2d799b81c', # jsdo.it
-                '67b8a3e0073449bba70600d0fc68e6cb', # jsdo.it
-                '26a098e0df4d4b9ea8b4ce6c505b7742', # jsdo.it
-                '2437cbcd906a4c10940f990d283d3cd5', # jsdo.it
-                '191c7d7d5312464cbd92134f36ffdab5', # jsdo.it
-                'acfec809437b4340b2c38f66503af774', # jsdo.it
-                'e9f77604a3a24beba949c12d18130988', # jsdo.it
-                '2cd7bcf68ae346529770073d311575b3', # jsdo.it
-                '830c600fe8d742e2ab3f3b94f9bb22b7', # jsdo.it
-                '55865a0397ad41e5997dd95ef4df8da1', # jsdo.it
-                '192a5742f3644ea8bed1d25e439286a8', # jsdo.it
-                '38ed1477e7a44595861b8842cdb8ba23', # jsdo.it
-                'e52f79f645f54488ad0cc47f6f55ade6', # jsfiddle.net
+  my @tokens = (#'b59fbe4563944b6c88cced13495c0f49', # gramfeed.com
+                #'fa26679250df49c48a33fbcf30aae989', # instac.at
+                #'d9494686198d4dfeb954979a3e270e5e', # iconosquare.com
+                #'793ef48bb18e4197b61afce2d799b81c', # jsdo.it
+                #'67b8a3e0073449bba70600d0fc68e6cb', # jsdo.it
+                #'26a098e0df4d4b9ea8b4ce6c505b7742', # jsdo.it
+                #'2437cbcd906a4c10940f990d283d3cd5', # jsdo.it
+                #'191c7d7d5312464cbd92134f36ffdab5', # jsdo.it
+                #'acfec809437b4340b2c38f66503af774', # jsdo.it
+                #'e9f77604a3a24beba949c12d18130988', # jsdo.it
+                #'2cd7bcf68ae346529770073d311575b3', # jsdo.it
+                #'830c600fe8d742e2ab3f3b94f9bb22b7', # jsdo.it
+                #'55865a0397ad41e5997dd95ef4df8da1', # jsdo.it
+                #'192a5742f3644ea8bed1d25e439286a8', # jsdo.it
+                #'38ed1477e7a44595861b8842cdb8ba23', # jsdo.it
+                #'e52f79f645f54488ad0cc47f6f55ade6', # jsfiddle.net
                 );
 
   my $tok = $tokens[int(rand($#tokens+1))];
@@ -2475,7 +2445,7 @@ sub get_local_file($) {
   error ("$id: $file not in $local_dir?")
     unless ($file =~ m@^\Q$local_dir@o);
 
-  open (my $in, '<', $file) || error ("$id: $file: $!");
+  open (my $in, '<:raw', $file) || error ("$id: $file: $!");
   local $/ = undef;  # read entire file
   my $body = <$in>;
   close ($in) || error ("$id: $file: $!");
@@ -3292,7 +3262,7 @@ sub x_or_pbm_output($) {
     my ($iw, $ih);
 
     my $body = "";
-    open (my $imgf, '<', $bgimage) || error "couldn't open $bgimage: $!";
+    open (my $imgf, '<:raw', $bgimage) || error "couldn't open $bgimage: $!";
     local $/ = undef;  # read entire file
     $body = <$imgf>;
     close ($imgf);
@@ -3394,7 +3364,7 @@ sub paste_image($$$$) {
       return 0;
     }
 
-    open (my $out, '>', $image_tmp1) || error ("writing $image_tmp1: $!");
+    open (my $out, '>:raw', $image_tmp1) || error ("writing $image_tmp1: $!");
     (print $out $body) || error ("writing $image_tmp1: $!");
     close ($out) || error ("writing $image_tmp1: $!");
 
@@ -3428,7 +3398,7 @@ sub paste_image($$$$) {
     rename ($image_tmp2, $image_tmp1);
 
     # re-get the width/height in case the filter resized it.
-    open (my $imgf, '<', $image_tmp1) || return 0;
+    open (my $imgf, '<:raw', $image_tmp1) || return 0;
     $_ = <$imgf>;
     $_ = <$imgf>;
     ($iw, $ih) = m/^(\d+) (\d+)$/;

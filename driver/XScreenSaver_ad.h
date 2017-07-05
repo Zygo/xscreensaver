@@ -127,7 +127,7 @@
 				compass -root				    \\n\
 				deluxe -root				    \\n\
 -				demon -root				    \\n\
-  GL: 				extrusion -root				    \\n\
+- GL: 				extrusion -root				    \\n\
 -				loop -root				    \\n\
 				penetrate -root				    \\n\
 				petri -root				    \\n\
@@ -275,7 +275,8 @@
   GL: 				hydrostat -root				    \\n\
   GL: 				raverhoop -root				    \\n\
   GL: 				splodesic -root				    \\n\
-  GL: 				unicrud -root				    \\n",
+  GL: 				unicrud -root				    \\n\
+  GL: 				vigilance -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -312,7 +313,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright \\251 1991-2016 by",
+"*splash.body.label:		Copyright \\251 1991-2017 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",

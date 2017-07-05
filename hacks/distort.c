@@ -32,16 +32,15 @@
  *    on wood).
  * 08 Oct 1999 Jonas Munsin (jmunsin@iki.fi)
  *	Corrected several bugs causing references beyond allocated memory.
+ * 09 Oct 2016 Dave Odell (dmo2118@gmail.com)
+ *  Updated for new xshm.c.
  */
 
 #include <math.h>
 #include <time.h>
 #include "screenhack.h"
 /*#include <X11/Xmd.h>*/
-
-#ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"
-#endif /* HAVE_XSHM_EXTENSION */
 
 #define CARD32 unsigned int
 #define CARD16 unsigned short
@@ -78,10 +77,7 @@ struct state {
 
   int bpp_size;
 
-#ifdef HAVE_XSHM_EXTENSION
-  Bool use_shm;
   XShmSegmentInfo shm_info;
-#endif /* HAVE_XSHM_EXTENSION */
 
   void (*effect) (struct state *, int);
   void (*draw) (struct state *, int);
@@ -274,10 +270,6 @@ distort_init (Display *dpy, Window window)
     st->dpy = dpy;
     st->window = window;
 
-#ifdef HAVE_XSHM_EXTENSION
-	st->use_shm = get_boolean_resource(st->dpy, "useSHM", "Boolean");
-#endif /* HAVE_XSHM_EXTENSION */
-	
     distort_reset (st);
 
 	st->black_pixel = BlackPixelOfScreen( st->xgwa.screen );
@@ -309,7 +301,6 @@ distort_finish_loading (struct state *st)
 
     st->start_time = time ((time_t *) 0);
 
-	st->buffer_map = 0;
     if (! st->pm) abort();
     XClearWindow (st->dpy, st->window);
     XCopyArea (st->dpy, st->pm, st->window, st->gc, 
@@ -324,28 +315,10 @@ distort_finish_loading (struct state *st)
 		exit(EXIT_FAILURE);
 	}
 
-# ifdef HAVE_XSHM_EXTENSION
-
-	if (st->use_shm)
-	  {
-		st->buffer_map = create_xshm_image(st->dpy, st->xgwa.visual, st->orig_map->depth,
-									   ZPixmap, 0, &st->shm_info,
-									   2*st->radius + st->speed + 2,
-									   2*st->radius + st->speed + 2);
-		if (!st->buffer_map)
-		  st->use_shm = False;
-	  }
-# endif /* HAVE_XSHM_EXTENSION */
-
-	if (!st->buffer_map)
-	  {
-		st->buffer_map = XCreateImage(st->dpy, st->xgwa.visual,
-								  st->orig_map->depth, ZPixmap, 0, 0,
-								  2*st->radius + st->speed + 2, 2*st->radius + st->speed + 2,
-								  8, 0);
-		st->buffer_map->data = (char *)
-		  calloc(st->buffer_map->height, st->buffer_map->bytes_per_line);
-	}
+	st->buffer_map = create_xshm_image(st->dpy, st->xgwa.visual, st->orig_map->depth,
+	                                   ZPixmap, &st->shm_info,
+	                                   2*st->radius + st->speed + 2,
+	                                   2*st->radius + st->speed + 2);
 
 	if ((st->buffer_map->byte_order == st->orig_map->byte_order)
 			&& (st->buffer_map->depth == st->orig_map->depth)
@@ -612,17 +585,8 @@ static void plain_draw(struct state *st, int k)
 
 	st->draw_routine(st, st->orig_map, st->buffer_map, st->xy_coo[k].x, st->xy_coo[k].y, st->fast_from);
 
-# ifdef HAVE_XSHM_EXTENSION
-	if (st->use_shm)
-		XShmPutImage(st->dpy, st->window, st->gc, st->buffer_map, 0, 0, st->xy_coo[k].x, st->xy_coo[k].y,
-				2*st->radius+st->speed+2, 2*st->radius+st->speed+2, False);
-	else
-
-	if (!st->use_shm)
-# endif
-		XPutImage(st->dpy, st->window, st->gc, st->buffer_map, 0, 0, st->xy_coo[k].x, st->xy_coo[k].y,
-				2*st->radius+st->speed+2, 2*st->radius+st->speed+2);
-
+	put_xshm_image(st->dpy, st->window, st->gc, st->buffer_map, 0, 0, st->xy_coo[k].x, st->xy_coo[k].y,
+	               2*st->radius+st->speed+2, 2*st->radius+st->speed+2, &st->shm_info);
 }
 
 
@@ -833,7 +797,7 @@ distort_free (Display *dpy, Window window, void *closure)
   XFreeGC (st->dpy, st->gc);
   if (st->pm) XFreePixmap (dpy, st->pm);
   if (st->orig_map) XDestroyImage (st->orig_map);
-  if (st->buffer_map) XDestroyImage (st->buffer_map);
+  if (st->buffer_map) destroy_xshm_image (st->dpy, st->buffer_map, &st->shm_info);
   if (st->from) free (st->from);
   if (st->fast_from) free (st->fast_from);
   if (st->from_array) free (st->from_array);

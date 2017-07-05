@@ -1461,13 +1461,7 @@ ModeInfo * mi
     struct glsnake_cfg * bp;
 
     /* set up the conf struct and glx contexts */
-    if (!glc) {
-	glc = (struct glsnake_cfg *) calloc(MI_NUM_SCREENS(mi), sizeof(struct glsnake_cfg));
-	if (!glc) {
-	    fprintf(stderr, "%s: out of memory\n", progname);
-	    exit(1);
-	}
-    }
+    MI_INIT(mi, glc, NULL);
     bp = &glc[MI_SCREEN(mi)];
 
     if ((bp->glx_context = init_GL(mi)) != NULL) {

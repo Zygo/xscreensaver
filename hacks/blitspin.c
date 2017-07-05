@@ -25,6 +25,7 @@
  */
 
 #include "screenhack.h"
+#include "pow2.h"
 #include "xpm-pixmap.h"
 #include <stdio.h>
 #include <time.h>
@@ -220,17 +221,13 @@ blitspin_draw (Display *dpy, Window window, void *closure)
 
 
 static int 
-to_pow2(struct state *st, int n, Bool up)
+blitspin_to_pow2(int n, Bool up)
 {
-  int powers_of_2[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
-			2048, 4096, 8192, 16384, 32768, 65536 };
-  int i = 0;
-  if (n > 65536) st->size = 65536;
-  while (n >= powers_of_2[i]) i++;
-  if (n == powers_of_2[i-1])
+  int pow2 = to_pow2 (n);
+  if (n == pow2)
     return n;
   else
-    return powers_of_2[up ? i : i-1];
+    return up ? pow2 : pow2 >> 1;
 }
 
 static void *
@@ -311,11 +308,12 @@ blitspin_init_2 (struct state *st)
 
   /* make it square */
   st->size = (st->width < st->height) ? st->height : st->width;
-  st->size = to_pow2(st, st->size, st->scale_up); /* round up to power of 2 */
+  /* round up to power of 2 */
+  st->size = blitspin_to_pow2(st->size, st->scale_up);
   {						/* don't exceed screen size */
     int s = XScreenNumberOfScreen(st->xgwa.screen);
-    int w = to_pow2(st, XDisplayWidth(st->dpy, s), False);
-    int h = to_pow2(st, XDisplayHeight(st->dpy, s), False);
+    int w = blitspin_to_pow2(XDisplayWidth(st->dpy, s), False);
+    int h = blitspin_to_pow2(XDisplayHeight(st->dpy, s), False);
     if (st->size > w) st->size = w;
     if (st->size > h) st->size = h;
   }

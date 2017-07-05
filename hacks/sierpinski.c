@@ -42,6 +42,7 @@ static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define BRIGHT_COLORS
+# define release_sierpinski 0
 # define sierpinski_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -55,7 +56,7 @@ ENTRYPOINT ModeSpecOpt sierpinski_opts =
 
 #ifdef USE_MODULES
 ModStruct   sierpinski_description =
-{"sierpinski", "init_sierpinski", "draw_sierpinski", "release_sierpinski",
+{"sierpinski", "init_sierpinski", "draw_sierpinski", (char *) NULL,
  "refresh_sierpinski", "init_sierpinski", (char *) NULL, &sierpinski_opts,
  400000, 2000, 100, 1, 64, 1.0, "",
  "Shows Sierpinski's triangle", 0, NULL};
@@ -115,8 +116,9 @@ startover(ModeInfo * mi)
 }
 
 static void
-free_sierpinski(sierpinskistruct *sp)
+free_sierpinski(ModeInfo * mi)
 {
+	sierpinskistruct *sp = &tris[MI_SCREEN(mi)];
 	int corner;
 
 	for (corner = 0; corner < MAXCORNERS; corner++)
@@ -132,11 +134,7 @@ init_sierpinski(ModeInfo * mi)
 	int         i;
 	sierpinskistruct *sp;
 
-	if (tris == NULL) {
-		if ((tris = (sierpinskistruct *) calloc(MI_NUM_SCREENS(mi),
-					 sizeof (sierpinskistruct))) == NULL)
-			return;
-	}
+	MI_INIT (mi, tris, free_sierpinski);
 	sp = &tris[MI_SCREEN(mi)];
 
 	sp->width = MI_WIDTH(mi);
@@ -153,7 +151,7 @@ init_sierpinski(ModeInfo * mi)
 		if (!sp->pointBuffer[i])
 			if ((sp->pointBuffer[i] = (XPoint *) malloc(sp->total_npoints *
 					sizeof (XPoint))) == NULL) {
-				free_sierpinski(sp);
+				free_sierpinski(mi);
 				return;
 			}
 	}
@@ -205,19 +203,6 @@ reshape_sierpinski(ModeInfo * mi, int width, int height)
 {
   XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
   init_sierpinski (mi);
-}
-
-ENTRYPOINT void
-release_sierpinski(ModeInfo * mi)
-{
-	if (tris != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_sierpinski(&tris[screen]);
-		(void) free((void *) tris);
-		tris = (sierpinskistruct *) NULL;
-	}
 }
 
 ENTRYPOINT void

@@ -48,6 +48,7 @@ static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
 						"*showFPS:    False \n"
 
 # define refresh_flurry 0
+# define release_flurry 0
 # define flurry_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 
@@ -72,7 +73,7 @@ ModStruct   flurry_description = {
     "flurry",
     "init_flurry",
     "draw_flurry",
-    "release_flurry",
+    NULL,
     "draw_flurry",
     "init_flurry",
     NULL,
@@ -90,8 +91,6 @@ ModStruct   flurry_description = {
 
 global_info_t *flurry_info = NULL;
 
-static double gTimeCounter = 0.0;
-
 static
 double currentTime(void) {
   struct timeval tv;
@@ -105,14 +104,8 @@ double currentTime(void) {
   return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
 }
 
-void OTSetup (void) {
-    if (gTimeCounter == 0.0) {
-        gTimeCounter = currentTime();
-    }
-}
-
-double TimeInSecondsSinceStart (void) {
-    return currentTime() - gTimeCounter;
+double TimeInSecondsSinceStart (const global_info_t *global) {
+    return currentTime() - global->gTimeCounter;
 }
 
 #if 0
@@ -150,7 +143,8 @@ flurry_info_t *new_flurry_info(global_info_t *global, int streams, ColorModes co
     flurry->flurryRandomSeed = RandFlt(0.0, 300.0);
 
 	flurry->fOldTime = 0;
-	flurry->fTime = TimeInSecondsSinceStart() + flurry->flurryRandomSeed;
+	flurry->dframe = 0;
+	flurry->fTime = TimeInSecondsSinceStart(global) + flurry->flurryRandomSeed;
  	flurry->fDeltaTime = flurry->fTime - flurry->fOldTime;
 
     flurry->numStreams = streams;
@@ -231,7 +225,7 @@ void GLRenderScene(global_info_t *global, flurry_info_t *flurry, double b)
     flurry->dframe++;
 
     flurry->fOldTime = flurry->fTime;
-    flurry->fTime = TimeInSecondsSinceStart() + flurry->flurryRandomSeed;
+    flurry->fTime = TimeInSecondsSinceStart(global) + flurry->flurryRandomSeed;
     flurry->fDeltaTime = flurry->fTime - flurry->fOldTime;
 
     flurry->drag = (float) pow(0.9965,flurry->fDeltaTime*85.0);
@@ -332,6 +326,8 @@ ENTRYPOINT void reshape_flurry(ModeInfo *mi, int width, int height)
     GLResize(global, (float)width, (float)height);
 }
 
+static void free_flurry(ModeInfo * mi);
+
 ENTRYPOINT void
 init_flurry(ModeInfo * mi)
 {
@@ -349,14 +345,11 @@ init_flurry(ModeInfo * mi)
         PRESET_MAX
     } preset_num;
 
-    if (flurry_info == NULL) {
-	OTSetup();
-	if ((flurry_info = (global_info_t *) calloc(MI_NUM_SCREENS(mi),
-			sizeof (global_info_t))) == NULL)
-	    return;
-    }
+    MI_INIT (mi, flurry_info, free_flurry);
 
     global = &flurry_info[screen];
+
+    global->gTimeCounter = currentTime();
 
     global->window = MI_WINDOW(mi);
 
@@ -468,13 +461,14 @@ init_flurry(ModeInfo * mi)
     } else {
 	MI_CLEARWINDOW(mi);
     }
+
+    global->first = 1;
+    global->oldFrameTime = -1;
 }
 
 ENTRYPOINT void
 draw_flurry(ModeInfo * mi)
 {
-    static int first = 1;
-    static double oldFrameTime = -1;
     double newFrameTime;
     double deltaFrameTime = 0;
     double brite;
@@ -486,7 +480,7 @@ draw_flurry(ModeInfo * mi)
     Window      window = MI_WINDOW(mi);
 
     newFrameTime = currentTime();
-    if (oldFrameTime == -1) {
+    if (global->oldFrameTime == -1) {
 	/* special case the first frame -- clear to black */
 	alpha = 1.0;
     } else {
@@ -499,24 +493,24 @@ draw_flurry(ModeInfo * mi)
 	 * than that and the blending causes the display to
 	 * saturate, which looks really ugly.
 	 */
-	if (newFrameTime - oldFrameTime < 1/60.0) {
-	    usleep(MAX_(1,(int)(20000 * (newFrameTime - oldFrameTime))));
+	if (newFrameTime - global->oldFrameTime < 1/60.0) {
+	    usleep(MAX_(1,(int)(20000 * (newFrameTime - global->oldFrameTime))));
 	    return;
 
 	}
-	deltaFrameTime = newFrameTime - oldFrameTime;
+	deltaFrameTime = newFrameTime - global->oldFrameTime;
 	alpha = 5.0 * deltaFrameTime;
     }
-    oldFrameTime = newFrameTime;
+    global->oldFrameTime = newFrameTime;
 
     if (alpha > 0.2) alpha = 0.2;
 
     if (!global->glx_context)
 	return;
 
-    if (first) {
+    if (global->first) {
 	MakeTexture();
-	first = 0;
+	global->first = 0;
     }
     glDrawBuffer(GL_BACK);
     glXMakeCurrent(display, window, *(global->glx_context));
@@ -538,28 +532,19 @@ draw_flurry(ModeInfo * mi)
     glXSwapBuffers(display, window);
 }
 
-ENTRYPOINT void
-release_flurry(ModeInfo * mi)
+static void
+free_flurry(ModeInfo * mi)
 {
-    if (flurry_info != NULL) {
-	int screen;
+    global_info_t *global = &flurry_info[MI_SCREEN(mi)];
+    flurry_info_t *flurry;
 
-	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-	    global_info_t *global = &flurry_info[screen];
-	    flurry_info_t *flurry;
-
-	    if (global->glx_context) {
-		glXMakeCurrent(MI_DISPLAY(mi), global->window, *(global->glx_context));
-	    }
-
-	    for (flurry = global->flurry; flurry; flurry=flurry->next) {
-		delete_flurry_info(flurry);
-	    }
-	}
-	(void) free((void *) flurry_info);
-	flurry_info = NULL;
+    if (global->glx_context) {
+	glXMakeCurrent(MI_DISPLAY(mi), global->window, *(global->glx_context));
     }
-    FreeAllGL(mi);
+
+    for (flurry = global->flurry; flurry; flurry=flurry->next) {
+	delete_flurry_info(flurry);
+    }
 }
 
 XSCREENSAVER_MODULE ("Flurry", flurry)

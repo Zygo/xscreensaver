@@ -192,14 +192,7 @@ init_quasicrystal (ModeInfo *mi)
   int tex_width;
   int i;
 
-  if (!bps) {
-    bps = (quasicrystal_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (quasicrystal_configuration));
-    if (!bps) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, bps, NULL);
 
   bp = &bps[MI_SCREEN(mi)];
 

@@ -19,14 +19,15 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- * 13-May-97: jwz@jwz.org: turned into a standalone program.
- * 21-Apr-95: improved startup time for TrueColour displays
- *            (limited to 16bpp to save memory) S.Early <sde1000@cam.ac.uk>
- * 09-Jan-95: fixed colour maps (more colourful) and the image now spirals
- *            outwards from the centre with a fixed number of points drawn
- *            every iteration. Thanks to M.Dobie <mrd@ecs.soton.ac.uk>.
- * 1994:      written.   Copyright (c) 1994 M.Dobie <mrd@ecs.soton.ac.uk>
- *            based on original code by R.Taylor
+ * 09-Oct-2016: dmo2118@gmail.com: Updated for new xshm.c.
+ * 13-May-1997: jwz@jwz.org: turned into a standalone program.
+ * 21-Apr-1995: improved startup time for TrueColour displays
+ *              (limited to 16bpp to save memory) S.Early <sde1000@cam.ac.uk>
+ * 09-Jan-1995: fixed colour maps (more colourful) and the image now spirals
+ *              outwards from the centre with a fixed number of points drawn
+ *              every iteration. Thanks to M.Dobie <mrd@ecs.soton.ac.uk>.
+ * 1994:        written.   Copyright (c) 1994 M.Dobie <mrd@ecs.soton.ac.uk>
+ *              based on original code by R.Taylor
  */
 
 #ifdef STANDALONE
@@ -39,10 +40,9 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS
+# define release_swirl 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
-# ifdef HAVE_XSHM_EXTENSION
-#  include "xshm.h"
-# endif /* HAVE_XSHM_EXTENSION */
+# include "xshm.h"
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 # undef HAVE_XSHM_EXTENSION
@@ -124,6 +124,7 @@ typedef struct swirl_data {
 	/* image stuff */
 	unsigned char *image;	/* image data */
 	XImage     *ximage;
+	XShmSegmentInfo shm_info;
 
 	/* colours stuff */
 	int         colours;	/* how many colours possible */
@@ -247,29 +248,11 @@ initialise_image(ModeInfo * mi, SWIRL_P swirl)
   Display *dpy = MI_DISPLAY(mi);
 
   if (swirl->ximage != NULL)
-	XDestroyImage(swirl->ximage);
+	destroy_xshm_image(dpy, swirl->ximage, &swirl->shm_info);
 
-  swirl->ximage = 0;
-#ifdef HAVE_XSHM_EXTENSION
-  if (mi->use_shm)
-	{
-	  swirl->ximage = create_xshm_image(dpy, swirl->visual, swirl->rdepth,
-										ZPixmap, 0, &mi->shm_info,
-										swirl->width, swirl->height);
-	  if (!swirl->ximage)
-		mi->use_shm = False;
-	}
-#endif /* HAVE_XSHM_EXTENSION */
-
-  if (!swirl->ximage)
-	{
-	  swirl->ximage = XCreateImage(dpy, swirl->visual, swirl->rdepth, ZPixmap,
-								   0, 0, swirl->width, swirl->height,
-								   8, 0);
-	  swirl->image = (unsigned char *)
-        calloc(swirl->height, swirl->ximage->bytes_per_line);
-      swirl->ximage->data = (char *) swirl->image;
-	}
+  swirl->ximage = create_xshm_image(dpy, swirl->visual, swirl->rdepth,
+                                    ZPixmap, &swirl->shm_info,
+                                    swirl->width, swirl->height);
 }
 
 /****************************************************************/
@@ -1125,16 +1108,8 @@ draw_point(ModeInfo * mi, SWIRL_P swirl)
 
 	/* update the screen */
 
-#ifdef HAVE_XSHM_EXTENSION
-	if (mi->use_shm)
-	  XShmPutImage(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi), swirl->ximage,
-				   x, y, x, y, r, r, False);
-	else
-#endif /* !HAVE_XSHM_EXTENSION */
-	  /* PURIFY 4.0.1 on SunOS4 and on Solaris 2 reports a 256 byte memory
-		 leak on the next line. */
-	  XPutImage(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi), swirl->ximage,
-				x, y, x, y, r, r);
+	put_xshm_image(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi), swirl->ximage,
+	               x, y, x, y, r, r, &swirl->shm_info);
 }
 
 /****************************************************************/
@@ -1237,6 +1212,8 @@ next_point(SWIRL_P swirl)
 
 /****************************************************************/
 
+static void free_swirl (ModeInfo * mi);
+
 /* 
  * init_swirl
  *
@@ -1251,14 +1228,9 @@ init_swirl(ModeInfo * mi)
 	Window      window = MI_WINDOW(mi);
 	SWIRL_P     swirl;
 
-	/* does the swirls array exist? */
-	if (swirls == NULL) {
-		/* allocate an array, one entry for each screen */
-		swirls = (SWIRL_P) calloc(MI_NUM_SCREENS(mi), sizeof (SWIRL));
-	}
-	/* get a pointer to this swirl */
+	MI_INIT (mi, swirls, free_swirl);
 	swirl = &(swirls[MI_SCREEN(mi)]);
-        initialise_swirl(mi, swirl);
+    initialise_swirl(mi, swirl);
                 
         /* get window parameters */
 	swirl->win = window;
@@ -1440,34 +1412,24 @@ reshape_swirl(ModeInfo * mi, int width, int height)
 
 /****************************************************************/
 
-ENTRYPOINT void
-release_swirl (ModeInfo * mi)
+static void
+free_swirl (ModeInfo * mi)
 {
-	/* does the swirls array exist? */
-	if (swirls != NULL) {
-		int         i;
-
-		/* free them all */
-		for (i = 0; i < MI_NUM_SCREENS(mi); i++) {
-			SWIRL_P     swirl = &(swirls[i]);
+	SWIRL_P     swirl = &(swirls[MI_SCREEN(mi)]);
 
 #ifndef STANDALONE
-			if (swirl->cmap != (Colormap) NULL)
-				XFreeColormap(MI_DISPLAY(mi), swirl->cmap);
+	if (swirl->cmap != (Colormap) NULL)
+		XFreeColormap(MI_DISPLAY(mi), swirl->cmap);
 #endif /* STANDALONE */
 #ifndef STANDALONE
-			if (swirl->rgb_values != NULL)
-				XFree((void *) swirl->rgb_values);
+	if (swirl->rgb_values != NULL)
+		XFree((void *) swirl->rgb_values);
 #endif /* !STANDALONE */
-			if (swirl->ximage != NULL)
-				XDestroyImage(swirl->ximage);
-			if (swirl->knots)
-				(void) free((void *) swirl->knots);
-		}
-		/* deallocate an array, one entry for each screen */
-		(void) free((void *) swirls);
-		swirls = NULL;
-	}
+	if (swirl->ximage != NULL)
+		destroy_xshm_image(MI_DISPLAY(mi), swirl->ximage,
+		                   &swirl->shm_info);
+	if (swirl->knots)
+		(void) free((void *) swirl->knots);
 }
 
 /****************************************************************/

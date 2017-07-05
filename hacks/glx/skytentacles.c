@@ -818,7 +818,7 @@ tentacles_handle_event (ModeInfo *mi, XEvent *event)
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
       if (c == ' ')
         {
-          gltrackball_reset (tc->trackball);
+          gltrackball_reset (tc->trackball, 0, 0);
           return True;
         }
     }
@@ -851,14 +851,7 @@ init_tentacles (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   int i;
 
-  if (!tcs) {
-    tcs = (tentacles_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (tentacles_configuration));
-    if (!tcs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, tcs, NULL);
 
   tc = &tcs[MI_SCREEN(mi)];
 

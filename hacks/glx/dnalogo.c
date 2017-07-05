@@ -2790,14 +2790,7 @@ init_logo (ModeInfo *mi)
       exit (1);
     }
 
-  if (!dcs) {
-    dcs = (logo_configuration *)
-      calloc (MI_NUM_SCREENS(mi), sizeof (logo_configuration));
-    if (!dcs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
-  }
+  MI_INIT (mi, dcs, NULL);
 
   dc = &dcs[MI_SCREEN(mi)];
 

@@ -21,6 +21,7 @@
 		       "*wireframe: False \n" \
 
 # define refresh_chess 0
+# define release_chess 0
 # include "xlockmore.h"
 
 #else
@@ -73,7 +74,7 @@ ENTRYPOINT ModeSpecOpt chess_opts = {countof(opts), opts, countof(vars), vars, N
 
 #ifdef USE_MODULES
 ModStruct   chess_description =
-{"chess", "init_chess", "draw_chess", "release_chess",
+{"chess", "init_chess", "draw_chess", NULL,
  "draw_chess", "init_chess", NULL, &chess_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "Chess", 0, NULL};
@@ -799,9 +800,7 @@ ENTRYPOINT void init_chess(ModeInfo *mi)
   Chesscreen *cs;
   int screen = MI_SCREEN(mi);
 
-  if(!qs && 
-     !(qs = (Chesscreen *) calloc(MI_NUM_SCREENS(mi), sizeof(Chesscreen))))
-    return;
+  MI_INIT(mi, qs, NULL);
   
   cs = &qs[screen];
   cs->window = MI_WINDOW(mi);
@@ -957,16 +956,6 @@ ENTRYPOINT void draw_chess(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
-}
-
-/** bust it */
-ENTRYPOINT void release_chess(ModeInfo *mi) 
-{
-  if(qs)
-    free((void *) qs);
-  qs = 0;
-
-  FreeAllGL(mi);
 }
 
 XSCREENSAVER_MODULE_2 ("Endgame", endgame, chess)
