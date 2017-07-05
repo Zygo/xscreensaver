@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hexadrop" _label="Hexadrop">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=HMPVzQUGW-Q"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="50000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+             low="0.1" high="4.0" default="1.0"/>
+
+    <number id="size" type="slider" arg="-size %"
+            _label="Tile size" _low-label="Small" _high-label="Large"
+            low="5" high="50" default="15"
+            convert="invert"/>
+   </vgroup>
+
+   <vgroup>
+    <select id="sides">
+     <option id="0" _label="Random shape"/>
+     <option id="3" _label="Triangles"    arg-set="-sides 3"/>
+     <option id="4" _label="Squares"      arg-set="-sides 4"/>
+     <option id="6" _label="Hexagons"     arg-set="-sides 6"/>
+     <option id="5" _label="Octagons"     arg-set="-sides 8"/>
+    </select>
+
+    <select id="uniform">
+     <option id="r-uniform"  _label="Random speed"/>
+     <option id="uniform"    _label="Uniform speed"     arg-set="-uniform-speed"/>
+     <option id="no-uniform" _label="Non-uniform speed" arg-set="-no-uniform-speed"/>
+    </select>
+
+    <select id="lockstep">
+     <option id="r-lockstep"  _label="Random sync"/>
+     <option id="lockstep"    _label="Synchronized"     arg-set="-lockstep"/>
+     <option id="no-lockstep" _label="Non-synchronized" arg-set="-no-lockstep"/>
+    </select>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A grid of hexagons or other shapes, with tiles dropping out.
+
+https://en.wikipedia.org/wiki/Tiling_by_regular_polygons
+
+Written by Jamie Zawinski; 2013.
+  </_description>
+</screensaver>

@@ -1,0 +1,142 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "5-May-2004" "X Version 11"
+.SH NAME
+bsod - Blue Screen of Death emulator
+.SH SYNOPSIS
+.B bsod
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP] [\-delay \fIseconds\fP]
+[\-fps]
+.SH DESCRIPTION
+The
+.I bsod
+program is the finest in personal computer emulation.  
+.PP
+.I bsod
+steps through a set of screens, each one a recreation of a different failure
+mode of an operating system.  Systems depicted include
+Windows 3.1, Windows 95, Windows NT, MS-DOS, AmigaDOS 1.3, Linux,
+SCO UNIX, BSD UNIX, HPUX, Solaris, Tru64, VMS, HVX/GCOS6, IBM OS/390, OS/2,
+MacOS (MacsBug, Bomb, Sad Mac, and OSX), Atari ST, Apple ][+, VMware and
+NCD X Terminals.
+.PP
+.SH OPTIONS
+.I bsod
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fIdelay\fP
+The duration each crash-mode is displayed before selecting another.
+.TP 8
+.B \-only \fIwhich\fP
+Tell it to run only one mode, e.g., \fI\-only HPUX\fP.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH X RESOURCES
+Notable X resources supported include the following, which control which
+hacks are displayed and which aren't.
+.BR doWindows ,
+.BR doNT ,
+.BR doWin2K ,
+.BR doWin10 ,
+.BR doAmiga ,
+.BR doMac ,
+.BR doMac1 ,
+.BR doMacsBug ,
+.BR doMacX ,
+.BR doSCO ,
+.BR doAtari ,
+.BR doBSD ,
+.BR doLinux ,
+.BR doSparcLinux ,
+.BR doHPPALinux ,
+.BR doBlitDamage ,
+.BR doSolaris ,
+.BR doHPUX ,
+.BR doApple2 ,
+.BR doOS390 ,
+.BR doTru64 ,
+.BR doVMS ,
+.BR doMSDOS ,
+.BR doOS2 ,
+.BR doHVX ,
+.BR doVMware ,
+and
+.BR doATM .
+Each of these is a Boolean resource, they all default to true, except
+for doAtari, doBSD, doSparcLinux, and doHPPALinux, which are turned off
+by default, because they're really not all that interesting looking
+unless you're a fan of those systems.  
+
+There are command-line options for all of these:
+e.g., \fI\-bsd\fP, \fI\-no-bsd\fP.  (Also note the \fI\-only\fP option.)
+.SH BUGS
+Unlike the systems being simulated, \fIbsod\fP does not require a
+reboot after running.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR http://www.microsoft.com/ ,
+.BR http://www.apple.com/ ,
+.BR http://www.sco.com/ ,
+.BR http://www.kernel.org/ ,
+and
+.BR http://www.amiga.de/ .
+.SH TRADEMARKS
+Microsoft Windows, Microsoft Windows 95, and Microsoft Windows NT are all
+registered trademarks of Microsoft Corporation.  Apple Macintosh is a
+registered trademark of Apple Computer.  Amiga is a registered trademark of
+Amiga International, Inc.  Atari ST is probably a trademark, too, but it's
+hard to tell who owns it.  Linux is a registered trademark of Linus Torvalds,
+but it isn't his fault. OS/2 is a registered trademark of International 
+Business Machines Corporation. VMware is a registered trademark of VMware, Inc.
+.SH COPYRIGHT
+Copyright \(co 1998-2003 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.  No animals were harmed during the testing of
+these simulations.  Always mount a scratch monkey.
+.SH AUTHOR
+Concept cribbed from Stephen Martin <smartin@mks.com>.  This version is by
+Jamie Zawinski <jwz@jwz.org>, with contributions from many others.

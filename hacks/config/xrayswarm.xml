@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xrayswarm" _label="XRaySwarm">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=e_E-k37b4Vc"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Worm-like swarms of particles with vapor trails.
+
+Written by Chris Leger; 2000.
+  </_description>
+</screensaver>
