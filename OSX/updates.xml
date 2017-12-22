@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>https://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 5.37</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.37.dmg</link>
+   <description><![CDATA[&bull; New hack, `vigilance'. <BR>&bull; Added Mac Software Update and VMware to `bsod'. <BR>&bull; OSX: Grabbing the desktop works again. <BR>&bull; OSX: Pinch to zoom. <BR>&bull; Android: Both Daydreams and Live Wallpapers are implemented. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; Various bug fixes.]]></description>
+   <pubDate>Wed, 05 Jul 2017 10:55:51 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.37.dmg"
+    sparkle:version="5.37"
+    sparkle:dsaSignature="MCwCFFsEWCDZbAY8Owz7k4lcs+uGM+LUAhQlLSsjg0Eqkd2TX2UfxiFdPrciTA=="
+    length="52481386"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.36</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.36.dmg</link>
+   <description><![CDATA[&bull; New hacks, `discoball', `cubetwist', `cubestack', `splodesic' and `hexstrut'. <BR>&bull; OSX: loading image files works in `dymaxionmap', `glplanet', `lavalite', `pulsar', `gleidescope' and `extrusion'. <BR>&bull; Several new programs in `m6502'. <BR>&bull; `rotzoomer -mode circle'. <BR>&bull; Better titles in `photopile'.]]></description>
+   <pubDate>Mon, 10 Oct 2016 19:59:35 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.36.dmg"
+    sparkle:version="5.36"
+    sparkle:dsaSignature="MC0CFE0PgizuGmjl0jbR0M5eu1KLU/XhAhUAj/D/h9i70tfjBehPoCxMoBakBSA="
+    length="52105511"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.35</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.35.dmg</link>
+   <description><![CDATA[&bull; New hacks, `dymaxionmap', `unicrud', `energystream', `raverhoop' and `hydrostat'. <BR>&bull; Added Windows 10 to `bsod'. <BR>&bull; X11: ignore WM_USER_TIME property changes with days-old timestamps. Thanks, KDE. <BR>&bull; MacOS, iOS: Better fonts in `BSOD' and `memscroller'. <BR>&bull; MacOS 10.8 or later and iOS 6.0 or later are now required, since Xcode 6 can no longer build executables that work on older OSes. <BR>&bull; Many, many Android improvements. <BR>&bull; iOS: Fixed rotation to work with the new iOS 8+ API. <BR>&bull; X11: `pong' is now playable.]]></description>
+   <pubDate>Wed, 01 Jun 2016 09:50:57 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.35.dmg"
+    sparkle:version="5.35"
+    sparkle:dsaSignature="MCwCFHtw9iKA+rimsGIK4PiRj3fc42yxAhRKZHNuDAJ/uREQ2d0yjeyZeTLL+A=="
+    length="50552771"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.34</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.34.dmg</link>
+   <description><![CDATA[&bull; Fixed a crash when hot-swapping monitors while locked. <BR>&bull; Fixed some incorrect output from `xscreensaver-command -watch'. <BR>&bull; Various OSX and iOS performance improvements.]]></description>
+   <pubDate>Sat, 24 Oct 2015 12:16:41 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.34.dmg"
+    sparkle:version="5.34"
+    sparkle:dsaSignature="MCwCFAoZpMknlOVF0zFXlzFruzFvRXufAhQVKY0qlzelKcArrlC6k7EbHLTcyg=="
+    length="58850776"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.14</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
+   <description><![CDATA[&bull; Fixed crash in Blank Only Mode when DPMS disabled. <BR>&bull; Added "Quick Power-off in Blank Only Mode" option. <BR>&bull; BSOD GLaDOS.]]></description>
+   <pubDate>Fri, 20 May 2011 11:42:36 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
+    sparkle:version="5.14"
+    sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
+    length="54485615"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

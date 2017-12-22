@@ -1,0 +1,68 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+esper - Enhance 224 to 176. Go right. Enhance 57 19. Track 45 left.
+.SH SYNOPSIS
+.B esper
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-delay \fInumber\fP]
+[\-speed \fInumber\fP]
+[\-titles]
+[\-fps]
+.SH DESCRIPTION
+"Enhance 224 to 176. Pull out track right. Center in pull back. Pull back.
+Wait a minute. Go right. Stop. Enhance 57 19. Track 45 left. Gimme a
+hardcopy right there." 
+
+The Esper Machine was a voice-controlled forensic device used by LAPD
+in 2019, as documented in the 1982 film, \fIBlade Runner.\fP  It was
+capable of enhancing photographs to an extreme degree, including
+reconstructing different viewpoints within the space from the
+reflections on various objects in the photograph.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
+.TP 8
+.B \-speed \fInumber\fP
+Animation speed.  2.0 means twice as fast, 0.5 means half as fast.
+.TP 8
+.B \-titles | \-no-titles
+Show file names.  Boolean.
+.TP 8
+.B \-fps | \-no-fps
+Whether to show a frames-per-second display at the top of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2017 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.
