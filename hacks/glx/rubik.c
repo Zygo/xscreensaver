@@ -112,7 +112,6 @@ static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
 					"*size:  -6 \n"		\
 					"*suppressRotationAnimation: True\n" \
 
-# define refresh_rubik 0
 # define release_rubik 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -165,7 +164,7 @@ ENTRYPOINT ModeSpecOpt rubik_opts =
 #ifdef USE_MODULES
 ModStruct   rubik_description =
 {"rubik", "init_rubik", "draw_rubik", (char *) NULL,
- "draw_rubik", "change_rubik", (char *) NULL, &rubik_opts,
+ "draw_rubik", "change_rubik", "free_rubik", &rubik_opts,
  10000, -30, 5, -6, 64, 1.0, "",
  "Shows an auto-solving Rubik's Cube", 0, NULL};
 
@@ -1814,8 +1813,14 @@ ENTRYPOINT void
 reshape_rubik(ModeInfo * mi, int width, int height)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
+    int y = 0;
 
-	glViewport(0, 0, rp->WindW = (GLint) width, rp->WindH = (GLint) height);
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width;
+      y = -height/2;
+    }
+
+	glViewport(0, y, rp->WindW = (GLint) width, rp->WindH = (GLint) height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0);
@@ -1869,7 +1874,7 @@ pinit(ModeInfo * mi)
 	return (shuffle(mi));
 }
 
-static void
+ENTRYPOINT void
 free_rubik(ModeInfo *mi)
 {
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
@@ -1896,7 +1901,7 @@ init_rubik(ModeInfo * mi)
 {
 	rubikstruct *rp;
 
-	MI_INIT (mi, rubik, free_rubik);
+	MI_INIT (mi, rubik);
 	rp = &rubik[MI_SCREEN(mi)];
 	rp->step = NRAND(90);
 	rp->PX = ((float) LRAND() / (float) MAXRAND) * 2.0 - 1.0;

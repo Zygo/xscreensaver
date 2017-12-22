@@ -52,6 +52,7 @@ static const char sccsid[] = "@(#)worm.c	4.04 97/07/28 xlockmore";
 					"*fpsSolid:  true \n" \
 
 # define SMOOTH_COLORS
+# define release_worm 0
 # define reshape_worm 0
 # define worm_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -240,10 +241,15 @@ worm_doit(ModeInfo * mi, int which, unsigned long color)
 	}
 }
 
-static void
-free_worms(wormstruct * wp)
+ENTRYPOINT void
+free_worm(ModeInfo * mi)
 {
+	wormstruct *wp;
 	int         wn;
+
+	if(!worms)
+		return;
+	wp = &worms[MI_SCREEN(mi)];
 
 	if (wp->worm) {
 		for (wn = 0; wn < wp->nw; wn++) {
@@ -272,7 +278,7 @@ init_worm (ModeInfo * mi)
 	int         size = MI_SIZE(mi);
 	int         i, j;
 
-	MI_INIT (mi, worms, 0);
+	MI_INIT (mi, worms);
 	wp = &worms[MI_SCREEN(mi)];
 	if (MI_NPIXELS(mi) <= 2 || MI_WIN_IS_USE3D(mi))
 		wp->nc = 2;
@@ -281,7 +287,7 @@ init_worm (ModeInfo * mi)
 	if (wp->nc > NUMCOLORS)
 		wp->nc = NUMCOLORS;
 
-	free_worms(wp);
+	free_worm(mi);
 	wp->nw = MI_BATCHCOUNT(mi);
 	if (wp->nw < -MINWORMS)
 		wp->nw = NRAND(-wp->nw - MINWORMS + 1) + MINWORMS;
@@ -403,19 +409,7 @@ draw_worm (ModeInfo * mi)
 		wp->chromo = 0;
 }
 
-ENTRYPOINT void
-release_worm(ModeInfo * mi)
-{
-	if (worms != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_worms(&worms[screen]);
-		(void) free((void *) worms);
-		worms = NULL;
-	}
-}
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_worm (ModeInfo * mi)
 {
@@ -434,5 +428,6 @@ refresh_worm (ModeInfo * mi)
 		}
 	}
 }
+#endif
 
 XSCREENSAVER_MODULE ("Worm", worm)

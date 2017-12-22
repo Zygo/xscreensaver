@@ -18,9 +18,8 @@
 			"*showFPS:      False           \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_blocktube 0
 # define release_blocktube 0
-# define blocktube_handle_event 0
+# define blocktube_handle_event xlockmore_no_events
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -111,7 +110,7 @@ ENTRYPOINT ModeSpecOpt blocktube_opts = {countof(opts), opts, countof(vars), var
 #ifdef USE_MODULES
 ModStruct blocktube_description =
     {"blocktube", "init_blocktube", "draw_blocktube", (char *)NULL,
-     "draw_blocktube", "init_blocktube", (char *)NULL, &blocktube_opts,
+     "draw_blocktube", "init_blocktube", "free_blocktube", &blocktube_opts,
      40000, 30, 1, 1, 64, 1.0, "",
      "A shifting tunnel of reflective blocks", 0, NULL};
 #endif /* USE_MODULES */
@@ -205,7 +204,6 @@ static void tick(blocktube_configuration *lp)
 static int cube_vertices(float x, float y, float z, int wire);
 
 ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height);
-static void free_blocktube (ModeInfo *mi);
 
 ENTRYPOINT void init_blocktube (ModeInfo *mi)
 {
@@ -214,7 +212,7 @@ ENTRYPOINT void init_blocktube (ModeInfo *mi)
     blocktube_configuration *lp;
     int wire = MI_IS_WIREFRAME(mi);
 
-    MI_INIT(mi, lps, free_blocktube);
+    MI_INIT(mi, lps);
 
     lp = &lps[MI_SCREEN(mi)];
     lp->glx_context = init_GL(mi);
@@ -289,7 +287,7 @@ ENTRYPOINT void init_blocktube (ModeInfo *mi)
     glFlush();
 }
 
-static void free_blocktube (ModeInfo *mi)
+ENTRYPOINT void free_blocktube (ModeInfo *mi)
 {
   blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
 # if defined ( I_HAVE_XPM )
@@ -308,10 +306,17 @@ ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height)
 {
     blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
     GLfloat h = (GLfloat) height / (GLfloat) width;
+    int y = 0;
 
     glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
 
-    glViewport(0, 0, (GLint) width, (GLint) height);
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width;
+      y = -height/2;
+      h = height / (GLfloat) width;
+    }
+
+    glViewport(0, y, (GLint) width, (GLint) height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(45.0, 1/h, 1.0, 100.0);

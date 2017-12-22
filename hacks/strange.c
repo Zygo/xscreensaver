@@ -55,10 +55,12 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
 					"*ignoreRotation: True \n" \
 					"*useSHM: True \n" \
 					"*useThreads: True \n" \
+				    "*lowrez: True \n" \
 
 # define SMOOTH_COLORS
-# define refresh_strange 0
 # define release_strange 0
+# define reshape_strange 0
+# define strange_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -68,6 +70,7 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
 #include <errno.h>
 #include "pow2.h"
 #include "thread_util.h"
+#include "xshm.h"
 
 #ifdef HAVE_INTTYPES_H
 # include <inttypes.h>
@@ -123,7 +126,7 @@ sizeof vars / sizeof vars[0], vars, desc};
 #ifdef USE_MODULES
 ModStruct   strange_description =
 {"strange", "init_strange", "draw_strange", (char *) NULL,
-"init_strange", "init_strange", (char *) NULL, &strange_opts,
+"init_strange", "init_strange", "free_strange", &strange_opts,
 10000, 1, 1, 1, 64, 1.0, "",
 "Shows strange attractors", 0, NULL};
 #endif
@@ -415,7 +418,7 @@ static void (*Funcs[2]) (const ATTRACTOR *, PRM, PRM, PRM *, PRM *) = {
 
 /***************************************************************/
 
-static void
+ENTRYPOINT void
 free_strange(ModeInfo *mi)
 {
 	Display *display = MI_DISPLAY(mi);
@@ -1086,7 +1089,7 @@ init_strange(ModeInfo * mi)
 
 	if (curve <= 0) curve = 10;
 
-	MI_INIT (mi, Root, free_strange);
+	MI_INIT (mi, Root);
 	Attractor = &Root[MI_SCREEN(mi)];
 
 	if (Attractor->Fold == NULL) {
@@ -1329,28 +1332,9 @@ init_strange(ModeInfo * mi)
 	XSetGraphicsExposures(display, MI_GC(mi), False);
 }
 
-ENTRYPOINT void
-reshape_strange(ModeInfo * mi, int width, int height)
-{
-  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
-  init_strange (mi);
-}
-
 /***************************************************************/
 
 #ifdef STANDALONE
-ENTRYPOINT Bool
-strange_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      reshape_strange (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-      return True;
-    }
-  return False;
-}
-
-
 XSCREENSAVER_MODULE ("Strange", strange)
 #endif
 

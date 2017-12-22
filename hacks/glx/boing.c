@@ -25,7 +25,7 @@
 			"*showFPS:      False            \n" \
 			"*wireframe:    False            \n" \
 
-# define refresh_boing 0
+# define free_boing 0
 # define release_boing 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -455,11 +455,18 @@ ENTRYPOINT void
 reshape_boing (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
   h *= 4.0 / 3.0;   /* Back in the caveman days we couldn't even afford
                        square pixels! */
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 3/4;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -502,7 +509,7 @@ init_boing (ModeInfo *mi)
   boing_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, bps, NULL);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 

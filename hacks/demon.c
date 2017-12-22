@@ -62,6 +62,8 @@ static const char sccsid[] = "@(#)demon.c	5.00 2000/11/01 xlockmore";
 
 # define UNIFORM_COLORS
 # define release_demon 0
+# define reshape_demon 0
+# define demon_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -97,7 +99,7 @@ ENTRYPOINT ModeSpecOpt demon_opts =
 #ifdef USE_MODULES
 ModStruct   demon_description =
 {"demon", "init_demon", "draw_demon", (char *) NULL,
- "refresh_demon", "init_demon", (char *) NULL, &demon_opts,
+ "refresh_demon", "init_demon", "free_demon", &demon_opts,
  50000, 0, 1000, -7, 64, 1.0, "",
  "Shows Griffeath's cellular automata", 0, NULL};
 
@@ -110,7 +112,7 @@ ModStruct   demon_description =
 
 #define REDRAWSTEP 2000		/* How many cells to draw per cycle */
 #define MINSTATES 2
-#define MINGRIDSIZE 24
+#define MINGRIDSIZE 5
 #define MINSIZE 4
 #define NEIGHBORKINDS 6
 
@@ -277,7 +279,7 @@ free_struct(demonstruct * dp)
 	}
 }
 
-static void
+ENTRYPOINT void
 free_demon(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -415,8 +417,11 @@ init_demon (ModeInfo * mi)
 	int         size = MI_SIZE(mi), nk;
 	demonstruct *dp;
 
-	MI_INIT (mi, demons, free_demon);
+	MI_INIT (mi, demons);
 	dp = &demons[MI_SCREEN(mi)];
+
+    if (MI_WIDTH(mi) < 100 || MI_HEIGHT(mi) < 100)  /* tiny window */
+      size = MIN(MI_WIDTH(mi), MI_HEIGHT(mi));
 
 	dp->generation = 0;
 	dp->redrawing = 0;
@@ -927,15 +932,7 @@ draw_demon (ModeInfo * mi)
 	}
 }
 
-
-ENTRYPOINT void
-reshape_demon(ModeInfo * mi, int width, int height)
-{
-  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
-  init_demon (mi);
-}
-
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_demon (ModeInfo * mi)
 {
@@ -948,19 +945,7 @@ refresh_demon (ModeInfo * mi)
 	dp->redrawing = 1;
 	dp->redrawpos = 0;
 }
-
-ENTRYPOINT Bool
-demon_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      reshape_demon (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-      return True;
-    }
-  return False;
-}
-
-
+#endif
 
 XSCREENSAVER_MODULE ("Demon", demon)
 

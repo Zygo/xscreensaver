@@ -16,7 +16,7 @@
            "*titleFont2: -*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*\n" \
            "*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
 
-# define refresh_pinion 0
+# define free_pinion 0
 # define release_pinion 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -1246,10 +1246,17 @@ find_mouse_gear (ModeInfo *mi)
 ENTRYPOINT void
 reshape_pinion (ModeInfo *mi, int width, int height)
 {
-  GLfloat h = (GLfloat) height / (GLfloat) width;
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
+  GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1315,7 +1322,7 @@ init_pinion (ModeInfo *mi)
 {
   pinion_configuration *pp;
 
-  MI_INIT (mi, pps, NULL);
+  MI_INIT (mi, pps);
 
   pp = &pps[MI_SCREEN(mi)];
 

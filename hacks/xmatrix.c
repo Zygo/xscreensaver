@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1331,6 +1331,33 @@ hack_text (m_state *state)
       state->typing_delay = state->typing_char_delay;
       if (state->typing_cursor_p)
         set_cursor (state, True);
+
+# ifdef USE_IPHONE
+  /* Stupid iPhone X bezel.
+     #### This is the worst of all possible ways to do this!  But how else?
+   */
+  if (state->xgwa.width == 2436 || state->xgwa.height == 2436)
+    switch (state->mode) 
+      {
+      case TRACE_TEXT_A:
+      case TRACE_TEXT_B:
+      case KNOCK:
+      case NMAP:
+        {
+          int off = 5 * (state->small_p ? 2 : 1);
+          if (state->xgwa.width > state->xgwa.height)
+            {
+              state->typing_left_margin += off;
+              state->cursor_x += off;
+            }
+          else
+            {
+              state->cursor_y += off;
+            }
+        }
+      default: break;
+      }
+# endif
     }
   else
     {

@@ -42,6 +42,7 @@ static const char sccsid[] = "@(#)spiral.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define SMOOTH_COLORS
+# define release_spiral 0
 # define reshape_spiral 0
 # define spiral_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -56,8 +57,8 @@ ENTRYPOINT ModeSpecOpt spiral_opts =
 
 #ifdef USE_MODULES
 ModStruct   spiral_description =
-{"spiral", "init_spiral", "draw_spiral", "release_spiral",
- "refresh_spiral", "init_spiral", (char *) NULL, &spiral_opts,
+{"spiral", "init_spiral", "draw_spiral", (char *) NULL,
+ "refresh_spiral", "init_spiral", "free_spiral", &spiral_opts,
  5000, -40, 350, 1, 64, 1.0, "",
  "Shows a helical locus of points", 0, NULL};
 
@@ -127,7 +128,7 @@ init_spiral(ModeInfo * mi)
 	spiralstruct *sp;
 	int         i;
 
-	MI_INIT (mi, spirals, 0);
+	MI_INIT (mi, spirals);
 	sp = &spirals[MI_SCREEN(mi)];
 
 #ifdef HAVE_JWXYZ
@@ -296,22 +297,19 @@ draw_spiral(ModeInfo * mi)
 }
 
 ENTRYPOINT void
-release_spiral(ModeInfo * mi)
+free_spiral(ModeInfo * mi)
 {
-	if (spirals != NULL) {
-		int         screen;
+	spiralstruct *sp;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			spiralstruct *sp = &spirals[screen];
+	if (spirals == NULL)
+		return;
+	sp = &spirals[MI_SCREEN(mi)];
 
-			if (sp->traildots)
-				(void) free((void *) sp->traildots);
-		}
-		(void) free((void *) spirals);
-		spirals = (spiralstruct *) NULL;
-	}
+	if (sp->traildots)
+		(void) free((void *) sp->traildots);
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_spiral(ModeInfo * mi)
 {
@@ -325,6 +323,7 @@ refresh_spiral(ModeInfo * mi)
 	sp->redrawing = 1;
 	sp->redrawpos = 0;
 }
+#endif
 
 XSCREENSAVER_MODULE ("Spiral", spiral)
 

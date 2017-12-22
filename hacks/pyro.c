@@ -346,6 +346,7 @@ pyro_free (Display *dpy, Window window, void *closure)
 
 
 static const char *pyro_defaults [] = {
+  ".lowrez:     true",
   ".background:	black",
   ".foreground:	white",
   "*fpsSolid:	true",

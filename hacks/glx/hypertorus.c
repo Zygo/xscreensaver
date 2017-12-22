@@ -89,7 +89,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
                             "*showFPS:    False \n" \
 			    "*suppressRotationAnimation: True\n" \
 
-# define refresh_hypertorus 0
+# define free_hypertorus 0
 # define release_hypertorus 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -744,11 +744,19 @@ static void display_hypertorus(ModeInfo *mi)
 ENTRYPOINT void reshape_hypertorus(ModeInfo *mi, int width, int height)
 {
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
+  double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
 
   hp->WindW = (GLint)width;
   hp->WindH = (GLint)height;
-  glViewport(0,0,width,height);
-  hp->aspect = (GLfloat)width/(GLfloat)height;
+  glViewport(0,y,width,height);
+  hp->aspect = h;
 }
 
 
@@ -830,7 +838,7 @@ ENTRYPOINT void init_hypertorus(ModeInfo *mi)
 {
   hypertorusstruct *hp;
 
-  MI_INIT(mi, hyper, NULL);
+  MI_INIT(mi, hyper);
   hp = &hyper[MI_SCREEN(mi)];
 
   

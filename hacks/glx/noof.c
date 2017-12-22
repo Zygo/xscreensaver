@@ -19,7 +19,7 @@
 			"*doubleBuffer: False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_noof 0
+# define free_noof 0
 # define release_noof 0
 # define noof_handle_event 0
 #include "xlockmore.h"
@@ -444,7 +444,7 @@ init_noof (ModeInfo *mi)
   int i;
   noof_configuration *bp;
 
-  MI_INIT (mi, bps, NULL);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 

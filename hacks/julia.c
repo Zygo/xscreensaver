@@ -47,6 +47,7 @@ static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
 
 # define UNIFORM_COLORS
 # define release_julia 0
+# define reshape_julia 0
 # include "xlockmore.h"				/* in xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* in xlockmore distribution */
@@ -153,8 +154,6 @@ incr(ModeInfo * mi, juliastruct * jp)
 	  }
 }
 
-static void free_julia (ModeInfo * mi);
-
 ENTRYPOINT void
 init_julia(ModeInfo * mi)
 {
@@ -164,7 +163,7 @@ init_julia(ModeInfo * mi)
 	XGCValues   gcv;
 	int         i;
 
-	MI_INIT (mi, julias, free_julia);
+	MI_INIT (mi, julias);
 	jp = &julias[MI_SCREEN(mi)];
 
 	jp->centerx = MI_WIN_WIDTH(mi) / 2;
@@ -250,13 +249,6 @@ init_julia(ModeInfo * mi)
 	jp->redrawing = 0;
 	jp->erase = 0;
 	XClearWindow(display, window);
-}
-
-
-static void
-reshape_julia (ModeInfo *mi, int w, int h)
-{
-  init_julia (mi);
 }
 
 
@@ -413,7 +405,7 @@ draw_julia (ModeInfo * mi)
 	}
 }
 
-static void
+ENTRYPOINT void
 free_julia (ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -436,6 +428,7 @@ free_julia (ModeInfo * mi)
 #endif
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_julia (ModeInfo * mi)
 {
@@ -444,5 +437,6 @@ refresh_julia (ModeInfo * mi)
 	jp->redrawing = 1;
 	jp->redrawpos = 0;
 }
+#endif
 
 XSCREENSAVER_MODULE ("Julia", julia)

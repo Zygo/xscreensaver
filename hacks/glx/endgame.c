@@ -20,7 +20,7 @@
                        "*showFPS:   False \n" \
 		       "*wireframe: False \n" \
 
-# define refresh_chess 0
+# define free_chess 0
 # define release_chess 0
 # include "xlockmore.h"
 
@@ -787,7 +787,15 @@ static void display(ModeInfo *mi, Chesscreen *cs)
 ENTRYPOINT void reshape_chess(ModeInfo *mi, int width, int height) 
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
-  glViewport(0,0, width, height);
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0,y, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(45, 1/h, 2.0, 30.0);
@@ -800,7 +808,7 @@ ENTRYPOINT void init_chess(ModeInfo *mi)
   Chesscreen *cs;
   int screen = MI_SCREEN(mi);
 
-  MI_INIT(mi, qs, NULL);
+  MI_INIT(mi, qs);
   
   cs = &qs[screen];
   cs->window = MI_WINDOW(mi);

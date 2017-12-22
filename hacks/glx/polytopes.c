@@ -93,7 +93,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
                             "*showFPS:    False \n" \
 			    "*suppressRotationAnimation: True\n" \
 
-# define refresh_polytopes 0
+# define free_polytopes 0
 # define release_polytopes 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -2863,10 +2863,16 @@ static void display_polytopes(ModeInfo *mi)
 ENTRYPOINT void reshape_polytopes(ModeInfo *mi, int width, int height)
 {
   polytopesstruct *pp = &poly[MI_SCREEN(mi)];
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width;
+    y = -height/2;
+  }
 
   pp->WindW = (GLint)width;
   pp->WindH = (GLint)height;
-  glViewport(0,0,width,height);
+  glViewport(0,y,width,height);
   pp->aspect = (GLfloat)width/(GLfloat)height;
 }
 
@@ -2949,7 +2955,7 @@ ENTRYPOINT void init_polytopes(ModeInfo *mi)
 {
   polytopesstruct *pp;
 
-  MI_INIT(mi, poly, NULL);
+  MI_INIT(mi, poly);
   pp = &poly[MI_SCREEN(mi)];
 
   pp->trackballs[0] = gltrackball_init(True);

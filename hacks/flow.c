@@ -103,6 +103,8 @@ static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
 					"*ncolors:     200   \n"
 
 # define release_flow 0
+# define reshape_flow 0
+# define flow_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -163,8 +165,8 @@ ENTRYPOINT ModeSpecOpt flow_opts =
 
 #ifdef USE_MODULES
 ModStruct   flow_description = {
-	"flow", "init_flow", "draw_flow", "release_flow",
-	"refresh_flow", "init_flow", NULL, &flow_opts,
+	"flow", "init_flow", "draw_flow", NULL,
+	"refresh_flow", "init_flow", "free_flow", &flow_opts,
 	1000, 1024, 10000, -10, 200, 1.0, "",
 	"Shows dynamic strange attractors", 0, NULL
 };
@@ -388,7 +390,7 @@ Iterate(dvector *p, dvector(*ODE)(Par par, double x, double y, double z),
 #define allocate(p,t,s) if ((p=(t*)malloc(sizeof(t)*s))==NULL)\
 {free_flow(mi);return;}
 
-static void
+ENTRYPOINT void
 free_flow(ModeInfo * mi)
 {
 	flowstruct *sp = &flows[MI_SCREEN(mi)];
@@ -626,7 +628,7 @@ init_flow (ModeInfo * mi)
 	flowstruct *sp;
 	char       *name;
 	
-	MI_INIT (mi, flows, free_flow);
+	MI_INIT (mi, flows);
 	sp = &flows[MI_SCREEN(mi)];
 
 	sp->count2 = 0;
@@ -1196,30 +1198,13 @@ draw_flow (ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-reshape_flow(ModeInfo * mi, int width, int height)
-{
-  init_flow (mi);
-}
-
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_flow (ModeInfo * mi)
 {
 	if(!dbufp) MI_CLEARWINDOW(mi);
 }
-
-ENTRYPOINT Bool
-flow_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      init_flow (mi);
-      return True;
-    }
-  return False;
-}
-
+#endif
 
 XSCREENSAVER_MODULE ("Flow", flow)
 

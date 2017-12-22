@@ -298,8 +298,6 @@ sinfree(SinVariable * point)
 	}
 }
 
-static void free_bouboule(ModeInfo * mi);
-
 
 /***************/
 ENTRYPOINT void
@@ -318,7 +316,7 @@ init_bouboule(ModeInfo * mi)
 	int         i;
 	double      theta, omega;
 
-	MI_INIT (mi, starfield, free_bouboule);
+	MI_INIT (mi, starfield);
 	sp = &starfield[MI_SCREEN(mi)];
 
 	sp->width = MI_WIN_WIDTH(mi);
@@ -802,7 +800,7 @@ draw_bouboule(ModeInfo * mi)
 	}
 }
 
-static void
+ENTRYPOINT void
 free_bouboule(ModeInfo * mi)
 {
 	StarField  *sp = &starfield[MI_SCREEN(mi)];
@@ -847,10 +845,12 @@ reshape_bouboule(ModeInfo * mi, int width, int height)
         POSCANRAND);
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_bouboule(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+#endif
 
 XSCREENSAVER_MODULE ("Bouboule", bouboule)

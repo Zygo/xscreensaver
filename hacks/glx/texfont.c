@@ -274,7 +274,7 @@ load_texture_font (Display *dpy, char *res)
   if (!res || !*res) abort();
 
   if (!strcmp (res, "fpsFont")) {  /* Kludge. */
-    def1 = "-*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*";
+    def1 = "-*-courier-bold-r-normal-*-*-180-*-*-*-*-*-*"; /* also fps.c */
     cache_size = 0;  /* No need for a cache on FPS: already throttled. */
   }
 

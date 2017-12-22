@@ -58,10 +58,12 @@ static const char sccsid[] = "@(#)lisa.c	5.00 2000/11/01 xlockmore";
 					"*size: 500 \n" \
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
+				    "*lowrez: True \n" \
 
 # define UNIFORM_COLORS
+# define release_lisa 0
 # define reshape_lisa 0
-# define lisa_handle_event 0
+# define lisa_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 #include "xlock.h"          /* in xlockmore distribution */
@@ -95,8 +97,8 @@ ENTRYPOINT ModeSpecOpt lisa_opts =
 
 #ifdef USE_MODULES
 ModStruct   lisa_description =
-{"lisa", "init_lisa", "draw_lisa", "release_lisa",
- "refresh_lisa", "change_lisa", (char *) NULL, &lisa_opts,
+{"lisa", "init_lisa", "draw_lisa", (char *) NULL,
+ "refresh_lisa", "change_lisa", "free_lisa", &lisa_opts,
  17000, 1, 768, -1, 64, 1.0, "",
  "Shows animated lissajous figures", 0, NULL};
 
@@ -256,9 +258,10 @@ static lisafuncs Function[NUMSTDFUNCS] =
 
 int xMaxLines;
 
-static void
-free_lisa(lisacons *lc)
+ENTRYPOINT void
+free_lisa(ModeInfo * mi)
 {
+	lisacons   *lc = &Lisa[MI_SCREEN(mi)];
 	while (lc->lissajous) {
 		int    lctr;
 
@@ -286,7 +289,7 @@ drawlisa(ModeInfo * mi, lisas * loop)
 
 	/* Allocate the np (new point) array (with padding) */
 	if ((np = (XPoint *) calloc(loop->nsteps+extra_points, sizeof (XPoint))) == NULL) {
-		free_lisa(lc);
+		free_lisa(mi);
 		return False;
 	}
 
@@ -511,7 +514,7 @@ initlisa(ModeInfo * mi, lisas * loop)
   
   if ((lp = loop->lastpoint = (XPoint *)
 	   calloc(loop->nsteps+extra_points, sizeof (XPoint))) == NULL) {
-	free_lisa(lc);
+	free_lisa(mi);
 	return False;
   }
   phase = lc->loopcount % loop->nsteps;
@@ -615,6 +618,7 @@ refreshlisa(ModeInfo * mi)
 	}
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_lisa(ModeInfo * mi)
 {
@@ -632,6 +636,7 @@ refresh_lisa(ModeInfo * mi)
 		refreshlisa(mi);
 	}
 }
+#endif
 
 static void
 change_lisa(ModeInfo * mi)
@@ -681,7 +686,7 @@ init_lisa (ModeInfo * mi)
 	int         lctr;
 	lisacons   *lc;
 
-	MI_INIT (mi, Lisa, 0);
+	MI_INIT (mi, Lisa);
 	lc = &Lisa[MI_SCREEN(mi)];
 	lc->width = MI_WIDTH(mi);
 	lc->height = MI_HEIGHT(mi);
@@ -727,19 +732,6 @@ draw_lisa (ModeInfo * mi)
 		change_lisa(mi);
 	}
 	refreshlisa(mi);
-}
-
-ENTRYPOINT void
-release_lisa (ModeInfo * mi)
-{
-	if (Lisa) {
-		int    screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_lisa(&Lisa[screen]);
-		(void) free(Lisa);
-		Lisa = (lisacons *) NULL;
-	}
 }
 
 XSCREENSAVER_MODULE ("Lisa", lisa)

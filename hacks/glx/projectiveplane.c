@@ -219,7 +219,7 @@ static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/01 xlockmore";
 # define DEFAULTS           "*delay:      10000 \n" \
                             "*showFPS:    False \n" \
 
-# define refresh_projectiveplane 0
+# define free_projectiveplane 0
 # define release_projectiveplane 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -1321,7 +1321,7 @@ ENTRYPOINT void init_projectiveplane(ModeInfo *mi)
 {
   projectiveplanestruct *pp;
 
-  MI_INIT(mi, projectiveplane, NULL);
+  MI_INIT(mi, projectiveplane);
   pp = &projectiveplane[MI_SCREEN(mi)];
 
   

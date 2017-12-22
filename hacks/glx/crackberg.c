@@ -10,7 +10,6 @@
                     "*showFPS:      False       \n" \
 		    "*wireframe:    False       \n" \
 
-# define refresh_crackberg 0
 # define release_crackberg 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -1167,7 +1166,6 @@ static inline double drunken_rando(double cur_val, double max, double width)
  ** */
 
 ENTRYPOINT void reshape_crackberg (ModeInfo *mi, int w, int h);
-static void free_crackberg (ModeInfo *mi);
 
 ENTRYPOINT void init_crackberg (ModeInfo *mi)
 {
@@ -1175,7 +1173,7 @@ ENTRYPOINT void init_crackberg (ModeInfo *mi)
 
     nsubdivs %= 16; /* just in case.. */
 
-    MI_INIT(mi, cbergs, free_crackberg);
+    MI_INIT(mi, cbergs);
 
     if (visibility > 1.0 || visibility < 0.2) {
         printf("visibility must be in range [0.2 .. 1.0]\n");
@@ -1457,7 +1455,7 @@ ENTRYPOINT void draw_crackberg (ModeInfo *mi)
 }
 
 /* uh */
-static void free_crackberg (ModeInfo *mi)
+ENTRYPOINT void free_crackberg (ModeInfo *mi)
 {
   cberg_state *cberg = &cbergs[MI_SCREEN(mi)];
   if (cberg->norms)

@@ -24,7 +24,7 @@
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
 
-# define refresh_carousel 0
+# define free_carousel 0
 # define release_carousel 0
 # include "xlockmore.h"
 
@@ -232,6 +232,11 @@ load_image (ModeInfo *mi, image_frame *frame)
       int h = (MI_HEIGHT(mi) / 2) - 1;
       if (w <= 10) w = 10;
       if (h <= 10) h = 10;
+
+      if (w > h * 5) {   /* tiny window: use 16:9 boxes */
+        h = w * 9/16;
+      }
+
       load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context, w, h,
                           mipmap_p, frame->loading.texid, 
                           image_loaded_cb, frame);
@@ -399,8 +404,15 @@ ENTRYPOINT void
 reshape_carousel (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -563,7 +575,7 @@ init_carousel (ModeInfo *mi)
   carousel_state *ss;
   int wire = MI_IS_WIREFRAME(mi);
   
-  MI_INIT (mi, sss, NULL);
+  MI_INIT (mi, sss);
   ss = &sss[screen];
 
   if ((ss->glx_context = init_GL(mi)) != NULL) {

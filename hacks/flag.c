@@ -47,9 +47,11 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 					"*font:		" DEF_FONT	"\n"	\
 					"*text:					\n" \
 					"*fpsSolid:		true    \n" \
+				    "*lowrez:       true    \n" \
 
 # define BRIGHT_COLORS
 # define UNIFORM_COLORS
+# define release_flag 0
 # define reshape_flag 0
 # define flag_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -432,7 +434,7 @@ init_flag(ModeInfo * mi)
 	int         size = MI_SIZE(mi);
 	flagstruct *fp;
 
-	MI_INIT (mi, flags, 0);
+	MI_INIT (mi, flags);
 	fp = &flags[MI_SCREEN(mi)];
 
 	make_flag_bits(mi);
@@ -496,9 +498,6 @@ init_flag(ModeInfo * mi)
 	XClearWindow(display, MI_WINDOW(mi));
 }
 
-ENTRYPOINT void release_flag(ModeInfo * mi);
-
-
 ENTRYPOINT void
 draw_flag(ModeInfo * mi)
 {
@@ -531,34 +530,29 @@ draw_flag(ModeInfo * mi)
 	fp->sidx %= (ANGLES * MI_NPIXELS(mi));
 	fp->timer++;
 	if ((MI_CYCLES(mi) > 0) && (fp->timer >= MI_CYCLES(mi)))
-      {
-        release_flag(mi);
 		init_flag(mi);
-      }
 }
 
 ENTRYPOINT void
-release_flag(ModeInfo * mi)
+free_flag(ModeInfo * mi)
 {
-	if (flags != NULL) {
-		int         screen;
+	int         screen = MI_SCREEN(mi);
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-		  {
-			if (flags[screen].cache && flags[screen].dbufp)
-				XFreePixmap(MI_DISPLAY(mi), flags[screen].cache);
-			if (flags[screen].image)
-			  XDestroyImage(flags[screen].image);
-		  }
-		(void) free((void *) flags);
-		flags = NULL;
-	}
+	if (flags == NULL)
+		return;
+
+	if (flags[screen].cache && flags[screen].dbufp)
+		XFreePixmap(MI_DISPLAY(mi), flags[screen].cache);
+	if (flags[screen].image)
+	  XDestroyImage(flags[screen].image);
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_flag(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+#endif
 
 XSCREENSAVER_MODULE ("Flag", flag)

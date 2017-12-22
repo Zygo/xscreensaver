@@ -58,9 +58,9 @@ static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
 						"*count: 		0		\n"		\
 						"*suppressRotationAnimation: True\n" \
 
-# define refresh_morph3d 0
+# define free_morph3d 0
 # define release_morph3d 0
-# define morph3d_handle_event 0
+# define morph3d_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -595,8 +595,14 @@ ENTRYPOINT void
 reshape_morph3d(ModeInfo * mi, int width, int height)
 {
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
+    int y = 0;
 
-	glViewport(0, 0, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width;
+      y = -height/2;
+    }
+
+	glViewport(0, y, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0);
@@ -719,7 +725,7 @@ init_morph3d(ModeInfo * mi)
 {
 	morph3dstruct *mp;
 
-	MI_INIT (mi, morph3d, NULL);
+	MI_INIT (mi, morph3d);
 	mp = &morph3d[MI_SCREEN(mi)];
 	mp->step = NRAND(90);
 	mp->VisibleSpikes = 1;

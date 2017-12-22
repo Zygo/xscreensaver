@@ -829,6 +829,10 @@ compass_init (Display *dpy, Window window)
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
   st->size2 = MIN(st->xgwa.width, st->xgwa.height);
 
+  if (st->xgwa.width > st->xgwa.height * 5 ||  /* goofy aspect ratio */
+      st->xgwa.height > st->xgwa.width * 5)
+    st->size2 = MAX(st->xgwa.width, st->xgwa.height);
+
   if (st->size2 > 600) st->size2 = 600;
 
   st->size = (st->size2 / 2) * 0.8;

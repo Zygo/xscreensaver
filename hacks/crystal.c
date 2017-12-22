@@ -78,6 +78,8 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
 						 "*ignoreRotation: True \n" \
 
 # define release_crystal 0
+# define reshape_crystal 0
+# define crystal_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"			/* in xlockmore distribution */
@@ -146,7 +148,7 @@ ENTRYPOINT ModeSpecOpt crystal_opts =
 #ifdef USE_MODULES
 ModStruct   crystal_description =
 {"crystal", "init_crystal", "draw_crystal", NULL,
- "refresh_crystal", "init_crystal", NULL, &crystal_opts,
+ "refresh_crystal", "init_crystal", "free_crystal", &crystal_opts,
  60000, -40, 200, -15, 64, 1.0, "",
  "Shows polygons in 2D plane groups", 0, NULL};
 
@@ -266,6 +268,8 @@ typedef struct {
 	Bool        cycle_p, mono_p, no_colors;
 	unsigned long blackpixel, whitepixel, fg, bg;
 	int         direction, invert;
+	unsigned long grid_pixel;
+	int         inx, iny;
 } crystalstruct;
 
 static crystalstruct *crystals = NULL;
@@ -564,6 +568,7 @@ ENTRYPOINT void
 draw_crystal(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
+	Window      window = MI_WINDOW(mi);
 	crystalstruct *cryst = &crystals[MI_SCREEN(mi)];
 	int         i;
 
@@ -575,8 +580,148 @@ draw_crystal(ModeInfo * mi)
 		init_crystal(mi);
 		return;
 	}
-	cryst->painted = True;
-	MI_IS_DRAWN(mi) = True;
+
+	/* Moved from init_crystal because you can't draw after MI_CLEARWINDOW in
+	   XScreenSaver. - Dave Odell <dmo2118@gmail.com>
+	 */
+	if (cryst->unit_cell
+#ifndef HAVE_JWXYZ
+		&& !cryst->painted
+#endif
+		) {
+	   int y_coor1 , y_coor2;
+	   
+		XSetForeground(display, cryst->gc, cryst->grid_pixel);
+		if (cryst->grid_cell) {
+			int         inx, iny;
+
+		   if ( cryst->invert )
+		     y_coor1 = y_coor2 = cryst->win_height - cryst->offset_h;
+		   else
+		     y_coor1 = y_coor2 = cryst->offset_h;
+			XDrawLine(display, window, cryst->gc, cryst->offset_w,
+				  y_coor1, cryst->offset_w + cryst->nx * cryst->a,
+				  y_coor2);
+		   if ( cryst->invert )
+		     {
+			y_coor1 = cryst->win_height - cryst->offset_h;
+			y_coor2 = cryst->win_height - (int) (cryst->ny *
+							     cryst->b *
+					 cos((cryst->gamma - 90) * PI_RAD)) -
+			  cryst->offset_h;
+		     }
+		   else
+		     {
+			y_coor1 = cryst->offset_h;
+			y_coor2 = (int) (cryst->ny * cryst->b *
+					 cos((cryst->gamma - 90) * PI_RAD)) +
+			  cryst->offset_h;
+		     }
+			XDrawLine(display, window, cryst->gc, cryst->offset_w,
+				  y_coor1, (int) (cryst->offset_w - cryst->ny * cryst->b *
+					  sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor2);
+			inx = cryst->nx;
+			for (iny = 1; iny <= cryst->ny; iny++) {
+		   if ( cryst->invert )
+		     {
+			y_coor1 = cryst->win_height -
+			  (int) (iny * cryst->b * cos((cryst->gamma - 90) *
+						  PI_RAD)) - cryst->offset_h;
+			y_coor2 = cryst->win_height -
+			  (int) (iny * cryst->b * cos((cryst->gamma - 90) *
+						      PI_RAD)) -
+			  cryst->offset_h;
+		     }
+		   else
+		     {
+			y_coor1 = (int) (iny * cryst->b * cos((cryst->gamma - 90) *
+						  PI_RAD)) + cryst->offset_h;
+			y_coor2 = (int) (iny * cryst->b * cos((cryst->gamma - 90) * PI_RAD)) +
+					  cryst->offset_h;
+		     }
+				XDrawLine(display, window, cryst->gc,
+					  (int) (cryst->offset_w +
+				     inx * cryst->a - (int) (iny * cryst->b *
+					 sin((cryst->gamma - 90) * PI_RAD))),
+					  y_coor1,
+				    (int) (cryst->offset_w - iny * cryst->b *
+					   sin((cryst->gamma - 90) * PI_RAD)),
+					  y_coor2);
+			}
+			iny = cryst->ny;
+			for (inx = 1; inx <= cryst->nx; inx++) {
+			   if ( cryst->invert )
+			     {
+				y_coor1 =cryst->win_height -
+				  (int) (iny * cryst->b *
+						cos((cryst->gamma - 90) *
+						    PI_RAD)) - cryst->offset_h;
+				y_coor2 =cryst->win_height - cryst->offset_h;
+			     }
+			   else
+			     {
+				y_coor1 =(int) (iny * cryst->b *
+						cos((cryst->gamma - 90) *
+						    PI_RAD)) + cryst->offset_h;
+				y_coor2 =cryst->offset_h;
+			     }
+				XDrawLine(display, window, cryst->gc,
+					  (int) (cryst->offset_w +
+				     inx * cryst->a - (int) (iny * cryst->b *
+					 sin((cryst->gamma - 90) * PI_RAD))),
+					  y_coor1,
+					  cryst->offset_w + inx * cryst->a,
+					  y_coor2);
+			}
+		} else {
+		   if ( cryst->invert )
+		     {
+			y_coor1 =cryst->win_height -
+			  (int) (cryst->iny * cryst->b *
+						  cos((cryst->gamma - 90) *
+						      PI_RAD)) -
+			  cryst->offset_h;
+			y_coor2 =cryst->win_height -
+			  (int) ( ( cryst->iny + 1 ) * cryst->b *
+						  cos((cryst->gamma - 90) *
+						      PI_RAD)) -
+			  cryst->offset_h;
+		     }
+		   else
+		     {
+			y_coor1 =(int) (cryst->iny * cryst->b *
+						  cos((cryst->gamma - 90) *
+						      PI_RAD)) +
+			  cryst->offset_h;
+			y_coor2 =(int) (( cryst->iny + 1 ) * cryst->b *
+						  cos((cryst->gamma - 90) *
+						      PI_RAD)) +
+			  cryst->offset_h;
+		     }
+			XDrawLine(display, window, cryst->gc,
+				  cryst->offset_w + cryst->inx * cryst->a - (int) (cryst->iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor1,
+				  cryst->offset_w + (cryst->inx + 1) * cryst->a - (int) (cryst->iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor1);
+			XDrawLine(display, window, cryst->gc,
+				  cryst->offset_w + cryst->inx * cryst->a - (int) (cryst->iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor1,
+				  cryst->offset_w + cryst->inx * cryst->a - (int) ((cryst->iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor2);
+			XDrawLine(display, window, cryst->gc,
+				  cryst->offset_w + (cryst->inx + 1) * cryst->a - (int) (cryst->iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor1,
+				  cryst->offset_w + (cryst->inx + 1) * cryst->a - (int) ((cryst->iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor2);
+			XDrawLine(display, window, cryst->gc,
+				  cryst->offset_w + cryst->inx * cryst->a - (int) ((cryst->iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor2,
+				  cryst->offset_w + (cryst->inx + 1) * cryst->a - (int) ((cryst->iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
+				  y_coor2);
+		}
+	}
+
 	XSetFunction(display, cryst->gc, GXxor);
 
 /* Rotate colours */
@@ -597,7 +742,10 @@ draw_crystal(ModeInfo * mi)
 		} else {
 			XSetForeground(display, cryst->gc, atom0->colour);
 		}
-		crystal_drawatom(mi, atom0);
+#ifndef HAVE_JWXYZ
+		if(cryst->painted)
+			crystal_drawatom(mi, atom0);
+#endif
 		atom0->velocity[0] += NRAND(3) - 1;
 		atom0->velocity[0] = MAX(-20, MIN(20, atom0->velocity[0]));
 		atom0->velocity[1] += NRAND(3) - 1;
@@ -620,8 +768,11 @@ draw_crystal(ModeInfo * mi)
 		crystal_drawatom(mi, atom0);
 	}
 	XSetFunction(display, cryst->gc, GXcopy);
+	cryst->painted = True;
+	MI_IS_DRAWN(mi) = True;
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_crystal(ModeInfo * mi)
 {
@@ -788,8 +939,9 @@ refresh_crystal(ModeInfo * mi)
 	}
 	XSetFunction(display, cryst->gc, GXcopy);
 }
+#endif
 
-static void
+ENTRYPOINT void
 free_crystal(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -821,7 +973,6 @@ ENTRYPOINT void
 init_crystal(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
 	crystalstruct *cryst;
 	int         i, max_atoms, size_atom, neqv;
 	int         cell_min;
@@ -829,7 +980,7 @@ init_crystal(ModeInfo * mi)
 #define MIN_CELL 200
 
 /* initialize */
-	MI_INIT (mi, crystals, free_crystal);
+	MI_INIT (mi, crystals);
 	cryst = &crystals[MI_SCREEN(mi)];
 
 	if (!cryst->gc) {
@@ -1020,146 +1171,6 @@ init_crystal(ModeInfo * mi)
 	}
 	cryst->a = cryst->a / cryst->nx;
 	cryst->b = cryst->b / cryst->ny;
-	if (cryst->unit_cell) {
-	   int y_coor1 , y_coor2;
-	   
-		if (MI_NPIXELS(mi) > 2)
-			XSetForeground(display, cryst->gc, MI_PIXEL(mi, NRAND(MI_NPIXELS(mi))));
-		else
-			XSetForeground(display, cryst->gc, MI_WHITE_PIXEL(mi));
-		if (cryst->grid_cell) {
-			int         inx, iny;
-
-		   if ( cryst->invert )
-		     y_coor1 = y_coor2 = cryst->win_height - cryst->offset_h;
-		   else
-		     y_coor1 = y_coor2 = cryst->offset_h;
-			XDrawLine(display, window, cryst->gc, cryst->offset_w,
-				  y_coor1, cryst->offset_w + cryst->nx * cryst->a,
-				  y_coor2);
-		   if ( cryst->invert )
-		     {
-			y_coor1 = cryst->win_height - cryst->offset_h;
-			y_coor2 = cryst->win_height - (int) (cryst->ny *
-							     cryst->b *
-					 cos((cryst->gamma - 90) * PI_RAD)) -
-			  cryst->offset_h;
-		     }
-		   else
-		     {
-			y_coor1 = cryst->offset_h;
-			y_coor2 = (int) (cryst->ny * cryst->b *
-					 cos((cryst->gamma - 90) * PI_RAD)) +
-			  cryst->offset_h;
-		     }
-			XDrawLine(display, window, cryst->gc, cryst->offset_w,
-				  y_coor1, (int) (cryst->offset_w - cryst->ny * cryst->b *
-					  sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor2);
-			inx = cryst->nx;
-			for (iny = 1; iny <= cryst->ny; iny++) {
-		   if ( cryst->invert )
-		     {
-			y_coor1 = cryst->win_height -
-			  (int) (iny * cryst->b * cos((cryst->gamma - 90) *
-						  PI_RAD)) - cryst->offset_h;
-			y_coor2 = cryst->win_height -
-			  (int) (iny * cryst->b * cos((cryst->gamma - 90) *
-						      PI_RAD)) -
-			  cryst->offset_h;
-		     }
-		   else
-		     {
-			y_coor1 = (int) (iny * cryst->b * cos((cryst->gamma - 90) *
-						  PI_RAD)) + cryst->offset_h;
-			y_coor2 = (int) (iny * cryst->b * cos((cryst->gamma - 90) * PI_RAD)) +
-					  cryst->offset_h;
-		     }
-				XDrawLine(display, window, cryst->gc,
-					  (int) (cryst->offset_w +
-				     inx * cryst->a - (int) (iny * cryst->b *
-					 sin((cryst->gamma - 90) * PI_RAD))),
-					  y_coor1,
-				    (int) (cryst->offset_w - iny * cryst->b *
-					   sin((cryst->gamma - 90) * PI_RAD)),
-					  y_coor2);
-			}
-			iny = cryst->ny;
-			for (inx = 1; inx <= cryst->nx; inx++) {
-			   if ( cryst->invert )
-			     {
-				y_coor1 =cryst->win_height -
-				  (int) (iny * cryst->b *
-						cos((cryst->gamma - 90) *
-						    PI_RAD)) - cryst->offset_h;
-				y_coor2 =cryst->win_height - cryst->offset_h;
-			     }
-			   else
-			     {
-				y_coor1 =(int) (iny * cryst->b *
-						cos((cryst->gamma - 90) *
-						    PI_RAD)) + cryst->offset_h;
-				y_coor2 =cryst->offset_h;
-			     }
-				XDrawLine(display, window, cryst->gc,
-					  (int) (cryst->offset_w +
-				     inx * cryst->a - (int) (iny * cryst->b *
-					 sin((cryst->gamma - 90) * PI_RAD))),
-					  y_coor1,
-					  cryst->offset_w + inx * cryst->a,
-					  y_coor2);
-			}
-		} else {
-			int         inx, iny;
-
-			inx = NRAND(cryst->nx);
-			iny = NRAND(cryst->ny);
-		   if ( cryst->invert )
-		     {
-			y_coor1 =cryst->win_height -
-			  (int) (iny * cryst->b *
-						  cos((cryst->gamma - 90) *
-						      PI_RAD)) -
-			  cryst->offset_h;
-			y_coor2 =cryst->win_height -
-			  (int) ( ( iny + 1 ) * cryst->b *
-						  cos((cryst->gamma - 90) *
-						      PI_RAD)) -
-			  cryst->offset_h;
-		     }
-		   else
-		     {
-			y_coor1 =(int) (iny * cryst->b *
-						  cos((cryst->gamma - 90) *
-						      PI_RAD)) +
-			  cryst->offset_h;
-			y_coor2 =(int) (( iny + 1 ) * cryst->b *
-						  cos((cryst->gamma - 90) *
-						      PI_RAD)) +
-			  cryst->offset_h;
-		     }
-			XDrawLine(display, window, cryst->gc,
-				  cryst->offset_w + inx * cryst->a - (int) (iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor1,
-				  cryst->offset_w + (inx + 1) * cryst->a - (int) (iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor1);
-			XDrawLine(display, window, cryst->gc,
-				  cryst->offset_w + inx * cryst->a - (int) (iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor1,
-				  cryst->offset_w + inx * cryst->a - (int) ((iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor2);
-			XDrawLine(display, window, cryst->gc,
-				  cryst->offset_w + (inx + 1) * cryst->a - (int) (iny * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor1,
-				  cryst->offset_w + (inx + 1) * cryst->a - (int) ((iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor2);
-			XDrawLine(display, window, cryst->gc,
-				  cryst->offset_w + inx * cryst->a - (int) ((iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor2,
-				  cryst->offset_w + (inx + 1) * cryst->a - (int) ((iny + 1) * cryst->b * sin((cryst->gamma - 90) * PI_RAD)),
-				  y_coor2);
-		}
-	}
 	if (MI_IS_INSTALL(mi) && MI_NPIXELS(mi) > 2) {
 /* Set up colour map */
 		if (cryst->colors && cryst->ncolors && !cryst->no_colors)
@@ -1232,13 +1243,11 @@ init_crystal(ModeInfo * mi)
 				atom0->colour = NRAND(cryst->ncolors - 2) + 2;
 			else
 				atom0->colour = 1;	/* Just in case */
-			XSetForeground(display, cryst->gc, cryst->colors[atom0->colour].pixel);
 		} else {
 			if (MI_NPIXELS(mi) > 2)
 				atom0->colour = MI_PIXEL(mi, NRAND(MI_NPIXELS(mi)));
 			else
 				atom0->colour = 1;	/*Xor'red so WHITE may not be appropriate */
-			XSetForeground(display, cryst->gc, atom0->colour);
 		}
 		atom0->x0 = NRAND(cryst->a);
 		atom0->y0 = NRAND(cryst->b);
@@ -1259,26 +1268,17 @@ init_crystal(ModeInfo * mi)
 		else
 			atom0->num_point = 4;
 		crystal_setupatom(atom0, cryst->gamma);
-		crystal_drawatom(mi, atom0);
 	}
 	XSetFunction(display, cryst->gc, GXcopy);
-}
 
-ENTRYPOINT void
-reshape_crystal(ModeInfo * mi, int width, int height)
-{
-  init_crystal(mi);
-}
+	if (MI_NPIXELS(mi) > 2)
+		cryst->grid_pixel = MI_PIXEL(mi, NRAND(MI_NPIXELS(mi)));
+	else
+		cryst->grid_pixel = MI_WHITE_PIXEL(mi);
 
-ENTRYPOINT Bool
-crystal_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      reshape_crystal (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-      return True;
-    }
-  return False;
+	cryst->inx = NRAND(cryst->nx);
+	cryst->iny = NRAND(cryst->ny);
+
 }
 
 XSCREENSAVER_MODULE ("Crystal", crystal)

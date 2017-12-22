@@ -78,7 +78,7 @@
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
 
-# define refresh_slideshow 0
+# define free_slideshow 0
 # define release_slideshow 0
 # include "xlockmore.h"
 
@@ -1079,7 +1079,7 @@ init_slideshow (ModeInfo *mi)
   slideshow_state *ss;
   int wire = MI_IS_WIREFRAME(mi);
   
-  MI_INIT (mi, sss, NULL);
+  MI_INIT (mi, sss);
   ss = &sss[screen];
 
   if ((ss->glx_context = init_GL(mi)) != NULL) {

@@ -93,6 +93,8 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
 					"*fpsSolid: true     \n" \
 					"*ignoreRotation: True \n" \
 
+# define reshape_loop 0
+# define loop_handle_event 0
 # define UNIFORM_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -131,7 +133,7 @@ ENTRYPOINT ModeSpecOpt loop_opts =
 #ifdef USE_MODULES
 ModStruct   loop_description =
 {"loop", "init_loop", "draw_loop", "release_loop",
- "refresh_loop", "init_loop", (char *) NULL, &loop_opts,
+ "refresh_loop", "init_loop", "free_loop", &loop_opts,
  100000, 5, 1600, -12, 64, 1.0, "",
  "Shows Langton's self-producing loops", 0, NULL};
 
@@ -188,7 +190,8 @@ static int  local_neighbors = 0;
 #define HEX_ADAM_LOOPY 7
 #endif
 #define HEX_MINGRIDSIZE (6*HEX_ADAM_LOOPX)
-#define MINSIZE ((MI_NPIXELS(mi)>=COLORS)?1:(2+(local_neighbors==6)))
+/* #define MINSIZE ((MI_NPIXELS(mi)>=COLORS)?1:(2+(local_neighbors==6))) */
+#define MINSIZE 5
 #define NEIGHBORKINDS 2
 #define ANGLES 360
 #define MAXNEIGHBORS 6
@@ -916,7 +919,7 @@ free_list(loopstruct * lp)
 		free_state(lp, state);
 }
 
-static void
+ENTRYPOINT void
 free_loop(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
@@ -1441,10 +1444,13 @@ init_loop (ModeInfo * mi)
 
     stop_warning_about_triangleUnit_already = (void *) &triangleUnit;
 
-	MI_INIT (mi, loops, free_loop);
+	MI_INIT (mi, loops);
 	lp = &loops[MI_SCREEN(mi)];
 
 	lp->redrawing = 0;
+
+    if (MI_WIDTH(mi) < 100 || MI_HEIGHT(mi) < 100)  /* tiny window */
+      size = MIN(MI_WIDTH(mi), MI_HEIGHT(mi));
 
 #ifdef DO_STIPPLE
 	if ((MI_NPIXELS(mi) < COLORS) && (lp->init_bits == 0)) {
@@ -1666,13 +1672,7 @@ draw_loop (ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-reshape_loop(ModeInfo * mi, int width, int height)
-{
-  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
-  init_loop (mi);
-}
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_loop (ModeInfo * mi)
 {
@@ -1686,17 +1686,7 @@ refresh_loop (ModeInfo * mi)
 	lp->redrawing = 1;
 	lp->redrawpos = lp->by * lp->ncols + lp->bx;
 }
-
-ENTRYPOINT Bool
-loop_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      reshape_loop (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-      return True;
-    }
-  return False;
-}
+#endif
 
 XSCREENSAVER_MODULE ("Loop", loop)
 

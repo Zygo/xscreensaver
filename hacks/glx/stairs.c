@@ -59,7 +59,6 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 # define DEFAULTS			"*delay:		20000   \n" \
 							"*showFPS:      False   \n"
 
-# define refresh_stairs 0
 # define release_stairs 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -85,7 +84,7 @@ ENTRYPOINT ModeSpecOpt stairs_opts =
 #ifdef USE_MODULES
 ModStruct   stairs_description =
 {"stairs", "init_stairs", "draw_stairs", NULL,
- "draw_stairs", "change_stairs", NULL, &stairs_opts,
+ "draw_stairs", "change_stairs", "free_stairs", &stairs_opts,
  1000, 1, 1, 1, 4, 1.0, "",
  "Shows Infinite Stairs, an Escher-like scene", 0, NULL};
 
@@ -321,8 +320,14 @@ ENTRYPOINT void
 reshape_stairs (ModeInfo * mi, int width, int height)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
+    int y = 0;
 
-	glViewport(0, 0, sp->WindW = (GLint) width, sp->WindH = (GLint) height);
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width;
+      y = -height/2;
+    }
+
+	glViewport(0, y, sp->WindW = (GLint) width, sp->WindH = (GLint) height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0);
@@ -432,15 +437,13 @@ pinit(ModeInfo *mi)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 }
 
-static void free_stairs (ModeInfo * mi);
-
 ENTRYPOINT void
 init_stairs (ModeInfo * mi)
 {
 	int         screen = MI_SCREEN(mi);
 	stairsstruct *sp;
 
-	MI_INIT (mi, stairs, free_stairs);
+	MI_INIT (mi, stairs);
 	sp = &stairs[screen];
 
 	sp->step = 0.0;
@@ -577,7 +580,7 @@ change_stairs (ModeInfo * mi)
 }
 #endif /* !STANDALONE */
 
-static void
+ENTRYPOINT void
 free_stairs (ModeInfo * mi)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];

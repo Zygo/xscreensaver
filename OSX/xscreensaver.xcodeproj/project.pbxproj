@@ -214,6 +214,7 @@
 				AF777A3D09B660B500EA3033 /* PBXTargetDependency */,
 				AFACE8911CC8365F008B24CD /* PBXTargetDependency */,
 				AF777A3B09B660B500EA3033 /* PBXTargetDependency */,
+				AF21078F1FD23D9800B61EA9 /* PBXTargetDependency */,
 				AF777A3909B660B400EA3033 /* PBXTargetDependency */,
 				AF777A3709B660B400EA3033 /* PBXTargetDependency */,
 				AF777A3509B660B400EA3033 /* PBXTargetDependency */,
@@ -1287,6 +1288,19 @@
 		AF1FDA88158FF96600C40F17 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
 		AF1FDA89158FF96600C40F17 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		AF1FDA8A158FF96600C40F17 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF2107781FD23BDD00B61EA9 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF21077A1FD23BDD00B61EA9 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF21077B1FD23BDD00B61EA9 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF21077C1FD23BDD00B61EA9 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF21077D1FD23BDD00B61EA9 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF21077E1FD23BDD00B61EA9 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF21077F1FD23BDD00B61EA9 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF2107801FD23BDD00B61EA9 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF2107891FD23D2800B61EA9 /* esper.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2107881FD23D2800B61EA9 /* esper.xml */; };
+		AF21078A1FD23D2800B61EA9 /* esper.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2107881FD23D2800B61EA9 /* esper.xml */; };
+		AF21078C1FD23D5000B61EA9 /* esper.c in Sources */ = {isa = PBXBuildFile; fileRef = AF21078B1FD23D5000B61EA9 /* esper.c */; };
+		AF21078D1FD23D5000B61EA9 /* esper.c in Sources */ = {isa = PBXBuildFile; fileRef = AF21078B1FD23D5000B61EA9 /* esper.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2107901FD23FEC00B61EA9 /* OCRAStd.otf in Resources */ = {isa = PBXBuildFile; fileRef = AFEC68361BD6CA85004C1B64 /* OCRAStd.otf */; };
 		AF241F83107C38DF00046A84 /* dropshadow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF241F81107C38DF00046A84 /* dropshadow.c */; };
 		AF2C31E615C0F7FE007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
 		AF2C31EA15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
@@ -3800,6 +3814,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF1B0FA71D7AB4740011DBE4;
 			remoteInfo = Hexstrut;
+		};
+		AF2107731FD23BDD00B61EA9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF21078E1FD23D9800B61EA9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF2107711FD23BDD00B61EA9;
+			remoteInfo = Esper;
 		};
 		AF32D9E20F3AD0B40080F535 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -7320,6 +7348,9 @@
 		AF1B0FBC1D7AB4740011DBE4 /* Hexstrut.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Hexstrut.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF1B0FBE1D7AB5210011DBE4 /* hexstrut.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hexstrut.c; path = hacks/glx/hexstrut.c; sourceTree = "<group>"; };
 		AF1B0FBF1D7AB5210011DBE4 /* hexstrut.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = hexstrut.xml; sourceTree = "<group>"; };
+		AF2107861FD23BDE00B61EA9 /* Esper.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Esper.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF2107881FD23D2800B61EA9 /* esper.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = esper.xml; sourceTree = "<group>"; };
+		AF21078B1FD23D5000B61EA9 /* esper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esper.c; path = hacks/glx/esper.c; sourceTree = "<group>"; };
 		AF241F81107C38DF00046A84 /* dropshadow.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = dropshadow.c; path = hacks/glx/dropshadow.c; sourceTree = "<group>"; };
 		AF241F82107C38DF00046A84 /* dropshadow.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = dropshadow.h; path = hacks/glx/dropshadow.h; sourceTree = "<group>"; };
 		AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -8376,6 +8407,20 @@
 				AF1B0FB41D7AB4740011DBE4 /* Carbon.framework in Frameworks */,
 				AF1B0FB51D7AB4740011DBE4 /* OpenGL.framework in Frameworks */,
 				AF1B0FB61D7AB4740011DBE4 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2107791FD23BDD00B61EA9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF21077A1FD23BDD00B61EA9 /* libjwxyz.a in Frameworks */,
+				AF21077B1FD23BDD00B61EA9 /* ScreenSaver.framework in Frameworks */,
+				AF21077C1FD23BDD00B61EA9 /* QuartzCore.framework in Frameworks */,
+				AF21077D1FD23BDD00B61EA9 /* Cocoa.framework in Frameworks */,
+				AF21077E1FD23BDD00B61EA9 /* Carbon.framework in Frameworks */,
+				AF21077F1FD23BDD00B61EA9 /* OpenGL.framework in Frameworks */,
+				AF2107801FD23BDD00B61EA9 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -12137,6 +12182,7 @@
 				AFEE10A01D17E20B00AAC8F7 /* Splodesic.saver */,
 				AF1B0FBC1D7AB4740011DBE4 /* Hexstrut.saver */,
 				AF633C161EE0BA6F00AB33BD /* Vigilance.saver */,
+				AF2107861FD23BDE00B61EA9 /* Esper.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -12477,6 +12523,7 @@
 				AFA55E2509935F2B00F3E977 /* endgame.c */,
 				AFACE88A1CC83578008B24CD /* energystream.c */,
 				AFA55C230993435300F3E977 /* engine.c */,
+				AF21078B1FD23D5000B61EA9 /* esper.c */,
 				AF642409099FFAF0000F4CD4 /* extrusion-helix2.c */,
 				AF64240A099FFAF0000F4CD4 /* extrusion-helix3.c */,
 				AF64240B099FFAF0000F4CD4 /* extrusion-helix4.c */,
@@ -12692,6 +12739,7 @@
 				AFC2589C0988A468000655EE /* engine.xml */,
 				AFC2589D0988A468000655EE /* epicycle.xml */,
 				AFC2589E0988A468000655EE /* eruption.xml */,
+				AF2107881FD23D2800B61EA9 /* esper.xml */,
 				AFC2589F0988A468000655EE /* euler2d.xml */,
 				AFC258A00988A468000655EE /* extrusion.xml */,
 				AFC258A10988A468000655EE /* fadeplot.xml */,
@@ -13171,6 +13219,26 @@
 			name = Hexstrut;
 			productName = DangerBall;
 			productReference = AF1B0FBC1D7AB4740011DBE4 /* Hexstrut.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF2107711FD23BDD00B61EA9 /* Esper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF2107831FD23BDD00B61EA9 /* Build configuration list for PBXNativeTarget "Esper" */;
+			buildPhases = (
+				AF2107741FD23BDD00B61EA9 /* Resources */,
+				AF2107761FD23BDD00B61EA9 /* Sources */,
+				AF2107791FD23BDD00B61EA9 /* Frameworks */,
+				AF2107811FD23BDD00B61EA9 /* Rez */,
+				AF2107821FD23BDD00B61EA9 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF2107721FD23BDD00B61EA9 /* PBXTargetDependency */,
+			);
+			name = Esper;
+			productName = DangerBall;
+			productReference = AF2107861FD23BDE00B61EA9 /* Esper.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF32D9E00F3AD0B40080F535 /* RubikBlocks */ = {
@@ -18144,7 +18212,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0830;
+				LastUpgradeCheck = 0920;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -18168,6 +18236,9 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF1B0FA71D7AB4740011DBE4 = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AF2107711FD23BDD00B61EA9 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF32D9E00F3AD0B40080F535 = {
@@ -19116,6 +19187,7 @@
 				AFACE8731CC83458008B24CD /* EnergyStream */,
 				AFA55E0D09935EDC00F3E977 /* Endgame */,
 				AFA55C0E0993431300F3E977 /* Engine */,
+				AF2107711FD23BDD00B61EA9 /* Esper */,
 				AF6423F2099FF9C2000F4CD4 /* Extrusion */,
 				AFA5603209936D5100F3E977 /* FlipFlop */,
 				AF77773E09B6446500EA3033 /* FlipScreen3D */,
@@ -19281,6 +19353,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF1B0FC11D7AB53A0011DBE4 /* hexstrut.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2107741FD23BDD00B61EA9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2107891FD23D2800B61EA9 /* esper.xml in Resources */,
+				AF2107901FD23FEC00B61EA9 /* OCRAStd.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -20204,6 +20285,7 @@
 				AF918AEB158FC53D002B5D1E /* engine.xml in Resources */,
 				AF918AEC158FC53D002B5D1E /* epicycle.xml in Resources */,
 				AF918AED158FC53D002B5D1E /* eruption.xml in Resources */,
+				AF21078A1FD23D2800B61EA9 /* esper.xml in Resources */,
 				AF918AEE158FC53D002B5D1E /* euler2d.xml in Resources */,
 				AF918AF0158FC53D002B5D1E /* fadeplot.xml in Resources */,
 				AF918AF1158FC53D002B5D1E /* fiberlamp.xml in Resources */,
@@ -21575,6 +21657,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF1B0FB71D7AB4740011DBE4 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2107811FD23BDD00B61EA9 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -23311,6 +23400,21 @@
 			showEnvVarsInLog = 0;
 		};
 		AF1B0FB81D7AB4740011DBE4 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF2107821FD23BDD00B61EA9 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -27230,6 +27334,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF2107761FD23BDD00B61EA9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2107781FD23BDD00B61EA9 /* XScreenSaverSubclass.m in Sources */,
+				AF21078C1FD23D5000B61EA9 /* esper.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF32D9E50F3AD0B40080F535 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -28420,6 +28533,7 @@
 				AF918A4A158FC3E5002B5D1E /* endgame.c in Sources */,
 				AFACE88F1CC83617008B24CD /* energystream.c in Sources */,
 				AF918A4B158FC3E5002B5D1E /* engine.c in Sources */,
+				AF21078D1FD23D5000B61EA9 /* esper.c in Sources */,
 				AF918A54158FC3E5002B5D1E /* flipflop.c in Sources */,
 				AF918A55158FC3E5002B5D1E /* flipscreen3d.c in Sources */,
 				AF918A56158FC3E5002B5D1E /* fliptext.c in Sources */,
@@ -30031,6 +30145,16 @@
 			isa = PBXTargetDependency;
 			target = AF1B0FA71D7AB4740011DBE4 /* Hexstrut */;
 			targetProxy = AF1B0FC41D7AB5740011DBE4 /* PBXContainerItemProxy */;
+		};
+		AF2107721FD23BDD00B61EA9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF2107731FD23BDD00B61EA9 /* PBXContainerItemProxy */;
+		};
+		AF21078F1FD23D9800B61EA9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF2107711FD23BDD00B61EA9 /* Esper */;
+			targetProxy = AF21078E1FD23D9800B61EA9 /* PBXContainerItemProxy */;
 		};
 		AF32D9E10F3AD0B40080F535 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -32651,6 +32775,28 @@
 			name = Debug;
 		};
 		AF1B0FBB1D7AB4740011DBE4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AF2107841FD23BDD00B61EA9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF2107851FD23BDD00B61EA9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
@@ -36816,13 +36962,19 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = NO;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = NO;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -36842,6 +36994,7 @@
 					"GETTIMEOFDAY_TWO_ARGS=1",
 					"HAVE_UNISTD_H=1",
 					"STANDALONE=1",
+					"HAVE_GL=1",
 					"HAVE_GLBINDTEXTURE=1",
 					"HAVE_UNAME=1",
 					"HAVE_ICMP=1",
@@ -36862,6 +37015,7 @@
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -36910,13 +37064,19 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = NO;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = NO;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -36935,6 +37095,7 @@
 					"GETTIMEOFDAY_TWO_ARGS=1",
 					"HAVE_UNISTD_H=1",
 					"STANDALONE=1",
+					"HAVE_GL=1",
 					"HAVE_GLBINDTEXTURE=1",
 					"HAVE_UNAME=1",
 					"HAVE_ICMP=1",
@@ -36954,6 +37115,7 @@
 					"CLASS=XScreenSaver${EXECUTABLE_NAME}View",
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -37080,6 +37242,15 @@
 			buildConfigurations = (
 				AF1B0FBA1D7AB4740011DBE4 /* Debug */,
 				AF1B0FBB1D7AB4740011DBE4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF2107831FD23BDD00B61EA9 /* Build configuration list for PBXNativeTarget "Esper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF2107841FD23BDD00B61EA9 /* Debug */,
+				AF2107851FD23BDD00B61EA9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

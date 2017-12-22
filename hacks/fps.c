@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -24,9 +24,15 @@ fps_init (Display *dpy, Window window)
   fps_state *st;
   const char *font;
   XFontStruct *f;
+  Bool top_p;
+  XWindowAttributes xgwa;
 
   if (! get_boolean_resource (dpy, "doFPS", "DoFPS"))
     return 0;
+
+  if (!strcasecmp (progname, "BSOD")) return 0;  /* Never worked right */
+
+  top_p = get_boolean_resource (dpy, "fpsTop", "FPSTop");
 
   st = (fps_state *) calloc (1, sizeof(*st));
 
@@ -36,12 +42,12 @@ fps_init (Display *dpy, Window window)
 
   font = get_string_resource (dpy, "fpsFont", "Font");
 
-  if (!font) font = "-*-courier-bold-r-normal-*-180-*";
+  if (!font)
+    font = "-*-courier-bold-r-normal-*-*-180-*-*-*-*-*-*"; /* also texfont.c */
   f = XLoadQueryFont (dpy, font);
   if (!f) f = XLoadQueryFont (dpy, "fixed");
 
   {
-    XWindowAttributes xgwa;
     XGCValues gcv;
     XGetWindowAttributes (dpy, window, &xgwa);
     gcv.font = f->fid;
@@ -56,8 +62,19 @@ fps_init (Display *dpy, Window window)
   st->font = f;
   st->x = 10;
   st->y = 10;
-  if (get_boolean_resource (dpy, "fpsTop", "FPSTop"))
+  if (top_p)
     st->y = - (st->font->ascent + st->font->descent + 10);
+
+# ifdef USE_IPHONE
+  /* Don't hide the FPS display under the iPhone X bezel.
+     #### This is the worst of all possible ways to do this!  But how else?
+   */
+  if (xgwa.width == 2436 || xgwa.height == 2436)
+    {
+      st->x += 48;
+      st->y += 48 * (top_p ? -1 : 1);
+    }
+# endif
 
   strcpy (st->string, "FPS: ... ");
 

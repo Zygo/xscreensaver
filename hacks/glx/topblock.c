@@ -28,7 +28,6 @@ History
 
 #include <math.h>
 
-# define refresh_topBlock 0
 # define release_topBlock 0
 
 #define DEFAULTS	"*delay:	10000       \n" \
@@ -159,7 +158,14 @@ ENTRYPOINT void
 reshape_topBlock (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width*1.5;
+    y = -height*0.2;
+    h = height / (GLfloat) width;
+  }
+  glViewport (0, y, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective (60.0, 1/h, 1.0, 1000.0);
@@ -169,7 +175,7 @@ reshape_topBlock (ModeInfo *mi, int width, int height)
 }
 
 /* clean up on exit, not required ... */
-static void
+ENTRYPOINT void
 free_topBlock(ModeInfo *mi)
 {
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
@@ -189,7 +195,7 @@ init_topBlock (ModeInfo *mi)
   topBlockSTATE *tb;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, tbs, free_topBlock);
+  MI_INIT (mi, tbs);
 
   tb = &tbs[MI_SCREEN(mi)];
 

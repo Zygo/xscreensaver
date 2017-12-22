@@ -728,14 +728,23 @@ NextSproingieDisplay(sp_instance *si)
 }
 
 void
-ReshapeSproingies(int w, int h)
+ReshapeSproingies(int width, int height)
 {
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(65.0, (GLfloat) w / (GLfloat) h, 0.1, 2000.0);	/* was 200000.0 */
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+  double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0, y, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(65.0, 1/h, 0.1, 2000.0);	/* was 200000.0 */
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 }
 
 void

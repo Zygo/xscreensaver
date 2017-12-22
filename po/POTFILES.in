@@ -1,4 +1,4 @@
-# Auto-generated: Wed Jul  5 10:52:59 PDT 2017
+# Auto-generated: Wed Dec 20 11:14:25 PST 2017
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -68,6 +68,7 @@ hacks/config/energystream.xml
 hacks/config/engine.xml
 hacks/config/epicycle.xml
 hacks/config/eruption.xml
+hacks/config/esper.xml
 hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml

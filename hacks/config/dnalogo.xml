@@ -15,7 +15,7 @@
    <option id="glyph"    _label="DNA Lounge logo" arg-set="-mode helix"/>
    <option id="pizza"    _label="DNA Pizza logo"  arg-set="-mode pizza"/>
    <option id="both"     _label="DNA Lounge and DNA Pizza logos"/>
-   <option id="codeword" _label="Codeword logo"   arg-set="-mode codeword"/>
+<!--<option id="codeword" _label="Codeword logo"  arg-set="-mode codeword"/>-->
   </select>
   <hgroup>
    <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>

@@ -56,7 +56,7 @@
 			"*suppressRotationAnimation: True\n" \
 
 
-# define refresh_sponge 0
+# define free_sponge 0
 # define release_sponge 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -128,8 +128,15 @@ ENTRYPOINT void
 reshape_sponge (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -401,7 +408,7 @@ init_sponge (ModeInfo *mi)
   sponge_configuration *sp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, sps, NULL);
+  MI_INIT (mi, sps);
 
   sp = &sps[MI_SCREEN(mi)];
 

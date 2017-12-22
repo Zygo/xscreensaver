@@ -53,7 +53,6 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 					"*fpsTop:       True    \n"			\
 					"*wireframe:	False	\n"
 
-# define refresh_sproingies 0
 # define release_sproingies 0
 # define sproingies_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -87,7 +86,7 @@ ENTRYPOINT ModeSpecOpt sproingies_opts =
 #ifdef USE_MODULES
 ModStruct   sproingies_description =
 {"sproingies", "init_sproingies", "draw_sproingies", NULL,
- "refresh_sproingies", "init_sproingies", NULL, &sproingies_opts,
+ "refresh_sproingies", "init_sproingies", "free_sproingies", &sproingies_opts,
  1000, 5, 0, 400, 4, 1.0, "",
  "Shows Sproingies!  Nontoxic.  Safe for pets and small children", 0, NULL};
 
@@ -112,9 +111,6 @@ typedef struct {
 static sproingiesstruct *sproingies = NULL;
 
 
-static void free_sproingies (ModeInfo * mi);
-
-
 ENTRYPOINT void
 init_sproingies (ModeInfo * mi)
 {
@@ -127,7 +123,7 @@ init_sproingies (ModeInfo * mi)
 	sproingiesstruct *sp;
 	int         wfmode = 0, grnd = 0, mspr, w, h;
 
-	MI_INIT (mi, sproingies, free_sproingies);
+	MI_INIT (mi, sproingies);
 	sp = &sproingies[screen];
 
 	sp->mono = (MI_IS_MONO(mi) ? 1 : 0);
@@ -216,7 +212,7 @@ reshape_sproingies (ModeInfo *mi, int w, int h)
 }
 
 
-static void
+ENTRYPOINT void
 free_sproingies (ModeInfo * mi)
 {
 	sproingiesstruct *sp = &sproingies[MI_SCREEN(mi)];

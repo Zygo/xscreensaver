@@ -137,7 +137,8 @@ static const char sccsid[] = "@(#)juggle.c	5.10 2003/09/02 xlockmore";
 					"*font:    -*-helvetica-bold-r-normal-*-180-*\n" \
 					"*fpsSolid: true\n" \
 
-# define refresh_juggle 0
+# define release_juggle 0
+# define reshape_juggle 0
 # define juggle_handle_event 0
 # undef SMOOTH_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -257,8 +258,8 @@ ENTRYPOINT ModeSpecOpt juggle_opts =
 
 #ifdef USE_MODULES
 ModStruct   juggle_description = {
-	"juggle", "init_juggle", "draw_juggle", "release_juggle",
-	"draw_juggle", "change_juggle", (char *) NULL, &juggle_opts,
+	"juggle", "init_juggle", "draw_juggle", (char *) NULL,
+	"draw_juggle", "change_juggle", "free_juggle", &juggle_opts,
 	10000, 200, 1000, 1, 64, 1.0, "",
 	"Shows a Juggler, juggling", 0, NULL
 };
@@ -660,8 +661,10 @@ trajectory_destroy(Trajectory *t) {
   REMOVE(t); /* Unlink and free */
 }
 
-static void
-free_juggle(jugglestruct *sp) {
+ENTRYPOINT void
+free_juggle(ModeInfo * mi) {
+  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
+
   if (sp->head != NULL) {
 	while (sp->head->next != sp->head) {
 	  trajectory_destroy(sp->head->next);
@@ -695,13 +698,14 @@ free_juggle(jugglestruct *sp) {
 }
 
 static Bool
-add_throw(jugglestruct *sp, char type, int h, Notation n, const char* name)
+add_throw(ModeInfo *mi, char type, int h, Notation n, const char* name)
 {
+  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
   Trajectory *t;
 
   ADD_ELEMENT(Trajectory, t, sp->head->prev);
   if(t == NULL){ /* Out of Memory */
-	free_juggle(sp);
+	free_juggle(mi);
 	return False;
   }
   t->object = NULL;
@@ -723,7 +727,6 @@ add_throw(jugglestruct *sp, char type, int h, Notation n, const char* name)
 static Bool
 program(ModeInfo *mi, const char *patn, const char *name, int cycles)
 {
-  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
   const char *p;
   int w, h, i, seen;
   Notation notation;
@@ -775,7 +778,7 @@ program(ModeInfo *mi, const char *patn, const char *name, int cycles)
 		case ' ':
 		  if (seen) {
 			i++;
-			if (!add_throw(sp, type, h, notation, title))
+			if (!add_throw(mi, type, h, notation, title))
 				return False;
 			title = NULL;
 			type=' ';
@@ -795,7 +798,7 @@ program(ModeInfo *mi, const char *patn, const char *name, int cycles)
 	  }
 	}
 	if (seen) { /* end of sequence */
-	  if (!add_throw(sp, type, h, notation, title))
+	  if (!add_throw(mi, type, h, notation, title))
 		return False;
 	  title = NULL;
 	}
@@ -896,8 +899,9 @@ name(jugglestruct *sp)
 /* ..nm.. -> .. LTn LC RTm RC .. */
 
 static Bool
-part(jugglestruct *sp)
+part(ModeInfo *mi)
 {
+  jugglestruct *sp = &juggles[MI_SCREEN(mi)];
   Trajectory *t, *nt, *p;
   Hand hand = (LRAND() & 1) ? RIGHT : LEFT;
 
@@ -942,7 +946,7 @@ part(jugglestruct *sp)
 	  t->action = CATCH;
 	  ADD_ELEMENT(Trajectory, nt, p);
 	  if(nt == NULL){
-		free_juggle(sp);
+		free_juggle(mi);
 		return False;
 	  }
 	  nt->object = NULL;
@@ -2295,19 +2299,6 @@ show_bball(ModeInfo *mi, unsigned long color, Trace *s)
  **************************************************************************/
 
 
-ENTRYPOINT void
-release_juggle (ModeInfo * mi)
-{
-  if (juggles != NULL) {
-	int screen;
-
-	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-	  free_juggle(&juggles[screen]);
-	free(juggles);
-	juggles = (jugglestruct *) NULL;
-  }
-}
-
 /* FIXME: refill_juggle currently just appends new throws to the
  * programme.  This is fine if the programme is empty, but if there
  * are still some trajectories left then it really should take these
@@ -2423,7 +2414,7 @@ refill_juggle(ModeInfo * mi)
 
   name(sp);
 
-  if (!part(sp))
+  if (!part(mi))
 	return;
 
   lob(mi);
@@ -2433,7 +2424,7 @@ refill_juggle(ModeInfo * mi)
   positions(sp);
 
   if (!projectile(sp)) {
-	free_juggle(sp);
+	free_juggle(mi);
 	return;
   }
 
@@ -2481,7 +2472,7 @@ init_juggle (ModeInfo * mi)
   jugglestruct *sp = 0;
   int i;
 
-  MI_INIT (mi, juggles, 0);
+  MI_INIT (mi, juggles);
   sp = &juggles[MI_SCREEN(mi)];
 
   if (only && *only && strcmp(only, " ")) {
@@ -2530,21 +2521,21 @@ init_juggle (ModeInfo * mi)
 	/* create circular trajectory list */
 	ADD_ELEMENT(Trajectory, sp->head, sp->head);
 	if(sp->head == NULL){
-	  free_juggle(sp);
+	  free_juggle(mi);
 	  return;
 	}
 
 	/* create circular object list */
 	ADD_ELEMENT(Object, sp->objects, sp->objects);
 	if(sp->objects == NULL){
-	  free_juggle(sp);
+	  free_juggle(mi);
 	  return;
 	}
 
 	/* create circular wander list */
 	ADD_ELEMENT(Wander, sp->wander, sp->wander);
 	if(sp->wander == NULL){
-	  free_juggle(sp);
+	  free_juggle(mi);
 	  return;
 	}
 	(void)wander(sp, 0); /* Initialize wander */
@@ -2608,12 +2599,6 @@ init_juggle (ModeInfo * mi)
     char *font = get_string_resource (MI_DISPLAY(mi), "font", "Font");
 	sp->mode_font = XLoadQueryFont(MI_DISPLAY(mi), font);
   }
-}
-
-ENTRYPOINT void
-reshape_juggle (ModeInfo * mi, int width, int height)
-{
-  init_juggle(mi);
 }
 
 ENTRYPOINT void
@@ -2802,7 +2787,6 @@ draw_juggle (ModeInfo * mi)
   if (future < sp->time + 100 * THROW_CATCH_INTERVAL) {
 	refill_juggle(mi);
   } else if (sp->time > 1<<30) { /* Hard Reset before the clock wraps */
-	release_juggle(mi);
 	init_juggle(mi);
   }
 }

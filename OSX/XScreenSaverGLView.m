@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -41,13 +41,18 @@ extern void check_gl_error (const char *type);
 @implementation XScreenSaverGLView
 
 
-#ifdef USE_IPHONE
 /* With GL programs, drawing at full resolution isn't a problem.
  */
 - (CGFloat) hackedContentScaleFactor
 {
+# ifdef USE_IPHONE
   return [self contentScaleFactor];
+# else
+  return self.window.backingScaleFactor;
+# endif
 }
+
+# ifdef USE_IPHONE
 
 - (BOOL)ignoreRotation
 {

@@ -36,9 +36,8 @@
 #define INDEX_OFFSET 100000
 #define NUM_CELL_SHAPES 10
 
-#define refresh_glcells 0
 #define release_glcells 0
-#define glcells_handle_event 0
+#define glcells_handle_event xlockmore_no_events
 
 #define DEF_DELAY     "20000"
 #define DEF_MAXCELLS  "800"
@@ -1267,15 +1266,13 @@ reshape_glcells( ModeInfo *mi, int width, int height )
 # endif
 }
 
-static void free_glcells( ModeInfo *mi );
-
 ENTRYPOINT void 
 init_glcells( ModeInfo *mi )
 {
   int i, divisions;
   State *st=0;
   
-  MI_INIT(mi, sstate, free_glcells);
+  MI_INIT(mi, sstate);
   st = &sstate[MI_SCREEN(mi)];
   
   st->glx_context = init_GL(mi);
@@ -1363,7 +1360,7 @@ draw_glcells( ModeInfo *mi )
   glXSwapBuffers( dpy, window );
 }
 
-static void
+ENTRYPOINT void 
 free_glcells( ModeInfo *mi )
 {
   int i;

@@ -665,9 +665,10 @@ load_texture_async (Screen *screen, Window window,
   data->pix_height = xgwa.height;
   data->pix_depth  = xgwa.depth;
 
-  if (desired_width  && desired_width  < xgwa.width)
+  /* Allow the pixmap to be larger than the window. Esper wants this. */
+  if (desired_width /* && desired_width  < xgwa.width */)
     data->pix_width  = desired_width;
-  if (desired_height && desired_height < xgwa.height)
+  if (desired_height /* && desired_height < xgwa.height */)
     data->pix_height = desired_height;
 
   data->pixmap = XCreatePixmap (dpy, window, data->pix_width, data->pix_height,

@@ -52,12 +52,16 @@ init_GL(ModeInfo * mi)
   Window window = mi->window;
   Screen *screen = mi->xgwa.screen;
   Visual *visual = mi->xgwa.visual;
-  GLXContext glx_context = 0;
   XVisualInfo vi_in, *vi_out;
   int out_count;
 
+  if (mi->glx_context) {
+    glXMakeCurrent (dpy, window, mi->glx_context);
+    return &mi->glx_context;
+  }
+
 # ifdef HAVE_JWZGLES
-  jwzgles_reset();
+  jwzgles_make_current(jwzgles_make_state(state));
 # endif
 
   vi_in.screen = screen_number (screen);
@@ -69,23 +73,23 @@ init_GL(ModeInfo * mi)
   {
     XSync (dpy, False);
     orig_ehandler = XSetErrorHandler (BadValue_ehandler);
-    glx_context = glXCreateContext (dpy, vi_out, 0, GL_TRUE);
+    mi->glx_context = glXCreateContext (dpy, vi_out, 0, GL_TRUE);
     XSync (dpy, False);
     XSetErrorHandler (orig_ehandler);
     if (got_error)
-      glx_context = 0;
+      mi->glx_context = 0;
   }
 
   XFree((char *) vi_out);
 
-  if (!glx_context)
+  if (!mi->glx_context)
     {
       fprintf(stderr, "%s: couldn't create GL context for visual 0x%x.\n",
 	      progname, (unsigned int) XVisualIDFromVisual (visual));
       exit(1);
     }
 
-  glXMakeCurrent (dpy, window, glx_context);
+  glXMakeCurrent (dpy, window, mi->glx_context);
 
   {
     GLboolean rgba_mode = 0;
@@ -139,11 +143,7 @@ init_GL(ModeInfo * mi)
   /* GLXContext is already a pointer type.
      Why this function returns a pointer to a pointer, I have no idea...
    */
-  {
-    GLXContext *ptr = (GLXContext *) malloc(sizeof(GLXContext));
-    *ptr = glx_context;
-    return ptr;
-  }
+  return &mi->glx_context;
 }
 
 

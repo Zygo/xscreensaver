@@ -152,7 +152,7 @@ ModStruct pacman_description = {
     (char *) NULL,              /* *release_name; */
     "refresh_pacman",           /* *refresh_name; */
     "change_pacman",            /* *change_name; */
-    (char *) NULL,              /* *unused_name; */
+    "free_pacman",              /* *free_name; */
     &pacman_opts,               /* *msopts */
     10000, 4, 1, 0, 64, 1.0, "", "Shows Pacman(tm)", 0, NULL
 };
@@ -166,7 +166,7 @@ static void repopulate (ModeInfo * mi);
 static void drawlevel (ModeInfo * mi);
 
 
-static void
+ENTRYPOINT void
 free_pacman (ModeInfo * mi)
 {
     Display * display = MI_DISPLAY (mi);
@@ -207,7 +207,7 @@ reset_level (ModeInfo * mi, int n, int pac_init)
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     unsigned int ghost;
 
-    MI_CLEARWINDOW (mi);
+    XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
     drawlevel (mi);
 
     pp->gamestate = GHOST_DANGER;
@@ -1490,7 +1490,7 @@ init_pacman (ModeInfo * mi)
     int dir, mouth;
 #endif
 
-    MI_INIT (mi, pacman_games, free_pacman);
+    MI_INIT (mi, pacman_games);
     pp = &pacman_games[MI_SCREEN (mi)];
 
     pp->width = (unsigned short) MI_WIDTH (mi);
@@ -1519,9 +1519,15 @@ init_pacman (ModeInfo * mi)
     if (size == 0 ||
         MINGRIDSIZE * size > (int) pp->width ||
         MINGRIDSIZE * size > (int) pp->height) {
+        double scale = MIN (pp->width / LEVWIDTH, pp->height / LEVHEIGHT);
 
-        pp->ys = pp->xs = MAX (MIN (pp->width / LEVWIDTH,
-                                    pp->height / LEVHEIGHT), 1);
+        if (pp->width > pp->height * 5 ||  /* weird window aspect ratio */
+            pp->height > pp->width * 5)
+            scale = 0.8 * (pp->width / pp->height
+                           ? pp->width / (double) pp->height
+                           : pp->height / (double) pp->width);
+        pp->ys = MAX (scale, 1);
+        pp->xs = pp->ys;
     }
     else {
         if (size < -MINSIZE)
@@ -1538,6 +1544,7 @@ init_pacman (ModeInfo * mi)
                                         MINGRIDSIZE)));
         pp->xs = pp->ys;
     }
+
 
     pp->wallwidth = (unsigned int) (pp->xs + pp->ys) >> 4;
     if (pp->wallwidth < 1)
@@ -1692,7 +1699,7 @@ init_pacman (ModeInfo * mi)
 
     pp->pacman.mouthstage = MAXMOUTH - 1;
 
-    MI_CLEARWINDOW (mi);
+    XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
     repopulate (mi);
 }
 
@@ -1748,6 +1755,7 @@ draw_pacman (ModeInfo * mi)
     pacman_tick (mi);
 }
 
+#ifndef STANDALONE
 /* Refresh current level. */
 ENTRYPOINT void
 refresh_pacman (ModeInfo * mi)
@@ -1755,6 +1763,7 @@ refresh_pacman (ModeInfo * mi)
     drawlevel (mi);
     pacman_tick (mi);
 }
+#endif
 
 ENTRYPOINT void
 reshape_pacman(ModeInfo * mi, int width, int height)
@@ -1764,7 +1773,7 @@ reshape_pacman(ModeInfo * mi, int width, int height)
     pp->height = height;
     pp->xb = (pp->width  - pp->ncols * pp->xs) >> 1;
     pp->yb = (pp->height - pp->nrows * pp->ys) >> 1;
-    MI_CLEARWINDOW (mi);
+    XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
     /* repopulate (mi); */
     drawlevel (mi);
 }
@@ -1774,7 +1783,7 @@ reshape_pacman(ModeInfo * mi, int width, int height)
 ENTRYPOINT void
 change_pacman (ModeInfo * mi)
 {
-    MI_CLEARWINDOW (mi);
+    XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
     repopulate (mi);
 }
 #endif /* !STANDALONE */

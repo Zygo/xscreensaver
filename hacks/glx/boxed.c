@@ -45,9 +45,8 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 			"*showFPS:   False   \n" \
 			"*wireframe: False   \n"
 
-# define refresh_boxed 0
 # define release_boxed 0
-# define boxed_handle_event 0
+# define boxed_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -99,7 +98,7 @@ ENTRYPOINT ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, N
 
 ModStruct   boxed_description = { 
      "boxed", "init_boxed", "draw_boxed", NULL,
-     "draw_boxed", "init_boxed", NULL, &boxed_opts,
+     "draw_boxed", "init_boxed", "free_boxed", &boxed_opts,
      1000, 1, 2, 1, 4, 1.0, "",
      "Shows GL's boxed balls", 0, NULL};
 
@@ -1170,8 +1169,15 @@ static void draw(ModeInfo * mi)
 ENTRYPOINT void reshape_boxed(ModeInfo *mi, int width, int height)
 {
    GLfloat     h = (GLfloat) height / (GLfloat) width;
+   int y = 0;
+
+   if (width > height * 5) {   /* tiny window: show middle */
+     height = width * 9/16;
+     y = -height/2;
+     h = height / (GLfloat) width;
+   }
    
-   glViewport(0, 0, (GLint) width, (GLint) height);
+   glViewport(0, y, (GLint) width, (GLint) height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    gluPerspective(50.0,1/h,2.0,1000.0);
@@ -1283,8 +1289,6 @@ pinit(ModeInfo * mi)
 
  
 
-static void free_boxed(ModeInfo * mi);
-
 ENTRYPOINT void
 init_boxed(ModeInfo * mi)
 {
@@ -1294,7 +1298,7 @@ init_boxed(ModeInfo * mi)
    /* Boolean     rgba, doublebuffer, cmap_installed; */
    boxedstruct *gp;
 
-   MI_INIT(mi, boxed, free_boxed);
+   MI_INIT(mi, boxed);
    gp = &boxed[screen];
    gp->window = MI_WINDOW(mi);
    

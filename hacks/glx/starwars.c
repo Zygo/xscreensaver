@@ -46,9 +46,8 @@
 		 "*textLiteral: " DEF_TEXT "\n" \
 		 "*program: xscreensaver-text --cols 0"  /* don't wrap */
 
-# define refresh_sws 0
 # define release_sws 0
-# define sws_handle_event 0
+# define sws_handle_event xlockmore_no_events
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -717,9 +716,6 @@ gl_init (ModeInfo *mi)
 }
 
 
-static void free_sws (ModeInfo *mi);
-
-
 ENTRYPOINT void 
 init_sws (ModeInfo *mi)
 {
@@ -727,7 +723,7 @@ init_sws (ModeInfo *mi)
 
   sws_configuration *sc = 0;
 
-  MI_INIT (mi, scs, free_sws);
+  MI_INIT (mi, scs);
 
   sc = &scs[MI_SCREEN(mi)];
 
@@ -1051,7 +1047,7 @@ draw_sws (ModeInfo *mi)
   sc->star_theta += star_spin;
 }
 
-static void
+ENTRYPOINT void
 free_sws (ModeInfo *mi)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];

@@ -1,4 +1,4 @@
-/* DNA Logo, Copyright (c) 2001-2016 Jamie Zawinski <jwz@jwz.org>
+/* DNA Logo, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.org>
  *
  *      DNA Lounge
  *
@@ -67,7 +67,7 @@
 #  define CWFONT "-*-helvetica-medium-r-normal-*-*-240-*-*-*-*-*-*"
 # endif
 
-# define refresh_logo 0
+# define free_logo 0
 # define release_logo 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -107,7 +107,9 @@ typedef enum {
   HELIX_IN, HELIX, HELIX_OUT,
   PIZZA_IN, PIZZA, PIZZA_OUT,
   HELIX_AND_PIZZA,
+# ifdef CW
   CODEWORD_IN, CODEWORD, CODEWORD_OUT, CODEWORD_BLANK
+# endif
 } glyph_mode;
 
 typedef struct {
@@ -150,6 +152,7 @@ typedef struct {
   GLfloat frame_thickness;
   GLfloat triangle_size;
 
+# ifdef CW
   int codeword_facets, codeword_disc_facets;
   GLfloat codeword_spread, codeword_line_width, codeword_thickness;
   GLfloat codeword_cap_size;
@@ -162,6 +165,7 @@ typedef struct {
   XYZ *codeword_guides;
   GLfloat codeword_color[4], codeword_bg[4];
   texture_font_data *font;
+# endif
 
   GLfloat speed;
   glyph_mode mode;
@@ -170,7 +174,9 @@ typedef struct {
 
   spinner gasket_spinnerx, gasket_spinnery, gasket_spinnerz;
   spinner scene_spinnerx,  scene_spinnery;	/* for DNA */
+# ifdef CW
   rotator *scene_rot;				/* for Codeword */
+# endif
   spinner helix_spinnerz;
   spinner pizza_spinnery, pizza_spinnerz;
   spinner frame_spinner;
@@ -190,9 +196,11 @@ static XrmOptionDescRec opts[] = {
   { "-pizza",    ".mode",   XrmoptionNoArg,  "pizza"    },
   { "-helix",    ".mode",   XrmoptionNoArg,  "helix"    },
   { "-both",     ".mode",   XrmoptionNoArg,  "both"     },
+# ifdef CW
   { "-codeword", ".mode",   XrmoptionNoArg,  "codeword" },
   { "-cw",       ".mode",   XrmoptionNoArg,  "codeword" },
   { "-text",     ".text",   XrmoptionSepArg, 0          },
+# endif
 };
 
 ENTRYPOINT ModeSpecOpt logo_opts = {countof(opts), opts, 0, NULL, NULL};
@@ -501,6 +509,9 @@ vector_angle (double ax, double ay, double az,
   return (angle);
 }
 
+
+# ifdef CW
+
 static void
 normalize (XYZ *p)
 {
@@ -523,6 +534,8 @@ dot (const XYZ u, const XYZ v)
 {
   return (u.x * v.x) + (u.y * v.y) + (u.z * v.z);
 }
+
+#endif /* CW */
 
 
 /* Make the helix
@@ -1916,6 +1929,8 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
 }
 
 
+# ifdef CW
+
 /* Upcase string, convert Unicrud to ASCII, remove any non-letters.
  */
 static char *
@@ -2713,6 +2728,7 @@ draw_codeword_path (ModeInfo *mi)
   return polys;
 }
 
+#endif /* CW */
 
 
 /* Window management, etc
@@ -2790,7 +2806,7 @@ init_logo (ModeInfo *mi)
       exit (1);
     }
 
-  MI_INIT (mi, dcs, NULL);
+  MI_INIT (mi, dcs);
 
   dc = &dcs[MI_SCREEN(mi)];
 
@@ -2820,6 +2836,7 @@ init_logo (ModeInfo *mi)
   dc->triangle_size   = get_float_resource(mi->dpy, "triangleSize",   "Float");
 
   dc->speed           = get_float_resource(mi->dpy, "speed",          "Float");
+# ifdef CW
   dc->codeword_text   = get_string_resource(mi->dpy, "text",         "String");
   dc->codeword_text   = codeword_simplify_text (dc->codeword_text);
   dc->codeword_text_out =
@@ -2835,6 +2852,7 @@ init_logo (ModeInfo *mi)
   dc->codeword_line_width = get_float_resource(mi->dpy, "cwLineWidth", "Float");
   dc->codeword_thickness  = get_float_resource(mi->dpy, "cwThickness", "Float");
   dc->codeword_cap_size = get_float_resource(mi->dpy, "cwCapSize",     "Float");
+# endif
 
   {
     char *s = get_string_resource (MI_DISPLAY (mi), "mode", "String");
@@ -2844,12 +2862,14 @@ init_logo (ModeInfo *mi)
       dc->mode = PIZZA;
     else if (!strcasecmp (s, "both"))
       dc->mode = HELIX_AND_PIZZA;
+# ifdef CW
     else if (!strcasecmp (s, "codeword"))
       dc->mode = CODEWORD_IN;
+# endif
     else
       {
         fprintf (stderr,
-               "%s: mode must be helix, pizza, both or codeword, not \"%s\"\n", 
+               "%s: mode must be helix, pizza or both, not \"%s\"\n", 
                  progname, s);
         exit (1);
       }
@@ -2861,8 +2881,10 @@ init_logo (ModeInfo *mi)
     dc->anim_ratio = 0;
   }
 
+# ifdef CW
   if (dc->mode == CODEWORD_IN)
     dc->font = load_texture_font (MI_DISPLAY(mi), "cwFont");
+# endif
 
   {
     XColor xcolor;
@@ -2900,6 +2922,7 @@ init_logo (ModeInfo *mi)
         exit (1);
       }
 
+# ifdef CW
     dc->codeword_color[0] = xcolor.red   / 65535.0;
     dc->codeword_color[1] = xcolor.green / 65535.0;
     dc->codeword_color[2] = xcolor.blue  / 65535.0;
@@ -2922,6 +2945,7 @@ init_logo (ModeInfo *mi)
     dc->codeword_bg[1] = xcolor.green / 65535.0;
     dc->codeword_bg[2] = xcolor.blue  / 65535.0;
     dc->codeword_bg[3] = 1.0;
+# endif /* CW */
   }
 
   dc->trackball = gltrackball_init (False);
@@ -2949,11 +2973,13 @@ init_logo (ModeInfo *mi)
   dc->scene_spinnerx.easement     = 0.1;
   dc->scene_spinnery.easement     = 0.1;
 
+# ifdef CW
   if (dc->mode == CODEWORD_IN)
     {
       double tilt_speed = 0.003;
       dc->scene_rot = make_rotator (0, 0, 0, 0, tilt_speed, True);
     }
+# endif
 
   /* start the frame off-screen */
   dc->frame_spinner.spinning_p = True;
@@ -3076,8 +3102,9 @@ init_logo (ModeInfo *mi)
   if (do_frame) dc->polys[6] += make_frame (dc, 1);
   glEndList ();
 
+# ifdef CW
   make_codeword_path (mi);
-
+# endif
 
   /* When drawing both solid and wireframe objects,
      make sure the wireframe actually shows up! */
@@ -3111,10 +3138,12 @@ logo_handle_event (ModeInfo *mi, XEvent *event)
             dc->anim_state = PIZZA_OUT;
             dc->anim_ratio = 0.0;
             return True;
+# ifdef CW
           case CODEWORD:
             dc->anim_state = CODEWORD_OUT;
             dc->anim_ratio = 0.0;
             return True;
+# endif
           default:
             break;
           }
@@ -3201,7 +3230,9 @@ draw_logo (ModeInfo *mi)
   GLfloat specular[]  = {0.8, 0.8, 0.8, 1.0};
   GLfloat shininess   = 50.0;
   Bool pizza_p;
+# ifdef CW
   Bool codeword_p;
+# endif
 
   if (!dc->glx_context)
     return;
@@ -3278,6 +3309,7 @@ draw_logo (ModeInfo *mi)
       break;
 
 
+# ifdef CW
     case CODEWORD_IN:
       dc->scene_spinnerx.probability = 0.2;
       dc->scene_spinnery.probability = 0.05;
@@ -3325,6 +3357,7 @@ draw_logo (ModeInfo *mi)
           dc->anim_state = CODEWORD_IN;
         }
       break;
+# endif /* CW */
 
     default:
       abort();
@@ -3335,10 +3368,12 @@ draw_logo (ModeInfo *mi)
              dc->anim_state == PIZZA_IN ||
              dc->anim_state == PIZZA_OUT);
 
+# ifdef CW
   codeword_p = (dc->anim_state == CODEWORD ||
                 dc->anim_state == CODEWORD_IN ||
                 dc->anim_state == CODEWORD_OUT ||
                 dc->anim_state == CODEWORD_BLANK);
+# endif
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -3352,7 +3387,9 @@ draw_logo (ModeInfo *mi)
 
 
     /* Draw frame before trackball rotation */
+# ifdef CW
     if (! codeword_p)
+# endif
       {
         GLfloat p = (dc->frame_spinner.position_eased >= 0
                      ? dc->frame_spinner.position_eased
@@ -3393,7 +3430,9 @@ draw_logo (ModeInfo *mi)
     glRotatef(90, 1, 0, 0);
     glRotatef(90, 0, 0, 1);
 
+# ifdef CW
     if (! codeword_p)
+# endif
       {
         glRotatef (360 * dc->scene_spinnerx.position_eased, 0, 1, 0);
         glRotatef (360 * dc->scene_spinnery.position_eased, 0, 0, 1);
@@ -3492,19 +3531,20 @@ draw_logo (ModeInfo *mi)
             mi->polygon_count += dc->polys[0];
           }
       }
+# ifdef CW
     else	/* codeword_p */
       {
-# if 0
+#  if 0
         double max = 70;  /* face front */
         double x, y, z;
         get_position (dc->scene_rot, &x, &y, &z, !dc->button_down_p);
         glRotatef (max/2 - x*max, 0, 0, 1);
         glRotatef (max/2 - y*max, 0, 1, 0);
         /* glRotatef (max/2 - z*max, 1, 0, 0); */
-# else
+#  else
         glRotatef (360 * dc->scene_spinnerx.position_eased, 0, 1, 0);
         glRotatef (360 * dc->scene_spinnery.position_eased, 0, 0, 1);
-# endif
+#  endif
 
         glClearColor (dc->codeword_bg[0],
                       dc->codeword_bg[1],
@@ -3512,6 +3552,7 @@ draw_logo (ModeInfo *mi)
                       dc->codeword_bg[3]);
         mi->polygon_count += draw_codeword_path (mi);
       }
+# endif /* CW */
   }
   glPopMatrix();
 

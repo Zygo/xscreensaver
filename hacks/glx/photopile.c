@@ -29,9 +29,9 @@
                   "*chooseRandomImages:  True  \n" \
 		  "*suppressRotationAnimation: True\n" \
 
-# define refresh_photopile 0
+# define free_photopile 0
 # define release_photopile 0
-# define photopile_handle_event 0
+# define photopile_handle_event xlockmore_no_events
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -480,7 +480,7 @@ init_photopile (ModeInfo *mi)
   photopile_state *ss;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, sss, NULL);
+  MI_INIT (mi, sss);
   ss = &sss[screen];
   ss->mi = mi;
 

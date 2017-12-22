@@ -35,9 +35,8 @@
 			"*suppressRotationAnimation: True\n" \
                "*componentFont: -*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*"
 
-# define refresh_circuit 0
 # define release_circuit 0
-# define circuit_handle_event 0
+# define circuit_handle_event xlockmore_no_events
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"                                     /* from the xlockmore distribution */
@@ -94,7 +93,7 @@ ENTRYPOINT ModeSpecOpt circuit_opts = {countof(opts), opts, countof(vars), vars,
 #ifdef USE_MODULES
 ModStruct   circuit_description =
 {"circuit", "init_circuit", "draw_circuit", NULL,
- "draw_circuit", "init_circuit", NULL, &circuit_opts,
+ "draw_circuit", "init_circuit", "free_circuit", &circuit_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "Flying electronic components", 0, NULL};
 
@@ -2000,8 +1999,16 @@ static void reorder(Component *c[])
 ENTRYPOINT void reshape_circuit(ModeInfo *mi, int width, int height)
 {
  Circuit *ci = &circuit[MI_SCREEN(mi)];
+ int y = 0;
  GLfloat h = (GLfloat) height / (GLfloat) width;
- glViewport(0,0,(GLint)width, (GLint) height);
+
+ if (width > height * 5) {   /* tiny window: show middle */
+   height = width * 9/16;
+   y = -height/2;
+   h = height / (GLfloat) width;
+ }
+
+ glViewport(0,y,(GLint)width, (GLint) height);
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
  glFrustum(-1.0,1.0,-h,h,1.5,35.0);
@@ -2012,14 +2019,12 @@ ENTRYPOINT void reshape_circuit(ModeInfo *mi, int width, int height)
 }
 
 
-static void free_circuit(ModeInfo *mi);
-
 ENTRYPOINT void init_circuit(ModeInfo *mi)
 {
 int screen = MI_SCREEN(mi);
 Circuit *ci;
 
- MI_INIT(mi, circuit, free_circuit);
+ MI_INIT(mi, circuit);
  ci = &circuit[screen];
  ci->window = MI_WINDOW(mi);
 
@@ -2076,7 +2081,7 @@ ENTRYPOINT void draw_circuit(ModeInfo *mi)
   glXSwapBuffers(disp, w);
 }
 
-static void free_circuit(ModeInfo *mi)
+ENTRYPOINT void free_circuit(ModeInfo *mi)
 {
   Circuit *ci = &circuit[MI_SCREEN(mi)];
   if (ci->font)

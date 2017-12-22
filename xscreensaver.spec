@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 5.37
+%define	version 5.38
 
 Summary:	X screen saver and locker
 Name:		%{name}

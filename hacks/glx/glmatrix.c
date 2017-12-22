@@ -20,7 +20,7 @@
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
 
-# define refresh_matrix 0
+# define free_matrix 0
 # define release_matrix 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -572,8 +572,15 @@ ENTRYPOINT void
 reshape_matrix (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -822,7 +829,7 @@ init_matrix (ModeInfo *mi)
   if (wire)
     do_texture = False;
 
-  MI_INIT (mi, mps, NULL);
+  MI_INIT (mi, mps);
 
   mp = &mps[MI_SCREEN(mi)];
   mp->glx_context = init_GL(mi);

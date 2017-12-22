@@ -968,6 +968,7 @@ penetrate_free (Display *dpy, Window window, void *closure)
 
 
 static const char *penetrate_defaults [] = {
+  ".lowrez:     true",
   ".background:	black",
   ".foreground:	white",
   "*fpsTop:	true",

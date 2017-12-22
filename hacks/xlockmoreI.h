@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,12 +18,12 @@
 #include <time.h>
 
 #include "screenhackI.h"
-#include "xshm.h"
+#include "erase.h"
 
 
 typedef struct ModeInfo ModeInfo;
 
-#ifdef USE_GL
+#ifdef HAVE_GL
 
 /* I'm told that the Sun version of OpenGL needs to have the constant
    SUN_OGL_NO_VERTEX_MACROS defined in order for morph3d to compile
@@ -53,7 +53,10 @@ typedef struct ModeInfo ModeInfo;
 # ifdef HAVE_JWZGLES
 #  include "jwzgles.h"
 # endif /* HAVE_JWZGLES */
+#endif /* HAVE_GL */
 
+
+#ifdef USE_GL
 
   extern GLXContext *init_GL (ModeInfo *);
   extern void xlockmore_reset_gl_state(void);
@@ -63,7 +66,7 @@ typedef struct ModeInfo ModeInfo;
   extern Visual *xlockmore_pick_gl_visual (Screen *);
   extern Bool xlockmore_validate_gl_visual (Screen *, const char *, Visual *);
 
-#endif /* !USE_GL */
+#endif /* USE_GL */
 
 /* These are only used in GL mode, but I don't understand why XCode
    isn't seeing the prototypes for them in glx/fps-gl.c... */
@@ -75,10 +78,8 @@ extern void xlockmore_gl_draw_fps (ModeInfo *);
 
 extern void xlockmore_setup (struct xscreensaver_function_table *, void *);
 extern void xlockmore_do_fps (Display *, Window, fps_state *, void *);
-
-
-extern void xlockmore_mi_init (ModeInfo *, size_t, void **,
-                               void (*) (ModeInfo *));
+extern void xlockmore_mi_init (ModeInfo *, size_t, void **);
+extern Bool xlockmore_no_events (ModeInfo *, XEvent *);
 
 
 /* The xlockmore RNG API is implemented in utils/yarandom.h. */
@@ -111,12 +112,17 @@ struct ModeInfo {
   long threed_delta;
   Bool wireframe_p;
   Bool is_drawn;
+  eraser_state *eraser;
+  Bool needs_clear;
 
   /* Used only by OpenGL programs, since FPS is tricky there. */
   fps_state *fpst;
   Bool fps_p;
   unsigned long polygon_count;  /* These values are for -fps display only */
   double recursion_depth;
+#if !defined HAVE_JWXYZ && defined HAVE_GL
+  GLXContext glx_context;
+#endif
 };
 
 typedef enum {  t_String, t_Float, t_Int, t_Bool } xlockmore_type;
@@ -152,14 +158,12 @@ struct xlockmore_function_table {
   void (*hack_init) (ModeInfo *);
   void (*hack_draw) (ModeInfo *);
   void (*hack_reshape) (ModeInfo *, int, int);
-  void (*hack_refresh) (ModeInfo *);
   void (*hack_release) (ModeInfo *);
+  void (*hack_free) (ModeInfo *);
   Bool (*hack_handle_events) (ModeInfo *, XEvent *);
   ModeSpecOpt *opts;
 
-  size_t state_size;
   void **state_array;
-  void (*hack_free_state) (ModeInfo *);
   unsigned long live_displays, got_init;
 };
 

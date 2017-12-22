@@ -28,7 +28,6 @@
 				 "*showFPS:   False\n" \
 				 "*wireframe: False\n"
 				 
-# define refresh_glhanoi 0
 # define release_glhanoi 0
 
 /* polygon resolution of poles and disks */
@@ -237,7 +236,7 @@ ENTRYPOINT ModeSpecOpt glhanoi_opts = { countof(opts), opts, countof(vars), vars
 
 ModStruct glhanoi_description = {
 	"glhanoi", "init_glhanoi", "draw_glhanoi", NULL,
-	"draw_glhanoi", "init_glhanoi", NULL, &glhanoi_opts,
+	"draw_glhanoi", "init_glhanoi", "free_glhanoi", &glhanoi_opts,
 	1000, 1, 2, 1, 4, 1.0, "",
 	"Towers of Hanoi", 0, NULL
 };
@@ -1847,13 +1846,22 @@ static int drawTrails(glhcfg *glhanoi) {
 ENTRYPOINT void reshape_glhanoi(ModeInfo * mi, int width, int height)
 {
 	glhcfg *glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
+    double h = (GLfloat) height / (GLfloat) width;  
+    int y = 0;
+
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width * 9/16;
+      y = -height/2;
+      h = height / (GLfloat) width;
+    }
+
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glhanoi->glx_context));
 
-	glViewport(0, 0, (GLint) width, (GLint) height);
+	glViewport(0, y, (GLint) width, (GLint) height);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(30.0, (GLdouble) width / (GLdouble) height, 1.0,
+	gluPerspective(30.0, 1/h, 1.0,
 				   2 * MAX_CAMERA_RADIUS);
 
 	glMatrixMode(GL_MODELVIEW);
@@ -1862,12 +1870,10 @@ ENTRYPOINT void reshape_glhanoi(ModeInfo * mi, int width, int height)
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-static void free_glhanoi(ModeInfo * mi);
-
 ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 {
 	glhcfg *glhanoi;
-	MI_INIT(mi, glhanoi_cfg, free_glhanoi);
+	MI_INIT(mi, glhanoi_cfg);
 
 	glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 	glhanoi->glx_context = init_GL(mi);
@@ -2052,7 +2058,7 @@ ENTRYPOINT Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
 	return False;
 }
 
-static void free_glhanoi(ModeInfo * mi)
+ENTRYPOINT void free_glhanoi(ModeInfo * mi)
 {
 	int i;
 	int j;

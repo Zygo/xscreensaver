@@ -36,6 +36,8 @@ static const char sccsid[] = "@(#)mountain.c	5.00 2000/11/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define release_mountain 0
+# define reshape_mountain 0
+# define mountain_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -49,7 +51,7 @@ ENTRYPOINT ModeSpecOpt mountain_opts =
 #ifdef USE_MODULES
 ModStruct   mountain_description =
 {"mountain", "init_mountain", "draw_mountain", (char *) NULL,
- "refresh_mountain", "init_mountain", (char *) NULL, &mountain_opts,
+ "refresh_mountain", "init_mountain", "free_mountain", &mountain_opts,
  1000, 30, 4000, 1, 64, 1.0, "",
  "Shows Papo's mountain range", 0, NULL};
 
@@ -162,8 +164,6 @@ drawamountain(ModeInfo * mi)
 		mp->stage++;
 }
 
-static void free_mountain (ModeInfo * mi);
-
 ENTRYPOINT void
 init_mountain (ModeInfo * mi)
 {
@@ -171,7 +171,7 @@ init_mountain (ModeInfo * mi)
 	XGCValues   gcv;
 	mountainstruct *mp;
 
-	MI_INIT (mi, mountains, free_mountain);
+	MI_INIT (mi, mountains);
 	mp = &mountains[MI_SCREEN(mi)];
 
 	mp->width = MI_WIDTH(mi);
@@ -253,14 +253,6 @@ draw_mountain (ModeInfo * mi)
 }
 
 ENTRYPOINT void
-reshape_mountain(ModeInfo * mi, int width, int height)
-{
-  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
-  init_mountain (mi);
-}
-
-
-static void
 free_mountain (ModeInfo * mi)
 {
 	mountainstruct *mp = &mountains[MI_SCREEN(mi)];
@@ -269,6 +261,7 @@ free_mountain (ModeInfo * mi)
 		XFreeGC(MI_DISPLAY(mi), mp->stippledGC);
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_mountain(ModeInfo * mi)
 {
@@ -282,17 +275,7 @@ refresh_mountain(ModeInfo * mi)
 	mp->x = 0;
 	mp->y = 0;
 }
-
-ENTRYPOINT Bool
-mountain_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      init_mountain (mi);
-      return True;
-    }
-  return False;
-}
+#endif
 
 XSCREENSAVER_MODULE ("Mountain", mountain)
 

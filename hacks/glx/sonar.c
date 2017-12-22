@@ -76,7 +76,6 @@
 			THREAD_DEFAULTS_XLOCK
 
 
-# define refresh_sonar 0
 # define release_sonar 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -785,8 +784,15 @@ reshape_sonar (ModeInfo *mi, int width, int height)
 {
   sonar_configuration *sp = &sps[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -817,14 +823,12 @@ sonar_handle_event (ModeInfo *mi, XEvent *event)
   return False;
 }
 
-static void free_sonar (ModeInfo *mi);
-
 ENTRYPOINT void 
 init_sonar (ModeInfo *mi)
 {
   sonar_configuration *sp;
 
-  MI_INIT (mi, sps, free_sonar);
+  MI_INIT (mi, sps);
   sp = &sps[MI_SCREEN(mi)];
   sp->glx_context = init_GL(mi);
 
@@ -1218,7 +1222,7 @@ draw_sonar (ModeInfo *mi)
 # endif /* TEST_ASYNC_NETDB */
 }
 
-static void
+ENTRYPOINT void
 free_sonar (ModeInfo *mi)
 {
 #if 0

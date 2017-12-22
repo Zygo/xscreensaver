@@ -66,7 +66,7 @@
 		 "*suppressRotationAnimation: True\n" \
 	 "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n"
 
-# define refresh_spheremonics 0
+# define free_spheremonics 0
 # define release_spheremonics 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -166,8 +166,15 @@ ENTRYPOINT void
 reshape_spheremonics (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -695,7 +702,7 @@ init_spheremonics (ModeInfo *mi)
 {
   spheremonics_configuration *cc;
 
-  MI_INIT (mi, ccs, NULL);
+  MI_INIT (mi, ccs);
 
   cc = &ccs[MI_SCREEN(mi)];
 

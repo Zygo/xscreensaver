@@ -21,7 +21,7 @@
 			"*geometry:	800x800\n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_hilbert 0
+# define free_hilbert 0
 # define release_hilbert 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -757,8 +757,15 @@ ENTRYPOINT void
 reshape_hilbert (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -838,7 +845,7 @@ init_hilbert (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   int i;
 
-  MI_INIT (mi, bps, NULL);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 

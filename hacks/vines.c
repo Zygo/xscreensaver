@@ -49,11 +49,13 @@ static const char sccsid[] = "@(#)vines.c	5.00 2000/11/01 xlockmore";
 					"*count: 0 \n" \
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
+				    "*lowrez: True \n" \
 
 # include "xlockmore.h"		/* in xscreensaver distribution */
+# define free_vines 0
+# define release_vines 0
 # define reshape_vines 0
 # define vines_handle_event 0
-# include "erase.h"
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
@@ -65,7 +67,7 @@ ENTRYPOINT ModeSpecOpt vines_opts =
 
 #ifdef USE_MODULES
 ModStruct   vines_description =
-{"vines", "init_vines", "draw_vines", "release_vines",
+{"vines", "init_vines", "draw_vines", (char *) NULL,
  "refresh_vines", "init_vines", (char *) NULL, &vines_opts,
  200000, 0, 1, 1, 64, 1.0, "",
  "Shows fractals", 0, NULL};
@@ -85,34 +87,31 @@ typedef struct {
 	int         ang;
 	int         centerx;
 	int         centery;
-#ifdef STANDALONE
-  eraser_state *eraser;
-#endif
 } vinestruct;
 
 static vinestruct *vines = (vinestruct *) NULL;
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_vines(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }				/* refresh_vines */
+#endif
 
 ENTRYPOINT void
 init_vines(ModeInfo * mi)
 {
 	vinestruct *fp;
 
-	MI_INIT (mi, vines, 0);
+	MI_INIT (mi, vines);
 	fp = &vines[MI_SCREEN(mi)];
 
 	fp->i = 0;
 	fp->length = 0;
 	fp->iterations = 30 + NRAND(100);
 
-#ifndef STANDALONE
 	MI_CLEARWINDOW(mi);
-#endif
 }				/* init_vines */
 
 ENTRYPOINT void
@@ -127,20 +126,11 @@ draw_vines(ModeInfo * mi)
 		return;
 	fp = &vines[MI_SCREEN(mi)];
 
-#ifdef STANDALONE
-    if (fp->eraser) {
-      fp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), fp->eraser);
-      return;
-    }
-#endif
-
-	/* MI_IS_DRAWN(mi) = True; */
+	MI_IS_DRAWN(mi) = True;
 	if (fp->i >= fp->length) {
 		if (--(fp->iterations) == 0) {
-#ifdef STANDALONE
-	  fp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), fp->eraser);
-#endif /* STANDALONE */
 			init_vines(mi);
+			return;
 		}
 		fp->centerx = NRAND(MI_WIDTH(mi));
 		fp->centery = NRAND(MI_HEIGHT(mi));
@@ -182,15 +172,6 @@ draw_vines(ModeInfo * mi)
 		fp->i++;
 	}
 }				/* draw_vines */
-
-ENTRYPOINT void
-release_vines(ModeInfo * mi)
-{
-	if (vines != NULL) {
-		(void) free((void *) vines);
-		vines = (vinestruct *) NULL;
-	}
-}				/* release_vines */
 
 
 XSCREENSAVER_MODULE ("Vines", vines)

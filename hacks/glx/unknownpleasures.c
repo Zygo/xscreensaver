@@ -41,7 +41,7 @@
 			"*wireframe:    False       \n" \
 			"*geometry:    =800x800"   "\n" \
 
-# define refresh_unk 0
+# define free_unk 0
 # define release_unk 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -92,8 +92,15 @@ reshape_unk (ModeInfo *mi, int width, int height)
 {
   unk_configuration *bp = &bps[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width*1.5;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   if (bp->orthop)
     {
@@ -175,7 +182,7 @@ init_unk (ModeInfo *mi)
 {
   unk_configuration *bp;
 
-  MI_INIT (mi, bps, NULL);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -372,7 +379,7 @@ draw_unk (ModeInfo *mi)
     xinc *= 2;
 */
 
-# endif /* USE_MOBILE */
+# endif /* HAVE_MOBILE */
 
 
   /* Make the image fill the screen a little more fully */

@@ -45,7 +45,7 @@
                    "*showFPS:       False         \n" \
                    "*wireframe:     False         \n"
 
-# define refresh_cube21 0
+# define free_cube21 0
 # define release_cube21 0
 #include "xlockmore.h"
 
@@ -846,9 +846,18 @@ static void init_cp(cube21_conf *cp)
 ENTRYPOINT void reshape_cube21(ModeInfo *mi, int width, int height) 
 {
   cube21_conf *cp = &cube21[MI_SCREEN(mi)];
+  int y = 0;
   if(!height) height = 1;
   cp->ratio = (GLfloat)width/(GLfloat)height;
-  glViewport(0, 0, (GLint) width, (GLint) height);
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width;
+    y = -height/2;
+    cp->ratio = width / (GLfloat) height;
+    cp->posarg = 0;
+  }
+
+  glViewport(0, y, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(30.0, cp->ratio, 1.0, 100.0);
@@ -873,7 +882,7 @@ cube21_handle_event (ModeInfo *mi, XEvent *event)
 ENTRYPOINT void init_cube21(ModeInfo *mi) 
 {
   cube21_conf *cp;
-  MI_INIT(mi, cube21, NULL);
+  MI_INIT(mi, cube21);
   cp = &cube21[MI_SCREEN(mi)];
 
   cp->trackball = gltrackball_init (False);

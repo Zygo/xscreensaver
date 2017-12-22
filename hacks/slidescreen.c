@@ -198,6 +198,16 @@ draw_grid (struct state *st)
   st->bitmap_w = xgwa.width;
   st->bitmap_h = xgwa.height;
 
+  if (xgwa.width < 50 || xgwa.height < 50) /* tiny window */
+    {
+      int s = (xgwa.width < xgwa.height ? xgwa.width : xgwa.height);
+      border = 1;
+      st->grid_size = s / 2;
+      if (st->grid_size < 16) st->grid_size = 16;
+      if (st->bitmap_w < st->grid_size*2) st->bitmap_w = st->grid_size*2;
+      if (st->bitmap_h < st->grid_size*2) st->bitmap_h = st->grid_size*2;
+    }
+
   st->grid_w = st->bitmap_w / st->grid_size;
   st->grid_h = st->bitmap_h / st->grid_size;
   st->hole_x = random () % st->grid_w;

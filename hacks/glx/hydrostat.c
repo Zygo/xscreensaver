@@ -33,7 +33,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_hydrostat 0
 # define release_hydrostat 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -641,8 +640,6 @@ hydrostat_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-static void free_hydrostat (ModeInfo *mi);
-
 ENTRYPOINT void 
 init_hydrostat (ModeInfo *mi)
 {
@@ -650,7 +647,7 @@ init_hydrostat (ModeInfo *mi)
   hydrostat_configuration *bp;
   int i;
 
-  MI_INIT (mi, bps, free_hydrostat);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -759,7 +756,7 @@ draw_hydrostat (ModeInfo *mi)
 }
 
 
-static void
+ENTRYPOINT void
 free_hydrostat (ModeInfo *mi)
 {
   hydrostat_configuration *bp = &bps[MI_SCREEN(mi)];

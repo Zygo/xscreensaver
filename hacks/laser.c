@@ -35,6 +35,7 @@ static const char sccsid[] = "@(#)laser.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define BRIGHT_COLORS
+# define release_laser 0
 # define reshape_laser 0
 # define laser_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -49,8 +50,8 @@ ENTRYPOINT ModeSpecOpt laser_opts =
 
 #ifdef USE_MODULES
 ModStruct   laser_description =
-{"laser", "init_laser", "draw_laser", "release_laser",
- "refresh_laser", "init_laser", (char *) NULL, &laser_opts,
+{"laser", "init_laser", "draw_laser", (char *) NULL,
+ "refresh_laser", "init_laser", "free_laser", &laser_opts,
  20000, -10, 200, 1, 64, 1.0, "",
  "Shows spinning lasers", 0, NULL};
 
@@ -106,9 +107,12 @@ typedef struct {
 
 static lasersstruct *lasers = (lasersstruct *) NULL;
 
-static void
-free_laser(Display *display, lasersstruct *lp)
+ENTRYPOINT void
+free_laser(ModeInfo * mi)
 {
+	Display *display = MI_DISPLAY(mi);
+	lasersstruct *lp = &lasers[MI_SCREEN(mi)];
+
 	if (lp->laser != NULL) {
 		(void) free((void *) lp->laser);
 		lp->laser = (laserstruct *) NULL;
@@ -126,7 +130,7 @@ init_laser(ModeInfo * mi)
 	int         i, c = 0;
 	lasersstruct *lp;
 
-	MI_INIT (mi, lasers, 0);
+	MI_INIT (mi, lasers);
 	lp = &lasers[MI_SCREEN(mi)];
 
 	lp->width = MI_WIDTH(mi);
@@ -147,7 +151,7 @@ init_laser(ModeInfo * mi)
 	if (lp->laser == NULL) {
 		if ((lp->laser = (laserstruct *) malloc(lp->ln *
 				sizeof (laserstruct))) == NULL) {
-			free_laser(display, lp);
+			free_laser(mi);
 			return;
 		}
 	}
@@ -159,7 +163,7 @@ init_laser(ModeInfo * mi)
 		lp->gcv_black.foreground = MI_BLACK_PIXEL(mi);
 		if ((lp->stippledGC = XCreateGC(display, MI_WINDOW(mi),
 				GCForeground | GCBackground, &gcv)) == None) {
-			free_laser(display, lp);
+			free_laser(mi);
 			return;
 		}
 # ifdef HAVE_JWXYZ
@@ -338,24 +342,13 @@ draw_laser(ModeInfo * mi)
 		init_laser(mi);
 }
 
-ENTRYPOINT void
-release_laser(ModeInfo * mi)
-{
-	if (lasers != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_laser(MI_DISPLAY(mi), &lasers[screen]);
-		(void) free((void *) lasers);
-		lasers = (lasersstruct *) NULL;
-	}
-}
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_laser(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+#endif
 
 XSCREENSAVER_MODULE ("Laser", laser)
 

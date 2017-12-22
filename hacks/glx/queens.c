@@ -22,7 +22,8 @@
                        "*showFPS:     False \n" \
 		       "*wireframe:   False \n"	\
 
-# define refresh_queens 0
+# define free_queens 0
+# define release_queens 0
 # include "xlockmore.h"
 
 #else
@@ -519,7 +520,14 @@ static int draw_model(int chunks, const GLfloat model[][3], int r)
 ENTRYPOINT void reshape_queens(ModeInfo *mi, int width, int height) 
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
-  glViewport(0,0, width, height);
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+  glViewport(0,y, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(45, 1/h, 2.0, 30.0);
@@ -537,7 +545,7 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
   wire = 0;
 # endif
 
-  MI_INIT (mi, qss, NULL);
+  MI_INIT (mi, qss);
   
   qs = &qss[screen];
   qs->window = MI_WINDOW(mi);
@@ -595,15 +603,6 @@ ENTRYPOINT void draw_queens(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
-}
-
-ENTRYPOINT void release_queens(ModeInfo *mi) 
-{
-  if(qss)
-    free((void *) qss);
-  qss = 0;
-
-  FreeAllGL(mi);
 }
 
 XSCREENSAVER_MODULE ("Queens", queens)

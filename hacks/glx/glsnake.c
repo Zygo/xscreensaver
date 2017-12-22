@@ -144,9 +144,9 @@ static GLfloat angvel;
 #define glsnake_init    init_glsnake
 #define glsnake_display draw_glsnake
 #define glsnake_reshape reshape_glsnake
-#define refresh_glsnake 0
+#define free_glsnake 0
 #define release_glsnake 0
-#define glsnake_handle_event 0
+#define glsnake_handle_event xlockmore_no_events
 
 /* xscreensaver defaults */
 #define DEFAULTS "*delay:          30000                      \n" \
@@ -1461,7 +1461,7 @@ ModeInfo * mi
     struct glsnake_cfg * bp;
 
     /* set up the conf struct and glx contexts */
-    MI_INIT(mi, glc, NULL);
+    MI_INIT(mi, glc);
     bp = &glc[MI_SCREEN(mi)];
 
     if ((bp->glx_context = init_GL(mi)) != NULL) {
@@ -1768,20 +1768,29 @@ ENTRYPOINT void glsnake_reshape(
 #ifndef HAVE_GLUT
 		     ModeInfo * mi,
 #endif
-		     int w, int h) 
+		     int width, int height) 
 {
-    glViewport(0, 0, (GLint) w, (GLint) h);
+    double h = (GLfloat) height / (GLfloat) width;  
+    int y = 0;
+
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width;
+      y = -height/2;
+      h = height / (GLfloat) width;
+    }
+
+    glViewport(0, y, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* jwz: 0.05 was too close (left black rectangles) */
-    gluPerspective(zoom, (GLdouble) w / (GLdouble) h, 1.0, 100.0);
+    gluPerspective(zoom, 1/h, 1.0, 100.0);
     gluLookAt(0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
     glMatrixMode(GL_MODELVIEW);
     /*gluLookAt(0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);*/
     glLoadIdentity();
 #ifdef HAVE_GLUT
-    bp->width = w;
-    bp->height = h;
+    bp->width = width;
+    bp->height = height;
 #endif
 }
 

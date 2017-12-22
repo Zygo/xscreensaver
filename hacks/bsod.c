@@ -5,7 +5,7 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
  * Blue Screen of Death: the finest in personal computer emulation.
@@ -60,6 +60,7 @@
 # include "images/osx_10_2.xpm"
 # include "images/osx_10_3.xpm"
 # include "images/android.xpm"
+# include "images/ransomware.xpm"
 #endif
 #include "images/atari.xbm"
 #include "images/mac.xbm"
@@ -76,13 +77,13 @@
 # define MAX(A,B) ((A)>(B)?(A):(B))
 
 #undef EOF
-typedef enum { EOF=0, 
-               LEFT, CENTER, RIGHT, 
-               LEFT_FULL, CENTER_FULL, RIGHT_FULL, 
+typedef enum { EOF=0,
+               LEFT, CENTER, RIGHT,
+               LEFT_FULL, CENTER_FULL, RIGHT_FULL,
                COLOR, INVERT, MOVETO, MARGINS,
                CURSOR_BLOCK, CURSOR_LINE, RECT, LINE, COPY, PIXMAP, IMG, FONT,
                PAUSE, CHAR_DELAY, LINE_DELAY,
-               LOOP, RESET
+               LOOP, RESET, VERT_MARGINS, CROP
 } bsod_event_type;
 
 struct bsod_event {
@@ -98,9 +99,11 @@ struct bsod_state {
   unsigned long fg, bg;
   GC gc;
   int left_margin, right_margin;	/* for text wrapping */
-  int top_margin, bottom_margin;	/* for text scrolling */
+  int top_margin, bottom_margin;	/* for text scrolling and cropping */
+  int xoff, yoff;
   Bool wrap_p;
   Bool scroll_p;
+  Bool crop_p;                  /* If True, chops off extra text vertically */
 
   Pixmap pixmap;		/* Source image used by BSOD_PIXMAP */
 
@@ -210,6 +213,16 @@ struct bsod_state {
   (bst)->pos++; \
   } while (0)
 
+/* Set the prevailing top/bottom margins (used when scrolling and cropping text)
+ */
+#define BSOD_VERT_MARGINS(bst,top,bottom) do { \
+  ensure_queue (bst); \
+  (bst)->queue[(bst)->pos].type = VERT_MARGINS; \
+  (bst)->queue[(bst)->pos].arg1 = (void *) ((long) (top)); \
+  (bst)->queue[(bst)->pos].arg2 = (void *) ((long) (bottom)); \
+  (bst)->pos++; \
+  } while (0)
+
 /* Draw a blinking cursor; type is CURSOR_BLOCK or CURSOR_LINE.
    usec is how long 1/2 of a cycle is.  count is how many times to blink.
    (You can pass a gigantic number if this is the last thing in your mode.)
@@ -286,7 +299,7 @@ struct bsod_state {
   (bst)->pos++; \
   } while (0)
 
-/* Jump around in the state table.  You can use this as the last thing 
+/* Jump around in the state table.  You can use this as the last thing
    in your state table to repeat the last N elements forever.
  */
 #define BSOD_LOOP(bst,off) do { \
@@ -304,6 +317,16 @@ struct bsod_state {
   (bst)->pos++; \
   } while (0)
 
+/* Sets the crop state, if True, will not write text below the bottom_margin
+ */
+#define BSOD_CROP(bst, state) do { \
+  ensure_queue (bst); \
+  (bst)->queue[(bst)->pos].type = CROP; \
+  (bst)->queue[(bst)->pos].arg1 = (void *) ((long) (state)); \
+  (bst)->pos++; \
+  } while (0)
+
+
 
 static void
 ensure_queue (struct bsod_state *bst)
@@ -316,10 +339,10 @@ ensure_queue (struct bsod_state *bst)
   if (n < 100) n *= 2;
   n *= 1.2;
 
-  bst->queue = (struct bsod_event *) 
+  bst->queue = (struct bsod_event *)
     realloc (bst->queue, n * sizeof(*bst->queue));
   if (!bst->queue) abort();
-  memset (bst->queue + bst->queue_size, 0, 
+  memset (bst->queue + bst->queue_size, 0,
           (n - bst->queue_size) * sizeof(*bst->queue));
   bst->queue_size = n;
 }
@@ -353,11 +376,11 @@ position_for_text (struct bsod_state *bst, const char *line)
   switch (bst->queue[bst->pos].type) {
   case LEFT:
   case LEFT_FULL:
-    bst->current_left = bst->left_margin;
+    bst->current_left = bst->left_margin + bst->xoff;
     break;
   case RIGHT:
   case RIGHT_FULL:
-    bst->x = max_width - bst->right_margin;
+    bst->x = max_width - bst->right_margin - bst->xoff;
     bst->current_left = bst->x;
     break;
   case CENTER:
@@ -366,7 +389,7 @@ position_for_text (struct bsod_state *bst, const char *line)
       int w = (bst->xgwa.width - bst->left_margin - bst->right_margin -
                max_width);
       if (w < 0) w = 0;
-      bst->x = bst->left_margin + (w / 2);
+      bst->x = bst->left_margin + bst->xoff + (w / 2);
       bst->current_left = bst->x;
       break;
     }
@@ -382,20 +405,21 @@ bst_crlf (struct bsod_state *bst)
   int lh = bst->font->ascent + bst->font->descent;
   bst->x = bst->current_left;
   if (!bst->scroll_p ||
-      bst->y + lh < bst->xgwa.height - bst->bottom_margin)
+      bst->y + lh < bst->xgwa.height - bst->bottom_margin - bst->yoff)
     bst->y += lh;
   else
     {
       int w = bst->xgwa.width  - bst->right_margin - bst->left_margin;
       int h = bst->xgwa.height - bst->top_margin - bst->bottom_margin;
       XCopyArea (bst->dpy, bst->window, bst->window, bst->gc,
-                 bst->left_margin,
-                 bst->top_margin + lh,
+                 bst->left_margin + bst->xoff,
+                 bst->top_margin + bst->yoff + lh,
                  w, h - lh,
-                 bst->left_margin,
-                 bst->top_margin);
+                 bst->left_margin + bst->xoff,
+                 bst->top_margin + bst->yoff);
       XClearArea (bst->dpy, bst->window,
-                  bst->left_margin, bst->top_margin + h - lh, w, lh, False);
+                  bst->left_margin + bst->xoff,
+                  bst->top_margin + bst->yoff + h - lh, w, lh, False);
     }
 }
 
@@ -405,6 +429,12 @@ draw_char (struct bsod_state *bst, char c)
 {
   if (!c)
     abort();
+  else if (bst->crop_p && bst->y >=
+           (bst->xgwa.height - bst->bottom_margin - bst->yoff))
+    {
+      /* reached the bottom of the drawing area, and crop_p = True */
+      return;
+    }
   else if (c == '\r')
     {
       bst->x = bst->current_left;
@@ -414,10 +444,10 @@ draw_char (struct bsod_state *bst, char c)
       if (bst->macx_eol_kludge)
         {
           /* Special case for the weird way OSX crashes print newlines... */
-          XDrawImageString (bst->dpy, bst->window, bst->gc, 
+          XDrawImageString (bst->dpy, bst->window, bst->gc,
                             bst->x, bst->y, " ", 1);
-          XDrawImageString (bst->dpy, bst->window, bst->gc, 
-                            bst->x, 
+          XDrawImageString (bst->dpy, bst->window, bst->gc,
+                            bst->x,
                             bst->y + bst->font->ascent + bst->font->descent,
                             " ", 1);
         }
@@ -429,8 +459,8 @@ draw_char (struct bsod_state *bst, char c)
 		? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
 		: bst->font->min_bounds.width);
       bst->x -= cw;
-      if (bst->x < bst->left_margin)
-        bst->x = bst->left_margin;
+      if (bst->x < bst->left_margin + bst->xoff)
+        bst->x = bst->left_margin + bst->xoff;
     }
   else
     {
@@ -438,11 +468,11 @@ draw_char (struct bsod_state *bst, char c)
       XCharStruct ov;
       XTextExtents (bst->font, &c, 1, &dir, &ascent, &descent, &ov);
 
-      if (bst->wrap_p && 
-          bst->x + ov.width > bst->xgwa.width - bst->right_margin)
+      if (bst->wrap_p &&
+          bst->x + ov.width > bst->xgwa.width - bst->right_margin - bst->xoff)
         bst_crlf (bst);
 
-      XDrawImageString (bst->dpy, bst->window, bst->gc, 
+      XDrawImageString (bst->dpy, bst->window, bst->gc,
                         bst->x, bst->y, &c, 1);
       bst->x += ov.width;
     }
@@ -473,7 +503,7 @@ bsod_pop (struct bsod_state *bst)
         {
           long delay = bst->line_delay;
           bst->pos++;
-          bst->current_left = bst->left_margin;
+          bst->current_left = bst->left_margin + bst->xoff;
           return delay;
         }
 
@@ -569,8 +599,8 @@ bsod_pop (struct bsod_state *bst)
       int h    = (long) bst->queue[bst->pos].arg4;
       int tox  = (long) bst->queue[bst->pos].arg5;
       int toy  = (long) bst->queue[bst->pos].arg6;
-      XCopyArea (bst->dpy, 
-                 (type == PIXMAP ? bst->pixmap : bst->window), 
+      XCopyArea (bst->dpy,
+                 (type == PIXMAP ? bst->pixmap : bst->window),
                  bst->window, bst->gc,
                  srcx, srcy, w, h, tox, toy);
       bst->pos++;
@@ -579,7 +609,7 @@ bsod_pop (struct bsod_state *bst)
   case IMG:
     {
       if (bst->img_loader) abort();
-      bst->img_loader = load_image_async_simple (0, bst->xgwa.screen, 
+      bst->img_loader = load_image_async_simple (0, bst->xgwa.screen,
                                                  bst->window, bst->window,
                                                  0, 0);
       bst->pos++;
@@ -619,6 +649,13 @@ bsod_pop (struct bsod_state *bst)
     {
       bst->left_margin  = (long) bst->queue[bst->pos].arg1;
       bst->right_margin = (long) bst->queue[bst->pos].arg2;
+      bst->pos++;
+      return 0;
+    }
+  case VERT_MARGINS:
+    {
+      bst->top_margin    = (long) bst->queue[bst->pos].arg1;
+      bst->bottom_margin = (long) bst->queue[bst->pos].arg2;
       bst->pos++;
       return 0;
     }
@@ -676,6 +713,12 @@ bsod_pop (struct bsod_state *bst)
         default: break;
         }
       bst->pos = 0;
+      return 0;
+    }
+  case CROP:
+    {
+      bst->crop_p = (long) bst->queue[bst->pos].arg1;
+      bst->pos++;
       return 0;
     }
   case EOF:
@@ -803,9 +846,21 @@ make_bsod_state (Display *dpy, Window window,
   jwxyz_XSetAntiAliasing (dpy, bst->gc, True);
 #endif
 
+# ifdef USE_IPHONE
+  /* Stupid iPhone X bezel.
+     #### This is the worst of all possible ways to do this!
+   */
+  if (bst->xgwa.width == 2436 || bst->xgwa.height == 2436) {
+    if (bst->xgwa.width > bst->xgwa.height)
+      bst->xoff = 96;
+    else
+      bst->yoff = 96;
+  }
+# endif
+
   bst->left_margin = bst->right_margin = 10;
-  bst->x = bst->left_margin;
-  bst->y = bst->font->ascent + bst->left_margin;
+  bst->x = bst->left_margin + bst->xoff;
+  bst->y = bst->font->ascent + bst->left_margin + bst->yoff;
 
   XSetWindowBackground (dpy, window, gcv.background);
   return bst;
@@ -877,6 +932,9 @@ static struct bsod_state *
 windows_31 (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "windows", "Windows");
+
+  bst->xoff = bst->left_margin = bst->right_margin = 0;
+
   BSOD_INVERT (bst);
   BSOD_TEXT   (bst, CENTER, "Windows\n");
   BSOD_INVERT (bst);
@@ -891,7 +949,7 @@ windows_31 (Display *dpy, Window window)
                "\n");
   BSOD_TEXT   (bst, CENTER, "Press any key to continue");
 
-  bst->y = ((bst->xgwa.height -
+  bst->y = ((bst->xgwa.height - bst->yoff -
              ((bst->font->ascent + bst->font->descent) * 9))
             / 2);
 
@@ -928,7 +986,7 @@ vmware (Display *dpy, Window window)
 		"0x3a37ffc:[0x750902]CpuSched_StartWorld+0x109 stack: 0x0, 0x0, 0x0\n"
 		"0x3a38000:[0x0]blk_dev+0xfd76461f stack: 0x0, 0x0, 0x0\n"
 		"VMK uptime: 7:05:43:45.014 TSC: 1751259712918392\n"
-		"Starting coredump to disk\n"); 
+		"Starting coredump to disk\n");
   BSOD_CHAR_DELAY (bst, 10000);		
   BSOD_TEXT (bst, LEFT,	"using slot 1 of 1... ");
   BSOD_CHAR_DELAY (bst, 300000);
@@ -948,7 +1006,7 @@ vmware (Display *dpy, Window window)
 
 /*  BSOD_CURSOR (bst, CURSOR_LINE, 240000, 999999);*/
 		
-/*  bst->y = ((bst->xgwa.height -
+/*  bst->y = ((bst->xgwa.height - bst->yoff -
              ((bst->font->ascent + bst->font->descent) * 9))
             / 2);*/
 
@@ -1053,7 +1111,7 @@ windows_me (Display *dpy, Window window)
   BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
 
   bst->left_margin = 40;
-  bst->y = ((bst->xgwa.height -
+  bst->y = ((bst->xgwa.height - bst->yoff -
              ((bst->font->ascent + bst->font->descent) * 3))
             / 2);
 
@@ -1111,7 +1169,7 @@ windows_xp (Display *dpy, Window window)
 static struct bsod_state *
 windows_lh (Display *dpy, Window window)
 {
-  struct bsod_state *bst = 
+  struct bsod_state *bst =
     make_bsod_state (dpy, window, "windowslh", "WindowsLH");
 
   unsigned long fg = bst->fg;
@@ -1147,7 +1205,8 @@ windows_lh (Display *dpy, Window window)
      "or computer\n"
      "manufacturer.\n"
      );
-  BSOD_MOVETO (bst, bst->left_margin, bst->xgwa.height - bst->font->descent);
+  BSOD_MOVETO (bst, bst->left_margin + bst->xoff,
+               bst->xgwa.height - bst->yoff - bst->font->descent);
   BSOD_COLOR (bst, bg, bg2);
   BSOD_TEXT (bst, LEFT_FULL, " SPACE=Continue\n");
 
@@ -1159,9 +1218,42 @@ windows_lh (Display *dpy, Window window)
 
 
 static struct bsod_state *
+windows_10_update (Display *dpy, Window window)
+{
+  struct bsod_state *bst =
+    make_bsod_state (dpy, window, "win10", "Win10");
+  const char *fmt  = "Working on updates  %d%%";
+  char        line1[255];
+  const char *line2 = "Don't turn off your PC. This will take a while.";
+  const char *line3 = "Your PC will restart several times.";
+  int line_height = bst->fontA->ascent + bst->fontA->descent;
+  int y1 = bst->xgwa.height / 2 - line_height * 4;
+  int y2 = bst->xgwa.height - bst->yoff - line_height * 3;
+  int pct;
+
+  /* TODO: win10_spinner.gif goes at (y - line_height * 2 - 64). */
+
+  for (pct = 0; pct < 98; pct++)
+    {
+      BSOD_MOVETO (bst, 0, y1);
+      sprintf (line1, fmt, pct);
+      BSOD_TEXT (bst, CENTER, line1);
+      BSOD_MOVETO (bst, 0, y1 + line_height);
+      BSOD_TEXT (bst, CENTER, line2);
+      BSOD_MOVETO (bst, 0, y2);
+      BSOD_TEXT (bst, CENTER, line3);
+      BSOD_PAUSE (bst, 200000 + (random() % 3000000) + (random() % 3000000));
+    }
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
+
+static struct bsod_state *
 windows_10 (Display *dpy, Window window)
 {
-  struct bsod_state *bst = 
+  struct bsod_state *bst =
     make_bsod_state (dpy, window, "win10", "Win10");
 
   int qr_width  = 41;
@@ -1201,10 +1293,10 @@ windows_10 (Display *dpy, Window window)
     "For more information about this issue and\n",
     "possible fixes, visit\n",
 /*  "https://www.jwz.org/xscreensaver\n",*/
-    "http://youtu.be/-RjmN9RZyr4\n", 
+    "http://youtu.be/-RjmN9RZyr4\n",
     "\n",
     "If you call a support person, give them this info:\n",
-    "Stop code CRITICAL_PROCESS_DIED", 
+    "Stop code CRITICAL_PROCESS_DIED",
  };
   int i, y = 0, y0 = 0;
   int line_height0 = bst->fontB->ascent;
@@ -1214,12 +1306,17 @@ windows_10 (Display *dpy, Window window)
   int top, left0, left;
   int stop = 60 + (random() % 39);
 
+  if (!(random() % 7))
+    return windows_10_update (dpy, window);
+
+
   line_height1 *= 1.3;
   line_height2 *= 1.5;
 
-  top = ((bst->xgwa.height - (line_height0 * 1 +
-                              line_height1 * 6 +
-                              line_height2 * 6))
+  top = ((bst->xgwa.height - bst->yoff
+          - (line_height0 * 1 +
+             line_height1 * 6 +
+             line_height2 * 6))
          / 2);
 
   {
@@ -1302,6 +1399,452 @@ windows_other (Display *dpy, Window window)
   }
 }
 
+/* Windows and Apple2 ransomware.
+ */
+static struct bsod_state *apple2ransomware (Display *, Window);
+
+static struct bsod_state *
+windows_ransomware (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window,
+                                            "ransomware", "Ransomware");
+  char buf[1024];
+
+  int pix_w = 0, pix_h = 0;
+  Pixmap pixmap = xpm_data_to_pixmap (dpy, window,
+                                      (char **) (ransomware_xpm),
+                                      &pix_w, &pix_h, 0);
+
+  /* Don't start the countdown from the start, advance the deadline by 3 - 30
+     hours */
+  int advance_deadline = (random() % 97200) + 10800;
+
+  time_t now = time(NULL);
+  const time_t stage1_deadline = now + 259200 - advance_deadline; /* 3 days */
+  const time_t stage2_deadline = now + 604800 - advance_deadline; /* 7 days */
+  char stage1_deadline_str[25], stage2_deadline_str[25];
+  char countdown_str[16];
+  int stage1_countdown_y, stage2_countdown_y;
+  int countdown_d, countdown_h, countdown_m, countdown_s, countdown_r;
+  const int line_height = bst->font->ascent + bst->font->descent;
+  int i;
+
+  const char *currencies[] = {
+    "Blitcoin",
+    "clicks",
+    "Ass Pennies",
+    "Dollary-doos",
+    "Dunning-Krugerrands",
+    "Dunning-Krugerrands",
+    "Dunning-Krugerrands",
+    "Dunning-Krugerrands",
+    "Dunning-Krugerrands",
+    "gift certificates",
+    "secret sauce",
+    "Tribbles",
+  };
+
+  const char *currency = currencies[random() % countof(currencies)];
+
+  const char *header_quips[] = {
+    "Oops, your screens have been encrypted!",
+    "Oops, your screens have been encrypted!",
+    "Oops, your screens have been encrypted!",
+    "Oops, your screens have been encrypted!",
+    "Oops, your screen have encrypted!",
+    "Oops, you're screens have been encrypted!",
+    "Oops, your screens have been encrupted!",
+    "Oops, your screens have been encrumpet!",
+    "Oops, your screens have been encrusted!",
+    "If you don't pay this ransom, then you are a theif!",
+    "Your screen was subject to the laws of mathomatics!",
+    "Oops, your screen was shaved by Occam's Razor!",
+    "Oops, your screen was perturbated by Langford's Basilisk!",
+    "Your screen is now stored as Snapchat messages!",
+    "Oops, your screen is now stored on Betamax!",
+    "Oops, your screen is now in the clown!",
+    "Oops, your screen has been deprecated!",
+    "Oops, you're screen was seized by the FBI!",
+    "All your screen was shared with your coworkers!",
+    "All your screen are belong to us.",
+    "Well actually, your screen isn't needed anymore.",
+    "u just got popped with some 0day shit!!",
+    "M'lady,",
+  };
+
+  const char *header_quip = header_quips[random() % countof(header_quips)];
+
+  /* You got this because... */
+  const char *excuse_quips[] = {
+    "all human actions are equivalent and all are on principle doomed "
+    "to failure",
+    "you hold a diverse portfolio of cryptocurrencies",
+    "you need to get in on ransomware futures at the ground floor",
+    "your flight was overbooked",
+    "you did not apply the security update for bugs NSA keys secret from "
+    "Microsoft in your Windows(R) operating system",
+    "you are bad and you should feel bad",
+    "you used the wifi at defcon",
+    "you lack official Clown Strike[TM] threaty threat technology",
+  };
+
+  const char *excuse_quip = excuse_quips[random() % countof(excuse_quips)];
+
+  /* WELL ACTUALLY, screensavers aren't really nescessary anymore because... */
+  const char *screensaver_quips[] = {
+    "I read it on hacker news",
+    "that's official Debian policy now",
+    "that is the official policy of United Airlines",
+    "they cause global warming",
+    "they lack an eternal struggle",
+    "they lack a vapid dichotomy",
+    "those electrons could be used for gold farming instead",
+    "you can make more money in art exhibitions",
+  };
+
+  const char *screensaver_quip =
+    screensaver_quips[random() % countof(screensaver_quips)];
+
+  /* Positions of UI elements. Layout:
+
+  +---------+-+---------------------------------------+
+  |   LOGO  | |               HEADER                  |
+  |         | |---------------------------------------|
+  |         | | NOTE TEXT                             |
+  |   DEAD  | |                                       |
+  |   LINE  | |                                       |
+  |  TIMERS | |                                       |
+  |         | |                                       |
+  |         | |                                       |
+  |         | |                                       |
+  |         | |                                       |
+  |         | |                                       |
+  +---------+ |                                       |
+  | LINKS   | +---------------------------------------+
+  | LINKS   | | FOOTER                                |
+  +---------+-+---------------------------------------+
+
+  The right side of the UI maximises to available width.
+  The note text maximises to available height.
+  The logo, header and timers are anchored to the top left of the window.
+  The links and footer are anchored to the bottom left of the window.
+  The entire window is a fixed 4:3 scale, with a minimum margin around it.
+  */
+
+  /* Minimum margin around the window */
+  int margin_size = 50;
+
+  /* Right side of window (header, ransom note, BTC address, buttons) */
+  const int right_pane_x = 270;
+  /* "oops" header */
+  const int header_y = 5;
+  /* Ransom note */
+  const int ransom_y = 40;
+  /* Footer area */
+  const int footer_height = 100;
+
+  /* Left pane (deadlines, countdown, links) */
+  const int left_pane_width = right_pane_x - 5;
+  /* Logo (shown at top left corner) */
+  int logo_x = (left_pane_width - pix_w) / 2;
+  int logo_y = 10;
+  /* Deadline position */
+  const int deadline_y = 130;
+  /* Links height */
+  const int links_height = 100;
+  const int links_x = 20;
+
+  /* main window text */
+  unsigned long fg = bst->fg;
+  unsigned long bg = bst->bg;
+  /* ransom note */
+  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.foreground2",
+                                          "Ransomware.Foreground");
+  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.background2",
+                                          "Ransomware.Background");
+  /* buttons */
+  unsigned long fg3 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.foreground3",
+                                          "Ransomware.Foreground");
+  unsigned long bg3 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.background3",
+                                          "Ransomware.Background");
+  /* links */
+  unsigned long link = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                           "ransomware.link",
+                                           "Ransomware.Foreground");
+  /* headers */
+  unsigned long theader = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                              "ransomware.timerheader",
+                                              "Ransomware.Foreground");
+
+  const char *lines[] = {
+    "*What Happened To My Computer?\n",
+    "Your important pixels are paintcrypted. All of your documents, photos, ",
+    "videos, databases, icons, dick pics are not accessible because they ",
+    "have been bitblted. Maybe you are looking for a way to get them back, ",
+    "but don't waste your time. Nobody can recover your pixels without our ",
+    "pointer motion clicker services.\n",
+    "\n",
+    "*Can I Recover My Important Dick Pix?\n",
+    "Yes. We guarantee that you can recover them safely and easily. But you ",
+    "not have much time.\n",
+    "You can expose some files for free. Try it now by pressing <The Any ",
+    "Key>.\n",
+    "But if you want to unsave all your screens, then you need to pay. ",
+    "You have only 3 days to click. After that the clicks will double. ",
+    "After 7 days your pixels will be gone forever.\n",
+    "We will have free events for cheapskates who can't pay in 6 months, ",
+    "long after all the pixels are xored.\n",
+    "\n",
+    "*How do I pay?\n",
+    "Payment is accepted in ", "[C]",
+    " only. For more information, press <About ", "[C]", ">.",
+    " Please check the current price of ", "[C]", " and buy some ", "[C]",
+    ". For more information, press <How to buy ", "[C]", ">.\n",
+    "And send the correct amount to the address specified below. After your ",
+    "payment, press <Check Payment>. Best time to check: 4-6am, Mon-Fri.\n",
+    "\n",
+    "*Why Did I Get This?\n",
+    "You got this because ", "[Q]",
+    ". Also you didn't click hard enough and now Tinkerbelle is dead.\n",
+    "\n",
+    "*But Aren't Screensavers Are Necessary?\n",
+    "WELL ACTUALLY, screensavers aren't really nescessary anymore because ",
+    "[S]", ".\n",
+    "\n",
+    "Please file complaints to @POTUS on Twitter.\n",
+    "\n"
+    "\n"
+    "\n"
+    "\n",
+    "*GREETZ TO CRASH OVERRIDE AND ALSO JOEY\n",
+  };
+
+  /* Make a 4:3 ratio box inside of the workspace */
+  int box_width = bst->xgwa.width - (margin_size * 2);
+  int box_height = bst->xgwa.height - bst->yoff - (margin_size * 2);
+  int box_x = margin_size;
+  int box_y = margin_size;
+  if ((bst->xgwa.width / 4) * 3 > bst->xgwa.height) {
+    /* Widescreen, make narrow bits */
+    box_width = (bst->xgwa.height * 4 / 3) - (margin_size * 2);
+    box_x = (bst->xgwa.width - box_width) / 2;
+  } else {
+    /* Narrowscreen, make wide bits */
+    box_height = (bst->xgwa.width * 3 / 4) - (margin_size * 2);
+    box_y = (bst->xgwa.height - bst->yoff - box_height) / 2;
+  }
+
+  if (box_width < 750 && box_x == margin_size) {
+    /* Not much width... */
+    box_width = bst->xgwa.width;
+    box_x = 0;
+  }
+
+
+  bst->xoff = bst->left_margin = bst->right_margin = 0;
+
+  if (!(random() % 8))
+    return apple2ransomware (dpy, window);
+
+  /* Grab the desktop image */
+  /* BSOD_IMG (bst); */
+  bst->wrap_p = True;
+
+  /* Draw the main red window */
+  BSOD_INVERT (bst);
+  BSOD_RECT (bst, True, box_x, box_y, box_width, box_height);
+
+  if (pixmap) {
+    bst->pixmap = pixmap;
+    BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h, box_x + logo_x, box_y + logo_y);
+  }
+
+  /* Setup deadlines */
+  strftime (stage1_deadline_str, sizeof(stage1_deadline_str),
+            "%m/%d/%Y %H:%M:%S\n\n", localtime(&stage1_deadline));
+  strftime (stage2_deadline_str, sizeof(stage1_deadline_str),
+            "%m/%d/%Y %H:%M:%S\n\n", localtime(&stage2_deadline));
+
+  BSOD_INVERT (bst);
+  /* Draw header pane */
+  BSOD_FONT (bst, 0);
+  BSOD_MOVETO (bst, box_x + right_pane_x, box_y + header_y + bst->fontA->ascent);
+  BSOD_MARGINS (bst, box_x + right_pane_x, box_x);
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, CENTER, header_quip);
+
+  /* Draw left-side timers */
+  BSOD_MOVETO (bst, box_x, box_y + deadline_y);
+  BSOD_MARGINS (bst, box_x, box_x + box_width - left_pane_width);
+  BSOD_FONT (bst, 1);
+
+  BSOD_COLOR (bst, theader, bg);
+  BSOD_TEXT (bst, CENTER, "Payment will be raised on\n");
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, CENTER, stage1_deadline_str);
+
+  BSOD_TEXT (bst, CENTER, "Time Left\n");
+  stage1_countdown_y = (line_height * 4) + box_y + deadline_y;
+  BSOD_TEXT (bst, CENTER, "\n");
+  BSOD_TEXT (bst, CENTER, "\n\n");
+
+  BSOD_COLOR (bst, theader, bg);
+  BSOD_TEXT (bst, CENTER, "Your pixels will be lost on\n");
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, CENTER, stage2_deadline_str);
+
+  BSOD_TEXT (bst, CENTER, "Time Left\n");
+  stage2_countdown_y = (line_height * 9) + box_y + deadline_y;
+  BSOD_TEXT (bst, CENTER, "\n");
+
+  /* Draw links */
+  BSOD_FONT (bst, 1);
+  BSOD_MOVETO (bst, box_x + links_x, box_y + box_height - links_height);
+  BSOD_MARGINS (bst, box_x + links_x, box_x + box_width - left_pane_width);
+  BSOD_COLOR (bst, link, bg);
+
+  if (box_height > 425) {
+    /* Don't show this on small screens */
+    BSOD_TEXT (bst, LEFT, "\n");
+    BSOD_TEXT (bst, LEFT, "About ");
+    BSOD_TEXT (bst, LEFT, currency);
+    BSOD_TEXT (bst, LEFT, "\n\n"
+                          "How to buy ");
+    BSOD_TEXT (bst, LEFT, currency);
+    BSOD_TEXT (bst, LEFT, "\n\n"
+                          "Contact us\n");
+  }
+
+  /* Ransom note text area */
+  BSOD_COLOR (bst, bg2, fg2);
+  BSOD_RECT (bst, True, box_x + right_pane_x, box_y + ransom_y,
+             box_width - right_pane_x - 10,
+             box_height - ransom_y - footer_height);
+  BSOD_MOVETO (bst, box_x + right_pane_x + 5,
+               box_y + ransom_y + (line_height * 1.1));
+  BSOD_MARGINS (bst, box_x + right_pane_x + 5, box_x + 15);
+  /* VERT_MARGINS are a bit high, to ensure we draw as much text as we can in
+   * the box, even if the line is partially cut. We'll draw over this later.
+   */
+  BSOD_VERT_MARGINS (bst, box_y + ransom_y, box_y + (footer_height / 2));
+  BSOD_INVERT (bst);
+
+  /* Write out the ransom note itself */
+  BSOD_CROP (bst, True);
+  for (i = 0; i < countof(lines); i++)
+    {
+      const char *s = lines[i];
+      if (!strcmp(s, "[C]")) s = currency;
+      else if  (!strcmp(s, "[Q]")) s = excuse_quip;
+      else if  (!strcmp(s, "[S]")) s = screensaver_quip;
+
+      if (*s == '*')
+        {
+          s++;
+          BSOD_FONT (bst, 2);
+        }
+      else
+        BSOD_FONT (bst, 0);
+
+      BSOD_TEXT (bst, LEFT, s);
+    }
+  BSOD_CROP (bst, False);
+  BSOD_FONT (bst, 0);
+
+  /* Draw over any overflowing ransom text. */
+  BSOD_COLOR (bst, bg, fg);
+  BSOD_RECT (bst, True, box_x + right_pane_x,
+             box_y + box_height - footer_height,
+             box_width - right_pane_x, footer_height);
+
+  /* Draw the footer */
+  BSOD_COLOR (bst, theader, bg);
+  BSOD_MOVETO (bst, box_x + right_pane_x,
+               box_y + box_height - footer_height + line_height);
+
+  sprintf(buf, "Send $%.2f of %s to this address:\n", 101+frand(888), currency);
+  BSOD_TEXT (bst, LEFT, buf);
+  BSOD_COLOR (bst, fg2, bg2);
+
+  /* address, has some extra slashes in there because it's a fake address */
+  for (i = 0; i < 40; i++) {
+    const char *s =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123459789";
+    buf[i] = s[random() % strlen(s)];
+  }
+  strncpy (buf, " //", 3);
+  buf[10] = '/';
+  buf[17] = '/';
+  buf[24] = '/';
+  strcpy (buf+33, " ");
+  BSOD_TEXT (bst, LEFT, buf);
+
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, LEFT, "   ");
+  BSOD_COLOR (bst, fg3, bg3);
+  BSOD_TEXT (bst, LEFT, "  Copy  ");
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, LEFT, "\n\n");
+
+  BSOD_COLOR (bst, fg3, bg3);
+  BSOD_TEXT (bst, LEFT, "  Demogrify Screen  ");
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, LEFT, "            ");
+  BSOD_COLOR (bst, fg3, bg3);
+  BSOD_TEXT (bst, LEFT, "  Check Payment  ");
+
+
+  /* Draw countdown timers */
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_FONT (bst, 0);
+  do {
+    /* First timer */
+    BSOD_MOVETO (bst, box_x, stage1_countdown_y);
+    BSOD_MARGINS (bst, box_x, box_x + box_width - left_pane_width);
+
+    countdown_r = stage1_deadline - now;
+    countdown_s = countdown_r % 60;
+    countdown_m = (countdown_r / 60) % 60;
+    countdown_h = (countdown_r / 3600) % 24;
+    countdown_d = (countdown_r / 86400);
+
+    sprintf (countdown_str, "%02d:%02d:%02d:%02d\n",
+             countdown_d, countdown_h, countdown_m, countdown_s);
+
+    BSOD_TEXT (bst, CENTER, countdown_str);
+
+    /* Second timer */
+    BSOD_MOVETO (bst, box_x, stage2_countdown_y);
+
+    countdown_r = stage2_deadline - now;
+    countdown_s = countdown_r % 60;
+    countdown_m = (countdown_r / 60) % 60;
+    countdown_h = (countdown_r / 3600) % 24;
+    countdown_d = (countdown_r / 86400);
+
+    sprintf (countdown_str, "%02d:%02d:%02d:%02d\n",
+             countdown_d, countdown_h, countdown_m, countdown_s);
+
+    BSOD_TEXT (bst, CENTER, countdown_str);
+
+    BSOD_PAUSE (bst, 1000000);
+    now++;
+
+    /* While the "correct" thing to do is create enough of a script to fill the
+     * stage2_deadline, this would be 7 days of "frames", which is quite a bit
+     * of memory. Instead, only fill the buffer with 1 hour of frames, which is
+     * enough to make the point before xscreensaver cycles us.
+     */
+  } while (stage1_deadline - now > 3600);
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
 
 /* As seen in Portal 2.  By jwz.
  */
@@ -1326,7 +1869,9 @@ glados (Display *dpy, Window window)
 
   int i;
 
-  bst->y = ((bst->xgwa.height -
+  bst->xoff = bst->left_margin = bst->right_margin = 0;
+
+  bst->y = ((bst->xgwa.height - bst->yoff -
              ((bst->font->ascent + bst->font->descent) * countof(panicstr)))
             / 2);
 
@@ -1387,7 +1932,7 @@ sco (Display *dpy, Window window)
      "** Press Any Key to Reboot **\n"
     );
 
-  bst->y = ((bst->xgwa.height -
+  bst->y = ((bst->xgwa.height - bst->yoff -
              ((bst->font->ascent + bst->font->descent) * 18)));
 
   XClearWindow (dpy, window);
@@ -1400,10 +1945,11 @@ sco (Display *dpy, Window window)
 static struct bsod_state *
 sparc_linux (Display *dpy, Window window)
 {
-  struct bsod_state *bst = make_bsod_state (dpy, window, 
+  struct bsod_state *bst = make_bsod_state (dpy, window,
                                             "sparclinux", "SparcLinux");
   bst->scroll_p = True;
-  bst->y = bst->xgwa.height - bst->font->ascent - bst->font->descent;
+  bst->y = bst->xgwa.height - bst->yoff
+    - bst->font->ascent - bst->font->descent;
 
   BSOD_TEXT (bst, LEFT,
         "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
@@ -1485,7 +2031,7 @@ bsd (Display *dpy, Window window)
   BSOD_TEXT (bst, LEFT, (b ? "damn!" : "sunk!"));
   BSOD_TEXT (bst, LEFT, "\nRebooting\n");
 
-  bst->y = ((bst->xgwa.height -
+  bst->y = ((bst->xgwa.height - bst->yoff -
              ((bst->font->ascent + bst->font->descent) * 4)));
 
   XClearWindow (dpy, window);
@@ -1507,6 +2053,9 @@ amiga (Display *dpy, Window window)
                                           "amiga.background2",
                                           "Amiga.Background");
 
+  bst->yoff = 0;
+  bst->top_margin = bst->bottom_margin = 0;
+
 # ifdef DO_XPM
   pixmap = xpm_data_to_pixmap (dpy, window, (char **) amiga_hand,
                                &pix_w, &pix_h, 0);
@@ -1519,6 +2068,7 @@ amiga (Display *dpy, Window window)
                               pixmap, pix_w, pix_h);
       pix_w *= 2;
       pix_h *= 2;
+      lw *= 2;
     }
 
   XSetLineAttributes (dpy, bst->gc, lw, LineSolid, CapButt, JoinMiter);
@@ -1596,7 +2146,7 @@ atari (Display *dpy, Window window)
   for (i = 1; i< 7; i++)
     BSOD_COPY (bst, x, y, pix_w, pix_h, (x + (i*offset)), y);
 
-  for (; i< 10; i++) 
+  for (; i< 10; i++)
     {
       BSOD_PAUSE (bst, 1000000);
       BSOD_COPY (bst, x, y, pix_w, pix_h, (x + (i*offset)), y);
@@ -1623,6 +2173,8 @@ mac (Display *dpy, Window window)
 
   const char *string = ("0 0 0 0 0 0 0 F\n"
 			"0 0 0 0 0 0 0 3");
+
+  bst->xoff = bst->left_margin = bst->right_margin = 0;
 
   pixmap = XCreatePixmapFromBitmapData(dpy, window, (char *) mac_bits,
 				       mac_width, mac_height,
@@ -1757,6 +2309,8 @@ macsbug (Display *dpy, Window window)
                                          "macsbug.borderColor",
                                          "MacsBug.BorderColor");
 
+  bst->xoff = bst->left_margin = bst->right_margin = 0;
+
   for (s = body; *s; s++) if (*s == '\n') body_lines++;
 
   char_width = (bst->font->per_char
@@ -1767,8 +2321,8 @@ macsbug (Display *dpy, Window window)
   col_right   = char_width  * 12;  /* number of columns in `left' */
   page_bottom = line_height * 47;  /* number of lines in `left'   */
 
-  if (page_bottom > bst->xgwa.height) 
-    page_bottom = bst->xgwa.height;
+  if (page_bottom > bst->xgwa.height - bst->yoff)
+    page_bottom = bst->xgwa.height - bst->yoff;
 
   row_bottom = page_bottom - line_height;
   row_top    = row_bottom - (line_height * 4);
@@ -1802,15 +2356,15 @@ macsbug (Display *dpy, Window window)
   BSOD_TEXT (bst, LEFT, bottom);
 
   BSOD_RECT (bst, True, xoff + col_right, yoff, 2, page_bottom);
-  BSOD_RECT (bst, True, xoff + col_right, yoff + row_top, 
+  BSOD_RECT (bst, True, xoff + col_right, yoff + row_top,
              page_right - col_right, 1);
-  BSOD_RECT (bst, True, xoff + col_right, yoff + row_bottom, 
+  BSOD_RECT (bst, True, xoff + col_right, yoff + row_bottom,
              page_right - col_right, 1);
   BSOD_RECT (bst, False, xoff-2, yoff, page_right+4, page_bottom);
 
   BSOD_LINE_DELAY (bst, 500);
-  BSOD_MOVETO (bst, 
-               xoff + col_right + char_width, 
+  BSOD_MOVETO (bst,
+               xoff + col_right + char_width,
                yoff + body_top + line_height);
   BSOD_MARGINS (bst, xoff + col_right + char_width, yoff);
   BSOD_TEXT (bst, LEFT, body);
@@ -1845,6 +2399,16 @@ mac1 (Display *dpy, Window window)
   pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) macbomb_bits,
                                         macbomb_width, macbomb_height,
                                         bst->fg, bst->bg, bst->xgwa.depth);
+
+  if (pixmap && 
+      pix_w < bst->xgwa.width / 2 &&
+      pix_h < bst->xgwa.height / 2)
+    {
+      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual,
+                              bst->xgwa.depth, pixmap, pix_w, pix_h);
+      pix_w *= 2;
+      pix_h *= 2;
+    }
 
   x = (bst->xgwa.width - pix_w) / 2;
   y = (bst->xgwa.height - pix_h) / 2;
@@ -1955,7 +2519,7 @@ macx_10_2 (Display *dpy, Window window, Bool v10_3_p)
   int pix_w = 0, pix_h = 0;
   int x, y;
 
-  pixmap = xpm_data_to_pixmap (dpy, window, 
+  pixmap = xpm_data_to_pixmap (dpy, window,
                                (char **) (v10_3_p ? osx_10_3 : osx_10_2),
                                &pix_w, &pix_h, 0);
   if (! pixmap) abort();
@@ -2186,6 +2750,8 @@ macx_install (Display *dpy, Window window)
   int i, min;
   double pct;
 
+  bst->xoff = bst->left_margin = bst->right_margin = 0;
+
   pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) apple_bits,
                                         apple_width, apple_height,
                                         fg, bg, bst->xgwa.depth);
@@ -2276,7 +2842,7 @@ macx (Display *dpy, Window window)
 static struct bsod_state *
 blitdamage (Display *dpy, Window window)
 {
-  struct bsod_state *bst = 
+  struct bsod_state *bst =
     make_bsod_state (dpy, window, "blitdamage", "BlitDamage");
 
   int i;
@@ -2286,7 +2852,7 @@ blitdamage (Display *dpy, Window window)
   int steps;
   int src_x, src_y;
   int x, y;
-  
+
   w = bst->xgwa.width;
   h = bst->xgwa.height;
 
@@ -2295,27 +2861,27 @@ blitdamage (Display *dpy, Window window)
   steps = 50;
   chunk_w = w / (random() % 1 + 1);
   chunk_h = h / (random() % 1 + 1);
-  if (random() & 0x1000) 
+  if (random() & 0x1000)
     delta_y = random() % 600;
   if (!delta_y || (random() & 0x2000))
     delta_x = random() % 600;
-  src_x = 0; 
-  src_y = 0; 
+  src_x = 0;
+  src_y = 0;
   x = 0;
   y = 0;
-  
+
   BSOD_IMG (bst);
   for (i = 0; i < steps; i++) {
-    if (x + chunk_w > w) 
+    if (x + chunk_w > w)
       x -= w;
     else
       x += delta_x;
-    
+
     if (y + chunk_h > h)
       y -= h;
     else
       y += delta_y;
-    
+
     BSOD_COPY (bst, src_x, src_y, chunk_w, chunk_h, x, y);
     BSOD_PAUSE (bst, 1000);
   }
@@ -2478,7 +3044,7 @@ os2 (Display *dpy, Window window)
 
 /* SPARC Solaris panic. Should look pretty authentic on Solaris boxes.
  * Anton Solovyev <solovam@earthlink.net>
- */ 
+ */
 static struct bsod_state *
 sparc_solaris (Display *dpy, Window window)
 {
@@ -2489,13 +3055,13 @@ sparc_solaris (Display *dpy, Window window)
   bst->wrap_p = True;
   bst->left_margin = bst->right_margin = bst->xgwa.width  * 0.07;
   bst->top_margin = bst->bottom_margin = bst->xgwa.height * 0.07;
-  bst->y = bst->top_margin + bst->font->ascent;
+  bst->y = bst->top_margin + bst->yoff + bst->font->ascent;
 
   BSOD_IMG (bst);
   BSOD_PAUSE (bst, 3000000);
 
   BSOD_INVERT(bst);
-  BSOD_RECT (bst, True, 
+  BSOD_RECT (bst, True,
              bst->left_margin, bst->top_margin,
              bst->xgwa.width - bst->left_margin - bst->right_margin,
              bst->xgwa.height - bst->top_margin - bst->bottom_margin);
@@ -2566,6 +3132,9 @@ linux_fsck (Display *dpy, Window window)
   int i;
   const char *sysname;
   char buf[1024];
+# ifdef HAVE_UNAME
+  struct utsname uts;
+#endif /* UNAME */
 
   const char *linux_panic[] = {
    " kernel: Unable to handle kernel paging request at virtual "
@@ -2608,7 +3177,6 @@ linux_fsck (Display *dpy, Window window)
   sysname = "linux";
 # ifdef HAVE_UNAME
   {
-    struct utsname uts;
     char *s;
     if (uname (&uts) >= 0)
       sysname = uts.nodename;
@@ -2627,7 +3195,7 @@ linux_fsck (Display *dpy, Window window)
   BSOD_CHAR_DELAY (bst, 300000);
   BSOD_TEXT (bst, LEFT, ".........\n");
   BSOD_CHAR_DELAY (bst, 0);
-  BSOD_TEXT (bst, LEFT, 
+  BSOD_TEXT (bst, LEFT,
              "xinit:  X server slow to shut down, sending KILL signal.\n"
              "waiting for server to die ");
   BSOD_CHAR_DELAY (bst, 300000);
@@ -2794,7 +3362,7 @@ linux_fsck (Display *dpy, Window window)
   if (0 == random() % 10)
     goto PANIC;
 
-  BSOD_TEXT (bst, LEFT, 
+  BSOD_TEXT (bst, LEFT,
              "Pass 3: Checking directory connectivity\n"
              "/lost+found not found.  Create? yes\n");
   BSOD_PAUSE (bst, 2000000);
@@ -2802,7 +3370,7 @@ linux_fsck (Display *dpy, Window window)
   /* Unconnected directory inode 4949 (/var/spool/squid/06/???)
      Connect to /lost+found<y>? yes
 
-     '..' in /var/spool/squid/06/08 (20351) is <The NULL inode> (0), should be 
+     '..' in /var/spool/squid/06/08 (20351) is <The NULL inode> (0), should be
      /var/spool/squid/06 (20350).
      Fix<y>? yes
 
@@ -2909,12 +3477,16 @@ linux_fsck (Display *dpy, Window window)
 static struct bsod_state *
 hppa_linux (Display *dpy, Window window)
 {
-  struct bsod_state *bst = 
+  struct bsod_state *bst =
     make_bsod_state (dpy, window, "hppalinux", "HPPALinux");
 
   int i = 0;
   const char *release, *sysname, *gccversion, *version;
   long int linedelay = 0;
+  char ss[1024];
+# ifdef HAVE_UNAME
+  struct utsname uts;
+# endif /* UNAME */
 
   __extension__
   struct { long int delay; const char *string; } linux_panic[] =
@@ -3055,7 +3627,6 @@ hppa_linux (Display *dpy, Window window)
   version = "#2 Mon Dec 8 06:09:27 GMT 2003";
 # ifdef HAVE_UNAME
   {
-    struct utsname uts;
     char *s;
     if (uname (&uts) >= 0)
       {
@@ -3079,8 +3650,7 @@ hppa_linux (Display *dpy, Window window)
 
   /* Insert current host name into banner on line 2 */
   {
-    char ss[1024];
-    snprintf (ss, 1024, linux_panic[1].string, 
+    snprintf (ss, 1024, linux_panic[1].string,
 	      release, sysname, gccversion, version);
     linux_panic[1].string = ss;
   }
@@ -3095,7 +3665,8 @@ hppa_linux (Display *dpy, Window window)
       i++;
     }
 
-  bst->y = bst->xgwa.height - bst->font->ascent - bst->font->descent;
+  bst->y = bst->xgwa.height - bst->yoff
+    - bst->font->ascent - bst->font->descent;
 
   XClearWindow(dpy, window);
   return bst;
@@ -3116,6 +3687,9 @@ vms (Display *dpy, Window window)
   char *s, *s1;
   int i;
   int arg_count;
+# ifdef HAVE_UNAME
+  struct utsname uts;
+# endif /* UNAME */
 
   __extension__
 
@@ -3188,7 +3762,6 @@ vms (Display *dpy, Window window)
   sysname = "VMS001";
 # ifdef HAVE_UNAME
   {
-    struct utsname uts;
     if (uname (&uts) >= 0)
       sysname = uts.nodename;
     s = strchr (sysname, '.');
@@ -3290,7 +3863,8 @@ hvx (Display *dpy, Window window)
 
   bst->scroll_p = True;
   bst->wrap_p = True;
-  bst->y = bst->xgwa.height - bst->bottom_margin - bst->font->ascent;
+  bst->y = bst->xgwa.height - bst->bottom_margin - bst->yoff
+    - bst->font->ascent;
 
   BSOD_CHAR_DELAY (bst, 10000);
   BSOD_TEXT (bst, LEFT,
@@ -3352,14 +3926,17 @@ hpux (Display *dpy, Window window)
   struct bsod_state *bst = make_bsod_state (dpy, window, "hpux", "HPUX");
   const char *sysname;
   char buf[2048];
+# ifdef HAVE_UNAME
+  struct utsname uts;
+# endif /* UNAME */
 
   bst->scroll_p = True;
-  bst->y = bst->xgwa.height - bst->bottom_margin - bst->font->ascent;
+  bst->y = bst->xgwa.height - bst->bottom_margin - bst->yoff
+    - bst->font->ascent;
 
   sysname = "HPUX";
 # ifdef HAVE_UNAME
   {
-    struct utsname uts;
     char *s;
     if (uname (&uts) >= 0)
       sysname = uts.nodename;
@@ -3451,7 +4028,7 @@ hpux (Display *dpy, Window window)
     for (i = 0; i <= steps; i++)
       {
         if (i > steps) i = steps;
-        sprintf (buf, 
+        sprintf (buf,
                "*** Dumping: %3d%% complete (%d of 40 MB) (device 64:0x2)\r",
                  i * 100 / steps,
                  i * size / steps);
@@ -3478,7 +4055,8 @@ os390 (Display *dpy, Window window)
   struct bsod_state *bst = make_bsod_state (dpy, window, "os390", "OS390");
 
   bst->scroll_p = True;
-  bst->y = bst->xgwa.height - bst->bottom_margin - bst->font->ascent;
+  bst->y = bst->xgwa.height - bst->bottom_margin - bst->yoff
+    - bst->font->ascent;
 
   BSOD_LINE_DELAY (bst, 100000);
   BSOD_TEXT (bst, LEFT,
@@ -3540,14 +4118,17 @@ tru64 (Display *dpy, Window window)
   struct bsod_state *bst = make_bsod_state (dpy, window, "tru64", "Tru64");
   const char *sysname;
   char buf[2048];
+# ifdef HAVE_UNAME
+  struct utsname uts;
+#endif /* UNAME */
 
   bst->scroll_p = True;
-  bst->y = bst->xgwa.height - bst->bottom_margin - bst->font->ascent;
+  bst->y = bst->xgwa.height - bst->bottom_margin - bst->yoff
+    - bst->font->ascent;
 
   sysname = "127.0.0.1";
 # ifdef HAVE_UNAME
   {
-    struct utsname uts;
     if (uname (&uts) >= 0)
       sysname = uts.nodename;
   }
@@ -3604,7 +4185,7 @@ tru64 (Display *dpy, Window window)
   BSOD_PAUSE (bst, 3000000);
 
   BSOD_TEXT (bst, LEFT,
-    "\n"   
+    "\n"
     "CPU 0 booting\n"
     "\n"
     "\n"
@@ -3773,7 +4354,7 @@ nvidia_draw (struct bsod_state *bst)
 
   nvs->tick++;
   if ((random() % 5) == 0)    /* change the display */
-    nvspatter (nvs->grid, nvs->rows, nvs->cols, nvs->ncolors, 
+    nvspatter (nvs->grid, nvs->rows, nvs->cols, nvs->ncolors,
                countof(nvs->bits), False);
 
   return 250000;
@@ -3829,7 +4410,7 @@ nvidia (Display *dpy, Window window)
       if (!nvs->gc1) nvs->gc1 = XCreateGC (dpy, nvs->bits[i], 0, &gcv);
 
       XSetForeground (dpy, nvs->gc1, 0);
-      XFillRectangle (dpy, nvs->bits[i], nvs->gc1, 0, 0, 
+      XFillRectangle (dpy, nvs->bits[i], nvs->gc1, 0, 0,
                       nvs->cellw, nvs->cellh);
       XSetForeground (dpy, nvs->gc1, 1);
 
@@ -3843,10 +4424,10 @@ nvidia (Display *dpy, Window window)
 
   /* Randomize the grid
    */
-  nvspatter (nvs->grid, nvs->rows, nvs->cols, nvs->ncolors, 
+  nvspatter (nvs->grid, nvs->rows, nvs->cols, nvs->ncolors,
              countof(nvs->bits), True);
   for (i = 0; i < 20; i++)
-    nvspatter (nvs->grid, nvs->rows, nvs->cols, nvs->ncolors, 
+    nvspatter (nvs->grid, nvs->rows, nvs->cols, nvs->ncolors,
                countof(nvs->bits), False);
 
   return bst;
@@ -3865,7 +4446,7 @@ nvidia (Display *dpy, Window window)
  * The Apple ][ logic and video hardware is in apple2.c. The TV is emulated by
  * analogtv.c for maximum realism
  *
- * Trevor Blackwell <tlb@tlb.org> 
+ * Trevor Blackwell <tlb@tlb.org>
  */
 
 static const char * const apple2_basic_errors[]={
@@ -3912,10 +4493,10 @@ static void a2controller_crash(apple2_sim_t *sim, int *stepno,
   if (!sim->controller_data)
     sim->controller_data = calloc(sizeof(struct mydata),1);
   mine=(struct mydata *) sim->controller_data;
-  
+
   switch(*stepno) {
   case 0:
-    
+
     a2_init_memory_active(sim);
     sim->dec->powerup = 1000.0;
 
@@ -4147,6 +4728,134 @@ apple2crash (Display *dpy, Window window)
 }
 
 
+static void
+a2controller_ransomware(apple2_sim_t *sim, int *stepno,
+                        double *next_actiontime)
+{
+  apple2_state_t *st=sim->st;
+
+  struct mydata {
+    const char *str;
+    Bool bold_p;
+  } *mine;
+
+  if (!sim->controller_data)
+    sim->controller_data = calloc(sizeof(struct mydata),1);
+  mine=(struct mydata *) sim->controller_data;
+
+  switch(*stepno) {
+  case 0:
+
+    st->gr_mode |= A2_GR_FULL;
+    a2_cls(st);
+    a2_goto(st,0,16);
+    a2_prints(st, "APPLE ][");
+    a2_goto(st,2,0);
+    *stepno = 10;
+    *next_actiontime += 2;
+    break;
+
+  case 10:
+    a2_prints(st, "READY\n\n");
+    *stepno = 11;
+    *next_actiontime += 1;
+    break;
+
+  case 11:
+    a2_goto(st, 1, 0);
+    *stepno = 12;
+    mine->str =
+      ("\n"
+       " _____________________________________\n"
+       "/                                     \\\n"
+       "! OOPS YOUR FILES HAVE BEEN ENCRYPTED !\n"
+       "!          ________________________   !\n"
+       "!         !                        !  !\n"
+       "!  [/--\\]   !  [ WHAT HAPPENED TO MY ] !  !\n"
+       "!  [!]  [!]   !  [ COMPUTER? ]           !  !\n"
+       "!  [!]  [!]   !                        !  !\n"
+       "! [######]  !  [ CAN I RECOVER MY ]    !  !\n"
+       "! [######]  !  [ FILES? ]              !  !\n"
+       "! [######]  !                        !  !\n"
+       "! [######]  !  [ HOW DO I PAY? ]       !  !\n"
+       "!         !                        !  !\n"
+       "!         !________________________!  !\n"
+       "!                                     !\n"
+       "!         BITCOIN ACCEPTED HERE       !\n"
+       "\\_____________________________________/\n"
+       "\n"
+       "\n"
+       "WAITING FOR BLOCKCHAIN..@\n"
+       "\n"
+       "PLEASE INSERT NEXT FLOPPY: "
+       );
+    break;
+
+  case 12:
+    {
+      char c = *mine->str;
+      mine->str++;
+
+      if (c == 0)
+        {
+          *next_actiontime += 30;
+          *stepno = 0;
+        }
+      else if (c == '[')
+        mine->bold_p++;
+      else if (c == ']')
+        mine->bold_p--;
+      else
+        {
+          if (c == '@')
+            {
+              c = '.';
+              *next_actiontime += 2;
+            }
+
+          if (mine->bold_p)
+            c |= 0xC0;
+          a2_printc_noscroll(st, c);
+          if (c == '.')
+            *next_actiontime += 1;
+        }
+    }
+    break;
+
+  case A2CONTROLLER_FREE:
+    return;
+  }
+}
+
+
+static int
+a2_ransomware_draw (struct bsod_state *bst)
+{
+  apple2_sim_t *sim = (apple2_sim_t *) bst->closure;
+  if (! sim) {
+    sim = apple2_start (bst->dpy, bst->window, 9999999,
+                        a2controller_ransomware);
+    bst->closure = sim;
+  }
+
+  if (! apple2_one_frame (sim)) {
+    bst->closure = 0;
+  }
+
+  return 10000;
+}
+
+static struct bsod_state *
+apple2ransomware (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "apple2", "Apple2");
+  bst->draw_cb = a2_ransomware_draw;
+  bst->free_cb = a2_free;
+  return bst;
+}
+
+
+
 /* A crash spotted on a cash machine circa 2006, by jwz.  I didn't note
    what model it was; probably a Tranax Mini-Bank 1000 or similar vintage.
  */
@@ -4167,7 +4876,7 @@ atm (Display *dpy, Window window)
                                         atm_width, atm_height,
                                         bst->fg, bst->bg, bst->xgwa.depth);
 
-  while (pix_w <= bst->xgwa.width  * scale && 
+  while (pix_w <= bst->xgwa.width  * scale &&
          pix_h <= bst->xgwa.height * scale)
     {
       pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
@@ -4302,7 +5011,7 @@ android (Display *dpy, Window window)
 
   while (1) {
     unsigned long delay =
-      ((state == 0 || 
+      ((state == 0 ||
         state == countof(lines0) ||
         state == countof(lines0) + countof(lines1) ||
         state == countof(lines0) + countof(lines1) + countof(lines2))
@@ -4314,10 +5023,11 @@ android (Display *dpy, Window window)
         BSOD_COLOR (bst, bg, bg);
         BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
         BSOD_COLOR (bst, bg, c1);
-        BSOD_MOVETO (bst, bst->left_margin, bst->top_margin + line_height);
+        BSOD_MOVETO (bst, bst->left_margin + bst->xoff,
+                     bst->top_margin + bst->yoff + line_height);
         BSOD_TEXT (bst, LEFT, "*** UNLOCKED ***\n");
         BSOD_COLOR (bst, c2, bg);
-        BSOD_TEXT (bst, LEFT, 
+        BSOD_TEXT (bst, LEFT,
                    "PRIMOU PVT SHIP S-OFF RL\n"
                    "HBOOT-1.17.0000\n"
                    "CPLD-None\n"
@@ -4334,7 +5044,7 @@ android (Display *dpy, Window window)
         if (pixmap)
           {
             int x = (bst->xgwa.width - pix_w) / 2;
-            int y = bst->xgwa.height - pix_h;
+            int y = bst->xgwa.height - bst->yoff - pix_h;
             BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h, x, y);
           }
       }
@@ -4434,6 +5144,7 @@ static const struct {
   { "NT",		windows_nt },
   { "Win2K",		windows_other },
   { "Win10",		windows_10 },
+  { "Ransomware",	windows_ransomware },
   { "Amiga",		amiga },
   { "Mac",		mac },
   { "MacsBug",		macsbug },
@@ -4547,7 +5258,7 @@ bsod_draw (Display *dpy, Window window, void *closure)
 
   if (dst->bst && dst->bst->img_loader)   /* still loading */
     {
-      dst->bst->img_loader = 
+      dst->bst->img_loader =
         load_image_async_simple (dst->bst->img_loader, 0, 0, 0, 0, 0);
       return 100000;
     }
@@ -4638,9 +5349,9 @@ bsod_draw (Display *dpy, Window window, void *closure)
               dst->which = dst->only = 0;
             }
         }
-          
+
       if (dst->debug_p)
-        fprintf (stderr, "%s: %s: launch\n", progname, 
+        fprintf (stderr, "%s: %s: launch\n", progname,
                  all_modes[dst->which].name);
 
       /* Run the mode setup routine...
@@ -4657,15 +5368,18 @@ bsod_draw (Display *dpy, Window window, void *closure)
       if (dst->bst)
         {
           if (dst->debug_p)
-            fprintf (stderr, "%s: %s: queue size: %d (%d)\n", progname, 
+            fprintf (stderr, "%s: %s: queue size: %d (%d)\n", progname,
                      dst->name, dst->bst->pos, dst->bst->queue_size);
 
           hack_title (dst);
           dst->bst->pos = 0;
-          dst->bst->x = dst->bst->current_left = dst->bst->left_margin;
+          dst->bst->x = dst->bst->current_left =
+            dst->bst->left_margin + dst->bst->xoff;
 
-          if (dst->bst->y < dst->bst->top_margin + dst->bst->font->ascent)
-            dst->bst->y = dst->bst->top_margin + dst->bst->font->ascent;
+          if (dst->bst->y < 
+              dst->bst->top_margin + dst->bst->yoff + dst->bst->font->ascent)
+            dst->bst->y =
+              dst->bst->top_margin + dst->bst->yoff + dst->bst->font->ascent;
         }
     }
 
@@ -4674,7 +5388,7 @@ bsod_draw (Display *dpy, Window window, void *closure)
 
 
 static void
-bsod_reshape (Display *dpy, Window window, void *closure, 
+bsod_reshape (Display *dpy, Window window, void *closure,
               unsigned int w, unsigned int h)
 {
   struct driver_state *dst = (struct driver_state *) closure;
@@ -4747,6 +5461,7 @@ static const char *bsod_defaults [] = {
   "*doNT:		   True",
   "*doWin2K:		   True",
   "*doWin10:		   True",
+  "*doRansomware:	   True",
   "*doAmiga:		   True",
   "*doMac:		   True",
   "*doMacsBug:		   True",
@@ -4789,6 +5504,16 @@ static const char *bsod_defaults [] = {
 
   ".win10.foreground:      White",
   ".win10.background:      #1070AA",
+
+  ".ransomware.foreground:   White",
+  ".ransomware.background:   #841212",
+  ".ransomware.foreground2:  Black",      /* ransom note */
+  ".ransomware.background2:  White",
+  ".ransomware.foreground3:  Black",      /* buttons */
+  ".ransomware.background3:  #AAAAAA",
+  ".ransomware.link:         #7BF9F6",
+  ".ransomware.timerheader:  #BDBE02",
+
 
   ".glaDOS.foreground:	   White",
   ".glaDOS.background:	   #0000AA",    /* EGA color 0x01. */
@@ -4906,6 +5631,10 @@ static const char *bsod_defaults [] = {
   ".win10.fontC:	   Arial 9, Helvetica 9",
   ".win10.bigFont2:	   ",
 
+  ".ransomware.font:         Arial 10, Helvetica 10",
+  ".ransomware.fontB:        Arial 8, Helvetica 8",
+  ".ransomware.fontC:        Arial 10, Helvetica Bold 10",
+
 # elif defined(HAVE_ANDROID)
 
   "*font:		   PxPlus IBM VGA8 16",
@@ -4928,38 +5657,47 @@ static const char *bsod_defaults [] = {
   ".win10.fontC:	   -*-helvetica-medium-r-*-*-*-90-*-*-*-*-*-*",
   ".win10.bigFont2:	   ",
 
+  ".ransomware.font:	   -*-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*",
+  ".ransomware.fontB:	   -*-helvetica-medium-r-*-*-*-80-*-*-*-*-*-*",
+  ".ransomware.fontC:	   -*-helvetica-bold-r-*-*-*-100-*-*-*-*-*-*",
+
 # elif defined(HAVE_COCOA)
 
-  "*font:		   PxPlus IBM VGA8 8,  Courier-Bold 9",
-  "*bigFont:		   PxPlus IBM VGA8 32, Courier-Bold 24",
+  "*font:		   PxPlus IBM VGA8 8,  Courier Bold 9",
+  "*bigFont:		   PxPlus IBM VGA8 32, Courier Bold 24",
   "*font2:		   ",
   "*bigFont2:		   ",
 
-  ".mac.font:		   Monaco 10, Courier-Bold 9",
-  ".mac.bigFont:	   Monaco 18, Courier-Bold 18",
+  ".mac.font:		   Monaco 10, Courier Bold 9",
+  ".mac.bigFont:	   Monaco 18, Courier Bold 18",
 
-  ".macsbug.font:	   Monaco 10, Courier-Bold 9",
-  ".macsbug.bigFont:	   Monaco 24, Courier-Bold 24",
+  ".macsbug.font:	   Monaco 10, Courier Bold 9",
+  ".macsbug.bigFont:	   Monaco 24, Courier Bold 24",
 
-  ".macx.font:		   Courier-Bold 9",
-  ".macx.bigFont:	   Courier-Bold 14",
-  ".macdisk.font:	   Courier-Bold 9",
-  ".macdisk.bigFont:	   Courier-Bold 18",
+  ".macx.font:		   Courier Bold 9",
+  ".macx.bigFont:	   Courier Bold 14",
+  ".macdisk.font:	   Courier Bold 9",
+  ".macdisk.bigFont:	   Courier Bold 18",
   ".macinstall.font:	   Helvetica 24, Arial 24",
   ".macinstall.bigFont:	   Helvetica 24, Arial 24",
 
-  ".hvx.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
-  ".hppalinux.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
-  ".solaris.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
-  ".linux.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
-  ".hpux.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
-  ".msdos.font:		   PxPlus IBM VGA8 16, Courier-Bold 14",
+  ".hvx.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
+  ".hppalinux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
+  ".solaris.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
+  ".linux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
+  ".hpux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
+  ".msdos.font:		   PxPlus IBM VGA8 16, Courier Bold 14",
 
   ".win10.font:		   Arial 24, Helvetica 24",
   ".win10.bigFont:	   Arial 24, Helvetica 24",
   ".win10.fontB:	   Arial 100, Helvetica 100",
   ".win10.fontC:	   Arial 16, Helvetica 16",
   ".win10.bigFont2:	   ",
+
+  ".ransomware.font:         Arial 24, Helvetica 24",
+  ".ransomware.bigFont:      Arial 24, Helvetica 24",
+  ".ransomware.fontB:        Arial 16, Helvetica 16",
+  ".ransomware.fontC:        Arial Bold 24, Helvetica Bold 24",
 
 # else   /* X11 */
 
@@ -4999,6 +5737,12 @@ static const char *bsod_defaults [] = {
   ".win10.font2:	   ",
   ".win10.bigFont2:	   ",
 
+  ".ransomware.font:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
+  ".ransomware.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
+  ".ransomware.fontB:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
+  ".ransomware.fontC:	   -*-helvetica-bold-r-*-*-*-180-*-*-*-*-*-*",
+
+
 # endif  /* X11 */
 
   0
@@ -5016,6 +5760,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-2k",		".doWin2K",		XrmoptionNoArg,  "False" },
   { "-win10",		".doWin10",		XrmoptionNoArg,  "True"  },
   { "-no-win10",	".doWin10",		XrmoptionNoArg,  "False" },
+  { "-ransomware",	".doRansomware",	XrmoptionNoArg,  "True"  },
+  { "-no-ransomware",	".doRansomware",	XrmoptionNoArg,  "False" },
   { "-amiga",		".doAmiga",		XrmoptionNoArg,  "True"  },
   { "-no-amiga",	".doAmiga",		XrmoptionNoArg,  "False" },
   { "-mac",		".doMac",		XrmoptionNoArg,  "True"  },

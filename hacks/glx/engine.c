@@ -27,7 +27,7 @@
 			"*suppressRotationAnimation: True\n" \
 	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
 
-# define refresh_engine 0
+# define free_engine 0
 # define release_engine 0
 # include "xlockmore.h"              /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -847,11 +847,19 @@ static int makeshaft (Engine *e)
 ENTRYPOINT void reshape_engine(ModeInfo *mi, int width, int height)
 {
  Engine *e = &engine[MI_SCREEN(mi)];
- glViewport(0,0,(GLint)width, (GLint) height);
+ double h = (GLfloat) height / (GLfloat) width;  
+ int y = 0;
+
+ if (width > height * 5) {   /* tiny window: show middle */
+   height = width * 9/16;
+   y = -height/2;
+   h = height / (GLfloat) width;
+ }
+
+ glViewport(0, y, width, height);
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
-/* glFrustum(-1.0,1.0,-1.0,1.0,1.5,70.0);*/
- gluPerspective(40.0,((GLdouble)width)/height,1.5,70.0);
+ gluPerspective(40, 1/h, 1.5, 70.0);
  glMatrixMode(GL_MODELVIEW);
  e->win_h = height; 
  e->win_w = width;
@@ -863,7 +871,7 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
   int screen = MI_SCREEN(mi);
   Engine *e;
 
- MI_INIT(mi, engine, NULL);
+ MI_INIT(mi, engine);
  e = &engine[screen];
  e->window = MI_WINDOW(mi);
 

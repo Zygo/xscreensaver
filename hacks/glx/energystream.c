@@ -17,7 +17,6 @@
       "*showFPS:      False       \n" \
       "*wireframe:    False       \n" \
 
-# define refresh_stream 0
 # define release_stream 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -308,15 +307,13 @@ static void render_flare_stream (flare_stream *s, float cur_time, Vector *vx, Ve
   glEnd ();
 }
 
-static void free_stream (ModeInfo * mi);
-
 ENTRYPOINT void
 init_stream (ModeInfo *mi)
 {
   stream_configuration *es;
   streamtime current_time;
 
-  MI_INIT (mi, ess, free_stream);
+  MI_INIT (mi, ess);
 
   es = &ess[MI_SCREEN(mi)];
 
@@ -364,7 +361,7 @@ init_stream (ModeInfo *mi)
   }
 }
 
-static void
+ENTRYPOINT void
 free_stream (ModeInfo * mi)
 {
   stream_configuration *es = &ess[MI_SCREEN(mi)];

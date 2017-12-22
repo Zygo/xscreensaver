@@ -1,7 +1,7 @@
 # XScreenSaver for Android
 
 export TERM=dumb
-GRADLE = cd project ; ./gradlew
+GRADLE = ./gradlew
 
 default:: debug
 all:: release
@@ -41,6 +41,7 @@ export ANDROID_HACKS=		\
 	anemone			\
 	anemotaxis		\
 	apollonian		\
+	atlantis		\
 	attraction		\
 	atunnel			\
 	blaster			\
@@ -50,14 +51,17 @@ export ANDROID_HACKS=		\
 	bouncingcow		\
 	boxed			\
 	boxfit			\
+	bouboule		\
 	braid			\
 	bsod			\
 	cage			\
 	ccurve			\
+	celtic			\
 	cloudlife		\
 	companioncube		\
 	compass			\
 	coral			\
+	crackberg		\
 	crystal			\
 	cubestack		\
 	cubestorm		\
@@ -67,6 +71,7 @@ export ANDROID_HACKS=		\
 	dangerball		\
 	decayscreen		\
 	deco			\
+	deluxe			\
 	demon			\
 	discrete		\
 	discoball		\
@@ -126,6 +131,7 @@ export ANDROID_HACKS=		\
 	moebiusgears		\
 	moire			\
 	morph3d			\
+	munch			\
 	nerverot		\
 	noof			\
 	penetrate		\
@@ -133,6 +139,7 @@ export ANDROID_HACKS=		\
 	petri			\
 	piecewise		\
 	pinion			\
+	polyominoes		\
 	polytopes		\
 	pong			\
 	popsquares		\
@@ -153,6 +160,7 @@ export ANDROID_HACKS=		\
 	sierpinski		\
 	sierpinski3d		\
 	slidescreen		\
+	slip			\
 	splodesic		\
 	squiral			\
 	stairs			\
@@ -179,6 +187,7 @@ export ANDROID_HACKS=		\
 	wormhole		\
 	xflame			\
 	xlyap			\
+	xrayswarm		\
 	xspirograph		\
 
 
@@ -188,23 +197,19 @@ ANDROID_TODO=			\
 	antinspect		\
 	antmaze			\
 	antspotlight		\
-	atlantis		\
 	barcode			\
 	binaryring		\
 	blitspin		\
-	bouboule		\
 	bumps			\
 	carousel		\
-	celtic			\
 	circuit			\
 	cityflow		\
-	crackberg		\
 	cube21			\
 	cubenetic		\
 	cubicgrid		\
-	deluxe			\
 	dymaxionmap		\
 	endgame			\
+	esper			\
 	flipscreen3d		\
 	fliptext		\
 	fontglide		\
@@ -226,19 +231,16 @@ ANDROID_TODO=			\
 	moire2			\
 	molecule		\
 	mountain		\
-	munch			\
 	noseguy			\
 	pedal			\
 	phosphor		\
 	photopile		\
 	pipes			\
-	polyominoes		\
 	projectiveplane		\
 	pulsar			\
 	qix			\
 	queens			\
 	skytentacles		\
-	slip			\
 	speedmine		\
 	spheremonics		\
 	splitflap		\
@@ -252,7 +254,6 @@ ANDROID_TODO=			\
 	xanalogtv		\
 	xjack			\
 	xmatrix			\
-	xrayswarm		\
 	zoom			\
 
 
@@ -285,7 +286,7 @@ m6502.h::
 		fi; \
 	done
 
-project/xscreensaver/res/drawable/%.png:
+xscreensaver/res/drawable/%.png:
 	@\
 	FILE1=`echo "$@" | sed 's!^.*/\([^/]*\)\.png$$!\1.jpg!'` ;	\
 	FILE2="$@" ;							\
@@ -303,19 +304,19 @@ project/xscreensaver/res/drawable/%.png:
 
 thumbs::
 	@for f in $(ANDROID_HACKS) $(ANDROID_TODO) ; do			\
-	  $(MAKE) project/xscreensaver/res/drawable/$$f.png ;		\
+	  $(MAKE) xscreensaver/res/drawable/$$f.png ;			\
 	done
 
 clean_thumbs::
 	@\
 	for f in $(ANDROID_HACKS) $(ANDROID_TODO) ; do			\
-	  rm -f project/xscreensaver/res/drawable/$$f.png ;		\
+	  rm -f xscreensaver/res/drawable/$$f.png ;			\
 	done
 
 distclean:: clean_thumbs clean
 
 
-EXTRA_TARFILES = project/xscreensaver/res/drawable/thumbnail.png \
+EXTRA_TARFILES = xscreensaver/res/drawable/thumbnail.png \
 
 echo_tarfiles:
 	@FILES=`find . $(EXTRA_TARFILES) \( \(	\
@@ -358,7 +359,7 @@ $(KEYSTORE):
 	keytool -genkey -v -keystore $@ \
 	-alias xscreensaver -keyalg RSA -keysize 2048 -validity 10000
 
-APK_DIR       = project/xscreensaver/build/outputs/apk/
+APK_DIR       = xscreensaver/build/outputs/apk/
 APK_UNSIGNED  = $(APK_DIR)/xscreensaver-release-unsigned.apk
 APK_UNALIGNED = $(APK_DIR)/xscreensaver-release-unaligned.apk
 APK_SIGNED    = $(APK_DIR)/xscreensaver-release.apk

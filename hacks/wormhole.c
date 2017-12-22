@@ -703,6 +703,7 @@ wormhole_free (Display *dpy, Window window, void *closure)
 
 
 static const char *wormhole_defaults [] = {
+  ".lowrez:     true",
   ".background:	Black",
   ".foreground:	#E9967A",
   "*delay:	10000",

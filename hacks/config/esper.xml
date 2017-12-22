@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="esper" _label="Esper" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=_er7xZd7zUU"/>
+
+  <hgroup>
+   <vgroup>
+   <number id="delay" type="slider" arg="-delay %"
+           _label="Frame rate" _low-label="Low" _high-label="High"
+           low="0" high="100000" default="20000"
+           convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.2" high="20" default="1.0"/>
+
+   </vgroup>
+   <vgroup>
+
+    <boolean id="titles" _label="Show file names" arg-unset="-no-titles"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+    <xscreensaver-image />
+
+    <xscreensaver-updater />
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+"Enhance 224 to 176. Pull out track right. Center in pull back.  Pull
+back. Wait a minute. Go right. Stop. Enhance 57 19. Track 45 left.
+Gimme a hardcopy right there."
+
+The Esper Machine was a voice-controlled forensic device used by LAPD
+in 2019, as documented in the 1982 film, Blade Runner.  It was capable
+of enhancing photographs to an extreme degree, including reconstructing
+different viewpoints within the space from the reflections on various
+objects in the photograph.
+
+Written by Jamie Zawinski; 2017.
+  </_description>
+</screensaver>

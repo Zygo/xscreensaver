@@ -16,6 +16,8 @@
 
 #include "screenhack.h"
 #include "glx/rotator.h"
+#include "colorbars.h"
+#include "erase.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -50,6 +52,7 @@ enum
   mode_images,
   mode_copy,
   mode_preserve,
+  mode_erase,
 
   mode_count
 };
@@ -94,6 +97,8 @@ struct testx11 {
   Pixmap copy_pix64;
 
   Pixmap preserve[2];
+
+  eraser_state *erase;
 
   rotator *rot;
 };
@@ -211,6 +216,14 @@ make_clip_mask (struct testx11 *st)
 }
 
 
+static void
+colorbars (struct testx11 *st)
+{
+  draw_colorbars (st->xgwa.screen, st->xgwa.visual, st->win,
+                  st->xgwa.colormap, 0, 0, st->xgwa.width, st->xgwa.height);
+}
+
+
 static void *
 testx11_init (Display *dpy, Window win)
 {
@@ -315,7 +328,7 @@ testx11_init (Display *dpy, Window win)
 
   {
     static const char text[] = "Welcome from testx11_init().";
-    XClearWindow (dpy, win);
+    colorbars (st);
     XDrawString (dpy, win, st->copy_gc, 16, 16, text, countof (text) - 1);
   }
 
@@ -839,6 +852,12 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
     XCopyArea (st->dpy, st->preserve[1], t, st->copy_gc, 0, 0,
                preserve_size, preserve_size,
                w - preserve_size / 2, preserve_size);
+    break;
+
+  case mode_erase:
+    if (!st->erase)
+      colorbars (st);
+    st->erase = erase_window(st->dpy, st->win, st->erase);
     break;
   }
 

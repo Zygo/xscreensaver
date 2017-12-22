@@ -78,6 +78,7 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
 					"*wireframe:	False	\n"			\
 					"*suppressRotationAnimation: True\n" \
 
+# define free_superquadrics 0
 # define release_superquadrics 0
 # define superquadrics_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -618,7 +619,14 @@ ReshapeSuperquadrics(int w, int h)
 		glViewport(0, 0, w, h);
 	}
 #else
-    glViewport(0, 0, w, h);
+    int y = 0;
+
+    if (w > h * 5) {   /* tiny window: show middle */
+      h = w;
+      y = -h/2;
+    }
+
+    glViewport(0, y, w, h);
 #endif
 
 	glMatrixMode(GL_PROJECTION);
@@ -727,7 +735,7 @@ init_superquadrics(ModeInfo * mi)
 
 	superquadricsstruct *sp;
 
-	MI_INIT (mi, superquadrics, NULL);
+	MI_INIT (mi, superquadrics);
 	sp = &superquadrics[screen];
 	sp->mono = (MI_IS_MONO(mi) ? 1 : 0);
 
@@ -777,11 +785,13 @@ draw_superquadrics(ModeInfo * mi)
 	glXSwapBuffers(display, window);
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_superquadrics(ModeInfo * mi)
 {
 	/* Nothing happens here */
 }
+#endif
 
 ENTRYPOINT void
 reshape_superquadrics(ModeInfo * mi, int width, int height)

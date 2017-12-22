@@ -19,7 +19,7 @@
 			    "*showFPS: False   \n" \
                             "*useSHM:  True    \n"
 
-# define refresh_antspotlight 0
+# define free_antspotlight 0
 # define release_antspotlight 0
 #include "xlockmore.h"
 #else
@@ -552,8 +552,16 @@ static void draw_antspotlight_strip(ModeInfo *mi)
 ENTRYPOINT void reshape_antspotlight(ModeInfo * mi, int width, int height)
 {
   double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
   int size = 2;
-  glViewport(0, 0, width, height);
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0, y, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
@@ -697,7 +705,7 @@ ENTRYPOINT void init_antspotlight(ModeInfo *mi)
 
   antspotlightstruct *mp;
   
-  MI_INIT(mi, antspotlight, NULL);
+  MI_INIT(mi, antspotlight);
   mp = &antspotlight[MI_SCREEN(mi)];
   mp->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
   mp->trackball = gltrackball_init (False);

@@ -35,7 +35,7 @@ struct state {
   Display *dpy;
   Window window;
 
-   int delay, subdivision, border, ncolors, twitch, dbuf;
+   int delay, subdivisionx, subdivisiony, border, ncolors, twitch, dbuf;
     XWindowAttributes xgwa;
     GC gc; 
     XColor *colors;
@@ -46,6 +46,73 @@ struct state {
     XdbeBackBuffer backb;
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 };
+
+static void
+popsquares_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  int s = get_integer_resource(st->dpy, "subdivision", "Integer");
+  int x, y;
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+
+  if (st->xgwa.width < 100 || st->xgwa.height < 100) /* tiny window */
+    {
+      int ss = (st->xgwa.width < st->xgwa.height
+                ? st->xgwa.width : st->xgwa.height);
+      s = ss / 15;
+      if (s < 1) s = 1;
+    }
+
+  if (st->xgwa.width > st->xgwa.height * 5 ||  /* weird aspect ratio */
+      st->xgwa.height > st->xgwa.width * 5)
+    {
+      double r = st->xgwa.width / (double) st->xgwa.height;
+      if (r > 1)
+        {
+          st->subdivisiony = s;
+          st->subdivisionx = s * r;
+        }
+      else
+        {
+          st->subdivisionx = s;
+          st->subdivisiony = s / r;
+        }
+    }
+  else
+    {
+      st->subdivisionx = st->subdivisiony = s;
+    }
+
+  st->sw = st->xgwa.width / st->subdivisionx;
+  st->sh = st->xgwa.height / st->subdivisiony;
+  st->gw = st->sw ? st->xgwa.width / st->sw : 0;
+  st->gh = st->sh ? st->xgwa.height / st->sh : 0;
+  st->nsquares = st->gw * st->gh;
+  free (st->squares);
+  if (st->nsquares < 1) st->nsquares = 1;
+  st->squares = (square *) calloc (st->nsquares, sizeof(square));
+
+  for (y = 0; y < st->gh; y++)
+    for (x = 0; x < st->gw; x++) 
+      {
+        square *s = (square *) &st->squares[st->gw * y + x];
+        s->w = st->sw;
+        s->h = st->sh;
+        s->x = x * st->sw;
+        s->y = y * st->sh;
+      }
+
+  randomize_square_colors(st->squares, st->nsquares, st->ncolors);
+
+  if (st->dbuf) {
+    XFreePixmap (dpy, st->ba);
+    XFreePixmap (dpy, st->bb);
+    st->ba = XCreatePixmap (st->dpy, st->window, st->xgwa.width, st->xgwa.height, st->xgwa.depth);
+    st->bb = XCreatePixmap (st->dpy, st->window, st->xgwa.width, st->xgwa.height, st->xgwa.depth);
+    st->b = st->ba;
+  }
+}
 
 static void *
 popsquares_init (Display *dpy, Window window)
@@ -63,7 +130,8 @@ popsquares_init (Display *dpy, Window window)
   st->window = window;
 
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
-  st->subdivision = get_integer_resource(st->dpy, "subdivision", "Integer");
+  st->subdivisionx = get_integer_resource(st->dpy, "subdivision", "Integer");
+  st->subdivisiony = st->subdivisionx;
   st->border = get_integer_resource(st->dpy, "border", "Integer");
   st->ncolors = get_integer_resource(st->dpy, "ncolors", "Integer");
   st->twitch = get_boolean_resource(st->dpy, "twitch", "Boolean");
@@ -81,8 +149,8 @@ popsquares_init (Display *dpy, Window window)
   XQueryColor (st->dpy, st->xgwa.colormap, &fg);
   XQueryColor (st->dpy, st->xgwa.colormap, &bg);
 
-  st->sw = st->xgwa.width / st->subdivision;
-  st->sh = st->xgwa.height / st->subdivision;
+  st->sw = st->xgwa.width / st->subdivisionx;
+  st->sh = st->xgwa.height / st->subdivisiony;
   st->gw = st->sw ? st->xgwa.width / st->sw : 0;
   st->gh = st->sh ? st->xgwa.height / st->sh : 0;
   st->nsquares = st->gw * st->gh;
@@ -139,6 +207,8 @@ popsquares_init (Display *dpy, Window window)
       st->b = st->window;
     }
 
+  popsquares_reshape (dpy, window, st, st->xgwa.width, st->xgwa.height);
+
   return st;
 }
 
@@ -184,43 +254,6 @@ popsquares_draw (Display *dpy, Window window, void *closure)
   return st->delay;
 }
 
-
-static void
-popsquares_reshape (Display *dpy, Window window, void *closure, 
-                 unsigned int w, unsigned int h)
-{
-  struct state *st = (struct state *) closure;
-  int x, y;
-  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
-  st->sw = st->xgwa.width / st->subdivision;
-  st->sh = st->xgwa.height / st->subdivision;
-  st->gw = st->sw ? st->xgwa.width / st->sw : 0;
-  st->gh = st->sh ? st->xgwa.height / st->sh : 0;
-  st->nsquares = st->gw * st->gh;
-  free (st->squares);
-  if (st->nsquares < 1) st->nsquares = 1;
-  st->squares = (square *) calloc (st->nsquares, sizeof(square));
-
-  for (y = 0; y < st->gh; y++)
-    for (x = 0; x < st->gw; x++) 
-      {
-        square *s = (square *) &st->squares[st->gw * y + x];
-        s->w = st->sw;
-        s->h = st->sh;
-        s->x = x * st->sw;
-        s->y = y * st->sh;
-      }
-
-  randomize_square_colors(st->squares, st->nsquares, st->ncolors);
-
-  if (st->dbuf) {
-    XFreePixmap (dpy, st->ba);
-    XFreePixmap (dpy, st->bb);
-    st->ba = XCreatePixmap (st->dpy, st->window, st->xgwa.width, st->xgwa.height, st->xgwa.depth);
-    st->bb = XCreatePixmap (st->dpy, st->window, st->xgwa.width, st->xgwa.height, st->xgwa.depth);
-    st->b = st->ba;
-  }
-}
 
 static Bool
 popsquares_event (Display *dpy, Window window, void *closure, XEvent *event)

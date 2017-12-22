@@ -32,7 +32,7 @@
                     "*fpsSolid:          true     \n" \
 
 # include "xlockmore.h"     /* from the xscreensaver distribution */
-# define refresh_trees 0
+# define free_trees 0
 # define release_trees 0
 # define reshape_trees 0
 # define trees_handle_event 0
@@ -113,7 +113,7 @@ init_trees(ModeInfo * mi)
     XSetForeground(display, gc, colors[1].pixel);
   }
 
-  MI_INIT (mi, trees, 0);
+  MI_INIT (mi, trees);
 
   XClearWindow(display, MI_WINDOW(mi));
   XSetLineAttributes(display, gc, 2, LineSolid, CapButt, JoinMiter);

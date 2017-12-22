@@ -134,7 +134,6 @@ distdepend:: compile_axp.com compile_decc.com
 #
 # DO NOT DELETE: updated by make distdepend
 
-jwxyz-android.o: ../config.h
 jwxyz-common.o: ../config.h
 jwxyz-timers.o: ../config.h
 jwzgles.o: ../config.h

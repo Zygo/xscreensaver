@@ -19,7 +19,7 @@
 #define DEFAULTS	    "*delay:   20000   \n" \
 			    "*showFPS: False   \n"
 
-# define refresh_antinspect 0
+# define free_antinspect 0
 # define release_antinspect 0
 #include "xlockmore.h"
 #else
@@ -549,10 +549,17 @@ static Bool draw_antinspect_strip(ModeInfo * mi)
 ENTRYPOINT void reshape_antinspect(ModeInfo * mi, int width, int height) 
 {
   double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
   antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
   mp->linewidth = (width / 512) + 1;
 
-  glViewport(0, 0, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0, y, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
@@ -605,7 +612,7 @@ ENTRYPOINT void init_antinspect(ModeInfo * mi)
 {
   antinspectstruct *mp;
   
-  MI_INIT(mi, antinspect, NULL);
+  MI_INIT(mi, antinspect);
   mp = &antinspect[MI_SCREEN(mi)];
   mp->step = NRAND(90);
   mp->ant_position = NRAND(90);

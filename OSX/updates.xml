@@ -8,6 +8,17 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.37</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.37.dmg</link>
+   <description><![CDATA[&bull; New hack, `vigilance'. <BR>&bull; Added Mac Software Update and VMware to `bsod'. <BR>&bull; OSX: Grabbing the desktop works again. <BR>&bull; OSX: Pinch to zoom. <BR>&bull; Android: Both Daydreams and Live Wallpapers are implemented. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; Various bug fixes.]]></description>
+   <pubDate>Wed, 05 Jul 2017 10:55:51 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.37.dmg"
+    sparkle:version="5.37"
+    sparkle:dsaSignature="MCwCFFsEWCDZbAY8Owz7k4lcs+uGM+LUAhQlLSsjg0Eqkd2TX2UfxiFdPrciTA=="
+    length="52481386"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.36</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-5.36.dmg</link>
    <description><![CDATA[&bull; New hacks, `discoball', `cubetwist', `cubestack', `splodesic' and `hexstrut'. <BR>&bull; OSX: loading image files works in `dymaxionmap', `glplanet', `lavalite', `pulsar', `gleidescope' and `extrusion'. <BR>&bull; Several new programs in `m6502'. <BR>&bull; `rotzoomer -mode circle'. <BR>&bull; Better titles in `photopile'.]]></description>

@@ -618,6 +618,17 @@ static void rescale_circles(struct state *st, Body *pb,
     {
       printf("enlarge by x%.2f skipped...\n", scale);
     }
+
+  if (st->width > st->height * 5 ||  /* window has weird aspect */
+      st->height > st->width * 5)
+    {
+      Circle *p;
+      double r = (st->width > st->height
+                  ? st->width / (double) st->height
+                  : st->height / (double) st->width);
+      for (p=pb->epicycles; p; p=p->pchild)
+        p->radius *= r;
+    }
 }
 
 

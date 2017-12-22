@@ -254,6 +254,10 @@ static void Initialize( struct state *st )
         if (st->radius >= 128) /* should use UCHAR_MAX? */
           st->radius = 127; /* st->dradius should fit in u_char */
 
+        if (st->iWinWidth < 100 || st->iWinHeight < 100) /* tiny window */
+          if (st->radius < 20)
+            st->radius = 20;
+
 	st->dradius = st->radius * 2;
 	st->sradius = st->radius * st->radius;
 

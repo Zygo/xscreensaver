@@ -113,7 +113,7 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
 			 "*size:        6000 \n" \
 			 "*wireframe:  False \n"
 # define release_atlantis 0
-# define atlantis_handle_event 0
+# define atlantis_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -157,7 +157,7 @@ ENTRYPOINT ModeSpecOpt atlantis_opts =
 #ifdef USE_MODULES
 ModStruct   atlantis_description =
 {"atlantis", "init_atlantis", "draw_atlantis", NULL,
- "refresh_atlantis", "change_atlantis", NULL, &atlantis_opts,
+ "refresh_atlantis", "change_atlantis", "free_atlantis", &atlantis_opts,
  1000, NUM_SHARKS, SHARKSPEED, SHARKSIZE, 64, 1.0, "",
  "Shows moving sharks/whales/dolphin", 0, NULL};
 
@@ -322,14 +322,22 @@ Init(ModeInfo *mi)
 ENTRYPOINT void
 reshape_atlantis(ModeInfo * mi, int width, int height)
 {
-	atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
+  double h = (GLfloat) height / (GLfloat) width;  
+  atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
+  int y = 0;
 
-	glViewport(0, 0, ap->WinW = (GLint) width, ap->WinH = (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(400.0, (GLdouble) width / (GLdouble) height, 1.0, 2000000.0);
-	glMatrixMode(GL_MODELVIEW);
+  glViewport(0, y, ap->WinW = (GLint) width, ap->WinH = (GLint) height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(400.0, 1/h, 1.0, 2000000.0);
+  glMatrixMode(GL_MODELVIEW);
 }
 
 
@@ -368,6 +376,9 @@ clear_tank (atlantisstruct * ap)
           glVertex3f ( 1,  1, 1); glVertex3f (-1,  1, 1);
           glEnd();
           glEnable (GL_LIGHTING);
+
+          /* Need to reset this because jwzgles conflates color and material */
+          glColor3f (0.0, 0.1, 0.2);
         }
         glPopMatrix();
       }
@@ -435,8 +446,6 @@ AllDisplay(atlantisstruct * ap)
  *-----------------------------------------------------------------------------
  */
 
-static void free_atlantis(ModeInfo * mi);
-
 /*
  *-----------------------------------------------------------------------------
  *    Initialize atlantis.  Called each time the window changes.
@@ -451,7 +460,7 @@ init_atlantis(ModeInfo * mi)
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
 
-	MI_INIT(mi, atlantis, free_atlantis);
+	MI_INIT(mi, atlantis);
 	ap = &atlantis[screen];
 	ap->num_sharks = MI_COUNT(mi);
 	if (ap->sharks == NULL) {
@@ -534,7 +543,7 @@ draw_atlantis(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-static void
+ENTRYPOINT void
 free_atlantis(ModeInfo * mi)
 {
 #if 0
@@ -545,12 +554,12 @@ free_atlantis(ModeInfo * mi)
 #endif
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_atlantis(ModeInfo * mi)
 {
 }
 
-#ifndef STANDALONE
 ENTRYPOINT void
 change_atlantis(ModeInfo * mi)
 {

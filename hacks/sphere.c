@@ -65,6 +65,7 @@ static const char sccsid[] = "@(#)sphere.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define BRIGHT_COLORS
+# define release_sphere 0
 # define reshape_sphere 0
 # define sphere_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -79,8 +80,8 @@ ENTRYPOINT ModeSpecOpt sphere_opts =
 
 #ifdef USE_MODULES
 ModStruct   sphere_description =
-{"sphere", "init_sphere", "draw_sphere", "release_sphere",
- "refresh_sphere", "init_sphere", (char *) NULL, &sphere_opts,
+{"sphere", "init_sphere", "draw_sphere", (char *) NULL,
+ "refresh_sphere", "init_sphere", "free_sphere", &sphere_opts,
  5000, 1, 20, 0, 64, 1.0, "",
  "Shows a bunch of shaded spheres", 0, NULL};
 
@@ -115,7 +116,7 @@ init_sphere(ModeInfo * mi)
 {
 	spherestruct *sp;
 
-	MI_INIT (mi, spheres, 0);
+	MI_INIT (mi, spheres);
 	sp = &spheres[MI_SCREEN(mi)];
 
 	if (sp->points != NULL) {
@@ -267,24 +268,21 @@ draw_sphere(ModeInfo * mi)
 }
 
 ENTRYPOINT void
-release_sphere(ModeInfo * mi)
+free_sphere(ModeInfo * mi)
 {
-	if (spheres != NULL) {
-		int         screen;
+	spherestruct *sp;
 
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			spherestruct *sp = &spheres[screen];
+	if (spheres == NULL)
+		return;
+	sp = &spheres[MI_SCREEN(mi)];
 
-			if (sp->points) {
-				(void) free((void *) sp->points);
-				/* sp->points = NULL; */
-			}
-		}
-		(void) free((void *) spheres);
-		spheres = (spherestruct *) NULL;
+	if (sp->points) {
+		(void) free((void *) sp->points);
+		/* sp->points = NULL; */
 	}
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_sphere(ModeInfo * mi)
 {
@@ -298,6 +296,7 @@ refresh_sphere(ModeInfo * mi)
 
 	sp->x = -sp->radius;
 }
+#endif
 
 XSCREENSAVER_MODULE ("Sphere", sphere)
 

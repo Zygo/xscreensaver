@@ -41,6 +41,8 @@
 #import <CoreText/CTLine.h>
 #import <CoreText/CTRun.h>
 
+#define VTBL JWXYZ_VTBL(dpy)
+
 /* OS X/iOS-specific JWXYZ implementation. */
 
 void
@@ -109,7 +111,13 @@ jwxyz_scale (Window main_window)
   scale = main_window->window.view.hackedContentScaleFactor;
   if (scale < 1) // iPad Pro magnifies the backbuffer by 3x, which makes text
     scale = 1;   // excessively blurry in BSOD.
-# endif
+
+# else  // !USE_IPHONE
+
+  /* Desktop retina displays also need fonts doubled. */
+  scale = main_window->window.view.hackedContentScaleFactor;
+
+# endif // !USE_IPHONE
 
   return scale;
 }
@@ -528,7 +536,7 @@ nsstring_from(const char *str, size_t len, int utf8_p)
 
 void
 jwxyz_render_text (Display *dpy, void *native_font,
-                   const char *str, size_t len, int utf8_p,
+                   const char *str, size_t len, Bool utf8_p, Bool antialias_p,
                    XCharStruct *cs_ret, char **pixmap_ret)
 {
   utf8_metrics (dpy, (NSFont *)native_font, nsstring_from (str, len, utf8_p),
@@ -679,19 +687,19 @@ create_framebuffer (GLuint *gl_framebuffer, GLuint *gl_renderbuffer)
 static void
 push_bg_gc (Display *dpy, Drawable d, GC gc, Bool fill_p)
 {
-  XGCValues *gcv = jwxyz_gc_gcv (gc);
+  XGCValues *gcv = VTBL->gc_gcv (gc);
   push_color_gc (dpy, d, gc, gcv->background, gcv->antialias_p, fill_p);
 }
 
 
 void
-jwxyz_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
-                 int src_x, int src_y,
-                 unsigned int width, unsigned int height,
-                 int dst_x, int dst_y)
+jwxyz_quartz_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
+                        int src_x, int src_y,
+                        unsigned int width, unsigned int height,
+                        int dst_x, int dst_y)
 {
   XRectangle src_frame = src->frame, dst_frame = dst->frame;
-  XGCValues *gcv = jwxyz_gc_gcv (gc);
+  XGCValues *gcv = VTBL->gc_gcv (gc);
 
   BOOL mask_p = src->type == PIXMAP && src->pixmap.depth == 1;
 
@@ -710,30 +718,12 @@ jwxyz_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
            !dst_frame.y,
            "unexpected non-zero origin");
 
-    ptrdiff_t src_pitch = CGBitmapContextGetBytesPerRow(src->cgc);
-    ptrdiff_t dst_pitch = CGBitmapContextGetBytesPerRow(dst->cgc);
-    char *src_data = seek_xy (CGBitmapContextGetData (src->cgc), src_pitch,
-                              src_x, src_y);
-    char *dst_data = seek_xy (CGBitmapContextGetData (dst->cgc), dst_pitch,
-                              dst_x, dst_y);
+    jwxyz_blit (CGBitmapContextGetData (src->cgc),
+                CGBitmapContextGetBytesPerRow (src->cgc), src_x, src_y,
+                CGBitmapContextGetData (dst->cgc),
+                CGBitmapContextGetBytesPerRow (dst->cgc), dst_x, dst_y,
+                width, height);
 
-    size_t bytes = width * 4;
-
-    if (src == dst && dst_y > src_y) {
-      // Copy upwards if the areas might overlap.
-      src_data += src_pitch * (height - 1);
-      dst_data += dst_pitch * (height - 1);
-      src_pitch = -src_pitch;
-      dst_pitch = -dst_pitch;
-    }
-
-    while (height) {
-      // memcpy is an alias for memmove on OS X.
-      memmove(dst_data, src_data, bytes);
-      src_data += src_pitch;
-      dst_data += dst_pitch;
-      --height;
-    }
   } else {
     CGRect
     src_rect = CGRectMake(src_x, src_y, width, height),
@@ -787,7 +777,7 @@ jwxyz_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
 
       // then fill in a solid rectangle of the fg color, using the image as an
       // alpha mask.  (the image has only values of BlackPixel or WhitePixel.)
-      set_color (dpy, cgc, gcv->foreground, jwxyz_gc_depth (gc),
+      set_color (dpy, cgc, gcv->foreground, VTBL->gc_depth (gc),
                  gcv->alpha_allowed_p, YES);
       CGContextClipToMask (cgc, dst_rect, cgi);
       CGContextFillRect (cgc, dst_rect);

@@ -89,8 +89,8 @@ If one of these are hit penrose will reinitialize.
 					"*fpsSolid: true \n" \
 					"*ignoreRotation: True \n" \
 
-# define refresh_penrose 0
 # define release_penrose 0
+# define penrose_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -121,8 +121,8 @@ ENTRYPOINT ModeSpecOpt penrose_opts =
 
 #ifdef USE_MODULES
 ModStruct   penrose_description =
-{"penrose", "init_penrose", "draw_penrose", "release_penrose",
- "init_penrose", "init_penrose", (char *) NULL, &penrose_opts,
+{"penrose", "init_penrose", "draw_penrose", (char *) NULL,
+ "init_penrose", "init_penrose", "free_penrose", &penrose_opts,
  10000, 1, 1, -40, 64, 1.0, "",
  "Shows Penrose's quasiperiodic tilings", 0, NULL};
 
@@ -402,7 +402,7 @@ fived_to_loc(int fived[], tiling_c * tp, XPoint *pt)
 
 
 /* Mop up dynamic data for one screen. */
-static void
+ENTRYPOINT void
 free_penrose(ModeInfo * mi)
 {
 	tiling_c * tp = &tilings[MI_SCREEN(mi)];
@@ -435,7 +435,7 @@ init_penrose(ModeInfo * mi)
 	fringe_node_c *fp;
 	int         i, size;
 
-	MI_INIT (mi, tilings, free_penrose);
+	MI_INIT (mi, tilings);
 	tp = &tilings[MI_SCREEN(mi)];
 
 #if 0 /* if you do this, then the -ammann and -no-ammann options don't work.
@@ -530,6 +530,8 @@ init_penrose(ModeInfo * mi)
 	fp->fived[i] = 2 * NRAND(2) - 1;
 	fived_to_loc(fp->fived, tp, &(fp->loc));
 	/* That's it!  We have created our first edge. */
+
+	MI_CLEARWINDOW(mi);
 }
 
 /*-
@@ -958,9 +960,13 @@ alloc_vertex(ModeInfo * mi, angle_c dir, fringe_node_c * from, tiling_c * tp)
 	fived_to_loc(v->fived, tp, &(v->loc));
 	if (v->loc.x < 0 || v->loc.y < 0
 	    || v->loc.x >= tp->width || v->loc.y >= tp->height) {
+        int ww = tp->width;
+        int hh = tp->height;
+        if (ww < 200) ww = 200;  /* tiny window */
+        if (hh < 200) hh = 200;
 		v->off_screen = True;
-		if (v->loc.x < -tp->width || v->loc.y < -tp->height
-		  || v->loc.x >= 2 * tp->width || v->loc.y >= 2 * tp->height)
+		if (v->loc.x < -ww || v->loc.y < -hh ||
+            v->loc.x >= 2 * ww || v->loc.y >= 2 * hh)
 			tp->done = True;
 	} else {
 		v->off_screen = False;
@@ -1280,8 +1286,6 @@ draw_penrose(ModeInfo * mi)
 	if (tp->fringe.nodes->prev == tp->fringe.nodes->next) {
 		vertex_type_c vtype = (unsigned char) (VT_TOTAL_MASK & LRAND());
 
-		MI_CLEARWINDOW(mi);
-
 		if (!add_tile(mi, tp->fringe.nodes, S_LEFT, vtype))
 			free_penrose(mi);
 		return;
@@ -1333,18 +1337,6 @@ reshape_penrose(ModeInfo * mi, int width, int height)
 	tp->width = width;
 	tp->height = height;
 }
-
-ENTRYPOINT Bool
-penrose_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      init_penrose (mi);
-      return True;
-    }
-  return False;
-}
-
 
 XSCREENSAVER_MODULE ("Penrose", penrose)
 

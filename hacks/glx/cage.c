@@ -82,9 +82,9 @@ static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
 							"*wireframe:	False	\n"			\
 							"*suppressRotationAnimation: True\n" \
 
-# define refresh_cage 0
+# define free_cage 0
 # define release_cage 0
-# define cage_handle_event 0
+# define cage_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -296,8 +296,14 @@ reshape_cage(ModeInfo * mi, int width, int height)
 {
 	cagestruct *cp = &cage[MI_SCREEN(mi)];
 	int i;
+    int y = 0;
 
-	glViewport(0, 0, cp->WindW = (GLint) width, cp->WindH = (GLint) height);
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width * 9/16;
+      y = -height/2;
+    }
+
+	glViewport(0, y, cp->WindW = (GLint) width, cp->WindH = (GLint) height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0);
@@ -387,7 +393,7 @@ init_cage (ModeInfo * mi)
 {
 	cagestruct *cp;
 
-	MI_INIT (mi, cage, NULL);
+	MI_INIT (mi, cage);
 	cp = &cage[MI_SCREEN(mi)];
 
 	cp->step = NRAND(90);

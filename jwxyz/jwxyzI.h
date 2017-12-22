@@ -13,6 +13,7 @@
 #define __JWXYZ_I_H__
 
 #include <inttypes.h>
+#include <stddef.h>
 
 #include "jwxyz.h"
 
@@ -31,26 +32,16 @@
 #define JWXYZ_STYLE_ITALIC      2
 #define JWXYZ_STYLE_MONOSPACE   4
 
-/* jwxyz.m, jwxyz-gl.c */
-extern Display *jwxyz_make_display (Window w);
-extern void jwxyz_free_display (Display *);
+#define JWXYZ_QUERY_COLOR(dpy, pixel, mult, rgba) \
+  { \
+    const unsigned long *_MASKS = \
+       DefaultVisualOfScreen (DefaultScreenOfDisplay (dpy))->rgba_masks; \
+    for (unsigned i = 0; i != 4; ++i) \
+      (rgba)[i] = ((pixel) & _MASKS[i]) * (mult) / _MASKS[i]; \
+  }
+
+/* jwxyz.m, jwxyz-gl.c, jwxyz-image.c */
 extern void jwxyz_window_resized (Display *);
-extern uint32_t jwxyz_alloc_color (Display *dpy, uint16_t r, uint16_t g,
-                                   uint16_t b, uint16_t a);
-extern void jwxyz_query_color (Display *dpy, unsigned long pixel,
-                               uint8_t *rgba);
-extern unsigned long jwxyz_window_background (Display *);
-extern int jwxyz_draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
-                           unsigned int width, unsigned int height,
-                           int angle1, int angle2, Bool fill_p);
-extern void jwxyz_fill_rects (Display *dpy, Drawable d, GC gc,
-                              const XRectangle *rectangles,
-                              unsigned long nrects,
-                              unsigned long pixel);
-extern XGCValues *jwxyz_gc_gcv (GC gc);
-extern unsigned int jwxyz_gc_depth (GC gc);
-extern int jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
-                              const char *str, size_t len, Bool utf8);
 
 /* jwxyz-cocoa.m, jwxyz-android.c */
 extern const XRectangle *jwxyz_frame (Drawable d); /* XGetGeometry sux. */
@@ -70,14 +61,13 @@ extern void *jwxyz_load_native_font (Window main_window,
                                      char **family_name_ret,
                                      int *ascent_ret, int *descent_ret);
 extern void jwxyz_release_native_font (Display *, void *native_font);
+
+/* Text metrics for aliased and antialiased text must match. */
 extern void jwxyz_render_text (Display *, void *native_font,
-                               const char *str, size_t len, int utf8_p,
-                               XCharStruct *cs_ret, char **pixmap_ret);
+                               const char *str, size_t len, Bool utf8_p,
+                               Bool antialias_p, XCharStruct *cs_ret,
+                               char **pixmap_ret);
 extern void jwxyz_get_pos (Window w, XPoint *vpos, XPoint *p);
-extern void jwxyz_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
-                             int src_x, int src_y,
-                             unsigned int width, unsigned int height,
-                             int dst_x, int dst_y);
 #ifndef current_device_rotation
 extern double current_device_rotation (void);
 extern Bool ignore_rotation_p (Display *);
@@ -89,18 +79,30 @@ extern void jwxyz_validate_pixel (Display *dpy, unsigned long pixel,
 extern Bool jwxyz_dumb_drawing_mode(Display *dpy, Drawable d, GC gc,
                                     int x, int y,
                                     unsigned width, unsigned height);
+extern void jwxyz_blit (const void *src_data, ptrdiff_t src_pitch,
+                        unsigned src_x, unsigned src_y,
+                        void *dst_data, ptrdiff_t dst_pitch,
+                        unsigned dst_x, unsigned dst_y,
+                        unsigned width, unsigned height);
 extern void jwxyz_fill_rect (Display *, Drawable, GC,
                              int x, int y,
                              unsigned int width, unsigned int height,
                              unsigned long pixel);
 extern void jwxyz_gcv_defaults (Display *dpy, XGCValues *gcv, int depth);
+extern int jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
+                              const char *str, size_t len, int utf8_p);
 extern void *jwxyz_native_font (Font f);
 
-# if defined JWXYZ_QUARTZ
+#define SEEK_XY(dst, dst_pitch, x, y) \
+  ((uint32_t *)((char *)dst + dst_pitch * y + x * 4))
+
+# ifdef JWXYZ_QUARTZ
 
 #  include <CoreGraphics/CGGeometry.h>
 #  include <CoreGraphics/CGContext.h>
 
+extern Display *jwxyz_quartz_make_display (Window w);
+extern void jwxyz_quartz_free_display (Display *);
 extern void jwxyz_flush_context (Display *);
 
 #  define jwxyz_assert_display(dpy)
@@ -116,13 +118,16 @@ extern void push_color_gc (Display *dpy, Drawable d, GC gc,
                            unsigned long color,
                            Bool antialias_p, Bool fill_p);
 extern CGPoint map_point (Drawable d, int x, int y);
-
-#define seek_xy(dst, dst_pitch, x, y) \
-  ((void *)((char *)dst + dst_pitch * y + x * 4))
+extern void jwxyz_quartz_copy_area (Display *dpy, Drawable src, Drawable dst,
+                                    GC gc, int src_x, int src_y,
+                                    unsigned int width, unsigned int height,
+                                    int dst_x, int dst_y);
 
 #define pop_gc(d,gc) CGContextRestoreGState (d->cgc)
 
-# elif defined JWXYZ_GL
+# endif /* JWXYZ_QUARTZ */
+
+# ifdef JWXYZ_GL
 
 #  if defined(USE_IPHONE)
 #   include <OpenGLES/ES1/gl.h>
@@ -135,9 +140,16 @@ extern CGPoint map_point (Drawable d, int x, int y);
 #  endif
 
 /* utils/jwxyz-gl.c */
-extern void jwxyz_prepare_context (Display *dpy);
+extern Display *jwxyz_gl_make_display (Window w);
+extern void jwxyz_gl_free_display (Display *);
 extern void jwxyz_set_matrices (Display *dpy, unsigned width, unsigned height,
                                 Bool screen_p);
+extern void jwxyz_gl_flush (Display *dpy);
+extern void jwxyz_gl_set_gc (Display *dpy, GC gc);
+extern void jwxyz_gl_copy_area (Display *dpy, Drawable src, Drawable dst,
+                                GC gc, int src_x, int src_y,
+                                unsigned int width, unsigned int height,
+                                int dst_x, int dst_y);
 
 /* Only works if both drawables share OpenGL objects. OpenGL context sharing
    works on OS X, iOS, and some (but not all!) EGL implementations. This would
@@ -178,5 +190,16 @@ extern void jwxyz_assert_drawable (Window main_window, Drawable d);
 extern void jwxyz_assert_gl (void);
 
 # endif /* JWXYZ_GL */
+
+# ifdef JWXYZ_IMAGE
+
+extern Display *jwxyz_image_make_display (Window w,
+                                          const unsigned char *rgba_bytes);
+extern void jwxyz_image_free_display (Display *);
+
+extern ptrdiff_t jwxyz_image_pitch (Drawable d);
+extern void *jwxyz_image_data (Drawable d);
+
+# endif /* JWXYZ_IMAGE */
 
 #endif

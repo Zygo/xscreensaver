@@ -305,7 +305,8 @@ analogtv_configure(analogtv *it)
   /* If the window is very small, don't let the image we draw get lower
      than the actual TV resolution (266x200.)
 
-     If the aspect ratio of the window is close to a 4:3 or 16:9 ratio,
+     If the aspect ratio of the window is close to a 4:3 or 16:9 ratio --
+     or if it is a completely weird aspect ratio --
      then scale the image to exactly fill the window.
 
      Otherwise, center the image either horizontally or vertically,
@@ -317,6 +318,8 @@ analogtv_configure(analogtv *it)
   float percent = 0.15;
   float min_ratio =  4.0 / 3.0 * (1 - percent);
   float max_ratio = 16.0 / 9.0 * (1 + percent);
+  float crazy_min_ratio = 10;
+  float crazy_max_ratio = 1/crazy_min_ratio;
   float ratio;
   float height_snap=0.025;
 
@@ -365,6 +368,20 @@ analogtv_configure(analogtv *it)
 # ifdef DEBUG
       fprintf (stderr,
                "size: center V: %dx%d in %dx%d (%.3f < %.3f < %.3f)\n",
+               wlim, hlim, it->xgwa.width, it->xgwa.height,
+               min_ratio, ratio, max_ratio);
+# endif
+    }
+
+  if (ratio < crazy_min_ratio || ratio > crazy_max_ratio)
+    {
+      if (ratio < crazy_min_ratio)
+        hlim = it->xgwa.height;
+      else
+        wlim = it->xgwa.width;
+# ifdef DEBUG
+      fprintf (stderr,
+               "size: aspect: %dx%d in %dx%d (%.3f < %.3f < %.3f)\n",
                wlim, hlim, it->xgwa.width, it->xgwa.height,
                min_ratio, ratio, max_ratio);
 # endif

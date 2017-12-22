@@ -731,7 +731,7 @@ eraser_draw (eraser_state *st, Bool first_p)
   return (st->ratio < 1.0);
 }
 
-static void
+void
 eraser_free (eraser_state *st)
 {
   XClearWindow (st->dpy, st->window);

@@ -44,7 +44,6 @@
                  "*chooseRandomImages:  True  \n"                           \
 		 "*suppressRotationAnimation: True\n"                       \
 
-# define refresh_mirrorblob 0
 # define release_mirrorblob 0
 # include "xlockmore.h"
 #else /* !STANDALONE */
@@ -179,7 +178,7 @@ ENTRYPOINT ModeSpecOpt mirrorblob_opts = {countof(opts), opts, countof(vars), va
 #ifdef USE_MODULES
 ModStruct   mirrorblob_description =
 {"mirrorblob", "init_mirrorblob", "draw_mirrorblob", NULL,
- "draw_mirrorblob", "init_mirrorblob", "handle_event", &mirrorblob_opts,
+ "draw_mirrorblob", "init_mirrorblob", "free_mirrorblob", &mirrorblob_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL mirrorblob", 0, NULL};
 #endif
@@ -1786,8 +1785,6 @@ mirrorblob_handle_event (ModeInfo * mi, XEvent * event)
   return False;
 }
 
-static void free_mirrorblob(ModeInfo * mi);
-
 /******************************************************************************
  *
  * XMirrorblob initialise entry
@@ -1799,7 +1796,7 @@ init_mirrorblob(ModeInfo * mi)
 
   mirrorblobstruct *gp;
 
-  MI_INIT(mi, Mirrorblob, free_mirrorblob);
+  MI_INIT(mi, Mirrorblob);
   gp = &Mirrorblob[screen];
 
   gp->window = MI_WINDOW(mi);
@@ -1825,7 +1822,7 @@ init_mirrorblob(ModeInfo * mi)
  *
  * XMirrorblob cleanup entry
  */
-static void
+ENTRYPOINT void
 free_mirrorblob(ModeInfo * mi)
 {
   mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];

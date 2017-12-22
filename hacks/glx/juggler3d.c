@@ -135,7 +135,6 @@
 			"*showFPS:	False	\n" \
 			"*wireframe:	False	\n" \
 
-# define refresh_juggle 0
 # define release_juggle 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -637,7 +636,7 @@ trajectory_destroy(Trajectory *t) {
   REMOVE(t); /* Unlink and free */
 }
 
-static void
+ENTRYPOINT void
 free_juggle(ModeInfo *mi) {
   jugglestruct *sp = &juggles[MI_SCREEN(mi)];
 
@@ -2636,7 +2635,7 @@ init_juggle (ModeInfo * mi)
   jugglestruct *sp = 0;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, juggles, free_juggle);
+  MI_INIT (mi, juggles);
 
   sp = &juggles[MI_SCREEN(mi)];
 

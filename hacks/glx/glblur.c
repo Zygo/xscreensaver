@@ -27,7 +27,7 @@
 	               	"*fpsSolid: True  \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_glblur 0
+# define free_glblur 0
 # define release_glblur 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -367,7 +367,7 @@ init_glblur (ModeInfo *mi)
   glblur_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, bps, NULL);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 

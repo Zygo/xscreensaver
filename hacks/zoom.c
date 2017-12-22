@@ -106,6 +106,12 @@ zoom_init (Display *dpy, Window window)
   st->pixspacey = get_integer_resource(st->dpy, "pixspacey", "Integer");
   if (st->pixspacey < 0)
     st->pixspacey = 0;
+
+  if (st->sizex < 50 || st->sizey < 50) {  /* tiny window */
+    st->pixwidth = 10;
+    st->pixheight = 10;
+  }
+
   st->lenses = get_boolean_resource(st->dpy, "lenses", "Boolean");
   st->lensoffsetx = get_integer_resource(st->dpy, "lensoffsetx", "Integer");
   st->lensoffsetx = MAX(0, MIN(st->pixwidth, st->lensoffsetx));

@@ -1635,6 +1635,12 @@ static void scrollModel (struct state *st)
 	     st->barcodes[st->barcode_count - 1].mag * BARCODE_WIDTH);
 	barcode->x += RAND_FLOAT_01 * 100;
 	barcode->mag = RAND_FLOAT_01 * MAX_MAG;
+
+        if (st->windowWidth < 100 || st->windowHeight < 100) {
+          barcode->mag *= 0.5;
+          if (barcode->mag <= 0) barcode->mag = 1;
+        }
+
 	barcode->y =
 	    RAND_FLOAT_01 * (st->windowHeight - BARCODE_HEIGHT * barcode->mag);
 	if (barcode->y < 0) 

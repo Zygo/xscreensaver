@@ -40,8 +40,9 @@ static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define release_drift 0
+# define reshape_drift 0
+# define drift_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
-# include "erase.h"
 #else /* STANDALONE */
 # define ENTRYPOINT /**/
 # include "xlock.h"		/* in xlockmore distribution */
@@ -83,7 +84,7 @@ ENTRYPOINT ModeSpecOpt drift_opts =
 #ifdef USE_MODULES
 ModStruct   drift_description =
 {"drift", "init_drift", "draw_drift", (char *) NULL,
- "refresh_drift", "init_drift", (char *) NULL, &drift_opts,
+ "refresh_drift", "init_drift", "free_drift", &drift_opts,
  10000, 30, 1, 1, 64, 1.0, "",
  "Shows cosmic drifting flame fractals", 0, NULL};
 
@@ -134,10 +135,7 @@ typedef struct {
 	long        saved_random_bits;
 	int         nbits;
 
-#ifdef STANDALONE
   int erase_countdown;
-  eraser_state *eraser;
-#endif
 } driftstruct;
 
 static driftstruct *drifts = (driftstruct *) NULL;
@@ -242,9 +240,7 @@ initmode(ModeInfo * mi, int mode)
 	}
 	dp->fractal_len = (dp->fractal_len * MI_COUNT(mi)) / 20;
 
-#ifndef STANDALONE
 	MI_CLEARWINDOW(mi);
-#endif
 }
 
 static void
@@ -269,7 +265,7 @@ pick_df_coefs(ModeInfo * mi)
 	}
 }
 
-static void
+ENTRYPOINT void
 free_drift(ModeInfo * mi)
 {
 	driftstruct *dp = &drifts[MI_SCREEN(mi)];
@@ -350,7 +346,7 @@ init_drift(ModeInfo * mi)
 {
 	driftstruct *dp;
 
-	MI_INIT (mi, drifts, free_drift);
+	MI_INIT (mi, drifts);
 	dp = &drifts[MI_SCREEN(mi)];
 
 	dp->width = MI_WIDTH(mi);
@@ -621,12 +617,9 @@ draw_drift(ModeInfo * mi)
 
     if (dp->erase_countdown) {
       if (!--dp->erase_countdown) {
-        dp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), dp->eraser);
+        initmode(mi, frandom(dp, 2));
+        initfractal(mi);
       }
-      return;
-    }
-    if (dp->eraser) {
-      dp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), dp->eraser);
       return;
     }
 
@@ -638,10 +631,8 @@ draw_drift(ModeInfo * mi)
 		if (dp->total_points++ > dp->fractal_len) {
 			draw_flush(mi, dp, window);
 			if (0 == --dp->nfractals) {
-#ifdef STANDALONE
               dp->erase_countdown = 4 * 1000000 / MI_PAUSE(mi);
-#endif /* STANDALONE */
-				initmode(mi, frandom(dp, 2));
+				return;
 			}
 			initfractal(mi);
 		}
@@ -668,30 +659,13 @@ draw_drift(ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-reshape_drift(ModeInfo * mi, int width, int height)
-{
-  MI_CLEARWINDOW(mi);
-  init_drift (mi);
-}
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_drift(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
-
-ENTRYPOINT Bool
-drift_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      reshape_drift (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-      return True;
-    }
-  return False;
-}
-
+#endif
 
 XSCREENSAVER_MODULE ("Drift", drift)
 

@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.24 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.25 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -696,7 +696,7 @@ sub build_android(@) {
   my (@savers) = @_;
 
   my $package     = "org.jwz.xscreensaver";
-  my $project_dir = "project/xscreensaver";
+  my $project_dir = "xscreensaver";
   my $xml_dir     = "$project_dir/res/xml";
   my $values_dir  = "$project_dir/res/values";
   my $java_dir    = "$project_dir/src/org/jwz/xscreensaver/gen";
@@ -1055,6 +1055,30 @@ sub build_android(@) {
                 "  </intent-filter>\n" .
                 "</activity>\n");
 
+
+  $manifest .= ("<activity android:name=\"" .
+                "org.jwz.xscreensaver.XScreenSaverTVActivity\"\n" .
+                "  android:theme=\"\@android:style/Theme.Holo\"\n" .
+                "  android:label=\"\@string/app_name\">\n" .
+                "  <intent-filter>\n" .
+                "    <action android:name=\"android.intent.action" .
+                ".MAIN\" />\n" .
+                "    <category android:name=\"android.intent.category" .
+                ".LEANBACK_LAUNCHER\" />\n" .
+                "  </intent-filter>\n" .
+                "  <intent-filter>\n" .
+                "    <action android:name=\"android.intent.action" .
+                ".VIEW\" />\n" .
+                "    <category android:name=\"android.intent.category" .
+                ".DEFAULT\" />\n" .
+                "    <category android:name=\"android.intent.category" .
+                ".BROWSABLE\" />\n" .
+                "  </intent-filter>\n" .
+                "</activity>\n");
+
+
+
+
   # Android wants this to be an int
   my $versb = $vers;
   $versb =~ s/^(\d+)\.(\d+).*$/{ $1 * 10000 + $2 * 100 }/sex;
@@ -1074,12 +1098,20 @@ sub build_android(@) {
                "  <uses-feature android:glEsVersion=\"0x00010001\"\n" .
                "    android:required=\"true\" />\n" .
 
+               "  <uses-feature android:name=\"android.software.leanback\"\n" .
+               "    android:required=\"false\" />\n" .
+
+               "  <uses-feature" .
+               " android:name=\"android.hardware.touchscreen\"\n" .
+               "    android:required=\"false\" />\n" .
+
                "  <uses-permission android:name=\"" .
                    "android.permission.INTERNET\" />\n" .
                "  <uses-permission android:name=\"" .
                    "android.permission.READ_EXTERNAL_STORAGE\" />\n" .
 
                "  <application android:icon=\"\@drawable/thumbnail\"\n" .
+               "    android:banner=\"\@drawable/thumbnail\"\n" .
                "    android:label=\"\@string/app_name\"\n" .
                "    android:name=\".XScreenSaverApp\">\n" .
                $manifest .

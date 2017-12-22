@@ -205,7 +205,6 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
 # define DEFAULTS           "*delay:      10000 \n" \
                             "*showFPS:    False \n" \
 
-# define refresh_romanboy 0
 # define release_romanboy 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -227,7 +226,7 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
 ModStruct romanboy_description =
 {"romanboy", "init_romanboy", "draw_romanboy",
  NULL, "draw_romanboy", "change_romanboy",
- NULL, &romanboy_opts, 25000, 1, 1, 1, 1.0, 4, "",
+ "free_romanboy", &romanboy_opts, 25000, 1, 1, 1, 1.0, 4, "",
  "Rotate a 3d immersion of the real projective plane in 3d or walk on it",
  0, NULL};
 
@@ -1270,10 +1269,16 @@ static void display_romanboy(ModeInfo *mi)
 ENTRYPOINT void reshape_romanboy(ModeInfo *mi, int width, int height)
 {
   romanboystruct *pp = &romanboy[MI_SCREEN(mi)];
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width;
+    y = -height/2;
+  }
 
   pp->WindW = (GLint)width;
   pp->WindH = (GLint)height;
-  glViewport(0,0,width,height);
+  glViewport(0,y,width,height);
   pp->aspect = (GLfloat)width/(GLfloat)height;
 }
 
@@ -1314,8 +1319,6 @@ ENTRYPOINT Bool romanboy_handle_event(ModeInfo *mi, XEvent *event)
  *-----------------------------------------------------------------------------
  */
 
-static void free_romanboy(ModeInfo *mi);
-
 /*
  *-----------------------------------------------------------------------------
  *    Initialize romanboy.  Called each time the window changes.
@@ -1326,7 +1329,7 @@ ENTRYPOINT void init_romanboy(ModeInfo *mi)
 {
   romanboystruct *pp;
 
-  MI_INIT (mi, romanboy, free_romanboy);
+  MI_INIT (mi, romanboy);
   pp = &romanboy[MI_SCREEN(mi)];
 
   if (surface_order < 2)
@@ -1517,7 +1520,7 @@ ENTRYPOINT void draw_romanboy(ModeInfo *mi)
  *-----------------------------------------------------------------------------
  */
 
-static void free_romanboy(ModeInfo *mi)
+ENTRYPOINT void free_romanboy(ModeInfo *mi)
 {
   romanboystruct *pp = &romanboy[MI_SCREEN(mi)];
 

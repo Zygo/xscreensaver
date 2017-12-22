@@ -47,7 +47,6 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
  			"*showFPS: 	False \n" \
  			"*wireframe:  	False \n" \
 
-# define refresh_sballs 0
 # define release_sballs 0
 #define MODE_sballs
 #include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -119,7 +118,7 @@ ENTRYPOINT ModeSpecOpt sballs_opts =
 #ifdef USE_MODULES
 ModStruct sballs_description =
     { "sballs", "init_sballs", "draw_sballs", NULL,
-    "draw_sballs", "change_sballs", (char *) NULL, &sballs_opts,
+    "draw_sballs", "change_sballs", "free_sballs", &sballs_opts,
     /*
     delay,count,cycles,size,ncolors,sat
      */
@@ -526,6 +525,12 @@ ENTRYPOINT void reshape_sballs(ModeInfo * mi, int width, int height)
         sb->WIDTH = (size > MI_WIDTH(mi)) ? MI_WIDTH(mi) : size;
         sb->HEIGHT = (size > MI_HEIGHT(mi)) ? MI_HEIGHT(mi) : size;
     }
+
+    if (width > height * 5) {   /* tiny window: show middle */
+      sb->WIDTH = width;
+      sb->HEIGHT = sb->WIDTH*0.75;
+    }
+
     glViewport((MI_WIDTH(mi) - sb->WIDTH) / 2, (MI_HEIGHT(mi) - sb->HEIGHT) / 2, sb->WIDTH, sb->HEIGHT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -686,8 +691,6 @@ static void Init(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-static void free_sballs(ModeInfo * mi);
-
 /*
  *-----------------------------------------------------------------------------
  *    Initialize sballs.  Called each time the window changes.
@@ -698,7 +701,7 @@ ENTRYPOINT void init_sballs(ModeInfo * mi)
 {
     sballsstruct *sb;
 
-    MI_INIT(mi, sballs, free_sballs);
+    MI_INIT(mi, sballs);
     sb = &sballs[MI_SCREEN(mi)];
 
     sb->trackball = gltrackball_init (True);
@@ -757,7 +760,7 @@ ENTRYPOINT void draw_sballs(ModeInfo * mi)
  *-----------------------------------------------------------------------------
  */
 
-static void free_sballs(ModeInfo * mi)
+ENTRYPOINT void free_sballs(ModeInfo * mi)
 {
     sballsstruct *sb = &sballs[MI_SCREEN(mi)];
     if (sb->glx_context)

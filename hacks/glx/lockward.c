@@ -39,7 +39,6 @@
 #define	DEFAULTS	"*delay:	20000	\n"\
 			"*showFPS:	False	\n"
 
-#define	refresh_lockward	0
 #define	release_lockward	0
 
 
@@ -137,7 +136,7 @@ typedef struct lockward_context {
 /***************************************************************************
  * Prototypes.
  */
-static void free_lockward (ModeInfo *mi);
+ENTRYPOINT void free_lockward (ModeInfo *mi);
 
 
 /***************************************************************************
@@ -206,11 +205,18 @@ reshape_lockward (ModeInfo *mi, int width, int height)
 {
 	lockward_context *ctx = &g_ctx[MI_SCREEN (mi)];
 	GLfloat h = (GLfloat) height / (GLfloat) width;
+        int y = 0;
+
+        if (width > height * 5) {   /* tiny window: show middle */
+          height = width * 9/16;
+          y = -height/2;
+          h = height / (GLfloat) width;
+        }
 
 	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi),
 	                *(ctx->glx_context));
 
-	glViewport (0, 0, (GLint) width, (GLint) height);
+	glViewport (0, y, (GLint) width, (GLint) height);
 
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
@@ -832,7 +838,7 @@ init_lockward (ModeInfo *mi)
 	lockward_context	*ctx;
 	int		i, n;
 
-	MI_INIT (mi, g_ctx, free_lockward);
+	MI_INIT (mi, g_ctx);
 	ctx = &g_ctx[MI_SCREEN (mi)];
 
 	ctx->glx_context = init_GL (mi);
@@ -850,7 +856,8 @@ init_lockward (ModeInfo *mi)
 	/* ctx->blades_inner	= glGenLists (NRADII); */
 	ctx->rings		= glGenLists (NRADII - 1);
 	ctx->blendmode		= 0;
-	ctx->fps		= 1000000 / MI_DELAY (mi);
+/* WTF? 	ctx->fps		= 1000000 / MI_DELAY (mi); */
+        ctx->fps = 60;
 	ctx->nextblink		= calc_interval_frames
 				   (ctx, g_blinkidle_min, g_blinkidle_max);
 	ctx->blink.drawfunc	= NULL;
@@ -924,7 +931,7 @@ init_lockward (ModeInfo *mi)
 	}
 }
 
-static void
+ENTRYPOINT void
 free_lockward (ModeInfo *mi)
 {
 	lockward_context	*ctx = &g_ctx[MI_SCREEN (mi)];

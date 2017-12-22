@@ -81,7 +81,6 @@ static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
 		"*showFPS:    False \n" \
 		"*wireframe:  False \n"	\
 
-# define refresh_fire 0
 #define MODE_fire
 #include "xlockmore.h"		/* from the xscreensaver distribution */
 #include "gltrackball.h"
@@ -887,9 +886,11 @@ static Bool Init(ModeInfo * mi)
  */
 
 
-static void
-free_fire(firestruct *fs)
+ENTRYPOINT void
+free_fire(ModeInfo * mi)
 {
+	firestruct *fs = &fire[MI_SCREEN(mi)];
+
 	if (mode_font != None && fs->fontbase != None) {
 		glDeleteLists(fs->fontbase, mode_font->max_char_or_byte2 -
 			mode_font->min_char_or_byte2 + 1);
@@ -931,7 +932,7 @@ init_fire(ModeInfo * mi)
 {
     firestruct *fs;
 
-    MI_INIT (mi, fire, 0);
+    MI_INIT (mi, fire);
     fs = &fire[MI_SCREEN(mi)];
     fs->np = MI_COUNT(mi);
     fs->fog = do_fog;
@@ -939,14 +940,14 @@ init_fire(ModeInfo * mi)
     /* initialise fire particles if any */
     if ((fs->np)&&(fs->p == NULL)) {
 	if ((fs->p = (part *) calloc(fs->np, sizeof(part))) == NULL) {
-	    free_fire(fs);
+	    free_fire(mi);
 	    return;
 	}
     }
     else if (fs->r == NULL) {
         /* initialise rain particles if no fire particles */
 	if ((fs->r = (rain *) calloc(NUMPART, sizeof(part))) == NULL) {
-	    free_fire(fs);
+	    free_fire(mi);
 	    return;
 	}
     }
@@ -969,7 +970,7 @@ init_fire(ModeInfo * mi)
 #endif
 	glDrawBuffer(GL_BACK);
 	if (!Init(mi)) {
-		free_fire(fs);
+		free_fire(mi);
 		return;
 	}
     } else {
@@ -1038,13 +1039,6 @@ ENTRYPOINT void draw_fire(ModeInfo * mi)
 
 ENTRYPOINT void release_fire(ModeInfo * mi)
 {
-    if (fire != NULL) {
-    int screen;
-	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-		free_fire(&fire[screen]);
-	(void) free((void *) fire);
-	fire = (firestruct *) NULL;
-    }
     if (mode_font != None)
     {
 	/* only free-ed when there are no more screens used */

@@ -24,7 +24,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n"
 
-# define refresh_stonerview 0
 # define release_stonerview 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -77,16 +76,12 @@ reshape_stonerview (ModeInfo *mi, int width, int height)
 }
 
 
-static void
-free_stonerview (ModeInfo *mi);
-
-
 ENTRYPOINT void 
 init_stonerview (ModeInfo *mi)
 {
   stonerview_configuration *bp;
 
-  MI_INIT (mi, bps, free_stonerview);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -133,7 +128,7 @@ draw_stonerview (ModeInfo *mi)
   glXSwapBuffers(MI_DISPLAY (mi), MI_WINDOW(mi));
 }
 
-static void
+ENTRYPOINT void
 free_stonerview (ModeInfo *mi)
 {
   stonerview_configuration *bp = &bps[MI_SCREEN(mi)];

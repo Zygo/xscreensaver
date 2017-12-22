@@ -230,55 +230,6 @@ rpm::
   echo '' ;								   \
   ls -lFG xscreensaver*-$$VERS-*.rpm
 
-test-tar::
-	@								    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
-  D=xscreensaver-$$VERS ;						    \
-  ADIR=archive/ ;							    \
-  NAME="$${ADIR}$$D.tar.gz" ;						    \
-  if [ ! -f $$NAME ]; then						    \
-    echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
-    exit 1 ; 								    \
-  fi ;									    \
-									    \
-  set -e ;								    \
-  set -x ;								    \
-									    \
-  if [ -d $$D ]; then							    \
-   chmod -R u+w $$D ;							    \
-  fi ;									    \
-  rm -rf $$D ;								    \
-  zcat $${ADIR}$$D.tar.gz | tar -xf - ;					    \
-  cd $$D ;								    \
-  chmod -R a-w . ;							    \
-  chmod u+w . ;								    \
-  mkdir BIN ;								    \
-  mkdir BIN/motif ;							    \
-  mkdir BIN/lesstif ;							    \
-  chmod a-w . ;								    \
-									    \
-  ( cd BIN/motif ;							    \
-    CC=cc ;								    \
-    export CC ;								    \
-    ../../configure --without-xpm --without-xdbe --without-xshm 	    \
-		    --with-motif=/usr/local/motif ;			    \
-    echo --------------------------------------------------------------- ;  \
-    gmake all ;								    \
-    ( cd driver; gmake tests ) ;					    \
-    echo --------------------------------------------------------------- ); \
-									    \
-  ( cd BIN/lesstif ;							    \
-    CC=cc ;								    \
-    export CC ;								    \
-    ../../configure --with-motif=/usr/local/lesstif --without-gnome ;	    \
-    echo --------------------------------------------------------------- ;  \
-    ( cd utils; gmake all ) ;						    \
-    ( cd jwxyz; gmake all ) ;						    \
-    ( cd driver; gmake all ) ;						    \
-    echo --------------------------------------------------------------- ); \
-									    \
-  chmod -R u+w .
-
 dmg::
 	$(MAKE) -C OSX release dmg
 apk::
@@ -363,6 +314,7 @@ www::
   for EXT in tar.gz dmg ; do						    \
     OLDEST=`ls xscreensaver*.$$EXT | 					    \
       fgrep -v 5.14 |							    \
+      fgrep -v 5.34 |							    \
       head -n 1` ;							    \
     /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
     read line;								    \

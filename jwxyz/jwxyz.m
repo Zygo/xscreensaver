@@ -59,8 +59,11 @@
 
 
 struct jwxyz_Display {
+  const struct jwxyz_vtbl *vtbl; // Must come first.
+
   Window main_window;
-  Screen *screen;
+  CGBitmapInfo bitmap_info;
+  Visual visual;
   struct jwxyz_sources_data *timers_data;
 
 # ifndef USE_IPHONE
@@ -74,13 +77,6 @@ struct jwxyz_Display {
                                   when rendering. */
 
   unsigned long window_background;
-};
-
-struct jwxyz_Screen {
-  Display *dpy;
-  CGBitmapInfo bitmap_info;
-  unsigned long black, white;
-  Visual *visual;
 };
 
 struct jwxyz_GC {
@@ -170,9 +166,9 @@ convert_row (uint32_t *dest, const void *src, size_t count,
        2. Clang's warning for this, -Wshift-count-overflow, only works when the
           shift count is a literal constant, as opposed to an arbitrary
           expression that is optimized down to a constant.
-       Put together, this means that the assertions in jwxyz_make_display with
-       convert_px break with the above naive rotation, but only for a release
-       build.
+       Put together, this means that the assertions in
+       jwxyz_quartz_make_display with convert_px break with the above naive
+       rotation, but only for a release build.
 
        http://blog.regehr.org/archives/1063
        http://llvm.org/bugs/show_bug.cgi?id=17332
@@ -285,64 +281,24 @@ union color_bytes
 };
 
 
-uint32_t
-jwxyz_alloc_color (Display *dpy,
-                   uint16_t r, uint16_t g, uint16_t b, uint16_t a)
-{
-  union color_bytes color;
-
-  /* Instead of (int)(c / 256.0), another possibility is
-     (int)(c * 255.0 / 65535.0 + 0.5). This can be calculated using only
-     uint8_t integer_math(uint16_t c) {
-       unsigned c0 = c + 128;
-       return (c0 - (c0 >> 8)) >> 8;
-     }
-   */
-
-  color.bytes[0] = r >> 8;
-  color.bytes[1] = g >> 8;
-  color.bytes[2] = b >> 8;
-  color.bytes[3] = a >> 8;
-
-  return
-    convert_px (color.pixel,
-      convert_mode_invert (convert_mode_to_rgba (dpy->screen->bitmap_info)));
-}
-
-
-void
-jwxyz_query_color (Display *dpy, unsigned long pixel, uint8_t *rgba)
-{
-  union color_bytes color;
-  color.pixel = convert_px ((uint32_t)pixel,
-                            convert_mode_to_rgba (dpy->screen->bitmap_info));
-  for (unsigned i = 0; i != 4; ++i)
-    rgba[i] = color.bytes[i];
-}
-
-
 static void
-query_color_float (Display *dpy, unsigned long pixel, float *rgba)
+query_color_float (Display *dpy, unsigned long pixel, CGFloat *rgba)
 {
-  uint8_t rgba8[4];
-  jwxyz_query_color (dpy, pixel, rgba8);
-  for (unsigned i = 0; i != 4; ++i)
-    rgba[i] = rgba8[i] * (1.0f / 255.0f);
+  JWXYZ_QUERY_COLOR (dpy, pixel, (CGFloat)1, rgba);
 }
 
+
+extern const struct jwxyz_vtbl quartz_vtbl;
 
 Display *
-jwxyz_make_display (Window w)
+jwxyz_quartz_make_display (Window w)
 {
   CGContextRef cgc = w->cgc;
 
   Display *d = (Display *) calloc (1, sizeof(*d));
-  d->screen = (Screen *) calloc (1, sizeof(Screen));
-  d->screen->dpy = d;
-  
-  d->screen->bitmap_info = CGBitmapContextGetBitmapInfo (cgc);
-  d->screen->black = jwxyz_alloc_color (d, 0x0000, 0x0000, 0x0000, 0xFFFF);
-  d->screen->white = jwxyz_alloc_color (d, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF);
+  d->vtbl = &quartz_vtbl;
+
+  d->bitmap_info = CGBitmapContextGetBitmapInfo (cgc);
 
 # if 0
   // Tests for the image conversion modes.
@@ -368,17 +324,23 @@ jwxyz_make_display (Window w)
   }
 # endif
 
-  Visual *v = (Visual *) calloc (1, sizeof(Visual));
+  Visual *v = &d->visual;
   v->class      = TrueColor;
-  v->red_mask   = jwxyz_alloc_color (d, 0xFFFF, 0x0000, 0x0000, 0x0000);
-  v->green_mask = jwxyz_alloc_color (d, 0x0000, 0xFFFF, 0x0000, 0x0000);
-  v->blue_mask  = jwxyz_alloc_color (d, 0x0000, 0x0000, 0xFFFF, 0x0000);
-  CGBitmapInfo byte_order = d->screen->bitmap_info & kCGBitmapByteOrderMask;
-  Assert ( ! (d->screen->bitmap_info & kCGBitmapFloatComponents) &&
+
+  union color_bytes color;
+  convert_mode_t mode =
+    convert_mode_invert (convert_mode_to_rgba (d->bitmap_info));
+  for (unsigned i = 0; i != 4; ++i) {
+    color.pixel = 0;
+    color.bytes[i] = 0xff;
+    v->rgba_masks[i] = convert_px (color.pixel, mode);
+  }
+
+  CGBitmapInfo byte_order = d->bitmap_info & kCGBitmapByteOrderMask;
+  Assert ( ! (d->bitmap_info & kCGBitmapFloatComponents) &&
           (byte_order == kCGBitmapByteOrder32Little ||
            byte_order == kCGBitmapByteOrder32Big),
           "invalid bits per channel");
-  d->screen->visual = v;
   
   d->timers_data = jwxyz_sources_init (XtDisplayToApplicationContext (d));
 
@@ -391,12 +353,10 @@ jwxyz_make_display (Window w)
 }
 
 void
-jwxyz_free_display (Display *dpy)
+jwxyz_quartz_free_display (Display *dpy)
 {
   jwxyz_sources_free (dpy->timers_data);
   
-  free (dpy->screen->visual);
-  free (dpy->screen);
   free (dpy);
 }
 
@@ -469,66 +429,23 @@ jwxyz_flush_context (Display *dpy)
   CGContextFlush(dpy->main_window->cgc);
 }
 
-jwxyz_sources_data *
+static jwxyz_sources_data *
 display_sources_data (Display *dpy)
 {
   return dpy->timers_data;
 }
 
 
-Window
-XRootWindow (Display *dpy, int screen)
+static Window
+root (Display *dpy)
 {
-  return dpy ? dpy->main_window : 0;
+  return dpy->main_window;
 }
 
-Screen *
-XDefaultScreenOfDisplay (Display *dpy)
+static Visual *
+visual (Display *dpy)
 {
-  return dpy ? dpy->screen : 0;
-}
-
-Visual *
-XDefaultVisualOfScreen (Screen *screen)
-{
-  return screen ? screen->visual : 0;
-}
-
-Display *
-XDisplayOfScreen (Screen *s)
-{
-  return s ? s->dpy : 0;
-}
-
-int
-XDisplayNumberOfScreen (Screen *s)
-{
-  return 0;
-}
-
-int
-XScreenNumberOfScreen (Screen *s)
-{
-  return 0;
-}
-
-unsigned long
-XBlackPixelOfScreen(Screen *screen)
-{
-  return screen->black;
-}
-
-unsigned long
-XWhitePixelOfScreen(Screen *screen)
-{
-  return screen->white;
-}
-
-unsigned long
-XCellsOfScreen(Screen *screen)
-{
-  Visual *v = screen->visual;
-  return v->red_mask | v->green_mask | v->blue_mask;
+  return &dpy->visual;
 }
 
 
@@ -543,7 +460,7 @@ set_color (Display *dpy, CGContextRef cgc, unsigned long argb,
     else
       CGContextSetGrayStrokeColor (cgc, (argb ? 1.0 : 0.0), 1.0);
   } else {
-    float rgba[4];
+    CGFloat rgba[4];
     query_color_float (dpy, argb, rgba);
     if (fill_p)
       CGContextSetRGBFillColor   (cgc, rgba[0], rgba[1], rgba[2], rgba[3]);
@@ -663,9 +580,9 @@ bitmap_context_p (Drawable d)
  */
 #define XDRAWPOINTS_CGDATA
 
-int
-XDrawPoints (Display *dpy, Drawable d, GC gc, 
-             XPoint *points, int count, int mode)
+static int
+DrawPoints (Display *dpy, Drawable d, GC gc,
+            XPoint *points, int count, int mode)
 {
   int i;
   XRectangle wr = d->frame;
@@ -736,7 +653,7 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
                                     dpy->colorspace, 
                                     /* Host-ordered, since we're using the
                                        address of an int as the color data. */
-                                    dpy->screen->bitmap_info,
+                                    dpy->bitmap_info,
                                     prov, 
                                     NULL,  /* decode[] */
                                     NO, /* interpolate */
@@ -840,41 +757,8 @@ point_for_line (Drawable d, GC gc, int x, int y)
 }
 
 
-int
-XDrawLine (Display *dpy, Drawable d, GC gc, int x1, int y1, int x2, int y2)
-{
-  // when drawing a zero-length line, obey line-width and cap-style.
-  if (x1 == x2 && y1 == y2) {
-    int w = gc->gcv.line_width;
-    x1 -= w/2;
-    y1 -= w/2;
-    if (gc->gcv.line_width > 1 && gc->gcv.cap_style == CapRound)
-      return XFillArc (dpy, d, gc, x1, y1, w, w, 0, 360*64);
-    else {
-      if (!w)
-        w = 1; // Actually show zero-length lines.
-      return XFillRectangle (dpy, d, gc, x1, y1, w, w);
-    }
-  }
-  
-  CGPoint p = point_for_line (d, gc, x1, y1);
-
-  push_fg_gc (dpy, d, gc, NO);
-
-  CGContextRef cgc = d->cgc;
-  set_line_mode (cgc, &gc->gcv);
-  CGContextBeginPath (cgc);
-  CGContextMoveToPoint (cgc, p.x, p.y);
-  p = point_for_line(d, gc, x2, y2);
-  CGContextAddLineToPoint (cgc, p.x, p.y);
-  CGContextStrokePath (cgc);
-  pop_gc (d, gc);
-  invalidate_drawable_cache (d);
-  return 0;
-}
-
-int
-XDrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
+static int
+DrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
             int mode)
 {
   int i;
@@ -913,8 +797,8 @@ XDrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
 }
 
 
-int
-XDrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
+static int
+DrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
 {
   int i;
 
@@ -924,10 +808,25 @@ XDrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
   set_line_mode (cgc, &gc->gcv);
   CGContextBeginPath (cgc);
   for (i = 0; i < count; i++) {
-    CGPoint p = point_for_line (d, gc, segments->x1, segments->y1);
-    CGContextMoveToPoint (cgc, p.x, p.y);
-    p = point_for_line (d, gc, segments->x2, segments->y2);
-    CGContextAddLineToPoint (cgc, p.x, p.y);
+    // when drawing a zero-length line, obey line-width and cap-style.
+    if (segments->x1 == segments->x2 && segments->y1 == segments->y2) {
+      int w = gc->gcv.line_width;
+      int x1 = segments->x1 - w/2;
+      int y1 = segments->y1 - w/2;
+      if (gc->gcv.line_width > 1 && gc->gcv.cap_style == CapRound)
+        XFillArc (dpy, d, gc, x1, y1, w, w, 0, 360*64);
+      else {
+        if (!w)
+          w = 1; // Actually show zero-length lines.
+        XFillRectangle (dpy, d, gc, x1, y1, w, w);
+      }
+    } else {
+      CGPoint p = point_for_line (d, gc, segments->x1, segments->y1);
+      CGContextMoveToPoint (cgc, p.x, p.y);
+      p = point_for_line (d, gc, segments->x2, segments->y2);
+      CGContextAddLineToPoint (cgc, p.x, p.y);
+    }
+
     segments++;
   }
   CGContextStrokePath (cgc);
@@ -937,33 +836,24 @@ XDrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
 }
 
 
-int
-XClearWindow (Display *dpy, Window win)
+static int
+ClearWindow (Display *dpy, Window win)
 {
   Assert (win && win->type == WINDOW, "not a window");
   XRectangle wr = win->frame;
   return XClearArea (dpy, win, 0, 0, wr.width, wr.height, 0);
 }
 
-unsigned long
-jwxyz_window_background (Display *dpy)
+static unsigned long *
+window_background (Display *dpy)
 {
-  return dpy->window_background;
+  return &dpy->window_background;
 }
 
-int
-XSetWindowBackground (Display *dpy, Window w, unsigned long pixel)
-{
-  Assert (w && w->type == WINDOW, "not a window");
-  jwxyz_validate_pixel (dpy, pixel, 32, NO);
-  dpy->window_background = pixel;
-  return 0;
-}
-
-void
-jwxyz_fill_rects (Display *dpy, Drawable d, GC gc,
-                  const XRectangle *rectangles, unsigned long nrectangles,
-                  unsigned long pixel)
+static void
+fill_rects (Display *dpy, Drawable d, GC gc,
+            const XRectangle *rectangles, unsigned long nrectangles,
+            unsigned long pixel)
 {
   Assert (!gc || gc->depth == jwxyz_drawable_depth (d), "depth mismatch");
 
@@ -1021,7 +911,7 @@ jwxyz_fill_rects (Display *dpy, Drawable d, GC gc,
         pixel = pixel ? WhitePixel(dpy, 0) : BlackPixel(dpy, 0);
 
       size_t dst_bytes_per_row = CGBitmapContextGetBytesPerRow (d->cgc);
-      void *dst = seek_xy (CGBitmapContextGetData (d->cgc),
+      void *dst = SEEK_XY (CGBitmapContextGetData (d->cgc),
                            dst_bytes_per_row, x, y);
 
       Assert(sizeof(wchar_t) == 4, "somebody changed the ABI");
@@ -1048,18 +938,9 @@ jwxyz_fill_rects (Display *dpy, Drawable d, GC gc,
 }
 
 
-int
-XClearArea (Display *dpy, Window win, int x, int y, int w, int h, Bool exp)
-{
-  Assert (win && win->type == WINDOW, "not a window");
-  jwxyz_fill_rect (dpy, win, 0, x, y, w, h, dpy->window_background);
-  return 0;
-}
-
-
-int
-XFillPolygon (Display *dpy, Drawable d, GC gc, 
-              XPoint *points, int npoints, int shape, int mode)
+static int
+FillPolygon (Display *dpy, Drawable d, GC gc,
+             XPoint *points, int npoints, int shape, int mode)
 {
   XRectangle wr = d->frame;
   int i;
@@ -1094,8 +975,8 @@ XFillPolygon (Display *dpy, Drawable d, GC gc,
 #define radians(DEG) ((DEG) * M_PI / 180.0)
 #define degrees(RAD) ((RAD) * 180.0 / M_PI)
 
-int
-jwxyz_draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
+static int
+draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
                 unsigned int width, unsigned int height,
                 int angle1, int angle2, Bool fill_p)
 {
@@ -1145,22 +1026,22 @@ jwxyz_draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
 }
 
 
-XGCValues *
-jwxyz_gc_gcv (GC gc)
+static XGCValues *
+gc_gcv (GC gc)
 {
   return &gc->gcv;
 }
 
 
-unsigned int
-jwxyz_gc_depth (GC gc)
+static unsigned int
+gc_depth (GC gc)
 {
   return gc->depth;
 }
 
 
-GC
-XCreateGC (Display *dpy, Drawable d, unsigned long mask, XGCValues *xgcv)
+static GC
+CreateGC (Display *dpy, Drawable d, unsigned long mask, XGCValues *xgcv)
 {
   struct jwxyz_GC *gc = (struct jwxyz_GC *) calloc (1, sizeof(*gc));
   gc->depth = jwxyz_drawable_depth (d);
@@ -1171,8 +1052,8 @@ XCreateGC (Display *dpy, Drawable d, unsigned long mask, XGCValues *xgcv)
 }
 
 
-int
-XFreeGC (Display *dpy, GC gc)
+static int
+FreeGC (Display *dpy, GC gc)
 {
   if (gc->gcv.font)
     XUnloadFont (dpy, gc->gcv.font);
@@ -1230,10 +1111,10 @@ flipbits (unsigned const char *in, unsigned char *out, int length)
 }
 
 
-int
-XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
-           int src_x, int src_y, int dest_x, int dest_y,
-           unsigned int w, unsigned int h)
+static int
+PutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
+          int src_x, int src_y, int dest_x, int dest_y,
+          unsigned int w, unsigned int h)
 {
   XRectangle wr = d->frame;
 
@@ -1303,7 +1184,7 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
     CGImageRef cgi = CGImageCreate (w, h,
                                     bpp/4, bpp, bpl,
                                     dpy->colorspace, 
-                                    dpy->screen->bitmap_info,
+                                    dpy->bitmap_info,
                                     prov, 
                                     NULL,  /* decode[] */
                                     NO, /* interpolate */
@@ -1357,11 +1238,11 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
 }
 
 
-XImage *
-XGetSubImage (Display *dpy, Drawable d, int x, int y,
-              unsigned int width, unsigned int height,
-              unsigned long plane_mask, int format,
-              XImage *image, int dest_x, int dest_y)
+static XImage *
+GetSubImage (Display *dpy, Drawable d, int x, int y,
+             unsigned int width, unsigned int height,
+             unsigned long plane_mask, int format,
+             XImage *image, int dest_x, int dest_y)
 {
   const unsigned char *data = 0;
   size_t depth, ibpp, ibpl;
@@ -1376,7 +1257,7 @@ XGetSubImage (Display *dpy, Drawable d, int x, int y,
 
   {
     depth = jwxyz_drawable_depth (d);
-    mode = convert_mode_to_rgba (dpy->screen->bitmap_info);
+    mode = convert_mode_to_rgba (dpy->bitmap_info);
     ibpp = CGBitmapContextGetBitsPerPixel (cgc);
     ibpl = CGBitmapContextGetBytesPerRow (cgc);
     data = CGBitmapContextGetData (cgc);
@@ -1422,7 +1303,7 @@ XGetSubImage (Display *dpy, Drawable d, int x, int y,
 
     mode = convert_mode_merge (mode,
              convert_mode_invert (
-               convert_mode_to_rgba (dpy->screen->bitmap_info)));
+               convert_mode_to_rgba (dpy->bitmap_info)));
 
     for (yy = 0; yy < height; yy++) {
 
@@ -1538,6 +1419,16 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
   float rh = winr.height / imgr.height;
   float r = (rw < rh ? rw : rh);
 
+  /* If the window is a goofy aspect ratio, take a middle slice of
+     the image instead. */
+  if (winr.width > winr.height * 5 ||
+      winr.width > winr.width * 5) {
+    r *= (winr.width > winr.height
+         ? winr.width  / (double) winr.height
+         : winr.height / (double) winr.width);
+    // NSLog (@"weird aspect: scaling by %.1f\n", r);
+  }
+
   CGRect dst, dst2;
   dst.size.width  = imgr.width  * r;
   dst.size.height = imgr.height * r;
@@ -1615,7 +1506,7 @@ XCreatePixmap (Display *dpy, Drawable d,
                                   8, /* bits per component */
                                   width * 4, /* bpl */
                                   dpy->colorspace,
-                                  dpy->screen->bitmap_info);
+                                  dpy->bitmap_info);
   Assert (p->cgc, "could not create CGBitmapContext");
   return p;
 }
@@ -1692,9 +1583,9 @@ jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
 }
 
 
-int
-jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
-                   const char *str, size_t len, int utf8_p)
+static int
+draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
+             const char *str, size_t len, int utf8_p)
 {
   NSString *nsstr = nsstring_from (str, len, utf8_p);
 
@@ -1705,7 +1596,7 @@ jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
 
   unsigned long argb = gc->gcv.foreground;
   if (gc->depth == 1) argb = (argb ? WhitePixel(dpy,0) : BlackPixel(dpy,0));
-  float rgba[4];
+  CGFloat rgba[4];
   query_color_float (dpy, argb, rgba);
   NSColor *fg = [NSColor colorWithDeviceRed:rgba[0]
                                       green:rgba[1]
@@ -1767,8 +1658,8 @@ jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
 }
 
 
-int
-XSetClipMask (Display *dpy, GC gc, Pixmap m)
+static int
+SetClipMask (Display *dpy, GC gc, Pixmap m)
 {
   Assert (!!gc->gcv.clip_mask == !!gc->clip_mask, "GC clip mask mixup");
 
@@ -1787,12 +1678,40 @@ XSetClipMask (Display *dpy, GC gc, Pixmap m)
   return 0;
 }
 
-int
-XSetClipOrigin (Display *dpy, GC gc, int x, int y)
+static int
+SetClipOrigin (Display *dpy, GC gc, int x, int y)
 {
   gc->gcv.clip_x_origin = x;
   gc->gcv.clip_y_origin = y;
   return 0;
 }
+
+
+const struct jwxyz_vtbl quartz_vtbl = {
+  root,
+  visual,
+  display_sources_data,
+
+  window_background,
+  draw_arc,
+  fill_rects,
+  gc_gcv,
+  gc_depth,
+  draw_string,
+
+  jwxyz_quartz_copy_area,
+
+  DrawPoints,
+  DrawSegments,
+  CreateGC,
+  FreeGC,
+  ClearWindow,
+  SetClipMask,
+  SetClipOrigin,
+  FillPolygon,
+  DrawLines,
+  PutImage,
+  GetSubImage
+};
 
 #endif // JWXYZ_QUARTZ -- entire file

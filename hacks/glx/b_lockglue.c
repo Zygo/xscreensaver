@@ -41,9 +41,8 @@ struct glb_config glb_config =
 # define DEFAULTS	"*delay:	10000   \n"	\
 			"*showFPS:      False   \n"
 
-# define refresh_bubble3d 0
 # define release_bubble3d 0
-# define bubble3d_handle_event 0
+# define bubble3d_handle_event xlockmore_no_events
 #include "xlockmore.h"
 #else
 #include "xlock.h"
@@ -83,7 +82,7 @@ ModStruct   bubbles3d_description =
  NULL,
  "change_bubble3d",
  "init_bubble3d",
- NULL,
+ "free_bubble3d",
  &bubble3d_opts,
  1000, 1, 2, 1, 64, 1.0, "",
  "Richard Jones's GL bubbles",
@@ -139,15 +138,23 @@ init(struct context *c)
 }
 
 ENTRYPOINT void
-reshape_bubble3d(ModeInfo *mi, int w, int h)
+reshape_bubble3d(ModeInfo *mi, int width, int height)
 {
-	glViewport(0, 0, (GLsizei) w, (GLsizei) h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45, (GLdouble) w / (GLdouble) h, 3, 8);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef(0, 0, -5);
+  double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+  glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(45, 1/h, 3, 8);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glTranslatef(0, 0, -5);
 }
 
 static void
@@ -155,8 +162,6 @@ do_display(struct context *c)
 {
 	glb_draw_step(c->draw_context);
 }
-
-static void free_bubble3d(ModeInfo * mi);
 
 ENTRYPOINT void
 init_bubble3d(ModeInfo * mi)
@@ -166,7 +171,7 @@ init_bubble3d(ModeInfo * mi)
 	int         screen = MI_SCREEN(mi);
 	struct context *c;
 
-	MI_INIT (mi, contexts, free_bubble3d);
+	MI_INIT (mi, contexts);
 	c = &contexts[screen];
 	c->glx_context = init_GL(mi);
 	init_colors(mi);
@@ -224,7 +229,7 @@ change_bubble3d(ModeInfo * mi)
 }
 #endif /* !STANDALONE */
 
-static void
+ENTRYPOINT void
 free_bubble3d(ModeInfo * mi)
 {
   struct context *c = &contexts[MI_SCREEN(mi)];

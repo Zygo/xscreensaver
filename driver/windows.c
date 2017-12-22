@@ -944,6 +944,9 @@ store_saver_id (saver_screen_info *ssi)
   struct passwd *p = getpwuid (getuid ());
   const char *name, *host;
   char *id;
+# if defined(HAVE_UNAME)
+  struct utsname uts;
+# endif /* UNAME */
 
   /* First store the name and class on the window.
    */
@@ -976,7 +979,6 @@ store_saver_id (saver_screen_info *ssi)
 
 # if defined(HAVE_UNAME)
   {
-    struct utsname uts;
     if (uname (&uts) < 0)
       host = "???";
     else

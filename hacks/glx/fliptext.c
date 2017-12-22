@@ -26,9 +26,8 @@
 		 ".foreground: " DEF_COLOR "\n" \
 		 "*program: xscreensaver-text --cols 0"  /* don't wrap */
 
-# define refresh_fliptext 0
 # define release_fliptext 0
-# define fliptext_handle_event 0
+# define fliptext_handle_event xlockmore_no_events
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -768,8 +767,15 @@ reshape_fliptext (ModeInfo *mi, int width, int height)
 {
   fliptext_configuration *sc = &scs[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -788,9 +794,6 @@ reshape_fliptext (ModeInfo *mi, int width, int height)
 }
 
 
-static void free_fliptext (ModeInfo *mi);
-
-
 ENTRYPOINT void 
 init_fliptext (ModeInfo *mi)
 {
@@ -798,7 +801,7 @@ init_fliptext (ModeInfo *mi)
 
   fliptext_configuration *sc;
 
-  MI_INIT(mi, scs, free_fliptext);
+  MI_INIT(mi, scs);
 
   sc = &scs[MI_SCREEN(mi)];
   sc->lines = (line **) calloc (max_lines+1, sizeof(char *));
@@ -982,7 +985,7 @@ draw_fliptext (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-static void
+ENTRYPOINT void
 free_fliptext (ModeInfo *mi)
 {
   fliptext_configuration *sc = &scs[MI_SCREEN(mi)];

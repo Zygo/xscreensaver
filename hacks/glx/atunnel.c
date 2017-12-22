@@ -43,7 +43,6 @@ static const char sccsid[] = "@(#)atunnel.c	5.13 2004/05/25 xlockmore";
                                 "*showFPS:  False   \n" \
 								"*suppressRotationAnimation: True\n" \
 
-# define refresh_atunnel 0
 # define release_atunnel 0
 # define atunnel_handle_event 0
 #define MODE_atunnel
@@ -120,7 +119,7 @@ ENTRYPOINT ModeSpecOpt atunnel_opts = {countof(opts), opts, countof(vars), vars,
 #ifdef USE_MODULES
 ModStruct   atunnel_description =
 {"atunnel", "init_atunnel", "draw_atunnel", NULL,
- "draw_atunnel", "init_atunnel", NULL, &atunnel_opts,
+ "draw_atunnel", "init_atunnel", "free_atunnel", &atunnel_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL advanced tunnel screensaver", 0, NULL};
 #endif
@@ -251,14 +250,20 @@ static void Init(ModeInfo * mi)
 ENTRYPOINT void
 reshape_atunnel(ModeInfo *mi, int width, int height)
 {
-	float a;
+  double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
 
-	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	a = (float)width/(float)height;
-	glFrustum(-0.1*a, 0.1*a, -0.1, 0.1, 0.1, 10);
-	glMatrixMode(GL_MODELVIEW);
+  if (width > height * 2) {   /* tiny window: show middle */
+    height = width;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0, y, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glFrustum(-0.1*(1/h), 0.1*(1/h), -0.1, 0.1, 0.1, 10);
+  glMatrixMode(GL_MODELVIEW);
 }
 
 /* draw the screensaver once */
@@ -288,15 +293,13 @@ ENTRYPOINT void draw_atunnel(ModeInfo * mi)
 }
 
 
-static void free_atunnel(ModeInfo * mi);
-
 /* xscreensaver initialization routine */
 ENTRYPOINT void init_atunnel(ModeInfo * mi)
 {
   int screen = MI_SCREEN(mi);
   atunnelstruct *sa;
 
-  MI_INIT(mi, Atunnel, free_atunnel);
+  MI_INIT(mi, Atunnel);
   sa = &Atunnel[screen];
 
   sa->window = MI_WINDOW(mi);
@@ -310,7 +313,7 @@ ENTRYPOINT void init_atunnel(ModeInfo * mi)
 }
 
 /* all sorts of nice cleanup code should go here! */
-static void free_atunnel(ModeInfo * mi)
+ENTRYPOINT void free_atunnel(ModeInfo * mi)
 {
 #if 0
   atunnelstruct *sa = &Atunnel[MI_SCREEN(mi)];

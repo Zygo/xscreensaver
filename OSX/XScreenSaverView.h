@@ -29,6 +29,7 @@
 #else
 # import <Cocoa/Cocoa.h>
 # import <ScreenSaver/ScreenSaver.h>
+//# define USE_TOUCHBAR
 #endif
 
 
@@ -85,6 +86,8 @@
   fps_state *fpst;
   void (*fps_cb) (Display *, Window, fps_state *, void *);
 
+  BOOL _lowrez_p;		// Whether the saver prefers 1990s pixels.
+
 # ifdef USE_IPHONE
   BOOL screenLocked;
   BOOL _ignoreRotation;		// whether hack requested "always portrait".
@@ -105,6 +108,11 @@
   NSOpenGLPixelFormat *pixfmt;
 
 # endif // !USE_IPHONE
+
+# ifdef USE_TOUCHBAR
+  NSWindow *touchbar_window;
+  XScreenSaverView *touchbar_view;
+# endif
 
   NSOpenGLContext *ogl_ctx;      // OpenGL rendering context
 
@@ -144,8 +152,9 @@
 - (NSUserDefaultsController *) userDefaultsController;
 + (NSString *) decompressXML:(NSData *)xml;
 
-#ifdef USE_IPHONE
 - (CGFloat) hackedContentScaleFactor;
+
+#ifdef USE_IPHONE
 - (void)setScreenLocked:(BOOL)locked;
 - (NSDictionary *)getGLProperties;
 - (void)addExtraRenderbuffers:(CGSize)size;

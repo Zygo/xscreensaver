@@ -68,7 +68,6 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 	               	"*wireframe:    False   \n"		    \
 					"*suppressRotationAnimation: True\n" \
 
-# define refresh_pipes 0
 # define release_pipes 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -135,7 +134,7 @@ ENTRYPOINT ModeSpecOpt pipes_opts =
 ModStruct   pipes_description =
 {"pipes", "init_pipes", "draw_pipes", NULL,
  "draw_pipes",
- "change_pipes", NULL, &pipes_opts,
+ "change_pipes", "free_pipes", &pipes_opts,
  1000, 2, 5, 500, 4, 1.0, "",
  "Shows a selfbuilding pipe system", 0, NULL};
 
@@ -656,12 +655,20 @@ pinit(ModeInfo * mi, int zera)
 ENTRYPOINT void
 reshape_pipes(ModeInfo * mi, int width, int height)
 {
-	glViewport(0, 0, width, (GLint) height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
-	gluPerspective(65.0, (GLfloat) width / (GLfloat) height, 0.1, 20.0);
-	glMatrixMode(GL_MODELVIEW);
+  double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+  glViewport(0, y, width, (GLint) height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  /*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
+  gluPerspective(65.0, 1/h, 0.1, 20.0);
+  glMatrixMode(GL_MODELVIEW);
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -689,15 +696,13 @@ pipes_handle_event (ModeInfo *mi, XEvent *event)
 static void generate_system (ModeInfo *);
 
 
-static void free_pipes (ModeInfo *);
-
 ENTRYPOINT void
 init_pipes (ModeInfo * mi)
 {
 	int         screen = MI_SCREEN(mi);
 	pipesstruct *pp;
 
-	MI_INIT (mi, pipes, free_pipes);
+	MI_INIT (mi, pipes);
 	pp = &pipes[screen];
 
 	pp->window = MI_WINDOW(mi);
@@ -1167,7 +1172,7 @@ change_pipes (ModeInfo * mi)
 #endif /* !STANDALONE */
 
 
-static void
+ENTRYPOINT void
 free_pipes (ModeInfo * mi)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];

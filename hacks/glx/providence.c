@@ -19,7 +19,7 @@
 			    "*showFPS: False   \n" \
 			    "*wireframe: False \n"
 
-# define refresh_providence 0
+# define free_providence 0
 # define release_providence 0
 #include "xlockmore.h"
 #else
@@ -596,10 +596,17 @@ static void draw_providence_strip(ModeInfo *mi)
 
 ENTRYPOINT void reshape_providence(ModeInfo * mi, int width, int height) 
 {
-  double h = (GLfloat) height / (GLfloat) width;  
   providencestruct *mp = &providence[MI_SCREEN(mi)];
+  double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
 
-  glViewport(0, 0, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 3;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0, y, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
@@ -660,7 +667,7 @@ ENTRYPOINT void init_providence(ModeInfo *mi)
 {
   providencestruct *mp;
   
-  MI_INIT(mi, providence, NULL);
+  MI_INIT(mi, providence);
   mp = &providence[MI_SCREEN(mi)];
   mp->trackball = gltrackball_init (False);
 

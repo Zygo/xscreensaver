@@ -47,9 +47,8 @@ static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
 # define DEFAULTS		"*delay:      10000 \n" \
 						"*showFPS:    False \n"
 
-# define refresh_flurry 0
 # define release_flurry 0
-# define flurry_handle_event 0
+# define flurry_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 
 #ifdef USE_GL
@@ -76,7 +75,7 @@ ModStruct   flurry_description = {
     NULL,
     "draw_flurry",
     "init_flurry",
-    NULL,
+    "free_flurry",
     &flurry_opts,
     1000, 1, 2, 1, 4, 1.0,
     "",
@@ -326,8 +325,6 @@ ENTRYPOINT void reshape_flurry(ModeInfo *mi, int width, int height)
     GLResize(global, (float)width, (float)height);
 }
 
-static void free_flurry(ModeInfo * mi);
-
 ENTRYPOINT void
 init_flurry(ModeInfo * mi)
 {
@@ -345,7 +342,7 @@ init_flurry(ModeInfo * mi)
         PRESET_MAX
     } preset_num;
 
-    MI_INIT (mi, flurry_info, free_flurry);
+    MI_INIT (mi, flurry_info);
 
     global = &flurry_info[screen];
 
@@ -532,7 +529,7 @@ draw_flurry(ModeInfo * mi)
     glXSwapBuffers(display, window);
 }
 
-static void
+ENTRYPOINT void
 free_flurry(ModeInfo * mi)
 {
     global_info_t *global = &flurry_info[MI_SCREEN(mi)];

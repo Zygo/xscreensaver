@@ -137,7 +137,7 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
 # define DEFAULTS           "*delay:      10000 \n" \
                             "*showFPS:    False \n" \
 
-# define refresh_klein 0
+# define free_klein 0
 # define release_klein 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -1857,7 +1857,7 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
 {
   kleinstruct *kb;
 
-  MI_INIT(mi, klein, NULL);
+  MI_INIT(mi, klein);
   kb = &klein[MI_SCREEN(mi)];
 
   

@@ -66,9 +66,9 @@ static const char sccsid[] = "@(#)ant.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true    \n" \
 
 # define reshape_ant 0
+# define release_ant 0
 # define ant_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
-# include "erase.h"
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
@@ -121,8 +121,8 @@ ENTRYPOINT ModeSpecOpt ant_opts =
 #ifdef USE_MODULES
 const ModStruct ant_description =
 {"ant",
- "init_ant", "draw_ant", "release_ant",
- "refresh_ant", "init_ant", (char *) NULL, &ant_opts,
+ "init_ant", "draw_ant", (char *) NULL,
+ "refresh_ant", "init_ant", "free_ant", &ant_opts,
  1000, -3, 40000, -12, 64, 1.0, "",
  "Shows Langton's and Turk's generalized ants", 0, NULL};
 
@@ -131,7 +131,7 @@ const ModStruct ant_description =
 #define ANTBITS(n,w,h)\
   if ((ap->pixmaps[ap->init_bits]=\
   XCreatePixmapFromBitmapData(display,window,(char *)n,w,h,1,0,1))==None){\
-  free_ant(display,ap); return;} else {ap->init_bits++;}
+  free_ant(mi); return;} else {ap->init_bits++;}
 
 /* If you change the table you may have to change the following 2 constants */
 #define STATES 2
@@ -183,9 +183,6 @@ typedef struct {
 		XPoint      hexagon[7];		/* Need more than 6 for truchet */
 		XPoint      triangle[2][4];	/* Need more than 3 for truchet */
 	} shape;
-#ifdef STANDALONE
-  eraser_state *eraser;
-#endif
 } antfarmstruct;
 
 static char plots[] =
@@ -975,9 +972,11 @@ getTurk(ModeInfo * mi, int i)
 			       ap->n, ap->neighbors, number, ap->ncolors);
 }
 
-static void
-free_ant(Display *display, antfarmstruct *ap)
+ENTRYPOINT void
+free_ant(ModeInfo * mi)
 {
+	Display *display = MI_DISPLAY(mi);
+	antfarmstruct *ap = &antfarms[MI_SCREEN(mi)];
 	int         shade;
 
 #ifdef DO_STIPPLE
@@ -1013,7 +1012,12 @@ init_ant(ModeInfo * mi)
 	int         col, row, dir;
 	int         i;
 
-    MI_INIT (mi, antfarms, 0);
+	MI_INIT(mi, antfarms);
+	/*if (antfarms == NULL) {
+		if ((antfarms = (antfarmstruct *) calloc(MI_NUM_SCREENS(mi),
+					    sizeof (antfarmstruct))) == NULL)
+			return;
+	}*/
 	ap = &antfarms[MI_SCREEN(mi)];
 
 	ap->redrawing = 0;
@@ -1027,7 +1031,7 @@ init_ant(ModeInfo * mi)
 			if ((ap->stippledGC = XCreateGC(display, window,
                                                         GCFillStyle,
 					&gcv)) == None) {
-				free_ant(display, ap);
+				free_ant(mi);
 				return;
 			}
 		}
@@ -1187,7 +1191,7 @@ init_ant(ModeInfo * mi)
 	if (ap->ants == NULL) {
 		if ((ap->ants = (antstruct *) malloc(ap->n * sizeof (antstruct))) ==
 				NULL) {
-			free_ant(display, ap);
+			free_ant(mi);
 			return;
 		}
 	}
@@ -1195,14 +1199,14 @@ init_ant(ModeInfo * mi)
 		(void) free((void *) ap->tape);
 	if ((ap->tape = (unsigned char *) calloc(ap->ncols * ap->nrows,
 			sizeof (unsigned char))) == NULL) {
-		free_ant(display, ap);
+		free_ant(mi);
 		return;
 	}
 	if (ap->truchet_state != NULL)
 		(void) free((void *) ap->truchet_state);
 	if ((ap->truchet_state = (unsigned char *) calloc(ap->ncols * ap->nrows,
 			sizeof (unsigned char))) == NULL) {
-		free_ant(display, ap);
+		free_ant(mi);
 		return;
 	}
 
@@ -1241,13 +1245,6 @@ draw_ant(ModeInfo * mi)
 	ap = &antfarms[MI_SCREEN(mi)];
 	if (ap->ants == NULL)
 		return;
-
-#ifdef STANDALONE
-    if (ap->eraser) {
-      ap->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), ap->eraser);
-      return;
-    }
-#endif
 
 	MI_IS_DRAWN(mi) = True;
 	ap->painted = True;
@@ -1309,9 +1306,6 @@ draw_ant(ModeInfo * mi)
 		draw_anant(mi, anant->direction, anant->col, anant->row);
 	}
 	if (++ap->generation > MI_CYCLES(mi)) {
-#ifdef STANDALONE
-      ap->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), ap->eraser);
-#endif
 		init_ant(mi);
 	}
 	if (ap->redrawing) {
@@ -1333,19 +1327,7 @@ draw_ant(ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-release_ant(ModeInfo * mi)
-{
-	if (antfarms != NULL) {
-		int         screen;
-
-		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
-			free_ant(MI_DISPLAY(mi), &antfarms[screen]);
-		(void) free((void *) antfarms);
-		antfarms = (antfarmstruct *) NULL;
-	}
-}
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_ant(ModeInfo * mi)
 {
@@ -1361,6 +1343,7 @@ refresh_ant(ModeInfo * mi)
 		ap->redrawpos = 0;
 	}
 }
+#endif
 
 XSCREENSAVER_MODULE ("Ant", ant)
 

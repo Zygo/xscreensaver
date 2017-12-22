@@ -44,9 +44,8 @@
 #define	DEFAULTS                       	"*delay:			10000   \n" \
 										"*showFPS:          False   \n" \
 
-# define refresh_pulsar 0
 # define release_pulsar 0
-# define pulsar_handle_event 0
+# define pulsar_handle_event xlockmore_no_events
 # include "xlockmore.h"				/* from the xpulsar distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -162,7 +161,7 @@ ENTRYPOINT ModeSpecOpt pulsar_opts = {countof(opts), opts, countof(vars), vars, 
 #ifdef USE_MODULES
 ModStruct   pulsar_description =
 {"pulsar", "init_pulsar", "draw_pulsar", NULL,
- "draw_pulsar", "init_pulsar", NULL, &pulsar_opts,
+ "draw_pulsar", "init_pulsar", "free_pulsar", &pulsar_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL pulsar", 0, NULL};
 #endif
@@ -482,8 +481,6 @@ reshape_pulsar(ModeInfo *mi, int width, int height)
   resetProjection();
 }
 
-static void free_pulsar(ModeInfo * mi);
-
 ENTRYPOINT void
 init_pulsar(ModeInfo * mi)
 {
@@ -491,7 +488,7 @@ init_pulsar(ModeInfo * mi)
 
   pulsarstruct *gp;
 
-  MI_INIT (mi, Pulsar, free_pulsar);
+  MI_INIT (mi, Pulsar);
   gp = &Pulsar[screen];
 
   gp->window = MI_WINDOW(mi);
@@ -508,7 +505,7 @@ init_pulsar(ModeInfo * mi)
 
 
 /* all sorts of nice cleanup code should go here! */
-static void free_pulsar(ModeInfo * mi)
+ENTRYPOINT void free_pulsar(ModeInfo * mi)
 {
   pulsarstruct *gp = &Pulsar[MI_SCREEN(mi)];
   free(gp->quads);

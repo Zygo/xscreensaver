@@ -26,7 +26,6 @@
 			"*program:      xscreensaver-text\n" \
 			"*usePty:       False\n"
 
-# define refresh_splitflap 0
 # define release_splitflap 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -293,7 +292,6 @@ parse_color (ModeInfo *mi, char *key, GLfloat color[4])
 
 
 static int draw_outer_frame (ModeInfo *mi);
-static void free_splitflap (ModeInfo *mi);
 
 ENTRYPOINT void 
 init_splitflap (ModeInfo *mi)
@@ -301,7 +299,7 @@ init_splitflap (ModeInfo *mi)
   splitflap_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
   int i;
-  MI_INIT (mi, bps, free_splitflap);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
   bp->glx_context = init_GL(mi);
@@ -1395,12 +1393,13 @@ draw_splitflap (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-static void
+ENTRYPOINT void
 free_splitflap (ModeInfo *mi)
 {
   splitflap_configuration *bp = &bps[MI_SCREEN(mi)];
   if (bp->tc)
     textclient_close (bp->tc);
+  bp->tc = 0;
   /* #### bp->texinfo */
 }
 

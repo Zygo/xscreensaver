@@ -79,7 +79,7 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_moebius
-# define refresh_moebius 0
+# define free_moebius 0
 # define release_moebius 0
 # define DEFAULTS			"*delay:		20000   \n"			\
 							"*showFPS:      False   \n"			\
@@ -564,8 +564,14 @@ ENTRYPOINT void
 reshape_moebius (ModeInfo * mi, int width, int height)
 {
 	moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
+    int y = 0;
 
-	glViewport(0, 0, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width;
+      y = -height/2;
+    }
+
+	glViewport(0, y, mp->WindW = (GLint) width, mp->WindH = (GLint) height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0);
@@ -673,7 +679,7 @@ init_moebius (ModeInfo * mi)
 {
 	moebiusstruct *mp;
 
-	MI_INIT (mi, moebius, NULL);
+	MI_INIT (mi, moebius);
 	mp = &moebius[MI_SCREEN(mi)];
 	mp->step = NRAND(90);
 	mp->ant_position = NRAND(90);

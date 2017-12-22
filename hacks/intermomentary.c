@@ -548,6 +548,7 @@ intermomentary_free (Display *dpy, Window window, void *closure)
 
 
 static const char *intermomentary_defaults[] = {
+    ".lowrez: true",
     ".background: black",
     ".foreground: yellow",
     "*drawDelay: 30000",

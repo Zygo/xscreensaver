@@ -103,6 +103,31 @@ static void do_prefs (saver_screen_info *ssi);
 static void do_help (saver_screen_info *ssi);
 
 
+XFontStruct *
+splash_load_font (Display *dpy, char *name, char *class)
+{
+  /* Try RES, RES2, etc. */
+  int i;
+  for (i = 0; i < 4; i++)
+    {
+      char *name2 = (char *) malloc (strlen(name) + 2);
+      char *s;
+      if (i)
+        sprintf (name2, "%s%d", name, i+1);
+      else
+        strcpy (name2, name);
+      s = get_string_resource (dpy, name2, class);
+      free (name2);
+      if (s && *s)
+        {
+          XFontStruct *f = XLoadQueryFont (dpy, s);
+          if (f) return f;
+        }
+    }
+  return XLoadQueryFont (dpy, "fixed");
+}
+
+
 struct splash_dialog_data {
 
   saver_screen_info *prompt_screen;
@@ -165,7 +190,6 @@ make_splash_dialog (saver_info *si)
   splash_dialog_data *sp;
   saver_screen_info *ssi;
   Colormap cmap;
-  char *f;
 
   Bool whine = decrepit_p ();
 
@@ -246,20 +270,12 @@ make_splash_dialog (saver_info *si)
     sp->heading_label = s;
   }
 
-  f = get_string_resource (si->dpy, "splash.headingFont", "Dialog.Font");
-  sp->heading_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
-  if (!sp->heading_font) sp->heading_font = XLoadQueryFont (si->dpy, "fixed");
-  if (f) free (f);
-
-  f = get_string_resource(si->dpy, "splash.bodyFont", "Dialog.Font");
-  sp->body_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
-  if (!sp->body_font) sp->body_font = XLoadQueryFont (si->dpy, "fixed");
-  if (f) free (f);
-
-  f = get_string_resource(si->dpy, "splash.buttonFont", "Dialog.Font");
-  sp->button_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
-  if (!sp->button_font) sp->button_font = XLoadQueryFont (si->dpy, "fixed");
-  if (f) free (f);
+  sp->heading_font =
+    splash_load_font (si->dpy, "splash.headingFont", "Dialog.Font");
+  sp->body_font =
+    splash_load_font (si->dpy, "splash.bodyFont", "Dialog.Font");
+  sp->button_font =
+    splash_load_font (si->dpy, "splash.buttonFont", "Dialog.Font");
 
   sp->foreground = get_pixel_resource (si->dpy, cmap,
                                        "splash.foreground",

@@ -162,6 +162,7 @@ attraction_init (Display *dpy, Window window)
   double th;
   Colormap cmap;
   char *mode_str, *graph_mode_str;
+  double size_scale;
 
   XGetWindowAttributes (dpy, window, &xgwa);
   st->xlim = xgwa.width;
@@ -342,8 +343,12 @@ attraction_init (Display *dpy, Window window)
   jwxyz_XSetAntiAliasing (dpy, st->erase_gc, False);
 #endif
 
+  size_scale = 3;
+  if (xgwa.width < 100 || xgwa.height < 100)  /* tiny windows */
+    size_scale = 0.75;
+
   /* let's make the balls bigger by default */
-#define rand_size() (3 * (8 + (random () % 7)))
+#define rand_size() (size_scale * (8 + (random () % 7)))
 
   if (st->orbit_p && !st->global_size)
     /* To orbit, all objects must be the same mass, or the math gets

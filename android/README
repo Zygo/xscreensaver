@@ -19,9 +19,9 @@ To set up your Android development environment:
       "build-tools/", etc.)  That is, it should be "sdk/ndk/".
 
     set $ANDROID_HOME to where your SDK is installed, or
-    set "sdk.dir" in project/local.properties.
+    set "sdk.dir" in the file local.properties.
     On MacOS, the value you want is probably ~/Library/Android/sdk/
-    Also set "ndk.dir" in project/local.properties.
+    Also set "ndk.dir" in local.properties.
 
 To build:
 
@@ -30,7 +30,7 @@ To build:
     make
 
     Hopefully an "xscreensaver-debug.apk" file will appear in
-    android/project/xscreensaver/build/outputs/apk/.
+    android/xscreensaver/build/outputs/apk/.
 
     Load that onto your device and go to:
       Settings / Display / Daydream
@@ -60,7 +60,7 @@ To build:
 
     To load it into the currently-running emulator or device:
       $ANDROID_HOME/platform-tools/adb install -r \
-        project/xscreensaver/build/outputs/apk/xscreensaver-debug.apk
+        xscreensaver/build/outputs/apk/xscreensaver-debug.apk
 
     Extremely verbose log output, including stack traces:
         $ANDROID_HOME/platform-tools/adb logcat
@@ -79,50 +79,50 @@ To build:
 Directory structure:
 
     Boilerplate for the Java version of "make":
-        project/*gradle*
-        project/*.properties
-        project/xscreensaver/*gradle*
-        project/xscreensaver/build.*
-        project/xscreensaver/*.properties
+        *gradle*
+        *.properties
+        xscreensaver/*gradle*
+        xscreensaver/build.*
+        xscreensaver/*.properties
 
     The other half of the Makefile:
-        project/xscreensaver/jni/*.mk
+        xscreensaver/jni/*.mk
 
     Source code:
-        project/xscreensaver/src/org/jwz/xscreensaver/*.java
-        project/xscreensaver/res/layout/*.xml
+        xscreensaver/src/org/jwz/xscreensaver/*.java
+        xscreensaver/res/layout/*.xml
 
     Other relevant source code is in ../jwxyz/ and ../hacks/.
 
     Icons:
-        project/xscreensaver/res/drawable-ldpi/
-        project/xscreensaver/res/drawable-mdpi/
-        project/xscreensaver/res/drawable/
+        xscreensaver/res/drawable-ldpi/
+        xscreensaver/res/drawable-mdpi/
+        xscreensaver/res/drawable/
 
     Files that we generate:
 
         gen/function-table.h
-        project/xscreensaver/AndroidManifest.xml
-        project/xscreensaver/res/drawable/*.png
-        project/xscreensaver/res/values/settings.xml
-        project/xscreensaver/res/values/strings.xml
-        project/xscreensaver/res/xml/*.xml
-        project/xscreensaver/src/org/jwz/xscreensaver/gen/*.java
+        xscreensaver/AndroidManifest.xml
+        xscreensaver/res/drawable/*.png
+        xscreensaver/res/values/settings.xml
+        xscreensaver/res/values/strings.xml
+        xscreensaver/res/xml/*.xml
+        xscreensaver/src/org/jwz/xscreensaver/gen/*.java
 
     Other files generated as a part of the build process:
 
         gen/
-        project/.gradle/
-        project/xscreensaver/build/
-        project/xscreensaver/build/outputs/apk/  -- app appears here
-        project/xscreensaver/jni/
-        project/xscreensaver/libs/
-        project/xscreensaver/obj/
-        project/xscreensaver/res/
-        project/xscreensaver/res/drawable/
-        project/xscreensaver/res/values/
-        project/xscreensaver/res/xml/
-        project/xscreensaver/src/org/jwz/xscreensaver/gen/
+        .gradle/
+        xscreensaver/build/
+        xscreensaver/build/outputs/apk/  -- app appears here
+        xscreensaver/jni/
+        xscreensaver/libs/
+        xscreensaver/obj/
+        xscreensaver/res/
+        xscreensaver/res/drawable/
+        xscreensaver/res/values/
+        xscreensaver/res/xml/
+        xscreensaver/src/org/jwz/xscreensaver/gen/
 
 When adding a new hack, edit android/Makefile, then "make clean" and "make".
 
@@ -150,8 +150,6 @@ TODO list, and known bugs:
     display the error message in a dialog.  The catch works, but the dialog
     box does not.
 
-  anemone	needs thick lines
-  anemotaxis    needs thick lines
   antinspect    crashes emulator, sometimes
   antmaze       crashes emulator, sometimes
   antspotlight	crashes emulator, sometimes
@@ -161,29 +159,24 @@ TODO list, and known bugs:
   binaryring    pixmaps
   blitspin      images
   bouboule      ?
-  braid         thick lines
   bsod          pixmaps, XCopyArea problems
   bumps         XPutImage
   carousel      blank
-  celtic        thick lines
   circuit	crashes emulator
   cityflow	crashes emulator, sometimes
-  compass       thick lines
   crackberg	crashes emulator, sometimes
   cube21	crashes emulator, sometimes
   cubenetic	crashes emulator, sometimes
   cubicgrid	crashes emulator, sometimes
-  deluxe        thick lines
   dnalogo       codeword is blank
   dymaxionmap	crashes emulator
   endgame	crashes emulator
   engine        text
-  epicycle      thick lines
+  esper         text
   flipflop      images
   flipscreen3d  images
   fliptext      text
   fontglide     text
-  fuzzyflakes   thick lines
   gflux         images
   glblur        crashes emulator, sometimes
   gleidescope   images
@@ -228,11 +221,9 @@ TODO list, and known bugs:
   substrate     background should be white
   surfaces      crashes emulator
   tessellimage  pixmaps
-  truchet       thick lines
   twang         background should be black
   unicrud       pixmaps
   xanalogtv     pixmaps
   xjack         blank
   xmatrix       pixmaps
-  xrayswarm     thick lines
   zoom          pixmaps

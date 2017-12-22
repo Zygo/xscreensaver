@@ -130,8 +130,8 @@ usage: %s -<option>\n\
   -watch        Prints a line each time the screensaver changes state: when\n\
                 the screen blanks, locks, unblanks, or when the running hack\n\
                 is changed.  This option never returns; it is intended for\n\
-                by shell scripts that want to react to the screensaver in\n\
-                some way.\n\
+                use by shell scripts that want to react to the screensaver\n\
+                in some way.\n\
 \n\
   See the man page for more details.\n\
   For updates, check https://www.jwz.org/xscreensaver/\n\

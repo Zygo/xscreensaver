@@ -510,6 +510,7 @@ rocks_free (Display *dpy, Window window, void *closure)
 
 
 static const char *rocks_defaults [] = {
+  ".lowrez:     true",
   ".background:	Black",
   ".foreground:	#E9967A",
   "*fpsSolid:	true",

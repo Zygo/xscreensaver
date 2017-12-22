@@ -1,11 +1,33 @@
+;
+; 6502 Assembler Demo.
+; Copyright (C) 2007  Daniel Serpell <daniel.serpell@gmail.com>
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+; 1. Redistributions of source code must retain the above copyright notice,
+; this list of conditions and the following disclaimer.
+;
+; 2. Redistributions in binary form must reproduce the above copyright notice,
+; this list of conditions and the following disclaimer in the documentation
+; and/or other materials provided with the distribution.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+;
 ; By DMSC - daniel.serpell@gmail.com
 ;
-; This demo was programmed in ACME:
-;     http://www.esw-heim.tu-clausthal.de/~marco/smorbrod/acme/
+; See xscreensaver/hacks/images/m6502/dsmc.txt for the source
 ;
-; If you want the source code, send me an email :-)
-;
-
  dcb  76, 94, 11,133, 32,162,  8,160,  8,145, 16,136,208,251,165, 16
  dcb  24,105, 32,133, 16,165, 17,105,  0,133, 17,165, 32,202,208,231
  dcb  96,230, 48,165, 48, 41, 63,133, 48,170,189,106,  6,170,189,  8

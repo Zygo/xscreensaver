@@ -70,7 +70,7 @@
 			"*geometry:	600x900\n"      \
 			"*count:      " DEF_COUNT " \n" \
 
-# define refresh_lavalite 0
+# define free_lavalite 0
 # define release_lavalite 0
 
 
@@ -300,8 +300,15 @@ ENTRYPOINT void
 reshape_lavalite (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 3;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1274,7 +1281,7 @@ init_lavalite (ModeInfo *mi)
   lavalite_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, bps, NULL);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 

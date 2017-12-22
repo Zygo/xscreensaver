@@ -63,11 +63,14 @@ struct state {
   int pixh;/* pixel height */
   int topb;/* top boarder */
   int field_ntsc[4];/* used for clearing the screen*/ 
-  int dt;/* how long to wait before changing the demo*/
+  double dt;/* how long to wait before changing the demo*/
   int which;/* the program to run*/
   int demos;/* number of demos included */
-  struct timeval start_time; 
+  double start_time;
   int reset_p;
+  char *file;
+  double last_frame, last_delay;
+  unsigned ips;
 };
 
 static void
@@ -92,42 +95,27 @@ start_rand_bin_prog(machine_6502 *machine, struct state *st){
 
 
 /*
- * get_time ()
+ * double_time ()
  *
- * returns the total time elapsed since the beginning of the demo
+ * returns the current time as a floating-point value
  */
-static double get_time(struct state *st) {
+static double double_time(void) {
   struct timeval t;
-  float f;
+  double f;
 #if GETTIMEOFDAY_TWO_ARGS
   gettimeofday(&t, NULL);
 #else
   gettimeofday(&t);
 #endif
-  t.tv_sec -= st->start_time.tv_sec;
   f = ((double)t.tv_sec) + t.tv_usec*1e-6;
   return f;
-}
-
-/*
- * init_time ()
- *
- * initialises the timing structures
- */
-static void init_time(struct state *st) {
-#if GETTIMEOFDAY_TWO_ARGS
-  gettimeofday(&st->start_time, NULL);
-#else
-  gettimeofday(&st->start_time);
-#endif
 }
 
 static void *
 m6502_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
-  unsigned int x, y;
-  int n = get_integer_resource(dpy, "displaytime", "Displaytime");
+  int n = get_float_resource(dpy, "displaytime", "Displaytime");
   int dh;
   st->demos = countof(demo_files);
   st->which = random() % st->demos;
@@ -151,17 +139,15 @@ m6502_init (Display *dpy, Window window)
   dh = SCREEN_H % 32;
   st->topb = dh / 2;
 
-  init_time(st);
-  
-  {
+  st->last_frame = double_time();
+  st->last_delay = 0;
+  st->ips = get_integer_resource(dpy, "ips", "IPS");
+
 #ifdef READ_FILES
-    char *s = get_string_resource (dpy, "file", "File");
-    if (strlen(s) > 0)
-      m6502_start_eval_file(st->machine,s, plot6502, st);
-  else
+  st->file = get_string_resource (dpy, "file", "File");
 #endif
-    start_rand_bin_prog(st->machine,st);
-  }
+
+  st->reset_p = 1;
 
   analogtv_lcp_to_ntsc(ANALOGTV_BLACK_LEVEL, 0.0, 0.0, st->field_ntsc);
 
@@ -169,10 +155,6 @@ m6502_init (Display *dpy, Window window)
                       ANALOGTV_VIS_START, ANALOGTV_VIS_END,
                       ANALOGTV_TOP, ANALOGTV_BOT,
                       st->field_ntsc);
-
-  for(x = 0; x < 32; x++)
-    for(y = 0; y < 32; y++)
-      st->pixels[x][y] = 0;
 
   return st;
 }
@@ -229,10 +211,30 @@ m6502_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   unsigned int x = 0, y = 0;
-  double te;
+  double now, last_delay = st->last_delay >= 0 ? st->last_delay : 0;
+  double insno = st->ips * ((1 / 29.97) + last_delay - st->last_delay);
   const analogtv_reception *reception = &st->reception;
 
-  m6502_next_eval(st->machine,500);
+  if (st->reset_p){ /* do something more interesting here XXX */
+    st->reset_p = 0;
+    for(x = 0; x < 32; x++)
+      for(y = 0; y < 32; y++)
+        st->pixels[x][y] = 0;
+    st->start_time = st->last_frame + last_delay;
+
+#ifdef READ_FILES
+    if (st->file && *st->file)
+      m6502_start_eval_file(st->machine, st->file, plot6502, st);
+    else
+#endif
+      start_rand_bin_prog(st->machine,st);
+  }
+
+  if (insno < 10)
+    insno = 10;
+  else if (insno > 100000) /* Real 6502 went no faster than 3 MHz. */
+    insno = 100000;
+  m6502_next_eval(st->machine,insno);
 
   for (x = 0; x < 32; x++)
     for (y = 0; y < 32; y++)
@@ -240,22 +242,14 @@ m6502_draw (Display *dpy, Window window, void *closure)
   
   analogtv_reception_update(&st->reception);
   analogtv_draw(st->tv, 0.04, &reception, 1);
-  te = get_time(st);
-  
-  if (st->reset_p || te > st->dt){ /* do something more interesting here XXX */
-    st->reset_p = 0;
-    for(x = 0; x < 32; x++)
-      for(y = 0; y < 32; y++)
-	st->pixels[x][y] = 0;
-    init_time(st);
-    start_rand_bin_prog(st->machine,st);
-  }
+  now = double_time();
+  st->last_delay = (1 / 29.97) + st->last_frame + last_delay - now;
+  st->last_frame = now;
 
-#ifdef HAVE_MOBILE
-  return 0;
-#else
-  return 5000;
-#endif
+  if (now - st->start_time > st->dt)
+    st->reset_p = 1;
+
+  return st->last_delay >= 0 ? st->last_delay * 1e6 : 0;
 }
 
 
@@ -265,7 +259,10 @@ static const char *m6502_defaults [] = {
   ".background:      black",
   ".foreground:      white",
   "*file:",
-  "*displaytime:     20",
+  "*displaytime:     30.0",     /* demoscene: 24s, dmsc: 48s, sierpinsky: 26s
+                                   sflake, two runs: 35s
+                                 */
+  "*ips:             15000",    /* Actual MOS 6502 ran at least 1 MHz. */
   ANALOGTV_DEFAULTS
   0
 };
@@ -273,6 +270,7 @@ static const char *m6502_defaults [] = {
 static XrmOptionDescRec m6502_options [] = {
   { "-file",           ".file",     XrmoptionSepArg, 0 },
   { "-displaytime",    ".displaytime", XrmoptionSepArg, 0},
+  { "-ips",            ".ips",         XrmoptionSepArg, 0},
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };
@@ -302,6 +300,7 @@ m6502_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   analogtv_release(st->tv);
+  free (st->file);
   free (st);
 }
 

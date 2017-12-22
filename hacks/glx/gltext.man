@@ -75,11 +75,30 @@ short.  You might try:
 -program 'xscreensaver-text --cols 20'
 .EE
 .TP 8
+.B \-maxlines
+Set the number of lines of text to display.  By default, 
+.I gltext
+will print 8 lines of text at a time.  Use this option to increase or
+decrease that number.  Be aware that 
+.I gltext
+is designed to work with a fairly small amount of text, so setting this
+value too high might result in slow performance or strange behaviour
+stemming from buffer overflows.  Increase at your own risk.
+.TP 8
+.B \-mono
+Display the text in a monospace font.  Default is a variable-width font.
+.TP 8
+.B \-no\-mono
+Display the text in a variable-width font.  This is the default.  
+.TP 8
 .B \-wander
 Move the text around the screen.  This is the default.
 .TP 8
 .B \-no\-wander
 Keep the text centered on the screen.
+.TP 8
+.B \-wander\-speed
+Sets the speed at which the text wanders around.  Default is 0.02.  
 .TP 8
 .B \-spin
 Which axes around which the text should spin.  The default is "XYZ",
@@ -102,6 +121,11 @@ Render in wireframe instead of solid.
 .TP 8
 .B \-fps
 Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-scale
+Sets the scale at which the text is rendered.  Bigger values will result
+in bigger text; smaller values will result in smaller text.  The default
+value is 0.01.  
 .SH ENVIRONMENT
 .PP
 .TP 8

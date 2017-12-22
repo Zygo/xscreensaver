@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2012 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -88,7 +88,18 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_IS_DEBUG(MI)		(False)
 #define MI_IS_MOUSE(MI)		(False)
 
-#define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
+/* Under xlockmore, MI_CLEARWINDOW runs immediately, and for animated clears
+   it delays execution while the animation runs. This doesn't work on
+   XScreenSaver, which has mandatory double-buffering on macOS/iOS/Android.
+
+   Tricky: As a result, MI_CLEARWINDOW doesn't clear the window until after
+   init_##() or draw_##() finishes.
+ */
+#ifdef USE_GL
+# define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
+#else
+# define MI_CLEARWINDOW(mi) ((mi)->needs_clear = True)
+#endif
 
 /* MI_INIT and MI_ABORT are XScreenSaver extensions. These exist primarily for
    the sake of ports to macOS, iOS, and Android, all of which need to restart
@@ -110,14 +121,12 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
    hack_free_state(mi);
    memset(&state_array[MI_SCREEN(mi)], 0, sizeof(*state_array));
 
-   It also enables hack_free_state to run when a screen is no longer in use.
-   This is called at some point after the last call to draw_##, but before
-   release_##.
+   MI_INIT also assumes ownership of the state_array over to xlockmore.c,
+   which frees it after all screens (or "screens") are closed.
  */
 
-#define MI_INIT(mi, state_array, hack_free_state) \
-  xlockmore_mi_init ((mi), sizeof(*(state_array)), (void **)&(state_array), \
-                     hack_free_state)
+#define MI_INIT(mi, state_array) \
+  xlockmore_mi_init ((mi), sizeof(*(state_array)), (void **)&(state_array))
 
 /* Use MI_ABORT if an init_## or draw_## hook needs to shut everything down.
    This replaces explicit calls to release_## hooks when things go wrong from
@@ -214,8 +223,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 	   init_    ## PREFIX,						\
 	   draw_    ## PREFIX,						\
 	   reshape_ ## PREFIX,						\
-	   refresh_ ## PREFIX,						\
 	   release_ ## PREFIX,						\
+	   free_    ## PREFIX,						\
 	   PREFIX   ## _handle_event,					\
 	   & PREFIX ## _opts						\
   };									\

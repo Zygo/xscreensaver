@@ -322,6 +322,13 @@ make_window_starfish (struct state *st)
   size = (xgwa.width < xgwa.height ? xgwa.width : xgwa.height);
   if (st->blob_p) size /= 2;
   else size *= 1.3;
+
+  if (xgwa.width < 100 || xgwa.height < 100) /* tiny window */
+    {
+      size = (xgwa.width > xgwa.height ? xgwa.width : xgwa.height);
+      if (size < 100) size = 100;
+    }
+
   return make_starfish (st, xgwa.width, xgwa.height, size);
 }
 

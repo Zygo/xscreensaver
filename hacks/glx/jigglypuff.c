@@ -41,7 +41,7 @@
                             "*wireframe: False\n" \
 			    "*suppressRotationAnimation: True\n" \
 
-# define refresh_jigglypuff 0
+# define free_jigglypuff 0
 # define release_jigglypuff 0
 # include "xlockmore.h"
 #else
@@ -940,13 +940,19 @@ ENTRYPOINT Bool jigglypuff_handle_event(ModeInfo *mi, XEvent *event)
 
 ENTRYPOINT void reshape_jigglypuff(ModeInfo *mi, int width, int height)
 {
-    GLfloat aspect = (GLfloat)width / (GLfloat)height;
+  double h = (GLfloat) height / (GLfloat) width;  
+  int y = 0;
 
-    glViewport(0, 0, width, height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(-0.5*aspect, 0.5*aspect, -0.5, 0.5, 1, 20);
-/*    glTranslatef(0, 0, -10);*/
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0, y, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glFrustum(-0.5*(1/h), 0.5*(1/h), -0.5, 0.5, 1, 20);
 }
 
 ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
@@ -1010,7 +1016,7 @@ ENTRYPOINT void init_jigglypuff(ModeInfo *mi)
     jigglystruct *js;
     int subdivs;
 
-    MI_INIT(mi, jss, NULL);
+    MI_INIT(mi, jss);
 
     js = &jss[MI_SCREEN(mi)];
 

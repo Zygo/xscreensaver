@@ -21,7 +21,7 @@
                  "*useSHM:    True  \n" \
 		 "*suppressRotationAnimation: True\n" \
 
-# define refresh_screenflip 0
+# define free_screenflip 0
 # define release_screenflip 0
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 # include "gltrackball.h"
@@ -306,7 +306,7 @@ static void drawgrid(void)
 static void display(Screenflip *c, int wire)
 {
   int frozen;
-/*  GLfloat rot = current_device_rotation();*/
+  GLfloat rot = current_device_rotation();
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
@@ -335,9 +335,9 @@ static void display(Screenflip *c, int wire)
       if (random() % 2)
         c->dgamma = 1/60 - (float)(random() % 100)/3000;
     }
-/*    glRotatef(-rot, 0, 0, 1);*/
+    glRotatef(rot, 0, 0, 1);
     gltrackball_rotate (c->trackball);
-/*    glRotatef(rot, 0, 0, 1);*/
+    glRotatef(-rot, 0, 0, 1);
     if (rotate) glRotatef(c->rot, c->rx, c->ry, c->rz);
 /* update variables with each frame */
     if(!c->button_down_p && !c->fadetime) {
@@ -439,7 +439,7 @@ ENTRYPOINT void init_screenflip(ModeInfo *mi)
   int screen = MI_SCREEN(mi);
   Screenflip *c;
 
- MI_INIT(mi, screenflip, NULL);
+ MI_INIT(mi, screenflip);
  c = &screenflip[screen];
  c->window = MI_WINDOW(mi);
 

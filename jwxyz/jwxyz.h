@@ -49,7 +49,7 @@ typedef unsigned int KeyCode;
 typedef unsigned long Atom; /* Must be as large as a char *. */
 
 typedef struct jwxyz_Display		Display;
-typedef struct jwxyz_Screen		Screen;
+typedef struct jwxyz_Display		Screen;
 typedef struct jwxyz_Visual		Visual;
 typedef struct jwxyz_Drawable *		Drawable;
 typedef struct jwxyz_Colormap *		Colormap;
@@ -311,13 +311,11 @@ typedef struct jwxyz_linked_point	linked_point;
 #define XHeightOfScreen(s) (DisplayHeight(DisplayOfScreen(s),0))
 #define XWidthMMOfScreen(s) (XDisplayWidthMM(DisplayOfScreen(s),0))
 #define XHeightMMOfScreen(s) (XDisplayHeightMM(DisplayOfScreen(s),0))
+#define XDefaultScreenOfDisplay(d) (d)
+#define XDisplayOfScreen(s) (s)
+#define XDisplayNumberOfScreen(s) 0
+#define XScreenNumberOfScreen(s) 0
 
-extern Window XRootWindow (Display *, int screen);
-extern Screen *XDefaultScreenOfDisplay (Display *);
-extern Visual *XDefaultVisualOfScreen (Screen *);
-extern Display *XDisplayOfScreen (Screen *);
-extern int XDisplayNumberOfScreen (Screen *);
-extern int XScreenNumberOfScreen (Screen *);
 extern int XDisplayWidth (Display *, int);
 extern int XDisplayHeight (Display *, int);
 extern int XDisplayWidthMM (Display *, int);
@@ -328,14 +326,9 @@ unsigned long XWhitePixelOfScreen(Screen *);
 unsigned long XCellsOfScreen(Screen *);
 
 extern int XDrawPoint (Display *, Drawable, GC, int x, int y);
-extern int XDrawPoints (Display *, Drawable, GC, XPoint *, int n, int mode);
-extern int XDrawSegments (Display *, Drawable, GC, XSegment *, int n);
 
-extern GC XCreateGC (Display *, Drawable, unsigned long mask, XGCValues *);
 extern int XChangeGC (Display *, GC, unsigned long mask, XGCValues *);
-extern int XFreeGC (Display *, GC);
 
-extern int XClearWindow (Display *, Window);
 extern int XClearArea (Display *, Window, int x, int y, int w, int h,Bool exp);
 extern int XSetWindowBackground (Display *, Window, unsigned long);
 extern Status XGetWindowAttributes (Display *, Window, XWindowAttributes *);
@@ -361,8 +354,6 @@ extern int XSetFunction (Display *, GC, int);
 extern int XSetSubwindowMode (Display *, GC, int);
 extern int XSetLineAttributes (Display *, GC, unsigned int line_width,
                                int line_style, int cap_style, int join_style);
-extern int XSetClipMask (Display *, GC, Pixmap);
-extern int XSetClipOrigin (Display *, GC, int x, int y);
 extern int jwxyz_XSetAlphaAllowed (Display *, GC, Bool);
 extern int jwxyz_XSetAntiAliasing (Display *, GC, Bool);
 
@@ -370,8 +361,6 @@ extern int XFlush (Display *);
 extern int XSync (Display *, Bool);
 extern int XFreeColors (Display *, Colormap, unsigned long *px, int n,
                         unsigned long planes);
-extern int XFillPolygon (Display *, Drawable, GC, 
-                         XPoint * points, int npoints, int shape, int mode);
 extern int XCopyArea (Display *, Drawable src, Drawable dest, GC, 
                       int src_x, int src_y, 
                       unsigned int width, unsigned int height, 
@@ -383,7 +372,6 @@ extern int XCopyPlane (Display *, Drawable, Drawable, GC,
                        unsigned long plane);
 
 extern int XDrawLine (Display *, Drawable, GC, int x1, int y1, int x2, int y2);
-extern int XDrawLines (Display *, Drawable, GC, XPoint *, int n, int mode);
 extern int XDrawArc (Display *, Drawable, GC, int x, int y, 
                      unsigned int width, unsigned int height,
                      int angle1, int angle2);
@@ -425,13 +413,6 @@ extern XImage *XSubImage (XImage *, int x, int y,
 extern unsigned long XGetPixel (XImage *, int x, int y);
 extern int XPutPixel (XImage *, int x, int y, unsigned long);
 extern int XDestroyImage (XImage *);
-extern int XPutImage (Display *, Drawable, GC, XImage *, 
-                      int src_x, int src_y, int dest_x, int dest_y,
-                      unsigned int w, unsigned int h);
-extern XImage *XGetSubImage (Display *dpy, Drawable d, int x, int y,
-                             unsigned int width, unsigned int height,
-                             unsigned long plane_mask, int format,
-                             XImage *dest_image, int dest_x, int dest_y);
 extern XImage *XGetImage (Display *, Drawable, int x, int y,
                           unsigned int w, unsigned int h,
                           unsigned long pm, int fmt);
@@ -498,6 +479,10 @@ extern Bool is_same_slope(linked_point * a);
 extern Bool is_an_ear(linked_point * a);
 extern Bool is_three_point_loop(linked_point * head);
 
+extern int draw_arc_gl(Display *dpy, Drawable d, GC gc, int x, int y,
+                   unsigned int width, unsigned int height,
+                   int angle1, int angle2, Bool fill_p);
+
 // Log()/Logv(), for debugging JWXYZ. Screenhacks should still use
 // fprintf(stderr, ...).
 extern void Log(const char *format, ...)
@@ -521,7 +506,6 @@ extern XtInputId XtAppAddInput (XtAppContext, int fd, XtPointer flags,
 extern void XtRemoveInput (XtInputId);
 extern XtInputMask XtAppPending (XtAppContext);
 extern void XtAppProcessEvent (XtAppContext, XtInputMask);
-extern struct jwxyz_sources_data *display_sources_data (Display *);
 
 // Some GLX stuff that also doesn't technically belong here...
 // from XScreenSaverGLView.m
@@ -551,7 +535,7 @@ extern void check_gl_error (const char *type);
 // Only utils/xft.c uses this, out of necessity.
 struct jwxyz_Visual {
   int class;		/* class of screen (monochrome, etc.) */
-  unsigned long red_mask, green_mask, blue_mask;	/* mask values */
+  unsigned long rgba_masks[4];	/* mask values */
 };
 
 struct jwxyz_XGCValues {
@@ -837,5 +821,82 @@ struct jwxyz_XChar2b {
   unsigned char byte1;
   unsigned char byte2;
 };
+
+
+struct jwxyz_vtbl {
+  Window (*root) (Display *);
+  Visual *(*visual) (Display *);
+  struct jwxyz_sources_data *(*display_sources_data) (Display *);
+
+  unsigned long *(*window_background) (Display *);
+  int (*draw_arc) (Display *dpy, Drawable d, GC gc, int x, int y,
+                   unsigned int width, unsigned int height,
+                   int angle1, int angle2, Bool fill_p);
+  void (*fill_rects) (Display *dpy, Drawable d, GC gc,
+                      const XRectangle *rectangles,
+                      unsigned long nrects, unsigned long pixel);
+  XGCValues *(*gc_gcv) (GC gc);
+  unsigned int (*gc_depth) (GC gc);
+  int (*draw_string) (Display *dpy, Drawable d, GC gc, int x, int y,
+                      const char *str, size_t len, Bool utf8);
+
+  void (*copy_area) (Display *dpy, Drawable src, Drawable dst, GC gc,
+                     int src_x, int src_y,
+                     unsigned int width, unsigned int height,
+                     int dst_x, int dst_y);
+
+  int (*DrawPoints) (Display *, Drawable, GC, XPoint *, int n, int mode);
+  int (*DrawSegments) (Display *, Drawable, GC, XSegment *, int n);
+  GC (*CreateGC) (Display *, Drawable, unsigned long mask, XGCValues *);
+  int (*FreeGC) (Display *, GC);
+  int (*ClearWindow) (Display *, Window);
+  int (*SetClipMask) (Display *, GC, Pixmap);
+  int (*SetClipOrigin) (Display *, GC, int x, int y);
+  int (*FillPolygon) (Display *, Drawable, GC,
+                      XPoint * points, int npoints, int shape, int mode);
+  int (*DrawLines) (Display *, Drawable, GC, XPoint *, int n, int mode);
+
+  int (*PutImage) (Display *, Drawable, GC, XImage *,
+                    int src_x, int src_y, int dest_x, int dest_y,
+                    unsigned int w, unsigned int h);
+  XImage *(*GetSubImage) (Display *dpy, Drawable d, int x, int y,
+                          unsigned int width, unsigned int height,
+                          unsigned long plane_mask, int format,
+                          XImage *dest_image, int dest_x, int dest_y);
+};
+
+#define JWXYZ_VTBL(dpy) (*(struct jwxyz_vtbl **)(dpy))
+
+#define XRootWindow(dpy, screen) \
+  ((dpy) ? JWXYZ_VTBL(dpy)->root(dpy) : 0)
+#define XDefaultVisualOfScreen(screen) \
+  ((screen) ? JWXYZ_VTBL(screen)->visual(screen) : 0)
+
+#define XDrawPoints(dpy, d, gc, points, n, mode) \
+  (JWXYZ_VTBL(dpy)->DrawPoints (dpy, d, gc, points, n, mode))
+#define XDrawSegments(dpy, d, gc, segments, n) \
+  (JWXYZ_VTBL(dpy)->DrawSegments (dpy, d, gc, segments, n))
+#define XCreateGC(dpy, d, mask, gcv) \
+  (JWXYZ_VTBL(dpy)->CreateGC (dpy, d, mask, gcv))
+#define XFreeGC(dpy, gc) \
+  (JWXYZ_VTBL(dpy)->FreeGC (dpy, gc))
+#define XClearWindow(dpy, win) \
+  (JWXYZ_VTBL(dpy)->ClearWindow(dpy, win))
+#define XSetClipMask(dpy, gc, m) \
+  (JWXYZ_VTBL(dpy)->SetClipMask (dpy, gc, m))
+#define XSetClipOrigin(dpy, gc, x, y) \
+  (JWXYZ_VTBL(dpy)->SetClipOrigin (dpy, gc, x, y))
+#define XFillPolygon(dpy, d, gc, points, npoints, shape, mode) \
+  (JWXYZ_VTBL(dpy)->FillPolygon (dpy, d, gc, points, npoints, shape, mode))
+#define XDrawLines(dpy, d, gc, points, n, mode) \
+  (JWXYZ_VTBL(dpy)->DrawLines (dpy, d, gc, points, n, mode))
+#define XPutImage(dpy, d, gc, image, src_x, src_y, dest_x, dest_y, w, h) \
+  (JWXYZ_VTBL(dpy)->PutImage (dpy, d, gc, image, src_x, src_y, \
+                              dest_x, dest_y, w, h))
+#define XGetSubImage(dpy, d, x, y, width, height, plane_mask, \
+                     format, dest_image, dest_x, dest_y) \
+  (JWXYZ_VTBL(dpy)->GetSubImage (dpy, d, x, y, width, height, plane_mask, \
+                                 format, dest_image, dest_x, dest_y))
+
 
 #endif /* __JWXYZ_H__ */

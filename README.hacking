@@ -92,7 +92,7 @@ The XScreenSaver API
   You may not store global state in global variables, or in function-local
   static variables.  All of your runtime state must be encapsulted in the
   "state" object created by your "init" function.  If you use global or
-  static variables, your screen saver will not work properly on MacOS.
+  static variables, your screen saver will not work properly on macOS.
 
   Do not call XSync() or XFlush().  If you think you need to do that, it
   probably means that you are you are relying on the speed of the graphics
@@ -101,28 +101,45 @@ The XScreenSaver API
 
 
 ==========================================================================
-The XLockMore API
+The xlockmore API
 ==========================================================================
 
   Some of the display modes that come with xscreensaver were ported from
-  XLock, and so, for historical reasons, they follow a slightly different
+  xlock, and so, for historical reasons, they follow a slightly different
   programming convention.  For newly-written Xlib programs, you'd be
   better off following the pattern used in hacks like "Deluxe" than in
-  hacks like "Flag".  The XLockMore ones are the ones that begin with
+  hacks like "Flag".  The xlockmore ones are the ones that begin with
   "#ifdef STANDALONE" and #include "xlockmore.h".
 
-  But, all OpenGL screen savers have to follow the XLockMore API.
+  But, all OpenGL screen savers have to follow the xlockmore API.
 
-  The XLockMore API is similar to the XScreenSaver API, in that you define
+  The xlockmore API is similar to the XScreenSaver API, in that you define
   (roughly) the same set of functions, but the naming conventions are
   slightly different.  Instead of "hackname_init", it's "init_hackname",
   and it should be preceeded with the pseudo-declaration ENTRYPOINT.
 
-  One annoying mis-feature of the XLockMore API is that it *requires* you
+  One annoying mis-feature of the xlockmore API is that it *requires* you
   to make use of global variables for two things: first, for each of your
   command line options; and second, for an array that holds your global
   state objects.  These are the only exceptions to the "never use global
   variables" rule.
+
+  There are a few important differences between the original xlockmore API
+  and XScreenSaver's implementation:
+
+  - XScreenSaver does not use refresh_hackname or change_hackname.
+
+  - XScreenSaver provides two additional hooks not present in xlockmore:
+    reshape_hackname, and hackname_handle_event. These are respectively
+    equivalent to hackname_reshape and hackname_event in the XScreenSaver
+    API.
+
+  - Under Xlib, MI_CLEARWINDOW doesn't clear the window immediately.
+    Instead, due to double buffering on macOS/iOS/Android, it waits until
+    after init_hackname or draw_hackname returns before clearing. Make
+    sure not to issue any Xlib drawing calls immediately after a call to
+    MI_CLEARWINDOW, as these will be erased. To clear the window
+    immediately, just use XClearWindow.
 
 
 ==========================================================================
@@ -163,16 +180,19 @@ Programming Tips
 
 
 ==========================================================================
-MacOS, iOS and Android
+macOS, iOS and Android
 ==========================================================================
 
   Though XScreenSaver started its life as an X11 program, it also now runs
-  on MacOS, iOS and Android, due to a maniacal collection of compatibility
+  on macOS, iOS and Android, due to a maniacal collection of compatibility
   shims.  If you do your development on an X11 system, and follow the
   usual XScreenSaver APIs, you shouldn't need to do anything special for
-  it to also work on MacOS and on phones.
+  it to also work on macOS and on phones.
 
   See the READMEs in the OSX/ and android/ directories for instructions on
   compiling for those platforms.
+
+  To check that an X11 saver will fit well on a mobile device, test it
+  with -geometry 640x1136 and 640x960.  That's a good first step, anyway.
 
 ==========================================================================

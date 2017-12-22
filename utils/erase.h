@@ -15,6 +15,7 @@
 
 typedef struct eraser_state eraser_state;
 
+extern void eraser_free (eraser_state *st);
 extern eraser_state *erase_window (Display *, Window, eraser_state *);
 
 #endif /* __XSCREENSAVER_ERASE_H__ */

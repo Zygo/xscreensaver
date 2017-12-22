@@ -22,7 +22,6 @@
 #import "XScreenSaverConfigSheet.h"
 #import "Updater.h"
 #import "screenhackI.h"
-#import "xlockmoreI.h"
 #import "pow2.h"
 #import "jwxyzI.h"
 #import "jwxyz-cocoa.h"
@@ -645,6 +644,9 @@ add_default_options (const XrmOptionDescRec *opts,
     // from initWithFrame.
     [ogl_ctx setView:self];
 
+    // Get device pixels instead of points.
+    self.wantsBestResolutionOpenGLSurface = YES;
+
     // This may not be necessary if there's FBO support.
 #  ifdef JWXYZ_GL
     xwindow->window.pixfmt = pixfmt;
@@ -675,6 +677,11 @@ add_default_options (const XrmOptionDescRec *opts,
     }
 
     new_backbuffer_size = NSSizeToCGSize ([self bounds].size);
+
+    // Scale factor for desktop retina displays
+    double s = [self hackedContentScaleFactor];
+    new_backbuffer_size.width *= s;
+    new_backbuffer_size.height *= s;
 
 # else  // USE_IPHONE
     if (!ogl_ctx) {
@@ -728,6 +735,50 @@ add_default_options (const XrmOptionDescRec *opts,
 
   [self setViewport];
   [self createBackbuffer:new_backbuffer_size];
+
+# ifdef USE_TOUCHBAR
+  static BOOL created_touchbar = NO;
+
+  if (!touchbar_view &&
+      //#### !self.isPreview &&
+      self.window.screen == [[NSScreen screens] objectAtIndex: 0] &&
+      !created_touchbar) {
+
+    // Figure out which NSScreen has the touchbar on it;
+    // find its bounds; create a saver there.
+
+    created_touchbar = YES;
+    NSScreen *tbs = [[NSScreen screens] lastObject]; // #### write me
+    NSRect rect = [tbs visibleFrame];
+
+    // #### debugging
+    rect.origin.x += 40;
+    rect.origin.x += 40;
+    rect.size.width /= 4;
+    rect.size.height /= 4;
+    NSLog(@"## TB %.0f, %.0f  %.0f x %.0f",
+          rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+
+    touchbar_view = [[[self class] alloc]
+                      initWithFrame:rect
+                      saverName:[NSString stringWithCString:xsft->progclass
+                                          encoding:NSISOLatin1StringEncoding]
+                      isPreview:self.isPreview];
+    [touchbar_view setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
+
+    touchbar_window = [[NSWindow alloc]
+                        initWithContentRect:rect
+                        styleMask: (NSTitledWindowMask|NSResizableWindowMask)
+                        backing:NSBackingStoreBuffered
+                        defer:YES
+                        screen:tbs];
+    [touchbar_window setTitle: @"XScreenSaver Touchbar"];
+    [[touchbar_window contentView] addSubview: touchbar_view];
+    [touchbar_window makeKeyAndOrderFront:touchbar_window];
+  }
+
+  if (touchbar_view) [touchbar_view startAnimation];
+# endif // USE_TOUCHBAR
 }
 
 - (void)stopAnimation
@@ -749,7 +800,7 @@ add_default_options (const XrmOptionDescRec *opts,
        xsft->free_cb (xdpy, xwindow, xdata);
     [self unlockFocus];
 
-    jwxyz_free_display (xdpy);
+    jwxyz_quartz_free_display (xdpy);
     xdpy = NULL;
 # if defined JWXYZ_GL && !defined USE_IPHONE
     CFRelease (xwindow->ogl_ctx);
@@ -800,6 +851,19 @@ add_default_options (const XrmOptionDescRec *opts,
   backbuffer_data = NULL;
   backbuffer_len = 0;
 # endif
+
+# ifdef USE_TOUCHBAR
+  if (touchbar_view) {
+    [touchbar_view stopAnimation];
+    [touchbar_window close];
+
+    [touchbar_view release];
+    [touchbar_window release];
+
+    touchbar_view = nil;
+    touchbar_window = nil;
+  }
+# endif
 }
 
 
@@ -835,18 +899,12 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
 }
 
 
-#ifdef USE_IPHONE
+/* Some of the older X11 savers look bad if a "pixel" is not a thing you can
+   see.  They expect big, chunky, luxurious 1990s pixels, and if they use
+   "device" pixels on a Retina screen, everything just disappears.
 
-/* On iPhones with Retina displays, we can draw the savers in "real"
-   pixels, and that works great.  The 320x480 "point" screen is really
-   a 640x960 *pixel* screen.  However, Retina iPads have 768x1024
-   point screens which are 1536x2048 pixels, and apparently that's
-   enough pixels that copying those bits to the screen is slow.  Like,
-   drops us from 15fps to 7fps.  So, on Retina iPads, we don't draw in
-   real pixels.  This will probably make the savers look better
-   anyway, since that's a higher resolution than most desktop monitors
-   have even today.  (This is only true for X11 programs, not GL 
-   programs.  Those are fine at full rez.)
+   Retina iPads have 768x1024 point screens which are 1536x2048 pixels,
+   2017 iMac screens are 5120x2880 in device pixels.
 
    This method is overridden in XScreenSaverGLView, since this kludge
    isn't necessary for GL programs, being resolution independent by
@@ -854,31 +912,26 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
  */
 - (CGFloat) hackedContentScaleFactor
 {
-  NSSize bsize = [self bounds].size;
-
-  CGFloat
-    max_bsize = bsize.width > bsize.height ? bsize.width : bsize.height;
-
-  // Ratio of screen size in pixels to view size in points.
+# ifdef USE_IPHONE
   CGFloat s = self.contentScaleFactor;
+# else
+  CGFloat s = self.window.backingScaleFactor;
+# endif
 
-  // Two constraints:
+  if (_lowrez_p) {
+    NSSize b = [self bounds].size;
+    CGFloat wh = b.width > b.height ? b.width : b.height;
+    const int max = 800; // maybe 1024?
+    wh *= s;
+    if (wh > max)
+      s *= max / wh;
+  }
 
-  // 1. Don't exceed -- let's say 1280 pixels in either direction.
-  //    (Otherwise the frame rate gets bad.)
-  //    Actually let's make that 1440 since iPhone 6 is natively 1334.
-  CGFloat mag0 = ceil(max_bsize * s / 1440);
-
-  // 2. Don't let the pixel size get too small.
-  //    (Otherwise pixels in IFS and similar are too fine.)
-  //    So don't let the result be > 2 pixels per point.
-  CGFloat mag1 = ceil(s / 2);
-
-  // As of iPhone 6, mag0 is always >= mag1. This may not be true in the future.
-  // (desired scale factor) = s / (desired magnification factor)
-  return s / (mag0 > mag1 ? mag0 : mag1);
+  return s;
 }
 
+
+#ifdef USE_IPHONE
 
 double
 current_device_rotation (void)
@@ -1095,11 +1148,10 @@ gl_check_ver (const struct gl_version *caps,
 
 #  ifdef USE_IPHONE
   GLfloat s = self.contentScaleFactor;
-  GLfloat hs = self.hackedContentScaleFactor;
 #  else // !USE_IPHONE
-  const GLfloat s = 1;
-  const GLfloat hs = s;
+  const GLfloat s = self.window.backingScaleFactor;
 #  endif
+  GLfloat hs = self.hackedContentScaleFactor;
 
   // On OS X this almost isn't necessary, except for the ugly aliasing
   // artifacts.
@@ -1455,11 +1507,11 @@ gl_check_ver (const struct gl_version *caps,
     new_size.width  = new_size.height;
     new_size.height = swap;
   }
+#  endif // USE_IPHONE
 
   double s = self.hackedContentScaleFactor;
   new_size.width *= s;
   new_size.height *= s;
-#  endif // USE_IPHONE
 
   [self prepareContext];
   [self setViewport];
@@ -1541,11 +1593,13 @@ gl_check_ver (const struct gl_version *caps,
 
   if (!initted_p) {
 
+    resized_p = NO;
+
     if (! xdpy) {
 # ifdef JWXYZ_QUARTZ
       xwindow->cgc = backbuffer;
 # endif // JWXYZ_QUARTZ
-      xdpy = jwxyz_make_display (xwindow);
+      xdpy = jwxyz_quartz_make_display (xwindow);
 
 # if defined USE_IPHONE
       /* Some X11 hacks (fluidballs) want to ignore all rotation events. */
@@ -1557,6 +1611,24 @@ gl_check_ver (const struct gl_version *caps,
 #  endif // !JWXYZ_GL
 # endif // USE_IPHONE
 
+      _lowrez_p = get_boolean_resource (xdpy, "lowrez", "Lowrez");
+      if (_lowrez_p) {
+        resized_p = YES;
+
+# if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
+        NSSize  b = [self bounds].size;
+        CGFloat s = self.hackedContentScaleFactor;
+#  ifdef USE_IPHONE
+        CGFloat o = self.contentScaleFactor;
+#  else
+        CGFloat o = self.window.backingScaleFactor;
+#  endif
+        NSLog(@"lowrez: scaling %.0fx%.0f -> %.0fx%.0f (%.02f)",
+              b.width * o, b.height * o,
+              b.width * s, b.height * s, s);
+# endif
+      }
+
       [self resize_x11];
     }
 
@@ -1566,7 +1638,6 @@ gl_check_ver (const struct gl_version *caps,
         xsft->setup_cb (xsft, xsft->setup_arg);
     }
     initted_p = YES;
-    resized_p = NO;
     NSAssert(!xdata, @"xdata already initialized");
 
 
@@ -1785,6 +1856,10 @@ gl_check_ver (const struct gl_version *caps,
 # if defined USE_IPHONE && defined JWXYZ_QUARTZ
   UIGraphicsPopContext();
 # endif
+
+# ifdef USE_TOUCHBAR
+  if (touchbar_view) [touchbar_view animateOneFrame];
+# endif
 }
 
 
@@ -1983,11 +2058,7 @@ gl_check_ver (const struct gl_version *caps,
   
   NSPoint p = [[[e window] contentView] convertPoint:[e locationInWindow]
                                             toView:self];
-# ifdef USE_IPHONE
   double s = [self hackedContentScaleFactor];
-# else
-  int s = 1;
-# endif
   int x = s * p.x;
   int y = s * ([self bounds].size.height - p.y);
 
@@ -2740,6 +2811,18 @@ gl_check_ver (const struct gl_version *caps,
     [button release];
 
     [self addSubview:closeBox];
+  }
+
+  // Don't hide the buttons under the iPhone X bezel.
+  UIEdgeInsets is = { 0, };
+  if ([self respondsToSelector:@selector(safeAreaInsets)]) {
+#   pragma clang diagnostic push   // "only available on iOS 11.0 or newer"
+#   pragma clang diagnostic ignored "-Wunguarded-availability-new"
+    is = [self safeAreaInsets];
+#   pragma clang diagnostic pop
+    [closeBox setFrame:CGRectMake(is.left, is.top,
+                                  self.bounds.size.width - is.right - is.left,
+                                  ih + off)];
   }
 
   if (closeBox.layer.opacity <= 0) {  // Fade in

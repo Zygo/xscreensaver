@@ -16,9 +16,9 @@
 			"*wireframe:	False		 \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_ball 0
+# define free_ball 0
 # define release_ball 0
-# define ball_handle_event 0
+# define ball_handle_event xlockmore_no_events
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -232,8 +232,15 @@ ENTRYPOINT void
 reshape_ball (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective (30.0, 1/h, 1.0, 100.0);
@@ -296,7 +303,7 @@ init_ball (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   blinkboxstruct *bp;
   
-  MI_INIT (mi, blinkbox, NULL);
+  MI_INIT (mi, blinkbox);
   bp = &blinkbox[MI_SCREEN(mi)];
 
   if ((bp->glx_context = init_GL(mi)) != NULL) {

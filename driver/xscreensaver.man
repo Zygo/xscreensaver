@@ -162,7 +162,7 @@ is no \fI~/.xscreensaver\fP file yet.)
 To change your power management settings, run
 .BR xscreensaver\-demo (1)
 and change the various timeouts through the user interface.
-Alternately, you can edit the \fI~/.xscreensaver\fP file directly.
+Alternatively, you can edit the \fI~/.xscreensaver\fP file directly.
 
 If the power management section is grayed out in the
 .BR xscreensaver\-demo (1)

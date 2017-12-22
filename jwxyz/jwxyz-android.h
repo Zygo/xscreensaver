@@ -29,8 +29,12 @@ struct jwxyz_Drawable {
   enum { WINDOW, PIXMAP } type;
   XRectangle frame;
   union {
+    /* JWXYZ_GL */
     EGLSurface egl_surface;
     GLuint texture; /* If this is 0, it's the default framebuffer. */
+
+    /* JWXYZ_IMAGE */
+    void *image_data;
   };
   union {
     struct {
@@ -53,7 +57,9 @@ struct running_hack {
   JNIEnv *jni_env;
   jobject jobject;
 
-  /* These are set up in Java by the GLSurfaceView. */
+  Bool jwxyz_gl_p;
+
+  /* JWXYZ_GL */
   EGLContext egl_ctx;
   EGLSurface egl_surface;
   EGLDisplay egl_display;
@@ -70,6 +76,10 @@ struct running_hack {
   GLuint fb_pixmap;
 
   Drawable current_drawable;
+
+  /* JWXYZ_IMAGE */
+  ANativeWindow *native_window;
+
   Bool ignore_rotation_p;
 
   jwzgles_state *gles_state;
@@ -80,16 +90,14 @@ struct running_hack {
 };
 
 
-extern void prepare_context (struct running_hack *rh);
-
-
 // Methods of the Java class org.jwz.jwxyz that are implemented in C.
 
 JNIEXPORT void JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeInit (JNIEnv *, jobject thiz,
                                             jstring jhack,
                                             jobject defaults,
-                                            jint w, jint h);
+                                            jint w, jint h,
+                                            jobject jni_surface);
 
 JNIEXPORT void JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *, jobject thiz,
@@ -100,19 +108,6 @@ Java_org_jwz_xscreensaver_jwxyz_nativeRender (JNIEnv *, jobject thiz);
 
 JNIEXPORT void JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeDone (JNIEnv *, jobject thiz);
-
-JNIEXPORT void JNICALL
-Java_org_jwz_xscreensaver_jwxyz_allnativeSettings (JNIEnv *, jobject thiz,
-                                                   jstring jhack,
-                                                   jstring hackPref,
-                                                   jint draw, jstring key);
-
-JNIEXPORT jboolean JNICALL
-Java_org_jwz_xscreensaver_jwxyz_ignoreRotation (JNIEnv *, jobject thiz);
-
-JNIEXPORT jboolean JNICALL
-Java_org_jwz_xscreensaver_jwxyz_suppressRotationAnimation (JNIEnv *,
-                                                           jobject thiz);
 
 JNIEXPORT void JNICALL
 Java_org_jwz_xscreensaver_jwxyz_sendButtonEvent (JNIEnv *, jobject thiz,

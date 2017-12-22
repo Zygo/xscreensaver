@@ -31,7 +31,7 @@
 					"*showFPS:	 False	\n" \
 					"*wireframe: False   \n"
 
-# define refresh_extrusion 0
+# define free_extrusion 0
 # define release_extrusion 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -383,8 +383,15 @@ ENTRYPOINT void
 reshape_extrusion (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -530,7 +537,7 @@ init_extrusion (ModeInfo * mi)
 
   if (MI_IS_WIREFRAME(mi)) do_light = 0;
 
-  MI_INIT(mi, Extrusion, NULL);
+  MI_INIT(mi, Extrusion);
   gp = &Extrusion[screen];
 
   gp->window = MI_WINDOW(mi);

@@ -13,7 +13,7 @@
                         "*showFPS:      False              \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_voronoi 0
+# define free_voronoi 0
 # define release_voronoi 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -478,7 +478,7 @@ init_voronoi (ModeInfo *mi)
 {
   voronoi_configuration *vp;
 
-  MI_INIT (mi, vps, NULL);
+  MI_INIT (mi, vps);
 
   vp = &vps[MI_SCREEN(mi)];
 

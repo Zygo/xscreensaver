@@ -1416,7 +1416,7 @@ FAIL:
                                   backing:NSBackingStoreBuffered
                                     defer:YES
                                    screen:screen];
-  [win setMinSize:[win frameRectForContentRect:rect].size];
+//  [win setMinSize:[win frameRectForContentRect:rect].size];
   [[win contentView] addSubview: (pbox ? (NSView *) pbox : (NSView *) sv)];
   [pbox release];
 

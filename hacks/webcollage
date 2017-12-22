@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2016 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2017 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -24,6 +24,10 @@
 # that on your own system, do this:
 #
 #     webcollage --size '800x600' --imagemap $HOME/www/webcollage/index
+#
+#
+# Requires that either the provided "webcollage-helper" program or
+# ImageMagick's "convert" be available on $PATH.
 #
 #
 # If you have the "driftnet" program installed, webcollage can display a
@@ -56,8 +60,8 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.176 $' =~ m/\s(\d[.\d]+)\s/s);
-my $copyright = "WebCollage $version, Copyright (c) 1999-2015" .
+my ($version) = ('$Revision: 1.181 $' =~ m/\s(\d[.\d]+)\s/s);
+my $copyright = "WebCollage $version, Copyright (c) 1999-2017" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
 
@@ -68,25 +72,30 @@ my @search_methods = (
                       # a short-running screen saver, but not as a batch job.
                       # I haven't found a workaround.
                       #
-                        7, "googlephotos",  \&pick_from_google_image_photos,
-                        5, "googleimgs",    \&pick_from_google_images,
-                        5, "googlenums",    \&pick_from_google_image_numbers,
+                        5, "googlephotos",  \&pick_from_google_image_photos,
+                        3, "googleimgs",    \&pick_from_google_images,
+                        3, "googlenums",    \&pick_from_google_image_numbers,
 
                       # So let's try Bing instead. No rate limiting yet!
                       #
-                       14, "bingphotos",    \&pick_from_bing_image_photos,
-                       12, "bingimgs",      \&pick_from_bing_images,
-                       11, "bingnums",      \&pick_from_bing_image_numbers,
+                       13, "bingphotos",    \&pick_from_bing_image_photos,
+                       11, "bingimgs",      \&pick_from_bing_images,
+                       10, "bingnums",      \&pick_from_bing_image_numbers,
 
-                       21, "flickr_recent", \&pick_from_flickr_recent,
-                       16, "flickr_random", \&pick_from_flickr_random,
-                        9, "livejournal",   \&pick_from_livejournal_images,
+                       20, "flickr_recent", \&pick_from_flickr_recent,
+                       15, "flickr_random", \&pick_from_flickr_random,
+                        6, "livejournal",   \&pick_from_livejournal_images,
+
+                       11, "imgur",         \&pick_from_imgur,
+
+                     # Tumblr doesn't have an "or" search, so this isn't great.
+                        3, "tumblr",        \&pick_from_tumblr,
 
                      # I ran out of usable access tokens, May 2017
-                     # 23, "instagram",     \&pick_from_instagram,
+                     #  0, "instagram",     \&pick_from_instagram,
 
                      # No longer exists, as of Apr 2014
-                     #  4, "yahoorand",     \&pick_from_yahoo_random_link,
+                     #  0, "yahoorand",     \&pick_from_yahoo_random_link,
 
                      # Twitter destroyed their whole API in 2013.
                      #  0, "twitpic",       \&pick_from_twitpic_images,
@@ -160,28 +169,17 @@ my @root_displayers = (
 my %cookies = (
   "www.altavista.com"  =>  "AV_ALL=1",   # request uncensored searches
   "web.altavista.com"  =>  "AV_ALL=1",
-
-                                         # log in as "cipherpunk"
-  "www.nytimes.com"    =>  'NYT-S=18cHMIlJOn2Y1bu5xvEG3Ufuk6E1oJ.' .
-                           'FMxWaQV0igaB5Yi/Q/guDnLeoL.pe7i1oakSb' .
-                           '/VqfdUdb2Uo27Vzt1jmPn3cpYRlTw9',
-
   "ircimages.com"      =>  'disclaimer=1',
 );
 
 
 # If this is set, it's a helper program to use for pasting images together:
-# this is a lot faster and more efficient than using PPM pipelines, which is
-# what we do if this program doesn't exist.  (We check for "webcollage-helper"
-# on $PATH at startup, and set this variable appropriately.)
+# this is somewhat faster than using ImageMagick.
 #
 my $webcollage_helper = undef;
+my $convert_cmd = 'convert';
 
-
-# If we have the webcollage-helper program, then it will paste the images
-# together with transparency!  0.0 is invisible, 1.0 is totally opaque.
-#
-my $opacity = 0.85;
+my $opacity = 0.85;  # Opacity when pasting images together.
 
 
 # Some sites have  managed to poison the search engines.  These are they.
@@ -244,9 +242,10 @@ my %warningless_sites = (
   "ljplus.ru"               => 1,
   "yandex.ru"               => 1,
   "imgur.com"               => 1,
+  "tumblr.com"              => 1,
   "yfrog.com"               => 1,
   "cdninstagram.com"        => 1,
-  "encrypted-tbn3.gstatic.com" => 1,
+  "gstatic.com"		    => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -262,6 +261,7 @@ my %warningless_sites = (
 
 
 # For decoding HTML-encoded character entities to URLs.
+# In This Modern World, probably we should use HTML::Entities instead.
 #
 my %entity_table = (
    "apos"   => '\'',
@@ -333,7 +333,7 @@ my $verbose_warnings = 0;       # print out warnings when things go wrong
 my $verbose_load = 0;           # diagnostics about loading of URLs
 my $verbose_filter = 0;         # diagnostics about page selection/rejection
 my $verbose_net = 0;            # diagnostics about network I/O
-my $verbose_pbm = 0;            # diagnostics about PBM pipelines
+my $verbose_decode = 0;         # diagnostics about img conversion pipelines
 my $verbose_http = 0;           # diagnostics about all HTTP activity
 my $verbose_exec = 0;           # diagnostics about executing programs
 
@@ -821,21 +821,25 @@ sub pick_image_from_body($$) {
 # and the image.
 
 sub pick_image_from_rss($$) {
-  my ( $url, $body ) = @_;
-  my @suitable = ($body =~ m/<enclosure url="(.*?)"/g);
+  my ($url, $body) = @_;
 
-  my ($base) = ($body =~ m@<link>([^<>]+)</link>@i);
+  my ($base) = ($body =~ m@<link>([^<>]+)</link>@si);	# root link
+
+  my @items = ($body =~ m@<item\b[^<>]*>(.*?)</item>@gsi);
+  return unless @items;
+
+  my $n = @items;
+  my $i = int(rand($n));
+  my $item = $items[$i];
+
+  $base = $1 if ($item =~ m@<link>([^<>]+)</link>@si);	# item link
   $base = $url unless $base;
+  
+  ($url) = ($item =~ m/<enclosure\b[^<>]*\burl="(.*?)"/si);
+  return unless $url;
 
-  # pick a random element of the table
-  if (@suitable) {
-    my $i = int(rand(scalar @suitable));
-    my $url = $suitable[$i];
-    LOG ($verbose_load, "picked image " .($i+1) . "/" . 
-                        ($#suitable+1) . ": $url");
-    return ($base, $url);
-  }
-  return;
+  LOG ($verbose_load, "picked image $i/$n: $url");
+  return ($base, $url);
 }
 
 
@@ -1323,7 +1327,7 @@ sub pick_from_security_camera($) {
   my @candidates = ();
   my %referers;
   foreach my $u (@subpages) {
-    next if ($u =~ m@[/.]google\.com\b@i);        # skip google builtins (most links)
+    next if ($u =~ m@[/.]google\.com\b@i); # skip google builtins (most links)
     next unless ($u =~ m@jpg/image.jpg\?r=@i);    #  All pics contain this
 
     LOG ($verbose_filter, "  candidate: $u");
@@ -2198,7 +2202,8 @@ sub pick_from_flickr_recent($) {
 #
 ############################################################################
 
-my $flickr_rss_base = ("http://www.flickr.com/services/feeds/photos_public.gne".
+my $flickr_rss_base = ("http://www.flickr.com/services/feeds/" .
+                       "photos_public.gne" .
                        "?format=rss_200_enc&tagmode=any&tags=");
 
 # Picks a random RSS feed; picks a random image from that feed;
@@ -2306,6 +2311,106 @@ sub pick_from_instagram($) {
 
   LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#urls+1) . ": $url");
   return ($url, $img);
+}
+
+
+############################################################################
+#
+# Pick images from Imgur.
+#
+############################################################################
+
+my $imgur_base = 'http://imgur.com/search?qs=thumb&q_any=';
+
+sub pick_from_imgur($) {
+  my $timeout = shift;
+
+  my $words = random_words('%20');
+  $last_search = $imgur_base . $words;
+
+  $_ = $words;
+  s/%20/ /g;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "words: $_");
+  LOG ($verbose_load, "URL: $last_search");
+
+  $suppress_audit = 1;
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  my @imgs = ($body =~ m@\bHREF=[\"\']([^\'\"<>]*/gallery/[^\'\"<>]+)@gsi);
+  return () unless @imgs;
+
+  my $n = @imgs;
+  my $i = int(rand($n));
+  my $page = $imgs[$i];
+  $page =~ s/[?&].*$//s;
+  $page = "http://imgur.com$page" if ($page =~ m@^/@s);
+
+  my ($id) = ($page =~ m@([^/?&]+)$@s);
+  my $img = "http://i.imgur.com/$id.jpg";
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+
+  return ($page, $img);
+}
+
+
+############################################################################
+#
+# Pick images from Tumblr.
+#
+############################################################################
+
+my $tumblr_base = 'https://www.tumblr.com/search/';
+
+sub pick_from_tumblr($) {
+  my $timeout = shift;
+
+  # Tumblr doesn't have an "or" search, which means our vocabulary is
+  # a bit too extensive to work well...
+
+  my $words = random_word();
+  $last_search = $tumblr_base . $words;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "words: $words");
+  LOG ($verbose_load, "URL: $last_search");
+
+  $suppress_audit = 1;
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  my @imgs0 = ($body =~ m@<IMG\b([^<>]*)>@gsi);
+  return () unless @imgs0;
+  my @imgs;
+  foreach my $img (@imgs0) {
+    my ($src)  = ($img =~ m@\bsrc=[\"\'](.*?)[\"\']@si);
+    my ($href) = ($img =~ m@\bdata-pin-url=[\"\'](.*?)[\"\']@si);
+    next unless ($src && $href);
+    next if ($src =~ m/^data:/s);
+    foreach ($src, $href) { $_ = "http://www.tumblr.com$_" if (m@^/@s); }
+    push @imgs, [$href, $src];
+  }
+  return () unless @imgs;
+
+  my $n = @imgs;
+  my $i = int(rand($n));
+  my $page = $imgs[$i]->[0];
+  my $img  = $imgs[$i]->[1];
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+
+  return ($page, $img);
 }
 
 
@@ -2839,6 +2944,15 @@ sub png_size($) {
 }
 
 
+# Given the raw body of a PNM document, returns the dimensions of the image.
+#
+sub pnm_size($) {
+  my ($body) = @_;
+  return () unless ($body =~ m/^P[1-6]\r?\n(\d+) +(\d+)\r?\n/s);
+  return ($1, $2);
+}
+
+
 # Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
 # of the image.
 #
@@ -2849,6 +2963,8 @@ sub image_size($) {
   ($w, $h) = jpeg_size ($body);
   if ($w && $h) { return ($w, $h); }
   return png_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  return pnm_size ($body);
 }
 
 
@@ -2919,15 +3035,15 @@ sub url_only_output() {
 #
 ##############################################################################
 
-my ($image_ppm, $image_tmp1, $image_tmp2);
+my ($image_png, $image_tmp1, $image_tmp2);
 {
   my $seed = rand(0xFFFFFFFF);
-  $image_ppm = sprintf ("%s/webcollage-%08x",
+  $image_png = sprintf ("%s/webcollage-%08x",
                         ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
                         $seed);
-  $image_tmp1 = $image_ppm . '-1.ppm';
-  $image_tmp2 = $image_ppm . '-2.ppm';
-  $image_ppm .= '.ppm';
+  $image_tmp1 = $image_png . '-1.png';
+  $image_tmp2 = $image_png . '-2.png';
+  $image_png .= '.png';
 }
 
 
@@ -2946,7 +3062,7 @@ my $img_height;
 my $delay = 2;
 
 sub x_cleanup() {
-  unlink $image_ppm, $image_tmp1, $image_tmp2;
+  unlink $image_png, $image_tmp1, $image_tmp2;
   unlink $imagemap_html_tmp, $imagemap_jpg_tmp
     if (defined ($imagemap_html_tmp));
 }
@@ -2984,125 +3100,23 @@ sub nontrapping_system(@) {
 }
 
 
-# Given the URL of a GIF, JPEG, or PNG image, and the body of that image,
-# writes a PPM to the given output file.  Returns the width/height of the
-# image if successful.
+# Creates a solid-colored PNG.
 #
-sub image_to_pnm($$$) {
-  my ($url, $body, $output) = @_;
-  my ($cmd, $cmd2, $w, $h);
-
-  if ((@_ = gif_size ($body))) {
-    ($w, $h) = @_;
-    $cmd = "giftopnm";
-  } elsif ((@_ = jpeg_size ($body))) {
-    ($w, $h) = @_;
-    $cmd = "djpeg";
-  } elsif ((@_ = png_size ($body))) {
-    ($w, $h) = @_;
-    $cmd = "pngtopnm";
-  } else {
-    LOG (($verbose_pbm || $verbose_load),
-         "not a GIF, JPG, or PNG" .
-         (($body =~ m@<(base|html|head|body|script|table|a href)\b@i)
-          ? " (looks like HTML)" : "") .
-         ": $url");
-    $suppress_audit = 1;
-    return ();
-  }
-
-  $cmd2 = "exec $cmd";        # yes, this really is necessary.  if we don't
-                              # do this, the process doesn't die properly.
-  if (!$verbose_pbm) {
-    #
-    # We get a "giftopnm: got a 'Application Extension' extension"
-    # warning any time it's an animgif.
-    #
-    # Note that "giftopnm: EOF / read error on image data" is not
-    # always a fatal error -- sometimes the image looks fine anyway.
-    #
-    $cmd2 .= " 2>/dev/null";
-  }
-
-  # There exist corrupted GIF and JPEG files that can make giftopnm and
-  # djpeg lose their minds and go into a loop.  So this gives those programs
-  # a small timeout -- if they don't complete in time, kill them.
-  #
-  my $pid;
-  @_ = eval {
-    my $timed_out;
-
-    local $SIG{ALRM}  = sub {
-      LOG ($verbose_pbm,
-           "timed out ($cvt_timeout) for $cmd on \"$url\" in pid $pid");
-      kill ('TERM', $pid) if ($pid);
-      $timed_out = 1;
-      $body = undef;
-    };
-
-    if (($pid = open (my $pipe, "| $cmd2 > $output"))) {
-      $timed_out = 0;
-      alarm $cvt_timeout;
-      print $pipe $body;
-      $body = undef;
-      close $pipe;
-
-      LOG ($verbose_exec, "awaiting $pid");
-      waitpid ($pid, 0);
-      LOG ($verbose_exec, "$pid completed");
-
-      my $size = (stat($output))[7];
-      $size = -1 unless defined($size);
-      if ($size < 5) {
-        LOG ($verbose_pbm, "$cmd on ${w}x$h \"$url\" failed ($size bytes)");
-        return ();
-      }
-
-      LOG ($verbose_pbm, "created ${w}x$h $output ($cmd)");
-      return ($w, $h);
-    } else {
-      print STDERR blurb() . "$cmd failed: $!\n";
-      return ();
-    }
-  };
-  die if ($@ && $@ ne "alarm\n");       # propagate errors
-  if ($@) {
-    # timed out
-    $body = undef;
-    return ();
-  } else {
-    # didn't
-    alarm 0;
-    $body = undef;
-    return @_;
-  }
-}
-
-
-# Same as the "ppmmake" command: creates a solid-colored PPM.
-# Does not understand the rgb.txt color names except "black" and "white".
-#
-sub ppmmake($$$$) {
+sub pngmake($$$$) {
   my ($outfile, $bgcolor, $w, $h) = @_;
 
-  my ($r, $g, $b);
-  if ($bgcolor =~ m/^\#?([\dA-F][\dA-F])([\dA-F][\dA-F])([\dA-F][\dA-F])$/i ||
-      $bgcolor =~ m/^\#?([\dA-F])([\dA-F])([\dA-F])$/i) {
-    ($r, $g, $b) = (hex($1), hex($2), hex($3));
-  } elsif ($bgcolor =~ m/^black$/i) {
-    ($r, $g, $b) = (0, 0, 0);
-  } elsif ($bgcolor =~ m/^white$/i) {
-    ($r, $g, $b) = (0xFF, 0xFF, 0xFF);
+  my @cmd;
+  if ($webcollage_helper) {
+    @cmd = ($webcollage_helper, $bgcolor, $w, $h, $outfile);
   } else {
-    error ("unparsable color name: $bgcolor");
+    @cmd = ($convert_cmd, '-size', "${w}x${h}", "xc:$bgcolor", $outfile);
   }
-
-  my $pixel = pack('CCC', $r, $g, $b);
-  my $bits = "P6\n$w $h\n255\n" . ($pixel x ($w * $h));
-
-  open (my $out, '>', $outfile) || error ("$outfile: $!");
-  print $out $bits;
-  close $out;
+    
+  my $rc = nontrapping_system (@cmd);
+  if ($rc != 0) {
+    LOG(0, "failed to create $bgcolor image: \"$outfile\"");
+    exit(1);
+  }
 }
 
 
@@ -3130,10 +3144,10 @@ sub pick_root_displayer() {
 }
 
 
-my $ppm_to_root_window_cmd = undef;
+my $png_to_root_window_cmd = undef;
 
 
-sub x_or_pbm_output($) {
+sub x_or_image_output($) {
   my ($window_id) = @_;
 
   # Adjust the PATH for OS X 10.10.
@@ -3143,65 +3157,54 @@ sub x_or_pbm_output($) {
   s/([^a-zA-Z0-9._\-+\/])/\\$1/g;
   $ENV{PATH} = "$_:$ENV{PATH}";
 
-  # Check for our helper program, to see whether we need to use PPM pipelines.
+  # Check for our helper program, to see whether we need to use imagemagick.
   #
   $_ = "webcollage-helper";
 
   if (! defined ($webcollage_helper)) {
-    $webcollage_helper = which ($_);
+#    $webcollage_helper = which ($_);
   }
 
   if (defined ($webcollage_helper)) {
-    LOG ($verbose_pbm, "found \"$webcollage_helper\"");
-    $webcollage_helper = "'$webcollage_helper' -v";
+    LOG ($verbose_decode, "found \"$webcollage_helper\"");
   } else {
-    LOG (($verbose_pbm || $verbose_load), "no $_ program");
+    LOG (($verbose_decode || $verbose_load), "no $_ program");
   }
 
   if ($cocoa_p && !defined ($webcollage_helper)) {
     error ("webcollage-helper not found in Cocoa-mode!");
   }
 
+  if (!$cocoa_p && defined ($webcollage_helper)) {
+    foreach ($image_png, $image_tmp1, $image_tmp2) {
+      s/\.png$/.jpg/si;
+    }
+  }
 
   # make sure the various programs we execute exist, right up front.
   #
   my @progs = ();
 
-  if (!defined($webcollage_helper)) {
-    # Only need these others if we don't have the helper.
-    @progs = (@progs,
-              "giftopnm", "pngtopnm", "djpeg",
-              "pnmpaste", "pnmscale", "pnmcut");
-  }
+  push @progs, $convert_cmd unless defined($webcollage_helper);
 
   foreach (@progs) {
     which ($_) || error "$_ not found on \$PATH.";
   }
 
-  # If we're using webcollage-helper and not a filter, then the tmp files
-  # are JPEGs, not PPMs.
-  #
-  if (defined ($webcollage_helper) && !defined ($filter_cmd)) {
-    foreach ($image_ppm, $image_tmp1, $image_tmp2) {
-      s/\.ppm$/.jpg/s;
-    }
-  }
-
-
   # find a root-window displayer program.
   #
   if (!$no_output_p) {
-    $ppm_to_root_window_cmd = pick_root_displayer();
+    $png_to_root_window_cmd = pick_root_displayer();
   }
 
   if (defined ($window_id)) {
     error ("-window-id only works if xscreensaver-getimage is installed")
-      unless ($ppm_to_root_window_cmd =~ m/^xscreensaver-getimage\b/);
+      unless ($png_to_root_window_cmd =~ m/^xscreensaver-getimage\b/);
 
     error ("unparsable window id: $window_id")
       unless ($window_id =~ m/^\d+$|^0x[\da-f]+$/i);
-    $ppm_to_root_window_cmd =~ s/--?root\b/$window_id/ ||
-      error ("unable to munge displayer: $ppm_to_root_window_cmd");
+    $png_to_root_window_cmd =~ s/--?root\b/$window_id/ ||
+      error ("unable to munge displayer: $png_to_root_window_cmd");
   }
 
   if (!$img_width || !$img_height) {
@@ -3253,55 +3256,17 @@ sub x_or_pbm_output($) {
 
   # Create the sold-colored base image.
   #
-  LOG ($verbose_pbm, "creating base image: ${img_width}x${img_height}");
-  $_ = ppmmake ($image_ppm, $bgcolor, $img_width, $img_height);
+  LOG ($verbose_decode, "creating base image: ${img_width}x${img_height}");
+  $_ = pngmake ($image_png, $bgcolor, $img_width, $img_height);
 
   # Paste the default background image in the middle of it.
   #
   if ($bgimage) {
-    my ($iw, $ih);
-
-    my $body = "";
-    open (my $imgf, '<:raw', $bgimage) || error "couldn't open $bgimage: $!";
+    open (my $in, '<:raw', $bgimage) || error ("$bgimage: $!");
     local $/ = undef;  # read entire file
-    $body = <$imgf>;
-    close ($imgf);
-
-    my $cmd;
-    if ((@_ = gif_size ($body))) {
-      ($iw, $ih) = @_;
-      $cmd = "giftopnm |";
-
-    } elsif ((@_ = jpeg_size ($body))) {
-      ($iw, $ih) = @_;
-      $cmd = "djpeg |";
-
-    } elsif ((@_ = png_size ($body))) {
-      ($iw, $ih) = @_;
-      $cmd = "pngtopnm |";
-
-    } elsif ($body =~ m/^P\d\n(\d+) (\d+)\n/) {
-      $iw = $1;
-      $ih = $2;
-      $cmd = "";
-
-    } else {
-      error "$bgimage is not a GIF, JPEG, PNG, or PPM.";
-    }
-
-    my $x = int (($img_width  - $iw) / 2);
-    my $y = int (($img_height - $ih) / 2);
-    LOG ($verbose_pbm,
-         "pasting $bgimage (${iw}x$ih) into base image at $x,$y");
-
-    $cmd .= "pnmpaste - $x $y $image_ppm > $image_tmp1";
-    open ($imgf, "| $cmd") || error "running $cmd: $!";
-    print $imgf $body;
-    $body = undef;
-    close ($imgf);
-    LOG ($verbose_exec, "subproc exited normally.");
-    rename ($image_tmp1, $image_ppm) ||
-      error "renaming $image_tmp1 to $image_ppm: $!";
+    my $body = <$in>;
+    close ($in) || error ("$bgimage: $!");
+    paste_image ('init', $image_png, $body, 'init', 1);
   }
 
   clearlog();
@@ -3325,60 +3290,40 @@ sub x_or_pbm_output($) {
   }
 }
 
-sub paste_image($$$$) {
-  my ($base, $img, $body, $source) = @_;
+sub paste_image($$$$;$) {
+  my ($base, $img, $body, $source, $init_p) = @_;
 
   $current_state = "paste";
 
   $suppress_audit = 0;
 
-  LOG ($verbose_pbm, "got $img (" . length($body) . ")");
+  LOG ($verbose_decode, "got $img (" . length($body) . ")");
 
-  my ($iw, $ih);
-
-  # If we are using the webcollage-helper, then we do not need to convert this
-  # image to a PPM.  But, if we're using a filter command, we still must, since
-  # that's what the filters expect (webcollage-helper can read PPMs, so that's
-  # fine.)
-  #
-  if (defined ($webcollage_helper) &&
-      !defined ($filter_cmd)) {
-
-    ($iw, $ih) = image_size ($body);
-    if (!$iw || !$ih) {
-      LOG (($verbose_pbm || $verbose_load),
-           "not a GIF, JPG, or PNG" .
-           (($body =~ m@<(base|html|head|body|script|table|a href)>@i)
-            ? " (looks like HTML)" : "") .
-           ": $img");
-      $suppress_audit = 1;
-      $body = undef;
-      return 0;
-    }
-
-    if ($iw <= 0 || $ih <= 0 || $iw > 9999 || $ih > 9999) {
-      LOG (($verbose_pbm || $verbose_load),
-           "ludicrous image dimensions: $iw x $ih (" . length($body) .
-           "): $img");
-      $body = undef;
-      return 0;
-    }
-
-    open (my $out, '>:raw', $image_tmp1) || error ("writing $image_tmp1: $!");
-    (print $out $body) || error ("writing $image_tmp1: $!");
-    close ($out) || error ("writing $image_tmp1: $!");
-
-  } else {
-    ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
+  my ($iw, $ih) = image_size ($body);
+  if (!$iw || !$ih) {
+    LOG (($verbose_decode || $verbose_load),
+         "not a GIF, JPG, or PNG" .
+         (($body =~ m@<(base|html|head|body|script|table|a href)>@i)
+          ? " (looks like HTML)" : "") .
+         ": $img");
+    $suppress_audit = 1;
     $body = undef;
-    if (!$iw || !$ih) {
-      LOG ($verbose_pbm, "unable to make PBM from $img");
-      return 0;
-    }
+    return 0;
   }
 
-  record_success ($load_method, $img, $base);
+  if ($iw <= 0 || $ih <= 0 || $iw > 9999 || $ih > 9999) {
+    LOG (($verbose_decode || $verbose_load),
+         "ludicrous image dimensions: $iw x $ih (" . length($body) .
+         "): $img");
+    $body = undef;
+    return 0;
+  }
 
+  open (my $out, '>:raw', $image_tmp1) || error ("writing $image_tmp1: $!");
+  (print $out $body) || error ("writing $image_tmp1: $!");
+  close ($out) || error ("writing $image_tmp1: $!");
+
+  record_success ($load_method, $img, $base);
 
   my $ow = $iw;  # used only for error messages
   my $oh = $ih;
@@ -3386,218 +3331,240 @@ sub paste_image($$$$) {
   # don't just tack this onto the front of the pipeline -- we want it to
   # be able to change the size of the input image.
   #
-  if ($filter_cmd) {
-    LOG ($verbose_pbm, "running $filter_cmd");
+  if ($filter_cmd && !$init_p) {
+    LOG ($verbose_decode, "running $filter_cmd");
+
+    # #### Historically, $filter_cmd read and write PPM files.
+    #      This is doing PNG or JPEG now.  I'll bet nobody uses this.
 
     my $rc = nontrapping_system "($filter_cmd) < $image_tmp1 >$image_tmp2";
     if ($rc != 0) {
-      LOG(($verbose_pbm || $verbose_load), "failed command: \"$filter_cmd\"");
-      LOG(($verbose_pbm || $verbose_load), "failed URL: \"$img\" (${ow}x$oh)");
+      LOG(($verbose_decode || $verbose_load),
+          "failed command: \"$filter_cmd\"");
+      LOG(($verbose_decode || $verbose_load),
+          "failed URL: \"$img\" (${ow}x$oh)");
       return;
     }
     rename ($image_tmp2, $image_tmp1);
 
     # re-get the width/height in case the filter resized it.
     open (my $imgf, '<:raw', $image_tmp1) || return 0;
-    $_ = <$imgf>;
-    $_ = <$imgf>;
-    ($iw, $ih) = m/^(\d+) (\d+)$/;
-    close ($imgf);
+    my $b = '';
+    sysread ($imgf, $b, 10240);
+    close $imgf;
+    ($iw, $ih) = image_size ($b);
     return 0 unless ($iw && $ih);
   }
 
   my $target_w = $img_width;   # max rectangle into which the image must fit
   my $target_h = $img_height;
 
-  my $cmd = "";
   my $scale = 1.0;
-
-
-  # Usually scale the image to fit on the screen -- but sometimes scale it
-  # to fit on half or a quarter of the screen.  (We do this by reducing the
-  # size of the target rectangle.)  Note that the image is not merely scaled
-  # to fit; we instead cut the image in half repeatedly until it fits in the
-  # target rectangle -- that gives a wider distribution of sizes.
-  #
-  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; } # reduce target rect
-  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
-
-  if ($iw > $target_w || $ih > $target_h) {
-    while ($iw > $target_w ||
-           $ih > $target_h) {
-      $iw = int($iw / 2);
-      $ih = int($ih / 2);
-      $scale /= 2;
-    }
-    if ($iw <= 10 || $ih <= 10) {
-      LOG ($verbose_pbm, "scaling to ${iw}x$ih would have been bogus.");
-      return 0;
-    }
-
-    LOG ($verbose_pbm, "scaling to ${iw}x$ih ($scale)");
-
-    $cmd .= " | pnmscale -xsize $iw -ysize $ih";
-  }
-
-
-  my $src = $image_tmp1;
 
   my $crop_x = 0;     # the sub-rectangle of the image
   my $crop_y = 0;     # that we will actually paste.
   my $crop_w = $iw;
   my $crop_h = $ih;
+  my $x = 0;
+  my $y = 0;
 
-  # The chance that we will randomly crop out a section of an image starts
-  # out fairly low, but goes up for images that are very large, or images
-  # that have ratios that make them look like banners (we try to avoid
-  # banner images entirely, but they slip through when the IMG tags didn't
-  # have WIDTH and HEIGHT specified.)
-  #
-  my $crop_chance = 0.2;
-  if ($iw > $img_width * 0.4 || $ih > $img_height * 0.4) {
-    $crop_chance += 0.2;
-  }
-  if ($iw > $img_width * 0.7 || $ih > $img_height * 0.7) {
-    $crop_chance += 0.2;
-  }
-  if ($min_ratio && ($iw * $min_ratio) > $ih) {
-    $crop_chance += 0.7;
-  }
+  if (!$init_p) {
 
-  if ($crop_chance > 0.1) {
-    LOG ($verbose_pbm, "crop chance: $crop_chance");
-  }
+    # Usually scale the image to fit on the screen -- but sometimes scale it
+    # to fit on half or a quarter of the screen.  (We do this by reducing the
+    # size of the target rectangle.)  Note that the image is not merely scaled
+    # to fit; we instead cut the image in half repeatedly until it fits in the
+    # target rectangle -- that gives a wider distribution of sizes.
+    #
+    if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; } # reduce target rect
+    if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
 
-  if (rand() < $crop_chance) {
+    if ($iw > $target_w || $ih > $target_h) {
+      while ($iw > $target_w ||
+             $ih > $target_h) {
+        $iw = int($iw / 2);
+        $ih = int($ih / 2);
+        $scale /= 2;
+      }
+      if ($iw <= 10 || $ih <= 10) {
+        LOG ($verbose_decode, "scaling ${ow}x${oh} to ${iw}x$ih" .
+             " would have been bogus.");
+        return 0;
+      }
 
-    my $ow = $crop_w;
-    my $oh = $crop_h;
+      $crop_w = $iw;
+      $crop_h = $ih;
 
-    if ($crop_w > $min_width) {
-      # if it's a banner, select the width linearly.
-      # otherwise, select a bell.
-      my $r = (($min_ratio && ($iw * $min_ratio) > $ih)
-               ? rand()
-               : bellrand());
-      $crop_w = $min_width + int ($r * ($crop_w - $min_width));
-      $crop_x = int (rand() * ($ow - $crop_w));
-    }
-    if ($crop_h > $min_height) {
-      # height always selects as a bell.
-      $crop_h = $min_height + int (bellrand() * ($crop_h - $min_height));
-      $crop_y = int (rand() * ($oh - $crop_h));
+      LOG ($verbose_decode, "scaling ${ow}x${oh} to ${iw}x$ih ($scale)");
     }
 
+
+    my $src = $image_tmp1;
+
+    # The chance that we will randomly crop out a section of an image starts
+    # out fairly low, but goes up for images that are very large, or images
+    # that have ratios that make them look like banners (we try to avoid
+    # banner images entirely, but they slip through when the IMG tags didn't
+    # have WIDTH and HEIGHT specified.)
+    #
+    my $crop_chance = 0.2;
+    if ($iw > $img_width * 0.4 || $ih > $img_height * 0.4) {
+      $crop_chance += 0.2;
+    }
+    if ($iw > $img_width * 0.7 || $ih > $img_height * 0.7) {
+      $crop_chance += 0.2;
+    }
+    if ($min_ratio && ($iw * $min_ratio) > $ih) {
+      $crop_chance += 0.7;
+    }
+
+    if ($crop_chance > 0.1) {
+      LOG ($verbose_decode, "crop chance: $crop_chance");
+    }
+
+    if (rand() < $crop_chance) {
+
+      my $ow = $crop_w;
+      my $oh = $crop_h;
+
+      if ($crop_w > $min_width) {
+        # if it's a banner, select the width linearly.
+        # otherwise, select a bell.
+        my $r = (($min_ratio && ($iw * $min_ratio) > $ih)
+                 ? rand()
+                 : bellrand());
+        $crop_w = $min_width + int ($r * ($crop_w - $min_width));
+        $crop_x = int (rand() * ($ow - $crop_w));
+      }
+      if ($crop_h > $min_height) {
+        # height always selects as a bell.
+        $crop_h = $min_height + int (bellrand() * ($crop_h - $min_height));
+        $crop_y = int (rand() * ($oh - $crop_h));
+      }
+
+      # Clip it to the actual post-scaling image size.
+      if ($crop_x + $crop_w > $iw) { $crop_w = $iw - $crop_x; }
+      if ($crop_y + $crop_h > $ih) { $crop_h = $ih - $crop_y; }
+      if ($crop_x < 0) { $crop_w += $crop_x; $crop_x = 0; }
+      if ($crop_y < 0) { $crop_h += $crop_y; $crop_y = 0; }
+
+      if ($crop_x != 0   || $crop_y != 0 ||
+          $crop_w != $iw || $crop_h != $ih) {
+        LOG ($verbose_decode,
+             "randomly cropping to ${crop_w}x$crop_h \@ $crop_x,$crop_y");
+      }
+    }
+
+    # Where the image should logically land -- this might be negative.
+    #
+    $x = int((rand() * ($img_width  + $crop_w/2)) - $crop_w*3/4);
+    $y = int((rand() * ($img_height + $crop_h/2)) - $crop_h*3/4);
+
+    # if we have chosen to paste the image outside of the rectangle of the
+    # screen, then we need to crop it.
+    #
+    if ($x < 0 ||
+        $y < 0 ||
+        $x + $crop_w > $img_width ||
+        $y + $crop_h > $img_height) {
+
+      LOG ($verbose_decode,
+           "cropping for effective paste of ${crop_w}x${crop_h} \@ $x,$y");
+
+      if ($x < 0) { $crop_x -= $x; $crop_w += $x; $x = 0; }
+      if ($y < 0) { $crop_y -= $y; $crop_h += $y; $y = 0; }
+
+      if ($x + $crop_w >= $img_width)  { $crop_w = $img_width  - $x - 1; }
+      if ($y + $crop_h >= $img_height) { $crop_h = $img_height - $y - 1; }
+    }
+
+    # If any cropping needs to happen, add pnmcut.
+    #
     if ($crop_x != 0   || $crop_y != 0 ||
         $crop_w != $iw || $crop_h != $ih) {
-      LOG ($verbose_pbm,
-           "randomly cropping to ${crop_w}x$crop_h \@ $crop_x,$crop_y");
+      $iw = $crop_w;
+      $ih = $crop_h;
+      LOG ($verbose_decode, "cropping to ${crop_w}x$crop_h \@ " .
+           "$crop_x,$crop_y");
     }
+
+    LOG ($verbose_decode, "pasting ${iw}x$ih \@ $x,$y in $image_png");
   }
 
-  # Where the image should logically land -- this might be negative.
-  #
-  my $x = int((rand() * ($img_width  + $crop_w/2)) - $crop_w*3/4);
-  my $y = int((rand() * ($img_height + $crop_h/2)) - $crop_h*3/4);
-
-  # if we have chosen to paste the image outside of the rectangle of the
-  # screen, then we need to crop it.
-  #
-  if ($x < 0 ||
-      $y < 0 ||
-      $x + $crop_w > $img_width ||
-      $y + $crop_h > $img_height) {
-
-    LOG ($verbose_pbm,
-         "cropping for effective paste of ${crop_w}x$crop_h \@ $x,$y");
-
-    if ($x < 0) { $crop_x -= $x; $crop_w += $x; $x = 0; }
-    if ($y < 0) { $crop_y -= $y; $crop_h += $y; $y = 0; }
-
-    if ($x + $crop_w >= $img_width)  { $crop_w = $img_width  - $x - 1; }
-    if ($y + $crop_h >= $img_height) { $crop_h = $img_height - $y - 1; }
-  }
-
-  # If any cropping needs to happen, add pnmcut.
-  #
-  if ($crop_x != 0   || $crop_y != 0 ||
-      $crop_w != $iw || $crop_h != $ih) {
-    $iw = $crop_w;
-    $ih = $crop_h;
-    $cmd .= " | pnmcut $crop_x $crop_y $iw $ih";
-    LOG ($verbose_pbm, "cropping to ${crop_w}x$crop_h \@ $crop_x,$crop_y");
-  }
-
-  LOG ($verbose_pbm, "pasting ${iw}x$ih \@ $x,$y in $image_ppm");
-
-  $cmd .= " | pnmpaste - $x $y $image_ppm";
-
-  $cmd =~ s@^ *\| *@@;
-
+  my @cmd;
   if (defined ($webcollage_helper)) {
-    $cmd = "$webcollage_helper $image_tmp1 $image_ppm " .
-                              "$scale $opacity " .
-                              "$crop_x $crop_y $x $y " .
-                              "$iw $ih";
-    $_ = $cmd;
-
+    @cmd = ($webcollage_helper,
+            $image_tmp1, $image_png,
+            $scale, $opacity,
+            $crop_x, $crop_y, $x, $y,
+            $iw, $ih);
   } else {
-    # use a PPM pipeline
-    $_ = "($cmd)";
-    $_ .= " < $image_tmp1 > $image_tmp2";
+    @cmd = ($convert_cmd,
+            $image_png,
+            '(',
+            $image_tmp1 . '[0]', 
+            '-scale', sprintf("%.2f%%", 100 * $scale),
+            '-crop', "${iw}x${ih}+${crop_x}+${crop_y}",
+            '-geometry', "+${x}+${y}",
+
+            ($init_p ? () :
+             (
+              # Blurry edges with rounded corners
+              '-alpha', 'set',
+              '-virtual-pixel', 'transparent',
+              '-channel', 'A',
+              '-blur', '0x12',
+              '-level', '50%,100%',
+
+              # Overall transparency
+              '-evaluate', 'multiply', $opacity,
+
+              '+channel',
+             )),
+            ')',
+            '-composite',
+            '+repage',
+            '-strip',
+            $image_png);
   }
 
-  if ($verbose_pbm) {
-    $_ = "($_) 2>&1 | sed s'/^/" . blurb() . "/'";
-  } else {
-    $_ .= " 2> /dev/null";
-  }
+  #### $verbose_decode should mean 2>/dev/null
 
-  my $rc = nontrapping_system ($_);
+  my $rc = nontrapping_system (@cmd);
 
-  if (defined ($webcollage_helper) && -z $image_ppm) {
-    LOG (1, "failed command: \"$cmd\"");
+  if (-z $image_png) {
+    LOG (1, "failed command: \"@cmd\"");
     print STDERR "\naudit log:\n\n\n";
     print STDERR ("#" x 78) . "\n";
-    print STDERR blurb() . "$image_ppm has zero size\n";
+    print STDERR blurb() . "$image_png has zero size\n";
     showlog();
     print STDERR "\n\n";
     exit (1);
   }
 
   if ($rc != 0) {
-    LOG (($verbose_pbm || $verbose_load), "failed command: \"$cmd\"");
-    LOG (($verbose_pbm || $verbose_load), "failed URL: \"$img\" (${ow}x$oh)");
+    LOG (($verbose_decode || $verbose_load), "failed command: \"@cmd\"");
+    LOG (($verbose_decode || $verbose_load),
+         "failed URL: \"$img\" (${ow}x$oh)");
     return;
   }
 
-  if (!defined ($webcollage_helper)) {
-    rename ($image_tmp2, $image_ppm) || return;
-  }
-
-  my $target = "$image_ppm";
+  my $target = "$image_png";
 
   # don't just tack this onto the end of the pipeline -- we don't want it
-  # to end up in $image_ppm, because we don't want the results to be
+  # to end up in $image_png, because we don't want the results to be
   # cumulative.
   #
   if ($post_filter_cmd) {
 
-    my $cmd;
+    # #### Historically, $post_filter_cmd read and write PPM files.
+    #      This is doing PNG or JPEG now.  I'll bet nobody uses this.
 
     $target = $image_tmp1;
-    if (!defined ($webcollage_helper)) {
-      $cmd = "($post_filter_cmd) < $image_ppm > $target";
-    } else {
-      # Blah, my scripts need the JPEG data, but some other folks need
-      # the PPM data -- what to do?  Ignore the problem, that's what!
-#     $cmd = "djpeg < $image_ppm | ($post_filter_cmd) > $target";
-      $cmd = "($post_filter_cmd) < $image_ppm > $target";
-    }
-
+    my $cmd = "($post_filter_cmd) < $image_png > $target";
     $rc = nontrapping_system ($cmd);
     if ($rc != 0) {
-      LOG ($verbose_pbm, "filter failed: \"$post_filter_cmd\"\n");
+      LOG ($verbose_decode, "filter failed: \"$post_filter_cmd\"\n");
       return;
     }
   }
@@ -3605,7 +3572,7 @@ sub paste_image($$$$) {
   if (!$no_output_p) {
     my $tsize = (stat($target))[7];
     if ($tsize > 200) {
-      $cmd = "$ppm_to_root_window_cmd $target";
+      my $cmd = "$png_to_root_window_cmd $target";
 
       # xv seems to hate being killed.  it tends to forget to clean
       # up after itself, and leaves windows around and colors allocated.
@@ -3622,21 +3589,23 @@ sub paste_image($$$$) {
       $rc = nontrapping_system ($cmd);
 
       if ($rc != 0) {
-        LOG (($verbose_pbm || $verbose_load), "display failed: \"$cmd\"");
+        LOG (($verbose_decode || $verbose_load), "display failed: \"$cmd\"");
         return;
       }
 
     } else {
-      LOG ($verbose_pbm, "$target size is $tsize");
+      LOG ($verbose_decode, "$target size is $tsize");
     }
   }
 
-  $source .= "-" . stats_of($source);
-  print STDOUT "image: ${iw}x${ih} @ $x,$y $base $source\n"
-    if ($verbose_imgmap);
-  if ($imagemap_base) {
-    update_imagemap ($base, $x, $y, $iw, $ih,
-                     $image_ppm, $img_width, $img_height);
+  if (defined($source)) {
+    $source .= "-" . stats_of($source);
+    print STDOUT "image: ${iw}x${ih} @ $x,$y $base $source\n"
+      if ($verbose_imgmap);
+    if ($imagemap_base) {
+      update_imagemap ($base, $x, $y, $iw, $ih,
+                       $image_png, $img_width, $img_height);
+    }
   }
 
   clearlog();
@@ -3646,22 +3615,16 @@ sub paste_image($$$$) {
 
 
 sub update_imagemap($$$$$$$$) {
-  my ($url, $x, $y, $w, $h, $image_ppm, $image_width, $image_height) = @_;
+  my ($url, $x, $y, $w, $h, $image_png, $image_width, $image_height) = @_;
 
   $current_state = "imagemap";
 
   my $max_areas = 200;
 
   $url = html_quote ($url);
-  my $x2 = $x + $w;
-  my $y2 = $y + $h;
-  my $area = "<AREA SHAPE=RECT COORDS=\"$x,$y,$x2,$y2\" HREF=\"$url\">";
-  unshift @imagemap_areas, $area;	# put one on the front
-  if ($#imagemap_areas >= $max_areas) {
-    pop @imagemap_areas;		# take one off the back.
-  }
-
-  LOG ($verbose_pbm, "area: $x,$y,$x2,$y2 (${w}x$h)");
+  push @imagemap_areas, [$x, $y, $w, $h, $url];
+  shift @imagemap_areas if (@imagemap_areas > $max_areas);
+  LOG ($verbose_decode, "area: $x,$y,$w,$h");
 
   my $map_name = $imagemap_base;
   $map_name =~ s@^.*/@@;
@@ -3685,29 +3648,80 @@ sub update_imagemap($$$$$$$$) {
       local $/ = undef;  # read entire file
       $template_html = <$in>;
       close $in;
-      LOG ($verbose_pbm, "read template $imagemap_html");
+      LOG ($verbose_decode, "read template $imagemap_html");
     }
 
-    if ($template_html =~ m/^\s*$/s) {
-      $template_html = ("<MAP NAME=\"$map_name\"></MAP>\n" .
-                        "<IMG SRC=\"$imagemap_jpg2\"" .
-                        " USEMAP=\"$map_name\">\n");
-      LOG ($verbose_pbm, "created dummy template");
+    if (! ($template_html =~ m/\.webcollage_box\b/s)) {  # missing or old
+      $template_html =
+       '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+	  "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+ <HEAD>
+  <BASE TARGET="_new">
+  <meta HTTP-EQUIV="Refresh" content="60" />
+  <TITLE>WebCollage</TITLE>
+  <STYLE TYPE="text/css">
+   <!--
+    body { color: #FFF; max-width: 100%; }
+    .webcollage_date, .webcollage_size {
+      display: block; margin-top: 4px; font-size: 7pt; color: #888;
+    }
+    .webcollage_date { float: left; }
+    .webcollage_size { float: right; }
+
+    .webcollage_frame {
+      overflow: hidden;
+      position: relative;
+      padding-bottom: 56.25%;
+      padding-bottom: 75%; /* 4:3 aspect ratio */
+      border: 1px solid #888;
+      background: #000;
+    }
+
+    .webcollage_box {
+       position: absolute; top: 0; left: 0;
+       border: 0; margin: 0; padding: 0;
+       width:  100%;
+       height: 100%;
+    }
+
+    .webcollage_box > img { width: 100%; height: 100%; border: 0; }
+
+    .webcollage_frame > a {
+      display: block;
+      position: absolute;
+      border-radius: 16px;
+    }
+
+    .webcollage_frame > a:hover {
+      background: rgba(1,1,1,.25);
+    }
+   -->
+  </STYLE>
+ </HEAD>
+ <BODY>
+  <DIV CLASS="webcollage_frame">
+  </DIV>
+ </BODY>
+</HTML>
+';
+
+      LOG ($verbose_decode, "created dummy template");
     }
   }
 
   # Write the jpg to a tmp file
   #
   {
-    my $cmd;
-    if (defined ($webcollage_helper)) {
-      $cmd = "cp -p $image_ppm $imagemap_jpg_tmp";
+    my @cmd;
+    if (defined($webcollage_helper)) {
+      @cmd = ('cp', '-p', $image_png, $imagemap_jpg_tmp);
     } else {
-      $cmd = "cjpeg < $image_ppm > $imagemap_jpg_tmp";
+      @cmd = ($convert_cmd, $image_png, 'jpeg:' . $imagemap_jpg_tmp);
     }
-    my $rc = nontrapping_system ($cmd);
+    my $rc = nontrapping_system (@cmd);
     if ($rc != 0) {
-      error ("imagemap jpeg failed: \"$cmd\"\n");
+      error ("imagemap jpeg failed: \"@cmd\"\n");
     }
   }
 
@@ -3715,14 +3729,28 @@ sub update_imagemap($$$$$$$$) {
   #
   {
     my $body = $template_html;
-    my $areas = join ("\n\t", @imagemap_areas);
-    my $map = ("<MAP NAME=\"$map_name\">\n\t$areas\n</MAP>");
-    my $img = ("<IMG SRC=\"$imagemap_jpg2\" " .
-               "BORDER=0 " .
-               "WIDTH=$image_width HEIGHT=$image_height " .
-               "USEMAP=\"#$map_name\">");
-    $body =~ s@(<MAP\s+NAME=\"[^\"]*\"\s*>).*?(</MAP>)@$map@is;
-    $body =~ s@<IMG\b[^<>]*\bUSEMAP\b[^<>]*>@$img@is;
+    my $img = ("   <DIV CLASS=\"webcollage_box\">" .
+                    "<IMG SRC=\"$imagemap_jpg2\">" .
+                   "</DIV>\n");
+    foreach my $a (@imagemap_areas) {
+      my ($x, $y, $w, $h, $u) = @$a;
+      $x /= $img_width  / 100;
+      $y /= $img_height / 100;
+      $w /= $img_width  / 100;
+      $h /= $img_height / 100;
+      foreach ($x, $y, $w, $h) { $_ = sprintf("%.1f%%", $_); }
+      $u = html_quote($u);
+      $img .= ("   <A HREF=\"$u\" STYLE=\"" .
+               "left:$x;top:$y;width:$w;height:$h\"/>\n");
+    }
+
+    $img = ("<DIV CLASS=\"webcollage_frame\">\n" .
+            $img .
+            "  </DIV>\n");
+    $body =~ s@<DIV \s+ CLASS=[\"\']webcollage_frame[\"\']>
+                .*? </DIV> .*? </DIV>@$img@sex ||
+      error ("$imagemap_html_tmp: unable to splice image");
+
 
     # if there are magic webcollage spans in the html, update those too.
     #
@@ -3734,20 +3762,23 @@ sub update_imagemap($$$$$$$$) {
       $body =~ s@(<SPAN\s+CLASS=\"webcollage_size\">).*?(</SPAN>)@$1$size$2@si;
     }
 
-    open (my $out, '>', $imagemap_html_tmp) || error ("$imagemap_html_tmp: $!");
-    (print $out $body)                      || error ("$imagemap_html_tmp: $!");
-    close ($out)                            || error ("$imagemap_html_tmp: $!");
-    LOG ($verbose_pbm, "wrote $imagemap_html_tmp");
+    open (my $out, '>', $imagemap_html_tmp) || error("$imagemap_html_tmp: $!");
+    (print $out $body)                      || error("$imagemap_html_tmp: $!");
+    close ($out)                            || error("$imagemap_html_tmp: $!");
+    LOG ($verbose_decode, "wrote $imagemap_html_tmp");
   }
 
   # Rename the two tmp files to the real files
   #
   rename ($imagemap_html_tmp, $imagemap_html) ||
     error "renaming $imagemap_html_tmp to $imagemap_html";
-  LOG ($verbose_pbm, "wrote $imagemap_html");
-  rename ($imagemap_jpg_tmp,  $imagemap_jpg) ||
-    error "renaming $imagemap_jpg_tmp to $imagemap_jpg";
-  LOG ($verbose_pbm, "wrote $imagemap_jpg");
+  LOG ($verbose_decode, "wrote $imagemap_html");
+
+  if ($imagemap_jpg_tmp ne $image_png) {
+    rename ($imagemap_jpg_tmp,  $imagemap_jpg) ||
+      error "renaming $imagemap_jpg_tmp to $imagemap_jpg";
+    LOG ($verbose_decode, "wrote $imagemap_jpg");
+  }
 }
 
 
@@ -3803,7 +3834,7 @@ sub init_signals() {
   $SIG{KILL} = \&signal_cleanup;
   $SIG{TERM} = \&signal_cleanup;
 
-  # Need this so that if giftopnm dies, we don't die.
+  # Need this so that if subprocess filters die, we don't die.
   $SIG{PIPE} = 'IGNORE';
 }
 
@@ -3963,7 +3994,7 @@ sub main() {
     $verbose_load     = 1;
     $verbose_filter   = 1;
     $verbose_net      = 1;
-    $verbose_pbm      = 1;
+    $verbose_decode   = 1;
 
   } elsif ($verbose == 6) {
     $verbose_imgmap   = 1;
@@ -3971,7 +4002,7 @@ sub main() {
     $verbose_load     = 1;
     $verbose_filter   = 1;
     $verbose_net      = 1;
-    $verbose_pbm      = 1;
+    $verbose_decode   = 1;
     $verbose_http     = 1;
 
   } elsif ($verbose >= 7) {
@@ -3980,7 +4011,7 @@ sub main() {
     $verbose_load     = 1;
     $verbose_filter   = 1;
     $verbose_net      = 1;
-    $verbose_pbm      = 1;
+    $verbose_decode   = 1;
     $verbose_http     = 1;
     $verbose_exec     = 1;
   }
@@ -4009,7 +4040,7 @@ sub main() {
   if ($urls_only_p) {
     url_only_output ();
   } else {
-    x_or_pbm_output ($window_id);
+    x_or_image_output ($window_id);
   }
 }
 

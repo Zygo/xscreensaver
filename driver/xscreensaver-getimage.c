@@ -256,9 +256,24 @@ compute_image_scaling (int src_w, int src_h,
       float rw = (float) dest_w  / src_w;
       float rh = (float) dest_h / src_h;
       float r = (rw < rh ? rw : rh);
-      int tw = src_w * r;
-      int th = src_h * r;
-      int pct = (r * 100);
+      int tw, th, pct;
+
+      /* If the window is a goofy aspect ratio, take a middle slice of
+         the image instead. */
+      if (dest_w > dest_h * 5 || dest_h > dest_w * 5)
+        {
+          double r2 = (dest_w > dest_h
+                       ? dest_w / (double) dest_h
+                       : dest_h / (double) dest_w);
+          r *= r2;
+          if (verbose_p)
+            fprintf (stderr, "%s: weird aspect: scaling by %.1f\n",
+                     progname, r2);
+        }
+
+      tw = src_w * r;
+      th = src_h * r;
+      pct = (r * 100);
 
 #if 0
       /* this optimization breaks things */
@@ -281,8 +296,8 @@ compute_image_scaling (int src_w, int src_h,
   if (destx < 0) srcx = -destx, destx = 0;
   if (desty < 0) srcy = -desty, desty = 0;
 
-  if (dest_w < src_w) src_w = dest_w;
-  if (dest_h < src_h) src_h = dest_h;
+  /* if (dest_w < src_w) src_w = dest_w;
+     if (dest_h < src_h) src_h = dest_h; */
 
   *scaled_w_ret = src_w;
   *scaled_h_ret = src_h;
@@ -292,8 +307,8 @@ compute_image_scaling (int src_w, int src_h,
   *scaled_to_y_ret = desty;
 
   if (verbose_p)
-    fprintf (stderr, "%s: displaying %dx%d image at %d,%d in %dx%d.\n",
-             progname, src_w, src_h, destx, desty, dest_w, dest_h);
+    fprintf (stderr, "%s: displaying %dx%d+%d+%d image at %d,%d in %dx%d.\n",
+             progname, src_w, src_h, srcx, srcy, destx, desty, dest_w, dest_h);
 }
 
 
@@ -466,6 +481,8 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
          gdk_pixbuf_render_pixmap_and_mask_for_colormap() instead.
          But I haven't tried.
        */
+      if (srcx > 0) w -= srcx;
+      if (srcy > 0) h -= srcy;
       gdk_pixbuf_xlib_render_to_drawable_alpha (pb, drawable,
                                                 srcx, srcy, destx, desty,
                                                 w, h,
@@ -1491,7 +1508,7 @@ drawable_miniscule_p (Display *dpy, Drawable drawable)
   int xx, yy;
   unsigned int bw, d, w = 0, h = 0;
   XGetGeometry (dpy, drawable, &root, &xx, &yy, &w, &h, &bw, &d);
-  return (w < 32 || h < 32);
+  return (w < 32 || h < 30);
 }
 
 

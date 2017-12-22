@@ -239,25 +239,9 @@ xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
 
 
 static void
-xlockmore_free_screens (ModeInfo *mi)
+xlockmore_release_screens (ModeInfo *mi)
 {
   struct xlockmore_function_table *xlmft = mi->xlmft;
-
-  /* Optimization: xlockmore_read_resources calls this lots on first start. */
-  if (!xlmft->got_init)
-    return;
-
-  /* Order is important here: */
-
-  /* 1. Call free_## for all screens. */
-  if (xlmft->hack_free_state) {
-    int old_screen = mi->screen_number;
-    for (mi->screen_number = 0; mi->screen_number < XLOCKMORE_NUM_SCREENS;
-         ++mi->screen_number) {
-      xlmft->hack_free_state (mi);
-    }
-    mi->screen_number = old_screen;
-  }
 
   /* 2. Call release_##, if it exists. */
   if (xlmft->hack_release)
@@ -273,6 +257,31 @@ xlockmore_free_screens (ModeInfo *mi)
   /* 4. Pretend FreeAllGL(mi) gets called here. */
 
   mi->xlmft->got_init = 0;
+}
+
+
+static void
+xlockmore_free_screens (ModeInfo *mi)
+{
+  struct xlockmore_function_table *xlmft = mi->xlmft;
+
+  /* Optimization: xlockmore_read_resources calls this lots on first start. */
+  if (!xlmft->got_init)
+    return;
+
+  /* Order is important here: */
+
+  /* 1. Call free_## for all screens. */
+  if (xlmft->hack_free) {
+    int old_screen = mi->screen_number;
+    for (mi->screen_number = 0; mi->screen_number < XLOCKMORE_NUM_SCREENS;
+         ++mi->screen_number) {
+      xlmft->hack_free (mi);
+    }
+    mi->screen_number = old_screen;
+  }
+
+  xlockmore_release_screens (mi);
 }
 
 
@@ -558,12 +567,40 @@ xlockmore_init (Display *dpy, Window window,
   return mi;
 }
 
-static void xlockmore_do_init (ModeInfo *mi)
+
+static void
+xlockmore_do_init (ModeInfo *mi)
 {
-  if (! (mi->xlmft->got_init & (1 << mi->screen_number))) {
-    mi->xlmft->got_init |= 1 << mi->screen_number;
-    XClearWindow (mi->dpy, mi->window);
-    mi->xlmft->hack_init (mi);
+  mi->xlmft->got_init |= 1 << mi->screen_number;
+  XClearWindow (mi->dpy, mi->window);
+  mi->xlmft->hack_init (mi);
+}
+
+
+static Bool
+xlockmore_got_init (ModeInfo *mi)
+{
+  return mi->xlmft->got_init & (1 << mi->screen_number);
+}
+
+
+static void
+xlockmore_abort_erase (ModeInfo *mi)
+{
+  if (mi->eraser) {
+    eraser_free (mi->eraser);
+    mi->eraser = NULL;
+  }
+  mi->needs_clear = False;
+}
+
+
+static void
+xlockmore_check_init (ModeInfo *mi)
+{
+  if (! xlockmore_got_init (mi)) {
+    xlockmore_abort_erase (mi);
+    xlockmore_do_init (mi);
   }
 }
 
@@ -575,12 +612,27 @@ xlockmore_draw (Display *dpy, Window window, void *closure)
   unsigned long orig_pause = mi->pause;
   unsigned long this_pause;
 
-  xlockmore_do_init (mi);
+  if (mi->needs_clear) {
+    /* OpenGL hacks never get here. */
+    if (!mi->is_drawn) {
+      XClearWindow (dpy, window);
+    } else {
+      mi->eraser = erase_window (dpy, window, mi->eraser);
+      /* Delay calls to xlockmore hooks while the erase animation is running. */
+      if (mi->eraser)
+        return 33333;
+    }
+    mi->needs_clear = False;
+  }
+
+  xlockmore_check_init (mi);
+  if (mi->needs_clear)
+    return 0;
   mi->xlmft->hack_draw (mi);
 
   this_pause = mi->pause;
   mi->pause  = orig_pause;
-  return this_pause;
+  return mi->needs_clear ? 0 : this_pause;
 }
 
 
@@ -589,24 +641,55 @@ xlockmore_reshape (Display *dpy, Window window, void *closure,
                  unsigned int w, unsigned int h)
 {
   ModeInfo *mi = (ModeInfo *) closure;
-  if (mi && mi->xlmft->hack_reshape)
-    {
-      XGetWindowAttributes (dpy, window, &mi->xgwa);
-      xlockmore_do_init (mi);
-      mi->xlmft->hack_reshape (mi, mi->xgwa.width, mi->xgwa.height);
+  if (mi) {
+    /* Ignore spurious resize events, because xlockmore_do_init usually clears
+       the screen, and there's no reason to do that if we don't have to.
+     */
+# ifndef HAVE_MOBILE
+    /* These are not spurious on mobile: they are rotations. */
+    if (mi->xgwa.width == w && mi->xgwa.height == h)
+      return;
+# endif
+    mi->xgwa.width = w;
+    mi->xgwa.height = h;
+
+    /* Finish any erase operations. */
+    if (mi->needs_clear) {
+      xlockmore_abort_erase (mi);
+      XClearWindow (dpy, window);
     }
+
+    /* If there hasn't been an init yet, init now, but don't call reshape_##.
+     */
+    if (xlockmore_got_init (mi) && mi->xlmft->hack_reshape) {
+      mi->xlmft->hack_reshape (mi, mi->xgwa.width, mi->xgwa.height);
+    } else {
+      mi->is_drawn = False;
+      xlockmore_do_init (mi);
+    }
+  }
 }
 
 static Bool
 xlockmore_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   ModeInfo *mi = (ModeInfo *) closure;
-  if (mi && mi->xlmft->hack_handle_events) {
-    xlockmore_do_init (mi);
-    return mi->xlmft->hack_handle_events (mi, event);
-  } else {
-    return False;
+  if (mi) {
+    if (mi->xlmft->hack_handle_events) {
+      xlockmore_check_init (mi);
+      return mi->xlmft->hack_handle_events (mi, event);
+    }
+
+    if (screenhack_event_helper (mi->dpy, mi->window, event)) {
+      /* If a clear is in progress, don't interrupt or restart it. */
+      if (mi->needs_clear)
+        mi->xlmft->got_init &= ~(1ul << mi->screen_number);
+      else
+        mi->xlmft->hack_init (mi);
+      return True;
+    }
   }
+  return False;
 }
 
 void
@@ -623,11 +706,22 @@ xlockmore_free (Display *dpy, Window window, void *closure)
 {
   ModeInfo *mi = (ModeInfo *) closure;
 
+  if (mi->eraser)
+    eraser_free (mi->eraser);
+
+  /* Some hacks may need to do things with their Display * on cleanup. And
+     under JWXYZ, the Display * for this hack gets cleaned up right after
+     xlockmore_free returns. Thus, hack_free has to happen now, rather than
+     after the final screen has been released.
+   */
+  if (mi->xlmft->hack_free)
+    mi->xlmft->hack_free (mi);
+
   /* Find us in live_displays and clear that slot. */
   assert (mi->xlmft->live_displays & (1ul << mi->screen_number));
   mi->xlmft->live_displays &= ~(1ul << mi->screen_number);
   if (!mi->xlmft->live_displays)
-    xlockmore_free_screens (mi);
+    xlockmore_release_screens (mi);
 
   XFreeGC (dpy, mi->gc);
   free_colors (mi->xgwa.screen, mi->xgwa.colormap, mi->colors, mi->npixels);
@@ -639,8 +733,7 @@ xlockmore_free (Display *dpy, Window window, void *closure)
 
 
 void
-xlockmore_mi_init (ModeInfo *mi, size_t state_size, void **state_array,
-                         void (*hack_free_state) (ModeInfo *))
+xlockmore_mi_init (ModeInfo *mi, size_t state_size, void **state_array)
 {
   struct xlockmore_function_table *xlmft = mi->xlmft;
 
@@ -651,11 +744,6 @@ xlockmore_mi_init (ModeInfo *mi, size_t state_size, void **state_array,
   assert ((!xlmft->state_array && !*state_array) ||
           xlmft->state_array == state_array);
   xlmft->state_array = state_array;
-  assert (!xlmft->state_size || xlmft->state_size == state_size);
-  xlmft->state_size = state_size;
-  assert (!xlmft->hack_free_state ||
-          xlmft->hack_free_state == hack_free_state);
-  xlmft->hack_free_state = hack_free_state;
 
   if (!*xlmft->state_array) {
     *xlmft->state_array = calloc (XLOCKMORE_NUM_SCREENS, state_size);
@@ -673,9 +761,16 @@ xlockmore_mi_init (ModeInfo *mi, size_t state_size, void **state_array,
 
   /* Find the appropriate state object, clear it, and we're done. */
   {
-    if (xlmft->hack_free_state)
-      xlmft->hack_free_state (mi);
+    if (xlmft->hack_free)
+      xlmft->hack_free (mi);
     memset ((char *)(*xlmft->state_array) + mi->screen_number * state_size, 0,
             state_size);
   }
+}
+
+
+Bool
+xlockmore_no_events (ModeInfo *mi, XEvent *event)
+{
+  return False;
 }

@@ -14,7 +14,7 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-# define refresh_tentacles 0
+# define free_tentacles 0
 # define release_tentacles 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -171,8 +171,15 @@ reshape_tentacles (ModeInfo *mi, int width, int height)
 {
   tentacles_configuration *tc = &tcs[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -851,7 +858,7 @@ init_tentacles (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   int i;
 
-  MI_INIT (mi, tcs, NULL);
+  MI_INIT (mi, tcs);
 
   tc = &tcs[MI_SCREEN(mi)];
 

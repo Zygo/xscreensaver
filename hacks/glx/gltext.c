@@ -1,4 +1,4 @@
-/* gltext, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
+/* gltext, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.orgq2
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,7 +14,6 @@
 			"*wireframe:    False        \n" \
 			"*usePty:       False        \n" \
 
-# define refresh_text 0
 # define release_text 0
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
@@ -41,11 +40,15 @@
 
 #ifdef USE_GL /* whole file */
 
-#define DEF_TEXT        "(default)"
-#define DEF_PROGRAM     "(default)"
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "True"
-#define DEF_FACE_FRONT  "True"
+#define DEF_TEXT          "(default)"
+#define DEF_PROGRAM       "(default)"
+#define DEF_SCALE_FACTOR  "0.01"
+#define DEF_WANDER_SPEED  "0.02"
+#define DEF_MAX_LINES     "8"
+#define DEF_SPIN          "XYZ"
+#define DEF_WANDER        "True"
+#define DEF_FACE_FRONT    "True"
+#define DEF_USE_MONOSPACE "False"
 
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>
@@ -53,7 +56,10 @@
 
 #include "glutstroke.h"
 #include "glut_roman.h"
-#define GLUT_FONT (&glutStrokeRoman)
+#include "glut_mroman.h"
+#define GLUT_VARI_FONT (&glutStrokeRoman)
+#define GLUT_MONO_FONT (&glutStrokeMonoRoman)
+#define GLUT_FONT ((use_monospace) ? GLUT_MONO_FONT : GLUT_VARI_FONT)
 
 
 typedef struct {
@@ -79,29 +85,42 @@ typedef struct {
 
 static text_configuration *tps = NULL;
 
-static char *text_fmt;
-static char *program_str;
-static char *do_spin;
-static Bool do_wander;
-static Bool face_front_p;
+static char   *text_fmt;
+static char   *program_str;
+static float  scale_factor;
+static int    max_no_lines;
+static float  wander_speed;
+static char   *do_spin;
+static Bool   do_wander;
+static Bool   face_front_p;
+static Bool   use_monospace;
 
 static XrmOptionDescRec opts[] = {
-  { "-text",    ".text",      XrmoptionSepArg, 0 },
-  { "-program", ".program",   XrmoptionSepArg, 0 },
-  { "-spin",    ".spin",      XrmoptionSepArg, 0 },
-  { "+spin",    ".spin",      XrmoptionNoArg, "" },
-  { "-wander",  ".wander",    XrmoptionNoArg, "True" },
-  { "+wander",  ".wander",    XrmoptionNoArg, "False" },
-  { "-front",   ".faceFront", XrmoptionNoArg, "True" },
-  { "+front",   ".faceFront", XrmoptionNoArg, "False" }
+  { "-text",         ".text",         XrmoptionSepArg, 0 },
+  { "-program",      ".program",      XrmoptionSepArg, 0 },
+  { "-scale",        ".scaleFactor",  XrmoptionSepArg, 0 },
+  { "-maxlines",     ".maxLines",     XrmoptionSepArg, 0 },
+  { "-wander-speed", ".wanderSpeed",  XrmoptionSepArg, 0 },
+  { "-spin",         ".spin",         XrmoptionSepArg, 0 },
+  { "+spin",         ".spin",         XrmoptionNoArg, "" },
+  { "-wander",       ".wander",       XrmoptionNoArg, "True" },
+  { "+wander",       ".wander",       XrmoptionNoArg, "False" },
+  { "-front",        ".faceFront",    XrmoptionNoArg, "True" },
+  { "+front",        ".faceFront",    XrmoptionNoArg, "False" },
+  { "-mono",         ".useMonoSpace", XrmoptionNoArg, "True" },
+  { "+mono",         ".useMonoSpace", XrmoptionNoArg, "False" }
 };
 
 static argtype vars[] = {
-  {&text_fmt,     "text",      "Text",      DEF_TEXT,       t_String},
-  {&program_str,  "program",   "Program",   DEF_PROGRAM,    t_String},
-  {&do_spin,      "spin",      "Spin",      DEF_SPIN,       t_String},
-  {&do_wander,    "wander",    "Wander",    DEF_WANDER,     t_Bool},
-  {&face_front_p, "faceFront", "FaceFront", DEF_FACE_FRONT, t_Bool},
+  {&text_fmt,      "text",         "Text",         DEF_TEXT,          t_String},
+  {&program_str,   "program",      "Program",      DEF_PROGRAM,       t_String},
+  {&do_spin,       "spin",         "Spin",         DEF_SPIN,          t_String},
+  {&scale_factor,  "scaleFactor",  "ScaleFactor",  DEF_SCALE_FACTOR,  t_Float},
+  {&max_no_lines,  "maxLines",     "MaxLines",     DEF_MAX_LINES,     t_Int},
+  {&wander_speed,  "wanderSpeed",  "WanderSpeed",  DEF_WANDER_SPEED,  t_Float},
+  {&do_wander,     "wander",       "Wander",       DEF_WANDER,        t_Bool},
+  {&face_front_p,  "faceFront",    "FaceFront",    DEF_FACE_FRONT,    t_Bool},
+  {&use_monospace, "useMonoSpace", "UseMonoSpace", DEF_USE_MONOSPACE, t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt text_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -113,8 +132,15 @@ ENTRYPOINT void
 reshape_text (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -169,8 +195,8 @@ parse_text (ModeInfo *mi)
 
   if (program_str && *program_str && !!strcmp(program_str, "(default)"))
     {
-      int max_lines = 8;
-      char buf[1024];
+      int max_lines = max_no_lines;
+      char buf[4096];
       char *p = buf;
       int lines = 0;
 
@@ -317,16 +343,13 @@ text_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-static void free_text(ModeInfo * mi);
-
-
 ENTRYPOINT void 
 init_text (ModeInfo *mi)
 {
   text_configuration *tp;
   int i;
 
-  MI_INIT (mi, tps, free_text);
+  MI_INIT (mi, tps);
 
   tp = &tps[MI_SCREEN(mi)];
 
@@ -611,7 +634,7 @@ draw_text (ModeInfo *mi)
 
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
 
-  glScalef(0.01, 0.01, 0.01);
+  glScalef(scale_factor, scale_factor, scale_factor);
 
   mi->polygon_count = fill_string(tp->text, wire);
 

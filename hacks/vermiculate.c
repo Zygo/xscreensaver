@@ -438,10 +438,6 @@ maininit (struct state *st)
       st->instring = sampleStrings[n].str;
       st->speed = sampleStrings[n].speed;
     }
-  if (st->speed == 0)
-    {
-	  st->speed = 200;
-    }
   st->boxh = 10;
   st->boxw = 10;
   st->gridden = 0;
@@ -773,12 +769,8 @@ vermiculate_init (Display *d, Window w)
     st->instring = 0;
 
   st->max_ticks = get_integer_resource (st->dpy, "ticks", "Integer");
-  {
-    int temp = get_integer_resource (st->dpy, "speed", "Speed");
-    if (temp != 0)
-      st->speed = temp;
-  }
-
+  st->speed = get_integer_resource (st->dpy, "speed", "Speed");
+  if (st->speed <= 0) st->speed = 1;
   st->mycolors[0].pixel = BlackPixel (st->dpy, DefaultScreen (st->dpy));
 
   XSetWindowBackground (st->dpy, st->window,
@@ -1207,10 +1199,11 @@ vermiculate_free (Display *dpy, Window window, void *closure)
 
 
 static const char *vermiculate_defaults[] = {
+  ".lowrez: true",
   ".background: Black",
   "*ticks: 20000",
   "*fpsSolid:	true",
-  "*speed: 0",
+  "*speed: 1",
   "*instring: ",
 #ifdef HAVE_MOBILE
   "*ignoreRotation: True",

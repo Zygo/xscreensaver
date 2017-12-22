@@ -127,7 +127,7 @@
 				compass -root				    \\n\
 				deluxe -root				    \\n\
 -				demon -root				    \\n\
-- GL: 				extrusion -root				    \\n\
+  GL: 				extrusion -root				    \\n\
 -				loop -root				    \\n\
 				penetrate -root				    \\n\
 				petri -root				    \\n\
@@ -276,19 +276,35 @@
   GL: 				raverhoop -root				    \\n\
   GL: 				splodesic -root				    \\n\
   GL: 				unicrud -root				    \\n\
+  GL: 				esper -root				    \\n\
   GL: 				vigilance -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
 "XScreenSaver.windowCreationTimeout:	0:00:30",
 "XScreenSaver.bourneShell:		/bin/sh",
-"*Dialog.headingFont:		*-helvetica-bold-r-*-*-*-180-*-*-*-iso8859-1",
-"*Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*Dialog.unameFont:		*-helvetica-bold-r-*-*-*-120-*-*-*-iso8859-1",
-"*Dialog.buttonFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
-"*Dialog.dateFont:		*-helvetica-medium-r-*-*-*-80-*-*-*-iso8859-1",
-"*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
+"*Dialog.headingFont:	-*-helvetica-bold-r-*-*-*-180-*-*-*-*-iso8859-1",
+"*Dialog.bodyFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1",
+"*Dialog.labelFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1",
+"*Dialog.unameFont:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
+"*Dialog.buttonFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1",
+"*Dialog.dateFont:	-*-helvetica-medium-r-*-*-*-80-*-*-*-*-iso8859-1",
+"*Dialog.headingFont2:	-*-bitstream charter-bold-r-*-*-*-160-*-*-*-*-iso8859-1",
+"*Dialog.bodyFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
+"*Dialog.labelFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
+"*Dialog.unameFont2:	-*-bitstream charter-bold-r-*-*-*-100-*-*-*-*-iso8859-1",
+"*Dialog.buttonFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
+"*Dialog.dateFont2:	-*-bitstream charter-medium-r-*-*-*-80-*-*-*-*-iso8859-1",
+"*Dialog.headingFont3:	-*-*-bold-r-*-*-*-180-*-*-p-*-iso8859-1",
+"*Dialog.bodyFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1",
+"*Dialog.labelFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1",
+"*Dialog.unameFont3:	-*-*-bold-r-*-*-*-120-*-*-p-*-iso8859-1",
+"*Dialog.buttonFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1",
+"*Dialog.dateFont3:	-*-*-medium-r-*-*-*-80-*-*-p-*-iso8859-1",
+"*passwd.passwdFont:	-*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
+"*passwd.passwdFont2:	-*-bitstream-courier 10 pitch-medium-r-*-*-*-140-*-*-*-iso8859-1",
+"*passwd.passwdFont3:	-*-*-medium-r-*-*-*-140-*-m-*-iso8859-1",
+"*passwd.passwdFont4:	-*-*-medium-r-*-*-*-140-*-c-*-iso8859-1",
 "*Dialog.foreground:		#000000",
 "*Dialog.background:		#E6E6E6",
 "*Dialog.Button.foreground:	#000000",

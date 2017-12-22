@@ -24,7 +24,7 @@
                    "*wireframe:     False         \n" \
 		   "*suppressRotationAnimation: True\n" \
 
-# define refresh_cubicgrid 0
+# define free_cubicgrid 0
 # define release_cubicgrid 0
 #include "xlockmore.h"
 
@@ -192,9 +192,17 @@ static void init_gl(ModeInfo *mi)
 ENTRYPOINT void reshape_cubicgrid(ModeInfo *mi, int width, int height) 
 {
   cubicgrid_conf *cp = &cubicgrid[MI_SCREEN(mi)];
+  int y = 0;
   if(!height) height = 1;
   cp->ratio = (GLfloat)width/(GLfloat)height;
-  glViewport(0, 0, (GLint) width, (GLint) height);
+
+  if (width > height * 3) {   /* tiny window: show middle */
+    height = width;
+    y = -height/2;
+    cp->ratio = (GLfloat)width/(GLfloat)height;
+  }
+
+  glViewport(0, y, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(30.0, cp->ratio, 1.0, 100.0);
@@ -205,7 +213,7 @@ ENTRYPOINT void reshape_cubicgrid(ModeInfo *mi, int width, int height)
 ENTRYPOINT void init_cubicgrid(ModeInfo *mi) 
 {
   cubicgrid_conf *cp;
-  MI_INIT(mi, cubicgrid, NULL);
+  MI_INIT(mi, cubicgrid);
   cp = &cubicgrid[MI_SCREEN(mi)];
 
   if ((cp->glx_context = init_GL(mi)) != NULL) {

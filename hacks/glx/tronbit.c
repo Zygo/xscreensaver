@@ -14,7 +14,7 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n"
 
-# define refresh_bit 0
+# define free_bit 0
 # define release_bit 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -407,7 +407,7 @@ init_bit (ModeInfo *mi)
   bit_configuration *bp;
   int i;
 
-  MI_INIT (mi, bps, NULL);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -515,6 +515,11 @@ draw_bit (ModeInfo *mi)
     double ratio = 1 - ((bp->last_time + bp->frequency) - now) / bp->frequency;
     if (ratio > 1) ratio = 1;
     mi->polygon_count += draw_histogram (mi, ratio);
+
+    if (MI_WIDTH(mi) > MI_HEIGHT(mi) * 5) {   /* wide window: scale up */
+      glScalef (8, 8, 8);
+    }
+
     mi->polygon_count += animate_bits (mi, omodel, nmodel, ratio);
     tick_bit (mi, now);
   }

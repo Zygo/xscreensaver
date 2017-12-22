@@ -46,7 +46,7 @@
                                     "*showFPS:      False   \n" \
 				   "*suppressRotationAnimation: True\n" \
 
-# define refresh_surface 0
+# define free_surface 0
 # define release_surface 0
 # include "xlockmore.h"     /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -421,10 +421,17 @@ ENTRYPOINT void reshape_surface(ModeInfo *mi, int width, int height)
 {
   surfacestruct *sp = &surface[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
 
-  glViewport(0, 0, (GLint) width, (GLint) height);
+  glViewport(0, y, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective (30.0, 1/h, 1.0, 100.0);
@@ -463,7 +470,7 @@ ENTRYPOINT void init_surface(ModeInfo *mi)
   int    screen = MI_SCREEN(mi);
   surfacestruct *sp;
 
-  MI_INIT (mi, surface, NULL);
+  MI_INIT (mi, surface);
   sp = &surface[screen];
 
   sp->window = MI_WINDOW(mi);

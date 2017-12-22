@@ -264,6 +264,10 @@ make_layer (Display *dpy, Window window, int width, int height, int nblobs)
   layer->blobs = (struct blob **) malloc(sizeof(*layer->blobs)*layer->nblobs);
 
   blob_max = (width < height ? width : height) / 2;
+
+  if (width < 100 || height < 100) /* tiny window */
+    blob_max *= 10;
+
   blob_min = (blob_max * 2) / 3;
   for (i = 0; i < layer->nblobs; i++){
     int j = blob_max - blob_min;

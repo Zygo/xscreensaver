@@ -77,7 +77,6 @@
 		"*useSHM:		True		\n" \
 		"*suppressRotationAnimation: True\n" \
 
-# define refresh_gleidescope 0
 # define release_gleidescope 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -183,8 +182,8 @@ ENTRYPOINT ModeSpecOpt gleidescope_opts = {
 #ifdef USE_MODULES
 ModStruct   gleidescope_description = { 
      "gleidescope", "init_gleidescope", "draw_gleidescope", NULL,
-     "draw_gleidescope", "init_gleidescope", NULL, &gleidescope_opts,
-     1000, 1, 2, 1, 4, 1.0, "",
+     "draw_gleidescope", "init_gleidescope", "free_gleidescope",
+     &gleidescope_opts, 1000, 1, 2, 1, 4, 1.0, "",
      "GL Kaleidescope", 0, NULL};
 #endif
 
@@ -1399,9 +1398,17 @@ ENTRYPOINT void reshape_gleidescope(ModeInfo *mi, int width, int height)
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 	GLfloat		h = (GLfloat) height / (GLfloat) width;
 
+    int y = 0;
+
+    if (width > height * 5) {   /* tiny window: show middle */
+      height = width * 9/16;
+      y = -height/2;
+      h = height / (GLfloat) width;
+    }
+
 	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));
 
-	glViewport(0, 0, (GLint) width, (GLint) height);
+	glViewport(0, y, (GLint) width, (GLint) height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(50.0, 1/h, 0.1, 2000.0);
@@ -1525,15 +1532,13 @@ printf("phases [%d, %d, %d]\n", gp->cam_x_phase, gp->cam_y_phase, gp->cam_z_phas
 #endif
 }
 
-static void free_gleidescope(ModeInfo * mi);
-
 ENTRYPOINT void
 init_gleidescope(ModeInfo * mi)
 {
 	gleidestruct *gp;
 	int screen = MI_SCREEN(mi);
 
-	MI_INIT(mi, gleidescope, free_gleidescope);
+	MI_INIT(mi, gleidescope);
 	gp = &gleidescope[screen];
 	gp->window = MI_WINDOW(mi);
     gp->size = -1;
@@ -1601,7 +1606,7 @@ draw_gleidescope(ModeInfo * mi)
 	}
 }
 
-static void
+ENTRYPOINT void
 free_gleidescope(ModeInfo * mi)
 {
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];

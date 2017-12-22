@@ -43,7 +43,6 @@
                        "*showFPS:   False     \n" \
                        "*wireframe: False     \n"
 
-# define refresh_flipflop 0
 # define release_flipflop 0
 # include "xlockmore.h"
 
@@ -96,7 +95,7 @@ ENTRYPOINT ModeSpecOpt flipflop_opts = {countof(opts), opts, countof(vars), vars
 #ifdef USE_MODULES
 ModStruct   flipflop_description =
     {"flipflop", "init_flipflop", "draw_flipflop", NULL,
-     "draw_flipflop", "init_flipflop", NULL, &flipflop_opts,
+     "draw_flipflop", "init_flipflop", "free_flipflop", &flipflop_opts,
      1000, 1, 2, 1, 4, 1.0, "",
      "Flipflop", 0, NULL};
 
@@ -284,12 +283,20 @@ display(ModeInfo *mi)
 ENTRYPOINT void
 reshape_flipflop(ModeInfo *mi, int width, int height)
 {
-    GLfloat h = (GLfloat) height / (GLfloat) width;
-    glViewport(0,0, width, height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, 1/h, 1.0, 300.0);
-    glMatrixMode(GL_MODELVIEW);
+  GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport(0,y, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(45, 1/h, 1.0, 300.0);
+  glMatrixMode(GL_MODELVIEW);
 }
 
 static void
@@ -348,8 +355,6 @@ get_texture(ModeInfo *modeinfo)
                       image_loaded_cb, c);
 }
 
-static void free_flipflop(ModeInfo *mi);
-
 ENTRYPOINT void
 init_flipflop(ModeInfo *mi)
 {
@@ -395,7 +400,7 @@ init_flipflop(ModeInfo *mi)
     screen = MI_SCREEN(mi);
     wire = MI_IS_WIREFRAME(mi);
 
-    MI_INIT(mi, qs, free_flipflop);
+    MI_INIT(mi, qs);
 
     c = &qs[screen];
     c->window = MI_WINDOW(mi);
@@ -465,7 +470,7 @@ draw_flipflop(ModeInfo *mi)
 
 }
 
-static void
+ENTRYPOINT void
 free_flipflop(ModeInfo *mi)
 {
   Flipflopcreen *c = &qs[MI_SCREEN(mi)];

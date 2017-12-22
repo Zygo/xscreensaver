@@ -307,13 +307,15 @@ screenhack_record_anim_free (record_anim_state *st)
 
   sprintf (cmd,
            "ffmpeg"
+           " -hide_banner"
+           " -v 16"
            " -framerate 30"	/* rate of input: must be before -i */
            " -i '%s-%%06d.%s'"
            " -r 30",		/* rate of output: must be after -i */
            progname, type);
   if (soundtrack)
     sprintf (cmd + strlen(cmd),
-             " -i '%s' -map 0:v:0 -map 1:a:0 -acodec libfaac",
+             " -i '%s' -map 0:v:0 -map 1:a:0 -acodec aac",
              soundtrack);
   sprintf (cmd + strlen(cmd),
            " -c:v libx264"
@@ -321,7 +323,7 @@ screenhack_record_anim_free (record_anim_state *st)
            " -crf 18"
            " -pix_fmt yuv420p"
            " '%s'"
-           " 2>&-",
+           /*" 2>&-"*/,
            fn);
   fprintf (stderr, "%s: exec: %s\n", progname, cmd);
   system (cmd);

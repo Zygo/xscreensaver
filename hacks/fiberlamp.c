@@ -39,6 +39,7 @@ static const char sccsid[] = "@(#)fiberlamp.c	5.00 2000/11/01 xlockmore";
 
 # define UNIFORM_COLORS
 # define release_fiberlamp 0
+# define reshape_fiberlamp 0
 # define fiberlamp_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -53,7 +54,7 @@ ENTRYPOINT ModeSpecOpt fiberlamp_opts =
 #ifdef USE_MODULES
 ModStruct   fiberlamp_description =
 {"fiberlamp", "init_fiberlamp", "draw_fiberlamp", (char *) NULL,
- "draw_fiberlamp", "change_fiberlamp", (char *) NULL, &fiberlamp_opts,
+ "draw_fiberlamp", "change_fiberlamp", "free_fiberlamp", &fiberlamp_opts,
  1000, 500, 10000, 0, 64, 1.0, "", "Shows a Fiber Optic Lamp", 0, NULL};
 
 #endif
@@ -142,7 +143,7 @@ free_fiber(fiberlampstruct *fl)
 	}
 }
 
-static void
+ENTRYPOINT void
 free_fiberlamp(ModeInfo *mi)
 {
     fiberlampstruct *fl = &fiberlamps[MI_SCREEN(mi)];
@@ -158,7 +159,7 @@ init_fiberlamp(ModeInfo * mi)
 {
   fiberlampstruct *fl;
 
-  MI_INIT (mi, fiberlamps, free_fiberlamp);
+  MI_INIT (mi, fiberlamps);
   fl = &fiberlamps[MI_SCREEN(mi)];
 
   /* Create or Resize double buffer */
@@ -273,13 +274,6 @@ init_fiberlamp(ModeInfo * mi)
   change_fiberlamp(mi);
 }
 
-/* Used by xscreensaver.  xlock just uses init_fiberlamp */
-ENTRYPOINT void
-reshape_fiberlamp(ModeInfo * mi, int width, int height)
-{
-  init_fiberlamp(mi);
-}
-
 /* sort fibers so they get drawn back-to-front, one bubble pass is
    enough as the order only changes slowly */
 static void
@@ -302,14 +296,35 @@ draw_fiberlamp (ModeInfo * mi)
   fiberlampstruct *fl;
   int f, i;
   int x, y;
+  int ww, hh;
   Window unused;
+  short cx, cy;
 
-  short cx = MI_WIDTH(mi)/2;
+  ww = MI_WIDTH(mi);
+  hh = MI_HEIGHT(mi);
+
+  cx = MI_WIDTH(mi)/2;
 #if defined PLAN || defined CHECKCOLORWHEEL
-  short cy = MI_HEIGHT(mi)/2;
+  cy = MI_HEIGHT(mi)/2;
 #else
-  short cy = MI_HEIGHT(mi);
+  cy = MI_HEIGHT(mi);
 #endif
+
+  if (ww > hh * 5 ||  /* window has weird aspect */
+      hh > ww * 5)
+    {
+      if (ww > hh)
+        {
+          hh = ww;
+          cy = hh / 4;
+        }
+      else
+        {
+          ww = hh;
+          cx = 0;
+          cy = hh*3/4;
+        }
+    }
 
   if (fiberlamps == NULL)
 	return;
@@ -380,11 +395,11 @@ draw_fiberlamp (ModeInfo * mi)
 		n->z = p->z + LEN(i-1) * se * sp;
 	  }
 
-	  fs->draw[i-1].x = cx + MI_WIDTH(mi)/2*n->x;
+	  fs->draw[i-1].x = cx + ww/2*n->x;
 #if defined PLAN || defined CHECKCOLORWHEEL /* Plan */
-	  fs->draw[i-1].y = cy + MI_WIDTH(mi)/2*n->z;
+	  fs->draw[i-1].y = cy + ww/2*n->z;
 #else /* Elevation */
-	  fs->draw[i-1].y = cy + MI_WIDTH(mi)/2*n->y;
+	  fs->draw[i-1].y = cy + ww/2*n->y;
 #endif
 	}
 	MI_IS_DRAWN(mi) = True;
@@ -446,11 +461,13 @@ draw_fiberlamp (ModeInfo * mi)
   }
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_fiberlamp(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+#endif
 
 XSCREENSAVER_MODULE ("Fiberlamp", fiberlamp)
 

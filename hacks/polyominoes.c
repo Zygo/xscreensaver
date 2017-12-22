@@ -40,10 +40,10 @@ static const char sccsid[] = "@(#)polyominoes.c 5.01 2000/12/18 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define release_polyominoes 0
+# define reshape_polyominoes 0
 # define polyominoes_handle_event 0
 # define SMOOTH_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
-# include "erase.h"
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
 #endif /* STANDALONE */
@@ -83,8 +83,8 @@ ENTRYPOINT ModeSpecOpt polyominoes_opts =
 #ifdef USE_MODULES
 ModStruct   polyominoes_description = {
   "polyominoes", "init_polyominoes", "draw_polyominoes", (char *) NULL,
-  "refresh_polyominoes", "init_polyominoes", (char *) NULL, &polyominoes_opts,
-  6000, 1, 8192, 1, 64, 1.0, "",
+  "refresh_polyominoes", "init_polyominoes", "free_polyominoes",
+  &polyominoes_opts, 6000, 1, 8192, 1, 64, 1.0, "",
   "Shows attempts to place polyominoes into a rectangle", 0, NULL
 };
 
@@ -177,10 +177,6 @@ typedef struct _polyominoesstruct{
   int *reason_to_not_attach;
 
   int counter;
-
-#ifdef STANDALONE
-  eraser_state *eraser;
-#endif
 } polyominoesstruct;
 
 #define ARRAY(x,y)         (sp->array[(x)*sp->height+(y)])
@@ -1053,7 +1049,7 @@ static void free_bitmaps(polyominoesstruct *sp)
 
 #define deallocate(p,t) if ((p)!=NULL) {free(p); p=(t*)NULL;}
 
-static void free_polyominoes(ModeInfo * mi)
+ENTRYPOINT void free_polyominoes(ModeInfo * mi)
 {
   polyominoesstruct *sp = &polyominoeses[MI_SCREEN(mi)];
   int n;
@@ -2099,7 +2095,7 @@ init_polyominoes (ModeInfo * mi)
   int box1, box2;
   int *perm;
 
-  MI_INIT (mi, polyominoeses, free_polyominoes);
+  MI_INIT (mi, polyominoeses);
   sp = &polyominoeses[MI_SCREEN(mi)];
 
   sp->rot180 = 0;
@@ -2176,6 +2172,12 @@ init_polyominoes (ModeInfo * mi)
     }
   }
 
+  if (MI_HEIGHT(mi) > MI_WIDTH(mi)) {  /* rotate if portrait */
+    int swap = sp->height;
+    sp->height = sp->width;
+    sp->width = swap;
+  }
+
   allocate(sp->attach_list,int,sp->nr_polyominoes*sizeof(int));
   sp->nr_attached = 0;
 
@@ -2196,6 +2198,13 @@ init_polyominoes (ModeInfo * mi)
     sp->box = box1;
   else
     sp->box = box2;
+
+  if (MI_WIDTH(mi) > MI_HEIGHT(mi) * 5 ||  /* weird window aspect ratio */
+      MI_HEIGHT(mi) > MI_WIDTH(mi)* 5) {
+    sp->box *= (MI_WIDTH(mi) > MI_HEIGHT(mi)
+                ? MI_WIDTH(mi) / (double) MI_HEIGHT(mi)
+                : MI_HEIGHT(mi) / (double) MI_WIDTH(mi));
+  }
 
   if (sp->box >= 12) {
     sp->box = (sp->box/12)*12;
@@ -2242,10 +2251,8 @@ init_polyominoes (ModeInfo * mi)
 
   sp->wait = 0;
 
-#ifndef STANDALONE
   /* Clear the background. */
   MI_CLEARWINDOW(mi);
-#endif
   
 }
 
@@ -2261,32 +2268,15 @@ draw_polyominoes (ModeInfo * mi)
     return;
   sp = &polyominoeses[MI_SCREEN(mi)];
 
-#ifdef STANDALONE
-    if (sp->eraser) {
-      sp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), sp->eraser);
-      if (!sp->eraser)
-        init_polyominoes(mi);
-      return;
-    }
-#endif
-
   if (MI_CYCLES(mi) != 0) {
     if (++sp->counter > MI_CYCLES(mi)) {
-#ifdef STANDALONE
-      sp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), sp->eraser);
-#else /* !STANDALONE */
       init_polyominoes(mi);
-#endif /* !STANDALONE */
       return;
     }
   }
 
   if (sp->box == 0) {
-#ifdef STANDALONE
-    sp->eraser = erase_window (MI_DISPLAY(mi), MI_WINDOW(mi), sp->eraser);
-#else /* !STANDALONE */
     init_polyominoes(mi);
-#endif
     return;
   }
 
@@ -2365,18 +2355,13 @@ draw_polyominoes (ModeInfo * mi)
     sp->wait = 0;
 }
 
-ENTRYPOINT void
-reshape_polyominoes(ModeInfo * mi, int width, int height)
-{
-  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
-  init_polyominoes (mi);
-}
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_polyominoes (ModeInfo * mi)
 {
   MI_CLEARWINDOW(mi);
 }
+#endif
 
 XSCREENSAVER_MODULE ("Polyominoes", polyominoes)
 

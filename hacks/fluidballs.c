@@ -296,6 +296,12 @@ fluidballs_init (Display *dpy, Window window)
   state->max_radius = get_float_resource (dpy, "size", "Size") / 2;
   if (state->max_radius < 1.0) state->max_radius = 1.0;
 
+  if (state->xgwa.width < 100 || state->xgwa.height < 100) /* tiny window */
+    {
+      if (state->max_radius > 5)
+        state->max_radius = 5;
+    }
+
   state->random_sizes_p = get_boolean_resource (dpy, "random", "Random");
 
   /* If the initial window size is too small to hold all these balls,

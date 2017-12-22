@@ -127,7 +127,8 @@ static void calc_logwidths (struct state *st)
      window, it's too big.  Mismunched squares that big make things
      look too noisy. */
 
-  if (st->window_height < st->window_width) {
+  if (st->window_height < st->window_width &&
+      st->window_width < st->window_height * 5) {
     st->logmaxwidth = (int)dumb_log_2(st->window_height * 0.8);
   } else {
     st->logmaxwidth = (int)dumb_log_2(st->window_width * 0.8);
@@ -167,7 +168,7 @@ static muncher *make_muncher (struct state *st)
   m->atX = (random() % (xgwa.width <= m->width ? 1
                         : xgwa.width - m->width));
   m->atY = (random() % (xgwa.height <= m->width ? 1
-                        : xgwa.width - m->width));
+                        : xgwa.height - m->width));
 
   /* wrap-around by these values; no need to % as we end up doing that
      later anyway */
@@ -443,6 +444,7 @@ munch_free (Display *dpy, Window window, void *closure)
 
 
 static const char *munch_defaults [] = {
+  ".lowrez:           true",
   ".background:       black",
   ".foreground:       white",
   "*fpsSolid:	      true",
@@ -454,6 +456,7 @@ static const char *munch_defaults [] = {
 #ifdef HAVE_MOBILE
   "*ignoreRotation:   True",
 #endif
+
   0
 };
 

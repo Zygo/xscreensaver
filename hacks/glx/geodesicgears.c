@@ -20,7 +20,6 @@
 			"*suppressRotationAnimation: True\n" \
 		"*font:  -*-helvetica-medium-r-normal-*-*-160-*-*-*-*-*-*\n" \
 
-# define refresh_geodesic 0
 # define release_geodesic 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -1318,10 +1317,17 @@ reshape_geodesic (ModeInfo *mi, int width, int height)
 {
   geodesic_configuration *bp = &bps[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1402,7 +1408,6 @@ pick_shape (ModeInfo *mi, time_t last)
 }
 
 
-static void free_geodesic (ModeInfo *mi);
 
 ENTRYPOINT void 
 init_geodesic (ModeInfo *mi)
@@ -1410,7 +1415,7 @@ init_geodesic (ModeInfo *mi)
   geodesic_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, bps, free_geodesic);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -1779,7 +1784,7 @@ draw_geodesic (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-static void
+ENTRYPOINT void
 free_geodesic (ModeInfo *mi)
 {
   geodesic_configuration *bp = &bps[MI_SCREEN(mi)];

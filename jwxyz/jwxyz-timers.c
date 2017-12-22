@@ -70,6 +70,9 @@ XtDisplayToApplicationContext (Display *dpy)
 
 #define app_to_display(APP) ((Display *) (APP))
 
+#define DISPLAY_SOURCES_DATA(APP) \
+  JWXYZ_VTBL(app_to_display (APP))->display_sources_data (app_to_display (APP))
+
 
 struct jwxyz_sources_data {
   int fd_count;
@@ -124,7 +127,7 @@ XtIntervalId
 XtAppAddTimeOut (XtAppContext app, unsigned long msecs,
                  XtTimerCallbackProc cb, XtPointer closure)
 {
-  jwxyz_sources_data *td = display_sources_data (app_to_display (app));
+  jwxyz_sources_data *td = DISPLAY_SOURCES_DATA (app);
   XtIntervalId data = (XtIntervalId) calloc (1, sizeof(*data));
   double now = double_time();
   data->app = app;
@@ -149,7 +152,7 @@ XtAppAddTimeOut (XtAppContext app, unsigned long msecs,
 void
 XtRemoveTimeOut (XtIntervalId data)
 {
-  jwxyz_sources_data *td = display_sources_data (app_to_display (data->app));
+  jwxyz_sources_data *td = DISPLAY_SOURCES_DATA (data->app);
 
   LOGT("timer  0x%08lX: remove", (unsigned long) data);
   ASSERT_RET (data->refcount > 0, "already freed");
@@ -188,7 +191,7 @@ XtInputId
 XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
                XtInputCallbackProc cb, XtPointer closure)
 {
-  jwxyz_sources_data *td = display_sources_data (app_to_display (app));
+  jwxyz_sources_data *td = DISPLAY_SOURCES_DATA (app);
   XtInputId data = (XtInputId) calloc (1, sizeof(*data));
   data->cb = cb;
   data->fd = fd;
@@ -210,7 +213,7 @@ XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
 void
 XtRemoveInput (XtInputId id)
 {
-  jwxyz_sources_data *td = display_sources_data (app_to_display (id->app));
+  jwxyz_sources_data *td = DISPLAY_SOURCES_DATA (id->app);
 
   LOGI("source 0x%08lX %2d: remove", (unsigned long) id, id->fd);
   ASSERT_RET (id->refcount > 0, "sources corrupted");
@@ -343,7 +346,7 @@ XtAppPending (XtAppContext app)
 void
 XtAppProcessEvent (XtAppContext app, XtInputMask mask)
 {
-  jwxyz_sources_data *td = display_sources_data (app_to_display (app));
+  jwxyz_sources_data *td = DISPLAY_SOURCES_DATA (app);
   if (mask & XtIMAlternateInput)
     jwxyz_sources_run (td);
   if (mask & XtIMTimer)

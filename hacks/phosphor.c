@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -70,6 +70,7 @@ typedef struct {
   const char *program;
   int grid_width, grid_height;
   int char_width, char_height;
+  int xmargin, ymargin;
   int saved_x, saved_y;
   int scale;
   int ticks;
@@ -211,8 +212,20 @@ phosphor_init (Display *dpy, Window window)
       state->char_height = font->max_bounds.ascent + font->max_bounds.descent;
     }
 
-  state->grid_width = state->xgwa.width / (state->char_width * state->scale);
-  state->grid_height = state->xgwa.height /(state->char_height * state->scale);
+# ifdef USE_IPHONE
+  /* Stupid iPhone X bezel.
+     #### This is the worst of all possible ways to do this!  But how else?
+   */
+  if (state->xgwa.width == 2436 || state->xgwa.height == 2436) {
+    state->xmargin = 96;
+    state->ymargin = state->xmargin;
+  }
+# endif
+
+  state->grid_width = ((state->xgwa.width - state->xmargin * 2) /
+                       (state->char_width * state->scale));
+  state->grid_height = ((state->xgwa.height - state->ymargin * 2) /
+                        (state->char_height * state->scale));
   state->cells = (p_cell *) calloc (sizeof(p_cell),
                                     state->grid_width * state->grid_height);
   state->chars = (p_char **) calloc (sizeof(p_char *), 256);
@@ -324,8 +337,8 @@ phosphor_init (Display *dpy, Window window)
 
   state->tc = textclient_open (dpy);
   textclient_reshape (state->tc,
-                      state->xgwa.width,
-                      state->xgwa.height,
+                      state->xgwa.width  - state->xmargin * 2,
+                      state->xgwa.height - state->ymargin * 2,
                       state->grid_width  - 1,
                       state->grid_height - 1,
                       0);
@@ -346,8 +359,17 @@ resize_grid (p_state *state)
 
   XGetWindowAttributes (state->dpy, state->window, &state->xgwa);
 
-  state->grid_width = state->xgwa.width   /(state->char_width  * state->scale);
-  state->grid_height = state->xgwa.height /(state->char_height * state->scale);
+  /* Would like to ensure here that
+     state->char_height * state->scale <= state->xgwa.height
+     but changing scale requires regenerating the bitmaps. */
+
+  state->grid_width  = ((state->xgwa.width - state->xmargin * 2) /
+                        (state->char_width  * state->scale));
+  state->grid_height = ((state->xgwa.height - state->ymargin * 2) /
+                        (state->char_height * state->scale));
+
+  if (state->grid_width  < 2) state->grid_width  = 2;
+  if (state->grid_height < 2) state->grid_height = 2;
 
   if (ow == state->grid_width &&
       oh == state->grid_height)
@@ -1238,10 +1260,10 @@ update_display (p_state *state, Bool changed_only)
         if (changed_only && !cell->changed)
           continue;
 
-        width = state->char_width * state->scale;
+        width  = state->char_width  * state->scale;
         height = state->char_height * state->scale;
-        tx = x * width;
-        ty = y * height;
+        tx = x * width  + state->xmargin;
+        ty = y * height + state->ymargin;
 
         if (cell->state == BLANK || cell->p_char->blank_p)
           {
@@ -1307,7 +1329,9 @@ phosphor_reshape (Display *dpy, Window window, void *closure,
 
   if (! changed_p) return;
 
-  textclient_reshape (state->tc, w, h,
+  textclient_reshape (state->tc,
+                      w - state->xmargin * 2,
+                      h - state->ymargin * 2,
                       state->grid_width  - 1,
                       state->grid_height - 1,
                       0);
@@ -1343,6 +1367,7 @@ phosphor_free (Display *dpy, Window window, void *closure)
 
 
 static const char *phosphor_defaults [] = {
+/*  ".lowrez:                true",*/
   ".background:		   Black",
   ".foreground:		   #00FF00",
   "*fpsSolid:		   true",

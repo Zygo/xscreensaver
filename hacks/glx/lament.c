@@ -32,7 +32,7 @@
 			"*wireframe:	False	\n"	\
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_lament 0
+# define free_lament 0
 # define release_lament 0
 #include "xlockmore.h"
 
@@ -324,6 +324,9 @@ scale_for_window (ModeInfo *mi)
    */
   if (MI_WIDTH(mi) > MI_HEIGHT(mi))
     scale /= MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
+
+  /* If the window is super wide, make it bigger. */
+  if (scale < 8) scale = 8;
 
   /* Constrain it to roughly life-sized on the screen, not huge.
    */
@@ -1705,7 +1708,7 @@ init_lament (ModeInfo *mi)
 {
   lament_configuration *lc;
   int i;
-  MI_INIT (mi, lcs, NULL);
+  MI_INIT (mi, lcs);
 
   lc = &lcs[MI_SCREEN(mi)];
 

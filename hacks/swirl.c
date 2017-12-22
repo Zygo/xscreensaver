@@ -41,6 +41,8 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS
 # define release_swirl 0
+# define reshape_swirl 0
+# define swirl_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 # include "xshm.h"
 #else  /* !STANDALONE */
@@ -1212,8 +1214,6 @@ next_point(SWIRL_P swirl)
 
 /****************************************************************/
 
-static void free_swirl (ModeInfo * mi);
-
 /* 
  * init_swirl
  *
@@ -1228,7 +1228,7 @@ init_swirl(ModeInfo * mi)
 	Window      window = MI_WINDOW(mi);
 	SWIRL_P     swirl;
 
-	MI_INIT (mi, swirls, free_swirl);
+	MI_INIT (mi, swirls);
 	swirl = &(swirls[MI_SCREEN(mi)]);
     initialise_swirl(mi, swirl);
                 
@@ -1403,16 +1403,9 @@ draw_swirl(ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-reshape_swirl(ModeInfo * mi, int width, int height)
-{
-  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
-  init_swirl (mi);
-}
-
 /****************************************************************/
 
-static void
+ENTRYPOINT void
 free_swirl (ModeInfo * mi)
 {
 	SWIRL_P     swirl = &(swirls[MI_SCREEN(mi)]);
@@ -1434,6 +1427,7 @@ free_swirl (ModeInfo * mi)
 
 /****************************************************************/
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_swirl (ModeInfo * mi)
 {
@@ -1445,16 +1439,6 @@ refresh_swirl (ModeInfo * mi)
 		swirl->drawing = False;
 	}
 }
-
-ENTRYPOINT Bool
-swirl_handle_event (ModeInfo *mi, XEvent *event)
-{
-  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    {
-      reshape_swirl (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-      return True;
-    }
-  return False;
-}
+#endif
 
 XSCREENSAVER_MODULE ("Swirl", swirl)

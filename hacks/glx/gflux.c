@@ -46,7 +46,7 @@
                                         "*useSHM:       True \n" \
 										"*suppressRotationAnimation: True\n" \
 
-# define refresh_gflux 0
+# define free_gflux 0
 # define release_gflux 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -359,7 +359,7 @@ ENTRYPOINT void init_gflux(ModeInfo * mi)
     int screen = MI_SCREEN(mi);
     gfluxstruct *gp;
 
-    MI_INIT(mi, gfluxes, NULL);
+    MI_INIT(mi, gfluxes);
     gp = &gfluxes[screen];
 
     gp->trackball = gltrackball_init (True);

@@ -22,7 +22,7 @@
 	"*titleFont2: -*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*\n" \
 	"*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
 
-# define refresh_tangram 0
+# define free_tangram 0
 # define release_tangram 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -779,7 +779,14 @@ static void draw_shapes(ModeInfo * mi)
 
 ENTRYPOINT void reshape_tangram(ModeInfo * mi, int w, int h)
 {
-    glViewport(0, 0, w, h);
+  int y = 0;
+
+  if (w > h * 5) {   /* tiny window: show middle */
+    h = w;
+    y = -h/2;
+  }
+
+  glViewport(0, y, w, h);
 }
 
 static void set_camera(tangram_configuration *tp)
@@ -877,7 +884,7 @@ ENTRYPOINT void init_tangram(ModeInfo * mi)
 {
     tangram_configuration *tp;
 
-    MI_INIT (mi, tps, NULL);
+    MI_INIT (mi, tps);
 
     tp = &tps[MI_SCREEN(mi)];
 

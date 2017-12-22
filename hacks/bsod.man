@@ -77,6 +77,7 @@ hacks are displayed and which aren't.
 .BR doNT ,
 .BR doWin2K ,
 .BR doWin10 ,
+.BR doRansomware ,
 .BR doAmiga ,
 .BR doMac ,
 .BR doMac1 ,

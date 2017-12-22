@@ -1,5 +1,5 @@
 /* webcollage-helper --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -329,6 +329,72 @@ paste (const char *paste_file,
 }
 
 
+static guint32
+parse_color (const char *s)
+{
+  static const char hex[128] =
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
+     0, 10,11,12,13,14,15,0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 10,11,12,13,14,15,0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  unsigned char r=0, g=0, b=0;
+
+  if      (!strcasecmp (s, "black")) ;
+  else if (!strcasecmp (s, "white")) r = g = b = 0xFF;
+  else if (!strcasecmp (s, "red"))   r = 0xFF;
+  else if (!strcasecmp (s, "green")) g = 0xFF;
+  else if (!strcasecmp (s, "blue"))  b = 0xFF;
+  else
+    {
+      if (*s != '#' || strlen(s) != 7)
+        {
+          fprintf (stderr, "%s: unparsable color: \"%s\"\n", progname, s);
+          exit (1);
+        }
+      s++;
+      r = (hex[(int) s[0]] << 4) | hex[(int) s[1]], s += 2;
+      g = (hex[(int) s[0]] << 4) | hex[(int) s[1]], s += 2;
+      b = (hex[(int) s[0]] << 4) | hex[(int) s[1]], s += 2;
+    }
+
+  return (r << 16) | (g << 8) | b;
+}
+
+
+static void
+create (const char *color,
+        int w, int h,
+        const char *file)
+{
+  int i;
+  GdkPixbuf *pb;
+  guint32 pixel = parse_color (color);
+  unsigned char *bytes = malloc (w * h * 3);
+  if (!bytes) abort();
+  for (i = 0; i < w * h * 3; i += 3)
+    {
+      bytes[i]   = 0xFF & (pixel >> 16);
+      bytes[i+1] = 0xFF & (pixel >> 8);
+      bytes[i+2] = 0xFF & (pixel);
+    }
+
+  pb = gdk_pixbuf_new_from_data (bytes, GDK_COLORSPACE_RGB,
+                                 FALSE, 8, /* alpha, sample size */
+                                 w, h,
+                                 w * 3,   /* rowstride */
+                                 NULL, 0);
+  if (!pb) abort();
+  write_pixbuf (pb, file);
+  g_object_unref (pb);
+  free (bytes);
+}
+
+
 static void
 write_pixbuf (GdkPixbuf *pb, const char *file)
 {
@@ -434,14 +500,18 @@ add_jpeg_comment (struct jpeg_compress_struct *cinfo)
 static void
 usage (void)
 {
-  fprintf (stderr, "usage: %s [-v] paste-file base-file\n"
+  fprintf (stderr,
+           "\nusage: %s [-v] paste-file base-file\n"
            "\t from-scale opacity\n"
            "\t from-x from-y to-x to-y w h\n"
            "\n"
            "\t Pastes paste-file into base-file.\n"
            "\t base-file will be overwritten (with JPEG data.)\n"
-           "\t scaling is applied first: coordinates apply to scaled image.\n",
-           progname);
+           "\t scaling is applied first: coordinates apply to scaled image.\n"
+           "\n"
+           "usage: %s [-v] color width height output-file\n"
+           "\t Creates a new image of a solid color.\n\n",
+           progname, progname);
   exit (1);
 }
 
@@ -459,47 +529,63 @@ main (int argc, char **argv)
   s = strrchr (progname, '/');
   if (s) progname = s+1;
 
-  if (argc != 11 && argc != 12) usage();
-
   if (!strcmp(argv[i], "-v"))
     verbose_p++, i++;
 
-  paste_file = argv[i++];
-  base_file = argv[i++];
+  if (argc == 11 || argc == 12)
+    {
+      paste_file = argv[i++];
+      base_file = argv[i++];
 
-  if (*paste_file == '-') usage();
-  if (*base_file == '-') usage();
+      if (*paste_file == '-') usage();
+      if (*base_file == '-') usage();
 
-  s = argv[i++];
-  if (1 != sscanf (s, " %lf %c", &from_scale, &dummy)) usage();
-  if (from_scale <= 0 || from_scale > 100) usage();
+      s = argv[i++];
+      if (1 != sscanf (s, " %lf %c", &from_scale, &dummy)) usage();
+      if (from_scale <= 0 || from_scale > 100) usage();
 
-  s = argv[i++];
-  if (1 != sscanf (s, " %lf %c", &opacity, &dummy)) usage();
-  if (opacity <= 0 || opacity > 1) usage();
+      s = argv[i++];
+      if (1 != sscanf (s, " %lf %c", &opacity, &dummy)) usage();
+      if (opacity <= 0 || opacity > 1) usage();
 
-  s = argv[i++]; if (1 != sscanf (s, " %d %c", &from_x, &dummy)) usage();
-  s = argv[i++]; if (1 != sscanf (s, " %d %c", &from_y, &dummy)) usage();
-  s = argv[i++]; if (1 != sscanf (s, " %d %c", &to_x, &dummy)) usage();
-  s = argv[i++]; if (1 != sscanf (s, " %d %c", &to_y, &dummy)) usage();
-  s = argv[i++]; if (1 != sscanf (s, " %d %c", &w, &dummy)) usage();
-  s = argv[i++]; if (1 != sscanf (s, " %d %c", &h, &dummy)) usage();
+      s = argv[i++]; if (1 != sscanf (s, " %d %c", &from_x, &dummy)) usage();
+      s = argv[i++]; if (1 != sscanf (s, " %d %c", &from_y, &dummy)) usage();
+      s = argv[i++]; if (1 != sscanf (s, " %d %c", &to_x, &dummy)) usage();
+      s = argv[i++]; if (1 != sscanf (s, " %d %c", &to_y, &dummy)) usage();
+      s = argv[i++]; if (1 != sscanf (s, " %d %c", &w, &dummy)) usage();
+      s = argv[i];   if (1 != sscanf (s, " %d %c", &h, &dummy)) usage();
 
-  bevel_pct = 10; /* #### */
+      bevel_pct = 10; /* #### */
 
-  if (w < 0) usage();
-  if (h < 0) usage();
+      if (w < 0) usage();
+      if (h < 0) usage();
 
-#ifdef HAVE_GTK2
-#if !GLIB_CHECK_VERSION(2, 36 ,0)
-  g_type_init ();
-#endif
-#endif /* HAVE_GTK2 */
+# ifdef HAVE_GTK2
+#  if !GLIB_CHECK_VERSION(2, 36 ,0)
+      g_type_init ();
+#  endif
+# endif /* HAVE_GTK2 */
 
-  paste (paste_file, base_file,
-         from_scale, opacity, bevel_pct,
-         from_x, from_y, to_x, to_y,
-         w, h);
+      paste (paste_file, base_file,
+             from_scale, opacity, bevel_pct,
+             from_x, from_y, to_x, to_y,
+             w, h);
+    }
+  else if (argc == 4 || argc == 5)
+    {
+      char *color = argv[i++];
+      s = argv[i++]; if (1 != sscanf (s, " %d %c", &w, &dummy)) usage();
+      s = argv[i++]; if (1 != sscanf (s, " %d %c", &h, &dummy)) usage();
+      paste_file = argv[i++];
+      if (*paste_file == '-') usage();
+
+      create (color, w, h, paste_file);
+    }
+  else
+    {
+      usage();
+    }
+
   exit (0);
 }
 

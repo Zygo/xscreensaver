@@ -25,7 +25,7 @@ static const char sccsid[] = "@(#)antmaze.c	5.01 2001/03/01 xlockmore";
 			"*showFPS:      False   \n" \
 			"*fpsSolid:     True    \n"
 
-# define refresh_antmaze 0
+# define free_antmaze 0
 # define release_antmaze 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -1329,7 +1329,7 @@ ENTRYPOINT void init_antmaze(ModeInfo * mi)
 
   antmazestruct *mp;
   
-  MI_INIT(mi, antmaze, NULL);
+  MI_INIT(mi, antmaze);
   mp = &antmaze[MI_SCREEN(mi)];
   mp->step = NRAND(90);
   mp->ant_position = NRAND(90);

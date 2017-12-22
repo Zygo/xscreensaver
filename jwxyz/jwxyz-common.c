@@ -29,6 +29,7 @@
 #include <stdio.h>
 
 #include "jwxyzI.h"
+#include "pow2.h"
 #include "utf8wc.h"
 #include "xft.h"
 
@@ -36,6 +37,7 @@
 #define assert_window(dpy, w) \
   Assert (w == RootWindow (dpy, 0), "not a window")
 
+#define VTBL JWXYZ_VTBL(dpy)
 
 struct jwxyz_Font {
   Display *dpy;
@@ -97,6 +99,25 @@ XDisplayHeightMM (Display *dpy, int screen)
   return size_mm (dpy, XDisplayHeight (dpy, screen));
 }
 
+unsigned long
+XBlackPixelOfScreen(Screen *screen)
+{
+  return DefaultVisualOfScreen (screen)->rgba_masks[3];
+}
+
+unsigned long
+XWhitePixelOfScreen(Screen *screen)
+{
+  const unsigned long *masks = DefaultVisualOfScreen (screen)->rgba_masks;
+  return masks[0] | masks[1] | masks[2] | masks[3];
+}
+
+unsigned long
+XCellsOfScreen(Screen *screen)
+{
+  const unsigned long *masks = DefaultVisualOfScreen (screen)->rgba_masks;
+  return masks[0] | masks[1] | masks[2];
+}
 
 void
 jwxyz_validate_pixel (Display *dpy, unsigned long pixel, unsigned int depth,
@@ -127,12 +148,12 @@ Bool
 jwxyz_dumb_drawing_mode(Display *dpy, Drawable d, GC gc,
                         int x, int y, unsigned width, unsigned height)
 {
-  XGCValues *gcv = jwxyz_gc_gcv (gc);
+  XGCValues *gcv = VTBL->gc_gcv (gc);
 
   if (gcv->function == GXset || gcv->function == GXclear) {
     // "set" and "clear" are dumb drawing modes that ignore the source
     // bits and just draw solid rectangles.
-    unsigned depth = jwxyz_gc_depth (gc);
+    unsigned depth = VTBL->gc_depth (gc);
     jwxyz_fill_rect (dpy, d, 0, x, y, width, height,
                      (gcv->function == GXset
                       ? (depth == 1 ? 1 : WhitePixel(dpy,0))
@@ -226,7 +247,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
     width0  = 0;
     height0 = 0;
   } else {
-    jwxyz_copy_area (dpy, src, dst, gc,
+    VTBL->copy_area (dpy, src, dst, gc,
                      src_x, src_y, width0, height0, dst_x, dst_y);
   }
 
@@ -283,15 +304,46 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       ++rects_end;
     }
 
-    XGCValues *gcv = jwxyz_gc_gcv (gc);
+    XGCValues *gcv = VTBL->gc_gcv (gc);
     int old_function = gcv->function;
     gcv->function = GXcopy;
-    jwxyz_fill_rects (dpy, dst, gc, rects, rects_end - rects,
-                      jwxyz_window_background (dpy));
+    VTBL->fill_rects (dpy, dst, gc, rects, rects_end - rects,
+                      *VTBL->window_background (dpy));
     gcv->function = old_function;
   }
 
   return 0;
+}
+
+
+void
+jwxyz_blit (const void *src_data, ptrdiff_t src_pitch,
+            unsigned src_x, unsigned src_y,
+            void *dst_data, ptrdiff_t dst_pitch,
+            unsigned dst_x, unsigned dst_y,
+            unsigned width, unsigned height)
+{
+  Bool same = src_data == dst_data;
+  src_data = SEEK_XY (src_data, src_pitch, src_x, src_y);
+  dst_data = SEEK_XY (dst_data, dst_pitch, dst_x, dst_y);
+
+  size_t bytes = width * 4;
+
+  if (same && dst_y > src_y) {
+    // Copy upwards if the areas might overlap.
+    src_data += src_pitch * (height - 1);
+    dst_data += dst_pitch * (height - 1);
+    src_pitch = -src_pitch;
+    dst_pitch = -dst_pitch;
+  }
+
+  while (height) {
+    // memcpy is an alias for memmove on macOS.
+    memmove (dst_data, src_data, bytes);
+    src_data += src_pitch;
+    dst_data += dst_pitch;
+    --height;
+  }
 }
 
 
@@ -301,7 +353,7 @@ XCopyPlane (Display *dpy, Drawable src, Drawable dest, GC gc,
             unsigned width, int height,
             int dest_x, int dest_y, unsigned long plane)
 {
-  Assert ((jwxyz_gc_depth (gc) == 1 || plane == 1), "hairy plane mask!");
+  Assert ((VTBL->gc_depth (gc) == 1 || plane == 1), "hairy plane mask!");
   
   // This isn't right: XCopyPlane() is supposed to map 1/0 to fg/bg,
   // not to white/black.
@@ -310,13 +362,35 @@ XCopyPlane (Display *dpy, Drawable src, Drawable dest, GC gc,
 }
 
 
+int
+XDrawLine (Display *dpy, Drawable d, GC gc, int x1, int y1, int x2, int y2)
+{
+  XSegment segment;
+  segment.x1 = x1;
+  segment.y1 = y1;
+  segment.x2 = x2;
+  segment.y2 = y2;
+  XDrawSegments (dpy, d, gc, &segment, 1);
+  return 0;
+}
+
+
+int
+XSetWindowBackground (Display *dpy, Window w, unsigned long pixel)
+{
+  Assert (w == XRootWindow (dpy,0), "not a window");
+  jwxyz_validate_pixel (dpy, pixel, visual_depth (NULL, NULL), False);
+  *VTBL->window_background (dpy) = pixel;
+  return 0;
+}
+
 void
 jwxyz_fill_rect (Display *dpy, Drawable d, GC gc,
                  int x, int y, unsigned int width, unsigned int height,
                  unsigned long pixel)
 {
   XRectangle r = {x, y, width, height};
-  jwxyz_fill_rects (dpy, d, gc, &r, 1, pixel);
+  VTBL->fill_rects (dpy, d, gc, &r, 1, pixel);
 }
 
 int
@@ -324,7 +398,7 @@ XFillRectangle (Display *dpy, Drawable d, GC gc, int x, int y,
                 unsigned int width, unsigned int height)
 {
   jwxyz_fill_rect (dpy, d, gc, x, y, width, height,
-                   jwxyz_gc_gcv (gc)->foreground);
+                   VTBL->gc_gcv (gc)->foreground);
   return 0;
 }
 
@@ -347,7 +421,17 @@ XDrawRectangle (Display *dpy, Drawable d, GC gc, int x, int y,
 int
 XFillRectangles (Display *dpy, Drawable d, GC gc, XRectangle *rects, int n)
 {
-  jwxyz_fill_rects (dpy, d, gc, rects, n, jwxyz_gc_gcv (gc)->foreground);
+  VTBL->fill_rects (dpy, d, gc, rects, n, VTBL->gc_gcv (gc)->foreground);
+  return 0;
+}
+
+
+int
+XClearArea (Display *dpy, Window win, int x, int y, int w, int h, Bool exp)
+{
+  Assert(win == XRootWindow(dpy,0), "XClearArea: not a window");
+  Assert(!exp, "XClearArea: exposures unsupported");
+  jwxyz_fill_rect (dpy, win, 0, x, y, w, h, *VTBL->window_background (dpy));
   return 0;
 }
 
@@ -356,7 +440,7 @@ int
 XDrawArc (Display *dpy, Drawable d, GC gc, int x, int y,
           unsigned int width, unsigned int height, int angle1, int angle2)
 {
-  return jwxyz_draw_arc (dpy, d, gc, x, y, width, height, angle1, angle2,
+  return VTBL->draw_arc (dpy, d, gc, x, y, width, height, angle1, angle2,
                          False);
 }
 
@@ -364,7 +448,7 @@ int
 XFillArc (Display *dpy, Drawable d, GC gc, int x, int y,
           unsigned int width, unsigned int height, int angle1, int angle2)
 {
-  return jwxyz_draw_arc (dpy, d, gc, x, y, width, height, angle1, angle2,
+  return VTBL->draw_arc (dpy, d, gc, x, y, width, height, angle1, angle2,
                          True);
 }
 
@@ -373,7 +457,7 @@ XDrawArcs (Display *dpy, Drawable d, GC gc, XArc *arcs, int narcs)
 {
   int i;
   for (i = 0; i < narcs; i++)
-    jwxyz_draw_arc (dpy, d, gc,
+    VTBL->draw_arc (dpy, d, gc,
                     arcs[i].x, arcs[i].y,
                     arcs[i].width, arcs[i].height,
                     arcs[i].angle1, arcs[i].angle2,
@@ -386,7 +470,7 @@ XFillArcs (Display *dpy, Drawable d, GC gc, XArc *arcs, int narcs)
 {
   int i;
   for (i = 0; i < narcs; i++)
-    jwxyz_draw_arc (dpy, d, gc,
+    VTBL->draw_arc (dpy, d, gc,
                     arcs[i].x, arcs[i].y,
                     arcs[i].width, arcs[i].height,
                     arcs[i].angle1, arcs[i].angle2,
@@ -418,8 +502,8 @@ XChangeGC (Display *dpy, GC gc, unsigned long mask, XGCValues *from)
   Assert (gc && from, "no gc");
   if (!gc || !from) return 0;
 
-  XGCValues *to = jwxyz_gc_gcv (gc);
-  unsigned depth = jwxyz_gc_depth (gc);
+  XGCValues *to = VTBL->gc_gcv (gc);
+  unsigned depth = VTBL->gc_depth (gc);
 
   if (mask & GCFunction)        to->function            = from->function;
   if (mask & GCForeground)      to->foreground          = from->foreground;
@@ -432,8 +516,8 @@ XChangeGC (Display *dpy, GC gc, unsigned long mask, XGCValues *from)
   if (mask & GCClipYOrigin)     to->clip_y_origin       = from->clip_y_origin;
   if (mask & GCSubwindowMode)   to->subwindow_mode      = from->subwindow_mode;
 
-  if (mask & GCClipMask)	XSetClipMask (0, gc, from->clip_mask);
-  if (mask & GCFont)		XSetFont (0, gc, from->font);
+  if (mask & GCClipMask)	XSetClipMask (dpy, gc, from->clip_mask);
+  if (mask & GCFont)		XSetFont (dpy, gc, from->font);
 
   if (mask & GCForeground)
     jwxyz_validate_pixel (dpy, from->foreground, depth, to->alpha_allowed_p);
@@ -494,11 +578,13 @@ XGetGeometry (Display *dpy, Drawable d, Window *root_ret,
 Status
 XAllocColor (Display *dpy, Colormap cmap, XColor *color)
 {
-  color->pixel = jwxyz_alloc_color (dpy,
-                                    color->red,
-                                    color->green,
-                                    color->blue,
-                                    0xFFFF);
+  const unsigned long *masks =
+    DefaultVisualOfScreen(DefaultScreenOfDisplay(dpy))->rgba_masks;
+  color->pixel =
+    (((color->red   << 16) >> (31 - i_log2(masks[0]))) & masks[0]) |
+    (((color->green << 16) >> (31 - i_log2(masks[1]))) & masks[1]) |
+    (((color->blue  << 16) >> (31 - i_log2(masks[2]))) & masks[2]) |
+    masks[3];
   return 1;
 }
 
@@ -590,11 +676,11 @@ int
 XQueryColor (Display *dpy, Colormap cmap, XColor *color)
 {
   jwxyz_validate_pixel (dpy, color->pixel, visual_depth (NULL, NULL), False);
-  uint8_t rgba[4];
-  jwxyz_query_color (dpy, color->pixel, rgba);
-  color->red   = (rgba[0] << 8) | rgba[0];
-  color->green = (rgba[1] << 8) | rgba[1];
-  color->blue  = (rgba[2] << 8) | rgba[2];
+  uint16_t rgba[4];
+  JWXYZ_QUERY_COLOR (dpy, color->pixel, 0xffffull, rgba);
+  color->red   = rgba[0];
+  color->green = rgba[1];
+  color->blue  = rgba[2];
   color->flags = DoRed|DoGreen|DoBlue;
   return 0;
 }
@@ -683,9 +769,9 @@ XCreateImage (Display *dpy, Visual *visual, unsigned int depth,
   ximage->bitmap_pad = bitmap_pad;
   ximage->depth = depth;
   Visual *v = DefaultVisualOfScreen (DefaultScreenOfDisplay (dpy));
-  ximage->red_mask   = (depth == 1 ? 0 : v->red_mask);
-  ximage->green_mask = (depth == 1 ? 0 : v->green_mask);
-  ximage->blue_mask  = (depth == 1 ? 0 : v->blue_mask);
+  ximage->red_mask   = (depth == 1 ? 0 : v->rgba_masks[0]);
+  ximage->green_mask = (depth == 1 ? 0 : v->rgba_masks[1]);
+  ximage->blue_mask  = (depth == 1 ? 0 : v->rgba_masks[2]);
   ximage->bits_per_pixel = (depth == 1 ? 1 : visual_depth (NULL, NULL));
   ximage->bytes_per_line = bytes_per_line;
 
@@ -843,7 +929,7 @@ query_font (Font fid)
   for (int i = first; i <= last; i++) {
     XCharStruct *cs = &f->per_char[i-first];
     char s = (char) i;
-    jwxyz_render_text (dpy, native_font, &s, 1, False, cs, 0);
+    jwxyz_render_text (dpy, native_font, &s, 1, False, False, cs, 0);
 
     max->width    = MAX (max->width,    cs->width);
     max->ascent   = MAX (max->ascent,   cs->ascent);
@@ -1145,16 +1231,11 @@ XLoadFont (Display *dpy, const char *name)
   if (! fid->native_font)
     try_xlfd_font (dpy, name, fid);
 
-  //Log("parsed \"%s\" to %s %.1f", name, fid->ps_name, fid->size);
-
-  /*
-  fid->native_font = jwxyz_load_native_font (dpy, name,
-                                             &fid->ascent, &fid->descent);
   if (!fid->native_font) {
     free (fid);
     return 0;
   }
-   */
+
   query_font (fid);
 
   return fid;
@@ -1218,7 +1299,7 @@ XFreeFont (Display *dpy, XFontStruct *f)
 int
 XSetFont (Display *dpy, GC gc, Font fid)
 {
-  XGCValues *gcv = jwxyz_gc_gcv(gc);
+  XGCValues *gcv = VTBL->gc_gcv(gc);
   Font font2 = copy_font (fid);
   if (gcv->font)
     XUnloadFont (dpy, gcv->font);
@@ -1283,7 +1364,7 @@ XTextExtents (XFontStruct *f, const char *s, int length,
 
   Font ff = f->fid;
   Display *dpy = ff->dpy;
-  jwxyz_render_text (dpy, ff->native_font, s, length, False, cs, 0);
+  jwxyz_render_text (dpy, ff->native_font, s, length, False, False, cs, 0);
   *dir_ret = 0;
   *ascent_ret  = f->ascent;
   *descent_ret = f->descent;
@@ -1319,7 +1400,7 @@ XTextExtents16 (XFontStruct *f, const XChar2b *s, int length,
     Font ff = f->fid;
     Display *dpy = ff->dpy;
     jwxyz_render_text (dpy, ff->native_font, utf8, strlen(utf8),
-                       True, cs, 0);
+                       True, False, cs, 0);
   }
 
   *dir_ret = 0;
@@ -1359,7 +1440,8 @@ Xutf8TextExtents (XFontSet set, const char *str, int len,
   XCharStruct cs;
   Font f = set->font->fid;
 
-  jwxyz_render_text (f->dpy, f->native_font, str, len, True, &cs, NULL);
+  jwxyz_render_text (f->dpy, f->native_font, str, len, True, False, &cs,
+                     NULL);
 
   /* "The overall_logical_return is the bounding box that provides minimum
    spacing to other graphical features for the string. Other graphical
@@ -1380,10 +1462,71 @@ Xutf8TextExtents (XFontSet set, const char *str, int len,
 
 
 int
+jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
+                   const char *str, size_t len, int utf8_p)
+{
+  const XGCValues *gcv = VTBL->gc_gcv (gc);
+  Font ff = gcv->font;
+  XCharStruct cs;
+
+  char *data = 0;
+  jwxyz_render_text (dpy, jwxyz_native_font (ff), str, len, utf8_p,
+                     gcv->antialias_p, &cs, &data);
+  int w = cs.rbearing - cs.lbearing;
+  int h = cs.ascent + cs.descent;
+
+  if (w < 0 || h < 0) abort();
+  if (w == 0 || h == 0) {
+    if (data) free(data);
+    return 0;
+  }
+
+  XImage *img = XCreateImage (dpy, VTBL->visual (dpy), 32,
+                              ZPixmap, 0, data, w, h, 0, 0);
+
+  /* The image of text is a 32-bit image, in white.
+     Take the green channel for intensity and use that as alpha.
+     replace RGB with the GC's foreground color.
+     This expects that XPutImage respects alpha and only writes
+     the bits that are not masked out.
+   */
+  {
+# define ROTL(x, rot) (((x) << ((rot) & 31)) | ((x) >> (32 - ((rot) & 31))))
+
+    const unsigned long *masks =
+      DefaultVisualOfScreen (DefaultScreenOfDisplay(dpy))->rgba_masks;
+    unsigned shift = (i_log2 (masks[3]) - i_log2 (masks[1])) & 31;
+    uint32_t mask = ROTL(masks[1], shift) & masks[3],
+             color = gcv->foreground & ~masks[3];
+    uint32_t *s = (uint32_t *)data;
+    uint32_t *end = s + (w * h);
+    while (s < end) {
+
+      *s = (ROTL(*s, shift) & mask) | color;
+      ++s;
+    }
+  }
+
+  {
+    Bool old_alpha = gcv->alpha_allowed_p;
+    jwxyz_XSetAlphaAllowed (dpy, gc, True);
+    XPutImage (dpy, d, gc, img, 0, 0,
+               x + cs.lbearing,
+               y - cs.ascent,
+               w, h);
+    jwxyz_XSetAlphaAllowed (dpy, gc, old_alpha);
+    XDestroyImage (img);
+  }
+
+  return 0;
+}
+
+
+int
 XDrawString (Display *dpy, Drawable d, GC gc, int x, int y,
              const char  *str, int len)
 {
-  return jwxyz_draw_string (dpy, d, gc, x, y, str, len, False);
+  return VTBL->draw_string (dpy, d, gc, x, y, str, len, False);
 }
 
 
@@ -1398,7 +1541,7 @@ XDrawString16 (Display *dpy, Drawable d, GC gc, int x, int y,
   b2[len].byte1 = b2[len].byte2 = 0;
   s2 = XChar2b_to_utf8 (b2, 0);
   free (b2);
-  ret = jwxyz_draw_string (dpy, d, gc, x, y, s2, strlen(s2), True);
+  ret = VTBL->draw_string (dpy, d, gc, x, y, s2, strlen(s2), True);
   free (s2);
   return ret;
 }
@@ -1408,7 +1551,7 @@ void
 Xutf8DrawString (Display *dpy, Drawable d, XFontSet set, GC gc,
                  int x, int y, const char *str, int len)
 {
-  jwxyz_draw_string (dpy, d, gc, x, y, str, len, True);
+  VTBL->draw_string (dpy, d, gc, x, y, str, len, True);
 }
 
 
@@ -1418,7 +1561,7 @@ XDrawImageString (Display *dpy, Drawable d, GC gc, int x, int y,
 {
   int ascent, descent, dir;
   XCharStruct cs;
-  XTextExtents (&jwxyz_gc_gcv (gc)->font->metrics, str, len,
+  XTextExtents (&VTBL->gc_gcv (gc)->font->metrics, str, len,
                 &dir, &ascent, &descent, &cs);
   jwxyz_fill_rect (dpy, d, gc,
                    x + MIN (0, cs.lbearing),
@@ -1427,7 +1570,7 @@ XDrawImageString (Display *dpy, Drawable d, GC gc, int x, int y,
                         MIN (0, cs.lbearing),
                         cs.width),
                    MAX (0, ascent) + MAX (0, descent),
-                   jwxyz_gc_gcv(gc)->background);
+                   VTBL->gc_gcv(gc)->background);
   return XDrawString (dpy, d, gc, x, y, str, len);
 }
 
@@ -1442,8 +1585,8 @@ jwxyz_native_font (Font f)
 int
 XSetForeground (Display *dpy, GC gc, unsigned long fg)
 {
-  XGCValues *gcv = jwxyz_gc_gcv (gc);
-  jwxyz_validate_pixel (dpy, fg, jwxyz_gc_depth (gc), gcv->alpha_allowed_p);
+  XGCValues *gcv = VTBL->gc_gcv (gc);
+  jwxyz_validate_pixel (dpy, fg, VTBL->gc_depth (gc), gcv->alpha_allowed_p);
   gcv->foreground = fg;
   return 0;
 }
@@ -1452,8 +1595,8 @@ XSetForeground (Display *dpy, GC gc, unsigned long fg)
 int
 XSetBackground (Display *dpy, GC gc, unsigned long bg)
 {
-  XGCValues *gcv = jwxyz_gc_gcv (gc);
-  jwxyz_validate_pixel (dpy, bg, jwxyz_gc_depth (gc), gcv->alpha_allowed_p);
+  XGCValues *gcv = VTBL->gc_gcv (gc);
+  jwxyz_validate_pixel (dpy, bg, VTBL->gc_depth (gc), gcv->alpha_allowed_p);
   gcv->background = bg;
   return 0;
 }
@@ -1461,14 +1604,14 @@ XSetBackground (Display *dpy, GC gc, unsigned long bg)
 int
 jwxyz_XSetAlphaAllowed (Display *dpy, GC gc, Bool allowed)
 {
-  jwxyz_gc_gcv (gc)->alpha_allowed_p = allowed;
+  VTBL->gc_gcv (gc)->alpha_allowed_p = allowed;
   return 0;
 }
 
 int
 jwxyz_XSetAntiAliasing (Display *dpy, GC gc, Bool antialias_p)
 {
-  jwxyz_gc_gcv (gc)->antialias_p = antialias_p;
+  VTBL->gc_gcv (gc)->antialias_p = antialias_p;
   return 0;
 }
 
@@ -1477,7 +1620,7 @@ int
 XSetLineAttributes (Display *dpy, GC gc, unsigned int line_width,
                     int line_style, int cap_style, int join_style)
 {
-  XGCValues *gcv = jwxyz_gc_gcv (gc);
+  XGCValues *gcv = VTBL->gc_gcv (gc);
   gcv->line_width = line_width;
   Assert (line_style == LineSolid, "only LineSolid implemented");
 //  gc->gcv.line_style = line_style;
@@ -1495,14 +1638,14 @@ XSetGraphicsExposures (Display *dpy, GC gc, Bool which)
 int
 XSetFunction (Display *dpy, GC gc, int which)
 {
-  jwxyz_gc_gcv (gc)->function = which;
+  VTBL->gc_gcv (gc)->function = which;
   return 0;
 }
 
 int
 XSetSubwindowMode (Display *dpy, GC gc, int which)
 {
-  jwxyz_gc_gcv (gc)->subwindow_mode = which;
+  VTBL->gc_gcv (gc)->subwindow_mode = which;
   return 0;
 }
 
@@ -1617,7 +1760,7 @@ visual_depth (Screen *s, Visual *v)
 int
 visual_cells (Screen *s, Visual *v)
 {
-  return (int)(v->red_mask | v->green_mask | v->blue_mask);
+  return (int)(v->rgba_masks[0] | v->rgba_masks[1] | v->rgba_masks[2]);
 }
 
 int
@@ -1630,9 +1773,9 @@ void
 visual_rgb_masks (Screen *s, Visual *v, unsigned long *red_mask,
                   unsigned long *green_mask, unsigned long *blue_mask)
 {
-  *red_mask = v->red_mask;
-  *green_mask = v->green_mask;
-  *blue_mask = v->blue_mask;
+  *red_mask = v->rgba_masks[0];
+  *green_mask = v->rgba_masks[1];
+  *blue_mask = v->rgba_masks[2];
 }
 
 int

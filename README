@@ -3,7 +3,8 @@
 
                              a collection of
                             free screen savers
-                            for X11 and MacOS
+                             for X11, macOS,
+                             iOS and Android
 
                             By Jamie Zawinski
                              and many others
@@ -14,8 +15,8 @@
 
 This is the XScreenSaver source code distribution.  It is strongly recommended
 that you install a binary release rather than trying to compile it yourself.
-Binaries are available for almost all platforms, including MacOS X.  See the
-XScreenSaver web site for details.
+Executables are available for almost all platforms, including macOS, iOS, and
+Android.  See the XScreenSaver web site for details.
 
 To compile for a Unix system with X11:
 
@@ -26,9 +27,9 @@ To compile for a Unix system with X11:
     If you are on an "apt"-based system, "apt-get build-dep xscreensaver"
     might install most of the compilation dependencies.
 
-To compile for MacOS X or iOS:
+To compile for macOS X or iOS:
 
-    Use the included XCode project.  Requires XCode 6 and MacOS X 10.8
+    Use the included XCode project.  Requires XCode 6 and macOS 10.8
     or newer.
 
 To compile for Android:
@@ -45,27 +46,49 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.38	* New hack, 'esper'.
+	* macOS: Support for Retina displays.
+	* X11: `webcollage' now works with ImageMagick instead of with
+	  pbmtools if `webcollage-helper' is not installed.
+	* 'bsod' now accepts Dunning-Krugerrands.
+	* Android: These hacks work now: 'anemone', 'anemotaxis', 'atlantis',
+	  'bouboule', 'celtic', 'compass', 'crackberg', 'epicycle',
+	  'fuzzyflakes', 'goop', 'kumppa' 'munch', 'pacman', 'polyominoes',
+	  'slip'.
+	* Android: Thick lines work better for: 'anemone', 'anemotaxis',
+	  'celtic', 'compass', 'deluxe', 'epicycle', 'fuzzyflakes', 'pacman'
+	* Android: Assorted performance improvements, especially for 'kumppa'
+	  and 'slip'.
+        * Android TV: Daydreams work.
+	* iOS: Tweaks for iPhone X.
+	* Lots of xlockmore-derived hacks now have animated erase routines.
+	* 'crystal' works properly on non-X11 systems.
+	* 'm6502' now includes 'texture.asm'.
+	* X11: Try harder to find sensible fonts for the password dialog.
+
 5.37	* New hack, `vigilance'.
 	* Added Mac Software Update and VMware to `bsod'.
-	* OSX: Grabbing the desktop works again.
-	* OSX: Pinch to zoom.
+	* macOS: Grabbing the desktop works again.
+	* macOS: Pinch to zoom.
 	* Android: Both Daydreams and Live Wallpapers are implemented.
 	* Updated `webcollage' for recent changes.
 	* Various bug fixes.
+
 5.36	* New hacks, `discoball', `cubetwist', `cubestack', `splodesic'
           and `hexstrut'.
-	* OSX: loading image files works in `dymaxionmap', `glplanet',
+	* macOS: loading image files works in `dymaxionmap', `glplanet',
 	  `lavalite', `pulsar', `gleidescope' and `extrusion'.
         * Several new programs in `m6502'.
         * `rotzoomer -mode circle'.
         * Better titles in `photopile'.
+
 5.35	* New hacks, `dymaxionmap', `unicrud', `energystream', `raverhoop'
           and `hydrostat'.
 	* Added Windows 10 to `bsod'.
 	* X11: ignore WM_USER_TIME property changes with days-old timestamps.
           Thanks, KDE.
-        * MacOS, iOS: Better fonts in `BSOD' and `memscroller'.
-	* MacOS 10.8 or later and iOS 6.0 or later are now required, since
+        * macOS, iOS: Better fonts in `bsod' and `memscroller'.
+	* macOS 10.8 or later and iOS 6.0 or later are now required, since
 	  Xcode 6 can no longer build executables that work on older OSes.
 	* Many, many Android improvements.
 	* iOS: Fixed rotation to work with the new iOS 8+ API.
@@ -73,7 +96,7 @@ XScreenSaver has an extensive manual -- please read it!
 
 5.34	* Fixed a crash when hot-swapping monitors while locked.
 	* Fixed some incorrect output from `xscreensaver-command -watch'.
-	* Various OSX and iOS performance improvements.
+	* Various macOS and iOS performance improvements.
 
 5.33	* New hacks, `splitflap' and `romanboy'.
 	* Better detection of user activity on modern GNOME systems.
@@ -84,20 +107,20 @@ XScreenSaver has an extensive manual -- please read it!
 
 5.32	* Fixed some X11 compilation problems.
 	* Fixed display size and shake gestures on iOS.
-	* OSX/iOS Performance improvements.
+	* macOS/iOS Performance improvements.
 
 5.31	* New hacks, `geodesicgears', `binaryring' and `cityflow'.
         * UTF-8 text support (instead of only Latin1) and antialiased text
-          on X11 with Xft (instead of only on OSX/iOS) in `fontglide',
+          on X11 with Xft (instead of only on macOS/iOS) in `fontglide',
           `noseguy', `fliptext', `starwars', and `winduprobot'.
           The other text-displaying hacks (`apple2', `phosphor', `xmatrix',
           and `gltext') also now accept UTF-8 input, though they convert it
           to Latin1 or ASCII.
 	* `glplanet' now has both day and night maps, and a sharp terminator.
-	* Fixed `webcollage' on OSX.
+	* Fixed `webcollage' on macOS.
 	* Fixed a transparency glitch in `winduprobot'.
 	* `lockward' works on iOS.
-	* Text and image loading work on OSX 10.10.
+	* Text and image loading work on macOS 10.10.
 	* Rotation works properly on iOS 8.
 	* Added a search field on iOS.
 	* Preliminary, unfinished support for Android.
@@ -112,7 +135,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* Most hacks respond to mouse-clicks, double-taps and swipes as
           meaning "do something different now".
 	* Reworked OpenGL fonts.
-	* The OSX auto-update installer wasn't working. This time for sure?
+	* The macOS auto-update installer wasn't working. This time for sure?
 	* Various minor fixes.
 
 5.29	* Downgraded to Xcode 5.0.2 to make it possible to build savers
@@ -120,7 +143,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* Updated `webcollage' for recent changes.
 
 5.28	* Fixed some compilation problems and intermittent crashes.
-        * Turned off the OSX 10.6 enable_gc hack. It didn't work.
+        * Turned off the macOS 10.6 enable_gc hack. It didn't work.
 
 5.27	* New hacks, `tessellimage' and `projectiveplane'.
         * Added support for pthreads, because Dave Odell is a madman.
@@ -129,16 +152,16 @@ XScreenSaver has an extensive manual -- please read it!
         * X11: Don't assume Suspend = 0 implies "No DPMS".
 	* Minor updates to `boxed' and `klein'.
         * Fixed possible crash in `apple2', `noseguy', `xmatrix', `shadebobs'.
-        * Fixed possible crash in OSX preferences.
-        * OSX Performance improvements.
+        * Fixed possible crash in macOS preferences.
+        * macOS Performance improvements.
         * Plugged some leaks.
 
 5.26	* More auto-updater tweaks.
 
-5.25	* Try harder to bypass Quarrantine and Gatekeeper in OSX installer.
+5.25	* Try harder to bypass Quarrantine and Gatekeeper in macOS installer.
 	* Some files were missing from the tarball.
 
-5.24	* Added "Automatically check for updates" option on OSX.
+5.24	* Added "Automatically check for updates" option on macOS.
 	* Updated feed-loading for recent Flickr changes.
 	* Updated `webcollage' for recent Google changes.
 	* Added Instagram and Bing as `webcollage' image sources.
@@ -146,13 +169,13 @@ XScreenSaver has an extensive manual -- please read it!
 	* Bug fixes.
 
 5.23	* New hack, `geodesic'.
-	* iOS and OSX: huge XCopyArea performance improvements.
+	* iOS and macOS: huge XCopyArea performance improvements.
 	* More heuristics for using RSS feeds as image sources.
 	* Improved Wikipedia parser.
 	* Updated `webcollage' for recent Flickr changes.
 	* Added Android to `bsod'.
-	* OSX: Added a real installer.
-	* iOS and OSX: fixed a font-metrics bug.
+	* macOS: Added a real installer.
+	* iOS and macOS: fixed a font-metrics bug.
 	* iOS: Fixed aspect ratio bug in non-rotating apps when launched in
 	  landscape mode.
 	* Made `quasicrystal' work on weak graphics cards.
@@ -181,14 +204,14 @@ XScreenSaver has an extensive manual -- please read it!
 	  now requires a login to get any feeds.
 	* New version of `fireworkx'.
 	* Minor fixes to `distort', `fontglide', `xmatrix'.
-	* New MacOS crash in `bsod'.
+	* New macOS crash in `bsod'.
 	* New mode in `lcdscrub'.
 
 5.20	* Support for iPhone 5 screen size.
-	* Fixed modifier key handing in Apple2.app and Phosphor.app on MacOS.
+	* Fixed modifier key handing in Apple2.app and Phosphor.app on macOS.
 	* Various minor bug fixes.
 
-5.19	* MacOS 10.8.0 compatibility.
+5.19	* macOS 10.8.0 compatibility.
 	* iOS performance improvements.
 
 5.18	* iOS responds to shake gestures to randomize.
@@ -216,10 +239,10 @@ XScreenSaver has an extensive manual -- please read it!
 	  `imageDirectory' may contain a URL.
 	* Updated `webcollage' for recent search engine changes.
 	* `phosphor' and `apple2' can now be run as standalone terminal
-	  emulator applications on MacOS.
+	  emulator applications on macOS.
 	* `photopile' sped up.
 	* New molecule in `molecule'.
-	* "Upgraded" to XCode 4.0, which means that MacOS 10.4 PPC builds are
+	* "Upgraded" to XCode 4.0, which means that macOS 10.4 PPC builds are
 	  impossible, and Intel is now required.
 	* Turned on LC_CTYPE on Linux; maybe Japanese password entry works
 	  now?
@@ -238,10 +261,10 @@ XScreenSaver has an extensive manual -- please read it!
 	* Passwords that contain UTF-8 non-Latin1 chars are now typeable.
 	* Numerous minor stability fixes.
 
-5.12	* Big speed improvement on OSX for heavy XCopyArea users (`xmatrix',
+5.12	* Big speed improvement on macOS for heavy XCopyArea users (`xmatrix',
 	  `moire2', `phosphor', etc.)
-	* Plugged a bad OSX-only Pixmap leak.
-	* Kludged around the OSX pty bug that caused text to be truncated in
+	* Plugged a bad macOS-only Pixmap leak.
+	* Kludged around the macOS pty bug that caused text to be truncated in
 	  phosphor, starwars, apple2, etc.
 	* New molecule in `molecule'.
 	* `glhanoi' now supports an arbitrary number of poles.
@@ -249,25 +272,25 @@ XScreenSaver has an extensive manual -- please read it!
 	* Added support for XInput-style alternate input devices.
 
 5.11	* New versions of `photopile', `strange'.
-	* Worked around MacOS 10.6 garbage collector bug that caused the
+	* Worked around macOS 10.6 garbage collector bug that caused the
 	  screen saver process to become enormous.
 	* Fixed flicker in `pipes', `cubestorm', and `noof'.
-	* Fixed EXIF rotation on MacOS 10.6.
-	* Fixed desktop-grabbing when screen locked on MacOS.
+	* Fixed EXIF rotation on macOS 10.6.
+	* Fixed desktop-grabbing when screen locked on macOS.
 	* Minor fixes to `circuit', `polyhedra', `tangram', `gears', `pinion',
 	  `substrate', `xanalogtv'.
 	* Fixed some leaks in `xanalogtv' and `apple2'.
 	* Better seeding of the RNG.
 
-5.10	* Fixed some crashes and color problems on MacOS 10.6.
+5.10	* Fixed some crashes and color problems on macOS 10.6.
 	* Retired `hypercube' and `hyperball', which are redundant with
 	  `polytopes'.
 
 
-5.09	* Ported to MacOS 10.6, including various 64-bit fixes.
+5.09	* Ported to macOS 10.6, including various 64-bit fixes.
 	* New hack, `rubikblocks'.
 	* Fixed another potential RANDR crash.
-	* Use correct proxy server on MacOS.
+	* Use correct proxy server on macOS.
 	* `molecule' now correctly displays PDB 3.2 files.
 	* Updates to `mirrorblob', `glhanoi', and `sonar'.
 	* Rewritten version of `klein' hack.
@@ -298,11 +321,11 @@ XScreenSaver has an extensive manual -- please read it!
 	* `flipflop' can load images onto the tiles.
 	* Fixed the bouncing ball in `stairs'.
 	* Added the missing Utah Teapotahedron to `polyhedra'.
-	* `blitspin' works with color images on MacOS now.
+	* `blitspin' works with color images on macOS now.
 	* Added transparency to `stonerview'.
 	* Improved layout of the preferences dialogs: they should all now be
 	  usable even on ridiculously tiny laptop screens.
-	* MacOS preferences text fields now prevent you from entering numbers
+	* macOS preferences text fields now prevent you from entering numbers
 	  that are out of range.
 	* Added "Reset to Defaults" button on X11.
 	* Added relevant Wikipedia links to many of the screen saver
@@ -331,9 +354,9 @@ XScreenSaver has an extensive manual -- please read it!
 	  rectangles available.
 	* Don't warning about receipt of bogus ClientMessages, since Gnome's
 	  just never going to stop sending those.
-	* Worked around MacOS 10.5 perl bug that caused the text-displaying
+	* Worked around macOS 10.5 perl bug that caused the text-displaying
 	  hacks to fail on some systems.
-	* Hopefully fixed font-related System Preferences crashes in MacOS
+	* Hopefully fixed font-related System Preferences crashes in macOS
 	  savers.
 	* The recent PAM changes broke the "Caps Lock" warning in the password
 	  dialog, the failed login warnings, and syslogging.  Fixed all that.
@@ -347,7 +370,7 @@ XScreenSaver has an extensive manual -- please read it!
 	  `fireworkx' and `webcollage'.
 	* `pong' can now display the current time as the score.
 	* `xmatrix -mode pipe' works better.
-	* Minor tweaks for compilation on MacOS 10.5.0.
+	* Minor tweaks for compilation on macOS 10.5.0.
 
 5.03	* New hacks, `cwaves', `glcells', `m6502', and `voronoi'.
 	* Minor fixes to `bsod'.
@@ -356,27 +379,27 @@ XScreenSaver has an extensive manual -- please read it!
 	  changes.
 
 5.02	* Reworked PAM code to support fingerprint readers, etc.
-	* Ported `webcollage' to MacOS.
-	* Added MacOS 10.2 and 10.3 kernel panics to `bsod'.
+	* Ported `webcollage' to macOS.
+	* Added macOS 10.2 and 10.3 kernel panics to `bsod'.
 	* Fixed a Xinerama crash when changing the screen count.
 	* New blobbier `mirrorblob'.
 	* Minor updates to `lisa', `bsod', `ifs', `hypertorus', `polytopes',
 	  `circuit', `endgame', `crackberg', `flipflop', `flipscreen3d',
 	  `fliptext', and `carousel'.
-	* Enabled multi-threaded OpenGL on MacOS.
+	* Enabled multi-threaded OpenGL on macOS.
 
 5.01	* Backed out recent locale-related changes, since they broke far more
 	  things than they fixed.
 	* Fail gracefully with ridiculously small window sizes.
-	* `xflame' and `flag' ignore bitmap option on MacOS.
-	* `speedmine' prefs work on MacOS.
+	* `xflame' and `flag' ignore bitmap option on macOS.
+	* `speedmine' prefs work on macOS.
 	* Better explosions in `boxed'.
 	* More dynamic motion in `sproingies'.
 	* More options in `flipflop'.
 	* Minor updates to `topblock'.
 	* Various other minor fixes.
 
-5.00	* Ported to MacOS X! (10.4.0 or newer)
+5.00	* Ported to macOS! (10.4.0 or newer)
 	* API change: instead of providing a single screenhack() function that
 	  does not return, screen savers using the screenhack.h framework must
 	  now provide "init" and "draw one frame" functions instead.  All
@@ -392,7 +415,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* Changes to the defaults and command-line options of many hacks to
 	  make the .xml files more consistent.
 	* Reap zombies in `glslideshow' and `carousel'.
-	* `sonar' works without setuid on MacOS (dgram icmp).
+	* `sonar' works without setuid on macOS (dgram icmp).
 	* `xmatrix -mode pipe' displays the text of a subprocess.
 	* `endgame' has higher resolution chess-piece models.
 	* `webcollage' takes a -directory option to get images from a local
@@ -419,7 +442,7 @@ XScreenSaver has an extensive manual -- please read it!
 	  seem to be installed.
 	* Don't install `ant' by default, since there is some Java tool of
 	  that name, which was causing confusion.  And also it's boring.
-	* Made screen grabbing work again on MacOS 10.4.2.
+	* Made screen grabbing work again on macOS 10.4.2.
 	* No longer prints bogus warnings about ClientMessages intended for
 	  the window manager.
 	* Ignore unprintable characters in passwd entry field.
@@ -539,7 +562,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* New version of `glsnake' (with many more models.)
 	* Another Windows crash in `bsod'; also HVX/GCOS6/TPS6.
 	* New version of `endgame'.
-	* Screen grabbing works on MacOS X.
+	* Screen grabbing works on macOS.
 	* Various minor fixes.
 
 4.13	* On Xinerama systems, xscreensaver now runs one hack on each monitor
@@ -582,7 +605,7 @@ XScreenSaver has an extensive manual -- please read it!
 
 4.08	* New hacks, `atunnels' and `piecewise'.
 	* Physics improvement in `fluidballs'.
-	* Various fixes for XDarwin systems (X11 on MacOS X.)
+	* Various fixes for XDarwin systems (X11 on macOS.)
 	* Added -clock option to `barcode'.
 	* Minor fixes to `endgame', `flurry', `flipscreen3d', and `gflux'.
 
@@ -619,7 +642,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* Updated to latest `config.guess' and `config.sub'.
 	* Fixed occasional core dump in `distort'.
 	* Added a Linux fsck failure and kernel panic to `bsod'.
-	* Added MacOS X kernel panic to `bsod'.
+	* Added macOS kernel panic to `bsod'.
 	* Fixed a bug in `bsod' (all bsod bugs are ironic.)
 	* Fixed a bug that caused `xscreensaver-gl-helper' to print a nonsense
 	  visual ID with some versions of `printf': this could cause GL

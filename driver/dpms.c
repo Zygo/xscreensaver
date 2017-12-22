@@ -281,6 +281,7 @@ monitor_power_on (saver_info *si, Bool on_p)
 
 void
 sync_server_dpms_settings (Display *dpy, Bool enabled_p,
+                           Bool dpms_quickoff_p,
                            int standby_secs, int suspend_secs, int off_secs,
                            Bool verbose_p)
 {

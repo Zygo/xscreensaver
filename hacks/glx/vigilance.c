@@ -22,7 +22,7 @@
 			"*lensColor:    #000000"   "\n" \
 			"*groundColor:  #004400"   "\n" \
 
-# define refresh_camera 0
+# define free_camera 0
 # define release_camera 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -136,7 +136,15 @@ ENTRYPOINT void
 reshape_camera (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
-  glViewport (0, 0, width, height);
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective (30.0, 1/h, 1.0, 200);
@@ -216,7 +224,7 @@ init_camera (ModeInfo *mi)
   camera_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
   int i;
-  MI_INIT (mi, bps, 0);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -879,8 +887,10 @@ tick_camera (ModeInfo *mi, camera *c)
             which = i-2;
           else if (i >= 1 && which == 1)
             which = i-1;
-          else if (i < bp->ncameras-1 && which == 2)
+          else if (i < bp->ncameras-2 && which == 2)
             which = i+2;
+          else if (i == bp->ncameras-1)
+            which = i-1;
           else /* (i < bp->ncameras-2 && which == 3) */
             which = i+1;
 

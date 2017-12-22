@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Thu Jun  1 17:53:59 2017 by build-fntable.pl 1.5.
+   Created: Fri Dec  1 17:57:48 2017 by build-fntable.pl 1.5.
  */
 
 #import <Foundation/Foundation.h>
@@ -70,6 +70,7 @@ extern struct xscreensaver_function_table
  engine_xscreensaver_function_table,
  epicycle_xscreensaver_function_table,
  eruption_xscreensaver_function_table,
+ esper_xscreensaver_function_table,
  euler2d_xscreensaver_function_table,
  fadeplot_xscreensaver_function_table,
  fiberlamp_xscreensaver_function_table,
@@ -302,6 +303,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&engine_xscreensaver_function_table], @"engine",
 	[NSValue valueWithPointer:&epicycle_xscreensaver_function_table], @"epicycle",
 	[NSValue valueWithPointer:&eruption_xscreensaver_function_table], @"eruption",
+	[NSValue valueWithPointer:&esper_xscreensaver_function_table], @"esper",
 	[NSValue valueWithPointer:&euler2d_xscreensaver_function_table], @"euler2d",
 	[NSValue valueWithPointer:&fadeplot_xscreensaver_function_table], @"fadeplot",
 	[NSValue valueWithPointer:&fiberlamp_xscreensaver_function_table], @"fiberlamp",

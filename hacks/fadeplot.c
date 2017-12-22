@@ -54,7 +54,7 @@ ENTRYPOINT ModeSpecOpt fadeplot_opts =
 #ifdef USE_MODULES
 ModStruct   fadeplot_description =
 {"fadeplot", "init_fadeplot", "draw_fadeplot", (char *) NULL,
- "refresh_fadeplot", "init_fadeplot", (char *) NULL, &fadeplot_opts,
+ "refresh_fadeplot", "init_fadeplot", "free_fadeplot", &fadeplot_opts,
  30000, 10, 1500, 1, 64, 0.6, "",
  "Shows a fading plot of sine squared", 0, NULL};
 
@@ -75,7 +75,7 @@ typedef struct {
 
 static fadeplotstruct *fadeplots = (fadeplotstruct *) NULL;
 
-static void
+ENTRYPOINT void
 free_fadeplot(ModeInfo * mi)
 {
 	fadeplotstruct *fp = &fadeplots[MI_SCREEN(mi)];
@@ -113,7 +113,7 @@ init_fadeplot (ModeInfo * mi)
 {
 	fadeplotstruct *fp;
 
-	MI_INIT (mi, fadeplots, free_fadeplot);
+	MI_INIT (mi, fadeplots);
 	fp = &fadeplots[MI_SCREEN(mi)];
 
 	fp->width = MI_WIDTH(mi);
@@ -221,10 +221,12 @@ reshape_fadeplot(ModeInfo * mi, int width, int height)
 	fp->factor.y = MAX(fp->height / (2 * fp->min), 1);
 }
 
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_fadeplot (ModeInfo * mi)
 {
 }
+#endif
 
 XSCREENSAVER_MODULE ("FadePlot", fadeplot)
 

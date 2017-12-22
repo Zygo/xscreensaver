@@ -33,7 +33,7 @@
 			"*wireframeThreshold:  150    \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_molecule 0
+# define free_molecule 0
 # define release_molecule 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -1187,8 +1187,15 @@ ENTRYPOINT void
 reshape_molecule (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1288,7 +1295,7 @@ init_molecule (ModeInfo *mi)
   molecule_configuration *mc;
   int wire;
 
-  MI_INIT (mi, mcs, NULL);
+  MI_INIT (mi, mcs);
 
   mc = &mcs[MI_SCREEN(mi)];
 

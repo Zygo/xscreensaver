@@ -33,6 +33,8 @@ static const char sccsid[] = "@(#)lightning.c	5.00 2000/11/01 xlockmore";
                   "*ncolors: 64  \n"
 
 # define BRIGHT_COLORS
+# define free_lightning 0
+# define release_lightning 0
 # define reshape_lightning 0
 # define lightning_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -47,7 +49,7 @@ ENTRYPOINT ModeSpecOpt lightning_opts =
 
 #ifdef USE_MODULES
 ModStruct   lightning_description =
-{"lightning", "init_lightning", "draw_lightning", "release_lightning",
+{"lightning", "init_lightning", "draw_lightning", (char *) NULL,
  "refresh_lightning", "init_lightning", (char *) NULL, &lightning_opts,
  10000, 1, 1, 1, 64, 0.6, "",
  "Shows Keith's fractal lightning bolts", 0, NULL};
@@ -518,7 +520,7 @@ init_lightning (ModeInfo * mi)
 {
 	Storm      *st;
 
-	MI_INIT (mi, Helga, 0);
+	MI_INIT (mi, Helga);
 	st = &Helga[MI_SCREEN(mi)];
 
 	st->scr_width = MI_WIDTH(mi);
@@ -543,9 +545,7 @@ draw_lightning (ModeInfo * mi)
 	MI_IS_DRAWN(mi) = True;
 	switch (st->stage) {
 		case 0:
-			MI_IS_DRAWN(mi) = False;
-			MI_CLEARWINDOW(mi);
-			MI_IS_DRAWN(mi) = True;
+			XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 
 			st->color = NRAND(MI_NPIXELS(mi));
 			st->draw_time = 0;
@@ -571,9 +571,7 @@ draw_lightning (ModeInfo * mi)
 			}
 			break;
 		case 3:
-			MI_IS_DRAWN(mi) = False;
-			MI_CLEARWINDOW(mi);
-			MI_IS_DRAWN(mi) = True;
+			XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 
 			if (storm_active(st))
 				st->stage = 1;
@@ -589,20 +587,13 @@ draw_lightning (ModeInfo * mi)
 	}
 }
 
-ENTRYPOINT void
-release_lightning(ModeInfo * mi)
-{
-	if (Helga != NULL) {
-		(void) free((void *) Helga);
-		Helga = (Storm *) NULL;
-	}
-}
-
+#ifndef STANDALONE
 ENTRYPOINT void
 refresh_lightning(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+#endif
 
 XSCREENSAVER_MODULE ("Lightning", lightning)
 

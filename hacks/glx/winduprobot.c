@@ -68,7 +68,6 @@
 #undef DEBUG
 #define WORDBUBBLES
 
-# define refresh_robot 0
 # define release_robot 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -237,8 +236,15 @@ ENTRYPOINT void
 reshape_robot (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, width, height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, width, height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -344,7 +350,6 @@ load_textures (ModeInfo *mi)
 static int unit_gear (ModeInfo *, GLfloat color[4]);
 static int draw_ground (ModeInfo *, GLfloat color[4]);
 static void init_walker (ModeInfo *, walker *);
-static void free_robot (ModeInfo *mi);
 
 static void
 parse_color (ModeInfo *mi, char *key, GLfloat color[4])
@@ -371,7 +376,7 @@ init_robot (ModeInfo *mi)
   robot_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
   int i;
-  MI_INIT (mi, bps, free_robot);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -2469,7 +2474,7 @@ draw_robot (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-static void
+ENTRYPOINT void
 free_robot (ModeInfo *mi)
 {
 # ifdef WORDBUBBLES

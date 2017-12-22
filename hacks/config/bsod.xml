@@ -26,13 +26,14 @@
    <boolean id="glados"     _label="GLaDOS"         arg-unset="-no-glados"/>
    <boolean id="android"    _label="Android"        arg-unset="-no-android"/>
    <boolean id="apple2"     _label="Apple ]["       arg-unset="-no-apple2"/>
-   <boolean id="vmware"     _label="VMware"         arg-unset="-no-vmware"/>
+   <boolean id="ransomware" _label="Ransomware"     arg-unset="-no-ransomware"/>
   </vgroup>
   <vgroup>
    <boolean id="nvidia"     _label="NVidia"         arg-unset="-no-nvidia"/>
    <boolean id="os2"        _label="OS/2"           arg-unset="-no-os2"/>
    <boolean id="mac"        _label="Sad Mac"        arg-unset="-no-mac"/>
    <boolean id="mac1"       _label="Mac bomb"       arg-unset="-no-mac1"/>
+   <boolean id="vmware"     _label="VMware"         arg-unset="-no-vmware"/>
   </vgroup>
   <vgroup>
    <boolean id="macsbug"    _label="MacsBug"        arg-unset="-no-macsbug"/>

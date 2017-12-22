@@ -15,7 +15,6 @@
 			"*count:        20          \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define refresh_hexstrut 0
 # define release_hexstrut 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -333,8 +332,15 @@ ENTRYPOINT void
 reshape_hexstrut (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 3) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -386,14 +392,12 @@ hexstrut_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-static void free_hexstrut (ModeInfo *mi);
-
 ENTRYPOINT void 
 init_hexstrut (ModeInfo *mi)
 {
   hexstrut_configuration *bp;
 
-  MI_INIT (mi, bps, free_hexstrut);
+  MI_INIT (mi, bps);
 
   bp = &bps[MI_SCREEN(mi)];
 
@@ -488,7 +492,7 @@ draw_hexstrut (ModeInfo *mi)
 }
 
 
-static void
+ENTRYPOINT void
 free_hexstrut (ModeInfo *mi)
 {
   hexstrut_configuration *bp = &bps[MI_SCREEN(mi)];

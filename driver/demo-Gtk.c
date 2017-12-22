@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2017 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1039,12 +1039,6 @@ await_xscreensaver (state *s)
 		"\n"));
 
       if (root_p)
-
-# ifdef __GNUC__
-        __extension__     /* don't warn about "string length is greater than
-                             the length ISO C89 compilers are required to
-                             support" in the following expression... */
-# endif
         strcat (buf, STFU
 	  _("You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
@@ -2920,7 +2914,6 @@ populate_prefs_page (state *s)
 
     /* DPMS
      */
-dpms_supported=1;
     SENSITIZE ("dpms_frame",              dpms_supported);
     SENSITIZE ("dpms_button",             dpms_supported);
     SENSITIZE ("dpms_quickoff_button",    dpms_supported);
@@ -4629,12 +4622,6 @@ g_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
             ? "\n" : ""));
 }
 
-
-#ifdef __GNUC__
- __extension__     /* shut up about "string length is greater than the length
-                      ISO C89 compilers are required to support" when including
-                      the .ad file... */
-#endif
 
 STFU
 static char *defaults[] = {

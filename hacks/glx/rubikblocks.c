@@ -22,7 +22,7 @@
                    "*wireframe:     False         \n" \
 		   "*suppressRotationAnimation: True\n" \
 
-# define refresh_rubikblocks 0
+# define free_rubikblocks 0
 # define release_rubikblocks 0
 #include "xlockmore.h"
 #include "rotator.h"
@@ -542,9 +542,15 @@ ENTRYPOINT void
 reshape_rubikblocks(ModeInfo *mi, int width, int height) 
 {
   rubikblocks_conf *cp = &rubikblocks[MI_SCREEN(mi)];
+  int y = 0;
+
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width;
+    y = -height/2;
+  }
   if(!height) height = 1;
   cp->ratio = (GLfloat)width/(GLfloat)height;
-  glViewport(0, 0, (GLint) width, (GLint) height);
+  glViewport(0, y, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(30.0, cp->ratio, 1.0, 100.0);
@@ -556,7 +562,7 @@ ENTRYPOINT void
 init_rubikblocks(ModeInfo *mi) 
 {
   rubikblocks_conf *cp;
-  MI_INIT(mi, rubikblocks, NULL);
+  MI_INIT(mi, rubikblocks);
   cp = &rubikblocks[MI_SCREEN(mi)];
 
   if(tex)

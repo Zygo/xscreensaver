@@ -59,7 +59,7 @@
 		  "*suppressRotationAnimation: True\n" \
 
 
-# define refresh_jigsaw 0
+# define free_jigsaw 0
 # define release_jigsaw 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -1325,8 +1325,15 @@ reshape_jigsaw (ModeInfo *mi, int width, int height)
 {
   jigsaw_configuration *jc = &sps[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  int y = 0;
 
-  glViewport (0, 0, (GLint) width, (GLint) height);
+  if (width > height * 5) {   /* tiny window: show middle */
+    height = width * 9/16;
+    y = -height/2;
+    h = height / (GLfloat) width;
+  }
+
+  glViewport (0, y, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1378,7 +1385,7 @@ init_jigsaw (ModeInfo *mi)
   jigsaw_configuration *jc;
   int wire = MI_IS_WIREFRAME(mi);
 
-  MI_INIT (mi, sps, NULL);
+  MI_INIT (mi, sps);
   jc = &sps[MI_SCREEN(mi)];
   jc->glx_context = init_GL(mi);
 
