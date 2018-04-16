@@ -56,8 +56,8 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 # define flag_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 
-#include "xpm-pixmap.h"
-#include "images/bob.xbm"
+#include "ximage-loader.h"
+#include "images/gen/bob_png.h"
 
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -224,8 +224,8 @@ make_flag_bits(ModeInfo *mi)
       int width = 0;
       int height = 0;
 
-      bitmap = xpm_file_to_pixmap (dpy, MI_WINDOW (mi), bitmap_name,
-                                   &width, &height, 0);
+      bitmap = file_to_pixmap (dpy, MI_WINDOW (mi), bitmap_name,
+                               &width, &height, 0);
 	  if (bitmap)
 		{
 		  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height, ~0L,
@@ -321,13 +321,7 @@ make_flag_bits(ModeInfo *mi)
 	  text2 = strdup(text);
 
 	  if (!fn) fn = def_fn;
-      font = XLoadQueryFont (dpy, fn);
-      if (! font)
-		{
-		  fprintf(stderr, "%s: unable to load font %s; using %s\n",
-				  progname, fn, def_fn);
-		  font = XLoadQueryFont (dpy, def_fn);
-		}
+      font = load_font_retry (dpy, fn);
 
 	  memset(&overall, 0, sizeof(overall));
 	  token = text;
@@ -388,13 +382,26 @@ make_flag_bits(ModeInfo *mi)
 
   if (! fp->image)
 	{
-      char *bits = (char *) malloc (sizeof(bob_bits));
-      memcpy (bits, bob_bits, sizeof(bob_bits));
+      XImage *im = image_data_to_ximage (dpy, MI_VISUAL(mi),
+                                       bob_png, sizeof(bob_png));
+      int x, y;
+
 	  fp->image = XCreateImage (dpy, MI_VISUAL(mi), 1, XYBitmap, 0,
-								bits, bob_width, bob_height,
-								8, 0);
-	  fp->image->byte_order = LSBFirst;
-	  fp->image->bitmap_bit_order = LSBFirst;
+								0, im->width, im->height, 8, 0);
+      fp->image->data = malloc (fp->image->bytes_per_line * fp->image->height);
+
+      /* Convert deep image to 1 bit */
+      for (y = 0; y < im->height; y++)
+        {
+          for (x = 0; x < im->width; x++)
+            {
+              unsigned long p = XGetPixel (im, x, im->height-y-1);
+              if (! (p & 0xFF000000)) p = ~0;  /* alpha -> white */
+              p = (p >> 16) & 0xFF;            /* red */
+              XPutPixel (fp->image, x, y, p > 0x7F ? 0 : 1);
+            }
+        }
+      XDestroyImage (im);
 	}
 
   if (bitmap_name)

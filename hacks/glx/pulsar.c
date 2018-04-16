@@ -61,7 +61,7 @@
 # endif /* VMS */
 #endif
 
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 
 /* Functions for loading and storing textures */
 
@@ -236,8 +236,8 @@ static void Create_Texture(ModeInfo *mi, const char *filename)
     }
   else
     {
-      XImage *ximage = xpm_file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                           MI_COLORMAP (mi), filename);
+      XImage *ximage = file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                       filename);
       if (! ximage)
         goto BUILTIN;
       image  = (GLubyte *) ximage->data;

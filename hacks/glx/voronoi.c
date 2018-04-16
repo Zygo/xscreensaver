@@ -1,4 +1,4 @@
-/* voronoi, Copyright (c) 2007, 2008 Jamie Zawinski <jwz@jwz.org>
+/* voronoi, Copyright (c) 2007-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -49,6 +49,7 @@ typedef struct {
   node *dragging;
   int ncolors;
   XColor *colors;
+  int point_size;
 
   enum { MODE_WAITING, MODE_ADDING, MODE_ZOOMING } mode;
   int adding;
@@ -253,11 +254,11 @@ draw_cells (ModeInfo *mi)
 
   glClear (GL_DEPTH_BUFFER_BIT);
 
-  if (point_size <= 0)
+  if (vp->point_size <= 0)
     ;
-  else if (point_size < 3)
+  else if (vp->point_size < 3)
     {
-      glPointSize (point_size);
+      glPointSize (vp->point_size);
       for (nn = vp->nodes; nn; nn = nn->next)
         {
           glBegin (GL_POINTS);
@@ -273,7 +274,7 @@ draw_cells (ModeInfo *mi)
         {
           int w = MI_WIDTH (mi);
           int h = MI_HEIGHT (mi);
-          int s = point_size;
+          int s = vp->point_size;
           int i;
 
           glColor4fv (nn->color2);
@@ -281,7 +282,7 @@ draw_cells (ModeInfo *mi)
           glTranslatef (nn->x, nn->y, 0);
           glScalef (1.0 / w * s, 1.0 / h * s, 1);
 
-          glLineWidth (point_size / 10);
+          glLineWidth (vp->point_size / 10);
           nn->rot += (nn->rot < 0 ? -1 : 1);
           glRotatef (nn->rot, 0, 0, 1);
 
@@ -366,7 +367,7 @@ static node *
 find_node (ModeInfo *mi, GLfloat x, GLfloat y)
 {
   voronoi_configuration *vp = &vps[MI_SCREEN(mi)];
-  int ps = (point_size < 5 ? 5 : point_size);
+  int ps = (vp->point_size < 5 ? 5 : vp->point_size);
   GLfloat hysteresis = (1.0 / MI_WIDTH (mi)) * ps;
   node *nn;
   for (nn = vp->nodes; nn; nn = nn->next)
@@ -484,7 +485,10 @@ init_voronoi (ModeInfo *mi)
 
   vp->glx_context = init_GL(mi);
 
-  if (point_size < 0) point_size = 10;
+  vp->point_size = point_size;
+  if (vp->point_size < 0) vp->point_size = 10;
+
+  if (MI_WIDTH(mi) > 2560) vp->point_size *= 2;  /* Retina displays */
 
   vp->ncolors = 128;
   vp->colors = (XColor *) calloc (vp->ncolors, sizeof(XColor));

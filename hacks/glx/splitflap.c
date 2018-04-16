@@ -1,4 +1,4 @@
-/* splitflap, Copyright (c) 2015 Jamie Zawinski <jwz@jwz.org>
+/* splitflap, Copyright (c) 2015-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -46,7 +46,7 @@
 
 #include "gltrackball.h"
 #include "rotator.h"
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include "utf8wc.h"
 #include "textclient.h"
 #include "texfont.h"

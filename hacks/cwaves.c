@@ -13,7 +13,7 @@
 
 #include "screenhack.h"
 #include <stdio.h>
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 

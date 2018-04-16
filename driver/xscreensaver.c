@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -804,7 +804,7 @@ print_banner (saver_info *si)
 	     "\n",
 	     blurb());
 
-  if (p->verbose_p && decrepit_p ())
+  if (p->verbose_p && senesculent_p ())
     fprintf (stderr, "\n"
              "*************************************"
              "**************************************\n"

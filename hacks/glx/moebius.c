@@ -108,8 +108,8 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 #if 0
 #include "e_textures.h"
 #else
-#include "xpm-ximage.h"
-#include "../images/wood.xpm"
+#include "ximage-loader.h"
+#include "images/gen/wood_png.h"
 #endif
 #endif /* 0 */
 
@@ -633,10 +633,8 @@ pinit(ModeInfo *mi)
     check_gl_error("mipmapping");
 #else
     {
-      XImage *img = xpm_to_ximage (mi->dpy,
-                                   mi->xgwa.visual,
-                                   mi->xgwa.colormap,
-                                   wood_texture);
+      XImage *img = image_data_to_ximage (mi->dpy, mi->xgwa.visual,
+                                          wood_png, sizeof(wood_png));
 	  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                     img->width, img->height, 0,
                     GL_RGBA,

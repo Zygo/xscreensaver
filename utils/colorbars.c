@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "resources.h"
 #include "colorbars.h"
+#include "../hacks/ximage-loader.h"
 
 static const char * const colors[7][18] = {
   { "#CCCCCC", "#FFFF00", "#00FFFF", "#00FF00",		/* tall bars */
@@ -55,7 +56,8 @@ static const int heights[7] = { 63, 10, 1, 5, 5, 1, 15 };   /* percentages */
 void
 draw_colorbars (Screen *screen, Visual *visual,
                 Drawable drawable, Colormap cmap,
-                int x, int y, int width, int height)
+                int x, int y, int width, int height,
+                Pixmap logo, Pixmap logo_mask)
 {
   Display *dpy = DisplayOfScreen (screen);
   int oy = y;
@@ -107,38 +109,25 @@ draw_colorbars (Screen *screen, Visual *visual,
   y = oy;
 
   /* Add in the xscreensaver logo */
-  {
-    unsigned long *pixels; /* ignored - unfreed */
-    int npixels;
-    unsigned long bg = ~0;
-    Pixmap logo_mask = 0;
-    Pixmap logo_map = xscreensaver_logo (screen, visual, drawable, cmap, bg,
-                                         &pixels, &npixels, &logo_mask,
-                                         True);
-    if (logo_map)
-      {
-        Window root;
-        unsigned int logo_width, logo_height;
-        int w = width;
-        int h = height * heights[0] / 100;
-        int x1, y1;
-        unsigned int bw, d;
-        XGetGeometry (dpy, logo_map, &root, &x1, &y1,
-                      &logo_width, &logo_height, &bw, &d);
-        x1 = x + (w - (int) logo_width) / 2;
-        y1 = y + (h - (int) logo_height) / 2;
-        if (logo_mask)
-          {
-            XSetClipMask (dpy, gc, logo_mask);
-            XSetClipOrigin (dpy, gc, x1, y1);
-          }
-        XCopyArea (dpy, logo_map, drawable, gc,
-                   0, 0, logo_width, logo_height, x1, y1);
-        XFreePixmap (dpy, logo_map);
-        if (logo_mask)
-          XFreePixmap (dpy, logo_mask);
-      }
-  }
+  if (logo)
+    {
+      Window r;
+      int x, y;
+      unsigned int logo_width, logo_height, bw, d;
+      int x1, y1, w, h;
+      XGetGeometry (dpy, logo, &r, &x, &y, &logo_width, &logo_height, &bw, &d);
+      w = width;
+      h = height * heights[0] / 100;
+      x1 = x + (w - (int) logo_width) / 2;
+      y1 = y + (h - (int) logo_height) / 2;
+      if (logo_mask)
+        {
+          XSetClipMask (dpy, gc, logo_mask);
+          XSetClipOrigin (dpy, gc, x1, y1);
+        }
+      XCopyArea (dpy, logo, drawable, gc, 0, 0,
+                 logo_width, logo_height, x1, y1);
+    }
 
   XFreeGC(dpy, gc);
 }

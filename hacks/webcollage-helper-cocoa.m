@@ -1,5 +1,5 @@
 /* webcollage-helper-cocoa --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -344,9 +344,34 @@ write_image (NSImage *img, const char *file)
 {
   float jpeg_quality = .85;
 
-  // Load the NSImage's contents into an NSBitmapImageRep:
+  // Load the NSImage's contents into an NSBitmapImageRep.
+
+#if 0
+  // If the local display is Retina, this doubles the size of the output JPEG.
   NSBitmapImageRep *bit_rep = [NSBitmapImageRep
                                 imageRepWithData:[img TIFFRepresentation]];
+#else
+  // Render the image into a rep using pixels instead of points.
+  NSBitmapImageRep *bit_rep = [[NSBitmapImageRep alloc]
+                                initWithBitmapDataPlanes:NULL
+                                pixelsWide:[img size].width
+                                pixelsHigh:[img size].height
+                                bitsPerSample:8
+                                samplesPerPixel:4
+                                hasAlpha:YES
+                                isPlanar:NO
+                                colorSpaceName:NSCalibratedRGBColorSpace
+                                bytesPerRow:0
+                                bitsPerPixel:0];
+    bit_rep.size = [img size];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:
+                         [NSGraphicsContext
+                           graphicsContextWithBitmapImageRep:bit_rep]];
+    [img drawInRect:NSMakeRect(0, 0, [img size].width, [img size].height)
+         fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+    [NSGraphicsContext restoreGraphicsState];
+#endif
 
   // Write the bitmapImageRep to a JPEG file.
   if (bit_rep == nil)
@@ -359,13 +384,10 @@ write_image (NSImage *img, const char *file)
     fprintf (stderr, "%s: writing %s (q=%d%%) ", progname, file, 
              (int) (jpeg_quality * 100));
 
-  NSDictionary *props = [NSDictionary
-                          dictionaryWithObject:
-                            [NSNumber numberWithFloat:jpeg_quality]
-                          forKey:NSImageCompressionFactor];
   NSData *jpeg_data = [bit_rep representationUsingType:NSJPEGFileType
-                               properties:props];
-
+                               properties:@{ NSImageCompressionFactor: 
+                                             [NSNumber numberWithFloat:
+                                                         jpeg_quality] }];
   [jpeg_data writeToFile:
                [NSString stringWithCString:file
                                   encoding:NSISOLatin1StringEncoding]

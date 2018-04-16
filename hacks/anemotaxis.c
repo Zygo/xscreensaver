@@ -511,13 +511,15 @@ static void draw_image(struct state *st, Drawable curr_window)
 
     for(j = 0; j < st->source[i]->n; j++) {
 
+      int size = (st->scrWidth > 2560 ? 8 : 4);  /* Retina displays */
+
       if(st->source[i]->yv[j].v == 2)
 	continue;
 
       /* Move the particles slightly off lattice */
       x =  X(st->source[i]->r.x + 1 + j) + RND(st->dx);
       y = Y(st->source[i]->r.y + st->source[i]->yv[j].y) + RND(st->dy);
-      XFillArc(st->dpy, curr_window, st->gcDraw, x - 2, y - 2, 4, 4, 0, 360 * 64);
+      XFillArc(st->dpy, curr_window, st->gcDraw, x - size/2, y - size/2, size, size, 0, 360 * 64);
     }
 
   }

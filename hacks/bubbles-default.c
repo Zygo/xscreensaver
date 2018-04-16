@@ -22,121 +22,124 @@
 #ifndef NO_DEFAULT_BUBBLE
 
 # define BLOOD 0
-# include "images/bubbles/blood1.xpm"
-# include "images/bubbles/blood2.xpm"
-# include "images/bubbles/blood3.xpm"
-# include "images/bubbles/blood4.xpm"
-# include "images/bubbles/blood5.xpm"
-# include "images/bubbles/blood6.xpm"
-# include "images/bubbles/blood7.xpm"
-# include "images/bubbles/blood8.xpm"
-# include "images/bubbles/blood9.xpm"
-# include "images/bubbles/blood10.xpm"
-# include "images/bubbles/blood11.xpm"
+# include "images/gen/blood1_png.h"
+# include "images/gen/blood2_png.h"
+# include "images/gen/blood3_png.h"
+# include "images/gen/blood4_png.h"
+# include "images/gen/blood5_png.h"
+# include "images/gen/blood6_png.h"
+# include "images/gen/blood7_png.h"
+# include "images/gen/blood8_png.h"
+# include "images/gen/blood9_png.h"
+# include "images/gen/blood10_png.h"
+# include "images/gen/blood11_png.h"
 
 # define BLUE 1
-# include "images/bubbles/blue1.xpm"
-# include "images/bubbles/blue2.xpm"
-# include "images/bubbles/blue3.xpm"
-# include "images/bubbles/blue4.xpm"
-# include "images/bubbles/blue5.xpm"
-# include "images/bubbles/blue6.xpm"
-# include "images/bubbles/blue7.xpm"
-# include "images/bubbles/blue8.xpm"
-# include "images/bubbles/blue9.xpm"
-# include "images/bubbles/blue10.xpm"
-# include "images/bubbles/blue11.xpm"
+# include "images/gen/blue1_png.h"
+# include "images/gen/blue2_png.h"
+# include "images/gen/blue3_png.h"
+# include "images/gen/blue4_png.h"
+# include "images/gen/blue5_png.h"
+# include "images/gen/blue6_png.h"
+# include "images/gen/blue7_png.h"
+# include "images/gen/blue8_png.h"
+# include "images/gen/blue9_png.h"
+# include "images/gen/blue10_png.h"
+# include "images/gen/blue11_png.h"
 
 # define GLASS 2
-# include "images/bubbles/glass1.xpm"
-# include "images/bubbles/glass2.xpm"
-# include "images/bubbles/glass3.xpm"
-# include "images/bubbles/glass4.xpm"
-# include "images/bubbles/glass5.xpm"
-# include "images/bubbles/glass6.xpm"
-# include "images/bubbles/glass7.xpm"
-# include "images/bubbles/glass8.xpm"
-# include "images/bubbles/glass9.xpm"
-# include "images/bubbles/glass10.xpm"
-# include "images/bubbles/glass11.xpm"
+# include "images/gen/glass1_png.h"
+# include "images/gen/glass2_png.h"
+# include "images/gen/glass3_png.h"
+# include "images/gen/glass4_png.h"
+# include "images/gen/glass5_png.h"
+# include "images/gen/glass6_png.h"
+# include "images/gen/glass7_png.h"
+# include "images/gen/glass8_png.h"
+# include "images/gen/glass9_png.h"
+# include "images/gen/glass10_png.h"
+# include "images/gen/glass11_png.h"
 
 # define JADE 3
-# include "images/bubbles/jade1.xpm"
-# include "images/bubbles/jade2.xpm"
-# include "images/bubbles/jade3.xpm"
-# include "images/bubbles/jade4.xpm"
-# include "images/bubbles/jade5.xpm"
-# include "images/bubbles/jade6.xpm"
-# include "images/bubbles/jade7.xpm"
-# include "images/bubbles/jade8.xpm"
-# include "images/bubbles/jade9.xpm"
-# include "images/bubbles/jade10.xpm"
-# include "images/bubbles/jade11.xpm"
+# include "images/gen/jade1_png.h"
+# include "images/gen/jade2_png.h"
+# include "images/gen/jade3_png.h"
+# include "images/gen/jade4_png.h"
+# include "images/gen/jade5_png.h"
+# include "images/gen/jade6_png.h"
+# include "images/gen/jade7_png.h"
+# include "images/gen/jade8_png.h"
+# include "images/gen/jade9_png.h"
+# include "images/gen/jade10_png.h"
+# include "images/gen/jade11_png.h"
 
 # define END 4
 
 
-char **default_bubbles[50];
+bubble_png default_bubbles[50];
 int num_default_bubbles;
 
 void init_default_bubbles(void)
 {
   int i = 0;
   switch (random() % END) {
+
+# define DEF(N,S) default_bubbles[i].png = N; default_bubbles[i].size = S; i++
+
   case BLOOD:
-    default_bubbles[i++] = blood1;
-    default_bubbles[i++] = blood2;
-    default_bubbles[i++] = blood3;
-    default_bubbles[i++] = blood4;
-    default_bubbles[i++] = blood5;
-    default_bubbles[i++] = blood6;
-    default_bubbles[i++] = blood7;
-    default_bubbles[i++] = blood8;
-    default_bubbles[i++] = blood9;
-    default_bubbles[i++] = blood10;
-    default_bubbles[i++] = blood11;
+    DEF(blood1_png, sizeof(blood1_png));
+    DEF(blood2_png, sizeof(blood2_png));
+    DEF(blood3_png, sizeof(blood3_png));
+    DEF(blood4_png, sizeof(blood4_png));
+    DEF(blood5_png, sizeof(blood5_png));
+    DEF(blood6_png, sizeof(blood6_png));
+    DEF(blood7_png, sizeof(blood7_png));
+    DEF(blood8_png, sizeof(blood8_png));
+    DEF(blood9_png, sizeof(blood9_png));
+    DEF(blood10_png, sizeof(blood10_png));
+    DEF(blood11_png, sizeof(blood11_png));
     break;
 
   case BLUE:
-    default_bubbles[i++] = blue1;
-    default_bubbles[i++] = blue2;
-    default_bubbles[i++] = blue3;
-    default_bubbles[i++] = blue4;
-    default_bubbles[i++] = blue5;
-    default_bubbles[i++] = blue6;
-    default_bubbles[i++] = blue7;
-    default_bubbles[i++] = blue8;
-    default_bubbles[i++] = blue9;
-    default_bubbles[i++] = blue10;
-    default_bubbles[i++] = blue11;
+    DEF(blue1_png, sizeof(blue1_png));
+    DEF(blue2_png, sizeof(blue2_png));
+    DEF(blue3_png, sizeof(blue3_png));
+    DEF(blue4_png, sizeof(blue4_png));
+    DEF(blue5_png, sizeof(blue5_png));
+    DEF(blue6_png, sizeof(blue6_png));
+    DEF(blue7_png, sizeof(blue7_png));
+    DEF(blue8_png, sizeof(blue8_png));
+    DEF(blue9_png, sizeof(blue9_png));
+    DEF(blue10_png, sizeof(blue10_png));
+    DEF(blue11_png, sizeof(blue11_png));
     break;
 
   case GLASS:
-    default_bubbles[i++] = glass1;
-    default_bubbles[i++] = glass2;
-    default_bubbles[i++] = glass3;
-    default_bubbles[i++] = glass4;
-    default_bubbles[i++] = glass5;
-    default_bubbles[i++] = glass6;
-    default_bubbles[i++] = glass7;
-    default_bubbles[i++] = glass8;
-    default_bubbles[i++] = glass9;
-    default_bubbles[i++] = glass10;
-    default_bubbles[i++] = glass11;
+    DEF(glass1_png, sizeof(glass1_png));
+    DEF(glass2_png, sizeof(glass2_png));
+    DEF(glass3_png, sizeof(glass3_png));
+    DEF(glass4_png, sizeof(glass4_png));
+    DEF(glass5_png, sizeof(glass5_png));
+    DEF(glass6_png, sizeof(glass6_png));
+    DEF(glass7_png, sizeof(glass7_png));
+    DEF(glass8_png, sizeof(glass8_png));
+    DEF(glass9_png, sizeof(glass9_png));
+    DEF(glass10_png, sizeof(glass10_png));
+    DEF(glass11_png, sizeof(glass11_png));
     break;
 
   case JADE:
-    default_bubbles[i++] = jade1;
-    default_bubbles[i++] = jade2;
-    default_bubbles[i++] = jade3;
-    default_bubbles[i++] = jade4;
-    default_bubbles[i++] = jade5;
-    default_bubbles[i++] = jade6;
-    default_bubbles[i++] = jade7;
-    default_bubbles[i++] = jade8;
-    default_bubbles[i++] = jade9;
-    default_bubbles[i++] = jade10;
-    default_bubbles[i++] = jade11;
+    DEF(jade1_png, sizeof(jade1_png));
+    DEF(jade2_png, sizeof(jade2_png));
+    DEF(jade3_png, sizeof(jade3_png));
+    DEF(jade4_png, sizeof(jade4_png));
+    DEF(jade5_png, sizeof(jade5_png));
+    DEF(jade6_png, sizeof(jade6_png));
+    DEF(jade7_png, sizeof(jade7_png));
+    DEF(jade8_png, sizeof(jade8_png));
+    DEF(jade9_png, sizeof(jade9_png));
+    DEF(jade10_png, sizeof(jade10_png));
+    DEF(jade11_png, sizeof(jade11_png));
     break;
 
   default:
@@ -144,7 +147,7 @@ void init_default_bubbles(void)
     break;
   }
 
-  default_bubbles[i] = 0;
+  default_bubbles[i].png = 0;
   num_default_bubbles = i;
 }
 

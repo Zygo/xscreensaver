@@ -416,6 +416,7 @@ cynosure_free (Display *dpy, Window window, void *closure)
 static const char *cynosure_defaults [] = {
   ".background:		black",
   ".foreground:		white",
+  ".lowrez:		true",
   "*fpsSolid:		true",
   "*delay:		500000",
   "*colors:		128",

@@ -38,10 +38,10 @@
 
 #if defined(USE_XPM) || defined(USE_XPMINC) || defined(STANDALONE)
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #define I_HAVE_XPM
 
-#include "../images/blocktube.xpm"
+#include "images/gen/blocktube_png.h"
 #endif /* HAVE_XPM */
 
 typedef struct {
@@ -124,14 +124,14 @@ static Bool LoadGLTextures(ModeInfo *mi)
     status = True;
     glGenTextures(1, &lp->envTexture);
     glBindTexture(GL_TEXTURE_2D, lp->envTexture);
-    lp->texti = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi), MI_COLORMAP(mi),
-                          blocktube_xpm);
+    lp->texti = image_data_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                                     blocktube_png, sizeof(blocktube_png));
     if (!lp->texti) {
         status = False;
     } else {
         glPixelStorei(GL_UNPACK_ALIGNMENT,1);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lp->texti->width, lp->texti->height, 0,
-            GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, lp->texti->data);
+                     GL_RGBA, GL_UNSIGNED_BYTE, lp->texti->data);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 # ifndef HAVE_JWZGLES /* #### Sphere maps unimplemented */

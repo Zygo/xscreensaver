@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,7 @@
    Colors will be allocated from the cmap, and never freed.
  */
 extern void draw_colorbars (Screen *, Visual *, Drawable, Colormap,
-                            int x, int y, int width, int height);
+                            int x, int y, int width, int height,
+                            Pixmap logo, Pixmap logo_mask);
 
 #endif /* __COLORBARS_H__ */

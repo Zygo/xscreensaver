@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -102,9 +102,18 @@
 #include "xft.h"
 #include "pow2.h"
 
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
 union color_bytes {
   uint32_t pixel;
   uint8_t bytes[4];
+};
+
+// Use two textures: one for RGBA, one for luminance. Older Android doesn't
+// seem to like it when textures change format.
+enum {
+  texture_rgba,
+  texture_mono
 };
 
 struct jwxyz_Display {
@@ -119,9 +128,7 @@ struct jwxyz_Display {
   /* Bool opengl_core_p */;
   GLenum gl_texture_target;
   
-// #if defined USE_IPHONE
-  GLuint rect_texture; // Also can work on the desktop.
-// #endif
+  GLuint textures[2]; // Also can work on the desktop.
 
   unsigned long window_background;
 
@@ -132,7 +139,7 @@ struct jwxyz_Display {
   size_t queue_size, queue_capacity;
   Drawable queue_drawable;
   GLint queue_mode;
-  GLshort *queue_vertex;
+  void *queue_vertex;
   uint32_t *queue_color;
   Bool queue_line_cap;
 };
@@ -320,29 +327,30 @@ jwxyz_gl_make_display (Window w)
     Log ("GL_MAX_TEXTURE_SIZE: %d\n", max_texture_size);
   }
  
-  // In case a GL hack wants to use X11 to draw offscreen, the rect_texture is available.
-  Assert (d->main_window == w, "Uh-oh.");
-  glGenTextures (1, &d->rect_texture);
-  // TODO: Check for (ARB|EXT|NV)_texture_rectangle. (All three are alike.)
-  // Rectangle textures should be present on OS X with the following exceptions:
-  // - Generic renderer on PowerPC OS X 10.4 and earlier
-  // - ATI Rage 128
-  glBindTexture (d->gl_texture_target, d->rect_texture);
-  // TODO: This is all somewhere else. Refactor.
-  glTexParameteri (d->gl_texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri (d->gl_texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glGenTextures (countof (d->textures), d->textures);
 
-  // This might be redundant for rectangular textures.
+  for (unsigned i = 0; i != countof (d->textures); i++) {
+    // TODO: Check for (ARB|EXT|NV)_texture_rectangle. (All three are alike.)
+    // Rectangle textures should be present on OS X with the following exceptions:
+    // - Generic renderer on PowerPC OS X 10.4 and earlier
+    // - ATI Rage 128
+    glBindTexture (d->gl_texture_target, d->textures[i]);
+    // TODO: This is all somewhere else. Refactor.
+    glTexParameteri (d->gl_texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri (d->gl_texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // This might be redundant for rectangular textures.
 # ifndef HAVE_JWZGLES
-  const GLint wrap = GL_CLAMP;
+    const GLint wrap = GL_CLAMP;
 # else  // HAVE_JWZGLES
-  const GLint wrap = GL_CLAMP_TO_EDGE;
+    const GLint wrap = GL_CLAMP_TO_EDGE;
 # endif // HAVE_JWZGLES
 
-  // In OpenGL, CLAMP_TO_EDGE is OpenGL 1.2 or GL_SGIS_texture_edge_clamp.
-  // This is always present with OpenGL ES.
-  glTexParameteri (d->gl_texture_target, GL_TEXTURE_WRAP_S, wrap);
-  glTexParameteri (d->gl_texture_target, GL_TEXTURE_WRAP_T, wrap);
+    // In OpenGL, CLAMP_TO_EDGE is OpenGL 1.2 or GL_SGIS_texture_edge_clamp.
+    // This is always present with OpenGL ES.
+    glTexParameteri (d->gl_texture_target, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri (d->gl_texture_target, GL_TEXTURE_WRAP_T, wrap);
+  }
 
   d->gc_function = GXcopy;
   d->gc_alpha_allowed_p = False;
@@ -354,6 +362,8 @@ jwxyz_gl_make_display (Window w)
 void
 jwxyz_gl_free_display (Display *dpy)
 {
+  Assert (dpy->vtbl == &gl_vtbl, "jwxyz-gl.c: bad vtable");
+
   /* TODO: Go over everything. */
 
   free (dpy->queue_vertex);
@@ -370,6 +380,8 @@ jwxyz_gl_free_display (Display *dpy)
 void
 jwxyz_window_resized (Display *dpy)
 {
+  Assert (dpy->vtbl == &gl_vtbl, "jwxyz-gl.c: bad vtable");
+
   const XRectangle *new_frame = jwxyz_frame (dpy->main_window);
   unsigned new_width = new_frame->width;
   unsigned new_height = new_frame->height;
@@ -466,8 +478,9 @@ visual (Display *dpy)
    subwindow_mode
  */
 
-static GLshort *
-enqueue (Display *dpy, Drawable d, GC gc, int mode, size_t count)
+static void *
+enqueue (Display *dpy, Drawable d, GC gc, int mode, size_t count,
+         unsigned long pixel)
 {
   if (dpy->queue_size &&
       (dpy->gc_function != gc->gcv.function ||
@@ -480,6 +493,15 @@ enqueue (Display *dpy, Drawable d, GC gc, int mode, size_t count)
   jwxyz_bind_drawable (dpy, dpy->main_window, d);
   jwxyz_gl_set_gc (dpy, gc);
 
+  if (mode == GL_TRIANGLE_STRIP)
+    Assert (count, "empty triangle strip");
+  // Use degenerate triangles to cut down on draw calls.
+  Bool prepend2 = mode == GL_TRIANGLE_STRIP && dpy->queue_size;
+
+  // ####: Primitive restarts should be used here when (if) they're available.
+  if (prepend2)
+    count += 2;
+
   // TODO: Use glColor when we can get away with it.
   size_t old_size = dpy->queue_size;
   dpy->queue_size += count;
@@ -488,8 +510,12 @@ enqueue (Display *dpy, Drawable d, GC gc, int mode, size_t count)
 
     uint32_t *new_color = realloc (
       dpy->queue_color, sizeof(*dpy->queue_color) * dpy->queue_capacity);
+    /* Allocate vertices as if they were always GLfloats. Otherwise, if
+       queue_vertex is allocated to hold GLshorts, then things get switched
+       to GLfloats, queue_vertex would be too small for the given capacity.
+     */
     GLshort *new_vertex = realloc (
-      dpy->queue_vertex, sizeof(*dpy->queue_vertex) * 2 * dpy->queue_capacity);
+      dpy->queue_vertex, sizeof(GLfloat) * 2 * dpy->queue_capacity);
 
     if (!new_color || !new_vertex)
       return NULL;
@@ -503,11 +529,29 @@ enqueue (Display *dpy, Drawable d, GC gc, int mode, size_t count)
 
   union color_bytes color;
   // TODO: validate color
-  JWXYZ_QUERY_COLOR (dpy, gc->gcv.foreground, 0xffull, color.bytes);
+  JWXYZ_QUERY_COLOR (dpy, pixel, 0xffull, color.bytes);
   for (size_t i = 0; i != count; ++i) // TODO: wmemset when applicable.
     dpy->queue_color[i + old_size] = color.pixel;
 
-  return dpy->queue_vertex + old_size * 2;
+  void *result = (char *)dpy->queue_vertex + old_size * 2 *
+    (mode == GL_TRIANGLE_STRIP ? sizeof(GLfloat) : sizeof(GLshort));
+  if (prepend2) {
+    dpy->queue_color[old_size] = dpy->queue_color[old_size - 1];
+    result = (GLfloat *)result + 4;
+  }
+  return result;
+}
+
+
+static void
+finish_triangle_strip (Display *dpy, GLfloat *enqueue_result)
+{
+  if (enqueue_result != dpy->queue_vertex) {
+    enqueue_result[-4] = enqueue_result[-6];
+    enqueue_result[-3] = enqueue_result[-5];
+    enqueue_result[-2] = enqueue_result[0];
+    enqueue_result[-1] = enqueue_result[1];
+  }
 }
 
 
@@ -641,7 +685,8 @@ DrawPoints (Display *dpy, Drawable d, GC gc,
   short v[2] = {0, 0};
 
   // TODO: XPoints can be fed directly to OpenGL.
-  GLshort *gl_points = enqueue (dpy, d, gc, GL_POINTS, count); // TODO: enqueue returns NULL.
+  GLshort *gl_points = enqueue (dpy, d, gc, GL_POINTS, count,
+                                gc->gcv.foreground); // TODO: enqueue returns NULL.
   for (unsigned i = 0; i < count; i++) {
     next_point (v, points[i], mode);
     gl_points[2 * i] = v[0];
@@ -689,6 +734,8 @@ set_white (void)
 void
 jwxyz_gl_flush (Display *dpy)
 {
+  Assert (dpy->vtbl == &gl_vtbl, "jwxyz-gl.c: bad vtable");
+
   if (!dpy->queue_size)
     return;
 
@@ -709,7 +756,9 @@ jwxyz_gl_flush (Display *dpy)
   }
 
   glColorPointer (4, GL_UNSIGNED_BYTE, 0, dpy->queue_color);
-  glVertexPointer (2, GL_SHORT, 0, dpy->queue_vertex);
+  glVertexPointer (2,
+                   dpy->queue_mode == GL_TRIANGLE_STRIP ? GL_FLOAT : GL_SHORT,
+                   0, dpy->queue_vertex);
   glDrawArrays (dpy->queue_mode, 0, dpy->queue_size);
 
   // TODO: This is right, right?
@@ -717,7 +766,8 @@ jwxyz_gl_flush (Display *dpy)
     Assert (!(dpy->queue_size % 2), "bad count for GL_LINES");
     glColorPointer (4, GL_UNSIGNED_BYTE, sizeof(GLubyte) * 8,
                     dpy->queue_color);
-    glVertexPointer (2, GL_SHORT, sizeof(GLshort) * 4, dpy->queue_vertex + 2);
+    glVertexPointer (2, GL_SHORT, sizeof(GLshort) * 4,
+                     (GLshort *)dpy->queue_vertex + 2);
     glDrawArrays (GL_POINTS, 0, dpy->queue_size / 2);
   }
 
@@ -752,7 +802,8 @@ jwxyz_gl_copy_area_read_tex_image (Display *dpy, unsigned src_height,
 
   GLint internalformat = texture_internalformat(dpy);
 
-  glBindTexture (dpy->gl_texture_target, dpy->rect_texture);
+  /* TODO: This probably shouldn't always be texture_rgba. */
+  glBindTexture (dpy->gl_texture_target, dpy->textures[texture_rgba]);
 
   if (tex_w == width && tex_h == height) {
     glCopyTexImage2D (dpy->gl_texture_target, 0, internalformat,
@@ -779,7 +830,8 @@ jwxyz_gl_copy_area_write_tex_image (Display *dpy, GC gc, int src_x, int src_y,
     tex_h = to_pow2(tex_h);
   }
 
-  glBindTexture (dpy->gl_texture_target, dpy->rect_texture);
+  /* Must match what's in jwxyz_gl_copy_area_read_tex_image. */
+  glBindTexture (dpy->gl_texture_target, dpy->textures[texture_rgba]);
 
   jwxyz_gl_draw_image (dpy->gl_texture_target, tex_w, tex_h, 0, 0,
                        width, height, dst_x, dst_y);
@@ -904,7 +956,9 @@ DrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
 //
 // TODO: Fix epicycle hack with large thickness, and truchet line segment ends
 //
-static void drawThickLine(int line_width, XSegment *segments)
+static void
+drawThickLine (Display *dpy, Drawable d, GC gc, int line_width,
+               XSegment *segments)
 {
     double dx, dy, di, m, angle;
     int sx1, sx2, sy1, sy2;
@@ -940,19 +994,17 @@ static void drawThickLine(int line_width, XSegment *segments)
     float x6 = sx2 + wsn;
     float y6 = sy2 - csn;
 
-    GLfloat coords[4][2] =
-    {
-      {x3, y3},
-      {x4, y4},
-      {x6, y6},
-      {x5, y5}
-    };
-
-    glEnableClientState (GL_VERTEX_ARRAY);
-    glVertexPointer (2, GL_FLOAT, 0, coords);
-    jwxyz_assert_gl ();
-    glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-    jwxyz_assert_gl ();
+    GLfloat *coords = enqueue (dpy, d, gc, GL_TRIANGLE_STRIP, 4,
+                               gc->gcv.foreground);
+    coords[0] = x3;
+    coords[1] = y3;
+    coords[2] = x4;
+    coords[3] = y4;
+    coords[4] = x5;
+    coords[5] = y5;
+    coords[6] = x6;
+    coords[7] = y6;
+    finish_triangle_strip (dpy, coords);
 }
 
 
@@ -963,8 +1015,7 @@ DrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
   /* Thin lines <= 1px are offset by +0.5; thick lines are not. */
 
   if (count == 1 && gc->gcv.line_width > 1) {
-    set_fg_gc (dpy, d, gc);
-    drawThickLine(gc->gcv.line_width,segments);
+    drawThickLine (dpy, d, gc, gc->gcv.line_width, segments);
   }
   else {
     if (dpy->queue_line_cap != (gc->gcv.cap_style != CapNotLast))
@@ -978,8 +1029,8 @@ DrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
             offsetof(XSegment, x2) == 4,
             "XDrawSegments: Data alignment mix-up.");
 
-    memcpy (enqueue(dpy, d, gc, GL_LINES, count * 2), segments,
-            count * sizeof(XSegment));
+    memcpy (enqueue(dpy, d, gc, GL_LINES, count * 2, gc->gcv.foreground),
+            segments, count * sizeof(XSegment));
   }
 
   return 0;
@@ -1013,40 +1064,18 @@ fill_rects (Display *dpy, Drawable d, GC gc,
             const XRectangle *rectangles, unsigned long nrectangles,
             unsigned long pixel)
 {
-  set_color_gc (dpy, d, gc, pixel);
-
-/*
-  glBegin(GL_QUADS);
-  for (unsigned i = 0; i != nrectangles; ++i) {
+  for (unsigned long i = 0; i != nrectangles; ++i) {
     const XRectangle *r = &rectangles[i];
-    glVertex2i(r->x, r->y);
-    glVertex2i(r->x, r->y + r->height);
-    glVertex2i(r->x + r->width, r->y + r->height);
-    glVertex2i(r->x + r->width, r->y);
-  }
-  glEnd();
-*/
-  
-  glEnableClientState (GL_VERTEX_ARRAY);
-  glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    
-  for (unsigned long i = 0; i != nrectangles; ++i)
-  {
-    const XRectangle *r = &rectangles[i];
-    
-    GLfloat coords[4][2] =
-    {
-      {r->x, r->y},
-      {r->x, r->y + r->height},
-      {r->x + r->width, r->y + r->height},
-      {r->x + r->width, r->y}
-    };
-    
-    // TODO: Several rects at once. Maybe even tune for XScreenSaver workloads.
-    glVertexPointer (2, GL_FLOAT, 0, coords);
-    jwxyz_assert_gl ();
-    glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
-    jwxyz_assert_gl ();
+    GLfloat *coords = enqueue (dpy, d, gc, GL_TRIANGLE_STRIP, 4, pixel);
+    coords[0] = r->x;
+    coords[1] = r->y;
+    coords[2] = r->x;
+    coords[3] = r->y + r->height;
+    coords[4] = r->x + r->width;
+    coords[5] = r->y;
+    coords[6] = r->x + r->width;
+    coords[7] = r->y + r->height;
+    finish_triangle_strip (dpy, coords);
   }
 }
 
@@ -1394,6 +1423,7 @@ PutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
   unsigned src_w;
   GLint tex_internalformat;
   GLenum tex_format, tex_type;
+  unsigned tex_index;
 
   if (bpp == 32) {
     tex_data = ximage->data + src_y * bpl + (src_x * 4);
@@ -1406,6 +1436,7 @@ PutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
     tex_internalformat = texture_internalformat(dpy);
     tex_format = dpy->pixel_format;
     tex_type = gl_pixel_type(dpy);
+    tex_index = texture_rgba;
 
     /* GL_UNPACK_ROW_LENGTH is not allowed to be negative. (sigh) */
 # ifndef HAVE_JWZGLES
@@ -1430,6 +1461,27 @@ PutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
 
     tex_data = malloc(src_w * h);
 
+#if 0
+    {
+      char s[10240];
+      int x, y, o;
+      Log("#PI ---------- %d %d %08lx %08lx",
+          jwxyz_drawable_depth(d), ximage->depth,
+          (unsigned long)d, (unsigned long)ximage);
+      for (y = 0; y < ximage->height; y++) {
+        o = 0;
+        for (x = 0; x < ximage->width; x++) {
+          unsigned long b = XGetPixel(ximage, x, y);
+          s[o++] = (   (b & 0xFF000000)
+                    ? ((b & 0x00FFFFFF) ? '#' : '-')
+                    : ((b & 0x00FFFFFF) ? '+' : ' '));
+        }
+        s[o] = 0;
+        Log("#PI [%s]",s);
+      }
+      Log("# PI ----------");
+    }
+#endif
     uint32_t *data_out = (uint32_t *)tex_data;
     for(unsigned y = h; y; --y) {
       for(unsigned x = 0; x != w8; ++x) {
@@ -1448,10 +1500,30 @@ PutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
       src_data += bpl;
       data_out += src_w / 4;
     }
+#if 0
+    {
+      char s[10240];
+      int x, y, o;
+      Log("#P2 ----------");
+      for (y = 0; y < ximage->height; y++) {
+        o = 0;
+        for (x = 0; x < ximage->width; x++) {
+          unsigned long b = ((uint8_t *)tex_data)[y * w + x];
+          s[o++] = (   (b & 0xFF000000)
+                    ? ((b & 0x00FFFFFF) ? '#' : '-')
+                    : ((b & 0x00FFFFFF) ? '+' : ' '));
+        }
+        s[o] = 0;
+        Log("#P2 [%s]",s);
+      }
+      Log("# P2 ----------");
+    }
+#endif
 
     tex_internalformat = GL_LUMINANCE;
     tex_format = GL_LUMINANCE;
     tex_type = GL_UNSIGNED_BYTE;
+    tex_index = texture_mono;
 
     // glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
 
@@ -1469,7 +1541,7 @@ PutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
     tex_h = to_pow2(tex_h);
   }
 
-  glBindTexture (dpy->gl_texture_target, dpy->rect_texture);
+  glBindTexture (dpy->gl_texture_target, dpy->textures[tex_index]);
 
   // A fun project: reimplement xshm.c by means of a PBO using
   // GL_MAP_UNSYNCHRONIZED_BIT.
@@ -1616,16 +1688,50 @@ GetSubImage (Display *dpy, Drawable d, int x, int y,
     }
   } else {
 
-    /* TODO: Actually get pixels. */
+    uint32_t *rgba_image = malloc(width * height * 4);
+    Assert (rgba_image, "not enough memory");
+
+    // Must be GL_RGBA; GL_RED isn't available.
+    glReadPixels (x, jwxyz_frame (d)->height - (y + height), width, height,
+                  GL_RGBA, GL_UNSIGNED_BYTE, rgba_image);
 
     Assert (!(dest_x % 8), "XGetSubImage: dest_x not byte-aligned");
-    uint8_t *dest_data =
+    uint8_t *top =
       (uint8_t *)dest_image->data + dest_image->bytes_per_line * dest_y
       + dest_x / 8;
-    for (unsigned y = height / 2; y; --y) {
-      memset (dest_data, y & 1 ? 0x55 : 0xAA, width / 8);
-      dest_data += dest_image->bytes_per_line;
+#if 0
+    {
+      char s[10240];
+      Log("#GI ---------- %d %d  %d x %d %08lx", 
+          jwxyz_drawable_depth(d), dest_image->depth,
+          width, height,
+          (unsigned long) d);
+      for (int y = 0; y < height; y++) {
+        int x;
+        for (x = 0; x < width; x++) {
+          unsigned long b = rgba_image[(height-y-1) * width + x];
+          s[x] = (   (b & 0xFF000000)
+                  ? ((b & 0x00FFFFFF) ? '#' : '-')
+                  : ((b & 0x00FFFFFF) ? '+' : ' '));
+        }
+        s[x] = 0;
+        Log("#GI [%s]",s);
+      }
+      Log("#GI ----------");
     }
+#endif
+    const uint32_t *bottom = rgba_image + width * (height - 1);
+    for (unsigned y = height; y; --y) {
+      memset (top, 0, width / 8);
+      for (unsigned x = 0; x != width; ++x) {
+        if (bottom[x] & 0x80)
+          top[x >> 3] |= (1 << (x & 7));
+      }
+      top += dest_image->bytes_per_line;
+      bottom -= width;
+    }
+
+    free (rgba_image);
   }
 
   return dest_image;

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2016-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,7 +26,9 @@
 #include <setjmp.h>
 
 #include <GLES/gl.h>
+#include <GLES/glext.h>
 #include <jni.h>
+#include <android/bitmap.h>
 #include <android/log.h>
 #include <android/native_window_jni.h>
 #include <pthread.h>
@@ -47,7 +49,6 @@ extern struct xscreensaver_function_table *xscreensaver_function_table;
 struct function_table_entry {
   const char *progname;
   struct xscreensaver_function_table *xsft;
-  int api;
 };
 
 #include "gen/function-table.h"
@@ -209,19 +210,21 @@ free_pixmap (struct running_hack *rh, Pixmap p)
 static void
 prepare_context (struct running_hack *rh)
 {
-  if (rh->jwxyz_gl_p) {
+  if (rh->egl_p) {
     /* TODO: Adreno recommends against doing this every frame. */
     Assert (eglMakeCurrent(rh->egl_display, rh->egl_surface, rh->egl_surface,
                            rh->egl_ctx),
             "eglMakeCurrent failed");
+  }
 
     /* Don't set matrices here; set them when an Xlib call triggers
        jwxyz_bind_drawable/jwxyz_set_matrices.
      */
+  if (rh->jwxyz_gl_p)
     rh->current_drawable = NULL;
-  }
 
-  jwzgles_make_current (rh->gles_state);
+  if (rh->xsft->visual == GL_VISUAL)
+    jwzgles_make_current (rh->gles_state);
 }
 
 
@@ -236,7 +239,6 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
   progname = chosen->progname;
   rh->xsft = chosen->xsft;
-  rh->api = chosen->api;
   rh->jni_env = env;
   rh->jobject = jwxyz_obj;  // update this every time we call into C
 
@@ -342,8 +344,9 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
   /* Note: https://source.android.com/devices/graphics/arch-egl-opengl */
 
-  /* TODO: This is lame, use a resource. */
+  /* ####: This is lame, use a resource. */
   rh->jwxyz_gl_p =
+    rh->xsft->visual == DEFAULT_VISUAL &&
     strcmp (progname, "kumppa") &&
     strcmp (progname, "petri") &&
     strcmp (progname, "slip") &&
@@ -352,7 +355,9 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
   Log ("init: %s @ %dx%d: using JWXYZ_%s", progname, w, h,
        rh->jwxyz_gl_p ? "GL" : "IMAGE");
 
-  if (rh->jwxyz_gl_p) {
+  rh->egl_p = rh->jwxyz_gl_p || rh->xsft->visual == GL_VISUAL;
+
+  if (rh->egl_p) {
   // GL init. Must come after resource processing.
 
     rh->egl_display = eglGetDisplay (EGL_DEFAULT_DISPLAY);
@@ -397,28 +402,39 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
     Assert (rh->egl_surface != EGL_NO_SURFACE, "init: EGL_NO_SURFACE");
 
     ANativeWindow_release (native_window);
+  } else {
+    rh->native_window = ANativeWindow_fromSurface (env, jni_surface);
 
-    prepare_context (rh);
+    int result = ANativeWindow_setBuffersGeometry (rh->native_window, w, h,
+                                                   WINDOW_FORMAT_RGBX_8888);
+    if (result < 0) {
+      // Maybe check this earlier?
+      Log ("can't set format (%d), surface may be invalid.", result);
+      (*env)->ThrowNew (env,
+        (*env)->FindClass(env, "org/jwz/xscreensaver/jwxyz$SurfaceLost"),
+        "Surface lost");
 
+      ANativeWindow_release (rh->native_window);
+      rh->native_window = NULL;
+      return;
+    }
+  }
+
+  prepare_context (rh);
+
+  if (rh->egl_p) {
     Log ("init %s / %s / %s",
          glGetString (GL_VENDOR),
          glGetString (GL_RENDERER),
          glGetString (GL_VERSION));
+  }
 
+  if (rh->jwxyz_gl_p) {
     const GLubyte *extensions = glGetString (GL_EXTENSIONS);
     rh->gl_fbo_p = jwzgles_gluCheckExtension (
       (const GLubyte *)"GL_OES_framebuffer_object", extensions);
 
     if (rh->gl_fbo_p) {
-      PFNGLGENFRAMEBUFFERSOESPROC glGenFramebuffersOES =
-        (PFNGLGENFRAMEBUFFERSOESPROC)
-          eglGetProcAddress ("glGenFramebuffersOES");
-
-      rh->glBindFramebufferOES = (PFNGLBINDFRAMEBUFFEROESPROC)
-          eglGetProcAddress ("glBindFramebufferOES");
-      rh->glFramebufferTexture2DOES = (PFNGLFRAMEBUFFERTEXTURE2DOESPROC)
-        eglGetProcAddress ("glFramebufferTexture2DOES");
-
       glGetIntegerv (GL_FRAMEBUFFER_BINDING_OES, &rh->fb_default);
       Assert (!rh->fb_default, "default framebuffer not current framebuffer");
       glGenFramebuffersOES (1, &rh->fb_pixmap);
@@ -429,8 +445,8 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
     rh->frontbuffer_p = False;
 
-    if (rh->api == API_XLIB ||
-        (rh->api == API_GL &&
+    if (rh->xsft->visual == DEFAULT_VISUAL ||
+        (rh->xsft->visual == GL_VISUAL &&
          strcmp("True", get_string_resource_window(wnd, "doubleBuffer")))) {
 
       rh->frontbuffer_p = True;
@@ -471,23 +487,10 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
   } else {
 
-    rh->native_window = ANativeWindow_fromSurface (env, jni_surface);
-
-    int result = ANativeWindow_setBuffersGeometry (rh->native_window, w, h,
-                                                   WINDOW_FORMAT_RGBX_8888);
-    if (result < 0) {
-      // Maybe check this earlier?
-      Log ("can't set format (%d), surface may be invalid.", result);
-      (*env)->ThrowNew (env,
-        (*env)->FindClass(env, "org/jwz/xscreensaver/jwxyz$SurfaceLost"),
-        "Surface lost");
-
-      ANativeWindow_release (rh->native_window);
-      rh->native_window = NULL;
-      return;
-    }
-
-    create_pixmap (wnd, wnd);
+    if (rh->xsft->visual == DEFAULT_VISUAL)
+      create_pixmap (wnd, wnd);
+    else
+      wnd->image_data = NULL;
 
     static const unsigned char rgba_bytes[] = {0, 1, 2, 3};
     rh->dpy = jwxyz_image_make_display(wnd, rgba_bytes);
@@ -501,7 +504,8 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
   if (rh->jwxyz_gl_p)
     rh->copy_gc = XCreateGC (rh->dpy, &rh->frontbuffer, 0, NULL);
 
-  rh->gles_state = jwzgles_make_state();
+  if (rh->xsft->visual == GL_VISUAL)
+    rh->gles_state = jwzgles_make_state();
  END: ;
 }
 
@@ -542,9 +546,9 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
 
   Window wnd = rh->window;
 
-  if (rh->jwxyz_gl_p) {
-    prepare_context (rh);
+  prepare_context (rh);
 
+  if (rh->egl_p) {
     /* There is some kind of weird redisplay race condition between Settings
        and the launching hack: e.g., Abstractile does XClearWindow at init,
        but the screen is getting filled with random bits.  So let's wait a
@@ -571,10 +575,12 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
     void *(*init_cb) (Display *, Window, void *) =
       (void *(*)(Display *, Window, void *)) rh->xsft->init_cb;
 
-    unsigned int bg =
-      get_pixel_resource (rh->dpy, 0, "background", "Background");
-    XSetWindowBackground (rh->dpy, wnd, bg);
-    XClearWindow (rh->dpy, wnd);
+    if (rh->xsft->visual == DEFAULT_VISUAL) {
+      unsigned int bg =
+        get_pixel_resource (rh->dpy, 0, "background", "Background");
+      XSetWindowBackground (rh->dpy, wnd, bg);
+      XClearWindow (rh->dpy, wnd);
+    }
 
     rh->closure = init_cb (rh->dpy, wnd, rh->xsft->setup_arg);
     rh->initted_p = True;
@@ -582,7 +588,7 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
     /* ignore_rotation_p doesn't quite work at the moment. */
     rh->ignore_rotation_p = False;
 /*
-      (rh->api == API_XLIB &&
+      (rh->xsft->visual == DEFAULT_VISUAL &&
        get_boolean_resource (rh->dpy, "ignoreRotation", "IgnoreRotation"));
 */
 
@@ -621,17 +627,19 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
   if (rh->fpst && rh->xsft->fps_cb)
     rh->xsft->fps_cb (rh->dpy, wnd, rh->fpst, rh->closure);
 
-  if (rh->jwxyz_gl_p) {
-    if (rh->frontbuffer_p) {
+  if (rh->egl_p) {
+    if (rh->jwxyz_gl_p && rh->frontbuffer_p) {
       jwxyz_gl_copy_area (rh->dpy, wnd, &rh->frontbuffer, rh->copy_gc,
                           0, 0, wnd->frame.width, wnd->frame.height,
                           0, 0);
     }
 
-    // TODO: Getting crashes here after resize, sometimes. Log sez:
+    // Getting failure here before/during/after resize, sometimes. Log sez:
     // W/Adreno-EGLSUB(18428): <DequeueBuffer:607>: dequeue native buffer fail: No such device, buffer=0x5f93bf5c, handle=0x0
-    Assert (eglSwapBuffers(rh->egl_display, rh->egl_surface),
-            "eglSwapBuffers failed");
+    if (!eglSwapBuffers(rh->egl_display, rh->egl_surface)) {
+      Log ("eglSwapBuffers failed: 0x%x (probably asynchronous resize)",
+           eglGetError());
+    }
   } else {
     ANativeWindow_Buffer buffer;
     ARect rect = {0, 0, wnd->frame.width, wnd->frame.height};
@@ -789,8 +797,9 @@ Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *env, jobject thiz,
 
   struct running_hack *rh = getRunningHack(env, thiz);
 
-  if (rh->jwxyz_gl_p) {
-    prepare_context (rh);
+  prepare_context (rh);
+
+  if (rh->egl_p) {
     glViewport (0, 0, w, h);
   } else {
     int result = ANativeWindow_setBuffersGeometry (rh->native_window, w, h,
@@ -825,18 +834,17 @@ Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *env, jobject thiz,
     }
 
     jwxyz_window_resized (rh->dpy);
-  } else {
+  } else if (rh->xsft->visual == DEFAULT_VISUAL) {
     free_pixmap (rh, wnd);
     create_pixmap (wnd, wnd);
+    XClearWindow (rh->dpy, wnd); // TODO: This is lame. Copy the bits.
   }
-
-  XClearWindow (rh->dpy, wnd); // TODO: This is lame.
 
   if (rh->initted_p)
     rh->xsft->reshape_cb (rh->dpy, rh->window, rh->closure,
                           wnd->frame.width, wnd->frame.height);
 
-  if (rh->jwxyz_gl_p && rh->api == API_GL) {
+  if (rh->xsft->visual == GL_VISUAL) {
     glMatrixMode (GL_PROJECTION);
     glRotatef (-rot, 0, 0, 1);
     glMatrixMode (GL_MODELVIEW);
@@ -873,10 +881,15 @@ Java_org_jwz_xscreensaver_jwxyz_nativeDone (JNIEnv *env, jobject thiz)
     rh->xsft->free_cb (rh->dpy, rh->window, rh->closure);
   if (rh->jwxyz_gl_p)
     XFreeGC (rh->dpy, rh->copy_gc);
-  jwzgles_free_state ();
+  if (rh->xsft->visual == GL_VISUAL)
+    jwzgles_free_state ();
 
-  if (rh->jwxyz_gl_p) {
+  if (rh->jwxyz_gl_p)
     jwxyz_gl_free_display(rh->dpy);
+  else
+    jwxyz_image_free_display(rh->dpy);
+
+  if (rh->egl_p) {
     // eglDestroy* probably isn't necessary here.
     eglMakeCurrent (rh->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
                     EGL_NO_CONTEXT);
@@ -884,7 +897,8 @@ Java_org_jwz_xscreensaver_jwxyz_nativeDone (JNIEnv *env, jobject thiz)
     eglDestroyContext (rh->egl_display, rh->egl_ctx);
     eglTerminate (rh->egl_display);
   } else {
-    jwxyz_image_free_display(rh->dpy);
+    if (rh->xsft->visual == DEFAULT_VISUAL)
+      free_pixmap (rh, rh->window);
     if (rh->native_window)
       ANativeWindow_release (rh->native_window);
   }
@@ -1052,11 +1066,11 @@ finish_bind_drawable (Display *dpy, Drawable dst)
 static void
 bind_drawable_fbo (struct running_hack *rh, Drawable d)
 {
-  rh->glBindFramebufferOES (GL_FRAMEBUFFER_OES,
-                            d->texture ? rh->fb_pixmap : rh->fb_default);
+  glBindFramebufferOES (GL_FRAMEBUFFER_OES,
+                        d->texture ? rh->fb_pixmap : rh->fb_default);
   if (d->texture) {
-    rh->glFramebufferTexture2DOES (GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES,
-                                   GL_TEXTURE_2D, d->texture, 0);
+    glFramebufferTexture2DOES (GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES,
+                               GL_TEXTURE_2D, d->texture, 0);
   }
 }
 
@@ -1162,6 +1176,7 @@ jwxyz_image_pitch (Drawable d)
 void *
 jwxyz_image_data (Drawable d)
 {
+  Assert (d->image_data, "no image storage (i.e. keep Xlib off the Window)");
   return d->image_data;
 }
 
@@ -1574,14 +1589,8 @@ jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
 
 /* Called from utils/grabclient.c */
 char *
-jwxyz_load_random_image (Display *dpy,
-                         int *width_ret, int *height_ret,
-                         char **name_ret)
+jwxyz_draw_random_image (Display *dpy, Drawable drawable, GC gc)
 {
-
-  /* TODO: This function needs to be implemented for Android */
-  return 0;
-
   Window window = RootWindow (dpy, 0);
   struct running_hack *rh = window->window.rh;
   JNIEnv *env = rh->jni_env;
@@ -1607,42 +1616,108 @@ jwxyz_load_random_image (Display *dpy,
                                        (grab_p
                                         ? "getScreenshot"
                                         : "loadRandomImage"),
-                                       "(IIZ)Ljava/nio/ByteBuffer;");
+                                       "(IIZ)[Ljava/lang/Object;");
   if ((*env)->ExceptionOccurred(env)) abort();
-  jobject buf = (m
-                 ? (*env)->CallObjectMethod (env, obj, m,
-                                             window->frame.width,
-                                             window->frame.height,
-                                             (rotate_p ? JNI_TRUE : JNI_FALSE))
-                 : NULL);
+  jobjectArray img_name = (
+    m
+    ? (*env)->CallObjectMethod (env, obj, m,
+                                drawable->frame.width, drawable->frame.height,
+                                (rotate_p ? JNI_TRUE : JNI_FALSE))
+    : NULL);
+  if ((*env)->ExceptionOccurred(env)) abort();
   (*env)->DeleteLocalRef (env, c);
 
-  unsigned char *bits = (unsigned char *)
-    (buf ? (*env)->GetDirectBufferAddress (env, buf) : 0);
-
-  if (bits) {
-    int i = 0;
-    int L = (*env)->GetDirectBufferCapacity (env, buf);
-    if (L < 100) abort();
-    int width  = (bits[i] << 8) | (bits[i+1] & 0xFF); i += 2;
-    int height = (bits[i] << 8) | (bits[i+1] & 0xFF); i += 2;
-    char *name = (char *) bits + i;
-    int L2 = strlen (name);
-    i += L2 + 1;
-    if (width * height * 4 != L - i) abort();
-    char *pix = malloc (L - i);
-    if (! pix) abort();
-    memcpy (pix, bits + i, L - i);
-    *width_ret  = width;
-    *height_ret = height;
-    *name_ret   = strdup (name);
-    return (char *) pix;
+  if (!img_name) {
+    fprintf (stderr, "failed to load %s\n", (grab_p ? "screenshot" : "image"));
+    return NULL;
   }
 
-  if (buf)
-    (*env)->DeleteLocalRef (env, buf);
+  jobject jbitmap = (*env)->GetObjectArrayElement (env, img_name, 0);
 
-  return 0;
+  AndroidBitmapInfo bmp_info;
+  AndroidBitmap_getInfo (env, jbitmap, &bmp_info);
+
+  XImage *img = XCreateImage (dpy, NULL, visual_depth(NULL, NULL),
+                              ZPixmap, 0, NULL,
+                              bmp_info.width, bmp_info.height, 0,
+                              bmp_info.stride);
+
+  AndroidBitmap_lockPixels (env, jbitmap, (void **) &img->data);
+
+  XPutImage (dpy, drawable, gc, img, 0, 0,
+             (drawable->frame.width  - bmp_info.width) / 2,
+             (drawable->frame.height - bmp_info.height) / 2,
+             bmp_info.width, bmp_info.height);
+
+  AndroidBitmap_unlockPixels (env, jbitmap);
+  img->data = NULL;
+  XDestroyImage (img);
+
+  return jstring_dup (env, (*env)->GetObjectArrayElement (env, img_name, 1));
+}
+
+
+XImage *
+jwxyz_png_to_ximage (Display *dpy, Visual *visual,
+                     const unsigned char *png_data, unsigned long data_size)
+{
+  Window window = RootWindow (dpy, 0);
+  struct running_hack *rh = window->window.rh;
+  JNIEnv *env = rh->jni_env;
+  jobject obj = rh->jobject;
+  jclass    c = (*env)->GetObjectClass (env, obj);
+  jmethodID m = (*env)->GetMethodID (env, c, "decodePNG",
+                                     "([B)Landroid/graphics/Bitmap;");
+  if ((*env)->ExceptionOccurred(env)) abort();
+  jbyteArray jdata = (*env)->NewByteArray (env, data_size);
+  (*env)->SetByteArrayRegion (env, jdata, 0,
+                              data_size, (const jbyte *) png_data);
+  jobject jbitmap = (
+    m
+    ? (*env)->CallObjectMethod (env, obj, m, jdata)
+    : NULL);
+  if ((*env)->ExceptionOccurred(env)) abort();
+  (*env)->DeleteLocalRef (env, c);
+  (*env)->DeleteLocalRef (env, jdata);
+  if (!jbitmap)
+    return NULL;
+
+  AndroidBitmapInfo bmp_info;
+  AndroidBitmap_getInfo (env, jbitmap, &bmp_info);
+
+  XImage *img = XCreateImage (dpy, NULL, 32, ZPixmap, 0, NULL,
+                              bmp_info.width, bmp_info.height, 8,
+                              bmp_info.stride);
+  char *bits = 0;
+  AndroidBitmap_lockPixels (env, jbitmap, (void **) &bits);
+  img->data = (char *) calloc (img->bytes_per_line, img->height);
+  memcpy (img->data, bits, img->bytes_per_line * img->height);
+  AndroidBitmap_unlockPixels (env, jbitmap);
+
+  // Java should have returned ARGB data.
+  // WTF, why isn't ANDROID_BITMAP_FORMAT_ARGB_8888 defined?
+  if (bmp_info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) abort();
+# ifndef __BYTE_ORDER__ // A GCC (and Clang)-ism.
+#  error Need a __BYTE_ORDER__.
+# elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  img->byte_order = img->bitmap_bit_order = LSBFirst;
+# elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+  img->byte_order = img->bitmap_bit_order = MSBFirst;
+# else
+#  error Need a __BYTE_ORDER__.
+# endif
+
+  static const union {
+    uint8_t bytes[4];
+    uint32_t pixel;
+  } c0 = {{0xff, 0x00, 0x00, 0x00}}, c1 = {{0x00, 0xff, 0x00, 0x00}},
+    c2 = {{0x00, 0x00, 0xff, 0x00}};
+
+  img->red_mask   = c0.pixel;
+  img->green_mask = c1.pixel;
+  img->blue_mask  = c2.pixel;
+
+  return img;
 }
 
 #endif /* HAVE_ANDROID */

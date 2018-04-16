@@ -21,9 +21,9 @@
 #include <GLES/glext.h>
 #include <jni.h>
 
-/* Keep synchronized with check-configs.pl and jwxyz.java. */
-#define API_XLIB 0
-#define API_GL   1
+/* From utils/visual.c. */
+#define DEFAULT_VISUAL	-1
+#define GL_VISUAL	-6
 
 struct jwxyz_Drawable {
   enum { WINDOW, PIXMAP } type;
@@ -49,7 +49,6 @@ struct jwxyz_Drawable {
 
 struct running_hack {
   struct xscreensaver_function_table *xsft;
-  jint api;
   Display *dpy;
   Window window;
   fps_state *fpst;
@@ -57,7 +56,7 @@ struct running_hack {
   JNIEnv *jni_env;
   jobject jobject;
 
-  Bool jwxyz_gl_p;
+  Bool jwxyz_gl_p, egl_p;
 
   /* JWXYZ_GL */
   EGLContext egl_ctx;
@@ -66,9 +65,6 @@ struct running_hack {
   GLint fb_default;
 
   EGLConfig egl_config;
-
-  PFNGLBINDFRAMEBUFFEROESPROC glBindFramebufferOES;
-  PFNGLFRAMEBUFFERTEXTURE2DOESPROC glFramebufferTexture2DOES;
 
   struct jwxyz_Drawable frontbuffer;
   GC copy_gc;

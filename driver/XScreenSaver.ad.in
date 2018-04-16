@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.38
-!                              20-Dec-2017
+!                              version 5.39
+!                              12-Apr-2018
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -382,7 +382,11 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				splodesic -root				    \n\
 @GL_KLUDGE@ GL: 				unicrud -root				    \n\
 @GL_KLUDGE@ GL: 				esper -root				    \n\
-@GL_KLUDGE@ GL: 				vigilance -root				    \n
+@GL_KLUDGE@ GL: 				vigilance -root				    \n\
+@GL_KLUDGE@ GL: 				crumbler -root				    \n\
+@GL_KLUDGE@ GL: 				maze3d -root				    \n\
+@GL_KLUDGE@ GL: 				peepers -root				    \n\
+@GL_KLUDGE@ GL: 				razzledazzle -root			    \n
 
 
 
@@ -410,29 +414,8 @@ XScreenSaver.bourneShell:		/bin/sh
 *Dialog.buttonFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1
 *Dialog.dateFont:	-*-helvetica-medium-r-*-*-*-80-*-*-*-*-iso8859-1
 
-! Fucking Ubuntu doesn't install Helvetica by default! Come ON!
-! What a weirdo exotic font that is, that nobody would care to use!
-!
-*Dialog.headingFont2:	-*-bitstream charter-bold-r-*-*-*-160-*-*-*-*-iso8859-1
-*Dialog.bodyFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1
-*Dialog.labelFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1
-*Dialog.unameFont2:	-*-bitstream charter-bold-r-*-*-*-100-*-*-*-*-iso8859-1
-*Dialog.buttonFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1
-*Dialog.dateFont2:	-*-bitstream charter-medium-r-*-*-*-80-*-*-*-*-iso8859-1
-
-! Fall back to anything variable width that supports ASCII.
-*Dialog.headingFont3:	-*-*-bold-r-*-*-*-180-*-*-p-*-iso8859-1
-*Dialog.bodyFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1
-*Dialog.labelFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1
-*Dialog.unameFont3:	-*-*-bold-r-*-*-*-120-*-*-p-*-iso8859-1
-*Dialog.buttonFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1
-*Dialog.dateFont3:	-*-*-medium-r-*-*-*-80-*-*-p-*-iso8859-1
-
 ! Helvetica asterisks look terrible.
 *passwd.passwdFont:	-*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1
-*passwd.passwdFont2:	-*-bitstream-courier 10 pitch-medium-r-*-*-*-140-*-*-*-iso8859-1
-*passwd.passwdFont3:	-*-*-medium-r-*-*-*-140-*-m-*-iso8859-1
-*passwd.passwdFont4:	-*-*-medium-r-*-*-*-140-*-c-*-iso8859-1
 
 
 *Dialog.foreground:		#000000
@@ -463,7 +446,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.uname:                  True
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright \251 1991-2017 by
+*splash.body.label:		Copyright \251 1991-2018 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -521,6 +504,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.lcdscrub.name:       LCDscrub
 *hacks.lmorph.name:         LMorph
 *hacks.m6502.name:          m6502
+*hacks.maze3d.name:         Maze3D
 *hacks.memscroller.name:    MemScroller
 *hacks.metaballs.name:      MetaBalls
 *hacks.mirrorblob.name:     MirrorBlob
@@ -532,6 +516,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.projectiveplane.name:ProjectivePlane
 *hacks.quasicrystal.name:   QuasiCrystal
 *hacks.raverhoop.name:      RaverHoop
+*hacks.razzledazzle.name:   RazzleDazzle
 *hacks.rd-bomb.name:        RDbomb
 *hacks.rdbomb.name:         RDbomb
 *hacks.romanboy.name:       RomanBoy

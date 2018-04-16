@@ -388,23 +388,11 @@ penetrate_init (Display *dpy, Window window)
   if (st->lrate < 0) st->lrate = 2;
   st->startlrate = st->lrate;
 
-  st->font = XLoadQueryFont(st->dpy, levelfont);
-  if (!st->font) {
-    fprintf (stderr, "%s: could not load font %s.\n", progname, levelfont);
-    st->font = XLoadQueryFont(st->dpy, scorefont);
-    if (! st->font)
-      st->font = XLoadQueryFont(st->dpy, "fixed");
-    if (! st->font) abort();
-  }
+  st->font = load_font_retry(st->dpy, levelfont);
+  if (!st->font) abort();
 
-  st->scoreFont = XLoadQueryFont(st->dpy, scorefont);
-  if (!st->scoreFont) {
-    fprintf (stderr, "%s: could not load font %s.\n", progname, scorefont);
-    st->scoreFont = XLoadQueryFont(st->dpy, levelfont);
-    if (! st->scoreFont)
-      st->scoreFont = XLoadQueryFont(st->dpy, "fixed");
-    if (! st->scoreFont) abort();
-  }
+  st->scoreFont = load_font_retry(st->dpy, scorefont);
+  if (!st->scoreFont) abort();
 
   for (i = 0; i < kMaxMissiles; i++)
     st->missile[i].alive = 0;

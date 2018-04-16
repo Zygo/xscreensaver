@@ -15,6 +15,7 @@
 #include <math.h>
 #include "screenhackI.h"
 #include "apple2.h"
+#include "ximage-loader.h"
 
 #ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
@@ -389,25 +390,47 @@ a2_init_memory_active(apple2_sim_t *sim)
 }
 
 
-#if 1  /* jwz: since MacOS doesn't have "6x10", I dumped this font to an XBM...
+#if 1  /* jwz: since MacOS doesn't have "6x10", I dumped this font to a PNG...
         */
 
-#include "images/apple2font.xbm"
+#include "images/gen/apple2font_png.h"
 
 static void
 a2_make_font(apple2_sim_t *sim)
 {
-  Pixmap text_pm = XCreatePixmapFromBitmapData (sim->dpy, sim->window,
-                                                (char *) apple2_font_bits,
-                                                apple2_font_width,
-                                                apple2_font_height,
-                                                1, 0, 1);
-  if (apple2_font_width != 64*7) abort();
-  if (apple2_font_height != 8) abort();
-  sim->text_im = XGetImage(sim->dpy, text_pm, 0, 0, 
-                           apple2_font_width, apple2_font_height,
-                           ~0L, ZPixmap);
-  XFreePixmap(sim->dpy, text_pm);
+  int pix_w, pix_h;
+  XWindowAttributes xgwa;
+  Pixmap m = 0;
+  Pixmap p = image_data_to_pixmap (sim->dpy, sim->window,
+                                   apple2font_png, sizeof(apple2font_png),
+                                   &pix_w, &pix_h, &m);
+  XImage *im = XGetImage (sim->dpy, p, 0, 0, pix_w, pix_h, ~0L, ZPixmap);
+  XImage *mm = XGetImage (sim->dpy, m, 0, 0, pix_w, pix_h, 1, XYPixmap);
+  unsigned long black =
+    BlackPixelOfScreen (DefaultScreenOfDisplay (sim->dpy));
+  int x, y;
+
+  XFreePixmap (sim->dpy, p);
+  XFreePixmap (sim->dpy, m);
+  if (pix_w != 64*7) abort();
+  if (pix_h != 8) abort();
+
+  XGetWindowAttributes (sim->dpy, sim->window, &xgwa);
+  sim->text_im = XCreateImage (sim->dpy, xgwa.visual, 1, XYBitmap, 0, 0,
+                               pix_w, pix_h, 8, 0);
+  sim->text_im->data = malloc (sim->text_im->bytes_per_line *
+                               sim->text_im->height);
+
+  /* Convert deep image to 1 bit */
+  for (y = 0; y < pix_h; y++)
+    for (x = 0; x < pix_w; x++)
+      XPutPixel (sim->text_im, x, y,
+                 (XGetPixel (mm, x, y)
+                  ? XGetPixel (im, x, y) == black
+                  : 0));
+
+  XDestroyImage (im);
+  XDestroyImage (mm);
 }
 
 #else /* 0 */
@@ -480,7 +503,7 @@ a2_make_font(apple2_sim_t *sim)
   GC gc;
   XGCValues gcv;
 
-  font = XLoadQueryFont (sim->dpy, def_font);
+  font = load_font_retry (sim->dpy, def_font);
   if (!font) {
     fprintf(stderr, "%s: can't load font %s\n", progname, def_font);
     abort();

@@ -1,4 +1,4 @@
-/* recanim, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -323,6 +323,7 @@ screenhack_record_anim_free (record_anim_state *st)
            " -crf 18"
            " -pix_fmt yuv420p"
            " '%s'"
+           " </dev/null"
            /*" 2>&-"*/,
            fn);
   fprintf (stderr, "%s: exec: %s\n", progname, cmd);

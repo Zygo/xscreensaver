@@ -1,4 +1,4 @@
-/* analogtv, Copyright (c) 2003, 2004 Trevor Blackwell <tlb@tlb.org>
+/* analogtv, Copyright (c) 2003-2018 Trevor Blackwell <tlb@tlb.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -85,6 +85,8 @@
 #include "yarandom.h"
 #include "grabscreen.h"
 #include "visual.h"
+#include "font-retry.h"
+#include "ximage-loader.h"
 
 /* #define DEBUG 1 */
 
@@ -2172,10 +2174,10 @@ analogtv_reception_update(analogtv_reception *rec)
 }
 
 
-/* jwz: since MacOS doesn't have "6x10", I dumped this font to an XBM...
+/* jwz: since MacOS doesn't have "6x10", I dumped this font to a PNG...
  */
 
-#include "images/6x10font.xbm"
+#include "images/gen/6x10font_png.h"
 
 void
 analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
@@ -2195,18 +2197,40 @@ analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
 
   if (fontname && !strcmp (fontname, "6x10")) {
 
-    text_pm = XCreatePixmapFromBitmapData (dpy, window,
-                                           (char *) font6x10_bits,
-                                           font6x10_width,
-                                           font6x10_height,
-                                           1, 0, 1);
-    f->text_im = XGetImage(dpy, text_pm, 0, 0, font6x10_width, font6x10_height,
-                           1, XYPixmap);
-    XFreePixmap(dpy, text_pm);
+    int pix_w, pix_h;
+    XWindowAttributes xgwa;
+    Pixmap m = 0;
+    Pixmap p = image_data_to_pixmap (dpy, window,
+                                     _6x10font_png, sizeof(_6x10font_png),
+                                     &pix_w, &pix_h, &m);
+    XImage *im = XGetImage (dpy, p, 0, 0, pix_w, pix_h, ~0L, ZPixmap);
+    XImage *mm = XGetImage (dpy, m, 0, 0, pix_w, pix_h, 1, XYPixmap);
+    unsigned long black = BlackPixelOfScreen (DefaultScreenOfDisplay (dpy));
+    int x, y;
+
+    XFreePixmap (dpy, p);
+    XFreePixmap (dpy, m);
+    if (pix_w != 256*7) abort();
+    if (pix_h != 10) abort();
+
+    XGetWindowAttributes (dpy, window, &xgwa);
+    f->text_im = XCreateImage (dpy, xgwa.visual, 1, XYBitmap, 0, 0,
+                               pix_w, pix_h, 8, 0);
+    f->text_im->data = malloc (f->text_im->bytes_per_line * f->text_im->height);
+
+    /* Convert deep image to 1 bit */
+    for (y = 0; y < pix_h; y++)
+      for (x = 0; x < pix_w; x++)
+        XPutPixel (f->text_im, x, y,
+                   (XGetPixel (mm, x, y)
+                    ? XGetPixel (im, x, y) == black
+                    : 0));
+    XDestroyImage (im);
+    XDestroyImage (mm);
 
   } else if (fontname) {
 
-    font = XLoadQueryFont (dpy, fontname);
+    font = load_font_retry (dpy, fontname);
     if (!font) {
       fprintf(stderr, "analogtv: can't load font %s\n", fontname);
       abort();

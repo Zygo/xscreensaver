@@ -17,7 +17,7 @@
 
 #include "screenhack.h"
 #include <stdio.h>
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 
 #define ALIVE   1
 #define CHANGED 2

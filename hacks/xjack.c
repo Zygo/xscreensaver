@@ -95,20 +95,8 @@ xjack_init (Display *dpy, Window window)
   if (st->xgwa.width <= 480)
     fontname = "-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*";
 
-  st->font = XLoadQueryFont (st->dpy, fontname);
-
-  if (!st->font)
-    st->font = XLoadQueryFont (st->dpy, "-*-*-medium-r-*-*-*-240-*-*-m-*-*-*");
-  if (!st->font)
-    st->font = XLoadQueryFont (st->dpy,
-                               "-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*");
-  if (!st->font)
-    st->font = XLoadQueryFont (st->dpy, "-*-*-*-r-*-*-*-240-*-*-m-*-*-*");
-  if (!st->font)
-    {
-      fprintf(stderr, "no big fixed-width font like \"%s\"\n", fontname);
-      exit(1);
-    }
+  st->font = load_font_retry (st->dpy, fontname);
+  if (!st->font) abort();
 
   gcv.font = st->font->fid;
   gcv.foreground = get_pixel_resource (st->dpy, st->xgwa.colormap,

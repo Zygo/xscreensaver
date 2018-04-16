@@ -304,6 +304,7 @@ deco_free (Display *dpy, Window window, void *closure)
 static const char *deco_defaults [] = {
   ".background:		black",
   ".foreground:		white",
+  ".lowrez:		true",
   "*maxDepth:		12",
   "*minWidth:		20",
   "*minHeight:		20",

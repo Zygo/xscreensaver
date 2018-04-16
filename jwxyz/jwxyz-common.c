@@ -27,6 +27,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "jwxyzI.h"
 #include "pow2.h"
@@ -1035,6 +1036,9 @@ try_native_font (Display *dpy, const char *name, Font fid)
       fid->xa_font = strdup (name); // Maybe this should be an XLFD?
       break;
     } else {
+      // To list fonts:
+      //  po [UIFont familyNames]
+      //  po [UIFont fontNamesForFamilyName:@"Arial"]
       Log("No native font: \"%s\" %.0f", name2, size);
     }
   }
@@ -1566,9 +1570,13 @@ XDrawImageString (Display *dpy, Drawable d, GC gc, int x, int y,
   jwxyz_fill_rect (dpy, d, gc,
                    x + MIN (0, cs.lbearing),
                    y - MAX (0, ascent),
+
+                   /* The +1 here is almost certainly wrong, but BSOD
+                      requires it; and only BSOD, fluidballs, juggle
+                      and grabclient call XDrawImageString... */
                    MAX (MAX (0, cs.rbearing) -
                         MIN (0, cs.lbearing),
-                        cs.width),
+                        cs.width) + 1,
                    MAX (0, ascent) + MAX (0, descent),
                    VTBL->gc_gcv(gc)->background);
   return XDrawString (dpy, d, gc, x, y, str, len);

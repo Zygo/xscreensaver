@@ -184,7 +184,7 @@ static GLuint gen_texture (void)
   glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
   clear_gl_error ();
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, TEX_WIDTH, TEX_HEIGHT,
-      0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, texture);
+      0, GL_RGBA, GL_UNSIGNED_BYTE, texture);
   check_gl_error ("texture");
 
   /* Texture parameters, LINEAR scaling for better texture quality */

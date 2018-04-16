@@ -40,32 +40,40 @@ export ANDROID_HACKS=		\
 	abstractile		\
 	anemone			\
 	anemotaxis		\
+	antmaze			\
+	antspotlight		\
 	apollonian		\
 	atlantis		\
 	attraction		\
 	atunnel			\
+	binaryring		\
 	blaster			\
 	blinkbox		\
 	blocktube		\
 	boing			\
+	bouboule		\
 	bouncingcow		\
 	boxed			\
 	boxfit			\
-	bouboule		\
 	braid			\
 	bsod			\
 	cage			\
 	ccurve			\
 	celtic			\
+	circuit			\
 	cloudlife		\
 	companioncube		\
 	compass			\
 	coral			\
 	crackberg		\
+	crumbler		\
 	crystal			\
+	cube21			\
+	cubenetic		\
 	cubestack		\
 	cubestorm		\
 	cubetwist		\
+	cubicgrid		\
 	cwaves			\
 	cynosure		\
 	dangerball		\
@@ -73,11 +81,12 @@ export ANDROID_HACKS=		\
 	deco			\
 	deluxe			\
 	demon			\
-	discrete		\
 	discoball		\
+	discrete		\
 	distort			\
 	dnalogo			\
 	drift			\
+	dymaxionmap		\
 	energystream		\
 	engine			\
 	epicycle		\
@@ -96,25 +105,33 @@ export ANDROID_HACKS=		\
 	gears			\
 	geodesic		\
 	geodesicgears		\
+	gflux			\
+	glblur			\
 	glcells			\
+	glhanoi			\
 	glknots			\
 	glmatrix		\
+	glplanet		\
 	glschool		\
 	glsnake			\
 	gltext			\
 	goop			\
 	grav			\
 	greynetic		\
+	halo			\
 	helix			\
 	hexadrop		\
 	hexstrut		\
 	hilbert			\
 	hopalong		\
+	hypertorus		\
 	hypnowheel		\
 	ifs			\
 	imsmap			\
+	interaggregate		\
 	interference		\
 	intermomentary		\
+	jigsaw			\
 	julia			\
 	kaleidescope		\
 	kaleidocycle		\
@@ -125,28 +142,38 @@ export ANDROID_HACKS=		\
 	loop			\
 	m6502			\
 	maze			\
+	maze3d			\
 	memscroller		\
 	menger			\
 	metaballs		\
+	mirrorblob		\
+	moebius			\
 	moebiusgears		\
 	moire			\
+	moire2			\
 	morph3d			\
+	mountain		\
 	munch			\
 	nerverot		\
 	noof			\
+	noseguy			\
+	peepers			\
 	penetrate		\
 	penrose			\
 	petri			\
 	piecewise		\
 	pinion			\
-	polyominoes		\
+	pipes			\
 	polytopes		\
 	pong			\
 	popsquares		\
+	projectiveplane		\
 	providence		\
+	pulsar			\
 	pyro			\
 	quasicrystal		\
 	raverhoop		\
+	razzledazzle		\
 	rd-bomb			\
 	ripples			\
 	rocks			\
@@ -159,16 +186,19 @@ export ANDROID_HACKS=		\
 	shadebobs		\
 	sierpinski		\
 	sierpinski3d		\
+	skytentacles		\
 	slidescreen		\
 	slip			\
+	spheremonics		\
+	splitflap		\
 	splodesic		\
 	squiral			\
 	stairs			\
-	starfish		\
 	stonerview		\
 	strange			\
 	substrate		\
 	superquadrics		\
+	surfaces		\
 	swirl			\
 	tangram			\
 	thornbird		\
@@ -176,6 +206,7 @@ export ANDROID_HACKS=		\
 	topblock		\
 	triangle		\
 	tronbit			\
+	truchet			\
 	twang			\
 	unknownpleasures	\
 	vermiculate		\
@@ -186,6 +217,7 @@ export ANDROID_HACKS=		\
 	winduprobot		\
 	wormhole		\
 	xflame			\
+	xjack			\
 	xlyap			\
 	xrayswarm		\
 	xspirograph		\
@@ -195,64 +227,36 @@ export ANDROID_HACKS=		\
 #
 ANDROID_TODO=			\
 	antinspect		\
-	antmaze			\
-	antspotlight		\
 	barcode			\
-	binaryring		\
 	blitspin		\
 	bumps			\
 	carousel		\
-	circuit			\
 	cityflow		\
-	cube21			\
-	cubenetic		\
-	cubicgrid		\
-	dymaxionmap		\
 	endgame			\
 	esper			\
 	flipscreen3d		\
 	fliptext		\
 	fontglide		\
-	gflux			\
-	glblur			\
 	gleidescope		\
-	glhanoi			\
-	glplanet		\
 	glslideshow		\
 	halftone		\
-	halo			\
-	hypertorus		\
-	interaggregate		\
 	jigglypuff		\
-	jigsaw			\
 	juggler3d		\
-	mirrorblob		\
-	moebius			\
-	moire2			\
 	molecule		\
-	mountain		\
-	noseguy			\
 	pedal			\
 	phosphor		\
 	photopile		\
-	pipes			\
-	projectiveplane		\
-	pulsar			\
+	polyominoes		\
 	qix			\
 	queens			\
-	skytentacles		\
 	speedmine		\
-	spheremonics		\
-	splitflap		\
 	spotlight		\
+	starfish		\
 	starwars		\
-	surfaces		\
 	tessellimage		\
 	testx11			\
-	truchet			\
 	unicrud			\
 	xanalogtv		\
-	xjack			\
 	xmatrix			\
 	zoom			\
 
@@ -322,6 +326,7 @@ echo_tarfiles:
 	@FILES=`find . $(EXTRA_TARFILES) \( \(	\
 		   -name .DS_Store		\
 		-o -name '*~'			\
+		-o -name '*.jks'		\
 		-o -name '*.keystore'		\
 		-o -name '*_dream.xml'		\
 		-o -name '*_settings.xml'	\
@@ -344,27 +349,30 @@ echo_tarfiles:
 		| sort` ;			\
 	echo $$FILES
 
+images_png_h:
+	cd ../hacks/images && $(MAKE)
+
 run_check::
 	../hacks/check-configs.pl --build-android $(ANDROID_HACKS)
 
-debug:: m6502.h run_check
+debug:: m6502.h run_check images_png_h
 	$(GRADLE) assembleDebug
-release:: m6502.h run_check
+release:: m6502.h run_check images_png_h
 	export APP_ABI=all ; \
 	$(GRADLE) assembleRelease
 
 
-KEYSTORE = xscreensaver.keystore
+KEYSTORE = xscreensaver.jks
 $(KEYSTORE):
 	keytool -genkey -v -keystore $@ \
 	-alias xscreensaver -keyalg RSA -keysize 2048 -validity 10000
 
 APK_DIR       = xscreensaver/build/outputs/apk/
-APK_UNSIGNED  = $(APK_DIR)/xscreensaver-release-unsigned.apk
-APK_UNALIGNED = $(APK_DIR)/xscreensaver-release-unaligned.apk
-APK_SIGNED    = $(APK_DIR)/xscreensaver-release.apk
+APK_UNSIGNED  = $(APK_DIR)xscreensaver-release-unsigned.apk
+APK_UNALIGNED = $(APK_DIR)xscreensaver-release-unaligned.apk
+APK_SIGNED    = $(APK_DIR)xscreensaver-release.apk
 
-  TOOLDIR = $(shell echo $$HOME/Library/Android/sdk/build-tools/* | tail -1)
+  TOOLDIR = $(shell ls -d $$HOME/Library/Android/sdk/build-tools/* | tail -1)
  ZIPALIGN = $(TOOLDIR)/zipalign
 JARSIGNER = jarsigner
 

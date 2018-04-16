@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -167,6 +167,8 @@ make_throbber (struct state *st, Drawable d, int w, int h, unsigned long pixel)
   t->speed = get_integer_resource (st->dpy, "speed", "Speed");
   t->fuse = 1 + (random() % 4);
   t->thickness = get_integer_resource (st->dpy, "thickness", "Thickness");
+
+  if (st->xgwa.width > 2560) t->thickness *= 3;  /* Retina displays */
 
   if (t->speed < 0) t->speed = -t->speed;
   t->speed += (((random() % t->speed) / 2) - (t->speed / 2));

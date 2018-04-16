@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -448,6 +448,21 @@ add_default_options (const XrmOptionDescRec *opts,
 }
 
 
+#ifdef USE_TOUCHBAR
+- (id) initWithFrame:(NSRect)frame
+           saverName:(NSString *)saverName
+           isPreview:(BOOL)isPreview
+           isTouchbar:(BOOL)isTouchbar
+{
+  if (! (self = [self initWithFrame:frame saverName:saverName
+                      isPreview:isPreview]))
+    return 0;
+  touchbar_p = isTouchbar;
+  return self;
+}
+#endif // USE_TOUCHBAR
+
+
 #ifdef USE_IPHONE
 + (Class) layerClass
 {
@@ -737,46 +752,6 @@ add_default_options (const XrmOptionDescRec *opts,
   [self createBackbuffer:new_backbuffer_size];
 
 # ifdef USE_TOUCHBAR
-  static BOOL created_touchbar = NO;
-
-  if (!touchbar_view &&
-      //#### !self.isPreview &&
-      self.window.screen == [[NSScreen screens] objectAtIndex: 0] &&
-      !created_touchbar) {
-
-    // Figure out which NSScreen has the touchbar on it;
-    // find its bounds; create a saver there.
-
-    created_touchbar = YES;
-    NSScreen *tbs = [[NSScreen screens] lastObject]; // #### write me
-    NSRect rect = [tbs visibleFrame];
-
-    // #### debugging
-    rect.origin.x += 40;
-    rect.origin.x += 40;
-    rect.size.width /= 4;
-    rect.size.height /= 4;
-    NSLog(@"## TB %.0f, %.0f  %.0f x %.0f",
-          rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
-
-    touchbar_view = [[[self class] alloc]
-                      initWithFrame:rect
-                      saverName:[NSString stringWithCString:xsft->progclass
-                                          encoding:NSISOLatin1StringEncoding]
-                      isPreview:self.isPreview];
-    [touchbar_view setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
-
-    touchbar_window = [[NSWindow alloc]
-                        initWithContentRect:rect
-                        styleMask: (NSTitledWindowMask|NSResizableWindowMask)
-                        backing:NSBackingStoreBuffered
-                        defer:YES
-                        screen:tbs];
-    [touchbar_window setTitle: @"XScreenSaver Touchbar"];
-    [[touchbar_window contentView] addSubview: touchbar_view];
-    [touchbar_window makeKeyAndOrderFront:touchbar_window];
-  }
-
   if (touchbar_view) [touchbar_view startAnimation];
 # endif // USE_TOUCHBAR
 }
@@ -855,13 +830,8 @@ add_default_options (const XrmOptionDescRec *opts,
 # ifdef USE_TOUCHBAR
   if (touchbar_view) {
     [touchbar_view stopAnimation];
-    [touchbar_window close];
-
     [touchbar_view release];
-    [touchbar_window release];
-
     touchbar_view = nil;
-    touchbar_window = nil;
   }
 # endif
 }
@@ -889,6 +859,57 @@ add_default_options (const XrmOptionDescRec *opts,
 #endif
   }
 }
+
+
+#ifdef USE_TOUCHBAR
+
+static NSString *touchbar_cid = @"org.jwz.xscreensaver.touchbar";
+static NSString *touchbar_iid = @"org.jwz.xscreensaver.touchbar";
+
+- (NSTouchBar *) makeTouchBar
+{
+  NSTouchBar *t = [[NSTouchBar alloc] init];
+  t.delegate = self;
+  t.customizationIdentifier = touchbar_cid;
+  t.defaultItemIdentifiers = @[touchbar_iid,
+                               NSTouchBarItemIdentifierOtherItemsProxy];
+  t.customizationAllowedItemIdentifiers = @[touchbar_iid];
+  t.principalItemIdentifier = touchbar_iid;
+  return t;
+}
+
+- (NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar
+       makeItemForIdentifier:(NSTouchBarItemIdentifier)id
+{
+  if ([id isEqualToString:touchbar_iid])
+    {
+      NSRect rect = [self frame];
+      // #### debugging
+      rect.origin.x = 0;
+      rect.origin.y = 0;
+      rect.size.width = 200;
+      rect.size.height = 40;
+      touchbar_view = [[[self class] alloc]
+                        initWithFrame:rect
+                        saverName:[NSString stringWithCString:xsft->progclass
+                                            encoding:NSISOLatin1StringEncoding]
+                        isPreview:self.isPreview
+                        isTouchbar:True];
+      [touchbar_view setAutoresizingMask:
+                       NSViewWidthSizable|NSViewHeightSizable];
+      NSCustomTouchBarItem *item =
+        [[NSCustomTouchBarItem alloc] initWithIdentifier:id];
+      item.view = touchbar_view;
+      item.customizationLabel = touchbar_cid;
+
+      if ([self isAnimating])
+        // TouchBar was created after animation begun.
+        [touchbar_view startAnimation];
+    }
+  return nil;
+}
+
+#endif // USE_TOUCHBAR
 
 
 static void
@@ -921,10 +942,15 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
   if (_lowrez_p) {
     NSSize b = [self bounds].size;
     CGFloat wh = b.width > b.height ? b.width : b.height;
-    const int max = 800; // maybe 1024?
-    wh *= s;
-    if (wh > max)
-      s *= max / wh;
+
+    // Scale down to as close to 1024 as we can get without going under,
+    // while keeping an integral scale factor so that we don't get banding
+    // artifacts and moire patterns.
+    //
+    // Retina sizes: 2208 => 1104, 2224 => 1112, 2732 => 1366, 2880 => 1440.
+    //
+    int s2 = wh / 1024;
+    if (s2) s /= s2;
   }
 
   return s;
@@ -1623,9 +1649,10 @@ gl_check_ver (const struct gl_version *caps,
 #  else
         CGFloat o = self.window.backingScaleFactor;
 #  endif
-        NSLog(@"lowrez: scaling %.0fx%.0f -> %.0fx%.0f (%.02f)",
-              b.width * o, b.height * o,
-              b.width * s, b.height * s, s);
+        if (o != s)
+          NSLog(@"lowrez: scaling %.0fx%.0f -> %.0fx%.0f (%.02f)",
+                b.width * o, b.height * o,
+                b.width * s, b.height * s, s);
 # endif
       }
 
@@ -1842,6 +1869,10 @@ gl_check_ver (const struct gl_version *caps,
 - (void) animateOneFrame
 {
   // Render X11 into the backing store bitmap...
+
+# ifdef USE_TOUCHBAR
+  if (touchbar_p) return;
+# endif
 
 # ifdef JWXYZ_QUARTZ
   NSAssert (backbuffer, @"no back buffer");

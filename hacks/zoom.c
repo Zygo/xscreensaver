@@ -253,6 +253,7 @@ static const char *zoom_defaults[] = {
   "*dontClearRoot: True",
   ".foreground: white",
   ".background: #111111",
+  ".lowrez: true",
   "*fpsSolid:	true",
 #ifdef __sgi /* really, HAVE_READ_DISPLAY_EXTENSION */
   "*visualID: Best",

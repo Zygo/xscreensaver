@@ -125,12 +125,18 @@ and
 Microsoft Windows, Microsoft Windows 95, and Microsoft Windows NT are all
 registered trademarks of Microsoft Corporation.  Apple Macintosh is a
 registered trademark of Apple Computer.  Amiga is a registered trademark of
-Amiga International, Inc.  Atari ST is probably a trademark, too, but it's
-hard to tell who owns it.  Linux is a registered trademark of Linus Torvalds,
-but it isn't his fault. OS/2 is a registered trademark of International 
-Business Machines Corporation. VMware is a registered trademark of VMware, Inc.
+Amiga International, Inc.  Solaris is a trademark of Sun Microsystems.  HP-UX
+is a trademark of HP Hewlett Packard Group LLC.  Nvidia is a tradmark of
+Nvidia Corporation.  VMS is probably a trademark of Digital Equipment
+Corporation.  Atari ST is probably a trademark, too, but it's hard to tell who
+owns it.  SCO is probably still a trademark of somebody these days, I guess.
+Linux is a registered trademark of Linus Torvalds, but it isn't his
+fault. OS/2 is a registered trademark of International Business Machines
+Corporation. VMware is a registered trademark of VMware, Inc.  Android is a
+trademark of Google LLC. GladOS is a trademark of Aperture Science
+Incorporated.
 .SH COPYRIGHT
-Copyright \(co 1998-2003 by Jamie Zawinski.  Permission to use, copy, modify, 
+Copyright \(co 1998-2018 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice

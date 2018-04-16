@@ -89,6 +89,9 @@
 
 #include "screenhack.h"
 #include "erase.h"
+#include "ximage-loader.h"
+#include "images/gen/logo-50_png.h"
+#include "images/gen/logo-180_png.h"
 
 #include  <stdio.h>
 
@@ -1475,26 +1478,22 @@ maze_init (Display *dpy_arg, Window window_arg)
 # endif
 
   {
-    Window r;
-    int x, y;
-    unsigned int w, h, bbw, d;
-    unsigned long *pixels;
-    int npixels;
     Pixmap logo_mask = 0;
-    st->logo_map = xscreensaver_logo (xgwa.screen, xgwa.visual, st->window,
-                                      xgwa.colormap, bg,
-                                      &pixels, &npixels, &logo_mask,
-                                      xgwa.width > 800 || xgwa.height > 800);
+    if (xgwa.width > 900 || xgwa.height > 900)
+      st->logo_map = image_data_to_pixmap (st->dpy, st->window,
+                                           logo_180_png, sizeof(logo_180_png),
+                                           &st->logo_width, &st->logo_height,
+                                           &logo_mask);
+    else
+      st->logo_map = image_data_to_pixmap (st->dpy, st->window,
+                                           logo_50_png, sizeof(logo_50_png),
+                                           &st->logo_width, &st->logo_height,
+                                           &logo_mask);
     if (logo_mask) {
       XSetClipMask (st->dpy, st->logo_gc, logo_mask);
       XFreePixmap (st->dpy, logo_mask);
     }
-    if (pixels) free (pixels);
-    XGetGeometry (st->dpy, st->logo_map, &r, &x, &y, &w, &h, &bbw, &d);
-    st->logo_width = w;
-    st->logo_height = h;
   }
-
 
   st->restart = 0;
   st->sync_p = 1;

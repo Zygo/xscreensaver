@@ -1,4 +1,4 @@
-/* winduprobot, Copyright (c) 2014-2017 Jamie Zawinski <jwz@jwz.org>
+/* winduprobot, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -81,7 +81,7 @@
 
 #include "xlockmore.h"
 #include "gltrackball.h"
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include "involute.h"
 #include "sphere.h"
 
@@ -97,7 +97,7 @@
 #endif
 
 #ifdef HAVE_TEXTURE
-# include "../images/chromesphere.xpm"
+# include "images/gen/chromesphere_png.h"
 #endif
 
 #ifdef USE_GL /* whole file */
@@ -319,8 +319,8 @@ load_textures (ModeInfo *mi)
   robot_configuration *bp = &bps[MI_SCREEN(mi)];
   XImage *xi;
 
-  xi = xpm_to_ximage (mi->dpy, mi->xgwa.visual, mi->xgwa.colormap,
-                      chromesphere_xpm);
+  xi = image_data_to_ximage (mi->dpy, mi->xgwa.visual,
+                             chromesphere_png, sizeof(chromesphere_png));
   clear_gl_error();
 
   glGenTextures (1, &bp->chrome_texture);
@@ -330,13 +330,7 @@ load_textures (ModeInfo *mi)
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                 xi->width, xi->height, 0,
-                GL_RGBA,
-# ifndef USE_IPHONE
-                GL_UNSIGNED_INT_8_8_8_8_REV,
-# else
-                GL_UNSIGNED_BYTE,
-# endif
-                xi->data);
+                GL_RGBA, GL_UNSIGNED_BYTE, xi->data);
   check_gl_error("texture");
 
   glEnable(GL_TEXTURE_GEN_S);

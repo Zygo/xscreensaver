@@ -25,8 +25,6 @@
 #include <limits.h>
 #include "screenhack.h"
 
-#define MINX 0.0
-#define MINY 0.0
 #define X_PERIOD 15000.0
 #define Y_PERIOD 12000.0
 
@@ -65,6 +63,7 @@ struct state {
 
   Bool first_p;
   async_load_state *img_loader;
+  XRectangle geom;
 };
 
 
@@ -117,6 +116,8 @@ spotlight_init (Display *dpy, Window window)
   st->radius = get_integer_resource (st->dpy, "radius", "Integer");
   if (st->radius < 0) st->radius = 125;
 
+  if (xgwa.width > 2560) st->radius *= 2;  /* Retina displays */
+
   /* Don't let the spotlight be bigger than the window */
   while (st->radius > xgwa.width * 0.45)
     st->radius /= 2;
@@ -157,7 +158,7 @@ spotlight_init (Display *dpy, Window window)
   /* create clip mask (so it's a circle, not a square) */
   clip_pm = XCreatePixmap(st->dpy, st->window, st->radius*4, st->radius*4, 1);
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window, st->pm,
-                                            0, 0);
+                                            0, &st->geom);
   st->start_time = time ((time_t *) 0);
 
   gcv.foreground = 0L;
@@ -198,7 +199,8 @@ onestep (struct state *st, Bool first_p)
 
   if (st->img_loader)   /* still loading */
     {
-      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
+      st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 
+                                                &st->geom);
       if (! st->img_loader) {  /* just finished */
         st->start_time = time ((time_t *) 0);
       }
@@ -208,7 +210,7 @@ onestep (struct state *st, Bool first_p)
   if (!st->img_loader &&
       st->start_time + st->duration < time ((time_t *) 0)) {
     st->img_loader = load_image_async_simple (0, st->screen, st->window,
-                                              st->pm, 0, 0);
+                                              st->pm, 0, &st->geom);
     return;
   }
 
@@ -223,10 +225,12 @@ onestep (struct state *st, Bool first_p)
   now = (now_unsigned <= LONG_MAX) ? now_unsigned : -1 - (long)(ULONG_MAX - now_unsigned);
 
   /* find new x,y */
-  st->x = ((1 + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0) 
-    * (st->sizex - st->s/2) -st->s/4  + MINX;
-  st->y = ((1 + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0) 
-    * (st->sizey - st->s/2) -st->s/4  + MINY;
+  st->x = st->geom.x +
+    ((1 + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0) 
+    * (st->geom.width - st->s/2) -st->s/4;
+  st->y = st->geom.y +
+    ((1 + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0) 
+    * (st->geom.height - st->s/2) -st->s/4;
     
   if (!st->first_p)
     {
@@ -261,6 +265,13 @@ onestep (struct state *st, Bool first_p)
 
       /* copy buffer to screen (window) */
       XCopyArea(st->dpy, st->buffer, st->window, st->window_gc, st->x , st->y, st->s, st->s, st->x, st->y);
+
+# if 0
+      XSetForeground (st->dpy, st->window_gc,
+                      WhitePixel (st->dpy, DefaultScreen (st->dpy)));
+      XDrawRectangle(st->dpy, st->window, st->window_gc,
+                     st->geom.x, st->geom.y, st->geom.width, st->geom.height);
+# endif
     }
 
 #ifdef DEBUG

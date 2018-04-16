@@ -1,4 +1,4 @@
-/* esper, Copyright (c) 2017 Jamie Zawinski <jwz@jwz.org>
+/* esper, Copyright (c) 2017-2018 Jamie Zawinski <jwz@jwz.org>
  * Enhance 224 to 176. Pull out track right. Center in pull back.
  * Pull back. Wait a minute. Go right. Stop. Enhance 57 19. Track 45 left.
  * Gimme a hardcopy right there.
@@ -128,8 +128,10 @@
 /* Use a small point size to keep it nice and grainy. */
 #if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
 # define TITLE_FONT "OCR A Std 10, Lucida Console 10, Monaco 10"
-#else  /* real X11 */
+#elif 0  /* real X11, XQueryFont() */
 # define TITLE_FONT "-*-courier-bold-r-*-*-*-100-*-*-m-*-*-*"
+#else    /* real X11, load_font_retry() */
+# define TITLE_FONT "-*-ocr a std-medium-r-*-*-*-100-*-*-m-*-*-*"
 #endif
 
 #define DEFAULTS  "*delay:           20000                \n" \
@@ -913,6 +915,8 @@ draw_line_sprite (ModeInfo *mi, sprite *sp)
   GLfloat y  = h * sp->current.y;
   GLfloat bw = w * sp->current.w;
   GLfloat bh = h * sp->current.h;
+
+  if (MI_WIDTH(mi) > 2560) t *= 3;  /* Retina displays */
 
   if (sx < 10) sx = 10;
   sy = sx;
@@ -2096,7 +2100,7 @@ esper_handle_event (ModeInfo *mi, XEvent *event)
       /* Now let's give a momentary glimpse of what the image would do. */
       if (debug_p)
         {
-          sprite *img;
+          sprite *img = 0;
           int i;
 
           /* Find the lingering image */
@@ -2241,7 +2245,7 @@ esper_handle_event (ModeInfo *mi, XEvent *event)
           }
       }
 
-      return True;
+      return ok;
     }
   else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {

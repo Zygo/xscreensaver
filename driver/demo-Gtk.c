@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -5279,7 +5279,7 @@ main (int argc, char **argv)
     the_network_is_not_the_computer (s);
 
 
-  if (decrepit_p())
+  if (senesculent_p())
     warning_dialog (s->toplevel_widget,
       _("Warning:\n\n"
         "This version of xscreensaver is VERY OLD!\n"

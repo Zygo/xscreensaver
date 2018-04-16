@@ -53,6 +53,9 @@ struct eraser_state {
   /* data for random_squares */
   int cols;
 
+  /* data for fizzle */
+  unsigned short *fizzle_rnd;
+
 };
 
 
@@ -369,27 +372,79 @@ squaretate (eraser_state *st)
 static void
 fizzle (eraser_state *st)
 {
-  XPoint *points;
-  int chunk = 20000;
-  int npoints = st->width * st->height * 4;
-  npoints *= (st->ratio - st->prev_ratio);
+  const double overshoot = 1.0625;
 
-  points = (XPoint *) malloc (chunk * sizeof(*points));
+  unsigned int x, y, i;
+  const unsigned int size = 256;
+  unsigned short *rnd;
+  XPoint *points;
+  unsigned int npoints =
+    (unsigned int)(size * size * st->ratio * overshoot) -
+    (unsigned int)(size * size * st->prev_ratio * overshoot);
+
+  if (st->ratio >= 1.0)
+    {
+      free (st->fizzle_rnd);
+      st->fizzle_rnd = NULL;
+      return;
+    }
+
+  if (! st->fizzle_rnd)
+    {
+      unsigned int chunks =
+        ((st->width + size - 1) / size) * ((st->height + size - 1) / size);
+      unsigned int i;
+
+      st->fizzle_rnd =
+        (unsigned short *) malloc (sizeof(unsigned short) * chunks);
+
+      if (! st->fizzle_rnd)
+        return;
+
+      for (i = 0; i != chunks; i++)
+        st->fizzle_rnd[i] = NRAND(0x10000) | 1; /* Seed can't be 0. */
+    }
+
+  points = (XPoint *) malloc ((npoints + 1) * sizeof(*points));
   if (! points) return;
 
-  while (npoints > 0)
+  rnd = st->fizzle_rnd;
+
+  for (y = 0; y < st->height; y += 256)
     {
-      int remain = (chunk > npoints ? npoints : chunk);
-      int i;
-      for (i = 0; i < remain; i++)
+      for (x = 0; x < st->width; x += 256)
         {
-          int r = random();
-          points[i].x = r % st->width;
-          points[i].y = (r >> 16) % st->height;
+          unsigned int need0 = 0;
+          unsigned short r = *rnd;
+          for (i = 0; i != npoints; i++)
+            {
+              points[i].x = r % size + x;
+              points[i].y = (r >> 8) % size + y;
+
+              /* Xorshift. This has a period of 2^16, which exactly matches
+                 the number of pixels in each 256x256 chunk.
+
+                 Other shift constants are possible, but it's hard to say
+                 which constants are best: a 2^16 period PRNG will never score
+                 well on BigCrush.
+               */
+              r = (r ^ (r <<  3)) & 0xffff;
+              r =  r ^ (r >>  5);
+              r = (r ^ (r << 11)) & 0xffff;
+              need0 |= (r == 0x8080); /* Can be anything, really. */
+            }
+
+          if (need0)
+            {
+              points[npoints].x = x;
+              points[npoints].y = y;
+            }
+
+          XDrawPoints (st->dpy, st->window, st->bg_gc,
+                       points, npoints + need0, CoordModeOrigin);
+          *rnd = r;
+          rnd++;
         }
-      XDrawPoints (st->dpy, st->window, st->bg_gc, 
-                   points, remain, CoordModeOrigin);
-      npoints -= remain;
     }
   free (points);
 }
@@ -609,7 +664,7 @@ losira (eraser_state *st)
                 radius*2, radius*2,
                 180*64, 180*64);
     }
-  else					/* starburst */
+  else if (st->ratio < mode3)		/* starburst */
     {
       double ratio = (st->ratio - mode2) / (mode3 - mode2);
       double r2 = ratio * radius * 4;
@@ -695,6 +750,7 @@ eraser_init (Display *dpy, Window window)
     which = -1;
   else
     which = get_integer_resource(dpy, "eraseMode", "Integer");
+  free (s);
 
   if (which < 0 || which >= countof(erasers))
     which = random() % countof(erasers);
@@ -713,28 +769,12 @@ eraser_init (Display *dpy, Window window)
 }
 
 
-static Bool
-eraser_draw (eraser_state *st, Bool first_p)
-{
-  double now = (first_p ? st->start_time : double_time());
-  double duration = st->stop_time - st->start_time;
-
-  st->prev_ratio = st->ratio;
-  st->ratio = (now - st->start_time) / duration;
-
-  if (st->ratio > 1.0)
-    st->ratio = 1.0;
-
-  st->fn (st);
-  XSync (st->dpy, False);
-
-  return (st->ratio < 1.0);
-}
-
 void
 eraser_free (eraser_state *st)
 {
-  XClearWindow (st->dpy, st->window);
+  XClearWindow (st->dpy, st->window); /* Final draw is black-on-black. */
+  st->ratio = 1.0;
+  st->fn (st); /* Free any memory. May also draw, but that doesn't matter. */
   XFreeGC (st->dpy, st->fg_gc);
   XFreeGC (st->dpy, st->bg_gc);
   free (st);
@@ -743,13 +783,26 @@ eraser_free (eraser_state *st)
 eraser_state *
 erase_window (Display *dpy, Window window, eraser_state *st)
 {
+  double now, duration;
   Bool first_p = False;
   if (! st)
     {
       first_p = True;
       st = eraser_init (dpy, window);
     }
-  if (! eraser_draw (st, first_p)) 
+
+  now = (first_p ? st->start_time : double_time());
+  duration = st->stop_time - st->start_time;
+
+  st->prev_ratio = st->ratio;
+  st->ratio = (now - st->start_time) / duration;
+
+  if (st->ratio < 1.0)
+    {
+      st->fn (st);
+      XSync (st->dpy, False);
+    }
+  else
     {
       eraser_free (st);
       st = 0;

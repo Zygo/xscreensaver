@@ -92,7 +92,7 @@
 #include "marching.h"
 #include "rotator.h"
 #include "gltrackball.h"
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -333,7 +333,6 @@ load_texture (ModeInfo *mi, const char *filename)
 {
   Display *dpy = mi->dpy;
   Visual *visual = mi->xgwa.visual;
-  Colormap cmap = mi->xgwa.colormap;
   char buf[1024];
   XImage *image;
 
@@ -345,7 +344,7 @@ load_texture (ModeInfo *mi, const char *filename)
       return False;
     }
 
-  image = xpm_file_to_ximage (dpy, visual, cmap, filename);
+  image = file_to_ximage (dpy, visual, filename);
   if (!image) return False;
 
   clear_gl_error();

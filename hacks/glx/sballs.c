@@ -56,40 +56,23 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 #include "visgl.h"
 #endif				/* !STANDALONE */
 
-#ifdef MODE_sballs
-
 #define MINSIZE 	32	/* minimal viewport size */
 #define FRAME           50      /* frame count interval */
 #define MAX_OBJ		8	/* number of 3D objects */
 
 #if defined( USE_XPM ) || defined( USE_XPMINC ) || defined( STANDALONE )
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
-# include "xpm-ximage.h"
+# include "ximage-loader.h"
 # define I_HAVE_XPM
 
-# ifdef STANDALONE
-
-#  ifdef __GNUC__
-   __extension__ /* don't warn about "string length is greater than the length
-                    ISO C89 compilers are required to support" when including
-                    the following XPM file... */
-#  endif
-#  include "../images/sball.xpm"
-#  ifdef __GNUC__
-   __extension__
-#  endif
-#  include "../images/sball-bg.xpm"
-# else /* !STANDALONE */
-#  include "pixmaps/sball.xpm"
-#  include "pixmaps/sball-bg.xpm"
-# endif /* !STANDALONE */
-#endif /* HAVE_XPM */
+# include "images/gen/sball_png.h"
+# include "images/gen/sball-bg_png.h"
 
 /* Manage option vars */
 #define DEF_TEXTURE	"True"
 #define DEF_OBJECT	"0"
 static Bool do_texture;
-static int  object;
+static int  object, object_arg;
 static int  spheres;
 
 static XrmOptionDescRec opts[] = {
@@ -101,7 +84,7 @@ static XrmOptionDescRec opts[] = {
 
 static argtype vars[] = {
     {&do_texture,    "texture",    "Texture",    DEF_TEXTURE,    t_Bool},
-    {&object,        "object",     "Object",     DEF_OBJECT,     t_Int},
+    {&object_arg,    "object",     "Object",     DEF_OBJECT,     t_Int},
 
 };
 
@@ -370,10 +353,9 @@ static void inittextures(ModeInfo * mi)
 	glBindTexture(GL_TEXTURE_2D, sb->backid);
 #endif /* HAVE_GLBINDTEXTURE */
 
-        sb->btexture = xpm_to_ximage(MI_DISPLAY(mi),
-                                     MI_VISUAL(mi),
-                                     MI_COLORMAP(mi),
-                                     sball_bg);
+        sb->btexture = image_data_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                                            sball_bg_png,
+                                            sizeof(sball_bg_png));
 	if (!(sb->btexture)) {
 	    (void) fprintf(stderr, "Error reading the background texture.\n");
             glDeleteTextures(1, &sb->backid);
@@ -387,17 +369,19 @@ static void inittextures(ModeInfo * mi)
         clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		     sb->btexture->width, sb->btexture->height, 0,
-		     GL_RGBA,
-                     /* GL_UNSIGNED_BYTE, */
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
-                     sb->btexture->data);
+		     GL_RGBA, GL_UNSIGNED_BYTE, sb->btexture->data);
         check_gl_error("texture");
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+/*
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        Let's pixellate it instead:
+*/
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
@@ -406,10 +390,8 @@ static void inittextures(ModeInfo * mi)
 	glBindTexture(GL_TEXTURE_2D, sb->faceid);
 #endif /* HAVE_GLBINDTEXTURE */
 
-        sb->ftexture = xpm_to_ximage(MI_DISPLAY(mi),
-                                     MI_VISUAL(mi),
-                                     MI_COLORMAP(mi),
-                                     sball);
+        sb->ftexture = image_data_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                                            sball_png, sizeof(sball_png));
 	if (!(sb->ftexture)) {
 	    (void) fprintf(stderr, "Error reading the face texture.\n");
             glDeleteTextures(1, &sb->faceid);
@@ -421,17 +403,19 @@ static void inittextures(ModeInfo * mi)
         clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		     sb->ftexture->width, sb->ftexture->height, 0,
-		     GL_RGBA,
-                     /* GL_UNSIGNED_BYTE, */
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
-                     sb->ftexture->data);
+		     GL_RGBA, GL_UNSIGNED_BYTE, sb->ftexture->data);
         check_gl_error("texture");
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+/*
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        Let's pixellate it instead:
+*/
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     }
@@ -642,9 +626,9 @@ static void Init(ModeInfo * mi)
     sb->speed = MI_CYCLES(mi);
 
     /* initialise object number */
-    if ((object == 0) || (object > MAX_OBJ))
-      object = NRAND(MAX_OBJ-1)+1;
-    object--;
+    object = object_arg-1;
+    if (object < 0 || object >= MAX_OBJ)
+      object = NRAND(MAX_OBJ);
 
     /* initialise sphere number */
     spheres = MI_COUNT(mi);
@@ -770,11 +754,13 @@ ENTRYPOINT void free_sballs(ModeInfo * mi)
 	{
 	    glDeleteTextures(1,&sb->backid);
 	    XDestroyImage(sb->btexture);
+            sb->btexture = 0;
 	}
 	if (sb->ftexture)
 	{
 	    glDeleteTextures(1,&sb->faceid);
 	    XDestroyImage(sb->ftexture);
+            sb->ftexture = 0;
 	}
     }
 }

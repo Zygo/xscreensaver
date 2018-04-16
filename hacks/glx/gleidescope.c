@@ -86,7 +86,7 @@
 #ifdef USE_GL
 
 #include "colors.h"
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include "grab-ximage.h"
 
 #ifdef GRAB
@@ -882,8 +882,7 @@ setup_file_texture (ModeInfo *mi, char *filename, texture *texture)
 	Visual *visual = mi->xgwa.visual;
 	char buf[1024];
 
-	Colormap cmap = mi->xgwa.colormap;
-	XImage *image = xpm_file_to_ximage (dpy, visual, cmap, filename);
+	XImage *image = file_to_ximage (dpy, visual, filename);
     if (!image) return False;
 
 #ifdef DEBUG

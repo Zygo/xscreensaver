@@ -1,4 +1,4 @@
-/* unicrud, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
+/* unicrud, Copyright (c) 2016-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -56,7 +56,7 @@ static unicrud_configuration *bps = NULL;
 static Bool do_spin;
 static GLfloat speed;
 static Bool do_wander;
-static char *do_block;
+static char *do_block = 0;
 static Bool do_titles;
 
 static XrmOptionDescRec opts[] = {
@@ -795,7 +795,7 @@ init_unicrud (ModeInfo *mi)
 
 
   if (matches ("all", do_block))
-    do_block = "";
+    do_block = strdup("");
 
   {
     char *s;

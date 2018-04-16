@@ -6,6 +6,7 @@ SHARED_CFLAGS = \
     -Wall \
     -Wstrict-prototypes \
     -Wmissing-prototypes \
+    -DGL_GLEXT_PROTOTYPES \
     -DSTANDALONE=1 \
     -DHAVE_ANDROID=1 \
     -DHAVE_GL=1 \
@@ -15,7 +16,6 @@ SHARED_CFLAGS = \
     -DHAVE_JWZGLES=1 \
     -DHAVE_XUTF8DRAWSTRING=1 \
     -DHAVE_GLBINDTEXTURE=1 \
-    -DGL_VERSION_ES_CM_1_0 \
     -DHAVE_UNISTD_H=1 \
     -DHAVE_INTTYPES_H=1 \
     -DHAVE_UNAME=1 \
@@ -52,7 +52,6 @@ LOCAL_SRC_FILES := \
     hacks/glx/texfont.c \
     hacks/glx/trackball.c \
     hacks/glx/tube.c \
-    hacks/glx/xpm-ximage.c \
 
 # Some savers occupy more than one source file:
 LOCAL_SRC_FILES += \
@@ -76,6 +75,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/involute.c \
     hacks/glx/lament_model.c \
     hacks/glx/pipeobjs.c \
+    hacks/glx/quickhull.c \
     hacks/glx/robot.c \
     hacks/glx/robot-wireframe.c \
     hacks/glx/polyhedra-gl.c \
@@ -88,6 +88,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/s1_b.c \
     hacks/glx/seccam.c \
     hacks/glx/shark.c \
+    hacks/glx/ships.c \
     hacks/glx/sonar-sim.c \
     hacks/glx/sonar-icmp.c \
     hacks/glx/splitflap_obj.c \
@@ -152,12 +153,13 @@ LOCAL_SRC_FILES += \
     hacks/delaunay.c \
     hacks/fps.c \
     hacks/xlockmore.c \
-    hacks/xpm-pixmap.c \
+    hacks/ximage-loader.c \
     utils/async_netdb.c \
     utils/aligned_malloc.c \
     utils/colorbars.c \
     utils/colors.c \
     utils/erase.c \
+    utils/font-retry.c \
     utils/grabclient.c \
     utils/hsv.c \
     utils/logo.c \
@@ -188,7 +190,7 @@ LOCAL_SRC_FILES += \
     hacks/pacman_ai.c \
     hacks/pacman_level.c \
 
-LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog -lEGL -latomic -landroid
+LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog -lEGL -latomic -landroid -ljnigraphics
 
 LOCAL_C_INCLUDES := $(SHARED_C_INCLUDES)
 LOCAL_CFLAGS += $(SHARED_CFLAGS)

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2017 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2018 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.43 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.46 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -95,8 +95,8 @@ my $good_file_re = '\.(' . join("|", @good_extensions) . ')$';
 #
 my @nondir_extensions = ('ai', 'bmp', 'bz2', 'cr2', 'crw', 'db',
    'dmg', 'eps', 'gz', 'hqx', 'htm', 'html', 'icns', 'ilbm', 'mov',
-   'nef', 'pbm', 'pdf', 'pl', 'ppm', 'ps', 'psd', 'sea', 'sh', 'shtml',
-   'tar', 'tgz', 'thb', 'txt', 'xcf', 'xmp', 'Z', 'zip' );
+   'nef', 'pbm', 'pdf', 'php', 'pl', 'ppm', 'ps', 'psd', 'sea', 'sh',
+   'shtml', 'tar', 'tgz', 'thb', 'txt', 'xcf', 'xmp', 'Z', 'zip' );
 my $nondir_re = '\.(' . join("|", @nondir_extensions) . ')$';
 
 
@@ -104,8 +104,8 @@ my $nondir_re = '\.(' . join("|", @nondir_extensions) . ')$';
 # this is so that you can use an image directory that contains both big
 # images and thumbnails, and have it only select the big versions.
 #
-my $min_image_width  = 255;
-my $min_image_height = 255;
+my $min_image_width  = 500;
+my $min_image_height = 500;
 
 my @all_files = ();         # list of "good" files we've collected
 my %seen_inodes;            # for breaking recursive symlink loops
@@ -393,6 +393,44 @@ sub init_lwp() {
 }
 
 
+sub sanity_check_lwp() {
+  my $url1 = 'https://www.mozilla.org/';
+  my $url2 =  'http://www.mozilla.org/';
+  my $body = (LWP::Simple::get($url1) || '');
+  if (length($body) < 10240) {
+    my $err = "";
+    $body = (LWP::Simple::get($url2) || '');
+    if (length($body) < 10240) {
+      $err = "Perl is broken: neither HTTP nor HTTPS URLs work.";
+    } else {
+      $err = "Perl is broken: HTTP URLs work but HTTPS URLs don't.";
+    }
+    $err .= "\nMaybe try: sudo cpan -f Mozilla::CA LWP::Protocol::https";
+    $err =~ s/^/\t/gm;
+    error ("\n\n$err\n");
+  }
+}
+
+
+# If the URL does not already end with an extension appropriate for the
+# content-type, add it after a "#" search.
+#
+# This is for when we know the content type of the URL, but the URL is
+# some crazy thing without an extension. The files on disk need to have
+# proper extensions.
+#
+sub force_extension($$) {
+  my ($url, $ct) = @_;
+  return $url unless (defined($url) && defined($ct));
+  my ($ext) = ($ct =~ m@^image/([-a-z\d]+)@si);
+  return $url unless $ext;
+  $ext = lc($ext);
+  $ext = 'jpg' if ($ext eq 'jpeg');
+  return $url if ($url =~ m/\.$ext$/si);
+  return "$url#.$ext";
+}
+
+
 # Returns a list of the image enclosures in the RSS or Atom feed.
 # Elements of the list are references, [ "url", "guid" ].
 #
@@ -423,8 +461,10 @@ sub parse_feed($) {
     # only for "Photostreams", and only the first 20 images of those.
     # Thanks, assholes.)
 
-    error ("null response: $url")
-      if ($body =~ m/^\s*$/s);
+    if ($body =~ m/^\s*$/s) {
+      sanity_check_lwp();
+      error ("null response: $url");
+    }
 
     error ("not an RSS or Atom feed, or HTML: $url")
       unless ($body =~ m@<(HEAD|BODY|A|IMG)\b@si);
@@ -467,66 +507,74 @@ sub parse_feed($) {
     # First look for <link rel="enclosure" href="...">
     #
     if (! $iurl) {
-      $item =~ s!(<LINK[^<>]*>)!{
-        my $link = $1;
-        my ($rel)  = ($link =~ m/\bREL\s*=\s*[\"\']?([^<>\'\"]+)/si);
-        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+      foreach my $link ($item =~ m@<LINK[^<>]*>@gsi) {
+        last if $iurl;
         my ($href) = ($link =~ m/\bHREF\s*=\s*[\"\']([^<>\'\"]+)/si);
-
-        if ($rel && lc($rel) eq 'enclosure') {
-          if ($type) {
-            $href = undef unless ($type =~ m@^image/@si);  # omit videos
-          }
-          $iurl = html_unquote($href) if $href;
-        }
-        $link;
-      }!gsexi;
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($rel)  = ($link =~ m/\bREL\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $href = undef unless (lc($rel || '') eq 'enclosure');
+        $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
+        $iurl = html_unquote($href) if $href;
+        $iurl = force_extension ($iurl, $type);
+      }
     }
 
     # Then look for <media:content url="...">
     #
     if (! $iurl) {
-      $item =~ s!(<MEDIA:CONTENT[^<>]*>)!{
-        my $link = $1;
+      foreach my $link ($item =~ m@<MEDIA:CONTENT[^<>]*>@gsi) {
+        last if $iurl;
         my ($href) = ($link =~ m/\bURL\s*=\s*[\"\']([^<>\'\"]+)/si);
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($med)  = ($link =~ m/\bMEDIUM\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $type = 'image/jpeg' if (!$type && lc($med || '') eq 'image');
+        $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
         $iurl = html_unquote($href) if $href;
-        $link;
-      }!gsexi;
+        $iurl = force_extension ($iurl, $type);
+      }
     }
 
     # Then look for <enclosure url="..."/> 
     #
     if (! $iurl) {
-      $item =~ s!(<ENCLOSURE[^<>]*>)!{
-        my $link = $1;
-        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+      foreach my $link ($item =~ m@<ENCLOSURE[^<>]*>@gsi) {
+        last if $iurl;
         my ($href) = ($link =~ m/\bURL\s*=\s*[\"\']([^<>\'\"]+)/si);
-        $iurl = html_unquote($href)
-          if ($href && $type && $type =~ m@^image/@si);  # omit videos
-        $link;
-      }!gsexi;
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
+        $iurl = html_unquote($href) if ($href);
+        $iurl = force_extension ($iurl, $type);
+      }
     }
 
     # Ok, maybe there's an image in the <url> field?
     #
     if (! $iurl) {
-      $item =~ s!((<URL\b[^<>]*>)([^<>]*))!{
-        my ($all, $u2) = ($1, $3);
+      foreach my $link ($item =~ m@<URL\b[^<>]*>([^<>]*)@gsi) {
+        last if $iurl;
+        my $u2 = $1;
         $iurl = html_unquote($u2) if ($u2 =~ m/$good_file_re/io);
-        $all;
-      }!gsexi;
+        if (! $iurl) {
+          my $u3 = $u2;
+          $u3 =~ s/#.*$//gs;
+          $u3 =~ s/[?&].*$//gs;
+          $iurl = html_unquote($u2) if ($u3 =~ m/$good_file_re/io);
+        }
+      }
     }
 
     # Then look for <description>... with an <img src="..."> inside.
     #
     if (! $iurl) {
-      $item =~ s!(<description[^<>]*>.*?</description>)!{
-        my $desc = $1;
-        $desc = html_unquote($desc);
+      foreach my $link ($item =~ m@<description[^<>]*>(.*?)</description>@gsi) {
+        last if $iurl;
+        my $desc = html_unquote($1);
         my ($href) = ($desc =~ m@<IMG[^<>]*\bSRC=[\"\']?([^\"\'<>]+)@si);
-        $iurl = $href if ($href);
-        $desc;
-      }!gsexi;
+        $iurl = html_unquote($href) if ($href);
+        # If IMG SRC has a bogus extension, pretend it's a JPEG.
+        $iurl = force_extension ($iurl, 'image/jpeg')
+          if ($iurl && $iurl !~ m/$good_file_re/io);
+      }
     }
 
     # Could also do <content:encoded>, but the above probably covers all
@@ -543,6 +591,8 @@ sub parse_feed($) {
     # Then look for <link> ... </link>
     ($id) = ($item =~ m!<LINK\b[^<>]*>\s*([^<>]+?)\s*</LINK>!si) unless $id;
 
+    # If we only have a GUID or LINK, but it's an image, use that.
+    $iurl = $id if (!$iurl && $id && $id =~ m/$good_file_re/io);
 
     if ($iurl) {
       $id = $iurl unless $id;
@@ -573,6 +623,49 @@ sub md5_file($) {
 }
 
 
+# expands the first URL relative to the second.
+#
+sub expand_url($$) {
+  my ($url, $base) = @_;
+
+  $url =~ s/^\s+//gs;  # lose whitespace at front and back
+  $url =~ s/\s+$//gs;
+
+  if (! ($url =~ m/^[a-z]+:/)) {
+
+    $base =~ s@(\#.*)$@@;       # strip anchors
+    $base =~ s@(\?.*)$@@;       # strip arguments
+    $base =~ s@/[^/]*$@/@;      # take off trailing file component
+
+    my $tail = '';
+    if ($url =~ s@(\#.*)$@@) { $tail = $1; }         # save anchors
+    if ($url =~ s@(\?.*)$@@) { $tail = "$1$tail"; }  # save arguments
+
+    my $base2 = $base;
+
+    $base2 =~ s@^([a-z]+:/+[^/]+)/.*@$1@        # if url is an absolute path
+      if ($url =~ m@^/@);
+
+    my $ourl = $url;
+
+    $url = $base2 . $url;
+    $url =~ s@/\./@/@g;                         # expand "."
+    1 while ($url =~ s@/[^/]+/\.\./@/@s);       # expand ".."
+
+    $url .= $tail;                              # put anchors/args back
+
+    print STDERR "$progname: relative URL: $ourl --> $url\n"
+      if ($verbose > 1);
+
+  } else {
+    print STDERR "$progname: absolute URL: $url\n"
+      if ($verbose > 2);
+  }
+
+  return $url;
+}
+
+
 # Given the URL of an image, download it into the given directory
 # and return the file name.
 #
@@ -582,7 +675,8 @@ sub download_image($$$) {
   my $url2 = $url;
   $url2 =~ s/\#.*$//s;		# Omit search terms after file extension
   $url2 =~ s/\?.*$//s;
-  my ($ext) = ($url2 =~ m@\.([a-z\d]+)$@si);
+  my ($ext) = ($url  =~ m@\.([a-z\d]+)$@si);
+     ($ext) = ($url2 =~ m@\.([a-z\d]+)$@si) unless $ext;
 
   # If the feed hasn't put a sane extension on their URLs, nothing's going
   # to work. This code assumes that file names have extensions, even the
@@ -596,7 +690,8 @@ sub download_image($$$) {
 
   # Don't bother downloading files that we will reject anyway.
   #
-  if (! ($url2 =~ m/$good_file_re/io)) {
+  if (! ($url  =~ m/$good_file_re/io ||
+         $url2 =~ m/$good_file_re/io)) {
     print STDERR "$progname: skipping non-image URL: $url\n"
       if ($verbose > 1);
     return undef;
@@ -641,6 +736,8 @@ sub download_image($$$) {
     if ($verbose > 1);
   init_lwp();
   $LWP::Simple::ua->agent ("$progname/$version");
+
+  $url =~ s/\#.*$//s;		# Omit search terms
   my $status = LWP::Simple::mirror ($url, "$dir/$file");
   if (!LWP::Simple::is_success ($status)) {
     print STDERR "$progname: error $status: $url\n";   # keep going
@@ -747,6 +844,7 @@ sub mirror_feed($) {
       if ($verbose > 1);
     foreach my $p (@urls) {
       my ($furl, $id) = @$p;
+      $furl = expand_url ($furl, $url);
       my $f = download_image ($furl, $id, $dir);
       next unless $f;
       $files{$f} = 1;    # Got it, don't delete

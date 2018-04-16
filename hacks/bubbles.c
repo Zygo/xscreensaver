@@ -63,11 +63,9 @@
 #include "screenhack.h"
 #include "yarandom.h"
 #include "bubbles.h"
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-# define FANCY_BUBBLES
-#endif
+#define FANCY_BUBBLES
 
 /* 
  * Public variables 
@@ -1161,7 +1159,10 @@ make_pixmap_array(struct state *st, Bubble_Step *list)
 }
 
 static void
-make_pixmap_from_default(struct state *st, char **pixmap_data, Bubble_Step *bl)
+make_pixmap_from_default(struct state *st,
+                         const unsigned char *png_data,
+                         unsigned long data_size,
+                         Bubble_Step *bl)
 /* Read pixmap data which has been compiled into the program and a pointer
  to which has been passed. 
 
@@ -1185,8 +1186,8 @@ changes made to either should be propagated onwards! */
 #ifdef FANCY_BUBBLES
   {
     int w, h;
-    bl->ball = xpm_data_to_pixmap (st->dpy, st->window, (char **) pixmap_data,
-                                   &w, &h, &bl->shape_mask);
+    bl->ball = image_data_to_pixmap (st->dpy, st->window, png_data, data_size,
+                                     &w, &h, &bl->shape_mask);
     bl->radius = MAX(w, h) / 2;
     bl->area = calc_bubble_area(st, bl->radius);
   }
@@ -1210,14 +1211,15 @@ default_to_pixmaps (struct state *st)
   int i;
   Bubble_Step *pixmap_list = (Bubble_Step *)NULL;
   Bubble_Step *newpix, *tmppix;
-  char **pixpt;
 
   init_default_bubbles();
 
   for (i = 0; i < num_default_bubbles; i++) {
-    pixpt = default_bubbles[i];
     newpix = (Bubble_Step *)xmalloc(sizeof(Bubble_Step));
-    make_pixmap_from_default(st, pixpt, newpix);
+    make_pixmap_from_default(st,
+                             default_bubbles[i].png, 
+                             default_bubbles[i].size,
+                             newpix);
     /* Now add to list */
     if (pixmap_list == (Bubble_Step *)NULL) {
       pixmap_list = newpix;

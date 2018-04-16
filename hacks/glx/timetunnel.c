@@ -1,5 +1,5 @@
 /* timetunnel. Based on dangerball.c, hack by Sean Brennan <zettix@yahoo.com>*/
-/* dangerball, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
+/* dangerball, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -89,12 +89,12 @@ static argtype vars[] = {
 };
 
 ENTRYPOINT ModeSpecOpt tunnel_opts = {countof(opts), opts, countof(vars), vars, NULL};
-#include "xpm-ximage.h"
-#include "images/logo-180.xpm"
-#include "images/tunnelstar.xpm"
-#include "images/timetunnel0.xpm"
-#include "images/timetunnel1.xpm"
-#include "images/timetunnel2.xpm"
+#include "ximage-loader.h"
+#include "images/gen/logo-180_png.h"
+#include "images/gen/tunnelstar_png.h"
+#include "images/gen/timetunnel0_png.h"
+#include "images/gen/timetunnel1_png.h"
+#include "images/gen/timetunnel2_png.h"
 
 
 #ifdef USE_GL /* whole file */
@@ -836,7 +836,7 @@ static int wrapVal(int val, int min, int max)
 
 static float mylog2(float x) { return ( log(x) / log(2));}
 
-static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint texbind, int blur, float bw_color, Bool anegative, Bool onealpha)
+static void LoadTexture(ModeInfo * mi, const unsigned char *fn, unsigned long size, const char *filename, GLuint texbind, int blur, float bw_color, Bool anegative, Bool onealpha)
 {
 	/* looping and temporary array index variables */
 	int ix, iy, bx, by, indx, indy, boxsize, cchan, tmpidx, dtaidx;
@@ -855,11 +855,11 @@ static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint t
 
 
 	if (filename) 
-        	teximage = xpm_file_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
-                         MI_COLORMAP(mi), filename);
+        	teximage = file_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                                          filename);
         else 
-		teximage = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
-                         MI_COLORMAP(mi), fn);
+		teximage = image_data_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                                                fn, size);
 	if (teximage == NULL) {
             fprintf(stderr, "%s: error reading the texture.\n", progname);
             glDeleteTextures(1, &texbind);
@@ -1076,41 +1076,41 @@ init_tunnel (ModeInfo *mi)
 		tunnel 1, tunnel 2, tunnel 3, marquee, tardis, head */
           glGenTextures(MAX_TEXTURE, tc->texture_binds);
 	  
-	  /*LoadTexture(*mi, **fn, *filename, texbind, bluralpha, bw_color,  anegative, onealpha)*/
+	  /*LoadTexture(*mi, *data, size, *filename, texbind, bluralpha, bw_color,  anegative, onealpha)*/
   	  if (strcasecmp (do_tun1, "(none)")) /* tunnel 1 */
-         	LoadTexture(mi, NULL, do_tun1, tc->texture_binds[0],  0,0.0, False, False);
+         	LoadTexture(mi, NULL, 0, do_tun1, tc->texture_binds[0],  0,0.0, False, False);
 	  else
-          	LoadTexture(mi, timetunnel0_xpm, NULL, tc->texture_binds[0], 0, 0.0, False, False);
+          	LoadTexture(mi, timetunnel0_png, sizeof(timetunnel0_png), NULL, tc->texture_binds[0], 0, 0.0, False, False);
   	  if (strcasecmp (do_tun2, "(none)")) /* tunnel 2 */
-         	LoadTexture(mi, NULL, do_tun2, tc->texture_binds[2],  0,0.0, False, False);
+         	LoadTexture(mi, NULL, 0, do_tun2, tc->texture_binds[2],  0,0.0, False, False);
 	  else
-          	LoadTexture(mi, timetunnel1_xpm, NULL, tc->texture_binds[2], 0, 0.0, False, False);
+          	LoadTexture(mi, timetunnel1_png, sizeof(timetunnel1_png), NULL, tc->texture_binds[2], 0, 0.0, False, False);
   	  if (strcasecmp (do_tun3, "(none)")) /* tunnel 3 */
-         	LoadTexture(mi, NULL, do_tun3, tc->texture_binds[5],  0,0.0, False, False);
+         	LoadTexture(mi, NULL, 0, do_tun3, tc->texture_binds[5],  0,0.0, False, False);
 	  else
-          	LoadTexture(mi, timetunnel2_xpm, NULL, tc->texture_binds[5], 0, 0.0, False, False);
-          LoadTexture(mi, tunnelstar_xpm, NULL, tc->texture_binds[4], 0, 0.0, False, False);
+          	LoadTexture(mi, timetunnel2_png, sizeof(timetunnel2_png), NULL, tc->texture_binds[5], 0, 0.0, False, False);
+          LoadTexture(mi, tunnelstar_png, sizeof(tunnelstar_png), NULL, tc->texture_binds[4], 0, 0.0, False, False);
   	  if (strcasecmp (do_tx1, "(none)")) /* marquee */
-         	LoadTexture(mi, NULL, do_tx1, tc->texture_binds[3],  0,0.0, False, False);
-#ifndef HAVE_JWZGLES  /* logo_180_xpm is 180px which is not a power of 2! */
+         	LoadTexture(mi, NULL, 0, do_tx1, tc->texture_binds[3],  0,0.0, False, False);
+#ifndef HAVE_JWZGLES  /* logo_180_png is 180px which is not a power of 2! */
 	  else
-         	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[3],  0,0.0, False, False);
+         	LoadTexture(mi, logo_180_png, sizeof(logo_180_png), NULL, tc->texture_binds[3],  0,0.0, False, False);
 #endif
   	  if (strcasecmp (do_tx2, "(none)")) /* tardis */
-         	LoadTexture(mi, NULL, do_tx2, tc->texture_binds[1], 0, 0.0 ,False, False);
-#ifndef HAVE_JWZGLES  /* logo_180_xpm is 180px which is not a power of 2! */
+         	LoadTexture(mi, NULL, 0, do_tx2, tc->texture_binds[1], 0, 0.0 ,False, False);
+#ifndef HAVE_JWZGLES  /* logo_180_png is 180px which is not a power of 2! */
 	  else
-         	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[1],  0,0.0, False, False);
+         	LoadTexture(mi, logo_180_png, sizeof(logo_180_png), NULL, tc->texture_binds[1],  0,0.0, False, False);
 #endif
   	  if (strcasecmp (do_tx3, "(none)")) { /* head */
-         	LoadTexture(mi,  NULL, do_tx3, tc->texture_binds[6], 0, 0.0 ,False, False);
+         	LoadTexture(mi,  NULL, 0, do_tx3, tc->texture_binds[6], 0, 0.0 ,False, False);
 		/* negative */
-          	LoadTexture(mi,  NULL, do_tx3, tc->texture_binds[9],  2,1.0, True, True);
-#ifndef HAVE_JWZGLES  /* logo_180_xpm is 180px which is not a power of 2! */
+          	LoadTexture(mi,  NULL, 0, do_tx3, tc->texture_binds[9],  2,1.0, True, True);
+#ifndef HAVE_JWZGLES  /* logo_180_png is 180px which is not a power of 2! */
 	  } else {
-         	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[6],  0,0.0, False, False);
+         	LoadTexture(mi, logo_180_png, sizeof(logo_180_png), NULL, tc->texture_binds[6],  0,0.0, False, False);
 		/* negative */
-          	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[9],  2,1.0, True, True);
+          	LoadTexture(mi, logo_180_png, sizeof(logo_180_png), NULL, tc->texture_binds[9],  2,1.0, True, True);
 #endif
 	  }
           glEnable(GL_TEXTURE_2D);

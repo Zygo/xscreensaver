@@ -1,4 +1,4 @@
-/* companioncube, Copyright (c) 2011-2014 Jamie Zawinski <jwz@jwz.org>
+/* companioncube, Copyright (c) 2011-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,7 +43,7 @@
 #include "xlockmore.h"
 #include "rotator.h"
 #include "gltrackball.h"
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */

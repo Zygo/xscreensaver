@@ -286,6 +286,8 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
          use it if when being compiled against the 10.5 SDK or later.
        */
 
+extern float jwxyz_scale (Window);  /* jwxyzI.h */
+
 /* Loads an image into the Drawable, returning once the image is loaded.
  */
 Bool
@@ -307,10 +309,11 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
   // Grab only the rectangle of the screen underlying this window.
   //
   CGRect cgrect;
+  double s = jwxyz_scale (xwindow);
   cgrect.origin.x    = window_x;
   cgrect.origin.y    = window_y;
-  cgrect.size.width  = xgwa.width;
-  cgrect.size.height = xgwa.height;
+  cgrect.size.width  = xgwa.width  / s;
+  cgrect.size.height = xgwa.height / s;
 
   /* If a password is required to unlock the screen, a large black
      window will be on top of all of the desktop windows by the time

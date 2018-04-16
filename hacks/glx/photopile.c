@@ -1,4 +1,4 @@
-/* photopile, Copyright (c) 2008-2015 Jens Kilian <jjk@acm.org>
+/* photopile, Copyright (c) 2008-2018 Jens Kilian <jjk@acm.org>
  * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
@@ -13,8 +13,10 @@
 
 #if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
 # define DEF_FONT "OCR A Std 48, Lucida Console 48, Monaco 48"
-#else
+#elif 0  /* real X11, XQueryFont() */
 # define DEF_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
+#else    /* real X11, load_font_retry() */
+# define DEF_FONT "-*-ocr a std-medium-r-*-*-*-480-*-*-m-*-*-*"
 #endif
 
 #define DEFAULTS  "*count:           7         \n" \
@@ -662,6 +664,7 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
 
 # if defined(HAVE_COCOA)
       scale /= 2;
+      if (MI_WIDTH(mi) > 2560) scale /= 2;  /* Retina displays */
 # endif
 
 # if defined(HAVE_MOBILE)

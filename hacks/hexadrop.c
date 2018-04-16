@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,10 +18,14 @@
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 #define ABS(x) ((x)<0?-(x):(x))
 
+/* Avoid rounding errors by using a larger fixed-point grid.
+   Without this, we got little pointy errors at some corners. */
+#define SCALE 10
+
 typedef struct {
   int sides;
   int cx, cy;
-  double th0, th, radius, i, speed;
+  double th, radius, i, speed;
   int colors[2];
   Bool initted_p;
 } cell;
@@ -121,14 +125,14 @@ make_cells (state *st)
       {
         cell *c = &st->cells[i];
         c->sides = st->sides;
-        c->radius = r;
+        c->radius = SCALE * r;
         c->th = th;
 
         switch (st->sides) {
         case 8:
           if (x & 1)
             {
-              c->cx = x * size;
+              c->cx = SCALE * x * size;
               c->radius /= 2;
               c->th = M_PI / 4;
               c->sides = 4;
@@ -136,34 +140,34 @@ make_cells (state *st)
             }
           else
             {
-              c->cx = x * size;
+              c->cx = SCALE * x * size;
               c->radius *= 1.02;
               c->radius--;
             }
 
           if (y & 1)
-            c->cx -= size;
+            c->cx -= SCALE * size;
 
-          c->cy = y * size;
+          c->cy = SCALE * y * size;
 
          break;
         case 6:
-          c->cx = x * size;
-          c->cy = y * size * sqrt(3)/2;
+          c->cx = SCALE * x * size;
+          c->cy = SCALE * y * size * sqrt(3)/2;
           if (y & 1)
-            c->cx -= size * 0.5;
+            c->cx -= SCALE * size * 0.5;
           break;
         case 4:
-          c->cx = x * size * 2;
-          c->cy = y * size * 2;
+          c->cx = SCALE * x * size * 2;
+          c->cy = SCALE * y * size * 2;
           break;
         case 3:
-          c->cx = x * size * 0.5;
-          c->cy = y * size * sqrt(3)/2;
+          c->cx = SCALE * x * size * 0.5;
+          c->cy = SCALE * y * size * sqrt(3)/2;
           if ((x & 1) ^ (y & 1))
             {
               c->th = th + M_PI;
-              c->cy -= (r * 0.5);
+              c->cy -= SCALE * r * 0.5;
             }
           break;
         default:
@@ -179,7 +183,7 @@ make_cells (state *st)
             c->initted_p = True;
           }
 
-        c->radius += 2;  /* Avoid rounding errors */
+        c->radius += SCALE;  /* Avoid single-pixel erase rounding errors */
 
         if (c->i > c->radius) c->i = c->radius;
         if (c->colors[0] >= st->ncolors) c->colors[0] = st->ncolors-1;
@@ -203,15 +207,15 @@ draw_cell (state *st, cell *c)
       for (i = 0; i < c->sides; i++)
         {
           double th = i * M_PI * 2 / c->sides;
-          points[i].x = c->cx + r * cos (th + c->th) + 0.5;
-          points[i].y = c->cy + r * sin (th + c->th) + 0.5;
+          points[i].x = (c->cx + r * cos (th + c->th) + 0.5) / SCALE;
+          points[i].y = (c->cy + r * sin (th + c->th) + 0.5) / SCALE;
         }
       XSetForeground (st->dpy, st->gc, st->colors[c->colors[j]].pixel);
       XFillPolygon (st->dpy, st->window, st->gc, points, c->sides,
                     Convex, CoordModeOrigin);
     }
 
-  c->i -= c->speed;
+  c->i -= SCALE * c->speed;
   if (c->i < 0)
     {
       c->i = c->radius;
@@ -362,10 +366,13 @@ hexadrop_event (Display *dpy, Window window, void *closure, XEvent *event)
   if (screenhack_event_helper (dpy, window, event))
     {
       cell *c = st->cells;
+      int i;
       st->cells = 0;
       hexadrop_free (st->dpy, st->window, st);
       free (st->cells);
       st->cells = c;
+      for (i = 0; i < st->ncells; i++)
+        st->cells[i].initted_p = False;
       hexadrop_init_1 (st->dpy, st->window, st);
       return True;
     }

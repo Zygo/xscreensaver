@@ -141,11 +141,9 @@ ENTRYPOINT void
 reshape_bubble3d(ModeInfo *mi, int width, int height)
 {
   double h = (GLfloat) height / (GLfloat) width;  
-  int y = 0;
 
   if (width > height * 5) {   /* tiny window: show middle */
     height = width * 9/16;
-    y = -height/2;
     h = height / (GLfloat) width;
   }
   glViewport(0, 0, width, height);

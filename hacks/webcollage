@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2017 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2018 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -60,7 +60,7 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.181 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.182 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2017" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
@@ -3162,7 +3162,7 @@ sub x_or_image_output($) {
   $_ = "webcollage-helper";
 
   if (! defined ($webcollage_helper)) {
-#    $webcollage_helper = which ($_);
+    $webcollage_helper = which ($_);
   }
 
   if (defined ($webcollage_helper)) {

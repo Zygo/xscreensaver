@@ -250,10 +250,7 @@ init_texture (ModeInfo *mi)
   glBindTexture (GL_TEXTURE_2D, bp->texture);
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                 bp->tex_w, bp->tex_h, 0,
-		GL_RGBA,
-                /* GL_UNSIGNED_BYTE, */
-                GL_UNSIGNED_INT_8_8_8_8_REV,
-                bp->tex_data);
+		GL_RGBA, GL_UNSIGNED_BYTE, bp->tex_data);
   check_gl_error ("texture generation");
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

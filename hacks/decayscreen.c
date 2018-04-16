@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -172,6 +172,9 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
     static const int upright_bias[]   = { L,L,L,R, R,R,R,R, U,U,U,U, U,D,D,D };
     static const int downright_bias[] = { L,L,L,R, R,R,R,R, U,U,U,D, D,D,D,D };
 
+    int off = 1;
+    if (st->sizex > 2560) off *= 2;  /* Retina displays */
+
     if (st->img_loader)   /* still loading */
       {
         st->img_loader = load_image_async_simple (st->img_loader, 
@@ -230,7 +233,7 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
       width = nrnd( st->sizex/2 ) + st->sizex/2 - left;
       height = nrnd(st->sizey - top);
       toleft = left;
-      totop = top+1;
+      totop = top+off;
 
     } else if (st->mode == FUZZ) {  /* By Vince Levey <vincel@vincel.org>;
                                    inspired by the "melt" mode of the
@@ -242,7 +245,7 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
       if (st->fuzz_toggle)
         {
           totop = top;
-          height = 1;
+          height = off;
           toleft = nrnd(st->sizex - 1);
           if (toleft > left)
             {
@@ -260,7 +263,7 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
       else
         {
           toleft = left;
-          width = 1;
+          width = off;
           totop  = nrnd(st->sizey - 1);
           if (totop > top)
             {
@@ -304,19 +307,21 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
       }
       
       switch (st->current_bias[random() % (sizeof(no_bias)/sizeof(*no_bias))]) {
-      case L: toleft = left-1; break;
-      case R: toleft = left+1; break;
-      case U: totop = top-1; break;
-      case D: totop = top+1; break;
+      case L: toleft = left-off; break;
+      case R: toleft = left+off; break;
+      case U: totop = top-off; break;
+      case D: totop = top+off; break;
       default: abort(); break;
       }
     }
     
     if (st->mode == STRETCH) {
-      XCopyArea (st->dpy, st->window, st->window, st->gc, 0, st->sizey-top-2, st->sizex, top+1, 
-		 0, st->sizey-top-1); 
+      XCopyArea (st->dpy, st->window, st->window, st->gc,
+                 0, st->sizey-top-off*2, st->sizex, top+off, 
+		 0, st->sizey-top-off);
     } else {
-      XCopyArea (st->dpy, st->window, st->window, st->gc, left, top, width, height,
+      XCopyArea (st->dpy, st->window, st->window, st->gc,
+                 left, top, width, height,
 		 toleft, totop);
     }
 

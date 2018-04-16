@@ -277,7 +277,11 @@
   GL: 				splodesic -root				    \\n\
   GL: 				unicrud -root				    \\n\
   GL: 				esper -root				    \\n\
-  GL: 				vigilance -root				    \\n",
+  GL: 				vigilance -root				    \\n\
+  GL: 				crumbler -root				    \\n\
+  GL: 				maze3d -root				    \\n\
+  GL: 				peepers -root				    \\n\
+  GL: 				razzledazzle -root			    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -289,22 +293,7 @@
 "*Dialog.unameFont:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
 "*Dialog.buttonFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1",
 "*Dialog.dateFont:	-*-helvetica-medium-r-*-*-*-80-*-*-*-*-iso8859-1",
-"*Dialog.headingFont2:	-*-bitstream charter-bold-r-*-*-*-160-*-*-*-*-iso8859-1",
-"*Dialog.bodyFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
-"*Dialog.labelFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
-"*Dialog.unameFont2:	-*-bitstream charter-bold-r-*-*-*-100-*-*-*-*-iso8859-1",
-"*Dialog.buttonFont2:	-*-bitstream charter-bold-r-*-*-*-120-*-*-*-*-iso8859-1",
-"*Dialog.dateFont2:	-*-bitstream charter-medium-r-*-*-*-80-*-*-*-*-iso8859-1",
-"*Dialog.headingFont3:	-*-*-bold-r-*-*-*-180-*-*-p-*-iso8859-1",
-"*Dialog.bodyFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1",
-"*Dialog.labelFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1",
-"*Dialog.unameFont3:	-*-*-bold-r-*-*-*-120-*-*-p-*-iso8859-1",
-"*Dialog.buttonFont3:	-*-*-bold-r-*-*-*-140-*-*-p-*-iso8859-1",
-"*Dialog.dateFont3:	-*-*-medium-r-*-*-*-80-*-*-p-*-iso8859-1",
 "*passwd.passwdFont:	-*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
-"*passwd.passwdFont2:	-*-bitstream-courier 10 pitch-medium-r-*-*-*-140-*-*-*-iso8859-1",
-"*passwd.passwdFont3:	-*-*-medium-r-*-*-*-140-*-m-*-iso8859-1",
-"*passwd.passwdFont4:	-*-*-medium-r-*-*-*-140-*-c-*-iso8859-1",
 "*Dialog.foreground:		#000000",
 "*Dialog.background:		#E6E6E6",
 "*Dialog.Button.foreground:	#000000",
@@ -329,7 +318,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright \\251 1991-2017 by",
+"*splash.body.label:		Copyright \\251 1991-2018 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -379,6 +368,7 @@
 "*hacks.lcdscrub.name:       LCDscrub",
 "*hacks.lmorph.name:         LMorph",
 "*hacks.m6502.name:          m6502",
+"*hacks.maze3d.name:         Maze3D",
 "*hacks.memscroller.name:    MemScroller",
 "*hacks.metaballs.name:      MetaBalls",
 "*hacks.mirrorblob.name:     MirrorBlob",
@@ -390,6 +380,7 @@
 "*hacks.projectiveplane.name:ProjectivePlane",
 "*hacks.quasicrystal.name:   QuasiCrystal",
 "*hacks.raverhoop.name:      RaverHoop",
+"*hacks.razzledazzle.name:   RazzleDazzle",
 "*hacks.rd-bomb.name:        RDbomb",
 "*hacks.rdbomb.name:         RDbomb",
 "*hacks.romanboy.name:       RomanBoy",

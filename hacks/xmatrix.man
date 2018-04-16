@@ -135,7 +135,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 1999-2003 by Jamie Zawinski.  Permission to use, copy, modify, 
+Copyright \(co 1999-2018 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice

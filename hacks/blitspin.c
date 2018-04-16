@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,11 +26,11 @@
 
 #include "screenhack.h"
 #include "pow2.h"
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 #include <stdio.h>
 #include <time.h>
 
-#include "images/som.xbm"
+#include "images/gen/som_png.h"
 
 /* Implementing this using XCopyArea doesn't work with color images on OSX.
    This means that the Cocoa implementation of XCopyArea in jwxyz.m is 
@@ -265,13 +265,25 @@ blitspin_init (Display *d_arg, Window w_arg)
   if (!strcasecmp (bitmap_name, "(builtin)") ||
       !strcasecmp (bitmap_name, "builtin"))
     {
-      st->width = som_width;
-      st->height = som_height;
-      st->bitmap = XCreatePixmapFromBitmapData (st->dpy, st->window,
-                                                (char *) som_bits,
-                                                st->width, st->height, 
-                                                st->fg, st->bg, 
-                                                st->xgwa.depth);
+      Pixmap mask = 0;
+      Pixmap pixmap = image_data_to_pixmap (st->dpy, st->window,
+                                            som_png, sizeof(som_png),
+                                            &st->width, &st->height, &mask);
+      XGCValues gcv;
+      GC gc;
+      gcv.foreground = st->bg;
+      gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+      st->bitmap = XCreatePixmap (st->dpy, st->window, 
+                                  st->xgwa.width, st->xgwa.height,
+                                  st->xgwa.depth);
+      XFillRectangle (st->dpy, st->bitmap, gc, 0, 0, st->width, st->height);
+      XSetClipMask (st->dpy, gc, mask);
+      XCopyArea (st->dpy, pixmap, st->bitmap, gc, 0, 0, st->width, st->height,
+                 0, 0);
+      XFreeGC (st->dpy, gc);
+      XFreePixmap (st->dpy, pixmap);
+      XFreePixmap (st->dpy, mask);
+
       st->scale_up = True; /* definitely. */
       st->loaded_p = True;
       blitspin_init_2 (st);
@@ -291,7 +303,7 @@ blitspin_init (Display *d_arg, Window w_arg)
     }
   else
     {
-      st->bitmap = xpm_file_to_pixmap (st->dpy, st->window, bitmap_name,
+      st->bitmap = file_to_pixmap (st->dpy, st->window, bitmap_name,
                                    &st->width, &st->height, 0);
       st->scale_up = True; /* probably? */
       blitspin_init_2 (st);

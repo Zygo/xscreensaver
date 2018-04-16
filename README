@@ -46,6 +46,14 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.39	* New hacks, 'razzledazzle', 'peepers', 'crumbler' and `maze3d'.
+	* More heuristics for using RSS feeds as image sources.
+	* Android: Image loading works.
+	* Built-in image assets are now PNG instead of XPM or XBM.
+	* X11: Better font-loading fallback heuristics on systems with a
+	  terrible selection of installed fonts.
+	* macOS: Retina display-related bug fixes.
+
 5.38	* New hack, 'esper'.
 	* macOS: Support for Retina displays.
 	* X11: `webcollage' now works with ImageMagick instead of with

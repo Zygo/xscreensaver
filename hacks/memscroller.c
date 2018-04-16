@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2002-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2002-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -85,6 +85,7 @@ memscroller_init (Display *dpy, Window window)
   }
 
   st->border = get_integer_resource (dpy, "borderSize", "BorderSize");
+  if (st->xgwa.width > 2560) st->border *= 2;  /* Retina displays */
 
   {
     int i;
@@ -105,7 +106,7 @@ memscroller_init (Display *dpy, Window window)
               {
                 token = 0;
                 while (*f == ' ' || *f == '\t') f++;
-                st->fonts[i] = XLoadQueryFont (dpy, f);
+                st->fonts[i] = load_font_retry (dpy, f);
               }
             free (f2);
             if (!st->fonts[i] && i < nfonts-1)
@@ -118,13 +119,8 @@ memscroller_init (Display *dpy, Window window)
       }
 
     if (!st->fonts[0])
-      st->fonts[0] = XLoadQueryFont (dpy, "fixed");
-
-    if (!st->fonts[0])
-      {
-        fprintf (stderr, "%s: unable to load any fonts!", progname);
-        exit (1);
-      }
+      st->fonts[0] = load_font_retry (dpy, "fixed");
+    if (!st->fonts[0]) abort();
   }
 
   gcv.line_width = st->border;
@@ -193,6 +189,8 @@ memscroller_init (Display *dpy, Window window)
       sc->which = i;
       sc->speed = i+1;
 
+      if (st->xgwa.width > 2560) sc->speed *= 2.5;  /* Retina displays */
+
       sc->image = create_xshm_image (st->dpy, st->xgwa.visual,
                                      st->xgwa.depth,
                                      ZPixmap, &st->shm_info,
@@ -225,6 +223,8 @@ reshape_memscroller (state *st)
       if (i == 0)
         {
           sc->rez = 6;  /* #### */
+
+          if (st->xgwa.width > 2560) sc->rez *= 2.5;  /* Retina displays */
 
           sc->rect.width  = (((int) (st->xgwa.width * 0.8)
                               / sc->rez) * sc->rez);
@@ -503,7 +503,7 @@ draw_string (state *st)
         {
           XSetFont (st->dpy, st->text_gc, st->fonts[i]->fid);
           XFillRectangle (st->dpy, st->window, st->erase_gc,
-                          x-w, y, w*3, h);
+                          x-w-1, y-1, w*3+2, h+2);
           XDrawString (st->dpy, st->window, st->text_gc,
                        x, y + ascent, buf, strlen(buf));
           break;
@@ -601,14 +601,21 @@ static const char *memscroller_defaults [] = {
   ".font4:		   OCR A Std 96,  Lucida Console 96,  Monaco 96",
   ".font5:		   OCR A Std 48,  Lucida Console 48,  Monaco 48",
   ".font6:		   OCR A Std 24,  Lucida Console 24,  Monaco 24",
-#else  /* real X11 */
+#elif 0  /* real X11, XQueryFont() */
   ".font1:		   -*-courier-bold-r-*-*-*-1440-*-*-m-*-*-*",
   ".font2:		   -*-courier-bold-r-*-*-*-960-*-*-m-*-*-*",
   ".font3:		   -*-courier-bold-r-*-*-*-480-*-*-m-*-*-*",
   ".font4:		   -*-courier-bold-r-*-*-*-320-*-*-m-*-*-*",
   ".font5:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".font6:		   fixed",
-#endif /* real X11 */
+#else    /* real X11, load_font_retry() */
+  ".font1:		   -*-ocr a std-medium-r-*-*-*-1440-*-*-m-*-*-*",
+  ".font2:		   -*-ocr a std-medium-r-*-*-*-960-*-*-m-*-*-*",
+  ".font3:		   -*-ocr a std-medium-r-*-*-*-480-*-*-m-*-*-*",
+  ".font4:		   -*-ocr a std-medium-r-*-*-*-320-*-*-m-*-*-*",
+  ".font5:		   -*-ocr a std-medium-r-*-*-*-180-*-*-m-*-*-*",
+  ".font6:		   -*-ocr a std-medium-r-*-*-*-120-*-*-m-*-*-*",
+#endif /* X11 */
 
   "*delay:		   10000",
   "*offset:		   0",

@@ -316,6 +316,8 @@ init_bouboule(ModeInfo * mi)
 	int         i;
 	double      theta, omega;
 
+    if (MI_WIDTH(mi) > 2560) size *= 2;  /* Retina displays */
+
 	MI_INIT (mi, starfield);
 	sp = &starfield[MI_SCREEN(mi)];
 

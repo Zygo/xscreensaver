@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=TbWZ6v5Zzk8"/>
+  <video href="https://www.youtube.com/watch?v=TbWZ6v5Zzk8"/>
 
   <number id="speed" type="slider" arg="-speed %"
           _label="Speed" _low-label="Slow" _high-label="Fast"

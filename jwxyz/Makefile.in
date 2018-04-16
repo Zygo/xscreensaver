@@ -36,7 +36,7 @@ INCLUDES_1	= -I$(srcdir) -I.. -I../utils
 INCLUDES	= $(INCLUDES_1) @INCLUDES@
 
 SRCS		= jwxyz-android.c jwxyz-cocoa.m jwxyz-common.c jwxyz-gl.c \
-		  jwxyz-timers.c jwxyz.m jwzgles.c
+		  jwxyz-timers.c jwxyz-image.c jwxyz.m jwzgles.c
 OBJS		= 
 HDRS		= jwxyz-android.h jwxyz-cocoa.h jwxyz-timers.h jwxyz.h \
 		  jwxyzI.h jwzgles.h jwzglesI.h
@@ -135,6 +135,7 @@ distdepend:: compile_axp.com compile_decc.com
 # DO NOT DELETE: updated by make distdepend
 
 jwxyz-common.o: ../config.h
+jwxyz-image.o: ../config.h
 jwxyz-timers.o: ../config.h
 jwzgles.o: ../config.h
 

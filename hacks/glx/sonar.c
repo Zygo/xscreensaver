@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2015 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2018 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -353,6 +353,8 @@ draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th,
   char *string2 = strdup (string);
   char *token = string2;
   char *line;
+
+  if (MI_WIDTH(mi) > 2560) font_scale /= 2;  /* Retina displays */
 
   if (size <= 0)   /* if size not specified, draw in yellow with alpha */
     {

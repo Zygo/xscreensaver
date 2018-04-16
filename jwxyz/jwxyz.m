@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -86,7 +86,7 @@ struct jwxyz_GC {
 };
 
 
-// 24/32bpp -> 32bpp image conversion.
+// 8/16/24/32bpp -> 32bpp image conversion.
 // Any of RGBA, BGRA, ABGR, or ARGB can be represented by a rotate of 0/8/16/24
 // bits and an optional byte order swap.
 
@@ -100,17 +100,27 @@ static const convert_mode_t CONVERT_MODE_ROTATE_MASK = 0x3;
 static const convert_mode_t CONVERT_MODE_SWAP = 0x4;
 
 
+#if defined __LITTLE_ENDIAN__
+# define PAD(r, g, b, a) ((r) | ((g) << 8) | ((b) << 16) | ((a) << 24))
+#elif defined __BIG_ENDIAN__
+# define PAD(r, g, b, a) (((r) << 24) | ((g) << 16) | ((b) << 8) | (a))
+#else
+# error "Can't determine system endianness."
+#endif
+
+
 // Converts an array of pixels ('src') from one format to another, placing the
 // result in 'dest', according to the pixel conversion mode 'mode'.
 static void
 convert_row (uint32_t *dest, const void *src, size_t count,
              convert_mode_t mode, size_t src_bpp)
 {
-  Assert (src_bpp == 24 || src_bpp == 32, "weird bpp");
+  Assert (src_bpp == 8 || src_bpp == 24 || src_bpp == 16 || src_bpp == 32,
+          "weird bpp");
 
   // This works OK iff src == dest or src and dest do not overlap.
 
-  if (!mode) {
+  if (!mode && src_bpp == 32) {
     if (src != dest)
       memcpy (dest, src, count * 4);
     return;
@@ -126,18 +136,20 @@ convert_row (uint32_t *dest, const void *src, size_t count,
   while (dest != dest_end) {
     uint32_t x;
 
-    if (src_bpp == 4)
-      x = *(const uint32_t *)src;
-    else { // src_bpp == 3
-      const uint8_t *src8 = (const uint8_t *)src;
-      // __LITTLE/BIG_ENDIAN__ are defined by the compiler.
-# if defined __LITTLE_ENDIAN__
-      x = src8[0] | (src8[1] << 8) | (src8[2] << 16) | 0xff000000;
-# elif defined __BIG_ENDIAN__
-      x = (src8[0] << 24) | (src8[1] << 16) | (src8[2] << 8) | 0xff;
-# else
-#  error "Can't determine system endianness."
-# endif
+    const uint8_t *src8 = (const uint8_t *)src;
+    switch (src_bpp) {
+      case 4:
+        x = *(const uint32_t *)src;
+        break;
+      case 3:
+        x = PAD(src8[0], src8[1], src8[2], 0xff);
+        break;
+      case 2:
+        x = PAD(src8[0], src8[0], src8[0], src8[1]);
+        break;
+      case 1:
+        x = PAD(src8[0], src8[0], src8[0], 0xff);
+        break;
     }
 
     src = (const uint8_t *)src + src_bpp;
@@ -1481,6 +1493,75 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
   invalidate_drawable_cache (d);
 }
 
+
+XImage *
+jwxyz_png_to_ximage (Display *dpy, Visual *visual,
+                     const unsigned char *png_data, unsigned long data_size)
+{
+  NSImage *img = [[NSImage alloc] initWithData:
+                                    [NSData dataWithBytes:png_data
+                                            length:data_size]];
+#ifndef USE_IPHONE
+  NSBitmapImageRep *bm = [NSBitmapImageRep
+                           imageRepWithData:
+                             [NSBitmapImageRep
+                               TIFFRepresentationOfImageRepsInArray:
+                                 [img representations]]];
+  int width   = [img size].width;
+  int height  = [img size].height;
+  size_t ibpp = [bm bitsPerPixel];
+  size_t ibpl = [bm bytesPerRow];
+  const unsigned char *data = [bm bitmapData];
+  convert_mode_t mode = (([bm bitmapFormat] & NSAlphaFirstBitmapFormat)
+                         ? CONVERT_MODE_ROTATE_MASK
+                         : 0);
+#else  // USE_IPHONE
+  CGImageRef cgi = [img CGImage];
+  int width = CGImageGetWidth (cgi);
+  int height = CGImageGetHeight (cgi);
+  size_t ibpp = 32;
+  size_t ibpl = ibpp/4 * width;
+  unsigned char *data = (unsigned char *) calloc (ibpl, height);
+  const CGBitmapInfo bitmap_info =
+    kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
+  CGContextRef cgc =
+    CGBitmapContextCreate (data, width, height,
+                           8, /* bits per component */
+                           ibpl, dpy->colorspace,
+                           bitmap_info);
+  CGContextDrawImage (cgc, CGRectMake (0, 0, width, height), cgi);
+
+  convert_mode_t mode = convert_mode_to_rgba (bitmap_info);
+
+#endif // USE_IPHONE
+
+  XImage *image = XCreateImage (dpy, visual, 32, ZPixmap, 0, 0,
+                                width, height, 8, 0);
+  image->data = (char *) malloc (image->height * image->bytes_per_line);
+
+  // data points at (x,y) with ibpl rowstride.
+
+  int obpl = image->bytes_per_line;
+  const unsigned char *iline = data;
+  unsigned char *oline = (unsigned char *) image->data;
+  int yy;
+  for (yy = 0; yy < height; yy++) {
+    convert_row ((uint32_t *)oline, iline, width, mode, ibpp);
+    oline += obpl;
+    iline += ibpl;
+  }
+
+  [img release];
+
+#ifndef USE_IPHONE
+  // [bm release];
+# else
+  CGContextRelease (cgc);
+  free (data);
+# endif
+
+  return image;
+}
 
 
 Pixmap

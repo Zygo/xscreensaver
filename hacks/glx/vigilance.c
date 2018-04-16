@@ -1,4 +1,4 @@
-/* vigilance, Copyright (c) 2017 Jamie Zawinski <jwz@jwz.org>
+/* vigilance, Copyright (c) 2017-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,7 +32,7 @@
 
 #include "xlockmore.h"
 #include "gltrackball.h"
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include "normals.h"
 
 #include <ctype.h>

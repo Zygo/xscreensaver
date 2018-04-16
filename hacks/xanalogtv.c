@@ -1,4 +1,4 @@
-/* xanalogtv, Copyright (c) 2003 Trevor Blackwell <tlb@tlb.org>
+/* xanalogtv, Copyright (c) 2003-2018 Trevor Blackwell <tlb@tlb.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -39,7 +39,7 @@
 #endif
 
 #include "screenhack.h"
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 #include "analogtv.h"
 
 #include "images/logo-50.xpm"
@@ -386,26 +386,6 @@ analogtv_load_random_image(struct state *st)
   hack_resources(st->dpy);
   load_image_async (st->tv->xgwa.screen, st->window, p, image_loaded_cb, st);
 }
-
-
-#if 0
-static int
-analogtv_load_xpm(analogtv *it, analogtv_input *input, char **xpm)
-{
-  Pixmap pixmap;
-  XImage *image;
-  int width,height;
-  int rc;
-
-  pixmap=xpm_data_to_pixmap (it->dpy, it->window, xpm,
-                             &width, &height, NULL);
-  image = XGetImage(it->dpy, pixmap, 0, 0, width, height, ~0L, ZPixmap);
-  XFreePixmap(it->dpy, pixmap);
-  rc=analogtv_load_ximage(it, input, image);
-  if (image) XDestroyImage(image);
-  return rc;
-}
-#endif
 
 
 static void add_stations(struct state *st)

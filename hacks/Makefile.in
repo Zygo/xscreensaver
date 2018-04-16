@@ -57,11 +57,10 @@ XFT_LIBS	= @XFT_LIBS@
 HACK_PRE	= $(LIBS) $(X_LIBS)
 HACK_POST     = $(X_PRE_LIBS) $(XFT_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS) -lm
 HACK_LIBS	= $(HACK_PRE) @ANIM_LIBS@ @HACK_LIBS@ $(HACK_POST)
-XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@  @HACK_LIBS@ $(HACK_POST)
+PNG_LIBS	= $(HACK_PRE) @PNG_LIBS@ @HACK_LIBS@ $(HACK_POST)
 JPEG_LIBS	= @JPEG_LIBS@
 XLOCK_LIBS	= $(HACK_LIBS)
 TEXT_LIBS	= @PTY_LIBS@
-MINIXPM		= $(UTILS_BIN)/minixpm.o
 
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
@@ -73,24 +72,24 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/grabclient.c \
 		  $(UTILS_SRC)/hsv.c $(UTILS_SRC)/resources.c \
 		  $(UTILS_SRC)/spline.c $(UTILS_SRC)/usleep.c \
-		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/logo.c \
-		  $(UTILS_SRC)/minixpm.c \
+		  $(UTILS_SRC)/visual.c \
 		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/erase.c \
 		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c \
 		  $(UTILS_SRC)/textclient.c $(UTILS_SRC)/aligned_malloc.c \
-		  $(UTILS_SRC)/thread_util.c $(UTILS_SRC)/pow2.c
+		  $(UTILS_SRC)/thread_util.c $(UTILS_SRC)/pow2.c \
+		  $(UTILS_SRC)/font-retry.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/usleep.o \
-		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/logo.o \
-		  $(UTILS_BIN)/minixpm.o \
+		  $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/erase.o \
 		  $(UTILS_BIN)/xshm.o $(UTILS_BIN)/xdbe.o \
 		  $(UTILS_BIN)/colorbars.o \
 		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/aligned_malloc.o \
 		  $(UTILS_BIN)/thread_util.o $(UTILS_BIN)/pow2.o \
-		  $(UTILS_BIN)/xft.o $(UTILS_BIN)/utf8wc.o
+		  $(UTILS_BIN)/xft.o $(UTILS_BIN)/utf8wc.o \
+		  $(UTILS_BIN)/font-retry.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles-default.c decayscreen.c deco.c drift.c flag.c \
@@ -111,7 +110,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  blaster.c bumps.c ripples.c xspirograph.c \
 		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c \
 		  rotzoomer.c whirlygig.c speedmine.c vermiculate.c \
-		  xpm-pixmap.c webcollage-helper.c twang.c apollonian.c \
+		  ximage-loader.c webcollage-helper.c twang.c apollonian.c \
 		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c \
 		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
 		  barcode.c piecewise.c cloudlife.c fontglide.c apple2.c \
@@ -151,7 +150,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  blaster.o bumps.o ripples.o xspirograph.o \
 		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o \
 		  rotzoomer.o whirlygig.o speedmine.o vermiculate.o \
-		  xpm-pixmap.o webcollage-helper.o twang.o apollonian.o \
+		  ximage-loader.o webcollage-helper.o twang.o apollonian.o \
 		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o \
 		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
 		  barcode.o piecewise.o cloudlife.o fontglide.o apple2.o \
@@ -194,7 +193,8 @@ RETIRED_EXES	= ant bubbles critical flag forest hyperball hypercube laser \
 
 HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
-		  $(UTILS_BIN)/utf8wc.o @XMU_OBJS@ @XFT_OBJS@ @ANIM_OBJS@
+		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/font-retry.o \
+		  @XMU_OBJS@ @XFT_OBJS@ @ANIM_OBJS@
 HACK_OBJS	= screenhack.o $(HACK_OBJS_1)
 XLOCK_OBJS	= screenhack.o xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1) \
 		  $(ERASE)
@@ -203,11 +203,11 @@ GRAB_OBJS	= $(UTILS_BIN)/grabclient.o
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 ANIM_OBJS	= recanim.o
-ANIM_LIBS	= @XPM_LIBS@
+ANIM_LIBS	= @PNG_LIBS@
 THREAD_OBJS	= $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o
 
 HDRS		= screenhack.h screenhackI.h fps.h fpsI.h xlockmore.h \
-		  xlockmoreI.h automata.h bubbles.h xpm-pixmap.h \
+		  xlockmoreI.h automata.h bubbles.h ximage-loader.h \
 		  apple2.h analogtv.h pacman.h pacman_ai.h pacman_level.h \
 		  asm6502.h delaunay.h recanim.h
 MEN		= anemone.man apollonian.man attraction.man \
@@ -256,16 +256,6 @@ EXTRAS		= README Makefile.in xml2man.pl m6502.sh .gdbinit \
 		  config/$(STAR).xml \
 		  config/$(STAR).dtd \
 		  config/$(STAR).xsd \
-		  images/$(STAR).xbm \
-		  images/$(STAR).xpm \
-		  images/bubbles/$(STAR).pov \
-		  images/bubbles/$(STAR).xpm \
-		  images/noseguy/$(STAR).xbm \
-		  images/noseguy/$(STAR).xpm \
-		  images/m6502/$(STAR).asm \
-		  images/m6502/$(STAR).txt \
-		  images/molecules/$(STAR).pdb \
-		  images/pacman/$(STAR).xpm
 
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
@@ -390,7 +380,7 @@ uninstall-xml:
 	          rm -f $$dest/$$file.xml ;				\
 	done
 
-clean:
+clean::
 	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) m6502.h
 
 distclean: clean
@@ -525,8 +515,6 @@ $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
 $(UTILS_BIN)/xft.o:		$(UTILS_SRC)/xft.c
 $(UTILS_BIN)/utf8wc.o:		$(UTILS_SRC)/utf8wc.c
-$(UTILS_BIN)/logo.o:		$(UTILS_SRC)/logo.c
-$(UTILS_BIN)/minixpm.o:		$(UTILS_SRC)/minixpm.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
@@ -535,6 +523,7 @@ $(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
 $(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
 $(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
 $(UTILS_BIN)/pow2.o:		$(UTILS_SRC)/pow2.c
+$(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
 
 $(UTIL_OBJS):
 	cd $(UTILS_BIN) ; \
@@ -549,17 +538,16 @@ $(UTIL_OBJS):
 screenhack.o: $(UTILS_SRC)/version.h
 
 # Some abbreviations to keep the lines short...
-XPM		= xpm-pixmap.o
+PNG		= ximage-loader.o
 ALP		= $(UTILS_BIN)/alpha.o
 HSV		= $(UTILS_BIN)/hsv.o
 SPL		= $(UTILS_BIN)/spline.o
-LOGO		= $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o
 GRAB		= $(GRAB_OBJS)
 ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
 SHM             = $(XSHM_OBJS) $(THREAD_OBJS)
 DBE		= $(XDBE_OBJS)
-BARS		= $(UTILS_BIN)/colorbars.o $(LOGO)
+BARS		= $(UTILS_BIN)/colorbars.o
 THRO		= $(THREAD_OBJS)
 THRL		= $(THREAD_CFLAGS) $(THREAD_LIBS)
 ATV             = analogtv.o $(SHM)
@@ -576,6 +564,10 @@ test-utf8wc: $(UTILS_SRC)/utf8wc.c
 	$(CC) $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $(LDFLAGS)\
 	-o $@ -DSELFTEST $<
 
+# Make sure the images have been packaged. This is the first one hit:
+$(srcdir)/images/gen/nose-f1_png.h:
+	cd $(srcdir)/images && $(MAKE)
+
 # The rules for those hacks which follow the `screenhack.c' API.
 # If make wasn't such an utter abomination, these could all be combined
 # into one rule, but we don't live in such a perfect world.  The $< rule
@@ -588,11 +580,11 @@ attraction:	attraction.o	$(HACK_OBJS) $(COL) $(SPL)
 binaryring:  binaryring.o $(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB) $(XPM) $(UTILS_BIN)/pow2.o
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM) $(UTILS_BIN)/pow2.o $(XPM_LIBS)
+blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB) $(PNG) $(UTILS_BIN)/pow2.o
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(PNG) $(UTILS_BIN)/pow2.o $(PNG_LIBS)
 
-bubbles:	bubbles.o	$(HACK_OBJS) bubbles-default.o $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) bubbles-default.o $(XPM) $(XPM_LIBS)
+bubbles:	bubbles.o	$(HACK_OBJS) bubbles-default.o $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) bubbles-default.o $(PNG) $(PNG_LIBS)
 
 decayscreen:	decayscreen.o	$(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS)
@@ -624,8 +616,8 @@ kaleidescope:	kaleidescope.o	$(HACK_OBJS)
 lmorph:		lmorph.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-maze:		maze.o		$(HACK_OBJS) $(ERASE) $(LOGO)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ERASE) $(LOGO) $(HACK_LIBS)
+maze:		maze.o		$(HACK_OBJS) $(ERASE) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ERASE) $(PNG) $(PNG_LIBS)
 
 moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS) $(THRL)
@@ -633,8 +625,8 @@ moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
 moire2:		moire2.o	$(HACK_OBJS) $(COL) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
-noseguy:	noseguy.o	$(HACK_OBJS) $(XPM) $(TEXT)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(TEXT) $(XPM_LIBS) $(TEXT_LIBS)
+noseguy:	noseguy.o	$(HACK_OBJS) $(PNG) $(TEXT)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(PNG) $(TEXT) $(PNG_LIBS) $(TEXT_LIBS)
 
 pedal:		pedal.o		$(HACK_OBJS) $(HSV) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(ERASE) $(HACK_LIBS)
@@ -687,14 +679,14 @@ interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE)
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM) $(XPM_LIBS) $(THRL)
+bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(APPLE2) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(APPLE2) $(PNG) $(PNG_LIBS) $(THRL)
 
-apple2:	 	apple2.o apple2-main.o	$(HACK_OBJS) $(ATV) $(GRAB) $(TEXT)
-	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(XPM_LIBS) $(TEXT_LIBS) $(THRL)
+apple2:	 	apple2.o apple2-main.o        $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(PNG)
+	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(PNG) $(PNG_LIBS) $(TEXT_LIBS) $(THRL)
 
-xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS) $(THRL)
+xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(THRL)
@@ -717,8 +709,8 @@ compass:	compass.o	$(HACK_OBJS) $(DBE)
 squiral:	squiral.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-xflame:		xflame.o	$(HACK_OBJS) $(SHM) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(XPM) $(XPM_LIBS) $(THRL)
+xflame:		xflame.o	$(HACK_OBJS) $(SHM) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(PNG) $(PNG_LIBS) $(THRL)
 
 wander:		wander.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
@@ -729,11 +721,11 @@ spotlight:	spotlight.o	$(HACK_OBJS) $(GRAB)
 critical:	critical.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-phosphor:	phosphor.o	$(HACK_OBJS) $(TEXT) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TEXT) $(COL) $(HACK_LIBS) $(TEXT_LIBS)
+phosphor:	phosphor.o	$(HACK_OBJS) $(TEXT) $(COL) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TEXT) $(COL) $(PNG) $(PNG_LIBS) $(TEXT_LIBS)
 
-xmatrix:	xmatrix.o	$(HACK_OBJS) $(TEXT) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TEXT) $(XPM) $(XPM_LIBS) $(TEXT_LIBS)
+xmatrix:	xmatrix.o	$(HACK_OBJS) $(TEXT) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TEXT) $(PNG) $(PNG_LIBS) $(TEXT_LIBS)
 
 petri:		petri.o		$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
@@ -816,8 +808,8 @@ cloudlife:	cloudlife.o	$(HACK_OBJS) $(COL) $(DBE)
 fontglide:	fontglide.o	$(HACK_OBJS) $(DBE) $(TEXT)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(TEXT) $(HACK_LIBS) $(TEXT_LIBS)
 
-pong: 	pong.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS) $(THRL)
+pong: 	pong.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
 
 wormhole: 	wormhole.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -861,8 +853,8 @@ m6502.h:
 	$(srcdir)/m6502.sh m6502.h $(srcdir)/images/m6502/*.asm
 
 m6502.o:	m6502.h
-m6502:		m6502.o		asm6502.o $(HACK_OBJS) $(ATV)
-	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(HACK_LIBS) $(THRL)
+m6502:		m6502.o		asm6502.o $(HACK_OBJS) $(ATV) $(PNG)
+	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(PNG) $(PNG_LIBS) $(THRL)
 
 abstractile:	abstractile.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -876,8 +868,8 @@ hexadrop:	hexadrop.o	$(HACK_OBJS) $(COL)
 tessellimage:	tessellimage.o	delaunay.o $(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	delaunay.o $(HACK_OBJS) $(GRAB) $(HACK_LIBS)
 
-testx11:	testx11.o	glx/rotator.o $(HACK_OBJS) $(COL) $(BARS) $(ERASE)
-	$(CC_HACK) -o $@ $@.o	glx/rotator.o $(HACK_OBJS) $(COL) $(BARS) $(ERASE) $(HACK_LIBS)
+testx11:	testx11.o	glx/rotator.o $(HACK_OBJS) $(COL) $(PNG) $(BARS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	glx/rotator.o $(HACK_OBJS) $(COL) $(PNG) $(BARS) $(ERASE) $(PNG_LIBS)
 
 glx/rotator.o:	glx/rotator.c
 	cd glx ; \
@@ -895,8 +887,8 @@ braid:		braid.o		$(XLOCK_OBJS)
 drift:		drift.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
-flag:		flag.o		$(XLOCK_OBJS) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(XPM) $(XPM_LIBS)
+flag:		flag.o		$(XLOCK_OBJS) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(PNG) $(PNG_LIBS)
 
 forest:		forest.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -998,8 +990,8 @@ thornbird:	thornbird.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 PACOBJS=pacman_ai.o pacman_level.o
-pacman:		pacman.o 	$(PACOBJS) $(XLOCK_OBJS) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(PACOBJS) $(XLOCK_OBJS) $(XPM) $(XPM_LIBS)
+pacman:		pacman.o 	$(PACOBJS) $(XLOCK_OBJS) $(PNG)
+	$(CC_HACK) -o $@ $@.o	$(PACOBJS) $(XLOCK_OBJS) $(PNG) $(PNG_LIBS)
 
 fiberlamp:	fiberlamp.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -1010,7 +1002,7 @@ xsublim:	xsublim.o	$(HACK_OBJS_1)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS_1) $(HACK_LIBS)
 
 webcollage-helper: webcollage-helper.o
-	$(CC_HACK) -o $@ $@.o	$(XPM_LIBS) $(JPEG_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(PNG_LIBS) $(JPEG_LIBS)
 
 
 ##############################################################################
@@ -1022,6 +1014,7 @@ abstractile.o: $(srcdir)/fps.h
 abstractile.o: $(srcdir)/screenhackI.h
 abstractile.o: $(srcdir)/screenhack.h
 abstractile.o: $(UTILS_SRC)/colors.h
+abstractile.o: $(UTILS_SRC)/font-retry.h
 abstractile.o: $(UTILS_SRC)/grabscreen.h
 abstractile.o: $(UTILS_SRC)/hsv.h
 abstractile.o: $(UTILS_SRC)/resources.h
@@ -1030,8 +1023,9 @@ abstractile.o: $(UTILS_SRC)/visual.h
 abstractile.o: $(UTILS_SRC)/yarandom.h
 analogtv.o: $(srcdir)/analogtv.h
 analogtv.o: ../config.h
-analogtv.o: $(srcdir)/images/6x10font.xbm
+analogtv.o: $(srcdir)/images/gen/6x10font_png.h
 analogtv.o: $(UTILS_SRC)/aligned_malloc.h
+analogtv.o: $(UTILS_SRC)/font-retry.h
 analogtv.o: $(UTILS_SRC)/grabscreen.h
 analogtv.o: $(UTILS_SRC)/resources.h
 analogtv.o: $(UTILS_SRC)/thread_util.h
@@ -1039,11 +1033,13 @@ analogtv.o: $(UTILS_SRC)/utils.h
 analogtv.o: $(UTILS_SRC)/visual.h
 analogtv.o: $(UTILS_SRC)/xshm.h
 analogtv.o: $(UTILS_SRC)/yarandom.h
+analogtv.o: $(srcdir)/ximage-loader.h
 anemone.o: ../config.h
 anemone.o: $(srcdir)/fps.h
 anemone.o: $(srcdir)/screenhackI.h
 anemone.o: $(srcdir)/screenhack.h
 anemone.o: $(UTILS_SRC)/colors.h
+anemone.o: $(UTILS_SRC)/font-retry.h
 anemone.o: $(UTILS_SRC)/grabscreen.h
 anemone.o: $(UTILS_SRC)/hsv.h
 anemone.o: $(UTILS_SRC)/resources.h
@@ -1056,6 +1052,7 @@ anemotaxis.o: $(srcdir)/fps.h
 anemotaxis.o: $(srcdir)/screenhackI.h
 anemotaxis.o: $(srcdir)/screenhack.h
 anemotaxis.o: $(UTILS_SRC)/colors.h
+anemotaxis.o: $(UTILS_SRC)/font-retry.h
 anemotaxis.o: $(UTILS_SRC)/grabscreen.h
 anemotaxis.o: $(UTILS_SRC)/hsv.h
 anemotaxis.o: $(UTILS_SRC)/resources.h
@@ -1069,6 +1066,7 @@ ant.o: $(srcdir)/fps.h
 ant.o: $(srcdir)/screenhackI.h
 ant.o: $(UTILS_SRC)/colors.h
 ant.o: $(UTILS_SRC)/erase.h
+ant.o: $(UTILS_SRC)/font-retry.h
 ant.o: $(UTILS_SRC)/grabscreen.h
 ant.o: $(UTILS_SRC)/hsv.h
 ant.o: $(UTILS_SRC)/resources.h
@@ -1082,6 +1080,7 @@ apollonian.o: $(srcdir)/fps.h
 apollonian.o: $(srcdir)/screenhackI.h
 apollonian.o: $(UTILS_SRC)/colors.h
 apollonian.o: $(UTILS_SRC)/erase.h
+apollonian.o: $(UTILS_SRC)/font-retry.h
 apollonian.o: $(UTILS_SRC)/grabscreen.h
 apollonian.o: $(UTILS_SRC)/hsv.h
 apollonian.o: $(UTILS_SRC)/resources.h
@@ -1098,6 +1097,7 @@ apple2-main.o: $(srcdir)/screenhackI.h
 apple2-main.o: $(srcdir)/screenhack.h
 apple2-main.o: $(UTILS_SRC)/aligned_malloc.h
 apple2-main.o: $(UTILS_SRC)/colors.h
+apple2-main.o: $(UTILS_SRC)/font-retry.h
 apple2-main.o: $(UTILS_SRC)/grabscreen.h
 apple2-main.o: $(UTILS_SRC)/hsv.h
 apple2-main.o: $(UTILS_SRC)/resources.h
@@ -1112,10 +1112,11 @@ apple2.o: $(srcdir)/analogtv.h
 apple2.o: $(srcdir)/apple2.h
 apple2.o: ../config.h
 apple2.o: $(srcdir)/fps.h
-apple2.o: $(srcdir)/images/apple2font.xbm
+apple2.o: $(srcdir)/images/gen/apple2font_png.h
 apple2.o: $(srcdir)/screenhackI.h
 apple2.o: $(UTILS_SRC)/aligned_malloc.h
 apple2.o: $(UTILS_SRC)/colors.h
+apple2.o: $(UTILS_SRC)/font-retry.h
 apple2.o: $(UTILS_SRC)/grabscreen.h
 apple2.o: $(UTILS_SRC)/hsv.h
 apple2.o: $(UTILS_SRC)/resources.h
@@ -1124,6 +1125,7 @@ apple2.o: $(UTILS_SRC)/usleep.h
 apple2.o: $(UTILS_SRC)/visual.h
 apple2.o: $(UTILS_SRC)/xshm.h
 apple2.o: $(UTILS_SRC)/yarandom.h
+apple2.o: $(srcdir)/ximage-loader.h
 asm6502.o: $(srcdir)/asm6502.h
 asm6502.o: ../config.h
 asm6502.o: $(UTILS_SRC)/yarandom.h
@@ -1132,6 +1134,7 @@ attraction.o: $(srcdir)/fps.h
 attraction.o: $(srcdir)/screenhackI.h
 attraction.o: $(srcdir)/screenhack.h
 attraction.o: $(UTILS_SRC)/colors.h
+attraction.o: $(UTILS_SRC)/font-retry.h
 attraction.o: $(UTILS_SRC)/grabscreen.h
 attraction.o: $(UTILS_SRC)/hsv.h
 attraction.o: $(UTILS_SRC)/resources.h
@@ -1144,6 +1147,7 @@ barcode.o: $(srcdir)/fps.h
 barcode.o: $(srcdir)/screenhackI.h
 barcode.o: $(srcdir)/screenhack.h
 barcode.o: $(UTILS_SRC)/colors.h
+barcode.o: $(UTILS_SRC)/font-retry.h
 barcode.o: $(UTILS_SRC)/grabscreen.h
 barcode.o: $(UTILS_SRC)/hsv.h
 barcode.o: $(UTILS_SRC)/resources.h
@@ -1155,6 +1159,7 @@ binaryring.o: $(srcdir)/fps.h
 binaryring.o: $(srcdir)/screenhackI.h
 binaryring.o: $(srcdir)/screenhack.h
 binaryring.o: $(UTILS_SRC)/colors.h
+binaryring.o: $(UTILS_SRC)/font-retry.h
 binaryring.o: $(UTILS_SRC)/grabscreen.h
 binaryring.o: $(UTILS_SRC)/hsv.h
 binaryring.o: $(UTILS_SRC)/resources.h
@@ -1166,6 +1171,7 @@ blaster.o: $(srcdir)/fps.h
 blaster.o: $(srcdir)/screenhackI.h
 blaster.o: $(srcdir)/screenhack.h
 blaster.o: $(UTILS_SRC)/colors.h
+blaster.o: $(UTILS_SRC)/font-retry.h
 blaster.o: $(UTILS_SRC)/grabscreen.h
 blaster.o: $(UTILS_SRC)/hsv.h
 blaster.o: $(UTILS_SRC)/resources.h
@@ -1174,10 +1180,11 @@ blaster.o: $(UTILS_SRC)/visual.h
 blaster.o: $(UTILS_SRC)/yarandom.h
 blitspin.o: ../config.h
 blitspin.o: $(srcdir)/fps.h
-blitspin.o: $(srcdir)/images/som.xbm
+blitspin.o: $(srcdir)/images/gen/som_png.h
 blitspin.o: $(srcdir)/screenhackI.h
 blitspin.o: $(srcdir)/screenhack.h
 blitspin.o: $(UTILS_SRC)/colors.h
+blitspin.o: $(UTILS_SRC)/font-retry.h
 blitspin.o: $(UTILS_SRC)/grabscreen.h
 blitspin.o: $(UTILS_SRC)/hsv.h
 blitspin.o: $(UTILS_SRC)/pow2.h
@@ -1185,12 +1192,13 @@ blitspin.o: $(UTILS_SRC)/resources.h
 blitspin.o: $(UTILS_SRC)/usleep.h
 blitspin.o: $(UTILS_SRC)/visual.h
 blitspin.o: $(UTILS_SRC)/yarandom.h
-blitspin.o: $(srcdir)/xpm-pixmap.h
+blitspin.o: $(srcdir)/ximage-loader.h
 bouboule.o: ../config.h
 bouboule.o: $(srcdir)/fps.h
 bouboule.o: $(srcdir)/screenhackI.h
 bouboule.o: $(UTILS_SRC)/colors.h
 bouboule.o: $(UTILS_SRC)/erase.h
+bouboule.o: $(UTILS_SRC)/font-retry.h
 bouboule.o: $(UTILS_SRC)/grabscreen.h
 bouboule.o: $(UTILS_SRC)/hsv.h
 bouboule.o: $(UTILS_SRC)/resources.h
@@ -1204,18 +1212,20 @@ boxfit.o: $(srcdir)/fps.h
 boxfit.o: $(srcdir)/screenhackI.h
 boxfit.o: $(srcdir)/screenhack.h
 boxfit.o: $(UTILS_SRC)/colors.h
+boxfit.o: $(UTILS_SRC)/font-retry.h
 boxfit.o: $(UTILS_SRC)/grabscreen.h
 boxfit.o: $(UTILS_SRC)/hsv.h
 boxfit.o: $(UTILS_SRC)/resources.h
 boxfit.o: $(UTILS_SRC)/usleep.h
 boxfit.o: $(UTILS_SRC)/visual.h
 boxfit.o: $(UTILS_SRC)/yarandom.h
-boxfit.o: $(srcdir)/xpm-pixmap.h
+boxfit.o: $(srcdir)/ximage-loader.h
 braid.o: ../config.h
 braid.o: $(srcdir)/fps.h
 braid.o: $(srcdir)/screenhackI.h
 braid.o: $(UTILS_SRC)/colors.h
 braid.o: $(UTILS_SRC)/erase.h
+braid.o: $(UTILS_SRC)/font-retry.h
 braid.o: $(UTILS_SRC)/grabscreen.h
 braid.o: $(UTILS_SRC)/hsv.h
 braid.o: $(UTILS_SRC)/resources.h
@@ -1228,21 +1238,22 @@ bsod.o: $(srcdir)/analogtv.h
 bsod.o: $(srcdir)/apple2.h
 bsod.o: ../config.h
 bsod.o: $(srcdir)/fps.h
-bsod.o: $(srcdir)/images/amiga.xpm
-bsod.o: $(srcdir)/images/android.xpm
-bsod.o: $(srcdir)/images/apple.xbm
-bsod.o: $(srcdir)/images/atari.xbm
-bsod.o: $(srcdir)/images/atm.xbm
-bsod.o: $(srcdir)/images/hmac.xpm
-bsod.o: $(srcdir)/images/macbomb.xbm
-bsod.o: $(srcdir)/images/mac.xbm
-bsod.o: $(srcdir)/images/osx_10_2.xpm
-bsod.o: $(srcdir)/images/osx_10_3.xpm
-bsod.o: $(srcdir)/images/ransomware.xpm
+bsod.o: $(srcdir)/images/gen/amiga_png.h
+bsod.o: $(srcdir)/images/gen/android_png.h
+bsod.o: $(srcdir)/images/gen/apple_png.h
+bsod.o: $(srcdir)/images/gen/atari_png.h
+bsod.o: $(srcdir)/images/gen/atm_png.h
+bsod.o: $(srcdir)/images/gen/hmac_png.h
+bsod.o: $(srcdir)/images/gen/macbomb_png.h
+bsod.o: $(srcdir)/images/gen/mac_png.h
+bsod.o: $(srcdir)/images/gen/osx_10_2_png.h
+bsod.o: $(srcdir)/images/gen/osx_10_3_png.h
+bsod.o: $(srcdir)/images/gen/ransomware_png.h
 bsod.o: $(srcdir)/screenhackI.h
 bsod.o: $(srcdir)/screenhack.h
 bsod.o: $(UTILS_SRC)/aligned_malloc.h
 bsod.o: $(UTILS_SRC)/colors.h
+bsod.o: $(UTILS_SRC)/font-retry.h
 bsod.o: $(UTILS_SRC)/grabscreen.h
 bsod.o: $(UTILS_SRC)/hsv.h
 bsod.o: $(UTILS_SRC)/resources.h
@@ -1251,53 +1262,53 @@ bsod.o: $(UTILS_SRC)/usleep.h
 bsod.o: $(UTILS_SRC)/visual.h
 bsod.o: $(UTILS_SRC)/xshm.h
 bsod.o: $(UTILS_SRC)/yarandom.h
-bsod.o: $(srcdir)/xpm-pixmap.h
+bsod.o: $(srcdir)/ximage-loader.h
 bubbles-default.o: $(srcdir)/bubbles.h
 bubbles-default.o: ../config.h
-bubbles-default.o: $(srcdir)/images/bubbles/blood10.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood11.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood1.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood2.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood3.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood4.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood5.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood6.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood7.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood8.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blood9.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue10.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue11.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue1.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue2.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue3.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue4.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue5.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue6.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue7.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue8.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/blue9.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass10.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass11.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass1.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass2.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass3.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass4.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass5.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass6.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass7.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass8.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/glass9.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade10.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade11.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade1.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade2.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade3.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade4.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade5.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade6.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade7.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade8.xpm
-bubbles-default.o: $(srcdir)/images/bubbles/jade9.xpm
+bubbles-default.o: $(srcdir)/images/gen/blood10_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood11_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood1_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood2_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood3_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood4_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood5_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood6_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood7_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood8_png.h
+bubbles-default.o: $(srcdir)/images/gen/blood9_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue10_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue11_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue1_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue2_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue3_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue4_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue5_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue6_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue7_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue8_png.h
+bubbles-default.o: $(srcdir)/images/gen/blue9_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass10_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass11_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass1_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass2_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass3_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass4_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass5_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass6_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass7_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass8_png.h
+bubbles-default.o: $(srcdir)/images/gen/glass9_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade10_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade11_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade1_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade2_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade3_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade4_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade5_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade6_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade7_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade8_png.h
+bubbles-default.o: $(srcdir)/images/gen/jade9_png.h
 bubbles-default.o: $(UTILS_SRC)/yarandom.h
 bubbles.o: $(srcdir)/bubbles.h
 bubbles.o: ../config.h
@@ -1305,18 +1316,20 @@ bubbles.o: $(srcdir)/fps.h
 bubbles.o: $(srcdir)/screenhackI.h
 bubbles.o: $(srcdir)/screenhack.h
 bubbles.o: $(UTILS_SRC)/colors.h
+bubbles.o: $(UTILS_SRC)/font-retry.h
 bubbles.o: $(UTILS_SRC)/grabscreen.h
 bubbles.o: $(UTILS_SRC)/hsv.h
 bubbles.o: $(UTILS_SRC)/resources.h
 bubbles.o: $(UTILS_SRC)/usleep.h
 bubbles.o: $(UTILS_SRC)/visual.h
 bubbles.o: $(UTILS_SRC)/yarandom.h
-bubbles.o: $(srcdir)/xpm-pixmap.h
+bubbles.o: $(srcdir)/ximage-loader.h
 bumps.o: ../config.h
 bumps.o: $(srcdir)/fps.h
 bumps.o: $(srcdir)/screenhackI.h
 bumps.o: $(srcdir)/screenhack.h
 bumps.o: $(UTILS_SRC)/colors.h
+bumps.o: $(UTILS_SRC)/font-retry.h
 bumps.o: $(UTILS_SRC)/grabscreen.h
 bumps.o: $(UTILS_SRC)/hsv.h
 bumps.o: $(UTILS_SRC)/resources.h
@@ -1330,6 +1343,7 @@ ccurve.o: $(srcdir)/screenhackI.h
 ccurve.o: $(srcdir)/screenhack.h
 ccurve.o: $(UTILS_SRC)/colors.h
 ccurve.o: $(UTILS_SRC)/erase.h
+ccurve.o: $(UTILS_SRC)/font-retry.h
 ccurve.o: $(UTILS_SRC)/grabscreen.h
 ccurve.o: $(UTILS_SRC)/hsv.h
 ccurve.o: $(UTILS_SRC)/resources.h
@@ -1342,6 +1356,7 @@ celtic.o: $(srcdir)/screenhackI.h
 celtic.o: $(srcdir)/screenhack.h
 celtic.o: $(UTILS_SRC)/colors.h
 celtic.o: $(UTILS_SRC)/erase.h
+celtic.o: $(UTILS_SRC)/font-retry.h
 celtic.o: $(UTILS_SRC)/grabscreen.h
 celtic.o: $(UTILS_SRC)/hsv.h
 celtic.o: $(UTILS_SRC)/resources.h
@@ -1353,6 +1368,7 @@ cloudlife.o: $(srcdir)/fps.h
 cloudlife.o: $(srcdir)/screenhackI.h
 cloudlife.o: $(srcdir)/screenhack.h
 cloudlife.o: $(UTILS_SRC)/colors.h
+cloudlife.o: $(UTILS_SRC)/font-retry.h
 cloudlife.o: $(UTILS_SRC)/grabscreen.h
 cloudlife.o: $(UTILS_SRC)/hsv.h
 cloudlife.o: $(UTILS_SRC)/resources.h
@@ -1364,6 +1380,7 @@ compass.o: $(srcdir)/fps.h
 compass.o: $(srcdir)/screenhackI.h
 compass.o: $(srcdir)/screenhack.h
 compass.o: $(UTILS_SRC)/colors.h
+compass.o: $(UTILS_SRC)/font-retry.h
 compass.o: $(UTILS_SRC)/grabscreen.h
 compass.o: $(UTILS_SRC)/hsv.h
 compass.o: $(UTILS_SRC)/resources.h
@@ -1377,6 +1394,7 @@ coral.o: $(srcdir)/screenhackI.h
 coral.o: $(srcdir)/screenhack.h
 coral.o: $(UTILS_SRC)/colors.h
 coral.o: $(UTILS_SRC)/erase.h
+coral.o: $(UTILS_SRC)/font-retry.h
 coral.o: $(UTILS_SRC)/grabscreen.h
 coral.o: $(UTILS_SRC)/hsv.h
 coral.o: $(UTILS_SRC)/resources.h
@@ -1389,6 +1407,7 @@ critical.o: $(srcdir)/screenhackI.h
 critical.o: $(srcdir)/screenhack.h
 critical.o: $(UTILS_SRC)/colors.h
 critical.o: $(UTILS_SRC)/erase.h
+critical.o: $(UTILS_SRC)/font-retry.h
 critical.o: $(UTILS_SRC)/grabscreen.h
 critical.o: $(UTILS_SRC)/hsv.h
 critical.o: $(UTILS_SRC)/resources.h
@@ -1400,6 +1419,7 @@ crystal.o: $(srcdir)/fps.h
 crystal.o: $(srcdir)/screenhackI.h
 crystal.o: $(UTILS_SRC)/colors.h
 crystal.o: $(UTILS_SRC)/erase.h
+crystal.o: $(UTILS_SRC)/font-retry.h
 crystal.o: $(UTILS_SRC)/grabscreen.h
 crystal.o: $(UTILS_SRC)/hsv.h
 crystal.o: $(UTILS_SRC)/resources.h
@@ -1413,18 +1433,20 @@ cwaves.o: $(srcdir)/fps.h
 cwaves.o: $(srcdir)/screenhackI.h
 cwaves.o: $(srcdir)/screenhack.h
 cwaves.o: $(UTILS_SRC)/colors.h
+cwaves.o: $(UTILS_SRC)/font-retry.h
 cwaves.o: $(UTILS_SRC)/grabscreen.h
 cwaves.o: $(UTILS_SRC)/hsv.h
 cwaves.o: $(UTILS_SRC)/resources.h
 cwaves.o: $(UTILS_SRC)/usleep.h
 cwaves.o: $(UTILS_SRC)/visual.h
 cwaves.o: $(UTILS_SRC)/yarandom.h
-cwaves.o: $(srcdir)/xpm-pixmap.h
+cwaves.o: $(srcdir)/ximage-loader.h
 cynosure.o: ../config.h
 cynosure.o: $(srcdir)/fps.h
 cynosure.o: $(srcdir)/screenhackI.h
 cynosure.o: $(srcdir)/screenhack.h
 cynosure.o: $(UTILS_SRC)/colors.h
+cynosure.o: $(UTILS_SRC)/font-retry.h
 cynosure.o: $(UTILS_SRC)/grabscreen.h
 cynosure.o: $(UTILS_SRC)/hsv.h
 cynosure.o: $(UTILS_SRC)/resources.h
@@ -1436,6 +1458,7 @@ decayscreen.o: $(srcdir)/fps.h
 decayscreen.o: $(srcdir)/screenhackI.h
 decayscreen.o: $(srcdir)/screenhack.h
 decayscreen.o: $(UTILS_SRC)/colors.h
+decayscreen.o: $(UTILS_SRC)/font-retry.h
 decayscreen.o: $(UTILS_SRC)/grabscreen.h
 decayscreen.o: $(UTILS_SRC)/hsv.h
 decayscreen.o: $(UTILS_SRC)/resources.h
@@ -1447,6 +1470,7 @@ deco.o: $(srcdir)/fps.h
 deco.o: $(srcdir)/screenhackI.h
 deco.o: $(srcdir)/screenhack.h
 deco.o: $(UTILS_SRC)/colors.h
+deco.o: $(UTILS_SRC)/font-retry.h
 deco.o: $(UTILS_SRC)/grabscreen.h
 deco.o: $(UTILS_SRC)/hsv.h
 deco.o: $(UTILS_SRC)/resources.h
@@ -1461,6 +1485,7 @@ deluxe.o: $(srcdir)/screenhackI.h
 deluxe.o: $(srcdir)/screenhack.h
 deluxe.o: $(UTILS_SRC)/alpha.h
 deluxe.o: $(UTILS_SRC)/colors.h
+deluxe.o: $(UTILS_SRC)/font-retry.h
 deluxe.o: $(UTILS_SRC)/grabscreen.h
 deluxe.o: $(UTILS_SRC)/hsv.h
 deluxe.o: $(UTILS_SRC)/resources.h
@@ -1474,6 +1499,7 @@ demon.o: $(srcdir)/fps.h
 demon.o: $(srcdir)/screenhackI.h
 demon.o: $(UTILS_SRC)/colors.h
 demon.o: $(UTILS_SRC)/erase.h
+demon.o: $(UTILS_SRC)/font-retry.h
 demon.o: $(UTILS_SRC)/grabscreen.h
 demon.o: $(UTILS_SRC)/hsv.h
 demon.o: $(UTILS_SRC)/resources.h
@@ -1487,6 +1513,7 @@ discrete.o: $(srcdir)/fps.h
 discrete.o: $(srcdir)/screenhackI.h
 discrete.o: $(UTILS_SRC)/colors.h
 discrete.o: $(UTILS_SRC)/erase.h
+discrete.o: $(UTILS_SRC)/font-retry.h
 discrete.o: $(UTILS_SRC)/grabscreen.h
 discrete.o: $(UTILS_SRC)/hsv.h
 discrete.o: $(UTILS_SRC)/resources.h
@@ -1500,6 +1527,7 @@ distort.o: $(srcdir)/fps.h
 distort.o: $(srcdir)/screenhackI.h
 distort.o: $(srcdir)/screenhack.h
 distort.o: $(UTILS_SRC)/colors.h
+distort.o: $(UTILS_SRC)/font-retry.h
 distort.o: $(UTILS_SRC)/grabscreen.h
 distort.o: $(UTILS_SRC)/hsv.h
 distort.o: $(UTILS_SRC)/resources.h
@@ -1512,6 +1540,7 @@ drift.o: $(srcdir)/fps.h
 drift.o: $(srcdir)/screenhackI.h
 drift.o: $(UTILS_SRC)/colors.h
 drift.o: $(UTILS_SRC)/erase.h
+drift.o: $(UTILS_SRC)/font-retry.h
 drift.o: $(UTILS_SRC)/grabscreen.h
 drift.o: $(UTILS_SRC)/hsv.h
 drift.o: $(UTILS_SRC)/resources.h
@@ -1526,6 +1555,7 @@ epicycle.o: $(srcdir)/screenhackI.h
 epicycle.o: $(srcdir)/screenhack.h
 epicycle.o: $(UTILS_SRC)/colors.h
 epicycle.o: $(UTILS_SRC)/erase.h
+epicycle.o: $(UTILS_SRC)/font-retry.h
 epicycle.o: $(UTILS_SRC)/grabscreen.h
 epicycle.o: $(UTILS_SRC)/hsv.h
 epicycle.o: $(UTILS_SRC)/resources.h
@@ -1537,6 +1567,7 @@ eruption.o: $(srcdir)/fps.h
 eruption.o: $(srcdir)/screenhackI.h
 eruption.o: $(srcdir)/screenhack.h
 eruption.o: $(UTILS_SRC)/colors.h
+eruption.o: $(UTILS_SRC)/font-retry.h
 eruption.o: $(UTILS_SRC)/grabscreen.h
 eruption.o: $(UTILS_SRC)/hsv.h
 eruption.o: $(UTILS_SRC)/resources.h
@@ -1548,6 +1579,7 @@ euler2d.o: $(srcdir)/fps.h
 euler2d.o: $(srcdir)/screenhackI.h
 euler2d.o: $(UTILS_SRC)/colors.h
 euler2d.o: $(UTILS_SRC)/erase.h
+euler2d.o: $(UTILS_SRC)/font-retry.h
 euler2d.o: $(UTILS_SRC)/grabscreen.h
 euler2d.o: $(UTILS_SRC)/hsv.h
 euler2d.o: $(UTILS_SRC)/resources.h
@@ -1561,6 +1593,7 @@ fadeplot.o: $(srcdir)/fps.h
 fadeplot.o: $(srcdir)/screenhackI.h
 fadeplot.o: $(UTILS_SRC)/colors.h
 fadeplot.o: $(UTILS_SRC)/erase.h
+fadeplot.o: $(UTILS_SRC)/font-retry.h
 fadeplot.o: $(UTILS_SRC)/grabscreen.h
 fadeplot.o: $(UTILS_SRC)/hsv.h
 fadeplot.o: $(UTILS_SRC)/resources.h
@@ -1574,6 +1607,7 @@ fiberlamp.o: $(srcdir)/fps.h
 fiberlamp.o: $(srcdir)/screenhackI.h
 fiberlamp.o: $(UTILS_SRC)/colors.h
 fiberlamp.o: $(UTILS_SRC)/erase.h
+fiberlamp.o: $(UTILS_SRC)/font-retry.h
 fiberlamp.o: $(UTILS_SRC)/grabscreen.h
 fiberlamp.o: $(UTILS_SRC)/hsv.h
 fiberlamp.o: $(UTILS_SRC)/resources.h
@@ -1587,6 +1621,7 @@ fireworkx.o: $(srcdir)/fps.h
 fireworkx.o: $(srcdir)/screenhackI.h
 fireworkx.o: $(srcdir)/screenhack.h
 fireworkx.o: $(UTILS_SRC)/colors.h
+fireworkx.o: $(UTILS_SRC)/font-retry.h
 fireworkx.o: $(UTILS_SRC)/grabscreen.h
 fireworkx.o: $(UTILS_SRC)/hsv.h
 fireworkx.o: $(UTILS_SRC)/resources.h
@@ -1595,24 +1630,26 @@ fireworkx.o: $(UTILS_SRC)/visual.h
 fireworkx.o: $(UTILS_SRC)/yarandom.h
 flag.o: ../config.h
 flag.o: $(srcdir)/fps.h
-flag.o: $(srcdir)/images/bob.xbm
+flag.o: $(srcdir)/images/gen/bob_png.h
 flag.o: $(srcdir)/screenhackI.h
 flag.o: $(UTILS_SRC)/colors.h
 flag.o: $(UTILS_SRC)/erase.h
+flag.o: $(UTILS_SRC)/font-retry.h
 flag.o: $(UTILS_SRC)/grabscreen.h
 flag.o: $(UTILS_SRC)/hsv.h
 flag.o: $(UTILS_SRC)/resources.h
 flag.o: $(UTILS_SRC)/usleep.h
 flag.o: $(UTILS_SRC)/visual.h
 flag.o: $(UTILS_SRC)/yarandom.h
+flag.o: $(srcdir)/ximage-loader.h
 flag.o: $(srcdir)/xlockmoreI.h
 flag.o: $(srcdir)/xlockmore.h
-flag.o: $(srcdir)/xpm-pixmap.h
 flame.o: ../config.h
 flame.o: $(srcdir)/fps.h
 flame.o: $(srcdir)/screenhackI.h
 flame.o: $(srcdir)/screenhack.h
 flame.o: $(UTILS_SRC)/colors.h
+flame.o: $(UTILS_SRC)/font-retry.h
 flame.o: $(UTILS_SRC)/grabscreen.h
 flame.o: $(UTILS_SRC)/hsv.h
 flame.o: $(UTILS_SRC)/resources.h
@@ -1624,6 +1661,7 @@ flow.o: $(srcdir)/fps.h
 flow.o: $(srcdir)/screenhackI.h
 flow.o: $(UTILS_SRC)/colors.h
 flow.o: $(UTILS_SRC)/erase.h
+flow.o: $(UTILS_SRC)/font-retry.h
 flow.o: $(UTILS_SRC)/grabscreen.h
 flow.o: $(UTILS_SRC)/hsv.h
 flow.o: $(UTILS_SRC)/resources.h
@@ -1637,6 +1675,7 @@ fluidballs.o: $(srcdir)/fps.h
 fluidballs.o: $(srcdir)/screenhackI.h
 fluidballs.o: $(srcdir)/screenhack.h
 fluidballs.o: $(UTILS_SRC)/colors.h
+fluidballs.o: $(UTILS_SRC)/font-retry.h
 fluidballs.o: $(UTILS_SRC)/grabscreen.h
 fluidballs.o: $(UTILS_SRC)/hsv.h
 fluidballs.o: $(UTILS_SRC)/resources.h
@@ -1649,6 +1688,7 @@ fontglide.o: $(srcdir)/fps.h
 fontglide.o: $(srcdir)/screenhackI.h
 fontglide.o: $(srcdir)/screenhack.h
 fontglide.o: $(UTILS_SRC)/colors.h
+fontglide.o: $(UTILS_SRC)/font-retry.h
 fontglide.o: $(UTILS_SRC)/grabscreen.h
 fontglide.o: $(UTILS_SRC)/hsv.h
 fontglide.o: $(UTILS_SRC)/resources.h
@@ -1664,6 +1704,7 @@ forest.o: $(srcdir)/fps.h
 forest.o: $(srcdir)/screenhackI.h
 forest.o: $(UTILS_SRC)/colors.h
 forest.o: $(UTILS_SRC)/erase.h
+forest.o: $(UTILS_SRC)/font-retry.h
 forest.o: $(UTILS_SRC)/grabscreen.h
 forest.o: $(UTILS_SRC)/hsv.h
 forest.o: $(UTILS_SRC)/resources.h
@@ -1677,6 +1718,7 @@ fps.o: $(srcdir)/fpsI.h
 fps.o: $(srcdir)/fps.h
 fps.o: $(srcdir)/screenhackI.h
 fps.o: $(UTILS_SRC)/colors.h
+fps.o: $(UTILS_SRC)/font-retry.h
 fps.o: $(UTILS_SRC)/grabscreen.h
 fps.o: $(UTILS_SRC)/hsv.h
 fps.o: $(UTILS_SRC)/resources.h
@@ -1688,6 +1730,7 @@ fuzzyflakes.o: $(srcdir)/fps.h
 fuzzyflakes.o: $(srcdir)/screenhackI.h
 fuzzyflakes.o: $(srcdir)/screenhack.h
 fuzzyflakes.o: $(UTILS_SRC)/colors.h
+fuzzyflakes.o: $(UTILS_SRC)/font-retry.h
 fuzzyflakes.o: $(UTILS_SRC)/grabscreen.h
 fuzzyflakes.o: $(UTILS_SRC)/hsv.h
 fuzzyflakes.o: $(UTILS_SRC)/resources.h
@@ -1699,6 +1742,7 @@ galaxy.o: $(srcdir)/fps.h
 galaxy.o: $(srcdir)/screenhackI.h
 galaxy.o: $(UTILS_SRC)/colors.h
 galaxy.o: $(UTILS_SRC)/erase.h
+galaxy.o: $(UTILS_SRC)/font-retry.h
 galaxy.o: $(UTILS_SRC)/grabscreen.h
 galaxy.o: $(UTILS_SRC)/hsv.h
 galaxy.o: $(UTILS_SRC)/resources.h
@@ -1713,6 +1757,7 @@ goop.o: $(srcdir)/screenhackI.h
 goop.o: $(srcdir)/screenhack.h
 goop.o: $(UTILS_SRC)/alpha.h
 goop.o: $(UTILS_SRC)/colors.h
+goop.o: $(UTILS_SRC)/font-retry.h
 goop.o: $(UTILS_SRC)/grabscreen.h
 goop.o: $(UTILS_SRC)/hsv.h
 goop.o: $(UTILS_SRC)/resources.h
@@ -1725,6 +1770,7 @@ grav.o: $(srcdir)/fps.h
 grav.o: $(srcdir)/screenhackI.h
 grav.o: $(UTILS_SRC)/colors.h
 grav.o: $(UTILS_SRC)/erase.h
+grav.o: $(UTILS_SRC)/font-retry.h
 grav.o: $(UTILS_SRC)/grabscreen.h
 grav.o: $(UTILS_SRC)/hsv.h
 grav.o: $(UTILS_SRC)/resources.h
@@ -1738,6 +1784,7 @@ greynetic.o: $(srcdir)/fps.h
 greynetic.o: $(srcdir)/screenhackI.h
 greynetic.o: $(srcdir)/screenhack.h
 greynetic.o: $(UTILS_SRC)/colors.h
+greynetic.o: $(UTILS_SRC)/font-retry.h
 greynetic.o: $(UTILS_SRC)/grabscreen.h
 greynetic.o: $(UTILS_SRC)/hsv.h
 greynetic.o: $(UTILS_SRC)/resources.h
@@ -1749,6 +1796,7 @@ halftone.o: $(srcdir)/fps.h
 halftone.o: $(srcdir)/screenhackI.h
 halftone.o: $(srcdir)/screenhack.h
 halftone.o: $(UTILS_SRC)/colors.h
+halftone.o: $(UTILS_SRC)/font-retry.h
 halftone.o: $(UTILS_SRC)/grabscreen.h
 halftone.o: $(UTILS_SRC)/hsv.h
 halftone.o: $(UTILS_SRC)/resources.h
@@ -1760,6 +1808,7 @@ halo.o: $(srcdir)/fps.h
 halo.o: $(srcdir)/screenhackI.h
 halo.o: $(srcdir)/screenhack.h
 halo.o: $(UTILS_SRC)/colors.h
+halo.o: $(UTILS_SRC)/font-retry.h
 halo.o: $(UTILS_SRC)/grabscreen.h
 halo.o: $(UTILS_SRC)/hsv.h
 halo.o: $(UTILS_SRC)/resources.h
@@ -1772,6 +1821,7 @@ helix.o: $(srcdir)/screenhackI.h
 helix.o: $(srcdir)/screenhack.h
 helix.o: $(UTILS_SRC)/colors.h
 helix.o: $(UTILS_SRC)/erase.h
+helix.o: $(UTILS_SRC)/font-retry.h
 helix.o: $(UTILS_SRC)/grabscreen.h
 helix.o: $(UTILS_SRC)/hsv.h
 helix.o: $(UTILS_SRC)/resources.h
@@ -1783,6 +1833,7 @@ hexadrop.o: $(srcdir)/fps.h
 hexadrop.o: $(srcdir)/screenhackI.h
 hexadrop.o: $(srcdir)/screenhack.h
 hexadrop.o: $(UTILS_SRC)/colors.h
+hexadrop.o: $(UTILS_SRC)/font-retry.h
 hexadrop.o: $(UTILS_SRC)/grabscreen.h
 hexadrop.o: $(UTILS_SRC)/hsv.h
 hexadrop.o: $(UTILS_SRC)/resources.h
@@ -1794,6 +1845,7 @@ hopalong.o: $(srcdir)/fps.h
 hopalong.o: $(srcdir)/screenhackI.h
 hopalong.o: $(UTILS_SRC)/colors.h
 hopalong.o: $(UTILS_SRC)/erase.h
+hopalong.o: $(UTILS_SRC)/font-retry.h
 hopalong.o: $(UTILS_SRC)/grabscreen.h
 hopalong.o: $(UTILS_SRC)/hsv.h
 hopalong.o: $(UTILS_SRC)/resources.h
@@ -1807,6 +1859,7 @@ hyperball.o: $(srcdir)/fps.h
 hyperball.o: $(srcdir)/screenhackI.h
 hyperball.o: $(srcdir)/screenhack.h
 hyperball.o: $(UTILS_SRC)/colors.h
+hyperball.o: $(UTILS_SRC)/font-retry.h
 hyperball.o: $(UTILS_SRC)/grabscreen.h
 hyperball.o: $(UTILS_SRC)/hsv.h
 hyperball.o: $(UTILS_SRC)/resources.h
@@ -1818,6 +1871,7 @@ hypercube.o: $(srcdir)/fps.h
 hypercube.o: $(srcdir)/screenhackI.h
 hypercube.o: $(srcdir)/screenhack.h
 hypercube.o: $(UTILS_SRC)/colors.h
+hypercube.o: $(UTILS_SRC)/font-retry.h
 hypercube.o: $(UTILS_SRC)/grabscreen.h
 hypercube.o: $(UTILS_SRC)/hsv.h
 hypercube.o: $(UTILS_SRC)/resources.h
@@ -1829,6 +1883,7 @@ ifs.o: $(srcdir)/fps.h
 ifs.o: $(srcdir)/screenhackI.h
 ifs.o: $(srcdir)/screenhack.h
 ifs.o: $(UTILS_SRC)/colors.h
+ifs.o: $(UTILS_SRC)/font-retry.h
 ifs.o: $(UTILS_SRC)/grabscreen.h
 ifs.o: $(UTILS_SRC)/hsv.h
 ifs.o: $(UTILS_SRC)/resources.h
@@ -1840,6 +1895,7 @@ imsmap.o: $(srcdir)/fps.h
 imsmap.o: $(srcdir)/screenhackI.h
 imsmap.o: $(srcdir)/screenhack.h
 imsmap.o: $(UTILS_SRC)/colors.h
+imsmap.o: $(UTILS_SRC)/font-retry.h
 imsmap.o: $(UTILS_SRC)/grabscreen.h
 imsmap.o: $(UTILS_SRC)/hsv.h
 imsmap.o: $(UTILS_SRC)/resources.h
@@ -1851,6 +1907,7 @@ interaggregate.o: $(srcdir)/fps.h
 interaggregate.o: $(srcdir)/screenhackI.h
 interaggregate.o: $(srcdir)/screenhack.h
 interaggregate.o: $(UTILS_SRC)/colors.h
+interaggregate.o: $(UTILS_SRC)/font-retry.h
 interaggregate.o: $(UTILS_SRC)/grabscreen.h
 interaggregate.o: $(UTILS_SRC)/hsv.h
 interaggregate.o: $(UTILS_SRC)/resources.h
@@ -1863,6 +1920,7 @@ interference.o: $(srcdir)/screenhackI.h
 interference.o: $(srcdir)/screenhack.h
 interference.o: $(UTILS_SRC)/aligned_malloc.h
 interference.o: $(UTILS_SRC)/colors.h
+interference.o: $(UTILS_SRC)/font-retry.h
 interference.o: $(UTILS_SRC)/grabscreen.h
 interference.o: $(UTILS_SRC)/hsv.h
 interference.o: $(UTILS_SRC)/resources.h
@@ -1877,6 +1935,7 @@ intermomentary.o: $(srcdir)/fps.h
 intermomentary.o: $(srcdir)/screenhackI.h
 intermomentary.o: $(srcdir)/screenhack.h
 intermomentary.o: $(UTILS_SRC)/colors.h
+intermomentary.o: $(UTILS_SRC)/font-retry.h
 intermomentary.o: $(UTILS_SRC)/grabscreen.h
 intermomentary.o: $(UTILS_SRC)/hsv.h
 intermomentary.o: $(UTILS_SRC)/resources.h
@@ -1888,6 +1947,7 @@ juggle.o: $(srcdir)/fps.h
 juggle.o: $(srcdir)/screenhackI.h
 juggle.o: $(UTILS_SRC)/colors.h
 juggle.o: $(UTILS_SRC)/erase.h
+juggle.o: $(UTILS_SRC)/font-retry.h
 juggle.o: $(UTILS_SRC)/grabscreen.h
 juggle.o: $(UTILS_SRC)/hsv.h
 juggle.o: $(UTILS_SRC)/resources.h
@@ -1901,6 +1961,7 @@ julia.o: $(srcdir)/fps.h
 julia.o: $(srcdir)/screenhackI.h
 julia.o: $(UTILS_SRC)/colors.h
 julia.o: $(UTILS_SRC)/erase.h
+julia.o: $(UTILS_SRC)/font-retry.h
 julia.o: $(UTILS_SRC)/grabscreen.h
 julia.o: $(UTILS_SRC)/hsv.h
 julia.o: $(UTILS_SRC)/resources.h
@@ -1914,6 +1975,7 @@ kaleidescope.o: $(srcdir)/fps.h
 kaleidescope.o: $(srcdir)/screenhackI.h
 kaleidescope.o: $(srcdir)/screenhack.h
 kaleidescope.o: $(UTILS_SRC)/colors.h
+kaleidescope.o: $(UTILS_SRC)/font-retry.h
 kaleidescope.o: $(UTILS_SRC)/grabscreen.h
 kaleidescope.o: $(UTILS_SRC)/hsv.h
 kaleidescope.o: $(UTILS_SRC)/resources.h
@@ -1926,6 +1988,7 @@ kumppa.o: $(srcdir)/fps.h
 kumppa.o: $(srcdir)/screenhackI.h
 kumppa.o: $(srcdir)/screenhack.h
 kumppa.o: $(UTILS_SRC)/colors.h
+kumppa.o: $(UTILS_SRC)/font-retry.h
 kumppa.o: $(UTILS_SRC)/grabscreen.h
 kumppa.o: $(UTILS_SRC)/hsv.h
 kumppa.o: $(UTILS_SRC)/resources.h
@@ -1938,6 +2001,7 @@ laser.o: $(srcdir)/fps.h
 laser.o: $(srcdir)/screenhackI.h
 laser.o: $(UTILS_SRC)/colors.h
 laser.o: $(UTILS_SRC)/erase.h
+laser.o: $(UTILS_SRC)/font-retry.h
 laser.o: $(UTILS_SRC)/grabscreen.h
 laser.o: $(UTILS_SRC)/hsv.h
 laser.o: $(UTILS_SRC)/resources.h
@@ -1951,6 +2015,7 @@ lcdscrub.o: $(srcdir)/fps.h
 lcdscrub.o: $(srcdir)/screenhackI.h
 lcdscrub.o: $(srcdir)/screenhack.h
 lcdscrub.o: $(UTILS_SRC)/colors.h
+lcdscrub.o: $(UTILS_SRC)/font-retry.h
 lcdscrub.o: $(UTILS_SRC)/grabscreen.h
 lcdscrub.o: $(UTILS_SRC)/hsv.h
 lcdscrub.o: $(UTILS_SRC)/resources.h
@@ -1962,6 +2027,7 @@ lightning.o: $(srcdir)/fps.h
 lightning.o: $(srcdir)/screenhackI.h
 lightning.o: $(UTILS_SRC)/colors.h
 lightning.o: $(UTILS_SRC)/erase.h
+lightning.o: $(UTILS_SRC)/font-retry.h
 lightning.o: $(UTILS_SRC)/grabscreen.h
 lightning.o: $(UTILS_SRC)/hsv.h
 lightning.o: $(UTILS_SRC)/resources.h
@@ -1975,6 +2041,7 @@ lisa.o: $(srcdir)/fps.h
 lisa.o: $(srcdir)/screenhackI.h
 lisa.o: $(UTILS_SRC)/colors.h
 lisa.o: $(UTILS_SRC)/erase.h
+lisa.o: $(UTILS_SRC)/font-retry.h
 lisa.o: $(UTILS_SRC)/grabscreen.h
 lisa.o: $(UTILS_SRC)/hsv.h
 lisa.o: $(UTILS_SRC)/resources.h
@@ -1988,6 +2055,7 @@ lissie.o: $(srcdir)/fps.h
 lissie.o: $(srcdir)/screenhackI.h
 lissie.o: $(UTILS_SRC)/colors.h
 lissie.o: $(UTILS_SRC)/erase.h
+lissie.o: $(UTILS_SRC)/font-retry.h
 lissie.o: $(UTILS_SRC)/grabscreen.h
 lissie.o: $(UTILS_SRC)/hsv.h
 lissie.o: $(UTILS_SRC)/resources.h
@@ -2001,6 +2069,7 @@ lmorph.o: $(srcdir)/fps.h
 lmorph.o: $(srcdir)/screenhackI.h
 lmorph.o: $(srcdir)/screenhack.h
 lmorph.o: $(UTILS_SRC)/colors.h
+lmorph.o: $(UTILS_SRC)/font-retry.h
 lmorph.o: $(UTILS_SRC)/grabscreen.h
 lmorph.o: $(UTILS_SRC)/hsv.h
 lmorph.o: $(UTILS_SRC)/resources.h
@@ -2013,6 +2082,7 @@ loop.o: $(srcdir)/fps.h
 loop.o: $(srcdir)/screenhackI.h
 loop.o: $(UTILS_SRC)/colors.h
 loop.o: $(UTILS_SRC)/erase.h
+loop.o: $(UTILS_SRC)/font-retry.h
 loop.o: $(UTILS_SRC)/grabscreen.h
 loop.o: $(UTILS_SRC)/hsv.h
 loop.o: $(UTILS_SRC)/resources.h
@@ -2030,6 +2100,7 @@ m6502.o: $(srcdir)/screenhackI.h
 m6502.o: $(srcdir)/screenhack.h
 m6502.o: $(UTILS_SRC)/aligned_malloc.h
 m6502.o: $(UTILS_SRC)/colors.h
+m6502.o: $(UTILS_SRC)/font-retry.h
 m6502.o: $(UTILS_SRC)/grabscreen.h
 m6502.o: $(UTILS_SRC)/hsv.h
 m6502.o: $(UTILS_SRC)/resources.h
@@ -2040,21 +2111,26 @@ m6502.o: $(UTILS_SRC)/xshm.h
 m6502.o: $(UTILS_SRC)/yarandom.h
 maze.o: ../config.h
 maze.o: $(srcdir)/fps.h
+maze.o: $(srcdir)/images/gen/logo-180_png.h
+maze.o: $(srcdir)/images/gen/logo-50_png.h
 maze.o: $(srcdir)/screenhackI.h
 maze.o: $(srcdir)/screenhack.h
 maze.o: $(UTILS_SRC)/colors.h
 maze.o: $(UTILS_SRC)/erase.h
+maze.o: $(UTILS_SRC)/font-retry.h
 maze.o: $(UTILS_SRC)/grabscreen.h
 maze.o: $(UTILS_SRC)/hsv.h
 maze.o: $(UTILS_SRC)/resources.h
 maze.o: $(UTILS_SRC)/usleep.h
 maze.o: $(UTILS_SRC)/visual.h
 maze.o: $(UTILS_SRC)/yarandom.h
+maze.o: $(srcdir)/ximage-loader.h
 memscroller.o: ../config.h
 memscroller.o: $(srcdir)/fps.h
 memscroller.o: $(srcdir)/screenhackI.h
 memscroller.o: $(srcdir)/screenhack.h
 memscroller.o: $(UTILS_SRC)/colors.h
+memscroller.o: $(UTILS_SRC)/font-retry.h
 memscroller.o: $(UTILS_SRC)/grabscreen.h
 memscroller.o: $(UTILS_SRC)/hsv.h
 memscroller.o: $(UTILS_SRC)/resources.h
@@ -2067,6 +2143,7 @@ metaballs.o: $(srcdir)/fps.h
 metaballs.o: $(srcdir)/screenhackI.h
 metaballs.o: $(srcdir)/screenhack.h
 metaballs.o: $(UTILS_SRC)/colors.h
+metaballs.o: $(UTILS_SRC)/font-retry.h
 metaballs.o: $(UTILS_SRC)/grabscreen.h
 metaballs.o: $(UTILS_SRC)/hsv.h
 metaballs.o: $(UTILS_SRC)/resources.h
@@ -2078,6 +2155,7 @@ moire2.o: $(srcdir)/fps.h
 moire2.o: $(srcdir)/screenhackI.h
 moire2.o: $(srcdir)/screenhack.h
 moire2.o: $(UTILS_SRC)/colors.h
+moire2.o: $(UTILS_SRC)/font-retry.h
 moire2.o: $(UTILS_SRC)/grabscreen.h
 moire2.o: $(UTILS_SRC)/hsv.h
 moire2.o: $(UTILS_SRC)/resources.h
@@ -2090,6 +2168,7 @@ moire.o: $(srcdir)/fps.h
 moire.o: $(srcdir)/screenhackI.h
 moire.o: $(srcdir)/screenhack.h
 moire.o: $(UTILS_SRC)/colors.h
+moire.o: $(UTILS_SRC)/font-retry.h
 moire.o: $(UTILS_SRC)/grabscreen.h
 moire.o: $(UTILS_SRC)/hsv.h
 moire.o: $(UTILS_SRC)/resources.h
@@ -2102,6 +2181,7 @@ mountain.o: $(srcdir)/fps.h
 mountain.o: $(srcdir)/screenhackI.h
 mountain.o: $(UTILS_SRC)/colors.h
 mountain.o: $(UTILS_SRC)/erase.h
+mountain.o: $(UTILS_SRC)/font-retry.h
 mountain.o: $(UTILS_SRC)/grabscreen.h
 mountain.o: $(UTILS_SRC)/hsv.h
 mountain.o: $(UTILS_SRC)/resources.h
@@ -2115,6 +2195,7 @@ munch.o: $(srcdir)/fps.h
 munch.o: $(srcdir)/screenhackI.h
 munch.o: $(srcdir)/screenhack.h
 munch.o: $(UTILS_SRC)/colors.h
+munch.o: $(UTILS_SRC)/font-retry.h
 munch.o: $(UTILS_SRC)/grabscreen.h
 munch.o: $(UTILS_SRC)/hsv.h
 munch.o: $(UTILS_SRC)/resources.h
@@ -2126,6 +2207,7 @@ nerverot.o: $(srcdir)/fps.h
 nerverot.o: $(srcdir)/screenhackI.h
 nerverot.o: $(srcdir)/screenhack.h
 nerverot.o: $(UTILS_SRC)/colors.h
+nerverot.o: $(UTILS_SRC)/font-retry.h
 nerverot.o: $(UTILS_SRC)/grabscreen.h
 nerverot.o: $(UTILS_SRC)/hsv.h
 nerverot.o: $(UTILS_SRC)/resources.h
@@ -2134,17 +2216,18 @@ nerverot.o: $(UTILS_SRC)/visual.h
 nerverot.o: $(UTILS_SRC)/yarandom.h
 noseguy.o: ../config.h
 noseguy.o: $(srcdir)/fps.h
-noseguy.o: $(srcdir)/images/noseguy/nose-f1.xpm
-noseguy.o: $(srcdir)/images/noseguy/nose-f2.xpm
-noseguy.o: $(srcdir)/images/noseguy/nose-f3.xpm
-noseguy.o: $(srcdir)/images/noseguy/nose-f4.xpm
-noseguy.o: $(srcdir)/images/noseguy/nose-l1.xpm
-noseguy.o: $(srcdir)/images/noseguy/nose-l2.xpm
-noseguy.o: $(srcdir)/images/noseguy/nose-r1.xpm
-noseguy.o: $(srcdir)/images/noseguy/nose-r2.xpm
+noseguy.o: $(srcdir)/images/gen/nose-f1_png.h
+noseguy.o: $(srcdir)/images/gen/nose-f2_png.h
+noseguy.o: $(srcdir)/images/gen/nose-f3_png.h
+noseguy.o: $(srcdir)/images/gen/nose-f4_png.h
+noseguy.o: $(srcdir)/images/gen/nose-l1_png.h
+noseguy.o: $(srcdir)/images/gen/nose-l2_png.h
+noseguy.o: $(srcdir)/images/gen/nose-r1_png.h
+noseguy.o: $(srcdir)/images/gen/nose-r2_png.h
 noseguy.o: $(srcdir)/screenhackI.h
 noseguy.o: $(srcdir)/screenhack.h
 noseguy.o: $(UTILS_SRC)/colors.h
+noseguy.o: $(UTILS_SRC)/font-retry.h
 noseguy.o: $(UTILS_SRC)/grabscreen.h
 noseguy.o: $(UTILS_SRC)/hsv.h
 noseguy.o: $(UTILS_SRC)/resources.h
@@ -2153,7 +2236,7 @@ noseguy.o: $(UTILS_SRC)/usleep.h
 noseguy.o: $(UTILS_SRC)/visual.h
 noseguy.o: $(UTILS_SRC)/xft.h
 noseguy.o: $(UTILS_SRC)/yarandom.h
-noseguy.o: $(srcdir)/xpm-pixmap.h
+noseguy.o: $(srcdir)/ximage-loader.h
 pacman_ai.o: ../config.h
 pacman_ai.o: $(srcdir)/fps.h
 pacman_ai.o: $(srcdir)/pacman_ai.h
@@ -2162,14 +2245,15 @@ pacman_ai.o: $(srcdir)/pacman_level.h
 pacman_ai.o: $(srcdir)/screenhackI.h
 pacman_ai.o: $(UTILS_SRC)/colors.h
 pacman_ai.o: $(UTILS_SRC)/erase.h
+pacman_ai.o: $(UTILS_SRC)/font-retry.h
 pacman_ai.o: $(UTILS_SRC)/grabscreen.h
 pacman_ai.o: $(UTILS_SRC)/hsv.h
 pacman_ai.o: $(UTILS_SRC)/resources.h
 pacman_ai.o: $(UTILS_SRC)/usleep.h
 pacman_ai.o: $(UTILS_SRC)/visual.h
 pacman_ai.o: $(UTILS_SRC)/yarandom.h
+pacman_ai.o: $(srcdir)/ximage-loader.h
 pacman_ai.o: $(srcdir)/xlockmoreI.h
-pacman_ai.o: $(srcdir)/xpm-pixmap.h
 pacman_level.o: ../config.h
 pacman_level.o: $(srcdir)/fps.h
 pacman_level.o: $(srcdir)/pacman.h
@@ -2177,71 +2261,41 @@ pacman_level.o: $(srcdir)/pacman_level.h
 pacman_level.o: $(srcdir)/screenhackI.h
 pacman_level.o: $(UTILS_SRC)/colors.h
 pacman_level.o: $(UTILS_SRC)/erase.h
+pacman_level.o: $(UTILS_SRC)/font-retry.h
 pacman_level.o: $(UTILS_SRC)/grabscreen.h
 pacman_level.o: $(UTILS_SRC)/hsv.h
 pacman_level.o: $(UTILS_SRC)/resources.h
 pacman_level.o: $(UTILS_SRC)/usleep.h
 pacman_level.o: $(UTILS_SRC)/visual.h
 pacman_level.o: $(UTILS_SRC)/yarandom.h
+pacman_level.o: $(srcdir)/ximage-loader.h
 pacman_level.o: $(srcdir)/xlockmoreI.h
-pacman_level.o: $(srcdir)/xpm-pixmap.h
 pacman.o: ../config.h
 pacman.o: $(srcdir)/fps.h
-pacman.o: $(srcdir)/images/pacman/eyes-d.xpm
-pacman.o: $(srcdir)/images/pacman/eyes-l.xpm
-pacman.o: $(srcdir)/images/pacman/eyes-r.xpm
-pacman.o: $(srcdir)/images/pacman/eyes-u.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-d1.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-d2.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-l1.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-l2.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-mask.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-r1.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-r2.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-s1.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-s2.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-sf1.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-sf2.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-u1.xpm
-pacman.o: $(srcdir)/images/pacman/ghost-u2.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-0.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-d1.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-d2.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds1.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds2.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds3.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds4.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds5.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds6.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds7.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-ds8.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-l1.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-l2.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-r1.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-r2.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-u1.xpm
-pacman.o: $(srcdir)/images/pacman/pacman-u2.xpm
+pacman.o: $(srcdir)/images/gen/pacman_png.h
 pacman.o: $(srcdir)/pacman_ai.h
 pacman.o: $(srcdir)/pacman.h
 pacman.o: $(srcdir)/pacman_level.h
 pacman.o: $(srcdir)/screenhackI.h
 pacman.o: $(UTILS_SRC)/colors.h
 pacman.o: $(UTILS_SRC)/erase.h
+pacman.o: $(UTILS_SRC)/font-retry.h
 pacman.o: $(UTILS_SRC)/grabscreen.h
 pacman.o: $(UTILS_SRC)/hsv.h
 pacman.o: $(UTILS_SRC)/resources.h
 pacman.o: $(UTILS_SRC)/usleep.h
 pacman.o: $(UTILS_SRC)/visual.h
 pacman.o: $(UTILS_SRC)/yarandom.h
+pacman.o: $(srcdir)/ximage-loader.h
 pacman.o: $(srcdir)/xlockmoreI.h
 pacman.o: $(srcdir)/xlockmore.h
-pacman.o: $(srcdir)/xpm-pixmap.h
 pedal.o: ../config.h
 pedal.o: $(srcdir)/fps.h
 pedal.o: $(srcdir)/screenhackI.h
 pedal.o: $(srcdir)/screenhack.h
 pedal.o: $(UTILS_SRC)/colors.h
 pedal.o: $(UTILS_SRC)/erase.h
+pedal.o: $(UTILS_SRC)/font-retry.h
 pedal.o: $(UTILS_SRC)/grabscreen.h
 pedal.o: $(UTILS_SRC)/hsv.h
 pedal.o: $(UTILS_SRC)/resources.h
@@ -2253,6 +2307,7 @@ penetrate.o: $(srcdir)/fps.h
 penetrate.o: $(srcdir)/screenhackI.h
 penetrate.o: $(srcdir)/screenhack.h
 penetrate.o: $(UTILS_SRC)/colors.h
+penetrate.o: $(UTILS_SRC)/font-retry.h
 penetrate.o: $(UTILS_SRC)/grabscreen.h
 penetrate.o: $(UTILS_SRC)/hsv.h
 penetrate.o: $(UTILS_SRC)/resources.h
@@ -2264,6 +2319,7 @@ penrose.o: $(srcdir)/fps.h
 penrose.o: $(srcdir)/screenhackI.h
 penrose.o: $(UTILS_SRC)/colors.h
 penrose.o: $(UTILS_SRC)/erase.h
+penrose.o: $(UTILS_SRC)/font-retry.h
 penrose.o: $(UTILS_SRC)/grabscreen.h
 penrose.o: $(UTILS_SRC)/hsv.h
 penrose.o: $(UTILS_SRC)/resources.h
@@ -2277,6 +2333,7 @@ petri.o: $(srcdir)/fps.h
 petri.o: $(srcdir)/screenhackI.h
 petri.o: $(srcdir)/screenhack.h
 petri.o: $(UTILS_SRC)/colors.h
+petri.o: $(UTILS_SRC)/font-retry.h
 petri.o: $(UTILS_SRC)/grabscreen.h
 petri.o: $(UTILS_SRC)/hsv.h
 petri.o: $(UTILS_SRC)/resources.h
@@ -2286,10 +2343,11 @@ petri.o: $(UTILS_SRC)/visual.h
 petri.o: $(UTILS_SRC)/yarandom.h
 phosphor.o: ../config.h
 phosphor.o: $(srcdir)/fps.h
-phosphor.o: $(srcdir)/images/6x10font.xbm
+phosphor.o: $(srcdir)/images/gen/6x10font_png.h
 phosphor.o: $(srcdir)/screenhackI.h
 phosphor.o: $(srcdir)/screenhack.h
 phosphor.o: $(UTILS_SRC)/colors.h
+phosphor.o: $(UTILS_SRC)/font-retry.h
 phosphor.o: $(UTILS_SRC)/grabscreen.h
 phosphor.o: $(UTILS_SRC)/hsv.h
 phosphor.o: $(UTILS_SRC)/resources.h
@@ -2298,11 +2356,13 @@ phosphor.o: $(UTILS_SRC)/usleep.h
 phosphor.o: $(UTILS_SRC)/utf8wc.h
 phosphor.o: $(UTILS_SRC)/visual.h
 phosphor.o: $(UTILS_SRC)/yarandom.h
+phosphor.o: $(srcdir)/ximage-loader.h
 piecewise.o: ../config.h
 piecewise.o: $(srcdir)/fps.h
 piecewise.o: $(srcdir)/screenhackI.h
 piecewise.o: $(srcdir)/screenhack.h
 piecewise.o: $(UTILS_SRC)/colors.h
+piecewise.o: $(UTILS_SRC)/font-retry.h
 piecewise.o: $(UTILS_SRC)/grabscreen.h
 piecewise.o: $(UTILS_SRC)/hsv.h
 piecewise.o: $(UTILS_SRC)/resources.h
@@ -2315,6 +2375,7 @@ polyominoes.o: $(srcdir)/fps.h
 polyominoes.o: $(srcdir)/screenhackI.h
 polyominoes.o: $(UTILS_SRC)/colors.h
 polyominoes.o: $(UTILS_SRC)/erase.h
+polyominoes.o: $(UTILS_SRC)/font-retry.h
 polyominoes.o: $(UTILS_SRC)/grabscreen.h
 polyominoes.o: $(UTILS_SRC)/hsv.h
 polyominoes.o: $(UTILS_SRC)/resources.h
@@ -2330,6 +2391,7 @@ pong.o: $(srcdir)/screenhackI.h
 pong.o: $(srcdir)/screenhack.h
 pong.o: $(UTILS_SRC)/aligned_malloc.h
 pong.o: $(UTILS_SRC)/colors.h
+pong.o: $(UTILS_SRC)/font-retry.h
 pong.o: $(UTILS_SRC)/grabscreen.h
 pong.o: $(UTILS_SRC)/hsv.h
 pong.o: $(UTILS_SRC)/resources.h
@@ -2343,6 +2405,7 @@ popsquares.o: $(srcdir)/fps.h
 popsquares.o: $(srcdir)/screenhackI.h
 popsquares.o: $(srcdir)/screenhack.h
 popsquares.o: $(UTILS_SRC)/colors.h
+popsquares.o: $(UTILS_SRC)/font-retry.h
 popsquares.o: $(UTILS_SRC)/grabscreen.h
 popsquares.o: $(UTILS_SRC)/hsv.h
 popsquares.o: $(UTILS_SRC)/resources.h
@@ -2355,6 +2418,7 @@ pyro.o: $(srcdir)/fps.h
 pyro.o: $(srcdir)/screenhackI.h
 pyro.o: $(srcdir)/screenhack.h
 pyro.o: $(UTILS_SRC)/colors.h
+pyro.o: $(UTILS_SRC)/font-retry.h
 pyro.o: $(UTILS_SRC)/grabscreen.h
 pyro.o: $(UTILS_SRC)/hsv.h
 pyro.o: $(UTILS_SRC)/resources.h
@@ -2367,6 +2431,7 @@ qix.o: $(srcdir)/screenhackI.h
 qix.o: $(srcdir)/screenhack.h
 qix.o: $(UTILS_SRC)/alpha.h
 qix.o: $(UTILS_SRC)/colors.h
+qix.o: $(UTILS_SRC)/font-retry.h
 qix.o: $(UTILS_SRC)/grabscreen.h
 qix.o: $(UTILS_SRC)/hsv.h
 qix.o: $(UTILS_SRC)/resources.h
@@ -2378,6 +2443,7 @@ rd-bomb.o: $(srcdir)/fps.h
 rd-bomb.o: $(srcdir)/screenhackI.h
 rd-bomb.o: $(srcdir)/screenhack.h
 rd-bomb.o: $(UTILS_SRC)/colors.h
+rd-bomb.o: $(UTILS_SRC)/font-retry.h
 rd-bomb.o: $(UTILS_SRC)/grabscreen.h
 rd-bomb.o: $(UTILS_SRC)/hsv.h
 rd-bomb.o: $(UTILS_SRC)/resources.h
@@ -2390,6 +2456,7 @@ recanim.o: $(srcdir)/fps.h
 recanim.o: $(srcdir)/recanim.h
 recanim.o: $(srcdir)/screenhackI.h
 recanim.o: $(UTILS_SRC)/colors.h
+recanim.o: $(UTILS_SRC)/font-retry.h
 recanim.o: $(UTILS_SRC)/grabscreen.h
 recanim.o: $(UTILS_SRC)/hsv.h
 recanim.o: $(UTILS_SRC)/resources.h
@@ -2401,6 +2468,7 @@ ripples.o: $(srcdir)/fps.h
 ripples.o: $(srcdir)/screenhackI.h
 ripples.o: $(srcdir)/screenhack.h
 ripples.o: $(UTILS_SRC)/colors.h
+ripples.o: $(UTILS_SRC)/font-retry.h
 ripples.o: $(UTILS_SRC)/grabscreen.h
 ripples.o: $(UTILS_SRC)/hsv.h
 ripples.o: $(UTILS_SRC)/resources.h
@@ -2413,6 +2481,7 @@ rocks.o: $(srcdir)/fps.h
 rocks.o: $(srcdir)/screenhackI.h
 rocks.o: $(srcdir)/screenhack.h
 rocks.o: $(UTILS_SRC)/colors.h
+rocks.o: $(UTILS_SRC)/font-retry.h
 rocks.o: $(UTILS_SRC)/grabscreen.h
 rocks.o: $(UTILS_SRC)/hsv.h
 rocks.o: $(UTILS_SRC)/resources.h
@@ -2425,6 +2494,7 @@ rorschach.o: $(srcdir)/screenhackI.h
 rorschach.o: $(srcdir)/screenhack.h
 rorschach.o: $(UTILS_SRC)/colors.h
 rorschach.o: $(UTILS_SRC)/erase.h
+rorschach.o: $(UTILS_SRC)/font-retry.h
 rorschach.o: $(UTILS_SRC)/grabscreen.h
 rorschach.o: $(UTILS_SRC)/hsv.h
 rorschach.o: $(UTILS_SRC)/resources.h
@@ -2436,6 +2506,7 @@ rotor.o: $(srcdir)/fps.h
 rotor.o: $(srcdir)/screenhackI.h
 rotor.o: $(UTILS_SRC)/colors.h
 rotor.o: $(UTILS_SRC)/erase.h
+rotor.o: $(UTILS_SRC)/font-retry.h
 rotor.o: $(UTILS_SRC)/grabscreen.h
 rotor.o: $(UTILS_SRC)/hsv.h
 rotor.o: $(UTILS_SRC)/resources.h
@@ -2449,6 +2520,7 @@ rotzoomer.o: $(srcdir)/fps.h
 rotzoomer.o: $(srcdir)/screenhackI.h
 rotzoomer.o: $(srcdir)/screenhack.h
 rotzoomer.o: $(UTILS_SRC)/colors.h
+rotzoomer.o: $(UTILS_SRC)/font-retry.h
 rotzoomer.o: $(UTILS_SRC)/grabscreen.h
 rotzoomer.o: $(UTILS_SRC)/hsv.h
 rotzoomer.o: $(UTILS_SRC)/resources.h
@@ -2461,6 +2533,7 @@ screenhack.o: $(srcdir)/fps.h
 screenhack.o: $(srcdir)/recanim.h
 screenhack.o: $(srcdir)/screenhackI.h
 screenhack.o: $(UTILS_SRC)/colors.h
+screenhack.o: $(UTILS_SRC)/font-retry.h
 screenhack.o: $(UTILS_SRC)/grabscreen.h
 screenhack.o: $(UTILS_SRC)/hsv.h
 screenhack.o: $(UTILS_SRC)/resources.h
@@ -2475,6 +2548,7 @@ shadebobs.o: $(srcdir)/fps.h
 shadebobs.o: $(srcdir)/screenhackI.h
 shadebobs.o: $(srcdir)/screenhack.h
 shadebobs.o: $(UTILS_SRC)/colors.h
+shadebobs.o: $(UTILS_SRC)/font-retry.h
 shadebobs.o: $(UTILS_SRC)/grabscreen.h
 shadebobs.o: $(UTILS_SRC)/hsv.h
 shadebobs.o: $(UTILS_SRC)/resources.h
@@ -2486,6 +2560,7 @@ sierpinski.o: $(srcdir)/fps.h
 sierpinski.o: $(srcdir)/screenhackI.h
 sierpinski.o: $(UTILS_SRC)/colors.h
 sierpinski.o: $(UTILS_SRC)/erase.h
+sierpinski.o: $(UTILS_SRC)/font-retry.h
 sierpinski.o: $(UTILS_SRC)/grabscreen.h
 sierpinski.o: $(UTILS_SRC)/hsv.h
 sierpinski.o: $(UTILS_SRC)/resources.h
@@ -2499,6 +2574,7 @@ slidescreen.o: $(srcdir)/fps.h
 slidescreen.o: $(srcdir)/screenhackI.h
 slidescreen.o: $(srcdir)/screenhack.h
 slidescreen.o: $(UTILS_SRC)/colors.h
+slidescreen.o: $(UTILS_SRC)/font-retry.h
 slidescreen.o: $(UTILS_SRC)/grabscreen.h
 slidescreen.o: $(UTILS_SRC)/hsv.h
 slidescreen.o: $(UTILS_SRC)/resources.h
@@ -2510,6 +2586,7 @@ slip.o: $(srcdir)/fps.h
 slip.o: $(srcdir)/screenhackI.h
 slip.o: $(UTILS_SRC)/colors.h
 slip.o: $(UTILS_SRC)/erase.h
+slip.o: $(UTILS_SRC)/font-retry.h
 slip.o: $(UTILS_SRC)/grabscreen.h
 slip.o: $(UTILS_SRC)/hsv.h
 slip.o: $(UTILS_SRC)/resources.h
@@ -2524,6 +2601,7 @@ speedmine.o: $(srcdir)/screenhackI.h
 speedmine.o: $(srcdir)/screenhack.h
 speedmine.o: $(UTILS_SRC)/colors.h
 speedmine.o: $(UTILS_SRC)/erase.h
+speedmine.o: $(UTILS_SRC)/font-retry.h
 speedmine.o: $(UTILS_SRC)/grabscreen.h
 speedmine.o: $(UTILS_SRC)/hsv.h
 speedmine.o: $(UTILS_SRC)/resources.h
@@ -2535,6 +2613,7 @@ sphere.o: $(srcdir)/fps.h
 sphere.o: $(srcdir)/screenhackI.h
 sphere.o: $(UTILS_SRC)/colors.h
 sphere.o: $(UTILS_SRC)/erase.h
+sphere.o: $(UTILS_SRC)/font-retry.h
 sphere.o: $(UTILS_SRC)/grabscreen.h
 sphere.o: $(UTILS_SRC)/hsv.h
 sphere.o: $(UTILS_SRC)/resources.h
@@ -2548,6 +2627,7 @@ spiral.o: $(srcdir)/fps.h
 spiral.o: $(srcdir)/screenhackI.h
 spiral.o: $(UTILS_SRC)/colors.h
 spiral.o: $(UTILS_SRC)/erase.h
+spiral.o: $(UTILS_SRC)/font-retry.h
 spiral.o: $(UTILS_SRC)/grabscreen.h
 spiral.o: $(UTILS_SRC)/hsv.h
 spiral.o: $(UTILS_SRC)/resources.h
@@ -2561,6 +2641,7 @@ spotlight.o: $(srcdir)/fps.h
 spotlight.o: $(srcdir)/screenhackI.h
 spotlight.o: $(srcdir)/screenhack.h
 spotlight.o: $(UTILS_SRC)/colors.h
+spotlight.o: $(UTILS_SRC)/font-retry.h
 spotlight.o: $(UTILS_SRC)/grabscreen.h
 spotlight.o: $(UTILS_SRC)/hsv.h
 spotlight.o: $(UTILS_SRC)/resources.h
@@ -2573,6 +2654,7 @@ squiral.o: $(srcdir)/screenhackI.h
 squiral.o: $(srcdir)/screenhack.h
 squiral.o: $(UTILS_SRC)/colors.h
 squiral.o: $(UTILS_SRC)/erase.h
+squiral.o: $(UTILS_SRC)/font-retry.h
 squiral.o: $(UTILS_SRC)/grabscreen.h
 squiral.o: $(UTILS_SRC)/hsv.h
 squiral.o: $(UTILS_SRC)/resources.h
@@ -2584,6 +2666,7 @@ starfish.o: $(srcdir)/fps.h
 starfish.o: $(srcdir)/screenhackI.h
 starfish.o: $(srcdir)/screenhack.h
 starfish.o: $(UTILS_SRC)/colors.h
+starfish.o: $(UTILS_SRC)/font-retry.h
 starfish.o: $(UTILS_SRC)/grabscreen.h
 starfish.o: $(UTILS_SRC)/hsv.h
 starfish.o: $(UTILS_SRC)/resources.h
@@ -2597,6 +2680,7 @@ strange.o: $(srcdir)/screenhackI.h
 strange.o: $(UTILS_SRC)/aligned_malloc.h
 strange.o: $(UTILS_SRC)/colors.h
 strange.o: $(UTILS_SRC)/erase.h
+strange.o: $(UTILS_SRC)/font-retry.h
 strange.o: $(UTILS_SRC)/grabscreen.h
 strange.o: $(UTILS_SRC)/hsv.h
 strange.o: $(UTILS_SRC)/pow2.h
@@ -2613,6 +2697,7 @@ substrate.o: $(srcdir)/fps.h
 substrate.o: $(srcdir)/screenhackI.h
 substrate.o: $(srcdir)/screenhack.h
 substrate.o: $(UTILS_SRC)/colors.h
+substrate.o: $(UTILS_SRC)/font-retry.h
 substrate.o: $(UTILS_SRC)/grabscreen.h
 substrate.o: $(UTILS_SRC)/hsv.h
 substrate.o: $(UTILS_SRC)/resources.h
@@ -2624,6 +2709,7 @@ swirl.o: $(srcdir)/fps.h
 swirl.o: $(srcdir)/screenhackI.h
 swirl.o: $(UTILS_SRC)/colors.h
 swirl.o: $(UTILS_SRC)/erase.h
+swirl.o: $(UTILS_SRC)/font-retry.h
 swirl.o: $(UTILS_SRC)/grabscreen.h
 swirl.o: $(UTILS_SRC)/hsv.h
 swirl.o: $(UTILS_SRC)/resources.h
@@ -2638,6 +2724,7 @@ t3d.o: $(srcdir)/fps.h
 t3d.o: $(srcdir)/screenhackI.h
 t3d.o: $(srcdir)/screenhack.h
 t3d.o: $(UTILS_SRC)/colors.h
+t3d.o: $(UTILS_SRC)/font-retry.h
 t3d.o: $(UTILS_SRC)/grabscreen.h
 t3d.o: $(UTILS_SRC)/hsv.h
 t3d.o: $(UTILS_SRC)/resources.h
@@ -2650,6 +2737,7 @@ tessellimage.o: $(srcdir)/fps.h
 tessellimage.o: $(srcdir)/screenhackI.h
 tessellimage.o: $(srcdir)/screenhack.h
 tessellimage.o: $(UTILS_SRC)/colors.h
+tessellimage.o: $(UTILS_SRC)/font-retry.h
 tessellimage.o: $(UTILS_SRC)/grabscreen.h
 tessellimage.o: $(UTILS_SRC)/hsv.h
 tessellimage.o: $(UTILS_SRC)/resources.h
@@ -2659,22 +2747,26 @@ tessellimage.o: $(UTILS_SRC)/yarandom.h
 testx11.o: ../config.h
 testx11.o: $(srcdir)/fps.h
 testx11.o: $(srcdir)/glx/rotator.h
+testx11.o: $(srcdir)/images/gen/logo-180_png.h
 testx11.o: $(srcdir)/screenhackI.h
 testx11.o: $(srcdir)/screenhack.h
 testx11.o: $(UTILS_SRC)/colorbars.h
 testx11.o: $(UTILS_SRC)/colors.h
 testx11.o: $(UTILS_SRC)/erase.h
+testx11.o: $(UTILS_SRC)/font-retry.h
 testx11.o: $(UTILS_SRC)/grabscreen.h
 testx11.o: $(UTILS_SRC)/hsv.h
 testx11.o: $(UTILS_SRC)/resources.h
 testx11.o: $(UTILS_SRC)/usleep.h
 testx11.o: $(UTILS_SRC)/visual.h
 testx11.o: $(UTILS_SRC)/yarandom.h
+testx11.o: $(srcdir)/ximage-loader.h
 thornbird.o: ../config.h
 thornbird.o: $(srcdir)/fps.h
 thornbird.o: $(srcdir)/screenhackI.h
 thornbird.o: $(UTILS_SRC)/colors.h
 thornbird.o: $(UTILS_SRC)/erase.h
+thornbird.o: $(UTILS_SRC)/font-retry.h
 thornbird.o: $(UTILS_SRC)/grabscreen.h
 thornbird.o: $(UTILS_SRC)/hsv.h
 thornbird.o: $(UTILS_SRC)/resources.h
@@ -2688,6 +2780,7 @@ triangle.o: $(srcdir)/fps.h
 triangle.o: $(srcdir)/screenhackI.h
 triangle.o: $(UTILS_SRC)/colors.h
 triangle.o: $(UTILS_SRC)/erase.h
+triangle.o: $(UTILS_SRC)/font-retry.h
 triangle.o: $(UTILS_SRC)/grabscreen.h
 triangle.o: $(UTILS_SRC)/hsv.h
 triangle.o: $(UTILS_SRC)/resources.h
@@ -2701,6 +2794,7 @@ truchet.o: $(srcdir)/fps.h
 truchet.o: $(srcdir)/screenhackI.h
 truchet.o: $(srcdir)/screenhack.h
 truchet.o: $(UTILS_SRC)/colors.h
+truchet.o: $(UTILS_SRC)/font-retry.h
 truchet.o: $(UTILS_SRC)/grabscreen.h
 truchet.o: $(UTILS_SRC)/hsv.h
 truchet.o: $(UTILS_SRC)/resources.h
@@ -2712,6 +2806,7 @@ twang.o: $(srcdir)/fps.h
 twang.o: $(srcdir)/screenhackI.h
 twang.o: $(srcdir)/screenhack.h
 twang.o: $(UTILS_SRC)/colors.h
+twang.o: $(UTILS_SRC)/font-retry.h
 twang.o: $(UTILS_SRC)/grabscreen.h
 twang.o: $(UTILS_SRC)/hsv.h
 twang.o: $(UTILS_SRC)/resources.h
@@ -2724,6 +2819,7 @@ vermiculate.o: $(srcdir)/fps.h
 vermiculate.o: $(srcdir)/screenhackI.h
 vermiculate.o: $(srcdir)/screenhack.h
 vermiculate.o: $(UTILS_SRC)/colors.h
+vermiculate.o: $(UTILS_SRC)/font-retry.h
 vermiculate.o: $(UTILS_SRC)/grabscreen.h
 vermiculate.o: $(UTILS_SRC)/hsv.h
 vermiculate.o: $(UTILS_SRC)/resources.h
@@ -2735,6 +2831,7 @@ vines.o: $(srcdir)/fps.h
 vines.o: $(srcdir)/screenhackI.h
 vines.o: $(UTILS_SRC)/colors.h
 vines.o: $(UTILS_SRC)/erase.h
+vines.o: $(UTILS_SRC)/font-retry.h
 vines.o: $(UTILS_SRC)/grabscreen.h
 vines.o: $(UTILS_SRC)/hsv.h
 vines.o: $(UTILS_SRC)/resources.h
@@ -2749,6 +2846,7 @@ wander.o: $(srcdir)/screenhackI.h
 wander.o: $(srcdir)/screenhack.h
 wander.o: $(UTILS_SRC)/colors.h
 wander.o: $(UTILS_SRC)/erase.h
+wander.o: $(UTILS_SRC)/font-retry.h
 wander.o: $(UTILS_SRC)/grabscreen.h
 wander.o: $(UTILS_SRC)/hsv.h
 wander.o: $(UTILS_SRC)/resources.h
@@ -2760,6 +2858,7 @@ webcollage-cocoa.o: $(srcdir)/fps.h
 webcollage-cocoa.o: $(srcdir)/screenhackI.h
 webcollage-cocoa.o: $(srcdir)/screenhack.h
 webcollage-cocoa.o: $(UTILS_SRC)/colors.h
+webcollage-cocoa.o: $(UTILS_SRC)/font-retry.h
 webcollage-cocoa.o: $(UTILS_SRC)/grabscreen.h
 webcollage-cocoa.o: $(UTILS_SRC)/hsv.h
 webcollage-cocoa.o: $(UTILS_SRC)/resources.h
@@ -2773,6 +2872,7 @@ whirlwindwarp.o: $(srcdir)/screenhackI.h
 whirlwindwarp.o: $(srcdir)/screenhack.h
 whirlwindwarp.o: $(UTILS_SRC)/colors.h
 whirlwindwarp.o: $(UTILS_SRC)/erase.h
+whirlwindwarp.o: $(UTILS_SRC)/font-retry.h
 whirlwindwarp.o: $(UTILS_SRC)/grabscreen.h
 whirlwindwarp.o: $(UTILS_SRC)/hsv.h
 whirlwindwarp.o: $(UTILS_SRC)/resources.h
@@ -2784,6 +2884,7 @@ whirlygig.o: $(srcdir)/fps.h
 whirlygig.o: $(srcdir)/screenhackI.h
 whirlygig.o: $(srcdir)/screenhack.h
 whirlygig.o: $(UTILS_SRC)/colors.h
+whirlygig.o: $(UTILS_SRC)/font-retry.h
 whirlygig.o: $(UTILS_SRC)/grabscreen.h
 whirlygig.o: $(UTILS_SRC)/hsv.h
 whirlygig.o: $(UTILS_SRC)/resources.h
@@ -2796,6 +2897,7 @@ wormhole.o: $(srcdir)/fps.h
 wormhole.o: $(srcdir)/screenhackI.h
 wormhole.o: $(srcdir)/screenhack.h
 wormhole.o: $(UTILS_SRC)/colors.h
+wormhole.o: $(UTILS_SRC)/font-retry.h
 wormhole.o: $(UTILS_SRC)/grabscreen.h
 wormhole.o: $(UTILS_SRC)/hsv.h
 wormhole.o: $(UTILS_SRC)/resources.h
@@ -2807,6 +2909,7 @@ worm.o: $(srcdir)/fps.h
 worm.o: $(srcdir)/screenhackI.h
 worm.o: $(UTILS_SRC)/colors.h
 worm.o: $(UTILS_SRC)/erase.h
+worm.o: $(UTILS_SRC)/font-retry.h
 worm.o: $(UTILS_SRC)/grabscreen.h
 worm.o: $(UTILS_SRC)/hsv.h
 worm.o: $(UTILS_SRC)/resources.h
@@ -2822,6 +2925,7 @@ xanalogtv.o: $(srcdir)/screenhackI.h
 xanalogtv.o: $(srcdir)/screenhack.h
 xanalogtv.o: $(UTILS_SRC)/aligned_malloc.h
 xanalogtv.o: $(UTILS_SRC)/colors.h
+xanalogtv.o: $(UTILS_SRC)/font-retry.h
 xanalogtv.o: $(UTILS_SRC)/grabscreen.h
 xanalogtv.o: $(UTILS_SRC)/hsv.h
 xanalogtv.o: $(UTILS_SRC)/images/logo-50.xpm
@@ -2831,13 +2935,14 @@ xanalogtv.o: $(UTILS_SRC)/usleep.h
 xanalogtv.o: $(UTILS_SRC)/visual.h
 xanalogtv.o: $(UTILS_SRC)/xshm.h
 xanalogtv.o: $(UTILS_SRC)/yarandom.h
-xanalogtv.o: $(srcdir)/xpm-pixmap.h
+xanalogtv.o: $(srcdir)/ximage-loader.h
 xflame.o: ../config.h
 xflame.o: $(srcdir)/fps.h
-xflame.o: $(srcdir)/images/bob.xbm
+xflame.o: $(srcdir)/images/gen/bob_png.h
 xflame.o: $(srcdir)/screenhackI.h
 xflame.o: $(srcdir)/screenhack.h
 xflame.o: $(UTILS_SRC)/colors.h
+xflame.o: $(UTILS_SRC)/font-retry.h
 xflame.o: $(UTILS_SRC)/grabscreen.h
 xflame.o: $(UTILS_SRC)/hsv.h
 xflame.o: $(UTILS_SRC)/resources.h
@@ -2845,12 +2950,15 @@ xflame.o: $(UTILS_SRC)/usleep.h
 xflame.o: $(UTILS_SRC)/visual.h
 xflame.o: $(UTILS_SRC)/xshm.h
 xflame.o: $(UTILS_SRC)/yarandom.h
-xflame.o: $(srcdir)/xpm-pixmap.h
+xflame.o: $(srcdir)/ximage-loader.h
+ximage-loader.o: ../config.h
+ximage-loader.o: $(srcdir)/ximage-loader.h
 xjack.o: ../config.h
 xjack.o: $(srcdir)/fps.h
 xjack.o: $(srcdir)/screenhackI.h
 xjack.o: $(srcdir)/screenhack.h
 xjack.o: $(UTILS_SRC)/colors.h
+xjack.o: $(UTILS_SRC)/font-retry.h
 xjack.o: $(UTILS_SRC)/grabscreen.h
 xjack.o: $(UTILS_SRC)/hsv.h
 xjack.o: $(UTILS_SRC)/resources.h
@@ -2863,6 +2971,7 @@ xlockmore.o: $(srcdir)/screenhackI.h
 xlockmore.o: $(srcdir)/screenhack.h
 xlockmore.o: $(UTILS_SRC)/colors.h
 xlockmore.o: $(UTILS_SRC)/erase.h
+xlockmore.o: $(UTILS_SRC)/font-retry.h
 xlockmore.o: $(UTILS_SRC)/grabscreen.h
 xlockmore.o: $(UTILS_SRC)/hsv.h
 xlockmore.o: $(UTILS_SRC)/resources.h
@@ -2875,6 +2984,7 @@ xlyap.o: $(srcdir)/fps.h
 xlyap.o: $(srcdir)/screenhackI.h
 xlyap.o: $(srcdir)/screenhack.h
 xlyap.o: $(UTILS_SRC)/colors.h
+xlyap.o: $(UTILS_SRC)/font-retry.h
 xlyap.o: $(UTILS_SRC)/grabscreen.h
 xlyap.o: $(UTILS_SRC)/hsv.h
 xlyap.o: $(UTILS_SRC)/resources.h
@@ -2883,17 +2993,14 @@ xlyap.o: $(UTILS_SRC)/visual.h
 xlyap.o: $(UTILS_SRC)/yarandom.h
 xmatrix.o: ../config.h
 xmatrix.o: $(srcdir)/fps.h
-xmatrix.o: $(srcdir)/images/matrix1b.xbm
-xmatrix.o: $(srcdir)/images/matrix1b.xpm
-xmatrix.o: $(srcdir)/images/matrix1.xbm
-xmatrix.o: $(srcdir)/images/matrix1.xpm
-xmatrix.o: $(srcdir)/images/matrix2b.xbm
-xmatrix.o: $(srcdir)/images/matrix2b.xpm
-xmatrix.o: $(srcdir)/images/matrix2.xbm
-xmatrix.o: $(srcdir)/images/matrix2.xpm
+xmatrix.o: $(srcdir)/images/gen/matrix1b_png.h
+xmatrix.o: $(srcdir)/images/gen/matrix1_png.h
+xmatrix.o: $(srcdir)/images/gen/matrix2b_png.h
+xmatrix.o: $(srcdir)/images/gen/matrix2_png.h
 xmatrix.o: $(srcdir)/screenhackI.h
 xmatrix.o: $(srcdir)/screenhack.h
 xmatrix.o: $(UTILS_SRC)/colors.h
+xmatrix.o: $(UTILS_SRC)/font-retry.h
 xmatrix.o: $(UTILS_SRC)/grabscreen.h
 xmatrix.o: $(UTILS_SRC)/hsv.h
 xmatrix.o: $(UTILS_SRC)/resources.h
@@ -2901,15 +3008,13 @@ xmatrix.o: $(UTILS_SRC)/textclient.h
 xmatrix.o: $(UTILS_SRC)/usleep.h
 xmatrix.o: $(UTILS_SRC)/visual.h
 xmatrix.o: $(UTILS_SRC)/yarandom.h
-xmatrix.o: $(srcdir)/xpm-pixmap.h
-xpm-pixmap.o: ../config.h
-xpm-pixmap.o: $(UTILS_SRC)/visual.h
-xpm-pixmap.o: $(srcdir)/xpm-pixmap.h
+xmatrix.o: $(srcdir)/ximage-loader.h
 xrayswarm.o: ../config.h
 xrayswarm.o: $(srcdir)/fps.h
 xrayswarm.o: $(srcdir)/screenhackI.h
 xrayswarm.o: $(srcdir)/screenhack.h
 xrayswarm.o: $(UTILS_SRC)/colors.h
+xrayswarm.o: $(UTILS_SRC)/font-retry.h
 xrayswarm.o: $(UTILS_SRC)/grabscreen.h
 xrayswarm.o: $(UTILS_SRC)/hsv.h
 xrayswarm.o: $(UTILS_SRC)/resources.h
@@ -2923,6 +3028,7 @@ xspirograph.o: $(srcdir)/screenhackI.h
 xspirograph.o: $(srcdir)/screenhack.h
 xspirograph.o: $(UTILS_SRC)/colors.h
 xspirograph.o: $(UTILS_SRC)/erase.h
+xspirograph.o: $(UTILS_SRC)/font-retry.h
 xspirograph.o: $(UTILS_SRC)/grabscreen.h
 xspirograph.o: $(UTILS_SRC)/hsv.h
 xspirograph.o: $(UTILS_SRC)/resources.h
@@ -2930,6 +3036,7 @@ xspirograph.o: $(UTILS_SRC)/usleep.h
 xspirograph.o: $(UTILS_SRC)/visual.h
 xspirograph.o: $(UTILS_SRC)/yarandom.h
 xsublim.o: ../config.h
+xsublim.o: $(UTILS_SRC)/font-retry.h
 xsublim.o: $(UTILS_SRC)/resources.h
 xsublim.o: $(UTILS_SRC)/usleep.h
 xsublim.o: $(UTILS_SRC)/vroot.h
@@ -2939,6 +3046,7 @@ zoom.o: $(srcdir)/fps.h
 zoom.o: $(srcdir)/screenhackI.h
 zoom.o: $(srcdir)/screenhack.h
 zoom.o: $(UTILS_SRC)/colors.h
+zoom.o: $(UTILS_SRC)/font-retry.h
 zoom.o: $(UTILS_SRC)/grabscreen.h
 zoom.o: $(UTILS_SRC)/hsv.h
 zoom.o: $(UTILS_SRC)/resources.h

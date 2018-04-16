@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2014 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2018 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -16,7 +16,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.3 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.4 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -46,7 +46,7 @@ sub sanity_check() {
   }
 
   foreach my $f ('ip.h', 'in_systm.h', 'ip_icmp.h', 'ip_var.h', 'udp.h') {
-    $fail .= "\tsudo ln -s $d3$f $d1$d2\n"
+    $fail .= "\tsudo ln -sf $d3$f $d1$d2\n"
       unless (-f "$d1$d2$f");
   }
 

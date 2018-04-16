@@ -11,6 +11,7 @@ tessellimage - Converts an image to triangles using Delaunay tessellation.
 [\-duration \fInumber\fP]
 [\-duration2 \fInumber\fP]
 [\-max-depth \fInumber\fP]
+[\-max-resolution \fIpixels\fP]
 [\-no-outline]
 [\-no-fill-screen]
 [\-fps]
@@ -47,6 +48,11 @@ Default: 0.4 seconds.
 .B \-max-depth \fInumber\fP
 The maximum number of triangles to render.  Default: 40000.
 .TP 8
+.B \-max-resolution \fIpixels\fP
+The size of the loaded image will be constrained to this width or
+height, to reduce the number of pixels examined.  Think of it as
+an initial low-pass filter.  Default 1024.
+.TP 8
 .B \-outline | \-no-outline
 Whether to outline the triangles.
 .TP 8
@@ -69,7 +75,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2014 by Jamie Zawinski.  Permission to use, copy, modify, 
+Copyright \(co 2014-2018 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice

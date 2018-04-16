@@ -165,19 +165,18 @@ ModStruct   atlantis_description =
 
 static atlantisstruct *atlantis = NULL;
 
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 
-#include "../images/sea-texture.xpm"
+#include "images/gen/sea-texture_png.h"
 
 
 static void
 parse_image_data(ModeInfo *mi)
 {
   atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
-  ap->texture = xpm_to_ximage (mi->dpy,
-			       mi->xgwa.visual,
-			       mi->xgwa.colormap,
-			       sea_texture);
+  ap->texture = image_data_to_ximage (mi->dpy, mi->xgwa.visual,
+                                      sea_texture_png,
+                                      sizeof(sea_texture_png));
 }
 
 static void

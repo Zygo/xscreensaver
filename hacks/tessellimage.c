@@ -1,4 +1,4 @@
-/* tessellimage, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* tessellimage, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,7 +31,7 @@ struct state {
   int delay;
   Bool outline_p, cache_p, fill_p;
   double duration, duration2;
-  int max_depth;
+  int max_depth, max_resolution;
   double start_time, start_time2;
 
   XImage *img, *delta;
@@ -82,6 +82,10 @@ tessellimage_init (Display *dpy, Window window)
 
   st->max_depth = get_integer_resource (st->dpy, "maxDepth", "MaxDepth");
   if (st->max_depth < 100) st->max_depth = 100;
+
+  st->max_resolution = get_integer_resource (st->dpy,
+                                             "maxResolution", "MaxResolution");
+  if (st->max_resolution < 0) st->max_resolution = 0;
 
   st->duration = get_float_resource (st->dpy, "duration", "Seconds");
   if (st->duration < 1) st->duration = 1;
@@ -577,7 +581,7 @@ tessellate (struct state *st)
         XCopyArea (st->dpy, 
                    st->cache[st->thresh],
                    st->output, st->pgc,
-                   0, 0, st->delta->width, st->delta->height, 
+                   0, 0, st->xgwa.width, st->xgwa.height, 
                    0, 0);
     }
   else if (ticked_p)
@@ -589,6 +593,7 @@ tessellate (struct state *st)
       int nv = 0;
       int ntri = 0;
       int x, y, i;
+      double wscale = st->xgwa.width / (double) st->delta->width;
 
 #if 0
       fprintf(stderr, "%s: thresh %d/%d = %d=%d\n", 
@@ -657,10 +662,10 @@ tessellate (struct state *st)
       if (st->output)
         XFreePixmap (st->dpy, st->output);
       st->output = XCreatePixmap (st->dpy, st->window,
-                                  st->delta->width, st->delta->height,
+                                  st->xgwa.width, st->xgwa.height,
                                   st->xgwa.depth);
       XFillRectangle (st->dpy, st->output, st->pgc, 
-                      0, 0, st->delta->width, st->delta->height);
+                      0, 0, st->xgwa.width, st->xgwa.height);
 
 #ifdef DO_VORONOI
 
@@ -706,14 +711,14 @@ tessellate (struct state *st)
         {
           XPoint xp[3];
           unsigned long color;
-          xp[0].x = p[v[i].p1].x; xp[0].y = p[v[i].p1].y;
-          xp[1].x = p[v[i].p2].x; xp[1].y = p[v[i].p2].y;
-          xp[2].x = p[v[i].p3].x; xp[2].y = p[v[i].p3].y;
+          xp[0].x = p[v[i].p1].x * wscale; xp[0].y = p[v[i].p1].y * wscale;
+          xp[1].x = p[v[i].p2].x * wscale; xp[1].y = p[v[i].p2].y * wscale;
+          xp[2].x = p[v[i].p3].x * wscale; xp[2].y = p[v[i].p3].y * wscale;
 
           /* Set the color of this triangle to the pixel at its midpoint. */
           color = XGetPixel (st->img,
-                             (xp[0].x + xp[1].x + xp[2].x) / 3,
-                             (xp[0].y + xp[1].y + xp[2].y) / 3);
+                             (xp[0].x + xp[1].x + xp[2].x) / (3 * wscale),
+                             (xp[0].y + xp[1].y + xp[2].y) / (3 * wscale));
 
           XSetForeground (st->dpy, st->pgc, color);
           XFillPolygon (st->dpy, st->output, st->pgc, xp, countof(xp),
@@ -747,7 +752,7 @@ tessellate (struct state *st)
         {
           st->cache[st->thresh] =
             XCreatePixmap (st->dpy, st->window,
-                           st->delta->width, st->delta->height,
+                           st->xgwa.width, st->xgwa.height,
                            st->xgwa.depth);
           if (! st->cache[st->thresh])
             {
@@ -759,7 +764,7 @@ tessellate (struct state *st)
                        st->output,
                        st->cache[st->thresh],
                        st->pgc,
-                       0, 0, st->delta->width, st->delta->height, 
+                       0, 0, st->xgwa.width, st->xgwa.height, 
                        0, 0);
         }
     }
@@ -774,8 +779,9 @@ static Pixmap
 get_deltap (struct state *st)
 {
   int x, y;
-  int w = st->delta->width;
-  int h = st->delta->height;
+  int w = st->xgwa.width;
+  int h = st->xgwa.height;
+  double wscale = st->xgwa.width / (double) st->delta->width;
   XImage *dimg;
 
   Visual *v = st->xgwa.visual;
@@ -799,7 +805,7 @@ get_deltap (struct state *st)
   for (y = 0; y < h; y++)
     for (x = 0; x < w; x++)
       {
-        unsigned long v = XGetPixel (st->delta, x, y) << 5;
+        unsigned long v = XGetPixel (st->delta, x / wscale, y / wscale) << 5;
         unsigned long p = (((v << rpos) & rmsk) |
                            ((v << gpos) & gmsk) |
                            ((v << bpos) & bmsk));
@@ -832,11 +838,23 @@ tessellimage_draw (Display *dpy, Window window, void *closure)
 
   if (!st->img_loader &&
       st->start_time + st->duration < double_time()) {
+    int w = st->xgwa.width;
+    int h = st->xgwa.height;
+
+    /* Analysing a full-resolution image on a Retina display is too slow,
+       so scale down the source at image-load time. */
+    if (st->max_resolution > 10)
+      {
+        if (w > h && w > st->max_resolution)
+          h = st->max_resolution * h / w, w = st->max_resolution;
+        else if (h > st->max_resolution)
+          w = st->max_resolution * w / h, h = st->max_resolution;
+      }
+    /* fprintf(stderr,"%s: loading %d x %d\n", progname, w, h); */
+
     XClearWindow (st->dpy, st->window);
     if (st->image) XFreePixmap (dpy, st->image);
-    st->image = XCreatePixmap (st->dpy, st->window,
-                               st->xgwa.width, st->xgwa.height,
-                               st->xgwa.depth);
+    st->image = XCreatePixmap (st->dpy, st->window, w, h, st->xgwa.depth);
     st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
                                               st->image, 0, &st->geom);
     goto DONE;
@@ -851,16 +869,12 @@ tessellimage_draw (Display *dpy, Window window, void *closure)
     XCopyArea (st->dpy, 
                (st->button_down_p ? get_deltap (st) : st->output),
                st->window, st->wgc,
-               0, 0, st->delta->width, st->delta->height, 
-               (st->xgwa.width  - st->delta->width)  / 2,
-               (st->xgwa.height - st->delta->height) / 2);
+               0, 0, st->xgwa.width, st->xgwa.height, 0, 0);
   else if (!st->nthreshes)
     XCopyArea (st->dpy,
                st->image,
                st->window, st->wgc,
-               0, 0, st->xgwa.width, st->xgwa.height,
-               0,
-               0);
+               0, 0, st->xgwa.width, st->xgwa.height, 0, 0);
 
 
  DONE:
@@ -918,12 +932,14 @@ tessellimage_free (Display *dpy, Window window, void *closure)
 static const char *tessellimage_defaults [] = {
   ".background:			black",
   ".foreground:			white",
+  ".lowrez:                     True",
   "*dontClearRoot:		True",
   "*fpsSolid:			true",
   "*delay:			30000",
   "*duration:			120",
   "*duration2:			0.4",
   "*maxDepth:			30000",
+  "*maxResolution:		1024",
   "*outline:			True",
   "*fillScreen:			True",
   "*cache:			True",
@@ -939,6 +955,7 @@ static XrmOptionDescRec tessellimage_options [] = {
   { "-duration",	".duration",		XrmoptionSepArg, 0 },
   { "-duration2",	".duration2",		XrmoptionSepArg, 0 },
   { "-max-depth",	".maxDepth",		XrmoptionSepArg, 0 },
+  { "-max-resolution",	".maxResolution",	XrmoptionSepArg, 0 },
   { "-outline",		".outline",		XrmoptionNoArg, "True"  },
   { "-no-outline",	".outline",		XrmoptionNoArg, "False" },
   { "-fill-screen",	".fillScreen",		XrmoptionNoArg, "True"  },

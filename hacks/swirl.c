@@ -37,6 +37,7 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 					"*useSHM:		True    \n" \
 					"*fpsSolid:		true    \n" \
 					"*ignoreRotation: True \n" \
+					".lowrez:         True \n" \
 
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS

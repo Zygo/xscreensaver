@@ -1,5 +1,5 @@
 /* dymaxionmap --- Buckminster Fuller's unwrapped icosahedral globe.
- * Copyright (c) 2016 Jamie Zawinski.
+ * Copyright (c) 2016-2018 Jamie Zawinski.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -99,10 +99,10 @@ ModStruct   planet_description =
 		    ISO C89 compilers are required to support" when including
 		    the following XPM file... */
 # endif
-#include "../images/dymaxionmap.xpm"
-#include "../images/ground.xpm"
+#include "images/gen/dymaxionmap_png.h"
+#include "images/gen/ground_png.h"
 
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -128,10 +128,11 @@ static planetstruct *planets = NULL;
 
 /* Set up and enable texturing on our object */
 static void
-setup_xpm_texture (ModeInfo *mi, char **xpm_data)
+setup_png_texture (ModeInfo *mi, const unsigned char *png_data,
+                   unsigned long data_size)
 {
-  XImage *image = xpm_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-				  MI_COLORMAP (mi), xpm_data);
+  XImage *image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                        png_data, data_size);
   char buf[1024];
   clear_gl_error();
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -140,10 +141,7 @@ setup_xpm_texture (ModeInfo *mi, char **xpm_data)
   */
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 	       image->width, image->height, 0,
-	       GL_RGBA,
-	       /* GL_UNSIGNED_BYTE, */
-	       GL_UNSIGNED_INT_8_8_8_8_REV,
-	       image->data);
+	       GL_RGBA, GL_UNSIGNED_BYTE, image->data);
   sprintf (buf, "builtin texture (%dx%d)", image->width, image->height);
   check_gl_error(buf);
 }
@@ -156,8 +154,7 @@ setup_file_texture (ModeInfo *mi, char *filename)
   Visual *visual = mi->xgwa.visual;
   char buf[1024];
 
-  Colormap cmap = mi->xgwa.colormap;
-  XImage *image = xpm_file_to_ximage (dpy, visual, cmap, filename);
+  XImage *image = file_to_ximage (dpy, visual, filename);
   if (!image) return False;
 
   clear_gl_error();
@@ -165,10 +162,7 @@ setup_file_texture (ModeInfo *mi, char *filename)
   glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 	       image->width, image->height, 0,
-	       GL_RGBA,
-	       /* GL_UNSIGNED_BYTE, */
-	       GL_UNSIGNED_INT_8_8_8_8_REV,
-	       image->data);
+	       GL_RGBA, GL_UNSIGNED_BYTE, image->data);
   sprintf (buf, "texture: %.100s (%dx%d)",
 	   filename, image->width, image->height);
   check_gl_error(buf);
@@ -196,7 +190,7 @@ setup_texture(ModeInfo * mi)
       !strcmp(which_image, "BUILTIN"))
     {
     BUILTIN:
-      setup_xpm_texture (mi, dymaxionmap_xpm);
+      setup_png_texture (mi, dymaxionmap_png, sizeof(dymaxionmap_png));
     }
   else
     {
@@ -214,7 +208,7 @@ setup_texture(ModeInfo * mi)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-  setup_xpm_texture (mi, ground);
+  setup_png_texture (mi, ground_png, sizeof(ground_png));
 
   check_gl_error("texture initialization");
 
@@ -237,12 +231,18 @@ init_stars (ModeInfo *mi)
   int max_size = 3;
   GLfloat inc = 0.5;
   int steps = max_size / inc;
+  GLfloat scale = 1;
+
+  if (MI_WIDTH(mi) > 2560) {  /* Retina displays */
+    scale *= 2;
+    nstars /= 2;
+  }
 
   gp->starlist = glGenLists(1);
   glNewList(gp->starlist, GL_COMPILE);
   for (j = 1; j <= steps; j++)
     {
-      glPointSize(inc * j);
+      glPointSize(inc * j * scale);
       glBegin (GL_POINTS);
       for (i = 0; i < nstars / steps; i++)
 	{
@@ -280,7 +280,7 @@ reshape_planet (ModeInfo *mi, int width, int height)
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glFrustum(-1.0, 1.0, -h, h, 5.0, 100.0);
+  glFrustum(-1.0, 1.0, -h, h, 5.0, 200.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -40);

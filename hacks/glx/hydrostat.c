@@ -63,6 +63,8 @@
 #define DEF_OPACITY     "0.8"
 
 
+#define TENTACLE_FACES 5
+
 typedef struct {
   XYZ pos, opos, v;
 } node;
@@ -92,6 +94,9 @@ typedef struct {
   Bool button_down_p;
   int dragging;
   squid **squids;
+  GLfloat cos_sin_table[2 * (TENTACLE_FACES + 1)];
+  GLuint head;
+  int head_polys;
 # ifdef USE_TRACKBALL
   trackball_state *trackball;
 # endif
@@ -324,8 +329,7 @@ head_angle (ModeInfo *mi, squid *sq)
 static void
 draw_head (ModeInfo *mi, squid *sq, GLfloat scale)
 {
-  int wire = MI_IS_WIREFRAME(mi);
-  int i = wire ? 8 : 64;
+  hydrostat_configuration *bp = &bps[MI_SCREEN(mi)];
   GLfloat c2[4];
   GLfloat angle = head_angle (mi, sq);
 
@@ -346,13 +350,9 @@ draw_head (ModeInfo *mi, squid *sq, GLfloat scale)
   glTranslatef (0, 0.3, 0);
   glRotatef (angle, 0, 0, 1);
 
-  glScalef (1, 1.1, 1);
-  unit_dome (i, i/2, wire);
-  glRotatef (180, 0, 0, 1);
-  glScalef (1, 0.5, 1);
-  unit_dome (i, i/2, wire);
+  glCallList (bp->head);
+  mi->polygon_count += bp->head_polys;
 
-  mi->polygon_count += i * i;
   glPopMatrix();
 }
 
@@ -360,6 +360,7 @@ draw_head (ModeInfo *mi, squid *sq, GLfloat scale)
 static void
 draw_squid (ModeInfo *mi, squid *sq)
 {
+  hydrostat_configuration *bp = &bps[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   int i;
   glPushMatrix();
@@ -367,6 +368,11 @@ draw_squid (ModeInfo *mi, squid *sq)
 
   if (opacity_arg < 1.0)
     draw_head (mi, sq, 0.75);
+
+  if (!wire) {
+    glFrontFace (GL_CCW);
+    glBegin (GL_TRIANGLE_STRIP);
+  }
 
   for (i = 0; i < sq->ntentacles; i++)
     {
@@ -390,8 +396,6 @@ draw_squid (ModeInfo *mi, squid *sq)
         {
           GLfloat radius = t->radius * thickness_arg;
           GLfloat rstep = radius / t->length;
-          int faces = 8;
-          glFrontFace (GL_CCW);
           for (j = 0; j < t->length-1; j++)
             {
               int k;
@@ -402,18 +406,12 @@ draw_squid (ModeInfo *mi, squid *sq)
               GLfloat Z = (n1->pos.z - n2->pos.z);
               GLfloat L = sqrt (X*X + Y*Y + Z*Z);
               GLfloat r2 = radius - rstep;
+              GLfloat L2 = sqrt (X*X + Y*Y);
 
-              glPushMatrix();
-              glTranslatef (n1->pos.x, n1->pos.y, n1->pos.z);
-              glRotatef (-atan2 (X, Y)               * (180 / M_PI), 0, 0, 1);
-              glRotatef ( atan2 (Z, sqrt(X*X + Y*Y)) * (180 / M_PI), 1, 0, 0);
-
-              glBegin (wire ? GL_LINE_LOOP : GL_QUAD_STRIP);
-              for (k = 0; k <= faces; k++)
+              for (k = 0; k <= TENTACLE_FACES; k++)
                 {
-                  GLfloat th  = k * M_PI * 2 / faces;
-                  GLfloat c = cos(th);
-                  GLfloat s = sin(th);
+                  GLfloat c = bp->cos_sin_table[2 * k];
+                  GLfloat s = bp->cos_sin_table[2 * k + 1];
                   GLfloat x1 = radius * c;
                   GLfloat y1 = radius * s;
                   GLfloat z1 = 0;
@@ -421,17 +419,37 @@ draw_squid (ModeInfo *mi, squid *sq)
                   GLfloat y2 = r2 * s;
                   GLfloat z2 = L;
 
-                  glNormal3f (x1, z1, y1);
-                  glVertex3f (x1, z1, y1);
-                  glVertex3f (x2, z2, y2);
+                  GLfloat x1t = (L2*X*z1-X*Z*y1+L*Y*x1)/(L*L2);
+                  GLfloat z1t = (L2*Y*z1-Y*Z*y1-L*X*x1)/(L*L2);
+                  GLfloat y1t = (Z*z1+L2*y1)/L;
+
+                  GLfloat x2t = (L2*X*z2-X*Z*y2+L*Y*x2)/(L*L2) + n1->pos.x;
+                  GLfloat z2t = (L2*Y*z2-Y*Z*y2-L*X*x2)/(L*L2) + n1->pos.y;
+                  GLfloat y2t = (Z*z2+L2*y2)/L + n1->pos.z;
+
+                  glNormal3f (x1t, z1t, y1t);
+
+                  x1t += n1->pos.x;
+                  z1t += n1->pos.y;
+                  y1t += n1->pos.z;
+
+                  if (k == 0)
+                    glVertex3f (x1t, z1t, y1t);
+                  glVertex3f (x1t, z1t, y1t);
+
+                  glVertex3f (x2t, z2t, y2t);
+                  if (k == TENTACLE_FACES)
+                    glVertex3f (x2t, z2t, y2t);
+
                   mi->polygon_count++;
                 }
-              glEnd();
-              glPopMatrix();
               radius = r2;
             }
         }
     }
+
+  if (!wire)
+    glEnd ();
 
   draw_head (mi, sq, 1.0);
 
@@ -661,6 +679,7 @@ init_hydrostat (ModeInfo *mi)
       GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
       GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
       GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
+      int k;
 
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
@@ -671,6 +690,13 @@ init_hydrostat (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
       glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+
+      for (k = 0; k <= TENTACLE_FACES; k++)
+        {
+          GLfloat th  = k * M_PI * 2 / TENTACLE_FACES;
+          bp->cos_sin_table[2 * k] = cos(th);
+          bp->cos_sin_table[2 * k + 1] = sin(th);
+        }
     }
 
   glShadeModel(GL_SMOOTH);
@@ -700,6 +726,16 @@ init_hydrostat (ModeInfo *mi)
       glEnable (GL_BLEND);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE);
     }
+
+  i = wire ? 4 : 24;
+  bp->head = glGenLists (1);
+  glNewList (bp->head, GL_COMPILE);
+  glScalef (1, 1.1, 1);
+  bp->head_polys = unit_dome (wire ? 8 : 16, i, wire);
+  glRotatef (180, 0, 0, 1);
+  glScalef (1, 0.5, 1);
+  bp->head_polys += unit_dome (wire ? 8 : 8, i, wire);
+  glEndList ();
 
 # ifdef USE_TRACKBALL
   bp->trackball = gltrackball_init (True);

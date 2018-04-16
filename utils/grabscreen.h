@@ -102,9 +102,8 @@ extern void ios_load_random_image (void (*callback) (void *uiimage,
 #endif /* USE_IPHONE */
 
 #ifdef HAVE_ANDROID
-char *jwxyz_load_random_image (Display *dpy,  /* utils/grabclient.c */
-                               int *width_ret, int *height_ret,
-                               char **name_ret);
+char *jwxyz_draw_random_image (Display *dpy,  /* utils/grabclient.c */
+                               Drawable drawable, GC gc);
 #endif
 
 #endif /* __GRABSCREEN_H__ */

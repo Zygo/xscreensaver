@@ -19,6 +19,9 @@
 #include "colorbars.h"
 #include "erase.h"
 
+#include "ximage-loader.h"
+#include "images/gen/logo-180_png.h"
+
 #include <assert.h>
 #include <errno.h>
 
@@ -219,8 +222,15 @@ make_clip_mask (struct testx11 *st)
 static void
 colorbars (struct testx11 *st)
 {
+  Pixmap logo_mask = 0;
+  Pixmap logo = image_data_to_pixmap (st->dpy, st->win,
+                                      logo_180_png, sizeof(logo_180_png),
+                                      0, 0, &logo_mask);
   draw_colorbars (st->xgwa.screen, st->xgwa.visual, st->win,
-                  st->xgwa.colormap, 0, 0, st->xgwa.width, st->xgwa.height);
+                  st->xgwa.colormap, 0, 0, st->xgwa.width, st->xgwa.height,
+                  logo, logo_mask);
+  XFreePixmap (st->dpy, logo);
+  XFreePixmap (st->dpy, logo_mask);
 }
 
 
@@ -340,6 +350,8 @@ testx11_init (Display *dpy, Window win)
     XCreatePixmap(dpy, win, preserve_size, preserve_size, st->xgwa.depth);
 
   toggle_antialiasing (st);
+
+  st->erase = NULL;
 
   jwxyz_assert_display (dpy);
 

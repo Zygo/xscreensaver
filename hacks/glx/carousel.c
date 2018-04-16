@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005-2015 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright (c) 2005-2018 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,7 +12,16 @@
  * Created: 21-Feb-2005
  */
 
-#define DEF_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
+#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
+# define DEF_FONT "OCR A Std 48, Lucida Console 48, Monaco 48"
+#elif 0  /* real X11, XQueryFont() */
+# define DEF_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
+#else    /* real X11, load_font_retry() */
+# define DEF_FONT "-*-ocr a std-medium-r-*-*-*-480-*-*-m-*-*-*"
+#endif
+
+#define DEF_TITLE_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
+
 #define DEFAULTS  "*count:           7         \n" \
 		  "*delay:           10000     \n" \
 		  "*wireframe:       False     \n" \
@@ -20,6 +29,7 @@
 	          "*fpsSolid:        True      \n" \
 	          "*useSHM:          True      \n" \
 		  "*font:	   " DEF_FONT "\n" \
+		  "*titleFont:	   " DEF_TITLE_FONT "\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
@@ -101,7 +111,7 @@ typedef struct {
   Bool awaiting_first_images_p;
   int loads_in_progress;
 
-  texture_font_data *texfont;
+  texture_font_data *texfont, *titlefont;
 
   fade_mode mode;
   int mode_tick;
@@ -510,7 +520,7 @@ loading_msg (ModeInfo *mi, int n)
     {
       /* only do this once, so that the string doesn't move. */
       XCharStruct e;
-      texture_string_metrics (ss->texfont, text, &e, 0, 0);
+      texture_string_metrics (ss->titlefont, text, &e, 0, 0);
       ss->loading_sw = e.width;
       ss->loading_sh = e.ascent + e.descent;
     }
@@ -554,7 +564,7 @@ loading_msg (ModeInfo *mi, int n)
   glColor3f (1, 1, 0);
   glEnable (GL_TEXTURE_2D);
   glDisable (GL_DEPTH_TEST);
-  print_texture_string (ss->texfont, text);
+  print_texture_string (ss->titlefont, text);
   glEnable (GL_DEPTH_TEST);
   glPopMatrix();
 
@@ -643,6 +653,7 @@ init_carousel (ModeInfo *mi)
     }
 
   ss->texfont = load_texture_font (MI_DISPLAY(mi), "font");
+  ss->titlefont = load_texture_font (MI_DISPLAY(mi), "titleFont");
 
   if (debug_p)
     hack_resources (MI_DISPLAY (mi));

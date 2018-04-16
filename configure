@@ -684,9 +684,9 @@ XDPMS_LIBS
 GLE_LIBS
 GL_LIBS
 PTY_LIBS
-XPM_LIBS
 HACK_LIBS
 JPEG_LIBS
+PNG_LIBS
 XML_LIBS
 GTK_LIBS
 MOTIF_LIBS
@@ -849,8 +849,8 @@ with_motif
 with_gl
 with_gle
 with_gles
+with_png
 with_pixbuf
-with_xpm
 with_jpeg
 with_xft
 with_xshm_ext
@@ -1544,11 +1544,10 @@ Graphics options:
   --with-gle              Build those demos which depend on GLE
                           (the OpenGL "extrusion" library.)
   --with-gles             Target OpenGL ES 1.x API instead of OpenGL 1.3.
+  --with-png             Include support for the PNG library.
   --with-pixbuf           Include support for the GDK-Pixbuf library in some
                           demos, which will make it possible for them to read
                           GIF, JPEG, and PNG files as well.
-  --with-xpm              Include support for XPM files in some demos.
-                          (Not needed if Pixbuf is used.)
   --with-jpeg             Include support for the JPEG library.
   --with-xft              Include support for the X Freetype library.
   --with-xshm-ext         Include support for the Shared Memory extension.
@@ -7013,7 +7012,7 @@ case "$host" in
         X_LIBS="$X_LIBS -L/usr/lib/Motif1.1"
       fi
 
-      # Now let's check for the pseudo-standard locations for OpenGL and XPM.
+      # Now let's check for the pseudo-standard locations for OpenGL.
       #
       if test -d /opt/graphics/OpenGL/include ; then
         # HP-UX 10.20 puts it here
@@ -7024,11 +7023,6 @@ case "$host" in
         X_LIBS="-L/opt/Mesa/lib $X_LIBS"
       fi
 
-
-      if test -d /opt/xpm/lib/X11 ; then
-        X_CFLAGS="-I/opt/xpm/include $X_CFLAGS"
-        X_LIBS="-L/opt/xpm/lib/X11 $X_LIBS"
-      fi
 
       # On HPUX, default to installing in /opt/xscreensaver/ instead of
       # in /usr/local/, unless there is already an xscreensaver in
@@ -12792,37 +12786,6 @@ fi
 
 ###############################################################################
 #
-#       Checking whether Motif requires -lXpm.
-#
-#       If this is Motif 2.x, and we have XPM, then link against XPM as well.
-#       The deal is, Motif 2.x requires XPM -- but it's a compilation option
-#       of the library whether to build the XPM code into libXm, or whether
-#       to rely on an external libXm.  So the only way to tell whether XPM is
-#       a link-time requirement is to examine libXm.a, which is very
-#       difficult to do in an autoconf script.  So... if it's Motif 2.x, we
-#       always link against XPM if the XPM lib exists (and this will be a
-#       no-op if libXm happens to already have the XPM code in it.)
-#
-###############################################################################
-
-motif_requires_xpm=no
-if test "$have_motif" = yes ; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether Motif requires XPM" >&5
-$as_echo_n "checking whether Motif requires XPM... " >&6; }
-   if test "$motif_version" = "unknown" || test "$motif_version" -ge 2000
-   then
-     motif_requires_xpm=yes
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: maybe" >&5
-$as_echo "maybe" >&6; }
-   else
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-   fi
-fi
-
-
-###############################################################################
-#
 #       Checking whether Motif requires -lXp.
 #
 #       Some versions of Motif (2.1.0, at least) require -lXp, the "X Printing
@@ -13388,7 +13351,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13395 "configure"
+#line 13358 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -13972,9 +13935,170 @@ if test "$with_gles" = yes; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: using OpenGL ES compatiblity shim" >&5
 $as_echo "using OpenGL ES compatiblity shim" >&6; }
 elif test "$with_gles" != no; then
-  echo "error: must be yes or no: --with-gles=$with_xpm"
+  echo "error: must be yes or no: --with-gles=$with_gles"
   exit 1
 fi
+
+###############################################################################
+#
+#       Check for -lpng
+#
+###############################################################################
+
+have_png=no
+with_png_req=unspecified
+png_halfassed=no
+
+# Check whether --with-png was given.
+if test "${with_png+set}" = set; then :
+  withval=$with_png; with_png="$withval"; with_png_req="$withval"
+else
+  with_png=yes
+fi
+
+
+
+   case "$with_png" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PNG headers" >&5
+$as_echo_n "checking for PNG headers... " >&6; }
+     d=$with_png/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PNG libs" >&5
+$as_echo_n "checking for PNG libs... " >&6; }
+     d=$with_png/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     # replace the directory string with "yes".
+     with_png_req="yes"
+     with_png=$with_png_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-png must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$with_png" != yes -a "$with_png" != no ; then
+  echo "error: must be yes or no: --with-png=$with_png"
+  exit 1
+fi
+
+if test "$with_png" = yes; then
+
+  have_png=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  ac_fn_c_check_header_mongrel "$LINENO" "png.h" "ac_cv_header_png_h" "$ac_includes_default"
+if test "x$ac_cv_header_png_h" = xyes; then :
+  have_png=yes
+fi
+
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+
+  if test "$have_png" = yes; then
+    # we have the header, now check for the library
+    have_png=no
+    png_halfassed=yes
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for png_create_read_struct in -lpng" >&5
+$as_echo_n "checking for png_create_read_struct in -lpng... " >&6; }
+if ${ac_cv_lib_png_png_create_read_struct+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpng  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char png_create_read_struct ();
+int
+main ()
+{
+return png_create_read_struct ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_png_png_create_read_struct=yes
+else
+  ac_cv_lib_png_png_create_read_struct=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_png_png_create_read_struct" >&5
+$as_echo "$ac_cv_lib_png_png_create_read_struct" >&6; }
+if test "x$ac_cv_lib_png_png_create_read_struct" = xyes; then :
+  have_png=yes
+                    png_halfassed=no
+                    PNG_LIBS="-lpng"
+                    $as_echo "#define HAVE_LIBPNG 1" >>confdefs.h
+
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+  fi
+fi
+
 
 ###############################################################################
 #
@@ -14066,6 +14190,7 @@ if test "$with_gdk_pixbuf" = yes; then
 
   pkg_check_version gdk-pixbuf-2.0      2.0.0
   pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
+  pkg_check_version gio-2.0             2.0.0
   have_gdk_pixbuf="$ok"
 
   if test "$have_gdk_pixbuf" = yes; then
@@ -14306,7 +14431,7 @@ fi
 
   if test "$have_gdk_pixbuf" = yes; then
     INCLUDES="$INCLUDES $ac_gdk_pixbuf_config_cflags"
-    XPM_LIBS="$ac_gdk_pixbuf_config_libs"
+    PNG_LIBS="$ac_gdk_pixbuf_config_libs"
     $as_echo "#define HAVE_GDK_PIXBUF 1" >>confdefs.h
 
   else
@@ -14380,106 +14505,6 @@ fi
 #  LIBS="$ac_save_LIBS"
 
   fi
-fi
-
-
-###############################################################################
-#
-#       Check for -lXpm.
-#
-###############################################################################
-
-have_xpm=no
-with_xpm_req=unspecified
-
-# Check whether --with-xpm was given.
-if test "${with_xpm+set}" = set; then :
-  withval=$with_xpm; with_xpm="$withval"; with_xpm_req="$withval"
-else
-  with_xpm=yes
-fi
-
-
-
-   case "$with_xpm" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XPM headers" >&5
-$as_echo_n "checking for XPM headers... " >&6; }
-     d=$with_xpm/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XPM libs" >&5
-$as_echo_n "checking for XPM libs... " >&6; }
-     d=$with_xpm/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_xpm_req="yes"
-     with_xpm=$with_xpm_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-xpm must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_xpm" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/xpm.h" "ac_cv_header_X11_xpm_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_xpm_h" = xyes; then :
-  have_xpm=yes
-                    $as_echo "#define HAVE_XPM 1" >>confdefs.h
-
-                    XPM_LIBS="-lXpm $XPM_LIBS"
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-elif test "$with_xpm" != no; then
-  echo "error: must be yes or no: --with-xpm=$with_xpm"
-  exit 1
-fi
-
-# See comment near $motif_requires_xpm, above.
-# Need to do this here, after both Motif and XPM have been checked for.
-#
-if test "$have_motif" = yes -a "$have_xpm" = yes ; then
-  if test "$motif_requires_xpm" = yes ; then
-    MOTIF_LIBS="$MOTIF_LIBS $XPM_LIBS"
-  fi
-fi
-
-if test "$XPM_LIBS" = "" ; then
-  XPM_LIBS=$(MINIXPM)
 fi
 
 
@@ -17639,16 +17664,12 @@ if test "$have_motif" = yes -a "$have_gtk" = no ; then
 fi
 
 
-if test "$with_xpm_req" = yes -a "$have_xpm" = no; then
-  warnL 'Use of XPM was requested, but it was not found.'
-fi
-
 if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
   warnL 'Use of GDK-Pixbuf was requested, but it was not found.'
 fi
 
 if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
-   test "$have_gdk_pixbuf" = no -a "$have_xpm" = no ; then
+   test "$have_gdk_pixbuf" = no ; then
 
   if test "$with_gdk_pixbuf_req" = yes ; then
     true
@@ -17656,18 +17677,6 @@ if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
     warnL 'The GDK-Pixbuf library is not being used.'
   else
     warnL 'The GDK-Pixbuf library was not found.'
-  fi
-
-  if test "$with_xpm_req" = yes -o "$have_xpm" = yes ; then
-    true
-  elif test "$with_xpm_req" = no ; then
-    warnL 'The XPM library is not being used.'
-  else
-    warnL 'The XPM library was not found.'
-  fi
-
-  if test "$have_gdk_pixbuf" = no -a "$have_xpm" = yes ; then
-    warn2 'The XPM library is being used instead.'
   fi
 
   if test "$gdk_pixbuf_halfassed" = yes ; then
@@ -17678,11 +17687,15 @@ if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
     warn2 'file might contain some clues.'
   fi
 
+  if test "$have_png" = yes ; then
+    echo ''
+    warn2 'The PNG library is being used instead.'
+  fi
+
   echo ''
   warn2 'Some of the demos will not use images as much as they could.'
   warn2 'You should consider installing GDK-Pixbuf and re-running'
-  warn2 'configure.  (GDK-Pixbuf is recommended over XPM, as it'
-  warn2 'provides support for more image formats.)'
+  warn2 'configure.'
 fi
 
 
@@ -17711,6 +17724,28 @@ if test "$have_jpeg" = no ; then
   else
     warn2 "This means the \`webcollage' program will be much slower."
   fi
+fi
+
+
+if test "$have_png" = no ; then
+  if test "$with_png_req" = yes ; then
+    warnL 'Use of libpng was requested, but it was not found.'
+  elif test "$with_png_req" = no ; then
+    noteL 'The PNG library is not being used.'
+  else
+    noteL 'The PNG library was not found.'
+  fi
+
+  if test "$png_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'library; so either PNG is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+  fi
+
+  warn2 "Many things aren't going to work right."
 fi
 
 

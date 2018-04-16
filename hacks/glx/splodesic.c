@@ -31,7 +31,7 @@
 #define DEF_SPIN        "True"
 #define DEF_WANDER      "True"
 #define DEF_SPEED       "1.0"
-#define DEF_DEPTH       "4"
+#define DEF_FREQ        "4"
 
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
@@ -84,7 +84,7 @@ static argtype vars[] = {
   {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
   {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
   {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
-  {&depth_arg, "freq",   "Depth",  DEF_DEPTH,  t_Int},
+  {&depth_arg, "freq",   "Depth",  DEF_FREQ,   t_Int},
 };
 
 ENTRYPOINT ModeSpecOpt splodesic_opts = {countof(opts), opts, countof(vars), vars, NULL};

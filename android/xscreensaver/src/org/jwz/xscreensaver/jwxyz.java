@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2016-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -33,6 +33,7 @@ import android.graphics.Rect;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetrics;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -56,7 +57,6 @@ import android.media.ExifInterface;
 import org.jwz.xscreensaver.TTFAnalyzer;
 import android.util.Log;
 import android.view.Surface;
-
 
 public class jwxyz
   implements GestureDetector.OnGestureListener,
@@ -552,16 +552,17 @@ public class jwxyz
   }
 
 
-  private ByteBuffer convertBitmap (String name, Bitmap bitmap,
-                                    int target_width, int target_height,
-                                    ExifInterface exif,
-                                    boolean rotate_p) {
+  // Returns [ Bitmap bitmap, String name ]
+  private Object[] convertBitmap (String name, Bitmap bitmap,
+                                  int target_width, int target_height,
+                                  ExifInterface exif, boolean rotate_p) {
     if (bitmap == null) return null;
 
-    try {
+    {
 
       int width  = bitmap.getWidth();
       int height = bitmap.getHeight();
+      Matrix matrix = new Matrix();
 
       LOG ("read image %s: %d x %d", name, width, height);
 
@@ -577,28 +578,26 @@ public class jwxyz
         }
         if (deg != 0) {
           LOG ("%s: EXIF rotate %d", name, deg);
-          Matrix matrix = new Matrix();
           matrix.preRotate (deg);
-          bitmap = Bitmap.createBitmap (bitmap, 0, 0, width, height,
-                                        matrix, true);
-          width  = bitmap.getWidth();
-          height = bitmap.getHeight();
+          if (deg == 90 || deg == 270) {
+            int temp = width;
+            width = height;
+            height = temp;
+          }
         }
       }
 
       // If the caller requested that we rotate the image to best fit the
-      // screen, rotate it again.  (Could combine this with the above and
-      // avoid copying the image again, but I'm lazy.)
+      // screen, rotate it again.
 
       if (rotate_p &&
           (width > height) != (target_width > target_height)) {
         LOG ("%s: rotated to fit screen", name);
-        Matrix matrix = new Matrix();
         matrix.preRotate (90);
-        bitmap = Bitmap.createBitmap (bitmap, 0, 0, width, height,
-                                      matrix, true);
-        width  = bitmap.getWidth();
-        height = bitmap.getHeight();
+
+        int temp = width;
+        width = height;
+        height = temp;
       }
 
       // Resize the image to be not larger than the screen, potentially
@@ -612,42 +611,24 @@ public class jwxyz
         float r = (r1 > r2 ? r2 : r1);
         LOG ("%s: resize %.1f: %d x %d => %d x %d", name,
              r, width, height, (int) (width * r), (int) (height * r));
-        width  = (int) (width * r);
-        height = (int) (height * r);
-        bitmap = Bitmap.createScaledBitmap (bitmap, width, height, true);
-        width  = bitmap.getWidth();
-        height = bitmap.getHeight();
+        matrix.preScale (r, r);
       }
 
-      // Now convert it to a ByteBuffer in the form expected by the C caller.
+      bitmap =  Bitmap.createBitmap (bitmap, 0, 0,
+                                     bitmap.getWidth(), bitmap.getHeight(),
+                                     matrix, true);
 
-      byte[] nameb = name.getBytes("UTF-8");
-      int size     = bitmap.getByteCount() + 4 + nameb.length + 1;
+      if (bitmap.getConfig() != Bitmap.Config.ARGB_8888)
+        bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
 
-      ByteBuffer bits = ByteBuffer.allocateDirect (size);
+      return new Object[] { bitmap, name };
 
-      bits.put ((byte) ((width  >> 8) & 0xFF));
-      bits.put ((byte) ( width        & 0xFF));
-      bits.put ((byte) ((height >> 8) & 0xFF));
-      bits.put ((byte) ( height       & 0xFF));
-      bits.put (nameb);
-      bits.put ((byte) 0);
-
-      // The fourth of five copies.  Good thing these are supercomputers.
-      bitmap.copyPixelsToBuffer (bits);
-
-      return bits;
-
-    } catch (Exception e) {
-      LOG ("image %s unreadable: %s", name, e.toString());
     }
-
-    return null;
   }
 
 
-  public ByteBuffer loadRandomImage (int target_width, int target_height,
-                                     boolean rotate_p) {
+  public Object[] loadRandomImage (int target_width, int target_height,
+                                   boolean rotate_p) {
 
     int min_size = 480;
     int max_size = 0x7FFF;
@@ -665,6 +646,8 @@ public class jwxyz
 
     for (int i = 0; i < uris.length; i++) {
       Cursor cursor = cr.query (uris[i], cols, null, null, null);
+      if (cursor == null)
+        continue;
       int j = 0;
       int path_col   = cursor.getColumnIndexOrThrow (cols[j++]);
       int type_col   = cursor.getColumnIndexOrThrow (cols[j++]);
@@ -673,12 +656,17 @@ public class jwxyz
       while (cursor.moveToNext()) {
         String path = cursor.getString(path_col);
         String type = cursor.getString(type_col);
-        int w = Integer.parseInt (cursor.getString(width_col));
-        int h = Integer.parseInt (cursor.getString(height_col));
-        if (type.startsWith("image/") &&
-            w > min_size && h > min_size &&
-            w < max_size && h < max_size) {
-          imgs.add (path);
+        if (path != null && type != null && type.startsWith("image/")) {
+          String wc = cursor.getString(width_col);
+          String hc = cursor.getString(height_col);
+          if (wc != null && hc != null) {
+            int w = Integer.parseInt (wc);
+            int h = Integer.parseInt (hc);
+            if (w > min_size && h > min_size &&
+                w < max_size && h < max_size) {
+              imgs.add (path);
+            }
+          }
         }
       }
       cursor.close();
@@ -702,30 +690,39 @@ public class jwxyz
     ExifInterface exif = null;
 
     try {
-      bitmap = MediaStore.Images.Media.getBitmap (cr, uri);
-    } catch (Exception e) {
-      LOG ("image %s unloadable: %s", which, e.toString());
+      try {
+        bitmap = MediaStore.Images.Media.getBitmap (cr, uri);
+      } catch (Exception e) {
+        LOG ("image %s unloadable: %s", which, e.toString());
+        return null;
+      }
+
+      try {
+        exif = new ExifInterface (uri.getPath());  // If it fails, who cares
+      } catch (Exception e) {
+      }
+
+      return convertBitmap (name, bitmap, target_width, target_height,
+                            exif, rotate_p);
+    } catch (java.lang.OutOfMemoryError e) {
+      LOG ("image %s got OutOfMemoryError: %s", which, e.toString());
       return null;
     }
-
-    try {
-      exif = new ExifInterface (uri.getPath());  // If it fails, who cares
-    } catch (Exception e) {
-    }
-
-    ByteBuffer bits = convertBitmap (name, bitmap,
-                                     target_width, target_height,
-                                     exif, rotate_p);
-    bitmap.recycle();
-    return bits;
   }
 
 
-  public ByteBuffer getScreenshot (int target_width, int target_height,
-                                   boolean rotate_p) {
+  public Object[] getScreenshot (int target_width, int target_height,
+                               boolean rotate_p) {
     return convertBitmap ("Screenshot", screenshot,
                           target_width, target_height,
                           null, rotate_p);
+  }
+
+
+  public Bitmap decodePNG (byte[] data) {
+    BitmapFactory.Options opts = new BitmapFactory.Options();
+    opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+    return BitmapFactory.decodeByteArray (data, 0, data.length, opts);
   }
 
 

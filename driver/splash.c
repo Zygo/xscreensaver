@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,6 +17,7 @@
 
 #include "xscreensaver.h"
 #include "resources.h"
+#include "font-retry.h"
 
 #undef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -106,25 +107,13 @@ static void do_help (saver_screen_info *ssi);
 XFontStruct *
 splash_load_font (Display *dpy, char *name, char *class)
 {
-  /* Try RES, RES2, etc. */
-  int i;
-  for (i = 0; i < 4; i++)
-    {
-      char *name2 = (char *) malloc (strlen(name) + 2);
-      char *s;
-      if (i)
-        sprintf (name2, "%s%d", name, i+1);
-      else
-        strcpy (name2, name);
-      s = get_string_resource (dpy, name2, class);
-      free (name2);
-      if (s && *s)
-        {
-          XFontStruct *f = XLoadQueryFont (dpy, s);
-          if (f) return f;
-        }
-    }
-  return XLoadQueryFont (dpy, "fixed");
+  char *s = get_string_resource (dpy, name, class);
+  XFontStruct *f;
+  if (!s || !*s)
+    s = "-*-helvetica-bold-r-*-*-*-140-*-*-*-*-*-*";
+  f = load_font_retry (dpy, s);
+  if (!f) abort();
+  return f;
 }
 
 
@@ -191,9 +180,9 @@ make_splash_dialog (saver_info *si)
   saver_screen_info *ssi;
   Colormap cmap;
 
-  Bool whine = decrepit_p ();
+  Bool whyne = senesculent_p ();
 
-  if (whine)
+  if (whyne)
     {
       /* If locking is not enabled, make sure they see the message. */
       if (!p->lock_p)
@@ -244,7 +233,7 @@ make_splash_dialog (saver_info *si)
 
 
 
-  if (whine)
+  if (whyne)
     {
       sp->body3_label = strdup("WARNING: This version is very old!");
       sp->body4_label = strdup("Please upgrade!");

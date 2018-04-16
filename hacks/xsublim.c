@@ -107,6 +107,7 @@
 #include "usleep.h"
 #include "yarandom.h"
 #include "resources.h"
+#include "font-retry.h"
 #include "vroot.h"
 
 
@@ -555,12 +556,12 @@ int main(int argc,char* argv[])
 	}
 
 	/* Load the font */
-	font_Font = XLoadQueryFont(dpy,
+	font_Font = load_font_retry(dpy,
 	 get_string_resource(dpy, XSUBLIM_ARG_FONT,"Font"));
 	font_Index = 0;
 	while ((font_Font == NULL) && (font_List[font_Index] != NULL))
 	{
-		font_Font = XLoadQueryFont(dpy,font_List[font_Index]);
+		font_Font = load_font_retry(dpy,font_List[font_Index]);
 		font_Index++;
 	}
 	if (font_Font == NULL)

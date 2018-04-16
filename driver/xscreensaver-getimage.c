@@ -312,6 +312,19 @@ compute_image_scaling (int src_w, int src_h,
 }
 
 
+static void
+colorbars (Screen *screen, Visual *visual, Drawable drawable, Colormap cmap)
+{
+  Pixmap mask = 0;
+  Pixmap logo = xscreensaver_logo (screen, visual, drawable, cmap,
+                                   BlackPixelOfScreen (screen),
+                                   0, 0, &mask, True);
+  draw_colorbars (screen, visual, drawable, cmap, 0, 0, 0, 0, logo, mask);
+  XFreePixmap (DisplayOfScreen (screen), logo);
+  XFreePixmap (DisplayOfScreen (screen), mask);
+}
+
+
 /* Scales an XImage, modifying it in place.
    This doesn't do dithering or smoothing, so it might have artifacts.
    If out of memory, returns False, and the XImage will have been
@@ -857,8 +870,7 @@ jpg_error_exit (j_common_ptr cinfo)
 {
   getimg_jpg_error_mgr *err = (getimg_jpg_error_mgr *) cinfo->err;
   cinfo->err->output_message (cinfo);
-  draw_colorbars (err->screen, err->visual, err->drawable, err->cmap,
-                  0, 0, 0, 0);
+  colorbars (err->screen, err->visual, err->drawable, err->cmap);
   XSync (DisplayOfScreen (err->screen), False);
   exit (1);
 }
@@ -1682,8 +1694,7 @@ get_image (Screen *screen,
         if (verbose_p)
           fprintf (stderr, "%s: drawing colorbars.\n", progname);
         XGetWindowAttributes (dpy, window, &xgwa);
-        draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
-                        0, 0, 0, 0);
+        colorbars (screen, xgwa.visual, drawable, xgwa.colormap);
         XSync (dpy, False);
         if (! file_prop) file_prop = "";
 

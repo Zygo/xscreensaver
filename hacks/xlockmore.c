@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -310,7 +310,7 @@ xlockmore_read_resources (ModeInfo *mi)
               free (c);
             } else {
               xlockmore_free_screens (mi);
-              free (*var_c);
+              if (*var_c) free (*var_c);
               *var_c = c;
             }
           }
@@ -541,23 +541,10 @@ xlockmore_init (Display *dpy, Window window,
     char *name = get_string_resource (dpy, "font", "Font");
     if (name)
       {
-        XFontStruct *f = XLoadQueryFont (dpy, name);
-        const char *def1 = "-*-helvetica-bold-r-normal-*-180-*";
-        const char *def2 = "fixed";
-        if (!f)
-          {
-            fprintf (stderr, "%s: font %s does not exist, using %s\n",
-                     progname, name, def1);
-            f = XLoadQueryFont (dpy, def1);
-          }
-        if (!f)
-          {
-            fprintf (stderr, "%s: font %s does not exist, using %s\n",
-                     progname, def1, def2);
-            f = XLoadQueryFont (dpy, def2);
-          }
-        if (f) XSetFont (dpy, mi->gc, f->fid);
-        if (f) XFreeFont (dpy, f);
+        XFontStruct *f = load_font_retry (dpy, name);
+        if (!f) abort();
+        XSetFont (dpy, mi->gc, f->fid);
+        XFreeFont (dpy, f);
         free (name);
       }
   }
@@ -569,10 +556,20 @@ xlockmore_init (Display *dpy, Window window,
 
 
 static void
+xlockmore_clear (ModeInfo *mi)
+{
+# ifndef HAVE_ANDROID
+  /* TODO: Clear the window for Xlib hacks on Android. */
+  XClearWindow (mi->dpy, mi->window);
+# endif
+}
+
+
+static void
 xlockmore_do_init (ModeInfo *mi)
 {
   mi->xlmft->got_init |= 1 << mi->screen_number;
-  XClearWindow (mi->dpy, mi->window);
+  xlockmore_clear (mi);
   mi->xlmft->hack_init (mi);
 }
 
@@ -615,7 +612,7 @@ xlockmore_draw (Display *dpy, Window window, void *closure)
   if (mi->needs_clear) {
     /* OpenGL hacks never get here. */
     if (!mi->is_drawn) {
-      XClearWindow (dpy, window);
+      xlockmore_clear (mi);
     } else {
       mi->eraser = erase_window (dpy, window, mi->eraser);
       /* Delay calls to xlockmore hooks while the erase animation is running. */
@@ -656,7 +653,7 @@ xlockmore_reshape (Display *dpy, Window window, void *closure,
     /* Finish any erase operations. */
     if (mi->needs_clear) {
       xlockmore_abort_erase (mi);
-      XClearWindow (dpy, window);
+      xlockmore_clear (mi);
     }
 
     /* If there hasn't been an init yet, init now, but don't call reshape_##.

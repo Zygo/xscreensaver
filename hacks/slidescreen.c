@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -65,6 +65,9 @@ slidescreen_init (Display *dpy, Window window)
   st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
   st->grid_size = get_integer_resource (st->dpy, "gridSize", "Integer");
   st->pix_inc = get_integer_resource (st->dpy, "pixelIncrement", "Integer");
+
+  if (xgwa.width > 2560) st->grid_size *= 2;  /* Retina displays */
+
 
   /* Don't let the grid be smaller than 5x5 */
   while (st->grid_size > xgwa.width / 5)
@@ -207,6 +210,8 @@ draw_grid (struct state *st)
       if (st->bitmap_w < st->grid_size*2) st->bitmap_w = st->grid_size*2;
       if (st->bitmap_h < st->grid_size*2) st->bitmap_h = st->grid_size*2;
     }
+
+  if (xgwa.width > 2560) border *= 2;  /* Retina displays */
 
   st->grid_w = st->bitmap_w / st->grid_size;
   st->grid_h = st->bitmap_h / st->grid_size;

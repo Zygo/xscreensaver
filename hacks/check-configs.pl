@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.25 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.26 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -722,7 +722,7 @@ sub build_android(@) {
     open (my $in, '<', $file) || error ("$file: $!");
     while (<$in>) { $body .= $_; }
     close $in;
-    ($vers) = ($body =~ m@ (\d+\.\d+) @s);
+    ($vers) = ($body =~ m@ (\d+\.[0-9a-z]+) @s);
     error ("$file: no version number") unless $vers;
   }
 
@@ -997,17 +997,17 @@ sub build_android(@) {
     $write_files{"$xml_dir/${saver_underscore}_wallpaper.xml"} = $wallpaper;
 
     $daydream_java .=
-      ("  public static class $saver_class extends XScreenSaverDaydream {\n" .
+      ("  public static class $saver_class extends org.jwz.xscreensaver.Daydream {\n" .
        "  }\n" .
        "\n");
 
     $wallpaper_java .=
-      ("  public static class $saver_class extends XScreenSaverWallpaper {\n" .
+      ("  public static class $saver_class extends org.jwz.xscreensaver.Wallpaper {\n" .
        "  }\n" .
        "\n");
 
     $settings_java .=
-      ("  public static class $saver_class extends XScreenSaverSettings\n" .
+      ("  public static class $saver_class extends org.jwz.xscreensaver.Settings\n" .
        "    implements SharedPreferences.OnSharedPreferenceChangeListener {\n" .
        "  }\n" .
        "\n");
@@ -1016,8 +1016,7 @@ sub build_android(@) {
     $fntable_h3 .= ",\n  " if $fntable_h3 ne '';
 
     $fntable_h2 .= "${saver}_xscreensaver_function_table";
-    $fntable_h3 .= "{\"${saver}\", &${saver}_xscreensaver_function_table, " .
-                     'API_' . ($gl_p ? 'GL' : 'XLIB') . '}';
+    $fntable_h3 .= "{\"${saver}\", &${saver}_xscreensaver_function_table}";
   }
 
   $arrays =~ s/^/  /gm;
@@ -1033,10 +1032,10 @@ sub build_android(@) {
               $strings .
               "</resources>\n");
 
-  $manifest .= "<activity android:name=\"$package.XScreenSaverSettings\" />\n";
+  $manifest .= "<activity android:name=\"$package.Settings\" />\n";
 
   $manifest .= ("<activity android:name=\"" .
-                "org.jwz.xscreensaver.XScreenSaverActivity\"\n" .
+                "org.jwz.xscreensaver.Activity\"\n" .
                 "  android:theme=\"\@android:style/Theme.Holo\"\n" .
                 "  android:label=\"\@string/app_name\">\n" .
                 "  <intent-filter>\n" .
@@ -1057,7 +1056,7 @@ sub build_android(@) {
 
 
   $manifest .= ("<activity android:name=\"" .
-                "org.jwz.xscreensaver.XScreenSaverTVActivity\"\n" .
+                "org.jwz.xscreensaver.TVActivity\"\n" .
                 "  android:theme=\"\@android:style/Theme.Holo\"\n" .
                 "  android:label=\"\@string/app_name\">\n" .
                 "  <intent-filter>\n" .
@@ -1113,14 +1112,13 @@ sub build_android(@) {
                "  <application android:icon=\"\@drawable/thumbnail\"\n" .
                "    android:banner=\"\@drawable/thumbnail\"\n" .
                "    android:label=\"\@string/app_name\"\n" .
-               "    android:name=\".XScreenSaverApp\">\n" .
+               "    android:name=\".App\">\n" .
                $manifest .
                "  </application>\n" .
                "</manifest>\n");
 
   $daydream_java = ("package org.jwz.xscreensaver.gen;\n" .
                     "\n" .
-                    "import org.jwz.xscreensaver.XScreenSaverDaydream;\n" .
                     "import org.jwz.xscreensaver.jwxyz;\n" .
                     "\n" .
                     "public class Daydream {\n" .
@@ -1129,7 +1127,6 @@ sub build_android(@) {
 
   $wallpaper_java = ("package org.jwz.xscreensaver.gen;\n" .
                      "\n" .
-                     "import org.jwz.xscreensaver.XScreenSaverWallpaper;\n" .
                      "import org.jwz.xscreensaver.jwxyz;\n" .
                      "\n" .
                      "public class Wallpaper {\n" .
@@ -1139,7 +1136,6 @@ sub build_android(@) {
   $settings_java = ("package org.jwz.xscreensaver.gen;\n" .
                     "\n" .
                     "import android.content.SharedPreferences;\n" .
-                    "import org.jwz.xscreensaver.XScreenSaverSettings;\n" .
                     "\n" .
                     "public class Settings {\n" .
                     $settings_java .

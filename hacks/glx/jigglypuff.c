@@ -52,9 +52,9 @@
 # include "config.h"
 #endif
 
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #include "gltrackball.h"
-#include "../images/jigglymap.xpm"
+#include "images/gen/jigglymap_png.h"
 
 #ifdef USE_GL
 
@@ -768,8 +768,8 @@ static void update_shape(jigglystruct *js)
 
 static void init_texture(ModeInfo *mi)
 {
-    XImage *img = xpm_to_ximage(mi->dpy, mi->xgwa.visual,
-			       mi->xgwa.colormap, jigglymap_xpm);
+    XImage *img = image_data_to_ximage(mi->dpy, mi->xgwa.visual,
+                                       jigglymap_png, sizeof(jigglymap_png));
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
 		 img->width, img->height, 0, GL_RGBA,

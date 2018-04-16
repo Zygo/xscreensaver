@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -72,7 +72,7 @@
                        CB name, geom, closure
 
 
-   Andrid execution path:
+   Android execution path:
 
        load_image_async CB
            load_random_image_android
@@ -671,7 +671,7 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
 
     XGetGeometry (dpy, clo2->drawable, &r, &x, &y, &w, &h, &bbw, &d);
     draw_colorbars (clo2->screen, xgwa.visual, clo2->drawable, xgwa.colormap,
-                    0, 0, w, h);
+                    0, 0, w, h, 0, 0); /* #### logo missing */
     geom.x = geom.y = 0;
     geom.width = w;
     geom.height = h;
@@ -740,7 +740,7 @@ ios_load_random_image_cb (void *uiimage, const char *filename,
   else  /* Probably means no images in the gallery. */
     {
       draw_colorbars (clo2->screen, xgwa.visual, clo2->drawable, xgwa.colormap,
-                      0, 0, w, h);
+                      0, 0, w, h, 0, 0); /* #### logo missing */
       geom.x = geom.y = 0;
       geom.width = w;
       geom.height = h;
@@ -855,8 +855,8 @@ load_random_image_cocoa (Screen *screen, Window window, Drawable drawable,
   }
 
   if (! done)
-    draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
-                    0, 0, xgwa.width, xgwa.height);
+    draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap, 0, 0,
+                    xgwa.width, xgwa.height, 0, 0); /* #### logo missing */
 
   /* If we got here, we loaded synchronously, so we're done. */
   callback (screen, window, drawable, name, &geom, closure);
@@ -878,10 +878,6 @@ load_random_image_android (Screen *screen, Window window, Drawable drawable,
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;
   XRectangle geom;
-  char *name = 0;
-  char *data = 0;
-  int width  = 0;
-  int height = 0;
   
   if (!drawable) abort();
 
@@ -900,26 +896,16 @@ load_random_image_android (Screen *screen, Window window, Drawable drawable,
   geom.width  = xgwa.width;
   geom.height = xgwa.height;
 
-  data = jwxyz_load_random_image (dpy, &width, &height, &name);
-  if (! data)
-    draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
-                    0, 0, xgwa.width, xgwa.height);
-  else
-    {
-      XImage *img = XCreateImage (dpy, xgwa.visual, 32,
-                                  ZPixmap, 0, data, width, height, 0, 0);
-      XGCValues gcv;
-      GC gc;
-      gcv.foreground = BlackPixelOfScreen (screen);
-      gc = XCreateGC (dpy, drawable, GCForeground, &gcv);
-      XFillRectangle (dpy, drawable, gc, 0, 0, xgwa.width, xgwa.height);
-      XPutImage (dpy, drawable, gc, img, 0, 0, 
-                 (xgwa.width  - width) / 2,
-                 (xgwa.height - height) / 2,
-                 width, height);
-      XDestroyImage (img);
-      XFreeGC (dpy, gc);
-    }
+  XGCValues gcv;
+  gcv.foreground = BlackPixelOfScreen (screen);
+  GC gc = XCreateGC (dpy, drawable, GCForeground, &gcv);
+  XFillRectangle (dpy, drawable, gc, 0, 0, xgwa.width, xgwa.height);
+  char *name = jwxyz_draw_random_image (dpy, drawable, gc);
+  if (! name) {
+    draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap, 0, 0,
+                    xgwa.width, xgwa.height, 0, 0); /* #### logo missing */
+  }
+  XFreeGC (dpy, gc);
 
   callback (screen, window, drawable, name, &geom, closure);
   if (name) free (name);

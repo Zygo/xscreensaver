@@ -92,6 +92,7 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
 					"*ncolors: 15     \n" \
 					"*fpsSolid: true     \n" \
 					"*ignoreRotation: True \n" \
+					".lowrez: True \n" \
 
 # define reshape_loop 0
 # define loop_handle_event 0

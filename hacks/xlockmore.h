@@ -181,6 +181,17 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #  define XLOCKMORE_FPS xlockmore_do_fps
 # endif
 
+# ifdef HAVE_JWXYZ
+#  ifdef USE_GL
+#   define XLOCKMORE_VISUAL GL_VISUAL
+#  else
+#   define XLOCKMORE_VISUAL DEFAULT_VISUAL
+#  endif
+# else /* !HAVE_JWXYZ */
+#  define XLOCKMORE_VISUAL \
+     xlockmore_pick_gl_visual, xlockmore_validate_gl_visual
+# endif /* !HAVE_JWXYZ */
+
 #ifdef WRITABLE_COLORS
 # undef WRITABLE_COLORS
 # define WRITABLE_COLORS 1
@@ -235,9 +246,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 	   xlockmore_setup,						\
 	   & NAME ## _xlockmore_function_table,				\
 	   0, 0, 0, 0, 0,						\
-           XLOCKMORE_FPS,						\
-           xlockmore_pick_gl_visual,					\
-	   xlockmore_validate_gl_visual };				\
+	   XLOCKMORE_FPS,						\
+	   XLOCKMORE_VISUAL };						\
 									\
   XSCREENSAVER_LINK (NAME ## _xscreensaver_function_table)
 

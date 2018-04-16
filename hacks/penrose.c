@@ -311,7 +311,7 @@ static angle_c vtype_angles[] =
 typedef struct {
 	int         width, height;
 	XPoint      origin;
-	int         edge_length;
+	int         edge_length, line_width;
 	fringe_c    fringe;
 	forced_pool_c forced;
 	int         done, failures;
@@ -458,6 +458,13 @@ init_penrose(ModeInfo * mi)
 				  MI_NPIXELS(mi) / 6) % MI_NPIXELS(mi);
 	}
 	size = MI_SIZE(mi);
+    tp->line_width = 1;
+
+   if (MI_WIDTH(mi) > 2560) {  /* Retina displays */
+     size *= 3;
+     tp->line_width *= 3;
+   }
+
 	if (size < -MINSIZE)
 		tp->edge_length = NRAND(MIN(-size, MAX(MINSIZE,
 		   MIN(tp->width, tp->height) / 2)) - MINSIZE + 1) + MINSIZE;
@@ -684,6 +691,8 @@ draw_tile(fringe_node_c * v1, fringe_node_c * v2,
 		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 	XFillPolygon(display, window, gc, pts, 4, Convex, CoordModeOrigin);
 	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
+    XSetLineAttributes(display, gc, tp->line_width,
+                       LineSolid, CapNotLast, JoinMiter);
 	XDrawLines(display, window, gc, pts, 5, CoordModeOrigin);
 
 	if (tp->ammann) {

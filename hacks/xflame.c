@@ -1,4 +1,4 @@
-/* xflame, Copyright (c) 1996-2002 Carsten Haitzler <raster@redhat.com>
+/* xflame, Copyright (c) 1996-2018 Carsten Haitzler <raster@redhat.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -49,7 +49,7 @@
 
 
 #include "screenhack.h"
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 #include <limits.h>
 
 #undef countof
@@ -57,7 +57,7 @@
 
 #include "xshm.h"
 
-#include "images/bob.xbm"
+#include "images/gen/bob_png.h"
 
 #define MAX_VAL             255
 
@@ -584,6 +584,118 @@ FlamePasteData(struct state *st,
 }
 
 
+static Pixmap
+double_pixmap (Display *dpy, Visual *visual, int depth, Pixmap pixmap,
+               int pix_w, int pix_h)
+{
+  int x, y;
+  Pixmap p2 = XCreatePixmap(dpy, pixmap, pix_w*2, pix_h*2, depth);
+  XImage *i1 = XGetImage (dpy, pixmap, 0, 0, pix_w, pix_h, ~0L, 
+                          (depth == 1 ? XYPixmap : ZPixmap));
+  XImage *i2 = XCreateImage (dpy, visual, depth, 
+                             (depth == 1 ? XYPixmap : ZPixmap), 0, 0,
+                             pix_w*2, pix_h*2, 8, 0);
+  XGCValues gcv;
+  GC gc = XCreateGC (dpy, p2, 0, &gcv);
+  i2->data = (char *) calloc(i2->height, i2->bytes_per_line);
+  for (y = 0; y < pix_h; y++)
+    for (x = 0; x < pix_w; x++)
+      {
+	unsigned long p = XGetPixel(i1, x, y);
+	XPutPixel(i2, x*2,   y*2,   p);
+	XPutPixel(i2, x*2+1, y*2,   p);
+	XPutPixel(i2, x*2,   y*2+1, p);
+	XPutPixel(i2, x*2+1, y*2+1, p);
+      }
+  free(i1->data); i1->data = 0;
+  XDestroyImage(i1);
+  XPutImage(dpy, p2, gc, i2, 0, 0, 0, 0, i2->width, i2->height);
+  XFreeGC (dpy, gc);
+  free(i2->data); i2->data = 0;
+  XDestroyImage(i2);
+  XFreePixmap(dpy, pixmap);
+  return p2;
+}
+
+
+static unsigned char *
+reformat_pixmap (struct state *st, Pixmap pixmap, Pixmap mask, int *w, int *h)
+{
+  XImage *image = 0, *mimage = 0;
+  int x, y;
+  unsigned char *result, *o;
+  XColor colors[256];
+  Bool cmap_p = has_writable_cells (st->screen, st->visual);
+
+  while (*w < st->width  / 10 &&
+         *h < st->height / 10)
+    {
+      pixmap = double_pixmap (st->dpy, st->visual, st->depth, pixmap, *w, *h);
+      if (mask)
+        mask = double_pixmap (st->dpy, st->visual, st->depth, mask, *w, *h);
+      *w *= 2;
+      *h *= 2;
+    }
+
+  if (cmap_p)
+    {
+      int i;
+      for (i = 0; i < countof (colors); i++)
+        colors[i].pixel = i;
+      XQueryColors (st->dpy, st->colormap, colors, countof (colors));
+    }
+
+  image  = XGetImage (st->dpy, pixmap, 0, 0, *w, *h, ~0L, ZPixmap);
+  XFreePixmap(st->dpy, pixmap);
+
+  if (mask)
+    {
+      mimage = XGetImage (st->dpy, mask,   0, 0, *w, *h, ~0L, ZPixmap);
+      XFreePixmap(st->dpy, mask);
+    }
+
+  result = (unsigned char *) malloc (image->width * image->height);
+  o = result;
+  for (y = 0; y < image->height; y++)
+    for (x = 0; x < image->width; x++)
+      {
+        unsigned long rgb = XGetPixel (image, x, y);
+        unsigned long a   = mimage ? XGetPixel (mimage, x, y) : 1;
+        unsigned long gray;
+        if (!a)
+          rgb = 0xFFFFFFFFL;
+        if (cmap_p)
+          gray = ((200 - ((((colors[rgb].red   >> 8) & 0xFF) +
+                           ((colors[rgb].green >> 8) & 0xFF) +
+                           ((colors[rgb].blue  >> 8) & 0xFF))
+                          >> 1))
+                  & 0xFF);
+        else
+          /* This is *so* not handling all the cases... */
+          gray = (image->depth > 16
+                  ? ((((rgb >> 24) & 0xFF) +
+                      ((rgb >> 16) & 0xFF) +
+                      ((rgb >>  8) & 0xFF) +
+                      ((rgb      ) & 0xFF)) >> 2)
+                  : ((((rgb >> 12) & 0x0F) +
+                      ((rgb >>  8) & 0x0F) +
+                      ((rgb >>  4) & 0x0F) +
+                      ((rgb      ) & 0x0F)) >> 1));
+
+        *o++ = 255 - gray;
+      }
+
+  *w = image->width;
+  *h = image->height;
+  XDestroyImage (image);
+  if (mimage)
+    XDestroyImage (mimage);
+
+  return result;
+
+}
+
+
 static unsigned char *
 loadBitmap(struct state *st, int *w, int *h)
 {
@@ -592,99 +704,21 @@ loadBitmap(struct state *st, int *w, int *h)
 # else
   char *bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
 # endif
-  
+  Pixmap p = 0, mask = 0;
   if (!bitmap_name ||
       !*bitmap_name ||
       !strcmp(bitmap_name, "none"))
     ;
   else if (!strcmp(bitmap_name, "(default)"))   /* use the builtin */
-    {
-      XImage *ximage;
-      unsigned char *result, *o;
-      unsigned char *bits = (unsigned char *) malloc (sizeof(bob_bits));
-      int x, y;
-      int scale = ((st->width > bob_width * 10) ? 2 : 1);
- 
-      memcpy (bits, bob_bits, sizeof(bob_bits));
-      ximage = XCreateImage (st->dpy, st->visual, 1, XYBitmap, 0, 
-                             (char *) bits, bob_width, bob_height, 8, 0);
-      ximage->byte_order = LSBFirst;
-      ximage->bitmap_bit_order = LSBFirst;
-      *w = ximage->width * scale;
-      *h = ximage->height * scale;
-      o = result = (unsigned char *) malloc ((*w * scale) * (*h * scale));
-      for (y = 0; y < *h; y++)
-        for (x = 0; x < *w; x++)
-          *o++ = (XGetPixel(ximage, x/scale, y/scale) ? 255 : 0);
-       
-      return result;
-    }
+    p = image_data_to_pixmap (st->dpy, st->window,
+                              bob_png, sizeof(bob_png),
+                              w, h, &mask);
   else  /* load a bitmap file */
-#ifdef HAVE_JWXYZ
-    abort(); /* #### fix me */
-#else
-   {
-      Pixmap pixmap =
-        xpm_file_to_pixmap (st->dpy, st->window, bitmap_name, &st->width, &st->height, 0);
-      XImage *image;
-      int x, y;
-      unsigned char *result, *o;
-      XColor colors[256];
-      Bool cmap_p = has_writable_cells (st->screen, st->visual);
+    p = file_to_pixmap (st->dpy, st->window, bitmap_name,
+                        &st->width, &st->height, 0);
 
-      if (cmap_p)
-        {
-          int i;
-          for (i = 0; i < countof (colors); i++)
-            colors[i].pixel = i;
-          XQueryColors (st->dpy, st->colormap, colors, countof (colors));
-        }
-
-      image = XGetImage (st->dpy, pixmap, 0, 0, st->width, st->height, ~0L, ZPixmap);
-      XFreePixmap(st->dpy, pixmap);
-
-      result = (unsigned char *) malloc (st->width * st->height);
-      o = result;
-      for (y = 0; y < st->height; y++)
-        for (x = 0; x < st->width; x++)
-          {
-            int rgba = XGetPixel (image, x, y);
-            int gray;
-            if (cmap_p)
-              gray = ((200 - ((((colors[rgba].red   >> 8) & 0xFF) +
-                              ((colors[rgba].green >> 8) & 0xFF) +
-                              ((colors[rgba].blue  >> 8) & 0xFF))
-                             >> 1))
-                      & 0xFF);
-            else
-              /* This is *so* not handling all the cases... */
-              gray = (image->depth > 16
-                      ? ((((rgba >> 24) & 0xFF) +
-                          ((rgba >> 16) & 0xFF) +
-                          ((rgba >>  8) & 0xFF) +
-                          ((rgba      ) & 0xFF)) >> 2)
-                      : ((((rgba >> 12) & 0x0F) +
-                          ((rgba >>  8) & 0x0F) +
-                          ((rgba >>  4) & 0x0F) +
-                          ((rgba      ) & 0x0F)) >> 1));
-
-            *o++ = 255 - gray;
-          }
-
-      XFree (image->data);
-      image->data = 0;
-      XDestroyImage (image);
-
-      *w = st->width;
-      *h = st->height;
-      return result;
-    }
-#endif /* !HAVE_JWXYZ */
-
-  *w = 0;
-  *h = 0;
-  return 0;
-
+  if (!p) return 0;
+  return reformat_pixmap (st, p, mask, w, h);
 }
 
 static void *

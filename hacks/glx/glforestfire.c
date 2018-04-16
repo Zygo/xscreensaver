@@ -95,16 +95,11 @@ static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
 
 #if defined( USE_XPM ) || defined( USE_XPMINC ) || defined(STANDALONE)
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
-#include "xpm-ximage.h"
+#include "ximage-loader.h"
 #define I_HAVE_XPM
 
-#ifdef STANDALONE
-#include "../images/ground.xpm"
-#include "../images/tree.xpm"
-#else /* !STANDALONE */
-#include "pixmaps/ground.xpm"
-#include "pixmaps/tree.xpm"
-#endif /* !STANDALONE */
+#include "images/gen/ground_png.h"
+#include "images/gen/tree_png.h"
 #endif /* HAVE_XPM */
 
 /* vector utility macros */
@@ -534,8 +529,10 @@ static void inittextures(ModeInfo * mi)
 	glBindTexture(GL_TEXTURE_2D, fs->groundid);
 #endif /* HAVE_GLBINDTEXTURE */
 
-        if ((fs->gtexture = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
-			 MI_COLORMAP(mi), ground)) == None) {
+        if ((fs->gtexture = image_data_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                                                 ground_png,
+                                                 sizeof(ground_png)))
+            == None) {
 	    (void) fprintf(stderr, "Error reading the ground texture.\n");
 	    glDeleteTextures(1, &fs->groundid);
             do_texture = False;
@@ -548,10 +545,7 @@ static void inittextures(ModeInfo * mi)
     clear_gl_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  fs->gtexture->width, fs->gtexture->height, 0,
-                 GL_RGBA,
-                 /* GL_UNSIGNED_BYTE, */
-                 GL_UNSIGNED_INT_8_8_8_8_REV,
-                 fs->gtexture->data);
+                 GL_RGBA, GL_UNSIGNED_BYTE, fs->gtexture->data);
     check_gl_error("texture");
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -568,8 +562,11 @@ static void inittextures(ModeInfo * mi)
 #ifdef HAVE_GLBINDTEXTURE
 	    glBindTexture(GL_TEXTURE_2D,fs->treeid);
 #endif /* HAVE_GLBINDTEXTURE */
-            if ((fs->ttexture = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
-			 MI_COLORMAP(mi), tree)) == None) {
+            if ((fs->ttexture = image_data_to_ximage(MI_DISPLAY(mi),
+                                                     MI_VISUAL(mi),
+                                                     tree_png,
+                                                     sizeof(tree_png)))
+                == None) {
 	      (void)fprintf(stderr,"Error reading tree texture.\n");
 	      glDeleteTextures(1, &fs->treeid);
 	      fs->treeid    = 0;
@@ -580,10 +577,7 @@ static void inittextures(ModeInfo * mi)
         clear_gl_error();
 	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                      fs->ttexture->width, fs->ttexture->height, 0,
-                     GL_RGBA,
-                     /* GL_UNSIGNED_BYTE, */
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
-                     fs->ttexture->data);
+                     GL_RGBA, GL_UNSIGNED_BYTE, fs->ttexture->data);
         check_gl_error("texture");
 
 	    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -833,7 +833,11 @@ compass_init (Display *dpy, Window window)
       st->xgwa.height > st->xgwa.width * 5)
     st->size2 = MAX(st->xgwa.width, st->xgwa.height);
 
-  if (st->size2 > 600) st->size2 = 600;
+  {
+    int max = 600;
+    if (st->xgwa.width > 2560) max *= 2;  /* Retina displays */
+    if (st->size2 > max) st->size2 = max;
+  }
 
   st->size = (st->size2 / 2) * 0.8;
 

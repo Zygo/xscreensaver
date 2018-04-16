@@ -6,7 +6,7 @@ srcdir		= @srcdir@
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
-SUBDIRS 	= utils jwxyz hacks hacks/glx driver po
+SUBDIRS 	= utils jwxyz hacks/images hacks hacks/glx driver po
 SUBDIRS2	= $(SUBDIRS) OSX android
 TARFILES	= README README.hacking README.VMS INSTALL \
 		  configure configure.in Makefile.in config.h.in \
@@ -121,7 +121,7 @@ configure::
  --x-includes=DIR        X include files are in DIR\n \
  --x-libraries=DIR       X library files are in DIR/m; \
 									     \
-		s@mandir=.\$${prefix}/man.@mandir=\\\$${datadir}/man@;       \
+		s@mandir=.\$$\{prefix}/man.@mandir=\\\$${datadir}/man@;       \
 									     \
 		s@rm -f conftest@rm -rf conftest@g;			     \
 									     \

@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Fri Dec  1 17:57:48 2017 by build-fntable.pl 1.5.
+   Created: Tue Apr 10 17:04:05 2018 by build-fntable.pl 1.5.
  */
 
 #import <Foundation/Foundation.h>
@@ -45,6 +45,7 @@ extern struct xscreensaver_function_table
  compass_xscreensaver_function_table,
  coral_xscreensaver_function_table,
  crackberg_xscreensaver_function_table,
+ crumbler_xscreensaver_function_table,
  crystal_xscreensaver_function_table,
  cube21_xscreensaver_function_table,
  cubenetic_xscreensaver_function_table,
@@ -131,6 +132,7 @@ extern struct xscreensaver_function_table
  loop_xscreensaver_function_table,
  m6502_xscreensaver_function_table,
  maze_xscreensaver_function_table,
+ maze3d_xscreensaver_function_table,
  memscroller_xscreensaver_function_table,
  menger_xscreensaver_function_table,
  metaballs_xscreensaver_function_table,
@@ -148,6 +150,7 @@ extern struct xscreensaver_function_table
  noseguy_xscreensaver_function_table,
  pacman_xscreensaver_function_table,
  pedal_xscreensaver_function_table,
+ peepers_xscreensaver_function_table,
  penetrate_xscreensaver_function_table,
  penrose_xscreensaver_function_table,
  petri_xscreensaver_function_table,
@@ -169,6 +172,7 @@ extern struct xscreensaver_function_table
  quasicrystal_xscreensaver_function_table,
  queens_xscreensaver_function_table,
  raverhoop_xscreensaver_function_table,
+ razzledazzle_xscreensaver_function_table,
  rdbomb_xscreensaver_function_table,
  ripples_xscreensaver_function_table,
  rocks_xscreensaver_function_table,
@@ -278,6 +282,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&compass_xscreensaver_function_table], @"compass",
 	[NSValue valueWithPointer:&coral_xscreensaver_function_table], @"coral",
 	[NSValue valueWithPointer:&crackberg_xscreensaver_function_table], @"crackberg",
+	[NSValue valueWithPointer:&crumbler_xscreensaver_function_table], @"crumbler",
 	[NSValue valueWithPointer:&crystal_xscreensaver_function_table], @"crystal",
 	[NSValue valueWithPointer:&cube21_xscreensaver_function_table], @"cube21",
 	[NSValue valueWithPointer:&cubenetic_xscreensaver_function_table], @"cubenetic",
@@ -364,6 +369,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&loop_xscreensaver_function_table], @"loop",
 	[NSValue valueWithPointer:&m6502_xscreensaver_function_table], @"m6502",
 	[NSValue valueWithPointer:&maze_xscreensaver_function_table], @"maze",
+	[NSValue valueWithPointer:&maze3d_xscreensaver_function_table], @"maze3d",
 	[NSValue valueWithPointer:&memscroller_xscreensaver_function_table], @"memscroller",
 	[NSValue valueWithPointer:&menger_xscreensaver_function_table], @"menger",
 	[NSValue valueWithPointer:&metaballs_xscreensaver_function_table], @"metaballs",
@@ -381,6 +387,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&noseguy_xscreensaver_function_table], @"noseguy",
 	[NSValue valueWithPointer:&pacman_xscreensaver_function_table], @"pacman",
 	[NSValue valueWithPointer:&pedal_xscreensaver_function_table], @"pedal",
+	[NSValue valueWithPointer:&peepers_xscreensaver_function_table], @"peepers",
 	[NSValue valueWithPointer:&penetrate_xscreensaver_function_table], @"penetrate",
 	[NSValue valueWithPointer:&penrose_xscreensaver_function_table], @"penrose",
 	[NSValue valueWithPointer:&petri_xscreensaver_function_table], @"petri",
@@ -402,6 +409,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&quasicrystal_xscreensaver_function_table], @"quasicrystal",
 	[NSValue valueWithPointer:&queens_xscreensaver_function_table], @"queens",
 	[NSValue valueWithPointer:&raverhoop_xscreensaver_function_table], @"raverhoop",
+	[NSValue valueWithPointer:&razzledazzle_xscreensaver_function_table], @"razzledazzle",
 	[NSValue valueWithPointer:&rdbomb_xscreensaver_function_table], @"rdbomb",
 	[NSValue valueWithPointer:&ripples_xscreensaver_function_table], @"ripples",
 	[NSValue valueWithPointer:&rocks_xscreensaver_function_table], @"rocks",

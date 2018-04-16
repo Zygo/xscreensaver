@@ -31,14 +31,7 @@
 
 #include "xlockmoreI.h"
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM) || defined(HAVE_JWXYZ)
-# define USE_PIXMAP
-#include "xpm-pixmap.h"
-# else
-# if defined(USE_PIXMAP)
-#  undef USE_PIXMAP
-# endif
-#endif
+#include "ximage-loader.h"
 
 #define LEVHEIGHT 	32U
 #define LEVWIDTH 	40U
@@ -51,11 +44,7 @@
 #define SNB(v, n) ((v) |= (1 << (n)))
 #define UNSNB(v, n) ((v) &= ~(1 << (n)))
 #define GHOSTS 4U
-#if defined(USE_PIXMAP)
 #define MAXMOUTH 3
-#else
-#define MAXMOUTH 11
-#endif
 #define MAXGPOS 2
 #define MAXGDIR 4
 #define MAXGWAG 2

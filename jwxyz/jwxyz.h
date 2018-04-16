@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -428,6 +428,8 @@ extern void jwxyz_draw_NSImage_or_CGImage (Display *, Drawable,
                                            Bool nsimg_p, void *NSImage_arg,
                                            XRectangle *geom_ret, 
                                            int exif_rotation);
+extern XImage *jwxyz_png_to_ximage (Display *, Visual *,
+                                    const unsigned char *, unsigned long size);
 
 extern int XSetGraphicsExposures (Display *, GC, Bool);
 extern Bool XTranslateCoordinates (Display *, Window src_w, Window dest_w,

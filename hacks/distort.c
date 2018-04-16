@@ -1,5 +1,5 @@
 /* -*- mode: C; tab-width: 4 -*-
- * xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -125,6 +125,8 @@ distort_reset (struct state *st)
 	st->reflect = get_boolean_resource(st->dpy, "reflect", "Boolean");
 	st->slow = get_boolean_resource(st->dpy, "slow", "Boolean");
 	
+    if (st->xgwa.width > 2560) st->radius *= 3;  /* Retina displays */
+
     if (st->delay < 0) st->delay = 0;
     if (st->duration < 1) st->duration = 1;
 

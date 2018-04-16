@@ -63,7 +63,7 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 XMU_LIBS	= @XMU_LIBS@
-XPM_LIBS	= @XPM_LIBS@
+PNG_LIBS	= @PNG_LIBS@
 
 # Note:
 #
@@ -120,7 +120,7 @@ TEST_EXES	= test-passwd   test-uid    test-xdpms      test-grab   \
 		  test-apm      test-fade   test-xinerama   test-vp     \
 		  test-randr    xdpyinfo    test-mlstring   test-screens
 
-MOTIF_LIBS	= @MOTIF_LIBS@ @XPM_LIBS@ $(XMU_LIBS)
+MOTIF_LIBS	= @MOTIF_LIBS@ @PNG_LIBS@ $(XMU_LIBS)
 GTK_LIBS	= @GTK_LIBS@ $(XMU_LIBS)
 XML_LIBS	= @XML_LIBS@
 
@@ -153,11 +153,11 @@ DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 
 SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
 		  $(UTILS_SRC)/logo.c $(UTILS_SRC)/yarandom.c \
-		  $(UTILS_SRC)/minixpm.c \
+		  $(UTILS_SRC)/minixpm.c $(UTILS_SRC)/font-retry.c \
 		  $(DEMO_UTIL_SRCS)
 SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/yarandom.o \
-		  $(UTILS_BIN)/minixpm.o \
+		  $(UTILS_BIN)/minixpm.o $(UTILS_SRC)/font-retry.o \
 		  $(DEMO_UTIL_OBJS)
 
 GETIMG_SRCS_1	= xscreensaver-getimage.c
@@ -210,7 +210,7 @@ SAVER_LIBS	= $(LIBS) $(X_LIBS) $(XMU_LIBS) @SAVER_LIBS@ \
 CMD_LIBS	= $(LIBS) $(X_LIBS) \
 		  $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
 
-GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(XPM_LIBS) $(JPEG_LIBS) \
+GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(PNG_LIBS) $(JPEG_LIBS) \
 		  $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS)
 
 EXES		= xscreensaver xscreensaver-command xscreensaver-demo \
@@ -729,6 +729,7 @@ $(UTILS_BIN)/colorbars.o:	$(UTILS_SRC)/colorbars.c
 $(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
 $(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
 $(UTILS_BIN)/grabscreen.o:	$(UTILS_SRC)/grabscreen.c
+$(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
 
 UTIL_OBJS	= $(SAVER_UTIL_OBJS) $(UTILS_BIN)/colorbars.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o \
@@ -803,7 +804,7 @@ xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS)
 
 xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(GTK_OBJS) $(LIBS) $(X_LIBS) \
-	$(GTK_LIBS) $(XPM_LIBS) $(XML_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) \
+	$(GTK_LIBS) $(XML_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) \
 	-lXt -lX11 $(XDPMS_LIBS) $(XINERAMA_LIBS) -lXext $(X_EXTRA_LIBS)
 
 demo-Gtk.o: XScreenSaver_ad.h
@@ -934,6 +935,7 @@ setuid.o: $(srcdir)/xscreensaver.h
 splash.o: ../config.h
 splash.o: $(srcdir)/prefs.h
 splash.o: $(srcdir)/types.h
+splash.o: $(UTILS_SRC)/font-retry.h
 splash.o: $(UTILS_SRC)/resources.h
 splash.o: $(srcdir)/xscreensaver.h
 stderr.o: ../config.h

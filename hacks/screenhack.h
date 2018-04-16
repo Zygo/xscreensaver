@@ -40,6 +40,12 @@
 #endif
 
 
+#ifdef HAVE_JWXYZ
+# define SCREENHACK_VISUAL DEFAULT_VISUAL
+#else /* !HAVE_JWXYZ */
+# define SCREENHACK_VISUAL 0, 0
+#endif /* !HAVE_JWXYZ */
+
 #define XSCREENSAVER_MODULE_2(CLASS,NAME,PREFIX)		\
   struct xscreensaver_function_table				\
 	 NAME ## _xscreensaver_function_table = {		\
@@ -52,7 +58,7 @@
 	   PREFIX ## _reshape,					\
 	   PREFIX ## _event,					\
 	   PREFIX ## _free,					\
-           0, 0, 0 };						\
+	   0, SCREENHACK_VISUAL };					\
   XSCREENSAVER_LINK (NAME ## _xscreensaver_function_table)
 
 #define XSCREENSAVER_MODULE(CLASS,PREFIX)			\

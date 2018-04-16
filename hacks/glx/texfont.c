@@ -9,7 +9,6 @@
  * implied warranty.
  *
  * Renders X11 fonts into textures for use with OpenGL.
- * A higher level API is in glxfonts.c.
  */
 
 #ifdef HAVE_CONFIG_H

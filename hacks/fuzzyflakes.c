@@ -349,6 +349,13 @@ FuzzyFlakesInit(Flake *flake)
    if (flake->RandomColors == True)
       flake->RandomColors = get_boolean_resource(flake->dpy, "randomColors", "Boolean");
 
+   if (xgwa.width > 2560) {  /* Retina displays */
+     flake->Thickness *= 2;
+     flake->BorderThickness *= 2;
+     flake->Radius *= 2;
+     flake->FallingSpeed *= 2;
+   }
+
    if (flake->Delay < 0)
       flake->Delay = 0;
 

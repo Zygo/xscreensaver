@@ -2597,7 +2597,7 @@ init_juggle (ModeInfo * mi)
 
   if(describe && !sp->mode_font) { /* Check to see if there's room to describe patterns. */
     char *font = get_string_resource (MI_DISPLAY(mi), "font", "Font");
-	sp->mode_font = XLoadQueryFont(MI_DISPLAY(mi), font);
+	sp->mode_font = load_font_retry(MI_DISPLAY(mi), font);
   }
 }
 

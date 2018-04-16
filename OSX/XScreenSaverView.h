@@ -69,6 +69,8 @@
 @interface XScreenSaverView : ScreenSaverView
 # ifdef USE_IPHONE
 			      <UIAlertViewDelegate>
+# elif defined(USE_TOUCHBAR)
+			      <NSTouchBarDelegate>
 # endif
 {
   struct xscreensaver_function_table *xsft;
@@ -110,8 +112,8 @@
 # endif // !USE_IPHONE
 
 # ifdef USE_TOUCHBAR
-  NSWindow *touchbar_window;
   XScreenSaverView *touchbar_view;
+  BOOL touchbar_p;
 # endif
 
   NSOpenGLContext *ogl_ctx;      // OpenGL rendering context

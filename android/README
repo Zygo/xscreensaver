@@ -150,80 +150,59 @@ TODO list, and known bugs:
     display the error message in a dialog.  The catch works, but the dialog
     box does not.
 
-  antinspect    crashes emulator, sometimes
-  antmaze       crashes emulator, sometimes
+  antinspect	renders incorrectly
+  antmaze	crashes emulator, sometimes
   antspotlight	crashes emulator, sometimes
   apple2	text, images into pixmaps doesn't work
   atlantis	crashes emulator, sometimes
-  barcode       pixmaps
-  binaryring    pixmaps
-  blitspin      images
-  bouboule      ?
-  bsod          pixmaps, XCopyArea problems
-  bumps         XPutImage
-  carousel      blank
-  circuit	crashes emulator
-  cityflow	crashes emulator, sometimes
-  crackberg	crashes emulator, sometimes
-  cube21	crashes emulator, sometimes
-  cubenetic	crashes emulator, sometimes
-  cubicgrid	crashes emulator, sometimes
-  dnalogo       codeword is blank
-  dymaxionmap	crashes emulator
-  endgame	crashes emulator
-  engine        text
-  esper         text
-  flipflop      images
-  flipscreen3d  images
-  fliptext      text
-  fontglide     text
-  gflux         images
-  glblur        crashes emulator, sometimes
-  gleidescope   images
-  glhanoi       crashes emulator, but a few seconds in
-  glplanet      crashes emulator
-  glslideshow   images
-  halftone      XFillArc crash
-  halo          XOR
-  hypertorus    crashes emulator
-  interaggregate        window background should be white
-  jigglypuff    incredibly slow
-  jigsaw        crashes emulator
-  juggler3d	crashes emulator
-  maze          no logo, lines look weird
-  mirrorblob    images
-  moebius       crashes emulator
-  moire2        pixmaps
-  molecule	crashes emulator
-  mountain      polygons
-  munch         XOR
-  noseguy       pixmaps
+  barcode	pixmaps
+  blitspin	images
+  bsod		pixmaps, XCopyArea problems
+  bumps		images
+  carousel	images
+  cityflow	shading is wrong
+  endgame	insanely slow
+  engine	text
+  esper		images, text
+  flipflop	images
+  flipscreen3d	images
+  fliptext	text
+  fontglide	text
+  gflux		images
+  glblur	grayscale instead of color
+  gleidescope	images
+  glslideshow	images
+  halftone	XFillArc crash
+  halo		some extra triangles show up
+  jigglypuff	incredibly slow
+  jigsaw	images
+  juggler3d	blank
+  maze		lines are not the same thickness (aliased?)
+  mirrorblob	images
+  molecule	blank
+  mountain	polygons
+  munch		XOR
+  noseguy	text; images flicker to black and white
   pacman	launches really slowly
-  pedal         polygons
-  phosphor      pixmaps
-  photopile     pixmaps
-  pipes         blank
-  polyhedra	crashes emulator
-  polyominoes   pixmaps
-  projectiveplane       crashes emulator
-  pulsar        crashes emulator
-  qix           polygons
-  queens	crashes emulator
-  skytentacles  crashes emulator
-  slip          pixmaps
-  sonar		crashes emulator
-  speedmine     polygons
-  spheremonics  crashes emulator
-  splitflap     text
-  spotlight     pixmaps
-  starfish      polygons
-  starwars	crashes emulator
-  substrate     background should be white
-  surfaces      crashes emulator
-  tessellimage  pixmaps
-  twang         background should be black
-  unicrud       pixmaps
-  xanalogtv     pixmaps
-  xjack         blank
-  xmatrix       pixmaps
-  zoom          pixmaps
+  pedal		polygons
+  phosphor	text; pixmaps
+  photopile	images; pixmaps
+  polyhedra	text
+  polyominoes	pixmaps
+  qix		polygons
+  queens	blank
+  slip		images
+  sonar		does icmp work?
+  speedmine	polygons
+  splitflap	super slow
+  spotlight	pixmaps
+  starfish	polygons
+  starwars	text
+  tessellimage	pixmaps
+  twang		background should be black
+  unicrud	pixmaps
+  winduprobot	dome is not transparent
+  xanalogtv	pixmaps
+  xflame	draws only upper left corner
+  xmatrix	super slow, glitch on first screen
+  zoom		pixmaps

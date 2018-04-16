@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -44,8 +44,8 @@ fps_init (Display *dpy, Window window)
 
   if (!font)
     font = "-*-courier-bold-r-normal-*-*-180-*-*-*-*-*-*"; /* also texfont.c */
-  f = XLoadQueryFont (dpy, font);
-  if (!f) f = XLoadQueryFont (dpy, "fixed");
+  f = load_font_retry (dpy, font);
+  if (!f) abort();
 
   {
     XGCValues gcv;

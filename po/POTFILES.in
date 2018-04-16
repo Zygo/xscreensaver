@@ -1,4 +1,4 @@
-# Auto-generated: Wed Dec 20 11:14:25 PST 2017
+# Auto-generated: Thu Apr 12 13:00:50 PDT 2018
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -43,6 +43,7 @@ hacks/config/compass.xml
 hacks/config/coral.xml
 hacks/config/crackberg.xml
 hacks/config/critical.xml
+hacks/config/crumbler.xml
 hacks/config/crystal.xml
 hacks/config/cube21.xml
 hacks/config/cubenetic.xml
@@ -144,6 +145,7 @@ hacks/config/lockward.xml
 hacks/config/loop.xml
 hacks/config/m6502.xml
 hacks/config/maze.xml
+hacks/config/maze3d.xml
 hacks/config/memscroller.xml
 hacks/config/menger.xml
 hacks/config/metaballs.xml
@@ -162,6 +164,7 @@ hacks/config/noof.xml
 hacks/config/noseguy.xml
 hacks/config/pacman.xml
 hacks/config/pedal.xml
+hacks/config/peepers.xml
 hacks/config/penetrate.xml
 hacks/config/penrose.xml
 hacks/config/petri.xml
@@ -183,6 +186,7 @@ hacks/config/qix.xml
 hacks/config/quasicrystal.xml
 hacks/config/queens.xml
 hacks/config/raverhoop.xml
+hacks/config/razzledazzle.xml
 hacks/config/rd-bomb.xml
 hacks/config/rdbomb.xml
 hacks/config/ripples.xml

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -36,7 +36,7 @@
 
 
 #include "screenhack.h"
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 #include "apple2.h"
 
 #include <ctype.h>
@@ -50,23 +50,17 @@
 # include <sys/utsname.h>
 #endif /* HAVE_UNAME */
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM) || defined(HAVE_JWXYZ)
-# define DO_XPM
-#endif
-
-#ifdef DO_XPM
-# include "images/amiga.xpm"
-# include "images/hmac.xpm"
-# include "images/osx_10_2.xpm"
-# include "images/osx_10_3.xpm"
-# include "images/android.xpm"
-# include "images/ransomware.xpm"
-#endif
-#include "images/atari.xbm"
-#include "images/mac.xbm"
-#include "images/macbomb.xbm"
-#include "images/apple.xbm"
-#include "images/atm.xbm"
+#include "images/gen/amiga_png.h"
+#include "images/gen/hmac_png.h"
+#include "images/gen/osx_10_2_png.h"
+#include "images/gen/osx_10_3_png.h"
+#include "images/gen/android_png.h"
+#include "images/gen/ransomware_png.h"
+#include "images/gen/atari_png.h"
+#include "images/gen/mac_png.h"
+#include "images/gen/macbomb_png.h"
+#include "images/gen/apple_png.h"
+#include "images/gen/atm_png.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -83,7 +77,8 @@ typedef enum { EOF=0,
                COLOR, INVERT, MOVETO, MARGINS,
                CURSOR_BLOCK, CURSOR_LINE, RECT, LINE, COPY, PIXMAP, IMG, FONT,
                PAUSE, CHAR_DELAY, LINE_DELAY,
-               LOOP, RESET, VERT_MARGINS, CROP
+               LOOP, RESET, VERT_MARGINS, CROP,
+               WRAP, WORD_WRAP, TRUNCATE
 } bsod_event_type;
 
 struct bsod_event {
@@ -101,14 +96,16 @@ struct bsod_state {
   int left_margin, right_margin;	/* for text wrapping */
   int top_margin, bottom_margin;	/* for text scrolling and cropping */
   int xoff, yoff;
-  Bool wrap_p;
+  Bool wrap_p, word_wrap_p;
+  char word_buf[80];
   Bool scroll_p;
   Bool crop_p;                  /* If True, chops off extra text vertically */
 
-  Pixmap pixmap;		/* Source image used by BSOD_PIXMAP */
+  Pixmap pixmap, mask;		/* Source image used by BSOD_PIXMAP */
 
   int x, y;			/* current text-drawing position */
   int current_left;		/* don't use this */
+  int last_nonwhite;
 
   int pos;			/* position in queue */
   int queue_size;
@@ -326,6 +323,23 @@ struct bsod_state {
   (bst)->pos++; \
   } while (0)
 
+#define BSOD_WRAP(bst) do { \
+  ensure_queue (bst); \
+ (bst)->queue[(bst)->pos].type = WRAP; \
+  (bst)->pos++; \
+  } while (0)
+
+#define BSOD_WORD_WRAP(bst) do { \
+  ensure_queue (bst); \
+  (bst)->queue[(bst)->pos].type = WORD_WRAP; \
+  (bst)->pos++; \
+  } while (0)
+
+#define BSOD_TRUNCATE(bst) do { \
+  ensure_queue (bst); \
+  (bst)->queue[(bst)->pos].type = TRUNCATE; \
+  (bst)->pos++; \
+  } while (0)
 
 
 static void
@@ -438,6 +452,7 @@ draw_char (struct bsod_state *bst, char c)
   else if (c == '\r')
     {
       bst->x = bst->current_left;
+      bst->last_nonwhite = bst->x;
     }
   else if (c == '\n')
     {
@@ -468,13 +483,60 @@ draw_char (struct bsod_state *bst, char c)
       XCharStruct ov;
       XTextExtents (bst->font, &c, 1, &dir, &ascent, &descent, &ov);
 
-      if (bst->wrap_p &&
+      if ((bst->wrap_p || bst->word_wrap_p) &&
           bst->x + ov.width > bst->xgwa.width - bst->right_margin - bst->xoff)
-        bst_crlf (bst);
+        {
+          XCharStruct ov2;
+          int L = 0;
+
+          if (bst->word_wrap_p && *bst->word_buf)
+            {
+              L = strlen(bst->word_buf);
+              XTextExtents (bst->font, bst->word_buf, L,
+                      &dir, &ascent, &descent, &ov2);
+            }
+
+          if (L)  /* Erase the truncated wrapped word */
+            {
+              XSetForeground (bst->dpy, bst->gc, bst->bg);
+              XFillRectangle (bst->dpy, bst->window, bst->gc,
+                              bst->last_nonwhite,
+                              bst->y - bst->font->ascent,
+                              ov2.width,
+                              bst->font->ascent + bst->font->descent);
+              XSetForeground (bst->dpy, bst->gc, bst->fg);
+            }
+
+          bst_crlf (bst);
+
+          if (L)  /* Draw wrapped partial word on the next line, no delay */
+            {
+              XDrawImageString (bst->dpy, bst->window, bst->gc,
+                                bst->x, bst->y, bst->word_buf, L);
+              bst->x += ov2.width;
+              bst->last_nonwhite = bst->x;
+            }
+        }
 
       XDrawImageString (bst->dpy, bst->window, bst->gc,
                         bst->x, bst->y, &c, 1);
       bst->x += ov.width;
+
+      if (bst->word_wrap_p)
+        {
+          if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+            {
+              bst->word_buf[0] = 0;
+              bst->last_nonwhite = bst->x;
+            }
+          else
+            {
+              int L = strlen (bst->word_buf);
+              if (L >= sizeof(bst->word_buf)-1) abort();
+              bst->word_buf[L] = c;
+              bst->word_buf[L+1] = 0;
+            }
+        }
     }
 }
 
@@ -502,6 +564,11 @@ bsod_pop (struct bsod_state *bst)
       if (! *s)
         {
           long delay = bst->line_delay;
+          /* Reset the string back to the beginning, in case we loop. */
+          bst->queue[bst->pos].arg2 = bst->queue[bst->pos].arg1;
+          bst->queue[bst->pos].arg3 = 0;
+          bst->queue[bst->pos].type = (bsod_event_type) 
+            bst->queue[bst->pos].arg4;
           bst->pos++;
           bst->current_left = bst->left_margin + bst->xoff;
           return delay;
@@ -512,6 +579,8 @@ bsod_pop (struct bsod_state *bst)
           position_for_text (bst, s);
           bst->queue[bst->pos].arg4 = (void *) bst->queue[bst->pos].type;
           bst->queue[bst->pos].type = LEFT;
+          bst->word_buf[0] = 0;
+          bst->last_nonwhite = bst->x;
 
           if (type == CENTER_FULL ||
               type == LEFT_FULL ||
@@ -559,6 +628,8 @@ bsod_pop (struct bsod_state *bst)
     {
       bst->x = (long) bst->queue[bst->pos].arg1;
       bst->y = (long) bst->queue[bst->pos].arg2;
+      bst->word_buf[0] = 0;
+      bst->last_nonwhite = bst->x;
       bst->pos++;
       return 0;
     }
@@ -599,10 +670,17 @@ bsod_pop (struct bsod_state *bst)
       int h    = (long) bst->queue[bst->pos].arg4;
       int tox  = (long) bst->queue[bst->pos].arg5;
       int toy  = (long) bst->queue[bst->pos].arg6;
+      if (type == PIXMAP && bst->mask)
+        {
+          XSetClipMask (bst->dpy, bst->gc, bst->mask);
+          XSetClipOrigin (bst->dpy, bst->gc, tox, toy);
+        }
       XCopyArea (bst->dpy,
                  (type == PIXMAP ? bst->pixmap : bst->window),
                  bst->window, bst->gc,
                  srcx, srcy, w, h, tox, toy);
+      if (type == PIXMAP && bst->mask)
+        XSetClipMask (bst->dpy, bst->gc, None);
       bst->pos++;
       return 0;
     }
@@ -690,6 +768,24 @@ bsod_pop (struct bsod_state *bst)
 
       return delay;
     }
+  case WRAP:
+    bst->wrap_p = 1;
+    bst->word_wrap_p = 0;
+    bst->pos++;
+    return 0;
+
+  case WORD_WRAP:
+    bst->wrap_p = 0;
+    bst->word_wrap_p = 1;
+    bst->pos++;
+    return 0;
+
+  case TRUNCATE:
+    bst->wrap_p = 0;
+    bst->word_wrap_p = 0;
+    bst->pos++;
+    return 0;
+
   case LOOP:
     {
       long off = (long) bst->queue[bst->pos].arg1;
@@ -740,10 +836,9 @@ make_bsod_state (Display *dpy, Window window,
   XGCValues gcv;
   struct bsod_state *bst;
   char buf1[1024], buf2[1024];
-  char buf3[1024], buf4[1024];
   char buf5[1024], buf6[1024];
   char buf7[1024], buf8[1024];
-  const char *font1, *font2, *font3, *font4;
+  const char *font1, *font3, *font4;
 
   bst = (struct bsod_state *) calloc (1, sizeof (*bst));
   bst->queue_size = 10;
@@ -753,12 +848,7 @@ make_bsod_state (Display *dpy, Window window,
   bst->window = window;
   XGetWindowAttributes (dpy, window, &bst->xgwa);
 
-  /* If the window is small:
-       use ".font" if it is loadable, else use ".font2".
-
-     If the window is big:
-       use ".bigFont" if it is loadable, else use ".bigFont2".
-   */
+  /* If the window is small, use ".font"; if big, ".bigFont". */
   if (
 # ifdef HAVE_MOBILE
       1
@@ -769,15 +859,11 @@ make_bsod_state (Display *dpy, Window window,
     {
       sprintf (buf1, "%.100s.font", name);
       sprintf (buf2, "%.100s.font", class);
-      sprintf (buf3, "%.100s.font2", name);
-      sprintf (buf4, "%.100s.font2", class);
     }
   else
     {
       sprintf (buf1, "%.100s.bigFont", name);
       sprintf (buf2, "%.100s.bigFont", class);
-      sprintf (buf3, "%.100s.bigFont2", name);
-      sprintf (buf4, "%.100s.bigFont2", class);
     }
   sprintf (buf5, "%.100s.fontB", name);
   sprintf (buf6, "%.100s.fontB", class);
@@ -785,11 +871,10 @@ make_bsod_state (Display *dpy, Window window,
   sprintf (buf8, "%.100s.fontC", class);
 
   font1 = get_string_resource (dpy, buf1, buf2);
-  font2 = get_string_resource (dpy, buf3, buf4);
   font3 = get_string_resource (dpy, buf5, buf6);
   font4 = get_string_resource (dpy, buf7, buf8);
 
-  /* If there was no ".mode.font2" resource also look for ".font2".
+  /* If there was no ".mode.font" resource also look for ".font".
      Under real X11, the wildcard does this, so this is redundant,
      but jwxyz needs it because it doesn't implement wildcards.
    */
@@ -800,29 +885,20 @@ make_bsod_state (Display *dpy, Window window,
 				 strchr (BUF2, '.') + 1);    \
     }} while(0)
   RES2 (font1, buf1, buf2);
-  RES2 (font2, buf3, buf4);
   RES2 (font3, buf5, buf6);
   RES2 (font4, buf7, buf8);
 #undef RES2
 
-  if (font1)
-    bst->font = XLoadQueryFont (dpy, font1);
-  if (! bst->font && font2)
-    bst->font = XLoadQueryFont (dpy, font2);
+  if (font1 && *font1)
+    bst->font = load_font_retry (dpy, font1);
 
-  /* If neither of those worked, try some defaults. */
-
-  if (! bst->font)
-    bst->font = XLoadQueryFont (dpy,"-*-courier-bold-r-*-*-*-120-*-*-m-*-*-*");
-  if (! bst->font)
-    bst->font = XLoadQueryFont (dpy, "fixed");
   if (! bst->font)
     abort();
 
-  if (font3)
-    bst->fontB = XLoadQueryFont (dpy, font3);
-  if (font4)
-    bst->fontC = XLoadQueryFont (dpy, font4);
+  if (font3 && *font3)
+    bst->fontB = load_font_retry (dpy, font3);
+  if (font4 && *font4)
+    bst->fontC = load_font_retry (dpy, font4);
 
   if (! bst->fontB) bst->fontB = bst->font;
   if (! bst->fontC) bst->fontC = bst->font;
@@ -876,6 +952,8 @@ free_bsod_state (struct bsod_state *bst)
     bst->free_cb (bst);
   if (bst->pixmap)
     XFreePixmap(bst->dpy, bst->pixmap);
+  if (bst->mask)
+    XFreePixmap(bst->dpy, bst->mask);
 
   XFreeFont (bst->dpy, bst->font);
   XFreeGC (bst->dpy, bst->gc);
@@ -897,14 +975,18 @@ free_bsod_state (struct bsod_state *bst)
 
 
 static Pixmap
-double_pixmap (Display *dpy, GC gc, Visual *visual, int depth, Pixmap pixmap,
+double_pixmap (Display *dpy, Visual *visual, int depth, Pixmap pixmap,
                int pix_w, int pix_h)
 {
   int x, y;
   Pixmap p2 = XCreatePixmap(dpy, pixmap, pix_w*2, pix_h*2, depth);
-  XImage *i1 = XGetImage(dpy, pixmap, 0, 0, pix_w, pix_h, ~0L, ZPixmap);
-  XImage *i2 = XCreateImage(dpy, visual, depth, ZPixmap, 0, 0,
-			    pix_w*2, pix_h*2, 8, 0);
+  XImage *i1 = XGetImage (dpy, pixmap, 0, 0, pix_w, pix_h, ~0L, 
+                          (depth == 1 ? XYPixmap : ZPixmap));
+  XImage *i2 = XCreateImage (dpy, visual, depth, 
+                             (depth == 1 ? XYPixmap : ZPixmap), 0, 0,
+                             pix_w*2, pix_h*2, 8, 0);
+  XGCValues gcv;
+  GC gc = XCreateGC (dpy, p2, 0, &gcv);
   i2->data = (char *) calloc(i2->height, i2->bytes_per_line);
   for (y = 0; y < pix_h; y++)
     for (x = 0; x < pix_w; x++)
@@ -918,6 +1000,7 @@ double_pixmap (Display *dpy, GC gc, Visual *visual, int depth, Pixmap pixmap,
   free(i1->data); i1->data = 0;
   XDestroyImage(i1);
   XPutImage(dpy, p2, gc, i2, 0, 0, 0, 0, i2->width, i2->height);
+  XFreeGC (dpy, gc);
   free(i2->data); i2->data = 0;
   XDestroyImage(i2);
   XFreePixmap(dpy, pixmap);
@@ -1331,13 +1414,17 @@ windows_10 (Display *dpy, Window window)
   pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) qr_bits,
                                         qr_width, qr_height,
                                         bst->fg, bst->bg, bst->xgwa.depth);
-  for (i = 0; i < 2; i++)
-    {
-      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
-                              pixmap, qr_width, qr_height);
-      qr_width *= 2;
-      qr_height *= 2;
-    }
+  {
+    int n = 2;
+    if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+    for (i = 0; i < n; i++)
+      {
+        pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
+                                pixmap, qr_width, qr_height);
+        qr_width *= 2;
+        qr_height *= 2;
+      }
+  }
   bst->pixmap = pixmap;
 
   y = top;
@@ -1411,9 +1498,11 @@ windows_ransomware (Display *dpy, Window window)
   char buf[1024];
 
   int pix_w = 0, pix_h = 0;
-  Pixmap pixmap = xpm_data_to_pixmap (dpy, window,
-                                      (char **) (ransomware_xpm),
-                                      &pix_w, &pix_h, 0);
+  Pixmap mask = 0;
+  Pixmap pixmap = image_data_to_pixmap (dpy, window,
+                                        ransomware_png, sizeof(ransomware_png),
+                                        &pix_w, &pix_h, &mask);
+  int i, n = 0;
 
   /* Don't start the countdown from the start, advance the deadline by 3 - 30
      hours */
@@ -1424,16 +1513,20 @@ windows_ransomware (Display *dpy, Window window)
   const time_t stage2_deadline = now + 604800 - advance_deadline; /* 7 days */
   char stage1_deadline_str[25], stage2_deadline_str[25];
   char countdown_str[16];
-  int stage1_countdown_y, stage2_countdown_y;
   int countdown_d, countdown_h, countdown_m, countdown_s, countdown_r;
-  const int line_height = bst->font->ascent + bst->font->descent;
-  int i;
+  int line_height  = bst->font->ascent + bst->font->descent;
+  int line_height1 = bst->fontA->ascent + bst->fontA->descent;
 
   const char *currencies[] = {
     "Blitcoin",
+    "Bitcorn",
+    "Buttcorn",
+    "clicks",
     "clicks",
     "Ass Pennies",
+    "Ass Pennies",
     "Dollary-doos",
+    "Dunning-Krugerrands",
     "Dunning-Krugerrands",
     "Dunning-Krugerrands",
     "Dunning-Krugerrands",
@@ -1505,81 +1598,6 @@ windows_ransomware (Display *dpy, Window window)
   const char *screensaver_quip =
     screensaver_quips[random() % countof(screensaver_quips)];
 
-  /* Positions of UI elements. Layout:
-
-  +---------+-+---------------------------------------+
-  |   LOGO  | |               HEADER                  |
-  |         | |---------------------------------------|
-  |         | | NOTE TEXT                             |
-  |   DEAD  | |                                       |
-  |   LINE  | |                                       |
-  |  TIMERS | |                                       |
-  |         | |                                       |
-  |         | |                                       |
-  |         | |                                       |
-  |         | |                                       |
-  |         | |                                       |
-  +---------+ |                                       |
-  | LINKS   | +---------------------------------------+
-  | LINKS   | | FOOTER                                |
-  +---------+-+---------------------------------------+
-
-  The right side of the UI maximises to available width.
-  The note text maximises to available height.
-  The logo, header and timers are anchored to the top left of the window.
-  The links and footer are anchored to the bottom left of the window.
-  The entire window is a fixed 4:3 scale, with a minimum margin around it.
-  */
-
-  /* Minimum margin around the window */
-  int margin_size = 50;
-
-  /* Right side of window (header, ransom note, BTC address, buttons) */
-  const int right_pane_x = 270;
-  /* "oops" header */
-  const int header_y = 5;
-  /* Ransom note */
-  const int ransom_y = 40;
-  /* Footer area */
-  const int footer_height = 100;
-
-  /* Left pane (deadlines, countdown, links) */
-  const int left_pane_width = right_pane_x - 5;
-  /* Logo (shown at top left corner) */
-  int logo_x = (left_pane_width - pix_w) / 2;
-  int logo_y = 10;
-  /* Deadline position */
-  const int deadline_y = 130;
-  /* Links height */
-  const int links_height = 100;
-  const int links_x = 20;
-
-  /* main window text */
-  unsigned long fg = bst->fg;
-  unsigned long bg = bst->bg;
-  /* ransom note */
-  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
-                                          "ransomware.foreground2",
-                                          "Ransomware.Foreground");
-  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
-                                          "ransomware.background2",
-                                          "Ransomware.Background");
-  /* buttons */
-  unsigned long fg3 = get_pixel_resource (dpy, bst->xgwa.colormap,
-                                          "ransomware.foreground3",
-                                          "Ransomware.Foreground");
-  unsigned long bg3 = get_pixel_resource (dpy, bst->xgwa.colormap,
-                                          "ransomware.background3",
-                                          "Ransomware.Background");
-  /* links */
-  unsigned long link = get_pixel_resource (dpy, bst->xgwa.colormap,
-                                           "ransomware.link",
-                                           "Ransomware.Foreground");
-  /* headers */
-  unsigned long theader = get_pixel_resource (dpy, bst->xgwa.colormap,
-                                              "ransomware.timerheader",
-                                              "Ransomware.Foreground");
-
   const char *lines[] = {
     "*What Happened To My Computer?\n",
     "Your important pixels are paintcrypted. All of your documents, photos, ",
@@ -1623,63 +1641,141 @@ windows_ransomware (Display *dpy, Window window)
     "*GREETZ TO CRASH OVERRIDE AND ALSO JOEY\n",
   };
 
-  /* Make a 4:3 ratio box inside of the workspace */
-  int box_width = bst->xgwa.width - (margin_size * 2);
-  int box_height = bst->xgwa.height - bst->yoff - (margin_size * 2);
-  int box_x = margin_size;
-  int box_y = margin_size;
-  if ((bst->xgwa.width / 4) * 3 > bst->xgwa.height) {
-    /* Widescreen, make narrow bits */
-    box_width = (bst->xgwa.height * 4 / 3) - (margin_size * 2);
-    box_x = (bst->xgwa.width - box_width) / 2;
-  } else {
-    /* Narrowscreen, make wide bits */
-    box_height = (bst->xgwa.width * 3 / 4) - (margin_size * 2);
-    box_y = (bst->xgwa.height - bst->yoff - box_height) / 2;
-  }
+  /* Positions of UI elements. Layout:
 
-  if (box_width < 750 && box_x == margin_size) {
-    /* Not much width... */
-    box_width = bst->xgwa.width;
-    box_x = 0;
-  }
+   +---------+-+---------------------------------------+
+   |   LOGO  | |               HEADER                  |
+   |         | |---------------------------------------|
+   |         | | NOTE TEXT                             |
+   |   DEAD  | |                                       |
+   |   LINE  | |                                       |
+   |  TIMERS | |                                       |
+   |         | |                                       |
+   |         | |                                       |
+   |         | |                                       |
+   |         | |                                       |
+   |         | |                                       |
+   +---------+ |                                       |
+   | LINKS   | +---------------------------------------+
+   | LINKS   | | FOOTER                                |
+   +---------+-+---------------------------------------+
 
+  The right side of the UI maximises to available width.
+  The note text maximises to available height.
+  The logo, header and timers are anchored to the top left of the window.
+  The links and footer are anchored to the bottom left of the window.
+  The entire window is a fixed 4:3 scale, with a minimum margin around it.
+  */
+
+  /* main window text */
+  unsigned long fg = bst->fg;
+  unsigned long bg = bst->bg;
+  /* ransom note */
+  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.foreground2",
+                                          "Ransomware.Foreground");
+  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.background2",
+                                          "Ransomware.Background");
+  /* buttons */
+  unsigned long fg3 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.foreground3",
+                                          "Ransomware.Foreground");
+  unsigned long bg3 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "ransomware.background3",
+                                          "Ransomware.Background");
+  /* links */
+  unsigned long link = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                           "ransomware.link",
+                                           "Ransomware.Foreground");
+  /* headers */
+  unsigned long theader = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                              "ransomware.timerheader",
+                                              "Ransomware.Foreground");
+  int left_column_width;
+  int right_column_width;
+  int right_column_height;
+  int stage1_countdown_y, stage2_countdown_y;
+  int margin;
+  int top_height, bottom_height;
+  int x, y;
+
+  if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+  for (i = 0; i < n; i++)
+    {
+      pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
+                              pixmap, pix_w, pix_h);
+      mask = double_pixmap (dpy, bst->xgwa.visual, 1,
+                            mask, pix_w, pix_h);
+      pix_w *= 2;
+      pix_h *= 2;
+    }
+
+  margin = line_height;
+  left_column_width  = MAX (pix_w, line_height1 * 8);
+  right_column_width = MIN (line_height * 40,
+                            MAX (line_height * 8,
+                                 bst->xgwa.width - left_column_width
+                                 - margin*2));
+  top_height = line_height * 2.5;
+  bottom_height = line_height * 6;
+  right_column_height = MIN (line_height * 36,
+                             bst->xgwa.height - bottom_height - top_height
+                             - line_height);
+
+  if ((bst->xgwa.width / 4) * 3 > bst->xgwa.height)
+    /* Wide screen: keep the big text box at 4:3, centered. */
+    right_column_height = MIN (right_column_height,
+                               right_column_width * 4 / 3);
+  else if (right_column_width < line_height * 30)
+    /* Tall but narrow screen: make the text box be full height. */
+    right_column_height = (bst->xgwa.height - bottom_height - top_height
+                           - line_height);
+
+  x = (bst->xgwa.width - left_column_width - right_column_width - margin) / 2;
+  y = (bst->xgwa.height - right_column_height - bottom_height) / 2;
 
   bst->xoff = bst->left_margin = bst->right_margin = 0;
 
   if (!(random() % 8))
     return apple2ransomware (dpy, window);
 
-  /* Grab the desktop image */
-  /* BSOD_IMG (bst); */
-  bst->wrap_p = True;
-
   /* Draw the main red window */
   BSOD_INVERT (bst);
-  BSOD_RECT (bst, True, box_x, box_y, box_width, box_height);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
 
   if (pixmap) {
     bst->pixmap = pixmap;
-    BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h, box_x + logo_x, box_y + logo_y);
+    bst->mask = mask;
+    BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h,
+                 x + (left_column_width - pix_w) / 2,
+                 y);
   }
 
   /* Setup deadlines */
   strftime (stage1_deadline_str, sizeof(stage1_deadline_str),
-            "%m/%d/%Y %H:%M:%S\n\n", localtime(&stage1_deadline));
+            "%m/%d/%Y %H:%M:%S", localtime(&stage1_deadline));
   strftime (stage2_deadline_str, sizeof(stage1_deadline_str),
-            "%m/%d/%Y %H:%M:%S\n\n", localtime(&stage2_deadline));
+            "%m/%d/%Y %H:%M:%S", localtime(&stage2_deadline));
 
   BSOD_INVERT (bst);
   /* Draw header pane */
   BSOD_FONT (bst, 0);
-  BSOD_MOVETO (bst, box_x + right_pane_x, box_y + header_y + bst->fontA->ascent);
-  BSOD_MARGINS (bst, box_x + right_pane_x, box_x);
+
+  BSOD_MARGINS (bst,
+                x + left_column_width + margin,
+                bst->xgwa.width -
+                (x + left_column_width + margin + right_column_width));
+  BSOD_MOVETO (bst, x + left_column_width + margin,
+               y + bst->fontA->ascent);
   BSOD_COLOR (bst, fg, bg);
+  BSOD_WORD_WRAP (bst);
   BSOD_TEXT (bst, CENTER, header_quip);
+  BSOD_TRUNCATE (bst);
 
   /* Draw left-side timers */
-  BSOD_MOVETO (bst, box_x, box_y + deadline_y);
-  BSOD_MARGINS (bst, box_x, box_x + box_width - left_pane_width);
+  BSOD_MARGINS (bst, x, bst->xgwa.width - (x + left_column_width));
+  BSOD_MOVETO (bst, x, y + pix_h + line_height);
   BSOD_FONT (bst, 1);
 
   BSOD_COLOR (bst, theader, bg);
@@ -1687,28 +1783,29 @@ windows_ransomware (Display *dpy, Window window)
   BSOD_COLOR (bst, fg, bg);
   BSOD_TEXT (bst, CENTER, stage1_deadline_str);
 
-  BSOD_TEXT (bst, CENTER, "Time Left\n");
-  stage1_countdown_y = (line_height * 4) + box_y + deadline_y;
-  BSOD_TEXT (bst, CENTER, "\n");
-  BSOD_TEXT (bst, CENTER, "\n\n");
+  stage1_countdown_y = y + pix_h + line_height + line_height1 * 3;
+  BSOD_MOVETO (bst, x, stage1_countdown_y - line_height);
+  BSOD_TEXT (bst, CENTER, "Time Left");
 
   BSOD_COLOR (bst, theader, bg);
-  BSOD_TEXT (bst, CENTER, "Your pixels will be lost on\n");
+  BSOD_WORD_WRAP (bst);
+  BSOD_TEXT (bst, CENTER, "\n\n\n\nYour pixels will be lost on\n");
+  BSOD_TRUNCATE (bst);
   BSOD_COLOR (bst, fg, bg);
   BSOD_TEXT (bst, CENTER, stage2_deadline_str);
 
-  BSOD_TEXT (bst, CENTER, "Time Left\n");
-  stage2_countdown_y = (line_height * 9) + box_y + deadline_y;
-  BSOD_TEXT (bst, CENTER, "\n");
+  stage2_countdown_y = stage1_countdown_y + line_height1 * 5;
+  BSOD_MOVETO (bst, x, stage2_countdown_y - line_height);
+  BSOD_TEXT (bst, CENTER, "Time Left");
 
-  /* Draw links */
   BSOD_FONT (bst, 1);
-  BSOD_MOVETO (bst, box_x + links_x, box_y + box_height - links_height);
-  BSOD_MARGINS (bst, box_x + links_x, box_x + box_width - left_pane_width);
-  BSOD_COLOR (bst, link, bg);
 
-  if (box_height > 425) {
-    /* Don't show this on small screens */
+  /* Draw links, but skip on small screens */
+  if (right_column_height > 425) {
+    BSOD_MOVETO (bst, x, 
+                 y + right_column_height + top_height + bottom_height
+                 - line_height1 * 5);
+    BSOD_COLOR (bst, link, bg);
     BSOD_TEXT (bst, LEFT, "\n");
     BSOD_TEXT (bst, LEFT, "About ");
     BSOD_TEXT (bst, LEFT, currency);
@@ -1721,20 +1818,26 @@ windows_ransomware (Display *dpy, Window window)
 
   /* Ransom note text area */
   BSOD_COLOR (bst, bg2, fg2);
-  BSOD_RECT (bst, True, box_x + right_pane_x, box_y + ransom_y,
-             box_width - right_pane_x - 10,
-             box_height - ransom_y - footer_height);
-  BSOD_MOVETO (bst, box_x + right_pane_x + 5,
-               box_y + ransom_y + (line_height * 1.1));
-  BSOD_MARGINS (bst, box_x + right_pane_x + 5, box_x + 15);
-  /* VERT_MARGINS are a bit high, to ensure we draw as much text as we can in
-   * the box, even if the line is partially cut. We'll draw over this later.
-   */
-  BSOD_VERT_MARGINS (bst, box_y + ransom_y, box_y + (footer_height / 2));
+  BSOD_RECT (bst, True, 
+             x + left_column_width + margin,
+             y + top_height,
+             right_column_width,
+             right_column_height);
+  BSOD_MOVETO (bst,
+               x + left_column_width + margin + line_height / 2,
+               y + top_height + line_height + line_height / 2);
+  BSOD_MARGINS (bst,
+                x + left_column_width + margin + line_height / 2,
+                bst->xgwa.width - 
+                (x + left_column_width + margin + right_column_width));
+  BSOD_VERT_MARGINS (bst, 
+                     y + top_height + line_height / 2,
+                     bottom_height - line_height);
   BSOD_INVERT (bst);
 
   /* Write out the ransom note itself */
   BSOD_CROP (bst, True);
+  BSOD_WORD_WRAP (bst);
   for (i = 0; i < countof(lines); i++)
     {
       const char *s = lines[i];
@@ -1752,19 +1855,26 @@ windows_ransomware (Display *dpy, Window window)
 
       BSOD_TEXT (bst, LEFT, s);
     }
+  BSOD_TRUNCATE (bst);
   BSOD_CROP (bst, False);
   BSOD_FONT (bst, 0);
 
   /* Draw over any overflowing ransom text. */
   BSOD_COLOR (bst, bg, fg);
-  BSOD_RECT (bst, True, box_x + right_pane_x,
-             box_y + box_height - footer_height,
-             box_width - right_pane_x, footer_height);
+  BSOD_RECT (bst, True,
+             x + left_column_width + margin,
+             y + top_height + right_column_height,
+             bst->xgwa.width, bst->xgwa.height);
+  BSOD_RECT (bst, True,
+             x + left_column_width + margin + right_column_width,
+             y + top_height,
+             bst->xgwa.width, bst->xgwa.height);
 
   /* Draw the footer */
   BSOD_COLOR (bst, theader, bg);
-  BSOD_MOVETO (bst, box_x + right_pane_x,
-               box_y + box_height - footer_height + line_height);
+  BSOD_MOVETO (bst,
+               x + left_column_width + margin,
+               y + top_height + right_column_height + line_height * 2);
 
   sprintf(buf, "Send $%.2f of %s to this address:\n", 101+frand(888), currency);
   BSOD_TEXT (bst, LEFT, buf);
@@ -1803,8 +1913,8 @@ windows_ransomware (Display *dpy, Window window)
   BSOD_FONT (bst, 0);
   do {
     /* First timer */
-    BSOD_MOVETO (bst, box_x, stage1_countdown_y);
-    BSOD_MARGINS (bst, box_x, box_x + box_width - left_pane_width);
+    BSOD_MOVETO (bst, x, stage1_countdown_y);
+    BSOD_MARGINS (bst, x, bst->xgwa.width - (x + left_column_width));
 
     countdown_r = stage1_deadline - now;
     countdown_s = countdown_r % 60;
@@ -1818,7 +1928,7 @@ windows_ransomware (Display *dpy, Window window)
     BSOD_TEXT (bst, CENTER, countdown_str);
 
     /* Second timer */
-    BSOD_MOVETO (bst, box_x, stage2_countdown_y);
+    BSOD_MOVETO (bst, x, stage2_countdown_y);
 
     countdown_r = stage2_deadline - now;
     countdown_s = countdown_r % 60;
@@ -2044,10 +2154,15 @@ amiga (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "amiga", "Amiga");
 
+  const char *guru1 ="Software failure.  Press left mouse button to continue.";
+  const char *guru2 ="Guru Meditation #00000003.00C01570";
   Pixmap pixmap = 0;
+  Pixmap mask = 0;
   int pix_w = 0, pix_h = 0;
   int height;
-  int lw = 10;
+  int lw = bst->font->ascent + bst->font->descent;
+  unsigned long fg = bst->fg;
+  unsigned long bg = bst->bg;
 
   unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
                                           "amiga.background2",
@@ -2056,40 +2171,55 @@ amiga (Display *dpy, Window window)
   bst->yoff = 0;
   bst->top_margin = bst->bottom_margin = 0;
 
-# ifdef DO_XPM
-  pixmap = xpm_data_to_pixmap (dpy, window, (char **) amiga_hand,
-                               &pix_w, &pix_h, 0);
-# endif /* DO_XPM */
+  pixmap = image_data_to_pixmap (dpy, window,
+                                 amiga_png, sizeof(amiga_png),
+                                 &pix_w, &pix_h, &mask);
 
-  if (pixmap &&
-      MIN (bst->xgwa.width, bst->xgwa.height) > 600) /* scale up the bitmap */
+  if (pixmap)
     {
-      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
-                              pixmap, pix_w, pix_h);
-      pix_w *= 2;
-      pix_h *= 2;
-      lw *= 2;
+      int i, n = 0;
+      if (MIN (bst->xgwa.width, bst->xgwa.height) > 600) n++;
+      if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+      for (i = 0; i < n; i++)
+        {
+          pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
+                                  pixmap, pix_w, pix_h);
+          mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
+          pix_w *= 2;
+          pix_h *= 2;
+        }
     }
 
   XSetLineAttributes (dpy, bst->gc, lw, LineSolid, CapButt, JoinMiter);
 
-  height = (bst->font->ascent + bst->font->descent) * 6;
+  height = lw * 5;
+
+  bst->char_delay = bst->line_delay = 0;
 
   BSOD_PAUSE (bst, 2000000);
   BSOD_COPY (bst, 0, 0, bst->xgwa.width, bst->xgwa.height - height, 0, height);
 
-  BSOD_INVERT (bst);
-  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, height);
-  BSOD_INVERT (bst);
-  BSOD_TEXT (bst, CENTER,
-             "\n"
-             "Software failure.  Press left mouse button to continue.\n"
-             "Guru Meditation #00000003.00C01570"
-             );
-  BSOD_RECT (bst, False, lw/2, lw/2, bst->xgwa.width - lw, height);
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, height); /* red */
+  BSOD_COLOR (bst, bg, fg);
+  BSOD_RECT (bst, True, lw/2, lw/2, bst->xgwa.width-lw, height-lw); /* black */
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_MOVETO (bst, 0, lw*2);
+  BSOD_TEXT (bst, CENTER, guru1);
+  BSOD_MOVETO (bst, 0, lw*3.5);
+  BSOD_TEXT (bst, CENTER, guru2);
   BSOD_PAUSE (bst, 1000000);
-  BSOD_INVERT (bst);
-  BSOD_LOOP (bst, -3);
+
+  BSOD_COLOR (bst, bg, fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, height); /* black */
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_MOVETO (bst, 0, lw*2);
+  BSOD_TEXT (bst, CENTER, guru1);
+  BSOD_MOVETO (bst, 0, lw*3.5);
+  BSOD_TEXT (bst, CENTER, guru2);
+  BSOD_PAUSE (bst, 1000000);
+
+  BSOD_LOOP (bst, -17);
 
   XSetWindowBackground (dpy, window, bg2);
   XClearWindow (dpy, window);
@@ -2099,7 +2229,12 @@ amiga (Display *dpy, Window window)
     {
       int x = (bst->xgwa.width - pix_w) / 2;
       int y = ((bst->xgwa.height - pix_h) / 2);
+      XSetClipMask (dpy, bst->gc, mask);
+      XSetClipOrigin (dpy, bst->gc, x, y);
       XCopyArea (dpy, pixmap, bst->window, bst->gc, 0, 0, pix_w, pix_h, x, y);
+      XSetClipMask (dpy, bst->gc, None);
+      XFreePixmap (dpy, pixmap);
+      XFreePixmap (dpy, mask);
     }
 
   bst->y += lw;
@@ -2124,17 +2259,17 @@ atari (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "atari", "Atari");
 
-  Pixmap pixmap = 0;
-  int pix_w = atari_width;
-  int pix_h = atari_height;
+  int pix_w, pix_h;
   int offset;
   int i, x, y;
+  Pixmap mask = 0;
+  Pixmap pixmap = image_data_to_pixmap (dpy, window,
+                                        atari_png, sizeof(atari_png),
+                                        &pix_w, &pix_h, &mask);
 
-  pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) atari_bits,
-                                        pix_w, pix_h,
-                                        bst->fg, bst->bg, bst->xgwa.depth);
-  pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
+  pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
                           pixmap, pix_w, pix_h);
+  mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
   pix_w *= 2;
   pix_h *= 2;
 
@@ -2153,8 +2288,12 @@ atari (Display *dpy, Window window)
     }
 
   XClearWindow (dpy, window);
+  XSetClipMask (dpy, bst->gc, mask);
+  XSetClipOrigin (dpy, bst->gc, x, y);
   XCopyArea (dpy, pixmap, window, bst->gc, 0, 0, pix_w, pix_h, x, y);
+  XSetClipMask (dpy, bst->gc, None);
   XFreePixmap (dpy, pixmap);
+  XFreePixmap (dpy, mask);
 
   return bst;
 }
@@ -2165,25 +2304,25 @@ mac (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "mac", "Mac");
 
-  Pixmap pixmap = 0;
-  int pix_w = mac_width;
-  int pix_h = mac_height;
-  int offset = mac_height * 4;
+  int pix_w, pix_h;
   int i;
 
   const char *string = ("0 0 0 0 0 0 0 F\n"
 			"0 0 0 0 0 0 0 3");
 
-  bst->xoff = bst->left_margin = bst->right_margin = 0;
+  Pixmap mask = 0;
+  Pixmap pixmap = image_data_to_pixmap (dpy, window,
+                                        mac_png, sizeof(mac_png),
+                                        &pix_w, &pix_h, &mask);
+  int offset = pix_h * 4;
 
-  pixmap = XCreatePixmapFromBitmapData(dpy, window, (char *) mac_bits,
-				       mac_width, mac_height,
-				       bst->fg, bst->bg, bst->xgwa.depth);
+  bst->xoff = bst->left_margin = bst->right_margin = 0;
 
   for (i = 0; i < 2; i++)
     {
-      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
+      pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
                               pixmap, pix_w, pix_h);
+      mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
       pix_w *= 2; pix_h *= 2;
     }
 
@@ -2194,8 +2333,12 @@ mac (Display *dpy, Window window)
   if (bst->y < 0) bst->y = 0;
 
   XClearWindow (dpy, window);
+  XSetClipMask (dpy, bst->gc, mask);
+  XSetClipOrigin (dpy, bst->gc, bst->x, bst->y);
   XCopyArea (dpy, pixmap, window, bst->gc, 0, 0, pix_w, pix_h, bst->x, bst->y);
+  XSetClipMask (dpy, bst->gc, None);
   XFreePixmap (dpy, pixmap);
+  XFreePixmap (dpy, mask);
 
   bst->y += offset + bst->font->ascent + bst->font->descent;
   BSOD_TEXT (bst, CENTER, string);
@@ -2391,23 +2534,27 @@ mac1 (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "mac1", "Mac1");
 
-  Pixmap pixmap = 0;
-  int pix_w = macbomb_width;
-  int pix_h = macbomb_height;
+  int pix_w, pix_h;
   int x, y;
-
-  pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) macbomb_bits,
-                                        macbomb_width, macbomb_height,
-                                        bst->fg, bst->bg, bst->xgwa.depth);
+  Pixmap mask = 0;
+  Pixmap pixmap = image_data_to_pixmap (dpy, window,
+                                        macbomb_png, sizeof(macbomb_png),
+                                        &pix_w, &pix_h, &mask);
 
   if (pixmap && 
       pix_w < bst->xgwa.width / 2 &&
       pix_h < bst->xgwa.height / 2)
     {
-      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual,
-                              bst->xgwa.depth, pixmap, pix_w, pix_h);
-      pix_w *= 2;
-      pix_h *= 2;
+      int i, n = 1;
+      if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+      for (i = 0; i < n; i++)
+        {
+          pixmap = double_pixmap (dpy, bst->xgwa.visual,
+                                  bst->xgwa.depth, pixmap, pix_w, pix_h);
+          mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
+          pix_w *= 2;
+          pix_h *= 2;
+        }
     }
 
   x = (bst->xgwa.width - pix_w) / 2;
@@ -2415,7 +2562,11 @@ mac1 (Display *dpy, Window window)
   if (y < 0) y = 0;
 
   XClearWindow (dpy, window);
+  XSetClipMask (dpy, bst->gc, mask);
+  XSetClipOrigin (dpy, bst->gc, x, y);
   XCopyArea (dpy, pixmap, window, bst->gc, 0, 0, pix_w, pix_h, x, y);
+  XSetClipMask (dpy, bst->gc, None);
+  XFreePixmap (dpy, mask);
 
   return bst;
 }
@@ -2440,20 +2591,20 @@ macx_10_0 (Display *dpy, Window window)
                                       "macx.textBackground",
                                       "MacX.TextBackground"));
 
-# ifdef DO_XPM
   {
     Pixmap pixmap = 0;
     Pixmap mask = 0;
     int x, y, pix_w, pix_h;
-    pixmap = xpm_data_to_pixmap (dpy, window, (char **) happy_mac,
-                                 &pix_w, &pix_h, &mask);
+    pixmap = image_data_to_pixmap (dpy, window,
+                                   hmac_png, sizeof(hmac_png),
+                                   &pix_w, &pix_h, &mask);
 
 # ifdef HAVE_MOBILE
     if (pixmap)
       {
-        pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual,
+        pixmap = double_pixmap (dpy, bst->xgwa.visual,
                                 bst->xgwa.depth, pixmap, pix_w, pix_h);
-        mask = double_pixmap (dpy, bst->gc, bst->xgwa.visual,
+        mask = double_pixmap (dpy, bst->xgwa.visual,
                               1, mask, pix_w, pix_h);
         pix_w *= 2;
         pix_h *= 2;
@@ -2468,8 +2619,8 @@ macx_10_0 (Display *dpy, Window window)
     XCopyArea (dpy, pixmap, window, bst->gc, 0, 0, pix_w, pix_h, x, y);
     XSetClipMask (dpy, bst->gc, None);
     XFreePixmap (dpy, pixmap);
+    XFreePixmap (dpy, mask);
   }
-#endif /* DO_XPM */
 
   bst->left_margin = 0;
   bst->right_margin = 0;
@@ -2509,27 +2660,35 @@ macx_10_0 (Display *dpy, Window window)
 }
 
 
-# ifdef DO_XPM
 static struct bsod_state *
 macx_10_2 (Display *dpy, Window window, Bool v10_3_p)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "macx", "MacX");
 
+  Pixmap mask = 0;
   Pixmap pixmap = 0;
   int pix_w = 0, pix_h = 0;
   int x, y;
 
-  pixmap = xpm_data_to_pixmap (dpy, window,
-                               (char **) (v10_3_p ? osx_10_3 : osx_10_2),
-                               &pix_w, &pix_h, 0);
+  if (v10_3_p)
+    pixmap = image_data_to_pixmap (dpy, window,
+                                   osx_10_3_png, sizeof(osx_10_3_png),
+                                   &pix_w, &pix_h, &mask);
+  else
+    pixmap = image_data_to_pixmap (dpy, window,
+                                   osx_10_2_png, sizeof(osx_10_2_png),
+                                   &pix_w, &pix_h, &mask);
   if (! pixmap) abort();
+  if (! mask) abort();
 
 #if 0
   if (bst->xgwa.height > 600)	/* scale up the bitmap */
     {
-      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
+      pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
                               pixmap, pix_w, pix_h);
+      mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
       if (! pixmap) abort();
+      if (! mask) abort();
       pix_w *= 2;
       pix_h *= 2;
     }
@@ -2539,6 +2698,7 @@ macx_10_2 (Display *dpy, Window window, Bool v10_3_p)
   BSOD_PAUSE (bst, 2000000);
 
   bst->pixmap = pixmap;
+  bst->mask = mask;
 
   x = (bst->xgwa.width - pix_w) / 2;
   y = ((bst->xgwa.height - pix_h) / 2);
@@ -2546,7 +2706,6 @@ macx_10_2 (Display *dpy, Window window, Bool v10_3_p)
 
   return bst;
 }
-# endif /* DO_XPM */
 
 
 /* 2006 Mac Mini with MacOS 10.6 failing with a bad boot drive. By jwz.
@@ -2726,9 +2885,7 @@ macx_install (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "macinstall", "MacX");
 
-  Pixmap pixmap = 0;
-  int pix_w = apple_width;
-  int pix_h = apple_height;
+  int pix_w, pix_h;
   int x, y;
   int bw1, bh1;
   int bw2, bh2;
@@ -2750,12 +2907,29 @@ macx_install (Display *dpy, Window window)
   int i, min;
   double pct;
 
+  Pixmap mask = 0;
+  Pixmap pixmap = image_data_to_pixmap (dpy, window,
+                                        apple_png, sizeof(apple_png),
+                                        &pix_w, &pix_h, &mask);
+
   bst->xoff = bst->left_margin = bst->right_margin = 0;
 
-  pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) apple_bits,
-                                        apple_width, apple_height,
-                                        fg, bg, bst->xgwa.depth);
+  if (pixmap)
+    {
+      int i, n = 0;
+      if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+      for (i = 0; i < n; i++)
+        {
+          pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
+                                  pixmap, pix_w, pix_h);
+          mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
+          pix_w *= 2;
+          pix_h *= 2;
+        }
+    }
+
   bst->pixmap = pixmap;
+  bst->mask = mask;
 
   x = (bst->xgwa.width - pix_w) / 2;
   y = (bst->xgwa.height) / 2  - pix_h;
@@ -2809,7 +2983,6 @@ macx_install (Display *dpy, Window window)
 static struct bsod_state *
 macx (Display *dpy, Window window)
 {
-# ifdef DO_XPM
   switch (1?4:random() % 5) {
   case 0: return macx_10_0 (dpy, window);        break;
   case 1: return macx_10_2 (dpy, window, False); break;
@@ -2818,13 +2991,6 @@ macx (Display *dpy, Window window)
   case 4: return macx_install (dpy, window);     break;
   default: abort();
   }
-# else  /* !DO_XPM */
-  switch (random() % 3) {
-  case 0:  return macx_10_0 (dpy, window);    break;
-  case 1:  return macx_install (dpy, window); break;
-  default: return mac_diskfail (dpy, window); break;
-  }
-# endif /* !DO_XPM */
 }
 
 
@@ -4864,23 +5030,22 @@ atm (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "atm", "ATM");
 
-  Pixmap pixmap = 0;
-  int pix_w = atm_width;
-  int pix_h = atm_height;
+  int pix_w, pix_h;
   int x, y, i = 0;
   float scale = 0.48;
+  Pixmap mask = 0;
+  Pixmap pixmap = image_data_to_pixmap (dpy, window,
+                                        atm_png, sizeof(atm_png),
+                                        &pix_w, &pix_h, &mask);
 
   XClearWindow (dpy, window);
-
-  pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) atm_bits,
-                                        atm_width, atm_height,
-                                        bst->fg, bst->bg, bst->xgwa.depth);
 
   while (pix_w <= bst->xgwa.width  * scale &&
          pix_h <= bst->xgwa.height * scale)
     {
-      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
+      pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
                               pixmap, pix_w, pix_h);
+      mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
       pix_w *= 2;
       pix_h *= 2;
       i++;
@@ -4903,9 +5068,12 @@ atm (Display *dpy, Window window)
         XDrawLine (bst->dpy, pixmap, bst->gc, 0, j, pix_w, j);
     }
 
+  XSetClipMask (dpy, bst->gc, mask);
+  XSetClipOrigin (dpy, bst->gc, x, y);
   XCopyArea (dpy, pixmap, window, bst->gc, 0, 0, pix_w, pix_h, x, y);
 
   XFreePixmap (dpy, pixmap);
+  XFreePixmap (dpy, mask);
 
   return bst;
 }
@@ -4996,15 +5164,28 @@ android (Display *dpy, Window window)
 
   int state = 0;
 
-  Pixmap pixmap = 0;
+  Pixmap pixmap = 0, mask = 0;
   int pix_w = 0, pix_h = 0;
 
-# ifdef DO_XPM
-  pixmap = xpm_data_to_pixmap (dpy, window, (char **) android_skate,
-                               &pix_w, &pix_h, 0);
+  pixmap = image_data_to_pixmap (dpy, window, 
+                                 android_png, sizeof(android_png),
+                                 &pix_w, &pix_h, &mask);
   if (! pixmap) abort();
+  {
+    int i, n = 0;
+    if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+    for (i = 0; i < n; i++)
+      {
+        pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
+                                pixmap, pix_w, pix_h);
+        mask = double_pixmap (dpy, bst->xgwa.visual, 1,
+                              mask, pix_w, pix_h);
+        pix_w *= 2;
+        pix_h *= 2;
+      }
+  }
   bst->pixmap = pixmap;
-# endif /* DO_XPM */
+  bst->mask = mask;
 
   bst->left_margin = (bst->xgwa.width - (cw * 40)) / 2;
   if (bst->left_margin < 0) bst->left_margin = 0;
@@ -5322,32 +5503,35 @@ bsod_draw (Display *dpy, Window window, void *closure)
       else
         {
           int count = countof(all_modes);
+          int *enabled = (int *) calloc (sizeof(*enabled), count + 1);
+          int nenabled = 0;
           int i;
 
-          for (i = 0; i < 200; i++)
+          for (i = 0; i < count; i++)
             {
               char name[100], class[100];
-              int new_mode = (random() & 0xFF) % count;
-
-              if (i < 100 && new_mode == dst->which)
-                continue;
-
-              sprintf (name,  "do%s", all_modes[new_mode].name);
-              sprintf (class, "Do%s", all_modes[new_mode].name);
-
+              sprintf (name,  "do%s", all_modes[i].name);
+              sprintf (class, "Do%s", all_modes[i].name);
               if (get_boolean_resource (dpy, name, class))
-                {
-                  dst->which = new_mode;
-                  break;
-                }
+                enabled[nenabled++] = i;
             }
 
-          if (i >= 200)
+          if (nenabled == 0)
             {
               fprintf (stderr, "%s: no display modes enabled?\n", progname);
               /* exit (-1); */
               dst->which = dst->only = 0;
             }
+          else if (nenabled == 1)
+            dst->which = enabled[0];
+          else
+            {
+              i = dst->which;
+              while (i == dst->which)
+                i = enabled[random() % nenabled];
+              dst->which = i;
+            }
+          free (enabled);
         }
 
       if (dst->debug_p)
@@ -5522,7 +5706,7 @@ static const char *bsod_defaults [] = {
   ".amiga.background:	   Black",
   ".amiga.background2:	   White",
 
-  ".mac.foreground:	   #BBFFFF",
+  ".mac.foreground:	   #FFFFFF",
   ".mac.background:	   Black",
 
   ".atari.foreground:	   Black",
@@ -5614,8 +5798,6 @@ static const char *bsod_defaults [] = {
 
   "*font:		   PxPlus IBM VGA8 16, Courier-Bold 14",
   "*bigFont:		   ",
-  "*font2:		   ",
-  "*bigFont2:		   ",
 
   ".mac.font:		   Courier-Bold 18",
   ".macsbug.font:	   Courier-Bold 8",
@@ -5629,18 +5811,20 @@ static const char *bsod_defaults [] = {
   ".win10.bigFont:	   Arial 12, Helvetica 12",
   ".win10.fontB:	   Arial 50, Helvetica 50",
   ".win10.fontC:	   Arial 9, Helvetica 9",
-  ".win10.bigFont2:	   ",
 
-  ".ransomware.font:         Arial 10, Helvetica 10",
-  ".ransomware.fontB:        Arial 8, Helvetica 8",
-  ".ransomware.fontC:        Arial 10, Helvetica Bold 10",
+  /* The real Solaris font is ../OSX/Gallant19.bdf but I don't know how
+     to convert that to a TTF, so let's use Luxi Mono instead. */
+  ".solaris.font:	   Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
+
+  /* "Arial" loads "ArialMT" but "Arial Bold" does not load "Arial-BoldMT"? */
+  ".ransomware.font:         Arial 11, Helvetica 11",
+  ".ransomware.fontB:        Arial 9, Helvetica 9",
+  ".ransomware.fontC:        Arial Bold 11, Arial-BoldMT 11, Helvetica Bold 11",
 
 # elif defined(HAVE_ANDROID)
 
   "*font:		   PxPlus IBM VGA8 16",
   "*bigFont:		   ",
-  "*font2:		   ",
-  "*bigFont2:		   ",
 
   ".mac.font:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".macsbug.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
@@ -5650,12 +5834,12 @@ static const char *bsod_defaults [] = {
   ".macinstall.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
   ".msdos.font:		   PxPlus IBM VGA8 32",
   ".nt.font:		   PxPlus IBM VGA8 12",
+  ".solaris.font:	   Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
 
   ".win10.font:		   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
   ".win10.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
   ".win10.fontB:	   -*-helvetica-medium-r-*-*-*-500-*-*-*-*-*-*",
   ".win10.fontC:	   -*-helvetica-medium-r-*-*-*-90-*-*-*-*-*-*",
-  ".win10.bigFont2:	   ",
 
   ".ransomware.font:	   -*-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*",
   ".ransomware.fontB:	   -*-helvetica-medium-r-*-*-*-80-*-*-*-*-*-*",
@@ -5665,8 +5849,6 @@ static const char *bsod_defaults [] = {
 
   "*font:		   PxPlus IBM VGA8 8,  Courier Bold 9",
   "*bigFont:		   PxPlus IBM VGA8 32, Courier Bold 24",
-  "*font2:		   ",
-  "*bigFont2:		   ",
 
   ".mac.font:		   Monaco 10, Courier Bold 9",
   ".mac.bigFont:	   Monaco 18, Courier Bold 18",
@@ -5683,16 +5865,16 @@ static const char *bsod_defaults [] = {
 
   ".hvx.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
   ".hppalinux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
-  ".solaris.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
   ".linux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
   ".hpux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
   ".msdos.font:		   PxPlus IBM VGA8 16, Courier Bold 14",
+  ".solaris.font:	   Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
+  ".solaris.bigFont:	   Luxi Mono 16, PxPlus IBM VGA8 16, Courier Bold 14",
 
   ".win10.font:		   Arial 24, Helvetica 24",
   ".win10.bigFont:	   Arial 24, Helvetica 24",
   ".win10.fontB:	   Arial 100, Helvetica 100",
   ".win10.fontC:	   Arial 16, Helvetica 16",
-  ".win10.bigFont2:	   ",
 
   ".ransomware.font:         Arial 24, Helvetica 24",
   ".ransomware.bigFont:      Arial 24, Helvetica 24",
@@ -5702,9 +5884,7 @@ static const char *bsod_defaults [] = {
 # else   /* X11 */
 
   "*font:		   9x15bold",
-  "*font2:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   "*bigFont:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  "*bigFont2:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
 
   ".macsbug.font:	   -*-courier-medium-r-*-*-*-80-*-*-m-*-*-*",
   ".macsbug.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
@@ -5719,11 +5899,18 @@ static const char *bsod_defaults [] = {
   ".hppalinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".sparclinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
 
+  /* Some systems might have this, but I'm not sure where it comes from: */
+  /* ".bsd.font:	   -*-vga-normal-r-*-*-*-120-*-*-c-*-*-*", */
+  /* The fonts/misc/vga.pcf that comes with xdosemu has no XLFD name: */
   ".bsd.font:		   vga",
-  ".bsd.bigFont:	   -sun-console-medium-r-*-*-22-*-*-*-m-*-*-*",
-  ".bsd.bigFont2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".bsd.bigFont:	   -*-vga-normal-r-*-*-*-220-*-*-c-*-*-*",
 
-  ".solaris.font:          -sun-gallant-*-*-*-*-19-*-*-*-*-120-*-*",
+  /* The original Solaris console font was:
+     -sun-gallant-demi-r-normal-*-*-140-*-*-c-*-*-*
+     Red Hat introduced Luxi Mono as its console font, which is similar
+     to Gallant. X.Org includes it but Debian and Fedora do not. */
+  ".solaris.font:	   -*-luxi mono-medium-r-normal--*-140-*-*-m-*-*-*",
+
   ".hpux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".os390.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".tru64.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
@@ -5734,8 +5921,6 @@ static const char *bsod_defaults [] = {
   ".win10.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
   ".win10.fontB:	   -*-helvetica-medium-r-*-*-*-240-*-*-*-*-*-*",
   ".win10.fontC:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
-  ".win10.font2:	   ",
-  ".win10.bigFont2:	   ",
 
   ".ransomware.font:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
   ".ransomware.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",

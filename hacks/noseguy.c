@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,16 +15,14 @@
  */
 
 #include "screenhack.h"
-#include "xpm-pixmap.h"
+#include "ximage-loader.h"
 #include "textclient.h"
 #include "xft.h"
 
-#ifdef HAVE_JWXYZ
-# define HAVE_XPM
-#endif
-
 #define font_height(font) (font->ascent + font->descent)
 
+
+typedef struct { Pixmap p, m; } PM;
 
 struct state {
   Display *dpy;
@@ -38,8 +36,8 @@ struct state {
   XftDraw  *xftdraw;
 
   unsigned long interval;
-  Pixmap left1, left2, right1, right2;
-  Pixmap left_front, right_front, front, down;
+  PM left1, left2, right1, right2, left_front, right_front, front, down;
+  int pix_w, pix_h;
 
   text_data *tc;
 
@@ -52,7 +50,7 @@ struct state {
 
   int      walk_lastdir;
   int      walk_up;
-  Pixmap   walk_frame;
+  PM       *walk_frame;
 
   int X, Y, talking;
 
@@ -73,35 +71,56 @@ static unsigned long look (struct state *);
 
 #define IS_MOVING  1
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-# include "images/noseguy/nose-f1.xpm"
-# include "images/noseguy/nose-f2.xpm"
-# include "images/noseguy/nose-f3.xpm"
-# include "images/noseguy/nose-f4.xpm"
-# include "images/noseguy/nose-l1.xpm"
-# include "images/noseguy/nose-l2.xpm"
-# include "images/noseguy/nose-r1.xpm"
-# include "images/noseguy/nose-r2.xpm"
-#else
-# include "images/noseguy/nose-f1.xbm"
-# include "images/noseguy/nose-f2.xbm"
-# include "images/noseguy/nose-f3.xbm"
-# include "images/noseguy/nose-f4.xbm"
-# include "images/noseguy/nose-l1.xbm"
-# include "images/noseguy/nose-l2.xbm"
-# include "images/noseguy/nose-r1.xbm"
-# include "images/noseguy/nose-r2.xbm"
-#endif
+#include "images/gen/nose-f1_png.h"
+#include "images/gen/nose-f2_png.h"
+#include "images/gen/nose-f3_png.h"
+#include "images/gen/nose-f4_png.h"
+#include "images/gen/nose-l1_png.h"
+#include "images/gen/nose-l2_png.h"
+#include "images/gen/nose-r1_png.h"
+#include "images/gen/nose-r2_png.h"
+
+static Pixmap
+double_pixmap (Display *dpy, Visual *visual, int depth, Pixmap pixmap,
+               int pix_w, int pix_h)
+{
+  int x, y;
+  Pixmap p2 = XCreatePixmap(dpy, pixmap, pix_w*2, pix_h*2, depth);
+  XImage *i1 = XGetImage (dpy, pixmap, 0, 0, pix_w, pix_h, ~0L, 
+                          (depth == 1 ? XYPixmap : ZPixmap));
+  XImage *i2 = XCreateImage (dpy, visual, depth, 
+                             (depth == 1 ? XYPixmap : ZPixmap), 0, 0,
+                             pix_w*2, pix_h*2, 8, 0);
+  XGCValues gcv;
+  GC gc = XCreateGC (dpy, p2, 0, &gcv);
+  i2->data = (char *) calloc(i2->height, i2->bytes_per_line);
+  for (y = 0; y < pix_h; y++)
+    for (x = 0; x < pix_w; x++)
+      {
+	unsigned long p = XGetPixel(i1, x, y);
+	XPutPixel(i2, x*2,   y*2,   p);
+	XPutPixel(i2, x*2+1, y*2,   p);
+	XPutPixel(i2, x*2,   y*2+1, p);
+	XPutPixel(i2, x*2+1, y*2+1, p);
+      }
+  free(i1->data); i1->data = 0;
+  XDestroyImage(i1);
+  XPutImage(dpy, p2, gc, i2, 0, 0, 0, 0, i2->width, i2->height);
+  XFreeGC (dpy, gc);
+  free(i2->data); i2->data = 0;
+  XDestroyImage(i2);
+  XFreePixmap(dpy, pixmap);
+  return p2;
+}
+
 
 static void
 init_images (struct state *st)
 {
-  Pixmap *images[8];
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-  char **bits[8];
-#else
-  unsigned char *bits[8];
-#endif
+  PM *images[8];
+  struct { const unsigned char *png; unsigned long size; } bits[8];
+  XWindowAttributes xgwa;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
   int i = 0;
   images[i++] = &st->left1;
@@ -113,49 +132,44 @@ init_images (struct state *st)
   images[i++] = &st->front;
   images[i]   = &st->down;
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
-
+#define DEF(N,S) bits[i].png = N; bits[i].size = S; i++
   i = 0;
-  bits[i++] = nose_l1_xpm;
-  bits[i++] = nose_l2_xpm;
-  bits[i++] = nose_r1_xpm;
-  bits[i++] = nose_r2_xpm;
-  bits[i++] = nose_f2_xpm;
-  bits[i++] = nose_f3_xpm;
-  bits[i++] = nose_f1_xpm;
-  bits[i]   = nose_f4_xpm;
+  DEF(nose_l1_png, sizeof(nose_l1_png));
+  DEF(nose_l2_png, sizeof(nose_l2_png));
+  DEF(nose_r1_png, sizeof(nose_r1_png));
+  DEF(nose_r2_png, sizeof(nose_r2_png));
+  DEF(nose_f2_png, sizeof(nose_f2_png));
+  DEF(nose_f3_png, sizeof(nose_f3_png));
+  DEF(nose_f1_png, sizeof(nose_f1_png));
+  DEF(nose_f4_png, sizeof(nose_f4_png));
 
   for (i = 0; i < sizeof (images) / sizeof(*images); i++)
     {
-      Pixmap pixmap = xpm_data_to_pixmap (st->dpy, st->window, bits[i],
-                                          0, 0, 0);
+      Pixmap mask = 0;
+      Pixmap pixmap = image_data_to_pixmap (st->dpy, st->window,
+                                            bits[i].png, bits[i].size,
+                                            &st->pix_w, &st->pix_h, &mask);
       if (!pixmap)
 	{
 	  fprintf (stderr, "%s: Can't load nose images\n", progname);
 	  exit (1);
 	}
-      *images[i] = pixmap;
+      images[i]->p = pixmap;
+      images[i]->m = mask;
     }
-#else
-  i = 0;
-  bits[i++] = nose_l1_bits;
-  bits[i++] = nose_l2_bits;
-  bits[i++] = nose_r1_bits;
-  bits[i++] = nose_r2_bits;
-  bits[i++] = nose_f2_bits;
-  bits[i++] = nose_f3_bits;
-  bits[i++] = nose_f1_bits;
-  bits[i++] = nose_f4_bits;
 
-  for (i = 0; i < sizeof (images) / sizeof(*images); i++)
-    if (!(*images[i] =
-	  XCreatePixmapFromBitmapData(st->dpy, st->window,
-				      (char *) bits[i], 64, 64, 1, 0, 1)))
-      {
-	fprintf (stderr, "%s: Can't load nose images\n", progname);
-	exit (1);
-      }
-#endif
+  if (xgwa.width > 2560) /* Retina display */
+    {
+      for (i = 0; i < sizeof (images) / sizeof(*images); i++)
+        {
+          images[i]->p = double_pixmap (st->dpy, xgwa.visual, xgwa.depth,
+                                        images[i]->p, st->pix_w, st->pix_h);
+          images[i]->m = double_pixmap (st->dpy, xgwa.visual, 1,
+                                        images[i]->m, st->pix_w, st->pix_h);
+        }
+      st->pix_w *= 2;
+      st->pix_h *= 2;
+    }
 }
 
 #define LEFT 	001
@@ -250,13 +264,15 @@ move (struct state *st)
     st->next_fn = move;
 }
 
-#ifdef HAVE_XPM
-# define COPY(dpy,frame,window,gc,x,y,w,h,x2,y2) \
-  XCopyArea (dpy,frame,window,gc,x,y,w,h,x2,y2)
-#else
-# define COPY(dpy,frame,window,gc,x,y,w,h,x2,y2) \
-  XCopyPlane(dpy,frame,window,gc,x,y,w,h,x2,y2,1L)
-#endif
+# define COPY(dpy,frame,window,gc,x,y,w,h,x2,y2) do {\
+  int X2 = (x2), Y2 = (y2); \
+  PM *FRAME = (frame); \
+  XFillRectangle(dpy,window,st->bg_gc,X2,Y2,w,h); \
+  XSetClipMask (dpy,gc,FRAME->m); \
+  XSetClipOrigin (dpy,gc,X2,Y2); \
+  XCopyArea (dpy,FRAME->p,window,gc,x,y,w,h,X2,Y2); \
+  XSetClipMask (dpy,gc,None); \
+  } while(0)
 
 static void
 walk (struct state *st, int dir)
@@ -269,12 +285,12 @@ walk (struct state *st, int dir)
 	if (dir & LEFT)
 	{
 	    incr = X_INCR;
-	    st->walk_frame = (st->walk_up < 0) ? st->left1 : st->left2;
+	    st->walk_frame = (st->walk_up < 0) ? &st->left1 : &st->left2;
 	}
 	else
 	{
 	    incr = -X_INCR;
-	    st->walk_frame = (st->walk_up < 0) ? st->right1 : st->right2;
+	    st->walk_frame = (st->walk_up < 0) ? &st->right1 : &st->right2;
 	}
 	if ((st->walk_lastdir == FRONT || st->walk_lastdir == DOWN) && dir & UP)
 	{
@@ -283,40 +299,46 @@ walk (struct state *st, int dir)
 	     * workaround silly bug that leaves screen dust when guy is
 	     * facing forward or st->down and moves up-left/right.
 	     */
-	    COPY(st->dpy, st->walk_frame, st->window, st->fg_gc, 0, 0, 64, 64, st->x, st->y);
+	    COPY(st->dpy, st->walk_frame, st->window, st->fg_gc,
+                 0, 0, st->pix_w, st->pix_h, st->x, st->y);
 	}
 	/* note that maybe neither UP nor DOWN is set! */
 	if (dir & UP && st->y > Y_INCR)
 	    st->y -= Y_INCR;
-	else if (dir & DOWN && st->y < st->Height - 64)
+	else if (dir & DOWN && st->y < st->Height - st->pix_h)
 	    st->y += Y_INCR;
     }
     /* Explicit up/st->down movement only (no left/right) */
     else if (dir == UP)
-	COPY(st->dpy, st->front, st->window, st->fg_gc, 0, 0, 64, 64, st->x, st->y -= Y_INCR);
+	COPY(st->dpy, &st->front, st->window, st->fg_gc,
+             0, 0, st->pix_w, st->pix_h, st->x, st->y -= Y_INCR);
     else if (dir == DOWN)
-	COPY(st->dpy, st->down, st->window, st->fg_gc, 0, 0, 64, 64, st->x, st->y += Y_INCR);
-    else if (dir == FRONT && st->walk_frame != st->front)
+	COPY(st->dpy, &st->down, st->window, st->fg_gc,
+             0, 0, st->pix_w, st->pix_h, st->x, st->y += Y_INCR);
+    else if (dir == FRONT && st->walk_frame != &st->front)
     {
 	if (st->walk_up > 0)
 	    st->walk_up = -st->walk_up;
 	if (st->walk_lastdir & LEFT)
-	    st->walk_frame = st->left_front;
+	    st->walk_frame = &st->left_front;
 	else if (st->walk_lastdir & RIGHT)
-	    st->walk_frame = st->right_front;
+	    st->walk_frame = &st->right_front;
 	else
-	    st->walk_frame = st->front;
-	COPY(st->dpy, st->walk_frame, st->window, st->fg_gc, 0, 0, 64, 64, st->x, st->y);
+	    st->walk_frame = &st->front;
+	COPY(st->dpy, st->walk_frame, st->window, st->fg_gc,
+             0, 0, st->pix_w, st->pix_h, st->x, st->y);
     }
     if (dir & LEFT)
 	while (--incr >= 0)
 	{
-	    COPY(st->dpy, st->walk_frame, st->window, st->fg_gc, 0, 0, 64, 64, --st->x, st->y + st->walk_up);
+	    COPY(st->dpy, st->walk_frame, st->window, st->fg_gc,
+                 0, 0, st->pix_w, st->pix_h, --st->x, st->y + st->walk_up);
 	}
     else if (dir & RIGHT)
 	while (++incr <= 0)
 	{
-	    COPY(st->dpy, st->walk_frame, st->window, st->fg_gc, 0, 0, 64, 64, ++st->x, st->y + st->walk_up);
+	    COPY(st->dpy, st->walk_frame, st->window, st->fg_gc,
+                 0, 0, st->pix_w, st->pix_h, ++st->x, st->y + st->walk_up);
 	}
     st->walk_lastdir = dir;
 }
@@ -433,7 +455,7 @@ talk (struct state *st, int force_erase)
 	     + st->s_rect.width + 15 > st->Width - 5)
 	st->s_rect.x = st->Width - 15 - st->s_rect.width;
     if (st->y - st->s_rect.height - 10 < 5)
-	st->s_rect.y = st->y + 64 + 5;
+	st->s_rect.y = st->y + st->pix_h + 5;
     else
 	st->s_rect.y = st->y - 5 - st->s_rect.height;
 
@@ -483,22 +505,22 @@ look (struct state *st)
 {
     if (random() % 3)
     {
-	COPY(st->dpy, (random() & 1) ? st->down : st->front, st->window, st->fg_gc,
-	     0, 0, 64, 64, st->x, st->y);
+	COPY(st->dpy, (random() & 1) ? &st->down : &st->front, st->window, st->fg_gc,
+	     0, 0, st->pix_w, st->pix_h, st->x, st->y);
 	return 1000L;
     }
     if (!(random() % 5))
 	return 0;
     if (random() % 3)
     {
-	COPY(st->dpy, (random() & 1) ? st->left_front : st->right_front,
-	     st->window, st->fg_gc, 0, 0, 64, 64, st->x, st->y);
+	COPY(st->dpy, (random() & 1) ? &st->left_front : &st->right_front,
+	     st->window, st->fg_gc, 0, 0, st->pix_w, st->pix_h, st->x, st->y);
 	return 1000L;
     }
     if (!(random() % 5))
 	return 0;
-    COPY(st->dpy, (random() & 1) ? st->left1 : st->right1, st->window, st->fg_gc,
-	 0, 0, 64, 64, st->x, st->y);
+    COPY(st->dpy, (random() & 1) ? &st->left1 : &st->right1, st->window, st->fg_gc,
+	 0, 0, st->pix_w, st->pix_h, st->x, st->y);
     return 1000L;
 }
 

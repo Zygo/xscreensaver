@@ -1,4 +1,4 @@
-/* Sky Tentacles, Copyright (c) 2008-2014 Jamie Zawinski <jwz@jwz.org>
+/* Sky Tentacles, Copyright (c) 2008-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,16 +26,8 @@
 #include "gltrackball.h"
 #include <ctype.h>
 
-#include "xpm-ximage.h"
-#include "../images/scales.xpm"
-
-static char *grey_texture[] = {
-  "16 1 3 1",
-  "X c #808080",
-  "x c #C0C0C0",
-  ". c #FFFFFF",
-  "XXXxxxxx........"
-};
+#include "ximage-loader.h"
+#include "images/gen/scales_png.h"
 
 #ifdef USE_GL /* whole file */
 
@@ -919,9 +911,27 @@ init_tentacles (ModeInfo *mi)
     glBindTexture ((cel_p ? GL_TEXTURE_1D : GL_TEXTURE_2D), tc->texid);
 # endif
 
-    tc->texture = xpm_to_ximage (MI_DISPLAY(mi), MI_VISUAL(mi), 
-                                 MI_COLORMAP(mi), 
-                                 (cel_p ? grey_texture : scales));
+    if (cel_p)
+      {
+        /* "16 1 3 1",
+           "X c #808080",
+           "x c #C0C0C0",
+           ". c #FFFFFF",
+           "XXXxxxxx........"
+         */
+        int w = 16;
+        tc->texture = XCreateImage (MI_DISPLAY(mi), MI_VISUAL(mi),
+                                    32, ZPixmap, 0, 0, w, 1, 32, 0);
+        tc->texture->data = (char *) calloc(1, tc->texture->bytes_per_line);
+        /* ABGR */
+        for (i = 0; i < 3; i++) XPutPixel (tc->texture, i, 0, 0xFF808080);
+        for (;      i < 8; i++) XPutPixel (tc->texture, i, 0, 0xFFC0C0C0);
+        for (;      i < w; i++) XPutPixel (tc->texture, i, 0, 0xFFFFFFFF);
+      }
+    else
+      tc->texture = image_data_to_ximage (MI_DISPLAY(mi), MI_VISUAL(mi), 
+                                          scales_png, sizeof(scales_png));
+
     if (!tc->texture) texture_p = cel_p = False;
   }
 
@@ -930,10 +940,7 @@ init_tentacles (ModeInfo *mi)
     clear_gl_error();
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                   tc->texture->width, tc->texture->height, 0,
-                  GL_RGBA,
-                  /* GL_UNSIGNED_BYTE, */
-                  GL_UNSIGNED_INT_8_8_8_8_REV,
-                  tc->texture->data);
+                  GL_RGBA, GL_UNSIGNED_BYTE, tc->texture->data);
     check_gl_error("texture");
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -949,10 +956,7 @@ init_tentacles (ModeInfo *mi)
     clear_gl_error();
     glTexImage1D (GL_TEXTURE_1D, 0, GL_RGBA,
                   tc->texture->width, 0,
-                  GL_RGBA,
-                  /* GL_UNSIGNED_BYTE, */
-                  GL_UNSIGNED_INT_8_8_8_8_REV,
-                  tc->texture->data);
+                  GL_RGBA, GL_UNSIGNED_BYTE, tc->texture->data);
     check_gl_error("texture");
 
     glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);

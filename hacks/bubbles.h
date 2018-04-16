@@ -7,7 +7,6 @@
 
 #ifdef HAVE_JWXYZ
 # include "jwxyz.h"
-# define HAVE_XPM
 #else
 # include <X11/Xlib.h>
 #endif
@@ -190,7 +189,6 @@ typedef struct bub Bubble;
  * better name...)
  */
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 struct bub_step {
   int radius;
   long area;
@@ -201,24 +199,10 @@ struct bub_step {
 };
 
 typedef struct bub_step Bubble_Step;
-#endif /* HAVE_XPM || HAVE_GDK_PIXBUF */
-
-/* Make sure default bubble isn't compiled when we don't have XPM
-Disable file I/O code too. */
-#if !defined(HAVE_XPM) && !defined(HAVE_GDK_PIXBUF)
-# define NO_DEFAULT_BUBBLE
-# undef BUBBLES_IO
-#endif /* !HAVE_XPM && !HAVE_GDK_PIXBUF */
-
-/* Make sure default bubble is compiled in when we have XPM and no file I/O */
-#if defined(HAVE_XPM) || defined(HAVE_GDK_PIXBUF)
-# ifndef BUBBLES_IO
-#  undef NO_DEFAULT_BUBBLE
-# endif /* BUBBLES_IO */
-#endif /* HAVE_XPM || HAVE_GDK_PIXBUF */
 
 extern void init_default_bubbles(void);
 extern int num_default_bubbles;
-extern char **default_bubbles[];
+typedef struct { const unsigned char *png; unsigned long size; } bubble_png;
+extern bubble_png default_bubbles[];
 
 #endif /* _BUBBLES_H_ */

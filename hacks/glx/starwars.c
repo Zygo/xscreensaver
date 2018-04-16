@@ -1,4 +1,4 @@
-/* starwars, Copyright (c) 1998-2015 Jamie Zawinski <jwz@jwz.org> and
+/* starwars, Copyright (c) 1998-2018 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -568,6 +568,12 @@ init_stars (ModeInfo *mi, int width, int height)
   int max_size = 3;
   GLfloat inc = 0.5;
   int steps = max_size / inc;
+  GLfloat scale = 1;
+
+  if (MI_WIDTH(mi) > 2560) {  /* Retina displays */
+    scale *= 2;
+    nstars = (size/scale) * (size/scale) / 320;
+  }
 
   glDeleteLists (sc->star_list, 1);
   sc->star_list = glGenLists (1);
@@ -577,7 +583,7 @@ init_stars (ModeInfo *mi, int width, int height)
 
   for (j = 1; j <= steps; j++)
     {
-      glPointSize(inc * j);
+      glPointSize(inc * j * scale);
       glBegin (GL_POINTS);
       for (i = 0; i < nstars / steps; i++)
         {

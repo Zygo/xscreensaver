@@ -147,10 +147,6 @@ AH_TEMPLATE([HAVE_OLD_XML_HEADERS],
 	    [Define this if you have the XML library headers in their old,
 	    non-namespaced location (you lack the gnome-xml/libxml symlink)])
 
-AH_TEMPLATE([HAVE_XPM],
-	    [Define this if you have the XPM library installed.  Some of the
-	    demos can make use of this if it is available.])
-
 AH_TEMPLATE([HAVE_GDK_PIXBUF],
 	    [Define this if you have the GDK_Pixbuf library installed.  Some
 	    of the demos can make use of this if it is available.])
@@ -163,6 +159,11 @@ AH_TEMPLATE([HAVE_JPEGLIB],
 	    [Define this if you have the Independent JPEG Group's JPEG
 	    library installed.  Some of the demos can make use of this if it
 	    is available.])
+
+AH_TEMPLATE([HAVE_LIBPNG],
+	    [Define this if the Portable Network Graphics library is installed.
+	    It is basically required, but many things will more-or-less limp
+	    along without it.])
 
 AH_TEMPLATE([HAVE_XMU],
 	    [Define this if you have the Xmu library.  This is standard part
@@ -976,7 +977,7 @@ AC_DEFUN([AC_X_RANDOM_PATHS],
         X_LIBS="$X_LIBS -L/usr/lib/Motif1.1"
       fi
 
-      # Now let's check for the pseudo-standard locations for OpenGL and XPM.
+      # Now let's check for the pseudo-standard locations for OpenGL.
       #
       if test -d /opt/graphics/OpenGL/include ; then
         # HP-UX 10.20 puts it here
@@ -987,11 +988,6 @@ AC_DEFUN([AC_X_RANDOM_PATHS],
         X_LIBS="-L/opt/Mesa/lib $X_LIBS"
       fi
 
-
-      if test -d /opt/xpm/lib/X11 ; then
-        X_CFLAGS="-I/opt/xpm/include $X_CFLAGS"
-        X_LIBS="-L/opt/xpm/lib/X11 $X_LIBS"
-      fi
 
       # On HPUX, default to installing in /opt/xscreensaver/ instead of
       # in /usr/local/, unless there is already an xscreensaver in
@@ -2858,34 +2854,6 @@ fi
 
 ###############################################################################
 #
-#       Checking whether Motif requires -lXpm.
-#
-#       If this is Motif 2.x, and we have XPM, then link against XPM as well.
-#       The deal is, Motif 2.x requires XPM -- but it's a compilation option
-#       of the library whether to build the XPM code into libXm, or whether
-#       to rely on an external libXm.  So the only way to tell whether XPM is
-#       a link-time requirement is to examine libXm.a, which is very
-#       difficult to do in an autoconf script.  So... if it's Motif 2.x, we
-#       always link against XPM if the XPM lib exists (and this will be a
-#       no-op if libXm happens to already have the XPM code in it.)
-#
-###############################################################################
-
-motif_requires_xpm=no
-if test "$have_motif" = yes ; then
-   AC_MSG_CHECKING(whether Motif requires XPM)
-   if test "$motif_version" = "unknown" || test "$motif_version" -ge 2000
-   then
-     motif_requires_xpm=yes
-     AC_MSG_RESULT(maybe)
-   else
-     AC_MSG_RESULT(no)
-   fi
-fi
-
-
-###############################################################################
-#
 #       Checking whether Motif requires -lXp.
 #
 #       Some versions of Motif (2.1.0, at least) require -lXp, the "X Printing
@@ -3248,9 +3216,48 @@ if test "$with_gles" = yes; then
   JWZGLES_OBJS='$(JWXYZ_BIN)/jwzgles.o'
   AC_MSG_RESULT(using OpenGL ES compatiblity shim)
 elif test "$with_gles" != no; then
-  echo "error: must be yes or no: --with-gles=$with_xpm"
+  echo "error: must be yes or no: --with-gles=$with_gles"
   exit 1
 fi
+
+###############################################################################
+#
+#       Check for -lpng
+#
+###############################################################################
+
+have_png=no
+with_png_req=unspecified
+png_halfassed=no
+AC_ARG_WITH(png,
+[  --with-png             Include support for the PNG library.],
+  [with_png="$withval"; with_png_req="$withval"],
+  [with_png=yes])
+
+HANDLE_X_PATH_ARG(with_png, --with-png, PNG)
+
+if test "$with_png" != yes -a "$with_png" != no ; then
+  echo "error: must be yes or no: --with-png=$with_png"
+  exit 1
+fi
+
+if test "$with_png" = yes; then
+
+  have_png=no
+  AC_CHECK_X_HEADER(png.h, [have_png=yes])
+
+  if test "$have_png" = yes; then
+    # we have the header, now check for the library
+    have_png=no
+    png_halfassed=yes
+    AC_CHECK_X_LIB(png, png_create_read_struct,
+                   [have_png=yes
+                    png_halfassed=no
+                    PNG_LIBS="-lpng"
+                    AC_DEFINE(HAVE_LIBPNG)])
+  fi
+fi
+
 
 ###############################################################################
 #
@@ -3297,6 +3304,7 @@ if test "$with_gdk_pixbuf" = yes; then
 
   pkg_check_version gdk-pixbuf-2.0      2.0.0
   pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
+  pkg_check_version gio-2.0             2.0.0
   have_gdk_pixbuf="$ok"
 
   if test "$have_gdk_pixbuf" = yes; then
@@ -3364,7 +3372,7 @@ if test "$with_gdk_pixbuf" = yes; then
 
   if test "$have_gdk_pixbuf" = yes; then
     INCLUDES="$INCLUDES $ac_gdk_pixbuf_config_cflags"
-    XPM_LIBS="$ac_gdk_pixbuf_config_libs"
+    PNG_LIBS="$ac_gdk_pixbuf_config_libs"
     AC_DEFINE(HAVE_GDK_PIXBUF)
   else
     AC_MSG_RESULT(checking for gdk_pixbuf usability... no)
@@ -3375,46 +3383,6 @@ if test "$with_gdk_pixbuf" = yes; then
                      [AC_DEFINE(HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION)],,
                      $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm)
   fi
-fi
-
-
-###############################################################################
-#
-#       Check for -lXpm.
-#
-###############################################################################
-
-have_xpm=no
-with_xpm_req=unspecified
-AC_ARG_WITH(xpm,
-[  --with-xpm              Include support for XPM files in some demos.
-                          (Not needed if Pixbuf is used.)],
-  [with_xpm="$withval"; with_xpm_req="$withval"],[with_xpm=yes])
-
-HANDLE_X_PATH_ARG(with_xpm, --with-xpm, XPM)
-
-if test "$with_xpm" = yes; then
-  AC_CHECK_X_HEADER(X11/xpm.h,
-                   [have_xpm=yes
-                    AC_DEFINE(HAVE_XPM)
-                    XPM_LIBS="-lXpm $XPM_LIBS"],,
-                    [#include <X11/Xlib.h>])
-elif test "$with_xpm" != no; then
-  echo "error: must be yes or no: --with-xpm=$with_xpm"
-  exit 1
-fi
-
-# See comment near $motif_requires_xpm, above.
-# Need to do this here, after both Motif and XPM have been checked for.
-#
-if test "$have_motif" = yes -a "$have_xpm" = yes ; then
-  if test "$motif_requires_xpm" = yes ; then
-    MOTIF_LIBS="$MOTIF_LIBS $XPM_LIBS"
-  fi
-fi
-
-if test "$XPM_LIBS" = "" ; then
-  XPM_LIBS=$(MINIXPM)
 fi
 
 
@@ -4096,9 +4064,9 @@ AC_SUBST(SAVER_LIBS)
 AC_SUBST(MOTIF_LIBS)
 AC_SUBST(GTK_LIBS)
 AC_SUBST(XML_LIBS)
+AC_SUBST(PNG_LIBS)
 AC_SUBST(JPEG_LIBS)
 AC_SUBST(HACK_LIBS)
-AC_SUBST(XPM_LIBS)
 AC_SUBST(PTY_LIBS)
 AC_SUBST(GL_LIBS)
 AC_SUBST(GLE_LIBS)
@@ -4396,16 +4364,12 @@ if test "$have_motif" = yes -a "$have_gtk" = no ; then
 fi
 
 
-if test "$with_xpm_req" = yes -a "$have_xpm" = no; then
-  warnL 'Use of XPM was requested, but it was not found.'
-fi
-
 if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
   warnL 'Use of GDK-Pixbuf was requested, but it was not found.'
 fi
 
 if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
-   test "$have_gdk_pixbuf" = no -a "$have_xpm" = no ; then
+   test "$have_gdk_pixbuf" = no ; then
 
   if test "$with_gdk_pixbuf_req" = yes ; then
     true
@@ -4413,18 +4377,6 @@ if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
     warnL 'The GDK-Pixbuf library is not being used.'
   else
     warnL 'The GDK-Pixbuf library was not found.'
-  fi
-
-  if test "$with_xpm_req" = yes -o "$have_xpm" = yes ; then
-    true
-  elif test "$with_xpm_req" = no ; then
-    warnL 'The XPM library is not being used.'
-  else
-    warnL 'The XPM library was not found.'
-  fi
-
-  if test "$have_gdk_pixbuf" = no -a "$have_xpm" = yes ; then
-    warn2 'The XPM library is being used instead.'
   fi
 
   if test "$gdk_pixbuf_halfassed" = yes ; then
@@ -4435,11 +4387,15 @@ if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
     warn2 'file might contain some clues.'
   fi
 
+  if test "$have_png" = yes ; then
+    echo ''
+    warn2 'The PNG library is being used instead.'
+  fi
+
   echo ''
   warn2 'Some of the demos will not use images as much as they could.'
   warn2 'You should consider installing GDK-Pixbuf and re-running'
-  warn2 'configure.  (GDK-Pixbuf is recommended over XPM, as it'
-  warn2 'provides support for more image formats.)'
+  warn2 'configure.'
 fi
 
 
@@ -4468,6 +4424,28 @@ if test "$have_jpeg" = no ; then
   else
     warn2 "This means the \`webcollage' program will be much slower."
   fi
+fi
+
+
+if test "$have_png" = no ; then
+  if test "$with_png_req" = yes ; then
+    warnL 'Use of libpng was requested, but it was not found.'
+  elif test "$with_png_req" = no ; then
+    noteL 'The PNG library is not being used.'
+  else
+    noteL 'The PNG library was not found.'
+  fi
+
+  if test "$png_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'library; so either PNG is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+  fi
+
+  warn2 "Many things aren't going to work right."
 fi
 
 

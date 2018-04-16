@@ -10,7 +10,7 @@ XCODE_APP = /Applications/Xcode.app
 # XCODE_APP = /Applications/Xcode-5.0.2.app
 
 TARGETS    = All Savers
-ARCH       = -arch i386 -arch x86_64 ONLY_ACTIVE_ARCH=NO
+#ARCH      = -arch i386 -arch x86_64 ONLY_ACTIVE_ARCH=NO
 CERT	   = 'Developer ID Installer: Jamie Zawinski (4627ATJELP)'
 PKGID	   = org.jwz.xscreensaver
 THUMBDIR   = build/screenshots
@@ -338,7 +338,7 @@ dmg::
   cp -p bindist.rtf "$$STAGE/Read Me.rtf" ;				      \
   cp -p build/Release/installer.pkg "$$PKG" ;				      \
   cp -p bindist-DS_Store "$$STAGE/.DS_Store" ;				      \
-  cp -p bindist.webloc "$$STAGE/" ;					      \
+  cp -p bindist*.webloc "$$STAGE/" ;					      \
   cp -p XScreenSaverDMG.icns "$$STAGE/.VolumeIcon.icns" ;		      \
   ${SETFILE} -a C "$$STAGE" ;						      \
   ${SETFILE} -a E "$$STAGE"/*.{rtf,pkg,webloc} ;			      \
@@ -347,9 +347,11 @@ dmg::
   $(SETICON) -d XScreenSaverFolder.icns "$$DST" ;			      \
   $(SETICON) -d XScreenSaver.icns "$$DST"/*.saver ;			      \
   $(SETICON) -d SaverRunner.icns "$$DST"/*.app ;			      \
-  $(SETICON) -d XScreenSaverWebloc.icns "$$STAGE"/*.webloc ;		      \
+  $(SETICON) -d XScreenSaverWebloc.icns        "$$STAGE"/bindist.webloc ;     \
+  $(SETICON) -d XScreenSaverAndroidWebloc.icns "$$STAGE"/bindist2.webloc ;    \
   $(SETICON) -d XScreenSaverPkg.icns "$$STAGE"/*.pkg ;			      \
-  mv "$$STAGE/bindist.webloc" "$$STAGE/Get the iPhone:iPad Version.webloc" ;  \
+  mv "$$STAGE/bindist.webloc"  "$$STAGE/Get the iPhone:iPad Version.webloc" ; \
+  mv "$$STAGE/bindist2.webloc" "$$STAGE/Get the Android Version.webloc" ;     \
 									      \
   set +x ;								      \
   echo "Checking signatures..." ;					      \

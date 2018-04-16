@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,7 @@
 
 #include "screenhack.h"
 #include "textclient.h"
+#include "ximage-loader.h"
 #include "utf8wc.h"
 
 #define FUZZY_BORDER
@@ -43,7 +44,7 @@
 #define BUILTIN_FONT
 
 #ifdef BUILTIN_FONT
-# include "images/6x10font.xbm"
+# include "images/gen/6x10font_png.h"
 #endif /* BUILTIN_FONT */
 
 typedef struct {
@@ -149,6 +150,9 @@ static unsigned short scale_color_channel (unsigned short ch1, unsigned short ch
   return (ch1 * 100 + ch2 * 156) >> 8;
 }
 
+#define FONT6x10_WIDTH (256*7)
+#define FONT6x10_HEIGHT 10
+
 static void *
 phosphor_init (Display *dpy, Window window)
 {
@@ -172,23 +176,13 @@ phosphor_init (Display *dpy, Window window)
     {
 #ifndef BUILTIN_FONT
       fprintf (stderr, "%s: no builtin font\n", progname);
-      state->font = XLoadQueryFont (dpy, "fixed");
+      state->font = load_font_retry (dpy, "fixed");
 #endif /* !BUILTIN_FONT */
     }
   else
     {
-      state->font = XLoadQueryFont (dpy, fontname);
-
-      if (!state->font)
-        {
-          fprintf(stderr, "couldn't load font \"%s\"\n", fontname);
-          state->font = XLoadQueryFont (dpy, "fixed");
-        }
-      if (!state->font)
-        {
-          fprintf(stderr, "couldn't load font \"fixed\"");
-          exit(1);
-        }
+      state->font = load_font_retry (dpy, fontname);
+      if (!state->font) abort();
     }
 
   font = state->font;
@@ -196,14 +190,15 @@ phosphor_init (Display *dpy, Window window)
   state->ticks = STATE_MAX + get_integer_resource (dpy, "ticks", "Integer");
   state->escstate = 0;
 
+  if (state->xgwa.width > 2560) state->scale *= 2;  /* Retina displays */
 
   state->cursor_blink = get_integer_resource (dpy, "cursor", "Time");
 
 # ifdef BUILTIN_FONT
   if (! font)
     {
-      state->char_width  = (font6x10_width / 256) - 1;
-      state->char_height = font6x10_height;
+      state->char_width  = (FONT6x10_WIDTH / 256) - 1;
+      state->char_height = FONT6x10_HEIGHT;
     }
   else
 # endif /* BUILTIN_FONT */
@@ -415,11 +410,54 @@ capture_font_bits (p_state *state)
     {
       safe_width = state->char_width + 1;
       height = state->char_height;
-      p2 = XCreatePixmapFromBitmapData (state->dpy, state->window,
-                                        (char *) font6x10_bits,
-                                        font6x10_width,
-                                        font6x10_height,
-                                        1, 0, 1);
+
+      int pix_w, pix_h;
+      XWindowAttributes xgwa;
+      Pixmap m = 0;
+      Pixmap p = image_data_to_pixmap (state->dpy, state->window,
+                                       _6x10font_png, sizeof(_6x10font_png),
+                                       &pix_w, &pix_h, &m);
+      XImage *im = XGetImage (state->dpy, p, 0, 0, pix_w, pix_h, ~0L, ZPixmap);
+      XImage *mm = XGetImage (state->dpy, m, 0, 0, pix_w, pix_h, 1, XYPixmap);
+      XImage *im2;
+      int x, y;
+      XGCValues gcv;
+      GC gc;
+      unsigned long black =
+        BlackPixelOfScreen (DefaultScreenOfDisplay (state->dpy));
+
+      XFreePixmap (state->dpy, p);
+      XFreePixmap (state->dpy, m);
+      if (pix_w != 256*7) abort();
+      if (pix_h != 10) abort();
+      if (pix_w != FONT6x10_WIDTH) abort();
+      if (pix_h != FONT6x10_HEIGHT) abort();
+
+      XGetWindowAttributes (state->dpy, state->window, &xgwa);
+      im2 = XCreateImage (state->dpy, xgwa.visual, 1, XYBitmap, 0, 0,
+                          pix_w, pix_h, 8, 0);
+      im2->data = malloc (im2->bytes_per_line * im2->height);
+
+      /* Convert deep image to 1 bit */
+      for (y = 0; y < pix_h; y++)
+        for (x = 0; x < pix_w; x++)
+          XPutPixel (im2, x, y,
+                     (XGetPixel (mm, x, y)
+                      ? (XGetPixel (im, x, y) == black)
+                      : 0));
+
+      XDestroyImage (im);
+      XDestroyImage (mm);
+      im = 0;
+
+      p2 = XCreatePixmap (state->dpy, state->window, 
+                          im2->width, im2->height, im2->depth);
+      gcv.foreground = 1;
+      gcv.background = 0;
+      gc = XCreateGC (state->dpy, p2, GCForeground|GCBackground, &gcv);
+      XPutImage (state->dpy, p2, gc, im2, 0, 0, 0, 0, im2->width, im2->height);
+      XFreeGC (state->dpy, gc);
+      XDestroyImage (im2);
     }
   else
 # endif /* BUILTIN_FONT */
@@ -474,7 +512,7 @@ capture_font_bits (p_state *state)
   if (p2)
     {
       XCopyPlane (state->dpy, p2, p, state->gc1,
-                  0, 0, font6x10_width, font6x10_height, 
+                  0, 0, FONT6x10_WIDTH, FONT6x10_HEIGHT, 
                   0, 0, 1);
       XFreePixmap (state->dpy, p2);
     }

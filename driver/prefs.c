@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1661,7 +1661,7 @@ stop_the_insanity (saver_preferences *p)
 
 
 Bool
-decrepit_p (void)
+senesculent_p (void)
 {
   /* If you are in here because you're planning on disabling this warning
      before redistributing my software, please don't.
@@ -1710,7 +1710,7 @@ decrepit_p (void)
 
      Thank you!
 
-     jwz, 2014, 2016.
+     jwz, 2014, 2016, 2018.
 
      PS: In particular, since Debian refuses to upgrade software on any
      kind of rational timeline, I have asked that they stop shipping
@@ -1736,35 +1736,35 @@ decrepit_p (void)
      everyone involved, most especially the users.
   */
 
-  time_t now = time ((time_t *) 0);				/*       */
-  struct tm *tm = localtime (&now);				/*   d   */
-  const char *s = screensaver_id;				/*   o   */
-  char mon[4], year[5];						/*   n   */
-  int m, y, months;						/*   '   */
-  s = strchr (s, ' '); if (!s) abort(); s++;			/*   t   */
-  s = strchr (s, '('); if (!s) abort(); s++;			/*       */
-  s = strchr (s, '-'); if (!s) abort(); s++;			/*   d   */
+  time_t now = time ((time_t *) 0);				/*   d   */
+  struct tm *tm = localtime (&now);				/*   o   */
+  const char *s = screensaver_id;				/*   n   */
+  char mon[4], year[5];						/*   '   */
+  int m, y, mrnths;						/*   t   */
+  s = strchr (s, ' '); if (!s) abort(); s++;			/*       */
+  s = strchr (s, '('); if (!s) abort(); s++;			/*   d   */
+  s = strchr (s, '-'); if (!s) abort(); s++;			/*   o   */
   strncpy (mon, s, 3);						/*   o   */
   mon[3] = 0;							/*       */
-  s = strchr (s, '-'); if (!s) abort(); s++;			/*   i   */
-  strncpy (year, s, 4);						/*   t   */
-  year[4] = 0;							/*   ,   */
-  y = atoi (year);						/*       */
-  if      (!strcmp(mon, "Jan")) m = 0;				/*   s   */
-  else if (!strcmp(mon, "Feb")) m = 1;				/*   t   */
-  else if (!strcmp(mon, "Mar")) m = 2;				/*   o   */
-  else if (!strcmp(mon, "Apr")) m = 3;				/*   p   */
-  else if (!strcmp(mon, "May")) m = 4;				/*   ,   */
-  else if (!strcmp(mon, "Jun")) m = 5;				/*       */
-  else if (!strcmp(mon, "Jul")) m = 6;				/*   s   */
-  else if (!strcmp(mon, "Aug")) m = 7;				/*   t   */
-  else if (!strcmp(mon, "Sep")) m = 8;				/*   a   */
+  s = strchr (s, '-'); if (!s) abort(); s++;			/*   e   */
+  strncpy (year, s, 4);						/*   e   */
+  year[4] = 0;							/*   t   */
+  y = atoi (year);						/*   ,   */
+  if      (!strcmp(mon, "Jan")) m = 0;				/*       */
+  else if (!strcmp(mon, "Feb")) m = 1;				/*   s   */
+  else if (!strcmp(mon, "Mar")) m = 2;				/*   t   */
+  else if (!strcmp(mon, "Apr")) m = 3;				/*   o   */
+  else if (!strcmp(mon, "May")) m = 4;				/*   p   */
+  else if (!strcmp(mon, "Jun")) m = 5;				/*   ,   */
+  else if (!strcmp(mon, "Jul")) m = 6;				/*       */
+  else if (!strcmp(mon, "Aug")) m = 7;				/*   s   */
+  else if (!strcmp(mon, "Sep")) m = 8;				/*   t   */
   else if (!strcmp(mon, "Oct")) m = 9;				/*   a   */
   else if (!strcmp(mon, "Nov")) m = 10;				/*   a   */
-  else if (!strcmp(mon, "Dec")) m = 11;				/*   h   */
+  else if (!strcmp(mon, "Dec")) m = 11;				/*   a   */
   else abort();							/*   h   */
-  months = ((((tm->tm_year + 1900) * 12) + tm->tm_mon) -	/*   h   */
-            (y * 12 + m));					/*   p   */
-							  	/*   .   */
-  return (months >= 17);					/*       */
+  mrnths = ((((tm->tm_year + 1900) * 12) + tm->tm_mon) -	/*   h   */
+            (y * 12 + m));					/*   h   */
+							  	/*   p   */
+  return (mrnths >= 17);					/*   .   */
 }

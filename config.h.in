@@ -171,6 +171,11 @@
 /* Define if your <locale.h> file defines LC_MESSAGES. */
 #undef HAVE_LC_MESSAGES
 
+/* Define this if the Portable Network Graphics library is installed. It is
+   basically required, but many things will more-or-less limp along without
+   it. */
+#undef HAVE_LIBPNG
+
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
 
@@ -369,10 +374,6 @@
 /* Define this if you have the Xmu library. This is standard part of X, and if
    your vendor doesn't ship it, you should report that as a bug. */
 #undef HAVE_XMU
-
-/* Define this if you have the XPM library installed. Some of the demos can
-   make use of this if it is available. */
-#undef HAVE_XPM
 
 /* Define this if you have the X Shared Memory Extension. */
 #undef HAVE_XSHM_EXTENSION

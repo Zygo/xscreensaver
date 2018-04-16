@@ -730,6 +730,7 @@ twang_init (Display *dpy, Window win)
 static const char *twang_defaults [] = {
     ".background:	black",
     ".foreground:	white",
+    ".lowrez:		true",
     "*borderColor:      blue",
     "*borderWidth:	3",
     "*delay:		10000",
