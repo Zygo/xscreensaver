@@ -1,0 +1,13 @@
+#%PAM-1.0
+
+# Fedora Core 5:
+auth       include	system-auth
+
+# SuSE 9.0: (along with "configure --with-passwd-helper" and "unix2_chkpwd")
+# auth     required       pam_unix2.so	nullok
+
+# Distant past:
+# auth       required	/lib/security/pam_pwdb.so shadow nullok
+
+# Account validation
+@COMMENT_PAM_CHECK_ACCOUNT@account include system-auth

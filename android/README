@@ -1,0 +1,208 @@
+
+This directory contains the Android-specific code for building xscreensaver.
+
+It is preliminary, and very much a work in progress.
+
+If you're messing with this, please let us know!
+
+        dennis@panaceasupplies.com
+        jwz@jwz.org
+
+
+To set up your Android development environment:
+
+    Install JDK 7 (http://www.oracle.com/technetwork/java/javase/downloads/)
+    Install Android Studio (http://developer.android.com/sdk/)
+    Install Android NDK (http://developer.android.com/ndk/downloads)
+      Rename or link the "android-ndk-*" directory to "ndk" inside your
+      $ANDROID_HOME (the "sdk/" directory that is the parent of
+      "build-tools/", etc.)  That is, it should be "sdk/ndk/".
+
+    set $ANDROID_HOME to where your SDK is installed, or
+    set "sdk.dir" in the file local.properties.
+    On MacOS, the value you want is probably ~/Library/Android/sdk/
+    Also set "ndk.dir" in local.properties.
+
+To build:
+
+    ./configure
+    cd android
+    make
+
+    Hopefully an "xscreensaver-debug.apk" file will appear in
+    android/xscreensaver/build/outputs/apk/.
+
+    Load that onto your device and go to:
+      Settings / Display / Daydream
+    or just click on the XScreenSaver icon, which is a shortcut to that.
+
+    To create and configure an emulator image, use the GUI tool and and
+    give the emulator a name (say, "Nexus_5").
+
+      $ANDROID_HOME/sdk/tools/android avd
+
+      E.g.: Nexus 5, Android 5, Intel Atom x86_64, RAM 2048 VM 64,
+        storage 200, use host GPU.
+
+    Configuration options are in $HOME/.android/avd/*.avd/config.ini
+
+    To launch it:
+
+      $ANDROID_HOME/sdk/tools/emulator -avd Nexus_5
+
+    Warning!  On my system at least, the emulator runs out of memory
+    when trying to display the Daydream page if all of the savers are
+    loaded.  This is troubling.  You can work around this by editing
+    your *.avd/config.ini and setting vm.heapSize=128; or by editing
+    android/Makefile and paring down the $ANDROID_HACKS list to a
+    smaller subset (60 or so with the default heapSize).
+
+
+    To load it into the currently-running emulator or device:
+      $ANDROID_HOME/platform-tools/adb install -r \
+        xscreensaver/build/outputs/apk/xscreensaver-debug.apk
+
+    Extremely verbose log output, including stack traces:
+        $ANDROID_HOME/platform-tools/adb logcat
+
+    Non-fatal log output for only this app:
+        $ANDROID_HOME/platform-tools/adb logcat \
+          -s xscreensaver:d AndroidRuntime:d libEGL:d
+
+    Note that sometimes "logcat" will just sit there forever saying
+    "waiting for device".  This is because the emulator is a piece of
+    shit and sometimes decides to just randomly not service connections.
+    If you restart the emulator, and wait minutes for the whole damned
+    thing to boot up again, it will probably work next time.  Probably.
+
+
+Directory structure:
+
+    Boilerplate for the Java version of "make":
+        *gradle*
+        *.properties
+        xscreensaver/*gradle*
+        xscreensaver/build.*
+        xscreensaver/*.properties
+
+    The other half of the Makefile:
+        xscreensaver/jni/*.mk
+
+    Source code:
+        xscreensaver/src/org/jwz/xscreensaver/*.java
+        xscreensaver/res/layout/*.xml
+
+    Other relevant source code is in ../jwxyz/ and ../hacks/.
+
+    Icons:
+        xscreensaver/res/drawable-ldpi/
+        xscreensaver/res/drawable-mdpi/
+        xscreensaver/res/drawable/
+
+    Files that we generate:
+
+        gen/function-table.h
+        xscreensaver/AndroidManifest.xml
+        xscreensaver/res/drawable/*.png
+        xscreensaver/res/values/settings.xml
+        xscreensaver/res/values/strings.xml
+        xscreensaver/res/xml/*.xml
+        xscreensaver/src/org/jwz/xscreensaver/gen/*.java
+
+    Other files generated as a part of the build process:
+
+        gen/
+        .gradle/
+        xscreensaver/build/
+        xscreensaver/build/outputs/apk/  -- app appears here
+        xscreensaver/jni/
+        xscreensaver/libs/
+        xscreensaver/obj/
+        xscreensaver/res/
+        xscreensaver/res/drawable/
+        xscreensaver/res/values/
+        xscreensaver/res/xml/
+        xscreensaver/src/org/jwz/xscreensaver/gen/
+
+When adding a new hack, edit android/Makefile, then "make clean" and "make".
+
+
+TODO list, and known bugs:
+
+  - See the top of ../jwxyz/jwxyz-gl.c for a low level TODO list,
+    but here's what's wrong with the savers from a high level view:
+
+  - Rotation is wonky (on some devices?)
+
+  - The Android emulator is a piece of shit and crashes all the time,
+    so it's possible that some of these work fine on real devices.
+    I don't actually have an Android device, so I have no idea.
+
+  - As mentioned above, the Android emulator runs out of memory if
+    more than about 60 of the Daydreams are installed with the default
+    heapSize.  Again, I don't know if this is an issue on real devices.
+    I sure hope not.
+
+  - The code that attempts to grab a screen shot before the Daydream begins
+    doesn't work.
+
+  - When a saver exits abnormally, we catch the exception and attempt to 
+    display the error message in a dialog.  The catch works, but the dialog
+    box does not.
+
+  antinspect	renders incorrectly
+  antmaze	crashes emulator, sometimes
+  antspotlight	crashes emulator, sometimes
+  apple2	text, images into pixmaps doesn't work
+  atlantis	crashes emulator, sometimes
+  barcode	pixmaps
+  blitspin	images
+  bsod		pixmaps, XCopyArea problems
+  bumps		images
+  carousel	images
+  cityflow	shading is wrong
+  endgame	insanely slow
+  engine	text
+  esper		images, text
+  flipflop	images
+  flipscreen3d	images
+  fliptext	text
+  fontglide	text
+  gflux		images
+  glblur	grayscale instead of color
+  gleidescope	images
+  glslideshow	images
+  halftone	XFillArc crash
+  halo		some extra triangles show up
+  jigglypuff	incredibly slow
+  jigsaw	images
+  juggler3d	blank
+  maze		lines are not the same thickness (aliased?)
+  mirrorblob	images
+  molecule	blank
+  mountain	polygons
+  munch		XOR
+  noseguy	text; images flicker to black and white
+  pacman	launches really slowly
+  pedal		polygons
+  phosphor	text; pixmaps
+  photopile	images; pixmaps
+  polyhedra	text
+  polyominoes	pixmaps
+  qix		polygons
+  queens	blank
+  slip		images
+  sonar		does icmp work?
+  speedmine	polygons
+  splitflap	super slow
+  spotlight	pixmaps
+  starfish	polygons
+  starwars	text
+  tessellimage	pixmaps
+  twang		background should be black
+  unicrud	pixmaps
+  winduprobot	dome is not transparent
+  xanalogtv	pixmaps
+  xflame	draws only upper left corner
+  xmatrix	super slow, glitch on first screen
+  zoom		pixmaps

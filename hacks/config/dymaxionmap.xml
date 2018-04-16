@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="dymaxionmap" _label="DymaxionMap" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=I-LwEg8-340"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Animation speed" _low-label="Slow" _high-label="Fast"
+          low="0.05" high="10.0" default="1.0"/>
+
+  <!-- #### -no-texture -->
+
+  <file id="bitmap" _label="Image file" arg="-image %"/>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
+   <boolean id="stars"  _label="Stars"     arg-unset="-no-stars"/>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Buckminster Fuller's map of the Earth projected onto the surface of
+an unfolded icosahedron.  It depicts the Earth's continents as one
+island, or nearly contiguous land masses.
+
+https://en.wikipedia.org/wiki/Dymaxion_map
+https://en.wikipedia.org/wiki/Buckminster_Fuller
+
+Written by Jamie Zawinski; 2016.
+  </_description>
+</screensaver>
