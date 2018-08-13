@@ -64,12 +64,17 @@ jwxyz_image_make_display (Window w, const unsigned char *rgba_bytes)
   Visual *v = &d->visual;
   v->class      = TrueColor;
   Assert (rgba_bytes[3] == 3, "alpha not last");
+  unsigned long masks[4];
   for (unsigned i = 0; i != 4; ++i) {
     union color_bytes color;
     color.pixel = 0;
     color.bytes[rgba_bytes[i]] = 0xff;
-    v->rgba_masks[i] = color.pixel;
+    masks[i] = color.pixel;
   }
+  v->red_mask   = masks[0];
+  v->green_mask = masks[1];
+  v->blue_mask  = masks[2];
+  v->alpha_mask = masks[3];
 
   d->timers_data = jwxyz_sources_init (XtDisplayToApplicationContext (d));
   d->window_background = BlackPixel(d,0);

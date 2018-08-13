@@ -4142,6 +4142,7 @@ AC_OUTPUT(Makefile
           utils/Makefile
           jwxyz/Makefile
           hacks/Makefile
+          hacks/images/Makefile
           hacks/glx/Makefile
           po/Makefile.in
           driver/Makefile

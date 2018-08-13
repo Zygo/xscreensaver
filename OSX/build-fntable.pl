@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2015 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2018 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -31,6 +31,7 @@ my $verbose = 1;
 #
 my %disable = (
    'extrusion'		=> 1,
+   'glitchpeg'		=> 1,
    'lcdscrub'		=> 1,
    'lockward'		=> 1,
    'webcollage'		=> 1,

@@ -60,7 +60,6 @@ draw_colorbars (Screen *screen, Visual *visual,
                 Pixmap logo, Pixmap logo_mask)
 {
   Display *dpy = DisplayOfScreen (screen);
-  int oy = y;
   int ypct = 0;
   int j;
   XGCValues gcv;
@@ -105,8 +104,6 @@ draw_colorbars (Screen *screen, Visual *visual,
 	}
       y = y2;
     }
-
-  y = oy;
 
   /* Add in the xscreensaver logo */
   if (logo)

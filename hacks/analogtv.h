@@ -1,4 +1,4 @@
-/* analogtv, Copyright (c) 2003-2016 Trevor Blackwell <tlb@tlb.org>
+/* analogtv, Copyright (c) 2003-2018 Trevor Blackwell <tlb@tlb.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -252,7 +252,9 @@ void analogtv_setup_sync(analogtv_input *input, int do_cb, int do_ssavi);
 void analogtv_draw(analogtv *it, double noiselevel,
                    const analogtv_reception *const *recs, unsigned rec_count);
 
-int analogtv_load_ximage(analogtv *it, analogtv_input *input, XImage *pic_im);
+int analogtv_load_ximage(analogtv *it, analogtv_input *input,
+                         XImage *pic_im, XImage *mask_im,
+                         int xoff, int yoff, int width, int height);
 
 void analogtv_reception_update(analogtv_reception *inp);
 
@@ -285,8 +287,6 @@ void analogtv_draw_string(analogtv_input *input, analogtv_font *f,
                           char *s, int x, int y, int ntsc[4]);
 void analogtv_draw_string_centered(analogtv_input *input, analogtv_font *f,
                                    char *s, int x, int y, int ntsc[4]);
-void analogtv_draw_xpm(analogtv *tv, analogtv_input *input,
-                       const char * const *xpm, int left, int top);
 
 int analogtv_handle_events (analogtv *it);
 
@@ -305,6 +305,15 @@ int analogtv_handle_events (analogtv *it);
 # define ANALOGTV_DEF_CONTRAST "400"
 #endif
 
+/* Brightness: useful range is around -75 to 100.
+   Contrast:   useful range is around 0 - 500.
+   Color:      useful range is around +/- 500.
+   Tint:       range is mod 360.
+
+   The values in the 'analogtv' struct are the resource divided by 100.0,
+   except for tint, which is exact.
+ */
+
 #define ANALOGTV_DEFAULTS \
   "*TVColor:         70", \
   "*TVTint:          5",  \
@@ -314,6 +323,7 @@ int analogtv_handle_events (analogtv *it);
   "*use_cmap:        0",  \
   "*geometry:	     800x600", \
   "*fpsSolid:	     True", \
+  "*lowrez:	     True", \
   THREAD_DEFAULTS \
   ANALOGTV_DEFAULTS_SHM
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,10 +34,11 @@
 
 #define JWXYZ_QUERY_COLOR(dpy, pixel, mult, rgba) \
   { \
-    const unsigned long *_MASKS = \
-       DefaultVisualOfScreen (DefaultScreenOfDisplay (dpy))->rgba_masks; \
-    for (unsigned i = 0; i != 4; ++i) \
-      (rgba)[i] = ((pixel) & _MASKS[i]) * (mult) / _MASKS[i]; \
+    Visual *_V = DefaultVisualOfScreen (DefaultScreenOfDisplay (dpy)); \
+    (rgba)[0] = ((pixel) & _V->red_mask)   * (mult) / _V->red_mask;    \
+    (rgba)[1] = ((pixel) & _V->green_mask) * (mult) / _V->green_mask;  \
+    (rgba)[2] = ((pixel) & _V->blue_mask)  * (mult) / _V->blue_mask;   \
+    (rgba)[3] = ((pixel) & _V->alpha_mask) * (mult) / _V->alpha_mask;  \
   }
 
 /* jwxyz.m, jwxyz-gl.c, jwxyz-image.c */
@@ -167,11 +168,13 @@ extern void jwxyz_gl_copy_area_write_tex_image (Display *dpy, GC gc,
                                                 unsigned int width,
                                                 unsigned int height,
                                                 int dst_x, int dst_y);
-extern void jwxyz_gl_draw_image (GLenum target,
+
+extern void jwxyz_gl_draw_image (Display *dpy, GC gc,
+                                 GLenum gl_texture_target,
                                  unsigned int tex_w, unsigned int tex_h,
-                                 int src_x, int src_y,
+                                 int src_x, int src_y, int src_depth,
                                  unsigned int width, unsigned int height,
-                                 int dst_x, int dst_y);
+                                 int dst_x, int dst_y, Bool flip_y);
 
 /* glReadPixels followed by glTexImage2D. This is terrible, so only use this
    if nothing else works.

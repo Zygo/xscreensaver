@@ -370,7 +370,8 @@ backdrop (struct testx11 *st, Drawable t)
     const float s0 = 2 * M_PI / tile_count;
     float y_fac = sin ((y + st->frame / 16.0) * s0);
     for (x = 0; x != tile_count; ++x) {
-      unsigned c = ((sin ((x + st->frame / 8.0) * s0) * y_fac) - 1) / 2 * st->backdrop_ncolors / 2;
+      int c = ((sin ((x + st->frame / 8.0) * s0) * y_fac) - 1) / 2 *
+              st->backdrop_ncolors / 2;
       c = (c + st->frame) % st->backdrop_ncolors;
       XSetBackground (st->dpy, st->backdrop_black_gc,
                       st->backdrop_colors[c].pixel);

@@ -38,6 +38,7 @@ $ eruption	:== $'mydir'eruption
 $ euler2d	:== $'mydir'euler2d
 $ fadeplot	:== $'mydir'fadeplot
 $ fiberlamp	:== $'mydir'fiberlamp
+$ filmleader	:== $'mydir'filmleader
 $ fireworkx	:== $'mydir'fireworkx
 $ flame		:== $'mydir'flame
 $ flow		:== $'mydir'flow
@@ -45,6 +46,7 @@ $ fluidballs	:== $'mydir'fluidballs
 $ fontglide	:== $'mydir'fontglide
 $ fuzzyflakes	:== $'mydir'fuzzyflakes
 $ galaxy	:== $'mydir'galaxy
+$ glitchpeg	:== $'mydir'glitchpeg
 $ goop		:== $'mydir'goop
 $ grav		:== $'mydir'grav
 $ greynetic	:== $'mydir'greynetic
@@ -107,6 +109,7 @@ $ triangle	:== $'mydir'triangle
 $ truchet	:== $'mydir'truchet
 $ twang		:== $'mydir'twang
 $ vermiculate	:== $'mydir'vermiculate
+$ vfeedback	:== $'mydir'vfeedback
 $ wander	:== $'mydir'wander
 $ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp

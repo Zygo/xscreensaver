@@ -151,58 +151,39 @@ TODO list, and known bugs:
     box does not.
 
   antinspect	renders incorrectly
-  antmaze	crashes emulator, sometimes
-  antspotlight	crashes emulator, sometimes
   apple2	text, images into pixmaps doesn't work
-  atlantis	crashes emulator, sometimes
   barcode	pixmaps
-  blitspin	images
   bsod		pixmaps, XCopyArea problems
-  bumps		images
-  carousel	images
+  carousel	images are corrupted
   cityflow	shading is wrong
   endgame	insanely slow
   engine	text
-  esper		images, text
-  flipflop	images
-  flipscreen3d	images
+  esper		images don't load, no text
   fliptext	text
   fontglide	text
-  gflux		images
   glblur	grayscale instead of color
-  gleidescope	images
-  glslideshow	images
   halftone	XFillArc crash
-  halo		some extra triangles show up
   jigglypuff	incredibly slow
-  jigsaw	images
   juggler3d	blank
   maze		lines are not the same thickness (aliased?)
-  mirrorblob	images
   molecule	blank
-  mountain	polygons
-  munch		XOR
-  noseguy	text; images flicker to black and white
-  pacman	launches really slowly
+  noseguy	text; images
+  pacman	images; launches really slowly
   pedal		polygons
   phosphor	text; pixmaps
-  photopile	images; pixmaps
+  photopile	text; images don't display
   polyhedra	text
   polyominoes	pixmaps
   qix		polygons
-  queens	blank
-  slip		images
+  queens	insanely slow
   sonar		does icmp work?
   speedmine	polygons
   splitflap	super slow
-  spotlight	pixmaps
+  spotlight	blank
   starfish	polygons
   starwars	text
-  tessellimage	pixmaps
-  twang		background should be black
   unicrud	pixmaps
   winduprobot	dome is not transparent
   xanalogtv	pixmaps
   xflame	draws only upper left corner
-  xmatrix	super slow, glitch on first screen
-  zoom		pixmaps
+  xmatrix	pretty slow

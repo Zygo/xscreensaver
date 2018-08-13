@@ -17,4 +17,8 @@
  */
 extern XFontStruct *load_font_retry (Display *, const char *xlfd);
 
+# ifdef __XSCREENSAVER_XFT_H__  /* if xft.h has been included */
+extern XftFont *load_xft_font_retry (Display *, int screen, const char *xlfd);
+# endif
+
 #endif /* __FONT_RETRY_H__ */

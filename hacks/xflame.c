@@ -55,6 +55,11 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+# undef MAX
+# undef MIN
+# define MAX(A,B) ((A)>(B)?(A):(B))
+# define MIN(A,B) ((A)<(B)?(A):(B))
+
 #include "xshm.h"
 
 #include "images/gen/bob_png.h"
@@ -226,7 +231,15 @@ InitFlame(struct state *st)
   THROTTLE (st->vartrend, "vartrend");
 # undef THROTTLE
 
-
+#if 0
+  if (st->width > 2560)  /* Retina displays */
+    {
+      /* #### One of these knobs must mean "make the fire be twice as tall"
+         but I can't figure out how. Changing any of the default values
+         of any of these seems to just make it all go crappy. */
+      st->ivspread = MAX (0, MIN (255, st->ivspread + 1));
+    }
+#endif
 
   st->hspread = st->ihspread;
   st->vspread = st->ivspread;
@@ -584,74 +597,87 @@ FlamePasteData(struct state *st,
 }
 
 
-static Pixmap
-double_pixmap (Display *dpy, Visual *visual, int depth, Pixmap pixmap,
-               int pix_w, int pix_h)
+static XImage *
+double_ximage (Display *dpy, Visual *visual, XImage *image)
 {
   int x, y;
-  Pixmap p2 = XCreatePixmap(dpy, pixmap, pix_w*2, pix_h*2, depth);
-  XImage *i1 = XGetImage (dpy, pixmap, 0, 0, pix_w, pix_h, ~0L, 
-                          (depth == 1 ? XYPixmap : ZPixmap));
-  XImage *i2 = XCreateImage (dpy, visual, depth, 
-                             (depth == 1 ? XYPixmap : ZPixmap), 0, 0,
-                             pix_w*2, pix_h*2, 8, 0);
-  XGCValues gcv;
-  GC gc = XCreateGC (dpy, p2, 0, &gcv);
-  i2->data = (char *) calloc(i2->height, i2->bytes_per_line);
-  for (y = 0; y < pix_h; y++)
-    for (x = 0; x < pix_w; x++)
+  XImage *out = XCreateImage (dpy, visual, image->depth, ZPixmap, 0, 0,
+                              image->width * 2, image->height * 2, 8, 0);
+  out->data = (char *) malloc (out->height * out->bytes_per_line);
+  for (y = 0; y < image->width; y++)
+    for (x = 0; x < image->height; x++)
       {
-	unsigned long p = XGetPixel(i1, x, y);
-	XPutPixel(i2, x*2,   y*2,   p);
-	XPutPixel(i2, x*2+1, y*2,   p);
-	XPutPixel(i2, x*2,   y*2+1, p);
-	XPutPixel(i2, x*2+1, y*2+1, p);
+	unsigned long p = XGetPixel (image, x, y);
+	XPutPixel (out, x*2,   y*2,   p);
+	XPutPixel (out, x*2+1, y*2,   p);
+	XPutPixel (out, x*2,   y*2+1, p);
+	XPutPixel (out, x*2+1, y*2+1, p);
       }
-  free(i1->data); i1->data = 0;
-  XDestroyImage(i1);
-  XPutImage(dpy, p2, gc, i2, 0, 0, 0, 0, i2->width, i2->height);
-  XFreeGC (dpy, gc);
-  free(i2->data); i2->data = 0;
-  XDestroyImage(i2);
-  XFreePixmap(dpy, pixmap);
-  return p2;
+  XDestroyImage (image);
+  return out;
 }
 
 
 static unsigned char *
-reformat_pixmap (struct state *st, Pixmap pixmap, Pixmap mask, int *w, int *h)
+gaussian_blur (unsigned char *in, int w, int h, double r)
 {
-  XImage *image = 0, *mimage = 0;
+  unsigned char *out = malloc(w * h);
+  int rs = (int) ((r * 2.57) + 0.5);
+  int i, j;
+
+  for (i = 0; i < h; i ++)
+    for (j = 0; j < w; j++) 
+      {
+        double val = 0, wsum = 0;
+        int ix, iy;
+        for (iy = i-rs; iy<i+rs+1; iy++)
+          for (ix = j-rs; ix<j+rs+1; ix++)
+            {
+              int x = MIN(w-1, MAX(0, ix));
+              int y = MIN(h-1, MAX(0, iy));
+              int dsq = (ix-j)*(ix-j)+(iy-i)*(iy-i);
+              double wght = exp (-dsq / (2*r*r)) / (M_PI*2*r*r);
+              val += in[y*w+x] * wght;
+              wsum += wght;
+            }
+        out[i*w+j] = val/wsum;            
+      }
+
+  free (in);
+  return out;
+}
+
+
+static unsigned char *
+loadBitmap (struct state *st)
+{
   int x, y;
   unsigned char *result, *o;
-  XColor colors[256];
-  Bool cmap_p = has_writable_cells (st->screen, st->visual);
+  int blur = 0;
 
-  while (*w < st->width  / 10 &&
-         *h < st->height / 10)
+# ifdef HAVE_JWXYZ
+  const char *bitmap_name = "(default)"; /* #### always use builtin */
+# else
+  char *bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
+# endif
+  XImage *image = 0;
+  if (!bitmap_name ||
+      !*bitmap_name ||
+      !strcmp(bitmap_name, "none"))
+    ;
+  else if (!strcmp(bitmap_name, "(default)"))   /* use the builtin */
+    image = image_data_to_ximage (st->dpy, st->visual,
+                                  bob_png, sizeof(bob_png));
+  else
+    image = file_to_ximage (st->dpy, st->visual, bitmap_name);
+
+  if (! image) return 0;
+
+  while (image->width  < st->width  / 10 &&
+         image->height < st->height / 10)
     {
-      pixmap = double_pixmap (st->dpy, st->visual, st->depth, pixmap, *w, *h);
-      if (mask)
-        mask = double_pixmap (st->dpy, st->visual, st->depth, mask, *w, *h);
-      *w *= 2;
-      *h *= 2;
-    }
-
-  if (cmap_p)
-    {
-      int i;
-      for (i = 0; i < countof (colors); i++)
-        colors[i].pixel = i;
-      XQueryColors (st->dpy, st->colormap, colors, countof (colors));
-    }
-
-  image  = XGetImage (st->dpy, pixmap, 0, 0, *w, *h, ~0L, ZPixmap);
-  XFreePixmap(st->dpy, pixmap);
-
-  if (mask)
-    {
-      mimage = XGetImage (st->dpy, mask,   0, 0, *w, *h, ~0L, ZPixmap);
-      XFreePixmap(st->dpy, mask);
+      image = double_ximage (st->dpy, st->visual, image);
+      blur++;
     }
 
   result = (unsigned char *) malloc (image->width * image->height);
@@ -659,67 +685,28 @@ reformat_pixmap (struct state *st, Pixmap pixmap, Pixmap mask, int *w, int *h)
   for (y = 0; y < image->height; y++)
     for (x = 0; x < image->width; x++)
       {
-        unsigned long rgb = XGetPixel (image, x, y);
-        unsigned long a   = mimage ? XGetPixel (mimage, x, y) : 1;
-        unsigned long gray;
-        if (!a)
-          rgb = 0xFFFFFFFFL;
-        if (cmap_p)
-          gray = ((200 - ((((colors[rgb].red   >> 8) & 0xFF) +
-                           ((colors[rgb].green >> 8) & 0xFF) +
-                           ((colors[rgb].blue  >> 8) & 0xFF))
-                          >> 1))
-                  & 0xFF);
-        else
-          /* This is *so* not handling all the cases... */
-          gray = (image->depth > 16
-                  ? ((((rgb >> 24) & 0xFF) +
-                      ((rgb >> 16) & 0xFF) +
-                      ((rgb >>  8) & 0xFF) +
-                      ((rgb      ) & 0xFF)) >> 2)
-                  : ((((rgb >> 12) & 0x0F) +
-                      ((rgb >>  8) & 0x0F) +
-                      ((rgb >>  4) & 0x0F) +
-                      ((rgb      ) & 0x0F)) >> 1));
-
+        unsigned long agbr = XGetPixel (image, x, image->height - y - 1);
+        unsigned long a    = (agbr >> 24) & 0xFF;
+        unsigned long gray = (a == 0
+                              ? 0xFF
+                              : ((((agbr >> 16) & 0xFF) +
+                                  ((agbr >>  8) & 0xFF) +
+                                  ((agbr >>  0) & 0xFF))
+                                 / 3));
+        if (gray < 96) gray /= 2;  /* a little more contrast */
         *o++ = 255 - gray;
       }
 
-  *w = image->width;
-  *h = image->height;
+  /* If we enlarged the image, file off the sharp edges. */
+  if (blur > 0)
+    result = gaussian_blur (result, image->width, image->height, blur * 1.7);
+
+  st->theimx = image->width;
+  st->theimy = image->height;
   XDestroyImage (image);
-  if (mimage)
-    XDestroyImage (mimage);
-
   return result;
-
 }
 
-
-static unsigned char *
-loadBitmap(struct state *st, int *w, int *h)
-{
-# ifdef HAVE_JWXYZ
-  const char *bitmap_name = "(default)"; /* #### always use builtin */
-# else
-  char *bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
-# endif
-  Pixmap p = 0, mask = 0;
-  if (!bitmap_name ||
-      !*bitmap_name ||
-      !strcmp(bitmap_name, "none"))
-    ;
-  else if (!strcmp(bitmap_name, "(default)"))   /* use the builtin */
-    p = image_data_to_pixmap (st->dpy, st->window,
-                              bob_png, sizeof(bob_png),
-                              w, h, &mask);
-  else  /* load a bitmap file */
-    p = file_to_pixmap (st->dpy, st->window, bitmap_name,
-                        &st->width, &st->height, 0);
-
-  if (!p) return 0;
-  return reformat_pixmap (st, p, mask, w, h);
-}
 
 static void *
 xflame_init (Display *dpy, Window win)
@@ -735,7 +722,7 @@ xflame_init (Display *dpy, Window win)
 
   GetXInfo(st);
   InitColors(st);
-  st->theim = loadBitmap(st, &st->theimx, &st->theimy);
+  st->theim = loadBitmap(st);
 
   MakeImage(st);
   InitFlame(st);

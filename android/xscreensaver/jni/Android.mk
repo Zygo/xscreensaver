@@ -69,6 +69,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/cow_tail.c \
     hacks/glx/cow_udder.c \
     hacks/glx/dolphin.c \
+    hacks/glx/dymaxionmap-coords.c \
     hacks/glx/gllist.c \
     hacks/glx/glschool_alg.c \
     hacks/glx/glschool_gl.c \

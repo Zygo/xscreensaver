@@ -279,9 +279,12 @@
   GL: 				esper -root				    \\n\
   GL: 				vigilance -root				    \\n\
   GL: 				crumbler -root				    \\n\
+				filmleader -root			    \\n\
+				glitchpeg -root				    \\n\
   GL: 				maze3d -root				    \\n\
   GL: 				peepers -root				    \\n\
-  GL: 				razzledazzle -root			    \\n",
+  GL: 				razzledazzle -root			    \\n\
+				vfeedback -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -348,6 +351,7 @@
 "*hacks.energystream.name:   EnergyStream",
 "*hacks.euler2d.name:        Euler2D",
 "*hacks.fadeplot.name:       FadePlot",
+"*hacks.filmleader.name:     FilmLeader",
 "*hacks.flipflop.name:       FlipFlop",
 "*hacks.flipscreen3d.name:   FlipScreen3D",
 "*hacks.fliptext.name:       FlipText",
@@ -359,6 +363,7 @@
 "*hacks.gflux.name:          GFlux",
 "*hacks.gleidescope.name:    Gleidescope",
 "*hacks.glforestfire.name:   GLForestFire",
+"*hacks.glitchpeg.name:      GlitchPEG",
 "*hacks.hyperball.name:      HyperBall",
 "*hacks.hypercube.name:      HyperCube",
 "*hacks.ifs.name:            IFS",
@@ -401,6 +406,7 @@
 "*hacks.topblock.name:       TopBlock",
 "*hacks.tronbit.name:        TronBit",
 "*hacks.unknownpleasures.name:UnknownPleasures",
+"*hacks.vfeedback.name:      VFeedback",
 "*hacks.vidwhacker.name:     VidWhacker",
 "*hacks.webcollage.name:     WebCollage",
 "*hacks.whirlwindwarp.name:  WhirlWindWarp",

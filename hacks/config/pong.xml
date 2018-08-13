@@ -25,11 +25,10 @@
    <vgroup>
     <number id="tvbrightness" type="slider" arg="-tv-brightness %"
             _label="Brightness Knob" _low-label="Low" _high-label="High"
-            low="0" high="200" default="150"/>
-
+            low="-75.0" high="100.0" default="3.0"/>
     <number id="tvcontrast" type="slider" arg="-tv-contrast %"
             _label="Contrast Knob" _low-label="Low" _high-label="High"
-            low="0" high="1500" default="1000"/>
+            low="0" high="500" default="150"/>
    </vgroup>
   </hgroup>
 

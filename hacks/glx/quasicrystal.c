@@ -66,7 +66,9 @@ static XrmOptionDescRec opts[] = {
   { "-wander",       ".wander",    XrmoptionNoArg, "True"  },
   { "+wander",       ".wander",    XrmoptionNoArg, "False" },
   { "-symmetry",     ".symmetric", XrmoptionNoArg, "True"   },
+  { "-symmetric",    ".symmetric", XrmoptionNoArg, "True"   },
   { "-no-symmetry",  ".symmetric", XrmoptionNoArg, "False"  },
+  { "-nonsymmetric", ".symmetric", XrmoptionNoArg, "False"  },
   { "-speed",        ".speed",     XrmoptionSepArg, 0 },
   { "-contrast",     ".contrast",  XrmoptionSepArg, 0 },
 };
@@ -227,7 +229,7 @@ init_quasicrystal (ModeInfo *mi)
     }
 
   bp->symmetric_p =
-    get_boolean_resource (MI_DISPLAY (mi), "symmetry", "Symmetry");
+    get_boolean_resource (MI_DISPLAY (mi), "symmetric", "Symmetric");
 
   bp->contrast = get_float_resource (MI_DISPLAY (mi), "contrast", "Contrast");
   if (bp->contrast < 0 || bp->contrast > 100) 

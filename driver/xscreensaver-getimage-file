@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.46 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.52 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -103,6 +103,7 @@ my $nondir_re = '\.(' . join("|", @nondir_extensions) . ')$';
 # JPEG, GIF, and PNG files that are are smaller than this are rejected:
 # this is so that you can use an image directory that contains both big
 # images and thumbnails, and have it only select the big versions.
+# But, if all of your images are smaller than this, all will be rejected.
 #
 my $min_image_width  = 500;
 my $min_image_height = 500;
@@ -116,6 +117,10 @@ my $dir_count = 1;          # number of directories seen
 my $stat_count = 0;	    # number of files/dirs stat'ed
 my $skip_count_unstat = 0;  # number of files skipped without stat'ing
 my $skip_count_stat = 0;    # number of files skipped after stat
+
+my $config_file = $ENV{HOME} . "/.xscreensaver";
+my $image_directory = undef;
+
 
 sub find_all_files($);
 sub find_all_files($) {
@@ -451,7 +456,7 @@ sub parse_feed($) {
   # malicious images really do exist, so for xscreensaver-getimage-file,
   # let's actually require that SSL be installed properly.
 
-
+  print STDERR "$progname: loading $url\n" if ($verbose);
   my $body = (LWP::Simple::get($url) || '');
 
   if ($body !~ m@^\s*<(\?xml|rss)\b@si) {
@@ -563,12 +568,19 @@ sub parse_feed($) {
       }
     }
 
-    # Then look for <description>... with an <img src="..."> inside.
+    # Then look for <content:encoded> or <description>... with an
+    # <img src="..."> inside. If more than one image, take the first.
     #
-    if (! $iurl) {
-      foreach my $link ($item =~ m@<description[^<>]*>(.*?)</description>@gsi) {
+    foreach my $t ('content:encoded', 'description') {
+      last if $iurl;
+      foreach my $link ($item =~ m@<$t[^<>]*>(.*?)</$t>@gsi) {
         last if $iurl;
-        my $desc = html_unquote($1);
+        my $desc = $1;
+        if ($desc =~ m@<!\[CDATA\[\s*(.*?)\s*\]\]>@gs) {
+          $desc = $1;
+        } else {
+          $desc = html_unquote($desc);
+        }
         my ($href) = ($desc =~ m@<IMG[^<>]*\bSRC=[\"\']?([^\"\'<>]+)@si);
         $iurl = html_unquote($href) if ($href);
         # If IMG SRC has a bogus extension, pretend it's a JPEG.
@@ -576,10 +588,6 @@ sub parse_feed($) {
           if ($iurl && $iurl !~ m/$good_file_re/io);
       }
     }
-
-    # Could also do <content:encoded>, but the above probably covers all
-    # of the real-world possibilities.
-
 
     # Find a unique ID for this image, to defeat image farms.
     # First look for <id>...</id>
@@ -817,7 +825,8 @@ sub mirror_feed($) {
     closedir $dirh;
 
     if ($count <= 0) {
-      print STDERR "$progname: no files in cache of $url\n" if ($verbose);
+      print STDERR "$progname: no image files in cache of $url\n"
+        if ($verbose);
       $poll_p = 1;
     }
   }
@@ -842,9 +851,16 @@ sub mirror_feed($) {
     my @urls = parse_feed ($url);
     print STDERR "$progname: " . ($#urls + 1) . " images\n"
       if ($verbose > 1);
+    my %seen_src_urls;
     foreach my $p (@urls) {
       my ($furl, $id) = @$p;
       $furl = expand_url ($furl, $url);
+
+      # No need to download the same image twice, even if it was in the feed
+      # multiple times under different GUIDs.
+      next if ($seen_src_urls{$furl});
+      $seen_src_urls{$furl} = 1;
+
       my $f = download_image ($furl, $id, $dir);
       next unless $f;
       $files{$f} = 1;    # Got it, don't delete
@@ -956,25 +972,40 @@ sub find_random_file($) {
   write_cache ($dir);
 
   if ($#all_files < 0) {
-    print STDERR "$progname: no files in $dir\n";
+    print STDERR "$progname: no image files in $dir\n";
     exit 1;
   }
 
   my $max_tries = 50;
-  for (my $i = 0; $i < $max_tries; $i++) {
+  my $total_files = @all_files;
+  my $sparse_p = ($total_files < 20);
 
-    my $n = int (rand ($#all_files + 1));
-    my $file = $all_files[$n];
-    if (large_enough_p ($file)) {
-      if (! $url) {
-        $file =~ s@^\Q$dir/@@so || die;  # remove $dir from front
+  # If the directory has a lot of files in it:
+  #   Make a pass through looking for hirez files (assume some are thumbs);
+  #   If we found none, then, select any other file at random.
+  # Otherwise if there are a small number of files:
+  #   Just select one at random (in case there's like, just one hirez).
+
+  for (my $check_size_p = $sparse_p ? 0 : 1;
+       $check_size_p >= 0; $check_size_p--) {
+
+    for (my $i = 0; $i < $max_tries; $i++) {
+      my $n = int (rand ($total_files));
+      my $file = $all_files[$n];
+      if (!$check_size_p || large_enough_p ($file)) {
+        if (! $url) {
+          $file =~ s@^\Q$dir/@@so || die;  # remove $dir from front
+        }
+        return $file;
       }
-      return $file;
     }
   }
 
-  print STDERR "$progname: no suitable images in $dir " .
-               "(after $max_tries tries)\n";
+  print STDERR "$progname: no suitable images in " . ($url || $dir) . " -- " .
+               ($total_files <= $max_tries
+                ? "all $total_files images"
+                : "$max_tries of $total_files images") .
+               " are smaller than ${min_image_width}x${min_image_height}.\n";
 
   # If we got here, blow away the cache.  Maybe it's stale.
   unlink $cache_file_name if $cache_file_name;
@@ -1119,6 +1150,81 @@ sub image_file_size($) {
 }
 
 
+# Reads the prefs we use from ~/.xscreensaver
+#
+sub get_x11_prefs() {
+  my $got_any_p = 0;
+
+  if (open (my $in, '<', $config_file)) {
+    print STDERR "$progname: reading $config_file\n" if ($verbose > 1);
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
+    $got_any_p = get_x11_prefs_1 ($body);
+
+  } elsif ($verbose > 1) {
+    print STDERR "$progname: $config_file: $!\n";
+  }
+
+  if (! $got_any_p && defined ($ENV{DISPLAY})) {
+    # We weren't able to read settings from the .xscreensaver file.
+    # Fall back to any settings in the X resource database
+    # (/usr/X11R6/lib/X11/app-defaults/XScreenSaver)
+    #
+    print STDERR "$progname: reading X resources\n" if ($verbose > 1);
+    my $body = `appres XScreenSaver xscreensaver -1`;
+    $got_any_p = get_x11_prefs_1 ($body);
+  }
+}
+
+
+sub get_x11_prefs_1($) {
+  my ($body) = @_;
+
+  my $got_any_p = 0;
+  $body =~ s@\\\n@@gs;
+  $body =~ s@^[ \t]*#[^\n]*$@@gm;
+
+  if ($body =~ m/^[.*]*imageDirectory:[ \t]*([^\s]+)\s*$/im) {
+    $image_directory = $1;
+    $got_any_p = 1;
+  }
+  return $got_any_p;
+}
+
+
+sub get_cocoa_prefs($) {
+  my ($id) = @_;
+  print STDERR "$progname: reading Cocoa prefs: \"$id\"\n" if ($verbose > 1);
+  my $v = get_cocoa_pref_1 ($id, "imageDirectory");
+  $v = '~/Pictures' unless defined ($v);  # Match default in XScreenSaverView
+  $image_directory = $v if defined ($v);
+}
+
+
+sub get_cocoa_pref_1($$) {
+  my ($id, $key) = @_;
+  # make sure there's nothing stupid/malicious in either string.
+  $id  =~ s/[^-a-z\d. ]/_/gsi;
+  $key =~ s/[^-a-z\d. ]/_/gsi;
+  my $cmd = "defaults -currentHost read \"$id\" \"$key\"";
+
+  print STDERR "$progname: executing $cmd\n"
+    if ($verbose > 3);
+
+  my $val = `$cmd 2>/dev/null`;
+  $val =~ s/^\s+//s;
+  $val =~ s/\s+$//s;
+
+  print STDERR "$progname: Cocoa: $id $key = \"$val\"\n"
+    if ($verbose > 2);
+
+  $val = undef if ($val =~ m/^$/s);
+
+  return $val;
+}
+
+
 sub error($) {
   my ($err) = @_;
   print STDERR "$progname: $err\n";
@@ -1126,7 +1232,7 @@ sub error($) {
 }
 
 sub usage() {
-  print STDERR "usage: $progname [--verbose] directory-or-feed-url\n\n" .
+  print STDERR "usage: $progname [--verbose] [ directory-or-feed-url ]\n\n" .
   "       Prints the name of a randomly-selected image file.  The directory\n" .
   "       is searched recursively.  Images smaller than " .
          "${min_image_width}x${min_image_height} are excluded.\n" .
@@ -1138,7 +1244,8 @@ sub usage() {
 }
 
 sub main() {
-  my $dir = undef;
+  my $cocoa_id = undef;
+  my $abs_p = 0;
 
   while ($_ = $ARGV[0]) {
     shift @ARGV;
@@ -1149,28 +1256,59 @@ sub main() {
     elsif (m/^--?no-spotlight$/s) { $use_spotlight_p = 0; }
     elsif (m/^--?cache$/s)        { $cache_p = 1; }
     elsif (m/^--?no-?cache$/s)    { $cache_p = 0; }
+    elsif (m/^--?cocoa$/)         { $cocoa_id = shift @ARGV; }
+    elsif (m/^--?abs(olute)?$/)   { $abs_p = 1; }
     elsif (m/^-./)                { usage; }
-    elsif (!defined($dir))        { $dir = $_; }
+    elsif (!defined($image_directory)) { $image_directory = $_; }
     else                          { usage; }
   }
 
-  usage unless (defined($dir));
+  # Most hacks (X11 and Cocoa) pass a --directory value on the command line,
+  # but if they don't, look it up from the resources.  Currently this only
+  # happens with "glitchpeg" which invokes xscreensaver-getimage-file
+  # directly instead of going through the traditional path.
+  #
+  if (! $image_directory) {
+    if (!defined ($cocoa_id)) {
+      # see OSX/XScreenSaverView.m
+      $cocoa_id = $ENV{XSCREENSAVER_CLASSPATH};
+    }
 
-  $dir =~ s@^feed:@http:@si;
+    if (defined ($cocoa_id)) {
+      get_cocoa_prefs($cocoa_id);
+      error ("no imageDirectory in $cocoa_id") unless $image_directory;
+    } else {
+      get_x11_prefs();
+      error ("no imageDirectory in X11 resources") unless $image_directory;
+    }
+  }
 
-  if ($dir =~ m/^https?:/si) {
+  usage unless (defined($image_directory));
+
+  $image_directory =~ s@^feed:@http:@si;
+
+  if ($image_directory =~ m/^https?:/si) {
     # ok
   } else {
-    $dir =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
-    $dir =~ s@/+$@@s;		   # omit trailing /
+    $image_directory =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
+    $image_directory =~ s@/+$@@s;		 # omit trailing /
 
-    if (! -d $dir) {
-      print STDERR "$progname: $dir: not a directory or URL\n";
+    if (! -d $image_directory) {
+      print STDERR "$progname: $image_directory not a directory or URL\n";
       usage;
     }
   }
 
-  my $file = find_random_file ($dir);
+  my $file = find_random_file ($image_directory);
+
+  # With --absolute return fully qualified paths instead of relative to --dir.
+  if ($abs_p &&
+      $file !~ m@^/@ &&
+      $image_directory =~ m@^/@s) {
+    $file = "$image_directory/$file";
+    $file =~ s@//+@/@gs;
+  }
+
   print STDOUT "$file\n";
 }
 

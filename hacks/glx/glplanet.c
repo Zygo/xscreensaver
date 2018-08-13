@@ -59,12 +59,14 @@
 #define DEF_ROTATE  "True"
 #define DEF_ROLL    "True"
 #define DEF_WANDER  "True"
-#define DEF_SPIN    "0.03"
+#define DEF_SPIN    "1.0"
 #define DEF_TEXTURE "True"
 #define DEF_STARS   "True"
 #define DEF_RESOLUTION "128"
 #define DEF_IMAGE   "BUILTIN"
 #define DEF_IMAGE2  "BUILTIN"
+
+#define BLENDED_TERMINATOR
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -80,22 +82,23 @@ static int do_stars;
 static char *which_image;
 static char *which_image2;
 static int resolution;
+static GLfloat spin_arg;
 
 static XrmOptionDescRec opts[] = {
-  {"-rotate",  ".glplanet.rotate",  XrmoptionNoArg, "true" },
-  {"+rotate",  ".glplanet.rotate",  XrmoptionNoArg, "false" },
-  {"-roll",    ".glplanet.roll",    XrmoptionNoArg, "true" },
-  {"+roll",    ".glplanet.roll",    XrmoptionNoArg, "false" },
-  {"-wander",  ".glplanet.wander",  XrmoptionNoArg, "true" },
-  {"+wander",  ".glplanet.wander",  XrmoptionNoArg, "false" },
-  {"-texture", ".glplanet.texture", XrmoptionNoArg, "true" },
-  {"+texture", ".glplanet.texture", XrmoptionNoArg, "false" },
-  {"-stars",   ".glplanet.stars",   XrmoptionNoArg, "true" },
-  {"+stars",   ".glplanet.stars",   XrmoptionNoArg, "false" },
-  {"-spin",    ".glplanet.spin",    XrmoptionSepArg, 0 },
-  {"-image",   ".glplanet.image",   XrmoptionSepArg, 0 },
-  {"-image2",  ".glplanet.image2",  XrmoptionSepArg, 0 },
-  {"-resolution", ".glplanet.resolution", XrmoptionSepArg, 0 },
+  {"-rotate",  ".rotate",  XrmoptionNoArg, "true" },
+  {"+rotate",  ".rotate",  XrmoptionNoArg, "false" },
+  {"-roll",    ".roll",    XrmoptionNoArg, "true" },
+  {"+roll",    ".roll",    XrmoptionNoArg, "false" },
+  {"-wander",  ".wander",  XrmoptionNoArg, "true" },
+  {"+wander",  ".wander",  XrmoptionNoArg, "false" },
+  {"-texture", ".texture", XrmoptionNoArg, "true" },
+  {"+texture", ".texture", XrmoptionNoArg, "false" },
+  {"-stars",   ".stars",   XrmoptionNoArg, "true" },
+  {"+stars",   ".stars",   XrmoptionNoArg, "false" },
+  {"-spin",    ".spin",    XrmoptionSepArg, 0 },
+  {"-image",   ".image",   XrmoptionSepArg, 0 },
+  {"-image2",  ".image2",  XrmoptionSepArg, 0 },
+  {"-resolution", ".resolution", XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
@@ -104,6 +107,7 @@ static argtype vars[] = {
   {&do_wander,   "wander",  "Wander",  DEF_WANDER,  t_Bool},
   {&do_texture,  "texture", "Texture", DEF_TEXTURE, t_Bool},
   {&do_stars,    "stars",   "Stars",   DEF_STARS,   t_Bool},
+  {&spin_arg,    "spin",    "Spin",    DEF_SPIN,    t_Float},
   {&which_image, "image",   "Image",   DEF_IMAGE,   t_String},
   {&which_image2,"image2",  "Image",   DEF_IMAGE2,  t_String},
   {&resolution,  "resolution","Resolution", DEF_RESOLUTION, t_Int},
@@ -143,7 +147,6 @@ typedef struct {
   int screen_width, screen_height;
   GLXContext *glx_context;
   Window window;
-  XColor fg, bg;
   GLfloat z;
   GLfloat tilt;
   rotator *rot;
@@ -202,7 +205,7 @@ setup_file_texture (ModeInfo *mi, char *filename)
 
 
 static void
-setup_texture(ModeInfo * mi)
+setup_texture (ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
@@ -316,6 +319,80 @@ init_stars (ModeInfo *mi)
 }
 
 
+#ifdef BLENDED_TERMINATOR
+static void
+terminator_tube (ModeInfo *mi, int resolution)
+{
+  Bool wire = MI_IS_WIREFRAME(mi);
+  GLfloat th;
+  GLfloat step = M_PI*2 / resolution;
+  GLfloat thickness = 0.1;  /* Dusk is about an hour wide. */
+  GLfloat c1[] = { 0, 0, 0, 1 };
+  GLfloat c2[] = { 0, 0, 0, 0 };
+
+  glPushMatrix();
+  if (wire)
+    {
+      c1[0] = c1[1] = 0.5;
+      c2[2] = 0.5;
+      glLineWidth (4);
+    }
+  glRotatef (90, 1, 0, 0);
+  glScalef (1.02, 1.02, 1.02);
+  glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+  for (th = 0; th < M_PI*2 + step; th += step)
+    {
+      GLfloat x = cos(th);
+      GLfloat y = sin(th);
+      glColor4fv (c1);
+      if (!do_texture)
+        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c1);
+      glNormal3f (x, y, 0);
+      glVertex3f (x, y,  thickness);
+      glColor4fv (c2);
+      if (!do_texture)
+        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c2);
+      glVertex3f (x, y, -thickness);
+    }
+  glEnd();
+
+  /* There's a bit of a spike in the shading where the tube overlaps
+     the sphere, so extend the sphere a lot to try and avoid that. */
+# if 0 /* Nope, that doesn't help. */
+  glColor4fv (c1);
+  if (!do_texture)
+    glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c1);
+  glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+  for (th = 0; th < M_PI*2 + step; th += step)
+    {
+      GLfloat x = cos(th);
+      GLfloat y = sin(th);
+      glNormal3f (x, y, 0);
+      glVertex3f (x, y, thickness);
+      glVertex3f (x, y, thickness + 10);
+    }
+  glEnd();
+
+  glColor4fv (c2);
+  if (!do_texture)
+    glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c2);
+  glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+  for (th = 0; th < M_PI*2 + step; th += step)
+    {
+      GLfloat x = cos(th);
+      GLfloat y = sin(th);
+      glNormal3f (x, y, 0);
+      glVertex3f (x, y, -thickness);
+      glVertex3f (x, y, -thickness - 10);
+    }
+  glEnd();
+# endif /* 0 */
+
+  glPopMatrix();
+}
+#endif /* BLENDED_TERMINATOR */
+
+
 ENTRYPOINT void
 reshape_planet (ModeInfo *mi, int width, int height)
 {
@@ -388,17 +465,6 @@ init_planet (ModeInfo * mi)
 	  if (*s == ' ' || *s == '\t')
 		*s = 0;
 
-    if (!XParseColor(mi->dpy, mi->xgwa.colormap, f, &gp->fg))
-      {
-		fprintf(stderr, "%s: unparsable color: \"%s\"\n", progname, f);
-		exit(1);
-      }
-    if (!XParseColor(mi->dpy, mi->xgwa.colormap, b, &gp->bg))
-      {
-		fprintf(stderr, "%s: unparsable color: \"%s\"\n", progname, f);
-		exit(1);
-      }
-
 	free (f);
 	free (b);
   }
@@ -415,6 +481,20 @@ init_planet (ModeInfo * mi)
     gp->tilt = frand (23.4);
     gp->trackball = gltrackball_init (True);
   }
+
+  if (!wire && !do_texture)
+    {
+      GLfloat pos[4] = {1, 1, 1, 0};
+      GLfloat amb[4] = {0, 0, 0, 1};
+      GLfloat dif[4] = {1, 1, 1, 1};
+      GLfloat spc[4] = {0, 1, 1, 1};
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
 
   if (wire)
     do_texture = False;
@@ -439,7 +519,39 @@ init_planet (ModeInfo * mi)
   gp->shadowlist = glGenLists(1);
   glNewList (gp->shadowlist, GL_COMPILE);
   glFrontFace(GL_CCW);
+
+  if (wire)
+    glColor4f (0.5, 0.5, 0, 1);
+# ifdef BLENDED_TERMINATOR
+  else
+    {
+      GLfloat c[] = { 0, 0, 0, 1 };
+      glColor4fv (c);
+      if (!do_texture)
+        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+    }
+# endif
+
+  glPushMatrix();
+  glScalef (1.01, 1.01, 1.01);
   unit_dome (resolution, resolution, wire);
+
+# ifdef BLENDED_TERMINATOR
+  terminator_tube (mi, resolution);
+  if (!wire)
+    {
+      /* We have to draw the transparent side of the mask too, 
+         though I'm not sure why. */
+      GLfloat c[] = { 0, 0, 0, 0 };
+      glColor4fv (c);
+      if (!do_texture)
+        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+      glRotatef (180, 1, 0, 0);
+      unit_dome (resolution, resolution, wire);
+    }
+# endif
+
+  glPopMatrix();
   glEndList();
 
   /* construct the polygons of the latitude/longitude/axis lines.
@@ -486,7 +598,7 @@ draw_planet (ModeInfo * mi)
 
   if (do_rotate && !gp->button_down_p)
     {
-      gp->z -= 0.001;     /* the sun sets in the west */
+      gp->z -= 0.001 * spin_arg;     /* the sun sets in the west */
       if (gp->z < 0) gp->z += 1;
     }
 
@@ -540,14 +652,18 @@ draw_planet (ModeInfo * mi)
 # endif
 
   if (wire)
-    glColor3f (0.5, 0.5, 1);
-  else
-    glColor3f (1, 1, 1);
-
-  if (do_texture)
+    glColor3f (0, 0, 0.5);
+  else if (do_texture)
     {
-      glEnable(GL_TEXTURE_2D);
+      glColor4f (1, 1, 1, 1);
+      glEnable (GL_TEXTURE_2D);
       glBindTexture (GL_TEXTURE_2D, gp->tex1);
+    }
+  else
+    {
+      GLfloat c[] = { 0, 0.5, 0, 1 };
+      glColor4fv (c);
+      glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
     }
 
   glPushMatrix();
@@ -556,54 +672,134 @@ draw_planet (ModeInfo * mi)
   mi->polygon_count += resolution*resolution;
   glPopMatrix();
 
-  /* Originally we just used GL_LIGHT0 to produce the day/night sides of
-     the planet, but that always looked crappy, even with a vast number of
-     polygons, because the day/night terminator didn't exactly line up with
-     the polygon edges.
-
-     So instead, draw the full "day" sphere; clear the depth buffer; draw
-     a rotated/tilted half-sphere into the depth buffer only; then draw
-     the "night" sphere.  That lets us divide the sphere into the two maps,
-     and the dividing line can be at any angle, regardless of polygon layout.
-
-     The half-sphere is scaled slightly larger to avoid polygon fighting,
-     since those triangles won't exactly line up because of the rotation.
-
-     The downside of this is that the day/night terminator is 100% sharp.
-     It would be nice if it was a little blurry.
-   */
-
   if (wire)
     {
       glPushMatrix();
       glRotatef (gp->tilt, 1, 0, 0);
-      glColor3f(0, 0, 0);
+      glColor3f(1, 0, 0);
       glLineWidth(4);
       glCallList (gp->shadowlist);
       glLineWidth(1);
       mi->polygon_count += resolution*(resolution/2);
       glPopMatrix();
     }
-  else if (do_texture && gp->tex2)
+
+  else if (!do_texture || gp->tex2)
     {
-      glClear(GL_DEPTH_BUFFER_BIT);
-      glDisable(GL_TEXTURE_2D);
+      /* Originally we just used GL_LIGHT0 to produce the day/night sides of
+         the planet, but that always looked crappy, even with a vast number of
+         polygons, because the day/night terminator didn't exactly line up with
+         the polygon edges.
+       */
+
+#ifndef BLENDED_TERMINATOR
+
+      /* Method 1, use the depth buffer as a stencil.
+
+         - Draw the full "day" sphere;
+         - Clear the depth buffer;
+         - Draw a rotated/tilted half-sphere into the depth buffer only,
+           on the Eastern hemisphere, putting non-zero depth only on the
+           sunlit side;
+         - Draw the full "night" sphere, which will clip to dark parts only.
+
+         That lets us divide the sphere into the two maps, and the dividing
+         line can be at any angle, regardless of polygon layout.
+
+         The half-sphere is scaled slightly larger to avoid polygon fighting,
+         since those triangles won't exactly line up because of the rotation.
+
+         The downside of this is that the day/night terminator is 100% sharp.
+      */
+      glClear (GL_DEPTH_BUFFER_BIT);
       glColorMask (0, 0, 0, 0);
+      glDisable (GL_TEXTURE_2D);
       glPushMatrix();
       glRotatef (gp->tilt, 1, 0, 0);
       glScalef (1.01, 1.01, 1.01);
-      glCallList (gp->shadowlist);
+      glCallList (gp->shadowlist);		/* Fill in depth on sunlit side */
       mi->polygon_count += resolution*(resolution/2);
       glPopMatrix();
       glColorMask (1, 1, 1, 1);
-      glEnable(GL_TEXTURE_2D);
 
-      glBindTexture (GL_TEXTURE_2D, gp->tex2);
+      if (do_texture)
+        {
+          glEnable (GL_TEXTURE_2D);
+          glBindTexture (GL_TEXTURE_2D, gp->tex2);
+        }
+      else
+        {
+          GLfloat c[] = { 0, 0, 0.5, 1 };
+          glColor4fv (c);
+          if (! do_texture)
+            glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+        }
+
       glPushMatrix();
       glRotatef (gp->z * 360, 0, 0, 1);
-      glCallList (gp->platelist);
+      glCallList (gp->platelist);		/* Fill in color on night side */
       mi->polygon_count += resolution*resolution;
       glPopMatrix();
+
+#else /* BLENDED_TERMINATOR */
+
+      /* Method 2, use the alpha buffer as a stencil.
+         - Draw the full "day" sphere;
+         - Clear the depth buffer; 
+         - Clear the alpha buffer;
+         - Draw a rotated/tilted half-sphere into the alpha buffer only,
+           on the Eastern hemisphere, putting non-zero alpha only on the
+           sunlit side;
+         - Also draw a fuzzy terminator ring into the alpha buffer;
+         - Clear the depth buffer again; 
+         - Draw the full "night" sphere, which will blend to dark parts only.
+       */
+      glColorMask (0, 0, 0, 1);
+      glClear (GL_COLOR_BUFFER_BIT);
+      glClear (GL_DEPTH_BUFFER_BIT);
+      glDisable (GL_TEXTURE_2D);
+
+      glPushMatrix();
+      glRotatef (gp->tilt, 1, 0, 0);
+      glScalef (1.01, 1.01, 1.01);
+      glCallList (gp->shadowlist);		/* Fill in alpha on sunlit side */
+      mi->polygon_count += resolution*(resolution/2);
+      glPopMatrix();
+
+      glClear (GL_DEPTH_BUFFER_BIT);
+
+      glColorMask (1, 1, 1, 1);
+      {
+        GLfloat c[] = { 1, 1, 1, 1 };
+        glColor4fv (c);
+        if (! do_texture)
+          glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+      }
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
+
+      if (do_texture)
+        {
+          glEnable (GL_TEXTURE_2D);
+          glBindTexture (GL_TEXTURE_2D, gp->tex2);
+        }
+      else
+        {
+          GLfloat c[] = { 0, 0, 0.5, 1 };
+          glColor4fv (c);
+          glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+          glEnable (GL_LIGHTING);
+        }
+
+      glPushMatrix();
+      glRotatef (gp->z * 360, 0, 0, 1);
+      glCallList (gp->platelist);		/* Fill in color on night side */
+      mi->polygon_count += resolution*resolution;
+      glPopMatrix();
+      glDisable (GL_BLEND);
+      glBlendFunc (GL_ONE, GL_ZERO);
+
+#endif /* BLENDED_TERMINATOR */
     }
 
   if (gp->draw_axis)
@@ -618,6 +814,8 @@ draw_planet (ModeInfo * mi)
       glCallList (gp->latlonglist);
       mi->polygon_count += 24*24;
       glPopMatrix();
+      if (!wire && !do_texture)
+        glEnable (GL_LIGHTING);
       if (gp->draw_axis) gp->draw_axis--;
     }
   glPopMatrix();

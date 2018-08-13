@@ -258,6 +258,7 @@ utf8_split (const char *string, int *length_ret)
   const unsigned char *end = in + len;
   char **ret = (char **) malloc ((len+1) * sizeof(*ret));
   int i = 0;
+  int zwjp = 0;
   if (!ret) return 0;
 
   while (in < end)
@@ -272,13 +273,28 @@ utf8_split (const char *string, int *length_ret)
 
       /* If this is a Combining Diacritical, append it to the previous
          character. E.g., "y\314\206\314\206" is one string, not three.
+
+         If this is ZWJ, Zero Width Joiner, then we append both this character
+         and the following character, e.g. "X ZWJ Y" is one string not three.
+
+         #### Hmmm, should this also include every character in the
+         "Symbol, Modifier" category, or does ZWJ get used for those?
+         https://www.fileformat.info/info/unicode/category/Sk/list.htm
+
+         Is it intended that "Latin small letter C, 0063" + "Cedilla, 00B8"
+         should be a single glyph? Or is that what "Combining Cedilla, 0327"
+         is for?  I'm confused by the fact that the skin tones (1F3FB-1F3FF)
+         do not seem to be in a readily-identifiable block the way the various
+         combining diacriticals are.
        */
       if (i > 1 && 
-          ((uc >=  0x300 && uc <=  0x36F) || /* Combining Diacritical */
-           (uc >= 0x1AB0 && uc <= 0x1AFF) || /* Combining Diacritical Ext. */
-           (uc >= 0x1DC0 && uc <= 0x1DFF) || /* Combining Diacritical Supp. */
-           (uc >= 0x20D0 && uc <= 0x20FF) || /* Combining Diacritical Sym. */
-           (uc >= 0xFE20 && uc <= 0xFE2F)))  /* Combining Half Marks */
+          ((uc >=   0x300 && uc <=   0x36F) || /* Combining Diacritical */
+           (uc >=  0x1AB0 && uc <=  0x1AFF) || /* Combining Diacritical Ext. */
+           (uc >=  0x1DC0 && uc <=  0x1DFF) || /* Combining Diacritical Supp. */
+           (uc >=  0x20D0 && uc <=  0x20FF) || /* Combining Diacritical Sym. */
+           (uc >=  0xFE20 && uc <=  0xFE2F) || /* Combining Half Marks */
+           (uc >= 0x1F3FB && uc <= 0x1F3FF) || /* Emoji skin tone modifiers */
+           zwjp || uc == 0x200D))              /* Zero Width Joiner */
         {
           long L1 = strlen(ret[i-2]);
           long L2 = strlen(ret[i-1]);
@@ -289,6 +305,7 @@ utf8_split (const char *string, int *length_ret)
           free (ret[i-2]);
           ret[i-2] = s2;
           i--;
+          zwjp = (uc == 0x200D);  /* Swallow the next character as well */
         }
     }
   ret[i] = 0;
@@ -818,6 +835,7 @@ main (int argc, char **argv)
       free (out16);
     }
 
+  /* Check conversion from UTF8 to Latin1 and ASCII. */
   {
     const char *utf8 = ("son \303\256le int\303\251rieure, \303\240 "
                         "c\303\264t\303\251 de l'alc\303\264ve "
@@ -850,6 +868,58 @@ main (int argc, char **argv)
     free (ascii2);
   }
 
+  /* Check de-composition of emoji that should all be treated as a unit
+     for measurement and display purposes. */
+  {
+    static const char * const tests[] = { 
+
+      /* 0: "Man" */
+      " \360\237\221\250 ",
+
+      /* 1: "Blackula" = "Vampire, dark skin tone" = 1F9DB 1F3FF */
+      " \360\237\247\233\360\237\217\277 ",
+
+      /* 2: "Black male teacher" = "Man, dark skin tone, ZWJ, school" =
+            1F468 1F3FF 200D 1F3EB
+       */
+      " \360\237\221\250\360\237\217\277\342\200\215\360\237\217\253 ",
+
+      /* 3: "Female runner" = "Runner, ZWJ, female sign" = 1F3C3 200D 2640 */
+      " \360\237\217\203\342\200\215\342\231\200 ",
+
+      /* 4: "Woman astronaut" = "Woman, ZWJ, rocket ship" = 1F3C3 200D 1F680 */
+      " \360\237\217\203\342\200\215\360\237\232\200 ",
+
+      /* 5:
+         Group of people displayed as a single glyph:
+           Woman, dark skin tone, ZWJ,   1F469 1F3FF 200D
+           Man, light skin tone, ZWJ,    1F468 1F3FB 200D
+           Boy, medium skin tone, ZWJ,   1F466 1F3FD 200D
+           Girl, dark skin tone.         1F467 1F3FF
+       */
+      " \360\237\221\251\360\237\217\277\342\200\215"
+       "\360\237\221\250\360\237\217\273\342\200\215"
+       "\360\237\221\246\360\237\217\275\342\200\215"
+       "\360\237\221\247\360\237\217\277 ",
+    };
+    int i;
+    for (i = 0; i < sizeof(tests)/sizeof(*tests); i++)
+      {
+        int L = 0;
+        char **out = utf8_split (tests[i], &L);
+        char name[100];
+        int j;
+        sprintf (name, "SPLIT %d: %d glyphs", i, L-2);
+        if (L != 3)
+          {
+            LOG (stderr, name, tests[i]);
+            ok = 0;
+          }
+        for (j = 0; j < L; j++)
+          free (out[j]);
+        free (out);
+      }
+  }
 
   if (ok) fprintf (stderr, "OK\n");
   return (ok == 0);

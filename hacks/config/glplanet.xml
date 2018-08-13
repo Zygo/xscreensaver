@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="https://www.youtube.com/watch?v=hXZquXPG4pg"/>
+  <video href="https://www.youtube.com/watch?v=ohcJ1bVkLZ4"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -31,10 +31,12 @@
   <xscreensaver-updater />
 
   <_description>
-The Earth, bouncing around in space.
+The Earth, bouncing around in space, rendered with satellite imagery
+of the planet in both sunlight and darkness.
 
-If you would like it to display a different planet, the texture maps
-that come with "ssystem" work well.
+If you would like it to display a different planet, any pair of
+Equirectangular-projected maps will work.  The maps that come with
+"ssystem" work well.
 
 Written by David Konerding and Jamie Zawinski; 1998.
   </_description>

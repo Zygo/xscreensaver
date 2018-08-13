@@ -70,11 +70,13 @@
 				AF77796509B6604A00EA3033 /* PBXTargetDependency */,
 				AF77796309B6604A00EA3033 /* PBXTargetDependency */,
 				AF77796109B6604A00EA3033 /* PBXTargetDependency */,
+				AFD77E7A20C241BE00A3638D /* PBXTargetDependency */,
 				AF77795F09B6604A00EA3033 /* PBXTargetDependency */,
 				AF77795D09B6604A00EA3033 /* PBXTargetDependency */,
 				AF77795B09B6604A00EA3033 /* PBXTargetDependency */,
 				AF77795909B6604A00EA3033 /* PBXTargetDependency */,
 				AF77795709B6604A00EA3033 /* PBXTargetDependency */,
+				AFA6AB1120999A9A006D2685 /* PBXTargetDependency */,
 				AF77795509B6604A00EA3033 /* PBXTargetDependency */,
 				AF77795309B6604900EA3033 /* PBXTargetDependency */,
 				AF77795109B6604900EA3033 /* PBXTargetDependency */,
@@ -126,6 +128,7 @@
 				AF7778F309B6604600EA3033 /* PBXTargetDependency */,
 				AF7778F109B6604600EA3033 /* PBXTargetDependency */,
 				AF7778EF09B6604600EA3033 /* PBXTargetDependency */,
+				AF5ECEC92116B31F00069433 /* PBXTargetDependency */,
 				AF7778ED09B6604600EA3033 /* PBXTargetDependency */,
 				AFA33B8F0B0585A4002B0E7D /* PBXTargetDependency */,
 				AFA33BCF0B0587B2002B0E7D /* PBXTargetDependency */,
@@ -1594,6 +1597,7 @@
 		AF3EC991203517AE00180A35 /* peepers.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF3EC98F203517AD00180A35 /* peepers.xml */; };
 		AF3EC993203517CC00180A35 /* peepers.c in Sources */ = {isa = PBXBuildFile; fileRef = AF3EC992203517CC00180A35 /* peepers.c */; };
 		AF3EC994203517CC00180A35 /* peepers.c in Sources */ = {isa = PBXBuildFile; fileRef = AF3EC992203517CC00180A35 /* peepers.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF3FAD8F20C242DA00680000 /* analogtv.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4CFA09B5AC94006E59CF /* analogtv.c */; };
 		AF41E959201D49DB0098E253 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF41E95B201D49DB0098E253 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF41E95C201D49DB0098E253 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -1805,6 +1809,8 @@
 		AF4A3464102A5A0E00A81B2A /* surfaces.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4A3463102A5A0E00A81B2A /* surfaces.c */; };
 		AF4A6692191F7CAE00C74753 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF4A8CA010B609B50074B062 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
+		AF4C300E208569AA00BE1DEF /* dymaxionmap-coords.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4C300D208569A900BE1DEF /* dymaxionmap-coords.c */; };
+		AF4C300F208569AA00BE1DEF /* dymaxionmap-coords.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4C300D208569A900BE1DEF /* dymaxionmap-coords.c */; };
 		AF4FD6EC0CE7A486005EE58E /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF4FD7010CE7A577005EE58E /* lockward.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4FD7000CE7A577005EE58E /* lockward.c */; };
 		AF4FD7030CE7A5BC005EE58E /* lockward.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF4FD7020CE7A5BC005EE58E /* lockward.xml */; };
@@ -1827,6 +1833,19 @@
 		AF5C9B121A0CCF4E00B0147A /* cityflow.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF5C9B0F1A0CCF4E00B0147A /* cityflow.xml */; };
 		AF5C9B131A0CCF4E00B0147A /* cityflow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5C9B101A0CCF4E00B0147A /* cityflow.c */; };
 		AF5C9B141A0CCF4E00B0147A /* cityflow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5C9B101A0CCF4E00B0147A /* cityflow.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF5ECEB02116B1A400069433 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF5ECEB12116B1A400069433 /* analogtv.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4CFA09B5AC94006E59CF /* analogtv.c */; };
+		AF5ECEB42116B1A400069433 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF5ECEB52116B1A400069433 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF5ECEB62116B1A400069433 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF5ECEB72116B1A400069433 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF5ECEB82116B1A400069433 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF5ECEB92116B1A400069433 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF5ECEBA2116B1A400069433 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF5ECEC32116B2CC00069433 /* vfeedback.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5ECEC22116B2CC00069433 /* vfeedback.c */; };
+		AF5ECEC42116B2CC00069433 /* vfeedback.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5ECEC22116B2CC00069433 /* vfeedback.c */; };
+		AF5ECEC62116B2FE00069433 /* vfeedback.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF5ECEC52116B2FE00069433 /* vfeedback.xml */; };
+		AF5ECEC72116B2FE00069433 /* vfeedback.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF5ECEC52116B2FE00069433 /* vfeedback.xml */; };
 		AF6048FB157C07C600CA21E4 /* jwzgles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6048F8157C07C600CA21E4 /* jwzgles.c */; };
 		AF6048FC157C07C600CA21E4 /* jwzgles.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048F9157C07C600CA21E4 /* jwzgles.h */; };
 		AF6048FD157C07C600CA21E4 /* jwzglesI.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048FA157C07C600CA21E4 /* jwzglesI.h */; };
@@ -2742,6 +2761,7 @@
 		AF939AD320351BFD0032DD23 /* font-retry.c in Sources */ = {isa = PBXBuildFile; fileRef = AF939AD220351BFC0032DD23 /* font-retry.c */; };
 		AF939AD52038C0050032DD23 /* luximr.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AF939AD42038C0040032DD23 /* luximr.ttf */; };
 		AF939AD72038C5F00032DD23 /* luximr.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AF939AD42038C0040032DD23 /* luximr.ttf */; };
+		AF95C30420999B3E001924BE /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF975734099C317000B05160 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF97573F099C31BB00B05160 /* imsmap.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258CA0988A468000655EE /* imsmap.xml */; };
 		AF975741099C31DD00B05160 /* imsmap.c in Sources */ = {isa = PBXBuildFile; fileRef = AF975740099C31DD00B05160 /* imsmap.c */; };
@@ -3077,6 +3097,16 @@
 		AFA5638F0993980D00F3E977 /* timetunnel.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA5638E0993980D00F3E977 /* timetunnel.c */; };
 		AFA563B8099398F700F3E977 /* juggler3d.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258D10988A468000655EE /* juggler3d.xml */; };
 		AFA563BA0993991300F3E977 /* juggler3d.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA563B90993991300F3E977 /* juggler3d.c */; };
+		AFA6AAF720999950006D2685 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFA6AAF920999950006D2685 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFA6AAFA20999950006D2685 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFA6AAFB20999950006D2685 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFA6AAFC20999950006D2685 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFA6AAFD20999950006D2685 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFA6AAFE20999950006D2685 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AFA6AAFF20999950006D2685 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFA6AB0D20999A60006D2685 /* glitchpeg.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFA6AB0C20999A60006D2685 /* glitchpeg.xml */; };
+		AFA6AB0F20999A7B006D2685 /* glitchpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA6AB0E20999A7B006D2685 /* glitchpeg.c */; };
 		AFAA6B451773F07800DE720C /* ios-function-table.m in Sources */ = {isa = PBXBuildFile; fileRef = AFAA6B441773F07700DE720C /* ios-function-table.m */; };
 		AFAAE38E207D6343007A515C /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFAAE390207D6343007A515C /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -3303,6 +3333,19 @@
 		AFD573630997411200BA26F7 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFD573700997418D00BA26F7 /* strange.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2591D0988A469000655EE /* strange.xml */; };
 		AFD57372099741A200BA26F7 /* strange.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD57371099741A200BA26F7 /* strange.c */; };
+		AFD77E6220C23F8600A3638D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFD77E6420C23F8600A3638D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFD77E6520C23F8600A3638D /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFD77E6620C23F8600A3638D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFD77E6720C23F8600A3638D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFD77E6820C23F8600A3638D /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFD77E6920C23F8600A3638D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AFD77E6A20C23F8600A3638D /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFD77E7320C2418000A3638D /* filmleader.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD77E7220C2417F00A3638D /* filmleader.c */; };
+		AFD77E7420C2418000A3638D /* filmleader.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD77E7220C2417F00A3638D /* filmleader.c */; };
+		AFD77E7520C2418000A3638D /* filmleader.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD77E7220C2417F00A3638D /* filmleader.c */; };
+		AFD77E7720C2419600A3638D /* filmleader.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFD77E7620C2419600A3638D /* filmleader.xml */; };
+		AFD77E7820C2419600A3638D /* filmleader.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFD77E7620C2419600A3638D /* filmleader.xml */; };
 		AFD9D5BE201E686B0070E99D /* ships.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD9D5BD201E686A0070E99D /* ships.c */; };
 		AFD9D5BF201E686B0070E99D /* ships.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD9D5BD201E686A0070E99D /* ships.c */; };
 		AFD9D5C0201E686B0070E99D /* ships.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD9D5BD201E686A0070E99D /* ships.c */; };
@@ -4548,6 +4591,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF5C9AF91A0CCE6E00B0147A;
 			remoteInfo = Cityflow;
+		};
+		AF5ECEAB2116B1A400069433 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF5ECEC82116B31F00069433 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF5ECEA92116B1A400069433;
+			remoteInfo = VFeedback;
 		};
 		AF633C031EE0BA6F00AB33BD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -6789,6 +6846,20 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AFA6AAF220999950006D2685 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFA6AB1020999A9A006D2685 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFA6AAF020999950006D2685;
+			remoteInfo = GlitchPEG;
+		};
 		AFAAE389207D6343007A515C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -7201,6 +7272,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
+		};
+		AFD77E5D20C23F8600A3638D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFD77E7920C241BE00A3638D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFD77E5B20C23F8600A3638D;
+			remoteInfo = FilmLeader;
 		};
 		AFDA6590178A52B70070D24B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -7676,6 +7761,7 @@
 		AF4A345D102A593600A81B2A /* Surfaces.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Surfaces.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF4A3461102A59EB00A81B2A /* surfaces.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = surfaces.xml; sourceTree = "<group>"; };
 		AF4A3463102A5A0E00A81B2A /* surfaces.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = surfaces.c; path = hacks/glx/surfaces.c; sourceTree = "<group>"; };
+		AF4C300D208569A900BE1DEF /* dymaxionmap-coords.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "dymaxionmap-coords.c"; path = "hacks/glx/dymaxionmap-coords.c"; sourceTree = "<group>"; };
 		AF4FD6FA0CE7A486005EE58E /* Lockward.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Lockward.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF4FD7000CE7A577005EE58E /* lockward.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lockward.c; path = hacks/glx/lockward.c; sourceTree = "<group>"; };
 		AF4FD7020CE7A5BC005EE58E /* lockward.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = lockward.xml; sourceTree = "<group>"; };
@@ -7689,6 +7775,9 @@
 		AF5C9B0D1A0CCE6E00B0147A /* Cityflow.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Cityflow.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF5C9B0F1A0CCF4E00B0147A /* cityflow.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = cityflow.xml; sourceTree = "<group>"; };
 		AF5C9B101A0CCF4E00B0147A /* cityflow.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cityflow.c; path = hacks/glx/cityflow.c; sourceTree = "<group>"; };
+		AF5ECEC02116B1A400069433 /* VFeedback.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VFeedback.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF5ECEC22116B2CC00069433 /* vfeedback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vfeedback.c; path = hacks/vfeedback.c; sourceTree = "<group>"; };
+		AF5ECEC52116B2FE00069433 /* vfeedback.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vfeedback.xml; sourceTree = "<group>"; };
 		AF6048F8157C07C600CA21E4 /* jwzgles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jwzgles.c; path = ../jwxyz/jwzgles.c; sourceTree = "<group>"; };
 		AF6048F9157C07C600CA21E4 /* jwzgles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzgles.h; path = ../jwxyz/jwzgles.h; sourceTree = "<group>"; };
 		AF6048FA157C07C600CA21E4 /* jwzglesI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzglesI.h; path = ../jwxyz/jwzglesI.h; sourceTree = "<group>"; };
@@ -8044,6 +8133,9 @@
 		AFA5638E0993980D00F3E977 /* timetunnel.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = timetunnel.c; path = hacks/glx/timetunnel.c; sourceTree = "<group>"; };
 		AFA563B6099398BB00F3E977 /* Juggler3D.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Juggler3D.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFA563B90993991300F3E977 /* juggler3d.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = juggler3d.c; path = hacks/glx/juggler3d.c; sourceTree = "<group>"; };
+		AFA6AB0520999950006D2685 /* GlitchPEG.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GlitchPEG.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFA6AB0C20999A60006D2685 /* glitchpeg.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = glitchpeg.xml; sourceTree = "<group>"; };
+		AFA6AB0E20999A7B006D2685 /* glitchpeg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glitchpeg.c; path = hacks/glitchpeg.c; sourceTree = "<group>"; };
 		AFAA6B441773F07700DE720C /* ios-function-table.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ios-function-table.m"; sourceTree = "<group>"; };
 		AFAAE39C207D6343007A515C /* Maze3D.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Maze3D.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFAAE39E207D6420007A515C /* maze3d.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = maze3d.c; path = hacks/glx/maze3d.c; sourceTree = "<group>"; };
@@ -8366,6 +8458,9 @@
 		AFD5730C099702C800BA26F7 /* julia.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = julia.c; path = hacks/julia.c; sourceTree = "<group>"; };
 		AFD5736D0997411200BA26F7 /* Strange.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Strange.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFD57371099741A200BA26F7 /* strange.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = strange.c; path = hacks/strange.c; sourceTree = "<group>"; };
+		AFD77E7020C23F8600A3638D /* FilmLeader.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FilmLeader.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFD77E7220C2417F00A3638D /* filmleader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = filmleader.c; path = hacks/filmleader.c; sourceTree = "<group>"; };
+		AFD77E7620C2419600A3638D /* filmleader.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = filmleader.xml; sourceTree = "<group>"; };
 		AFD9D5BD201E686A0070E99D /* ships.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ships.c; path = hacks/glx/ships.c; sourceTree = "<group>"; };
 		AFDA11211934424D003D397F /* aligned_malloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = aligned_malloc.c; path = utils/aligned_malloc.c; sourceTree = "<group>"; };
 		AFDA11221934424D003D397F /* aligned_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aligned_malloc.h; path = utils/aligned_malloc.h; sourceTree = "<group>"; };
@@ -9526,6 +9621,20 @@
 				AF5C9B061A0CCE6E00B0147A /* Carbon.framework in Frameworks */,
 				CEE0BCE71A6B144800C098BF /* OpenGL.framework in Frameworks */,
 				AF5C9B071A0CCE6E00B0147A /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5ECEB32116B1A400069433 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF5ECEB42116B1A400069433 /* libjwxyz.a in Frameworks */,
+				AF5ECEB52116B1A400069433 /* ScreenSaver.framework in Frameworks */,
+				AF5ECEB62116B1A400069433 /* QuartzCore.framework in Frameworks */,
+				AF5ECEB72116B1A400069433 /* Cocoa.framework in Frameworks */,
+				AF5ECEB82116B1A400069433 /* Carbon.framework in Frameworks */,
+				AF5ECEB92116B1A400069433 /* OpenGL.framework in Frameworks */,
+				AF5ECEBA2116B1A400069433 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11293,6 +11402,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA6AAF820999950006D2685 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA6AAF920999950006D2685 /* libjwxyz.a in Frameworks */,
+				AFA6AAFA20999950006D2685 /* ScreenSaver.framework in Frameworks */,
+				AFA6AAFB20999950006D2685 /* QuartzCore.framework in Frameworks */,
+				AFA6AAFC20999950006D2685 /* Cocoa.framework in Frameworks */,
+				AFA6AAFD20999950006D2685 /* Carbon.framework in Frameworks */,
+				AFA6AAFE20999950006D2685 /* OpenGL.framework in Frameworks */,
+				AFA6AAFF20999950006D2685 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFAAE38F207D6343007A515C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -11879,6 +12002,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFD77E6320C23F8600A3638D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFD77E6420C23F8600A3638D /* libjwxyz.a in Frameworks */,
+				AFD77E6520C23F8600A3638D /* ScreenSaver.framework in Frameworks */,
+				AFD77E6620C23F8600A3638D /* QuartzCore.framework in Frameworks */,
+				AFD77E6720C23F8600A3638D /* Cocoa.framework in Frameworks */,
+				AFD77E6820C23F8600A3638D /* Carbon.framework in Frameworks */,
+				AFD77E6920C23F8600A3638D /* OpenGL.framework in Frameworks */,
+				AFD77E6A20C23F8600A3638D /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFDA6596178A52B70070D24B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -12389,6 +12526,9 @@
 				AF3EC98D2035154C00180A35 /* Peepers.saver */,
 				AFC5CFEB2044AA23004CEB5E /* Crumbler.saver */,
 				AFAAE39C207D6343007A515C /* Maze3D.saver */,
+				AFA6AB0520999950006D2685 /* GlitchPEG.saver */,
+				AFD77E7020C23F8600A3638D /* FilmLeader.saver */,
+				AF5ECEC02116B1A400069433 /* VFeedback.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -12536,6 +12676,7 @@
 				AF9D490709B536F7006E59CF /* distort.c */,
 				AF477605099DA097001F091E /* epicycle.c */,
 				AF975A83099C6B4900B05160 /* eruption.c */,
+				AFD77E7220C2417F00A3638D /* filmleader.c */,
 				AF975AEE099C6F1700B05160 /* fireworkx.c */,
 				AF477496099D8A53001F091E /* flame.c */,
 				AF4777A4099DBB11001F091E /* fluidballs.c */,
@@ -12544,6 +12685,7 @@
 				AFBF893D0E41D930006A2D66 /* fps.h */,
 				AFBF89B10E424036006A2D66 /* fpsI.h */,
 				AF4773B4099D6778001F091E /* fuzzyflakes.c */,
+				AFA6AB0E20999A7B006D2685 /* glitchpeg.c */,
 				AF64268E09A19542000F4CD4 /* goop.c */,
 				AF480C21098E28EF00FB32B8 /* greynetic.c */,
 				AF477266099D5768001F091E /* halftone.c */,
@@ -12602,6 +12744,7 @@
 				AF476FF0099D1713001F091E /* truchet.c */,
 				AF9D497F09B541E5006E59CF /* twang.c */,
 				AF477704099DAF3F001F091E /* vermiculate.c */,
+				AF5ECEC22116B2CC00069433 /* vfeedback.c */,
 				AF477192099D4864001F091E /* wander.c */,
 				AFA33C0A0B058E6B002B0E7D /* webcollage */,
 				AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */,
@@ -12727,6 +12870,7 @@
 				AF241F81107C38DF00046A84 /* dropshadow.c */,
 				AF241F82107C38DF00046A84 /* dropshadow.h */,
 				AFEC23E41CB6EBC400DE138F /* dymaxionmap.c */,
+				AF4C300D208569A900BE1DEF /* dymaxionmap-coords.c */,
 				AF7778C109B65C6A00EA3033 /* e_textures.h */,
 				AFA55E2509935F2B00F3E977 /* endgame.c */,
 				AFACE88A1CC83578008B24CD /* energystream.c */,
@@ -12958,6 +13102,7 @@
 				AFC258A00988A468000655EE /* extrusion.xml */,
 				AFC258A10988A468000655EE /* fadeplot.xml */,
 				AFC258A20988A468000655EE /* fiberlamp.xml */,
+				AFD77E7620C2419600A3638D /* filmleader.xml */,
 				AFC258A40988A468000655EE /* fireworkx.xml */,
 				AFC258A50988A468000655EE /* flag.xml */,
 				AFC258A60988A468000655EE /* flame.xml */,
@@ -12981,6 +13126,7 @@
 				AFC258B50988A468000655EE /* gleidescope.xml */,
 				AFC258B60988A468000655EE /* glforestfire.xml */,
 				AFC258B70988A468000655EE /* glhanoi.xml */,
+				AFA6AB0C20999A60006D2685 /* glitchpeg.xml */,
 				AFC258B80988A468000655EE /* glknots.xml */,
 				AFC258B90988A468000655EE /* glmatrix.xml */,
 				AFC258BA0988A468000655EE /* glplanet.xml */,
@@ -13123,6 +13269,7 @@
 				AFC2592A0988A469000655EE /* vines.xml */,
 				AF46E9E61CBBA3F900240FBC /* unicrud.xml */,
 				AFDA65A3178A541A0070D24B /* unknownpleasures.xml */,
+				AF5ECEC52116B2FE00069433 /* vfeedback.xml */,
 				AF633C181EE0BC4900AB33BD /* vigilance.xml */,
 				AF0DCA610C4CBB8E00D76972 /* voronoi.xml */,
 				AFC2592B0988A469000655EE /* wander.xml */,
@@ -14848,6 +14995,26 @@
 			name = Cityflow;
 			productName = DangerBall;
 			productReference = AF5C9B0D1A0CCE6E00B0147A /* Cityflow.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF5ECEA92116B1A400069433 /* VFeedback */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF5ECEBD2116B1A400069433 /* Build configuration list for PBXNativeTarget "VFeedback" */;
+			buildPhases = (
+				AF5ECEAC2116B1A400069433 /* Resources */,
+				AF5ECEAF2116B1A400069433 /* Sources */,
+				AF5ECEB32116B1A400069433 /* Frameworks */,
+				AF5ECEBB2116B1A400069433 /* Rez */,
+				AF5ECEBC2116B1A400069433 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF5ECEAA2116B1A400069433 /* PBXTargetDependency */,
+			);
+			name = VFeedback;
+			productName = XAnalogTV;
+			productReference = AF5ECEC02116B1A400069433 /* VFeedback.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF633C011EE0BA6F00AB33BD /* Vigilance */ = {
@@ -17375,6 +17542,26 @@
 			productReference = AFA563B6099398BB00F3E977 /* Juggler3D.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AFA6AAF020999950006D2685 /* GlitchPEG */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFA6AB0220999950006D2685 /* Build configuration list for PBXNativeTarget "GlitchPEG" */;
+			buildPhases = (
+				AFA6AAF320999950006D2685 /* Resources */,
+				AFA6AAF520999950006D2685 /* Sources */,
+				AFA6AAF820999950006D2685 /* Frameworks */,
+				AFA6AB0020999950006D2685 /* Rez */,
+				AFA6AB0120999950006D2685 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFA6AAF120999950006D2685 /* PBXTargetDependency */,
+			);
+			name = GlitchPEG;
+			productName = Attraction;
+			productReference = AFA6AB0520999950006D2685 /* GlitchPEG.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AFAAE387207D6343007A515C /* Maze3D */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFAAE399207D6343007A515C /* Build configuration list for PBXNativeTarget "Maze3D" */;
@@ -18217,6 +18404,26 @@
 			productReference = AFD5736D0997411200BA26F7 /* Strange.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AFD77E5B20C23F8600A3638D /* FilmLeader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFD77E6D20C23F8600A3638D /* Build configuration list for PBXNativeTarget "FilmLeader" */;
+			buildPhases = (
+				AFD77E5E20C23F8600A3638D /* Resources */,
+				AFD77E6020C23F8600A3638D /* Sources */,
+				AFD77E6320C23F8600A3638D /* Frameworks */,
+				AFD77E6B20C23F8600A3638D /* Rez */,
+				AFD77E6C20C23F8600A3638D /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFD77E5C20C23F8600A3638D /* PBXTargetDependency */,
+			);
+			name = FilmLeader;
+			productName = Attraction;
+			productReference = AFD77E7020C23F8600A3638D /* FilmLeader.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AFDA658E178A52B70070D24B /* Unknown Pleasures */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFDA659E178A52B70070D24B /* Build configuration list for PBXNativeTarget "Unknown Pleasures" */;
@@ -18524,7 +18731,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0930;
+				LastUpgradeCheck = 0940;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -18773,6 +18980,9 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF5C9AF91A0CCE6E00B0147A = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AF5ECEA92116B1A400069433 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF633C011EE0BA6F00AB33BD = {
@@ -19159,6 +19369,9 @@
 					AFA563A4099398BB00F3E977 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
+					AFA6AAF020999950006D2685 = {
+						DevelopmentTeam = 4627ATJELP;
+					};
 					AFAAE387207D6343007A515C = {
 						DevelopmentTeam = 4627ATJELP;
 					};
@@ -19293,6 +19506,9 @@
 					AFD5735D0997411200BA26F7 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
+					AFD77E5B20C23F8600A3638D = {
+						DevelopmentTeam = 4627ATJELP;
+					};
 					AFDA658E178A52B70070D24B = {
 						DevelopmentTeam = 4627ATJELP;
 					};
@@ -19387,11 +19603,13 @@
 				AF9D48F409B535DA006E59CF /* Distort */,
 				AF4775F2099DA030001F091E /* Epicycle */,
 				AF975A6C099C6AB200B05160 /* Eruption */,
+				AFD77E5B20C23F8600A3638D /* FilmLeader */,
 				AF975AD7099C6EB100B05160 /* Fireworkx */,
 				AF477483099D89E4001F091E /* Flame */,
 				AF477790099DBA90001F091E /* FluidBalls */,
 				AF77787F09B6563500EA3033 /* FontGlide */,
 				AF47739A099D6648001F091E /* FuzzyFlakes */,
+				AFA6AAF020999950006D2685 /* GlitchPEG */,
 				AF64267B09A194B0000F4CD4 /* Goop */,
 				AF975C3D099C8DCF00B05160 /* Greynetic */,
 				AF477253099D5717001F091E /* Halftone */,
@@ -19444,6 +19662,7 @@
 				AF476FDA099D1686001F091E /* Truchet */,
 				AF9D496C09B5411D006E59CF /* Twang */,
 				AF4776F1099DAE7A001F091E /* Vermiculate */,
+				AF5ECEA92116B1A400069433 /* VFeedback */,
 				AF47717F099D4803001F091E /* Wander */,
 				AFA3392E0B058505002B0E7D /* WebCollage */,
 				AFA33C020B058E17002B0E7D /* webcollage-perl */,
@@ -20250,6 +20469,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF5ECEAC2116B1A400069433 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF5ECEC62116B2FE00069433 /* vfeedback.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF633C041EE0BA6F00AB33BD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -20640,6 +20867,7 @@
 				AF21078A1FD23D2800B61EA9 /* esper.xml in Resources */,
 				AF918AEE158FC53D002B5D1E /* euler2d.xml in Resources */,
 				AF918AF0158FC53D002B5D1E /* fadeplot.xml in Resources */,
+				AFD77E7820C2419600A3638D /* filmleader.xml in Resources */,
 				AF918AF1158FC53D002B5D1E /* fiberlamp.xml in Resources */,
 				AF918AF2158FC53D002B5D1E /* fireworkx.xml in Resources */,
 				AF918AF4158FC53D002B5D1E /* flame.xml in Resources */,
@@ -20783,6 +21011,7 @@
 				AF46E9EA1CBBA42F00240FBC /* unicrud.xml in Resources */,
 				AFDA65A6178A541A0070D24B /* unknownpleasures.xml in Resources */,
 				AF918B80158FC53E002B5D1E /* vermiculate.xml in Resources */,
+				AF5ECEC72116B2FE00069433 /* vfeedback.xml in Resources */,
 				AF633C1A1EE0BC5500AB33BD /* vigilance.xml in Resources */,
 				AF918B83158FC53E002B5D1E /* voronoi.xml in Resources */,
 				AF918B84158FC53E002B5D1E /* wander.xml in Resources */,
@@ -21527,6 +21756,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA6AAF320999950006D2685 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF95C30420999B3E001924BE /* xscreensaver-getimage-file in Resources */,
+				AFA6AB0D20999A60006D2685 /* glitchpeg.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFAAE38A207D6343007A515C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -21867,6 +22105,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFD573700997418D00BA26F7 /* strange.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFD77E5E20C23F8600A3638D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFD77E7720C2419600A3638D /* filmleader.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22512,6 +22758,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF5C9B081A0CCE6E00B0147A /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5ECEBB2116B1A400069433 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -23351,6 +23604,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA6AB0020999950006D2685 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFAAE397207D6343007A515C /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -23625,6 +23885,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AFD573690997411200BA26F7 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFD77E6B20C23F8600A3638D /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -24070,6 +24337,21 @@
 			showEnvVarsInLog = 0;
 		};
 		AF5C9B091A0CCE6E00B0147A /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF5ECEBC2116B1A400069433 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -27213,6 +27495,21 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AFA6AB0120999950006D2685 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AFAAE398207D6343007A515C /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -27482,6 +27779,21 @@
 			showEnvVarsInLog = 0;
 		};
 		AFD51B2C0F063B4A00471C02 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AFD77E6C20C23F8600A3638D /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -28346,6 +28658,7 @@
 				AF4808C6098C3BDF00FB32B8 /* erase.c in Sources */,
 				AF4808C7098C3BE600FB32B8 /* hsv.c in Sources */,
 				AFBF893E0E41D930006A2D66 /* fps.c in Sources */,
+				AFD77E7320C2418000A3638D /* filmleader.c in Sources */,
 				AFBF89AF0E423FC3006A2D66 /* fps-gl.c in Sources */,
 				5501D1961DBDCC3D00624BE9 /* xshm.c in Sources */,
 				AF4808C8098C3BE800FB32B8 /* InvertedSlider.m in Sources */,
@@ -28490,6 +28803,16 @@
 			files = (
 				AF5C9B131A0CCF4E00B0147A /* cityflow.c in Sources */,
 				AF5C9B001A0CCE6E00B0147A /* XScreenSaverSubclass.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5ECEAF2116B1A400069433 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF5ECEB02116B1A400069433 /* XScreenSaverSubclass.m in Sources */,
+				AF5ECEC32116B2CC00069433 /* vfeedback.c in Sources */,
+				AF5ECEB12116B1A400069433 /* analogtv.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -28885,6 +29208,7 @@
 				AF918A06158FC38A002B5D1E /* euler2d.c in Sources */,
 				AF918A07158FC38A002B5D1E /* fadeplot.c in Sources */,
 				AF918A08158FC38A002B5D1E /* fiberlamp.c in Sources */,
+				AFD77E7520C2418000A3638D /* filmleader.c in Sources */,
 				AF9189B5158FC311002B5D1E /* fireworkx.c in Sources */,
 				AF9189B6158FC334002B5D1E /* flame.c in Sources */,
 				AF918A0A158FC38A002B5D1E /* flow.c in Sources */,
@@ -28924,6 +29248,7 @@
 				AF918A19158FC38A002B5D1E /* pacman_ai.c in Sources */,
 				AF918A1A158FC38A002B5D1E /* pacman_level.c in Sources */,
 				AF9189D4158FC334002B5D1E /* pedal.c in Sources */,
+				AF4C300F208569AA00BE1DEF /* dymaxionmap-coords.c in Sources */,
 				AF9189D5158FC334002B5D1E /* penetrate.c in Sources */,
 				AF9189D6158FC334002B5D1E /* petri.c in Sources */,
 				AF9189D7158FC334002B5D1E /* phosphor.c in Sources */,
@@ -28958,6 +29283,7 @@
 				AF9189EF158FC35D002B5D1E /* truchet.c in Sources */,
 				AF9189F0158FC35D002B5D1E /* twang.c in Sources */,
 				AF9189F1158FC35D002B5D1E /* vermiculate.c in Sources */,
+				AF5ECEC42116B2CC00069433 /* vfeedback.c in Sources */,
 				AF9189F2158FC35D002B5D1E /* wander.c in Sources */,
 				AF9189F3158FC35E002B5D1E /* whirlwindwarp.c in Sources */,
 				AF9189F5158FC35E002B5D1E /* wormhole.c in Sources */,
@@ -29993,6 +30319,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA6AAF520999950006D2685 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA6AAF720999950006D2685 /* XScreenSaverSubclass.m in Sources */,
+				AFA6AB0F20999A7B006D2685 /* glitchpeg.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFAAE38C207D6343007A515C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -30376,6 +30711,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFD77E6020C23F8600A3638D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF3FAD8F20C242DA00680000 /* analogtv.c in Sources */,
+				AFD77E7420C2418000A3638D /* filmleader.c in Sources */,
+				AFD77E6220C23F8600A3638D /* XScreenSaverSubclass.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFDA6593178A52B70070D24B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -30430,6 +30775,7 @@
 			files = (
 				AFEC23E61CB6EC0400DE138F /* dymaxionmap.c in Sources */,
 				AFEC23D41CB6EAE100DE138F /* XScreenSaverSubclass.m in Sources */,
+				AF4C300E208569AA00BE1DEF /* dymaxionmap-coords.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -31131,6 +31477,16 @@
 			isa = PBXTargetDependency;
 			target = AF5C9AF91A0CCE6E00B0147A /* Cityflow */;
 			targetProxy = AF5C9B151A0CCF8000B0147A /* PBXContainerItemProxy */;
+		};
+		AF5ECEAA2116B1A400069433 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF5ECEAB2116B1A400069433 /* PBXContainerItemProxy */;
+		};
+		AF5ECEC92116B31F00069433 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF5ECEA92116B1A400069433 /* VFeedback */;
+			targetProxy = AF5ECEC82116B31F00069433 /* PBXContainerItemProxy */;
 		};
 		AF633C021EE0BA6F00AB33BD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -32732,6 +33088,16 @@
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AFA563A6099398BB00F3E977 /* PBXContainerItemProxy */;
 		};
+		AFA6AAF120999950006D2685 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFA6AAF220999950006D2685 /* PBXContainerItemProxy */;
+		};
+		AFA6AB1120999A9A006D2685 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFA6AAF020999950006D2685 /* GlitchPEG */;
+			targetProxy = AFA6AB1020999A9A006D2685 /* PBXContainerItemProxy */;
+		};
 		AFAAE388207D6343007A515C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -33026,6 +33392,16 @@
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AFD5735F0997411200BA26F7 /* PBXContainerItemProxy */;
+		};
+		AFD77E5C20C23F8600A3638D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFD77E5D20C23F8600A3638D /* PBXContainerItemProxy */;
+		};
+		AFD77E7A20C241BE00A3638D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFD77E5B20C23F8600A3638D /* FilmLeader */;
+			targetProxy = AFD77E7920C241BE00A3638D /* PBXContainerItemProxy */;
 		};
 		AFDA658F178A52B70070D24B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -34422,6 +34798,20 @@
 					"USE_GL=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
+			};
+			name = Release;
+		};
+		AF5ECEBE2116B1A400069433 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF5ECEBF2116B1A400069433 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -36725,6 +37115,20 @@
 			};
 			name = Release;
 		};
+		AFA6AB0320999950006D2685 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFA6AB0420999950006D2685 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		AFAAE39A207D6343007A515C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -37332,6 +37736,20 @@
 		AFD5736C0997411200BA26F7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		AFD77E6E20C23F8600A3638D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFD77E6F20C23F8600A3638D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -38579,6 +38997,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AF5ECEBD2116B1A400069433 /* Build configuration list for PBXNativeTarget "VFeedback" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF5ECEBE2116B1A400069433 /* Debug */,
+				AF5ECEBF2116B1A400069433 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AF633C131EE0BA6F00AB33BD /* Build configuration list for PBXNativeTarget "Vigilance" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -39731,6 +40158,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AFA6AB0220999950006D2685 /* Build configuration list for PBXNativeTarget "GlitchPEG" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFA6AB0320999950006D2685 /* Debug */,
+				AFA6AB0420999950006D2685 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AFAAE399207D6343007A515C /* Build configuration list for PBXNativeTarget "Maze3D" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -40114,6 +40550,15 @@
 			buildConfigurations = (
 				AFD5736B0997411200BA26F7 /* Debug */,
 				AFD5736C0997411200BA26F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFD77E6D20C23F8600A3638D /* Build configuration list for PBXNativeTarget "FilmLeader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFD77E6E20C23F8600A3638D /* Debug */,
+				AFD77E6F20C23F8600A3638D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

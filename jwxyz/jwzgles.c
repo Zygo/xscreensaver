@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -3081,6 +3081,25 @@ jwzgles_glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat,
   glCopyTexImage2D (target, level, internalformat, x, y, width, height,
                     border);  /* the real one */
   CHECK("glCopyTexImage2D");
+}
+
+
+void
+jwzgles_glCopyTexSubImage2D (GLenum target, GLint level, 
+                             GLint xoff, GLint yoff, 
+                             GLint x, GLint y, 
+                             GLsizei width, GLsizei height)
+{
+  Assert (!state->compiling_verts, 
+          "glCopyTexSubImage2D not allowed inside glBegin");
+  Assert (!state->compiling_list,    /* technically legal, but stupid! */
+          "glCopyTexSubImage2D not allowed inside glNewList");
+  if (! state->replaying_list)
+    LOG9 ("direct %-12s %s %d %d %d %d %d %d %d", "glCopyTexSubImage2D", 
+          mode_desc(target), level, xoff, yoff, x, y, width, height);
+  glCopyTexSubImage2D (target, level,   /* the real one */
+                       xoff, yoff, x, y, width, height);
+  CHECK("glCopyTexSubImage2D");
 }
 
 

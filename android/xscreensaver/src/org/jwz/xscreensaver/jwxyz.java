@@ -57,6 +57,11 @@ import android.media.ExifInterface;
 import org.jwz.xscreensaver.TTFAnalyzer;
 import android.util.Log;
 import android.view.Surface;
+import android.Manifest;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.os.Build;
+import android.content.pm.PackageManager;
 
 public class jwxyz
   implements GestureDetector.OnGestureListener,
@@ -99,6 +104,8 @@ public class jwxyz
   public final static int FONT_FAMILY = 0;
   public final static int FONT_FACE   = 1;
   public final static int FONT_RANDOM = 2;
+
+  public final static int MY_REQ_READ_EXTERNAL_STORAGE = 271828;
 
   private long nativeRunningHackPtr;
 
@@ -626,6 +633,38 @@ public class jwxyz
     }
   }
 
+
+  boolean havePermission(String permission) {
+
+        if (Build.VERSION.SDK_INT < 16) {
+            return true;
+        }
+
+        if (permissionGranted(permission)) {
+            return true;
+        }
+
+        return false;
+  }
+
+
+  private boolean permissionGranted(String permission) {
+        boolean check = ContextCompat.checkSelfPermission(app, permission) ==
+                PackageManager.PERMISSION_GRANTED;
+        return check;
+  }
+
+  public Object[] checkThenLoadRandomImage (int target_width, int target_height,
+                                   boolean rotate_p) {
+      // RES introduced in API 16
+      String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+
+        if (havePermission(permission)) {
+            return loadRandomImage(target_width,target_height,rotate_p);
+        } else {
+            return null;
+        }
+  }
 
   public Object[] loadRandomImage (int target_width, int target_height,
                                    boolean rotate_p) {

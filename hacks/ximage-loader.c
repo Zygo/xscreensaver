@@ -105,7 +105,8 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
       pb = gdk_pixbuf_new_from_file (filename);
       if (!pb)
         {
-          fprintf (stderr, "%s: GDK unable to load %s\n", progname, filename);
+          fprintf (stderr, "%s: GDK unable to load %s: %s\n",
+                   progname, filename, (gerr ? gerr->message : "?"));
           return 0;
         }
 # endif /* HAVE_GTK2 */
@@ -116,11 +117,14 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
       GInputStream *s =
         g_memory_input_stream_new_from_data (image_data, data_size, 0);
       pb = gdk_pixbuf_new_from_stream (s, 0, &gerr);
-      /* #### free s? */
+
+      g_input_stream_close (s, NULL, NULL);
+      g_object_unref (s);
+
       if (! pb)
         {
-          fprintf (stderr, "%s: GDK unable to parse built-in image data\n",
-                   progname);
+          /* fprintf (stderr, "%s: GDK unable to parse image data: %s\n",
+                   progname, (gerr ? gerr->message : "?")); */
           return 0;
         }
 # else /* !HAVE_GTK2 */
@@ -622,6 +626,7 @@ flip_ximage (XImage *ximage)
   char *data2, *in, *out;
   int y;
 
+  if (!ximage) return;
   data2 = malloc (ximage->bytes_per_line * ximage->height);
   if (!data2) abort();
   in = ximage->data;
@@ -657,6 +662,11 @@ file_to_pixmap (Display *dpy, Window window, const char *filename,
 }
 
 
+/* This XImage has RGBA data, which is what OpenGL code typically expects.
+   Also it is upside down: the origin is at the bottom left of the image.
+   X11 typically expects 0RGB as it has no notion of alpha, only 1-bit masks.
+   With X11 code, you should probably use the _pixmap routines instead.
+ */
 XImage *
 image_data_to_ximage (Display *dpy, Visual *visual,
                       const unsigned char *image_data,
@@ -667,10 +677,6 @@ image_data_to_ximage (Display *dpy, Visual *visual,
   return ximage;
 }
 
-/* This XImage has RGBA data, which is what OpenGL code typically expects.
-   X11 typically expects 0RGB as it has no notion of alpha, only 1-bit masks.
-   With X11 code, you should probably use the _pixmap routines instead.
- */
 XImage *
 file_to_ximage (Display *dpy, Visual *visual, const char *filename)
 {

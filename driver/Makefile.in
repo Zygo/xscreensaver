@@ -157,7 +157,7 @@ SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
 		  $(DEMO_UTIL_SRCS)
 SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/yarandom.o \
-		  $(UTILS_BIN)/minixpm.o $(UTILS_SRC)/font-retry.o \
+		  $(UTILS_BIN)/minixpm.o $(UTILS_BIN)/font-retry.o \
 		  $(DEMO_UTIL_OBJS)
 
 GETIMG_SRCS_1	= xscreensaver-getimage.c

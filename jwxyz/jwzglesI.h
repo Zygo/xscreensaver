@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -204,6 +204,7 @@ extern void jwzgles_glViewport (GLuint, GLuint, GLuint, GLuint);
 extern void jwzgles_glTranslatef (GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glRotatef (GLfloat, GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glRotated (GLdouble, GLdouble x, GLdouble y, GLdouble z);
+extern void jwzgles_glReadBuffer (GLuint);
 extern void jwzgles_glScalef (GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glColor3f (GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glColor4f (GLfloat, GLfloat, GLfloat, GLfloat);
@@ -289,6 +290,10 @@ extern void jwzgles_glCopyTexImage2D (GLenum target, GLint level,
                                       GLint x, GLint y, 
                                       GLsizei width, GLsizei height, 
                                       GLint border);
+extern void jwzgles_glCopyTexSubImage2D (GLenum target, GLint level, 
+                                         GLint xoff, GLint yoff, 
+                                         GLint x, GLint y, 
+                                         GLsizei width, GLsizei height);
 extern void jwzgles_glInterleavedArrays (GLenum, GLsizei, const GLvoid *);
 extern void jwzgles_glTexEnvf (GLuint, GLuint, GLfloat);
 extern void jwzgles_glTexEnvi (GLuint, GLuint, GLuint);

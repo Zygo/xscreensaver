@@ -342,11 +342,16 @@ jwxyz_quartz_make_display (Window w)
   union color_bytes color;
   convert_mode_t mode =
     convert_mode_invert (convert_mode_to_rgba (d->bitmap_info));
+  unsigned long masks[4];
   for (unsigned i = 0; i != 4; ++i) {
     color.pixel = 0;
     color.bytes[i] = 0xff;
-    v->rgba_masks[i] = convert_px (color.pixel, mode);
+    masks[i] = convert_px (color.pixel, mode);
   }
+  v->red_mask   = masks[0];
+  v->green_mask = masks[1];
+  v->blue_mask  = masks[2];
+  v->alpha_mask = masks[3];
 
   CGBitmapInfo byte_order = d->bitmap_info & kCGBitmapByteOrderMask;
   Assert ( ! (d->bitmap_info & kCGBitmapFloatComponents) &&
@@ -1501,12 +1506,17 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
   NSImage *img = [[NSImage alloc] initWithData:
                                     [NSData dataWithBytes:png_data
                                             length:data_size]];
+  if (! img) return 0;
 #ifndef USE_IPHONE
   NSBitmapImageRep *bm = [NSBitmapImageRep
                            imageRepWithData:
                              [NSBitmapImageRep
                                TIFFRepresentationOfImageRepsInArray:
                                  [img representations]]];
+  if (!bm) {
+    [img release];
+    return 0;
+  }
   int width   = [img size].width;
   int height  = [img size].height;
   size_t ibpp = [bm bitsPerPixel];
@@ -1517,6 +1527,10 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
                          : 0);
 #else  // USE_IPHONE
   CGImageRef cgi = [img CGImage];
+  if (!cgi) {
+    [img release];
+    return 0;
+  }
   int width = CGImageGetWidth (cgi);
   int height = CGImageGetHeight (cgi);
   size_t ibpp = 32;

@@ -2,16 +2,22 @@
 buildscript {
     repositories {
         jcenter()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0'
+        classpath 'com.android.tools.build:gradle:3.1.2'
     }
 
-    // This allows versions of Gradle past 2.9 to be used with the Gradle
-    // Android plugin.
-    // https://discuss.gradle.org/t/gradle-thinks-2-10-is-less-than-2-2-when-resolving-plugins/13434/2
-//    System.properties['com.android.build.gradle.overrideVersionCheck'] = 'true';
 }
+
+allprojects {
+  repositories {
+    maven { url 'https://maven.google.com' }
+    jcenter()
+    google()
+  }
+}
+
 
 task clean(type: Delete) {
     delete('./build')

@@ -1533,6 +1533,7 @@ windows_ransomware (Display *dpy, Window window)
     "Dunning-Krugerrands",
     "Dunning-Krugerrands",
     "gift certificates",
+    "Creepto-Currency",
     "secret sauce",
     "Tribbles",
   };

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2011 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2018 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -47,10 +47,7 @@ get_gl_visual (Screen *screen)
 # define DB GLX_DOUBLEBUFFER
 # define ST GLX_STENCIL_SIZE
 
-# if defined(GL_SAMPLE_BUFFERS)
-#  define SB GL_SAMPLE_BUFFERS
-#  define SM GL_SAMPLES
-# elif defined(GLX_SAMPLE_BUFFERS)
+# if defined(GLX_SAMPLE_BUFFERS) /* Needs to come before GL_SAMPLE_BUFFERS */
 #  define SB GLX_SAMPLE_BUFFERS
 #  define SM GLX_SAMPLES
 # elif defined(GLX_SAMPLE_BUFFERS_ARB)
@@ -59,7 +56,11 @@ get_gl_visual (Screen *screen)
 # elif defined(GLX_SAMPLE_BUFFERS_SGIS)
 #  define SB GLX_SAMPLE_BUFFERS_SGIS
 #  define SM GLX_SAMPLES_SGIS
+# elif defined(GL_SAMPLE_BUFFERS)
+#  define SB GL_SAMPLE_BUFFERS
+#  define SM GL_SAMPLES
 # endif
+
 
   int attrs[][40] = {
 # ifdef SB				  /* rgba double stencil multisample */

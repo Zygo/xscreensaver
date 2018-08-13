@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -194,16 +194,12 @@ XftColorAllocValue (Display *dpy,
   if (!dpy || !visual || !color || !result) abort();
   if (visual->class == TrueColor)
     {
-      int red_shift, red_len;
-      int green_shift, green_len;
-      int blue_shift, blue_len;
-
-      red_shift   = maskbase (visual->rgba_masks[0]);
-      red_len     = masklen  (visual->rgba_masks[0]);
-      green_shift = maskbase (visual->rgba_masks[1]);
-      green_len   = masklen (visual->rgba_masks[1]);
-      blue_shift  = maskbase (visual->rgba_masks[2]);
-      blue_len    = masklen (visual->rgba_masks[2]);
+      int red_shift   = maskbase (visual->red_mask);
+      int red_len     = masklen  (visual->red_mask);
+      int green_shift = maskbase (visual->green_mask);
+      int green_len   = masklen (visual->green_mask);
+      int blue_shift  = maskbase (visual->blue_mask);
+      int blue_len    = masklen (visual->blue_mask);
       result->pixel = (((color->red   >> (16 - red_len))   << red_shift)   |
                        ((color->green >> (16 - green_len)) << green_shift) |
                        ((color->blue  >> (16 - blue_len))  << blue_shift));

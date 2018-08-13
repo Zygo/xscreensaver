@@ -8,15 +8,26 @@ dymaxionmap - An animation of Buckminster Fuller's unwrapped icosahedral globe.
 [\-window]
 [\-root]
 [\-delay \fInumber\fP]
+[\-speed \fIratio\fP]
 [\-no-wander]
 [\-no-roll]
 [\-no-stars]
+[\-no-grid]
+[\-flat]
+[\-satellite]
+[\-image \fIfile\fP]
+[\-image2 \fIfile\fP]
+[\-frames \fInumber\fP]
 [\-wireframe]
 [\-fps]
 .SH DESCRIPTION
 Buckminster Fuller's map of the Earth projected onto the surface of an
 unfolded icosahedron. It depicts the Earth's continents as one island, or
 nearly contiguous land masses.
+
+This screen saver animates the progression of the dusk terminator across
+the flattened globe. It includes both satellite and flat-colored map
+imagery, and can load and convert other Equirectangular-projected maps.
 .SH OPTIONS
 .TP 8
 .B \-visual \fIvisual\fP
@@ -32,14 +43,39 @@ Draw on the root window.
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
 .TP 8
+.B \-speed \fIratio\fP
+Speed of the animation. 0.5 means half as fast, 2 means twice as fast.
+.TP 8
 .B \-wander | \-no-wander
-Whether the object should wander around the screen.
+Whether the object should wander around the screen. Default yes.
 .TP 8
 .B \-roll | \-no-roll
-Whether the object should roll randomly.
+Whether the object should roll randomly. Default yes.
 .TP 8
 .B \-stars | \-no-stars
-Whether to display a star field.
+Whether to display a star field. Default yes.
+.TP 8
+.B \-grid | \-no-grid
+Whether to overlay a latitude/longitude grid over the map. Default yes.
+.TP 8
+.B \-flat
+Display a flat-colored map of the Earth. This is the default.
+.TP 8
+.B \-satellite
+Display a day-time satellite map of the Earth.
+.TP 8
+.B \-image \fIfile\fP
+An image to use for the day-time map.
+.TP 8
+.B \-image2 \fIfile\fP
+An image to use for the night-time map.
+The two images can be the same: the night-time one will be darkened.
+.TP 8
+.B \-frames \fInumber\fP
+The number of frames in the day/night animation. Default 720.
+Larger numbers are smoother, but use more memory.
+The day/night animation happens if \fIimage2\fP is set, or
+if \fIframes\fP is greater than 1.
 .TP 8
 .B \-wireframe | \-no-wireframe
 Render in wireframe instead of solid.
@@ -58,13 +94,24 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
+.BR glplanet (1)
 .SH COPYRIGHT
-Copyright \(co 2016 by Jamie Zawinski.  Permission to use, copy, modify, 
+Copyright \(co 2016-2018 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice
 appear in supporting documentation.  No representations are made about the 
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
+
+"Dymaxion Map" and "The Fuller Projection Map" are trademarks of
+The Buckminster Fuller Institute.
+
+The original Dymaxion Map image is copyright \(co 1982 by
+The Buckminster Fuller Institute. (This program does not use their
+imagery, only similar trigonometry.)
+
+The Dymaxion Map was covered by now-expired US Patent 2,393,676
+(Richard Buckminster Fuller, 1946).
 .SH AUTHOR
 Jamie Zawinski.

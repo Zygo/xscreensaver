@@ -1,4 +1,4 @@
-# Auto-generated: Thu Apr 12 13:00:50 PDT 2018
+# Auto-generated: Sun Aug 12 16:36:38 PDT 2018
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -74,6 +74,7 @@ hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml
 hacks/config/fiberlamp.xml
+hacks/config/filmleader.xml
 hacks/config/fireworkx.xml
 hacks/config/flag.xml
 hacks/config/flame.xml
@@ -97,6 +98,7 @@ hacks/config/glcells.xml
 hacks/config/gleidescope.xml
 hacks/config/glforestfire.xml
 hacks/config/glhanoi.xml
+hacks/config/glitchpeg.xml
 hacks/config/glknots.xml
 hacks/config/glmatrix.xml
 hacks/config/glplanet.xml
@@ -237,6 +239,7 @@ hacks/config/twang.xml
 hacks/config/unicrud.xml
 hacks/config/unknownpleasures.xml
 hacks/config/vermiculate.xml
+hacks/config/vfeedback.xml
 hacks/config/vidwhacker.xml
 hacks/config/vigilance.xml
 hacks/config/vines.xml

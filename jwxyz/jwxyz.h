@@ -473,8 +473,9 @@ extern int XFreePixmap (Display *, Pixmap);
 extern char *XGetAtomName (Display *, Atom);
 
 extern void set_points_list(XPoint *points, int npoints, linked_point *root);
-extern void traverse_points_list(linked_point * root);
-extern void draw_three_vertices(linked_point * a, Bool triangle);
+extern void traverse_points_list(Display *dpy, linked_point * root);
+extern void draw_three_vertices(Display *dpy, linked_point * a,
+                                Bool triangle);
 extern double compute_edge_length(linked_point * a, linked_point * b);
 extern double get_angle(double a, double b, double c);
 extern Bool is_same_slope(linked_point * a);
@@ -537,7 +538,8 @@ extern void check_gl_error (const char *type);
 // Only utils/xft.c uses this, out of necessity.
 struct jwxyz_Visual {
   int class;		/* class of screen (monochrome, etc.) */
-  unsigned long rgba_masks[4];	/* mask values */
+  unsigned long red_mask, green_mask, blue_mask;	/* same as Xlib.h */
+  unsigned long alpha_mask;				/* new */
 };
 
 struct jwxyz_XGCValues {

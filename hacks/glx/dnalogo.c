@@ -1,4 +1,4 @@
-/* DNA Logo, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.org>
+/* DNA Logo, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
  *
  *      DNA Lounge
  *
@@ -31,17 +31,17 @@
 			"*wallFacets:	    360	    \n" \
 			"*barFacets:	    90	    \n" \
 			"*clockwise:	    False   \n" \
-			"*turns:	    0.69    \n" \
-			"*turnSpacing:	    2.2     \n" \
-			"*barSpacing:	    0.24    \n" \
-			"*wallHeight:	    0.45    \n" \
+			"*turns:	    0.72    \n" \
+			"*turnSpacing:	    2.3     \n" \
+			"*barSpacing:	    0.268   \n" \
+			"*wallHeight:	    0.42    \n" \
 			"*wallThickness:    0.12    \n" \
 			"*barThickness:     0.058   \n" \
 			"*wallTaper:	    0.95    \n" \
-			"*gasketSize:	    1.88    \n" \
+			"*gasketSize:	    2.0     \n" \
 			"*gasketDepth:	    0.15    \n" \
 			"*gasketThickness:  0.4	    \n" \
-			"*frameSize:	    1.20    \n" \
+			"*frameSize:	    1.28    \n" \
 			"*frameDepth:	    0.01    \n" \
 			"*frameThickness:   0.03    \n" \
 			"*triangleSize:	    0.045   \n" \
@@ -165,6 +165,11 @@ typedef struct {
   XYZ *codeword_guides;
   GLfloat codeword_color[4], codeword_bg[4];
   texture_font_data *font;
+# endif
+
+# ifdef DEBUG
+  GLfloat persp_off, pos_off;
+  texture_font_data *label_font;
 # endif
 
   GLfloat speed;
@@ -560,7 +565,7 @@ make_helix (logo_configuration *dc, int facetted, int wire)
   th  = 0;
   x1  = 1;
   y1  = 0;
-  x1b = 1 - dc->wall_thickness;
+  x1b = 1;
   y1b = 0;
 
   z1 = -(dc->turn_spacing * dc->turns / 2);
@@ -591,13 +596,13 @@ make_helix (logo_configuration *dc, int facetted, int wire)
 
   while (th + th_inc <= max_th)
     {
+      GLfloat thick = dc->wall_thickness;
+
       th += th_inc;
 
       x2 = cos (th);
       y2 = sin (th);
       z2 = z1 + z_inc;
-      x2b = x2 * (1 - dc->wall_thickness);
-      y2b = y2 * (1 - dc->wall_thickness);
 
       h2 = h1;
       h2off = h1off;
@@ -613,6 +618,11 @@ make_helix (logo_configuration *dc, int facetted, int wire)
                 h2off = h2 - dc->wall_height/2;
               else
                 h2off = dc->wall_height/2 - h2;
+
+              if (th + th_inc <= 0)
+                thick = 0;
+              else
+              thick *= cos (M_PI / 2 * (1 - (th / dc->wall_taper)));
             }
           else if (th >= max_th - dc->wall_taper)
             {
@@ -626,8 +636,16 @@ make_helix (logo_configuration *dc, int facetted, int wire)
                 h2off = dc->wall_height/2 - h2;
               else
                 h2off = h2 - dc->wall_height/2;
+
+              if (th + th_inc > max_th)
+                thick = 0;
+              else
+                thick *= cos(M_PI / 2 * (1 - ((max_th - th)/dc->wall_taper)));
             }
         }
+
+      x2b = x2 * (1 - thick);
+      y2b = y2 * (1 - thick);
 
       /* outer face
        */
@@ -741,6 +759,11 @@ make_ladder (logo_configuration *dc, int facetted, int wire)
 
   th = (max_th * pad_ratio/2);
   z  = -(max_z / 2) + (max_z * pad_ratio/2);
+
+  /* ##### WHYYYYYY */
+  /* The image is not reflected across line y = -x and I don't know why. */
+  th += M_PI * -0.035;
+  z -= 0.08;
 
   if (!dc->clockwise)
     z = -z, z_inc = -z_inc;
@@ -2730,25 +2753,33 @@ draw_codeword_path (ModeInfo *mi)
 
 #endif /* CW */
 
-
-/* Window management, etc
- */
+
 ENTRYPOINT void
 reshape_logo (ModeInfo *mi, int width, int height)
 {
+# ifdef DEBUG
+  logo_configuration *dc = &dcs[MI_SCREEN(mi)];
+# endif
   GLfloat h = (GLfloat) height / (GLfloat) width;
+  GLfloat persp = 64;  /* 30 */
+  GLfloat pos   = 13;  /* 30 */
+
+# ifdef DEBUG
+  persp += dc->persp_off;
+  pos += dc->pos_off;
+# endif
 
   glViewport (0, 0, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective (30.0, 1/h, 1.0, 100.0);
+  gluPerspective (persp, 1/h, 1, 100);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  gluLookAt( 0.0, 0.0, 30.0,
-             0.0, 0.0, 0.0,
-             0.0, 1.0, 0.0);
+  gluLookAt( 0, 0, pos,
+             0, 0, 0,
+             0, 1, 0);
 
 # ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
@@ -2884,6 +2915,10 @@ init_logo (ModeInfo *mi)
 # ifdef CW
   if (dc->mode == CODEWORD_IN)
     dc->font = load_texture_font (MI_DISPLAY(mi), "cwFont");
+# endif
+
+# ifdef DEBUG
+    dc->label_font = load_texture_font (MI_DISPLAY(mi), "fpsFont");
 # endif
 
   {
@@ -3127,6 +3162,22 @@ logo_handle_event (ModeInfo *mi, XEvent *event)
       KeySym keysym;
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
+
+# ifdef DEBUG
+      {
+        GLfloat step = 0.1;
+        if      (c == 'a') dc->persp_off += step;
+        else if (c == 'z') dc->persp_off -= step;
+        else if (c == 's') dc->pos_off   += step;
+        else if (c == 'x') dc->pos_off   -= step;
+        else return False;
+
+        /* dc->pos_off = -dc->persp_off; */
+        reshape_logo (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+        return True;
+      }
+# endif
+
       if (c == ' ' || c == '\t')
         {
           switch (dc->anim_state) {
@@ -3247,6 +3298,7 @@ draw_logo (ModeInfo *mi)
                         (random() % 200) +
                         (random() % 200));
       
+# ifndef DEBUG
   tick_spinner (mi, &dc->gasket_spinnerx);
   tick_spinner (mi, &dc->gasket_spinnery);
   tick_spinner (mi, &dc->gasket_spinnerz);
@@ -3257,6 +3309,7 @@ draw_logo (ModeInfo *mi)
   tick_spinner (mi, &dc->scene_spinnery);
   tick_spinner (mi, &dc->frame_spinner);
   link_spinners (mi, &dc->scene_spinnerx, &dc->scene_spinnery);
+# endif /* DEBUG */
 
   switch (dc->anim_state)
     {
@@ -3363,6 +3416,11 @@ draw_logo (ModeInfo *mi)
       abort();
       break;
     }
+
+# ifdef DEBUG
+  dc->anim_state = HELIX;
+  dc->wire_overlay = 0;
+# endif
 
   pizza_p = (dc->anim_state == PIZZA ||
              dc->anim_state == PIZZA_IN ||
@@ -3558,6 +3616,17 @@ draw_logo (ModeInfo *mi)
 
   if (dc->wire_overlay > 0)
     dc->wire_overlay--;
+
+# ifdef DEBUG
+  {
+    char s[1024];
+    sprintf (s, "a/z, s/x; per = %0.2f pos = %0.2f",
+             dc->persp_off, dc->pos_off);
+    glColor3f (1,1,1);
+    print_texture_label (dpy, dc->label_font, MI_WIDTH(mi), MI_HEIGHT(mi),
+                         1, s);
+  }
+# endif
 
   if (mi->fps_p) do_fps (mi);
   glFinish();

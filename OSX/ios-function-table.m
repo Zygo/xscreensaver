@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Tue Apr 10 17:04:05 2018 by build-fntable.pl 1.5.
+   Created: Sat Aug  4 21:35:23 2018 by build-fntable.pl 1.6.
  */
 
 #import <Foundation/Foundation.h>
@@ -75,6 +75,7 @@ extern struct xscreensaver_function_table
  euler2d_xscreensaver_function_table,
  fadeplot_xscreensaver_function_table,
  fiberlamp_xscreensaver_function_table,
+ filmleader_xscreensaver_function_table,
  fireworkx_xscreensaver_function_table,
  flame_xscreensaver_function_table,
  flipflop_xscreensaver_function_table,
@@ -217,6 +218,7 @@ extern struct xscreensaver_function_table
  unicrud_xscreensaver_function_table,
  unknownpleasures_xscreensaver_function_table,
  vermiculate_xscreensaver_function_table,
+ vfeedback_xscreensaver_function_table,
  vigilance_xscreensaver_function_table,
  voronoi_xscreensaver_function_table,
  wander_xscreensaver_function_table,
@@ -312,6 +314,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&euler2d_xscreensaver_function_table], @"euler2d",
 	[NSValue valueWithPointer:&fadeplot_xscreensaver_function_table], @"fadeplot",
 	[NSValue valueWithPointer:&fiberlamp_xscreensaver_function_table], @"fiberlamp",
+	[NSValue valueWithPointer:&filmleader_xscreensaver_function_table], @"filmleader",
 	[NSValue valueWithPointer:&fireworkx_xscreensaver_function_table], @"fireworkx",
 	[NSValue valueWithPointer:&flame_xscreensaver_function_table], @"flame",
 	[NSValue valueWithPointer:&flipflop_xscreensaver_function_table], @"flipflop",
@@ -454,6 +457,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&unicrud_xscreensaver_function_table], @"unicrud",
 	[NSValue valueWithPointer:&unknownpleasures_xscreensaver_function_table], @"unknownpleasures",
 	[NSValue valueWithPointer:&vermiculate_xscreensaver_function_table], @"vermiculate",
+	[NSValue valueWithPointer:&vfeedback_xscreensaver_function_table], @"vfeedback",
 	[NSValue valueWithPointer:&vigilance_xscreensaver_function_table], @"vigilance",
 	[NSValue valueWithPointer:&voronoi_xscreensaver_function_table], @"voronoi",
 	[NSValue valueWithPointer:&wander_xscreensaver_function_table], @"wander",

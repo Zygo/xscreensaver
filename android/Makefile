@@ -49,6 +49,7 @@ export ANDROID_HACKS=		\
 	binaryring		\
 	blaster			\
 	blinkbox		\
+	blitspin		\
 	blocktube		\
 	boing			\
 	bouboule		\
@@ -57,10 +58,12 @@ export ANDROID_HACKS=		\
 	boxfit			\
 	braid			\
 	bsod			\
+	bumps			\
 	cage			\
 	ccurve			\
 	celtic			\
 	circuit			\
+	cityflow		\
 	cloudlife		\
 	companioncube		\
 	compass			\
@@ -87,16 +90,20 @@ export ANDROID_HACKS=		\
 	dnalogo			\
 	drift			\
 	dymaxionmap		\
+	endgame			\
 	energystream		\
 	engine			\
 	epicycle		\
 	eruption		\
+	esper			\
 	euler2d			\
 	fadeplot		\
 	fiberlamp		\
+	filmleader		\
 	fireworkx		\
 	flame			\
 	flipflop		\
+	flipscreen3d		\
 	flow			\
 	fluidballs		\
 	flyingtoasters		\
@@ -108,11 +115,13 @@ export ANDROID_HACKS=		\
 	gflux			\
 	glblur			\
 	glcells			\
+	gleidescope		\
 	glhanoi			\
 	glknots			\
 	glmatrix		\
 	glplanet		\
 	glschool		\
+	glslideshow		\
 	glsnake			\
 	gltext			\
 	goop			\
@@ -131,6 +140,7 @@ export ANDROID_HACKS=		\
 	interaggregate		\
 	interference		\
 	intermomentary		\
+	jigglypuff		\
 	jigsaw			\
 	julia			\
 	kaleidescope		\
@@ -172,6 +182,7 @@ export ANDROID_HACKS=		\
 	pulsar			\
 	pyro			\
 	quasicrystal		\
+	queens			\
 	raverhoop		\
 	razzledazzle		\
 	rd-bomb			\
@@ -192,6 +203,7 @@ export ANDROID_HACKS=		\
 	spheremonics		\
 	splitflap		\
 	splodesic		\
+	spotlight		\
 	squiral			\
 	stairs			\
 	stonerview		\
@@ -201,6 +213,7 @@ export ANDROID_HACKS=		\
 	surfaces		\
 	swirl			\
 	tangram			\
+	tessellimage		\
 	thornbird		\
 	timetunnel		\
 	topblock		\
@@ -210,17 +223,21 @@ export ANDROID_HACKS=		\
 	twang			\
 	unknownpleasures	\
 	vermiculate		\
+	vfeedback		\
 	vigilance		\
 	voronoi			\
 	wander			\
 	whirlwindwarp		\
 	winduprobot		\
 	wormhole		\
+	xanalogtv		\
 	xflame			\
 	xjack			\
 	xlyap			\
+	xmatrix			\
 	xrayswarm		\
 	xspirograph		\
+	zoom			\
 
 
 # These don't work well enough to turn on by default:
@@ -228,19 +245,10 @@ export ANDROID_HACKS=		\
 ANDROID_TODO=			\
 	antinspect		\
 	barcode			\
-	blitspin		\
-	bumps			\
 	carousel		\
-	cityflow		\
-	endgame			\
-	esper			\
-	flipscreen3d		\
 	fliptext		\
 	fontglide		\
-	gleidescope		\
-	glslideshow		\
 	halftone		\
-	jigglypuff		\
 	juggler3d		\
 	molecule		\
 	pedal			\
@@ -248,17 +256,11 @@ ANDROID_TODO=			\
 	photopile		\
 	polyominoes		\
 	qix			\
-	queens			\
 	speedmine		\
-	spotlight		\
 	starfish		\
 	starwars		\
-	tessellimage		\
 	testx11			\
 	unicrud			\
-	xanalogtv		\
-	xmatrix			\
-	zoom			\
 
 
 # Download and resize images from jwz.org.
@@ -367,7 +369,7 @@ $(KEYSTORE):
 	keytool -genkey -v -keystore $@ \
 	-alias xscreensaver -keyalg RSA -keysize 2048 -validity 10000
 
-APK_DIR       = xscreensaver/build/outputs/apk/
+APK_DIR       = xscreensaver/build/outputs/apk/release/
 APK_UNSIGNED  = $(APK_DIR)xscreensaver-release-unsigned.apk
 APK_UNALIGNED = $(APK_DIR)xscreensaver-release-unaligned.apk
 APK_SIGNED    = $(APK_DIR)xscreensaver-release.apk

@@ -115,6 +115,10 @@
 #include "fps.h"
 #include "font-retry.h"
 
+#ifdef HAVE_RECORD_ANIM
+# include "recanim.h"
+#endif
+
 /* Be Posixly correct */
 #undef  bzero
 #define bzero  __ERROR_use_memset_not_bzero_in_xscreensaver__

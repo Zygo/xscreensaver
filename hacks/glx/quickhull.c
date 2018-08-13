@@ -52,7 +52,11 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+extern const char *progname;
+
 #include "quickhull.h"
+
+#include "screenhackI.h" /* for jwxyz_abort */
 
 #include <math.h>   /* sqrt & fabs */
 #include <stdio.h>  /* FILE */
@@ -1188,6 +1192,22 @@ qh__init_context(qh_context_t* context, qh_vertex_t const* vertices,
   context->horizonedges.begin = QH_MALLOC(qh_index_t, nedges);
   context->newhorizonedges.begin = QH_MALLOC(qh_index_t, nedges);
   context->valid = QH_MALLOC(char, nfaces);
+
+  if (!(context->edges &&
+        context->faces &&
+        context->facestack.begin &&
+        context->scratch.begin &&
+        context->horizonedges.begin &&
+        context->newhorizonedges.begin &&
+        context->valid)) {
+# ifdef HAVE_JWXYZ
+    jwxyz_abort ("%s: out of memory", progname);
+# else
+    fprintf (stderr, "%s: out of memory\n", progname);
+    exit (1);
+# endif
+  }
+
 
   context->vertices = QH_MALLOC(qh_vertex_t, nvertices);
   memcpy(context->vertices, vertices, sizeof(qh_vertex_t) * nvertices);

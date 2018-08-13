@@ -32,6 +32,7 @@
 #include "sphere.h"
 #include "normals.h"
 #include "texfont.h"
+#include "dymaxionmap-coords.h"
 
 #ifdef HAVE_XMU
 # ifndef VMS
@@ -46,33 +47,47 @@
 #define DEF_WANDER  "True"
 #define DEF_TEXTURE "True"
 #define DEF_STARS   "True"
+#define DEF_GRID    "True"
 #define DEF_SPEED   "1.0"
-#define DEF_IMAGE   "BUILTIN"
+#define DEF_IMAGE   "BUILTIN_FLAT"
+#define DEF_IMAGE2  "NONE"
+#define DEF_FRAMES  "720"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
+#undef RANDSIGN
+#define RANDSIGN() ((random() & 1) ? 1 : -1)
 
 static int do_roll;
 static int do_wander;
 static int do_texture;
 static int do_stars;
+static int do_grid;
+static int frames;
 static GLfloat speed;
 static char *which_image;
+static char *which_image2;
 
 static XrmOptionDescRec opts[] = {
-  {"-speed",   ".dymaxionmap.speed",   XrmoptionSepArg, 0 },
-  {"-roll",    ".dymaxionmap.roll",    XrmoptionNoArg, "true" },
-  {"+roll",    ".dymaxionmap.roll",    XrmoptionNoArg, "false" },
-  {"-wander",  ".dymaxionmap.wander",  XrmoptionNoArg, "true" },
-  {"+wander",  ".dymaxionmap.wander",  XrmoptionNoArg, "false" },
-  {"-texture", ".dymaxionmap.texture", XrmoptionNoArg, "true" },
-  {"+texture", ".dymaxionmap.texture", XrmoptionNoArg, "false" },
-  {"-stars",   ".dymaxionmap.stars",   XrmoptionNoArg, "true" },
-  {"+stars",   ".dymaxionmap.stars",   XrmoptionNoArg, "false" },
-  {"-image",   ".dymaxionmap.image",  XrmoptionSepArg, 0 },
+  {"-speed",    ".speed",   XrmoptionSepArg, 0 },
+  {"-roll",     ".roll",    XrmoptionNoArg, "true" },
+  {"+roll",     ".roll",    XrmoptionNoArg, "false" },
+  {"-wander",   ".wander",  XrmoptionNoArg, "true" },
+  {"+wander",   ".wander",  XrmoptionNoArg, "false" },
+  {"-texture",  ".texture", XrmoptionNoArg, "true" },
+  {"+texture",  ".texture", XrmoptionNoArg, "false" },
+  {"-stars",    ".stars",   XrmoptionNoArg, "true" },
+  {"+stars",    ".stars",   XrmoptionNoArg, "false" },
+  {"-grid",     ".grid",    XrmoptionNoArg, "true" },
+  {"+grid",     ".grid",    XrmoptionNoArg, "false" },
+  {"-flat",     ".image",   XrmoptionNoArg, "BUILTIN_FLAT" },
+  {"-satellite",".image",   XrmoptionNoArg, "BUILTIN_SAT"  },
+  {"-image",    ".image",   XrmoptionSepArg, 0 },
+  {"-image2",   ".image2",  XrmoptionSepArg, 0 },
+  {"-frames",   ".frames",  XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
@@ -81,7 +96,10 @@ static argtype vars[] = {
   {&do_wander,	 "wander",  "Wander",  DEF_WANDER,  t_Bool},
   {&do_texture,	 "texture", "Texture", DEF_TEXTURE, t_Bool},
   {&do_stars,	 "stars",   "Stars",   DEF_STARS,   t_Bool},
+  {&do_grid,	 "grid",    "Grid",    DEF_GRID,    t_Bool},
   {&which_image, "image",   "Image",   DEF_IMAGE,   t_String},
+  {&which_image2,"image2",  "Image2",  DEF_IMAGE2,  t_String},
+  {&frames,      "frames",  "Frames",  DEF_FRAMES,  t_Int},
 };
 
 ENTRYPOINT ModeSpecOpt planet_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -99,7 +117,10 @@ ModStruct   planet_description =
 		    ISO C89 compilers are required to support" when including
 		    the following XPM file... */
 # endif
-#include "images/gen/dymaxionmap_png.h"
+
+#include "images/gen/earth_flat_png.h"
+#include "images/gen/earth_png.h"
+#include "images/gen/earth_night_png.h"
 #include "images/gen/ground_png.h"
 
 #include "ximage-loader.h"
@@ -111,7 +132,7 @@ typedef struct {
   GLXContext *glx_context;
   GLuint starlist;
   int starcount;
-  rotator *rot;
+  rotator *rot, *rot2;
   trackball_state *trackball;
   Bool button_down_p;
   enum { STARTUP, FLAT, FOLD, 
@@ -120,60 +141,464 @@ typedef struct {
   GLfloat ratio;
   GLuint tex1, tex2;
   texture_font_data *font_data;
+  int loading_sw, loading_sh;
+
+  XImage *day, *night, *dusk, *cvt;
+  XImage **images;  /* One image for each frame of time-of-day. */
+  int nimages;
+
+  double current_frame;
+  Bool cache_p;
+  long delay;
+
 } planetstruct;
 
 
 static planetstruct *planets = NULL;
 
 
-/* Set up and enable texturing on our object */
-static void
-setup_png_texture (ModeInfo *mi, const unsigned char *png_data,
-                   unsigned long data_size)
+static double
+double_time (void)
 {
-  XImage *image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                        png_data, data_size);
-  char buf[1024];
-  clear_gl_error();
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  /* iOS invalid enum:
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
+  struct timeval now;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday(&now, &tzp);
+# else
+  gettimeofday(&now);
+# endif
+
+  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+
+/* Draw faint latitude and longitude lines into the RGBA XImage.
+ */
+static void
+add_grid_lines (XImage *image)
+{
+  int i;
+  int off = 24;
+  for (i = 0; i < 24; i++)
+    {
+      int x = (i + 0.5) * image->width / (double) 24;
+      int y;
+      for (y = 0; y < image->height; y++)
+        {
+          unsigned long rgba = XGetPixel (image, x, y);
+          int r = (rgba >> 24) & 0xFF;
+          int g = (rgba >> 16) & 0xFF;
+          int b = (rgba >>  8) & 0xFF;
+          int a = (rgba >>  0) & 0xFF;
+          int off2 = (((r + g + b) / 3) < 0x7F ? off : -off);
+          r = MAX (0, MIN (0xFF, r + off2));
+          g = MAX (0, MIN (0xFF, g + off2));
+          b = MAX (0, MIN (0xFF, b + off2));
+          XPutPixel (image, x, y, (r << 24) | (g << 16) | (b << 8) | a);
+        }
+    }
+
+  for (i = 1; i < 11; i++)
+    {
+      int y = i * image->height / (double) 12;
+      int x;
+      for (x = 0; x < image->width; x++)
+        {
+          unsigned long rgba = XGetPixel (image, x, y);
+          int r = (rgba >> 24) & 0xFF;
+          int g = (rgba >> 16) & 0xFF;
+          int b = (rgba >>  8) & 0xFF;
+          int a = (rgba >>  0) & 0xFF;
+          int off2 = (((r + g + b) / 3) < 0x7F ? off : -off);
+          r = MAX (0, MIN (0xFF, r + off2));
+          g = MAX (0, MIN (0xFF, g + off2));
+          b = MAX (0, MIN (0xFF, b + off2));
+          XPutPixel (image, x, y, (r << 24) | (g << 16) | (b << 8) | a);
+        }
+    }
+}
+
+
+static void
+adjust_brightness (XImage *image, double amount)
+{
+  uint32_t *in = (uint32_t *) image->data;
+  int i;
+  int end = image->height * image->bytes_per_line / 4;
+  for (i = 0; i < end; i++)
+    {
+      uint32_t p = *in;
+      /* #### Why is this ABGR instead of RGBA? */
+      uint32_t a = (p >> 24) & 0xFF;
+      uint32_t g = (p >> 16) & 0xFF;
+      uint32_t b = (p >>  8) & 0xFF;
+      uint32_t r = (p >>  0) & 0xFF;
+      r = MAX(0, MIN(0xFF, (long) (r * amount)));
+      g = MAX(0, MIN(0xFF, (long) (g * amount)));
+      b = MAX(0, MIN(0xFF, (long) (b * amount)));
+      p = (a << 24) | (g << 16) | (b << 8) | r;
+      *in++ = p;
+    }
+}
+
+
+static GLfloat
+vector_angle (XYZ a, XYZ b)
+{
+  double La = sqrt (a.x*a.x + a.y*a.y + a.z*a.z);
+  double Lb = sqrt (b.x*b.x + b.y*b.y + b.z*b.z);
+  double cc, angle;
+
+  if (La == 0 || Lb == 0) return 0;
+  if (a.x == b.x && a.y == b.y && a.z == b.z) return 0;
+
+  /* dot product of two vectors is defined as:
+       La * Lb * cos(angle between vectors)
+     and is also defined as:
+       ax*bx + ay*by + az*bz
+     so:
+      La * Lb * cos(angle) = ax*bx + ay*by + az*bz
+      cos(angle)  = (ax*bx + ay*by + az*bz) / (La * Lb)
+      angle = acos ((ax*bx + ay*by + az*bz) / (La * Lb));
   */
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-	       image->width, image->height, 0,
-	       GL_RGBA, GL_UNSIGNED_BYTE, image->data);
-  sprintf (buf, "builtin texture (%dx%d)", image->width, image->height);
-  check_gl_error(buf);
+  cc = (a.x*b.x + a.y*b.y + a.z*b.z) / (La * Lb);
+  if (cc > 1) cc = 1;  /* avoid fp rounding error (1.000001 => sqrt error) */
+  angle = acos (cc);
+
+  return (angle);
 }
 
 
-static Bool
-setup_file_texture (ModeInfo *mi, char *filename)
+/* Creates a grayscale image encoding the day/night terminator for a random
+   axial tilt.
+ */
+static XImage *
+create_daylight_mask (Display *dpy, Visual *v, int w, int h)
 {
-  Display *dpy = mi->dpy;
-  Visual *visual = mi->xgwa.visual;
-  char buf[1024];
+  XImage *image = XCreateImage (dpy, v, 8, ZPixmap, 0, 0, w, h, 8, 0);
+  int x, y;
+  XYZ sun;
+  double axial_tilt = frand(23.4) / (180/M_PI) * RANDSIGN();
+  double dusk = M_PI * 0.035;
+  sun.x = 0;
+  sun.y = cos (axial_tilt);
+  sun.z = sin (axial_tilt);
 
-  XImage *image = file_to_ximage (dpy, visual, filename);
-  if (!image) return False;
+  image->data = (char *) malloc (image->height * image->bytes_per_line);
 
-  clear_gl_error();
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-	       image->width, image->height, 0,
-	       GL_RGBA, GL_UNSIGNED_BYTE, image->data);
-  sprintf (buf, "texture: %.100s (%dx%d)",
-	   filename, image->width, image->height);
-  check_gl_error(buf);
-  return True;
+  for (y = 0; y < image->height; y++)
+    {
+      double lat = -M_PI_2 + (M_PI * (y / (double) image->height));
+      double cosL = cos(lat);
+      double sinL = sin(lat);
+      for (x = 0; x < image->width; x++)
+        {
+          double lon = -M_PI_2 + (M_PI * 2 * (x / (double) image->width));
+          XYZ v;
+          double a;
+          unsigned long p;
+          v.x = cos(lon) * cosL;
+          v.y = sin(lon) * cosL;
+          v.z = sinL;
+          a = vector_angle (sun, v);
+          a -= M_PI_2;
+          a = (a < -dusk ? 1 : a >= dusk ? 0 : (dusk - a) / (dusk * 2));
+          p = 0xFF & (unsigned long) (a * 0xFF);
+          XPutPixel (image, x, y, p);
+        }
+    }
+  return image;
 }
 
 
 static void
-setup_texture(ModeInfo * mi)
+load_images (ModeInfo *mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
+  int i;
+
+  if (which_image && !strcmp (which_image, "BUILTIN_FLAT"))
+    {
+      which_image  = strdup("BUILTIN_FLAT");
+      which_image2 = strdup("BUILTIN_FLAT");
+    }
+  else if (which_image && !strcmp (which_image, "BUILTIN_SAT"))
+    {
+      which_image  = strdup("BUILTIN_DAY");
+      which_image2 = strdup("BUILTIN_NIGHT");
+    }
+
+  if (!which_image)  which_image  = strdup("");
+  if (!which_image2) which_image2 = strdup("");
+
+  for (i = 0; i < 2; i++)
+    {
+      char *s = (i == 0 ? which_image : which_image2);
+      XImage *image;
+      if (!strcmp (s, "BUILTIN_DAY"))
+        image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                      earth_png, sizeof(earth_png));
+      else if (!strcmp (s, "BUILTIN_NIGHT"))
+        image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                      earth_night_png,sizeof(earth_night_png));
+      else if (!strcmp (s, "BUILTIN") ||
+               !strcmp (s, "BUILTIN_FLAT") ||
+               (i == 0 && !strcmp (s, "")))
+        image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                      earth_flat_png, sizeof(earth_flat_png));
+      else if (!strcmp (s, "NONE"))
+        image = 0;
+      else if (*s)
+        image = file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi), s);
+      else
+        image = 0;
+
+      /* if (image) fprintf (stderr, "%s: %d: loaded %s\n", progname, i, s); */
+
+      if (i == 0)
+        gp->day = image;
+      else
+        gp->night = image;
+    }
+
+  if (gp->night && !gp->day) 
+    gp->day = gp->night, gp->night = 0;
+
+  gp->nimages = frames;
+  gp->current_frame = random() % gp->nimages;
+
+  if (gp->nimages < 1)
+    gp->nimages = 1;
+
+  if (gp->nimages < 2 && gp->night)
+    {
+      XDestroyImage (gp->night);
+      gp->night = 0;
+      gp->nimages = 1;
+    }
+
+  if (! gp->night)
+    gp->nimages = 1;
+
+  if (do_grid)
+    {
+      if (gp->day)   add_grid_lines (gp->day);
+      if (gp->night) add_grid_lines (gp->night);
+    }
+
+  if (gp->day && gp->night && !gp->dusk)
+    {
+      if (gp->day->width  != gp->night->width ||
+          gp->day->height != gp->night->height)
+        {
+          fprintf (stderr, "%s: day and night images must be the same size"
+                   " (%dx%d vs %dx%d)\n", progname,
+                   gp->day->width, gp->day->height,
+                   gp->night->width, gp->night->height);
+          exit (1);
+        }
+      gp->dusk = create_daylight_mask (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                       gp->day->width, gp->day->height);
+    }
+
+  /* Make the day image brighter, because that's easier than doing it
+     with GL lights. */
+  adjust_brightness (gp->day, 1.4);
+
+  if (!strcmp (which_image, which_image2))
+    /* If day and night are the same image, make night way darker. */
+    adjust_brightness (gp->night, 0.2);
+  else if (gp->night)
+    /* Otherwise make it just a little darker. */
+    adjust_brightness (gp->night, 0.7);
+
+
+  gp->images = (XImage **) calloc (gp->nimages, sizeof(*gp->images));
+
+  /* Create 'cvt', a map that projects each pixel from Equirectangular to
+     Dymaxion.  It is 2x the width/height of the source images. We iterate
+     by half pixel to make sure we hit every pixel in 'out'. It would be
+     cleaner to iterate over 'out' instead of over 'in' but
+     dymaxionmap-coords.c only goes forward. This is... not super fast.
+   */
+  {
+    double W = 5.5;
+    double H = 3 * sqrt(3)/2;
+    int x2, y2;
+    int w = gp->day->width;
+    int h = gp->day->height;
+    uint32_t *out;
+
+    gp->cvt = XCreateImage (MI_DISPLAY(mi), MI_VISUAL(mi), 32, ZPixmap, 0, 0,
+                            gp->day->width*2, gp->day->height*2, 32, 0);
+    gp->cvt->data = (char *)
+      malloc (gp->cvt->height * gp->cvt->bytes_per_line);
+    out = (uint32_t *) gp->cvt->data;
+
+    for (y2 = 0; y2 < h*2; y2++)
+      {
+        double y = (double) y2/2;
+        double lat = -90 + (180 * (y / (double) h));
+        for (x2 = 0; x2 < w*2; x2++)
+          {
+            double x = (double) x2/2;
+            double lon = -180 + (360 * x / w);
+            double ox, oy;
+            dymaxion_convert (lon, lat, &ox, &oy);
+            ox = w - (w * ox / W);
+            oy =     (h * oy / H);
+
+            *out++ = (((((uint32_t) ox) & 0xFFFF) << 16) |
+                      ((((uint32_t) oy) & 0xFFFF)));
+          }
+      }
+  }
+
+  /* A 128 GB iPhone 6s dies at around 540 frames, ~1 GB of XImages.
+     A 16 GB iPad Air 2 dies at around 320 frames, ~640 MB.
+     Caching on mobile doesn't matter much: we can just run at 100% CPU.
+
+     On some systems it would be more efficient to cache the images inside
+     a texture on the GPU instead of moving it from RAM to GPU every few
+     frames; but on other systems, we'd just run out of GPU memory instead. */
+  {
+    unsigned long cache_size = (gp->day->width * gp->day->height * 4 *
+                                gp->nimages);
+# ifdef HAVE_MOBILE
+    unsigned long max = 320 * 1024 * 1024L;		/* 320 MB */
+# else
+    unsigned long max = 2 * 1024 * 1024 * 1024L;	/* 2 GB */
+# endif
+    gp->cache_p = (cache_size < max);
+  }
+}
+
+
+static void
+cache_current_frame (ModeInfo *mi)
+{
+  planetstruct *gp = &planets[MI_SCREEN(mi)];
+  XImage *blended, *dymaxion;
+  int i, x, y, w, h, end, xoff;
+  uint32_t *day, *night, *cvt, *out;
+  uint8_t *dusk;
+
+  if (gp->images[(int) gp->current_frame])
+    return;
+
+  xoff = (gp->dusk
+          ? gp->dusk->width * ((double) gp->current_frame / gp->nimages)
+          : 0);
+
+  w = gp->day->width;
+  h = gp->day->height;
+
+  if (!gp->night)
+    blended = gp->day;
+  else
+    {
+      /* Blend the foreground and background images through the dusk map.
+       */
+      blended = XCreateImage (MI_DISPLAY(mi), MI_VISUAL(mi), 
+                              gp->day->depth, ZPixmap, 0, 0, w, h, 32, 0);
+      if (!blended) abort();
+      blended->data = (char *) malloc (h * blended->bytes_per_line);
+      if (!blended->data) abort();
+
+      end = blended->height * blended->bytes_per_line / 4;
+      day   = (uint32_t *) gp->day->data;
+      night = (uint32_t *) gp->night->data;
+      dusk  = (uint8_t  *) gp->dusk->data;
+      out   = (uint32_t *) blended->data;
+
+      for (i = 0; i < end; i++)
+        {
+          uint32_t d = *day++;
+          uint32_t n = *night++;
+          uint32_t x = i % w;
+          uint32_t y = i / w;
+          double r = dusk[y * w + ((x + xoff) % w)] / 256.0;
+          double r2 = 1-r;
+# define ADD(M) (((unsigned long)             \
+                  ((((d >> M) & 0xFF) * r) +  \
+                   (((n >> M) & 0xFF) * r2))) \
+                 << M)
+          /* #### Why is this ABGR instead of RGBA? */
+          *out++ = (0xFF << 24) | ADD(16) | ADD(8) | ADD(0);
+# undef ADD
+        }
+    }
+
+  /* Convert blended Equirectangular to Dymaxion through the 'cvt' map.
+   */
+  dymaxion = XCreateImage (MI_DISPLAY(mi), MI_VISUAL(mi), 
+                          gp->day->depth, ZPixmap, 0, 0, w, h, 32, 0);
+  dymaxion->data = (char *) calloc (h, dymaxion->bytes_per_line);
+  
+  day = (uint32_t *) blended->data;
+  out = (uint32_t *) dymaxion->data;
+  cvt = (uint32_t *) gp->cvt->data;
+
+  for (y = 0; y < h*2; y++)
+    for (x = 0; x < w*2; x++)
+      {
+        unsigned long m  = *cvt++;
+        unsigned long dx = (m >> 16) & 0xFFFF;
+        unsigned long dy = m & 0xFFFF;
+        unsigned long p  = day[(y>>1) * w + (x>>1)];
+        unsigned long p2 = out[dy * w + dx];
+        if (p2 & 0xFF000000)
+          /* RGBA nonzero alpha: initialized. Average with existing,
+             otherwise the grid lines look terrible. */
+          p = (((((p>>24) & 0xFF) + ((p2>>24) & 0xFF)) >> 1) << 24 |
+               ((((p>>16) & 0xFF) + ((p2>>16) & 0xFF)) >> 1) << 16 |
+               ((((p>> 8) & 0xFF) + ((p2>> 8) & 0xFF)) >> 1) <<  8 |
+               ((((p>> 0) & 0xFF) + ((p2>> 0) & 0xFF)) >> 1) <<  0);
+        out[dy * w + dx] = p;
+      }
+
+  /* Fill in the triangles that are not a part of The World with the
+     color of the ocean to avoid texture-tearing on the folded edges.
+  */
+  out = (uint32_t *) dymaxion->data;
+  end = dymaxion->height * dymaxion->bytes_per_line / 4;
+  {
+    double lat = -48.44, lon = -123.39;   /* R'Lyeh */
+    int x = (lon + 180) * blended->width  / 360.0;
+    int y = (lat + 90)  * blended->height / 180.0;
+    unsigned long ocean = XGetPixel (gp->day, x, y);
+    for (i = 0; i < end; i++)
+      {
+        uint32_t p = *out;
+        if (! (p & 0xFF000000)) /* AGBR */
+          *out = ocean;
+        out++;
+      }
+  }
+
+  if (blended != gp->day)
+    XDestroyImage (blended);
+
+  gp->images[(int) gp->current_frame] = dymaxion;
+
+  if (!gp->cache_p)  /* Keep only one image around; recompute every time. */
+    {
+      i = ((int) gp->current_frame) - 1;
+      if (i < 0) i = gp->nimages - 1;
+      if (gp->images[i])
+        {
+          XDestroyImage (gp->images[i]);
+          gp->images[i] = 0;
+        }
+    }
+}
+
+
+static void
+setup_texture (ModeInfo * mi)
+{
+  planetstruct *gp = &planets[MI_SCREEN(mi)];
+  XImage *ground;
 
   glGenTextures (1, &gp->tex1);
   glBindTexture (GL_TEXTURE_2D, gp->tex1);
@@ -185,18 +610,7 @@ setup_texture(ModeInfo * mi)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-  if (!which_image ||
-      !*which_image ||
-      !strcmp(which_image, "BUILTIN"))
-    {
-    BUILTIN:
-      setup_png_texture (mi, dymaxionmap_png, sizeof(dymaxionmap_png));
-    }
-  else
-    {
-      if (! setup_file_texture (mi, which_image))
-        goto BUILTIN;
-    }
+  load_images (mi);
 
   glGenTextures (1, &gp->tex2);
   glBindTexture (GL_TEXTURE_2D, gp->tex2);
@@ -208,14 +622,17 @@ setup_texture(ModeInfo * mi)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-  setup_png_texture (mi, ground_png, sizeof(ground_png));
-
-  check_gl_error("texture initialization");
-
-  /* Need to flip the texture top for bottom for some reason. */
-  glMatrixMode (GL_TEXTURE);
-  glScalef (1, -1, 1);
-  glMatrixMode (GL_MODELVIEW);
+  /* The underground image can go on flat, without the dymaxion transform. */
+  ground = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                 ground_png, sizeof(ground_png));
+  clear_gl_error();
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  /* glPixelStorei(GL_UNPACK_ROW_LENGTH, ground->width); */
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+                ground->width, ground->height, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, ground->data);
+  check_gl_error ("ground texture");
+  XDestroyImage (ground);
 }
 
 
@@ -298,23 +715,35 @@ reshape_planet (ModeInfo *mi, int width, int height)
 
 
 static void
-do_normal2 (Bool frontp, XYZ a, XYZ b, XYZ c)
+do_normal2 (ModeInfo *mi, Bool frontp, XYZ a, XYZ b, XYZ c)
 {
-  if (frontp)
-    do_normal (a.x, a.y, a.z,
-               b.x, b.y, b.z,
-               c.x, c.y, c.z);
-  else
-    do_normal (b.x, b.y, b.z,
-               a.x, a.y, a.z,
-               c.x, c.y, c.z);
+  XYZ n = (frontp
+           ? calc_normal (a, b, c)
+           : calc_normal (b, a, c));
+  glNormal3f (n.x, n.y, n.z);
+
+# if 0
+  if (frontp && MI_IS_WIREFRAME(mi))
+    {
+      glBegin (GL_LINES);
+      glVertex3f ((a.x + b.x + c.x) / 3,
+                  (a.y + b.y + c.y) / 3,
+                  (a.z + b.z + c.z) / 3);
+      glVertex3f ((a.x + b.x + c.x) / 3 + n.x,
+                  (a.y + b.y + c.y) / 3 + n.y,
+                  (a.z + b.z + c.z) / 3 + n.z);
+      glEnd();
+    }
+# endif
 }
 
 
 static void
-triangle0 (ModeInfo *mi, Bool frontp, GLfloat stel_ratio, int bitmask)
+triangle0 (ModeInfo *mi, Bool frontp, GLfloat stel_ratio, int facemask, 
+           XYZ *corners_ret)
 {
-  /* Render a triangle as six sub-triangles:
+  /* Render a triangle as six sub-triangles.
+     Facemask bits 0-5 indicate which sub-triangle to draw.
 
                 A
                / \
@@ -371,89 +800,100 @@ triangle0 (ModeInfo *mi, Bool frontp, GLfloat stel_ratio, int bitmask)
   }
 
 
-  if (bitmask & 1<<0)
+  if (facemask & 1<<0)
     {
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       a  =  E;  b =  D;  c =  A;
       ta = tE; tb = tD; tc = tA;
-      do_normal2 (frontp, a, b, c);
+      do_normal2 (mi, frontp, a, b, c);
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glTexCoord2f (ta.x, ta.y); glVertex3f (a.x, a.y, a.z);
       glTexCoord2f (tb.x, tb.y); glVertex3f (b.x, b.y, b.z);
       glTexCoord2f (tc.x, tc.y); glVertex3f (c.x, c.y, c.z);
       glEnd();
       mi->polygon_count++;
     }
-  if (bitmask & 1<<1)
+  if (facemask & 1<<1)
     {
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       a  =  D;  b =  F;  c =  A;
       ta = tD; tb = tF; tc = tA;
-      do_normal2 (frontp, a, b, c);
+      do_normal2 (mi, frontp, a, b, c);
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glTexCoord2f (ta.x, ta.y); glVertex3f (a.x, a.y, a.z);
       glTexCoord2f (tb.x, tb.y); glVertex3f (b.x, b.y, b.z);
       glTexCoord2f (tc.x, tc.y); glVertex3f (c.x, c.y, c.z);
       glEnd();
       mi->polygon_count++;
     }
-  if (bitmask & 1<<2)
+  if (facemask & 1<<2)
     {
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       a  =  D;  b =  C;  c =  F;
       ta = tD; tb = tC; tc = tF;
-      do_normal2 (frontp, a, b, c);
+      do_normal2 (mi, frontp, a, b, c);
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glTexCoord2f (ta.x, ta.y); glVertex3f (a.x, a.y, a.z);
       glTexCoord2f (tb.x, tb.y); glVertex3f (b.x, b.y, b.z);
       glTexCoord2f (tc.x, tc.y); glVertex3f (c.x, c.y, c.z);
       glEnd();
       mi->polygon_count++;
     }
-  if (bitmask & 1<<3)
+  if (facemask & 1<<3)
     {
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       a  =  G;  b =  C;  c =  D;
       ta = tG; tb = tC; tc = tD;
-      do_normal2 (frontp, a, b, c);
+      do_normal2 (mi, frontp, a, b, c);
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glTexCoord2f (ta.x, ta.y); glVertex3f (a.x, a.y, a.z);
       glTexCoord2f (tb.x, tb.y); glVertex3f (b.x, b.y, b.z);
       glTexCoord2f (tc.x, tc.y); glVertex3f (c.x, c.y, c.z);
       glEnd();
       mi->polygon_count++;
     }
-  if (bitmask & 1<<4)
+  if (facemask & 1<<4)
     {
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       a  =  B;  b =  G;  c =  D;
       ta = tB; tb = tG; tc = tD;
-      do_normal2 (frontp, a, b, c);
+      do_normal2 (mi, frontp, a, b, c);
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glTexCoord2f (ta.x, ta.y); glVertex3f (a.x, a.y, a.z);
       glTexCoord2f (tb.x, tb.y); glVertex3f (b.x, b.y, b.z);
       glTexCoord2f (tc.x, tc.y); glVertex3f (c.x, c.y, c.z);
       glEnd();
       mi->polygon_count++;
     }
-  if (bitmask & 1<<5)
+  if (facemask & 1<<5)
     {
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       a  =  B;  b =  D;  c =  E;
       ta = tB; tb = tD; tc = tE;
-      do_normal2 (frontp, a, b, c);
+      do_normal2 (mi, frontp, a, b, c);
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glTexCoord2f (ta.x, ta.y); glVertex3f (a.x, a.y, a.z);
       glTexCoord2f (tb.x, tb.y); glVertex3f (b.x, b.y, b.z);
       glTexCoord2f (tc.x, tc.y); glVertex3f (c.x, c.y, c.z);
       glEnd();
       mi->polygon_count++;
     }
-  if (bitmask & 1<<6)
+  if (facemask & 1<<6)
     {
-      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       a  =  E;  b =  D;  c =  A;
       ta = tE; tb = tD; tc = tA;
-      do_normal2 (frontp, a, b, c);
+      do_normal2 (mi, frontp, a, b, c);
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
       glTexCoord2f (ta.x, ta.y); glVertex3f (a.x, a.y, a.z);
       glTexCoord2f (tb.x, tb.y); glVertex3f (b.x, b.y, b.z);
       glTexCoord2f (tc.x, tc.y); glVertex3f (c.x, c.y, c.z);
       glEnd();
       mi->polygon_count++;
+    }
+
+  if (corners_ret)
+    {
+      corners_ret[0] = A;
+      corners_ret[1] = B;
+      corners_ret[2] = C;
+      corners_ret[3] = D;
+      corners_ret[4] = E;
+      corners_ret[5] = F;
+      corners_ret[6] = G;
     }
 }
 
@@ -476,37 +916,41 @@ triangle0 (ModeInfo *mi, Bool frontp, GLfloat stel_ratio, int bitmask)
    Each triangle can be connected to at most two other triangles.
    We start from the middle, #12, and work our way to the edges.
    Its centroid is 0,0.
+
+   (Note that dymaxionmap-coords.c uses a different numbering system.)
  */
 static void
 triangle (ModeInfo *mi, int which, Bool frontp, 
           GLfloat fold_ratio, GLfloat stel_ratio)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
-  const GLfloat fg[3] = { 1, 1, 1 };
-  const GLfloat bg[3] = { 0.3, 0.3, 0.3 };
+  const GLfloat fg[] = { 1, 1, 1, 1 };
+  const GLfloat bg[] = { 0.3, 0.3, 0.3, 1 };
   int a = -1, b = -1;
   GLfloat max = acos (sqrt(5)/3);
   GLfloat rot = -max * fold_ratio / (M_PI/180);
   Bool wire = MI_IS_WIREFRAME(mi);
+  XYZ corners[7];
 
-  if (wire)
-    glColor3fv (fg);
+  glColor3fv (fg);
+  if (!wire)
+    glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, fg);
 
   switch (which) {
   case 3:				/* One third of the face. */
-    triangle0 (mi, frontp, stel_ratio, 1<<3 | 1<<4);
+    triangle0 (mi, frontp, stel_ratio, 1<<3 | 1<<4, corners);
     break;
   case 4:				/* Two thirds of the face: convex. */
-    triangle0 (mi, frontp, stel_ratio, 1<<1 | 1<<2 | 1<<3 | 1<<4);
+    triangle0 (mi, frontp, stel_ratio, 1<<1 | 1<<2 | 1<<3 | 1<<4, corners);
     break;
   case 6:				/* One half of the face. */
-    triangle0 (mi, frontp, stel_ratio, 1<<1 | 1<<2 | 1<<3);
+    triangle0 (mi, frontp, stel_ratio, 1<<1 | 1<<2 | 1<<3, corners);
     break;
   case 7:				/* One half of the face. */
-    triangle0 (mi, frontp, stel_ratio, 1<<2 | 1<<3 | 1<<4);
+    triangle0 (mi, frontp, stel_ratio, 1<<2 | 1<<3 | 1<<4, corners);
     break;
   default:				/* Full face. */
-    triangle0 (mi, frontp, stel_ratio, 0x3F);
+    triangle0 (mi, frontp, stel_ratio, 0x3F, corners);
     break;
   }
 
@@ -610,6 +1054,95 @@ triangle (ModeInfo *mi, int which, Bool frontp,
 
       glMatrixMode(GL_MODELVIEW);
       glPopMatrix();
+    }
+
+
+  /* Draw a border around the edge of the world.
+   */
+  if (!wire && frontp && stel_ratio == 0 && fold_ratio < 0.95)
+    {
+      int edges = 0;
+      GLfloat c[] = { 0, 0.2, 0.5, 1 };
+      c[3] = 1-fold_ratio;
+
+      switch (which)
+        {
+        case  0: edges = 1<<0 | 1<<2; break;
+        case  1: edges = 1<<2;        break;
+        case  2: edges = 1<<0;        break;
+        case  3: edges = 1<<3 | 1<<4; break;
+        case  4: edges = 1<<3 | 1<<5; break;
+        case  5: edges = 1<<0 | 1<<6; break;
+        case  6: edges = 1<<2 | 1<<7; break;
+        case 16: edges = 1<<0 | 1<<2; break;
+        case 21: edges = 1<<0 | 1<<2; break;
+        case 19: edges = 1<<0 | 1<<2; break;
+        case 12: edges = 1<<1;        break;
+        case 18: edges = 1<<0 | 1<<2; break;
+        case 17: edges = 1<<0 | 1<<2; break;
+        case  7: edges = 1<<8 | 1<<9; break;
+        case  9: edges = 1<<2;        break;
+        default: break;
+        }
+
+      glDisable (GL_TEXTURE_2D);
+      glDisable (GL_LIGHTING);
+      glLineWidth (2);
+      glColor4fv (c);
+      glBegin (GL_LINES);
+      if (edges & 1<<0)
+        {
+          glVertex3f (corners[0].x, corners[0].y, corners[0].z);
+          glVertex3f (corners[1].x, corners[1].y, corners[1].z);
+        }
+      if (edges & 1<<1)
+        {
+          glVertex3f (corners[1].x, corners[1].y, corners[1].z);
+          glVertex3f (corners[2].x, corners[2].y, corners[2].z);
+        }
+      if (edges & 1<<2)
+        {
+          glVertex3f (corners[2].x, corners[2].y, corners[2].z);
+          glVertex3f (corners[0].x, corners[0].y, corners[0].z);
+        }
+      if (edges & 1<<3)
+        {
+          glVertex3f (corners[1].x, corners[1].y, corners[1].z);
+          glVertex3f (corners[3].x, corners[3].y, corners[3].z);
+        }
+      if (edges & 1<<4)
+        {
+          glVertex3f (corners[3].x, corners[3].y, corners[3].z);
+          glVertex3f (corners[2].x, corners[2].y, corners[2].z);
+        }
+      if (edges & 1<<5)
+        {
+          glVertex3f (corners[3].x, corners[3].y, corners[3].z);
+          glVertex3f (corners[0].x, corners[0].y, corners[0].z);
+        }
+      if (edges & 1<<6)
+        {
+          glVertex3f (corners[0].x, corners[0].y, corners[0].z);
+          glVertex3f (corners[5].x, corners[5].y, corners[5].z);
+        }
+      if (edges & 1<<7)
+        {
+          glVertex3f (corners[0].x, corners[0].y, corners[0].z);
+          glVertex3f (corners[6].x, corners[6].y, corners[6].z);
+        }
+      if (edges & 1<<8)
+        {
+          glVertex3f (corners[1].x, corners[1].y, corners[1].z);
+          glVertex3f (corners[5].x, corners[5].y, corners[5].z);
+        }
+      if (edges & 1<<9)
+        {
+          glVertex3f (corners[5].x, corners[5].y, corners[5].z);
+          glVertex3f (corners[2].x, corners[2].y, corners[2].z);
+        }
+      glEnd();
+      glEnable (GL_TEXTURE_2D);
+      glEnable (GL_LIGHTING);
     }
 }
 
@@ -721,6 +1254,7 @@ draw_axis (ModeInfo *mi)
   s = 0.96;
   glScalef (s, s, s);   /* tighten up the enclosing sphere */
 
+  glLineWidth (1);
   glColor3f (0.5, 0.5, 0);
 
   glRotatef (90,  1, 0, 0);    /* unit_sphere is off by 90 */
@@ -754,6 +1288,29 @@ planet_handle_event (ModeInfo *mi, XEvent *event)
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
       if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
         {
+          int i;
+          double cf = gp->current_frame;
+
+          /* Switch between the satellite and flat map, preserving position. */
+          if (gp->day)   XDestroyImage (gp->day);
+          if (gp->night) XDestroyImage (gp->night);
+          if (gp->cvt)   XDestroyImage (gp->cvt);
+          gp->day    = 0;
+          gp->night  = 0;
+          gp->cvt    = 0;
+
+          for (i = 0; i < gp->nimages; i++)
+            if (gp->images[i]) XDestroyImage (gp->images[i]);
+          free (gp->images);
+          gp->images = 0;
+
+          which_image  = strdup (!strcmp (which_image, "BUILTIN_DAY")
+                                 ? "BUILTIN_FLAT" : "BUILTIN_DAY");
+          which_image2 = strdup (!strcmp (which_image2, "BUILTIN_NIGHT")
+                                 ? "BUILTIN_FLAT" : "BUILTIN_NIGHT");
+          load_images (mi);
+          gp->current_frame = cf;
+# if 0
           switch (gp->state) {
           case FLAT: case ICO: case STEL: case AXIS: case ICO2:
             gp->ratio = 1;
@@ -761,6 +1318,7 @@ planet_handle_event (ModeInfo *mi, XEvent *event)
           default:
             break;
           }
+# endif
           return True;
         }
     }
@@ -786,6 +1344,7 @@ init_planet (ModeInfo * mi)
   gp->state = STARTUP;
   gp->ratio = 0;
   gp->font_data = load_texture_font (mi->dpy, "labelFont");
+  gp->delay = MI_DELAY(mi);
 
   {
     double spin_speed	= 0.1;
@@ -795,6 +1354,7 @@ init_planet (ModeInfo * mi)
 			    0, 1,
 			    do_wander ? wander_speed : 0,
 			    False);
+    gp->rot2 = make_rotator (0, 0, 0, 0, wander_speed, False);
     gp->trackball = gltrackball_init (True);
   }
 
@@ -813,11 +1373,10 @@ init_planet (ModeInfo * mi)
 
   if (!wire)
     {
-      GLfloat pos[4] = {0.4, 0.2, 0.4, 0.0};
-      GLfloat amb[4] = {0.4, 0.4, 0.4, 1.0};
-      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
-      GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
-
+      GLfloat pos[4] = {1, 1, 1, 0};
+      GLfloat amb[4] = {0, 0, 0, 1};
+      GLfloat dif[4] = {1, 1, 1, 1};
+      GLfloat spc[4] = {0, 1, 1, 1};
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
       glLightfv(GL_LIGHT0, GL_POSITION, pos);
@@ -854,6 +1413,7 @@ draw_planet (ModeInfo * mi)
   int wire = MI_IS_WIREFRAME(mi);
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
+  long delay = gp->delay;
   double x, y, z;
 
   if (!gp->glx_context)
@@ -869,7 +1429,10 @@ draw_planet (ModeInfo * mi)
   if (! gp->button_down_p)
     switch (gp->state) {
     case STARTUP:  gp->ratio += speed * 0.01;  break;
-    case FLAT:     gp->ratio += speed * 0.005; break;
+    case FLAT:     gp->ratio += speed * 0.005 *
+        /* Stay flat longer if animating day and night. */
+        (gp->nimages <= 1 ? 1 : 0.3);
+      break;
     case FOLD:     gp->ratio += speed * 0.01;  break;
     case ICO:      gp->ratio += speed * 0.01;  break;
     case STEL_IN:  gp->ratio += speed * 0.05;  break;
@@ -918,6 +1481,18 @@ draw_planet (ModeInfo * mi)
   gltrackball_rotate (gp->trackball);
   glRotatef (current_device_rotation(), 0, 0, 1);
 
+# ifdef HAVE_MOBILE   /* Fill more of the screen. */
+    {
+      int size = MI_WIDTH(mi) < MI_HEIGHT(mi)
+        ? MI_WIDTH(mi) : MI_HEIGHT(mi);
+      GLfloat s = (size > 768 ? 1.4 :  /* iPad */
+                   2);                 /* iPhone */
+      glScalef (s, s, s);
+      if (MI_WIDTH(mi) < MI_HEIGHT(mi))
+        glRotatef (90, 0, 0, 1);
+    }
+# endif
+
   if (gp->state != STARTUP)
     {
       get_position (gp->rot, &x, &y, &z, !gp->button_down_p);
@@ -929,9 +1504,10 @@ draw_planet (ModeInfo * mi)
 
   if (do_roll && gp->state != STARTUP)
     {
-      get_rotation (gp->rot, &x, &y, 0, !gp->button_down_p);
-      glRotatef (x * 360, 1.0, 0.0, 0.0);
-      glRotatef (y * 360, 0.0, 1.0, 0.0);
+      double max = 65;
+      get_position (gp->rot2, &x, &y, 0, !gp->button_down_p);
+      glRotatef (max/2 - x*max, 1, 0, 0);
+      glRotatef (max/2 - y*max, 0, 1, 0);
     }
 
   if (do_stars)
@@ -949,11 +1525,57 @@ draw_planet (ModeInfo * mi)
     }
 
   if (! wire)
-    glEnable (GL_LIGHTING);
+    {
+      glEnable (GL_LIGHTING);
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
 
   if (do_texture)
     glEnable(GL_TEXTURE_2D);
 
+  if (do_texture /* && !gp->button_down_p */)
+    {
+      int i;
+      int prev = gp->current_frame;
+
+      /* By default, advance terminator by about an hour every 5 seconds. */
+      gp->current_frame += 0.1 * speed * (gp->nimages / 360.0);
+      while (gp->current_frame >= gp->nimages)
+        gp->current_frame -= gp->nimages;
+      i = gp->current_frame;
+
+      /* Load the current image into the texture.
+       */
+      if (i != prev || !gp->images[i])
+        {
+          double start = double_time();
+          cache_current_frame (mi);
+
+          glBindTexture (GL_TEXTURE_2D, gp->tex1);
+
+          /* Must be after glBindTexture */
+          glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+          glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+                        gp->images[i]->width,
+                        gp->images[i]->height, 0,
+                        GL_RGBA, GL_UNSIGNED_BYTE,
+                        gp->images[i]->data);
+          check_gl_error ("texture");
+
+          /* If caching the image took a bunch of time, deduct that from
+             our per-frame delay to keep the timing a little smoother. */
+          delay -= 1000000 * (double_time() - start);
+          if (delay < 0) delay = 0;
+        }
+    }
+
+  glTranslatef (-0.5, -0.4, 0);
   glScalef (2.6, 2.6, 2.6);
 
   {
@@ -998,6 +1620,8 @@ draw_planet (ModeInfo * mi)
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers(dpy, window);
+
+  MI_DELAY(mi) = delay;
 }
 
 
@@ -1005,6 +1629,16 @@ ENTRYPOINT void
 free_planet (ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
+  int i;
+
+  if (gp->day)   XDestroyImage (gp->day);
+  if (gp->night) XDestroyImage (gp->night);
+  if (gp->dusk)  XDestroyImage (gp->dusk);
+  if (gp->cvt)   XDestroyImage (gp->cvt);
+
+  for (i = 0; i < gp->nimages; i++)
+    if (gp->images[i]) XDestroyImage (gp->images[i]);
+  free (gp->images);
 
   if (gp->glx_context) {
     glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));

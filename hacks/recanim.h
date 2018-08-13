@@ -1,4 +1,4 @@
-/* recanim, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -23,5 +23,14 @@ extern record_anim_state *screenhack_record_anim_init (Screen *, Window,
                                                        int frames);
 extern void screenhack_record_anim (record_anim_state *);
 extern void screenhack_record_anim_free (record_anim_state *);
+
+extern time_t screenhack_record_anim_time (time_t *);
+extern void screenhack_record_anim_gettimeofday (struct timeval *
+# ifdef GETTIMEOFDAY_TWO_ARGS
+                                                 , struct timezone *
+# endif
+                                                 );
+#define time screenhack_record_anim_time
+#define gettimeofday screenhack_record_anim_gettimeofday
 
 #endif /* __XSCREENSAVER_RECORD_ANIM_H__ */

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -458,6 +458,8 @@ jwxyz_load_native_font (Window main_window, int traits_jwxyz, int mask_jwxyz,
       nsfont = try_font (traits, mask, font_name, size);
     }
   }
+
+  [font_name release];
 
   if (nsfont)
   {

@@ -14,7 +14,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_crumbler 0
 # define release_crumbler 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -130,14 +129,15 @@ render_chunk (ModeInfo *mi, chunk *c)
   qh_mesh_t m;
   GLfloat d;
 
-  c->polygon_count = 0;
-  c->min.x = c->min.y = c->min.z =  999999;
-  c->max.x = c->max.y = c->max.z = -999999;
   if (c->nverts <= 3)
     {
       fprintf (stderr, "%s: nverts %d\n", progname, c->nverts);
       abort();
     }
+
+  c->polygon_count = 0;
+  c->min.x = c->min.y = c->min.z =  999999;
+  c->max.x = c->max.y = c->max.z = -999999;
 
   for (i = 0; i < c->nverts; i++)
     {
@@ -218,8 +218,9 @@ render_chunk (ModeInfo *mi, chunk *c)
 static void
 free_chunk (chunk *c)
 {
+  if (c->dlist)
+    glDeleteLists (c->dlist, 1);
   free (c->verts);
-  glDeleteLists (c->dlist, 1);
   free (c);
 }
 
@@ -334,15 +335,20 @@ split_chunk (ModeInfo *mi, chunk *c, int nchunks)
        render_chunk
    */
   crumbler_configuration *bp = &bps[MI_SCREEN(mi)];
-  chunk **chunks = (chunk **) calloc (nchunks, sizeof(*chunks));
-  int *keys = (int *) calloc (nchunks, sizeof(*keys));
+  chunk **chunks;
+  int *keys;
   int i, j;
-  chunk *c2;
+  int retries = 0;
+
+ RETRY:
+  chunks = (chunk **) calloc (nchunks, sizeof(*chunks));
+  keys = (int *) calloc (nchunks, sizeof(*keys));
 
   for (i = 0; i < nchunks; i++)
     {
       /* Fill keys with random numbers that are not duplicates. */
       Bool ok = True;
+      chunk *c2 = 0;
       if (nchunks >= c->nverts)
         {
           fprintf (stderr, "%s: nverts %d nchunks %d\n", progname,
@@ -351,21 +357,21 @@ split_chunk (ModeInfo *mi, chunk *c, int nchunks)
         }
       do {
         keys[i] = random() % c->nverts;
+        ok = True;
         for (j = 0; j < i; j++)
           if (keys[i] == keys[j])
             {
               ok = False;
               break;
             }
-        ok = True;
       } while (!ok);
 
       c2 = make_chunk();
       chunks[i] = c2;
       chunks[i]->nverts = 0;
       c2->verts = (qh_vertex_t *) calloc (c->nverts, sizeof(*c2->verts));
-      c2->color = (c->color + (random() % (1 + (bp->ncolors / 3)))
-                   % bp->ncolors);
+      c2->color = (c->color + (random() % (1 + (bp->ncolors / 3))))
+                   % bp->ncolors;
     }
 
   /* Add the verts to the approprate chunks
@@ -375,6 +381,8 @@ split_chunk (ModeInfo *mi, chunk *c, int nchunks)
       qh_vertex_t *v0 = &c->verts[i];
       int target_chunk = -1;
       double target_d2 = 9999999;
+      chunk *c2 = 0;
+
       for (j = 0; j < nchunks; j++)
         {
           qh_vertex_t *v1 = &c->verts[keys[j]];
@@ -392,17 +400,39 @@ split_chunk (ModeInfo *mi, chunk *c, int nchunks)
 
       c2 = chunks[target_chunk];
       c2->verts[c2->nverts++] = *v0;
+      if (c2->nverts > c->nverts) abort();
     }
+
+  free (keys);
+  keys = 0;
 
   for (i = 0; i < nchunks; i++)
     {
-      c2 = chunks[i];
+      chunk *c2 = chunks[i];
+
+      /* It is possible that the keys we have chosen have resulted in one or
+         more cells that have 3 or fewer points in them. If that's the case,
+         re-randomize.
+       */
+      if (c2->nverts <= 3)
+        {
+          for (j = 0; j < nchunks; j++)
+            free_chunk (chunks[j]);
+          free (chunks);
+          chunks = 0;
+          if (retries++ > 100)
+            {
+              fprintf(stderr, "%s: unsplittable\n", progname);
+              abort();
+            }
+          goto RETRY;
+        }
+
       if (i == 0)  /* The one we're gonna keep */
         pad_chunk (c2, c->nverts);
       render_chunk (mi, c2);
     }
 
-  free (keys);
   return chunks;
 }
 
@@ -646,6 +676,14 @@ init_crumbler (ModeInfo *mi)
 # undef R
     }
 
+# ifdef HAVE_MOBILE
+#  ifdef USE_IPHONE
+     density *= 0.5;  /* iPhone 6s runs out of memory at 4500 nverts. */
+#  else
+     density *= 0.3;  /* Android Nexus_5_8.1 emulator runs out earlier. */
+#  endif
+# endif
+
   {
     chunk *c;
     bp->nchunks = 1;
@@ -816,6 +854,21 @@ draw_crumbler (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+
+ENTRYPOINT void
+free_crumbler (ModeInfo *mi)
+{
+  crumbler_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  free (bp->trackball);
+  free (bp->rot);
+  free (bp->colors);
+  for (i = 0; i < bp->nchunks; i++)
+    free_chunk (bp->chunks[i]);
+  free (bp->chunks);
+}
+
 
 XSCREENSAVER_MODULE ("Crumbler", crumbler)
 

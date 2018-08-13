@@ -40,6 +40,9 @@
 #include "screenhackI.h"
 #include "recanim.h"
 
+#undef gettimeofday  /* wrapped by recanim.h */
+#undef time
+
 struct record_anim_state {
   Screen *screen;
   Window window;
@@ -57,6 +60,62 @@ struct record_anim_state {
   GC gc;
 # endif /* !USE_GL */
 };
+
+
+static double
+double_time (void)
+{
+  struct timeval now;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday(&now, &tzp);
+# else
+  gettimeofday(&now);
+# endif
+
+  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+
+/* Some of the hacks set their timing based on the real-world wall clock,
+   so to make the animations record at a sensible speed, we need to slow
+   down that clock by discounting the time taken up by snapshotting and
+   saving the frame.
+ */
+static double recanim_time_warp = 0;
+
+void
+screenhack_record_anim_gettimeofday (struct timeval *tv
+# ifdef GETTIMEOFDAY_TWO_ARGS
+                                     , struct timezone *tz
+# endif
+                                     )
+{
+  gettimeofday (tv
+# ifdef GETTIMEOFDAY_TWO_ARGS
+                , tz
+# endif
+                );
+  tv->tv_sec  -= (time_t) recanim_time_warp;
+  tv->tv_usec -= 1000000 * (recanim_time_warp - (time_t) recanim_time_warp);
+}
+
+time_t
+screenhack_record_anim_time (time_t *o)
+{
+  struct timeval tv;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tz;
+# endif
+  screenhack_record_anim_gettimeofday (&tv
+# ifdef GETTIMEOFDAY_TWO_ARGS
+                                       , &tz
+# endif
+                                       );
+  if (o) *o = tv.tv_sec;
+  return tv.tv_sec;
+}
+
 
 record_anim_state *
 screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
@@ -147,6 +206,7 @@ void
 screenhack_record_anim (record_anim_state *st)
 {
   int bytes_per_line = st->xgwa.width * 3;
+  double start_time = double_time();
 
 # ifndef USE_GL
 
@@ -264,6 +324,8 @@ screenhack_record_anim (record_anim_state *st)
 
   if (++st->frame_count >= st->target_frames)
     screenhack_record_anim_free (st);
+
+  recanim_time_warp += double_time() - start_time;
 }
 
 

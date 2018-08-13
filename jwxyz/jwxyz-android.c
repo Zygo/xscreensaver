@@ -1112,10 +1112,11 @@ jwxyz_gl_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
 
     glBindTexture (GL_TEXTURE_2D, src->texture);
 
-    jwxyz_gl_draw_image (GL_TEXTURE_2D, to_pow2(src->frame.width),
+    jwxyz_gl_draw_image (dpy, gc, GL_TEXTURE_2D, to_pow2(src->frame.width),
                          to_pow2(src->frame.height),
                          src_x, src->frame.height - src_y - height,
-                         width, height, dst_x, dst_y);
+                         jwxyz_drawable_depth (src), width, height,
+                         dst_x, dst_y, False);
     return;
   }
 
@@ -1615,7 +1616,7 @@ jwxyz_draw_random_image (Display *dpy, Drawable drawable, GC gc)
   jmethodID   m = (*env)->GetMethodID (env, c, 
                                        (grab_p
                                         ? "getScreenshot"
-                                        : "loadRandomImage"),
+                                        : "checkThenLoadRandomImage"),
                                        "(IIZ)[Ljava/lang/Object;");
   if ((*env)->ExceptionOccurred(env)) abort();
   jobjectArray img_name = (

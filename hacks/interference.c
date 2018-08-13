@@ -696,6 +696,7 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   int mono;
   int gray;
   int radius;
+  double scale = 1;
   XGCValues val;
   Bool dbuf = get_boolean_resource (dpy, "doubleBuffer", "Boolean");
 
@@ -748,6 +749,9 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   radius = get_integer_resource(dpy, "radius", "Integer");;
   if(radius < 1)
     radius = 1;
+
+  if (xgwa.width > 2560) scale = 3.5;  /* Retina displays */
+  radius *= scale;
 
   create_image(dpy, c, &xgwa);
 
@@ -843,7 +847,7 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
       ((float)radius);
     c->wave_height[i] = 
       (unsigned)
-      ((max + max*cos(fi/50.0)) / 2.0);
+      ((max + max*cos(fi/(50.0 * scale))) / 2.0);
   }
 
   c->source = calloc(c->count, sizeof(struct inter_source));

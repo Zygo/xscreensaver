@@ -16,6 +16,8 @@
 #define _GNU_SOURCE
 
 #include "utils.h"
+#include "visual.h"
+#include "xft.h"
 #include "font-retry.h"
 
 extern const char *progname;
@@ -23,13 +25,27 @@ extern const char *progname;
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-XFontStruct *
-load_font_retry (Display *dpy, const char *xlfd)
+static void *
+load_font_retry_1 (Display *dpy, int screen, const char *xlfd, Bool xft_p)
 {
-  XFontStruct *f = XLoadQueryFont (dpy, xlfd);
+
+# ifdef USE_XFT
+#  define LOADFONT() (xft_p \
+                      ? (void *) XftFontOpenXlfd (dpy, screen, xlfd) \
+                      : (void *) XLoadQueryFont (dpy, xlfd))
+# else
+#  define LOADFONT() ((void *) XLoadQueryFont (dpy, xlfd))
+# endif
+
+  void *f = LOADFONT();
+
+# ifndef USE_XFT
+  if (xft_p) abort();
+# endif
+
 # ifdef HAVE_JWXYZ
   return f;
-# else
+# else /* !HAVE_JWXYZ */
   if (f)
     return f;
   else
@@ -73,7 +89,8 @@ load_font_retry (Display *dpy, const char *xlfd)
         {
           fprintf (stderr, "%s: unloadable, unparsable font: \"%s\"\n",
                    progname, xlfd);
-          return XLoadQueryFont (dpy, "fixed");
+          xlfd = "fixed";
+          return LOADFONT();
         }
       else
         {
@@ -129,7 +146,7 @@ load_font_retry (Display *dpy, const char *xlfd)
                                  "*",			/* average width */
                                  charsets[a]);
                         /* fprintf(stderr, "%s: trying %s\n", progname, buf);*/
-                        f = XLoadQueryFont (dpy, buf);
+                        f = LOADFONT();
                         if (f)
                           {
                             /* fprintf (stderr,
@@ -141,8 +158,32 @@ load_font_retry (Display *dpy, const char *xlfd)
 
           fprintf (stderr, "%s: unable to find any alternatives to \"%s\"\n",
                    progname, xlfd);
-          return XLoadQueryFont (dpy, "fixed");
+          xlfd = "fixed";
+          return LOADFONT();
         }
     }
-# endif
+# endif /* !HAVE_JWXYZ */
 }
+
+XFontStruct *
+load_font_retry (Display *dpy, const char *xlfd)
+{
+  return (XFontStruct *) load_font_retry_1 (dpy, 0, xlfd, 0);
+}
+
+#ifdef USE_XFT
+XftFont *
+load_xft_font_retry (Display *dpy, int screen, const char *xlfd)
+{
+  return (XftFont *) load_font_retry_1 (dpy, screen, xlfd, 1);
+}
+
+#elif defined(HAVE_JWXYZ)
+
+XftFont *
+load_xft_font_retry (Display *dpy, int screen, const char *xlfd)
+{
+  return XftFontOpenXlfd (dpy, screen, xlfd);
+}
+
+#endif /* !HAVE_JWXYZ */

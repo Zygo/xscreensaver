@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2017 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2018 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -727,7 +727,9 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
         {
           struct in_addr in2;
           unsigned long mask;
-          if (ifa->ifa_addr->sa_family != AF_INET)
+          if (! ifa->ifa_addr)
+            continue;
+          else if (ifa->ifa_addr->sa_family != AF_INET)
             {
               if (pd->debug_p)
                 fprintf (stderr, "%s:     if: %4s: %s\n", progname,

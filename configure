@@ -16114,7 +16114,7 @@ APPDEFAULTS=$ac_x_app_defaults
 
 
 
-ac_config_files="$ac_config_files Makefile utils/Makefile jwxyz/Makefile hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/Makefile driver/xscreensaver.pam driver/xscreensaver-demo.glade2 driver/XScreenSaver.ad"
+ac_config_files="$ac_config_files Makefile utils/Makefile jwxyz/Makefile hacks/Makefile hacks/images/Makefile hacks/glx/Makefile po/Makefile.in driver/Makefile driver/xscreensaver.pam driver/xscreensaver-demo.glade2 driver/XScreenSaver.ad"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -16825,6 +16825,7 @@ do
     "utils/Makefile") CONFIG_FILES="$CONFIG_FILES utils/Makefile" ;;
     "jwxyz/Makefile") CONFIG_FILES="$CONFIG_FILES jwxyz/Makefile" ;;
     "hacks/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/Makefile" ;;
+    "hacks/images/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/images/Makefile" ;;
     "hacks/glx/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/glx/Makefile" ;;
     "po/Makefile.in") CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
     "driver/Makefile") CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;

@@ -46,6 +46,18 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.40	* New hacks, 'filmleader', 'vfeedback'.
+	* New hack, 'glitchpeg' (X11 and macOS only).
+	* GLPlanet blends between day and night maps at the dusk terminator.
+	* DymaxionMap can display arbitrary map images, and animate sunlight
+          across the flattened globe.
+	* Tessellimage can draw either Delaunay or Voronoi tilings.
+	* XAnalogTV includes test cards.
+	* Android: These hacks work now: 'blitspin', 'bumps', 'cityflow',
+	  'endgame', 'esper', 'flipscreen3d', 'gleidescope', 'glslideshow',
+	  'jigglypuff', 'queens', 'tessellimage', 'xanalogtv', 'xmatrix',
+	  'zoom'.
+
 5.39	* New hacks, 'razzledazzle', 'peepers', 'crumbler' and `maze3d'.
 	* More heuristics for using RSS feeds as image sources.
 	* Android: Image loading works.

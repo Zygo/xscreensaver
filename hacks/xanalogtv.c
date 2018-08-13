@@ -18,10 +18,6 @@
  * pictures from your images directory, some show color bars, and some
  * just have static. Some channels receive two stations simultaneously
  * so you see a ghostly, misaligned image.
- *
- * It's easy to add some test patterns by compiling in an XPM, but I
- * can't find any that are clearly freely redistributable.
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,10 +38,16 @@
 #include "ximage-loader.h"
 #include "analogtv.h"
 
-#include "images/logo-50.xpm"
+#define USE_TEST_PATTERNS
 
-/* #define DEBUG 1 */
-/* #define USE_TEST_PATTERNS */
+#include "images/gen/logo-180_png.h"
+
+#ifdef USE_TEST_PATTERNS
+# include "images/gen/testcard_rca_png.h"
+# include "images/gen/testcard_pm5544_png.h"
+# include "images/gen/testcard_bbcf_png.h"
+#endif
+
 
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -75,6 +77,10 @@ struct state {
   int n_stations;
   analogtv_input *stations[MAX_STATIONS];
   Bool image_loading_p;
+  XImage *logo, *logo_mask;
+# ifdef USE_TEST_PATTERNS
+  XImage *test_patterns[MAX_STATIONS];
+# endif
 
   int curinputi;
   int change_ticks;
@@ -155,13 +161,18 @@ update_smpte_colorbars(analogtv_input *input)
   ypos=ANALOGTV_V/5;
   xpos=ANALOGTV_VIS_START + ANALOGTV_VIS_LEN/2;
 
-  if (! st->colorbars_only_p)
+  /* if (! st->colorbars_only_p) */
   {
     char localname[256];
     if (gethostname (localname, sizeof (localname))==0) {
+      int L;
       localname[sizeof(localname)-1]=0; /* "The returned name is null-
                                            terminated unless insufficient 
                                            space is provided" */
+      L = strlen(localname);
+      if (L > 6 && !strcmp(".local", localname+L-6))
+        localname[L-6] = 0;
+
       localname[24]=0; /* limit length */
 
       analogtv_draw_string_centered(input, &st->ugly_font, localname,
@@ -170,9 +181,15 @@ update_smpte_colorbars(analogtv_input *input)
   }
   ypos += st->ugly_font.char_h*5/2;
 
-  if (! st->colorbars_only_p)
-    analogtv_draw_xpm(st->tv, input,
-                      logo_50_xpm, xpos - 100, ypos);
+  if (st->logo)
+    {
+      int w2 = st->tv->xgwa.width  * 0.2;
+      int h2 = st->tv->xgwa.height * 0.2;
+      analogtv_load_ximage (st->tv, input, st->logo, st->logo_mask,
+                            (st->tv->xgwa.width - w2) / 2,
+                            st->tv->xgwa.height * 0.28,
+                            w2, h2);
+    }
 
   ypos += 58;
 
@@ -182,7 +199,7 @@ update_smpte_colorbars(analogtv_input *input)
   ypos += st->ugly_font.char_h*4;
 #endif
 
-  if (! st->colorbars_only_p)
+  /* if (! st->colorbars_only_p) */
   {
     char timestamp[256];
     time_t t = time ((time_t *) 0);
@@ -198,73 +215,6 @@ update_smpte_colorbars(analogtv_input *input)
   
   input->next_update_time += 1.0;
 }
-
-#if 0
-static void
-draw_color_square(analogtv_input *input)
-{
-  double xs,ys;
-
-  analogtv_draw_solid_rel_lcp(input, 0.0, 1.0, 0.0, 1.0,
-                              30.0, 0.0, 0.0);
-  
-  for (xs=0.0; xs<0.9999; xs+=1.0/15.0) {
-    analogtv_draw_solid_rel_lcp(input, xs, xs, 0.0, 1.0,
-                                100.0, 0.0, 0.0);
-  }
-
-  for (ys=0.0; ys<0.9999; ys+=1.0/11.0) {
-    analogtv_draw_solid_rel_lcp(input, 0.0, 1.0, ys, ys,
-                                100.0, 0.0, 0.0);
-  }
-
-  for (ys=0.0; ys<0.9999; ys+=0.01) {
-    
-    analogtv_draw_solid_rel_lcp(input, 0.0/15, 1.0/15, ys, ys+0.01,
-                                40.0, 45.0, 103.5*(1.0-ys) + 347.0*ys);
-
-    analogtv_draw_solid_rel_lcp(input, 14.0/15, 15.0/15, ys, ys+0.01,
-                                40.0, 45.0, 103.5*(ys) + 347.0*(1.0-ys));
-  }
-
-  for (ys=0.0; ys<0.9999; ys+=0.02) {
-    analogtv_draw_solid_rel_lcp(input, 1.0/15, 2.0/15, ys*2.0/11.0+1.0/11.0, 
-                                (ys+0.01)*2.0/11.0+1.0/11.0,
-                                100.0*(1.0-ys), 0.0, 0.0);
-  }
-
-
-}
-#endif
-
-static const char *xanalogtv_defaults [] = {
-  ".background:	        black",
-  ".foreground:	        white",
-  "*delay:	        5",
-  "*grabDesktopImages:  False",   /* HAVE_JWXYZ */
-  "*chooseRandomImages: True",    /* HAVE_JWXYZ */
-  ANALOGTV_DEFAULTS
-  0,
-};
-
-static XrmOptionDescRec xanalogtv_options [] = {
-  { "-delay",		".delay",		XrmoptionSepArg, 0 },
-  { "-colorbars-only",	".colorbarsOnly",	XrmoptionNoArg, "True" },
-  ANALOGTV_OPTIONS
-  { 0, 0, 0, 0 }
-};
-
-
-#ifdef USE_TEST_PATTERNS
-
-#include "images/earth.xpm"
-
-char **test_patterns[] = {
-  earth_xpm,
-};
-
-#endif
-
 
 static int
 getticks(struct state *st)
@@ -346,7 +296,7 @@ static void image_loaded_cb (Screen *screen, Window window, Drawable pixmap,
     XFreePixmap(st->dpy, pixmap);
 
     analogtv_setup_sync(input, 1, (random()%20)==0);
-    analogtv_load_ximage(st->tv, input, image);
+    analogtv_load_ximage(st->tv, input, image, 0, 0, 0, 0, 0);
     if (image) XDestroyImage(image);
     st->chansettings[this].image_loaded_p = True;
 #if 0
@@ -412,9 +362,13 @@ static void load_station_images(struct state *st)
     }
 #ifdef USE_TEST_PATTERNS
     else if (random()%5==0) {
-      j=random()%countof(test_patterns);
-      analogtv_setup_sync(input);
-      analogtv_load_xpm(tv, input, test_patterns[j]);
+      int count = 0, j;
+      for (count = 0; st->test_patterns[count]; count++)
+        ;
+      j=random()%count;
+      analogtv_setup_sync(input, 1, 0);
+      analogtv_load_ximage(st->tv, input, st->test_patterns[j],
+                           0, 0, 0, 0, 0);
       analogtv_setup_teletext(input);
     }
 #endif
@@ -434,6 +388,7 @@ xanalogtv_init (Display *dpy, Window window)
   int i;
   int last_station=42;
   int delay = get_integer_resource(dpy, "delay", "Integer");
+
   if (delay < 1) delay = 1;
 
   analogtv_make_font(dpy, window, &st->ugly_font, 7, 10, "6x10");
@@ -444,6 +399,48 @@ xanalogtv_init (Display *dpy, Window window)
 
   st->colorbars_only_p =
     get_boolean_resource(dpy, "colorbarsOnly", "ColorbarsOnly");
+
+  /* if (!st->colorbars_only_p) */
+    {
+      int w, h;
+      Pixmap mask = 0;
+      Pixmap p = image_data_to_pixmap (dpy, window,
+                                       logo_180_png, sizeof(logo_180_png),
+                                       &w, &h, &mask);
+      st->logo = XGetImage (dpy, p, 0, 0, w, h, ~0L, ZPixmap);
+      XFreePixmap (dpy, p);
+      if (mask)
+        {
+          st->logo_mask = XGetImage (dpy, mask, 0, 0, w, h, ~0L, ZPixmap);
+          XFreePixmap (dpy, mask);
+        }
+    }
+
+# ifdef USE_TEST_PATTERNS
+  {
+    int i = 0;
+    int w, h;
+    Pixmap p;
+    p = image_data_to_pixmap (dpy, window,
+                              testcard_rca_png, sizeof(testcard_rca_png),
+                              &w, &h, 0);
+    st->test_patterns[i++] = XGetImage (dpy, p, 0, 0, w, h, ~0L, ZPixmap);
+    XFreePixmap (dpy, p);
+
+    p = image_data_to_pixmap (dpy, window,
+                              testcard_pm5544_png, sizeof(testcard_pm5544_png),
+                              &w, &h, 0);
+    st->test_patterns[i++] = XGetImage (dpy, p, 0, 0, w, h, ~0L, ZPixmap);
+    XFreePixmap (dpy, p);
+
+    p = image_data_to_pixmap (dpy, window,
+                              testcard_bbcf_png, sizeof(testcard_bbcf_png),
+                              &w, &h, 0);
+    st->test_patterns[i++] = XGetImage (dpy, p, 0, 0, w, h, ~0L, ZPixmap);
+    XFreePixmap (dpy, p);
+  }
+# endif /* USE_TEST_PATTERNS */
+
 
   add_stations(st);
 
@@ -622,8 +619,36 @@ xanalogtv_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   analogtv_release(st->tv);
+  if (st->logo) XDestroyImage (st->logo);
+  if (st->logo_mask) XDestroyImage (st->logo_mask);
+# ifdef USE_TEST_PATTERNS
+  {
+    int i;
+    for (i = 0; i < countof(st->test_patterns); i++)
+      if (st->test_patterns[i]) XDestroyImage (st->test_patterns[i]);
+  }
+# endif
   free (st);
 }
+
+
+static const char *xanalogtv_defaults [] = {
+  ".background:	        black",
+  ".foreground:	        white",
+  "*delay:	        5",
+  "*grabDesktopImages:  False",   /* HAVE_JWXYZ */
+  "*chooseRandomImages: True",    /* HAVE_JWXYZ */
+  "*colorbarsOnly:      False",
+  ANALOGTV_DEFAULTS
+  0,
+};
+
+static XrmOptionDescRec xanalogtv_options [] = {
+  { "-delay",		".delay",		XrmoptionSepArg, 0 },
+  { "-colorbars-only",	".colorbarsOnly",	XrmoptionNoArg, "True" },
+  ANALOGTV_OPTIONS
+  { 0, 0, 0, 0 }
+};
 
 
 XSCREENSAVER_MODULE ("XAnalogTV", xanalogtv)

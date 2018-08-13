@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2016 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2018 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -316,9 +316,11 @@ static void
 colorbars (Screen *screen, Visual *visual, Drawable drawable, Colormap cmap)
 {
   Pixmap mask = 0;
+  unsigned long *pixels; /* ignored - unfreed */
+  int npixels;
   Pixmap logo = xscreensaver_logo (screen, visual, drawable, cmap,
                                    BlackPixelOfScreen (screen),
-                                   0, 0, &mask, True);
+                                   &pixels, &npixels, &mask, True);
   draw_colorbars (screen, visual, drawable, cmap, 0, 0, 0, 0, logo, mask);
   XFreePixmap (DisplayOfScreen (screen), logo);
   XFreePixmap (DisplayOfScreen (screen), mask);

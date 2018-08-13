@@ -30,16 +30,16 @@
    <vgroup>
     <number id="tvcolor" type="slider" arg="-tv-color %"
             _label="Color Knob" _low-label="Low" _high-label="High"
-            low="0" high="1000" default="70"/>
+            low="0" high="400" default="70"/>
     <number id="tvtint" type="slider" arg="-tv-tint %"
             _label="Tint Knob" _low-label="Low" _high-label="High"
-            low="0" high="100" default="5"/>
+            low="0" high="360" default="5"/>
     <number id="tvbrightness" type="slider" arg="-tv-brightness %"
             _label="Brightness Knob" _low-label="Low" _high-label="High"
-            low="0" high="200" default="150"/>
+            low="-75.0" high="100.0" default="3.0"/>
     <number id="tvcontrast" type="slider" arg="-tv-contrast %"
             _label="Contrast Knob" _low-label="Low" _high-label="High"
-            low="0" high="1500" default="1000"/>
+            low="0" high="500" default="150"/>
    </vgroup>
   </hgroup>
 

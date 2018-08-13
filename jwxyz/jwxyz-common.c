@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -103,21 +103,21 @@ XDisplayHeightMM (Display *dpy, int screen)
 unsigned long
 XBlackPixelOfScreen(Screen *screen)
 {
-  return DefaultVisualOfScreen (screen)->rgba_masks[3];
+  return DefaultVisualOfScreen (screen)->alpha_mask;
 }
 
 unsigned long
 XWhitePixelOfScreen(Screen *screen)
 {
-  const unsigned long *masks = DefaultVisualOfScreen (screen)->rgba_masks;
-  return masks[0] | masks[1] | masks[2] | masks[3];
+  Visual *v = DefaultVisualOfScreen (screen);
+  return (v->red_mask | v->green_mask |v->blue_mask | v->alpha_mask);
 }
 
 unsigned long
 XCellsOfScreen(Screen *screen)
 {
-  const unsigned long *masks = DefaultVisualOfScreen (screen)->rgba_masks;
-  return masks[0] | masks[1] | masks[2];
+  Visual *v = DefaultVisualOfScreen (screen);
+  return (v->red_mask | v->green_mask |v->blue_mask);
 }
 
 void
@@ -579,13 +579,12 @@ XGetGeometry (Display *dpy, Drawable d, Window *root_ret,
 Status
 XAllocColor (Display *dpy, Colormap cmap, XColor *color)
 {
-  const unsigned long *masks =
-    DefaultVisualOfScreen(DefaultScreenOfDisplay(dpy))->rgba_masks;
+  Visual *v = DefaultVisualOfScreen (DefaultScreenOfDisplay (dpy));
   color->pixel =
-    (((color->red   << 16) >> (31 - i_log2(masks[0]))) & masks[0]) |
-    (((color->green << 16) >> (31 - i_log2(masks[1]))) & masks[1]) |
-    (((color->blue  << 16) >> (31 - i_log2(masks[2]))) & masks[2]) |
-    masks[3];
+    (((color->red   << 16) >> (31 - i_log2(v->red_mask)))   & v->red_mask)   |
+    (((color->green << 16) >> (31 - i_log2(v->green_mask))) & v->green_mask) |
+    (((color->blue  << 16) >> (31 - i_log2(v->blue_mask)))  & v->blue_mask)  |
+    v->alpha_mask;
   return 1;
 }
 
@@ -714,6 +713,25 @@ ximage_putpixel_1 (XImage *ximage, int x, int y, unsigned long pixel)
 }
 
 static unsigned long
+ximage_getpixel_8 (XImage *ximage, int x, int y)
+{
+  return ((unsigned long)
+          *((uint8_t *) ximage->data +
+            (y * ximage->bytes_per_line) +
+            x));
+}
+
+static int
+ximage_putpixel_8 (XImage *ximage, int x, int y, unsigned long pixel)
+{
+  *((uint8_t *) ximage->data +
+    (y * ximage->bytes_per_line) +
+    x) = (uint8_t) pixel;
+  return 0;
+}
+
+
+static unsigned long
 ximage_getpixel_32 (XImage *ximage, int x, int y)
 {
   return ((unsigned long)
@@ -736,9 +754,9 @@ Status
 XInitImage (XImage *ximage)
 {
   if (!ximage->bytes_per_line)
-    ximage->bytes_per_line = (ximage->depth == 1
-                              ? (ximage->width + 7) / 8
-                              : ximage->width * 4);
+    ximage->bytes_per_line = (ximage->depth == 1 ? (ximage->width + 7) / 8 :
+                              ximage->depth == 8 ? ximage->width :
+                              ximage->width * 4);
 
   if (ximage->depth == 1) {
     ximage->f.put_pixel = ximage_putpixel_1;
@@ -746,6 +764,9 @@ XInitImage (XImage *ximage)
   } else if (ximage->depth == 32 || ximage->depth == 24) {
     ximage->f.put_pixel = ximage_putpixel_32;
     ximage->f.get_pixel = ximage_getpixel_32;
+  } else if (ximage->depth == 8) {
+    ximage->f.put_pixel = ximage_putpixel_8;
+    ximage->f.get_pixel = ximage_getpixel_8;
   } else {
     Assert (0, "unknown depth");
   }
@@ -770,9 +791,9 @@ XCreateImage (Display *dpy, Visual *visual, unsigned int depth,
   ximage->bitmap_pad = bitmap_pad;
   ximage->depth = depth;
   Visual *v = DefaultVisualOfScreen (DefaultScreenOfDisplay (dpy));
-  ximage->red_mask   = (depth == 1 ? 0 : v->rgba_masks[0]);
-  ximage->green_mask = (depth == 1 ? 0 : v->rgba_masks[1]);
-  ximage->blue_mask  = (depth == 1 ? 0 : v->rgba_masks[2]);
+  ximage->red_mask   = (depth == 1 ? 0 : v->red_mask);
+  ximage->green_mask = (depth == 1 ? 0 : v->green_mask);
+  ximage->blue_mask  = (depth == 1 ? 0 : v->blue_mask);
   ximage->bits_per_pixel = (depth == 1 ? 1 : visual_depth (NULL, NULL));
   ximage->bytes_per_line = bytes_per_line;
 
@@ -1497,11 +1518,10 @@ jwxyz_draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
   {
 # define ROTL(x, rot) (((x) << ((rot) & 31)) | ((x) >> (32 - ((rot) & 31))))
 
-    const unsigned long *masks =
-      DefaultVisualOfScreen (DefaultScreenOfDisplay(dpy))->rgba_masks;
-    unsigned shift = (i_log2 (masks[3]) - i_log2 (masks[1])) & 31;
-    uint32_t mask = ROTL(masks[1], shift) & masks[3],
-             color = gcv->foreground & ~masks[3];
+    Visual *v = DefaultVisualOfScreen (DefaultScreenOfDisplay(dpy));
+    unsigned shift = (i_log2 (v->alpha_mask) - i_log2 (v->green_mask)) & 31;
+    uint32_t mask = ROTL(v->green_mask, shift) & v->alpha_mask,
+             color = gcv->foreground & ~v->alpha_mask;
     uint32_t *s = (uint32_t *)data;
     uint32_t *end = s + (w * h);
     while (s < end) {
@@ -1768,7 +1788,7 @@ visual_depth (Screen *s, Visual *v)
 int
 visual_cells (Screen *s, Visual *v)
 {
-  return (int)(v->rgba_masks[0] | v->rgba_masks[1] | v->rgba_masks[2]);
+  return (int)(v->red_mask | v->green_mask | v->blue_mask);
 }
 
 int
@@ -1781,9 +1801,9 @@ void
 visual_rgb_masks (Screen *s, Visual *v, unsigned long *red_mask,
                   unsigned long *green_mask, unsigned long *blue_mask)
 {
-  *red_mask = v->rgba_masks[0];
-  *green_mask = v->rgba_masks[1];
-  *blue_mask = v->rgba_masks[2];
+  *red_mask = v->red_mask;
+  *green_mask = v->green_mask;
+  *blue_mask = v->blue_mask;
 }
 
 int

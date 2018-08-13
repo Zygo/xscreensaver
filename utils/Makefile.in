@@ -113,7 +113,8 @@ OBJS		= alpha.o colors.o fade.o grabscreen.o grabclient.o hsv.o \
 		  visual-gl.o xmu.o logo.o yarandom.o erase.o \
 		  xshm.o xdbe.o colorbars.o minixpm.o textclient.o \
 		  textclient-mobile.o aligned_malloc.o thread_util.o \
-		  async_netdb.o xft.o utf8wc.o pow2.o font-retry.o
+		  async_netdb.o xft.o utf8wc.o pow2.o \
+		  font-retry.o font-retry-xft.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
 		  yarandom.h erase.h xshm.h xdbe.h colorbars.h minixpm.h \
@@ -189,8 +190,14 @@ echo_tarfiles:
 
 
 # How we build object files in this directory.
+CCUTILS = $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
+	$(CC) -c $(CCUTILS) $<
+
+# Two versions of this: driver/ does not link with Xft, but hacks/ does.
+font-retry-xft.o: font-retry.c
+	$(CC) -c $(CCUTILS) -DUSE_XFT $< -o $@
+
 
 # Rules for generating the VMS makefiles on Unix, so that it doesn't have to
 # be done by hand...
@@ -257,6 +264,8 @@ fade.o: $(srcdir)/visual.h
 font-retry.o: ../config.h
 font-retry.o: $(srcdir)/font-retry.h
 font-retry.o: $(srcdir)/utils.h
+font-retry.o: $(srcdir)/visual.h
+font-retry.o: $(srcdir)/xft.h
 grabclient.o: ../config.h
 grabclient.o: $(srcdir)/grabscreen.h
 grabclient.o: $(srcdir)/resources.h
