@@ -1,0 +1,214 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "14-Jun-97" "X Version 11"
+.SH NAME
+attraction - interactions of opposing forces
+.SH SYNOPSIS
+.B attraction
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP] [\-points \fIint\fP] [\-threshold \fIint\fP]
+[\-mode balls | lines | polygons | splines | filled-splines | tails ]
+[\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP]
+[\-color-shift \fIint\fP] [\-radius \fIint\fP]
+[\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow]
+[\-orbit] [\-viscosity \fIfloat\fP]
+[\-walls] [\-nowalls] [\-maxspeed] [\-nomaxspeed]
+[\-correct-bounce] [\-fast-bounce]
+[\-fps]
+.SH DESCRIPTION
+The \fIattraction\fP program has several visually different modes of 
+operation, all of which are based on the interactions of a set of control
+points which attract each other up to a certain distance, and then begin
+to repel each other.  The attraction/repulsion is proportional to the 
+distance between any two particles.
+.SH OPTIONS
+.I attraction
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-points integer
+How many control points should be used, or 0 to select the number randomly.
+Default 0.  Between 3 and 15 works best.
+.TP 8
+.B \-threshold integer
+The distance (in pixels) from each particle at which the attractive force
+becomes repulsive.  Default 100.
+.TP 8
+.B \-mode "balls | lines | polygons | tails | splines | filled-splines"
+In \fIballs\fP mode (the default) the control points are drawn as filled
+circles.  The larger the circle, the more massive the particle.
+
+In \fIlines\fP mode, the control points are connected by straight lines;
+the effect is something like \fIqix\fP.
+
+In \fIpolygons\fP mode, the control points are connected by straight
+lines, and filled in.  This is most interesting in color.
+
+In \fIsplines\fP mode, a closed spline is interpolated from the control 
+points.
+
+In \fIfilled-splines\fP mode, the splines are filled in instead of being
+outlines.  This is most interesting in color.
+
+In \fItails\fP mode, the path which each particle follows is indicated
+by a worm-like trail, whose length is controlled by the \fIsegments\fP
+parameter.
+.TP 8
+.B \-size integer
+The size of the balls in pixels, or 0, meaning to select the sizes 
+randomly (the default.)  If this is specified, then all balls will be 
+the same size.  This option has an effect in all modes, since the ``size''
+of the balls controls their mass.
+.TP 8
+.B \-segments integer
+If in \fIlines\fP or \fIpolygons\fP mode, how many sets of line segments
+or polygons should be drawn. Default 500.  This has no effect in \fIballs\fP
+mode.  If \fIsegments\fP is 0, then no segments will ever be erased (this
+is only useful in color.)
+.TP 8
+.B \-delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default 10000, or about 0.01 seconds.
+.TP 8
+.B \-color-shift int
+If on a color display, the color of the line segments or polygons will 
+cycle through the color map.  This specifies how many lines will be drawn
+before a new color is chosen.  (When a small number of colors are available,
+increasing this value will yield smoother transitions.)  Default 3.
+This has no effect in \fIballs\fP mode.
+.TP 8
+.B \-radius
+The size in pixels of the circle on which the points are initially positioned.
+The default is slightly smaller than the size of the window.
+.TP 8
+.B \-glow
+This is consulted only in \fIballs\fP mode.  If this is specified, then 
+the saturation of the colors of the points will vary according to their
+current acceleration.  This has the effect that the balls flare brighter
+when they are reacting to each other most strongly.
+
+In \fIglow\fP mode, all of the balls will be drawn the same (random)
+color, modulo the saturation shifts.  In non-glow mode, the balls will
+each be drawn in a random color that doesn't change.
+.TP 8
+.B \-noglow
+Don't do ``glowing.''  This is the default.
+.TP 8
+.B \-vx pixels
+.TP 8
+.B \-vy pixels
+Initial velocity of the balls.  This has no effect in \fB\-orbit\fP mode.
+.TP 8
+.B \-orbit
+Make the initial force on each ball be tangential to the circle on which
+they are initially placed, with the right velocity to hold them in orbit
+about each other.  After a while, roundoff errors will cause the orbit
+to decay.
+.TP 8
+.B \-vmult float
+In orbit mode, the initial velocity of the balls is multiplied by this;
+a number less than 1 will make the balls pull closer together, and a larger
+number will make them move apart.  The default is 0.9, meaning a slight
+inward pull.
+.TP 8
+.B \-viscosity float
+This sets the viscosity of the hypothetical fluid through which the control
+points move; the default is 1, meaning no resistance.  Values higher than 1
+aren't interesting; lower values cause less motion.
+
+One interesting thing to try is
+.EX
+attraction -viscosity 0.8 -points 300 -size 10 -geometry =500x500
+.EE
+Give it a few seconds to settle down into a stable clump, and then move
+the drag the mouse through it to make "waves".
+.TP 8
+.B \-nowalls
+This will cause the balls to continue on past the edge of the
+screen or window.  They will still be kept track of and can come back.
+.TP 8
+.B \-walls
+This will cause the balls to bounce when they get
+to the edge of the screen or window.  This is the default behavior.
+.TP 8
+.B \-maxspeed
+Imposes a maximum speed (default).  If a ball ends up going faster than
+this, it will be treated as though there were .9  viscosity until it is
+under the limit. This stops the balls from continually accelerating (which
+they have a tendency to do), but also causes balls moving very fast to
+tend to clump in the lower right corner.
+.TP 8
+.B \-nomaxspeed
+If this is specified, no maximum speed is set for the balls.
+.TP 8
+.B \-fast-bounce
+Uses the old, simple bouncing algorithm (default).  This simply moves any
+ball that is out of bounds back to a wall and reverses its velocity.
+This works fine for most cases, but under some circumstances, the
+simplification can lead to annoying effects.
+.TP 8
+.B \-correct-bounce
+Uses a more intelligent bouncing algorithm.  This method actually reflects
+the balls off the walls until they are within bounds.  This can be slow
+if balls are bouncing a whole lot, perhaps because of -nomaxspeed.
+.TP 8
+.B \-graphmode none | x | y | both | speed
+For "x", "y", and "both", displays the given velocities of each ball as a
+bar graph in the same window as the balls.  For "speed", displays the total
+speed of each ball.  Default is "none".
+.BR
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1992, 1993, 1997 by Jamie Zawinski.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for any
+purpose is hereby granted without fee, provided that the above copyright
+notice appear in all copies and that both that copyright notice and this
+permission notice appear in supporting documentation.  No representations are
+made about the suitability of this software for any purpose.  It is provided
+"as is" without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
+
+Viscosity support by Philip Edward Cutone, III.
+
+Walls, speed limit options, new bouncing, graphs, and tail mode fix by
+Matthew Strait. 31 March 2001

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glmatrix" _label="GLMatrix" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=_dktSpsaCPg"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
+          convert="invert"/>
+
+  <number id="density" type="slider" arg="-density %"
+          _label="Glyph density" _low-label="Sparse" _high-label="Dense"
+          low="0" high="100" default="20"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Glyph speed" _low-label="Slow" _high-label="Fast"
+          low="0.1" high="8.0" default="1.0"/>
+
+  <select id="mode">
+    <option id="matrix" _label="Matrix encoding"/>
+    <option id="binary" _label="Binary encoding"      arg-set="-mode binary"/>
+    <option id="hex"    _label="Hexadecimal encoding" arg-set="-mode hex"/>
+    <option id="dna"    _label="Genetic encoding"     arg-set="-mode dna"/>
+  </select>
+
+  <hgroup>
+   <boolean id="fog"    _label="Fog"     arg-unset="-no-fog"/>
+   <boolean id="waves"  _label="Waves"   arg-unset="-no-waves"/>
+   <boolean id="rotate" _label="Panning" arg-unset="-no-rotate"/>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+   <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The 3D "digital rain" effect, as seen in the title sequence of "The Matrix".
+
+See also "xmatrix" for a 2D rendering of the similar effect that
+appeared on the computer monitors actually *in* the movie.
+
+https://en.wikipedia.org/wiki/Matrix_digital_rain
+
+Written by Jamie Zawinski; 2003.
+  </_description>
+</screensaver>

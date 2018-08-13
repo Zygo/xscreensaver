@@ -1,0 +1,85 @@
+.TH XScreenSaver 1 "20-Mar-2005 (4.21)" "X Version 11"
+.SH NAME
+xscreensaver\-text - prints some text to stdout, for use by screen savers.
+.SH SYNOPSIS
+.B xscreensaver\-text
+[\--verbose]
+[\--columns \fIN\fP]
+[\--text \fISTRING\fP]
+[\--file \fIPATH\fP]
+[\--program \fICMD\fP]
+[\--url \fIURL\fP]
+.SH DESCRIPTION
+The \fIxscreensaver\-text\fP script prints out some text for use by
+various screensavers, according to the options set in the ~/.xscreensaver
+file.  This may dump the contents of a file, run a program, or load a URL.
+.SH OPTIONS
+.I xscreensaver\-text
+accepts the following options:
+.TP 8
+.B \-\-columns \fIN\fP or \-\-cols \fIN\fP
+Where to wrap lines; default 72 columns.
+.TP 8
+.B \-\-verbose \fRor\fP \-v
+Print diagnostics to stderr.  Multiple \fI-v\fP switches increase the
+amount of output.
+.PP
+Command line options may be used to override the settings in the 
+~/.xscreensaver file:
+.TP 8
+.B \-\-string \fISTRING\fP
+Print the given string.  It may contain % escape sequences as per
+.BR strftime (2).
+.TP 8
+.B \-\-file \fIPATH\fP
+Print the contents of the given file.  If --cols is specified, re-wrap
+the lines; otherwise, print them as-is.
+.TP 8
+.B \-\-program \fICMD\fP
+Run the given program and print its output.  If --cols is specified,
+re-wrap the output.
+.TP 8
+.B \-\-url \fIHTTP-URL\fP
+Download and print the contents of the HTTP document.  If it contains 
+HTML, RSS, or Atom, it will be converted to plain-text.
+
+Note: this re-downloads the document every time it is run!  It might
+be considered abusive for you to point this at a web server that you
+do not control!
+.SH ENVIRONMENT
+.PP
+.TP 4
+.B HTTP_PROXY\fR or \fPhttp_proxy
+to get the default HTTP proxy host and port.
+.SH BUGS
+The RSS and Atom output is always ISO-8859-1, regardless of locale.
+
+URLs should be cached, use "If-Modified-Since", and obey "Expires".
+.SH SEE ALSO
+.BR xscreensaver-demo (1),
+.BR xscreensaver (1),
+.BR fortune (1),
+.BR phosphor (MANSUFFIX),
+.BR apple2 (MANSUFFIX),
+.BR starwars (MANSUFFIX),
+.BR fontglide (MANSUFFIX),
+.BR dadadodo (1),
+.BR webcollage (MANSUFFIX),
+.RS 0
+.I http://www.livejournal.com/stats/latest-rss.bml,
+.RS 0
+.I https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss,
+.RS 0
+.BR driftnet (1),
+.BR EtherPEG ,
+.BR EtherPeek
+.SH COPYRIGHT
+Copyright \(co 2005 by Jamie Zawinski.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 20-Mar-2005.

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="surfaces" _label="Surfaces" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=Q412lxz3fTg"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="descent" type="slider" arg="-speed %"
+            _label="Duration" _low-label="Short" _high-label="Long"
+            low="2" high="2000" default="300"
+            convert="invert"/>
+   </vgroup>
+
+   <vgroup>
+    <select id="surface">
+     <option id="random"    _label="Random Surface"/>
+     <option id="dini"      _label="Dini's Surface"      arg-set="-surface dini"/>
+     <option id="enneper"   _label="Enneper's Surface"   arg-set="-surface enneper"/>
+     <option id="kuen"      _label="Kuen Surface"        arg-set="-surface kuen"/>
+     <option id="moebius"   _label="Moebius Strip"       arg-set="-surface moebius"/>
+     <option id="seashell"  _label="Seashell"            arg-set="-surface seashell"/>
+     <option id="swallow"   _label="Swallowtail"         arg-set="-surface swallowtail"/>
+     <option id="bohemian"  _label="Bohemian Dome"       arg-set="-surface bohemian"/>
+     <option id="whitney"   _label="Whitney Umbrella"    arg-set="-surface whitney"/>
+     <option id="pluecker"  _label="Pluecker's Conoid"   arg-set="-surface pluecker"/>
+     <option id="henneberg" _label="Henneberg's Surface" arg-set="-surface henneberg"/>
+     <option id="catalan"   _label="Catalan's Surface"   arg-set="-surface catalan"/>
+     <option id="corkscrew" _label="Corkscrew Surface"   arg-set="-surface corkscrew"/>
+    </select>
+
+    <select id="mode">
+      <option id="random"    _label="Random Display Mode"/>
+      <option id="points"    _label="Points"     arg-set="-mode points"/>
+      <option id="lines"     _label="Lines"      arg-set="-mode lines"/>
+      <option id="line_loop" _label="Line Loops" arg-set="-mode line-loops"/>
+    </select>
+
+    <hgroup>
+     <boolean id="wander"  _label="Wander" arg-set="-wander"/>
+     <boolean id="spin"    _label="Spin" arg-unset="-no-spin"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </hgroup>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Parametric surfaces.
+
+http://mathworld.wolfram.com/DinisSurface.html
+https://en.wikipedia.org/wiki/Enneper_surface
+http://mathworld.wolfram.com/EnnepersMinimalSurface.html
+http://mathworld.wolfram.com/KuenSurface.html
+https://en.wikipedia.org/wiki/Moebius_strip
+http://mathworld.wolfram.com/Seashell.html
+http://mathworld.wolfram.com/SwallowtailCatastrophe.html
+http://mathworld.wolfram.com/BohemianDome.html
+https://en.wikipedia.org/wiki/Whitney_umbrella
+http://mathworld.wolfram.com/PlueckersConoid.html
+http://mathworld.wolfram.com/HennebergsMinimalSurface.html
+http://mathworld.wolfram.com/CatalansSurface.html
+http://mathworld.wolfram.com/CorkscrewSurface.html
+
+Written by Andrey Mirtchovski and Carsten Steger; 2003.
+  </_description>
+</screensaver>

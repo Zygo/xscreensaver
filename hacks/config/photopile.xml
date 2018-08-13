@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="photopile" _label="Photopile" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=snm7o95AR8E"/>
+
+  <hgroup>
+   <vgroup>
+
+    <number id="scale" type="slider" arg="-scale %"
+            _label="Image size"
+            _low-label="Small" _high-label="Large"
+            low="0.1" high="0.9" default="0.4"/>
+
+    <number id="tilt" type="slider" arg="-maxTilt %"
+            _label="Maximum angle from vertical"
+            _low-label="0 deg" _high-label="90 deg"
+            low="0" high="90" default="50"/>
+
+    <number id="count" type="spinbutton" arg="-count %"
+            _label="Number of images" low="1" high="20" default="7"/>
+
+    <boolean id="polaroid" _label="Simulate instant film" arg-unset="-no-polaroid"/>
+
+    <boolean id="clip" _label="Instant film theme" arg-unset="-no-clip"/>
+
+    <boolean id="shadows" _label="Draw drop shadows" arg-unset="-no-shadows"/>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Animation speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="8.0" default="1.0"/>
+
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="duration" type="slider" arg="-duration %"
+            _label="Time until loading a new image"
+            _low-label="Short" _high-label="Long"
+            low="1" high="60" default="5"/>
+
+    <boolean id="titles" _label="Show file names" arg-unset="-no-titles"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-image />
+  <xscreensaver-updater />
+
+  <_description>
+Loads several random images, and displays them as if lying in a random pile.
+The pile is periodically reshuffled, with new images coming in and old ones
+being thrown out.
+
+Written by Jens Kilian and Jamie Zawinski; 2008.
+  </_description>
+</screensaver>
