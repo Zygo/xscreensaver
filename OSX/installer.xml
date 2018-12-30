@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<installer-gui-script minSpecVersion="1">
+  <title>XScreenSaver</title>
+  <organization>org.jwz</organization>
+  <!-- <domains enable_localSystem="true"/> -->
+  <options customize="never" require-scripts="true" rootVolumeOnly="true" />
+
+  <welcome file="welcome.rtf" mime-type="text/rtf" />
+  <background file="background.png"  mime-type="image/png"
+              alignment="left" scaling="proportional"/>
+
+  <volume-check>
+    <allowed-os-versions>
+      <os-version min="10.4.0"/>
+    </allowed-os-versions>
+  </volume-check>
+
+  <pkg-ref id="org.jwz.xscreensaver" auth="root">contents.pkg</pkg-ref>
+
+  <choices-outline>
+    <line choice="org.jwz.xscreensaver"/>
+  </choices-outline>
+
+  <choice id="org.jwz.xscreensaver" visible="false" title="Screen Savers"
+          start_selected="true">
+    <pkg-ref id="org.jwz.xscreensaver"/>
+  </choice>
+
+</installer-gui-script>

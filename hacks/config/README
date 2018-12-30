@@ -1,0 +1,262 @@
+
+                              XScreenSaver
+
+            a screen saver and locker for the X window system
+                            by Jamie Zawinski
+
+                              version 5.42
+                               28-Dec-2018
+
+                     https://www.jwz.org/xscreensaver/
+
+-----------------------------------------------------------------------
+
+This directory contains XML files that describe each of the screenhacks;
+the per-hack user interface is constructed based on the things in these
+files.  The files are loaded at run-time by xscreensaver-demo (also
+known as "the Control Center screensaver properties capplet".)
+
+The tags and parameters used here are:
+
+-----------------------------------------------------------------------
+
+  <screensaver name="PROGRAM-NAME" _label="PRETTY NAME">
+     ...
+  </screensaver>
+
+        This encloses the whole file: all of the tags described below
+        are inside this one.
+
+-----------------------------------------------------------------------
+
+  <command arg="-SWITCH"/>
+
+        specifies that "-SWITCH" always appears on the command line.
+        You'll most often see this with "-root".
+
+-----------------------------------------------------------------------
+
+  <boolean id="SYMBOLIC NAME"
+           _label="USER VISIBLE STRING"
+            arg-set="-SWITCH-A"
+            arg-unset="-SWITCH-B"
+           />
+
+        This creates a checkbox.
+
+        "id" is currently unused, but may eventually be used for
+        letting other widgets refer to this one.
+
+        "_label" is the string printed next to the checkbox.
+
+        "arg-set" is what to insert into the command line if the
+        box is checked.
+
+        "arg-unset" is what to insert into the command line if the
+        box is unchecked.
+
+        You will probably never specify both "arg-set" and "arg-unset",
+        because the setting that is the default should insert nothing
+        into the command line (that's what makes it the default.)
+        For example:
+
+           <boolean _label="foo" arg-set="-foo" />
+
+        or if "foo" is the default, and must be explicity turned off,
+
+           <boolean _label="foo" arg-unset="-no-foo" />
+
+-----------------------------------------------------------------------
+
+  <number id="SYMBOLIC NAME"
+          type="slider"
+          arg="-SWITCH %"
+          _label="HEADING LABEL"
+          _low-label="LEFT LABEL"
+          _high-label="RIGHT LABEL"
+          low="MIN VALUE"
+          high="MAX VALUE"
+          default="DEFAULT VALUE"
+          [ convert="invert" ]
+          />
+
+        This creates a slider.
+
+        The _label is printed above the slider.  The _low-label and
+        _high-label are printed to the left and right, respectively.
+
+        If any of the numbers you type has a decimal point, then
+        the range is assumed to be a floating-point value; otherwise,
+        only integral values will be used.  So be careful about "1"
+        versus "1.0".
+
+        If convert="invert" is specified, then the value that the
+        user tweaks goes the other way from the value the command
+        line expects: e.g., if the slider goes from 10-20 and the
+        user picks 13, the converted value goes from 20-10 (and
+        would be 17.)  This is useful for converting between the
+        concepts of "delay" and "speed".
+
+        In the "arg" string, the first occurence of "%" is replaced
+        with the numeric value, when creating the command line.
+
+-----------------------------------------------------------------------
+
+  <number id="SYMBOLIC NAME"
+          type="spinbutton"
+          arg="-SWITCH %"
+          _label="HEADING LABEL"
+          low="MIN VALUE"
+          high="MAX VALUE"
+          default="DEFAULT VALUE"
+          [ convert="invert" ]
+          />
+
+        This creates a spinbox (a text field with a number in it,
+        and up/down arrows next to it.)
+
+        Arguments are exactly like type="slider", except that
+        _low-label and _high-label are not used.  Also, _label
+        appears to the left of the box, instead of above it.
+
+-----------------------------------------------------------------------
+
+  <select id="SYMBOLIC NAME">
+    <option id="SYMBOLIC NAME"
+            _label="USER VISIBLE STRING"
+            arg-set="-SWITCH"
+            />
+    [ ... more <options> ... ]
+  </select>
+
+        This creates a selection popup menu.
+
+        Options should have arg-set (arg-unset is not used here.)
+
+        One of the menu items (the default) should have no arg-set.
+
+        Each arg-set should begin with the same switch: that is,
+        all the args in a given menu should look like:
+
+           -mode one
+           -mode two
+           -mode three
+
+        and not
+
+           -this
+           -that
+           -the other
+
+-----------------------------------------------------------------------
+
+  <string id="SYMBOLIC NAME"
+           _label="USER VISIBLE STRING"
+           arg="-SWITCH %"
+           />
+
+        This creates a text entry field.
+
+-----------------------------------------------------------------------
+
+  <file id="SYMBOLIC NAME"
+        _label="USER VISIBLE STRING"
+        arg="-SWITCH %"
+        />
+
+        This creates a file entry field (a text field with a "Browse"
+        button next to it.)
+
+-----------------------------------------------------------------------
+
+  <xscreensaver-text />
+
+        This indicates that this screen saver displays text via the
+        "xscreensaver-text" program.  
+
+        In the X11 version, this tag does nothing: the text-related
+        preferences are in the main Screen Saver Preferences window,
+        not in the per-display-mode preferences.
+
+        In the MacOS version, the text-related preferences appear
+        in this pane, and this tag emits those several controls.
+
+-----------------------------------------------------------------------
+
+  <xscreensaver-image />
+
+        This indicates that this screen saver displays images via the
+        "xscreensaver-getimage" program.  
+
+        In the X11 version, this tag does nothing: the image-loading
+        and screen-grabbing-related preferences are in the main
+        Screen Saver Preferences window, not in the per-display-mode
+        preferences.
+
+        In the MacOS version, the image-related preferences appear
+        in this pane, and this tag emits those several controls.
+
+-----------------------------------------------------------------------
+
+  <xscreensaver-updater />
+
+        Where to position the "Check for Updates" options.
+        This is used on MacOS and ignored on X11.
+
+-----------------------------------------------------------------------
+
+  <video href="URL" />
+
+        A link to a Youtube preview of this screen saver.
+
+-----------------------------------------------------------------------
+
+  <hgroup>
+    [ ... <boolean>s ... ]
+    [ ... <number>s ... ]
+    [ ... <select>s ... ]
+    [ ... <string>s ... ]
+    [ ... <file>s ... ]
+    [ ... <vgroup>s ... ]
+  </hgroup>
+
+        A horizontal group of widgets/groups.  No more than 4 widgets 
+        or groups should be used in a row.
+
+-----------------------------------------------------------------------
+
+  <vgroup>
+    [ ... <boolean>s ... ]
+    [ ... <number>s ... ]
+    [ ... <select>s ... ]
+    [ ... <string>s ... ]
+    [ ... <file>s ... ]
+    [ ... <hgroup>s ... ]
+  </vgroup>
+
+        A vertical group of widgets/groups.  No more than 10 widgets 
+        or groups should be used in a column.
+        
+        Since the default alignment of widgets is a column, the 
+        <vgroup> element is only of use inside an <hgroup> element.
+
+-----------------------------------------------------------------------
+
+  <_description>
+        FREE TEXT
+  </_description>
+
+        This is the description of the hack that appears in the right
+        part of the window.  Lines are wrapped; paragraphs are separated
+        by blank lines.  Lines that begin with whitespace will not be
+        wrapped (see "munch.xml" for an example of why.)
+
+        Make sure you use "&lt;" instead of "<", etc.  Character
+        entities are allowed; HTML (and other markup) is not.
+
+-----------------------------------------------------------------------
+
+If you are DTD-minded, you may also find the included files "xss.dtd"
+and "xss.xsd" useful.
+
+-----------------------------------------------------------------------

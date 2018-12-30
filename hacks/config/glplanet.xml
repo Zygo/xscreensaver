@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glplanet" _label="GLPlanet" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=ohcJ1bVkLZ4"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <!-- #### -no-texture -->
+
+  <file id="image"  _label="Day image"   arg="-image %"  />
+  <file id="image2" _label="Night image" arg="-image2 %" />
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="rotate" _label="Rotate"    arg-unset="-no-rotate"/>
+   <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
+   <boolean id="stars"  _label="Stars"     arg-unset="-no-stars"/>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The Earth, bouncing around in space, rendered with satellite imagery
+of the planet in both sunlight and darkness.
+
+If you would like it to display a different planet, any pair of
+Equirectangular-projected maps will work.  The maps that come with
+"ssystem" work well.
+
+Written by David Konerding and Jamie Zawinski; 1998.
+  </_description>
+</screensaver>

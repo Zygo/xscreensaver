@@ -1,0 +1,88 @@
+.TH XScreenSaver 1 "14-Mar-01" "X Version 11"
+.SH NAME
+rotzoomer - animated rotations and scalings of portions of the screen
+.SH SYNOPSIS
+.B rotzoomer
+[\-display \fIhost:display.screen\fP]
+[\-move | \-no\-move]
+[\-delay \fImillisecs\fP]
+[\-duration \fIsecs\fP]
+[\-n \fIcount\fP]
+[\-shm | \-no\-shm]
+[\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
+[\-fps]
+.SH DESCRIPTION
+The \fIrotzoomer\fP program grabs an image, then picks
+rectangles and draws scaled and rotated animations of that 
+section.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
+.SH OPTIONS
+.I rotzoomer
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImilliseconds\fP
+How much of a delay should be introduced between steps of the animation.
+Default 10, or about 1/100th second.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
+.TP 8
+.B \-move
+Make the rectangles should wander around the screen.
+.TP 8
+.B \-no\-move
+Make the rectangles be stationary.  This is the default.
+.TP 8
+.B \-n \fIcount\fP
+How many rectangles to animate simultaneously.  Default 2.
+.TP 8
+.B \-no\-shm
+Disable use of the SHM extension, even if it appears to be available.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
+.SH COPYRIGHT
+Copyright \(co 2001 by Claudio Matsuoka.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Claudio Matsuoka <claudio@helllabs.org>
