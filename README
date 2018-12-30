@@ -46,6 +46,8 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.42	* macOS: Fixed Sparkle auto-updater.
+
 5.41	* X11: Those new font-loading fallback heuristics work again. Oops.
 	* iOS, Android: Plugged many memory leaks at exit.
 	* New hack, `handsy'.
@@ -55,6 +57,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* Linux: If the xscreensaver daemon is setuid, then we can implore the
           kernel's out-of-memory killer to pretty please not unlock the screen.
 	* macOS: Upgraded Sparkle (the "Check for Updates" library).
+	* macOS: Screen saver settings work again on 10.14.
 
 5.40	* New hacks, `filmleader', `vfeedback'.
 	* New hack, `glitchpeg' (X11 and macOS only).

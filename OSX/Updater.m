@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2013-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,6 +17,7 @@
  *       version 4-Dec-2013 or later.
  */
 
+#define IN_UPDATER
 #import "Updater.h"
 #import "Sparkle/SUUpdater.h"
 

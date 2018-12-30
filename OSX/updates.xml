@@ -8,36 +8,39 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.42</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.42.dmg</link>
+   <description><![CDATA[&bull; macOS: Fixed Sparkle auto-updater.]]></description>
+   <pubDate>Fri, 28 Dec 2018 16:20:28 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.42.dmg"
+    sparkle:version="5.42"
+    sparkle:dsaSignature="MC0CFQC1IPDQbZA8nlNOy66NB/EpedRH6QIUSezxMtsmla56Axi6QpMzIKYaFAI="
+    sparkle:edSignature="TlJojJAVzOQvQ5rUkHPvTpKtePMGKErePVI8nRvTnZjgaLR5YvxAiZAykdYeA1fip81jwzMXnOA14DxfumscAQ=="
+    length="36576409"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.41</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.41.dmg</link>
+   <description><![CDATA[&bull; X11: Those new font-loading fallback heuristics work again. Oops. <BR>&bull; iOS, Android: Plugged many memory leaks at exit. <BR>&bull; New hack, `handsy'. <BR>&bull; Fixed `noof' from displaying minimalistically. <BR>&bull; Rewrote `unknownpleasures' to be faster, and a true waterfall graph. <BR>&bull; BSOD Solaris improved. DVD added. <BR>&bull; Linux: If the xscreensaver daemon is setuid, then we can implore the kernel's out-of-memory killer to pretty please not unlock the screen. <BR>&bull; macOS: Upgraded Sparkle (the "Check for Updates" library). <BR>&bull; macOS: Screen saver settings work again on 10.14.]]></description>
+   <pubDate>Wed, 26 Dec 2018 23:00:51 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.41.dmg"
+    sparkle:version="5.41"
+    sparkle:dsaSignature="MC0CFEH7e4ONZ1wfijWGBMEHwLESwKS3AhUAuhLIv/AsPsE60Jcmgm0eJDU0BRA="
+    sparkle:edSignature="2hXB1NVm+HZsj3aMCgOmdwX1zHT+dJ95v5aI2Cyn6vEReOUs+NSxqpoWEWQgH/AIMYhr9I3b4c5e/MceOdK7Bg=="
+    length="35542175"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.40</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-5.40.dmg</link>
-   <description><![CDATA[&bull; New hacks, 'filmleader', 'vfeedback'. <BR>&bull; New hack, 'glitchpeg' (X11 and macOS only). <BR>&bull; GLPlanet blends between day and night maps at the dusk terminator. <BR>&bull; DymaxionMap can display arbitrary map images, and animate sunlight across the flattened globe. <BR>&bull; Tessellimage can draw either Delaunay or Voronoi tilings. <BR>&bull; XAnalogTV includes test cards. <BR>&bull; Android: These hacks work now: 'blitspin', 'bumps', 'cityflow', 'endgame', 'esper', 'flipscreen3d', 'gleidescope', 'glslideshow', 'jigglypuff', 'queens', 'tessellimage', 'xanalogtv', 'xmatrix', 'zoom'.]]></description>
+   <description><![CDATA[&bull; New hacks, `filmleader', `vfeedback'. <BR>&bull; New hack, `glitchpeg' (X11 and macOS only). <BR>&bull; GLPlanet blends between day and night maps at the dusk terminator. <BR>&bull; DymaxionMap can display arbitrary map images, and animate sunlight across the flattened globe. <BR>&bull; Tessellimage can draw either Delaunay or Voronoi tilings. <BR>&bull; XAnalogTV includes test cards. <BR>&bull; Android: These hacks work now: `blitspin', `bumps', `cityflow', `endgame', `esper', `flipscreen3d', `gleidescope', `glslideshow', `jigglypuff', `queens', `tessellimage', `xanalogtv', `xmatrix', `zoom'.]]></description>
    <pubDate>Sun, 12 Aug 2018 16:39:18 -0700</pubDate>
    <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.40.dmg"
     sparkle:version="5.40"
     sparkle:dsaSignature="MCwCFBVb+Vyo39OOfiuqm9K3zmrahnGIAhRK6pirSDvI1gT0ddtv+okGTW4NLg=="
+    sparkle:edSignature="R3FTLn+BURQDTK8BORtPeUrLrb2BLyhP2TeEU11Y9oXl2epIJ2owMS2BvsQke+gV/nEyzq34sUnBHnCsKvfgDg=="
     length="34297646"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.39</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.39.dmg</link>
-   <description><![CDATA[&bull; New hacks, 'razzledazzle', 'peepers', 'crumbler' and `maze3d'. <BR>&bull; More heuristics for using RSS feeds as image sources. <BR>&bull; Android: Image loading works. <BR>&bull; Built-in image assets are now PNG instead of XPM or XBM. <BR>&bull; X11: Better font-loading fallback heuristics on systems with a terrible selection of installed fonts. <BR>&bull; macOS: Retina display-related bug fixes.]]></description>
-   <pubDate>Thu, 12 Apr 2018 13:00:37 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.39.dmg"
-    sparkle:version="5.39"
-    sparkle:dsaSignature="MC0CFCNqDWYNT+EDQXEpi0SAxySC77A+AhUArqhfa7sp5J8cXq42u5uFmBOQiFA="
-    length="32888133"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.38</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.38.dmg</link>
-   <description><![CDATA[&bull; New hack, 'esper'. <BR>&bull; macOS: Support for Retina displays. <BR>&bull; X11: `webcollage' now works with ImageMagick instead of with pbmtools if `webcollage-helper' is not installed. <BR>&bull; 'bsod' now accepts Dunning-Krugerrands. <BR>&bull; Android: These hacks work now: 'anemone', 'anemotaxis', 'atlantis', 'bouboule', 'celtic', 'compass', 'crackberg', 'epicycle', 'fuzzyflakes', 'goop', 'kumppa' 'munch', 'pacman', 'polyominoes', 'slip'. <BR>&bull; Android: Thick lines work better for: 'anemone', 'anemotaxis', 'celtic', 'compass', 'deluxe', 'epicycle', 'fuzzyflakes', 'pacman' <BR>&bull; Android: Assorted performance improvements, especially for 'kumppa' and 'slip'. <BR>&bull; Android TV: Daydreams work. <BR>&bull; iOS: Tweaks for iPhone X. <BR>&bull; Lots of xlockmore-derived hacks now have animated erase routines. <BR>&bull; 'crystal' works properly on non-X11 systems. <BR>&bull; 'm6502' now includes 'texture.asm'. <BR>&bull; X11: Try harder to find sensible fonts for the password dialog.]]></description>
-   <pubDate>Wed, 20 Dec 2017 11:16:13 -0800</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.38.dmg"
-    sparkle:version="5.38"
-    sparkle:dsaSignature="MCwCFB2O5ykEfT4xCkb/CraguQZPTFJHAhQZde4jxrb5+zc2Haazg10uYLqNRw=="
-    length="54125574"
     type="application/octet-stream" />
   </item>
   <item>
@@ -48,6 +51,7 @@
    <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.34.dmg"
     sparkle:version="5.34"
     sparkle:dsaSignature="MCwCFAoZpMknlOVF0zFXlzFruzFvRXufAhQVKY0qlzelKcArrlC6k7EbHLTcyg=="
+    sparkle:edSignature="yUaWHZ0W91rhh0jsFUgtdcH17SPq66A4SdLMRqf/AU7cnVwNNBvlEJOKAJGJIMTVPpBMtYgk93YJL3/5R4+1BA=="
     length="58850776"
     type="application/octet-stream" />
   </item>
@@ -59,6 +63,7 @@
    <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
     sparkle:version="5.14"
     sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
+    sparkle:edSignature="yAg5vrtkqVdOXnloYeZ/XlwNK6VA3yWdKIOvMbpFEEGUfmsRm5/besIJBMjQkZg5BxXG8DTVh9NMHWrzZ9KvCg=="
     length="54485615"
     type="application/octet-stream" />
   </item>

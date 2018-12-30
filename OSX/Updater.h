@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2013-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,14 +9,17 @@
  * implied warranty.
  */
 
-#ifndef USE_IPHONE
-#import <Cocoa/Cocoa.h>
-@interface XScreenSaverUpdater : NSObject <NSApplicationDelegate>
+#ifdef IN_UPDATER
+# import <Cocoa/Cocoa.h>
+# import <Sparkle/SUUpdaterDelegate.h>
+
+@interface XScreenSaverUpdater : NSObject <NSApplicationDelegate,
+                                           SUUpdaterDelegate>
 {
   NSTimer *timer;
 }
 @end
-#endif // !USE_IPHONE
+#endif // IN_UPDATER
 
 #define UPDATER_DOMAIN "org.jwz.xscreensaver.updater"
 

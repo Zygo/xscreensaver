@@ -380,8 +380,6 @@ _dmg::
   ls -ldhgF "$$DMG" ;							      \
   $(MAKE) notarize ;							      \
 
-dmg2:: staple updates.xml
-
 
 # To set up notarization:
 #  - Log in on https://appleid.apple.com/
@@ -399,6 +397,8 @@ dmg2:: staple updates.xml
 # Note that if Sparkle.framework/.../Autoupdate.app is not independently
 # signed, it won't pass. I had to add a build phase for that.
 #
+NOTARGS=-u "jwz@jwz.org" -p "@keychain:altool-notarizer"
+
 notarize::
 	@								      \
   set -e ;								      \
@@ -409,10 +409,19 @@ notarize::
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
   set -x ;								      \
   xcrun altool --notarize-app --primary-bundle-id "org.jwz.xscreensaver"      \
-    --file "$$DMG" -u "jwz@jwz.org" -p "@keychain:altool-notarizer" ;	      \
+    --file "$$DMG" $(NOTARGS) ;						      \
   echo "" ;								      \
-  echo "After notarization succeeds, make dmg2"
+  sleep 3 ;								      \
+  $(MAKE) notarize_wait staple updates.xml
 
+notarize_wait::
+	@while ( xcrun altool --notarization-history 0 $(NOTARGS) |	      \
+		 grep -q 'in progress' ); do				      \
+	  echo `date +%I:%M:` "waiting for notarization..." ;		      \
+	  sleep 15 ;							      \
+	done ;								      \
+	echo '' ;							      \
+	xcrun altool --notarization-history 0 $(NOTARGS) ;		      \
 
 staple::
 	@								      \
@@ -423,12 +432,12 @@ staple::
   OUTDIR="../archive" ;							      \
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
   set -x ;								      \
-  xcrun stapler staple "$$DMG"
+  xcrun stapler staple "$$DMG" ;					      \
+  xcrun stapler validate "$$DMG"
 
 notarization_history::
-	xcrun altool --notarization-history 0 \
-	-u "jwz@jwz.org" -p "@keychain:altool-notarizer"
-	@echo 'now do: xcrun altool --notarization-info <UUID> ...' ; \
+	xcrun altool --notarization-history 0 $(NOTARGS)
+	@echo 'now do: xcrun altool $(NOTARGS) --notarization-info <UUID>' ;  \
 	echo 'and wget the LogFileURL'
 
 

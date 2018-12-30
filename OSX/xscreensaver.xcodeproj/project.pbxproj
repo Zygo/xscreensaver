@@ -2001,6 +2001,7 @@
 		AF68A49B19196E3E00D41CD1 /* delaunay.c in Sources */ = {isa = PBXBuildFile; fileRef = AF68A49619196E3E00D41CD1 /* delaunay.c */; };
 		AF68A49C19196E3E00D41CD1 /* delaunay.c in Sources */ = {isa = PBXBuildFile; fileRef = AF68A49619196E3E00D41CD1 /* delaunay.c */; };
 		AF69640B0E4FE3470085DBCE /* teapot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC211930E4E30C800D87B6E /* teapot.c */; };
+		AF6C07C121D6ECCE00083862 /* Sparkle.framework in Resources */ = {isa = PBXBuildFile; fileRef = AF1ADA171850180E00932759 /* Sparkle.framework */; };
 		AF73FF211A08AB9400E485E9 /* iSaverRunner57t.png in Resources */ = {isa = PBXBuildFile; fileRef = AF73FF201A08AB9400E485E9 /* iSaverRunner57t.png */; };
 		AF73FF291A09877F00E485E9 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF73FF2B1A09877F00E485E9 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -19972,6 +19973,7 @@
 				AF1ADA1B18501B3D00932759 /* SaverRunner.icns in Resources */,
 				AF3633FC18530DD90086A439 /* sparkle_dsa_pub.pem in Resources */,
 				AF1ADA161850157400932759 /* Updater.xib in Resources */,
+				AF6C07C121D6ECCE00083862 /* Sparkle.framework in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33820,6 +33822,7 @@
 					"$(SRCROOT)",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Updater.plist";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				"OTHER_CFLAGS[sdk=macosx*]" = "${OBJC_NO_GC_CFLAGS}";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_IDENTIFIER)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -33836,6 +33839,7 @@
 					"$(SRCROOT)",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Updater.plist";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				"OTHER_CFLAGS[sdk=macosx*]" = "${OBJC_NO_GC_CFLAGS}";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_IDENTIFIER)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
