@@ -16,7 +16,6 @@
                     "*showFPS:      False       \n" \
                     "*wireframe:    False       \n" \
 
-#define free_glschool			(0)
 #define release_glschool		(0)
 #define glschool_handle_event	(xlockmore_no_events)
 
@@ -124,7 +123,7 @@ reshape_glschool(ModeInfo *mi, int width, int height)
 	double					aspect = (double)width/(double)height;
 	glschool_configuration	*sc = &scs[MI_SCREEN(mi)];
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sc->context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sc->context);
 	if (sc->school != (School *)0) {
 		glschool_setBBox(sc->school, -aspect*160, aspect*160, -130, 130, -450, -50.0);
 		glDeleteLists(sc->bboxList, 1);
@@ -187,7 +186,7 @@ draw_glschool(ModeInfo *mi)
 		return;
 	}
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sc->context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sc->context);
 
         mi->polygon_count = 0;
 
@@ -211,6 +210,22 @@ draw_glschool(ModeInfo *mi)
 
 	glFinish();
 	glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_glschool(ModeInfo *mi)
+{
+	glschool_configuration	*sc = &scs[MI_SCREEN(mi)];
+
+        if (!sc->context) return;
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sc->context);
+
+        if (sc->school) glschool_freeSchool (sc->school);
+        if (sc->colors) free (sc->colors);
+        if (glIsList(sc->bboxList)) glDeleteLists(sc->bboxList, 1);
+        if (glIsList(sc->goalList)) glDeleteLists(sc->goalList, 1);
+        if (glIsList(sc->fishList)) glDeleteLists(sc->fishList, 1);
 }
 
 XSCREENSAVER_MODULE("GLSchool", glschool)

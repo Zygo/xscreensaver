@@ -21,7 +21,6 @@
                  "*useSHM:    True  \n" \
 		 "*suppressRotationAnimation: True\n" \
 
-# define free_screenflip 0
 # define release_screenflip 0
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 # include "gltrackball.h"
@@ -499,7 +498,7 @@ ENTRYPOINT void draw_screenflip(ModeInfo *mi)
   if (c->waiting_for_image_p && c->first_image_p)
     return;
 
-  glXMakeCurrent(disp, w, *(c->glx_context));
+  glXMakeCurrent(disp, w, *c->glx_context);
 
   glBindTexture(GL_TEXTURE_2D, c->texid);
 
@@ -511,6 +510,16 @@ ENTRYPOINT void draw_screenflip(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
+}
+
+
+ENTRYPOINT void free_screenflip(ModeInfo *mi)
+{
+  Screenflip *c = &screenflip[MI_SCREEN(mi)];
+  if (!c->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *c->glx_context);
+  gltrackball_free (c->trackball);
+  if (c->texid) glDeleteTextures (1, &c->texid);
 }
 
 XSCREENSAVER_MODULE_2 ("FlipScreen3D", flipscreen3d, screenflip)

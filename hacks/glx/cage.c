@@ -82,7 +82,6 @@ static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
 							"*wireframe:	False	\n"			\
 							"*suppressRotationAnimation: True\n" \
 
-# define free_cage 0
 # define release_cage 0
 # define cage_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -418,7 +417,7 @@ draw_cage (ModeInfo * mi)
 		return;
 
     mi->polygon_count = 0;
-	glXMakeCurrent(display, window, *(cp->glx_context));
+	glXMakeCurrent(display, window, *cp->glx_context);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -470,10 +469,16 @@ change_cage (ModeInfo * mi)
 	if (!cp->glx_context)
 		return;
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cp->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
 	pinit(mi);
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void
+free_cage (ModeInfo * mi)
+{
+	/* nothing to do */
+}
 
 XSCREENSAVER_MODULE ("Cage", cage)
 

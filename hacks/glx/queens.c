@@ -22,7 +22,6 @@
                        "*showFPS:     False \n" \
 		       "*wireframe:   False \n"	\
 
-# define free_queens 0
 # define release_queens 0
 # include "xlockmore.h"
 
@@ -576,7 +575,7 @@ ENTRYPOINT void draw_queens(ModeInfo *mi)
   if(!qs->glx_context)
     return;
 
-  glXMakeCurrent(disp, w, *(qs->glx_context));
+  glXMakeCurrent(disp, w, *qs->glx_context);
 
   if(flat)
     glShadeModel(GL_FLAT);
@@ -603,6 +602,20 @@ ENTRYPOINT void draw_queens(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
+}
+
+
+ENTRYPOINT void free_queens(ModeInfo *mi) 
+{
+  Queenscreen *qs = &qss[MI_SCREEN(mi)];
+  int i;
+  if (!qs->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *qs->glx_context);
+  gltrackball_free (qs->trackball);
+
+  /* this is horrible! List numbers are hardcoded! */
+  for (i = 1; i <= 20; i++)
+    if (glIsList(i)) glDeleteLists(i, 1);
 }
 
 XSCREENSAVER_MODULE ("Queens", queens)

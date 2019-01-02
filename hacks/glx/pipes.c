@@ -183,7 +183,7 @@ typedef struct {
 	GLXContext *glx_context;
 
     Bool button_down_p;
-    trackball_state *trackball;
+   trackball_state *trackball;
     GLuint *dlists, *poly_counts;
     int dlist_count, dlist_size;
     int system_index, system_size;
@@ -1079,7 +1079,7 @@ draw_pipes (ModeInfo * mi)
 	if (!pp->glx_context)
 		return;
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glColor3f(1.0, 1.0, 1.0);
@@ -1166,7 +1166,7 @@ change_pipes (ModeInfo * mi)
 	if (!pp->glx_context)
 		return;
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
 	pinit(mi, 1);
 }
 #endif /* !STANDALONE */
@@ -1177,42 +1177,41 @@ free_pipes (ModeInfo * mi)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 
-	if (pp->glx_context) {
+    if (!pp->glx_context) return;
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
 
-		/* Display lists MUST be freed while their glXContext is current. */
-		glXMakeCurrent(MI_DISPLAY(mi), pp->window, *(pp->glx_context));
+    if (pp->trackball) gltrackball_free (pp->trackball);
 
-		if (pp->valve)
-			glDeleteLists(pp->valve, 1);
-		if (pp->bolts)
-			glDeleteLists(pp->bolts, 1);
-		if (pp->betweenbolts)
-			glDeleteLists(pp->betweenbolts, 1);
+    if (pp->valve)
+        glDeleteLists(pp->valve, 1);
+    if (pp->bolts)
+        glDeleteLists(pp->bolts, 1);
+    if (pp->betweenbolts)
+        glDeleteLists(pp->betweenbolts, 1);
 
-		if (pp->elbowbolts)
-			glDeleteLists(pp->elbowbolts, 1);
-		if (pp->elbowcoins)
-			glDeleteLists(pp->elbowcoins, 1);
+    if (pp->elbowbolts)
+        glDeleteLists(pp->elbowbolts, 1);
+    if (pp->elbowcoins)
+        glDeleteLists(pp->elbowcoins, 1);
 
-		if (pp->guagehead)
-			glDeleteLists(pp->guagehead, 1);
-		if (pp->guageface)
-			glDeleteLists(pp->guageface, 1);
-		if (pp->guagedial)
-			glDeleteLists(pp->guagedial, 1);
-		if (pp->guageconnector)
-			glDeleteLists(pp->guageconnector, 1);
-		if (pp->teapot)
-			glDeleteLists(pp->teapot, 1);
-        if (pp->dlists)
-          {
-            int i;
-            for (i = 0; i < pp->dlist_count; i++)
-              glDeleteLists (pp->dlists[i], 1);
-            free (pp->dlists);
-            free (pp->poly_counts);
-          }
-	}
+    if (pp->guagehead)
+        glDeleteLists(pp->guagehead, 1);
+    if (pp->guageface)
+        glDeleteLists(pp->guageface, 1);
+    if (pp->guagedial)
+        glDeleteLists(pp->guagedial, 1);
+    if (pp->guageconnector)
+        glDeleteLists(pp->guageconnector, 1);
+    if (pp->teapot)
+        glDeleteLists(pp->teapot, 1);
+    if (pp->dlists)
+      {
+        int i;
+        for (i = 0; i < pp->dlist_count; i++)
+          glDeleteLists (pp->dlists[i], 1);
+        free (pp->dlists);
+        free (pp->poly_counts);
+      }
 }
 
 XSCREENSAVER_MODULE ("Pipes", pipes)

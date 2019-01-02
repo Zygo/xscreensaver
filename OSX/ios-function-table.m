@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Sat Aug  4 21:35:23 2018 by build-fntable.pl 1.6.
+   Created: Tue Oct 23 19:02:07 2018 by build-fntable.pl 1.6.
  */
 
 #import <Foundation/Foundation.h>
@@ -107,6 +107,7 @@ extern struct xscreensaver_function_table
  greynetic_xscreensaver_function_table,
  halftone_xscreensaver_function_table,
  halo_xscreensaver_function_table,
+ handsy_xscreensaver_function_table,
  helix_xscreensaver_function_table,
  hexadrop_xscreensaver_function_table,
  hexstrut_xscreensaver_function_table,
@@ -346,6 +347,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&greynetic_xscreensaver_function_table], @"greynetic",
 	[NSValue valueWithPointer:&halftone_xscreensaver_function_table], @"halftone",
 	[NSValue valueWithPointer:&halo_xscreensaver_function_table], @"halo",
+	[NSValue valueWithPointer:&handsy_xscreensaver_function_table], @"handsy",
 	[NSValue valueWithPointer:&helix_xscreensaver_function_table], @"helix",
 	[NSValue valueWithPointer:&hexadrop_xscreensaver_function_table], @"hexadrop",
 	[NSValue valueWithPointer:&hexstrut_xscreensaver_function_table], @"hexstrut",

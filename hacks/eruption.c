@@ -482,15 +482,16 @@ eruption_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 eruption_free (Display *dpy, Window window, void *closure)
 {
-#if 0
   struct state *st = (struct state *) closure;
-	XDestroyImage( st->pImage );
-	free( st->aiColorVals );
-	for (i = 0; i < st->iWinHeight; ++i)
-	  free( st->fire[i] );
-	free( st->fire );
-	free( st->particles );
-#endif
+  int i;
+  XDestroyImage (st->pImage);
+  free (st->aiColorVals);
+  for (i = 0; i < st->iWinHeight; ++i)
+    free (st->fire[i]);
+  free (st->fire);
+  free (st->particles);
+  XFreeGC (dpy, st->gc);
+  free (st);
 }
 
 

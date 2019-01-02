@@ -13,7 +13,6 @@
                         "*showFPS:      False              \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_voronoi 0
 # define release_voronoi 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -514,7 +513,7 @@ draw_voronoi (ModeInfo *mi)
   if (!vp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(vp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *vp->glx_context);
 
   glShadeModel(GL_FLAT);
   glEnable(GL_POINT_SMOOTH);
@@ -536,6 +535,23 @@ draw_voronoi (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_voronoi (ModeInfo *mi)
+{
+  voronoi_configuration *vp = &vps[MI_SCREEN(mi)];
+  node *n;
+  if (!vp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *vp->glx_context);
+  if (vp->colors) free (vp->colors);
+  n = vp->nodes;
+  while (n) {
+    node *n2 = n->next;
+    free (n);
+    n = n2;
+  }
 }
 
 XSCREENSAVER_MODULE ("Voronoi", voronoi)

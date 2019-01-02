@@ -128,6 +128,7 @@ export ANDROID_HACKS=		\
 	grav			\
 	greynetic		\
 	halo			\
+	handsy			\
 	helix			\
 	hexadrop		\
 	hexstrut		\

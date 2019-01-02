@@ -88,7 +88,7 @@ struct state {
   chansetting *cs;
 
   int change_now;
-  int colorbars_only_p;
+  Bool colorbars_only_p, no_colorbars_p;
 };
 
 
@@ -179,7 +179,7 @@ update_smpte_colorbars(analogtv_input *input)
                                     xpos, ypos, black_ntsc);
     }
   }
-  ypos += st->ugly_font.char_h*5/2;
+  ypos += (st->ugly_font.char_h * ANALOGTV_SCALE)*5/2;
 
   if (st->logo)
     {
@@ -191,7 +191,7 @@ update_smpte_colorbars(analogtv_input *input)
                             w2, h2);
     }
 
-  ypos += 58;
+  ypos += 58 * ANALOGTV_SCALE;
 
 #if 0
   analogtv_draw_string_centered(input, &st->ugly_font,
@@ -254,6 +254,7 @@ hack_resources (Display *dpy)
       value.addr = buf2;
       value.size = strlen(buf2);
       XrmPutResource (&db, buf1, "String", &value);
+      free (val);
     }
 #endif /* HAVE_JWXYZ */
 }
@@ -351,17 +352,23 @@ static void add_stations(struct state *st)
 static void load_station_images(struct state *st)
 {
   int i;
+  char *img_file = get_string_resource (st->dpy, "image", "Image");
+  XImage *ximage = 0;
+
   for (i = 0; i < MAX_STATIONS; i++) {
     analogtv_input *input = st->stations[i];
 
     st->chansettings[i].image_loaded_p = True;
-    if (i == 0 ||   /* station 0 is always colorbars */
-        st->colorbars_only_p) {
+    if (!st->no_colorbars_p &&
+        (i == 0 ||   /* station 0 is always colorbars */
+         st->colorbars_only_p)) {
       input->updater = update_smpte_colorbars;
       input->do_teletext=1;
     }
 #ifdef USE_TEST_PATTERNS
-    else if (random()%5==0) {
+    else if (!st->no_colorbars_p &&
+             !(img_file && *img_file) &&
+             ((random() % 5) == 0)) {
       int count = 0, j;
       for (count = 0; st->test_patterns[count]; count++)
         ;
@@ -372,12 +379,31 @@ static void load_station_images(struct state *st)
       analogtv_setup_teletext(input);
     }
 #endif
-    else {
+    else if (img_file && *img_file) {
+
+      /* Load a single image file into every free channel. */
+      if (! ximage) {
+        int w, h;
+        Pixmap p = file_to_pixmap (st->dpy, st->window, img_file, &w, &h, 0);
+        ximage = XGetImage (st->dpy, p, 0, 0, w, h, ~0L, ZPixmap);
+        XFreePixmap (st->dpy, p);
+      }
+
+      analogtv_input *input = st->stations[i];
+      analogtv_setup_sync(input, 1, (random()%20)==0);
+      analogtv_load_ximage (st->tv, input, ximage, 0, 0, 0, 0, 0);
+      analogtv_setup_teletext(input);
+      st->chansettings[i].image_loaded_p = True;
+
+    } else {
       analogtv_load_random_image(st);
       input->do_teletext=1;
       st->chansettings[i].image_loaded_p = False;
     }
   }
+
+  if (img_file) free (img_file);
+  if (ximage) XDestroyImage (ximage);
 }
 
 
@@ -399,6 +425,8 @@ xanalogtv_init (Display *dpy, Window window)
 
   st->colorbars_only_p =
     get_boolean_resource(dpy, "colorbarsOnly", "ColorbarsOnly");
+  st->no_colorbars_p =
+    get_boolean_resource(dpy, "noColorbars", "NoColorbars");
 
   /* if (!st->colorbars_only_p) */
     {
@@ -618,9 +646,13 @@ static void
 xanalogtv_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
   analogtv_release(st->tv);
   if (st->logo) XDestroyImage (st->logo);
   if (st->logo_mask) XDestroyImage (st->logo_mask);
+  if (st->ugly_font.text_im) XDestroyImage (st->ugly_font.text_im);
+  for (i = 0; i < MAX_STATIONS; i++)
+    if (st->stations[i]) free (st->stations[i]);
 # ifdef USE_TEST_PATTERNS
   {
     int i;
@@ -639,6 +671,8 @@ static const char *xanalogtv_defaults [] = {
   "*grabDesktopImages:  False",   /* HAVE_JWXYZ */
   "*chooseRandomImages: True",    /* HAVE_JWXYZ */
   "*colorbarsOnly:      False",
+  "*noColorbars:        False",
+  "*image:              ",
   ANALOGTV_DEFAULTS
   0,
 };
@@ -646,6 +680,8 @@ static const char *xanalogtv_defaults [] = {
 static XrmOptionDescRec xanalogtv_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-colorbars-only",	".colorbarsOnly",	XrmoptionNoArg, "True" },
+  { "-no-colorbars",	".noColorbars",		XrmoptionNoArg, "True" },
+  { "-image",		".image",		XrmoptionSepArg, 0 },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

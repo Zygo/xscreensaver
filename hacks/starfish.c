@@ -458,6 +458,7 @@ starfish_init (Display *dpy, Window window)
     st->blob_p = !(random() % 3);
   else
     fprintf (stderr, "%s: mode must be blob, zoom, or random", progname);
+  if (s) free (s);
 
   if (st->blob_p)
     st->delay *= 3;
@@ -520,6 +521,9 @@ static void
 starfish_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
+  free_starfish (st->starfish);
+  free (st->colors);
   free (st);
 }
 

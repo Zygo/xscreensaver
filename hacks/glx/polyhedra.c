@@ -2406,6 +2406,7 @@ free_polyhedron (polyhedron *p)
   Free (p->name);
   Free (p->group);
   Free (p->class);
+  Free (p->points);
   if (p->faces)
     {
       int i;

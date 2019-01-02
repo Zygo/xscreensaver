@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -177,8 +177,10 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 
 # ifdef USE_GL
 #  define XLOCKMORE_FPS xlockmore_gl_compute_fps
+#  define XLOCKMORE_FPS_FREE xlockmore_gl_free_fps
 # else
 #  define XLOCKMORE_FPS xlockmore_do_fps
+#  define XLOCKMORE_FPS_FREE fps_free
 # endif
 
 # ifdef HAVE_JWXYZ
@@ -246,7 +248,7 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 	   xlockmore_setup,						\
 	   & NAME ## _xlockmore_function_table,				\
 	   0, 0, 0, 0, 0,						\
-	   XLOCKMORE_FPS,						\
+	   XLOCKMORE_FPS, XLOCKMORE_FPS_FREE,				\
 	   XLOCKMORE_VISUAL };						\
 									\
   XSCREENSAVER_LINK (NAME ## _xscreensaver_function_table)

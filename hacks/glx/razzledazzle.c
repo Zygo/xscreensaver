@@ -571,7 +571,7 @@ draw_dazzle (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel(GL_SMOOTH);
   glDisable(GL_DEPTH_TEST);
@@ -709,6 +709,10 @@ ENTRYPOINT void
 free_dazzle (ModeInfo *mi)
 {
   dazzle_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
   if (bp->nodes) free (bp->nodes);
   if (bp->colors) free (bp->colors);
   if (bp->dlists)

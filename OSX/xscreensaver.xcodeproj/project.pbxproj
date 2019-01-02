@@ -239,6 +239,7 @@
 				AF777A1D09B660B300EA3033 /* PBXTargetDependency */,
 				AF777A1B09B660B300EA3033 /* PBXTargetDependency */,
 				AF777A1909B660B300EA3033 /* PBXTargetDependency */,
+				AF62D6392180087500C57C42 /* PBXTargetDependency */,
 				AF1B0FC51D7AB5740011DBE4 /* PBXTargetDependency */,
 				AF4F10F0143450C300E34F3F /* PBXTargetDependency */,
 				AFC0E8C91CDC6125008CAFAC /* PBXTargetDependency */,
@@ -400,7 +401,7 @@
 		AF1ADA141850132600932759 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
 		AF1ADA161850157400932759 /* Updater.xib in Resources */ = {isa = PBXBuildFile; fileRef = AF1ADA151850157400932759 /* Updater.xib */; };
 		AF1ADA181850180E00932759 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF1ADA171850180E00932759 /* Sparkle.framework */; };
-		AF1ADA1A1850186B00932759 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF1ADA171850180E00932759 /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF1ADA1A1850186B00932759 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF1ADA171850180E00932759 /* Sparkle.framework */; };
 		AF1ADA1B18501B3D00932759 /* SaverRunner.icns in Resources */ = {isa = PBXBuildFile; fileRef = AF2D522513E954A0002AA818 /* SaverRunner.icns */; };
 		AF1ADA1F18504A4F00932759 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
 		AF1B0FAE1D7AB4740011DBE4 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
@@ -1849,6 +1850,20 @@
 		AF6048FB157C07C600CA21E4 /* jwzgles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6048F8157C07C600CA21E4 /* jwzgles.c */; };
 		AF6048FC157C07C600CA21E4 /* jwzgles.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048F9157C07C600CA21E4 /* jwzgles.h */; };
 		AF6048FD157C07C600CA21E4 /* jwzglesI.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048FA157C07C600CA21E4 /* jwzglesI.h */; };
+		AF62D61F2180070600C57C42 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF62D6212180070600C57C42 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF62D6222180070600C57C42 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF62D6232180070600C57C42 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF62D6242180070600C57C42 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF62D6252180070600C57C42 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF62D6262180070600C57C42 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF62D6272180070600C57C42 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF62D6312180082100C57C42 /* handsy_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AF62D62F2180082100C57C42 /* handsy_model.c */; };
+		AF62D6322180082100C57C42 /* handsy_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AF62D62F2180082100C57C42 /* handsy_model.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF62D6332180082100C57C42 /* handsy.c in Sources */ = {isa = PBXBuildFile; fileRef = AF62D6302180082100C57C42 /* handsy.c */; };
+		AF62D6342180082100C57C42 /* handsy.c in Sources */ = {isa = PBXBuildFile; fileRef = AF62D6302180082100C57C42 /* handsy.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF62D6362180083E00C57C42 /* handsy.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF62D6352180083D00C57C42 /* handsy.xml */; };
+		AF62D6372180083E00C57C42 /* handsy.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF62D6352180083D00C57C42 /* handsy.xml */; };
 		AF633C081EE0BA6F00AB33BD /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF633C0A1EE0BA6F00AB33BD /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF633C0B1EE0BA6F00AB33BD /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -4605,6 +4620,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF5ECEA92116B1A400069433;
 			remoteInfo = VFeedback;
+		};
+		AF62D61A2180070600C57C42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF62D6382180087500C57C42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF62D6182180070600C57C42;
+			remoteInfo = Handsy;
 		};
 		AF633C031EE0BA6F00AB33BD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -7781,6 +7810,10 @@
 		AF6048F8157C07C600CA21E4 /* jwzgles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jwzgles.c; path = ../jwxyz/jwzgles.c; sourceTree = "<group>"; };
 		AF6048F9157C07C600CA21E4 /* jwzgles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzgles.h; path = ../jwxyz/jwzgles.h; sourceTree = "<group>"; };
 		AF6048FA157C07C600CA21E4 /* jwzglesI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzglesI.h; path = ../jwxyz/jwzglesI.h; sourceTree = "<group>"; };
+		AF62D62D2180070600C57C42 /* Handsy.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Handsy.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF62D62F2180082100C57C42 /* handsy_model.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = handsy_model.c; path = hacks/glx/handsy_model.c; sourceTree = "<group>"; };
+		AF62D6302180082100C57C42 /* handsy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = handsy.c; path = hacks/glx/handsy.c; sourceTree = "<group>"; };
+		AF62D6352180083D00C57C42 /* handsy.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = handsy.xml; sourceTree = "<group>"; };
 		AF633C161EE0BA6F00AB33BD /* Vigilance.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Vigilance.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF633C181EE0BC4900AB33BD /* vigilance.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vigilance.xml; sourceTree = "<group>"; };
 		AF633C191EE0BC4A00AB33BD /* vigilance.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vigilance.c; path = hacks/glx/vigilance.c; sourceTree = "<group>"; };
@@ -9635,6 +9668,20 @@
 				AF5ECEB82116B1A400069433 /* Carbon.framework in Frameworks */,
 				AF5ECEB92116B1A400069433 /* OpenGL.framework in Frameworks */,
 				AF5ECEBA2116B1A400069433 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF62D6202180070600C57C42 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF62D6212180070600C57C42 /* libjwxyz.a in Frameworks */,
+				AF62D6222180070600C57C42 /* ScreenSaver.framework in Frameworks */,
+				AF62D6232180070600C57C42 /* QuartzCore.framework in Frameworks */,
+				AF62D6242180070600C57C42 /* Cocoa.framework in Frameworks */,
+				AF62D6252180070600C57C42 /* Carbon.framework in Frameworks */,
+				AF62D6262180070600C57C42 /* OpenGL.framework in Frameworks */,
+				AF62D6272180070600C57C42 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -12529,6 +12576,7 @@
 				AFA6AB0520999950006D2685 /* GlitchPEG.saver */,
 				AFD77E7020C23F8600A3638D /* FilmLeader.saver */,
 				AF5ECEC02116B1A400069433 /* VFeedback.saver */,
+				AF62D62D2180070600C57C42 /* Handsy.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -12911,6 +12959,8 @@
 				AF7777E709B64CF700EA3033 /* glslideshow.c */,
 				AFA55C8C099349EE00F3E977 /* glsnake.c */,
 				AFD56E080996A07A00BA26F7 /* gltext.c */,
+				AF62D62F2180082100C57C42 /* handsy_model.c */,
+				AF62D6302180082100C57C42 /* handsy.c */,
 				AF1B0FBE1D7AB5210011DBE4 /* hexstrut.c */,
 				AF78D18A142DD96E002AAF77 /* hilbert.c */,
 				AFC0E8C21CDC60A9008CAFAC /* hydrostat.c */,
@@ -13139,6 +13189,7 @@
 				AFC258C10988A468000655EE /* greynetic.xml */,
 				AFC258C20988A468000655EE /* halftone.xml */,
 				AFC258C30988A468000655EE /* halo.xml */,
+				AF62D6352180083D00C57C42 /* handsy.xml */,
 				AFC258C40988A468000655EE /* helix.xml */,
 				AFB591BC178B81E600EA4005 /* hexadrop.xml */,
 				AF1B0FBF1D7AB5210011DBE4 /* hexstrut.xml */,
@@ -13567,6 +13618,7 @@
 				AF1AD9DF18500F9F00932759 /* Frameworks */,
 				AF1AD9E018500F9F00932759 /* Resources */,
 				AF1ADA191850185F00932759 /* CopyFiles */,
+				AF168EA821D240EB00ED6E08 /* Codesign Sparkle */,
 				AF1ADA1E18501DC200932759 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15015,6 +15067,26 @@
 			name = VFeedback;
 			productName = XAnalogTV;
 			productReference = AF5ECEC02116B1A400069433 /* VFeedback.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF62D6182180070600C57C42 /* Handsy */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF62D62A2180070600C57C42 /* Build configuration list for PBXNativeTarget "Handsy" */;
+			buildPhases = (
+				AF62D61B2180070600C57C42 /* Resources */,
+				AF62D61D2180070600C57C42 /* Sources */,
+				AF62D6202180070600C57C42 /* Frameworks */,
+				AF62D6282180070600C57C42 /* Rez */,
+				AF62D6292180070600C57C42 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF62D6192180070600C57C42 /* PBXTargetDependency */,
+			);
+			name = Handsy;
+			productName = DangerBall;
+			productReference = AF62D62D2180070600C57C42 /* Handsy.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF633C011EE0BA6F00AB33BD /* Vigilance */ = {
@@ -18731,7 +18803,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0940;
+				LastUpgradeCheck = 1010;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -18983,6 +19055,9 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF5ECEA92116B1A400069433 = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AF62D6182180070600C57C42 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF633C011EE0BA6F00AB33BD = {
@@ -19756,6 +19831,7 @@
 				AF7777D009B64C6B00EA3033 /* GLSlideshow */,
 				AFA55C77099349A600F3E977 /* GLSnake */,
 				AFD56DF10996A03800BA26F7 /* GLText */,
+				AF62D6182180070600C57C42 /* Handsy */,
 				AF1B0FA71D7AB4740011DBE4 /* Hexstrut */,
 				AF78D175142DD8F3002AAF77 /* Hilbert */,
 				AFC0E8AB1CDC601A008CAFAC /* Hydrostat */,
@@ -20477,6 +20553,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF62D61B2180070600C57C42 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF62D6362180083E00C57C42 /* handsy.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF633C041EE0BA6F00AB33BD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -20900,6 +20984,7 @@
 				AF918B0F158FC53D002B5D1E /* grav.xml in Resources */,
 				AF918B11158FC53D002B5D1E /* halftone.xml in Resources */,
 				AF918B12158FC53D002B5D1E /* halo.xml in Resources */,
+				AF62D6372180083E00C57C42 /* handsy.xml in Resources */,
 				AF918B13158FC53D002B5D1E /* helix.xml in Resources */,
 				AFB591BF178B81E600EA4005 /* hexadrop.xml in Resources */,
 				AF1B0FC01D7AB5330011DBE4 /* hexstrut.xml in Resources */,
@@ -22771,6 +22856,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF62D6282180070600C57C42 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF633C111EE0BA6F00AB33BD /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -24036,6 +24128,25 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AF168EA821D240EB00ED6E08 /* Codesign Sparkle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Codesign Sparkle";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "codesign -v --force --deep -o runtime --sign ${EXPANDED_CODE_SIGN_IDENTITY} ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework/Versions/A/Resources/Autoupdate.app\ncodesign -v --force -o runtime --sign ${EXPANDED_CODE_SIGN_IDENTITY} ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework/Versions/A\n";
+			showEnvVarsInLog = 0;
+		};
 		AF1A176F0D6D6EE3008AF328 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -24352,6 +24463,21 @@
 			showEnvVarsInLog = 0;
 		};
 		AF5ECEBC2116B1A400069433 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF62D6292180070600C57C42 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -28816,6 +28942,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF62D61D2180070600C57C42 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF62D6312180082100C57C42 /* handsy_model.c in Sources */,
+				AF62D61F2180070600C57C42 /* XScreenSaverSubclass.m in Sources */,
+				AF62D6332180082100C57C42 /* handsy.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF633C061EE0BA6F00AB33BD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -29364,6 +29500,8 @@
 				AF918A67158FC3E5002B5D1E /* glslideshow.c in Sources */,
 				AF918A68158FC3E5002B5D1E /* glsnake.c in Sources */,
 				AF918A69158FC3E5002B5D1E /* gltext.c in Sources */,
+				AF62D6322180082100C57C42 /* handsy_model.c in Sources */,
+				AF62D6342180082100C57C42 /* handsy.c in Sources */,
 				AF1B0FC31D7AB5500011DBE4 /* hexstrut.c in Sources */,
 				AF918A6A158FC3E5002B5D1E /* hilbert.c in Sources */,
 				AFC0E8C41CDC60B0008CAFAC /* hydrostat.c in Sources */,
@@ -31487,6 +31625,16 @@
 			isa = PBXTargetDependency;
 			target = AF5ECEA92116B1A400069433 /* VFeedback */;
 			targetProxy = AF5ECEC82116B31F00069433 /* PBXContainerItemProxy */;
+		};
+		AF62D6192180070600C57C42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF62D61A2180070600C57C42 /* PBXContainerItemProxy */;
+		};
+		AF62D6392180087500C57C42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF62D6182180070600C57C42 /* Handsy */;
+			targetProxy = AF62D6382180087500C57C42 /* PBXContainerItemProxy */;
 		};
 		AF633C021EE0BA6F00AB33BD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -34815,6 +34963,28 @@
 			};
 			name = Release;
 		};
+		AF62D62B2180070600C57C42 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF62D62C2180070600C57C42 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		AF633C141EE0BA6F00AB33BD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -38035,6 +38205,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = AF94E7411A16E93600289B93 /* xscreensaver.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
@@ -38057,8 +38228,10 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4627ATJELP;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -38120,6 +38293,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[sdk=macosx*]" = "$(OBJC_GC_CFLAGS)";
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				"OTHER_LDFLAGS[sdk=macosx*]" = "-headerpad_max_install_names";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -38137,6 +38311,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = AF94E7411A16E93600289B93 /* xscreensaver.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
@@ -38159,8 +38334,10 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jamie Zawinski (4627ATJELP)";
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "iPhone Distribution: Jamie Zawinski (4627ATJELP)";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application: Jamie Zawinski (4627ATJELP)";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4627ATJELP;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -38221,6 +38398,7 @@
 				"LLVM_LTO[sdk=macosx*]" = NO;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[sdk=macosx*]" = "$(OBJC_GC_CFLAGS)";
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				"OTHER_LDFLAGS[sdk=macosx*]" = "-headerpad_max_install_names";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -39002,6 +39180,15 @@
 			buildConfigurations = (
 				AF5ECEBE2116B1A400069433 /* Debug */,
 				AF5ECEBF2116B1A400069433 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF62D62A2180070600C57C42 /* Build configuration list for PBXNativeTarget "Handsy" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF62D62B2180070600C57C42 /* Debug */,
+				AF62D62C2180070600C57C42 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

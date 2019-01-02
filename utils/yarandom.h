@@ -25,8 +25,23 @@
 #undef drand48
 #undef srandom
 #undef srand
-#undef srand48
 #undef frand
+#undef sranddev
+#undef srandomdev
+#undef arc4random
+#undef arc4random_addrandom
+#undef arc4random_buf
+#undef arc4random_stir
+#undef arc4random_uniform
+#undef erand48
+#undef jrand48
+#undef lcong48
+#undef lrand48
+#undef mrand48
+#undef nrand48
+#undef seed48
+#undef srand48
+#undef rand_r
 #undef RAND_MAX
 
 #ifdef VMS
@@ -47,8 +62,23 @@ extern void ya_rand_init (unsigned int);
 #define drand48       __ERROR_use_frand_not_drand48_in_xscreensaver__
 #define srandom       __ERROR_do_not_call_srandom_in_xscreensaver__
 #define srand         __ERROR_do_not_call_srand_in_xscreensaver__
-#define srand48       __ERROR_do_not_call_srand48_in_xscreensaver__
+#define sranddev      __ERROR_do_not_call_sranddev_in_xscreensaver__
 #define ya_rand_init  __ERROR_do_not_call_ya_rand_init_in_xscreensaver__
+#define srandomdev    __ERROR_do_not_call_srandomdev_in_xscreensaver__
+#define arc4random    __ERROR_do_not_call_arc4random_in_xscreensaver__
+#define arc4random_addrandom __ERROR_do_not_call_arc4random_in_xscreensaver__
+#define arc4random_buf       __ERROR_do_not_call_arc4random_in_xscreensaver__
+#define arc4random_stir      __ERROR_do_not_call_arc4random_in_xscreensaver__
+#define arc4random_uniform   __ERROR_do_not_call_arc4random_in_xscreensaver__
+#define erand48    __ERROR_do_not_call_erand48_in_xscreensaver__
+#define jrand48    __ERROR_do_not_call_jrand48_in_xscreensaver__
+#define lcong48    __ERROR_do_not_call_lcong48_in_xscreensaver__
+#define lrand48    __ERROR_do_not_call_lrand48_in_xscreensaver__
+#define mrand48    __ERROR_do_not_call_mrand48_in_xscreensaver__
+#define nrand48    __ERROR_do_not_call_nrand48_in_xscreensaver__
+#define seed48     __ERROR_do_not_call_seed48_in_xscreensaver__
+#define srand48    __ERROR_do_not_call_srand48_in_xscreensaver__
+#define rand_r     __ERROR_do_not_call_rand_r_in_xscreensaver__
 
 
 #if defined (__GNUC__) && (__GNUC__ >= 2)

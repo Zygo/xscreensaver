@@ -529,6 +529,10 @@ truchet_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 truchet_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->agc);
+  XFreeGC (dpy, st->bgc);
+  free (st);
 }
 
 

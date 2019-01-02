@@ -599,6 +599,7 @@ vfeedback_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   analogtv_release (st->tv);
+  free (st->rec.input);
   if (st->pix)
     XFreePixmap (dpy, st->pix);
   XFreeGC (dpy, st->gc);

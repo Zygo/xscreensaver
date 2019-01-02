@@ -137,7 +137,6 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
 # define DEFAULTS           "*delay:      10000 \n" \
                             "*showFPS:    False \n" \
 
-# define free_klein 0
 # define release_klein 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -2065,7 +2064,7 @@ ENTRYPOINT void draw_klein(ModeInfo *mi)
   if (!kb->glx_context)
     return;
 
-  glXMakeCurrent(display,window,*(kb->glx_context));
+  glXMakeCurrent(display, window, *kb->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
@@ -2089,10 +2088,20 @@ ENTRYPOINT void change_klein(ModeInfo *mi)
   if (!kb->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi),MI_WINDOW(mi),*(kb->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *kb->glx_context);
   init(mi);
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void free_klein(ModeInfo *mi)
+{
+  kleinstruct *kb = &klein[MI_SCREEN(mi)];
+  if (!kb->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *kb->glx_context);
+  gltrackball_free (kb->trackballs[0]);
+  gltrackball_free (kb->trackballs[1]);
+  if (kb->tex_name) glDeleteTextures (1, &kb->tex_name);
+}
 
 XSCREENSAVER_MODULE ("Klein", klein)
 

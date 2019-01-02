@@ -31,7 +31,6 @@
                   "*chooseRandomImages:  True  \n" \
 		  "*suppressRotationAnimation: True\n" \
 
-# define free_photopile 0
 # define release_photopile 0
 # define photopile_handle_event xlockmore_no_events
 
@@ -471,6 +470,7 @@ hack_resources (Display *dpy)
   value.addr = buf2;
   value.size = strlen(buf2);
   XrmPutResource (&db, buf1, "String", &value);
+  free (val);
 # endif /* !HAVE_JWXYZ */
 }
 
@@ -730,7 +730,7 @@ draw_photopile (ModeInfo *mi)
   if (!ss->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ss->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
 
   if (ss->mode == EARLY)
     if (loading_initial_image (mi))
@@ -826,6 +826,24 @@ draw_photopile (ModeInfo *mi)
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers (MI_DISPLAY (mi), MI_WINDOW(mi));
+}
+
+
+ENTRYPOINT void
+free_photopile (ModeInfo *mi)
+{
+  photopile_state *ss = &sss[MI_SCREEN(mi)];
+  if (!ss->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
+  if (ss->frames) {
+    int i;
+    for (i = 0; i < MI_COUNT(mi); i++) {
+      if (ss->frames[i].title) free (ss->frames[i].title);
+      if (ss->frames[i].texid) glDeleteTextures(1, &ss->frames[i].texid);
+    }
+  }
+  if (ss->shadow) glDeleteTextures(1, &ss->shadow);
+  if (ss->texfont) free_texture_font (ss->texfont);
 }
 
 XSCREENSAVER_MODULE ("Photopile", photopile)

@@ -32,7 +32,6 @@
 
 /* #define DEBUG */
 
-# define free_toasters 0
 # define release_toasters 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -796,7 +795,7 @@ draw_toasters (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -861,6 +860,27 @@ draw_toasters (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_toasters (ModeInfo *mi)
+{
+  toaster_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->dlists) free (bp->dlists);
+  if (bp->floaters) free (bp->floaters);
+  if (bp->user_trackball) gltrackball_free (bp->user_trackball);
+  for (i = 0; i < countof(all_objs); i++)
+    if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+  if (bp->toast_texture) glDeleteTextures (1, &bp->toast_texture);
+# ifndef HAVE_JWZGLES
+  if (bp->chrome_texture) glDeleteTextures (1, &bp->chrome_texture);
+# endif
 }
 
 XSCREENSAVER_MODULE_2 ("FlyingToasters", flyingtoasters, toasters)

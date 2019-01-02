@@ -148,6 +148,7 @@ qix_init (Display *dpy, Window window)
   int nlines;
   XGCValues gcv;
   XWindowAttributes xgwa;
+  int i;
   st->dpy = dpy;
   st->window = window;
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
@@ -243,7 +244,7 @@ qix_init (Display *dpy, Window window)
 	  st->count = nplanes;
 	}
 
-      st->gcs[0] = (GC *) malloc (st->count * sizeof (GC));
+      st->gcs[0] = (GC *) calloc (st->count, sizeof (GC));
       st->gcs[1] = (st->xor_p
                     ? st->gcs[0]
                     : (GC *) malloc (st->count * sizeof (GC)));
@@ -321,12 +322,11 @@ qix_init (Display *dpy, Window window)
     jwxyz_XSetAlphaAllowed (dpy, st->draw_gc, True);
 #endif
 
-  st->qixes = (struct qix **) malloc ((st->count + 1) * sizeof (struct qix *));
-  st->qixes [st->count] = 0;
-  while (st->count--)
+  st->qixes = (struct qix **) calloc ((st->count + 1), sizeof (struct qix *));
+  for (i = 0; i < st->count; i++)
     {
-      st->qixes [st->count] = init_one_qix (st, nlines);
-      st->qixes [st->count]->id = st->count;
+      st->qixes [i] = init_one_qix (st, nlines);
+      st->qixes [i]->id = i;
     }
 
 # ifdef HAVE_JWXYZ
@@ -566,10 +566,27 @@ static void
 qix_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
-  if (st->gcs[0])
-    free (st->gcs[0]);
-  if (st->gcs[1] && st->gcs[0] != st->gcs[1])
-    free (st->gcs[1]);
+  int i;
+
+# if 0  /* 2001 jwz was a total jerk */
+  for (i = 0; i < 2; i++) {
+    int j;
+    if (st->gcs[i]) {
+      for (j = 0; i < st->count; j++)
+        if (st->gcs[i][j]) XFreeGC (dpy, st->gcs[i][j]);
+      free (st->gcs[i]);
+    }
+  }
+# endif
+  for (i = 0; i < st->count; i++) {
+    struct qix *q = st->qixes[i];
+    free (q->lines);
+    free (q);
+  }
+  if (st->draw_gc)
+    free (st->draw_gc);
+  if (st->erase_gc && st->draw_gc != st->erase_gc)
+    free (st->erase_gc);
   free (st->qixes);
   free (st);
 }

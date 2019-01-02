@@ -41,11 +41,11 @@ struct Obj {
   void (*propigate) (GLOBAL *, OBJECT *);
   void (*draw) (GLOBAL *, OBJECT *);
   void (*init) (GLOBAL *, OBJECT *);
-  void *cur;
+  void *cur, *root;
 };
 
 typedef struct KSEGMENT {
-  struct KSEGMENT *next;
+  struct KSEGMENT *next, *next0;
   XColor color;
   int drawn;
   short int x1,y1,x2,y2;  /* these are in the natural coordinate system */
@@ -211,9 +211,10 @@ create_ksegment (GLOBAL *g)
 
     kcopy_color(&(prev->color), &new_color);
 
-    prev->next              = (Ksegment*)malloc(sizeof(Ksegment));
-    (prev->next)->xsegments = (XSegment*)malloc(g->symmetry * sizeof(XSegment));
+    prev->next              = (Ksegment*)calloc(1,sizeof(Ksegment));
+    (prev->next)->xsegments = (XSegment*)calloc(g->symmetry, sizeof(XSegment));
     prev->drawn             = 0;
+    prev->next0 = prev->next;
     prev = (prev->next);
   } 
 
@@ -345,7 +346,7 @@ create_objects (GLOBAL *g)
   g->objects = (OBJECT *) malloc(g->nobjects * sizeof(OBJECT));
 
   for (i=0; i< g->nsegments; i++) {
-    g->objects[i].cur = create_ksegment(g);
+    g->objects[i].cur = g->objects[i].root = create_ksegment(g);
     g->objects[i].type = 1;
     g->objects[i].time = 0;
     g->objects[i].propigate = propigate_ksegment;
@@ -406,6 +407,7 @@ init_g (GLOBAL *g)
   } else {
     g->color_mode = 2;
   }
+  if (color_mode_str) free(color_mode_str);
 
   XGetWindowAttributes (g->dpy, g->window, &xgwa);
   g->xmax     = xgwa.width;
@@ -484,6 +486,19 @@ static void
 kaleidescope_free (Display *dpy, Window window, void *closure)
 {
   GLOBAL *g = (GLOBAL *) closure;
+  int i;
+  for (i = 0; i < g->nsegments; i++) {
+    Ksegment *s = g->objects[i].root;
+    while (s) {
+      Ksegment *p = s;
+      s = s->next0;
+      free (p->xsegments);
+      free (p);
+    }
+  }
+  free (g->objects);
+  XFreeGC (dpy, g->draw_gc);
+  XFreeGC (dpy, g->erase_gc);
   free (g);
 }
 

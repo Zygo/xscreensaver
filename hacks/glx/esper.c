@@ -147,7 +147,6 @@
 		  "*reticleColor: #FFFF77\n" \
 		  "*textColor:    #FFFFBB\n" \
 
-# define free_esper 0
 # define refresh_esper 0
 # define release_esper 0
 # include "xlockmore.h"
@@ -2327,6 +2326,7 @@ parse_color (ModeInfo *mi, char *key, GLfloat color[4])
                key, string);
       exit (1);
     }
+  free (string);
 
   color[0] = xcolor.red   / 65536.0;
   color[1] = xcolor.green / 65536.0;
@@ -2390,7 +2390,7 @@ draw_esper (ModeInfo *mi)
   if (!ss->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ss->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
 
   mi->polygon_count = 0;
 
@@ -2405,6 +2405,31 @@ draw_esper (ModeInfo *mi)
 
   glFinish();
   glXSwapBuffers (MI_DISPLAY (mi), MI_WINDOW(mi));
+}
+
+
+ENTRYPOINT void
+free_esper (ModeInfo *mi)
+{
+  esper_state *ss = &sss[MI_SCREEN(mi)];
+  int i;
+  if (!ss->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
+
+  if (ss->font_data) free_texture_font (ss->font_data);
+  for (i = 0; i < ss->nimages; i++) {
+    if (ss->images[i]) {
+      if (ss->images[i]->title) free (ss->images[i]->title);
+      if (ss->images[i]->texid) glDeleteTextures (1, &ss->images[i]->texid);
+      free (ss->images[i]);
+    }
+  }
+  for (i = 0; i < countof(ss->sprites); i++) {
+    if (ss->sprites[i]) {
+      if (ss->sprites[i]->text) free (ss->sprites[i]->text);
+      if (ss->sprites[i]) free (ss->sprites[i]);
+    }
+  }
 }
 
 XSCREENSAVER_MODULE ("Esper", esper)

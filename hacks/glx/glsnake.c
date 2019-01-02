@@ -144,7 +144,6 @@ static GLfloat angvel;
 #define glsnake_init    init_glsnake
 #define glsnake_display draw_glsnake
 #define glsnake_reshape reshape_glsnake
-#define free_glsnake 0
 #define release_glsnake 0
 #define glsnake_handle_event xlockmore_no_events
 
@@ -2176,7 +2175,7 @@ ENTRYPOINT void glsnake_display(
     if (!bp->glx_context)
 	return;
 
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 #endif
     
     gl_init(mi);
@@ -2333,6 +2332,20 @@ ENTRYPOINT void glsnake_display(
     glXSwapBuffers(dpy, window);
 #endif
 }
+
+
+#ifndef HAVE_GLUT
+ENTRYPOINT void free_glsnake(ModeInfo * mi) 
+{
+    struct glsnake_cfg * bp = &glc[MI_SCREEN(mi)];
+    if (!bp->glx_context) return;
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+    if (bp->font_data) free_texture_font (bp->font_data);
+    if (glIsList(bp->node_solid)) glDeleteLists(bp->node_solid, 1);
+    if (glIsList(bp->node_wire)) glDeleteLists(bp->node_wire, 1);
+}
+#endif
+
 
 #ifdef HAVE_GLUT
 /* anything that needs to be cleaned up goes here */

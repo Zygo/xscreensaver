@@ -88,6 +88,7 @@ reset_boxes (state *st)
                    progname, s);
           exit (1);
         }
+      free (s);
     }
 
   if (st->mode == -1)
@@ -514,6 +515,11 @@ boxfit_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 boxfit_free (Display *dpy, Window window, void *closure)
 {
+  state *st = (state *) closure;
+  if (st->boxes) free (st->boxes);
+  if (st->colors) free (st->colors);
+  XFreeGC (dpy, st->gc);
+  free (st);
 }
 
 

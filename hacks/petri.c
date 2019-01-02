@@ -419,7 +419,7 @@ setup_display (struct state *st)
 
     if (osize != cell_size)
       {
-        if (!st->warned)
+        if (0 && !st->warned)
           {
             fprintf (stderr,
              "%s: throttling cell size from %d to %d because of %dM limit.\n",
@@ -707,9 +707,17 @@ static void
 petri_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->arr) free (st->arr);
+  if (st->head) free (st->head);
+  if (st->tail) free (st->tail);
+  if (st->coloredGCs) {
+    int i;
+    for (i = 0; i < st->count*2; i++)
+      XFreeGC (st->dpy, st->coloredGCs[i]);
+    free (st->coloredGCs);
+  }
   free (st);
 }
-
 
 
 static const char *petri_defaults [] = {

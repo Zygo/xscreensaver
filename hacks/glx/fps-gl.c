@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2015 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -95,4 +95,17 @@ xlockmore_gl_draw_fps (ModeInfo *mi)
                            (data->top_p ? 1 : 2),
                            st->string);
     }
+}
+
+void
+xlockmore_gl_free_fps (fps_state *st)
+{
+  gl_fps_data *data = (gl_fps_data *) st->gl_fps_data;
+  if (data)
+    {
+      if (data->texfont) free_texture_font (data->texfont);
+      free (data);
+      st->gl_fps_data = 0;
+    }
+  fps_free (st);
 }

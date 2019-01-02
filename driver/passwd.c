@@ -1,5 +1,5 @@
 /* passwd.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,6 +24,7 @@
 #endif
 #include <time.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #ifndef VMS
 # include <pwd.h>		/* for getpwuid() */
@@ -111,6 +112,44 @@ struct auth_methods methods[] = {
 };
 
 
+# ifdef HAVE_PROC_OOM
+/* On some recent Linux systems you can tell the kernel's OOM-killer to
+   consider the possibility of maybe sometimes not killing you in low-memory
+   situations. Because that would unlock the screen. And that would be bad.
+
+   Linux >= 2.6.11: echo -17   > /proc/$$/oom_adj	  <-- ignoring this.
+   Linux >= 2.6.37: echo -1000 > /proc/$$/oom_score_adj	  <-- trying this.
+ */
+static void
+oom_assassin_immunity (Bool verbose_p)
+{
+  char fn[1024];
+  struct stat st;
+  FILE *out;
+  sprintf (fn, "/proc/%d/oom_score_adj", getpid());
+  if (stat(fn, &st) != 0)
+    {
+      if (verbose_p)
+        fprintf (stderr, "%s: OOM: %s does not exist\n", blurb(), fn);
+      return;
+    }
+  out = fopen (fn, "w");
+  if (!out)
+    {
+      if (verbose_p)
+        {
+          char b[2048];
+          sprintf (b, "%s: OOM: unable to write %s\n", blurb(), fn);
+          perror(b);
+        }
+      return;
+    }
+  fputs ("-1000\n", out);
+  fclose (out);
+}
+# endif /* HAVE_PROC_OOM */
+
+
 Bool
 lock_priv_init (int argc, char **argv, Bool verbose_p)
 {
@@ -130,6 +169,11 @@ lock_priv_init (int argc, char **argv, Bool verbose_p)
         fprintf (stderr, "%s: initialization of %s passwords failed.\n",
                  blurb(), methods[i].name);
     }
+
+# ifdef HAVE_PROC_OOM
+  oom_assassin_immunity (verbose_p);
+# endif
+
   return any_ok;
 }
 

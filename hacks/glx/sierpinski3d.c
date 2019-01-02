@@ -550,7 +550,7 @@ draw_gasket(ModeInfo * mi)
   if (max_depth > 10)
     max_depth = 10;
 
-  glXMakeCurrent(display, window, *(gp->glx_context));
+  glXMakeCurrent(display, window, *gp->glx_context);
   draw(mi);
   if (mi->fps_p) do_fps (mi);
   glFinish();
@@ -562,16 +562,17 @@ free_gasket(ModeInfo * mi)
 {
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
-  if (gp->glx_context)
-  {
-	/* Display lists MUST be freed while their glXContext is current. */
-    glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
+  if (!gp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
 
-    if (glIsList(gp->gasket0)) glDeleteLists(gp->gasket0, 1);
-    if (glIsList(gp->gasket1)) glDeleteLists(gp->gasket1, 1);
-    if (glIsList(gp->gasket2)) glDeleteLists(gp->gasket2, 1);
-    if (glIsList(gp->gasket3)) glDeleteLists(gp->gasket3, 1);
-  }
+  if (gp->trackball) gltrackball_free (gp->trackball);
+  if (gp->rot) free_rotator (gp->rot);
+  if (gp->colors) free (gp->colors);
+
+  if (glIsList(gp->gasket0)) glDeleteLists(gp->gasket0, 1);
+  if (glIsList(gp->gasket1)) glDeleteLists(gp->gasket1, 1);
+  if (glIsList(gp->gasket2)) glDeleteLists(gp->gasket2, 1);
+  if (glIsList(gp->gasket3)) glDeleteLists(gp->gasket3, 1);
 }
 
 XSCREENSAVER_MODULE_2 ("Sierpinski3D", sierpinski3d, gasket)

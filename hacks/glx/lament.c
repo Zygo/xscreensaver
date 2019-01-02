@@ -32,7 +32,6 @@
 			"*wireframe:	False	\n"	\
 			"*suppressRotationAnimation: True\n" \
 
-# define free_lament 0
 # define release_lament 0
 #include "xlockmore.h"
 
@@ -1768,7 +1767,7 @@ draw_lament (ModeInfo *mi)
 
   glDrawBuffer(GL_BACK);
 
-  glXMakeCurrent(dpy, window, *(lc->glx_context));
+  glXMakeCurrent(dpy, window, *lc->glx_context);
   draw(mi);
   if (mi->fps_p) do_fps (mi);
 
@@ -1779,6 +1778,23 @@ draw_lament (ModeInfo *mi)
     lc->anim_pause--;
   else
     animate(mi);
+}
+
+ENTRYPOINT void
+free_lament (ModeInfo *mi)
+{
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
+  int i;
+  if (!lc->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *lc->glx_context);
+  if (lc->states) free (lc->states);
+  if (lc->trackball) gltrackball_free (lc->trackball);
+  if (lc->rot) free_rotator (lc->rot);
+  if (lc->texture) XDestroyImage (lc->texture);
+  for (i = 0; i < countof(all_objs); i++)
+    if (glIsList(lc->dlists[i])) glDeleteLists(lc->dlists[i], 1);
+  for (i = 0; i < countof(lc->texids); i++)
+    if (lc->texids[i]) glDeleteTextures (1, &lc->texids[i]);
 }
 
 XSCREENSAVER_MODULE ("Lament", lament)

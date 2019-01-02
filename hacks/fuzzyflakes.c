@@ -445,6 +445,10 @@ FuzzyFlakesFreeFlake(Flake *flake)
 
    if (flake->DB.bb) XFreePixmap(flake->dpy, flake->DB.bb);
    if (flake->DB.ba) XFreePixmap(flake->dpy, flake->DB.ba);
+   XFreeGC (flake->dpy, flake->GCVar);
+   if (flake->Colors.Back) free (flake->Colors.Back);
+   if (flake->Colors.Fore) free (flake->Colors.Fore);
+   if (flake->Colors.Bord) free (flake->Colors.Bord);
 }
 
 static void
@@ -607,6 +611,7 @@ fuzzyflakes_free (Display *dpy, Window window, void *closure)
 {
   Flake *flake = (Flake *) closure;
   FuzzyFlakesFreeFlake(flake);
+  free(flake->Flakes);
   free(flake);
 }
 

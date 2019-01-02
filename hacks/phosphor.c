@@ -185,6 +185,8 @@ phosphor_init (Display *dpy, Window window)
       if (!state->font) abort();
     }
 
+  if (fontname) free (fontname);
+
   font = state->font;
   state->scale = get_integer_resource (dpy, "scale", "Integer");
   state->ticks = STATE_MAX + get_integer_resource (dpy, "ticks", "Integer");
@@ -322,6 +324,8 @@ phosphor_init (Display *dpy, Window window)
         state->gcs[STATE_MAX + i] = XCreateGC (state->dpy, state->window,
                                                flags, &state->gcv);
       }
+
+    free (colors);
   }
 
   capture_font_bits (state);
@@ -548,7 +552,6 @@ capture_font_bits (p_state *state)
 
   for (i = 0; i < 256; i++)
     state->chars[i] = make_character (state, i);
-  state->chars[CURSOR_INDEX] = make_character (state, CURSOR_INDEX);
 }
 
 
@@ -1392,13 +1395,30 @@ static void
 phosphor_free (Display *dpy, Window window, void *closure)
 {
   p_state *state = (p_state *) closure;
+  int i;
 
   textclient_close (state->tc);
   if (state->cursor_timer)
     XtRemoveTimeOut (state->cursor_timer);
 
-  /* #### there's more to free here */
-
+  if (state->gc0) XFreeGC (dpy, state->gc0);
+  if (state->gc1) XFreeGC (dpy, state->gc1);
+#ifdef FUZZY_BORDER
+  if (state->gc2) XFreeGC (dpy, state->gc2);
+#endif /* FUZZY_BORDER */
+  for (i = 0; i < state->ticks; i++)
+    if (state->gcs[i]) XFreeGC (dpy, state->gcs[i]);
+  free (state->gcs);
+  for (i = 0; i < 256; i++) {
+    XFreePixmap (dpy, state->chars[i]->pixmap);
+#ifdef FUZZY_BORDER
+    XFreePixmap (dpy, state->chars[i]->pixmap2);
+#endif /* FUZZY_BORDER */
+    free (state->chars[i]);
+  }
+  XDestroyImage (state->font_bits);
+  free (state->chars);
+  free (state->cells);
   free (state);
 }
 

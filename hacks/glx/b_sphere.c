@@ -213,7 +213,7 @@ glb_sphere_get_triangles(glb_data *d, int *nr_triangles_ptr)
 void
 glb_sphere_end(glb_data *d)
 {
-	(void) free((void *) d->vertices);
-	(void) free((void *) d->triangles);
+	free(d->vertices);
+	free(d->triangles);
         free (d);
 }

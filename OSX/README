@@ -20,7 +20,8 @@ ridiculously long list of steps!
   5: Delete the "DangerBall copy-Info.plist" from the Build Settings too.
   6: Manage Schemes, rename "DangerBall Copy".
   7: Move to the right place in the list.
-  8: Scheme / Run / Info: Executable: SaverTester.app.
+  8. Scheme / Profile / Info: Executable: SaverTester.app.
+     Scheme / Run / Info: Executable: SaverTester.app.
   9: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
  10: File / Add Files / the new .c and .xml.
  11: Re-order them in the file list. This will bring up an Options dialog.
@@ -38,5 +39,5 @@ ridiculously long list of steps!
  18: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
  19: Don't forget to create a man page from the XML with xml2man.pl,
      and update Makefile.in.
- 20: Make a video: -record-animation 3600 -delay 1 -geom 1920x1080+128+64
+ 20: Make a video: -record-animation 3600 -geom 1920x1080+128+64
      ./upload-video.pl NAME

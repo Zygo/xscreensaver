@@ -53,7 +53,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static GLubyte smallTextureArray[32][32];
 static GLubyte bigTextureArray[256][256][2];
-GLuint theTexture = 0;
 
 /* simple smoothing routine */
 static void SmoothTexture(void)
@@ -187,8 +186,9 @@ static void AverageLastAndFirstTextures(void)
     }
 }
 
-void MakeTexture()
+GLuint MakeTexture(void)
 {
+    GLuint theTexture = 0;
     int i,j;
     for (i=0;i<8;i++)
     {
@@ -221,4 +221,5 @@ void MakeTexture()
 
     gluBuild2DMipmaps(GL_TEXTURE_2D, 2, 256, 256, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, bigTextureArray);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    return theTexture;
 }

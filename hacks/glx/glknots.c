@@ -18,7 +18,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_knot 0
 # define release_knot 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -348,7 +347,7 @@ draw_knot (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   if (bp->mode == 0)
     {
@@ -438,6 +437,19 @@ draw_knot (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_knot (ModeInfo *mi)
+{
+  knot_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->colors) free (bp->colors);
+  if (glIsList(bp->knot_list)) glDeleteLists(bp->knot_list, 1);
 }
 
 XSCREENSAVER_MODULE_2 ("GLKnots", glknots, knot)

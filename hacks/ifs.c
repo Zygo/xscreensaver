@@ -545,6 +545,7 @@ ifs_free (Display *dpy, Window window, void *closure)
   if (st->colours) free(st->colours);
   if (st->backbuffer != None && st->backbuffer != st->window)
     XFreePixmap(st->dpy, st->backbuffer);
+  XFreeGC (dpy, st->gc);
   free(st);
 }
 

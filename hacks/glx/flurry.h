@@ -211,7 +211,7 @@ static vector float FastDistance2DV(vector float x, vector float y) {
 
 extern GLuint theTexture;
 
-void MakeTexture(void);
+GLuint MakeTexture(void);
 
 #define OPT_MODE_SCALAR_BASE		0x0
 
@@ -290,6 +290,7 @@ struct _global_info_t {
 	double oldFrameTime;
 
 	flurry_info_t *flurry;
+        GLuint texid;
 };
 
 #define kNumSpectrumEntries 512

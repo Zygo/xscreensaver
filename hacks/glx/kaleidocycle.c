@@ -21,7 +21,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_kaleidocycle 0
 # define release_kaleidocycle 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -414,7 +413,7 @@ draw_kaleidocycle (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -567,6 +566,19 @@ draw_kaleidocycle (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_kaleidocycle (ModeInfo *mi)
+{
+  kaleidocycle_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->rot2) free_rotator (bp->rot2);
+  if (bp->colors) free (bp->colors);
 }
 
 XSCREENSAVER_MODULE ("Kaleidocycle", kaleidocycle)

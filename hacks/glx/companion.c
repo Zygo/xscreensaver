@@ -26,7 +26,6 @@
 /* #define DEBUG */
 
 
-# define free_cube 0
 # define release_cube 0
 #define DEF_SPEED  "1.0"
 #define DEF_SPIN   "False"
@@ -548,7 +547,7 @@ draw_cube (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -585,6 +584,23 @@ draw_cube (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_cube (ModeInfo *mi)
+{
+  cube_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  for (i = 0; i < bp->nfloaters; i++)
+    if (bp->floaters[i].rot) free_rotator (bp->floaters[i].rot);
+  for (i = 0; i < countof(all_objs)+1; i++)
+    if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+  if (bp->floaters) free (bp->floaters);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->dlists) free (bp->dlists);
 }
 
 XSCREENSAVER_MODULE_2 ("CompanionCube", companioncube, cube)

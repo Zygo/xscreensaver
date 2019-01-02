@@ -87,8 +87,13 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
       g_type_init ();
 #  endif
 # endif
-      gdk_pixbuf_xlib_init (dpy, DefaultScreen (dpy));
-      xlib_rgb_init (dpy, DefaultScreenOfDisplay (dpy));
+      if (dpy)
+        {
+          /* Turns out gdk-pixbuf works even if you don't have display
+             connection, which is good news for analogtv-cli. */
+          gdk_pixbuf_xlib_init (dpy, DefaultScreen (dpy));
+          xlib_rgb_init (dpy, DefaultScreenOfDisplay (dpy));
+        }
       initted = 1;
     }
 
@@ -119,6 +124,7 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
       pb = gdk_pixbuf_new_from_stream (s, 0, &gerr);
 
       g_input_stream_close (s, NULL, NULL);
+      /* #### valgrind on xflame says there's a small leak in s? */
       g_object_unref (s);
 
       if (! pb)
@@ -198,6 +204,7 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
         row += stride;
       }
 
+    /* #### valgrind on xflame says there's a small leak in pb? */
     g_object_unref (pb);
     return image;
   }

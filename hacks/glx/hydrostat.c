@@ -754,7 +754,7 @@ draw_hydrostat (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -797,11 +797,21 @@ free_hydrostat (ModeInfo *mi)
 {
   hydrostat_configuration *bp = &bps[MI_SCREEN(mi)];
   int i;
-  if (!bp->squids)
-    return;
-  for (i = 0; i < MI_COUNT(mi); i++)
-    free_squid (bp->squids[i]);
-  free (bp->squids);
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+# ifdef USE_TRACKBALL
+  if (bp->trackball) gltrackball_free (bp->trackball);
+# endif
+  if (bp->squids)
+    {
+      for (i = 0; i < MI_COUNT(mi); i++)
+        free_squid (bp->squids[i]);
+      free (bp->squids);
+    }
+
+  if (glIsList(bp->head)) glDeleteLists(bp->head, 1);
 }
 
 XSCREENSAVER_MODULE ("Hydrostat", hydrostat)

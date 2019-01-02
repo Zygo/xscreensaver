@@ -1303,7 +1303,11 @@ static void
 nerverot_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
   freeBlots (st);
+  for (i = 0; i <= st->colorCount; i++) 
+    XFreeGC (dpy, st->gcs[i]);
+  free (st->gcs);
   free (st);
 }
 

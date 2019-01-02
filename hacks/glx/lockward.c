@@ -213,8 +213,7 @@ reshape_lockward (ModeInfo *mi, int width, int height)
           h = height / (GLfloat) width;
         }
 
-	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi),
-	                *(ctx->glx_context));
+	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi), *ctx->glx_context);
 
 	glViewport (0, y, (GLint) width, (GLint) height);
 
@@ -734,7 +733,7 @@ draw_lockward (ModeInfo *mi)
 	if (!ctx->glx_context)
 		return;
 
-	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi), *(ctx->glx_context));
+	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi), *ctx->glx_context);
 
 
 	glClear (GL_COLOR_BUFFER_BIT);
@@ -937,11 +936,8 @@ free_lockward (ModeInfo *mi)
 	lockward_context	*ctx = &g_ctx[MI_SCREEN (mi)];
 	int i;
 
-	if (!ctx->glx_context)
-		return;
-
-	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi),
-	                *(ctx->glx_context));
+        if (!ctx->glx_context) return;
+	glXMakeCurrent (MI_DISPLAY (mi), MI_WINDOW (mi), *ctx->glx_context);
 
 	if (ctx->blink.noise)
 		free (ctx->blink.noise);

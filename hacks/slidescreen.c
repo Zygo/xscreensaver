@@ -91,6 +91,8 @@ slidescreen_init (Display *dpy, Window window)
       XParseColor (st->dpy, xgwa.colormap, "black", &bgc);
     if (!XParseColor (st->dpy, xgwa.colormap, bgs, &bgc))
       XParseColor (st->dpy, xgwa.colormap, "gray", &fgc);
+    if (fgs) free (fgs);
+    if (bgs) free (bgs);
 
     fg_ok = XAllocColor (st->dpy, xgwa.colormap, &fgc);
     bg_ok = XAllocColor (st->dpy, xgwa.colormap, &bgc);

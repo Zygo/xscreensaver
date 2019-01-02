@@ -53,6 +53,7 @@ filmleader_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
+  char *s;
 
   st->dpy = dpy;
   st->window = window;
@@ -105,15 +106,15 @@ filmleader_init (Display *dpy, Window window)
 
   st->xftdraw = XftDrawCreate (dpy, st->pix, st->xgwa.visual,
                                st->xgwa.colormap);
-  st->font = load_xft_font_retry (dpy, screen_number (st->xgwa.screen),
-                                  get_string_resource (dpy, "numberFont",
-                                                       "Font"));
-  st->font2 = load_xft_font_retry (dpy, screen_number (st->xgwa.screen),
-                                   get_string_resource (dpy, "numberFont2",
-                                                        "Font"));
-  st->font3 = load_xft_font_retry (dpy, screen_number (st->xgwa.screen),
-                                   get_string_resource (dpy, "numberFont3",
-                                                        "Font"));
+  s = get_string_resource (dpy, "numberFont", "Font");
+  st->font = load_xft_font_retry (dpy, screen_number (st->xgwa.screen), s);
+  if (s) free (s);
+  s = get_string_resource (dpy, "numberFont2", "Font");
+  st->font2 = load_xft_font_retry (dpy, screen_number (st->xgwa.screen), s);
+  if (s) free (s);
+  s = get_string_resource (dpy, "numberFont3", "Font");
+  st->font3 = load_xft_font_retry (dpy, screen_number (st->xgwa.screen), s);
+  if (s) free (s);
 
   st->bg = get_pixel_resource (dpy, st->xgwa.colormap,
                                "textBackground", "Background");
@@ -124,12 +125,15 @@ filmleader_init (Display *dpy, Window window)
   st->trace_color = get_pixel_resource (dpy, st->xgwa.colormap,
                                         "traceColor", "Foreground");
 
-  XftColorAllocName (dpy, st->xgwa.visual, st->xgwa.colormap,
-                     get_string_resource (dpy, "textColor", "Foreground"),
+  s = get_string_resource (dpy, "textColor", "Foreground");
+  XftColorAllocName (dpy, st->xgwa.visual, st->xgwa.colormap, s,
                      &st->xft_text_color_1);
-  XftColorAllocName (dpy, st->xgwa.visual, st->xgwa.colormap,
-                     get_string_resource (dpy, "textBackground", "Background"),
+  if (s) free (s);
+
+  s = get_string_resource (dpy, "textBackground", "Background");
+  XftColorAllocName (dpy, st->xgwa.visual, st->xgwa.colormap, s,
                      &st->xft_text_color_2);
+  if (s) free (s);
 
   return st;
 }
@@ -512,6 +516,7 @@ filmleader_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   analogtv_release (st->tv);
+  free (st->inp);
   XftDrawDestroy (st->xftdraw);
   XftColorFree(dpy, st->xgwa.visual, st->xgwa.colormap, &st->xft_text_color_1);
   XftColorFree(dpy, st->xgwa.visual, st->xgwa.colormap, &st->xft_text_color_2);

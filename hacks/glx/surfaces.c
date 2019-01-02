@@ -46,7 +46,6 @@
                                     "*showFPS:      False   \n" \
 				   "*suppressRotationAnimation: True\n" \
 
-# define free_surface 0
 # define release_surface 0
 # include "xlockmore.h"     /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -429,7 +428,7 @@ ENTRYPOINT void reshape_surface(ModeInfo *mi, int width, int height)
     h = height / (GLfloat) width;
   }
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
 
   glViewport(0, y, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
@@ -634,12 +633,22 @@ ENTRYPOINT void draw_surface(ModeInfo * mi)
 
   glDrawBuffer(GL_BACK);
 
-  glXMakeCurrent(display, window, *(sp->glx_context));
+  glXMakeCurrent(display, window, *sp->glx_context);
   draw(mi);
   if (mi->fps_p)
     do_fps(mi);
   glFinish();
   glXSwapBuffers(display, window);
+}
+
+
+ENTRYPOINT void free_surface(ModeInfo * mi)
+{
+  surfacestruct *sp = &surface[MI_SCREEN(mi)];
+  if (!sp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
+  gltrackball_free (sp->trackball);
+  free_rotator (sp->rot);
 }
 
 

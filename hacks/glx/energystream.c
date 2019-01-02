@@ -367,16 +367,19 @@ free_stream (ModeInfo * mi)
   stream_configuration *es = &ess[MI_SCREEN(mi)];
   int i;
 
-  if (es->glx_context) {
-    glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *(es->glx_context));
+  if (!es->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *es->glx_context);
 
-    for (i = 0; i < es->num_streams; i++) {
-      free (es->streams[i].flares);
-      glDeleteTextures (1, &es->streams[i].flare_tex);
-    }
+  if (es->trackball) gltrackball_free (es->trackball);
+  if (es->rot) free_rotator (es->rot);
 
-    free (es->streams);
+  for (i = 0; i < es->num_streams; i++) {
+    free (es->streams[i].flares);
+    glDeleteTextures (1, &es->streams[i].flare_tex);
   }
+
+  if (es->streams) free (es->streams);
+
 }
 
 
@@ -438,7 +441,7 @@ draw_stream (ModeInfo *mi)
   cur_time = (float)(GETSECS(current_time) * 1000 + GETMSECS(current_time) - es->start_time) / 1000.0;
   cur_time *= global_speed;
 
-  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *(es->glx_context));
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *es->glx_context);
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

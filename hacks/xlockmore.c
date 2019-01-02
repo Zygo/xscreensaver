@@ -71,6 +71,9 @@ xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
 
   /* Translate the xlockmore `opts[]' argument to a form that
      screenhack.c expects.
+
+     Some of the strings in here are leaked at exit, but since this code
+     only runs on X11, that doesn't matter.
    */
   new_options = (XrmOptionDescRec *) 
     calloc (xlockmore_opts->numopts*3 + 100, sizeof (*new_options));

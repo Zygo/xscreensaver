@@ -33,7 +33,6 @@
 			"*wireframeThreshold:  150    \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_molecule 0
 # define release_molecule 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -124,7 +123,7 @@ static const atom_data all_atom_data[] = {
 
 typedef struct {
   int id;		/* sequence number in the PDB file */
-  const char *label;	/* The atom name */
+  char *label;		/* The atom name */
   GLfloat x, y, z;	/* position in 3-space (angstroms) */
   const atom_data *data; /* computed: which style of atom this is */
 } molecule_atom;
@@ -136,7 +135,7 @@ typedef struct {
 
 
 typedef struct {
-  const char *label;		/* description of this compound */
+  char *label;		/* description of this compound */
   int natoms, atoms_size;
   int nbonds, bonds_size;
   molecule_atom *atoms;
@@ -635,7 +634,7 @@ build_molecule (ModeInfo *mi, Bool transparent_p)
 
 static void
 push_atom (molecule *m,
-           int id, const char *label,
+           int id, char *label,
            GLfloat x, GLfloat y, GLfloat z)
 {
   m->natoms++;
@@ -723,7 +722,7 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
               !strcmp (n2 + strlen(n2) - 4, ".pdb"))
             n2[strlen(n2)-4] = 0;
 
-          if (m->label) free ((char *) m->label);
+          if (m->label) free (m->label);
           m->label = strdup (n2);
           free (name);
         }
@@ -780,7 +779,8 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
           int id;
           const char *end = strchr (s, '\n');
           int L = end - s;
-          char *name = (char *) calloc (1, 4);
+          char *oname = (char *) calloc (1, 4);
+          char *name = oname;
           GLfloat x = -999, y = -999, z = -999;
 
           if (1 != sscanf (s+7, " %d ", &id))
@@ -816,12 +816,14 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
                    progname, filename, line,
                    id, name, x, y, z);
 */
-          push_atom (m, id, name, x, y, z);
+          push_atom (m, id, strdup(name), x, y, z);
+          free (oname);
         }
       else if (!strncmp (s, "HETATM ", 7))
         {
           int id;
-          char *name = (char *) calloc (1, 4);
+          char *oname = (char *) calloc (1, 4);
+          char *name = oname;
           GLfloat x = -999, y = -999, z = -999;
 
           if (1 != sscanf (s+7, " %d ", &id))
@@ -839,7 +841,8 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
                    progname, filename, line,
                    id, name, x, y, z);
 */
-          push_atom (m, id, name, x, y, z);
+          push_atom (m, id, strdup(name), x, y, z);
+          free (oname);
         }
       else if (!strncmp (s, "CONECT ", 7))
         {
@@ -893,6 +896,7 @@ parse_pdb_file (molecule *m, const char *name)
       char *buf = (char *) malloc(1024 + strlen(name));
       sprintf(buf, "%s: error reading \"%s\"", progname, name);
       perror(buf);
+      free(buf);
       return -1;
     }
 
@@ -1001,7 +1005,7 @@ generate_molecule_formula (molecule *m)
   strcpy (s, m->label);
   strcat (s, "\n");
   strcat (s, buf);
-  free ((char *) m->label);
+  free (m->label);
   free (buf);
   m->label = s;
 }
@@ -1162,6 +1166,7 @@ load_molecules (ModeInfo *mi)
   if (mc->nmolecules == 0)	/* do the builtins if no files */
     {
       mc->nmolecules = countof(builtin_pdb_data);
+      if (mc->molecules) free (mc->molecules);
       mc->molecules = (molecule *) calloc (sizeof (molecule), mc->nmolecules);
       for (i = 0; i < mc->nmolecules; i++)
         {
@@ -1557,7 +1562,7 @@ draw_molecule (ModeInfo *mi)
   if (!mc->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mc->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mc->glx_context);
 
   if (mc->draw_time == 0)
     {
@@ -1675,6 +1680,35 @@ draw_molecule (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_molecule (ModeInfo *mi)
+{
+  molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
+  int i, j;
+
+  if (!mc->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mc->glx_context);
+
+  for (i = 0; i < mc->nmolecules; i++) {
+    molecule *m = &mc->molecules[i];
+    for (j = 0; j < m->natoms; j++)
+      free (m->atoms[j].label);
+    free (m->atoms);
+    free (m->bonds);
+    free (m->label);
+  }
+  if (mc->molecules) free (mc->molecules);
+  if (mc->trackball) gltrackball_free (mc->trackball);
+  if (mc->rot) free_rotator (mc->rot);
+  if (mc->atom_font) free_texture_font (mc->atom_font);
+  if (mc->title_font) free_texture_font (mc->title_font);
+
+  if (glIsList(mc->molecule_dlist)) glDeleteLists(mc->molecule_dlist, 1);
+  if (glIsList(mc->shell_dlist)) glDeleteLists(mc->shell_dlist, 1);
+  if (glIsList(mc->molecule_dlist)) glDeleteLists(mc->molecule_dlist, 1);
 }
 
 XSCREENSAVER_MODULE ("Molecule", molecule)

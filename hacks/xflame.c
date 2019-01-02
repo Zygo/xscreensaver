@@ -202,8 +202,8 @@ InitFlame(struct state *st)
   st->fheight = st->height / 2;
 
   if (st->flame) free (st->flame);
-  st->flame   = (unsigned char *) malloc((st->fwidth + 2) * (st->fheight + 2)
-                                     * sizeof(unsigned char));
+  st->flame   = (unsigned char *) calloc((st->fwidth + 2) * (st->fheight + 2),
+                                         sizeof(unsigned char));
 
   if (!st->flame)
     {
@@ -656,7 +656,7 @@ loadBitmap (struct state *st)
   int blur = 0;
 
 # ifdef HAVE_JWXYZ
-  const char *bitmap_name = "(default)"; /* #### always use builtin */
+  char *bitmap_name = strdup("(default)"); /* #### always use builtin */
 # else
   char *bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
 # endif
@@ -670,6 +670,8 @@ loadBitmap (struct state *st)
                                   bob_png, sizeof(bob_png));
   else
     image = file_to_ximage (st->dpy, st->visual, bitmap_name);
+
+  if (bitmap_name) free (bitmap_name);
 
   if (! image) return 0;
 
@@ -769,6 +771,13 @@ xflame_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 xflame_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  if (st->xim)
+    destroy_xshm_image (dpy, st->xim, &st->shminfo);
+  free (st->theim);
+  free (st->flame);
+  XFreeGC (dpy, st->gc);
+  free (st);
 }
 
 

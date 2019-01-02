@@ -227,6 +227,7 @@ attraction_init (Display *dpy, Window window)
 	     progname, mode_str);
     exit (1);
   }
+  if (mode_str) free (mode_str);
 
   graph_mode_str = get_string_resource (dpy, "graphmode", "Mode");
   if (! graph_mode_str) st->graph_mode = graph_none;
@@ -241,6 +242,7 @@ attraction_init (Display *dpy, Window window)
 	 progname, graph_mode_str);
     exit (1);
   }
+  if (graph_mode_str) free (graph_mode_str);
 
   /* only allocate memory if it is needed */
   if(st->graph_mode != graph_none)
@@ -1043,6 +1045,9 @@ attraction_free (Display *dpy, Window window, void *closure)
   if (st->point_stack)	free (st->point_stack);
   if (st->colors)	free (st->colors);
   if (st->spl)		free_spline (st->spl);
+
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
 
   free (st);
 }

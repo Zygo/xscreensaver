@@ -283,6 +283,7 @@ parse_color (ModeInfo *mi, char *key, GLfloat color[4])
                key, string);
       exit (1);
     }
+  free (string);
 
   color[0] = xcolor.red   / 65536.0;
   color[1] = xcolor.green / 65536.0;
@@ -1319,7 +1320,7 @@ draw_splitflap (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1397,10 +1398,27 @@ ENTRYPOINT void
 free_splitflap (ModeInfo *mi)
 {
   splitflap_configuration *bp = &bps[MI_SCREEN(mi)];
-  if (bp->tc)
-    textclient_close (bp->tc);
-  bp->tc = 0;
-  /* #### bp->texinfo */
+  int i;
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->flappers) free (bp->flappers);
+  if (bp->tc) textclient_close (bp->tc);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->rot2) free_rotator (bp->rot2);
+  if (bp->font_data) free_texture_font (bp->font_data);
+  if (bp->dlists) {
+    for (i = 0; i < countof(all_objs); i++)
+      if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+    free (bp->dlists);
+  }
+  if (bp->texinfo) {
+    for (i = 0; i < bp->texinfo_size; i++)
+      if (bp->texinfo[i].texid) glDeleteTextures (1, &bp->texinfo[i].texid);
+    free (bp->texinfo);
+  }
 }
 
 XSCREENSAVER_MODULE ("SplitFlap", splitflap)

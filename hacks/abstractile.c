@@ -1485,6 +1485,7 @@ abstractile_init(Display *display, Window window)
       fprintf(stderr, "%s: unknown tile option %s\n", progname, tile);
     st->tile = TILE_RANDOM;
   }
+  if (tile) free (tile);
 
   st->speed = get_integer_resource(display, "speed", "Integer");
   if (st->speed < 0) st->speed = 0;
@@ -1579,6 +1580,14 @@ static void
 abstractile_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->dline) free(st->dline);
+  if (st->eline) free(st->eline);
+  if (st->grid)  free(st->grid);
+  if (st->zlist) free(st->zlist);
+  if (st->fdol)  free(st->fdol);
+  if (st->odi)   free(st->odi);
+  XFreeGC (dpy, st->fgc);
+  XFreeGC (dpy, st->bgc);
   free (st);
 }
 

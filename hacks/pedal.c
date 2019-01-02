@@ -302,6 +302,9 @@ static void
 pedal_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->eraser) eraser_free (st->eraser);
+  XFreeGC (dpy, st->gc);
+  free (st->points);
   free (st);
 }
 

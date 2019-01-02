@@ -308,6 +308,9 @@ Init(ModeInfo *mi)
             glLoadIdentity();
             glScalef(scale, scale, 1);
             glMatrixMode(GL_MODELVIEW);
+
+            if (ap->texture) XDestroyImage (ap->texture);
+            ap->texture = 0;
           }
 
 	InitFishs(ap);
@@ -466,7 +469,7 @@ init_atlantis(ModeInfo * mi)
 		if ((ap->sharks = (fishRec *) calloc(ap->num_sharks,
 						sizeof (fishRec))) == NULL) {
 			/* free everything up to now */
-			(void) free((void *) atlantis);
+			free(atlantis);
 			atlantis = NULL;
 			return;
 		}
@@ -520,7 +523,7 @@ draw_atlantis(ModeInfo * mi)
 	if (!ap->glx_context)
 		return;
 
-	glXMakeCurrent(display, window, *(ap->glx_context));
+	glXMakeCurrent(display, window, *ap->glx_context);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -545,12 +548,10 @@ draw_atlantis(ModeInfo * mi)
 ENTRYPOINT void
 free_atlantis(ModeInfo * mi)
 {
-#if 0
-	atlantisstruct *ap = &atlantis[screen];
-
-	if (ap->sharks)
-		(void) free((void *) ap->sharks);
-#endif
+	atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
+	if (!ap->glx_context) return;
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ap->glx_context);
+	if (ap->sharks) free(ap->sharks);
 }
 
 #ifndef STANDALONE
@@ -567,7 +568,7 @@ change_atlantis(ModeInfo * mi)
 	if (!ap->glx_context)
 		return;
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ap->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ap->glx_context);
 	Init(mi);
 }
 #endif /* !STANDALONE */

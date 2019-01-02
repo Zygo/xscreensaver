@@ -137,6 +137,9 @@ const char *progname;   /* used by hacks in error messages */
 const char *progclass;  /* used by ../utils/resources.c */
 Bool mono_p;		/* used by hacks */
 
+#ifdef EXIT_AFTER
+static time_t exit_after;	/* Exit gracefully after N seconds */
+#endif
 
 static XrmOptionDescRec default_options [] = {
   { "-root",	".root",		XrmoptionNoArg, "True" },
@@ -151,11 +154,13 @@ static XrmOptionDescRec default_options [] = {
 
 # ifdef DEBUG_PAIR
   { "-pair",	".pair",		XrmoptionNoArg, "True" },
-# endif /* DEBUG_PAIR */
-
+# endif
 # ifdef HAVE_RECORD_ANIM
   { "-record-animation", ".recordAnim", XrmoptionSepArg, 0 },
-# endif /* HAVE_RECORD_ANIM */
+# endif
+# ifdef EXIT_AFTER
+  { "-exit-after",	".exitAfter",	XrmoptionSepArg, 0 },
+# endif
 
   { 0, 0, 0, 0 }
 };
@@ -473,6 +478,12 @@ screenhack_table_handle_events (Display *dpy,
       if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
         XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
     }
+
+# ifdef EXIT_AFTER
+  if (exit_after != 0 && time ((time_t *) 0) >= exit_after)
+    return False;
+# endif
+
   return True;
 }
 
@@ -601,11 +612,11 @@ run_screenhack_table (Display *dpy,
 #endif
 
   ft->free_cb (dpy, window, closure);
-  if (fpst) fps_free (fpst);
+  if (fpst) ft->fps_free (fpst);
 
 #ifdef DEBUG_PAIR
   if (window2) ft->free_cb (dpy, window2, closure2);
-  if (fpst2) fps_free (fpst2);
+  if (fpst2) ft->fps_free (fpst2);
 #endif
 }
 
@@ -707,9 +718,9 @@ main (int argc, char **argv)
   Window window2 = 0;
   Widget toplevel2 = 0;
 # endif
-#ifdef HAVE_RECORD_ANIM
+# ifdef HAVE_RECORD_ANIM
   record_anim_state *anim_state = 0;
-#endif
+# endif
   XtAppContext app;
   Bool root_p;
   Window on_window = 0;
@@ -863,6 +874,15 @@ main (int argc, char **argv)
     mono_p = True;
 
   root_p = get_boolean_resource (dpy, "root", "Boolean");
+
+# ifdef EXIT_AFTER
+  {
+    int secs = get_integer_resource (dpy, "exitAfter", "Integer");
+    exit_after = (secs > 0
+                  ? time((time_t *) 0) + secs
+                  : 0);
+  }      
+# endif
 
   {
     char *s = get_string_resource (dpy, "windowID", "WindowID");

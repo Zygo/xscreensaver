@@ -56,7 +56,6 @@
 			"*suppressRotationAnimation: True\n" \
 
 
-# define free_sponge 0
 # define release_sponge 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -481,7 +480,7 @@ draw_sponge (ModeInfo *mi)
   if (!sp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -555,6 +554,21 @@ draw_sponge (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_sponge (ModeInfo *mi)
+{
+  sponge_configuration *sp = &sps[MI_SCREEN(mi)];
+  if (!sp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
+  if (sp->colors) free (sp->colors);
+  if (sp->rot) free_rotator (sp->rot);
+  if (sp->trackball) gltrackball_free (sp->trackball);
+  if (glIsList(sp->sponge_list0)) glDeleteLists(sp->sponge_list0, 1);
+  if (glIsList(sp->sponge_list1)) glDeleteLists(sp->sponge_list1, 1);
+  if (glIsList(sp->sponge_list2)) glDeleteLists(sp->sponge_list2, 1);
 }
 
 XSCREENSAVER_MODULE_2 ("Menger", menger, sponge)

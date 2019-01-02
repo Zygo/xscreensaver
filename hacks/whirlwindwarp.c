@@ -479,6 +479,8 @@ static void
 whirlwindwarp_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
   free (st);
 }
 

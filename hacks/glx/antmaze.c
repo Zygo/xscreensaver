@@ -25,7 +25,6 @@ static const char sccsid[] = "@(#)antmaze.c	5.01 2001/03/01 xlockmore";
 			"*showFPS:      False   \n" \
 			"*fpsSolid:     True    \n"
 
-# define free_antmaze 0
 # define release_antmaze 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -1442,7 +1441,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
 	return;
   
   mi->polygon_count = 0;
-  glXMakeCurrent(display, window, *(mp->glx_context));
+  glXMakeCurrent(display, window, *mp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1603,10 +1602,21 @@ ENTRYPOINT void change_antmaze(ModeInfo * mi)
   if (!mp->glx_context)
 	return;
   
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
   pinit();
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void free_antmaze(ModeInfo * mi) 
+{
+  antmazestruct *mp = &antmaze[MI_SCREEN(mi)];
+  if (!mp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
+  gltrackball_free (mp->trackball);
+  free_rotator (mp->rot);
+  if (mp->checktexture) glDeleteTextures (1, &mp->checktexture);
+  if (mp->brushedtexture) glDeleteTextures (1, &mp->brushedtexture);
+}
 
 XSCREENSAVER_MODULE ("AntMaze", antmaze)
 

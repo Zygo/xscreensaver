@@ -39,7 +39,10 @@ m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun
 #
 # Modified to require ngettext
 # Matthias Clasen <mclasen@redhat.com> 08/06/2004
-#
+
+# Increment this whenever this file is changed.
+#serial 1
+
 # We need this here as well, since someone might use autoconf-2.5x
 # to configure GLib then an older version to configure a package
 # using AM_GLIB_GNU_GETTEXT

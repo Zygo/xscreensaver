@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -383,9 +383,22 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
   /* Floating-point round-off can make us decide to use fewer colors. */
   if (k < *ncolorsP)
     {
+      /* We used to just return the smaller set of colors, but that meant
+         that after re-generating the color map repeatedly, the number of
+         colors in use would tend toward 0, which not only looked bad but
+         also often caused crashes. So instead, just duplicate the last
+         color to pad things out. */
+# if 0
       *ncolorsP = k;
       if (k <= 0)
 	return;
+# else
+      for (i = k+1; i < *ncolorsP; i++)
+        /* #### Should duplicate the allocation of the color cell here
+           to avoid a double-color-free on PseudoColor, but it's 2018
+           and I don't care, */
+        colors[i] = colors[k];
+# endif
     }
 
   if (!allocate_p)

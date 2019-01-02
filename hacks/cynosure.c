@@ -409,6 +409,11 @@ static void
 cynosure_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->fg_gc);
+  XFreeGC (dpy, st->bg_gc);
+  XFreeGC (dpy, st->shadow_gc);
+  if (st->colors)  free (st->colors);
+  if (st->colors2) free (st->colors2);
   free (st);
 }
 

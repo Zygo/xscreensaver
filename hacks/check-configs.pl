@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2017 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2018 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.26 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.28 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -997,17 +997,17 @@ sub build_android(@) {
     $write_files{"$xml_dir/${saver_underscore}_wallpaper.xml"} = $wallpaper;
 
     $daydream_java .=
-      ("  public static class $saver_class extends org.jwz.xscreensaver.Daydream {\n" .
+      ("  public static class $saver_class extends $package.Daydream {\n" .
        "  }\n" .
        "\n");
 
     $wallpaper_java .=
-      ("  public static class $saver_class extends org.jwz.xscreensaver.Wallpaper {\n" .
+      ("  public static class $saver_class extends $package.Wallpaper {\n" .
        "  }\n" .
        "\n");
 
     $settings_java .=
-      ("  public static class $saver_class extends org.jwz.xscreensaver.Settings\n" .
+      ("  public static class $saver_class extends $package.Settings\n" .
        "    implements SharedPreferences.OnSharedPreferenceChangeListener {\n" .
        "  }\n" .
        "\n");
@@ -1035,7 +1035,7 @@ sub build_android(@) {
   $manifest .= "<activity android:name=\"$package.Settings\" />\n";
 
   $manifest .= ("<activity android:name=\"" .
-                "org.jwz.xscreensaver.Activity\"\n" .
+                "$package.Activity\"\n" .
                 "  android:theme=\"\@android:style/Theme.Holo\"\n" .
                 "  android:label=\"\@string/app_name\">\n" .
                 "  <intent-filter>\n" .
@@ -1056,7 +1056,7 @@ sub build_android(@) {
 
 
   $manifest .= ("<activity android:name=\"" .
-                "org.jwz.xscreensaver.TVActivity\"\n" .
+                "$package.TVActivity\"\n" .
                 "  android:theme=\"\@android:style/Theme.Holo\"\n" .
                 "  android:label=\"\@string/app_name\">\n" .
                 "  <intent-filter>\n" .
@@ -1091,7 +1091,7 @@ sub build_android(@) {
                "  android:versionCode=\"$versb\"\n" .
                "  android:versionName=\"$vers\">\n" .
 
-               "  <uses-sdk android:minSdkVersion=\"14\"" .
+               "  <uses-sdk android:minSdkVersion=\"16\"" .
                " android:targetSdkVersion=\"19\" />\n" .
 
                "  <uses-feature android:glEsVersion=\"0x00010001\"\n" .
@@ -1117,23 +1117,23 @@ sub build_android(@) {
                "  </application>\n" .
                "</manifest>\n");
 
-  $daydream_java = ("package org.jwz.xscreensaver.gen;\n" .
+  $daydream_java = ("package $package.gen;\n" .
                     "\n" .
-                    "import org.jwz.xscreensaver.jwxyz;\n" .
+                    "import $package.jwxyz;\n" .
                     "\n" .
                     "public class Daydream {\n" .
                     $daydream_java .
                     "}\n");
 
-  $wallpaper_java = ("package org.jwz.xscreensaver.gen;\n" .
+  $wallpaper_java = ("package $package.gen;\n" .
                      "\n" .
-                     "import org.jwz.xscreensaver.jwxyz;\n" .
+                     "import $package.jwxyz;\n" .
                      "\n" .
                      "public class Wallpaper {\n" .
                      $wallpaper_java .
                      "}\n");
 
-  $settings_java = ("package org.jwz.xscreensaver.gen;\n" .
+  $settings_java = ("package $package.gen;\n" .
                     "\n" .
                     "import android.content.SharedPreferences;\n" .
                     "\n" .

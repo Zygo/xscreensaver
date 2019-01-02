@@ -48,10 +48,12 @@ struct record_anim_state {
   Window window;
   int frame_count;
   int target_frames;
+  int fps;
   XWindowAttributes xgwa;
   char *title;
   int pct;
   int fade_frames;
+  double start_time;
 # ifdef USE_GL
   char *data, *data2;
 # else  /* !USE_GL */
@@ -71,6 +73,21 @@ double_time (void)
   gettimeofday(&now, &tzp);
 # else
   gettimeofday(&now);
+# endif
+
+  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+
+static double
+double_timewarp (void)
+{
+  struct timeval now;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  screenhack_record_anim_gettimeofday(&now, &tzp);
+# else
+  screenhack_record_anim_gettimeofday(&now);
 # endif
 
   return (now.tv_sec + ((double) now.tv_usec * 0.000001));
@@ -131,13 +148,15 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
 
   st = (record_anim_state *) calloc (1, sizeof(*st));
 
+  st->fps = 30;
   st->screen = screen;
   st->window = window;
   st->target_frames = target_frames;
+  st->start_time = double_time();
   st->frame_count = 0;
-  st->fade_frames = 30 * 1.5;
+  st->fade_frames = st->fps * 1.5;
 
-  if (st->fade_frames >= (st->target_frames / 2) - 30)
+  if (st->fade_frames >= (st->target_frames / 2) - st->fps)
     st->fade_frames = 0;
 
 # ifdef HAVE_GDK_PIXBUF
@@ -180,6 +199,10 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
 
 # ifndef HAVE_JWXYZ
   XFetchName (dpy, st->window, &st->title);
+  {
+    char *s = strchr(st->title, ':');
+    if (s) *s = 0;
+  }
 # endif /* !HAVE_JWXYZ */
 
   return st;
@@ -311,9 +334,36 @@ screenhack_record_anim (record_anim_state *st)
     int pct = 100 * (st->frame_count + 1) / st->target_frames;
     if (pct != st->pct && st->title)
       {
+        double end   = st->target_frames / (double) st->fps;
+        double secs0 = double_time() - st->start_time;
+        double secs  = double_timewarp() - st->start_time;
+        double rate  = secs / secs0;
+        double secs2 = (end - secs) / rate;
         Display *dpy = DisplayOfScreen (st->screen);
-        char *t2 = (char *) malloc (strlen(st->title) + 20);
-        sprintf (t2, "%s: %d%%", st->title, pct);
+        char *t2 = (char *) malloc (strlen(st->title) + 100);
+        if (secs2 < 0) secs2 = 0;
+
+        sprintf (t2, "%s: %3d%% done,"
+                 " %d:%02d:%02d in"
+                 " %d:%02d:%02d;"
+                 " %d%% speed,"
+                 " %d:%02d:%02d remaining",
+                 st->title, pct,
+
+                 ((int) secs) / (60*60),
+                 (((int) secs) / 60) % 60,
+                 ((int) secs) % 60,
+
+                 ((int) secs0) / (60*60),
+                 (((int) secs0) / 60) % 60,
+                 ((int) secs0) % 60,
+
+                 (int) (100 * rate),
+
+                 ((int) secs2) / (60*60),
+                 (((int) secs2) / 60) % 60,
+                 ((int) secs2) % 60
+                 );
         XStoreName (dpy, st->window, t2);
         XSync (dpy, 0);
         free (t2);
@@ -371,10 +421,10 @@ screenhack_record_anim_free (record_anim_state *st)
            "ffmpeg"
            " -hide_banner"
            " -v 16"
-           " -framerate 30"	/* rate of input: must be before -i */
+           " -framerate %d"	/* rate of input: must be before -i */
            " -i '%s-%%06d.%s'"
-           " -r 30",		/* rate of output: must be after -i */
-           progname, type);
+           " -r %d",		/* rate of output: must be after -i */
+           st->fps, progname, type, st->fps);
   if (soundtrack)
     sprintf (cmd + strlen(cmd),
              " -i '%s' -map 0:v:0 -map 1:a:0 -acodec aac",

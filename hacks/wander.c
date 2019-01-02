@@ -241,6 +241,7 @@ wander_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   XFreeGC (st->dpy, st->context);
+  if (st->eraser) eraser_free (st->eraser);
   free (st);
 }
 

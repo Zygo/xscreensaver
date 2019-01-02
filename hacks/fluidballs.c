@@ -800,6 +800,17 @@ static void
 fluidballs_free (Display *dpy, Window window, void *closure)
 {
   b_state *state = (b_state *) closure;
+  XFreeGC (dpy, state->draw_gc);
+  XFreeGC (dpy, state->draw_gc2);
+  XFreeGC (dpy, state->erase_gc);
+  free (state->m);
+  free (state->r);
+  free (state->vx);
+  free (state->vy);
+  free (state->px);
+  free (state->py);
+  free (state->opx);
+  free (state->opy);
   free (state);
 }
 

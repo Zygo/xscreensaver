@@ -46,7 +46,6 @@
                                         "*useSHM:       True \n" \
 										"*suppressRotationAnimation: True\n" \
 
-# define free_gflux 0
 # define release_gflux 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -275,7 +274,7 @@ ENTRYPOINT void draw_gflux(ModeInfo * mi)
     /* Just keep running before the texture has come in. */
     /* if (gp->waiting_for_image_p) return; */
 
-    glXMakeCurrent(display, window, *(gp->glx_context));
+    glXMakeCurrent(display, window, *gp->glx_context);
 
     calcGrid(gp);
     mi->polygon_count = gp->drawFunc(gp);
@@ -382,6 +381,7 @@ ENTRYPOINT void init_gflux(ModeInfo * mi)
                    progname, s);
           exit (1);
         }
+      if (s) free (s);
     }
 
     gp->modeinfo = mi;
@@ -394,6 +394,14 @@ ENTRYPOINT void init_gflux(ModeInfo * mi)
     }
 }
 
+ENTRYPOINT void free_gflux(ModeInfo * mi)
+{
+  gfluxstruct *gp = &gfluxes[MI_SCREEN(mi)];
+  if (!gp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
+  gltrackball_free (gp->trackball);
+  if (gp->texName) glDeleteTextures (1, &gp->texName);
+}
 
 static void createTexture(gfluxstruct *gp)
 {

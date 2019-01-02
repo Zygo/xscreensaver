@@ -1112,6 +1112,8 @@ pong_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   analogtv_release(st->tv);
+  free(st->inp);
+  if (st->score_font.text_im) XDestroyImage (st->score_font.text_im);
   free (st);
 }
 

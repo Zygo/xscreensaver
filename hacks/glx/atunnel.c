@@ -267,7 +267,7 @@ ENTRYPOINT void draw_atunnel(ModeInfo * mi)
   	if (!sa->glx_context)
 		return;
 
-  	glXMakeCurrent(display, window, *(sa->glx_context));
+  	glXMakeCurrent(display, window, *sa->glx_context);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -303,13 +303,13 @@ ENTRYPOINT void init_atunnel(ModeInfo * mi)
 
 }
 
-/* all sorts of nice cleanup code should go here! */
 ENTRYPOINT void free_atunnel(ModeInfo * mi)
 {
-#if 0
   atunnelstruct *sa = &Atunnel[MI_SCREEN(mi)];
-  FreeTunnel(sa->ts);
-#endif
+  if (!sa->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sa->glx_context);
+  atunnel_FreeTunnel(sa->ts);
+  glDeleteTextures (MAX_TEXTURE, sa->texture);
 }
 
 XSCREENSAVER_MODULE ("Atunnel", atunnel)

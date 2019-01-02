@@ -17,7 +17,6 @@
 			"*suppressRotationAnimation: True\n" \
 
 
-# define free_cube 0
 # define release_cube 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -391,7 +390,7 @@ draw_cube (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glShadeModel(GL_SMOOTH);
@@ -462,6 +461,25 @@ draw_cube (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_cube (ModeInfo *mi)
+{
+  cube_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->subcubes) {
+    for (i = 0; i < MI_COUNT(mi); i++)
+      free_rotator (bp->subcubes[i].rot);
+    free (bp->subcubes);
+  }
+  if (bp->hist) free (bp->hist);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->colors) free (bp->colors);
+
 }
 
 XSCREENSAVER_MODULE_2 ("CubeStorm", cubestorm, cube)

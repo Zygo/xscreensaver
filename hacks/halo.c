@@ -117,6 +117,7 @@ halo_init (Display *dpy, Window window)
 	     progname, mode_str);
     exit (1);
   }
+  if (mode_str) free (mode_str);
 
   if (mono_p) cmode = seuss_mode;
   if (cmode == random_mode)
@@ -435,6 +436,16 @@ halo_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 halo_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
+  XFreeGC (dpy, st->copy_gc);
+  XFreeGC (dpy, st->merge_gc);
+  if (st->pixmap) XFreePixmap (dpy, st->pixmap);
+  if (st->buffer) XFreePixmap (dpy, st->buffer);
+  free (st->circles);
+  free (st->colors);
+  free (st);
 }
 
 XSCREENSAVER_MODULE ("Halo", halo)

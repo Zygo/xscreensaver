@@ -19,7 +19,6 @@
 #define DEFAULTS	    "*delay:   20000   \n" \
 			    "*showFPS: False   \n"
 
-# define free_antinspect 0
 # define release_antinspect 0
 #include "xlockmore.h"
 #else
@@ -645,7 +644,7 @@ ENTRYPOINT void draw_antinspect(ModeInfo * mi)
   if(!mp->glx_context)
 	return;
   
-  glXMakeCurrent(display, window, *(mp->glx_context));
+  glXMakeCurrent(display, window, *mp->glx_context);
   
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -695,10 +694,17 @@ ENTRYPOINT void change_antinspect(ModeInfo * mi)
   if (!mp->glx_context)
 	return;
   
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
   pinit();
 }
 #endif /* !STANDALONE */
 
+ENTRYPOINT void free_antinspect(ModeInfo * mi) 
+{
+  antinspectstruct *mp = &antinspect[MI_SCREEN(mi)];
+  if (!mp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
+  gltrackball_free (mp->trackball);
+}
 
 XSCREENSAVER_MODULE ("AntInspect", antinspect)

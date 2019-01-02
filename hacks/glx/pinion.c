@@ -16,7 +16,6 @@
            "*titleFont2: -*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*\n" \
            "*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
 
-# define free_pinion 0
 # define release_pinion 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -1355,7 +1354,7 @@ draw_pinion (ModeInfo *mi)
   if (!pp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
 
   glPushMatrix();
   glRotatef(current_device_rotation(), 0, 0, 1);
@@ -1463,6 +1462,25 @@ draw_pinion (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_pinion (ModeInfo *mi)
+{
+  pinion_configuration *pp = &pps[MI_SCREEN(mi)];
+  int i;
+
+  if (!pp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
+
+  for (i = 0; i < pp->ngears; i++)
+    if (pp->gears[i]) free_gear (pp->gears[i]);
+  if (pp->gears) free (pp->gears);
+  if (pp->trackball) gltrackball_free (pp->trackball);
+  if (pp->font1) free_texture_font (pp->font1);
+  if (pp->font2) free_texture_font (pp->font2);
+  if (pp->font3) free_texture_font (pp->font3);
 }
 
 XSCREENSAVER_MODULE ("Pinion", pinion)

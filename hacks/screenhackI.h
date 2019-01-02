@@ -147,6 +147,7 @@ struct xscreensaver_function_table {
   Bool           (*event_cb)   (Display *, Window, void *, XEvent *);
   void           (*free_cb)    (Display *, Window, void *);
   void           (*fps_cb)     (Display *, Window, fps_state *, void *);
+  void           (*fps_free)   (fps_state *);
 
 # ifndef HAVE_JWXYZ
   Visual *       (*pick_visual_hook) (Screen *);

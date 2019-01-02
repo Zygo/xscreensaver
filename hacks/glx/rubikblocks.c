@@ -22,7 +22,6 @@
                    "*wireframe:     False         \n" \
 		   "*suppressRotationAnimation: True\n" \
 
-# define free_rubikblocks 0
 # define release_rubikblocks 0
 #include "xlockmore.h"
 #include "rotator.h"
@@ -592,7 +591,7 @@ draw_rubikblocks(ModeInfo * mi)
   MI_IS_DRAWN(mi) = True;
   if (!cp->glx_context) return;
   mi->polygon_count = 0;
-  glXMakeCurrent(display, window, *(cp->glx_context));
+  glXMakeCurrent(display, window, *cp->glx_context);
   if (!draw_main(mi, cp)) 
   {
     MI_ABORT(mi);
@@ -609,7 +608,7 @@ change_rubikblocks(ModeInfo * mi)
 {
   rubikblocks_conf *cp = &rubikblocks[MI_SCREEN(mi)];
   if (!cp->glx_context) return;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
   init_gl(mi);
 }
 #endif /* !STANDALONE */
@@ -625,6 +624,17 @@ rubikblocks_handle_event (ModeInfo *mi, XEvent *event)
     return True;
 
   return False;
+}
+
+
+ENTRYPOINT void
+free_rubikblocks (ModeInfo *mi)
+{
+  rubikblocks_conf *cp = &rubikblocks[MI_SCREEN(mi)];
+  if (!cp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
+  if (cp->trackball) gltrackball_free (cp->trackball);
+  glDeleteLists (cp->list_base, 27);
 }
 
 

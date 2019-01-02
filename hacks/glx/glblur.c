@@ -27,7 +27,6 @@
 	               	"*fpsSolid: True  \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_glblur 0
 # define release_glblur 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -483,7 +482,7 @@ draw_glblur (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   /* Decide what we're drawing
    */
@@ -603,6 +602,29 @@ draw_glblur (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_glblur (ModeInfo *mi)
+{
+  glblur_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->tex_data) free (bp->tex_data);
+  if (bp->colors0) free (bp->colors0);
+  if (bp->colors1) free (bp->colors1);
+  if (bp->colors2) free (bp->colors2);
+  if (bp->colors3) free (bp->colors3);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (glIsList(bp->obj_dlist0)) glDeleteLists(bp->obj_dlist0, 1);
+  if (glIsList(bp->obj_dlist1)) glDeleteLists(bp->obj_dlist1, 1);
+  if (glIsList(bp->obj_dlist2)) glDeleteLists(bp->obj_dlist2, 1);
+  if (glIsList(bp->obj_dlist3)) glDeleteLists(bp->obj_dlist3, 1);
+  if (glIsList(bp->scene_dlist1)) glDeleteLists(bp->scene_dlist1, 1);
+  if (glIsList(bp->scene_dlist2)) glDeleteLists(bp->scene_dlist2, 1);
+  if (bp->texture) glDeleteTextures (1, &bp->texture);
 }
 
 XSCREENSAVER_MODULE ("GLBlur", glblur)

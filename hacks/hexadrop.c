@@ -277,7 +277,8 @@ hexadrop_init_1 (Display *dpy, Window window, state *st)
       else
         st->lockstep_p = get_boolean_resource (st->dpy, "lockstep","Lockstep");
     }
-
+  if (s1) free (s1);
+  if (s2) free (s2);
 
   st->sides = get_integer_resource (st->dpy, "sides", "Sides");
   if (! (st->sides == 0 || st->sides == 3 || st->sides == 4 || 
@@ -355,6 +356,7 @@ hexadrop_free (Display *dpy, Window window, void *closure)
       XFreeGC (st->dpy, st->gc);
       st->gc = 0;
     }
+  free (st);
 }
 
 

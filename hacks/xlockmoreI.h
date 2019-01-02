@@ -73,6 +73,7 @@ typedef struct ModeInfo ModeInfo;
 extern void do_fps (ModeInfo *);
 extern void xlockmore_gl_compute_fps (Display *, Window, fps_state *, void *);
 extern void xlockmore_gl_draw_fps (ModeInfo *);
+extern void xlockmore_gl_free_fps (fps_state *);
 # define do_fps xlockmore_gl_draw_fps
 
 

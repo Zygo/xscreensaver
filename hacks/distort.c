@@ -74,6 +74,7 @@ struct state {
   int ***from;
   int ****from_array;
   int *fast_from;
+  int from_size;
 
   int bpp_size;
 
@@ -140,6 +141,7 @@ distort_reset (struct state *st)
       ;
     else if (s && *s)
       fprintf(stderr,"%s: bogus effect: %s\n", progname, s);
+    if (s) free (s);
 
 	if (st->effect == NULL && st->radius == 0 && st->speed == 0 && st->number == 0
 		&& !st->blackhole && !st->vortex && !st->magnify && !st->reflect) {
@@ -307,9 +309,11 @@ distort_finish_loading (struct state *st)
     XClearWindow (st->dpy, st->window);
     XCopyArea (st->dpy, st->pm, st->window, st->gc, 
                0, 0, st->xgwa.width, st->xgwa.height, 0, 0);
+    if (st->orig_map) XDestroyImage (st->orig_map);
 	st->orig_map = XGetImage(st->dpy, st->pm, 0, 0,
                              st->xgwa.width, st->xgwa.height,
                              ~0L, ZPixmap);
+    if (st->buffer_map_cache) free (st->buffer_map_cache);
 	st->buffer_map_cache = malloc(sizeof(unsigned long)*(2*st->radius+st->speed+2)*(2*st->radius+st->speed+2));
 
 	if (st->buffer_map_cache == NULL) {
@@ -317,6 +321,8 @@ distort_finish_loading (struct state *st)
 		exit(EXIT_FAILURE);
 	}
 
+    if (st->buffer_map)
+      destroy_xshm_image (st->dpy, st->buffer_map, &st->shm_info);
 	st->buffer_map = create_xshm_image(st->dpy, st->xgwa.visual, st->orig_map->depth,
 	                                   ZPixmap, &st->shm_info,
 	                                   2*st->radius + st->speed + 2,
@@ -377,6 +383,7 @@ static void convert(struct state *st)
 {
 	int *p;
 	int i, j;
+    if (st->fast_from) free (st->fast_from);
 	st->fast_from = calloc(1, sizeof(int)*((st->buffer_map->bytes_per_line/st->bpp_size)*(2*st->radius+st->speed+2) + 2*st->radius+st->speed+2));
 	if (st->fast_from == NULL) {
 		perror("distort");
@@ -478,6 +485,17 @@ static void allocate_lense(struct state *st)
 	 * then pointers could be used instead of arrays in some places (and
 	 * maybe give a speedup - maybe also consume less memory)
 	 */
+    if (st->from) {
+      for (i = 0; i < st->from_size; i++)
+		if (st->from[i]) {
+          for (j = 0; j < st->from_size; j++) {
+            if (st->from[i][j]) free (st->from[i][j]);
+          }
+          free (st->from[i]);
+        }
+      free (st->from);
+    }
+    st->from_size = s;
 	st->from = (int ***)malloc(s*sizeof(int **));
 	if (st->from == NULL) {
 		perror("distort");
@@ -508,6 +526,7 @@ static void init_round_lense(struct state *st)
 	int k;
 
 	if (st->effect == &swamp_thing) {
+        if (st->from_array) free (st->from_array);
 		st->from_array = (int ****)malloc((st->radius+1)*sizeof(int ***));
 		for (k=0; k <= st->radius; k++) {
 			allocate_lense(st);
@@ -796,13 +815,27 @@ static void
 distort_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i, j;
   XFreeGC (st->dpy, st->gc);
   if (st->pm) XFreePixmap (dpy, st->pm);
   if (st->orig_map) XDestroyImage (st->orig_map);
-  if (st->buffer_map) destroy_xshm_image (st->dpy, st->buffer_map, &st->shm_info);
-  if (st->from) free (st->from);
+  if (st->buffer_map)
+    destroy_xshm_image (st->dpy, st->buffer_map, &st->shm_info);
   if (st->fast_from) free (st->fast_from);
   if (st->from_array) free (st->from_array);
+  if (st->buffer_map_cache) free (st->buffer_map_cache);
+
+  if (st->from) {
+    for (i = 0; i < st->from_size; i++)
+      if (st->from[i]) {
+        for (j = 0; j < st->from_size; j++) {
+          if (st->from[i][j]) free (st->from[i][j]);
+        }
+        free (st->from[i]);
+      }
+    free (st->from);
+  }
+
   free (st);
 }
 

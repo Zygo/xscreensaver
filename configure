@@ -835,6 +835,7 @@ with_xf86vmode_ext
 with_xf86gamma_ext
 with_randr_ext
 with_proc_interrupts
+with_proc_oom
 enable_locking
 enable_root_passwd
 with_pam
@@ -1522,6 +1523,7 @@ Installation options:
   --with-randr-ext        Include support for the X Resize+Rotate extension.
   --with-proc-interrupts  Include support for consulting the /proc/interrupts
                           file to notice keyboard activity.
+  --with-proc-oom  Include support for disabling the OOM-killer.
   --with-pam              Include support for PAM (Pluggable Auth Modules.)
   --with-pam-service-name NAME arg is the name of the PAM service that
                           xscreensaver will authenticate as.
@@ -2508,6 +2510,8 @@ echo "command line was: $0 $@"
 #AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
 #	    [Define this if you have the SGI-VIDEO-CONTROL extension.  This
 #	    is standard on Irix systems, and not available elsewhere.])
+
+
 
 
 
@@ -10321,6 +10325,61 @@ fi
 
 ###############################################################################
 #
+#       Check for /proc/*/oom_score_adj.
+#
+###############################################################################
+
+have_proc_oom=no
+with_proc_oom_req=unspecified
+
+# Check whether --with-proc-oom was given.
+if test "${with_proc_oom+set}" = set; then :
+  withval=$with_proc_oom; with_proc_oom="$withval"; with_proc_oom_req="$withval"
+else
+  with_proc_oom=yes
+fi
+
+
+if test "$with_proc_oom_req" = yes; then
+
+  # Note that we may be building in an environment (e.g. Debian buildd chroot)
+  # without a proper /proc filesystem.
+  #
+  have_proc_oom=yes
+  $as_echo "#define HAVE_PROC_OOM 1" >>confdefs.h
+
+
+elif test "$with_proc_oom_req" = unspecified; then
+
+  have_proc_oom=no
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether /proc/$$/oom_score_adj exists" >&5
+$as_echo_n "checking whether /proc/$$/oom_score_adj exists... " >&6; }
+if ${ac_cv_have_proc_oom+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_have_proc_oom=no
+     if test -f /proc/$$/oom_score_adj; then
+       ac_cv_have_proc_oom=yes
+     fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_proc_oom" >&5
+$as_echo "$ac_cv_have_proc_oom" >&6; }
+  have_proc_oom=$ac_cv_have_proc_oom
+
+  if test "$have_proc_oom" = yes; then
+    $as_echo "#define HAVE_PROC_OOM 1" >>confdefs.h
+
+  fi
+
+elif test "$with_proc_oom" != no; then
+  echo "error: must be yes or no: --with-proc-oom=$with_proc_oom"
+  exit 1
+fi
+
+
+###############################################################################
+#
 #       The --enable-locking option
 #
 ###############################################################################
@@ -13351,7 +13410,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13358 "configure"
+#line 13417 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION

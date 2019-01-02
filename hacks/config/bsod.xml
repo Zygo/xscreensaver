@@ -40,12 +40,14 @@
    <boolean id="atari"      _label="Atari"          arg-set="-atari"/>
    <boolean id="macx"       _label="MacOS X"        arg-unset="-no-macx"/>
    <boolean id="os390"      _label="OS/390"         arg-unset="-no-os390"/>
+   <boolean id="encom"      _label="Encom"          arg-unset="-no-encom"/>
   </vgroup>
   <vgroup>
    <boolean id="vms"        _label="VMS"            arg-unset="-no-vms"/>
    <boolean id="hvx"        _label="HVX/GCOS6"      arg-unset="-no-hvx"/>
    <boolean id="blitdamage" _label="NCD X Terminal  " arg-unset="-no-blitdamage"/>
    <boolean id="atm"        _label="ATM"            arg-unset="-no-atm"/>
+   <boolean id="dvd"        _label="DVD"            arg-unset="-no-dvd"/>
   </vgroup>
   <vgroup>
    <boolean id="bsd"        _label="BSD"            arg-set="-bsd"/>

@@ -24,7 +24,6 @@
 	"*suppressRotationAnimation: True\n" \
 
 
-# define free_polyhedra 0
 # define release_polyhedra 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -581,7 +580,7 @@ draw_polyhedra (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   if (bp->mode == 0 && do_which >= 0 && bp->change_to < 0)
     ;
@@ -676,6 +675,27 @@ draw_polyhedra (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_polyhedra (ModeInfo *mi)
+{
+  polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  for (i = 0; i < bp->npolyhedra; i++)
+    free_polyhedron (bp->polyhedra[i]);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->colors) free (bp->colors);
+  if (bp->font1_data) free_texture_font (bp->font1_data);
+  if (bp->font2_data) free_texture_font (bp->font2_data);
+  if (bp->font3_data) free_texture_font (bp->font3_data);
+  if (glIsList(bp->object_list)) glDeleteLists(bp->object_list, 1);
 }
 
 XSCREENSAVER_MODULE ("Polyhedra", polyhedra)

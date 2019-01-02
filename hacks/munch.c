@@ -334,6 +334,7 @@ munch_init (Display *dpy, Window w)
     st->mismunch = random() & 1;
   else
     st->mismunch = get_boolean_resource (st->dpy, "mismunch", "Mismunch");
+  if (mm) free (mm);
 
   st->window_width = xgwa.width;
   st->window_height = xgwa.height;
@@ -439,6 +440,11 @@ static void
 munch_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
+  XFreeGC (dpy, st->gc);
+  for (i = 0; i < st->simul; i++)
+    free (st->munchers[i]);
+  free (st->munchers);
   free (st);
 }
 

@@ -18,7 +18,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_gears 0
 # define release_gears 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -827,7 +826,7 @@ draw_gears (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel(GL_SMOOTH);
 
@@ -931,6 +930,24 @@ gears_handle_event (ModeInfo *mi, XEvent *event)
     }
 
   return False;
+}
+
+
+ENTRYPOINT void
+free_gears (ModeInfo *mi)
+{
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  for (i = 0; i < bp->ngears; i++)
+    if (bp->gears[i])
+      free_gear (bp->gears[i]);
+  if (glIsList(bp->armature_dlist))
+    glDeleteLists (bp->armature_dlist, 1);
+
 }
 
 XSCREENSAVER_MODULE ("Gears", gears)

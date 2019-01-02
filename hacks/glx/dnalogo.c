@@ -67,7 +67,6 @@
 #  define CWFONT "-*-helvetica-medium-r-normal-*-*-240-*-*-*-*-*-*"
 # endif
 
-# define free_logo 0
 # define release_logo 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -2944,6 +2943,7 @@ init_logo (ModeInfo *mi)
     dc->color[2] = xcolor.blue  / 65535.0;
     dc->color[3] = 1.0;
 
+    free (color_name);
     color_name = get_string_resource (mi->dpy, "cwForeground", "Foreground");
     for (s2 = color_name + strlen(color_name) - 1; s2 > color_name; s2--)
       if (*s2 == ' ' || *s2 == '\t')
@@ -2956,6 +2956,7 @@ init_logo (ModeInfo *mi)
         fprintf (stderr, "%s: can't parse color %s\n", progname, color_name);
         exit (1);
       }
+    free (color_name);
 
 # ifdef CW
     dc->codeword_color[0] = xcolor.red   / 65535.0;
@@ -2975,6 +2976,7 @@ init_logo (ModeInfo *mi)
         fprintf (stderr, "%s: can't parse color %s\n", progname, color_name);
         exit (1);
       }
+    free (color_name);
 
     dc->codeword_bg[0] = xcolor.red   / 65535.0;
     dc->codeword_bg[1] = xcolor.green / 65535.0;
@@ -3289,7 +3291,7 @@ draw_logo (ModeInfo *mi)
     return;
 
   mi->polygon_count = 0;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(dc->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *dc->glx_context);
 
   if (!wire &&
       dc->wire_overlay == 0 &&
@@ -3632,6 +3634,35 @@ draw_logo (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_logo (ModeInfo *mi)
+{
+  logo_configuration *dc = &dcs[MI_SCREEN(mi)];
+  if (!dc->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *dc->glx_context);
+  if (dc->trackball) gltrackball_free (dc->trackball);
+# ifdef CW
+  if (dc->codeword_text) free (dc->codeword_text);
+  if (dc->codeword_text_out) free (dc->codeword_text_out);
+  if (dc->scene_rot) free_rotator (dc->scene_rot);
+  if (dc->font) free_texture_font (dc->font);
+# endif
+# ifdef DEBUG
+  if (dc->label_font) free_texture_font (dc->label_font);
+# endif
+  glDeleteLists(dc->helix_list, 1);
+  glDeleteLists(dc->helix_list_wire, 1);
+  glDeleteLists(dc->helix_list_facetted, 1);
+  glDeleteLists(dc->pizza_list, 1);
+  glDeleteLists(dc->pizza_list_wire, 1);
+  glDeleteLists(dc->pizza_list_facetted, 1);
+  glDeleteLists(dc->gasket_list, 1);
+  glDeleteLists(dc->gasket_list_wire, 1);
+  glDeleteLists(dc->frame_list, 1);
+  glDeleteLists(dc->frame_list_wire, 1);
 }
 
 XSCREENSAVER_MODULE_2 ("DNALogo", dnalogo, logo)

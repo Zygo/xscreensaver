@@ -24,7 +24,6 @@
                    "*wireframe:     False         \n" \
 		   "*suppressRotationAnimation: True\n" \
 
-# define free_cubicgrid 0
 # define release_cubicgrid 0
 #include "xlockmore.h"
 
@@ -242,7 +241,7 @@ ENTRYPOINT void draw_cubicgrid(ModeInfo * mi)
   cp = &cubicgrid[MI_SCREEN(mi)];
   MI_IS_DRAWN(mi) = True;
   if (!cp->glx_context) return;
-  glXMakeCurrent(display, window, *(cp->glx_context));
+  glXMakeCurrent(display, window, *cp->glx_context);
   if (!draw_main(mi)) {
     MI_ABORT(mi);
     return;
@@ -258,11 +257,20 @@ ENTRYPOINT void change_cubicgrid(ModeInfo * mi)
 {
   cubicgrid_conf *cp = &cubicgrid[MI_SCREEN(mi)];
   if (!cp->glx_context) return;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
   init_gl(mi);
 }
 #endif /* !STANDALONE */
 
+ENTRYPOINT void free_cubicgrid(ModeInfo * mi) 
+{
+  cubicgrid_conf *cp = &cubicgrid[MI_SCREEN(mi)];
+  if (!cp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
+  gltrackball_free (cp->trackball);
+  free_rotator (cp->rot);
+  if (glIsList(cp->list)) glDeleteLists(cp->list, 1);
+}
 
 XSCREENSAVER_MODULE ("CubicGrid", cubicgrid)
 

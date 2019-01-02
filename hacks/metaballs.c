@@ -386,19 +386,20 @@ metaballs_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 metaballs_free (Display *dpy, Window window, void *closure)
 {
-#if 0
   struct state *st = (struct state *) closure;
-	free( st->pImage->data );
-	XDestroyImage( st->pImage );
-	free( st->aiColorVals );
-	free( st->blobs );
-	for (i = 0; i < st->iWinHeight; ++i)
-	  free( st->blub[i] );
-	free( st->blub );
-	for (i = 0; i < st->dradius; ++i)
-	  free( st->blob[i] );
-	free( st->blob );
-#endif
+  int i;
+  if (st->pImage) XDestroyImage (st->pImage);
+  free (st->aiColorVals);
+  free (st->blobs);
+  for (i = 0; i < st->iWinHeight; ++i)
+    free (st->blub[i]);
+  free (st->blub);
+  for (i = 0; i < st->dradius; ++i)
+    free (st->blob[i]);
+  if (st->sColor) free (st->sColor);
+  free (st->blob);
+  XFreeGC (dpy, st->gc);
+  free (st);
 }
 
 

@@ -219,7 +219,6 @@ static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/01 xlockmore";
 # define DEFAULTS           "*delay:      10000 \n" \
                             "*showFPS:    False \n" \
 
-# define free_projectiveplane 0
 # define release_projectiveplane 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -1516,7 +1515,7 @@ ENTRYPOINT void draw_projectiveplane(ModeInfo *mi)
   if (!pp->glx_context)
     return;
 
-  glXMakeCurrent(display,window,*(pp->glx_context));
+  glXMakeCurrent(display, window, *pp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
@@ -1540,10 +1539,20 @@ ENTRYPOINT void change_projectiveplane(ModeInfo *mi)
   if (!pp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi),MI_WINDOW(mi),*(pp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
   init(mi);
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void free_projectiveplane(ModeInfo *mi)
+{
+  projectiveplanestruct *pp = &projectiveplane[MI_SCREEN(mi)];
+  if (!pp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
+  gltrackball_free (pp->trackballs[0]);
+  gltrackball_free (pp->trackballs[1]);
+  if (pp->tex_name) glDeleteTextures (1, &pp->tex_name);
+}
 
 XSCREENSAVER_MODULE ("ProjectivePlane", projectiveplane)
 

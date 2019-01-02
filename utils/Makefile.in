@@ -195,7 +195,7 @@ CCUTILS = $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 	$(CC) -c $(CCUTILS) $<
 
 # Two versions of this: driver/ does not link with Xft, but hacks/ does.
-font-retry-xft.o: font-retry.c
+font-retry-xft.o: $(srcdir)/font-retry.c
 	$(CC) -c $(CCUTILS) -DUSE_XFT $< -o $@
 
 

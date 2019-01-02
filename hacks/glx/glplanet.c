@@ -178,6 +178,7 @@ setup_xpm_texture (ModeInfo *mi, const unsigned char *data, unsigned long size)
                GL_RGBA, GL_UNSIGNED_BYTE, image->data);
   sprintf (buf, "builtin texture (%dx%d)", image->width, image->height);
   check_gl_error(buf);
+  XDestroyImage (image);
 }
 
 
@@ -399,7 +400,7 @@ reshape_planet (ModeInfo *mi, int width, int height)
   planetstruct *gp = &planets[MI_SCREEN(mi)];
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
-  glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), gp->window, *gp->glx_context);
 
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
@@ -587,7 +588,7 @@ draw_planet (ModeInfo * mi)
   glDrawBuffer(GL_BACK);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glXMakeCurrent (dpy, window, *(gp->glx_context));
+  glXMakeCurrent (dpy, window, *gp->glx_context);
 
   mi->polygon_count = 0;
 
@@ -831,14 +832,18 @@ free_planet (ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
-  if (gp->glx_context) {
-	glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
+  if (!gp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), gp->window, *gp->glx_context);
 
-	if (glIsList(gp->platelist))
-	  glDeleteLists(gp->platelist, 1);
-	if (glIsList(gp->starlist))
-	  glDeleteLists(gp->starlist, 1);
-  }
+  if (glIsList(gp->platelist))   glDeleteLists(gp->platelist, 1);
+  if (glIsList(gp->shadowlist))  glDeleteLists(gp->shadowlist, 1);
+  if (glIsList(gp->latlonglist)) glDeleteLists(gp->latlonglist, 1);
+  if (glIsList(gp->starlist))    glDeleteLists(gp->starlist, 1);
+  glDeleteTextures(1, &gp->tex1);
+  glDeleteTextures(1, &gp->tex2);
+
+  if (gp->trackball) gltrackball_free (gp->trackball);
+  if (gp->rot) free_rotator (gp->rot);
 }
 
 

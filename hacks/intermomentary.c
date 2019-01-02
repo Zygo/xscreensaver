@@ -543,6 +543,22 @@ static void
 intermomentary_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->f) {
+    if (st->f->off_alpha) free(st->f->off_alpha);
+    if (st->f->off_map != window) XFreePixmap (dpy, st->f->off_map);
+    if (st->f->discs) {
+      int i;
+      for (i = 0; i < st->f->num; i++) {
+        if (st->f->discs[i].pxRiders) free (st->f->discs[i].pxRiders);
+      }
+      free (st->f->discs);
+    }
+    free (st->f);
+  }
+  if (st->colors) free (st->colors);
+  XFreeGC (dpy, st->fgc);
+  XFreeGC (dpy, st->copygc);
+
   free (st);
 }
 

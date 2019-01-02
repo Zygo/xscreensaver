@@ -15,7 +15,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_ball 0
 # define release_ball 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -294,7 +293,7 @@ draw_ball (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel(GL_SMOOTH);
 
@@ -357,6 +356,21 @@ draw_ball (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_ball (ModeInfo *mi)
+{
+  ball_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->colors) free (bp->colors);
+  if (bp->spikes) free (bp->spikes);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (glIsList(bp->ball_list)) glDeleteLists(bp->ball_list, 1);
+  if (glIsList(bp->spike_list)) glDeleteLists(bp->spike_list, 1);
 }
 
 XSCREENSAVER_MODULE_2 ("DangerBall", dangerball, ball)

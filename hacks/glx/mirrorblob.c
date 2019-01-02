@@ -1729,7 +1729,7 @@ draw_mirrorblob(ModeInfo * mi)
   if (gp->waiting_for_image_p && gp->first_image_p)
     return;
 
-  glXMakeCurrent(display, window, *(gp->glx_context));
+  glXMakeCurrent(display, window, *gp->glx_context);
   draw_scene(mi);
   if (mi->fps_p) do_fps (mi);
   glFinish();
@@ -1826,14 +1826,24 @@ ENTRYPOINT void
 free_mirrorblob(ModeInfo * mi)
 {
   mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
+  int i;
+
+  if (!gp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
+
   if (gp->nodes) free(gp->nodes);
   if (gp->faces) free(gp->faces);
   if (gp->bump_data) free(gp->bump_data);
   if (gp->colours) free(gp->colours);
   if (gp->tex_coords) free(gp->tex_coords);
   if (gp->dots) free(gp->dots);
+  if (gp->normals) free(gp->normals);
   if (gp->wall_shape) free(gp->wall_shape);
   if (gp->bump_shape) free(gp->bump_shape);
+  if (gp->trackball) gltrackball_free (gp->trackball);
+
+  for (i = 0; i < NUM_TEXTURES; i++)
+    if (gp->textures[i]) glDeleteTextures(1, &gp->textures[i]);
 }
 
 XSCREENSAVER_MODULE ("MirrorBlob", mirrorblob)

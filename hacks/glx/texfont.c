@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2017 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -952,6 +952,7 @@ free_texture_font (texture_font_data *data)
     {
       texfont_cache *next = data->cache->next;
       glDeleteTextures (1, &data->cache->texid);
+      free (data->cache->string);
       free (data->cache);
       data->cache = next;
     }

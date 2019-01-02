@@ -564,6 +564,12 @@ static const struct line_info line_table[LINE_COUNT] =
 static void
 hypercube_free (Display *dpy, Window window, void *closure)
 {
+  struct hyper_state *hs = (struct hyper_state *) closure;
+  int i;
+  XFreeGC (dpy, hs->black_gc);
+  for (i = 0; i < 8; i++)
+    if (hs->hs_color_gcs[i]) XFreeGC (dpy, hs->hs_color_gcs[i]);
+  free (hs);
 }
 
 XSCREENSAVER_MODULE ("HyperCube", hypercube)

@@ -735,6 +735,12 @@ static void
 substrate_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->f->cgrid) free(st->f->cgrid);
+  if (st->f->cracks) free(st->f->cracks);
+  if (st->f->off_img) free(st->f->off_img);
+  if (st->f->parsedcolors) free(st->f->parsedcolors);
+  XFreeGC (dpy, st->fgc);
+  free (st->f);
   free (st);
 }
 

@@ -974,6 +974,13 @@ static void
 interaggregate_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->f) {
+    free_circles (st->f);
+    if (st->f->off_img) free (st->f->off_img);
+    if (st->f->parsedcolors) free (st->f->parsedcolors);
+    free (st->f);
+  }
+  if (st->fgc) XFreeGC (st->dpy, st->fgc);
   free (st);
 }
 

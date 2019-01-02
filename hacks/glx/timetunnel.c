@@ -23,7 +23,6 @@
 
 
 
-# define free_tunnel 0
 # define release_tunnel 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -1061,7 +1060,7 @@ init_tunnel (ModeInfo *mi)
   tc->end_time = end;
 
   /* reset animation knots, effect 0 not defined. */
-  tc->effects = malloc(sizeof(effect_t) * ( tc->num_effects + 1));
+  tc->effects = calloc(sizeof(effect_t),tc->num_effects + 1);
   for ( i = 1; i <= tc->num_effects ; i++)
   	init_effects(&tc->effects[i], i);
 
@@ -1159,7 +1158,7 @@ draw_tunnel (ModeInfo *mi)
   if (!tc->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tc->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tc->glx_context);
 
   glShadeModel(GL_SMOOTH);
 
@@ -1233,6 +1232,29 @@ draw_tunnel (ModeInfo *mi)
 
   check_gl_error("drawing done, calling swap buffers");
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_tunnel (ModeInfo *mi)
+{
+  tunnel_configuration *tc = &tconf[MI_SCREEN(mi)];
+  int i;
+  if (!tc->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tc->glx_context);
+  if (tc->trackball) gltrackball_free (tc->trackball);
+  if (tc->rot) free_rotator (tc->rot);
+  if (tc->texshift) free (tc->texshift);
+  if (tc->effects) {
+    for (i = 0; i < tc->num_effects; i++) {
+      if (tc->effects[i].knots) free (tc->effects[i].knots);
+      if (tc->effects[i].state) free (tc->effects[i].state);
+    }
+    free (tc->effects);
+  }
+  if (glIsList(tc->cyllist)) glDeleteLists(tc->cyllist, 1);
+  if (glIsList(tc->diamondlist)) glDeleteLists(tc->diamondlist, 1);
+  glDeleteTextures (MAX_TEXTURE, tc->texture_binds);
 }
 
 XSCREENSAVER_MODULE_2 ("TimeTunnel", timetunnel, tunnel)

@@ -31,7 +31,7 @@
 # import <ScreenSaver/ScreenSaver.h>
 #endif
 
-#import <XScreenSaverView.h>
+#import "XScreenSaverView.h"
 
 #ifdef USE_IPHONE
 

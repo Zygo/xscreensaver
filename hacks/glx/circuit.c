@@ -2072,7 +2072,7 @@ ENTRYPOINT void draw_circuit(ModeInfo *mi)
   if (!ci->glx_context)
       return;
 
- glXMakeCurrent(disp, w, *(ci->glx_context));
+ glXMakeCurrent(disp, w, *ci->glx_context);
 
   display(mi);
 
@@ -2084,8 +2084,12 @@ ENTRYPOINT void draw_circuit(ModeInfo *mi)
 ENTRYPOINT void free_circuit(ModeInfo *mi)
 {
   Circuit *ci = &circuit[MI_SCREEN(mi)];
-  if (ci->font)
-    free_texture_font (ci->font);
+  int i;
+  if (!ci->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *ci->glx_context);
+  if (ci->font) free_texture_font (ci->font);
+  for (i = 0 ; i < 12 ; i++)
+    if (glIsList(ci->band_list[i])) glDeleteLists(ci->band_list[i], 1);
   FreeAllGL(mi);
 }
 

@@ -24,7 +24,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_hypnowheel 0
 # define release_hypnowheel 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -243,7 +242,7 @@ draw_hypnowheel (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -316,6 +315,22 @@ hypnowheel_handle_event (ModeInfo *mi, XEvent *event)
   return False;
 }
 
+
+ENTRYPOINT void
+free_hypnowheel (ModeInfo *mi)
+{
+  hypnowheel_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->colors) free (bp->colors);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->discs) {
+    for (i = 0; i < nlayers; i++)
+      if (bp->discs[i].rot) free_rotator (bp->discs[i].rot);
+    free (bp->discs);
+  }
+}
 
 XSCREENSAVER_MODULE ("Hypnowheel", hypnowheel)
 

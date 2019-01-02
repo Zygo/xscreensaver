@@ -297,6 +297,8 @@ static void
 deco_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->fgc);
+  XFreeGC (dpy, st->bgc);
   free (st);
 }
 

@@ -211,6 +211,10 @@
    examined to determine when keyboard activity has occurred. */
 #undef HAVE_PROC_INTERRUPTS
 
+/* Define this if you have a Linux-like /proc/.../oom_score_adj file which can
+   be adjusted by root to exempt us from the out-of-memory . */
+#undef HAVE_PROC_OOM
+
 /* Define this if your system supports POSIX threads. */
 #undef HAVE_PTHREAD
 

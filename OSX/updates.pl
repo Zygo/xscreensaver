@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2013-2018 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,14 +21,15 @@ use open ":encoding(utf8)";
 use POSIX;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.2 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
 
 my $base_url = "https://www.jwz.org/";
-my $priv_key_file = "$ENV{HOME}/.ssh/sparkle_dsa_priv.pem";
-my $sign_update = "./sign_update.rb";
+my $dsa_priv_key_file = "$ENV{HOME}/.ssh/sparkle_dsa_priv.pem";
+my $dsa_sign_update = "sparkle-bin/old_dsa_scripts/sign_update";
+my $edddsa_sign_update = "sparkle-bin/sign_update";
 
 
 sub generate_xml($$$$) {
@@ -37,21 +38,26 @@ sub generate_xml($$$$) {
   my $outfile = "updates.xml";
 
   my $obody = '';
-  my %sigs;
+  my %sig1s;
+  my %sig2s;
   my %dates;
   if (open (my $in, '<', $outfile)) {
     print STDERR "$progname: reading $outfile\n" if $verbose;
     local $/ = undef;  # read entire file
     $obody = <$in>;
     close $in;
-    foreach my $item (split (/<item/i, $obody)) {
+    my @i = split (/<item/i, $obody);
+    shift @i;
+    foreach my $item (@i) {
       my ($v)    = ($item =~ m/version="(.*?)"/si);
-      my ($sig)  = ($item =~ m/dsaSignature="(.*?)"/si);
+      my ($sig1) = ($item =~ m/dsaSignature="(.*?)"/si);
+      my ($sig2) = ($item =~ m/edSignature="(.*?)"/si);
       my ($date) = ($item =~ m/<pubDate>(.*?)</si);
       next unless $v;
-      $sigs{$v}  = $sig  if $sig;
+      $sig1s{$v}  = $sig1 if $sig1;
+      $sig2s{$v}  = $sig2 if $sig2;
       $dates{$v} = $date if $date;
-      print STDERR "$progname: $v: " . ($date || '?') . "\n"
+      print STDERR "$progname: existing: $v: " . ($date || '?') . "\n"
         if ($verbose > 1);
     }
   }
@@ -82,7 +88,8 @@ sub generate_xml($$$$) {
     my $v2 = $v1; $v2 =~ s/\.//gs;
     my $zip = undef;
   DONE:
-    foreach my $ext ('zip', 'dmg', 'tar.gz', 'tar.Z') {
+    #foreach my $ext ('zip', 'dmg', 'tar.gz', 'tar.Z') {
+    foreach my $ext ('dmg') {
       foreach my $v ($v1, $v2) {
         foreach my $name ($app_name, "x" . lc($app_name)) {
           my $f = "$name-$v.$ext";
@@ -97,36 +104,51 @@ sub generate_xml($$$$) {
     my $publishedp = ($zip && -f "$www_dir/$zip");
     $publishedp = 1 if ($count == 0);
 
-    my $url = ("${base_url}$app_name/" . ($publishedp ? $zip : ""));
+    my $url = ("${base_url}$app_name/" . ($publishedp && $zip ? $zip : ""));
 
     $url =~ s@DaliClock/@xdaliclock/@gs if $url; # Kludge
 
     my @st = stat("$archive_dir/$zip") if $zip;
     my $size = $st[7];
     my $date = $st[9];
-    $date = ($zip ?
+    $date = ($date ?
              strftime ("%a, %d %b %Y %T %z", localtime($date))
              : "");
 
     my $odate = $dates{$v1};
-    my $sig   = $sigs{$v1};
+    my $sig1  = $sig1s{$v1};
+    my $sig2  = $sig2s{$v1};
     # Re-generate the sig if the file date changed.
-    $sig = undef if ($odate && $odate ne $date);
+    $sig1 = undef if ($odate && $odate ne $date);
+    $sig2 = undef if ($odate && $odate ne $date);
 
-    print STDERR "$progname: $v1: $date " . ($sig ? "Y" : "N") . "\n"
+    print STDERR "$progname: $v1: $date " .
+                  ($sig1 ? "Y" : "N") . ($sig2 ? "Y" : "N") . "\n"
       if ($verbose > 1);
 
-    if (!$sig && $zip) {
+    if (!$sig1 && $zip) {	# Old-style sigs
       local %ENV = %ENV;
       $ENV{PATH} = "/usr/bin:$ENV{PATH}";
-      $sig = `$sign_update "$archive_dir/$zip" "$priv_key_file"`;
-      $sig =~ s/\s+//gs;
+      $sig1 = `$dsa_sign_update "$archive_dir/$zip" "$dsa_priv_key_file"`;
+      $sig1 =~ s/\s+//gs;
     }
 
+    if (!$sig2 && $zip) {	# New-style sigs
+      local %ENV = %ENV;
+      $ENV{PATH} = "/usr/bin:$ENV{PATH}";
+      my $xml = `$edddsa_sign_update "$archive_dir/$zip"`;
+      ($sig2) = ($xml =~ m/sparkle:edSignature=\"([^\"<>\s]+)\"/si);
+      error ("unparsable: $edddsa_sign_update: $xml") unless $sig2;
+    }
+
+    $sig1 = 'ERROR' unless defined($sig1);
+    $sig2 = 'ERROR' unless defined($sig2);
+    $size = -1 unless defined($size);
     my $enc = ($publishedp
                ? ("<enclosure url=\"$url\"\n" .
                   " sparkle:version=\"$v1\"\n" .
-                  " sparkle:dsaSignature=\"$sig\"\n" .
+                  " sparkle:dsaSignature=\"$sig1\"\n" .
+                  " sparkle:edSignature=\"$sig2\"\n" .
                   " length=\"$size\"\n" .
                   " type=\"application/octet-stream\" />\n")
                : "<sparkle:version>$v1</sparkle:version>\n");
@@ -196,6 +218,8 @@ sub usage() {
 }
 
 sub main() {
+  binmode (STDOUT, ':utf8');
+  binmode (STDERR, ':utf8');
   my ($app_name, $changelog, $archive_dir, $www_dir);
   while ($#ARGV >= 0) {
     $_ = shift @ARGV;

@@ -178,6 +178,12 @@ Programming Tips
   - On modern machines, OpenGL will always run faster than Xlib.  It's
     also more portable.  Consider writing in OpenGL whenever possible.
 
+  - Free any memory you allocate. While screen savers under X11 have
+    their memory freed automatically when their process is killed by
+    the XScreenSaver daemon, under iOS and Android screen savers exist
+    in long-lived processes where no such cleanup takes place.
+    Consider Valgrind or gcc -fsanitize=leak to find memory leaks.
+
 
 ==========================================================================
 macOS, iOS and Android

@@ -362,6 +362,7 @@ initLMorph(struct state *st)
 	fprintf(stderr, "figtype should be `all', `open' or `closed'.\n");
 	st->figType = FT_ALL;
     }
+    if (ft) free (ft);
 
     if (steps <= 0)
       steps = (random() % 400) + 100;
@@ -389,7 +390,7 @@ initLMorph(struct state *st)
 
     st->aSlopeTo = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint)); 
     st->aSlopeFrom = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint)); 
-    st->aNext = (XPoint *) xmalloc(st->numPoints * sizeof(XPoint)); 
+    st->aNext = 0;
 
     for (i = 0; i < st->numPoints ; i++) {
         st->aSlopeTo[i].x = 0.0;
@@ -562,6 +563,16 @@ static void
 lmorph_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
+  XFreeGC (dpy, st->gcDraw);
+  XFreeGC (dpy, st->gcClear);
+  free (st->aWork[0]);
+  free (st->aWork[1]);
+  free (st->aTmp);
+  free (st->aSlopeTo);
+  free (st->aSlopeFrom);
+  for (i = 0; i < MAXFIGS; i++)
+    if (st->a[i]) free (st->a[i]);
   free (st);
 }
 

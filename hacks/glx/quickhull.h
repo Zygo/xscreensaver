@@ -22,14 +22,9 @@
 #define __QUICKHULL_H__
 
 typedef struct qh_vertex {
-  union {
-    double v[3];
-    struct {
-      double x;
-      double y;
-      double z;
-    };
-  };
+  double x;
+  double y;
+  double z;
 } qh_vertex_t;
 
 typedef qh_vertex_t qh_vec3_t;

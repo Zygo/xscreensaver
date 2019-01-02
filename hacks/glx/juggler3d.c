@@ -640,6 +640,13 @@ ENTRYPOINT void
 free_juggle(ModeInfo *mi) {
   jugglestruct *sp = &juggles[MI_SCREEN(mi)];
 
+  if (!sp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
+
+  if (sp->trackball) gltrackball_free (sp->trackball);
+  if (sp->rot) free_rotator (sp->rot);
+  if (sp->font_data) free_texture_font (sp->font_data);
+
   if (sp->head != NULL) {
 	while (sp->head->next != sp->head) {
 	  trajectory_destroy(sp->head->next);
@@ -668,7 +675,6 @@ add_throw(ModeInfo *mi, char type, int h, Notation n, const char* name)
 
   ADD_ELEMENT(Trajectory, t, sp->head->prev);
   if(t == NULL){ /* Out of Memory */
-	free_juggle(mi);
 	return False;
   }
   t->object = NULL;
@@ -909,7 +915,6 @@ part(ModeInfo *mi)
 	  t->action = CATCH;
 	  ADD_ELEMENT(Trajectory, nt, p);
 	  if(nt == NULL){
-		free_juggle(mi);
 		return False;
 	  }
 	  nt->object = NULL;
@@ -2570,7 +2575,6 @@ refill_juggle(ModeInfo * mi)
   positions(sp);
 
   if (!projectile(sp)) {
-	free_juggle(mi);
 	return;
   }
 
@@ -2729,14 +2733,12 @@ init_juggle (ModeInfo * mi)
 	/* create circular trajectory list */
 	ADD_ELEMENT(Trajectory, sp->head, sp->head);
 	if(sp->head == NULL){
-	  free_juggle(mi);
 	  return;
 	}
 
 	/* create circular object list */
 	ADD_ELEMENT(Object, sp->objects, sp->objects);
 	if(sp->objects == NULL){
-	  free_juggle(mi);
 	  return;
 	}
 
@@ -2828,7 +2830,7 @@ draw_juggle (ModeInfo *mi)
   if (!sp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
 
   glShadeModel(GL_SMOOTH);
 

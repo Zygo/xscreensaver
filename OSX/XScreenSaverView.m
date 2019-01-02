@@ -2059,10 +2059,10 @@ gl_check_ver (const struct gl_version *caps,
   if (!initted_p || ![self isAnimating]) // no event handling unless running.
     return NO;
 
-  [self lockFocus];
+//  [self lockFocus];  // As of 10.14 this causes flicker on mouse motion
   [self prepareContext];
   BOOL result = xsft->event_cb (xdpy, xwindow, xdata, e);
-  [self unlockFocus];
+//  [self unlockFocus];cp -Rf ${CONFIGURATION_BUILD_DIR}/BuildOutputPrefPane.prefPane ~/Library/PreferencePanes
   return result;
 }
 

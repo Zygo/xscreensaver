@@ -409,6 +409,9 @@ anemone_free (Display *dpy, Window window, void *closure)
   struct state *st = (struct state *) closure;
   if (st->vPendage) free (st->vPendage);
   if (st->appD) free (st->appD);
+  XFreeGC (dpy, st->gcDraw);
+  XFreeGC (dpy, st->gcClear);
+  free (st->colors);
   free (st);
 }
 

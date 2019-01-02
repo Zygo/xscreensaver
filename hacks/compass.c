@@ -957,6 +957,18 @@ compass_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 compass_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  int i;
+  XFreeGC (dpy, st->ptr_gc);
+  XFreeGC (dpy, st->erase_gc);
+  for (i = 0; i < 4; i++)
+    if (st->discs[i]) {
+      XFreeGC (dpy, st->discs[i]->gc);
+      free (st->discs[i]);
+    }
+  if (st->ba) XFreePixmap (dpy, st->ba);
+  if (st->bb) XFreePixmap (dpy, st->bb);
+  free (st);
 }
 
 

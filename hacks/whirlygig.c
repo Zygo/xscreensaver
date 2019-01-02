@@ -655,6 +655,13 @@ whirlygig_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 whirlygig_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  free (st->info);
+  XFreeGC (dpy, st->fgc);
+  XFreeGC (dpy, st->bgc);
+  if (st->xmode_str) free (st->xmode_str);
+  if (st->ymode_str) free (st->ymode_str);
+  free (st);
 }
 
 

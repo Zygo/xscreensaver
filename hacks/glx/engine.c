@@ -27,7 +27,6 @@
 			"*suppressRotationAnimation: True\n" \
 	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
 
-# define free_engine 0
 # define release_engine 0
 # include "xlockmore.h"              /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -985,7 +984,7 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
   if (!e->glx_context)
     return;
 
-  glXMakeCurrent(disp, w, *(e->glx_context));
+  glXMakeCurrent(disp, w, *e->glx_context);
 
 
   mi->polygon_count = display(mi);
@@ -999,6 +998,20 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
+}
+
+
+ENTRYPOINT void free_engine(ModeInfo *mi)
+{
+  Engine *e = &engine[MI_SCREEN(mi)];
+  if (!e->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *e->glx_context);
+  if (e->font_data) free_texture_font (e->font_data);
+  free (e->engine_name);
+  gltrackball_free (e->trackball);
+  free_rotator (e->rot);
+  if (glIsList(e->piston_list)) glDeleteLists(e->piston_list, 1);
+  if (glIsList(e->shaft_list)) glDeleteLists(e->shaft_list, 1);
 }
 
 XSCREENSAVER_MODULE ("Engine", engine)

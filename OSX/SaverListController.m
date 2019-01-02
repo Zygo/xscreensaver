@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -225,6 +225,8 @@
   for (int i = 0; i < n; i++) {
     if ([list_by_letter[i] count] > 0) {
       active_section_count++;
+      [list_by_letter[i] sortUsingSelector:
+                           @selector(localizedCaseInsensitiveCompare:)];
       [letter_sections addObject: list_by_letter[i]];
       if (i <= 'Z'-'A')
         [section_titles addObject: [NSString stringWithFormat: @"%c", i+'A']];

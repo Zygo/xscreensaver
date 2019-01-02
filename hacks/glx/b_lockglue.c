@@ -195,7 +195,7 @@ draw_bubble3d(ModeInfo * mi)
 	if (!c->glx_context)
 		return;
 
-	glXMakeCurrent(display, window, *(c->glx_context));
+	glXMakeCurrent(display, window, *c->glx_context);
 
         glb_config.polygon_count = 0;
         glPushMatrix();
@@ -231,8 +231,9 @@ ENTRYPOINT void
 free_bubble3d(ModeInfo * mi)
 {
   struct context *c = &contexts[MI_SCREEN(mi)];
-  if (c->draw_context)
-    glb_draw_end(c->draw_context);
+  if (!c->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *c->glx_context);
+  if (c->draw_context) glb_draw_end(c->draw_context);
 }
 
 XSCREENSAVER_MODULE ("Bubble3D", bubble3d)

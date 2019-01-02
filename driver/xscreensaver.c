@@ -1328,6 +1328,10 @@ main_loop (saver_info *si)
       {
         Time lock_timeout = p->lock_timeout;
 
+        /* If we're fading, don't lock until the fade finishes. */
+        if (si->fading_possible_p && p->fade_p)
+          lock_timeout += p->fade_seconds / 1000;
+
         if (si->emergency_lock_p && p->lock_p && lock_timeout)
           {
             int secs = p->lock_timeout / 1000;
@@ -2071,14 +2075,14 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	  sprintf (buf, "LOCK ClientMessage received; %s", response);
 	  clientmessage_response (si, window, False, buf, response);
 
+           /* Have to set the time or xscreensaver-command doesn't report
+              the LOCK state change. Must come before set_locked_p(). */
+           si->blank_time = time ((time_t *) 0);
+
           /* Note that this leaves things in a slightly inconsistent state:
              we are blanked but not locked.  And blanking might actually
              fail if we can't get the grab. */
 	  set_locked_p (si, True);
-
-           /* Have to set the time or xscreensaver-command doesn't
-              report the LOCK state change. */
-           si->blank_time = time ((time_t *) 0);
 
 	  si->selection_mode = 0;
 	  si->demoing_p = False;

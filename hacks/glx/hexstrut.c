@@ -450,7 +450,7 @@ draw_hexstrut (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel(GL_SMOOTH);
 
@@ -496,6 +496,13 @@ ENTRYPOINT void
 free_hexstrut (ModeInfo *mi)
 {
   hexstrut_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->colors) free (bp->colors);
   while (bp->triangles)
     {
       triangle *t = bp->triangles->next;

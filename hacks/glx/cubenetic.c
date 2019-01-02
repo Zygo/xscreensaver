@@ -15,7 +15,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_cube 0
 # define release_cube 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -530,7 +529,7 @@ draw_cube (ModeInfo *mi)
     return;
 
   mi->polygon_count = 0;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cc->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cc->glx_context);
 
   glShadeModel(GL_FLAT);
 
@@ -591,6 +590,27 @@ draw_cube (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_cube (ModeInfo *mi)
+{
+  cube_configuration *cc = &ccs[MI_SCREEN(mi)];
+  if (!cc->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cc->glx_context);
+  if (cc->waves) {
+    free (cc->waves->srcs);
+    free (cc->waves->heights);
+    free (cc->waves);
+  }
+  if (glIsList(cc->cube_list)) glDeleteLists(cc->cube_list, 1);
+  if (cc->rot) free_rotator (cc->rot);
+  if (cc->trackball) gltrackball_free (cc->trackball);
+  if (cc->texture_colors) free (cc->texture_colors);
+  if (cc->cube_colors) free (cc->cube_colors);
+  if (cc->texture) free (cc->texture);
+  if (cc->texture_id) glDeleteTextures (1, &cc->texture_id);
 }
 
 XSCREENSAVER_MODULE_2 ("Cubenetic", cubenetic, cube)

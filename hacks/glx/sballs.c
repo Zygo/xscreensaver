@@ -724,7 +724,7 @@ ENTRYPOINT void draw_sballs(ModeInfo * mi)
     if (!sb->glx_context)
 	return;
 
-    glXMakeCurrent(display, window, *(sb->glx_context));
+    glXMakeCurrent(display, window, *sb->glx_context);
     Draw(mi);
 #ifndef STANDALONE
     Reshape(mi); /* xlock mode */
@@ -747,21 +747,23 @@ ENTRYPOINT void draw_sballs(ModeInfo * mi)
 ENTRYPOINT void free_sballs(ModeInfo * mi)
 {
     sballsstruct *sb = &sballs[MI_SCREEN(mi)];
-    if (sb->glx_context)
+
+    if (!sb->glx_context) return;
+    glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *sb->glx_context);
+
+    gltrackball_free (sb->trackball);
+
+    if (sb->btexture)
     {
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sb->glx_context));
-	if (sb->btexture)
-	{
-	    glDeleteTextures(1,&sb->backid);
-	    XDestroyImage(sb->btexture);
-            sb->btexture = 0;
-	}
-	if (sb->ftexture)
-	{
-	    glDeleteTextures(1,&sb->faceid);
-	    XDestroyImage(sb->ftexture);
-            sb->ftexture = 0;
-	}
+        glDeleteTextures(1,&sb->backid);
+        XDestroyImage(sb->btexture);
+        sb->btexture = 0;
+    }
+    if (sb->ftexture)
+    {
+        glDeleteTextures(1,&sb->faceid);
+        XDestroyImage(sb->ftexture);
+        sb->ftexture = 0;
     }
 }
 
@@ -813,7 +815,7 @@ ENTRYPOINT void change_sballs(ModeInfo * mi)
 		       do_texture ? "on" : "off"
 			);
     }
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sb->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sb->glx_context);
 
 }
 #endif /* !STANDALONE */

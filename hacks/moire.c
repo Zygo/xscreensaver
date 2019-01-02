@@ -123,6 +123,7 @@ moire_init_1 (struct state *st)
 
       gcv.foreground = st->colors[0].pixel;
     }
+  if (st->gc) XFreeGC (st->dpy, st->gc);
   st->gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
 }
 
@@ -240,6 +241,12 @@ moire_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 moire_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  if (st->draw_image)
+    destroy_xshm_image (dpy, st->draw_image, &st->shm_info);
+  XFreeGC (dpy, st->gc);
+  free (st->colors);
+  free (st);
 }
 
 XSCREENSAVER_MODULE ("Moire", moire)

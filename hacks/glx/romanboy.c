@@ -1497,7 +1497,7 @@ ENTRYPOINT void draw_romanboy(ModeInfo *mi)
   if (!pp->glx_context)
     return;
 
-  glXMakeCurrent(display,window,*(pp->glx_context));
+  glXMakeCurrent(display, window, *pp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
@@ -1524,14 +1524,15 @@ ENTRYPOINT void free_romanboy(ModeInfo *mi)
 {
   romanboystruct *pp = &romanboy[MI_SCREEN(mi)];
 
-  if (pp->pp)
-    (void) free((void *)pp->pp);
-  if (pp->pn)
-    (void) free((void *)pp->pn);
-  if (pp->col)
-    (void) free((void *)pp->col);
-  if (pp->tex)
-    (void) free((void *)pp->tex);
+  if (!pp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
+
+  if (pp->pp) free(pp->pp);
+  if (pp->pn) free(pp->pn);
+  if (pp->col) free(pp->col);
+  if (pp->tex) free(pp->tex);
+  gltrackball_free (pp->trackball);
+  if (pp->tex_name) glDeleteTextures (1, &pp->tex_name);
 }
 
 #ifndef STANDALONE
@@ -1542,7 +1543,7 @@ ENTRYPOINT void change_romanboy(ModeInfo *mi)
   if (!pp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi),MI_WINDOW(mi),*(pp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *pp->glx_context);
   init(mi);
 }
 #endif /* !STANDALONE */

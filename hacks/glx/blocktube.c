@@ -291,14 +291,13 @@ ENTRYPOINT void free_blocktube (ModeInfo *mi)
 {
   blocktube_configuration *lp = &lps[MI_SCREEN(mi)];
 # if defined ( I_HAVE_XPM )
-  if (lp->glx_context) {
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
+  if (!lp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *lp->glx_context);
+  if (lp->envTexture) glDeleteTextures(1, &lp->envTexture);
+  if (lp->texti) XDestroyImage(lp->texti);
+  if (glIsList(lp->block_dlist)) glDeleteLists(lp->block_dlist, 1);
+  if (lp->envTexture) glDeleteTextures (1, &lp->envTexture);
 
-    if (lp->envTexture)
-      glDeleteTextures(1, &lp->envTexture);
-    if (lp->texti)
-      XDestroyImage(lp->texti);
-  }
 # endif
 }
 
@@ -308,7 +307,7 @@ ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height)
     GLfloat h = (GLfloat) height / (GLfloat) width;
     int y = 0;
 
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *lp->glx_context);
 
     if (width > height * 5) {   /* tiny window: show middle */
       height = width;
@@ -421,7 +420,7 @@ draw_blocktube (ModeInfo *mi)
 
     mi->polygon_count = 0;
 
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(lp->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *lp->glx_context);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

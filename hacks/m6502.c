@@ -299,7 +299,9 @@ static void
 m6502_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  m6502_destroy6502(st->machine);
   analogtv_release(st->tv);
+  free (st->inp);
   free (st->file);
   free (st);
 }

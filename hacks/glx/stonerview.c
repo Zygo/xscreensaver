@@ -101,7 +101,7 @@ draw_stonerview (ModeInfo *mi)
 {
   stonerview_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glPushMatrix ();
   glRotatef( current_device_rotation(), 0, 0, 1);
@@ -132,6 +132,9 @@ ENTRYPOINT void
 free_stonerview (ModeInfo *mi)
 {
   stonerview_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->trackball) gltrackball_free (bp->trackball);
   if (bp->st)
     stonerview_win_release (bp->st);
 }

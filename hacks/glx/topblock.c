@@ -179,13 +179,20 @@ ENTRYPOINT void
 free_topBlock(ModeInfo *mi)
 {
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
-	NODE *llCurrent, *llOld;
-	llCurrent = tb->blockNodeRoot;
-	while (llCurrent != NULL) {
-		llOld = llCurrent;
-		llCurrent = llCurrent->next;
-		free(llOld);
-	}
+  NODE *llCurrent, *llOld;
+
+  if (!tb->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tb->glx_context);
+
+  llCurrent = tb->blockNodeRoot;
+  while (llCurrent != NULL) {
+          llOld = llCurrent;
+          llCurrent = llCurrent->next;
+          free(llOld);
+  }
+  if (tb->trackball) gltrackball_free (tb->trackball);
+  if (glIsList(tb->carpet)) glDeleteLists(tb->carpet, 1);
+  if (glIsList(tb->block)) glDeleteLists(tb->block, 1);
 }
 
 /* setup */
@@ -309,7 +316,7 @@ draw_topBlock (ModeInfo *mi)
 
   if (!tb->glx_context)
     return;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tb->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tb->glx_context);
   mi->polygon_count = 0;
 
 	generateNewBlock(mi);

@@ -20,7 +20,6 @@
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
 
-# define free_matrix 0
 # define release_matrix 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -986,7 +985,7 @@ draw_matrix (ModeInfo *mi)
   if (!mp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1061,6 +1060,17 @@ draw_matrix (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_matrix (ModeInfo *mi)
+{
+  matrix_configuration *mp = &mps[MI_SCREEN(mi)];
+  if (!mp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
+  if (mp->strips) free (mp->strips);
+  if (mp->texture) glDeleteTextures (1, &mp->texture);
 }
 
 XSCREENSAVER_MODULE_2 ("GLMatrix", glmatrix, matrix)

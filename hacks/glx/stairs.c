@@ -472,7 +472,7 @@ draw_stairs (ModeInfo * mi)
 	if (!sp->glx_context)
 		return;
 
-	glXMakeCurrent(display, window, *(sp->glx_context));
+	glXMakeCurrent(display, window, *sp->glx_context);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -570,7 +570,7 @@ change_stairs (ModeInfo * mi)
 	if (!sp->glx_context)
 		return;
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
 	pinit();
 }
 #endif /* !STANDALONE */
@@ -579,9 +579,10 @@ ENTRYPOINT void
 free_stairs (ModeInfo * mi)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
-	if (glIsList(sp->objects)) {
-		glDeleteLists(sp->objects, 1);
-	}
+    if (!sp->glx_context) return;
+	glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
+	if (glIsList(sp->objects)) glDeleteLists(sp->objects, 1);
+    if (sp->trackball) gltrackball_free (sp->trackball);
 }
 
 XSCREENSAVER_MODULE ("Stairs", stairs)

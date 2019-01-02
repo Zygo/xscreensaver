@@ -15,7 +15,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_mgears 0
 # define release_mgears 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -344,7 +343,7 @@ draw_mgears (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel(GL_SMOOTH);
 
@@ -430,6 +429,18 @@ draw_mgears (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_mgears (ModeInfo *mi)
+{
+  mgears_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->gears) free (bp->gears);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->trackball) gltrackball_free (bp->trackball);
 }
 
 XSCREENSAVER_MODULE_2 ("MoebiusGears", moebiusgears, mgears)

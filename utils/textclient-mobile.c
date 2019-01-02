@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -311,11 +311,13 @@ textclient_strip_html (const char *html)
   int comment = 0;
   int white = 0;
   int nl = 0;
-  char *ret = (char *) malloc ((strlen(html) * 4) + 1);  // room for UTF8
+  int L = strlen(html);
+  char *ret = (char *) malloc ((L * 4) + 1);  // room for UTF8
   char *out = ret;
   *out = 0;
 
   for (const char *in = html; *in; in++) {
+    if (in >= html + L) abort();
     if (comment) {
       if (!strncmp (in, "-->", 3)) {
         comment = 0;
@@ -339,7 +341,7 @@ textclient_strip_html (const char *html)
         white = 1;
       }
     } else if (*in == ' ' || *in == '\t' || *in == '\r' || *in == '\n') {
-      if (!white && out != html)
+      if (!white && out != ret)
         *out++ = ' ';
       white = 1;
     } else {
@@ -552,7 +554,8 @@ strip_wiki (char *text)
 static char *
 textclient_strip_rss (const char *rss)
 {
-  char *ret = malloc (strlen(rss) * 4 + 1);  // room for UTF8
+  int L = strlen(rss);
+  char *ret = malloc (L * 4 + 1);  // room for UTF8
   char *out = ret;
   const char *a = 0, *b = 0, *c = 0, *d = 0, *t = 0;
   int head = 1;
@@ -561,6 +564,7 @@ textclient_strip_rss (const char *rss)
 
   *out = 0;
   for (const char *in = rss; *in; in++) {
+    if (in >= rss + L) abort();
     if (*in == '<') {
       if (!strncasecmp (in, "<item", 5) ||	// New item, dump.
           !strncasecmp (in, "<entry", 6)) {
@@ -591,6 +595,8 @@ textclient_strip_rss (const char *rss)
           strcpy (out, "<P>");
           out += strlen (out);
         }
+
+        if (done) break;
 
       } else if (head) {   // still before first <item>
         ;

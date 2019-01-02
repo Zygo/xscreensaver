@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003-2014 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2003-2018 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -17,8 +17,8 @@
 #    --normalize      Compute the bounding box of the object, and scale all
 #                     coordinates so that the object fits inside a unit cube.
 #
-#    --smooth         When computing normals for the vertexes, average the
-#                     normals at any edge which is less than 90 degrees.
+#    --smooth [DEG]   When computing normals for the vertexes, average the
+#                     normals at any edge which is less than N degrees.
 #                     If this option is not specified, planar normals will be
 #                     used, resulting in a "faceted" object.
 #
@@ -39,7 +39,7 @@ use Math::Trig qw(acos);
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.11 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.13 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -121,8 +121,8 @@ sub vector_angle($$$$$$) {
 # returns a list of the normals for each vertex.  These are the smoothed
 # normals: the average of the normals of the participating faces.
 #
-sub compute_vertex_normals(@) {
-  my (@points) = @_;
+sub compute_vertex_normals($@) {
+  my ($smooth, @points) = @_;
   my $npoints = ($#points+1) / 3;
   my $nfaces = $npoints / 3;
 
@@ -185,7 +185,7 @@ sub compute_vertex_normals(@) {
         # ignore any adjascent faces that are more than N degrees off.
         my $angle = vector_angle ($norm[0],  $norm[1],  $norm[2],
                                   $fnorm[0], $fnorm[1], $fnorm[2]);
-        next if ($angle >= 30);
+        next if ($angle >= $smooth);
 
         $nx += $fnorm[0];
         $ny += $fnorm[1];
@@ -208,7 +208,7 @@ sub parse_dxf($$$$$) {
 
   # Convert whitespace within a line to _, e.g., "ObjectDBX Classes".
   # What the hell is up with this file format!
-  1 while ($dxf =~ s/([^ \t\n])[ \t]+([^ \t\n])/$1_$2/gs);
+  1 while ($dxf =~ s/([^ \t\n])[ \t\#]+([^ \t\n])/$1_$2/gs);
 
   $dxf =~ s/\r/\n/gs;
 
@@ -455,7 +455,7 @@ sub parse_dxf($$$$$) {
 
 
 sub generate_c_1($$$$$@) {
-  my ($name, $outfile, $smooth_p, $wireframe_p, $normalize_p, @points) = @_;
+  my ($name, $outfile, $smooth, $wireframe_p, $normalize_p, @points) = @_;
 
   my $ccw_p = 1;  # counter-clockwise winding rule for computing normals
 
@@ -463,8 +463,8 @@ sub generate_c_1($$$$$@) {
   my $nfaces = ($wireframe_p ? $npoints/2 : $npoints/3);
 
   my @normals;
-  if ($smooth_p && !$wireframe_p) {
-    @normals = compute_vertex_normals (@points);
+  if ($smooth && !$wireframe_p) {
+    @normals = compute_vertex_normals ($smooth, @points);
 
     if ($#normals != $#points) {
       error ("computed " . (($#normals+1)/3) . " normals for " .
@@ -514,7 +514,7 @@ sub generate_c_1($$$$$@) {
           $nbx, $nby, $nbz,
           $ncx, $ncy, $ncz);
 
-      if ($smooth_p) {
+      if ($smooth) {
         $nax = $normals[$i*9];
         $nay = $normals[$i*9+1];
         $naz = $normals[$i*9+2];
@@ -572,7 +572,7 @@ sub generate_c_1($$$$$@) {
 
 
 sub generate_c($$$$$$) {
-  my ($infile, $outfile, $smooth_p, $wireframe_p, $normalize_p, $layers) = @_;
+  my ($infile, $outfile, $smooth, $wireframe_p, $normalize_p, $layers) = @_;
 
   my $code = '';
 
@@ -594,8 +594,8 @@ sub generate_c($$$$$$) {
             strftime ("%d-%b-%Y", localtime ()) . ".\n" .
             "   " . ($wireframe_p
                      ? "Wireframe."
-                     : ($smooth_p ? 
-                        "Smoothed vertex normals." :
+                     : ($smooth ? 
+                        "Smoothed vertex normals at $smooth\x{00B0}." :
                         "Faceted face normals.")) .
             ($normalize_p ? " Normalized to unit bounding box." : "") .
             "\n" .
@@ -613,7 +613,7 @@ sub generate_c($$$$$$) {
     my $name = $layer ? "${token}_${layer}" : $token;
     my ($c, $np, $nf) =
       generate_c_1 ($name, $outfile,
-                    $smooth_p, $wireframe_p, $normalize_p,
+                    $smooth, $wireframe_p, $normalize_p,
                     @{$layers->{$layer}});
     $code .= $c;
     $npoints += $np;
@@ -648,7 +648,7 @@ sub cmp_files($$) {
 
 
 sub dxf_to_gl($$$$$$) {
-  my ($infile, $outfile, $smooth_p, $normalize_p, $wireframe_p, $layers_p) = @_;
+  my ($infile, $outfile, $smooth, $normalize_p, $wireframe_p, $layers_p) = @_;
 
   open (my $in, "<$infile") || error ("$infile: $!");
   my $filename = ($infile eq '-' ? "<stdin>" : $infile);
@@ -662,14 +662,14 @@ sub dxf_to_gl($$$$$$) {
   my $data = parse_dxf ($filename, $dxf, $normalize_p, $wireframe_p, $layers_p);
 
   $filename = ($outfile eq '-' ? "<stdout>" : $outfile);
-  my $code = generate_c ($infile, $filename, $smooth_p, $wireframe_p,
+  my $code = generate_c ($infile, $filename, $smooth, $wireframe_p,
                          $normalize_p, $data);
 
   if ($outfile eq '-') {
     print STDOUT $code;
   } else {
     my $tmp = "$outfile.tmp";
-    open (my $out, '>', $tmp) || error ("$tmp: $!");
+    open (my $out, '>:utf8', $tmp) || error ("$tmp: $!");
     print $out $code || error ("$filename: $!");
     close $out || error ("$filename: $!");
     if (cmp_files ($filename, $tmp)) {
@@ -702,7 +702,7 @@ sub usage() {
 sub main() {
   my ($infile, $outfile);
   my $normalize_p = 0;
-  my $smooth_p = 0;
+  my $smooth = 0;
   my $wireframe_p = 0;
   my $layers_p = 0;
   while ($_ = $ARGV[0]) {
@@ -710,7 +710,14 @@ sub main() {
     if ($_ eq "--verbose") { $verbose++; }
     elsif (m/^-v+$/) { $verbose += length($_)-1; }
     elsif ($_ eq "--normalize") { $normalize_p = 1; }
-    elsif ($_ eq "--smooth") { $smooth_p = 1; }
+    elsif ($_ eq "--smooth") {
+      if ($ARGV[0] && $ARGV[0] =~ m/^(\d[\d.]*)%?$/s) {
+        $smooth = 0 + $1;
+        shift @ARGV;
+      } else {
+        $smooth = 30;
+      }
+    }
     elsif ($_ eq "--wireframe") { $wireframe_p = 1; }
     elsif ($_ eq "--layers") { $layers_p = 1; }
     elsif (m/^-./) { usage; }
@@ -722,7 +729,7 @@ sub main() {
   $infile  = "-" unless defined ($infile);
   $outfile = "-" unless defined ($outfile);
 
-  dxf_to_gl ($infile, $outfile, $smooth_p, $normalize_p, $wireframe_p, $layers_p);
+  dxf_to_gl ($infile, $outfile, $smooth, $normalize_p, $wireframe_p, $layers_p);
 }
 
 main;

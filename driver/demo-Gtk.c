@@ -3970,6 +3970,11 @@ launch_preview_subproc (state *s)
     }
   else
     {
+      /* We do this instead of relying on $XSCREENSAVER_WINDOW specifically
+         so that third-party savers that don't implement -window-id will fail:
+         otherwise we might have full-screen windows popping up when we were
+         just trying to get a preview thumbnail.
+       */
       strcpy (new_cmd, cmd);
       sprintf (new_cmd + strlen (new_cmd), " -window-id 0x%X",
                (unsigned int) id);

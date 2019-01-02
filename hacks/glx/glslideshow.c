@@ -78,7 +78,6 @@
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
 
-# define free_slideshow 0
 # define release_slideshow 0
 # include "xlockmore.h"
 
@@ -1068,6 +1067,7 @@ hack_resources (void)
   value.addr = buf2;
   value.size = strlen(buf2);
   XrmPutResource (&db, buf1, "String", &value);
+  free (val);
 #endif
 }
 
@@ -1137,7 +1137,7 @@ draw_slideshow (ModeInfo *mi)
   if (!ss->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ss->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
 
   if (ss->awaiting_first_image_p)
     {
@@ -1215,6 +1215,28 @@ draw_slideshow (ModeInfo *mi)
   ss->prev_frame_time = ss->now;
   ss->redisplay_needed_p = False;
   check_fps (mi);
+}
+
+
+ENTRYPOINT void
+free_slideshow (ModeInfo *mi)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  int i;
+  if (!ss->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
+
+  if (ss->font_data) free_texture_font (ss->font_data);
+  for (i = 0; i < ss->nimages; i++) {
+    if (ss->images[i]) {
+      if (ss->images[i]->title) free (ss->images[i]->title);
+      if (ss->images[i]->texid) glDeleteTextures (1, &ss->images[i]->texid);
+      free (ss->images[i]);
+    }
+  }
+  for (i = 0; i < countof(ss->sprites); i++) {
+    if (ss->sprites[i]) free (ss->sprites[i]);
+  }
 }
 
 XSCREENSAVER_MODULE_2 ("GLSlideshow", glslideshow, slideshow)

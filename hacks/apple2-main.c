@@ -813,7 +813,7 @@ struct terminal_controller_data {
 
 /* The structure of closure linkage throughout this code is so amazingly
    baroque that I can't get to the 'struct state' from where I need it. */
-static const char *global_program;
+static char *global_program;
 static Bool global_fast_p;
 
 
@@ -1825,8 +1825,10 @@ apple2_init (Display *dpy, Window window)
     }
   if (s) free (s);
 
-  global_program = get_string_resource (dpy, "program", "Program");
-  global_fast_p = get_boolean_resource (dpy, "fast", "Boolean");
+  if (!global_program) {
+    global_program = get_string_resource (dpy, "program", "Program");
+    global_fast_p = get_boolean_resource (dpy, "fast", "Boolean");
+  }
 
 
   /* Kludge for MacOS standalone mode: see OSX/SaverRunner.m. */
@@ -1836,7 +1838,8 @@ apple2_init (Display *dpy, Window window)
       {
         st->controller = terminal_controller;
         st->random_p   = False;
-        global_program = getenv ("SHELL");
+        if (global_program) free (global_program);
+        global_program = strdup (getenv ("SHELL"));
         global_fast_p  = True;
       }
   }
@@ -1906,6 +1909,8 @@ apple2_free (Display *dpy, Window window, void *closure)
     if (apple2_one_frame (st->sim))
       abort();  /* should have freed! */
   }
+  if (global_program) free (global_program);
+  global_program = 0;
   free (st);
 }
 

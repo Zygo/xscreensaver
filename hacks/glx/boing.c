@@ -25,7 +25,6 @@
 			"*showFPS:      False            \n" \
 			"*wireframe:    False            \n" \
 
-# define free_boing 0
 # define release_boing 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -595,7 +594,7 @@ draw_boing (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   mi->polygon_count = 0;
 
@@ -651,6 +650,16 @@ draw_boing (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_boing (ModeInfo *mi)
+{
+  boing_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->trackball) gltrackball_free (bp->trackball);
 }
 
 XSCREENSAVER_MODULE ("Boing", boing)

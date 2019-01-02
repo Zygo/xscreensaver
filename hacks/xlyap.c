@@ -600,6 +600,7 @@ parseargs(struct state *st)
       if (st->Forcing[findex] >= NUMMAPS)
         usage();
     }
+    if (optarg) free (optarg);
   }
 #endif
   if (get_boolean_resource(st->dpy, "useLog", "Boolean"))
@@ -624,6 +625,7 @@ parseargs(struct state *st)
   if (s && *s) {
     st->prob=atof(s); st->Rflag++; setforcing(st);
   }
+  if (s) free (s);
 
   st->settle = get_integer_resource(st->dpy, "settle", "Integer");
 
@@ -633,11 +635,13 @@ parseargs(struct state *st)
     st->min_a = atof(s);
     st->aflag++;
   }
+  if (s) free (s);
   
   s = get_string_resource(st->dpy, "minB", "Float");
   if (s && *s) {
     st->min_b=atof(s); st->bflag++;
   }
+  if (s) free (s);
 #else
   st->min_a = get_float_resource (st->dpy, "minA", "Float");
   st->aflag++;
@@ -665,12 +669,14 @@ parseargs(struct state *st)
       ch++;
     }
   }
+  if (s) free (s);
 
   s = get_string_resource(st->dpy, "bRange", "Float");
   if (s && *s) {
     st->b_range = atof(s);
     st->hflag++;
   }
+  if (s) free (s);
 
   st->start_x = get_float_resource(st->dpy, "startX", "Float");
 
@@ -693,6 +699,7 @@ parseargs(struct state *st)
       for (i=0;i<FUNCMAXINDEX;i++)
         st->Forcing[i] = st->mapindex;
   }
+  if (s) free (s);
 
   st->outname = get_string_resource(st->dpy, "outputFile", "Integer");
 
@@ -707,6 +714,7 @@ parseargs(struct state *st)
   if (s && *s) {
     st->a_range = atof(s); st->wflag++;
   }
+  if (s) free (s);
 
   st->max_a = st->min_a + st->a_range;
   st->max_b = st->min_b + st->b_range;
@@ -1924,6 +1932,7 @@ xlyap_free (Display *dpy, Window window, void *closure)
 /*  XFreeGC (st->dpy, st->RubberGC);*/
   for (i = 0; i < st->maxcolor; i++)
     XFreeGC (st->dpy, st->Data_GC[i]);
+  if (st->outname) free (st->outname);
 
   free (st);
 }

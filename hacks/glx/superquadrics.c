@@ -78,7 +78,6 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
 					"*wireframe:	False	\n"			\
 					"*suppressRotationAnimation: True\n" \
 
-# define free_superquadrics 0
 # define release_superquadrics 0
 # define superquadrics_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -776,7 +775,7 @@ draw_superquadrics(ModeInfo * mi)
 	if (!sp->glx_context)
 		return;
 
-	glXMakeCurrent(display, window, *(sp->glx_context));
+	glXMakeCurrent(display, window, *sp->glx_context);
 
     mi->polygon_count = NextSuperquadricDisplay(mi);
 
@@ -799,6 +798,12 @@ reshape_superquadrics(ModeInfo * mi, int width, int height)
   ReshapeSuperquadrics(MI_WIDTH(mi), MI_HEIGHT(mi));
 }
 
+
+ENTRYPOINT void
+free_superquadrics(ModeInfo * mi)
+{
+  /* nothing to do */
+}
 
 #endif
 

@@ -340,6 +340,10 @@ static void
 pyro_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
+  free (st->projectiles);
+  free (st->sorted_projectiles);
   free (st);
 }
 

@@ -364,10 +364,8 @@ static void inter_free(Display* dpy, struct inter_context* c)
 
   destroy_image(dpy, c);
 
-  if(c->colors <= 2)
-    free(c->pal);
-  else if(c->pal)
-    free_colors(c->screen, c->cmap, c->pal, c->colors);
+  free_colors(c->screen, c->cmap, c->pal, c->colors);
+  if (c->pal) free(c->pal);
 
 #ifndef USE_XIMAGE
   for(i = 0; i != c->colors; ++i)
@@ -995,6 +993,7 @@ interference_free (Display *dpy, Window window, void *closure)
 {
   struct inter_context *c = (struct inter_context *) closure;
   inter_free(dpy, c);
+  free(c);
 }
 
 XSCREENSAVER_MODULE ("Interference", interference)

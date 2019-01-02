@@ -1012,6 +1012,8 @@ static int drawTube(GLdouble bottomRadius, GLdouble topRadius,
 	glVertex3f(0.0, y, innerRadius);
 	glVertex3f(0.0, y, radius);
 	glEnd();
+    free (cosCache);
+    free (sinCache);
     return polys;
 }
 
@@ -1855,7 +1857,7 @@ ENTRYPOINT void reshape_glhanoi(ModeInfo * mi, int width, int height)
       h = height / (GLfloat) width;
     }
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glhanoi->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *glhanoi->glx_context);
 
 	glViewport(0, y, (GLint) width, (GLint) height);
 
@@ -1962,7 +1964,7 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 	if(!glhanoi->glx_context)
 		return;
 
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glhanoi->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *glhanoi->glx_context);
 
 	glPolygonMode(GL_FRONT, glhanoi->wire ? GL_LINE : GL_FILL);
 
@@ -2060,25 +2062,32 @@ ENTRYPOINT Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
 
 ENTRYPOINT void free_glhanoi(ModeInfo * mi)
 {
+	glhcfg *glh = &glhanoi_cfg[MI_SCREEN(mi)];
 	int i;
 	int j;
-	glhcfg *glh = &glhanoi_cfg[MI_SCREEN(mi)];
-	if (glh->glx_context) {
-		glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glh->glx_context));
-		glDeleteLists(glh->floorList, 1);
-		glDeleteLists(glh->baseList, 1);
-		glDeleteLists(glh->poleList, 1);
-                glDeleteLists(glh->textureNames[0], 2);
-		for(j = 0; j < glh->numberOfDisks; ++j) {
-			glDeleteLists(glh->disk[j].displayList, 1);
-		}
-		free(glh->disk);
-		for(i = 0; i < glh->numberOfPoles; i++) {
-			if(glh->pole[i].data != NULL) {
-				free(glh->pole[i].data);
-			}
-		}
-	}
+
+    if (!glh->glx_context) return;
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *glh->glx_context);
+
+    free_rotator (glh->the_rotator);
+    if (glh->pole) {
+      for (i = 0; i < glh->numberOfPoles; i++)
+        if (glh->pole[i].data) free (glh->pole[i].data);
+      free (glh->pole);
+    }
+    if (glh->diskPos) free (glh->diskPos);
+    if (glh->trailQ) free (glh->trailQ);
+    if (glh->solveStack) free (glh->solveStack);
+
+    glDeleteLists(glh->floorList, 1);
+    glDeleteLists(glh->baseList, 1);
+    glDeleteLists(glh->poleList, 1);
+            glDeleteLists(glh->textureNames[0], 2);
+    for(j = 0; j < glh->numberOfDisks; ++j) {
+        glDeleteLists(glh->disk[j].displayList, 1);
+    }
+    free(glh->disk);
+	glDeleteTextures (N_TEXTURES, glh->textureNames);
 }
 
 XSCREENSAVER_MODULE ("GLHanoi", glhanoi)

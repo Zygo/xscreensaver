@@ -300,6 +300,7 @@ analyze (struct state *st)
                  progname, s);
         exit (1);
       }
+    if (s) free (s);
   }
 
   flush_cache (st);
@@ -966,6 +967,7 @@ tessellimage_free (Display *dpy, Window window, void *closure)
   if (st->image)  XFreePixmap (dpy, st->image);
   if (st->output) XFreePixmap (dpy, st->output);
   if (st->delta)  XDestroyImage (st->delta);
+  if (st->img)    XDestroyImage (st->img);
   free (st);
 }
 

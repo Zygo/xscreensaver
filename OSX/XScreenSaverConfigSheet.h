@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2018 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,7 +48,7 @@
 #  endif
 				  >
 # else
-	   NSWindow <NSXMLParserDelegate>
+	   NSPanel <NSXMLParserDelegate>
 # endif
 {
   NSString *saver_name;

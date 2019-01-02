@@ -126,6 +126,8 @@ free_pacman (ModeInfo * mi)
     pacmangamestruct * pp = &pacman_games[MI_SCREEN (mi)];
     int dir, mouth, i, j, k;
 
+    if (pp->tiles) free (pp->tiles);
+
     if (pp->ghosts != NULL) {
         free (pp->ghosts);
         pp->ghosts = (ghoststruct *) NULL;
@@ -1249,6 +1251,9 @@ load_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
                           pp->spritexs, pp->spriteys);
         srcy += sw;
     }
+    XFreeGC (*dpy, gc);
+    XFreePixmap (*dpy, sprites);
+    XFreePixmap (*dpy, sprites_mask);
 }
 
 

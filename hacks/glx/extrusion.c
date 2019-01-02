@@ -31,7 +31,6 @@
 					"*showFPS:	 False	\n" \
 					"*wireframe: False   \n"
 
-# define free_extrusion 0
 # define release_extrusion 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -314,7 +313,7 @@ draw_extrusion(ModeInfo * mi)
   if (!gp->glx_context)
 	return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
 
   glPushMatrix();
 
@@ -549,6 +548,17 @@ init_extrusion (ModeInfo * mi)
 	MI_CLEARWINDOW(mi);
   }
 
+}
+
+
+ENTRYPOINT void
+free_extrusion (ModeInfo * mi)
+{
+  extrusionstruct *gp = &Extrusion[MI_SCREEN(mi)];
+  if (!gp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
+  if (gp->trackball) gltrackball_free (gp->trackball);
+  if (gp->rot) free_rotator (gp->rot);
 }
 
 XSCREENSAVER_MODULE ("Extrusion", extrusion)

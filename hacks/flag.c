@@ -196,8 +196,9 @@ make_flag_bits(ModeInfo *mi)
   char *bitmap_name = get_string_resource (dpy, "bitmap", "Bitmap");
   char *text = get_string_resource (dpy, "text", "Text");
 
-#ifdef HAVE_JWXYZ
-  bitmap_name = 0;  /* #### always use default */
+#ifdef HAVE_JWXYZ  /* always use default */
+  if (bitmap_name) free (bitmap_name);
+  bitmap_name = 0;
 #endif
 
   /* If neither a bitmap nor text are specified, randomly select either
@@ -228,6 +229,7 @@ make_flag_bits(ModeInfo *mi)
                                &width, &height, 0);
 	  if (bitmap)
 		{
+          if (fp->image) XDestroyImage (fp->image);
 		  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height, ~0L,
 								ZPixmap);
 		  XFreePixmap(dpy, bitmap);
@@ -256,6 +258,7 @@ make_flag_bits(ModeInfo *mi)
 		  struct utsname uts;
 		  if (uname (&uts) < 0)
 			{
+              if (text) free (text);
 			  text = strdup("uname() failed");
 			}
 		  else
@@ -263,6 +266,7 @@ make_flag_bits(ModeInfo *mi)
 			  char *s;
 			  if ((s = strchr(uts.nodename, '.')))
 				*s = 0;
+              if (text) free (text);
 			  text = (char *) malloc(strlen(uts.nodename) +
 									 strlen(uts.sysname) +
 									 strlen(uts.version) +
@@ -280,11 +284,14 @@ make_flag_bits(ModeInfo *mi)
                   char *s, buf[255];
 
                   while (fgets (buf, sizeof(buf)-1, f)) {
-#                   define GRAB(S,V)					\
-                    if (strstr(buf, S)) {					\
-                      fgets (buf, sizeof(buf)-1, f);			\
-                      if ((s = strchr (buf, '>'))) V = strdup(s+1); 	\
-                      if ((s = strchr (V, '<'))) *s = 0;		 	\
+#                   define GRAB(S,V)                                    \
+                    if (strstr(buf, S)) {                               \
+                      fgets (buf, sizeof(buf)-1, f);                    \
+                      if ((s = strchr (buf, '>'))) {                    \
+                        if (V) free (V);                                \
+                        V = strdup(s+1);                                \
+                      }                                                 \
+                      if ((s = strchr (V, '<'))) *s = 0;                \
                     }
                     GRAB ("ProductName", pn)
                     GRAB ("ProductBuildVersion", pbv)
@@ -298,6 +305,9 @@ make_flag_bits(ModeInfo *mi)
                 else
                   sprintf(text, "%s\n%s %s",
                           uts.nodename, uts.sysname, uts.release);
+                if (pbv) free (pbv);
+                if (pn) free (pn);
+                if (puvv) free (puvv);
               }
 # else
 			  sprintf(text, "%s\n%s %s",
@@ -305,6 +315,7 @@ make_flag_bits(ModeInfo *mi)
 # endif /* special system types */
 			}
 #else	/* !HAVE_UNAME */
+          if (text) free (text);
 # ifdef VMS
 		  text = strdup(getenv("SYS$NODE"));
 # else
@@ -320,8 +331,9 @@ make_flag_bits(ModeInfo *mi)
 
 	  text2 = strdup(text);
 
-	  if (!fn) fn = def_fn;
+	  if (!fn) fn = strdup (def_fn);
       font = load_font_retry (dpy, fn);
+      free (fn);
 
 	  memset(&overall, 0, sizeof(overall));
 	  token = text;
@@ -371,10 +383,10 @@ make_flag_bits(ModeInfo *mi)
 		  lines++;
 		}
 	  free(text2);
-	  XUnloadFont(dpy, font->fid);
-	  XFree((XPointer) font);
+	  XFreeFont(dpy, font);
 	  XFreeGC(dpy, gc);
 
+      if (fp->image) XDestroyImage (fp->image);
 	  fp->image = XGetImage(dpy, bitmap, 0, 0, width, height, 1L, XYPixmap);
 	  XFreePixmap(dpy, bitmap);
 	}
@@ -420,6 +432,7 @@ make_flag_bits(ModeInfo *mi)
   int w = flag_width;
   int h = flag_height;
   int i = 0;
+  if (fp->image) XDestroyImage (fp->image);
   fp->image =
 	XCreateImage(MI_DISPLAY(mi), MI_VISUAL(mi),
 				 1, XYBitmap, 0,					/* dpth, fmt, offset */
@@ -543,15 +556,10 @@ draw_flag(ModeInfo * mi)
 ENTRYPOINT void
 free_flag(ModeInfo * mi)
 {
-	int         screen = MI_SCREEN(mi);
-
-	if (flags == NULL)
-		return;
-
-	if (flags[screen].cache && flags[screen].dbufp)
-		XFreePixmap(MI_DISPLAY(mi), flags[screen].cache);
-	if (flags[screen].image)
-	  XDestroyImage(flags[screen].image);
+	flagstruct *fp = &flags[MI_SCREEN(mi)];
+	if (fp->cache && fp->dbufp)
+		XFreePixmap(MI_DISPLAY(mi), fp->cache);
+	if (fp->image) XDestroyImage(fp->image);
 }
 
 #ifndef STANDALONE

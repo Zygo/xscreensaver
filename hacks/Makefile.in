@@ -115,15 +115,15 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c \
 		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
 		  barcode.c piecewise.c cloudlife.c fontglide.c apple2.c \
-		  apple2-main.c analogtv.c xanalogtv.c pong.c filmleader.c \
-		  wormhole.c pacman.c pacman_ai.c pacman_level.c \
+		  apple2-main.c analogtv.c analogtv-cli.c xanalogtv.c pong.c \
+		  filmleader.c wormhole.c pacman.c pacman_ai.c pacman_level.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
 		  intermomentary.c fireworkx.c fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
 		  asm6502.c abstractile.c lcdscrub.c hexadrop.c \
 		  tessellimage.c delaunay.c recanim.c binaryring.c \
-		  glitchpeg.c vfeedback.c \
-		  webcollage-cocoa.m webcollage-helper-cocoa.m testx11.c
+		  glitchpeg.c vfeedback.c webcollage-cocoa.m \
+		  webcollage-helper-cocoa.m testx11.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 # Programs that are mentioned in XScreenSaver.ad, and that have XML files,
@@ -156,14 +156,15 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o \
 		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
 		  barcode.o piecewise.o cloudlife.o fontglide.o apple2.o \
-		  apple2-main.o analogtv.o xanalogtv.o pong.o filmleader.o \
-		  wormhole.o pacman.o pacman_ai.o pacman_level.o \
-		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
-		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
-		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
-		  webcollage-helper-cocoa.o m6502.o asm6502.o abstractile.o \
-		  lcdscrub.o hexadrop.o tessellimage.o delaunay.o recanim.o \
-		  binaryring.o glitchpeg.o vfeedback.o testx11.o
+		  apple2-main.o analogtv.o analogtv2.o analogtv-cli.o \
+		  xanalogtv.o pong.o filmleader.o wormhole.o pacman.o \
+		  pacman_ai.o pacman_level.o fuzzyflakes.o anemotaxis.o \
+		  memscroller.o substrate.o intermomentary.o fireworkx.o \
+		  fiberlamp.o boxfit.o interaggregate.o celtic.o cwaves.o \
+		  webcollage-cocoa.o webcollage-helper-cocoa.o m6502.o \
+		  asm6502.o abstractile.o lcdscrub.o hexadrop.o \
+		  tessellimage.o delaunay.o recanim.o binaryring.o \
+		  glitchpeg.o vfeedback.o testx11.o
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -414,7 +415,9 @@ distdepend:: m6502.h
 	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				    \
 	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
 	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'			    \
-	      -e 's@ $$(srcdir)/\(m6502.h\)@ \1@g' ;			    \
+	      -e 's@ $$(srcdir)/\(m6502.h\)@ \1@g'			    \
+	      -e 's@ $$(srcdir)/\(images/gen/\)@ \1@g'			    \
+	      -e 's@ $$(HACK_SRC)/\(images/gen/\)@ \1@g' ;		    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
 	mv /tmp/distdepend.$$$$ Makefile.in
@@ -533,8 +536,9 @@ $(UTIL_OBJS):
 	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 # How we build object files in this directory.
+HACK_CFLAGS_BASE=$(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
+	$(CC) -c $(HACK_CFLAGS_BASE) $<
 
 
 # Make sure these are regenerated when the version number ticks.
@@ -564,11 +568,13 @@ xscreensaver-sgigl: xscreensaver-sgigl.c
 		$(XMU_LIBS) -lX11 -lXext $(X_EXTRA_LIBS) -lm
 
 test-utf8wc: $(UTILS_SRC)/utf8wc.c
-	$(CC) $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $(LDFLAGS)\
+	$(CC) $(HACK_CFLAGS_BASE) $(LDFLAGS)\
 	-o $@ -DSELFTEST $<
 
 # Make sure the images have been packaged. This is the first one hit:
-$(HACK_BIN)/images/gen/nose-f1_png.h:
+images/gen/som_png.h:
+	cd $(srcdir)/images && $(MAKE)
+images/gen/6x10font_png.h:
 	cd $(srcdir)/images && $(MAKE)
 
 # The rules for those hacks which follow the `screenhack.c' API.
@@ -690,6 +696,21 @@ apple2:	 	apple2.o apple2-main.o        $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(PN
 
 xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
+
+ATVCLI_CFLAGS=-DANALOGTV_SCALE=1 -DNO_CONSTRAIN_RATIO $(HACK_CFLAGS_BASE)
+analogtv2.o: Makefile
+analogtv2.o: images/gen/6x10font_png.h
+analogtv2.o: $(srcdir)/analogtv.h
+analogtv2.o: $(srcdir)/analogtv.c
+	$(CC) -o $@ -c $(ATVCLI_CFLAGS) $<
+analogtv-cli.o: $(srcdir)/analogtv-cli.c
+	$(CC) -o $@ -c $(ATVCLI_CFLAGS) $<
+
+ATVCLI=analogtv2.o $(UTILS_BIN)/yarandom.o $(THRO) $(PNG)
+analogtv-cli: 	analogtv-cli.o	$(ATVCLI)
+	$(CC_HACK) -o $@ $@.o	$(ATVCLI) $(THRL) $(PNG_LIBS) -lpng
+clean::
+	-rm -f analogtv-cli
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(THRL)
@@ -1035,9 +1056,19 @@ abstractile.o: $(UTILS_SRC)/resources.h
 abstractile.o: $(UTILS_SRC)/usleep.h
 abstractile.o: $(UTILS_SRC)/visual.h
 abstractile.o: $(UTILS_SRC)/yarandom.h
+analogtv-cli.o: $(srcdir)/analogtv.h
+analogtv-cli.o: ../config.h
+analogtv-cli.o: $(UTILS_SRC)/aligned_malloc.h
+analogtv-cli.o: $(UTILS_SRC)/font-retry.h
+analogtv-cli.o: $(UTILS_SRC)/resources.h
+analogtv-cli.o: $(UTILS_SRC)/thread_util.h
+analogtv-cli.o: $(UTILS_SRC)/visual.h
+analogtv-cli.o: $(UTILS_SRC)/xshm.h
+analogtv-cli.o: $(UTILS_SRC)/yarandom.h
+analogtv-cli.o: $(srcdir)/ximage-loader.h
 analogtv.o: $(srcdir)/analogtv.h
 analogtv.o: ../config.h
-analogtv.o: $(srcdir)/images/gen/6x10font_png.h
+analogtv.o: images/gen/6x10font_png.h
 analogtv.o: $(UTILS_SRC)/aligned_malloc.h
 analogtv.o: $(UTILS_SRC)/font-retry.h
 analogtv.o: $(UTILS_SRC)/grabscreen.h
@@ -1131,7 +1162,7 @@ apple2.o: $(srcdir)/analogtv.h
 apple2.o: $(srcdir)/apple2.h
 apple2.o: ../config.h
 apple2.o: $(srcdir)/fps.h
-apple2.o: $(srcdir)/images/gen/apple2font_png.h
+apple2.o: images/gen/apple2font_png.h
 apple2.o: $(srcdir)/recanim.h
 apple2.o: $(srcdir)/screenhackI.h
 apple2.o: $(UTILS_SRC)/aligned_malloc.h
@@ -1204,7 +1235,7 @@ blaster.o: $(UTILS_SRC)/visual.h
 blaster.o: $(UTILS_SRC)/yarandom.h
 blitspin.o: ../config.h
 blitspin.o: $(srcdir)/fps.h
-blitspin.o: $(srcdir)/images/gen/som_png.h
+blitspin.o: images/gen/som_png.h
 blitspin.o: $(srcdir)/recanim.h
 blitspin.o: $(srcdir)/screenhackI.h
 blitspin.o: $(srcdir)/screenhack.h
@@ -1266,17 +1297,19 @@ bsod.o: $(srcdir)/analogtv.h
 bsod.o: $(srcdir)/apple2.h
 bsod.o: ../config.h
 bsod.o: $(srcdir)/fps.h
-bsod.o: $(srcdir)/images/gen/amiga_png.h
-bsod.o: $(srcdir)/images/gen/android_png.h
-bsod.o: $(srcdir)/images/gen/apple_png.h
-bsod.o: $(srcdir)/images/gen/atari_png.h
-bsod.o: $(srcdir)/images/gen/atm_png.h
-bsod.o: $(srcdir)/images/gen/hmac_png.h
-bsod.o: $(srcdir)/images/gen/macbomb_png.h
-bsod.o: $(srcdir)/images/gen/mac_png.h
-bsod.o: $(srcdir)/images/gen/osx_10_2_png.h
-bsod.o: $(srcdir)/images/gen/osx_10_3_png.h
-bsod.o: $(srcdir)/images/gen/ransomware_png.h
+bsod.o: images/gen/amiga_png.h
+bsod.o: images/gen/android_png.h
+bsod.o: images/gen/apple_png.h
+bsod.o: images/gen/atari_png.h
+bsod.o: images/gen/atm_png.h
+bsod.o: images/gen/dvd_png.h
+bsod.o: images/gen/hmac_png.h
+bsod.o: images/gen/macbomb_png.h
+bsod.o: images/gen/mac_png.h
+bsod.o: images/gen/osx_10_2_png.h
+bsod.o: images/gen/osx_10_3_png.h
+bsod.o: images/gen/ransomware_png.h
+bsod.o: images/gen/sun_png.h
 bsod.o: $(srcdir)/recanim.h
 bsod.o: $(srcdir)/screenhackI.h
 bsod.o: $(srcdir)/screenhack.h
@@ -1294,50 +1327,50 @@ bsod.o: $(UTILS_SRC)/yarandom.h
 bsod.o: $(srcdir)/ximage-loader.h
 bubbles-default.o: $(srcdir)/bubbles.h
 bubbles-default.o: ../config.h
-bubbles-default.o: $(srcdir)/images/gen/blood10_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood11_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood1_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood2_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood3_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood4_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood5_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood6_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood7_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood8_png.h
-bubbles-default.o: $(srcdir)/images/gen/blood9_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue10_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue11_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue1_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue2_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue3_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue4_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue5_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue6_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue7_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue8_png.h
-bubbles-default.o: $(srcdir)/images/gen/blue9_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass10_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass11_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass1_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass2_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass3_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass4_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass5_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass6_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass7_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass8_png.h
-bubbles-default.o: $(srcdir)/images/gen/glass9_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade10_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade11_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade1_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade2_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade3_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade4_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade5_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade6_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade7_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade8_png.h
-bubbles-default.o: $(srcdir)/images/gen/jade9_png.h
+bubbles-default.o: images/gen/blood10_png.h
+bubbles-default.o: images/gen/blood11_png.h
+bubbles-default.o: images/gen/blood1_png.h
+bubbles-default.o: images/gen/blood2_png.h
+bubbles-default.o: images/gen/blood3_png.h
+bubbles-default.o: images/gen/blood4_png.h
+bubbles-default.o: images/gen/blood5_png.h
+bubbles-default.o: images/gen/blood6_png.h
+bubbles-default.o: images/gen/blood7_png.h
+bubbles-default.o: images/gen/blood8_png.h
+bubbles-default.o: images/gen/blood9_png.h
+bubbles-default.o: images/gen/blue10_png.h
+bubbles-default.o: images/gen/blue11_png.h
+bubbles-default.o: images/gen/blue1_png.h
+bubbles-default.o: images/gen/blue2_png.h
+bubbles-default.o: images/gen/blue3_png.h
+bubbles-default.o: images/gen/blue4_png.h
+bubbles-default.o: images/gen/blue5_png.h
+bubbles-default.o: images/gen/blue6_png.h
+bubbles-default.o: images/gen/blue7_png.h
+bubbles-default.o: images/gen/blue8_png.h
+bubbles-default.o: images/gen/blue9_png.h
+bubbles-default.o: images/gen/glass10_png.h
+bubbles-default.o: images/gen/glass11_png.h
+bubbles-default.o: images/gen/glass1_png.h
+bubbles-default.o: images/gen/glass2_png.h
+bubbles-default.o: images/gen/glass3_png.h
+bubbles-default.o: images/gen/glass4_png.h
+bubbles-default.o: images/gen/glass5_png.h
+bubbles-default.o: images/gen/glass6_png.h
+bubbles-default.o: images/gen/glass7_png.h
+bubbles-default.o: images/gen/glass8_png.h
+bubbles-default.o: images/gen/glass9_png.h
+bubbles-default.o: images/gen/jade10_png.h
+bubbles-default.o: images/gen/jade11_png.h
+bubbles-default.o: images/gen/jade1_png.h
+bubbles-default.o: images/gen/jade2_png.h
+bubbles-default.o: images/gen/jade3_png.h
+bubbles-default.o: images/gen/jade4_png.h
+bubbles-default.o: images/gen/jade5_png.h
+bubbles-default.o: images/gen/jade6_png.h
+bubbles-default.o: images/gen/jade7_png.h
+bubbles-default.o: images/gen/jade8_png.h
+bubbles-default.o: images/gen/jade9_png.h
 bubbles-default.o: $(UTILS_SRC)/yarandom.h
 bubbles.o: $(srcdir)/bubbles.h
 bubbles.o: ../config.h
@@ -1701,7 +1734,7 @@ fireworkx.o: $(UTILS_SRC)/visual.h
 fireworkx.o: $(UTILS_SRC)/yarandom.h
 flag.o: ../config.h
 flag.o: $(srcdir)/fps.h
-flag.o: $(srcdir)/images/gen/bob_png.h
+flag.o: images/gen/bob_png.h
 flag.o: $(srcdir)/recanim.h
 flag.o: $(srcdir)/screenhackI.h
 flag.o: $(UTILS_SRC)/colors.h
@@ -2232,8 +2265,8 @@ m6502.o: $(UTILS_SRC)/xshm.h
 m6502.o: $(UTILS_SRC)/yarandom.h
 maze.o: ../config.h
 maze.o: $(srcdir)/fps.h
-maze.o: $(srcdir)/images/gen/logo-180_png.h
-maze.o: $(srcdir)/images/gen/logo-50_png.h
+maze.o: images/gen/logo-180_png.h
+maze.o: images/gen/logo-50_png.h
 maze.o: $(srcdir)/recanim.h
 maze.o: $(srcdir)/screenhackI.h
 maze.o: $(srcdir)/screenhack.h
@@ -2345,14 +2378,14 @@ nerverot.o: $(UTILS_SRC)/visual.h
 nerverot.o: $(UTILS_SRC)/yarandom.h
 noseguy.o: ../config.h
 noseguy.o: $(srcdir)/fps.h
-noseguy.o: $(srcdir)/images/gen/nose-f1_png.h
-noseguy.o: $(srcdir)/images/gen/nose-f2_png.h
-noseguy.o: $(srcdir)/images/gen/nose-f3_png.h
-noseguy.o: $(srcdir)/images/gen/nose-f4_png.h
-noseguy.o: $(srcdir)/images/gen/nose-l1_png.h
-noseguy.o: $(srcdir)/images/gen/nose-l2_png.h
-noseguy.o: $(srcdir)/images/gen/nose-r1_png.h
-noseguy.o: $(srcdir)/images/gen/nose-r2_png.h
+noseguy.o: images/gen/nose-f1_png.h
+noseguy.o: images/gen/nose-f2_png.h
+noseguy.o: images/gen/nose-f3_png.h
+noseguy.o: images/gen/nose-f4_png.h
+noseguy.o: images/gen/nose-l1_png.h
+noseguy.o: images/gen/nose-l2_png.h
+noseguy.o: images/gen/nose-r1_png.h
+noseguy.o: images/gen/nose-r2_png.h
 noseguy.o: $(srcdir)/recanim.h
 noseguy.o: $(srcdir)/screenhackI.h
 noseguy.o: $(srcdir)/screenhack.h
@@ -2404,7 +2437,7 @@ pacman_level.o: $(srcdir)/ximage-loader.h
 pacman_level.o: $(srcdir)/xlockmoreI.h
 pacman.o: ../config.h
 pacman.o: $(srcdir)/fps.h
-pacman.o: $(srcdir)/images/gen/pacman_png.h
+pacman.o: images/gen/pacman_png.h
 pacman.o: $(srcdir)/pacman_ai.h
 pacman.o: $(srcdir)/pacman.h
 pacman.o: $(srcdir)/pacman_level.h
@@ -2480,7 +2513,7 @@ petri.o: $(UTILS_SRC)/visual.h
 petri.o: $(UTILS_SRC)/yarandom.h
 phosphor.o: ../config.h
 phosphor.o: $(srcdir)/fps.h
-phosphor.o: $(srcdir)/images/gen/6x10font_png.h
+phosphor.o: images/gen/6x10font_png.h
 phosphor.o: $(srcdir)/recanim.h
 phosphor.o: $(srcdir)/screenhackI.h
 phosphor.o: $(srcdir)/screenhack.h
@@ -2912,7 +2945,7 @@ tessellimage.o: $(UTILS_SRC)/yarandom.h
 testx11.o: ../config.h
 testx11.o: $(srcdir)/fps.h
 testx11.o: $(srcdir)/glx/rotator.h
-testx11.o: $(srcdir)/images/gen/logo-180_png.h
+testx11.o: images/gen/logo-180_png.h
 testx11.o: $(srcdir)/recanim.h
 testx11.o: $(srcdir)/screenhackI.h
 testx11.o: $(srcdir)/screenhack.h
@@ -3116,10 +3149,10 @@ worm.o: $(srcdir)/xlockmore.h
 xanalogtv.o: $(srcdir)/analogtv.h
 xanalogtv.o: ../config.h
 xanalogtv.o: $(srcdir)/fps.h
-xanalogtv.o: $(srcdir)/images/gen/logo-180_png.h
-xanalogtv.o: $(srcdir)/images/gen/testcard_bbcf_png.h
-xanalogtv.o: $(srcdir)/images/gen/testcard_pm5544_png.h
-xanalogtv.o: $(srcdir)/images/gen/testcard_rca_png.h
+xanalogtv.o: images/gen/logo-180_png.h
+xanalogtv.o: images/gen/testcard_bbcf_png.h
+xanalogtv.o: images/gen/testcard_pm5544_png.h
+xanalogtv.o: images/gen/testcard_rca_png.h
 xanalogtv.o: $(srcdir)/recanim.h
 xanalogtv.o: $(srcdir)/screenhackI.h
 xanalogtv.o: $(srcdir)/screenhack.h
@@ -3137,7 +3170,7 @@ xanalogtv.o: $(UTILS_SRC)/yarandom.h
 xanalogtv.o: $(srcdir)/ximage-loader.h
 xflame.o: ../config.h
 xflame.o: $(srcdir)/fps.h
-xflame.o: $(srcdir)/images/gen/bob_png.h
+xflame.o: images/gen/bob_png.h
 xflame.o: $(srcdir)/recanim.h
 xflame.o: $(srcdir)/screenhackI.h
 xflame.o: $(srcdir)/screenhack.h
@@ -3196,10 +3229,10 @@ xlyap.o: $(UTILS_SRC)/visual.h
 xlyap.o: $(UTILS_SRC)/yarandom.h
 xmatrix.o: ../config.h
 xmatrix.o: $(srcdir)/fps.h
-xmatrix.o: $(srcdir)/images/gen/matrix1b_png.h
-xmatrix.o: $(srcdir)/images/gen/matrix1_png.h
-xmatrix.o: $(srcdir)/images/gen/matrix2b_png.h
-xmatrix.o: $(srcdir)/images/gen/matrix2_png.h
+xmatrix.o: images/gen/matrix1b_png.h
+xmatrix.o: images/gen/matrix1_png.h
+xmatrix.o: images/gen/matrix2b_png.h
+xmatrix.o: images/gen/matrix2_png.h
 xmatrix.o: $(srcdir)/recanim.h
 xmatrix.o: $(srcdir)/screenhackI.h
 xmatrix.o: $(srcdir)/screenhack.h

@@ -19,7 +19,6 @@
 			    "*showFPS: False   \n" \
 			    "*wireframe: False \n"
 
-# define free_providence 0
 # define release_providence 0
 #include "xlockmore.h"
 #else
@@ -101,6 +100,8 @@ typedef struct {
   double theta;
   double theta_scale;
 
+  /* This structure is so large that debugging malloc requires
+     $MALLOC_PERMIT_INSANE_REQUESTS to be set under iOS... */
   double particles[PARTICLE_COUNT][5];
   int eyeparticles[EYE_PARTICLE_COUNT][2];
   double lookup[LOOKUPSIZE][EYELENGTH][2];
@@ -713,7 +714,7 @@ ENTRYPOINT void draw_providence(ModeInfo * mi)
   if(!mp->glx_context)
     return;
   
-  glXMakeCurrent(display, window, *(mp->glx_context));
+  glXMakeCurrent(display, window, *mp->glx_context);
   
   /* setup twoside lighting */
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient2);
@@ -791,9 +792,19 @@ ENTRYPOINT void change_providence(ModeInfo * mi)
   if (!mp->glx_context)
 	return;
   
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
   pinit();
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void free_providence(ModeInfo * mi) 
+{
+  providencestruct *mp = &providence[MI_SCREEN(mi)];
+  if (!mp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
+  gltrackball_free (mp->trackball);
+  if (glIsList(mp->pyramidlist)) glDeleteLists(mp->pyramidlist, 1);
+  if (mp->bricktexture) glDeleteTextures (1, &mp->bricktexture);
+}
 
 XSCREENSAVER_MODULE ("Providence", providence)

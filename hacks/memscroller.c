@@ -90,36 +90,16 @@ memscroller_init (Display *dpy, Window window)
   {
     int i;
     int nfonts = countof (st->fonts);
-    for (i = nfonts-1; i >= 0; i--)
+    for (i = 0; i < nfonts; i++)
       {
         char *fontname;
         char res[20];
         sprintf (res, "font%d", i+1);
         fontname = get_string_resource (dpy, res, "Font");
-        /* Each resource can be a comma-separated list of font names.
-           We use the first one that exists. */
-        if (fontname && *fontname) 
-          {
-            char *f2 = strdup(fontname);
-            char *f, *token = f2;
-            while ((f = strtok(token, ",")) && !st->fonts[i])
-              {
-                token = 0;
-                while (*f == ' ' || *f == '\t') f++;
-                st->fonts[i] = load_font_retry (dpy, f);
-              }
-            free (f2);
-            if (!st->fonts[i] && i < nfonts-1)
-              {
-                fprintf (stderr, "%s: unable to load font: \"%s\"\n",
-                         progname, fontname);
-                st->fonts[i] = st->fonts[i+1];
-              }
-          }
+        if (fontname && *fontname)
+          st->fonts[i] = load_font_retry (dpy, fontname);
+        if (fontname) free (fontname);
       }
-
-    if (!st->fonts[0])
-      st->fonts[0] = load_font_retry (dpy, "fixed");
     if (!st->fonts[0]) abort();
   }
 
@@ -581,6 +561,18 @@ memscroller_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 memscroller_free (Display *dpy, Window window, void *closure)
 {
+  state *st = (state *) closure;
+  int i;
+  for (i = 0; i < st->nscrollers; i++)
+    destroy_xshm_image (dpy, st->scrollers[i].image, &st->shm_info);
+  free (st->scrollers);
+  for (i = 0; i < countof (st->fonts); i++)
+    if (st->fonts[i]) XFreeFont (dpy, st->fonts[i]);
+  if (st->filename) free (st->filename);
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
+  XFreeGC (dpy, st->text_gc);
+  free (st);
 }
 
 
@@ -601,13 +593,6 @@ static const char *memscroller_defaults [] = {
   ".font4:		   OCR A Std 96,  Lucida Console 96,  Monaco 96",
   ".font5:		   OCR A Std 48,  Lucida Console 48,  Monaco 48",
   ".font6:		   OCR A Std 24,  Lucida Console 24,  Monaco 24",
-#elif 0  /* real X11, XQueryFont() */
-  ".font1:		   -*-courier-bold-r-*-*-*-1440-*-*-m-*-*-*",
-  ".font2:		   -*-courier-bold-r-*-*-*-960-*-*-m-*-*-*",
-  ".font3:		   -*-courier-bold-r-*-*-*-480-*-*-m-*-*-*",
-  ".font4:		   -*-courier-bold-r-*-*-*-320-*-*-m-*-*-*",
-  ".font5:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  ".font6:		   fixed",
 #else    /* real X11, load_font_retry() */
   ".font1:		   -*-ocr a std-medium-r-*-*-*-1440-*-*-m-*-*-*",
   ".font2:		   -*-ocr a std-medium-r-*-*-*-960-*-*-m-*-*-*",

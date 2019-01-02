@@ -71,8 +71,10 @@ init_coral(struct state *st)
         st->ncolors = 0;
     }
     gcv.foreground = st->default_fg_pixel = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
+    if (st->draw_gc) XFreeGC (st->dpy, st->draw_gc);
     st->draw_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
     gcv.foreground = get_pixel_resource (st->dpy, cmap, "background", "Background");
+    if (st->erase_gc) XFreeGC (st->dpy, st->erase_gc);
     st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     st->ncolors = NCOLORSMAX;
     make_uniform_colormap(xgwa.screen, xgwa.visual, cmap,
@@ -283,6 +285,8 @@ coral_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   free (st->pointbuf);
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
   if (st->walkers) free (st->walkers);
   if (st->board) free (st->board);
   free (st);

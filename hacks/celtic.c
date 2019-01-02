@@ -911,6 +911,7 @@ celtic_init (Display *d_arg, Window w_arg)
 
 
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+  if (st->colors) free (st->colors);
   assert(st->colors = (XColor *) calloc (st->ncolors,sizeof(XColor)));
 
   if (get_boolean_resource(st->dpy, "mono", "Boolean"))
@@ -983,7 +984,8 @@ celtic_draw (Display *dpy, Window window, void *closure)
       pattern_del(st->pattern);
     }
     st->pattern = NULL;
-    graph_del(st->graph);
+    if (st->graph) graph_del(st->graph);
+    st->graph = NULL;
 
     /* recolor each time */
     st->ncolors = get_integer_resource (st->dpy, "ncolors", "Integer");
@@ -1124,6 +1126,13 @@ static void
 celtic_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
+  XFreeGC (dpy, st->shadow_gc);
+  XFreeGC (dpy, st->gc_graph);
+  if (st->pattern) pattern_del (st->pattern);
+  st->pattern = 0;
+  if (st->graph) graph_del (st->graph);
+  if (st->eraser) eraser_free (st->eraser);
   free (st);
 }
 

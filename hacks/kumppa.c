@@ -531,6 +531,8 @@ kumppa_free (Display *dpy, Window window, void *closure)
   free (st->Yrotations);
   free (st->Xrottable);
   free (st->Yrottable);
+  free (st->rotateX);
+  free (st->rotateY);
   free (st);
 }
 

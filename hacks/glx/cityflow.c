@@ -14,7 +14,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-# define free_cube 0
 # define release_cube 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -381,7 +380,7 @@ draw_cube (ModeInfo *mi)
     return;
 
   mi->polygon_count = 0;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cc->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cc->glx_context);
 
   interference (mi);
   animate_cubes (mi);
@@ -537,6 +536,24 @@ draw_cube (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_cube (ModeInfo *mi)
+{
+  cube_configuration *cc = &ccs[MI_SCREEN(mi)];
+  if (!cc->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cc->glx_context);
+
+  if (cc->waves) {
+    free (cc->waves->srcs);
+    free (cc->waves->heights);
+    free (cc->waves);
+  }
+  if (cc->trackball) gltrackball_free (cc->trackball);
+  if (cc->cubes) free (cc->cubes);
+  if (cc->colors) free (cc->colors);
 }
 
 

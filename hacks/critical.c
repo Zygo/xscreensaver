@@ -198,7 +198,7 @@ static void
 setup_colormap (struct state *st, XColor **colors, int *n_colors)
 {
   Bool			writable;
-  char const *		color_scheme;
+  char *		color_scheme;
 
   /* Make a colormap */
   *n_colors = get_integer_resource (st->dpy, "ncolors", "Integer");
@@ -237,6 +237,7 @@ setup_colormap (struct state *st, XColor **colors, int *n_colors)
 			     *colors, n_colors, True,
 			     &writable, True);
     }
+  if (color_scheme) free (color_scheme);
 }
 
 
@@ -421,6 +422,12 @@ static void
 critical_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->fgc);
+  XFreeGC (dpy, st->bgc);
+  free (st->model->cells);
+  free (st->model);
+  free (st->history);
+  free (st->d_colors);
   free (st);
 }
 

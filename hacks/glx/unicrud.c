@@ -15,7 +15,6 @@
        "*titleFont: -*-helvetica-bold-r-normal-*-*-180-*-*-*-*-*-*\n" \
        "*font:      -*-helvetica-bold-r-normal-*-*-2400-*-*-*-*-iso10646-1\n" \
 
-# define free_unicrud 0
 # define release_unicrud 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -879,7 +878,7 @@ draw_unicrud (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel (GL_FLAT);
   glEnable (GL_NORMALIZE);
@@ -954,6 +953,19 @@ draw_unicrud (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_unicrud (ModeInfo *mi)
+{
+  unicrud_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->title_font) free_texture_font (bp->title_font);
+  if (bp->char_font) free_texture_font (bp->char_font);
 }
 
 XSCREENSAVER_MODULE_2 ("Unicrud", unicrud, unicrud)

@@ -90,6 +90,7 @@ ModStruct   flurry_description = {
 
 global_info_t *flurry_info = NULL;
 
+
 static
 double currentTime(void) {
   struct timeval tv;
@@ -313,7 +314,7 @@ ENTRYPOINT void reshape_flurry(ModeInfo *mi, int width, int height)
 {
     global_info_t *global = flurry_info + MI_SCREEN(mi);
 
-    glXMakeCurrent(MI_DISPLAY(mi), global->window, *(global->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), global->window, *global->glx_context);
 
     glViewport(0.0, 0.0, width, height);
     glMatrixMode(GL_PROJECTION);
@@ -506,11 +507,11 @@ draw_flurry(ModeInfo * mi)
 	return;
 
     if (global->first) {
-	MakeTexture();
+	global->texid = MakeTexture();
 	global->first = 0;
     }
     glDrawBuffer(GL_BACK);
-    glXMakeCurrent(display, window, *(global->glx_context));
+    glXMakeCurrent(display, window, *global->glx_context);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -535,13 +536,12 @@ free_flurry(ModeInfo * mi)
     global_info_t *global = &flurry_info[MI_SCREEN(mi)];
     flurry_info_t *flurry;
 
-    if (global->glx_context) {
-	glXMakeCurrent(MI_DISPLAY(mi), global->window, *(global->glx_context));
-    }
+	if (!global->glx_context) return;
+    glXMakeCurrent(MI_DISPLAY(mi), global->window, *global->glx_context);
 
-    for (flurry = global->flurry; flurry; flurry=flurry->next) {
-	delete_flurry_info(flurry);
-    }
+    for (flurry = global->flurry; flurry; flurry=flurry->next)
+		delete_flurry_info(flurry);
+	if (global->texid) glDeleteTextures (1, &global->texid);
 }
 
 XSCREENSAVER_MODULE ("Flurry", flurry)

@@ -129,7 +129,7 @@ struct state {
 
 #ifdef FANCY_BUBBLES
   int num_bubble_pixmaps;
-  Bubble_Step **step_pixmaps;
+  Bubble_Step **step_pixmaps, **def_list;
 #endif
 
   Bool simple;
@@ -1214,6 +1214,8 @@ default_to_pixmaps (struct state *st)
 
   init_default_bubbles();
 
+  st->def_list = (Bubble_Step **)xmalloc((num_default_bubbles + 1) * 
+					 sizeof(Bubble_Step *));
   for (i = 0; i < num_default_bubbles; i++) {
     newpix = (Bubble_Step *)xmalloc(sizeof(Bubble_Step));
     make_pixmap_from_default(st,
@@ -1221,6 +1223,7 @@ default_to_pixmaps (struct state *st)
                              default_bubbles[i].size,
                              newpix);
     /* Now add to list */
+    st->def_list[i] = newpix;
     if (pixmap_list == (Bubble_Step *)NULL) {
       pixmap_list = newpix;
     } else {
@@ -1277,6 +1280,8 @@ get_resources(struct state *st)
     st->drop = True;
   else
     fprintf (stderr, "%s: bogus mode: \"%s\"\n", progname, s);
+
+  if (s) free (s);
 
   st->trails = get_boolean_resource(st->dpy, "trails", "Boolean");
   st->drop_dir = (st->drop ? 1 : -1);
@@ -1428,9 +1433,38 @@ bubbles_event (Display *dpy, Window window, void *closure, XEvent *event)
 }
 
 static void
+free_bubble (Display *dpy, Bubble_Step *b)
+{
+  if (b->ball) XFreePixmap (dpy, b->ball);
+  if (b->shape_mask) XFreePixmap (dpy, b->shape_mask);
+  if (b->draw_gc) XFreeGC (dpy, b->draw_gc);
+  if (b->erase_gc) XFreeGC (dpy, b->erase_gc);
+  free (b);
+}
+
+static void
 bubbles_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
+
+  /* #### The lifetime of objects in this program is fucking incomprehensible.
+     I give up. */
+
+  /* for (i = 0; i < num_default_bubbles; i++)
+    free_bubble (dpy, st->def_list[i]); */
+  for (i = 0; i < st->num_bubble_pixmaps; i++)
+    free_bubble (dpy, st->step_pixmaps[i]);
+  for (i = 0; i < st->mesh_cells; i++)
+    free (st->adjacent_list[i]);
+  /* for (i = 0; i < st->mesh_cells; i++)
+    free_bubble (dpy, st->mesh[i]); */
+  if (st->draw_gc) XFreeGC (dpy, st->draw_gc);
+  if (st->erase_gc) XFreeGC (dpy, st->erase_gc);
+  free (st->adjacent_list);
+  free (st->def_list);
+  free (st->step_pixmaps);
+  free (st->mesh);
   free (st);
 }
 

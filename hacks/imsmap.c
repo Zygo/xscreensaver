@@ -161,8 +161,10 @@ init_map (struct state *st)
 
   if (mono_p)
     st->flip_xy = 0;
-  else if (st->colors)
+  else if (st->colors) {
     free_colors (st->xgwa.screen, st->cmap, st->colors, st->ncolors);
+    free (st->colors);
+  }
   st->colors = 0;
 
   st->ncolors = get_integer_resource (st->dpy, "ncolors", "Integer");
@@ -187,6 +189,7 @@ init_map (struct state *st)
   if (!mono_p)
     {
       if (st->ncolors < 1) st->ncolors = 1;
+      if (st->colors) free (st->colors);
       st->colors = (XColor *) malloc (st->ncolors * sizeof(*st->colors));
 
       make_smooth_colormap (st->xgwa.screen, st->xgwa.visual, st->cmap,
@@ -387,6 +390,8 @@ static void
 imsmap_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
+  XFreeGC (dpy, st->gc2);
   if (st->colors) free (st->colors);
   if (st->cell) free (st->cell);
   free (st);

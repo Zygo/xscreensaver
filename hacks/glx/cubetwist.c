@@ -517,7 +517,7 @@ draw_cube (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel(GL_SMOOTH);
   glEnable(GL_DEPTH_TEST);
@@ -574,6 +574,8 @@ ENTRYPOINT void
 free_cube (ModeInfo *mi)
 {
   cube_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
   while (bp->cubes)
     {
       cube *c = bp->cubes->next;
@@ -587,6 +589,8 @@ free_cube (ModeInfo *mi)
       free (bp->oscillators);
       bp->oscillators = o;
     }
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
 }
 
 

@@ -768,7 +768,7 @@ CleanupSproingies(sp_instance *si)
 		glDeleteLists(si->TopsSides, 2);
 	}
 	if (si->positions) {
-		(void) free((void *) (si->positions));
+		free((si->positions));
 		si->positions = NULL;
 	}
 }

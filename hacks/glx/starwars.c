@@ -896,7 +896,7 @@ draw_sws (ModeInfo *mi)
     return;
 
   glDrawBuffer (GL_BACK);
-  glXMakeCurrent (dpy, window, *(sc->glx_context));
+  glXMakeCurrent (dpy, window, *sc->glx_context);
 
   glClear (GL_COLOR_BUFFER_BIT);
 
@@ -1057,10 +1057,18 @@ ENTRYPOINT void
 free_sws (ModeInfo *mi)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];
-  if (sc->tc)
-    textclient_close (sc->tc);
-
-  /* #### there's more to free here */
+  int i;
+  if (!sc->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *sc->glx_context);
+  if (sc->tc) textclient_close (sc->tc);
+  if (sc->texfont) free_texture_font (sc->texfont);
+  if (sc->buf) free (sc->buf);
+  if (sc->line_widths) free (sc->line_widths);
+  for (i = 0; i < sc->total_lines; i++)
+    if (sc->lines[i]) free (sc->lines[i]);
+  if (sc->lines) free (sc->lines);
+  if (glIsList(sc->star_list)) glDeleteLists(sc->star_list, 1);
+  if (glIsList(sc->text_list)) glDeleteLists(sc->text_list, 1);
 }
 
 

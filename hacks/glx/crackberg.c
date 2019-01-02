@@ -95,7 +95,7 @@ struct _Trile {
     const Morph *morph;
 
     struct _Trile *left, *right, *parent; /* for bst, NOT spatial */
-    struct _Trile *next_free; /* for memory allocation */
+    struct _Trile *next_free, *next0; /* for memory allocation */
 };
 
 enum { MOTION_AUTO = 0, MOTION_MANUAL = 1, MOTION_LROT= 2,    MOTION_RROT = 4,
@@ -124,6 +124,7 @@ struct _cberg_state {
 
     double *heights, *norms;
     Trile *free_head; /* for trile_[alloc|free] */
+    Trile *all_triles;
 
     double draw_elapsed;
 
@@ -539,13 +540,15 @@ static Trile *trile_alloc(cberg_state *cberg)
         cberg->free_head = cberg->free_head->next_free;
     } else {
         ++cberg->count;
-        if (!(new = malloc(sizeof(Trile)))
-         || !(new->l = (double *) malloc(sizeof(double) * cberg->epoints * 3))) {
+        if (!(new = calloc(1, sizeof(Trile)))
+         || !(new->l = (double *) calloc(sizeof(double), cberg->epoints * 3))) {
             perror(progname);
             exit(1);
         }
         new->r = new->l + cberg->epoints;
         new->v = new->r + cberg->epoints;
+        new->next0 = cberg->all_triles;
+        cberg->all_triles = new;
 #ifdef DEBUG
         printf("needed to alloc; [%d]\n", cberg->count);
 #endif
@@ -584,13 +587,15 @@ static void trile_draw(Trile *tr, void *ignore)
 
 static void grow_init(Trile *tr)
 {
-    tr->morph_data = (void *) malloc(sizeof(double));
+    if (!tr->morph_data)
+      tr->morph_data = (void *) malloc(sizeof(double));
     *((double *)tr->morph_data) = 0.02; /* not 0; avoid normals crapping */
 }
 
 static void grow_free(Trile *tr)
 {
-    free(tr->morph_data);
+    if (tr->morph_data) free(tr->morph_data);
+    tr->morph_data = 0;
 }
 
 static void grow_draw(Trile *tr)
@@ -619,13 +624,15 @@ static void grow_dying_iter(Trile *tr, cberg_state *cberg)
 
 static void fall_init(Trile *tr)
 {
-    tr->morph_data = (void *) malloc(sizeof(double));
+    if (!tr->morph_data)
+      tr->morph_data = (void *) malloc(sizeof(double));
     *((double *)tr->morph_data) = 0.0;
 }
 
 static void fall_free(Trile *tr)
 {
-    free(tr->morph_data);
+    if (tr->morph_data) free(tr->morph_data);
+    tr->morph_data = 0;
 }
 
 static void fall_draw(Trile *tr)
@@ -654,13 +661,15 @@ static void fall_dying_iter(Trile *tr, cberg_state *cberg)
 
 static void yeast_init(Trile *tr)
 {
-    tr->morph_data = (void *) malloc(sizeof(double));
+    if (!tr->morph_data)
+      tr->morph_data = (void *) malloc(sizeof(double));
     *((double *)tr->morph_data) = 0.02;
 }
 
 static void yeast_free(Trile *tr)
 {
-    free(tr->morph_data);
+    if (tr->morph_data) free(tr->morph_data);
+    tr->morph_data = 0;
 }
 
 static void yeast_draw(Trile *tr)
@@ -1362,7 +1371,7 @@ ENTRYPOINT void draw_crackberg (ModeInfo *mi)
     if (!cberg->glx_context) /*XXX does this get externally tweaked? it kinda*/
         return;               /*XXX can't.. check it in crackberg_init*/
 
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cberg->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cberg->glx_context);
 
     gettimeofday(&cur_frame_t, NULL);
     cur_frame = cur_frame_t.tv_sec + cur_frame_t.tv_usec / 1.0E6;
@@ -1458,9 +1467,17 @@ ENTRYPOINT void draw_crackberg (ModeInfo *mi)
 ENTRYPOINT void free_crackberg (ModeInfo *mi)
 {
   cberg_state *cberg = &cbergs[MI_SCREEN(mi)];
-  if (cberg->norms)
-    free(cberg->norms);
-  free(cberg->heights);
+  if (!cberg->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cberg->glx_context);
+  while (cberg->all_triles) {
+    Trile *n = cberg->all_triles;
+    cberg->all_triles = n->next0;
+    free (n->l);
+    if (n->morph_data) free (n->morph_data);
+    free (n);
+  }
+  if (cberg->norms) free(cberg->norms);
+  if (cberg->heights) free(cberg->heights);
 }
 
 XSCREENSAVER_MODULE ("Crackberg", crackberg)

@@ -172,9 +172,11 @@ append_font_name(Display *dpy, char *dest, const XFontStruct *font)
   int i;
   for (i = 0; i != font->n_properties; ++i) {
     if (font->properties[i].name == XA_FONT) {
-      const char *suffix = XGetAtomName (dpy, font->properties[i].card32);
+      char *suffix = XGetAtomName (dpy, font->properties[i].card32);
+      int L = strlen(suffix);
       strcpy(dest, suffix);
-      return dest + strlen(suffix);
+      free (suffix);
+      return dest + L;
     }
   }
 
@@ -768,6 +770,7 @@ free_word (state *s, word *w)
   if (w->text)   free (w->text);
   if (w->pixmap) XFreePixmap (s->dpy, w->pixmap);
   if (w->mask)   XFreePixmap (s->dpy, w->mask);
+  free (w);
 }
 
 
@@ -860,6 +863,7 @@ split_words (state *s, sentence *se)
           char *t2 = chars[k];
           word *w2 = new_word (s, se, t2, True);
           words2[j++] = w2;
+          free (t2);
 
           w2->x = x;
           w2->y = y;
@@ -1219,7 +1223,7 @@ populate_sentence (state *s, sentence *se)
               y + se->xftfont->ascent + se->xftfont->descent > s->xgwa.height)
             {
               unread_word (s, w);
-              free (w);
+              w = 0;
               /* done = True; */
               break;
             }
@@ -2203,8 +2207,10 @@ fontglide_init (Display *dpy, Window window)
   XGetWindowAttributes (s->dpy, s->window, &s->xgwa);
 
   s->font_override = get_string_resource (dpy, "font", "Font");
-  if (s->font_override && (!*s->font_override || *s->font_override == '('))
+  if (s->font_override && (!*s->font_override || *s->font_override == '(')) {
+    free (s->font_override);
     s->font_override = 0;
+  }
 
   s->charset = get_string_resource (dpy, "fontCharset", "FontCharset");
   s->border_width = get_integer_resource (dpy, "fontBorderWidth", "Integer");
@@ -2247,7 +2253,7 @@ fontglide_init (Display *dpy, Window window)
   if (s->trails_p) s->dbuf = False;  /* don't need it in this case */
 
   {
-    const char *ss = get_string_resource (dpy, "mode", "Mode");
+    char *ss = get_string_resource (dpy, "mode", "Mode");
     if (!ss || !*ss || !strcasecmp (ss, "random"))
       s->mode = ((random() % 2) ? SCROLL : PAGE);
     else if (!strcasecmp (ss, "scroll"))
@@ -2262,6 +2268,7 @@ fontglide_init (Display *dpy, Window window)
                 "%s: `mode' must be `scroll', `page', or `random', not `%s'\n",
                  progname, ss);
       }
+    if (ss) free (ss);
   }
 
   if (s->dbuf)
@@ -2410,7 +2417,19 @@ static void
 fontglide_free (Display *dpy, Window window, void *closure)
 {
   state *s = (state *) closure;
+  int i;
+
   textclient_close (s->tc);
+
+//  if (s->b && s->b != s->window) XFreePixmap (dpy, s->b);
+//  if (s->ba && s->ba != s->b) XFreePixmap (dpy, s->ba);
+  XFreeGC (dpy, s->bg_gc);
+  if (s->charset) free (s->charset);
+  if (s->font_override) free (s->font_override);
+  for (i = 0;i < s->nsentences; i++)
+    if (s->sentences[i])
+      free_sentence (s, s->sentences[i]);
+  free (s->sentences);
 
 #ifdef DEBUG
   if (s->metrics_xftfont)
@@ -2423,8 +2442,6 @@ fontglide_free (Display *dpy, Window window, void *closure)
   if (s->next_font_name) free (s->next_font_name);
   if (s->label_gc) XFreeGC (dpy, s->label_gc);
 #endif
-
-  /* #### there's more to free here */
 
   free (s);
 }

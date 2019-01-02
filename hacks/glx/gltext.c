@@ -573,7 +573,7 @@ draw_text (ModeInfo *mi)
   if (!tp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tp->glx_context);
 
   if (tp->reload)
     {
@@ -650,8 +650,18 @@ ENTRYPOINT void
 free_text(ModeInfo * mi)
 {
   text_configuration *tp = &tps[MI_SCREEN(mi)];
+
+  if (!tp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tp->glx_context);
+
   if (tp->tc)
     textclient_close (tp->tc);
+  if (tp->text) free (tp->text);
+  if (tp->trackball) gltrackball_free (tp->trackball);
+  if (tp->rot) free_rotator (tp->rot);
+  if (tp->rot2) free_rotator (tp->rot2);
+  if (tp->colors) free (tp->colors);
+  if (glIsList(tp->text_list)) glDeleteLists(tp->text_list, 1);
 }
 
 

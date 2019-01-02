@@ -19,21 +19,29 @@
 # define HAVE_MOBILE
 #endif
 
+/* To simulate an NTSC CRT monitor with way more scanlines, and thus
+   apply an ahistorical tv-like effect to a larger image, increase
+   this resolution multiplier.
+ */
+#ifndef ANALOGTV_SCALE
+# define ANALOGTV_SCALE 1
+#endif
+
 /*
   You'll need these to generate standard NTSC TV signals
  */
 enum {
   /* We don't handle interlace here */
-  ANALOGTV_V=262,
-  ANALOGTV_TOP=30,
-  ANALOGTV_VISLINES=200,
+  ANALOGTV_V=262*ANALOGTV_SCALE,
+  ANALOGTV_TOP=30*ANALOGTV_SCALE,
+  ANALOGTV_VISLINES=200*ANALOGTV_SCALE,
   ANALOGTV_BOT=ANALOGTV_TOP + ANALOGTV_VISLINES,
 
   /* This really defines our sampling rate, 4x the colorburst
      frequency. Handily equal to the Apple II's dot clock.
      You could also make a case for using 3x the colorburst freq,
      but 4x isn't hard to deal with. */
-  ANALOGTV_H=912,
+  ANALOGTV_H=912*ANALOGTV_SCALE,
 
   /* Each line is 63500 nS long. The sync pulse is 4700 nS long, etc.
      Define sync, back porch, colorburst, picture, and front porch
@@ -54,7 +62,7 @@ enum {
   ANALOGTV_VIS_END=ANALOGTV_PIC_START + (ANALOGTV_PIC_LEN*7/8),
   ANALOGTV_VIS_LEN=ANALOGTV_VIS_END-ANALOGTV_VIS_START,
 
-  ANALOGTV_HASHNOISE_LEN=6,
+  ANALOGTV_HASHNOISE_LEN=6*ANALOGTV_SCALE,
 
   ANALOGTV_GHOSTFIR_LEN=4,
 

@@ -1655,6 +1655,16 @@ static void
 maze_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
+  XFreeGC (dpy, st->cgc);
+  XFreeGC (dpy, st->tgc);
+  XFreeGC (dpy, st->sgc);
+  XFreeGC (dpy, st->ugc);
+  XFreeGC (dpy, st->logo_gc);
+  XFreeGC (dpy, st->erase_gc);
+  if (st->solve_state) free (st->solve_state);
+  if (st->logo_map) XFreePixmap (dpy, st->logo_map);
+  exit_sets (st);
   free (st);
 }
 

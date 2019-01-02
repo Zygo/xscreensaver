@@ -628,6 +628,14 @@ twang_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   if (st->pm) XFreePixmap (dpy, st->pm);
+  XFreeGC (dpy, st->backgroundGC);
+  XFreeGC (dpy, st->foregroundGC);
+  XFreeGC (dpy, st->borderGC);
+  if (st->sourceImage) XDestroyImage (st->sourceImage);
+  if (st->workImage) destroy_xshm_image (st->dpy, st->workImage, &st->shmInfo);
+  if (st->tiles) free (st->tiles);
+  if (st->sortedTiles) free (st->sortedTiles);
+
   free (st);
 }
 

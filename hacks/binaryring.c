@@ -554,10 +554,12 @@ static void binaryring_free ( Display* display, Window win, void *closure ) {
     XWindowAttributes tmp;
     XGetWindowAttributes(display, win, &tmp);
 
-    free( st->buffer );
-    free( st->particles );
-
-    free ( st );
+    if (st->gc) XFreeGC (display, st->gc);
+    if (st->pix) XFreePixmap (display, st->pix);
+    if (st->buf) XDestroyImage (st->buf);
+    free (st->buffer);
+    free (st->particles);
+    free (st);
 }
 
 

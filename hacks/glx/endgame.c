@@ -20,7 +20,6 @@
                        "*showFPS:   False \n" \
 		       "*wireframe: False \n" \
 
-# define free_chess 0
 # define release_chess 0
 # include "xlockmore.h"
 
@@ -894,7 +893,7 @@ ENTRYPOINT void draw_chess(ModeInfo *mi)
   if(!cs->glx_context)
     return;
 
-  glXMakeCurrent(disp, w, *(cs->glx_context));
+  glXMakeCurrent(disp, w, *cs->glx_context);
 
   /** code for moving a piece */
   if(cs->moving && ++cs->steps == 100) {
@@ -964,6 +963,22 @@ ENTRYPOINT void draw_chess(ModeInfo *mi)
   if(mi->fps_p) do_fps(mi);
   glFinish(); 
   glXSwapBuffers(disp, w);
+}
+
+
+ENTRYPOINT void free_chess(ModeInfo *mi) 
+{
+  Chesscreen *cs = &qs[MI_SCREEN(mi)];
+  int i;
+  if (!cs->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cs->glx_context);
+  gltrackball_free (cs->trackball);
+  if (cs->piecetexture) glDeleteTextures (1, &cs->piecetexture);
+  if (cs->boardtexture) glDeleteTextures (1, &cs->boardtexture);
+
+  /* this is horrible! List numbers are hardcoded! */
+  for (i = 1; i <= 20; i++)
+    if (glIsList(i)) glDeleteLists(i, 1);
 }
 
 XSCREENSAVER_MODULE_2 ("Endgame", endgame, chess)

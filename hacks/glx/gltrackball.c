@@ -76,6 +76,13 @@ gltrackball_init (int ignore_device_rotation_p)
   return ts;
 }
 
+void
+gltrackball_free (trackball_state *ts)
+{
+  free (ts);
+}
+
+
 /* Device rotation interacts very strangely with mouse positions.
    I'm not entirely sure this is the right fix.
  */

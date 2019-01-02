@@ -1083,6 +1083,8 @@ blaster_free (Display *dpy, Window window, void *closure)
   if (st->l_color1) XFreeGC (dpy, st->l_color1);
   if (st->s_color)  XFreeGC (dpy, st->s_color);
   if (st->black)    XFreeGC (dpy, st->black);
+  if (st->EXPLODE_COLOR_1) XFreeGC (dpy, st->EXPLODE_COLOR_1);
+  if (st->EXPLODE_COLOR_2) XFreeGC (dpy, st->EXPLODE_COLOR_2);
   if (st->stars) free (st->stars);
   if (st->mother) {
     free (st->mother->lasers);

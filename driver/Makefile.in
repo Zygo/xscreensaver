@@ -115,10 +115,12 @@ NOLOCK_OBJS_1	= lock.o
 
 TEST_SRCS	= test-passwd.c test-uid.c  test-xdpms.c    test-grab.c \
 		  test-apm.c    test-fade.c test-xinerama.c test-vp.c   \
-	          test-randr.c  xdpyinfo.c  test-mlstring.c test-screens.c
+	          test-randr.c  xdpyinfo.c  test-mlstring.c test-screens.c \
+	          test-yarandom.c
 TEST_EXES	= test-passwd   test-uid    test-xdpms      test-grab   \
 		  test-apm      test-fade   test-xinerama   test-vp     \
-		  test-randr    xdpyinfo    test-mlstring   test-screens
+		  test-randr    xdpyinfo    test-mlstring   test-screens \
+		  test-yarandom
 
 MOTIF_LIBS	= @MOTIF_LIBS@ @PNG_LIBS@ $(XMU_LIBS)
 GTK_LIBS	= @GTK_LIBS@ $(XMU_LIBS)
@@ -865,6 +867,9 @@ test-screens.o: screens.c
 test-screens: test-screens.o
 	$(CC) $(LDFLAGS) -o $@ $(TEST_SCREENS_OBJS) $(SAVER_LIBS)
 
+test-yarandom: test-yarandom.o
+	$(CC) -DTEST $(LDFLAGS) -o $@ test-yarandom.o $(UTILS_BIN)/yarandom.o
+
 
 xdpyinfo.o: xdpyinfo.c
 	$(CC) -c $(INCLUDES) -DHAVE_GLX $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
@@ -980,6 +985,8 @@ test-uid.o: ../config.h
 test-vp.o: ../config.h
 test-xdpms.o: ../config.h
 test-xinerama.o: ../config.h
+test-yarandom.o: ../config.h
+test-yarandom.o: $(UTILS_SRC)/yarandom.h
 timers.o: ../config.h
 timers.o: $(srcdir)/prefs.h
 timers.o: $(srcdir)/types.h

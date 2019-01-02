@@ -181,6 +181,7 @@ static void
 rorschach_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->draw_gc);
   free (st);
 }
 

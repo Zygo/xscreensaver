@@ -97,6 +97,7 @@ xjack_init (Display *dpy, Window window)
 
   st->font = load_font_retry (st->dpy, fontname);
   if (!st->font) abort();
+  if (fontname) free (fontname);
 
   gcv.font = st->font->fid;
   gcv.foreground = get_pixel_resource (st->dpy, st->xgwa.colormap,
@@ -461,6 +462,8 @@ static void
 xjack_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
+  XFreeFont (dpy, st->font);
   free (st);
 }
 

@@ -372,6 +372,9 @@ initialize (struct state *st)
   printf("fast\t%i\nmarks\t%i\nwait\t%i\n",st->fastch,st->maxk,st->timewait);
 #endif
  
+  free (xgc);
+  free (xorgc);
+  free (xandgc);
 }
 
 static void fill_kugel(struct state *st, int i, Pixmap buf, int setcol);
@@ -936,6 +939,13 @@ t3d_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 t3d_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
+  XFreeGC (dpy, st->orgc);
+  XFreeGC (dpy, st->andgc);
+  XFreePixmap (dpy, st->buffer);
+  free (st->zeit);
+  free (st);
 }
 
 

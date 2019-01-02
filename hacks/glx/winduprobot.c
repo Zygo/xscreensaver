@@ -332,6 +332,7 @@ load_textures (ModeInfo *mi)
                 xi->width, xi->height, 0,
                 GL_RGBA, GL_UNSIGNED_BYTE, xi->data);
   check_gl_error("texture");
+  XDestroyImage (xi);
 
   glEnable(GL_TEXTURE_GEN_S);
   glEnable(GL_TEXTURE_GEN_T);
@@ -356,6 +357,7 @@ parse_color (ModeInfo *mi, char *key, GLfloat color[4])
                key, string);
       exit (1);
     }
+  free (string);
 
   color[0] = xcolor.red   / 65536.0;
   color[1] = xcolor.green / 65536.0;
@@ -2300,7 +2302,7 @@ draw_robot (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -2471,11 +2473,31 @@ draw_robot (ModeInfo *mi)
 ENTRYPOINT void
 free_robot (ModeInfo *mi)
 {
-# ifdef WORDBUBBLES
   robot_configuration *bp = &bps[MI_SCREEN(mi)];
-  if (bp->tc)
-    textclient_close (bp->tc);
+  int i;
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->user_trackball) gltrackball_free (bp->user_trackball);
+  if (bp->walkers) free (bp->walkers);
+  if (robot_dome) free (robot_dome); robot_dome = 0;
+  if (robot_gear) free (robot_gear); robot_gear = 0;
+  if (ground) free (ground); ground = 0;
+
+# ifdef WORDBUBBLES
+  if (bp->tc) textclient_close (bp->tc);
+  if (bp->font_data) free_texture_font (bp->font_data);
 # endif
+
+# ifdef HAVE_TEXTURE
+  if (bp->chrome_texture) glDeleteTextures(1, &bp->chrome_texture);
+# endif
+  if (bp->dlists) {
+    for (i = 0; i < countof(all_objs); i++)
+      if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+    free (bp->dlists);
+  }
 }
 
 XSCREENSAVER_MODULE_2 ("WindupRobot", winduprobot, robot)

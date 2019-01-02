@@ -182,6 +182,11 @@ cwaves_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 cwaves_free (Display *dpy, Window window, void *closure)
 {
+  state *st = (state *) closure;
+  XFreeGC (dpy, st->gc);
+  free (st->colors);
+  free (st->waves);
+  free (st);
 }
 
 

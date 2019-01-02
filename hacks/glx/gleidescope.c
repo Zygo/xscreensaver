@@ -1405,7 +1405,7 @@ ENTRYPOINT void reshape_gleidescope(ModeInfo *mi, int width, int height)
       h = height / (GLfloat) width;
     }
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
 
 	glViewport(0, y, (GLint) width, (GLint) height);
 	glMatrixMode(GL_PROJECTION);
@@ -1574,7 +1574,7 @@ draw_gleidescope(ModeInfo * mi)
 
 	glDrawBuffer(GL_BACK);
 
-	glXMakeCurrent(display, window, *(gp->glx_context));
+	glXMakeCurrent(display, window, *gp->glx_context);
 	draw(mi);
 
 	if (mi->fps_p) {
@@ -1608,15 +1608,12 @@ draw_gleidescope(ModeInfo * mi)
 ENTRYPOINT void
 free_gleidescope(ModeInfo * mi)
 {
-	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
-
-	/* acd -  is this needed? */
-	if (gp->glx_context) {
-		/* Display lists MUST be freed while their glXContext is current. */
-		glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
-
-		/* acd - was code here for freeing things that are no longer in struct */
-	}
+  gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
+  if (!gp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
+  if (glIsList(gp->list)) glDeleteLists(gp->list, 1);
+  if (gp->textures[0].id) glDeleteTextures (1, &gp->textures[0].id);
+  if (gp->textures[1].id) glDeleteTextures (1, &gp->textures[1].id);
 }
 
 XSCREENSAVER_MODULE ("Gleidescope", gleidescope)

@@ -951,6 +951,11 @@ static void
 penetrate_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
+  XFreeGC (dpy, st->level_gc);
+  XFreeFont (dpy, st->font);
+  XFreeFont (dpy, st->scoreFont);
   free (st);
 }
 

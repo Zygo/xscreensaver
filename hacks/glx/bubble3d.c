@@ -114,20 +114,20 @@ glb_bubble_new(glb_data *d, GLfloat x, GLfloat y, GLfloat z, GLfloat scale,
 	b->contributions = (GLfloat *) malloc(sizeof (GLfloat) * nr_vertices *
 					      glb_config.nr_nudge_axes);
 	if (b->contributions == 0) {
-		(void) free((void *) b);
+		free(b);
 		return 0;
 	}
 	b->nudge_angle = (GLfloat *) malloc(sizeof (GLfloat) * glb_config.nr_nudge_axes);
 	if (b->nudge_angle == 0) {
-		(void) free((void *) b->contributions);
-		(void) free((void *) b);
+		free(b->contributions);
+		free(b);
 		return 0;
 	}
 	b->nudge_angle_incr = (GLfloat *) malloc(sizeof (GLfloat) * glb_config.nr_nudge_axes);
 	if (b->nudge_angle_incr == 0) {
-		(void) free((void *) b->nudge_angle);
-		(void) free((void *) b->contributions);
-		(void) free((void *) b);
+		free(b->nudge_angle);
+		free(b->contributions);
+		free(b);
 		return 0;
 	}
 	/* Initialize primitive elements. */
@@ -176,18 +176,18 @@ glb_bubble_delete(void *bb)
 
 	if (b != NULL) {
 		if (b->nudge_angle_incr) {
-			(void) free((void *) b->nudge_angle_incr);
+			free(b->nudge_angle_incr);
 			b->nudge_angle_incr = NULL;
 		}
 		if (b->nudge_angle) {
-			(void) free((void *) b->nudge_angle);
+			free(b->nudge_angle);
 			b->nudge_angle = NULL;
 		}
 		if (b->contributions) {
-			(void) free((void *) b->contributions);
+			free(b->contributions);
 			b->contributions = NULL;
 		}
-		(void) free((void *) b);
+		free(b);
 		b = NULL;
 	}
 }
@@ -267,7 +267,7 @@ glb_bubble_draw(glb_data *d, void *bb)
 	}
 	glEnd();
 	glPopMatrix();
-	(void) free((void *) new_vertices);
+	free(new_vertices);
     glb_config.polygon_count += nr_triangles;
 }
 

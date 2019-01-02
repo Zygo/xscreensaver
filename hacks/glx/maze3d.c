@@ -1170,7 +1170,7 @@ draw_maze (ModeInfo * mi)
 
     if (!maze->glx_context)
       return;
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(maze->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *maze->glx_context);
 
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -1919,6 +1919,10 @@ ENTRYPOINT void
 free_maze (ModeInfo * mi)
 {
 	maze_configuration *maze = &mazes[MI_SCREEN(mi)];
+    int i;
+
+    if (!maze->glx_context) return;
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *maze->glx_context);
 
     glDeleteTextures(1, &maze->wallTexture);
     glDeleteTextures(1, &maze->floorTexture);
@@ -1937,16 +1941,14 @@ free_maze (ModeInfo * mi)
     glDeleteTextures(1, &maze->fractal4Texture);
 # endif
 
-    glDeleteLists(maze->dlists[ARROW], 4);
-    glDeleteLists(maze->dlists[INVERTER_TETRAHEDRON], 4);
+    for (i = 0; i < countof(maze->dlists); i++)
+      if (glIsList(maze->dlists[i])) glDeleteLists(maze->dlists[i], 1);
 
     free(maze->mazeGrid);
     free(maze->wallList);
     free(maze->inverterPosition);
     free(maze->gl3dTextPosition);
     free(maze->rats);
-
-    memset(maze, 0, sizeof(*maze));
 }
 
 

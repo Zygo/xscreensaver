@@ -45,7 +45,6 @@
                    "*showFPS:       False         \n" \
                    "*wireframe:     False         \n"
 
-# define free_cube21 0
 # define release_cube21 0
 #include "xlockmore.h"
 
@@ -915,7 +914,7 @@ ENTRYPOINT void draw_cube21(ModeInfo * mi)
   MI_IS_DRAWN(mi) = True;
   if (!cp->glx_context) return;
   mi->polygon_count = 0;
-  glXMakeCurrent(display, window, *(cp->glx_context));
+  glXMakeCurrent(display, window, *cp->glx_context);
   if (!draw_main(mi, cp)) {
     MI_ABORT(mi);
     return;
@@ -930,11 +929,18 @@ ENTRYPOINT void change_cube21(ModeInfo * mi)
 {
   cube21_conf *cp = &cube21[MI_SCREEN(mi)];
   if (!cp->glx_context) return;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
   init_gl(mi);
 }
 #endif /* !STANDALONE */
 
+ENTRYPOINT void free_cube21(ModeInfo * mi) 
+{
+  cube21_conf *cp = &cube21[MI_SCREEN(mi)];
+  if (!cp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
+  gltrackball_free (cp->trackball);
+}
 
 XSCREENSAVER_MODULE ("Cube21", cube21)
 

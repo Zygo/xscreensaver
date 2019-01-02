@@ -22,7 +22,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-# define free_peepers 0
 # define release_peepers 0
 
 #define DEF_SPEED "1.0"
@@ -1375,7 +1374,7 @@ draw_peepers (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1448,6 +1447,25 @@ draw_peepers (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_peepers (ModeInfo *mi)
+{
+  peepers_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  for (i = 0; i < bp->nfloaters; i++)
+    free_rotator (bp->floaters[i].rot);
+  if (bp->floaters) free (bp->floaters);
+  if (glIsList(bp->lens_list)) glDeleteLists(bp->lens_list, 1);
+  if (glIsList(bp->sclera_list)) glDeleteLists(bp->sclera_list, 1);
+  if (glIsList(bp->iris_list)) glDeleteLists(bp->iris_list, 1);
+  if (glIsList(bp->retina_list)) glDeleteLists(bp->retina_list, 1);
+  if (bp->sclera_texture) glDeleteTextures (1, &bp->sclera_texture);
+  if (bp->iris_texture) glDeleteTextures (1, &bp->iris_texture);
 }
 
 XSCREENSAVER_MODULE ("Peepers", peepers)

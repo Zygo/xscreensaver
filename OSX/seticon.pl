@@ -18,7 +18,7 @@ use strict;
 use File::Temp;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.7 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -52,6 +52,11 @@ sub set_icon ($$) {
   close $rez_fh;
 
   my @cmd = ('Rez',
+
+             '-isysroot', 
+             '/Applications/Xcode.app/Contents/Developer/Platforms' .
+             '/MacOSX.platform/Developer/SDKs/MacOSX.sdk',
+
              'CoreServices.r',
              $rez_filename,
              '-o', $target_res);

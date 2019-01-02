@@ -788,6 +788,10 @@ static void
 epicycle_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->eraser) eraser_free (st->eraser);  
+  if (st->pb0) delete_body (st->pb0);
+  XFreeGC (dpy, st->color0);
+  free (st->colors);
   free (st);
 }
 

@@ -1330,7 +1330,7 @@ draw_boxed(ModeInfo * mi)
    
    glDrawBuffer(GL_BACK);
    
-   glXMakeCurrent(display, window, *(gp->glx_context));
+   glXMakeCurrent(display, window, *gp->glx_context);
    draw(mi);
    
    if (mi->fps_p) do_fps (mi);
@@ -1343,23 +1343,17 @@ free_boxed(ModeInfo * mi)
 {
    boxedstruct *gp = &boxed[MI_SCREEN(mi)];
    int i;
-
-   if (gp->glx_context) {
-      /* Display lists MUST be freed while their glXContext is current. */
-      glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
-   
-      if (glIsList(gp->listobjects))
-        glDeleteLists(gp->listobjects, 3);
-
-      for (i=0;i<gp->bman.num_balls;i++) {
-         if (gp->bman.balls[i].bounced) freetris(&gp->tman[i]);
-      }
-      free (gp->bman.balls);
-      free (gp->tman);
-      free (gp->tex1);
-
-
-   }
+   if (!gp->glx_context) return;
+   glXMakeCurrent(MI_DISPLAY(mi), gp->window, *gp->glx_context);
+   if (glIsList(gp->listobjects)) glDeleteLists(gp->listobjects, 3);
+   for (i=0;i<gp->bman.num_balls;i++)
+     if (gp->bman.balls[i].bounced) freetris(&gp->tman[i]);
+   glDeleteLists (gp->gllists[0], 1);
+   glDeleteLists (gp->gllists[1], 1);
+   glDeleteLists (gp->gllists[2], 1);
+   free (gp->bman.balls);
+   free (gp->tman);
+   free (gp->tex1);
 }
 
 

@@ -747,7 +747,7 @@ draw_crumbler (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   tick_crumbler (mi);
 
@@ -861,12 +861,14 @@ free_crumbler (ModeInfo *mi)
 {
   crumbler_configuration *bp = &bps[MI_SCREEN(mi)];
   int i;
-  free (bp->trackball);
-  free (bp->rot);
-  free (bp->colors);
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->colors) free (bp->colors);
   for (i = 0; i < bp->nchunks; i++)
     free_chunk (bp->chunks[i]);
-  free (bp->chunks);
+  if (bp->chunks) free (bp->chunks);
 }
 
 

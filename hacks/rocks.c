@@ -505,6 +505,17 @@ rocks_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 rocks_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  int i;
+  for (i = 0; i < MAX_SIZE; i++)
+    if (st->pixmaps[i]) XFreePixmap (dpy, st->pixmaps[i]);
+  for (i = 0; i < st->ncolors; i++)
+    if (st->draw_gcs[i]) XFreeGC (dpy, st->draw_gcs[i]);
+  XFreeGC (dpy, st->erase_gc);
+  free (st->colors);
+  free (st->rocks);
+  free (st->draw_gcs);
+  free (st);
 }
 
 

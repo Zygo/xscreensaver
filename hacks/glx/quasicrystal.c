@@ -24,7 +24,6 @@
 			"*wireframe:    False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_quasicrystal 0
 # define release_quasicrystal 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -308,7 +307,7 @@ draw_quasicrystal (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -471,6 +470,24 @@ draw_quasicrystal (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_quasicrystal (ModeInfo *mi)
+{
+  quasicrystal_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  for (i = 0; i < bp->count; i++) {
+    free_rotator (bp->planes[i].rot);
+    free_rotator (bp->planes[i].rot2);
+    if (bp->planes[i].texid) glDeleteTextures (1, &bp->planes[i].texid);
+  }    
+  if (bp->planes) free (bp->planes);
+  if (bp->colors) free (bp->colors);
+
 }
 
 XSCREENSAVER_MODULE ("QuasiCrystal", quasicrystal)

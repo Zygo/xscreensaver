@@ -1563,6 +1563,17 @@ static void
 speedmine_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
+  XFreeGC (dpy, st->tunnelend_gc);
+  XFreeGC (dpy, st->stars_gc);
+  XFreeGC (dpy, st->stars_erase_gc);
+  for (i = 0; i < MAX_COLORS; i++) {
+      if (st->ground_gcs[i]) XFreeGC (dpy, (st->ground_gcs[i]));
+      if (st->wall_gcs[i]) XFreeGC (dpy, (st->wall_gcs[i]));
+      if (st->bonus_gcs[i]) XFreeGC (dpy, (st->bonus_gcs[i]));
+  }
   free (st);
 }
 

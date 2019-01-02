@@ -22,7 +22,6 @@
 	"*titleFont2: -*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*\n" \
 	"*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
 
-# define free_tangram 0
 # define release_tangram 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -967,7 +966,7 @@ ENTRYPOINT void draw_tangram(ModeInfo * mi)
 
     if (! tp->glx_context)
       return;
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tp->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tp->glx_context);
 
     ls[small_triangle1] = &tp->tsm1;
     ls[small_triangle2] = &tp->tsm2;
@@ -1060,7 +1059,16 @@ tangram_handle_event (ModeInfo *mi, XEvent *event)
   return False;
 }
 
-
+ENTRYPOINT void
+free_tangram (ModeInfo *mi)
+{
+  tangram_configuration *tp = &tps[MI_SCREEN(mi)];
+  if (!tp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tp->glx_context);
+  if (tp->font1_data) free_texture_font (tp->font1_data);
+  if (tp->font2_data) free_texture_font (tp->font2_data);
+  if (tp->font3_data) free_texture_font (tp->font3_data);
+}
 
 XSCREENSAVER_MODULE ("Tangram", tangram)
 

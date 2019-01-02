@@ -329,7 +329,7 @@ analogtv_configure(analogtv *it)
   wlim = it->xgwa.width;
   ratio = wlim / (float) hlim;
 
-#ifdef HAVE_MOBILE
+#if defined(HAVE_MOBILE) || defined(NO_CONSTRAIN_RATIO)
   /* Fill the whole iPhone screen, even though that distorts the image. */
   min_ratio = 0;
   max_ratio = 10;
@@ -1002,7 +1002,7 @@ analogtv_setup_sync(analogtv_input *input, int do_cb, int do_ssavi)
 
     if (do_cb) {
       /* 9 cycles of colorburst */
-      for (i=ANALOGTV_CB_START; i<ANALOGTV_CB_START+36; i+=4) {
+      for (i=ANALOGTV_CB_START; i<ANALOGTV_CB_START+36*ANALOGTV_SCALE; i+=4*ANALOGTV_SCALE) {
         sig[i+1] += ANALOGTV_CB_LEVEL;
         sig[i+3] -= ANALOGTV_CB_LEVEL;
       }
@@ -1022,11 +1022,11 @@ analogtv_sync(analogtv *it)
   float cbfc=1.0f/128.0f;
 
 /*  sp = it->rx_signal + lineno*ANALOGTV_H + cur_hsync;*/
-  for (i=-32; i<32; i++) {
+  for (i=-32*ANALOGTV_SCALE; i<32*ANALOGTV_SCALE; i++) {
     lineno = (cur_vsync + i + ANALOGTV_V) % ANALOGTV_V;
     sp = it->rx_signal + lineno*ANALOGTV_H;
     filt=0.0f;
-    for (j=0; j<ANALOGTV_H; j+=ANALOGTV_H/16) {
+    for (j=0; j<ANALOGTV_H; j+=ANALOGTV_H/(16*ANALOGTV_SCALE)) {
       filt += sp[j];
     }
     filt *= it->agclevel;
@@ -1039,11 +1039,11 @@ analogtv_sync(analogtv *it)
 
   for (lineno=0; lineno<ANALOGTV_V; lineno++) {
 
-    if (lineno>5 && lineno<ANALOGTV_V-3) { /* ignore vsync interval */
+    if (lineno>5*ANALOGTV_SCALE && lineno<ANALOGTV_V-3*ANALOGTV_SCALE) { /* ignore vsync interval */
       unsigned lineno2 = (lineno + cur_vsync + ANALOGTV_V)%ANALOGTV_V;
       if (!lineno2) lineno2 = ANALOGTV_V;
       sp = it->rx_signal + lineno2*ANALOGTV_H + cur_hsync;
-      for (i=-8; i<8; i++) {
+      for (i=-8*ANALOGTV_SCALE; i<8*ANALOGTV_SCALE; i++) {
         osc = (float)(ANALOGTV_H+i)/(float)ANALOGTV_H;
         filt=(sp[i-3]+sp[i-2]+sp[i-1]+sp[i]) * it->agclevel;
 
@@ -1061,9 +1061,9 @@ analogtv_sync(analogtv *it)
        cycles.
     */
 
-    if (lineno>15) {
+    if (lineno>15*ANALOGTV_SCALE) {
       sp = it->rx_signal + lineno*ANALOGTV_H + (cur_hsync&~3);
-      for (i=ANALOGTV_CB_START+8; i<ANALOGTV_CB_START+36-8; i++) {
+      for (i=ANALOGTV_CB_START+8*ANALOGTV_SCALE; i<ANALOGTV_CB_START+(36-8)*ANALOGTV_SCALE; i++) {
         it->cb_phase[i&3] = it->cb_phase[i&3]*(1.0f-cbfc) +
           sp[i]*it->agclevel*cbfc;
       }
@@ -2009,7 +2009,7 @@ analogtv_load_ximage(analogtv *it, analogtv_input *input,
   unsigned long black = 0; /* not BlackPixelOfScreen (it->xgwa.screen); */
 
   int x_length=ANALOGTV_PIC_LEN;
-  int y_overscan=5; /* overscan this much top and bottom */
+  int y_overscan=5*ANALOGTV_SCALE; /* overscan this much top and bottom */
   int y_scanlength=ANALOGTV_VISLINES+2*y_overscan;
 
   if (target_w > 0) x_length     = x_length     * target_w / it->xgwa.width;
@@ -2297,8 +2297,8 @@ analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
                                       f->text_im->bytes_per_line);
 
   }
-  f->x_mult=4;
-  f->y_mult=2;
+  f->x_mult=4 * ANALOGTV_SCALE;
+  f->y_mult=2 * ANALOGTV_SCALE;
 }
 
 int
@@ -2415,7 +2415,7 @@ analogtv_draw_string(analogtv_input *input, analogtv_font *f,
 {
   while (*s) {
     analogtv_draw_char(input, f, *s, x, y, ntsc);
-    x += f->char_w * 4;
+    x += f->char_w * f->x_mult;
     s++;
   }
 }
@@ -2424,7 +2424,7 @@ void
 analogtv_draw_string_centered(analogtv_input *input, analogtv_font *f,
                               char *s, int x, int y, int ntsc[4])
 {
-  int width=strlen(s) * f->char_w * 4;
+  int width=strlen(s) * f->char_w * f->x_mult;
   x -= width/2;
 
   analogtv_draw_string(input, f, s, x, y, ntsc);

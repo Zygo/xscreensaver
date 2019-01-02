@@ -19,7 +19,6 @@
 			    "*showFPS: False   \n" \
                             "*useSHM:  True    \n"
 
-# define free_antspotlight 0
 # define release_antspotlight 0
 #include "xlockmore.h"
 #else
@@ -750,7 +749,7 @@ ENTRYPOINT void draw_antspotlight(ModeInfo * mi)
   /* Just keep running before the texture has come in. */
   /* if (mp->waiting_for_image_p) return; */
 
-  glXMakeCurrent(display, window, *(mp->glx_context));
+  glXMakeCurrent(display, window, *mp->glx_context);
   
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
@@ -791,9 +790,19 @@ ENTRYPOINT void change_antspotlight(ModeInfo * mi)
   if (!mp->glx_context)
 	return;
   
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
   pinit();
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void free_antspotlight(ModeInfo * mi)
+{
+  antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
+  if (!mp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
+  gltrackball_free (mp->trackball);
+  free_rotator (mp->rot);
+  if (mp->screentexture) glDeleteTextures (1, &mp->screentexture);
+}
 
 XSCREENSAVER_MODULE ("AntSpotlight", antspotlight)

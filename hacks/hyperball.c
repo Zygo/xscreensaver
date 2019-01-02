@@ -548,6 +548,11 @@ static void
 hyperball_free (Display *dpy, Window window, void *closure)
 {
   struct hyper_state *hs = (struct hyper_state *) closure;
+  int i, j;
+  XFreeGC (dpy, hs->black_gc);
+  for (i = 0; i < 8; i++)
+    for (j = 0; j < 8; j++)
+      if (hs->hs_color_gcs[i][j]) XFreeGC (dpy, hs->hs_color_gcs[i][j]);
   free (hs);
 }
 

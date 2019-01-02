@@ -16,7 +16,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-# define free_hoop 0
 # define release_hoop 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -715,7 +714,7 @@ draw_hoop (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -760,6 +759,31 @@ draw_hoop (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_hoop (ModeInfo *mi)
+{
+  hoop_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->lights) free (bp->lights);
+  while (bp->trail) {
+    afterimage *n = bp->trail->next;
+    free (bp->trail);
+    bp->trail = n;
+  }
+  while (bp->oscillators) {
+    oscillator *n = bp->oscillators->next;
+    free (bp->oscillators);
+    bp->oscillators = n;
+  }
+  
 }
 
 XSCREENSAVER_MODULE_2 ("RaverHoop", raverhoop, hoop)

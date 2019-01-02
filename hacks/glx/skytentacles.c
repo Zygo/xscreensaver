@@ -14,7 +14,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-# define free_tentacles 0
 # define release_tentacles 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -90,7 +89,6 @@ typedef struct {
   GLuint texid;
 
   Bool left_p;
-  
 
 } tentacles_configuration;
 
@@ -994,7 +992,7 @@ draw_tentacles (ModeInfo *mi)
   if (!tc->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(tc->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tc->glx_context);
 
   glShadeModel(GL_SMOOTH);
 
@@ -1096,6 +1094,30 @@ draw_tentacles (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_tentacles (ModeInfo *mi)
+{
+  tentacles_configuration *tc = &tcs[MI_SCREEN(mi)];
+  int i, j;
+
+  if (!tc->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tc->glx_context);
+
+  for (i = 0; i < tc->ntentacles; i++) {
+    for (j = 0; j < tc->tentacles[i]->nsegments; j++)
+      free_rotator (tc->tentacles[i]->segments[j].rot);
+    free (tc->tentacles[i]->segments);
+    free (tc->tentacles[i]);
+  }
+  if (tc->tentacles) free (tc->tentacles);
+  if (tc->torus_points) free (tc->torus_points);
+  if (tc->torus_normals) free (tc->torus_normals);
+  if (tc->texture) XDestroyImage (tc->texture);
+  if (tc->trackball) gltrackball_free (tc->trackball);
+  if (tc->texid) glDeleteTextures (1, &tc->texid);
 }
 
 XSCREENSAVER_MODULE_2 ("SkyTentacles", skytentacles, tentacles)

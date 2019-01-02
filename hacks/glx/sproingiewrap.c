@@ -181,7 +181,7 @@ draw_sproingies (ModeInfo * mi)
 		return;
 
 	glDrawBuffer(GL_BACK);
-	glXMakeCurrent(display, window, *(sp->glx_context));
+	glXMakeCurrent(display, window, *sp->glx_context);
 
     glPushMatrix();
     glRotatef(current_device_rotation(), 0, 0, 1);
@@ -216,12 +216,9 @@ ENTRYPOINT void
 free_sproingies (ModeInfo * mi)
 {
 	sproingiesstruct *sp = &sproingies[MI_SCREEN(mi)];
-
-	if (sp->glx_context) {
-
-		glXMakeCurrent(MI_DISPLAY(mi), sp->window, *(sp->glx_context));
-		CleanupSproingies(&sp->si);
-	}
+    if (!sp->glx_context) return;
+	glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *sp->glx_context);
+    CleanupSproingies(&sp->si);
 }
 
 XSCREENSAVER_MODULE ("Sproingies", sproingies)

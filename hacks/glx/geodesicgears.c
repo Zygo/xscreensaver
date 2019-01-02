@@ -1325,7 +1325,7 @@ reshape_geodesic (ModeInfo *mi, int width, int height)
     h = height / (GLfloat) width;
   }
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glViewport (0, y, (GLint) width, (GLint) height);
 
@@ -1527,7 +1527,7 @@ draw_geodesic (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
 
   if (bp->draw_time == 0)
@@ -1790,11 +1790,13 @@ free_geodesic (ModeInfo *mi)
   geodesic_configuration *bp = &bps[MI_SCREEN(mi)];
   if (!bp->glx_context)
     return;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
-  free_texture_font (bp->font);
-  free (bp->colors);
-  free_sphere_gears (mi);
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->font) free_texture_font (bp->font);
+  if (bp->colors) free (bp->colors);
+  if (mi) free_sphere_gears (mi);
   if (bp->desc) free (bp->desc);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
 }
 
 

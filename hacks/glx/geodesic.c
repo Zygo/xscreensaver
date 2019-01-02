@@ -14,7 +14,6 @@
 			"*showFPS:      False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_geodesic 0
 # define release_geodesic 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -625,7 +624,7 @@ draw_geodesic (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   if (! wire)
     glShadeModel(GL_SMOOTH);
@@ -809,6 +808,18 @@ draw_geodesic (ModeInfo *mi)
           bp->thickdelta = fabs (bp->thickdelta);
         }
     }
+}
+
+
+ENTRYPOINT void
+free_geodesic (ModeInfo *mi)
+{
+  geodesic_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->colors) free (bp->colors);
 }
 
 XSCREENSAVER_MODULE ("Geodesic", geodesic)

@@ -437,6 +437,7 @@ init_trace (m_state *state)
   if (!s)
     goto FAIL;
 
+  if (state->tracing) free (state->tracing);
   state->tracing = (signed char *) malloc (strlen (s) + 1);
   s3 = state->tracing;
 
@@ -450,6 +451,7 @@ init_trace (m_state *state)
 
   state->glyph_map = decimal_encoding;
   state->nglyphs = countof(decimal_encoding);
+  free (s);
 
   return;
 
@@ -580,7 +582,7 @@ xmatrix_init (Display *dpy, Window window)
 
   state->small_p = (state->xgwa.width < 300);
   {
-    const char *s = get_string_resource (dpy, "matrixFont", "String");
+    char *s = get_string_resource (dpy, "matrixFont", "String");
     if (!s || !*s || !strcasecmp(s, "large"))
       state->small_p = False;
     else if (!strcasecmp(s, "small"))
@@ -588,6 +590,7 @@ xmatrix_init (Display *dpy, Window window)
     else
       fprintf (stderr, "%s: matrixFont should be 'small' or 'large' not '%s'\n",
                progname, s);
+    if (s) free (s);
   }
 
   load_images (dpy, state);
@@ -733,6 +736,7 @@ xmatrix_init (Display *dpy, Window window)
       fprintf (stderr, "not `%s'\n", mode);
       set_mode (state, MATRIX);
     }
+  if (mode) free (mode);
 
   if (state->mode == MATRIX && get_boolean_resource (dpy, "trace", "Boolean"))
     set_mode (state, ((random() % 3) ? TRACE_TEXT_A : TRACE_TEXT_B));
@@ -1795,13 +1799,20 @@ static void
 xmatrix_free (Display *dpy, Window window, void *closure)
 {
   m_state *state = (m_state *) closure;
+  int i;
   if (state->tc)
     textclient_close (state->tc);
   if (state->cursor_timer)
     XtRemoveTimeOut (state->cursor_timer);
-
-  /* #### there's more to free here */
-
+  XFreeGC (dpy, state->draw_gc);
+  XFreeGC (dpy, state->erase_gc);
+  XFreeGC (dpy, state->scratch_gc);
+  free (state->cells);
+  free (state->background);
+  free (state->feeders);
+  if (state->tracing) free (state->tracing);
+  for (i = 0; i < CHAR_MAPS; i++)
+    if (state->images[i]) XFreePixmap (dpy, state->images[i]);
   free (state);
 }
 

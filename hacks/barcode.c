@@ -391,14 +391,12 @@ static void bitmapClear (Bitmap *b)
     memset (b->buf, 0, b->widthBytes * b->height);
 }
 
-#if 0
 /* free a bitmap */
 static void bitmapFree (Bitmap *b)
 {
     free (b->buf);
     free (b);
 }
-#endif
 
 
 /* get the byte value at the given byte-offset coordinates in the given
@@ -1913,6 +1911,16 @@ barcode_reshape (Display *dpy, Window window, void *closure,
 static void
 barcode_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  int i;
+  XFreeGC (dpy, st->theGC);
+  st->theImage->data = 0;
+  XDestroyImage (st->theImage);
+  bitmapFree (st->theBitmap);
+  for (i = 0; i < st->barcode_max; i++)
+    bitmapFree (st->barcodes[i].bitmap);
+  free (st->barcodes);
+  free (st);
 }
 
 

@@ -1460,7 +1460,7 @@ rotateFace(rubikstruct * rp, int face, int direction)
 		/* DrawSquare(face, position); */
 	}
 	if (faceLoc != NULL)
-		(void) free((void *) faceLoc);
+		free(faceLoc);
 	return True;
 }
 
@@ -1728,7 +1728,7 @@ shuffle(ModeInfo * mi)
 
 	for (face = 0; face < MAXFACES; face++) {
 		if (rp->cubeLoc[face] != NULL)
-			(void) free((void *) rp->cubeLoc[face]);
+			free(rp->cubeLoc[face]);
 		if ((rp->cubeLoc[face] = (RubikLoc *) malloc(sizeFace(rp, face) *
 				sizeof (RubikLoc))) == NULL) {
 			return False;
@@ -1740,7 +1740,7 @@ shuffle(ModeInfo * mi)
 	}
 	for (i = 0; i < MAXORIENT; i++) {
 		if (rp->rowLoc[i] != NULL)
-			(void) free((void *) rp->rowLoc[i]);
+			free(rp->rowLoc[i]);
 		/* The following is reused so make it the biggest size */
 		if ((rp->rowLoc[i] = (RubikLoc *) malloc(MAXMAXSIZE *
 				sizeof (RubikLoc))) == NULL) {
@@ -1750,7 +1750,7 @@ shuffle(ModeInfo * mi)
 	rp->storedmoves = MI_COUNT(mi);
 	if (rp->storedmoves < 0) {
 		if (rp->moves != NULL)
-			(void) free((void *) rp->moves);
+			free(rp->moves);
 		rp->moves = (RubikMove *) NULL;
 		rp->storedmoves = NRAND(-rp->storedmoves) + 1;
 	}
@@ -1880,18 +1880,23 @@ free_rubik(ModeInfo *mi)
 	rubikstruct *rp = &rubik[MI_SCREEN(mi)];
 	int         i;
 
+    if (!rp->glx_context) return;
+	glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *rp->glx_context);
+
+    if (rp->trackball) gltrackball_free (rp->trackball);
+
 	for (i = 0; i < MAXFACES; i++)
 		if (rp->cubeLoc[i] != NULL) {
-			(void) free((void *) rp->cubeLoc[i]);
+			free(rp->cubeLoc[i]);
 			rp->cubeLoc[i] = (RubikLoc *) NULL;
 		}
 	for (i = 0; i < MAXORIENT; i++)
 		if (rp->rowLoc[i] != NULL) {
-			(void) free((void *) rp->rowLoc[i]);
+			free(rp->rowLoc[i]);
 			rp->rowLoc[i] = (RubikLoc *) NULL;
 		}
 	if (rp->moves != NULL) {
-		(void) free((void *) rp->moves);
+		free(rp->moves);
 		rp->moves = (RubikMove *) NULL;
 	}
 }
@@ -1945,7 +1950,7 @@ draw_rubik(ModeInfo * mi)
 		return;
 
     mi->polygon_count = 0;
-	glXMakeCurrent(display, window, *(rp->glx_context));
+	glXMakeCurrent(display, window, *rp->glx_context);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

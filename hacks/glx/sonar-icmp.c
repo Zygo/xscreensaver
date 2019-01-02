@@ -758,7 +758,9 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
                      mask_width (mask),
                      mask);
           if (in2.s_addr == 0x0100007f ||   /* 127.0.0.1 in network order */
+              ((in2.s_addr & 0x000000ff) == 0x7f) ||  /* 127.0.0.0/24 */
               mask == 0)
+            /* Assume all 127 addresses are loopback, not just 127.0.0.1. */
             continue;
 
           /* At least on the AT&T 3G network, pinging either of the two
@@ -780,6 +782,10 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
 
           in = in2;
           subnet_width = mask_width (mask);
+
+          /* Take the first non-loopback network: prefer en0 over en1. */
+          if (in.s_addr && subnet_width)
+            break;
         }
 
       if (in.s_addr)
@@ -980,6 +986,8 @@ send_ping (ping_data *pd, const sonar_bogie *b)
       perror(buf);
 #endif
     }
+
+  free (packet);
 }
 
 /* signal handler */

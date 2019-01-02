@@ -382,6 +382,11 @@ cloudlife_event (Display *dpy, Window window, void *closure, XEvent *event)
     {
       XClearWindow (dpy, window);
       st->cycles = 0;
+      if (st->field) {
+        free (st->field->cells);
+        free (st->field->new_cells);
+        free (st->field);
+      }
       st->field = init_field(st);
       return True;
     }
@@ -392,6 +397,12 @@ static void
 cloudlife_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  free (st->field->cells);
+  free (st->field->new_cells);
+  free (st->field);
+  free (st->colors);
+  XFreeGC (dpy, st->fgc);
+  XFreeGC (dpy, st->bgc);
   free (st);
 }
 

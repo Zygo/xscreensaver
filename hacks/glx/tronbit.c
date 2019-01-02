@@ -14,7 +14,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n"
 
-# define free_bit 0
 # define release_bit 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -456,7 +455,7 @@ draw_bit (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -529,6 +528,23 @@ draw_bit (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_bit (ModeInfo *mi)
+{
+  bit_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  for (i = 0; i < countof(bp->dlists); i++)
+    if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+
 }
 
 XSCREENSAVER_MODULE_2 ("TronBit", tronbit, bit)

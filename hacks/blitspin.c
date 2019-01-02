@@ -256,11 +256,13 @@ blitspin_init (Display *d_arg, Window w_arg)
 
   bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
   if (! bitmap_name || !*bitmap_name)
-    bitmap_name = "(default)";
+    bitmap_name = strdup ("(default)");
 
   if (!strcasecmp (bitmap_name, "(default)") ||
-      !strcasecmp (bitmap_name, "default"))
-    bitmap_name = "(screen)";
+      !strcasecmp (bitmap_name, "default")) {
+    free (bitmap_name);
+    bitmap_name = strdup ("(screen)");
+  }
 
   if (!strcasecmp (bitmap_name, "(builtin)") ||
       !strcasecmp (bitmap_name, "builtin"))
@@ -309,6 +311,7 @@ blitspin_init (Display *d_arg, Window w_arg)
       blitspin_init_2 (st);
     }
 
+  if (bitmap_name) free (bitmap_name);
   return st;
 }
 
@@ -421,6 +424,18 @@ blitspin_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 blitspin_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+# ifdef USE_XCOPYAREA
+  if (st->gc_set) XFreeGC (dpy, st->gc_set);
+  if (st->gc_clear) XFreeGC (dpy, st->gc_clear);
+  if (st->gc_copy) XFreeGC (dpy, st->gc_copy);
+  if (st->gc_and) XFreeGC (dpy, st->gc_and);
+  if (st->gc_or) XFreeGC (dpy, st->gc_or);
+  if (st->gc_xor) XFreeGC (dpy, st->gc_xor);
+# endif
+  if (st->gc) XFreeGC (dpy, st->gc);
+  XFreePixmap (dpy, st->bitmap);
+  free (st);
 }
 
 

@@ -253,6 +253,12 @@ static void
 squiral_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->worms) free (st->worms);
+  if (st->fill) free (st->fill);
+/*  if (st->ncolors)
+    free_colors (st->xgwa.screen, st->xgwa.cmap, st->colors, st->ncolors); */
+  XFreeGC (dpy, st->draw_gc);
+  XFreeGC (dpy, st->erase_gc);
   free (st);
 }
 

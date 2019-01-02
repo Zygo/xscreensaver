@@ -281,15 +281,13 @@ static void moveColorChanger( color_changer * ch )
 
 }
 
-#if 0
-static void destroyColorChanger( color_changer * ch )
+static void destroyColorChanger( struct state *st, color_changer * ch )
 {
 	int q;
 	for ( q = 0; q < ch->max; q++ )
-		XFreeColors( st->dpy, *cmap, &( ch->shade[q].pixel ), 1, 0 );
+		XFreeColors( st->dpy, st->cmap, &( ch->shade[q].pixel ), 1, 0 );
 	free( ch->shade );
 }
-#endif
 
 static void resizeWormhole( struct state *st, wormhole * worm )
 {
@@ -353,21 +351,26 @@ static void initWormhole( struct state *st, wormhole * worm, Display * display, 
 	initColorChanger( st, &(worm->changer) );
 
 	worm->num_stars = 64;
-	worm->stars = (starline **)malloc( sizeof(starline *) * worm->num_stars );
-	for ( i = 0; i < worm->num_stars; i++ )
+	worm->stars = (starline **)calloc(sizeof(starline *), worm->num_stars);
+	for ( i = 0; i < worm->num_stars; i++ ) {
+          if (worm->stars[i]) free (worm->stars[i]);
 		worm->stars[i] = NULL;
+        }
 
 }
 
-#if 0
-static void destroyWormhole( wormhole * worm )
+static void destroyWormhole( struct state *st, wormhole * worm )
 {
-	destroyColorChanger( &(worm->changer), st->dpy, cmap );
-        if (work->work != st->window)
+        int i;
+	destroyColorChanger( st, &(worm->changer));
+        if (worm->work != st->window) {
           XFreePixmap( st->dpy, worm->work );
-	free( worm->stars );
+          worm->work = 0;
+        }
+	for (i = 0; i < worm->num_stars; i++)
+          if (worm->stars[i]) free(worm->stars[i]);
+	free(worm->stars);
 }
-#endif
 
 static double Cos( int a )
 {
@@ -696,6 +699,8 @@ static void
 wormhole_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  destroyWormhole (st, &st->worm);
+  XFreeGC (dpy, st->gc);
   free (st);
 }
 

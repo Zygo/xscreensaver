@@ -16,7 +16,6 @@
 			"*wireframe:	False		 \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_ball 0
 # define release_ball 0
 # define ball_handle_event xlockmore_no_events
 #undef countof
@@ -383,11 +382,11 @@ init_ball (ModeInfo *mi)
 #define SPHERE_SLICES 12  /* how densely to render spheres */
 #define SPHERE_STACKS 16
 
-  bp->sp = malloc(sizeof(*bp->sp));
+/*  bp->sp = malloc(sizeof(*bp->sp));
   if(bp->sp == NULL){
     fprintf(stderr,"Could not allocate memory\n");
     exit(1);
-  }
+  }*/
   if( (bp->bscale.wh < 1) ||
       (bp->bscale.wh > 8) ) {
     fprintf(stderr,"Boxsize out of range. Using default\n");
@@ -449,7 +448,7 @@ draw_ball (ModeInfo *mi)
    if (! bp->glx_context)
      return;
    mi->polygon_count = 0;
-   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -601,6 +600,16 @@ draw_ball (ModeInfo *mi)
    glFinish();
    glXSwapBuffers(dpy, window);
 
+}
+
+ENTRYPOINT void
+free_ball (ModeInfo *mi)
+{
+   blinkboxstruct *bp = &blinkbox[MI_SCREEN(mi)];
+   if (!bp->glx_context) return;
+   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+   if (glIsList(bp->ballList)) glDeleteLists(bp->ballList, 1);
+   if (glIsList(bp->boxList))  glDeleteLists(bp->boxList, 1);
 }
 
 XSCREENSAVER_MODULE_2 ("BlinkBox", blinkbox, ball)

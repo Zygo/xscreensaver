@@ -885,6 +885,9 @@ free_fire(ModeInfo * mi)
 {
 	firestruct *fs = &fire[MI_SCREEN(mi)];
 
+    if (!fs->glx_context) return;
+    glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *fs->glx_context);
+
 	if (mode_font != None && fs->fontbase != None) {
 		glDeleteLists(fs->fontbase, mode_font->max_char_or_byte2 -
 			mode_font->min_char_or_byte2 + 1);
@@ -892,15 +895,15 @@ free_fire(ModeInfo * mi)
 	}
 
 	if (fs->p != NULL) {
-		(void) free((void *) fs->p);
+		free(fs->p);
 		fs->p = (part *) NULL;
 	}
 	if (fs->r != NULL) {
-		(void) free((void *) fs->r);
+		free(fs->r);
 		fs->r = (rain *) NULL;
 	}
 	if (fs->treepos != NULL) {
-		(void) free((void *) fs->treepos);
+		free(fs->treepos);
 		fs->treepos = (treestruct *) NULL;
 	}
 	if (fs->ttexture != None) {
@@ -913,6 +916,8 @@ free_fire(ModeInfo * mi)
 		XDestroyImage(fs->gtexture);
 		fs->gtexture = None;
 	}
+
+    if (fs->trackball) gltrackball_free (fs->trackball);
 }
 
 /*
@@ -989,7 +994,7 @@ ENTRYPOINT void draw_fire(ModeInfo * mi)
     if (!fs->glx_context)
 	return;
 
-    glXMakeCurrent(display, window, *(fs->glx_context));
+    glXMakeCurrent(display, window, *fs->glx_context);
 
     glShadeModel(GL_FLAT);
     glEnable(GL_DEPTH_TEST);
@@ -1064,7 +1069,7 @@ ENTRYPOINT void change_fire(ModeInfo * mi)
     if (!fs->glx_context)
 	return;
 
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(fs->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *fs->glx_context);
 
     /* if available, randomly change some values */
     if (do_fog)

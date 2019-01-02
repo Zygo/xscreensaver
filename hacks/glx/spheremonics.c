@@ -66,7 +66,6 @@
 		 "*suppressRotationAnimation: True\n" \
 	 "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n"
 
-# define free_spheremonics 0
 # define release_spheremonics 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -796,7 +795,7 @@ draw_spheremonics (ModeInfo *mi)
   if (!cc->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cc->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cc->glx_context);
 
   gl_init(mi);
 
@@ -875,6 +874,21 @@ draw_spheremonics (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_spheremonics (ModeInfo *mi)
+{
+  spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
+  if (!cc->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cc->glx_context);
+  if (cc->colors) free (cc->colors);
+  if (cc->trackball) gltrackball_free (cc->trackball);
+  if (cc->rot) free_rotator (cc->rot);
+  if (cc->font_data) free_texture_font (cc->font_data);
+  if (glIsList(cc->dlist)) glDeleteLists(cc->dlist, 1);
+  if (glIsList(cc->dlist2)) glDeleteLists(cc->dlist2, 1);
 }
 
 XSCREENSAVER_MODULE ("Spheremonics", spheremonics)

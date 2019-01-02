@@ -58,7 +58,6 @@ static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
 						"*count: 		0		\n"		\
 						"*suppressRotationAnimation: True\n" \
 
-# define free_morph3d 0
 # define release_morph3d 0
 # define morph3d_handle_event xlockmore_no_events
 # include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -760,7 +759,7 @@ draw_morph3d(ModeInfo * mi)
 		return;
 
     mi->polygon_count = 0;
-	glXMakeCurrent(display, window, *(mp->glx_context));
+	glXMakeCurrent(display, window, *mp->glx_context);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -831,6 +830,12 @@ change_morph3d(ModeInfo * mi)
 	pinit(mi);
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void
+free_morph3d(ModeInfo * mi)
+{
+  /* nothing to do */
+}
 
 #endif
 

@@ -446,6 +446,7 @@ rd_init (Display *dpy, Window win)
           ok = True;
       if (!ok)
         st->pdepth = 16;
+      free (pfv);
     }
 
   st->cmap = st->xgwa.colormap;
@@ -544,6 +545,16 @@ rd_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 rd_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  free (st->r1);
+  free (st->r2);
+  free (st->r1b);
+  free (st->r2b);
+  free (st->colors);
+  free (st->mc);
+  XFreeGC (dpy, st->gc);
+  destroy_xshm_image (dpy, st->image, &st->shm_info);
+  free (st);
 }
 
 XSCREENSAVER_MODULE_2 ("RDbomb", rdbomb, rd)

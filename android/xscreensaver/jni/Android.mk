@@ -73,6 +73,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/gllist.c \
     hacks/glx/glschool_alg.c \
     hacks/glx/glschool_gl.c \
+    hacks/glx/handsy_model.c \
     hacks/glx/involute.c \
     hacks/glx/lament_model.c \
     hacks/glx/pipeobjs.c \

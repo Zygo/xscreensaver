@@ -70,7 +70,6 @@
 			"*geometry:	600x900\n"      \
 			"*count:      " DEF_COUNT " \n" \
 
-# define free_lavalite 0
 # define release_lavalite 0
 
 
@@ -1423,7 +1422,7 @@ draw_lavalite (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glMatrixMode (GL_MODELVIEW);
   glPushMatrix ();
@@ -1532,6 +1531,21 @@ draw_lavalite (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_lavalite (ModeInfo *mi)
+{
+  lavalite_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->balls) free (bp->balls);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->rot2) free_rotator (bp->rot2);
+  if (glIsList(bp->bottle_list)) glDeleteLists(bp->bottle_list, 1);
+  if (glIsList(bp->ball_list)) glDeleteLists(bp->ball_list, 1);
 }
 
 XSCREENSAVER_MODULE ("Lavalite", lavalite)

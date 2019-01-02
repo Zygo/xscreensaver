@@ -788,6 +788,11 @@ init_ripples(struct state *st, int ndrops, int splash)
 {
   int i;
 
+  if (st->bufferA) free (st->bufferA);
+  if (st->bufferB) free (st->bufferB);
+  if (st->temp) free (st->temp);
+  if (st->dirty_buffer) free (st->dirty_buffer);
+
   st->bufferA = (short *)calloc(st->width * st->height, sizeof(*st->bufferA));
   st->bufferB = (short *)calloc(st->width * st->height, sizeof(*st->bufferB));
   st->temp = (short *)calloc(st->width * st->height, sizeof(*st->temp));
@@ -1008,6 +1013,7 @@ ripples_draw (Display *dpy, Window window, void *closure)
         XWindowAttributes xgwa;
         XGetWindowAttributes(st->dpy, st->window, &xgwa);
         st->start_time = time ((time_t *) 0);
+        if (st->orig_map) XDestroyImage (st->orig_map);
         st->orig_map = XGetImage (st->dpy, st->window, 0, 0, 
                                   xgwa.width, xgwa.height,
                                   ~0L, ZPixmap);
@@ -1064,6 +1070,13 @@ static void
 ripples_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  if (st->bufferA) free (st->bufferA);
+  if (st->bufferB) free (st->bufferB);
+  if (st->temp) free (st->temp);
+  if (st->dirty_buffer) free (st->dirty_buffer);
+  if (st->orig_map) XDestroyImage (st->orig_map);
+  if (st->buffer_map) destroy_xshm_image (dpy, st->buffer_map, &st->shm_info);
+  XFreeGC (dpy, st->gc);
   free (st);
 }
 

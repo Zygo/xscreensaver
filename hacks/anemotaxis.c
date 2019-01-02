@@ -722,6 +722,9 @@ anemotaxis_free (Display *dpy, Window window, void *closure)
       if (st->searcher[i]) destroy_searcher (st->searcher[i]);
     free (st->searcher);
   }
+  XFreeGC (dpy, st->gcDraw);
+  XFreeGC (dpy, st->gcClear);
+  free (st->colors);
   free (st);
 }
 

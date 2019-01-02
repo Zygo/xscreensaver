@@ -22,7 +22,6 @@
 			"*lensColor:    #000000"   "\n" \
 			"*groundColor:  #004400"   "\n" \
 
-# define free_camera 0
 # define release_camera 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -210,6 +209,7 @@ parse_color (ModeInfo *mi, char *key, GLfloat color[4])
                key, string);
       exit (1);
     }
+  free (string);
 
   color[0] = xcolor.red   / 65536.0;
   color[1] = xcolor.green / 65536.0;
@@ -1053,7 +1053,7 @@ draw_camera (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1143,6 +1143,32 @@ draw_camera (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_camera (ModeInfo *mi)
+{
+  camera_configuration *bp = &bps[MI_SCREEN(mi)];
+  pedestrian *p;
+  int i;
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->user_trackball) gltrackball_free (bp->user_trackball);
+  if (bp->cameras) free (bp->cameras);
+  p = bp->pedestrians;
+  while (p) {
+    pedestrian *p2 = p->next;
+    free (p);
+    p = p2;
+  }
+  if (bp->dlists) {
+    for (i = 0; i < countof(all_objs); i++)
+      if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+    free (bp->dlists);
+  }
 }
 
 XSCREENSAVER_MODULE_2 ("Vigilance", vigilance, camera)

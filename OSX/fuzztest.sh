@@ -33,6 +33,8 @@ function menu() {
      end tell
     end tell
    end tell"
+
+   open -a XEmacs # switch focus back to somewhere sane
 }
 
 menu 'Shake Gesture'

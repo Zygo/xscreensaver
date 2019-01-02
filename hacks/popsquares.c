@@ -265,6 +265,9 @@ static void
 popsquares_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
+  free (st->colors);
+  free (st->squares);
   free (st);
 }
 

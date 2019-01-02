@@ -905,6 +905,9 @@ static int create_list( State *st, double fac )
   glNormalPointer( GL_FLOAT, 0, vertex_array->normal );
   glDrawElements( GL_TRIANGLES, vertex_array->num_index, 
                   GL_UNSIGNED_INT, vertex_array->index );
+  free (vertex_array->vertex);
+  free (vertex_array->normal);
+  free (vertex_array->index);
   free( vertex_array );
 #else
   glBegin( GL_TRIANGLES );
@@ -1349,8 +1352,7 @@ draw_glcells( ModeInfo *mi )
   
   if (!st->glx_context) return;
 
-  glXMakeCurrent( MI_DISPLAY(mi), MI_WINDOW(mi), 
-                  *(st->glx_context) );
+  glXMakeCurrent( MI_DISPLAY(mi), MI_WINDOW(mi), *st->glx_context);
   
   mi->polygon_count = render( st );
 
@@ -1366,23 +1368,21 @@ free_glcells( ModeInfo *mi )
   int i;
   State *st  = &sstate[MI_SCREEN(mi)];
 
-  if (st->glx_context) {
-    glXMakeCurrent( MI_DISPLAY(mi), MI_WINDOW(mi),
-                    *(st->glx_context) );
-  
-    /* nuke everything before exit */
-    if (st->sphere) free_Object( st->sphere );
-    if (st->food)   free( st->food );
-    for (i=0; i<NUM_CELL_SHAPES; ++i) {
-      if (st->cell_list[i] != -1) {
-        glDeleteLists( st->cell_list[i], 1 );
-      }
+  if (!st->glx_context) return;
+  glXMakeCurrent( MI_DISPLAY(mi), MI_WINDOW(mi), *st->glx_context);
+
+  if (st->sphere) free_Object( st->sphere );
+  if (st->food)   free( st->food );
+  for (i=0; i<NUM_CELL_SHAPES; ++i) {
+    if (st->cell_list[i] != -1) {
+      glDeleteLists( st->cell_list[i], 1 );
     }
-    if (st->cell) free( st->cell );
-    free( st->disturbance );
-    glDeleteTextures( 1, &st->texture_name );
-    free( st->texture );
   }
+  if (st->cell) free( st->cell );
+  free( st->disturbance );
+  glDeleteTextures( 1, &st->texture_name );
+  free( st->texture );
+  if (glIsList(st->nucleus_list)) glDeleteLists(st->nucleus_list, 1);
 }
 
 XSCREENSAVER_MODULE( "GLCells", glcells )

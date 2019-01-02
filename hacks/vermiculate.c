@@ -65,7 +65,7 @@ linedata;
 
 static const struct stringAndSpeed
 {
-  char *str;
+  const char * const str;
   int speed;
 }
 sampleStrings[] =
@@ -99,7 +99,8 @@ struct state {
 
   int hei, wid, speed;
   Bool erasing, cleared, autopal;
-  char *instring;
+  char *oinstring;       /* allocated */
+  const char *instring;  /* consumed */
   int max_ticks;
 
   real sinof[degs], cosof[degs], tanof[degs];
@@ -435,7 +436,8 @@ maininit (struct state *st)
   if (!st->instring)
     {
       int n = random1 (sizeof (sampleStrings) / sizeof (sampleStrings[0]));
-      st->instring = sampleStrings[n].str;
+      if (st->oinstring) free (st->oinstring);
+      st->instring = st->oinstring = strdup (sampleStrings[n].str);
       st->speed = sampleStrings[n].speed;
     }
   st->boxh = 10;
@@ -745,7 +747,8 @@ vermiculate_draw (Display *dpy, Window window, void *closure)
   if (tick++ > st->max_ticks && !had_instring)
     {
       tick = 0;
-      st->instring = 0;
+      if (st->oinstring) free (st->oinstring);
+      st->instring = st->oinstring = 0;
       maininit(st);
       st->reset_p = True;
       st->autopal = False;
@@ -764,9 +767,12 @@ vermiculate_init (Display *d, Window w)
   st->dpy = d;
   st->window = w;
   st->reset_p = 1;
-  st->instring = get_string_resource (st->dpy, "instring", "Instring");
-  if (st->instring && !*st->instring)
-    st->instring = 0;
+  st->oinstring = get_string_resource (st->dpy, "instring", "Instring");
+  if (st->oinstring && !*st->oinstring) {
+    free (st->oinstring);
+    st->oinstring = 0;
+  }
+  st->instring = st->oinstring;
 
   st->max_ticks = get_integer_resource (st->dpy, "ticks", "Integer");
   st->speed = get_integer_resource (st->dpy, "speed", "Speed");
@@ -1189,11 +1195,9 @@ static void
 vermiculate_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
-
-  if (st->point)
-    {
-      free(st->point);
-    }
+  XFreeGC (dpy, st->mygc);
+  if (st->oinstring) free (st->oinstring);
+  if (st->point) free(st->point);
   free (st);
 }
 

@@ -127,8 +127,8 @@ glb_draw_end(void *cc)
 
 	glb_sphere_end (c->d);
 
-	(void) free((void *) c->bubble_list);
-	(void) free((void *) c);
+	free(c->bubble_list);
+	free(c);
 }
 
 static int

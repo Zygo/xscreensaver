@@ -456,7 +456,7 @@ draw_flipflop(ModeInfo *mi)
     if(!c->glx_context || (textured && !c->got_texture))
         return;
 
-    glXMakeCurrent(disp, w, *(c->glx_context));
+    glXMakeCurrent(disp, w, *c->glx_context);
 
     mi->polygon_count = display(mi);
 
@@ -474,10 +474,14 @@ ENTRYPOINT void
 free_flipflop(ModeInfo *mi)
 {
   Flipflopcreen *c = &qs[MI_SCREEN(mi)];
+  if (!c->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *c->glx_context);
+  if(c->trackball) gltrackball_free(c->trackball);
   if (c->sheet) {
     randsheet_free(c->sheet);
     free (c->sheet);
   }
+  if (c->texid) glDeleteTextures (1, &c->texid);
 }
 
 /*** ADDED RANDSHEET FUNCTIONS ***/

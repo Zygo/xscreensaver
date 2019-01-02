@@ -19,6 +19,7 @@ typedef struct trackball_state trackball_state;
    to make dragging the mouse on the window of a GL program do the right thing.
  */
 extern trackball_state *gltrackball_init (int ignore_device_rotation_p);
+extern void gltrackball_free (trackball_state *);
 
 /* Begin tracking the mouse: Call this when the mouse button goes down.
    x and y are the mouse position relative to the window.

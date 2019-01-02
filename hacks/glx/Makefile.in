@@ -132,7 +132,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c erase-gl.c fps-gl.c \
 		  raverhoop.c hydrostat.c discoball.c cubetwist.c cubestack.c \
 		  splodesic.c hexstrut.c vigilance.c seccam.c esper.c \
 		  razzledazzle.c ships.c peepers.c crumbler.c quickhull.c \
-		  maze3d.c
+		  maze3d.c handsy.c handsy_model.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -179,7 +179,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  raverhoop.o hydrostat.o discoball.o cubetwist.o cubestack.o \
 		  splodesic.o hexstrut.o vigilance.o seccam.o esper.o \
 		  razzledazzle.o ships.o peepers.o crumbler.o quickhull.o \
-		  maze3d.o
+		  maze3d.o handsy.o handsy_model.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -200,7 +200,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  splitflap dymaxionmap unicrud energystream raverhoop \
 		  hydrostat discoball cubetwist cubestack splodesic \
 		  hexstrut vigilance esper razzledazzle peepers crumbler \
-		  maze3d
+		  maze3d handsy
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -237,7 +237,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h \
 		  sproingies.h extrusion.h glschool.h glschool_gl.h \
 		  glschool_alg.h topblock.h involute.h teapot.h sonar.h \
 		  dropshadow.h starwars.h teapot2.h dnapizza.h curlicue.h \
-		  quickhull.h dymaxionmap-coords.h
+		  quickhull.h dymaxionmap-coords.h handsy_anim.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man \
@@ -266,7 +266,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  unicrud.man energystream.man raverhoop.man hydrostat.man \
 		  discoball.man cubetwist.man cubestack.man splodesic.man \
 		  hexstrut.man vigilance.man esper.man razzledazzle.man \
-		  peepers.man crumbler.man maze3d.man
+		  peepers.man crumbler.man maze3d.man handsy.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -452,7 +452,9 @@ distdepend:: molecules.h
 	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
 	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'			    \
 	      -e 's@ $$(HACK_SRC)/\(.*config.h\)@ ../\1@g'		    \
-	      -e 's@ $$(srcdir)/\(.*molecules.h\)@ \1@g' ;		    \
+	      -e 's@ $$(srcdir)/\(.*molecules.h\)@ \1@g'		    \
+	      -e 's@ $$(srcdir)/\(images/gen/\)@ ../\1@g'		    \
+	      -e 's@ $$(HACK_SRC)/\(images/gen/\)@ ../\1@g' ;		    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
 	mv /tmp/distdepend.$$$$ Makefile.in
@@ -997,6 +999,14 @@ crumbler:	crumbler.o	quickhull.o $(HACK_TRACK_OBJS)
 maze3d:	maze3d.o		 $(PNG) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(PNG) $(PNG_LIBS) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
+HANDSY_OBJS=gllist.o handsy_model.o normals.o $(HACK_TRACK_OBJS)
+handsy:	handsy.o		 $(HANDSY_OBJS)
+	$(CC_HACK) -o $@ $@.o	 $(HANDSY_OBJS) $(HACK_LIBS)
+
+handsy_dxf::
+	./dxf2gl.pl --smooth 28 --layers handsy.dxf handsy_model.c
+
+
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
@@ -1062,7 +1072,7 @@ antspotlight.o: $(HACK_SRC)/xlockmore.h
 atlantis.o: $(srcdir)/atlantis.h
 atlantis.o: ../../config.h
 atlantis.o: $(HACK_SRC)/fps.h
-atlantis.o: $(HACK_SRC)/images/gen/sea-texture_png.h
+atlantis.o: ../images/gen/sea-texture_png.h
 atlantis.o: $(HACK_SRC)/recanim.h
 atlantis.o: $(HACK_SRC)/screenhackI.h
 atlantis.o: $(UTILS_SRC)/colors.h
@@ -1079,12 +1089,12 @@ atlantis.o: $(HACK_SRC)/xlockmoreI.h
 atlantis.o: $(HACK_SRC)/xlockmore.h
 atunnel.o: ../../config.h
 atunnel.o: $(HACK_SRC)/fps.h
-atunnel.o: $(HACK_SRC)/images/gen/tunnel0_png.h
-atunnel.o: $(HACK_SRC)/images/gen/tunnel1_png.h
-atunnel.o: $(HACK_SRC)/images/gen/tunnel2_png.h
-atunnel.o: $(HACK_SRC)/images/gen/tunnel3_png.h
-atunnel.o: $(HACK_SRC)/images/gen/tunnel4_png.h
-atunnel.o: $(HACK_SRC)/images/gen/tunnel5_png.h
+atunnel.o: ../images/gen/tunnel0_png.h
+atunnel.o: ../images/gen/tunnel1_png.h
+atunnel.o: ../images/gen/tunnel2_png.h
+atunnel.o: ../images/gen/tunnel3_png.h
+atunnel.o: ../images/gen/tunnel4_png.h
+atunnel.o: ../images/gen/tunnel5_png.h
 atunnel.o: $(HACK_SRC)/recanim.h
 atunnel.o: $(HACK_SRC)/screenhackI.h
 atunnel.o: $(srcdir)/tunnel_draw.h
@@ -1149,7 +1159,7 @@ b_lockglue.o: $(HACK_SRC)/xlockmoreI.h
 b_lockglue.o: $(HACK_SRC)/xlockmore.h
 blocktube.o: ../../config.h
 blocktube.o: $(HACK_SRC)/fps.h
-blocktube.o: $(HACK_SRC)/images/gen/blocktube_png.h
+blocktube.o: ../images/gen/blocktube_png.h
 blocktube.o: $(HACK_SRC)/recanim.h
 blocktube.o: $(HACK_SRC)/screenhackI.h
 blocktube.o: $(UTILS_SRC)/colors.h
@@ -1249,7 +1259,7 @@ buildlwo.o: $(srcdir)/buildlwo.h
 buildlwo.o: ../../config.h
 cage.o: ../../config.h
 cage.o: $(HACK_SRC)/fps.h
-cage.o: $(HACK_SRC)/images/gen/wood_png.h
+cage.o: ../images/gen/wood_png.h
 cage.o: $(HACK_SRC)/recanim.h
 cage.o: $(HACK_SRC)/screenhackI.h
 cage.o: $(UTILS_SRC)/colors.h
@@ -1582,10 +1592,10 @@ dymaxionmap.o: ../../config.h
 dymaxionmap.o: $(srcdir)/dymaxionmap-coords.h
 dymaxionmap.o: $(HACK_SRC)/fps.h
 dymaxionmap.o: $(srcdir)/gltrackball.h
-dymaxionmap.o: $(HACK_SRC)/images/gen/earth_flat_png.h
-dymaxionmap.o: $(HACK_SRC)/images/gen/earth_night_png.h
-dymaxionmap.o: $(HACK_SRC)/images/gen/earth_png.h
-dymaxionmap.o: $(HACK_SRC)/images/gen/ground_png.h
+dymaxionmap.o: ../images/gen/earth_flat_png.h
+dymaxionmap.o: ../images/gen/earth_night_png.h
+dymaxionmap.o: ../images/gen/earth_png.h
+dymaxionmap.o: ../images/gen/ground_png.h
 dymaxionmap.o: $(srcdir)/normals.h
 dymaxionmap.o: $(HACK_SRC)/recanim.h
 dymaxionmap.o: $(srcdir)/rotator.h
@@ -1804,8 +1814,8 @@ flyingtoasters.o: ../../config.h
 flyingtoasters.o: $(HACK_SRC)/fps.h
 flyingtoasters.o: $(srcdir)/gllist.h
 flyingtoasters.o: $(srcdir)/gltrackball.h
-flyingtoasters.o: $(HACK_SRC)/images/gen/chromesphere_png.h
-flyingtoasters.o: $(HACK_SRC)/images/gen/toast_png.h
+flyingtoasters.o: ../images/gen/chromesphere_png.h
+flyingtoasters.o: ../images/gen/toast_png.h
 flyingtoasters.o: $(HACK_SRC)/recanim.h
 flyingtoasters.o: $(HACK_SRC)/screenhackI.h
 flyingtoasters.o: $(UTILS_SRC)/colors.h
@@ -1965,8 +1975,8 @@ gleidescope.o: $(HACK_SRC)/xlockmore.h
 glforestfire.o: ../../config.h
 glforestfire.o: $(HACK_SRC)/fps.h
 glforestfire.o: $(srcdir)/gltrackball.h
-glforestfire.o: $(HACK_SRC)/images/gen/ground_png.h
-glforestfire.o: $(HACK_SRC)/images/gen/tree_png.h
+glforestfire.o: ../images/gen/ground_png.h
+glforestfire.o: ../images/gen/tree_png.h
 glforestfire.o: $(HACK_SRC)/recanim.h
 glforestfire.o: $(HACK_SRC)/screenhackI.h
 glforestfire.o: $(UTILS_SRC)/colors.h
@@ -2019,7 +2029,7 @@ gllist.o: ../../config.h
 gllist.o: $(srcdir)/gllist.h
 glmatrix.o: ../../config.h
 glmatrix.o: $(HACK_SRC)/fps.h
-glmatrix.o: $(HACK_SRC)/images/gen/matrix3_png.h
+glmatrix.o: ../images/gen/matrix3_png.h
 glmatrix.o: $(HACK_SRC)/recanim.h
 glmatrix.o: $(HACK_SRC)/screenhackI.h
 glmatrix.o: $(UTILS_SRC)/colors.h
@@ -2037,8 +2047,8 @@ glmatrix.o: $(HACK_SRC)/xlockmore.h
 glplanet.o: ../../config.h
 glplanet.o: $(HACK_SRC)/fps.h
 glplanet.o: $(srcdir)/gltrackball.h
-glplanet.o: $(HACK_SRC)/images/gen/earth_night_png.h
-glplanet.o: $(HACK_SRC)/images/gen/earth_png.h
+glplanet.o: ../images/gen/earth_night_png.h
+glplanet.o: ../images/gen/earth_png.h
 glplanet.o: $(HACK_SRC)/recanim.h
 glplanet.o: $(srcdir)/rotator.h
 glplanet.o: $(HACK_SRC)/screenhackI.h
@@ -2151,6 +2161,29 @@ grab-ximage.o: $(UTILS_SRC)/grabscreen.h
 grab-ximage.o: $(UTILS_SRC)/pow2.h
 grab-ximage.o: $(UTILS_SRC)/visual.h
 grab-ximage.o: $(UTILS_SRC)/xshm.h
+handsy_model.o: ../../config.h
+handsy_model.o: $(srcdir)/gllist.h
+handsy.o: ../../config.h
+handsy.o: $(HACK_SRC)/fps.h
+handsy.o: $(srcdir)/gllist.h
+handsy.o: $(srcdir)/gltrackball.h
+handsy.o: $(srcdir)/handsy_anim.h
+handsy.o: $(HACK_SRC)/recanim.h
+handsy.o: $(srcdir)/rotator.h
+handsy.o: $(HACK_SRC)/screenhackI.h
+handsy.o: $(srcdir)/sphere.h
+handsy.o: $(srcdir)/tube.h
+handsy.o: $(UTILS_SRC)/colors.h
+handsy.o: $(UTILS_SRC)/erase.h
+handsy.o: $(UTILS_SRC)/font-retry.h
+handsy.o: $(UTILS_SRC)/grabscreen.h
+handsy.o: $(UTILS_SRC)/hsv.h
+handsy.o: $(UTILS_SRC)/resources.h
+handsy.o: $(UTILS_SRC)/usleep.h
+handsy.o: $(UTILS_SRC)/visual.h
+handsy.o: $(UTILS_SRC)/yarandom.h
+handsy.o: $(HACK_SRC)/xlockmoreI.h
+handsy.o: $(HACK_SRC)/xlockmore.h
 hexstrut.o: ../../config.h
 hexstrut.o: $(HACK_SRC)/fps.h
 hexstrut.o: $(srcdir)/gltrackball.h
@@ -2255,7 +2288,7 @@ involute.o: $(UTILS_SRC)/yarandom.h
 jigglypuff.o: ../../config.h
 jigglypuff.o: $(HACK_SRC)/fps.h
 jigglypuff.o: $(srcdir)/gltrackball.h
-jigglypuff.o: $(HACK_SRC)/images/gen/jigglymap_png.h
+jigglypuff.o: ../images/gen/jigglymap_png.h
 jigglypuff.o: $(HACK_SRC)/recanim.h
 jigglypuff.o: $(HACK_SRC)/screenhackI.h
 jigglypuff.o: $(UTILS_SRC)/colors.h
@@ -2352,7 +2385,7 @@ lament.o: ../../config.h
 lament.o: $(HACK_SRC)/fps.h
 lament.o: $(srcdir)/gllist.h
 lament.o: $(srcdir)/gltrackball.h
-lament.o: $(HACK_SRC)/images/gen/lament512_png.h
+lament.o: ../images/gen/lament512_png.h
 lament.o: $(srcdir)/normals.h
 lament.o: $(HACK_SRC)/recanim.h
 lament.o: $(srcdir)/rotator.h
@@ -2408,12 +2441,12 @@ marching.o: $(srcdir)/marching.h
 marching.o: $(srcdir)/normals.h
 maze3d.o: ../../config.h
 maze3d.o: $(HACK_SRC)/fps.h
-maze3d.o: $(HACK_SRC)/images/gen/bob_png.h
-maze3d.o: $(HACK_SRC)/images/gen/brick1_png.h
-maze3d.o: $(HACK_SRC)/images/gen/brick2_png.h
-maze3d.o: $(HACK_SRC)/images/gen/logo-32_png.h
-maze3d.o: $(HACK_SRC)/images/gen/start_png.h
-maze3d.o: $(HACK_SRC)/images/gen/wood2_png.h
+maze3d.o: ../images/gen/bob_png.h
+maze3d.o: ../images/gen/brick1_png.h
+maze3d.o: ../images/gen/brick2_png.h
+maze3d.o: ../images/gen/logo-32_png.h
+maze3d.o: ../images/gen/start_png.h
+maze3d.o: ../images/gen/wood2_png.h
 maze3d.o: $(HACK_SRC)/recanim.h
 maze3d.o: $(HACK_SRC)/screenhackI.h
 maze3d.o: $(UTILS_SRC)/colors.h
@@ -2557,8 +2590,8 @@ normals.o: $(srcdir)/normals.h
 peepers.o: ../../config.h
 peepers.o: $(HACK_SRC)/fps.h
 peepers.o: $(srcdir)/gltrackball.h
-peepers.o: $(HACK_SRC)/images/gen/iris_png.h
-peepers.o: $(HACK_SRC)/images/gen/sclera_png.h
+peepers.o: ../images/gen/iris_png.h
+peepers.o: ../images/gen/sclera_png.h
 peepers.o: $(srcdir)/normals.h
 peepers.o: $(HACK_SRC)/recanim.h
 peepers.o: $(srcdir)/rotator.h
@@ -2875,8 +2908,8 @@ s1_b.o: $(srcdir)/gllist.h
 sballs.o: ../../config.h
 sballs.o: $(HACK_SRC)/fps.h
 sballs.o: $(srcdir)/gltrackball.h
-sballs.o: $(HACK_SRC)/images/gen/sball-bg_png.h
-sballs.o: $(HACK_SRC)/images/gen/sball_png.h
+sballs.o: ../images/gen/sball-bg_png.h
+sballs.o: ../images/gen/sball_png.h
 sballs.o: $(HACK_SRC)/recanim.h
 sballs.o: $(HACK_SRC)/screenhackI.h
 sballs.o: $(UTILS_SRC)/colors.h
@@ -2928,7 +2961,7 @@ sierpinski3d.o: $(HACK_SRC)/xlockmore.h
 skytentacles.o: ../../config.h
 skytentacles.o: $(HACK_SRC)/fps.h
 skytentacles.o: $(srcdir)/gltrackball.h
-skytentacles.o: $(HACK_SRC)/images/gen/scales_png.h
+skytentacles.o: ../images/gen/scales_png.h
 skytentacles.o: $(srcdir)/normals.h
 skytentacles.o: $(HACK_SRC)/recanim.h
 skytentacles.o: $(srcdir)/rotator.h
@@ -3094,7 +3127,7 @@ sproingiewrap.o: $(HACK_SRC)/xlockmore.h
 stairs.o: ../../config.h
 stairs.o: $(HACK_SRC)/fps.h
 stairs.o: $(srcdir)/gltrackball.h
-stairs.o: $(HACK_SRC)/images/gen/wood_png.h
+stairs.o: ../images/gen/wood_png.h
 stairs.o: $(HACK_SRC)/recanim.h
 stairs.o: $(HACK_SRC)/screenhackI.h
 stairs.o: $(srcdir)/sphere.h
@@ -3242,11 +3275,11 @@ texfont.o: $(UTILS_SRC)/xshm.h
 timetunnel.o: ../../config.h
 timetunnel.o: $(HACK_SRC)/fps.h
 timetunnel.o: $(srcdir)/gltrackball.h
-timetunnel.o: $(HACK_SRC)/images/gen/logo-180_png.h
-timetunnel.o: $(HACK_SRC)/images/gen/timetunnel0_png.h
-timetunnel.o: $(HACK_SRC)/images/gen/timetunnel1_png.h
-timetunnel.o: $(HACK_SRC)/images/gen/timetunnel2_png.h
-timetunnel.o: $(HACK_SRC)/images/gen/tunnelstar_png.h
+timetunnel.o: ../images/gen/logo-180_png.h
+timetunnel.o: ../images/gen/timetunnel0_png.h
+timetunnel.o: ../images/gen/timetunnel1_png.h
+timetunnel.o: ../images/gen/timetunnel2_png.h
+timetunnel.o: ../images/gen/tunnelstar_png.h
 timetunnel.o: $(HACK_SRC)/recanim.h
 timetunnel.o: $(srcdir)/rotator.h
 timetunnel.o: $(HACK_SRC)/screenhackI.h
@@ -3433,7 +3466,7 @@ winduprobot.o: ../../config.h
 winduprobot.o: $(HACK_SRC)/fps.h
 winduprobot.o: $(srcdir)/gllist.h
 winduprobot.o: $(srcdir)/gltrackball.h
-winduprobot.o: $(HACK_SRC)/images/gen/chromesphere_png.h
+winduprobot.o: ../images/gen/chromesphere_png.h
 winduprobot.o: $(srcdir)/involute.h
 winduprobot.o: $(HACK_SRC)/recanim.h
 winduprobot.o: $(HACK_SRC)/screenhackI.h

@@ -583,7 +583,7 @@ noseguy_init (Display *d, Window w)
   unsigned long fg, bg, text_fg, text_bg;
   XWindowAttributes xgwa;
   Colormap cmap;
-  char *fontname;
+  char *fontname, *cname, *s;
   XGCValues gcvalues;
   st->dpy = d;
   st->window = w;
@@ -608,10 +608,12 @@ noseguy_init (Display *d, Window w)
 
   st->xftfont = XftFontOpenXlfd (st->dpy, screen_number (xgwa.screen),
                                  fontname);
+  free (fontname);
+
+  cname = get_string_resource (st->dpy, "textForeground", "Foreground");
   XftColorAllocName (st->dpy, xgwa.visual, xgwa.colormap,
-                     get_string_resource (st->dpy,
-                                          "textForeground", "Foreground"),
-                     &st->xftcolor);
+                     cname, &st->xftcolor);
+  free (cname);
   st->xftdraw = XftDrawCreate (st->dpy, st->window, xgwa.visual,
                                xgwa.colormap);
 
@@ -621,9 +623,15 @@ noseguy_init (Display *d, Window w)
   text_fg = get_pixel_resource (st->dpy, cmap, "textForeground", "Foreground");
   text_bg = get_pixel_resource (st->dpy, cmap, "textBackground", "Background");
   /* notice when unspecified */
-  if (! get_string_resource (st->dpy, "textForeground", "Foreground"))
+  s = get_string_resource (st->dpy, "textForeground", "Foreground");
+  if (s)
+    free (s);
+  else
     text_fg = bg;
-  if (! get_string_resource (st->dpy, "textBackground", "Background"))
+  s = get_string_resource (st->dpy, "textBackground", "Background");
+  if (s)
+    free (s);
+  else
     text_bg = fg;
 
   gcvalues.foreground = fg;
@@ -683,6 +691,25 @@ noseguy_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   textclient_close (st->tc);
+  XftFontClose (dpy, st->xftfont);
+  /* XftColorFree (dpy, st->xgwa.visual, st->xgwa.colormap, st->xftcolor); */
+  XftDrawDestroy (st->xftdraw);
+  XFreeGC (dpy, st->fg_gc);
+  XFreeGC (dpy, st->bg_gc);
+  XFreeGC (dpy, st->text_fg_gc);
+  XFreeGC (dpy, st->text_bg_gc);
+
+# define FP(F) \
+  if (st->F.p) XFreePixmap (dpy, st->F.p); \
+  if (st->F.m) XFreePixmap (dpy, st->F.m)
+  FP (left1);
+  FP (left2);
+  FP (right1);
+  FP (right2);
+  FP (left_front);
+  FP (right_front);
+  FP (front);
+  FP (down);
   free (st);
 }
 

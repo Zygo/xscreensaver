@@ -281,6 +281,7 @@
   GL: 				crumbler -root				    \\n\
 				filmleader -root			    \\n\
 				glitchpeg -root				    \\n\
+  GL: 				handsy -root				    \\n\
   GL: 				maze3d -root				    \\n\
   GL: 				peepers -root				    \\n\
   GL: 				razzledazzle -root			    \\n\

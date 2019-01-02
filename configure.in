@@ -124,6 +124,11 @@ AH_TEMPLATE([HAVE_PROC_INTERRUPTS],
 	    can be examined to determine when keyboard activity has
 	    occurred.])
 
+AH_TEMPLATE([HAVE_PROC_OOM],
+	    [Define this if you have a Linux-like /proc/.../oom_score_adj file
+	    which can be adjusted by root to exempt us from the out-of-memory
+	    .])
+
 AH_TEMPLATE([HAVE_MOTIF],[Define this if you have Motif.])
 
 AH_TEMPLATE([HAVE_XMCOMBOBOX],
@@ -1946,6 +1951,49 @@ if test "$with_proc_interrupts" = yes; then
 
 elif test "$with_proc_interrupts" != no; then
   echo "error: must be yes or no: --with-proc-interrupts=$with_proc_interrupts"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for /proc/*/oom_score_adj.
+#
+###############################################################################
+
+have_proc_oom=no
+with_proc_oom_req=unspecified
+AC_ARG_WITH(proc-oom,
+[  --with-proc-oom  Include support for disabling the OOM-killer.],
+  [with_proc_oom="$withval"; with_proc_oom_req="$withval"],
+  [with_proc_oom=yes])
+
+if test "$with_proc_oom_req" = yes; then
+
+  # Note that we may be building in an environment (e.g. Debian buildd chroot)
+  # without a proper /proc filesystem.
+  #
+  have_proc_oom=yes
+  AC_DEFINE(HAVE_PROC_OOM)
+
+elif test "$with_proc_oom_req" = unspecified; then
+
+  have_proc_oom=no
+  AC_CACHE_CHECK([whether /proc/$$/oom_score_adj exists],
+    ac_cv_have_proc_oom,
+    [ac_cv_have_proc_oom=no
+     if test -f /proc/$$/oom_score_adj; then
+       ac_cv_have_proc_oom=yes
+     fi
+    ])
+  have_proc_oom=$ac_cv_have_proc_oom
+
+  if test "$have_proc_oom" = yes; then
+    AC_DEFINE(HAVE_PROC_OOM)
+  fi
+
+elif test "$with_proc_oom" != no; then
+  echo "error: must be yes or no: --with-proc-oom=$with_proc_oom"
   exit 1
 fi
 

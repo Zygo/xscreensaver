@@ -571,11 +571,13 @@ static void resize(struct state *st)
 	XSync(st->dpy, 0);
 	if (st->xim)
 	{
-		if (st->xim->data == (char *)st->palaka2) st->xim->data = NULL;
+		/* if (st->xim->data == (char *)st->palaka2) */
+                st->xim->data = NULL;
 		XDestroyImage(st->xim);
 		XSync(st->dpy, 0);
 		free(st->mem2);
 		free(st->mem1);
+                st->xim = 0;
 	}
 	st->xim = XCreateImage(st->dpy, xwa.visual, xwa.depth, ZPixmap, 0, 0,
 	                       st->width, st->height, 8, 0);
@@ -841,6 +843,14 @@ fireworkx_free (Display *dpy, Window window, void *closure)
 	free(st->mem1);
 	free(st->fireshell_array->fpix);
 	free(st->fireshell_array);
+        if (st->xim) {
+          st->xim->data = NULL;
+          XDestroyImage (st->xim);
+        }
+	if (st->light_map) free(st->light_map);
+        if (st->colors) free (st->colors);
+        XFreeGC (dpy, st->gc);
+        free(st);
 }
 
 static const char *fireworkx_defaults [] =

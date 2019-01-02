@@ -19,7 +19,6 @@
 			"*doubleBuffer: False       \n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_noof 0
 # define release_noof 0
 # define noof_handle_event 0
 #include "xlockmore.h"
@@ -379,7 +378,7 @@ draw_noof (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -398,6 +397,7 @@ draw_noof (ModeInfo *mi)
       glBindTexture (GL_TEXTURE_2D, bp->screenshot_texture);
       glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glColor3f (1, 1, 1);
       glBegin (GL_QUADS);
       glTexCoord2f (0,  0);  glVertex3f (0, 0, 0);
       glTexCoord2f (tw, 0);  glVertex3f (bp->wd, 0, 0);
@@ -511,6 +511,16 @@ init_noof (ModeInfo *mi)
     initshapes(bp, i);
 
   reshape_noof (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+}
+
+
+ENTRYPOINT void 
+free_noof (ModeInfo *mi)
+{
+  noof_configuration *bp = &bps[MI_SCREEN(mi)];
+  if (!bp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->screenshot_texture) glDeleteTextures (1, &bp->screenshot_texture);
 }
 
 

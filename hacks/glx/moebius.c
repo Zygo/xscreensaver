@@ -79,7 +79,6 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_moebius
-# define free_moebius 0
 # define release_moebius 0
 # define DEFAULTS			"*delay:		20000   \n"			\
 							"*showFPS:      False   \n"			\
@@ -715,7 +714,7 @@ draw_moebius (ModeInfo * mi)
 	if (!mp->glx_context)
 		return;
 
-	glXMakeCurrent(display, window, *(mp->glx_context));
+	glXMakeCurrent(display, window, *mp->glx_context);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -777,11 +776,20 @@ change_moebius (ModeInfo * mi)
 	if (!mp->glx_context)
 		return;
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(mp->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
 	pinit();
 }
 #endif /* !STANDALONE */
 
+ENTRYPOINT void
+free_moebius (ModeInfo * mi)
+{
+	moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
+    if (!mp->glx_context) return;
+	glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *mp->glx_context);
+    if (mp->trackball) gltrackball_free (mp->trackball);
+    if (mp->rot) free_rotator (mp->rot);
+}
 
 XSCREENSAVER_MODULE ("Moebius", moebius)
 

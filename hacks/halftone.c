@@ -357,6 +357,17 @@ static void
 halftone_free (Display *dpy, Window window, void *closure)
 {
   halftone_screen *halftone = (halftone_screen *) closure;
+  free (halftone->gravity_point_x);
+  free (halftone->gravity_point_y);
+  free (halftone->gravity_point_mass);
+  free (halftone->gravity_point_x_inc);
+  free (halftone->gravity_point_y_inc);
+  free (halftone->dots);
+  free (halftone->colors);
+  if (halftone->buffer && halftone->buffer != halftone->window)
+    XFreePixmap (dpy, halftone->buffer);
+  if (halftone->gc) XFreeGC (dpy, halftone->gc);
+  if (halftone->buffer_gc) XFreeGC (dpy, halftone->buffer_gc);
   free (halftone);
 }
 

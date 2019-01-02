@@ -175,7 +175,7 @@ DBL_To_PRM( 1.0-exp( -16.0*(a)/UNIT2 ) )
 
 #if defined(__BIGGEST_ALIGNMENT__) \
 	&& (defined(__GNUC__) \
-	 && (__GNUC__ == 4 && __GNUC_MINOR__ >= 4 || __GNUC__ >= 5) \
+    && (__GNUC__ == 4 && __GNUC_MINOR__ >= 7 || __GNUC__ >= 5) \
 	|| defined(__clang__))
 # define ALIGNED __attribute__((aligned(__BIGGEST_ALIGNMENT__)))
 # define ALIGN_HINT(ptr) __builtin_assume_aligned((ptr), __BIGGEST_ALIGNMENT__)

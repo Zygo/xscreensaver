@@ -34,7 +34,6 @@
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
 
-# define free_carousel 0
 # define release_carousel 0
 # include "xlockmore.h"
 
@@ -497,6 +496,7 @@ hack_resources (Display *dpy)
   value.addr = buf2;
   value.size = strlen(buf2);
   XrmPutResource (&db, buf1, "String", &value);
+  free (val);
 # endif /* !HAVE_JWXYZ */
 }
 
@@ -847,7 +847,7 @@ draw_carousel (ModeInfo *mi)
   if (!ss->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ss->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
 
   if (ss->awaiting_first_images_p)
     if (!load_initial_images (mi))
@@ -934,6 +934,29 @@ draw_carousel (ModeInfo *mi)
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers (MI_DISPLAY (mi), MI_WINDOW(mi));
+}
+
+
+ENTRYPOINT void
+free_carousel (ModeInfo *mi)
+{
+  carousel_state *ss = &sss[MI_SCREEN(mi)];
+  int i;
+  if (!ss->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *ss->glx_context);
+  if (ss->rot) free_rotator (ss->rot);
+  if (ss->trackball) gltrackball_free (ss->trackball);
+  if (ss->texfont) free_texture_font (ss->texfont);
+  if (ss->titlefont) free_texture_font (ss->titlefont);
+  for (i = 0; i < ss->nframes; i++) {
+    if (ss->frames[i]->current.title) free (ss->frames[i]->current.title);
+    if (ss->frames[i]->loading.title) free (ss->frames[i]->loading.title);
+    if (ss->frames[i]->rot) free_rotator (ss->frames[i]->rot);
+    if (ss->frames[i]->current.texid)
+      glDeleteTextures (1, &ss->frames[i]->current.texid);
+    if (ss->frames[i]->loading.texid)
+      glDeleteTextures (1, &ss->frames[i]->loading.texid);
+  }
 }
 
 XSCREENSAVER_MODULE ("Carousel", carousel)

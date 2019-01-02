@@ -277,6 +277,7 @@ create_daylight_mask (Display *dpy, Visual *v, int w, int h)
 {
   XImage *image = XCreateImage (dpy, v, 8, ZPixmap, 0, 0, w, h, 8, 0);
   int x, y;
+# undef sun /* Doh */
   XYZ sun;
   double axial_tilt = frand(23.4) / (180/M_PI) * RANDSIGN();
   double dusk = M_PI * 0.035;
@@ -1422,7 +1423,7 @@ draw_planet (ModeInfo * mi)
   glDrawBuffer(GL_BACK);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glXMakeCurrent (dpy, window, *(gp->glx_context));
+  glXMakeCurrent (dpy, window, *gp->glx_context);
 
   mi->polygon_count = 0;
 
@@ -1631,21 +1632,28 @@ free_planet (ModeInfo * mi)
   planetstruct *gp = &planets[MI_SCREEN(mi)];
   int i;
 
+  if (!gp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
+
+  if (gp->font_data) free_texture_font (gp->font_data);
+  if (gp->trackball) gltrackball_free (gp->trackball);
+  if (gp->rot) free_rotator (gp->rot);
+  if (gp->rot2) free_rotator (gp->rot2);
+
   if (gp->day)   XDestroyImage (gp->day);
   if (gp->night) XDestroyImage (gp->night);
   if (gp->dusk)  XDestroyImage (gp->dusk);
   if (gp->cvt)   XDestroyImage (gp->cvt);
 
-  for (i = 0; i < gp->nimages; i++)
-    if (gp->images[i]) XDestroyImage (gp->images[i]);
-  free (gp->images);
-
-  if (gp->glx_context) {
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(gp->glx_context));
-
-    if (glIsList(gp->starlist))
-      glDeleteLists(gp->starlist, 1);
+  if (gp->images) {
+    for (i = 0; i < gp->nimages; i++)
+      if (gp->images[i]) XDestroyImage (gp->images[i]);
+    free (gp->images);
   }
+
+  if (glIsList(gp->starlist)) glDeleteLists(gp->starlist, 1);
+  if (gp->tex1) glDeleteTextures (1, &gp->tex1);
+  if (gp->tex2) glDeleteTextures (1, &gp->tex2);
 }
 
 

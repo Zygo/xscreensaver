@@ -324,6 +324,7 @@ static int initGraphics(struct state *st)
       color.flags=DoRed|DoGreen|DoBlue;
       XAllocColor(st->dpy,cmap,&color);
       xgcv.foreground=color.pixel;
+      if (st->fgc[i]) XFreeGC (st->dpy, st->fgc[i]);
       st->fgc[i] = XCreateGC(st->dpy, st->win, GCForeground | GCFunction,&xgcv);
 #ifdef HAVE_JWXYZ
       jwxyz_XSetAntiAliasing (st->dpy, st->fgc[i], False);
@@ -1218,6 +1219,10 @@ static void
 xrayswarm_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
+  for (i = 0; i < 256; i++)
+    if (st->fgc[i]) XFreeGC (dpy, (st->fgc[i]));
+  XFreeGC (dpy, st->cgc);
   free (st);
 }
 

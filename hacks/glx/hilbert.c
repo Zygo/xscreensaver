@@ -21,7 +21,6 @@
 			"*geometry:	800x800\n" \
 			"*suppressRotationAnimation: True\n" \
 
-# define free_hilbert 0
 # define release_hilbert 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -987,7 +986,7 @@ draw_hilbert (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glShadeModel(GL_SMOOTH);
 
@@ -1137,6 +1136,30 @@ draw_hilbert (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_hilbert (ModeInfo *mi)
+{
+  hilbert_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->rot) free_rotator (bp->rot);
+  if (bp->rot2) free_rotator (bp->rot2);
+  if (bp->colors) free (bp->colors);
+  if (bp->caches)
+    for (i = 0; i < max_depth + 2; i++)
+      if (bp->caches[i])
+        {
+          free (bp->caches[i]->values);
+          free (bp->caches[i]);
+        }
+  /* #### free dlists */
 }
 
 XSCREENSAVER_MODULE ("Hilbert", hilbert)

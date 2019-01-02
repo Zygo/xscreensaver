@@ -376,6 +376,8 @@ static void SetPalette(Display *dpy, SBumps *pBumps, XWindowAttributes *pXWinAtt
 #endif  /*  VERBOSE */
 
 	XSetWindowBackground( pBumps->dpy, pBumps->Win, pBumps->aColors[ 0 ] );
+
+    if (sColor) free (sColor);
 }
 
 
@@ -418,6 +420,7 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 	XClearWindow (pBumps->dpy, pBumps->Win);
 	XSync (pBumps->dpy, 0);
 
+    if (pBumps->aBumpMap) free (pBumps->aBumpMap);
 	pBumps->aBumpMap = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_t) );
 	
 	nSoften = get_integer_resource(dpy,  "soften", "Integer" );
@@ -606,9 +609,12 @@ static void DestroySpotLight( SSpotLight *pSpotLight ) { free( pSpotLight->aLigh
 static void DestroyBumps( SBumps *pBumps )
 {
 	DestroySpotLight( &pBumps->SpotLight );
+    free (pBumps->xColors);
 	free( pBumps->aColors );
 	free( pBumps->aBumpMap );
 	destroy_xshm_image( pBumps->dpy, pBumps->pXImage, &pBumps->XShmInfo );
+    XFreeGC (pBumps->dpy, pBumps->GraphicsContext);
+    free(pBumps);
 }
 
 

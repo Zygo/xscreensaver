@@ -122,6 +122,7 @@ decayscreen_init (Display *dpy, Window window)
     st->random_p = 1;
     st->mode = random() % (FUZZ+1);
   }
+  if (s) free (s);
 
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   if (st->delay < 0) st->delay = 0;
@@ -361,6 +362,7 @@ static void
 decayscreen_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->gc);
   free (st);
 }
 

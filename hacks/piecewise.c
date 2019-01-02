@@ -61,6 +61,7 @@ typedef struct _fringe {
   int mni;                /* size of intersection array */
   int ni;                 /* number of intersections */
   int *i;                 /* sorted intersection list */
+  struct _fringe *next0;  /* allocation list */
   } fringe;
 
 
@@ -104,6 +105,8 @@ struct state {
   int count, delay, ncolors, colorspeed, color_index, flags, iterations;
   int color_iterations;
   circle *circles;
+  fringe *fringes;
+  event *events;
 };
 
 typedef int (*cut)(struct state *, tree*);    /* cut x is <, =, or > 0 given a <, =, or > x for some a */
@@ -335,6 +338,7 @@ static inline void fringe_add_intersection(fringe *f, double x, double y)
   f->ni++;
   if (f->mni < f->ni) {
     f->mni += 2;
+    /* #### valgrind says this leaks at exit */
     f->i = realloc(f->i, sizeof(int) * f->mni);
     }
   f->i[f->ni-1] = rint(atan2(y - f->c->y, x - f->c->x) * X_PI / M_PI);
@@ -345,8 +349,11 @@ static circle *init_circles(struct state *st, int n, int w, int h)
   int i, r0, dr, speed;
   double v, a;
   double minradius, maxradius;
-  fringe *s = malloc(sizeof(fringe) * n * 2);    /* never freed */
-  circle *c = malloc(sizeof(circle) * n);
+  fringe *s = calloc(sizeof(fringe), n * 2);
+  circle *c = calloc(sizeof(circle), n);
+
+  s->next0 = st->fringes;
+  st->fringes = s;
 
   speed = get_integer_resource(st->dpy, "speed", "Speed");
   minradius = get_float_resource(st->dpy, "minradius", "Float");
@@ -377,6 +384,8 @@ static circle *init_circles(struct state *st, int n, int w, int h)
     c[i].lo->side = 0;
     c[i].hi->side = 1;
     c[i].lo->mni = c[i].lo->ni = c[i].hi->mni = c[i].hi->ni = 0;
+    if (c[i].lo->i) free (c[i].lo->i);
+    if (c[i].hi->i) free (c[i].hi->i);
     c[i].lo->i = c[i].hi->i = 0;
     }
 
@@ -456,7 +465,7 @@ static void event_insert(struct state *st, event **eq, event *e)
 static void circle_start_event(struct state *st, event **eq, circle *c)
 {
   event *s;
-  s = malloc(sizeof(event));
+  s = calloc(1, sizeof(event));
   s->kind = START;
   s->x = c->x;
   s->y = c->y - c->r;
@@ -468,7 +477,7 @@ static void circle_start_event(struct state *st, event **eq, circle *c)
 static void circle_finish_event(struct state *st, event **eq, circle *c)
 {
   event *f;
-  f = malloc(sizeof(event));
+  f = calloc(1, sizeof(event));
   f->kind = FINISH;
   f->x = c->x;
   f->y = c->y + c->r;
@@ -543,11 +552,11 @@ static void fringe_intersect(struct state *st, event **eq, double y, fringe *lo,
   #define CHECK(xi, yi) (y <= yi && ((xi < lo->c->x) ^ lo->side) && ((xi < hi->c->x) ^ hi->side))
 
   #define ADD_CROSS(xi, yi, ilo, ihi) {  \
-    e = malloc(sizeof(event));   /* #### LEAK */        \
+    e = calloc(1, sizeof(event));        \
     e->kind = CROSS;                     \
     e->x = xi; e->y = yi;                \
     e->lo = ilo; e->hi = ihi;            \
-    event_insert(st, eq, e);                 \
+    event_insert(st, eq, e);             \
     }
 
   if (CHECK(x1, y1)) {
@@ -751,7 +760,7 @@ static void adjust_circle_visibility(circle *c)
   int i, j, n, a;
   int *in;
   n = c->lo->ni + c->hi->ni;
-  in = malloc(sizeof(int) * n);
+  in = calloc(sizeof(int), n);
   for (i=0;i<c->hi->ni;i++)
     in[i] = c->hi->i[i]; 
   for (i=c->lo->ni-1;i>=0;i--)
@@ -960,6 +969,22 @@ static void
 piecewise_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  int i;
+  XFreeGC (dpy, st->erase_gc);
+  XFreeGC (dpy, st->draw_gc);
+  for (i = 0; i < st->count; i++) {
+    if (st->circles[i].i) free (st->circles[i].i);
+    if (st->circles[i].lo) {
+      if (st->circles[i].lo->i) free (st->circles[i].lo->i);
+    }
+  }
+  while (st->fringes) {
+    fringe *f = st->fringes;
+    st->fringes = f->next0;
+    free (f);
+  }
+  free (st->circles);
+  free (st->colors);
   free (st);
 }
 

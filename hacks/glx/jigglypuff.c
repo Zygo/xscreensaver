@@ -41,7 +41,6 @@
                             "*wireframe: False\n" \
 			    "*suppressRotationAnimation: True\n" \
 
-# define free_jigglypuff 0
 # define release_jigglypuff 0
 # include "xlockmore.h"
 #else
@@ -94,7 +93,14 @@ static int shininess;
 
 static int random_parms;
 
+/* This is all the half-edge b-rep code (as well as basic geometry) */
 typedef struct solid solid;
+typedef struct face face;
+typedef struct edge edge;
+typedef struct hedge hedge;
+typedef struct vertex vertex;
+typedef GLfloat coord;
+typedef coord vector[3];
 
 typedef struct {
     float stable_distance;
@@ -118,6 +124,13 @@ typedef struct {
     float angle;
     float axis;
     float speed;
+
+    face *faces;
+    edge *edges;
+    hedge *hedges;
+    vertex *vertices;
+
+    GLuint texid;
 
     GLXContext *glx_context;
 } jigglystruct;
@@ -203,14 +216,6 @@ static const GLfloat flowerbox_colors[4][4] = {
 #endif
 #endif /* 0 */
 
-/* This is all the half-edge b-rep code (as well as basic geometry) */
-typedef struct face face;
-typedef struct edge edge;
-typedef struct hedge hedge;
-typedef struct vertex vertex;
-typedef GLfloat coord;
-typedef coord vector[3];
-
 struct solid {
     face *faces;
     edge *edges;
@@ -221,21 +226,21 @@ struct face {
     solid *s;
     hedge *start;
     const GLfloat *color;
-    face *next;
+    face *next, *next0;
 };
 
 struct edge {
     solid *s;
     hedge *left;
     hedge *right;
-    edge *next;
+    edge *next, *next0;
 };
 
 struct hedge {
     face *f;
     edge *e;
     vertex *vtx;
-    hedge *next;
+    hedge *next, *next0;
     hedge *prev;
 };
 
@@ -246,7 +251,7 @@ struct vertex {
     vector n;
     vector f;
     vector vel;
-    vertex *next;
+    vertex *next, *next0;
 };
 
 static inline void vector_init(vector v, coord x, coord y, coord z)
@@ -353,12 +358,14 @@ static inline hedge *partner(hedge *h) {
     }
 }
 
-static vertex *vertex_new(solid *s, vector v)
+static vertex *vertex_new(jigglystruct *js, solid *s, vector v)
 {
     vertex *vtx = (vertex*)malloc(sizeof(vertex));
 
     if(!vtx)
 	return NULL;
+    vtx->next0 = js->vertices;
+    js->vertices = vtx;
     vtx->s = s;
     vtx->next = s->vertices;
     s->vertices = vtx;
@@ -372,7 +379,7 @@ static vertex *vertex_new(solid *s, vector v)
  * i.e. it is a helper for the split_* functions, which
  * maintain the consistency of the solid.
  */
-static hedge *hedge_new(hedge *hafter, vertex *vtx)
+static hedge *hedge_new(jigglystruct *js, hedge *hafter, vertex *vtx)
 {
     hedge *h = (hedge*)malloc(sizeof(hedge));
     
@@ -380,6 +387,8 @@ static hedge *hedge_new(hedge *hafter, vertex *vtx)
 /*	_DEBUG("Out of memory in hedge_new()\n",NULL); */
 	return NULL;
     }
+    h->next0 = js->hedges;
+    js->hedges = h;
     h->f = hafter->f;
     h->vtx = vtx;
     h->e = NULL;
@@ -390,13 +399,15 @@ static hedge *hedge_new(hedge *hafter, vertex *vtx)
     return h;
 }
 
-static edge *edge_new(solid *s)
+static edge *edge_new(jigglystruct *js, solid *s)
 {
     edge *e = (edge*)malloc(sizeof(edge));
     if(!e) {
 /*	_DEBUG("Out of memory in edge_new()\n",NULL);*/
 	exit(-1);
     }
+    e->next0 = js->edges;
+    js->edges = e;
     e->next = s->edges;
     s->edges = e;
     e-> s = s;
@@ -404,13 +415,15 @@ static edge *edge_new(solid *s)
     return e;
 }
 
-static face *face_new(solid *s, hedge *h)
+static face *face_new(jigglystruct *js, solid *s, hedge *h)
 {
     face *f = (face*)malloc(sizeof(face));
     if(!f) {
 /*	_DEBUG("Out of memory in face_new()",NULL);*/
 	exit(-1);
     }
+    f->next0 = js->faces;
+    js->faces = f;
     f->s = s;
     f->start = h;
     f->next = s->faces;
@@ -432,7 +445,7 @@ static face *face_new(solid *s, hedge *h)
  *    the vertex returned will have h==<the new halfedge>.
  */
 
-static vertex *vertex_split(hedge *h, vector v)
+static vertex *vertex_split(jigglystruct *js, hedge *h, vector v)
 {
     hedge *h2, *hn1, *hn2;
     vertex *vtxn;
@@ -442,10 +455,10 @@ static vertex *vertex_split(hedge *h, vector v)
     f1 = h->f;
     h2 = partner(h);
     
-    vtxn = vertex_new(f1->s, v);
-    hn1 = hedge_new(h, vtxn);
+    vtxn = vertex_new(js, f1->s, v);
+    hn1 = hedge_new(js, h, vtxn);
     vtxn->h = hn1;
-    hn2 = hedge_new(h2, vtxn);
+    hn2 = hedge_new(js, h2, vtxn);
     hn2->e = h->e;
 
     if(h2->e->left == h2)
@@ -453,7 +466,7 @@ static vertex *vertex_split(hedge *h, vector v)
     else
 	h2->e->right = hn2;
 
-    en = edge_new(f1->s);
+    en = edge_new(js, f1->s);
     en->left = hn1;
     en->right = h2;
     hn1->e = en;
@@ -461,7 +474,7 @@ static vertex *vertex_split(hedge *h, vector v)
     return vtxn;
 }
 
-static face *face_split(face *f, hedge *h1, hedge *h2)
+static face *face_split(jigglystruct *js, face *f, hedge *h1, hedge *h2)
 {
     hedge *hn1, *hn2, *tmp;
     edge *en;
@@ -482,9 +495,9 @@ static face *face_split(face *f, hedge *h1, hedge *h2)
     h1->prev = h2->prev;
     h2->prev = tmp;
     /* insert halfedges & create edge */
-    hn1 = hedge_new(h2->prev, h1->vtx);
-    hn2 = hedge_new(h1->prev, h2->vtx);
-    en = edge_new(f->s);
+    hn1 = hedge_new(js, h2->prev, h1->vtx);
+    hn2 = hedge_new(js, h1->prev, h2->vtx);
+    en = edge_new(js, f->s);
     en->left = hn1;
     en->right = hn2;
     hn1->e = en;
@@ -496,7 +509,7 @@ static face *face_split(face *f, hedge *h1, hedge *h2)
     while(tmp != h1 && tmp != h2)
 	tmp = tmp->next;
     tmp = (tmp == h1) ? h2 : h1 ;
-    fn = face_new(f->s, tmp);
+    fn = face_new(js, f->s, tmp);
     do {
 	tmp->f = fn;
 	tmp = tmp->next;
@@ -505,7 +518,7 @@ static face *face_split(face *f, hedge *h1, hedge *h2)
     return fn;
 }
 
-static solid *solid_new(vector where) 
+static solid *solid_new(jigglystruct *js, vector where) 
 {
     solid *s = (solid*)malloc(sizeof(solid));
     face *f1, *f2;
@@ -522,19 +535,24 @@ static solid *solid_new(vector where)
     h1->next = h1->prev = h1;
     h2->next = h2->prev = h2;
 
-    vtx = vertex_new(s, where);
+    h1->next0 = js->hedges;
+    js->hedges = h1;
+    h2->next0 = js->hedges;
+    js->hedges = h2;
+
+    vtx = vertex_new(js, s, where);
     vtx->h = h1;
     h1->vtx = vtx;
     h2->vtx = vtx;
 
-    e = edge_new(s);
+    e = edge_new(js, s);
     e->left = h1;
     e->right = h2;
     h1->e = e;
     h2->e = e;
 
-    f1 = face_new(s, h1);
-    f2 = face_new(s, h2);
+    f1 = face_new(js, s, h1);
+    f2 = face_new(js, s, h2);
     h1->f = f1;
     h2->f = f2;
 
@@ -542,14 +560,14 @@ static solid *solid_new(vector where)
 }
 
 /* This is all the code directly related to constructing the jigglypuff */
-static void face_tessel2(face *f)
+static void face_tessel2(jigglystruct *js, face *f)
 {
     hedge *h1=f->start->prev, *h2=f->start->next;
     
     if(h1->next == h1)
 	return;
     while(h2 != h1 && h2->next != h1) {
-	f = face_split(f, h1, h2);
+	f = face_split(js, f, h1, h2);
 	h1 = f->start;
 	h2 = f->start->next->next;
     }
@@ -563,7 +581,7 @@ static void face_tessel2(face *f)
  * added at the head of the list. If that ever changes,
  * this is borked. 
  */
-static void solid_tesselate(solid *s) 
+static void solid_tesselate(jigglystruct *js, solid *s) 
 {
     edge *e = s->edges;
     face *f = s->faces;
@@ -571,11 +589,11 @@ static void solid_tesselate(solid *s)
     while(e) {
 	vector v;
 	midpoint(e->left->vtx->v, e->right->vtx->v, v);
-	vertex_split(e->left, v);
+	vertex_split(js, e->left, v);
 	e = e->next;
     }
     while(f) {
-	face_tessel2(f);
+	face_tessel2(js, f);
 	f=f->next;
     }
 }
@@ -600,19 +618,19 @@ static solid *tetrahedron(jigglystruct *js)
     int i;
 
     vector_init(v, 1, 1, 1);
-    s = solid_new(v);
+    s = solid_new(js, v);
     vector_init(v, -1, -1, 1);
     h = s->faces->start;
-    vtx = vertex_split(h, v);
+    vtx = vertex_split(js, h, v);
     vector_init(v, -1, 1, -1);
-    vtx = vertex_split(vtx->h, v);
+    vtx = vertex_split(js, vtx->h, v);
     h = vtx->h;
-    f = face_split(s->faces, h, h->prev);
+    f = face_split(js, s->faces, h, h->prev);
     vector_init(v, 1, -1, -1);
-    vertex_split(f->start, v);
+    vertex_split(js, f->start, v);
     f = s->faces->next->next;
     h = f->start;
-    face_split(f, h, h->next->next);
+    face_split(js, f, h, h->next->next);
 
     if(js->color_style == COLOR_STYLE_FLOWERBOX) {
 	f = s->faces;
@@ -630,7 +648,7 @@ static solid *tesselated_tetrahedron(coord size, int iter, jigglystruct *js) {
     int i;
 
     for(i=0; i<iter; i++) {
-	solid_tesselate(s);
+	solid_tesselate(js, s);
     }
     return s;
 }
@@ -768,9 +786,12 @@ static void update_shape(jigglystruct *js)
 
 static void init_texture(ModeInfo *mi)
 {
+    jigglystruct *js = &jss[MI_SCREEN(mi)];
     XImage *img = image_data_to_ximage(mi->dpy, mi->xgwa.visual,
                                        jigglymap_png, sizeof(jigglymap_png));
 
+    glGenTextures (1, &js->texid);
+    glBindTexture (GL_TEXTURE_2D, js->texid);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
 		 img->width, img->height, 0, GL_RGBA,
 		 GL_UNSIGNED_BYTE, img->data);
@@ -959,7 +980,7 @@ ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
 {
     jigglystruct *js = &jss[MI_SCREEN(mi)];
     
-    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(js->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *js->glx_context);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1054,7 +1075,7 @@ ENTRYPOINT void init_jigglypuff(ModeInfo *mi)
     calculate_parameters(js, subdivs);
 
     if((js->glx_context = init_GL(mi)) != NULL) {
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(js->glx_context));
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *js->glx_context);
 	setup_opengl(mi, js);
 	reshape_jigglypuff(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
     }
@@ -1067,6 +1088,41 @@ ENTRYPOINT void init_jigglypuff(ModeInfo *mi)
 	   js->damping_velocity, js->damping_factor);
     _DEBUG("wire : %d\nspooky : %d\nstyle : %d\nshininess : %d\n",
 	   js->do_wireframe, js->spooky, js->color_style, js->shininess);*/
+}
+
+
+ENTRYPOINT void free_jigglypuff(ModeInfo *mi)
+{
+    jigglystruct *js = &jss[MI_SCREEN(mi)];
+
+    if (!js->glx_context) return;
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *js->glx_context);
+
+    if (js->texid) glDeleteTextures(1, &js->texid);
+    if (js->trackball) gltrackball_free (js->trackball);
+
+    while (js->faces) {
+      face *n = js->faces->next0;
+      free (js->faces);
+      js->faces = n;
+    }
+    while (js->edges) {
+      edge *n = js->edges->next0;
+      free (js->edges);
+      js->edges = n;
+    }
+    while (js->hedges) {
+      hedge *n = js->hedges->next0;
+      free (js->hedges);
+      js->hedges = n;
+    }
+    while (js->vertices) {
+      vertex *n = js->vertices->next0;
+      free (js->vertices);
+      js->vertices = n;
+    }
+    free (js->shape);
+    if (js->texid) glDeleteTextures (1, &js->texid);
 }
 
 XSCREENSAVER_MODULE ("JigglyPuff", jigglypuff)

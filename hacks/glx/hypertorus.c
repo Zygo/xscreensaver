@@ -89,7 +89,6 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
                             "*showFPS:    False \n" \
 			    "*suppressRotationAnimation: True\n" \
 
-# define free_hypertorus 0
 # define release_hypertorus 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -982,7 +981,7 @@ ENTRYPOINT void draw_hypertorus(ModeInfo *mi)
   if (!hp->glx_context)
     return;
 
-  glXMakeCurrent(display,window,*(hp->glx_context));
+  glXMakeCurrent(display, window, *hp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
@@ -1006,10 +1005,19 @@ ENTRYPOINT void change_hypertorus(ModeInfo *mi)
   if (!hp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi),MI_WINDOW(mi),*(hp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *hp->glx_context);
   init(mi);
 }
 #endif /* !STANDALONE */
+
+ENTRYPOINT void free_hypertorus(ModeInfo *mi)
+{
+  hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
+  if (!hp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *hp->glx_context);
+  gltrackball_free (hp->trackballs[0]);
+  gltrackball_free (hp->trackballs[1]);
+}
 
 XSCREENSAVER_MODULE ("Hypertorus", hypertorus)
 

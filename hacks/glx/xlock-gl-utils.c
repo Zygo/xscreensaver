@@ -132,6 +132,7 @@ init_GL(ModeInfo * mi)
     if (! XParseColor (dpy, mi->xgwa.colormap, s, &c))
       fprintf (stderr, "%s: can't parse color %s; using black.\n", 
                progname, s);
+    if (s) free (s);
     glClearColor (c.red   / 65535.0,
                   c.green / 65535.0,
                   c.blue  / 65535.0,

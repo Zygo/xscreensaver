@@ -16,7 +16,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-# define free_cow 0
 # define release_cow 0
 #define DEF_SPEED       "1.0"
 #define DEF_TEXTURE     "(none)"
@@ -463,7 +462,7 @@ draw_cow (ModeInfo *mi)
   if (!bp->glx_context)
     return;
 
-  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -512,6 +511,25 @@ draw_cow (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+
+ENTRYPOINT void
+free_cow (ModeInfo *mi)
+{
+  cow_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  if (!bp->glx_context) return;
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+  if (bp->floaters) {
+    for (i = 0; i < bp->nfloaters; i++)
+      free_rotator (bp->floaters[i].rot);
+    free (bp->floaters);
+  }
+  for (i = 0; i < countof(all_objs); i++)
+    if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+  if (bp->trackball) gltrackball_free (bp->trackball);
+  if (bp->dlists) free (bp->dlists);
 }
 
 XSCREENSAVER_MODULE_2 ("BouncingCow", bouncingcow, cow)

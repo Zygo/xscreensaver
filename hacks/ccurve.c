@@ -733,6 +733,7 @@ ccurve_draw (Display *dpy, Window window, void *closure)
           {
 	st->draw_segment_count
 	    = lengths [random () % (sizeof (lengths) / sizeof (int))];
+        if (st->draw_segments) free (st->draw_segments);
 	st->draw_segments
 	    = (Segment*)(malloc ((st->draw_segment_count) * sizeof (Segment)));
 	select_pattern (st->draw_segment_count, st->draw_segments);
@@ -839,6 +840,10 @@ ccurve_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 ccurve_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  XFreeGC (dpy, st->context);
+  if (st->draw_segments) free (st->draw_segments);
+  free (st);
 }
 
 

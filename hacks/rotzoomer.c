@@ -336,6 +336,7 @@ set_mode(struct state *st)
   char *s = get_string_resource (st->dpy, "mode", "Mode");
   if (!s || !*s || !strcasecmp (s, "random"))
     {
+      free (s);
       switch (random() % 4) {
       case 0: s = "stationary"; break;
       case 1: s = "move"; break;
@@ -370,8 +371,15 @@ init_hack (struct state *st)
   set_mode (st);
 
   st->start_time = time ((time_t *) 0);
+
+  if (st->zoom_box) {
+    for (i = 0; i < st->num_zoom; i++)
+      if (st->zoom_box[i]) free (st->zoom_box[i]);
+    free (st->zoom_box);
+  }
   st->zoom_box = calloc (st->num_zoom, sizeof (struct zoom_area *));
   for (i = 0; i < st->num_zoom; i++) {
+    if (st->zoom_box[i]) free (st->zoom_box[i]);
     st->zoom_box[i] = create_zoom (st);
   }
 
@@ -395,6 +403,7 @@ rotzoomer_draw (Display *disp, Window win, void *closure)
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
       if (! st->img_loader) {  /* just finished */
         if (! st->pm) abort();
+        if (st->orig_map) XDestroyImage (st->orig_map);
 	st->orig_map = XGetImage (st->dpy, st->pm,
                                   0, 0, st->width, st->height,
                                   ~0L, ZPixmap);
@@ -540,6 +549,15 @@ rotzoomer_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   if (st->pm) XFreePixmap (dpy, st->pm);
+  if (st->gc) XFreeGC (dpy, st->gc);
+  if (st->orig_map) XDestroyImage (st->orig_map);
+  if (st->buffer_map) destroy_xshm_image (dpy, st->buffer_map, &st->shm_info);
+  if (st->zoom_box) {
+    int i;
+    for (i = 0; i < st->num_zoom; i++)
+      if (st->zoom_box[i]) free (st->zoom_box[i]);
+    free (st->zoom_box);
+  }
   free (st);
 }
 

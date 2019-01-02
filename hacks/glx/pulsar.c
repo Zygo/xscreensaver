@@ -467,7 +467,7 @@ ENTRYPOINT void draw_pulsar(ModeInfo * mi)
   if (!gp->glx_context)
 	return;
 
-  glXMakeCurrent(display, window, *(gp->glx_context));
+  glXMakeCurrent(display, window, *gp->glx_context);
   drawScene(mi);
   if (mi->fps_p) do_fps (mi);
   glXSwapBuffers(display, window);
@@ -508,7 +508,10 @@ init_pulsar(ModeInfo * mi)
 ENTRYPOINT void free_pulsar(ModeInfo * mi)
 {
   pulsarstruct *gp = &Pulsar[MI_SCREEN(mi)];
+  if (!gp->glx_context) return;
+  glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *gp->glx_context);
   free(gp->quads);
+  if (glIsList(gp->quad_list)) glDeleteLists(gp->quad_list, 1);
 }
 #endif
 
