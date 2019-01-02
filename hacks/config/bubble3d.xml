@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="bubble3d" _label="Bubble3D" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=4vcj8sq9FO8"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <boolean id="transp" _label="Transparent bubbles" arg-unset="-no-transparent"/>
+   <select id="bubblecolor">
+    <option id="random" _label="Random" />
+    <option id="Red"    _label="Amber" arg-set="-color #FF0000" />
+    <option id="Green"  _label="Green" arg-set="-color #00FF00" />
+    <option id="Blue"   _label="Blue"  arg-set="-color #0000FF" />
+    <option id="white"  _label="White" arg-set="-color #FFFFFF" />
+   </select>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
+
+  <_description>
+Rising, undulating 3D bubbles, with transparency and specular reflections. 
+
+Written by Richard Jones; 1998.
+  </_description>
+</screensaver>

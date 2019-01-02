@@ -1,0 +1,140 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "14-Dec-95" "X Version 11"
+.SH NAME
+bubbles - frying pan / soft drink simulation
+.SH SYNOPSIS
+.B bubbles
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-simple] [\-broken] [\-3D] [\-rise|\-drop] [-trails]
+[\-fps]
+.SH DESCRIPTION
+\fIBubbles\fP sprays lots of little random bubbles all over the window which
+then grow until they reach their maximum size and go pop.  The inspiration
+for this was watching little globules of oil on the bottom of a frying pan
+and it also looks a little like bubbles in fizzy soft drink.  The default
+mode uses fancy ray-traced bubbles but there is also a mode which just draws 
+circles in case the default mode is too taxing on your hardware.
+.SH OPTIONS
+Depending on how your
+.I bubbles
+was compiled, it accepts the following options:
+.TP 8
+.B \-foreground
+Colour of circles if \fI\-simple\fP mode is selected.
+.TP 8
+.B \-background
+Colour of window background.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default 800, or about 800 microsecond.  Actually, this is the delay between each
+group of 15 new bubbles since such a delay between each step results in a
+very slow animation rate.
+.TP 8
+.B \-nodelay
+Same as \fI\-delay 0\fP.
+.TP 8
+.B \-simple
+Don't use the default fancy pixmap bubbles.  Just draw circles instead.
+This may give more bearable performance if your hardware wasn't made for
+this sort of thing.
+.TP 8
+.B \-broken
+Don't hide bubbles when they pop.  This was a bug during development
+but the results were actually quite attractive.
+.TP 8
+.B \-3D
+Normally, the simulation is done completely in two dimensions.  When a
+bubble swallows up another bubble, the areas of each are added to get
+the area of the resulting bubble.  This option changes the algorithm
+to instead add volume (imagining each to be a sphere in 3D space).  The
+whole thing looks more realistic but I find it attracts attention to
+the flickering of each bubble as they are move and are redrawn.  Your
+mileage may vary.
+.TP 8
+.B \-quiet
+Don't print messages explaining why one or several command line options
+were ignored.  This is disabled by default.
+.TP 8
+.B \-rise | \-drop 
+.TP 8
+.B \-trails
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH NOTES
+If you find the pace of things too slow, remember that there is a delay
+even though you specify no \fI\-delay\fP option.  Try using \fI\-nodelay\fP
+although beware of the effects of irritation of other users if you're on a 
+shared system as you bleed their CPU time away.
+
+Some tools to assist in creation of new bubbles are included in the source
+distribution.  These can either be loaded with the \fI\-file\fP or
+\fI\-directory\fP options (if available) or they can be used in place
+of the distributed default bubble (bubble_default.c).
+You might like to copy these scripts to a permanent location and
+use them.  Read bubbles.README.
+
+Rendered bubbles are not supported on monochrome displays.  I'm not
+convinced that small bubbles, even dithered properly are going to look
+like anything more than a jumble of random dots.
+.SH BUGS
+There is a delay before something appears on the screen when using
+rendered bubbles.  The XPM library seems to take a \fBlong\fP time to make
+pixmaps out of raw data.  This can be irritating on slower systems.
+
+The movement of the bubbles looks jerky if an incomplete set of bubbles
+is used.  
+
+The hide/display algorithm could do with some work to avoid flickering
+when \fI\-nodelay\fP is set.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH DISTRIBUTION POLICY
+This work is Copyright \(co 1995, 1996 by James Macnicol.  Permission
+to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided
+that the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+.SH AUTHOR
+James Macnicol <james.macnicol@mailexcite.com>
