@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="razzledazzle" _label="RazzleDazzle" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=tV_70VxJFfs" />
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="10" default="1.0"/>
+
+    <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Colors" _low-label="Mono" _high-label="Many"
+            low="2" high="200" default="2"/>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="density" type="slider" arg="-density %"
+            _label="Density" _low-label="Sparse" _high-label="Dense"
+            low="1.0" high="10.0" default="5.0"/>
+
+    <number id="thickness" type="slider" arg="-thickness %"
+            _label="Lines" _low-label="Thick" _high-label="Thin"
+            low="0.05" high="1.0" default="0.1"/>
+
+    <select id="object">
+     <option _label="Ship Outlines" arg-set="-mode ships"/>
+     <option _label="Flat Pattern" arg-set="-mode flat"/>
+     <option id="random" _label="Ships or flat pattern"/>
+    </select>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Generates an infinitely-scrolling sequence of dazzle camouflage patterns.
+
+Dazzle Ships, in addition to being the best album by Orchestral
+Manoeuvres in the Dark, were military vessels during World War I and
+early in World War II that were painted not to conceal but to confuse:
+with these Cubist overlapping stripes, it was very hard to estimate
+their size, range and heading.  This was a big deal before the
+invention of Radar.
+
+https://en.wikipedia.org/wiki/Dazzle_camouflage
+https://en.wikipedia.org/wiki/Cubism
+https://en.wikipedia.org/wiki/Dazzle_Ships_%28album%29
+https://en.wikipedia.org/wiki/Acoustic_mirror
+https://en.wikipedia.org/wiki/Radar
+
+Written by Jamie Zawinski; 2018.
+  </_description>
+</screensaver>

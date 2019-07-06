@@ -1,0 +1,357 @@
+# Makefile.in --- xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski.
+# the `../configure' script generates `Makefile' from this file.
+
+@SET_MAKE@
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+SHELL		= /bin/sh
+SUBDIRS 	= utils jwxyz hacks/images hacks hacks/glx driver po
+SUBDIRS2	= $(SUBDIRS) OSX android
+TARFILES	= README README.hacking README.VMS INSTALL \
+		  configure configure.in Makefile.in config.h.in \
+		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
+		  ax_pthread.m4 config.sub makevms.com \
+		  intltool-merge.in intltool-extract.in intltool-update.in \
+		  xscreensaver.spec \
+		  OSX/xscreensaver.xcodeproj/project.pbxproj
+
+TAR		= tar
+
+MAKE_SUBDIR  = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
+MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do (cd $$dir; $(MAKE) $@) || exit 5; done
+
+default::
+	@+$(MAKE_SUBDIR)
+all::
+	@+$(MAKE_SUBDIR)
+install::
+	@+$(MAKE_SUBDIR)
+install-program::
+	@+$(MAKE_SUBDIR)
+install-man::
+	@+$(MAKE_SUBDIR)
+install-strip::
+	@+$(MAKE_SUBDIR)
+uninstall::
+	@$(MAKE_SUBDIR)
+uninstall-program::
+	@$(MAKE_SUBDIR)
+uninstall-man::
+	@$(MAKE_SUBDIR)
+depend::
+	@$(MAKE_SUBDIR)
+distdepend::
+	@$(MAKE) update_spec_version
+	@$(MAKE_SUBDIR2)
+	@cd po ; $(MAKE) update-po
+
+TAGS:: tags
+tags::
+	@$(MAKE_SUBDIR)
+
+clean::
+	@$(MAKE_SUBDIR2)
+
+distclean:: clean
+	-rm -f config.h Makefile config.status config.cache config.log TAGS *~ "#"* intltool-extract intltool-merge intltool-update
+	@$(MAKE_SUBDIR2)
+
+dist:: tar
+
+# This really makes me sick...
+tar::
+	@								    \
+  sh config.status ;							    \
+  rm -f configure ;							    \
+  $(MAKE) configure ;							    \
+  $(MAKE) version-date distdepend ;					    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
+  NAME="xscreensaver-$$VERS" ;						    \
+  rm -rf $$NAME ; ln -s . $$NAME ;					    \
+  FILES= ;								    \
+  ADIR=archive/ ;							    \
+  for subdir in $(SUBDIRS2) ; do					    \
+    d=`pwd` ;								    \
+    cd $$subdir ;							    \
+    FILES="$$FILES `$(MAKE) echo_tarfiles				    \
+      | grep -v '^.*make\['						    \
+      | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"			    \
+      ` ";								    \
+    cd $$d ; done ;							    \
+  echo creating tar file $$ADIR$$NAME.tar.gz... ;			    \
+  export COPYFILE_DISABLE=true ;					    \
+  GZIP="-9v" $(TAR) -vczf $$ADIR$$NAME.tar.gz			            \
+    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" ` ;	    \
+  rm $$NAME
+
+
+# This also makes me sick...
+# autoconf generates a configure script that begins with a very hard to read,
+# nearly impossible to customize --help blurb.  This horrid set of regexps
+# go through and clean up the help text, by inserting whitespace and ripping
+# out options we don't use.  Odds are good that this will fail with any version
+# of autoconf other than the ones I've tried (2.12 and 2.13.)
+#
+configure::
+	aclocal
+	autoconf
+	autoheader
+	@TMP=configure.$$$$ ;						     \
+	echo "munging configure's --help message..." ;			     \
+	( perl -e '							     \
+		my $$file="";						     \
+		while (<>) { $$file .= $$_; }				     \
+		$$_ = $$file;						     \
+									     \
+		s/^(Configuration:)$$/\n$$1\n/m;			     \
+		s/^(Directory and file names:)$$/\n$$1\n/m;		     \
+		s/^  --sbindir=.*\n//m;					     \
+		s/^  --sysconfdir.*\n//m;				     \
+		s/^  --sharedstatedir.*\n.*\n//m;			     \
+		s/^  --localstatedir.*\n//m;				     \
+		s/^  --infodir.*\n//m;					     \
+		s/^(Host type:)$$/\n$$1\n/m;				     \
+		s/\nFeatures and packages:\n.*library files are in DIR\n/\n/s;\
+		s/--enable and --with options recognized://m;		     \
+		s/\n  --with-x .*?(["\n])/$$1/s;			     \
+		s/\n(Installation options:\n)/$$1/s;			     \
+									     \
+		s/^  --oldincludedir=.*$$/ \
+ --x-includes=DIR        X include files are in DIR\n \
+ --x-libraries=DIR       X library files are in DIR/m; \
+									     \
+		s@mandir=.\$$\{prefix}/man.@mandir=\\\$${datadir}/man@;       \
+									     \
+		s@rm -f conftest@rm -rf conftest@g;			     \
+									     \
+		print;'							     \
+	< configure							     \
+	> $$TMP &&							     \
+	cat $$TMP > configure ) ;					     \
+	rm -f $$TMP
+
+bump-version::
+	@								    \
+  SRC=utils/version.h ;							    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\)\.\([0-9][^. ]*\).*/\1 \2/p' $$SRC` ;	    \
+  set - $$VERS ;							    \
+  MAJOR="$$1"; MINOR="$$2";						    \
+  NEW=`echo $$MINOR + 1 | bc` ;						    \
+  NEW=`echo $$NEW | sed 's/^\([0-9]\)$$/0\1/'` ;			    \
+  D=`date '+%d-%b-%Y'`;							    \
+  ADIR=archive/ ;							    \
+  if [ ! -f $${ADIR}xscreensaver-$$MAJOR.$$MINOR.tar.gz ]; then		    \
+   echo "WARNING: $${ADIR}xscreensaver-$$MAJOR.$$MINOR.tar.gz does not exist.";\
+  fi ;									    \
+  if [ -f $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz ]; then		    \
+    echo "WARNING: $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz already exists.";\
+  fi ;									    \
+  /bin/echo -n "Bumping $$MAJOR.$$MINOR to $$MAJOR.$$NEW ($$D), ok? ";	    \
+  read line;								    \
+  if [ "x$$line" != "xyes" -a  "x$$line" != "xy" ]; then		    \
+    exit 1 ; 								    \
+  fi ;									    \
+  TMP=/tmp/bv.$$ ;							    \
+  sed -e "s/\([0-9]\.[0-9][0-9]*\)/$$MAJOR.$$NEW/"			    \
+      -e "s/\(([0-9][0-9]*-[A-Za-z][a-z][a-z]-[0-9][0-9][0-9]*\))/($$D)/"   \
+        $$SRC > $$TMP ;							    \
+  /bin/echo -n "New version and date are ";				    \
+  sed -n "s/[^0-9]*\([0-9]\.[0-9][0-9]*\) (\([-A-Za-z0-9]*\)).*/\1, \2./p"  \
+     $$TMP;								    \
+  cat $$TMP > $$SRC ;							    \
+  rm -f $$TMP;								    \
+  echo "overwrote $$SRC"; 						    \
+  ls -lFd $$SRC
+
+bump_version:: bump-version
+tick-version:: bump-version
+tick_version:: bump-version
+
+version-date::
+	@								    \
+  SRC=utils/version.h ;							    \
+  D=`date '+%d-%b-%Y'`;							    \
+  TMP=/tmp/bv.$$ ;							    \
+  sed -e "s/([0-9][^()]*)/($$D)/" < $$SRC > $$TMP ;			    \
+  /bin/echo -n "Updating date in $$SRC to \"$$D\"... " ;		    \
+  if cmp -s $$SRC $$TMP ; then						    \
+    echo "unchanged." ;							    \
+  else									    \
+    cat $$TMP > $$SRC ;							    \
+    echo "done." ;							    \
+  fi ;									    \
+  rm -f $$TMP
+
+
+update_spec_version::
+	@S=$(srcdir)/xscreensaver.spec ;				    \
+	U=$(srcdir)/utils/version.h ;					    \
+	VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;	    \
+	/bin/echo -n "Updating $$S to \"$$VERS\"... " ;			    \
+	T=/tmp/xs.$$$$ ;						    \
+	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"		    \
+	  < $$S > $$T ;							    \
+	if cmp -s $$S $$T ; then					    \
+	  echo "unchanged." ;						    \
+	else								    \
+	  cat $$T > $$S ;						    \
+	  echo "done." ;						    \
+	fi ;								    \
+	rm $$T
+
+rpm::
+	@								   \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ; \
+  DIR=`pwd`/rpm_build ;							   \
+  ARCH=`rpm --showrc | sed -n 's/^build arch *: //p'` ;			   \
+  ADIR=archive/ ;							   \
+  TGZ=xscreensaver-$$VERS.tar.gz ;					   \
+  if [ ! -f $${ADIR}$$TGZ ]; then					   \
+    echo "$${ADIR}$$TGZ does not exist!  Did you forget to \`make tar'?" ; \
+    exit 1 ; 								   \
+  fi ;									   \
+  rm -rf /var/tmp/xscreensaver-$$VERS-root ;				   \
+  rm -rf $$DIR ;							   \
+  mkdir $$DIR ;								   \
+  ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
+  cp -p $${ADIR}$$TGZ $$DIR/SOURCES/ ;					   \
+  rpmbuild --define "_topdir $$DIR"					   \
+           --define "USE_GL yes"					   \
+           -v -ba xscreensaver.spec ;					   \
+  echo '' ;								   \
+  echo 'RPM build complete' ;						   \
+  echo '' ;								   \
+  rm -f $$DIR/$$TGZ ;							   \
+  rm -rf $$DIR/BUILD/xscreensaver-$$VERS ;				   \
+  mv $$DIR/SRPMS/xscreensaver*-$$VERS-*.rpm . ;				   \
+  mv $$DIR/RPMS/$$ARCH/xscreensaver*-$$VERS-*.rpm . ;			   \
+  rm -rf $$DIR ;							   \
+  echo '' ;								   \
+  ls -lFG xscreensaver*-$$VERS-*.rpm
+
+dmg::
+	$(MAKE) -C OSX release dmg
+apk::
+	$(MAKE) -C android apk
+
+www::
+	@								    \
+  DEST=$$HOME/www/xscreensaver ;					    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
+  HEAD="xscreensaver-$$VERS" ;						    \
+  ADIR=archive/ ;							    \
+  BNAME="$$HEAD.tar.gz" ;						    \
+  NAME="$$ADIR$$BNAME" ;						    \
+  DNAME="$$DEST/$$HEAD.tar.gz" ;					    \
+  BNAME2="$$HEAD.dmg" ;							    \
+  NAME2="$$ADIR$$BNAME2" ;						    \
+  DNAME2="$$DEST/$$HEAD.dmg" ;						    \
+  BNAME3="$$HEAD.apk" ;							    \
+  NAME3="$$ADIR$$BNAME3" ;						    \
+  DNAME3="$$DEST/$$HEAD.apk" ;						    \
+									    \
+  if ! git diff --quiet ; then						    \
+    echo "uncommitted changes exist!" ;					    \
+    exit 1 ;								    \
+  fi ;									    \
+									    \
+  $(MAKE) -C OSX updates.xml ;						    \
+									    \
+  if [ ! -f $$NAME ]; then						    \
+    echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
+    exit 1 ; 								    \
+  fi ;									    \
+  if [ ! -f $$NAME2 ]; then						    \
+    echo "$$NAME2 does not exist!  Did you forget to \`make dmg'?" ;	    \
+    exit 1 ; 								    \
+  fi ;									    \
+  if [ ! -f $$NAME3 ]; then						    \
+    echo "$$NAME3 does not exist!  Did you forget to \`make apk'?" ;	    \
+    exit 1 ; 								    \
+  fi ;									    \
+  chmod a-w $$NAME ;							    \
+  if [ -f $$DNAME ]; then						    \
+    /bin/echo -n "WARNING: $$DNAME already exists!  Overwrite? ";	    \
+    read line;								    \
+    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+      exit 1 ; 								    \
+    fi ;								    \
+  fi ;									    \
+  if [ -f $$DNAME2 ]; then						    \
+    /bin/echo -n "WARNING: $$DNAME2 already exists!  Overwrite? ";	    \
+    read line;								    \
+    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+      exit 1 ; 								    \
+    fi ;								    \
+  fi ;									    \
+  if [ -f $$DNAME3 ]; then						    \
+    /bin/echo -n "WARNING: $$DNAME3 already exists!  Overwrite? ";	    \
+    read line;								    \
+    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+      exit 1 ; 								    \
+    fi ;								    \
+  fi ;									    \
+									    \
+  git tag -a "v$$VERS" -m "$$VERS" ;					    \
+  git commit -m "$$VERS" . ;						    \
+									    \
+  ( cd $$DEST ;	git pull ) ;						    \
+									    \
+  cp -p $$NAME $$DNAME ;						    \
+  cp -p $$NAME2 $$DNAME2 ;						    \
+  cp -p $$NAME3 $$DNAME3 ;						    \
+  chmod u+w $$DNAME $$DNAME2 $$DNAME3 ;					    \
+  cp -p OSX/updates.xml $$DEST ;					    \
+  cd $$DEST ;								    \
+									    \
+  TMP=/tmp/xd.$$$$ ;							    \
+  sed "s/xscreensaver-5\.[0-9][0-9ab]*/$$HEAD/g" download.html > $$TMP ;    \
+  echo '' ;								    \
+  diff -U0 download.html $$TMP ;					    \
+  echo '' ;								    \
+									    \
+  for EXT in tar.gz dmg ; do						    \
+    OLDEST=`ls xscreensaver*.$$EXT | 					    \
+      fgrep -v 5.14 |							    \
+      fgrep -v 5.34 |							    \
+      head -n 1` ;							    \
+    /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
+    read line;								    \
+    if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \
+      set -x ;								    \
+      rm $$OLDEST ;							    \
+      git rm $$OLDEST ;							    \
+      set +x ;								    \
+    fi ;								    \
+  done ;								    \
+  set -x ;								    \
+  cat $$TMP > download.html ;						    \
+  rm -f $$TMP ;								    \
+									    \
+  git add $$BNAME $$BNAME2 $$BNAME3 ;					    \
+									    \
+  $(MAKE) -C ../ xscreensaver/changelog.html xscreensaver/screenshots/index.html; \
+  git diff changelog.html ;						    \
+  set +x ;								    \
+									    \
+  /bin/echo -n "Ok? ";							    \
+  read line;								    \
+  if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then			    \
+    exit 1 ;								    \
+  fi ;									    \
+									    \
+  git tag -a "v$$VERS" -m "$$VERS" ;					    \
+  git commit -m "$$VERS" . ;						    \
+  git push ;								    \
+
+
+count::
+	@ \
+  /bin/echo -n "Current hack count: " ; \
+  ( ( cd hacks;     make -s INSTALL=true install-program install-scripts ) ; \
+    ( cd hacks/glx; make -s INSTALL=true install-program ) ) | \
+    grep true | \
+    grep -v helper | \
+    grep -v ljlatest | \
+    wc -l
