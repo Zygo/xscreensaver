@@ -121,7 +121,7 @@ static void InitShadeBob( struct state *st, SShadeBob *pShadeBob, Bool bDark )
 	double nDelta;
 	int iWidth, iHeight;
 
-	if( ( pShadeBob->anDeltaMap = calloc( st->iBobDiameter * st->iBobDiameter, sizeof(char) ) ) == NULL )
+	if( ( pShadeBob->anDeltaMap = calloc( st->iBobDiameter * st->iBobDiameter, sizeof(signed char) ) ) == NULL )
 	{
 		fprintf( stderr, "%s: Could not allocate Delta Map!\n", progname );
 		return;

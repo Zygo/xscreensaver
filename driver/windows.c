@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -752,6 +752,16 @@ restore_real_vroot_handler (int sig)
   if (restore_real_vroot (si))
     fprintf (real_stderr, "\n%s: %s intercepted, vroot restored.\n",
 	     blurb(), signal_name(sig));
+# ifdef HAVE_LIBSYSTEMD
+  if (si->systemd_pid)  /* Kill background xscreensaver-systemd process */
+    {
+      /* We're exiting, so there's no need to do a full kill_job() here,
+         which will waitpid(). */
+      /* kill_job (si, si->systemd_pid, SIGTERM); */
+      kill (si->systemd_pid, SIGTERM);
+      si->systemd_pid = 0;
+    }
+# endif
   kill (getpid (), sig);
 }
 
@@ -871,6 +881,14 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
 
   if (p->verbose_p && vrs)
     fprintf (real_stderr, "%s: old vroot restored.\n", blurb());
+
+# ifdef HAVE_LIBSYSTEMD
+  if (si->systemd_pid)  /* Kill background xscreensaver-systemd process */
+    {
+      kill_job (si, si->systemd_pid, SIGTERM);
+      si->systemd_pid = 0;
+    }
+# endif
 
   fflush(real_stdout);
 

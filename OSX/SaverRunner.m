@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -67,10 +67,13 @@
   return self;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
 - (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
 {
   return allowRotation;				/* Deprecated in iOS 6 */
 }
+#pragma clang diagnostic pop
 
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
 {
@@ -115,7 +118,7 @@
 
 - (void)dealloc
 {
-  [_saverName release];
+  [saverName release];
   // iOS: When a UIView deallocs, it doesn't do [UIView removeFromSuperView]
   // for its subviews, so the subviews end up with a dangling pointer in their
   // superview properties.
@@ -356,10 +359,12 @@
 
   if (! _saverView) {
     UIAlertController *c = [UIAlertController
-                             alertControllerWithTitle:@"Unable to load!"
+                             alertControllerWithTitle:
+                               NSLocalizedString(@"Unable to load!", @"")
                              message:@""
                              preferredStyle:UIAlertControllerStyleAlert];
-    [c addAction: [UIAlertAction actionWithTitle: @"Bummer"
+    [c addAction: [UIAlertAction actionWithTitle:
+                                   NSLocalizedString(@"Bummer", @"")
                                  style: UIAlertActionStyleDefault
                                  handler: ^(UIAlertAction *a) {
       // #### Should expose the SaverListController...
@@ -391,10 +396,13 @@
 }
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
 - (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
 {
   return NO;					/* Deprecated in iOS 6 */
 }
+#pragma clang diagnostic pop
 
 
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
@@ -1343,7 +1351,7 @@ FAIL:
     rect.origin.y = 0;
     rect.size.width = rect.size.height = 10;
     pb = [[NSButton alloc] initWithFrame:rect];
-    [pb setTitle:@"Preferences"];
+    [pb setTitle:NSLocalizedString(@"Preferences", @"")];
     [pb setBezelStyle:NSRoundedBezelStyle];
     [pb sizeToFit];
 

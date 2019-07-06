@@ -661,6 +661,7 @@ PASSWD_OBJS
 PASSWD_SRCS
 MEN_OSX
 SCRIPTS_OSX
+EXES_SYSTEMD
 EXES_OSX
 OBJCC
 COMMENT_DEMO_GLADE2_GTK_2_22_TAIL
@@ -676,8 +677,12 @@ HAVE_PAM_FAIL_DELAY
 INSTALL_PAM
 NEED_SETUID
 INSTALL_DIRS
+SETCAP_HACKS
 SETUID_HACKS
 INSTALL_SETUID
+PROG_SETCAP
+LIBCAP_LIBS
+LIBCAP_CFLAGS
 PASSWD_LIBS
 XINERAMA_LIBS
 XDPMS_LIBS
@@ -694,6 +699,7 @@ SAVER_LIBS
 ALL_DEMO_PROGRAMS
 PREFERRED_DEMO_PROGRAM
 INCLUDES
+setcap_program
 gnome_url_show_program
 gnome_open_program
 pkg_config
@@ -854,6 +860,7 @@ with_png
 with_pixbuf
 with_jpeg
 with_xft
+with_systemd
 with_xshm_ext
 with_xdbe_ext
 with_readdisplay
@@ -861,6 +868,7 @@ with_image_directory
 with_text_file
 with_browser
 with_setuid_hacks
+with_setcap_hacks
 with_record_animation
 '
       ac_precious_vars='build_alias
@@ -1552,6 +1560,7 @@ Graphics options:
                           GIF, JPEG, and PNG files as well.
   --with-jpeg             Include support for the JPEG library.
   --with-xft              Include support for the X Freetype library.
+  --with-systemd          Build xscreensaver-systemd to lock on suspend.
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-readdisplay      Include support for the XReadDisplay extension.
@@ -1561,9 +1570,9 @@ Graphics options:
   --with-browser=BROWSER  Specify the web browser used to show the help URL.
   --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
-
+  --with-setcap-hacks     Allow some demos to be installed with setcap
+                          (which is needed in order to ping other hosts.)
   --with-record-animation Include code for generating MP4 videos.
-
 
 Some influential environment variables:
   CC          C compiler command
@@ -1740,6 +1749,43 @@ fi
 
 } # ac_fn_c_try_link
 
+# ac_fn_c_try_cpp LINENO
+# ----------------------
+# Try to preprocess conftest.$ac_ext, and return whether this succeeded.
+ac_fn_c_try_cpp ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if { { ac_try="$ac_cpp conftest.$ac_ext"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } > conftest.i && {
+	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+    ac_retval=1
+fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_c_try_cpp
+
 # ac_fn_c_try_run LINENO
 # ----------------------
 # Try to link conftest.$ac_ext, and return whether this succeeded. Assumes
@@ -1781,43 +1827,6 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_c_try_run
-
-# ac_fn_c_try_cpp LINENO
-# ----------------------
-# Try to preprocess conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_cpp ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  if { { ac_try="$ac_cpp conftest.$ac_ext"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } > conftest.i && {
-	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       }; then :
-  ac_retval=0
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-    ac_retval=1
-fi
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-  as_fn_set_status $ac_retval
-
-} # ac_fn_c_try_cpp
 
 # ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
 # -------------------------------------------------------
@@ -2510,6 +2519,10 @@ echo "command line was: $0 $@"
 #AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
 #	    [Define this if you have the SGI-VIDEO-CONTROL extension.  This
 #	    is standard on Irix systems, and not available elsewhere.])
+
+
+
+
 
 
 
@@ -4376,27 +4389,15 @@ $as_echo "Solaris: adding -D__EXTENSIONS__" >&6; }
 
   OBJCC="$CC"
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler works on ANSI C" >&5
-$as_echo_n "checking whether the compiler works on ANSI C... " >&6; }
-  if test "$cross_compiling" = yes; then :
-  as_fn_error $? "Couldn't build even a trivial ANSI C program: check CC." "$LINENO" 5
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
- main(int ac, char **av) { return 0; }
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-     as_fn_error $? "Couldn't build even a trivial ANSI C program: check CC." "$LINENO" 5
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+  # This test makes cross-compiling fail, so let's just assume that nobody
+  # is using a K&R compiler any more...
+  #
+#  AC_MSG_CHECKING([whether the compiler works on ANSI C])
+#  AC_TRY_RUN([ main(int ac, char **av) { return 0; } ],
+#     AC_MSG_RESULT(yes),
+#     AC_MSG_RESULT(no)
+#     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.),
+#     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.))
 
   if test -n "$GCC"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: Turning on gcc compiler warnings." >&5
@@ -13410,7 +13411,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13417 "configure"
+#line 13418 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -15019,6 +15020,219 @@ fi
 
 ###############################################################################
 #
+#       Check for -lsystemd
+#
+###############################################################################
+
+have_systemd=no
+with_systemd_req=unspecified
+systemd_halfassed=no
+
+# Check whether --with-systemd was given.
+if test "${with_systemd+set}" = set; then :
+  withval=$with_systemd; with_systemd="$withval"; with_systemd_req="$withval"
+else
+  with_systemd=yes
+fi
+
+
+
+   case "$with_systemd" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for systemd headers" >&5
+$as_echo_n "checking for systemd headers... " >&6; }
+     d=$with_systemd/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for systemd libs" >&5
+$as_echo_n "checking for systemd libs... " >&6; }
+     d=$with_systemd/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     # replace the directory string with "yes".
+     with_systemd_req="yes"
+     with_systemd=$with_systemd_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-systemd must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$with_systemd" != yes -a "$with_systemd" != no ; then
+  echo "error: must be yes or no: --with-systemd=$with_systemd"
+  exit 1
+fi
+
+if test "$with_systemd" = yes; then
+
+  pkgs=''
+  ok="yes"
+  pkg_check_version libsystemd 221
+  have_systemd="$ok"
+
+  if test "$have_systemd" = yes; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libsystemd includes" >&5
+$as_echo_n "checking for libsystemd includes... " >&6; }
+if ${ac_cv_systemd_config_cflags+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_systemd_config_cflags=`$pkg_config --cflags $pkgs`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_systemd_config_cflags" >&5
+$as_echo "$ac_cv_systemd_config_cflags" >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libsystemd libs" >&5
+$as_echo_n "checking for libsystemd libs... " >&6; }
+if ${ac_cv_systemd_config_libs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_systemd_config_libs=`$pkg_config --libs $pkgs`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_systemd_config_libs" >&5
+$as_echo "$ac_cv_systemd_config_libs" >&6; }
+  fi
+
+  ac_systemd_config_cflags=$ac_cv_systemd_config_cflags
+  ac_systemd_config_libs=$ac_cv_systemd_config_libs
+
+  if test "$have_systemd" = yes; then
+    #
+    # we appear to have libsystemd; check for headers/libs to be sure.
+    #
+    ac_save_systemd_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_systemd_config_cflags"
+
+    have_systemd=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  ac_fn_c_check_header_mongrel "$LINENO" "systemd/sd-bus.h" "ac_cv_header_systemd_sd_bus_h" "$ac_includes_default"
+if test "x$ac_cv_header_systemd_sd_bus_h" = xyes; then :
+  have_systemd=yes
+fi
+
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+
+    CPPFLAGS="$ac_save_systemd_CPPFLAGS"
+  fi
+
+  if test "$have_systemd" = yes; then
+    # we have the headers, now check for the libraries
+    have_systemd=no
+    systemd_halfassed=yes
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for libsystemd usability..." >&5
+$as_echo "checking for libsystemd usability..." >&6; }
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sd_bus_open_system in -lc" >&5
+$as_echo_n "checking for sd_bus_open_system in -lc... " >&6; }
+if ${ac_cv_lib_c_sd_bus_open_system+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc $ac_systemd_config_libs -lX11 -lXext -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sd_bus_open_system ();
+int
+main ()
+{
+return sd_bus_open_system ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_c_sd_bus_open_system=yes
+else
+  ac_cv_lib_c_sd_bus_open_system=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_c_sd_bus_open_system" >&5
+$as_echo "$ac_cv_lib_c_sd_bus_open_system" >&6; }
+if test "x$ac_cv_lib_c_sd_bus_open_system" = xyes; then :
+  have_systemd=yes
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+  fi
+
+  if test "$have_systemd" = no; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for libsystemd usability... no" >&5
+$as_echo "checking for libsystemd usability... no" >&6; }
+  fi
+fi
+
+if test "$have_systemd" = yes; then
+  INCLUDES="$INCLUDES $ac_systemd_config_cflags"
+  EXES_SYSTEMD='$(EXES_SYSTEMD)'
+  $as_echo "#define HAVE_LIBSYSTEMD 1" >>confdefs.h
+
+else
+  EXES_SYSTEMD=''
+fi
+
+
+###############################################################################
+#
 #       Check for pty support: this allows 'phosphor' and 'apple2'
 #	to run curses-based programs, or be used as terminal windows.
 #
@@ -15837,6 +16051,207 @@ fi
 
 ###############################################################################
 #
+#       Check for setcap, which is less worrying than setuid.
+#
+###############################################################################
+
+have_libcap=no
+setcap_hacks_default=yes
+setcap_hacks="$setcap_hacks_default"
+setcap_hacks_req=unspecified
+
+# Check whether --with-setcap-hacks was given.
+if test "${with_setcap_hacks+set}" = set; then :
+  withval=$with_setcap_hacks; setcap_hacks="$withval"; setcap_hacks_req="$withval"
+else
+  setcap_hacks=yes
+fi
+
+
+
+   case "$setcap_hacks" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for setcap hacks headers" >&5
+$as_echo_n "checking for setcap hacks headers... " >&6; }
+     d=$setcap_hacks/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for setcap hacks libs" >&5
+$as_echo_n "checking for setcap hacks libs... " >&6; }
+     d=$setcap_hacks/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     # replace the directory string with "yes".
+     setcap_hacks_req="yes"
+     setcap_hacks=$setcap_hacks_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-setcap-hacks must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$setcap_hacks" != yes -a "$setcap_hacks" != no ; then
+  echo "error: must be yes or no: --with-setcap-hacks=$setcap_hacks"
+  exit 1
+fi
+
+if test "$setcap_hacks" = yes; then
+
+  for ac_prog in setcap
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_setcap_program+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$setcap_program"; then
+  ac_cv_prog_setcap_program="$setcap_program" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_setcap_program="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+setcap_program=$ac_cv_prog_setcap_program
+if test -n "$setcap_program"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $setcap_program" >&5
+$as_echo "$setcap_program" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$setcap_program" && break
+done
+
+  if test "$setcap_program" != ''; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/capability.h" "ac_cv_header_sys_capability_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_capability_h" = xyes; then :
+  have_setcap=yes
+fi
+
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  fi
+  if test "$have_setcap" = yes; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cap_set_flag in -lcap" >&5
+$as_echo_n "checking for cap_set_flag in -lcap... " >&6; }
+if ${ac_cv_lib_cap_cap_set_flag+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcap  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cap_set_flag ();
+int
+main ()
+{
+return cap_set_flag ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_cap_cap_set_flag=yes
+else
+  ac_cv_lib_cap_cap_set_flag=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cap_cap_set_flag" >&5
+$as_echo "$ac_cv_lib_cap_cap_set_flag" >&6; }
+if test "x$ac_cv_lib_cap_cap_set_flag" = xyes; then :
+  have_libcap=yes
+                    PROG_SETCAP="$setcap_program"
+                    LIBCAP_LIBS="-lcap"
+                    $as_echo "#define HAVE_LIBCAP 1" >>confdefs.h
+
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+  fi
+fi
+
+
+###############################################################################
+#
 #       Check for --with-record-animation
 #
 ###############################################################################
@@ -16005,6 +16420,12 @@ else
   SETUID_HACKS=no
 fi
 
+if test "$have_libcap" = yes; then
+  SETCAP_HACKS=yes
+else
+  SETCAP_HACKS=no
+fi
+
 tab='	'
 if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
@@ -16090,6 +16511,11 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
+
+
+
+
 
 
 
@@ -17831,6 +18257,37 @@ if test "$have_xft" = no ; then
 fi
 
 
+if test "$have_systemd" = no ; then
+  systemd_warned=no
+  if test "$with_systemd_req" = yes ; then
+    warnL "Use of systemd was requested, but it was not found."
+    systemd_warned=yes
+  elif test "$with_systemd_req" = no ; then
+    true
+    # noteL 'The systemd library is not being used.'
+    # systemd_warned=yes
+  else
+    true
+    # noteL "The systemd library was not found."
+    # systemd_warned=yes
+  fi
+
+  if test "$systemd_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either systemd is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+    systemd_warned=yes
+  fi
+
+  if test "$systemd_warned" = yes; then
+    warn2 "This means that xscreensaver-systemd won't be built."
+  fi
+fi
+
+
 if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
   preferred_mesagl=3.4
   mgv="$ac_mesagl_version_string"
@@ -17928,6 +18385,10 @@ fi
 
 if test "$with_shadow_req" = yes -a "$have_shadow" = no ; then
   warn 'Use of shadow passwords was requested, but they were not found.'
+fi
+
+if test "$setcap_hacks_req" = yes -a "$have_libcap" = no ; then
+  warn 'Use of libcap was requested, but it was not found.'
 fi
 
 if test "$ac_macosx" = yes ; then

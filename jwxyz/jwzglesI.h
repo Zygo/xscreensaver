@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -118,6 +118,7 @@
 # define GL_VIEWPORT_BIT			0x00000800
 # define GL_INT					0x1404
 # define GL_DOUBLE				0x140A
+# define GL_CONSTANT_ALPHA			0x8003
 
 #endif
 
@@ -173,6 +174,7 @@ extern void jwzgles_glPopAttrib(void);
 extern void jwzgles_glActiveTexture (GLuint);
 extern void jwzgles_glBindTexture (GLuint, GLuint);
 extern void jwzgles_glBlendFunc (GLuint, GLuint);
+extern void jwzgles_glBlendColor (GLfloat, GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glClear (GLuint);
 extern void jwzgles_glClearColor (GLclampf, GLclampf, GLclampf, GLclampf);
 extern void jwzgles_glClearStencil (GLuint);

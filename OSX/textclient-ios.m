@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -60,6 +60,13 @@ textclient_mobile_date_string (void)
 {
   NSURL    *_url;
   NSString *_result;
+}
+
+- (void)dealloc
+{
+  [_url release];
+  [_result release];
+  [super dealloc];
 }
 
 + (TextLoader *) sharedLoader

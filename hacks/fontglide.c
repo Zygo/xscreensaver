@@ -2421,8 +2421,8 @@ fontglide_free (Display *dpy, Window window, void *closure)
 
   textclient_close (s->tc);
 
-//  if (s->b && s->b != s->window) XFreePixmap (dpy, s->b);
-//  if (s->ba && s->ba != s->b) XFreePixmap (dpy, s->ba);
+/*  if (s->b && s->b != s->window) XFreePixmap (dpy, s->b); */
+/*  if (s->ba && s->ba != s->b) XFreePixmap (dpy, s->ba); */
   XFreeGC (dpy, s->bg_gc);
   if (s->charset) free (s->charset);
   if (s->font_override) free (s->font_override);

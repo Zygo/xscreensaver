@@ -249,7 +249,7 @@ static void
 link_neighbors (ModeInfo *mi)
 {
   splodesic_configuration *bp = &bps[MI_SCREEN(mi)];
-  triangle *t0 = bp->triangles;
+  triangle *t0;
   int i;
 
   /* Triangles are neighbors if they share an edge (exactly 2 points).

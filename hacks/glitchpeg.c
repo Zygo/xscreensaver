@@ -1,4 +1,4 @@
-/* glitchpeg, Copyright (c) 2018 Jamie Zawinski <jwz@jwz.org>
+/* glitchpeg, Copyright (c) 2018-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -232,6 +232,13 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
   while (L > 0 && (buf[L-1] == '\r' || buf[L-1] == '\n'))
     buf[--L] = 0;
 
+  if (!*file)
+    {
+      fprintf (stderr, "%s: no suitable images in imageDirectory\n",
+               progname);
+      return;
+    }
+
   fp = fopen (file, "r");
   if (! fp)
     {
@@ -285,6 +292,14 @@ glitchpeg_init (Display *dpy, Window window)
   if (st->count < 1) st->count = 1;
 
   XClearWindow (st->dpy, st->window);
+
+# if 0  /* This check doesn't work, because X11 resources are the devil. */
+  if (! get_boolean_resource (dpy, "chooseRandomImages", "Boolean"))
+    {
+      fprintf (stderr, "%s: chooseRandomImages must be True", progname);
+      exit (1);
+    }
+# endif
 
   return st;
 }

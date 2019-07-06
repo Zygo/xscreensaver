@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,7 +43,7 @@ extern void check_gl_error (const char *type);
 
 /* With GL programs, drawing at full resolution isn't a problem.
  */
-- (CGFloat) hackedContentScaleFactor
+- (CGFloat) hackedContentScaleFactor:(BOOL)fonts_p
 {
 # ifdef USE_IPHONE
   return [self contentScaleFactor];
@@ -351,8 +351,8 @@ init_GL (ModeInfo *mi)
 
   // Caller expects a pointer to an opaque struct...  which it dereferences.
   // Don't ask me, it's historical...
-  static int blort = -1;
-  return (void *) &blort;
+  static GLXContext blort = (GLXContext) -1;
+  return &blort;
 }
 
 

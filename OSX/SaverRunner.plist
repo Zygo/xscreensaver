@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>5.42</string>
+	<string>5.43</string>
 	<key>CFBundleIconFile</key>
 	<string>SaverRunner</string>
 	<key>CFBundleIdentifier</key>
@@ -15,21 +15,21 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleLongVersionString</key>
-	<string>5.42</string>
+	<string>5.43</string>
 	<key>CFBundleName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.42</string>
+	<string>5.43</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>5.42</string>
+	<string>5.43</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>5.42</string>
+	<string>5.43</string>
 	<key>NSMainNibFile</key>
 	<string>SaverRunner</string>
 	<key>NSPrincipalClass</key>

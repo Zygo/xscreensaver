@@ -1,4 +1,4 @@
-/* gears, Copyright (c) 2007-2014 Jamie Zawinski <jwz@jwz.org>
+/* gears, Copyright (c) 2007-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -684,7 +684,7 @@ planetary_gears (ModeInfo *mi)
   g0->spokes      = 0;
   g0->size        = INVOLUTE_LARGE;
 
-  bp->gears = (gear **) calloc (6, sizeof(**bp->gears));
+  bp->gears = (gear **) calloc (6, sizeof(*bp->gears));
   bp->ngears = 0;
 
   bp->gears[bp->ngears++] = g1;
@@ -768,7 +768,7 @@ init_gears (ModeInfo *mi)
 
       if (total_gears <= 0)
         total_gears = 3 + fabs (BELLRAND (8) - 4);  /* 3 - 7, mostly 3. */
-      bp->gears = (gear **) calloc (total_gears+2, sizeof(**bp->gears));
+      bp->gears = (gear **) calloc (total_gears+2, sizeof(*bp->gears));
       bp->ngears = 0;
 
       for (i = 0; i < total_gears; i++)

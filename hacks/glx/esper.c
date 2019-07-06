@@ -210,7 +210,7 @@ typedef enum {
   MANUAL_RETICLE_ON,
   MANUAL_RETICLE,
   MANUAL_BOX_ON,
-  MANUAL_BOX,
+  MANUAL_BOX
 } anim_state;
 
 typedef enum { NEW, IN, FULL, OUT, DEAD } sprite_state;
@@ -1185,13 +1185,13 @@ static void
 draw_flash_sprite (ModeInfo *mi, sprite *sp)
 {
   /* esper_state *ss = &sss[MI_SCREEN(mi)]; */
+  int wire = MI_IS_WIREFRAME(mi);
   GLfloat o = sp->opacity;
 
   if (o <= 0) return;
   o = 0.7;  /* Too fast to see, so keep it consistent */
 
   glPushMatrix();
-  int wire = MI_IS_WIREFRAME(mi);
   if (!wire)
     glDisable (GL_TEXTURE_2D);
   glColor4f (0, 0, 1, o);

@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright (c) 2016-2018 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2016-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -260,9 +260,9 @@ public class jwxyz
           // LOG ("unparsable system font: %s", file);
         } else {
           name = mungeFontName (name);
-          if (! all_fonts.contains (name)) {
+          if (! all_fonts.contains (name.toLowerCase())) {
             // LOG ("system font \"%s\" %s", name, file);
-            all_fonts.put (name, name);
+            all_fonts.put (name.toLowerCase(), name);
           }
         }
       }
@@ -301,7 +301,7 @@ public class jwxyz
         tmpfile.delete();
 
         name = mungeFontName (name);
-        all_fonts.put (name, t);
+        all_fonts.put (name.toLowerCase(), t);
         // LOG ("asset font \"%s\" %s", name, fn);
       } catch (Exception e) {
         if (tmpfile != null) tmpfile.delete();
@@ -360,7 +360,7 @@ public class jwxyz
   // Parses "Native Font Name One 12, Native Font Name Two 14".
   // Returns [ String name, Typeface ]
   private Object[] parseNativeFont (String name) {
-    Object font2 = all_fonts.get (name);
+    Object font2 = all_fonts.get (name.toLowerCase());
     if (font2 instanceof String)
       font2 = Typeface.create (name, Typeface.NORMAL);
     return new Object[] { name, (Typeface)font2 };
@@ -382,6 +382,8 @@ public class jwxyz
 
     String name2  = (String)   pair[0];
     Typeface font = (Typeface) pair[1];
+
+    if (font == null) return null;
 
     size *= 2;
 

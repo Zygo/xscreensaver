@@ -12,6 +12,7 @@ flyingtoasters - 3d space-age jet-powered flying toasters (and toast)
 [\-ntoasters \fInumber\fP]
 [\-nslices \fInumber\fP]
 [\-no-texture]
+[\-no-fog]
 [\-wireframe]
 [\-fps]
 .SH DESCRIPTION
@@ -43,6 +44,9 @@ How many slices of toast to draw.  Default 25.
 .TP 8
 .B \-no-texture
 Turn off texture mapping (for slow machines.)
+.TP 8
+.B \-no-fog
+Turn off fog (do not fade out distant toasters.)
 .TP 8
 .B \-wireframe
 Render in wireframe instead of solid.

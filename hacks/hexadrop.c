@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -337,7 +337,7 @@ hexadrop_reshape (Display *dpy, Window window, void *closure,
 
 
 static void
-hexadrop_free (Display *dpy, Window window, void *closure)
+hexadrop_free_1 (Display *dpy, Window window, void *closure)
 {
   state *st = (state *) closure;
   if (st->colors)
@@ -356,7 +356,16 @@ hexadrop_free (Display *dpy, Window window, void *closure)
       XFreeGC (st->dpy, st->gc);
       st->gc = 0;
     }
-  free (st);
+
+  memset (st, 0, sizeof(*st));
+}
+
+
+static void
+hexadrop_free (Display *dpy, Window window, void *closure)
+{
+  hexadrop_free_1 (dpy, window, closure);
+  free (closure);
 }
 
 
@@ -367,15 +376,35 @@ hexadrop_event (Display *dpy, Window window, void *closure, XEvent *event)
 
   if (screenhack_event_helper (dpy, window, event))
     {
-      cell *c = st->cells;
-      int i;
-      st->cells = 0;
-      hexadrop_free (st->dpy, st->window, st);
-      free (st->cells);
-      st->cells = c;
-      for (i = 0; i < st->ncells; i++)
-        st->cells[i].initted_p = False;
-      hexadrop_init_1 (st->dpy, st->window, st);
+      if (random() % 5)		/* Change everything */
+        {
+          hexadrop_free_1 (st->dpy, st->window, st);
+          hexadrop_init_1 (dpy, window, st);
+        }
+      else			/* Change colors only */
+        {
+          /* Save the old geometry */
+          cell *c = st->cells;
+          int n = st->ncells;
+          int s = st->sides;
+          int i;
+
+          /* Protect it from being freed */
+          st->cells = 0;
+          hexadrop_free_1 (st->dpy, st->window, st);
+          hexadrop_init_1 (dpy, window, st);
+
+          /* Reset the old cells */
+          for (i = 0; i < n; i++)
+            c[i].initted_p = False;
+
+          /* Re-init, then put them back. */
+          free (st->cells);
+          st->cells = c;
+          st->ncells = n;
+          st->sides = s;
+        }
+
       return True;
     }
 
@@ -408,6 +437,7 @@ static XrmOptionDescRec hexadrop_options [] = {
   { "-ncolors",		".ncolors",	XrmoptionSepArg, 0 },
   { "-uniform-speed",	".uniform",	XrmoptionNoArg, "True"  },
   { "-no-uniform-speed",".uniform",	XrmoptionNoArg, "False" },
+  { "-nonuniform-speed",".uniform",	XrmoptionNoArg, "False" },
   { "-lockstep",	".lockstep",	XrmoptionNoArg, "True"  },
   { "-no-lockstep",	".lockstep",	XrmoptionNoArg, "False" },
   { 0, 0, 0, 0 }

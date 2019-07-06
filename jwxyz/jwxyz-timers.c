@@ -200,7 +200,8 @@ XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
   data->app = app;
   data->refcount++;
 
-  LOGI("source 0x%08lX %2d: alloc", (unsigned long) data, data->fd);
+  LOGI("source 0x%08lX %2d: alloc 0x%08lX", (unsigned long) data, data->fd,
+       (unsigned long) closure);
 
   ASSERT_RET0 (fd > 0 && fd < FD_SETSIZE, "fd out of range");
   ASSERT_RET0 (td->ids[fd] == 0, "sources corrupted");
@@ -216,7 +217,8 @@ XtRemoveInput (XtInputId id)
 {
   jwxyz_sources_data *td = DISPLAY_SOURCES_DATA (id->app);
 
-  LOGI("source 0x%08lX %2d: remove", (unsigned long) id, id->fd);
+  LOGI("source 0x%08lX %2d: remove 0x%08lX", (unsigned long) id, id->fd,
+       (unsigned long) id->closure);
   ASSERT_RET (id->refcount > 0, "sources corrupted");
   ASSERT_RET (td->fd_count > 0, "sources corrupted");
   ASSERT_RET (id->fd > 0 && id->fd < FD_SETSIZE, "fd out of range");
@@ -226,8 +228,8 @@ XtRemoveInput (XtInputId id)
   td->fd_count--;
   id->refcount--;
 
-  LOGI("source 0x%08lX %2d: release %d", (unsigned long) id, id->fd,
-       id->refcount);
+  LOGI("source 0x%08lX %2d: release %d 0x%08lX", (unsigned long) id, id->fd,
+       id->refcount, (unsigned long) id->closure);
   ASSERT_RET (id->refcount >= 0, "double free");
   if (id->refcount == 0) {
     memset (id, 0xA1, sizeof(*id));

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -155,6 +155,7 @@
 + (NSString *) decompressXML:(NSData *)xml;
 
 - (CGFloat) hackedContentScaleFactor;
+- (CGFloat) hackedContentScaleFactor:(BOOL)fonts_p;
 
 #ifdef USE_IPHONE
 - (void)setScreenLocked:(BOOL)locked;

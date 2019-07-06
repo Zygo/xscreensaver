@@ -300,8 +300,8 @@ FuzzyFlakesColorHelper(Flake *flake)
    iG1 = nG1 * 255;
    iB1 = nB1 * 255;
 
-   flake->Colors.Fore = malloc(sizeof(unsigned char) * 8);
-   flake->Colors.Bord = malloc(sizeof(unsigned char) * 8);
+   flake->Colors.Fore = malloc(sizeof(char) * 8);
+   flake->Colors.Bord = malloc(sizeof(char) * 8);
 
    sprintf(flake->Colors.Fore, "#%02X%02X%02X", iR0, iG0, iB0);
    sprintf(flake->Colors.Bord, "#%02X%02X%02X", iR1, iG1, iB1);
@@ -372,7 +372,7 @@ FuzzyFlakesInit(Flake *flake)
 	  {
 	     if (flake->Colors.Back)
 		free(flake->Colors.Back);
-	     flake->Colors.Back = malloc(sizeof(unsigned char) * 8);
+	     flake->Colors.Back = malloc(sizeof(char) * 8);
 	     sprintf(flake->Colors.Back, "#%X%X%X%X%X%X", random() % 16,
 		     random() % 16, random() % 16, random() % 16, random() % 16,
 		     random() % 16);
@@ -387,7 +387,7 @@ FuzzyFlakesInit(Flake *flake)
 	     fprintf(stderr, " reverting to random\n");
 	     if (flake->Colors.Back)
 		free(flake->Colors.Back);
-	     flake->Colors.Back = malloc(sizeof(unsigned char) * 8);
+	     flake->Colors.Back = malloc(sizeof(char) * 8);
 	     sprintf(flake->Colors.Back, "#%X%X%X%X%X%X", random() % 16,
 		     random() % 16, random() % 16, random() % 16, random() % 16,
 		     random() % 16);

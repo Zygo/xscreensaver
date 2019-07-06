@@ -960,7 +960,7 @@ void *io_thread_create(struct io_thread *self, void *parent, void *(*start_routi
 			attr_ptr = &attr;
 			if(pthread_attr_init(&attr))
 				return NULL;
-#   if defined _POSIX_SOURCE || defined _POSIX_C_SOURCE || defined _XOPEN_SOURCE
+#   if (defined _POSIX_SOURCE || defined _POSIX_C_SOURCE || defined _XOPEN_SOURCE) && !defined __GNU__
 			/* PTHREAD_STACK_MIN needs the above test. */
 			assert(stacksize >= PTHREAD_STACK_MIN);
 #   endif

@@ -576,7 +576,7 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors,
     {
       *errP = append (*errP,
                       "WARNING: RANDR reports 1 screen but Xinerama\n"
-                      "\t\treports multiple.  Believing Xinerama.");
+                      "         reports multiple.  Believing Xinerama.");
       free_monitors (randr_monitors);
       return xinerama_monitors;
     }
@@ -584,7 +584,7 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors,
     {
       *errP = append (*errP,
                       "WARNING: RANDR and Xinerama report different\n"
-                      "\t\tscreen layouts!  Believing RANDR.");
+                      "         screen layouts!  Believing RANDR.");
       free_monitors (xinerama_monitors);
       return randr_monitors;
     }

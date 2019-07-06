@@ -65,6 +65,7 @@
 #define DEF_RESOLUTION "128"
 #define DEF_IMAGE   "BUILTIN"
 #define DEF_IMAGE2  "BUILTIN"
+#define DEF_MODE    "globe"
 
 #define BLENDED_TERMINATOR
 
@@ -83,6 +84,7 @@ static char *which_image;
 static char *which_image2;
 static int resolution;
 static GLfloat spin_arg;
+static char *mode_arg;
 
 static XrmOptionDescRec opts[] = {
   {"-rotate",  ".rotate",  XrmoptionNoArg, "true" },
@@ -96,9 +98,11 @@ static XrmOptionDescRec opts[] = {
   {"-stars",   ".stars",   XrmoptionNoArg, "true" },
   {"+stars",   ".stars",   XrmoptionNoArg, "false" },
   {"-spin",    ".spin",    XrmoptionSepArg, 0 },
+  {"-no-spin", ".spin",    XrmoptionNoArg, "0" },
   {"-image",   ".image",   XrmoptionSepArg, 0 },
   {"-image2",  ".image2",  XrmoptionSepArg, 0 },
   {"-resolution", ".resolution", XrmoptionSepArg, 0 },
+  {"-mode",    ".mode",    XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
@@ -110,6 +114,7 @@ static argtype vars[] = {
   {&spin_arg,    "spin",    "Spin",    DEF_SPIN,    t_Float},
   {&which_image, "image",   "Image",   DEF_IMAGE,   t_String},
   {&which_image2,"image2",  "Image",   DEF_IMAGE2,  t_String},
+  {&mode_arg,    "mode"     ,"Mode"  , DEF_MODE,    t_String},
   {&resolution,  "resolution","Resolution", DEF_RESOLUTION, t_Int},
 };
 
@@ -154,6 +159,7 @@ typedef struct {
   Bool button_down_p;
   GLuint tex1, tex2;
   int draw_axis;
+  enum { GLOBE, EQUIRECTANGULAR, MERCATOR } mode;
 
 } planetstruct;
 
@@ -265,6 +271,138 @@ setup_texture (ModeInfo * mi)
   glScalef (1, -1, 1);
   glMatrixMode (GL_MODELVIEW);
 }
+
+
+static void
+unit_mercator (int stacks, int slices, int wire_p, Bool mercp)
+{
+  int i, j;
+  GLfloat x, y, ty, xs, ys;
+  GLfloat lastx = 0, lasty = 0, lastty = 0;
+  GLfloat r, north, south;
+
+  /* #### TODO: the grid lines are always rendered as Equirectangular,
+     not Mercator. */
+
+  stacks /= 2;
+  xs = 1.0 / slices;
+  ys = 1.0 / stacks;
+
+  glPushMatrix();
+  r = 1.8;
+  glScalef (r, r, r);
+  glFrontFace(GL_CW);
+
+  r = 0.35;  /* Grids are roughly square at equator */
+
+  if (mercp)
+    {
+      /* The poles go to infinity. The traditional Mercator projection
+         omits the Northern and Southern latitudes asymmetrically to
+         move Europe toward the center.  How Colonial! */
+      north =  85 / 180.0;
+      south = -66 / 180.0;
+    }
+  else
+    {
+      /* Antarctica should be roughly the same width as North America,
+         but even Equirectangular is crazypants here. */
+      north = 80 / 180.0;
+      south = -north;
+    }
+
+
+  for (j = 0, y = -0.5, ty = 0; j <= stacks; 
+       lasty = y, lastty = ty, y += ys, j++)
+    {
+      GLfloat th;
+
+      ty = (0.5 - y) * (south - north) - south;
+      ty += 0.5;
+
+      th = M_PI * (ty - 0.5); /* latitude in radians */
+
+      if (mercp)
+        {
+          /* Obviously I have no idea what I'm doing here */
+          ty = 2 * (atan (pow(M_E, th)) - M_PI/4);
+          ty *= 0.41;
+          ty += 0.5;
+        }
+
+      /* Draw the end caps
+       */
+      if (j == 0 || j == stacks)
+        {
+          GLfloat xx, yy, lxx, lyy;
+          glFrontFace(j == 0 ? GL_CCW : GL_CW);
+
+          if (j == stacks && !wire_p) glEnd();
+
+          glNormal3f (0, (j == 0 ? -1 : 1), 0);
+
+          glBegin (wire_p ? GL_LINE_LOOP : GL_TRIANGLES);
+
+          for (i = 0, x = 0, lastx = 0, lxx = 0;
+               i <= slices;
+               lastx = x, lxx = xx, lyy = yy, x += xs, i++)
+            {
+              xx = r * cos(M_PI * 2 * x);
+              yy = r * sin(M_PI * 2 * x);
+              if (i == 0) continue;
+
+              glTexCoord2f (x, j == 0 ? 0 : 1);
+              glVertex3f (0, y, 0);
+              glTexCoord2f (lastx, ty); glVertex3f (lxx, y, lyy);
+              glTexCoord2f (x, ty);     glVertex3f (xx,  y, yy);
+            }
+          glEnd();
+          glFrontFace(GL_CW);
+
+          if (!wire_p) glBegin (GL_QUADS);
+        }
+
+      if (j == 0)
+        continue;
+
+      /* Draw one ring of quads.
+       */
+      for (i = 0, x = 0, lastx = 0; i <= slices; lastx = x, x += xs, i++)
+        {
+          GLfloat xx = r * cos(M_PI * 2 * x);
+          GLfloat yy = r * sin(M_PI * 2 * x);
+          GLfloat lx = r * cos(M_PI * 2 * lastx);
+          GLfloat ly = r * sin(M_PI * 2 * lastx);
+          GLfloat y2  = y;
+          GLfloat ly2 = lasty;
+
+#if 0
+          if (mercp)
+            {
+              y2 = ty - 0.5;
+              ly2 = lastty - 0.5;
+            }
+#endif
+
+          if (i == 0) continue;
+          if (wire_p) glBegin(GL_LINE_LOOP);
+          glNormal3f (lx, 0, ly);
+          glTexCoord2f (lastx, lastty); glVertex3f (lx, ly2, ly);
+          glNormal3f (xx, 0, yy);
+          glTexCoord2f (x,     lastty); glVertex3f (xx, ly2, yy);
+          glNormal3f (xx, 0, yy);
+          glTexCoord2f (x,     ty);     glVertex3f (xx, y2,   yy);
+          glNormal3f (lx, 0, ly);
+          glTexCoord2f (lastx, ty);     glVertex3f (lx, y2,   ly);
+          if (wire_p) glEnd();
+        }
+    }
+
+  if (!wire_p) glEnd();
+
+  glPopMatrix();
+}
+
 
 
 static void
@@ -452,6 +590,20 @@ init_planet (ModeInfo * mi)
 	reshape_planet(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
 
+  if (!mode_arg || !*mode_arg || !strcasecmp(mode_arg, "GLOBE"))
+    gp->mode = GLOBE;
+  else if (!strcasecmp(mode_arg, "EQUIRECTANGULAR"))
+    gp->mode = EQUIRECTANGULAR;
+  else if (!strcasecmp(mode_arg, "mercator"))
+    gp->mode = MERCATOR;
+  else
+    {
+      fprintf (stderr,
+               "%s: mode must be 'globe', 'merecator' or 'equirectangular'," 
+               " not '%s'\n", progname, mode_arg);
+      exit (1);
+    }
+
   {
 	char *f = get_string_resource(mi->dpy, "imageForeground", "Foreground");
 	char *b = get_string_resource(mi->dpy, "imageBackground", "Background");
@@ -513,7 +665,10 @@ init_planet (ModeInfo * mi)
   glFrontFace(GL_CCW);
   glPushMatrix();
   glRotatef (90, 1, 0, 0);
-  unit_sphere (resolution, resolution, wire);
+  if (gp->mode == GLOBE)
+    unit_sphere (resolution, resolution, wire);
+  else
+    unit_mercator (resolution, resolution, wire, (gp->mode == MERCATOR));
   glPopMatrix();
   glEndList();
 
@@ -533,24 +688,27 @@ init_planet (ModeInfo * mi)
     }
 # endif
 
-  glPushMatrix();
-  glScalef (1.01, 1.01, 1.01);
-  unit_dome (resolution, resolution, wire);
+  if (gp->mode == GLOBE)
+    {
+      glPushMatrix();
+      glScalef (1.01, 1.01, 1.01);
+      unit_dome (resolution, resolution, wire);
 
 # ifdef BLENDED_TERMINATOR
-  terminator_tube (mi, resolution);
-  if (!wire)
-    {
-      /* We have to draw the transparent side of the mask too, 
-         though I'm not sure why. */
-      GLfloat c[] = { 0, 0, 0, 0 };
-      glColor4fv (c);
-      if (!do_texture)
-        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
-      glRotatef (180, 1, 0, 0);
-      unit_dome (resolution, resolution, wire);
-    }
+      terminator_tube (mi, resolution);
+      if (!wire)
+        {
+          /* We have to draw the transparent side of the mask too, 
+             though I'm not sure why. */
+          GLfloat c[] = { 0, 0, 0, 0 };
+          glColor4fv (c);
+          if (!do_texture)
+            glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+          glRotatef (180, 1, 0, 0);
+          unit_dome (resolution, resolution, wire);
+        }
 # endif
+    }
 
   glPopMatrix();
   glEndList();
@@ -562,8 +720,10 @@ init_planet (ModeInfo * mi)
   glPushMatrix ();
   glRotatef (90, 1, 0, 0);  /* unit_sphere is off by 90 */
   glRotatef (8,  0, 1, 0);  /* line up the time zones */
-  unit_sphere (12, 24, 1);
-  unit_sphere (12, 24, 1);
+  if (gp->mode == GLOBE)
+    unit_sphere (12, 24, 1);
+  else
+    unit_mercator (20, 24, 1, (gp->mode == MERCATOR));
   glBegin(GL_LINES);
   glVertex3f(0, -2, 0);
   glVertex3f(0,  2, 0);
@@ -599,7 +759,8 @@ draw_planet (ModeInfo * mi)
 
   if (do_rotate && !gp->button_down_p)
     {
-      gp->z -= 0.001 * spin_arg;     /* the sun sets in the west */
+      int wat = gp->mode == GLOBE ? 1 : -1;
+      gp->z -= 0.001 * spin_arg * wat;     /* the sun sets in the west */
       if (gp->z < 0) gp->z += 1;
     }
 
@@ -685,7 +846,7 @@ draw_planet (ModeInfo * mi)
       glPopMatrix();
     }
 
-  else if (!do_texture || gp->tex2)
+  else if (!do_texture || (gp->tex2 && gp->mode == GLOBE))
     {
       /* Originally we just used GL_LIGHT0 to produce the day/night sides of
          the planet, but that always looked crappy, even with a vast number of
@@ -801,6 +962,11 @@ draw_planet (ModeInfo * mi)
       glBlendFunc (GL_ONE, GL_ZERO);
 
 #endif /* BLENDED_TERMINATOR */
+    }
+  else if (gp->mode != GLOBE)
+    {
+      glDisable (GL_LIGHTING);
+      glDisable (GL_BLEND);
     }
 
   if (gp->draw_axis)

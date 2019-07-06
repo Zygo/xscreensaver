@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2019 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -170,14 +170,41 @@ fps_compute (fps_state *st, unsigned long polys, double depth)
 
       if (depth >= 0.0)
         {
-          unsigned long L = strlen (st->string);
-          char *s = st->string + L;
-          strcat (s, "\nDepth: ");
-          sprintf (s + strlen(s), "%.1f", depth);
-          L = strlen (s);
-          /* Remove trailing ".0" in case depth is not a fraction. */
-          if (s[L-2] == '.' && s[L-1] == '0')
-            s[L-2] = 0;
+          const char *s = "";
+          unsigned long ldepth = depth;
+# if 0
+          if (depth >= (1024 * 1024 * 1024))
+            ldepth = depth / (1024 * 1024 * 1024), s = "G";
+          else if (depth >= (1024 * 1024)) ldepth >>= 20, s = "M";
+          else if (depth >= 2048)          ldepth >>= 10, s = "K";
+# endif
+          strcat (st->string, "\nDepth: ");
+          if (ldepth >= 1000000000)
+            sprintf (st->string + strlen(st->string),
+                     "%lu,%03lu,%03lu,%03lu%s ",
+                     (ldepth / 1000000000),
+                     ((ldepth / 1000000) % 1000),
+                     ((ldepth / 1000) % 1000),
+                     (ldepth % 1000), s);
+          else if (ldepth >= 1000000)
+            sprintf (st->string + strlen(st->string), "%lu,%03lu,%03lu%s ",
+                     (ldepth / 1000000), ((ldepth / 1000) % 1000),
+                     (ldepth % 1000), s);
+          else if (ldepth >= 1000)
+            sprintf (st->string + strlen(st->string), "%lu,%03lu%s ",
+                     (ldepth / 1000), (ldepth % 1000), s);
+          else if (*s)
+            sprintf (st->string + strlen(st->string), "%lu%s ",
+                     ldepth, s);
+          else
+            {
+              int L;
+              sprintf (st->string + strlen(st->string), "%.1f", depth);
+              L = strlen (st->string);
+              /* Remove trailing ".0" in case depth is not a fraction. */
+              if (st->string[L-2] == '.' && st->string[L-1] == '0')
+                st->string[L-2] = 0;
+            }
         }
     }
 

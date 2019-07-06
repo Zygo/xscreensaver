@@ -36,7 +36,7 @@ ridiculously long list of steps!
  16: Put a 200x150 screen shot in ~/www/xscreensaver/screenshots/
  17: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
            ~/Library/Screen\ Savers/
- 18: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
+ 18: git add xscreensaver.xcodeproj/xcshareddata/xcschemes/*.xcscheme
  19: Don't forget to create a man page from the XML with xml2man.pl,
      and update Makefile.in.
  20: Make a video: -record-animation 3600 -geom 1920x1080+128+64

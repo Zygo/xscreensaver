@@ -43,6 +43,8 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SETUID  = @INSTALL_SETUID@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
+PROG_SETCAP	= @PROG_SETCAP@
+SETCAP_FLAGS	= cap_net_raw=p
 
 X_CFLAGS	= @X_CFLAGS@
 X_LIBS		= @X_LIBS@
@@ -60,6 +62,9 @@ HACK_LIBS	= $(HACK_PRE)           @ANIM_LIBS@ $(HACK_POST2)
 PNG_LIBS	= $(HACK_PRE)            @PNG_LIBS@ $(HACK_POST2)
 GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @PNG_LIBS@ $(HACK_POST2)
 TEXT_LIBS	= @PTY_LIBS@
+#### Is LIBCAP_CFLAGS necessary?
+LIBCAP_CFLAGS	= @LIBCAP_CFLAGS@
+LIBCAP_LIBS	= @LIBCAP_LIBS@
 
 HACK_SRC	= $(srcdir)/..
 HACK_BIN	= ..
@@ -132,7 +137,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c erase-gl.c fps-gl.c \
 		  raverhoop.c hydrostat.c discoball.c cubetwist.c cubestack.c \
 		  splodesic.c hexstrut.c vigilance.c seccam.c esper.c \
 		  razzledazzle.c ships.c peepers.c crumbler.c quickhull.c \
-		  maze3d.c handsy.c handsy_model.c
+		  maze3d.c handsy.c handsy_model.c gravitywell.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -179,7 +184,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  raverhoop.o hydrostat.o discoball.o cubetwist.o cubestack.o \
 		  splodesic.o hexstrut.o vigilance.o seccam.o esper.o \
 		  razzledazzle.o ships.o peepers.o crumbler.o quickhull.o \
-		  maze3d.o handsy.o handsy_model.o
+		  maze3d.o handsy.o handsy_model.o gravitywell.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -200,9 +205,10 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  splitflap dymaxionmap unicrud energystream raverhoop \
 		  hydrostat discoball cubetwist cubestack splodesic \
 		  hexstrut vigilance esper razzledazzle peepers crumbler \
-		  maze3d handsy
+		  maze3d handsy gravitywell
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
+SETCAP_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
 JWZGLES_OBJS	= @JWZGLES_OBJS@
 HACK_EXES_1	= @GL_EXES@ @GLE_EXES@
@@ -225,7 +231,7 @@ HACK_OBJS	= $(JWZGLES_OBJS) $(HACK_BIN)/screenhack.o @ANIM_OBJS@ \
 		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/async_netdb.o \
 		  $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o \
 		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/pow2.o \
-		  $(UTILS_BIN)/font-retry-xft.o
+		  $(UTILS_BIN)/font-retry-xft.o @XMU_OBJS@
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h \
 		  grab-ximage.h tube.h sphere.h boxed.h \
@@ -266,7 +272,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  unicrud.man energystream.man raverhoop.man hydrostat.man \
 		  discoball.man cubetwist.man cubestack.man splodesic.man \
 		  hexstrut.man vigilance.man esper.man razzledazzle.man \
-		  peepers.man crumbler.man maze3d.man handsy.man
+		  peepers.man crumbler.man maze3d.man handsy.man \
+		  gravitywell.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -321,6 +328,20 @@ install-program:: $(EXES)
 	       exit 1 ;							\
 	     fi ;							\
 	   done ;							\
+									\
+	   exes="${SETCAP_EXES}" ;					\
+	   if [ @SETCAP_HACKS@ = yes ]; then				\
+	     for program in $$exes; do					\
+	       echo $(PROG_SETCAP) $(SETCAP_FLAGS) $$idir/$$program ;	\
+	       if   $(PROG_SETCAP) $(SETCAP_FLAGS) $$idir/$$program ; then \
+	         true ;							\
+	       else							\
+	         echo "" ;						\
+	         echo "WARNING: unable to setcap $$program" ;		\
+	         echo "" ;						\
+	       fi ;							\
+	     done ;							\
+	   fi ;								\
 	 fi
 
 
@@ -898,7 +919,7 @@ skytentacles:	skytentacles.o	$(TENTACLE_OBJS)
 
 SONAR_OBJS=sonar-sim.o sonar-icmp.o $(HACK_TRACK_OBJS)
 sonar:		sonar.o		$(SONAR_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(SONAR_OBJS) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(SONAR_OBJS) $(HACK_LIBS) $(LIBCAP_LIBS)
 
 JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o $(HACK_TRACK_GRAB_OBJS)
 jigsaw:		jigsaw.o	$(JIGSAW_OBJS)
@@ -932,8 +953,8 @@ kaleidocycle:			$(KALEIDOCYCLE_OBJS)
 quasicrystal:	quasicrystal.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-unknownpleasures: unknownpleasures.o	$(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+unknownpleasures: unknownpleasures.o	$(PNG) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o $(PNG) $(HACK_TRACK_OBJS) $(HACK_LIBS) $(PNG_LIBS)
 
 geodesic: geodesic.o		 normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -1006,6 +1027,8 @@ handsy:	handsy.o		 $(HANDSY_OBJS)
 handsy_dxf::
 	./dxf2gl.pl --smooth 28 --layers handsy.dxf handsy_model.c
 
+gravitywell:	gravitywell.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -2161,6 +2184,22 @@ grab-ximage.o: $(UTILS_SRC)/grabscreen.h
 grab-ximage.o: $(UTILS_SRC)/pow2.h
 grab-ximage.o: $(UTILS_SRC)/visual.h
 grab-ximage.o: $(UTILS_SRC)/xshm.h
+gravitywell.o: ../../config.h
+gravitywell.o: $(HACK_SRC)/fps.h
+gravitywell.o: $(srcdir)/gltrackball.h
+gravitywell.o: $(HACK_SRC)/recanim.h
+gravitywell.o: $(HACK_SRC)/screenhackI.h
+gravitywell.o: $(UTILS_SRC)/colors.h
+gravitywell.o: $(UTILS_SRC)/erase.h
+gravitywell.o: $(UTILS_SRC)/font-retry.h
+gravitywell.o: $(UTILS_SRC)/grabscreen.h
+gravitywell.o: $(UTILS_SRC)/hsv.h
+gravitywell.o: $(UTILS_SRC)/resources.h
+gravitywell.o: $(UTILS_SRC)/usleep.h
+gravitywell.o: $(UTILS_SRC)/visual.h
+gravitywell.o: $(UTILS_SRC)/yarandom.h
+gravitywell.o: $(HACK_SRC)/xlockmoreI.h
+gravitywell.o: $(HACK_SRC)/xlockmore.h
 handsy_model.o: ../../config.h
 handsy_model.o: $(srcdir)/gllist.h
 handsy.o: ../../config.h
@@ -3402,6 +3441,7 @@ unicrud.o: $(HACK_SRC)/xlockmore.h
 unknownpleasures.o: ../../config.h
 unknownpleasures.o: $(HACK_SRC)/fps.h
 unknownpleasures.o: $(srcdir)/gltrackball.h
+unknownpleasures.o: $(srcdir)/grab-ximage.h
 unknownpleasures.o: $(HACK_SRC)/recanim.h
 unknownpleasures.o: $(HACK_SRC)/screenhackI.h
 unknownpleasures.o: $(UTILS_SRC)/colors.h
@@ -3413,6 +3453,7 @@ unknownpleasures.o: $(UTILS_SRC)/resources.h
 unknownpleasures.o: $(UTILS_SRC)/usleep.h
 unknownpleasures.o: $(UTILS_SRC)/visual.h
 unknownpleasures.o: $(UTILS_SRC)/yarandom.h
+unknownpleasures.o: $(HACK_SRC)/ximage-loader.h
 unknownpleasures.o: $(HACK_SRC)/xlockmoreI.h
 unknownpleasures.o: $(HACK_SRC)/xlockmore.h
 vigilance.o: ../../config.h

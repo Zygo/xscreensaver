@@ -881,7 +881,7 @@ do_prefs (saver_screen_info *ssi)
   saver_preferences *p = &si->prefs;
   const char *cmd = p->prefs_command;
 
-  if (command && *command)
+  if (cmd && *cmd)
     fork_and_exec (ssi, cmd);
   else
     fprintf (stderr, "%s: no preferences command has been specified.\n",

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -41,7 +41,7 @@ ios_load_random_image (void (*callback) (void *uiimage, const char *fn,
 
   // The rest of this is synchronous.
 
-  PHFetchOptions *opt = [PHFetchOptions new];
+  PHFetchOptions *opt = [[PHFetchOptions new] autorelease];
   opt.includeAssetSourceTypes = (PHAssetSourceTypeUserLibrary |
                                  PHAssetSourceTypeCloudShared |
                                  PHAssetSourceTypeiTunesSynced);

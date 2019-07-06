@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -6391,9 +6391,9 @@ static const char *bsod_defaults [] = {
   ".win10.fontB:	   Arial 50, Helvetica 50",
   ".win10.fontC:	   Arial 9, Helvetica 9",
 
-  /* The real Solaris font is ../OSX/Gallant19.bdf but I don't know how
-     to convert that to a TTF, so let's use Luxi Mono instead. */
-  ".solaris.font:	   Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
+  /* The real Solaris font is Gallant (../OSX/gallant12x22.ttf)
+     but Luxi Mono (../OSX/luximr.ttf) is pretty close as well. */
+  ".solaris.font:	   Gallant12x22 12, Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
 
   /* "Arial" loads "ArialMT" but "Arial Bold" does not load "Arial-BoldMT"? */
   ".ransomware.font:         Arial 11, Helvetica 11",
@@ -6413,7 +6413,7 @@ static const char *bsod_defaults [] = {
   ".macinstall.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
   ".msdos.font:		   PxPlus IBM VGA8 32",
   ".nt.font:		   PxPlus IBM VGA8 12",
-  ".solaris.font:	   Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
+  ".solaris.font:	   Gallant12x22 14, Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
 
   ".win10.font:		   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
   ".win10.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
@@ -6433,7 +6433,7 @@ static const char *bsod_defaults [] = {
   ".mac.bigFont:	   Monaco 18, Courier Bold 18",
 
   ".macsbug.font:	   Monaco 10, Courier Bold 9",
-  ".macsbug.bigFont:	   Monaco 24, Courier Bold 24",
+  ".macsbug.bigFont:	   Monaco 10, Courier Bold 9",
 
   ".macx.font:		   Courier Bold 9",
   ".macx.bigFont:	   Courier Bold 14",
@@ -6442,13 +6442,13 @@ static const char *bsod_defaults [] = {
   ".macinstall.font:	   Helvetica 24, Arial 24",
   ".macinstall.bigFont:	   Helvetica 24, Arial 24",
 
-  ".hvx.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
-  ".hppalinux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
-  ".linux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
-  ".hpux.bigFont:	   PxPlus IBM VGA8 16, Courier Bold 14",
-  ".msdos.font:		   PxPlus IBM VGA8 16, Courier Bold 14",
-  ".solaris.font:	   Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
-  ".solaris.bigFont:	   Luxi Mono 16, PxPlus IBM VGA8 16, Courier Bold 14",
+  ".hvx.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
+  ".hppalinux.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
+  ".linux.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
+  ".hpux.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
+  ".msdos.font:		   PxPlus IBM VGA8 24, Courier Bold 14",
+  ".solaris.font:	   Gallant12x22 12, Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
+  ".solaris.bigFont:	   Gallant12x22 22, Luxi Mono 16, PxPlus IBM VGA8 16, Courier Bold 14",
 
   ".win10.font:		   Arial 24, Helvetica 24",
   ".win10.bigFont:	   Arial 24, Helvetica 24",

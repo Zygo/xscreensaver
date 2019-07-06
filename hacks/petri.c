@@ -245,7 +245,10 @@ setup_display (struct state *st)
     XWindowAttributes xgwa;
 
     int cell_size = get_integer_resource (st->dpy, "size", "Integer");
-    int osize, alloc_size, oalloc;
+    int osize, alloc_size;
+#if 0
+    int oalloc;
+#endif
     int mem_throttle = 0;
     char *s;
 
@@ -404,7 +407,9 @@ setup_display (struct state *st)
     st->arr_height = st->windowHeight / cell_size;
 
     alloc_size = sizeof(cell) * st->arr_width * st->arr_height;
+# if 0
     oalloc = alloc_size;
+# endif
 
     if (mem_throttle > 0)
       while (cell_size < st->windowWidth/10 &&
@@ -419,7 +424,8 @@ setup_display (struct state *st)
 
     if (osize != cell_size)
       {
-        if (0 && !st->warned)
+# if 0
+        if (!st->warned)
           {
             fprintf (stderr,
              "%s: throttling cell size from %d to %d because of %dM limit.\n",
@@ -432,6 +438,7 @@ setup_display (struct state *st)
                      ((float) alloc_size) / (1 << 20));
             st->warned = 1;
           }
+# endif
       }
 
     st->xSize = st->arr_width ? st->windowWidth / st->arr_width : 0;

@@ -1,4 +1,4 @@
-/* filmleader, Copyright (c) 2018 Jamie Zawinski <jwz@jwz.org>
+/* filmleader, Copyright (c) 2018-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -223,10 +223,10 @@ filmleader_draw (Display *dpy, Window window, void *closure)
           XftTextExtentsUtf8 (dpy, xftfont, (FcChar8 *)
                               blurbs[i].s[0], strlen(blurbs[i].s[0]),
                               &extents);
-          lbearing = -extents.x;
+          /* lbearing = -extents.x; */
           rbearing = extents.width - extents.x;
           ascent   = extents.y;
-          descent  = extents.height - extents.y;
+          /* descent  = extents.height - extents.y; */
 
           x = (st->w - rbearing) / 2;
           y = st->h * 0.1 + ascent;
@@ -245,10 +245,10 @@ filmleader_draw (Display *dpy, Window window, void *closure)
                   XftTextExtentsUtf8 (dpy, xftfont, (FcChar8 *)
                                       blurbs[i].s[0], strlen(blurbs[i].s[j]),
                                       &extents);
-                  lbearing = -extents.x;
-                  rbearing = extents.width - extents.x;
-                  ascent   = extents.y;
-                  descent  = extents.height - extents.y;
+                  /* lbearing = -extents.x; */
+                  /* rbearing = extents.width - extents.x; */
+                  /* ascent   = extents.y; */
+                  /* descent  = extents.height - extents.y; */
                 }
             }
 
@@ -360,7 +360,7 @@ filmleader_draw (Display *dpy, Window window, void *closure)
       lbearing = -extents.x;
       rbearing = extents.width - extents.x;
       ascent   = extents.y;
-      descent  = extents.height - extents.y;
+      /* descent  = extents.height - extents.y; */
 
       x = st->w * 0.1;
       y = st->h * 0.1 + ascent;
@@ -377,8 +377,8 @@ filmleader_draw (Display *dpy, Window window, void *closure)
       XftTextExtentsUtf8 (dpy, xftfont, (FcChar8 *) s, strlen(s), &extents);
       lbearing = -extents.x;
       rbearing = extents.width - extents.x;
-      ascent   = extents.y;
-      descent  = extents.height - extents.y;
+      /* ascent   = extents.y; */
+      /* descent  = extents.height - extents.y; */
 
       x = st->w * 0.1;
       y = st->h * 0.95;

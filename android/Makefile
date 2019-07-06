@@ -82,6 +82,7 @@ export ANDROID_HACKS=		\
 	dangerball		\
 	decayscreen		\
 	deco			\
+	deepstars		\
 	deluxe			\
 	demon			\
 	discoball		\
@@ -126,6 +127,7 @@ export ANDROID_HACKS=		\
 	gltext			\
 	goop			\
 	grav			\
+	gravitywell		\
 	greynetic		\
 	halo			\
 	handsy			\

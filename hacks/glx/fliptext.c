@@ -1,5 +1,5 @@
 /*
- * fliptext, Copyright (c) 2005-2015 Jamie Zawinski <jwz@jwz.org>
+ * fliptext, Copyright (c) 2005-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -805,7 +805,7 @@ init_fliptext (ModeInfo *mi)
   MI_INIT(mi, scs);
 
   sc = &scs[MI_SCREEN(mi)];
-  sc->lines = (line **) calloc (max_lines+1, sizeof(char *));
+  sc->lines = (line **) calloc (max_lines+1, sizeof(*sc->lines));
 
   sc->dpy = MI_DISPLAY(mi);
 

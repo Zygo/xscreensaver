@@ -107,26 +107,39 @@ load_font_retry_1 (Display *dpy, int screen, const char *xlfd, Bool xft_p)
         }
       else
         {
-          const char *fixed[] = { "courier",
-                                  "courier new",
-                                  "courier 10 pitch",
-                                  "lucidatypewriter",
-                                  "american typewriter",
-                                  "fixed",
-                                  "ocr a std",
-                                  "*" };
-          const char *variable[] = { "helvetica",
-                                     "arial",
-                                     "bitstream vera sans",
-                                     "gill sans",
-                                     "times",
-                                     "times new roman",
-                                     "new century schoolbook",
-                                     "utopia",
-                                     "palatino",
-                                     "lucida",
-                                     "bitstream charter",
-                                     "*" };
+          const char *variable[] = {
+            "helvetica",
+            "arial",
+            "bitstream vera sans",
+            "gill sans",
+            "times",
+            "times new roman",
+            "new century schoolbook",
+            "utopia",
+            "palatino",
+            "lucida",
+            "bitstream charter",
+
+            /* Don't use a wildcard family. If none of the above worked, then
+               then almost none of the X11 fonts are installed, and it's not
+               unlikely that "-*-*-medium-r-*-*-*-140-*-*-*-10646-1" will
+               match an Arabic or or Japanese font that contains no Latin
+               glyphs at all, even in a Latin locale. So in that case, just
+               let "helvetica" fall back to "fixed".
+             */
+            /* "*" */
+          };
+          const char *fixed[] = {
+            "courier",
+            "courier new",
+            "courier 10 pitch",
+            "lucidatypewriter",
+            "american typewriter",
+            "fixed",
+            "ocr a std",
+            /* As above, but "can't happen" because we already tried fixed? */
+            /* "*" */
+          };
           const char *charsets[] = { "iso10646-1", "iso8859-1", "*-*" };
           const char *weights[]  = { "bold", "medium" };
           const char *slants[]   = { "o", "i", "r" };

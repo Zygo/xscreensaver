@@ -12,6 +12,7 @@ XCODE_APP = /Applications/Xcode.app
 TARGETS    = All Savers
 #ARCH      = -arch i386 -arch x86_64 ONLY_ACTIVE_ARCH=NO
 CERT	   = 'Developer ID Installer: Jamie Zawinski (4627ATJELP)'
+CERT2	   = 'Developer ID Application: Jamie Zawinski (4627ATJELP)'
 PKGID	   = org.jwz.xscreensaver
 THUMBDIR   = build/screenshots
 XCODEBUILD = $(XCODE_APP)/Contents/Developer/usr/bin/xcodebuild
@@ -286,7 +287,6 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
   rm -rf "$$STAGE" ;							\
 
 
-# -format UDBZ saves 4% (~1.2 MB) over UDZO.
 dmg:: distdepend check_versions check_coretext
 #dmg:: check_gc
 dmg:: build/Release/installer.pkg
@@ -362,6 +362,10 @@ _dmg::
   mv "$$STAGE/bindist2.webloc" "$$STAGE/Get the Android Version.webloc" ;     \
 									      \
   set +x ;								      \
+									      \
+  echo "Chowning..." ;							      \
+  sudo chown -R root:wheel "$$STAGE/"* ;				      \
+									      \
   echo "Checking signatures..." ;					      \
   spctl --assess --type install "$$PKG" ;				      \
   spctl --assess --type execute "$$SRC/XScreenSaverUpdater.app" ;	      \
@@ -377,6 +381,10 @@ _dmg::
     "$$TMPDMG" -o "$$DMG" ;						      \
   xattr -w com.apple.quarantine "0000;00000000;;" "$$DMG" ;		      \
   rm -f "$$TMPDMG" ;							      \
+									      \
+  codesign --sign $(CERT2) "$$DMG" ;					      \
+  spctl --assess --type install "$$DMG" ;				      \
+									      \
   ls -ldhgF "$$DMG" ;							      \
   $(MAKE) notarize ;							      \
 
@@ -389,8 +397,8 @@ _dmg::
 #    Pass: the one you just generated.
 #
 # "make notarize", which will upload the DMG (slow).
-# A response will be emailed back in about an hour.
-# When that arrives, "make staple".
+# "notarize_wait" waits for the response to be ready (takes 5+ minutes).
+# Only once that has arrived can we "staple" it onto the DMG.
 #
 # https://developer.apple.com/documentation/security/notarizing_your_app_before_distribution/customizing_the_notarization_workflow?language=objc
 #
@@ -433,12 +441,12 @@ staple::
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
   set -x ;								      \
   xcrun stapler staple "$$DMG" ;					      \
-  xcrun stapler validate "$$DMG"
+  xcrun stapler validate "$$DMG" ;					      \
 
 notarization_history::
 	xcrun altool --notarization-history 0 $(NOTARGS)
 	@echo 'now do: xcrun altool $(NOTARGS) --notarization-info <UUID>' ;  \
-	echo 'and wget the LogFileURL'
+	echo 'and wget the LogFileURL' ;				      \
 
 
 # When debugging, sometimes I have to reset the preferences for all

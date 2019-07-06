@@ -5,6 +5,7 @@
   <command arg="-root"/>
 
   <video href="https://www.youtube.com/watch?v=ohcJ1bVkLZ4"/>
+<!--<video href="https://www.youtube.com/watch?v=OZ6zRLLFLk4"/>-->
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -21,10 +22,18 @@
    <boolean id="rotate" _label="Rotate"    arg-unset="-no-rotate"/>
    <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
    <boolean id="stars"  _label="Stars"     arg-unset="-no-stars"/>
+   <select id="mode">
+    <option id="globe" _label="Globe"/>
+    <option id="mercator" _label="Mercator"
+            arg-set="-mode mercator"/>
+    <option id="equirectangular" _label="Equirectangular"
+            arg-set="-mode equirectangular"/>
+   </select>
+
   </hgroup>
 
   <hgroup>
-   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+   <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 

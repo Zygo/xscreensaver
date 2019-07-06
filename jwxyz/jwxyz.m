@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1284,7 +1284,7 @@ GetSubImage (Display *dpy, Drawable d, int x, int y,
   // data points at (x,y) with ibpl rowstride.  ignore x,y from now on.
   data += (y * ibpl) + (x * (ibpp/8));
   
-  format = (depth == 1 ? XYPixmap : ZPixmap);
+  // format = (depth == 1 ? XYPixmap : ZPixmap);
   
   int obpl = image->bytes_per_line;
   

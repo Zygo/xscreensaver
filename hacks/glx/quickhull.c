@@ -1351,10 +1351,11 @@ qh_quickhull3d(qh_vertex_t const* vertices, unsigned int nvertices)
     }
 
     for (i = 0; i < context.nfaces; ++i) {
+      qh_half_edge_t e0, e1, e2;
       if (!context.valid[i]) { continue; }
-      qh_half_edge_t e0 = context.edges[context.faces[i].edges[0]];
-      qh_half_edge_t e1 = context.edges[context.faces[i].edges[1]];
-      qh_half_edge_t e2 = context.edges[context.faces[i].edges[2]];
+      e0 = context.edges[context.faces[i].edges[0]];
+      e1 = context.edges[context.faces[i].edges[1]];
+      e2 = context.edges[context.faces[i].edges[2]];
 
       m.vertices[m.nvertices++] = context.vertices[e0.to_vertex];
       m.vertices[m.nvertices++] = context.vertices[e1.to_vertex];

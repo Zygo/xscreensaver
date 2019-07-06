@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -57,6 +57,7 @@
   NSDictionary *defaultOptions;
   const XrmOptionDescRec *opts;
   id xml_root, xml_parsing;
+  BOOL haveUpdater;
 
 # ifdef USE_IPHONE
   UITextField *active_text_field;
@@ -74,6 +75,7 @@
           options: (const XrmOptionDescRec *) opts
        controller: (NSUserDefaultsController *) prefs
  globalController: (NSUserDefaultsController *) globalPrefs
-         defaults: (NSDictionary *) defs;
+         defaults: (NSDictionary *) defs
+      haveUpdater: (BOOL) haveUpdater;
 
 @end

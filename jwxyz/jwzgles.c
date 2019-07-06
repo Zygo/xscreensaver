@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -352,7 +352,8 @@ static jwzgles_state *state = 0;
 
 #ifdef DEBUG
 
-static void Log(const char *fmt, ...)
+void
+Log(const char *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -4287,6 +4288,7 @@ void jwzgles_##NAME (ARGS_##SIG)					\
 WRAP (glActiveTexture,	I)
 WRAP (glAlphaFunc,	IF)
 WRAP (glBlendFunc,	II)
+//WRAP (glBlendColor,     FFFF);
 WRAP (glClear,		I)
 WRAP (glClearColor,	FFFF)
 WRAP (glClearStencil,	I)

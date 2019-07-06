@@ -736,6 +736,10 @@ static void display_hypertorus(ModeInfo *mi)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
+  /* Let's keep a constant aspect ratio rather than stretching with the
+     shape of the window */
+  glScalef (hp->WindH / (GLfloat) hp->WindW, 1, 1);
+
   mi->polygon_count = hypertorus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,64,64);
 }
 

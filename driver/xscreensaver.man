@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "09-Nov-2013 (5.23)" "X Version 11"
+.TH XScreenSaver 1 "6-Jun-2019 (5.43)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver and screen locking framework
 .SH SYNOPSIS
@@ -254,7 +254,7 @@ If that doesn't work, then try this:
 Open "\fISystem Settings / Startup/Shutdown / Autostart\fP", and then
 add "\fI/usr/bin/xscreensaver\fP".
 
-If you are lucky, that will create a \fIxscreensaver.desktop"\fP file 
+If you are lucky, that will create a \fI"xscreensaver.desktop"\fP file 
 for you in \fI~/.config/autostart/\fP or \fI~/.kde/Autostart/\fP.
 .TP 3
 \fB3: Make xscreensaver be an Autostart program.\fP
@@ -369,6 +369,17 @@ X server's access control mechanisms, see the man pages for
 .BR xauth (1),
 and
 .BR xhost (1).
+.SH LAPTOP LIDS
+If you are running a system with
+.BR systemd (1)
+221 or newer, and if xscreensaver was compiled with \fIlibsystemd\fP
+support, then closing the lid of your laptop will cause the screen to
+lock immediately.
+
+If not, then the screen might not lock until a few seconds \fIafter\fP you
+re-open the lid. Which is less than ideal. So if you don't 
+use \fIsystemd\fP, you might want to get in the habit of
+doing \fIxscreensaver-command -lock\fP before closing the lid.
 .SH BUGS
 Bugs?  There are no bugs.  Ok, well, maybe.  If you find one, please let
 me know.  https://www.jwz.org/xscreensaver/bugs.html explains how to
@@ -1016,7 +1027,7 @@ and a FAQ can always be found at https://www.jwz.org/xscreensaver/
 .BR xscreensaver\-getimage (1),
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
-Copyright \(co 1991-2018 by Jamie Zawinski.
+Copyright \(co 1991-2019 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

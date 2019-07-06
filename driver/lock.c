@@ -872,6 +872,7 @@ draw_passwd_window (saver_info *si)
     memset (buf, 0, sizeof(buf));
     strftime (buf, sizeof(buf)-1, pw->date_label, tm);
 
+    XSetForeground (si->dpy, gc1, pw->foreground);
     XSetFont (si->dpy, gc1, pw->date_font->fid);
     y1 += pw->shadow_width;
     y1 += (spacing + tb_height);
@@ -1148,7 +1149,8 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
   y = (pw->thermo_field_height - 2) * (1.0 - pw->ratio);
   if (y > 0)
     {
-      XFillRectangle (si->dpy, si->passwd_dialog, gc2,
+      XSetForeground (si->dpy, gc1, pw->thermo_background);
+      XFillRectangle (si->dpy, si->passwd_dialog, gc1,
 		      pw->thermo_field_x + 1,
 		      pw->thermo_field_y + 1,
 		      pw->thermo_width-2,

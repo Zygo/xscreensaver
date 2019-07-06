@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2009 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,6 +43,7 @@ extern char *progname;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_RESPONSE;
 extern Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_EXIT;
 extern Atom XA_VROOT, XA_SELECT, XA_DEMO, XA_BLANK, XA_LOCK;
+extern Atom XA_ACTIVATE, XA_SUSPEND, XA_NEXT, XA_PREV, XA_EXIT;
 
 
 static XErrorHandler old_handler = 0;
@@ -490,6 +491,109 @@ xscreensaver_command_response (Display *dpy, Window window,
 }
 
 
+/* Wait until the window has been mapped, blanking the screen.
+   Catches errors, times out after a few seconds.
+ */
+static int
+xscreensaver_command_wait_for_blank (Display *dpy, Window window,
+                                     Bool verbose_p, char **error_ret)
+{
+  time_t start = time((time_t*)0);
+  int max = 10;
+  char err[2048];
+  Status status = -1;
+
+  while (1)
+    {
+      XWindowAttributes xgwa;
+      xgwa.map_state = IsUnmapped;
+
+      if (!window)
+        got_badwindow = True;
+      else
+        {
+          XSync (dpy, False);
+          if (old_handler) abort();
+          got_badwindow = False;
+          old_handler = XSetErrorHandler (BadWindow_ehandler);
+          status = XGetWindowAttributes (dpy, window, &xgwa);
+          XSync (dpy, False);
+          XSetErrorHandler (old_handler);
+          old_handler = 0;
+        }
+
+      if (got_badwindow)
+        {
+          /* If we got a BadWindow, it might be that in the course of
+             activating, xscreensaver had to destroy and re-create the
+             window to get one with the proper Visual. So wait for a
+             new window to come into existence.
+           */
+          if (window && verbose_p > 1)
+            fprintf (stderr,
+                     "%s: BadWindow 0x%08x waiting for screen to blank\n",
+                     progname, (unsigned int) window);
+          window = find_screensaver_window (dpy, 0);
+          if (window && verbose_p > 1)
+            fprintf (stderr, "%s: new window is 0x%08x.\n",
+                     progname, (unsigned int) window);
+          got_badwindow = False;
+        }
+      else if (status == 0)
+        {
+          sprintf (err, "error on 0x%08x waiting for screen to blank",
+                   (unsigned int) window);
+          if (error_ret)
+            *error_ret = strdup (err);
+          else
+            fprintf (stderr, "%s: %s\n", progname, err);
+          return -1;
+        }
+      else if (xgwa.map_state == IsViewable)
+        {
+          if (verbose_p)
+            fprintf (stderr, "%s: window 0x%08x mapped.\n",
+                     progname, (unsigned int) window);
+          return 0;
+        }
+      else
+        {
+          time_t now = time((time_t*)0);
+
+          if (now >= start + max)
+            {
+              sprintf (err, "Timed out waiting for screen to blank on 0x%08x",
+                       (unsigned int) window);
+              if (error_ret)
+                *error_ret = strdup (err);
+              else
+                fprintf (stderr, "%s: %s\n", progname, err);
+              return -1;
+            }
+          else if (verbose_p && now > start+1)
+            {
+              fprintf (stderr, "%s: waiting for window 0x%08x to map\n",
+                       progname, (unsigned int) window);
+            }
+        }
+
+# if defined(HAVE_SELECT)
+      {
+        struct timeval tv;
+        tv.tv_sec  = 0;
+        tv.tv_usec = 1000000L / 10;
+        select (0, 0, 0, 0, &tv);
+      }
+# else
+      sleep (1);
+# endif
+    }
+
+  return 0;
+}
+
+
+
 int
 xscreensaver_command (Display *dpy, Atom command, long arg, Bool verbose_p,
                       char **error_ret)
@@ -500,6 +604,18 @@ xscreensaver_command (Display *dpy, Atom command, long arg, Bool verbose_p,
     status = xscreensaver_command_response (dpy, w, verbose_p,
                                             (command == XA_EXIT),
                                             error_ret);
+
+  /* If this command should result in the screen being blank, wait until
+     the xscreensaver window is mapped before returning. */
+  if (status == 0 &&
+      (command == XA_ACTIVATE ||
+       command == XA_SUSPEND ||
+       command == XA_LOCK ||
+       command == XA_NEXT ||
+       command == XA_PREV ||
+       command == XA_SELECT))
+    status = xscreensaver_command_wait_for_blank (dpy, w, verbose_p,
+                                                  error_ret);
 
   fflush (stdout);
   fflush (stderr);

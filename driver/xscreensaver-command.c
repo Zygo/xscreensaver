@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -51,8 +51,8 @@ char *progname;
 Atom XA_VROOT;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_RESPONSE;
 Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO, XA_EXIT;
-Atom XA_BLANK, XA_LOCK;
-static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
+Atom XA_BLANK, XA_LOCK, XA_ACTIVATE, XA_SUSPEND, XA_NEXT, XA_PREV;
+static Atom XA_DEACTIVATE, XA_CYCLE;
 static Atom XA_RESTART, XA_PREFS, XA_THROTTLE, XA_UNTHROTTLE;
 
 static char *screensaver_version;
@@ -116,6 +116,11 @@ usage: %s -<option>\n\
                 immediately.  This is like -activate, but forces locking as\n\
                 well, even if locking is not the default.  If the saver is\n\
                 already active, this causes it to be locked as well.\n\
+\n\
+  -suspend      Like -activate, but ignores the lock-timeout, if any, and\n\
+                immediately powers off the screen without fading out.\n\
+                This is intended to be run just after your laptop's lid\n\
+                is closed, and just before the CPU halts.\n\
 \n\
   -version      Prints the version of xscreensaver that is currently running\n\
                 on the display -- that is, the actual version number of the\n\
@@ -187,6 +192,7 @@ main (int argc, char **argv)
       else if (cmd) USAGE();
       else if (!strncmp (s, "-activate", L))   cmd = &XA_ACTIVATE;
       else if (!strncmp (s, "-deactivate", L)) cmd = &XA_DEACTIVATE;
+      else if (!strncmp (s, "-suspend", L))    cmd = &XA_SUSPEND;
       else if (!strncmp (s, "-cycle", L))      cmd = &XA_CYCLE;
       else if (!strncmp (s, "-next", L))       cmd = &XA_NEXT;
       else if (!strncmp (s, "-prev", L))       cmd = &XA_PREV;
@@ -300,6 +306,7 @@ main (int argc, char **argv)
   XA_SCREENSAVER_RESPONSE = XInternAtom (dpy, "_SCREENSAVER_RESPONSE", False);
   XA_ACTIVATE = XInternAtom (dpy, "ACTIVATE", False);
   XA_DEACTIVATE = XInternAtom (dpy, "DEACTIVATE", False);
+  XA_SUSPEND = XInternAtom (dpy, "SUSPEND", False);
   XA_RESTART = XInternAtom (dpy, "RESTART", False);
   XA_CYCLE = XInternAtom (dpy, "CYCLE", False);
   XA_NEXT = XInternAtom (dpy, "NEXT", False);
@@ -321,7 +328,7 @@ main (int argc, char **argv)
       exit (i);
     }
 
-  if (*cmd == XA_ACTIVATE || *cmd == XA_LOCK ||
+  if (*cmd == XA_ACTIVATE || *cmd == XA_LOCK || *cmd == XA_SUSPEND || 
       *cmd == XA_NEXT || *cmd == XA_PREV || *cmd == XA_SELECT)
     /* People never guess that KeyRelease deactivates the screen saver too,
        so if we're issuing an activation command, wait a second.

@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Tue Oct 23 19:02:07 2018 by build-fntable.pl 1.6.
+   Created: Sat Apr 27 19:53:47 2019 by build-fntable.pl 1.7.
  */
 
 #import <Foundation/Foundation.h>
@@ -58,6 +58,7 @@ extern struct xscreensaver_function_table
  dangerball_xscreensaver_function_table,
  decayscreen_xscreensaver_function_table,
  deco_xscreensaver_function_table,
+ deepstars_xscreensaver_function_table,
  deluxe_xscreensaver_function_table,
  demon_xscreensaver_function_table,
  discoball_xscreensaver_function_table,
@@ -104,6 +105,7 @@ extern struct xscreensaver_function_table
  gltext_xscreensaver_function_table,
  goop_xscreensaver_function_table,
  grav_xscreensaver_function_table,
+ gravitywell_xscreensaver_function_table,
  greynetic_xscreensaver_function_table,
  halftone_xscreensaver_function_table,
  halo_xscreensaver_function_table,
@@ -298,6 +300,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&dangerball_xscreensaver_function_table], @"dangerball",
 	[NSValue valueWithPointer:&decayscreen_xscreensaver_function_table], @"decayscreen",
 	[NSValue valueWithPointer:&deco_xscreensaver_function_table], @"deco",
+	[NSValue valueWithPointer:&deepstars_xscreensaver_function_table], @"deepstars",
 	[NSValue valueWithPointer:&deluxe_xscreensaver_function_table], @"deluxe",
 	[NSValue valueWithPointer:&demon_xscreensaver_function_table], @"demon",
 	[NSValue valueWithPointer:&discoball_xscreensaver_function_table], @"discoball",
@@ -344,6 +347,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&gltext_xscreensaver_function_table], @"gltext",
 	[NSValue valueWithPointer:&goop_xscreensaver_function_table], @"goop",
 	[NSValue valueWithPointer:&grav_xscreensaver_function_table], @"grav",
+	[NSValue valueWithPointer:&gravitywell_xscreensaver_function_table], @"gravitywell",
 	[NSValue valueWithPointer:&greynetic_xscreensaver_function_table], @"greynetic",
 	[NSValue valueWithPointer:&halftone_xscreensaver_function_table], @"halftone",
 	[NSValue valueWithPointer:&halo_xscreensaver_function_table], @"halo",

@@ -223,7 +223,7 @@ self_similar_normalized (struct state *st,
 	double    x = 0.0;
 	double    y = 0.0;
 
-	replacement = (Position*)(malloc (segment_count * sizeof (Segment)));
+	replacement = (Position*)(malloc (segment_count * sizeof (*replacement)));
 	copy_points (segment_count, points, replacement);
 	assert (fabs ((replacement [segment_count - 1].x) - 1.0) < EPSILON);
 	assert (fabs (replacement [segment_count - 1].y) < EPSILON);

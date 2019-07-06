@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -241,7 +241,7 @@ XrmDatabase db = 0;
 
 
 static Atom XA_SCREENSAVER_RESPONSE;
-static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
+static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_SUSPEND, XA_CYCLE, XA_NEXT, XA_PREV;
 static Atom XA_RESTART, XA_SELECT;
 static Atom XA_THROTTLE, XA_UNTHROTTLE;
 Atom XA_DEMO, XA_PREFS, XA_EXIT, XA_LOCK, XA_BLANK;
@@ -681,6 +681,7 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   XA_NET_WM_USER_TIME = XInternAtom (si->dpy, "_NET_WM_USER_TIME", False);
   XA_ACTIVATE = XInternAtom (si->dpy, "ACTIVATE", False);
   XA_DEACTIVATE = XInternAtom (si->dpy, "DEACTIVATE", False);
+  XA_SUSPEND = XInternAtom (si->dpy, "SUSPEND", False);
   XA_RESTART = XInternAtom (si->dpy, "RESTART", False);
   XA_CYCLE = XInternAtom (si->dpy, "CYCLE", False);
   XA_NEXT = XInternAtom (si->dpy, "NEXT", False);
@@ -1206,7 +1207,13 @@ main_loop (saver_info *si)
 
       maybe_reload_init_file (si);
 
-      if (p->mode == DONT_BLANK)
+      /* Treat DONT_BLANK as BLANK_ONLY in emergency-lock when locking
+         is enabled. */
+
+      if (p->mode == DONT_BLANK &&
+          (!si->emergency_lock_p ||
+           !p->lock_p ||
+           si->locking_disabled_p))
         {
           if (p->verbose_p)
             fprintf (stderr, "%s: idle with blanking disabled at %s.\n",
@@ -1332,6 +1339,9 @@ main_loop (saver_info *si)
         if (si->fading_possible_p && p->fade_p)
           lock_timeout += p->fade_seconds / 1000;
 
+        if (si->emergency_lock_p)
+          lock_timeout = 0;
+
         if (si->emergency_lock_p && p->lock_p && lock_timeout)
           {
             int secs = p->lock_timeout / 1000;
@@ -1449,6 +1459,11 @@ main_loop (saver_info *si)
 	  XtRemoveTimeOut (si->lock_id);
 	  si->lock_id = 0;
 	}
+
+# ifdef HAVE_LIBSYSTEMD
+      /* This might be a good spot to re-launch si->systemd_pid
+         if it has died unexpectedly. Which shouldn't happen. */
+# endif
 
       /* Since we're unblanked now, break race conditions and make
          sure we stay that way (see comment in timers.c.) */
@@ -1574,6 +1589,10 @@ main (int argc, char **argv)
 
   initialize_stderr (si);
   handle_signals (si);
+
+# ifdef HAVE_LIBSYSTEMD   /* Launch it in the background */
+  si->systemd_pid = fork_and_exec_1 (si, 0, "xscreensaver-systemd");
+# endif
 
   make_splash_dialog (si);
 
@@ -1831,6 +1850,11 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     }
   else if (type == XA_DEACTIVATE)
     {
+
+      /* Regardless of whether the screen saver is active, a DEACTIVATE
+         message should cause the monitor to become powered on. */
+      monitor_power_on (si, True);
+
 # if 0
       /* When -deactivate is received while locked, pop up the dialog box
          instead of just ignoring it.  Some people depend on this behavior
@@ -1872,6 +1896,34 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
                                  "not active: idle timer reset.");
           reset_timers (si);
         }
+    }
+  else if (type == XA_SUSPEND)
+    {
+      clientmessage_response(si, window, False,
+                             "SUSPEND ClientMessage received.",
+                             "suspending.");
+      si->selection_mode = 0;
+      si->demoing_p = False;
+      si->emergency_lock_p = True;
+      si->throttled_p = True;
+
+      /* When suspending, immediately lock, if locking enabled. */
+# ifndef NO_LOCKING
+      if (p->lock_p && !si->locked_p && !si->locking_disabled_p)
+        {
+          if (p->verbose_p)
+            fprintf (stderr, "%s: locking.\n", blurb());
+          set_locked_p (si, True);
+        }
+# endif
+
+      /* When suspending, immediately power off the display. */
+      monitor_power_on (si, False);
+
+      if (until_idle_p)
+        return True;    /* Blank now */
+      else
+        return False;   /* Do not unblank now */
     }
   else if (type == XA_CYCLE)
     {
@@ -2353,6 +2405,12 @@ analyze_display (saver_info *si)
         strcat (buf, " (disabled at compile time)");
       fprintf (stderr, "%s\n", buf);
     }
+
+# ifdef HAVE_LIBSYSTEMD
+  fprintf (stderr, "%s:   libsystemd\n", blurb());
+# else
+  fprintf (stderr, "%s:   libsystemd (disabled at compile time)\n", blurb());
+# endif
 
   for (i = 0; i < si->nscreens; i++)
     {

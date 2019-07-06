@@ -1,4 +1,4 @@
-/* peepers, Copyright (c) 2018 Jamie Zawinski <jwz@jwz.org>
+/* peepers, Copyright (c) 2018-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -851,7 +851,7 @@ draw_ball (ModeInfo *mi, component which)
           polys++;
         }
       glEnd();
-      return polys;
+      goto DONE;
     }
 
   for (i = xstart; i <= xstop; i++)
@@ -1009,6 +1009,7 @@ draw_ball (ModeInfo *mi, component which)
   if (!wire)
     glEnd();
 
+ DONE:
   free (stacks);
   free (normals);
 

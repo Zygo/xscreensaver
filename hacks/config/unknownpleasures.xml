@@ -44,6 +44,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <file id="mask" _label="Mask image" arg="-mask %"/>
+
   <xscreensaver-updater />
 
   <_description>

@@ -1,4 +1,4 @@
-/* flyingtoasters, Copyright (c) 2003-2018 Jamie Zawinski <jwz@jwz.org>
+/* flyingtoasters, Copyright (c) 2003-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,6 +40,7 @@
 #define DEF_NTOASTERS   "20"
 #define DEF_NSLICES     "25"
 #define DEF_TEXTURE     "True"
+#define DEF_FOG         "True"
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
@@ -138,6 +139,7 @@ static GLfloat speed;
 static int ntoasters;
 static int nslices;
 static int do_texture;
+static int do_fog;
 
 static XrmOptionDescRec opts[] = {
   { "-speed",  ".speed",  XrmoptionSepArg, 0 },
@@ -145,6 +147,8 @@ static XrmOptionDescRec opts[] = {
   { "-nslices",    ".nslices",   XrmoptionSepArg, 0 },
   {"-texture",     ".texture",   XrmoptionNoArg, "True" },
   {"+texture",     ".texture",   XrmoptionNoArg, "False" },
+  {"-fog",         ".fog",       XrmoptionNoArg, "True" },
+  {"+fog",         ".fog",       XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {
@@ -152,6 +156,7 @@ static argtype vars[] = {
   {&ntoasters,  "ntoasters",  "Count",   DEF_NTOASTERS, t_Int},
   {&nslices,    "nslices",    "Count",   DEF_NSLICES,   t_Int},
   {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_Bool},
+  {&do_fog,     "fog",        "Fog",     DEF_FOG,       t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt toasters_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -651,6 +656,12 @@ draw_grid (ModeInfo *mi)
   glVertex3f( GRID_SIZE/2, -GRID_SIZE/2,  GRID_DEPTH/2);
   glVertex3f( GRID_SIZE/2,  GRID_SIZE/2,  GRID_DEPTH/2);
   glEnd();
+  glBegin(GL_QUADS);
+  glVertex3f( GRID_SIZE/2, -GRID_SIZE/2, -GRID_DEPTH/2);
+  glVertex3f( GRID_SIZE/2,  GRID_SIZE/2, -GRID_DEPTH/2);
+  glVertex3f( 0,            GRID_SIZE/2, -GRID_DEPTH/2);
+  glVertex3f( 0,           -GRID_SIZE/2, -GRID_DEPTH/2);
+  glEnd();
   glPopMatrix();
 
   if (!MI_IS_WIREFRAME(mi)) glEnable(GL_LIGHTING);
@@ -845,6 +856,15 @@ draw_toasters (ModeInfo *mi)
   glTranslatef (0, 0, -GRID_DEPTH/2.5);
   draw_grid (mi);
 
+  if (do_fog && !MI_IS_WIREFRAME(mi))
+    {
+      GLfloat fog_color[4] = { 0, 0, 0, 1 };
+      glFogi (GL_FOG_MODE, GL_EXP2);
+      glFogfv (GL_FOG_COLOR, fog_color);
+      glFogf (GL_FOG_DENSITY, 0.0085);
+      glEnable (GL_FOG);
+    }
+
   mi->polygon_count = 0;
   for (i = 0; i < bp->nfloaters; i++)
     {
@@ -872,11 +892,11 @@ free_toasters (ModeInfo *mi)
   if (!bp->glx_context) return;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
-  if (bp->dlists) free (bp->dlists);
   if (bp->floaters) free (bp->floaters);
   if (bp->user_trackball) gltrackball_free (bp->user_trackball);
   for (i = 0; i < countof(all_objs); i++)
     if (glIsList(bp->dlists[i])) glDeleteLists(bp->dlists[i], 1);
+  if (bp->dlists) free (bp->dlists);
   if (bp->toast_texture) glDeleteTextures (1, &bp->toast_texture);
 # ifndef HAVE_JWZGLES
   if (bp->chrome_texture) glDeleteTextures (1, &bp->chrome_texture);

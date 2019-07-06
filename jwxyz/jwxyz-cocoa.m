@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -94,8 +94,8 @@ jwxyz_drawable_depth (Drawable d)
 }
 
 
-float
-jwxyz_scale (Window main_window)
+static float
+jwxyz_scale_1 (Window main_window, BOOL fonts_p)
 {
   float scale = 1;
 
@@ -108,18 +108,30 @@ jwxyz_scale (Window main_window)
      or so, even if the display has significantly higher resolution.  That is
      unrelated to this hack, which is really about DPI.
    */
-  scale = main_window->window.view.hackedContentScaleFactor;
+  scale = [main_window->window.view hackedContentScaleFactor:fonts_p];
   if (scale < 1) // iPad Pro magnifies the backbuffer by 3x, which makes text
     scale = 1;   // excessively blurry in BSOD.
 
 # else  // !USE_IPHONE
 
   /* Desktop retina displays also need fonts doubled. */
-  scale = main_window->window.view.hackedContentScaleFactor;
+  scale = [main_window->window.view hackedContentScaleFactor:fonts_p];
 
 # endif // !USE_IPHONE
 
   return scale;
+}
+
+float
+jwxyz_scale (Window main_window)
+{
+  return jwxyz_scale_1 (main_window, FALSE);
+}
+
+static float
+jwxyz_font_scale (Window main_window)
+{
+  return jwxyz_scale_1 (main_window, TRUE);
 }
 
 
@@ -421,7 +433,7 @@ jwxyz_load_native_font (Window main_window, int traits_jwxyz, int mask_jwxyz,
                            encoding:NSUTF8StringEncoding] :
     nil;
 
-  size *= jwxyz_scale (main_window);
+  size *= jwxyz_font_scale (main_window);
 
   if (font_name_type == JWXYZ_FONT_RANDOM) {
 

@@ -84,16 +84,18 @@ xjack_init (Display *dpy, Window window)
   XGCValues gcv;
   char *fontname;
 
+
   st->dpy = dpy;
   st->window = window;
   st->s = source;
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
-  fontname = get_string_resource (st->dpy, "font", "Font");
 
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
-  if (st->xgwa.width <= 480)
-    fontname = "-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*";
+  if (st->xgwa.width > 480)
+    fontname = get_string_resource (st->dpy, "font", "Font");
+  else
+    fontname = get_string_resource (st->dpy, "font2", "Font");
 
   st->font = load_font_retry (st->dpy, fontname);
   if (!st->font) abort();
@@ -474,8 +476,10 @@ static const char *xjack_defaults [] = {
   "*fpsSolid:		true",
 #ifdef HAVE_COCOA
   ".font:		American Typewriter 24",
+  ".font2:		American Typewriter 10",
 #else
   ".font:		-*-courier-medium-r-*-*-*-240-*-*-m-*-*-*",
+  ".font2:		-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*",
 #endif
   "*delay:		50000",
   0

@@ -1296,7 +1296,7 @@ static void initData(glhcfg *glhanoi)
 		glhanoi->pole[i].size = glhanoi->numberOfDisks;
 	}
 	checkAllocAndExit(
-			!!(glhanoi->diskPos = calloc(glhanoi->numberOfDisks, sizeof(double))),
+			!!(glhanoi->diskPos = calloc(glhanoi->numberOfDisks, sizeof(float))),
 			"diskPos");
 
 	if (glhanoi->trailQSize) {
@@ -1430,7 +1430,7 @@ static GLubyte *makeTexture(glhcfg *glhanoi, int x_size, int y_size, int z_size,
 	double xi, yi, zi;
 
 	if((textureData =
-		calloc(x_size * y_size * z_size, sizeof(GLuint))) == NULL) {
+		calloc(x_size * y_size * z_size, sizeof(GLubyte))) == NULL) {
 		return NULL;
 	}
 

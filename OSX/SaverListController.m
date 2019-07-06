@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -125,7 +125,7 @@
   win.size.height = 44; // #### This cannot possibly be right.
   UISearchBar *search = [[UISearchBar alloc] initWithFrame:win];
   search.delegate = self;
-  search.placeholder = @"Search...";
+  search.placeholder = NSLocalizedString(@"Search...", @"");
   self.tableView.tableHeaderView = search;
 
   // Dismiss the search field's keyboard as soon as we scroll.

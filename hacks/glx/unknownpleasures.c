@@ -1,4 +1,5 @@
-/* unknownpleasures, Copyright (c) 2013-2018 Jamie Zawinski <jwz@jwz.org>
+/* unknownpleasures, Copyright (c) 2013-2018, 2019
+ * -Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,10 +29,6 @@
  *
  * TODO:
  *
- * - Load images and feed them line by line into the plotter, so it scrolls.
- *
- * - Same but use the image as a mask against the random graph data.
- *
  * - Take a function generator program as a command line argument:
  *   read lines of N float values from it, interpolate to full width.
  */
@@ -43,6 +40,7 @@
 #define DEF_NOISE      "1.0"
 #define DEF_ASPECT     "1.9"
 #define DEF_BUZZ       "False"
+#define DEF_MASK       "(none)"
 
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*count:        80          \n" \
@@ -57,6 +55,8 @@
 #include "xlockmore.h"
 #include "colors.h"
 #include "gltrackball.h"
+#include "ximage-loader.h"
+#include "grab-ximage.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -70,6 +70,7 @@ GLfloat amplitude_arg;
 GLfloat noise_arg;
 GLfloat aspect_arg;
 Bool buzz_arg;
+char *mask_arg;
 
 
 typedef struct {
@@ -88,6 +89,9 @@ typedef struct {
   GLuint *lines;	/* Display lists for each edge * face * frame */
   GLfloat *heights;	/* Animated elevation / alpha of each line */
   GLfloat fg[4], bg[4];	/* Colors */
+  XImage *mask;
+  double mask_scale;
+  int frame_count;
 } unk_configuration;
 
 static unk_configuration *bps = NULL;
@@ -102,6 +106,7 @@ static XrmOptionDescRec opts[] = {
   { "-no-ortho",     ".ortho",      XrmoptionNoArg,  "False" },
   { "-buzz",         ".buzz",       XrmoptionNoArg,  "True"  },
   { "-no-buzz",      ".buzz",       XrmoptionNoArg,  "False" },
+  { "-mask",         ".mask",       XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
@@ -112,6 +117,7 @@ static argtype vars[] = {
   {&noise_arg,      "noise",       "Noise",       DEF_NOISE,      t_Float},
   {&aspect_arg,     "aspect",      "Aspect",      DEF_ASPECT,     t_Float},
   {&buzz_arg,       "buzz",        "Buzz",        DEF_BUZZ,       t_Bool},
+  {&mask_arg,       "mask",        "Image",       DEF_MASK,       t_String},
 };
 
 ENTRYPOINT ModeSpecOpt unk_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -241,27 +247,94 @@ reshape_unk (ModeInfo *mi, int width, int height)
     GLfloat lw = 1;
     GLfloat s = 1;
 
-    if (MI_WIDTH(mi) > 2560) lw = 4;  /* Retina displays */
-# ifdef HAVE_COCOA
-    else if (MI_WIDTH(mi) > 1280) lw = 3;  /* WTF */
-# endif
-    else if (MI_WIDTH(mi) > 1920) lw = 3;
-    else if (mi->xgwa.width > 640 && mi->xgwa.height > 640) lw = 2;
-
 # ifdef HAVE_MOBILE
     lw = 4;
     s = 1.4;
-# else
+
+# else  /* !HAVE_MOBILE */
+
+    if (MI_WIDTH(mi) > 2560) lw = 4;  /* Retina displays */
+#  ifdef HAVE_COCOA
+    else if (MI_WIDTH(mi) > 1280) lw = 3;  /* WTF */
+#  endif
+    else if (MI_WIDTH(mi) > 1920) lw = 3;
+    else if (mi->xgwa.width > 640 && mi->xgwa.height > 640) lw = 2;
+
     /* Make the image fill the screen a little more fully */
     if (mi->xgwa.width <= 640 || mi->xgwa.height <= 640)
       s = 1.2;
-# endif
+
+# endif /* !HAVE_MOBILE */
+
+    s /= 1.9 / bp->aspect;
 
     glScalef (s, s, s);
     glLineWidth (lw);
   }
 
   glClear(GL_COLOR_BUFFER_BIT);
+}
+
+static void
+load_image (ModeInfo *mi)
+{
+  unk_configuration *bp = &bps[MI_SCREEN(mi)];
+  XImage *image0;
+  int x, y;
+  double xs, ys;
+  unsigned long max = 0;
+
+  if (!mask_arg || !*mask_arg || !strcasecmp(mask_arg, "(none)"))
+    return;
+
+  image0 = file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi), mask_arg);
+  if (!image0) return;
+
+  bp->mask = XCreateImage (MI_DISPLAY(mi), MI_VISUAL(mi), 32, ZPixmap, 0, 0,
+                           bp->resolution,
+                           bp->count * image0->height / image0->width *
+                           (1.9 / bp->aspect) * 0.75,
+                           32, 0);
+  if (!bp->mask) abort();
+  bp->mask->data = (char *)
+    malloc (bp->mask->height * bp->mask->bytes_per_line);
+  if (!bp->mask->data) abort();
+
+  xs = image0->width  / (double) bp->mask->width;
+  ys = image0->height / (double) bp->mask->height;
+
+  /* Scale the image down to a 1-bit mask. */
+  for (y = 0; y < bp->mask->height; y++)
+    for (x = 0; x < bp->mask->width; x++)
+      {
+        int x2, y2, n = 0;
+        double total = 0;
+        unsigned long p;
+        for (y2 = y * ys; y2 < (y+1) * ys; y2++)
+          for (x2 = x * xs; x2 < (x+1) * xs; x2++)
+            {
+              unsigned long agbr = XGetPixel (image0, x2, y2);
+              unsigned long a    = (agbr >> 24) & 0xFF;
+              unsigned long gray = (a == 0
+                                    ? 0
+                                    : ((((agbr >> 16) & 0xFF) +
+                                        ((agbr >>  8) & 0xFF) +
+                                        ((agbr >>  0) & 0xFF))
+                                       / 3));
+# if 0
+              if (gray < 96) gray /= 2;  /* a little more contrast */
+# endif
+              total += gray / 255.0;
+              n++;
+            }
+        p = 255 * total / n;
+        if (p > max) max = p;
+        p = (0xFF << 24) | (p << 16) | (p << 8) | p;
+        XPutPixel (bp->mask, x, bp->mask->height-y-1, p);
+      }
+
+  bp->mask_scale = 255.0 / max;
+  XDestroyImage (image0);
 }
 
 
@@ -353,7 +426,9 @@ generate_signal (ModeInfo *mi)
 
   for (j = 0; j < nspikes; j++)
     {
-      double off = frand (0.8) - 0.4;
+      double off = (bp->mask
+                    ? frand (1.0) - 0.5    /* all the way to the edge */
+                    : frand (0.8) - 0.4);  /* leave a margin */
       double amp = (0.1 + frand (0.9)) * nspikes;
       double freq = (7 + frand (11)) * bp->noise;
       for (i = 0, r = -0.5, p = points;
@@ -371,7 +446,10 @@ generate_signal (ModeInfo *mi)
   /* Multiply by baseline clipping curve, add static. */
   for (i = 0, r = -0.5, p = points; i < bp->resolution; i++, r += step, p++)
     *p = ((*p / max)
-          * (0.5 + 0.5 * cos1 (r * r * M_PI * 14) * (1 - frand(0.2))));
+          * (0.5 +
+             0.5
+             * (bp->mask ? 1 : cos1 (r * r * M_PI * 14))
+             * (1 - frand(0.2))));
 
   return points;
 }
@@ -414,6 +492,16 @@ tick_unk (ModeInfo *mi)
             {
               GLfloat x = i / (GLfloat) bp->resolution;
               GLfloat z = (points[i] + frand (0.05)) * bp->amplitude;
+
+              if (bp->mask)
+                {
+                  int h = bp->mask->height;  /* leave a 10% gutter */
+                  int y = bp->frame_count % (int) (h * 1.1);
+                  unsigned long p = (y < h ? XGetPixel (bp->mask, i, y) : 0);
+                  unsigned long gray = ((p >> 8) & 0xFF);
+                  z *= gray * bp->mask_scale / 255.0;
+                }
+
               if (z < 0) z = 0;
               if (z > bp->amplitude) z = bp->amplitude;
               glVertex3f (x, 0, z);
@@ -426,6 +514,7 @@ tick_unk (ModeInfo *mi)
         }
     }
 
+  bp->frame_count++;
   mi->polygon_count *= bp->count;
   mi->polygon_count += 5;  /* base */
 
@@ -470,6 +559,8 @@ init_unk (ModeInfo *mi)
 
   if (MI_COUNT(mi) < 1) MI_COUNT(mi) = 1;
   /* bp->count is set in reshape */
+
+  load_image (mi);
 
   bp->base = glGenLists (1);
   glNewList (bp->base, GL_COMPILE);
@@ -673,6 +764,7 @@ free_unk (ModeInfo *mi)
     glDeleteLists (bp->lines[i], 1);
   free (bp->lines);
   free (bp->heights);
+  if (bp->mask) XDestroyImage (bp->mask);
 }
 
 XSCREENSAVER_MODULE_2 ("UnknownPleasures", unknownpleasures, unk)

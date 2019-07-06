@@ -10,6 +10,7 @@ bouncingcow - a happy cow on a trampoline in 3D.  Moo.
 [\-delay \fInumber\fP]
 [\-speed \fInumber\fP]
 [\-count \fInumber\fP]
+[\-mathematical]
 [\-texture \fIfilename\fP]
 [\-wireframe]
 [\-fps]
@@ -41,6 +42,10 @@ An image file to paint on the cow's hide.
 
 Note that on most systems, GL textures must have dimensions that are a
 power of two.
+.TP 8
+.B \-mathematical
+Periodically transition to display mathematically ideal cows (spherical, 
+frictionless).
 .TP 8
 .B \-wireframe
 Render in wireframe instead of solid.

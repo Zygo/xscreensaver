@@ -171,10 +171,16 @@
 /* Define if your <locale.h> file defines LC_MESSAGES. */
 #undef HAVE_LC_MESSAGES
 
+/* Define this if your system has libcap. */
+#undef HAVE_LIBCAP
+
 /* Define this if the Portable Network Graphics library is installed. It is
    basically required, but many things will more-or-less limp along without
    it. */
 #undef HAVE_LIBPNG
+
+/* Define this if you have libsystemd. */
+#undef HAVE_LIBSYSTEMD
 
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H

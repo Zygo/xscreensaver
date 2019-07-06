@@ -1,5 +1,5 @@
 #!/bin/sh
-# XScreenSaver, Copyright © 2013-2016 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2018 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -118,11 +118,16 @@ for f in *.{saver,app} "$UPDATER_SRC" ; do
     cp -pR "$f" "$DD" || error "Unable to install $f in $DST/"
   fi
 
+  # The files in the DMG might be owned by "jwz:staff" (503:20)
+  chown root:wheel "$DD"
+
   # Eliminate the "this was downloaded from the interweb" warning.
+  # (This trick probably doesn't work.)
   xattr -r -d com.apple.quarantine "$DD"
 
   if [ "$EXT" = "app" ]; then
     # Eliminate the "this is from an unknown developer" warning.
+    # (This trick probably doesn't work.)
     spctl --add "$DD"
   fi
 

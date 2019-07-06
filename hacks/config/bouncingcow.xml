@@ -19,7 +19,11 @@
           _label="Number of cows" _low-label="Moo" _high-label="Herd"
           low="1" high="9" default="1"/>
 
-  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+  <boolean id="mathematical"
+   _label="Mathematically ideal cows (spherical, frictionless)"
+   arg-set="-mathematical"/>
+
+  <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <xscreensaver-updater />

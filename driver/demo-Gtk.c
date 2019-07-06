@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2018 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -250,7 +250,8 @@ static state *global_state_kludge;
 Atom XA_VROOT;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_RESPONSE, XA_SCREENSAVER_VERSION;
 Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO;
-Atom XA_ACTIVATE, XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
+Atom XA_ACTIVATE, XA_SUSPEND, XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
+Atom XA_NEXT, XA_PREV;
 
 
 static void populate_demo_window (state *, int list_elt);
@@ -5069,8 +5070,11 @@ main (int argc, char **argv)
   XA_SELECT = XInternAtom (dpy, "SELECT", False);
   XA_DEMO = XInternAtom (dpy, "DEMO", False);
   XA_ACTIVATE = XInternAtom (dpy, "ACTIVATE", False);
+  XA_SUSPEND = XInternAtom (dpy, "SUSPEND", False);
   XA_BLANK = XInternAtom (dpy, "BLANK", False);
   XA_LOCK = XInternAtom (dpy, "LOCK", False);
+  XA_NEXT = XInternAtom (dpy, "NEXT", False);
+  XA_PREV = XInternAtom (dpy, "PREV", False);
   XA_EXIT = XInternAtom (dpy, "EXIT", False);
   XA_RESTART = XInternAtom (dpy, "RESTART", False);
 

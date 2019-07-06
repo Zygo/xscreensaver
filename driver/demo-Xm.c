@@ -113,7 +113,7 @@ static char *short_version = 0;
 Atom XA_VROOT;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_RESPONSE, XA_SCREENSAVER_VERSION;
 Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO;
-Atom XA_ACTIVATE, XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
+Atom XA_ACTIVATE, XA_SUSPEND, XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
 
 
 static void populate_demo_window (Widget toplevel,
@@ -1800,6 +1800,7 @@ main (int argc, char **argv)
   XA_SELECT = XInternAtom (dpy, "SELECT", False);
   XA_DEMO = XInternAtom (dpy, "DEMO", False);
   XA_ACTIVATE = XInternAtom (dpy, "ACTIVATE", False);
+  XA_SUSPEND = XInternAtom (dpy, "SUSPEND", False);
   XA_BLANK = XInternAtom (dpy, "BLANK", False);
   XA_LOCK = XInternAtom (dpy, "LOCK", False);
   XA_EXIT = XInternAtom (dpy, "EXIT", False);

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -344,6 +344,9 @@ struct saver_info {
 
   XtIntervalId stderr_popup_timer;
 
+# ifdef HAVE_LIBSYSTEMD
+  pid_t systemd_pid;
+# endif
 };
 
 /* This structure holds all the data that applies to the screen-specific parts

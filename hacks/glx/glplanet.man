@@ -10,6 +10,7 @@ glplanet - rotating 3d texture-mapped planet.
 [\-delay \fInumber\fP]
 [\-image \fIfile\fP]
 [\-image2 \fIfile\fP]
+[\-mode \fIstring\fP]
 [\-resolution \fInumber\fP]
 [\-wireframe]
 [\-fps]
@@ -39,6 +40,15 @@ The day texture map to wrap around the planet's surface.
 .B \-image2 \fIfile\fP
 The night texture map to wrap around the planet's surface.
 The two will be blended together at the dusk terminator.
+.TP 8
+.B \-mode globe
+All is right with the world.
+.TP 8
+.B \-mode equirectangular
+Wat.
+.TP 8
+.B \-mode mercator
+Good day, Sir. I said GOOD DAY.
 .TP 8
 .B \-resolution
 The resolution of the planetary mesh. Default: 128.

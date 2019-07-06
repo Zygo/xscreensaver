@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -555,7 +555,7 @@ draw_piece (jigsaw_configuration *jc, puzzle_piece *p,
 # else  /* !HAVE_TESS */
 
       GLfloat *tri = (GLfloat *)
-        (GLfloat *) malloc (s->n_points * 4 * 3 * 3 * sizeof(*pts));
+        malloc (s->n_points * 4 * 3 * 3 * sizeof(*tri));
       GLfloat *otri = tri;
       int count;
       GLdouble zz;

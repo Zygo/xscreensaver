@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -157,7 +157,10 @@ extern void hack_subproc_environment (Screen *, Window saver_window);
 extern void init_sigchld (void);
 extern void spawn_screenhack (saver_screen_info *ssi);
 extern pid_t fork_and_exec (saver_screen_info *ssi, const char *command);
+extern pid_t fork_and_exec_1 (saver_info *si, saver_screen_info *ssi,
+                              const char *command);
 extern void kill_screenhack (saver_screen_info *ssi);
+int kill_job (saver_info *si, pid_t pid, int signal);
 extern void suspend_screenhack (saver_screen_info *ssi, Bool suspend_p);
 extern Bool screenhack_running_p (saver_info *si);
 extern void emergency_kill_subproc (saver_info *si);

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "09-Nov-2013 (5.23)" "X Version 11"
+.TH XScreenSaver 1 "03-Jun-2019 (5.42)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -29,6 +29,7 @@ xscreensaver-command - control a running xscreensaver process
 \-exit | \
 \-restart | \
 \-lock | \
+\-suspend | \
 \-version | \
 \-time | \
 \-watch]
@@ -136,6 +137,12 @@ Note that locking doesn't work unless the \fIxscreensaver\fP process is
 running as you.  See 
 .BR xscreensaver (1)
 for details.
+.TP 8
+.B \-suspend
+Like \fI\-activate\fP, but ignores \fIlockTimeout\fP and immediately
+powers off the screen without fading out.  This is intended to be run
+just after your laptop's lid is closed, and just before the CPU halts,
+to lock things down quickly.
 .TP 8
 .B \-version
 Prints the version of xscreensaver that is currently running on the display:
@@ -249,7 +256,7 @@ and related tools can always be found at https://www.jwz.org/xscreensaver/
 .BR xscreensaver\-demo (1),
 .BR xset (1)
 .SH COPYRIGHT
-Copyright \(co 1992-2013 by Jamie Zawinski.
+Copyright \(co 1992-2019 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

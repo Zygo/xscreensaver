@@ -46,6 +46,18 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.43	* New hacks, `GravityWell', `DeepStars'.
+	* GLPlanet now supports the Mercator projection.
+	* Bouncing Cow has mathematically ideal cows (spherical, frictionless).
+	* Foggy toasters.
+	* Unknown Pleasures can now use an image file as a clip mask.
+	* Updated `webcollage' for recent changes.
+	* macOS: Fixed BSOD fonts on UWQHD+ displays.
+	* X11: Added some sample unlock dialog color schemes to the .ad file.
+	* X11: On systemd systems, closing your laptop lid might actually lock
+          your screen now, maybe.
+	* X11: 'sonar' can ping without being setuid by using setcap.
+
 5.42	* macOS: Fixed Sparkle auto-updater.
 
 5.41	* X11: Those new font-loading fallback heuristics work again. Oops.

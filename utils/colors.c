@@ -393,11 +393,13 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
       if (k <= 0)
 	return;
 # else
-      for (i = k+1; i < *ncolorsP; i++)
+      if (k <= 0)
+	return;
+      for (i = k; i < *ncolorsP; i++)
         /* #### Should duplicate the allocation of the color cell here
            to avoid a double-color-free on PseudoColor, but it's 2018
            and I don't care, */
-        colors[i] = colors[k];
+        colors[i] = colors[i-1];
 # endif
     }
 

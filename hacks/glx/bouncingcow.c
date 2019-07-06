@@ -1,4 +1,4 @@
-/* bouncingcow, Copyright (c) 2003-2018 Jamie Zawinski <jwz@jwz.org>
+/* bouncingcow, Copyright (c) 2003-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,7 @@
 # define release_cow 0
 #define DEF_SPEED       "1.0"
 #define DEF_TEXTURE     "(none)"
+#define DEF_MATHEMATICAL "False"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -68,6 +69,8 @@ typedef struct {
 
   GLuint *dlists;
   GLuint texture;
+  enum { BOUNCE, INFLATE, DEFLATE } mode;
+  GLfloat ratio;
 
   int nfloaters;
   floater *floaters;
@@ -78,16 +81,20 @@ static cow_configuration *bps = NULL;
 
 static GLfloat speed;
 static const char *do_texture;
+static Bool mathematical;
 
 static XrmOptionDescRec opts[] = {
   { "-speed",      ".speed",     XrmoptionSepArg, 0 },
   {"-texture",     ".texture",   XrmoptionSepArg, 0 },
   {"+texture",     ".texture",   XrmoptionNoArg, "(none)" },
+  {"-mathematical", ".mathematical", XrmoptionNoArg, "True" },
+  {"+mathematical", ".mathematical", XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {
   {&speed,      "speed",      "Speed",   DEF_SPEED,     t_Float},
   {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_String},
+  {&mathematical,"mathematical","Mathematical",DEF_MATHEMATICAL,t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt cow_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -196,29 +203,33 @@ cow_handle_event (ModeInfo *mi, XEvent *event)
 /* Textures
  */
 
-static Bool
+static void
 load_texture (ModeInfo *mi, const char *filename)
 {
+  cow_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = mi->dpy;
   Visual *visual = mi->xgwa.visual;
   char buf[1024];
   XImage *image;
 
+  bp->texture = 0;
   if (MI_IS_WIREFRAME(mi))
-    return False;
+    return;
 
   if (!filename ||
       !*filename ||
       !strcasecmp (filename, "(none)"))
     {
       glDisable (GL_TEXTURE_2D);
-      return False;
+      return;
     }
 
   image = file_to_ximage (dpy, visual, filename);
-  if (!image) return False;
+  if (!image) return;
 
   clear_gl_error();
+  glGenTextures (1, &bp->texture);
+  glBindTexture (GL_TEXTURE_2D, bp->texture);
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                 image->width, image->height, 0,
                 GL_RGBA, GL_UNSIGNED_BYTE, image->data);
@@ -228,61 +239,23 @@ load_texture (ModeInfo *mi, const char *filename)
 
   glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
   glPixelStorei (GL_UNPACK_ROW_LENGTH, image->width);
-
-  return True;
 }
 
 
-ENTRYPOINT void
-init_cow (ModeInfo *mi)
+static void
+render_cow (ModeInfo *mi, GLfloat ratio)
 {
-  cow_configuration *bp;
+  cow_configuration *bp = &bps[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   int i;
-  Bool tex_p = False;
-
-  MI_INIT (mi, bps);
-
-  bp = &bps[MI_SCREEN(mi)];
-
-  bp->glx_context = init_GL(mi);
-
-  reshape_cow (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-
-  glShadeModel(GL_SMOOTH);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_CULL_FACE);
-
-  if (!wire)
-    {
-      GLfloat pos[4] = {0.4, 0.2, 0.4, 0.0};
-/*      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};*/
-      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
-      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
-      GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
-
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
-
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
-      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
-      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
-    }
-
-  bp->trackball = gltrackball_init (False);
-
-  bp->dlists = (GLuint *) calloc (countof(all_objs)+1, sizeof(GLuint));
+  if (! bp->dlists)
+    bp->dlists = (GLuint *) calloc (countof(all_objs)+1, sizeof(GLuint));
   for (i = 0; i < countof(all_objs); i++)
-    bp->dlists[i] = glGenLists (1);
-
-  tex_p = load_texture (mi, do_texture);
-  if (tex_p)
-    glBindTexture (GL_TEXTURE_2D, bp->texture);
+    {
+      if (bp->dlists[i])
+        glDeleteLists (bp->dlists[i], 1);
+      bp->dlists[i] = glGenLists (1);
+    }
 
   for (i = 0; i < countof(all_objs); i++)
     {
@@ -296,7 +269,7 @@ init_cow (ModeInfo *mi)
       if (i == HIDE)
         {
           GLfloat color[4] = {0.63, 0.43, 0.36, 1.00};
-          if (tex_p)
+          if (bp->texture)
             {
               /* if we have a texture, make the base color be white. */
               color[0] = color[1] = color[2] = 1.0;
@@ -366,11 +339,121 @@ init_cow (ModeInfo *mi)
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny);
         }
 
-      renderList (gll, wire);
+      if (ratio == 0)
+        renderList (gll, wire);
+      else
+        {
+          /* Transition between a physics cow (cow-shaped) and a 
+             mathematical cow (spherical).
+           */
+          struct gllist *gll2 = (struct gllist *) malloc (sizeof(*gll2));
+          GLfloat *p = (GLfloat *) malloc (gll->points * 6 * sizeof(*p));
+          GLfloat scale2 = 0.5 + (0.5 * (1-ratio));
+          const GLfloat *pin  = (GLfloat *) gll->data;
+          GLfloat *pout = p;
+          int j;
+          GLfloat scale = 10.46;
+
+          memcpy (gll2, gll, sizeof(*gll2));
+          gll2->next = 0;
+          gll2->data = p;
+
+          for (j = 0; j < gll2->points; j++)
+            {
+              const GLfloat *ppi;
+              GLfloat *ppo, d;
+              int k;
+              switch (gll2->format) {
+              case GL_N3F_V3F:
+
+                /* Verts transition from cow-shaped to the surface of
+                   the enclosing sphere. */
+                ppi = &pin[3];
+                ppo = &pout[3];
+                d = sqrt (ppi[0]*ppi[0] + ppi[1]*ppi[1] + ppi[2]*ppi[2]);
+                for (k = 0; k < 3; k++)
+                  {
+                    GLfloat min = ppi[k];
+                    GLfloat max = ppi[k] / d * scale;
+                    ppo[k] = (min + ratio * (max - min)) * scale2;
+                  }
+
+                /* Normals are the ratio between original normals and
+                   the radial coordinates. */
+                ppi = &pin[0];
+                ppo = &pout[0];
+                for (k = 0; k < 3; k++)
+                  {
+                    GLfloat min = ppi[k];
+                    GLfloat max = ppi[k] / d;
+                    ppo[k] = (min + ratio * (max - min));
+                  }
+
+                pin  += 6;
+                pout += 6;
+                break;
+              default: abort(); break; /* write me */
+              }
+            }
+
+          renderList (gll2, wire);
+          free (gll2);
+          free (p);
+        }
 
       glEndList ();
     }
+}
 
+
+ENTRYPOINT void
+init_cow (ModeInfo *mi)
+{
+  cow_configuration *bp;
+  int wire = MI_IS_WIREFRAME(mi);
+  int i;
+
+  MI_INIT (mi, bps);
+
+  bp = &bps[MI_SCREEN(mi)];
+
+  bp->glx_context = init_GL(mi);
+
+  reshape_cow (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+
+  glShadeModel(GL_SMOOTH);
+
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_CULL_FACE);
+
+  if (!wire)
+    {
+      GLfloat pos[4] = {0.4, 0.2, 0.4, 0.0};
+/*      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};*/
+      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
+
+  bp->trackball = gltrackball_init (False);
+
+  load_texture (mi, do_texture);
+
+  bp->ratio = 0;
+  render_cow (mi, bp->ratio);
+
+  bp->mode = BOUNCE;
   bp->nfloaters = MI_COUNT (mi);
   bp->floaters = (floater *) calloc (bp->nfloaters, sizeof (floater));
 
@@ -481,6 +564,39 @@ draw_cow (ModeInfo *mi)
   glScalef (0.5, 0.5, 0.5);
 
   mi->polygon_count = 0;
+
+  if (mathematical)
+    {
+      switch (bp->mode) {
+      case BOUNCE:
+        if (bp->ratio == 0 && !(random() % 400))
+          bp->mode = INFLATE;
+        else if (bp->ratio > 0 && !(random() % 2000))
+          bp->mode = DEFLATE;
+        break;
+      case INFLATE:
+        bp->ratio += 0.01;
+        if (bp->ratio >= 1)
+          {
+            bp->ratio = 1;
+            bp->mode = BOUNCE;
+          }
+        break;
+      case DEFLATE:
+        bp->ratio -= 0.01;
+        if (bp->ratio <= 0)
+          {
+            bp->ratio = 0;
+            bp->mode = BOUNCE;
+          }
+        break;
+      default:
+        abort();
+      }
+
+      if (bp->ratio > 0)
+        render_cow (mi, bp->ratio);
+    }
 
 # if 0
   {

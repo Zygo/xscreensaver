@@ -13,6 +13,7 @@ unknownpleasures - a waterfall graph of the signal from pulsar PSR B1919+21.
 [\-resolution \fInumber\fP]
 [\-amplitude \fInumber\fP]
 [\-noise \fInumber\fP]
+[\-mask \fIfile\fP]
 [\-no-ortho]
 [\-buzz]
 [\-wireframe]
@@ -54,6 +55,11 @@ Height of the waves, 0 - 1.0.  Default: 0.13.
 .TP 8
 .B \-noise \fInumber\fP
 How noisy the signal is. 2 for twice as noisy, 0.5 for half as noisy.
+.TP 8
+.B \-mask \fIfile\fP
+Use the given image file as a clipping mask against the data.
+A high contrast image of around 256x256 works best.
+Signal peaks appear in the dark areas.
 .TP 8
 .B \-ortho | \-no-ortho
 Whether to use an orthographic projection.

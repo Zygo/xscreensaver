@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2018 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2019 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -67,6 +67,9 @@
 # include <errno.h>
 # ifdef HAVE_GETIFADDRS
 #  include <ifaddrs.h>
+# endif
+# ifdef HAVE_LIBCAP
+#  include <sys/capability.h>
 # endif
 #endif /* HAVE_ICMP || HAVE_ICMPHDR */
 
@@ -1483,7 +1486,7 @@ parse_mode (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
 
       if (!ping_works_p)
         {
-          *error_ret = strdup ("Sonar must be setuid to ping!\n"
+          *error_ret = strdup ("Sonar must be setuid or libcap to ping!\n"
                                "Running simulation instead.");
           return 0;
         }
@@ -1569,6 +1572,46 @@ parse_mode (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
 }
 
 
+static Bool
+set_net_raw_capalibity(int enable_p)
+{
+  Bool ret_status = False;
+# ifdef HAVE_LIBCAP
+  cap_t cap_status;
+  cap_value_t cap_value[] = { CAP_NET_RAW, };
+  cap_flag_value_t cap_flag_value;
+  cap_flag_value_t new_value = enable_p ? CAP_SET : CAP_CLEAR;
+
+  cap_status = cap_get_proc();
+  do {
+    cap_flag_value = CAP_CLEAR;
+    if (cap_get_flag (cap_status, CAP_NET_RAW, CAP_EFFECTIVE, &cap_flag_value))
+      break;
+    if (cap_flag_value == new_value)
+      {
+        ret_status = True;
+        break;
+      }
+
+    cap_set_flag (cap_status, CAP_EFFECTIVE, 1, cap_value, new_value);
+    if (!cap_set_proc(cap_status)) 
+      ret_status = True;
+  } while (0);
+
+  if (cap_status) cap_free (cap_status);
+# endif /* HAVE_LIBCAP */
+
+  return ret_status;
+}
+
+static Bool
+set_ping_capability (void)
+{
+  if (geteuid() == 0) return True;
+  return set_net_raw_capalibity (True);
+}
+
+
 sonar_sensor_data *
 sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
                  const char *subnet, int timeout,
@@ -1615,6 +1658,10 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
 
      On MacOS X, we can avoid the whole problem by using a
      non-privileged datagram instead of a raw socket.
+
+     On recent Linux systems (2012-ish?) we can avoid setuid by instead
+     using cap_set_flag(... CAP_NET_RAW). To make that call the executable
+     needs to have "sudo setcap cap_net_raw=p sonar" done to it first.
    */
   if (global_icmpsock)
     {
@@ -1628,7 +1675,7 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
     {
       socket_initted_p = True;
     }
-  else if (geteuid() == 0 &&
+  else if (set_ping_capability() &&
            (pd->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0)
     {
       socket_initted_p = True;

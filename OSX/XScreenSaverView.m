@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -295,15 +295,11 @@ add_default_options (const XrmOptionDescRec *opts,
 # endif
     ".doubleBuffer:       True",
     ".multiSample:        False",
-# ifndef USE_IPHONE
-    ".textMode:           date",
-# else
     ".textMode:           url",
-# endif
- // ".textLiteral:        ",
- // ".textFile:           ",
+    ".textLiteral:        ",
+    ".textFile:           ",
     ".textURL:            https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
- // ".textProgram:        ",
+    ".textProgram:        ",
     ".grabDesktopImages:  yes",
 # ifndef USE_IPHONE
     ".chooseRandomImages: no",
@@ -933,14 +929,19 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
  */
 - (CGFloat) hackedContentScaleFactor
 {
+  return [self hackedContentScaleFactor:FALSE];
+}
+
+- (CGFloat) hackedContentScaleFactor:(BOOL)fonts_p
+{
 # ifdef USE_IPHONE
   CGFloat s = self.contentScaleFactor;
 # else
   CGFloat s = self.window.backingScaleFactor;
 # endif
 
-  if (_lowrez_p) {
-    NSSize b = [self bounds].size;
+  if (_lowrez_p && !fonts_p) {
+    NSSize b = [self bounds].size;  // This is in points, not pixels
     CGFloat wh = b.width > b.height ? b.width : b.height;
 
     // Scale down to as close to 1024 as we can get without going under,
@@ -1011,12 +1012,14 @@ current_device_rotation (void)
                                               e]
                            preferredStyle:UIAlertControllerStyleAlert];
 
-  [c addAction: [UIAlertAction actionWithTitle: @"Exit"
+  [c addAction: [UIAlertAction actionWithTitle:
+                                 NSLocalizedString(@"Exit", @"")
                                style: UIAlertActionStyleDefault
                                handler: ^(UIAlertAction *a) {
     exit (-1);
   }]];
-  [c addAction: [UIAlertAction actionWithTitle: @"Keep going"
+  [c addAction: [UIAlertAction actionWithTitle:
+                                 NSLocalizedString(@"Keep going", @"")
                                style: UIAlertActionStyleDefault
                                handler: ^(UIAlertAction *a) {
     [self stopAndClose:NO];
@@ -1866,6 +1869,15 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
+/* drawRect always does nothing, and animateOneFrame renders bits to the
+   screen.  This is (now) true of both X11 and GL on both MacOS and iOS.
+   But this null method needs to exist or things complain.
+ */
+- (void)drawRect:(NSRect)rect
+{
+}
+
+
 - (void) animateOneFrame
 {
   // Render X11 into the backing store bitmap...
@@ -1990,9 +2002,12 @@ gl_check_ver (const struct gl_version *caps,
   
 # ifdef USE_IPHONE
   UIViewController *sheet;
+  NSString *updater = 0;
 # else  // !USE_IPHONE
   NSWindow *sheet;
+  NSString *updater = [self updaterPath];
 # endif // !USE_IPHONE
+
 
   NSData *xmld = [NSData dataWithContentsOfFile:path];
   NSString *xml = [[self class] decompressXML: xmld];
@@ -2001,7 +2016,8 @@ gl_check_ver (const struct gl_version *caps,
                 options:xsft->options
              controller:[prefsReader userDefaultsController]
        globalController:[prefsReader globalDefaultsController]
-               defaults:[prefsReader defaultOptions]];
+               defaults:[prefsReader defaultOptions]
+            haveUpdater:(updater ? TRUE : FALSE)];
 
   // #### am I expected to retain this, or not? wtf.
   //      I thought not, but if I don't do this, we (sometimes) crash.
@@ -2953,24 +2969,12 @@ gl_check_ver (const struct gl_version *caps,
 #endif // USE_IPHONE
 
 
-- (void) checkForUpdates
-{
 # ifndef USE_IPHONE
-  // We only check once at startup, even if there are multiple screens,
-  // and even if this saver is running for many days.
-  // (Uh, except this doesn't work because this static isn't shared,
-  // even if we make it an exported global. Not sure why. Oh well.)
-  static BOOL checked_p = NO;
-  if (checked_p) return;
-  checked_p = YES;
 
-  // If it's off, don't bother running the updater.  Otherwise, the
-  // updater will decide if it's time to hit the network.
-  if (! get_boolean_resource (xdpy,
-                              SUSUEnableAutomaticChecksKey,
-                              SUSUEnableAutomaticChecksKey))
-    return;
-
+// Returns the full pathname to the Sparkle updater app.
+//
+- (NSString *) updaterPath
+{
   NSString *updater = @"XScreenSaverUpdater.app";
 
   // There may be multiple copies of the updater: e.g., one in /Applications
@@ -3001,11 +3005,37 @@ gl_check_ver (const struct gl_version *caps,
   if (app_path && [app_path hasPrefix:@"/Volumes/XScreenSaver "])
     app_path = 0;  // The DMG version will not do.
 
+  return app_path;
+}
+# endif // !USE_IPHONE
+
+
+- (void) checkForUpdates
+{
+# ifndef USE_IPHONE
+  // We only check once at startup, even if there are multiple screens,
+  // and even if this saver is running for many days.
+  // (Uh, except this doesn't work because this static isn't shared,
+  // even if we make it an exported global. Not sure why. Oh well.)
+  static BOOL checked_p = NO;
+  if (checked_p) return;
+  checked_p = YES;
+
+  // If it's off, don't bother running the updater.  Otherwise, the
+  // updater will decide if it's time to hit the network.
+  if (! get_boolean_resource (xdpy,
+                              SUSUEnableAutomaticChecksKey,
+                              SUSUEnableAutomaticChecksKey))
+    return;
+
+  NSString *app_path = [self updaterPath];
+
   if (!app_path) {
-    NSLog(@"Unable to find %@", updater);
+    NSLog(@"Unable to find XScreenSaverUpdater.app");
     return;
   }
 
+  NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
   NSError *err = nil;
   if (! [workspace launchApplicationAtURL:[NSURL fileURLWithPath:app_path]
                    options:(NSWorkspaceLaunchWithoutAddingToRecents |
@@ -3028,6 +3058,7 @@ gl_check_ver (const struct gl_version *caps,
 static PrefsReader *
 get_prefsReader (Display *dpy)
 {
+  if (! dpy) return 0;
   XScreenSaverView *view = jwxyz_window_view (XRootWindow (dpy, 0));
   if (!view) return 0;
   return [view prefsReader];

@@ -181,6 +181,9 @@ AH_TEMPLATE([HAVE_XUTF8DRAWSTRING],
 AH_TEMPLATE([HAVE_XFT],
 	    [Define this if you have libXft2.])
 
+AH_TEMPLATE([HAVE_LIBSYSTEMD],
+	    [Define this if you have libsystemd.])
+
 AH_TEMPLATE([HAVE_GL],
 	    [Define this if you have OpenGL.  Some of the demos require it,
 	    so if you don't have it, then those particular demos won't be
@@ -329,6 +332,9 @@ AH_TEMPLATE([XPointer],
 AH_TEMPLATE([HAVE_PTHREAD],
 	    [Define this if your system supports POSIX threads.])
 
+AH_TEMPLATE([HAVE_LIBCAP],
+	    [Define this if your system has libcap.])
+
 AH_TEMPLATE([HAVE_RECORD_ANIM],
 	    [Define this to enable recording of videos.])
 
@@ -427,12 +433,15 @@ AC_DEFUN([AC_PROG_CC_ANSI],
 
   OBJCC="$CC"
 
-  AC_MSG_CHECKING([whether the compiler works on ANSI C])
-  AC_TRY_RUN([ main(int ac, char **av) { return 0; } ],
-     AC_MSG_RESULT(yes),
-     AC_MSG_RESULT(no)
-     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.),
-     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.))
+  # This test makes cross-compiling fail, so let's just assume that nobody
+  # is using a K&R compiler any more...
+  #
+#  AC_MSG_CHECKING([whether the compiler works on ANSI C])
+#  AC_TRY_RUN([ main(int ac, char **av) { return 0; } ],
+#     AC_MSG_RESULT(yes),
+#     AC_MSG_RESULT(no)
+#     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.),
+#     AC_MSG_ERROR(Couldn't build even a trivial ANSI C program: check CC.))
 
   if test -n "$GCC"; then
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
@@ -3563,6 +3572,81 @@ fi
 
 ###############################################################################
 #
+#       Check for -lsystemd
+#
+###############################################################################
+
+have_systemd=no
+with_systemd_req=unspecified
+systemd_halfassed=no
+AC_ARG_WITH(systemd,
+[  --with-systemd          Build xscreensaver-systemd to lock on suspend.],
+  [with_systemd="$withval"; with_systemd_req="$withval"],
+  [with_systemd=yes])
+
+HANDLE_X_PATH_ARG(with_systemd, --with-systemd, systemd)
+
+if test "$with_systemd" != yes -a "$with_systemd" != no ; then
+  echo "error: must be yes or no: --with-systemd=$with_systemd"
+  exit 1
+fi
+
+if test "$with_systemd" = yes; then
+
+  pkgs=''
+  ok="yes"
+  pkg_check_version libsystemd 221
+  have_systemd="$ok"
+
+  if test "$have_systemd" = yes; then
+    AC_CACHE_CHECK([for libsystemd includes], ac_cv_systemd_config_cflags,
+               [ac_cv_systemd_config_cflags=`$pkg_config --cflags $pkgs`])
+    AC_CACHE_CHECK([for libsystemd libs], ac_cv_systemd_config_libs,
+               [ac_cv_systemd_config_libs=`$pkg_config --libs $pkgs`])
+  fi
+
+  ac_systemd_config_cflags=$ac_cv_systemd_config_cflags
+  ac_systemd_config_libs=$ac_cv_systemd_config_libs
+
+  if test "$have_systemd" = yes; then
+    #
+    # we appear to have libsystemd; check for headers/libs to be sure.
+    #
+    ac_save_systemd_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_systemd_config_cflags"
+
+    have_systemd=no
+    AC_CHECK_X_HEADER(systemd/sd-bus.h, [have_systemd=yes])
+
+    CPPFLAGS="$ac_save_systemd_CPPFLAGS"
+  fi
+
+  if test "$have_systemd" = yes; then
+    # we have the headers, now check for the libraries
+    have_systemd=no
+    systemd_halfassed=yes
+
+    AC_MSG_RESULT(checking for libsystemd usability...)
+    AC_CHECK_X_LIB(c, sd_bus_open_system, [have_systemd=yes],,
+                   $ac_systemd_config_libs -lX11 -lXext -lm)
+  fi
+
+  if test "$have_systemd" = no; then
+    AC_MSG_RESULT(checking for libsystemd usability... no)
+  fi
+fi
+
+if test "$have_systemd" = yes; then
+  INCLUDES="$INCLUDES $ac_systemd_config_cflags"
+  EXES_SYSTEMD='$(EXES_SYSTEMD)'
+  AC_DEFINE(HAVE_LIBSYSTEMD)
+else
+  EXES_SYSTEMD=''
+fi
+
+
+###############################################################################
+#
 #       Check for pty support: this allows 'phosphor' and 'apple2'
 #	to run curses-based programs, or be used as terminal windows.
 #
@@ -3885,8 +3969,7 @@ setuid_hacks_default=no
 setuid_hacks="$setuid_hacks_default"
 AC_ARG_WITH(setuid-hacks,
 [  --with-setuid-hacks     Allow some demos to be installed `setuid root'
-                          (which is needed in order to ping other hosts.)
-],
+                          (which is needed in order to ping other hosts.)],
   [setuid_hacks="$withval"], [setuid_hacks="$setuid_hacks_default"])
 
 HANDLE_X_PATH_ARG(setuid_hacks, --with-setuid-hacks, setuid hacks)
@@ -3901,6 +3984,45 @@ fi
 
 ###############################################################################
 #
+#       Check for setcap, which is less worrying than setuid.
+#
+###############################################################################
+
+have_libcap=no
+setcap_hacks_default=yes
+setcap_hacks="$setcap_hacks_default"
+setcap_hacks_req=unspecified
+AC_ARG_WITH(setcap-hacks,
+[  --with-setcap-hacks     Allow some demos to be installed with setcap
+                          (which is needed in order to ping other hosts.)],
+  [setcap_hacks="$withval"; setcap_hacks_req="$withval"],
+  [setcap_hacks=yes])
+
+HANDLE_X_PATH_ARG(setcap_hacks, --with-setcap-hacks, setcap hacks)
+
+if test "$setcap_hacks" != yes -a "$setcap_hacks" != no ; then
+  echo "error: must be yes or no: --with-setcap-hacks=$setcap_hacks"
+  exit 1
+fi
+
+if test "$setcap_hacks" = yes; then
+
+  AC_CHECK_PROGS(setcap_program, setcap)
+  if test "$setcap_program" != ''; then
+    AC_CHECK_X_HEADER(sys/capability.h, [have_setcap=yes])
+  fi
+  if test "$have_setcap" = yes; then
+    AC_CHECK_X_LIB(cap, cap_set_flag,
+                   [have_libcap=yes
+                    PROG_SETCAP="$setcap_program"
+                    LIBCAP_LIBS="-lcap"
+                    AC_DEFINE(HAVE_LIBCAP)])
+  fi
+fi
+
+
+###############################################################################
+#
 #       Check for --with-record-animation
 #
 ###############################################################################
@@ -3908,8 +4030,7 @@ fi
 record_anim_default=no
 record_anim="$record_anim_default"
 AC_ARG_WITH(record-animation,
-[  --with-record-animation Include code for generating MP4 videos.
-],
+[  --with-record-animation Include code for generating MP4 videos.],
   [record_anim="$withval"], [record_anim="$record_anim_default"])
 
 HANDLE_X_PATH_ARG(record_anim, --with-record-animation, record animation)
@@ -4020,6 +4141,12 @@ else
   SETUID_HACKS=no
 fi
 
+if test "$have_libcap" = yes; then
+  SETCAP_HACKS=yes
+else
+  SETCAP_HACKS=no
+fi
+
 tab='	'
 if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
@@ -4121,8 +4248,12 @@ AC_SUBST(GLE_LIBS)
 AC_SUBST(XDPMS_LIBS)
 AC_SUBST(XINERAMA_LIBS)
 AC_SUBST(PASSWD_LIBS)
+AC_SUBST(LIBCAP_CFLAGS)
+AC_SUBST(LIBCAP_LIBS)
+AC_SUBST(PROG_SETCAP)
 AC_SUBST(INSTALL_SETUID)
 AC_SUBST(SETUID_HACKS)
+AC_SUBST(SETCAP_HACKS)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
 AC_SUBST(INSTALL_PAM)
@@ -4140,6 +4271,7 @@ AC_SUBST(COMMENT_DEMO_GLADE2_GTK_2_22_TAIL)
 
 AC_SUBST(OBJCC)
 AC_SUBST(EXES_OSX)
+AC_SUBST(EXES_SYSTEMD)
 AC_SUBST(SCRIPTS_OSX)
 AC_SUBST(MEN_OSX)
 
@@ -4520,6 +4652,37 @@ if test "$have_xft" = no ; then
 fi
 
 
+if test "$have_systemd" = no ; then
+  systemd_warned=no
+  if test "$with_systemd_req" = yes ; then
+    warnL "Use of systemd was requested, but it was not found."
+    systemd_warned=yes
+  elif test "$with_systemd_req" = no ; then
+    true
+    # noteL 'The systemd library is not being used.'
+    # systemd_warned=yes
+  else
+    true
+    # noteL "The systemd library was not found."
+    # systemd_warned=yes
+  fi
+
+  if test "$systemd_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either systemd is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+    systemd_warned=yes
+  fi
+
+  if test "$systemd_warned" = yes; then
+    warn2 "This means that xscreensaver-systemd won't be built."
+  fi
+fi
+
+
 if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
   preferred_mesagl=3.4
   mgv="$ac_mesagl_version_string"
@@ -4617,6 +4780,10 @@ fi
 
 if test "$with_shadow_req" = yes -a "$have_shadow" = no ; then
   warn 'Use of shadow passwords was requested, but they were not found.'
+fi
+
+if test "$setcap_hacks_req" = yes -a "$have_libcap" = no ; then
+  warn 'Use of libcap was requested, but it was not found.'
 fi
 
 if test "$ac_macosx" = yes ; then

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2018 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2019 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.7 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -66,8 +66,10 @@ sub build_h($) {
 
   parse_makefiles();
 
-  my @schemes = glob('xscreensaver.xcodeproj/xcuserdata/' .
-                     '*.xcuserdatad/xcschemes/*.xcscheme');
+  my @schemes = (glob('xscreensaver.xcodeproj/xcuserdata/' .
+                      '*.xcuserdatad/xcschemes/*.xcscheme'),
+                 glob('xscreensaver.xcodeproj/xcshareddata/' .
+                      'xcschemes/*.xcscheme'));
   error ("no scheme files") unless (@schemes);
 
   my %names = ();

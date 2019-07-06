@@ -35,7 +35,7 @@
     <select id="uniform">
      <option id="r-uniform"  _label="Random speed"/>
      <option id="uniform"    _label="Uniform speed"     arg-set="-uniform-speed"/>
-     <option id="no-uniform" _label="Non-uniform speed" arg-set="-no-uniform-speed"/>
+     <option id="no-uniform" _label="Non-uniform speed" arg-set="-nonuniform-speed"/>
     </select>
 
     <select id="lockstep">

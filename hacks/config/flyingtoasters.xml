@@ -25,6 +25,7 @@
 
   <hgroup>
    <boolean id="tex"     _label="Chrome"      arg-unset="-no-texture"/>
+   <boolean id="fog"     _label="Fog"        arg-unset="-no-fog"/>
    <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>

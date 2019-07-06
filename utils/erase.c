@@ -396,7 +396,7 @@ fizzle (eraser_state *st)
       unsigned int i;
 
       st->fizzle_rnd =
-        (unsigned short *) malloc (sizeof(unsigned short) * chunks);
+        (unsigned short *) calloc (sizeof(unsigned short), chunks);
 
       if (! st->fizzle_rnd)
         return;

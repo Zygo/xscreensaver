@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.42
-!                              28-Dec-2018
+!                              version 5.43
+!                              01-Jul-2019
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -55,7 +55,7 @@
 *splash:		True
 *splashDuration:	0:00:05
 *visualID:		default
-*captureStderr: 	True
+*installColormap:	True
 *ignoreUninstalledPrograms: False
 *authWarningSlack:	20
 
@@ -65,12 +65,16 @@
 *textProgram:		fortune
 *textURL:		https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss
 
+! When a saver writes an error message to stdout/stderr, it can be printed
+! on the screen.
+!
+*captureStderr: 	True
+*overlayStderr:		True
 *overlayTextForeground:	#FFFF00
 *overlayTextBackground:	#000000
-*overlayStderr:		True
 *font:			*-medium-r-*-140-*-m-*
 
-! The default is to use these extensions if available (as noted.)
+! The default is to use these server extensions if available (as noted.)
 *sgiSaverExtension:	True
 *xidleExtension:	True
 *procInterrupts:	True
@@ -80,13 +84,10 @@
 
 ! Set this to True if you are experiencing longstanding XFree86 bug #421
 ! (xscreensaver not covering the whole screen)
-GetViewPortIsFullOfLies: False
+*GetViewPortIsFullOfLies: False
 
-! This is what the "Demo" button on the splash screen runs (/bin/sh syntax.)
+! This is what the "Settings" button on the splash screen runs.
 *demoCommand: xscreensaver-demo
-
-! This is what the "Prefs" button on the splash screen runs (/bin/sh syntax.)
-*prefsCommand: xscreensaver-demo -prefs
 
 ! This is the URL loaded by the "Help" button on the splash screen,
 ! and by the "Documentation" menu item in xscreensaver-demo.
@@ -124,6 +125,8 @@ GetViewPortIsFullOfLies: False
 ! The format used for printing the date and time in the password dialog box
 ! (see the strftime(3) manual page for details.)
 *dateFormat:		%d-%b-%y (%a); %I:%M %p
+! For day month date:
+! *dateFormat:		%a %b %d, %I:%M %p
 ! To show the time only:
 ! *dateFormat:		%I:%M %p
 ! For 24 hour time:
@@ -139,15 +142,195 @@ GetViewPortIsFullOfLies: False
 @NEW_LOGIN_COMMAND_P@*newLoginCommand:	@NEW_LOGIN_COMMAND@
 
 
-! Turning on "installColormap" on 8-bit systems interacts erratically with
-! certain jurassic window managers.  If your screen turns some color other
-! than black, the window manager is buggy, and you need to set this resource
-! to false.  Or switch WMs.  Or join the 21st century and get a 24-bit
-! graphics card.
+! Change these at your peril:
 !
-*installColormap:	True
+XScreenSaver.pointerPollTime:		0:00:05
+XScreenSaver.pointerHysteresis:		10
+XScreenSaver.initialDelay:		0:00:00
+XScreenSaver.windowCreationTimeout:	0:00:30
+XScreenSaver.bourneShell:		/bin/sh
 
 
+!=============================================================================
+!
+!      Colors and fonts for the unlock dialog and splash screen.
+!
+!=============================================================================
+
+! Note, the daemon uses Xlib XLoadFont, not Xft.  If these fonts don't
+! exist, arcane heuristics are applied until we find something similar.
+!
+*Dialog.headingFont:	-*-helvetica-bold-r-*-*-*-180-*-*-*-*-iso8859-1
+*Dialog.bodyFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1
+*Dialog.labelFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1
+*Dialog.unameFont:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1
+*Dialog.buttonFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1
+*Dialog.dateFont:	-*-helvetica-medium-r-*-*-*-80-*-*-*-*-iso8859-1
+
+! Helvetica asterisks look terrible.
+*passwd.passwdFont:	-*-courier-bold-r-*-*-*-140-*-*-*-iso8859-1
+
+! Whether to display the local host name in the unlock dialog.
+*passwd.uname:                  True
+
+! Whether typed passwords should echo as asterisks (true) or nothing (false)
+*passwd.asterisks:              True
+
+
+! The default color scheme for the unlock and splash dialogs.
+! This looks pretty close to the default Gtk theme.
+!
+*Dialog.foreground:		#000000
+*Dialog.background:		#E6E6E6
+*Dialog.Button.foreground:	#000000
+*Dialog.Button.background:	#F5F5F5
+*Dialog.text.foreground:	#000000
+*Dialog.text.background:	#FFFFFF
+*Dialog.topShadowColor:		#FFFFFF
+*Dialog.bottomShadowColor:	#CECECE
+*Dialog.logo.width:		210
+*Dialog.logo.height:		210
+*Dialog.internalBorderWidth:	24
+*Dialog.borderWidth:		1
+*Dialog.shadowThickness:	2
+*passwd.thermometer.foreground:	#4464AC
+*passwd.thermometer.background:	#FFFFFF
+*passwd.thermometer.width:	8
+
+
+! A few other example color schemes.
+!
+! A convenient way to debug these is to build and run "driver/test-passwd".
+! Remember that configure overwrites XScreenSaver.ad from XScreenSaver.ad.in.
+
+
+! Borderless theme:
+!
+! *Dialog.topShadowColor:         #E6E6E6
+! *Dialog.bottomShadowColor:      #E6E6E6
+! *passwd.thermometer.width:      6
+
+
+! Dark gray theme:
+!
+! *Dialog.foreground:             #CCCCCC
+! *Dialog.background:             #333333
+! *Dialog.topShadowColor:         #444444
+! *Dialog.bottomShadowColor:      #111111
+! *Dialog.text.foreground:        #DDDDDD
+! *Dialog.text.background:        #666666
+! *Dialog.Button.foreground:      #CCCCCC
+! *Dialog.Button.background:      #666666
+! *passwd.thermometer.foreground: #4464AC
+! *passwd.thermometer.background: #666666
+
+
+! Black borderless theme:
+!
+! *Dialog.foreground:             #CCCCCC
+! *Dialog.background:             #000000
+! *Dialog.topShadowColor:         #000000
+! *Dialog.bottomShadowColor:      #000000
+! *Dialog.text.foreground:        #CCCCCC
+! *Dialog.text.background:        #000000
+! *Dialog.Button.foreground:      #CCCCCC
+! *Dialog.Button.background:      #333333
+! *passwd.thermometer.foreground: #CCCCCC
+! *passwd.thermometer.background: #333333
+! *passwd.thermometer.width:      3
+
+
+! Green on black theme:
+!
+! *Dialog.foreground:             #00FF00
+! *Dialog.background:             #000000
+! *Dialog.topShadowColor:         #000000
+! *Dialog.bottomShadowColor:      #000000
+! *Dialog.shadowThickness:        1
+! *Dialog.text.foreground:        #00FF00
+! *Dialog.text.background:        #006600
+! *Dialog.Button.foreground:      #00FF00
+! *Dialog.Button.background:      #006600
+! *passwd.thermometer.foreground: #00CC00
+! *passwd.thermometer.background: #006600
+
+
+! White theme:
+!
+! *Dialog.foreground:             #000000
+! *Dialog.background:             #FFFFFF
+! *Dialog.topShadowColor:         #CCCCCC
+! *Dialog.bottomShadowColor:      #CCCCCC
+! *Dialog.shadowThickness:        1
+! *Dialog.text.foreground:        #000000
+! *Dialog.text.background:        #FFFFFF
+! *Dialog.Button.foreground:      #000000
+! *Dialog.Button.background:      #FFFFFF
+
+
+! Blue theme:
+!
+! *Dialog.foreground:             #000000
+! *Dialog.background:             #BBCCDD
+! *Dialog.topShadowColor:         #CCDDEE
+! *Dialog.bottomShadowColor:      #AABBCC
+! *Dialog.text.foreground:        #000000
+! *Dialog.text.background:        #DDEEFF
+! *Dialog.Button.foreground:      #000000
+! *Dialog.Button.background:      #DDEEFF
+! *passwd.thermometer.foreground: #5566AA
+! *passwd.thermometer.background: #BBCCDD
+
+
+! Aqua on black borderless theme:
+!
+! *Dialog.foreground:             #00EFEF
+! *Dialog.background:             #000000
+! *Dialog.topShadowColor:         #000000
+! *Dialog.bottomShadowColor:      #000000
+! *Dialog.Button.foreground:      #000000
+! *Dialog.Button.background:      #2244EE
+! *Dialog.text.foreground:        #2244EE
+! *Dialog.text.background:        #EEEEEE
+! *Dialog.internalBorderWidth:    36
+! *Dialog.borderWidth:            4
+! *Dialog.shadowThickness:        2
+! *passwd.thermometer.foreground: #2244EE
+! *passwd.thermometer.background: #000088
+
+
+! Wine theme, similar to the login screen of "Ubuntu 18.04 Community".
+!
+! *Dialog.foreground:             #AD8FA6
+! *Dialog.background:             #2C041E
+! *Dialog.topShadowColor:         #2C041E
+! *Dialog.bottomShadowColor:      #2C041E
+! *Dialog.text.foreground:        #706B70
+! *Dialog.text.background:        #F9F9F8
+! *Dialog.Button.foreground:      #CFC8CB
+! *Dialog.Button.background:      #4D2946
+! *passwd.thermometer.foreground: #AD8FA6
+! *passwd.thermometer.background: #4D2946
+! *passwd.thermometer.width:      6
+
+
+! Static text in the dialog boxes:
+!
+*passwd.heading.label:		XScreenSaver %s
+*passwd.body.label:		This screen is locked.
+*passwd.unlock.label:		OK
+*passwd.login.label:		New Login
+*passwd.user.label:		Username:
+
+*splash.heading.label:		XScreenSaver %s
+*splash.body.label:		Copyright \251 1991-2019 by
+*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
+*splash.demo.label:		Settings
+*splash.help.label:		Help
+
+
+!=============================================================================
+!
 ! This is the list of installed screen saver modes.  See "man xscreensaver"
 ! for the syntax used here.
 !
@@ -157,6 +340,8 @@ GetViewPortIsFullOfLies: False
 ! You can use the `xscreensaver-demo' program to edit the current list of
 ! screen savers interactively.
 !
+!=============================================================================
+
 *programs:								      \
 				maze -root				    \n\
 @GL_KLUDGE@ GL: 				superquadrics -root			    \n\
@@ -390,75 +575,16 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				maze3d -root				    \n\
 @GL_KLUDGE@ GL: 				peepers -root				    \n\
 @GL_KLUDGE@ GL: 				razzledazzle -root			    \n\
-				vfeedback -root				    \n
+				vfeedback -root				    \n\
+@GL_KLUDGE@ GL: 				deepstars -root				    \n\
+@GL_KLUDGE@ GL: 				gravitywell -root			    \n
 
-
-
-!=============================================================================
-!
-!      You probably don't want to change anything after this point.
-!
-!=============================================================================
-
-
-XScreenSaver.pointerPollTime:		0:00:05
-XScreenSaver.pointerHysteresis:		10
-XScreenSaver.initialDelay:		0:00:00
-XScreenSaver.windowCreationTimeout:	0:00:30
-XScreenSaver.bourneShell:		/bin/sh
-
-
-! Resources for the password and splash-screen dialog boxes of
-! the "xscreensaver" daemon.
-!
-*Dialog.headingFont:	-*-helvetica-bold-r-*-*-*-180-*-*-*-*-iso8859-1
-*Dialog.bodyFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1
-*Dialog.labelFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1
-*Dialog.unameFont:	-*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-1
-*Dialog.buttonFont:	-*-helvetica-bold-r-*-*-*-140-*-*-*-*-iso8859-1
-*Dialog.dateFont:	-*-helvetica-medium-r-*-*-*-80-*-*-*-*-iso8859-1
-
-! Helvetica asterisks look terrible.
-*passwd.passwdFont:	-*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1
-
-
-*Dialog.foreground:		#000000
-*Dialog.background:		#E6E6E6
-*Dialog.Button.foreground:	#000000
-*Dialog.Button.background:	#F5F5F5
-!*Dialog.Button.pointBackground: #EAEAEA
-!*Dialog.Button.clickBackground: #C3C3C3
-*Dialog.text.foreground:	#000000
-*Dialog.text.background:	#FFFFFF
-*passwd.thermometer.foreground:	#4464AC
-*passwd.thermometer.background:	#FFFFFF
-*Dialog.topShadowColor:		#FFFFFF
-*Dialog.bottomShadowColor:	#CECECE
-*Dialog.logo.width:		210
-*Dialog.logo.height:		210
-*Dialog.internalBorderWidth:	24
-*Dialog.borderWidth:		1
-*Dialog.shadowThickness:	2
-
-*passwd.heading.label:		XScreenSaver %s
-*passwd.body.label:		This screen is locked.
-*passwd.unlock.label:		OK
-*passwd.login.label:		New Login
-*passwd.user.label:		Username:
-*passwd.thermometer.width:	8
-*passwd.asterisks:              True
-*passwd.uname:                  True
-
-*splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright \251 1991-2018 by
-*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
-*splash.demo.label:		Settings
-*splash.help.label:		Help
 
 
 !=============================================================================
 !
 ! Pretty names for the hacks that have unusual capitalization.
+! Used by xscreensaver-demo.
 !
 !=============================================================================
 
@@ -483,6 +609,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.cwaves.name:         CWaves
 *hacks.dangerball.name:     DangerBall
 *hacks.decayscreen.name:    DecayScreen
+*hacks.deepstars.name:      DeepStars
 *hacks.dnalogo.name:        DNA Logo
 *hacks.dymaxionmap.name:    DymaxionMap
 *hacks.energystream.name:   EnergyStream
@@ -501,6 +628,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.gleidescope.name:    Gleidescope
 *hacks.glforestfire.name:   GLForestFire
 *hacks.glitchpeg.name:      GlitchPEG
+*hacks.gravitywell.name:    GravityWell
 *hacks.hyperball.name:      HyperBall
 *hacks.hypercube.name:      HyperCube
 *hacks.ifs.name:            IFS

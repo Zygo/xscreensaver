@@ -1248,7 +1248,7 @@ pinit(ModeInfo * mi)
    gp->tic = gp->camtic = rnd() * 100.0f;
    
    /* define tex1 (bottom plate) */
-   gp->tex1 = (char *)malloc(3*width*height*sizeof(GLuint));
+   gp->tex1 = (char *)malloc(3*width*height*sizeof(*gp->tex1));
    texpixels = 256*256; /*width*height;*/
    texpixeldata = header_data;
    texpixeltarget = gp->tex1;
