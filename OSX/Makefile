@@ -228,7 +228,7 @@ update_plist_version:
 
 updates.xml::
 	./updates.pl xscreensaver ../README ../archive ~/www/xscreensaver
-	@$(MAKE) test_sig
+	@$(MAKE) $(MAKEFLAGS) test_sig
 
 test_sig::
 	@								    \
@@ -243,6 +243,9 @@ test_sig::
   SIGB=/tmp/$$NN.sig ;							    \
   HASH=/tmp/$$NN.hash ;							    \
   rm -f "$$SIGB" "$$HASH" ;						    \
+  if ( echo "$$SIG" | grep -qi ERROR ); then				    \
+    echo "No signature in updates.xml" >&2 ; exit 1 ;			    \
+  fi ;									    \
   echo "$$SIG " | base64 -D  > "$$SIGB" ;				    \
   set -e ;								    \
   for OPENSSL in /usr/bin/openssl /opt/local/bin/openssl ; do		    \
@@ -375,6 +378,8 @@ _dmg::
 									      \
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
+  echo "Chowning back and deleting..." ;				      \
+  sudo chown -R `whoami` "$$STAGE/"* ;					      \
   rm -rf "$$STAGE" ;							      \
 									      \
   hdiutil convert -quiet -ov -format UDBZ -imagekey zlib-level=9	      \
@@ -386,7 +391,7 @@ _dmg::
   spctl --assess --type install "$$DMG" ;				      \
 									      \
   ls -ldhgF "$$DMG" ;							      \
-  $(MAKE) notarize ;							      \
+  $(MAKE) $(MAKEFLAGS) notarize ;					      \
 
 
 # To set up notarization:
@@ -420,12 +425,16 @@ notarize::
     --file "$$DMG" $(NOTARGS) ;						      \
   echo "" ;								      \
   sleep 3 ;								      \
-  $(MAKE) notarize_wait staple updates.xml
+  $(MAKE) $(MAKEFLAGS) notarize_wait staple updates.xml
 
 notarize_wait::
-	@while ( xcrun altool --notarization-history 0 $(NOTARGS) |	      \
+	@TODAY=`date +%Y-%m-%d` ;					      \
+	 while ( xcrun altool --notarization-history 0 $(NOTARGS) |	      \
+		 grep "$$TODAY" |					      \
 		 grep -q 'in progress' ); do				      \
 	  echo `date +%I:%M:` "waiting for notarization..." ;		      \
+	  xcrun altool --notarization-history 0 $(NOTARGS) |		      \
+		 grep "$$TODAY" ;					      \
 	  sleep 15 ;							      \
 	done ;								      \
 	echo '' ;							      \

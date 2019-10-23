@@ -137,7 +137,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c erase-gl.c fps-gl.c \
 		  raverhoop.c hydrostat.c discoball.c cubetwist.c cubestack.c \
 		  splodesic.c hexstrut.c vigilance.c seccam.c esper.c \
 		  razzledazzle.c ships.c peepers.c crumbler.c quickhull.c \
-		  maze3d.c handsy.c handsy_model.c gravitywell.c
+		  maze3d.c handsy.c handsy_model.c gravitywell.c deepstars.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -184,7 +184,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  raverhoop.o hydrostat.o discoball.o cubetwist.o cubestack.o \
 		  splodesic.o hexstrut.o vigilance.o seccam.o esper.o \
 		  razzledazzle.o ships.o peepers.o crumbler.o quickhull.o \
-		  maze3d.o handsy.o handsy_model.o gravitywell.o
+		  maze3d.o handsy.o handsy_model.o gravitywell.o deepstars.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -205,7 +205,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  splitflap dymaxionmap unicrud energystream raverhoop \
 		  hydrostat discoball cubetwist cubestack splodesic \
 		  hexstrut vigilance esper razzledazzle peepers crumbler \
-		  maze3d handsy gravitywell
+		  maze3d handsy gravitywell deepstars
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
@@ -273,7 +273,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  discoball.man cubetwist.man cubestack.man splodesic.man \
 		  hexstrut.man vigilance.man esper.man razzledazzle.man \
 		  peepers.man crumbler.man maze3d.man handsy.man \
-		  gravitywell.man
+		  gravitywell.man deepstars.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -1030,6 +1030,9 @@ handsy_dxf::
 gravitywell:	gravitywell.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
+deepstars:	deepstars.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
@@ -1541,6 +1544,23 @@ dangerball.o: $(UTILS_SRC)/visual.h
 dangerball.o: $(UTILS_SRC)/yarandom.h
 dangerball.o: $(HACK_SRC)/xlockmoreI.h
 dangerball.o: $(HACK_SRC)/xlockmore.h
+deepstars.o: ../../config.h
+deepstars.o: $(HACK_SRC)/fps.h
+deepstars.o: $(srcdir)/gltrackball.h
+deepstars.o: $(HACK_SRC)/recanim.h
+deepstars.o: $(HACK_SRC)/screenhackI.h
+deepstars.o: $(srcdir)/sphere.h
+deepstars.o: $(UTILS_SRC)/colors.h
+deepstars.o: $(UTILS_SRC)/erase.h
+deepstars.o: $(UTILS_SRC)/font-retry.h
+deepstars.o: $(UTILS_SRC)/grabscreen.h
+deepstars.o: $(UTILS_SRC)/hsv.h
+deepstars.o: $(UTILS_SRC)/resources.h
+deepstars.o: $(UTILS_SRC)/usleep.h
+deepstars.o: $(UTILS_SRC)/visual.h
+deepstars.o: $(UTILS_SRC)/yarandom.h
+deepstars.o: $(HACK_SRC)/xlockmoreI.h
+deepstars.o: $(HACK_SRC)/xlockmore.h
 discoball.o: ../../config.h
 discoball.o: $(HACK_SRC)/fps.h
 discoball.o: $(srcdir)/gltrackball.h
