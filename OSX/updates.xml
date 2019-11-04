@@ -8,6 +8,18 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.43</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.43.dmg</link>
+   <description><![CDATA[&bull; New hacks, `GravityWell', `DeepStars'. <BR>&bull; GLPlanet now supports the Mercator projection. <BR>&bull; Bouncing Cow has mathematically ideal cows (spherical, frictionless). <BR>&bull; Foggy toasters. <BR>&bull; Unknown Pleasures can now use an image file as a clip mask. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; macOS: Fixed BSOD fonts on UWQHD+ displays. <BR>&bull; X11: Added some sample unlock dialog color schemes to the .ad file. <BR>&bull; X11: On systemd systems, closing your laptop lid might actually lock your screen now, maybe. <BR>&bull; X11: 'sonar' can ping without being setuid by using setcap.]]></description>
+   <pubDate>Mon, 01 Jul 2019 15:58:08 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.43.dmg"
+    sparkle:version="5.43"
+    sparkle:dsaSignature="MC0CFQCT0sgF8wB8e/BuCnVkuJh7ZQe/CgIUeioy2Yx5Y8fytHXHNCaKKaNoP/Y="
+    sparkle:edSignature="ndnq1ocmiPR+UPdgr/pwc2rYo+hWFUJ+v0RCcAHzqONhpUx2V4hlvpUbaIHx9fEAMIbnUj9xVh6xtEFBSd95CQ=="
+    length="37345218"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.42</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-5.42.dmg</link>
    <description><![CDATA[&bull; macOS: Fixed Sparkle auto-updater.]]></description>

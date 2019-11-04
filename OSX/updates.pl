@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2013-2018 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2013-2019 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use open ":encoding(utf8)";
 use POSIX;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -54,6 +54,8 @@ sub generate_xml($$$$) {
       my ($sig2) = ($item =~ m/edSignature="(.*?)"/si);
       my ($date) = ($item =~ m/<pubDate>(.*?)</si);
       next unless $v;
+      $sig1 = '' if ($sig1 eq 'ERROR');
+      $sig2 = '' if ($sig2 eq 'ERROR');
       $sig1s{$v}  = $sig1 if $sig1;
       $sig2s{$v}  = $sig2 if $sig2;
       $dates{$v} = $date if $date;
@@ -129,14 +131,20 @@ sub generate_xml($$$$) {
     if (!$sig1 && $zip) {	# Old-style sigs
       local %ENV = %ENV;
       $ENV{PATH} = "/usr/bin:$ENV{PATH}";
-      $sig1 = `$dsa_sign_update "$archive_dir/$zip" "$dsa_priv_key_file"`;
+      my $cmd = ("$dsa_sign_update" .
+                 " \"$archive_dir/$zip\"" .
+                 " \"$dsa_priv_key_file\"");
+      print STDERR "$progname: exec: $cmd\n" if ($verbose > 1);
+      $sig1 = `$cmd`;
       $sig1 =~ s/\s+//gs;
     }
 
     if (!$sig2 && $zip) {	# New-style sigs
       local %ENV = %ENV;
       $ENV{PATH} = "/usr/bin:$ENV{PATH}";
-      my $xml = `$edddsa_sign_update "$archive_dir/$zip"`;
+      my $cmd = "$edddsa_sign_update \"$archive_dir/$zip\"";
+      print STDERR "$progname: exec: $cmd\n" if ($verbose > 1);
+      my $xml = `$cmd`;
       ($sig2) = ($xml =~ m/sparkle:edSignature=\"([^\"<>\s]+)\"/si);
       error ("unparsable: $edddsa_sign_update: $xml") unless $sig2;
     }

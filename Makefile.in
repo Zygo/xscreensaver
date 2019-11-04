@@ -18,8 +18,11 @@ TARFILES	= README README.hacking README.VMS INSTALL \
 
 TAR		= tar
 
-MAKE_SUBDIR  = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
-MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do (cd $$dir; $(MAKE) $@) || exit 5; done
+# Using $(MAKE) directly means the shell executes things even with "make -n"
+MAKE2 = $(MAKE)
+
+MAKE_SUBDIR  = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE2) $@) || exit 5; done
+MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do (cd $$dir; $(MAKE2) $@) || exit 5; done
 
 default::
 	@+$(MAKE_SUBDIR)
@@ -42,9 +45,9 @@ uninstall-man::
 depend::
 	@$(MAKE_SUBDIR)
 distdepend::
-	@$(MAKE) update_spec_version
+	@$(MAKE2) update_spec_version
 	@$(MAKE_SUBDIR2)
-	@cd po ; $(MAKE) update-po
+	@cd po ; $(MAKE2) update-po
 
 TAGS:: tags
 tags::
@@ -64,8 +67,8 @@ tar::
 	@								    \
   sh config.status ;							    \
   rm -f configure ;							    \
-  $(MAKE) configure ;							    \
-  $(MAKE) version-date distdepend ;					    \
+  $(MAKE2) configure ;							    \
+  $(MAKE2) version-date distdepend ;					    \
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
   NAME="xscreensaver-$$VERS" ;						    \
   rm -rf $$NAME ; ln -s . $$NAME ;					    \
@@ -74,7 +77,7 @@ tar::
   for subdir in $(SUBDIRS2) ; do					    \
     d=`pwd` ;								    \
     cd $$subdir ;							    \
-    FILES="$$FILES `$(MAKE) echo_tarfiles				    \
+    FILES="$$FILES `$(MAKE2) echo_tarfiles				    \
       | grep -v '^.*make\['						    \
       | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"			    \
       ` ";								    \
@@ -231,9 +234,9 @@ rpm::
   ls -lFG xscreensaver*-$$VERS-*.rpm
 
 dmg::
-	$(MAKE) -C OSX release dmg
+	$(MAKE2) -C OSX release dmg
 apk::
-	$(MAKE) -C android apk
+	$(MAKE2) -C android apk
 
 www::
 	@								    \
@@ -256,7 +259,7 @@ www::
     exit 1 ;								    \
   fi ;									    \
 									    \
-  $(MAKE) -C OSX updates.xml ;						    \
+  $(MAKE2) -C OSX updates.xml ;						    \
 									    \
   if [ ! -f $$NAME ]; then						    \
     echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
@@ -331,7 +334,7 @@ www::
 									    \
   git add $$BNAME $$BNAME2 $$BNAME3 ;					    \
 									    \
-  $(MAKE) -C ../ xscreensaver/changelog.html xscreensaver/screenshots/index.html; \
+  $(MAKE2) -C ../ xscreensaver/changelog.html xscreensaver/screenshots/index.html; \
   git diff changelog.html ;						    \
   set +x ;								    \
 									    \
