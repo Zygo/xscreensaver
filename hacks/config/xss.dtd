@@ -1,0 +1,109 @@
+<!-- xscreensaver, Copyright (c) 2001-2012 Jamie Zawinski <jwz@jwz.org> -->
+<!--
+ Permission to use, copy, modify, distribute, and sell this software and its
+ documentation for any purpose is hereby granted without fee, provided that
+ the above copyright notice appear in all copies and that both that
+ copyright notice and this permission notice appear in supporting
+ documentation.  No representations are made about the suitability of this
+ software for any purpose.  It is provided "as is" without express or
+ implied warranty.
+-->
+<!-- 
+This DTD validates the format of the XScreenSaver configuration files.
+
+The DTD will not be devloped further, as the .XSD style validation
+can already check more of the details of the config files.
+
+DTD written by Andrew Thompson <andrewthommo@gmail.com>
+-->
+<!-- XScreenSaver settings config file. - DTD version 1.0  -->
+<!ELEMENT screensaver 
+    ((command|fullcommand)*,
+      (boolean|number|select|string|file|hgroup|vgroup|xscreensaver-text|xscreensaver-image)*,
+      _description)>
+<!ATTLIST screensaver
+  name        CDATA   #REQUIRED
+  _label      CDATA   #REQUIRED
+  gl          CDATA   #IMPLIED
+  >
+
+<!-- Every XScreenSaver hack has exactly one of either command or fullcommand -->
+<!ELEMENT command EMPTY>
+<!ATTLIST command
+  arg         CDATA   #IMPLIED
+  >
+
+<!-- Checkbox -->
+<!-- One of either arg-set or arg-unset is required -->
+<!ELEMENT boolean EMPTY>
+<!ATTLIST boolean
+  id          ID      #IMPLIED
+  _label      CDATA   #REQUIRED
+  arg-set     CDATA   #IMPLIED
+  arg-unset   CDATA   #IMPLIED
+  >
+
+<!-- Slider and Spin Button -->
+<!-- _low/high-label not required for type spinbutton -->
+<!-- arg must end with ' %' -->
+<!ELEMENT number EMPTY>
+<!ATTLIST number
+  id          ID                  #IMPLIED
+  type	      (slider|spinbutton) #REQUIRED
+  _label      CDATA               #REQUIRED
+  _low-label  CDATA               #IMPLIED 
+  _high-label CDATA               #IMPLIED 
+  arg         CDATA               #REQUIRED
+  low         CDATA              #REQUIRED
+  high        CDATA              #REQUIRED
+  default     CDATA              #REQUIRED
+  convert     (invert)            #IMPLIED
+  >
+
+<!-- Drop-down list -->
+<!ELEMENT select (option+)>
+<!ATTLIST select
+  id          ID      #IMPLIED
+  >
+
+<!-- List item -->
+<!ELEMENT option EMPTY>
+<!ATTLIST option
+  id          ID      #IMPLIED
+  _label      CDATA   #REQUIRED
+  arg-set     CDATA   #IMPLIED
+  >
+
+<!-- String or Textual input -->
+<!-- arg must end with ' %' -->
+<!ELEMENT string EMPTY>
+<!ATTLIST string
+  id          ID      #IMPLIED
+  _label      CDATA   #REQUIRED
+  arg         CDATA   #REQUIRED
+  >
+
+<!-- File browser. -->
+<!-- arg must end with ' %' -->
+<!ELEMENT file EMPTY>
+<!ATTLIST file
+  id          ID      #IMPLIED
+  _label      CDATA   #REQUIRED
+  arg         CDATA   #REQUIRED
+  >
+
+<!ELEMENT xscreensaver-text EMPTY>
+<!ELEMENT xscreensaver-image EMPTY>
+
+<!-- Free Text.  The description of the Screen Saver. -->
+<!ELEMENT _description (#PCDATA)>
+
+<!-- Horizontal grouping element, a row of widgets. 
+Unimplemented in SaverBeans as of API 0.2. -->
+<!ELEMENT hgroup ((boolean|number|select|string|file|vgroup)*)> <!-- Undocumented -->
+
+<!-- Vertical grouping element, a column of widgets.
+Since the widgets are normally arranged in a column,
+this is only of use within an hgroup. 
+Unimplemented in SaverBeans as of API 0.2. -->
+<!ELEMENT vgroup ((boolean|number|select|string|file|hgroup)*)> <!-- Undocumented -->

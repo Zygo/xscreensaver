@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="crumbler" _label="Crumbler" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=oERz1IPluYQ"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.05" high="2.0" default="1.0"/>
+
+    <number id="density" type="slider" arg="-density %"
+            _label="Polygons" _low-label="Few" _high-label="Many"
+            low="0.2" high="5.0" default="1.0"/>
+
+    <number id="fracture" type="slider" arg="-fracture %"
+            _label="Fractures" _low-label="Few" _high-label="Many"
+            low="0" high="20" default="0"/>
+   </vgroup>
+
+   <vgroup>
+    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+    <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>
+    <boolean id="wire"    _label="Wireframe"  arg-set="-wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+    <xscreensaver-updater />
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Randomly subdivides a ball into voronoi chunks, then further subdivides
+one of the remaining pieces.
+
+https://en.wikipedia.org/wiki/Voronoi_diagram
+https://en.wikipedia.org/wiki/Convex_hull
+https://en.wikipedia.org/wiki/Quickhull
+
+Written by Jamie Zawinski; 2018.
+  </_description>
+</screensaver>

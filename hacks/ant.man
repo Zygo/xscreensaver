@@ -1,0 +1,96 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+ant - cellular automaton.
+.SH SYNOPSIS
+.B ant
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-install]
+[\-noinstall]
+[\-root]
+[\-eyes]
+[\-no-eyes]
+[\-truchet]
+[\-no-truchet]
+[\-sharpturn]
+[\-no-sharpturn]
+[\-delay \fInumber\fP]
+[\-cycles \fInumber\fP]
+[\-count \fInumber\fP]
+[\-size \fInumber\fP]
+[\-neighbors 3]
+[\-neighbors 4]
+[\-neighbors 6]
+[\-neighbors 9]
+[\-neighbors 12]
+[\-ncolors \fInumber\fP]
+[\-fps]
+.SH DESCRIPTION
+A cellular automaton that is really a two-dimensional Turing machine: as
+the heads ("ants") walk along the screen, they change pixel values in
+their path. Then, as they pass over changed pixels, their behavior is
+influenced.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-sharpturns | \-no-sharpturns
+Whether to do sharp turns.
+.TP 8
+.B \-truchet | \-no-truchet
+Whether to use truchet lines.
+.TP 8
+.B \-eyes | \-no-eyes
+Whether to draw eyes on the ants.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 1000 (0.0001 seconds.).
+.TP 8
+.B \-cycles \fInumber\fP
+How long to wait until resetting.  0 - 800000.  Default: 40000.
+.TP 8
+.B \-count \fInumber\fP
+Ants Count.  -20 - 20.	Default: -3.
+.TP 8
+.B \-size \fInumber\fP
+Ant Size.  -18 - 18.  Default: -12.
+.TP 8
+.B \-neighbors \fIN\fP
+How many neighbors each cell has.  Legal values are 3, 4, 6, 9, and 12.
+.TP 8
+.B \-ncolors \fInumber\fP
+Number of colors.  Default: 64.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2002 by David Bagley.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+David Bagley.
