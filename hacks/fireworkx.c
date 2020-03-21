@@ -862,6 +862,7 @@ static const char *fireworkx_defaults [] =
 	"*flash: True",
 	"*shoot: False",
 	"*verbose: False",
+        ".lowrez: true",  /* Too slow on Retina screens otherwise */
 	0
 };
 

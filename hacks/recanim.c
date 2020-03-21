@@ -1,4 +1,4 @@
-/* recanim, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright (c) 2014-2020 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -427,7 +427,9 @@ screenhack_record_anim_free (record_anim_state *st)
            st->fps, progname, type, st->fps);
   if (soundtrack)
     sprintf (cmd + strlen(cmd),
-             " -i '%s' -map 0:v:0 -map 1:a:0 -acodec aac",
+             " -i '%s' -map 0:v:0 -map 1:a:0 -acodec aac"
+             /* Truncate or pad audio to length of video */
+             " -filter_complex '[1:0] apad' -shortest",
              soundtrack);
   sprintf (cmd + strlen(cmd),
            " -c:v libx264"
@@ -439,7 +441,11 @@ screenhack_record_anim_free (record_anim_state *st)
            /*" 2>&-"*/,
            fn);
   fprintf (stderr, "%s: exec: %s\n", progname, cmd);
-  system (cmd);
+  /* Use empty body to kill warning from gcc -Wall with
+     "warning: ignoring return value of 'system',
+     declared with attribute warn_unused_result"
+   */
+  if (system (cmd)) {}
 
   if (stat (fn, &s))
     {

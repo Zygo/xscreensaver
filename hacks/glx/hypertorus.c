@@ -1,10 +1,10 @@
 /* hypertorus --- Shows a hypertorus that rotates in 4d */
 
 #if 0
-static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
+static const char sccsid[] = "@(#)hypertorus.c  1.2 28/09/05 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2009 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2020 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -25,30 +25,44 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
  *                       and trackball support
  * C. Steger - 07/01/23: Improved 4d trackball support
  * C. Steger - 09/08/22: Removed check-config.pl warnings
+ * C. Steger - 11/01/20: Added the changing colors mode.
  */
 
 /*
- * This program shows the Clifford torus as it rotates in 4d.  The Clifford
- * torus is a torus lies on the "surface" of the hypersphere in 4d.  The
- * program projects the 4d torus to 3d using either a perspective or an
- * orthographic projection.  Of the two alternatives, the perspecitve
- * projection looks much more appealing.  In orthographic projections the
- * torus degenerates into a doubly covered cylinder for some angles.  The
- * projected 3d torus can then be projected to the screen either perspectively
- * or orthographically.  There are three display modes for the torus: mesh
- * (wireframe), solid, or transparent.  Furthermore, the appearance of the
- * torus can be as a solid object or as a set of see-through bands or
- * see-through spirals.  Finally, the colors with with the torus is drawn can
- * be set to either two-sided or to colorwheel.  In the first case, the torus
- * is drawn with red on the outside and green on the inside.  This mode
- * enables you to see that the torus turns inside-out as it rotates in 4d.
- * The second mode draws the torus in a fully saturated color wheel.  This
- * gives a very nice effect when combined with the see-through bands or
- * see-through spirals mode.  The rotation speed for each of the six planes
- * around which the torus rotates can be chosen.  This program is very much
- * inspired by Thomas Banchoff's book "Beyond the Third Dimension: Geometry,
- * Computer Graphics, and Higher Dimensions", Scientific American Library,
- * 1990.
+ * This program shows the Clifford torus as it rotates in 4d.  The
+ * Clifford torus is a torus lies on the "surface" of the hypersphere
+ * in 4d.  The program projects the 4d torus to 3d using either a
+ * perspective or an orthographic projection.  Of the two
+ * alternatives, the perspective projection looks much more appealing.
+ * In orthographic projections the torus degenerates into a doubly
+ * covered cylinder for some angles.  The projected 3d torus can then
+ * be projected to the screen either perspectively or
+ * orthographically.
+ *
+ * There are three display modes for the torus: mesh (wireframe),
+ * solid, or transparent.  Furthermore, the appearance of the torus
+ * can be as a solid object or as a set of see-through bands or
+ * see-through spirals.  Finally, the colors with with the torus is
+ * drawn can be set to one-sided, two-sided, or to a color wheel.  The
+ * colors can be static or changing dynamically.  In one-sided color
+ * mode, the torus is drawn with the same color on the inside and the
+ * outside.  In two-sided color mode, the torus is drawn with red on
+ * the outside and green on the inside if static colors are used.  If
+ * changing colors are used, dynamically varying complementary colors
+ * are used for the two sides.  This mode enables you to see that the
+ * 3d projection of the torus turns inside-out as it rotates in 4d.
+ * The color wheel mode draws the torus with a fully saturated color
+ * wheel.  If changing colors are used, the colors of the color wheel
+ * are varying dynamically.  The color wheel mode gives a very nice
+ * effect when combined with the see-through bands or see-through
+ * spirals mode.
+ *
+ * Finally, the rotation speed for each of the six planes around which
+ * the torus rotates can be chosen.
+ *
+ * This program is inspired by Thomas Banchoff's book "Beyond the
+ * Third Dimension: Geometry, Computer Graphics, and Higher
+ * Dimensions", Scientific American Library, 1990.
  */
 
 #ifndef M_PI
@@ -63,8 +77,9 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #define APPEARANCE_BANDS           1
 #define APPEARANCE_SPIRALS         2
 
-#define COLORS_TWOSIDED            0
-#define COLORS_COLORWHEEL          1
+#define COLORS_ONESIDED            0
+#define COLORS_TWOSIDED            1
+#define COLORS_COLORWHEEL          2
 
 #define DISP_3D_PERSPECTIVE        0
 #define DISP_3D_ORTHOGRAPHIC       1
@@ -75,6 +90,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #define DEF_DISPLAY_MODE           "surface"
 #define DEF_APPEARANCE             "bands"
 #define DEF_COLORS                 "colorwheel"
+#define DEF_CHANGE_COLORS          "False"
 #define DEF_PROJECTION_3D          "perspective"
 #define DEF_PROJECTION_4D          "perspective"
 #define DEF_SPEEDWX                "1.1"
@@ -117,6 +133,7 @@ static int appearance;
 static int num_spirals;
 static char *color_mode;
 static int colors;
+static Bool change_colors;
 static char *proj_3d;
 static int projection_3d;
 static char *proj_4d;
@@ -146,8 +163,11 @@ static XrmOptionDescRec opts[] =
   {"-spirals-4",       ".appearance",   XrmoptionNoArg,  "spirals-4" },
   {"-spirals-8",       ".appearance",   XrmoptionNoArg,  "spirals-8" },
   {"-spirals-16",      ".appearance",   XrmoptionNoArg,  "spirals-16" },
+  {"-onesided",        ".colors",       XrmoptionNoArg,  "onesided" },
   {"-twosided",        ".colors",       XrmoptionNoArg,  "twosided" },
   {"-colorwheel",      ".colors",       XrmoptionNoArg,  "colorwheel" },
+  {"-change-colors",   ".changeColors", XrmoptionNoArg,  "on"},
+  {"+change-colors",   ".changeColors", XrmoptionNoArg,  "off"},
   {"-perspective-3d",  ".projection3d", XrmoptionNoArg,  "perspective" },
   {"-orthographic-3d", ".projection3d", XrmoptionNoArg,  "orthographic" },
   {"-perspective-4d",  ".projection4d", XrmoptionNoArg,  "perspective" },
@@ -162,43 +182,28 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] =
 {
-  { &mode,       "displayMode",  "DisplayMode",  DEF_DISPLAY_MODE,  t_String },
-  { &appear,     "appearance",   "Appearance",   DEF_APPEARANCE,    t_String },
-  { &color_mode, "colors",       "Colors",       DEF_COLORS,        t_String },
-  { &proj_3d,    "projection3d", "Projection3d", DEF_PROJECTION_3D, t_String },
-  { &proj_4d,    "projection4d", "Projection4d", DEF_PROJECTION_4D, t_String },
-  { &speed_wx,   "speedwx",      "Speedwx",      DEF_SPEEDWX,       t_Float},
-  { &speed_wy,   "speedwy",      "Speedwy",      DEF_SPEEDWY,       t_Float},
-  { &speed_wz,   "speedwz",      "Speedwz",      DEF_SPEEDWZ,       t_Float},
-  { &speed_xy,   "speedxy",      "Speedxy",      DEF_SPEEDXY,       t_Float},
-  { &speed_xz,   "speedxz",      "Speedxz",      DEF_SPEEDXZ,       t_Float},
-  { &speed_yz,   "speedyz",      "Speedyz",      DEF_SPEEDYZ,       t_Float}
-};
-
-static OptionStruct desc[] =
-{
-  { "-wireframe",       "display the torus as a wireframe mesh" },
-  { "-surface",         "display the torus as a solid surface" },
-  { "-transparent",     "display the torus as a transparent surface" },
-  { "-solid",           "display the torus as a solid object" },
-  { "-bands",           "display the torus as see-through bands" },
-  { "-spirals-{1,2,4,8,16}", "display the torus as see-through spirals" },
-  { "-twosided",        "display the torus with two colors" },
-  { "-colorwheel",      "display the torus with a smooth color wheel" },
-  { "-perspective-3d",  "project the torus perspectively from 3d to 2d" },
-  { "-orthographic-3d", "project the torus orthographically from 3d to 2d" },
-  { "-perspective-4d",  "project the torus perspectively from 4d to 3d" },
-  { "-orthographic-4d", "project the torus orthographically from 4d to 3d" },
-  { "-speed-wx <arg>",  "rotation speed around the wx plane" },
-  { "-speed-wy <arg>",  "rotation speed around the wy plane" },
-  { "-speed-wz <arg>",  "rotation speed around the wz plane" },
-  { "-speed-xy <arg>",  "rotation speed around the xy plane" },
-  { "-speed-xz <arg>",  "rotation speed around the xz plane" },
-  { "-speed-yz <arg>",  "rotation speed around the yz plane" }
+  { &mode,          "displayMode",  "DisplayMode",  DEF_DISPLAY_MODE,  t_String },
+  { &appear,        "appearance",   "Appearance",   DEF_APPEARANCE,    t_String },
+  { &color_mode,    "colors",       "Colors",       DEF_COLORS,        t_String },
+  { &change_colors, "changeColors", "ChangeColors", DEF_CHANGE_COLORS, t_Bool },
+  { &proj_3d,       "projection3d", "Projection3d", DEF_PROJECTION_3D, t_String },
+  { &proj_4d,       "projection4d", "Projection4d", DEF_PROJECTION_4D, t_String },
+  { &speed_wx,      "speedwx",      "Speedwx",      DEF_SPEEDWX,       t_Float},
+  { &speed_wy,      "speedwy",      "Speedwy",      DEF_SPEEDWY,       t_Float},
+  { &speed_wz,      "speedwz",      "Speedwz",      DEF_SPEEDWZ,       t_Float},
+  { &speed_xy,      "speedxy",      "Speedxy",      DEF_SPEEDXY,       t_Float},
+  { &speed_xz,      "speedxz",      "Speedxz",      DEF_SPEEDXZ,       t_Float},
+  { &speed_yz,      "speedyz",      "Speedyz",      DEF_SPEEDYZ,       t_Float}
 };
 
 ENTRYPOINT ModeSpecOpt hypertorus_opts =
-{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
+{sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, NULL};
+
+
+/* Color change speeds */
+#define DRHO    0.7
+#define DSIGMA  1.1
+#define DTAU    1.7
 
 
 typedef struct {
@@ -206,15 +211,15 @@ typedef struct {
   GLXContext *glx_context;
   /* 4D rotation angles */
   float alpha, beta, delta, zeta, eta, theta;
+  /* Color rotation angles */
+  float rho, sigma, tau;
   /* Aspect ratio of the current window */
   float aspect;
   /* Trackball states */
   trackball_state *trackballs[2];
   int current_trackball;
   Bool button_pressed;
-
   float speed_scale;
-
 } hypertorusstruct;
 
 static hypertorusstruct *hyper = (hypertorusstruct *) NULL;
@@ -352,6 +357,77 @@ static void rotateall(float al, float be, float de, float ze, float et,
 }
 
 
+/* Add a rotation around the x-axis to the matrix m. */
+static void rotatex(float m[3][3], float phi)
+{
+  float c, s, u, v;
+  int i;
+
+  phi *= M_PI/180.0;
+  c = cos(phi);
+  s = sin(phi);
+  for (i=0; i<3; i++)
+  {
+    u = m[i][1];
+    v = m[i][2];
+    m[i][1] = c*u+s*v;
+    m[i][2] = -s*u+c*v;
+  }
+}
+
+
+/* Add a rotation around the y-axis to the matrix m. */
+static void rotatey(float m[3][3], float phi)
+{
+  float c, s, u, v;
+  int i;
+
+  phi *= M_PI/180.0;
+  c = cos(phi);
+  s = sin(phi);
+  for (i=0; i<3; i++)
+  {
+    u = m[i][0];
+    v = m[i][2];
+    m[i][0] = c*u-s*v;
+    m[i][2] = s*u+c*v;
+  }
+}
+
+
+/* Add a rotation around the z-axis to the matrix m. */
+static void rotatez(float m[3][3], float phi)
+{
+  float c, s, u, v;
+  int i;
+
+  phi *= M_PI/180.0;
+  c = cos(phi);
+  s = sin(phi);
+  for (i=0; i<3; i++)
+  {
+    u = m[i][0];
+    v = m[i][1];
+    m[i][0] = c*u+s*v;
+    m[i][1] = -s*u+c*v;
+  }
+}
+
+
+/* Compute the 3d rotation matrix m from the 3d rotation angles. */
+static void rotateall3d(float al, float be, float de, float m[3][3])
+{
+  int i, j;
+
+  for (i=0; i<3; i++)
+    for (j=0; j<3; j++)
+      m[i][j] = (i==j);
+  rotatex(m,al);
+  rotatey(m,be);
+  rotatez(m,de);
+}
+
+
 /* Multiply two rotation matrices: o=m*n. */
 static void mult_rotmat(float m[4][4], float n[4][4], float o[4][4])
 {
@@ -400,62 +476,84 @@ static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
 
 
 /* Compute a fully saturated and bright color based on an angle. */
-static void color(double angle)
+static void color(double angle, float mat[3][3], float col[4])
 {
   int s;
-  double t;
-  float color[4];
+  double t, ca, sa;
+  float m;
 
-  if (colors != COLORS_COLORWHEEL)
-    return;
-
-  if (angle >= 0.0)
-    angle = fmod(angle,2*M_PI);
-  else
-    angle = fmod(angle,-2*M_PI);
-  s = floor(angle/(M_PI/3));
-  t = angle/(M_PI/3)-s;
-  if (s >= 6)
-    s = 0;
-  switch (s)
+  if (!change_colors)
   {
-    case 0:
-      color[0] = 1.0;
-      color[1] = t;
-      color[2] = 0.0;
-      break;
-    case 1:
-      color[0] = 1.0-t;
-      color[1] = 1.0;
-      color[2] = 0.0;
-      break;
-    case 2:
-      color[0] = 0.0;
-      color[1] = 1.0;
-      color[2] = t;
-      break;
-    case 3:
-      color[0] = 0.0;
-      color[1] = 1.0-t;
-      color[2] = 1.0;
-      break;
-    case 4:
-      color[0] = t;
-      color[1] = 0.0;
-      color[2] = 1.0;
-      break;
-    case 5:
-      color[0] = 1.0;
-      color[1] = 0.0;
-      color[2] = 1.0-t;
-      break;
+    if (colors == COLORS_ONESIDED || colors == COLORS_TWOSIDED)
+      return;
+
+    if (angle >= 0.0)
+      angle = fmod(angle,2*M_PI);
+    else
+      angle = fmod(angle,-2*M_PI);
+    s = floor(angle/(M_PI/3));
+    t = angle/(M_PI/3)-s;
+    if (s >= 6)
+      s = 0;
+    switch (s)
+    {
+      case 0:
+        col[0] = 1.0;
+        col[1] = t;
+        col[2] = 0.0;
+        break;
+      case 1:
+        col[0] = 1.0-t;
+        col[1] = 1.0;
+        col[2] = 0.0;
+        break;
+      case 2:
+        col[0] = 0.0;
+        col[1] = 1.0;
+        col[2] = t;
+        break;
+      case 3:
+        col[0] = 0.0;
+        col[1] = 1.0-t;
+        col[2] = 1.0;
+        break;
+      case 4:
+        col[0] = t;
+        col[1] = 0.0;
+        col[2] = 1.0;
+        break;
+      case 5:
+        col[0] = 1.0;
+        col[1] = 0.0;
+        col[2] = 1.0-t;
+        break;
+    }
+  }
+  else /* change_colors */
+  {
+    if (colors == COLORS_ONESIDED || colors == COLORS_TWOSIDED)
+    {
+      col[0] = mat[0][2];
+      col[1] = mat[1][2];
+      col[2] = mat[2][2];
+    }
+    else
+    {
+      ca = cos(angle);
+      sa = sin(angle);
+      col[0] = ca*mat[0][0]+sa*mat[0][1];
+      col[1] = ca*mat[1][0]+sa*mat[1][1];
+      col[2] = ca*mat[2][0]+sa*mat[2][1];
+    }
+    m = 0.5f/fmaxf(fmaxf(fabsf(col[0]),fabsf(col[1])),fabsf(col[2]));
+    col[0] = m*col[0]+0.5f;
+    col[1] = m*col[1]+0.5f;
+    col[2] = m*col[2]+0.5f;
   }
   if (display_mode == DISP_TRANSPARENT)
-    color[3] = 0.7;
+    col[3] = 0.7;
   else
-    color[3] = 1.0;
-  glColor3fv(color);
-  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,color);
+    col[3] = 1.0;
 }
 
 
@@ -464,14 +562,17 @@ static void color(double angle)
    power of 2.  Similarly, the banded appearance will only work correctly
    if numu and numv are divisible by 4. */
 static int hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
-                       double vmax, int numu, int numv)
+                      double vmax, int numu, int numv)
 {
   int polys = 0;
-  static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
-  static const GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
-  float p[3], pu[3], pv[3], n[3], mat[4][4];
+  static const GLfloat mat_diff_red[]           = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_green[]         = { 0.0, 1.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_oneside[]       = { 0.9, 0.4, 0.3, 1.0 };
+  static const GLfloat mat_diff_trans_red[]     = { 1.0, 0.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_green[]   = { 0.0, 1.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_oneside[] = { 0.9, 0.4, 0.3, 0.7 };
+  float mat_diff_dyn[4], mat_diff_dyn_compl[4];
+  float p[3], pu[3], pv[3], n[3], mat[4][4], matc[3][3], col[4];
   int i, j, k, l, m, b, skew;
   double u, v, ur, vr;
   double cu, su, cv, sv;
@@ -479,6 +580,9 @@ static int hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
   double r, s, t;
   float q1[4], q2[4], r1[4][4], r2[4][4];
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
+
+  if (change_colors)
+    rotateall3d(hp->rho,hp->sigma,hp->tau,matc);
 
   rotateall(hp->alpha,hp->beta,hp->delta,hp->zeta,hp->eta,hp->theta,r1);
 
@@ -488,31 +592,56 @@ static int hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
 
   mult_rotmat(r2,r1,mat);
 
-  if (colors != COLORS_COLORWHEEL)
+  if (!change_colors)
   {
-    glColor3fv(mat_diff_red);
-    if (display_mode == DISP_TRANSPARENT)
+    if (colors == COLORS_ONESIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      glColor3fv(mat_diff_oneside);
+      if (display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_trans_oneside);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_oneside);
+      }
     }
-    else
+    else if (colors == COLORS_TWOSIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      glColor3fv(mat_diff_red);
+      if (display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      }
     }
   }
-
-#if 0 /* #### not working */
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  else /* change_colors */
   {
-    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    color(0.0,matc,mat_diff_dyn);
+    if (colors == COLORS_ONESIDED)
+    {
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+    }
+    else if (colors == COLORS_TWOSIDED)
+    {
+      mat_diff_dyn_compl[0] = 1.0f-mat_diff_dyn[0];
+      mat_diff_dyn_compl[1] = 1.0f-mat_diff_dyn[1];
+      mat_diff_dyn_compl[2] = 1.0f-mat_diff_dyn[2];
+      mat_diff_dyn_compl[3] = mat_diff_dyn[3];
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn_compl);
+    }
   }
-# endif
-#endif
 
   skew = num_spirals;
   ur = umax-umin;
@@ -538,11 +667,16 @@ static int hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
         {
           u += 4.0*skew/numv*v;
           b = ((i/4)&(skew-1))*(numu/(4*skew));
-          color(ur*4*b/numu+umin);
+          color(ur*4*b/numu+umin,matc,col);
         }
         else
         {
-          color(u);
+          color(u,matc,col);
+        }
+        if (colors == COLORS_COLORWHEEL)
+        {
+          glColor3fv(col);
+          glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,col);
         }
         cu = cos(u);
         su = sin(u);
@@ -631,6 +765,10 @@ static void init(ModeInfo *mi)
   hp->eta = 0.0;
   hp->theta = 0.0;
 
+  hp->rho = frand(360.0);
+  hp->sigma = frand(360.0);
+  hp->tau = frand(360.0);
+
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   if (projection_3d == DISP_3D_PERSPECTIVE)
@@ -718,6 +856,19 @@ static void display_hypertorus(ModeInfo *mi)
     hp->theta += speed_yz * hp->speed_scale;
     if (hp->theta >= 360.0)
       hp->theta -= 360.0;
+
+    if (change_colors)
+    {
+      hp->rho += DRHO;
+      if (hp->rho >= 360.0)
+        hp->rho -= 360.0;
+      hp->sigma += DSIGMA;
+      if (hp->sigma >= 360.0)
+        hp->sigma -= 360.0;
+      hp->tau += DTAU;
+      if (hp->tau >= 360.0)
+        hp->tau -= 360.0;
+    }
   }
 
   glMatrixMode(GL_PROJECTION);
@@ -736,10 +887,6 @@ static void display_hypertorus(ModeInfo *mi)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  /* Let's keep a constant aspect ratio rather than stretching with the
-     shape of the window */
-  glScalef (hp->WindH / (GLfloat) hp->WindW, 1, 1);
-
   mi->polygon_count = hypertorus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,64,64);
 }
 
@@ -747,19 +894,11 @@ static void display_hypertorus(ModeInfo *mi)
 ENTRYPOINT void reshape_hypertorus(ModeInfo *mi, int width, int height)
 {
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
-  double h = (GLfloat) height / (GLfloat) width;  
-  int y = 0;
-
-  if (width > height * 5) {   /* tiny window: show middle */
-    height = width * 9/16;
-    y = -height/2;
-    h = height / (GLfloat) width;
-  }
 
   hp->WindW = (GLint)width;
   hp->WindH = (GLint)height;
-  glViewport(0,y,width,height);
-  hp->aspect = h;
+  glViewport(0,0,width,height);
+  hp->aspect = (GLfloat)width/(GLfloat)height;
 }
 
 
@@ -910,7 +1049,11 @@ ENTRYPOINT void init_hypertorus(ModeInfo *mi)
   }
 
   /* Set the color mode. */
-  if (!strcasecmp(color_mode,"twosided"))
+  if (!strcasecmp(color_mode,"onesided"))
+  {
+    colors = COLORS_ONESIDED;
+  }
+  else if (!strcasecmp(color_mode,"twosided"))
   {
     colors = COLORS_TWOSIDED;
   }

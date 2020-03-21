@@ -29,7 +29,7 @@
             low="1.0" high="10.0" default="5.0"/>
 
     <number id="thickness" type="slider" arg="-thickness %"
-            _label="Lines" _low-label="Thick" _high-label="Thin"
+            _label="Lines" _low-label="Thin" _high-label="Thick"
             low="0.05" high="1.0" default="0.1"/>
 
     <select id="object">

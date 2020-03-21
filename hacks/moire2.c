@@ -329,7 +329,7 @@ moire2_free (Display *dpy, Window window, void *closure)
 }
 
 static const char *moire2_defaults [] = {
-  ".lowrez:		true",
+  ".lowrez:		true",  /* Too slow on Retina screens otherwise */
   ".background:		black",
   ".foreground:		white",
   "*delay:		50000",

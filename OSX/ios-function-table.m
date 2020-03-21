@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Sat Apr 27 19:53:47 2019 by build-fntable.pl 1.7.
+   Created: Sat Mar 14 14:46:37 2020 by build-fntable.pl 1.7.
  */
 
 #import <Foundation/Foundation.h>
@@ -64,7 +64,6 @@ extern struct xscreensaver_function_table
  discoball_xscreensaver_function_table,
  discrete_xscreensaver_function_table,
  distort_xscreensaver_function_table,
- dnalogo_xscreensaver_function_table,
  drift_xscreensaver_function_table,
  dymaxionmap_xscreensaver_function_table,
  endgame_xscreensaver_function_table,
@@ -73,6 +72,7 @@ extern struct xscreensaver_function_table
  epicycle_xscreensaver_function_table,
  eruption_xscreensaver_function_table,
  esper_xscreensaver_function_table,
+ etruscanvenus_xscreensaver_function_table,
  euler2d_xscreensaver_function_table,
  fadeplot_xscreensaver_function_table,
  fiberlamp_xscreensaver_function_table,
@@ -92,6 +92,7 @@ extern struct xscreensaver_function_table
  geodesic_xscreensaver_function_table,
  geodesicgears_xscreensaver_function_table,
  gflux_xscreensaver_function_table,
+ gibson_xscreensaver_function_table,
  glblur_xscreensaver_function_table,
  glcells_xscreensaver_function_table,
  gleidescope_xscreensaver_function_table,
@@ -186,6 +187,7 @@ extern struct xscreensaver_function_table
  rubik_xscreensaver_function_table,
  rubikblocks_xscreensaver_function_table,
  sballs_xscreensaver_function_table,
+ scooter_xscreensaver_function_table,
  shadebobs_xscreensaver_function_table,
  sierpinski_xscreensaver_function_table,
  sierpinski3d_xscreensaver_function_table,
@@ -306,7 +308,6 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&discoball_xscreensaver_function_table], @"discoball",
 	[NSValue valueWithPointer:&discrete_xscreensaver_function_table], @"discrete",
 	[NSValue valueWithPointer:&distort_xscreensaver_function_table], @"distort",
-	[NSValue valueWithPointer:&dnalogo_xscreensaver_function_table], @"dnalogo",
 	[NSValue valueWithPointer:&drift_xscreensaver_function_table], @"drift",
 	[NSValue valueWithPointer:&dymaxionmap_xscreensaver_function_table], @"dymaxionmap",
 	[NSValue valueWithPointer:&endgame_xscreensaver_function_table], @"endgame",
@@ -315,6 +316,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&epicycle_xscreensaver_function_table], @"epicycle",
 	[NSValue valueWithPointer:&eruption_xscreensaver_function_table], @"eruption",
 	[NSValue valueWithPointer:&esper_xscreensaver_function_table], @"esper",
+	[NSValue valueWithPointer:&etruscanvenus_xscreensaver_function_table], @"etruscanvenus",
 	[NSValue valueWithPointer:&euler2d_xscreensaver_function_table], @"euler2d",
 	[NSValue valueWithPointer:&fadeplot_xscreensaver_function_table], @"fadeplot",
 	[NSValue valueWithPointer:&fiberlamp_xscreensaver_function_table], @"fiberlamp",
@@ -334,6 +336,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&geodesic_xscreensaver_function_table], @"geodesic",
 	[NSValue valueWithPointer:&geodesicgears_xscreensaver_function_table], @"geodesicgears",
 	[NSValue valueWithPointer:&gflux_xscreensaver_function_table], @"gflux",
+	[NSValue valueWithPointer:&gibson_xscreensaver_function_table], @"gibson",
 	[NSValue valueWithPointer:&glblur_xscreensaver_function_table], @"glblur",
 	[NSValue valueWithPointer:&glcells_xscreensaver_function_table], @"glcells",
 	[NSValue valueWithPointer:&gleidescope_xscreensaver_function_table], @"gleidescope",
@@ -428,6 +431,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&rubik_xscreensaver_function_table], @"rubik",
 	[NSValue valueWithPointer:&rubikblocks_xscreensaver_function_table], @"rubikblocks",
 	[NSValue valueWithPointer:&sballs_xscreensaver_function_table], @"sballs",
+	[NSValue valueWithPointer:&scooter_xscreensaver_function_table], @"scooter",
 	[NSValue valueWithPointer:&shadebobs_xscreensaver_function_table], @"shadebobs",
 	[NSValue valueWithPointer:&sierpinski_xscreensaver_function_table], @"sierpinski",
 	[NSValue valueWithPointer:&sierpinski3d_xscreensaver_function_table], @"sierpinski3d",

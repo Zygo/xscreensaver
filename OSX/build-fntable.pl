@@ -31,6 +31,7 @@ my $verbose = 1;
 #
 my %disable = (
    'extrusion'		=> 1,
+   'flurry'		=> 1,
    'glitchpeg'		=> 1,
    'lcdscrub'		=> 1,
    'lockward'		=> 1,
@@ -38,56 +39,51 @@ my %disable = (
    'testx11'		=> 1,
   );
 
-# Parse the RETIRED_EXES variable from the Makefiles to populate %disable.
-# Duplicated in ../hacks/munge-ad.pl.
+# Parse specified variables from a Makefile.
+# ../hacks/munge-ad.pl also parses Makefiles.
 #
-sub parse_makefiles() {
-  foreach my $mf ( "../hacks/Makefile.in", "../hacks/glx/Makefile.in" ) {
-    open (my $in, '<', $mf) || error ("$mf: $!");
-    print STDERR "$progname: reading $mf\n" if ($verbose > 1);
-    local $/ = undef;  # read entire file
-    my $body = <$in>;
-    close $in;
+sub parse_makefile_vars($@)
+{
+  my ($mf, @vars) = @_;
 
-    $body =~ s/\\\n//gs;
-    my ($var)  = ($body =~ m/^RETIRED_EXES\s*=\s*(.*)$/mi);
-    my ($var2) = ($body =~ m/^RETIRED_GL_EXES\s*=\s*(.*)$/mi);
-    error ("no RETIRED_EXES in $mf") unless $var;
-    $var .= " $var2" if $var2;
-    foreach my $hack (split (/\s+/, $var)) {
-      $disable{$hack} = 2;
+  open (my $in, '<', $mf) || error ("$mf: $!");
+  print STDERR "$progname: reading $mf\n" if ($verbose > 1);
+  local $/ = undef;  # read entire file
+  my $body = <$in>;
+  close $in;
+
+  my %vars = map { $_ => 1 } @vars;
+  my %result;
+  while ($body =~ /^([^:#=\s]+)\s*=\s*((?:\\\n|.)*)/mg)
+  {
+    my ($key, $value) = ($1, $2);
+    if (!%vars || $vars{$key}) {
+      $value =~ s/\\\n/ /g;
+      $result{$key} = $value;
     }
   }
+  return \%result;
 }
 
 
 sub build_h($) {
   my ($outfile) = @_;
 
-  parse_makefiles();
-
-  my @schemes = (glob('xscreensaver.xcodeproj/xcuserdata/' .
-                      '*.xcuserdatad/xcschemes/*.xcscheme'),
-                 glob('xscreensaver.xcodeproj/xcshareddata/' .
-                      'xcschemes/*.xcscheme'));
-  error ("no scheme files") unless (@schemes);
-
   my %names = ();
 
-  foreach my $s (@schemes) {
-    open (my $in, '<', $s) || error ("$s: $!");
-    local $/ = undef;  # read entire file
-    my $body = <$in>;
-    close $in;
-    my ($name) = ($body =~ m@BuildableName *= *"([^\"<>]+?)\.saver"@s);
-    next unless $name;
-    $name = lc($name);
-    if ($disable{$name}) {
-      print STDERR "$progname: skipping $name\n" if ($verbose > 1);
-      next;
+  foreach my $var (
+    (values parse_makefile_vars ('../hacks/Makefile.in', 'EXES')),
+    (values parse_makefile_vars ('../hacks/glx/Makefile.in', 'GL_EXES',
+                                 'SUID_EXES'))) {
+    foreach my $name (split (/\s+/, $var)) {
+      if ($name =~ /@/ || $disable{$name}) {
+        print STDERR "$progname: skipping $name\n" if ($verbose > 1);
+        next;
+      }
+      $name =~ s/-//g;
+      print STDERR "$progname: found $name\n" if ($verbose > 1);
+      $names{$name} = 1;
     }
-    print STDERR "$progname: found $name\n" if ($verbose > 1);
-    $names{$name} = 1;
   }
 
   my @names = sort (keys %names);

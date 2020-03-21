@@ -3701,6 +3701,7 @@ sub update_imagemap($$$$$$$$) {
  </HEAD>
  <BODY>
   <DIV CLASS="webcollage_frame">
+   <DIV CLASS="webcollage_box"></DIV>
   </DIV>
  </BODY>
 </HTML>

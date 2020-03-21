@@ -430,6 +430,8 @@ draw_row (ModeInfo *mi, int w, int y, Bool swap)
           polys += 1;
 
           ci = EASE (bp->vtx[vp + 2] / MAX_MASS_COLOR) * bp->ncolors;
+          if (ci < 0) ci = 0;
+          if (ci >= bp->ncolors) ci = bp->ncolors - 1;
           bp->col[cp]   = bp->colors[ci].red   / 65536.0;
           bp->col[cp+1] = bp->colors[ci].green / 65536.0;
           bp->col[cp+2] = bp->colors[ci].blue  / 65536.0;
@@ -452,6 +454,8 @@ draw_row (ModeInfo *mi, int w, int y, Bool swap)
               bp->vtx[vp + 2] = gridp[x * GRID_SEG + i];
 
               ci = EASE (bp->vtx[vp + 2] / MAX_MASS_COLOR) * bp->ncolors;
+              if (ci < 0) ci = 0;
+              if (ci >= bp->ncolors) ci = bp->ncolors - 1;
               bp->col[cp]   = bp->colors[ci].red   / 65536.0;
               bp->col[cp+1] = bp->colors[ci].green / 65536.0;
               bp->col[cp+2] = bp->colors[ci].blue  / 65536.0;
@@ -689,6 +693,8 @@ draw_gw (ModeInfo *mi)
       GLfloat th, color[4];
       int ci;
       ci = EASE (s->depth / MAX_MASS_COLOR) * bp->ncolors;
+      if (ci < 0) ci = 0;
+      if (ci >= bp->ncolors) ci = bp->ncolors - 1;
       color[0] = bp->colors[ci].red   / 65536.0;
       color[1] = bp->colors[ci].green / 65536.0;
       color[2] = bp->colors[ci].blue  / 65536.0;

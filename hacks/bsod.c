@@ -1554,7 +1554,7 @@ windows_ransomware (Display *dpy, Window window)
   const time_t stage1_deadline = now + 259200 - advance_deadline; /* 3 days */
   const time_t stage2_deadline = now + 604800 - advance_deadline; /* 7 days */
   char stage1_deadline_str[25], stage2_deadline_str[25];
-  char countdown_str[16];
+  char countdown_str[20];
   int countdown_d, countdown_h, countdown_m, countdown_s, countdown_r;
   int line_height  = bst->font->ascent + bst->font->descent;
   int line_height1 = bst->fontA->ascent + bst->fontA->descent;
@@ -2528,7 +2528,7 @@ macsbug (Display *dpy, Window window)
   if (xoff < 0) xoff = 0;
   if (yoff < 0) yoff = 0;
 
-  BSOD_MARGINS (bst, xoff, yoff);
+  BSOD_MARGINS (bst, xoff, xoff);
 
   BSOD_COLOR (bst, bc, bg);
   BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
@@ -2552,7 +2552,9 @@ macsbug (Display *dpy, Window window)
   BSOD_MOVETO (bst,
                xoff + col_right + char_width,
                yoff + body_top + line_height);
-  BSOD_MARGINS (bst, xoff + col_right + char_width, yoff);
+  BSOD_MARGINS (bst,
+                xoff + col_right + char_width,
+                xoff + col_right + char_width);
   BSOD_TEXT (bst, LEFT, body);
 
   BSOD_RECT (bst, False, xoff-2, yoff, page_right+4, page_bottom); /* again */
@@ -3265,27 +3267,20 @@ sparc_solaris (Display *dpy, Window window)
   Pixmap pixmap = image_data_to_pixmap (dpy, window,
                                         sun_png, sizeof(sun_png),
                                         &pix_w, &pix_h, &mask);
-# if 0
-  if (pixmap && 
-      pix_w < bst->xgwa.width / 2 &&
-      pix_h < bst->xgwa.height / 2)
-    {
-      int i, n = 1;
-      if (bst->xgwa.width > 2560) n++;  /* Retina displays */
-      for (i = 0; i < n; i++)
-        {
-          pixmap = double_pixmap (dpy, bst->xgwa.visual,
-                                  bst->xgwa.depth, pixmap, pix_w, pix_h);
-          mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
-          pix_w *= 2;
-          pix_h *= 2;
-        }
-    }
-# endif
 
   char_width = (bst->font->per_char
 		? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
 		: bst->font->min_bounds.width);
+
+  if (pixmap)
+    while (pix_w < char_width * 4)
+      {
+        pixmap = double_pixmap (dpy, bst->xgwa.visual,
+                                bst->xgwa.depth, pixmap, pix_w, pix_h);
+        mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
+        pix_w *= 2;
+        pix_h *= 2;
+      }
 
   bst->pixmap = pixmap;
   bst->mask = mask;
@@ -3384,13 +3379,13 @@ sparc_solaris (Display *dpy, Window window)
 
   BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h, ~0, ~0);
   BSOD_MARGINS (bst,
-                bst->left_margin + char_width * 12,
-                bst->top_margin);
+                bst->left_margin + pix_w + char_width * 2,
+                bst->left_margin + pix_w + char_width * 2);
   BSOD_TEXT (bst, LEFT,
              "SPARCstation IPC, Keyboard Present\n"
              "ROM Rev. 2.9, 16 MB memory installed, Serial #12648190.\n"
              "Ethernet address 8:0:20:37:1:87, Host ID: 52c0fefe.\n");
-  BSOD_MARGINS (bst, bst->left_margin, bst->top_margin);
+  BSOD_MARGINS (bst, bst->left_margin, bst->left_margin);
 
   BSOD_TEXT (bst, LEFT, "\n\n\033");
   BSOD_PAUSE (bst, 3000000);
@@ -5653,6 +5648,121 @@ dvd (Display *dpy, Window window)
 }
 
 
+static struct bsod_state *
+tivo (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "tivo", "Tivo");
+  int char_width =
+    (bst->font->per_char
+     ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
+     : bst->font->min_bounds.width);
+  int line_height = bst->font->ascent + bst->font->descent;
+
+  int left = (bst->xgwa.width - char_width * 44) / 2;
+  int top = (bst->xgwa.height - line_height * 15) / 2;
+  if (left < 0) left = 0;
+  if (top < 0) top = 0;
+
+  XClearWindow (dpy, window);
+
+  BSOD_MARGINS (bst, left, left);
+  BSOD_MOVETO (bst, left, top);
+
+  BSOD_FONT (bst, 1);
+  BSOD_TEXT (bst, LEFT, "\nA severe error has occurred.\n\n");
+  BSOD_FONT (bst, 0);
+  BSOD_TEXT (bst, LEFT,
+             "Please leave the Receiver plugged in and connected\n"
+             "to the phone line for the next three hours while the\n"
+             "Receiver attempts to repair itself.");
+  BSOD_FONT (bst, 1);
+  BSOD_TEXT (bst, LEFT,
+             "\n\n"
+             "DO NOT UNPLUG OR RESTART\nTHE RECEIVER.\n\n");
+  BSOD_FONT (bst, 0);
+  BSOD_TEXT (bst, LEFT,
+             "If, after three hours, the Receiver does not restart\n"
+             "itself, call Customer Care.");
+
+  BSOD_PAUSE (bst, 1000000 * 60);
+  return bst;
+}
+
+
+/* Error message for corrupted (and therefore presumed bootleg) cartridges.
+ */
+static struct bsod_state *
+nintendo (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window,
+                                            "nintendo", "Nintendo");
+  unsigned long bg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "nintendo.background",
+                                         "Nintendo.Background");
+  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "nintendo.background2",
+                                          "Nintendo.Background");
+  unsigned long fg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "nintendo.foreground",
+                                         "Nintendo.Foreground");
+  int char_width =
+    (bst->font->per_char
+     ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
+     : bst->font->min_bounds.width);
+  int line_height = bst->font->ascent + bst->font->descent;
+
+  int left = (bst->xgwa.width - char_width * 30) / 2;
+  int top = (bst->xgwa.height - line_height * 9) / 2;
+  int left2 = left - char_width * 4;
+  int top2  = top - line_height;
+  if (left < 0) left = 0;
+  if (top < 0) top = 0;
+  if (left2 < 0) left2 = 0;
+  if (top2 < 0) top2 = 0;
+  if (left2 > char_width * 8) left2 = char_width * 8;
+  if (top2  > line_height * 10) top2 = line_height * 10;
+
+  XClearWindow (dpy, window);
+
+  BSOD_COLOR (bst, bg2, bg);
+  BSOD_RECT (bst, True, left2, top2 - line_height*2,
+             bst->xgwa.width - left2*2, 
+             bst->xgwa.height - top2*2 + line_height*2);
+
+  BSOD_MARGINS (bst, left, left);
+  BSOD_MOVETO (bst, left, top - line_height/2);
+
+  BSOD_FONT (bst, 1);
+  BSOD_COLOR (bst, bg, bg2);
+
+  /* a variant crash has a second box above the English text that says:
+
+                        警告
+         ビデオゲームのコピーは法律で禁じられています。
+         詳しくは取扱説明書をご覧になってください。
+
+     but BSOD_TEXT doesn't do Xft, and more importantly, "PxPlus IBM VGA8"
+     doesn't contain Japanese characters.
+   */
+
+  BSOD_TEXT (bst, CENTER, "WARNING");
+  BSOD_FONT (bst, 0);
+  BSOD_COLOR (bst, fg, bg2);
+  BSOD_TEXT (bst, LEFT,
+             "\n\n"
+             "IT IS A SERIOUS CRIME\n"
+             "TO COPY VIDEO GAMES\n"
+             "ACCORDING TO COPYRIGHT LAW.\n"
+             "PLEASE REFER TO\n"
+             "YOUR NINTENDO GAME\n"
+             "INSTRUCTION BOOKLET\n"
+             "FOR FURTHER INFORMATION.");
+
+  BSOD_PAUSE (bst, 1000000 * 60);
+  return bst;
+}
+
+
 /* An Android phone boot loader, by jwz.
  */
 static struct bsod_state *
@@ -5930,6 +6040,8 @@ static const struct {
   { "VMware",		vmware },
   { "Encom",		encom },
   { "DVD",		dvd },
+  { "Tivo",		tivo },
+  { "Nintendo",		nintendo },
 };
 
 
@@ -6247,10 +6359,12 @@ static const char *bsod_defaults [] = {
   "*doNvidia:		   True",
   "*doATM:		   True",
   "*doGLaDOS:		   True",
-  "*doAndroid:		   True",
+  "*doAndroid:		   False",
   "*doVMware:		   True",
   "*doEncom:		   True",
   "*doDVD:		   True",
+  "*doTivo:		   True",
+  "*doNintendo:		   True",
 
   ".foreground:		   White",
   ".background:		   Black",
@@ -6362,6 +6476,13 @@ static const char *bsod_defaults [] = {
   ".vmware.foreground2:	   Yellow",
   ".vmware.background:	   #a700a8",    /* purple */
 
+  ".tivo.background:	   #339020",
+  ".tivo.foreground:	   #B8E6BA",
+
+  ".nintendo.background:   #F76D0A",
+  ".nintendo.background2:  #085C89",
+  ".nintendo.foreground:   #EEAACF",
+
   "*dontClearRoot:         True",
 
   ANALOGTV_DEFAULTS
@@ -6369,6 +6490,8 @@ static const char *bsod_defaults [] = {
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:                True",
 #endif
+
+  ".lowrez: false",  /* This is required on macOS */
 
   "*fontB:		   ",
   "*fontC:		   ",
@@ -6400,6 +6523,11 @@ static const char *bsod_defaults [] = {
   ".ransomware.fontB:        Arial 9, Helvetica 9",
   ".ransomware.fontC:        Arial Bold 11, Arial-BoldMT 11, Helvetica Bold 11",
 
+  ".tivo.font:		   Helvetica-Bold 13",
+  ".tivo.fontB:		   Helvetica-Bold 17",
+
+  ".nintendo.font:	   PxPlus IBM VGA8 18, Courier-Bold 18",
+
 # elif defined(HAVE_ANDROID)
 
   "*font:		   PxPlus IBM VGA8 16",
@@ -6423,6 +6551,11 @@ static const char *bsod_defaults [] = {
   ".ransomware.font:	   -*-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*",
   ".ransomware.fontB:	   -*-helvetica-medium-r-*-*-*-80-*-*-*-*-*-*",
   ".ransomware.fontC:	   -*-helvetica-bold-r-*-*-*-100-*-*-*-*-*-*",
+
+  ".tivo.font:		   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
+  ".tivo.fontB:		   -*-helvetica-bold-r-*-*-*-240-*-*-*-*-*-*",
+
+  ".nintendo.font:	   PxPlus IBM VGA8 18",
 
 # elif defined(HAVE_COCOA)
 
@@ -6455,10 +6588,16 @@ static const char *bsod_defaults [] = {
   ".win10.fontB:	   Arial 100, Helvetica 100",
   ".win10.fontC:	   Arial 16, Helvetica 16",
 
-  ".ransomware.font:         Arial 24, Helvetica 24",
-  ".ransomware.bigFont:      Arial 24, Helvetica 24",
-  ".ransomware.fontB:        Arial 16, Helvetica 16",
-  ".ransomware.fontC:        Arial Bold 24, Helvetica Bold 24",
+  ".ransomware.font:       Arial 24, Helvetica 24",
+  ".ransomware.bigFont:    Arial 24, Helvetica 24",
+  ".ransomware.fontB:      Arial 16, Helvetica 16",
+  ".ransomware.fontC:      Arial Bold 24, Helvetica Bold 24",
+
+  ".tivo.font:		   Helvetica 36",
+  ".tivo.fontB:		   Helvetica 48",
+
+  ".nintendo.font:	   PxPlus IBM VGA8 12, Courier Bold 12",
+  ".nintendo.bigFont:	   PxPlus IBM VGA8 48, Courier Bold 48",
 
 # else   /* X11 */
 
@@ -6506,6 +6645,11 @@ static const char *bsod_defaults [] = {
   ".ransomware.fontB:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
   ".ransomware.fontC:	   -*-helvetica-bold-r-*-*-*-180-*-*-*-*-*-*",
 
+  ".tivo.font:		   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
+  ".tivo.fontB:		   -*-helvetica-bold-r-*-*-*-240-*-*-*-*-*-*",
+
+  ".nintendo.font:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".nintendo.bigFont:	   -*-courier-bold-r-*-*-*-360-*-*-m-*-*-*",
 
 # endif  /* X11 */
 
@@ -6580,8 +6724,12 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-vmware",	".doVMware",		XrmoptionNoArg,  "False" },
   { "-encom",		".doEncom",		XrmoptionNoArg,  "True"  },
   { "-no-encom",	".doEncom",		XrmoptionNoArg,  "False" },
-  { "-dvd",	  	".doDVD",		XrmoptionNoArg,  "True"  },
-  { "-no-dvd",  	".doDVD",		XrmoptionNoArg,  "False" },
+  { "-dvd",		".doDVD",		XrmoptionNoArg,  "True"  },
+  { "-no-dvd",		".doDVD",		XrmoptionNoArg,  "False" },
+  { "-tivo",		".doTivo",		XrmoptionNoArg,  "True"  },
+  { "-no-tivo",		".doTivo",		XrmoptionNoArg,  "False" },
+  { "-nintendo",	".doNintendo",		XrmoptionNoArg,  "True"  },
+  { "-no-nintendo",	".doNintendo",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

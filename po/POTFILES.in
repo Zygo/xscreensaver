@@ -1,4 +1,4 @@
-# Auto-generated: Tue Jul  9 20:31:29 PDT 2019
+# Auto-generated: Fri Mar 20 18:40:22 PDT 2020
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -71,6 +71,7 @@ hacks/config/engine.xml
 hacks/config/epicycle.xml
 hacks/config/eruption.xml
 hacks/config/esper.xml
+hacks/config/etruscanvenus.xml
 hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml
@@ -94,6 +95,7 @@ hacks/config/gears.xml
 hacks/config/geodesic.xml
 hacks/config/geodesicgears.xml
 hacks/config/gflux.xml
+hacks/config/gibson.xml
 hacks/config/glblur.xml
 hacks/config/glcells.xml
 hacks/config/gleidescope.xml
@@ -203,6 +205,7 @@ hacks/config/rotzoomer.xml
 hacks/config/rubik.xml
 hacks/config/rubikblocks.xml
 hacks/config/sballs.xml
+hacks/config/scooter.xml
 hacks/config/shadebobs.xml
 hacks/config/sierpinski.xml
 hacks/config/sierpinski3d.xml

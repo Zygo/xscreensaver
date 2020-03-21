@@ -17,6 +17,11 @@
 
 @interface SaverListController : UITableViewController <UISearchBarDelegate> {
 
+  UIView *v;
+  UILabel *label1;
+  UILabel *label2;
+  UISearchBar *search;
+
   int active_section_count;
   NSMutableArray *list_by_letter[26];  // 27 to get "#" after "Z".
   NSMutableArray *letter_sections;

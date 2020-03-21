@@ -544,7 +544,7 @@ visual (Display *dpy)
  */
 
 static void *
-enqueue (Display *dpy, Drawable d, GC gc, int mode, size_t count,
+enqueue (Display *dpy, Drawable d, GC gc, GLenum mode, size_t count,
          unsigned long pixel)
 {
   if (dpy->queue_size &&
@@ -947,7 +947,8 @@ jwxyz_gl_copy_area_read_tex_image (Display *dpy, unsigned src_height,
 }
 
 void
-jwxyz_gl_copy_area_write_tex_image (Display *dpy, GC gc, int src_x, int src_y,
+jwxyz_gl_copy_area_write_tex_image (Display *dpy, GC gc,
+                                    int src_x, int src_y, int src_depth,
                                     unsigned int width, unsigned int height,
                                     int dst_x, int dst_y)
 {
@@ -964,7 +965,7 @@ jwxyz_gl_copy_area_write_tex_image (Display *dpy, GC gc, int src_x, int src_y,
   glBindTexture (dpy->gl_texture_target, dpy->textures[texture_rgba]);
 
   jwxyz_gl_draw_image (dpy, gc, dpy->gl_texture_target, tex_w, tex_h,
-                       0, 0, gc->depth, width, height, dst_x, dst_y, False);
+                       0, 0, src_depth, width, height, dst_x, dst_y, False);
 
   clear_texture (dpy);
 }
@@ -1291,10 +1292,32 @@ FillPolygon (Display *dpy, Drawable d, GC gc,
 #define degrees(RAD) ((RAD) * 180.0 / M_PI)
 
 static void
-arc_xy(GLfloat *p, double cx, double cy, double w2, double h2, double theta)
+arc_xy (GLfloat *p, GLfloat cx, GLfloat cy, GLfloat w2, GLfloat h2,
+        GLfloat theta)
 {
-  p[0] = cos(theta) * w2 + cx;
-  p[1] = -sin(theta) * h2 + cy;
+  p[0] = cx + cosf(theta) * w2;
+  p[1] = cy - sinf(theta) * h2;
+}
+
+static void
+arc_xy2 (GLfloat *p, GLfloat cx, GLfloat cy, GLfloat w2, GLfloat h2,
+         GLfloat theta, GLfloat gglw)
+{
+  // The inner/outer contour of the stroke of an ellipse is not itself an
+  // ellipse.
+
+  GLfloat ct = cosf(theta), st = sinf(theta);
+
+  GLfloat w2st = w2 * st, h2ct = h2 * ct;
+  GLfloat w2ct = w2 * ct, h2st = h2 * st;
+
+  GLfloat d = gglw / sqrtf(w2st * w2st + h2ct * h2ct);
+  GLfloat dh2ct = d * h2ct, dw2st = d * w2st;
+
+  p[0] = cx +  w2ct + dh2ct;
+  p[1] = cy - (h2st + dw2st);
+  p[2] = cx +  w2ct - dh2ct;
+  p[3] = cy - (h2st - dw2st);
 }
 
 static unsigned
@@ -1306,48 +1329,17 @@ mod_neg(int a, unsigned b)
   return a < 0 ? (b - 1) - (-(a + 1) % b) : a % b;
 }
 
-/* TODO: Fill in arcs with line width > 1 */
 static int
 draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
           unsigned int width, unsigned int height,
           int angle1, int angle2, Bool fill_p)
 {
-    int gglw = gc->gcv.line_width;
+  /* Let's say the number of line segments needed to make a convincing circle
+     is 4*sqrt(radius). (But these arcs aren't necessarily circular arcs...)
+   */
 
-    if (fill_p || gglw <= 1) {
-        draw_arc_gl (dpy, d, gc, x, y, width, height, angle1, angle2, fill_p);
-    }
-    else {
-        int w1, w2, h1, h2, gglwh;
-        w1 = width + gglw;
-        h1 = height + gglw;
-        h2 = height - gglw;
-        w2 = width - gglw;
-        gglwh = gglw / 2;
-        int x1 = x - gglwh;
-        int x2 = x + gglwh;
-        int y1 = y - gglwh;
-        int y2 = y + gglwh;
-        //draw_arc_gl (dpy, d, gc, x, y, width, height, angle1, angle2, fill_p);
-        draw_arc_gl (dpy, d, gc, x1, y1, w1, h1, angle1, angle2, fill_p);
-        draw_arc_gl (dpy, d, gc, x2, y2, w2, h2, angle1, angle2, fill_p);
-    }
-    return 0;
-}
-
-
-int
-draw_arc_gl (Display *dpy, Drawable d, GC gc, int x, int y,
-          unsigned int width, unsigned int height,
-          int angle1, int angle2, Bool fill_p)
-{
-  set_fg_gc(dpy, d, gc);
-
-  /* Let's say the number of line segments needed to make a convincing circle is
-     4*sqrt(radius). (But these arcs aren't necessarily circular arcs...) */
-
-  double w2 = width * 0.5f, h2 = height * 0.5f;
-  double a, b; /* Semi-major/minor axes. */
+  GLfloat w2 = width * 0.5f, h2 = height * 0.5f;
+  GLfloat a, b; /* Semi-major/minor axes. */
   if(w2 > h2) {
     a = w2;
     b = h2;
@@ -1355,30 +1347,30 @@ draw_arc_gl (Display *dpy, Drawable d, GC gc, int x, int y,
     a = h2;
     b = w2;
   }
-  
-  const double two_pi = 2 * M_PI;
 
-  double amb = a - b, apb = a + b;
-  double h = (amb * amb) / (apb * apb);
-  // TODO: Math cleanup.
-  double C_approx = M_PI * apb * (1 + 3 * h / (10 + sqrtf(4 - 3 * h)));
-  double segments_f = 4 * sqrtf(C_approx / (2 * M_PI));
+  const GLfloat tau = 2 * M_PI;
+
+  GLfloat amb = a - b, apb = a + b;
+  GLfloat h = (amb * amb) / (apb * apb);
+  GLfloat D_approx = apb * (1 + 3 * h / (10 + sqrtf(4 - 3 * h)));
+  // From Ramanujan, "Modular Equations and Approximations to π".
+  // double C_approx = D_approx * M_PI;
+  GLfloat segments_f = sqrtf(8 * D_approx);
 
   // TODO: Explain how drawing works what with the points of overlapping arcs
   // matching up.
- 
-#if 1
+
   unsigned segments_360 = segments_f;
-  
+
   /* TODO: angle2 == 0. This is a tilted square with CapSquare. */
   /* TODO: color, thick lines, CapNotLast for thin lines */
   /* TODO: Transformations. */
 
-  double segment_angle = two_pi / segments_360;
+  GLfloat segment_angle = tau / segments_360;
 
   const unsigned deg64 = 360 * 64;
-  const double rad_from_deg64 = two_pi / deg64;
-  
+  const GLfloat rad_from_deg64 = tau / deg64;
+
   if (angle2 < 0) {
     angle1 += angle2;
     angle2 = -angle2;
@@ -1388,79 +1380,128 @@ draw_arc_gl (Display *dpy, Drawable d, GC gc, int x, int y,
 
   if (angle2 > deg64)
     angle2 = deg64; // TODO: Handle circles special.
-  
-  double
+
+  GLfloat
     angle1_f = angle1 * rad_from_deg64,
     angle2_f = angle2 * rad_from_deg64;
-  
-  if (angle2_f > two_pi) // TODO: Move this up.
-    angle2_f = two_pi;
-  
-  double segment1_angle_part = fmodf(angle1_f, segment_angle);
-  
-  unsigned segment1 = ((angle1_f - segment1_angle_part) / segment_angle) + 1.5;
 
-  double angle_2r = angle2_f - segment1_angle_part;
+  if (angle2_f > tau) // TODO: Move this up.
+    angle2_f = tau;
+
+  GLfloat segment0_angle_part = fmodf(angle1_f, segment_angle);
+
+  unsigned segment0 = ((angle1_f - segment0_angle_part) / segment_angle) + 1.5;
+
+  GLfloat angle_2r = angle2_f - segment0_angle_part;
   unsigned segments = angle_2r / segment_angle;
-  
+
   GLfloat cx = x + w2, cy = y + h2;
 
-  GLfloat *data = malloc((segments + 3) * sizeof(GLfloat) * 2); // TODO: Check result.
-  
-  GLfloat *data_ptr = data;
+  /* TODO: It would probably be better for vertices at the corners of the
+     elliptical sector/arc to be the intersection between a ray extending from
+     the ellipse center along one of the specified angles and one of the line
+     segments following the outline of the 360-degree ellipse, rather than
+     what it is now.
+   */
+
   if (fill_p) {
-    data_ptr[0] = cx;
-    data_ptr[1] = cy;
-    data_ptr += 2;
-  }
-  
-  arc_xy (data_ptr, cx, cy, w2, h2, angle1_f);
-  data_ptr += 2;
-  
-  for (unsigned s = 0; s != segments; ++s) {
-    // TODO: Make sure values of theta for the following arc_xy call are between
-    // angle1_f and angle1_f + angle2_f.
-    arc_xy (data_ptr, cx, cy, w2, h2, (segment1 + s) * segment_angle);
-    data_ptr += 2;
-  }
-  
-  arc_xy (data_ptr, cx, cy, w2, h2, angle1_f + angle2_f);
-  data_ptr += 2;
+    GLfloat *data = enqueue (dpy, d, gc, GL_TRIANGLE_STRIP, segments + 5,
+                             gc->gcv.foreground);
+    GLfloat *data_ptr = data;
 
-  glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-  glEnableClientState (GL_VERTEX_ARRAY);
-  
-  vertex_pointer (dpy, GL_FLOAT, 0, data);
-  glDrawArrays (fill_p ? GL_TRIANGLE_FAN : GL_LINE_STRIP,
-                0,
-                (GLsizei)((data_ptr - data) / 2));
+    unsigned segment1 = segment0 + segments / 2;
+    unsigned ds = segment1 - segment0 + 1;
+    unsigned ds2 = ds / 2;
 
-  free(data);
-  
-#endif
-  
-#if 0
-  unsigned segments = segments_f * (fabs(angle2) / (360 * 64));
- 
-  glBegin (fill_p ? GL_TRIANGLE_FAN : GL_LINE_STRIP);
-  
-  if (fill_p /* && gc->gcv.arc_mode == ArcPieSlice */)
-    glVertex2f (cx, cy);
-  
-  /* TODO: This should fix the middle points of the arc so that the starting and ending points are OK. */
-  
-  float to_radians = 2 * M_PI / (360 * 64);
-  float theta = angle1 * to_radians, d_theta = angle2 * to_radians / segments;
-  
-  for (unsigned s = 0; s != segments + 1; ++s) /* TODO: This is the right number of segments, yes? */
-  {
-    glVertex2f(cos(theta) * w2 + cx, -sin(theta) * h2 + cy);
-    theta += d_theta;
+    if (ds & 1) {
+      arc_xy (data_ptr, cx, cy, w2, h2, (segment0 + ds2) * segment_angle);
+      data_ptr += 2;
+    }
+
+    unsigned s = ds2;
+    while (s) {
+      --s;
+      arc_xy (data_ptr, cx, cy, w2, h2, (segment0 + s) * segment_angle);
+      arc_xy (data_ptr + 2, cx, cy, w2, h2,
+              (segment1 - s) * segment_angle);
+      data_ptr += 4;
+    }
+
+    arc_xy (data_ptr, cx, cy, w2, h2, angle1_f);
+    data_ptr[2] = cx;
+    data_ptr[3] = cy;
+    data_ptr[4] = cx;
+    data_ptr[5] = cy;
+    arc_xy (data_ptr + 6, cx, cy, w2, h2, angle1_f + angle2_f);
+    data_ptr += 8;
+
+    unsigned segment2 = segment0 + segments;
+    ds = segment2 - segment1;
+    ds2 = ds / 2;
+
+    for (s = 0; s != ds2; ++s) {
+      arc_xy (data_ptr, cx, cy, w2, h2, (segment1 + s) * segment_angle);
+      arc_xy (data_ptr + 2, cx, cy, w2, h2,
+              (segment2 - s - 1) * segment_angle);
+      data_ptr += 4;
+    }
+
+    if (ds & 1) {
+      arc_xy (data_ptr, cx, cy, w2, h2, (segment1 + ds2) * segment_angle);
+      data_ptr += 2;
+    }
+
+    finish_triangle_strip (dpy, data);
+  } else if (!gc->gcv.line_width) {
+    set_fg_gc(dpy, d, gc);
+
+    GLfloat *data = malloc((segments + 2) * sizeof(GLfloat) * 2); // TODO: Check result.
+    GLfloat *data_ptr = data;
+
+    arc_xy (data_ptr, cx, cy, w2, h2, angle1_f);
+    data_ptr += 2;
+
+    for (unsigned s = 0; s != segments; ++s) {
+      // TODO: Make sure values of theta for the following arc_xy call are between
+      // angle1_f and angle1_f + angle2_f.
+      arc_xy (data_ptr, cx, cy, w2, h2, (segment0 + s) * segment_angle);
+      data_ptr += 2;
+    }
+
+    arc_xy (data_ptr, cx, cy, w2, h2, angle1_f + angle2_f);
+    data_ptr += 2;
+
+    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState (GL_VERTEX_ARRAY);
+
+    vertex_pointer (dpy, GL_FLOAT, 0, data);
+    glDrawArrays (fill_p ? GL_TRIANGLE_FAN : GL_LINE_STRIP,
+                  0,
+                  (GLsizei)((data_ptr - data) / 2));
+
+    free(data);
+  } else {
+    GLfloat gglw = gc->gcv.line_width * 0.5f;
+
+    GLfloat *data = enqueue (dpy, d, gc, GL_TRIANGLE_STRIP, 2 * segments + 4,
+                             gc->gcv.foreground);
+    GLfloat *data_ptr = data;
+
+    arc_xy2 (data_ptr, cx, cy, w2, h2, angle1_f, gglw);
+    data_ptr += 4;
+
+    for (unsigned s = 0; s != segments; ++s) {
+      arc_xy2 (data_ptr, cx, cy, w2, h2, (segment0 + s) * segment_angle,
+               gglw);
+      data_ptr += 4;
+    }
+
+    arc_xy2 (data_ptr, cx, cy, w2, h2, angle1_f + angle2_f, gglw);
+    data_ptr += 4;
+
+    finish_triangle_strip (dpy, data);
   }
-  
-  glEnd ();
-#endif
-  
+
   return 0;
 }
 

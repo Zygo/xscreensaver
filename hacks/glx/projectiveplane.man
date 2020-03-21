@@ -19,9 +19,11 @@ projectiveplane - Draws a 4d embedding of the real projective plane.
 [\-distance-bands]
 [\-direction-bands]
 [\-colors \fIcolor-scheme\fP]
+[\-onesided-colors]
 [\-twosided-colors]
 [\-distance-colors]
 [\-direction-colors]
+[\-change-colors]
 [\-depth-colors]
 [\-view-mode \fIview-mode\fP]
 [\-walk]
@@ -47,12 +49,13 @@ The \fIprojectiveplane\fP program shows a 4d embedding of the real
 projective plane.  You can walk on the projective plane, see it turn
 in 4d, or walk on it while it turns in 4d.  The fact that the surface
 is an embedding of the real projective plane in 4d can be seen in the
-depth colors mode: set all rotation speeds to 0 and the projection
-mode to 4d orthographic projection.  In its default orientation, the
-embedding of the real projective plane will then project to the Roman
-surface, which has three lines of self-intersection.  However, at the
-three lines of self-intersection the parts of the surface that
-intersect have different colors, i.e., different 4d depths.
+depth colors mode (using static colors): set all rotation speeds to 0
+and the projection mode to 4d orthographic projection.  In its default
+orientation, the embedding of the real projective plane will then
+project to the Roman surface, which has three lines of
+self-intersection.  However, at the three lines of self-intersection
+the parts of the surface that intersect have different colors, i.e.,
+different 4d depths.
 .PP
 The real projective plane is a non-orientable surface.  To make this
 apparent, the two-sided color mode can be used.  Alternatively,
@@ -65,26 +68,27 @@ non-orientable).
 The real projective plane is a model for the projective geometry in 2d
 space.  One point can be singled out as the origin.  A line can be
 singled out as the line at infinity, i.e., a line that lies at an
-infinite distance to the origin.  The line at infinity is
-topologically a circle.  Points on the line at infinity are also used
-to model directions in projective geometry.  The origin can be
-visualized in different manners.  When using distance colors, the
-origin is the point that is displayed as fully saturated red, which is
-easier to see as the center of the reddish area on the projective
-plane.  Alternatively, when using distance bands, the origin is the
-center of the only band that projects to a disk.  When using direction
-bands, the origin is the point where all direction bands collapse to a
-point.  Finally, when orientation markers are being displayed, the
-origin the the point where all orientation markers are compressed to a
-point.  The line at infinity can also be visualized in different ways.
-When using distance colors, the line at infinity is the line that is
-displayed as fully saturated magenta.  When two-sided colors are used,
-the line at infinity lies at the points where the red and green
-"sides" of the projective plane meet (of course, the real projective
-plane only has one side, so this is a design choice of the
-visualization).  Alternatively, when orientation markers are being
-displayed, the line at infinity is the place where the orientation
-markers change their orientation.
+infinite distance to the origin.  The line at infinity, like all lines
+in the projective plane, is topologically a circle.  Points on the
+line at infinity are also used to model directions in projective
+geometry.  The origin can be visualized in different manners.  When
+using distance colors (and using static colors), the origin is the
+point that is displayed as fully saturated red, which is easier to see
+as the center of the reddish area on the projective plane.
+Alternatively, when using distance bands, the origin is the center of
+the only band that projects to a disk.  When using direction bands,
+the origin is the point where all direction bands collapse to a point.
+Finally, when orientation markers are being displayed, the origin the
+the point where all orientation markers are compressed to a point.
+The line at infinity can also be visualized in different ways.  When
+using distance colors (and using static colors), the line at infinity
+is the line that is displayed as fully saturated magenta.  When
+two-sided (and static) colors are used, the line at infinity lies at
+the points where the red and green "sides" of the projective plane
+meet (of course, the real projective plane only has one side, so this
+is a design choice of the visualization).  Alternatively, when
+orientation markers are being displayed, the line at infinity is the
+place where the orientation markers change their orientation.
 .PP
 Note that when the projective plane is displayed with bands, the
 orientation markers are placed in the middle of the bands.  For
@@ -134,27 +138,32 @@ origin) is a Moebius strip, which also shows that the projective plane
 is non-orientable.
 .PP
 Finally, the colors with with the projective plane is drawn can be set
-to two-sided, distance, direction, or depth.  In two-sided mode, the
-projective plane is drawn with red on one "side" and green on the
-"other side".  As described above, the projective plane only has one
-side, so the color jumps from red to green along the line at infinity.
-This mode enables you to see that the projective plane is
-non-orientable.  In distance mode, the projective plane is displayed
-with fully saturated colors that depend on the distance of the points
-on the projective plane to the origin.  The origin is displayed in
-red, the line at infinity is displayed in magenta.  If the projective
-plane is displayed as distance bands, each band will be displayed with
-a different color.  In direction mode, the projective plane is
-displayed with fully saturated colors that depend on the angle of the
-points on the projective plane with respect to the origin.  Angles in
-opposite directions to the origin (e.g., 15 and 205 degrees) are
-displayed in the same color since they are projectively equivalent.
-If the projective plane is displayed as direction bands, each band
-will be displayed with a different color.  Finally, in depth mode the
-projective plane with colors chosen depending on the 4d "depth" (i.e.,
-the w coordinate) of the points on the projective plane at its default
-orientation in 4d.  As discussed above, this mode enables you to see
-that the projective plane does not intersect itself in 4d.
+to one-sided, two-sided, distance, direction, or depth.  In one-sided
+mode, the projective plane is drawn with the same color on both
+"sides."  In two-sided mode (using static colors), the projective
+plane is drawn with red on one "side" and green on the "other side."
+As described above, the projective plane only has one side, so the
+color jumps from red to green along the line at infinity.  This mode
+enables you to see that the projective plane is non-orientable.  If
+changing colors are used in two-sided mode, changing complementary
+colors are used on the respective "sides."  In distance mode, the
+projective plane is displayed with fully saturated colors that depend
+on the distance of the points on the projective plane to the origin.
+If static colors are used, the origin is displayed in red, while the
+line at infinity is displayed in magenta.  If the projective plane is
+displayed as distance bands, each band will be displayed with a
+different color.  In direction mode, the projective plane is displayed
+with fully saturated colors that depend on the angle of the points on
+the projective plane with respect to the origin.  Angles in opposite
+directions to the origin (e.g., 15 and 205 degrees) are displayed in
+the same color since they are projectively equivalent.  If the
+projective plane is displayed as direction bands, each band will be
+displayed with a different color.  Finally, in depth mode the
+projective plane is displayed with colors chosen depending on the 4d
+"depth" (i.e., the w coordinate) of the points on the projective plane
+at its default orientation in 4d.  As discussed above, this mode
+enables you to see that the projective plane does not intersect itself
+in 4d.
 .PP
 The rotation speed for each of the six planes around which the
 projective plane rotates can be chosen.  For the walk-and-turn mode,
@@ -238,18 +247,23 @@ to color the projective plane.
 .B \-colors random
 Display the projective plane with a random color scheme (default).
 .TP 8
+.B \-colors onesided \fP(Shortcut: \fB\-onesided-colors\fP)
+Display the projective plane with a single color.
+.TP 8
 .B \-colors twosided \fP(Shortcut: \fB\-twosided-colors\fP)
-Display the projective plane with two colors: red on one "side" and
-green on the "other side."  Note that the line at infinity lies at the
+Display the projective plane with two colors: one color one "side" and
+the complementary color on the "other side."  For static colors, the
+colors are red and green.  Note that the line at infinity lies at the
 points where the red and green "sides" of the projective plane meet,
 i.e., where the orientation of the projective plane reverses.
 .TP 8
 .B \-colors distance \fP(Shortcut: \fB\-distance-colors\fP)
 Display the projective plane with fully saturated colors that depend
 on the distance of the points on the projective plane to the origin.
-The origin is displayed in red, the line at infinity is displayed in
-magenta.  If the projective plane is displayed as distance bands, each
-band will be displayed with a different color.
+For static colors, the origin is displayed in red, while the line at
+infinity is displayed in magenta.  If the projective plane is
+displayed as distance bands, each band will be displayed with a
+different color.
 .TP 8
 .B \-colors direction \fP(Shortcut: \fB\-direction-colors\fP)
 Display the projective plane with fully saturated colors that depend
@@ -263,6 +277,16 @@ each band will be displayed with a different color.
 Display the projective plane with colors chosen depending on the 4d
 "depth" (i.e., the w coordinate) of the points on the projective plane
 at its default orientation in 4d.
+.PP
+The following options determine whether the colors with which the
+projective plane is displayed are static or are changing dynamically.
+.TP 8
+.B \-change-colors
+Change the colors with which the projective plane is displayed
+dynamically.
+.TP 8
+.B \-no-change-colors
+Use static colors to display the projective plane (default).
 .PP
 The following four options are mutually exclusive.  They determine how
 to view the projective plane.
@@ -388,7 +412,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2005-2014 by Carsten Steger.  Permission to use, copy,
+Copyright \(co 2013-2020 by Carsten Steger.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
 any purpose is hereby granted without fee, provided that the above
 copyright notice appear in all copies and that both that copyright
@@ -397,4 +421,4 @@ No representations are made about the suitability of this software for
 any purpose.  It is provided "as is" without express or implied
 warranty.
 .SH AUTHOR
-Carsten Steger <carsten@mirsanmir.org>, 03-oct-2014.
+Carsten Steger <carsten@mirsanmir.org>, 06-jan-2020.

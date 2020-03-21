@@ -137,7 +137,8 @@ SRCS		= xscreensaver-gl-helper.c normals.c erase-gl.c fps-gl.c \
 		  raverhoop.c hydrostat.c discoball.c cubetwist.c cubestack.c \
 		  splodesic.c hexstrut.c vigilance.c seccam.c esper.c \
 		  razzledazzle.c ships.c peepers.c crumbler.c quickhull.c \
-		  maze3d.c handsy.c handsy_model.c gravitywell.c deepstars.c
+		  maze3d.c handsy.c handsy_model.c gravitywell.c deepstars.c \
+		  gibson.c etruscanvenus.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -184,7 +185,8 @@ OBJS		= xscreensaver-gl-helper.o normals.o erase-gl.o fps-gl.o \
 		  raverhoop.o hydrostat.o discoball.o cubetwist.o cubestack.o \
 		  splodesic.o hexstrut.o vigilance.o seccam.o esper.o \
 		  razzledazzle.o ships.o peepers.o crumbler.o quickhull.o \
-		  maze3d.o handsy.o handsy_model.o gravitywell.o deepstars.o
+		  maze3d.o handsy.o handsy_model.o gravitywell.o deepstars.o \
+		  gibson.o etruscanvenus.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -205,7 +207,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  splitflap dymaxionmap unicrud energystream raverhoop \
 		  hydrostat discoball cubetwist cubestack splodesic \
 		  hexstrut vigilance esper razzledazzle peepers crumbler \
-		  maze3d handsy gravitywell deepstars
+		  maze3d handsy gravitywell deepstars gibson etruscanvenus
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
@@ -273,7 +275,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  discoball.man cubetwist.man cubestack.man splodesic.man \
 		  hexstrut.man vigilance.man esper.man razzledazzle.man \
 		  peepers.man crumbler.man maze3d.man handsy.man \
-		  gravitywell.man deepstars.man
+		  gravitywell.man deepstars.man gibson.man etruscanvenus.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -791,6 +793,9 @@ projectiveplane:	projectiveplane.o	$(HACK_TRACK_OBJS)
 romanboy:	romanboy.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
+etruscanvenus:	etruscanvenus.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
 glmatrix:	glmatrix.o	$(PNG) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(PNG) $(HACK_OBJS) $(PNG_LIBS)
 
@@ -1032,6 +1037,9 @@ gravitywell:	gravitywell.o	$(HACK_TRACK_OBJS)
 
 deepstars:	deepstars.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+gibson:		gibson.o	$(PNG) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(PNG) $(HACK_TRACK_OBJS) $(PNG_LIBS)
 
 ##############################################################################
 #
@@ -1731,6 +1739,23 @@ esper.o: $(UTILS_SRC)/xshm.h
 esper.o: $(UTILS_SRC)/yarandom.h
 esper.o: $(HACK_SRC)/xlockmoreI.h
 esper.o: $(HACK_SRC)/xlockmore.h
+etruscanvenus.o: ../../config.h
+etruscanvenus.o: $(srcdir)/curlicue.h
+etruscanvenus.o: $(HACK_SRC)/fps.h
+etruscanvenus.o: $(srcdir)/gltrackball.h
+etruscanvenus.o: $(HACK_SRC)/recanim.h
+etruscanvenus.o: $(HACK_SRC)/screenhackI.h
+etruscanvenus.o: $(UTILS_SRC)/colors.h
+etruscanvenus.o: $(UTILS_SRC)/erase.h
+etruscanvenus.o: $(UTILS_SRC)/font-retry.h
+etruscanvenus.o: $(UTILS_SRC)/grabscreen.h
+etruscanvenus.o: $(UTILS_SRC)/hsv.h
+etruscanvenus.o: $(UTILS_SRC)/resources.h
+etruscanvenus.o: $(UTILS_SRC)/usleep.h
+etruscanvenus.o: $(UTILS_SRC)/visual.h
+etruscanvenus.o: $(UTILS_SRC)/yarandom.h
+etruscanvenus.o: $(HACK_SRC)/xlockmoreI.h
+etruscanvenus.o: $(HACK_SRC)/xlockmore.h
 extrusion-helix2.o: ../../config.h
 extrusion-helix2.o: $(srcdir)/extrusion.h
 extrusion-helix3.o: ../../config.h
@@ -1966,6 +1991,23 @@ gflux.o: $(UTILS_SRC)/visual.h
 gflux.o: $(UTILS_SRC)/yarandom.h
 gflux.o: $(HACK_SRC)/xlockmoreI.h
 gflux.o: $(HACK_SRC)/xlockmore.h
+gibson.o: ../../config.h
+gibson.o: $(HACK_SRC)/fps.h
+gibson.o: $(HACK_SRC)/recanim.h
+gibson.o: $(srcdir)/rotator.h
+gibson.o: $(HACK_SRC)/screenhackI.h
+gibson.o: $(srcdir)/texfont.h
+gibson.o: $(UTILS_SRC)/colors.h
+gibson.o: $(UTILS_SRC)/erase.h
+gibson.o: $(UTILS_SRC)/font-retry.h
+gibson.o: $(UTILS_SRC)/grabscreen.h
+gibson.o: $(UTILS_SRC)/hsv.h
+gibson.o: $(UTILS_SRC)/resources.h
+gibson.o: $(UTILS_SRC)/usleep.h
+gibson.o: $(UTILS_SRC)/visual.h
+gibson.o: $(UTILS_SRC)/yarandom.h
+gibson.o: $(HACK_SRC)/xlockmoreI.h
+gibson.o: $(HACK_SRC)/xlockmore.h
 glblur.o: ../../config.h
 glblur.o: $(HACK_SRC)/fps.h
 glblur.o: $(srcdir)/gltrackball.h

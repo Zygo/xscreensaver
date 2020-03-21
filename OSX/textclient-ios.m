@@ -81,12 +81,26 @@ textclient_mobile_date_string (void)
 
 - (void) startLoading
 {
-  // NSLog(@"textclient thread loading %@", self.url);
+# ifndef __OPTIMIZE__
+  NSLog(@"textclient thread loading %@", self.url);
+# endif
+  NSError *e = 0;
   self.result = [NSString stringWithContentsOfURL: self.url
                           encoding: NSUTF8StringEncoding
-                          error: nil];
-  // NSLog(@"textclient thread finished %@ (length %d)", self.url,
-  //      (unsigned int) [self.result length]);
+                          error: &e];
+  if (!self.result || [self.result length] == 0) {
+    // Aug 2019: loading URLs in the simulator no longer works, hooray!
+    NSLog(@"URL error: %@: %@", self.url, e);
+    self.result = [[[[self.url host]
+                      stringByAppendingString:@": "]
+                        stringByAppendingString:
+                         (e ? [e localizedDescription] : @"null response")]
+                       stringByAppendingString:@"\n\n"];
+  }
+# ifndef __OPTIMIZE__
+  NSLog(@"textclient thread finished %@ (length %d)", self.url,
+        (unsigned int) [self.result length]);
+# endif
 }
 
 @end
@@ -110,19 +124,25 @@ textclient_mobile_url_string (Display *dpy, const char *url)
   // URL #2, it might get URL #1 instead.  Oh well, who cares.
 
   if (result) {						// Thread finished
-    // NSLog(@"textclient finished %s (length %d)", url,
-    //       (unsigned int) [result length]);
+# ifndef __OPTIMIZE__
+    NSLog(@"textclient finished %s (length %d)", url,
+          (unsigned int) [result length]);
+# endif
     char *s = strdup ([result cStringUsingEncoding:NSUTF8StringEncoding]);
     loader.url    = nil;
     loader.result = nil;
     return s;
 
   } else if ([loader url]) {				// Waiting on thread
-    // NSLog(@"textclient waiting...");
+# ifndef __OPTIMIZE__
+    NSLog(@"textclient waiting...");
+# endif
     return 0;
 
   } else {						// Launch thread
-    // NSLog(@"textclient launching %s...", url);
+# ifndef __OPTIMIZE__
+    NSLog(@"textclient launching %s...", url);
+# endif
     loader.url =
       [NSURL URLWithString:
                [NSString stringWithCString: url

@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2019 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -550,7 +550,10 @@ warning_dialog (GtkWidget *parent, const char *message,
   if (!parent ||
       !GET_WINDOW (parent)) /* too early to pop up transient dialogs */
     {
-      fprintf (stderr, "%s: too early for dialog?\n", progname);
+      fprintf (stderr,
+               "%s: too early for warning dialog?"
+               "\n\n\t%s\n\n",
+               progname, message);
       free(msg);
       return False;
     }
@@ -1043,7 +1046,9 @@ await_xscreensaver (state *s)
         strcat (buf, STFU
 	  _("You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
-            "turned on.  Try running this command:\n"
+            "turned on."
+/*
+            "  Try running this command:\n"
             "\n"
             "                        xhost +localhost\n"
             "\n"
@@ -1053,9 +1058,10 @@ await_xscreensaver (state *s)
             "on to this machine to access your screen, which might be\n"
             "considered a security problem.  Please read the xscreensaver\n"
             "manual and FAQ for more information.\n"
+ */
             "\n"
             "You shouldn't run X as root. Instead, you should log in as a\n"
-            "normal user, and `su' as necessary."));
+            "normal user, and `sudo' as necessary."));
       else
         strcat (buf, _("Please check your $PATH and permissions."));
 
@@ -4422,7 +4428,8 @@ kde_screensaver_active_p (void)
   FILE *p = popen ("dcop kdesktop KScreensaverIface isEnabled 2>/dev/null",
                    "r");
   char buf[255];
-  fgets (buf, sizeof(buf)-1, p);
+  if (!p) return False;
+  if (!fgets (buf, sizeof(buf)-1, p)) return False;
   pclose (p);
   if (!strcmp (buf, "true\n"))
     return True;
@@ -4433,7 +4440,11 @@ kde_screensaver_active_p (void)
 static void
 kill_kde_screensaver (void)
 {
-  system ("dcop kdesktop KScreensaverIface enable false");
+  /* Use empty body to kill warning from gcc -Wall with
+     "warning: ignoring return value of 'system',
+      declared with attribute warn_unused_result"
+  */
+  if (system ("dcop kdesktop KScreensaverIface enable false")) {}
 }
 
 

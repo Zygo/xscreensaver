@@ -40,9 +40,13 @@
     </select>
 
     <select id="colors">
-      <option id="twosided" _label="Two-sided" arg-set="-twosided"/>
+      <option id="onesided"   _label="One-sided" arg-set="-onesided"/>
+      <option id="twosided"   _label="Two-sided" arg-set="-twosided"/>
       <option id="colorwheel" _label="Color wheel"/>
     </select>
+
+    <boolean id="change-colors" _label="Change colors"
+              arg-set="-change-colors"/>
 
     <select id="projection3d">
       <option id="perspective-3d" _label="Perspective 3D"/>

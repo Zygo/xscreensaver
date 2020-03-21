@@ -1,5 +1,5 @@
 /* passwd.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-2018 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -251,7 +251,7 @@ do_syslog (saver_info *si, Bool verbose_p)
 {
 # ifdef HAVE_SYSLOG
   struct passwd *pw = getpwuid (getuid ());
-  char *d = DisplayString (si->dpy);
+  char *d = (si->dpy ? DisplayString (si->dpy) : 0);
   char *u = (pw && pw->pw_name ? pw->pw_name : "???");
   int opt = 0;
   int fac = 0;
@@ -324,8 +324,9 @@ xss_authenticate(saver_info *si, Bool verbose_p)
           si->cached_passwd &&
           !*si->cached_passwd)
         {
-          fprintf (stderr, "%s: assuming null password means cancel.\n",
-                   blurb());
+          if (verbose_p)
+            fprintf (stderr, "%s: assuming null password means cancel.\n",
+                     blurb());
           si->unlock_state = ul_cancel;
         }
 
@@ -354,11 +355,11 @@ xss_authenticate(saver_info *si, Bool verbose_p)
         {
           /* If any auth method gets a cancel or timeout, don't try the
              next auth method!  We're done! */
-          fprintf (stderr,
-                   "%s: authentication via %s %s.\n",
-                       blurb(), methods[i].name,
-                   (si->unlock_state == ul_cancel
-                    ? "cancelled" : "timed out"));
+          if (verbose_p)
+            fprintf (stderr, "%s: authentication via %s %s.\n",
+                     blurb(), methods[i].name,
+                     (si->unlock_state == ul_cancel
+                      ? "cancelled" : "timed out"));
           goto DONE;
         }
     }

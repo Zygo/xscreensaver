@@ -1311,7 +1311,7 @@ hack_text (m_state *state)
   /* Stupid iPhone X bezel.
      #### This is the worst of all possible ways to do this!  But how else?
    */
-  if (state->xgwa.width == 2436 || state->xgwa.height == 2436)
+  if (state->xgwa.width == 1218 || state->xgwa.height == 1218)
     switch (state->mode) 
       {
       case TRACE_TEXT_A:
@@ -1319,7 +1319,7 @@ hack_text (m_state *state)
       case KNOCK:
       case NMAP:
         {
-          int off = 5 * (state->small_p ? 2 : 1);
+          int off = 2 * (state->small_p ? 2 : 1);
           if (state->xgwa.width > state->xgwa.height)
             {
               state->typing_left_margin += off;

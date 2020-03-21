@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -442,6 +442,11 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
   return 0;
 }
 
+
+#ifdef __GNUC__  /* Silence warning */
+static void startup_ehandler (String, String, String, String, String *,
+                              Cardinal *) __attribute__((noreturn));
+#endif /* __GNUC__ */
 
 /* This error handler is used only while the X connection is being set up;
    after we've got a connection, we don't use this handler again.  The only
@@ -1561,6 +1566,7 @@ main (int argc, char **argv)
       if (ssi->real_screen_p)
         if (ensure_no_screensaver_running (si->dpy, si->screens[i].screen))
           exit (1);
+      ssi->current_hack = -1;
     }
 
   lock_initialization (si, &argc, argv);
@@ -1589,6 +1595,8 @@ main (int argc, char **argv)
 
   initialize_stderr (si);
   handle_signals (si);
+
+  store_saver_status (si);	/* for xscreensaver-command -status */
 
 # ifdef HAVE_LIBSYSTEMD   /* Launch it in the background */
   si->systemd_pid = fork_and_exec_1 (si, 0, "xscreensaver-systemd");
@@ -1904,13 +1912,13 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
                              "suspending.");
       si->selection_mode = 0;
       si->demoing_p = False;
-      si->emergency_lock_p = True;
       si->throttled_p = True;
 
       /* When suspending, immediately lock, if locking enabled. */
 # ifndef NO_LOCKING
       if (p->lock_p && !si->locked_p && !si->locking_disabled_p)
         {
+          si->emergency_lock_p = True;
           if (p->verbose_p)
             fprintf (stderr, "%s: locking.\n", blurb());
           set_locked_p (si, True);

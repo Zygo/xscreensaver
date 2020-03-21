@@ -165,6 +165,7 @@ extern void jwxyz_gl_copy_area_read_tex_image (Display *dpy,
                                                int dst_x, int dst_y);
 extern void jwxyz_gl_copy_area_write_tex_image (Display *dpy, GC gc,
                                                 int src_x, int src_y,
+                                                int src_depth,
                                                 unsigned int width,
                                                 unsigned int height,
                                                 int dst_x, int dst_y);

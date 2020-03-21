@@ -11,13 +11,13 @@
 
 #ifdef STANDALONE
 #define DEFAULTS	"*delay:			30000   \n"	\
-					"*showFPS:			False   \n" \
-					"*suppressRotationAnimation: True\n" \
+			"*showFPS:			False   \n" \
+			"*suppressRotationAnimation: True\n" \
 
 # define release_deepstars 0
-# include "xlockmore.h"				/* from the xscreensaver distribution */
+# include "xlockmore.h"			/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
+# include "xlock.h"			/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef USE_GL /* whole file */

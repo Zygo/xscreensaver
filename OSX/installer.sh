@@ -1,5 +1,5 @@
 #!/bin/sh
-# XScreenSaver, Copyright © 2013-2018 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2019 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -65,7 +65,6 @@ if [ "$DEBUG" != 0 ]; then DSTVOLUME=/tmp; fi
 SRC=`dirname "$PACKAGE_PATH"`/"Screen Savers"
 DST1="$DSTVOLUME/Library/Screen Savers"
 DST2="$DSTVOLUME/Applications"
-PU="$DSTVOLUME/$HOME/Library/Screen Savers"
 
 # Because of Sparkle.framework weirdness, "XScreenSaverUpdater.app" is
 # in the DMG as a compressed tar file instead of an app, and we unpack
@@ -131,13 +130,45 @@ for f in *.{saver,app} "$UPDATER_SRC" ; do
     spctl --add "$DD"
   fi
 
-  # If this saver or app is also installed in the per-user directory,
-  # delete that copy so that we don't have conflicts.
+  # If this saver or app is also installed in any per-user directory,
+  # delete those copies so that we don't have conflicts.
   #
   if [ "$DEBUG" = 0 ]; then
-    rm -rf "$PU/$f"
+    rm -rf "$DSTVOLUME/Users/"*"/Library/Screen Savers/$f"
   fi
 done
+
+
+# Savers are sandboxed as of 10.15, which means the preferences files
+# moved.  If this is 10.15 or later, and there are old preferences files,
+# move them to the new location.  Without this, all saver preferences
+# would be wiped by the upgrade.
+#
+V=`sw_vers -productVersion`
+V0=`echo $V | sed 's/^\([^.]*\).*/\1/'`
+V1=`echo $V | sed 's/^[^.]*\.\([^.]*\).*$/\1/'`
+
+if [ "$V0" == 10 -a \! "$V1" \< 15 ]; then	# If >= 10.15
+  for HOME2 in "$DSTVOLUME/Users/"* ; do	# for each user
+
+    CON="$HOME2/Library/Containers"
+    LEG="$CON/com.apple.ScreenSaver.Engine.legacyScreenSaver"
+    NBH="$LEG/Data/Library/Preferences/ByHost"
+    OBH="$HOME2/Library/Preferences/ByHost"
+
+    if [ -d "$CON" ]; then		# if there are Containers
+      if ! [ -d "$LEG" ]; then		# but no legacyScreenSaver already
+        UG=`stat -f %u:%g "$CON"`
+        umask 077
+        mkdir -p "$NBH"			# create tree
+        chown -R "$UG" "$LEG"		# correct user/group
+        echo "Moving old prefs to $NBH" >&2
+        mv "$OBH/org.jwz.xscreensaver."* "$NBH/"
+      fi
+    fi
+  done
+fi
+
 
 # Launch System Preferences with the Screen Saver pane selected.
 #

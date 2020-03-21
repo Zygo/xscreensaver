@@ -6,10 +6,21 @@ GRADLE = ./gradlew
 default:: debug
 all:: release
 
-clean::
-	$(GRADLE) clean
+# Your sdk.dir and ndk.dir might go in here; gradle wants the file to exist.
+local.properties:
+	touch local.properties
 
-distdepend::
+clean:: local.properties
+	@\
+  if [ "x" == x"$$JAVA_HOME" ] && ! ( which java >&- 2>&- ) ; then	\
+    echo "android: not cleaning: no java" >&2 ;				\
+  else									\
+    echo $(GRADLE) clean ;						\
+         $(GRADLE) clean ;						\
+  fi
+
+
+distdepend:: local.properties
 
 # Set this to the set of platforms you want to compile for in debug mode.
 # E.g., if you are running an x86 emulator, there's no point in compiling
@@ -97,6 +108,7 @@ export ANDROID_HACKS=		\
 	epicycle		\
 	eruption		\
 	esper			\
+	etruscanvenus		\
 	euler2d			\
 	fadeplot		\
 	fiberlamp		\
@@ -114,6 +126,7 @@ export ANDROID_HACKS=		\
 	geodesic		\
 	geodesicgears		\
 	gflux			\
+	gibson			\
 	glblur			\
 	glcells			\
 	gleidescope		\
@@ -129,6 +142,7 @@ export ANDROID_HACKS=		\
 	grav			\
 	gravitywell		\
 	greynetic		\
+	halftone		\
 	halo			\
 	handsy			\
 	helix			\
@@ -197,6 +211,7 @@ export ANDROID_HACKS=		\
 	rubik			\
 	rubikblocks		\
 	sballs			\
+	scooter			\
 	shadebobs		\
 	sierpinski		\
 	sierpinski3d		\
@@ -251,7 +266,6 @@ ANDROID_TODO=			\
 	carousel		\
 	fliptext		\
 	fontglide		\
-	halftone		\
 	juggler3d		\
 	molecule		\
 	pedal			\
@@ -323,6 +337,7 @@ clean_thumbs::
 	done
 
 distclean:: clean_thumbs clean
+	rm -rf .gradle
 
 
 EXTRA_TARFILES = xscreensaver/res/drawable/thumbnail.png \
@@ -337,16 +352,19 @@ echo_tarfiles:
 		-o -name '*_settings.xml'	\
 		-o -name '*_wallpaper.xml'	\
 		-o -name AndroidManifest.xml	\
-		-o -name strings.xml		\
-		-o -name settings.xml		\
-		-o -name attrs.xml		\
 		-o -name .gitignore		\
 		-o -name .gradle		\
-		-o -name drawable		\
+		-o -name .idea			\
+		-o -name attrs.xml		\
 		-o -name build			\
+		-o -name caches			\
+		-o -name drawable		\
 		-o -name gen			\
 		-o -name libs			\
+		-o -name local.properties	\
 		-o -name obj			\
+		-o -name settings.xml		\
+		-o -name strings.xml		\
 		\) -prune \)			\
 		-o \( \( -type f -o -type l \)	\
 		      -print \)			\
@@ -360,9 +378,9 @@ images_png_h:
 run_check::
 	../hacks/check-configs.pl --build-android $(ANDROID_HACKS)
 
-debug:: m6502.h run_check images_png_h
+debug::   local.properties m6502.h run_check images_png_h
 	$(GRADLE) assembleDebug
-release:: m6502.h run_check images_png_h
+release:: local.properties m6502.h run_check images_png_h
 	export APP_ABI=all ; \
 	$(GRADLE) assembleRelease
 

@@ -87,7 +87,7 @@
 "*passwd.login.label:		New Login",
 "*passwd.user.label:		Username:",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright \\251 1991-2019 by",
+"*splash.body.label:		Copyright \\251 1991-2020 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -194,6 +194,7 @@
   GL: 				menger -root				    \\n\
   GL: 				molecule -root				    \\n\
 				rotzoomer -root				    \\n\
+				scooter -root				    \\n\
 				speedmine -root				    \\n\
   GL: 				starwars -root				    \\n\
   GL: 				stonerview -root			    \\n\
@@ -326,7 +327,9 @@
   GL: 				razzledazzle -root			    \\n\
 				vfeedback -root				    \\n\
   GL: 				deepstars -root				    \\n\
-  GL: 				gravitywell -root			    \\n",
+  GL: 				gravitywell -root			    \\n\
+  GL: 				etruscanvenus -root			    \\n\
+  GL: 				gibson -root				    \\n",
 "*hacks.antinspect.name:     AntInspect",
 "*hacks.antmaze.name:        AntMaze",
 "*hacks.antspotlight.name:   AntSpotlight",
@@ -352,6 +355,7 @@
 "*hacks.dnalogo.name:        DNA Logo",
 "*hacks.dymaxionmap.name:    DymaxionMap",
 "*hacks.energystream.name:   EnergyStream",
+"*hacks.etruscanvenus.name:  EtruscanVenus",
 "*hacks.euler2d.name:        Euler2D",
 "*hacks.fadeplot.name:       FadePlot",
 "*hacks.filmleader.name:     FilmLeader",

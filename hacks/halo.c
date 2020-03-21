@@ -409,6 +409,8 @@ static const char *halo_defaults [] = {
 #ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
+  ".lowrez:		true",  /* Too slow on Retina screens otherwise */
+                     /* But that looks crappy too. It's bad either way. */
   0
 };
 

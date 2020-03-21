@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>5.43</string>
+	<string>5.44</string>
 	<key>CFBundleIcons</key>
 	<dict/>
 	<key>CFBundleIcons~ipad</key>
@@ -19,23 +19,25 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleLongVersionString</key>
-	<string>5.43</string>
+	<string>5.44</string>
 	<key>CFBundleName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.43</string>
+	<string>5.44</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>5.43</string>
+	<string>5.44</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>5.43</string>
+	<string>5.44</string>
 	<key>NSMainNibFile</key>
 	<string>iSaverRunner</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>XScreenSaver displays manipulated versions of your photos.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>OCRAStd.otf</string>
@@ -67,6 +69,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>XScreenSaver displays manipulated versions of your photos.</string></dict>
+</dict>
 </plist>

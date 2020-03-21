@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2009 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2019 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -2862,16 +2862,10 @@ static void display_polytopes(ModeInfo *mi)
 ENTRYPOINT void reshape_polytopes(ModeInfo *mi, int width, int height)
 {
   polytopesstruct *pp = &poly[MI_SCREEN(mi)];
-  int y = 0;
-
-  if (width > height * 5) {   /* tiny window: show middle */
-    height = width;
-    y = -height/2;
-  }
 
   pp->WindW = (GLint)width;
   pp->WindH = (GLint)height;
-  glViewport(0,y,width,height);
+  glViewport(0,0,width,height);
   pp->aspect = (GLfloat)width/(GLfloat)height;
 }
 

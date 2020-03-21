@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2019 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2020 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -939,6 +939,7 @@ send_ping (ping_data *pd, const sonar_bogie *b)
   struct ICMP *icmph;
   const char *token = "org.jwz.xscreensaver.sonar";
   char *host_id;
+  struct timeval tval;
 
   unsigned long pcktsiz = (sizeof(struct ICMP) + sizeof(struct timeval) +
                  sizeof(socklen_t) + pb->addrlen +
@@ -956,12 +957,16 @@ send_ping (ping_data *pd, const sonar_bogie *b)
   ICMP_CHECKSUM(icmph) = 0;
   ICMP_ID(icmph) = pd->pid;
   ICMP_SEQ(icmph) = pd->seq++;
+  /* struct timeval needs alignment, so we first use aligned buffer for
+     gettimeofday() and later copy the result to packet buffer
+   */
 # ifdef GETTIMEOFDAY_TWO_ARGS
-  gettimeofday((struct timeval *) &packet[sizeof(struct ICMP)],
+  gettimeofday((struct timeval *) &tval,
                (struct timezone *) 0);
 # else
-  gettimeofday((struct timeval *) &packet[sizeof(struct ICMP)]);
+  gettimeofday((struct timeval *) &tval);
 # endif
+  memcpy(&packet[sizeof(struct ICMP)], &tval, sizeof tval);
 
   /* We store the sockaddr of the host we're pinging in the packet, and parse
      that out of the return packet later (see get_ping() for why).
@@ -1068,7 +1073,7 @@ get_ping (sonar_sensor_data *ssd)
   int result;
   u_char packet[1024];
   struct timeval now;
-  struct timeval *then;
+  struct timeval then;
   struct ip *ip;
   int iphdrlen;
   struct ICMP *icmph;
@@ -1132,7 +1137,10 @@ get_ping (sonar_sensor_data *ssd)
           ip = (struct ip *) packet;
           iphdrlen = IP_HDRLEN(ip) << 2;
           icmph = (struct ICMP *) &packet[iphdrlen];
-          then  = (struct timeval *) &packet[iphdrlen + sizeof(struct ICMP)];
+           /* struct timeval data in packet is not aligned, move the data to
+              the aligned buffer
+             */
+          memcpy(&then, &packet[iphdrlen + sizeof(struct ICMP)], sizeof then);
 
 
           /* Ignore anything but ICMP Replies */
@@ -1221,7 +1229,7 @@ get_ping (sonar_sensor_data *ssd)
           bl = new;
 
           {
-            double msec = delta(then, &now) / 1000.0;
+            double msec = delta(&then, &now) / 1000.0;
 
             if (pd->times_p)
               {
@@ -1694,7 +1702,7 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
     fprintf (stderr, "%s: unable to open icmp socket\n", progname);
 
   /* Disavow privs */
-  setuid(getuid());
+  if (setuid(getuid()) == -1) abort();
 
   pd->pid = getpid() & 0xFFFF;
   pd->seq = 0;

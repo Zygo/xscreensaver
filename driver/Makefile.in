@@ -301,7 +301,7 @@ install-program: $(EXES)
 	echo $$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver ;    \
 	$$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver
 	@for exe in xscreensaver-command xscreensaver-demo	           \
-		    xscreensaver-getimage @EXES_OSX@ ; do	           \
+		    xscreensaver-getimage @EXES_OSX@ @EXES_SYSTEMD@ ; do   \
 	  echo $(INSTALL_PROGRAM) $$exe $(install_prefix)$(bindir)/$$exe ; \
 	       $(INSTALL_PROGRAM) $$exe $(install_prefix)$(bindir)/$$exe ; \
 	 done
@@ -633,7 +633,9 @@ clean:
 
 distclean: clean
 	-rm -f Makefile XScreenSaver.ad \
-	TAGS *~ "#"* screensaver-properties.desktop
+	TAGS *~ "#"* screensaver-properties.desktop \
+	xscreensaver-demo.glade2 \
+	xscreensaver.pam
 
 # Adds all current dependencies to Makefile
 depend: XScreenSaver_ad.h XScreenSaver_Xm_ad.h
@@ -651,9 +653,10 @@ distdepend: check_men update_ad_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \
-	$(SAVER_SRCS_1) $(MOTIF_SRCS) $(GTK_SRCS) $(GETIMG_SRCS_1)	    \
-	$(PWENT_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS)		    \
-	$(SYSTEMD_SRCS) $(TEST_SRCS) 2>/dev/null |			    \
+	$(SAVER_SRCS_1) $(SYSTEMD_SRCS) $(MOTIF_SRCS) $(GTK_SRCS)	    \
+	$(PWENT_SRCS) $(PWHELPER_SRCS) $(KERBEROS_SRCS) $(PAM_SRCS)	    \
+	$(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS) $(GETIMG_SRCS_1)	    \
+	$(PDF2JPEG_SRCS) $(TEST_SRCS) 2>/dev/null |			    \
 	sort -d |							    \
 	(								    \
 	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
@@ -866,7 +869,7 @@ test-mlstring.o: mlstring.c
 test-mlstring: test-mlstring.o
 	$(CC) -DTEST $(LDFLAGS) -o $@ test-mlstring.o $(SAVER_LIBS)
 
-TEST_FADE_OBJS = test-fade.o $(UTILS_SRC)/fade.o $(DEMO_UTIL_OBJS)
+TEST_FADE_OBJS = test-fade.o $(UTILS_BIN)/fade.o $(DEMO_UTIL_OBJS)
 test-fade: test-fade.o $(UTILS_BIN)/fade.o
 	$(CC) $(LDFLAGS) -o $@ $(TEST_FADE_OBJS) $(SAVER_LIBS)
 
@@ -923,11 +926,19 @@ lock.o: $(srcdir)/types.h
 lock.o: $(UTILS_SRC)/resources.h
 lock.o: $(srcdir)/xscreensaver.h
 mlstring.o: $(srcdir)/mlstring.h
+passwd-helper.o: ../config.h
+passwd-helper.o: $(srcdir)/prefs.h
+passwd-helper.o: $(srcdir)/types.h
+passwd-helper.o: $(srcdir)/xscreensaver.h
+passwd-kerberos.o: ../config.h
 passwd.o: $(srcdir)/auth.h
 passwd.o: ../config.h
 passwd.o: $(srcdir)/prefs.h
 passwd.o: $(srcdir)/types.h
 passwd.o: $(srcdir)/xscreensaver.h
+passwd-pam.o: $(srcdir)/auth.h
+passwd-pam.o: ../config.h
+passwd-pam.o: $(srcdir)/types.h
 passwd-pwent.o: ../config.h
 prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h

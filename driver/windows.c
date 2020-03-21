@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1463,6 +1463,7 @@ resize_screensaver_window (saver_info *si)
           if (ssi->cmap)
             XInstallColormap (si->dpy, ssi->cmap);
           XMapRaised (si->dpy, ssi->screensaver_window);
+          XSync (si->dpy, False);
           if (! ssi->pid)
             spawn_screenhack (ssi);
 
@@ -1586,6 +1587,7 @@ raise_window (saver_info *si,
 	  if (!dont_clear || ssi->stderr_overlay_window)
 	    clear_stderr (ssi);
 	  XMapRaised (si->dpy, ssi->screensaver_window);
+          XSync (si->dpy, False);
 #ifdef HAVE_MIT_SAVER_EXTENSION
 	  if (ssi->server_mit_saver_window &&
 	      window_exists_p (si->dpy, ssi->server_mit_saver_window))
@@ -1792,15 +1794,18 @@ unblank_screen (saver_info *si)
   {
     Window focus = 0;
     int revert_to;
+    XSync (si->dpy, False);
     XGetInputFocus (si->dpy, &focus, &revert_to);
     if (focus && focus != PointerRoot && focus != None)
       {
+	XErrorHandler old_handler = XSetErrorHandler (BadWindow_ehandler);
 	XWindowAttributes xgwa;
 	xgwa.colormap = 0;
-	XGetWindowAttributes (si->dpy, focus, &xgwa);
-	if (xgwa.colormap &&
+	if (XGetWindowAttributes (si->dpy, focus, &xgwa) &&
+	    xgwa.colormap &&
 	    xgwa.colormap != DefaultColormapOfScreen (xgwa.screen))
 	  XInstallColormap (si->dpy, xgwa.colormap);
+	XSetErrorHandler (old_handler);
       }
   }
 

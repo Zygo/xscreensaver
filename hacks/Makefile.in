@@ -122,7 +122,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
 		  asm6502.c abstractile.c lcdscrub.c hexadrop.c \
 		  tessellimage.c delaunay.c recanim.c binaryring.c \
-		  glitchpeg.c vfeedback.c webcollage-cocoa.m \
+		  glitchpeg.c vfeedback.c scooter.c webcollage-cocoa.m \
 		  webcollage-helper-cocoa.m testx11.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
@@ -164,7 +164,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  webcollage-cocoa.o webcollage-helper-cocoa.o m6502.o \
 		  asm6502.o abstractile.o lcdscrub.o hexadrop.o \
 		  tessellimage.o delaunay.o recanim.o binaryring.o \
-		  glitchpeg.o vfeedback.o testx11.o
+		  glitchpeg.o vfeedback.o scooter.o testx11.o
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -186,7 +186,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
 		  celtic cwaves m6502 abstractile lcdscrub hexadrop \
-		  tessellimage binaryring glitchpeg vfeedback \
+		  tessellimage binaryring glitchpeg vfeedback scooter \
 		  @JPEG_EXES@
 JPEG_EXES	= webcollage-helper
 
@@ -245,7 +245,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
 		  lcdscrub.man hexadrop.man tessellimage.man binaryring.man \
-		  glitchpeg.man vfeedback.man
+		  glitchpeg.man vfeedback.man scooter.man
 
 RETIRED_MEN	= ant.man bubbles.man critical.man flag.man forest.man \
 		  laser.man lightning.man lisa.man lissie.man lmorph.man \
@@ -291,7 +291,10 @@ install-program:: $(EXES)
 	done
 
 install-scripts: $(SCRIPTS) munge-scripts
-	@for program in $(SCRIPTS); do					\
+	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
+	 fi ;								\
+	for program in $(SCRIPTS); do					\
 	  if [ -r $$program ] ; then					\
 	    p=$$program ;						\
 	  else								\
@@ -814,8 +817,8 @@ halftone:	halftone.o	$(HACK_OBJS) $(COL)
 metaballs:	metaballs.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-eruption:	eruption.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+eruption:	eruption.o	$(HACK_OBJS) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(HACK_LIBS) $(THRL)
 
 popsquares:	popsquares.o	$(HACK_OBJS) $(DBE) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(COL) $(HACK_LIBS)
@@ -1028,6 +1031,9 @@ pacman:		pacman.o 	$(PACOBJS) $(XLOCK_OBJS) $(PNG)
 	$(CC_HACK) -o $@ $@.o	$(PACOBJS) $(XLOCK_OBJS) $(PNG) $(PNG_LIBS)
 
 fiberlamp:	fiberlamp.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+scooter:	scooter.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 # These are not like the others.
@@ -1655,6 +1661,7 @@ eruption.o: $(UTILS_SRC)/hsv.h
 eruption.o: $(UTILS_SRC)/resources.h
 eruption.o: $(UTILS_SRC)/usleep.h
 eruption.o: $(UTILS_SRC)/visual.h
+eruption.o: $(UTILS_SRC)/xshm.h
 eruption.o: $(UTILS_SRC)/yarandom.h
 euler2d.o: ../config.h
 euler2d.o: $(srcdir)/fps.h
@@ -2711,6 +2718,21 @@ rotzoomer.o: $(UTILS_SRC)/usleep.h
 rotzoomer.o: $(UTILS_SRC)/visual.h
 rotzoomer.o: $(UTILS_SRC)/xshm.h
 rotzoomer.o: $(UTILS_SRC)/yarandom.h
+scooter.o: ../config.h
+scooter.o: $(srcdir)/fps.h
+scooter.o: $(srcdir)/recanim.h
+scooter.o: $(srcdir)/screenhackI.h
+scooter.o: $(UTILS_SRC)/colors.h
+scooter.o: $(UTILS_SRC)/erase.h
+scooter.o: $(UTILS_SRC)/font-retry.h
+scooter.o: $(UTILS_SRC)/grabscreen.h
+scooter.o: $(UTILS_SRC)/hsv.h
+scooter.o: $(UTILS_SRC)/resources.h
+scooter.o: $(UTILS_SRC)/usleep.h
+scooter.o: $(UTILS_SRC)/visual.h
+scooter.o: $(UTILS_SRC)/yarandom.h
+scooter.o: $(srcdir)/xlockmoreI.h
+scooter.o: $(srcdir)/xlockmore.h
 screenhack.o: ../config.h
 screenhack.o: $(srcdir)/fps.h
 screenhack.o: $(srcdir)/recanim.h

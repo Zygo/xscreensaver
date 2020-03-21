@@ -81,8 +81,17 @@ sub generate_xml($$$$) {
 
     $entry =~ s/^\s*\d\d?[- ][A-Z][a-z][a-z][- ]\d{4}:?\s+//s;  # lose date
 
-    $entry =~ s/^\s+|\s+$//gs;
+    # unwrap continuation lines
+    $entry =~ s/^[ \t]*[-*][ \t]+/\001/gm;
+    $entry =~ s/\s+/ /gs;
+    $entry =~ s/\001/\n* /gs;
     $entry =~ s/^\s+|\s+$//gm;
+
+    # Since this updater is only for macOS, omit any changelog entry
+    # beginning with "X11:", "Android:" etc.
+    $entry =~ s/^[-*] (X11|Android|Linux|iOS): [^\n]+(\n|$)//gm;
+    $entry =~ s/^([-*] )macOS: /$1/gm;
+
     $entry =~ s/^[-*] /<BR>&bull; /gm;
     $entry =~ s/^<BR>//si;
     $entry =~ s/\s+/ /gs;
@@ -90,6 +99,9 @@ sub generate_xml($$$$) {
     my $v2 = $v1; $v2 =~ s/\.//gs;
     my $zip = undef;
   DONE:
+    # It only makes sense to include entries in this file for releases for
+    # which a DMG still exists. Expired releases and non-macOS releases
+    # aren't helpful.
     #foreach my $ext ('zip', 'dmg', 'tar.gz', 'tar.Z') {
     foreach my $ext ('dmg') {
       foreach my $v ($v1, $v2) {

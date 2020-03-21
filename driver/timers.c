@@ -1,5 +1,5 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -311,6 +311,12 @@ activate_lock_timer (XtPointer closure, XtIntervalId *id)
 
   if (p->verbose_p)
     fprintf (stderr, "%s: timed out; activating lock.\n", blurb());
+
+  if (!si->locked_p)
+    /* So that "xscreensaver-command -watch" reports the time that the
+       screen was locked, instead of duplicating the blank time. */
+    si->blank_time = time ((time_t *) 0);
+
   set_locked_p (si, True);
 }
 

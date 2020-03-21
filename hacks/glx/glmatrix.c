@@ -251,7 +251,7 @@ reset_strip (ModeInfo *mi, strip *s)
     if (do_clock &&
         !time_displayed_p &&
         (i < GRID_SIZE-5) &&   /* display approx. once per 5 strips */
-	!(random() % (GRID_SIZE-5)*5))
+	!(random() % ((GRID_SIZE-5)*5)))
       {
 	int j;
 	char text[80];

@@ -6,8 +6,8 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
@@ -101,7 +101,7 @@ android {
         // Note that the Java class tree is still "org.jwz.xscreensaver".
         applicationId "org.jwz.android.xscreensaver"
         minSdkVersion 15
-        targetSdkVersion 27
+        targetSdkVersion 28
     }
     productFlavors {
     }

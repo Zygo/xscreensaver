@@ -1865,7 +1865,7 @@ xlyap_draw (Display *dpy, Window window, void *closure)
     }
   }
 
-  for (i = 0; i < 1000; i++)
+  for (i = 0; i < 2000; i++)
     if (complyap(st) == TRUE)
       {
         st->run = 0;

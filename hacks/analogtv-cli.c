@@ -1,4 +1,4 @@
-/* xanalogtv-cli, Copyright (c) 2018 Jamie Zawinski <jwz@jwz.org>
+/* xanalogtv-cli, Copyright (c) 2018-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,7 +15,7 @@
  *    --duration     Length in seconds of MP4.
  *    --powerup      Do the power-on animation at the beginning.
  *    --logo FILE    Small image overlayed onto the colorbars image.
- *    --audio FILE   Add a soundtrack. Must be as long or longer.
+ *    --audio FILE   Add a soundtrack.
  *
  *  Created: 10-Dec-2018 by jwz.
  */
@@ -573,7 +573,8 @@ analogtv_write_mp4 (struct state *st, const char *outfile,
              " -map 0:v:0"
              " -map 1:a:0"
              " -acodec aac"
-             " -shortest",
+             /* Truncate or pad audio to length of video */
+             " -filter_complex '[1:0] apad' -shortest",
              audiofile);
   sprintf (cmd + strlen(cmd),
            " -c:v libx264"
@@ -642,10 +643,11 @@ analogtv_convert (const char *infile, const char *outfile,
   unsigned long curticks = 0;
   time_t lastlog = time((time_t *)0);
   int frames_left;
+  int channel_changes = 0;
   int fps = 30;
 
   if (verbose_p)
-    fprintf (stderr, "%s: progname: loaded %s %dx%d\n", 
+    fprintf (stderr, "%s: loaded %s %dx%d\n", 
              progname, infile, ximage->width, ximage->height);
 
   flip_ximage (ximage);
@@ -663,12 +665,30 @@ analogtv_convert (const char *infile, const char *outfile,
     calloc (st->output_frame->height, st->output_frame->bytes_per_line);
 
   {
-    char *s1, *s2;
-    st->framefile_fmt = malloc (strlen(outfile) + 100);
+    char *s0, *slash, *dot;
+    st->framefile_fmt = calloc (1, strlen(outfile) + 100);
+
+    s0 = st->framefile_fmt;
     strcpy (st->framefile_fmt, outfile);
-    s1 = strrchr (st->framefile_fmt, '/');
-    s2 = strrchr (st->framefile_fmt, '.');
-    if (s2 && s2 > s1) *s2 = 0;
+
+    slash = strrchr (st->framefile_fmt, '/');
+    dot = strrchr (st->framefile_fmt, '.');
+    if (dot && dot > slash) *dot = 0;
+
+    /* Make tmp files be dotfiles */
+    if (slash) {
+      memmove (slash+1, slash, strlen(slash)+1);
+      slash[1] = '.';
+    } else {
+      memmove (s0+1, s0, strlen(s0)+1);
+      s0[0] = '.';
+    }
+
+    /* Can't have percents in the tmp file names */
+    for (s0 = (slash ? slash : s0); *s0; s0++) {
+      if (*s0 == '%') *s0 = '_';
+    }
+
     sprintf (st->framefile_fmt + strlen(st->framefile_fmt),
              ".%08x.%%06d.png", (random() % 0xFFFFFFFF));
   }
@@ -677,7 +697,7 @@ analogtv_convert (const char *infile, const char *outfile,
     int x, y;
     st->logo = file_to_ximage (0, 0, logofile);
     if (verbose_p)
-      fprintf (stderr, "%s: progname: loaded %s %dx%d\n", 
+      fprintf (stderr, "%s: loaded %s %dx%d\n", 
                progname, logofile, st->logo->width, st->logo->height);
     flip_ximage (st->logo);
     /* Pull the alpha out of the logo and make a separate mask ximage. */
@@ -799,6 +819,8 @@ analogtv_convert (const char *infile, const char *outfile,
 
   st->curinputi=0;
   st->cs = &st->chansettings[st->curinputi];
+
+  /* First channel (initial unadulterated image) stays for this long */
   frames_left = fps * (2 + frand(1.5));
 
   st->tv->powerup=0.0;
@@ -832,17 +854,35 @@ analogtv_convert (const char *infile, const char *outfile,
 
     frames_left--;
     if (frames_left <= 0) {
-      frames_left = fps * (0.5 + frand(2.5));
 
-      if (st->curinputi != 0 && !(random() % 3)) {
-        st->curinputi = 0;  /* unadulterated image */
+      channel_changes++;
+
+      if (channel_changes == 1) {
+        /* Second channel has short duration */
+        frames_left = fps * (0.25 + frand(0.5));
       } else {
+        frames_left = fps * (0.5 + frand(2.5));
+      }
+
+      if (channel_changes == 2) {
+        /* Always use the unadulterated image for the third channel:
+           So the effect is, plain, brief blip, plain, then random. */
+        st->curinputi = 0;
+      } else if (st->curinputi != 0 && !(random() % 3)) {
+        /* Use the unadulterated image 1/3 of the time */
+        st->curinputi = 0;
+      } else {
+        /* Otherwise random */
         st->curinputi = 1 + (random() % (N_CHANNELS - 1));
       }
 
       st->cs = &st->chansettings[st->curinputi];
       /* Set channel change noise flag */
       st->tv->channel_change_cycles=200000;
+
+      if (verbose_p)
+        fprintf (stderr, "%s: %.1f: channel %d\n",
+                 progname, curticks/1000.0, st->curinputi);
     }
 
     for (i=0; i<MAX_MULTICHAN; i++) {

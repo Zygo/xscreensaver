@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2017 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2019 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -37,7 +37,7 @@ use Text::Wrap qw(wrap);
 #use bytes;  # This breaks shit.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.46 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.48 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -344,6 +344,11 @@ sub output() {
         last if ($truncate_lines && $lines > $truncate_lines);
       }
       close $pipe;
+
+      # I don't understand why we must do this here, but must not do this
+      # in the 'file' branch above, which reads the file with :raw...
+      utf8::decode ($body);  # Pack multi-byte UTF-8 back into wide chars.
+
       $body = reformat_text ($body);
       print STDOUT $body;
     } else {
@@ -573,9 +578,10 @@ sub reformat_rss($) {
   foreach (@items) {
     $i++;
 
-    my ($title, $body1, $body2, $body3);
+    my ($title, $author, $body1, $body2, $body3);
     
     $title = $3 if (m@<((TITLE)       [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
+    $author= $3 if (m@<((DC:CREATOR)  [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
     $body1 = $3 if (m@<((DESCRIPTION) [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
     $body2 = $3 if (m@<((CONTENT)     [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
     $body3 = $3 if (m@<((SUMMARY)     [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
@@ -602,9 +608,18 @@ sub reformat_rss($) {
     }
 
     $title = rss_field_to_html ($title || '');
+    $author= rss_field_to_html ($author || '');
     $body1 = rss_field_to_html ($body1 || '');
 
     $title = '' if ($body1 eq $title);  # Identical in Twitter's atom feed.
+
+    # Omit author if it's in the title or body
+    $author = '' if ($author &&
+                     ($title =~ m/\Q$author\E/si ||
+                      $body1 =~ m/\Q$author\E/si));
+
+    $title = $author if ($author && !$title);
+    $title = "$author: $title" if ($author && $title);
 
     $out .= reformat_html ("$title<P>$body1", $wiki_p ? 'wiki' : 'rss');
     $out .= "\n";

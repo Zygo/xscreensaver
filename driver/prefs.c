@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2018 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -136,39 +136,44 @@ init_file_name (void)
   if (!file)
     {
       uid_t uid = getuid ();
-      struct passwd *p = getpwuid (uid);
+      const char *home = getenv("HOME");
 
-      if (i_am_a_nobody (uid))
-        /* If we're running as nobody, then use root's .xscreensaver file
-           (since ~root/.xscreensaver and ~nobody/.xscreensaver are likely
-           to be different -- if we didn't do this, then xscreensaver-demo
-           would appear to have no effect when the luser is running as root.)
-         */
-        uid = 0;
-
-      p = getpwuid (uid);
-
-      if (!p || !p->pw_name || !*p->pw_name)
+      if (i_am_a_nobody (uid) || !home || !*home)
 	{
-	  fprintf (stderr, "%s: couldn't get user info of uid %d\n",
-		   blurb(), getuid ());
-	  file = "";
+	  /* If we're running as nobody, then use root's .xscreensaver file
+	     (since ~root/.xscreensaver and ~nobody/.xscreensaver are likely
+	     to be different -- if we didn't do this, then xscreensaver-demo
+	     would appear to have no effect when the luser is running as root.)
+	   */
+          struct passwd *p = getpwuid (uid);
+	  uid = 0;
+	  if (!p || !p->pw_name || !*p->pw_name)
+	    {
+	      fprintf (stderr, "%s: couldn't get user info of uid %d\n",
+		       blurb(), getuid ());
+	    }
+	  else if (!p->pw_dir || !*p->pw_dir)
+	    {
+	      fprintf (stderr, "%s: couldn't get home directory of \"%s\"\n",
+		       blurb(), (p->pw_name ? p->pw_name : "???"));
+	    }
+	  else
+	    {
+	      home = p->pw_dir;
+	    }
 	}
-      else if (!p->pw_dir || !*p->pw_dir)
+      if (home && *home)
 	{
-	  fprintf (stderr, "%s: couldn't get home directory of \"%s\"\n",
-		   blurb(), (p->pw_name ? p->pw_name : "???"));
-	  file = "";
-	}
-      else
-	{
-	  const char *home = p->pw_dir;
 	  const char *name = ".xscreensaver";
 	  file = (char *) malloc(strlen(home) + strlen(name) + 2);
 	  strcpy(file, home);
 	  if (!*home || home[strlen(home)-1] != '/')
 	    strcat(file, "/");
 	  strcat(file, name);
+	}
+      else
+	{
+	  file = "";
 	}
     }
 
@@ -1653,7 +1658,7 @@ stop_the_insanity (saver_preferences *p)
   if (p->watchdog_timeout > 57000) p->watchdog_timeout = 57000;   /* 57 secs */
 
   if (p->pointer_hysteresis < 0)   p->pointer_hysteresis = 0;
-  if (p->pointer_hysteresis > 100) p->pointer_hysteresis = 100;
+/* if (p->pointer_hysteresis > 100) p->pointer_hysteresis = 100; */
 
   if (p->auth_warning_slack < 0)   p->auth_warning_slack = 0;
   if (p->auth_warning_slack > 300) p->auth_warning_slack = 300;

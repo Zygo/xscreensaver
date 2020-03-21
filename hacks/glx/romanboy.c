@@ -3,10 +3,10 @@
    smoothly between the Roman surface and the Boy surface. */
 
 #if 0
-static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
+static const char sccsid[] = "@(#)romanboy.c  1.1 03/10/14 xlockmore";
 #endif
 
-/* Copyright (c) 2013-2014 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2014-2020 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -22,15 +22,16 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
  * other special, indirect and consequential damages.
  *
  * REVISION HISTORY:
- * C. Steger - 14/10/03: Initial version
+ * C. Steger - 03/10/14: Initial version
+ * C. Steger - 06/01/20: Added the changing colors mode.
  */
 
 /*
- * This program shows a 3d immersion of the real projective plane
- * that smoothly deforms between the Roman surface and the Boy
- * surface.  You can walk on the projective plane or turn in 3d.  The
- * smooth deformation (homotopy) between these two famous immersions
- * of the real projective plane was constructed by François Apéry.
+ * This program shows a 3d immersion of the real projective plane that
+ * smoothly deforms between the Roman surface and the Boy surface.
+ * You can walk on the projective plane or turn in 3d.  The smooth
+ * deformation (homotopy) between these two famous immersions of the
+ * real projective plane was constructed by François Apéry.
  *
  * The real projective plane is a non-orientable surface.  To make
  * this apparent, the two-sided color mode can be used.
@@ -43,10 +44,11 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
  * The real projective plane is a model for the projective geometry in
  * 2d space.  One point can be singled out as the origin.  A line can
  * be singled out as the line at infinity, i.e., a line that lies at
- * an infinite distance to the origin.  The line at infinity is
- * topologically a circle.  Points on the line at infinity are also
- * used to model directions in projective geometry.  The origin can be
- * visualized in different manners.  When using distance colors, the
+ * an infinite distance to the origin.  The line at infinity, like all
+ * lines in the projective plane, is topologically a circle.  Points
+ * on the line at infinity are also used to model directions in
+ * projective geometry.  The origin can be visualized in different
+ * manners.  When using distance colors (and using static colors), the
  * origin is the point that is displayed as fully saturated red, which
  * is easier to see as the center of the reddish area on the
  * projective plane.  Alternatively, when using distance bands, the
@@ -56,14 +58,15 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
  * markers are being displayed, the origin the the point where all
  * orientation markers are compressed to a point.  The line at
  * infinity can also be visualized in different ways.  When using
- * distance colors, the line at infinity is the line that is displayed
- * as fully saturated magenta.  When two-sided colors are used, the
- * line at infinity lies at the points where the red and green "sides"
- * of the projective plane meet (of course, the real projective plane
- * only has one side, so this is a design choice of the
- * visualization).  Alternatively, when orientation markers are being
- * displayed, the line at infinity is the place where the orientation
- * markers change their orientation.
+ * distance colors (and using static colors), the line at infinity is
+ * the line that is displayed as fully saturated magenta.  When
+ * two-sided (and static) colors are used, the line at infinity lies
+ * at the points where the red and green "sides" of the projective
+ * plane meet (of course, the real projective plane only has one side,
+ * so this is a design choice of the visualization).  Alternatively,
+ * when orientation markers are being displayed, the line at infinity
+ * is the place where the orientation markers change their
+ * orientation.
  *
  * Note that when the projective plane is displayed with bands, the
  * orientation markers are placed in the middle of the bands.  For
@@ -100,24 +103,28 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
  * projective plane is non-orientable.
  *
  * Finally, the colors with with the projective plane is drawn can be
- * set to two-sided, distance, or direction.  In two-sided mode, the
- * projective plane is drawn with red on one "side" and green on the
- * "other side".  As described above, the projective plane only has
- * one side, so the color jumps from red to green along the line at
- * infinity.  This mode enables you to see that the projective plane
- * is non-orientable.  In distance mode, the projective plane is
- * displayed with fully saturated colors that depend on the distance
- * of the points on the projective plane to the origin.  The origin is
- * displayed in red, the line at infinity is displayed in magenta.  If
- * the projective plane is displayed as distance bands, each band will
- * be displayed with a different color.  In direction mode, the
- * projective plane is displayed with fully saturated colors that
- * depend on the angle of the points on the projective plane with
- * respect to the origin.  Angles in opposite directions to the origin
- * (e.g., 15 and 205 degrees) are displayed in the same color since
- * they are projectively equivalent.  If the projective plane is
- * displayed as direction bands, each band will be displayed with a
- * different color.
+ * set to one-sided, two-sided, distance, or direction.  In one-sided
+ * mode, the projective plane is drawn with the same color on both
+ * "sides."  In two-sided mode (using static colors), the projective
+ * plane is drawn with red on one "side" and green on the "other
+ * side."  As described above, the projective plane only has one side,
+ * so the color jumps from red to green along the line at infinity.
+ * This mode enables you to see that the projective plane is
+ * non-orientable.  If changing colors are used in two-sided mode,
+ * changing complementary colors are used on the respective "sides."
+ * In distance mode, the projective plane is displayed with fully
+ * saturated colors that depend on the distance of the points on the
+ * projective plane to the origin.  If static colors are used, the
+ * origin is displayed in red, while the line at infinity is displayed
+ * in magenta.  If the projective plane is displayed as distance
+ * bands, each band will be displayed with a different color.  In
+ * direction mode, the projective plane is displayed with fully
+ * saturated colors that depend on the angle of the points on the
+ * projective plane with respect to the origin.  Angles in opposite
+ * directions to the origin (e.g., 15 and 205 degrees) are displayed
+ * in the same color since they are projectively equivalent.  If the
+ * projective plane is displayed as direction bands, each band will be
+ * displayed with a different color.
  *
  * The rotation speed for each of the three coordinate axes around
  * which the projective plane rotates can be chosen.
@@ -172,10 +179,11 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
 #define APPEARANCE_DIRECTION_BANDS 2
 #define NUM_APPEARANCES            3
 
-#define COLORS_TWOSIDED            0
-#define COLORS_DISTANCE            1
-#define COLORS_DIRECTION           2
-#define NUM_COLORS                 3
+#define COLORS_ONESIDED            0
+#define COLORS_TWOSIDED            1
+#define COLORS_DISTANCE            2
+#define COLORS_DIRECTION           3
+#define NUM_COLORS                 4
 
 #define VIEW_WALK                  0
 #define VIEW_TURN                  1
@@ -190,6 +198,7 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
 #define DEF_COLORS                 "random"
 #define DEF_VIEW_MODE              "random"
 #define DEF_MARKS                  "False"
+#define DEF_CHANGE_COLORS          "False"
 #define DEF_DEFORM                 "True"
 #define DEF_PROJECTION             "random"
 #define DEF_SPEEDX                 "1.1"
@@ -239,6 +248,7 @@ static char *color_mode;
 static char *view_mode;
 static Bool marks;
 static Bool deform;
+static Bool change_colors;
 static char *proj;
 static float speed_x;
 static float speed_y;
@@ -261,16 +271,19 @@ static XrmOptionDescRec opts[] =
   {"-distance-bands",      ".appearance",    XrmoptionNoArg,  "distance-bands" },
   {"-direction-bands",     ".appearance",    XrmoptionNoArg,  "direction-bands" },
   {"-colors",              ".colors",        XrmoptionSepArg, 0 },
+  {"-onesided-colors",     ".colors",        XrmoptionNoArg,  "one-sided" },
   {"-twosided-colors",     ".colors",        XrmoptionNoArg,  "two-sided" },
   {"-distance-colors",     ".colors",        XrmoptionNoArg,  "distance" },
   {"-direction-colors",    ".colors",        XrmoptionNoArg,  "direction" },
+  {"-change-colors",       ".changeColors",  XrmoptionNoArg,  "on"},
+  {"+change-colors",       ".changeColors",  XrmoptionNoArg,  "off"},
   {"-view-mode",           ".viewMode",      XrmoptionSepArg, 0 },
   {"-walk",                ".viewMode",      XrmoptionNoArg,  "walk" },
   {"-turn",                ".viewMode",      XrmoptionNoArg,  "turn" },
-  {"-deform",              ".deform",        XrmoptionNoArg, "on"},
-  {"+deform",              ".deform",        XrmoptionNoArg, "off"},
-  {"-orientation-marks",   ".marks",         XrmoptionNoArg, "on"},
-  {"+orientation-marks",   ".marks",         XrmoptionNoArg, "off"},
+  {"-deform",              ".deform",        XrmoptionNoArg,  "on"},
+  {"+deform",              ".deform",        XrmoptionNoArg,  "off"},
+  {"-orientation-marks",   ".marks",         XrmoptionNoArg,  "on"},
+  {"+orientation-marks",   ".marks",         XrmoptionNoArg,  "off"},
   {"-projection",          ".projection",    XrmoptionSepArg, 0 },
   {"-perspective",         ".projection",    XrmoptionNoArg,  "perspective" },
   {"-orthographic",        ".projection",    XrmoptionNoArg,  "orthographic" },
@@ -291,6 +304,7 @@ static argtype vars[] =
   { &mode,           "displayMode",   "DisplayMode",   DEF_DISPLAY_MODE,   t_String },
   { &appear,         "appearance",    "Appearance",    DEF_APPEARANCE,     t_String },
   { &color_mode,     "colors",        "Colors",        DEF_COLORS,         t_String },
+  { &change_colors,  "changeColors",  "ChangeColors",  DEF_CHANGE_COLORS,  t_Bool },
   { &view_mode,      "viewMode",      "ViewMode",      DEF_VIEW_MODE,      t_String },
   { &deform,         "deform",        "Deform",        DEF_DEFORM,         t_Bool },
   { &marks,          "marks",         "Marks",         DEF_MARKS,          t_Bool },
@@ -312,6 +326,11 @@ ENTRYPOINT ModeSpecOpt romanboy_opts =
 /* Offset by which we walk above the projective plane */
 #define DELTAY  0.01
 
+/* Color change speeds */
+#define DRHO    0.7
+#define DSIGMA  1.1
+#define DTAU    1.7
+
 /* Number of subdivisions of the projective plane */
 #define NUMU 64
 #define NUMV 128
@@ -327,11 +346,14 @@ typedef struct {
   int display_mode;
   int appearance;
   int colors;
+  Bool change_colors;
   int view;
   int projection;
   Bool marks;
   /* 3D rotation angles */
   float alpha, beta, delta;
+  /* Color rotation angles */
+  float rho, sigma, tau;
   /* Movement parameters */
   float umove, vmove, dumove, dvmove;
   int side, dir;
@@ -472,54 +494,80 @@ static void quat_to_rotmat(float p[4], float m[3][3])
 
 
 /* Compute a fully saturated and bright color based on an angle. */
-static void color(romanboystruct *pp, double angle, float col[4])
+static void color(romanboystruct *pp, double angle, float mat[3][3],
+                  float col[4])
 {
   int s;
-  double t;
+  double t, ca, sa;
+  float m;
 
-  if (pp->colors == COLORS_TWOSIDED)
-    return;
-
-  if (angle >= 0.0)
-    angle = fmod(angle,2.0*M_PI);
-  else
-    angle = fmod(angle,-2.0*M_PI);
-  s = floor(angle/(M_PI/3));
-  t = angle/(M_PI/3)-s;
-  if (s >= 6)
-    s = 0;
-  switch (s)
+  if (!pp->change_colors)
   {
-    case 0:
-      col[0] = 1.0;
-      col[1] = t;
-      col[2] = 0.0;
-      break;
-    case 1:
-      col[0] = 1.0-t;
-      col[1] = 1.0;
-      col[2] = 0.0;
-      break;
-    case 2:
-      col[0] = 0.0;
-      col[1] = 1.0;
-      col[2] = t;
-      break;
-    case 3:
-      col[0] = 0.0;
-      col[1] = 1.0-t;
-      col[2] = 1.0;
-      break;
-    case 4:
-      col[0] = t;
-      col[1] = 0.0;
-      col[2] = 1.0;
-      break;
-    case 5:
-      col[0] = 1.0;
-      col[1] = 0.0;
-      col[2] = 1.0-t;
-      break;
+    if (pp->colors == COLORS_ONESIDED || pp->colors == COLORS_TWOSIDED)
+      return;
+
+    if (angle >= 0.0)
+      angle = fmod(angle,2.0*M_PI);
+    else
+      angle = fmod(angle,-2.0*M_PI);
+    s = floor(angle/(M_PI/3));
+    t = angle/(M_PI/3)-s;
+    if (s >= 6)
+      s = 0;
+    switch (s)
+    {
+      case 0:
+        col[0] = 1.0;
+        col[1] = t;
+        col[2] = 0.0;
+        break;
+      case 1:
+        col[0] = 1.0-t;
+        col[1] = 1.0;
+        col[2] = 0.0;
+        break;
+      case 2:
+        col[0] = 0.0;
+        col[1] = 1.0;
+        col[2] = t;
+        break;
+      case 3:
+        col[0] = 0.0;
+        col[1] = 1.0-t;
+        col[2] = 1.0;
+        break;
+      case 4:
+        col[0] = t;
+        col[1] = 0.0;
+        col[2] = 1.0;
+        break;
+      case 5:
+        col[0] = 1.0;
+        col[1] = 0.0;
+        col[2] = 1.0-t;
+        break;
+    }
+  }
+  else /* pp->change_colors */
+  {
+    if (pp->colors == COLORS_ONESIDED || pp->colors == COLORS_TWOSIDED)
+    {
+      col[0] = mat[0][2];
+      col[1] = mat[1][2];
+      col[2] = mat[2][2];
+    }
+    else
+    {
+      ca = cos(angle);
+      sa = sin(angle);
+      col[0] = ca*mat[0][0]+sa*mat[0][1];
+      col[1] = ca*mat[1][0]+sa*mat[1][1];
+      col[2] = ca*mat[2][0]+sa*mat[2][1];
+    }
+    m = 0.5f/fmaxf(fmaxf(fabsf(col[0]),fabsf(col[1])),fabsf(col[2]));
+    col[0] = m*col[0]+0.5f;
+    col[1] = m*col[1]+0.5f;
+    col[2] = m*col[2]+0.5f;
   }
   if (pp->display_mode == DISP_TRANSPARENT)
     col[3] = 0.7;
@@ -550,10 +598,13 @@ static void setup_roman_boy_color_texture(ModeInfo *mi, double umin,
       else
         u = ur*j/numu+umin;
       v = vr*i/numv+vmin;
-      if (pp->colors == COLORS_DIRECTION)
-        color(pp,2.0*M_PI-fmod(2.0*u,2.0*M_PI),&pp->col[4*k]);
-      else /* pp->colors == COLORS_DISTANCE */
-        color(pp,v*(5.0/6.0),&pp->col[4*k]);
+      if (!pp->change_colors)
+      {
+        if (pp->colors == COLORS_DIRECTION)
+          color(pp,2.0*M_PI-fmod(2.0*u,2.0*M_PI),NULL,&pp->col[4*k]);
+        else /* pp->colors == COLORS_DISTANCE */
+          color(pp,v*(5.0/6.0),NULL,&pp->col[4*k]);
+      }
       pp->tex[2*k+0] = -16*g*u/(2.0*M_PI);
       if (pp->appearance == APPEARANCE_DISTANCE_BANDS)
         pp->tex[2*k+1] = 32*v/(2.0*M_PI)-0.5;
@@ -569,11 +620,14 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
                      double vmin, double vmax, int numu, int numv)
 {
   int polys = 0;
-  static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
-  static const GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
-  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[3][3];
+  static const GLfloat mat_diff_red[]           = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_green[]         = { 0.0, 1.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_oneside[]       = { 0.9, 0.4, 0.3, 1.0 };
+  static const GLfloat mat_diff_trans_red[]     = { 1.0, 0.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_green[]   = { 0.0, 1.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_oneside[] = { 0.9, 0.4, 0.3, 0.7 };
+  float mat_diff_dyn[4], mat_diff_dyn_compl[4];
+  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[3][3], matc[3][3];
   int i, j, k, l, m, o, g;
   double u, v, ur, vr, oz;
   double xx[3], xxu[3], xxv[3];
@@ -591,6 +645,10 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
   r = 1.0+d*d*(1.0/2.0+d*d*(1.0/6.0+d*d*(1.0/3.0)));
   radius = 1.0/r;
   oz = 0.5*r;
+
+  if (pp->change_colors)
+    rotateall(pp->rho,pp->sigma,pp->tau,matc);
+
   if (pp->view == VIEW_WALK)
   {
     u = pp->umove;
@@ -740,18 +798,54 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
     mult_rotmat(r2,r1,mat);
   }
 
-  if (pp->colors == COLORS_TWOSIDED)
+  if (!pp->change_colors)
   {
-    glColor3fv(mat_diff_red);
-    if (pp->display_mode == DISP_TRANSPARENT)
+    if (pp->colors == COLORS_ONESIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      glColor3fv(mat_diff_oneside);
+      if (pp->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_trans_oneside);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_oneside);
+      }
     }
-    else
+    else if (pp->colors == COLORS_TWOSIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      glColor3fv(mat_diff_red);
+      if (pp->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      }
+    }
+  }
+  else /* pp->change_colors */
+  {
+    color(pp,0.0,matc,mat_diff_dyn);
+    if (pp->colors == COLORS_ONESIDED)
+    {
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+    }
+    else if (pp->colors == COLORS_TWOSIDED)
+    {
+      mat_diff_dyn_compl[0] = 1.0f-mat_diff_dyn[0];
+      mat_diff_dyn_compl[1] = 1.0f-mat_diff_dyn[1];
+      mat_diff_dyn_compl[2] = 1.0f-mat_diff_dyn[2];
+      mat_diff_dyn_compl[3] = mat_diff_dyn[3];
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn_compl);
     }
   }
   glBindTexture(GL_TEXTURE_2D,pp->tex_name);
@@ -772,6 +866,14 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
         o = i*(numu+1)+j;
         u = ur*j/numu+umin;
         v = vr*i/numv+vmin;
+        if (pp->change_colors)
+        {
+          /* Compute the colors dynamically. */
+          if (pp->colors == COLORS_DIRECTION)
+            color(pp,2.0*M_PI-fmod(2.0*u,2.0*M_PI),matc,&pp->col[4*o]);
+          else if (pp->colors == COLORS_DISTANCE)
+            color(pp,v*(5.0/6.0),matc,&pp->col[4*o]);
+        }
         if (g & 1)
           v = 0.5*M_PI-0.25*v;
         else
@@ -872,6 +974,14 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
         o = i*(numu+1)+j;
         u = -ur*j/numu+umin;
         v = vr*i/numv+vmin;
+        if (pp->change_colors)
+        {
+          /* Compute the colors dynamically. */
+          if (pp->colors == COLORS_DIRECTION)
+            color(pp,2.0*M_PI-fmod(2.0*u,2.0*M_PI),matc,&pp->col[4*o]);
+          else if (pp->colors == COLORS_DISTANCE)
+            color(pp,v*(5.0/6.0),matc,&pp->col[4*o]);
+        }
         if (g & 1)
           v = 0.5*M_PI-0.25*v;
         else
@@ -981,7 +1091,7 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
           m = j;
           o = l*(numu+1)+m;
           glTexCoord2fv(&pp->tex[2*o]);
-          if (pp->colors != COLORS_TWOSIDED)
+          if (pp->colors != COLORS_ONESIDED && pp->colors != COLORS_TWOSIDED)
           {
             glColor3fv(&pp->col[4*o]);
             glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
@@ -1013,7 +1123,7 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
           m = (j+k);
           o = l*(numu+1)+m;
           glTexCoord2fv(&pp->tex[2*o]);
-          if (pp->colors != COLORS_TWOSIDED)
+          if (pp->colors != COLORS_ONESIDED && pp->colors != COLORS_TWOSIDED)
           {
             glColor3fv(&pp->col[4*o]);
             glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
@@ -1046,7 +1156,7 @@ static void gen_texture(ModeInfo *mi)
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
   glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,TEX_DIMENSION,TEX_DIMENSION,0,
+  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,TEX_DIMENSION,TEX_DIMENSION,0,
                GL_LUMINANCE,GL_UNSIGNED_BYTE,texture);
 }
 
@@ -1095,6 +1205,10 @@ static void init(ModeInfo *mi)
 
   pp->dd = init_deform*0.001;
   pp->defdir = -1;
+
+  pp->rho = frand(360.0);
+  pp->sigma = frand(360.0);
+  pp->tau = frand(360.0);
 
   pp->offset3d[0] = 0.0;
   pp->offset3d[1] = 0.0;
@@ -1241,6 +1355,18 @@ static void display_romanboy(ModeInfo *mi)
       if (pp->umove < 0.0)
         pp->umove += 2.0*M_PI;
     }
+    if (pp->change_colors)
+    {
+      pp->rho += DRHO;
+      if (pp->rho >= 360.0)
+        pp->rho -= 360.0;
+      pp->sigma += DSIGMA;
+      if (pp->sigma >= 360.0)
+        pp->sigma -= 360.0;
+      pp->tau += DTAU;
+      if (pp->tau >= 360.0)
+        pp->tau -= 360.0;
+    }
   }
 
   glMatrixMode(GL_PROJECTION);
@@ -1269,16 +1395,10 @@ static void display_romanboy(ModeInfo *mi)
 ENTRYPOINT void reshape_romanboy(ModeInfo *mi, int width, int height)
 {
   romanboystruct *pp = &romanboy[MI_SCREEN(mi)];
-  int y = 0;
-
-  if (width > height * 5) {   /* tiny window: show middle */
-    height = width;
-    y = -height/2;
-  }
 
   pp->WindW = (GLint)width;
   pp->WindH = (GLint)height;
-  glViewport(0,y,width,height);
+  glViewport(0,0,width,height);
   pp->aspect = (GLfloat)width/(GLfloat)height;
 }
 
@@ -1402,6 +1522,10 @@ ENTRYPOINT void init_romanboy(ModeInfo *mi)
   {
     pp->colors = random() % NUM_COLORS;
   }
+  else if (!strcasecmp(color_mode,"one-sided"))
+  {
+    pp->colors = COLORS_ONESIDED;
+  }
   else if (!strcasecmp(color_mode,"two-sided"))
   {
     pp->colors = COLORS_TWOSIDED;
@@ -1418,6 +1542,8 @@ ENTRYPOINT void init_romanboy(ModeInfo *mi)
   {
     pp->colors = random() % NUM_COLORS;
   }
+
+  pp->change_colors = change_colors;
 
   /* Set the view mode. */
   if (!strcasecmp(view_mode,"random"))

@@ -1138,8 +1138,9 @@ jwxyz_gl_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
     bind_drawable_fbo (rh, dst);
   finish_bind_drawable (dpy, dst);
 
-  jwxyz_gl_copy_area_write_tex_image (dpy, gc, src_x, src_y, width, height,
-                                      dst_x, dst_y);
+  jwxyz_gl_copy_area_write_tex_image (dpy, gc, src_x, src_y,
+                                      jwxyz_drawable_depth (src),
+                                      width, height, dst_x, dst_y);
 
 #else
   // Kumppa: 0.17 FPS

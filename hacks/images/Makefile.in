@@ -39,6 +39,8 @@ gen/%_png.h: %.png
 clean:
 	$(RM) -r gen
 
+distclean:: clean
+
 echo_tarfiles:
 	@echo $(TARFILES)
 

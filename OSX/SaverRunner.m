@@ -98,7 +98,6 @@
   self = [super init];
   if (self) {
     _parent = parent;
-    // _storedOrientation = UIInterfaceOrientationUnknown;
     _showAboutBox = showAboutBox;
 
     self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
@@ -346,14 +345,6 @@
     [_saverView release];
   }
 
-# if 0
-  if (_storedOrientation != UIInterfaceOrientationUnknown) {
-    [[UIApplication sharedApplication]
-     setStatusBarOrientation:_storedOrientation
-     animated:NO];
-  }
-# endif
-
   _saverView = [_parent newSaverView:_saverName
                             withSize:parentView.bounds.size];
 
@@ -385,7 +376,7 @@
   [_saverView becomeFirstResponder]; // For shakes on iOS 6.
   [_saverView startAnimation];
   [self aboutPanel:_saverView
-       orientation:/* _storedOrientation */ UIInterfaceOrientationPortrait];
+       orientation: UIInterfaceOrientationPortrait];
 }
 
 
@@ -436,9 +427,6 @@
   [name retain];
   [_saverName release];
   _saverName = name;
-  // _storedOrientation =
-  //   [UIApplication sharedApplication].statusBarOrientation;
-
   if (_saverView)
     [self createSaverView];
 }
@@ -462,16 +450,38 @@
 
   [self aboutOff:TRUE];  // It does goofy things if we rotate while it's up
 
+# if 1
+  NSLog(@"## orient");
+  [CATransaction commit];
+  [_saverView orientationChanged];
+  return;
+# endif
+
+  BOOL queued =
   [coordinator animateAlongsideTransition:^
                (id <UIViewControllerTransitionCoordinatorContext> context) {
     // This executes repeatedly during the rotation.
+NSLog(@"## animate %@", context);
   } completion:^(id <UIViewControllerTransitionCoordinatorContext> context) {
+NSLog(@"## completion %@", context);
     // This executes once when the rotation has finished.
     [CATransaction commit];
     [_saverView orientationChanged];
   }];
   // No code goes here, as it would execute before the above completes.
+
+  NSLog(@"## queued = %d", queued);
+
 }
+
+/* Not called
+- (void)willTransitionToTraitCollection:(UITraitCollection *)collection
+              withTransitionCoordinator:
+                (id<UIViewControllerTransitionCoordinator>)coordinator
+{
+  NSLog(@"#### %@ %@", collection, coordinator);
+}
+*/
 
 @end
 
@@ -949,6 +959,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
                             showAboutBox:[saverNames count] != 1];
   nonrotating_controller.saverName = name;
 
+  // Necessary to prevent "card"-like presentation on Xcode 11 with iOS 13:
+  nonrotating_controller.modalPresentationStyle =
+    UIModalPresentationFullScreen;
+
   /* LAUNCH: */
 
   [rotating_nav presentViewController:nonrotating_controller animated:NO completion:nil];
@@ -1256,17 +1270,6 @@ FAIL:
 - (void) wantsFadeOut:(XScreenSaverView *)sender
 {
   rotating_nav.view.hidden = NO; // In case it was hidden during startup.
-
-  /* The XScreenSaverView screws with the status bar orientation, mostly to
-     keep the simulator oriented properly. But on iOS 8.1 (and maybe 8.0
-     and/or 8.2), this confuses the UINavigationController, so put the
-     orientation back to portrait before dismissing the SaverViewController.
-   */
-# if 0
-  [[UIApplication sharedApplication]
-   setStatusBarOrientation:UIInterfaceOrientationPortrait
-   animated:NO];
-# endif
 
   /* Make sure the most-recently-run saver is visible.  Sometimes it ends
      up scrolled half a line off the bottom of the screen.

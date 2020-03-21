@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2018 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2020 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -935,7 +935,11 @@ init_sensor (ModeInfo *mi)
                                ping_arg, ping_timeout, resolve_p, times_p,
                                debug_p);
   else
-    setuid(getuid()); /* Disavow privs if not pinging. */
+    { /* Disavow privs if not pinging. */
+      if (setuid(getuid()) == -1) abort();
+    }
+
+    setuid(getuid());
 
   sp->start_time = double_time ();  /* for error message timing */
 

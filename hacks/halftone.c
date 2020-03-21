@@ -387,6 +387,7 @@ static const char *halftone_defaults [] = {
 #ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
+  ".lowrez:		true",  /* Too slow on Retina screens otherwise */
   0
 };
 

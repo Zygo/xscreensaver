@@ -332,6 +332,18 @@ typedef enum { SimpleXMLCommentKind,
   [h retain];
   if (html) [html release];
   html = h;
+
+  BOOL dark_mode_p = FALSE;
+  {
+    UITraitCollection *t = [self traitCollection];
+#   pragma clang diagnostic push   // "only available on iOS 12.0 or newer"
+#   pragma clang diagnostic ignored "-Wunguarded-availability-new"
+    if (t && [t respondsToSelector:@selector(userInterfaceStyle)] &&
+        [t userInterfaceStyle] == UIUserInterfaceStyleDark)
+      dark_mode_p = TRUE;
+#   pragma clang diagnostic pop
+  }
+
   NSString *h2 =
     [NSString stringWithFormat:
                 @"<!DOCTYPE HTML PUBLIC "
@@ -351,7 +363,9 @@ typedef enum { SimpleXMLCommentKind,
                       " font-size: %.4fpx;"	// Must be "px", not "pt"!
                       " line-height: %.4fpx;"   // And no spaces before it.
                       " -webkit-text-size-adjust: none;"
+                      " color: %@;"
                       "}"
+                    " a { color: %@ !important; }"
                     "\n//-->\n"
                    "</STYLE>"
                   "</HEAD>"
@@ -359,9 +373,12 @@ typedef enum { SimpleXMLCommentKind,
                    "%@"
                   "</BODY>"
                  "</HTML>",
-              [font fontName],
+              // [font fontName],  // Returns ".SFUI-Regular", doesn't work.
+              @"Helvetica", // "SanFranciscoDisplay-Regular" also doesn't work.
               [font pointSize],
               [font lineHeight],
+              (dark_mode_p ? @"#FFF" : @"#000"),
+              (dark_mode_p ? @"#0DF" : @"#00E"),
               h];
   [webView stopLoading];
   [webView loadHTMLString:h2 baseURL:[NSURL URLWithString:@""]];
@@ -1992,7 +2009,8 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 # else  // USE_IPHONE
 
   txt.adjustsFontSizeToFitWidth = YES;
-  txt.textColor = [UIColor blackColor];
+  // Why did I do this? Messes up dark mode.
+  // txt.textColor = [UIColor blackColor];
   txt.font = [UIFont systemFontOfSize: FONT_SIZE];
   txt.placeholder = @"";
   txt.borderStyle = UITextBorderStyleRoundedRect;

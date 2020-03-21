@@ -57,7 +57,6 @@ my %disable = (
 
 
 # Parse the RETIRED_EXES variable from the Makefiles to populate %disable.
-# Duplicated in ../OSX/build-fntable.pl.
 #
 sub parse_makefiles() {
   foreach my $mf ( "Makefile.in", "glx/Makefile.in" ) {

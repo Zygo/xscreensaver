@@ -23,11 +23,15 @@
 
     <select id="colors">
       <option id="random"   _label="Random coloration"/>
+      <option id="twosided" _label="One-sided"        arg-set="-colors one-sided"/>
       <option id="twosided" _label="Two-sided"        arg-set="-colors two-sided"/>
       <option id="rainbow"  _label="Distance colors"  arg-set="-colors distance"/>
       <option id="rainbow"  _label="Direction colors" arg-set="-colors direction"/>
       <option id="depth"    _label="4d depth colors"  arg-set="-colors depth"/>
     </select>
+
+    <boolean id="change-colors" _label="Change colors"
+              arg-set="-change-colors"/>
 
     <select id="projection3d">
       <option id="random"          _label="Random 3D"/>

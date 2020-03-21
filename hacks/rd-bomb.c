@@ -489,12 +489,21 @@ rd_draw (Display *dpy, Window win, void *closure)
   struct state *st = (struct state *) closure;
   Bool bump = False;
 
+  /* Let's compute N frames at once. This speeds up the progress of
+     the animation and the seething, but doesn't appreciably affect the
+     frame rate or CPU utilization. */
+  int ii;
+  int chunk = 3;
+  for (ii = 0; ii < chunk; ii++) {
+
   int i, j;
   pixack_frame(st, st->pd);
+  if (ii == chunk-1) {  /* Only need to putimage on the final frame */
   for (i = 0; i < st->array_width; i += st->width)
     for (j = 0; j < st->array_height; j += st->height)
       put_xshm_image(st->dpy, st->window, st->gc, st->image, 0, 0, i+st->array_x, j+st->array_y,
                      st->width, st->height, &st->shm_info);
+  }
 
   st->array_x += st->array_dx;
   st->array_y += st->array_dy;
@@ -526,6 +535,7 @@ rd_draw (Display *dpy, Window win, void *closure)
   }
 
   st->frame++;
+  }
 
   return st->delay;
 }

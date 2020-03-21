@@ -264,8 +264,8 @@ make_job (pid_t pid, int screen, const char *cmd)
   clean_job_list();
 
  AGAIN:
-  while (isspace(*in)) in++;		/* skip whitespace */
-  while (!isspace(*in) && *in != ':') {
+  while (*in && isspace(*in)) in++;		/* skip whitespace */
+  while (*in && !isspace(*in) && *in != ':') {
     if (*in == '=') got_eq = 1;
     *out++ = *in++;			/* snarf first token */
   }
@@ -277,7 +277,7 @@ make_job (pid_t pid, int screen, const char *cmd)
       goto AGAIN;
     }
 
-  while (isspace(*in)) in++;		/* skip whitespace */
+  while (*in && isspace(*in)) in++;		/* skip whitespace */
   *out = 0;
 
   job->name = strdup(name);

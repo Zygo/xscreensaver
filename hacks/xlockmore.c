@@ -263,6 +263,13 @@ xlockmore_release_screens (ModeInfo *mi)
 }
 
 
+static Bool
+xlockmore_got_init (ModeInfo *mi)
+{
+  return mi->xlmft->got_init & (1ul << mi->screen_number);
+}
+
+
 static void
 xlockmore_free_screens (ModeInfo *mi)
 {
@@ -279,7 +286,8 @@ xlockmore_free_screens (ModeInfo *mi)
     int old_screen = mi->screen_number;
     for (mi->screen_number = 0; mi->screen_number < XLOCKMORE_NUM_SCREENS;
          ++mi->screen_number) {
-      xlmft->hack_free (mi);
+      if (xlockmore_got_init(mi))
+        xlmft->hack_free (mi); /* got_init is reset in xlockmore_release_screens. */
     }
     mi->screen_number = old_screen;
   }
@@ -401,7 +409,7 @@ xlockmore_init (Display *dpy, Window window,
     const int size = XLOCKMORE_NUM_SCREENS;
     int i;
     for (i = 0; i < size; i++) {
-      if (! (xlmft->live_displays & (1 << i)))
+      if (! (xlmft->live_displays & (1ul << i)))
         break;
     }
     if (i >= size) abort();
@@ -571,16 +579,11 @@ xlockmore_clear (ModeInfo *mi)
 static void
 xlockmore_do_init (ModeInfo *mi)
 {
-  mi->xlmft->got_init |= 1 << mi->screen_number;
   xlockmore_clear (mi);
   mi->xlmft->hack_init (mi);
-}
 
-
-static Bool
-xlockmore_got_init (ModeInfo *mi)
-{
-  return mi->xlmft->got_init & (1 << mi->screen_number);
+  /* Do this last, so MI_INIT gets the old got_init. */
+  mi->xlmft->got_init |= 1ul << mi->screen_number;
 }
 
 
@@ -682,10 +685,13 @@ xlockmore_event (Display *dpy, Window window, void *closure, XEvent *event)
 
     if (screenhack_event_helper (mi->dpy, mi->window, event)) {
       /* If a clear is in progress, don't interrupt or restart it. */
-      if (mi->needs_clear)
+      if (mi->needs_clear) {
+        if (mi->xlmft->hack_free)
+          mi->xlmft->hack_free (mi);
         mi->xlmft->got_init &= ~(1ul << mi->screen_number);
-      else
+      } else {
         mi->xlmft->hack_init (mi);
+      }
       return True;
     }
   }
@@ -714,8 +720,10 @@ xlockmore_free (Display *dpy, Window window, void *closure)
      xlockmore_free returns. Thus, hack_free has to happen now, rather than
      after the final screen has been released.
    */
-  if (mi->xlmft->hack_free)
+  if (mi->xlmft->hack_free && xlockmore_got_init(mi)) {
     mi->xlmft->hack_free (mi);
+    mi->xlmft->got_init &= ~(1ul << mi->screen_number);
+  }
 
   /* Find us in live_displays and clear that slot. */
   assert (mi->xlmft->live_displays & (1ul << mi->screen_number));
@@ -761,8 +769,8 @@ xlockmore_mi_init (ModeInfo *mi, size_t state_size, void **state_array)
 
   /* Find the appropriate state object, clear it, and we're done. */
   {
-    if (xlmft->hack_free)
-      xlmft->hack_free (mi);
+    if (xlmft->hack_free && xlockmore_got_init(mi))
+      xlmft->hack_free (mi); /* Don't reset the got_init bit from MI_INIT. */
     memset ((char *)(*xlmft->state_array) + mi->screen_number * state_size, 0,
             state_size);
   }

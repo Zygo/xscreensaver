@@ -2,10 +2,10 @@
    can walk */
 
 #if 0
-static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
+static const char sccsid[] = "@(#)klein.c  1.1 04/10/08 xlockmore";
 #endif
 
-/* Copyright (c) 2005-2014 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2005-2020 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -21,61 +21,83 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
  * other special, indirect and consequential damages.
  *
  * REVISION HISTORY:
- * C. Steger - 08/10/04: Initial version
- * C. Steger - 09/08/03: Changes to the parameter handling
- * C. Steger - 13/12/25: Added the squeezed torus Klein bottle
- * C. Steger - 14/10/03: Moved the curlicue texture to curlicue.h
+ * C. Steger - 04/10/08: Initial version
+ * C. Steger - 03/08/09: Changes to the parameter handling
+ * C. Steger - 25/12/13: Added the squeezed torus Klein bottle
+ * C. Steger - 03/10/14: Moved the curlicue texture to curlicue.h
+ * C. Steger - 11/01/20: Added the changing colors mode.
  */
 
 /*
- * This program shows three different Klein bottles in 4d: the figure-8 Klein
- * bottle, the squeezed torus Klein bottle, or the Lawson Klein bottle.  You
- * can walk on the Klein bottle, see it turn in 4d, or walk on it while it
- * turns in 4d.  The figure-8 Klein bottle is well known in its 3d form.  The
- * 4d form used in this program is an extension of the 3d form to 4d that
- * does not intersect itself in 4d (which can be seen in the depth colors
- * mode).  The squeezed torus Klein bottle also does not intersect itself in
- * 4d (which can be seen in the depth colors mode).  The Lawson Klein bottle,
- * on the other hand, does intersect itself in 4d.  Its primary use is that
- * it has a nice appearance for walking and for turning in 3d.  The Klein
- * bottle is a non-orientable surface.  To make this apparent, the two-sided
- * color mode can be used.  Alternatively, orientation markers (curling
- * arrows) can be drawn as a texture map on the surface of the Klein bottle.
- * While walking on the Klein bottle, you will notice that the orientation
- * of the curling arrows changes (which it must because the Klein bottle is
- * non-orientable).  The program projects the 4d Klein bottle to 3d using
- * either a perspective or an orthographic projection.  Which of the two
- * alternatives looks more appealing depends on the viewing mode and the
- * Klein bottle.  For example, the Lawson Klein bottle looks nicest when
- * projected perspectively.  The figure-8 Klein bottle, on the other
- * hand, looks nicer while walking when projected orthographically from 4d.
- * For the squeezed torus Klein bottle, both projection modes give equally
- * acceptable projections.  The projected Klein bottle can then be projected
- * to the screen either perspectively or orthographically.  When using the
- * walking modes, perspective projection to the screen should be used.  There
- * are three display modes for the Klein bottle: mesh (wireframe), solid, or
- * transparent.  Furthermore, the appearance of the Klein bottle can be as
- * a solid object or as a set of see-through bands.  Finally, the colors
- * with with the Klein bottle is drawn can be set to two-sided, rainbow, or
- * depth.  In the first case, the Klein bottle is drawn with red on one
- * "side" and green on the "other side".  Of course, the Klein bottle only
- * has one side, so the color jumps from red to green along a curve on the
- * surface of the Klein bottle.  This mode enables you to see that the Klein
- * bottle is non-orientable.  The second mode draws the Klein bottle with
- * fully saturated rainbow colors.  This gives a very nice effect when
- * combined with the see-through bands mode or with the orientation markers
- * drawn.  The third mode draws the Klein bottle with colors that are chosen
- * according to the 4d "depth" of the points.  This mode enables you to see
- * that the figure-8 and squeezed torus Klein bottles do not intersect
- * themselves in 4d, while the Lawson Klein bottle does intersect itself.
- * The rotation speed for each of the six planes around which the Klein
- * bottle rotates can be chosen.  For the walk-and-turn more, only the
- * rotation speeds around the true 4d planes are used (the xy, xz, and yz
- * planes).  Furthermore, in the walking modes the walking direction in the
- * 2d base square of the Klein bottle and the walking speed can be chosen.
- * This program is somewhat inspired by Thomas Banchoff's book "Beyond the
- * Third Dimension: Geometry, Computer Graphics, and Higher Dimensions",
- * Scientific American Library, 1990.
+ * This program shows three different Klein bottles in 4d: the
+ * figure-8 Klein bottle, the pinched torus Klein bottle, or the
+ * Lawson Klein bottle.  You can walk on the Klein bottle, see it turn
+ * in 4d, or walk on it while it turns in 4d.  The figure-8 Klein
+ * bottle is well known in its 3d form.  The 4d form used in this
+ * program is an extension of the 3d form to 4d that does not
+ * intersect itself in 4d (which can be seen in the depth colors mode
+ * when using static colors).  The pinched torus Klein bottle also
+ * does not intersect itself in 4d (which can be seen in the depth
+ * colors mode when using static colors).  The Lawson Klein bottle, on
+ * the other hand, does intersect itself in 4d.  Its primary use is
+ * that it has a nice appearance for walking and for turning in 3d.
+ *
+ * The Klein bottle is a non-orientable surface.  To make this
+ * apparent, the two-sided color mode can be used.  Alternatively,
+ * orientation markers (curling arrows) can be drawn as a texture map
+ * on the surface of the Klein bottle.  While walking on the Klein
+ * bottle, you will notice that the orientation of the curling arrows
+ * changes (which it must because the Klein bottle is non-orientable).
+ *
+ * The program projects the 4d Klein bottle to 3d using either a
+ * perspective or an orthographic projection.  Which of the two
+ * alternatives looks more appealing depends on the viewing mode and
+ * the Klein bottle.  For example, the Lawson Klein bottle looks
+ * nicest when projected perspectively.  The figure-8 Klein bottle, on
+ * the other hand, looks nicer while walking when projected
+ * orthographically from 4d.  For the pinched torus Klein bottle, both
+ * projection modes give equally acceptable projections.
+ *
+ * The projected Klein bottle can then be projected to the screen
+ * either perspectively or orthographically.  When using the walking
+ * modes, perspective projection to the screen should be used.
+ *
+ * There are three display modes for the Klein bottle: mesh
+ * (wireframe), solid, or transparent.  Furthermore, the appearance of
+ * the Klein bottle can be as a solid object or as a set of
+ * see-through bands.  Finally, the colors with with the Klein bottle
+ * is drawn can be set to one-sided, two-sided, rainbow, or depth.  In
+ * one-sided mode, the Klein bottle is drawn with the same color on
+ * both "sides."  In two-sided mode (using static colors), the Klein
+ * bottle is drawn with red on one "side" and green on the "other
+ * side."  Of course, the Klein bottle only has one side, so the color
+ * jumps from red to green along a curve on the surface of the Klein
+ * bottle.  This mode enables you to see that the Klein bottle is
+ * non-orientable.  If changing colors are used in two-sided mode,
+ * changing complementary colors are used on the respective "sides."
+ * The rainbow color mode (using static colors) draws the Klein bottle
+ * with a color wheel of fully saturated rainbow colors.  If changing
+ * colors are used, the color wheel's colors change dynamically.  The
+ * rainbow color mode gives a very nice effect when combined with the
+ * see-through bands mode or with the orientation markers drawn.  The
+ * depth color mode draws the Klein bottle with colors that are chosen
+ * according to the 4d "depth" of the points.  If static colors are
+ * used, this mode enables you to see that the figure-8 and pinched
+ * torus Klein bottles do not intersect themselves in 4d, while the
+ * Lawson Klein bottle does intersect itself.
+ *
+ * The rotation speed for each of the six planes around which the
+ * Klein bottle rotates can be chosen.  For the walk-and-turn mode,
+ * only the rotation speeds around the true 4d planes are used (the
+ * xy, xz, and yz planes).
+ *
+ * Furthermore, in the walking modes the walking direction in the 2d
+ * base square of the Klein bottle and the walking speed can be
+ * chosen.
+ *
+ * This program is somewhat inspired by Thomas Banchoff's book "Beyond
+ * the Third Dimension: Geometry, Computer Graphics, and Higher
+ * Dimensions", Scientific American Library, 1990.
  */
 
 #include "curlicue.h"
@@ -84,54 +106,56 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
 #define M_PI 3.14159265358979323846
 #endif
 
-#define KLEIN_BOTTLE_FIGURE_8       0
-#define KLEIN_BOTTLE_SQUEEZED_TORUS 1
-#define KLEIN_BOTTLE_LAWSON         2
-#define NUM_KLEIN_BOTTLES           3
+#define KLEIN_BOTTLE_FIGURE_8      0
+#define KLEIN_BOTTLE_PINCHED_TORUS 1
+#define KLEIN_BOTTLE_LAWSON        2
+#define NUM_KLEIN_BOTTLES          3
 
-#define DISP_WIREFRAME              0
-#define DISP_SURFACE                1
-#define DISP_TRANSPARENT            2
-#define NUM_DISPLAY_MODES           3
+#define DISP_WIREFRAME             0
+#define DISP_SURFACE               1
+#define DISP_TRANSPARENT           2
+#define NUM_DISPLAY_MODES          3
 
-#define APPEARANCE_SOLID            0
-#define APPEARANCE_BANDS            1
-#define NUM_APPEARANCES             2
+#define APPEARANCE_SOLID           0
+#define APPEARANCE_BANDS           1
+#define NUM_APPEARANCES            2
 
-#define COLORS_TWOSIDED             0
-#define COLORS_RAINBOW              1
-#define COLORS_DEPTH                2
-#define NUM_COLORS                  3
+#define COLORS_ONESIDED            0
+#define COLORS_TWOSIDED            1
+#define COLORS_RAINBOW             2
+#define COLORS_DEPTH               3
+#define NUM_COLORS                 4
 
-#define VIEW_WALK                   0
-#define VIEW_TURN                   1
-#define VIEW_WALKTURN               2
-#define NUM_VIEW_MODES              3
+#define VIEW_WALK                  0
+#define VIEW_TURN                  1
+#define VIEW_WALKTURN              2
+#define NUM_VIEW_MODES             3
 
-#define DISP_3D_PERSPECTIVE         0
-#define DISP_3D_ORTHOGRAPHIC        1
-#define NUM_DISP_3D_MODES           2
+#define DISP_3D_PERSPECTIVE        0
+#define DISP_3D_ORTHOGRAPHIC       1
+#define NUM_DISP_3D_MODES          2
 
-#define DISP_4D_PERSPECTIVE         0
-#define DISP_4D_ORTHOGRAPHIC        1
-#define NUM_DISP_4D_MODES           2
+#define DISP_4D_PERSPECTIVE        0
+#define DISP_4D_ORTHOGRAPHIC       1
+#define NUM_DISP_4D_MODES          2
 
-#define DEF_KLEIN_BOTTLE            "random"
-#define DEF_DISPLAY_MODE            "random"
-#define DEF_APPEARANCE              "random"
-#define DEF_COLORS                  "random"
-#define DEF_VIEW_MODE               "random"
-#define DEF_MARKS                   "False"
-#define DEF_PROJECTION_3D           "random"
-#define DEF_PROJECTION_4D           "random"
-#define DEF_SPEEDWX                 "1.1"
-#define DEF_SPEEDWY                 "1.3"
-#define DEF_SPEEDWZ                 "1.5"
-#define DEF_SPEEDXY                 "1.7"
-#define DEF_SPEEDXZ                 "1.9"
-#define DEF_SPEEDYZ                 "2.1"
-#define DEF_WALK_DIRECTION          "7.0"
-#define DEF_WALK_SPEED              "20.0"
+#define DEF_KLEIN_BOTTLE           "random"
+#define DEF_DISPLAY_MODE           "random"
+#define DEF_APPEARANCE             "random"
+#define DEF_COLORS                 "random"
+#define DEF_VIEW_MODE              "random"
+#define DEF_MARKS                  "False"
+#define DEF_CHANGE_COLORS          "False"
+#define DEF_PROJECTION_3D          "random"
+#define DEF_PROJECTION_4D          "random"
+#define DEF_SPEEDWX                "1.1"
+#define DEF_SPEEDWY                "1.3"
+#define DEF_SPEEDWZ                "1.5"
+#define DEF_SPEEDXY                "1.7"
+#define DEF_SPEEDXZ                "1.9"
+#define DEF_SPEEDYZ                "2.1"
+#define DEF_WALK_DIRECTION         "7.0"
+#define DEF_WALK_SPEED             "20.0"
 
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      10000 \n" \
@@ -168,6 +192,7 @@ static char *appear;
 static char *color_mode;
 static char *view_mode;
 static Bool marks;
+static Bool change_colors;
 static char *proj_3d;
 static char *proj_4d;
 static float speed_wx;
@@ -184,7 +209,7 @@ static XrmOptionDescRec opts[] =
 {
   {"-klein-bottle",      ".kleinBottle",   XrmoptionSepArg, 0 },
   {"-figure-8",          ".kleinBottle",   XrmoptionNoArg,  "figure-8" },
-  {"-squeezed-torus",    ".kleinBottle",   XrmoptionNoArg,  "squeezed-torus" },
+  {"-pinched-torus",     ".kleinBottle",   XrmoptionNoArg,  "pinched-torus" },
   {"-lawson",            ".kleinBottle",   XrmoptionNoArg,  "lawson" },
   {"-mode",              ".displayMode",   XrmoptionSepArg, 0 },
   {"-wireframe",         ".displayMode",   XrmoptionNoArg,  "wireframe" },
@@ -194,15 +219,18 @@ static XrmOptionDescRec opts[] =
   {"-solid",             ".appearance",    XrmoptionNoArg,  "solid" },
   {"-bands",             ".appearance",    XrmoptionNoArg,  "bands" },
   {"-colors",            ".colors",        XrmoptionSepArg, 0 },
+  {"-onesided",          ".colors",        XrmoptionNoArg,  "one-sided" },
   {"-twosided",          ".colors",        XrmoptionNoArg,  "two-sided" },
   {"-rainbow",           ".colors",        XrmoptionNoArg,  "rainbow" },
   {"-depth",             ".colors",        XrmoptionNoArg,  "depth" },
+  {"-change-colors",     ".changeColors",  XrmoptionNoArg,  "on"},
+  {"+change-colors",     ".changeColors",  XrmoptionNoArg,  "off"},
   {"-view-mode",         ".viewMode",      XrmoptionSepArg, 0 },
   {"-walk",              ".viewMode",      XrmoptionNoArg,  "walk" },
   {"-turn",              ".viewMode",      XrmoptionNoArg,  "turn" },
   {"-walk-turn",         ".viewMode",      XrmoptionNoArg,  "walk-turn" },
-  {"-orientation-marks", ".marks",         XrmoptionNoArg, "on"},
-  {"+orientation-marks", ".marks",         XrmoptionNoArg, "off"},
+  {"-orientation-marks", ".marks",         XrmoptionNoArg,  "on"},
+  {"+orientation-marks", ".marks",         XrmoptionNoArg,  "off"},
   {"-projection-3d",     ".projection3d",  XrmoptionSepArg, 0 },
   {"-perspective-3d",    ".projection3d",  XrmoptionNoArg,  "perspective" },
   {"-orthographic-3d",   ".projection3d",  XrmoptionNoArg,  "orthographic" },
@@ -225,6 +253,7 @@ static argtype vars[] =
   { &mode,           "displayMode",   "DisplayMode",   DEF_DISPLAY_MODE,   t_String },
   { &appear,         "appearance",    "Appearance",    DEF_APPEARANCE,     t_String },
   { &color_mode,     "colors",        "Colors",        DEF_COLORS,         t_String },
+  { &change_colors,  "changeColors",  "ChangeColors",  DEF_CHANGE_COLORS,  t_Bool },
   { &view_mode,      "viewMode",      "ViewMode",      DEF_VIEW_MODE,      t_String },
   { &marks,          "marks",         "Marks",         DEF_MARKS,          t_Bool },
   { &proj_3d,        "projection3d",  "Projection3d",  DEF_PROJECTION_3D,  t_String },
@@ -246,11 +275,16 @@ ENTRYPOINT ModeSpecOpt klein_opts =
 /* Radius of the figure-8 Klein bottle */
 #define FIGURE_8_RADIUS 2.0
 
-/* Radius of the squeezed torus Klein bottle */
-#define SQUEEZED_TORUS_RADIUS 2.0
+/* Radius of the pinched torus Klein bottle */
+#define PINCHED_TORUS_RADIUS 2.0
 
 /* Offset by which we walk above the Klein bottle */
 #define DELTAY  0.02
+
+/* Color change speeds */
+#define DRHO    0.7
+#define DSIGMA  1.1
+#define DTAU    1.7
 
 /* Number of subdivisions of the Klein bottle */
 #define NUMU 128
@@ -268,11 +302,14 @@ typedef struct {
   int display_mode;
   int appearance;
   int colors;
+  Bool change_colors;
   int view;
   int projection_3d;
   int projection_4d;
   /* 4D rotation angles */
   float alpha, beta, delta, zeta, eta, theta;
+  /* Color rotation angles */
+  float rho, sigma, tau;
   /* Movement parameters */
   float umove, vmove, dumove, dvmove;
   int side;
@@ -451,6 +488,77 @@ static void rotateall4d(float ze, float et, float th, float m[4][4])
 }
 
 
+/* Add a rotation around the x-axis to the matrix m. */
+static void rotatex(float m[3][3], float phi)
+{
+  float c, s, u, v;
+  int i;
+
+  phi *= M_PI/180.0;
+  c = cos(phi);
+  s = sin(phi);
+  for (i=0; i<3; i++)
+  {
+    u = m[i][1];
+    v = m[i][2];
+    m[i][1] = c*u+s*v;
+    m[i][2] = -s*u+c*v;
+  }
+}
+
+
+/* Add a rotation around the y-axis to the matrix m. */
+static void rotatey(float m[3][3], float phi)
+{
+  float c, s, u, v;
+  int i;
+
+  phi *= M_PI/180.0;
+  c = cos(phi);
+  s = sin(phi);
+  for (i=0; i<3; i++)
+  {
+    u = m[i][0];
+    v = m[i][2];
+    m[i][0] = c*u-s*v;
+    m[i][2] = s*u+c*v;
+  }
+}
+
+
+/* Add a rotation around the z-axis to the matrix m. */
+static void rotatez(float m[3][3], float phi)
+{
+  float c, s, u, v;
+  int i;
+
+  phi *= M_PI/180.0;
+  c = cos(phi);
+  s = sin(phi);
+  for (i=0; i<3; i++)
+  {
+    u = m[i][0];
+    v = m[i][1];
+    m[i][0] = c*u+s*v;
+    m[i][1] = -s*u+c*v;
+  }
+}
+
+
+/* Compute the 3d rotation matrix m from the 3d rotation angles. */
+static void rotateall3d(float al, float be, float de, float m[3][3])
+{
+  int i, j;
+
+  for (i=0; i<3; i++)
+    for (j=0; j<3; j++)
+      m[i][j] = (i==j);
+  rotatex(m,al);
+  rotatey(m,be);
+  rotatez(m,de);
+}
+
+
 /* Multiply two rotation matrices: o=m*n. */
 static void mult_rotmat(float m[4][4], float n[4][4], float o[4][4])
 {
@@ -499,54 +607,79 @@ static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
 
 
 /* Compute a fully saturated and bright color based on an angle. */
-static void color(kleinstruct *kb, double angle, float col[4])
+static void color(kleinstruct *kb, double angle, float mat[3][3], float col[4])
 {
   int s;
-  double t;
+  double t, ca, sa;
+  float m;
 
-  if (kb->colors == COLORS_TWOSIDED)
-    return;
-
-  if (angle >= 0.0)
-    angle = fmod(angle,2.0*M_PI);
-  else
-    angle = fmod(angle,-2.0*M_PI);
-  s = floor(angle/(M_PI/3));
-  t = angle/(M_PI/3)-s;
-  if (s >= 6)
-    s = 0;
-  switch (s)
+  if (!kb->change_colors)
   {
-    case 0:
-      col[0] = 1.0;
-      col[1] = t;
-      col[2] = 0.0;
-      break;
-    case 1:
-      col[0] = 1.0-t;
-      col[1] = 1.0;
-      col[2] = 0.0;
-      break;
-    case 2:
-      col[0] = 0.0;
-      col[1] = 1.0;
-      col[2] = t;
-      break;
-    case 3:
-      col[0] = 0.0;
-      col[1] = 1.0-t;
-      col[2] = 1.0;
-      break;
-    case 4:
-      col[0] = t;
-      col[1] = 0.0;
-      col[2] = 1.0;
-      break;
-    case 5:
-      col[0] = 1.0;
-      col[1] = 0.0;
-      col[2] = 1.0-t;
-      break;
+    if (kb->colors == COLORS_ONESIDED || kb->colors == COLORS_TWOSIDED)
+      return;
+
+    if (angle >= 0.0)
+      angle = fmod(angle,2.0*M_PI);
+    else
+      angle = fmod(angle,-2.0*M_PI);
+    s = floor(angle/(M_PI/3));
+    t = angle/(M_PI/3)-s;
+    if (s >= 6)
+      s = 0;
+    switch (s)
+    {
+      case 0:
+        col[0] = 1.0;
+        col[1] = t;
+        col[2] = 0.0;
+        break;
+      case 1:
+        col[0] = 1.0-t;
+        col[1] = 1.0;
+        col[2] = 0.0;
+        break;
+      case 2:
+        col[0] = 0.0;
+        col[1] = 1.0;
+        col[2] = t;
+        break;
+      case 3:
+        col[0] = 0.0;
+        col[1] = 1.0-t;
+        col[2] = 1.0;
+        break;
+      case 4:
+        col[0] = t;
+        col[1] = 0.0;
+        col[2] = 1.0;
+        break;
+      case 5:
+        col[0] = 1.0;
+        col[1] = 0.0;
+        col[2] = 1.0-t;
+        break;
+    }
+  }
+  else /* kb->change_colors */
+  {
+    if (kb->colors == COLORS_ONESIDED || kb->colors == COLORS_TWOSIDED)
+    {
+      col[0] = mat[0][2];
+      col[1] = mat[1][2];
+      col[2] = mat[2][2];
+    }
+    else
+    {
+      ca = cos(angle);
+      sa = sin(angle);
+      col[0] = ca*mat[0][0]+sa*mat[0][1];
+      col[1] = ca*mat[1][0]+sa*mat[1][1];
+      col[2] = ca*mat[2][0]+sa*mat[2][1];
+    }
+    m = 0.5f/fmaxf(fmaxf(fabsf(col[0]),fabsf(col[1])),fabsf(col[2]));
+    col[0] = m*col[0]+0.5f;
+    col[1] = m*col[1]+0.5f;
+    col[2] = m*col[2]+0.5f;
   }
   if (kb->display_mode == DISP_TRANSPARENT)
     col[3] = 0.7;
@@ -573,10 +706,13 @@ static void setup_figure8(ModeInfo *mi, double umin, double umax, double vmin,
       k = i*(NUMV+1)+j;
       u = -ur*j/NUMU+umin;
       v = vr*i/NUMV+vmin;
-      if (kb->colors == COLORS_DEPTH)
-        color(kb,(cos(u)+1.0)*M_PI*2.0/3.0,kb->col[k]);
-      else
-        color(kb,v,kb->col[k]);
+      if (!kb->change_colors)
+      {
+        if (kb->colors == COLORS_DEPTH)
+          color(kb,(cos(u)+1.0)*M_PI*2.0/3.0,NULL,kb->col[k]);
+        else if (kb->colors == COLORS_RAINBOW)
+          color(kb,v,NULL,kb->col[k]);
+      }
       kb->tex[k][0] = -32*u/(2.0*M_PI);
       kb->tex[k][1] = 32*v/(2.0*M_PI);
       cu = cos(u);
@@ -612,9 +748,9 @@ static void setup_figure8(ModeInfo *mi, double umin, double umax, double vmin,
 }
 
 
-/* Set up the squeezed torus Klein bottle coordinates, colors, and texture. */
-static void setup_squeezed_torus(ModeInfo *mi, double umin, double umax,
-                                 double vmin, double vmax)
+/* Set up the pinched torus Klein bottle coordinates, colors, and texture. */
+static void setup_pinched_torus(ModeInfo *mi, double umin, double umax,
+                                double vmin, double vmax)
 {
   int i, j, k, l;
   double u, v, ur, vr;
@@ -630,10 +766,13 @@ static void setup_squeezed_torus(ModeInfo *mi, double umin, double umax,
       k = i*(NUMV+1)+j;
       u = -ur*j/NUMU+umin;
       v = vr*i/NUMV+vmin;
-      if (kb->colors == COLORS_DEPTH)
-        color(kb,(sin(u)*sin(0.5*v)+1.0)*M_PI*2.0/3.0,kb->col[k]);
-      else
-        color(kb,v,kb->col[k]);
+      if (!kb->change_colors)
+      {
+        if (kb->colors == COLORS_DEPTH)
+          color(kb,(sin(u)*sin(0.5*v)+1.0)*M_PI*2.0/3.0,NULL,kb->col[k]);
+        else if (kb->colors == COLORS_RAINBOW)
+          color(kb,v,NULL,kb->col[k]);
+      }
       kb->tex[k][0] = -32*u/(2.0*M_PI);
       kb->tex[k][1] = 32*v/(2.0*M_PI);
       cu = cos(u);
@@ -642,23 +781,23 @@ static void setup_squeezed_torus(ModeInfo *mi, double umin, double umax,
       sv = sin(v);
       cv2 = cos(0.5*v);
       sv2 = sin(0.5*v);
-      kb->x[k][0] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
-      kb->x[k][1] = (SQUEEZED_TORUS_RADIUS+cu)*sv;
+      kb->x[k][0] = (PINCHED_TORUS_RADIUS+cu)*cv;
+      kb->x[k][1] = (PINCHED_TORUS_RADIUS+cu)*sv;
       kb->x[k][2] = su*cv2;
       kb->x[k][3] = su*sv2;
       kb->xu[k][0] = -su*cv;
       kb->xu[k][1] = -su*sv;
       kb->xu[k][2] = cu*cv2;
       kb->xu[k][3] = cu*sv2;
-      kb->xv[k][0] = -(SQUEEZED_TORUS_RADIUS+cu)*sv;
-      kb->xv[k][1] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
+      kb->xv[k][0] = -(PINCHED_TORUS_RADIUS+cu)*sv;
+      kb->xv[k][1] = (PINCHED_TORUS_RADIUS+cu)*cv;
       kb->xv[k][2] = -0.5*su*sv2;
       kb->xv[k][3] = 0.5*su*cv2;
       for (l=0; l<4; l++)
       {
-        kb->x[k][l] /= SQUEEZED_TORUS_RADIUS+1.25;
-        kb->xu[k][l] /= SQUEEZED_TORUS_RADIUS+1.25;
-        kb->xv[k][l] /= SQUEEZED_TORUS_RADIUS+1.25;
+        kb->x[k][l] /= PINCHED_TORUS_RADIUS+1.25;
+        kb->xu[k][l] /= PINCHED_TORUS_RADIUS+1.25;
+        kb->xv[k][l] /= PINCHED_TORUS_RADIUS+1.25;
       }
     }
   }
@@ -683,10 +822,13 @@ static void setup_lawson(ModeInfo *mi, double umin, double umax, double vmin,
       k = i*(NUMU+1)+j;
       u = -ur*j/NUMU+umin;
       v = vr*i/NUMV+vmin;
-      if (kb->colors == COLORS_DEPTH)
-        color(kb,(sin(u)*cos(0.5*v)+1.0)*M_PI*2.0/3.0,kb->col[k]);
-      else
-        color(kb,v,kb->col[k]);
+      if (!kb->change_colors)
+      {
+        if (kb->colors == COLORS_DEPTH)
+          color(kb,(sin(u)*cos(0.5*v)+1.0)*M_PI*2.0/3.0,NULL,kb->col[k]);
+        else if (kb->colors == COLORS_RAINBOW)
+          color(kb,v,NULL,kb->col[k]);
+      }
       kb->tex[k][0] = -32*u/(2.0*M_PI);
       kb->tex[k][1] = 32*v/(2.0*M_PI);
       cu = cos(u);
@@ -717,18 +859,24 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
                    double vmax)
 {
   int polys = 0;
-  static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
-  static const GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
-  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[4][4];
+  static const GLfloat mat_diff_red[]           = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_green[]         = { 0.0, 1.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_oneside[]       = { 0.9, 0.4, 0.3, 1.0 };
+  static const GLfloat mat_diff_trans_red[]     = { 1.0, 0.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_green[]   = { 0.0, 1.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_oneside[] = { 0.9, 0.4, 0.3, 0.7 };
+  float mat_diff_dyn[4], mat_diff_dyn_compl[4];
+  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[4][4], matc[3][3];
   int i, j, k, l, m, o;
-  double u, v;
+  double u, v, ur, vr;
   double xx[4], xxu[4], xxv[4], y[4], yu[4], yv[4];
   double q, r, s, t;
   double cu, su, cv, sv, cv2, sv2, c2u, s2u;
   float q1[4], q2[4], r1[4][4], r2[4][4];
   kleinstruct *kb = &klein[MI_SCREEN(mi)];
+
+  if (kb->change_colors)
+    rotateall3d(kb->rho,kb->sigma,kb->tau,matc);
 
   if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
@@ -931,22 +1079,60 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
     }
   }
 
-  if (kb->colors == COLORS_TWOSIDED)
+  if (!kb->change_colors)
   {
-    glColor3fv(mat_diff_red);
-    if (kb->display_mode == DISP_TRANSPARENT)
+    if (kb->colors == COLORS_ONESIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      glColor3fv(mat_diff_oneside);
+      if (kb->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_trans_oneside);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_oneside);
+      }
     }
-    else
+    else if (kb->colors == COLORS_TWOSIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      glColor3fv(mat_diff_red);
+      if (kb->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      }
+    }
+  }
+  else /* kb->change_colors */
+  {
+    color(kb,0.0,matc,mat_diff_dyn);
+    if (kb->colors == COLORS_ONESIDED)
+    {
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+    }
+    else if (kb->colors == COLORS_TWOSIDED)
+    {
+      mat_diff_dyn_compl[0] = 1.0f-mat_diff_dyn[0];
+      mat_diff_dyn_compl[1] = 1.0f-mat_diff_dyn[1];
+      mat_diff_dyn_compl[2] = 1.0f-mat_diff_dyn[2];
+      mat_diff_dyn_compl[3] = mat_diff_dyn[3];
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn_compl);
     }
   }
   glBindTexture(GL_TEXTURE_2D,kb->tex_name);
 
+  ur = umax-umin;
+  vr = vmax-vmin;
   for (i=0; i<NUMU; i++)
   {
     if (kb->appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
@@ -964,7 +1150,20 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
         o = l*(NUMV+1)+m;
         glNormal3fv(kb->pn[o]);
         glTexCoord2fv(kb->tex[o]);
-        if (kb->colors != COLORS_TWOSIDED)
+        if (kb->change_colors)
+        {
+          if (kb->colors == COLORS_DEPTH)
+          {
+            u = -ur*m/NUMU+umin;
+            color(kb,(cos(u)+1.0)*M_PI*2.0/3.0,matc,kb->col[o]);
+          }
+          else if (kb->colors == COLORS_RAINBOW)
+          {
+            v = vr*l/NUMV+vmin;
+            color(kb,v,matc,kb->col[o]);
+          }
+        }
+        if (kb->colors != COLORS_ONESIDED && kb->colors != COLORS_TWOSIDED)
         {
           glColor3fv(kb->col[o]);
           glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,kb->col[o]);
@@ -980,23 +1179,29 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
 }
 
 
-/* Draw a squeezed torus Klein bottle projected into 3D. */
-static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
-                          double vmax)
+/* Draw a pinched torus Klein bottle projected into 3D. */
+static int pinched_torus(ModeInfo *mi, double umin, double umax, double vmin,
+                         double vmax)
 {
   int polys = 0;
-  static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
-  static const GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
-  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[4][4];
+  static const GLfloat mat_diff_red[]           = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_green[]         = { 0.0, 1.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_oneside[]       = { 0.9, 0.4, 0.3, 1.0 };
+  static const GLfloat mat_diff_trans_red[]     = { 1.0, 0.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_green[]   = { 0.0, 1.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_oneside[] = { 0.9, 0.4, 0.3, 0.7 };
+  float mat_diff_dyn[4], mat_diff_dyn_compl[4];
+  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[4][4], matc[3][3];
   int i, j, k, l, m, o;
-  double u, v;
+  double u, v, ur, vr;
   double xx[4], xxu[4], xxv[4], y[4], yu[4], yv[4];
   double q, r, s, t;
   double cu, su, cv, sv, cv2, sv2;
   float q1[4], q2[4], r1[4][4], r2[4][4];
   kleinstruct *kb = &klein[MI_SCREEN(mi)];
+
+  if (kb->change_colors)
+    rotateall3d(kb->rho,kb->sigma,kb->tau,matc);
 
   if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
@@ -1012,23 +1217,23 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
     sv = sin(v);
     cv2 = cos(0.5*v);
     sv2 = sin(0.5*v);
-    xx[0] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
-    xx[1] = (SQUEEZED_TORUS_RADIUS+cu)*sv;
+    xx[0] = (PINCHED_TORUS_RADIUS+cu)*cv;
+    xx[1] = (PINCHED_TORUS_RADIUS+cu)*sv;
     xx[2] = su*cv2;
     xx[3] = su*sv2;
     xxu[0] = -su*cv;
     xxu[1] = -su*sv;
     xxu[2] = cu*cv2;
     xxu[3] = cu*sv2;
-    xxv[0] = -(SQUEEZED_TORUS_RADIUS+cu)*sv;
-    xxv[1] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
+    xxv[0] = -(PINCHED_TORUS_RADIUS+cu)*sv;
+    xxv[1] = (PINCHED_TORUS_RADIUS+cu)*cv;
     xxv[2] = -0.5*su*sv2;
     xxv[3] = 0.5*su*cv2;
     for (l=0; l<4; l++)
     {
-      xx[l] /= SQUEEZED_TORUS_RADIUS+1.25;
-      xxu[l] /= SQUEEZED_TORUS_RADIUS+1.25;
-      xxv[l] /= SQUEEZED_TORUS_RADIUS+1.25;
+      xx[l] /= PINCHED_TORUS_RADIUS+1.25;
+      xxu[l] /= PINCHED_TORUS_RADIUS+1.25;
+      xxv[l] /= PINCHED_TORUS_RADIUS+1.25;
     }
     for (l=0; l<4; l++)
     {
@@ -1103,12 +1308,12 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
     sv = sin(v);
     cv2 = cos(0.5*v);
     sv2 = sin(0.5*v);
-    xx[0] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
-    xx[1] = (SQUEEZED_TORUS_RADIUS+cu)*sv;
+    xx[0] = (PINCHED_TORUS_RADIUS+cu)*cv;
+    xx[1] = (PINCHED_TORUS_RADIUS+cu)*sv;
     xx[2] = su*cv2;
     xx[3] = su*sv2;
     for (l=0; l<4; l++)
-      xx[l] /= SQUEEZED_TORUS_RADIUS+1.25;
+      xx[l] /= PINCHED_TORUS_RADIUS+1.25;
     for (l=0; l<4; l++)
     {
       r = 0.0;
@@ -1193,22 +1398,60 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
     }
   }
 
-  if (kb->colors == COLORS_TWOSIDED)
+  if (!kb->change_colors)
   {
-    glColor3fv(mat_diff_red);
-    if (kb->display_mode == DISP_TRANSPARENT)
+    if (kb->colors == COLORS_ONESIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      glColor3fv(mat_diff_oneside);
+      if (kb->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_trans_oneside);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_oneside);
+      }
     }
-    else
+    else if (kb->colors == COLORS_TWOSIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      glColor3fv(mat_diff_red);
+      if (kb->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      }
+    }
+  }
+  else /* kb->change_colors */
+  {
+    color(kb,0.0,matc,mat_diff_dyn);
+    if (kb->colors == COLORS_ONESIDED)
+    {
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+    }
+    else if (kb->colors == COLORS_TWOSIDED)
+    {
+      mat_diff_dyn_compl[0] = 1.0f-mat_diff_dyn[0];
+      mat_diff_dyn_compl[1] = 1.0f-mat_diff_dyn[1];
+      mat_diff_dyn_compl[2] = 1.0f-mat_diff_dyn[2];
+      mat_diff_dyn_compl[3] = mat_diff_dyn[3];
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn_compl);
     }
   }
   glBindTexture(GL_TEXTURE_2D,kb->tex_name);
 
+  ur = umax-umin;
+  vr = vmax-vmin;
   for (i=0; i<NUMU; i++)
   {
     if (kb->appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
@@ -1226,7 +1469,20 @@ static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
         o = l*(NUMV+1)+m;
         glNormal3fv(kb->pn[o]);
         glTexCoord2fv(kb->tex[o]);
-        if (kb->colors != COLORS_TWOSIDED)
+        if (kb->change_colors)
+        {
+          v = vr*l/NUMV+vmin;
+          if (kb->colors == COLORS_DEPTH)
+          {
+            u = -ur*m/NUMU+umin;
+            color(kb,(sin(u)*sin(0.5*v)+1.0)*M_PI*2.0/3.0,matc,kb->col[o]);
+          }
+          else if (kb->colors == COLORS_RAINBOW)
+          {
+            color(kb,v,matc,kb->col[o]);
+          }
+        }
+        if (kb->colors != COLORS_ONESIDED && kb->colors != COLORS_TWOSIDED)
         {
           glColor3fv(kb->col[o]);
           glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,kb->col[o]);
@@ -1247,18 +1503,24 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
                   double vmax)
 {
   int polys = 0;
-  static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
-  static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
-  static const GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
-  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[4][4];
+  static const GLfloat mat_diff_red[]           = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_green[]         = { 0.0, 1.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_oneside[]       = { 0.9, 0.4, 0.3, 1.0 };
+  static const GLfloat mat_diff_trans_red[]     = { 1.0, 0.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_green[]   = { 0.0, 1.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_oneside[] = { 0.9, 0.4, 0.3, 0.7 };
+  float mat_diff_dyn[4], mat_diff_dyn_compl[4];
+  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[4][4], matc[3][3];
   int i, j, k, l, m, o;
-  double u, v;
+  double u, v, ur, vr;
   double cu, su, cv, sv, cv2, sv2;
   double xx[4], xxu[4], xxv[4], y[4], yu[4], yv[4];
   double q, r, s, t;
   float q1[4], q2[4], r1[4][4], r2[4][4];
   kleinstruct *kb = &klein[MI_SCREEN(mi)];
+
+  if (kb->change_colors)
+    rotateall3d(kb->rho,kb->sigma,kb->tau,matc);
 
   if (kb->view == VIEW_WALK || kb->view == VIEW_WALKTURN)
   {
@@ -1447,22 +1709,60 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
     }
   }
 
-  if (kb->colors == COLORS_TWOSIDED)
+  if (!kb->change_colors)
   {
-    glColor3fv(mat_diff_red);
-    if (kb->display_mode == DISP_TRANSPARENT)
+    if (kb->colors == COLORS_ONESIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      glColor3fv(mat_diff_oneside);
+      if (kb->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_trans_oneside);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+                     mat_diff_oneside);
+      }
     }
-    else
+    else if (kb->colors == COLORS_TWOSIDED)
     {
-      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
-      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      glColor3fv(mat_diff_red);
+      if (kb->display_mode == DISP_TRANSPARENT)
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+      }
+      else
+      {
+        glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
+        glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+      }
+    }
+  }
+  else /* kb->change_colors */
+  {
+    color(kb,0.0,matc,mat_diff_dyn);
+    if (kb->colors == COLORS_ONESIDED)
+    {
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+    }
+    else if (kb->colors == COLORS_TWOSIDED)
+    {
+      mat_diff_dyn_compl[0] = 1.0f-mat_diff_dyn[0];
+      mat_diff_dyn_compl[1] = 1.0f-mat_diff_dyn[1];
+      mat_diff_dyn_compl[2] = 1.0f-mat_diff_dyn[2];
+      mat_diff_dyn_compl[3] = mat_diff_dyn[3];
+      glColor3fv(mat_diff_dyn);
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn);
+      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_dyn_compl);
     }
   }
   glBindTexture(GL_TEXTURE_2D,kb->tex_name);
 
+  ur = umax-umin;
+  vr = vmax-vmin;
   for (i=0; i<NUMV; i++)
   {
     if (kb->appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
@@ -1480,7 +1780,20 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
         o = l*(NUMU+1)+m;
         glNormal3fv(kb->pn[o]);
         glTexCoord2fv(kb->tex[o]);
-        if (kb->colors != COLORS_TWOSIDED)
+        if (kb->change_colors)
+        {
+          v = vr*l/NUMV+vmin;
+          if (kb->colors == COLORS_DEPTH)
+          {
+            u = -ur*m/NUMU+umin;
+            color(kb,(sin(u)*cos(0.5*v)+1.0)*M_PI*2.0/3.0,matc,kb->col[o]);
+          }
+          else if (kb->colors == COLORS_RAINBOW)
+          {
+            color(kb,v,matc,kb->col[o]);
+          }
+        }
+        if (kb->colors != COLORS_ONESIDED && kb->colors != COLORS_TWOSIDED)
         {
           glColor3fv(kb->col[o]);
           glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,kb->col[o]);
@@ -1509,7 +1822,7 @@ static void gen_texture(ModeInfo *mi)
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
   glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,TEX_DIMENSION,TEX_DIMENSION,0,
+  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,TEX_DIMENSION,TEX_DIMENSION,0,
                GL_LUMINANCE,GL_UNSIGNED_BYTE,texture);
 }
 
@@ -1540,7 +1853,7 @@ static void init(ModeInfo *mi)
   }
   kb->zeta = 0.0;
   if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8 ||
-      kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+      kb->bottle_type == KLEIN_BOTTLE_PINCHED_TORUS)
     kb->eta = 0.0;
   else
     kb->eta = 45.0;
@@ -1550,6 +1863,10 @@ static void init(ModeInfo *mi)
   kb->dumove = 0.0;
   kb->dvmove = 0.0;
   kb->side = 1;
+
+  kb->rho = frand(360.0);
+  kb->sigma = frand(360.0);
+  kb->tau = frand(360.0);
 
   if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8)
   {
@@ -1565,7 +1882,7 @@ static void init(ModeInfo *mi)
       kb->offset3d[2] = -1.9;
     kb->offset3d[3] = 0.0;
   }
-  else if (kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+  else if (kb->bottle_type == KLEIN_BOTTLE_PINCHED_TORUS)
   {
     kb->offset4d[0] = 0.0;
     kb->offset4d[1] = 0.0;
@@ -1598,8 +1915,8 @@ static void init(ModeInfo *mi)
   gen_texture(mi);
   if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8)
     setup_figure8(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else if (kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
-    setup_squeezed_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
+  else if (kb->bottle_type == KLEIN_BOTTLE_PINCHED_TORUS)
+    setup_pinched_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
   else /* kb->bottle_type == KLEIN_BOTTLE_LAWSON */
     setup_lawson(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
 
@@ -1736,6 +2053,18 @@ static void display_klein(ModeInfo *mi)
       if (kb->umove < 0.0)
         kb->umove += 2.0*M_PI;
     }
+    if (kb->change_colors)
+    {
+      kb->rho += DRHO;
+      if (kb->rho >= 360.0)
+        kb->rho -= 360.0;
+      kb->sigma += DSIGMA;
+      if (kb->sigma >= 360.0)
+        kb->sigma -= 360.0;
+      kb->tau += DTAU;
+      if (kb->tau >= 360.0)
+        kb->tau -= 360.0;
+    }
   }
 
   glMatrixMode(GL_PROJECTION);
@@ -1760,8 +2089,8 @@ static void display_klein(ModeInfo *mi)
 
   if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8)
     mi->polygon_count = figure8(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else if (kb->bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
-    mi->polygon_count = squeezed_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
+  else if (kb->bottle_type == KLEIN_BOTTLE_PINCHED_TORUS)
+    mi->polygon_count = pinched_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
   else /* kb->bottle_type == KLEIN_BOTTLE_LAWSON */
     mi->polygon_count = lawson(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
 }
@@ -1874,9 +2203,9 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
   {
     kb->bottle_type = KLEIN_BOTTLE_FIGURE_8;
   }
-  else if (!strcasecmp(klein_bottle,"squeezed-torus"))
+  else if (!strcasecmp(klein_bottle,"pinched-torus"))
   {
-    kb->bottle_type = KLEIN_BOTTLE_SQUEEZED_TORUS;
+    kb->bottle_type = KLEIN_BOTTLE_PINCHED_TORUS;
   }
   else if (!strcasecmp(klein_bottle,"lawson"))
   {
@@ -1936,6 +2265,10 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
   {
     kb->colors = random() % NUM_COLORS;
   }
+  else if (!strcasecmp(color_mode,"one-sided"))
+  {
+    kb->colors = COLORS_ONESIDED;
+  }
   else if (!strcasecmp(color_mode,"two-sided"))
   {
     kb->colors = COLORS_TWOSIDED;
@@ -1952,6 +2285,8 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
   {
     kb->colors = random() % NUM_COLORS;
   }
+
+  kb->change_colors = change_colors;
 
   /* Set the view mode. */
   if (!strcasecmp(view_mode,"random"))

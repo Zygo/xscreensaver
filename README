@@ -46,6 +46,20 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.44	* New hacks, `gibson', `etruscanvenus' and `scooter'.
+	* BSOD supports Tivo and Nintendo.
+	* New color options in `romanboy', `projectiveplane', `hypertorus'
+          and `klein'.
+	* macOS: Fixed "Use random screen saver" on macOS 10.15.
+	* iOS: Supports dark mode.
+	* iOS: Fixed image loading on iOS 13.
+	* iOS: Fixed rotation on iOS 13 (Apple incompatibly breaks rotation
+          every two years as a matter of policy).
+        * Performance tweaks for `eruption', `fireworkx', `halftone', `halo',
+          `moire2', `rd-bomb'.
+	* X11: Always use $HOME/.xscreensaver, not getpwuid's directory.
+	* Various bug fixes.
+
 5.43	* New hacks, `GravityWell', `DeepStars'.
 	* GLPlanet now supports the Mercator projection.
 	* Bouncing Cow has mathematically ideal cows (spherical, frictionless).

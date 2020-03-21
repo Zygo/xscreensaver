@@ -23,6 +23,7 @@ To set up your Android development environment:
     On MacOS, the value you want is probably ~/Library/Android/sdk/
     Also set "ndk.dir" in local.properties.
 
+
 To build:
 
     ./configure
@@ -74,6 +75,19 @@ To build:
     shit and sometimes decides to just randomly not service connections.
     If you restart the emulator, and wait minutes for the whole damned
     thing to boot up again, it will probably work next time.  Probably.
+
+
+WTF is Gradle?
+
+    "gradle" is a yet another re-invention of "make" that is written
+    in Java, because we needed that like another hole in the head.
+    The actual gradle app is bundled here, in a .jar file.
+
+    "gradlew" is an sh script that tries to figure out how to invoke
+    Java to run gradle properly.
+
+    There are identical copies of gradle and gradlew in both
+    "android/" and in "android/xscreensaver/".  I don't know why.
 
 
 Directory structure:

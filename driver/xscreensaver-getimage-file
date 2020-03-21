@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2018 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2020 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.52 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.53 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -1256,6 +1256,7 @@ sub main() {
     elsif (m/^--?no-spotlight$/s) { $use_spotlight_p = 0; }
     elsif (m/^--?cache$/s)        { $cache_p = 1; }
     elsif (m/^--?no-?cache$/s)    { $cache_p = 0; }
+    elsif (m/^--?flush-?cache$/s) { $feed_max_age = $cache_max_age = 0; }
     elsif (m/^--?cocoa$/)         { $cocoa_id = shift @ARGV; }
     elsif (m/^--?abs(olute)?$/)   { $abs_p = 1; }
     elsif (m/^-./)                { usage; }

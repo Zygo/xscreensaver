@@ -69,6 +69,10 @@ tar::
   rm -f configure ;							    \
   $(MAKE2) configure ;							    \
   $(MAKE2) version-date distdepend ;					    \
+  $(MAKE2) _tar
+
+_tar:
+	@								    \
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
   NAME="xscreensaver-$$VERS" ;						    \
   rm -rf $$NAME ; ln -s . $$NAME ;					    \

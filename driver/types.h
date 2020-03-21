@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -275,6 +275,7 @@ struct saver_info {
   int unlock_failures;		/* Counts failed login attempts while the
 				   screen is locked. */
   time_t unlock_failure_time;	/* Time of first failed login attempt. */
+  time_t unlock_dismiss_time;	/* Time lock dialog most recently dismissed. */
 
   char *unlock_typeahead;	/* If the screen is locked, and the user types
                                    a character, we assume that it is the first

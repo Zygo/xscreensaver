@@ -631,7 +631,8 @@ draw_drift(ModeInfo * mi)
 		if (dp->total_points++ > dp->fractal_len) {
 			draw_flush(mi, dp, window);
 			if (0 == --dp->nfractals) {
-              dp->erase_countdown = 4 * 1000000 / MI_PAUSE(mi);
+              dp->erase_countdown = 4 * 1000000 / 
+                ((MI_PAUSE(mi) == 0) ? 1 : MI_PAUSE(mi));
 				return;
 			}
 			initfractal(mi);

@@ -1400,6 +1400,8 @@ destroy_passwd_window (saver_info *si)
   memset (pw, 0, sizeof(*pw));
   free (pw);
   si->pw_data = 0;
+
+  si->unlock_dismiss_time = time((time_t *) 0);
 }
 
 
@@ -2216,6 +2218,7 @@ Bool
 unlock_p (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
+  time_t now = time ((time_t *) 0);
 
   if (!si->unlock_cb)
     {
@@ -2224,6 +2227,18 @@ unlock_p (saver_info *si)
     }
 
   raise_window (si, True, True, True);
+
+  /* If your cat is sitting on the return key, don't thrash the window.
+     Only one failed/cancelled unlock per 2 seconds.
+   */
+  if (si->unlock_dismiss_time >= now - 1)
+    {
+      if (p->verbose_p)
+        fprintf (stderr, "%s: unlock: thrashing: RET held down?\n", blurb());
+      XSync (si->dpy, False);
+#     undef sleep
+      sleep (2);    /* This is less than ideal, but fine */
+    }
 
   xss_authenticate(si, p->verbose_p);
 

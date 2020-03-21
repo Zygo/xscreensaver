@@ -546,13 +546,22 @@ static const char *filmleader_defaults [] = {
 
 # endif
 
-# ifdef USE_IPHONE
+  /* Note: these font sizes aren't relative to screen pixels, but to the
+     712 x Y or X x 712 canvas that we draw in, which is then scaled to
+     the size of the screen by analogtv. */
 
+# ifdef USE_IPHONE
   "*numberFont:  Helvetica Bold 120",
   "*numberFont2: Helvetica 36",
   "*numberFont3: Helvetica 28",
 
-# else /* X11, Cocoa or Android */
+# elif defined(HAVE_COCOA)
+  /* Need to double these because ANALOGTV_DEFAULTS sets lowrez: true */
+  "*numberFont:  Helvetica Bold 240",
+  "*numberFont2: Helvetica 72",
+  "*numberFont3: Helvetica 56",
+
+# else /* X11 or Android */
 
   "*numberFont:  -*-helvetica-bold-r-*-*-*-1700-*-*-*-*-*-*",
   "*numberFont2: -*-helvetica-medium-r-*-*-*-500-*-*-*-*-*-*",

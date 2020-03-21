@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -265,7 +265,7 @@ MapNotify_event_p (Display *dpy, XEvent *event, XPointer window)
 }
 
 
-static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW;
+static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW, XA_NET_WM_PID;
 
 /* Dead-trivial event handling: exits if "q" or "ESC" are typed.
    Exit if the WM_PROTOCOLS WM_DELETE_WINDOW ClientMessage is received.
@@ -691,6 +691,7 @@ init_window (Display *dpy, Widget toplevel, const char *title)
   XWindowAttributes xgwa;
   XtPopup (toplevel, XtGrabNone);
   XtVaSetValues (toplevel, XtNtitle, title, NULL);
+  long pid = getpid();
 
   /* Select KeyPress, and announce that we accept WM_DELETE_WINDOW.
    */
@@ -702,6 +703,8 @@ init_window (Display *dpy, Widget toplevel, const char *title)
   XChangeProperty (dpy, window, XA_WM_PROTOCOLS, XA_ATOM, 32,
                    PropModeReplace,
                    (unsigned char *) &XA_WM_DELETE_WINDOW, 1);
+  XChangeProperty (dpy, window, XA_NET_WM_PID, XA_CARDINAL, 32,
+                   PropModeReplace, (unsigned char *)&pid, 1);
 }
 
 
@@ -767,6 +770,7 @@ main (int argc, char **argv)
 
   XA_WM_PROTOCOLS = XInternAtom (dpy, "WM_PROTOCOLS", False);
   XA_WM_DELETE_WINDOW = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
+  XA_NET_WM_PID = XInternAtom (dpy, "_NET_WM_PID", False);
 
   {
     char *v = (char *) strdup(strchr(screensaver_id, ' '));

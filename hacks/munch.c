@@ -1,6 +1,8 @@
 /* Munching Squares and Mismunch
  *
  * Portions copyright 1992-2014 Jamie Zawinski <jwz@jwz.org>
+ * Portions Copyright 1997, Tim Showalter
+ * Portions Copyright 2004 Steven Hazel <sah@thalassocracy.org>
  *
  *   Permission to use, copy, modify, distribute, and sell this
  *   software and its documentation for any purpose is hereby
@@ -10,16 +12,6 @@
  *   representations are made about the suitability of this software
  *   for any purpose.  It is provided "as is" without express or
  *   implied warranty.
- *
- * Portions Copyright 1997, Tim Showalter
- *
- *   Permission is granted to copy, modify, and use this as long
- *   as this notice remains intact.  No warranties are expressed or
- *   implied.  CMU Sucks.
- * 
- * Portions Copyright 2004 Steven Hazel <sah@thalassocracy.org>
- *
- *   (The "mismunch" part).
  * 
  * "munch.c" and "mismunch.c" merged by jwz, 29-Aug-2008.
  *

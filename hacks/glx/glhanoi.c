@@ -1424,13 +1424,14 @@ static GLubyte *makeTexture(glhcfg *glhanoi, int x_size, int y_size, int z_size,
 									   tex_col_t *), tex_col_t * colours)
 {
 	int i, j, k;
-	GLubyte *textureData;
+	GLuint *textureData;
 	GLuint *texturePtr;
 	double x, y, z;
 	double xi, yi, zi;
 
+	/* As we use GL_RGBA format, we must assign 4 bytes per element */
 	if((textureData =
-		calloc(x_size * y_size * z_size, sizeof(GLubyte))) == NULL) {
+		calloc(x_size * y_size * z_size, sizeof(*texturePtr))) == NULL) {
 		return NULL;
 	}
 
@@ -1439,7 +1440,7 @@ static GLubyte *makeTexture(glhcfg *glhanoi, int x_size, int y_size, int z_size,
 	zi = 1.0 / z_size;
 
 	z = 0.0;
-	texturePtr = (void *)textureData;
+	texturePtr = textureData;
 	for(k = 0; k < z_size; k++, z += zi) {
 		y = 0.0;
 		for(j = 0; j < y_size; j++, y += yi) {
@@ -1450,7 +1451,7 @@ static GLubyte *makeTexture(glhcfg *glhanoi, int x_size, int y_size, int z_size,
 			}
 		}
 	}
-	return textureData;
+	return (GLubyte *)textureData;
 }
 
 static void freeTexCols(tex_col_t*p)

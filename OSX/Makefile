@@ -19,6 +19,10 @@ XCODEBUILD = $(XCODE_APP)/Contents/Developer/usr/bin/xcodebuild
 SETFILE    = $(XCODE_APP)/Contents/Developer/Tools/SetFile
 SETICON    = ./seticon.pl
 
+# Using $(MAKE) directly means the shell executes things even with "make -n"
+MAKE2 = $(MAKE)
+
+
 default: release
 all: debug release
 
@@ -30,7 +34,8 @@ distclean:
 	-rm -f config.status config.cache config.log \
 	  *.bak *.rej TAGS *~ "#"*
 	-rm -rf autom4te*.cache
-	-rm -rf build Sparkle.framework
+	-rm -rf build
+#	-rm -rf Sparkle.framework
 
 distdepend:: Sparkle.framework
 distdepend:: update_plist_version
@@ -228,7 +233,7 @@ update_plist_version:
 
 updates.xml::
 	./updates.pl xscreensaver ../README ../archive ~/www/xscreensaver
-	@$(MAKE) $(MAKEFLAGS) test_sig
+	@$(MAKE2) test_sig
 
 test_sig::
 	@								    \
@@ -312,7 +317,7 @@ _dmg::
   DST="$$STAGE/Screen Savers" ;						      \
   PKG="$$STAGE/Install Everything.pkg" ;				      \
   rm -f "$$DMG" ;							      \
-  rm -rf "$$STAGE" ;							      \
+  sudo rm -rf "$$STAGE" ;						      \
   echo + mkdir -p "$$DST" ;						      \
          mkdir -p "$$DST" ;						      \
 									      \
@@ -345,6 +350,10 @@ _dmg::
    fi ;									      \
   done ;								      \
 									      \
+  true codesign --force --sign $(CERT2) "$$DST/"*.app/Contents/Resources/*.saver ; \
+  rm -rf "$$DST/"*.app/Contents/Resources/*.saver/Contents/_CodeSignature ;   \
+  codesign --force --sign $(CERT2) "$$DST/"*.app ;			      \
+									      \
   set -x ;								      \
   cp -p bindist.rtf "$$STAGE/Read Me.rtf" ;				      \
   cp -p build/Release/installer.pkg "$$PKG" ;				      \
@@ -364,6 +373,11 @@ _dmg::
   mv "$$STAGE/bindist.webloc"  "$$STAGE/Get the iPhone:iPad Version.webloc" ; \
   mv "$$STAGE/bindist2.webloc" "$$STAGE/Get the Android Version.webloc" ;     \
 									      \
+  echo Fuck this shit. ;						      \
+  rm -r "$$DST"/Apple2.app ;						      \
+  rm -r "$$DST"/Phosphor.app ;						      \
+  rm -r "$$DST"/WebCollage.saver ;					      \
+									      \
   set +x ;								      \
 									      \
   echo "Chowning..." ;							      \
@@ -372,7 +386,7 @@ _dmg::
   echo "Checking signatures..." ;					      \
   spctl --assess --type install "$$PKG" ;				      \
   spctl --assess --type execute "$$SRC/XScreenSaverUpdater.app" ;	      \
-  spctl --assess --type execute "$$DST/"*.app ;				      \
+  true spctl --assess --type execute "$$DST/"*.app ;			      \
   spctl --assess --type install "$$DST/"*.saver ;			      \
   set -x ;								      \
 									      \
@@ -380,7 +394,7 @@ _dmg::
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
   echo "Chowning back and deleting..." ;				      \
   sudo chown -R `whoami` "$$STAGE/"* ;					      \
-  rm -rf "$$STAGE" ;							      \
+  sudo rm -rf "$$STAGE" ;						      \
 									      \
   hdiutil convert -quiet -ov -format UDBZ -imagekey zlib-level=9	      \
     "$$TMPDMG" -o "$$DMG" ;						      \
@@ -391,7 +405,7 @@ _dmg::
   spctl --assess --type install "$$DMG" ;				      \
 									      \
   ls -ldhgF "$$DMG" ;							      \
-  $(MAKE) $(MAKEFLAGS) notarize ;					      \
+  $(MAKE2) notarize ;							      \
 
 
 # To set up notarization:
@@ -425,7 +439,7 @@ notarize::
     --file "$$DMG" $(NOTARGS) ;						      \
   echo "" ;								      \
   sleep 3 ;								      \
-  $(MAKE) $(MAKEFLAGS) notarize_wait staple updates.xml
+  $(MAKE2) notarize_wait staple updates.xml
 
 notarize_wait::
 	@TODAY=`date +%Y-%m-%d` ;					      \

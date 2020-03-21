@@ -67,7 +67,7 @@ ios_load_random_image (void (*callback) (void *uiimage, const char *fn,
       contentMode: PHImageContentModeDefault
       options: opt
       resultHandler:^void (UIImage *image, NSDictionary *info) {
-        img = image;
+        img = [image retain];
     }];
 
     // Get the image name.
