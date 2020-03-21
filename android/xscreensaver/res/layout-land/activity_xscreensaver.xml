@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TODO: Remove action bar; it's redundant. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="horizontal"
+    android:gravity="center_horizontal"
+    tools:context="org.jwz.xscreensaver.Activity">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="256sp"
+            android:layout_height="256sp"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/thumbnail" />
+        <!-- TODO: Version number! -->
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="XScreenSaver"
+            android:textSize="32sp" />
+        <Button
+            android:id="@+id/apply_wallpaper"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Open live wallpaper list" />
+        <Button
+            android:id="@+id/apply_daydream"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Open Daydream list" />
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:gravity="center"
+            android:text="https://www.jwz.org/xscreensaver/" />
+    </LinearLayout>
+</LinearLayout>

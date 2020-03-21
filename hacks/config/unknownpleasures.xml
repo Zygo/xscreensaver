@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="unknownpleasures" _label="UnknownPleasures" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=DEWPiUbwnt0"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Scanlines" _low-label="Few" _high-label="Many"
+            low="3" high="200" default="80"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="20.0" default="1.0"/>
+   </vgroup>
+
+   <vgroup>
+    <number id="resolution" type="slider" arg="-resolution %"
+            _label="Resolution" _low-label="Low" _high-label="High"
+            low="5" high="300" default="100"/>
+
+    <number id="amplitude" type="slider" arg="-amplitude %"
+            _label="Amplitude" _low-label="Low" _high-label="High"
+            low="0.01" high="0.25" default="0.13"/>
+
+    <number id="noise" type="slider" arg="-noise %"
+            _label="Noise" _low-label="Low" _high-label="High"
+            low="0.0" high="3.0" default="1.0"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="ortho" _label="Orthographic Projection" arg-unset="-no-ortho"/>
+   <boolean id="buzz"    _label="Buzz"                  arg-set="-buzz"/>
+   <boolean id="wire"    _label="Wireframe"             arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <file id="mask" _label="Mask image" arg="-mask %"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+PSR B1919+21 (AKA CP 1919) was the first pulsar ever discovered:
+a spinning neutron star emitting a periodic lighthouse-like beacon.
+An illustration of the signal received from it was published in
+Scientific American in 1971, and later in The Cambridge Encyclopedia
+of Astronomy in 1977, where it was seen by Stephen Morris, the
+drummer of Joy Division, and was consequently appropriated by
+Peter Saville for the cover of the band's album "Unknown Pleasures".
+
+https://en.wikipedia.org/wiki/Pulsar
+https://en.wikipedia.org/wiki/PSR_B1919%2B21
+https://en.wikipedia.org/wiki/Unknown_Pleasures
+https://en.wikipedia.org/wiki/Peter_Saville_%28graphic_designer%29
+https://en.wikipedia.org/wiki/Joy_Division
+
+Written by Jamie Zawinski; 2013.
+  </_description>
+</screensaver>

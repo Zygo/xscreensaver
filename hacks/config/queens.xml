@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="queens" _label="Queens" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=Ssy0ldFDeAs"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <hgroup>
+   <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The N-Queens problem: how to place N queens on an NxN chessboard
+such that no queen can attack a sister?
+
+See also the "Endgame" screen saver.
+
+https://en.wikipedia.org/wiki/Eight_queens_puzzle
+
+Written by Blair Tennessy and Jamie Zawinski; 2002.
+  </_description>
+</screensaver>

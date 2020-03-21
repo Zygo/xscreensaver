@@ -1,0 +1,85 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+glplanet - rotating 3d texture-mapped planet.
+.SH SYNOPSIS
+.B glplanet
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-delay \fInumber\fP]
+[\-image \fIfile\fP]
+[\-image2 \fIfile\fP]
+[\-mode \fIstring\fP]
+[\-resolution \fInumber\fP]
+[\-wireframe]
+[\-fps]
+.SH DESCRIPTION
+Draws a planet bouncing around in space.  The built-in images are day and
+night maps of the Earth, but you can wrap any Equirectangular-projected
+map onto the sphere, e.g., the planetary textures included 
+with \fIssystem.\fP
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
+.TP 8
+.B \-image \fIfile\fP
+The day texture map to wrap around the planet's surface.
+.TP 8
+.B \-image2 \fIfile\fP
+The night texture map to wrap around the planet's surface.
+The two will be blended together at the dusk terminator.
+.TP 8
+.B \-mode globe
+All is right with the world.
+.TP 8
+.B \-mode equirectangular
+Wat.
+.TP 8
+.B \-mode mercator
+Good day, Sir. I said GOOD DAY.
+.TP 8
+.B \-resolution
+The resolution of the planetary mesh. Default: 128.
+.TP 8
+.B \-wireframe
+Render in wireframe instead of solid.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.BR dymaxionmap (1)
+.BR ssystem (1)
+.SH COPYRIGHT
+Copyright \(co 2002-2018 by David Konerding and Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software
+and its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+David Konerding and Jamie Zawinski. 

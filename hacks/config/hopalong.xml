@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hopalong" _label="Hopalong">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=Ck0pKMflau0"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="cycles" type="slider" arg="-cycles %"
+             _label="Duration" _low-label="Small" _high-label="Large"
+            low="0" high="800000" default="2500"/>
+   </vgroup>
+
+   <vgroup>
+    <number id="count" type="slider" arg="-count %"
+            _label="Color contrast" _low-label="Low" _high-label="High"
+            low="100" high="10000" default="1000"/>
+
+    <number id="ncolors" type="slider" arg="-ncolors %"
+              _label="Number of colors" _low-label="Two" _high-label="Many"
+              low="1" high="255" default="200"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+    <vgroup>
+      <boolean id="sine"    _label="Sine"    arg-set="-sine"/>
+      <boolean id="martin"  _label="Martin"  arg-set="-martin"/>
+      <boolean id="popcorn" _label="Popcorn" arg-set="-popcorn"/>
+    </vgroup>
+    <vgroup>
+      <boolean id="jong"    _label="Jong"    arg-set="-jong"/>
+      <boolean id="rr"      _label="RR"      arg-set="-rr"/>
+      <boolean id="ejk1"    _label="EJK1"    arg-set="-ejk1"/>
+    </vgroup>
+    <vgroup>
+      <boolean id="ejk2"    _label="EJK2"    arg-set="-ejk2"/>
+      <boolean id="ejk3"    _label="EJK3"    arg-set="-ejk3"/>
+      <boolean id="ejk4"    _label="EJK4"    arg-set="-ejk4"/>
+    </vgroup>
+    <vgroup>
+      <boolean id="ejk5"    _label="EJK5"    arg-set="-ejk5"/>
+      <boolean id="ejk6"    _label="EJK6"    arg-set="-ejk6"/>
+      <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Lacy fractal patterns based on iteration in the imaginary
+plane, from a 1986 Scientific American article.  See also the
+"Discrete" screen saver.
+
+Written by Patrick Naughton; 1992.
+  </_description>
+</screensaver>

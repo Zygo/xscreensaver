@@ -1,0 +1,43 @@
+.TH XScreenSaver 1 "07-Sep-2003 (4.13)" "X Version 11"
+.SH NAME
+pdf2jpeg - converts a PDF file to a JPEG file using Cocoa
+.SH SYNOPSIS
+.B pdf2jpeg
+[\--verbose] [\--quality \fINN\fP] infile.pdf outfile.jpg
+.SH DESCRIPTION
+This reads a PDF file (for example, as written by the
+.BR screencapture (1)
+program) and writes a JPEG file.
+.SH OPTIONS
+.I pdf2jpeg
+accepts the following options:
+.TP 4
+.B --verbose
+Print diagnostics.
+.TP 4
+.B --quality \fINN\fP
+JPEG compression factor.  Default 85%.
+.SH BUGS
+The input and output files must be files: pipes don't work.
+
+This program is Cocoa-specific, so it won't work on non-MacOS systems.
+
+This shouldn't need to be a part of the XScreenSaver distribution at
+all, but Apple is COMPLETELY INSANE and made
+.BR screencapture (1)
+only write PDFs, with no simple way to convert that to something
+less crazy.
+.SH SEE ALSO
+.BR screencapture (1),
+.BR xscreensaver\-getimage\-desktop (1)
+.SH COPYRIGHT
+Copyright \(co 2003 by Jamie Zawinski.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 20-Oct-03.

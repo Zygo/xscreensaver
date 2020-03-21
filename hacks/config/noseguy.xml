@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="noseguy" _label="NoseGuy">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=ONJlg9Y_TLI"/>
+
+  <xscreensaver-text />
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+A little man with a big nose wanders around your screen saying things.
+
+Written by Dan Heller and Jamie Zawinski; 1992.
+  </_description>
+</screensaver>
