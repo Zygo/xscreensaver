@@ -1,0 +1,97 @@
+.TH XScreenSaver 1 "June 2007"
+.SH NAME
+glcells \- growing cells graphics hack
+.SH SYNOPSIS
+.B glcells
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP]
+[\-delay \fInum\fP] [\-pause \fInum\fP] [\-maxcells \fInum\fP]
+[\-radius \fInum\fP] [\-seeds \fInum\fP] [\-quality \fInum\fP]
+[\-minfood \fInum\fP] [\-maxfood \fInum\fP] [\-divideage \fInum\fP]
+[\-mindist \fInum\fP]
+[\-keepold]
+[\-wireframe]
+[\-fps]
+.SH DESCRIPTION
+The \fIglcells\fP program draws cells that divide exponentially, eat and eventually die.
+.SH OPTIONS
+.I glcells
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-pause \fInum\fP\fP
+Specifies the pause at the end of the animation (all cells dead or maximum amount of cells reached). Unit is in frames, default 20.
+.TP 8
+.B \-maxcells \fInum\fP\fP
+Specifies the maximum number of cells on screen (dead cells also count, even if invisible). Default is 800.
+.TP 8
+.B \-radius \fInum\fP\fP
+Specifies the radius of the cells. Default is 40.
+.TP 8
+.B \-seeds \fInum\fP\fP
+Specifies the number of cells when animation starts. Default is 1.
+.TP 8
+.B \-quality \fInum\fP\fP
+Specifies subdivision quality of the spheres used to draw the cells [0...5]. Default is 3.
+.TP 8
+.B \-minfood \fInum\fP\fP
+Food is ditributed randomly on the screen (Yes, the cells need to eat). This parameter specifies the
+minimum amount of food per pixel. Default is 5.
+.TP 8
+.B \-maxfood \fInum\fP\fP
+Food is ditributed randomly on the screen (Yes, the cells need to eat). This parameter specifies the
+maximum amount of food per pixel. Default is 20.
+.TP 8
+.B \-divideage \fInum\fP\fP
+Specifies the minimum age in frames a cell needs to have before being able to divide. Default is 20
+.TP 8
+.B \-mindist \fInum\fP\fP
+Specifies the minimum distance between cells. Default 1.4
+.TP 8
+.B \-delay \fInum\fP
+How long to pause between frames.  Default is 20000, or 0.02 second.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-wireframe
+Draw wireframe only.
+.TP 8
+.B \-keepold
+Dead cells stay on screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.BR xscreensaver\-demo (1),
+.SH COPYRIGHT
+Copyright \(co 2007 by Matthias Toussaint.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Matthias Toussaint <glcells@mtoussaint.de>, 17-Jun-2007, http://www.mtoussaint.de/bits.html.
+ 

@@ -1,0 +1,84 @@
+.TH XScreenSaver 1 "13-aug-92" "X Version 11"
+.SH NAME
+noseguy \- a little guy with a big nose wanders around being witty
+.SH SYNOPSIS
+.B noseguy
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-text-foreground \fIcolor\fP]
+[\-text-background \fIcolor\fP]
+[\-font \fIfont\fP]
+[\-window]
+[\-root]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-mode \fImode\fP]
+[\-program \fIprogram\fP]
+[\-filename \fIfile\fP]
+[\-text \fItext\fP]
+[\-fps]
+.SH DESCRIPTION
+A little man with a big nose and a hat runs around spewing out messages to
+the screen.  This code (and its bitmaps) were extracted from the \fIxnlock\fP
+program.
+.SH OPTIONS
+.I noseguy
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-font \fIfont\fP
+The font used for the messages.
+.TP 8
+.B \-program \fIprogram\fP
+This program will be run periodically, and its output will be the text
+of the messages.  Default:
+
+    xscreensaver-text --cols 40 | head -n15
+
+You can configure the text printed through the "Advanced" tab of
+.BR xscreensaver\-demo (1),
+or by editing your ~/.xscreensaver file.
+.TP 8
+.B \-filename \fIfile\fP
+If \fImode\fP is \fIfile\fP, then the contents of this file will be used
+for all messages.
+.TP 8
+.B \-text \fIstring\fP
+If \fImode\fP is \fIstring\fP, then this text will be used for all messages.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver-text (1),
+.BR xnlock (1)
+.SH COPYRIGHT
+Copyright 1985, 1990 by Dan Heller <argv@danheller.com>.
+.SH AUTHOR
+Dan Heller <argv@danheller.com>, 1985.
+
+Ability to run standalone or with \fIxscreensaver\fP added by 
+Jamie Zawinski <jwz@jwz.org>, 13-aug-92.

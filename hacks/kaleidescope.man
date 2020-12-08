@@ -1,0 +1,89 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH Kaleidescpe 1 "14-Dec-95" "X Version 11"
+.SH NAME
+Kaleidescope \- rotating line segments
+.SH SYNOPSIS
+.B kaleidescope
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-color_mode \fImono | nice | greedy\fP] [-nsegments \fIint\fP] [\-ntrails \fIint\fP] [\-local_rotation \fIint\fP] [\-global_rotation \fIint\fP] [\-delay \fIusecs\fP] [\-redmin \fIint\fP] [\-greenmin \fIint\fP] [\-bluemin \fIint\fP] [\-redrange \fIint\fP] [\-greenrange \fIint\fP] [\-bluerange \fIint\fP]
+[\-fps]
+.SH DESCRIPTION
+The \fIkaleidescope\fP program draws line segments in a symmetric pattern
+that evolves over time. 
+.SH OPTIONS
+.I kaleidescope
+accepts the following options:
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-color_mode "mono | nice | greedy"
+Specify how kaleidescope uses colors. Mono uses
+just the default foreground and background colors. Nice uses one
+color for each segment (specified by nsegments). Greedy uses (ntrails * nsegments) + 1  colors.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-nsegments integer
+The number of segments to draw. Default is 7.
+.TP 8
+.B \-ntrails integer
+The number of trails to draw. Default is 100.
+.TP 8
+.B \-local_rotation integer
+The rate at which segments rotate around their center. Default is -59.
+.TP 8
+.B \-global_rotation integer 
+The rate at which segments rotate around the center of the window.
+Default is 1. 
+.TP 8
+.B \-redmin, \-greenmin, \-bluemin, \-redrange, \-greenrange, \-bluerange
+All take an integer argument. When colors are randomly chosen, they 
+are chosen from the interval min to min plus range. The minimums default
+to 30000. The ranges default to 20000. 
+.TP 8
+.B \-delay microseconds
+How much of a delay should be introduced between steps of the animation.
+Default is 20000, or about 5 frames a second.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR kaleidescope (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co 1997 by Ron Tapia.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Ron Tapia <tapia@nmia.com>, 20-Mar-97.
+

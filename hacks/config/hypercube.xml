@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hypercube" _label="HyperCube">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=tOLzz_D4-0E"/>
+
+  <hgroup>
+    <vgroup>
+      <number id="delay" type="slider" arg="-delay %"
+              _label="Frame rate" _low-label="Low" _high-label="High"
+              low="0" high="100000" default="10000"
+              convert="invert"/>
+
+      <number id="z" type="slider" arg="-observer-z %"
+              _label="Zoom" _low-label="Near" _high-label="Far"
+              low="1.125" high="10.0" default="3.0"/>
+
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </vgroup>
+
+    <vgroup>
+      <number id="xw" type="slider" arg="-xw %"
+              _label="XW rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="0"/>
+      <number id="xy" type="slider" arg="-xy %"
+              _label="XY rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="3"/>
+      <number id="xz" type="slider" arg="-xz %"
+              _label="XZ rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="5"/>
+    </vgroup>
+    <vgroup>
+      <number id="yw" type="slider" arg="-yw %"
+              _label="YW rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="10"/>
+      <number id="yz" type="slider" arg="-yz %"
+              _label="YZ rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="0"/>
+      <number id="zw" type="slider" arg="-zw %"
+              _label="ZW rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="0"/>
+    </vgroup>
+  </hgroup>
+
+  <!-- #### -color0 [magenta] -->
+  <!-- #### -color1 [yellow] -->
+  <!-- #### -color2 [#FF9300] -->
+  <!-- #### -color3 [#FF0093] -->
+  <!-- #### -color4 [green] -->
+  <!-- #### -color5 [#8080FF] -->
+  <!-- #### -color6 [#00D0FF] -->
+  <!-- #### -color7 [#00FFD0] -->
+
+  <xscreensaver-updater />
+
+  <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.10.  It has been replaced by the more general "Polytopes"
+screen saver, which can display this object as well as others.
+
+This displays 2D projections of the sequence of 3D objects which are
+the projections of the 4D analog to the cube: as a square is composed
+of four lines, each touching two others; and a cube is composed of
+six squares, each touching four others; a hypercube is composed of
+eight cubes, each touching six others.  To make it easier to
+visualize the rotation, it uses a different color for the edges of
+each face.  Don't think about it too long, or your brain will melt.
+
+https://en.wikipedia.org/wiki/Hypercube
+https://en.wikipedia.org/wiki/Tesseract
+https://en.wikipedia.org/wiki/Regular_polytope
+
+Written by Joe Keane, Fritz Mueller, and Jamie Zawinski; 1992.
+  </_description>
+</screensaver>

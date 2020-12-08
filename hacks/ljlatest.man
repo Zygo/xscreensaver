@@ -1,0 +1,61 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "20-Mar-2005" "X Version 11"
+.SH NAME
+ljlatest \- prints the most recent public posts on livejournal.com.
+.SH SYNOPSIS
+.B ljlatest
+[\--verbose]
+[\--columns \fIN\fP]
+.SH DESCRIPTION
+The \fIljlatest\fP script reads the most recent public posts made to
+livejournal.com, and prints them on stdout, after doing a rudimentary
+conversion of HTML to plain text.
+
+This script is just a wrapper around
+.EX
+xscreensaver-text \\
+  --url http://www.livejournal.com/stats/latest-rss.bml
+.EE
+As of XScreenSaver 4.21, you can just use use above URL
+in the "Text URL" field on the "Advanced" tab in
+.BR xscreensaver-demo (1).
+.SH BUGS
+This program makes it seem like morons have invaded your screen saver.
+
+The output is always ISO-8859-1, regardless of locale.
+.SH SEE ALSO
+.I http://www.livejournal.com/,
+.BR xscreensaver (1),
+.BR xscreensaver-text (1),
+.BR fortune (1),
+.BR phosphor (MANSUFFIX),
+.BR apple2 (MANSUFFIX),
+.BR starwars (MANSUFFIX),
+.BR fontglide (MANSUFFIX),
+.BR dadadodo (1),
+.BR webcollage (MANSUFFIX),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
+.SH COPYRIGHT
+Copyright \(co 2003, 2005 by Jamie Zawinski.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 30-Aug-2003.

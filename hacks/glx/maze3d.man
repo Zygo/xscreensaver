@@ -1,0 +1,116 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+maze3d \- A 3D maze.
+.SH SYNOPSIS
+.B maze3d
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-speed \fIfloat\fP]
+[\-delay \fInumber\fP]
+[\-fps]
+[\-rows \fInumber\fP]
+[\-columns \fInumber\fP]
+[\-overlay]
+[\-wall-texture \fItexture\fP]
+[\-floor-texture \fItexture\fP]
+[\-ceiling-texture \fItexture\fP]
+[\-drop-acid]
+[\-drop-acid-walls]
+[\-drop-acid-floor]
+[\-drop-acid-ceiling]
+[\-inverters \fInumber\fP]
+[\-rats \fInumber\fP]
+.SH DESCRIPTION
+A recreation of the 3D Maze screensaver from Windows 95.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-speed \fInumber\fP
+Speed of the dungeon crawl. 2 is twice as fast, 0.5 is half as fast.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds. Default: 20000 (0.02 seconds).
+.TP 8
+.B \-fps | \-no-fps
+Display the current frame rate and CPU load.
+.TP 8
+.B \-rows \fInumber\fP
+The number of rows in the maze. Default: 12.
+.TP 8
+.B \-columns \fInumber\fP
+The number of columns in the maze. Default: 12.
+.TP 8
+.B \-overlay
+Overlays a minimap of the maze on the screen.
+.TP 8
+.B \-wall-texture \fItexture\fP
+Sets the wall texture. \fItexture\fP can be a path to an image file, or it can be one of the built-in textures (see TEXTURES below).
+.TP 8
+.B \-floor-texture \fItexture\fP
+Sets the floor texture. \fItexture\fP can be a path to an image file, or it can be one of the built-in textures (see TEXTURES below).
+.TP 8
+.B \-ceiling-texture \fItexture\fP
+Sets the ceiling texture. \fItexture\fP can be a path to an image file, or it can be one of the built-in textures (see TEXTURES below).
+.TP 8
+.B \-drop-acid-walls
+Continuously shifts the hue of the wall texture. (This looks like an LSD trip, hence the name.)
+.TP 8
+.B \-drop-acid-floor
+Continuously shifts the hue of the floor texture.
+.TP 8
+.B \-drop-acid-ceiling
+Continuously shifts the hue of the ceiling texture.
+.TP 8
+.B \-drop-acid
+Turns on all three.
+.TP 8
+.B \-inverters \fInumber\fP
+Sets the number of inverters (the spinny grey things that flip the camera upside-down) in the maze. Default: 10.
+.TP 8
+.B \-rats \fInumber\fP
+Sets the number of rats, or rather "Bobs", in the maze. Default: 1.
+.TP 8
+.SH TEXTURES
+The wall, ceiling, and floor textures can be set to one of the following:
+.TP 8
+.B brick-wall
+A brick wall. This is the default wall texture.
+.TP 8
+.B wood-floor
+A wooden floor. This is the default floor texture.
+.TP 8
+.B ceiling-tiles
+Ceiling tiles. This is the default ceiling texture.
+.TP 8
+You can also specify a path to an image file, instead of using one of the built-in textures.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2018 by sudoer@riseup.net.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
