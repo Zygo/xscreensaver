@@ -13,7 +13,7 @@
 ..
 .TH XScreenSaver 1 "27-Apr-97" "X Version 11"
 .SH NAME
-epicycle - draws a point moving around a circle which moves around a cicle which...
+epicycle \- draws a point moving around a circle which moves around a cicle which...
 .SH SYNOPSIS
 .B epicycle 
 [\-display \fIhost:display.screen\fP] [\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIviz\fP] [\-colors \fIN\fP] [\-foreground \fIname\fP] [\-color\-shift \fIN\fP] [\-delay \fImicroseconds\fP] [\-holdtime \fIseconds\fP] [\-linewidth \fIN\fP] [\-min_circles \fIN\fP] [\-max_circles \fIN\fP] [\-min_speed \fInumber\fP] [\-max_speed \fInumber\fP] [\-harmonics \fIN\fP] [\-timestep \fInumber\fP] [\-divisor_poisson \fIprobability\fP] [\-size_factor_min \fInumber\fP] [\-size_factor_max \fInumber\fP]

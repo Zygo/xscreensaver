@@ -33,7 +33,6 @@ gen:
 # %.png dependency below works because VPATH contains subdirs
 # of 'images' dir not only 'images' itself
 gen/%_png.h: %.png
-	echo $(UTILS_SRC)/bin2c "$<" "$@"
 	$(UTILS_SRC)/bin2c "$<" "$@"
 
 clean:

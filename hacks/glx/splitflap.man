@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-splitflap - a simulation of a split-flap electromechanical display.
+splitflap \- a simulation of a split-flap electromechanical display.
 .SH SYNOPSIS
 .B splitflap
 [\-display \fIhost:display.screen\fP]

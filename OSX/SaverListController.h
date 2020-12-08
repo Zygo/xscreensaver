@@ -11,7 +11,7 @@
  * This implements the top-level screen-saver selection list in the iOS app.
  */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 
 #import <UIKit/UIKit.h>
 
@@ -38,4 +38,4 @@
 - (void) scrollTo:(NSString *)name;
 @end
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE

@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-crackberg - Lose your way wandering some height fields, and enjoy candy.
+crackberg \- Lose your way wandering some height fields, and enjoy candy.
 .SH SYNOPSIS
 .B crackberg
 [\-root]

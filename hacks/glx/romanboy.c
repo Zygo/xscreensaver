@@ -1218,9 +1218,19 @@ static void init(ModeInfo *mi)
   setup_roman_boy_color_texture(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,pp->g*NUMU,NUMV);
 
   if (pp->marks)
+  {
     glEnable(GL_TEXTURE_2D);
+# ifndef HAVE_JWZGLES
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
+# endif
+  }
   else
+  {
     glDisable(GL_TEXTURE_2D);
+# ifndef HAVE_JWZGLES
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);
+# endif
+  }
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1625,6 +1635,7 @@ ENTRYPOINT void draw_romanboy(ModeInfo *mi)
 
   glXMakeCurrent(display, window, *pp->glx_context);
 
+  glClearColor(0.0f,0.0f,0.0f,1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 

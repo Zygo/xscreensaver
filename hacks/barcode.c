@@ -119,6 +119,7 @@ static const char *words[] =
   "bellicosity",
   "bells",
   "belly",
+  "bird flu",
   "bliss",
   "bogosity",
   "boobies",
@@ -129,6 +130,7 @@ static const char *words[] =
   "bubba",
   "burrito",
   "California",
+  "cancer",
   "capybara",
   "cardinality",
   "caribou",
@@ -143,6 +145,10 @@ static const char *words[] =
   "contrition",
   "cop",
   "corpse",
+# ifndef HAVE_IPHONE
+  "coronavirus",
+  "covid-19",
+# endif
   "cowboy",
   "crabapple",
   "craziness",
@@ -297,6 +303,10 @@ static const char *words[] =
   "roadrunner",
   "rootkit",
   "rule",
+  "SARS",
+# ifndef HAVE_IPHONE
+  "SARS-CoV-2",
+# endif
   "savor",
   "scab",
   "scalar",

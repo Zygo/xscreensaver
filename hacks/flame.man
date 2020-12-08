@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "13-aug-92" "X Version 11"
 .SH NAME
-flame - draw weird cosmic fractals
+flame \- draw weird cosmic fractals
 .SH SYNOPSIS
 .B flame
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-colors \fIinteger\fP] [\-iterations \fIinteger\fP] [\-points \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-delay2 \fImicroseconds\fP]

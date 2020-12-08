@@ -64,6 +64,7 @@
  */
 
 #include <math.h>
+#include "pow2.h"
 #include "screenhack.h"
 
 typedef struct _muncher {
@@ -97,20 +98,6 @@ struct state {
 };
 
 
-/*
- * dumb way to get # of digits in number.  Probably faster than actually
- * doing a log and a division, maybe.
- */
-static int dumb_log_2(int k) 
-{
-  int r = -1;
-  while (k > 0) {
-    k >>= 1; r++;
-  }
-  return r;
-}
-
-
 static void calc_logwidths (struct state *st) 
 {
   /* Choose a range of square sizes based on the window size.  We want
@@ -121,9 +108,9 @@ static void calc_logwidths (struct state *st)
 
   if (st->window_height < st->window_width &&
       st->window_width < st->window_height * 5) {
-    st->logmaxwidth = (int)dumb_log_2(st->window_height * 0.8);
+    st->logmaxwidth = (int)i_log2(st->window_height * 0.8);
   } else {
-    st->logmaxwidth = (int)dumb_log_2(st->window_width * 0.8);
+    st->logmaxwidth = (int)i_log2(st->window_width * 0.8);
   }
 
   if (st->logmaxwidth < 2) {

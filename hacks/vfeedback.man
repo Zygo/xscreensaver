@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-vfeedback - Simulates video feedback.
+vfeedback \- Simulates video feedback.
 .SH SYNOPSIS
 .B vfeedback
 [\-display \fIhost:display.screen\fP]

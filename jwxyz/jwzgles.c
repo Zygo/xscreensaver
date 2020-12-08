@@ -162,7 +162,7 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#if defined(USE_IPHONE)
+#if defined(HAVE_IPHONE)
 # include <OpenGLES/ES1/gl.h>
 # include <OpenGLES/ES1/glext.h>
 #elif defined(HAVE_COCOA)

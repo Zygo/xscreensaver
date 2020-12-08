@@ -13,7 +13,7 @@
 ..
 .TH XScreenSaver 1 "18-May-2002" "X Version 11"
 .SH NAME
-lavalite - 3D OpenGL simulation of a Lavalite.
+lavalite \- 3D OpenGL simulation of a Lavalite.
 .SH SYNOPSIS
 .B lavalite
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]

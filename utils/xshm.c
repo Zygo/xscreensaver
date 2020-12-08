@@ -89,7 +89,7 @@ shm_ehandler (Display *dpy, XErrorEvent *error)
   XSync((DPY), False); 					\
   if (old_handler)					\
     XSetErrorHandler (old_handler);			\
-    old_handler = 0;					\
+  old_handler = 0;					\
 } while(0)
 
 #endif /* HAVE_XSHM_EXTENSION */
@@ -291,6 +291,8 @@ void
 destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
 {
 #ifdef HAVE_XSHM_EXTENSION
+  Status status;
+
   if (shm_info->shmid == -1) {
 #endif /* HAVE_XSHM_EXTENSION */
 
@@ -303,8 +305,6 @@ destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
 #ifdef HAVE_XSHM_EXTENSION
   }
 
-  Status status;
-
   CATCH_X_ERROR(dpy);
   status = XShmDetach (dpy, shm_info);
   UNCATCH_X_ERROR(dpy);
@@ -312,10 +312,10 @@ destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
     status = False;
   if (!status)
     fprintf (stderr, "%s: XShmDetach failed!\n", progname);
-#ifdef DEBUG
+# ifdef DEBUG
   else
     fprintf (stderr, "%s: XShmDetach(dpy, shm_info) ==> True\n", progname);
-#endif
+# endif
 
   XDestroyImage (image);
   XSync(dpy, False);
@@ -329,10 +329,10 @@ destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
                (unsigned long) shm_info->shmaddr);
       perror(buf);
     }
-#ifdef DEBUG
+# ifdef DEBUG
   else
     fprintf (stderr, "%s: shmdt(shm_info->shmaddr) ==> 0\n", progname);
-#endif
+# endif
 
   XSync(dpy, False);
 

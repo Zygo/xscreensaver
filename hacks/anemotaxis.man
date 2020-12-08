@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-anemotaxis - directional search on a plane.
+anemotaxis \- directional search on a plane.
 .SH SYNOPSIS
 .B anemotaxis
 [\-display \fIhost:display.screen\fP]

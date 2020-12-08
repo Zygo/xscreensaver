@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "10-May-97" "X Version 11"
 .SH NAME
-drift - draws drifting recursive fractal cosmic flames
+drift \- draws drifting recursive fractal cosmic flames
 .SH SYNOPSIS
 .B drift
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-count \fIinteger\fP] [\-grow] [\-no\-grow] [\-liss] [\-no\-liss]

@@ -639,8 +639,9 @@ copy_sprite (ModeInfo *mi, sprite *old)
 {
   sprite *sp = new_sprite (mi, (sprite_type) ~0L);
   int id;
-  double tt = sp->start_time;
+  double tt;
   if (!sp) abort();
+  tt = sp->start_time;
   id = sp->id;
   memcpy (sp, old, sizeof(*sp));
   sp->id = id;
@@ -1172,7 +1173,9 @@ draw_text_sprite (ModeInfo *mi, sprite *sp)
   if (wire)
     glEnable (GL_TEXTURE_2D);
 
+#ifdef HAVE_ANDROID  /* Doesn't work -- prevents image loading? */
   print_texture_string (ss->font_data, text);
+# endif
   mi->polygon_count++;
 
   if (wire)

@@ -1,6 +1,6 @@
 .TH Intermomentary 1 "08-Oct-04" "X Version 11"
 .SH NAME
-intermomentary - Visualize the momentary and aggregate intersections 
+intermomentary \- Visualize the momentary and aggregate intersections 
 between slowly moving circles.
 .SH SYNOPSIS
 .B intermomentary

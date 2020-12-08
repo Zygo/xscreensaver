@@ -1038,8 +1038,8 @@ pong_event (Display *dpy, Window window, void *closure, XEvent *event)
     {
       char c;
       KeySym key;
-      XLookupString(&event->xkey, &c, 1, &key, 0);
       Bool is_pressed = event->type == KeyPress;
+      XLookupString(&event->xkey, &c, 1, &key, 0);
       switch(key)
       {
       case XK_Up:

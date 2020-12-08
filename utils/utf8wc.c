@@ -266,7 +266,7 @@ utf8_split (const char *string, int *length_ret)
       unsigned long uc;
       long len2 = utf8_decode (in, len, &uc);
       char tmp[10];
-      strncpy (tmp, (char *) in, len2);
+      memcpy (tmp, (char *) in, len2);
       tmp[len2] = 0;
       ret[i++] = strdup (tmp);
       in += len2;
@@ -299,8 +299,8 @@ utf8_split (const char *string, int *length_ret)
           long L1 = strlen(ret[i-2]);
           long L2 = strlen(ret[i-1]);
           char *s2 = (char *) malloc (L1 + L2 + 1);
-          strncpy (s2,      ret[i-2], L1);
-          strncpy (s2 + L1, ret[i-1], L2);
+          memcpy (s2,      ret[i-2], L1);
+          memcpy (s2 + L1, ret[i-1], L2);
           s2[L1 + L2] = 0;
           free (ret[i-2]);
           ret[i-2] = s2;

@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "28-May-97" "X Version 11"
 .SH NAME
-julia - draws spinning, animating julia-set fractals
+julia \- draws spinning, animating julia-set fractals
 .SH SYNOPSIS
 .B julia
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP]

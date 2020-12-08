@@ -14,7 +14,7 @@
 
 #import "XScreenSaverView.h"
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <UIKit/UIKit.h>
 # define NSView           UIView
 # define NSOpenGLContext  EAGLContext
@@ -55,10 +55,10 @@ struct jwxyz_Drawable {
            get leaked if a Pixmap CFRetains this.
    */
   NSOpenGLContext *ogl_ctx;      // OpenGL rendering context (OS X)
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   // TODO: Also on OS X as extensions.
   GLuint gl_framebuffer, gl_renderbuffer;
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
   CGImageRef cgi;
   XRectangle frame;
   union {
@@ -66,16 +66,16 @@ struct jwxyz_Drawable {
       XScreenSaverView *view;
       int last_mouse_x, last_mouse_y;
       struct jwxyz_Drawable *current_drawable;
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
       NSOpenGLPixelFormat *pixfmt;
       GLint virtual_screen;
-# else // USE_IPHONE
+# else // HAVE_IPHONE
       NSOpenGLContext *ogl_ctx_pixmap;
 # endif
     } window;
     struct {
       int depth;
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
       NSOpenGLPixelBuffer *gl_pbuffer;
       // GLuint blit_texture; // TODO: For blitting from Pbuffers
 # endif
@@ -87,11 +87,11 @@ struct jwxyz_Drawable {
 
 extern NSString *nsstring_from(const char *str, size_t len, int utf8_p);
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 extern void create_framebuffer (GLuint *gl_framebuffer,
                                 GLuint *gl_renderbuffer);
 extern void check_framebuffer_status (void);
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 #define jwxyz_window_view(w) ((w)->window.view)
 

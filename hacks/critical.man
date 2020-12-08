@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "08 Feb 2000" "X Version 11"
 .SH NAME
-critical - Draw a system showing self-organizing criticality
+critical \- Draw a system showing self-organizing criticality
 .SH SYNOPSIS
 .B critical
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIseconds\fP] [\-random \fIboolean\fP] [\-ncolors \fIint\fP] [\-offset \fIint\fP] 

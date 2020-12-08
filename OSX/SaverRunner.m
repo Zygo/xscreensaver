@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,7 +35,7 @@
 #import "XScreenSaverGLView.h"
 #import "yarandom.h"
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 
 # ifndef __IPHONE_8_0
 #  define UIInterfaceOrientationUnknown UIDeviceOrientationUnknown
@@ -485,7 +485,7 @@ NSLog(@"## completion %@", context);
 
 @end
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 @implementation SaverRunner
@@ -496,7 +496,7 @@ NSLog(@"## completion %@", context);
 {
   Class new_class = 0;
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
   // Load the XScreenSaverView subclass and code from a ".saver" bundle.
 
@@ -520,7 +520,7 @@ NSLog(@"## completion %@", context);
   // if (obundle && obundle != saverBundle)
   //  [obundle unload];
 
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
 
   // Determine whether to create an X11 view or an OpenGL view by
   // looking for the "gl" tag in the xml file.  This is kind of awful.
@@ -540,7 +540,7 @@ NSLog(@"## completion %@", context);
                ? [XScreenSaverGLView class]
                : [XScreenSaverView class]);
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   if (! new_class)
     return 0;
@@ -566,7 +566,7 @@ NSLog(@"## completion %@", context);
      This is kind of horrible but I haven't thought of a more sensible
      way to make this work.
    */
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   if ([saverNames count] == 1) {
     setenv ("XSCREENSAVER_STANDALONE", "1", 1);
   }
@@ -576,7 +576,7 @@ NSLog(@"## completion %@", context);
 }
 
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 static ScreenSaverView *
 find_saverView_child (NSView *v)
@@ -680,7 +680,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   [NSApp stopModalWithCode:returnCode];
 }
 
-#else  // USE_IPHONE
+#else  // HAVE_IPHONE
 
 
 - (UIImage *) screenshot
@@ -800,13 +800,13 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 }
 
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 
 - (void)loadSaver:(NSString *)name
 {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
   if (saverName && [saverName isEqualToString: name]) {
     for (NSWindow *win in windows) {
@@ -851,7 +851,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     [NSUserDefaultsController sharedUserDefaultsController];
   [ctl save:self];
 
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
 
 #  if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
   NSLog (@"selecting saver \"%@\"", name);
@@ -971,11 +971,11 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   // even though [XScreenSaverView stopAndClose] does setHidden:NO first.
   // [window setHidden:YES];
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 }
 
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 - (void)aboutPanel:(id)sender
 {
@@ -997,7 +997,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     orderFrontStandardAboutPanelWithOptions:d];
 }
 
-#endif // !USE_IPHONE
+#endif // !HAVE_IPHONE
 
 
 
@@ -1019,7 +1019,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 - (NSArray *) listSaverBundleNamesInDir:(NSString *)dir
 {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   NSString *ext = @"saver";
 # else
   NSString *ext = @"xml";
@@ -1036,7 +1036,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
     NSString *name = [[p lastPathComponent] stringByDeletingPathExtension];
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
     // Get the saver name's capitalization right by reading the XML file.
 
     p = [dir stringByAppendingPathComponent: p];
@@ -1051,7 +1051,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
       if (r.length) name = [xml substringToIndex: r.location];
     }
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
     NSAssert1 (name, @"no name in %@", p);
     if (name) [result addObject: name];
@@ -1070,7 +1070,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 {
   NSMutableArray *dirs = [NSMutableArray arrayWithCapacity: 10];
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   // On MacOS, look in the "Contents/Resources/" and "Contents/PlugIns/"
   // directories in the bundle.
   [dirs addObject: [[[[NSBundle mainBundle] bundlePath]
@@ -1087,12 +1087,12 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 //  [dirs addObject: @"/Library/Screen Savers"];
 //  [dirs addObject: @"/System/Library/Screen Savers"];
 
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
 
   // On iOS, only look in the bundle's root directory.
   [dirs addObject: [[NSBundle mainBundle] bundlePath]];
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   int i;
   for (i = 0; i < [dirs count]; i++) {
@@ -1118,7 +1118,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 /* Create the popup menu of available saver names.
  */
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 - (NSPopUpButton *) makeMenu
 {
@@ -1162,7 +1162,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   return popup;
 }
 
-#else  // USE_IPHONE
+#else  // HAVE_IPHONE
 
 - (NSString *) makeDesc:(NSString *)saver
                   yearOnly:(BOOL) yearp
@@ -1301,7 +1301,7 @@ FAIL:
 }
 
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 
@@ -1325,7 +1325,7 @@ FAIL:
 }
 
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
 /* Create the desktop window shell, possibly including a preferences button.
  */
@@ -1452,21 +1452,21 @@ FAIL:
   }
 }
 
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
 
 - (void)applicationDidFinishLaunching:
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
     (NSNotification *) notif
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
     (UIApplication *) application
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 {
   [self listSaverBundleNames];
 
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   int window_count = ([saverNames count] <= 1 ? 1 : 2);
   NSMutableArray *a = [[NSMutableArray arrayWithCapacity: window_count+1]
                         retain];
@@ -1488,7 +1488,7 @@ FAIL:
     win.releasedWhenClosed = NO;
     [win release];
   }
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
 
 # undef ya_rand_init
   ya_rand_init (0);	// Now's a good time.
@@ -1525,7 +1525,7 @@ FAIL:
   application.applicationSupportsShakeToEdit = YES;
 
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   NSString *forced = 0;
   /* In the XCode project, each .saver scheme sets this env var when
@@ -1548,11 +1548,18 @@ FAIL:
   if (!forced && [saverNames count] == 1)
     forced = [saverNames objectAtIndex:0];
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   NSString *prev = [prefs stringForKey:@"selectedSaverName"];
 
   if (forced)
     prev = forced;
+
+  if (prev && ! [saverNames containsObject:prev]) {
+    NSLog (@"prev saver \"%@\" does not exist", prev);
+    prev = forced = 0;
+    [prefs removeObjectForKey:@"selectedSaverName"];
+    [prefs removeObjectForKey:@"wasRunning"];
+  }
 
   // If nothing was selected (e.g., this is the first launch)
   // then scroll randomly instead of starting up at "A".
@@ -1562,12 +1569,12 @@ FAIL:
 
   if (prev)
     [menu scrollTo: prev];
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   if (forced)
     [prefs setObject:forced forKey:@"selectedSaverName"];
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   /* Don't auto-launch the saver unless it was running last time.
      XScreenSaverView manages this, on crash_timer.
      Unless forced.
@@ -1585,7 +1592,7 @@ FAIL:
 
 
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   /* On 10.8 and earlier, [ScreenSaverView startAnimation] causes the
      ScreenSaverView to run its own timer calling animateOneFrame.
      On 10.9, that fails because the private class ScreenSaverModule
@@ -1609,11 +1616,11 @@ FAIL:
                             repeats:YES];
     }
   }
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 }
 
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 /* When the window closes, exit (even if prefs still open.)
  */
@@ -1634,7 +1641,7 @@ FAIL:
     [sv stopAnimation];
 }
 
-# else // USE_IPHONE
+# else // HAVE_IPHONE
 
 - (void)applicationWillResignActive:(UIApplication *)app
 {
@@ -1651,7 +1658,7 @@ FAIL:
   [(XScreenSaverView *)view setScreenLocked:YES];
 }
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 @end

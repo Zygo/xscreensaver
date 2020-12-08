@@ -6485,7 +6485,7 @@ msgstr ""
 
 #: ../hacks/config/menger.xml.h:21
 msgid ""
-"The Menger Gasket is a cube-based recursive fractal object analagous to the "
+"The Menger Gasket is a cube-based recursive fractal object analogous to the "
 "Sierpinski Tetrahedron. http://en.wikipedia.org/wiki/Menger_sponge http://en."
 "wikipedia.org/wiki/Sierpinski_carpet Written by Jamie Zawinski; 2001."
 msgstr ""

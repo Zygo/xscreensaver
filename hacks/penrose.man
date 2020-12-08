@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "10-May-97" "X Version 11"
 .SH NAME
-penrose - draws quasiperiodic tilings
+penrose \- draws quasiperiodic tilings
 .SH SYNOPSIS
 .B penrose
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-size \fIinteger\fP] [\-ammann] [\-no\-ammann]
@@ -23,7 +23,7 @@ the literature: First, we do not allow the tiling to enclose an
 untiled area.  Whenever this is in danger of happening, we just
 do not add the tile, hoping for a better random choice the next
 time.  Second, when choosing a vertex randomly, we will take
-one that lies withing the viewport if available.  If this seems to
+one that lies within the viewport if available.  If this seems to
 cause enclosures in the forced rule case, we will allow invisible
 vertices to be chosen.
 

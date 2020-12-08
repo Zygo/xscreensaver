@@ -12,7 +12,7 @@
  * the high value is on the left and the low value is on the right.
  */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <UIKit/UIKit.h>
 # define NSSlider UISlider
 # define NSRect   CGRect
@@ -30,7 +30,7 @@
 
 - (id) initWithFrame:(NSRect)r inverted:(BOOL)_inv integers:(BOOL)_int;
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 - (double) transformedValue;
 - (void) setTransformedValue:(double)v;
 # endif

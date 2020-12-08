@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-noof - draw rotatey patterns
+noof \- draw rotatey patterns
 .SH SYNOPSIS
 .B dangerball
 [\-display \fIhost:display.screen\fP]

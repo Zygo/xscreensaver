@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -551,7 +551,7 @@ xscreensaver_command_wait_for_blank (Display *dpy, Window window,
         }
       else if (xgwa.map_state == IsViewable)
         {
-          if (verbose_p)
+          if (verbose_p > 1)
             fprintf (stderr, "%s: window 0x%08x mapped.\n",
                      progname, (unsigned int) window);
           return 0;
@@ -570,10 +570,11 @@ xscreensaver_command_wait_for_blank (Display *dpy, Window window,
                 fprintf (stderr, "%s: %s\n", progname, err);
               return -1;
             }
-          else if (verbose_p && now > start+1)
+          else if (verbose_p && now > start + 3)
             {
               fprintf (stderr, "%s: waiting for window 0x%08x to map\n",
                        progname, (unsigned int) window);
+              verbose_p++;
             }
         }
 
@@ -681,11 +682,12 @@ server_xscreensaver_version (Display *dpy,
 	    {
 	      char *o = 0, *p = 0, *c = 0;
 	      o = strchr ((char *) id, '(');
-	      if (o) p = strchr (o, '@');
+	      if (o) p = strrchr (o, '@');
 	      if (p) c = strchr (p, ')');
 	      if (c)
 		{
-		  /* found ID of the form "1234 (user@host)". */
+		  /* found ID of the form "1234 (user@host)"
+                     or the weirder "1234 (user@crap@host)". */
 		  user = o+1;
 		  host = p+1;
 		  *p = 0;

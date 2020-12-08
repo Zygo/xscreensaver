@@ -808,6 +808,7 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
 
     /* X.org isn't making a whole lot of sense here. */
 
+    {
     Bool use_copy = (st->frame / 20) & 1;
 
     {
@@ -842,7 +843,7 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
        */
       XCopyArea (st->dpy, st->copy_pix64, t, gc, 32, 32, 128, 64, 0, h - 64);
     }
-
+    }
     break;
 
   case mode_preserve:

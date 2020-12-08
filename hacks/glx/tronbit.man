@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-tronbit - Yes. Yes. No. Yes. Yes. No. Yes. Yes yes yes yes yes.
+tronbit \- Yes. Yes. No. Yes. Yes. No. Yes. Yes yes yes yes yes.
 .SH SYNOPSIS
 .B tronbit
 [\-display \fIhost:display.screen\fP]

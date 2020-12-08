@@ -23,7 +23,7 @@
    specified in the XML to the resource names to use).
  */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <Foundation/Foundation.h>
 # import <UIKit/UIKit.h>
 # define NSView UIView
@@ -39,7 +39,7 @@
 #undef USE_PICKER_VIEW
 
 @interface XScreenSaverConfigSheet : 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 	   UITableViewController <NSXMLParserDelegate,
 				  UITextFieldDelegate
 #  ifdef USE_PICKER_VIEW
@@ -59,7 +59,7 @@
   id xml_root, xml_parsing;
   BOOL haveUpdater;
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   UITextField *active_text_field;
   NSMutableArray *controls;
   NSMutableArray *pref_ctls;	// UIControl objects, with index = c.tag

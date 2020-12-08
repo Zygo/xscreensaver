@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-ccurve - self-similar linear fractals.
+ccurve \- self-similar linear fractals.
 .SH SYNOPSIS
 .B ccurve
 [\-display \fIhost:display.screen\fP]

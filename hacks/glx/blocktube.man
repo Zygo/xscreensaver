@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-blocktube - draws a swirling, falling tunnel of reflective slabs
+blocktube \- draws a swirling, falling tunnel of reflective slabs
 .SH SYNOPSIS
 .B blocktube
 [\-display \fIhost:display.screen\fP]

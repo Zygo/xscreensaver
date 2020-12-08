@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "06-Jul-2000" "X Version 11"
 .SH NAME
-petri - simulates mold growing in a petri dish
+petri \- simulates mold growing in a petri dish
 .SH SYNOPSIS
 .B petri
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-size \fIinteger\fP] [\-mem-throttle \fIamount\fP] [\-count \fIinteger\fP] [\-originalcolors] [\-diaglim \fIreal\fP] [\-anychan \fIreal\fP] [\-minorchan \fIreal\fP] [\-instantdeathchan \fIreal\fP] [\-minlifespeed \fIreal\fP] [\-maxlifespeed \fIreal\fP] [\-mindeathspeed \fIreal\fP] [\-maxdeathspeed \fIreal\fP] [\-minlifespan \fIinteger\fP] [\-maxlifespan \fIinteger\fP]

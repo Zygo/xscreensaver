@@ -550,7 +550,7 @@ static const char *filmleader_defaults [] = {
      712 x Y or X x 712 canvas that we draw in, which is then scaled to
      the size of the screen by analogtv. */
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   "*numberFont:  Helvetica Bold 120",
   "*numberFont2: Helvetica 36",
   "*numberFont3: Helvetica 28",

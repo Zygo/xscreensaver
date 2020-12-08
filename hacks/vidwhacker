@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# vidwhacker, for xscreensaver.  Copyright (c) 1998-2011 Jamie Zawinski.
+# vidwhacker, for xscreensaver.  Copyright (c) 1998-2020 Jamie Zawinski.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.33 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.34 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -315,52 +315,38 @@ sub get_ppm() {
     if ($do_file_p) {
       $cmd = "xscreensaver-getimage-file  $v --name \"$imagedir\"";
     } else {
-      $cmd = "xscreensaver-getimage-video $v --stdout";
+      $cmd = "xscreensaver-getimage-video $v";
     }
 
     my $ppm;
 
-    if ($do_file_p) {
+    print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
+    my $fn = `$cmd`;
+    $fn =~ s/\n$//s;
+    error ("didn't get a file?") if ($fn eq "");
+    $fn = "$imagedir/$fn" unless ($fn =~ m@^/@s);
 
-      print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
-      my $fn = `$cmd`;
-      $fn =~ s/\n$//s;
-      error ("didn't get a file?") if ($fn eq "");
-      $fn = "$imagedir/$fn" unless ($fn =~ m@^/@s);
+    print STDERR "$progname: selected file $fn\n" if ($verbose > 1);
 
-      print STDERR "$progname: selected file $fn\n" if ($verbose > 1);
-
-      if    ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < \"$fn\""; }
-      elsif ($fn =~ m/\.jpe?g/i) { $cmd = "djpeg < \"$fn\""; }
-      elsif ($fn =~ m/\.png/i)   { $cmd = "pngtopnm < \"$fn\""; }
-      elsif ($fn =~ m/\.xpm/i)   { $cmd = "xpmtoppm < \"$fn\""; }
-      elsif ($fn =~ m/\.bmp/i)   { $cmd = "bmptoppm < \"$fn\""; }
-      elsif ($fn =~ m/\.tiff?/i) { $cmd = "tifftopnm < \"$fn\""; }
-      elsif ($fn =~ m/\.p[bgp]m/i) { return `cat \"$fn\"`; }
-      else {
-        print STDERR "$progname: $fn: unrecognized file extension\n";
-        # go around the loop and get another
-        return undef;
-      }
-
-      print STDERR "$progname: converting with: $cmd\n" if ($verbose > 1);
-      $cmd .= " 2>/dev/null" unless ($verbose > 1);
-      $ppm = `$cmd`;
-
-    } else {
-
-      print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
-      $ppm = `$cmd`;
-      error ("no data?") if ($ppm eq "");
-      error ("not a PPM file") unless ($ppm =~ m/^P\d\n/s);
-
-      $_ = $ppm;
-      my ($width, $height) = m/^P\d\n(\d+) (\d+)\n/s;
-      error ("got a bogus PPM") unless ($width && $height);
-      print STDERR "$progname: grabbed ${width}x$height PPM\n"
-        if ($verbose > 1);
-      $_ = 0;
+    if    ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < \"$fn\""; }
+    elsif ($fn =~ m/\.jpe?g/i) { $cmd = "exiftran -o /dev/stdout -a \"$fn\" | djpeg"; }
+    elsif ($fn =~ m/\.png/i)   { $cmd = "pngtopnm < \"$fn\""; }
+    elsif ($fn =~ m/\.xpm/i)   { $cmd = "xpmtoppm < \"$fn\""; }
+    elsif ($fn =~ m/\.bmp/i)   { $cmd = "bmptoppm < \"$fn\""; }
+    elsif ($fn =~ m/\.tiff?/i) { $cmd = "tifftopnm < \"$fn\""; }
+    elsif ($fn =~ m/\.p[bgp]m/i) { $cmd = "cat \"$fn\""; }
+    else {
+      print STDERR "$progname: $fn: unrecognized file extension\n";
+      # go around the loop and get another
+      return undef;
     }
+
+    print STDERR "$progname: converting with: $cmd\n" if ($verbose > 1);
+    $cmd .= " 2>/dev/null" unless ($verbose > 1);
+    $ppm = `$cmd`;
+
+    unlink $fn if (!$do_file_p);
+
 
     return $ppm;
   }
@@ -420,13 +406,18 @@ sub vidwhack() {
     my $err_count = 0;
     while (!defined($ppm)) {
       $ppm = get_ppm();
-      $err_count++ if (!defined ($ppm));
+      if (!defined ($ppm)) {
+        $err_count++ 
+      } else {
+        $ppm = frob_ppm ($ppm);
+        undef $ppm if (defined ($ppm) && $ppm eq "");
+        $err_count++ if (!defined ($ppm));
+      };
       error ("too many errors, too few images!")
         if ($err_count > $max_err_count);
     }
   }
 
-  $ppm = frob_ppm ($ppm);
   dispose_ppm ($ppm);
   $ppm = undef;
 }

@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "Dec-28-07" "X Version 11"
 .SH NAME
-cubicgrid - rotating 3D lattice seen from inside
+cubicgrid \- rotating 3D lattice seen from inside
 .SH SYNOPSIS
 .B cubicgrid
 [\-display \fIhost:display.screen\fP]

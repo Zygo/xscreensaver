@@ -12,10 +12,6 @@
 #ifndef __SCREENHACK_USLEEP_H__
 #define __SCREENHACK_USLEEP_H__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

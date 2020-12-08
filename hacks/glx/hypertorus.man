@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-hypertorus - Draws a hypertorus that rotates in 4d
+hypertorus \- Draws a hypertorus that rotates in 4d
 .SH SYNOPSIS
 .B hypertorus
 [\-display \fIhost:display.screen\fP]

@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-kumppa - spiraling, spinning, splashes of color rush toward the screen.
+kumppa \- spiraling, spinning, splashes of color rush toward the screen.
 .SH SYNOPSIS
 .B kumppa
 [\-display \fIhost:display.screen\fP]

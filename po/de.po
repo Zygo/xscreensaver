@@ -6131,7 +6131,7 @@ msgid "Menger"
 msgstr "Menger"
 
 #: hacks/config/menger.xml.h:19
-msgid "This draws the three-dimensional variant of the recursive Menger Gasket, a cube-based fractal object analagous to the Sierpinski Tetrahedron. Written by Jamie Zawinski."
+msgid "This draws the three-dimensional variant of the recursive Menger Gasket, a cube-based fractal object analogous to the Sierpinski Tetrahedron. Written by Jamie Zawinski."
 msgstr ""
 
 #: hacks/config/metaballs.xml.h:1

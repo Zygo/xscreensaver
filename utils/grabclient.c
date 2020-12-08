@@ -127,11 +127,11 @@ typedef struct {
   XtInputId pipe_id;
   FILE *pipe;
 
-# if !defined(USE_IPHONE) && !defined(HAVE_COCOA)  /* Real X11 */
+# if !defined(HAVE_IPHONE) && !defined(HAVE_COCOA)  /* Real X11 */
   pid_t pid;
 # endif
 
-# if !defined(USE_IPHONE) && defined(HAVE_COCOA)   /* Desktop OSX */
+# if !defined(HAVE_IPHONE) && defined(HAVE_COCOA)   /* Desktop OSX */
   char *directory;
 # endif
 
@@ -564,7 +564,7 @@ load_random_image_x11 (Screen *screen, Window window, Drawable drawable,
 
 #elif defined (HAVE_COCOA) /* OSX or iOS */
 
-# ifndef USE_IPHONE   /* HAVE_COCOA && !USE_IPHONE -- desktop OSX */
+# ifndef HAVE_IPHONE   /* HAVE_COCOA && !HAVE_IPHONE -- desktop OSX */
 
 # define BACKSLASH(c) \
   (! ((c >= 'a' && c <= 'z') || \
@@ -699,7 +699,7 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
 }
 
 
-# else   /* HAVE_COCOA && USE_IPHONE -- iOS */
+# else   /* HAVE_COCOA && HAVE_IPHONE -- iOS */
 
 /* Callback for ios_load_random_image(), called after we have loaded an
    image from the iOS device's Photo Library.  See grabclient-ios.m.
@@ -753,7 +753,7 @@ ios_load_random_image_cb (void *uiimage, const char *filename,
   free (clo2);
 }
 
-# endif /* HAVE_COCOA && USE_IPHONE */
+# endif /* HAVE_COCOA && HAVE_IPHONE */
 
 
 static void
@@ -774,7 +774,7 @@ osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
   clo2->callback = callback;
   clo2->closure = closure;
 
-# ifndef USE_IPHONE   /* Desktop OSX */
+# ifndef HAVE_IPHONE   /* Desktop OSX */
   clo2->directory = strdup (dir);
   clo2->pipe = open_image_name_pipe (dir);
   clo2->pipe_id = XtAppAddInput (XtDisplayToApplicationContext (
@@ -782,14 +782,14 @@ osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
                             fileno (clo2->pipe),
                             (XtPointer) (XtInputReadMask | XtInputExceptMask),
                             xscreensaver_getimage_file_cb, (XtPointer) clo2);
-# else /* USE_IPHONE */
+# else /* HAVE_IPHONE */
   {
     XWindowAttributes xgwa;
     XGetWindowAttributes (DisplayOfScreen (screen), xwindow, &xgwa);
     ios_load_random_image (ios_load_random_image_cb, clo2,
                            xgwa.width, xgwa.height);
   }
-# endif /* USE_IPHONE */
+# endif /* HAVE_IPHONE */
 }
 
 
@@ -828,13 +828,13 @@ load_random_image_cocoa (Screen *screen, Window window, Drawable drawable,
   geom.width  = xgwa.width;
   geom.height = xgwa.height;
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   if (filep)
     dir = get_string_resource (dpy, "imageDirectory", "ImageDirectory");
 
   if (!dir || !*dir)
     filep = False;
-# endif /* ! USE_IPHONE */
+# endif /* ! HAVE_IPHONE */
 
   if (deskp && filep) {
     deskp = !(random() & 5);    /* if both, desktop 1/5th of the time */

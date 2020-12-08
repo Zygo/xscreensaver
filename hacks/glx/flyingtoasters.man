@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-flyingtoasters - 3d space-age jet-powered flying toasters (and toast)
+flyingtoasters \- 3d space-age jet-powered flying toasters (and toast)
 .SH SYNOPSIS
 .B flyingtoasters
 [\-display \fIhost:display.screen\fP]

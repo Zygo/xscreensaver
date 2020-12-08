@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-shadebobs - oscillating vapor trails.
+shadebobs \- oscillating vapor trails.
 .SH SYNOPSIS
 .B shadebobs
 [\-display \fIhost:display.screen\fP]

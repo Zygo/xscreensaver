@@ -35,7 +35,9 @@ ERROR!  You must not include vroot.h in this file.
 #endif
 
 
-/* MIT SCREEN-SAVER server extension hackery.
+/* MIT SCREEN-SAVER server extension.
+ * See the very long comment at the top of xscreensaver.c for why the
+ * MIT-SCREEN-SAVER extension is garbage and should not be used.
  */
 
 #ifdef HAVE_MIT_SAVER_EXTENSION

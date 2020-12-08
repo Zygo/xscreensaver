@@ -13,7 +13,7 @@
 ..
 .TH XScreenSaver 1 "03-Oct-01" "X Version 11"
 .SH NAME
-glforestfire - draws a GL animation of sprinkling fire-like 3D triangles
+glforestfire \- draws a GL animation of sprinkling fire-like 3D triangles
 .SH SYNOPSIS
 .B glforestfire
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]

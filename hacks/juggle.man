@@ -2,7 +2,7 @@
 .\" ** The above line should force tbl to be used as a preprocessor **
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-juggle - juggling man screen saver.
+juggle \- juggling man screen saver.
 .SH SYNOPSIS
 .B juggle
 [\-display host:display.screen ]

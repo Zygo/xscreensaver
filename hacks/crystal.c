@@ -1142,8 +1142,9 @@ init_crystal(ModeInfo * mi)
 		cryst->offset_h = (int) ((cryst->win_height - cryst->b * cos((
 					cryst->gamma - 90) * PI_RAD)) / 2.0);
 		if (!centre) {
+          int n2 = (2 * cryst->offset_h);
 			if (cryst->offset_h > 0)
-				cryst->offset_h = NRAND(2 * cryst->offset_h);
+				cryst->offset_h = NRAND(n2);
 			cryst->offset_w = (int) (cryst->win_width - cryst->a -
 						 cryst->b *
 				    fabs(sin((cryst->gamma - 90) * PI_RAD)));

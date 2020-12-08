@@ -716,6 +716,9 @@ swallow_unlock_typeahead_events (saver_info *si, XEvent *e)
       deactivated by clientmessage.
 
    I trust that explains why this function is a big hairy mess.
+
+   See the very long comment at the top of xscreensaver.c for why the
+   MIT-SCREEN-SAVER extension is garbage and should not be used.
  */
 void
 sleep_until_idle (saver_info *si, Bool until_idle_p)

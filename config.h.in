@@ -1,7 +1,7 @@
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 
-/* config.h.in --- xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski.
+/* config.h.in --- xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski.
  *
  *  The best way to set these parameters is by running the included `configure'
  *  script.  That examines your system, and generates `config.h' from 
@@ -67,9 +67,7 @@
 /* Define this if you have the X Double Buffer Extension. */
 #undef HAVE_DOUBLE_BUFFER_EXTENSION
 
-/* Define this if you have the XDPMS extension. This is standard on
-   sufficiently-recent XFree86 systems, and possibly elsewhere. (It's
-   available if the file /usr/include/X11/extensions/dpms.h exists.) */
+/* Define this if you have the XDPMS extension. */
 #undef HAVE_DPMS_EXTENSION
 
 /* Define this if your system is Digital or SCO Unix with so-called ``Enhanced
@@ -126,15 +124,18 @@
 /* Define this if you have the -lgle from GLE version 3 */
 #undef HAVE_GLE3
 
+/* Define this if your OpenGL implementation supports the OpenGL Shading
+   Language (GLSL). This requires at least OpenGL 2.0. HAVE_GL should be
+   defined, too. */
+#undef HAVE_GLSL
+
 /* Define this if you have Gtk (any version.) */
 #undef HAVE_GTK
 
 /* Define this if you have Gtk 2.x. */
 #undef HAVE_GTK2
 
-/* Define this if you are running HPUX with so-called ``Secure Passwords'' (if
-   you have /usr/include/hpsecurity.h, you probably have this.) I haven't
-   tested this one, let me know if it works. */
+/* Define this if you have HPUX with so-called "Secure Passwords". */
 #undef HAVE_HPUX_PASSWD
 
 /* Define this if you do pings with a `struct icmp' and an `icmp_id' slot. */
@@ -192,6 +193,11 @@
    have different names.) (HAVE_GL should be defined too.) */
 #undef HAVE_MESA_GL
 
+/* Using the MIT-SCREEN-SAVER extension means that the X server will crash at
+   random times, and fading and hysteresis won't work. Don't use this. You'll
+   be sorry. See comment in xscreensaver.c. */
+#undef HAVE_MIT_SAVER_EXTENSION
+
 /* Define this if you have Motif. */
 #undef HAVE_MOTIF
 
@@ -233,17 +239,13 @@
 /* Define to 1 if you have the `putenv' function. */
 #undef HAVE_PUTENV
 
-/* Define this if you have the Resize and Rotate extension. This is standard
-   on sufficiently-recent XFree86 systems, and possibly elsewhere. (It's
-   available if the file /usr/include/X11/extensions/Xrandr.h exists.) */
+/* Define this if you have the Resize and Rotate extension. */
 #undef HAVE_RANDR
 
 /* Define this if the RANDR library is version 1.2 or newer. */
 #undef HAVE_RANDR_12
 
-/* Define this if you have the XReadDisplay extension (I think this is an
-   SGI-only thing; it's in <X11/extensions/readdisplay.h>.) A few of the
-   screenhacks will take advantage of this if it's available. */
+/* Define this if you have the SGI XReadDisplay extension. */
 #undef HAVE_READ_DISPLAY_EXTENSION
 
 /* Define to 1 if you have the `realpath' function. */
@@ -266,6 +268,12 @@
 
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
+
+/* Define this if you have the SGI SCREEN_SAVER extension. */
+#undef HAVE_SGI_SAVER_EXTENSION
+
+/* Define this if you have the SGI-VIDEO-CONTROL extension. */
+#undef HAVE_SGI_VC_EXTENSION
 
 /* Define this if your system uses 'shadow' passwords, that is, the passwords
    live in /etc/shadow instead of /etc/passwd, and one reads them with
@@ -340,22 +348,17 @@
 
 /* Define this if you have the functions XF86VidModeGetModeLine() and
    XF86VidModeGetViewPort(), in support of virtual desktops where the X
-   server's root window is bigger than the actual screen. This is an XFree86
-   thing, and probably doesn't exist elsewhere. (It's available if the file
-   /usr/include/X11/extensions/xf86vmode.h exists.) */
+   server's root window is bigger than the actual screen. */
 #undef HAVE_XF86VMODE
 
 /* Define this if you have the functions XF86VidModeGetGamma() and
    XF86VidModeSetGamma(), which allow clients to change the gamma response of
-   the monitor. This is an XFree86 4.0.x thing, and probably doesn't exist
-   elsewhere. (It's available if the file
-   /usr/include/X11/extensions/xf86vmode.h exists and has stuff about gamma in
-   it.) */
+   the monitor. */
 #undef HAVE_XF86VMODE_GAMMA
 
 /* Define this if you have the functions XF86VidModeGetGammaRamp() and
    XF86VidModeSetGammaRamp(), which provide finer-grained control than
-   XF86VidMode[GS]etGamma(). These appeared in XFree86 4.1.0. */
+   XF86VidMode[GS]etGamma(). */
 #undef HAVE_XF86VMODE_GAMMA_RAMP
 
 /* Define this if you have libXft2. */
@@ -365,14 +368,13 @@
    which allows the Ctrl-Sh-Reset key sequence to be temporarily disabled.) */
 #undef HAVE_XHPDISABLERESET
 
-/* Define this if you have the Xinerama extension. This is standard on
-   sufficiently-recent XFree86 systems, and possibly elsewhere. (It's
-   available if the file /usr/include/X11/extensions/Xinerama.h exists.) */
+/* Define this if you have the X11R5 XIDLE extension. */
+#undef HAVE_XIDLE_EXTENSION
+
+/* Define this if you have the Xinerama extension. */
 #undef HAVE_XINERAMA
 
-/* Define this if you have the Xinput extension. This is standard since X11R5,
-   and is thus almost everywhere. (It's available if the file
-   /usr/include/X11/extensions/XInput.h exists.) */
+/* Define this if you have the Xinput extension. */
 #undef HAVE_XINPUT
 
 /* Define this if you have the XmComboBox Motif widget (Motif 2.0.) */
@@ -393,9 +395,6 @@
 
 /* Define this to remove the option of locking the screen at all. */
 #undef NO_LOCKING
-
-/* This is the same as GETTEXT_PACKAGE, but for the glade generated code. */
-#undef PACKAGE
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

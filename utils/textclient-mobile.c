@@ -16,7 +16,7 @@
 
 #include "utils.h"
 
-#if defined(USE_IPHONE) || defined(HAVE_ANDROID)  /* whole file */
+#if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)  /* whole file */
 
 #include "textclient.h"
 #include "resources.h"

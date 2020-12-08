@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "14-Aug-2004" "X Version 11"
 .SH NAME
-memscroller - scrolls a dump of its own RAM across the screen
+memscroller \- scrolls a dump of its own RAM across the screen
 .SH SYNOPSIS
 .B memscroller
 [\-display \fIhost:display.screen\fP]

@@ -702,7 +702,9 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
           glEnable (GL_TEXTURE_2D);
           glEnable (GL_BLEND);
           glDisable (GL_DEPTH_TEST);
+# ifndef HAVE_ANDROID   /* Doesn't work -- photo displays as static */
           print_texture_string (ss->texfont, title);
+# endif
           glEnable (GL_DEPTH_TEST);
         }
       else

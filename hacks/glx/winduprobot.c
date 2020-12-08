@@ -2481,9 +2481,9 @@ free_robot (ModeInfo *mi)
 
   if (bp->user_trackball) gltrackball_free (bp->user_trackball);
   if (bp->walkers) free (bp->walkers);
-  if (robot_dome) free (robot_dome); robot_dome = 0;
-  if (robot_gear) free (robot_gear); robot_gear = 0;
-  if (ground) free (ground); ground = 0;
+  if (robot_dome) free (robot_dome);
+  if (robot_gear) free (robot_gear);
+  if (ground) free (ground);
 
 # ifdef WORDBUBBLES
   if (bp->tc) textclient_close (bp->tc);

@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.7 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.8 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -208,7 +208,7 @@ sub xml2man($) {
 
   $body = (".TH XScreenSaver 1 \"\" \"X Version 11\"\n" .
            ".SH NAME\n" .
-           "$exe - screen saver.\n" .
+           "$exe \\- screen saver.\n" .
            ".SH SYNOPSIS\n" .
            ".B $exe\n" .
            $default_args .

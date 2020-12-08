@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2013-2019 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2013-2020 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use open ":encoding(utf8)";
 use POSIX;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.8 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -72,12 +72,12 @@ sub generate_xml($$$$) {
 
   my $rss = "";
 
-  $body =~ s/^(\d+\.\d+[ \t])/\001$1/gm;
+  $body =~ s/^(\d+\.\d+(?:\.\d+)?[ \t])/\001$1/gm;
   my @log = split (/\001/, $body);
   shift @log;
   my $count = 0;
   foreach my $log (@log) {
-    my ($v1, $entry) = ($log =~ m/^(\d+\.\d+)\s+(.*)$/s);
+    my ($v1, $entry) = ($log =~ m/^(\d+\.\d+(?:\.\d+)?)\s+(.*)$/s);
 
     $entry =~ s/^\s*\d\d?[- ][A-Z][a-z][a-z][- ]\d{4}:?\s+//s;  # lose date
 
@@ -114,6 +114,8 @@ sub generate_xml($$$$) {
         }
       }
     }
+
+    error ("no dmg for $v1") if (!$zip && $count == 0);
 
     my $publishedp = ($zip && -f "$www_dir/$zip");
     $publishedp = 1 if ($count == 0);

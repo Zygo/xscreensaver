@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,7 +22,7 @@
 
 #include "utils.h"
 
-#if !defined(USE_IPHONE) && !defined(HAVE_ANDROID)  /* whole file */
+#if !defined(HAVE_IPHONE) && !defined(HAVE_ANDROID)  /* whole file */
 
 #include "textclient.h"
 #include "resources.h"
@@ -117,6 +117,72 @@ escape_str (char *s, const char *src)
 }
 #endif
 
+
+/* Let's see if we're able to fork and exec at all. Thanks, macOS.
+ */
+static Bool
+selftest (void)
+{
+  static Bool done = False;
+  pid_t pid;
+  char buf [255];
+  if (done) return True;
+
+  pid = fork ();
+  switch ((int) pid)
+    {
+    case -1:
+      sprintf (buf, "%s: textclient: selftest: couldn't fork", progname);
+      perror (buf);
+      return False;
+
+    case 0:					/* child */
+      {
+        char * const av[] = { "/bin/sh", "-c", "true", 0 };
+        execvp (av[0], av);
+        exit (1);  /* exits child fork */
+        break;
+      }
+
+    default:					/* parent */
+      {
+        int status = -1;
+        int i;
+        /* Busy-loops are bad mmmmkayyyy */
+        struct timeval tv;
+        tv.tv_sec  = 0;
+        tv.tv_usec = 100000L;		/* 0.1 sec */
+        for (i = 0; i < 50; i++) {	/* 5 sec max */
+          pid_t pid2 = waitpid (pid, &status, 0);
+          if (pid == pid2) break;
+          (void) select (0, 0, 0, 0, &tv);
+        }
+
+        if (status != 0)
+          {
+# ifdef DEBUG
+            fprintf (stderr, "%s: selftest: textclient: status %d\n",
+                     progname, status);
+# endif
+            return False;
+          }
+        else
+          {
+# ifdef DEBUG
+            fprintf (stderr, "%s: textclient: selftest ok\n", progname);
+# endif
+            done = True;
+          }
+        break;
+      }
+    }
+
+  return True;
+}
+
+
+static void start_timer (text_data *d);
+
 static void
 launch_text_generator (text_data *d)
 {
@@ -141,6 +207,14 @@ launch_text_generator (text_data *d)
 # else
   char *cmd = s = malloc ((strlen(oprogram)) * 2 + 100);
 # endif
+
+  if (!selftest())
+    {
+      if (!d->out_buffer || !*d->out_buffer)
+        d->out_buffer = "Can't exec; Gatekeeper problem?\r\n\r\n";
+      start_timer (d);
+      return;
+    }
 
   strcpy (s, "( ");
   strcat (s, oprogram);
@@ -670,4 +744,4 @@ textclient_putc (text_data *d, XKeyEvent *k)
   return False;
 }
 
-#endif /* !USE_IPHONE -- whole file */
+#endif /* !HAVE_IPHONE -- whole file */

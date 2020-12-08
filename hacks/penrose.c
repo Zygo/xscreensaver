@@ -494,17 +494,6 @@ init_penrose(ModeInfo * mi)
 		free_penrose(mi);
 		return;
 	}
-	if (fp == 0) {
-		if (MI_IS_VERBOSE(mi)) {
-			(void) fprintf(stderr, "Weirdness in init_penrose()\n");
-			(void) fprintf(stderr, "fp = 0\n");
-		}
-		if ((fp = tp->fringe.nodes = ALLOC_NODE(fringe_node_c)) == NULL) {
-			free_penrose(mi);
-			return;
-		}
-		tp->done = True;
-	}
 	/* First vertex. */
 	fp->rule_mask = (1 << N_VERTEX_RULES) - 1;
 	fp->list_ptr = 0;

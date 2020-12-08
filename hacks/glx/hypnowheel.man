@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-hypnowheel - draws overlapping, translucent spiral patterns
+hypnowheel \- draws overlapping, translucent spiral patterns
 .SH SYNOPSIS
 .B hypnowheel
 [\-display \fIhost:display.screen\fP]

@@ -138,7 +138,7 @@ main (int argc, char** argv)
                           dictionaryWithObject:
                             [NSNumber numberWithFloat:compression]
                           forKey:NSImageCompressionFactor];
-  NSData *jpeg_data = [bit_rep representationUsingType:NSJPEGFileType
+  NSData *jpeg_data = [bit_rep representationUsingType:NSBitmapImageFileTypeJPEG
                                properties:props];
 
   [jpeg_data writeToFile:

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -140,6 +140,10 @@ extern void schedule_wakeup_event (saver_info *si, Time when, Bool verbose_p);
 
 extern Bool handle_clientmessage (saver_info *, XEvent *, Bool);
 extern void maybe_reload_init_file (saver_info *);
+extern void clientmessage_response (saver_info *, Window, Bool error,
+                                    const char *stderr_msg,
+                                    const char *protocol_msg);
+
 
 /* =======================================================================
    subprocs
@@ -174,8 +178,8 @@ extern const char *signal_name (int signal);
 
 extern FILE *real_stderr;
 extern FILE *real_stdout;
-extern void stderr_log_file (saver_info *si);
-extern void initialize_stderr (saver_info *si);
+extern Bool stderr_log_file (saver_info *si);
+extern void initialize_stderr (saver_info *si, Bool inhibit_p);
 extern void reset_stderr (saver_screen_info *ssi);
 extern void clear_stderr (saver_screen_info *ssi);
 extern void shutdown_stderr (saver_info *si);

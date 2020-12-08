@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 5.44
+%define	version 5.45
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -22,19 +22,22 @@ BuildRequires:	gettext
 BuildRequires:	pam-devel
 BuildRequires:	gtk2-devel
 BuildRequires:	desktop-file-utils
-# Red Hat (pre-FC5):
-#BuildRequires:	xorg-x11-devel
-#BuildRequires:	libglade2-devel
+BuildRequires:  systemd-devel
+BuildRequires:	libcap-devel
 # Red Hat 5, CentOS5, FC5, and up:
 BuildRequires:	xorg-x11-proto-devel
-BuildRequires:	libglade2-devel
+#BuildRequires:	libglade2-devel
 # Mandrake:
 #BuildRequires:	libxorg-x11-devel
 #BuildRequires:	libglade2.0_0-devel
 Requires: SysVinit
+Requires: pam
 Requires: /etc/pam.d/system-auth
 Requires: htmlview
+Requires: xorg-x11-fonts-100dpi
 Requires: desktop-backgrounds-basic
+Requires: xdg-utils
+Requires: systemd-libs
 Provides: xscreensaver
 Provides: xscreensaver-base
 Obsoletes: xscreensaver
@@ -111,12 +114,6 @@ export CFLAGS="${CFLAGS:-${RPM_OPT_FLAGS}}"
 
 CONFIG_OPTS="--prefix=/usr --with-pam --without-shadow --without-kerberos"
 
-# Red Hat doesn't like this:
-CONFIG_OPTS="$CONFIG_OPTS --with-setuid-hacks"
-
-# This is flaky:
-# CONFIG_OPTS="$CONFIG_OPTS --with-login-manager"
-
 ln -s ../configure .
 %configure $CONFIG_OPTS
 rm -f configure
@@ -139,10 +136,6 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}                      \
          $RPM_BUILD_ROOT/etc/pam.d
 
 make install_prefix=$RPM_BUILD_ROOT install
-
-desktop-file-install --vendor gnome --delete-original                         \
-  --dir $RPM_BUILD_ROOT%{_datadir}/applications                               \
-  $RPM_BUILD_ROOT%{_datadir}/applications/*.desktop
 
 # This function prints a list of things that get installed.
 # It does this by parsing the output of a dummy run of "make install".

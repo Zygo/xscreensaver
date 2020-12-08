@@ -5850,7 +5850,7 @@ msgstr "Menger"
 #: hacks/config/menger.xml.h:18
 msgid ""
 "This draws the three-dimensional variant of the recursive Menger Gasket, a "
-"cube-based fractal object analagous to the Sierpinski Tetrahedron. Written "
+"cube-based fractal object analogous to the Sierpinski Tetrahedron. Written "
 "by Jamie Zawinski; 2001."
 msgstr ""
 "Dessine une variante tridimensionnelle du tamis récursif de Menger, un objet "

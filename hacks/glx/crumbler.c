@@ -677,7 +677,7 @@ init_crumbler (ModeInfo *mi)
     }
 
 # ifdef HAVE_MOBILE
-#  ifdef USE_IPHONE
+#  ifdef HAVE_IPHONE
      density *= 0.5;  /* iPhone 6s runs out of memory at 4500 nverts. */
 #  else
      density *= 0.3;  /* Android Nexus_5_8.1 emulator runs out earlier. */

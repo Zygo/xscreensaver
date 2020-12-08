@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-compass - draws a spinning compass.
+compass \- draws a spinning compass.
 .SH SYNOPSIS
 .B compass
 [\-display \fIhost:display.screen\fP]

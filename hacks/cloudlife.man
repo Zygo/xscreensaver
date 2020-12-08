@@ -1,6 +1,6 @@
 .TH XScreenSaver 6 "20-May-2003" "X Version 11"
 .SH NAME
-cloudlife - a cellular automaton based on Conway's Life
+cloudlife \- a cellular automaton based on Conway's Life
 .SH SYNOPSIS
 .B cloudlife
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-cycle-delay \fImicroseconds\fP] [\-cycle-colors \fIinteger\fP][\-cell-size \fIinteger\fP] [\-initial-density \fIinteger\fP] [\-max-age \fIinteger\fP]

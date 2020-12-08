@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-menger - 3D menger gasket fractal.
+menger \- 3D menger gasket fractal.
 .SH SYNOPSIS
 .B menger
 [\-display \fIhost:display.screen\fP]
@@ -17,7 +17,7 @@ menger - 3D menger gasket fractal.
 [\-fps]
 .SH DESCRIPTION
 This draws the three-dimensional variant of the recursive Menger Gasket, a
-cube-based fractal object analagous to the Sierpinski Tetrahedron.
+cube-based fractal object analogous to the Sierpinski Tetrahedron.
 .SH OPTIONS
 .TP 8
 .B \-visual \fIvisual\fP

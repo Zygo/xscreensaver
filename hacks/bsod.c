@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -63,6 +63,8 @@
 #include "images/gen/atm_png.h"
 #include "images/gen/sun_png.h"
 #include "images/gen/dvd_png.h"
+#include "images/gen/gnome1_png.h"
+#include "images/gen/gnome2_png.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -957,7 +959,7 @@ make_bsod_state (Display *dpy, Window window,
   jwxyz_XSetAntiAliasing (dpy, bst->gc, True);
 #endif
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   /* Stupid iPhone X bezel.
      #### This is the worst of all possible ways to do this!
    */
@@ -1064,7 +1066,7 @@ windows_31 (Display *dpy, Window window)
   BSOD_TEXT   (bst, CENTER, "Windows\n");
   BSOD_INVERT (bst);
   BSOD_TEXT   (bst, CENTER,
-               "A fatal exception 0E has occured at F0AD:42494C4C\n"
+               "A fatal exception 0E has occurred at F0AD:42494C4C\n"
                "the current application will be terminated.\n"
                "\n"
                "* Press any key to terminate the current application.\n"
@@ -1121,7 +1123,7 @@ vmware (Display *dpy, Window window)
   BSOD_CHAR_DELAY (bst, 100000);
   BSOD_TEXT (bst, LEFT, "4321");
   BSOD_CHAR_DELAY (bst, 0);
-  BSOD_TEXT (bst, LEFT, "Disk dump successfull.\n"
+  BSOD_TEXT (bst, LEFT, "Disk dump successful.\n"
 		"Waiting for Debugger (world 1037)\n"
 		"Debugger is listening on serial port ...\n");
   BSOD_CHAR_DELAY (bst, 10000);
@@ -1626,7 +1628,7 @@ windows_ransomware (Display *dpy, Window window)
 
   const char *excuse_quip = excuse_quips[random() % countof(excuse_quips)];
 
-  /* WELL ACTUALLY, screensavers aren't really nescessary anymore because... */
+  /* WELL ACTUALLY, screensavers aren't really necessary anymore because... */
   const char *screensaver_quips[] = {
     "I read it on hacker news",
     "that's official Debian policy now",
@@ -1673,7 +1675,7 @@ windows_ransomware (Display *dpy, Window window)
     ". Also you didn't click hard enough and now Tinkerbelle is dead.\n",
     "\n",
     "*But Aren't Screensavers Are Necessary?\n",
-    "WELL ACTUALLY, screensavers aren't really nescessary anymore because ",
+    "WELL ACTUALLY, screensavers aren't really necessary anymore because ",
     "[S]", ".\n",
     "\n",
     "Please file complaints to @POTUS on Twitter.\n",
@@ -1929,7 +1931,7 @@ windows_ransomware (Display *dpy, Window window)
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123459789";
     buf[i] = s[random() % strlen(s)];
   }
-  strncpy (buf, " //", 3);
+  memcpy (buf, " //", 3);
   buf[10] = '/';
   buf[17] = '/';
   buf[24] = '/';
@@ -3222,7 +3224,7 @@ os2 (Display *dpy, Window window)
       "contact your service representative.\n",
 
       /* Warp 4.52+, typical JFS problem. */
-      "Exeption in module: JFS\n"
+      "Exception in module: JFS\n"
       "TRAP 0003       ERRCD=0000  ERACC=****  ERLIM=********\n"
       "EAX=00000000  EBX=ffffff05  ECX=00000001  EDX=f5cd8010\n"
       "ESI=000000e6  EDI=000000e7  EBP=f9c7378e  FLG=00002296\n"
@@ -4596,7 +4598,6 @@ hpux (Display *dpy, Window window)
     int size = 40;
     for (i = 0; i <= steps; i++)
       {
-        if (i > steps) i = steps;
         sprintf (buf,
                "*** Dumping: %3d%% complete (%d of 40 MB) (device 64:0x2)\r",
                  i * 100 / steps,
@@ -5995,6 +5996,65 @@ android (Display *dpy, Window window)
 }
 
 
+/* Gnome SOD. Truly 2020 will be the year of the Linux Desktop. */
+static struct bsod_state *
+gnome (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "gnome", "Gnome");
+
+  int pix_w, pix_h;
+  int x, y;
+  int lh = bst->font->ascent + bst->font->descent;
+  Pixmap mask = 0;
+  Pixmap pixmap;
+  unsigned long fg, bg;
+  Bool which = random() & 1;
+
+  if (which)
+    {
+      pixmap = image_data_to_pixmap (dpy, window,
+                                     gnome2_png, sizeof(gnome2_png),
+                                     &pix_w, &pix_h, &mask);
+      fg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                               "gnome.foreground2", "Gnome.Foreground");
+      bg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                               "gnome.background2", "Gnome.Background");
+    }
+  else
+    {
+      pixmap = image_data_to_pixmap (dpy, window,
+                                     gnome1_png, sizeof(gnome1_png),
+                                     &pix_w, &pix_h, &mask);
+      fg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                               "gnome.foreground", "Gnome.Foreground");
+      bg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                               "gnome.background", "Gnome.Background");
+    }
+
+  x = (bst->xgwa.width - pix_w) / 2;
+  y = (bst->xgwa.height - pix_h) / 2;
+  if (y < 0) y = 0;
+
+  XSetWindowBackground (dpy, window, bg);
+  XClearWindow (dpy, window);
+  XSetClipMask (dpy, bst->gc, mask);
+  XSetClipOrigin (dpy, bst->gc, x, y);
+  XCopyArea (dpy, pixmap, window, bst->gc, 0, 0, pix_w, pix_h, x, y);
+  XSetClipMask (dpy, bst->gc, None);
+  XFreePixmap (dpy, mask);
+
+  BSOD_MOVETO (bst, 0, y + pix_h + lh * 2);
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_FONT (bst, 0);
+  BSOD_TEXT (bst, CENTER, "Oh no!  Something has gone wrong!\n\n");
+  BSOD_FONT (bst, 1);
+  BSOD_TEXT (bst, CENTER,
+             "A problem has occurred and the system can't recover.\n");
+  BSOD_TEXT (bst, CENTER, "Please log out and try again.");
+  BSOD_PAUSE (bst, 60 * 1000000);
+
+  return bst;
+}
 
 
 /*****************************************************************************
@@ -6042,6 +6102,7 @@ static const struct {
   { "DVD",		dvd },
   { "Tivo",		tivo },
   { "Nintendo",		nintendo },
+  { "Gnome",		gnome },
 };
 
 
@@ -6365,6 +6426,7 @@ static const char *bsod_defaults [] = {
   "*doDVD:		   True",
   "*doTivo:		   True",
   "*doNintendo:		   True",
+  "*doGnome:		   True",
 
   ".foreground:		   White",
   ".background:		   Black",
@@ -6483,6 +6545,11 @@ static const char *bsod_defaults [] = {
   ".nintendo.background2:  #085C89",
   ".nintendo.foreground:   #EEAACF",
 
+  ".gnome.background:      #000000",
+  ".gnome.foreground:      #E2E2E2",
+  ".gnome.background2:     #F0F0F0",
+  ".gnome.foreground2:     #2E3436",
+
   "*dontClearRoot:         True",
 
   ANALOGTV_DEFAULTS
@@ -6496,7 +6563,7 @@ static const char *bsod_defaults [] = {
   "*fontB:		   ",
   "*fontC:		   ",
 
-# if defined(USE_IPHONE)
+# if defined(HAVE_IPHONE)
 
   "*font:		   PxPlus IBM VGA8 16, Courier-Bold 14",
   "*bigFont:		   ",
@@ -6528,6 +6595,10 @@ static const char *bsod_defaults [] = {
 
   ".nintendo.font:	   PxPlus IBM VGA8 18, Courier-Bold 18",
 
+  ".gnome.font:		   Helvetica-Bold 13",
+  ".gnome.bigFont:	   Helvetica-Bold 13",
+  ".gnome.fontB:	   Helvetica 13",
+
 # elif defined(HAVE_ANDROID)
 
   "*font:		   PxPlus IBM VGA8 16",
@@ -6556,6 +6627,10 @@ static const char *bsod_defaults [] = {
   ".tivo.fontB:		   -*-helvetica-bold-r-*-*-*-240-*-*-*-*-*-*",
 
   ".nintendo.font:	   PxPlus IBM VGA8 18",
+
+  ".gnome.font:		   Helvetica-Bold 13",
+  ".gnome.bigFont:	   Helvetica-Bold 13",
+  ".gnome.fontB:	   Helvetica 13",
 
 # elif defined(HAVE_COCOA)
 
@@ -6598,6 +6673,10 @@ static const char *bsod_defaults [] = {
 
   ".nintendo.font:	   PxPlus IBM VGA8 12, Courier Bold 12",
   ".nintendo.bigFont:	   PxPlus IBM VGA8 48, Courier Bold 48",
+
+  ".gnome.font:		   Helvetica-Bold 14",
+  ".gnome.bigFont:	   Helvetica-Bold 14",
+  ".gnome.fontB:	   Helvetica 14",
 
 # else   /* X11 */
 
@@ -6650,6 +6729,10 @@ static const char *bsod_defaults [] = {
 
   ".nintendo.font:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".nintendo.bigFont:	   -*-courier-bold-r-*-*-*-360-*-*-m-*-*-*",
+
+  ".gnome.font:		   -*-helvetica-bold-r-*-*-*-140-*-*-*-*-*-*",
+  ".gnome.bigFont:	   -*-helvetica-bold-r-*-*-*-140-*-*-*-*-*-*",
+  ".gnome.fontB:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
 
 # endif  /* X11 */
 
@@ -6730,6 +6813,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-tivo",		".doTivo",		XrmoptionNoArg,  "False" },
   { "-nintendo",	".doNintendo",		XrmoptionNoArg,  "True"  },
   { "-no-nintendo",	".doNintendo",		XrmoptionNoArg,  "False" },
+  { "-gnome",		".doGnome",		XrmoptionNoArg,  "True"  },
+  { "-no-gnome",	".doGnome",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

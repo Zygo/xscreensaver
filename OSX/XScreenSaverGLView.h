@@ -17,7 +17,7 @@
 
 #import "XScreenSaverView.h"
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <OpenGLES/EAGL.h>
 # import <OpenGLES/ES1/gl.h>
 # import <OpenGLES/ES1/glext.h>
@@ -29,11 +29,11 @@
 
 @interface XScreenSaverGLView : XScreenSaverView
 {
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   GLuint gl_depthbuffer;
   BOOL _suppressRotationAnimation;
   jwzgles_state *_glesState;
-# endif /* USE_IPHONE */
+# endif /* HAVE_IPHONE */
 }
 
 @end

@@ -92,14 +92,14 @@ extern Bool osx_load_image_file (Screen *, Window, Drawable,
                                  const char *filename, XRectangle *geom_ret);
 #endif /* HAVE_JWXYZ */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 extern void ios_load_random_image (void (*callback) (void *uiimage,
                                                      const char *filename,
                                                      int w, int h,
                                                      void *closure),
                                    void *closure,
                                    int width, int height);
-#endif /* USE_IPHONE */
+#endif /* HAVE_IPHONE */
 
 #ifdef HAVE_ANDROID
 char *jwxyz_draw_random_image (Display *dpy,  /* utils/grabclient.c */

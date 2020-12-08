@@ -50,6 +50,11 @@ Requirements for inclusion with the XScreenSaver collection
     your name and the current year).  The GNU GPL is not compatible with
     the rest of XScreenSaver.
 
+  - No clocks! Just as time travellers always try to kill Hitler on their
+    first trip, everyone seems to think that their first screen saver
+    should be a clock of some kind.  Nobody needs to know what time it is
+    with such frequency.  Fight The Tyranny Of The Clock.
+
 
 ==========================================================================
 The XScreenSaver API
@@ -183,6 +188,10 @@ Programming Tips
     the XScreenSaver daemon, under iOS and Android screen savers exist
     in long-lived processes where no such cleanup takes place.
     Consider Valgrind or gcc -fsanitize=leak to find memory leaks.
+
+  - Again, don't use global variables.  If you are doing your developent
+    under X11, test your saver from the command line with the "-pair"
+    argument.  If that crashes, you're using global variables!
 
 
 ==========================================================================

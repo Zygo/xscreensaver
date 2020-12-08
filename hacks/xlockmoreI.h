@@ -38,7 +38,7 @@ typedef struct ModeInfo ModeInfo;
 # endif /* !HAVE_MESA_GL */
 
 # ifdef HAVE_COCOA
-#  ifndef USE_IPHONE
+#  ifndef HAVE_IPHONE
 #   include <OpenGL/gl.h>
 #   include <OpenGL/glu.h>
 #  endif

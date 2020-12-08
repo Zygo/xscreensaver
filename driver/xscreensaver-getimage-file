@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.53 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.57 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -84,7 +84,7 @@ my $feed_max_age = $cache_max_age;
 # them, but it assumes that you gave your images sensible file extensions.
 #
 my @good_extensions = ('jpg', 'jpeg', 'pjpeg', 'pjpg', 'png', 'gif',
-                       'tif', 'tiff', 'xbm', 'xpm');
+                       'tif', 'tiff', 'xbm', 'xpm', 'svg');
 my $good_file_re = '\.(' . join("|", @good_extensions) . ')$';
 
 # This matches file extensions that might occur in an image directory,
@@ -1120,8 +1120,21 @@ sub png_size($) {
 }
 
 
-# Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
-# of the image.
+# Given the raw body of an SVG document, returns the dimensions of the image.
+#
+sub svg_size($) {
+  my ($body) = @_;
+  return () unless ($body =~ m/^<\?xml\s/s);
+  return () unless ($body =~ m/<svg\s/si);
+  my ($w) = ($body =~ m@\swidth=[\"\'](\d+)[\"\']@si);
+  my ($h) = ($body =~ m@\sheight=[\"\'](\d+)[\"\']@si);
+  return () unless (defined ($w) && defined ($h));
+  return ($w, $h);
+}
+
+
+# Given the raw body of a GIF, JPEG, PNG or SVG document, returns the
+# dimensions of the image.
 #
 sub image_size($) {
   my ($body) = @_;
@@ -1129,6 +1142,8 @@ sub image_size($) {
   my ($w, $h) = gif_size ($body);
   if ($w && $h) { return ($w, $h); }
   ($w, $h) = jpeg_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  ($w, $h) = svg_size ($body);
   if ($w && $h) { return ($w, $h); }
   # #### TODO: need image parsers for TIFF, XPM, XBM.
   return png_size ($body);
@@ -1182,13 +1197,24 @@ sub get_x11_prefs_1($) {
   my ($body) = @_;
 
   my $got_any_p = 0;
+  my $choosep = 1;
   $body =~ s@\\\n@@gs;
   $body =~ s@^[ \t]*#[^\n]*$@@gm;
 
-  if ($body =~ m/^[.*]*imageDirectory:[ \t]*([^\s]+)\s*$/im) {
-    $image_directory = $1;
-    $got_any_p = 1;
+  foreach my $line (split (/\n/, $body)) {
+    $line =~ s/#.*//s;
+    if ($line =~ m/^[.*]*imageDirectory:[ \t]*([^\s]+)\s*$/si) {
+      $image_directory = $1;
+      $got_any_p = 1;
+    } elsif ($line =~ m/^[.*]*chooseRandomImages:[ \t]*([^\s]+)\s*$/si) {
+      $choosep = ($1 =~ m/^true$/si ? 1 : 0);
+      $got_any_p = 1;
+    }
   }
+
+  # Don't allow image files to be loaded if chooseRandomImages is false.
+  $image_directory = undef unless $choosep;
+
   return $got_any_p;
 }
 
@@ -1276,12 +1302,11 @@ sub main() {
     }
 
     if (defined ($cocoa_id)) {
-      get_cocoa_prefs($cocoa_id);
-      error ("no imageDirectory in $cocoa_id") unless $image_directory;
+      get_cocoa_prefs ($cocoa_id);
     } else {
       get_x11_prefs();
-      error ("no imageDirectory in X11 resources") unless $image_directory;
     }
+    error ("image file loading is not configured") unless $image_directory;
   }
 
   usage unless (defined($image_directory));

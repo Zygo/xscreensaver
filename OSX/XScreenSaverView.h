@@ -15,7 +15,7 @@
    the "screenhack.c" module.
  */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <Foundation/Foundation.h>
 # import <UIKit/UIKit.h>
 # define NSView  UIView
@@ -36,7 +36,7 @@
 #import "screenhackI.h"
 #import "PrefsReader.h"
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 
 @class XScreenSaverView;
 
@@ -60,14 +60,14 @@
 - (BOOL)isPreview;
 @end
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 // Currently only OpenGL backbuffers are supported (OSX and iOS).
 # define BACKBUFFER_OPENGL
 
 @interface XScreenSaverView : ScreenSaverView
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 			      <UIAlertViewDelegate>
 # elif defined(USE_TOUCHBAR)
 			      <NSTouchBarDelegate>
@@ -90,7 +90,7 @@
 
   BOOL _lowrez_p;		// Whether the saver prefers 1990s pixels.
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   BOOL screenLocked;
   BOOL _ignoreRotation;		// whether hack requested "always portrait".
 				// some want this, some do not.
@@ -109,7 +109,7 @@
 
   NSOpenGLPixelFormat *pixfmt;
 
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
 # ifdef USE_TOUCHBAR
   XScreenSaverView *touchbar_view;
@@ -131,19 +131,19 @@
   GLuint backbuffer_texture;
   GLenum gl_texture_target;
   GLenum gl_pixel_format, gl_pixel_type;
-#   ifndef USE_IPHONE
+#   ifndef HAVE_IPHONE
   BOOL double_buffered_p, gl_apple_client_storage_p;
-#   else // USE_IPHONE
+#   else // HAVE_IPHONE
   BOOL gl_limited_npot_p;
   GLuint gl_framebuffer, gl_renderbuffer;
-#   endif // USE_IPHONE
+#   endif // HAVE_IPHONE
 #  endif
 
 # endif // JWXYZ_QUARTZ
 
-# if defined JWXYZ_GL && defined USE_IPHONE
+# if defined JWXYZ_GL && defined HAVE_IPHONE
   NSOpenGLContext *ogl_ctx_pixmap;
-# endif // JWXYZ_GL && USE_IPHONE
+# endif // JWXYZ_GL && HAVE_IPHONE
 }
 
 - (id)initWithFrame:(NSRect)frame saverName:(NSString*)n isPreview:(BOOL)p;
@@ -157,7 +157,7 @@
 - (CGFloat) hackedContentScaleFactor;
 - (CGFloat) hackedContentScaleFactor:(BOOL)fonts_p;
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 - (void)setScreenLocked:(BOOL)locked;
 - (NSDictionary *)getGLProperties;
 - (void)addExtraRenderbuffers:(CGSize)size;
@@ -167,9 +167,9 @@
 @property (nonatomic) BOOL ignoreRotation;
 - (BOOL)suppressRotationAnimation;
 - (BOOL)rotateTouches;
-#else // !USE_IPHONE
+#else // !HAVE_IPHONE
 - (NSOpenGLPixelFormat *)getGLPixelFormat;
-#endif // !USE_IPHONE
+#endif // !HAVE_IPHONE
 
 - (void)enableBackbuffer:(CGSize)new_backbuffer_size;
 - (void)setViewport;

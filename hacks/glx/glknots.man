@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-glknots - generates some twisting 3d knot patterns
+glknots \- generates some twisting 3d knot patterns
 .SH SYNOPSIS
 .B glknots
 [\-display \fIhost:display.screen\fP]

@@ -41,7 +41,7 @@
 #include "trackball.h"
 #include "gltrackball.h"
 
-#if defined(USE_IPHONE) || defined(HAVE_ANDROID)
+#if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
   /* Surely this should be defined somewhere more centrally... */
 # define HAVE_MOBILE
 #endif
@@ -216,7 +216,7 @@ gltrackball_reset (trackball_state *ts, float x, float y)
 
 
 /* Execute the rotations current encapsulated in the trackball_state:
-   this does something analagous to glRotatef().
+   this does something analogous to glRotatef().
  */
 void
 gltrackball_rotate (trackball_state *ts)

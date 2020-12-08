@@ -10,7 +10,7 @@
   <number id="delay" type="slider" arg="-delay %"
           _label="Duration" _low-label="5 seconds" _high-label="2 minutes"
           low="5" high="120" default="45"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+<!--  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/> -->
  </hgroup>
 
  <hgroup>
@@ -19,49 +19,54 @@
    <boolean id="nt"         _label="Windows NT"     arg-unset="-no-nt"/>
    <boolean id="2k"         _label="Windows 2000  " arg-unset="-no-2k"/>
    <boolean id="win10"      _label="Windows 10    " arg-unset="-no-win10"/>
-   <boolean id="msdos"      _label="MS-DOS"         arg-unset="-no-msdos"/>
   </vgroup>
   <vgroup>
-   <boolean id="amiga"      _label="AmigaDOS"       arg-unset="-no-amiga"/>
+   <boolean id="msdos"      _label="MS-DOS"         arg-unset="-no-msdos"/>
    <boolean id="glados"     _label="GLaDOS"         arg-unset="-no-glados"/>
+   <boolean id="amiga"      _label="AmigaDOS"       arg-unset="-no-amiga"/>
    <boolean id="android"    _label="Android"        arg-set="-android"/>
+  </vgroup>
+  <vgroup>
    <boolean id="apple2"     _label="Apple ]["       arg-unset="-no-apple2"/>
    <boolean id="ransomware" _label="Ransomware"     arg-unset="-no-ransomware"/>
-  </vgroup>
-  <vgroup>
    <boolean id="nvidia"     _label="NVidia"         arg-unset="-no-nvidia"/>
    <boolean id="os2"        _label="OS/2"           arg-unset="-no-os2"/>
+  </vgroup>
+  <vgroup>
    <boolean id="mac"        _label="Sad Mac"        arg-unset="-no-mac"/>
    <boolean id="mac1"       _label="Mac bomb"       arg-unset="-no-mac1"/>
-   <boolean id="vmware"     _label="VMware"         arg-unset="-no-vmware"/>
-  </vgroup>
-  <vgroup>
    <boolean id="macsbug"    _label="MacsBug"        arg-unset="-no-macsbug"/>
-   <boolean id="atari"      _label="Atari"          arg-set="-atari"/>
    <boolean id="macx"       _label="MacOS X"        arg-unset="-no-macx"/>
-   <boolean id="os390"      _label="OS/390"         arg-unset="-no-os390"/>
-   <boolean id="encom"      _label="Encom"          arg-unset="-no-encom"/>
   </vgroup>
   <vgroup>
-   <boolean id="hvx"        _label="HVX/GCOS6"      arg-unset="-no-hvx"/>
-   <boolean id="blitdamage" _label="NCD X Terminal  " arg-unset="-no-blitdamage"/>
+   <boolean id="vmware"     _label="VMware"         arg-unset="-no-vmware"/>
+   <boolean id="atari"      _label="Atari"          arg-set="-atari"/>
+   <boolean id="os390"      _label="OS/390"         arg-unset="-no-os390"/>
+   <boolean id="hvx"        _label="HVX/GCOS"       arg-unset="-no-hvx"/>
+  </vgroup>
+  <vgroup>
+   <boolean id="encom"      _label="Encom"          arg-unset="-no-encom"/>
+   <boolean id="blitdamage" _label="NCD XTerm"      arg-unset="-no-blitdamage"/>
    <boolean id="atm"        _label="ATM"            arg-unset="-no-atm"/>
    <boolean id="dvd"        _label="DVD"            arg-unset="-no-dvd"/>
-   <boolean id="nintendo"   _label="Nintendo"       arg-unset="-no-nintendo"/>
   </vgroup>
   <vgroup>
+   <boolean id="nintendo"   _label="Nintendo"       arg-unset="-no-nintendo"/>
    <boolean id="tivo"       _label="Tivo"           arg-unset="-no-tivo"/>
    <boolean id="vms"        _label="VMS"            arg-unset="-no-vms"/>
    <boolean id="bsd"        _label="BSD"            arg-set="-bsd"/>
-   <boolean id="linux"      _label="Linux (fsck)"   arg-unset="-no-linux"/>
-   <boolean id="sparclinux" _label="Linux (sparc)"  arg-set="-sparclinux"/>
   </vgroup>
   <vgroup>
+   <boolean id="linux"      _label="Linux (fsck)"   arg-unset="-no-linux"/>
+   <boolean id="sparclinux" _label="Linux (sparc)"  arg-set="-sparclinux"/>
    <boolean id="hppalinux"  _label="Linux (hppa)"   arg-unset="-no-hppalinux"/>
    <boolean id="solaris"    _label="Solaris"        arg-unset="-no-solaris"/>
+  </vgroup>
+  <vgroup>
    <boolean id="sco"        _label="SCO"            arg-unset="-no-sco"/>
    <boolean id="hpux"       _label="HPUX"           arg-unset="-no-hpux"/>
    <boolean id="tru64"      _label="Tru64"          arg-unset="-no-tru64"/>
+   <boolean id="gnome"      _label="GNOME"          arg-unset="-no-gnome"/>
   </vgroup>
  </hgroup>
 

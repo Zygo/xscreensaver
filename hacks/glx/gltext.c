@@ -246,7 +246,7 @@ parse_text (ModeInfo *mi)
 #  if defined(_AIX)
           sprintf(tp->text, "%s\n%s %s.%s",
                   uts.nodename, uts.sysname, uts.version, uts.release);
-#  elif defined(USE_IPHONE)
+#  elif defined(HAVE_IPHONE)
           /* "My iPhone\n iPhone4,1\n Darwin 11.0.0" */
           sprintf(tp->text, "%s\n%s\n%s %s",
                   uts.nodename, uts.machine, uts.sysname, uts.release);

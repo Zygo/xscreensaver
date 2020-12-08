@@ -12,7 +12,7 @@ local.properties:
 
 clean:: local.properties
 	@\
-  if [ "x" == x"$$JAVA_HOME" ] && ! ( which java >&- 2>&- ) ; then	\
+  if [ "x" = x"$$JAVA_HOME" ] && ! ( which java >&- 2>&- ) ; then	\
     echo "android: not cleaning: no java" >&2 ;				\
   else									\
     echo $(GRADLE) clean ;						\
@@ -57,6 +57,7 @@ export ANDROID_HACKS=		\
 	atlantis		\
 	attraction		\
 	atunnel			\
+	beats			\
 	binaryring		\
 	blaster			\
 	blinkbox		\
@@ -71,6 +72,7 @@ export ANDROID_HACKS=		\
 	bsod			\
 	bumps			\
 	cage			\
+	carousel		\
 	ccurve			\
 	celtic			\
 	circuit			\
@@ -79,6 +81,7 @@ export ANDROID_HACKS=		\
 	companioncube		\
 	compass			\
 	coral			\
+	covid19			\
 	crackberg		\
 	crumbler		\
 	crystal			\
@@ -103,7 +106,6 @@ export ANDROID_HACKS=		\
 	drift			\
 	dymaxionmap		\
 	endgame			\
-	energystream		\
 	engine			\
 	epicycle		\
 	eruption		\
@@ -136,7 +138,6 @@ export ANDROID_HACKS=		\
 	glplanet		\
 	glschool		\
 	glslideshow		\
-	glsnake			\
 	gltext			\
 	goop			\
 	grav			\
@@ -145,6 +146,7 @@ export ANDROID_HACKS=		\
 	halftone		\
 	halo			\
 	handsy			\
+	headroom		\
 	helix			\
 	hexadrop		\
 	hexstrut		\
@@ -159,6 +161,7 @@ export ANDROID_HACKS=		\
 	intermomentary		\
 	jigglypuff		\
 	jigsaw			\
+	juggler3d		\
 	julia			\
 	kaleidescope		\
 	kaleidocycle		\
@@ -178,6 +181,7 @@ export ANDROID_HACKS=		\
 	moebiusgears		\
 	moire			\
 	moire2			\
+	molecule		\
 	morph3d			\
 	mountain		\
 	munch			\
@@ -188,9 +192,11 @@ export ANDROID_HACKS=		\
 	penetrate		\
 	penrose			\
 	petri			\
+	photopile		\
 	piecewise		\
 	pinion			\
 	pipes			\
+	polyominoes		\
 	polytopes		\
 	pong			\
 	popsquares		\
@@ -200,7 +206,6 @@ export ANDROID_HACKS=		\
 	pyro			\
 	quasicrystal		\
 	queens			\
-	raverhoop		\
 	razzledazzle		\
 	rd-bomb			\
 	ripples			\
@@ -218,6 +223,7 @@ export ANDROID_HACKS=		\
 	skytentacles		\
 	slidescreen		\
 	slip			\
+	sphereeversion		\
 	spheremonics		\
 	splitflap		\
 	splodesic		\
@@ -263,20 +269,17 @@ export ANDROID_HACKS=		\
 ANDROID_TODO=			\
 	antinspect		\
 	barcode			\
-	carousel		\
+	energystream		\
 	fliptext		\
 	fontglide		\
-	juggler3d		\
-	molecule		\
+	glsnake			\
 	pedal			\
 	phosphor		\
-	photopile		\
-	polyominoes		\
 	qix			\
+	raverhoop		\
 	speedmine		\
 	starfish		\
 	starwars		\
-	testx11			\
 	unicrud			\
 
 
@@ -398,16 +401,27 @@ APK_SIGNED    = $(APK_DIR)xscreensaver-release.apk
   TOOLDIR = $(shell ls -d $$HOME/Library/Android/sdk/build-tools/* | tail -1)
  ZIPALIGN = $(TOOLDIR)/zipalign
 JARSIGNER = jarsigner
+APKSIGNER = $(TOOLDIR)/apksigner
 
-sign_release::
+sign_release_OLD::
 	cp -p $(APK_UNSIGNED) $(APK_UNALIGNED)
 	$(JARSIGNER) -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+		     -tsa http://timestamp.comodoca.com/rfc3161 \
 		     -keystore $(KEYSTORE) $(APK_UNALIGNED) xscreensaver
 	rm -f $(APK_SIGNED)
 	$(ZIPALIGN) -v 4 $(APK_UNALIGNED) $(APK_SIGNED)
 	rm -f $(APK_UNALIGNED)
 	$(JARSIGNER) -verify -verbose -certs $(APK_SIGNED)
 	@ls -lF $(APK_SIGNED)
+
+sign_release::
+	rm -f $(APK_UNALIGNED)
+	rm -f $(APK_SIGNED)
+	$(ZIPALIGN) -v 4 $(APK_UNSIGNED) $(APK_SIGNED)
+	$(APKSIGNER) sign --ks $(KEYSTORE) $(APK_SIGNED)
+	$(APKSIGNER) verify $(APK_SIGNED)
+	@ls -lF $(APK_SIGNED)
+	stty -echo
 
 apk:: release
 	@\

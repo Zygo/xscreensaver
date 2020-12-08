@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-polyominoes - fill a rectangle with irregularly-shaped blocks.
+polyominoes \- fill a rectangle with irregularly-shaped blocks.
 .SH SYNOPSIS
 .B polyominoes
 [\-display \fIhost:display.screen\fP]

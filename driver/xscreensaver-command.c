@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -71,6 +71,9 @@ usage: %s -<option>\n\
   You control a running xscreensaver process by sending it messages\n\
   with this program, xscreensaver-command.  See the man pages for\n\
   details.  These are the arguments understood by xscreensaver-command:\n\
+\n\
+  -quiet        Only print output if an error occurs.\n\
+  -verbose      Opposite of -quiet. Default.\n\
 \n\
   -demo         Ask the xscreensaver process to enter interactive demo mode.\n\
 \n\
@@ -166,6 +169,7 @@ main (int argc, char **argv)
   char *s;
   Atom XA_WATCH = 0;  /* kludge: not really an atom */
   char year[5];
+  Bool verbose_p = TRUE;
 
   progname = argv[0];
   s = strrchr (progname, '/');
@@ -208,6 +212,8 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-version", L))    cmd = &XA_SCREENSAVER_VERSION;
       else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_STATUS;
       else if (!strncmp (s, "-watch", L))      cmd = &XA_WATCH;
+      else if (!strncmp (s, "-quiet", L))      verbose_p = FALSE;
+      else if (!strncmp (s, "-verbose", L))    verbose_p = TRUE;
       else USAGE ();
 
       if (cmd == &XA_SELECT || cmd == &XA_DEMO)
@@ -338,7 +344,7 @@ main (int argc, char **argv)
     if (isatty(0))
       sleep (1);
 
-  i = xscreensaver_command (dpy, *cmd, arg, True, NULL);
+  i = xscreensaver_command (dpy, *cmd, arg, verbose_p, NULL);
   if (i < 0) exit (i);
   else exit (0);
 }

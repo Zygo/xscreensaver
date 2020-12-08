@@ -1,4 +1,4 @@
-/* xanalogtv-cli, Copyright (c) 2018-2019 Jamie Zawinski <jwz@jwz.org>
+/* xanalogtv-cli, Copyright (c) 2018-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -55,12 +55,12 @@ int mono_p = 0;
 static Bool verbose_p = 0;
 
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
 
-enum {
-  N_CHANNELS=12,
-  MAX_MULTICHAN=2,
-  MAX_STATIONS=11
-}; 
+#define MAX_MULTICHAN 2
+static int N_CHANNELS=12;
+static int MAX_STATIONS=6;
 
 typedef struct chansetting_s {
   analogtv_reception recs[MAX_MULTICHAN];
@@ -78,12 +78,12 @@ struct state {
   analogtv_font ugly_font;
 
   int n_stations;
-  analogtv_input *stations[MAX_STATIONS];
+  analogtv_input **stations;
   Bool image_loading_p;
   XImage *logo, *logo_mask;
 
   int curinputi;
-  chansetting chansettings[N_CHANNELS];
+  chansetting *chansettings;
   chansetting *cs;
 };
 
@@ -319,13 +319,15 @@ get_boolean_resource (Display *dpy, char *name, char *class)
   abort();
 }
 
+static int darkp = 0;
 double
 get_float_resource (Display *dpy, char *name, char *class)
 {
-  if (!strcmp(name, "TVTint")) return 5;
-  if (!strcmp(name, "TVColor")) return 70;
-  if (!strcmp(name, "TVBrightness")) return -15;
-  if (!strcmp(name, "TVContrast")) return 150;
+  if (!strcmp(name, "TVTint")) return 5;		/* default 5   */
+  if (!strcmp(name, "TVColor")) return 70;		/* default 70  */
+  if (!strcmp(name, "TVBrightness"))
+    return (darkp ? -15 : 2);				/* default 2   */
+  if (!strcmp(name, "TVContrast")) return 150;		/* default 150 */
   abort();
 }
 
@@ -535,7 +537,7 @@ delete_tmp_files(void)
   for (i = 0; i <= st->frames_written; i++)
     {
       sprintf (outfile, st->framefile_fmt, i);
-      if (verbose_p > 1)
+      if (verbose_p > 2)
         fprintf (stderr, "%s: rm %s\n", progname, outfile);
       unlink (outfile);
     }
@@ -551,6 +553,25 @@ analogtv_signal (int sig)
 }
 
 
+static char *
+quote (const char *s)
+{
+  char *s2, *o;
+  if (!s) return 0;
+
+  s2 = malloc (strlen(s) * 2 + 2);
+  o = s2;
+  while (*s)
+    {
+      if (*s == '"' || *s == '\\')
+        *o++ = '\\';
+      *o++ = *s++;
+    }
+  *o = 0;
+  return s2;
+}
+
+
 static void
 analogtv_write_mp4 (struct state *st, const char *outfile,
                     const char *audiofile,
@@ -558,33 +579,37 @@ analogtv_write_mp4 (struct state *st, const char *outfile,
 {
   char cmd[1024];
   struct stat ss;
+  char *qout   = quote (outfile);
+  char *qaudio = quote (audiofile);
 
   sprintf (cmd,
            "ffmpeg"
            " -hide_banner"
-           " -v 16"
-           " -framerate 30"	/* rate of input: must be before -i */
-           " -i '%s'"
-           " -r 30",		/* rate of output: must be after -i */
+           " -loglevel error"
+           " -framerate 30"		/* rate of input: must be before -i */
+           " -thread_queue_size 4096"
+           " -i \"%s\""
+           " -r 30",			/* rate of output: must be after -i */
            st->framefile_fmt);
   if (audiofile)
     sprintf (cmd + strlen(cmd),
-             " -i '%s'"
+             " -i \"%s\""
              " -map 0:v:0"
              " -map 1:a:0"
              " -acodec aac"
+             " -b:a 96k"
              /* Truncate or pad audio to length of video */
              " -filter_complex '[1:0] apad' -shortest",
-             audiofile);
+             qaudio);
   sprintf (cmd + strlen(cmd),
            " -c:v libx264"
            " -profile:v high"
-           " -crf 24"		/* 18 is very high; 24 is good enough */
            " -pix_fmt yuv420p"
+           " -preset veryfast"
+           " -crf 24"		      /* 18 is very high; 24 is good enough */
            " '%s'"
-           " </dev/null"
-           /*" 2>&-"*/,
-           outfile);
+           " </dev/null",
+           qout);
 
   if (verbose_p > 1)
     fprintf (stderr, "%s: exec: %s\n", progname, cmd);
@@ -631,36 +656,51 @@ flip_ximage (XImage *ximage)
 
 
 static void
-analogtv_convert (const char *infile, const char *outfile,
+analogtv_convert (const char **infiles, const char *outfile,
                   const char *audiofile, const char *logofile,
                   int duration, Bool powerp)
 {
+  unsigned long start_time = time((time_t *)0);
   struct state *st = &global_state;
-  XImage *ximage = file_to_ximage (0, 0, infile);
   Display *dpy = 0;
   Window window = 0;
-  int i;
+  int i, n;
   unsigned long curticks = 0;
   time_t lastlog = time((time_t *)0);
-  int frames_left;
+  int frames_left = 0;
   int channel_changes = 0;
   int fps = 30;
+  XImage **ximages;
+  int singlep;
+  int *stats;
 
-  if (verbose_p)
-    fprintf (stderr, "%s: loaded %s %dx%d\n", 
-             progname, infile, ximage->width, ximage->height);
+  stats = (int *) calloc(N_CHANNELS, sizeof(*stats));
+  ximages = calloc (MAX_STATIONS, sizeof(*ximages));
+  i = 0;
+  while (infiles[i])
+    {
+      ximages[i] = file_to_ximage (0, 0, infiles[i]);
+      if (verbose_p > 1)
+        fprintf (stderr, "%s: loaded %s %dx%d\n", 
+                 progname, infiles[i], ximages[i]->width, ximages[i]->height);
+      flip_ximage (ximages[i]);
+      i++;
+    }
 
-  flip_ximage (ximage);
+  singlep = !infiles[1];
+
+  if (singlep) powerp = 0;  /* #### These don't work together but should */
 
   memset (st, 0, sizeof(*st));
   st->dpy = dpy;
   st->window = window;
 
-  st->output_frame = XCreateImage (dpy, 0, ximage->depth, ximage->format, 0,
+  st->output_frame = XCreateImage (dpy, 0, ximages[0]->depth,
+                                   ximages[0]->format, 0,
                                    NULL,
-                                   ximage->width  & ~1, /* can't be odd */
-                                   ximage->height & ~1,
-                                   ximage->bitmap_pad, 0);
+                                   ximages[0]->width  & ~1, /* can't be odd */
+                                   ximages[0]->height & ~1,
+                                   ximages[0]->bitmap_pad, 0);
   st->output_frame->data = (char *)
     calloc (st->output_frame->height, st->output_frame->bytes_per_line);
 
@@ -759,6 +799,8 @@ analogtv_convert (const char *infile, const char *outfile,
 
   st->tv=analogtv_allocate(dpy, window);
 
+  st->stations = (analogtv_input **)
+    calloc (MAX_STATIONS, sizeof(*st->stations));
   while (st->n_stations < MAX_STATIONS) {
     analogtv_input *input=analogtv_input_allocate();
     st->stations[st->n_stations++]=input;
@@ -774,16 +816,17 @@ analogtv_convert (const char *infile, const char *outfile,
   if (1) {
     st->tv->color_control += frand(0.3) * RANDSIGN();
   }
-  if (random()%4==0) {
-    st->tv->brightness_control += frand(0.15);
-  }
-  if (random()%4==0) {
-    st->tv->contrast_control += frand(0.2) * RANDSIGN();
+  if (darkp) {
+    if (random()%4==0) {
+      st->tv->brightness_control += frand(0.15);
+    }
+    if (random()%4==0) {
+      st->tv->contrast_control += frand(0.2) * RANDSIGN();
+    }
   }
 
+  st->chansettings = calloc (N_CHANNELS, sizeof (*st->chansettings));
   for (i=0; i<N_CHANNELS; i++) {
-    memset(&st->chansettings[i], 0, sizeof(chansetting));
-
     st->chansettings[i].noise_level = 0.06;
     {
       int last_station=42;
@@ -820,13 +863,15 @@ analogtv_convert (const char *infile, const char *outfile,
   st->curinputi=0;
   st->cs = &st->chansettings[st->curinputi];
 
-  /* First channel (initial unadulterated image) stays for this long */
-  frames_left = fps * (2 + frand(1.5));
+  if (singlep)
+    /* First channel (initial unadulterated image) stays for this long */
+    frames_left = fps * (2 + frand(1.5));
 
   st->tv->powerup=0.0;
 
   /* load_station_images() */
 
+  n = 0;
   for (i = 0; i < MAX_STATIONS; i++) {
     analogtv_input *input = st->stations[i];
 
@@ -834,6 +879,13 @@ analogtv_convert (const char *infile, const char *outfile,
                        station 1 is colorbars. */
       input->updater = update_smpte_colorbars;
     } else {
+      XImage *ximage = ximages[n++];
+      if (!ximage) {
+        n = 0;
+        ximage = ximages[n++];
+      }
+
+      {
       int w = ximage->width  * 0.815;  /* underscan */
       int h = ximage->height * 0.970;
       int x = (ximage->width - w) / 2;
@@ -841,6 +893,7 @@ analogtv_convert (const char *infile, const char *outfile,
       analogtv_input *input = st->stations[i];
       analogtv_setup_sync(input, 1, (random()%20)==0);
       analogtv_load_ximage (st->tv, input, ximage, 0, x, y, w, h);
+      }
     }
   }
 
@@ -857,32 +910,57 @@ analogtv_convert (const char *infile, const char *outfile,
 
       channel_changes++;
 
-      if (channel_changes == 1) {
-        /* Second channel has short duration */
+      if (singlep && channel_changes == 1) {
+        /* Second channel has short duration, 0.25 to 0.75 sec. */
         frames_left = fps * (0.25 + frand(0.5));
+      } else if (singlep) {
+        /* 0.5 - 2.0 sec (was 0.5 - 3.0 sec) */
+        frames_left = fps * (0.5 + frand(1.5));
       } else {
-        frames_left = fps * (0.5 + frand(2.5));
+        /* 1 - 7 sec */
+        frames_left = fps * (1 + frand(6));
       }
 
-      if (channel_changes == 2) {
+      if (singlep && channel_changes == 2) {
         /* Always use the unadulterated image for the third channel:
            So the effect is, plain, brief blip, plain, then random. */
         st->curinputi = 0;
-      } else if (st->curinputi != 0 && !(random() % 3)) {
-        /* Use the unadulterated image 1/3 of the time */
+        frames_left += fps * (0.1 + frand(0.5));
+
+      } else if (singlep && st->curinputi != 0 && ((random() % 100) < 75)) {
+        /* Use the unadulterated image 75% of the time (was 33%) */
         st->curinputi = 0;
       } else {
         /* Otherwise random */
         st->curinputi = 1 + (random() % (N_CHANNELS - 1));
       }
 
+      stats[st->curinputi]++;
       st->cs = &st->chansettings[st->curinputi];
       /* Set channel change noise flag */
       st->tv->channel_change_cycles=200000;
 
-      if (verbose_p)
+      if (verbose_p > 1)
         fprintf (stderr, "%s: %.1f: channel %d\n",
                  progname, curticks/1000.0, st->curinputi);
+
+      /* Turn the knobs every now and then */
+      if (! (random() % 5)) {
+        if (random()%4==0) {
+          st->tv->tint_control += pow(frand(2.0)-1.0, 7) * 180.0 * RANDSIGN();
+        }
+        if (1) {
+          st->tv->color_control += frand(0.3) * RANDSIGN();
+        }
+        if (darkp) {
+          if (random()%4==0) {
+            st->tv->brightness_control += frand(0.15);
+          }
+          if (random()%4==0) {
+            st->tv->contrast_control += frand(0.2) * RANDSIGN();
+          }
+        }
+      }
     }
 
     for (i=0; i<MAX_MULTICHAN; i++) {
@@ -899,9 +977,9 @@ analogtv_convert (const char *infile, const char *outfile,
 
     st->tv->powerup=(powerp ? curtime : 9999);
 
-    if (st->curinputi == 0) {
-      XPutImage (dpy, 0, 0, ximage, 0, 0, 0, 0,
-                 ximage->width, ximage->height);
+    if (st->curinputi == 0 && singlep) {
+      XPutImage (dpy, 0, 0, ximages[0], 0, 0, 0, 0,
+                 ximages[0]->width, ximages[0]->height);
     } else {
       for (i=0; i<MAX_MULTICHAN; i++) {
         analogtv_reception *rec = &st->cs->recs[i];
@@ -923,14 +1001,41 @@ analogtv_convert (const char *infile, const char *outfile,
 
     if (verbose_p) {
       unsigned long now = time((time_t *)0);
-      if (now > lastlog + 5) {
-        fprintf (stderr, "%s: %2d%%...\n", progname,
-                 (int) (curtime * 100 / duration));
+      if (now > (verbose_p == 1 ? lastlog : lastlog + 10)) {
+        unsigned long elapsed = now - start_time;
+        double ratio = curtime / (double) duration;
+        int remaining = (ratio ? (elapsed / ratio) - elapsed : 0);
+        int pct = 100 * ratio;
+        int cols = 47;
+        char dots[80];
+        int ii;
+        for (ii = 0; ii < cols * ratio; ii++)
+          dots[ii] = '.';
+        dots[ii] = 0;
+        fprintf (stderr, "%s%s: %s %2d%%, %d:%02d:%02d ETA%s",
+                 (verbose_p == 1 ? "\r" : ""),
+                 progname,
+                 dots, pct, 
+                 (remaining/60/60),
+                 (remaining/60)%60,
+                 remaining%60,
+                 (verbose_p == 1 ? "" : "\n"));
         lastlog = now;
       }
     }
   }
 
+  if (verbose_p == 1) fprintf(stderr, "\n");
+
+  if (verbose_p > 1) {
+    if (channel_changes == 0) channel_changes++;
+    fprintf(stderr, "%s: channels shown: %d\n", progname, channel_changes);
+    for (i = 0; i < N_CHANNELS; i++)
+      fprintf(stderr, "%s:   %2d: %3d%%\n", progname,
+              i+1, stats[i] * 100 / channel_changes);
+  }
+
+  free (stats);
   analogtv_write_mp4 (st, outfile, audiofile, st->frames_written);
 }
 
@@ -940,7 +1045,7 @@ usage(const char *err)
 {
   if (err) fprintf (stderr, "%s: %s unknown\n", progname, err);
   fprintf (stderr, "usage: %s [--verbose] [--duration secs]"
-           " [--audio mp3-file] [--no-powerup] infile.png outfile.mp4\n",
+           " [--audio mp3-file] [--no-powerup] infile.png ... outfile.mp4\n",
            progname);
   exit (1);
 }
@@ -949,16 +1054,19 @@ int
 main (int argc, char **argv)
 {
   int i;
-  const char *infile = 0;
+  const char *infiles[1000];
   const char *outfile = 0;
   int duration = 30;
   Bool powerp = False;
   char *audio = 0;
   char *logo = 0;
+  int nfiles = 0;
 
   char *s = strrchr (argv[0], '/');
   progname = s ? s+1 : argv[0];
   progclass = progname;
+
+  memset (infiles, 0, sizeof(infiles));
 
   for (i = 1; i < argc; i++)
     {
@@ -990,18 +1098,29 @@ main (int argc, char **argv)
          powerp = False;
       else if (argv[i][0] == '-')
         usage(argv[i]);
-      else if (!infile)
-        infile = argv[i];
-      else if (!outfile)
-        outfile = argv[i];
+      else if (nfiles >= countof(infiles)-1)
+        usage("too many files");
       else
-        usage(argv[i]);
+        infiles[nfiles++] = argv[i];
     }
-  if (!infile) usage("input file");
-  if (!outfile) usage("output file");
+
+  if (nfiles < 2)
+    usage("");
+
+  outfile = infiles[nfiles-1];
+  infiles[--nfiles] = 0;
+
+  /* stations should be a multiple of files, but >= 6.
+     channels should be double that. */
+  MAX_STATIONS = 0;
+  while (MAX_STATIONS < 6)
+    MAX_STATIONS += nfiles;
+  N_CHANNELS = MAX_STATIONS * 2;
+
+  darkp = (nfiles == 1);
 
 # undef ya_rand_init
   ya_rand_init (0);
-  analogtv_convert (infile, outfile, audio, logo, duration, powerp);
+  analogtv_convert (infiles, outfile, audio, logo, duration, powerp);
   exit (0);
 }

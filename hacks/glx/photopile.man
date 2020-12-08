@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-photopile - displays multiple images in a periodically shuffled pile
+photopile \- displays multiple images in a periodically shuffled pile
 .SH SYNOPSIS
 .B photopile
 [\-display \fIhost:display.screen\fP]

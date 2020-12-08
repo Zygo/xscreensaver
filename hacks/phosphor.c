@@ -209,7 +209,7 @@ phosphor_init (Display *dpy, Window window)
       state->char_height = font->max_bounds.ascent + font->max_bounds.descent;
     }
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   /* Stupid iPhone X bezel.
      #### This is the worst of all possible ways to do this!  But how else?
    */
@@ -412,9 +412,6 @@ capture_font_bits (p_state *state)
 
   if (!font)
     {
-      safe_width = state->char_width + 1;
-      height = state->char_height;
-
       int pix_w, pix_h;
       XWindowAttributes xgwa;
       Pixmap m = 0;
@@ -429,6 +426,9 @@ capture_font_bits (p_state *state)
       GC gc;
       unsigned long black =
         BlackPixelOfScreen (DefaultScreenOfDisplay (state->dpy));
+
+      safe_width = state->char_width + 1;
+      height = state->char_height;
 
       XFreePixmap (state->dpy, p);
       XFreePixmap (state->dpy, m);

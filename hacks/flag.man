@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "24-May-97" "X Version 11"
 .SH NAME
-flag - draws a waving flag, containing text or an image
+flag \- draws a waving flag, containing text or an image
 .SH SYNOPSIS
 .B flag
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-size \fIinteger\fP] [\-text \fIstring\fP] [\-font \fIfont\fP] [\-bitmap \fIxbm-file\fP]

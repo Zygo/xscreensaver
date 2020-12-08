@@ -1,4 +1,4 @@
-# configure.in --- xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright (c) 1997-2020 Jamie Zawinski.
 #
 
 AC_PREREQ(2.52)
@@ -15,7 +15,7 @@ echo "command line was: $0 $@"
 ###############################################################################
 
 AH_TOP([
-/* config.h.in --- xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski.
+/* config.h.in --- xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski.
  *
  *  The best way to set these parameters is by running the included `configure'
  *  script.  That examines your system, and generates `config.h' from 
@@ -27,10 +27,7 @@ AH_TOP([
 ])
 
 AH_TEMPLATE([HAVE_READ_DISPLAY_EXTENSION],
-	    [Define this if you have the XReadDisplay extension (I think
-             this is an SGI-only thing; it's in
-             <X11/extensions/readdisplay.h>.) A few of the screenhacks will
-             take advantage of this if it's available.])
+	    [Define this if you have the SGI XReadDisplay extension.])
 
 AH_TEMPLATE([HAVE_XHPDISABLERESET],
 	    [Define this if you have the XHPDisableReset function (an HP only
@@ -38,71 +35,46 @@ AH_TEMPLATE([HAVE_XHPDISABLERESET],
 	    temporarily disabled.)])
 
 # This only ever existed in X11R4 and X11R5.
-#AH_TEMPLATE([HAVE_XIDLE_EXTENSION],
-#	    [Define this if you have the XIDLE extension installed. If you
-#	    have the XIDLE extension, this is recommended.  (You have this
-#	    extension if the file /usr/include/X11/extensions/xidle.h
-#	    exists.) Turning on this flag lets XScreenSaver work better with
-#	    servers which support this extension; but it will still work
-#	    with servers which do not suport it, so it's a good idea to
-#	    compile in support for it if you can.])
+AH_TEMPLATE([HAVE_XIDLE_EXTENSION],
+	    [Define this if you have the X11R5 XIDLE extension.])
 
-# Using this extension will crash your X server and make fading not work.
-#AH_TEMPLATE([HAVE_MIT_SAVER_EXTENSION],
-#	    [Define this if you have the MIT-SCREEN-SAVER extension
-#            installed.  See the caveats about this extension, above.
-#            (It's available if /usr/include/X11/extensions/scrnsaver.h
-#            exists.)])
+AH_TEMPLATE([HAVE_MIT_SAVER_EXTENSION],
+	    [Using the MIT-SCREEN-SAVER extension means that the X server
+            will crash at random times, and fading and hysteresis won't work.
+            Don't use this.  You'll be sorry.  See comment in xscreensaver.c.])
 
 # This only ever existed on SGI hardware.
-#AH_TEMPLATE([HAVE_SGI_SAVER_EXTENSION],
-#	    [Define this if you have the SGI SCREEN_SAVER extension.  This is
-#	    standard on Irix systems, and not available elsewhere.])
+AH_TEMPLATE([HAVE_SGI_SAVER_EXTENSION],
+	    [Define this if you have the SGI SCREEN_SAVER extension.])
 
 # This only ever existed on SGI hardware.
-#AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
-#	    [Define this if you have the SGI-VIDEO-CONTROL extension.  This
-#	    is standard on Irix systems, and not available elsewhere.])
+AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
+	    [Define this if you have the SGI-VIDEO-CONTROL extension.])
 
 AH_TEMPLATE([HAVE_DPMS_EXTENSION],
-	    [Define this if you have the XDPMS extension.  This is standard
-	    on sufficiently-recent XFree86 systems, and possibly elsewhere. 
-	    (It's available if the file /usr/include/X11/extensions/dpms.h
-	    exists.)])
+	    [Define this if you have the XDPMS extension.])
 
 AH_TEMPLATE([HAVE_XF86VMODE],
 	    [Define this if you have the functions XF86VidModeGetModeLine()
 	    and XF86VidModeGetViewPort(), in support of virtual desktops
 	    where the X server's root window is bigger than the actual
-	    screen.  This is an XFree86 thing, and probably doesn't exist
-	    elsewhere.  (It's available if the file
-	    /usr/include/X11/extensions/xf86vmode.h exists.)])
+	    screen.])
 
 AH_TEMPLATE([HAVE_XF86VMODE_GAMMA],
 	    [Define this if you have the functions XF86VidModeGetGamma() and
 	    XF86VidModeSetGamma(), which allow clients to change the gamma
-	    response of the monitor.  This is an XFree86 4.0.x thing, and
-	    probably doesn't exist elsewhere.  (It's available if the file
-	    /usr/include/X11/extensions/xf86vmode.h exists and has stuff about
-	    gamma in it.)])
+	    response of the monitor.])
 
 AH_TEMPLATE([HAVE_XF86VMODE_GAMMA_RAMP],
 	    [Define this if you have the functions XF86VidModeGetGammaRamp()
 	    and XF86VidModeSetGammaRamp(), which provide finer-grained
-	    control than XF86VidMode[GS]etGamma().  These appeared in
-	    XFree86 4.1.0.])
+	    control than XF86VidMode[GS]etGamma().])
 
 AH_TEMPLATE([HAVE_XINERAMA],
-	    [Define this if you have the Xinerama extension.  This is
-	    standard on sufficiently-recent XFree86 systems, and possibly
-	    elsewhere.  (It's available if the file
-	    /usr/include/X11/extensions/Xinerama.h exists.)])
+	    [Define this if you have the Xinerama extension.])
 
 AH_TEMPLATE([HAVE_XINPUT],
-	    [Define this if you have the Xinput extension.  This is
-	    standard since X11R5, and is thus almost everywhere.
-	    (It's available if the file /usr/include/X11/extensions/XInput.h
-	    exists.)])
+	    [Define this if you have the Xinput extension.])
 
 AH_TEMPLATE([HAVE_XF86MISCSETGRABKEYSSTATE],
 	    [Define this if you have the XF86MiscSetGrabKeysState function
@@ -111,10 +83,7 @@ AH_TEMPLATE([HAVE_XF86MISCSETGRABKEYSSTATE],
 	    Ctrl-Alt-BS or Ctrl-Alt-F1.)])
 
 AH_TEMPLATE([HAVE_RANDR],
-	    [Define this if you have the Resize and Rotate extension.
-	    This is standard on sufficiently-recent XFree86 systems, and
-	    possibly elsewhere.  (It's available if the file
-	    /usr/include/X11/extensions/Xrandr.h exists.)])
+	    [Define this if you have the Resize and Rotate extension.])
 
 AH_TEMPLATE([HAVE_RANDR_12],
 	    [Define this if the RANDR library is version 1.2 or newer.])
@@ -198,6 +167,11 @@ AH_TEMPLATE([HAVE_GLBINDTEXTURE],
 	    [Define this if your version of OpenGL has the glBindTexture()
 	    routine.  This is the case for OpenGL 1.1, but not for OpenGL
 	    1.0.])
+
+AH_TEMPLATE([HAVE_GLSL],
+	    [Define this if your OpenGL implementation supports the OpenGL
+            Shading Language (GLSL). This requires at least OpenGL 2.0.
+            HAVE_GL should be defined, too.])
 
 AH_TEMPLATE([HAVE_GLE],
 	    [Define this if you have the -lgle and -lmatrix libraries (GL 
@@ -296,9 +270,7 @@ AH_TEMPLATE([HAVE_ADJUNCT_PASSWD],
 	    let me know if it works.])
 
 AH_TEMPLATE([HAVE_HPUX_PASSWD],
-	    [Define this if you are running HPUX with so-called ``Secure
-	    Passwords'' (if you have /usr/include/hpsecurity.h, you probably
-	    have this.) I haven't tested this one, let me know if it works.])
+	    [Define this if you have HPUX with so-called "Secure Passwords".])
 
 AH_TEMPLATE([HAVE_SYSLOG],
 	    [Define this if you the openlog(), syslog(), and closelog()
@@ -352,45 +324,6 @@ for d in utils jwxyz hacks hacks/glx driver ; do
     exit 1
   fi
 done
-
-###############################################################################
-#
-#       Query AX_PTHREAD, and figure out which compiler gets used.
-#
-###############################################################################
-
-AC_DEFUN([AC_PROG_CC_PTHREAD],
- [have_pthread=no
-  with_pthread_req=unspecified
-
-  # AX_PTHREAD is from the GNU Autoconf Archive.
-  # https://savannah.gnu.org/projects/autoconf-archive/
-  m4_include(ax_pthread.m4)
-
-  # This affects CC, LIBS, and CFLAGS, instead of defining new variables.
-
-  AC_ARG_WITH([pthread],
-    [  --with-pthread          Enables POSIX threads, for SMP support.],
-    [with_pthread="$withval"; with_pthread_req="$withval"],
-    [with_pthread=yes])
-
-  if test "$with_pthread" = yes; then
-    # AX_PTHREAD might want a different compiler.
-    AX_PTHREAD(
-     [if test "$CC" = "$PTHREAD_CC" -o -z "$ac_original_cc"; then
-        have_pthread=yes
-      else
-        ac_prog_cc_no_pthread=yes
-      fi
-    ])
-
-    if test "$have_pthread" = yes; then
-      AC_DEFINE([HAVE_PTHREAD])
-      CC=$PTHREAD_CC
-    fi
-  fi
-])
-
 
 ###############################################################################
 #
@@ -808,17 +741,6 @@ EOF
     rm -fr conftestdir
   fi])
 
-###############################################################################
-#
-#       Handle the --with-x-app-defaults option HERE
-#
-###############################################################################
-
-AC_ARG_WITH(x-app-defaults,[],
-	[ac_cv_x_app_defaults="$withval"],
-	[eval ac_x_app_defaults="$withval"])
-
-
 AC_DEFUN([AC_PATH_X_APP_DEFAULTS_DIRECT],[
   # Look for the directory under a standard set of common directories.
   # Check X11 before X11Rn because it's often a symlink to the current release.
@@ -1211,7 +1133,6 @@ AC_DEFUN([HANDLE_X_PATH_ARG], [
   ])
 
 
-
 ###############################################################################
 ###############################################################################
 #
@@ -1224,14 +1145,11 @@ AC_DEFUN([HANDLE_X_PATH_ARG], [
 test "x$prefix" = xNONE && prefix=$ac_default_prefix
 test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
 
-
 # random compiler setup
 AC_CANONICAL_HOST
 
 ac_original_cc=$CC
 AC_PROG_CC
-AC_PROG_CC_PTHREAD # Needs ac_original_cc.
-
 AC_PROG_CC_ANSI
 AC_NO_LONG_STRING_WARNINGS
 AC_NO_MISPLACED_DECLARATIONS
@@ -1290,18 +1208,63 @@ if test "$have_x" != yes; then
   AC_MSG_ERROR(Couldn't find X11 headers/libs.  Try `$0 --help'.)
 fi
 
-AC_PATH_X_APP_DEFAULTS
 AC_X_RANDOM_PATHS
 AC_XPOINTER
 
 AC_MSG_CHECKING(whether this is MacOS X)
   ac_macosx=no
+  ac_irix=no
   case "$host" in
     *-apple-darwin* )
       ac_macosx=yes
     ;;
+    *-irix* )
+      ac_irix=yes
+    ;;
   esac
 AC_MSG_RESULT($ac_macosx)
+
+
+###############################################################################
+#
+#       pkg-config
+#
+###############################################################################
+
+AC_PATH_TOOL(pkg_config, pkg-config)
+
+if test -z "$pkg_config" ; then
+  AC_MSG_WARN([pkg-config not found!])
+  pkg_config="false"
+fi
+
+
+# Utility function for running pkg-config-based tests...
+#
+pkgs=''
+pkg_check_version() {
+  if test "$ok" = yes ; then
+    req="$1"
+    min="$2"
+    AC_MSG_CHECKING(for $req)
+    if $pkg_config --exists "$req" ; then
+      vers=`$pkg_config --modversion "$req"`
+      if $pkg_config --exists "$req >= $min" ; then
+        AC_MSG_RESULT($vers)
+        pkgs="$pkgs $req"
+        return 1
+      else
+        AC_MSG_RESULT($vers (wanted >= $min))
+        ok=no
+        return 0
+      fi
+    else
+      AC_MSG_RESULT(no)
+      ok=no
+      return 0
+    fi
+  fi
+}
 
 
 ###############################################################################
@@ -1314,9 +1277,6 @@ IT_PROG_INTLTOOL
 GETTEXT_PACKAGE=xscreensaver
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
 		   [This is the name of the gettext package to use.])
-AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE",
-		   [This is the same as GETTEXT_PACKAGE, but for the glade
-		   generated code.])
 AC_SUBST(GETTEXT_PACKAGE)
 
 ALL_LINGUAS="da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
@@ -1389,6 +1349,24 @@ if test "$have_xmu" = yes ; then
   esac
 fi
 
+###############################################################################
+#
+#       The --with-x-app-defaults option
+#
+###############################################################################
+
+#### H1
+
+AC_ARG_WITH(app-defaults,[
+Installation Options:
+
+  --prefix=PREFIX         Install root of architecture-independent files.
+  --exec-prefix=EPREFIX   Install root of architecture-dependent files.
+  --with-app-defaults=DIR Where to install the default settings file.],
+	[ac_cv_x_app_defaults="$withval"],
+	[eval ac_x_app_defaults="$withval"])
+AC_PATH_X_APP_DEFAULTS
+
 
 ###############################################################################
 #
@@ -1398,11 +1376,8 @@ fi
 
 have_hackdir=yes
 with_hackdir_req=unspecified
-AC_ARG_WITH(hackdir,[
-
-Installation options:
-  --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: `PREFIX/libexec/xscreensaver/'],
+AC_ARG_WITH(hackdir,
+[  --with-hackdir=DIR      Where to install the hundreds of demo executables.],
   [with_hackdir="$withval"; with_hackdir_req="$withval"],[with_hackdir=yes])
 
 if test x"$with_hackdir" = xyes; then
@@ -1435,19 +1410,13 @@ fi
 ###############################################################################
 #
 #       Handle the --with-configdir option
-#       Help for --with-x-app-defaults option added.
 #
 ###############################################################################
 
 have_configdir=yes
 with_configdir_req=unspecified
 AC_ARG_WITH(configdir,
-[  --with-configdir=DIR    Where to install the data files that describe each
-                          of the display modes to the GUI.
-                          Default: `PREFIX/share/xscreensaver/config/'
-  --with-x-app-defaults=DIR
-			   Where to install xscreensaver configuration file.
-],
+[  --with-configdir=DIR    Where to install the GUI configuration files.],
   [with_configdir="$withval"; with_configdir_req="$withval"],
   [with_configdir=yes])
 
@@ -1469,120 +1438,21 @@ fi
 
 
 
-
-###############################################################################
-#
-#       Check for the SGI SCREEN_SAVER server extension.
-#
-###############################################################################
-
-#have_sgi=no
-#with_sgi_req=unspecified
-#AC_ARG_WITH(sgi-ext,
-#[Except where noted, all of the --with options below can also take a
-#directory argument: for example, `--with-motif=/opt/Motif'.  That would
-#cause /opt/Motif/include/ to be added to the -I list, and /opt/Motif/lib/
-#to be added to the -L list, assuming those directories exist.  
-#
-#By default, support for each of these options will be built in, if the
-#relevant library routines exist.  At run time, they will then be used
-#only if the X server being used supports them.  Each --with option has
-#a corresponding --without option, to override building support for them
-#at all.
-#
-#Screen blanking and idle-detection options:
-#
-#  --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.],
-#  [with_sgi="$withval"; with_sgi_req="$withval"],[with_sgi=yes])
-#
-#HANDLE_X_PATH_ARG(with_sgi, --with-sgi-ext, SGI SCREEN_SAVER)
-#
-#if test "$with_sgi" = yes; then
-#  AC_CHECK_X_HEADER(X11/extensions/XScreenSaver.h,
-#                    [have_sgi=yes
-#                     AC_DEFINE(HAVE_SGI_SAVER_EXTENSION)],,
-#                    [#include <X11/Xlib.h>])
-#
-#elif test "$with_sgi" != no; then
-#  echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
-#  exit 1
-#fi
-
-
-###############################################################################
-#
-#       Check for the XIDLE server extension.
-#
-###############################################################################
-
-#have_xidle=no
-#with_xidle_req=unspecified
-#AC_ARG_WITH(xidle-ext,
-#[  --with-xidle-ext        Include support for the XIDLE extension.],
-#  [with_xidle="$withval"; with_xidle_req="$withval"],[with_xidle=yes])
-#
-#HANDLE_X_PATH_ARG(with_xidle, --with-xidle-ext, XIDLE)
-#
-#if test "$with_xidle" = yes; then
-#  AC_CHECK_X_HEADER(X11/extensions/xidle.h,
-#                    [have_xidle=yes
-#                     AC_DEFINE(HAVE_XIDLE_EXTENSION)],,
-#                    [#include <X11/Xlib.h>])
-#elif test "$with_xidle" != no; then
-#  echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
-#  exit 1
-#fi
-
-
-###############################################################################
-#
-#       Check for the SGI-VIDEO-CONTROL server extension.
-#
-###############################################################################
-
-#have_sgivc=no
-#with_sgivc_req=unspecified
-#AC_ARG_WITH(sgivc-ext,
-#[  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.],
-#  [with_sgivc="$withval"; with_sgivc_req="$withval"],[with_sgivc=yes])
-#
-#HANDLE_X_PATH_ARG(with_sgivc, --with-sgivc-ext, SGI-VIDEO-CONTROL)
-#
-#if test "$with_sgivc" = yes; then
-#
-#  # first check for XSGIvc.h
-#  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes],,
-#                    [#include <X11/Xlib.h>])
-#
-#  # if that succeeded, then check for the -lXsgivc
-#  if test "$have_sgivc" = yes; then
-#    have_sgivc=no
-#    AC_CHECK_X_LIB(Xsgivc, XSGIvcQueryGammaMap,
-#                  [have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"], [true],
-#                  -lXext -lX11)
-#  fi
-#
-#  # if that succeeded, then we've really got it.
-#  if test "$have_sgivc" = yes; then
-#    AC_DEFINE(HAVE_SGI_VC_EXTENSION)
-#  fi
-#
-#elif test "$with_sgivc" != no; then
-#  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
-#  exit 1
-#fi
-
-
 ###############################################################################
 #
 #       Check for the DPMS server extension.
 #
 ###############################################################################
 
+#### H1
+
 have_dpms=no
 with_dpms_req=unspecified
 AC_ARG_WITH(dpms-ext,
-[  --with-dpms-ext         Include support for the DPMS extension.],
+[
+Server Extension Options:
+
+  --with-dpms-ext         Include support for power management.],
   [with_dpms="$withval"; with_dpms_req="$withval"],[with_dpms=yes])
 
 HANDLE_X_PATH_ARG(with_dpms, --with-dpms-ext, DPMS)
@@ -1623,6 +1493,50 @@ fi
 
 ###############################################################################
 #
+#       Check for the XF86VMODE server extension (for virtual screens.)
+#
+###############################################################################
+
+have_xf86vmode=no
+with_xf86vmode_req=unspecified
+AC_ARG_WITH(xf86vmode-ext,
+[  --with-xf86vmode-ext    Include support for virtual screens.],
+  [with_xf86vmode="$withval"; with_xf86vmode_req="$withval"],
+  [with_xf86vmode=yes])
+
+HANDLE_X_PATH_ARG(with_xf86vmode, --with-xf86vmode-ext, xf86vmode)
+
+VIDMODE_LIBS=""
+
+if test "$with_xf86vmode" = yes; then
+
+  # first check for xf86vmode.h
+  AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86vmode=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for the -lXxf86vm
+  if test "$have_xf86vmode" = yes; then
+    have_xf86vmode=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeGetViewPort,
+                  [have_xf86vmode=yes;
+                   VIDMODE_LIBS="-lXxf86vm";
+                   SAVER_LIBS="$SAVER_LIBS $VIDMODE_LIBS"],
+                   [true], -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xf86vmode" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE)
+  fi
+
+elif test "$with_xf86vmode" != no; then
+  echo "error: must be yes or no: --with-xf86vmode-ext=$with_xf86vmode"
+  exit 1
+fi
+
+
+###############################################################################
+#
 #       Check for the XINERAMA server extension.
 #
 ###############################################################################
@@ -1630,7 +1544,7 @@ fi
 have_xinerama=no
 with_xinerama_req=unspecified
 AC_ARG_WITH(xinerama-ext,
-[  --with-xinerama-ext     Include support for the XINERAMA extension.],
+[  --with-xinerama-ext     Include support for multiple monitors.],
   [with_xinerama="$withval"; with_xinerama_req="$withval"],[with_xinerama=yes])
 
 HANDLE_X_PATH_ARG(with_xinerama, --with-xinerama-ext, XINERAMA)
@@ -1670,151 +1584,6 @@ fi
 
 ###############################################################################
 #
-#       Check for the XINPUT server extension.
-#
-###############################################################################
-
-have_xinput=no
-with_xinput_req=unspecified
-AC_ARG_WITH(xinput-ext,
-[  --with-xinput-ext       Include support for the XInput extension.],
-  [with_xinput="$withval"; with_xinput_req="$withval"], [with_xinput=yes])
-
-HANDLE_X_PATH_ARG(with_xinput, --with-xinput-ext, XINPUT)
-
-if test "$with_xinput" = yes; then
-
-  # first check for Xinput.h
-  AC_CHECK_X_HEADER(X11/extensions/XInput.h, [have_xinput=yes],,
-                    [#include <X11/Xlib.h>])
-
-  # if that succeeded, then check for libXi
-  if test "$have_xinput" = yes; then
-    have_xinput=no
-    AC_CHECK_X_LIB(Xi, XListInputDevices,
-                   [have_xinput=yes; SAVER_LIBS="$SAVER_LIBS -lXi"],
-                   [true], -lXext -lX11)
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_xinput" = yes; then
-    AC_DEFINE(HAVE_XINPUT)
-  fi
-
-elif test "$with_xinput" != no; then
-  echo "error: must be yes or no: --with-xinput-ext=$with_xinput"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for the XF86VMODE server extension (for virtual screens.)
-#
-###############################################################################
-
-have_xf86vmode=no
-with_xf86vmode_req=unspecified
-AC_ARG_WITH(xf86vmode-ext,
-[  --with-xf86vmode-ext    Include support for XFree86 virtual screens.],
-  [with_xf86vmode="$withval"; with_xf86vmode_req="$withval"],
-  [with_xf86vmode=yes])
-
-HANDLE_X_PATH_ARG(with_xf86vmode, --with-xf86vmode-ext, xf86vmode)
-
-VIDMODE_LIBS=""
-
-if test "$with_xf86vmode" = yes; then
-
-  # first check for xf86vmode.h
-  AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86vmode=yes],,
-                    [#include <X11/Xlib.h>])
-
-  # if that succeeded, then check for the -lXxf86vm
-  if test "$have_xf86vmode" = yes; then
-    have_xf86vmode=no
-    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeGetViewPort,
-                  [have_xf86vmode=yes;
-                   VIDMODE_LIBS="-lXxf86vm";
-                   SAVER_LIBS="$SAVER_LIBS $VIDMODE_LIBS"],
-                   [true], -lXext -lX11)
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_xf86vmode" = yes; then
-    AC_DEFINE(HAVE_XF86VMODE)
-  fi
-
-elif test "$with_xf86vmode" != no; then
-  echo "error: must be yes or no: --with-xf86vmode-ext=$with_xf86vmode"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for the XF86VMODE server extension (for gamma fading.)
-#
-###############################################################################
-
-have_xf86gamma=no
-have_xf86gamma_ramp=no
-with_xf86gamma_req=unspecified
-AC_ARG_WITH(xf86gamma-ext,
-[  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
-  [with_xf86gamma="$withval"; with_xf86gamma_req="$withval"],
-  [with_xf86gamma=yes])
-
-HANDLE_X_PATH_ARG(with_xf86gamma, --with-xf86gamma-ext, xf86gamma)
-
-if test "$with_xf86gamma" = yes; then
-
-  # first check for xf86vmode.h, if we haven't already
-  if test "$have_xf86vmode" = yes; then
-    have_xf86gamma=yes
-  else
-    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes],,
-                      [#include <X11/Xlib.h>])
-  fi
-
-  # if that succeeded, then check for the -lXxf86vm
-  if test "$have_xf86gamma" = yes; then
-    have_xf86gamma=no
-    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGamma,
-                  [have_xf86gamma=yes],
-                   [true], -lXext -lX11)
-  fi
-
-  # check for the Ramp versions of the functions too.
-  if test "$have_xf86gamma" = yes; then
-    have_xf86gamma_ramp=no
-    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGammaRamp,
-                  [have_xf86gamma_ramp=yes],
-                   [true], -lXext -lX11)
-  fi
-
-  # if those tests succeeded, then we've really got the functions.
-  if test "$have_xf86gamma" = yes; then
-    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
-  fi
-
-  if test "$have_xf86gamma_ramp" = yes; then
-    AC_DEFINE(HAVE_XF86VMODE_GAMMA_RAMP)
-  fi
-
-  # pull in the lib, if we haven't already
-  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
-    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
-  fi
-
-elif test "$with_xf86gamma" != no; then
-  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
-  exit 1
-fi
-
-
-###############################################################################
-#
 #       Check for the RANDR (Resize and Rotate) server extension.
 #
 #       We need this to detect when the resolution of the desktop
@@ -1826,7 +1595,7 @@ fi
 have_randr=no
 with_randr_req=unspecified
 AC_ARG_WITH(randr-ext,
-[  --with-randr-ext        Include support for the X Resize+Rotate extension.],
+[  --with-randr-ext        Include different support for multiple monitors.],
   [with_randr="$withval"; with_randr_req="$withval"],[with_randr=yes])
 
 HANDLE_X_PATH_ARG(with_randr, --with-randr-ext, RANDR)
@@ -1909,6 +1678,366 @@ fi
 
 ###############################################################################
 #
+#       Check for the XINPUT server extension.
+#
+###############################################################################
+
+have_xinput=no
+with_xinput_req=unspecified
+AC_ARG_WITH(xinput-ext,
+[  --with-xinput-ext       Include support for the XInput extension.],
+  [with_xinput="$withval"; with_xinput_req="$withval"], [with_xinput=yes])
+
+HANDLE_X_PATH_ARG(with_xinput, --with-xinput-ext, XINPUT)
+
+if test "$with_xinput" = yes; then
+
+  # first check for Xinput.h
+  AC_CHECK_X_HEADER(X11/extensions/XInput.h, [have_xinput=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for libXi
+  if test "$have_xinput" = yes; then
+    have_xinput=no
+    AC_CHECK_X_LIB(Xi, XListInputDevices,
+                   [have_xinput=yes; SAVER_LIBS="$SAVER_LIBS -lXi"],
+                   [true], -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xinput" = yes; then
+    AC_DEFINE(HAVE_XINPUT)
+  fi
+
+elif test "$with_xinput" != no; then
+  echo "error: must be yes or no: --with-xinput-ext=$with_xinput"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XF86VMODE server extension (for gamma fading.)
+#
+###############################################################################
+
+have_xf86gamma=no
+have_xf86gamma_ramp=no
+with_xf86gamma_req=unspecified
+AC_ARG_WITH(xf86gamma-ext,
+[  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
+  [with_xf86gamma="$withval"; with_xf86gamma_req="$withval"],
+  [with_xf86gamma=yes])
+
+HANDLE_X_PATH_ARG(with_xf86gamma, --with-xf86gamma-ext, xf86gamma)
+
+if test "$with_xf86gamma" = yes; then
+
+  # first check for xf86vmode.h, if we haven't already
+  if test "$have_xf86vmode" = yes; then
+    have_xf86gamma=yes
+  else
+    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes],,
+                      [#include <X11/Xlib.h>])
+  fi
+
+  # if that succeeded, then check for the -lXxf86vm
+  if test "$have_xf86gamma" = yes; then
+    have_xf86gamma=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGamma,
+                  [have_xf86gamma=yes],
+                   [true], -lXext -lX11)
+  fi
+
+  # check for the Ramp versions of the functions too.
+  if test "$have_xf86gamma" = yes; then
+    have_xf86gamma_ramp=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGammaRamp,
+                  [have_xf86gamma_ramp=yes],
+                   [true], -lXext -lX11)
+  fi
+
+  # if those tests succeeded, then we've really got the functions.
+  if test "$have_xf86gamma" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
+  fi
+
+  if test "$have_xf86gamma_ramp" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE_GAMMA_RAMP)
+  fi
+
+  # pull in the lib, if we haven't already
+  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
+    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
+  fi
+
+elif test "$with_xf86gamma" != no; then
+  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XIDLE server extension.
+#
+###############################################################################
+
+have_xidle=no
+with_xidle_req=unspecified
+AC_ARG_WITH(xidle-ext,
+[  --with-xidle-ext        Include support for the X11R5 XIDLE extension.],
+  [with_xidle="$withval"; with_xidle_req="$withval"],[with_xidle=yes])
+
+HANDLE_X_PATH_ARG(with_xidle, --with-xidle-ext, XIDLE)
+
+if test "$with_xidle" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/xidle.h,
+                    [have_xidle=yes
+                     AC_DEFINE(HAVE_XIDLE_EXTENSION)],,
+                    [#include <X11/Xlib.h>])
+elif test "$with_xidle" != no; then
+  echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the MIT-SCREEN-SAVER server extension.
+#
+###############################################################################
+
+have_mit=no
+with_mit=no
+with_mit_req=unspecified
+#AC_ARG_WITH(mit-ext,
+#[  --with-mit-ext          Include support for the MIT-SCREEN-SAVER extension.],
+#  [with_mit="$withval"; with_mit_req="$withval"],[with_mit=no])
+#HANDLE_X_PATH_ARG(with_mit, --with-mit-ext, MIT-SCREEN-SAVER)
+
+if test "$with_mit" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/scrnsaver.h, [have_mit=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # Now check to see if it's really in the library; XF86Free-3.3 ships
+  # scrnsaver.h, but doesn't include the code in libXext.a, the idiots!
+  #
+  if test "$have_mit" = yes; then
+    AC_CHECK_X_LIB(Xext, XScreenSaverRegister, [true], [have_mit=no], -lm)
+
+    if test "$have_mit" = no; then
+      # Fuck!  Looks like XF86Free-3.3 actually puts it in XExExt instead
+      # of in Xext.  Thank you master, may I have another.
+      AC_CHECK_X_LIB(XExExt, XScreenSaverRegister,
+                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXExExt"],
+                     [true], -lX11 -lXext -lm)
+    fi
+
+    if test "$have_mit" = no; then
+      # Double fuck!  Looks like some versions of XFree86 (whichever version
+      # it is that comes with RedHat Linux 2.0 -- I can't find a version 
+      # number) put this garbage in Xss instead of Xext.  Thank you master,
+      #  may I have another.
+      AC_CHECK_X_LIB(Xss, XScreenSaverRegister,
+                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXss"],
+                     [true], -lX11 -lXext -lm)
+    fi
+
+    if test "$have_mit" = yes; then
+#     AC_DEFINE(HAVE_MIT_SAVER_EXTENSION)
+      echo "Using the MIT-SCREEN-SAVER extension will crash your server. Don't."
+      exit 1
+    fi
+
+  fi
+
+elif test "$with_mit" != no; then
+  echo "error: must be yes or no: --with-mit-ext=$with_mit"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the SGI SCREEN_SAVER server extension.
+#
+###############################################################################
+
+have_sgi=no
+with_sgi_req=unspecified
+AC_ARG_WITH(sgi-ext,
+[  --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.],
+  [with_sgi="$withval"; with_sgi_req="$withval"],[with_sgi=$ac_irix])
+
+HANDLE_X_PATH_ARG(with_sgi, --with-sgi-ext, SGI SCREEN_SAVER)
+
+if test "$with_sgi" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/XScreenSaver.h,
+                    [have_sgi=yes
+                     AC_DEFINE(HAVE_SGI_SAVER_EXTENSION)],,
+                    [#include <X11/Xlib.h>])
+
+elif test "$with_sgi" != no; then
+  echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the SGI-VIDEO-CONTROL server extension.
+#
+###############################################################################
+
+have_sgivc=no
+with_sgivc_req=unspecified
+AC_ARG_WITH(sgivc-ext,
+[  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.],
+  [with_sgivc="$withval"; with_sgivc_req="$withval"],[with_sgivc=$ac_irix])
+
+HANDLE_X_PATH_ARG(with_sgivc, --with-sgivc-ext, SGI-VIDEO-CONTROL)
+
+if test "$with_sgivc" = yes; then
+
+  # first check for XSGIvc.h
+  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for the -lXsgivc
+  if test "$have_sgivc" = yes; then
+    have_sgivc=no
+    AC_CHECK_X_LIB(Xsgivc, XSGIvcQueryGammaMap,
+                  [have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"], [true],
+                  -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_sgivc" = yes; then
+    AC_DEFINE(HAVE_SGI_VC_EXTENSION)
+  fi
+
+elif test "$with_sgivc" != no; then
+  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the SGI XReadDisplay server extension.
+#
+###############################################################################
+
+have_readdisplay=no
+with_readdisplay_req=unspecified
+AC_ARG_WITH(readdisplay,
+[  --with-readdisplay      Include support for the SGI XReadDisplay extension.],
+  [with_readdisplay="$withval"; with_readdisplay_req="$withval"],
+  [with_readdisplay=$ac_irix])
+
+HANDLE_X_PATH_ARG(with_readdisplay, --with-readdisplay, XReadDisplay)
+
+if test "$with_readdisplay" = yes; then
+  AC_CHECK_X_HEADER(X11/extensions/readdisplay.h,
+                    AC_DEFINE(HAVE_READ_DISPLAY_EXTENSION),,
+                    [#include <X11/Xlib.h>])
+elif test "$with_readdisplay" != no; then
+  echo "error: must be yes or no: --with-readdisplay=$with_readdisplay"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the XSHM server extension.
+#
+###############################################################################
+
+have_xshm=no
+with_xshm_req=unspecified
+AC_ARG_WITH(xshm-ext,
+[  --with-xshm-ext         Include support for the Shared Memory extension.],
+  [with_xshm="$withval"; with_xshm_req="$withval"],[with_xshm=yes])
+
+HANDLE_X_PATH_ARG(with_xshm, --with-xshm-ext, XSHM)
+
+if test "$with_xshm" = yes; then
+
+  # first check for Xshm.h.
+  AC_CHECK_X_HEADER(X11/extensions/XShm.h, [have_xshm=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for sys/ipc.h.
+  if test "$have_xshm" = yes; then
+    have_xshm=no
+    AC_CHECK_X_HEADER(sys/ipc.h, [have_xshm=yes])
+  fi
+
+  # if that succeeded, then check for sys/shm.h.
+  if test "$have_xshm" = yes; then
+    have_xshm=no
+    AC_CHECK_X_HEADER(sys/shm.h, [have_xshm=yes])
+  fi
+
+  # AIX is pathological, as usual: apparently it's normal for the Xshm headers
+  # to exist, but the library code to not exist.  And even better, the library
+  # code is in its own library: libXextSam.a.  So, if we're on AIX, and that
+  # lib doesn't exist, give up.  (This lib gets added to X_EXTRA_LIBS, and
+  # that's not quite right, but close enough.)
+  #
+  case "$host" in
+    *-aix*)
+      if [ `uname -v` -eq 3 ]; then
+        have_xshm=no
+        AC_CHECK_X_LIB(XextSam, XShmQueryExtension,
+                       [have_xshm=yes; X_EXTRA_LIBS="$X_EXTRA_LIBS -lXextSam"],
+                       [true], -lX11 -lXext -lm)
+      fi
+    ;;
+  esac
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xshm" = yes; then
+    AC_DEFINE(HAVE_XSHM_EXTENSION)
+  fi
+
+elif test "$with_xshm" != no; then
+  echo "error: must be yes or no: --with-xshm-ext=$with_xshm"
+  exit 1
+fi
+
+
+###############################################################################
+#
+#       Check for the DOUBLE-BUFFER server extension.
+#
+###############################################################################
+
+have_xdbe=no
+with_xdbe_req=unspecified
+AC_ARG_WITH(xdbe-ext,
+[  --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.],
+  [with_xdbe="$withval"; with_xdbe_req="$withval"],[with_xdbe=yes])
+
+HANDLE_X_PATH_ARG(with_xdbe, --with-xdbe-ext, DOUBLE-BUFFER)
+
+if test "$with_xdbe" = yes; then
+
+  AC_CHECK_X_HEADER(X11/extensions/Xdbe.h, [have_xdbe=yes],,
+                    [#include <X11/Xlib.h>])
+  if test "$have_xdbe" = yes; then
+    AC_DEFINE(HAVE_DOUBLE_BUFFER_EXTENSION)    
+  fi
+
+elif test "$with_xdbe" != no; then
+  echo "error: must be yes or no: --with-xdbe-ext=$with_xshm"
+  exit 1
+fi
+
+
+###############################################################################
+#
 #       Check for HP XHPDisableReset and XHPEnableReset.
 #
 ###############################################################################
@@ -1973,7 +2102,7 @@ fi
 have_proc_oom=no
 with_proc_oom_req=unspecified
 AC_ARG_WITH(proc-oom,
-[  --with-proc-oom  Include support for disabling the OOM-killer.],
+[  --with-proc-oom         Include support for disabling the OOM-killer.],
   [with_proc_oom="$withval"; with_proc_oom_req="$withval"],
   [with_proc_oom=yes])
 
@@ -2009,13 +2138,100 @@ fi
 
 ###############################################################################
 #
-#       The --enable-locking option
+#       Check for -lsystemd
 #
 ###############################################################################
 
-AC_ARG_ENABLE(locking,[Screen locking options:
-  --enable-locking        Compile in support for locking the display.
-  --disable-locking       Do not allow locking at all.],
+have_systemd=no
+with_systemd_req=unspecified
+systemd_halfassed=no
+systemd_too_old=no
+AC_ARG_WITH(systemd,
+[  --with-systemd          Support systemd requests to lock on suspend, and to
+                          allow video players to inhibit the screen saver.],
+  [with_systemd="$withval"; with_systemd_req="$withval"],
+  [with_systemd=yes])
+
+HANDLE_X_PATH_ARG(with_systemd, --with-systemd, systemd)
+
+if test "$with_systemd" != yes -a "$with_systemd" != no ; then
+  echo "error: must be yes or no: --with-systemd=$with_systemd"
+  exit 1
+fi
+
+if test "$with_systemd" = yes; then
+
+  pkgs=''
+  ok="yes"
+  pkg_check_version libsystemd 221
+  have_systemd="$ok"
+
+  if test "$have_systemd" = no; then
+    if $pkg_config --exists libsystemd ; then
+      systemd_too_old=yes
+    fi
+  fi
+
+  if test "$have_systemd" = yes; then
+    AC_CACHE_CHECK([for libsystemd includes], ac_cv_systemd_config_cflags,
+               [ac_cv_systemd_config_cflags=`$pkg_config --cflags $pkgs`])
+    AC_CACHE_CHECK([for libsystemd libs], ac_cv_systemd_config_libs,
+               [ac_cv_systemd_config_libs=`$pkg_config --libs $pkgs`])
+  fi
+
+  ac_systemd_config_cflags=$ac_cv_systemd_config_cflags
+  ac_systemd_config_libs=$ac_cv_systemd_config_libs
+
+  if test "$have_systemd" = yes; then
+    #
+    # we appear to have libsystemd; check for headers/libs to be sure.
+    #
+    ac_save_systemd_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_systemd_config_cflags"
+
+    have_systemd=no
+    AC_CHECK_X_HEADER(systemd/sd-bus.h, [have_systemd=yes])
+
+    CPPFLAGS="$ac_save_systemd_CPPFLAGS"
+  fi
+
+  if test "$have_systemd" = yes; then
+    # we have the headers, now check for the libraries
+    have_systemd=no
+    systemd_halfassed=yes
+
+    AC_MSG_RESULT(checking for libsystemd usability...)
+    AC_CHECK_X_LIB(c, sd_bus_open_system, [have_systemd=yes],,
+                   $ac_systemd_config_libs -lX11 -lXext -lm)
+  fi
+
+  if test "$have_systemd" = no; then
+    AC_MSG_RESULT(checking for libsystemd usability... no)
+  fi
+fi
+
+if test "$have_systemd" = yes; then
+  INCLUDES="$INCLUDES $ac_systemd_config_cflags"
+  EXES_SYSTEMD='$(EXES_SYSTEMD)'
+  AC_DEFINE(HAVE_LIBSYSTEMD)
+else
+  EXES_SYSTEMD=''
+fi
+
+
+###############################################################################
+#
+#       The --enable-locking option
+#
+#	Note: "configure --help" list all "--enable" options before any
+#	"--with" options, so we document the --enable options inline with
+#	the --with options where it looks better, instead of in AC_ARG_ENABLE
+#	where it would make sense, sigh...
+#
+###############################################################################
+
+AC_ARG_ENABLE(locking,
+[],  # This is documented elsewhere because of --enable/--with option sorting.
   [enable_locking="$enableval"],
   [if test "$ac_macosx" = yes; then
     # We can't lock on MacOS X, so default to not compiling in support for it.
@@ -2035,14 +2251,14 @@ else
 fi
 
 
-###############################################################################
+##############################################################################
 #
 #       Whether to allow root password to unblank.
 #
 ###############################################################################
-AC_ARG_ENABLE(root-passwd, [
-  --enable-root-passwd	      Allow root passwd to unlock screen.
-  --disable-root-passwd       Do not allow that.],
+
+AC_ARG_ENABLE(root-passwd,
+[],  # This is documented elsewhere because of --enable/--with option sorting.
   [enable_root_passwd="$enableval"],[enable_root_passwd=yes])
 if test "$enable_root_passwd" = yes; then
   AC_DEFINE(ALLOW_ROOT_PASSWD)
@@ -2051,6 +2267,7 @@ elif test "$enable_root_passwd" != no; then
   echo "error: must be yes or no: --enable-root-passwd=$enable_root_passwd"
   exit 1
 fi
+
 
 ###############################################################################
 #
@@ -2070,24 +2287,28 @@ case "$host" in
   ;;
 esac
 
+#### H1
+
 have_pam=no
 with_pam_req=unspecified
 
-AC_ARG_WITH(pam,
-[  --with-pam              Include support for PAM (Pluggable Auth Modules.)],
+AC_ARG_WITH(pam,[
+Screen Locking Options:
+
+  --disable-locking       Do not allow locking of the display at all.
+  --with-pam              Include support for PAM (Pluggable Auth Modules.)],
   [with_pam="$withval"; with_pam_req="$withval"],[with_pam=$with_pam_default])
 
 AC_ARG_WITH([pam_service_name],
-	    AC_HELP_STRING([--with-pam-service-name],
-	    		   [NAME arg is the name of the PAM service that
-	    		   xscreensaver will authenticate as.]),
-	    [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
+[  --with-pam-service-name Set the name of the xscreensaver PAM service.
+  --enable-pam-account    Whether PAM should check the result of account
+	    		  modules when authenticating.  Only do this if you
+	    		  have "account" modules configured on your system.
+  --enable-root-passwd	  Allow the root passwd to unlock, if not using PAM.],
+  [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
 
 AC_ARG_ENABLE(pam-check-account-type,
-  [AC_HELP_STRING([--enable-pam-check-account-type],
-	    		   [Whether PAM should check the result of account
-	    		   modules when authenticating.  Only do this if you
-	    		   have account configured properly on your system.])],
+[],  # This is documented elsewhere because of --enable/--with option sorting.
   [enable_pam_check_account_type="$enableval"],[enable_pam_check_account_type=no])
 if test "$enable_pam_check_account_type" = yes ; then
   AC_DEFINE(PAM_CHECK_ACCOUNT_TYPE)
@@ -2511,117 +2732,6 @@ case "$with_passwd_helper" in
 esac
 
 
-###############################################################################
-#
-#       Check for a login manager for a "New Login" button on the lock dialog.
-#	Usually this will be "/usr/bin/gdmflexiserver".
-#
-###############################################################################
-
-with_login_manager_req=unspecified
-default_login_manager_1='gdmflexiserver -ls'
-default_login_manager_2='kdmctl reserve'
-default_login_manager_3='lxdm -c USER_SWITCH'
-default_login_manager_4='dm-tool switch-to-greeter'
-
-AC_ARG_WITH(login-manager,
-[  --with-login-manager    Put a "New Login" button on the unlock dialog that
-                          runs a login manager like gdmflexiserver or kdmctl.],
-  [with_login_manager="$withval"; with_login_manager_req="$withval"],
-  [with_login_manager=yes])
-# no HANDLE_X_PATH_ARG for this one
-
-if test "$enable_locking" = no ; then
-  with_login_manager_req=no
-  with_login_manager=no
-fi
-
-case "$with_login_manager_req" in
-  no)
-    with_login_manager=""
-  ;;
-
-  yes|unspecified)
-    # Try various defaults, use the first one that exists.
-
-    with_login_manager=""
-
-    if test -z "$with_login_manager" ; then
-      set dummy $default_login_manager_1 ; login_manager_tmp=$2
-      unset ac_cv_path_login_manager_tmp  # don't cache
-      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
-      if test ! -z "$login_manager_tmp" ; then
-        with_login_manager="$default_login_manager_1"
-      fi
-    fi
-
-    if test -z "$with_login_manager" ; then
-      set dummy $default_login_manager_2 ; login_manager_tmp=$2
-      unset ac_cv_path_login_manager_tmp  # don't cache
-      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
-      if test ! -z "$login_manager_tmp" ; then
-        with_login_manager="$default_login_manager_2"
-      fi
-    fi
-
-    if test -z "$with_login_manager" ; then
-      set dummy $default_login_manager_3 ; login_manager_tmp=$2
-      unset ac_cv_path_login_manager_tmp  # don't cache
-      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
-      if test ! -z "$login_manager_tmp" ; then
-        with_login_manager="$default_login_manager_3"
-      fi
-    fi
-
-    if test -z "$with_login_manager" ; then
-      set dummy $default_login_manager_4 ; login_manager_tmp=$2
-      unset ac_cv_path_login_manager_tmp  # don't cache
-      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
-      if test ! -z "$login_manager_tmp" ; then
-        with_login_manager="$default_login_manager_4"
-      fi
-    fi
-
-  ;;
-
-  /*)
-    # absolute path specified on cmd line
-    set dummy $with_login_manager_req ; login_manager_tmp=$2
-    AC_MSG_CHECKING([for $login_manager_tmp])
-    if test -x "$login_manager_tmp" ; then
-      AC_MSG_RESULT(yes)
-    else
-      AC_MSG_RESULT(no)
-      with_login_manager=""
-    fi
-  ;;
-
-  *)
-    # relative path specified on cmd line
-    set dummy $with_login_manager_req ; login_manager_tmp=$2
-    unset ac_cv_path_login_manager_tmp    # don't cache
-    AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
-    if test -z "$login_manager_tmp" ; then
-      with_login_manager=""
-    else
-      with_login_manager="$login_manager_tmp"
-    fi
-  ;;
-esac
-ac_cv_login_manager_program="$with_login_manager"
-
-NEW_LOGIN_COMMAND_P=''
-NEW_LOGIN_COMMAND="$ac_cv_login_manager_program"
-
-AC_MSG_CHECKING(for login manager)
-if test -z "$NEW_LOGIN_COMMAND" ; then
-  NEW_LOGIN_COMMAND="$default_login_manager_1"
-  NEW_LOGIN_COMMAND_P='! '
-  AC_MSG_RESULT($NEW_LOGIN_COMMAND (disabled))
-else
-  AC_MSG_RESULT($NEW_LOGIN_COMMAND)
-fi
-
 
 ###############################################################################
 #
@@ -2629,10 +2739,13 @@ fi
 #
 ###############################################################################
 
+#### H1
+
 have_gtk=no
 with_gtk_req=unspecified
-AC_ARG_WITH(gtk,[
-User interface options:
+AC_ARG_WITH(gtk,
+[
+User Interface Options:
 
   --with-gtk              Use the Gtk toolkit for the user interface.],
   [with_gtk="$withval"; with_gtk_req="$withval"],[with_gtk=yes])
@@ -2669,66 +2782,16 @@ parse_gtk_version_string() {
   fi
 }
 
-# Find pkg-config... (need this for both gtk and gdk_pixbuf.)
-# if the user specified --with-gtk=/foo/ then look there.
-#
-gtk_path="$PATH"
-if test ! -z "$gtk_dir"; then
-  # canonicalize slashes.
-  foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
-  gtk_path="$foo:$gtk_path"
-fi
-
-AC_PATH_PROGS(pkg_config, pkg-config,, $gtk_path)
-
-if test -z "$pkg_config" ; then
-  AC_MSG_WARN([pkg-config not found!])
-  pkg_config="false"
-fi
-
-
-# Utility function for running pkg-config-based tests...
-#
-pkgs=''
-pkg_check_version() {
-  if test "$ok" = yes ; then
-    req="$1"
-    min="$2"
-    AC_MSG_CHECKING(for $req)
-    if $pkg_config --exists "$req" ; then
-      vers=`$pkg_config --modversion "$req"`
-      if $pkg_config --exists "$req >= $min" ; then
-        AC_MSG_RESULT($vers)
-        pkgs="$pkgs $req"
-        return 1
-      else
-        AC_MSG_RESULT($vers (wanted >= $min))
-        ok=no
-        return 0
-      fi
-    else
-      AC_MSG_RESULT(no)
-      ok=no
-      return 0
-    fi
-  fi
-}
-
-
 jurassic_gtk=no
 gtk_halfassed=no
-have_gtk_2_22_or_higher=no
-COMMENT_DEMO_GLADE2_GTK_2_22_HEAD=""
-COMMENT_DEMO_GLADE2_GTK_2_22_TAIL=""
 
 if test "$with_gtk" = yes; then
   have_gtk=no
   
   ok="yes"
-  pkg_check_version            gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
+  pkg_check_version            gtk+-2.0  2.22.0 ; ac_gtk_version_string="$vers"
   pkg_check_version         gmodule-2.0  2.0.0
   pkg_check_version          libxml-2.0  2.4.6
-  pkg_check_version        libglade-2.0  1.99.0
   pkg_check_version      gdk-pixbuf-2.0  2.0.0
   pkg_check_version gdk-pixbuf-xlib-2.0  2.0.0
   have_gtk="$ok"
@@ -2769,16 +2832,6 @@ if test "$with_gtk" = yes; then
     AC_DEFINE(HAVE_GTK2)
     AC_DEFINE(HAVE_XML)
   fi
-
-  if test "$have_gtk" = yes; then
-    ok="yes"
-    pkg_check_version gtk+-2.0 2.22
-    have_gtk_2_22_or_higher="$ok"
-    if test "$have_gtk_2_22_or_higher" = yes; then
-      COMMENT_DEMO_GLADE2_GTK_2_22_HEAD="<!-- comment>"
-      COMMENT_DEMO_GLADE2_GTK_2_22_TAIL="</comment -->"
-    fi
-  fi
 fi
 
 
@@ -2799,8 +2852,8 @@ fi
 
 have_motif=no
 with_motif_req=unspecified
-AC_ARG_WITH(motif,[  --with-motif            Use the Motif toolkit for the user interface
-                          (no longer supported.)],
+AC_ARG_WITH(motif,
+[  --with-motif            Use the Motif toolkit for the user interface.],
   [with_motif="$withval"; with_motif_req="$withval"],[with_motif=no])
 
 HANDLE_X_PATH_ARG(with_motif, --with-motif, Motif)
@@ -2946,16 +2999,309 @@ fi
 
 ###############################################################################
 #
+#       Check for a login manager for a "New Login" button on the lock dialog.
+#	Usually this will be "/usr/bin/gdmflexiserver".
+#
+###############################################################################
+
+with_login_manager_req=unspecified
+default_login_manager_1='gdmflexiserver -ls'
+default_login_manager_2='kdmctl reserve'
+default_login_manager_3='lxdm -c USER_SWITCH'
+default_login_manager_4='dm-tool switch-to-greeter'
+
+AC_ARG_WITH(login-manager,
+[  --with-login-manager    Put a "New Login" button on the unlock dialog that
+                          runs a login manager like gdmflexiserver or kdmctl.],
+  [with_login_manager="$withval"; with_login_manager_req="$withval"],
+  [with_login_manager=yes])
+# no HANDLE_X_PATH_ARG for this one
+
+if test "$enable_locking" = no ; then
+  with_login_manager_req=no
+  with_login_manager=no
+fi
+
+case "$with_login_manager_req" in
+  no)
+    with_login_manager=""
+  ;;
+
+  yes|unspecified)
+    # Try various defaults, use the first one that exists.
+
+    with_login_manager=""
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_1 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_1"
+      fi
+    fi
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_2 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_2"
+      fi
+    fi
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_3 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_3"
+      fi
+    fi
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_4 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_4"
+      fi
+    fi
+
+  ;;
+
+  /*)
+    # absolute path specified on cmd line
+    set dummy $with_login_manager_req ; login_manager_tmp=$2
+    AC_MSG_CHECKING([for $login_manager_tmp])
+    if test -x "$login_manager_tmp" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+      with_login_manager=""
+    fi
+  ;;
+
+  *)
+    # relative path specified on cmd line
+    set dummy $with_login_manager_req ; login_manager_tmp=$2
+    unset ac_cv_path_login_manager_tmp    # don't cache
+    AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+    if test -z "$login_manager_tmp" ; then
+      with_login_manager=""
+    else
+      with_login_manager="$login_manager_tmp"
+    fi
+  ;;
+esac
+ac_cv_login_manager_program="$with_login_manager"
+
+NEW_LOGIN_COMMAND_P=''
+NEW_LOGIN_COMMAND="$ac_cv_login_manager_program"
+
+AC_MSG_CHECKING(for login manager)
+if test -z "$NEW_LOGIN_COMMAND" ; then
+  NEW_LOGIN_COMMAND="$default_login_manager_1"
+  NEW_LOGIN_COMMAND_P='! '
+  AC_MSG_RESULT($NEW_LOGIN_COMMAND (disabled))
+else
+  AC_MSG_RESULT($NEW_LOGIN_COMMAND)
+fi
+
+
+
+###############################################################################
+#
+#       Check for a directory full of images to use as the default value
+#	of the "imageDirectory" preference.
+#
+###############################################################################
+
+have_imagedir=no
+with_imagedir_req=unspecified
+
+AC_ARG_WITH(image-directory,
+[  --with-image-directory  Some demos will display random images from here.],
+  [with_imagedir="$withval"; with_imagedir_req="$withval"],
+  [with_imagedir=yes])
+# no HANDLE_X_PATH_ARG for this one
+
+case "$with_imagedir" in
+  /*)
+    # absolute path
+    AC_MSG_CHECKING([for image directory $with_imagedir])
+    if test -d "$with_imagedir" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+      with_imagedir=""
+    fi
+  ;;
+  yes)
+    with_imagedir=""
+
+    #### Could use some more defaults here...
+    for dd in \
+      "/usr/share/rpd-wallpaper"                \
+      "/usr/share/backgrounds/images/"          \
+      "/usr/share/wallpapers/"                  \
+      "/Library/Desktop Pictures/"              \
+    ; do
+      if test -z "$with_imagedir"; then
+        AC_MSG_CHECKING([for image directory $dd])
+        if test -d "$dd" ; then
+          AC_MSG_RESULT(yes)
+          with_imagedir="$dd"
+        else
+          AC_MSG_RESULT(no)
+        fi
+      fi
+    done
+
+  ;;
+  no)
+    with_imagedir=""
+  ;;
+
+  *)
+    echo "error: must be an absolute path: --with-image-directory=$with_imagedir_req"
+    exit 1
+  ;;
+esac
+ac_cv_imagedir="$with_imagedir"
+
+DEFAULT_IMAGES_P='True'
+DEFAULT_IMAGE_DIRECTORY="$ac_cv_imagedir"
+
+if test -z "$DEFAULT_IMAGE_DIRECTORY" ; then
+  DEFAULT_IMAGES_P='False'
+fi
+
+
+###############################################################################
+#
+#       Pick a text file to use as the default of the "textFile" preference.
+#	Any old file will do, but preferably one that will make interesting
+#	shapes when displayed by "starwars" and "fontglide".
+#
+###############################################################################
+
+have_textfile=no
+with_textfile_req=unspecified
+
+AC_ARG_WITH(text-file,
+[  --with-text-file=FILE   Some demos will use this as a source of text.],
+  [with_textfile="$withval"; with_textfile_req="$withval"],
+  [with_textfile=yes])
+# no HANDLE_X_PATH_ARG for this one
+
+case "$with_textfile" in
+  /*)
+    # absolute path
+    AC_MSG_CHECKING([for text file $with_textfile])
+    if test -f "$with_textfile" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+      with_textfile=""
+    fi
+  ;;
+  yes)
+    with_textfile=""
+
+    #### Could use some more defaults here...
+    for f in \
+      "/usr/X11R6/lib/X11/doc/README"		   \
+      "/usr/share/doc/xserver-common/copyright"	   \
+      "/usr/share/doc/xserver-xorg-core/copyright" \
+      "/usr/X11R6/README"			   \
+      "/usr/share/doc/libX11*/COPYING"		   \
+      "/usr/X11/share/X11/doc/README*"		   \
+      "/usr/share/doc/debian/debian-manifesto"     \
+    ; do
+      if test -z "$with_textfile"; then
+        AC_MSG_CHECKING([for text file $f])
+	f=`/bin/ls $f 2>&- | head -1`
+        if test -f "$f" ; then
+          AC_MSG_RESULT(yes)
+          with_textfile="$f"
+        else
+          AC_MSG_RESULT(no)
+        fi
+      fi
+    done
+
+  ;;
+  no)
+    with_textfile=""
+  ;;
+
+  *)
+    echo "error: must be an absolute path: --with-text-file=$with_textfile_req"
+    exit 1
+  ;;
+esac
+ac_cv_textfile="$with_textfile"
+
+DEFAULT_TEXT_FILE="$ac_cv_textfile"
+
+
+###############################################################################
+#
+#       Check the browser to see help URL
+#
+###############################################################################
+
+have_browser=no
+with_browser_req=unspecified
+
+AC_ARG_WITH(browser,
+[  --with-browser=BROWSER  The web browser used to open the "Help" URL.],
+  [with_browser="$withval"; with_browser_req="$withval"],
+  [with_browser=no ])
+# no HANDLE_X_PATH_ARG for this one
+
+case "$with_browser" in
+  no )
+  ;;
+  * )
+    WITH_BROWSER=$with_browser
+    gnome_open_program=$with_browser
+    AC_MSG_CHECKING([for browser $with_browser])
+    with_browser_fullpath=`which $with_browser 2>/dev/null`
+    case $with_browser_fullpath in
+	 /* )
+	        AC_MSG_RESULT(yes)
+		 have_browser=yes
+		 ;;
+	* )
+	       AC_MSG_RESULT(no)
+# Only warning: we don't want to install all packages for the 
+# dependency of the browser in building stage...
+	       echo "WARNING: browser not found: --with-browser=$with_browser"
+	       ;;
+    esac
+  ;;
+esac
+ac_cv_browser="$with_browser"
+
+
+###############################################################################
+#
 #       Check for -lGL or -lMesaGL.
 #
 ###############################################################################
+
+#### H1
 
 have_gl=no
 ac_have_mesa_gl=no
 with_gl_req=unspecified
 gl_halfassed=no
-AC_ARG_WITH(gl,[
-Graphics options:
+have_glext=no
+AC_ARG_WITH(gl,
+[
+Graphics Options:
 
   --with-gl               Build those demos which depend on OpenGL.],
   [with_gl="$withval"; with_gl_req="$withval"],[with_gl=yes])
@@ -3160,6 +3506,15 @@ EOF
     #
     AC_CHECK_X_LIB($gl_lib_1, glBindTexture, [AC_DEFINE(HAVE_GLBINDTEXTURE)],
                    [true], $GL_LIBS -lX11 -lXext -lm)
+
+    # Check for OpenGL GLSL features.
+    #
+    AC_CHECK_X_HEADER(GL/glext.h, have_glext=yes, have_glext=no,
+                      [#include <GL/gl.h>])
+    if test "$have_glext" = yes ; then
+      AC_CHECK_X_LIB($gl_lib_1, glUseProgram, [AC_DEFINE(HAVE_GLSL)],
+                     [true], $GL_LIBS -lX11 -lXext -lm)
+    fi
   fi
 
 elif test "$with_gl" != no; then
@@ -3178,8 +3533,7 @@ have_gle=no
 with_gle_req=unspecified
 gle_halfassed=no
 AC_ARG_WITH(gle,
-[  --with-gle              Build those demos which depend on GLE
-                          (the OpenGL "extrusion" library.)],
+[  --with-gle              Build those demos which depend on GLE (extrusion).],
   [with_gle="$withval"; with_gle_req="$withval"],[with_gle=yes])
 
 HANDLE_X_PATH_ARG(with_gle, --with-gle, GLE)
@@ -3279,6 +3633,45 @@ fi
 
 ###############################################################################
 #
+#       Check for -ljpeg
+#
+###############################################################################
+
+have_jpeg=no
+with_jpeg_req=unspecified
+jpeg_halfassed=no
+AC_ARG_WITH(jpeg,
+[  --with-jpeg             Include support for the JPEG library.],
+  [with_jpeg="$withval"; with_jpeg_req="$withval"],
+  [with_jpeg=yes])
+
+HANDLE_X_PATH_ARG(with_jpeg, --with-jpeg, JPEG)
+
+if test "$with_jpeg" != yes -a "$with_jpeg" != no ; then
+  echo "error: must be yes or no: --with-jpeg=$with_jpeg"
+  exit 1
+fi
+
+if test "$with_jpeg" = yes; then
+
+  have_jpeg=no
+  AC_CHECK_X_HEADER(jpeglib.h, [have_jpeg=yes])
+
+  if test "$have_jpeg" = yes; then
+    # we have the header, now check for the library
+    have_jpeg=no
+    jpeg_halfassed=yes
+    AC_CHECK_X_LIB(jpeg, jpeg_start_compress,
+                   [have_jpeg=yes
+                    jpeg_halfassed=no
+                    JPEG_LIBS="-ljpeg"
+                    AC_DEFINE(HAVE_JPEGLIB)])
+  fi
+fi
+
+
+###############################################################################
+#
 #       Check for -lpng
 #
 ###############################################################################
@@ -3287,7 +3680,7 @@ have_png=no
 with_png_req=unspecified
 png_halfassed=no
 AC_ARG_WITH(png,
-[  --with-png             Include support for the PNG library.],
+[  --with-png              Include support for the PNG library.],
   [with_png="$withval"; with_png_req="$withval"],
   [with_png=yes])
 
@@ -3329,9 +3722,8 @@ fi
 have_gdk_pixbuf=no
 with_gdk_pixbuf_req=unspecified
 AC_ARG_WITH(pixbuf,
-[  --with-pixbuf           Include support for the GDK-Pixbuf library in some
-                          demos, which will make it possible for them to read
-                          GIF, JPEG, and PNG files as well.],
+[  --with-pixbuf           Include support for the GDK-Pixbuf library, which
+                          allows the display of JPEG, PNG, GIF and SVG images.],
   [with_gdk_pixbuf="$withval"; with_gdk_pixbuf_req="$withval"],
   [with_gdk_pixbuf=yes])
 
@@ -3445,45 +3837,6 @@ fi
 
 ###############################################################################
 #
-#       Check for -ljpeg
-#
-###############################################################################
-
-have_jpeg=no
-with_jpeg_req=unspecified
-jpeg_halfassed=no
-AC_ARG_WITH(jpeg,
-[  --with-jpeg             Include support for the JPEG library.],
-  [with_jpeg="$withval"; with_jpeg_req="$withval"],
-  [with_jpeg=yes])
-
-HANDLE_X_PATH_ARG(with_jpeg, --with-jpeg, JPEG)
-
-if test "$with_jpeg" != yes -a "$with_jpeg" != no ; then
-  echo "error: must be yes or no: --with-jpeg=$with_jpeg"
-  exit 1
-fi
-
-if test "$with_jpeg" = yes; then
-
-  have_jpeg=no
-  AC_CHECK_X_HEADER(jpeglib.h, [have_jpeg=yes])
-
-  if test "$have_jpeg" = yes; then
-    # we have the header, now check for the library
-    have_jpeg=no
-    jpeg_halfassed=yes
-    AC_CHECK_X_LIB(jpeg, jpeg_start_compress,
-                   [have_jpeg=yes
-                    jpeg_halfassed=no
-                    JPEG_LIBS="-ljpeg"
-                    AC_DEFINE(HAVE_JPEGLIB)])
-  fi
-fi
-
-
-###############################################################################
-#
 #       Check for -lXft
 #
 ###############################################################################
@@ -3570,78 +3923,43 @@ else
 fi
 
 
-###############################################################################
+# Also check for the standard X11 bitmap fonts, since Debian likes to not
+# install any of those by default.  The unlock dialog requires them.
 #
-#       Check for -lsystemd
-#
-###############################################################################
+have_bitmap_fonts=no
+ff='helvB14.pcf.gz helvB14-ISO8859-1.pcf.gz'
+AC_MSG_CHECKING(for bitmap font files)
+for d in /usr/share/fonts/X11 \
+         /usr/share/X11/fonts \
+         /opt/X11/share/fonts \
+; do
+  for r in 100dpi 75dpi ; do
+    for f in $ff ; do
+      if test -f "$d/$r/$f" ; then
+        have_bitmap_fonts=yes
+      fi
+    done
+  done
+done
+AC_MSG_RESULT($have_bitmap_fonts)
 
-have_systemd=no
-with_systemd_req=unspecified
-systemd_halfassed=no
-AC_ARG_WITH(systemd,
-[  --with-systemd          Build xscreensaver-systemd to lock on suspend.],
-  [with_systemd="$withval"; with_systemd_req="$withval"],
-  [with_systemd=yes])
-
-HANDLE_X_PATH_ARG(with_systemd, --with-systemd, systemd)
-
-if test "$with_systemd" != yes -a "$with_systemd" != no ; then
-  echo "error: must be yes or no: --with-systemd=$with_systemd"
-  exit 1
-fi
-
-if test "$with_systemd" = yes; then
-
-  pkgs=''
-  ok="yes"
-  pkg_check_version libsystemd 221
-  have_systemd="$ok"
-
-  if test "$have_systemd" = yes; then
-    AC_CACHE_CHECK([for libsystemd includes], ac_cv_systemd_config_cflags,
-               [ac_cv_systemd_config_cflags=`$pkg_config --cflags $pkgs`])
-    AC_CACHE_CHECK([for libsystemd libs], ac_cv_systemd_config_libs,
-               [ac_cv_systemd_config_libs=`$pkg_config --libs $pkgs`])
-  fi
-
-  ac_systemd_config_cflags=$ac_cv_systemd_config_cflags
-  ac_systemd_config_libs=$ac_cv_systemd_config_libs
-
-  if test "$have_systemd" = yes; then
-    #
-    # we appear to have libsystemd; check for headers/libs to be sure.
-    #
-    ac_save_systemd_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_systemd_config_cflags"
-
-    have_systemd=no
-    AC_CHECK_X_HEADER(systemd/sd-bus.h, [have_systemd=yes])
-
-    CPPFLAGS="$ac_save_systemd_CPPFLAGS"
-  fi
-
-  if test "$have_systemd" = yes; then
-    # we have the headers, now check for the libraries
-    have_systemd=no
-    systemd_halfassed=yes
-
-    AC_MSG_RESULT(checking for libsystemd usability...)
-    AC_CHECK_X_LIB(c, sd_bus_open_system, [have_systemd=yes],,
-                   $ac_systemd_config_libs -lX11 -lXext -lm)
-  fi
-
-  if test "$have_systemd" = no; then
-    AC_MSG_RESULT(checking for libsystemd usability... no)
-  fi
-fi
-
-if test "$have_systemd" = yes; then
-  INCLUDES="$INCLUDES $ac_systemd_config_cflags"
-  EXES_SYSTEMD='$(EXES_SYSTEMD)'
-  AC_DEFINE(HAVE_LIBSYSTEMD)
-else
-  EXES_SYSTEMD=''
+# In case we didn't guess the font directory properly, check RPMs and DEBs too.
+if test $have_bitmap_fonts != yes ; then
+  for r in 100dpi 75dpi ; do
+    for f in xfonts-$r \
+             xorg-x11-fonts-$r \
+             xorg-x11-fonts-ISO8859-1-$r \
+      ; do
+      if test $have_bitmap_fonts != yes ; then
+        AC_MSG_CHECKING(for $f)
+        if ( rpm -q "$f"  2>&- >&- ) ||
+           ( dpkg -s "$f" 2>&- | grep -q '^Status:.*installed' ) ; then
+          have_bitmap_fonts=yes
+        fi
+        AC_MSG_RESULT($have_bitmap_fonts)
+      fi
+    done
+  done
 fi
 
 
@@ -3666,325 +3984,47 @@ if test "$ac_have_forkpty" != yes ; then
                   AC_DEFINE(HAVE_FORKPTY)])
 fi
 
-###############################################################################
-#
-#       Check for the XSHM server extension.
-#
-###############################################################################
-
-have_xshm=no
-with_xshm_req=unspecified
-AC_ARG_WITH(xshm-ext,
-[  --with-xshm-ext         Include support for the Shared Memory extension.],
-  [with_xshm="$withval"; with_xshm_req="$withval"],[with_xshm=yes])
-
-HANDLE_X_PATH_ARG(with_xshm, --with-xshm-ext, XSHM)
-
-if test "$with_xshm" = yes; then
-
-  # first check for Xshm.h.
-  AC_CHECK_X_HEADER(X11/extensions/XShm.h, [have_xshm=yes],,
-                    [#include <X11/Xlib.h>])
-
-  # if that succeeded, then check for sys/ipc.h.
-  if test "$have_xshm" = yes; then
-    have_xshm=no
-    AC_CHECK_X_HEADER(sys/ipc.h, [have_xshm=yes])
-  fi
-
-  # if that succeeded, then check for sys/shm.h.
-  if test "$have_xshm" = yes; then
-    have_xshm=no
-    AC_CHECK_X_HEADER(sys/shm.h, [have_xshm=yes])
-  fi
-
-  # AIX is pathological, as usual: apparently it's normal for the Xshm headers
-  # to exist, but the library code to not exist.  And even better, the library
-  # code is in its own library: libXextSam.a.  So, if we're on AIX, and that
-  # lib doesn't exist, give up.  (This lib gets added to X_EXTRA_LIBS, and
-  # that's not quite right, but close enough.)
-  #
-  case "$host" in
-    *-aix*)
-      if [ `uname -v` -eq 3 ]; then
-        have_xshm=no
-        AC_CHECK_X_LIB(XextSam, XShmQueryExtension,
-                       [have_xshm=yes; X_EXTRA_LIBS="$X_EXTRA_LIBS -lXextSam"],
-                       [true], -lX11 -lXext -lm)
-      fi
-    ;;
-  esac
-
-  # if that succeeded, then we've really got it.
-  if test "$have_xshm" = yes; then
-    AC_DEFINE(HAVE_XSHM_EXTENSION)
-  fi
-
-elif test "$with_xshm" != no; then
-  echo "error: must be yes or no: --with-xshm-ext=$with_xshm"
-  exit 1
-fi
-
 
 ###############################################################################
 #
-#       Check for the DOUBLE-BUFFER server extension.
+#       Query AX_PTHREAD, and figure out which compiler gets used.
 #
 ###############################################################################
 
-have_xdbe=no
-with_xdbe_req=unspecified
-AC_ARG_WITH(xdbe-ext,
-[  --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.],
-  [with_xdbe="$withval"; with_xdbe_req="$withval"],[with_xdbe=yes])
+have_pthread=no
+with_pthread_req=unspecified
 
-HANDLE_X_PATH_ARG(with_xdbe, --with-xdbe-ext, DOUBLE-BUFFER)
+# AX_PTHREAD is from the GNU Autoconf Archive.
+# https://savannah.gnu.org/projects/autoconf-archive/
+m4_include(ax_pthread.m4)
 
-if test "$with_xdbe" = yes; then
+# This affects CC, LIBS, and CFLAGS, instead of defining new variables.
 
-  AC_CHECK_X_HEADER(X11/extensions/Xdbe.h, [have_xdbe=yes],,
-                    [#include <X11/Xlib.h>])
-  if test "$have_xdbe" = yes; then
-    AC_DEFINE(HAVE_DOUBLE_BUFFER_EXTENSION)    
-  fi
+AC_ARG_WITH([pthread],
+[  --with-pthread          Enables POSIX threads, for SMP support.],
+  [with_pthread="$withval"; with_pthread_req="$withval"],
+  [with_pthread=yes])
 
-elif test "$with_xdbe" != no; then
-  echo "error: must be yes or no: --with-xdbe-ext=$with_xshm"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for the SGI XReadDisplay server extension.
-#
-#       Note: this has to be down here, rather than up with the other server
-#       extension tests, so that the output of `configure --help' is in the
-#       right order.  Arrgh!
-#
-###############################################################################
-
-have_readdisplay=no
-with_readdisplay_req=unspecified
-AC_ARG_WITH(readdisplay,
-[  --with-readdisplay      Include support for the XReadDisplay extension.],
-  [with_readdisplay="$withval"; with_readdisplay_req="$withval"],
-  [with_readdisplay=yes])
-
-HANDLE_X_PATH_ARG(with_readdisplay, --with-readdisplay, XReadDisplay)
-
-if test "$with_readdisplay" = yes; then
-  AC_CHECK_X_HEADER(X11/extensions/readdisplay.h,
-                    AC_DEFINE(HAVE_READ_DISPLAY_EXTENSION),,
-                    [#include <X11/Xlib.h>])
-elif test "$with_readdisplay" != no; then
-  echo "error: must be yes or no: --with-readdisplay=$with_readdisplay"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for a directory full of images to use as the default value
-#	of the "imageDirectory" preference.
-#
-###############################################################################
-
-have_imagedir=no
-with_imagedir_req=unspecified
-
-AC_ARG_WITH(image-directory,
-[  --with-image-directory  Arg is the default directory from which some demos
-                          will choose random images to display.],
-  [with_imagedir="$withval"; with_imagedir_req="$withval"],
-  [with_imagedir=yes])
-# no HANDLE_X_PATH_ARG for this one
-
-case "$with_imagedir" in
-  /*)
-    # absolute path
-    AC_MSG_CHECKING([for image directory $with_imagedir])
-    if test -d "$with_imagedir" ; then
-      AC_MSG_RESULT(yes)
+if test "$with_pthread" = yes; then
+  # AX_PTHREAD might want a different compiler.
+  AX_PTHREAD(
+   [if test "$CC" = "$PTHREAD_CC" -o -z "$ac_original_cc"; then
+      have_pthread=yes
     else
-      AC_MSG_RESULT(no)
-      with_imagedir=""
+      ac_prog_cc_no_pthread=yes
     fi
-  ;;
-  yes)
-    with_imagedir=""
+  ])
 
-    #### Could use some more defaults here...
-    for dd in \
-      "/usr/share/backgrounds/images/"          \
-      "/usr/share/wallpapers/"                  \
-      "/Library/Desktop Pictures/"              \
-    ; do
-      if test -z "$with_imagedir"; then
-        AC_MSG_CHECKING([for image directory $dd])
-        if test -d "$dd" ; then
-          AC_MSG_RESULT(yes)
-          with_imagedir="$dd"
-        else
-          AC_MSG_RESULT(no)
-        fi
-      fi
-    done
-
-  ;;
-  no)
-    with_imagedir=""
-  ;;
-
-  *)
-    echo "error: must be an absolute path: --with-image-directory=$with_imagedir_req"
-    exit 1
-  ;;
-esac
-ac_cv_imagedir="$with_imagedir"
-
-DEFAULT_IMAGES_P='True'
-DEFAULT_IMAGE_DIRECTORY="$ac_cv_imagedir"
-
-if test -z "$DEFAULT_IMAGE_DIRECTORY" ; then
-  DEFAULT_IMAGES_P='False'
+  if test "$have_pthread" = yes; then
+    AC_DEFINE([HAVE_PTHREAD])
+    CC=$PTHREAD_CC
+  fi
 fi
 
 
 ###############################################################################
 #
-#       Pick a text file to use as the default of the "textFile" preference.
-#	Any old file will do, but preferably one that will make interesting
-#	shapes when displayed by "starwars" and "fontglide".
-#
-###############################################################################
-
-have_textfile=no
-with_textfile_req=unspecified
-
-AC_ARG_WITH(text-file,
-[  --with-text-file=FILE   By default, some demos may display this file.],
-  [with_textfile="$withval"; with_textfile_req="$withval"],
-  [with_textfile=yes])
-# no HANDLE_X_PATH_ARG for this one
-
-case "$with_textfile" in
-  /*)
-    # absolute path
-    AC_MSG_CHECKING([for text file $with_textfile])
-    if test -f "$with_textfile" ; then
-      AC_MSG_RESULT(yes)
-    else
-      AC_MSG_RESULT(no)
-      with_textfile=""
-    fi
-  ;;
-  yes)
-    with_textfile=""
-
-    #### Could use some more defaults here...
-    for f in \
-      "/usr/X11R6/lib/X11/doc/README"		   \
-      "/usr/share/doc/xserver-common/copyright"	   \
-      "/usr/share/doc/xserver-xorg-core/copyright" \
-      "/usr/X11R6/README"			   \
-      "/usr/share/doc/libX11*/COPYING"		   \
-      "/usr/X11/share/X11/doc/README*"		   \
-      "/usr/share/doc/debian/debian-manifesto"     \
-    ; do
-      if test -z "$with_textfile"; then
-        AC_MSG_CHECKING([for text file $f])
-	f=`/bin/ls $f 2>&- | head -1`
-        if test -f "$f" ; then
-          AC_MSG_RESULT(yes)
-          with_textfile="$f"
-        else
-          AC_MSG_RESULT(no)
-        fi
-      fi
-    done
-
-  ;;
-  no)
-    with_textfile=""
-  ;;
-
-  *)
-    echo "error: must be an absolute path: --with-text-file=$with_textfile_req"
-    exit 1
-  ;;
-esac
-ac_cv_textfile="$with_textfile"
-
-DEFAULT_TEXT_FILE="$ac_cv_textfile"
-
-
-###############################################################################
-#
-#       Check the browser to see help URL
-#
-###############################################################################
-
-have_browser=no
-with_browser_req=unspecified
-
-AC_ARG_WITH(browser,
-[  --with-browser=BROWSER  Specify the web browser used to show the help URL.],
-  [with_browser="$withval"; with_browser_req="$withval"],
-  [with_browser=no ])
-# no HANDLE_X_PATH_ARG for this one
-
-case "$with_browser" in
-  no )
-  ;;
-  * )
-    WITH_BROWSER=$with_browser
-    gnome_open_program=$with_browser
-    AC_MSG_CHECKING([for browser $with_browser])
-    with_browser_fullpath=`which $with_browser 2>/dev/null`
-    case $with_browser_fullpath in
-	 /* )
-	        AC_MSG_RESULT(yes)
-		 have_browser=yes
-		 ;;
-	* )
-	       AC_MSG_RESULT(no)
-# Only warning: we don't want to install all packages for the 
-# dependency of the browser in building stage...
-	       echo "WARNING: browser not found: --with-browser=$with_browser"
-	       ;;
-    esac
-  ;;
-esac
-ac_cv_browser="$with_browser"
-
-###############################################################################
-#
-#       Check whether it's ok to install some hacks as setuid (e.g., "sonar")
-#       This should be safe, but let's give people the option.
-#
-###############################################################################
-
-setuid_hacks_default=no
-setuid_hacks="$setuid_hacks_default"
-AC_ARG_WITH(setuid-hacks,
-[  --with-setuid-hacks     Allow some demos to be installed `setuid root'
-                          (which is needed in order to ping other hosts.)],
-  [setuid_hacks="$withval"], [setuid_hacks="$setuid_hacks_default"])
-
-HANDLE_X_PATH_ARG(setuid_hacks, --with-setuid-hacks, setuid hacks)
-
-if test "$setuid_hacks" = yes; then
-  true
-elif test "$setuid_hacks" != no; then
-  echo "error: must be yes or no: --with-setuid-hacks=$setuid_hacks"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for setcap, which is less worrying than setuid.
+#       Check for libcap, which allows "sonar" to work without setuid.
 #
 ###############################################################################
 
@@ -3993,8 +4033,8 @@ setcap_hacks_default=yes
 setcap_hacks="$setcap_hacks_default"
 setcap_hacks_req=unspecified
 AC_ARG_WITH(setcap-hacks,
-[  --with-setcap-hacks     Allow some demos to be installed with setcap
-                          (which is needed in order to ping other hosts.)],
+[  --with-setcap-hacks     Build the "sonar" demo with libcap, which allows
+                          it to ping other hosts without being setuid.],
   [setcap_hacks="$withval"; setcap_hacks_req="$withval"],
   [setcap_hacks=yes])
 
@@ -4018,6 +4058,35 @@ if test "$setcap_hacks" = yes; then
                     LIBCAP_LIBS="-lcap"
                     AC_DEFINE(HAVE_LIBCAP)])
   fi
+fi
+
+
+###############################################################################
+#
+#       Option to prevent "sonar" from working properly.
+#	It must be setuid on systems without libcap.
+#
+###############################################################################
+
+if test "$have_libcap" = yes; then
+  setuid_hacks_default=no
+else
+  setuid_hacks_default=yes
+fi
+
+setuid_hacks="$setuid_hacks_default"
+AC_ARG_WITH(setuid-hacks,
+[  --with-setuid-hacks     Install the "sonar" demo as setuid root, which is
+                          needed in order to ping other hosts without setcap.],
+  [setuid_hacks="$withval"], [setuid_hacks="$setuid_hacks_default"])
+
+HANDLE_X_PATH_ARG(setuid_hacks, --with-setuid-hacks, setuid hacks)
+
+if test "$setuid_hacks" = yes; then
+  true
+elif test "$setuid_hacks" != no; then
+  echo "error: must be yes or no: --with-setuid-hacks=$setuid_hacks"
+  exit 1
 fi
 
 
@@ -4052,6 +4121,7 @@ if test "$record_anim" = yes; then
     ANIM_LIBS='$(ANIM_LIBS)'
   fi
 fi
+
 
 ###############################################################################
 #
@@ -4265,9 +4335,6 @@ AC_SUBST(DEFAULT_IMAGES_P)
 AC_SUBST(DEFAULT_IMAGE_DIRECTORY)
 AC_SUBST(DEFAULT_TEXT_FILE)
 AC_SUBST(WITH_BROWSER)
-AC_SUBST(COMMENT_DEMO_GLADE2_GTK_2_22_HEAD)
-AC_SUBST(COMMENT_DEMO_GLADE2_GTK_2_22_TAIL)
-
 
 AC_SUBST(OBJCC)
 AC_SUBST(EXES_OSX)
@@ -4327,7 +4394,6 @@ AC_OUTPUT(Makefile
           po/Makefile.in
           driver/Makefile
           driver/xscreensaver.pam
-          driver/xscreensaver-demo.glade2
           driver/XScreenSaver.ad)
 
 ###############################################################################
@@ -4404,6 +4470,10 @@ fi
 
 if test "$with_xidle_req" = yes -a "$have_xidle" = no ; then
   warn 'The XIdle extension was requested, but was not found.'
+fi
+
+if test "$with_mit_req" = yes -a "$have_mit" = no ; then
+  warn 'The MIT-SCREEN-SAVER extension was requested, but was not found.'
 fi
 
 if test "$with_xshm_req" = yes -a "$have_xshm" = no ; then
@@ -4652,19 +4722,29 @@ if test "$have_xft" = no ; then
 fi
 
 
+if test "$have_bitmap_fonts" = no ; then
+  warnL 'The standard bitmap fonts do not seem to be installed.'
+  warn2 'That is not going to work out well for you.'
+  warn2 'Install "xfonts-100dpi" or "xorg-x11-fonts-100dpi".'
+fi
+
+
 if test "$have_systemd" = no ; then
   systemd_warned=no
-  if test "$with_systemd_req" = yes ; then
+  if test "$systemd_too_old" = yes ; then
+    warnL "The systemd library is too old."
+    systemd_warned=yes
+  elif test "$with_systemd_req" = yes ; then
     warnL "Use of systemd was requested, but it was not found."
     systemd_warned=yes
+  elif test "$ac_macosx" = yes; then
+    true
   elif test "$with_systemd_req" = no ; then
-    true
-    # noteL 'The systemd library is not being used.'
-    # systemd_warned=yes
+    noteL 'The systemd library is not being used.'
+    systemd_warned=yes
   else
-    true
-    # noteL "The systemd library was not found."
-    # systemd_warned=yes
+    warnL "The systemd library was not found."
+    systemd_warned=yes
   fi
 
   if test "$systemd_halfassed" = yes ; then
@@ -4678,7 +4758,11 @@ if test "$have_systemd" = no ; then
   fi
 
   if test "$systemd_warned" = yes; then
+    echo ''
     warn2 "This means that xscreensaver-systemd won't be built."
+    warn2 "Without that, xscreensaver will not be able to auto-lock"
+    warn2 "before the system is suspended (e.g., closing laptop lid)"
+    warn2 "and might activate while video playback is in progress."
   fi
 fi
 
@@ -4819,8 +4903,6 @@ for bad_choice in xscreensaver xscreensaver-demo xscreensaver-command ; do
 done
 
 
-do_dir_warning=no
-
 # Now let's warn if there's a previous RPM version already installed.
 # But don't bother with this test if we are currently *building* an RPM.
 
@@ -4836,27 +4918,38 @@ if test -z "$RPM_PACKAGE_VERSION" ; then
   changequote([,])
 
   if test \! -z "$rpmv" ; then
-    rpmbdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
-    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/popsquares$@\1@p'`
+
+    # M4 sucks!!
+    changequote(A,B)
+    rpmbdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)xscreensaver-demo$@\1@p'`
+    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)popsquares$@\1@p'`
+    rpmcdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)popsquares\.xml$@\1@p'`
+    rpmadir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)XScreenSaver$@\1@p'`
+    changequote([,])
+
+    err=" (DIFFERS)"
+    if test -z "$rpmbdir" ; then rpmbdir='???'
+    elif test "$rpmbdir" != "${bindir}/"       ; then rpmbdir="$rpmbdir$err";fi
+
+    if test -z "$rpmhdir" ; then rpmhdir='???'
+    elif test "$rpmhdir" != "${HACKDIR}/"      ; then rpmhdir="$rpmhdir$err";fi
+
+    if test -z "$rpmcdir" ; then rpmcdir='???'
+    elif test "$rpmcdir" != "${HACK_CONF_DIR}/"; then rpmcdir="$rpmcdir$err";fi
+
+    if test -z "$rpmadir" ; then rpmadir='???'
+    elif test "$rpmadir" != "${APPDEFAULTS}/"  ; then rpmadir="$rpmadir$err";fi
 
     warning=no
-    warnL "There is already an installed RPM of xscreensaver $rpmv"
-    warn2 'on this system.  You might want to remove it ("rpm -ve")'
-    warn2 'before running "make install" in this directory.'
+    warnL "There is already an installed RPM of xscreensaver"
+    warn2 "version \"$rpmv\" on this system."
     echo ""
-    warn2 "Alternately, you could build this version of xscreensaver"
-    warn2 'as an RPM, and then install that.  An "xscreensaver.spec"'
-    warn2 'file is included.  Try "rpmbuild -v -ba xscreensaver.spec".'
-    warn2 "See the RPM documentation for more info."
+    warn2 "It is currently installed in these directories:"
     echo ""
-
-    if test "$rpmbdir" = "$rpmhdir" ; then
-      warn2 "The RPM version was installed in $rpmbdir/."
-      do_dir_warning=yes
-    else
-      warn2 "The RPM version was installed in $rpmbdir/,"
-      warn2 "with demos in $rpmhdir/."
-    fi
+    warn2 "User programs: $rpmbdir$berr"
+    warn2 "Screen savers: $rpmhdir$herr"
+    warn2 "Configuration: $rpmcdir$cerr"
+    warn2 "App Defaults:  $rpmadir$aerr"
   fi
 fi
 
@@ -4871,54 +4964,47 @@ for dpkg in $debnames ; do
 done
 
 if test \! -z "$debv" ; then
-  debbdir=`dpkg -L $debnames 2>/dev/null | \
-            sed -n 's@^\(.*/bin/\)xscreensaver$@\1@p'`
-  debhdir=`dpkg -L $debnames 2>/dev/null | \
-            sed -n 's@^\(.*/\)popsquares$@\1@p'`
-  if test -z "$debbdir" ; then debbdir='???'; fi
-  if test -z "$debhdir" ; then debhdir='???'; fi
+
+  # M4 sucks!!
+  changequote(A,B)
+  debbdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/bin/\)xscreensaver$@\1@p'`
+  debhdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)popsquares$@\1@p'`
+  debcdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)popsquares\.xml$@\1@p'`
+  debadir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)XScreenSaver[^/]*$@\1@p'`
+  changequote([,])
+
+  err=" (DIFFERS)"
+  if test -z "$debbdir" ; then debbdir='???'
+  elif test "$debbdir" != "${bindir}/"        ; then debbdir="$debbdir$err"; fi
+
+  if test -z "$debhdir" ; then debhdir='???'
+  elif test "$debhdir" != "${HACKDIR}/"       ; then debhdir="$debhdir$err"; fi
+
+  if test -z "$debcdir" ; then debcdir='???'
+  elif test "$debcdir" != "${HACK_CONF_DIR}/" ; then debcdir="$debcdir$err"; fi
+
+  if test -z "$debadir" ; then debadir='???'
+  elif test "$debadir" != "${APPDEFAULTS}/"   ; then debadir="$debadir$err"; fi
 
   warning=no
   warnL "There is already an installed dpkg of xscreensaver"
   warn2 "version \"$debv\" on this system."
   echo ""
-  warn2 "The dpkg was installed in $debbdir,"
-  warn2 "with demos in $debhdir."
-fi
-
-
-if test "${bindir}" = "${HACKDIR}" ; then
-  do_dir_warning=yes
-fi
-
-if test "$do_dir_warning" = yes; then
+  warn2 "It is currently installed in these directories:"
   echo ""
-  echo "$warnsep"
-  echo ""
-  echo '      When you run "make install", the "xscreensaver",'
-  echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
-  echo "      will be installed in ${bindir}/."
-  echo ""
-  echo "      The various graphics demos (200+ different executables) will"
-  echo "      be installed in ${HACKDIR}/."
-  echo ""
-  echo "      If you would prefer the demos to be installed elsewhere,"
-  echo "      you should re-run configure with the --with-hackdir=DIR"
-  echo "      option.  For more information, run \`./configure --help'."
-  warning=yes
+  warn2 "User programs: $debbdir$berr"
+  warn2 "Screen savers: $debhdir$herr"
+  warn2 "Configuration: $debcdir$cerr"
+  warn2 "App Defaults:  $debadir$aerr"
 fi
 
-if test "$warning" != no; then
-  echo '' ; echo "$warnsep" ; echo ''
-fi
-
-if test "$do_dir_warning" = no; then
-  if test "$warning" = no; then
-    echo ''
-  fi
-  echo "User programs will be installed in ${bindir}/"
-  echo "Screen savers will be installed in ${HACKDIR}/"
-  echo "Configuration dialogs will be installed in ${HACK_CONF_DIR}/"
-  echo "System-wide default settings will be installed in ${APPDEFAULTS}/"
-  echo ''
-fi
+echo ""
+echo "$warnsep"
+echo ""
+echo "    XScreenSaver will be installed in these directories:"
+echo ""
+echo "             User programs: ${bindir}/"
+echo "             Screen savers: ${HACKDIR}/"
+echo "             Configuration: ${HACK_CONF_DIR}/"
+echo "             App Defaults:  ${APPDEFAULTS}/"
+echo ""

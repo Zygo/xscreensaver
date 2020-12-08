@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "May 2004"
 .SH NAME
-providence - eye in glory screenhack
+providence \- eye in glory screenhack
 .SH SYNOPSIS
 .B providence
 [\-display \fIhost:display.screen\fP]

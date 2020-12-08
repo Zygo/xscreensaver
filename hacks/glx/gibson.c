@@ -441,10 +441,6 @@ draw_tower_face_text (ModeInfo *mi, GLfloat height, Bool which)
   Bool wire2 = False;   /* Debugging quads */
   Bool bg_p = (which == 1 && do_tex && !wire);
 
-  glColor4fv (which ? bp->tower_color2 : bp->tower_color);
-  glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, 
-                which ? bp->tower_color2 : bp->tower_color);
-
   /* The texture is a tex_width x tex_height rectangle, of which we 
      only use the rbearing+lbearing x ascent+descent sub-rectangle.
      Texture coordinates reference the tex_width x tex_height rectangle
@@ -478,6 +474,10 @@ draw_tower_face_text (ModeInfo *mi, GLfloat height, Bool which)
   GLfloat m2 = margin/2 / (which ? 1 : columns);
   GLfloat m3 = m2 / (which ? 1 : height);
   GLfloat h2 = height * (which ? 1-margin : 1);
+
+  glColor4fv (which ? bp->tower_color2 : bp->tower_color);
+  glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, 
+                which ? bp->tower_color2 : bp->tower_color);
 
   glBindTexture (GL_TEXTURE_2D, bp->text[n].texid);
 
@@ -1306,7 +1306,6 @@ free_gibson (ModeInfo *mi)
   if (!bp->glx_context) return;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
-  if (bp->towers) free (bp->towers);
   if (bp->rot)  free_rotator (bp->rot);
   if (bp->rot2) free_rotator (bp->rot2);
   if (glIsList(bp->ground_dlist)) glDeleteLists(bp->ground_dlist, 1);
@@ -1316,16 +1315,17 @@ free_gibson (ModeInfo *mi)
       if (bp->text[i].font_data) free_texture_font (bp->text[i].font_data);
       if (bp->text[i].text) free (bp->text[i].text);
     }
-  for (i = 0; i < bp->ntowers; i++)
-    {
-      for (j = 0; j < countof(bp->towers[i].fg_dlists); j++)
-        {
-          if (glIsList(bp->towers[i].fg_dlists[j]))
-            glDeleteLists(bp->towers[i].fg_dlists[j], 1);
-          if (glIsList(bp->towers[i].bg_dlists[j]))
-            glDeleteLists(bp->towers[i].bg_dlists[j], 1);
-        }
-    }
+  if (bp->towers)
+    for (i = 0; i < bp->ntowers; i++)
+      {
+        for (j = 0; j < countof(bp->towers[i].fg_dlists); j++)
+          {
+            if (glIsList(bp->towers[i].fg_dlists[j]))
+              glDeleteLists(bp->towers[i].fg_dlists[j], 1);
+            if (glIsList(bp->towers[i].bg_dlists[j]))
+              glDeleteLists(bp->towers[i].bg_dlists[j], 1);
+          }
+      }
 }
 
 

@@ -131,7 +131,7 @@ Bool pam_priv_init (int argc, char **argv, Bool verbose_p);
    set up an "xscreensaver" PAM service.  However, if we went that route,
    it would have a really awful failure mode: the failure mode would be that
    xscreensaver was willing to *lock* the screen, but would be unwilling to
-   *unlock* the screen.  (With the non-PAM password code, the analagous
+   *unlock* the screen.  (With the non-PAM password code, the analogous
    situation -- security not being configured properly, for example do to the
    executable not being installed as setuid root -- the failure mode is much
    more palettable, in that xscreensaver will refuse to *lock* the screen,

@@ -1,6 +1,6 @@
 .TH "Binary Ring" 1 "02-Sep-14" "X Version 11"
 .SH NAME
-binaryring - A system of path tracing particles evolves continuously from an initial creation. 
+binaryring \- A system of path tracing particles evolves continuously from an initial creation. 
 .SH SYNOPSIS
 .B binaryring
 [\-fps]

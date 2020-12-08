@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-raverhoop - Simulates an LED hula hoop in a dark room.
+raverhoop \- Simulates an LED hula hoop in a dark room.
 .SH SYNOPSIS
 .B raverhoop
 [\-display \fIhost:display.screen\fP]

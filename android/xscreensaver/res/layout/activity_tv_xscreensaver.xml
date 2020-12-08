@@ -30,7 +30,7 @@
             android:id="@+id/apply_daydream"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Open Daydream list" />
+            android:text="Open screen saver list" />
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

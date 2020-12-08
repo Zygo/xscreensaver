@@ -192,7 +192,7 @@ JPEG_EXES	= webcollage-helper
 
 RETIRED_EXES	= ant bubbles critical flag forest hyperball hypercube laser \
 		  lightning lisa lissie lmorph rotor sphere spiral t3d vines \
-		  whirlygig worm xsublim juggle testx11
+		  whirlygig worm xsublim juggle
 
 HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
@@ -388,7 +388,7 @@ uninstall-xml:
 	done
 
 clean::
-	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) m6502.h
+	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) m6502.h testx11
 
 distclean: clean
 	-rm -f Makefile TAGS *~ "#"*
@@ -571,8 +571,7 @@ xscreensaver-sgigl: xscreensaver-sgigl.c
 		$(XMU_LIBS) -lX11 -lXext $(X_EXTRA_LIBS) -lm
 
 test-utf8wc: $(UTILS_SRC)/utf8wc.c
-	$(CC) $(HACK_CFLAGS_BASE) $(LDFLAGS)\
-	-o $@ -DSELFTEST $<
+	$(CC) $(HACK_CFLAGS_BASE) $(LDFLAGS) -o $@ -DSELFTEST $<
 
 # Make sure the images have been packaged. This is the first one hit:
 images/gen/som_png.h:
@@ -665,7 +664,7 @@ starfish:	starfish.o	$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
 munch:		munch.o		$(HACK_OBJS) $(COL) $(SPL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(UTILS_BIN)/pow2.o $(HACK_LIBS)
 
 rd-bomb:	rd-bomb.o	$(HACK_OBJS) $(COL) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS) $(THRL)
@@ -1309,6 +1308,8 @@ bsod.o: images/gen/apple_png.h
 bsod.o: images/gen/atari_png.h
 bsod.o: images/gen/atm_png.h
 bsod.o: images/gen/dvd_png.h
+bsod.o: images/gen/gnome1_png.h
+bsod.o: images/gen/gnome2_png.h
 bsod.o: images/gen/hmac_png.h
 bsod.o: images/gen/macbomb_png.h
 bsod.o: images/gen/mac_png.h
@@ -2366,6 +2367,7 @@ munch.o: $(UTILS_SRC)/colors.h
 munch.o: $(UTILS_SRC)/font-retry.h
 munch.o: $(UTILS_SRC)/grabscreen.h
 munch.o: $(UTILS_SRC)/hsv.h
+munch.o: $(UTILS_SRC)/pow2.h
 munch.o: $(UTILS_SRC)/resources.h
 munch.o: $(UTILS_SRC)/usleep.h
 munch.o: $(UTILS_SRC)/visual.h

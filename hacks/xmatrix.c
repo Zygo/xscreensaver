@@ -1307,7 +1307,7 @@ hack_text (m_state *state)
       if (state->typing_cursor_p)
         set_cursor (state, True);
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   /* Stupid iPhone X bezel.
      #### This is the worst of all possible ways to do this!  But how else?
    */

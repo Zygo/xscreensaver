@@ -9,7 +9,7 @@
  * implied warranty.
  */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <Foundation/Foundation.h>
 # import <UIKit/UIKit.h>
 # import <OpenGLES/EAGL.h>
@@ -33,7 +33,7 @@
 
 #import "XScreenSaverView.h"
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 
 @class SaverRunner;
 
@@ -54,7 +54,7 @@
 #endif
 
 @interface SaverRunner : NSObject
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   <XScreenSaverViewDelegate>
 # else
   <NSWindowDelegate>
@@ -64,14 +64,14 @@
   NSArray  *saverNames;		// Names of available savers
   NSString *saverDir;		// Where we find saver bundles
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
   NSBundle *saverBundle;
   NSArray  *windows;
   IBOutlet NSMenu *menubar;
   NSTimer *anim_timer;
 
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
 
   UINavigationController *rotating_nav;		// Hierarchy 1 (UI)
   IBOutlet UIWindow *window;
@@ -81,7 +81,7 @@
 
   UIImage *saved_screenshot;
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 }
 
 - (XScreenSaverView *) newSaverView: (NSString *) module
@@ -89,12 +89,12 @@
 - (void) loadSaver: (NSString *)name;
 - (void) selectedSaverDidChange:(NSDictionary *)change;
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 - (void) openPreferences: (id)sender;
-#else  // USE_IPHONE
+#else  // HAVE_IPHONE
 - (UIImage *) screenshot;
 - (NSString *) makeDesc:(NSString *)saver
                yearOnly:(BOOL) yearp;
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 @end

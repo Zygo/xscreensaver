@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "10-May-97" "X Version 11"
 .SH NAME
-vines - draws pseudo-fractal geometric patterns
+vines \- draws pseudo-fractal geometric patterns
 .SH SYNOPSIS
 .B vines
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP]

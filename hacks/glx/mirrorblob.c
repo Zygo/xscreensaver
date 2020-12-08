@@ -169,7 +169,7 @@ static OptionStruct desc[] =
     {"-resolution", "Resolution of blob tesselation"},
     {"-bumps", "Number of bumps used to disturb blob"},
     {"-motion_blur", "Fade blob images (higher number = faster fade)"},
-    {"-fade_time", "Number of frames to transistion to next image"},
+    {"-fade_time", "Number of frames to transition to next image"},
     {"-hold_time", "Number of frames before next image"},
 };
 

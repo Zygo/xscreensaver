@@ -55,7 +55,7 @@ Food is ditributed randomly on the screen (Yes, the cells need to eat). This par
 maximum amount of food per pixel. Default is 20.
 .TP 8
 .B \-divideage \fInum\fP\fP
-Specifies the minimum age in frames a cell needs to have before beeing able to divide. Default is 20
+Specifies the minimum age in frames a cell needs to have before being able to divide. Default is 20
 .TP 8
 .B \-mindist \fInum\fP\fP
 Specifies the minimum distance between cells. Default 1.4

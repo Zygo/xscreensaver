@@ -19,7 +19,7 @@
 
 #import <stdlib.h>
 #import <stdint.h>
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 # import <Cocoa/Cocoa.h>
 #else
 # import "SaverRunner.h"
@@ -31,7 +31,7 @@
 #import "usleep.h"
 
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # define NSImage UIImage
 #endif
 
@@ -248,7 +248,7 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
 }
 
 
-#elif defined(USE_IPHONE)
+#elif defined(HAVE_IPHONE)
 
 	/* What a hack!
 
@@ -366,7 +366,7 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
 #endif /* 10.5+ code */
 
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
 /* Returns the EXIF rotation property of the image, if any.
  */
@@ -426,7 +426,7 @@ exif_rotation (const char *filename)
 # endif /* 10.5 */
 }
 
-# endif /* USE_IPHONE */
+# endif /* HAVE_IPHONE */
 
 
 
@@ -439,7 +439,7 @@ Bool
 osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
                      const char *filename, XRectangle *geom_ret)
 {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
   if (!filename || !*filename) return False;
 
@@ -455,10 +455,10 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
   [img release];
   return True;
 
-# else  /* USE_IPHONE */
+# else  /* HAVE_IPHONE */
 
   /* This is handled differently: see grabclient.c and grabclient-ios.m. */
   return False;
 
-# endif /* USE_IPHONE */
+# endif /* HAVE_IPHONE */
 }

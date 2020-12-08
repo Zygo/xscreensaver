@@ -381,6 +381,8 @@ static void load_station_images(struct state *st)
 #endif
     else if (img_file && *img_file) {
 
+      analogtv_input *input;
+
       /* Load a single image file into every free channel. */
       if (! ximage) {
         int w, h;
@@ -389,7 +391,7 @@ static void load_station_images(struct state *st)
         XFreePixmap (st->dpy, p);
       }
 
-      analogtv_input *input = st->stations[i];
+      input = st->stations[i];
       analogtv_setup_sync(input, 1, (random()%20)==0);
       analogtv_load_ximage (st->tv, input, ximage, 0, 0, 0, 0, 0);
       analogtv_setup_teletext(input);

@@ -12,7 +12,7 @@
 /* iOS 8+ code to choose and return a random image from the photo library.
  */
 
-#ifdef USE_IPHONE  // whole file
+#ifdef HAVE_IPHONE  // whole file
 
 #import <Photos/Photos.h>
 #import "grabscreen.h"
@@ -92,4 +92,4 @@ ios_load_random_image (void (*callback) (void *uiimage, const char *fn,
     callback (0, 0, 0, 0, closure);
 }
 
-#endif  // USE_IPHONE - whole file
+#endif  // HAVE_IPHONE - whole file

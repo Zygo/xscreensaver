@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-moebius - Escher's Moebuis Strip II, with ants.
+moebius \- Escher's Moebuis Strip II, with ants.
 .SH SYNOPSIS
 .B moebius
 [\-display \fIhost:display.screen\fP]

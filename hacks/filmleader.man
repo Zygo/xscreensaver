@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-filmleader - screen saver.
+filmleader \- screen saver.
 .SH SYNOPSIS
 .B filmleader
 [\-display \fIhost:display.screen\fP]

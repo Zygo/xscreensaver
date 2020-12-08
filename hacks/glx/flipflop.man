@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-flipflop - draws a grid of 3D squares that change positions
+flipflop \- draws a grid of 3D squares that change positions
 .SH SYNOPSIS
 .B flipflop
 [\-display \fIhost:display.screen\fP]

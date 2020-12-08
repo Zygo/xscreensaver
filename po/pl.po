@@ -5950,7 +5950,7 @@ msgstr "Długi"
 #, fuzzy
 msgid ""
 "This draws the three-dimensional variant of the recursive Menger Gasket, a "
-"cube-based fractal object analagous to the Sierpinski Tetrahedron. Written "
+"cube-based fractal object analogous to the Sierpinski Tetrahedron. Written "
 "by Jamie Zawinski."
 msgstr ""
 "Rysuje w dwóch wymiarach rekurencyjnie fraktal - trójkąt Sierpińskiego. "

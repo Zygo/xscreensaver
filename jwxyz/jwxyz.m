@@ -26,7 +26,7 @@
 #import <stdint.h>
 #import <wchar.h>
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <UIKit/UIKit.h>
 # import <UIKit/UIScreen.h>
 # import <QuartzCore/QuartzCore.h>
@@ -66,7 +66,7 @@ struct jwxyz_Display {
   Visual visual;
   struct jwxyz_sources_data *timers_data;
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   CGDirectDisplayID cgdpy;  /* ...of the one and only Window, main_window.
                                This can change if the window is dragged to
                                a different screen. */
@@ -399,7 +399,7 @@ jwxyz_window_resized (Display *dpy)
 {
   Window w = dpy->main_window;
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   // Figure out which screen the window is currently on.
   {
     int wx, wy;
@@ -417,7 +417,7 @@ jwxyz_window_resized (Display *dpy)
     }
     Assert (dpy->cgdpy, "unable to find CGDisplay");
   }
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
 /*
   {
@@ -1394,9 +1394,9 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
                                XRectangle *geom_ret, int exif_rotation)
 {
   CGImageRef cgi;
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   CGImageSourceRef cgsrc;
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
   NSSize imgr;
 
   CGContextRef cgc = d->cgc;
@@ -1406,7 +1406,7 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
     NSImage *nsimg = (NSImage *) img_arg;
     imgr = [nsimg size];
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
     // convert the NSImage to a CGImage via the toll-free-bridging 
     // of NSData and CFData...
     //
@@ -1416,9 +1416,9 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
     CFDataRef cfdata = (CFDataRef) nsdata;
     cgsrc = CGImageSourceCreateWithData (cfdata, NULL);
     cgi = CGImageSourceCreateImageAtIndex (cgsrc, 0, NULL);
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
     cgi = nsimg.CGImage;
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   } else {
     cgi = (CGImageRef) img_arg;
@@ -1481,12 +1481,12 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
   CGContextDrawImage (cgc, dst2, cgi);
   CGContextRestoreGState (cgc);
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   if (nsimg_p) {
     CFRelease (cgsrc);
     CGImageRelease (cgi);
   }
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   if (geom_ret) {
     geom_ret->x = dst.origin.x;
@@ -1507,7 +1507,7 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
                                     [NSData dataWithBytes:png_data
                                             length:data_size]];
   if (! img) return 0;
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
   NSBitmapImageRep *bm = [NSBitmapImageRep
                            imageRepWithData:
                              [NSBitmapImageRep
@@ -1525,7 +1525,7 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
   convert_mode_t mode = (([bm bitmapFormat] & NSAlphaFirstBitmapFormat)
                          ? CONVERT_MODE_ROTATE_MASK
                          : 0);
-#else  // USE_IPHONE
+#else  // HAVE_IPHONE
   CGImageRef cgi = [img CGImage];
   if (!cgi) {
     [img release];
@@ -1547,7 +1547,7 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
 
   convert_mode_t mode = convert_mode_to_rgba (bitmap_info);
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
   XImage *image = XCreateImage (dpy, visual, 32, ZPixmap, 0, 0,
                                 width, height, 8, 0);
@@ -1567,7 +1567,7 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
 
   [img release];
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
   // [bm release];
 # else
   CGContextRelease (cgc);

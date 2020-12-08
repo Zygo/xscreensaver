@@ -18,11 +18,15 @@
 
 #undef usleep /* conflicts with unistd.h on OSX */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
   /* Note: to get this to compile for iPhone, you need to fix Xcode!
      The icmp headers exist for the simulator build environment, but
      not for the real-device build environment.  This appears to 
-     just be an Apple bug, not intentional.
+     just be an Apple bug, not intentional.  But it has existed for
+     many years.
+
+     The "ICMP Sanity Check" build phase in the Xcode project checks
+     this and tells you what to do.
 
      xc=/Applications/Xcode.app/Contents
      for path in    /Developer/Platforms/iPhone*?/Developer/SDKs/?* \
@@ -452,12 +456,13 @@ read_hosts_file (sonar_sensor_data *ssd, const char *filename)
   fp = fopen(filename, "r");
   if (!fp)
     {
-      char buf2[1024];
-      sprintf(buf2, "%s:  %s", progname, filename);
 #ifdef HAVE_JWXYZ
       if (pd->debug_p)  /* on OSX don't syslog this */
 #endif
-        perror (buf2);
+        {
+          char *str_error = strerror(errno);
+          fprintf(stderr, "%s:  %s: %s", progname, filename, str_error);
+        }
       return 0;
     }
 
@@ -1248,7 +1253,7 @@ get_ping (sonar_sensor_data *ssd)
                 if (strlen(s) > 28)
                   {
                     s2 = s + strlen(s) - 28;
-                    strncpy (s2, "...", 3);
+                    memcpy (s2, "...", 3);
                   }
                 fprintf (stdout, 
                          "%3d bytes from %28s: icmp_seq=%-4d time=%s\n",
@@ -1735,7 +1740,7 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
       if (! *error_ret)
         *error_ret = strdup ("No hosts to ping!\n"
                              "Simulating instead.");
-      if (pd) ping_free_data (ssd, pd);
+      ping_free_data (ssd, pd);
       if (ssd) free (ssd);
       return 0;
     }

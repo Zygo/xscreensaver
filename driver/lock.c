@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-2018 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1928,6 +1928,15 @@ passwd_event_loop (saver_info *si)
 	  if (si->pw_data->login_button_p)
 	    handle_login_button (si, &event.x_event);
 	}
+      else if (event.x_event.xany.type == ClientMessage &&
+               event.x_event.xclient.message_type == XA_SCREENSAVER &&
+               event.x_event.xclient.format == 32)
+        {
+          const char *msg =
+            "ClientMessage ignored while authentication dialog is active";
+          clientmessage_response (si, event.x_event.xclient.window,
+                                  True, msg, msg);
+        }
       else
 	XtDispatchEvent (&event.x_event);
     }

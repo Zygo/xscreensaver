@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-polytopes - Draws one of the six regular 4d polytopes rotating in 4d.
+polytopes \- Draws one of the six regular 4d polytopes rotating in 4d.
 .SH SYNOPSIS
 .B polytopes
 [\-display \fIhost:display.screen\fP]
@@ -45,7 +45,7 @@ polytope in its unrotated position.  In the first case, the polytope
 is drawn in red.  This coloring combined with transparency gives a
 nice visual effect of the structure of the polytope.  The second mode
 draws the polytope with a fully saturated color wheel in which the
-edges or faces are colored accoring to their average 4d "depth".  This
+edges or faces are colored according to their average 4d "depth".  This
 mode is best combined with the wireframe mode, where it allows you to
 see how different parts of the polytope are moved to the "inside" of
 the projected polytope in 3d.  Of course, in 4d the cells, faces, and
@@ -126,7 +126,7 @@ Display the polytope in red.
 .TP 8
 .B \-depth-colors
 Display the polytope with a fully saturated color wheel in which the
-edges or faces are colored accoring to their average 4d "depth", i.e.,
+edges or faces are colored according to their average 4d "depth", i.e.,
 the w coordinate of the polytope in its unrotated position (default).
 .PP
 The following two options are mutually exclusive.  They determine how

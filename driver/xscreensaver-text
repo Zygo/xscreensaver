@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2019 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2020 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -37,7 +37,7 @@ use Text::Wrap qw(wrap);
 #use bytes;  # This breaks shit.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.48 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.49 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -529,8 +529,13 @@ sub reformat_html($$) {
   if (!defined($wrap_columns) || $wrap_columns > 0) {
     $Text::Wrap::columns = ($wrap_columns || 72);
     $Text::Wrap::break = '[\s/|]';  # wrap on slashes for URLs
-    $_ = wrap ("", "  ", $_);       # wrap the lines as a paragraph
-    s/[ \t]+$//gm;                  # lose whitespace at end of line again
+
+    # Text::Wrap sometimes dies with "This shouldn't happen" if columns
+    # is small, but not in any predictable way.
+    eval {
+      $_ = wrap ("", "  ", $_);     # wrap the lines as a paragraph
+      s/[ \t]+$//gm;                # lose whitespace at end of line again
+    };
   }
 
   s/^\n+//gs;
@@ -658,8 +663,13 @@ sub reformat_text($) {
     print STDERR "$progname: wrapping at $wrap_columns...\n" if ($verbose > 2);
     $Text::Wrap::columns = $wrap_columns;
     $Text::Wrap::break = '[\s/]';  # wrap on slashes for URLs
-    $body = wrap ("", "", $body);
-    $body =~ s/[ \t]+$//gm;
+
+    # Text::Wrap sometimes dies with "This shouldn't happen" if columns
+    # is small, but not in any predictable way.
+    eval {
+      $body = wrap ("", "", $body);
+      $body =~ s/[ \t]+$//gm;
+    };
   }
 
   if ($truncate_lines) {
@@ -842,13 +852,12 @@ sub main() {
     else { usage; }
   }
 
+  if (!defined ($cocoa_id)) {
+    # see OSX/XScreenSaverView.m
+    $cocoa_id = $ENV{XSCREENSAVER_CLASSPATH};
+  }
+
   if ($load_p) {
-
-    if (!defined ($cocoa_id)) {
-      # see OSX/XScreenSaverView.m
-      $cocoa_id = $ENV{XSCREENSAVER_CLASSPATH};
-    }
-
     if (defined ($cocoa_id)) {
       get_cocoa_prefs($cocoa_id);
     } else {

@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-engine - draws a 3D four-stroke engine.
+engine \- draws a 3D four-stroke engine.
 .SH SYNOPSIS
 .B engine
 [\-display \fIhost:display.screen\fP]

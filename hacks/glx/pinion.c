@@ -907,7 +907,7 @@ push_gear (ModeInfo *mi)
       fprintf (stderr, " %3.0f rpm;", g->rpm);
 
       {
-        char buf1[50], buf2[50], buf3[100];
+        char buf1[50], buf2[50], buf3[200];
         *buf1 = 0; *buf2 = 0; *buf3 = 0;
         if (pp->debug_size_failures)
           sprintf (buf1, "%3d sz", pp->debug_size_failures);

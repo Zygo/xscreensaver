@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "13-aug-92" "X Version 11"
 .SH NAME
-noseguy - a little guy with a big nose wanders around being witty
+noseguy \- a little guy with a big nose wanders around being witty
 .SH SYNOPSIS
 .B noseguy
 [\-display \fIhost:display.screen\fP]

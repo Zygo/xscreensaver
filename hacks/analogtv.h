@@ -15,7 +15,7 @@
 #include "thread_util.h"
 #include "xshm.h"
 
-#if defined(USE_IPHONE) || defined(HAVE_ANDROID)
+#if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
 # define HAVE_MOBILE
 #endif
 

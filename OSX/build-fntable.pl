@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2019 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2020 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.7 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.8 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -37,6 +37,8 @@ my %disable = (
    'lockward'		=> 1,
    'webcollage'		=> 1,
    'testx11'		=> 1,
+   'covid19'		=> 1,  # Fuck you, Apple.
+   'co____9'		=> 1,  # Double-fuck you.
   );
 
 # Parse specified variables from a Makefile.
@@ -75,6 +77,7 @@ sub build_h($) {
     (values parse_makefile_vars ('../hacks/Makefile.in', 'EXES')),
     (values parse_makefile_vars ('../hacks/glx/Makefile.in', 'GL_EXES',
                                  'SUID_EXES'))) {
+    $var =~ s/covid19/co____9/gs;
     foreach my $name (split (/\s+/, $var)) {
       if ($name =~ /@/ || $disable{$name}) {
         print STDERR "$progname: skipping $name\n" if ($verbose > 1);

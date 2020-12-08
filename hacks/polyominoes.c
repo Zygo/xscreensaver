@@ -975,6 +975,10 @@ static void create_bitmaps(ModeInfo * mi, polyominoesstruct *sp)
   }
 
   sp->use_bitmaps = 1;
+
+#ifdef HAVE_ANDROID  /* Doesn't work -- displays black */
+  sp->use_bitmaps = 0;
+#endif
 }
 
 static void draw_with_bitmaps(ModeInfo * mi, polyominoesstruct *sp)

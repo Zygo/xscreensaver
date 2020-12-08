@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-bubble3d - 3d rising bubbles.
+bubble3d \- 3d rising bubbles.
 .SH SYNOPSIS
 .B bubble3d
 [\-display \fIhost:display.screen\fP]

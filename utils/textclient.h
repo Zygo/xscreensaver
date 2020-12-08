@@ -14,7 +14,7 @@
 #ifndef __TEXTCLIENT_H__
 #define __TEXTCLIENT_H__
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 #  undef HAVE_FORKPTY
 # endif
 
@@ -29,7 +29,7 @@ extern void textclient_reshape (text_data *,
 extern int textclient_getc (text_data *);
 extern Bool textclient_putc (text_data *, XKeyEvent *);
 
-# if defined(USE_IPHONE) || defined(HAVE_ANDROID)
+# if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
 extern char *textclient_mobile_date_string (void);
 extern char *textclient_mobile_url_string (Display *, const char *url);
 # endif

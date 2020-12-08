@@ -967,7 +967,9 @@ write_init_file (Display *dpy,
 
 	  /* Since the .xscreensaver file is used for IPC, let's try and make
 	     sure that the bits actually land on the disk right away. */
-	  sync ();
+          /* Update 2020: Apparently here in the future, this sometimes takes
+             3+ seconds, so let's not. */
+	  /* sync(); */
 
           status = 0;    /* wrote and renamed successfully! */
 	}

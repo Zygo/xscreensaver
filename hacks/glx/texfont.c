@@ -21,7 +21,7 @@
 #include <ctype.h>
 
 #ifdef HAVE_COCOA
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 #  include "jwzgles.h"
 # else
 #  include <OpenGL/glu.h>
@@ -673,6 +673,7 @@ print_texture_string (texture_font_data *data, const char *string)
     glGetIntegerv (GL_FRONT_FACE, &ofront);
     glGetIntegerv (GL_BLEND_DST, &oblend);
     glGetFloatv (GL_TEXTURE_MATRIX, omatrix);
+    check_gl_error ("texture font matrix");
     blend_p = glIsEnabled (GL_BLEND);
     alpha_p = glIsEnabled (GL_ALPHA_TEST);
     light_p = glIsEnabled (GL_LIGHTING);
@@ -829,7 +830,7 @@ print_texture_label (Display *dpy,
       h = cs.ascent + cs.descent;
       w  = cs.width;
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
       {
         /* Size of the font is in points, so scale iOS pixels to points. */
         GLfloat scale = ((window_width > window_height
@@ -846,7 +847,7 @@ print_texture_label (Display *dpy,
         window_height /= scale;
         glScalef (scale, scale, scale);
       }
-# endif /* USE_IPHONE */
+# endif /* HAVE_IPHONE */
 
       if (rot > 135 || rot < -135)		/* 180 */
         {

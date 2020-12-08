@@ -38,7 +38,7 @@ extern void gltrackball_track (trackball_state *, int x, int y, int w, int h);
 extern void gltrackball_stop (trackball_state *);
 
 /* Execute the rotations current encapsulated in the trackball_state:
-   this does something analagous to glRotatef().
+   this does something analogous to glRotatef().
  */
 extern void gltrackball_rotate (trackball_state *);
 

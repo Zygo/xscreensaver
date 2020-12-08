@@ -118,7 +118,7 @@ $(THUMBDIR)/%.png:
 check_versions:
 	@\
   SRC=../utils/version.h ;						\
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		\
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		\
   DIR=build/Release ;							\
   RESULT=0 ;								\
   for S in $$DIR/*.{saver,app} ; do					\
@@ -213,7 +213,7 @@ echo_tarfiles:
 update_plist_version:
 	@								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
   T=/tmp/xs.$$$$ ;							      \
   for S in *.plist ; do							      \
     /bin/echo -n "Updating version number in $$S to \"$$V\"... " ;	      \
@@ -238,7 +238,7 @@ updates.xml::
 test_sig::
 	@								    \
   U=../utils/version.h ;						    \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ;]*\).*/\1/p' < $$U` ;		    \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ;]*\).*/\1/p' < $$U` ;		    \
   BASE="xscreensaver-$$V" ;						    \
   OUTDIR="../archive" ;							    \
   DMG="$$OUTDIR/$$BASE.dmg" ;						    \
@@ -256,7 +256,7 @@ test_sig::
   for OPENSSL in /usr/bin/openssl /opt/local/bin/openssl ; do		    \
     $$OPENSSL dgst -sha1 -binary  < "$$DMG"  > "$$HASH" ;		    \
     /bin/echo -n "$$OPENSSL	`$$OPENSSL version`:	" ;		    \
-    $$OPENSSL dgst -dss1 -verify "$$PUB" -signature "$$SIGB" "$$HASH" ;	    \
+    $$OPENSSL dgst -sha1 -verify "$$PUB" -signature "$$SIGB" "$$HASH" ;	    \
   done ;								    \
   rm -f "$$SIGB" "$$HASH" ;						    \
 
@@ -265,7 +265,7 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 	@\
   set -e ;								\
   SRC=../utils/version.h ;						\
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		\
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		\
 									\
   DIST="installer.xml" ;						\
   STAGE="build/Release/pkg_stage" ;					\
@@ -304,7 +304,7 @@ _dmg::
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
   TMPDIR="build" ;							      \
   SRC="build/Release" ;							      \
   EXTRAS=../../xdaliclock/OSX/build/Release/*.saver ;			      \
@@ -335,24 +335,26 @@ _dmg::
    ok=yes ;								      \
    ff=`echo $$f | perl -e '$$_=<>; s@^.*/(.*)\..*$$@\L$$1@; print'`;	      \
    for r in $$retired ; do						      \
-    if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
+     if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
    done ;								      \
    if [ "$$ff" = testx11 ]; then ok=no ; fi ;				      \
    if [ "$$f2" = "XScreenSaverUpdater.app" ]; then			      \
-    DST_HACK="XScreenSaver.updater" ;					      \
-    echo + tar ... "$$DST/$$DST_HACK" ;					      \
-    ( cd $$SRC ; tar -czf - "$$f2" ) > "$$DST/$$DST_HACK" ;		      \
+     DST_HACK="XScreenSaver.updater" ;					      \
+     echo + tar ... "$$DST/$$DST_HACK" ;				      \
+     CWD=`pwd` ;							      \
+     ( cd $$SRC ; tar -czf "$$CWD/$$DST/$$DST_HACK" "$$f2" ) ;		      \
+     echo ' fuck you apple' >> $$DST/$$DST_HACK ;			      \
    elif [ "$$ok" = yes ]; then						      \
-    echo + cp -pR "$$f" "$$DST/" ;					      \
-           cp -pR "$$f" "$$DST/" ;					      \
+     echo + cp -pR "$$f" "$$DST/" ;					      \
+            cp -pR "$$f" "$$DST/" ;					      \
    else									      \
-    echo skipping "$$f" ;						      \
+     echo skipping "$$f" ;						      \
    fi ;									      \
   done ;								      \
 									      \
-  true codesign --force --sign $(CERT2) "$$DST/"*.app/Contents/Resources/*.saver ; \
-  rm -rf "$$DST/"*.app/Contents/Resources/*.saver/Contents/_CodeSignature ;   \
-  codesign --force --sign $(CERT2) "$$DST/"*.app ;			      \
+  echo "Re-signing Apple2 and Phosphor..." ;				      \
+  codesign --force --sign $(CERT2) --timestamp -o runtime "$$DST/"*.app/Contents/PlugIns/*.saver ; \
+  codesign --force --sign $(CERT2) --timestamp -o runtime "$$DST/"*.app ;     \
 									      \
   set -x ;								      \
   cp -p bindist.rtf "$$STAGE/Read Me.rtf" ;				      \
@@ -373,11 +375,6 @@ _dmg::
   mv "$$STAGE/bindist.webloc"  "$$STAGE/Get the iPhone:iPad Version.webloc" ; \
   mv "$$STAGE/bindist2.webloc" "$$STAGE/Get the Android Version.webloc" ;     \
 									      \
-  echo Fuck this shit. ;						      \
-  rm -r "$$DST"/Apple2.app ;						      \
-  rm -r "$$DST"/Phosphor.app ;						      \
-  rm -r "$$DST"/WebCollage.saver ;					      \
-									      \
   set +x ;								      \
 									      \
   echo "Chowning..." ;							      \
@@ -386,14 +383,13 @@ _dmg::
   echo "Checking signatures..." ;					      \
   spctl --assess --type install "$$PKG" ;				      \
   spctl --assess --type execute "$$SRC/XScreenSaverUpdater.app" ;	      \
-  true spctl --assess --type execute "$$DST/"*.app ;			      \
+  spctl --assess --type execute "$$DST/"*.app ;				      \
   spctl --assess --type install "$$DST/"*.saver ;			      \
   set -x ;								      \
 									      \
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
-  echo "Chowning back and deleting..." ;				      \
-  sudo chown -R `whoami` "$$STAGE/"* ;					      \
+  echo "Deleting..." ;							      \
   sudo rm -rf "$$STAGE" ;						      \
 									      \
   hdiutil convert -quiet -ov -format UDBZ -imagekey zlib-level=9	      \
@@ -405,7 +401,6 @@ _dmg::
   spctl --assess --type install "$$DMG" ;				      \
 									      \
   ls -ldhgF "$$DMG" ;							      \
-  $(MAKE2) notarize ;							      \
 
 
 # To set up notarization:
@@ -426,39 +421,69 @@ _dmg::
 #
 NOTARGS=-u "jwz@jwz.org" -p "@keychain:altool-notarizer"
 
+
+# Send a notarization request, and then wait for the result.
+# Staple once the results are in.
+#
 notarize::
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
   BASE="xscreensaver-$$V" ;						      \
   OUTDIR="../archive" ;							      \
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
-  set -x ;								      \
-  xcrun altool --notarize-app --primary-bundle-id "org.jwz.xscreensaver"      \
-    --file "$$DMG" $(NOTARGS) ;						      \
+  CMD='xcrun altool --notarize-app --primary-bundle-id org.jwz.xscreensaver'; \
+  CMD="$$CMD --file $$DMG $(NOTARGS)" ;					      \
+  echo "+ $$CMD" ;  							      \
   echo "" ;								      \
-  sleep 3 ;								      \
-  $(MAKE2) notarize_wait staple updates.xml
+  RET=`$$CMD` ;  							      \
+  echo "$$RET";  							      \
+  echo "" ;								      \
+  ID=`echo "$$RET" | sed -n 's/RequestUUID *= *\(.*\)/\1/p'` ;		      \
+  if [ "x$$ID" = "x" ]; then						      \
+    echo "unparsable RequestUUID" ;					      \
+    exit 1 ;								      \
+  else									      \
+    set -x ;								      \
+    export NOTARIZE_UUID="$$ID" ;					      \
+    $(MAKE2) notarize_wait staple updates.xml ;				      \
+  fi ;									      \
 
+
+# Keep probing Apple's server until we have a result for this notarization.
+# We can't staple until the results are in.
+#
 notarize_wait::
-	@TODAY=`date +%Y-%m-%d` ;					      \
-	 while ( xcrun altool --notarization-history 0 $(NOTARGS) |	      \
-		 grep "$$TODAY" |					      \
-		 grep -q 'in progress' ); do				      \
-	  echo `date +%I:%M:` "waiting for notarization..." ;		      \
-	  xcrun altool --notarization-history 0 $(NOTARGS) |		      \
-		 grep "$$TODAY" ;					      \
-	  sleep 15 ;							      \
-	done ;								      \
-	echo '' ;							      \
-	xcrun altool --notarization-history 0 $(NOTARGS) ;		      \
+	@if [ "x$$NOTARIZE_UUID" = "x" ]; then				      \
+	   echo "NOTARIZE_UUID is unset" ;				      \
+	   exit 1 ;							      \
+	 fi ;								      \
+	 CMD="xcrun altool --notarization-info $$NOTARIZE_UUID $(NOTARGS)" ;  \
+	 echo "+ $$CMD" ;						      \
+	 while true ; do						      \
+	   RET=`$$CMD` ;						      \
+	   STATUS=`echo "$$RET" | sed -n 's/^ *Status: *\(.*\)/\1/p'` ;	      \
+	   if [ "x$$STATUS" = 'xin progress' ]; then			      \
+	     echo " `date +%H:%M:%S` $$STATUS..." ;			      \
+	     sleep 15 ;							      \
+	   elif [ "x$$STATUS" = 'xsuccess' ]; then			      \
+	     echo "" ;							      \
+	     echo "$$RET" ;						      \
+	     echo "" ;							      \
+	     exit 0 ;							      \
+	   else								      \
+	     echo "" ;							      \
+	     echo "$$RET" ;						      \
+	     exit 1 ;							      \
+	   fi ;								      \
+	 done ;								      \
 
 staple::
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
   BASE="xscreensaver-$$V" ;						      \
   OUTDIR="../archive" ;							      \
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \

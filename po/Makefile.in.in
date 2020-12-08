@@ -300,9 +300,11 @@ generate_potfiles_in:
 	 ( cd $(top_srcdir);			\
 	   echo "# Auto-generated: `LANG=C date`" ;	\
 	   ( grep -l '_("' driver/*.[ch] ;	\
-	     ls driver/*.glade2.in			\
+	     ls driver/*.ui			\
 		driver/*.desktop.in		\
-		hacks/config/*.xml ) | sort	\
+		hacks/config/*.xml ) |		\
+	   grep -v co____9 |			\
+	   sort					\
 	  ) > $$tmp &&				\
 	 mv $$tmp $$file &&			\
 	 echo "created `pwd`/$$file"

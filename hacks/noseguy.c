@@ -120,9 +120,9 @@ init_images (struct state *st)
   PM *images[8];
   struct { const unsigned char *png; unsigned long size; } bits[8];
   XWindowAttributes xgwa;
+  int i = 0;
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
-  int i = 0;
   images[i++] = &st->left1;
   images[i++] = &st->left2;
   images[i++] = &st->right1;
@@ -405,8 +405,7 @@ talk (struct state *st, int force_erase)
         XGlyphInfo extents;
 
 	total = strlen (st->words);
-	strncpy (args[0], st->words, LINELEN);
-	args[0][LINELEN - 1] = 0;
+	sprintf(args[0], "%.*s", LINELEN - 1, st->words);
         XftTextExtentsUtf8 (st->dpy, st->xftfont, 
                             (FcChar8 *) st->words, total,
                             &extents);
@@ -430,8 +429,8 @@ talk (struct state *st, int force_erase)
 
 	  total += p2 - p;	/* total chars; count to determine reading
 				 * time */
-	  (void) strncpy(args[height], p, LINELEN);
-	  args[height][LINELEN - 1] = 0;
+	  sprintf(args[height], "%.*s", LINELEN - 1, p);
+
 	  if (height == MAXLINES - 1)
 	    {
 	      /* puts("Message too long!"); */

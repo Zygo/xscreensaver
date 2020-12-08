@@ -62,6 +62,10 @@ extern const char *progname;
 #include <stdio.h>  /* FILE */
 #include <string.h> /* memcpy */
 
+#if (__GNUC__ >= 4)
+# pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
+
 /* Quickhull helpers, define your own if needed */
 #ifndef QUICKHULL_HELPERS
 #include <stdlib.h> /* malloc, free, realloc */

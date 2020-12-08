@@ -16,7 +16,7 @@
    the UI (XScreenSaverConfigSheet).
  */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <Foundation/Foundation.h>
 # import <UIKit/UIKit.h>
 # define NSUserDefaultsController NSUserDefaults

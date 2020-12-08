@@ -22,7 +22,7 @@
 #import "screenhackI.h"
 #import "xlockmoreI.h"
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # include "jwzgles.h"
 # import <OpenGLES/ES1/glext.h>
 #else
@@ -45,14 +45,14 @@ extern void check_gl_error (const char *type);
  */
 - (CGFloat) hackedContentScaleFactor:(BOOL)fonts_p
 {
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   return [self contentScaleFactor];
 # else
   return self.window.backingScaleFactor;
 # endif
 }
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 
 - (BOOL)ignoreRotation
 {
@@ -78,18 +78,18 @@ extern void check_gl_error (const char *type);
   glBindRenderbufferOES (GL_RENDERBUFFER_OES, gl_renderbuffer);
   [ogl_ctx presentRenderbuffer:GL_RENDERBUFFER_OES];
 }
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 - (void) animateOneFrame
 {
-# if defined USE_IPHONE && defined JWXYZ_QUARTZ
+# if defined HAVE_IPHONE && defined JWXYZ_QUARTZ
   UIGraphicsPushContext (backbuffer);
 # endif
 
   [self render_x11];
 
-# if defined USE_IPHONE && defined JWXYZ_QUARTZ
+# if defined HAVE_IPHONE && defined JWXYZ_QUARTZ
   UIGraphicsPopContext();
 # endif
 }
@@ -107,7 +107,7 @@ extern void check_gl_error (const char *type);
 }
 
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 
 /* Keep the GL scene oriented into a portrait-mode View, regardless of
    what the physical device orientation is.
@@ -133,7 +133,7 @@ extern void check_gl_error (const char *type);
                             "SuppressRotationAnimation");
 }
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 
@@ -175,7 +175,7 @@ extern void check_gl_error (const char *type);
 }
 
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 - (NSOpenGLPixelFormat *) getGLPixelFormat
 {
@@ -228,7 +228,7 @@ extern void check_gl_error (const char *type);
   return [result autorelease];
 }
 
-#else // !USE_IPHONE
+#else // !HAVE_IPHONE
 
 - (NSDictionary *)getGLProperties
 {
@@ -277,7 +277,7 @@ extern void check_gl_error (const char *type);
 - (void) stopAnimation
 {
   [super stopAnimation];
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
   if (_glesState) {
     [EAGLContext setCurrentContext:ogl_ctx];
     jwzgles_make_current (_glesState);
@@ -292,7 +292,7 @@ extern void check_gl_error (const char *type);
   jwzgles_make_current (_glesState);
 }
 
-#endif // !USE_IPHONE
+#endif // !HAVE_IPHONE
 
 
 - (void)dealloc {
@@ -369,12 +369,12 @@ glXSwapBuffers (Display *dpy, Window window)
   XScreenSaverGLView *view = (XScreenSaverGLView *) jwxyz_window_view (window);
   NSAssert1 ([view isKindOfClass:[XScreenSaverGLView class]],
              @"wrong view class: %@", view);
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
   NSOpenGLContext *ctx = [view oglContext];
   if (ctx) [ctx flushBuffer]; // despite name, this actually swaps
-#else /* USE_IPHONE */
+#else /* HAVE_IPHONE */
   [view swapBuffers];
-#endif /* USE_IPHONE */
+#endif /* HAVE_IPHONE */
 }
 
 /* Does nothing - prepareContext already did the work.

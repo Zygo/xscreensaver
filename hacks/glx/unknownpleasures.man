@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-unknownpleasures - a waterfall graph of the signal from pulsar PSR B1919+21.
+unknownpleasures \- a waterfall graph of the signal from pulsar PSR B1919+21.
 .SH SYNOPSIS
 .B unknownpleasures
 [\-display \fIhost:display.screen\fP]

@@ -62,7 +62,7 @@ typedef long PROP32;
 #undef XtPointer
 #define XtAppContext void*
 #define XrmDatabase  void*
-#define XtIntervalId void*
+#define XtIntervalId unsigned long
 #define XtPointer    void*
 #define Widget       void*
 
@@ -747,23 +747,36 @@ static RETSIGTYPE
 restore_real_vroot_handler (int sig)
 {
   saver_info *si = global_si_kludge;	/* I hate C so much... */
+  Bool restored_p;
 
   signal (sig, SIG_DFL);
-  if (restore_real_vroot (si))
-    fprintf (real_stderr, "\n%s: %s intercepted, vroot restored.\n",
-	     blurb(), signal_name(sig));
+
 # ifdef HAVE_LIBSYSTEMD
   if (si->systemd_pid)  /* Kill background xscreensaver-systemd process */
     {
       /* We're exiting, so there's no need to do a full kill_job() here,
-         which will waitpid(). */
+         which would waitpid(). */
       /* kill_job (si, si->systemd_pid, SIGTERM); */
       kill (si->systemd_pid, SIGTERM);
       si->systemd_pid = 0;
     }
 # endif
+
+  /* This is a signal handler, and the following might do X protocol,
+     which is horrible, but we're about to terminate so we don't have
+     a choice... */
+  restored_p = restore_real_vroot (si);
+
+  /* Calling fprintf from a signal handler is also risky, but we're
+     so far into the weeds on that front already... */
+  fprintf (stderr, "\n%s: %s%s\n\n", blurb(), signal_name(sig),
+           (restored_p ? ", vroot restored" : ""));
+
+  shutdown_stderr (si);
+
   kill (getpid (), sig);
 }
+
 
 static void
 catch_signal (saver_info *si, int sig, RETSIGTYPE (*handler) (int))
@@ -847,15 +860,6 @@ saver_sighup_handler (int sig)
   fprintf (stderr, "%s: %s received: restarting...\n",
            blurb(), signal_name(sig));
 
-  if (si->screen_blanked_p)
-    {
-      int i;
-      for (i = 0; i < si->nscreens; i++)
-        kill_screenhack (&si->screens[i]);
-      unblank_screen (si);
-      XSync (si->dpy, False);
-    }
-
   restart_process (si);   /* Does not return */
   abort ();
 }
@@ -871,16 +875,15 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
   Bool vrs;
 
   if (exiting)
-    exit(status);
+    exit (status);
 
   exiting = True;
   
   vrs = restore_real_vroot (si);
-  emergency_kill_subproc (si);
-  shutdown_stderr (si);
-
   if (p->verbose_p && vrs)
     fprintf (real_stderr, "%s: old vroot restored.\n", blurb());
+
+  emergency_kill_subproc (si);
 
 # ifdef HAVE_LIBSYSTEMD
   if (si->systemd_pid)  /* Kill background xscreensaver-systemd process */
@@ -890,12 +893,7 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
     }
 # endif
 
-  fflush(real_stdout);
-
-#ifdef VMS	/* on VMS, 1 is the "normal" exit code instead of 0. */
-  if (status == 0) status = 1;
-  else if (status == 1) status = -1;
-#endif
+  shutdown_stderr (si);
 
   bugp = !!dump_core_reason;
 
@@ -932,6 +930,11 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
       /* Do this to drop a core file, so that we can get a stack trace. */
       abort();
     }
+
+# ifdef VMS	/* on VMS, 1 is the "normal" exit code instead of 0. */
+  if (status == 0) status = 1;
+  else if (status == 1) status = -1;
+# endif
 
   exit (status);
 }
@@ -1295,7 +1298,11 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
 	 always exist (though the ID is constant.)  So to use this
 	 window, we'd have to reimplement the ACTIVATE ClientMessage to
 	 tell the *server* to tell *us* to turn on, to cause the window
-	 to get created at the right time.  Gag.  */
+	 to get created at the right time.  Gag.
+
+         See the very long comment at the top of xscreensaver.c for why the
+         MIT-SCREEN-SAVER extension is garbage and should not be used.
+       */
       XScreenSaverSetAttributes (si->dpy, root,
 				 0, 0, width, height, 0,
 				 current_depth, InputOutput, visual,

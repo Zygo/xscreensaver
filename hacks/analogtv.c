@@ -647,11 +647,6 @@ analogtv_set_demod(analogtv *it)
  cmap_again:
   if (it->use_cmap && !it->n_colors) {
 
-    if (it->n_colors) {
-      XFreeColors(it->dpy, it->colormap, it->colors, it->n_colors, 0L);
-      it->n_colors=0;
-    }
-
     {
       int yli,qli,ili;
       for (yli=0; yli<y_levels; yli++) {
@@ -1799,6 +1794,11 @@ analogtv_draw(analogtv *it, double noiselevel,
   analogtv_setup_levels(it, it->puheight * (double)it->useheight/(double)ANALOGTV_VISLINES);
 
   /* calculate tint once per frame */
+  /* Christopher Mosher argues that this should use 33 degress instead of
+     103 degrees, and then TVTint should default to 0 in analogtv.h and
+     all relevant XML files. But that makes all the colors go really green
+     and saturated, so apparently that's not right.  -- jwz, Nov 2020.
+   */
   it->tint_i = -cos((103 + it->tint_control)*3.1415926/180);
   it->tint_q = sin((103 + it->tint_control)*3.1415926/180);
   

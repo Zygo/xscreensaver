@@ -77,7 +77,7 @@
 #include <wchar.h>
 
 #ifdef HAVE_COCOA
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 #  import <QuartzCore/QuartzCore.h>
 #  include <OpenGLES/ES1/gl.h>
 #  include <OpenGLES/ES1/glext.h>
@@ -186,7 +186,7 @@ jwxyz_set_matrices (Display *dpy, unsigned width, unsigned height,
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   
-# if defined(USE_IPHONE) || defined(HAVE_ANDROID)
+# if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
 
   if (window_p && ignore_rotation_p(dpy)) {
     int o = (int) current_device_rotation();
@@ -917,7 +917,7 @@ jwxyz_gl_copy_area_read_tex_image (Display *dpy, unsigned src_height,
                                    unsigned int width, unsigned int height,
                                    int dst_x, int dst_y)
 {
-#  if defined HAVE_COCOA && !defined USE_IPHONE
+#  if defined HAVE_COCOA && !defined HAVE_IPHONE
   /* TODO: Does this help? */
   /* glFinish(); */
 #  endif

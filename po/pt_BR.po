@@ -6790,7 +6790,7 @@ msgid "Menger"
 msgstr "Menger"
 
 #: ../hacks/config/menger.xml.h:18
-msgid "This draws the three-dimensional variant of the recursive Menger Gasket, a cube-based fractal object analagous to the Sierpinski Tetrahedron. http://en.wikipedia.org/wiki/Menger_sponge http://en.wikipedia.org/wiki/Sierpinski_carpet Written by Jamie Zawinski; 2001."
+msgid "This draws the three-dimensional variant of the recursive Menger Gasket, a cube-based fractal object analogous to the Sierpinski Tetrahedron. http://en.wikipedia.org/wiki/Menger_sponge http://en.wikipedia.org/wiki/Sierpinski_carpet Written by Jamie Zawinski; 2001."
 msgstr ""
 
 #: ../hacks/config/metaballs.xml.h:2

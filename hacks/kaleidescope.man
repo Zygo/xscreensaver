@@ -13,7 +13,7 @@
 ..
 .TH Kaleidescpe 1 "14-Dec-95" "X Version 11"
 .SH NAME
-Kaleidescope - rotating line segments
+Kaleidescope \- rotating line segments
 .SH SYNOPSIS
 .B kaleidescope
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-color_mode \fImono | nice | greedy\fP] [-nsegments \fIint\fP] [\-ntrails \fIint\fP] [\-local_rotation \fIint\fP] [\-global_rotation \fIint\fP] [\-delay \fIusecs\fP] [\-redmin \fIint\fP] [\-greenmin \fIint\fP] [\-bluemin \fIint\fP] [\-redrange \fIint\fP] [\-greenrange \fIint\fP] [\-bluerange \fIint\fP]

@@ -201,8 +201,10 @@ or possibly
 .EX
 sudo dpkg -P gnome-screensaver
 .EE
+Be careful that it doesn't try to uninstall all of GNOME.
 .TP 3
 \fB2: Launch xscreensaver at login.\fP
+
 Select "\fIStartup Applications\fP" from the menu (or manually
 launch "\fIgnome-session-properties\fP") and add "\fIxscreensaver\fP".
 
@@ -222,11 +224,18 @@ Keep reinventing that wheel, guys!  (If you have figured out how to
 replace Unity's locking "feature" with xscreensaver, let me know.)
 .TP 3
 \fB4: Turn off Unity's built-in blanking.\fP
+
 Open "\fISystem Settings / Brightness & Lock\fP";
 .br
 Un-check "\fIStart Automatically\fP";
 .br
 Set \fI"Turn screen off when inactive for"\fP to \fI"Never".\fP
+.br
+Or possibly that has been randomly renamed again:
+.br
+Set "\fISettings / Power / Power Settings\fP" to \fI"Never".\fP
+.TP 3
+\fB5: Log out and back in again.
 .SH USING KDE
 Like GNOME, KDE also decided to invent their own screen saver framework
 from scratch instead of simply using xscreensaver.  To replace the KDE
@@ -303,6 +312,7 @@ containing:
 Description=XScreenSaver
 [Service]
 ExecStart=/usr/bin/xscreensaver
+Restart=always
 [Install]
 WantedBy=default.target
 .EE
@@ -1027,7 +1037,7 @@ and a FAQ can always be found at https://www.jwz.org/xscreensaver/
 .BR xscreensaver\-getimage (1),
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
-Copyright \(co 1991-2019 by Jamie Zawinski.
+Copyright \(co 1991-2020 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

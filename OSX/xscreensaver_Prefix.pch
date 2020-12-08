@@ -9,13 +9,13 @@
 #include <TargetConditionals.h>
 
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
-# undef USE_IPHONE
-# define USE_IPHONE
+# undef HAVE_IPHONE
+# define HAVE_IPHONE
 # define HAVE_JWZGLES
 #endif
 
 #ifdef __OBJC__
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 #  import <Foundation/Foundation.h>
 #  import <UIKit/UIKit.h>
 # else
@@ -25,7 +25,7 @@
 
 #include "jwxyz.h"
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 # include <OpenGLES/ES1/gl.h>
 # include <OpenGLES/ES1/glext.h>
 #else

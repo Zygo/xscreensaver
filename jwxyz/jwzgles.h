@@ -21,7 +21,6 @@
 # error: do not include this without HAVE_JWZGLES
 #endif
 
-
 #include "jwzglesI.h"
 
 

@@ -11,7 +11,7 @@
  * This implements the top-level screen-saver selection list in the iOS app.
  */
 
-#ifdef USE_IPHONE  // whole file
+#ifdef HAVE_IPHONE  // whole file
 
 
 #import "SaverListController.h"
@@ -415,4 +415,4 @@
 @end
 
 
-#endif // USE_IPHONE -- whole file
+#endif // HAVE_IPHONE -- whole file

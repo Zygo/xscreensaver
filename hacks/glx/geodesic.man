@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-geodesic - animates a mesh geodesic sphere.
+geodesic \- animates a mesh geodesic sphere.
 .SH SYNOPSIS
 .B geodesic
 [\-display \fIhost:display.screen\fP]

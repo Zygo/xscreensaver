@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-boxed - draws a box full of 3D bouncing balls that explode.
+boxed \- draws a box full of 3D bouncing balls that explode.
 .SH SYNOPSIS
 .B boxed
 [\-display \fIhost:display.screen\fP]

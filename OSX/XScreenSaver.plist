@@ -15,16 +15,18 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.44</string>
+	<string>5.45</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>5.44</string>
+	<string>5.45</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.8</string>
 	<key>NSMainNibFile</key>
 	<string>SaverRunner</string>
 	<key>NSPrincipalClass</key>
 	<string>XScreenSaver${EXECUTABLE_NAME}View</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.entertainment</string>
 </dict>
 </plist>

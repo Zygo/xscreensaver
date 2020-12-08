@@ -193,6 +193,7 @@
 				AF777A6109B660B700EA3033 /* PBXTargetDependency */,
 				AF777A5F09B660B600EA3033 /* PBXTargetDependency */,
 				AF777A5D09B660B600EA3033 /* PBXTargetDependency */,
+				AF688AD7257C061C00C91EAE /* PBXTargetDependency */,
 				AF777A5B09B660B600EA3033 /* PBXTargetDependency */,
 				AF777A5909B660B600EA3033 /* PBXTargetDependency */,
 				AF777A5709B660B600EA3033 /* PBXTargetDependency */,
@@ -204,6 +205,7 @@
 				AF777A4B09B660B600EA3033 /* PBXTargetDependency */,
 				AF5C9B161A0CCF8000B0147A /* PBXTargetDependency */,
 				AF4F10EE143450C300E34F3F /* PBXTargetDependency */,
+				AF9505A22567104200C1F257 /* PBXTargetDependency */,
 				AF777A4909B660B500EA3033 /* PBXTargetDependency */,
 				AFC5CFF72044AB46004CEB5E /* PBXTargetDependency */,
 				AF777A4709B660B500EA3033 /* PBXTargetDependency */,
@@ -245,6 +247,7 @@
 				AF777A1909B660B300EA3033 /* PBXTargetDependency */,
 				AF6C6D91226AE6780065A748 /* PBXTargetDependency */,
 				AF62D6392180087500C57C42 /* PBXTargetDependency */,
+				AF96015F25759150007FA31B /* PBXTargetDependency */,
 				AF1B0FC51D7AB5740011DBE4 /* PBXTargetDependency */,
 				AF4F10F0143450C300E34F3F /* PBXTargetDependency */,
 				AFC0E8C91CDC6125008CAFAC /* PBXTargetDependency */,
@@ -286,6 +289,7 @@
 				AF7779EF09B660B000EA3033 /* PBXTargetDependency */,
 				AF7779ED09B660B000EA3033 /* PBXTargetDependency */,
 				AFE2A46F0E2E908E00ADB298 /* PBXTargetDependency */,
+				AFADD34924B67256005456DC /* PBXTargetDependency */,
 				AF7779EB09B660B000EA3033 /* PBXTargetDependency */,
 				AFCF835C1AF5B683008BB7E1 /* PBXTargetDependency */,
 				AFEE10A91D17E32100AAC8F7 /* PBXTargetDependency */,
@@ -2013,6 +2017,18 @@
 		AF6427BA09A2DF09000F4CD4 /* bubbles.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258800988A468000655EE /* bubbles.xml */; };
 		AF6427BE09A2DF47000F4CD4 /* bubbles-default.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6427BB09A2DF47000F4CD4 /* bubbles-default.c */; };
 		AF6427BF09A2DF47000F4CD4 /* bubbles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6427BC09A2DF47000F4CD4 /* bubbles.c */; };
+		AF688AC0257C04D200C91EAE /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF688AC2257C04D200C91EAE /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF688AC3257C04D200C91EAE /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF688AC4257C04D200C91EAE /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF688AC5257C04D200C91EAE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF688AC6257C04D200C91EAE /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF688AC7257C04D200C91EAE /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF688AC8257C04D200C91EAE /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF688AD1257C05E400C91EAE /* beats.c in Sources */ = {isa = PBXBuildFile; fileRef = AF688AD0257C05E300C91EAE /* beats.c */; };
+		AF688AD2257C05E400C91EAE /* beats.c in Sources */ = {isa = PBXBuildFile; fileRef = AF688AD0257C05E300C91EAE /* beats.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF688AD4257C05FC00C91EAE /* beats.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF688AD3257C05FB00C91EAE /* beats.xml */; };
+		AF688AD5257C05FC00C91EAE /* beats.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF688AD3257C05FB00C91EAE /* beats.xml */; };
 		AF68A48519196CF800D41CD1 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF68A48719196CF800D41CD1 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF68A48819196CF800D41CD1 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -2817,7 +2833,31 @@
 		AF939AD320351BFD0032DD23 /* font-retry.c in Sources */ = {isa = PBXBuildFile; fileRef = AF939AD220351BFC0032DD23 /* font-retry.c */; };
 		AF939AD52038C0050032DD23 /* luximr.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AF939AD42038C0040032DD23 /* luximr.ttf */; };
 		AF939AD72038C5F00032DD23 /* luximr.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AF939AD42038C0040032DD23 /* luximr.ttf */; };
+		AF95058B25670ECC00C1F257 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF95058D25670ECC00C1F257 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF95058E25670ECC00C1F257 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF95058F25670ECC00C1F257 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF95059025670ECC00C1F257 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF95059125670ECC00C1F257 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF95059225670ECC00C1F257 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF95059325670ECC00C1F257 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF95059C25670FE900C1F257 /* covid19.c in Sources */ = {isa = PBXBuildFile; fileRef = AF95059B25670FE900C1F257 /* covid19.c */; };
+		AF95059F2567102000C1F257 /* covid19.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF95059E2567102000C1F257 /* covid19.xml */; };
 		AF95C30420999B3E001924BE /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
+		AF96014525758F9F007FA31B /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF96014725758F9F007FA31B /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF96014825758F9F007FA31B /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF96014925758F9F007FA31B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF96014A25758F9F007FA31B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF96014B25758F9F007FA31B /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF96014C25758F9F007FA31B /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF96014D25758F9F007FA31B /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF96015625759103007FA31B /* headroom.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF96015525759102007FA31B /* headroom.xml */; };
+		AF96015725759103007FA31B /* headroom.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF96015525759102007FA31B /* headroom.xml */; };
+		AF96015A25759124007FA31B /* headroom_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AF96015825759124007FA31B /* headroom_model.c */; };
+		AF96015B25759124007FA31B /* headroom_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AF96015825759124007FA31B /* headroom_model.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF96015C25759124007FA31B /* headroom.c in Sources */ = {isa = PBXBuildFile; fileRef = AF96015925759124007FA31B /* headroom.c */; };
+		AF96015D25759124007FA31B /* headroom.c in Sources */ = {isa = PBXBuildFile; fileRef = AF96015925759124007FA31B /* headroom.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF975734099C317000B05160 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF97573F099C31BB00B05160 /* imsmap.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258CA0988A468000655EE /* imsmap.xml */; };
 		AF975741099C31DD00B05160 /* imsmap.c in Sources */ = {isa = PBXBuildFile; fileRef = AF975740099C31DD00B05160 /* imsmap.c */; };
@@ -3021,8 +3061,7 @@
 		AFA33BAF0B0585F7002B0E7D /* webcollage-cocoa.m in Sources */ = {isa = PBXBuildFile; fileRef = AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */; };
 		AFA33BB00B05860F002B0E7D /* webcollage.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2592C0988A469000655EE /* webcollage.xml */; };
 		AFA33BD10B0587EE002B0E7D /* webcollage-helper-cocoa.m in Sources */ = {isa = PBXBuildFile; fileRef = AFA33BD00B0587EE002B0E7D /* webcollage-helper-cocoa.m */; };
-		AFA33BDD0B058A30002B0E7D /* webcollage-helper in Resources */ = {isa = PBXBuildFile; fileRef = AFA33BC70B058740002B0E7D /* webcollage-helper */; };
-		AFA33C0C0B058ED2002B0E7D /* webcollage in Resources */ = {isa = PBXBuildFile; fileRef = AFA33C0A0B058E6B002B0E7D /* webcollage */; };
+		AFA33BDD0B058A30002B0E7D /* webcollage-helper in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFA33BC70B058740002B0E7D /* webcollage-helper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AFA55866099324D800F3E977 /* minixpm.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA55864099324D800F3E977 /* minixpm.c */; };
 		AFA55867099324D800F3E977 /* minixpm.h in Headers */ = {isa = PBXBuildFile; fileRef = AFA55865099324D800F3E977 /* minixpm.h */; };
 		AFA5595C099330E500F3E977 /* cage.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258820988A468000655EE /* cage.xml */; };
@@ -3202,6 +3241,18 @@
 		AFACE88E1CC83613008B24CD /* energystream.c in Sources */ = {isa = PBXBuildFile; fileRef = AFACE88A1CC83578008B24CD /* energystream.c */; };
 		AFACE88F1CC83617008B24CD /* energystream.c in Sources */ = {isa = PBXBuildFile; fileRef = AFACE88A1CC83578008B24CD /* energystream.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFAD462309D5F4DA00AB5F95 /* grabclient.c in Sources */ = {isa = PBXBuildFile; fileRef = AFAD462209D5F4DA00AB5F95 /* grabclient.c */; };
+		AFADD33224B67100005456DC /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFADD33424B67100005456DC /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFADD33524B67100005456DC /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFADD33624B67100005456DC /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFADD33724B67100005456DC /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFADD33824B67100005456DC /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFADD33924B67100005456DC /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AFADD33A24B67100005456DC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFADD34324B67204005456DC /* sphereeversion.c in Sources */ = {isa = PBXBuildFile; fileRef = AFADD34224B67204005456DC /* sphereeversion.c */; };
+		AFADD34424B67204005456DC /* sphereeversion.c in Sources */ = {isa = PBXBuildFile; fileRef = AFADD34224B67204005456DC /* sphereeversion.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFADD34624B67223005456DC /* sphereeversion.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFADD34524B67223005456DC /* sphereeversion.xml */; };
+		AFADD34724B67223005456DC /* sphereeversion.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFADD34524B67223005456DC /* sphereeversion.xml */; };
 		AFB591AE178B812C00EA4005 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFB591B0178B812C00EA4005 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFB591B1178B812C00EA4005 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -3230,7 +3281,7 @@
 		AFBFE757178642DC00432B21 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
 		AFBFE758178642DC00432B21 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		AFBFE759178642DC00432B21 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
-		AFBFE765178643B200432B21 /* Apple2.saver in Resources */ = {isa = PBXBuildFile; fileRef = AF9D4DFE09B5BB19006E59CF /* Apple2.saver */; };
+		AFBFE765178643B200432B21 /* Apple2.saver in Copy Saver Bundle PlugIn */ = {isa = PBXBuildFile; fileRef = AF9D4DFE09B5BB19006E59CF /* Apple2.saver */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AFBFE76F178647FE00432B21 /* SaverRunner.nib in Resources */ = {isa = PBXBuildFile; fileRef = AF9772E10989DFC6001F8B92 /* SaverRunner.nib */; };
 		AFBFE770178647FE00432B21 /* SaverRunner.icns in Resources */ = {isa = PBXBuildFile; fileRef = AF2D522513E954A0002AA818 /* SaverRunner.icns */; };
 		AFBFE772178647FE00432B21 /* SaverRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = AFE1FD400981E32E00F7970E /* SaverRunner.m */; };
@@ -3240,7 +3291,7 @@
 		AFBFE777178647FE00432B21 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
 		AFBFE778178647FE00432B21 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		AFBFE779178647FE00432B21 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
-		AFBFE7831786483B00432B21 /* Phosphor.saver in Resources */ = {isa = PBXBuildFile; fileRef = AF7776F609B63ABF00EA3033 /* Phosphor.saver */; };
+		AFBFE7831786483B00432B21 /* Phosphor.saver in Copy Saver Bundle Plugin */ = {isa = PBXBuildFile; fileRef = AF7776F609B63ABF00EA3033 /* Phosphor.saver */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AFC0E8B21CDC601A008CAFAC /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFC0E8B41CDC601A008CAFAC /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFC0E8B51CDC601A008CAFAC /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -3403,6 +3454,7 @@
 		AFD573630997411200BA26F7 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFD573700997418D00BA26F7 /* strange.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2591D0988A469000655EE /* strange.xml */; };
 		AFD57372099741A200BA26F7 /* strange.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD57371099741A200BA26F7 /* strange.c */; };
+		AFD5E98525672E8500704C83 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFD5E98425672E8500704C83 /* WebKit.framework */; };
 		AFD77E6220C23F8600A3638D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFD77E6420C23F8600A3638D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFD77E6520C23F8600A3638D /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -4883,6 +4935,20 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AF688ABB257C04D200C91EAE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF688AD6257C061C00C91EAE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF688AB9257C04D200C91EAE;
+			remoteInfo = Beats;
+		};
 		AF68A48019196CF800D41CD1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -6332,6 +6398,34 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AF95058625670ECC00C1F257 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF9505A12567104200C1F257 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF95058425670ECC00C1F257;
+			remoteInfo = COVID19;
+		};
+		AF96014025758F9F007FA31B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF96015E25759150007FA31B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF96013E25758F9F007FA31B;
+			remoteInfo = Headroom;
+		};
 		AF97572F099C317000B05160 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -7053,6 +7147,20 @@
 			remoteGlobalIDString = AFACE8731CC83458008B24CD;
 			remoteInfo = EnergyStream;
 		};
+		AFADD32D24B67100005456DC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFADD34824B67256005456DC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFADD32B24B67100005456DC;
+			remoteInfo = SphereEversion;
+		};
 		AFB581AF102F363300342B11 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -7670,6 +7778,38 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		AFB9B5C024269AF900A5740D /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				AFA33BDD0B058A30002B0E7D /* webcollage-helper in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFB9B5C22426B1FB00A5740D /* Copy Saver Bundle PlugIn */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AFBFE765178643B200432B21 /* Apple2.saver in Copy Saver Bundle PlugIn */,
+			);
+			name = "Copy Saver Bundle PlugIn";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFB9B5C32426B53800A5740D /* Copy Saver Bundle Plugin */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AFBFE7831786483B00432B21 /* Phosphor.saver in Copy Saver Bundle Plugin */,
+			);
+			name = "Copy Saver Bundle Plugin";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -7992,6 +8132,9 @@
 		AF6427BB09A2DF47000F4CD4 /* bubbles-default.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "bubbles-default.c"; path = "hacks/bubbles-default.c"; sourceTree = "<group>"; };
 		AF6427BC09A2DF47000F4CD4 /* bubbles.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = bubbles.c; path = hacks/bubbles.c; sourceTree = "<group>"; };
 		AF6427BD09A2DF47000F4CD4 /* bubbles.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = bubbles.h; path = hacks/bubbles.h; sourceTree = "<group>"; };
+		AF688ACE257C04D200C91EAE /* Beats.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Beats.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF688AD0257C05E300C91EAE /* beats.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = beats.c; path = hacks/glx/beats.c; sourceTree = "<group>"; };
+		AF688AD3257C05FB00C91EAE /* beats.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = beats.xml; sourceTree = "<group>"; };
 		AF68A49219196CF800D41CD1 /* Tessellimage.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tessellimage.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF68A49419196E3E00D41CD1 /* tessellimage.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = tessellimage.xml; sourceTree = "<group>"; };
 		AF68A49519196E3E00D41CD1 /* tessellimage.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tessellimage.c; path = hacks/tessellimage.c; sourceTree = "<group>"; };
@@ -8069,6 +8212,13 @@
 		AF939AD220351BFC0032DD23 /* font-retry.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "font-retry.c"; path = "utils/font-retry.c"; sourceTree = "<group>"; };
 		AF939AD42038C0040032DD23 /* luximr.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = luximr.ttf; sourceTree = "<group>"; };
 		AF94E7411A16E93600289B93 /* xscreensaver.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = xscreensaver.xcconfig; sourceTree = "<group>"; };
+		AF95059925670ECC00C1F257 /* COVID19.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = COVID19.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF95059B25670FE900C1F257 /* covid19.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = covid19.c; path = hacks/glx/covid19.c; sourceTree = "<group>"; };
+		AF95059E2567102000C1F257 /* covid19.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = covid19.xml; sourceTree = "<group>"; };
+		AF96015325758F9F007FA31B /* Headroom.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Headroom.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF96015525759102007FA31B /* headroom.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = headroom.xml; sourceTree = "<group>"; };
+		AF96015825759124007FA31B /* headroom_model.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = headroom_model.c; path = hacks/glx/headroom_model.c; sourceTree = "<group>"; };
+		AF96015925759124007FA31B /* headroom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = headroom.c; path = hacks/glx/headroom.c; sourceTree = "<group>"; };
 		AF97573D099C317000B05160 /* IMSMap.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IMSMap.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF975740099C31DD00B05160 /* imsmap.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = imsmap.c; path = hacks/imsmap.c; sourceTree = "<group>"; };
 		AF975785099C374A00B05160 /* Moire.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Moire.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -8323,6 +8473,9 @@
 		AFACE88A1CC83578008B24CD /* energystream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = energystream.c; path = hacks/glx/energystream.c; sourceTree = "<group>"; };
 		AFACE88B1CC83578008B24CD /* energystream.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = energystream.xml; sourceTree = "<group>"; };
 		AFAD462209D5F4DA00AB5F95 /* grabclient.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = grabclient.c; path = utils/grabclient.c; sourceTree = "<group>"; };
+		AFADD34024B67100005456DC /* SphereEversion.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SphereEversion.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFADD34224B67204005456DC /* sphereeversion.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sphereeversion.c; path = hacks/glx/sphereeversion.c; sourceTree = "<group>"; };
+		AFADD34524B67223005456DC /* sphereeversion.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = sphereeversion.xml; sourceTree = "<group>"; };
 		AFB591BA178B812C00EA4005 /* Hexadrop.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Hexadrop.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFB591BC178B81E600EA4005 /* hexadrop.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = hexadrop.xml; sourceTree = "<group>"; };
 		AFB591BD178B81E600EA4005 /* hexadrop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hexadrop.c; path = hacks/hexadrop.c; sourceTree = "<group>"; };
@@ -8638,6 +8791,7 @@
 		AFD5730C099702C800BA26F7 /* julia.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = julia.c; path = hacks/julia.c; sourceTree = "<group>"; };
 		AFD5736D0997411200BA26F7 /* Strange.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Strange.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFD57371099741A200BA26F7 /* strange.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = strange.c; path = hacks/strange.c; sourceTree = "<group>"; };
+		AFD5E98425672E8500704C83 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS13.2.sdk/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		AFD77E7020C23F8600A3638D /* FilmLeader.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FilmLeader.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFD77E7220C2417F00A3638D /* filmleader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = filmleader.c; path = hacks/filmleader.c; sourceTree = "<group>"; };
 		AFD77E7620C2419600A3638D /* filmleader.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = filmleader.xml; sourceTree = "<group>"; };
@@ -8713,6 +8867,8 @@
 		AFF3C9FB17CCAC440028F240 /* Geodesic.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Geodesic.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF3C9FD17CCAD9A0028F240 /* geodesic.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = geodesic.xml; sourceTree = "<group>"; };
 		AFF3CA0217CCAEB70028F240 /* geodesic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = geodesic.c; path = hacks/glx/geodesic.c; sourceTree = "<group>"; };
+		AFF42886257D3071001BC8CE /* co____9.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "co____9.c"; path = "hacks/glx/co____9.c"; sourceTree = "<group>"; };
+		AFF42888257D30BE001BC8CE /* co____9.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "co____9.xml"; sourceTree = "<group>"; };
 		AFF449F52275494400DB8EDB /* DeepStars.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DeepStars.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF449F722754B2300DB8EDB /* deepstars.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deepstars.c; path = hacks/glx/deepstars.c; sourceTree = "<group>"; };
 		AFF449FF22754BB500DB8EDB /* deepstars.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = deepstars.xml; sourceTree = "<group>"; };
@@ -10068,6 +10224,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF688AC1257C04D200C91EAE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF688AC2257C04D200C91EAE /* libjwxyz.a in Frameworks */,
+				AF688AC3257C04D200C91EAE /* ScreenSaver.framework in Frameworks */,
+				AF688AC4257C04D200C91EAE /* QuartzCore.framework in Frameworks */,
+				AF688AC5257C04D200C91EAE /* Cocoa.framework in Frameworks */,
+				AF688AC6257C04D200C91EAE /* Carbon.framework in Frameworks */,
+				AF688AC7257C04D200C91EAE /* OpenGL.framework in Frameworks */,
+				AF688AC8257C04D200C91EAE /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF68A48619196CF800D41CD1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -10382,6 +10552,7 @@
 			files = (
 				AF918B96158FD0EA002B5D1E /* libjwxyz.a in Frameworks */,
 				AFEB9C3B1590054B003974F3 /* OpenGLES.framework in Frameworks */,
+				AFD5E98525672E8500704C83 /* WebKit.framework in Frameworks */,
 				AFEB9C3915900514003974F3 /* UIKit.framework in Frameworks */,
 				AF561DF815969C5B007CA5ED /* AssetsLibrary.framework in Frameworks */,
 				AF142BB11EFEFBA20005C0A8 /* Photos.framework in Frameworks */,
@@ -10390,6 +10561,34 @@
 				AF0FAF3C159BAC7C00BCE2F7 /* CoreText.framework in Frameworks */,
 				AFEB9C411590056A003974F3 /* QuartzCore.framework in Frameworks */,
 				AF7F54A417DC249500CE1158 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF95058C25670ECC00C1F257 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF95058D25670ECC00C1F257 /* libjwxyz.a in Frameworks */,
+				AF95058E25670ECC00C1F257 /* ScreenSaver.framework in Frameworks */,
+				AF95058F25670ECC00C1F257 /* QuartzCore.framework in Frameworks */,
+				AF95059025670ECC00C1F257 /* Cocoa.framework in Frameworks */,
+				AF95059125670ECC00C1F257 /* Carbon.framework in Frameworks */,
+				AF95059225670ECC00C1F257 /* OpenGL.framework in Frameworks */,
+				AF95059325670ECC00C1F257 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF96014625758F9F007FA31B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF96014725758F9F007FA31B /* libjwxyz.a in Frameworks */,
+				AF96014825758F9F007FA31B /* ScreenSaver.framework in Frameworks */,
+				AF96014925758F9F007FA31B /* QuartzCore.framework in Frameworks */,
+				AF96014A25758F9F007FA31B /* Cocoa.framework in Frameworks */,
+				AF96014B25758F9F007FA31B /* Carbon.framework in Frameworks */,
+				AF96014C25758F9F007FA31B /* OpenGL.framework in Frameworks */,
+				AF96014D25758F9F007FA31B /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11699,6 +11898,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFADD33324B67100005456DC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFADD33424B67100005456DC /* libjwxyz.a in Frameworks */,
+				AFADD33524B67100005456DC /* ScreenSaver.framework in Frameworks */,
+				AFADD33624B67100005456DC /* QuartzCore.framework in Frameworks */,
+				AFADD33724B67100005456DC /* Cocoa.framework in Frameworks */,
+				AFADD33824B67100005456DC /* Carbon.framework in Frameworks */,
+				AFADD33924B67100005456DC /* OpenGL.framework in Frameworks */,
+				AFADD33A24B67100005456DC /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFB591AF178B812C00EA4005 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -12804,6 +13017,10 @@
 				AFA0B133241CE69E0071E35D /* Gibson.saver */,
 				AF2D0D3A241D7C870001D8B8 /* EtruscanVenus.saver */,
 				AF436411241D84CE00966603 /* Scooter.saver */,
+				AFADD34024B67100005456DC /* SphereEversion.saver */,
+				AF95059925670ECC00C1F257 /* COVID19.saver */,
+				AF96015325758F9F007FA31B /* Headroom.saver */,
+				AF688ACE257C04D200C91EAE /* Beats.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -12860,6 +13077,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AFD5E98425672E8500704C83 /* WebKit.framework */,
 				AF142BB01EFEFBA20005C0A8 /* Photos.framework */,
 				AF1ADA171850180E00932759 /* Sparkle.framework */,
 				AF78377C17DBA85D003B9FC0 /* libz.dylib */,
@@ -13105,6 +13323,7 @@
 				AFA55AF409933DBF00F3E977 /* b_draw.c */,
 				AFA55AF509933DBF00F3E977 /* b_lockglue.c */,
 				AFA55AF609933DBF00F3E977 /* b_sphere.c */,
+				AF688AD0257C05E300C91EAE /* beats.c */,
 				AFA5616D09937C9A00F3E977 /* blinkbox.c */,
 				AFA5602909936D0700F3E977 /* blocktube.c */,
 				AFA562D40993930C00F3E977 /* boing.c */,
@@ -13126,6 +13345,8 @@
 				AF3581D61431D5FC00E09C51 /* companion_disc.c */,
 				AF3581D71431D5FC00E09C51 /* companion_heart.c */,
 				AF3581D81431D5FC00E09C51 /* companion_quad.c */,
+				AF95059B25670FE900C1F257 /* covid19.c */,
+				AFF42886257D3071001BC8CE /* co____9.c */,
 				AFA55EE80993613E00F3E977 /* cow_face.c */,
 				AFA55EE90993613E00F3E977 /* cow_hide.c */,
 				AFA55EEA0993613E00F3E977 /* cow_hoofs.c */,
@@ -13194,6 +13415,8 @@
 				AF6C6D8B226AE6120065A748 /* gravitywell.c */,
 				AF62D62F2180082100C57C42 /* handsy_model.c */,
 				AF62D6302180082100C57C42 /* handsy.c */,
+				AF96015925759124007FA31B /* headroom.c */,
+				AF96015825759124007FA31B /* headroom_model.c */,
 				AF1B0FBE1D7AB5210011DBE4 /* hexstrut.c */,
 				AF78D18A142DD96E002AAF77 /* hilbert.c */,
 				AFC0E8C21CDC60A9008CAFAC /* hydrostat.c */,
@@ -13258,6 +13481,7 @@
 				AFE30BFF0E52B1DC00CCF4A5 /* sonar-icmp.c */,
 				AFE30C000E52B1DC00CCF4A5 /* sonar-sim.c */,
 				AFE30C010E52B1DC00CCF4A5 /* sonar.c */,
+				AFADD34224B67204005456DC /* sphereeversion.c */,
 				AFA55D940993590F00F3E977 /* spheremonics.c */,
 				AFCF83541AF5B5FD008BB7E1 /* splitflap.c */,
 				AFCF83531AF5B5FD008BB7E1 /* splitflap_obj.c */,
@@ -13327,6 +13551,7 @@
 				AFC258710988A468000655EE /* attraction.xml */,
 				AFC258720988A468000655EE /* atunnel.xml */,
 				AFC258730988A468000655EE /* barcode.xml */,
+				AF688AD3257C05FB00C91EAE /* beats.xml */,
 				AF73FF3B1A0988C500E485E9 /* binaryring.xml */,
 				AFC258740988A468000655EE /* blaster.xml */,
 				AFC258750988A468000655EE /* blinkbox.xml */,
@@ -13352,6 +13577,8 @@
 				AF3581E61431D61D00E09C51 /* companioncube.xml */,
 				AFC258880988A468000655EE /* compass.xml */,
 				AFC258890988A468000655EE /* coral.xml */,
+				AF95059E2567102000C1F257 /* covid19.xml */,
+				AFF42888257D30BE001BC8CE /* co____9.xml */,
 				AFC2588B0988A468000655EE /* crackberg.xml */,
 				AFC5CFF32044AB27004CEB5E /* crumbler.xml */,
 				AFC2588C0988A468000655EE /* critical.xml */,
@@ -13427,6 +13654,7 @@
 				AFC258C20988A468000655EE /* halftone.xml */,
 				AFC258C30988A468000655EE /* halo.xml */,
 				AF62D6352180083D00C57C42 /* handsy.xml */,
+				AF96015525759102007FA31B /* headroom.xml */,
 				AFC258C40988A468000655EE /* helix.xml */,
 				AFB591BC178B81E600EA4005 /* hexadrop.xml */,
 				AF1B0FBF1D7AB5210011DBE4 /* hexstrut.xml */,
@@ -13526,6 +13754,7 @@
 				AFC2590F0988A469000655EE /* sonar.xml */,
 				AFC259100988A469000655EE /* speedmine.xml */,
 				AFC259110988A469000655EE /* sphere.xml */,
+				AFADD34524B67223005456DC /* sphereeversion.xml */,
 				AFC259130988A469000655EE /* spheremonics.xml */,
 				AFC259140988A469000655EE /* spiral.xml */,
 				AFCF83521AF5B5FD008BB7E1 /* splitflap.xml */,
@@ -15653,6 +15882,26 @@
 			productReference = AF6427B809A2DE36000F4CD4 /* Bubbles.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AF688AB9257C04D200C91EAE /* Beats */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF688ACB257C04D200C91EAE /* Build configuration list for PBXNativeTarget "Beats" */;
+			buildPhases = (
+				AF688ABC257C04D200C91EAE /* Resources */,
+				AF688ABE257C04D200C91EAE /* Sources */,
+				AF688AC1257C04D200C91EAE /* Frameworks */,
+				AF688AC9257C04D200C91EAE /* Rez */,
+				AF688ACA257C04D200C91EAE /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF688ABA257C04D200C91EAE /* PBXTargetDependency */,
+			);
+			name = Beats;
+			productName = DangerBall;
+			productReference = AF688ACE257C04D200C91EAE /* Beats.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AF68A47E19196CF800D41CD1 /* Tessellimage */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AF68A48F19196CF800D41CD1 /* Build configuration list for PBXNativeTarget "Tessellimage" */;
@@ -16116,6 +16365,46 @@
 			productName = SaverTester;
 			productReference = AF91898F158FC00A002B5D1E /* XScreenSaver.app */;
 			productType = "com.apple.product-type.application";
+		};
+		AF95058425670ECC00C1F257 /* COVID19 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF95059625670ECC00C1F257 /* Build configuration list for PBXNativeTarget "COVID19" */;
+			buildPhases = (
+				AF95058725670ECC00C1F257 /* Resources */,
+				AF95058925670ECC00C1F257 /* Sources */,
+				AF95058C25670ECC00C1F257 /* Frameworks */,
+				AF95059425670ECC00C1F257 /* Rez */,
+				AF95059525670ECC00C1F257 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF95058525670ECC00C1F257 /* PBXTargetDependency */,
+			);
+			name = COVID19;
+			productName = DangerBall;
+			productReference = AF95059925670ECC00C1F257 /* COVID19.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF96013E25758F9F007FA31B /* Headroom */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF96015025758F9F007FA31B /* Build configuration list for PBXNativeTarget "Headroom" */;
+			buildPhases = (
+				AF96014125758F9F007FA31B /* Resources */,
+				AF96014325758F9F007FA31B /* Sources */,
+				AF96014625758F9F007FA31B /* Frameworks */,
+				AF96014E25758F9F007FA31B /* Rez */,
+				AF96014F25758F9F007FA31B /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF96013F25758F9F007FA31B /* PBXTargetDependency */,
+			);
+			name = Headroom;
+			productName = DangerBall;
+			productReference = AF96015325758F9F007FA31B /* Headroom.saver */;
+			productType = "com.apple.product-type.bundle";
 		};
 		AF97572D099C317000B05160 /* IMSMap */ = {
 			isa = PBXNativeTarget;
@@ -16838,6 +17127,8 @@
 			buildConfigurationList = AFA3393D0B058505002B0E7D /* Build configuration list for PBXNativeTarget "WebCollage" */;
 			buildPhases = (
 				AFA339310B058505002B0E7D /* Resources */,
+				AFB9B5C12426A0EA00A5740D /* Copy WebCollage Perl */,
+				AFB9B5C024269AF900A5740D /* CopyFiles */,
 				AFA339340B058505002B0E7D /* Sources */,
 				AFA339370B058505002B0E7D /* Frameworks */,
 				AFA3393B0B058505002B0E7D /* Rez */,
@@ -17992,6 +18283,26 @@
 			productReference = AFACE8881CC83458008B24CD /* EnergyStream.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AFADD32B24B67100005456DC /* SphereEversion */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFADD33D24B67100005456DC /* Build configuration list for PBXNativeTarget "SphereEversion" */;
+			buildPhases = (
+				AFADD32E24B67100005456DC /* Resources */,
+				AFADD33024B67100005456DC /* Sources */,
+				AFADD33324B67100005456DC /* Frameworks */,
+				AFADD33B24B67100005456DC /* Rez */,
+				AFADD33C24B67100005456DC /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFADD32C24B67100005456DC /* PBXTargetDependency */,
+			);
+			name = SphereEversion;
+			productName = DangerBall;
+			productReference = AFADD34024B67100005456DC /* SphereEversion.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AFB591A7178B812C00EA4005 /* Hexadrop */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFB591B7178B812C00EA4005 /* Build configuration list for PBXNativeTarget "Hexadrop" */;
@@ -18017,9 +18328,10 @@
 			buildConfigurationList = AFBFE75B178642DC00432B21 /* Build configuration list for PBXNativeTarget "Apple2-OSX" */;
 			buildPhases = (
 				AFBFE74E178642DC00432B21 /* Resources */,
+				AFB9B5C22426B1FB00A5740D /* Copy Saver Bundle PlugIn */,
+				AFBFE78817894FFA00432B21 /* Copy Standalone Preferences XML File */,
 				AFBFE751178642DC00432B21 /* Sources */,
 				AFBFE755178642DC00432B21 /* Frameworks */,
-				AFBFE78817894FFA00432B21 /* Copy Standalone Preferences XML File */,
 				AFBFE75A178642DC00432B21 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18038,9 +18350,10 @@
 			buildConfigurationList = AFBFE77B178647FE00432B21 /* Build configuration list for PBXNativeTarget "Phosphor-OSX" */;
 			buildPhases = (
 				AFBFE76C178647FE00432B21 /* Resources */,
+				AFB9B5C32426B53800A5740D /* Copy Saver Bundle Plugin */,
+				AFBFE78917895AAF00432B21 /* Copy Standalone Preferences XML File */,
 				AFBFE771178647FE00432B21 /* Sources */,
 				AFBFE775178647FE00432B21 /* Frameworks */,
-				AFBFE78917895AAF00432B21 /* Copy Standalone Preferences XML File */,
 				AFBFE77A178647FE00432B21 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19446,6 +19759,9 @@
 					AF6427A809A2DE36000F4CD4 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
+					AF688AB9257C04D200C91EAE = {
+						DevelopmentTeam = 4627ATJELP;
+					};
 					AF68A47E19196CF800D41CD1 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
@@ -19513,6 +19829,12 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF918977158FC00A002B5D1E = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AF95058425670ECC00C1F257 = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AF96013E25758F9F007FA31B = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF97572D099C317000B05160 = {
@@ -19804,6 +20126,9 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AFACE8731CC83458008B24CD = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AFADD32B24B67100005456DC = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AFB591A7178B812C00EA4005 = {
@@ -20137,6 +20462,7 @@
 				AFA5606209936F3800F3E977 /* AntSpotlight */,
 				AF08398F09930B6B00277BE9 /* Atlantis */,
 				AF083A32099311D700277BE9 /* Atunnel */,
+				AF688AB9257C04D200C91EAE /* Beats */,
 				AFA5615609937C0D00F3E977 /* BlinkBox */,
 				AFA5601409936CC800F3E977 /* BlockTube */,
 				AFA562BF099392C600F3E977 /* Boing */,
@@ -20148,6 +20474,7 @@
 				AFA55BAB099340CE00F3E977 /* Circuit */,
 				AF5C9AF91A0CCE6E00B0147A /* Cityflow */,
 				AF3581BF1431D47B00E09C51 /* CompanionCube */,
+				AF95058425670ECC00C1F257 /* COVID19 */,
 				AFA563130993951000F3E977 /* Crackberg */,
 				AFC5CFD62044AA23004CEB5E /* Crumbler */,
 				AFA56351099396C000F3E977 /* Cube21 */,
@@ -20189,6 +20516,7 @@
 				AFD56DF10996A03800BA26F7 /* GLText */,
 				AF6C6D74226AE4FC0065A748 /* GravityWell */,
 				AF62D6182180070600C57C42 /* Handsy */,
+				AF96013E25758F9F007FA31B /* Headroom */,
 				AF1B0FA71D7AB4740011DBE4 /* Hexstrut */,
 				AF78D175142DD8F3002AAF77 /* Hilbert */,
 				AFC0E8AB1CDC601A008CAFAC /* Hydrostat */,
@@ -20231,6 +20559,7 @@
 				AFA55B7909933F7200F3E977 /* Sierpinski3D */,
 				AFE2A4560E2E904600ADB298 /* SkyTentacles */,
 				AFE30BE80E52B14700CCF4A5 /* Sonar */,
+				AFADD32B24B67100005456DC /* SphereEversion */,
 				AFA55D7F099358C400F3E977 /* Spheremonics */,
 				AFCF833B1AF5B515008BB7E1 /* SplitFlap */,
 				AFEE108B1D17E20B00AAC8F7 /* Splodesic */,
@@ -21056,6 +21385,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF688ABC257C04D200C91EAE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF688AD4257C05FC00C91EAE /* beats.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF68A48119196CF800D41CD1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -21277,12 +21614,11 @@
 				AF918ABE158FC53D002B5D1E /* attraction.xml in Resources */,
 				AF918ABF158FC53D002B5D1E /* atunnel.xml in Resources */,
 				AF918AC0158FC53D002B5D1E /* barcode.xml in Resources */,
+				AF688AD5257C05FC00C91EAE /* beats.xml in Resources */,
 				AF73FF3D1A0988C500E485E9 /* binaryring.xml in Resources */,
-				AFEE10681D1341FE00AAC8F7 /* cubetwist.xml in Resources */,
 				AF918AC1158FC53D002B5D1E /* blaster.xml in Resources */,
 				AF918AC2158FC53D002B5D1E /* blinkbox.xml in Resources */,
 				AF918AC3158FC53D002B5D1E /* blitspin.xml in Resources */,
-				AFC5CFF52044AB28004CEB5E /* crumbler.xml in Resources */,
 				AF918AC4158FC53D002B5D1E /* blocktube.xml in Resources */,
 				AF918AC5158FC53D002B5D1E /* boing.xml in Resources */,
 				AF918AC6158FC53D002B5D1E /* bouboule.xml in Resources */,
@@ -21304,11 +21640,13 @@
 				AF918AD6158FC53D002B5D1E /* compass.xml in Resources */,
 				AF918AD7158FC53D002B5D1E /* coral.xml in Resources */,
 				AF918AD8158FC53D002B5D1E /* crackberg.xml in Resources */,
+				AFC5CFF52044AB28004CEB5E /* crumbler.xml in Resources */,
 				AF918ADA158FC53D002B5D1E /* crystal.xml in Resources */,
 				AF918ADB158FC53D002B5D1E /* cube21.xml in Resources */,
 				AF918ADC158FC53D002B5D1E /* cubenetic.xml in Resources */,
 				AFEE10881D15EBDC00AAC8F7 /* cubestack.xml in Resources */,
 				AF918ADD158FC53D002B5D1E /* cubestorm.xml in Resources */,
+				AFEE10681D1341FE00AAC8F7 /* cubetwist.xml in Resources */,
 				AF918ADE158FC53D002B5D1E /* cubicgrid.xml in Resources */,
 				AF918ADF158FC53D002B5D1E /* cwaves.xml in Resources */,
 				AF918AE0158FC53D002B5D1E /* cynosure.xml in Resources */,
@@ -21369,6 +21707,7 @@
 				AF918B11158FC53D002B5D1E /* halftone.xml in Resources */,
 				AF918B12158FC53D002B5D1E /* halo.xml in Resources */,
 				AF62D6372180083E00C57C42 /* handsy.xml in Resources */,
+				AF96015725759103007FA31B /* headroom.xml in Resources */,
 				AF918B13158FC53D002B5D1E /* helix.xml in Resources */,
 				AFB591BF178B81E600EA4005 /* hexadrop.xml in Resources */,
 				AF1B0FC01D7AB5330011DBE4 /* hexstrut.xml in Resources */,
@@ -21385,8 +21724,8 @@
 				AF918B1F158FC53D002B5D1E /* jigglypuff.xml in Resources */,
 				AF39483F15A1647A0000FFCD /* jigsaw.xml in Resources */,
 				AF918B22158FC53D002B5D1E /* juggler3d.xml in Resources */,
-				AFB8A69C1782BF6C004EDB85 /* kaleidocycle.xml in Resources */,
 				AF918B23158FC53D002B5D1E /* julia.xml in Resources */,
+				AFB8A69C1782BF6C004EDB85 /* kaleidocycle.xml in Resources */,
 				AF918B24158FC53D002B5D1E /* kaleidescope.xml in Resources */,
 				AF918B25158FC53D002B5D1E /* klein.xml in Resources */,
 				AF918B26158FC53D002B5D1E /* kumppa.xml in Resources */,
@@ -21454,6 +21793,7 @@
 				AF918B65158FC53E002B5D1E /* slip.xml in Resources */,
 				AF918B66158FC53E002B5D1E /* sonar.xml in Resources */,
 				AF918B67158FC53E002B5D1E /* speedmine.xml in Resources */,
+				AFADD34724B67223005456DC /* sphereeversion.xml in Resources */,
 				AF918B69158FC53E002B5D1E /* spheremonics.xml in Resources */,
 				AFCF83561AF5B5FD008BB7E1 /* splitflap.xml in Resources */,
 				AFEE10A71D17E2CD00AAC8F7 /* splodesic.xml in Resources */,
@@ -21496,6 +21836,22 @@
 				AF918B8F158FC53E002B5D1E /* xrayswarm.xml in Resources */,
 				AF918B90158FC53E002B5D1E /* xspirograph.xml in Resources */,
 				AF918B91158FC554002B5D1E /* zoom.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF95058725670ECC00C1F257 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF95059F2567102000C1F257 /* covid19.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF96014125758F9F007FA31B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF96015625759103007FA31B /* headroom.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -21804,8 +22160,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFA33BB00B05860F002B0E7D /* webcollage.xml in Resources */,
-				AFA33BDD0B058A30002B0E7D /* webcollage-helper in Resources */,
-				AFA33C0C0B058ED2002B0E7D /* webcollage in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22261,6 +22615,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFADD32E24B67100005456DC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFADD34624B67223005456DC /* sphereeversion.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFB591AA178B812C00EA4005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -22273,7 +22635,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AFBFE765178643B200432B21 /* Apple2.saver in Resources */,
 				AFBFE74F178642DC00432B21 /* SaverRunner.nib in Resources */,
 				AFBFE750178642DC00432B21 /* SaverRunner.icns in Resources */,
 			);
@@ -22283,7 +22644,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AFBFE7831786483B00432B21 /* Phosphor.saver in Resources */,
 				AFBFE76F178647FE00432B21 /* SaverRunner.nib in Resources */,
 				AFBFE770178647FE00432B21 /* SaverRunner.icns in Resources */,
 			);
@@ -23357,6 +23717,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF688AC9257C04D200C91EAE /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF68A48D19196CF800D41CD1 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -23505,6 +23872,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF7ACFCF19FF0A9200BD752B /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF95059425670ECC00C1F257 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF96014E25758F9F007FA31B /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -24142,6 +24523,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AFACE8831CC83458008B24CD /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFADD33B24B67100005456DC /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -25077,6 +25465,21 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AF688ACA257C04D200C91EAE /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AF68A48E19196CF800D41CD1 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -25223,6 +25626,36 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "$SOURCE_ROOT/build-fntable.pl $SOURCE_ROOT/ios-function-table.m\n";
+		};
+		AF95059525670ECC00C1F257 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF96014F25758F9F007FA31B /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
 		};
 		AF998EEA0A083DB30051049D /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -28164,6 +28597,21 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AFADD33C24B67100005456DC /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AFB591B6178B812C00EA4005 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -28179,6 +28627,24 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AFB9B5C12426A0EA00A5740D /* Copy WebCollage Perl */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy WebCollage Perl";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# The script has to be \"webcollage.pl\", not  \"webcollage\"\nset -x\nNAME=webcollage\nSRC=$SRCROOT/../hacks\nDST=$BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX/Contents/Resources\ncp -p $SRC/$NAME $DST/$NAME.pl\n";
+		};
 		AFBFE75A178642DC00432B21 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -28191,7 +28657,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AFBFE77A178647FE00432B21 /* Run Update Info Plist */ = {
@@ -28206,7 +28672,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AFBFE78817894FFA00432B21 /* Copy Standalone Preferences XML File */ = {
@@ -28221,7 +28687,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC=$SRCROOT/$PRODUCT_NAME-app.xml\nDST=$BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX/Contents/Resources\nNAME=`echo $PRODUCT_NAME.xml | tr A-Z a-z`\ncp -p $SRC $DST/$NAME\nln -sf ../../../$NAME $DST/$PRODUCT_NAME.saver/Contents/Resources/";
+			shellScript = "SRC=$SRCROOT/$PRODUCT_NAME-app.xml\nRSRC=$BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX/Contents/Resources\nPLUG=$BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX/Contents/PlugIns\nNAME=`echo $PRODUCT_NAME.xml | tr A-Z a-z`\nset -x\ncp -p $SRC $RSRC/$NAME\n# codesign doesn't like this being a symlink\n# ln -sf ../../../$NAME $PLUG/$PRODUCT_NAME.saver/Contents/Resources/\ncp -p $SRC $PLUG/$PRODUCT_NAME.saver/Contents/Resources/\n";
 		};
 		AFBFE78917895AAF00432B21 /* Copy Standalone Preferences XML File */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -28235,7 +28701,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC=$SRCROOT/$PRODUCT_NAME-app.xml\nDST=$BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX/Contents/Resources\nNAME=`echo $PRODUCT_NAME.xml | tr A-Z a-z`\ncp -p $SRC $DST/$NAME\nln -sf ../../../$NAME $DST/$PRODUCT_NAME.saver/Contents/Resources/";
+			shellScript = "SRC=$SRCROOT/$PRODUCT_NAME-app.xml\nRSRC=$BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX/Contents/Resources\nPLUG=$BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX/Contents/PlugIns\nNAME=`echo $PRODUCT_NAME.xml | tr A-Z a-z`\nset -x\ncp -p $SRC $RSRC/$NAME\n# codesign doesn't like this being a symlink\n# ln -sf ../../../$NAME $PLUG/$PRODUCT_NAME.saver/Contents/Resources/\ncp -p $SRC $PLUG/$PRODUCT_NAME.saver/Contents/Resources/\n\n";
 		};
 		AFC0E8BC1CDC601A008CAFAC /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -29631,6 +30097,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF688ABE257C04D200C91EAE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF688AC0257C04D200C91EAE /* XScreenSaverSubclass.m in Sources */,
+				AF688AD1257C05E400C91EAE /* beats.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF68A48319196CF800D41CD1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -29980,6 +30455,7 @@
 				AF918A2D158FC3BB002B5D1E /* b_draw.c in Sources */,
 				AF918A2E158FC3BB002B5D1E /* b_lockglue.c in Sources */,
 				AF918A2F158FC3BB002B5D1E /* b_sphere.c in Sources */,
+				AF688AD2257C05E400C91EAE /* beats.c in Sources */,
 				AF918A30158FC3BB002B5D1E /* blinkbox.c in Sources */,
 				AF918A31158FC3BB002B5D1E /* blocktube.c in Sources */,
 				AF918A32158FC3BB002B5D1E /* boing.c in Sources */,
@@ -30047,6 +30523,8 @@
 				AF6C6D92226AE6CE0065A748 /* gravitywell.c in Sources */,
 				AF62D6322180082100C57C42 /* handsy_model.c in Sources */,
 				AF62D6342180082100C57C42 /* handsy.c in Sources */,
+				AF96015D25759124007FA31B /* headroom.c in Sources */,
+				AF96015B25759124007FA31B /* headroom_model.c in Sources */,
 				AF1B0FC31D7AB5500011DBE4 /* hexstrut.c in Sources */,
 				AF918A6A158FC3E5002B5D1E /* hilbert.c in Sources */,
 				AFC0E8C41CDC60B0008CAFAC /* hydrostat.c in Sources */,
@@ -30107,6 +30585,7 @@
 				AF918A93158FC417002B5D1E /* sonar-icmp.c in Sources */,
 				AF918A94158FC417002B5D1E /* sonar-sim.c in Sources */,
 				AF918A95158FC417002B5D1E /* sonar.c in Sources */,
+				AFADD34424B67204005456DC /* sphereeversion.c in Sources */,
 				AF918A96158FC417002B5D1E /* spheremonics.c in Sources */,
 				AFCF835A1AF5B5FD008BB7E1 /* splitflap.c in Sources */,
 				AFCF83581AF5B5FD008BB7E1 /* splitflap_obj.c in Sources */,
@@ -30149,6 +30628,25 @@
 				AF918AB2158FC47B002B5D1E /* voronoi.c in Sources */,
 				AF918AB3158FC47B002B5D1E /* whale.c in Sources */,
 				AF39E2B8198A15EE0064A58D /* winduprobot.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF95058925670ECC00C1F257 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF95058B25670ECC00C1F257 /* XScreenSaverSubclass.m in Sources */,
+				AF95059C25670FE900C1F257 /* covid19.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF96014325758F9F007FA31B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF96015C25759124007FA31B /* headroom.c in Sources */,
+				AF96015A25759124007FA31B /* headroom_model.c in Sources */,
+				AF96014525758F9F007FA31B /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -31035,6 +31533,15 @@
 			files = (
 				AFACE87A1CC83458008B24CD /* XScreenSaverSubclass.m in Sources */,
 				AFACE88E1CC83613008B24CD /* energystream.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFADD33024B67100005456DC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFADD33224B67100005456DC /* XScreenSaverSubclass.m in Sources */,
+				AFADD34324B67204005456DC /* sphereeversion.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32329,6 +32836,16 @@
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF6427AA09A2DE36000F4CD4 /* PBXContainerItemProxy */;
 		};
+		AF688ABA257C04D200C91EAE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF688ABB257C04D200C91EAE /* PBXContainerItemProxy */;
+		};
+		AF688AD7257C061C00C91EAE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF688AB9257C04D200C91EAE /* Beats */;
+			targetProxy = AF688AD6257C061C00C91EAE /* PBXContainerItemProxy */;
+		};
 		AF68A47F19196CF800D41CD1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -33364,6 +33881,26 @@
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF918979158FC00A002B5D1E /* PBXContainerItemProxy */;
 		};
+		AF95058525670ECC00C1F257 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF95058625670ECC00C1F257 /* PBXContainerItemProxy */;
+		};
+		AF9505A22567104200C1F257 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF95058425670ECC00C1F257 /* COVID19 */;
+			targetProxy = AF9505A12567104200C1F257 /* PBXContainerItemProxy */;
+		};
+		AF96013F25758F9F007FA31B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF96014025758F9F007FA31B /* PBXContainerItemProxy */;
+		};
+		AF96015F25759150007FA31B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF96013E25758F9F007FA31B /* Headroom */;
+			targetProxy = AF96015E25759150007FA31B /* PBXContainerItemProxy */;
+		};
 		AF97572E099C317000B05160 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -33878,6 +34415,16 @@
 			isa = PBXTargetDependency;
 			target = AFACE8731CC83458008B24CD /* EnergyStream */;
 			targetProxy = AFACE8901CC8365F008B24CD /* PBXContainerItemProxy */;
+		};
+		AFADD32C24B67100005456DC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFADD32D24B67100005456DC /* PBXContainerItemProxy */;
+		};
+		AFADD34924B67256005456DC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFADD32B24B67100005456DC /* SphereEversion */;
+			targetProxy = AFADD34824B67256005456DC /* PBXContainerItemProxy */;
 		};
 		AFB581B0102F363300342B11 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -35687,7 +36234,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"APPLE2_ONLY=1",
 					"$(inherited)",
 				);
@@ -35711,7 +36258,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"APPLE2_ONLY=1",
 					"$(inherited)",
 				);
@@ -35735,7 +36282,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"PHOSPHOR_ONLY=1",
 					"$(inherited)",
 				);
@@ -35759,7 +36306,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"PHOSPHOR_ONLY=1",
 					"$(inherited)",
 				);
@@ -35783,7 +36330,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"TESTX11_ONLY=1",
 					"$(inherited)",
 				);
@@ -35807,7 +36354,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"TESTX11_ONLY=1",
 					"$(inherited)",
 				);
@@ -35935,6 +36482,28 @@
 		AF6427B709A2DE36000F4CD4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		AF688ACC257C04D200C91EAE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF688ACD257C04D200C91EAE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -36330,7 +36899,7 @@
 				COMBINE_HIDPI_IMAGES = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"$(inherited)",
 				);
 				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
@@ -36353,7 +36922,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COMBINE_HIDPI_IMAGES = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"USE_IPHONE=1",
+					"HAVE_IPHONE=1",
 					"$(inherited)",
 				);
 				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
@@ -36364,6 +36933,50 @@
 				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		AF95059725670ECC00C1F257 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF95059825670ECC00C1F257 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AF96015125758F9F007FA31B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF96015225758F9F007FA31B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -38039,6 +38652,28 @@
 			name = Debug;
 		};
 		AFACE8871CC83458008B24CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AFADD33E24B67100005456DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFADD33F24B67100005456DC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
@@ -40057,6 +40692,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AF688ACB257C04D200C91EAE /* Build configuration list for PBXNativeTarget "Beats" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF688ACC257C04D200C91EAE /* Debug */,
+				AF688ACD257C04D200C91EAE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AF68A48F19196CF800D41CD1 /* Build configuration list for PBXNativeTarget "Tessellimage" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -40260,6 +40904,24 @@
 			buildConfigurations = (
 				AF91898D158FC00A002B5D1E /* Debug */,
 				AF91898E158FC00A002B5D1E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF95059625670ECC00C1F257 /* Build configuration list for PBXNativeTarget "COVID19" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF95059725670ECC00C1F257 /* Debug */,
+				AF95059825670ECC00C1F257 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF96015025758F9F007FA31B /* Build configuration list for PBXNativeTarget "Headroom" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF96015125758F9F007FA31B /* Debug */,
+				AF96015225758F9F007FA31B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -41133,6 +41795,15 @@
 			buildConfigurations = (
 				AFACE8861CC83458008B24CD /* Debug */,
 				AFACE8871CC83458008B24CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFADD33D24B67100005456DC /* Build configuration list for PBXNativeTarget "SphereEversion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFADD33E24B67100005456DC /* Debug */,
+				AFADD33F24B67100005456DC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

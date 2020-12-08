@@ -1,6 +1,8 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
  * xscreensaver, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
  *
+ * Modified by Richard Weeks <rtweeks21@gmail.com> Copyright (c) 2020
+ *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -72,5 +74,54 @@ void load_texture_async (Screen *, Window, GLXContext,
                                            int texture_height,
                                            void *closure),
                          void *closure);
+
+struct texture_loader_t;
+typedef struct texture_loader_t texture_loader_t;
+
+/* Incremental Texture Loading
+
+   The process works like load_texture_async, but split into multiple calls
+   to facilitate chunks of work fitted to animation idle periods.  The
+   necessary calls are:
+
+      * alloc_texture_loader - one call - allocates texture loader and starts
+            background loading of image
+      * step_texture_loader - multiple calls - each call processes part of the
+            image into an OpenGL texture; calls back to provided function when
+            texture is ready with image
+      * free_texture_loader - one call - frees the texture loader resources
+            and memory
+
+   With the exception of the pointer to the loader and the time limit, all
+   arguments are the same types as used by load_texture_async.
+ */
+texture_loader_t *alloc_texture_loader (Screen *, Window, GLXContext,
+                                        int desired_width, int desired_height,
+                                        Bool mipmap_p,
+                                        GLuint texid);
+
+/* Give an incremental texture loader time to work
+
+   The given callback function will be called (with the passed closure) if
+   the texture loader completes its work, and this callback will only be
+   made once during the lifetime of the texture loader.
+
+   This function will return either when all work is complete or when a
+   processed "stripe" takes the elapsed time beyond allowed_seconds.
+ */
+void step_texture_loader (texture_loader_t *loader,
+                          double allowed_seconds,
+                          void (*callback) (const char *filename,
+                                            XRectangle *geometry,
+                                            int image_width,
+                                            int image_height,
+                                            int texture_width,
+                                            int texture_height,
+                                            void *closure),
+                          void *closure);
+
+Bool texture_loader_failed (texture_loader_t *loader);
+
+void free_texture_loader (texture_loader_t *loader);
 
 #endif /* __GRAB_XIMAGE_H__ */

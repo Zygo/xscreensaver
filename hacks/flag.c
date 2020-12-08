@@ -274,7 +274,7 @@ make_flag_bits(ModeInfo *mi)
 # if defined(_AIX)
 			  sprintf(text, "%s\n%s %s.%s",
 					  uts.nodename, uts.sysname, uts.version, uts.release);
-#  elif defined(__APPLE__) && !defined(USE_IPHONE)  /* MacOS X + XDarwin */
+#  elif defined(__APPLE__) && !defined(HAVE_IPHONE)  /* MacOS X + XDarwin */
               {
                 const char *file = 
                   "/System/Library/CoreServices/SystemVersion.plist";

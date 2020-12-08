@@ -1,6 +1,8 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
  * xscreensaver, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
  *
+ * Modified by Richard Weeks <rtweeks21@gmail.com> Copyright (c) 2020
+ *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -86,6 +88,7 @@ extern char *progname;
 
 
 static int debug_p = 0;
+static double perf = 32768000.0; /* initially assume 2^19 pixels in 1/60/sec */
 
 static Bool
 bigendian (void)
@@ -93,6 +96,35 @@ bigendian (void)
   union { int i; char c[sizeof(int)]; } u;
   u.i = 1;
   return !u.c[0];
+}
+
+#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
+typedef void (* PFNGLGENERATEMIPMAPPROC) (GLenum target);
+#endif
+
+static PFNGLGENERATEMIPMAPPROC
+get_glGenerateMipmap (void)
+{
+  static PFNGLGENERATEMIPMAPPROC pfn = 0;
+
+  /* auto-generate mipmaps on X11 and macOS, but skip iOS and Android. */
+
+# ifndef HAVE_JWZGLES
+#  ifdef HAVE_COCOA
+    pfn = glGenerateMipmap;
+#  else /* !HAVE_COCOA */
+
+  static Bool retrieved_p = False;
+  if (!retrieved_p)
+    {
+      pfn = (PFNGLGENERATEMIPMAPPROC)
+        glXGetProcAddress ((const GLubyte *) "glGenerateMipmap");
+      retrieved_p = True;
+    }
+#  endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWZGLES */
+
+  return pfn;
 }
 
 
@@ -492,6 +524,27 @@ typedef struct {
 
 } img_closure;
 
+typedef enum { TLP_LOADING = 0, TLP_IMPORTING, TLP_COMPLETE, TLP_ERROR } texture_loader_phase;
+struct texture_loader_t {
+  texture_loader_phase phase;
+  Screen *screen;
+  Window window;
+  XShmSegmentInfo shm_info;
+  XImage *ximage;
+  img_closure load_closure;
+  Bool pixmap_valid_p;
+  int img_width, img_height, tex_width, tex_height;
+  XRectangle geometry;
+  int y;
+  unsigned int stripe_height;
+  char *name;
+
+  /* debugging */
+  int steps;        /* number of calls to step_texture_loader() that loaded part of the texture */
+  int stripes;      /* number of stripes put into the texture so far */
+  double loaded_time, work_seconds;
+};
+
 
 /* Returns the current time in seconds as a double.
  */
@@ -678,6 +731,95 @@ load_texture_async (Screen *screen, Window window,
 }
 
 
+static void incremental_load_texture_async_cb (Screen *screen,
+                                               Window window,
+                                               Drawable drawable,
+                                               const char *name,
+                                               XRectangle *geometry,
+                                               void *closure);
+
+
+/* Allocate a texture loader to grab the image of a Window and load the image
+   into GL's texture memory.
+
+   The returned texture loader should be stepped with step_texture_loader
+   until that function calls the callback function passed to it.
+ */
+texture_loader_t*
+alloc_texture_loader (Screen *screen, Window window,
+                      GLXContext glx_context,
+                      int desired_width, int desired_height,
+                      Bool mipmap_p,
+                      GLuint texid)
+{
+  texture_loader_t *loader = (texture_loader_t*) calloc (1, sizeof(*loader));
+  Display *dpy = DisplayOfScreen (screen);
+  XWindowAttributes xgwa;
+  img_closure *data = &loader->load_closure;
+
+  if (debug_p)
+    data->load_time = double_time();
+
+  data->texid         = texid;
+  data->mipmap_p    = mipmap_p;
+  data->glx_context = glx_context;
+  loader->screen      = screen;
+  loader->window      = window;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  data->pix_width  = xgwa.width;
+  data->pix_height = xgwa.height;
+  data->pix_depth  = xgwa.depth;
+
+  /* Allow the pixmap to be larger than the window. Esper wants this. */
+  if (desired_width /* && desired_width  < xgwa.width */)
+    data->pix_width  = desired_width;
+  if (desired_height /* && desired_height < xgwa.height */)
+    data->pix_height = desired_height;
+
+  data->pixmap = XCreatePixmap (dpy, window, data->pix_width, data->pix_height,
+                                data->pix_depth);
+  loader->pixmap_valid_p = True;
+  load_image_async (screen, window, data->pixmap,
+                    incremental_load_texture_async_cb, loader);
+
+  return loader;
+}
+
+
+/* Free the texture loader
+ */
+void
+free_texture_loader (texture_loader_t *loader)
+{
+  Display *dpy = DisplayOfScreen(loader->screen);
+
+  /* If the loader is still awaiting asynchronous completion of loading the
+     XImage, there is no way to recover from this request.
+   */
+  if (loader->phase == TLP_LOADING)
+    abort();
+
+  if (loader->ximage)
+  {
+    XImage *ximage = loader->ximage;
+    loader->ximage = 0;
+    destroy_xshm_image (dpy, ximage, &loader->shm_info);
+  }
+
+  if (loader->pixmap_valid_p)
+  {
+    loader->pixmap_valid_p = False;
+    XFreePixmap (dpy, loader->load_closure.pixmap);
+  }
+
+  free ((char *) loader->name);
+  loader->name = 0;
+
+  free (loader);
+}
+
+
 /* Once we have an XImage, this loads it into GL.
    This is used in both synchronous and asynchronous mode.
  */
@@ -810,4 +952,297 @@ load_texture_async_cb (Screen *screen, Window window, Drawable drawable,
       if (dd.texture_width_return)  *dd.texture_width_return  = tw;
       if (dd.texture_height_return) *dd.texture_height_return = th;
     }
+}
+
+
+/* Once we have a pixmap, this sets us up to step-load it into a GL texture.
+ */
+static void
+incremental_load_texture_async_cb (Screen *screen, Window window,
+                                   Drawable drawable, const char *name,
+                                   XRectangle *geometry,
+                                   void *closure)
+{
+  texture_loader_t *loader = (texture_loader_t *) closure;
+  Display *dpy = DisplayOfScreen (screen);
+  img_closure dd = loader->load_closure;
+  GLenum err = 0;
+  GLsizei tex_width = 0, tex_height = 0;
+
+  loader->load_closure.texid = dd.texid;
+  loader->phase = TLP_IMPORTING;
+
+  if (debug_p)
+    loader->loaded_time = double_time();
+
+  /* Like load_texture_async_cb() until it calls pixmap_to_gl_ximage() */
+
+  if (dd.glx_context)
+    glXMakeCurrent (dpy, window, dd.glx_context);
+
+  if (geometry->width <= 0 || geometry->height <= 0)
+  {
+    geometry->x = 0;
+    geometry->y = 0;
+    geometry->width = dd.pix_width;
+    geometry->height = dd.pix_height;
+  }
+
+  if (geometry->width <= 0 || geometry->height <= 0)
+    abort();
+
+  loader->geometry = *geometry;
+
+  /* Like pixmap_to_gl_ximage(): */
+  {
+    Visual *visual = DefaultVisualOfScreen (screen);
+    unsigned int width, height, depth;
+
+    {
+      Window root;
+      int x, y;
+      unsigned int bw;
+      XGetGeometry (dpy, dd.pixmap, &root, &x, &y, &width, &height, &bw, &depth);
+    }
+
+    if (width < 5 || height < 5)
+    {
+      loader->phase = TLP_ERROR;
+      return;
+    }
+
+    loader->ximage = create_xshm_image (dpy, visual, depth, ZPixmap,
+                                        &loader->shm_info, width, height);
+
+    get_xshm_image (dpy, dd.pixmap, loader->ximage, 0, 0, ~0L, &loader->shm_info);
+  }
+
+  loader->img_width = loader->ximage->width;
+  loader->img_height = loader->ximage->height;
+  loader->stripe_height = (1 << 19) / loader->img_width;
+  if (dd.texid != -1)
+    glBindTexture (GL_TEXTURE_2D, dd.texid);
+
+  /* as much of ximage_to_texture() functionality as we can precompute */
+  tex_width  = (GLsizei) to_pow2 (loader->ximage->width);
+  tex_height = (GLsizei) to_pow2 (loader->ximage->height);
+
+  /* glTexImage2D() to allocate OpenGL texture */
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  err = glGetError();
+
+  if (err)
+  {
+    loader->phase = TLP_ERROR;
+    loader->img_width = loader->img_height = 0;
+    tex_width = tex_height = 0;
+    return;
+  }
+
+  /* Capture texture dimensions and name in loader */
+  loader->tex_width = tex_width;
+  loader->tex_height = tex_height;
+  loader->name = name ? strdup(name) : 0;
+}
+
+
+static void
+advance_texture_loader (texture_loader_t *loader, double allowed_seconds);
+static void
+complete_texture_load (texture_loader_t *loader,
+                       void (*callback) (const char *filename,
+                                         XRectangle *geometry,
+                                         int image_width,
+                                         int image_height,
+                                         int texture_width,
+                                         int texture_height,
+                                         void *closure),
+                       void *closure);
+
+
+void
+step_texture_loader (texture_loader_t *loader, double allowed_seconds,
+                     void (*callback) (const char *filename,
+                                       XRectangle *geometry,
+                                       int image_width,
+                                       int image_height,
+                                       int texture_width,
+                                       int texture_height,
+                                       void *closure),
+                     void *closure)
+{
+  if (loader->phase != TLP_IMPORTING)
+    return;
+
+  if (loader->y < loader->ximage->height)
+  {
+    loader->steps++;
+    if (loader->steps == 1)
+      /* Initial tune on the loader for the number of allowed_seconds */
+      loader->stripe_height = ((unsigned int) (perf * allowed_seconds / loader->ximage->width)) / 8 + 1;
+    else
+      advance_texture_loader (loader, allowed_seconds);
+  }
+  else
+  {
+    loader->phase = TLP_COMPLETE;
+    complete_texture_load (loader, callback, closure);
+  }
+}
+
+
+static unsigned int
+texture_loader_next_stripe_height (texture_loader_t *loader)
+{
+  if (loader->y + loader->stripe_height <= loader->img_height)
+    return loader->stripe_height;
+  else
+    return loader->img_height - loader->y;
+}
+
+
+static void
+advance_texture_loader (texture_loader_t *loader, double allowed_seconds)
+{
+  Display *dpy = loader->screen ? DisplayOfScreen (loader->screen) : 0;
+  double start_time = double_time(), elapsed_seconds = 0;
+  double step_end = start_time + allowed_seconds;
+  int iter_count = 0;
+  unsigned int lines_processed = 0;
+  PFNGLGENERATEMIPMAPPROC pfn_glGenerateMipmap = get_glGenerateMipmap();
+
+  if (loader->load_closure.glx_context)
+    glXMakeCurrent (dpy, loader->window, loader->load_closure.glx_context);
+
+  for (
+    ;
+    (double_time() < step_end) && (loader->y < loader->img_height);
+    loader->y += loader->stripe_height, ++iter_count
+  )
+  {
+    /*
+        * Use XSubImage() to extract a section of the shared image
+          loader->stripe_height tall
+        * Use convert_ximage_to_rgba32() to convert that to the desired format
+        * Use XDestroyImage() to free the extracted section of the shared image
+        * glBindTexture(GL_TEXTURE_2D, loader->load_closure.texid)
+        * Import the data to the next stripe of the texture with glTexSubImage2D()
+        * XDestroyImage() to destroy the converted image
+        * Increment loader->y by loader->stripe_height
+     */
+    unsigned int patch_height = texture_loader_next_stripe_height (loader);
+    XImage* patch = XSubImage (loader->ximage,
+                               0, loader->y,
+                               loader->img_width, patch_height);
+    XImage* cvt_patch = convert_ximage_to_rgba32 (loader->screen, patch);
+    Bool use_old_mipmap_p = loader->load_closure.mipmap_p &&
+                            !pfn_glGenerateMipmap &&
+                            (loader->y + loader->stripe_height >= loader->ximage->height);
+
+    loader->stripes++;
+
+    XDestroyImage (patch);
+
+    glBindTexture (GL_TEXTURE_2D, loader->load_closure.texid);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, cvt_patch->bitmap_pad / 8);
+
+    if (use_old_mipmap_p)
+      /* Use old GL_GENERATE_MIPMAP (if before OpenGL 3.0) */
+      glTexParameteri (GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+    /* CHECK: loader->y or -loader->y? */
+    glTexSubImage2D (GL_TEXTURE_2D, 0, 0, loader->y,
+                     cvt_patch->width, cvt_patch->height,
+                     GL_RGBA, GL_UNSIGNED_BYTE, cvt_patch->data);
+
+    if (use_old_mipmap_p)
+      /* Turn off GL_GENERATE_MIPMAP if we turned it on */
+      glTexParameteri (GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+
+    XDestroyImage (cvt_patch);
+
+    lines_processed += patch_height;
+  }
+
+  if (iter_count == 1 && loader->y < loader->img_height && loader->stripe_height > 1)
+  {
+    loader->stripe_height >>= 1;
+  }
+
+  elapsed_seconds = double_time() - start_time;
+  /* monitor perf for use setting the next initial stripe_height (px/s) */
+  if (elapsed_seconds > 0.001)
+    {
+      perf = lines_processed * (double) loader->ximage->width / elapsed_seconds;
+      if (perf > 2e8)
+        perf = 2e8;
+      else if (perf < 1e6)
+        perf = 1e6;
+    }
+
+  if (debug_p)
+    loader->work_seconds += elapsed_seconds;
+}
+
+
+static void
+complete_texture_load (texture_loader_t *loader,
+                       void (*callback) (const char *filename,
+                                         XRectangle *geometry,
+                                         int image_width,
+                                         int image_height,
+                                         int texture_width,
+                                         int texture_height,
+                                         void *closure),
+                       void *closure)
+{
+  XImage *ximage = loader->ximage;
+  Display *dpy = loader->screen ? DisplayOfScreen (loader->screen) : 0;
+  char *name = loader->name;
+  XRectangle geometry = loader->geometry;
+
+  loader->name = 0;
+
+  if (loader->load_closure.glx_context)
+    glXMakeCurrent (dpy, loader->window, loader->load_closure.glx_context);
+
+  loader->ximage = 0;
+  destroy_xshm_image (dpy, ximage, &loader->shm_info);
+
+  loader->pixmap_valid_p = False;
+  XFreePixmap (dpy, loader->load_closure.pixmap);
+
+  if (loader->load_closure.mipmap_p)
+  {
+    PFNGLGENERATEMIPMAPPROC pfn_glGenerateMipmap = get_glGenerateMipmap();
+    glBindTexture (GL_TEXTURE_2D, loader->load_closure.texid);
+    if (pfn_glGenerateMipmap)
+      pfn_glGenerateMipmap (GL_TEXTURE_2D);
+  }
+
+  if (debug_p)
+    {
+      double done_time = double_time();
+      fprintf (stderr,
+               "%s: texture loading: [load %.2f sec] [import %.2f sec, %d stripes, %d steps] [elapsed %2.f sec]\n",
+               progname,
+               loader->loaded_time - loader->load_closure.load_time,
+               loader->work_seconds,
+               loader->stripes,
+               loader->steps,
+               done_time - loader->load_closure.load_time);
+    }
+
+  callback (name, &geometry,
+    loader->img_width, loader->img_height,
+    loader->tex_width, loader->tex_height,
+    closure);
+
+  free (name);
+}
+
+Bool texture_loader_failed (texture_loader_t *loader)
+{
+  return loader->phase == TLP_ERROR;
 }

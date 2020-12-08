@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-mirrorblob - Draws a wobbly blob that distorts the image behind it.
+mirrorblob \- Draws a wobbly blob that distorts the image behind it.
 .SH SYNOPSIS
 .B mirrorblob
 [\-display \fIhost:display.screen\fP]

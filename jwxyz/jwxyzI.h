@@ -130,7 +130,7 @@ extern void jwxyz_quartz_copy_area (Display *dpy, Drawable src, Drawable dst,
 
 # ifdef JWXYZ_GL
 
-#  if defined(USE_IPHONE)
+#  if defined(HAVE_IPHONE)
 #   include <OpenGLES/ES1/gl.h>
 #  elif defined(HAVE_COCOA)
 #   include <OpenGL/gl.h>

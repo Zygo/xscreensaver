@@ -13,7 +13,7 @@
 ..
 .TH XScreenSaver 1 "03-Oct-01" "X Version 11"
 .SH NAME
-sballs - draws balls spinning like crazy in GL
+sballs \- draws balls spinning like crazy in GL
 .SH SYNOPSIS
 .B sballs
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]

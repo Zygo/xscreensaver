@@ -420,7 +420,7 @@ screenhack_record_anim_free (record_anim_state *st)
   sprintf (cmd,
            "ffmpeg"
            " -hide_banner"
-           " -v 16"
+           " -loglevel error"
            " -framerate %d"	/* rate of input: must be before -i */
            " -i '%s-%%06d.%s'"
            " -r %d",		/* rate of output: must be after -i */

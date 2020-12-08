@@ -689,9 +689,9 @@ init_window (Display *dpy, Widget toplevel, const char *title)
 {
   Window window;
   XWindowAttributes xgwa;
+  long pid = getpid();
   XtPopup (toplevel, XtGrabNone);
   XtVaSetValues (toplevel, XtNtitle, title, NULL);
-  long pid = getpid();
 
   /* Select KeyPress, and announce that we accept WM_DELETE_WINDOW.
    */

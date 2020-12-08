@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -125,7 +125,7 @@ open_pipe (state *st)
   char *filter  = get_string_resource  (st->dpy, "filter",  "Filter");
   char *filter2 = get_string_resource  (st->dpy, "filter2", "Filter2");
 
-  av[ac++] = strdup ("webcollage");
+  av[ac++] = strdup ("webcollage.pl");
   av[ac++] = strdup ("-cocoa");
 
   av[ac++] = strdup ("-size");

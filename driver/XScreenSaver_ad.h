@@ -328,8 +328,12 @@
 				vfeedback -root				    \\n\
   GL: 				deepstars -root				    \\n\
   GL: 				gravitywell -root			    \\n\
+  GL: 				beats -root				    \\n\
+  GL: 				covid19 -root				    \\n\
   GL: 				etruscanvenus -root			    \\n\
-  GL: 				gibson -root				    \\n",
+  GL: 				gibson -root				    \\n\
+  GL: 				headroom -root				    \\n\
+  GL: 				sphereeversion -root			    \\n",
 "*hacks.antinspect.name:     AntInspect",
 "*hacks.antmaze.name:        AntMaze",
 "*hacks.antspotlight.name:   AntSpotlight",
@@ -344,6 +348,7 @@
 "*hacks.ccurve.name:         CCurve",
 "*hacks.cloudlife.name:      CloudLife",
 "*hacks.companioncube.name:  CompanionCube",
+"*hacks.covid19.name:        COVID19",
 "*hacks.cubestack.name:      CubeStack",
 "*hacks.cubestorm.name:      CubeStorm",
 "*hacks.cubetwist.name:      CubeTwist",
@@ -405,6 +410,7 @@
 "*hacks.skytentacles.name:   SkyTentacles",
 "*hacks.slidescreen.name:    SlideScreen",
 "*hacks.speedmine.name:      SpeedMine",
+"*hacks.sphereeversion.name: SphereEversion",
 "*hacks.splitflap.name:      SplitFlap",
 "*hacks.starwars.name:       StarWars",
 "*hacks.stonerview.name:     StonerView",

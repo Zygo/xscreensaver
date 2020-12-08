@@ -10,81 +10,155 @@
  */
 
 /*   ========================================================================
+ *   HOW IT WORKS
+ *   ========================================================================
+ *
  *   First we wait until the keyboard and mouse become idle for the specified
- *   amount of time.  We do this in one of three different ways: periodically
- *   checking with the XIdle server extension; selecting key and mouse events
- *   on (nearly) all windows; or by waiting for the MIT-SCREEN-SAVER extension
- *   to send us a "you are idle" event.
+ *   amount of time.  Then, we map one or more full screen black windows.
  *
- *   Then, we map a full screen black window.
+ *   We hold grabs on our override-redirect windows to ensure that user input
+ *   does not leak through the screen saver to other applications on the 
+ *   desktop.  If we cannot secure those grabs, we do not blank the screen.
  *
- *   We place a __SWM_VROOT property on this window, so that newly-started
- *   clients will think that this window is a "virtual root" window (as per
- *   the logic in the historical "vroot.h" header.)
+ *   Creating those windows:
  *
- *   If there is an existing "virtual root" window (one that already had
- *   an __SWM_VROOT property) then we remove that property from that window.
- *   Otherwise, clients would see that window (the real virtual root) instead
- *   of ours (the impostor.)
+ *     - If there are multiple screens, in the X11 sense of "screen", we
+ *       create a window for each (the second number in the $DISPLAY
+ *       variable, "host:display.screen".)
  *
- *   Then we pick a random program to run, and start it.  Two assumptions 
- *   are made about this program: that it has been specified with whatever
- *   command-line options are necessary to make it run on the root window;
- *   and that it has been compiled with vroot.h, so that it is able to find
- *   the root window when a virtual-root window manager (or this program) is
- *   running.
+ *     - On Xinerama/RANDR systems, we create windows covering each physical
+ *       monitor, meaning multiple windows on the same virtual desktop.
  *
- *   Then, we wait for keyboard or mouse events to be generated on the window.
- *   When they are, we kill the inferior process, unmap the window, and restore
- *   the __SWM_VROOT property to the real virtual root window if there was one.
+ *   Then we pick a random program to run, and start it.  We assume that it
+ *   has been specified with whatever command line arguments are required to
+ *   make it render onto the window we have provided.  This is most easily
+ *   accomplished by simply including the late-2003 version of "vroot.h",
+ *   which will find the window via the $XSCREENSAVER_WINDOW environment
+ *   variable, or via the __SWM_VROOT property.
  *
- *   On multi-screen systems, we do the above on each screen, and start
- *   multiple programs, each with a different value of $DISPLAY.
+ *   Programs must draw onto the window provided.  Creating their own window
+ *   atop the xscreensaver window does not work.
  *
- *   On Xinerama systems, we do a similar thing, but instead create multiple
- *   windows on the (only) display, and tell the subprocess which one to use
- *   via the $XSCREENSAVER_WINDOW environment variable -- this trick requires
- *   a recent (Aug 2003) revision of vroot.h.
+ *   Then, we wait for keyboard or mouse events to be generated on our
+ *   windows.  When they are, we kill the inferior process, unmap the
+ *   windows, and restore the __SWM_VROOT property to the real virtual root
+ *   window if there was one.
  *
- *   (See comments in screens.c for more details about Xinerama/RANDR stuff.)
+ *   Do not ever kill XScreenSaver with signal 9 -- that can lead to the
+ *   __SWM_VROOT property not being restored, and that will screw up your
+ *   window manager.  Rather than "kill", use "xscreensaver-command -exit"
+ *   instead.
  *
  *   While we are waiting for user activity, we also set up timers so that,
  *   after a certain amount of time has passed, we can start a different
  *   screenhack.  We do this by killing the running child process with
  *   SIGTERM, and then starting a new one in the same way.
  *
- *   If there was a real virtual root, meaning that we removed the __SWM_VROOT
- *   property from it, meaning we must (absolutely must) restore it before we
- *   exit, then we set up signal handlers for most signals (SIGINT, SIGTERM,
- *   etc.) that do this.  Most Xlib and Xt routines are not reentrant, so it
- *   is not generally safe to call them from signal handlers; however, this
- *   program spends most of its time waiting, so the window of opportunity 
- *   when code could be called reentrantly is fairly small; and also, the worst
- *   that could happen is that the call would fail.  If we've gotten one of
- *   these signals, then we're on our way out anyway.  If we didn't restore the
- *   __SWM_VROOT property, that would be very bad, so it's worth a shot.  Note
- *   that this means that, if you're using a virtual-root window manager, you
- *   can really fuck up the world by killing this process with "kill -9".
- *
  *   This program accepts ClientMessages of type SCREENSAVER; these messages
- *   may contain the atoms ACTIVATE, DEACTIVATE, etc, meaning to turn the 
- *   screensaver on or off now, regardless of the idleness of the user,
- *   and a few other things.  The included "xscreensaver-command" program
- *   sends these messsages.
+ *   may contain the atoms ACTIVATE, DEACTIVATE, etc. The included
+ *   "xscreensaver-command" program sends these messsages.
  *
- *   If we don't have the XIdle, MIT-SCREEN-SAVER, or SGI SCREEN_SAVER
- *   extensions, then we do the XAutoLock trick: notice every window that
- *   gets created, and wait 30 seconds or so until its creating process has
- *   settled down, and then select KeyPress events on those windows which
- *   already select for KeyPress events.  It's important that we not select
- *   KeyPress on windows which don't select them, because that would
- *   interfere with event propagation.  This will break if any program
- *   changes its event mask to contain KeyRelease or PointerMotion more than
- *   30 seconds after creating the window, but such programs do not seem to
- *   occur in nature (I've never seen it happen in all these years.)
  *
- *   The reason that we can't select KeyPresses on windows that don't have
- *   them already is that, when dispatching a KeyPress event, X finds the
+ *   ========================================================================
+ *   ABOUT SERVER EXTENSIONS
+ *   ========================================================================
+ *
+ *   Over the decades, there have been three X11 server extensions that are
+ *   applicable to screen saving:
+ *
+ *     - XIdle
+ *
+ *       This extension provided a function to poll the user's idle time.
+ *       It was simple and direct and worked great.  Therefore, it was
+ *       removed from the X11 distribution in 1994, with the release of
+ *       X11R6.  https://bugs.freedesktop.org/show_bug.cgi?id=1419
+ *
+ *     - SGI SCREEN_SAVER
+ *
+ *       This extension sent two new events: "user is idle", and "user
+ *       is no longer idle". It was simple and direct and worked great.
+ *       But as the name implies, it only ever worked on Silicon
+ *       Graphics machines.  SGI became irrelevant around 1998 and went
+ *       out of business in 2009.
+ *
+ *     - MIT-SCREEN-SAVER
+ *
+ *       This extension still exists, but it is useless to us.  It takes
+ *       the following approach:
+ *
+ *         - When the user is idle, immediately map full screen black
+ *           windows on each screen.
+ *
+ *         - Inform the screen saver client that the screen is now black.
+ *
+ *         - When user activity occurs, unmap the windows and then
+ *           inform the screen saver client.
+ *
+ *       The screen saver client can specify a few parameters of that
+ *       window, like visual and depth, but that's it.
+ *
+ *       The extension is designed with the assumption that a screen saver
+ *       would render onto the provided window.  However:
+ *
+ *         - OpenGL programs may require different visuals than 2D X11
+ *           programs, and you can't change the visual of a window after it
+ *           has been created.
+ *
+ *         - The extension maps one window per X11 "Screen", which, in this
+ *           modern world, tend to span the entire virtual desktop; whereas
+ *           XScreenSaver runs savers full screen on each *monitor* instead.
+ *           In other words, it is incompatible with Xinerama / RANDR.
+ *
+ *         - Since this extension maps its own full-screen black windows and
+ *           informs us of that after the fact, it prevents the "fade/unfade"
+ *           animations from working properly.
+ *
+ *         - Since it only tells us when the user is idle or non-idle, it
+ *           prevents the "hysteresis" option from working properly (where
+ *           we ignore tiny mouse motions).
+ *
+ *       In summary, it creates its windows too early, removes them too late,
+ *       creates windows of the wrong quantity and wrong shape, cannot create
+ *       them with the proper visuals, and delivers too little information
+ *       about what caused the user activity.
+ *
+ *       Also my experience was that the MIT-SCREEN-SAVER extension was flaky,
+ *       and using it at all led to frequent server crashes.
+ *
+ *       So that's why, even if the server supports the MIT-SCREEN-SAVER
+ *       extension, we don't use it.
+ *
+ *       There is a recent trend among those who hack on video players to
+ *       say, "We inhibit blanking by calling XResetScreenSaver and/or
+ *       XScreenSaverSuspend, so our work here is done, fuck off."  This
+ *       betrays a willful ignorance of why the MIT-SCREEN-SAVER extension
+ *       is a useless foundation upon which to build a screen saver or
+ *       screen locker.
+ *
+ *       The proper way to inhibit blanking while video is playing is to
+ *       run "xscreensaver-command -deactivate" once a minute while the
+ *       video is playing, as has been explained in the XScreenSaver FAQ
+ *       for 3 decades: https://www.jwz.org/xscreensaver/faq.html#dvd
+ *
+ *       The reason to do it as a heartbeat is so that your video player
+ *       fails SAFE.  Should the player exit abnormally, or freeze, the
+ *       heartbeat stops coming, and screen blanking and locking can resume.
+ *
+ *
+ *   ========================================================================
+ *   WITHOUT SERVER EXTENSIONS
+ *   ========================================================================
+ *
+ *   So.  Having established that there no longer exist any server extensions
+ *   that help us in any way, here's how idle detection ACTUALLY works:
+ *
+ *   XScreenSaver notices every window that gets created, wait 30 seconds or
+ *   so until its birth pangs have settled down, and then select KeyPress
+ *   events on those windows.
+ *
+ *   Actually it only selects KeyPress events on windows that already selected
+ *   for their own KeyPress events, because to do otherwise would interfere
+ *   with event propagation.  When dispatching a KeyPress event, X finds the
  *   lowest (leafmost) window in the hierarchy on which *any* client selects
  *   for KeyPress, and sends the event to that window.  This means that if a
  *   client had a window with subwindows, and expected to receive KeyPress
@@ -94,7 +168,7 @@
  *   another client malfunction in this way.
  *
  *   But here's a new kink that started showing up in late 2014: GNOME programs
- *   don't actually select for or receive KeyPress events! They do it behind
+ *   don't actually select for or receive KeyPress events!  They do it behind
  *   the scenes through some kind of Input Method magic, even when running in
  *   an en_US locale.  However, in that case, those applications *do* seem to
  *   update the _NET_WM_USER_TIME on their own windows every time they have
@@ -103,44 +177,44 @@
  *
  *   To detect mouse motion, we periodically wake up and poll the mouse
  *   position and button/modifier state, and notice when something has
- *   changed.  We make this check every five seconds by default, and since the
- *   screensaver timeout has a granularity of one minute, this makes the
+ *   changed.  We make this check every five seconds by default, and since
+ *   the screensaver timeout has a granularity of one minute, this makes the
  *   chance of a false positive very small.  We could detect mouse motion in
  *   the same way as keyboard activity, but that would suffer from the same
  *   "client changing event mask" problem that the KeyPress events hack does.
- *   I think polling is more reliable.
+ *   Polling is more reliable.
  *
- *   On systems with /proc/interrupts (Linux) we poll that file and note when
+ *   Also, because cats, trucks and earthquakes are things that exist, we
+ *   ignore any mouse motions smaller than 10px by default.
+ *
+ *   On Linux systems with /proc/interrupts we poll that file and note when
  *   the interrupt counter numbers on the "keyboard" and "PS/2" lines change.
- *   (There is no reliable way, using /proc/interrupts, to detect non-PS/2
- *   mice, so it doesn't help for serial or USB mice.)
+ *   That was helpful for a decade or so, but then PS/2 devices went out of
+ *   fashion, and there is no reliable way, using /proc/interrupts, to detect
+ *   activity on USB keyboards or mice.  Oh well.
  *
- *   None of this crap happens if we're using one of the extensions.  Sadly,
- *   the XIdle extension hasn't been available for many years; the SGI
- *   extension only exists on SGIs; and the MIT extension, while widely
- *   deployed, is garbage in several ways.
  *
- *   A third idle-detection option could be implemented (but is not): when
- *   running on the console display ($DISPLAY is `localhost`:0) and we're on a
- *   machine where /dev/tty and /dev/mouse have reasonable last-modification
- *   times, we could just stat() those.  But the incremental benefit of
- *   implementing this is really small, so forget I said anything.
+ *   ========================================================================
+ *   DEBUGGING HINTS
+ *   ========================================================================
  *
- *   Debugging hints:
- *     - Have a second terminal handy.
- *     - Be careful where you set your breakpoints, you don't want this to
- *       stop under the debugger with the keyboard grabbed or the blackout
- *       window exposed.
- *     - If you run your debugger under XEmacs, try M-ESC (x-grab-keyboard)
- *       to keep your emacs window alive even when xscreensaver has grabbed.
+ *     - Have a second terminal handy, e.g. a Ctrl-Alt-F1 console.  If you
+ *       are running xscreensaver under a debugger, it might be helpful to
+ *       run it from that other console, not from a terminal window within
+ *       the same X11 session.  That runs the risk of stopping at a
+ *       breakpoint while the screen is blanked and the keyboard is grabbed.
+ *
  *     - Go read the code related to `debug_p'.
+ *
  *     - You probably can't set breakpoints in functions that are called on
  *       the other side of a call to fork() -- if your subprocesses are
- *       dying with signal 5, Trace/BPT Trap, you're losing in this way.
- *     - If you aren't using a server extension, don't leave this stopped
- *       under the debugger for very long, or the X input buffer will get
- *       huge because of the keypress events it's selecting for.  This can
- *       make your X server wedge with "no more input buffers."
+ *       dying with signal 5 Trace/BPT Trap, you're losing in this way.
+ *
+ *     - Don't leave this stopped under the debugger for very long, or the
+ *       X input buffer will get huge with un-read KeyPress events.  This
+ *       can make your X server hang with "no more input buffers."
+ *
+ *     - Writing a new screen saver?  See the README.hacking file.
  *
  * ======================================================================== */
 
@@ -418,10 +492,10 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
    "#######################################################################\n"
    "\n"
    "    If at all possible, please re-run xscreensaver with the command\n"
-   "    line arguments `-sync -verbose -log log.txt', and reproduce this\n"
-   "    bug.  That will cause xscreensaver to dump a `core' file to the\n"
-   "    current directory.  Please include the stack trace from that core\n"
-   "    file in your bug report.  *DO NOT* mail the core file itself!  That\n"
+   "    line arguments \"-sync -log log.txt\", and reproduce this bug.\n"
+   "    That will cause xscreensaver to dump a `core' file to the current\n"
+   "    directory.  Please include the stack trace from that core file\n"
+   "    in your bug report.  *DO NOT* mail the core file itself!  That\n"
    "    won't work.  A \"log.txt\" file will also be written.  Please *do*\n"
    "    include the complete \"log.txt\" file with your bug report.\n"
    "\n"
@@ -1314,6 +1388,7 @@ main_loop (saver_info *si)
           p->dpms_enabled_p && 
           p->dpms_quickoff_p)
         {
+          /* Sync again just in case */
           sync_server_dpms_settings (si->dpy, True,
                                      p->dpms_quickoff_p,
                                      p->dpms_standby / 1000,
@@ -1423,6 +1498,24 @@ main_loop (saver_info *si)
                 si->cycle_id = 0;
                 cycle_timer ((XtPointer) si, 0);
               }
+
+            /* If we are blanking only, optionally power down monitor
+               right now: quickoff means power down monitor again as soon
+               as unlock dialog is dismissed without unlocking. */
+            if (!ok_to_unblank &&
+                p->mode == BLANK_ONLY &&
+                p->dpms_enabled_p && 
+                p->dpms_quickoff_p)
+              {
+                /* Sync again just in case */
+                sync_server_dpms_settings (si->dpy, True,
+                                           p->dpms_quickoff_p,
+                                           p->dpms_standby / 1000,
+                                           p->dpms_suspend / 1000,
+                                           p->dpms_off / 1000,
+                                           False);
+                monitor_power_on (si, False);
+              }
 	  }
 #endif /* !NO_LOCKING */
 
@@ -1488,6 +1581,7 @@ main (int argc, char **argv)
   saver_info *si = &the_si;
   saver_preferences *p = &si->prefs;
   struct passwd *spasswd;
+  Bool inhibit_stderr_capture_p = False;
   int i;
 
   /* It turns out that if we do setlocale (LC_ALL, "") here, people
@@ -1546,10 +1640,14 @@ main (int argc, char **argv)
 
   shell = connect_to_server (si, &argc, argv);
   process_command_line (si, &argc, argv);
-  stderr_log_file (si);
+  inhibit_stderr_capture_p = stderr_log_file (si);
   print_banner (si);
 
   load_init_file(si->dpy, p); /* must be before initialize_per_screen_info() */
+
+  if (inhibit_stderr_capture_p && !p->verbose_p)
+    p->verbose_p = 1;  /* "-log" implies "-verbose -no-capture-stderr" */
+
   blurb_timestamp_p = p->timestamp_p;  /* kludge */
   initialize_per_screen_info (si, shell); /* also sets si->fading_possible_p */
 
@@ -1593,13 +1691,18 @@ main (int argc, char **argv)
                              p->dpms_off / 1000,
                              False);
 
-  initialize_stderr (si);
+  initialize_stderr (si, inhibit_stderr_capture_p);
   handle_signals (si);
 
   store_saver_status (si);	/* for xscreensaver-command -status */
 
 # ifdef HAVE_LIBSYSTEMD   /* Launch it in the background */
-  si->systemd_pid = fork_and_exec_1 (si, 0, "xscreensaver-systemd");
+  {
+    const char *cmd = (p->verbose_p
+                       ? "xscreensaver-systemd -verbose"
+                       : "xscreensaver-systemd");
+    si->systemd_pid = fork_and_exec_1 (si, 0, cmd);
+  }
 # endif
 
   make_splash_dialog (si);
@@ -1683,7 +1786,7 @@ XGetAtomName_safe (Display *dpy, Atom atom)
 }
 
 
-static void
+void
 clientmessage_response (saver_info *si, Window w, Bool error,
 			const char *stderr_msg,
 			const char *protocol_msg)

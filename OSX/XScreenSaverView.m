@@ -30,7 +30,7 @@
 #import "jwxyz-cocoa.h"
 #import "jwxyz-timers.h"
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 // XScreenSaverView.m speaks OpenGL ES just fine, but enableBackbuffer does
 // need (jwzgles_)gluCheckExtension.
 # import "jwzglesI.h"
@@ -71,7 +71,7 @@ const char *progclass;
 int mono_p = 0;
 
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 
 #  define NSSizeToCGSize(x) (x)
 
@@ -120,7 +120,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 }
 @end
 
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
 
 
@@ -156,7 +156,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
            stringByReplacingOccurrencesOfString:@" "
            withString:@""];
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   // CFBundleGetDataPointerForName doesn't work in "Archive" builds.
   // I'm guessing that symbol-stripping is mandatory.  Fuck.
   NSString *table_name = [name stringByAppendingString:
@@ -167,13 +167,13 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
   if (! addr)
     NSLog (@"no symbol \"%@\" for \"%@\"", table_name, path);
 
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
   // Depends on the auto-generated "ios-function-table.m" being up to date.
   if (! function_tables)
     function_tables = [make_function_table_dict() retain];
   NSValue *v = [function_tables objectForKey: name];
   void *addr = v ? [v pointerValue] : 0;
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   return (struct xscreensaver_function_table *) addr;
 }
@@ -187,13 +187,21 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
   NSBundle *nsb = [NSBundle bundleForClass:[self class]];
   NSAssert1 (nsb, @"no bundle for class %@", [self class]);
   
-  NSString *nsdir = [nsb resourcePath];
-  NSAssert1 (nsdir, @"no resourcePath for class %@", [self class]);
-  const char *dir = [nsdir cStringUsingEncoding:NSUTF8StringEncoding];
+  NSString *nsrespath = [nsb resourcePath];    // "Contents/Resources"
+  NSString *nsexepath = [[nsb executablePath]  // "Contents/MacOS/SaverName"
+                          stringByDeletingLastPathComponent];
+  NSAssert1 (nsrespath, @"no resourcePath for class %@", [self class]);
+  NSAssert1 (nsexepath, @"no executablePath for class %@", [self class]);
+  const char *respath = [nsrespath cStringUsingEncoding:NSUTF8StringEncoding];
+  const char *exepath = [nsexepath cStringUsingEncoding:NSUTF8StringEncoding];
   const char *opath = getenv ("PATH");
   if (!opath) opath = "/bin"; // $PATH is unset when running under Shark!
-  char *npath = (char *) malloc (strlen (opath) + strlen (dir) + 2);
-  strcpy (npath, dir);
+  char *npath = (char *) malloc (strlen (opath)   + 2 +
+                                 strlen (respath) + 2 +
+                                 strlen (exepath) + 2);
+  strcpy (npath, exepath);
+  strcat (npath, ":");
+  strcat (npath, respath);
   strcat (npath, ":");
   strcat (npath, opath);
   if (setenv ("PATH", npath, 1)) {
@@ -223,7 +231,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 
 - (void) loadCustomFonts
 {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   NSBundle *nsb = [NSBundle bundleForClass:[self class]];
   NSMutableArray *fonts = [NSMutableArray arrayWithCapacity:20];
   for (NSString *ext in @[@"ttf", @"otf"]) {
@@ -240,7 +248,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
       // NSLog (@"loading font: %@ %@", url, err);
     }
   }
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 }
 
 
@@ -273,7 +281,7 @@ add_default_options (const XrmOptionDescRec *opts,
     { "-background",             ".background",        XrmoptionSepArg, 0 },
     { "-bg",                     ".background",        XrmoptionSepArg, 0 },
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
     // <xscreensaver-updater />
     {    "-" SUSUEnableAutomaticChecksKey,
          "." SUSUEnableAutomaticChecksKey, XrmoptionNoArg, "True"  },
@@ -289,13 +297,13 @@ add_default_options (const XrmOptionDescRec *opts,
          "." SUSendProfileInfoKey, XrmoptionNoArg,"False"},
     {    "-" SUScheduledCheckIntervalKey,
          "." SUScheduledCheckIntervalKey, XrmoptionSepArg, 0 },
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
     { 0, 0, 0, 0 }
   };
   static const char *default_defaults [] = {
 
-# if defined(USE_IPHONE) && !defined(__OPTIMIZE__)
+# if defined(HAVE_IPHONE) && !defined(__OPTIMIZE__)
     ".doFPS:              True",
 # else
     ".doFPS:              False",
@@ -308,7 +316,7 @@ add_default_options (const XrmOptionDescRec *opts,
     ".textURL:            https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
     ".textProgram:        ",
     ".grabDesktopImages:  yes",
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
     ".chooseRandomImages: no",
 # else
     ".chooseRandomImages: yes",
@@ -317,7 +325,7 @@ add_default_options (const XrmOptionDescRec *opts,
     ".relaunchDelay:      2",
     ".texFontCacheSize:   30",
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 #  define STR1(S) #S
 #  define STR(S) STR1(S)
 #  define __objc_yes Yes
@@ -330,7 +338,7 @@ add_default_options (const XrmOptionDescRec *opts,
 #  undef __objc_no
 #  undef STR1
 #  undef STR
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
     0
   };
 
@@ -388,7 +396,7 @@ static void sighandler (int sig)
 {
   const char *s = strsignal(sig);
   if (!s) s = "Unknowng";
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   jwxyz_abort ("Signal: %s", s);	// Throw NSException, show dialog
 # else
   NSLog (@"Signal: %s", s);		// Just make sure it is logged
@@ -475,21 +483,21 @@ static void catch_signals (void)
 
   next_frame_time = 0;
 
-# if !defined USE_IPHONE && defined JWXYZ_QUARTZ
+# if !defined HAVE_IPHONE && defined JWXYZ_QUARTZ
   // When the view fills the screen and double buffering is enabled, OS X will
   // use page flipping for a minor CPU/FPS boost. In windowed mode, double
   // buffering reduces the frame rate to 1/2 the screen's refresh rate.
   double_buffered_p = !isPreview;
 # endif
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   [self initGestures];
 
   // So we can tell when we're docked.
   [UIDevice currentDevice].batteryMonitoringEnabled = YES;
 
   [self setBackgroundColor:[NSColor blackColor]];
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
 # ifdef JWXYZ_QUARTZ
   // Colorspaces and CGContexts only happen with non-GL hacks.
@@ -500,7 +508,7 @@ static void catch_signals (void)
 }
 
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 /* On 10.15, if "use random screen saver" is checked, then startAnimation
    is never called.  This may be related to Apple's buggy code in 
    ScreenSaverEngine calling nonexistent beginExtensionRequestWithUserInfo,
@@ -518,7 +526,7 @@ static void catch_signals (void)
   if (window == nil)
     [self stopAnimation];
 }
-#endif  // USE_IPHONE
+#endif  // HAVE_IPHONE
 
 
 #ifdef USE_TOUCHBAR
@@ -536,7 +544,7 @@ static void catch_signals (void)
 #endif // USE_TOUCHBAR
 
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 + (Class) layerClass
 {
   return [CAEAGLLayer class];
@@ -557,20 +565,20 @@ static void catch_signals (void)
   NSAssert(!xdata, @"xdata not yet freed");
   NSAssert(!xdpy, @"xdpy not yet freed");
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   [[NSNotificationCenter defaultCenter] removeObserver:self];
 # endif
 
 #  ifdef BACKBUFFER_OPENGL
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   [pixfmt release];
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
   [ogl_ctx release];
   // Releasing the OpenGL context should also free any OpenGL objects,
   // including the backbuffer texture and frame/render/depthbuffers.
 #  endif // BACKBUFFER_OPENGL
 
-# if defined JWXYZ_GL && defined USE_IPHONE
+# if defined JWXYZ_GL && defined HAVE_IPHONE
   [ogl_ctx_pixmap release];
 # endif // JWXYZ_GL
 
@@ -593,14 +601,14 @@ static void catch_signals (void)
 }
 
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 - (void) lockFocus { }
 - (void) unlockFocus { }
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
 /* A few seconds after the saver launches, we store the "wasRunning"
    preference.  This is so that if the saver is crashing at startup,
    we don't launch it again next time, getting stuck in a crash loop.
@@ -653,7 +661,7 @@ static void catch_signals (void)
 
   check_framebuffer_status();
 }
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 - (void) startAnimation
@@ -672,7 +680,7 @@ static void catch_signals (void)
      to animateOneFrame() instead.
    */
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   if (crash_timer)
     [crash_timer invalidate];
 
@@ -686,12 +694,12 @@ static void catch_signals (void)
                          userInfo:nil
                          repeats:NO];
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   // Never automatically turn the screen off if we are docked,
   // and an animation is running.
   //
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   [UIApplication sharedApplication].idleTimerDisabled =
     ([UIDevice currentDevice].batteryState != UIDeviceBatteryStateUnplugged);
 # endif
@@ -705,7 +713,7 @@ static void catch_signals (void)
   CGSize new_backbuffer_size;
 
   {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
     if (!ogl_ctx) {
 
       pixfmt = [self getGLPixelFormat];
@@ -773,7 +781,7 @@ static void catch_signals (void)
     new_backbuffer_size.width *= s;
     new_backbuffer_size.height *= s;
 
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
     if (!ogl_ctx) {
       CAEAGLLayer *eagl_layer = (CAEAGLLayer *) self.layer;
       eagl_layer.opaque = TRUE;
@@ -805,13 +813,13 @@ static void catch_signals (void)
     new_backbuffer_size.width *= s;
     new_backbuffer_size.height *= s;
 
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
 # ifdef JWXYZ_GL
     xwindow->ogl_ctx = ogl_ctx;
-#  ifndef USE_IPHONE
+#  ifndef HAVE_IPHONE
     CFRetain (xwindow->ogl_ctx);
-#  endif // USE_IPHONE
+#  endif // HAVE_IPHONE
 # endif // JWXYZ_GL
 
     check_gl_error ("startAnimation");
@@ -833,7 +841,7 @@ static void catch_signals (void)
 
 - (void)stopAnimation
 {
-  NSAssert([self isAnimating], @"not animating");
+  if (![self isAnimating]) return;  // macOS 10.15 stupidity
 
   if (initted_p) {
 
@@ -852,7 +860,7 @@ static void catch_signals (void)
 
     jwxyz_quartz_free_display (xdpy);
     xdpy = NULL;
-# if defined JWXYZ_GL && !defined USE_IPHONE
+# if defined JWXYZ_GL && !defined HAVE_IPHONE
     CFRelease (xwindow->ogl_ctx);
 # endif
     CFRelease (xwindow->window.view);
@@ -864,21 +872,21 @@ static void catch_signals (void)
     xdata = 0;
   }
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   if (crash_timer)
     [crash_timer invalidate];
   crash_timer = 0;
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
   [prefs removeObjectForKey:@"wasRunning"];
   [prefs synchronize];
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   [super stopAnimation];
 
   // When an animation is no longer running (e.g., looking at the list)
   // then it's ok to power off the screen when docked.
   //
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   [UIApplication sharedApplication].idleTimerDisabled = NO;
 # endif
 
@@ -886,9 +894,9 @@ static void catch_signals (void)
   // in System Preferences.
   // (Or perhaps it used to. It doesn't seem to matter on 10.9.)
   //
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   [NSOpenGLContext clearCurrentContext];
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
   clear_gl_error();	// This hack is defunct, don't let this linger.
 
@@ -922,12 +930,12 @@ static void catch_signals (void)
 - (void) prepareContext
 {
   if (xwindow) {
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
     [EAGLContext setCurrentContext:ogl_ctx];
-#else  // !USE_IPHONE
+#else  // !HAVE_IPHONE
     [ogl_ctx makeCurrentContext];
 //    check_gl_error ("makeCurrentContext");
-#endif // !USE_IPHONE
+#endif // !HAVE_IPHONE
 
 #ifdef JWXYZ_GL
     xwindow->window.current_drawable = xwindow;
@@ -1013,7 +1021,7 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
 
 - (CGFloat) hackedContentScaleFactor:(BOOL)fonts_p
 {
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   CGFloat s = self.contentScaleFactor;
 # else
   CGFloat s = self.window.backingScaleFactor;
@@ -1045,7 +1053,7 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
 }
 
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 
 double
 current_device_rotation (void)
@@ -1120,12 +1128,12 @@ current_device_rotation (void)
   [self stopAnimation];
 }
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 #ifdef JWXYZ_QUARTZ
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
 struct gl_version
 {
@@ -1148,7 +1156,7 @@ gl_check_ver (const struct gl_version *caps,
 /* Called during startAnimation before the first call to createBackbuffer. */
 - (void) enableBackbuffer:(CGSize)new_backbuffer_size
 {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   struct gl_version version;
 
   {
@@ -1172,7 +1180,7 @@ gl_check_ver (const struct gl_version *caps,
 
   // On really old systems, it would make sense to split the texture
   // into subsections
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   gl_texture_target = (gluCheckExtension ((const GLubyte *)
                                          "GL_ARB_texture_rectangle",
                                          extensions)
@@ -1191,7 +1199,7 @@ gl_check_ver (const struct gl_version *caps,
   glTexParameteri (gl_texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri (gl_texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   // There isn't much sense in supporting one of these if the other
   // isn't present.
   gl_apple_client_storage_p =
@@ -1208,7 +1216,7 @@ gl_check_ver (const struct gl_version *caps,
 
   // If a video adapter suports BGRA textures, then that's probably as fast as
   // you're gonna get for getting a texture onto the screen.
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   gl_pixel_format =
     jwzgles_gluCheckExtension
       ((const GLubyte *)"GL_APPLE_texture_format_BGRA8888", extensions) ?
@@ -1241,7 +1249,7 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 - (BOOL) suppressRotationAnimation
 {
   return [self ignoreRotation];	// Don't animate if we aren't rotating
@@ -1262,9 +1270,9 @@ gl_check_ver (const struct gl_version *caps,
 
   NSSize new_size = self.bounds.size;
 
-#  ifdef USE_IPHONE
+#  ifdef HAVE_IPHONE
   GLfloat s = self.contentScaleFactor;
-#  else // !USE_IPHONE
+#  else // !HAVE_IPHONE
   const GLfloat s = self.window.backingScaleFactor;
 #  endif
   GLfloat hs = self.hackedContentScaleFactor;
@@ -1275,7 +1283,7 @@ gl_check_ver (const struct gl_version *caps,
 
   glMatrixMode (GL_PROJECTION);
   glLoadIdentity();
-#  ifdef USE_IPHONE
+#  ifdef HAVE_IPHONE
   glOrthof
 #  else
   glOrtho
@@ -1284,12 +1292,12 @@ gl_check_ver (const struct gl_version *caps,
      -new_size.height * hs, new_size.height * hs,
      -1, 1);
 
-#  ifdef USE_IPHONE
+#  ifdef HAVE_IPHONE
   if ([self ignoreRotation]) {
     int o = (int) -current_device_rotation();
     glRotatef (o, 0, 0, 1);
   }
-#  endif // USE_IPHONE
+#  endif // HAVE_IPHONE
 # endif // BACKBUFFER_OPENGL
 }
 
@@ -1351,12 +1359,12 @@ gl_check_ver (const struct gl_version *caps,
   gl_texture_h = (int)new_size.height;
 
   NSAssert (gl_texture_target == GL_TEXTURE_2D
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
             || gl_texture_target == GL_TEXTURE_RECTANGLE_EXT
 # endif
 		  , @"unexpected GL texture target");
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   if (gl_texture_target != GL_TEXTURE_RECTANGLE_EXT)
 # else
   if (!gl_limited_npot_p)
@@ -1368,12 +1376,12 @@ gl_check_ver (const struct gl_version *caps,
 
   GLsizei bytes_per_row = gl_texture_w * 4;
 
-# if defined(BACKBUFFER_OPENGL) && !defined(USE_IPHONE)
+# if defined(BACKBUFFER_OPENGL) && !defined(HAVE_IPHONE)
   // APPLE_client_storage requires texture width to be aligned to 32 bytes, or
   // it will fall back to a memcpy.
   // https://developer.apple.com/library/mac/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_texturedata/opengl_texturedata.html#//apple_ref/doc/uid/TP40001987-CH407-SW24
   bytes_per_row = (bytes_per_row + 31) & ~31;
-# endif // BACKBUFFER_OPENGL && !USE_IPHONE
+# endif // BACKBUFFER_OPENGL && !HAVE_IPHONE
 
   backbuffer_len = bytes_per_row * gl_texture_h;
   if (backbuffer_len) // mmap requires this to be non-zero.
@@ -1396,7 +1404,7 @@ gl_check_ver (const struct gl_version *caps,
     order_little_p = NO;
   }
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
   NSAssert (gl_pixel_type == GL_UNSIGNED_BYTE, @"unknown GL pixel type");
 #else
   NSAssert (gl_pixel_type == GL_UNSIGNED_INT_8_8_8_8 ||
@@ -1436,10 +1444,10 @@ gl_check_ver (const struct gl_version *caps,
   CGContextSetGrayFillColor (backbuffer, 0, 1);
   CGContextFillRect (backbuffer, r);
 
-# if defined(BACKBUFFER_OPENGL) && !defined(USE_IPHONE)
+# if defined(BACKBUFFER_OPENGL) && !defined(HAVE_IPHONE)
   if (gl_apple_client_storage_p)
     glTextureRangeAPPLE (gl_texture_target, backbuffer_len, backbuffer_data);
-# endif // BACKBUFFER_OPENGL && !USE_IPHONE
+# endif // BACKBUFFER_OPENGL && !HAVE_IPHONE
 
   if (ob) {
     // Restore old bits, as much as possible, to the X11 upper left origin.
@@ -1489,9 +1497,9 @@ gl_check_ver (const struct gl_version *caps,
 
   GLfloat tex_coords[4][2];
 
-#  ifndef USE_IPHONE
+#  ifndef HAVE_IPHONE
   if (gl_texture_target != GL_TEXTURE_RECTANGLE_EXT)
-#  endif // USE_IPHONE
+#  endif // HAVE_IPHONE
   {
     w /= gl_texture_w;
     h /= gl_texture_h;
@@ -1533,7 +1541,7 @@ gl_check_ver (const struct gl_version *caps,
   NSAssert (xwindow->window.current_drawable == xwindow,
             @"current_drawable not set properly");
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   /* On iOS, Retina means glViewport gets called with the screen size instead
      of the backbuffer/xwindow size. This happens in startAnimation.
 
@@ -1557,7 +1565,7 @@ gl_check_ver (const struct gl_version *caps,
   jwxyz_bind_drawable (xwindow, xwindow);
 # endif // JWXYZ_GL
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
 #  ifdef JWXYZ_QUARTZ
   // The OpenGL pipeline is not automatically synchronized with the contents
@@ -1578,7 +1586,7 @@ gl_check_ver (const struct gl_version *caps,
   if (double_buffered_p)
 #  endif // JWXYZ_QUARTZ
     [ogl_ctx flushBuffer]; // despite name, this actually swaps
-# else // USE_IPHONE
+# else // HAVE_IPHONE
 
   // jwxyz_bind_drawable() only binds the framebuffer, not the renderbuffer.
 #  ifdef JWXYZ_GL
@@ -1587,7 +1595,7 @@ gl_check_ver (const struct gl_version *caps,
 
   glBindRenderbufferOES (GL_RENDERBUFFER_OES, gl_renderbuffer);
   [ogl_ctx presentRenderbuffer:GL_RENDERBUFFER_OES];
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
 # if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
   // glGetError waits for the OpenGL command pipe to flush, so skip it in
@@ -1610,7 +1618,7 @@ gl_check_ver (const struct gl_version *caps,
 
   new_size = self.bounds.size;
 
-#  ifdef USE_IPHONE
+#  ifdef HAVE_IPHONE
 
   // If this hack ignores rotation, then that means that it pretends to
   // always be in portrait mode.  If the View has been resized to a 
@@ -1623,7 +1631,7 @@ gl_check_ver (const struct gl_version *caps,
     new_size.width  = new_size.height;
     new_size.height = swap;
   }
-#  endif // USE_IPHONE
+#  endif // HAVE_IPHONE
 
   double s = self.hackedContentScaleFactor;
   new_size.width *= s;
@@ -1637,9 +1645,9 @@ gl_check_ver (const struct gl_version *caps,
       xwindow->frame.height == new_size.height)
     return;
 
-#  if defined(BACKBUFFER_OPENGL) && !defined(USE_IPHONE)
+#  if defined(BACKBUFFER_OPENGL) && !defined(HAVE_IPHONE)
   [ogl_ctx update];
-#  endif // BACKBUFFER_OPENGL && !USE_IPHONE
+#  endif // BACKBUFFER_OPENGL && !HAVE_IPHONE
 
   NSAssert (xwindow && xwindow->type == WINDOW, @"not a window");
   xwindow->frame.x    = 0;
@@ -1653,10 +1661,10 @@ gl_check_ver (const struct gl_version *caps,
 # if defined JWXYZ_QUARTZ
   xwindow->cgc = backbuffer;
   NSAssert (xwindow->cgc, @"no CGContext");
-# elif defined JWXYZ_GL && !defined USE_IPHONE
+# elif defined JWXYZ_GL && !defined HAVE_IPHONE
   [ogl_ctx update];
   [ogl_ctx setView:xwindow->window.view]; // (Is this necessary?)
-# endif // JWXYZ_GL && USE_IPHONE
+# endif // JWXYZ_GL && HAVE_IPHONE
 
   jwxyz_window_resized (xdpy);
 
@@ -1669,7 +1677,7 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 
 /* Called by SaverRunner when the device has changed orientation.
    That means we need to generate a resize event, even if the size
@@ -1688,7 +1696,7 @@ gl_check_ver (const struct gl_version *caps,
 - (void) postReshape
 {
 }
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 // Only render_x11 should call this.  XScreenSaverGLView specializes it.
@@ -1700,7 +1708,7 @@ gl_check_ver (const struct gl_version *caps,
 
 - (void) render_x11
 {
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   @try {
 # endif
 
@@ -1717,7 +1725,7 @@ gl_check_ver (const struct gl_version *caps,
 # endif // JWXYZ_QUARTZ
       xdpy = jwxyz_quartz_make_display (xwindow);
 
-# if defined USE_IPHONE
+# if defined HAVE_IPHONE
       /* Some X11 hacks (fluidballs) want to ignore all rotation events. */
       _ignoreRotation =
 #  ifdef JWXYZ_GL
@@ -1725,7 +1733,7 @@ gl_check_ver (const struct gl_version *caps,
 #  else  // !JWXYZ_GL
         get_boolean_resource (xdpy, "ignoreRotation", "IgnoreRotation");
 #  endif // !JWXYZ_GL
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
       _lowrez_p = get_boolean_resource (xdpy, "lowrez", "Lowrez");
       if (_lowrez_p) {
@@ -1733,7 +1741,7 @@ gl_check_ver (const struct gl_version *caps,
 
         NSSize  b = [self bounds].size;
         CGFloat s = self.hackedContentScaleFactor;
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
         CGFloat o = self.contentScaleFactor;
 # else
         CGFloat o = self.window.backingScaleFactor;
@@ -1767,7 +1775,7 @@ gl_check_ver (const struct gl_version *caps,
                                               "background", "Background"));
     XClearWindow (xdpy, xwindow);
     
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
     [[self window] setAcceptsMouseMovedEvents:YES];
 # endif
 
@@ -1802,7 +1810,7 @@ gl_check_ver (const struct gl_version *caps,
       fps_cb = 0;
     }
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
     if (current_device_rotation() != 0)   // launched while rotated
       resized_p = YES;
 # endif
@@ -1814,7 +1822,7 @@ gl_check_ver (const struct gl_version *caps,
   /* I don't understand why we have to do this *every frame*, but we do,
      or else the cursor comes back on.
    */
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   if (![self isPreview])
     [NSCursor setHiddenUntilMouseMoves:YES];
 # endif
@@ -1885,10 +1893,10 @@ gl_check_ver (const struct gl_version *caps,
     // We do this here instead of in setFrame so that all the
     // Xlib drawing takes place under the animation timer.
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
     if (ogl_ctx)
       [ogl_ctx setView:self];
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
     [self reshape_x11];
     resized_p = NO;
@@ -1913,7 +1921,7 @@ gl_check_ver (const struct gl_version *caps,
   // This can also happen near the beginning of render_x11.
   [self flushBackbuffer];
 
-# ifdef USE_IPHONE	// Allow savers on the iPhone to run full-tilt.
+# ifdef HAVE_IPHONE	// Allow savers on the iPhone to run full-tilt.
   if (delay < [self animationTimeInterval])
     [self setAnimationTimeInterval:(delay / 1000000.0)];
 # endif
@@ -1948,12 +1956,12 @@ gl_check_ver (const struct gl_version *caps,
   }
 # endif // DO_GC_HACKERY
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   }
   @catch (NSException *e) {
     [self handleException: e];
   }
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
 # if 0
   {
@@ -1989,14 +1997,14 @@ gl_check_ver (const struct gl_version *caps,
 # ifdef JWXYZ_QUARTZ
   NSAssert (backbuffer, @"no back buffer");
 
-#  ifdef USE_IPHONE
+#  ifdef HAVE_IPHONE
   UIGraphicsPushContext (backbuffer);
 #  endif
 # endif // JWXYZ_QUARTZ
 
   [self render_x11];
 
-# if defined USE_IPHONE && defined JWXYZ_QUARTZ
+# if defined HAVE_IPHONE && defined JWXYZ_QUARTZ
   UIGraphicsPopContext();
 # endif
 
@@ -2006,7 +2014,7 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
-# ifndef USE_IPHONE  // Doesn't exist on iOS
+# ifndef HAVE_IPHONE  // Doesn't exist on iOS
 
 - (void) setFrame:(NSRect) newRect
 {
@@ -2023,7 +2031,7 @@ gl_check_ver (const struct gl_version *caps,
     [self resize_x11];
 }
 
-# else // USE_IPHONE
+# else // HAVE_IPHONE
 
 - (void) layoutSubviews
 {
@@ -2083,7 +2091,7 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 - (NSWindow *) configureSheet
 #else
 - (UIViewController *) configureView
@@ -2100,13 +2108,13 @@ gl_check_ver (const struct gl_version *caps,
     return nil;
   }
   
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   UIViewController *sheet;
   NSString *updater = 0;
-# else  // !USE_IPHONE
+# else  // !HAVE_IPHONE
   NSWindow *sheet;
   NSString *updater = [self updaterPath];
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
 
   NSData *xmld = [NSData dataWithContentsOfFile:path];
@@ -2144,9 +2152,9 @@ gl_check_ver (const struct gl_version *caps,
 
 - (void) beep
 {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   NSBeep();
-# else // USE_IPHONE 
+# else // HAVE_IPHONE 
 
   // There's no way to play a standard system alert sound!
   // We'd have to include our own WAV for that.
@@ -2164,7 +2172,7 @@ gl_check_ver (const struct gl_version *caps,
           animations:^{ [v setAlpha: 0.0]; }
           completion:^(BOOL finished) { [v removeFromSuperview]; } ];
 
-# endif  // USE_IPHONE
+# endif  // HAVE_IPHONE
 }
 
 
@@ -2183,7 +2191,7 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 /* Convert an NSEvent into an XEvent, and pass it along.
    Returns YES if it was handled.
@@ -2428,7 +2436,7 @@ gl_check_ver (const struct gl_version *caps,
   return p;
 }
 
-#else  // USE_IPHONE
+#else  // HAVE_IPHONE
 
 
 - (void) stopAndClose
@@ -3066,10 +3074,10 @@ gl_check_ver (const struct gl_version *caps,
 //  return kCAGravityBottomLeft;
 }
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
 
 // Returns the full pathname to the Sparkle updater app.
 //
@@ -3107,12 +3115,12 @@ gl_check_ver (const struct gl_version *caps,
 
   return app_path;
 }
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 
 
 - (void) checkForUpdates
 {
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   // We only check once at startup, even if there are multiple screens,
   // and even if this saver is running for many days.
   // (Uh, except this doesn't work because this static isn't shared,
@@ -3146,7 +3154,7 @@ gl_check_ver (const struct gl_version *caps,
     NSLog(@"Unable to launch %@: %@", app_path, err);
   }
 
-# endif // !USE_IPHONE
+# endif // !HAVE_IPHONE
 }
 
 

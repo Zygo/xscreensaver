@@ -27,7 +27,8 @@ INTLTOOL_MERGE	= @INTLTOOL_MERGE@
 GTK_DATADIR	= @GTK_DATADIR@
 GTK_APPDIR	= $(GTK_DATADIR)/applications
 GTK_ICONDIR	= $(GTK_DATADIR)/pixmaps
-GTK_GLADEDIR	= $(GTK_DATADIR)/xscreensaver/glade
+GTK_UIDIR	= $(GTK_DATADIR)/xscreensaver/ui
+OLD_GLADEDIR	= $(GTK_DATADIR)/xscreensaver/glade
 HACK_CONF_DIR	= @HACK_CONF_DIR@
 
 CC		= @CC@
@@ -36,8 +37,8 @@ CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
 DEFS		= @DEFS@
 INTL_DEFS	= -DLOCALEDIR=\"$(localedir)\"
-SUBP_DEFS	= $(DEFS) -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
-GTK_DEFS	= $(DEFS) -DDEFAULT_ICONDIR='"$(GTK_GLADEDIR)"'
+SUBP_DEFS	= -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
+GTK_DEFS	= -DDEFAULT_ICONDIR='"$(GTK_UIDIR)"'
 CONF_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"'
 
 LIBS		= @LIBS@
@@ -114,7 +115,7 @@ NOLOCK_SRCS_1	= lock.c
 NOLOCK_OBJS_1	= lock.o
 
 SYSTEMD_SRCS	= xscreensaver-systemd.c
-SYSTEMD_OBJS	= xscreensaver-systemd.o
+SYSTEMD_OBJS	= xscreensaver-systemd.o $(UTILS_BIN)/yarandom.o
 SYSTEMD_LIBS	= -lsystemd
 
 TEST_SRCS	= test-passwd.c test-uid.c  test-xdpms.c    test-grab.c \
@@ -245,7 +246,7 @@ MEN		= $(MEN_1) @MEN_OSX@
 
 EXTRAS		= README Makefile.in \
 		  XScreenSaver.ad.in XScreenSaver-Xm.ad xscreensaver.pam.in \
-		  xscreensaver-demo.glade2.in xscreensaver-demo.glade2p \
+		  xscreensaver-demo.ui \
 		  screensaver-properties.desktop.in \
 		  .gdbinit
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
@@ -378,7 +379,7 @@ munge-scripts: $(SCRIPTS)
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
 	U=$(UTILS_SRC)/version.h ;					\
-	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;	\
 	T=/tmp/xs$$$$.$(mansuffix) ;					\
 	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
 	echo "installing man pages: $$TH" ;				\
@@ -529,42 +530,42 @@ install-gnome:: $(LOGO)
         fi
 
 # ../utils/images/screensaver-*.png
-# into /usr/share/xscreensaver/glade/
+# into /usr/share/xscreensaver/ui/
 install-gnome::
-	@if [ "$(GTK_DATADIR)" != "" ]; then                                 \
-           if [ ! -d "$(install_prefix)$(GTK_GLADEDIR)" ]; then               \
-             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"         ;\
-                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"         ;\
+	@if [ "$(GTK_DATADIR)" != "" ]; then                                  \
+           if [ ! -d "$(install_prefix)$(GTK_UIDIR)" ]; then                  \
+             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_UIDIR)"	     ;\
+                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_UIDIR)"	     ;\
            fi                                                                ;\
 	   for target in $(GTK_ICONS) ; do				      \
 	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
 	     echo $(INSTALL_DATA) $$target				      \
-	          $(install_prefix)$(GTK_GLADEDIR)/$$dest		     ;\
+	          $(install_prefix)$(GTK_UIDIR)/$$dest			     ;\
 	          $(INSTALL_DATA) $$target				      \
-	          $(install_prefix)$(GTK_GLADEDIR)/$$dest		     ;\
+	          $(install_prefix)$(GTK_UIDIR)/$$dest			     ;\
 	   done								     ;\
         fi
 
-# xscreensaver-demo.glade2
-# into /usr/share/xscreensaver/glade/
-install-gnome:: xscreensaver-demo.glade2
+# xscreensaver-demo.ui
+# into /usr/share/xscreensaver/ui/
+install-gnome:: xscreensaver-demo.ui
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
-	  if [ ! -d "$(install_prefix)$(GTK_GLADEDIR)" ]; then		      \
-	    echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"	     ;\
-	         $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"	     ;\
+	  if [ ! -d "$(install_prefix)$(GTK_UIDIR)" ]; then		      \
+	    echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_UIDIR)"	     ;\
+	         $(INSTALL_DIRS) "$(install_prefix)$(GTK_UIDIR)"	     ;\
 	  fi								     ;\
-	  target=xscreensaver-demo.glade2				     ;\
-	  echo $(INSTALL_DATA) $$target                             \
-	    $(install_prefix)$(GTK_GLADEDIR)/$$target                        ;\
-	  if   $(INSTALL_DATA) $$target                             \
-	    $(install_prefix)$(GTK_GLADEDIR)/$$target                        ;\
+	  target=xscreensaver-demo.ui					     ;\
+	  echo $(INSTALL_DATA) $$target					      \
+	    $(install_prefix)$(GTK_UIDIR)/$$target			     ;\
+	  if   $(INSTALL_DATA) $$target					      \
+	    $(install_prefix)$(GTK_UIDIR)/$$target			     ;\
 	    then true                                                        ;\
           else                                                                \
 	    e=echo ;                                                          \
  $$e ""                                                                      ;\
  $$e "  ####################################################################";\
  $$e "  Warning: unable to install $$target into"			     ;\
- $$e "           $(install_prefix)$(GTK_GLADEDIR)/."                         ;\
+ $$e "           $(install_prefix)$(GTK_UIDIR)/."			     ;\
  $$e "           Without this file, xscreensaver-demo will not"              ;\
  $$e "           be able to run properly."                                   ;\
  $$e "  ####################################################################";\
@@ -593,24 +594,28 @@ uninstall-gnome::
 	 fi
 
 # ../utils/images/screensaver-*.png
-# into /usr/share/xscreensaver/glade/
+# into /usr/share/xscreensaver/ui/
 uninstall-gnome::
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
 	   for target in $(GTK_ICONS) ; do				      \
 	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
-	     echo rm -f $(install_prefix)$(GTK_GLADEDIR)/$$dest              ;\
-	          rm -f $(install_prefix)$(GTK_GLADEDIR)/$$dest              ;\
+	     echo rm -f $(install_prefix)$(GTK_UIDIR)/$$dest                 ;\
+	          rm -f $(install_prefix)$(GTK_UIDIR)/$$dest                 ;\
 	   done								     ;\
         fi
 
-# xscreensaver-demo.glade2
-# into /usr/share/xscreensaver/glade/
-uninstall-gnome:: xscreensaver-demo.glade2
+# xscreensaver-demo.ui
+# into /usr/share/xscreensaver/ui/
+uninstall-gnome::
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
-	  target=xscreensaver-demo.glade2				     ;\
-	  echo rm -f $(install_prefix)$(GTK_GLADEDIR)/$$target               ;\
-	       rm -f $(install_prefix)$(GTK_GLADEDIR)/$$target               ;\
+	  target=xscreensaver-demo.ui					     ;\
+	  echo rm -f $(install_prefix)$(GTK_UIDIR)/$$target                  ;\
+	       rm -f $(install_prefix)$(GTK_UIDIR)/$$target                  ;\
 	 fi
+
+# /usr/share/xscreensaver/glade/ no longer used
+uninstall-gnome::
+	-rm -rf $(OLD_GLADEDIR)
 
 # /usr/share/xscreensaver/config/README
 install-xml:
@@ -632,9 +637,11 @@ clean:
 	XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 
 distclean: clean
-	-rm -f Makefile XScreenSaver.ad \
-	TAGS *~ "#"* screensaver-properties.desktop \
-	xscreensaver-demo.glade2 \
+	-rm -f \
+	TAGS *~ "#"* *.rej *.orig \
+	Makefile \
+	XScreenSaver.ad \
+	screensaver-properties.desktop \
 	xscreensaver.pam
 
 # Adds all current dependencies to Makefile
@@ -679,12 +686,12 @@ update_ad_version::
 	@								    \
   files="XScreenSaver.ad.in ../hacks/config/README ../OSX/bindist.rtf" ;    \
   U=$(UTILS_SRC)/version.h ;						    \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;		    \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' < $$U` ;		    \
   Y=`date '+%Y'` ;							    \
   D=`date '+%d-%b-%Y'` ;						    \
   for S in $$files ; do							    \
     T=/tmp/xs.$$$$ ;							    \
-    sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*[ab]*[0-9]*\(.*\)/\1$$V\2/"  \
+    sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9.]*[ab]*[0-9]*\(.*\)/\1$$V\2/" \
         -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9]*\)/$$D/"	    \
         -e "s/\( [0-9][0-9][0-9][0-9]-\)[0-9][0-9][0-9][0-9] /\1$$Y /"	    \
       < $$S > $$T ;							    \
@@ -751,32 +758,26 @@ $(UTIL_OBJS):
 	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 # How we build object files in this directory.
+CC_ALL=$(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
-
+	$(CC) -c $(CC_ALL) $<
 .m.o:
-	$(OBJCC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
+	$(OBJCC) -c $(CC_ALL) $<
 
 # subprocs takes an extra -D option.
 subprocs.o: subprocs.c
-	$(CC) -c $(INCLUDES) $(SUBP_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
-	  $(srcdir)/subprocs.c
+	$(CC) -c $(CC_ALL) $(SUBP_DEFS) $(srcdir)/subprocs.c
 
 # xscreensaver takes an extra -D option.
 xscreensaver.o: xscreensaver.c
-	$(CC) -c $(INCLUDES) $(DEFS) $(INTL_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
-	  $(srcdir)/xscreensaver.c
+	$(CC) -c $(CC_ALL) $(INTL_DEFS) $(srcdir)/xscreensaver.c
 
-# demo-Gtk takes extra -D options, and an extra -I option.
+# demo-Gtk and demo-Gtk-conf take extra -D and -I options.
+DEMO_GTK=$(CONF_DEFS) $(SUBP_DEFS) $(GTK_DEFS) $(INTL_DEFS) -I$(ICON_SRC)
 demo-Gtk.o: demo-Gtk.c
-	$(CC) -c $(INCLUDES) $(SUBP_DEFS) -I$(ICON_SRC) \
-	  $(GTK_DEFS) $(INTL_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
-	  $(srcdir)/demo-Gtk.c
-
-# demo-Gtk-conf takes an extra -D option.
+	$(CC) -c $(CC_ALL) $(DEMO_GTK) $(srcdir)/demo-Gtk.c
 demo-Gtk-conf.o: demo-Gtk-conf.c
-	$(CC) -c $(INCLUDES) $(CONF_DEFS) $(GTK_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
-	  $(srcdir)/demo-Gtk-conf.c
+	$(CC) -c $(CC_ALL) $(DEMO_GTK) $(srcdir)/demo-Gtk-conf.c
 
 
 # How we build the default app-defaults file into the program.
@@ -808,15 +809,15 @@ xscreensaver-demo: @PREFERRED_DEMO_PROGRAM@
 	       cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@      ;	\
 	fi
 
+DEMO_XM_CC=$(DEMO_OBJS) $(MOTIF_OBJS) $(LIBS) $(X_LIBS) $(MOTIF_LIBS)
+DEMO_GTK_CC=$(DEMO_OBJS) $(GTK_OBJS)  $(LIBS) $(X_LIBS) $(GTK_LIBS) $(XML_LIBS)
+DEMO_CC2=$(INTL_LIBS) $(X_PRE_LIBS) -lXt -lX11 $(XDPMS_LIBS) $(XINERAMA_LIBS)
+DEMO_CC3=-lXext $(X_EXTRA_LIBS)
 xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(MOTIF_OBJS) $(LIBS) $(X_LIBS) \
-	$(MOTIF_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) -lXt -lX11 \
-	$(XDPMS_LIBS) $(XINERAMA_LIBS) -lXext $(X_EXTRA_LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(DEMO_XM_CC)  $(DEMO_CC2) $(DEMO_CC3)
 
 xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(GTK_OBJS) $(LIBS) $(X_LIBS) \
-	$(GTK_LIBS) $(XML_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) \
-	-lXt -lX11 $(XDPMS_LIBS) $(XINERAMA_LIBS) -lXext $(X_EXTRA_LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(DEMO_GTK_CC) $(DEMO_CC2) $(DEMO_CC3)
 
 demo-Gtk.o: XScreenSaver_ad.h
 demo-Xm.o:  XScreenSaver_Xm_ad.h
@@ -1042,6 +1043,10 @@ xscreensaver.o: $(UTILS_SRC)/version.h
 xscreensaver.o: $(UTILS_SRC)/visual.h
 xscreensaver.o: $(UTILS_SRC)/yarandom.h
 xscreensaver.o: $(srcdir)/xscreensaver.h
+xscreensaver-systemd.o: ../config.h
+xscreensaver-systemd.o: $(UTILS_SRC)/queue.h
+xscreensaver-systemd.o: $(UTILS_SRC)/version.h
+xscreensaver-systemd.o: $(UTILS_SRC)/yarandom.h
 xset.o: ../config.h
 xset.o: $(srcdir)/prefs.h
 xset.o: $(srcdir)/types.h

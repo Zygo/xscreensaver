@@ -25,12 +25,12 @@ To compile for a Unix system with X11:
     make install
 
     If you are on an "apt"-based system, "apt-get build-dep xscreensaver"
-    might install most of the compilation dependencies.
+    might install most of the compilation dependencies.  You may need to
+    uncomment a line in /etc/apt/sources.list first.
 
 To compile for macOS X or iOS:
 
-    Use the included XCode project.  Requires XCode 6 and macOS 10.8
-    or newer.
+    Use the included XCode project.  Probably requires XCode 11 or newer.
 
 To compile for Android:
 
@@ -45,6 +45,22 @@ Interested in writing a new screen saver?
 XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
+
+5.45	* New hacks, `covid19', `headroom', `sphereeversion' and `beats'.
+	* Shader updates to `hypertorus'.
+	* No more image-loading pause in `glslideshow'.
+	* BSOD supports GNOME.
+	* Image loaders support SVG.
+	* macOS: Fixed text loading on 10.15.
+	* X11: `xscreensaver-systemd' now allows video players to request that
+	  the screen not blank.
+	* X11: -log implies -verbose -no-capture-stderr.
+	* X11: Glade -> GtkBuilder.
+	* Android: These hacks work now: `carousel', `juggler3d', `molecule',
+          `photopile', `polyominoes'.
+	* Various bug fixes.
+
+5.44.1	* macOS: fixed some signing problems in the DMG.
 
 5.44	* New hacks, `gibson', `etruscanvenus' and `scooter'.
 	* BSOD supports Tivo and Nintendo.

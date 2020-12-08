@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "04-Feb-09" "X Version 11"
 .SH NAME
-rubikblocks - animates the Rubik's Mirror Blocks puzzle
+rubikblocks \- animates the Rubik's Mirror Blocks puzzle
 .SH SYNOPSIS
 .B rubikblocks
 [\-display \fIhost:display.screen\fP]

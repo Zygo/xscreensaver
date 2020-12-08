@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "10-May-97" "X Version 11"
 .SH NAME
-braid - draws random color-cycling braids around a circle
+braid \- draws random color-cycling braids around a circle
 .SH SYNOPSIS
 .B braid
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP]

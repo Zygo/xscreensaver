@@ -1,5 +1,5 @@
 #!/bin/sh
-# XScreenSaver, Copyright © 2013-2019 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2020 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -58,7 +58,7 @@ if [ x"$HOME"         = x ]; then error "HOME unset";         fi
 
 echo "Destination: $DSTVOLUME" >&2
 
-if [ x"$USER" = xjwz ]; then DEBUG=1; fi
+#if [ x"$USER" = xjwz ]; then DEBUG=1; fi
 
 if [ "$DEBUG" != 0 ]; then DSTVOLUME=/tmp; fi
 
@@ -97,6 +97,9 @@ mkdir -p "$DST2" || error "Unable to create directory $DST2/"
 # Install the other apps in /Applications/
 #
 for f in *.{saver,app} "$UPDATER_SRC" ; do
+
+  if [ ! -e "$f" ]; then continue; fi  # in case it is literally "*.app"
+
   EXT=`echo "$f" | sed 's/^.*\.//'`
   if [ "$f" = "$UPDATER_SRC" ]; then
     DST="$DST1"
@@ -112,13 +115,17 @@ for f in *.{saver,app} "$UPDATER_SRC" ; do
   rm -rf "$DD" || error "Unable to delete $DD"
 
   if [ "$f" = "$UPDATER_SRC" ]; then
+    echo "Unpacking $DD" >&2
     ( cd "$DST/" && tar -xzf - ) < "$f" || error "Unable to unpack $f in $DST/"
+    f="$UPDATER_DST"
+    DD="$DST/$f"
+    EXT="app"
   else
     cp -pR "$f" "$DD" || error "Unable to install $f in $DST/"
   fi
 
   # The files in the DMG might be owned by "jwz:staff" (503:20)
-  chown root:wheel "$DD"
+  chown -R root:wheel "$DD"
 
   # Eliminate the "this was downloaded from the interweb" warning.
   # (This trick probably doesn't work.)
@@ -148,7 +155,8 @@ V=`sw_vers -productVersion`
 V0=`echo $V | sed 's/^\([^.]*\).*/\1/'`
 V1=`echo $V | sed 's/^[^.]*\.\([^.]*\).*$/\1/'`
 
-if [ "$V0" == 10 -a \! "$V1" \< 15 ]; then	# If >= 10.15
+if [ "$V0" -ge 11 -o \
+     "$V0" -eq 10 -a "$V1" -ge 15 ] ; then	# If >= 10.15
   for HOME2 in "$DSTVOLUME/Users/"* ; do	# for each user
 
     CON="$HOME2/Library/Containers"
@@ -170,8 +178,20 @@ if [ "$V0" == 10 -a \! "$V1" \< 15 ]; then	# If >= 10.15
 fi
 
 
+# Launch the updater so that the user gets these dialogs now, instead of them
+# happening the first time a screen saver activates, and that screen saver
+# failing to run and showing up black.  (I'm not sure if this is working.)
+#
+#   - "XScreenSaverUpdater was downloaded from the internet, are you sure?"
+#   - "Rosetta 2 must be installed to run this software. Install it?”
+#
+su "$USER" -c "open \"$DST1/$UPDATER_DST\"" &
+sleep 5
+
+
 # Launch System Preferences with the Screen Saver pane selected.
 #
-open /System/Library/PreferencePanes/DesktopScreenEffectsPref.prefPane &
+su "$USER" -c \
+ "open /System/Library/PreferencePanes/DesktopScreenEffectsPref.prefPane" &
 
 exit 0

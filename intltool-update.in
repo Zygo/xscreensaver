@@ -569,8 +569,8 @@ sub find_package_name
     my ($conf_in, $src_dir);
 
     if ($base_dirname =~ /^po(-.+)?$/) {
-        if (-f "../configure.in") {
-            $conf_in = "../configure.in";
+        if (-f "../configure.ac") {
+            $conf_in = "../configure.ac";
         } else {
 	    my $makefile_source;
 	    local (*IN);
@@ -584,7 +584,7 @@ sub find_package_name
 		    $src_dir =~ s/^top_srcdir[ \t]*=[ \t]*([^ \t\n\r]*)/$1/;
 		    # print "${src_dir}\n";
 		    chomp $src_dir;
-		    $conf_in = "$src_dir" . "/configure.in" . "\n";
+		    $conf_in = "$src_dir" . "/configure.ac" . "\n";
 		    last;
 		}
 	    }

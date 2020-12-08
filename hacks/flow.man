@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-flow - strange attractors.
+flow \- strange attractors.
 .SH SYNOPSIS
 .B flow
 [\-display \fIhost:display.screen\fP]

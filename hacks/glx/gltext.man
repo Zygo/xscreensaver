@@ -13,7 +13,7 @@
 ..
 .TH XScreenSaver 1 "25-Jul-98" "X Version 11"
 .SH NAME
-gltext - draws text spinning around in 3D
+gltext \- draws text spinning around in 3D
 .SH SYNOPSIS
 .B gltext
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]

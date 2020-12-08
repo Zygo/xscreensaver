@@ -299,7 +299,7 @@ main(int argc, const char **argv)
         {
           exec = mmap(NULL, exec_stat.st_size, PROT_READ | PROT_WRITE,
                       MAP_SHARED, fd, 0);
-          if(!exec)
+          if(exec == MAP_FAILED)
             perror("mmap");
         }
 

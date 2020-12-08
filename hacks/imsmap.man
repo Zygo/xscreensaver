@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "17-May-97" "X Version 11"
 .SH NAME
-imsmap - generate fractal maps
+imsmap \- generate fractal maps
 .SH SYNOPSIS
 .B imsmap
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIint\fP] [\-delay \fIseconds\fP] [\-delay2 \fImicroseconds\fP] [\-iterations \fIint\fP] [\-mode h|s|v|random]

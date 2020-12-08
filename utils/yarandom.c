@@ -118,9 +118,9 @@ ya_rand_init(unsigned int seed)
 #define ROT(X,N) (((X)<<(N)) | ((X)>>((sizeof(unsigned int)*8)-(N))))
       seed = (999U * (unsigned int) tp.tv_sec);
       seed = ROT (seed, 11);
-      seed += (1001 * tp.tv_usec);
+      seed += (1001 * (unsigned int) tp.tv_usec);
       seed = ROT (seed, 7);
-      seed += (1003 * getpid());
+      seed += (1003 * (unsigned int) getpid());
       seed = ROT (seed, 13);
     }
 

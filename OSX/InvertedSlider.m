@@ -49,7 +49,7 @@
   return v2;
 }
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 /* On MacOS, we have to transform the value on every entry and exit point
    to this class.  So, we implement doubleValue and setDoubleValue to
@@ -110,7 +110,7 @@
   [self setDoubleValue:[((NSNumber *) v) doubleValue]];
 }
 
-#else  // USE_IPHONE
+#else  // HAVE_IPHONE
 
 /* On iOS, we have control over how the value is displayed, but there's no
    way to transform the value on input and output: if we wrap 'value' and
@@ -145,7 +145,7 @@
   [self setValue: [self transformValue: v]];
 }
 
-#endif // USE_IPHONE
+#endif // HAVE_IPHONE
 
 
 @end

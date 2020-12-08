@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2018 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2018-2020 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -110,7 +110,8 @@ load_font_retry_1 (Display *dpy, int screen, const char *xlfd, Bool xft_p)
           const char *variable[] = {
             "helvetica",
             "arial",
-            "bitstream vera sans",
+            "bitstream vera sans",  /* sometimes foundry is in family */
+            "vera sans",            /* sometimes not? */
             "gill sans",
             "times",
             "times new roman",
@@ -118,7 +119,12 @@ load_font_retry_1 (Display *dpy, int screen, const char *xlfd, Bool xft_p)
             "utopia",
             "palatino",
             "lucida",
-            "bitstream charter",
+            "clearlyu",
+            "bitstream charter",    /* sometimes foundry is in family */
+            "charter",              /* sometimes not? */
+            "utopia",
+            "luxi sans",
+            "latin modern roman",
 
             /* Don't use a wildcard family. If none of the above worked, then
                then almost none of the X11 fonts are installed, and it's not
@@ -135,6 +141,7 @@ load_font_retry_1 (Display *dpy, int screen, const char *xlfd, Bool xft_p)
             "courier 10 pitch",
             "lucidatypewriter",
             "american typewriter",
+            "luxi mono",
             "fixed",
             "ocr a std",
             /* As above, but "can't happen" because we already tried fixed? */

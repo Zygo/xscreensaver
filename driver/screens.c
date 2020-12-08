@@ -1,5 +1,5 @@
 /* screens.c --- dealing with RANDR, Xinerama, and VidMode Viewports.
- * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1087,6 +1087,22 @@ update_screen_layout (saver_info *si)
 # endif
 
       j++;
+    }
+
+  for (; j < count; j++)
+    {
+      saver_screen_info *ssi = &si->screens[j];
+      if (!ssi->screensaver_window)
+        continue;
+      fprintf (stderr, "%s: %d: screen now unused, disabling.\n",
+               blurb(), j);
+      /* Undo store_saver_id() so that xscreensaver-command doesn't attempt
+         to communicate with us through this window. It might make more
+         sense to destroy the window, but I'm not 100% sure that there are
+         no outstanding grabs on it that have yet been transferred.
+       */
+      XDeleteProperty (si->dpy, ssi->screensaver_window,
+                       XA_SCREENSAVER_VERSION);
     }
 
   si->default_screen = &si->screens[0];

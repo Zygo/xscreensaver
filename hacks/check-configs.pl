@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.28 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.29 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -1090,9 +1090,6 @@ sub build_android(@) {
                "  package=\"$package\"\n" .
                "  android:versionCode=\"$versb\"\n" .
                "  android:versionName=\"$vers\">\n" .
-
-               "  <uses-sdk android:minSdkVersion=\"16\"" .
-               " android:targetSdkVersion=\"19\" />\n" .
 
                "  <uses-feature android:glEsVersion=\"0x00010001\"\n" .
                "    android:required=\"true\" />\n" .

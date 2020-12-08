@@ -9,7 +9,7 @@
  * implied warranty.
  */
 
-#ifdef USE_IPHONE
+#ifdef HAVE_IPHONE
 # import <UIKit/UIKit.h>
 #else
 # import <Cocoa/Cocoa.h>
@@ -18,7 +18,7 @@
 int
 main (int argc, char *argv[])
 {
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int ret = UIApplicationMain (argc, argv, nil, nil);
   [pool release];

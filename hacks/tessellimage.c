@@ -364,7 +364,7 @@ analyze (struct state *st)
     for (x = 0; x < st->delta->width; x++)
       {
         unsigned long p = XGetPixel (st->delta, x, y);
-        if (p > sizeof(histo)) abort();
+        if (p > countof(histo)) abort();
         histo[p]++;
       }
 

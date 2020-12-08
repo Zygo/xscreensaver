@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-coral - simulates coral growth, albeit somewhat slowly.
+coral \- simulates coral growth, albeit somewhat slowly.
 .SH SYNOPSIS
 .B coral
 [\-display \fIhost:display.screen\fP]

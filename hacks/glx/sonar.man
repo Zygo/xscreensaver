@@ -13,7 +13,7 @@
 ..
 .TH Sonar 1 "12-Aug-08" "X Version 11"
 .SH NAME
-sonar - display a sonar scope
+sonar \- display a sonar scope
 .SH SYNOPSIS
 .B sonar
 [\-ping \fIhosts-or-subnets\fP]

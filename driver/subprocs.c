@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -62,7 +62,7 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 #undef XtPointer
 #define XtAppContext void*
 #define XrmDatabase  void*
-#define XtIntervalId void*
+#define XtIntervalId unsigned long
 #define XtPointer    void*
 #define Widget       void*
 
@@ -369,7 +369,8 @@ find_job (pid_t pid)
 
 static void await_dying_children (saver_info *si);
 #ifndef VMS
-static void describe_dead_child (saver_info *, pid_t, int wait_status);
+static void describe_dead_child (saver_info *, pid_t, int wait_status,
+                                 struct rusage);
 #endif
 
 
@@ -561,9 +562,10 @@ await_dying_children (saver_info *si)
     {
       int wait_status = 0;
       pid_t kid;
+      struct rusage rus;
 
       errno = 0;
-      kid = waitpid (-1, &wait_status, WNOHANG|WUNTRACED);
+      kid = wait4 (-1, &wait_status, WNOHANG|WUNTRACED, &rus);
 
       if (si->prefs.debug_p)
 	{
@@ -600,13 +602,14 @@ await_dying_children (saver_info *si)
 	  (kid < 0 && errno != EINTR))
 	break;
 
-      describe_dead_child (si, kid, wait_status);
+      describe_dead_child (si, kid, wait_status, rus);
     }
 }
 
 
 static void
-describe_dead_child (saver_info *si, pid_t kid, int wait_status)
+describe_dead_child (saver_info *si, pid_t kid, int wait_status,
+                     struct rusage rus)
 {
   int i;
   saver_preferences *p = &si->prefs;
@@ -678,6 +681,10 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
 		   blurb(), screen_no, (unsigned long) kid, name,
 		   signal_name (WTERMSIG(wait_status)));
            */
+# ifdef LOG_CPU_TIME
+          long u_ms = rus.ru_utime.tv_usec / 1000 + rus.ru_utime.tv_sec * 1000;
+          long s_ms = rus.ru_stime.tv_usec / 1000 + rus.ru_stime.tv_sec * 1000;
+# endif /* LOG_CPU_TIME */
           write_string (STDERR_FILENO, blurb());
           write_string (STDERR_FILENO, ": ");
           write_long   (STDERR_FILENO, (long) screen_no);
@@ -688,6 +695,20 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
           write_string (STDERR_FILENO, ") terminated with signal ");
           write_long   (STDERR_FILENO, WTERMSIG(wait_status));
           write_string (STDERR_FILENO, ".\n");
+# ifdef LOG_CPU_TIME
+          write_string (STDERR_FILENO, blurb());
+          write_string (STDERR_FILENO, ": ");
+          write_long   (STDERR_FILENO, (long) screen_no);
+          write_string (STDERR_FILENO, ": CPU used: ");
+          write_long   (STDERR_FILENO, (u_ms / 1000));   /* msec -> sec */
+          write_string (STDERR_FILENO, ".");
+          write_long   (STDERR_FILENO, (u_ms % 1000) / 100);
+          write_string (STDERR_FILENO, "u, ");
+          write_long   (STDERR_FILENO, (s_ms / 1000));   /* msec -> sec */
+          write_string (STDERR_FILENO, ".");
+          write_long   (STDERR_FILENO, (s_ms % 1000) / 100);
+          write_string (STDERR_FILENO, "s.\n");
+# endif /* LOG_CPU_TIME */
         }
 
       if (job)
@@ -1408,9 +1429,25 @@ save_argv (int argc, char **argv)
 void
 restart_process (saver_info *si)
 {
-  fflush (stdout);
-  fflush (stderr);
-  shutdown_stderr (si);
+  if (si->screen_blanked_p)
+    {
+      unblank_screen (si);
+      XSync (si->dpy, False);
+    }
+
+  emergency_kill_subproc (si);
+
+# ifdef HAVE_LIBSYSTEMD
+  if (si->systemd_pid)  /* Kill background xscreensaver-systemd process */
+    {
+      /* We're exiting, so there's no need to do a full kill_job() here,
+         which would waitpid(). */
+      /* kill_job (si, si->systemd_pid, SIGTERM); */
+      kill (si->systemd_pid, SIGTERM);
+      si->systemd_pid = 0;
+    }
+# endif
+
   if (si->prefs.verbose_p)
     {
       int i;
@@ -1418,12 +1455,13 @@ restart_process (saver_info *si)
       for (i = 0; saved_argv[i]; i++)
 	fprintf (stderr, " %s", saved_argv[i]);
       fprintf (stderr, "\n");
-    }
-  describe_uids (si, stderr);
-  fprintf (stderr, "\n");
 
-  fflush (stdout);
-  fflush (stderr);
+      describe_uids (si, stderr);
+      fprintf (stderr, "\n");
+    }
+
+  shutdown_stderr (si);
+
   execvp (saved_argv [0], saved_argv);	/* shouldn't return */
   {
     char buf [512];

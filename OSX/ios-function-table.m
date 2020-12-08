@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Sat Mar 14 14:46:37 2020 by build-fntable.pl 1.7.
+   Created: Mon Dec  7 06:35:16 2020 by build-fntable.pl 1.8.
  */
 
 #import <Foundation/Foundation.h>
@@ -20,6 +20,7 @@ extern struct xscreensaver_function_table
  attraction_xscreensaver_function_table,
  atunnel_xscreensaver_function_table,
  barcode_xscreensaver_function_table,
+ beats_xscreensaver_function_table,
  binaryring_xscreensaver_function_table,
  blaster_xscreensaver_function_table,
  blinkbox_xscreensaver_function_table,
@@ -111,6 +112,7 @@ extern struct xscreensaver_function_table
  halftone_xscreensaver_function_table,
  halo_xscreensaver_function_table,
  handsy_xscreensaver_function_table,
+ headroom_xscreensaver_function_table,
  helix_xscreensaver_function_table,
  hexadrop_xscreensaver_function_table,
  hexstrut_xscreensaver_function_table,
@@ -196,6 +198,7 @@ extern struct xscreensaver_function_table
  slip_xscreensaver_function_table,
  sonar_xscreensaver_function_table,
  speedmine_xscreensaver_function_table,
+ sphereeversion_xscreensaver_function_table,
  spheremonics_xscreensaver_function_table,
  splitflap_xscreensaver_function_table,
  splodesic_xscreensaver_function_table,
@@ -264,6 +267,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&attraction_xscreensaver_function_table], @"attraction",
 	[NSValue valueWithPointer:&atunnel_xscreensaver_function_table], @"atunnel",
 	[NSValue valueWithPointer:&barcode_xscreensaver_function_table], @"barcode",
+	[NSValue valueWithPointer:&beats_xscreensaver_function_table], @"beats",
 	[NSValue valueWithPointer:&binaryring_xscreensaver_function_table], @"binaryring",
 	[NSValue valueWithPointer:&blaster_xscreensaver_function_table], @"blaster",
 	[NSValue valueWithPointer:&blinkbox_xscreensaver_function_table], @"blinkbox",
@@ -355,6 +359,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&halftone_xscreensaver_function_table], @"halftone",
 	[NSValue valueWithPointer:&halo_xscreensaver_function_table], @"halo",
 	[NSValue valueWithPointer:&handsy_xscreensaver_function_table], @"handsy",
+	[NSValue valueWithPointer:&headroom_xscreensaver_function_table], @"headroom",
 	[NSValue valueWithPointer:&helix_xscreensaver_function_table], @"helix",
 	[NSValue valueWithPointer:&hexadrop_xscreensaver_function_table], @"hexadrop",
 	[NSValue valueWithPointer:&hexstrut_xscreensaver_function_table], @"hexstrut",
@@ -440,6 +445,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&slip_xscreensaver_function_table], @"slip",
 	[NSValue valueWithPointer:&sonar_xscreensaver_function_table], @"sonar",
 	[NSValue valueWithPointer:&speedmine_xscreensaver_function_table], @"speedmine",
+	[NSValue valueWithPointer:&sphereeversion_xscreensaver_function_table], @"sphereeversion",
 	[NSValue valueWithPointer:&spheremonics_xscreensaver_function_table], @"spheremonics",
 	[NSValue valueWithPointer:&splitflap_xscreensaver_function_table], @"splitflap",
 	[NSValue valueWithPointer:&splodesic_xscreensaver_function_table], @"splodesic",

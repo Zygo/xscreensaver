@@ -65,7 +65,7 @@ fps_init (Display *dpy, Window window)
   if (top_p)
     st->y = - (st->font->ascent + st->font->descent + 10);
 
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   /* Don't hide the FPS display under the iPhone X bezel.
      #### This is the worst of all possible ways to do this!  But how else?
    */

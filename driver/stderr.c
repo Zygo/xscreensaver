@@ -1,5 +1,5 @@
 /* stderr.c --- capturing stdout/stderr output onto the screensaver window.
- * xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -296,6 +296,7 @@ static void
 stderr_callback (XtPointer closure, int *fd, XtIntervalId *id)
 {
   saver_info *si = (saver_info *) closure;
+  Bool shutting_down_p = (id == 0);  /* Called from shutdown_stderr() */
   char *s;
   int left;
   int size;
@@ -345,7 +346,7 @@ stderr_callback (XtPointer closure, int *fd, XtIntervalId *id)
      However, if the buffer is full (meaning lots of data has been written)
      then we don't reset the timer.
    */
-  if (read_this_time > 0)
+  if (read_this_time > 0 && !shutting_down_p)
     {
       if (si->stderr_popup_timer)
 	XtRemoveTimeOut (si->stderr_popup_timer);
@@ -361,7 +362,7 @@ stderr_callback (XtPointer closure, int *fd, XtIntervalId *id)
    screen as well as on the original value of those streams.
  */
 void
-initialize_stderr (saver_info *si)
+initialize_stderr (saver_info *si, Bool inhibit_p)
 {
   static Boolean done = False;
   int fds [2];
@@ -377,6 +378,9 @@ initialize_stderr (saver_info *si)
 
   real_stderr = stderr;
   real_stdout = stdout;
+
+  if (inhibit_p)
+    return;
 
   stderr_dialog_p = get_boolean_resource (si->dpy, "captureStderr", "Boolean");
 
@@ -476,8 +480,9 @@ initialize_stderr (saver_info *si)
 /* If the "-log file" command-line option has been specified,
    open the file for append, and redirect stdout/stderr there.
    This is called very early, before initialize_stderr().
+   Returns true if logging to a file.
  */
-void
+Bool
 stderr_log_file (saver_info *si)
 {
   int stdout_fd = 1;
@@ -485,7 +490,8 @@ stderr_log_file (saver_info *si)
   const char *filename = get_string_resource (si->dpy, "logFile", "LogFile");
   int fd;
 
-  if (!filename || !*filename) return;
+  if (!filename || !*filename)
+    return False;
 
   fd = open (filename, O_WRONLY | O_APPEND | O_CREAT, 0666);
 
@@ -511,6 +517,7 @@ stderr_log_file (saver_info *si)
  "##########################################################################\n"
            "\n",
            blurb(), filename, timestring(0));
+  return True;
 }
 
 
@@ -527,6 +534,7 @@ shutdown_stderr (saver_info *si)
   if (!real_stderr || stderr_stdout_read_fd < 0)
     return;
 
+  /* Copy any stragglers from the stderr pipe into stderr_buffer */
   stderr_callback ((XtPointer) si, &stderr_stdout_read_fd, 0);
 
   if (stderr_tail &&

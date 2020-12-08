@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-barcode - draws a random sequence of barcodes for the products you enjoy
+barcode \- draws a random sequence of barcodes for the products you enjoy
 .SH SYNOPSIS
 .B barcode
 [\-display \fIhost:display.screen\fP]

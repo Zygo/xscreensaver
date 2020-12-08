@@ -468,7 +468,8 @@ load_images (ModeInfo *mi)
 # ifdef HAVE_MOBILE
     unsigned long max = 320 * 1024 * 1024L;		/* 320 MB */
 # else
-    unsigned long max = 2 * 1024 * 1024 * 1024L;	/* 2 GB */
+  /*unsigned long max = 2 * 1024 * 1024 * 1024L;*/	/* 2 GB */
+    unsigned long max = 0x80000000L;			/* 2 GB */
 # endif
     gp->cache_p = (cache_size < max);
   }

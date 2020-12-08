@@ -658,6 +658,7 @@ draw_fin_text_quad (ModeInfo *mi, flapper *f, int index, Bool top_p)
   int tex_width, tex_height;
   int i;
 
+  if (bp->texinfo_size <= 0) abort();
   for (i = 0; i < bp->texinfo_size; i++)
     {
       ti = &bp->texinfo[i];

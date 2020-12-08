@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "24-Jun-94" "X Version 11"
 .SH NAME
-pedal - pretty geometric picture program
+pedal \- pretty geometric picture program
 .SH SYNOPSIS
 .B pedal
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-delay \fIseconds\fP] [-maxlines \fInumber\fP] [-mono] [\-install] [\-visual \fIvisual\fP]

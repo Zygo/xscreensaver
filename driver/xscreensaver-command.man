@@ -32,7 +32,9 @@ xscreensaver-command - control a running xscreensaver process
 \-suspend | \
 \-version | \
 \-time | \
-\-watch]
+\-watch | \
+\-quiet | \
+\-verbose]
 .SH DESCRIPTION
 The \fIxscreensaver\-command\fP program controls a running \fIxscreensaver\fP
 process by sending it client-messages.
@@ -52,6 +54,12 @@ accepts the following command-line options:
 .TP 8
 .B \-help
 Prints a brief summary of command-line options.
+.TP 8
+.B \-quiet
+Only print output if an error occurs.
+.TP 8
+.B \-verbose
+Opposite of \-quiet. Default.
 .TP 8
 .B \-demo
 This just launches the
@@ -256,7 +264,7 @@ and related tools can always be found at https://www.jwz.org/xscreensaver/
 .BR xscreensaver\-demo (1),
 .BR xset (1)
 .SH COPYRIGHT
-Copyright \(co 1992-2019 by Jamie Zawinski.
+Copyright \(co 1992-2020 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

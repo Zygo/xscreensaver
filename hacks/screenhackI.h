@@ -81,7 +81,7 @@
 # include <X11/Xos.h>
 #endif /* !HAVE_JWXYZ */
 
-#if defined(USE_IPHONE) || defined(HAVE_ANDROID)
+#if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
 # define HAVE_MOBILE
 #endif
 

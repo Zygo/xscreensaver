@@ -16,7 +16,7 @@
    the UI (XScreenSaverConfigSheet).
  */
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 # import <ScreenSaver/ScreenSaverDefaults.h>
 #endif
 
@@ -24,7 +24,7 @@
 #import "Updater.h"
 #import "screenhackI.h"
 
-#ifndef USE_IPHONE
+#ifndef HAVE_IPHONE
 
 #include <objc/runtime.h>
 
@@ -202,7 +202,7 @@
 @end
 
 
-#endif // !USE_IPHONE
+#endif // !HAVE_IPHONE
 
 
 @implementation PrefsReader
@@ -216,7 +216,7 @@
  */
 - (NSString *) makeKey:(NSString *)key
 {
-# ifdef USE_IPHONE
+# ifdef HAVE_IPHONE
   NSString *prefix = [saver_name stringByAppendingString:@"."];
   if (! [key hasPrefix:prefix])  // Don't double up!
     key = [prefix stringByAppendingString:key];
@@ -308,17 +308,17 @@
     [defaultOptions setValue:[defsdict objectForKey:key] forKey:key];
   }
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   userDefaultsController = 
     [[NSUserDefaultsController alloc] initWithDefaults:userDefaults
                                       initialValues:defsdict];
   globalDefaultsController = 
     [[NSUserDefaultsController alloc] initWithDefaults:globalDefaults
                                       initialValues:UPDATER_DEFAULTS];
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
   userDefaultsController   = [userDefaults retain];
   globalDefaultsController = [userDefaults retain];
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   NSDictionary *optsdict = [NSMutableDictionary dictionaryWithCapacity:20];
 
@@ -577,14 +577,14 @@
   self = [self init];
   if (!self) return nil;
 
-# ifndef USE_IPHONE
+# ifndef HAVE_IPHONE
   userDefaults = [ScreenSaverDefaults defaultsForModuleWithName:name];
   globalDefaults = [[GlobalDefaults alloc] initWithDomain:@UPDATER_DOMAIN
                                                    module:name];
-# else  // USE_IPHONE
+# else  // HAVE_IPHONE
   userDefaults = [NSUserDefaults standardUserDefaults];
   globalDefaults = [userDefaults retain];
-# endif // USE_IPHONE
+# endif // HAVE_IPHONE
 
   // Convert "org.jwz.xscreensaver.NAME" to just "NAME".
   NSRange r = [name rangeOfString:@"." options:NSBackwardsSearch];

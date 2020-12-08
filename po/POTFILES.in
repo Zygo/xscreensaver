@@ -1,8 +1,8 @@
-# Auto-generated: Fri Mar 20 18:40:22 PDT 2020
+# Auto-generated: Tue Dec  8 09:53:21 PST 2020
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
-driver/xscreensaver-demo.glade2.in
+driver/xscreensaver-demo.ui
 hacks/config/abstractile.xml
 hacks/config/anemone.xml
 hacks/config/anemotaxis.xml
@@ -16,6 +16,7 @@ hacks/config/atlantis.xml
 hacks/config/attraction.xml
 hacks/config/atunnel.xml
 hacks/config/barcode.xml
+hacks/config/beats.xml
 hacks/config/binaryring.xml
 hacks/config/blaster.xml
 hacks/config/blinkbox.xml
@@ -41,6 +42,7 @@ hacks/config/cloudlife.xml
 hacks/config/companioncube.xml
 hacks/config/compass.xml
 hacks/config/coral.xml
+hacks/config/covid19.xml
 hacks/config/crackberg.xml
 hacks/config/critical.xml
 hacks/config/crumbler.xml
@@ -116,6 +118,7 @@ hacks/config/greynetic.xml
 hacks/config/halftone.xml
 hacks/config/halo.xml
 hacks/config/handsy.xml
+hacks/config/headroom.xml
 hacks/config/helix.xml
 hacks/config/hexadrop.xml
 hacks/config/hexstrut.xml
@@ -215,6 +218,7 @@ hacks/config/slip.xml
 hacks/config/sonar.xml
 hacks/config/speedmine.xml
 hacks/config/sphere.xml
+hacks/config/sphereeversion.xml
 hacks/config/spheremonics.xml
 hacks/config/spiral.xml
 hacks/config/splitflap.xml

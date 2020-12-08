@@ -16,7 +16,7 @@
 
 #include "utils.h"
 
-#ifdef USE_IPHONE // whole file
+#ifdef HAVE_IPHONE // whole file
 
 #include "textclient.h"
 
@@ -153,4 +153,4 @@ textclient_mobile_url_string (Display *dpy, const char *url)
   }
 }
 
-#endif // USE_IPHONE -- whole file
+#endif // HAVE_IPHONE -- whole file

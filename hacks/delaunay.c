@@ -204,8 +204,10 @@ delaunay (int nv,XYZ *pxyz,ITRIANGLE *v,int *ntri)
       if (inside) {
         /* Check that we haven't exceeded the edge list size */
         if (nedge+3 >= emax) {
+          IEDGE *edges_old = edges;
           emax += 100;
           if ((edges = realloc(edges,emax*(long)sizeof(IEDGE))) == NULL) {
+            edges = edges_old;
             status = 3;
             goto skip;
           }

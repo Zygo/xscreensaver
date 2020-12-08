@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.44
-!                              20-Mar-2020
+!                              version 5.45
+!                              08-Dec-2020
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -579,8 +579,12 @@ XScreenSaver.bourneShell:		/bin/sh
 				vfeedback -root				    \n\
 @GL_KLUDGE@ GL: 				deepstars -root				    \n\
 @GL_KLUDGE@ GL: 				gravitywell -root			    \n\
+@GL_KLUDGE@ GL: 				beats -root				    \n\
+@GL_KLUDGE@ GL: 				covid19 -root				    \n\
 @GL_KLUDGE@ GL: 				etruscanvenus -root			    \n\
-@GL_KLUDGE@ GL: 				gibson -root				    \n
+@GL_KLUDGE@ GL: 				gibson -root				    \n\
+@GL_KLUDGE@ GL: 				headroom -root				    \n\
+@GL_KLUDGE@ GL: 				sphereeversion -root			    \n
 
 
 
@@ -605,6 +609,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.ccurve.name:         CCurve
 *hacks.cloudlife.name:      CloudLife
 *hacks.companioncube.name:  CompanionCube
+*hacks.covid19.name:        COVID19
 *hacks.cubestack.name:      CubeStack
 *hacks.cubestorm.name:      CubeStorm
 *hacks.cubetwist.name:      CubeTwist
@@ -666,6 +671,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.skytentacles.name:   SkyTentacles
 *hacks.slidescreen.name:    SlideScreen
 *hacks.speedmine.name:      SpeedMine
+*hacks.sphereeversion.name: SphereEversion
 *hacks.splitflap.name:      SplitFlap
 *hacks.starwars.name:       StarWars
 *hacks.stonerview.name:     StonerView

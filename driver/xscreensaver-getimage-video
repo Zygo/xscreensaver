@@ -30,7 +30,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version  = q{ $Revision: 1.23 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version  = q{ $Revision: 1.24 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $tmpdir   = $ENV{TMPDIR} || "/tmp";
 my $tmpfile  = sprintf("%s/xssv.%08x.ppm", $tmpdir, rand(0xFFFFFFFF));
@@ -69,8 +69,7 @@ my @programs = (
   "vidtomem -f $tmpfile 2>&- " .		# Silicon Graphics
 	"&& mv $tmpfile-00000.rgb $tmpfile",
 
-  # Maybe this works?
-  # "ffmpeg -i /dev/video0 -ss 00:00:01 -vframes 1 $tmpfile 2>&-",
+  "ffmpeg -y -v quiet -i /dev/video0 -vframes:v 1 $escaped_tmpfile 2>&-",
 
   # "mplayer -really-quiet tv://0 " .		# Maybe works with some cams?
   #         "-ao null -vo pnm -frames 1 2>&- " .
@@ -124,7 +123,7 @@ sub grab_image() {
 
 
 sub usage() {
-  print STDERR "usage: $progname [--verbose] [--name | --stdout]\n";
+  print STDERR "usage: $progname [--verbose] [--name]\n";
   exit 1;
 }
 

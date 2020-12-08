@@ -9,7 +9,7 @@ SHELL		= /bin/sh
 SUBDIRS 	= utils jwxyz hacks/images hacks hacks/glx driver po
 SUBDIRS2	= $(SUBDIRS) OSX android
 TARFILES	= README README.hacking README.VMS INSTALL \
-		  configure configure.in Makefile.in config.h.in \
+		  configure configure.ac Makefile.in config.h.in \
 		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
 		  ax_pthread.m4 config.sub makevms.com \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
@@ -101,9 +101,12 @@ _tar:
 # of autoconf other than the ones I've tried (2.12 and 2.13.)
 #
 configure::
+	rm -f configure
 	aclocal
 	autoconf
 	autoheader
+
+configure::
 	@TMP=configure.$$$$ ;						     \
 	echo "munging configure's --help message..." ;			     \
 	( perl -e '							     \
@@ -111,26 +114,24 @@ configure::
 		while (<>) { $$file .= $$_; }				     \
 		$$_ = $$file;						     \
 									     \
-		s/^(Configuration:)$$/\n$$1\n/m;			     \
-		s/^(Directory and file names:)$$/\n$$1\n/m;		     \
-		s/^  --sbindir=.*\n//m;					     \
-		s/^  --sysconfdir.*\n//m;				     \
-		s/^  --sharedstatedir.*\n.*\n//m;			     \
-		s/^  --localstatedir.*\n//m;				     \
-		s/^  --infodir.*\n//m;					     \
-		s/^(Host type:)$$/\n$$1\n/m;				     \
-		s/\nFeatures and packages:\n.*library files are in DIR\n/\n/s;\
-		s/--enable and --with options recognized://m;		     \
-		s/\n  --with-x .*?(["\n])/$$1/s;			     \
-		s/\n(Installation options:\n)/$$1/s;			     \
+		s/\nInstallation directories:.*?\n\n/\n/s;		     \
+		s/\nOptional Features:.*?\n\n/\n/s;			     \
+		s/\nOptional Packages:.*?\n\n/\n/s;			     \
 									     \
-		s/^  --oldincludedir=.*$$/ \
- --x-includes=DIR        X include files are in DIR\n \
- --x-libraries=DIR       X library files are in DIR/m; \
+		s/^ +--sbindir=.*\n//m;					     \
+		s/^ +--sysconfdir.*\n//m;				     \
+		s/^ +--sharedstatedir.*\n.*\n//m;			     \
+		s/^ +--oldincludedir.*\n//m;				     \
+		s/^ +--infodir.*\n//m;					     \
+		s/^ +--htmldir.*\n//m;					     \
+		s/^ +--dvidir.*\n//m;					     \
+		s/^ +--pdfdir.*\n//m;					     \
+		s/^ +--psdir.*\n//m;					     \
+		s/^ +--with-x .*\n//m;					     \
 									     \
-		s@mandir=.\$$\{prefix}/man.@mandir=\\\$${datadir}/man@;       \
+		s/(\n\n)\n+/$$1/gs;					     \
 									     \
-		s@rm -f conftest@rm -rf conftest@g;			     \
+		s/rm -f conftest/rm -rf conftest/g;			     \
 									     \
 		print;'							     \
 	< configure							     \
@@ -362,3 +363,33 @@ count::
     grep -v helper | \
     grep -v ljlatest | \
     wc -l
+
+
+cerebrum::
+	rsync -vax . cerebrum:src/xscreensaver/ \
+	--omit-dir-times \
+	--delete-during \
+	--exclude .git \
+	--exclude OSX \
+	--exclude android \
+	--exclude archive \
+	--exclude build \
+	--exclude gen \
+	--exclude videos \
+	--include '*.asm' \
+	--include '*.c' \
+	--include '*.gif' \
+	--include '*.h' \
+	--include '*.in' \
+	--include '*.jpg' \
+	--include '*.m' \
+	--include '*.m4' \
+	--include '*.pdb' \
+	--include '*.png' \
+	--include '*.po' \
+	--include '*.xml' \
+	--include '*.xpm' \
+	--include 'configure*' \
+	--include '*/' \
+	--exclude '*'
+

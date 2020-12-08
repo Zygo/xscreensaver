@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "13-aug-92" "X Version 11"
 .SH NAME
-greynetic - draw random stippled/color rectangles
+greynetic \- draw random stippled/color rectangles
 .SH SYNOPSIS
 .B greynetic
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP]

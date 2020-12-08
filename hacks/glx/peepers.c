@@ -233,10 +233,10 @@ reset_floater (ModeInfo *mi, floater *f)
       p += c[i].pct;
     p = frand(p);
 
-    for (i = 0; i < countof(c); i++)
+    for (i = 0; i < countof(c) - 1; i++)
       {
-        if (t > p) break;
         t += c[i].pct;
+        if (t > p) break;
       }
 
     if (c[i].c == 0xFFAA88)    f->jaundice = 2;
