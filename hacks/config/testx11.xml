@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<screensaver name="testx11" _label="Test X11">
+
+  <command arg="-root"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Test platform for JWXYZ - the X11 compatibility shim for OS X and iOS.
+End users shouldn't normally see this one.
+
+Written by Dave Odell; 2015.
+  </_description>
+</screensaver>

@@ -1,0 +1,67 @@
+.TH XScreenSaver 1 "4-Jun-2019 (5.43)" "X Version 11"
+.SH NAME
+xscreensaver-systemd - lock the screen upon suspend, and inhibit
+screen-blanking during video playback.
+.SH SYNOPSIS
+.B xscreensaver-systemd [-verbose]
+.SH DESCRIPTION
+The \fIxscreensaver\-systemd\fP program is a helper program launched by
+.BR xscreensaver (1)
+for
+.BR systemd (1)
+or
+.BR elogind (8)
+integration.  It does two things:
+.TP 2
+\fB*
+When the system is about to go to sleep (e.g., the laptop lid has just been
+closed) it locks the screen just \fIbefore\fP the system sleeps, by running
+\fIxscreensaver-command -suspend\fP.  When the system wakes up again, it
+runs \fIxscreensaver-command -deactivate\fP to make the unlock dialog appear
+immediately.  It does this through the
+.BR org.freedesktop.login1 (5)
+D-Bus interface.
+.TP 2
+\fB*
+When another process on the system asks for the screen saver to be
+inhibited (e.g. because a video is playing) this program periodically runs
+\fIxscreensaver-command -deactivate\fP to keep the display un-blanked.
+It does this until the other program asks for it to stop, or exits.
+It does this through the
+.BR org.freedesktop.ScreenSaver (5)
+D-Bus interface.
+.RS 0
+.SH BUGS
+Only one program at a time can register with
+.BR systemd (1)
+for screen-saver-related events, so if another screen saver is running as a
+part of the desktop environment, \fIxscreensaver-systemd\fP will be unable to
+launch.  Likely adversaries include
+.BR ksmserver (1)
+and
+.BR gsd\-screensaver\-proxy (1).
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-settings (1),
+.BR xscreensaver\-command (1),
+.BR systemd (1),
+.BR sd-bus (3),
+.BR elogind (8)
+.SH COPYRIGHT
+Copyright \(co 2019-2021 by Martin Lucina and Jamie Zawinski.
+Permission to use, copy, modify, and/or distribute this software
+for any purpose with or without fee is hereby granted, provided
+that the above copyright notice and this permission notice appear
+in all copies.
+
+The software is provided "as is" and the author disclaims all
+warranties with regard to this software including all implied
+warranties of merchantability and fitness. in no event shall the
+author be liable for any special, direct, indirect, or
+consequential damages or any damages whatsoever resulting from loss
+of use, data or profits, whether in an action of contract,
+negligence or other tortious action, arising out of or in
+connection with the use or performance of this software.
+.SH AUTHOR
+Martin Lucina <martin@lucina.net>, 4-Jun-2019

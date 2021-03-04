@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="intermomentary" _label="Intermomentary">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=pH-ykepPopw"/>
+
+  <number id="speed" type="slider" arg="-draw-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000" convert="invert"/>
+
+  <number id="init" type="slider" arg="-num-discs %"
+          _label="Number of discs" _low-label="50" _high-label="400"
+          low="50" high="400" default="85"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Blinking dots interact with each other circularly.
+
+A surface is filled with a hundred medium to small sized circles.
+Each circle has a different size and direction, but moves at the same
+slow rate.  Displays the instantaneous intersections of the circles as
+well as the aggregate intersections of the circles.
+
+The circles begin with a radius of 1 pixel and slowly increase to some
+arbitrary size.  Circles are drawn with small moving points along the
+perimeter. The intersections are rendered as glowing orbs.  Glowing
+orbs are rendered only when a perimeter point moves past the
+intersection point.
+
+Written by Casey Reas, William Ngan, Robert Hodgin, and Jamie Zawinski; 2004.
+  </_description>
+</screensaver>

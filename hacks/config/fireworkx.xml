@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fireworkx" _label="Fireworkx">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=-l9BfvnFIPM"/>
+
+  <number id="Delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="maxlife" type="slider" arg="-maxlife %"
+          _label="Activity" _low-label="Dense" _high-label="Sparse"
+          low="0" high="100" default="32"/>
+
+  <boolean id="flash" _label="Light flash" arg-unset="-no-flash"/>
+  <boolean id="shoot" _label="Shells upward" arg-set="-shoot"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Exploding fireworks.  See also the "Eruption", "XFlame" and "Pyro"
+screen savers.
+
+Written by Rony B Chandran; 2004.
+  </_description>
+</screensaver>

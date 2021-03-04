@@ -1,0 +1,88 @@
+.TH XScreenSaver 1 "Dec-28-07" "X Version 11"
+.SH NAME
+cubicgrid \- rotating 3D lattice seen from inside
+.SH SYNOPSIS
+.B cubicgrid
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-install]
+[\-delay \fImicroseconds\fP]
+[\-mono]
+[\-speed \fInumber\fP]
+[\-zoom \fInumber\fP]
+[\-ticks \fInumber\fP]
+[\-bigdots]
+[\-fps]
+[\-symmetry \fcrystalographic symmetry\fP]
+.SH DESCRIPTION
+This program shows the view of an observer located inside a set of points 
+arranged to a 3D lattice.  As the lattice rotates, various view-throughs appear 
+and evolve.  A simple idea with interesting results.
+.SH OPTIONS
+.I cubicgrid
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How long to pause between frames.  Default is 20000, or 0.02 second.
+.TP 8
+.B \-mono
+Draw in black and white.  If not used, a fixed all-color scheme is chosen.
+.TP 8
+.B \-speed \fInumber\fP
+The maximum speed of the rotation.  The actual speed and axis change smoothly 
+for better effect.  0.5 - 10.  The default is 1.0.
+.TP 8
+.B \-zoom \fInumber\fP
+Size of the lattice.  Ideally it should fill all the screen, but one may find 
+other values also interesting.  5 - 50.  The default of 20 should do for common 
+screen aspect ratios.
+.TP 8
+.B \-ticks \fInumber\fP
+The count of points drawn along every axis.  10 - 100.  The default is 30.
+.TP 8
+.B \-bigdots
+Draw the points twice as big.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-symmetry \fSymmetry\fP
+Which crystalographic symmetry system to use. One of "auto", "cubic", or
+"hexagonal". "auto" will randomly select between symmetry systems.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2007 by Vasek Potocek.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear in 
+all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Vasek Potocek <vasek.potocek@post.cz>, Dec-28-07.
