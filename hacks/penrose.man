@@ -1,0 +1,106 @@
+.TH XScreenSaver 1 "10-May-97" "X Version 11"
+.SH NAME
+penrose \- draws quasiperiodic tilings
+.SH SYNOPSIS
+.B penrose
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-size \fIinteger\fP] [\-ammann] [\-no\-ammann]
+
+[\-fps]
+.SH DESCRIPTION
+The \fIpenrose\fP program draws quasiperiodic tilings.
+
+See Onoda, Steinhardt, DiVincenzo and Socolar in
+Phys. Rev. Lett. 60, #25, 1988 or
+Strandburg in Computers in Physics, Sep/Oct 1991.
+
+This implementation uses the simpler version of the growth
+algorithm, i.e., if there are no forced vertices, a randomly chosen
+tile is added to a randomly chosen vertex (no preference for those
+108 degree angles).
+
+There are two essential differences to the algorithm presented in
+the literature: First, we do not allow the tiling to enclose an
+untiled area.  Whenever this is in danger of happening, we just
+do not add the tile, hoping for a better random choice the next
+time.  Second, when choosing a vertex randomly, we will take
+one that lies within the viewport if available.  If this seems to
+cause enclosures in the forced rule case, we will allow invisible
+vertices to be chosen.
+
+Tiling is restarted whenever one of the following happens: there
+are no incomplete vertices within the viewport or the tiling has
+extended a window's length beyond the edge of the window
+horizontally or vertically or forced rule choice has failed 100
+times due to areas about to become enclosed.
+
+Although quasiperiodic tilings are produced, the tiles themselves are
+not penrose tiles (darts and kites). In contrast to penrose tiles,
+these tiles can be arranged to form a periodic tiling.
+
+.SH OPTIONS
+.I penrose
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-ncolors \fIinteger\fP
+How many colors should be used (if possible).  Default 64.
+The colors are chosen randomly.
+.TP 8
+.B \-size \fIinteger\fP
+How big the tiles should be.  Default 40 pixels.
+
+.TP 8
+.B \-delay \fImilliseconds\fP
+How long (in 1/1,000,000'ths of a second) to wait between drawing each
+tile.  Default 10,000 or .01 seconds.
+
+.TP 8
+.B \-ammann
+.TP 8
+.B \-no\-ammann
+Whether Ammann lines should be added.
+
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xlock (1)
+.SH COPYRIGHT
+Copyright \(co 1996 by Timo Korvola.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+.SH AUTHOR
+Timo Korvola <tkorvola@dopey.hut.fi>, 1996.
+
+Ability to run standalone or with \fIxscreensaver\fP added by 
+Jamie Zawinski <jwz@jwz.org>, 10-May-97.

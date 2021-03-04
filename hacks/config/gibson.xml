@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="gibson" _label="Gibson" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=_gOhMR3TrHA"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Glyph speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="8.0" default="1.0"/>
+   </vgroup>
+   <vgroup>
+    <number id="grid-width" type="spinbutton" arg="-grid-width %"
+            _label="Grid width" low="1" high="20" default="6"/>
+
+    <number id="grid-depth" type="spinbutton" arg="-grid-depth %"
+            _label="Grid depth" low="1" high="20" default="6"/>
+   </vgroup>
+   <vgroup>
+    <number id="grid-height" type="spinbutton" arg="-grid-height %"
+            _label="Tower depth" low="1" high="20" default="7"/>
+
+    <number id="spacing" type="spinbutton" arg="-spacing %"
+            _label="Tower spacing" low="1" high="5" default="2.0"/>
+
+    <number id="columns" type="spinbutton" arg="-columns %"
+            _label="Text columns" low="1" high="20" default="5"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+   <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <xscreensaver-updater />
+  </hgroup>
+
+  <_description>
+Hacking the Gibson, as per the 1995 classic film, HACKERS.
+
+Cereal Killer: "Oh yeah, you want a seriously righteous hack, you score
+one of those Gibsons, man.  You know, supercomputers they use to like,
+do physics, and look for oil and stuff?"
+
+Phantom Phreak: "Ain't no way, man, security's too tight. The big iron?"
+
+Zero Cool: "Maybe. But, if I were gonna hack some heavy metal, I'd, uh,
+work my way back through some low security, and try the back door."
+
+Cereal Killer: "Yeah but oh man, wouldn't you just love to get one of
+those Gibsons, baby? Ooooh!"
+
+Phantom Phreak: "Yo, who ate all of my fries?"
+
+Written by Jamie Zawinski; 2020.
+  </_description>
+</screensaver>

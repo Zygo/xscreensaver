@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<screensaver name="sphereeversion" _label="Sphere Eversion" gl="yes">
+
+  <video href="https://www.youtube.com/watch?v=CbmIggJ5GdA"/>
+
+  <command arg="-root"/>
+
+  <hgroup>
+
+    <vgroup>
+      <number id="deform-speed" type="slider" arg="-deformation-speed %"
+              _label="Deformation speed"
+              _low-label="1.0" _high-label="100.0"
+              low="1.0" high="100.0" default="10.0"/>
+
+      <select id="surface-order">
+        <option id="random" _label="Random surface order"/>
+        <option id="2"      _label="2" arg-set="-surface-order 2"/>
+        <option id="3"      _label="3" arg-set="-surface-order 3"/>
+        <option id="4"      _label="4" arg-set="-surface-order 4"/>
+        <option id="5"      _label="5" arg-set="-surface-order 5"/>
+      </select>
+    </vgroup>
+
+    <vgroup>
+      <select id="display-mode">
+        <option id="random"      _label="Random surface"/>
+        <option id="surface"     _label="Solid surface"       arg-set="-mode surface"/>
+        <option id="transparent" _label="Transparent surface" arg-set="-mode transparent"/>
+      </select>
+
+      <select id="appearance">
+        <option id="random" _label="Random pattern"/>
+        <option id="solid"  _label="Solid object"   arg-set="-appearance solid"/>
+        <option id="bands"  _label="Parallel bands" arg-set="-appearance parallel-bands"/>
+        <option id="bands"  _label="Meridian bands" arg-set="-appearance meridian-bands"/>
+      </select>
+
+      <select id="graticule">
+        <option id="random" _label="Random graticule"/>
+        <option id="bands"  _label="With graticule"    arg-set="-graticule on"/>
+        <option id="bands"  _label="Without graticule" arg-set="-graticule off"/>
+      </select>
+
+      <select id="colors">
+        <option id="random"   _label="Random coloration"/>
+        <option id="twosided" _label="Two-sided"       arg-set="-colors two-sided"/>
+        <option id="rainbow"  _label="Parallel colors" arg-set="-colors parallel"/>
+        <option id="rainbow"  _label="Meridian colors" arg-set="-colors meridian"/>
+      </select>
+
+      <select id="projection">
+        <option id="random"       _label="Random Projection"/>
+        <option id="perspective"  _label="Perspective"  arg-set="-projection perspective"/>
+        <option id="orthographic" _label="Orthographic" arg-set="-projection orthographic"/>
+      </select>
+    </vgroup>
+
+    <vgroup>
+      <number id="speed-x" type="slider" arg="-speed-x %"
+              _label="X rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="0.0"/>
+
+      <number id="speed-y" type="slider" arg="-speed-y %"
+              _label="Y rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="0.0"/>
+
+      <number id="speed-z" type="slider" arg="-speed-z %"
+              _label="Z rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="0.0"/>
+    </vgroup>
+
+    <vgroup>
+     <xscreensaver-updater />
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </vgroup>
+
+  </hgroup>
+
+  <_description>
+Turns a sphere inside out: a smooth deformation (homotopy).  During the
+eversion, the deformed sphere is allowed to intersect itself transversally,
+however, no creases or pinch points occur.
+
+Inspired by the following paper: Adam Bednorz, Witold Bednorz:
+"Analytic sphere eversion using ruled surfaces", Differential Geometry
+and its Applications 64:59-79, 2019.
+
+https://en.wikipedia.org/wiki/Sphere_eversion
+https://mathworld.wolfram.com/SphereEversion.html
+
+Written by Carsten Steger; 2020.
+  </_description>
+</screensaver>

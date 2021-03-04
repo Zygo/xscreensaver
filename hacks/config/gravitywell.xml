@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="gravitywell" _label="Gravity Well" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=yhsw0QhIjjs"/>
+
+  <hgroup>
+   <vgroup>
+
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.01" high="8.0" default="1.0"/>
+
+    <number id="resolution" type="slider" arg="-resolution %"
+            _label="Resolution" _low-label="Low" _high-label="High"
+            low="1.0" high="5.0" default="1.0"/>
+   </vgroup>
+   <vgroup>
+
+    <number id="grid-size" type="slider" arg="-grid-size %"
+            _label="Grid Size" _low-label="Dense" _high-label="Sparse"
+            low="0.1" high="5.0" default="1.0"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Number of stars" _low-label="One" _high-label="Lots"
+            low="1" high="40" default="15"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Massive objects distort space in a two dimensional universe.
+
+Written by Jamie Zawinski; 2019.
+  </_description>
+</screensaver>

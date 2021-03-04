@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<screensaver name="moebius" _label="Möbius" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=77Nib6jQrXc"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="solid" _label="Solid floor" arg-set="-solidmoebius"/>
+  <boolean id="ants" _label="Draw ants" arg-unset="-no-ants"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+M. C. Escher's "Möbius Strip II", an image of ants walking along the
+surface of a möbius strip.
+
+https://en.wikipedia.org/wiki/Moebius_strip
+https://en.wikipedia.org/wiki/Maurits_Cornelis_Escher
+
+Written by Marcelo F. Vianna; 1997.
+  </_description>
+</screensaver>

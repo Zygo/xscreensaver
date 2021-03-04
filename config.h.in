@@ -1,0 +1,433 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+
+/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski.
+ * Generate this file by running 'configure' rather than editing it by hand.
+ */
+
+
+/* Define this to allow root to unlock, when not using PAM. */
+#undef ALLOW_ROOT_PASSWD
+
+/* always defined to indicate that i18n is enabled */
+#undef ENABLE_NLS
+
+/* This is the name of the gettext package to use. */
+#undef GETTEXT_PACKAGE
+
+/* Define this if gettimeofday takes two arguments. */
+#undef GETTIMEOFDAY_TWO_ARGS
+
+/* Define this for Solaris getpwanam. */
+#undef HAVE_ADJUNCT_PASSWD
+
+/* Define to 1 if you have the `bind_textdomain_codeset' function. */
+#undef HAVE_BIND_TEXTDOMAIN_CODESET
+
+/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYCURRENT
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+#undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
+/* Define this if you have Gnome and want to build support for the
+   xscreensaver control panel in the Gtk 1.x Gnome Control Center. */
+#undef HAVE_CRAPPLET
+
+/* Define this if HAVE_CRAPPLET is defined, and the function
+   capplet_widget_changes_are_immediate is available. */
+#undef HAVE_CRAPPLET_IMMEDIATE
+
+/* Define to 1 if you have the <crypt.h> header file. */
+#undef HAVE_CRYPT_H
+
+/* Define to 1 if you have the `dcgettext' function. */
+#undef HAVE_DCGETTEXT
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_DIRENT_H
+
+/* Define this if you have the X Double Buffer Extension. */
+#undef HAVE_DOUBLE_BUFFER_EXTENSION
+
+/* Define this if you have the XDPMS extension. */
+#undef HAVE_DPMS_EXTENSION
+
+/* Define this if OpenGL bindings are via EGL instead of GLX. */
+#undef HAVE_EGL
+
+/* Define this for DEC/SCO "Enhanced Security" with getprpwnam. */
+#undef HAVE_ENHANCED_PASSWD
+
+/* Define to 1 if you have the `fcntl' function. */
+#undef HAVE_FCNTL
+
+/* Define this if you have forkpty. */
+#undef HAVE_FORKPTY
+
+/* Define this if you have GDK_Pixbuf. */
+#undef HAVE_GDK_PIXBUF
+
+/* Define this if you have the gdk_pixbuf_apply_embedded_orientation function
+   (gdk-pixbuf 2.12). */
+#undef HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* Define to 1 if you have the `getcwd' function. */
+#undef HAVE_GETCWD
+
+/* Define this if you have getifaddrs. */
+#undef HAVE_GETIFADDRS
+
+/* Define if the GNU gettext() function is already present or preinstalled. */
+#undef HAVE_GETTEXT
+
+/* Define this if you have gettimeofday. */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the `getwd' function. */
+#undef HAVE_GETWD
+
+/* Define this if you have OpenGL. */
+#undef HAVE_GL
+
+/* Define this if the OpenGL version is 1.1 or newer. */
+#undef HAVE_GLBINDTEXTURE
+
+/* Define this if you have the GL Extrusion library. */
+#undef HAVE_GLE
+
+/* Define this if GL Extrusion is version 3. */
+#undef HAVE_GLE3
+
+/* Define this if the native OpenGL library is OpenGLES 1.x. */
+#undef HAVE_GLES
+
+/* Define this if the native OpenGL library is OpenGLES 2.x. */
+#undef HAVE_GLES2
+
+/* Define this if the native OpenGL library is OpenGLES 3.x. */
+#undef HAVE_GLES3
+
+/* Define this if OpenGL supports the OpenGL Shading Language. */
+#undef HAVE_GLSL
+
+/* Define this if you have Gtk */
+#undef HAVE_GTK
+
+/* Define this if you have Gtk 2.x. */
+#undef HAVE_GTK2
+
+/* Define this for HPUX so-called "Secure Passwords". */
+#undef HAVE_HPUX_PASSWD
+
+/* Define this if ping uses struct icmp.icmp_id. */
+#undef HAVE_ICMP
+
+/* Define this if ping uses struct icmphdr.un.echo.id. */
+#undef HAVE_ICMPHDR
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define this if you have the JPEG Group's JPEG library. */
+#undef HAVE_JPEGLIB
+
+/* Define this to emulate OpenGL 1.3 in terms of OpenGLES 1.x. */
+#undef HAVE_JWZGLES
+
+/* Define this if you want to use Kerberos authentication to lock/unlock the
+   screen instead of PAM. */
+#undef HAVE_KERBEROS
+
+/* Define this if you have Kerberos 5. */
+#undef HAVE_KERBEROS5
+
+/* Define if your <locale.h> file defines LC_MESSAGES. */
+#undef HAVE_LC_MESSAGES
+
+/* Define this if your system has libcap. */
+#undef HAVE_LIBCAP
+
+/* Define this if you have the Portable Network Graphics library. */
+#undef HAVE_LIBPNG
+
+/* Define this if you have libsystemd. */
+#undef HAVE_LIBSYSTEMD
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Using the MIT-SCREEN-SAVER extension means that the X server will crash at
+   random times, and fading and hysteresis won't work. Don't use this. You'll
+   be sorry. See comment in xscreensaver.c. */
+#undef HAVE_MIT_SAVER_EXTENSION
+
+/* Define this if you have Motif. */
+#undef HAVE_MOTIF
+
+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+#undef HAVE_NDIR_H
+
+/* Define to 1 if you have the `nice' function. */
+#undef HAVE_NICE
+
+/* Define this if you the XML library headers lack the gnome-xml/libxml
+   symlink. */
+#undef HAVE_OLD_XML_HEADERS
+
+/* Define this if you have Pluggable Authentication Modules. */
+#undef HAVE_PAM
+
+/* Define this if you have pam_fail_delay. */
+#undef HAVE_PAM_FAIL_DELAY
+
+/* Define this if you have a Linux-like /proc/interrupts file which can be
+   examined to determine when keyboard activity has occurred, and you use PS/2
+   input devices instead of USB. */
+#undef HAVE_PROC_INTERRUPTS
+
+/* Define this if you have a Linux-like /proc/.../oom_score_adj file which can
+   be adjusted by root to exempt us from the out-of-memory killer. */
+#undef HAVE_PROC_OOM
+
+/* Define this if you have POSIX threads. */
+#undef HAVE_PTHREAD
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the <pty.h> header file. */
+#undef HAVE_PTY_H
+
+/* Define to 1 if you have the `putenv' function. */
+#undef HAVE_PUTENV
+
+/* Define this if you have the Resize and Rotate extension. */
+#undef HAVE_RANDR
+
+/* Define this if the RANDR library is version 1.2 or newer. */
+#undef HAVE_RANDR_12
+
+/* Define this if you have the SGI XReadDisplay extension. */
+#undef HAVE_READ_DISPLAY_EXTENSION
+
+/* Define to 1 if you have the `realpath' function. */
+#undef HAVE_REALPATH
+
+/* Define this to enable recording of videos. */
+#undef HAVE_RECORD_ANIM
+
+/* Define to 1 if you have the `sbrk' function. */
+#undef HAVE_SBRK
+
+/* Define to 1 if you have the `select' function. */
+#undef HAVE_SELECT
+
+/* Define to 1 if you have the `setlocale' function. */
+#undef HAVE_SETLOCALE
+
+/* Define to 1 if you have the `setpriority' function. */
+#undef HAVE_SETPRIORITY
+
+/* Define to 1 if you have the `setrlimit' function. */
+#undef HAVE_SETRLIMIT
+
+/* Define this if you have the SGI SCREEN_SAVER extension. */
+#undef HAVE_SGI_SAVER_EXTENSION
+
+/* Define this if you have the SGI-VIDEO-CONTROL extension. */
+#undef HAVE_SGI_VC_EXTENSION
+
+/* Define this if your system uses /etc/shadow. */
+#undef HAVE_SHADOW_PASSWD
+
+/* Define to 1 if you have the `sigaction' function. */
+#undef HAVE_SIGACTION
+
+/* Define to 1 if you have the `sigtimedwait' function. */
+#undef HAVE_SIGTIMEDWAIT
+
+/* Define to 1 if you have the `sqrtf' function. */
+#undef HAVE_SQRTF
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if `sa_len' is a member of `struct sockaddr'. */
+#undef HAVE_STRUCT_SOCKADDR_SA_LEN
+
+/* Define to 1 if you have the `syslog' function. */
+#undef HAVE_SYSLOG
+
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/termios.h> header file. */
+#undef HAVE_SYS_TERMIOS_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the `uname' function. */
+#undef HAVE_UNAME
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <util.h> header file. */
+#undef HAVE_UTIL_H
+
+/* Define this if you have XF86MiscSetGrabKeysState, which allows
+   Ctl-Alt-KP_star and Ctl-Alt-KP_slash to be temporarily disabled. */
+#undef HAVE_XF86MISCSETGRABKEYSSTATE
+
+/* Define this if you have XF86VidModeGetViewPort, for virtual desktops. */
+#undef HAVE_XF86VMODE
+
+/* Define this if you have XF86VidModeSetGamma, for fading. */
+#undef HAVE_XF86VMODE_GAMMA
+
+/* Define this if you have XF86VidModeSetGammaRamp, for fading. */
+#undef HAVE_XF86VMODE_GAMMA_RAMP
+
+/* Define this if you have libXft2. */
+#undef HAVE_XFT
+
+/* Define this if you have XHPDisableReset, which allows Ctrl-Sh-Reset to be
+   temporarily disabled. */
+#undef HAVE_XHPDISABLERESET
+
+/* Define this if you have the X11R5 XIDLE extension. */
+#undef HAVE_XIDLE_EXTENSION
+
+/* Define this if you have the Xinerama extension. */
+#undef HAVE_XINERAMA
+
+/* Define this if you have the XInput2 extension. */
+#undef HAVE_XINPUT
+
+/* Define this if you have the XmComboBox Motif 2.0 widget. */
+#undef HAVE_XMCOMBOBOX
+
+/* Define this if you have the XML library. */
+#undef HAVE_XML
+
+/* Define this if you have the X Shared Memory Extension. */
+#undef HAVE_XSHM_EXTENSION
+
+/* Define this if you have the function Xutf8DrawString. */
+#undef HAVE_XUTF8DRAWSTRING
+
+/* Define this to remove the option of locking the screen at all. */
+#undef NO_LOCKING
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Whether PAM should check the result of account modules when authenticating.
+   */
+#undef PAM_CHECK_ACCOUNT_TYPE
+
+/* The name of the "xscreensaver" PAM service. */
+#undef PAM_SERVICE_NAME
+
+/* Define if pam_strerror requires two arguments. */
+#undef PAM_STRERROR_TWO_ARGS
+
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Stare into the void. */
+#undef XPointer
+
+/* Define to 1 if the X Window System is missing or not being used. */
+#undef X_DISPLAY_MISSING
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef mode_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to `int' if <sys/types.h> or <sys/socket.h> does not define. */
+#undef socklen_t

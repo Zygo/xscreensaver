@@ -1,0 +1,109 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+carousel \- displays multiple images rotating in a circular formation
+.SH SYNOPSIS
+.B carousel
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-count \fIint\fP]
+[\-zoom | \-no\-zoom]
+[\-tilt \fIXY\fP]
+[\-titles | \-no\-titles]
+[\-font \fIfont\fP]
+[\-speed \fIratio\fP]
+[\-duration \fIseconds\fP]
+[\-fps]
+[\-debug]
+[\-wireframe]
+.SH DESCRIPTION
+Loads several random images, and displays them flying in a circular
+formation.  The circle changes speed and direction randomly, tilts on
+its axis, and the images move in and out.
+
+This program requires a good video card capable of supporting large
+textures.
+
+To specify the directory that images are loaded from, run
+.BR xscreensaver\-settings (1)
+and click on the "Advanced" tab.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-count \fIint\fP
+How many images to display.  Default 7.
+.TP 8
+.B \-zoom \fB| \-no\-zoom\fP
+Whether the images should move in and out (toward and away from the
+axis of rotation).  Default true.
+.TP 8
+.B \-tilt \fIXY\fP \fB| \-no\-tilt\fP
+Whether the axis of rotation should tilt, and how.  \fB-tilt X\fP
+means that it will tilt toward and away from the viewer.  
+\fB-tilt Y\fP means that it will tilt to the left and right of the
+screen.  \fB-tilt XY\fP (the default) means it will do both.
+.TP 8
+.B \-titles \fB| \-no\-titles\fP
+Whether to display the file names of the images beneath them.  Default: yes.
+.TP 8
+.B \-font \fIfont-name\fP
+The font to use for titles.  Note that the size of the font affects
+the clarity of the characters, not their size (it is auto-scaled.)
+.TP 8
+.B \-duration \fIseconds\fP
+Every \fIduration\fP seconds, one of the images will be replaced
+with a new one.  Default 20 seconds.
+.TP 8
+.B \-speed \fIratio\fP
+Speed up or slow down the animation.  0.5 means half as fast as the
+default; 2.0 means twice as fast.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-debug
+Prints debugging info to stderr.
+.TP 8
+.B \-wireframe
+Another debug mode.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver\-settings (1)
+.BR xscreensaver\-getimage (MANSUFFIX)
+.BR xscreensaver (1)
+.BR glslideshow (MANSUFFIX)
+.BR photopile (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co 2005 by Jamie Zawinski.
+
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.
