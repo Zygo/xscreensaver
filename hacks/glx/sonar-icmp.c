@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2020 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright © 1998-2021 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1499,8 +1499,13 @@ parse_mode (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
 
       if (!ping_works_p)
         {
+# ifdef HAVE_LIBCAP
           *error_ret = strdup ("Sonar must be setuid or libcap to ping!\n"
                                "Running simulation instead.");
+# else
+          *error_ret = strdup ("Sonar must be setuid to ping!\n"
+                               "Running simulation instead.");
+# endif
           return 0;
         }
 
@@ -1661,20 +1666,33 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
 
   /* Create the ICMP socket.  Do this before dropping privs.
 
-     Raw sockets can only be opened by root (or setuid root), so we
-     only try to do this when the effective uid is 0.
+     Raw sockets can only be opened by root (or setuid root), so we only try
+     to do this when the effective uid is 0.
 
-     We used to just always try, and notice the failure.  But apparently
-     that causes "SELinux" to log spurious warnings when running with the
-     "strict" policy.  So to avoid that, we just don't try unless we
-     know it will work.
+     We used to just always try, and notice the failure.  But apparently that
+     causes "SELinux" to log spurious warnings when running with the "strict"
+     policy.  So to avoid that, we just don't try unless we know it will work.
 
-     On MacOS X, we can avoid the whole problem by using a
-     non-privileged datagram instead of a raw socket.
+     On MacOS X, we can avoid the whole problem by using a non-privileged
+     datagram instead of a raw socket.
 
-     On recent Linux systems (2012-ish?) we can avoid setuid by instead
-     using cap_set_flag(... CAP_NET_RAW). To make that call the executable
-     needs to have "sudo setcap cap_net_raw=p sonar" done to it first.
+     On recent Linux systems (2012-ish?) we can avoid setuid by instead using
+     cap_set_flag(... CAP_NET_RAW). To make that call the executable needs to
+     have "sudo setcap cap_net_raw=p sonar" done to it first.
+
+     Except, it turns out that $MESA_LOADER_DRIVER_OVERRIDE would then let you
+     run arbitrary other programs with access to raw sockets.  It's possible
+     that un-setting $MESA_LOADER_DRIVER_OVERRIDE early in main() would prevent
+     this, but Mesa uses a ton of environment variables, and who knows what
+     other crap is lurking in there.  So that's just great.
+
+     Ironically, being setuid root is *more* secure, as Mesa happens to contain
+     code that says, "Hey, maybe I shouldn't link in arbitrary other .so files
+     when I'm root".
+
+     This trick does not work with $LD_PRELOAD because the kernel checks auxv
+     for AT_SECURE and won't run $LD_PRELOAD if setcap is in use, whereas Mesa
+     only checks geteuid.
    */
   if (global_icmpsock)
     {

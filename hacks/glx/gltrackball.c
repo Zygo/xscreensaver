@@ -10,28 +10,11 @@
  * implied warranty.
  */
 
+#include "screenhackI.h"
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#ifdef HAVE_COCOA
-# include "jwxyz.h"
-#elif defined(HAVE_ANDROID)
-# include "jwxyz.h"
-# include <GLES/gl.h>
-#else  /* real X11 */
-# include <X11/X.h>
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-#endif /* !HAVE_COCOA */
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
 
 # define Button4 4  /* WTF */
 # define Button5 5

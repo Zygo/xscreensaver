@@ -42,7 +42,7 @@ This program will be run periodically, and its output will be the text
 that is displayed.  Default \fIxscreensaver\-text\fP.
 
 You can configure the text printed through the "Advanced" tab of
-.BR xscreensaver\-demo (1),
+.BR xscreensaver\-settings (1),
 or by editing your ~/.xscreensaver file.
 .TP 8
 .B \-size \fIinteger\fP
@@ -90,7 +90,7 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR xscreensaver (1),
-.BR xscreensaver-text (1),
+.BR xscreensaver\-text (MANSUFFIX),
 .BR fortune (1),
 .BR phosphor (MANSUFFIX),
 .BR apple2 (MANSUFFIX),

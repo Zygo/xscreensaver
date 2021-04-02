@@ -16,15 +16,13 @@
  */
 
 
-#define DEFAULTS	"*delay:	10000		 \n" \
-			"*wireframe:    False         \n" \
-	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
-	"*titleFont2: -*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*\n" \
-	"*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
+#define DEFAULTS	"*delay:	10000	     \n" \
+			"*wireframe:    False        \n" \
+                        "*titleFont:    sans-serif 18\n" \
+                        "*titleFont2:   sans-serif 12\n" \
+                        "*titleFont3:   sans-serif 8\n"  \
 
 # define release_tangram 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 

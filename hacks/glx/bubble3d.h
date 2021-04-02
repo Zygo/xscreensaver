@@ -3,25 +3,13 @@
 #ifndef __bubbles3d_h__
 #define __bubbles3d_h__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #ifdef STANDALONE
-# include <math.h>
-# include "xlockmoreI.h"	/* from the xscreensaver distribution */
+# include "screenhackI.h"	/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#if !defined(HAVE_JWXYZ) && !defined(HAVE_JWZGLES)
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
+#include <math.h>
 
 /* Static configuration. */
 #define GLB_SLOW_GL          0	/* Set this if you have a slow GL

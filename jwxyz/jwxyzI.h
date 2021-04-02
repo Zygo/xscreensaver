@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,6 +52,7 @@ extern unsigned int jwxyz_drawable_depth (Drawable d);
    meaning of -[UIView contentScaleFactor] on iOS.
  */
 extern float jwxyz_scale (Window main_window);
+extern float jwxyz_font_scale (Window main_window);
 
 extern const char *jwxyz_default_font_family (int require);
 extern void *jwxyz_load_native_font (Window main_window,

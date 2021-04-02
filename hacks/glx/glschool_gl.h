@@ -1,4 +1,5 @@
-/* glschool_gl.h, Copyright (c) 2005-2006 David C. Lambert <dcl@panix.com>
+/* glschool_gl.h, Copyright (c) 2005-2006, 2021
+ * -David C. Lambert <dcl@panix.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,29 +12,7 @@
 #ifndef __GLSCHOOL_GL_H__
 #define __GLSCHOOL_GL_H__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-# ifndef HAVE_JWZGLES
-#  include <OpenGL/glu.h>
-# endif
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_ANDROID
-#include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
+#include "xlockmoreI.h"
 #include "glschool_alg.h"
 
 extern void glschool_initFog(void);

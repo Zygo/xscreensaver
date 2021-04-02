@@ -1,4 +1,4 @@
-# XScreenSaver for MacOS X, Copyright (c) 2006-2015 by Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright © 2006-2021 Jamie Zawinski.
 
 XCODE_APP = /Applications/Xcode.app
 
@@ -67,8 +67,19 @@ Sparkle.framework:
 
 BASE = xscreensaver/screenshots/
 URL = https://www.jwz.org/$(BASE)
-WGET = wget -q -U xscreensaver-build-osx --content-on-error=0
-CVT  = -thumbnail '200x150^' -gravity center -extent 200x150 \
+
+# I find wget easier to deal with, but curl is usually installed by default.
+#WGET = wget -q -U xscreensaver-build-osx --content-on-error=0 -O-
+WGET = curl -s -A xscreensaver-build-osx -f
+
+# Apple savers have "thumbnail.png" at 90x58 and "thumbnail@2x.png" at 180x116.
+# System Preferences stretches those to fill a bordered 170x105 frame.
+# These args take our source images (usually 200x150) and fits them into a
+# 180x116 box, cropping either horizontally or vertically as needed.
+# It also makes the alpha mask have rounded corners.
+#
+THUMB_SIZE=180x116
+CVT  = -thumbnail $(THUMB_SIZE)'^' -gravity center -extent $(THUMB_SIZE) \
      \( +clone  -alpha extract \
         -draw 'fill black polygon 0,0 0,6 6,0 fill white circle 6,6 6,0' \
         \( +clone -flip \) -compose Multiply -composite \
@@ -93,10 +104,10 @@ $(THUMBDIR)/%.png:
 	  cp -p "$$HOME/www/$(BASE)/$$FILE1" "$$TMP" ;			\
 	else								\
 	  echo "downloading $$URL..." ;					\
-	  $(WGET) -O"$$TMP" "$$URL" ;					\
+	  $(WGET) "$$URL" > "$$TMP" ;					\
 	  if [ ! -s "$$TMP" ]; then					\
 	    echo "downloading $$URL2..." ;				\
-	    $(WGET) -O"$$TMP" "$$URL2" ;				\
+	    $(WGET) "$$URL2" > "$$TMP" ;				\
 	  fi ;								\
 	  if [ ! -s "$$TMP" ]; then					\
 	    rm -f "$$TMP" ;						\
@@ -114,11 +125,29 @@ $(THUMBDIR)/%.png:
 	  rm -f "$$TMP" ;						\
 	fi
 
+$(THUMBDIR)/randomxscreensaver.png:
+	@\
+	SRC="iSaverRunner1024.png" ;					\
+	CVT2="-gravity center -background #249ff5 -extent 200%x100%" ;	\
+	FILE1=`echo "$@" | sed 's!^.*/\([^/]*\)\.png$$!\1.jpg!'` ;	\
+	FILE2="$@" ;							\
+	TMP="$$FILE2".tmp.png ;						\
+	if [ ! -d $(THUMBDIR) ]; then mkdir -p $(THUMBDIR) ; fi ;	\
+	rm -f "$$FILE2" "$$TMP" ;					\
+	set +e ;							\
+	convert "$$SRC" $$CVT2 "$$TMP" ;				\
+	convert "$$TMP" $(CVT) "$$FILE2" ;				\
+	if [ ! -s "$$FILE2" ]; then					\
+	  echo "$$FILE2 failed" >&2 ;					\
+	  rm -f "$$FILE2" "$$TMP" ;					\
+	  exit 1 ;							\
+	fi
+
 
 check_versions:
 	@\
   SRC=../utils/version.h ;						\
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		\
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC | head -1` ;	\
   DIR=build/Release ;							\
   RESULT=0 ;								\
   for S in $$DIR/*.{saver,app} ; do					\
@@ -199,21 +228,23 @@ ios-function-table.m::
 	@./build-fntable.pl build/Debug-iphonesimulator/XScreenSaver.app $@
 
 
-echo_tarfiles:
-	@echo `( find .							\
+list_tarfiles:
+	@( find .							\
 	  \( \( -name '.??*' -o -name build -o -name CVS -o -name '*~*'	\
 	     -o -name 'jwz.*' -o -name 'Screen Savers'			\
              -o -name xscreensaver.xcodeproj \)				\
 	     -prune \)							\
 	  -o \( -type f -o -type l \) -print ;				\
-	  echo xscreensaver.xcodeproj/project.pbxproj )			\
+	  echo xscreensaver.xcodeproj/project.pbxproj ;			\
+	  find xscreensaver.xcodeproj/xcshareddata -type f ;		\
+	 )								\
 	| sed 's@^\./@@'						\
-	| sort`
+	| sort
 
 update_plist_version:
 	@								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC | head -1` ;	      \
   T=/tmp/xs.$$$$ ;							      \
   for S in *.plist ; do							      \
     /bin/echo -n "Updating version number in $$S to \"$$V\"... " ;	      \
@@ -238,7 +269,7 @@ updates.xml::
 test_sig::
 	@								    \
   U=../utils/version.h ;						    \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ;]*\).*/\1/p' < $$U` ;		    \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ;]*\).*/\1/p' < $$U | head -1` ;	    \
   BASE="xscreensaver-$$V" ;						    \
   OUTDIR="../archive" ;							    \
   DMG="$$OUTDIR/$$BASE.dmg" ;						    \
@@ -265,7 +296,7 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 	@\
   set -e ;								\
   SRC=../utils/version.h ;						\
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		\
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC | head -1` ;	\
 									\
   DIST="installer.xml" ;						\
   STAGE="build/Release/pkg_stage" ;					\
@@ -304,7 +335,7 @@ _dmg::
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC | head -1` ;	      \
   TMPDIR="build" ;							      \
   SRC="build/Release" ;							      \
   EXTRAS=../../xdaliclock/OSX/build/Release/*.saver ;			      \
@@ -429,7 +460,7 @@ notarize::
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC | head -1` ;	      \
   BASE="xscreensaver-$$V" ;						      \
   OUTDIR="../archive" ;							      \
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
@@ -483,7 +514,7 @@ staple::
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
-  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC` ;		      \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^ ]*\).*/\1/p' $$SRC | head -1` ;	      \
   BASE="xscreensaver-$$V" ;						      \
   OUTDIR="../archive" ;							      \
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \

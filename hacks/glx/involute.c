@@ -11,31 +11,9 @@
  * Utilities for rendering OpenGL gears with involute teeth.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include "screenhackI.h"
-
-#ifndef HAVE_JWXYZ
-# include <GL/glx.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_ANDROID
-# include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #include "involute.h"
 #include "normals.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 
 /* For debugging: if true then in wireframe, do not abbreviate. */
 static Bool wire_all_p = False;

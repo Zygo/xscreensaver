@@ -20,9 +20,9 @@
  * so you see a ghostly, misaligned image.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "screenhack.h"
+#include "ximage-loader.h"
+#include "analogtv.h"
 
 #include <math.h>
 
@@ -33,10 +33,6 @@
 #ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h> /* for XtDatabase in hack_resources() */
 #endif
-
-#include "screenhack.h"
-#include "ximage-loader.h"
-#include "analogtv.h"
 
 #define USE_TEST_PATTERNS
 

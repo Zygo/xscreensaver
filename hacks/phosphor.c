@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1999-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,18 +13,15 @@
  * Pty and vt100 emulation by Fredrik Tolf <fredrik@dolda2000.com>
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "screenhack.h"
+#include "textclient.h"
+#include "ximage-loader.h"
+#include "utf8wc.h"
 
 #ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h>
 #endif
 
-#include "screenhack.h"
-#include "textclient.h"
-#include "ximage-loader.h"
-#include "utf8wc.h"
 
 #define FUZZY_BORDER
 
@@ -67,7 +64,8 @@ typedef struct {
   Display *dpy;
   Window window;
   XWindowAttributes xgwa;
-  XFontStruct *font;
+  XftFont *font;
+  XftDraw *xftdraw;
   const char *program;
   int grid_width, grid_height;
   int char_width, char_height;
@@ -160,7 +158,7 @@ phosphor_init (Display *dpy, Window window)
   unsigned long flags;
   p_state *state = (p_state *) calloc (sizeof(*state), 1);
   char *fontname = get_string_resource (dpy, "font", "Font");
-  XFontStruct *font;
+  XftFont *font;
 
   state->dpy = dpy;
   state->window = window;
@@ -176,19 +174,27 @@ phosphor_init (Display *dpy, Window window)
     {
 #ifndef BUILTIN_FONT
       fprintf (stderr, "%s: no builtin font\n", progname);
-      state->font = load_font_retry (dpy, "fixed");
+      state->font = load_xft_font_retry (dpy,
+                                         screen_number (state->xgwa.screen),
+                                         "fixed");
 #endif /* !BUILTIN_FONT */
     }
   else
     {
-      state->font = load_font_retry (dpy, fontname);
+      state->font = load_xft_font_retry (dpy,
+                                         screen_number (state->xgwa.screen),
+                                         fontname);
       if (!state->font) abort();
     }
 
   if (fontname) free (fontname);
 
   font = state->font;
-  state->scale = get_integer_resource (dpy, "scale", "Integer");
+  state->xftdraw = XftDrawCreate (dpy, window, state->xgwa.visual,
+                               state->xgwa.colormap);
+
+  /* Xft uses 'scale' */
+  state->scale = get_integer_resource (dpy, "phosphorScale", "Integer");
   state->ticks = STATE_MAX + get_integer_resource (dpy, "ticks", "Integer");
   state->escstate = 0;
 
@@ -205,8 +211,10 @@ phosphor_init (Display *dpy, Window window)
   else
 # endif /* BUILTIN_FONT */
     {
-      state->char_width  = font->max_bounds.width;
-      state->char_height = font->max_bounds.ascent + font->max_bounds.descent;
+      XGlyphInfo overall;
+      XftTextExtentsUtf8 (dpy, state->font, (FcChar8 *) "N", 1, &overall);
+      state->char_width  = overall.xOff;
+      state->char_height = font->ascent + font->descent;
     }
 
 # ifdef HAVE_IPHONE
@@ -289,7 +297,6 @@ phosphor_init (Display *dpy, Window window)
 
     /* Now, GCs all around.
      */
-    state->gcv.font = (font ? font->fid : 0);
     state->gcv.cap_style = CapRound;
 #ifdef FUZZY_BORDER
     state->gcv.line_width = (int) (((long) state->scale) * 1.3);
@@ -401,7 +408,7 @@ resize_grid (p_state *state)
 static void
 capture_font_bits (p_state *state)
 {
-  XFontStruct *font = state->font;
+  XftFont *font = state->font;
   int safe_width, height;
   unsigned char string[257];
   int i;
@@ -466,7 +473,12 @@ capture_font_bits (p_state *state)
   else
 # endif /* BUILTIN_FONT */
     {
-      safe_width = font->max_bounds.rbearing - font->min_bounds.lbearing;
+      XGlyphInfo overall;
+      XftTextExtentsUtf8 (state->dpy, state->font,
+                          (FcChar8 *) "N", 1, &overall);
+      /* #### maybe safe_width should take lbearing into account */
+      safe_width  = overall.xOff;
+      state->char_height = state->font->ascent + state->font->descent;
       height = state->char_height;
     }
 
@@ -485,8 +497,7 @@ capture_font_bits (p_state *state)
 
   state->gcv.foreground = 1;
   state->gc1 = XCreateGC (state->dpy, p,
-                          ((font ? GCFont : 0) |
-                           GCForeground | GCBackground |
+                          (GCForeground | GCBackground |
                            GCCapStyle | GCLineWidth),
                           &state->gcv);
 
@@ -503,8 +514,7 @@ capture_font_bits (p_state *state)
     if (state->gcv.line_width < 1)
       state->gcv.line_width = 1;
     state->gc2 = XCreateGC (state->dpy, p,
-                            ((font ? GCFont : 0) |
-                             GCForeground | GCBackground |
+                            (GCForeground | GCBackground |
                              GCCapStyle | GCLineWidth),
                             &state->gcv);
   }
@@ -523,28 +533,69 @@ capture_font_bits (p_state *state)
   else
 # endif /* BUILTIN_FONT */
     {
+      Pixmap pm_color = XCreatePixmap (state->dpy, state->window,
+                                       (safe_width * 256), height,
+                                       state->xgwa.depth);
+      XImage *xim_color, *xim_mono;
+      GC text_gc;
+      XGCValues gcv;
+      XftDraw *xftdraw;
+      XftColor xft_fg;
+      int x, y;
+
+      /* Maybe this should be using XftDrawCreateBitmap instead of 
+         XftDrawCreate to render the font with 1-bit hinting? */
+
+      /* Create a full-depth pixmap and draw the text into it, fg/bg ~0/0. */
+      gcv.foreground = 0;
+      text_gc = XCreateGC (state->dpy, pm_color, GCForeground, &gcv);
+      XFillRectangle (state->dpy, pm_color, text_gc, 0, 0,
+                      (safe_width * 256), height);
+      xftdraw = XftDrawCreate (state->dpy, pm_color,
+                               state->xgwa.visual, state->xgwa.colormap);
+      xft_fg.pixel = ~0L;
+      xft_fg.color.red = xft_fg.color.green = xft_fg.color.blue = ~0L;
       for (i = 0; i < 256; i++)
-        {
-          if (string[i] < font->min_char_or_byte2 ||
-              string[i] > font->max_char_or_byte2)
-            continue;
-          XDrawString (state->dpy, p, state->gc1,
-                       i * safe_width, font->ascent,
-                       (char *) (string + i), 1);
-        }
+        XftDrawStringUtf8 (xftdraw, &xft_fg, state->font,
+                           i * safe_width, font->ascent,
+                           (FcChar8 *) (string + i), 1);
+
+      /* Retrieve a full-depth XImage. */
+      xim_color = XGetImage (state->dpy, pm_color, 0, 0, 
+                             i * safe_width, font->ascent,
+                             state->xgwa.depth, ZPixmap);
+
+      /* Convert it to a mono XImage. */
+      xim_mono = XCreateImage (state->dpy, state->xgwa.visual,
+                               1, XYPixmap, 0, 0,
+                               i * safe_width, font->ascent,
+                               8, 0);
+      xim_mono->data = (char *)
+        calloc(xim_mono->height, xim_mono->bytes_per_line);
+      for (y = 0; y < xim_color->height; y++)
+        for (x = 0; x < xim_color->width; x++)
+          XPutPixel (xim_mono, x, y, XGetPixel (xim_color, x, y) ? 1 : 0);
+
+      /* Copy mono ximage to mono pixmap */
+      XFreeGC (state->dpy, text_gc);
+      text_gc = XCreateGC (state->dpy, p, GCForeground, &gcv);
+      XPutImage (state->dpy, p, text_gc, xim_mono, 0, 0, 0, 0,
+                 (safe_width * 256), height);
+      XFreeGC (state->dpy, text_gc);
+      XDestroyImage (xim_color);
+      XDestroyImage (xim_mono);
+# if 0
+      XWriteBitmapFile(state->dpy, "/tmp/tvfont.xbm", p, 
+                       (safe_width * 256), height,
+                       -1, -1);
+# endif
     }
 
   /* Draw the cursor. */
   XFillRectangle (state->dpy, p, state->gc1,
                   (CURSOR_INDEX * safe_width), 1,
-                  (font
-                   ? (font->per_char
-                      ? font->per_char['n'-font->min_char_or_byte2].width
-                      : font->max_bounds.width)
-                   : state->char_width),
-                  (font
-                   ? font->ascent - 1
-                   : state->char_height));
+                  state->char_width,
+                  state->char_height);
 
   state->font_bits = XGetImage (state->dpy, p, 0, 0,
                                 (safe_width * 256), height, ~0L, XYPixmap);
@@ -579,17 +630,10 @@ char_to_pixmap (p_state *state, p_char *pc, int c)
   int from, to;
   int x1, y;
 
-  XFontStruct *font = state->font;
-  int safe_width = (font 
-                    ? font->max_bounds.rbearing - font->min_bounds.lbearing
-                    : state->char_width + 1);
+  int safe_width = state->char_width + 1;
 
   int width  = state->scale * state->char_width;
   int height = state->scale * state->char_height;
-
-  if (font && (c < font->min_char_or_byte2 ||
-               c > font->max_char_or_byte2))
-    goto DONE;
 
   gc = state->gc1;
   p = XCreatePixmap (state->dpy, state->window, width, height, 1);
@@ -642,7 +686,6 @@ char_to_pixmap (p_state *state, p_char *pc, int c)
   /*  if (pc->blank_p && c == CURSOR_INDEX)
     abort();*/
 
- DONE:
   pc->pixmap = p;
 #ifdef FUZZY_BORDER
   pc->pixmap2 = p2;
@@ -1436,7 +1479,7 @@ static const char *phosphor_defaults [] = {
 #else
   "*font:		   fixed",
 #endif
-  "*scale:		   6",
+  "*phosphorScale:	   6",
   "*ticks:		   20",
   "*delay:		   50000",
   "*cursor:		   333",
@@ -1454,7 +1497,7 @@ static const char *phosphor_defaults [] = {
 
 static XrmOptionDescRec phosphor_options [] = {
   { "-font",		".font",		XrmoptionSepArg, 0 },
-  { "-scale",		".scale",		XrmoptionSepArg, 0 },
+  { "-scale",		".phosphorScale",	XrmoptionSepArg, 0 },
   { "-ticks",		".ticks",		XrmoptionSepArg, 0 },
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-program",		".program",		XrmoptionSepArg, 0 },

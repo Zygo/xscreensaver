@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright Â© 2006-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -134,7 +134,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 // Given a lower-cased saver name, returns the function table for it.
 // If no name, guess the name from the class's bundle name.
 //
-- (struct xscreensaver_function_table *) findFunctionTable:(NSString *)name
+- (struct xscreensaver_function_table *) findFunctionTable:(NSString *)title
 {
   NSBundle *nsb = [NSBundle bundleForClass:[self class]];
   NSAssert1 (nsb, @"no bundle for class %@", [self class]);
@@ -149,18 +149,13 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
   NSAssert1 (cfb, @"no CFBundle for \"%@\"", path);
   // #### Analyze says "Potential leak of an object stored into cfb"
   
-  if (! name)
-    name = [[path lastPathComponent] stringByDeletingPathExtension];
-
-  name = [[name lowercaseString]
-           stringByReplacingOccurrencesOfString:@" "
-           withString:@""];
-
 # ifndef HAVE_IPHONE
   // CFBundleGetDataPointerForName doesn't work in "Archive" builds.
   // I'm guessing that symbol-stripping is mandatory.  Fuck.
-  NSString *table_name = [name stringByAppendingString:
-                                 @"_xscreensaver_function_table"];
+  NSString *classname = [[nsb executablePath] lastPathComponent];
+  NSString *table_name = [[classname lowercaseString]
+                           stringByAppendingString:
+                             @"_xscreensaver_function_table"];
   void *addr = CFBundleGetDataPointerForName (cfb, (CFStringRef) table_name);
   CFRelease (cfb);
 
@@ -171,7 +166,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
   // Depends on the auto-generated "ios-function-table.m" being up to date.
   if (! function_tables)
     function_tables = [make_function_table_dict() retain];
-  NSValue *v = [function_tables objectForKey: name];
+  NSValue *v = [function_tables objectForKey: title];
   void *addr = v ? [v pointerValue] : 0;
 # endif // HAVE_IPHONE
 
@@ -188,14 +183,22 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
   NSAssert1 (nsb, @"no bundle for class %@", [self class]);
   
   NSString *nsrespath = [nsb resourcePath];    // "Contents/Resources"
-  NSString *nsexepath = [[nsb executablePath]  // "Contents/MacOS/SaverName"
+  NSString *nsexepath = [[nsb executablePath]  // "Contents/MacOS/CLASSNAME"
                           stringByDeletingLastPathComponent];
   NSAssert1 (nsrespath, @"no resourcePath for class %@", [self class]);
   NSAssert1 (nsexepath, @"no executablePath for class %@", [self class]);
   const char *respath = [nsrespath cStringUsingEncoding:NSUTF8StringEncoding];
   const char *exepath = [nsexepath cStringUsingEncoding:NSUTF8StringEncoding];
-  const char *opath = getenv ("PATH");
-  if (!opath) opath = "/bin"; // $PATH is unset when running under Shark!
+
+  // Only read $PATH once, so that when running under Randomizer.m,
+  // we don't keep adding more and more to it with each selected saver.
+  static const char *opath = 0;
+  if (!opath) {
+    opath = getenv ("PATH");
+    if (!opath) opath = "/bin"; // $PATH is unset when running under Shark!
+    opath = strdup (opath);     // Leaks once, NBD.
+  }
+
   char *npath = (char *) malloc (strlen (opath)   + 2 +
                                  strlen (respath) + 2 +
                                  strlen (exepath) + 2);
@@ -218,9 +221,6 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 //
 - (void) setResourcesEnv:(NSString *) name
 {
-  NSBundle *nsb = [NSBundle bundleForClass:[self class]];
-  NSAssert1 (nsb, @"no bundle for class %@", [self class]);
-  
   const char *s = [name cStringUsingEncoding:NSUTF8StringEncoding];
   if (setenv ("XSCREENSAVER_CLASSPATH", s, 1)) {
     perror ("setenv");
@@ -299,6 +299,16 @@ add_default_options (const XrmOptionDescRec *opts,
          "." SUScheduledCheckIntervalKey, XrmoptionSepArg, 0 },
 # endif // !HAVE_IPHONE
 
+# ifdef HAVE_IPHONE
+    // Cycle mode
+    { "-global-cycle",        ".globalCycle", XrmoptionNoArg, "True" },
+    { "-no-global-cycle",     ".globalCycle", XrmoptionNoArg, "False" },
+    { "-global-cycle-timeout",  ".globalCycleTimeout", XrmoptionSepArg, 0 },
+    { "-global-cycle-selected", ".globalCycleSelected", XrmoptionNoArg,"True"},
+    { "-no-global-cycle-selected", ".globalCycleSelected",XrmoptionNoArg,
+      "False" },
+# endif // HAVE_IPHONE
+
     { 0, 0, 0, 0 }
   };
   static const char *default_defaults [] = {
@@ -338,6 +348,12 @@ add_default_options (const XrmOptionDescRec *opts,
 #  undef __objc_no
 #  undef STR1
 #  undef STR
+# endif // !HAVE_IPHONE
+
+# ifdef HAVE_IPHONE
+    ".globalCycle:         False",
+    ".globalCycleTimeout:  300",
+    ".globalCycleSelected: True",
 # endif // HAVE_IPHONE
     0
   };
@@ -441,14 +457,15 @@ static void catch_signals (void)
 
 
 - (id) initWithFrame:(NSRect)frame
-           saverName:(NSString *)saverName
+               title:(NSString *)_title
            isPreview:(BOOL)isPreview
 {
   if (! (self = [super initWithFrame:frame isPreview:isPreview]))
     return 0;
   
+  saver_title = [_title retain];
   catch_signals();
-  xsft = [self findFunctionTable: saverName];
+  xsft = [self findFunctionTable: saver_title];
   if (! xsft) {
     [self release];
     return 0;
@@ -462,10 +479,10 @@ static void catch_signals (void)
 
   /* The plist files for these preferences show up in
      $HOME/Library/Preferences/ByHost/ in a file named like
-     "org.jwz.xscreensaver.<SAVERNAME>.<NUMBERS>.plist"
+     "org.jwz.xscreensaver.<CLASSNAME>.<NUMBERS>.plist"
    */
   NSString *name = [NSString stringWithCString:xsft->progclass
-                             encoding:NSISOLatin1StringEncoding];
+                             encoding:NSUTF8StringEncoding];
   name = [@"org.jwz.xscreensaver." stringByAppendingString:name];
   [self setResourcesEnv:name];
   [self loadCustomFonts];
@@ -514,6 +531,10 @@ static void catch_signals (void)
    ScreenSaverEngine calling nonexistent beginExtensionRequestWithUserInfo,
    but on 10.15 we're not even running in that process: now we're in the
    not-at-all-ominously-named legacyScreenSaver process.
+
+   Dec 2020, noticed that this also happens on 10.14.6 when *not* in random
+   mode.  Both System Preferences and ScreenSaverEngine fail to call
+   StartAnimation.
  */
 - (void) viewDidMoveToWindow
 {
@@ -531,12 +552,11 @@ static void catch_signals (void)
 
 #ifdef USE_TOUCHBAR
 - (id) initWithFrame:(NSRect)frame
-           saverName:(NSString *)saverName
+               title:(NSString *)_title
            isPreview:(BOOL)isPreview
            isTouchbar:(BOOL)isTouchbar
 {
-  if (! (self = [self initWithFrame:frame saverName:saverName
-                      isPreview:isPreview]))
+  if (! (self = [self initWithFrame:frame title:_title isPreview:isPreview]))
     return 0;
   touchbar_p = isTouchbar;
   return self;
@@ -554,7 +574,7 @@ static void catch_signals (void)
 
 - (id) initWithFrame:(NSRect)frame isPreview:(BOOL)p
 {
-  return [self initWithFrame:frame saverName:0 isPreview:p];
+  return [self initWithFrame:frame title:0 isPreview:p];
 }
 
 
@@ -694,6 +714,9 @@ static void catch_signals (void)
                          userInfo:nil
                          repeats:NO];
 
+  if (cycle_timer)
+    [cycle_timer invalidate];
+  cycle_timer = 0;
 # endif // HAVE_IPHONE
 
   // Never automatically turn the screen off if we are docked,
@@ -790,7 +813,13 @@ static void catch_signals (void)
       // Without this, the GL frame buffer is half the screen resolution!
       eagl_layer.contentsScale = [UIScreen mainScreen].scale;
 
-      ogl_ctx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+      PrefsReader *prefs = [self prefsReader];
+      BOOL gles3p = [prefs getBooleanResource:"prefersGLSL"];
+
+      ogl_ctx = [[EAGLContext alloc] initWithAPI:
+                                       (gles3p
+                                        ? kEAGLRenderingAPIOpenGLES3
+                                        : kEAGLRenderingAPIOpenGLES1)];
 # ifdef JWXYZ_GL
       ogl_ctx_pixmap = [[EAGLContext alloc]
                         initWithAPI:kEAGLRenderingAPIOpenGLES1
@@ -839,8 +868,21 @@ static void catch_signals (void)
 # endif // USE_TOUCHBAR
 }
 
+
+/* "The stopAnimation or startAnimation methods do not immediately start
+   or stop animation. In particular, it is not safe to assume that your
+   animateOneFrame method will not execute (or continue to execute) after
+   you call stopAnimation." */
+
+
 - (void)stopAnimation
 {
+# ifdef HAVE_IPHONE
+  if (cycle_timer)
+    [cycle_timer invalidate];
+  cycle_timer = 0;
+# endif // HAVE_IPHONE
+
   if (![self isAnimating]) return;  // macOS 10.15 stupidity
 
   if (initted_p) {
@@ -973,11 +1015,10 @@ static NSString *touchbar_iid = @"org.jwz.xscreensaver.touchbar";
       rect.size.width = 200;
       rect.size.height = 40;
       touchbar_view = [[[self class] alloc]
-                        initWithFrame:rect
-                        saverName:[NSString stringWithCString:xsft->progclass
-                                            encoding:NSISOLatin1StringEncoding]
-                        isPreview:self.isPreview
-                        isTouchbar:True];
+                        initWithFrame: rect
+                                title: saver_title
+                            isPreview: self.isPreview
+                           isTouchbar: True];
       [touchbar_view setAutoresizingMask:
                        NSViewWidthSizable|NSViewHeightSizable];
       NSCustomTouchBarItem *item =
@@ -1095,30 +1136,29 @@ current_device_rotation (void)
 - (void) handleException: (NSException *)e
 {
   NSLog (@"Caught exception: %@", e);
-  UIAlertController *c = [UIAlertController
-                           alertControllerWithTitle:
-                             [NSString stringWithFormat: @"%s crashed!",
-                                       xsft->progclass]
-                           message: [NSString stringWithFormat:
-                                                @"The error message was:"
-                                              "\n\n%@\n\n"
-                                              "If it keeps crashing, try "
-                                              "resetting its options.",
-                                              e]
-                           preferredStyle:UIAlertControllerStyleAlert];
+  UIAlertController *c =
+    [UIAlertController
+      alertControllerWithTitle:
+        [NSString stringWithFormat: @"%@ crashed!", saver_title]
+      message: [NSString stringWithFormat:
+                 @"The error message was:"
+                  "\n\n%@\n\n"
+                  "If it keeps crashing, try resetting its options.",
+                  e]
+      preferredStyle: UIAlertControllerStyleAlert];
 
   [c addAction: [UIAlertAction actionWithTitle:
                                  NSLocalizedString(@"Exit", @"")
                                style: UIAlertActionStyleDefault
                                handler: ^(UIAlertAction *a) {
-    exit (-1);
-  }]];
+        exit (-1);
+      }]];
   [c addAction: [UIAlertAction actionWithTitle:
                                  NSLocalizedString(@"Keep going", @"")
                                style: UIAlertActionStyleDefault
                                handler: ^(UIAlertAction *a) {
-    [self stopAndClose:NO];
-  }]];
+        [self stopAndClose:NO];
+      }]];
 
   UIViewController *vc =
     [UIApplication sharedApplication].keyWindow.rootViewController;
@@ -1739,20 +1779,20 @@ gl_check_ver (const struct gl_version *caps,
       if (_lowrez_p) {
         resized_p = YES;
 
+# if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
         NSSize  b = [self bounds].size;
         CGFloat s = self.hackedContentScaleFactor;
-# ifdef HAVE_IPHONE
+#  ifdef HAVE_IPHONE
         CGFloat o = self.contentScaleFactor;
-# else
+#  else
         CGFloat o = self.window.backingScaleFactor;
-# endif
+#  endif
 
-# if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
         if (o != s)
           NSLog(@"lowrez: scaling %.0fx%.0f -> %.0fx%.0f (%.02f)",
                 b.width * o, b.height * o,
                 b.width * s, b.height * s, s);
-# endif
+# endif // DEBUG
       }
 
       [self resize_x11];
@@ -1807,7 +1847,6 @@ gl_check_ver (const struct gl_version *caps,
       if (! fps_cb) fps_cb = screenhack_do_fps;
     } else {
       fpst = NULL;
-      fps_cb = 0;
     }
 
 # ifdef HAVE_IPHONE
@@ -1816,6 +1855,21 @@ gl_check_ver (const struct gl_version *caps,
 # endif
 
     [self checkForUpdates];
+
+# ifdef HAVE_IPHONE
+    BOOL cyclep = get_boolean_resource (xdpy, "globalCycle", "GlobalCycle");
+    int cycle_sec =
+      (cyclep
+       ? get_integer_resource(xdpy, "globalCycleTimeout", "GlobalCycleTimeout")
+       : -1);
+    NSLog (@"cycle_sec = %d", cycle_sec);
+    if (cycle_sec > 0)
+      cycle_timer = [NSTimer scheduledTimerWithTimeInterval: cycle_sec
+                             target:self
+                             selector:@selector(cycleSaver)
+                             userInfo:nil
+                             repeats:NO];
+# endif // HAVE_IPHONE
   }
 
 
@@ -1869,8 +1923,8 @@ gl_check_ver (const struct gl_version *caps,
 
      An NSTimer won't fire if the timer is already running the invocation
      function from a previous firing.  So, if we use a 30 FPS
-     animationTimeInterval (33333 µs) and a screenhack takes 40000 µs for a
-     frame, there will be a 26666 µs delay until the next frame, 66666 µs
+     animationTimeInterval (33333 Âµs) and a screenhack takes 40000 Âµs for a
+     frame, there will be a 26666 Âµs delay until the next frame, 66666 Âµs
      after the beginning of the current frame.  In other words, 25 FPS
      becomes 15 FPS.
 
@@ -1980,6 +2034,9 @@ gl_check_ver (const struct gl_version *caps,
 /* drawRect always does nothing, and animateOneFrame renders bits to the
    screen.  This is (now) true of both X11 and GL on both MacOS and iOS.
    But this null method needs to exist or things complain.
+
+   Note that drawRect is called before startAnimation, with the intent
+   that it draws the initial state to be exposed by the fade-in.
  */
 - (void)drawRect:(NSRect)rect
 {
@@ -2011,6 +2068,12 @@ gl_check_ver (const struct gl_version *caps,
 # ifdef USE_TOUCHBAR
   if (touchbar_view) [touchbar_view animateOneFrame];
 # endif
+}
+
+
+- (BOOL)isAnimating
+{
+  return !!xdpy;
 }
 
 
@@ -2098,9 +2161,9 @@ gl_check_ver (const struct gl_version *caps,
 #endif
 {
   NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-  NSString *file = [NSString stringWithCString:xsft->progclass
-                                      encoding:NSISOLatin1StringEncoding];
-  file = [file lowercaseString];
+  NSString *classname = [NSString stringWithCString:xsft->progclass
+                                           encoding:NSUTF8StringEncoding];
+  NSString *file = [classname lowercaseString];
   NSString *path = [bundle pathForResource:file ofType:@"xml"];
   if (!path) {
     NSLog (@"%@.xml does not exist in the application bundle: %@/",
@@ -2121,6 +2184,7 @@ gl_check_ver (const struct gl_version *caps,
   NSString *xml = [[self class] decompressXML: xmld];
   sheet = [[XScreenSaverConfigSheet alloc]
             initWithXML:[xml dataUsingEncoding:NSUTF8StringEncoding]
+              classname:classname
                 options:xsft->options
              controller:[prefsReader userDefaultsController]
        globalController:[prefsReader globalDefaultsController]
@@ -2285,8 +2349,7 @@ gl_check_ver (const struct gl_version *caps,
             case NSF12FunctionKey:	  k = XK_F12;	    break;
             default:
               {
-                const char *ss =
-                  [ns cStringUsingEncoding:NSISOLatin1StringEncoding];
+                const char *ss = [ns cStringUsingEncoding:NSUTF8StringEncoding];
                 k = (ss && *ss ? *ss : 0);
               }
               break;
@@ -2470,6 +2533,13 @@ gl_check_ver (const struct gl_version *caps,
 # endif
     [_delegate wantsFadeOut:self];
   }
+}
+
+
+// The cycle timer behaves just like a shake event.
+- (void) cycleSaver
+{
+  [self stopAndClose:YES];
 }
 
 
@@ -3025,14 +3095,11 @@ gl_check_ver (const struct gl_version *caps,
 
 - (void) stopAndOpenSettings
 {
-  NSString *s = [NSString stringWithCString:xsft->progclass
-                          encoding:NSISOLatin1StringEncoding];
   if ([self isAnimating])
     [self stopAnimation];
   [self resignFirstResponder];
   [_delegate wantsFadeOut:self];
-  [_delegate openPreferences: s];
-
+  [_delegate openPreferences: saver_title];
 }
 
 

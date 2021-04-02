@@ -92,6 +92,7 @@
 #include "ximage-loader.h"
 #include "images/gen/logo-50_png.h"
 #include "images/gen/logo-180_png.h"
+#include "images/gen/logo-360_png.h"
 
 #include  <stdio.h>
 
@@ -1373,7 +1374,6 @@ static const char *maze_defaults[] = {
   "*deadColor:	   #880000",
   "*skipColor:     #8B5A00",
   "*surroundColor: #220055",
-
   0
 };
 
@@ -1475,11 +1475,18 @@ maze_init (Display *dpy_arg, Window window_arg)
 
 # ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (st->dpy, st->gc, False);
+  /* We still get weird aliasing if line-width is 1. */
+  XSetLineAttributes (st->dpy, st->gc, 2, LineSolid, CapButt, JoinMiter);
 # endif
 
   {
     Pixmap logo_mask = 0;
-    if (xgwa.width > 900 || xgwa.height > 900)
+    if (xgwa.width > 2500 || xgwa.height > 2500)
+      st->logo_map = image_data_to_pixmap (st->dpy, st->window,
+                                           logo_360_png, sizeof(logo_360_png),
+                                           &st->logo_width, &st->logo_height,
+                                           &logo_mask);
+    else if (xgwa.width > 900 || xgwa.height > 900)
       st->logo_map = image_data_to_pixmap (st->dpy, st->window,
                                            logo_180_png, sizeof(logo_180_png),
                                            &st->logo_width, &st->logo_height,

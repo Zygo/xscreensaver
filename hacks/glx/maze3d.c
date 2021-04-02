@@ -44,9 +44,6 @@
 #define DEF_SHOW_OVERLAY "False"
 #define DEF_DROP_ACID "False"
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #include "../images/gen/brick1_png.h"
 #include "../images/gen/brick2_png.h"
 #include "../images/gen/wood2_png.h"

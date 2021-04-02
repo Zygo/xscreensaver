@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "17-Jun-99" "X Version 11"
 .SH NAME
 webcollage \- decorate the screen with random images from the web
@@ -63,7 +50,7 @@ produced: drawing to a window other than the root window is not yet
 supported.
 
 Images are placed on the root window by using one of the
-.BR xscreensaver-getimage (1),
+.BR xscreensaver\-getimage (MANSUFFIX),
 .BR chbg (1),
 .BR xv (1),
 .BR xli (1),
@@ -73,7 +60,7 @@ programs (whichever is available.)
 .TP 8
 .B \-window\-id \fIid\fP
 Draw to the indicated window instead; this only works if the
-.BR xscreensaver-getimage (1)
+.BR xscreensaver\-getimage (MANSUFFIX)
 program is installed.
 .TP 8
 .B \-verbose \fRor\fP \-v
@@ -127,9 +114,11 @@ were found (just like \fIhttps://www.jwz.org/webcollage/\fP.)
 Filter all source images through this command.  The command must take
 a PPM file on stdin, and write a new PPM file to stdout.  One good 
 choice for a filter would be:
-.EX
-webcollage -root -filter 'vidwhacker -stdin -stdout'
-.EE
+.nf
+.sp
+	webcollage -root -filter 'vidwhacker -stdin -stdout'
+.sp
+.fi
 .TP 8
 .B \-filter2 \fIcommand\fP
 Filter the \fIcomposite\fP image through this command.  The \fI-filter\fP
@@ -153,20 +142,24 @@ as you might be hoping.
 .TP 8
 .B \-driftnet \fI[ args ]\fP
 .BR driftnet (1)
-is a program that snoops your local ethernet for packets that look
-like they might be image files.  It can be used in conjunction 
+is a program that snoops your local ethernet for unencrypted packets
+that look like they might be image files.  It can be used in conjunction
 with \fIwebcollage\fP to generate a collage of what other people on
 your network are looking at, instead of a search-engine collage.
 If you have \fIdriftnet\fP installed on your $PATH, just use 
 the \fI\-driftnet\fP option.  You can also specify the location
 of the program like this:
-.EX
--driftnet /path/to/driftnet
-.EE
+.nf
+.sp
+	-driftnet /path/to/driftnet
+.sp
+.fi
 or, you can provide extra arguments like this:
-.EX
--driftnet '/path/to/driftnet -extra -args'
-.EE
+.nf
+.sp
+	-driftnet '/path/to/driftnet -extra -args'
+.sp
+.fi
 Driftnet version 0.1.5 or later is required.  Note that 
 the \fIdriftnet\fP program requires root access, so you'll have
 to make \fIdriftnet\fP be setuid-root for this to work.

@@ -33,6 +33,7 @@
 
 /* #define DEBUG */
 
+#include <assert.h>
 #include <errno.h>		/* for perror() */
 
 #ifdef HAVE_JWXYZ
@@ -42,12 +43,8 @@
 #endif
 
 #include "xshm.h"
+#include "aligned_malloc.h"
 #include "resources.h"		/* for get_string_resource() */
-#include "thread_util.h"        /* for thread_malloc() */
-
-#ifdef DEBUG
-# include <X11/Xmu/Error.h>
-#endif
 
 extern char *progname;
 
@@ -68,7 +65,7 @@ shm_ehandler (Display *dpy, XErrorEvent *error)
 {
   shm_got_x_error = True;
 
-#ifdef DEBUG
+#if 0
   fprintf (stderr, "\n%s: ignoring X error from XSHM:\n", progname);
   XmuPrintDefaultErrorMessage (dpy, error, stderr);
   fprintf (stderr, "\n");
@@ -117,8 +114,8 @@ create_fallback (Display *dpy, Visual *visual,
     /* Sometimes the XImage data needs to be aligned, such as for SIMD (SSE2
        in Fireworkx), or multithreading (AnalogTV).
      */
-    int error = thread_malloc ((void **)&image->data, dpy,
-                               image->height * image->bytes_per_line);
+    int error = aligned_malloc ((void **)&image->data, get_cache_line_size(),
+                                image->height * image->bytes_per_line);
     if (error) {
       print_error (error);
       XDestroyImage (image);
@@ -297,7 +294,7 @@ destroy_xshm_image (Display *dpy, XImage *image, XShmSegmentInfo *shm_info)
 #endif /* HAVE_XSHM_EXTENSION */
 
     /* Don't let XDestroyImage free image->data. */
-    thread_free (image->data);
+    aligned_free (image->data);
     image->data = NULL;
     XDestroyImage (image);
     return;

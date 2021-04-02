@@ -10,22 +10,12 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "screenhackI.h"
+#include "ximage-loader.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <X11/Xutil.h>
-#endif
-
-#include "ximage-loader.h"
 
 #if defined(HAVE_GDK_PIXBUF) || defined(HAVE_COCOA) || defined(HAVE_ANDROID)
 # undef HAVE_LIBPNG
@@ -67,8 +57,6 @@ extern void Log(const char *format, ...);
 # undef  fprintf
 # define fprintf(S, ...) Log(__VA_ARGS__)
 #endif
-
-extern char *progname;
 
 static Bool
 bigendian (void)
@@ -316,6 +304,8 @@ make_ximage (Display *dpy, Visual *visual,
   png_uint_32 width, height, channels;
   int bit_depth, color_type, interlace_type;
   FILE *fp = 0;
+  /* Must be at top or it goes out of scope in the setjmp! */
+  png_read_closure closure;
 
   png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 0, 0, 0);
   if (!png_ptr) return 0;
@@ -352,7 +342,6 @@ make_ximage (Display *dpy, Visual *visual,
     }
   else
     {
-      png_read_closure closure;
       closure.buf = image_data;
       closure.siz = data_size;
       closure.ptr = 0;
@@ -542,7 +531,7 @@ make_pixmap (Display *dpy, Window window,
   unsigned long srsiz=0, sgsiz=0, sbsiz=0;
 
 # ifdef HAVE_JWXYZ
-  // BlackPixel has alpha: 0xFF000000.
+  /* BlackPixel has alpha: 0xFF000000. */
   unsigned long black = BlackPixelOfScreen (DefaultScreenOfDisplay (dpy));
 #else
   unsigned long black = 0;

@@ -31,18 +31,6 @@ static const char sccsid[] = "@(#)antmaze.c	5.01 2001/03/01 xlockmore";
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #ifdef MODE_antmaze
 
 
@@ -106,7 +94,7 @@ ModStruct   antmaze_description =
 #include "ants.h"
 
 #define ANTCOUNT 5
-#define PI 3.14157
+#define PI M_PI
 
 #define EPSILON 0.01
 #define BOARDSIZE 10

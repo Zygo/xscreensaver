@@ -74,7 +74,7 @@ static const char sccsid[] = "@(#)swim.c	1.3 98/06/18 xlockmore";
 
 #ifdef STANDALONE
 # include <math.h>
-# include "xlockmoreI.h"	/* from the xscreensaver distribution */
+# include "screenhackI.h"	/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"            /* from the xlockmore distribution */
 #endif /* !STANDALONE */

@@ -573,14 +573,12 @@ DisplaySuperquadrics(ModeInfo *mi)
 
     glScalef(0.7, 0.7, 0.7);  /* jwz: scale it down a bit */
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
-  {
-    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
-  }
-# endif
+    {
+      GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                   ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                   : 1);
+      glScalef (s, s, s);
+    }
 
 	polys = DoneScale(sp);
 

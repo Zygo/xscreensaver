@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="vidwhacker" _label="VidWhacker">
+<screensaver name="vidwhacker" _label="Vid Whacker">
 
   <command arg="-root"/>
 

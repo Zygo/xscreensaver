@@ -17,25 +17,11 @@
  * 21-Aug-10  jwz@jwz.org  Converted to use glDrawArrays, for OpenGL ES.
  */
 
+#include "screenhackI.h"
+#include "sphere.h"
+
 #include <math.h>
 #include <stdlib.h>
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#ifdef HAVE_COCOA
-#elif defined(HAVE_ANDROID)
-# include <GLES/gl.h>
-#else  /* real X11 */
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
-#include "sphere.h"
 
 typedef struct { GLfloat x, y, z; } XYZ;
 

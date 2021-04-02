@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2020 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2021 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.12 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.14 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -30,6 +30,7 @@ my %disable = (
    'antmaze'		=> 1,
    'antspotlight'	=> 1,
    'braid'		=> 1,
+   'co____9'		=> 2,
    'crystal'		=> 1,
    'demon'		=> 1,
    'dnalogo'		=> 1,
@@ -50,6 +51,7 @@ my %disable = (
    'rocks'		=> 1,
    'sballs'		=> 1,
    'sierpinski'		=> 1,
+   'testx11'		=> 2,
    'thornbird'		=> 1,
    'vidwhacker'		=> 1,
    'webcollage'		=> 1,
@@ -60,7 +62,7 @@ my %disable = (
 #
 sub parse_makefiles() {
   foreach my $mf ( "Makefile.in", "glx/Makefile.in" ) {
-    open (my $in, '<', $mf) || error ("$mf: $!");
+    open (my $in, '<:utf8', $mf) || error ("$mf: $!");
     local $/ = undef;  # read entire file
     my $body = <$in>;
     close $in;
@@ -73,8 +75,6 @@ sub parse_makefiles() {
     foreach my $hack (split (/\s+/, $var)) {
       $disable{$hack} = 2;
     }
-    $disable{'testx11'} = 2;
-    $disable{'co____9'} = 2;
   }
 }
 
@@ -84,7 +84,7 @@ sub munge_ad($) {
 
   parse_makefiles();
 
-  open (my $in, '<', $file) || error ("$file: $!");
+  open (my $in, '<:utf8', $file) || error ("$file: $!");
   local $/ = undef;  # read entire file
   my $body = <$in>;
   close $in;
@@ -103,28 +103,29 @@ sub munge_ad($) {
   $dir =~ s@/[^/]*$@@s;
   my @counts = (0,0,0,0,0,0,0,0,0,0);
   foreach my $xml (sort (glob ("$dir/../hacks/config/*.xml"))) {
-    open (my $in, '<', $xml) || error ("$xml: $!");
+    open (my $in, '<:utf8', $xml) || error ("$xml: $!");
     local $/ = undef;  # read entire file
     my $b = <$in>;
     close $in;
-    my ($name) = ($b =~ m@<screensaver[^<>]*\b_label=\"([^<>\"]+)\"@s);
+    my ($name)  = ($b =~ m@<screensaver[^<>]* \b name   = \" ([^<>\"]+) \"@sx);
+    my ($label) = ($b =~ m@<screensaver[^<>]* \b _label = \" ([^<>\"]+) \"@sx);
     error ("$xml: no name") unless $name;
+    error ("$xml: no label") unless $label;
 
-    my $name2 = lc($name);
-    $name2 =~ s/^((x|gl)?[a-z])/\U$1/s;  # what prefs.c (make_hack_name) does
+    my $label2 = lc($name);
+    $label2 =~ s/^((x|gl)?[a-z])/\U$1/s;  # what prefs.c (make_hack_name) does
 
-    $xml =~ s@^.*/([^/]+)\.xml$@$1@s;
-    if ($name ne $name2) {
-      my $s = sprintf("*hacks.%s.name:", $xml);
-      $mid2 .= sprintf ("%-28s%s\n", $s, $name);
+    if ($label ne $label2) {
+      my $s = sprintf("*hacks.%s.name:", $name);
+      $mid2 .= sprintf ("%-28s%s\n", $s, $label);
       $counts[9]++;
     }
 
     # Grab the year.
     my ($year) =
       ($b =~ m/<_description>.*Written by.*?;\s+(19[6-9]\d|20\d\d)\b/si);
-    error ("no year in $xml.xml") unless $year;
-    $hacks{$xml} = $year;
+    error ("no year in $name.xml") unless $year;
+    $hacks{$name} = $year;
   }
 
   # Splice in new names.
@@ -198,7 +199,7 @@ sub munge_ad($) {
   # Write file if changed.
   #
   if ($body ne $obody) {
-    open (my $out, '>', $file) || error ("$file: $!");
+    open (my $out, '>:utf8', $file) || error ("$file: $!");
     print $out $body;
     close $out;
     print STDERR "$progname: wrote $file\n";

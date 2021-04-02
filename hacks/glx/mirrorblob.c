@@ -73,21 +73,10 @@
 #define DEF_FADE_TIME        "5.0"
 #define DEF_ZOOM             "1.0"
 
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-#else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif
-
 #include "gltrackball.h"
 #include "grab-ximage.h"
 
-#undef countof
-#define countof(x) (sizeof((x)) / sizeof((*x)))
-
-#define PI  3.1415926535897
+#define PI M_PI
 
 /* Options from command line */
 static GLfloat blend;

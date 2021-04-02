@@ -17,9 +17,6 @@
 # include <X11/keysymdef.h>
 #endif
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 struct state {
   Display *dpy;
   Window window;

@@ -8,6 +8,18 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 6.00</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.00.dmg</link>
+   <description><![CDATA[&bull; Improved GLSL and GLES3 support: Phong shading in `etruscanvenus', `hypertorus', `klein', `projectiveplane',`romanboy' and `sphereeversion'. <BR>&bull; Updates to `cubicgrid'. <BR>&bull; Added a `Random XScreenSaver' screen saver, which implements cycle mode, among other things. ]]></description>
+   <pubDate>Thu, 01 Apr 2021 02:18:28 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.00.dmg"
+    sparkle:version="6.00"
+    sparkle:dsaSignature="MCwCFBxhmIrsI5fzulYpnqb786HAAHsDAhR2rtZihZUc7wWjxEiZPS1dY9O+ig=="
+    sparkle:edSignature="33OZlfSDYILARuBcbLGVHHCMq8NZPDK0BYGDhLfyagfVHeGYiBruq9EkqpNZ/IAaeyDoZwoIB0ZqdQwZOPZuBw=="
+    length="39207177"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.45</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-5.45.dmg</link>
    <description><![CDATA[&bull; New hacks, `covid19', `headroom', `sphereeversion' and `beats'. <BR>&bull; Shader updates to `hypertorus'. <BR>&bull; No more image-loading pause in `glslideshow'. <BR>&bull; BSOD supports GNOME. <BR>&bull; Image loaders support SVG. <BR>&bull; Fixed text loading on 10.15. <BR>&bull; Various bug fixes.]]></description>
@@ -41,18 +53,6 @@
     sparkle:dsaSignature="MCwCFAbbR5ENYHtmTm8MOOOR7zNN3Ms6AhRx2ktxv2xNpa4Wve7JKRnaZTZ7vA=="
     sparkle:edSignature="2KBqFcIamFbOVfIUSYFjpQcFEW1XYozYh71wlMyS9jEGSIGIDJvbK2N50gdpiKfxCwDZspncEVncFnTzPv44Bw=="
     length="36839532"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.43</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.43.dmg</link>
-   <description><![CDATA[&bull; New hacks, `GravityWell', `DeepStars'. <BR>&bull; GLPlanet now supports the Mercator projection. <BR>&bull; Bouncing Cow has mathematically ideal cows (spherical, frictionless). <BR>&bull; Foggy toasters. <BR>&bull; Unknown Pleasures can now use an image file as a clip mask. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; Fixed BSOD fonts on UWQHD+ displays. ]]></description>
-   <pubDate>Mon, 01 Jul 2019 15:58:08 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.43.dmg"
-    sparkle:version="5.43"
-    sparkle:dsaSignature="MC0CFQCT0sgF8wB8e/BuCnVkuJh7ZQe/CgIUeioy2Yx5Y8fytHXHNCaKKaNoP/Y="
-    sparkle:edSignature="ndnq1ocmiPR+UPdgr/pwc2rYo+hWFUJ+v0RCcAHzqONhpUx2V4hlvpUbaIHx9fEAMIbnUj9xVh6xtEFBSd95CQ=="
-    length="37345218"
     type="application/octet-stream" />
   </item>
   <item>

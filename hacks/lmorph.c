@@ -17,7 +17,7 @@
  |  DESCRIPTION     Smooth and non-linear morphing between 1D curves.
  |
  |  WRITTEN BY      Sverre H. Huseby                Glenn T. Lines
- |                  Kurvn. 30                       Østgaardsgt. 5
+ |                  Kurvn. 30                       Ã˜stgaardsgt. 5
  |                  N-0495 Oslo                     N-0474 Oslo
  |                  Norway                          Norway
  |

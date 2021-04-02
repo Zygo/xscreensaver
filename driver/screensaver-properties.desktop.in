@@ -1,5 +1,5 @@
 [Desktop Entry]
-Exec=xscreensaver-demo
+Exec=xscreensaver-settings
 Icon=xscreensaver
 Terminal=false
 _Name=Screensaver

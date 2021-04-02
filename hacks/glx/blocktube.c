@@ -20,8 +20,6 @@
 
 # define release_blocktube 0
 # define blocktube_handle_event xlockmore_no_events
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"
@@ -321,13 +319,12 @@ ENTRYPOINT void reshape_blocktube (ModeInfo *mi, int width, int height)
     gluPerspective(45.0, 1/h, 1.0, 100.0);
     glMatrixMode(GL_MODELVIEW);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
     {
-      int o = (int) current_device_rotation();
-      if (o != 0 && o != 180 && o != -180)
-        glScalef (1/h, 1/h, 1/h);
+      GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                   ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                   : 1);
+      glScalef (s, s, s);
     }
-# endif
 }
 
 static int cube_vertices(float x, float y, float z, int wire)

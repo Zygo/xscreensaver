@@ -25,7 +25,7 @@
 #define DEFAULTS        "*delay:           30000        \n" \
                         "*showFPS:         False        \n" \
 			"*suppressRotationAnimation: True\n" \
-	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
+	                "*titleFont:      sans-serif 18\n" \
 
 # define release_engine 0
 # include "xlockmore.h"              /* from the xscreensaver distribution */
@@ -48,9 +48,6 @@
 #define DEF_TITLES "False"
 #define DEF_SPIN   "True"
 #define DEF_MOVE   "True"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 static char *which_engine;
 static int move;
@@ -619,14 +616,12 @@ static int display(ModeInfo *mi)
             0.0, 1.0, 0.0);
   glPushMatrix();
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light_sp);

@@ -47,10 +47,6 @@
 # include "xlock.h"
 #endif
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #include "ximage-loader.h"
 #include "gltrackball.h"
 #include "images/gen/jigglymap_png.h"
@@ -167,9 +163,6 @@ static argtype vars[] = {
     {&damping, "damping", "Damping", DEF_DAMPING, t_Int}
 };
 
-#undef countof
-#define countof(x) ((int)(sizeof(x)/sizeof(*(x))))
-
 ENTRYPOINT ModeSpecOpt jigglypuff_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #define COLOR_STYLE_NORMAL    0
@@ -253,6 +246,7 @@ struct vertex {
     vector vel;
     vertex *next, *next0;
 };
+
 
 static inline void vector_init(vector v, coord x, coord y, coord z)
 {
@@ -989,14 +983,12 @@ ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
     glTranslatef(0,0,-10);
 
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
     {
-      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-      int o = (int) current_device_rotation();
-      if (o != 0 && o != 180 && o != -180)
-        glScalef (1/h, 1/h, 1/h);
+      GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                   ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                   : 1);
+      glScalef (s, s, s);
     }
-# endif
 
     glRotatef(js->angle, sin(js->axis), cos(js->axis), -sin(js->axis));
     glTranslatef(0, 0, 5);

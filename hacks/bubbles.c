@@ -39,9 +39,10 @@
  * Internet E-mail : j-macnicol@adfa.edu.au
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "screenhack.h"
+#include "yarandom.h"
+#include "bubbles.h"
+#include "ximage-loader.h"
 
 #undef DEBUG /* doesn't compile */
 
@@ -59,11 +60,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
-#include "screenhack.h"
-#include "yarandom.h"
-#include "bubbles.h"
-#include "ximage-loader.h"
 
 #define FANCY_BUBBLES
 
@@ -157,9 +153,9 @@ calc_bubble_area(struct state *st, int r)
 	 10.0 * PI * (double)r * (double)r * (double)r);
 #endif /* DEBUG */
   if (st->threed)
-    return (long)(10.0 * PI * (double)r * (double)r * (double)r);
+    return (long)(10.0 * M_PI * (double)r * (double)r * (double)r);
   else
-    return (long)(10.0 * PI * (double)r * (double)r);
+    return (long)(10.0 * M_PI * (double)r * (double)r);
 }
 
 static void *

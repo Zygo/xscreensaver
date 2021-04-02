@@ -93,8 +93,10 @@ struct state {
   Display *dpy;
   Window window;
 
-   XFontStruct *font, *scoreFont;
-   GC draw_gc, erase_gc, level_gc;
+   XftFont *font, *scoreFont;
+   XftColor xft_fg, xft_level_fg;
+   XftDraw *xftdraw;
+   GC draw_gc, erase_gc;
    unsigned int default_fg_pixel;
    XColor scoreColor;
 
@@ -366,10 +368,11 @@ penetrate_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   int i;
-  const char *levelfont = "-*-courier-*-r-*-*-*-380-*-*-*-*-*-*";
-  const char *scorefont = "-*-helvetica-*-r-*-*-*-180-*-*-*-*-*-*";
+  const char *levelfont = "monospace 38";
+  const char *scorefont = "sans-serif 18";
   XGCValues gcv;
   XWindowAttributes xgwa;
+  char *s;
 
   st->dpy = dpy;
   st->window = window;
@@ -388,10 +391,12 @@ penetrate_init (Display *dpy, Window window)
   if (st->lrate < 0) st->lrate = 2;
   st->startlrate = st->lrate;
 
-  st->font = load_font_retry(st->dpy, levelfont);
+  st->font = load_xft_font_retry(st->dpy,  screen_number (xgwa.screen),
+                                 levelfont);
   if (!st->font) abort();
 
-  st->scoreFont = load_font_retry(st->dpy, scorefont);
+  st->scoreFont = load_xft_font_retry(st->dpy, screen_number (xgwa.screen),
+                                      scorefont);
   if (!st->scoreFont) abort();
 
   for (i = 0; i < kMaxMissiles; i++)
@@ -417,13 +422,19 @@ penetrate_init (Display *dpy, Window window)
 
   gcv.foreground = st->default_fg_pixel =
     get_pixel_resource(st->dpy, st->cmap, "foreground", "Foreground");
-  gcv.font = st->scoreFont->fid;
-  st->draw_gc = XCreateGC(st->dpy, st->window, GCForeground | GCFont, &gcv);
-  gcv.font = st->font->fid;
-  st->level_gc = XCreateGC(st->dpy, st->window, GCForeground | GCFont, &gcv);
-  XSetForeground (st->dpy, st->level_gc, st->city[0].color.pixel);
+  st->draw_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
   gcv.foreground = get_pixel_resource(st->dpy, st->cmap, "background", "Background");
   st->erase_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+  s = get_string_resource (st->dpy, "foreground", "Foreground");
+  if (!s) s = strdup ("white");
+  XftColorAllocName (st->dpy, xgwa.visual, xgwa.colormap, s, &st->xft_fg);
+  free (s);
+
+  /* Level color was st->city[0].color which is hardcoded as: */
+  s = "#FF8811";
+  XftColorAllocName (st->dpy, xgwa.visual, xgwa.colormap, s,
+                     &st->xft_level_fg);
+  st->xftdraw = XftDrawCreate (st->dpy, window, xgwa.visual, xgwa.colormap);
 
 # ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (st->dpy, st->erase_gc, False);
@@ -449,21 +460,28 @@ static void DrawScore(struct state *st, int xlim, int ylim)
 {
   char buf[16];
   int width, height;
+  XGlyphInfo overall;
   sprintf(buf, "%ld", st->score);
-  width = XTextWidth(st->scoreFont, buf, strlen(buf));
+  XftTextExtentsUtf8 (st->dpy, st->scoreFont, (FcChar8 *) buf, 
+                      strlen(buf), &overall);
+  width = overall.xOff;
   height = font_height(st->scoreFont);
   XSetForeground (st->dpy, st->draw_gc, st->scoreColor.pixel);
   XFillRectangle(st->dpy, st->window, st->erase_gc,
-				  xlim - width - 6, ylim - height - 2, width + 6, height + 2);
-  XDrawString(st->dpy, st->window, st->draw_gc, xlim - width - 2, ylim - 2,
-		    buf, strlen(buf));
+                 xlim - width - 6, ylim - height - 2, width + 6, height + 2);
+  XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->scoreFont,
+                     xlim - width - 2, ylim - 2,
+                     (FcChar8 *) buf, strlen(buf));
 
   sprintf(buf, "%ld", st->highscore);
-  width = XTextWidth(st->scoreFont, buf, strlen(buf));
+  XftTextExtentsUtf8 (st->dpy, st->scoreFont, (FcChar8 *) buf, 
+                      strlen(buf), &overall);
+  width = overall.xOff;
   XFillRectangle(st->dpy, st->window, st->erase_gc,
 				  4, ylim - height - 2, width + 4, height + 2);
-  XDrawString(st->dpy, st->window, st->draw_gc, 4, ylim - 2,
-		    buf, strlen(buf));
+  XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->scoreFont,
+                     4, ylim - 2,
+                     (FcChar8 *) buf, strlen(buf));
 }
 
 static void AddScore(struct state *st, int xlim, int ylim, long dif)
@@ -719,6 +737,7 @@ static void NewLevel(struct state *st, int xlim, int ylim)
   int width, i, sumlive = 0;
   int liv[kNumCities];
   int freecity = 0;
+  XGlyphInfo overall;
 
   if (st->level == 0) {
 	 st->level++;
@@ -753,9 +772,12 @@ static void NewLevel(struct state *st, int xlim, int ylim)
 		sprintf(buf, "GAME OVER");
   }
   if (st->level > 0) {
-	 width = XTextWidth(st->font, buf, strlen(buf));
-	 XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(st->font) / 2,
-					 buf, strlen(buf));
+         XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) buf, 
+                             strlen(buf), &overall);
+         width = overall.xOff;
+         XftDrawStringUtf8 (st->xftdraw, &st->xft_level_fg, st->font,
+                   xlim / 2 - width / 2, ylim / 2 - font_height(st->font) / 2,
+                            (FcChar8 *) buf, strlen(buf));
 	 XSync(st->dpy, False);
 	 usleep(1000000);
   }
@@ -769,13 +791,18 @@ static void NewLevel(struct state *st, int xlim, int ylim)
 
 		sprintf(buf, "X %ld", st->level * 100L);
 		/* how much they get */
-		sumwidth = XTextWidth(st->font, buf, strlen(buf));
+                XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) buf, 
+                                    strlen(buf), &overall);
+                sumwidth = overall.xOff;
 		/* add width of city */
 		sumwidth += 60;
 		/* add spacer */
 		sumwidth += 40;
 		DrawCity(st, xlim / 2 - sumwidth / 2 + 30, ylim * 0.70, st->city[0].color);
-		XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - sumwidth / 2 + 40 + 60, ylim * 0.7, buf, strlen(buf));
+                XftDrawStringUtf8 (st->xftdraw, &st->xft_level_fg, st->font,
+                                   xlim / 2 - sumwidth / 2 + 40 + 60,
+                                   ylim * 0.7, 
+                                   (FcChar8 *) buf, strlen(buf));
 		for (i=0;i<kNumCities;i++) {
 		  if (liv[i]) {
 			 st->city[i].alive = 1;
@@ -812,8 +839,12 @@ static void NewLevel(struct state *st, int xlim, int ylim)
 		  if (!--ncnt)
 			 st->city[i].alive = 1;
 	 strcpy(buf, "Bonus City");
-	 width = XTextWidth(st->font, buf, strlen(buf));
-	 XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - width / 2, ylim / 4, buf, strlen(buf));
+         XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) buf, 
+                             strlen(buf), &overall);
+         width = overall.xOff;
+         XftDrawStringUtf8 (st->xftdraw, &st->xft_level_fg, st->font,
+                            xlim / 2 - width / 2, ylim / 4,
+                            (FcChar8 *) buf, strlen(buf));
 	 DrawCities(st, xlim, ylim);
 	 XSync(st->dpy, False);
 	 usleep(1000000);
@@ -841,8 +872,13 @@ static void NewLevel(struct state *st, int xlim, int ylim)
 		for (i=0;i<kNumCities;i++)
 		  st->blive[i] = st->city[i].alive;
 		sprintf(buf, "Bonus Round");
-		width = XTextWidth(st->font, buf, strlen(buf));
-		XDrawString(st->dpy, st->window, st->level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(st->font) / 2, buf, strlen(buf));
+                XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) buf, 
+                                    strlen(buf), &overall);
+                width = overall.xOff;
+                XftDrawStringUtf8 (st->xftdraw, &st->xft_level_fg, st->font,
+                                   xlim / 2 - width / 2,
+                                   ylim / 2 - font_height(st->font) / 2,
+                                   (FcChar8 *) buf, strlen(buf));
 		XSync(st->dpy, False);
 		usleep(1000000);
 		XFillRectangle(st->dpy, st->window, st->erase_gc,
@@ -953,9 +989,9 @@ penetrate_free (Display *dpy, Window window, void *closure)
   struct state *st = (struct state *) closure;
   XFreeGC (dpy, st->draw_gc);
   XFreeGC (dpy, st->erase_gc);
-  XFreeGC (dpy, st->level_gc);
-  XFreeFont (dpy, st->font);
-  XFreeFont (dpy, st->scoreFont);
+  XftFontClose (st->dpy, st->font);
+  XftFontClose (st->dpy, st->scoreFont);
+  XftDrawDestroy (st->xftdraw);
   free (st);
 }
 

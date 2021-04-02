@@ -145,10 +145,8 @@ static const char *words[] =
   "contrition",
   "cop",
   "corpse",
-# ifndef HAVE_IPHONE
   "coronavirus",
   "covid-19",
-# endif
   "cowboy",
   "crabapple",
   "craziness",
@@ -304,9 +302,7 @@ static const char *words[] =
   "rootkit",
   "rule",
   "SARS",
-# ifndef HAVE_IPHONE
   "SARS-CoV-2",
-# endif
   "savor",
   "scab",
   "scalar",

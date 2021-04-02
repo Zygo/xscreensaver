@@ -88,8 +88,6 @@ typedef struct {
   int y;
 } m_feeder;
 
-#define countof(x) (sizeof(x)/sizeof(*(x)))
-
 static const int matrix_encoding[] = { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
                                        192, 193, 194, 195, 196, 197, 198, 199,
                                        200, 201, 202, 203, 204, 205, 206, 207 };
@@ -186,6 +184,8 @@ typedef struct {
   char back_line [BUF_SIZE*2+1]; /* line buffer for background */
   int back_pos; /* background line buffer position */
   int back_y;
+
+  int left_margin, top_margin;  /* Stupid iPhone bezel */
 
   signed char *tracing;
   int density;
@@ -1013,8 +1013,8 @@ redraw_cells (m_state *state, Bool active)
 
         if (cell->glyph == 0 && !cursor_p && !use_back_p)
           XFillRectangle (state->dpy, state->window, state->erase_gc,
-                          x * state->char_width,
-                          y * state->char_height,
+                          (x + state->left_margin) * state->char_width,
+                          (y + state->top_margin)  * state->char_height,
                           state->char_width,
                           state->char_height);
         else
@@ -1031,8 +1031,8 @@ redraw_cells (m_state *state, Bool active)
                        cy * state->char_height,
                        state->char_width,
                        state->char_height,
-                       x * state->char_width,
-                       y * state->char_height);
+                       (x + state->left_margin) * state->char_width,
+                       (y + state->top_margin)  * state->char_height);
           }
         if (!use_back_p)
         cell->changed = 0;
@@ -1131,6 +1131,9 @@ hack_text (m_state *state)
 
             if (cy < 0) cy = 0;
             if (cx < 0) cx = 0;
+
+            cx += state->left_margin;
+            cy += state->top_margin;
 
             XFillRectangle (state->dpy, state->window, state->erase_gc,
                             cx * state->char_width,
@@ -1306,33 +1309,6 @@ hack_text (m_state *state)
       state->typing_delay = state->typing_char_delay;
       if (state->typing_cursor_p)
         set_cursor (state, True);
-
-# ifdef HAVE_IPHONE
-  /* Stupid iPhone X bezel.
-     #### This is the worst of all possible ways to do this!  But how else?
-   */
-  if (state->xgwa.width == 1218 || state->xgwa.height == 1218)
-    switch (state->mode) 
-      {
-      case TRACE_TEXT_A:
-      case TRACE_TEXT_B:
-      case KNOCK:
-      case NMAP:
-        {
-          int off = 2 * (state->small_p ? 2 : 1);
-          if (state->xgwa.width > state->xgwa.height)
-            {
-              state->typing_left_margin += off;
-              state->cursor_x += off;
-            }
-          else
-            {
-              state->cursor_y += off;
-            }
-        }
-      default: break;
-      }
-# endif
     }
   else
     {
@@ -1669,6 +1645,31 @@ xmatrix_reshape (Display *dpy, Window window, void *closure,
   state->grid_height = state->xgwa.height / state->char_height;
   state->grid_width++;
   state->grid_height++;
+
+# ifdef HAVE_IPHONE
+  /* Stupid iPhone X bezel.
+     #### This is the worst of all possible ways to do this!  But how else?
+     This magic number should catch iPhone X and larger, but unfortunately
+     also catches iPads which do not have the stupid bezel.
+   */
+  if (state->xgwa.width >= 1218 || state->xgwa.height >= 1218)
+    {
+      int margin = 3 * (state->small_p ? 2 : 1);
+      if (state->xgwa.width > state->xgwa.height)
+        {
+          state->left_margin = margin;
+          state->top_margin = 0;
+          state->grid_width -= margin;
+        }
+      else
+        {
+          state->left_margin = 0;
+          state->top_margin = margin;
+          state->grid_height -= margin;
+        }
+    }
+# endif /* HAVE_IPHONE */
+
   if (state->grid_width  < 5) state->grid_width  = 5;
   if (state->grid_height < 5) state->grid_height = 5;
 
@@ -1705,7 +1706,10 @@ xmatrix_reshape (Display *dpy, Window window, void *closure,
         nfeeders[i] = state->feeders[i];
       free (state->feeders);
       state->feeders = nfeeders;
+
+      XClearWindow (dpy, window);
     }
+
   if (state->tc)
     textclient_reshape (state->tc,
                         state->xgwa.width,
@@ -1825,7 +1829,7 @@ static const char *xmatrix_defaults [] = {
   "*delay:		   10000",
   "*insert:		   both",
   "*mode:		   Matrix",
-  "*tracePhone:            (312) 555-0690",
+  "*tracePhone:            (415) 626-1409",
   "*spinners:		   5",
   "*density:		   75",
   "*trace:		   True",

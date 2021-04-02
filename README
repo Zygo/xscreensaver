@@ -18,33 +18,77 @@ that you install a binary release rather than trying to compile it yourself.
 Executables are available for almost all platforms, including macOS, iOS, and
 Android.  See the XScreenSaver web site for details.
 
+
+===============================================================================
 To compile for a Unix system with X11:
+===============================================================================
 
-    ./configure
-    make
-    make install
+        ./configure --help
 
-    If you are on an "apt"-based system, "apt-get build-dep xscreensaver"
-    might install most of the compilation dependencies.  You may need to
-    uncomment a line in /etc/apt/sources.list first.
+        ./configure --prefix=/usr
+        make
+        sudo make install
+        make clean
 
-To compile for macOS X or iOS:
+        xscreensaver &
+        xscreensaver-settings
 
-    Use the included XCode project.  Probably requires XCode 11 or newer.
+    There are many compilation dependencies.  The configure script will
+    tell you what is missing.  At the least, you will need development
+    versions of these libraries:
 
+        perl pkg-config gettext intltool libx11 libxext libxi libxt
+        libxft libxinerama libxrandr libxxf86vm libgl libglu libgle
+        libgtk2 gdk-pixbuf-2.0 gdk-pixbuf-xlib-2.0 libxml2 libpam
+        dbus libsystemd elogind
+
+    BSD systems might need gmake instead of make.
+
+
+===============================================================================
+To compile for macOS or iOS:
+===============================================================================
+
+    See OSX/README.  Use the included Xcode project.
+
+
+===============================================================================
 To compile for Android:
+===============================================================================
 
     See android/README.
 
+
+===============================================================================
 Interested in writing a new screen saver?
+===============================================================================
 
     See the README.hacking file.
 
-===============================================================================
-
-XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
+Version History
+===============================================================================
+
+6.00	* X11: Major refactor of the `xscreensaver' daemon for improved
+	  security, dividing it into three programs: `xscreensaver',
+	  `xscreensaver-gfx' and `xscreensaver-auth'.
+	* X11: Dropped support for systems older than X11R7 (2009).
+	* X11: Renamed `xscreensaver-demo' to `xscreensaver-settings'.
+	* X11: Unlock dialog has user-selectable color schemes.
+	* X11: Everything uses XFreeType for fonts now.
+	* X11: Install a few custom fonts needed by some savers.
+	* X11: Fading works on systems without gamma (e.g. Raspberry Pi).
+	* X11: Use EGL instead of GLX when available.
+	* X11: `xscreensaver-systemd' now detects when a video player has
+	  inhibited screen blanking and then exits without uninhibiting.
+	* Improved GLSL and GLES3 support: Phong shading in `etruscanvenus',
+	  `hypertorus', `klein', `projectiveplane',`romanboy' and
+	  `sphereeversion'.
+	* Updates to `cubicgrid'.
+	* macOS: Added a `Random XScreenSaver' screen saver, which implements
+	  cycle mode, among other things.
+	* iOS: Also added cycle mode.
 
 5.45	* New hacks, `covid19', `headroom', `sphereeversion' and `beats'.
 	* Shader updates to `hypertorus'.
@@ -554,7 +598,7 @@ XScreenSaver has an extensive manual -- please read it!
 	  run `gdmflexiserver'.  Experimental!
 	* Fixed non-ASCII display bug in `starwars'.
 	* Configure finds a default for imageDirectory.
-	* "xscreensaver-command -lock" now works even if in "screensaver
+	* `xscreensaver-command -lock' now works even if in "screensaver
 	  disabled" mode.
 	* If a bad password is typed while CapsLock is on, the unlock dialog
 	  says "CapsLock?" instead of "Sorry".
@@ -650,7 +694,7 @@ XScreenSaver has an extensive manual -- please read it!
 
 4.12	* New GL hacks, `flipflop', `antspotlight', and `polytopes'.
 	* Added VMS to `bsod'.
-	* Compile without warnings in "gcc -pedantic".
+	* Compile without warnings in `gcc -pedantic'.
 	* Updates to `webcollage' and `queens'.
 	* Fixed a bug that could cause PAM to hang.
 
@@ -738,8 +782,8 @@ XScreenSaver has an extensive manual -- please read it!
 	* Fixed a bug in `webcollage' (due to recent Alta Vista url changes)
 	  that was causing it to try and load incorrect image URLs.
 	* Made `xscreensaver-getimage' use gdk_pixbuf if it is available: this
-	  means that those hacks that load images will no longer rely on "xv",
-	  "xloadimage", etc.  This will close a race condition that could
+	  means that those hacks that load images will no longer rely on `xv',
+	  `xloadimage', etc.  This will close a race condition that could
 	  sometimes cause your desktop background to be changed; and also
 	  makes it possible for those programs to operate on image files when
 	  running in windowed mode.
@@ -1142,7 +1186,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* Made xscreensaver notice when there has been a sudden large jump in
 	  wall-clock time, and if so, lock right away, instead of waiting for
 	  "lockTimeout" to expire first.  (Laptops need this for safer
-	  recovery from ``hibernation.'')
+	  recovery from hibernation.)
 	* Added `-throttle' option to `xscreensaver-command'.
 
 3.10	* Added `phosphor', `xmatrix', and `pulsar' hacks.
@@ -1214,7 +1258,7 @@ XScreenSaver has an extensive manual -- please read it!
 3.04	* Added an `xscreensaver.spec' file, to make it easier for other folks
 	  to generate RPMs.
 	* Made the password code work on HPUX in the situation where:
-	  ``enhanced security'' is available; but not used; but the user typed
+	  "enhanced security" is available; but not used; but the user typed
 	  a password more than 8 characters long anyway.  FTSOHPUX.
 
 3.03	* Made locking work when passwd aging is enabled.
@@ -1360,7 +1404,7 @@ XScreenSaver has an extensive manual -- please read it!
 	* Added a `timestamp' resource that makes the `-verbose' messages
 	  include the time at which they were printed.
 
-2.23	* The fix for SGI's ``scheme'' nonsense broke things, and let the
+2.23	* The fix for SGI's "scheme" nonsense broke things, and let the
 	  user's "*background" resource show through.  Fixed it in a different
 	  way.
 
@@ -1393,7 +1437,7 @@ XScreenSaver has an extensive manual -- please read it!
 	  xscreensaver-command, which does a totally different thing.
 	* Removed xscreensaver's `-demo' command-line option for a similar
 	  reason; use `xscreensaver-command -demo' instead.
-	* Disabled SGI's ``scheme'' nonsense in a better way than
+	* Disabled SGI's "scheme" nonsense in a better way than
 	  fully-qualifying the background colors in every single hack.
 	* Fixed some other minor cosmetic problems when *sgiMode is turned on.
 	* Fixed an X error in `bsod -root' (how ironic...)
@@ -1514,7 +1558,7 @@ XScreenSaver has an extensive manual -- please read it!
 2.06	* Merged in VMS support from Patrick Moreau.
 
 2.05	* Fixed a MIT-SCREEN-SAVER-related crash, and tweaked
-	  configure to detect the extra-random -Xss library.
+	  configure to detect the extra-random -lXss library.
 
 2.04	* HP configure tweaks.  Detect and warn about LessTif.
 	* Fixed low-color behavior of `goop', `pyro', `starfish',
@@ -1666,5 +1710,6 @@ XScreenSaver has an extensive manual -- please read it!
 	* Fixed a BadDrawable error in non-XIdle mode.
 	* Added `blitspin' and `imsmap'.
 
-1.01	* Current list of included hacks is now: qix, helix, rorschach,
-	  attraction, greynetic, rocks, pyro, hopalong, and noseguy.
+1.01	* Current list of included hacks is now: `qix', `helix', `rorschach',
+	  `attraction', `greynetic', `rocks', `pyro', `hopalong', and
+	  `noseguy'.

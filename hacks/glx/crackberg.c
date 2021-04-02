@@ -11,8 +11,6 @@
 		    "*wireframe:    False       \n" \
 
 # define release_crackberg 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #ifdef USE_GL /* whole file */

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <screensaver name="klein" _label="Klein" gl="yes">
 
@@ -111,7 +111,7 @@
 
      <number id="delay" type="slider" arg="-delay %"
              _label="Frame rate" _low-label="Low" _high-label="High"
-             low="0" high="100000" default="10000"
+             low="0" high="100000" default="25000"
              convert="invert"/>
 
      <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
@@ -121,7 +121,7 @@
   <xscreensaver-updater />
 
   <_description>
-A Klein bottle is the 4D analog of a moebius strip.
+A Klein bottle is the 4D analog of a möbius strip.
 
 You can walk on the surface of the bottle or rotate it in 4D or walk
 on it while it rotates in 4D.  Inspired by Thomas Banchoff's book

@@ -90,8 +90,6 @@
 
 @implementation SaverViewController
 
-@synthesize saverName;
-
 - (id)initWithSaverRunner:(SaverRunner *)parent
              showAboutBox:(BOOL)showAboutBox
 {
@@ -117,7 +115,7 @@
 
 - (void)dealloc
 {
-  [saverName release];
+  [_saver_title release];
   // iOS: When a UIView deallocs, it doesn't do [UIView removeFromSuperView]
   // for its subviews, so the subviews end up with a dangling pointer in their
   // superview properties.
@@ -149,9 +147,7 @@
   if (!_showAboutBox)
     return;
 
-  NSString *name = _saverName;
-  NSString *year = [_parent makeDesc:_saverName yearOnly:YES];
-
+  NSString *year = [_parent makeDesc:_saver_title yearOnly:YES];
 
   CGRect frame = [saverView frame];
   CGFloat rot;
@@ -163,13 +159,13 @@
 # ifdef __IPHONE_7_0
   CGSize s = CGSizeMake(frame.size.width, frame.size.height);
   CGSize tsize1 = [[[NSAttributedString alloc]
-                     initWithString: name
+                     initWithString:_saver_title
                      attributes:@{ NSFontAttributeName: font1 }]
                     boundingRectWithSize: s
                     options: NSStringDrawingUsesLineFragmentOrigin
                     context: nil].size;
   CGSize tsize2 = [[[NSAttributedString alloc]
-                     initWithString: name
+                     initWithString:_saver_title
                      attributes:@{ NSFontAttributeName: font2 }]
                     boundingRectWithSize: s
                     options: NSStringDrawingUsesLineFragmentOrigin
@@ -259,7 +255,7 @@
       frame.origin.y = (j == 0 ? 0 : pt1);
       textview = [[UITextView alloc] initWithFrame:frame];
       textview.font = (j == 0 ? font1 : font2);
-      textview.text = (j == 0 ? name  : year);
+      textview.text = (j == 0 ? _saver_title : year);
       textview.textAlignment = NSTextAlignmentCenter;
       textview.showsHorizontalScrollIndicator = NO;
       textview.showsVerticalScrollIndicator   = NO;
@@ -345,8 +341,8 @@
     [_saverView release];
   }
 
-  _saverView = [_parent newSaverView:_saverName
-                            withSize:parentView.bounds.size];
+  _saverView = [_parent newSaverView: _saver_title
+                            withSize: parentView.bounds.size];
 
   if (! _saverView) {
     UIAlertController *c = [UIAlertController
@@ -422,13 +418,23 @@
 */
 
 
-- (void)setSaverName:(NSString *)name
+- (void)setSaverTitle:(NSString *)title
 {
-  [name retain];
-  [_saverName release];
-  _saverName = name;
+  [title retain];
+  [_saver_title release];
+  _saver_title = title;
   if (_saverView)
     [self createSaverView];
+}
+
+
+- (void)setSaver_title:(NSString *)title
+{
+  [self setSaverTitle: title];
+}
+- (void)setSaver_Title:(NSString *)title
+{
+  abort();
 }
 
 
@@ -490,19 +496,19 @@ NSLog(@"## completion %@", context);
 
 @implementation SaverRunner
 
-
-- (XScreenSaverView *) newSaverView: (NSString *) module
-                           withSize: (NSSize) size
+- (ScreenSaverView *) newSaverView: (NSString *) title
+                          withSize: (NSSize) size
 {
   Class new_class = 0;
+
+  NSString *classname = [saverNames objectForKey: title];
 
 # ifndef HAVE_IPHONE
 
   // Load the XScreenSaverView subclass and code from a ".saver" bundle.
 
-  NSString *name = [module stringByAppendingPathExtension:@"saver"];
-  NSString *path = [saverDir stringByAppendingPathComponent:name];
-
+  NSString *path = [[saverDir stringByAppendingPathComponent:classname]
+                     stringByAppendingPathExtension:@"saver"];
   if (! [[NSFileManager defaultManager] fileExistsAtPath:path]) {
     NSLog(@"bundle \"%@\" does not exist", path);
     return 0;
@@ -525,12 +531,10 @@ NSLog(@"## completion %@", context);
   // Determine whether to create an X11 view or an OpenGL view by
   // looking for the "gl" tag in the xml file.  This is kind of awful.
 
+  NSString *file = [classname lowercaseString];
   NSString *path = [saverDir
                      stringByAppendingPathComponent:
-                       [[[module lowercaseString]
-                          stringByReplacingOccurrencesOfString:@" "
-                          withString:@""]
-                         stringByAppendingPathExtension:@"xml"]];
+                       [file stringByAppendingPathExtension:@"xml"]];
   NSData *xmld = [NSData dataWithContentsOfFile:path];
   NSAssert (xmld, @"no XML: %@", path);
   NSString *xml = [XScreenSaverView decompressXML:xmld];
@@ -550,13 +554,23 @@ NSLog(@"## completion %@", context);
   rect.size.width  = size.width;
   rect.size.height = size.height;
 
-  XScreenSaverView *instance =
-    [(XScreenSaverView *) [new_class alloc]
-                          initWithFrame:rect
-                          saverName:module
-                          isPreview:YES];
+  NSObject *instance = [new_class alloc];
+  if ([instance respondsToSelector:
+                  @selector(initWithFrame:title:isPreview:)])
+    // If it's one of ours, also pass the title.
+    instance = [(XScreenSaverView *) instance
+                   initWithFrame: rect
+                           title: title
+                       isPreview: YES];
+  else if ([instance respondsToSelector: @selector(initWithFrame:isPreview:)])
+    instance = [(ScreenSaverView *) instance
+                   initWithFrame: rect
+                       isPreview: YES];
+  else
+    instance = 0;
+
   if (! instance) {
-    NSLog(@"Failed to instantiate %@ for \"%@\"", new_class, module);
+    NSLog(@"Failed to instantiate %@ for \"%@\"", new_class, saver_title);
     return 0;
   }
 
@@ -572,7 +586,7 @@ NSLog(@"## completion %@", context);
   }
 # endif
 
-  return (XScreenSaverView *) instance;
+  return (ScreenSaverView *) instance;
 }
 
 
@@ -653,6 +667,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   NSAssert (sv, @"no saver view");
   if (!sv) return;
   NSWindow *prefs = [sv configureSheet];
+  NSAssert (prefs, @"no configureSheet in %@", sv);
 
   [NSApp beginSheet:prefs
      modalForWindow:[sv window]
@@ -787,8 +802,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 - (void) openPreferences: (NSString *) saver
 {
-  XScreenSaverView *saverView = [self newSaverView:saver
-                                          withSize:CGSizeMake(0, 0)];
+  ScreenSaverView *saverView = [self newSaverView:saver
+                                         withSize:CGSizeMake(0, 0)];
   if (! saverView) return;
 
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
@@ -804,11 +819,11 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 
 
-- (void)loadSaver:(NSString *)name
+- (void)loadSaver:(NSString *)title
 {
 # ifndef HAVE_IPHONE
 
-  if (saverName && [saverName isEqualToString: name]) {
+  if (saver_title && [saver_title isEqualToString: title]) {
     for (NSWindow *win in windows) {
       ScreenSaverView *sv = find_saverView ([win contentView]);
       if (![sv isAnimating])
@@ -817,14 +832,16 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     return;
   }
 
-  saverName = name;
+  [title retain];
+  [saver_title release];
+  saver_title = title;
 
   for (NSWindow *win in windows) {
     NSView *cv = [win contentView];
     NSString *old_title = [win title];
     if (!old_title) old_title = @"XScreenSaver";
-    [win setTitle: name];
-    relabel_menus (menubar, old_title, name);
+    [win setTitle: title];
+    relabel_menus (menubar, old_title, title);
 
     ScreenSaverView *old_view = find_saverView (cv);
     NSView *sup = old_view ? [old_view superview] : cv;
@@ -835,8 +852,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
       [old_view removeFromSuperview];
     }
 
-    NSSize size = [cv frame].size;
-    ScreenSaverView *new_view = [self newSaverView:name withSize: size];
+    NSSize size = [sup frame].size;
+    ScreenSaverView *new_view = [self newSaverView: title withSize: size];
     NSAssert (new_view, @"unable to make a saver view");
 
     [new_view setFrame: (old_view ? [old_view frame] : [cv frame])];
@@ -851,18 +868,34 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     [NSUserDefaultsController sharedUserDefaultsController];
   [ctl save:self];
 
+#  if 0
+  // Dump the entire resource database.
+  NSBundle *nsb = [NSBundle bundleForClass:[self class]];
+  NSLog(@"SaverRunner userDefaults for %@", [nsb bundleIdentifier]);
+  NSDictionary *d = [[ctl defaults] dictionaryRepresentation];
+  for (NSObject *key in [[d allKeys]
+                          sortedArrayUsingSelector:@selector(compare:)]) {
+    NSObject *val = [d objectForKey:key];
+    NSLog (@"%@ = %@", key, val);
+  }
+#  endif
+
 # else  // HAVE_IPHONE
 
+  [title retain];
+  [saver_title release];
+  saver_title = title;
+
 #  if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
-  NSLog (@"selecting saver \"%@\"", name);
+  NSLog (@"selecting saver \"%@\"", saver_title);
 #  endif
 
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-  [prefs setObject:name forKey:@"selectedSaverName"];
+  [prefs setObject:saver_title forKey:@"selectedSaverName"];
   [prefs synchronize];
 
 /* Cacheing this screws up rotation when starting a saver twice in a row.
-  if (saverName && [saverName isEqualToString: name]) {
+  if (saver_title && [saver_title isEqualToString: title]) {
     if ([saverView isAnimating])
       return;
     else
@@ -870,10 +903,12 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   }
 */
 
-  saverName = name;
+  [title retain];
+  [saver_title release];
+  saver_title = title;
 
   if (nonrotating_controller) {
-    nonrotating_controller.saverName = name;
+    nonrotating_controller.saver_title = saver_title;
     return;
   }
 
@@ -957,7 +992,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   nonrotating_controller = [[SaverViewController alloc]
                             initWithSaverRunner:self
                             showAboutBox:[saverNames count] != 1];
-  nonrotating_controller.saverName = name;
+  nonrotating_controller.saver_title = title;
 
   // Necessary to prevent "card"-like presentation on Xcode 11 with iOS 13:
   nonrotating_controller.modalPresentationStyle =
@@ -1004,20 +1039,20 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 - (void)selectedSaverDidChange:(NSDictionary *)change
 {
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-  NSString *name = [prefs stringForKey:@"selectedSaverName"];
+  NSString *title = [prefs stringForKey:@"selectedSaverName"];
 
-  if (! name) return;
+  if (! title) return;
 
-  if (! [saverNames containsObject:name]) {
-    NSLog (@"saver \"%@\" does not exist", name);
+  if (! [saverNames objectForKey:title]) {
+    NSLog (@"saver \"%@\" does not exist", title);
     return;
   }
 
-  [self loadSaver: name];
+  [self loadSaver: title];
 }
 
 
-- (NSArray *) listSaverBundleNamesInDir:(NSString *)dir
+- (NSDictionary *) listSaverBundleNamesInDir:(NSString *)dir
 {
 # ifndef HAVE_IPHONE
   NSString *ext = @"saver";
@@ -1028,45 +1063,48 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   NSArray *files = [[NSFileManager defaultManager]
                      contentsOfDirectoryAtPath:dir error:nil];
   if (! files) return 0;
-  NSMutableArray *result = [NSMutableArray arrayWithCapacity: [files count]+1];
+  NSMutableDictionary *result =
+    [NSMutableDictionary dictionaryWithCapacity:[files count]+1];
 
   for (NSString *p in files) {
-    if ([[p pathExtension] caseInsensitiveCompare: ext]) 
+    if ([[p pathExtension] caseInsensitiveCompare: ext])
       continue;
 
-    NSString *name = [[p lastPathComponent] stringByDeletingPathExtension];
+    p = [dir stringByAppendingPathComponent: p];
+
+    NSString *classname = [[p lastPathComponent] stringByDeletingPathExtension];
+    NSString *title = classname;
+
+    // Get the title's capitalization right by reading the XML file.
 
 # ifdef HAVE_IPHONE
-    // Get the saver name's capitalization right by reading the XML file.
-
-    p = [dir stringByAppendingPathComponent: p];
     NSData *xmld = [NSData dataWithContentsOfFile:p];
     NSAssert (xmld, @"no XML: %@", p);
     NSString *xml = [XScreenSaverView decompressXML:xmld];
+
     NSRange r = [xml rangeOfString:@"_label=\"" options:0];
     NSAssert1 (r.length, @"no name in %@", p);
     if (r.length) {
       xml = [xml substringFromIndex: r.location + r.length];
       r = [xml rangeOfString:@"\"" options:0];
-      if (r.length) name = [xml substringToIndex: r.location];
+      NSAssert1 (r.length, @"no name in %@", p);
+      if (r.length)
+        title = [xml substringToIndex: r.location];
     }
+# else  // !HAVE_IPHONE
+    NSBundle *nsb = [NSBundle bundleWithPath:p];
+    title = [[nsb infoDictionary] objectForKey:@"CFBundleName"];
+# endif // !HAVE_IPHONE
 
-# endif // HAVE_IPHONE
-
-    NSAssert1 (name, @"no name in %@", p);
-    if (name) [result addObject: name];
+    [result setObject:classname forKey:title];
   }
 
-  if (result && [result count])
-    return [result sortedArrayUsingSelector:
-                     @selector(localizedCaseInsensitiveCompare:)];
-  else
-    return 0;
+  return [result count] ? result : 0;
 }
 
 
 
-- (NSArray *) listSaverBundleNames
+- (void) listSaverBundleNames
 {
   NSMutableArray *dirs = [NSMutableArray arrayWithCapacity: 10];
 
@@ -1097,11 +1135,11 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   int i;
   for (i = 0; i < [dirs count]; i++) {
     NSString *dir = [dirs objectAtIndex:i];
-    NSArray *names = [self listSaverBundleNamesInDir:dir];
+    NSDictionary *names = [self listSaverBundleNamesInDir:dir];
     if (! names) continue;
     saverDir   = [dir retain];
     saverNames = [names retain];
-    return names;
+    return;
   }
 
   NSString *err = @"no .saver bundles found in: ";
@@ -1112,7 +1150,6 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     err = [err stringByAppendingString:@"/"];
   }
   NSLog (@"%@", err);
-  return [NSArray array];
 }
 
 
@@ -1128,12 +1165,13 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   rect.size.height = 10;
   NSPopUpButton *popup = [[NSPopUpButton alloc] initWithFrame:rect
                                                     pullsDown:NO];
-  int i;
   float max_width = 0;
-  for (i = 0; i < [saverNames count]; i++) {
-    NSString *name = [saverNames objectAtIndex:i];
-    [popup addItemWithTitle:name];
-    [[popup itemWithTitle:name] setRepresentedObject:name];
+  NSArray *titles = [[saverNames allKeys]
+                        sortedArrayUsingSelector:
+                       @selector(localizedCaseInsensitiveCompare:)];
+  for (NSString *title in titles) {
+    [popup addItemWithTitle: title];
+    [[popup itemWithTitle: title] setRepresentedObject: title];
     [popup sizeToFit];
     NSRect r = [popup frame];
     if (r.size.width > max_width) max_width = r.size.width;
@@ -1164,24 +1202,21 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 #else  // HAVE_IPHONE
 
-- (NSString *) makeDesc:(NSString *)saver
-                  yearOnly:(BOOL) yearp
+- (NSString *) makeDesc:(NSString *) title
+               yearOnly:(BOOL) yearp
 {
   NSString *desc = 0;
-  NSString *path = [saverDir stringByAppendingPathComponent:
-                               [[saver lowercaseString]
-                                 stringByReplacingOccurrencesOfString:@" "
-                                 withString:@""]];
-  NSRange r;
-
-  path = [path stringByAppendingPathExtension:@"xml"];
+  NSString *classname = [saverNames objectForKey: title];
+  NSString *file = [classname lowercaseString];
+  NSString *path = [[saverDir stringByAppendingPathComponent: file]
+                     stringByAppendingPathExtension:@"xml"];
   NSData *xmld = [NSData dataWithContentsOfFile:path];
   if (! xmld) goto FAIL;
   desc = [XScreenSaverView decompressXML:xmld];
   if (! desc) goto FAIL;
 
-  r = [desc rangeOfString:@"<_description>"
-            options:NSCaseInsensitiveSearch];
+  NSRange r = [desc rangeOfString:@"<_description>"
+                          options:NSCaseInsensitiveSearch];
   if (r.length == 0) {
     desc = 0;
     goto FAIL;
@@ -1260,13 +1295,16 @@ FAIL:
 {
   NSMutableDictionary *dict = 
     [NSMutableDictionary dictionaryWithCapacity:[saverNames count]];
-  for (NSString *saver in saverNames) {
-    [dict setObject:[self makeDesc:saver] forKey:saver];
+  for (NSString *title in [saverNames allKeys]) {
+    [dict setObject:[self makeDesc:title] forKey:title];
   }
   return dict;
 }
 
 
+// Called from iOS XScreenSaverView when the "Stop" or "Settings"
+// buttons are pressed.
+//
 - (void) wantsFadeOut:(XScreenSaverView *)sender
 {
   rotating_nav.view.hidden = NO; // In case it was hidden during startup.
@@ -1274,10 +1312,10 @@ FAIL:
   /* Make sure the most-recently-run saver is visible.  Sometimes it ends
      up scrolled half a line off the bottom of the screen.
    */
-  if (saverName) {
+  if (saver_title) {
     for (UIViewController *v in [rotating_nav viewControllers]) {
       if ([v isKindOfClass:[SaverListController class]]) {
-        [(SaverListController *)v scrollTo: saverName];
+        [(SaverListController *)v scrollTo: saver_title];
         break;
       }
     }
@@ -1291,6 +1329,8 @@ FAIL:
 }
 
 
+// Called from iOS XScreenSaverView when the cycle timer fires.
+//
 - (void) didShake:(XScreenSaverView *)sender
 {
 # if TARGET_IPHONE_SIMULATOR
@@ -1447,7 +1487,8 @@ FAIL:
 {
   for (NSWindow *win in windows) {
     ScreenSaverView *sv = find_saverView ([win contentView]);
-    if ([sv isAnimating])
+    BOOL is = [sv isAnimating];
+    if (is)
       [sv animateOneFrame];
   }
 }
@@ -1480,7 +1521,7 @@ FAIL:
     [win setDelegate:self];
     // Get the last-saved window position out of preferences.
     [win setFrameAutosaveName:
-              [NSString stringWithFormat:@"XScreenSaverWindow%d", i]];
+           [NSString stringWithFormat:@"XScreenSaverWindow%d", i]];
     [win setFrameUsingName:[win frameAutosaveName]];
     [a addObject: win];
     // This prevents clicks from being seen by savers.
@@ -1516,7 +1557,7 @@ FAIL:
              UIViewAutoresizingFlexibleHeight)];
 
   SaverListController *menu = [[SaverListController alloc] 
-                                initWithNames:saverNames
+                                initWithNames:[saverNames allKeys]
                                 descriptions:[self makeDescTable]];
   [rotating_nav pushViewController:menu animated:YES];
   [menu becomeFirstResponder];
@@ -1535,18 +1576,22 @@ FAIL:
      whatever it was last time.
    */
   const char *f = getenv ("SELECTED_SAVER");
-  if (f && *f)
-    forced = [NSString stringWithCString:(char *)f
-                       encoding:NSUTF8StringEncoding];
-
-  if (forced && ![saverNames containsObject:forced]) {
-    NSLog(@"forced saver \"%@\" does not exist", forced);
-    forced = 0;
+  if (f && *f) {
+    NSString *ff = [NSString stringWithCString:(char *)f
+                                      encoding:NSUTF8StringEncoding];
+    for (NSString *title in [saverNames allKeys]) {
+      if ([ff isEqualToString: [saverNames objectForKey:title]]) {
+        forced = title;
+        break;
+      }
+    }
+    if (!forced)
+      NSLog(@"forced saver \"%@\" does not exist", ff);
   }
 
   // If there's only one saver, run that.
   if (!forced && [saverNames count] == 1)
-    forced = [saverNames objectAtIndex:0];
+    forced = [[saverNames allValues] objectAtIndex:0];
 
 # ifdef HAVE_IPHONE
   NSString *prev = [prefs stringForKey:@"selectedSaverName"];
@@ -1554,18 +1599,22 @@ FAIL:
   if (forced)
     prev = forced;
 
-  if (prev && ! [saverNames containsObject:prev]) {
+  if (prev && ! [saverNames objectForKey:prev]) {
     NSLog (@"prev saver \"%@\" does not exist", prev);
     prev = forced = 0;
     [prefs removeObjectForKey:@"selectedSaverName"];
     [prefs removeObjectForKey:@"wasRunning"];
+    rotating_nav.view.hidden = NO;
   }
 
   // If nothing was selected (e.g., this is the first launch)
   // then scroll randomly instead of starting up at "A".
   //
-  if (!prev)
-    prev = [saverNames objectAtIndex: (random() % [saverNames count])];
+  if (!prev) {
+    NSArray *titles = [saverNames allKeys];
+    prev = [titles objectAtIndex: (random() % [titles count])];
+    [prefs removeObjectForKey:@"wasRunning"];
+  }
 
   if (prev)
     [menu scrollTo: prev];

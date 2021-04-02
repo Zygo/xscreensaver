@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="photopile" _label="Photopile" gl="yes">
+<screensaver name="photopile" _label="Photo Pile" gl="yes">
 
   <command arg="-root"/>
 

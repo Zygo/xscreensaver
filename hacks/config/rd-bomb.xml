@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="rd-bomb" _label="RDbomb">
+<screensaver name="rd-bomb" _label="RD-Bomb">
 
   <command arg="-root"/>
 

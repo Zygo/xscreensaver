@@ -14,8 +14,6 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define release_voronoi 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
@@ -339,7 +337,7 @@ reshape_voronoi (ModeInfo *mi, int width, int height)
     int rot = current_device_rotation();
 
     glTranslatef (0.5, 0.5, 0);
-    //  glScalef(0.19, 0.19, 0.19);
+    /* glScalef(0.19, 0.19, 0.19); */
 
     if (rot == 180 || rot == -180) {
       glTranslatef (1, 1, 0);

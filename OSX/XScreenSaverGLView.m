@@ -48,6 +48,8 @@ extern void check_gl_error (const char *type);
 # ifdef HAVE_IPHONE
   return [self contentScaleFactor];
 # else
+  NSAssert (self.window, @"no window in view");
+  if (! self.window) abort();
   return self.window.backingScaleFactor;
 # endif
 }
@@ -198,6 +200,19 @@ extern void check_gl_error (const char *type);
      predictable.  Without changing the code, some times a given saver will
      perform fine with multisampling on, and other times it will perform
      very badly.  Without multisampling, they always perform fine.
+
+     Update, 2021: In this modern world of Retina screens, I don't think
+     there's any point in trying to get multisampling to work.  Modern systems
+     all have retina / hiDPI screens, meaning that a logical pixel is already
+     2 or 3.5 physical pixels, and the whole point of having displays like
+     that is that software antialiasing isn't necessary any more because the
+     individual pixels are small enough that human eyes can't see them as
+     rectangles.  If you already have 0.16mm pixels, having 0.08mm "virtual"
+     pixels is not perceptible.
+
+     So multisample only makes sense on non-retina displays -- and those are
+     the *old* video cards and GPUs, that are most likely to be resource
+     limited and most likely to screw up in unpredictable ways!
    */
   //  if (ms_p && [[view window] screen] != [[NSScreen screens] objectAtIndex:0])
   //    ms_p = 0;
@@ -330,10 +345,12 @@ extern void check_gl_error (const char *type);
 GLXContext *
 init_GL (ModeInfo *mi)
 {
+#if 0
   Window win = mi->window;
   XScreenSaverGLView *view = (XScreenSaverGLView *) jwxyz_window_view (win);
   NSAssert1 ([view isKindOfClass:[XScreenSaverGLView class]],
              @"wrong view class: %@", view);
+#endif
 
   // OpenGL initialization is in [XScreenSaverView startAnimation].
 
@@ -367,8 +384,10 @@ glXSwapBuffers (Display *dpy, Window window)
 #endif // JWXYZ_GL
 
   XScreenSaverGLView *view = (XScreenSaverGLView *) jwxyz_window_view (window);
+#if 0
   NSAssert1 ([view isKindOfClass:[XScreenSaverGLView class]],
              @"wrong view class: %@", view);
+#endif
 #ifndef HAVE_IPHONE
   NSOpenGLContext *ctx = [view oglContext];
   if (ctx) [ctx flushBuffer]; // despite name, this actually swaps

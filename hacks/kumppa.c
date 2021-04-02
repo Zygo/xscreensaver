@@ -44,9 +44,6 @@ from the X Consortium.
 # include "xdbe.h"
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 static const char *kumppa_defaults [] ={
   ".background:		black",
   ".lowrez:		true",

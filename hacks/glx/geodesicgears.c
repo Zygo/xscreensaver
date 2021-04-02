@@ -18,11 +18,9 @@
 			"*showFPS:      False       \n" \
 		        "*texFontCacheSize: 100     \n" \
 			"*suppressRotationAnimation: True\n" \
-		"*font:  -*-helvetica-medium-r-normal-*-*-160-*-*-*-*-*-*\n" \
+		        "*font: sans-serif 16\n" \
 
 # define release_geodesic 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "involute.h"
@@ -1339,13 +1337,12 @@ reshape_geodesic (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -1413,7 +1410,6 @@ ENTRYPOINT void
 init_geodesic (ModeInfo *mi)
 {
   geodesic_configuration *bp;
-  int wire = MI_IS_WIREFRAME(mi);
 
   MI_INIT (mi, bps);
 
@@ -1440,15 +1436,6 @@ init_geodesic (ModeInfo *mi)
     glMaterialfv (GL_FRONT, GL_SPECULAR,  cspec);
     glMateriali  (GL_FRONT, GL_SHININESS, shiny);
   }
-
-  if (! wire)
-    {
-      glEnable (GL_DEPTH_TEST);
-      glEnable (GL_BLEND);
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glEnable (GL_LIGHTING);
-      glEnable (GL_LIGHT0);
-    }
 
   if (! bp->rot)
   {
@@ -1528,6 +1515,15 @@ draw_geodesic (ModeInfo *mi)
     return;
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
+
+  if (! wire)
+    {
+      glEnable (GL_DEPTH_TEST);
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glEnable (GL_LIGHTING);
+      glEnable (GL_LIGHT0);
+    }
 
 
   if (bp->draw_time == 0)

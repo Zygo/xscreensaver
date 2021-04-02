@@ -48,9 +48,9 @@ int _async_netdb_is_done (struct io_thread *io)
 # define _get_addr_family(addr) ((addr)->x_sockaddr_in.sin_family)
 # define _get_addr_len(addr) ((addr)->x_sockaddr_in.sin_len)
 
-static const int _has_threads = -1;
-
 # if ASYNC_NETDB_FAKE_EAI
+
+static const int _has_threads = -1;
 
 const char *_async_netdb_strerror (int errcode)
 {

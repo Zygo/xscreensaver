@@ -1,5 +1,30 @@
-Basic Installation
-==================
+XScreenSaver Installation
+=========================
+
+        ./configure --help
+
+        ./configure --prefix=/usr
+        make
+        sudo make install
+        make clean
+
+        xscreensaver &
+        xscreensaver-settings
+
+    There are many compilation dependencies.  The configure script will
+    tell you what is missing.  At the least, you will need development
+    versions of these libraries:
+
+        perl pkg-config gettext intltool libx11 libxext libxi libxt
+        libxft libxinerama libxrandr libxxf86vm libgl libglu libgle
+        libgtk2 gdk-pixbuf-2.0 gdk-pixbuf-xlib-2.0 libxml2 libpam
+        dbus libsystemd elogind
+
+    BSD systems might need gmake instead of make.
+
+
+Boilerplate 'Configure' Instructions
+====================================
 
    These are generic installation instructions.
 
@@ -36,8 +61,7 @@ The simplest way to compile this package is:
 
   2. Type `make' to compile the package.
 
-  3. Optionally, type `make check' to run any self-tests that come with
-     the package.
+  3. [There is no number three]
 
   4. Type `make install' to install the programs and any data files and
      documentation.

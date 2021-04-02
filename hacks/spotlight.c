@@ -192,7 +192,7 @@ spotlight_init (Display *dpy, Window window)
  * perform one iteration
  */
 static void
-onestep (struct state *st, Bool first_p)
+onestep (struct state *st)
 {
   long now;
   unsigned long now_unsigned;
@@ -216,9 +216,6 @@ onestep (struct state *st, Bool first_p)
 
 #define nrnd(x) (random() % (x))
 
-  st->oldx = st->x;
-  st->oldy = st->y;
-
   st->s = st->radius *4 ;   /* s = width of buffer */
 
   now_unsigned = (unsigned long) currentTimeInMs(st) + st->off;
@@ -232,6 +229,9 @@ onestep (struct state *st, Bool first_p)
     ((1 + sin(((double)now) / Y_PERIOD * 2. * M_PI))/2.0) 
     * (st->geom.height - st->s/2) -st->s/4;
     
+  st->oldx = st->x;
+  st->oldy = st->y;
+
   if (!st->first_p)
     {
       /* limit change in x and y to buffer width */
@@ -239,6 +239,10 @@ onestep (struct state *st, Bool first_p)
       if ( st->x > (st->oldx + st->max_x_speed) ) st->x = st->oldx + st->max_x_speed;
       if ( st->y < (st->oldy - st->max_y_speed) ) st->y = st->oldy - st->max_y_speed;
       if ( st->y > (st->oldy + st->max_y_speed) ) st->y = st->oldy + st->max_y_speed;
+    }
+  else
+    {
+      st->first_p = False;
     }
 
   if (! st->buffer)
@@ -286,8 +290,7 @@ static unsigned long
 spotlight_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
-  onestep(st, st->first_p);
-  st->first_p = False;
+  onestep(st);
   return st->delay;
 }
   

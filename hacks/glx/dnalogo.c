@@ -61,15 +61,9 @@
 		        "*cwFont:           " CWFONT "\n" \
 			"*geometry:	    =640x640\n" \
 
-# if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
-#  define CWFONT "Yearling 28, OCR A Std 24"
-# else
-#  define CWFONT "-*-helvetica-medium-r-normal-*-*-240-*-*-*-*-*-*"
-# endif
+#define CWFONT "Yearling 28, OCR A Std 24, Courier 24"
 
 # define release_logo 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef DXF_OUTPUT_HACK
 
@@ -2382,11 +2376,6 @@ codeword_text_output (ModeInfo *mi, GLfloat anim_ratio)
           buf[1] = 0;
           texture_string_metrics (dc->font, buf, &e, &ascent, &descent);
 
-# ifdef HAVE_MOBILE
-          /* #### Magic magic magic WTF... */
-          glScalef (0.5, 0.5, 0.5);
-# endif
-
           glTranslatef (-e.width * 1.0,
                         -(ascent + descent + e.descent * 2.4), /* #### WTF */
                           0);
@@ -2551,14 +2540,12 @@ draw_codeword_path (ModeInfo *mi)
   glColor4fv (dc->codeword_color);
   glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, dc->codeword_color);
 
-# ifdef HAVE_MOBILE  /* Make the whole thing fit on the phone screen */
   {
-    GLfloat size = MI_WIDTH(mi) < MI_HEIGHT(mi) ? MI_WIDTH(mi) : MI_HEIGHT(mi);
-    glScalef (0.9, 0.9, 0.9);
-    if (size <= 768)  /* iPad retina / iPhone 6 */
-      glScalef (0.7, 0.7, 0.7);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   codeword_text_output (mi, anim_ratio);
 
@@ -2780,13 +2767,12 @@ reshape_logo (ModeInfo *mi, int width, int height)
              0, 0, 0,
              0, 1, 0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);  /* #### Why does this change the lighting? */
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }

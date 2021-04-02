@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="metaballs" _label="MetaBalls">
+<screensaver name="metaballs" _label="Meta Balls">
 
   <command arg="-root"/>
 
@@ -27,14 +27,14 @@
    <vgroup>
 
     <number id="count" type="slider" arg="-count %"
-            _label="Metaball count" _low-label="Two" _high-label="Many"
+            _label="Ball count" _low-label="Two" _high-label="Many"
             low="2" high="255" default="10"/>
 
     <number id="radius" type="slider" arg="-radius %"
-            _label="MetaBall Radius" _low-label="Small" _high-label="Big" low="2" high="100" default="100"/>
+            _label="Ball Radius" _low-label="Small" _high-label="Big" low="2" high="100" default="100"/>
 
     <number id="delta" type="slider" arg="-delta %"
-            _label="MetaBall Movement" _low-label="Small" _high-label="Big" low="1" high="20" default="3"/>
+            _label="Ball Movement" _low-label="Small" _high-label="Big" low="1" high="20" default="3"/>
 
    </vgroup>
   </hgroup>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="flipflop" _label="FlipFlop" gl="yes">
+<screensaver name="flipflop" _label="Flip Flop" gl="yes">
 
   <command arg="-root"/>
 

@@ -15,7 +15,6 @@
 #include <math.h>
 #include "screenhack.h"
 
-#define countof(x) (sizeof(x)/sizeof(*(x)))
 #define ABS(x) ((x)<0?-(x):(x))
 
 /* Avoid rounding errors by using a larger fixed-point grid.

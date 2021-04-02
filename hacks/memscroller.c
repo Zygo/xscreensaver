@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2002-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2002-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,10 +13,8 @@
 
 #include "screenhack.h"
 #include "xshm.h"
+#include "xft.h"
 #include <stdio.h>
-
-#undef countof
-#define countof(x) (sizeof(x)/sizeof(*(x)))
 
 #ifndef HAVE_MOBILE
 # define READ_FILES
@@ -39,7 +37,9 @@ typedef struct {
   Window window;
   XWindowAttributes xgwa;
   GC draw_gc, erase_gc, text_gc;
-  XFontStruct *fonts[6];
+  XftColor xft_fg;
+  XftDraw *xftdraw;
+  XftFont *fonts[6];
   int border;
 
   enum { SEED_RAM, SEED_RANDOM, SEED_FILE } seed_mode;
@@ -97,7 +97,9 @@ memscroller_init (Display *dpy, Window window)
         sprintf (res, "font%d", i+1);
         fontname = get_string_resource (dpy, res, "Font");
         if (fontname && *fontname)
-          st->fonts[i] = load_font_retry (dpy, fontname);
+          st->fonts[i] =
+            load_xft_font_retry (dpy, screen_number (st->xgwa.screen),
+                                 fontname);
         if (fontname) free (fontname);
       }
     if (!st->fonts[0]) abort();
@@ -117,6 +119,14 @@ memscroller_init (Display *dpy, Window window)
   st->draw_gc = XCreateGC (st->dpy, st->window,
                            GCForeground|GCBackground|GCLineWidth,
                            &gcv);
+  s = get_string_resource (st->dpy, "foreground", "Foreground");
+  if (!s) s = strdup ("white");
+  XftColorAllocName (st->dpy, st->xgwa.visual, st->xgwa.colormap, s,
+                     &st->xft_fg);
+  free (s);
+  st->xftdraw = XftDrawCreate (dpy, window, st->xgwa.visual,
+                               st->xgwa.colormap);
+
   gcv.foreground = gcv.background;
   st->erase_gc = XCreateGC (st->dpy, st->window,
                             GCForeground|GCBackground, &gcv);
@@ -455,7 +465,6 @@ static void
 draw_string (state *st)
 {
   char buf[40];
-  int direction, ascent, descent;
   int bot = st->scrollers[0].rect.y;
   const char *fmt = "%08X";
   int i;
@@ -464,28 +473,28 @@ draw_string (state *st)
    */
   for (i = 0; i < countof (st->fonts); i++)
     {
-      XCharStruct overall;
+      XGlyphInfo overall;
       int x, y, w, h;
 
       if (! st->fonts[i]) continue;
 
       sprintf (buf, fmt, 0);
-      XTextExtents (st->fonts[i], buf, strlen(buf), 
-                    &direction, &ascent, &descent, &overall);
+      XftTextExtentsUtf8 (st->dpy, st->fonts[i], (FcChar8 *) buf, 
+                          strlen(buf), &overall);
       sprintf (buf, "%08X", st->scrollers[0].value);
 
       w = overall.width;
-      h = ascent + descent + 1;
+      h = st->fonts[i]->ascent + st->fonts[i]->descent + 1;
       x = (st->xgwa.width - w) / 2;
       y = (bot - h) / 2;
 
       if (y + h + 10 <= bot && x > -10)
         {
-          XSetFont (st->dpy, st->text_gc, st->fonts[i]->fid);
           XFillRectangle (st->dpy, st->window, st->erase_gc,
                           x-w-1, y-1, w*3+2, h+2);
-          XDrawString (st->dpy, st->window, st->text_gc,
-                       x, y + ascent, buf, strlen(buf));
+          XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->fonts[i],
+                             x, y + st->fonts[i]->ascent,
+                             (FcChar8 *) buf, strlen(buf));
           break;
         }
     }
@@ -567,11 +576,12 @@ memscroller_free (Display *dpy, Window window, void *closure)
     destroy_xshm_image (dpy, st->scrollers[i].image, &st->shm_info);
   free (st->scrollers);
   for (i = 0; i < countof (st->fonts); i++)
-    if (st->fonts[i]) XFreeFont (dpy, st->fonts[i]);
+    if (st->fonts[i]) XftFontClose (st->dpy, st->fonts[i]);
   if (st->filename) free (st->filename);
   XFreeGC (dpy, st->draw_gc);
   XFreeGC (dpy, st->erase_gc);
   XFreeGC (dpy, st->text_gc);
+  XftDrawDestroy (st->xftdraw);
   free (st);
 }
 
@@ -586,21 +596,12 @@ static const char *memscroller_defaults [] = {
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
 
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
-  ".font1:		   OCR A Std 192, Lucida Console 192, Monaco 192",
-  ".font2:		   OCR A Std 144, Lucida Console 144, Monaco 144",
-  ".font3:		   OCR A Std 128, Lucida Console 128, Monaco 128",
-  ".font4:		   OCR A Std 96,  Lucida Console 96,  Monaco 96",
-  ".font5:		   OCR A Std 48,  Lucida Console 48,  Monaco 48",
-  ".font6:		   OCR A Std 24,  Lucida Console 24,  Monaco 24",
-#else    /* real X11, load_font_retry() */
-  ".font1:		   -*-ocr a std-medium-r-*-*-*-1440-*-*-m-*-*-*",
-  ".font2:		   -*-ocr a std-medium-r-*-*-*-960-*-*-m-*-*-*",
-  ".font3:		   -*-ocr a std-medium-r-*-*-*-480-*-*-m-*-*-*",
-  ".font4:		   -*-ocr a std-medium-r-*-*-*-320-*-*-m-*-*-*",
-  ".font5:		   -*-ocr a std-medium-r-*-*-*-180-*-*-m-*-*-*",
-  ".font6:		   -*-ocr a std-medium-r-*-*-*-120-*-*-m-*-*-*",
-#endif /* X11 */
+  ".font1:	OCR A Std 192, Lucida Console 192, Monaco 192, Courier 192",
+  ".font2:	OCR A Std 144, Lucida Console 144, Monaco 144, Courier 144",
+  ".font3:	OCR A Std 128, Lucida Console 128, Monaco 128, Courier 128",
+  ".font4:	OCR A Std 96,  Lucida Console 96,  Monaco 96,  Courier 96",
+  ".font5:	OCR A Std 48,  Lucida Console 48,  Monaco 48,  Courier 48",
+  ".font6:	OCR A Std 24,  Lucida Console 24,  Monaco 24,  Courier 24",
 
   "*delay:		   10000",
   "*offset:		   0",

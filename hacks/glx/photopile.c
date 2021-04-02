@@ -11,13 +11,8 @@
  * implied warranty.
  */
 
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
-# define DEF_FONT "OCR A Std 48, Lucida Console 48, Monaco 48"
-#elif 0  /* real X11, XQueryFont() */
-# define DEF_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
-#else    /* real X11, load_font_retry() */
-# define DEF_FONT "-*-ocr a std-medium-r-*-*-*-480-*-*-m-*-*-*"
-#endif
+#define DEF_FONT \
+  "OCR A Std 18, Lucida Console 18, Monaco 18, Courier 18, monospace 18"
 
 #define DEFAULTS  "*count:           7         \n" \
                   "*delay:           10000     \n" \
@@ -34,9 +29,6 @@
 # define release_photopile 0
 # define photopile_handle_event xlockmore_no_events
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h>     /* for XrmDatabase in -debug mode */
 #endif
@@ -49,7 +41,7 @@
 
 #ifdef USE_GL
 
-# define DEF_SCALE          "0.4"
+# define DEF_IMG_SCALE      "0.4"
 # define DEF_MAX_TILT       "50"
 # define DEF_SPEED          "1.0"
 # define DEF_DURATION       "5"
@@ -122,7 +114,8 @@ static Bool debug_p;         /* Be loud and do weird things. */
 
 
 static XrmOptionDescRec opts[] = {
-  {"-scale",        ".scale",         XrmoptionSepArg, 0 },
+  /* Xft uses 'scale' */
+  {"-scale",        ".imgScale",      XrmoptionSepArg, 0 },
   {"-maxTilt",      ".maxTilt",       XrmoptionSepArg, 0 },
   {"-speed",        ".speed",         XrmoptionSepArg, 0 },
   {"-duration",     ".duration",      XrmoptionSepArg, 0 },
@@ -141,7 +134,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  { &scale,         "scale",        "Scale",        DEF_SCALE,       t_Float},
+  { &scale,         "imgScale",     "Scale",        DEF_IMG_SCALE,   t_Float},
   { &max_tilt,      "maxTilt",      "MaxTilt",      DEF_MAX_TILT,    t_Float},
   { &speed,         "speed",        "Speed",        DEF_SPEED,       t_Float},
   { &duration,      "duration",     "Duration",     DEF_DURATION,    t_Int},
@@ -446,6 +439,15 @@ reshape_photopile (ModeInfo *mi, int width, int height)
     int o = (int) current_device_rotation();
     if (o != 0 && o != 180 && o != -180)
       glScalef (1/h, h, 1);
+  }
+# else
+  {
+    /* Don't understand why this clause doesn't work on mobile, but it 
+       doesn't. */
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
 # endif
 

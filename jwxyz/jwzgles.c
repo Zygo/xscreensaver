@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,9 +9,14 @@
  * implied warranty.
  */
 
-/* A compatibility shim to allow OpenGL 1.3 source code to work in an
-   OpenGLES environment, where almost every OpenGL 1.3 function has
-   been "deprecated".
+/* JWXYZ Is Not Xlib.
+
+   See the comment at the top of jwxyz-common.c for an explanation of
+   the division of labor between these various modules.
+
+   This file is a compatibility shim to allow OpenGL 1.3 source code to
+   work in an OpenGLES environment, where almost every OpenGL 1.3 function
+   has been "deprecated".
 
    There are two major operations going on here:
 
@@ -97,9 +102,17 @@
    OpenGLES 1.0	 2003 (deprecated 80% of the language; fork of OpenGL 1.3)
    OpenGL   1.5	 2003 (added VBOs)
    OpenGLES 1.1	 2004 (fork of OpenGL 1.5)
-   OpenGL   2.0	 2004 (a political quagmire)
-   OpenGLES 2.0	 2007 (deprecated 95% of the language; fork of OpenGL 2.0)
+   OpenGL   2.0	 2004 (a political quagmire, added shader language GLSL 1.1)
+   OpenGLES 2.0	 2007 (deprecated 95% of the language; fork of OpenGL 2.0;
+                       GLSL 1.20)
    OpenGL   3.0	 2008 (added FBOs, VAOs, deprecated 60% of the language)
+   OpenGL   3.3  2010 (OpenGL 3.3 and OpenGL 4.0 released concurrently;
+                       3.3 has GLSL 3.30, but 4.0 has GLSL 4.00)
+   OpenGLES 3.0	 2012 (same as WebGL 2.0, but has GLSL 3.00)
+   OpenGL   4.3	 2012 (superset of GLES 3.0, but has GLSL 4.30)
+
+   It's like these assholes are going out of their way to make it all just
+   as incoherent and difficult to understand as possible.
 
 
    Some things that are missing:
@@ -152,6 +165,10 @@
 
 #ifdef HAVE_JWZGLES	/* whole file */
 
+#ifndef HAVE_GL
+# error HAVE_GL is undefined
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -163,20 +180,29 @@
 #endif /* HAVE_UNISTD_H */
 
 #if defined(HAVE_IPHONE)
-# include <OpenGLES/ES1/gl.h>
-# include <OpenGLES/ES1/glext.h>
+# ifdef HAVE_GLES3
+#  include <OpenGLES/ES3/gl.h>
+#  include <OpenGLES/ES3/glext.h>
+# else  /* !HAVE_GLES3 */
+#  include <OpenGLES/ES1/gl.h>
+#  include <OpenGLES/ES1/glext.h>
+# endif /* !HAVE_GLES3 */
 #elif defined(HAVE_COCOA)
 # include <OpenGL/gl.h>
-# include <OpenGL/glu.h>
 #elif defined(HAVE_ANDROID)
 # include <GLES/gl.h>
+# ifdef HAVE_GLES3
+#  include <GLES3/gl3.h>
+# endif
 # include <android/log.h>
 #else /* real X11 */
 # ifndef  GL_GLEXT_PROTOTYPES
 #  define GL_GLEXT_PROTOTYPES /* for glBindBuffer */
 # endif
-# include <GL/glx.h>
-# include <GL/glu.h>
+# include <GLES/gl.h>
+# ifdef HAVE_GLES3
+# include <GLES3/gl3.h>
+# endif /* HAVE_GLES3 */
 #endif
 
 #include "jwzglesI.h"
@@ -1759,13 +1785,37 @@ jwzgles_glDrawBuffer (GLenum buf)
     }
   else
     {
-/*      Assert (buf == GL_BACK, "glDrawBuffer: back buffer only"); */
-# ifndef GL_VERSION_ES_CM_1_0  /* not compiling against OpenGLES 1.x */
+      Assert (buf == GL_BACK, "glDrawBuffer: back buffer only");
+# if !defined(GL_VERSION_ES_CM_1_0)
+      /* not compiling against OpenGLES 1.x */
       if (! state->replaying_list)
         LOG1 ("direct %-12s", "glDrawBuffer");
       glDrawBuffer (buf);      /* the real one */
       CHECK("glDrawBuffer");
 # endif
+    }
+}
+
+
+void jwzgles_glDrawElements (GLenum mode, GLsizei count, GLenum type,
+                             const GLvoid *indices)
+{
+  Assert (!state->compiling_verts, "not allowed inside glBegin");
+  Assert (!state->compiling_list,  "not allowed inside glNewList");
+# if 0
+  if (state->compiling_list)
+    {
+      void_int vv[1];
+      vv[0].i = buf;
+      /* #### This won't work because indices is a pointer */
+      list_push ("glDrawElements", (list_fn_cb) &jwzgles_glDrawElements, 
+                 PROTO_IIII, vv);
+    }
+  else
+# endif /* 0 */
+    {
+      glDrawElements (mode, count, type, indices);      /* the real one */
+      CHECK("glDrawElements");
     }
 }
 
@@ -1966,15 +2016,15 @@ jwzgles_glEnd (void)
   jwzgles_glDrawArrays (s->mode, 0, s->count);
   glBindBuffer (GL_ARRAY_BUFFER, 0);    /* Keep out of others' hands */
 
-# define RESET(VAR,FN,ARG) do { \
+# define RESET(VAR,ENFN,DISFN,ARG) do { \
          if (is_##VAR != was_##VAR) { \
-            if (was_##VAR) jwzgles_glEnable##FN (ARG); \
-            else jwzgles_glDisable##FN (ARG); \
+            if (was_##VAR) jwzgles_gl##ENFN (ARG); \
+            else jwzgles_gl##DISFN (ARG); \
          }} while(0)
-  RESET (norm,  ClientState, GL_NORMAL_ARRAY);
-  RESET (tex,   ClientState, GL_TEXTURE_COORD_ARRAY);
-  RESET (color, ClientState, GL_COLOR_ARRAY);
-  RESET (mat,   ,            GL_COLOR_MATERIAL);
+  RESET (norm,  EnableClientState, DisableClientState, GL_NORMAL_ARRAY);
+  RESET (tex,   EnableClientState, DisableClientState, GL_TEXTURE_COORD_ARRAY);
+  RESET (color, EnableClientState, DisableClientState, GL_COLOR_ARRAY);
+  RESET (mat,   Enable,            Disable,            GL_COLOR_MATERIAL);
 # undef RESET
 
   s->count  = 0;
@@ -2987,7 +3037,12 @@ jwzgles_glTexImage1D (GLenum target, GLint level,
   Assert (!state->compiling_verts, "glTexImage1D not allowed inside glBegin");
   /* technically legal, but stupid! */
   Assert (!state->compiling_list, "glTexImage1D inside glNewList");
+# ifndef HAVE_GLSL
+  /* If the underlying library is GLES2, then textures can be any size.
+     Portable code should still be using pow2 sizes, unless it's in a branch
+     that is guaranteed not to run in a GLES1 or OpenGL 1.3 context. */
   Assert (width  == to_pow2(width), "width must be a power of 2");
+# endif
 
   if (target == GL_TEXTURE_1D) target = GL_TEXTURE_2D;
   jwzgles_glTexImage2D (target, level, internalFormat, width, 1,
@@ -3010,8 +3065,13 @@ jwzgles_glTexImage2D (GLenum target,
   Assert (!state->compiling_list,  /* technically legal, but stupid! */
           "glTexImage2D not allowed inside glNewList");
 
+# ifndef HAVE_GLSL
+  /* If the underlying library is GLES2, then textures can be any size.
+     Portable code should still be using pow2 sizes, unless it's in a branch
+     that is guaranteed not to run in a GLES1 or OpenGL 1.3 context. */
   Assert (width  == to_pow2(width),   "width must be a power of 2");
   Assert (height == to_pow2(height), "height must be a power of 2");
+# endif
 
   /* OpenGLES no longer supports "4" as a synonym for "RGBA". */
   switch (internalFormat) {
@@ -4131,12 +4191,13 @@ jwzgles_gluCheckExtension (const GLubyte *ext_name, const GLubyte *ext_string)
   size_t ext_len = strlen ((const char *)ext_name);
 
   for (;;) {
+    char last_ch;
     const GLubyte *found = (const GLubyte *)strstr ((const char *)ext_string,
                                                     (const char *)ext_name);
     if (!found)
       break;
 
-    char last_ch = found[ext_len];
+    last_ch = found[ext_len];
     if ((found == ext_string || found[-1] == ' ') &&
         (last_ch == ' ' || !last_ch)) {
       return GL_TRUE;
@@ -4288,7 +4349,7 @@ void jwzgles_##NAME (ARGS_##SIG)					\
 WRAP (glActiveTexture,	I)
 WRAP (glAlphaFunc,	IF)
 WRAP (glBlendFunc,	II)
-//WRAP (glBlendColor,     FFFF);
+/*WRAP (glBlendColor,     FFFF);*/
 WRAP (glClear,		I)
 WRAP (glClearColor,	FFFF)
 WRAP (glClearStencil,	I)
@@ -4328,6 +4389,5 @@ WRAP (glTranslatef,	FFF)
 #undef  TYPE_IV
 #define TYPE_IV GLuint
 WRAP (glDeleteTextures,	IIV)
-
 
 #endif /* HAVE_JWZGLES - whole file */

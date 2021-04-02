@@ -236,7 +236,6 @@ checkerboard (Screen *screen, Drawable drawable)
       win_width = xgwa.width;
       win_height = xgwa.height;
       cmap = xgwa.colormap;
-      screen = xgwa.screen;
     }
   else  /* it's a pixmap */
     {

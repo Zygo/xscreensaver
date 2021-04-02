@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <screensaver name="spiral" _label="Spiral">
 
@@ -31,7 +31,7 @@
 This screen saver was removed from the XScreenSaver distribution as of
 version 5.08.
 
-Moving circular moire patterns.
+Moving circular moiré patterns.
 
 Written by Peter Schmitzberger; 1997.
   </_description>

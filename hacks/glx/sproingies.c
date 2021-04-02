@@ -24,12 +24,8 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
  * See sproingiewrap.c
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #ifdef STANDALONE
-# include "xlockmoreI.h"		/* from the xscreensaver distribution */
+# include "screenhackI.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"            /* from the xlockmore distribution */
 #endif /* !STANDALONE */

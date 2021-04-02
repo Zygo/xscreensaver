@@ -34,9 +34,14 @@ in this Software without prior written authorization from The Open Group.
  *         -DHAVE_XRECORD
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xproto.h> /* for CARD32 */
+#include <X11/extensions/shape.h>
 #include <X11/extensions/multibuf.h>
 #ifdef HAVE_XIE
 #include <X11/extensions/XIElib.h>
@@ -69,18 +74,16 @@ in this Software without prior written authorization from The Open Group.
 char *ProgramName;
 Bool queryExtensions = False;
 
-static int StrCmp(a, b)
-    char **a, **b;
+static int StrCmp(const void *a, const void *b)
 {
-    return strcmp(*a, *b);
+    return strcmp(*((char **)a), *((char **)b));
 }
 
 
 #ifdef HAVE_GLX  /* Added by jwz, 11-Nov-99 */
 
 static void
-print_glx_versions (dpy)
-    Display *dpy;
+print_glx_versions (Display *dpy)
 {
   /* Note: with Mesa 3.0, this lies: it prints the info from the
      client's GL library, rather than the info from the GLX server.
@@ -100,9 +103,7 @@ print_glx_versions (dpy)
 }
 
 static void
-print_glx_visual_info (dpy, vip)
-    Display *dpy;
-    XVisualInfo *vip;
+print_glx_visual_info (Display *dpy, XVisualInfo *vip)
 {
   int status, value = False;
 
@@ -271,8 +272,7 @@ struct overlay_list
 static struct overlay_list *overlays = 0;
 
 static void
-find_overlay_info (dpy)
-  Display *dpy;
+find_overlay_info (Display *dpy)
 {
   int screen;
   Atom OVERLAY = XInternAtom (dpy, "SERVER_OVERLAY_VISUALS", False);
@@ -307,8 +307,7 @@ find_overlay_info (dpy)
 }
 
 static void
-print_overlay_visual_info (vip)
-    XVisualInfo *vip;
+print_overlay_visual_info (XVisualInfo *vip)
 {
   int i;
   int vis = vip->visualid;
@@ -327,7 +326,7 @@ print_overlay_visual_info (vip)
         if (ov->transparency == 1)
           printf ("transparent pixel %lu\n", (unsigned long) ov->value);
         else if (ov->transparency == 2)
-          printf ("transparent mask 0x%x\n", (unsigned long) ov->value);
+          printf ("transparent mask 0x%lx\n", (unsigned long) ov->value);
         else
           printf ("opaque\n");
       }
@@ -335,9 +334,8 @@ print_overlay_visual_info (vip)
 #endif /* HAVE_OVERLAY */
 
 
-void
-print_extension_info (dpy)
-    Display *dpy;
+static void
+print_extension_info (Display *dpy)
 {
     int n = 0;
     char **extlist = XListExtensions (dpy, &n);
@@ -367,9 +365,8 @@ print_extension_info (dpy)
     }
 }
 
-void
-print_display_info (dpy)
-    Display *dpy;
+static void
+print_display_info (Display *dpy)
 {
     char dummybuf[40];
     char *cp;
@@ -393,7 +390,7 @@ print_display_info (dpy)
     req_size = XExtendedMaxRequestSize (dpy);
     if (!req_size) req_size = XMaxRequestSize (dpy);
     printf ("maximum request size:  %ld bytes\n", req_size * 4);
-    printf ("motion buffer size:  %d\n", XDisplayMotionBufferSize (dpy));
+    printf ("motion buffer size:  %ld\n", XDisplayMotionBufferSize (dpy));
 
     switch (BitmapBitOrder (dpy)) {
       case LSBFirst:    cp = "LSBFirst"; break;
@@ -470,9 +467,8 @@ print_display_info (dpy)
     printf ("number of screens:    %d\n", ScreenCount (dpy));
 }
 
-void
-print_visual_info (vip)
-    XVisualInfo *vip;
+static void
+print_visual_info (XVisualInfo *vip)
 {
     char errorbuf[40];			/* for sprintfing into */
     char *class = NULL;			/* for printing */
@@ -507,10 +503,15 @@ print_visual_info (vip)
 	    vip->bits_per_rgb);
 }
 
-void
-print_screen_info (dpy, scr)
-    Display *dpy;
-    int scr;
+static int print_event_mask (
+    char *buf,				/* string to write into */
+    int lastcol,			/* strlen(buf)+1 */
+    int indent, 			/* amount by which to indent */
+    long mask);				/* event mask */
+
+
+static void
+print_screen_info (Display *dpy, int scr)
 {
     Screen *s = ScreenOfDisplay (dpy, scr);  /* opaque structure */
     XVisualInfo viproto;		/* fill in for getting info */
@@ -565,7 +566,7 @@ print_screen_info (dpy, scr)
     printf ("  default colormap:    0x%lx\n", DefaultColormap (dpy, scr));
     printf ("  default number of colormap cells:    %d\n",
 	    DisplayCells (dpy, scr));
-    printf ("  preallocated pixels:    black %d, white %d\n",
+    printf ("  preallocated pixels:    black %lu, white %lu\n",
 	    BlackPixel (dpy, scr), WhitePixel (dpy, scr));
     printf ("  options:    backing-store %s, save-unders %s\n",
 	    (DoesBackingStore (s) == NotUseful) ? no :
@@ -637,11 +638,11 @@ static struct _event_table {
     { "OwnerGrabButtonMask      ", OwnerGrabButtonMask },
     { NULL, 0 }};
 
-int print_event_mask (buf, lastcol, indent, mask)
-    char *buf;				/* string to write into */
-    int lastcol;			/* strlen(buf)+1 */
-    int indent;				/* amount by which to indent */
-    long mask;				/* event mask */
+static int print_event_mask (
+    char *buf,				/* string to write into */
+    int lastcol,			/* strlen(buf)+1 */
+    int indent,				/* amount by which to indent */
+    long mask)				/* event mask */
 {
     struct _event_table *etp;
     int len;
@@ -673,11 +674,9 @@ int print_event_mask (buf, lastcol, indent, mask)
     return (bitsfound);
 }
 
-void
-print_standard_extension_info(dpy, extname, majorrev, minorrev)
-    Display *dpy;
-    char *extname;
-    int majorrev, minorrev;
+static void
+print_standard_extension_info(Display *dpy, char *extname,
+                              int majorrev, int minorrev)
 {
     int opcode, event, error;
 
@@ -692,10 +691,8 @@ print_standard_extension_info(dpy, extname, majorrev, minorrev)
     printf("\n");
 }
 
-int
-print_multibuf_info(dpy, extname)
-    Display *dpy;
-    char *extname;
+static int
+print_multibuf_info(Display *dpy, char *extname)
 {
     int i, j;			/* temp variable: iterator */
     int nmono, nstereo;		/* count */
@@ -850,10 +847,8 @@ print_sync_info(dpy, extname)
 }
 #endif /* HAVE_XSYNC */
 
-int
-print_shape_info(dpy, extname)
-    Display *dpy;
-    char *extname;
+static int
+print_shape_info(Display *dpy, char *extname)
 {
     int majorrev, minorrev;
 
@@ -979,9 +974,8 @@ ExtensionPrintInfo known_extensions[] =
 
 int num_known_extensions = sizeof known_extensions / sizeof known_extensions[0];
 
-void
-print_known_extensions(f)
-    FILE *f;
+static void
+print_known_extensions(FILE *f)
 {
     int i;
     for (i = 0; i < num_known_extensions; i++)
@@ -990,9 +984,8 @@ print_known_extensions(f)
     }
 }
 
-void
-mark_extension_for_printing(extname)
-    char *extname;
+static void
+mark_extension_for_printing(char *extname)
 {
     int i;
 
@@ -1015,9 +1008,8 @@ mark_extension_for_printing(extname)
     }
 }
 
-void
-print_marked_extensions(dpy)
-    Display *dpy;
+static void
+print_marked_extensions(Display *dpy)
 {
     int i;
     for (i = 0; i < num_known_extensions; i++)
@@ -1035,7 +1027,7 @@ print_marked_extensions(dpy)
     }
 }
 
-static void usage ()
+static void usage (void)
 {
     fprintf (stderr, "usage:  %s [options]\n", ProgramName);
     fprintf (stderr, "-display displayname\tserver to query\n");
@@ -1047,15 +1039,11 @@ static void usage ()
     exit (1);
 }
 
-int main (argc, argv)
-    int argc;
-    char *argv[];
+int main (int argc, char *argv[])
 {
     Display *dpy;			/* X connection */
     char *displayname = NULL;		/* server to contact */
     int i;				/* temp variable:  iterator */
-    Bool multibuf = False;
-    int mbuf_event_base, mbuf_error_base;
 
     ProgramName = argv[0];
 
@@ -1077,7 +1065,7 @@ int main (argc, argv)
 
     dpy = XOpenDisplay (displayname);
     if (!dpy) {
-	fprintf (stderr, "%s:  unable to open display \"%s\".\n",
+	fprintf (stderr, "%s:  unable to open display \"%s\"\n",
 		 ProgramName, XDisplayName (displayname));
 	exit (1);
     }

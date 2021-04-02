@@ -49,10 +49,6 @@ static int rotate;
 #define QW 12
 #define QH 12
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-
 static XrmOptionDescRec opts[] = {
   {"+rotate", ".screenflip.rotate", XrmoptionNoArg, "false" },
   {"-rotate", ".screenflip.rotate", XrmoptionNoArg, "true" },

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="tronbit" _label="TronBit" gl="yes">
+<screensaver name="tronbit" _label="Tron Bit" gl="yes">
 
   <command arg="-root"/>
 

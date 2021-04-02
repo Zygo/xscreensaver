@@ -13,30 +13,13 @@
  * http://astronomy.swin.edu.au/~pbourke/modelling/polygonise/
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "screenhackI.h"
+#include "marching.h"
+#include "normals.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
-#ifndef HAVE_JWXYZ
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_ANDROID
-# include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
-#include "marching.h"
-#include "normals.h"
-
-extern char *progname;
 
 #undef ABS
 #define ABS(x) ((x)<0?(-(x)):(x))

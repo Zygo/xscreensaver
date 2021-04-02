@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2016-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2016-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -7,13 +7,19 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
- *
- * This file is three related things:
- *
- *   - It is the Android-specific C companion to jwxyz-gl.c;
- *   - It is how C calls into Java to do things that OpenGL does not
- *     have access to without Java-based APIs;
- *   - It is how the jwxyz.java class calls into C to run the hacks.
+ */
+
+/* JWXYZ Is Not Xlib.
+
+   See the comment at the top of jwxyz-common.c for an explanation of
+   the division of labor between these various modules.
+
+   This file is three related things:
+  
+     - It is the Android-specific companion to jwxyz-gl.c or jwxyz-image.c;
+     - It is how C calls into Java to do things that OpenGL does not have
+       access to without Java-based APIs;
+     - It is how the jwxyz.java class calls into C to run the hacks.
  */
 
 #ifdef HAVE_ANDROID /* whole file */
@@ -25,8 +31,13 @@
 #include <math.h>
 #include <setjmp.h>
 
+#define GL_GLEXT_PROTOTYPES
+
 #include <GLES/gl.h>
 #include <GLES/glext.h>
+#ifdef HAVE_GLES3
+# include <GLES3/gl3.h>
+#endif
 #include <jni.h>
 #include <android/bitmap.h>
 #include <android/log.h>
@@ -228,6 +239,202 @@ prepare_context (struct running_hack *rh)
 }
 
 
+static void
+get_egl_config_android(Window window, EGLDisplay *egl_display,
+                       EGLConfig *egl_config)
+{
+# define R EGL_RED_SIZE
+# define G EGL_GREEN_SIZE
+# define B EGL_BLUE_SIZE
+# define A EGL_ALPHA_SIZE
+# define D EGL_DEPTH_SIZE
+# define I EGL_BUFFER_SIZE
+# define ST EGL_STENCIL_SIZE
+  EGLint templates[][40] = {
+    { R,8, G,8, B,8, A,8, D,8, ST,1, EGL_NONE }, /* rgba stencil */
+    { R,8, G,8, B,8,      D,8, ST,1, EGL_NONE }, /* rgb  stencil */
+    { R,4, G,4, B,4,      D,4, ST,1, EGL_NONE },
+    { R,2, G,2, B,2,      D,2, ST,1, EGL_NONE },
+    { R,8, G,8, B,8, A,8, D,8,       EGL_NONE }, /* rgba */
+    { R,8, G,8, B,8,      D,8,       EGL_NONE }, /* rgb  */
+    { R,4, G,4, B,4,      D,4,       EGL_NONE },
+    { R,2, G,2, B,2,      D,2,       EGL_NONE },
+    { R,1, G,1, B,1,      D,1,       EGL_NONE }  /* monochrome */
+  };
+  EGLint attrs[40];
+  EGLint nconfig;
+  int i, j, k, iter, pass;
+
+  char *glsls = get_string_resource_window (window, "prefersGLSL");
+  Bool glslp = (glsls && !strcasecmp(glsls, "true"));
+  iter = (glslp ? 2 : 1);
+
+  *egl_config = 0;
+  for (pass = 0; pass < iter; pass++)
+    {
+      for (i = 0; i < countof(templates); i++)
+        {
+          for (j = 0, k = 0; templates[i][j] != EGL_NONE; j += 2)
+            {
+              attrs[k++] = templates[i][j];
+              attrs[k++] = templates[i][j+1];
+            }
+
+          attrs[k++] = EGL_RENDERABLE_TYPE;
+# ifdef HAVE_GLES3
+          if (glslp && pass == 0)
+            attrs[k++] = EGL_OPENGL_ES3_BIT;
+          else
+            attrs[k++] = EGL_OPENGL_ES_BIT;
+# else
+          attrs[k++] = EGL_OPENGL_ES_BIT;
+# endif
+
+          attrs[k++] = EGL_NONE;
+
+          nconfig = -1;
+          if (eglChooseConfig (egl_display, attrs, egl_config, 1, &nconfig)
+              && nconfig == 1)
+            break;
+        }
+      if (i < countof(templates))
+        break;
+    }
+  Assert (*egl_config != 0, "no EGL config chosen");
+#if 1
+  {
+    int i;
+    const struct { int hexp; EGLint i; const char *s; } fields[] = {
+      { 1, EGL_CONFIG_ID,		"config ID:"	 },
+      { 1, EGL_CONFIG_CAVEAT,		"caveat:"	 },
+      { 1, EGL_CONFORMANT,		"conformant:"	 },
+      { 0, EGL_COLOR_BUFFER_TYPE,	"buffer type:"	 },
+      { 0, EGL_RED_SIZE,		"color size:"	 },
+      { 0, EGL_TRANSPARENT_RED_VALUE,	"transparency:"	 },
+      { 0, EGL_BUFFER_SIZE,		"buffer size:"	 },
+      { 0, EGL_DEPTH_SIZE,		"depth size:"	 },
+      { 0, EGL_LUMINANCE_SIZE,	"lum size:"	 },
+      { 0, EGL_STENCIL_SIZE,		"stencil size:"	 },
+      { 0, EGL_ALPHA_MASK_SIZE,	"alpha mask:"	 },
+      { 0, EGL_LEVEL,			"level:"	 },
+      { 0, EGL_SAMPLES,		"samples:"	 },
+      { 0, EGL_SAMPLE_BUFFERS,	"sample bufs:"	 },
+      { 0, EGL_NATIVE_RENDERABLE,	"native render:" },
+      { 1, EGL_NATIVE_VISUAL_TYPE,	"native type:"	 },
+      { 1, EGL_RENDERABLE_TYPE,	"render type:"	 },
+      { 0, EGL_SURFACE_TYPE,		"surface type:"	 },
+      { 0, EGL_BIND_TO_TEXTURE_RGB,	"bind RGB:"	 },
+      { 0, EGL_BIND_TO_TEXTURE_RGBA,	"bind RGBA:"	 },
+      { 0, EGL_MAX_PBUFFER_WIDTH,	"buffer width:"	 },
+      { 0, EGL_MAX_PBUFFER_HEIGHT,	"buffer height:" },
+      { 0, EGL_MAX_PBUFFER_PIXELS,	"buffer pixels:" },
+      { 0, EGL_MAX_SWAP_INTERVAL,	"max swap:"	 },
+      { 0, EGL_MIN_SWAP_INTERVAL,	"min swap:"	 },
+    };
+    EGLint r=0, g=0, b=0, a=0, tt=0, tr=0, tg=0, tb=0;
+    eglGetConfigAttrib (egl_display, *egl_config, EGL_RED_SIZE,   &r);
+    eglGetConfigAttrib (egl_display, *egl_config, EGL_GREEN_SIZE, &g);
+    eglGetConfigAttrib (egl_display, *egl_config, EGL_BLUE_SIZE,  &b);
+    eglGetConfigAttrib (egl_display, *egl_config, EGL_ALPHA_SIZE, &a);
+    eglGetConfigAttrib (egl_display, *egl_config,
+                        EGL_TRANSPARENT_TYPE, &tt);
+    eglGetConfigAttrib (egl_display, *egl_config,
+                        EGL_TRANSPARENT_RED_VALUE,  &tr);
+    eglGetConfigAttrib (egl_display, *egl_config,
+                        EGL_TRANSPARENT_GREEN_VALUE,&tg);
+    eglGetConfigAttrib (egl_display, *egl_config,
+                        EGL_TRANSPARENT_BLUE_VALUE, &tb);
+    for (i = 0; i < countof(fields); i++)
+      {
+        EGLint v = 0;
+        char s[100];
+        eglGetConfigAttrib (egl_display, *egl_config, fields[i].i, &v);
+        if (fields[i].i == EGL_RED_SIZE)
+          sprintf (s, "%d, %d, %d, %d", r, g, b, a);
+        else if (fields[i].i == EGL_TRANSPARENT_RED_VALUE && tt != EGL_NONE)
+          sprintf (s, "%d, %d, %d", tr, tg, tb);
+        else if (fields[i].i == EGL_CONFIG_CAVEAT)
+          strcpy (s, (v == EGL_NONE ? "none" :
+                      v == EGL_SLOW_CONFIG ? "slow" :
+# ifdef EGL_NON_CONFORMANT
+                      v == EGL_NON_CONFORMANT ? "non-conformant" :
+# endif
+                      "???"));
+        else if (fields[i].i == EGL_COLOR_BUFFER_TYPE)
+          strcpy (s, (v == EGL_RGB_BUFFER ? "RGB" :
+                      v == EGL_LUMINANCE_BUFFER ? "luminance" :
+                      "???"));
+        else if (fields[i].i == EGL_CONFORMANT ||
+                 fields[i].i == EGL_RENDERABLE_TYPE)
+          {
+            sprintf (s, "0x%02x", v);
+            if (v & EGL_OPENGL_BIT)     strcat (s, " OpenGL");
+            if (v & EGL_OPENGL_ES_BIT)  strcat (s, " GLES-1.x");
+            if (v & EGL_OPENGL_ES2_BIT) strcat (s, " GLES-2.0");
+# ifdef EGL_OPENGL_ES3_BIT
+            if (v & EGL_OPENGL_ES3_BIT) strcat (s, " GLES-3.0");
+# endif
+            if (v & EGL_OPENVG_BIT)     strcat (s, " OpenVG");
+          }
+        else if (fields[i].hexp)
+          sprintf (s, "0x%02x", v);
+        else if (v)
+          sprintf (s, "%d", v);
+        else
+          *s = 0;
+
+        if (*s) Log ("init:    EGL %-14s %s\n", fields[i].s, s);
+      }
+  }
+#endif
+}
+
+
+static void
+get_egl_context_android(Window window, EGLDisplay *egl_display,
+                        EGLConfig *egl_config, EGLContext *egl_context)
+{
+  EGLint context_attribs[][3] = {
+    { EGL_CONTEXT_CLIENT_VERSION, 1, EGL_NONE },
+    { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE }
+  };
+  EGLint *attrs;
+  Bool glslp;
+  int pass, iter;
+
+# ifdef EGL_OPENGL_ES3_BIT
+  char *glsls = get_string_resource_window (window, "prefersGLSL");
+  glslp = (glsls && !strcasecmp(glsls, "true"));
+  if (glslp)
+    {
+      EGLint renderable_type;
+      eglGetConfigAttrib (egl_display, egl_config, EGL_RENDERABLE_TYPE,
+                          &renderable_type);
+      Bool gles3p = (renderable_type & EGL_OPENGL_ES3_BIT) != 0;
+      glslp = glslp && gles3p;
+    }
+# else
+  glslp = False;
+# endif
+  iter = (glslp ? 2 : 1);
+
+  *egl_context = EGL_NO_CONTEXT;
+  for (pass = 0; pass < iter; pass++)
+    {
+      if (glslp && pass == 0)
+        attrs = context_attribs[1];
+      else
+        attrs = context_attribs[0];
+      *egl_context = eglCreateContext (egl_display, egl_config,
+                                       EGL_NO_CONTEXT, attrs);
+      if (*egl_context != EGL_NO_CONTEXT)
+        break;
+    }
+
+  Assert (*egl_context != EGL_NO_CONTEXT, "init: EGL_NO_CONTEXT");
+}
+
+
 // Initialized OpenGL and runs the screenhack's init function.
 //
 static void
@@ -344,7 +551,24 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
   /* Note: https://source.android.com/devices/graphics/arch-egl-opengl */
 
-  /* ####: This is lame, use a resource. */
+  /* jwxyz_gl_p controls which implementation of Pixmaps we are using.
+
+     - jwxyz-image.c implements them in CPU RAM, and is used for Android GL
+       hacks, and for kumppa, petri and slip, which are too slow otherwise.
+
+     - jwxyz-gl.c implements them in terms of OpenGL textures, and is used
+       for all other Android X11 hacks.
+
+     Why two implemementations of Pixmaps for Android?
+
+     - GL hacks don't tend to need much in the way of Xlib, and having a
+       GL context to render Xlib alongside a GL context for rendering GL
+       seemed like trouble.
+
+     - X11 hacks render to a GL context because hardware acceleration tends
+       to work well with Xlib geometric stuff.  Better framerates, lower
+       power.
+   */
   rh->jwxyz_gl_p =
     rh->xsft->visual == DEFAULT_VISUAL &&
     strcmp (progname, "kumppa") &&
@@ -357,48 +581,27 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
   rh->egl_p = rh->jwxyz_gl_p || rh->xsft->visual == GL_VISUAL;
 
+  int egl_major = -1, egl_minor = -1;
+
   if (rh->egl_p) {
   // GL init. Must come after resource processing.
 
     rh->egl_display = eglGetDisplay (EGL_DEFAULT_DISPLAY);
     Assert (rh->egl_display != EGL_NO_DISPLAY, "init: EGL_NO_DISPLAY");
 
-    int egl_major, egl_minor;
     Assert (eglInitialize (rh->egl_display, &egl_major, &egl_minor),
             "eglInitialize failed");
 
-    // TODO: Skip depth and (probably) alpha for Xlib.
-    // TODO: Could ask for EGL_SWAP_BEHAVIOR_PRESERVED_BIT here...maybe?
-    // TODO: Probably should try to ask for EGL_PBUFFER_BIT.
-    // TODO: Do like visual-gl.c and work from a list of configs.
-    /* Probably don't need EGL_FRAMEBUFFER_TARGET_ANDROID here if GLSurfaceView
-       doesn't use it.
-     */
-    EGLint config_attribs[] = {
-       EGL_RED_SIZE, 8,
-       EGL_GREEN_SIZE, 8,
-       EGL_BLUE_SIZE, 8,
-       EGL_ALPHA_SIZE, 8,
-       EGL_DEPTH_SIZE, 16,
-       EGL_NONE
-    };
+    get_egl_config_android (rh->window, rh->egl_display, &rh->egl_config);
 
-    EGLint num_config;
-    Assert (eglChooseConfig (rh->egl_display, config_attribs,
-                             &rh->egl_config, 1, &num_config),
-            "eglChooseConfig failed");
-    Assert (num_config == 1, "no EGL config chosen");
-
-    EGLint no_attribs[] = {EGL_NONE};
-    rh->egl_ctx = eglCreateContext (rh->egl_display, rh->egl_config,
-                                    EGL_NO_CONTEXT, no_attribs);
-    Assert (rh->egl_ctx != EGL_NO_CONTEXT, "init: EGL_NO_CONTEXT");
+    get_egl_context_android(rh->window, rh->egl_display, rh->egl_config,
+                            &rh->egl_ctx);
 
     ANativeWindow *native_window =
       ANativeWindow_fromSurface (env, jni_surface);
 
     rh->egl_surface = eglCreateWindowSurface (rh->egl_display, rh->egl_config,
-                                              native_window, no_attribs);
+                                              native_window, NULL);
     Assert (rh->egl_surface != EGL_NO_SURFACE, "init: EGL_NO_SURFACE");
 
     ANativeWindow_release (native_window);
@@ -423,10 +626,12 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
   prepare_context (rh);
 
   if (rh->egl_p) {
-    Log ("init %s / %s / %s",
+    // GL_SHADING_LANGUAGE_VERSION undefined
+    Log ("init %s / %s / %s / EGL %d.%d",
          glGetString (GL_VENDOR),
          glGetString (GL_RENDERER),
-         glGetString (GL_VERSION));
+         glGetString (GL_VERSION),
+         egl_major, egl_minor);
   }
 
   if (rh->jwxyz_gl_p) {
@@ -487,10 +692,7 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
   } else {
 
-    if (rh->xsft->visual == DEFAULT_VISUAL)
-      create_pixmap (wnd, wnd);
-    else
-      wnd->image_data = NULL;
+    create_pixmap (wnd, wnd);
 
     static const unsigned char rgba_bytes[] = {0, 1, 2, 3};
     rh->dpy = jwxyz_image_make_display(wnd, rgba_bytes);
@@ -597,7 +799,6 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
       if (! rh->xsft->fps_cb) rh->xsft->fps_cb = screenhack_do_fps;
     } else {
       rh->fpst = NULL;
-      rh->xsft->fps_cb = 0;
     }
 
     if ((*env)->ExceptionOccurred(env)) abort();
@@ -834,7 +1035,7 @@ Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *env, jobject thiz,
     }
 
     jwxyz_window_resized (rh->dpy);
-  } else if (rh->xsft->visual == DEFAULT_VISUAL) {
+  } else {
     free_pixmap (rh, wnd);
     create_pixmap (wnd, wnd);
     XClearWindow (rh->dpy, wnd); // TODO: This is lame. Copy the bits.
@@ -877,6 +1078,8 @@ Java_org_jwz_xscreensaver_jwxyz_nativeDone (JNIEnv *env, jobject thiz)
 
   prepare_context (rh);
 
+  if (rh->fpst)
+    rh->xsft->fps_free (rh->fpst);
   if (rh->initted_p)
     rh->xsft->free_cb (rh->dpy, rh->window, rh->closure);
   if (rh->jwxyz_gl_p)
@@ -897,8 +1100,7 @@ Java_org_jwz_xscreensaver_jwxyz_nativeDone (JNIEnv *env, jobject thiz)
     eglDestroyContext (rh->egl_display, rh->egl_ctx);
     eglTerminate (rh->egl_display);
   } else {
-    if (rh->xsft->visual == DEFAULT_VISUAL)
-      free_pixmap (rh, rh->window);
+    free_pixmap (rh, rh->window);
     if (rh->native_window)
       ANativeWindow_release (rh->native_window);
   }
@@ -1373,6 +1575,12 @@ jwxyz_scale (Window main_window)
 {
   // TODO: Use the actual device resolution.
   return 2;
+}
+
+float
+jwxyz_font_scale (Window main_window)
+{
+  return jwxyz_scale (main_window);
 }
 
 

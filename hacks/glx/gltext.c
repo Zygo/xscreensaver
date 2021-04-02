@@ -1,4 +1,4 @@
-/* gltext, Copyright (c) 2001-2017 Jamie Zawinski <jwz@jwz.orgq2
+/* gltext, Copyright (c) 2001-2021 Jamie Zawinski <jwz@jwz.orgq2
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,9 +24,6 @@
 #endif
 
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #include "xlockmore.h"
 #include "colors.h"
 #include "tube.h"
@@ -41,7 +38,7 @@
 #ifdef USE_GL /* whole file */
 
 #define DEF_TEXT          "(default)"
-#define DEF_PROGRAM       "(default)"
+#define DEF_PROGRAM       "xscreensaver-text --date --cols 20 --lines 3"
 #define DEF_SCALE_FACTOR  "0.01"
 #define DEF_WANDER_SPEED  "0.02"
 #define DEF_MAX_LINES     "8"
@@ -49,10 +46,6 @@
 #define DEF_WANDER        "True"
 #define DEF_FACE_FRONT    "True"
 #define DEF_USE_MONOSPACE "False"
-
-#ifdef HAVE_UNAME
-# include <sys/utsname.h>
-#endif /* HAVE_UNAME */
 
 #include "glutstroke.h"
 #include "glut_roman.h"
@@ -113,6 +106,7 @@ static XrmOptionDescRec opts[] = {
 
 static argtype vars[] = {
   {&text_fmt,      "text",         "Text",         DEF_TEXT,          t_String},
+  /* This happens to be what utils/textclient.c reads */
   {&program_str,   "program",      "Program",      DEF_PROGRAM,       t_String},
   {&do_spin,       "spin",         "Spin",         DEF_SPIN,          t_String},
   {&scale_factor,  "scaleFactor",  "ScaleFactor",  DEF_SCALE_FACTOR,  t_Float},
@@ -152,13 +146,12 @@ reshape_text (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -193,7 +186,36 @@ parse_text (ModeInfo *mi)
   text_configuration *tp = &tps[MI_SCREEN(mi)];
   char *old = tp->text;
 
-  if (program_str && *program_str && !!strcmp(program_str, "(default)"))
+  const char *tt =
+    (text_fmt && *text_fmt && !!strcmp(text_fmt, "(default)")
+     ? text_fmt : 0);
+  const char *pr =
+    (program_str && *program_str && !!strcmp(program_str, "(default)")
+     ? program_str : 0);
+
+  /* We used to do some "#ifdef HAVE_UNAME" stuff in here, but 
+     "xscreensaver-text --date" does a much better job of that
+     by reading random files from /etc/ and such.
+   */
+
+  if (tt && !strchr (tt, '%'))		/* Static text with no formatting */
+    {
+      tp->text = strdup (tt);
+      tp->reload = 0;
+    }
+  else if (tt)				/* Format string */
+    {
+      time_t now = time ((time_t *) 0);
+      struct tm *tm = localtime (&now);
+      int L = strlen(text_fmt) + 100;
+      tp->text = (char *) malloc (L);
+      *tp->text = 0;
+      strftime (tp->text, L-1, text_fmt, tm);
+      if (!*tp->text)
+        sprintf (tp->text, "strftime error:\n%s", text_fmt);
+      tp->reload = 1;			/* Clock ticks every second */
+    }
+  else if (pr)
     {
       int max_lines = max_no_lines;
       char buf[4096];
@@ -201,6 +223,7 @@ parse_text (ModeInfo *mi)
       int lines = 0;
 
       if (! tp->tc)
+        /* This runs 'pr' because it reads the same "program" resource. */
         tp->tc = textclient_open (mi->dpy);
 
       while (p < buf + sizeof(buf) - 1 &&
@@ -220,94 +243,19 @@ parse_text (ModeInfo *mi)
 
       tp->text = strdup (buf);
       
-      tp->reload = 7;  /* Let this one linger for a few seconds */
       if (!*tp->text)
-        tp->reload = 1;
-
-    }
-  else if (!text_fmt || !*text_fmt || !strcmp(text_fmt, "(default)"))
-    {
-# ifdef HAVE_UNAME
-      struct utsname uts;
-
-      if (uname (&uts) < 0)
+        tp->reload = 1;		/* No output, try again right away */
+      else if (!strncmp (pr, "xscreensaver-text --date", 24))
         {
-          tp->text = strdup("uname() failed");
+          /* If it's the default, and we have results, there's no need
+             to ever reload. */
+          tp->reload = 0;
         }
       else
-        {
-          char *s;
-          if ((s = strchr(uts.nodename, '.')))
-            *s = 0;
-          tp->text = (char *) malloc(strlen(uts.nodename) +
-                                     strlen(uts.sysname) +
-                                     strlen(uts.version) +
-                                     strlen(uts.release) + 10);
-#  if defined(_AIX)
-          sprintf(tp->text, "%s\n%s %s.%s",
-                  uts.nodename, uts.sysname, uts.version, uts.release);
-#  elif defined(HAVE_IPHONE)
-          /* "My iPhone\n iPhone4,1\n Darwin 11.0.0" */
-          sprintf(tp->text, "%s\n%s\n%s %s",
-                  uts.nodename, uts.machine, uts.sysname, uts.release);
-#  elif defined(__APPLE__)  /* MacOS X + XDarwin */
-          {
-            const char *file = 
-              "/System/Library/CoreServices/SystemVersion.plist";
-            FILE *f = fopen (file, "r");
-            char *pbv = 0, *pn = 0, *puvv = 0;
-            if (f) {
-              char *s, buf[255];
-
-              while (fgets (buf, sizeof(buf)-1, f)) {
-#               define GRAB(S,V)					\
-                if (strstr(buf, S)) {					\
-                  fgets (buf, sizeof(buf)-1, f);			\
-                  if ((s = strchr (buf, '>'))) V = strdup(s+1); 	\
-                  if ((s = strchr (V, '<'))) *s = 0;		 	\
-                }
-                GRAB ("ProductName", pn)
-                GRAB ("ProductBuildVersion", pbv)
-                GRAB ("ProductUserVisibleVersion", puvv)
-#               undef GRAB
-              }
-            }
-            if (pbv)
-              sprintf (tp->text, "%s\n%s\n%s\n%s", 
-                       uts.nodename, pn, puvv, uts.machine);
-            else
-              sprintf(tp->text, "%s\n%s %s\n%s",
-                      uts.nodename, uts.sysname, uts.release, uts.machine);
-          }
-#  else
-          sprintf(tp->text, "%s\n%s %s",
-                  uts.nodename, uts.sysname, uts.release);
-#  endif /* special system types */
-        }
-# else	/* !HAVE_UNAME */
-#  ifdef VMS
-      tp->text = strdup(getenv("SYS$NODE"));
-#  else
-      tp->text = strdup("*  *\n*  *  *\nxscreensaver\n*  *  *\n*  *");
-#  endif
-# endif	/* !HAVE_UNAME */
-    }
-  else if (!strchr (text_fmt, '%'))
-    {
-      tp->text = strdup (text_fmt);
+        tp->reload = 7;		/* Linger a bit */
     }
   else
-    {
-      time_t now = time ((time_t *) 0);
-      struct tm *tm = localtime (&now);
-      int L = strlen(text_fmt) + 100;
-      tp->text = (char *) malloc (L);
-      *tp->text = 0;
-      strftime (tp->text, L-1, text_fmt, tm);
-      if (!*tp->text)
-        sprintf (tp->text, "strftime error:\n%s", text_fmt);
-      tp->reload = 1;
-    }
+    abort();
 
   {
     /* The GLUT font only has ASCII characters. */

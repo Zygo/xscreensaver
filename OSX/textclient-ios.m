@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -89,13 +89,20 @@ textclient_mobile_date_string (void)
                           encoding: NSUTF8StringEncoding
                           error: &e];
   if (!self.result || [self.result length] == 0) {
-    // Aug 2019: loading URLs in the simulator no longer works, hooray!
     NSLog(@"URL error: %@: %@", self.url, e);
-    self.result = [[[[self.url host]
+    NSString *s = [[[[self.url host]
                       stringByAppendingString:@": "]
                         stringByAppendingString:
                          (e ? [e localizedDescription] : @"null response")]
                        stringByAppendingString:@"\n\n"];
+
+# if TARGET_IPHONE_SIMULATOR
+    // Aug 2019: loading URLs in the simulator no longer works, hooray!
+    // Print that, because I keep forgetting.
+    s = [@"Simulator can't load URLs:\n\n" stringByAppendingString:s];
+# endif
+
+    self.result = s;
   }
 # ifndef __OPTIMIZE__
   NSLog(@"textclient thread finished %@ (length %d)", self.url,

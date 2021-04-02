@@ -6,7 +6,6 @@ SHARED_CFLAGS = \
     -Wall \
     -Wstrict-prototypes \
     -Wmissing-prototypes \
-    -DGL_GLEXT_PROTOTYPES \
     -DSTANDALONE=1 \
     -DHAVE_ANDROID=1 \
     -DHAVE_GL=1 \
@@ -23,6 +22,8 @@ SHARED_CFLAGS = \
     -DGETTIMEOFDAY_TWO_ARGS=1 \
     -DHAVE_ICMP=1 \
     -DHAVE_PTHREAD=1 \
+    -DHAVE_GLSL=1 \
+    -DHAVE_GLES3=1 \
 
 SHARED_C_INCLUDES = \
     $(LOCAL_PATH) \
@@ -41,6 +42,7 @@ LOCAL_SRC_FILES := \
     hacks/glx/dropshadow.c \
     hacks/glx/chessmodels.c \
     hacks/glx/fps-gl.c \
+    hacks/glx/trackball.c \
     hacks/glx/gltrackball.c \
     hacks/glx/glut_stroke.c \
     hacks/glx/glut_swidth.c \
@@ -50,7 +52,7 @@ LOCAL_SRC_FILES := \
     hacks/glx/rotator.c \
     hacks/glx/sphere.c \
     hacks/glx/texfont.c \
-    hacks/glx/trackball.c \
+    hacks/glx/glsl-utils.c \
     hacks/glx/tube.c \
 
 # Some savers occupy more than one source file:
@@ -193,7 +195,8 @@ LOCAL_SRC_FILES += \
     hacks/pacman_ai.c \
     hacks/pacman_level.c \
 
-LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog -lEGL -latomic -landroid -ljnigraphics
+# "NDK: WARNING: non-system libraries in linker flags: -latomic"
+LOCAL_LDLIBS := -lGLESv1_CM -lGLESv3 -ldl -llog -lEGL -landroid -ljnigraphics
 
 LOCAL_C_INCLUDES := $(SHARED_C_INCLUDES)
 LOCAL_CFLAGS += $(SHARED_CFLAGS)

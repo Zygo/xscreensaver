@@ -1,5 +1,5 @@
 /* StonerView: An eccentric visual toy.
-   Copyright 1998-2001 by Andrew Plotkin (erkyrath@eblong.com)
+   Copyright 1998-2021 by Andrew Plotkin (erkyrath@eblong.com)
 
    Permission to use, copy, modify, distribute, and sell this software and its
    documentation for any purpose is hereby granted without fee, provided that
@@ -12,10 +12,6 @@
 
 #ifndef __STONERVIEW_H__
 # define __STONERVIEW_H__
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 typedef struct stonerview_state stonerview_state;
 

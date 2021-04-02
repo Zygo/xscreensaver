@@ -39,6 +39,7 @@ typedef struct qh_mesh {
   unsigned int nnormals;
 } qh_mesh_t;
 
+/* If out of memory, returns a mesh with no vertices */
 extern qh_mesh_t qh_quickhull3d(qh_vertex_t const* vertices,
                                 unsigned int nvertices);
 

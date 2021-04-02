@@ -4,8 +4,8 @@
             a screen saver and locker for the X window system
                             by Jamie Zawinski
 
-                              version 5.45
-                               08-Dec-2020
+                              version 6.00
+                               01-Apr-2021
 
                      https://www.jwz.org/xscreensaver/
 
@@ -13,8 +13,7 @@
 
 This directory contains XML files that describe each of the screenhacks;
 the per-hack user interface is constructed based on the things in these
-files.  The files are loaded at run-time by xscreensaver-demo (also
-known as "the Control Center screensaver properties capplet".)
+files.  The files are loaded at run-time by "xscreensaver-settings".
 
 The tags and parameters used here are:
 
@@ -76,6 +75,7 @@ The tags and parameters used here are:
           _high-label="RIGHT LABEL"
           low="MIN VALUE"
           high="MAX VALUE"
+          step="MODULUS"
           default="DEFAULT VALUE"
           [ convert="invert" ]
           />
@@ -255,6 +255,9 @@ The tags and parameters used here are:
         entities are allowed; HTML (and other markup) is not.
 
 -----------------------------------------------------------------------
+
+Those tags and parameters whose names begin with an underscore contain
+strings that are translatable via the ../../po/ directory.
 
 If you are DTD-minded, you may also find the included files "xss.dtd"
 and "xss.xsd" useful.

@@ -1,5 +1,5 @@
 /* exec.c --- executes a program in *this* pid, without an intervening process.
- * xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -69,22 +69,12 @@
 				/* and also setrlimit() and RLIMIT_AS */
 #endif
 
-#ifdef VMS
-# include <processes.h>
-# include <unixio.h>		/* for close */
-# include <unixlib.h>		/* for getpid */
-# define pid_t int
-# define fork  vfork
-#endif /* VMS */
-
 #include "exec.h"
 
 extern const char *blurb (void);
 
 static void nice_process (int nice_level);
 
-
-#ifndef VMS
 
 static void
 exec_simple_command (const char *command)
@@ -161,26 +151,12 @@ exec_complex_command (const char *shell, const char *command)
   execvp (av[0], av);	/* shouldn't return. */
 }
 
-#else  /* VMS */
-
-static void
-exec_vms_command (const char *command)
-{
-  system (command);
-  fflush (stderr);
-  fflush (stdout);
-  exit (1);	/* Note that this only exits a child fork.  */
-}
-
-#endif /* !VMS */
-
 
 void
 exec_command (const char *shell, const char *command, int nice_level)
 {
   int hairy_p;
 
-#ifndef VMS
   nice_process (nice_level);
 
   hairy_p = !!strpbrk (command, "*?$&!<>[];`'\\\"=");
@@ -204,10 +180,6 @@ exec_command (const char *shell, const char *command, int nice_level)
   else
     /* Otherwise, we can just exec the program directly. */
     exec_simple_command (command);
-
-#else  /* VMS */
-  exec_vms_command (command);
-#endif /* VMS */
 }
 
 
@@ -242,7 +214,7 @@ nice_process (int nice_level)
     }
 #else
   fprintf (stderr,
-	   "%s: don't know how to change process priority on this system.\n",
+	   "%s: don't know how to change process priority on this system\n",
 	   blurb());
 
 #endif

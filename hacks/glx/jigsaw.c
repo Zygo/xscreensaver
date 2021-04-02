@@ -48,7 +48,7 @@
 #define DEF_WOBBLE       "True"
 #define DEF_DEBUG        "False"
 
-#define DEF_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
+#define DEF_FONT "sans-serif bold 24"
 #define DEFAULTS  "*delay:		20000	\n" \
 		  "*showFPS:		False	\n" \
 		  "*font:	     " DEF_FONT"\n" \
@@ -60,16 +60,6 @@
 
 
 # define release_jigsaw 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
 
 #include "xlockmore.h"
 #include "rotator.h"
@@ -79,9 +69,7 @@
 #include "grab-ximage.h"
 #include "texfont.h"
 
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#else /* !HAVE_JWZGLES */
+#ifndef HAVE_JWZGLES
 # define HAVE_TESS
 #endif /* !HAVE_JWZGLES */
 
@@ -1344,13 +1332,12 @@ reshape_jigsaw (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 

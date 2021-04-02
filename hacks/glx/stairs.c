@@ -494,6 +494,16 @@ draw_stairs (ModeInfo * mi)
     if (rot != 0 && rot != 180 && rot != -180)
       glScalef (1/h, 1/h, 1/h);
   }
+# else
+  {
+    /* Don't understand why this clause doesn't work on mobile, but it 
+       doesn't. */
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glRotatef (current_device_rotation(), 0, 0, 1);
+    glScalef (s, s, s);
+  }
 # endif
 
     gltrackball_rotate (sp->trackball);

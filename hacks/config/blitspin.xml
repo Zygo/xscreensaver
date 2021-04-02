@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="blitspin" _label="BlitSpin">
+<screensaver name="blitspin" _label="Blit Spin">
 
   <command arg="-root"/>
 

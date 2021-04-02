@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2014-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -37,6 +37,50 @@ struct _XftDraw {
 };
 
 
+Display *
+XftDrawDisplay (XftDraw *draw)
+{
+  return draw->dpy;
+}
+
+
+Bool
+XftDrawSetClipRectangles (XftDraw *draw, int x, int y,
+                          _Xconst XRectangle *rects, int n)
+{
+  if (!n)
+    return XSetClipMask (draw->dpy, draw->gc, 0);
+# if 0
+  else
+    /* #### unimplemented in jwxyz, so clipping is a no-op */
+    return XSetClipRectangles (draw->dpy, draw->gc, x, y,
+                               (XRectangle *) rects,  /* discard const */
+                               n, Unsorted);
+# else
+  return False;
+# endif
+}
+
+
+Bool
+XftDrawSetClip (XftDraw *draw, Region region)
+{
+  if (!region)
+    return XSetClipMask (draw->dpy, draw->gc, 0);
+# if 0
+  else
+    /* #### unimplemented in jwxyz, so clipping is a no-op */
+    {
+      XRectangle rect;		/* #### untested */
+      XClipBox (region, &rect); /* #### unimplemented in jwxyz */
+      return XftDrawSetClipRectangles (draw, 0, 0, &rect, 1);
+    }
+# else
+  return False;
+# endif
+}
+
+
 XftFont *
 XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
 {
@@ -60,8 +104,9 @@ XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
   {
     unsigned i;
 
-    // In the event of -*-random-* (under JWXYZ), get the actual XLFD,
-    // otherwise we'll get another random font that doesn't match ff->xfont.
+    /* In the event of -*-random-* (under JWXYZ), get the actual XLFD,
+       otherwise we'll get another random font that doesn't match ff->xfont.
+     */
     char *xlfd_resolved = NULL;
 
     char **missing_charset_list_return;
@@ -111,6 +156,62 @@ XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
 }
 
 
+/* Very approximately convert an XFT-style name to an XLFD style name
+   and then call XftFontOpenXlfd on that.
+ */
+XftFont *
+XftFontOpenName (Display *dpy, int screen, _Xconst char *xft_name)
+{
+  XftFont *font;
+  char *name = strdup (xft_name);
+  char *xlfd = 0;
+  char *s, *b, *i, *o, *c;
+  int size;
+  char dummy;
+
+  /* Ignore any ":keywords=" */
+  c = strchr (name, ':');
+  if (c) *c = 0;
+
+  /* Downcase ASCII */
+  for (s = name; *s; s++)
+    if (*s >= 'A' && *s <= 'Z')
+      *s += 'a'-'A';
+
+  /* "Family-NN" */
+  s = strrchr (name, '-');
+  if (!s) goto FAIL;
+  if (1 != sscanf (s+1, " %d %c", &size, &dummy)) goto FAIL;
+  if (size <= 0) goto FAIL;
+  *s = 0;
+
+  /* "Family Bold", etc. */
+  b = strstr (name, " bold");
+  i = strstr (name, " italic");
+  o = strstr (name, " oblique");
+  if (b) *b = 0;
+  if (i) *i = 0;
+  if (o) *o = 0;
+
+  xlfd = (char *) malloc (strlen(name) + 80);
+  sprintf (xlfd, "-*-%s-%s-%s-*-*-*-%d-*-*-*-*-*-*",
+           name,
+           (b ? "bold" : "medium"),
+           (i ? "i" : o ? "o" : "r"),
+           size * 10);
+  font = XftFontOpenXlfd (dpy, screen, xlfd);
+  free (name);
+  free (xlfd);
+  return font;
+
+ FAIL:
+  fprintf (stderr, "%s: XFT: unparsable: \"%s\"\n", progname, xft_name);
+  if (name) free (name);
+  if (xlfd) free (xlfd);
+  return 0;
+}
+
+
 void
 XftFontClose (Display *dpy, XftFont *font)
 {
@@ -132,7 +233,8 @@ XftColorAllocName (Display  *dpy,
 		   XftColor *result)
 {
   XColor color;
-  if (!dpy || !visual || !name || !result) abort();
+  if (!dpy || !visual || !result) abort();
+  if (!name || !*name) name = "#FFFFFF";
 
   if (! XParseColor (dpy, cmap, name, &color))
     {

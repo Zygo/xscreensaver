@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "29-Aug-2008" "X Version 11"
 .SH NAME
 munch \- munching squares
@@ -94,46 +81,47 @@ stored in the RESOURCE_MANAGER property.
 .RS 0
 .BR http://www.inwap.com/pdp10/hbaker/hakmem/hakmem.html
 .SH HISTORY
-HAKMEM: MIT AI Memo 239, Feb. 29, 1972.
-.RS 8
+.B HAKMEM: MIT AI Memo 239, Feb. 29, 1972.
 Beeler, M., Gosper, R.W., and Schroeppel, R.
 
 "Unless otherwise stated, all computer programs are in PDP-6/10
 assembly language."
-.TP 4
-ITEM 146: MUNCHING SQUARES
+
+.SS ITEM 146: MUNCHING SQUARES
 
 Another simple display program. It is thought that this was discovered by
 Jackson Wright on the RLE PDP-1 circa 1962.
+.nf
+.sp
+	DATAI 2
+	ADDB 1,2
+	ROTC 2,-22
+	XOR 1,2
+	JRST .-4
+.sp
+.fi
 
-.EX
-    DATAI 2
-    ADDB 1,2
-    ROTC 2,-22
-    XOR 1,2
-    JRST .-4
-.EE
-.RS 4
 2=X, 3=Y. Try things like 1001002 in data switches. This also does
 interesting things with operations other than XOR, and rotations other 
 than -22. (Try IOR; AND; TSC; FADR; FDV(!); ROT -14, -9, -20, ...)
-.RE
-.TP 4
+
+.SS
 ITEM 147 (Schroeppel):
 
 Munching squares is just views of the graph Y = X XOR T for consecutive
 values of T = time.
-.TP 4
-ITEM 148 (Cohen, Beeler):
+
+.SS ITEM 148 (Cohen, Beeler):
 
 A modification to munching squares which reveals them in frozen states
 through opening and closing curtains: insert FADR 2,1 before the XOR. Try
 data switches =
+.nf
+.sp
+	4000,,4    1000,,2002    2000,,4    0,,1002
+.sp
+.fi
 
-.EX
-    4000,,4    1000,,2002    2000,,4    0,,1002
-.EE
-.RS 4
 (Notation: <left half>,,<right half>)
 .RS 0
 Also try the FADR after the XOR, switches = 1001,,1. 

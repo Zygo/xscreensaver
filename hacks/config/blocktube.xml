@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="blocktube" _label="BlockTube" gl="yes">
+<screensaver name="blocktube" _label="Block Tube" gl="yes">
 
   <command arg="-root"/>
 

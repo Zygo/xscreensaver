@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -213,6 +213,7 @@ launch_text_generator (text_data *d)
       if (!d->out_buffer || !*d->out_buffer)
         d->out_buffer = "Can't exec; Gatekeeper problem?\r\n\r\n";
       start_timer (d);
+      free (cmd);
       return;
     }
 
@@ -278,26 +279,39 @@ launch_text_generator (text_data *d)
           free (text_mode);
         }
 
-      strcpy (s, text_mode_flag);
-      s += strlen (s);
-
-      if (value_res)
+      /* If the 'program' resource already has a text-mode option in it,
+         don't override that!  'gltext' does this. */
+      if (! (strstr (cmd, " --date") ||
+             strstr (cmd, " --text") ||
+             strstr (cmd, " --file") ||
+             strstr (cmd, " --url")  ||
+             strstr (cmd, " --program")))
         {
-          size_t old_s = s - cmd;
-          char *value = get_string_resource (d->dpy, value_res, "");
-          if (!value)
-            value = strdup("");
-          cmd = realloc(cmd, cmd_capacity + strlen(value) * 2);
-          s = cmd + old_s;
-          *s = ' ';
-          ++s;
-          s = escape_str(s, value);
-          free(value);
+          strcpy (s, text_mode_flag);
+          s += strlen (s);
+
+          if (value_res)
+            {
+              size_t old_s = s - cmd;
+              char *value = get_string_resource (d->dpy, value_res, "");
+              if (!value)
+                value = strdup("");
+              cmd = realloc(cmd, cmd_capacity + strlen(value) * 2);
+              s = cmd + old_s;
+              *s = ' ';
+              ++s;
+              s = escape_str(s, value);
+              free(value);
+            }
         }
 # endif /* HAVE_COCOA */
     }
 
+# if 1
   strcpy (s, " ) 2>&1");
+# else
+  strcpy (s, " )");
+# endif
 
 # ifdef DEBUG
   fprintf (stderr, "%s: textclient: launch %s: %s\n", progname, 
@@ -550,6 +564,13 @@ textclient_open (Display *dpy)
   d->swap_bs_del_p    = get_boolean_resource (dpy, "swapBSDEL",    "Boolean");
 
   d->program = get_string_resource (dpy, "program", "Program");
+
+  /* Just in case the resource is blank, e.g. gltext. */
+  if (!d->program || !*d->program || !strcmp(d->program, "(default)"))
+    {
+      if (d->program) free (d->program);
+      d->program = strdup ("xscreensaver-text");
+    }
 
 
 # ifdef HAVE_FORKPTY

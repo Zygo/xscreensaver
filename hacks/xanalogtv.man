@@ -21,7 +21,7 @@ underlying the window, or from the system's video input, or from a
 random file on disk, as indicated by the \fIgrabDesktopImages\fP,
 \fIgrabVideoFrames\fP, and \fIchooseRandomImages\fP options in the
 \fI~/.xscreensaver\fP file; see
-.BR xscreensaver-demo (1)
+.BR xscreensaver\-settings (1)
 for more details. It looks best with a video input or
 your digital photo collection.
 .PP
@@ -70,8 +70,8 @@ between -180 and +180.
 .BR apple2 (MANSUFFIX),
 .BR bsod (MANSUFFIX),
 .BR xscreensaver (1),
-.BR xscreensaver\-demo (1),
-.BR xscreensaver\-getimage (1)
+.BR xscreensaver\-settings (1),
+.BR xscreensaver\-getimage (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2003 by Trevor Blackwell.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

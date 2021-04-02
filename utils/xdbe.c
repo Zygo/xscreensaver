@@ -18,12 +18,9 @@
 #include "utils.h"
 #include "xdbe.h"
 #include "resources.h"		/* for get_string_resource() */
+#include "xmu.h"
 
 /* #define DEBUG */
-
-#ifdef DEBUG
-# include <X11/Xmu/Error.h>
-#endif
 
 extern char *progname;
 

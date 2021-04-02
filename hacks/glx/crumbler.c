@@ -15,8 +15,6 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define release_crumbler 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"
@@ -111,17 +109,29 @@ make_point_cloud (qh_vertex_t *verts, int nverts)
     }
 }
 
+static void crumbler_oom (void)
+{
+# ifdef HAVE_JWXYZ
+  jwxyz_abort ("%s: out of memory, try reducing 'density'", progname);
+# else
+  fprintf (stderr, "%s: out of memory, try reducing 'density'\n", progname);
+  exit (1);
+# endif
+}
+
 
 static chunk *
 make_chunk (void)
 {
   chunk *c = (chunk *) calloc (1, sizeof(*c));
+  if (!c) crumbler_oom();
   c->dlist = glGenLists (1);
   c->color_shift = 1 + (random() % 3) * RANDSIGN();
   return c;
 }
 
-static void
+/* Return False if out of memory */
+static Bool
 render_chunk (ModeInfo *mi, chunk *c)
 {
   int wire = MI_IS_WIREFRAME(mi);
@@ -169,6 +179,12 @@ render_chunk (ModeInfo *mi, chunk *c)
 
   m = qh_quickhull3d (c->verts, c->nverts);
 
+  if (!m.vertices)  /* out of memory */
+    {
+      qh_free_mesh (m);
+      return False;
+    }
+
   glNewList (c->dlist, GL_COMPILE);
   if (! wire) glBegin (GL_TRIANGLES);
   for (i = 0, j = 0; i < m.nindices; i += 3, j++)
@@ -212,6 +228,7 @@ render_chunk (ModeInfo *mi, chunk *c)
   glEndList();
 
   qh_free_mesh (m);
+  return True;
 }
 
 
@@ -245,7 +262,7 @@ pad_chunk (chunk *c, int min)
   if (c->nverts >= min) return;
   if (c->nverts <= 3) abort();
   verts = (qh_vertex_t *) calloc (min, sizeof(*verts));
-  if (!verts) abort();
+  if (!verts) crumbler_oom();
   memcpy (verts, c->verts, c->nverts * sizeof(*verts));
   i = c->nverts;
   while (i < min)
@@ -312,6 +329,7 @@ pad_chunk (chunk *c, int min)
 
 #if 0
   qh_vertex_t *verts2 = (qh_vertex_t *) calloc (n, sizeof(*verts2));
+  if (!verts2) crumbler_oom();
   memcpy (verts2, v, n * sizeof(*verts2));
   free (c->verts);
   c->verts = verts2;
@@ -342,7 +360,9 @@ split_chunk (ModeInfo *mi, chunk *c, int nchunks)
 
  RETRY:
   chunks = (chunk **) calloc (nchunks, sizeof(*chunks));
+  if (!chunks) crumbler_oom();
   keys = (int *) calloc (nchunks, sizeof(*keys));
+  if (!keys) crumbler_oom();
 
   for (i = 0; i < nchunks; i++)
     {
@@ -370,6 +390,7 @@ split_chunk (ModeInfo *mi, chunk *c, int nchunks)
       chunks[i] = c2;
       chunks[i]->nverts = 0;
       c2->verts = (qh_vertex_t *) calloc (c->nverts, sizeof(*c2->verts));
+      if (!c2->verts) crumbler_oom();
       c2->color = (c->color + (random() % (1 + (bp->ncolors / 3))))
                    % bp->ncolors;
     }
@@ -430,7 +451,8 @@ split_chunk (ModeInfo *mi, chunk *c, int nchunks)
 
       if (i == 0)  /* The one we're gonna keep */
         pad_chunk (c2, c->nverts);
-      render_chunk (mi, c2);
+      if (! render_chunk (mi, c2))
+        crumbler_oom();   /* We are too far in to recover from this */
     }
 
   return chunks;
@@ -483,7 +505,8 @@ tick_crumbler (ModeInfo *mi)
       /* Re-render it to move the verts in the display list too.
          This also recomputes min, max and mid.
        */
-      render_chunk (mi, c);
+      if (! render_chunk (mi, c))
+        crumbler_oom();   /* We are too far in to recover from this */
       break;
     }
 
@@ -530,7 +553,8 @@ tick_crumbler (ModeInfo *mi)
       /* Re-render it to move the verts in the display list too.
          This also recomputes min, max and mid (now 0).
        */
-      render_chunk (mi, c);
+      if (! render_chunk (mi, c))
+        crumbler_oom();   /* We are too far in to recover from this */
       break;
     }
 
@@ -584,13 +608,12 @@ reshape_crumbler (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -661,6 +684,7 @@ init_crumbler (ModeInfo *mi)
 
   bp->ncolors = 1024;
   bp->colors = (XColor *) calloc(bp->ncolors, sizeof(XColor));
+  if (!bp->colors) crumbler_oom();
   make_smooth_colormap (0, 0, 0,
                         bp->colors, &bp->ncolors,
                         False, 0, False);
@@ -676,35 +700,56 @@ init_crumbler (ModeInfo *mi)
 # undef R
     }
 
-# ifdef HAVE_MOBILE
-#  ifdef HAVE_IPHONE
-     density *= 0.5;  /* iPhone 6s runs out of memory at 4500 nverts. */
-#  else
-     density *= 0.3;  /* Android Nexus_5_8.1 emulator runs out earlier. */
-#  endif
-# endif
-
   {
+    double d2 = density;
     chunk *c;
+
     bp->nchunks = 1;
     bp->chunks = (chunk **) calloc (bp->nchunks, sizeof(*bp->chunks));
-    c = make_chunk();
-    bp->chunks[0] = c;
-    c->nverts = 4500 * density;
-    c->verts = (qh_vertex_t *) calloc (c->nverts, sizeof(*c->verts));
-    make_point_cloud (c->verts, c->nverts);
+    if (! bp->chunks) crumbler_oom();
 
-    /* Let's shrink it to a point then zoom in. */
-    bp->state = ZOOM;
-    bp->tick = 0;
-    for (i = 0; i < c->nverts; i++)
+    c = make_chunk();
+    if (! c) crumbler_oom();
+
+    bp->chunks[0] = c;
+
+    while (1)
       {
-        c->verts[i].x /= 500;
-        c->verts[i].y /= 500;
-        c->verts[i].z /= 500;
+        c->nverts = 4500 * d2;
+        c->verts = (qh_vertex_t *) calloc (c->nverts, sizeof(*c->verts));
+        if (c->verts)
+          {
+            make_point_cloud (c->verts, c->nverts);
+
+            /* Let's shrink it to a point then zoom in. */
+            bp->state = ZOOM;
+            bp->tick = 0;
+            for (i = 0; i < c->nverts; i++)
+              {
+                c->verts[i].x /= 500;
+                c->verts[i].y /= 500;
+                c->verts[i].z /= 500;
+              }
+
+            if (! render_chunk (mi, c))
+              {
+                free (c->verts);
+                c->verts = 0;
+              }
+          }
+
+        if (c->verts)
+          break;
+
+        if (d2 < 0.1)
+          crumbler_oom();
+        d2 *= 0.9;
       }
 
-    render_chunk (mi, c);
+    if (density != d2)
+      fprintf (stderr,
+               "%s: out of memory: reduced density from %.01f to %0.1f\n",
+               progname, density, d2);
   }
 }
 

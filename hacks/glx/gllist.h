@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,22 +12,7 @@
 #ifndef __GLLIST_H__
 #define __GLLIST_H__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#include <stdlib.h>
-
-#ifdef HAVE_COCOA
-#elif defined(HAVE_ANDROID)
-# include <GLES/gl.h>
-#else /* real X11 */
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
+#include "xlockmoreI.h"
 
 struct gllist 
 {

@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "25-Jul-98" "X Version 11"
 .SH NAME
 starwars \- draws a perspective text crawl, like at the beginning of the movie
@@ -74,14 +61,16 @@ will work, but programs like
 won't.
 
 Some examples:
-.EX
-starwars -program 'cat /usr/src/linux*/README'
-starwars -columns 30 -program 'ping www.starwars.com'
-starwars -left -no-wrap -program 'ps -auxwwf'
-starwars -left -no-wrap -columns 45 -program 'top -bn1'
-starwars -left -columns 40 -program 'od -txC /dev/urandom'
-starwars -font fixed -program 'od -txC /dev/urandom'
-.EE
+.nf
+.sp
+	starwars -program 'cat /usr/src/linux*/README'
+	starwars -columns 30 -program 'ping www.starwars.com'
+	starwars -left -no-wrap -program 'ps -auxwwf'
+	starwars -left -no-wrap -columns 45 -program 'top -bn1'
+	starwars -left -columns 40 -program 'od -txC /dev/urandom'
+	starwars -font fixed -program 'od -txC /dev/urandom'
+.sp
+.fi
 .TP 8
 .B \-size \fIinteger\fP
 How large a font to use, in points.  (Well, in some arbitrary unit 
@@ -157,7 +146,7 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR xscreensaver (1),
-.BR xscreensaver-text (1),
+.BR xscreensaver\-text (MANSUFFIX),
 .BR fortune (1),
 .BR phosphor (MANSUFFIX),
 .BR apple2 (MANSUFFIX),

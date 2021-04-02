@@ -70,7 +70,7 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
-.BR dymaxionmap (1)
+.BR dymaxionmap (MANSUFFIX)
 .BR ssystem (1)
 .SH COPYRIGHT
 Copyright \(co 2002-2018 by David Konerding and Jamie Zawinski.

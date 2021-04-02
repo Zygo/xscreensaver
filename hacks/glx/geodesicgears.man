@@ -64,8 +64,8 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR geodesic (1),
-.BR pinion (1)
+.BR geodesic (MANSUFFIX),
+.BR pinion (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2014 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

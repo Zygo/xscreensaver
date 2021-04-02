@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,11 +34,27 @@
 }
 
 
+-(double) increment
+{
+  return increment;
+}
+
+
+-(void) setIncrement:(double)v
+{
+  increment = v;
+}
+
+
 -(double) transformValue:(double) value
 {
-  double v2 = (integers
-               ? (int) (value + (value < 0 ? -0.5 : 0.5))
-               : value);
+  double v2 = value;
+
+  if (increment)
+    v2 = round (v2 / increment) * increment;
+  if (integers)
+    v2 = (int) (v2 + (v2 < 0 ? -0.5 : 0.5));
+
   double low   = [self minValue];
   double high  = [self maxValue];
   double range = high - low;

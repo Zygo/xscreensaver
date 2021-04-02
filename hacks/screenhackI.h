@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -71,15 +71,63 @@
 #ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 # include <string.h> /* X11/Xos.h brings this in. */
-/* From utils/visual.c. */
-# define DEFAULT_VISUAL	-1
-# define GL_VISUAL	-6
 #else  /* real X11 */
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # include <X11/Xresource.h>
 # include <X11/Xos.h>
 #endif /* !HAVE_JWXYZ */
+
+#ifdef HAVE_JWXYZ
+# define DEFAULT_VISUAL -1   /* From utils/visual.c. */
+# define GL_VISUAL	 -6
+#endif /* HAVE_JWXYZ */
+
+#ifdef USE_GL
+
+/* I'm told that the Sun version of OpenGL needs to have the constant
+   SUN_OGL_NO_VERTEX_MACROS defined in order for morph3d to compile
+   (the number of arguments to the glNormal3f macro changes...)
+   Verified with gcc 2.7.2.2 and Sun cc 4.2 with OpenGL 1.1.1 dev 4
+   on Solaris 2.5.1.
+ */
+# if defined(__sun) && defined(__SVR4)	/* Solaris */
+#  define SUN_OGL_NO_VERTEX_MACROS 1
+# endif /* Solaris */
+
+# ifdef HAVE_GLSL
+#  define GL_GLEXT_PROTOTYPES
+# endif
+
+# if defined(HAVE_COCOA) && !defined(HAVE_IPHONE)  /* macOS */
+#  include <OpenGL/gl.h>
+#  include <OpenGL/glu.h>
+# elif defined(HAVE_IPHONE)
+#  ifdef HAVE_GLES3
+#   include "OpenGLES/ES3/gl.h"
+#  endif
+# elif defined(HAVE_ANDROID)
+#  include <GLES/gl.h>
+#  ifdef HAVE_GLES3
+#   include <GLES3/gl3.h>
+#  endif
+# else /* real X11 */
+#  include <GL/gl.h>
+#  include <GL/glu.h>
+#  ifdef HAVE_EGL
+#   include <EGL/egl.h>
+#   include <EGL/eglext.h>
+#  else
+#   include <GL/glx.h>
+#  endif
+# endif
+
+# ifdef HAVE_JWZGLES
+#  include "jwzgles.h"
+# endif
+
+#endif /* HAVE_GL */
+
 
 #if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
 # define HAVE_MOBILE
@@ -113,11 +161,18 @@
 #include "grabscreen.h"
 #include "visual.h"
 #include "fps.h"
+#include "xft.h"
 #include "font-retry.h"
 
 #ifdef HAVE_RECORD_ANIM
 # include "recanim.h"
 #endif
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+#define RANDSIGN() ((random() & 1) ? 1 : -1)
+
 
 /* Be Posixly correct */
 #undef  bzero

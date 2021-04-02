@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="ccurve" _label="CCurve">
+<screensaver name="ccurve" _label="C Curve">
 
   <command arg="-root"/>
 

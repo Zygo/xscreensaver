@@ -20,6 +20,10 @@
       I changed the structure of the assembler in this version.
 */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 /*#include <malloc.h>*/
@@ -29,9 +33,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+
 #if defined(HAVE_STDINT_H)
 # include <stdint.h>
 #elif defined(HAVE_INTTYPES_H)
@@ -1178,7 +1180,7 @@ static AsmLine *newAsmLine(char *cmd, char *label, BOOL decl, Param *param, int 
     newp =  (AsmLine *) ecalloc(1, sizeof(AsmLine));
     newp->labelDecl = decl;
     newp->label = newLabel();
-    strncpy(newp->label->label,label,MAX_LABEL_LEN);
+    sprintf(newp->label->label, "%.*s", MAX_LABEL_LEN - 1, label);
     newp->command = estrdup(cmd);
     newp->param = newParam();
     copyParam(newp->param, param);
@@ -1413,6 +1415,7 @@ static BOOL immediate(char **s, Param *param){
     (*s)++; /* move past < or > */
     if (paramLabel(s, &label)){
       sprintf(param->label, "%.*s", MAX_LABEL_LEN-1, label);
+      free(label);
       return TRUE;
     }    
     free(label);

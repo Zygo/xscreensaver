@@ -10,8 +10,6 @@
  * implied warranty.
  */
 
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <math.h> /* for log2 */
 
 #define DEFAULTS	"*delay:	30000       \n" \
@@ -24,8 +22,6 @@
 
 
 # define release_tunnel 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"

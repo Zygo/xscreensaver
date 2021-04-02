@@ -17,25 +17,17 @@
 #ifndef __XSCREENSAVER_EXTRUSION_H__
 #define __XSCREENSAVER_EXTRUSION_H__
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "xlockmoreI.h"
 
 #ifdef HAVE_COCOA
 # include <GLUT/tube.h>    /* gle is included with GLUT on OSX */
 #else  /* !HAVE_COCOA */
-# include <GL/gl.h>
-# include <GL/glu.h>
 # ifdef HAVE_GLE3
 #  include <GL/gle.h>
 # else
 #  include <GL/tube.h>
 # endif
 #endif /* !HAVE_COCOA */
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
 
 extern void InitStuff_helix2(void);
 extern void DrawStuff_helix2(void);

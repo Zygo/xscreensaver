@@ -25,14 +25,6 @@
 #ifndef __PACMAN_H__
 #define __PACMAN_H__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include "xlockmoreI.h"
-
-#include "ximage-loader.h"
-
 #define LEVHEIGHT 	32U
 #define LEVWIDTH 	40U
 

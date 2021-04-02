@@ -26,8 +26,6 @@
 #include <assert.h>
 #include <float.h>
 
-#define countof(x) (sizeof((x))/sizeof(*(x)))
-
 #define MAX_COLORS (1L<<13)
 
 extern struct xscreensaver_function_table *xscreensaver_function_table;
@@ -545,20 +543,6 @@ xlockmore_init (Display *dpy, Window window,
     mi->pause = 0;
   else if (mi->pause > 100000000)
     mi->pause = 100000000;
-
-  /* If this hack uses fonts (meaning, mentioned "font" in DEFAULTS)
-     then load it. */
-  {
-    char *name = get_string_resource (dpy, "font", "Font");
-    if (name)
-      {
-        XFontStruct *f = load_font_retry (dpy, name);
-        if (!f) abort();
-        XSetFont (dpy, mi->gc, f->fid);
-        XFreeFont (dpy, f);
-        free (name);
-      }
-  }
   
   xlockmore_read_resources (mi);
 
@@ -579,6 +563,11 @@ xlockmore_clear (ModeInfo *mi)
 static void
 xlockmore_do_init (ModeInfo *mi)
 {
+# ifdef HAVE_JWZGLES
+  if (mi->xlmft->jwzgles_make_current && mi->jwzgles_state)
+    mi->xlmft->jwzgles_make_current (mi->jwzgles_state);
+# endif
+
   xlockmore_clear (mi);
   mi->xlmft->hack_init (mi);
 
@@ -614,6 +603,11 @@ xlockmore_draw (Display *dpy, Window window, void *closure)
   ModeInfo *mi = (ModeInfo *) closure;
   unsigned long orig_pause = mi->pause;
   unsigned long this_pause;
+
+# ifdef HAVE_JWZGLES
+  if (mi->xlmft->jwzgles_make_current && mi->jwzgles_state)
+    mi->xlmft->jwzgles_make_current (mi->jwzgles_state);
+# endif
 
   if (mi->needs_clear) {
     /* OpenGL hacks never get here. */
@@ -677,6 +671,12 @@ static Bool
 xlockmore_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   ModeInfo *mi = (ModeInfo *) closure;
+
+# ifdef HAVE_JWZGLES
+  if (mi->xlmft->jwzgles_make_current && mi->jwzgles_state)
+    mi->xlmft->jwzgles_make_current (mi->jwzgles_state);
+# endif
+
   if (mi) {
     if (mi->xlmft->hack_handle_events) {
       xlockmore_check_init (mi);
@@ -712,6 +712,11 @@ xlockmore_free (Display *dpy, Window window, void *closure)
 {
   ModeInfo *mi = (ModeInfo *) closure;
 
+# ifdef HAVE_JWZGLES
+  if (mi->xlmft->jwzgles_make_current && mi->jwzgles_state)
+    mi->xlmft->jwzgles_make_current (mi->jwzgles_state);
+# endif
+
   if (mi->eraser)
     eraser_free (mi->eraser);
 
@@ -735,6 +740,11 @@ xlockmore_free (Display *dpy, Window window, void *closure)
   free_colors (mi->xgwa.screen, mi->xgwa.colormap, mi->colors, mi->npixels);
   free (mi->colors);
   free (mi->pixels);
+
+# ifdef HAVE_JWZGLES
+  if (mi->xlmft->jwzgles_free)
+    mi->xlmft->jwzgles_free();
+# endif /* HAVE_JWZGLES */
 
   free (mi);
 }

@@ -76,18 +76,6 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #include "sphere.h"
 #include "buildlwo.h"
 #include "teapot.h"

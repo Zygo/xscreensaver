@@ -25,8 +25,6 @@
 			"*wireframe:    False       \n" \
 
 # define release_beats 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"
@@ -120,14 +118,6 @@ reshape_beats (ModeInfo *mi, int width, int height)
   gluLookAt( 0.0, 0.0, 30.0,
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
-
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
-  {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
-  }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -239,9 +229,9 @@ draw_beats (ModeInfo *mi)
   Bool sineWaveTick = bp->use_tick;
   Bool motionBlur = bp->use_blur;
   size_t cycle, dist;
-  int tmS, tmM, tmH, tmD;
-  uint64_t timeSeed;
-  int64_t timeDelta = 0;
+  unsigned int tmS, tmM, tmH, tmD;
+  unsigned int timeSeed;
+  int timeDelta = 0;
   size_t blurOffset = 10; /* offset per blur frame, in milliseconds */
   size_t framesPerBlur = 20;  /* number of sub-frames to blur */
   size_t deltaLimit = (motionBlur) ? (blurOffset * framesPerBlur) : 1;
@@ -276,12 +266,12 @@ draw_beats (ModeInfo *mi)
   glPushMatrix ();
   glRotatef(current_device_rotation(), 0, 0, 1);
 
-# ifdef HAVE_MOBILE
   {
-    GLfloat s = (MI_WIDTH(mi) > MI_HEIGHT(mi) ? 0.5 : 0.3);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi)
+                 : 1);
     glScalef (s, s, s);
   }
-# endif
 
   /* timeDelta is in milliseconds */
   for(timeDelta = 0; timeDelta <= deltaLimit; timeDelta += blurOffset){

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="sierpinski3d" _label="Sierpinski3D" gl="yes">
+<screensaver name="sierpinski3d" _label="Sierpinski 3D" gl="yes">
 
   <command arg="-root"/>
 

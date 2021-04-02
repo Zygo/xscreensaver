@@ -94,7 +94,7 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
-.BR glplanet (1)
+.BR glplanet (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2016-2018 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

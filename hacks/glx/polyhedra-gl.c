@@ -18,37 +18,15 @@
 #define DEFAULTS	"*delay:	30000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-	"*titleFont:  -*-helvetica-medium-r-normal-*-*-140-*-*-*-*-*-*\n" \
-	"*titleFont2: -*-helvetica-medium-r-normal-*-*-100-*-*-*-*-*-*\n" \
-	"*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
-	"*suppressRotationAnimation: True\n" \
+                        "*titleFont:    sans-serif 14\n" \
+                        "*titleFont2:   sans-serif 10\n" \
+                        "*titleFont3:   sans-serif 8\n"  \
+                        "*suppressRotationAnimation: True\n" \
 
 
 # define release_polyhedra 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
-
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
-#define DEF_SPIN        "True"
-#define DEF_WANDER      "True"
-#define DEF_SPEED       "1.0"
-#define DEF_TITLES      "True"
-#define DEF_DURATION    "12"
-#define DEF_WHICH       "random"
-
 #include "texfont.h"
 #include "normals.h"
 #include "polyhedra.h"
@@ -56,6 +34,13 @@
 #include "rotator.h"
 #include "gltrackball.h"
 #include "teapot.h"
+
+#define DEF_SPIN        "True"
+#define DEF_WANDER      "True"
+#define DEF_SPEED       "1.0"
+#define DEF_TITLES      "True"
+#define DEF_DURATION    "12"
+#define DEF_WHICH       "random"
 
 #ifndef HAVE_JWXYZ
 # define XK_MISCELLANY
@@ -625,14 +610,12 @@ draw_polyhedra (ModeInfo *mi)
 
   glPushMatrix ();
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glScalef(1.1, 1.1, 1.1);
 

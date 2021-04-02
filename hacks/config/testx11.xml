@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<screensaver name="testx11" _label="TestX11">
+<screensaver name="testx11" _label="Test X11">
 
   <command arg="-root"/>
 

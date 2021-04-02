@@ -48,14 +48,6 @@
 
 #include "sphere.h"
 
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-#else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif
-
 #define DEF_ROTATE  "True"
 #define DEF_ROLL    "True"
 #define DEF_WANDER  "True"
@@ -68,9 +60,6 @@
 #define DEF_MODE    "globe"
 
 #define BLENDED_TERMINATOR
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)

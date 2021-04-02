@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "30-Oct-99" "X Version 11"
 .SH NAME
 xmatrix \- simulates the computer displays from the movie
@@ -115,12 +102,15 @@ exits, it will be launched again after xmatrix has processed all the
 text it produced.
 
 For example:
-.EX
-xmatrix -program 'echo Hello World'
-xmatrix -ascii -program 'ps -eo comm | rev'
-xmatrix -program 'od -txC -w6 /dev/random'
-xmatrix -program 'cat /dev/random'
-.EE
+
+.nf
+.sp
+	xmatrix -program 'echo Hello World'
+	xmatrix -ascii -program 'ps -eo comm | rev'
+	xmatrix -program 'od -txC -w6 /dev/random'
+	xmatrix -program 'cat /dev/random'
+.sp
+.fi
 .SH ENVIRONMENT
 .PP
 .TP 8

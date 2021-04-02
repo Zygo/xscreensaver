@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "5-May-2004" "X Version 11"
 .SH NAME
 apple2 \- Apple ][ display emulator
@@ -43,7 +30,7 @@ colors, you can only make out the general shape of the pictures.
 
 In text mode it displays the output of a command or the contents of
 a file or URL (via the default
-.BR xscreensaver-text (1)
+.BR xscreensaver\-text (MANSUFFIX)
 program, which can be overridden with \fI\-program\fP).
 
 In text mode, it is also a fully functional (if anachronistic)
@@ -83,31 +70,35 @@ option may be any string acceptable to /bin/sh. The program will be
 run at the end of a pipe, and any characters that it prints to
 \fIstdout\fP will be printed on the Apple ][ display. If the program
 exits, it will be launched again after 3 seconds.  Default:
-.BR xscreensaver-text (1).
+.BR xscreensaver\-text (MANSUFFIX).
 
 In text mode, \fIapple2\fP emulates a vt100 terminal running on a 40x24
 uppercase-only screen.
 
 For example:
-.EX
-apple2 -text \\
-       -program 'cat /usr/src/linux*/README | fold -sw40'
-apple2 -text -program 'ping apple.com'
-apple2 -text -program 'ps -e'
-apple2 -text -program 'od -txCz -w7 /dev/urandom'
-apple2 -text -program 'cat /dev/random'
-apple2 -text -fast -program 'xemacs -nw -q -f life'
-apple2 -text -fast \\
-       -program 'xemacs -nw -q --eval "(hanoi 5)"'
-.EE
+.nf
+.sp
+	apple2 -text \\
+	       -program 'cat /usr/src/linux*/README | fold -sw40'
+	apple2 -text -program 'ping apple.com'
+	apple2 -text -program 'ps -e'
+	apple2 -text -program 'od -txCz -w7 /dev/urandom'
+	apple2 -text -program 'cat /dev/random'
+	apple2 -text -fast -program 'xemacs -nw -q -f life'
+	apple2 -text -fast \\
+	       -program 'xemacs -nw -q --eval "(hanoi 5)"'
+.sp
+.fi
 You can also use \fIapple2\fP as an extremely lo-fi replacement for the
 .BR xterm (1)
 and
 .BR gnome-terminal (1)
 terminal emulators:
-.EX
-apple2 -text -fast -program tcsh
-.EE
+.nf
+.sp
+	apple2 -text -fast -program tcsh
+.sp
+.fi
 .TP 8
 .B \-pty
 In \fI\-text\fP mode, launch the sub-program under a pty so that it
@@ -180,7 +171,7 @@ Apple ][ and Applesoft are trademarks of Apple Computer.
 .SH SEE ALSO
 .BR xscreensaver (1),
 .BR bsod (MANSUFFIX),
-.BR xscreensaver-text (1),
+.BR xscreensaver\-text (MANSUFFIX),
 .BR fortune (1),
 .BR phosphor (MANSUFFIX),
 .BR starwars (MANSUFFIX),

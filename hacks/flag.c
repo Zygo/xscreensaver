@@ -35,7 +35,7 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 #ifdef HAVE_COCOA
 # define DEF_FONT "Monaco 15"
 #else
-# define DEF_FONT "fixed"
+# define DEF_FONT "-*-fixed-medium-r-*-*-*-100-*-*-c-*-*-*"
 #endif
 
 #ifdef STANDALONE

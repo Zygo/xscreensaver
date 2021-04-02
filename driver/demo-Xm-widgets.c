@@ -79,6 +79,8 @@ tab_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
+extern Widget create_xscreensaver_demo (Widget parent);
+
 Widget
 create_xscreensaver_demo (Widget parent)
 {
@@ -539,14 +541,12 @@ create_options_page (Widget parent)
        timeoutLabel
        cycleLabel
        fadeSecondsLabel
-       fadeTicksLabel
        lockLabel
        passwdLabel
 
        timeoutText
        cycleText
        fadeSecondsText
-       fadeTicksText
        lockText
        passwdText
 
@@ -566,11 +566,11 @@ create_options_page (Widget parent)
   Arg av[64];
   int ac = 0;
   Widget children[100];
-  Widget timeout_label, cycle_label, fade_seconds_label, fade_ticks_label;
+  Widget timeout_label, cycle_label, fade_seconds_label;
   Widget lock_label, passwd_label, hr;
   Widget preferences_form;
 
-  Widget timeout_text, cycle_text, fade_text, fade_ticks_text;
+  Widget timeout_text, cycle_text, fade_text;
   Widget lock_timeout_text, passwd_timeout_text, verbose_toggle;
   Widget install_cmap_toggle, fade_toggle, unfade_toggle;
   Widget lock_toggle, prefs_done, prefs_cancel;
@@ -601,10 +601,6 @@ create_options_page (Widget parent)
                                             "fadeSecondsLabel", av, ac);
   ac = 0;
   XtSetArg(av[ac], XmNalignment, XmALIGNMENT_END); ac++;
-  fade_ticks_label = XmCreateLabelGadget (preferences_form, "fadeTicksLabel",
-                                          av, ac);
-  ac = 0;
-  XtSetArg(av[ac], XmNalignment, XmALIGNMENT_END); ac++;
   lock_label = XmCreateLabelGadget (preferences_form, "lockLabel", av, ac);
   ac = 0;
   XtSetArg(av[ac], XmNalignment, XmALIGNMENT_END); ac++;
@@ -613,8 +609,6 @@ create_options_page (Widget parent)
   timeout_text = XmCreateTextField (preferences_form, "timeoutText", av, ac);
   cycle_text = XmCreateTextField (preferences_form, "cycleText", av, ac);
   fade_text = XmCreateTextField (preferences_form, "fadeSecondsText", av, ac);
-  fade_ticks_text = XmCreateTextField (preferences_form, "fadeTicksText",
-                                       av, ac);
   lock_timeout_text = XmCreateTextField (preferences_form, "lockText",
                                          av, ac);
   passwd_timeout_text = XmCreateTextField (preferences_form, "passwdText",
@@ -684,20 +678,6 @@ create_options_page (Widget parent)
                  XmNrightWidget, fade_text,
                  NULL);
 
-  XtVaSetValues (fade_ticks_label,
-                 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
-                 XmNtopOffset, 0,
-                 XmNtopWidget, fade_ticks_text,
-                 XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
-                 XmNbottomOffset, 0,
-                 XmNbottomWidget, fade_ticks_text,
-                 XmNleftAttachment, XmATTACH_FORM,
-                 XmNleftOffset, 20,
-                 XmNrightAttachment, XmATTACH_WIDGET,
-                 XmNrightOffset, 4,
-                 XmNrightWidget, fade_ticks_text,
-                 NULL);
-
   XtVaSetValues (lock_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopOffset, 0,
@@ -751,22 +731,13 @@ create_options_page (Widget parent)
                  XmNleftWidget, cycle_text,
                  NULL);
 
-  XtVaSetValues (fade_ticks_text,
+  XtVaSetValues (lock_timeout_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopOffset, 2,
                  XmNtopWidget, fade_text,
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftOffset, 0,
                  XmNleftWidget, fade_text,
-                 NULL);
-
-  XtVaSetValues (lock_timeout_text,
-                 XmNtopAttachment, XmATTACH_WIDGET,
-                 XmNtopOffset, 2,
-                 XmNtopWidget, fade_ticks_text,
-                 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
-                 XmNleftOffset, 0,
-                 XmNleftWidget, fade_ticks_text,
                  NULL);
 
   XtVaSetValues (passwd_timeout_text,
@@ -822,10 +793,10 @@ create_options_page (Widget parent)
   XtVaSetValues (unfade_toggle,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopOffset, 0,
-                 XmNtopWidget, fade_ticks_text,
+                 XmNtopWidget, lock_timeout_text,
                  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNbottomOffset, 0,
-                 XmNbottomWidget, fade_ticks_text,
+                 XmNbottomWidget, lock_timeout_text,
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftOffset, 0,
                  XmNleftWidget, fade_toggle,
@@ -836,10 +807,10 @@ create_options_page (Widget parent)
   XtVaSetValues (lock_toggle,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopOffset, 0,
-                 XmNtopWidget, lock_timeout_text,
+                 XmNtopWidget, passwd_timeout_text,
                  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNbottomOffset, 0,
-                 XmNbottomWidget, lock_timeout_text,
+                 XmNbottomWidget, passwd_timeout_text,
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftOffset, 0,
                  XmNleftWidget, unfade_toggle,
@@ -872,13 +843,11 @@ create_options_page (Widget parent)
   children[ac++] = timeout_label;
   children[ac++] = cycle_label;
   children[ac++] = fade_seconds_label;
-  children[ac++] = fade_ticks_label;
   children[ac++] = lock_label;
   children[ac++] = passwd_label;
   children[ac++] = timeout_text;
   children[ac++] = cycle_text;
   children[ac++] = fade_text;
-  children[ac++] = fade_ticks_text;
   children[ac++] = lock_timeout_text;
   children[ac++] = passwd_timeout_text;
   children[ac++] = verbose_toggle;

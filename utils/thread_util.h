@@ -161,7 +161,7 @@ unsigned thread_memory_alignment(Display *dpy);
 
 /* int thread_malloc(void **ptr, Display *dpy, unsigned size); */
 #define thread_malloc(ptr, dpy, size) \
-  (aligned_malloc((ptr), thread_memory_alignment(dpy), (size)))
+  (aligned_malloc((ptr), 0, (size)))
 
 /*
    This simply does a malloc aligned to thread_memory_alignment(). See

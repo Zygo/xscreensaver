@@ -53,16 +53,13 @@
                   "*showFPS:         False                \n" \
 	          "*fpsSolid:        True                 \n" \
 	          "*useSHM:          True                 \n" \
-            "*titleFont: -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
+                  "*titleFont: sans-serif 18\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
 
 # define release_slideshow 0
 # include "xlockmore.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #ifdef USE_GL
 

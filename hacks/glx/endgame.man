@@ -57,8 +57,8 @@ It's not unknown for this and other OpenGL hacks to fail under hardware accelara
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
-.BR xscreensaver\-demo (1),
-.BR xscreensaver\-getimage (1)
+.BR xscreensaver\-settings (1),
+.BR xscreensaver\-getimage (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2002 by Blair Tennessy.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is

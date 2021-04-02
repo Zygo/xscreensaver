@@ -124,12 +124,12 @@ main (int argc, char **argv)
 	    {
 	      if (was_numeric)
 		{
-		  fprintf(stderr, "no group numbered %s.\n", group);
+		  fprintf(stderr, "no group numbered %s\n", group);
 		  group = "";
 		}
 	      else
 		{
-		  fprintf(stderr, "no group named %s.\n", group);
+		  fprintf(stderr, "no group named %s\n", group);
 		  goto NOGROUP;
 		}
 	    }
@@ -138,14 +138,14 @@ main (int argc, char **argv)
           {
             gid_t g2 = gid;
             if (setgroups(1, &g2) == 0)
-              fprintf(stderr, " succeeded.\n");
+              fprintf(stderr, " succeeded\n");
             else
               perror(" failed");
           }
 
 	  fprintf(stderr, "setgid(%ld) \"%s\"", gid, group);
 	  if (setgid(gid) == 0)
-	    fprintf(stderr, " succeeded.\n");
+	    fprintf(stderr, " succeeded\n");
 	  else
 	    perror(" failed");
 
@@ -177,19 +177,19 @@ main (int argc, char **argv)
 	    {
 	      if (was_numeric)
 		{
-		  fprintf(stderr, "no user numbered \"%s\".\n", user);
+		  fprintf(stderr, "no user numbered \"%s\"\n", user);
 		  user = "";
 		}
 	      else
 		{
-		  fprintf(stderr, "no user named %s.\n", user);
+		  fprintf(stderr, "no user named %s\n", user);
 		  goto NOUSER;
 		}
 	    }
 
 	  fprintf(stderr, "setuid(%ld) \"%s\"", uid, user);
 	  if (setuid(uid) == 0)
-	    fprintf(stderr, " succeeded.\n");
+	    fprintf(stderr, " succeeded\n");
 	  else
 	    perror(" failed");
 	NOUSER: ;

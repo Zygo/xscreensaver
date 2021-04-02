@@ -1,5 +1,5 @@
 /* test-xdpms.c --- playing with the XDPMS extension.
- * xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1998-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,41 +29,10 @@
 
 #include <X11/Xproto.h>
 #include <X11/extensions/dpms.h>
-#include <X11/extensions/dpmsstr.h>
+/*#include <X11/extensions/dpmsstr.h>*/
 
-extern Bool DPMSQueryExtension (Display *dpy, int *event_ret, int *error_ret);
-extern Bool DPMSCapable (Display *dpy);
-extern Status DPMSForceLevel (Display *dpy, CARD16 level);
-extern Status DPMSInfo (Display *dpy, CARD16 *power_level, BOOL *state);
-
-extern Status DPMSGetVersion (Display *dpy, int *major_ret, int *minor_ret);
-extern Status DPMSSetTimeouts (Display *dpy,
-			       CARD16 standby, CARD16 suspend, CARD16 off);
-extern Bool DPMSGetTimeouts (Display *dpy,
-			     CARD16 *standby, CARD16 *suspend, CARD16 *off);
-extern Status DPMSEnable (Display *dpy);
-extern Status DPMSDisable (Display *dpy);
-
-
-char *progname = 0;
+#include "blurb.h"
 char *progclass = "XScreenSaver";
-
-static const char *
-blurb (void)
-{
-  static char buf[255];
-  time_t now = time ((time_t *) 0);
-  char *ct = (char *) ctime (&now);
-  int n = strlen(progname);
-  if (n > 100) n = 99;
-  strncpy(buf, progname, n);
-  buf[n++] = ':';
-  buf[n++] = ' ';
-  strncpy(buf+n, ct+11, 8);
-  strcpy(buf+n+9, ": ");
-  return buf;
-}
-
 
 static Bool error_handler_hit_p = False;
 
@@ -90,13 +59,12 @@ main (int argc, char **argv)
   Widget toplevel_shell = XtAppInitialize (&app, progclass, 0, 0,
 					   &argc, argv, 0, 0, 0);
   Display *dpy = XtDisplay (toplevel_shell);
-  XtGetApplicationNameAndClass (dpy, &progname, &progclass);
 
   if (!DPMSQueryExtension(dpy, &event_number, &error_number))
     {
       fprintf(stderr, "%s: DPMSQueryExtension(dpy, ...) ==> False\n",
 	      blurb());
-      fprintf(stderr, "%s: server does not support the XDPMS extension.\n",
+      fprintf(stderr, "%s: server does not support the XDPMS extension\n",
 	      blurb());
       exit(1);
     }
@@ -107,7 +75,7 @@ main (int argc, char **argv)
   if (!DPMSCapable(dpy))
     {
       fprintf(stderr, "%s: DPMSCapable(dpy) ==> False\n", blurb());
-      fprintf(stderr, "%s: server says hardware doesn't support DPMS.\n",
+      fprintf(stderr, "%s: server says hardware doesn't support DPMS\n",
 	      blurb());
       exit(1);
     }
@@ -158,13 +126,12 @@ main (int argc, char **argv)
 	  state == DPMSModeSuspend ||
 	  state == DPMSModeOff)
 	{
-          XErrorHandler old_handler;
 	  int st;
-	  fprintf(stderr, "%s: monitor is off; turning it on.\n", blurb());
+	  fprintf(stderr, "%s: monitor is off; turning it on\n", blurb());
 
           XSync (dpy, False);
           error_handler_hit_p = False;
-          old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+          XSetErrorHandler (ignore_all_errors_ehandler);
           XSync (dpy, False);
 	  st = DPMSForceLevel (dpy, DPMSModeOn);
           XSync (dpy, False);

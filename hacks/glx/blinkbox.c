@@ -18,8 +18,6 @@
 
 # define release_ball 0
 # define ball_handle_event xlockmore_no_events
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "sphere.h"
@@ -249,14 +247,6 @@ reshape_ball (ModeInfo *mi, int width, int height)
   gluLookAt( 0.0, 0.0, 40.0,
              0.0, 0.0, 0.0,
              0.0, 2.0,  10.0);
-
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
-  {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
-  }
-# endif
 }
 
 static void
@@ -462,7 +452,14 @@ draw_ball (ModeInfo *mi)
 
 
    glPushMatrix();
-   glScalef(0.5,0.5,0.5);
+
+   {
+     GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                  ? MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi)
+                  : 1);
+     s *= 0.5;
+     glScalef (s, s, s);
+   }
 
    glColor3f(1,1,1);
    glPushMatrix();

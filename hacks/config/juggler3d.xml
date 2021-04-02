@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="juggler3d" _label="Juggler3D" gl="yes">
+<screensaver name="juggler3d" _label="Juggler 3D" gl="yes">
   <command arg="-root"/>
 
   <video href="https://www.youtube.com/watch?v=TJkKaXBOvCA"/>

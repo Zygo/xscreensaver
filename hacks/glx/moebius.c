@@ -89,18 +89,6 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #ifdef MODE_moebius
 
 #if 0 /* Hey, this never actually used the texture at all! */
@@ -740,6 +728,15 @@ draw_moebius (ModeInfo * mi)
         h = 1.7;
         glScalef (h, h, h);
       }
+    }
+# else
+    /* Don't understand why this clause doesn't work on mobile, but it 
+       doesn't. */
+    {
+      GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                   ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                   : 1);
+      glScalef (s, s, s);
     }
 # endif
 

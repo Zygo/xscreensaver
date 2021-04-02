@@ -23,7 +23,7 @@
 #undef drand48
 #define drand48()	frand(1.0)
 
-#define RAD2DEG		(180.0/3.1415926535)
+#define RAD2DEG		(180.0 / M_PI)
 
 
 static inline double

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="memscroller" _label="MemScroller">
+<screensaver name="memscroller" _label="Mem Scroller">
 
   <command arg="-root"/>
 

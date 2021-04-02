@@ -10,11 +10,7 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-720-*-*-*-*-*-*"
+#define DEF_FONT       "sans-serif bold 72"
 #define DEF_COLOR      "#00CCFF"
 
 #define DEFAULTS "*delay:        10000      \n" \
@@ -28,8 +24,6 @@
 
 # define release_fliptext 0
 # define fliptext_handle_event xlockmore_no_events
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)

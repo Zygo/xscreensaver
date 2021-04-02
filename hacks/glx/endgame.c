@@ -36,9 +36,6 @@
 #include "chessmodels.h"
 #include "chessgames.h"
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #define DEF_ROTATE      "True"
 #define DEF_REFLECTIONS "True"
 #define DEF_SHADOWS     "True"

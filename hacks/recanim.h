@@ -1,4 +1,4 @@
-/* recanim, Copyright (c) 2014-2018 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright (c) 2014-2021 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,10 +12,6 @@
 
 #ifndef __XSCREENSAVER_RECORD_ANIM_H__
 # define __XSCREENSAVER_RECORD_ANIM_H__
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 typedef struct record_anim_state record_anim_state;
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="maze3d" _label="Maze3D" gl="yes">
+<screensaver name="maze3d" _label="Maze 3D" gl="yes">
 
   <command arg="-root"/>
 

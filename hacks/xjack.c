@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1997-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,7 +28,9 @@ struct state {
   Display *dpy;
   Window window;
   XWindowAttributes xgwa;
-  XFontStruct *font;
+  XftFont *font;
+  XftColor xft_fg;
+  XftDraw *xftdraw;
   GC gc;
 
   const char *s;
@@ -82,8 +84,7 @@ xjack_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
-  char *fontname;
-
+  char *fontname, *s;
 
   st->dpy = dpy;
   st->window = window;
@@ -97,23 +98,31 @@ xjack_init (Display *dpy, Window window)
   else
     fontname = get_string_resource (st->dpy, "font2", "Font");
 
-  st->font = load_font_retry (st->dpy, fontname);
+  st->font = load_xft_font_retry (st->dpy, screen_number (st->xgwa.screen),
+                                  fontname);
   if (!st->font) abort();
   if (fontname) free (fontname);
 
-  gcv.font = st->font->fid;
   gcv.foreground = get_pixel_resource (st->dpy, st->xgwa.colormap,
                                        "foreground", "Foreground");
   gcv.background = get_pixel_resource (st->dpy, st->xgwa.colormap,
                                        "background", "Background");
   st->gc = XCreateGC (st->dpy, st->window,
-                      (GCFont | GCForeground | GCBackground), &gcv);
+                      (GCForeground | GCBackground), &gcv);
+  s = get_string_resource (st->dpy, "foreground", "Foreground");
+  if (!s) s = strdup("black");
+  XftColorAllocName (st->dpy, st->xgwa.visual, st->xgwa.colormap, s,
+                     &st->xft_fg);
+  free (s);
+  st->xftdraw = XftDrawCreate (dpy, st->window, st->xgwa.visual,
+                               st->xgwa.colormap);
 
-  st->char_width = 
-    (st->font->per_char
-     ? st->font->per_char['n'-st->font->min_char_or_byte2].rbearing
-     : st->font->min_bounds.rbearing);
-  st->line_height = st->font->ascent + st->font->descent + 1;
+  {
+    XGlyphInfo overall;
+    XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) "N", 1, &overall);
+    st->char_width = overall.xOff;
+    st->line_height = st->font->ascent + st->font->descent + 1;
+  }
 
   xjack_reshape (dpy, window, st, st->xgwa.width, st->xgwa.height);
 
@@ -185,11 +194,11 @@ xjack_pine (struct state *st)
   if (prev)
     while (*n2)
       {
-        XDrawString (st->dpy, st->window, st->gc,
-                     (st->x * st->char_width) + st->hspace,
-                     ((st->y * st->line_height) + st->vspace
-                      + st->font->ascent),
-                     (char *) n2, 1);
+        XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->font,
+                           (st->x * st->char_width) + st->hspace,
+                           ((st->y * st->line_height) + st->vspace
+                            + st->font->ascent),
+                           (FcChar8 *) n2, 1);
         st->x++;
         if (st->x >= st->columns) st->x = 0, st->y++;
         n2++;
@@ -201,11 +210,11 @@ xjack_pine (struct state *st)
   if (st->pining)
     while (*n1)
       {
-        XDrawString (st->dpy, st->window, st->gc,
-                     (st->x * st->char_width) + st->hspace,
-                     ((st->y * st->line_height) + st->vspace
-                      + st->font->ascent),
-                     (char *) n1, 1);
+        XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->font,
+                           (st->x * st->char_width) + st->hspace,
+                           ((st->y * st->line_height) + st->vspace
+                            + st->font->ascent),
+                           (FcChar8 *) n1, 1);
         st->x++;
         if (st->x >= st->columns) st->x = 0, st->y++;
         n1++;
@@ -333,11 +342,12 @@ xjack_draw (Display *dpy, Window window, void *closure)
         }
 
     OVERSTRIKE:
-      XDrawString (st->dpy, st->window, st->gc,
-                   (st->x * st->char_width) + st->hspace + xshift,
-                   ((st->y * st->line_height) + st->vspace + st->font->ascent
-                    + yshift),
-                   &c, 1);
+      XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->font,
+                         (st->x * st->char_width) + st->hspace + xshift,
+                         ((st->y * st->line_height) + st->vspace +
+                          st->font->ascent
+                          + yshift),
+                         (FcChar8 *) &c, 1);
       if (xshift == 0 && yshift == 0 && (0 == (random() & 3000)))
         {
           if (random() & 1)
@@ -354,8 +364,8 @@ xjack_draw (Display *dpy, Window window, void *closure)
           st->x--;
           st->s--;
           if (st->delay)
-            st->delay += (0xFFFF & (st->delay + 
-                                    (random() % (st->delay * 10))));
+            this_delay += (0xFFFF & (st->delay + 
+                                     (random() % (st->delay * 10))));
         }
     }
 
@@ -465,7 +475,8 @@ xjack_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   XFreeGC (dpy, st->gc);
-  XFreeFont (dpy, st->font);
+  XftFontClose (dpy, st->font);
+  XftDrawDestroy (st->xftdraw);
   free (st);
 }
 
@@ -474,13 +485,9 @@ static const char *xjack_defaults [] = {
   ".background:		#FFF0B4",
   ".foreground:		#000000",
   "*fpsSolid:		true",
-#ifdef HAVE_COCOA
-  ".font:		American Typewriter 24",
-  ".font2:		American Typewriter 10",
-#else
-  ".font:		-*-courier-medium-r-*-*-*-240-*-*-m-*-*-*",
-  ".font2:		-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*",
-#endif
+  "*fpsTop:		true",
+  ".font:  Special Elite 24, American Typewriter 24, Courier 24, monospace 24",
+  ".font2: Special Elite 12, American Typewriter 12, Courier 12, monospace 12",
   "*delay:		50000",
   0
 };

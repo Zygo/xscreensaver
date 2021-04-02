@@ -1,4 +1,4 @@
-/* xscreensaver-systemd, Copyright (c) 2019-2020
+/* xscreensaver-systemd, Copyright (c) 2019-2021
  * Martin Lucina <martin@lucina.net> and Jamie Zawinski <jwz@jwz.org>
  *
  * ISC License
@@ -33,6 +33,10 @@
  *     display un-blanked.  It does this until the other program asks for
  *     it to stop.
  *
+ * For this to work at all, you must prevent Gnome and KDE from usurping
+ * the "org.freedesktop.ScreenSaver" messages, or else this program can't
+ * receive them.  The "xscreensaver" man page contains the (complicated)
+ * installation instructions.
  *
  * Background:
  *
@@ -55,8 +59,27 @@
  *
  *         "Did IQs just drop sharply while I was away?" -- Ellen Ripley
  *
- *     So here's what we're dealing with now, with the various apps you might
- *     use to play video on Linux at the end of 2020:
+ *     We can sometimes detect that the inhibiting app has exited abnormally
+ *     by using "tracking peers" but I'm not sure how reliable that is.
+ *
+ *     Furthermore, we can't listen for these "inhibit blanking" requests
+ *     if some other program is already listening for them -- which Gnome and
+ *     KDE do by default, even if their screen savers are otherwise disabled.
+ *     That makes it far more complicated for the user to install XScreenSaver
+ *     in such a way that "xscreensaver-systemd" can even launch at all.
+ *
+ *     To recap: because the existing video players decided to delete the
+ *     single line of code that they already had -- the heartbeat call to
+ *     "xscreensaver-command -deactivate" -- we had to respond by adding a
+ *     THOUSAND LINES of complicated code that talks to a server that may
+ *     not be running, and that may not allow us to connect, and that may
+ *     not work properly anyway, and that makes installation hellaciously
+ *     difficult and confusing for the end user.
+ *
+ *     This is what is laughingly referred to as "progress".
+ *
+ *     So here's what we're dealing with now, with the various apps that
+ *     you might use to play video on Linux at the end of 2020:
  *
  *
  *****************************************************************************
@@ -200,16 +223,17 @@
  *
  *****************************************************************************
  *
+ * Zoom
+ *
+ *    I'm told that the proprietary Zoom executable for Linux sends "inhibit"
+ *    to "org.freedesktop.ScreenSaver", but I don't have any further details.
+ *
+ *****************************************************************************
+ *
  * TO DO:
  *
- *   - What does the standalone Zoom executable do on Linux?  There doesn't
- *     seem to be a Raspbian build, so I can't test it.
- *
- *   - Since the systemd misdesign allows a program to call "inhibit" and
- *     then crash without un-inhibiting, it would be sensible for us to
- *     auto-uninhibit if the inhibiting process's pid goes away, but it
- *     seems that sd_bus_creds_get_pid() never works, so we can't do that.
- *     This is going to be a constant problem!
+ *   - What precisely does the standalone Zoom executable do on Linux?
+ *     There doesn't seem to be a Raspbian build, so I can't test it.
  *
  *   - xscreensaver_method_uninhibit() does not actually send a reply, are
  *     we doing the right thing when registering it?
@@ -221,6 +245,15 @@
  *   - Do we need to call sd_bus_release_name() explicitly on exit?
  *
  *   - Run under valgrind to check for any memory leaks.
+ *
+ *   - Apparently the two different desktops have managed to come up with
+ *     *three* different ways for dbus clients to ask the question, "is the
+ *     screen currently blanked?"  We should probably also respond to these:
+ *
+ *     qdbus org.freedesktop.ScreenSaver /ScreenSaver org.freedesktop.ScreenSaver.GetActive
+ *     qdbus org.kde.screensaver         /ScreenSaver org.freedesktop.ScreenSaver.GetActive
+ *     qdbus org.gnome.ScreenSaver       /ScreenSaver org.gnome.ScreenSaver.GetActive
+ *
  *
  *
  * TESTING:
@@ -259,74 +292,16 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <X11/Xlib.h>
 
-#include "yarandom.h"
+#include <systemd/sd-bus.h>
 
-#ifdef HAVE_LIBSYSTEMD
-# include <systemd/sd-bus.h>
-
-#else   /* !HAVE_LIBSYSTEMD */
-
- /* This is a testing shim so that I can somewhat test this even on
-    machines that only have libsystemd < 221, such as CentOS 7.7...
-  */
- typedef struct sd_bus sd_bus;
- typedef struct sd_bus_message sd_bus_message;
- typedef struct sd_bus_slot sd_bus_slot;
- typedef struct sd_bus_creds sd_bus_creds;
- typedef struct { char *message; } sd_bus_error;
- typedef int (*sd_bus_message_handler_t)
-   (sd_bus_message *m, void *userdata, sd_bus_error *ret_error);
- #define SD_BUS_ERROR_NULL { 0 }
- static int sd_bus_message_read (sd_bus_message *m, char *types, ...)
-   { return -1; }
- static sd_bus_message *sd_bus_message_unref(sd_bus_message *m) { return 0; }
- static void sd_bus_error_free(sd_bus_error *e) { }
- static int sd_bus_call_method(sd_bus *bus, const char *destination,
-                               const char *path, const char *interface,
-                               const char *member, sd_bus_error *ret_error,
-                               sd_bus_message **reply, const char *types, ...)
-   { return -1; }
- static int sd_bus_open_user(sd_bus **ret) { return -1; }
- static int sd_bus_request_name(sd_bus *bus, const char *name, uint64_t flags)
-   { return -1; }
- static int sd_bus_open_system(sd_bus **ret) { return -1; }
- static int sd_bus_add_match(sd_bus *bus, sd_bus_slot **slot,
-                             const char *match,
-                             sd_bus_message_handler_t callback, void *userdata)
-   { return -1; }
- static int sd_bus_process(sd_bus *bus, sd_bus_message **r) { return -1; }
- static sd_bus *sd_bus_flush_close_unref(sd_bus *bus) { return 0; }
- static void sd_bus_message_ref(sd_bus_message *r) { }
- static int sd_bus_reply_method_return (sd_bus_message *call,
-                                        const char *types, ...) { return -1; }
- typedef int (*sd_bus_message_handler_t) (sd_bus_message *m, void *userdata,
-                                          sd_bus_error *ret_error);
- struct sd_bus_vtable { const char *a; const char *b; const char *c;
-                        sd_bus_message_handler_t d; int e; };
- typedef struct sd_bus_vtable sd_bus_vtable;
-# define SD_BUS_VTABLE_START(_flags) { 0 }
-# define SD_BUS_VTABLE_END /**/
-# define SD_BUS_VTABLE_UNPRIVILEGED -1
-# define SD_BUS_METHOD(_member, _signature, _result, _handler, _flags) { \
-   _member, _signature, _result, _handler, _flags }
- static int sd_bus_add_object_vtable(sd_bus *bus, sd_bus_slot **slot,
-                                     const char *path, const char *interface,
-                                     const sd_bus_vtable *vtable,
-                                     void *userdata) { return -1; }
- static int sd_bus_get_fd(sd_bus *bus) { return -1; }
- static int sd_bus_get_events(sd_bus *bus) { return -1; }
- static int sd_bus_get_timeout (sd_bus *bus, uint64_t *u) { return -1; }
- static sd_bus_creds *sd_bus_message_get_creds (sd_bus_message *m) {return 0;}
- static int sd_bus_creds_get_pid(sd_bus_creds *c, pid_t *p) { return -1; }
-#endif /* !HAVE_LIBSYSTEMD */
-
-#include "queue.h"
 #include "version.h"
+#include "blurb.h"
+#include "yarandom.h"
+#include "queue.h"
 
-static char *progname;
 static char *screensaver_version;
-static int verbose_p = 0;
 
 #define DBUS_CLIENT_NAME     "org.jwz.XScreenSaver"
 #define DBUS_SD_SERVICE_NAME "org.freedesktop.login1"
@@ -350,44 +325,30 @@ static int verbose_p = 0;
 
 #define HEARTBEAT_INTERVAL 50  /* seconds */
 
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
 
 struct handler_ctx {
   sd_bus *system_bus;
   sd_bus_message *lock_message;
   int lock_fd;
   int is_inhibited;
+  sd_bus_track *track;
 };
 
-static struct handler_ctx global_ctx = { NULL, NULL, -1 };
+static struct handler_ctx global_ctx = { NULL, NULL, -1, 0, NULL };
 
 SLIST_HEAD(inhibit_head, inhibit_entry) inhibit_head =
   SLIST_HEAD_INITIALIZER(inhibit_head);
 
 struct inhibit_entry {
   uint32_t cookie;
-  pid_t pid;
   time_t start_time;
   char *appname;
+  char *peer;
   SLIST_ENTRY(inhibit_entry) entries;
 };
-
-
-static const char *
-blurb (void)
-{
-  static char buf[255];
-  time_t now = time ((time_t *) 0);
-  char ct[100];
-  int n = strlen(progname);
-  if (n > 100) n = 99;
-  strncpy(buf, progname, n);
-  buf[n++] = ':';
-  buf[n++] = ' ';
-  ctime_r (&now, ct);
-  strncpy(buf+n, ct+11, 8);
-  strcpy(buf+n+9, ": ");
-  return buf;
-}
 
 
 static void
@@ -510,9 +471,8 @@ xscreensaver_method_inhibit (sd_bus_message *m, void *arg,
   struct handler_ctx *ctx = arg;
   const char *application_name = 0, *inhibit_reason = 0;
   struct inhibit_entry *entry = 0;
-  sd_bus_creds *creds = 0;
-  pid_t pid = 0;
   const char *s;
+  const char *sender;
 
   int rc = sd_bus_message_read(m, "ss", &application_name, &inhibit_reason);
   if (rc < 0) {
@@ -532,6 +492,8 @@ xscreensaver_method_inhibit (sd_bus_message *m, void *arg,
     return -1;
   }
 
+  sender = sd_bus_message_get_sender (m);
+
   /* Omit directory (Chrome does this shit) */
   s = strrchr (application_name, '/');
   if (s && s[1]) application_name = s+1;
@@ -543,49 +505,30 @@ xscreensaver_method_inhibit (sd_bus_message *m, void *arg,
        would be better to accept it, issue them a cookie, and then just
        ignore that entry?) */
     if (verbose_p)
-      fprintf (stderr, "%s: inhibited by \"%s\" with \"%s\", ignored\n",
-               blurb(), application_name, inhibit_reason);
+      fprintf (stderr, "%s: inhibited by \"%s\" (%s) with \"%s\", ignored\n",
+               blurb(), application_name, sender, inhibit_reason);
     return -1;
   }
-
-  /* Get the pid of the process that called inhibit, so that we can
-     auto-uninhibit if that process dies.  We need to do this because so
-     many apps do not fail safe, and systemd's design doesn't enforce that.
-
-     Welp, this doesn't work.  We get ENODATA any time we try to get the
-     pid of the message sender.  FFFFFFFfffffffuuuuuuu......
-
-     Other things that do not work include: sd_bus_creds_get_exe,
-     sd_bus_creds_get_cmdline and sd_bus_creds_get_description.  So maybe
-     we could go through the process table and find a pid whose command
-     line matches application_name, but there's no guarantee that those are
-     the same.
-  */
-  creds = sd_bus_message_get_creds (m);
-  if (!creds) {
-    if (verbose_p)
-      fprintf (stderr, "%s: inhibit: unable to get creds of \"%s\"\n",
-               blurb(), application_name);
-  } else {
-    rc = sd_bus_creds_get_pid (creds, &pid);
-    if (rc < 0 || pid <= 0) {
-      pid = 0;
-      if (verbose_p)
-        fprintf (stderr, "%s: inhibit: unable to get pid of \"%s\": %s\n",
-                 blurb(), application_name, strerror(-rc));
-    }
+  
+  /* Tell the global tracker object to monitor when this peer exits. */
+  rc = sd_bus_track_add_name(ctx->track, sender);
+  if (rc < 0) {
+    fprintf (stderr, "%s: failed to track peer \"%s\": %s\n",
+             blurb(), sender, strerror(-rc));
+    sender = NULL;
   }
 
   entry = malloc(sizeof (struct inhibit_entry));
   entry->cookie = ya_random();
   entry->appname = strdup(application_name);
-  entry->pid = pid;
+  entry->peer = sender ? strdup(sender) : NULL;
   entry->start_time = time ((time_t *)0);
   SLIST_INSERT_HEAD(&inhibit_head, entry, entries);
   ctx->is_inhibited++;
   if (verbose_p)
-    fprintf (stderr, "%s: inhibited by \"%s\" with \"%s\" -> cookie %08X\n",
-             blurb(), application_name, inhibit_reason, entry->cookie);
+    fprintf (stderr, "%s: inhibited by \"%s\" (%s) with \"%s\""
+             " -> cookie %08X\n",
+             blurb(), application_name, sender, inhibit_reason, entry->cookie);
 
   return sd_bus_reply_method_return (m, "u", entry->cookie);
 }
@@ -603,6 +546,7 @@ xscreensaver_method_uninhibit (sd_bus_message *m, void *arg,
   uint32_t cookie;
   struct inhibit_entry *entry;
   int found = 0;
+  const char *sender;
 
   int rc = sd_bus_message_read (m, "u", &cookie);
   if (rc < 0) {
@@ -611,13 +555,23 @@ xscreensaver_method_uninhibit (sd_bus_message *m, void *arg,
     return rc;
   }
 
+  sender = sd_bus_message_get_sender (m);
+
   SLIST_FOREACH(entry, &inhibit_head, entries) {
     if (entry->cookie == cookie) {
       if (verbose_p)
-        fprintf (stderr, "%s: uninhibited by \"%s\" with cookie %08X\n",
-                 blurb(), entry->appname, cookie);
+        fprintf (stderr, "%s: uninhibited by \"%s\" (%s) with cookie %08X\n",
+                 blurb(), entry->appname, sender, cookie);
       SLIST_REMOVE (&inhibit_head, entry, inhibit_entry, entries);
       if (entry->appname) free (entry->appname);
+      if (entry->peer) {
+        rc = sd_bus_track_remove_name(ctx->track, entry->peer);
+        if (rc < 0) {
+          fprintf (stderr, "%s: failed to stop tracking peer \"%s\": %s\n",
+                   blurb(), entry->peer, strerror(-rc));
+        }
+        free(entry->peer);
+      }
       free(entry);
       ctx->is_inhibited--;
       if (ctx->is_inhibited < 0)
@@ -648,13 +602,69 @@ xscreensaver_dbus_vtable[] = {
 };
 
 
-static int
-pid_dead (pid_t pid)
+/* The only reason this program connects to X at all is so that it dies
+   right away when the X server shuts down.  Otherwise the process might
+   linger, still connected to systemd but unable to connect to xscreensaver.
+ */
+static Display *
+open_dpy (void)
 {
-  int rc = kill (pid, 0);
-  if (rc == 0) return 0;	/* Process exists. */
-  if (errno == EPERM) return 0;	/* Process exists but is not owned by us. */
-  return 1;			/* No such process, ESRCH. */
+  Display *d;
+  const char *s = getenv("DISPLAY");
+  if (!s || !*s) {
+    fprintf (stderr, "%s: $DISPLAY unset\n", progname);
+    exit (1);
+  }
+
+  d = XOpenDisplay (s);
+  if (!d) {
+    fprintf (stderr, "%s: can't open display %s\n", progname, s);
+    exit (1);
+  }
+
+  return d;
+}
+
+
+static pid_t
+get_bus_name_pid (sd_bus *bus, const char *name)
+{
+  int rc;
+  sd_bus_creds *creds;
+  pid_t pid;
+
+  rc = sd_bus_get_name_creds (bus, name, SD_BUS_CREDS_PID, &creds);
+  if (rc == 0) {
+    rc = sd_bus_creds_get_pid (creds, &pid);
+    sd_bus_creds_unref (creds);
+    if (rc == 0)
+      return pid;
+  }
+
+  return -1;
+}
+
+
+/* This only works on Linux, but it's useful for the error message.
+ */
+static char *
+process_name (pid_t pid)
+{
+  char fn[100], buf[100], *s;
+  FILE *fd = 0;
+  if (pid <= 0) goto FAIL;
+  /* "comm" truncates at 16 characters. "cmdline" has nulls between args. */
+  sprintf (fn, "/proc/%lu/cmdline", (unsigned long) pid);
+  fd = fopen (fn, "r");
+  if (!fd) goto FAIL;
+  if (!fgets (buf, sizeof(buf)-1, fd)) goto FAIL;
+  if (fclose (fd) != 0) goto FAIL;
+  s = strchr (buf, '\n');
+  if (s) *s = 0;
+  return strdup (buf);
+ FAIL:
+  if (fd) fclose (fd);
+  return 0;
 }
 
 
@@ -666,6 +676,7 @@ xscreensaver_systemd_loop (void)
   sd_bus_error error = SD_BUS_ERROR_NULL;
   int rc;
   time_t last_deactivate_time = 0;
+  Display *dpy = open_dpy();
 
   /* 'user_bus' is where we receive messages from other programs sending
      inhibit/uninhibit to org.freedesktop.ScreenSaver, etc.
@@ -674,6 +685,20 @@ xscreensaver_systemd_loop (void)
   rc = sd_bus_open_user (&user_bus);
   if (rc < 0) {
     fprintf (stderr, "%s: user bus connection failed: %s\n",
+             blurb(), strerror(-rc));
+    goto FAIL;
+  }
+
+  /* Create a single tracking object so that we can later ask it,
+     "is the peer with this name still around?"  This is how we tell
+     that Firefox has exited without calling 'uninhibit'.
+   */
+  rc = sd_bus_track_new (user_bus,
+                         &global_ctx.track,
+                         NULL,
+                         NULL);
+  if (rc < 0) {
+    fprintf (stderr, "%s: cannot create user bus tracker: %s\n",
              blurb(), strerror(-rc));
     goto FAIL;
   }
@@ -702,20 +727,36 @@ xscreensaver_systemd_loop (void)
     goto FAIL;
   }
 
-  rc = sd_bus_request_name (user_bus, DBUS_FDO_NAME, 0);
-  if (rc < 0) {
-    fprintf (stderr, "%s: failed to connect as %s: %s\n",
-             blurb(), DBUS_FDO_NAME, strerror(-rc));
-    goto FAIL;
+  {
+    const char * const names[] = { DBUS_FDO_NAME, DBUS_CLIENT_NAME };
+    int i = 0;
+    for (i = 0; i < countof(names); i++) {
+      rc = sd_bus_request_name (user_bus, names[i], 0);
+      if (rc < 0) {
+        pid_t pid = get_bus_name_pid (user_bus, names[i]);
+        if (pid != -1) {
+          char *pname = process_name (pid);
+          if (pname) {
+            fprintf (stderr,
+                     "%s: connection failed: \"%s\" in use by pid %lu (%s)\n",
+                     blurb(), names[i], (unsigned long) pid, pname);
+            free (pname);
+          } else {
+            fprintf (stderr,
+                     "%s: connection failed: \"%s\" in use by pid %lu\n",
+                     blurb(), names[i], (unsigned long) pid);
+          }
+        } else if (-rc == EEXIST || -rc == EALREADY) {
+          fprintf (stderr, "%s: connection failed: \"%s\" already in use\n",
+                   blurb(), names[i]);
+        } else {
+          fprintf (stderr, "%s: connection failed for \"%s\": %s\n",
+                   blurb(), names[i], strerror(-rc));
+        }
+        goto FAIL;
+      }
+    }
   }
-
-  rc = sd_bus_request_name (user_bus, DBUS_CLIENT_NAME, 0);
-  if (rc < 0) {
-    fprintf (stderr, "%s: failed to connect as %s: %s\n",
-             blurb(), DBUS_CLIENT_NAME, strerror(-rc));
-    goto FAIL;
-  }
-
 
   /* 'system_bus' is where we hold a lock on org.freedesktop.login1, meaning
      that the system will send us a PrepareForSleep message when the system is
@@ -755,7 +796,7 @@ xscreensaver_systemd_loop (void)
   /* Run an event loop forever, and wait for our callback to run.
    */
   while (1) {
-    struct pollfd fds[2];
+    struct pollfd fds[3];
     uint64_t poll_timeout, system_timeout, user_timeout;
     struct inhibit_entry *entry;
 
@@ -788,6 +829,11 @@ xscreensaver_systemd_loop (void)
     fds[1].events = sd_bus_get_events (user_bus);
     fds[1].revents = 0;
 
+    fds[2].fd = XConnectionNumber (dpy);
+    fds[2].events = POLLIN;
+    fds[2].revents = 0;
+
+
     sd_bus_get_timeout (system_bus, &system_timeout);
     sd_bus_get_timeout (user_bus, &user_timeout);
 
@@ -801,24 +847,25 @@ xscreensaver_systemd_loop (void)
       poll_timeout /= 1000000;
     }
 
-    /* Prune any entries whose process has gone away: this happens if
-       a program inhibits, then exits without having called uninhibit.
+    /* Prune any entries whose original sender has gone away: this happens
+       if a program inhibits, then exits without having called uninhibit.
        That would have left us inhibited forever, even if the inhibiting
        program was re-launched, since the new instance won't have the
        same cookie. */
     SLIST_FOREACH (entry, &inhibit_head, entries) {
-      if (entry->pid &&   /* Might not know this entry's pid, sigh... */
-          pid_dead (entry->pid)) {
+      if (entry->peer &&
+          !sd_bus_track_count_name (ctx->track, entry->peer)) {
         if (verbose_p)
           fprintf (stderr,
-                   "%s: pid %lu for inhibiting app \"%s\" has died:"
+                   "%s: peer %s for inhibiting app \"%s\" has died:"
                    " uninhibiting %08X\n",
                    blurb(),
-                   (unsigned long) entry->pid,
+                   entry->peer,
                    entry->appname,
                    entry->cookie);
         SLIST_REMOVE (&inhibit_head, entry, inhibit_entry, entries);
         if (entry->appname) free (entry->appname);
+        free(entry->peer);
         free (entry);
         ctx->is_inhibited--;
         if (ctx->is_inhibited < 0)
@@ -833,10 +880,15 @@ xscreensaver_systemd_loop (void)
     if (poll_timeout > HEARTBEAT_INTERVAL * 1000)
       poll_timeout = HEARTBEAT_INTERVAL * 1000;
 
-    rc = poll (fds, 2, poll_timeout);
+    rc = poll (fds, 3, poll_timeout);
     if (rc < 0) {
       fprintf (stderr, "%s: poll failed: %s\n", blurb(), strerror(-rc));
       exit (EXIT_FAILURE);
+    }
+
+    if (fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+      fprintf (stderr, "%s: X connection closed\n", blurb());
+      goto FAIL;
     }
 
     if (ctx->is_inhibited) {
@@ -857,8 +909,14 @@ xscreensaver_systemd_loop (void)
   }
 
  FAIL:
+
+  XCloseDisplay(dpy);
+
   if (system_bus)
     sd_bus_flush_close_unref (system_bus);
+
+  if (ctx->track)
+    sd_bus_track_unref (ctx->track);
 
   if (user_bus)
     sd_bus_flush_close_unref (user_bus);
@@ -891,22 +949,19 @@ int
 main (int argc, char **argv)
 {
   int i;
-  char *s;
-  char year[5];
+  char *version = strdup (screensaver_id + 17);
+  char *year = strchr (version, '-');
+  char *s = strchr (version, ' ');
+  *s = 0;
+  year = strchr (year+1, '-') + 1;
+  s = strchr (year, ')');
+  *s = 0;
+
+  screensaver_version = version;
 
   progname = argv[0];
   s = strrchr (progname, '/');
   if (s) progname = s+1;
-
-  screensaver_version = (char *) malloc (5);
-  memcpy (screensaver_version, screensaver_id + 17, 4);
-  screensaver_version [4] = 0;
-
-  s = strchr (screensaver_id, '-');
-  s = strrchr (s, '-');
-  s++;
-  strncpy (year, s, 4);
-  year[4] = 0;
 
   for (i = 1; i < argc; i++)
     {

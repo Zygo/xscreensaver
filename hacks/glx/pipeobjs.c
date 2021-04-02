@@ -9,7 +9,9 @@ static const char sccsid[] = "@(#)pipeobjs.c	4.04 97/07/28 xlockmore";
  */
 
 #ifndef STANDALONE
-#include "xlock.h"
+# include "xlock.h"
+#else
+# include "screenhackI.h"
 #endif
 
 #ifdef USE_GL

@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "27-Apr-97" "X Version 11"
 .SH NAME
 epicycle \- draws a point moving around a circle which moves around a cicle which...
@@ -140,30 +127,6 @@ Epicycles are never more than this factor smaller than their parents.
 .TP 8
 .B \-fps
 Display the current frame rate and CPU load.
-.SH RESOURCES
-.EX
-Option            Resource               Default Value
-------            --------               -------------
--colors           .colors                100
--delay            .delay                 1000
--holdtime         .holdtime              2
--linewidth        .lineWidth             4
--min_circles      .minCircles            2
--max_circles      .maxCircles            10
--min_speed        .minSpeed              0.003
--max_speed        .maxSpeed              0.005
--harmonics        .harmonics             8
--timestep         .timestep              1.0
--divisor_poisson  .divisorPoisson        0.4
--size_factor_min  .sizeFactorMin         1.05
--size_factor_max  .sizeFactorMax         2.05
-                  .timestepCoarseFactor  1.0
-.EE
-Before the drawing of the figure is begun, a preliminary calculation
-of the path is done in order to scale the radii of the epicycles so
-as to fit the figure on the screen or window.  For the sake of speed,
-This calculation is done with a larger timestep than the actual
-drawing.  The time-step used is the value of the
 .B \-timestep 
 option multiplied by the timestepCoarseFactor resource.  The default
 value of 1 will almost always work fast enough and so this resource

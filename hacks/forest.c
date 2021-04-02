@@ -14,10 +14,6 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 /* ******************************   NOTE   ******************************
 
      This is not the xlockmore version of forest, but a much better

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="jigglypuff" _label="JigglyPuff" gl="yes">
+<screensaver name="jigglypuff" _label="Jiggly Puff" gl="yes">
 
   <command arg="-root"/>
 

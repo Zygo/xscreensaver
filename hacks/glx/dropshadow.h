@@ -12,12 +12,6 @@
 #ifndef __DROPSHADOW_H__
 #define __DROPSHADOW_H__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#include "xlockmoreI.h"
-
 /* Initialize drop shadow texture, return a texture ID.
  */
 GLuint

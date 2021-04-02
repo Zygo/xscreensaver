@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="hypercube" _label="HyperCube">
+<screensaver name="hypercube" _label="Hypercube">
 
   <command arg="-root"/>
 

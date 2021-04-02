@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -39,7 +39,7 @@
   // I guess I could add custom key to the Info.plist for this.
 
   NSArray *a = [[NSString stringWithCString: screensaver_id
-                          encoding:NSASCIIStringEncoding]
+                          encoding:NSUTF8StringEncoding]
                  componentsSeparatedByCharactersInSet:
                    [NSCharacterSet
                      characterSetWithCharactersInString:@" ()-"]];
@@ -172,7 +172,7 @@
     s[0] = (i == 'Z'-'A'+1 ? '#' : i+'A');
     s[1] = 0;
     [a addObject: [NSString stringWithCString:s
-                            encoding:NSASCIIStringEncoding]];
+                            encoding:NSUTF8StringEncoding]];
   }
   return a;
 }
@@ -223,7 +223,7 @@
     if (! matchp)
       continue;
 
-    int index = ([name cStringUsingEncoding: NSASCIIStringEncoding])[0];
+    int index = ([name cStringUsingEncoding: NSUTF8StringEncoding])[0];
     if (index >= 'a' && index <= 'z')
       index -= 'a'-'A';
     if (index >= 'A' && index <= 'Z')
@@ -387,8 +387,35 @@
     return;
   NSMutableArray *a = [NSMutableArray arrayWithCapacity: 200];
   for (NSArray *sec in letter_sections)
-    for (NSString *s in sec)
+    for (NSString *s in sec) {
+
+# ifdef HAVE_IPHONE
+      // Check the "SaverName.globalCycleSelected" preference.
+
+      NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+      NSString *key = [s stringByAppendingString:@".globalCycleSelected"];
+      NSObject *o = [prefs objectForKey:key];
+      BOOL checked_p;
+
+      // Roughly duplicate logic of PrefsReader:getBooleanResource
+      if (o && [o isKindOfClass:[NSNumber class]]) {
+        double n = [(NSNumber *) o doubleValue];
+        checked_p = !!n;
+      } else if (o && [o isKindOfClass:[NSString class]]) {
+        NSString *ss = [((NSString *) o) lowercaseString];
+        checked_p = ([ss isEqualToString:@"true"] ||
+                     [ss isEqualToString:@"yes"] ||
+                     [ss isEqualToString:@"1"]);
+      } else {
+        checked_p = YES;  // Default true
+      }
+
+      if (! checked_p)  // Omit from list if un-checked
+        continue;
+# endif // HAVE_IPHONE
+
       [a addObject: s];
+    }
   int n = [a count];
   if (! n) return;
   NSString *which = [a objectAtIndex: (random() % n)];

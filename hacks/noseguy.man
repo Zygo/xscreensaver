@@ -49,7 +49,7 @@ of the messages.  Default:
     xscreensaver-text --cols 40 | head -n15
 
 You can configure the text printed through the "Advanced" tab of
-.BR xscreensaver\-demo (1),
+.BR xscreensaver\-settings (1),
 or by editing your ~/.xscreensaver file.
 .TP 8
 .B \-filename \fIfile\fP
@@ -73,7 +73,7 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR xscreensaver-text (1),
+.BR xscreensaver\-text (MANSUFFIX),
 .BR xnlock (1)
 .SH COPYRIGHT
 Copyright 1985, 1990 by Dan Heller <argv@danheller.com>.

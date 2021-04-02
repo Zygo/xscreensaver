@@ -25,18 +25,6 @@
 #include "xlock.h"
 #endif
 
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #include "sphere.h"
 #include "tube.h"
 #include "rotator.h"

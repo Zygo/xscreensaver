@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 5.45
+%define	version 6.00
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -17,7 +17,6 @@ Buildroot:	%{_tmppath}/%{name}-root
 Summary: A minimal installation of xscreensaver.
 Summary(fr): Une installation minimale de xscreensaver.
 Group: Amusements/Graphics
-BuildRequires:	bc
 BuildRequires:	gettext
 BuildRequires:	pam-devel
 BuildRequires:	gtk2-devel
@@ -34,7 +33,6 @@ Requires: SysVinit
 Requires: pam
 Requires: /etc/pam.d/system-auth
 Requires: htmlview
-Requires: xorg-x11-fonts-100dpi
 Requires: desktop-backgrounds-basic
 Requires: xdg-utils
 Requires: systemd-libs

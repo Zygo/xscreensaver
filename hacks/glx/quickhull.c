@@ -48,15 +48,11 @@
   - reduce memory usage
 */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "screenhackI.h"
 
 extern const char *progname;
 
 #include "quickhull.h"
-
-#include "screenhackI.h" /* for jwxyz_abort */
 
 #include <math.h>   /* sqrt & fabs */
 #include <stdio.h>  /* FILE */
@@ -72,7 +68,7 @@ extern const char *progname;
 #define QUICKHULL_HELPERS 1
 #define QH_MALLOC(T, N) ((T*) malloc(N * sizeof(T)))
 #define QH_REALLOC(T, P, N) ((T*)realloc(P, sizeof(T) * N))
-#define QH_FREE(T) free(T)
+#define QH_FREE(T) do { void *t = (T); if (t) free(t); } while(0)
 #define QH_SWAP(T, A, B) { T tmp = B; B = A; A = tmp; }
 #ifdef QUICKHULL_DEBUG
 #define QH_ASSERT(STMT) if (!(STMT)) { *(int *)0 = 0; }
@@ -1179,56 +1175,6 @@ qh__remove_vertex_duplicates(qh_context_t* context, double epsilon)
   }
 }
 
-static void
-qh__init_context(qh_context_t* context, qh_vertex_t const* vertices,
-                 unsigned int nvertices)
-{
-  /* TODO: */
-  /* size_t nedges = 3 * nvertices - 6; */
-  /* size_t nfaces = 2 * nvertices - 4; */
-  unsigned int nfaces = nvertices * (nvertices - 1);
-  unsigned int nedges = nfaces * 3;
-
-  context->edges = QH_MALLOC(qh_half_edge_t, nedges);
-  context->faces = QH_MALLOC(qh_face_t, nfaces);
-  context->facestack.begin = QH_MALLOC(qh_index_t, nfaces);
-  context->scratch.begin = QH_MALLOC(qh_index_t, nfaces);
-  context->horizonedges.begin = QH_MALLOC(qh_index_t, nedges);
-  context->newhorizonedges.begin = QH_MALLOC(qh_index_t, nedges);
-  context->valid = QH_MALLOC(char, nfaces);
-
-  if (!(context->edges &&
-        context->faces &&
-        context->facestack.begin &&
-        context->scratch.begin &&
-        context->horizonedges.begin &&
-        context->newhorizonedges.begin &&
-        context->valid)) {
-# ifdef HAVE_JWXYZ
-    jwxyz_abort ("%s: out of memory", progname);
-# else
-    fprintf (stderr, "%s: out of memory\n", progname);
-    exit (1);
-# endif
-  }
-
-
-  context->vertices = QH_MALLOC(qh_vertex_t, nvertices);
-  memcpy(context->vertices, vertices, sizeof(qh_vertex_t) * nvertices);
-
-  context->nvertices = nvertices;
-  context->nedges = 0;
-  context->nfaces = 0;
-  context->facestack.size = 0;
-  context->scratch.size = 0;
-  context->horizonedges.size = 0;
-  context->newhorizonedges.size = 0;
-
-  #ifdef QUICKHULL_DEBUG
-  context->maxfaces = nfaces;
-  context->maxedges = nedges;
-  #endif
-}
 
 static void
 qh__free_context(qh_context_t* context)
@@ -1252,6 +1198,52 @@ qh__free_context(qh_context_t* context)
   QH_FREE(context->newhorizonedges.begin);
   QH_FREE(context->vertices);
   QH_FREE(context->valid);
+}
+
+/* jwz: return 0 when out of memory */
+static Bool
+qh__init_context(qh_context_t* context, qh_vertex_t const* vertices,
+                 unsigned int nvertices)
+{
+  /* TODO: */
+  /* size_t nedges = 3 * nvertices - 6; */
+  /* size_t nfaces = 2 * nvertices - 4; */
+  unsigned int nfaces = nvertices * (nvertices - 1);
+  unsigned int nedges = nfaces * 3;
+
+  memset (context, 0, sizeof(*context));
+
+  context->edges = QH_MALLOC(qh_half_edge_t, nedges);
+  if (!context->edges) goto FAIL;
+  context->faces = QH_MALLOC(qh_face_t, nfaces);
+  if (!context->faces) goto FAIL;
+  context->facestack.begin = QH_MALLOC(qh_index_t, nfaces);
+  if (!context->facestack.begin) goto FAIL;
+  context->scratch.begin = QH_MALLOC(qh_index_t, nfaces);
+  if (!context->scratch.begin) goto FAIL;
+  context->horizonedges.begin = QH_MALLOC(qh_index_t, nedges);
+  if (!context->horizonedges.begin) goto FAIL;
+  context->newhorizonedges.begin = QH_MALLOC(qh_index_t, nedges);
+  if (!context->newhorizonedges.begin) goto FAIL;
+  context->valid = QH_MALLOC(char, nfaces);
+  if (!context->valid) goto FAIL;
+
+  context->vertices = QH_MALLOC(qh_vertex_t, nvertices);
+  if (!context->vertices) goto FAIL;
+  context->nvertices = nvertices;
+
+  memcpy(context->vertices, vertices, sizeof(qh_vertex_t) * nvertices);
+
+  #ifdef QUICKHULL_DEBUG
+  context->maxfaces = nfaces;
+  context->maxedges = nedges;
+  #endif
+
+  return True;
+
+ FAIL:
+  qh__free_context (context);
+  return False;
 }
 
 void
@@ -1298,9 +1290,11 @@ qh_quickhull3d(qh_vertex_t const* vertices, unsigned int nvertices)
   unsigned int nfaces = 0, i, index, nindices;
   double epsilon;
 
+  memset (&m, 0, sizeof(m));
   epsilon = qh__compute_epsilon(vertices, nvertices);
 
-  qh__init_context(&context, vertices, nvertices);
+  if (! qh__init_context(&context, vertices, nvertices))
+    return m;
 
   qh__remove_vertex_duplicates(&context, epsilon);
 

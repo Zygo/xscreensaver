@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2017 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2020 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.47 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.54 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -98,6 +98,7 @@ sub read_saver_xml($) {
   return () if ($name eq 'XScreenSaver');
   return () if ($name eq 'SaverTester');
   return () if ($name eq 'XScreenSaverUpdater');
+  return () if ($name eq 'RandomXScreenSaver');
 
   my $file  = "$app_dir/Contents/Resources/" . lc($name) . ".xml";
   my $file2 = "$app_dir/" . lc($name) . ".xml";
@@ -253,7 +254,7 @@ sub update_saver_xml($$) {
     print STDERR "$progname: wrote $filename\n" if ($verbose);
   }
 
-  return ($desc1, $desc2);
+  return ($desc1, $desc2, $name);
 }
 
 
@@ -330,28 +331,38 @@ sub set_icon($) {
 sub set_thumb($) {
   my ($app_dir) = @_;
 
+  error ("$app_dir: no name") 
+    unless ($app_dir =~ m@/([^/.]+).(app|saver)/?$@x);
+  my $name = $1;
+  my $oname = $name;
+
   return unless ($app_dir =~ m@\.saver/?$@s);
 
-  my $name = $app_dir;
+  $name = $app_dir;
   $name =~ s@^.*/@@s;
   $name =~ s@\..*?$@@s;
   $name = lc($name);
 
   $name = 'rd-bomb' if ($name eq 'rdbomb');  # sigh
 
-  if (! -f "$thumbdir/$name.png") {
-    system ("make", "$thumbdir/$name.png");
+  my $src = "$thumbdir/$name.png";
+
+  if (! -f $src) {
+    print STDERR "$progname: exec: make \"$src\"\n" if ($verbose);
+    system ("make", $src);
     my $exit  = $? >> 8;
     exit ($exit) if $exit;
     error ("unable to download $name.png")
-      unless (-f "$thumbdir/$name.png");
+      unless (-f $src);
   }
 
   $app_dir =~ s@/+$@@s;
   $app_dir .= "/Contents/Resources";
-  error ("$app_dir does not exist") unless (-d $app_dir);
+  if (! -d $app_dir) {
+    mkdir ($app_dir) || error ("mkdir: $app_dir: $!");
+  }
 
-  system ("cp", "-p", "$thumbdir/$name.png", "$app_dir/thumbnail.png");
+  system ("cp", "-p", $src, "$app_dir/thumbnail.png");
   my $exit  = $? >> 8;
   exit ($exit) if $exit;
 }
@@ -418,36 +429,45 @@ sub update($) {
     unless ($plist =~ m@<key>CFBundleShortVersionString</key>\s*
                         <string>([^<>]+)</string>@sx);
   my $vers = $1;
-  my ($ignore, $info_str) = update_saver_xml ($app_dir, $vers);
+  my ($ignore, $info_str, $name) = update_saver_xml ($app_dir, $vers);
 
   # No, don't do this -- the iOS version reads the XML file in a few
   # different places, and most of those places don't understand gzip.
 
   if ($app_name eq 'XScreenSaver') {
     compress_all_xml_files ($app_dir);
-  } elsif (! defined($info_str)) {
-    print STDERR "$progname: $filename: no XML file\n" if ($verbose > 1);
   } else {
 
-    $info_str =~ m@^([^\n]+)\n@s ||
-      error ("$filename: unparsable copyright");
-    my $copyright = "$1";
-    $copyright =~ s/\b\d{4}-(\d{4})\b/$1/;
-
-    # Lose the Wikipedia URLs.
-    $info_str =~ s@https?:.*?\b(wikipedia|mathworld)\b[^\s]+[ \t]*\n?@@gm;
-
-    $info_str =~ s/(\n\n)\n+/$1/gs;
-    $info_str =~ s/(^\s+|\s+$)//gs;
-    $plist = set_plist_key ($filename, $plist, 
-                            "NSHumanReadableCopyright", $copyright);
-    $plist = set_plist_key ($filename, $plist,
-                            "CFBundleLongVersionString",$copyright);
-    $plist = set_plist_key ($filename, $plist,
-                            "CFBundleGetInfoString",    $info_str);
     $plist = set_plist_key ($filename, $plist,
                             "CFBundleIdentifier",
                             "org.jwz.xscreensaver." . $app_name);
+
+    error ("$filename: no bundle identifier")
+      unless ($plist =~ m@>CFBundleIdentifier</key>\s*<string>[^<>]*@s);
+
+    if (!defined($info_str)) {
+      print STDERR "$progname: $filename: no XML file\n" if ($verbose > 1);
+    } else {
+      $info_str =~ m@^([^\n]+)\n@s ||
+        error ("$filename: unparsable copyright");
+      my $copyright = "$1";
+      $copyright =~ s/\b\d{4}-(\d{4})\b/$1/;
+
+      # Lose the Wikipedia URLs.
+      $info_str =~ s@https?:.*?\b(wikipedia|mathworld)\b[^\s]+[ \t]*\n?@@gm;
+
+      $info_str =~ s/(\n\n)\n+/$1/gs;
+      $info_str =~ s/(^\s+|\s+$)//gs;
+      $plist = set_plist_key ($filename, $plist, 
+                              "NSHumanReadableCopyright", $copyright);
+      $plist = set_plist_key ($filename, $plist,
+                              "CFBundleLongVersionString",$copyright);
+      $plist = set_plist_key ($filename, $plist,
+                              "CFBundleGetInfoString",    $info_str);
+
+      $plist = set_plist_key ($filename, $plist, "CFBundleName", $name)
+        unless ($app_name eq $name);  # Some names contain spaces.
+    }
 
     if ($oplist eq $plist) {
       print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);

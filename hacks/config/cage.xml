@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <screensaver name="cage" _label="Cage" gl="yes">
 
@@ -17,7 +17,7 @@
   <xscreensaver-updater />
 
   <_description>
-Escher's "Impossible Cage", a 3d analog of a moebius
+Escher's "Impossible Cage", a 3d analog of a möbius
 strip, and rotates it in three dimensions.
 
 https://en.wikipedia.org/wiki/Maurits_Cornelis_Escher

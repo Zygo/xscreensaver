@@ -131,13 +131,11 @@
 			"*count:	200	\n" \
 			"*cycles:	1000	\n" \
 			"*ncolors:	32	\n" \
-             "*titleFont:  -*-helvetica-bold-r-normal-*-*-180-*-*-*-*-*-*\n" \
+                        "*titleFont:    sans-serif bold 18\n" \
 			"*showFPS:	False	\n" \
 			"*wireframe:	False	\n" \
 
 # define release_juggle 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "sphere.h"

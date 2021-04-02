@@ -22,7 +22,7 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
  *
  *    Programming:  Ed Mackey, http://www.netaxs.com/~emackey/
  *                  Gordon Wrigley, gdw33@student.canterbury.ac.nz
- *                  Sergio Gutiérrez "Sergut", sergut@gmail.com
+ *                  Sergio GutiÃ©rrez "Sergut", sergut@gmail.com
  *    Sproingie 3D objects modeled by:  Al Mackey, al@iam.com
  *       (using MetaNURBS in NewTek's Lightwave 3D v5).
  *
@@ -65,9 +65,6 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 #define DEF_SMART_SPROINGIES "True" /* Smart sproingies do not fall down the edge */
 
 #include "sproingies.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 static XrmOptionDescRec opts[] = {
     {"-fall",     ".smartSproingies",  XrmoptionNoArg,  "False"},

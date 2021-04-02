@@ -21,8 +21,6 @@
 			"*wireframe:    False         \n" \
 
 # define release_matrix 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)

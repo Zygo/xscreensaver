@@ -72,9 +72,6 @@ static const char sccsid[] = "@(#)atunnel.c	5.13 2004/05/25 xlockmore";
 #endif /* HAVE_XPM */
 
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #define DEF_LIGHT	"True"
 #define DEF_WIRE    "False"
 #define DEF_TEXTURE	"True"

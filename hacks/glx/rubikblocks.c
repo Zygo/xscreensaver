@@ -46,9 +46,6 @@
 #define BORDER     5
 #define BORDER2    (BORDER*BORDER)
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #define rnd01() ((int)(random()%2))
 
 /*************************************************************************/
@@ -278,6 +275,16 @@ draw_main(ModeInfo *mi, rubikblocks_conf *cp)
     int o = (int) current_device_rotation();
     if (o != 0 && o != 180 && o != -180)
       glScalef (1/h, 1/h, 1/h);
+  }
+# else
+  {
+    /* Don't understand why this clause doesn't work on mobile, but it 
+       doesn't. */
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glRotatef (current_device_rotation(), 0, 0, 1);
+    glScalef (s, s, s);
   }
 # endif
 

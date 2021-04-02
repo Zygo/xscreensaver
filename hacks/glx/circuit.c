@@ -33,7 +33,7 @@
 #define DEFAULTS        "*delay:   20000 \n" \
                         "*showFPS: False \n" \
 			"*suppressRotationAnimation: True\n" \
-               "*componentFont: -*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*"
+                        "*componentFont: monospace bold 12" \
 
 # define release_circuit 0
 # define circuit_handle_event xlockmore_no_events
@@ -57,17 +57,11 @@
 
 #include "texfont.h"
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 static int maxparts;
 static int rotatespeed;
 static int spin;
 static int uselight;
 static int seven;
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 static XrmOptionDescRec opts[] = {
   {"-parts", ".circuit.parts", XrmoptionSepArg, 0 },
@@ -1117,6 +1111,7 @@ static int DrawIC(Circuit *ci, IC *c)
       glTranslatef (-w/2, 0, 0);
       glColor4fv (texfg);
       print_texture_string (ci->font, c->text);
+      glEnable(GL_LIGHTING);
       glPopMatrix();
     }
 
@@ -1358,6 +1353,7 @@ static int DrawTransistor(Circuit *ci, Transistor *t)
       glTranslatef (-w/2, 0, 0);
       glColor4fv (texfg);
       print_texture_string (ci->font, t->text);
+      glEnable (GL_LIGHTING);
       glPopMatrix();
     }
 
@@ -1385,6 +1381,7 @@ static int DrawTransistor(Circuit *ci, Transistor *t)
       glTranslatef (-w/2, 0, 0);
       glColor4fv (texfg);
       print_texture_string (ci->font, t->text);
+      glEnable (GL_LIGHTING);
       glPopMatrix();
     }
     glDisable(GL_TEXTURE_2D);
@@ -1931,6 +1928,16 @@ static void display(ModeInfo *mi)
       glScalef (h, h, h);
     h = 2;
     glScalef (h, h, h);
+  }
+# else
+  {
+    /* Don't understand why this clause doesn't work on mobile, but it 
+       doesn't. */
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    s = 1/s;
+    glScalef (s, s, s);
   }
 # endif
 

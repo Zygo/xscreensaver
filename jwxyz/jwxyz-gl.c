@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,13 +11,13 @@
 
 /* JWXYZ Is Not Xlib.
 
-   But it's a bunch of function definitions that bear some resemblance to
-   Xlib and that do OpenGL-ish things that bear some resemblance to the
-   things that Xlib might have done.
+   Pixmaps implemented in terms of OpenGL textures, for Android X11 hacks.
+   Maybe this can someday be used on macOS and iOS as well.
 
-   This is the version of jwxyz for Android.  The version used by macOS
-   and iOS is in jwxyz.m.
+   See the comment at the top of jwxyz-common.c for an explanation of
+   the division of labor between these various modules.
  */
+
 
 /* Be advised, this is all very much a work in progress. */
 
@@ -91,6 +91,9 @@
 # else
 #  include <GLES/gl.h>
 #  include <GLES/glext.h>
+#  ifdef HAVE_GLES3
+#   include <GLES3/gl3.h>
+#  endif
 # endif
 #endif
 

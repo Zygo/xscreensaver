@@ -46,9 +46,6 @@ static const char sccsid[] = "@(#)apollonian.c	5.02 2001/07/01 xlockmore";
  *      sum(a^2,b^2,c^2,d^2) >= 2*max(a,b,c,d)^2
  *
  *
- * Todo:
- * Add a small font
- *
  * Revision History:
  * 25-Jun-2001: Converted from C and Postscript code by David Bagley 
  *              Original code by Allan R. Wilks <allan@research.att.com>.
@@ -70,7 +67,7 @@ static const char sccsid[] = "@(#)apollonian.c	5.02 2001/07/01 xlockmore";
 					"*count:   64      \n" \
 					"*cycles:  20      \n" \
 					"*ncolors: 64      \n" \
-					"*font:    fixed" "\n" \
+					"*font:    sans-serif bold 10\n" \
 					"*fpsTop: true     \n" \
 					"*fpsSolid: true   \n" \
 					"*ignoreRotation: True" \
@@ -111,10 +108,6 @@ static OptionStruct desc[] =
 
 ENTRYPOINT ModeSpecOpt apollonian_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, desc};
-
-#ifdef DOFONT
-extern XFontStruct *getFont(Display * display);
-#endif
 
 #ifdef USE_MODULES
 ModStruct   apollonian_description =
@@ -294,19 +287,15 @@ typedef struct {
 	int         count;
 	Bool        label, altgeom;
 	apollonian_quadruple  *quad;
-#ifdef DOFONT
-	XFontStruct *font;
-#endif
+    XftFont     *font;
+    XftColor    xft_fg;
+    XftDraw     *xftdraw;
 	int         time;
 	int         game;
 } apollonianstruct;
 
 static apollonianstruct *apollonians = (apollonianstruct *) NULL;
 
-#define FONT_HEIGHT 19
-#define FONT_WIDTH 15
-#define FONT_LENGTH 20
-#define MAX_CHAR 10
 #define K       2.15470053837925152902  /* 1+2/sqrt(3) */
 #define MAXBEND 100 /* Do not want configurable by user since it will take too
 	much time if increased. */
@@ -501,12 +490,27 @@ cquad(circle *c1, circle *c2, circle *c3, circle *c4)
 }
 
 static void
+set_xft_color (ModeInfo *mi, XftColor *c, unsigned long pixel)
+{
+  XColor xc;
+  xc.pixel = pixel;
+  XQueryColor (MI_DISPLAY(mi), MI_COLORMAP(mi), &xc);
+  c->pixel = pixel;
+  c->color.red   = xc.red;
+  c->color.green = xc.green;
+  c->color.blue  = xc.blue;
+  c->color.alpha = 0xFFFF;
+}
+
+
+static void
 p(ModeInfo *mi, circle c)
 {
 	apollonianstruct *cp = &apollonians[MI_SCREEN(mi)];
 	char string[15];
 	double g, e;
 	int g_width;
+    unsigned long pix;
 
 #ifdef DEBUG
 	(void) printf("c.e=%g c.s=%g c.h=%g  c.x=%g c.y=%g\n",
@@ -518,12 +522,12 @@ p(ModeInfo *mi, circle c)
 		if (g < 0.0)
 			g = -g;
 		if (MI_NPIXELS(mi) <= 2)
-			XSetForeground(MI_DISPLAY(mi), MI_GC(mi),
-				MI_WHITE_PIXEL(mi));
+          pix = MI_WHITE_PIXEL(mi);
 		else
-			XSetForeground(MI_DISPLAY(mi), MI_GC(mi),
-				MI_PIXEL(mi, ((int) ((g + cp->color_offset) *
-					g)) % MI_NPIXELS(mi)));
+          pix = MI_PIXEL(mi, ((int) ((g + cp->color_offset) * g))
+                         % MI_NPIXELS(mi));
+        XSetForeground(MI_DISPLAY(mi), MI_GC(mi), pix);
+        set_xft_color (mi, &cp->xft_fg, pix);
 		XDrawArc(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
 			((int) (cp->size * (-cp->c1.e) * (c.x - 1.0) /
 				(-2.0 * c.e) + cp->size / 2.0 + cp->offset.x)),
@@ -537,22 +541,24 @@ p(ModeInfo *mi, circle c)
 #endif
 			return;
 		}
-		(void) sprintf(string, "%g", (g == 0.0) ? 0 : -g);
-		if (cp->size >= 10 * FONT_WIDTH) {
-		  /* hard code these to corners */
-		  XDrawString(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
-			((int) (cp->size * c.x / (2.0 * c.e))) + cp->offset.x,
-			((int) (cp->size * c.y / (2.0 * c.e))) + FONT_HEIGHT,
-			string, (g == 0.0) ? 1 : ((g < 10.0) ? 2 :
-				((g < 100.0) ? 3 : 4)));
-		}
-		if (cp->altgeom && MI_HEIGHT(mi) >= 30 * FONT_WIDTH) {
-		  XDrawString(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
-			((int) (cp->size * c.x / (2.0 * c.e) + cp->offset.x)),
-			((int) (cp->size * c.y / (2.0 * c.e) + MI_HEIGHT(mi) -
-			FONT_HEIGHT / 2)), (char *) space_string[cp->geometry],
-			strlen(space_string[cp->geometry]));
-		}
+
+		sprintf(string, "%g", (g == 0.0) ? 0 : -g);
+        XftDrawStringUtf8 (cp->xftdraw, &cp->xft_fg, cp->font,
+                           ((int) (cp->size * c.x / (2.0 * c.e))) +
+                           cp->offset.x + cp->font->ascent * 2,
+                           ((int) (cp->size * c.y / (2.0 * c.e))) +
+                           cp->font->ascent * 4,
+                           (FcChar8 *) string,
+                           (g == 0 ? 1 :
+                            g < 10 ? 2 :
+                            g < 100 ? 3 : 4));
+        XftDrawStringUtf8 (cp->xftdraw, &cp->xft_fg, cp->font,
+                           ((int) (cp->size * c.x / (2.0 * c.e) +
+                                   cp->offset.x)) + cp->font->ascent * 2,
+                           ((int) (cp->size * c.y / (2.0 * c.e) +
+                                   MI_HEIGHT(mi) - cp->font->ascent * 4)),
+                           (FcChar8 *) space_string[cp->geometry],
+                           strlen(space_string[cp->geometry]));
 		return;
 	}
 	if (MI_NPIXELS(mi) <= 2)
@@ -590,22 +596,27 @@ p(ModeInfo *mi, circle c)
 		return;
 	}
 	if (MI_NPIXELS(mi) <= 2)
-		XSetForeground(MI_DISPLAY(mi), MI_GC(mi), MI_BLACK_PIXEL(mi));
+      pix = MI_BLACK_PIXEL(mi);
 	else
-		XSetForeground(MI_DISPLAY(mi), MI_GC(mi),
-			MI_PIXEL(mi, ((int) ((g + cp->color_offset) * g) +
-				MI_NPIXELS(mi) / 2) % MI_NPIXELS(mi)));
+      pix = MI_PIXEL(mi, ((int) ((g + cp->color_offset) * g) +
+                          MI_NPIXELS(mi) / 2) % MI_NPIXELS(mi));
 	g_width = (g < 10.0) ? 1: ((g < 100.0) ? 2 : 3);
-	if (c.e < e * cp->size / (FONT_LENGTH + 5 * g_width) && g < 1000.0) {
-		(void) sprintf(string, "%g", g);
-		XDrawString(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
-			((int) (cp->size * e * c.x / (2.0 * c.e) +
-				cp->size / 2.0 + cp->offset.x)) -
-				g_width * FONT_WIDTH / 2,
-			((int) (cp->size * e * c.y / (2.0 * c.e) +
-				cp->size / 2.0 + cp->offset.y)) +
-				FONT_HEIGHT / 2,
-			string, g_width);
+	if (c.e < e * cp->size / ((cp->font->ascent + cp->font->descent) * 2) &&
+        g < 1000.0) {
+        XGlyphInfo overall;
+        XSetForeground(MI_DISPLAY(mi), MI_GC(mi), pix);
+        set_xft_color (mi, &cp->xft_fg, pix);
+		sprintf(string, "%g", g);
+        XftTextExtentsUtf8 (MI_DISPLAY(mi), cp->font,
+                            (FcChar8 *) string, g_width, &overall);
+        XftDrawStringUtf8 (cp->xftdraw, &cp->xft_fg, cp->font,
+                           ((int) (cp->size * e * c.x / (2.0 * c.e) +
+                                   cp->size / 2.0 + cp->offset.x)) -
+                           overall.width / 2,
+                           ((int) (cp->size * e * c.y / (2.0 * c.e) +
+                                   cp->size / 2.0 + cp->offset.y)) +
+                           cp->font->ascent / 2,
+                           (FcChar8 *) string, g_width);
         }
 }
 
@@ -643,16 +654,9 @@ free_apollonian (ModeInfo * mi)
 		(void) free((void *) cp->quad);
 		cp->quad = (apollonian_quadruple *) NULL;
 	}
-#ifdef DOFONT
-	if (cp->gc != None) {
-		XFreeGC(display, cp->gc);
-		cp->gc = None;
-	}
-	if (cp->font != None) {
-		XFreeFont(display, cp->font);
-		cp->font = None;
-	}
-#endif
+
+  XftFontClose (MI_DISPLAY(mi), cp->font);
+  XftDrawDestroy (cp->xftdraw);
 }
 
 #ifndef DEBUG
@@ -678,6 +682,7 @@ init_apollonian (ModeInfo * mi)
 {
 	apollonianstruct *cp;
 	int i;
+    char *s;
 
 	MI_INIT (mi, apollonians);
 	cp = &apollonians[MI_SCREEN(mi)];
@@ -687,12 +692,16 @@ init_apollonian (ModeInfo * mi)
 	cp->offset.y = (MI_HEIGHT(mi) - cp->size) / 2;
 	cp->color_offset = NRAND(MI_NPIXELS(mi));
 
-#ifdef DOFONT
-	if (cp->font == None) {
-		if ((cp->font = getFont(MI_DISPLAY(mi))) == None)
-			return False;
-	}
-#endif
+    cp->font = load_xft_font_retry (MI_DISPLAY(mi), MI_SCREEN(mi),
+                                    get_string_resource (MI_DISPLAY(mi),
+                                                         "font", "Font"));
+    cp->xftdraw = XftDrawCreate (MI_DISPLAY(mi), MI_WINDOW(mi),
+                                 MI_VISUAL(mi), MI_COLORMAP(mi));
+    s = get_string_resource (MI_DISPLAY(mi), "foreground", "Foreground");
+    XftColorAllocName (MI_DISPLAY(mi), MI_VISUAL(mi), MI_COLORMAP(mi), s,
+                       &cp->xft_fg);
+    free(s);
+    
 	cp->label = label;
 	cp->altgeom = cp->label && altgeom;
 

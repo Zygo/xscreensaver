@@ -58,9 +58,6 @@ struct glb_config glb_config =
 static Bool transparent_p;
 static char *bubble_color_str;
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 static XrmOptionDescRec opts[] = {
   { "-transparent",  ".transparent",   XrmoptionNoArg, "True" },
   { "+transparent",  ".transparent",   XrmoptionNoArg, "False" },
@@ -200,15 +197,15 @@ draw_bubble3d(ModeInfo * mi)
         glb_config.polygon_count = 0;
         glPushMatrix();
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
         {
-          GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-          int o = (int) current_device_rotation();
-          if (o != 0 && o != 180 && o != -180)
-            glScalef (1/h, 1/h, 1/h);
-          glRotatef(o, 0, 0, 1);
+          GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                       /* Portrait needs to be a little zoomed in or else
+                          the bubbles pop into existence already on-screen. */
+                       ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi)) * 1.5
+                       : 1);
+          glRotatef (current_device_rotation(), 0, 0, 1);
+          glScalef (s, s, s);
         }
-# endif
 
 	do_display(c);
         glPopMatrix();

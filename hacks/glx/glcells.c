@@ -56,9 +56,6 @@
 			"*wireframe:    False            \n" \
 			"*suppressRotationAnimation: True\n" \
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #ifndef HAVE_JWZGLES /* glDrawElements unimplemented... */
 # define USE_VERTEX_ARRAY
 #endif
@@ -1224,9 +1221,7 @@ ENTRYPOINT void
 reshape_glcells( ModeInfo *mi, int width, int height )
 {
   State *st  = &sstate[MI_SCREEN(mi)];
-# ifdef HAVE_MOBILE
   int rot = current_device_rotation();
-# endif
   st->height = height;
   st->width  = width;
 # ifdef HAVE_MOBILE
@@ -1250,9 +1245,7 @@ reshape_glcells( ModeInfo *mi, int width, int height )
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho( 0, width, height, 0, 200, 0 );
-# ifdef HAVE_MOBILE
   glRotatef (rot, 0, 0, 1);
-# endif
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   if (st->food) free( st->food );

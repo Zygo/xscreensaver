@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright © 1999-2021 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -6,23 +6,23 @@ srcdir		= @srcdir@
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
-SUBDIRS 	= utils jwxyz hacks/images hacks hacks/glx driver po
+SUBDIRS 	= utils jwxyz hacks/images hacks hacks/glx hacks/fonts \
+		  driver po
 SUBDIRS2	= $(SUBDIRS) OSX android
-TARFILES	= README README.hacking README.VMS INSTALL \
+TARFILES	= README README.hacking INSTALL \
 		  configure configure.ac Makefile.in config.h.in \
-		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
-		  ax_pthread.m4 config.sub makevms.com \
+		  install-sh config.guess aclocal.m4 \
+		  ax_pthread.m4 config.sub \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
-		  xscreensaver.spec \
-		  OSX/xscreensaver.xcodeproj/project.pbxproj
+		  xscreensaver.spec
 
 TAR		= tar
 
 # Using $(MAKE) directly means the shell executes things even with "make -n"
 MAKE2 = $(MAKE)
 
-MAKE_SUBDIR  = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE2) $@) || exit 5; done
-MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do (cd $$dir; $(MAKE2) $@) || exit 5; done
+MAKE_SUBDIR  = for dir in $(SUBDIRS);  do (cd $$dir && $(MAKE2) $@) || exit 5; done
+MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do (cd $$dir && $(MAKE2) $@) || exit 5; done
 
 default::
 	@+$(MAKE_SUBDIR)
@@ -57,8 +57,8 @@ clean::
 	@$(MAKE_SUBDIR2)
 
 distclean:: clean
-	-rm -f config.h Makefile config.status config.cache config.log TAGS *~ "#"* intltool-extract intltool-merge intltool-update
 	@$(MAKE_SUBDIR2)
+	-rm -f config.h Makefile config.status config.cache config.log TAGS *~ "#"* intltool-extract intltool-merge intltool-update
 
 dist:: tar
 
@@ -71,26 +71,31 @@ tar::
   $(MAKE2) version-date distdepend ;					    \
   $(MAKE2) _tar
 
+list_tarfiles:
+	@find $(TARFILES) -type f -print | sort
+
 _tar:
 	@								    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h |   \
+	head -1` ;							    \
   NAME="xscreensaver-$$VERS" ;						    \
   rm -rf $$NAME ; ln -s . $$NAME ;					    \
-  FILES= ;								    \
+  LIST="tar$$$$.txt" ;							    \
   ADIR=archive/ ;							    \
-  for subdir in $(SUBDIRS2) ; do					    \
-    d=`pwd` ;								    \
-    cd $$subdir ;							    \
-    FILES="$$FILES `$(MAKE2) echo_tarfiles				    \
-      | grep -v '^.*make\['						    \
-      | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"			    \
-      ` ";								    \
-    cd $$d ; done ;							    \
+  rm -f "$$LIST" ;							    \
+  for subdir in . $(SUBDIRS2) ; do					    \
+    ( cd $$subdir ;							    \
+      $(MAKE2) list_tarfiles						    \
+        | grep -v '^.*make\['						    \
+        | sed -e "s@^@$$NAME/$$subdir/@g"				    \
+        | sed -e "s@/\./@/@g"						    \
+    ) >> "$$LIST" ;							    \
+  done ;								    \
   echo creating tar file $$ADIR$$NAME.tar.gz... ;			    \
   export COPYFILE_DISABLE=true ;					    \
-  GZIP="-9v" $(TAR) -vczf $$ADIR$$NAME.tar.gz			            \
-    `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" ` ;	    \
-  rm $$NAME
+  export GZIP="-9v" ;							    \
+  $(TAR) -vczf $$ADIR$$NAME.tar.gz -T "$$LIST" ;			    \
+  rm "$$LIST" "$$NAME"
 
 
 # This also makes me sick...
@@ -139,37 +144,68 @@ configure::
 	cat $$TMP > configure ) ;					     \
 	rm -f $$TMP
 
+# WARNING: This stands a good chance of breaking the world.
+# Be prepared to roll back all of /opt/local/ from Time Machine.
+automake-upgrade:
+	sudo port upgrade autoconf automake libtool autoconf-archive
+	cp -p /opt/local/share/automake*/{config.guess,config.sub,install-sh} .
+	cp -p /opt/local/share/libtool/aclocal.m4 .
+	cp -p /opt/local/share/aclocal/ax_pthread.m4 .
+	echo also consider autoupdate
+	$(MAKE2) configure
+
+
 bump-version::
 	@								    \
   SRC=utils/version.h ;							    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\)\.\([0-9][^. ]*\).*/\1 \2/p' $$SRC` ;	    \
+  VERS=`sed -n								    \
+    's/[^0-9]*\([0-9]\)\.\([0-9][0-9]*\)\([^. \"]*\).*/\1 \2 \3/p' $$SRC |  \
+	head -1` ;							    \
   set - $$VERS ;							    \
-  MAJOR="$$1"; MINOR="$$2";						    \
-  NEW=`echo $$MINOR + 1 | bc` ;						    \
-  NEW=`echo $$NEW | sed 's/^\([0-9]\)$$/0\1/'` ;			    \
-  D=`date '+%d-%b-%Y'`;							    \
+  MAJOR="$$1"; MINOR="$$2"; SUF="$$3";					    \
+  VERS="$$MAJOR.$$MINOR$$SUF" ;						    \
+  if [ -z "$$SUF" ]; then						    \
+    MINOR=`echo $$MINOR + 1 | bc | sed 's/^\(.\)/0\1/'` ;		    \
+  else									    \
+    set - `echo $$SUF | sed 's/^\([^0-9]*\)/\1 /'` ;			    \
+    AA="$$1"; BB="$$2";							    \
+    BB=`echo $$BB + 1 | bc` ;						    \
+    SUF="$$AA$$BB" ;							    \
+  fi ;									    \
+  VERS2="$$MAJOR.$$MINOR$$SUF" ;					    \
   ADIR=archive/ ;							    \
-  if [ ! -f $${ADIR}xscreensaver-$$MAJOR.$$MINOR.tar.gz ]; then		    \
-   echo "WARNING: $${ADIR}xscreensaver-$$MAJOR.$$MINOR.tar.gz does not exist.";\
+  if [ ! -f "$${ADIR}xscreensaver-$$VERS.tar.gz" ]; then		    \
+   echo "WARNING: $${ADIR}xscreensaver-$$VERS.tar.gz does not exist.";	    \
   fi ;									    \
-  if [ -f $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz ]; then		    \
-    echo "WARNING: $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz already exists.";\
+  if [ -f "$${ADIR}xscreensaver-$$VERS2.tar.gz" ]; then			    \
+    echo "WARNING: $${ADIR}xscreensaver-$$VERS2.tar.gz already exists.";    \
   fi ;									    \
-  /bin/echo -n "Bumping $$MAJOR.$$MINOR to $$MAJOR.$$NEW ($$D), ok? ";	    \
+  /bin/echo -n "Bumping $$VERS to $$VERS2, ok? ";			    \
   read line;								    \
   if [ "x$$line" != "xyes" -a  "x$$line" != "xy" ]; then		    \
     exit 1 ; 								    \
   fi ;									    \
+									    \
   TMP=/tmp/bv.$$ ;							    \
-  sed -e "s/\([0-9]\.[0-9][0-9]*\)/$$MAJOR.$$NEW/"			    \
-      -e "s/\(([0-9][0-9]*-[A-Za-z][a-z][a-z]-[0-9][0-9][0-9]*\))/($$D)/"   \
-        $$SRC > $$TMP ;							    \
-  /bin/echo -n "New version and date are ";				    \
-  sed -n "s/[^0-9]*\([0-9]\.[0-9][0-9]*\) (\([-A-Za-z0-9]*\)).*/\1, \2./p"  \
-     $$TMP;								    \
+  sed -e "s/\([0-9]\.[0-9][^. \"]*\)/$$VERS2/" $$SRC > $$TMP ;		    \
+  if cmp -s $$SRC $$TMP ; then						    \
+    echo "ERROR! UNCHANGED!" ;						    \
+    exit 1 ;								    \
+  fi ;									    \
+									    \
   cat $$TMP > $$SRC ;							    \
   rm -f $$TMP;								    \
-  echo "overwrote $$SRC"; 						    \
+									    \
+  VERS3=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. \"]*\).*/\1/p' < $$SRC |	    \
+	 tail -1`;							    \
+  if [ x"$$VERS2" != x"$$VERS3" ]; then					    \
+    echo "ERROR! \"$$VERS2\" vs \"$$VERS3\"!" ;				    \
+    exit 1 ;								    \
+  fi ;									    \
+									    \
+  echo "Updated $$SRC version to \"$$VERS3\"" ;				    \
+									    \
+  $(MAKE) version-date ;						    \
   ls -lFd $$SRC
 
 bump_version:: bump-version
@@ -179,15 +215,18 @@ tick_version:: bump-version
 version-date::
 	@								    \
   SRC=utils/version.h ;							    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. \"]*\).*/\1/p' < $$SRC |	    \
+	 head -1`;							    \
   D=`date '+%d-%b-%Y'`;							    \
+  TIME_T=`perl -e "use Date::Parse; print str2time('$$D 12:00')"` ;	    \
   TMP=/tmp/bv.$$ ;							    \
-  sed -e "s/([0-9][^()]*)/($$D)/" < $$SRC > $$TMP ;			    \
-  /bin/echo -n "Updating date in $$SRC to \"$$D\"... " ;		    \
-  if cmp -s $$SRC $$TMP ; then						    \
-    echo "unchanged." ;							    \
-  else									    \
+  sed -e "s/\([0-9]\.[0-9][^. \"]*\)/$$VERS/"				    \
+      -e "s/([0-9][^()]*)/($$D)/"					    \
+      -e "s/\(_RELEASED  *\)[0-9][0-9]*/\1$$TIME_T/"			    \
+    < $$SRC > $$TMP ;							    \
+  if ! cmp -s $$SRC $$TMP ; then					    \
     cat $$TMP > $$SRC ;							    \
-    echo "done." ;							    \
+    echo "Updated $$SRC date to \"$$D\"" ;				    \
   fi ;									    \
   rm -f $$TMP
 
@@ -195,7 +234,8 @@ version-date::
 update_spec_version::
 	@S=$(srcdir)/xscreensaver.spec ;				    \
 	U=$(srcdir)/utils/version.h ;					    \
-	VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;	    \
+	VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U |	    \
+	  head -1` ;							    \
 	/bin/echo -n "Updating $$S to \"$$VERS\"... " ;			    \
 	T=/tmp/xs.$$$$ ;						    \
 	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"		    \
@@ -210,7 +250,8 @@ update_spec_version::
 
 rpm::
 	@								   \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ; \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h |  \
+	  head -1` ;							   \
   DIR=`pwd`/rpm_build ;							   \
   ARCH=`rpm --showrc | sed -n 's/^build arch *: //p'` ;			   \
   ADIR=archive/ ;							   \
@@ -246,7 +287,8 @@ apk::
 www::
 	@								    \
   DEST=$$HOME/www/xscreensaver ;					    \
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h` ;  \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h |   \
+	  head -1` ;							    \
   HEAD="xscreensaver-$$VERS" ;						    \
   ADIR=archive/ ;							    \
   BNAME="$$HEAD.tar.gz" ;						    \
@@ -356,17 +398,22 @@ www::
 
 count::
 	@ \
-  /bin/echo -n "Current hack count: " ; \
-  ( ( cd hacks;     make -s INSTALL=true install-program install-scripts ) ; \
-    ( cd hacks/glx; make -s INSTALL=true install-program ) ) | \
-    grep true | \
-    grep -v helper | \
-    grep -v ljlatest | \
-    wc -l
+  echo "Current hack count: " ;						\
+  A=`cd hacks ;     ( make -s INSTALL=true install-man |		\
+    grep true | grep -v helper | grep -v ljlatest | wc -l )` ;		\
+  echo "    X11:" $$A ;							\
+  B=`cd hacks/glx ; ( make -s INSTALL=true install-man |		\
+    grep true | grep -v helper | grep -v ljlatest | wc -l )` ;		\
+  echo "    GLX:" $$B ;							\
+  C=`echo $$A + $$B | bc` ;						\
+  echo "  Total:" $$C ;							\
 
+
+#cerebrum::
+#	rsync -vax . cerebrum:src/xscreensaver/ \
 
 cerebrum::
-	rsync -vax . cerebrum:src/xscreensaver/ \
+	rsync -vax . pi@10.0.1.19:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \
@@ -376,6 +423,12 @@ cerebrum::
 	--exclude build \
 	--exclude gen \
 	--exclude videos \
+	--exclude config.h \
+	--exclude XScreenSaver_ad.h \
+	--include xscreensaver-getimage-file \
+	--include xscreensaver-getimage-video \
+	--include xscreensaver-text \
+	--exclude '*~' \
 	--include '*.asm' \
 	--include '*.c' \
 	--include '*.gif' \
@@ -389,6 +442,10 @@ cerebrum::
 	--include '*.po' \
 	--include '*.xml' \
 	--include '*.xpm' \
+	--include '*.man' \
+	--include '*.ttf' \
+	--include '*.otf' \
+	--include '*.ui' \
 	--include 'configure*' \
 	--include '*/' \
 	--exclude '*'

@@ -68,6 +68,7 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 #include "pacman.h"
 #include "pacman_ai.h"
 #include "pacman_level.h"
+#include "ximage-loader.h"
 #include "images/gen/pacman_png.h"
 
 #ifdef DISABLE_INTERACTIVE
@@ -315,7 +316,7 @@ draw_position (ModeInfo * mi, int x, int y, int color)
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
-    char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
+    char *f_name = "Utopia 60, Helvetica 60";
     char *s = NULL;
 
     font = load_font_retry (display, f_name);
@@ -338,7 +339,7 @@ draw_number (ModeInfo * mi, int x, int y, int num, int color)
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
-    char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
+    char *f_name = "Utopia 60, Helvetica 60";
     char *s = NULL;
 
     font = load_font_retry (display, f_name);
@@ -390,7 +391,7 @@ draw_string (ModeInfo * mi, int x, int y, char *s, int color)
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
-    char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
+    char *f_name = "Utopia 60, Helvetica 60";
 
     font = load_font_retry (display, f_name);
     assert (font != NULL);

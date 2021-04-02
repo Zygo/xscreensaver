@@ -17,8 +17,6 @@
 			"*wireframe:    False  \n"
 
 # define release_gw 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define DEF_SPEED      "1.0"
 #define DEF_RESOLUTION "1.0"
@@ -573,9 +571,7 @@ draw_gw (ModeInfo *mi)
 
   glPushMatrix ();
 
-# ifdef HAVE_MOBILE
   glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
-# endif
 
   gltrackball_rotate (bp->user_trackball);
 

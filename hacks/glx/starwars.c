@@ -25,18 +25,6 @@
  *     starwars -program 'cat starwars.txt' -columns 25 -no-wrap
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#include <ctype.h>
-#include <sys/stat.h>
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include "starwars.h"
 #define DEFAULTS "*delay:    40000     \n" \
 		 "*showFPS:  False     \n" \
 		 "*fpsTop:   True      \n" \
@@ -48,12 +36,18 @@
 
 # define release_sws 0
 # define sws_handle_event xlockmore_no_events
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "textclient.h"
 #include "utf8wc.h"
+#include "starwars.h"
+
+#include <ctype.h>
+#include <sys/stat.h>
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #ifdef USE_GL /* whole file */
 
@@ -79,8 +73,7 @@
 #define DEF_FADE       "True"
 #define DEF_TEXTURES   "True"
 #define DEF_DEBUG      "False"
-
-#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-360-*-*-*-*-*-*"
+#define DEF_FONT       "sans-serif 36"
 
 #define TAB_WIDTH        8
 

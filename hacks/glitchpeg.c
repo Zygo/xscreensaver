@@ -1,4 +1,4 @@
-/* glitchpeg, Copyright (c) 2018-2020 Jamie Zawinski <jwz@jwz.org>
+/* glitchpeg, Copyright (c) 2018-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,9 +22,6 @@
 #endif
 
 #include <sys/stat.h>
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 struct state {
   Display *dpy;
@@ -89,7 +86,7 @@ draw_image (Display *dpy, Window window, Visual *v, GC gc,
   unsigned long srsiz=0, sgsiz=0, sbsiz=0;
 
 # ifdef HAVE_JWXYZ
-  // BlackPixel has alpha: 0xFF000000.
+  /* BlackPixel has alpha: 0xFF000000. */
   unsigned long black = BlackPixelOfScreen (DefaultScreenOfDisplay (dpy));
 #else
   unsigned long black = 0;
@@ -215,6 +212,7 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
   struct state *st = (struct state *) closure;
   char buf[10240];
   char *file = buf;
+  char *result;
   FILE *fp;
   struct stat stat;
   int n;
@@ -224,11 +222,12 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
   static int error_count = 0;
 
   *buf = 0;
-  fgets (buf, sizeof(buf)-1, st->pipe);
+  result = fgets (buf, sizeof(buf)-1, st->pipe);
   pclose (st->pipe);
   st->pipe = 0;
   XtRemoveInput (st->pipe_id);
   st->pipe_id = 0;
+  if (!result) goto FAIL;
 
   /* strip trailing newline */
   L = strlen(buf);
@@ -340,6 +339,7 @@ glitchpeg_draw (Display *dpy, Window window, void *closure)
       unsigned char *glitched = malloc (st->image_size);
       int nn = random() % st->count;
       if (nn <= 0) nn = 1;
+      if (! (random() % 30)) nn *= 20;
 
       memcpy (glitched, st->image_data, st->image_size);
 

@@ -5,7 +5,7 @@
 static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/03 xlockmore";
 #endif
 
-/* Copyright (c) 2013-2020 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2013-2021 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -23,9 +23,10 @@ static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/03 xlockmore";
  * REVISION HISTORY:
  * C. Steger - 14/01/03: Initial version
  * C. Steger - 14/10/03: Moved the curlicue texture to curlicue.h
- * C. Steger - 20/01/06: Added the changing colors mode.
+ * C. Steger - 20/01/06: Added the changing colors mode
  * C. Steger - 20/12/05: Added per-fragment shading
- * C. Steger - 20/12/06: Moved all GLSL support code into glsl_support.[hc]
+ * C. Steger - 20/12/06: Moved all GLSL support code into glsl-utils.[hc]
+ * C. Steger - 20/12/30: Make the shader code work under macOS and iOS
  */
 
 /*
@@ -228,15 +229,10 @@ static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/03 xlockmore";
 #define DEF_WALK_SPEED             "20.0"
 
 
-/* glsl_support.h must be included before any other headers to make the
-   OpenGL 2.0 (GLSL) function prototypes available by defining
-   GL_GLEXT_PROTOTYPES. */
-#include "glsl_support.h"
-
-
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      25000 \n" \
                             "*showFPS:    False \n" \
+                            "*prefersGLSL: True \n" \
 
 # define release_projectiveplane 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
@@ -250,6 +246,7 @@ static const char sccsid[] = "@(#)projectiveplane.c  1.1 14/01/03 xlockmore";
 # include <X11/keysym.h>
 #endif
 
+#include "glsl-utils.h"
 #include "gltrackball.h"
 
 #include <float.h>
@@ -364,6 +361,13 @@ ENTRYPOINT ModeSpecOpt projectiveplane_opts =
 #define NUMB 8
 
 
+#if !defined(__GNUC__) && !defined(__extension__)
+ /* don't warn about "string length is greater than the length ISO C89
+    compilers are required to support" in these string constants... */
+# define  __extension__ /**/
+#endif
+
+
 typedef struct {
   GLint      WindH, WindW;
   GLXContext *glx_context;
@@ -425,7 +429,7 @@ typedef struct {
   GLint texture_sampler_index;
   GLuint vertex_uv_buffer, vertex_t_buffer;
   GLuint color_buffer, indices_buffer;
-  GLint ni, ne;
+  GLint ni, ne, nt;
 #endif /* HAVE_GLSL */
 } projectiveplanestruct;
 
@@ -439,16 +443,20 @@ static const GLchar *shader_version_2_1 =
   "#version 120\n";
 static const GLchar *shader_version_3_0 =
   "#version 130\n";
+static const GLchar *shader_version_3_0_es =
+  "#version 300 es\n"
+  "precision highp float;\n"
+  "precision highp int;\n";
 
 /* The vertex shader code is composed of code fragments that depend on
    the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init(). */
+   They are concatenated by glsl_CompileAndLinkShaders in the function
+   init_glsl(). */
 static const GLchar *vertex_shader_attribs_2_1 =
   "attribute vec2 VertexUV;\n"
   "attribute vec4 VertexT;\n"
   "attribute vec4 VertexColor;\n"
   "\n"
-  "varying vec4 Position;\n"
   "varying vec3 Normal;\n"
   "varying vec4 Color;\n"
   "varying vec4 TexCoord;\n"
@@ -458,12 +466,12 @@ static const GLchar *vertex_shader_attribs_3_0 =
   "in vec4 VertexT;\n"
   "in vec4 VertexColor;\n"
   "\n"
-  "out vec4 Position;\n"
   "out vec3 Normal;\n"
   "out vec4 Color;\n"
   "out vec4 TexCoord;\n"
   "\n";
 static const GLchar *vertex_shader_main =
+  __extension__
   "uniform mat4 MatRot4D;\n"
   "uniform mat4 MatProj;\n"
   "uniform bool BoolPersp;\n"
@@ -474,74 +482,73 @@ static const GLchar *vertex_shader_main =
   "void main (void)\n"
   "{\n"
   "  const float EPSILON = 1.0e-7f;\n"
-  "  float U, V, SU, CU, S2U, C2U, SV2, CV2, SV4, CV4;\n"
-  "  vec3 P, PU, PV;\n"
-  "  U = VertexUV.x;\n"
-  "  V = VertexUV.y;\n"
-  "  SU = sin(U)\n;"
-  "  CU = cos(U)\n;"
-  "  S2U = sin(2.0f*U)\n;"
-  "  C2U = cos(2.0f*U)\n;"
-  "  SV2 = sin(0.5f*V)\n;"
-  "  CV2 = cos(0.5f*V)\n;"
-  "  SV4 = sin(0.25f*V)\n;"
-  "  CV4 = cos(0.25f*V)\n;"
-  "  vec4 XX = vec4(0.5f*S2U*SV4*SV4,\n"
-  "                 0.5f*SU*SV2,\n"
-  "                 0.5f*CU*SV2,\n"
-  "                 0.5f*(SU*SU*SV4*SV4-CV4*CV4));\n"
-  "  if (V < EPSILON)\n"
+  "  float u, v, su, cu, s2u, c2u, sv2, cv2, sv4, cv4;\n"
+  "  vec3 p, pu, pv;\n"
+  "  u = VertexUV.x;\n"
+  "  v = VertexUV.y;\n"
+  "  su = sin(u)\n;"
+  "  cu = cos(u)\n;"
+  "  s2u = sin(2.0f*u)\n;"
+  "  c2u = cos(2.0f*u)\n;"
+  "  sv2 = sin(0.5f*v)\n;"
+  "  cv2 = cos(0.5f*v)\n;"
+  "  sv4 = sin(0.25f*v)\n;"
+  "  cv4 = cos(0.25f*v)\n;"
+  "  vec4 xx = vec4(0.5f*s2u*sv4*sv4,\n"
+  "                 0.5f*su*sv2,\n"
+  "                 0.5f*cu*sv2,\n"
+  "                 0.5f*(su*su*sv4*sv4-cv4*cv4));\n"
+  "  if (v < EPSILON)\n"
   "  {\n"
-  "    V = EPSILON;\n"
-  "    SV2 = sin(0.5f*V)\n;"
-  "    CV2 = cos(0.5f*V)\n;"
-  "    SV4 = sin(0.25f*V)\n;"
+  "    v = EPSILON;\n"
+  "    sv2 = sin(0.5f*v)\n;"
+  "    cv2 = cos(0.5f*v)\n;"
+  "    sv4 = sin(0.25f*v)\n;"
   "  }\n"
-  "  vec4 XXU = vec4(C2U*SV4*SV4,\n"
-  "                  0.5f*CU*SV2,\n"
-  "                  -0.5f*SU*SV2,\n"
-  "                  0.5f*S2U*SV4*SV4);\n"
-  "  vec4 XXV = vec4(0.125f*S2U*SV2,\n"
-  "                  0.25f*SU*CV2,\n"
-  "                  0.25f*CU*CV2,\n"
-  "                  0.125f*(SU*SU+1.0f)*SV2);\n"
-  "  vec4 X = MatRot4D*XX+Offset4D;\n"
-  "  vec4 XU = MatRot4D*XXU;\n"
-  "  vec4 XV = MatRot4D*XXV;\n"
+  "  vec4 xxu = vec4(c2u*sv4*sv4,\n"
+  "                  0.5f*cu*sv2,\n"
+  "                  -0.5f*su*sv2,\n"
+  "                  0.5f*s2u*sv4*sv4);\n"
+  "  vec4 xxv = vec4(0.125f*s2u*sv2,\n"
+  "                  0.25f*su*cv2,\n"
+  "                  0.25f*cu*cv2,\n"
+  "                  0.125f*(su*su+1.0f)*sv2);\n"
+  "  vec4 x = MatRot4D*xx+Offset4D;\n"
+  "  vec4 xu = MatRot4D*xxu;\n"
+  "  vec4 xv = MatRot4D*xxv;\n"
   "  if (BoolPersp)\n"
   "  {\n"
-  "    vec3 R = X.xyz;\n"
-  "    float S = X.w;\n"
-  "    float T = S*S;\n"
-  "    P = R/S+Offset3D.xyz;\n"
-  "    PU = (S*XU.xyz-R*XU.w)/T;\n"
-  "    PV = (S*XV.xyz-R*XV.w)/T;\n"
+  "    vec3 r = x.xyz;\n"
+  "    float s = x.w;\n"
+  "    float t = s*s;\n"
+  "    p = r/s+Offset3D.xyz;\n"
+  "    pu = (s*xu.xyz-r*xu.w)/t;\n"
+  "    pv = (s*xv.xyz-r*xv.w)/t;\n"
   "  }\n"
   "  else\n"
   "  {\n"
-  "    P = X.xyz+Offset3D.xyz;\n"
-  "    PU = XU.xyz;\n"
-  "    PV = XV.xyz;\n"
+  "    p = x.xyz+Offset3D.xyz;\n"
+  "    pu = xu.xyz;\n"
+  "    pv = xv.xyz;\n"
   "  }\n"
-  "  Normal = normalize(cross(PU,PV));\n"
-  "  Color = VertexColor;\n"
-  "  Position = vec4(P,1.0);\n"
+  "  vec4 Position = vec4(p,1.0);\n"
+  "  Normal = normalize(cross(pu,pv));\n"
   "  gl_Position = MatProj*Position;\n"
+  "  Color = VertexColor;\n"
   "  if (BoolTextures)\n"
   "    TexCoord = VertexT;\n"
   "}\n";
 
 /* The fragment shader code is composed of code fragments that depend on
    the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init(). */
+   They are concatenated by glsl_CompileAndLinkShaders in the function
+   init_glsl(). */
 static const GLchar *fragment_shader_attribs_2_1 =
-  "varying vec4 Position;\n"
   "varying vec3 Normal;\n"
   "varying vec4 Color;\n"
   "varying vec4 TexCoord;\n"
   "\n";
 static const GLchar *fragment_shader_attribs_3_0 =
-  "in vec4 Position;\n"
   "in vec3 Normal;\n"
   "in vec4 Color;\n"
   "in vec4 TexCoord;\n"
@@ -549,6 +556,7 @@ static const GLchar *fragment_shader_attribs_3_0 =
   "out vec4 FragColor;\n"
   "\n";
 static const GLchar *fragment_shader_main =
+  __extension__
   "uniform bool DrawLines;\n"
   "uniform vec4 LtGlblAmbient;\n"
   "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
@@ -598,15 +606,19 @@ static const GLchar *fragment_shader_main =
   "    ambientLighting = ambientColor*LtAmbient;\n"
   "    diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
   "    specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "    color = sceneColor+ambientLighting+diffuseReflection;\n"
+  "    color = sceneColor+ambientLighting+diffuseReflection;\n";
+static const GLchar *fragment_shader_out_2_1 =
   "    if (BoolTextures)\n"
   "      color *= texture2D(TextureSampler,TexCoord.st);"
   "    color += specularReflection;\n"
-  "  }\n";
-static const GLchar *fragment_shader_out_2_1 =
+  "  }\n"
   "  gl_FragColor = clamp(color,0.0,1.0);\n"
   "}\n";
 static const GLchar *fragment_shader_out_3_0 =
+  "    if (BoolTextures)\n"
+  "      color *= texture(TextureSampler,TexCoord.st);"
+  "    color += specularReflection;\n"
+  "  }\n"
   "  FragColor = clamp(color,0.0,1.0);\n"
   "}\n";
 
@@ -1029,7 +1041,7 @@ static void setup_projective_plane(ModeInfo *mi, double umin, double umax,
 /* Compute the current walk frame, i.e., the coordinate system of the
    point and direction at which the viewer is currently walking on the
    projective plane. */
-static void compute_walk_frame(ModeInfo *mi, float mat[4][4])
+static void compute_walk_frame(projectiveplanestruct *pp, float mat[4][4])
 {
   int l, m;
   double u, v;
@@ -1037,7 +1049,6 @@ static void compute_walk_frame(ModeInfo *mi, float mat[4][4])
   double cu, su, cv2, sv2, cv4, sv4, c2u, s2u;
   float p[3], pu[3], pv[3], pm[3], n[3], b[3];
   double xx[4], xxu[4], xxv[4], y[4], yu[4], yv[4];
-  projectiveplanestruct *pp = &projectiveplane[MI_SCREEN(mi)];
 
   /* Compute the rotation that rotates the projective plane in 4D without
      the trackball rotations. */
@@ -1222,6 +1233,7 @@ static int projective_plane_ff(ModeInfo *mi, double umin, double umax,
   {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
     glShadeModel(GL_SMOOTH);
     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
@@ -1233,12 +1245,12 @@ static int projective_plane_ff(ModeInfo *mi, double umin, double umax,
     glLightfv(GL_LIGHT0,GL_POSITION,light_position);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,mat_specular);
     glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,50.0);
-    glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
   }
   else if (pp->display_mode == DISP_TRANSPARENT)
   {
     glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
     glShadeModel(GL_SMOOTH);
     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
@@ -1250,18 +1262,34 @@ static int projective_plane_ff(ModeInfo *mi, double umin, double umax,
     glLightfv(GL_LIGHT0,GL_POSITION,light_position);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,mat_specular);
     glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,50.0);
-    glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
   }
   else  /* pp->display_mode == DISP_WIREFRAME */
   {
-    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
     glShadeModel(GL_FLAT);
     glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     glDisable(GL_LIGHTING);
     glDisable(GL_LIGHT0);
     glDisable(GL_BLEND);
+  }
+
+  if (pp->marks)
+  {
+    glEnable(GL_TEXTURE_2D);
+#ifndef HAVE_JWZGLES
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
+#endif
+  }
+  else
+  {
+    glDisable(GL_TEXTURE_2D);
+#ifndef HAVE_JWZGLES
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);
+#endif
   }
 
   if (pp->change_colors)
@@ -1270,7 +1298,7 @@ static int projective_plane_ff(ModeInfo *mi, double umin, double umax,
   if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
   {
     /* Compute the walk frame. */
-    compute_walk_frame(mi,mat);
+    compute_walk_frame(pp,mat);
   }
   else
   {
@@ -1402,7 +1430,7 @@ static int projective_plane_ff(ModeInfo *mi, double umin, double umax,
       {
         for (k=0; k<=1; k++)
         {
-          l = (i+k);
+          l = i+k;
           m = j;
           o = l*(NUMU+1)+m;
           glNormal3fv(pp->pn[o]);
@@ -1450,7 +1478,7 @@ static int projective_plane_ff(ModeInfo *mi, double umin, double umax,
         for (k=0; k<=1; k++)
         {
           l = i;
-          m = (j+k);
+          m = j+k;
           o = l*(NUMU+1)+m;
           glNormal3fv(pp->pn[o]);
           glTexCoord2fv(pp->tex[o]);
@@ -1483,7 +1511,7 @@ static int projective_plane_ff(ModeInfo *mi, double umin, double umax,
     }
   }
 
-  polys = NUMU*NUMV;
+  polys = 2*NUMU*NUMV;
   if (pp->appearance != APPEARANCE_SOLID)
     polys /= 2;
   return polys;
@@ -1521,8 +1549,8 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
   projectiveplanestruct *pp = &projectiveplane[MI_SCREEN(mi)];
   int polys;
 
-  if (pp->change_colors)
-    rotateall3d(pp->rho,pp->sigma,pp->tau,matc);
+  if (!pp->use_shaders)
+    return 0;
 
   if (!pp->buffers_initialized)
   {
@@ -1559,7 +1587,7 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
     {
       glBindBuffer(GL_ARRAY_BUFFER,pp->color_buffer);
       glBufferData(GL_ARRAY_BUFFER,4*(NUMU+1)*(NUMV+1)*sizeof(GLfloat),
-                   pp->col,GL_STREAM_DRAW);
+                   pp->col,GL_STATIC_DRAW);
       glBindBuffer(GL_ARRAY_BUFFER,0);
     }
 
@@ -1567,6 +1595,7 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
        appearance changes, once we support that). */
     pp->ni = 0;
     pp->ne = 0;
+    pp->nt = 0;
     if (pp->display_mode != DISP_WIREFRAME)
     {
       if (pp->appearance != APPEARANCE_DIRECTION_BANDS)
@@ -1580,7 +1609,7 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
           {
             for (k=0; k<=1; k++)
             {
-              l = (i+k);
+              l = i+k;
               m = j;
               o = l*(NUMU+1)+m;
               pp->indices[pp->ni++] = o;
@@ -1588,6 +1617,7 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
           }
           pp->ne++;
         }
+        pp->nt = 2*(NUMU+1);
       }
       else /* pp->appearance == APPEARANCE_DIRECTION_BANDS */
       {
@@ -1600,13 +1630,14 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
             for (k=0; k<=1; k++)
             {
               l = i;
-              m = (j+k);
+              m = j+k;
               o = l*(NUMU+1)+m;
               pp->indices[pp->ni++] = o;
             }
           }
           pp->ne++;
         }
+        pp->nt = 2*(NUMV+1);
       }
     }
     else /* pp->display_mode == DISP_WIREFRAME */
@@ -1678,10 +1709,13 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
     pp->buffers_initialized = True;
   }
 
+  if (pp->change_colors)
+    rotateall3d(pp->rho,pp->sigma,pp->tau,matc);
+
   if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
   {
     /* Compute the walk frame. */
-    compute_walk_frame(mi,mat);
+    compute_walk_frame(pp,mat);
   }
   else
   {
@@ -1727,23 +1761,23 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
 
   glUseProgram(pp->shader_program);
 
-  glslsIdentity(p_mat);
+  glsl_Identity(p_mat);
   if (pp->projection_3d == DISP_3D_PERSPECTIVE ||
       pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
   {
     if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
-      glslsPerspective(p_mat,60.0f,pp->aspect,0.01f,10.0f);
+      glsl_Perspective(p_mat,60.0f,pp->aspect,0.01f,10.0f);
     else
-      glslsPerspective(p_mat,60.0f,pp->aspect,0.1f,10.0f);
+      glsl_Perspective(p_mat,60.0f,pp->aspect,0.1f,10.0f);
   }
   else
   {
     if (pp->aspect >= 1.0)
-      glslsOrthographic(p_mat,-0.6*pp->aspect,0.6*pp->aspect,-0.6,0.6,
-                        0.1,10.0);
+      glsl_Orthographic(p_mat,-0.6f*pp->aspect,0.6f*pp->aspect,-0.6f,0.6f,
+                        0.1f,10.0f);
     else
-      glslsOrthographic(p_mat,-0.6,0.6,-0.6/pp->aspect,0.6/pp->aspect,
-                        0.1,10.0);
+      glsl_Orthographic(p_mat,-0.6f,0.6f,-0.6f/pp->aspect,0.6f/pp->aspect,
+                        0.1f,10.0f);
   }
   glUniformMatrix4fv(pp->mat_rot_index,1,GL_TRUE,(GLfloat *)mat);
   glUniformMatrix4fv(pp->mat_p_index,1,GL_FALSE,p_mat);
@@ -1773,7 +1807,6 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     glUniform4fv(pp->glbl_ambient_index,1,light_model_ambient);
     glUniform4fv(pp->lt_ambient_index,1,light_ambient);
     glUniform4fv(pp->lt_diffuse_index,1,light_diffuse);
@@ -1790,7 +1823,6 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     glUniform4fv(pp->glbl_ambient_index,1,light_model_ambient);
     glUniform4fv(pp->lt_ambient_index,1,light_ambient);
     glUniform4fv(pp->lt_diffuse_index,1,light_diffuse);
@@ -1803,11 +1835,17 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
   }
   else /* pp->display_mode == DISP_WIREFRAME */
   {
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
     glUniform1i(pp->draw_lines_index,GL_TRUE);
   }
+
+  if (pp->marks)
+    glEnable(GL_TEXTURE_2D);
+  else
+    glDisable(GL_TEXTURE_2D);
 
   glUniform4fv(pp->front_ambient_index,1,mat_diff_white);
   glUniform4fv(pp->front_diffuse_index,1,mat_diff_white);
@@ -1907,12 +1945,9 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
   glBindBuffer(GL_ARRAY_BUFFER,pp->vertex_uv_buffer);
   glVertexAttribPointer(pp->vertex_uv_index,2,GL_FLOAT,GL_FALSE,0,0);
 
-  if (pp->marks)
-  {
-    glEnableVertexAttribArray(pp->vertex_t_index);
-    glBindBuffer(GL_ARRAY_BUFFER,pp->vertex_t_buffer);
-    glVertexAttribPointer(pp->vertex_t_index,2,GL_FLOAT,GL_FALSE,0,0);
-  }
+  glEnableVertexAttribArray(pp->vertex_t_index);
+  glBindBuffer(GL_ARRAY_BUFFER,pp->vertex_t_buffer);
+  glVertexAttribPointer(pp->vertex_t_index,2,GL_FLOAT,GL_FALSE,0,0);
 
   if (pp->colors != COLORS_ONESIDED && pp->colors != COLORS_TWOSIDED)
   {
@@ -1930,8 +1965,8 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
   {
     for (i=0; i<pp->ne; i++)
     {
-      index_offset = 2*(NUMV+1)*i*sizeof(GLuint);
-      glDrawElements(GL_TRIANGLE_STRIP,2*(NUMV+1),GL_UNSIGNED_INT,
+      index_offset = pp->nt*i*sizeof(GLuint);
+      glDrawElements(GL_TRIANGLE_STRIP,pp->nt,GL_UNSIGNED_INT,
                      (const GLvoid *)index_offset);
     }
   }
@@ -1944,8 +1979,7 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
   }
 
   glDisableVertexAttribArray(pp->vertex_uv_index);
-  if (pp->marks)
-    glDisableVertexAttribArray(pp->vertex_t_index);
+  glDisableVertexAttribArray(pp->vertex_t_index);
   if (pp->colors != COLORS_ONESIDED && pp->colors != COLORS_TWOSIDED)
     glDisableVertexAttribArray(pp->color_index);
   glBindBuffer(GL_ARRAY_BUFFER,0);
@@ -1953,12 +1987,11 @@ static int projective_plane_pf(ModeInfo *mi, double umin, double umax,
 
   glUseProgram(0);
 
-  polys = NUMU*NUMV;
+  polys = 2*NUMU*NUMV;
   if (pp->appearance != APPEARANCE_SOLID)
     polys /= 2;
   return polys;
 }
-
 
 #endif /* HAVE_GLSL */
 
@@ -1981,135 +2014,70 @@ static void gen_texture(ModeInfo *mi)
 }
 
 
-static void init(ModeInfo *mi)
+#ifdef HAVE_GLSL
+
+static void init_glsl(ModeInfo *mi)
 {
   projectiveplanestruct *pp = &projectiveplane[MI_SCREEN(mi)];
-#ifdef HAVE_GLSL
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
+  GLboolean gl_gles3;
   const GLchar *vertex_shader_source[3];
   const GLchar *fragment_shader_source[4];
-#endif /* HAVE_GLSL */
 
-  if (walk_speed == 0.0)
-    walk_speed = 20.0;
-
-  if (pp->view == VIEW_TURN)
-  {
-    pp->alpha = frand(360.0);
-    pp->beta = frand(360.0);
-    pp->delta = frand(360.0);
-    pp->zeta = 0.0;
-    pp->eta = 0.0;
-    pp->theta = 0.0;
-  }
-  else
-  {
-    pp->alpha = 0.0;
-    pp->beta = 0.0;
-    pp->delta = 0.0;
-    pp->zeta = 120.0;
-    pp->eta = 180.0;
-    pp->theta = 90.0;
-  }
-  pp->umove = frand(2.0*M_PI);
-  pp->vmove = frand(2.0*M_PI);
-  pp->dumove = 0.0;
-  pp->dvmove = 0.0;
-  pp->side = 1;
-  if (sin(walk_direction*M_PI/180.0) >= 0.0)
-    pp->dir = 1;
-  else
-    pp->dir = -1;
-
-  pp->rho = frand(360.0);
-  pp->sigma = frand(360.0);
-  pp->tau = frand(360.0);
-
-  pp->offset4d[0] = 0.0;
-  pp->offset4d[1] = 0.0;
-  pp->offset4d[2] = 0.0;
-  pp->offset4d[3] = 1.2;
-  pp->offset3d[0] = 0.0;
-  pp->offset3d[1] = 0.0;
-  pp->offset3d[2] = -1.2;
-  pp->offset3d[3] = 0.0;
-
-  gen_texture(mi);
-  setup_projective_plane(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-
-  if (pp->marks)
-  {
-    glEnable(GL_TEXTURE_2D);
-# ifndef HAVE_JWZGLES
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
-# endif
-  }
-  else
-  {
-    glDisable(GL_TEXTURE_2D);
-# ifndef HAVE_JWZGLES
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);
-# endif
-  }
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  if (pp->projection_3d == DISP_3D_PERSPECTIVE ||
-      pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
-  {
-    if (pp->view == VIEW_WALK || pp->view == VIEW_WALKTURN)
-      gluPerspective(60.0,1.0,0.01,10.0);
-    else
-      gluPerspective(60.0,1.0,0.1,10.0);
-  }
-  else
-  {
-    glOrtho(-0.6,0.6,-0.6,0.6,0.1,10.0);
-  }
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
-  if (pp->display_mode == DISP_WIREFRAME)
-    pp->display_mode = DISP_SURFACE;
-# endif
-
-#ifdef HAVE_GLSL
-  /* Determine whether to use shaders to render the hypertorus. */
+  /* Determine whether to use shaders to render the projective plane. */
   pp->use_shaders = False;
   pp->buffers_initialized = False;
   pp->shader_program = 0;
   pp->ni = 0;
   pp->ne = 0;
-  if (!glslsGetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor))
+  pp->nt = 0;
+
+  if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
+                                 &gl_gles3))
     return;
-  if (gl_major < 3 ||
-      (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
+  if (!gl_gles3)
   {
-    if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-      return;
-    /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-    vertex_shader_source[0] = shader_version_2_1;
-    vertex_shader_source[1] = vertex_shader_attribs_2_1;
-    vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_2_1;
-    fragment_shader_source[1] = fragment_shader_attribs_2_1;
-    fragment_shader_source[2] = fragment_shader_main;
-    fragment_shader_source[3] = fragment_shader_out_2_1;
+    if (gl_major < 3 ||
+        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
+    {
+      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
+          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
+        return;
+      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
+      vertex_shader_source[0] = shader_version_2_1;
+      vertex_shader_source[1] = vertex_shader_attribs_2_1;
+      vertex_shader_source[2] = vertex_shader_main;
+      fragment_shader_source[0] = shader_version_2_1;
+      fragment_shader_source[1] = fragment_shader_attribs_2_1;
+      fragment_shader_source[2] = fragment_shader_main;
+      fragment_shader_source[3] = fragment_shader_out_2_1;
+    }
+    else
+    {
+      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
+      vertex_shader_source[0] = shader_version_3_0;
+      vertex_shader_source[1] = vertex_shader_attribs_3_0;
+      vertex_shader_source[2] = vertex_shader_main;
+      fragment_shader_source[0] = shader_version_3_0;
+      fragment_shader_source[1] = fragment_shader_attribs_3_0;
+      fragment_shader_source[2] = fragment_shader_main;
+      fragment_shader_source[3] = fragment_shader_out_3_0;
+    }
   }
-  else
+  else /* gl_gles3 */
   {
-    /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-    vertex_shader_source[0] = shader_version_3_0;
+    if (gl_major < 3 || glsl_major < 3)
+      return;
+    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
+    vertex_shader_source[0] = shader_version_3_0_es;
     vertex_shader_source[1] = vertex_shader_attribs_3_0;
     vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0;
+    fragment_shader_source[0] = shader_version_3_0_es;
     fragment_shader_source[1] = fragment_shader_attribs_3_0;
     fragment_shader_source[2] = fragment_shader_main;
     fragment_shader_source[3] = fragment_shader_out_3_0;
   }
-  if (!glslsCompileAndLinkShaders(3,vertex_shader_source,
+  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
                                   4,fragment_shader_source,
                                   &pp->shader_program))
     return;
@@ -2162,7 +2130,7 @@ static void init(ModeInfo *mi)
                                              "MatShininess");
   pp->texture_sampler_index = glGetUniformLocation(pp->shader_program,
                                                    "TextureSampler");
-  if (pp->mat_rot_index == -1 ||pp->mat_p_index == -1 ||
+  if (pp->mat_rot_index == -1 || pp->mat_p_index == -1 ||
       pp->bool_persp_index == -1 || pp->off4d_index == -1 ||
       pp->off3d_index == -1 || pp->bool_textures_index == -1 ||
       pp->draw_lines_index == -1 || pp->glbl_ambient_index == -1 ||
@@ -2176,12 +2144,79 @@ static void init(ModeInfo *mi)
     glDeleteProgram(pp->shader_program);
     return;
   }
+
   glGenBuffers(1,&pp->vertex_uv_buffer);
   glGenBuffers(1,&pp->vertex_t_buffer);
   glGenBuffers(1,&pp->color_buffer);
   glGenBuffers(1,&pp->indices_buffer);
+
   pp->use_shaders = True;
+}
+
 #endif /* HAVE_GLSL */
+
+
+static void init(ModeInfo *mi)
+{
+  projectiveplanestruct *pp = &projectiveplane[MI_SCREEN(mi)];
+
+  if (walk_speed == 0.0)
+    walk_speed = 20.0;
+
+  if (pp->view == VIEW_TURN)
+  {
+    pp->alpha = frand(360.0);
+    pp->beta = frand(360.0);
+    pp->delta = frand(360.0);
+    pp->zeta = 0.0;
+    pp->eta = 0.0;
+    pp->theta = 0.0;
+  }
+  else
+  {
+    pp->alpha = 0.0;
+    pp->beta = 0.0;
+    pp->delta = 0.0;
+    pp->zeta = 120.0;
+    pp->eta = 180.0;
+    pp->theta = 90.0;
+  }
+  pp->umove = frand(2.0*M_PI);
+  pp->vmove = frand(2.0*M_PI);
+  pp->dumove = 0.0;
+  pp->dvmove = 0.0;
+  pp->side = 1;
+  if (sin(walk_direction*M_PI/180.0) >= 0.0)
+    pp->dir = 1;
+  else
+    pp->dir = -1;
+
+  pp->rho = frand(360.0);
+  pp->sigma = frand(360.0);
+  pp->tau = frand(360.0);
+
+  pp->offset4d[0] = 0.0;
+  pp->offset4d[1] = 0.0;
+  pp->offset4d[2] = 0.0;
+  pp->offset4d[3] = 1.2;
+  pp->offset3d[0] = 0.0;
+  pp->offset3d[1] = 0.0;
+  pp->offset3d[2] = -1.2;
+  pp->offset3d[3] = 0.0;
+
+  gen_texture(mi);
+  setup_projective_plane(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
+
+#ifdef HAVE_GLSL
+  init_glsl(mi);
+#endif /* HAVE_GLSL */
+
+#ifdef HAVE_ANDROID
+  /* glPolygonMode(...,GL_LINE) is not supported for an OpenGL ES 1.1
+     context. */
+  if (!pp->use_shaders && pp->display_mode == DISP_WIREFRAME)
+    pp->display_mode = DISP_SURFACE;
+#endif /* HAVE_ANDROID */
 }
 
 
@@ -2540,7 +2575,6 @@ ENTRYPOINT void init_projectiveplane(ModeInfo *mi)
   if ((pp->glx_context = init_GL(mi)) != NULL)
   {
     reshape_projectiveplane(mi,MI_WIDTH(mi),MI_HEIGHT(mi));
-    glDrawBuffer(GL_BACK);
     init(mi);
   }
   else
@@ -2571,6 +2605,7 @@ ENTRYPOINT void draw_projectiveplane(ModeInfo *mi)
   glXMakeCurrent(display, window, *pp->glx_context);
 
   glClearColor(0.0f,0.0f,0.0f,1.0f);
+  glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
 
@@ -2598,6 +2633,7 @@ ENTRYPOINT void change_projectiveplane(ModeInfo *mi)
 }
 #endif /* !STANDALONE */
 
+
 ENTRYPOINT void free_projectiveplane(ModeInfo *mi)
 {
   projectiveplanestruct *pp = &projectiveplane[MI_SCREEN(mi)];
@@ -2621,6 +2657,7 @@ ENTRYPOINT void free_projectiveplane(ModeInfo *mi)
   }
 #endif /* HAVE_GLSL */
 }
+
 
 XSCREENSAVER_MODULE ("ProjectivePlane", projectiveplane)
 

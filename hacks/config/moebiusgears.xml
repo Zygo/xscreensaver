@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
-<screensaver name="moebiusgears" _label="MoebiusGears" gl="yes">
+<screensaver name="moebiusgears" _label="Möbius Gears" gl="yes">
 
   <command arg="-root"/>
 
@@ -36,7 +36,7 @@
 
   <_description>
 An interlinked loop of rotating gears.  The layout of the gears
-follows the path of a moebius strip.  See also the "Pinion" and
+follows the path of a möbius strip.  See also the "Pinion" and
 "Gears" screen savers.
 
 https://en.wikipedia.org/wiki/Involute_gear

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="blinkbox" _label="BlinkBox" gl="yes">
+<screensaver name="blinkbox" _label="Blink Box" gl="yes">
 
   <command arg="-root"/>
 

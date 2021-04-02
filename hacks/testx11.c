@@ -33,8 +33,6 @@
 # define jwxyz_assert_display(dpy)
 #endif
 
-#define countof(a) (sizeof(a) / sizeof(*(a)))
-
 static const char *testx11_defaults [] = {
   ".background: #a020f0", /* purple */
   ".foreground: white",

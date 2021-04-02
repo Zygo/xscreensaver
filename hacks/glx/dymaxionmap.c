@@ -14,7 +14,7 @@
  * other special, indirect and consequential damages.
  */
 
-#define LABEL_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
+#define LABEL_FONT "sans-serif bold 24"
 
 #ifdef STANDALONE
 #define DEFAULTS    "*delay:		20000	\n" \
@@ -34,14 +34,6 @@
 #include "texfont.h"
 #include "dymaxionmap-coords.h"
 
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-#else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif
-
 #define DEF_ROTATE  "True"
 #define DEF_ROLL    "True"
 #define DEF_WANDER  "True"
@@ -52,9 +44,6 @@
 #define DEF_IMAGE   "BUILTIN_FLAT"
 #define DEF_IMAGE2  "NONE"
 #define DEF_FRAMES  "720"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)

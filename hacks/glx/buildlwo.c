@@ -17,7 +17,9 @@ static const char sccsid[] = "@(#)buildlwo.c	4.02 97/04/20 xlockmore";
  */
 
 #ifndef STANDALONE
-#include "xlock.h"
+# include "xlock.h"
+#else
+# include "screenhackI.h"
 #endif
 
 #ifdef USE_GL

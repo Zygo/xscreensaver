@@ -1,5 +1,5 @@
 /* test-randr.c --- playing with the Resize And Rotate extension.
- * xscreensaver, Copyright (c) 2004-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2004-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,25 +30,8 @@
 #include <X11/Xproto.h>
 #include <X11/extensions/Xrandr.h>
 
-char *progname = 0;
+#include "blurb.h"
 char *progclass = "XScreenSaver";
-
-static const char *
-blurb (void)
-{
-  static char buf[255];
-  time_t now = time ((time_t *) 0);
-  char *ct = (char *) ctime (&now);
-  int n = strlen(progname);
-  if (n > 100) n = 99;
-  strncpy(buf, progname, n);
-  buf[n++] = ':';
-  buf[n++] = ' ';
-  strncpy(buf+n, ct+11, 8);
-  strcpy(buf+n+9, ": ");
-  return buf;
-}
-
 
 static Bool error_handler_hit_p = False;
 
@@ -72,15 +55,15 @@ main (int argc, char **argv)
   Widget toplevel_shell = XtAppInitialize (&app, progclass, 0, 0,
 					   &argc, argv, 0, 0, 0);
   Display *dpy = XtDisplay (toplevel_shell);
-  XtGetApplicationNameAndClass (dpy, &progname, &progclass);
 
+  progname = argv[0];
   nscreens = ScreenCount(dpy);
 
   if (!XRRQueryExtension(dpy, &event_number, &error_number))
     {
       fprintf(stderr, "%s: XRRQueryExtension(dpy, ...) ==> False\n",
 	      blurb());
-      fprintf(stderr, "%s: server does not support the RANDR extension.\n",
+      fprintf(stderr, "%s: server does not support the RANDR extension\n",
 	      blurb());
       major = -1;
     }

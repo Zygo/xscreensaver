@@ -44,22 +44,10 @@ Graphics, Inc., 2011 N.  Shoreline Blvd., Mountain View, CA
 OpenGL(TM) is a trademark of Silicon Graphics, Inc.
 */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
+#include "screenhackI.h"
 #include "teapot.h"
 
-#ifndef HAVE_JWXYZ
-# include <GL/gl.h>
-#endif
-#ifdef HAVE_ANDROID
-# include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#else
+#ifndef HAVE_JWZGLES
 # define HAVE_GLMAP
 #endif
 

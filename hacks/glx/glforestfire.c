@@ -155,7 +155,6 @@ static Bool do_fog;
 static Bool do_shadows;
 static Bool do_wander;
 static int num_trees;
-static XFontStruct *mode_font = None;
 
 static XrmOptionDescRec opts[] = {
     {"-texture", ".fire.texture", XrmoptionNoArg, "on"},
@@ -282,7 +281,6 @@ typedef struct {
     XImage *ttexture;		/* tree texture image bits */
     GLuint groundid;		/* ground texture id: GL world */
     GLuint treeid;		/* tree texture id: GL world */
-    GLuint fontbase;		/* fontbase id: GL world */
 
     int   num_trees;		/* number of trees: set it through 'trees' resource */
     treestruct *treepos;	/* trees positions: float treepos[num_trees][3] */
@@ -888,12 +886,6 @@ free_fire(ModeInfo * mi)
     if (!fs->glx_context) return;
     glXMakeCurrent (MI_DISPLAY(mi), MI_WINDOW(mi), *fs->glx_context);
 
-	if (mode_font != None && fs->fontbase != None) {
-		glDeleteLists(fs->fontbase, mode_font->max_char_or_byte2 -
-			mode_font->min_char_or_byte2 + 1);
-		fs->fontbase = None;
-	}
-
 	if (fs->p != NULL) {
 		free(fs->p);
 		fs->p = (part *) NULL;
@@ -1038,12 +1030,6 @@ ENTRYPOINT void draw_fire(ModeInfo * mi)
 
 ENTRYPOINT void release_fire(ModeInfo * mi)
 {
-    if (mode_font != None)
-    {
-	/* only free-ed when there are no more screens used */
-	XFreeFont(MI_DISPLAY(mi), mode_font);
-	mode_font = None;
-    }
     FreeAllGL(mi);
 }
 

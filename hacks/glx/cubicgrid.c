@@ -33,33 +33,49 @@
 #define DEF_DIV     "30"
 #define DEF_ZOOM    "20"
 #define DEF_BIGDOTS "True"
+#define DEF_SYMMETRY "random"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
+
+#undef RAND
+#define RAND(n) ((random() & 0x7fffffff) % ((long) (n)))
+
+#undef TOUPPER 
+#define TOUPPER(x) ((x)&(~0x20))
 
 #include "rotator.h"
 #include "gltrackball.h"
 
 /*************************************************************************/
 
+enum HACKS_GLX_CUBICGRID_SYMMETRY {
+    HACKS_GLX_CUBICGRID_SYMMETRY_CUBIC = 0,
+    HACKS_GLX_CUBICGRID_SYMMETRY_HEXAGONAL = 1
+};
+
 static int ticks;
 static float size;
 static float speed;
 static Bool bigdots;
+static char *symmetry;
+static int symmetry_id;
 
 static argtype vars[] = {
-  { &speed,   "speed",   "Speed",   DEF_SPEED,   t_Float },
-  { &size,    "zoom",    "Zoom",    DEF_ZOOM,    t_Float },
-  { &ticks,   "ticks",   "Ticks",   DEF_DIV,     t_Int },
-  { &bigdots, "bigdots", "BigDots", DEF_BIGDOTS, t_Bool },
+  { &speed,   "speed",    "Speed",   DEF_SPEED,    t_Float },
+  { &size,    "zoom",     "Zoom",    DEF_ZOOM,     t_Float },
+  { &ticks,   "ticks",    "Ticks",   DEF_DIV,      t_Int },
+  { &bigdots, "bigdots",  "BigDots", DEF_BIGDOTS,  t_Bool },
+  { &symmetry,"symmetry", "Symmety", DEF_SYMMETRY, t_String },
 };
 
 static XrmOptionDescRec opts[] = {
-  { "-speed",   ".speed",   XrmoptionSepArg, 0 },
-  { "-zoom",    ".zoom",    XrmoptionSepArg, 0 },
-  { "-ticks",   ".ticks",   XrmoptionSepArg, 0 },
-  { "-bigdots", ".bigdots", XrmoptionNoArg,  "True" },
-  { "+bigdots", ".bigdots", XrmoptionNoArg,  "False" },
+  { "-speed",    ".speed",      XrmoptionSepArg, 0 },
+  { "-zoom",     ".zoom",       XrmoptionSepArg, 0 },
+  { "-ticks",    ".ticks",      XrmoptionSepArg, 0 },
+  { "-symmetry", ".symmetry",   XrmoptionSepArg, 0 },
+  { "-bigdots",  ".bigdots",    XrmoptionNoArg,  "True" },
+  { "+bigdots",  ".bigdots",    XrmoptionNoArg,  "False" },
 };
 
 ENTRYPOINT ModeSpecOpt cubicgrid_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -119,15 +135,12 @@ static Bool draw_main(ModeInfo *mi)
 
   glScalef(size/ticks, size/ticks, size/ticks);
 
-
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   gltrackball_rotate (cp->trackball);
 
@@ -146,10 +159,13 @@ static void init_gl(ModeInfo *mi)
   cubicgrid_conf *cp = &cubicgrid[MI_SCREEN(mi)];
   int x, y, z;
   float tf = ticks;
+  float i, j, k;
+  float sqrt_3 = sqrtf(3.0f);
+  float sqrt_6 = sqrtf(6.0f);
 
   glDrawBuffer(GL_BACK);
   if(bigdots) {
-    glPointSize(2.0);
+    glPointSize(2.5);
   }
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glShadeModel(GL_FLAT);
@@ -162,7 +178,14 @@ static void init_gl(ModeInfo *mi)
     for(x = 0; x < ticks; x++) {
       for(y = 0; y < ticks; y++) {
         for(z = 0; z < ticks; z++) {
-          glVertex3f(x, y, z);
+          if (symmetry_id == HACKS_GLX_CUBICGRID_SYMMETRY_HEXAGONAL) {
+            i = 2*x+(y+z)%2;
+            j = sqrt_3*(y+(1.0f/3.0f)*(z % 2));
+            k = (2.0f/3.0f)*sqrt_6*z;
+            glVertex3f(i, j, k);
+          } else {
+            glVertex3f(x, y, z);
+          }
           cp->npoints++;
         }
       }
@@ -176,7 +199,14 @@ static void init_gl(ModeInfo *mi)
       for(y = 0; y < ticks; y++) {
         for(z = 0; z < ticks; z++) {
           glColor3f(x/tf, y/tf, z/tf);
-          glVertex3f(x, y, z);
+          if (symmetry_id == HACKS_GLX_CUBICGRID_SYMMETRY_HEXAGONAL) {
+            i = 2*x+(y+z)%2;
+            j = sqrt_3*(y+(1.0f/3.0f)*(z % 2));
+            k = (2.0f/3.0f)*sqrt_6*z;
+            glVertex3f(i, j, k);
+          } else {
+            glVertex3f(x, y, z);
+          }
           cp->npoints++;
         }
       }
@@ -212,8 +242,20 @@ ENTRYPOINT void reshape_cubicgrid(ModeInfo *mi, int width, int height)
 ENTRYPOINT void init_cubicgrid(ModeInfo *mi) 
 {
   cubicgrid_conf *cp;
+
   MI_INIT(mi, cubicgrid);
   cp = &cubicgrid[MI_SCREEN(mi)];
+
+  if (!symmetry || !*symmetry || !strcmp(symmetry, "random"))
+    symmetry_id = RAND(2);
+  else if (!strcmp(symmetry, "hexagonal"))
+    symmetry_id = HACKS_GLX_CUBICGRID_SYMMETRY_HEXAGONAL;
+  else if (!strcmp(symmetry, "cubic"))
+      symmetry_id = HACKS_GLX_CUBICGRID_SYMMETRY_CUBIC;
+  else {
+    fprintf(stderr, "%s: unknown symmetry: %s\n", progname, symmetry);
+    exit(1);
+  }
 
   if ((cp->glx_context = init_GL(mi)) != NULL) {
     init_gl(mi);
@@ -257,6 +299,7 @@ ENTRYPOINT void change_cubicgrid(ModeInfo * mi)
 {
   cubicgrid_conf *cp = &cubicgrid[MI_SCREEN(mi)];
   if (!cp->glx_context) return;
+  srand(time(NULL));
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *cp->glx_context);
   init_gl(mi);
 }

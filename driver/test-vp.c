@@ -1,5 +1,5 @@
 /* test-xinerama.c --- playing with XF86VidModeGetViewPort
- * xscreensaver, Copyright (c) 2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2004-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,25 +31,8 @@
 #include <X11/extensions/xf86vmode.h>
 #include <X11/extensions/Xinerama.h>
 
-char *progname = 0;
+#include "blurb.h"
 char *progclass = "XScreenSaver";
-
-static const char *
-blurb (void)
-{
-  static char buf[255];
-  time_t now = time ((time_t *) 0);
-  char *ct = (char *) ctime (&now);
-  int n = strlen(progname);
-  if (n > 100) n = 99;
-  strncpy(buf, progname, n);
-  buf[n++] = ':';
-  buf[n++] = ' ';
-  strncpy(buf+n, ct+11, 8);
-  strcpy(buf+n+9, ": ");
-  return buf;
-}
-
 
 static Bool error_handler_hit_p = False;
 
@@ -129,14 +112,13 @@ main (int argc, char **argv)
   Widget toplevel_shell = XtAppInitialize (&app, progclass, 0, 0,
 					   &argc, argv, 0, 0, 0);
   Display *dpy = XtDisplay (toplevel_shell);
-  XtGetApplicationNameAndClass (dpy, &progname, &progclass);
 
   if (!XF86VidModeQueryExtension(dpy, &event_number, &error_number))
     {
       fprintf(stderr, "%s: XF86VidModeQueryExtension(dpy, ...) ==> False\n",
 	      blurb());
       fprintf(stderr,
-              "%s: server does not support the XF86VidMode extension.\n",
+              "%s: server does not support the XF86VidMode extension\n",
 	      blurb());
       exit(1);
     }

@@ -53,14 +53,6 @@
 
 #ifdef USE_GL /* whole file */
 
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-#else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif
-
 #include "ximage-loader.h"
 
 /* Functions for loading and storing textures */
@@ -69,9 +61,6 @@
 #define checkImageHeight 64
 
 /* Functions for handling the frames per second timer */
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define WIDTH 800
 #define HEIGHT 600

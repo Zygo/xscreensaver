@@ -52,7 +52,8 @@ cwaves_init (Display *dpy, Window window)
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
   st->debug_p = get_boolean_resource (dpy, "debug", "Boolean");
-  st->scale = get_integer_resource (dpy, "scale", "Integer");
+  /* Xft uses 'scale' */
+  st->scale = get_integer_resource (dpy, "waveScale", "Integer");
   if (st->scale <= 0) st->scale = 1;
   st->ncolors = get_integer_resource (dpy, "ncolors", "Integer");
   if (st->ncolors < 4) st->ncolors = 4;
@@ -195,7 +196,7 @@ static const char *cwaves_defaults [] = {
   ".foreground:		   white",
   "*ncolors:		   600",
   "*nwaves:		   15",
-  "*scale:		   2",
+  "*waveScale:		   2",
   "*debug:		   False",
   "*delay:		   20000",
 #ifdef HAVE_MOBILE
@@ -208,7 +209,7 @@ static XrmOptionDescRec cwaves_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-waves",		".nwaves",		XrmoptionSepArg, 0 },
   { "-colors",		".ncolors",		XrmoptionSepArg, 0 },
-  { "-scale",		".scale",		XrmoptionSepArg, 0 },
+  { "-scale",		".waveScale",		XrmoptionSepArg, 0 },
   { "-debug",		".debug",		XrmoptionNoArg, "True" },
   { 0, 0, 0, 0 }
 };

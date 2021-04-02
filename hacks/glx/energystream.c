@@ -18,8 +18,6 @@
       "*wireframe:    False       \n" \
 
 # define release_stream 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "gltrackball.h"

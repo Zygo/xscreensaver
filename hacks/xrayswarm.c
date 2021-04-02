@@ -40,14 +40,10 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 */
 
-#include <math.h>
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include <sys/time.h>
 #include "screenhack.h"
+
+#include <math.h>
+#include <sys/time.h>
 
 #ifdef HAVE_JWXYZ
 # define HAVE_GETTIMEOFDAY 1

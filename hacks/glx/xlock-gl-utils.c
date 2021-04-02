@@ -1,5 +1,5 @@
 /* xlock-gl.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright (c) 1997-2015 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,8 +14,10 @@
  * By Jamie Zawinski <jwz@jwz.org> on 31-May-97.
  */
 
-#include <stdio.h>
 #include "xlockmoreI.h"
+
+#ifdef HAVE_GL  /* whole file */
+
 #include "texfont.h"
 
 #ifndef isupper
@@ -26,6 +28,7 @@
 #endif
 
 
+# ifndef HAVE_EGL
 /* Gag -- we use this to turn X errors from glXCreateContext() into
    something that will actually make sense to the user.
  */
@@ -43,11 +46,13 @@ BadValue_ehandler (Display *dpy, XErrorEvent *error)
   else
     return orig_ehandler (dpy, error);
 }
+#endif /* !HAVE_EGL */
 
 
 GLXContext *
 init_GL(ModeInfo * mi)
 {
+  /* The Android version of this function is in android/screenhack-android.c */
   Display *dpy = mi->dpy;
   Window window = mi->window;
   Screen *screen = mi->xgwa.screen;
@@ -61,7 +66,10 @@ init_GL(ModeInfo * mi)
   }
 
 # ifdef HAVE_JWZGLES
-  jwzgles_make_current(jwzgles_make_state(state));
+  mi->jwzgles_state = jwzgles_make_state();
+  mi->xlmft->jwzgles_make_current = jwzgles_make_current;
+  mi->xlmft->jwzgles_free = jwzgles_free_state;
+  mi->xlmft->jwzgles_make_current (mi->jwzgles_state);
 # endif
 
   vi_in.screen = screen_number (screen);
@@ -70,6 +78,113 @@ init_GL(ModeInfo * mi)
 			   &vi_in, &out_count);
   if (! vi_out) abort ();
 
+# ifdef HAVE_EGL
+  {
+    egl_data *d = (egl_data *) calloc (1, sizeof(*d));
+
+    /* The correct EGL config has been selected by utils/visual-gl.c
+       (via hacks/glx/xscreensaver-gl-visual) by calling get_egl_config()
+       from get_gl_visual and returning the corresponding X11 Visual.
+       That visual is the one that was used to create our window. We will
+       pass the corresponding visual ID to get_egl_config() to obtain the
+       same configuration here. */
+    unsigned int vid = XVisualIDFromVisual (visual);
+
+    const EGLint ctxattr1[] = {
+# ifdef HAVE_JWZGLES
+      EGL_CONTEXT_MAJOR_VERSION, 1,	/* Request an OpenGL ES 1.1 context. */
+      EGL_CONTEXT_MINOR_VERSION, 1,
+# else
+      EGL_CONTEXT_MAJOR_VERSION, 1,	/* Request an OpenGL 1.3 context. */
+      EGL_CONTEXT_MINOR_VERSION, 3,
+# endif
+      EGL_NONE
+    };
+    const EGLint *ctxattr = ctxattr1;
+
+# ifdef HAVE_GLES3
+    const EGLint ctxattr3[] = {
+      EGL_CONTEXT_MAJOR_VERSION, 3,	/* Request an OpenGL ES 3.0 context. */
+      EGL_CONTEXT_MINOR_VERSION, 0,
+      EGL_NONE
+    };
+
+    if (get_boolean_resource (dpy, "prefersGLSL", "PrefersGLSL"))
+      ctxattr = ctxattr3;
+# endif /* HAVE_GLES3 */
+
+    /* This is re-used, no need to close it. */
+    d->egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR,
+                                            (EGLNativeDisplayType) dpy, NULL);
+    if (!d->egl_display)
+      {
+        fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);
+        abort();
+      }
+
+    get_egl_config (dpy, d->egl_display, vid, &d->egl_config);
+    if (!d->egl_config)
+      {
+        fprintf (stderr, "%s: no matching EGL config for X11 visual 0x%lx\n",
+                 progname, vi_out->visualid);
+        abort();
+      }
+
+    d->egl_surface = eglCreatePlatformWindowSurface (d->egl_display,
+                                                     d->egl_config,
+                                                     &window, NULL);
+    if (! d->egl_surface)
+      {
+        fprintf (stderr, "%s: eglCreatePlatformWindowSurface failed:"
+                 " window 0x%lx visual 0x%x\n", progname, window, vid);
+        abort();
+      }
+
+#ifdef HAVE_JWZGLES
+    /* This call is not strictly necessary to get an OpenGL ES context
+       since the default API is EGL_OPENGL_ES_API, but it  makes our
+       intention clear.
+     */
+    if (!eglBindAPI (EGL_OPENGL_ES_API))
+      {
+        fprintf (stderr, "%s: eglBindAPI failed\n", progname);
+      }
+#else /* !HAVE_JWZGLES */
+    /* This is necessary to get a OpenGL context instead of an OpenGLES
+       context.
+     */
+    if (!eglBindAPI (EGL_OPENGL_API))
+      {
+        fprintf (stderr, "%s: eglBindAPI failed\n", progname);
+      }
+#endif /* !HAVE_JWZGLES */
+
+    d->egl_context = eglCreateContext (d->egl_display, d->egl_config,
+                                       EGL_NO_CONTEXT, ctxattr);
+
+# ifdef HAVE_GLES3
+    /* If creation of a GLES 3.0 context failed, fall back to GLES 1.x. */
+    if (!d->egl_context && ctxattr != ctxattr1)
+      {
+        /* fprintf (stderr, "%s: eglCreateContext 3.0 failed\n", progname); */
+        d->egl_context = eglCreateContext (d->egl_display, d->egl_config,
+                                           EGL_NO_CONTEXT, ctxattr1);
+      }
+# endif /* HAVE_GLES3 */
+
+    if (!d->egl_context)
+      {
+        fprintf (stderr, "%s: eglCreateContext failed\n", progname);
+        abort();
+      }
+
+    /* describe_gl_visual (stderr, screen, visual, False); */
+
+    mi->glx_context = d;  /* #### leaked */
+
+    glXMakeCurrent (dpy, window, mi->glx_context);
+  }
+# else /* GLX */
   {
     XSync (dpy, False);
     orig_ehandler = XSetErrorHandler (BadValue_ehandler);
@@ -79,8 +194,6 @@ init_GL(ModeInfo * mi)
     if (got_error)
       mi->glx_context = 0;
   }
-
-  XFree((char *) vi_out);
 
   if (!mi->glx_context)
     {
@@ -100,6 +213,9 @@ init_GL(ModeInfo * mi)
 	glClearIndex (BlackPixelOfScreen (screen));
       }
   }
+# endif /* GLX */
+
+  XFree((char *) vi_out);
 
 
   /* jwz: the doc for glDrawBuffer says "The initial value is GL_FRONT
@@ -229,3 +345,35 @@ xlockmore_validate_gl_visual (Screen *screen, const char *name, Visual *visual)
 {
   return validate_gl_visual (stderr, screen, name, visual);
 }
+
+
+#ifdef HAVE_EGL
+
+static egl_data *global_egl_kludge = 0;
+
+Bool
+glXMakeCurrent (Display *dpy, GLXDrawable window, egl_data *d)
+{
+  if (!d) abort();
+  if (! eglMakeCurrent (d->egl_display, d->egl_surface, d->egl_surface,
+                        d->egl_context))
+    abort();
+
+  global_egl_kludge = d;
+
+  return True;
+}
+
+void
+glXSwapBuffers (Display *dpy, GLXDrawable win)
+{
+  egl_data *d = global_egl_kludge;
+  if (!d) abort();
+  if (! eglSwapBuffers (d->egl_display, d->egl_surface))
+    abort();
+}
+
+#endif /* HAVE_EGL */
+
+
+#endif /* HAVE_GL -- whole file */

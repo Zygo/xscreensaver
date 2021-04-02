@@ -23,8 +23,6 @@
 			"*groundColor:  #004400"   "\n" \
 
 # define release_camera 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define DEF_SPEED       "1.0"
 #define DEF_CAMERA_SIZE "1.0"
@@ -153,13 +151,12 @@ reshape_camera (ModeInfo *mi, int width, int height)
              0, 0, 0,
              0, 1, 0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -1059,10 +1056,7 @@ draw_camera (ModeInfo *mi)
 
   glPushMatrix ();
 
-# ifdef HAVE_MOBILE
   glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
-# endif
-
   gltrackball_rotate (bp->user_trackball);
 
 # ifdef HAVE_MOBILE

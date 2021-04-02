@@ -852,8 +852,8 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   check_no_mem(dpy, c, c->source);
 
   for(i = 0; i < c->count; i++) {
-    c->source[i].x_theta = frand(2.0)*3.14159;
-    c->source[i].y_theta = frand(2.0)*3.14159;
+    c->source[i].x_theta = frand(2.0)*M_PI;
+    c->source[i].y_theta = frand(2.0)*M_PI;
   }
 
   c->last_frame = float_time();
@@ -890,11 +890,11 @@ static unsigned long do_inter(struct inter_context* c)
 
   for(i = 0; i < c->count; i++) {
     c->source[i].x_theta += (elapsed*c->speed/1000.0);
-    if(c->source[i].x_theta > 2.0*3.14159)
-      c->source[i].x_theta -= 2.0*3.14159;
+    if(c->source[i].x_theta > 2.0*M_PI)
+      c->source[i].x_theta -= 2.0*M_PI;
     c->source[i].y_theta += (elapsed*c->speed/1000.0);
-    if(c->source[i].y_theta > 2.0*3.14159)
-      c->source[i].y_theta -= 2.0*3.14159;
+    if(c->source[i].y_theta > 2.0*M_PI)
+      c->source[i].y_theta -= 2.0*M_PI;
     c->source[i].x = source_x(c, i);
     c->source[i].y = source_y(c, i);
   }

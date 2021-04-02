@@ -1,5 +1,5 @@
 /* test-screens.c --- some test cases for the "monitor sanity" checks.
- * xscreensaver, Copyright (c) 2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2008-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,38 +14,19 @@
 # include "config.h"
 #endif
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <X11/Xlib.h>
 
-/* This file doesn't need the Xt headers, so stub these types out... */
-#undef XtPointer
-#define XtAppContext void*
-#define XrmDatabase  void*
-#define XtIntervalId void*
-#define XtPointer    void*
-#define Widget       void*
-
-#include "xscreensaver.h"
+#include "blurb.h"
 #include "visual.h"
+#include "screens.h"
 
 #undef WidthOfScreen
 #undef HeightOfScreen
 #define WidthOfScreen(s) 10240
 #define HeightOfScreen(s) 10240
-
-#undef screen_number
-#define screen_number(s) ((int) s)
-
-#include "screens.c"   /* to get at static void check_monitor_sanity() */
-
-char *progname = 0;
-char *progclass = "XScreenSaver";
-
-const char *blurb(void) { return progname; }
-
-Bool safe_XF86VidModeGetViewPort(Display *d, int i, int *x, int *y) { abort(); }
-void initialize_screen_root_widget(saver_screen_info *ssi) { abort(); }
-Visual *get_best_gl_visual (saver_info *si, Screen *sc) { abort(); }
-
 
 static const char *
 failstr (monitor_sanity san)

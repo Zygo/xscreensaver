@@ -65,4 +65,4 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Ed Mackey. Some additional code by Sergio Gutiérrez "Sergut". 
+Ed Mackey. Some additional code by Sergio GutiÃ©rrez "Sergut". 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="euler2d" _label="Euler2D">
+<screensaver name="euler2d" _label="Euler 2D">
 
   <command arg="-root"/>
 

@@ -39,7 +39,7 @@
  * https://www.youtube.com/watch?v=EZF4ZAAy49g
  */
 
-#define LABEL_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
+#define LABEL_FONT "sans-serif bold 24"
 
 #define DEFAULTS	"*delay:	20000       \n" \
 			"*count:        25          \n" \
@@ -69,8 +69,6 @@
 #define WORDBUBBLES
 
 # define release_robot 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define DEF_SPEED       "1.0"
 #define DEF_ROBOT_SIZE  "1.0"
@@ -379,33 +377,6 @@ init_robot (ModeInfo *mi)
   bp->glx_context = init_GL(mi);
 
   reshape_robot (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-
-  glShadeModel(GL_SMOOTH);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_CULL_FACE);
-
-  if (!wire)
-    {
-      GLfloat pos[4] = {0.4, 0.2, 0.4, 0.0};
-/*      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};*/
-      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
-      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
-      GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
-
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
-
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
-      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
-      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
-
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
 
 # ifdef HAVE_TEXTURE
   if (!wire && do_texture)
@@ -2295,6 +2266,7 @@ draw_robot (ModeInfo *mi)
   robot_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
+  int wire = MI_IS_WIREFRAME(mi);
   GLfloat robot_size;
   depth_sorter *sorted;
   int i;
@@ -2306,12 +2278,36 @@ draw_robot (ModeInfo *mi)
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glShadeModel(GL_SMOOTH);
+
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_CULL_FACE);
+
+  if (!wire)
+    {
+      GLfloat pos[4] = {0.4, 0.2, 0.4, 0.0};
+/*      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};*/
+      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
   glPushMatrix ();
 
-# ifdef HAVE_MOBILE
   glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
-# endif
-
   gltrackball_rotate (bp->user_trackball);
 
   glTranslatef (0, -20, 0);  /* Move the horizon down the screen */
@@ -2482,8 +2478,11 @@ free_robot (ModeInfo *mi)
   if (bp->user_trackball) gltrackball_free (bp->user_trackball);
   if (bp->walkers) free (bp->walkers);
   if (robot_dome) free (robot_dome);
+  robot_dome = 0;
   if (robot_gear) free (robot_gear);
+  robot_gear = 0;
   if (ground) free (ground);
+  ground = 0;
 
 # ifdef WORDBUBBLES
   if (bp->tc) textclient_close (bp->tc);

@@ -17,7 +17,6 @@
 #include "screenhack.h"
 #include "ximage-loader.h"
 #include "textclient.h"
-#include "xft.h"
 
 #define font_height(font) (font->ascent + font->descent)
 
@@ -562,7 +561,7 @@ static const char *noseguy_defaults [] = {
   "*fpsSolid:	 true",
   "*program:	 xscreensaver-text",
   "*usePty:      False",
-  ".font:	 -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
+  ".font:	 sans-serif 14",
   0
 };
 
@@ -605,11 +604,12 @@ noseguy_init (Display *d, Window w)
 
   init_images(st);
 
-  st->xftfont = XftFontOpenXlfd (st->dpy, screen_number (xgwa.screen),
-                                 fontname);
+  st->xftfont = load_xft_font_retry (st->dpy, screen_number (xgwa.screen),
+                                     fontname);
   free (fontname);
 
   cname = get_string_resource (st->dpy, "textForeground", "Foreground");
+  if (!cname) cname = strdup ("black");
   XftColorAllocName (st->dpy, xgwa.visual, xgwa.colormap,
                      cname, &st->xftcolor);
   free (cname);

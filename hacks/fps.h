@@ -13,10 +13,6 @@
 #ifndef __XSCREENSAVER_FPS_H__
 # define __XSCREENSAVER_FPS_H__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 typedef struct fps_state fps_state;
 
 extern fps_state *fps_init (Display *, Window);

@@ -34,9 +34,8 @@ static const char sccsid[] = "@(#)tunnel_draw.c	5.13 2004/05/25 xlockmore";
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "screenhackI.h"
+#include "tunnel_draw.h"
 
 #ifdef USE_GL /* whole file */
 
@@ -44,24 +43,6 @@ static const char sccsid[] = "@(#)tunnel_draw.c	5.13 2004/05/25 xlockmore";
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef STANDALONE
-# ifndef HAVE_JWXYZ
-#  include <GL/gl.h>
-#  include <GL/glu.h>
-# endif
-#endif
-#ifdef HAVE_ANDROID
-#include <GLES/gl.h>
-#endif
-
-
-#include "tunnel_draw.h"
-
-#ifdef STANDALONE /* For NRAND() */
-#include "xlockmoreI.h"          /* in xscreensaver distribution */
-#else /* STANDALONE */
-#include "xlock.h"              /* in xlockmore distribution */
-#endif /* STANDALONE */
 
 typedef struct 
 {

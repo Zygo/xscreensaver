@@ -17,11 +17,13 @@
 
 /* this file handles the AI of the ghosts and the pacman. */
 
-#include <math.h>
-#include <assert.h>
+#include "xlockmoreI.h"
 #include "pacman.h"
 #include "pacman_ai.h"
 #include "pacman_level.h"
+
+#include <math.h>
+#include <assert.h>
 
 #define MI_DISPLAY(MI)	((MI)->dpy)
 #define MI_WINDOW(MI)	((MI)->window)

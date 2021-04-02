@@ -9,13 +9,10 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "screenhackI.h"
+#include "dropshadow.h"
 
 #include <stdlib.h>
-
-#include "dropshadow.h"
 
 /* (Alpha) texture data for drop shadow.
  */

@@ -10,26 +10,10 @@
  * implied warranty.
  */
 
-#include <math.h>
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include <stdlib.h>
-
-#ifdef HAVE_COCOA
-#elif defined(HAVE_ANDROID)
-# include <GLES/gl.h>
-#else
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
+#include "screenhackI.h"
 #include "tube.h"
+
+#include <math.h>
 
 typedef struct { GLfloat x, y, z; } XYZ;
 

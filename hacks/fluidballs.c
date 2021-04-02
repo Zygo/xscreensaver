@@ -21,7 +21,7 @@
  *
  * It would be nice to detect when there are more balls than fit in
  * the window, and scale the number of balls back.  Useful for the
- * xscreensaver-demo preview, which is often too tight by default.
+ * xscreensaver-settings preview, which is often too tight by default.
  */
 
 #include <math.h>
@@ -76,7 +76,9 @@ typedef struct {
   int time_since_shake;
 
   Bool fps_p;		/* Whether to draw some text at the bottom. */
-  GC font_gc;
+  XftColor xft_fg;
+  XftDraw *xftdraw;
+  XftFont *font;
   int font_height;
   int font_baseline;
   int frame_count;
@@ -96,10 +98,10 @@ draw_fps_string (b_state *state)
   XFillRectangle (state->dpy, state->b, state->erase_gc,
 		  0, state->xgwa.height - state->font_height*3 - 20,
 		  state->xgwa.width, state->font_height*3 + 20);
-  XDrawImageString (state->dpy, state->b, state->font_gc,
+  XftDrawStringUtf8 (state->xftdraw, &state->xft_fg, state->font,
 		    10, state->xgwa.height - state->font_height*2 -
                     state->font_baseline - 10,
-		    state->fps_str, strlen(state->fps_str));
+		    (FcChar8 *) state->fps_str, strlen(state->fps_str));
 }
 
 /* Finds the origin of the window relative to the root window, by
@@ -346,18 +348,23 @@ fluidballs_init (Display *dpy, Window window)
   state->fps_p = get_boolean_resource (dpy, "doFPS", "DoFPS");
   if (state->fps_p)
     {
-      XFontStruct *font;
       char *fontname = get_string_resource (dpy, "fpsFont", "Font");
-      if (!fontname) fontname = "-*-courier-bold-r-normal-*-180-*";
-      font = load_font_retry (dpy, fontname);
-      if (!font) abort();
-      gcv.font = font->fid;
-      gcv.foreground = get_pixel_resource(state->dpy, state->xgwa.colormap,
-                                          "textColor", "Foreground");
-      state->font_gc = XCreateGC(dpy, state->b,
-                                 GCFont|GCForeground|GCBackground, &gcv);
-      state->font_height = font->ascent + font->descent;
-      state->font_baseline = font->descent;
+      char *s;
+      if (!fontname) fontname = "monospace bold 18";
+      state->font =
+        load_xft_font_retry (dpy, screen_number (state->xgwa.screen),
+                             fontname);
+      if (!state->font) abort();
+      s = get_string_resource (state->dpy, "textColor", "Foreground");
+      if (!s) s = strdup ("white");
+      XftColorAllocName (state->dpy, state->xgwa.visual, state->xgwa.colormap,
+                         s, &state->xft_fg);
+      free (s);
+      state->xftdraw = XftDrawCreate (state->dpy, state->window,
+                                      state->xgwa.visual,
+                                      state->xgwa.colormap);
+      state->font_height = state->font->ascent + state->font->descent;
+      state->font_baseline = state->font->descent;
     }
 
   state->m   = (float *) malloc (sizeof (*state->m)   * (state->count + 1));
@@ -437,7 +444,9 @@ check_wall_clock (b_state *state, float max_d)
 {
   state->frame_count++;
   
+#if 0
   if (state->time_tick++ > 20)  /* don't call gettimeofday() too often -- it's slow. */
+#endif
     {
       struct timeval now;
 # ifdef GETTIMEOFDAY_TWO_ARGS
@@ -451,8 +460,10 @@ check_wall_clock (b_state *state, float max_d)
         state->last_time = now;
 
       state->time_tick = 0;
+#if 0
       if (now.tv_sec == state->last_time.tv_sec)
         return;
+#endif
 
       state->time_since_shake += (now.tv_sec - state->last_time.tv_sec);
 
@@ -478,7 +489,8 @@ check_wall_clock (b_state *state, float max_d)
 	  float fps = state->frame_count / elapsed;
 	  float cps = state->collision_count / elapsed;
 	  
-	  sprintf (state->fps_str, "Collisions: %.3f/frame  Max motion: %.3f",
+	  sprintf (state->fps_str,
+                   "Collisions: %6.3f/frame  Max motion: %6.3f",
 		   cps/fps, max_d);
 	  
 	  draw_fps_string(state);
@@ -803,6 +815,8 @@ fluidballs_free (Display *dpy, Window window, void *closure)
   XFreeGC (dpy, state->draw_gc);
   XFreeGC (dpy, state->draw_gc2);
   XFreeGC (dpy, state->erase_gc);
+  XftFontClose (state->dpy, state->font);
+  XftDrawDestroy (state->xftdraw);
   free (state->m);
   free (state->r);
   free (state->vx);

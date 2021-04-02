@@ -627,16 +627,20 @@ static void layout_group (NSView *group, BOOL horiz_p);
 
 
 /* Normally we read resources by looking up "KEY" in the database
-   "org.jwz.xscreensaver.SAVERNAME".  But in the all-in-one iPhone
+   "org.jwz.xscreensaver.CLASSNAME".  But in the all-in-one iPhone
    app, everything is stored in the database "org.jwz.xscreensaver"
-   instead, so transform keys to "SAVERNAME.KEY".
+   instead, so transform keys to "CLASSNAME.KEY".
 
    NOTE: This is duplicated in PrefsReader.m, cause I suck.
  */
 - (NSString *) makeKey:(NSString *)key
 {
 # ifdef HAVE_IPHONE
-  NSString *prefix = [saver_name stringByAppendingString:@"."];
+  if ([key isEqualToString:@"globalCycle"] ||
+      [key isEqualToString:@"globalCycleTimeout"])
+    return key;  // These two are global, not per-saver.
+
+  NSString *prefix = [classname stringByAppendingString:@"."];
   if (! [key hasPrefix:prefix])  // Don't double up!
     key = [prefix stringByAppendingString:key];
 # endif
@@ -1457,6 +1461,7 @@ hreffify (NSText *nstext)
                                   @"arg":         @"",
                                   @"low":         @"",
                                   @"high":        @"",
+                                  @"step":        @"",
                                   @"default":     @"",
                                   @"convert":     @"" }
                                 mutableCopy];
@@ -1468,6 +1473,7 @@ hreffify (NSText *nstext)
   NSString *arg        = [dict objectForKey:@"arg"];
   NSString *low        = [dict objectForKey:@"low"];
   NSString *high       = [dict objectForKey:@"high"];
+  NSString *step_by    = [dict objectForKey:@"step"];
   NSString *def        = [dict objectForKey:@"default"];
   NSString *cvt        = [dict objectForKey:@"convert"];
   [dict release];
@@ -1512,12 +1518,14 @@ hreffify (NSText *nstext)
     rect.origin.x = rect.origin.y = 0;    
     rect.size.width = 150;
     rect.size.height = 23;  // apparent min height for slider with ticks...
-    NSSlider *slider;
-    slider = [[InvertedSlider alloc] initWithFrame:rect
-                                     inverted: !!cvt
-                                     integers: !float_p];
+    InvertedSlider *slider =
+      [[InvertedSlider alloc] initWithFrame:rect
+                                   inverted: !!cvt
+                                   integers: !float_p];
     [slider setMaxValue:[high doubleValue]];
     [slider setMinValue:[low  doubleValue]];
+    if (step_by)
+      [slider setIncrement:[step_by doubleValue]];
     
     int range = [slider maxValue] - [slider minValue] + 1;
     int range2 = range;
@@ -1675,7 +1683,9 @@ hreffify (NSText *nstext)
     [step setValueWraps:NO];
     
     double range = [high doubleValue] - [low doubleValue];
-    if (range < 1.0)
+    if (step_by)
+      [step setIncrement:[step_by doubleValue]];
+    else if (range < 1.0)
       [step setIncrement:range / 10.0];
     else if (range >= 500)
       [step setIncrement:range / 100.0];
@@ -1915,12 +1925,16 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 #  endif // USE_PICKER_VIEW
 # endif
 
-# if !defined(HAVE_IPHONE) || defined(USE_PICKER_VIEW)
+# if !defined(HAVE_IPHONE)
   [self placeChild:popup on:parent];
   if (disabled)
     [popup setEnabled:NO];
   else
     [self bindResource:popup key:menu_key];
+  [popup release];
+# elif defined(USE_PICKER_VIEW)
+  [self placeChild:popup on:parent];
+  [self bindResource:popup key:menu_key];
   [popup release];
 # endif
 
@@ -1933,7 +1947,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   if (! picker_values)
     picker_values = [[NSMutableArray arrayWithCapacity:menu_number] retain];
   while ([picker_values count] <= menu_number)
-    [picker_values addObject:[NSArray arrayWithObjects: nil]];
+    [picker_values addObject:@{}];
   [picker_values replaceObjectAtIndex:menu_number withObject:items];
   [popup reloadAllComponents];
 
@@ -1970,6 +1984,11 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
  */
 - (void) makeDescLabel:(NSXMLNode *)node on:(NSView *)parent
 {
+# ifdef HAVE_IPHONE
+  // The "auto-cycle" controls go just above the description.
+  [self makeCycleSaverControlBox:node on:parent];
+# endif
+
   NSString *text = nil;
   NSArray *children = [node children];
   NSUInteger i, count = [children count];
@@ -2722,6 +2741,76 @@ find_text_field_of_button (NSButton *button)
 }
 
 
+#ifdef HAVE_IPHONE
+
+- (void) makeCycleSaverControlBox:(NSXMLNode *)node on:(NSView *)parent
+{
+  /*
+    Select a new saver after timeout     [x]
+          [--------------------------------]
+    Include this saver in "random" mode  [x]
+
+   <boolean id="globalCycle"
+            _label="Select a new saver after timeout"
+            arg-set="-global-cycle" />
+    <number id="globalCycleTimeout" type="slider"
+            arg="-global-cycle-timeout %"
+            _label="After"
+            _low-label="5 minutes"
+            _high-label="4 hours"
+            low="300" high="14400" default="3600" step="300" />
+   <boolean id="globalCycleSelected"
+            _label="Include this saver in \"random\" mode"
+            arg-set="-global-cycle-selected" />
+   */
+
+  NSXMLElement *node2;
+
+  [self placeSeparator];
+
+  // <boolean ...>
+
+  node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
+  [node2 setAttributesAsDictionary:
+           @{ @"id":        @"globalCycle",
+              @"_label":    @"Select a new saver after timeout",
+              @"arg-unset": @"-no-global-cycle"
+            }];
+  [self makeCheckbox:node2 on:parent];
+  [node2 release];
+
+  // <number ...>
+
+  node2 = [[NSXMLElement alloc] initWithName:@"number"];
+  [node2 setAttributesAsDictionary:
+           @{ @"id":          @"globalCycleTimeout",
+              @"type":        @"slider",
+              @"_label":      @"",
+              @"arg":         @"-global-cycle-timeout %",
+              @"_low-label":  @"5 minutes",
+              @"_high-label": @"4 hours",
+              @"low":         @"300",
+              @"high":        @"14400",
+              @"default":     @"4600",
+              @"step":        @"300",
+             }];
+  [self makeNumberSelector:node2 on:parent];
+  [node2 release];
+
+  // <boolean ...>
+
+  node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
+  [node2 setAttributesAsDictionary:
+           @{ @"id":        @"globalCycleSelected",
+              @"_label":    @"Include this saver in \"random\" mode",
+              @"arg-unset": @"-no-global-cycle-selected"
+            }];
+  [self makeCheckbox:node2 on:parent];
+  [node2 release];
+}
+#endif // HAVE_IPHONE
+
+
 #pragma mark Layout for controls
 
 
@@ -3278,10 +3367,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
     NSAssert (0, @"top level node is not <xscreensaver>");
   }
 
-  saver_name = [self parseXScreenSaverTag: node];
-  saver_name = [saver_name stringByReplacingOccurrencesOfString:@" "
-                           withString:@""];
-  [saver_name retain];
+  saver_title = [[self parseXScreenSaverTag: node] retain];
   
 # ifndef HAVE_IPHONE
 
@@ -3400,8 +3486,14 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   CGFloat max = 0;
   for (NSArray *a2 in a) {
     NSString *s = [a2 objectAtIndex:0];
-    // #### sizeWithFont deprecated as of iOS 7; use boundingRectWithSize.
-    CGSize r = [s sizeWithFont:f];
+    //CGSize r = [s sizeWithFont:f];
+    CGSize r = pv.frame.size;
+    r.height = 999999;
+    r = [s boundingRectWithSize:r
+                        options:NSStringDrawingUsesLineFragmentOrigin
+                     attributes:@{NSFontAttributeName: f}
+                        context:nil].size;
+
     if (r.width > max) max = r.width;
   }
 
@@ -3443,7 +3535,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
                              style: UIBarButtonItemStylePlain
                              target:self
                              action:@selector(resetAction:)]];
-  NSString *s = saver_name;
+  NSString *s = saver_title;
   if ([self view].frame.size.width > 320)
     s = [s stringByAppendingString: @" Settings"];
   [self navigationItem].title = s;
@@ -3481,7 +3573,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 {
   // Titles above each vertically-stacked white box.
 //  if (section == 0)
-//    return [saver_name stringByAppendingString:@" Settings"];
+//    return [saver_title stringByAppendingString:@" Settings"];
   return nil;
 }
 
@@ -3521,6 +3613,15 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
     r = t.frame;
     h = r.size.height;
 # endif // USE_HTML_LABELS
+
+# ifdef USE_PICKER_VIEW
+  } else if ([ctl isKindOfClass:[UIPickerView class]]) {
+    UIPickerView *pv = (UIPickerView *) ctl;
+    NSArray *a = [picker_values objectAtIndex: [pv tag]];
+    int lines = [a count];
+    lines = 3;
+    h = FONT_SIZE * lines + LINE_SPACING * 2;
+# endif
 
   } else {			// Does this ever happen?
     h = FONT_SIZE + LINE_SPACING * 2;
@@ -3819,6 +3920,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
    The default size of the view is just big enough to hold them all.
  */
 - (id)initWithXML: (NSData *) xml_data
+        classname: (NSString *) _classname
           options: (const XrmOptionDescRec *) _opts
        controller: (NSUserDefaultsController *) _prefs
  globalController: (NSUserDefaultsController *) _globalPrefs
@@ -3829,7 +3931,6 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   self = [super init];
 # else  // !HAVE_IPHONE
   self = [super initWithStyle:UITableViewStyleGrouped];
-  self.title = [saver_name stringByAppendingString:@" Settings"];
 # endif // !HAVE_IPHONE
   if (! self) return 0;
 
@@ -3838,6 +3939,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   defaultOptions = _defs;
   userDefaultsController   = [_prefs retain];
   globalDefaultsController = [_globalPrefs retain];
+  classname = [_classname retain];
   haveUpdater = _haveUpdater;
 
   NSXMLParser *xmlDoc = [[NSXMLParser alloc] initWithData:xml_data];
@@ -3863,12 +3965,18 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   [NSValueTransformer setValueTransformer:t
                       forName:@"TextModeTransformer"];
   [t release];
+
+  NonNilStringTransformer *t2 = [[NonNilStringTransformer alloc] init];
+  [NSValueTransformer setValueTransformer:t2
+                      forName:@"NonNilStringTransformer"];
+  [t2 release];
 # endif // HAVE_IPHONE
 
   [self traverseTree];
   xml_root = 0;
 
 # ifdef HAVE_IPHONE
+  self.title = [saver_title stringByAppendingString:@" Settings"];
   [self addResetButton];
 # endif
 
@@ -3878,7 +3986,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 
 - (void) dealloc
 {
-  [saver_name release];
+  [classname release];
+  [saver_title release];
   [userDefaultsController release];
   [globalDefaultsController release];
 # ifdef HAVE_IPHONE

@@ -1,4 +1,4 @@
-! Resources for the Motif dialog boxes of the "xscreensaver-demo" program.
+! Resources for the Motif dialog boxes of the "xscreensaver-settings" program.
 ! 
 *fontList:                       *-helvetica-medium-r-*-*-*-120-*-*-*-iso8859-1
 *demoDialog*label1.fontList:     *-helvetica-medium-r-*-*-*-140-*-*-*-iso8859-1

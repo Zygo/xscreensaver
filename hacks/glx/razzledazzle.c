@@ -1,4 +1,4 @@
-/* razzledazzle, Copyright (c) 2018 Jamie Zawinski <jwz@jwz.org>
+/* razzledazzle, Copyright (c) 2018-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,8 +16,6 @@
 			"*suppressRotationAnimation: True\n" \
 
 # define release_dazzle 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"
@@ -339,8 +337,7 @@ reshape_dazzle (ModeInfo *mi, int width, int height)
     glOrtho (0, 1, 0.5-s, 0.5+s, -1, 1);
   }
 
-/* #### should these all be HAVE_MOBILE instead? */
-# ifdef HAVE_IPHONE	/* So much WTF */
+# ifdef HAVE_MOBILE	/* So much WTF */
   {
     int rot = current_device_rotation();
 

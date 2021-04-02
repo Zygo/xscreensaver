@@ -37,8 +37,8 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
-.BR xscreensaver\-demo (1),
-.BR xscreensaver\-getimage (1)
+.BR xscreensaver\-settings (1),
+.BR xscreensaver\-getimage (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2005 by Blair Tennessy.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is

@@ -1,4 +1,4 @@
-/* esper, Copyright (c) 2017-2018 Jamie Zawinski <jwz@jwz.org>
+/* esper, Copyright © 2017-2021 Jamie Zawinski <jwz@jwz.org>
  * Enhance 224 to 176. Pull out track right. Center in pull back.
  * Pull back. Wait a minute. Go right. Stop. Enhance 57 19. Track 45 left.
  * Gimme a hardcopy right there.
@@ -126,13 +126,8 @@
 
 
 /* Use a small point size to keep it nice and grainy. */
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
-# define TITLE_FONT "OCR A Std 10, Lucida Console 10, Monaco 10"
-#elif 0  /* real X11, XQueryFont() */
-# define TITLE_FONT "-*-courier-bold-r-*-*-*-100-*-*-m-*-*-*"
-#else    /* real X11, load_font_retry() */
-# define TITLE_FONT "-*-ocr a std-medium-r-*-*-*-100-*-*-m-*-*-*"
-#endif
+#define TITLE_FONT \
+ "OCR A Std 10, Lucida Console 10, Monaco 10, Courier 10, monospace 10"
 
 #define DEFAULTS  "*delay:           20000                \n" \
 		  "*wireframe:       False                \n" \
@@ -151,9 +146,6 @@
 # define release_esper 0
 # include "xlockmore.h"
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #undef RANDSIGN
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 #undef BELLRAND
@@ -162,6 +154,7 @@
 #ifdef USE_GL
 
 #undef SMOOTH
+#define USE_ASYNC_LOADER
 
 # define DEF_GRID_SIZE      "11"
 # define DEF_GRID_THICKNESS "15"
@@ -189,6 +182,9 @@ typedef struct {
   int tw, th;			   /* size in pixels of the texture */
   XRectangle geom;		   /* where in the image the bits are */
   Bool loaded_p;		   /* whether the image has finished loading */
+# ifdef USE_ASYNC_LOADER
+  texture_loader_t *loader;	   /* asynchronous image loader */
+# endif
   Bool used_p;			   /* whether the image has yet appeared
                                       on screen */
   GLuint texid;			   /* which texture contains the image */
@@ -388,6 +384,18 @@ alloc_image (ModeInfo *mi)
 #  elif defined(__APPLE__)
       /* MacOS 10.13 "sysctl kern.sysv.shmmax" is paltry: */
       shmmax = 0x400000;
+#  elif defined(__linux__)
+      {
+        /* Raspbian 10.6 = 0xFEFFFFFF, CentOS 7.7 = 0xFFFFFFFFFEFFFFFF */
+        FILE *fp = fopen ("/proc/sys/kernel/shmmax", "r");
+        if (fp)
+          {
+            int result = fscanf (fp, "%lu", &shmmax);
+	    if (!result || result == EOF)
+              shmmax = 0;  /* Just go with max_max. */ 
+            fclose (fp);
+          }
+      }
 #  endif /* !SHMMAX */
 
       if (shmmax)
@@ -407,8 +415,14 @@ alloc_image (ModeInfo *mi)
       if (max < MI_WIDTH(mi) || max < MI_HEIGHT(mi))
         max = 0;
 
+# ifdef USE_ASYNC_LOADER
+      img->loader = alloc_texture_loader (mi->xgwa.screen, mi->window,
+                                          *ss->glx_context, 0, 0, False,
+                                          img->texid);
+# else
       load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context,
                           max, max, False, img->texid, image_loaded_cb, img);
+# endif
     }
 
   ss->images[ss->nimages++] = img;
@@ -441,6 +455,15 @@ image_loaded_cb (const char *filename, XRectangle *geom,
       img->geom.height = img->h;
       goto DONE;
     }
+
+# ifdef USE_ASYNC_LOADER
+  if (img->loader)
+    {
+      texture_loader_t *loader = img->loader;
+      img->loader = 0;
+      free_texture_loader (loader);
+    }
+# endif
 
   if (image_width == 0 || image_height == 0)
     exit (1);
@@ -1173,7 +1196,7 @@ draw_text_sprite (ModeInfo *mi, sprite *sp)
   if (wire)
     glEnable (GL_TEXTURE_2D);
 
-#ifdef HAVE_ANDROID  /* Doesn't work -- prevents image loading? */
+#ifndef HAVE_ANDROID  /* Doesn't work -- prevents image loading? */
   print_texture_string (ss->font_data, text);
 # endif
   mi->polygon_count++;
@@ -1215,6 +1238,7 @@ draw_flash_sprite (ModeInfo *mi, sprite *sp)
 static void
 draw_sprite (ModeInfo *mi, sprite *sp)
 {
+  glEnable (GL_BLEND);
   switch (sp->type) {
   case IMAGE:
     draw_image_sprite (mi, sp);
@@ -1241,6 +1265,22 @@ tick_sprites (ModeInfo *mi)
 {
   esper_state *ss = &sss[MI_SCREEN(mi)];
   int i;
+
+# ifdef USE_ASYNC_LOADER
+  double end_by_time = ss->now + ((double) mi->pause) / 2000000;
+  for (i = 0; i < ss->nimages; i++)
+    {
+      image *img = ss->images[i];
+      if (img->loader)
+        {
+          if (texture_loader_failed (img->loader))
+            abort();
+          step_texture_loader (img->loader, end_by_time - double_time(),
+                               image_loaded_cb, img);
+        }
+    }
+# endif
+
   for (i = 0; i < ss->nsprites; i++)
     tick_sprite (mi, ss->sprites[i]);
 
@@ -1605,8 +1645,9 @@ tick_animation (ModeInfo *mi)
     /* Only advance once an image has loaded. */
     if (find_newest_sprite (mi, IMAGE))
       ss->anim_state = RETICLE_ON;
-    else
+    else {
       ss->anim_state = IMAGE_LOAD;
+    }
     break;
   case RETICLE_ON:
     ss->anim_state = RETICLE_MOVE;
@@ -2343,7 +2384,6 @@ init_esper (ModeInfo *mi)
 {
   int screen = MI_SCREEN(mi);
   esper_state *ss;
-  int wire = MI_IS_WIREFRAME(mi);
   
   MI_INIT (mi, sss);
   ss = &sss[screen];
@@ -2357,20 +2397,6 @@ init_esper (ModeInfo *mi)
   parse_color (mi, "gridColor", ss->grid_color);
   parse_color (mi, "reticleColor", ss->reticle_color);
   parse_color (mi, "textColor", ss->text_color);
-
-  glDisable (GL_LIGHTING);
-  glDisable (GL_DEPTH_TEST);
-  glDepthMask (GL_FALSE);
-  glEnable (GL_CULL_FACE);
-  glCullFace (GL_BACK);
-
-  if (! wire)
-    {
-      glEnable (GL_TEXTURE_2D);
-      glShadeModel (GL_SMOOTH);
-      glEnable (GL_BLEND);
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
 
   ss->font_data = load_texture_font (mi->dpy, "titleFont");
 
@@ -2389,6 +2415,7 @@ ENTRYPOINT void
 draw_esper (ModeInfo *mi)
 {
   esper_state *ss = &sss[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
 
   if (!ss->glx_context)
     return;
@@ -2398,6 +2425,20 @@ draw_esper (ModeInfo *mi)
   mi->polygon_count = 0;
 
   ss->now = double_time();
+
+  glDisable (GL_LIGHTING);
+  glDisable (GL_DEPTH_TEST);
+  glDepthMask (GL_FALSE);
+  glEnable (GL_CULL_FACE);
+  glCullFace (GL_BACK);
+
+  if (! wire)
+    {
+      glEnable (GL_TEXTURE_2D);
+      glShadeModel (GL_SMOOTH);
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
 
   tick_sprites (mi);
   draw_sprites (mi);

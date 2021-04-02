@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="speedmine" _label="SpeedMine">
+<screensaver name="speedmine" _label="Speed Mine">
 
   <command arg="-root"/>
 

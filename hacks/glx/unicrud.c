@@ -1,4 +1,4 @@
-/* unicrud, Copyright (c) 2016-2018 Jamie Zawinski <jwz@jwz.org>
+/* unicrud, Copyright (c) 2016-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,15 +9,13 @@
  * implied warranty.
  */
 
-#define DEFAULTS	"*delay:	20000       \n" \
-			"*showFPS:      False       \n" \
+#define DEFAULTS	"*delay:	20000          \n" \
+			"*showFPS:      False          \n" \
+                        "*titleFont: sans-serif bold 18\n" \
+                        "*font:      sans-serif bold 300\n" \
 			"*suppressRotationAnimation: True\n" \
-       "*titleFont: -*-helvetica-bold-r-normal-*-*-180-*-*-*-*-*-*\n" \
-       "*font:      -*-helvetica-bold-r-normal-*-*-2400-*-*-*-*-iso10646-1\n" \
 
 # define release_unicrud 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "rotator.h"
@@ -580,6 +578,7 @@ pick_unichar (ModeInfo *mi)
   unsigned long max = 0x2F800;
   unsigned long last = 0;
   int retries = 0;
+  time_t start_time = time ((time_t *) 0);
 
  AGAIN:
   bp->unichar = min + (random() % (max - min));
@@ -632,8 +631,15 @@ pick_unichar (ModeInfo *mi)
     i = utf8_encode (bp->unichar, text, sizeof(text) - 1);
     text[i] = 0;
     texture_string_metrics (bp->char_font, text, &e, 0, 0);
-    if (e.width < 2 || e.ascent + e.descent < 2)
-      goto AGAIN;
+
+    if (e.width < 2 ||
+        e.ascent + e.descent < 2 ||
+        blank_character_p (bp->char_font, text))
+      {
+        time_t now = time ((time_t *) 0);
+        if (now < start_time + 5) 	/* Might be a *very* bad font... */
+          goto AGAIN;
+      }
   }
 
 # ifdef HAVE_JWXYZ
@@ -721,13 +727,12 @@ reshape_unicrud (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }

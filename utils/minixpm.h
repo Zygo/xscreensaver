@@ -20,7 +20,8 @@
 extern XImage * minixpm_to_ximage (Display *, Visual *, Colormap, int depth,
                                    unsigned long transparent_color,
                                    const char * const * data,
-                                   int *width_ret, int *height_ret,
+                                   unsigned int *width_ret,
+                                   unsigned int *height_ret,
                                    unsigned long **pixels_ret, 
                                    int *npixels_ret,
                                    unsigned char **mask_ret);

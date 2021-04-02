@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2014 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,5 +32,9 @@ extern void visual_rgb_masks (Screen *screen, Visual *visual,
 extern Visual *get_gl_visual (Screen *);
 extern void describe_gl_visual (FILE *, Screen *, Visual *, Bool priv_cmap_p);
 extern Bool validate_gl_visual (FILE *, Screen *, const char *, Visual *);
+
+#ifdef __egl_h_  /* EGL/egl.h included */
+extern void get_egl_config (Display *, EGLDisplay *, EGLint vid, EGLConfig *);
+#endif
 
 #endif /* __VISUAL_H__ */

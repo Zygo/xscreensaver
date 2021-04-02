@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Modified by Richard Weeks <rtweeks21@gmail.com> Copyright (c) 2020
  *
@@ -12,39 +12,17 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#ifdef HAVE_ANDROID
-#include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-# ifndef HAVE_JWZGLES
-#  include <OpenGL/glu.h>
-# endif
-#else
-# include <X11/Xlib.h>
-# include <X11/Xutil.h>
-# include <GL/gl.h>	/* only for GLfloat */
-# include <GL/glu.h>	/* for gluBuild2DMipmaps */
-# include <GL/glx.h>	/* for glXMakeCurrent() */
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
+#include "xlockmoreI.h"
 #include "grab-ximage.h"
 #include "grabscreen.h"
 #include "pow2.h"
 #include "visual.h"
+#include "xshm.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
 
 /* If REFORMAT_IMAGE_DATA is defined, then we convert Pixmaps to textures
    like this:
@@ -67,25 +45,8 @@
 */
 #define REFORMAT_IMAGE_DATA
 
-
-#include "xshm.h"
-
-extern char *progname;
-
-#include <sys/time.h>
-
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xutil.h>
-#endif
-
 #undef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 
 static int debug_p = 0;
 static double perf = 32768000.0; /* initially assume 2^19 pixels in 1/60/sec */
@@ -98,34 +59,11 @@ bigendian (void)
   return !u.c[0];
 }
 
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
-typedef void (* PFNGLGENERATEMIPMAPPROC) (GLenum target);
+#if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
+# undef GENERATE_MIPMAPS
+#else
+# define GENERATE_MIPMAPS
 #endif
-
-static PFNGLGENERATEMIPMAPPROC
-get_glGenerateMipmap (void)
-{
-  static PFNGLGENERATEMIPMAPPROC pfn = 0;
-
-  /* auto-generate mipmaps on X11 and macOS, but skip iOS and Android. */
-
-# ifndef HAVE_JWZGLES
-#  ifdef HAVE_COCOA
-    pfn = glGenerateMipmap;
-#  else /* !HAVE_COCOA */
-
-  static Bool retrieved_p = False;
-  if (!retrieved_p)
-    {
-      pfn = (PFNGLGENERATEMIPMAPPROC)
-        glXGetProcAddress ((const GLubyte *) "glGenerateMipmap");
-      retrieved_p = True;
-    }
-#  endif /* !HAVE_COCOA */
-# endif /* !HAVE_JWZGLES */
-
-  return pfn;
-}
 
 
 #ifdef REFORMAT_IMAGE_DATA
@@ -1036,7 +974,6 @@ incremental_load_texture_async_cb (Screen *screen, Window window,
   {
     loader->phase = TLP_ERROR;
     loader->img_width = loader->img_height = 0;
-    tex_width = tex_height = 0;
     return;
   }
 
@@ -1110,7 +1047,6 @@ advance_texture_loader (texture_loader_t *loader, double allowed_seconds)
   double step_end = start_time + allowed_seconds;
   int iter_count = 0;
   unsigned int lines_processed = 0;
-  PFNGLGENERATEMIPMAPPROC pfn_glGenerateMipmap = get_glGenerateMipmap();
 
   if (loader->load_closure.glx_context)
     glXMakeCurrent (dpy, loader->window, loader->load_closure.glx_context);
@@ -1136,9 +1072,12 @@ advance_texture_loader (texture_loader_t *loader, double allowed_seconds)
                                0, loader->y,
                                loader->img_width, patch_height);
     XImage* cvt_patch = convert_ximage_to_rgba32 (loader->screen, patch);
-    Bool use_old_mipmap_p = loader->load_closure.mipmap_p &&
-                            !pfn_glGenerateMipmap &&
-                            (loader->y + loader->stripe_height >= loader->ximage->height);
+    Bool use_old_mipmap_p = False;
+# ifdef GENERATE_MIPMAPS
+    use_old_mipmap_p = (loader->load_closure.mipmap_p &&
+                        (loader->y + loader->stripe_height >=
+                         loader->ximage->height));
+# endif
 
     loader->stripes++;
 
@@ -1214,12 +1153,12 @@ complete_texture_load (texture_loader_t *loader,
   XFreePixmap (dpy, loader->load_closure.pixmap);
 
   if (loader->load_closure.mipmap_p)
-  {
-    PFNGLGENERATEMIPMAPPROC pfn_glGenerateMipmap = get_glGenerateMipmap();
-    glBindTexture (GL_TEXTURE_2D, loader->load_closure.texid);
-    if (pfn_glGenerateMipmap)
-      pfn_glGenerateMipmap (GL_TEXTURE_2D);
-  }
+    {
+      glBindTexture (GL_TEXTURE_2D, loader->load_closure.texid);
+# ifdef GENERATE_MIPMAPS
+      glGenerateMipmap (GL_TEXTURE_2D);
+# endif
+    }
 
   if (debug_p)
     {

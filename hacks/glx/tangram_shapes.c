@@ -9,22 +9,7 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#ifndef HAVE_JWXYZ
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_ANDROID
-#include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
+#include "screenhackI.h"
 #include "tangram_shapes.h"
 
 #define small_scale  ( 1 )

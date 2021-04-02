@@ -1,4 +1,4 @@
-/* splitflap, Copyright (c) 2015-2018 Jamie Zawinski <jwz@jwz.org>
+/* splitflap, Copyright (c) 2015-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,7 +11,7 @@
  * Draws a split-flap text display.
  */
 
-#define FLAP_FONT "-*-helvetica-bold-r-normal-*-*-1440-*-*-*-*-*-*"
+#define FLAP_FONT "sans-serif bold 144"
 
 #define DEFAULTS	"*delay:	20000       \n" \
 			"*showFPS:      False       \n" \
@@ -27,8 +27,6 @@
 			"*usePty:       False\n"
 
 # define release_splitflap 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define DEF_SPEED       "1.0"
 #define DEF_WIDTH       "22"
@@ -348,34 +346,6 @@ init_splitflap (ModeInfo *mi)
   if (bp->clock_p)
     speed /= 4;
 
-  glShadeModel(GL_SMOOTH);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_CULL_FACE);
-
-  if (!wire)
-    {
-      GLfloat pos[4] = {0.4, 0.2, 0.4, 0.0};
-/*      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};*/
-      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
-      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
-      GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
-
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
-
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
-      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
-      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
-
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-
   {
     double spin_speed   = 0.5;
     double wander_speed = 0.005;
@@ -684,7 +654,7 @@ draw_fin_text_quad (ModeInfo *mi, flapper *f, int index, Bool top_p)
   if (! wire)
     {
       glBindTexture (GL_TEXTURE_2D, ti->texid);
-      enable_texture_string_parameters();
+      enable_texture_string_parameters (bp->font_data);
     }
 
   glTranslatef (0, 0, z);		/* Move to just above the surface */
@@ -1317,6 +1287,7 @@ draw_splitflap (ModeInfo *mi)
   splitflap_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
+  int wire = MI_IS_WIREFRAME(mi);
 
   if (!bp->glx_context)
     return;
@@ -1324,6 +1295,34 @@ draw_splitflap (ModeInfo *mi)
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glShadeModel(GL_SMOOTH);
+
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_CULL_FACE);
+
+  if (!wire)
+    {
+      GLfloat pos[4] = {0.4, 0.2, 0.4, 0.0};
+/*      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};*/
+      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
 
   glPushMatrix ();
   glRotatef(current_device_rotation(), 0, 0, 1);

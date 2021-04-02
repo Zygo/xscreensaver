@@ -1,4 +1,4 @@
-# utils/Makefile.in --- xscreensaver, Copyright (c) 1997-2010 Jamie Zawinski.
+# utils/Makefile.in --- xscreensaver, Copyright © 1997-2021 Jamie Zawinski.
 # the `../configure' script generates `jwxyz/Makefile' from this file.
 
 # JWXYZ Is Not Xlib.
@@ -97,37 +97,13 @@ TAGS: tags
 tags:
 	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
 
-echo_tarfiles:
-	@echo $(TARFILES)
+list_tarfiles:
+	@find $(TARFILES) -type f -print | sort
 
 
 # How we build object files in this directory.
 .c.o:
 	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
-
-
-# Rules for generating the VMS makefiles on Unix, so that it doesn't have to
-# be done by hand...
-#
-VMS_AXP_COMPILE=$$ CC/DECC/PREFIX=ALL/DEFINE=(VMS,HAVE_CONFIG_H)/INCL=([],[-])
-
-compile_axp.com: Makefile.in
-	@echo generating $@ from $<...  ;				    \
-	( ( for c in $(SRCS) vms-*.c ; do				    \
-	      c=`echo $$c | tr a-z A-Z` ;				    \
-	      echo "$(VMS_AXP_COMPILE) $$c" ;				    \
-            done ;							    \
-	  ) | sort -d ;							    \
-          echo '$$ lib/cre utils.olb_axp' ; 				    \
-	  echo '$$ lib utils.olb_axp *.obj' ; 				    \
-	  echo '$$! delete/noconf *.obj;' ; 				    \
-        ) > $@
-
-compile_decc.com: compile_axp.com
-	@echo generating $@ from $<...  ;				    \
-	sed 's/axp/decc/g' < $< > $@
-
-distdepend:: compile_axp.com compile_decc.com
 
 
 ##############################################################################

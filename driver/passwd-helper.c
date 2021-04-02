@@ -1,6 +1,6 @@
 /* passwd-helper.c --- verifying typed passwords with external helper program
+ * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
  * written by Olaf Kirch <okir@suse.de>
- * xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,6 +10,18 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  */
+
+
+/*****************************************************************************
+
+    I strongly suspect that this code has not been used in decades, and I
+    am considering removing it.  These details should be hidden behind PAM.
+    If you are using this code, email me and tell me why.  -- jwz, Feb 2021
+
+ *****************************************************************************/
+
+#error "email jwz@jwz.org about passwd-helper.c"
+
 
 /* The idea here is to be able to run xscreensaver without any setuid bits.
  * Password verification happens through an external program that you feed
@@ -35,18 +47,6 @@
 
 #ifndef NO_LOCKING  /* whole file */
 
-#include <X11/Xlib.h>		/* not used for much... */
-
-/* This file doesn't need the Xt headers, so stub these types out... */
-#undef XtPointer
-#define XtAppContext void*
-#define XrmDatabase  void*
-#define XtIntervalId void*
-#define XtPointer    void*
-#define Widget       void*
-
-#include "xscreensaver.h"
-
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -57,11 +57,14 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>
-
 #include <sys/wait.h>
 
+#include "blurb.h"
+#include "auth.h"
+
+
 static int
-ext_run (const char *user, const char *typed_passwd, int verbose_p)
+ext_run (const char *user, const char *typed_passwd)
 {
   int pfd[2], status;
   pid_t pid;
@@ -70,10 +73,7 @@ ext_run (const char *user, const char *typed_passwd, int verbose_p)
     return 0;
 
   if (verbose_p)
-    fprintf (stderr, "%s: ext_run (%s, %s)\n",
-             blurb(), PASSWD_HELPER_PROGRAM, user);
-
-  block_sigchld();
+    fprintf (stderr, "%s: EXT: %s\n", blurb(), PASSWD_HELPER_PROGRAM);
 
   if ((pid = fork()) < 0) {
     close(pfd[0]);
@@ -89,7 +89,7 @@ ext_run (const char *user, const char *typed_passwd, int verbose_p)
     /* Helper is invoked as helper service-name [user] */
     execlp(PASSWD_HELPER_PROGRAM, PASSWD_HELPER_PROGRAM, "xscreensaver", user, NULL);
     if (verbose_p)
-      fprintf(stderr, "%s: %s\n", PASSWD_HELPER_PROGRAM,
+      fprintf(stderr, "%s: EXT: %s\n", PASSWD_HELPER_PROGRAM,
       		strerror(errno));
     exit(1);
   }
@@ -106,13 +106,10 @@ ext_run (const char *user, const char *typed_passwd, int verbose_p)
     if (errno == EINTR)
       continue;
     if (verbose_p)
-      fprintf(stderr, "%s: ext_run: waitpid failed: %s\n",
+      fprintf(stderr, "%s: EXT: waitpid failed: %s\n",
 		blurb(), strerror(errno));
-    unblock_sigchld();
     return 0;
   }
-
-  unblock_sigchld();
 
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
     return 0;
@@ -126,37 +123,36 @@ ext_run (const char *user, const char *typed_passwd, int verbose_p)
    to root.
  */
 int
-ext_passwd_valid_p (const char *typed_passwd, int verbose_p)
+ext_passwd_valid_p (void *closure, const char *typed_passwd)
 {
   struct passwd *pw;
   int res = 0;
 
   if ((pw = getpwuid(getuid())) != NULL)
-    res = ext_run (pw->pw_name, typed_passwd, verbose_p);
+    res = ext_run (pw->pw_name, typed_passwd);
   endpwent();
 
 #ifdef ALLOW_ROOT_PASSWD
   if (!res)
-    res = ext_run ("root", typed_passwd, verbose_p);
+    res = ext_run ("root", typed_passwd);
 #endif /* ALLOW_ROOT_PASSWD */
 
   return res;
 }
 
 
-int 
-ext_priv_init (int argc, char **argv, int verbose_p)
+Bool
+ext_priv_init (void)
 {
   /* Make sure the passwd helper exists */
   if (access(PASSWD_HELPER_PROGRAM, X_OK) < 0) {
     fprintf(stderr,
-    		"%s: warning: %s does not exist.\n"
-		"%s: password authentication via "
-			"external helper will not work.\n",
+    		"%s: EXT: warning: %s does not exist.\n"
+		"%s: EXT password authentication will not work.\n",
 		blurb(), PASSWD_HELPER_PROGRAM, blurb());
-    return 0;
+    return False;
   }
-  return 1;
+  return True;
 }
 
 #endif /* NO_LOCKING -- whole file */

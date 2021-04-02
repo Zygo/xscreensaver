@@ -10,8 +10,8 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * LAVA®, LAVA LITE®, LAVA WORLD INTERNATIONAL® and the configuration of the
- * LAVA® brand motion lamp are registered trademarks of Haggerty Enterprises,
+ * LAVAÂ®, LAVA LITEÂ®, LAVA WORLD INTERNATIONALÂ® and the configuration of the
+ * LAVAÂ® brand motion lamp are registered trademarks of Haggerty Enterprises,
  * Inc.  The configuration of the globe and base of the motion lamp are
  * registered trademarks of Haggerty Enterprises, Inc. in the U.S.A. and in
  * other countries around the world.
@@ -78,9 +78,6 @@
 #define GRAVITY         0.000013    /* odwnward acceleration */
 #define CONVECTION      0.005       /* initial upward velocity (bell curve) */
 #define TILT            0.00166666  /* horizontal velocity (bell curve) */
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef ABS
 #define ABS(n) ((n)<0?-(n):(n))

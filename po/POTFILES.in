@@ -1,8 +1,10 @@
-# Auto-generated: Tue Dec  8 09:53:21 PST 2020
+# Auto-generated: Thu Apr  1 03:16:58 PDT 2021
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
+driver/dialog.c
 driver/screensaver-properties.desktop.in
-driver/xscreensaver-demo.ui
+driver/subprocs.c
+driver/xscreensaver.ui
 hacks/config/abstractile.xml
 hacks/config/anemone.xml
 hacks/config/anemotaxis.xml
@@ -198,7 +200,6 @@ hacks/config/queens.xml
 hacks/config/raverhoop.xml
 hacks/config/razzledazzle.xml
 hacks/config/rd-bomb.xml
-hacks/config/rdbomb.xml
 hacks/config/ripples.xml
 hacks/config/rocks.xml
 hacks/config/romanboy.xml

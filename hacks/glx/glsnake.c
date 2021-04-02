@@ -19,32 +19,15 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 /* HAVE_GLUT defined if we're building a standalone glsnake,
  * and not defined if we're building as an xscreensaver hack */
 #ifdef HAVE_GLUT
 # include <GL/glut.h>
 #else
-# ifdef HAVE_JWXYZ
-#  define HAVE_GETTIMEOFDAY
-# else
-#  include <GL/gl.h>
-#  include <GL/glu.h>
-# endif
-#endif
-# ifdef HAVE_ANDROID
-# include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
-#ifdef STANDALONE
 # include "xlockmoreI.h"
+# ifndef HAVE_GETTIMEOFDAY
+#  define HAVE_GETTIMEOFDAY
+# endif
 #endif
 
 #include <stdio.h>
@@ -151,12 +134,9 @@ static GLfloat angvel;
 #define DEFAULTS "*delay:          30000                      \n" \
                  "*count:          30                         \n" \
                  "*showFPS:        False                      \n" \
-		"*suppressRotationAnimation: True\n" \
-         "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
+		 "*suppressRotationAnimation: True\n" \
+                 "*labelfont:      sans-serif 18\n" \
 
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "texfont.h"
@@ -2269,14 +2249,12 @@ ENTRYPOINT void glsnake_display(
     glRotatef(yspin, 0.0, 1.0, 0.0); 
     glRotatef(zspin, 0.0, 0.0, 1.0); 
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
     {
-      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-      int o = (int) current_device_rotation();
-      if (o != 0 && o != 180 && o != -180)
-        glScalef (1/h, 1/h, 1/h);
+      GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                   ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                   : 1);
+      glScalef (s, s, s);
     }
-# endif
 
     /* now draw each node along the snake -- this is quite ugly :p */
     mi->polygon_count = 0;

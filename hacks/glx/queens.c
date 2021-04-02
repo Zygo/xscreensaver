@@ -24,30 +24,14 @@
 
 # define release_queens 0
 # include "xlockmore.h"
-
 #else
 # include "xlock.h"
 #endif
-
-#ifdef HAVE_JWXYZ
-# include "jwxyz.h"
-#else
-# include <X11/Xlib.h>
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
 
 #ifdef USE_GL
 
 #include "gltrackball.h"
 #include "chessmodels.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 static XrmOptionDescRec opts[] = {
   {"+rotate", ".queens.rotate", XrmoptionNoArg, "false" },

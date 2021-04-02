@@ -27,9 +27,6 @@
 #define DEF_SPEED "1.0"
 #define DEF_MODE  "random"
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 #undef RANDSIGN

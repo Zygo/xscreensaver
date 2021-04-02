@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,8 @@
 #include <string.h>
 
 #include <X11/Xlib.h>		/* not used for much... */
+#include <X11/Xatom.h>
+#include <X11/Intrinsic.h>	/* For XtAppAddSignal */
 
 #ifndef ESRCH
 # include <errno.h>
@@ -35,169 +37,23 @@
 # include <sys/resource.h>	/* for setrlimit() and RLIMIT_AS */
 #endif
 
-#ifdef VMS
-# include <processes.h>
-# include <unixio.h>		/* for close */
-# include <unixlib.h>		/* for getpid */
-# define pid_t int
-# define fork  vfork
-#endif /* VMS */
-
 #include <signal.h>		/* for the signal names */
 #include <time.h>
 
-#if !defined(SIGCHLD) && defined(SIGCLD)
-# define SIGCHLD SIGCLD
+#ifdef ENABLE_NLS
+# include <locale.h>
+# include <libintl.h>
+# define _(S) gettext(S)
+#else
+# define _(S) (S)
 #endif
-
-#if 0 /* putenv() is declared in stdlib.h on modern linux systems. */
-#ifdef HAVE_PUTENV
-extern int putenv (/* const char * */);	/* getenv() is in stdlib.h... */
-#endif
-#endif
-
-extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
-
-/* This file doesn't need the Xt headers, so stub these types out... */
-#undef XtPointer
-#define XtAppContext void*
-#define XrmDatabase  void*
-#define XtIntervalId unsigned long
-#define XtPointer    void*
-#define Widget       void*
 
 #include "xscreensaver.h"
 #include "exec.h"
 #include "yarandom.h"
-#include "visual.h"    /* for id_to_visual() */
+#include "visual.h"		/* for id_to_visual() */
+#include "atoms.h"
 
-extern saver_info *global_si_kludge;	/* I hate C so much... */
-
-
-/* Used when printing error/debugging messages from signal handlers.
- */
-static const char *
-no_malloc_number_to_string (long num)
-{
-  static char string[128] = "";
-  int num_digits;
-  Bool negative_p = False;
-
-  num_digits = 0;
-
-  if (num == 0)
-    return "0";
-
-  if (num < 0)
-    {
-      negative_p = True;
-      num = -num;
-    }
-
-  while ((num > 0) && (num_digits < sizeof(string) - 1))
-    {
-      int digit;
-      digit = (int) num % 10;
-      num_digits++;
-      string[sizeof(string) - 1 - num_digits] = digit + '0';
-      num /= 10;
-    }
-
-  if (negative_p)
-    {
-      num_digits++;
-      string[sizeof(string) - 1 - num_digits] = '-';
-    }
-
-  return string + sizeof(string) - 1 - num_digits;
-}
-
-/* Like write(), but runs strlen() on the arg to get the length. */
-static int
-write_string (int fd, const char *str)
-{
-  return write (fd, str, strlen (str));
-}
-
-static int
-write_long (int fd, long n)
-{
-  const char *str = no_malloc_number_to_string (n);
-  return write_string (fd, str);
-}
-
-
-/* RLIMIT_AS (called RLIMIT_VMEM on some systems) controls the maximum size
-   of a process's address space, i.e., the maximal brk(2) and mmap(2) values.
-   Setting this lets you put a cap on how much memory a process can allocate.
-
-   Except the "and mmap()" part kinda makes this useless, since many GL
-   implementations end up using mmap() to pull the whole frame buffer into
-   memory (or something along those lines) making it appear processes are
-   using hundreds of megabytes when in fact they're using very little, and
-   we end up capping their mallocs prematurely.  YAY!
- */
-#if defined(RLIMIT_VMEM) && !defined(RLIMIT_AS)
-# define RLIMIT_AS RLIMIT_VMEM
-#endif
-
-static void
-limit_subproc_memory (int address_space_limit, Bool verbose_p)
-{
-
-/* This has caused way more problems than it has solved...
-   Let's just completely ignore the "memoryLimit" option now.
- */
-#undef HAVE_SETRLIMIT
-
-#if defined(HAVE_SETRLIMIT) && defined(RLIMIT_AS)
-  struct rlimit r;
-
-  if (address_space_limit < 10 * 1024)  /* let's not be crazy */
-    return;
-
-  if (getrlimit (RLIMIT_AS, &r) != 0)
-    {
-      char buf [512];
-      sprintf (buf, "%s: getrlimit(RLIMIT_AS) failed", blurb());
-      perror (buf);
-      return;
-    }
-
-  r.rlim_cur = address_space_limit;
-
-  if (setrlimit (RLIMIT_AS, &r) != 0)
-    {
-      char buf [512];
-      sprintf (buf, "%s: setrlimit(RLIMIT_AS, {%lu, %lu}) failed",
-               blurb(), r.rlim_cur, r.rlim_max);
-      perror (buf);
-      return;
-    }
-
-  if (verbose_p)
-    {
-      int i = address_space_limit;
-      char buf[100];
-      if      (i >= (1<<30) && i == ((i >> 30) << 30))
-        sprintf(buf, "%dG", i >> 30);
-      else if (i >= (1<<20) && i == ((i >> 20) << 20))
-        sprintf(buf, "%dM", i >> 20);
-      else if (i >= (1<<10) && i == ((i >> 10) << 10))
-        sprintf(buf, "%dK", i >> 10);
-      else
-        sprintf(buf, "%d bytes", i);
-
-      fprintf (stderr, "%s: limited pid %lu address space to %s.\n",
-               blurb(), (unsigned long) getpid (), buf);
-    }
-
-#endif /* HAVE_SETRLIMIT && RLIMIT_AS */
-}
-
-
-/* Management of child processes, and de-zombification.
- */
 
 enum job_status {
   job_running,	/* the process is still alive */
@@ -220,10 +76,107 @@ struct screenhack_job {
 
 static struct screenhack_job *jobs = 0;
 
-/* for debugging -- nothing calls this, but it's useful to invoke from gdb.
- */
-void show_job_list (void);
+static void clean_job_list (void);
+static void await_dying_children (saver_info *si);
+static void describe_dead_child (saver_info *, pid_t, int wait_status,
+                                 struct rusage);
 
+static XtSignalId xt_sigterm_id = 0;
+static int sigterm_received = 0;
+
+static XtSignalId xt_sigchld_id = 0;
+static int sigchld_received = 0;
+
+
+const char *
+signal_name (int signal)
+{
+  /* sys_signame[], sys_siglist[], strsignal() and sigabbrev_np()
+     are an unportable mess. */
+  switch (signal) {
+  case SIGHUP:	  return "SIGHUP";
+  case SIGINT:	  return "SIGINT";
+  case SIGQUIT:	  return "SIGQUIT";
+  case SIGILL:	  return "SIGILL";
+  case SIGTRAP:	  return "SIGTRAP";
+#ifdef SIGABRT
+  case SIGABRT:	  return "SIGABRT";
+#endif
+  case SIGFPE:	  return "SIGFPE";
+  case SIGKILL:	  return "SIGKILL";
+  case SIGBUS:	  return "SIGBUS";
+  case SIGSEGV:	  return "SIGSEGV";
+  case SIGPIPE:	  return "SIGPIPE";
+  case SIGALRM:	  return "SIGALRM";
+  case SIGTERM:	  return "SIGTERM";
+#ifdef SIGSTOP
+  case SIGSTOP:	  return "SIGSTOP";
+#endif
+#ifdef SIGCONT
+  case SIGCONT:	  return "SIGCONT";
+#endif
+#ifdef SIGUSR1
+  case SIGUSR1:	  return "SIGUSR1";
+#endif
+#ifdef SIGUSR2
+  case SIGUSR2:	  return "SIGUSR2";
+#endif
+#ifdef SIGEMT
+  case SIGEMT:	  return "SIGEMT";
+#endif
+#ifdef SIGSYS
+  case SIGSYS:	  return "SIGSYS";
+#endif
+  case SIGCHLD:	  return "SIGCHLD";
+#ifdef SIGPWR
+  case SIGPWR:	  return "SIGPWR";
+#endif
+#ifdef SIGWINCH
+  case SIGWINCH:  return "SIGWINCH";
+#endif
+#ifdef SIGURG
+  case SIGURG:	  return "SIGURG";
+#endif
+#ifdef SIGIO
+  case SIGIO:	  return "SIGIO";
+#endif
+#ifdef SIGVTALRM
+  case SIGVTALRM: return "SIGVTALRM";
+#endif
+#ifdef SIGXCPU
+  case SIGXCPU:	  return "SIGXCPU";
+#endif
+#ifdef SIGXFSZ
+  case SIGXFSZ:	  return "SIGXFSZ";
+#endif
+#ifdef SIGDANGER
+  case SIGDANGER: return "SIGDANGER";
+#endif
+  default:
+    {
+      static char buf[50];
+      sprintf(buf, "signal %d\n", signal);
+      return buf;
+    }
+  }
+}
+
+
+/* Management of child processes, and de-zombification.
+ */
+
+static char *
+timestring (time_t when)
+{
+  static char buf[255] = { 0 };
+  struct tm tm;
+  localtime_r (&when, &tm);
+  sprintf (buf, "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
+  return buf;
+}
+
+#ifdef DEBUG
+void show_job_list (void);
 void
 show_job_list (void)
 {
@@ -231,27 +184,24 @@ show_job_list (void)
   fprintf(stderr, "%s: job list:\n", blurb());
   for (job = jobs; job; job = job->next)
     {
-      char b[] = "           ??:??:??     ";
-      char *t = (job->killed   ? timestring (job->killed) :
-                 job->launched ? timestring (job->launched) : b);
-      t += 11;
-      t[8] = 0;
-        fprintf (stderr, "  %5ld: %2d: (%s) %s %s\n",
-                 (long) job->pid,
-                 job->screen,
-                 (job->status == job_running ? "running" :
-                  job->status == job_stopped ? "stopped" :
-                  job->status == job_killed  ? " killed" :
-                  job->status == job_dead    ? "   dead" : "    ???"),
-                 t, job->name);
+      fprintf (stderr, "  %5ld: %2d: (%s) %s %s\n",
+               (long) job->pid,
+               job->screen,
+               (job->status == job_running ? "running" :
+                job->status == job_stopped ? "stopped" :
+                job->status == job_killed  ? " killed" :
+                job->status == job_dead    ? "   dead" : "    ???"),
+               (job->killed   ? timestring (job->killed) :
+                job->launched ? timestring (job->launched) :
+                "??:??:??"),
+               job->name);
     }
   fprintf (stderr, "\n");
 }
+#endif /* DEBUG */
 
 
-static void clean_job_list (void);
-
-static struct screenhack_job *
+static void
 make_job (pid_t pid, int screen, const char *cmd)
 {
   struct screenhack_job *job = (struct screenhack_job *) malloc (sizeof(*job));
@@ -288,8 +238,6 @@ make_job (pid_t pid, int screen, const char *cmd)
   job->killed = 0;
   job->next = jobs;
   jobs = job;
-
-  return jobs;
 }
 
 
@@ -317,8 +265,7 @@ free_job (struct screenhack_job *job)
 }
 
 
-/* Cleans out dead jobs from the jobs list -- this must only be called
-   from the main thread, not from a signal handler. 
+/* Cleans out dead jobs from the jobs list.
  */
 static void
 clean_job_list (void)
@@ -367,80 +314,8 @@ find_job (pid_t pid)
   return 0;
 }
 
-static void await_dying_children (saver_info *si);
-#ifndef VMS
-static void describe_dead_child (saver_info *, pid_t, int wait_status,
-                                 struct rusage);
-#endif
 
-
-/* Semaphore to temporarily turn the SIGCHLD handler into a no-op.
-   Don't alter this directly -- use block_sigchld() / unblock_sigchld().
- */
-static int block_sigchld_handler = 0;
-
-
-#ifdef HAVE_SIGACTION
- sigset_t
-#else  /* !HAVE_SIGACTION */
- int
-#endif /* !HAVE_SIGACTION */
-block_sigchld (void)
-{
-#ifdef HAVE_SIGACTION
-  struct sigaction sa;
-  sigset_t child_set;
-
-  memset (&sa, 0, sizeof (sa));
-  sa.sa_handler = SIG_IGN;
-  sigaction (SIGPIPE, &sa, NULL);
-
-  sigemptyset (&child_set);
-  sigaddset (&child_set, SIGCHLD);
-  sigprocmask (SIG_BLOCK, &child_set, 0);
-
-#else  /* !HAVE_SIGACTION */
-  signal (SIGPIPE, SIG_IGN);
-#endif /* !HAVE_SIGACTION */
-
-  block_sigchld_handler++;
-
-#ifdef HAVE_SIGACTION
-  return child_set;
-#else  /* !HAVE_SIGACTION */
-  return 0;
-#endif /* !HAVE_SIGACTION */
-}
-
-void
-unblock_sigchld (void)
-{
-  if (block_sigchld_handler <= 0)
-    abort();
-
-  if (block_sigchld_handler <= 1)  /* only unblock if count going to 0 */
-    {
-#ifdef HAVE_SIGACTION
-  struct sigaction sa;
-  sigset_t child_set;
-
-  memset(&sa, 0, sizeof (sa));
-  sa.sa_handler = SIG_DFL;
-  sigaction(SIGPIPE, &sa, NULL);
-
-  sigemptyset(&child_set);
-  sigaddset(&child_set, SIGCHLD);
-  sigprocmask(SIG_UNBLOCK, &child_set, 0);
-
-#else /* !HAVE_SIGACTION */
-  signal(SIGPIPE, SIG_DFL);
-#endif /* !HAVE_SIGACTION */
-    }
-
-  block_sigchld_handler--;
-}
-
-int
+static int
 kill_job (saver_info *si, pid_t pid, int signal)
 {
   saver_preferences *p = &si->prefs;
@@ -448,12 +323,6 @@ kill_job (saver_info *si, pid_t pid, int signal)
   int status = -1;
 
   clean_job_list();
-
-  if (in_signal_handler_p)
-    /* This function should not be called from the signal handler. */
-    abort();
-
-  block_sigchld();			/* we control the horizontal... */
 
   job = find_job (pid);
   if (!job ||
@@ -472,7 +341,6 @@ kill_job (saver_info *si, pid_t pid, int signal)
     job->killed = time ((time_t *) 0);
     break;
 #ifdef SIGSTOP
-    /* #### there must be a way to do this on VMS... */
   case SIGSTOP: job->status = job_stopped; break;
   case SIGCONT: job->status = job_running; break;
 #endif /* SIGSTOP */
@@ -493,7 +361,7 @@ kill_job (saver_info *si, pid_t pid, int signal)
     {
       if (errno == ESRCH)
 	fprintf (stderr,
-                 "%s: %d: child process %lu (%s) was already dead.\n",
+                 "%s: %d: child process %lu (%s) was already dead\n",
 		 blurb(), job->screen, (unsigned long) job->pid, job->name);
       else
 	{
@@ -507,53 +375,148 @@ kill_job (saver_info *si, pid_t pid, int signal)
   await_dying_children (si);
 
  DONE:
-  unblock_sigchld();
-  if (block_sigchld_handler < 0)
-    abort();
-
   clean_job_list();
   return status;
 }
 
 
-#ifdef SIGCHLD
+/* We use Xt-style signal handling.  A Unix signal fires, and we inform Xt of
+   that.  Then after we return to the top-level command loop on the main
+   stack, Xt runs our callback function for that signal.  Just like Xt timers.
+ */
+static void
+catch_signal (int sig, RETSIGTYPE (*handler) (int))
+{
+# ifdef HAVE_SIGACTION
+  struct sigaction a;
+  a.sa_handler = handler;
+  sigemptyset (&a.sa_mask);
+  a.sa_flags = 0;
+  if (sigaction (sig, &a, 0) < 0)
+# else  /* !HAVE_SIGACTION */
+  if (((long) signal (sig, handler)) == -1L)
+# endif /* !HAVE_SIGACTION */
+    {
+      char buf [255];
+      sprintf (buf, "%s: couldn't catch signal %s", blurb(),
+               signal_name (sig));
+      perror (buf);
+      abort();
+    }
+}
+
+
+/* Exiting gracefully.
+
+   When xscreensaver sends a SIGTERM signal to xscreensaver-gfx, rather
+   than exiting immediately, we want it to do two things:
+
+     - Send a SIGTERM to each running screenhack.  They would *probably*
+       die of a BadWindow X error once their window was deleted, but this
+       is cleaner and more immediate.
+
+     - Fade the screens in from black.  This might take several seconds.
+
+   Should another signal come in while that is ongoing, we should just
+   die immediately.
+ */
+
+static RETSIGTYPE
+saver_sigterm_handler (int sig)
+{
+  /* This is the actual signal handler, running on the signal stack.
+     After firing once, set this signal back to the default behavior. */
+  sigterm_received = sig;
+  catch_signal (sig, SIG_DFL);
+
+  /* The first time a signal fires, inform Xt of that so that it will run
+     xt_signal_handler().  "XtNoticeSignal is the only Intrinsics function
+     that can safely be called from a signal handler". */
+  if (xt_sigterm_id)
+    XtNoticeSignal (xt_sigterm_id);
+}
+
+
+static void
+xt_sigterm_handler (XtPointer data, XtSignalId *id)
+{
+  /* This runs from the Xt event loop on the main stack, some time after
+     the signal fired. */
+  saver_info *si = (saver_info *) data;
+  saver_preferences *p = &si->prefs;
+  static Bool hit_p = False;
+  int i;
+
+  if (xt_sigterm_id)
+    XtRemoveSignal (xt_sigterm_id);
+  xt_sigterm_id = 0;
+
+  if (hit_p)
+    fprintf (stderr, "%s: second signal: %s: exiting\n", blurb(), 
+             signal_name (sigterm_received));
+  else
+    {
+      hit_p = True;
+      if (p->verbose_p)
+        fprintf (stderr, "%s: %s: unblanking\n", blurb(), 
+                 signal_name (sigterm_received));
+
+      /* Kill before unblanking, to stop drawing as soon as possible. */
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          if (ssi->cycle_id)
+            {
+              XtRemoveTimeOut (ssi->cycle_id);
+              ssi->cycle_id = 0;
+              ssi->cycle_at = 0;
+            }
+          kill_screenhack (ssi);
+        }
+      unblank_screen (si);
+
+      if (p->verbose_p)
+        fprintf (stderr, "%s: %s: exiting\n", blurb(), 
+                 signal_name (sigterm_received));
+    }
+
+  /* Exit with the original signal received. */
+  kill (getpid(), sigterm_received);
+  abort();
+}
+
+
+/* SIGCHLD handling.  Basically the same deal as SIGTERM.
+ */
+
 static RETSIGTYPE
 sigchld_handler (int sig)
 {
-  saver_info *si = global_si_kludge;	/* I hate C so much... */
-  in_signal_handler_p++;
+  /* This is the actual signal handler, running on the signal stack.
+     After firing once, set this signal to fire again. */
+  sigchld_received = sig;
+# ifndef HAVE_SIGACTION
+  catch_signal (SIGCHLD, sigchld_handler);
+# endif
+
+  if (xt_sigchld_id)
+    XtNoticeSignal (xt_sigchld_id);
+}
+
+
+static void
+xt_sigchld_handler (XtPointer data, XtSignalId *id)
+{
+  /* This runs from the Xt event loop on the main stack, some time after
+     the signal fired. */
+  saver_info *si = (saver_info *) data;
 
   if (si->prefs.debug_p)
-    {
-      /* Don't call fprintf() from signal handlers, as it might malloc.
-      fprintf(stderr, "%s: got SIGCHLD%s\n", blurb(),
-	    (block_sigchld_handler ? " (blocked)" : ""));
-      */
-      write_string (STDERR_FILENO, blurb());
-      write_string (STDERR_FILENO, ": got SIGCHLD");
+    fprintf(stderr, "%s: got SIGCHLD\n", blurb());
 
-      if (block_sigchld_handler)
-        write_string (STDERR_FILENO, " (blocked)\n");
-      else
-        write_string (STDERR_FILENO, "\n");
-    }
-
-  if (block_sigchld_handler < 0)
-    abort();
-  else if (block_sigchld_handler == 0)
-    {
-      block_sigchld();
-      await_dying_children (si);
-      unblock_sigchld();
-    }
-
-  init_sigchld();
-  in_signal_handler_p--;
+  await_dying_children (si);		/* Their first album was better */
 }
-#endif /* SIGCHLD */
 
-
-#ifndef VMS
 
 static void
 await_dying_children (saver_info *si)
@@ -570,29 +533,11 @@ await_dying_children (saver_info *si)
       if (si->prefs.debug_p)
 	{
 	  if (kid < 0 && errno)
-            {
-              /* Don't call fprintf() from signal handlers, as it might malloc.
-	      fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", blurb(),
-		       (long) kid, errno);
-               */
-              write_string (STDERR_FILENO, blurb());
-              write_string (STDERR_FILENO, ": waitpid(-1) ==> ");
-              write_long   (STDERR_FILENO, (long) kid);
-              write_string (STDERR_FILENO, " (");
-              write_long   (STDERR_FILENO, (long) errno);
-              write_string (STDERR_FILENO, ")\n");
-            }
+            fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", blurb(),
+                     (long) kid, errno);
           else
-            {
-              /* Don't call fprintf() from signal handlers, as it might malloc.
-              fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", blurb(),
-                       (long) kid);
-               */
-              write_string (STDERR_FILENO, blurb());
-              write_string (STDERR_FILENO, ": waitpid(-1) ==> ");
-              write_long   (STDERR_FILENO, (long) kid);
-              write_string (STDERR_FILENO, "\n");
-            }
+            fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", blurb(),
+                     (long) kid);
 	}
 
       /* 0 means no more children to reap.
@@ -616,208 +561,235 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status,
   struct screenhack_job *job = find_job (kid);
   const char *name = job ? job->name : "<unknown>";
   int screen_no = job ? job->screen : 0;
+  char msg[1024];
+  *msg = 0;
 
   if (WIFEXITED (wait_status))
     {
       int exit_status = WEXITSTATUS (wait_status);
-
       /* Treat exit code as a signed 8-bit quantity. */
       if (exit_status & 0x80) exit_status |= ~0xFF;
 
-      /* One might assume that exiting with non-0 means something went wrong.
-	 But that loser xswarm exits with the code that it was killed with, so
-	 it *always* exits abnormally.  Treat abnormal exits as "normal" (don't
-	 mention them) if we've just killed the subprocess.  But mention them
-	 if they happen on their own.
-       */
-      if (!job ||
-	  (exit_status != 0 &&
-	   (p->verbose_p || job->status != job_killed)))
-        {
-          /* Don't call fprintf() from signal handlers, as it might malloc.
-	  fprintf (stderr,
-		   "%s: %d: child pid %lu (%s) exited abnormally (code %d).\n",
-		   blurb(), screen_no, (unsigned long) kid, name, exit_status);
-           */
-          write_string (STDERR_FILENO, blurb());
-          write_string (STDERR_FILENO, ": ");
-          write_long   (STDERR_FILENO, (long) screen_no);
-          write_string (STDERR_FILENO, ": child pid ");
-          write_long   (STDERR_FILENO, (long) kid);
-          write_string (STDERR_FILENO, " (");
-          write_string (STDERR_FILENO, name);
-          write_string (STDERR_FILENO, ") exited abnormally (code ");
-          write_long   (STDERR_FILENO, (long) exit_status);
-          write_string (STDERR_FILENO, ").\n"); 
-        }
-      else if (p->verbose_p)
-        {
-          /* Don't call fprintf() from signal handlers, as it might malloc.
-	  fprintf (stderr, "%s: %d: child pid %lu (%s) exited normally.\n",
-		   blurb(), screen_no, (unsigned long) kid, name);
-           */
-          write_string (STDERR_FILENO, blurb());
-          write_string (STDERR_FILENO, ": ");
-          write_long   (STDERR_FILENO, (long) screen_no);
-          write_string (STDERR_FILENO, ": child pid ");
-          write_long   (STDERR_FILENO, (long) kid);
-          write_string (STDERR_FILENO, " (");
-          write_string (STDERR_FILENO, name);
-          write_string (STDERR_FILENO, ") exited normally.\n");
-        }
-
+      sprintf (msg, _("crashed with status %d"), exit_status);
+      if (p->verbose_p)
+        fprintf (stderr,
+                 "%s: %d: child pid %lu (%s) exited abnormally"
+                 " with status %d\n",
+                 blurb(), screen_no, (unsigned long) kid, name, exit_status);
       if (job)
 	job->status = job_dead;
     }
   else if (WIFSIGNALED (wait_status))
     {
-      if (p->verbose_p ||
-	  !job ||
-	  job->status != job_killed ||
-	  WTERMSIG (wait_status) != SIGTERM)
+      const char *sig = signal_name (WTERMSIG (wait_status));
+      if (job &&
+	  job->status == job_killed &&
+	  WTERMSIG (wait_status) == SIGTERM)
         {
-          /* Don't call fprintf() from signal handlers, as it might malloc.
-	  fprintf (stderr, "%s: %d: child pid %lu (%s) terminated with %s.\n",
-		   blurb(), screen_no, (unsigned long) kid, name,
-		   signal_name (WTERMSIG(wait_status)));
-           */
-# ifdef LOG_CPU_TIME
-          long u_ms = rus.ru_utime.tv_usec / 1000 + rus.ru_utime.tv_sec * 1000;
-          long s_ms = rus.ru_stime.tv_usec / 1000 + rus.ru_stime.tv_sec * 1000;
-# endif /* LOG_CPU_TIME */
-          write_string (STDERR_FILENO, blurb());
-          write_string (STDERR_FILENO, ": ");
-          write_long   (STDERR_FILENO, (long) screen_no);
-          write_string (STDERR_FILENO, ": child pid ");
-          write_long   (STDERR_FILENO, (long) kid);
-          write_string (STDERR_FILENO, " (");
-          write_string (STDERR_FILENO, name);
-          write_string (STDERR_FILENO, ") terminated with signal ");
-          write_long   (STDERR_FILENO, WTERMSIG(wait_status));
-          write_string (STDERR_FILENO, ".\n");
-# ifdef LOG_CPU_TIME
-          write_string (STDERR_FILENO, blurb());
-          write_string (STDERR_FILENO, ": ");
-          write_long   (STDERR_FILENO, (long) screen_no);
-          write_string (STDERR_FILENO, ": CPU used: ");
-          write_long   (STDERR_FILENO, (u_ms / 1000));   /* msec -> sec */
-          write_string (STDERR_FILENO, ".");
-          write_long   (STDERR_FILENO, (u_ms % 1000) / 100);
-          write_string (STDERR_FILENO, "u, ");
-          write_long   (STDERR_FILENO, (s_ms / 1000));   /* msec -> sec */
-          write_string (STDERR_FILENO, ".");
-          write_long   (STDERR_FILENO, (s_ms % 1000) / 100);
-          write_string (STDERR_FILENO, "s.\n");
-# endif /* LOG_CPU_TIME */
+          /* Expected notification after we killed it. */
+          sprintf (msg, _("exited normally with %.100s"), sig);
+          if (p->verbose_p)
+            fprintf (stderr, "%s: %d: child pid %lu (%s)"
+                     " exited normally with %s\n",
+                     blurb(), screen_no, (unsigned long) kid, name, sig);
         }
-
+      else
+        {
+          /* Unexpected signal. */
+          sprintf (msg, _("crashed with %.100s"), sig);
+          if (p->verbose_p)
+            fprintf (stderr, "%s: %d: child pid %lu (%s)"
+                     " unexpectedly terminated with %s\n",
+                     blurb(), screen_no, (unsigned long) kid, name, sig);
+        }
       if (job)
 	job->status = job_dead;
     }
   else if (WIFSTOPPED (wait_status))
     {
       if (p->verbose_p)
-        {
-          /* Don't call fprintf() from signal handlers, as it might malloc.
-	  fprintf (stderr, "%s: child pid %lu (%s) stopped with %s.\n",
-		   blurb(), (unsigned long) kid, name,
-		   signal_name (WSTOPSIG (wait_status)));
-           */
-          write_string (STDERR_FILENO, blurb());
-          write_string (STDERR_FILENO, ": ");
-          write_long   (STDERR_FILENO, (long) screen_no);
-          write_string (STDERR_FILENO, ": child pid ");
-          write_long   (STDERR_FILENO, (long) kid);
-          write_string (STDERR_FILENO, " (");
-          write_string (STDERR_FILENO, name);
-          write_string (STDERR_FILENO, ") stopped with signal ");
-          write_long   (STDERR_FILENO, WSTOPSIG(wait_status));
-          write_string (STDERR_FILENO, ".\n");
-        }
-
+        fprintf (stderr, "%s: child pid %lu (%s) stopped with %s\n",
+                 blurb(), (unsigned long) kid, name,
+                 signal_name (WSTOPSIG (wait_status)));
       if (job)
 	job->status = job_stopped;
     }
   else
     {
-      /* Don't call fprintf() from signal handlers, as it might malloc.
+      /* Didn't exit, signal or stop; is this even possible? */
+      sprintf (msg, _("crashed mysteriously"));
       fprintf (stderr, "%s: child pid %lu (%s) died in a mysterious way!",
 	       blurb(), (unsigned long) kid, name);
-       */
-      write_string (STDERR_FILENO, blurb());
-      write_string (STDERR_FILENO, ": ");
-      write_long   (STDERR_FILENO, (long) screen_no);
-      write_string (STDERR_FILENO, ": child pid ");
-      write_long   (STDERR_FILENO, (long) kid);
-      write_string (STDERR_FILENO, " (");
-      write_string (STDERR_FILENO, name);
-      write_string (STDERR_FILENO, ") died in a mysterious way!");
       if (job)
 	job->status = job_dead;
     }
 
-  /* Clear out the pid so that screenhack_running_p() knows it's dead.
+# ifdef LOG_CPU_TIME
+  if (p->verbose_p && job && job->status == job_dead)
+    {
+      long u = rus.ru_utime.tv_usec / 1000 + rus.ru_utime.tv_sec * 1000;
+      long s = rus.ru_stime.tv_usec / 1000 + rus.ru_stime.tv_sec * 1000;
+      fprintf (stderr, "%s: %d: CPU used: %.1fu, %.1fs\n",
+               blurb(), screen_no, u / 1000.0, s / 1000.0);
+    }
+# endif /* LOG_CPU_TIME */
+
+  /* Clear out the pid so that any_screenhacks_running_p() knows it's dead.
    */
   if (!job || job->status == job_dead)
     {
-    for (i = 0; i < si->nscreens; i++)
-      {
-	saver_screen_info *ssi = &si->screens[i];
-	if (kid == ssi->pid)
-	  ssi->pid = 0;
-      }
-# ifdef HAVE_LIBSYSTEMD
-    if (kid == si->systemd_pid)
-      si->systemd_pid = 0;
-# endif
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          if (kid == ssi->pid)
+            {
+              ssi->pid = 0;
+              if (*msg)
+                screenhack_obituary (ssi, name, msg);
+            }
+        }
     }
 }
-
-#else  /* VMS */
-static void await_dying_children (saver_info *si) { return; }
-#endif /* VMS */
 
 
 void
-init_sigchld (void)
+init_sigchld (saver_info *si)
 {
-#ifdef SIGCHLD
+  static Bool signals_initialized_p = 0;
+  if (signals_initialized_p) return;
+  signals_initialized_p = True;
 
-# ifdef HAVE_SIGACTION	/* Thanks to Tom Kelly <tom@ancilla.toronto.on.ca> */
+  catch_signal (SIGTERM, saver_sigterm_handler);	/* kill     */
+  catch_signal (SIGINT,  saver_sigterm_handler);	/* shell ^C */
+  catch_signal (SIGQUIT, saver_sigterm_handler);	/* shell ^| */
+  catch_signal (SIGCHLD, sigchld_handler);
 
-  static Bool sigchld_initialized_p = 0;
-  if (!sigchld_initialized_p)
-    {
-      struct sigaction action, old;
-
-      action.sa_handler = sigchld_handler;
-      sigemptyset(&action.sa_mask);
-      action.sa_flags = 0;
-
-      if (sigaction(SIGCHLD, &action, &old) < 0)
-	{
-	  char buf [255];
-	  sprintf (buf, "%s: couldn't catch SIGCHLD", blurb());
-	  perror (buf);
-	}
-      sigchld_initialized_p = True;
-    }
-
-# else  /* !HAVE_SIGACTION */
-
-  if (((long) signal (SIGCHLD, sigchld_handler)) == -1L)
-    {
-      char buf [255];
-      sprintf (buf, "%s: couldn't catch SIGCHLD", blurb());
-      perror (buf);
-    }
-# endif /* !HAVE_SIGACTION */
-#endif /* SIGCHLD */
+  xt_sigchld_id = XtAppAddSignal (si->app, xt_sigchld_handler, si);
+  xt_sigterm_id = XtAppAddSignal (si->app, xt_sigterm_handler, si);
 }
 
 
+static void
+hack_subproc_environment (Screen *screen, Window saver_window)
+{
+  /* Store $DISPLAY into the environment, so that the $DISPLAY variable that
+     the spawned processes inherit is correct.  First, it must be on the same
+     host and display as the value of -display passed in on our command line
+     (which is not necessarily the same as what our $DISPLAY variable is.)
+     Second, the screen number in the $DISPLAY passed to the subprocess should
+     be the screen on which this particular hack is running -- not the display
+     specification which the driver itself is using, since the driver ignores
+     its screen number and manages all existing screens.
 
-
+     Likewise, store a window ID in $XSCREENSAVER_WINDOW -- this is necessary
+     in a Xinerama or RANDR world where a single X11 'Screen' spans multiple
+     monitors, and we want to run a hack on each piece of glass, not spanning
+     them.  In that case, multiple hacks have the same $DISPLAY, screen and
+     root window.
+   */
+  Display *dpy = DisplayOfScreen (screen);
+  const char *odpy = DisplayString (dpy);
+  char *ndpy = (char *) malloc (strlen(odpy) + 20);
+  char *nssw = (char *) malloc (40);
+  char *s, *c;
+
+  strcpy (ndpy, "DISPLAY=");
+  s = ndpy + strlen(ndpy);
+  strcpy (s, odpy);
+
+  /* We have to find the last colon since it is the boundary between
+     hostname & screen - IPv6 numeric format addresses may have many
+     colons before that point, and DECnet addresses always have two colons */
+  c = strrchr(s,':');				/* skip to last colon */
+  if (c != NULL) s = c+1;
+  while (isdigit(*s)) s++;			/* skip over dpy number */
+  while (*s == '.') s++;			/* skip over dot */
+  if (s[-1] != '.') *s++ = '.';			/* put on a dot */
+  sprintf(s, "%d", screen_number (screen));	/* put on screen number */
+
+  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%lX", (unsigned long) saver_window);
+
+  if (putenv (ndpy))
+    abort ();
+  if (putenv (nssw))
+    abort ();
+
+  /* don't free ndpy/nssw -- some implementations of putenv (BSD 4.4,
+     glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2)
+     do not.  So we must leak it (and/or the previous setting). Yay.
+   */
+}
+
+
+#ifdef ABORT_TESTER  /* Shoot down processes after a bit, for debugging */
+static void
+abort_debug_timer (XtPointer closure, XtIntervalId *id)
+{
+  saver_screen_info *ssi = (saver_screen_info *) closure;
+  if (ssi->pid)
+    {
+      fprintf (stderr, "%s: %d: %ld: born to ill\n", blurb(), ssi->number,
+               (unsigned long) ssi->pid);
+      kill (ssi->pid, SIGILL);
+    }
+}
+#endif /* ABORT_TESTER */
+
+
+/* Executes the command in another process.
+   Command may be any single command acceptable to /bin/sh.
+   It may include wildcards, but no semicolons.
+   If successful, the pid of the other process is returned.
+   Otherwise, -1 is returned and an error may have been
+   printed to stderr.
+ */
+static pid_t
+fork_and_exec (saver_screen_info *ssi, const char *command)
+{
+  saver_info *si = ssi->global;
+  saver_preferences *p = &si->prefs;
+  pid_t forked;
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      {
+        char buf [255];
+        sprintf (buf, "%s: couldn't fork", blurb());
+        perror (buf);
+        break;
+      }
+
+    case 0:
+      close (ConnectionNumber (si->dpy));	/* close display fd */
+      if (ssi)
+        hack_subproc_environment (ssi->screen, ssi->screensaver_window);
+
+      exec_command (p->shell, command, p->nice_inferior);
+      /* If that returned, we were unable to exec the subprocess. */
+      exit (1);  /* exits child fork */
+      break;
+
+    default:	/* parent */
+      make_job (forked, (ssi ? ssi->number : 0), command);
+      if (p->verbose_p)
+        fprintf (stderr, "%s: %d: forked \"%s\" in pid %lu"
+                 " on window 0x%lx\n",
+                 blurb(), (ssi ? ssi->number : 0), command,
+                 (unsigned long) forked,
+                 (unsigned long) ssi->screensaver_window);
+      break;
+    }
+
+# ifdef ABORT_TESTER
+  if (forked)
+    XtAppAddTimeOut (si->app, 1000 * (5 + (5 * ssi->number)),
+                     abort_debug_timer, (XtPointer) ssi);
+# endif
+
+  return forked;
+}
+
 
 static Bool
 select_visual_of_hack (saver_screen_info *ssi, screenhack *hack)
@@ -834,118 +806,13 @@ select_visual_of_hack (saver_screen_info *ssi, screenhack *hack)
   if (!selected && (p->verbose_p || si->demoing_p))
     fprintf (stderr,
              (si->demoing_p
-              ? "%s: warning, no \"%s\" visual for \"%s\".\n"
-              : "%s: no \"%s\" visual; skipping \"%s\".\n"),
+              ? "%s: warning, no \"%s\" visual for \"%s\"\n"
+              : "%s: no \"%s\" visual; skipping \"%s\"\n"),
              blurb(),
              (hack->visual && *hack->visual ? hack->visual : "???"),
              hack->command);
 
   return selected;
-}
-
-
-static void
-print_path_error (const char *program)
-{
-  char buf [512];
-  char *cmd = strdup (program);
-  char *token = strchr (cmd, ' ');
-
-  if (token) *token = 0;
-  sprintf (buf, "%s: could not execute \"%.100s\"", blurb(), cmd);
-  free (cmd);
-  perror (buf);
-
-  if (errno == ENOENT &&
-      (token = getenv("PATH")))
-    {
-# ifndef PATH_MAX
-#  ifdef MAXPATHLEN
-#   define PATH_MAX MAXPATHLEN
-#  else
-#   define PATH_MAX 2048
-#  endif
-# endif
-      char path[PATH_MAX];
-      fprintf (stderr, "\n");
-      *path = 0;
-# if defined(HAVE_GETCWD)
-      if (! getcwd (path, sizeof(path)))
-        *path = 0;
-# elif defined(HAVE_GETWD)
-      getwd (path);
-# endif
-      if (*path)
-        fprintf (stderr, "    Current directory is: %s\n", path);
-      fprintf (stderr, "    PATH is:\n");
-      token = strtok (strdup(token), ":");
-      while (token)
-        {
-          fprintf (stderr, "        %s\n", token);
-          token = strtok(0, ":");
-        }
-      fprintf (stderr, "\n");
-    }
-}
-
-
-/* Executes the command in another process.
-   Command may be any single command acceptable to /bin/sh.
-   It may include wildcards, but no semicolons.
-   If successful, the pid of the other process is returned.
-   Otherwise, -1 is returned and an error may have been
-   printed to stderr.
- */
-pid_t
-fork_and_exec (saver_screen_info *ssi, const char *command)
-{
-  return fork_and_exec_1 (ssi->global, ssi, command);
-}
-
-pid_t
-fork_and_exec_1 (saver_info *si, saver_screen_info *ssi, const char *command)
-{
-  saver_preferences *p = &si->prefs;
-  pid_t forked;
-
-  switch ((int) (forked = fork ()))
-    {
-    case -1:
-      {
-        char buf [255];
-        sprintf (buf, "%s: couldn't fork", blurb());
-        perror (buf);
-        break;
-      }
-
-    case 0:
-      close (ConnectionNumber (si->dpy));	/* close display fd */
-      limit_subproc_memory (p->inferior_memory_limit, p->verbose_p);
-      if (ssi)
-        hack_subproc_environment (ssi->screen, ssi->screensaver_window);
-
-      if (p->verbose_p)
-        fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu.\n",
-                 blurb(), (ssi ? ssi->number : 0), command,
-                 (unsigned long) getpid ());
-
-      exec_command (p->shell, command, p->nice_inferior);
-
-      /* If that returned, we were unable to exec the subprocess.
-         Print an error message, if desired.
-       */
-      if (! p->ignore_uninstalled_p)
-        print_path_error (command);
-
-      exit (1);  /* exits child fork */
-      break;
-
-    default:	/* parent */
-      (void) make_job (forked, (ssi ? ssi->number : 0), command);
-      break;
-    }
-
-  return forked;
 }
 
 
@@ -956,13 +823,21 @@ spawn_screenhack (saver_screen_info *ssi)
   saver_preferences *p = &si->prefs;
   XFlush (si->dpy);
 
-  if (!monitor_powered_on_p (si))
+  if (!monitor_powered_on_p (si->dpy))
     {
       if (si->prefs.verbose_p)
         fprintf (stderr,
                  "%s: %d: X says monitor has powered down; "
-                 "not launching a hack.\n", blurb(), ssi->number);
-      return;
+                 "not launching a hack\n", blurb(), ssi->number);
+      ssi->current_hack = -1;
+
+      /* Hooray, this doesn't actually clear the window if it was OpenGL. */
+      XClearWindow (si->dpy, ssi->screensaver_window);
+
+      /* Even though we aren't launching a hack, do launch the cycle timer,
+         in case the monitor powers back up at some point without us having
+         un-blanked. */
+      goto DONE;
     }
 
   if (p->screenhacks_count)
@@ -1036,9 +911,7 @@ spawn_screenhack (saver_screen_info *ssi)
       if (new_hack < 0)   /* don't run a hack */
         {
           ssi->current_hack = -1;
-          if (si->selection_mode < 0)
-            si->selection_mode = 0;
-          return;
+          goto DONE;
         }
 
       ssi->current_hack = new_hack;
@@ -1066,19 +939,13 @@ spawn_screenhack (saver_screen_info *ssi)
 	      */
 	      if (p->verbose_p)
 		fprintf(stderr,
-		      "%s: %d: no programs enabled, or no suitable visuals.\n",
+		      "%s: %d: no programs enabled, or no suitable visuals\n",
 			blurb(), ssi->number);
 	      return;
 	    }
 	  else
 	    goto AGAIN;
 	}
-
-      /* Turn off "next" and "prev" modes now, but "demo" mode is only
-	 turned off by explicit action.
-       */
-      if (si->selection_mode < 0)
-	si->selection_mode = 0;
 
       forked = fork_and_exec (ssi, hack->command);
       switch ((int) forked)
@@ -1087,17 +954,95 @@ spawn_screenhack (saver_screen_info *ssi)
 	case 0:  /* child fork (can't happen) */
 	  sprintf (buf, "%s: couldn't fork", blurb());
 	  perror (buf);
-	  restore_real_vroot (si);
-	  saver_exit (si, 1, "couldn't fork");
+          exit (1);
 	  break;
 
 	default:
 	  ssi->pid = forked;
 	  break;
 	}
+
+      XChangeProperty (si->dpy, ssi->screensaver_window, XA_WM_COMMAND,
+                       XA_STRING, 8, PropModeReplace,
+                       (unsigned char *) hack->command,
+                       strlen (hack->command));
+      XChangeProperty (si->dpy, ssi->screensaver_window, XA_NET_WM_PID,
+                       XA_CARDINAL, 32, PropModeReplace,
+                       (unsigned char *) &ssi->pid, 1);
     }
 
-  store_saver_status (si);  /* store current hack number */
+ DONE:
+
+  if (ssi->current_hack < 0)
+    XDeleteProperty (si->dpy, ssi->screensaver_window, XA_WM_COMMAND);
+
+  store_saver_status (si);  /* store current hack numbers */
+
+  /* Now that the hack has launched, queue a timer to cycle it. */
+  if (!si->demoing_p && p->cycle)
+    {
+      time_t now = time ((time_t *) 0);
+      Time how_long = p->cycle;
+
+      /* If we're in "SELECT n" mode, the cycle timer going off will just
+         restart this same hack again.  There's not much point in doing this
+         every 5 or 10 minutes, but on the other hand, leaving one hack
+         running for days is probably not a great idea, since they tend to
+         leak and/or crash.  So, restart the thing once an hour.
+       */
+      if (si->selection_mode > 0 && ssi->pid)
+        how_long = 1000 * 60 * 60;
+
+      /* If there are multiple screens, stagger the restart time of subsequent
+         screens: they will all change every N minutes, but not at the same
+         time.  But don't let that offset be more than about 5 minutes.
+
+         I originally did this by just adding an offset to the very first
+         cycle only, but after a few days, the cycles would synchronize again!
+         Are Xt timers implemented with Huygens pendulums??  So compare this
+         screen's target time against the previous screen's, and offset it as
+         needed.
+       */
+      if (ssi->number > 0 &&
+          p->mode != RANDOM_HACKS_SAME)
+        {
+          saver_screen_info *prev = &si->screens[ssi->number-1];
+          time_t cycle_at = now + how_long / 1000;
+          time_t prev_at  = prev->cycle_at;
+
+          Time max = 1000 * 60 * 60 * 10;
+          Time off = (how_long > max ? max : how_long) / si->nscreens;
+
+          if (cycle_at < prev_at + off / 1000)
+            {
+              time_t old = cycle_at;
+              cycle_at = prev_at + off / 1000;
+              how_long = 1000 * (cycle_at - now);
+
+              if (p->verbose_p && cycle_at - old > 2)
+                fprintf (stderr, "%s: %d: offsetting cycle time by %ld sec\n",
+                         blurb(), ssi->number,
+                         cycle_at - old);
+            }
+        }
+
+      if (p->debug_p)
+        fprintf (stderr, "%s: %d: starting cycle_timer (%ld)\n",
+                 blurb(), ssi->number, how_long);
+
+      if (ssi->cycle_id)
+        XtRemoveTimeOut (ssi->cycle_id);
+      ssi->cycle_id =
+        XtAppAddTimeOut (si->app, how_long, cycle_timer, (XtPointer) ssi);
+      ssi->cycle_at = now + how_long / 1000;
+
+      if (p->verbose_p)
+        {
+          time_t t = time((time_t *) 0) + how_long/1000;
+          fprintf (stderr, "%s: %d: next cycle in %lu sec at %s\n",
+                   blurb(), ssi->number, how_long/1000, timestring(t));
+        }
+    }
 }
 
 
@@ -1108,42 +1053,14 @@ kill_screenhack (saver_screen_info *ssi)
   if (ssi->pid)
     kill_job (si, ssi->pid, SIGTERM);
   ssi->pid = 0;
+
+  /* Hooray, this doesn't actually clear the window if it was OpenGL. */
+  XClearWindow (si->dpy, ssi->screensaver_window);
 }
 
-
-void
-suspend_screenhack (saver_screen_info *ssi, Bool suspend_p)
-{
-#ifdef SIGSTOP	/* older VMS doesn't have it... */
-  saver_info *si = ssi->global;
-  if (ssi->pid)
-    kill_job (si, ssi->pid, (suspend_p ? SIGSTOP : SIGCONT));
-#endif /* SIGSTOP */
-}
-
-
-/* Called when we're exiting abnormally, to kill off the subproc. */
-void
-emergency_kill_subproc (saver_info *si)
-{
-  int i;
-#ifdef SIGCHLD
-  signal (SIGCHLD, SIG_IGN);
-#endif /* SIGCHLD */
-
-  for (i = 0; i < si->nscreens; i++)
-    {
-      saver_screen_info *ssi = &si->screens[i];
-      if (ssi->pid)
-	{
-	  kill_job (si, ssi->pid, SIGTERM);
-	  ssi->pid = 0;
-	}
-    }
-}
 
 Bool
-screenhack_running_p (saver_info *si)
+any_screenhacks_running_p (saver_info *si)
 {
   Bool any_running_p = False;
   int i;
@@ -1151,104 +1068,21 @@ screenhack_running_p (saver_info *si)
     {
       saver_screen_info *ssi = &si->screens[i];
       if (ssi->pid) any_running_p = True;
+      /* Consider it running if an error dialog is posted, so that we
+         don't prematurely clear the window. */
+      if (ssi->error_dialog) any_running_p = True;
     }
   return any_running_p;
 }
 
-
-/* Environment variables. */
 
-
-/* Modifies $PATH in the current environment, so that if DEFAULT_PATH_PREFIX
-   is defined, the xscreensaver daemon will search that directory for hacks.
+/* Fork "xscreensaver-gl-visual" and wait for it to print the IDs of
+   the GL visual that should be used on this screen.
  */
-void
-hack_environment (saver_info *si)
-{
-#if defined(HAVE_PUTENV) && defined(DEFAULT_PATH_PREFIX)
-  static const char *def_path = DEFAULT_PATH_PREFIX;
-  if (def_path && *def_path)
-    {
-      const char *opath = getenv("PATH");
-      char *npath;
-      if (! opath) opath = "/bin:/usr/bin";  /* WTF */
-      npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
-      strcpy (npath, "PATH=");
-      strcat (npath, def_path);
-      strcat (npath, ":");
-      strcat (npath, opath);
-
-      if (putenv (npath))
-	abort ();
-
-      /* don't free (npath) -- some implementations of putenv (BSD 4.4,
-         glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2)
-         do not.  So we must leak it (and/or the previous setting). Yay.
-       */
-    }
-#endif /* HAVE_PUTENV && DEFAULT_PATH_PREFIX */
-}
-
-
-void
-hack_subproc_environment (Screen *screen, Window saver_window)
-{
-  /* Store $DISPLAY into the environment, so that the $DISPLAY variable that
-     the spawned processes inherit is correct.  First, it must be on the same
-     host and display as the value of -display passed in on our command line
-     (which is not necessarily the same as what our $DISPLAY variable is.)
-     Second, the screen number in the $DISPLAY passed to the subprocess should
-     be the screen on which this particular hack is running -- not the display
-     specification which the driver itself is using, since the driver ignores
-     its screen number and manages all existing screens.
-
-     Likewise, store a window ID in $XSCREENSAVER_WINDOW -- this will allow
-     us to (eventually) run multiple hacks in Xinerama mode, where each hack
-     has the same $DISPLAY but a different piece of glass.
-   */
-  Display *dpy = DisplayOfScreen (screen);
-  const char *odpy = DisplayString (dpy);
-  char *ndpy = (char *) malloc (strlen(odpy) + 20);
-  char *nssw = (char *) malloc (40);
-  char *s, *c;
-
-  strcpy (ndpy, "DISPLAY=");
-  s = ndpy + strlen(ndpy);
-  strcpy (s, odpy);
-
-  /* We have to find the last colon since it is the boundary between
-     hostname & screen - IPv6 numeric format addresses may have many
-     colons before that point, and DECnet addresses always have two colons */
-  c = strrchr(s,':');				/* skip to last colon */
-  if (c != NULL) s = c+1;
-  while (isdigit(*s)) s++;			/* skip over dpy number */
-  while (*s == '.') s++;			/* skip over dot */
-  if (s[-1] != '.') *s++ = '.';			/* put on a dot */
-  sprintf(s, "%d", screen_number (screen));	/* put on screen number */
-
-  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%lX", (unsigned long) saver_window);
-
-  /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
-     any more, right?  It's not Posix, but everyone seems to have it. */
-#ifdef HAVE_PUTENV
-  if (putenv (ndpy))
-    abort ();
-  if (putenv (nssw))
-    abort ();
-
-  /* don't free ndpy/nssw -- some implementations of putenv (BSD 4.4,
-     glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2)
-     do not.  So we must leak it (and/or the previous setting). Yay.
-   */
-#endif /* HAVE_PUTENV */
-}
-
-
-/* GL crap */
-
 Visual *
 get_best_gl_visual (saver_info *si, Screen *screen)
 {
+  saver_preferences *p = &si->prefs;
   pid_t forked;
   int fds [2];
   int in, out;
@@ -1259,7 +1093,7 @@ get_best_gl_visual (saver_info *si, Screen *screen)
   char *av[10];
   int ac = 0;
 
-  av[ac++] = "xscreensaver-gl-helper";
+  av[ac++] = "xscreensaver-gl-visual";
   av[ac] = 0;
 
   if (pipe (fds))
@@ -1283,18 +1117,13 @@ get_best_gl_visual (saver_info *si, Screen *screen)
       errout = errfds [1];
     }
 
-  block_sigchld();   /* This blocks it in the parent and child, to avoid
-                        racing.  It is never unblocked in the child before
-                        the child exits, but that doesn't matter.
-                      */
-
   switch ((int) (forked = fork ()))
     {
     case -1:
       {
         sprintf (buf, "%s: couldn't fork", blurb());
         perror (buf);
-        saver_exit (si, 1, 0);
+        exit (1);
       }
     case 0:
       {
@@ -1336,11 +1165,17 @@ get_best_gl_visual (saver_info *si, Screen *screen)
         int result = 0;
         int wait_status = 0;
         pid_t pid = -1;
-
-        FILE *f = fdopen (in, "r");
+        FILE *f;
         unsigned long v = 0;
         char c;
 
+        make_job (forked, 0, av[0]);  /* Bookkeeping for SIGCHLD */
+
+        if (p->verbose_p)
+          fprintf (stderr, "%s: %d: forked \"%s\" in pid %lu\n",
+                   blurb(), 0, av[0], (unsigned long) forked);
+
+        f = fdopen (in, "r");
         close (out);  /* don't need this one */
 
         *buf = 0;
@@ -1357,16 +1192,8 @@ get_best_gl_visual (saver_info *si, Screen *screen)
         /* Wait for the child to die - wait for this pid only, not others. */
         pid = waitpid (forked, &wait_status, 0);
         if (si->prefs.debug_p)
-          {
-            write_string (STDERR_FILENO, blurb());
-            write_string (STDERR_FILENO, ": waitpid(");
-            write_long   (STDERR_FILENO, (long) forked);
-            write_string (STDERR_FILENO, ") ==> ");
-            write_long   (STDERR_FILENO, (long) pid);
-            write_string (STDERR_FILENO, "\n");
-          }
-
-        unblock_sigchld();   /* child is dead and waited, unblock now. */
+          fprintf (stderr, "%s: waitpid(%ld) => %ld\n", blurb(),
+                   (long) forked, (long) pid);
 
         if (1 == sscanf (buf, "0x%lx %c", &v, &c))
           result = (int) v;
@@ -1391,7 +1218,7 @@ get_best_gl_visual (saver_info *si, Screen *screen)
           {
             Visual *v = id_to_visual (screen, result);
             if (si->prefs.verbose_p)
-              fprintf (stderr, "%s: %d: %s: GL visual is 0x%X%s.\n",
+              fprintf (stderr, "%s: %d: %s: GL visual is 0x%X%s\n",
                        blurb(), screen_number (screen),
                        av[0], result,
                        (v == DefaultVisualOfScreen (screen)
@@ -1402,72 +1229,4 @@ get_best_gl_visual (saver_info *si, Screen *screen)
     }
 
   abort();
-}
-
-
-
-/* Restarting the xscreensaver process from scratch. */
-
-static char **saved_argv;
-
-void
-save_argv (int argc, char **argv)
-{
-  saved_argv = (char **) calloc (argc+2, sizeof (char *));
-  saved_argv [argc] = 0;
-  while (argc--)
-    {
-      int i = strlen (argv [argc]) + 1;
-      saved_argv [argc] = (char *) malloc (i);
-      memcpy (saved_argv [argc], argv [argc], i);
-    }
-}
-
-
-/* Re-execs the process with the arguments in saved_argv.  Does not return.
- */
-void
-restart_process (saver_info *si)
-{
-  if (si->screen_blanked_p)
-    {
-      unblank_screen (si);
-      XSync (si->dpy, False);
-    }
-
-  emergency_kill_subproc (si);
-
-# ifdef HAVE_LIBSYSTEMD
-  if (si->systemd_pid)  /* Kill background xscreensaver-systemd process */
-    {
-      /* We're exiting, so there's no need to do a full kill_job() here,
-         which would waitpid(). */
-      /* kill_job (si, si->systemd_pid, SIGTERM); */
-      kill (si->systemd_pid, SIGTERM);
-      si->systemd_pid = 0;
-    }
-# endif
-
-  if (si->prefs.verbose_p)
-    {
-      int i;
-      fprintf (stderr, "%s: re-executing", blurb());
-      for (i = 0; saved_argv[i]; i++)
-	fprintf (stderr, " %s", saved_argv[i]);
-      fprintf (stderr, "\n");
-
-      describe_uids (si, stderr);
-      fprintf (stderr, "\n");
-    }
-
-  shutdown_stderr (si);
-
-  execvp (saved_argv [0], saved_argv);	/* shouldn't return */
-  {
-    char buf [512];
-    sprintf (buf, "%s: could not restart process", blurb());
-    perror(buf);
-    fflush(stderr);
-    abort();
-  }
 }

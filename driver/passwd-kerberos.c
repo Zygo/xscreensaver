@@ -1,6 +1,6 @@
 /* kpasswd.c --- verify kerberos passwords.
- * written by Nat Lanza (magus@cs.cmu.edu) for
- * xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
+ * written by Nat Lanza (magus@cs.cmu.edu)
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,6 +10,17 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  */
+
+/*****************************************************************************
+
+    I strongly suspect that this code has not been used in decades, and I
+    am considering removing it.  These details should be hidden behind PAM.
+    If you are using this code, email me and tell me why.  -- jwz, Feb 2021
+
+ *****************************************************************************/
+
+#error "email jwz@jwz.org about passwd-kerberos.c"
+
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -48,9 +59,7 @@
 # include <des.h>
 #endif /* !HAVE_KERBEROS5 */
 
-#if !defined(VMS) && !defined(HAVE_ADJUNCT_PASSWD)
-# include <pwd.h>
-#endif
+#include <pwd.h>
 
 
 #ifdef __bsdi__
@@ -60,13 +69,9 @@
 # endif
 #endif /* __bsdi__ */
 
-/* blargh */
-#undef  Bool
-#undef  True
-#undef  False
-#define Bool  int
-#define True  1
-#define False 0
+#include "blurb.h"
+#include "auth.h"
+
 
 /* The user information we need to store */
 #ifdef HAVE_DARWIN
@@ -77,10 +82,6 @@
  static char  inst[INST_SZ];
  static const char *tk_file;
 #endif /* !HAVE_DARWIN */
-
-/* warning suppression: duplicated in passwd.c */
-extern Bool kerberos_lock_init (int argc, char **argv, Bool verbose_p);
-extern Bool kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 
 
 /* Called at startup to grab user, instance, and realm information
@@ -102,7 +103,7 @@ extern Bool kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
    We don't use the arguments we're given, though.
  */
 Bool
-kerberos_lock_init (int argc, char **argv, Bool verbose_p)
+kerberos_lock_init (void)
 {
 # ifdef HAVE_DARWIN
 
@@ -182,7 +183,7 @@ key_to_key(char *user, char *instance, char *realm, char *passwd, C_Block key)
    some sites. So, we do a quick, painful hack with a tmpfile.
  */
 Bool
-kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
+kerberos_passwd_valid_p (void *closure, const char *typed_passwd)
 {
 # ifdef HAVE_DARWIN
     return (klNoErr ==
@@ -201,10 +202,10 @@ kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
     /* temporarily switch to a new ticketfile.
        I'm not using tmpnam() because it isn't entirely portable.
        this could probably be fixed with autoconf. */
-    newtkfile = malloc(80 * sizeof(char));
-    memset(newtkfile, 0, sizeof(newtkfile));
-
-    sprintf(newtkfile, "/tmp/xscrn-%i.XXXXXX", getpid());
+    char *tmpdir = getenv("TMPDIR");
+    if (!tmpdir || !*tmpdir) tmpdir = "/tmp";
+    newtkfile = malloc (strlen(tmpdir) + 40);
+    sprintf (newtkfile, "%s/xscreensaver.XXXXXX", tmpdir);
 
     if( (fh = mkstemp(newtkfile)) < 0)
     {

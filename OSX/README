@@ -2,19 +2,87 @@
 This directory contains the MacOS-specific code for building a Cocoa
 version of xscreensaver without using X11.
 
-To build it, just type "make", or use the included XCode project.  The
-executables will show up in the "build/Release/" and/or "build/Debug/"
-directories.
+############################################################################
+#
+#   To set up your macOS and iOS development environment:
+#
+############################################################################
 
-If you build using anything later than Xcode 5.0.2, the resultant savers
-will require MacOS 10.7 or later.  To support 10.4 through 10.6, you must
-use Xcode 5.0.2 or earlier.  Apple's longstanding corporate policy of
-planned obsolescence means that they make it as difficult as possible for
-you to support anything that's more than two years old, six months for iOS.
+Installation:
 
-This is how you add a new screen saver to the Xcode project.  It's a
-ridiculously long list of steps!  I tried to automate it with Applescript
-but that appears to be impossible.
+  - Install the latest Xcode from the App Store.  Note: it is
+    mind-bogglingly gigantic.
+
+  - Install ImageMagick ("convert"). Either MacPorts or Homebrew are
+    good choices for installing open source software on macOS.
+
+
+Make sure everything works:
+
+  - Open "xscreensaver.xcodeproj" in Xcode.
+
+  - Select "All Savers" on the "Scheme" menu in the upper left, to the
+    right of the "Play / Pause" buttons.
+
+  - ⌘B "Product / Build"
+
+  - There will probably be a build error related to Sonar and ICMP.
+    Click on the red error icon to see the error message and follow the
+    instructions there to fix it.
+
+
+To build and test a macOS saver:
+
+  - Select the saver you want on the "Scheme" menu in the upper left,
+    to the right of the "Play / Pause" buttons.
+
+  - Select "My Mac" from the "platform" menu to the right of that.
+
+  - Press "Play".  This will run the "SaverTester" app under the debugger.
+    SaverTester is a testing framework that will load and run your selected
+    ".saver" bundle in the same manner that "System Preferences" and
+    "ScreenSaverEngine" will.
+
+  - To get the system's screen saver to use your debug builds, you can
+    do something like this:
+
+    ln -s ~/xscreensaver/OSX/build/Debug/*.saver ~/Library/Screen\ Savers/
+
+
+To build and test an iOS saver:
+
+  - Pay Apple $100 per year for an iOS developer account.  There's no way
+    to build and debug iOS code without doing this, because they are evil.
+
+  - Select "XScreenSaver-iOS" on the "Scheme" menu.
+
+  - On the platform menu, select your physically attached iOS device, or
+    select one of the simulators.  Press "Play".
+
+  - If you have already installed the App Store version of XScreenSaver
+    on your physical iOS device, you may need to delete it before you
+    can install your own debug build.
+
+
+Building for older operating systems:
+
+  Basically, you can't.  If you build using anything later than Xcode 5.0.2,
+  the resultant savers will require MacOS 10.7 or later.  To support macOS
+  10.4 through 10.6, you would need to be running Xcode 5.0.2 or earlier.
+  Apple's longstanding corporate policy of planned obsolescence means that
+  they make it as difficult as possible for you to support anything that's
+  more than two years old on desktop, or six months on mobile.
+
+
+############################################################################
+#
+#   To add a new screen saver to the Xcode project:
+#
+############################################################################
+
+  It is a ridiculously long list of steps!  This list is here mostly for
+  my benefit.  I tried to automate some of this with Applescript but that
+  appears to be impossible.
 
   1: Duplicate a target (Dangerball for GL, or Attraction for X11).
   2: Rename it, and drag it to the right spot in the list.

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,11 +11,11 @@
 
 /* JWXYZ Is Not Xlib.
 
-   But it's a bunch of function definitions that bear some resemblance to
-   Xlib and that do things to an XImage that bear some resemblance to the
-   things that Xlib might have done.
+   Pixmaps implemented in CPU RAM, for Android OpenGL hacks.
+   Renders into an XImage, basically.
 
-   This handles things when jwxyz-gl.c can't.
+   See the comment at the top of jwxyz-common.c for an explanation of
+   the division of labor between these various modules.
  */
 
 #ifdef HAVE_CONFIG_H

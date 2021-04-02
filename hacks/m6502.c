@@ -12,18 +12,17 @@
  * Created: 07-May-2007 
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-#if defined(HAVE_STDINT_H)
-#include <stdint.h> 
-#elif defined(HAVE_INTTYPES_H)
-#include <inttypes.h>
-#endif
-#include <string.h>
 #include "screenhack.h"
 #include "analogtv.h"
 #include "asm6502.h"
+
+#include <string.h>
+
+#if defined(HAVE_STDINT_H)
+# include <stdint.h> 
+#elif defined(HAVE_INTTYPES_H)
+# include <inttypes.h>
+#endif
 
 # ifdef __GNUC__
   __extension__  /* don't warn about "string length is greater than the length
@@ -79,10 +78,6 @@ plot6502(Bit8 x, Bit8 y, Bit8 color, void *closure)
   struct state *st = (struct state *) closure;
   st->pixels[x][y] = color;
 }
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 
 static void 
 start_rand_bin_prog(machine_6502 *machine, struct state *st){

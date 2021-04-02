@@ -13,16 +13,19 @@
  * Requires a system with scalable fonts.  (X's font handing sucks.  A lot.)
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-
 /* If you turn on DEBUG, this program also masquerades as a tool for
    debugging font metrics issues, which is probably only if interest
    if you are doing active development on libjwxyz.a itself.
  */
 /* #define DEBUG */
+
+#include "screenhack.h"
+#include "textclient.h"
+#include "utf8wc.h"
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+#include "xdbe.h"
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 #include <math.h>
 #include <time.h>
@@ -34,15 +37,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
-#include "screenhack.h"
-#include "textclient.h"
-#include "xft.h"
-#include "utf8wc.h"
-
-#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-#include "xdbe.h"
-#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 typedef struct {
   char *text;
@@ -205,7 +199,84 @@ pick_font_1 (state *s, sentence *se)
   char pattern[1024];
   char pattern2[1024];
 
-#ifndef HAVE_JWXYZ /* real Xlib */
+#  define _DONE_1 /**/
+#  define _DONE_2 /**/
+# if defined(HAVE_XFT) && !defined(HAVE_JWXYZ)   /* Real Xft under real X11 */
+#  undef  _DONE_1
+#  undef  _DONE_2
+#  define _DONE_1 DONE_1:
+#  define _DONE_2 DONE_2:
+  if (s->font_override)
+    {
+      sprintf (pattern, "%.200s", s->font_override);
+      ok = True;
+      goto DONE_1;
+    }
+  else
+    {
+      unsigned long pixel = pick_font_size (s);
+
+      /* https://keithp.com/~keithp/render/Xft.tutorial */
+      XftFontSet *fs =
+        XftListFonts (s->dpy, DefaultScreen (s->dpy),
+                      /* Pattern-triples to match, followed by a NULL */
+                      /* XFT_FAMILY, XftTypeString, "Helvetica", */
+                      /* XFT_SIZE,   XftTypeDouble, 12.0,        */
+                      NULL,
+                      /* Properties to return, followed by a second NULL */
+                      XFT_FAMILY,
+                      XFT_STYLE,
+                      XFT_SLANT,
+                      XFT_WEIGHT,
+                      XFT_SIZE,
+                      NULL);
+      XftPattern *pat;
+      char name1[1024], name2[1024], *s1, *s2;
+      XftFont *font;
+
+      if (!fs) abort();
+      if (fs->nfont <= 0)
+        {
+          fprintf (stderr, "%s: unable to list fonts\n", progname);
+          abort();
+        }
+      pat = fs->fonts[(random() % fs->nfont)];
+      if (!pat) abort();
+      if (! XftNameUnparse (pat, name1, sizeof(name1)-1))
+        {
+          /* I've seen this happen but rarely. Bogus font? */
+          /* fprintf (stderr, "%s: unable to get font name\n", progname); */
+          return False;
+        }
+
+      /* Convert "Helvetica:style=..." into "Helvetica-48:style=" */
+      s1 = strchr (name1, ':');
+      s2 = strchr (name1, '-');
+      if (!s1) abort();
+      if (!s2) s2 = s1;
+      memcpy (name2, name1, s2 - name1);
+      name2[s2 - name1] = 0;
+      sprintf (name2 + strlen(name2), "-%ld:", pixel);
+      strcat (name2, s2 + 1);
+      font = XftFontOpenName (s->dpy, screen_number (s->xgwa.screen), name2);
+
+      if (!font)
+        {
+          fprintf (stderr, "%s: unable to load Xft font \"%s\"\n", 
+                   progname, name2);
+          return False;
+        }
+
+      /* #### This gets a link error with FcFontSetDestroy missing. */
+      /* if (fs) XftFontSetDestroy (fs); */
+
+      se->xftfont = font;
+      ok = True;
+      goto DONE_2;
+    }
+
+# elif !defined(HAVE_JWXYZ)			/* No Xft but real Xlib */
+
   char **names = 0;
   char **names2 = 0;
   XFontStruct *info = 0;
@@ -242,6 +313,7 @@ pick_font_1 (state *s, sentence *se)
              "p",         /* spacing */
              "0",         /* avg width */
              s->charset); /* registry + encoding */
+
 
   names = XListFonts (s->dpy, pattern, 1000, &count);
 
@@ -364,7 +436,7 @@ pick_font_1 (state *s, sentence *se)
   XFreeFontInfo (names2, info, count2);
   XFreeFontNames (names);
 
-# else  /* HAVE_JWXYZ */
+# else  /* HAVE_JWXYZ -- no Xft on macOS, iOS or Android */
 
   if (s->font_override)
     sprintf (pattern, "%.200s", s->font_override);
@@ -379,10 +451,14 @@ pick_font_1 (state *s, sentence *se)
   ok = True;
 # endif /* HAVE_JWXYZ */
 
+  _DONE_1
+
   if (! ok) return False;
 
   se->xftfont = XftFontOpenXlfd (s->dpy, screen_number (s->xgwa.screen),
                                  pattern);
+
+  _DONE_2
 
   if (! se->xftfont)
     {
@@ -1638,12 +1714,12 @@ fontglide_draw_metrics (state *s)
   if (! s->metrics_xftfont)
     {
       s->metrics_xftfont =
-        XftFontOpenXlfd (s->dpy, screen_number(s->xgwa.screen), fn);
+        load_xft_font_retry (s->dpy, screen_number(s->xgwa.screen), fn);
       if (! s->metrics_xftfont)
         {
           const char *fn2 = "fixed";
           s->metrics_xftfont =
-            XftFontOpenName (s->dpy, screen_number(s->xgwa.screen), fn2);
+            load_xft_font_retry (s->dpy, screen_number(s->xgwa.screen), fn2);
           if (s->metrics_xftfont)
             fn = fn2;
           else

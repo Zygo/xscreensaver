@@ -1,4 +1,4 @@
-/* gibson, Copyright (c) 2020 Jamie Zawinski <jwz@jwz.org>
+/* gibson, Copyright (c) 2020-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,7 +14,7 @@
  * edge-lit etched perspex, each about four feet tall.
  */
 
-#define TOWER_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
+#define TOWER_FONT "sans-serif bold 48"
 
 #define DEFAULTS	"*delay:	20000       \n" \
 			"*groundColor:  #8A2BE2"   "\n" \
@@ -26,8 +26,6 @@
 			"*wireframe:    False       \n" \
 
 # define release_gibson 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"
@@ -1237,7 +1235,7 @@ draw_gibson (ModeInfo *mi)
       if (do_tex)
         {
           glEnable (GL_TEXTURE_2D);
-          enable_texture_string_parameters();
+          enable_texture_string_parameters (bp->text[0].font_data);
         }
       glEnable (GL_BLEND);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE);

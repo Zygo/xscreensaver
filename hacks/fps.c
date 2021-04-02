@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2019 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright © 2001-2021 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -10,22 +10,22 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "screenhackI.h"
+#include "xft.h"
+#include "fpsI.h"
 
 #include <time.h>
-#include "screenhackI.h"
-#include "fpsI.h"
 
 fps_state *
 fps_init (Display *dpy, Window window)
 {
   fps_state *st;
   const char *font;
-  XFontStruct *f;
+  XftFont *f;
   Bool top_p;
   XWindowAttributes xgwa;
+  XGCValues gcv;
+  char *s;
 
   if (! get_boolean_resource (dpy, "doFPS", "DoFPS"))
     return 0;
@@ -42,22 +42,21 @@ fps_init (Display *dpy, Window window)
 
   font = get_string_resource (dpy, "fpsFont", "Font");
 
+  XGetWindowAttributes (dpy, window, &xgwa);
+
   if (!font)
-    font = "-*-courier-bold-r-normal-*-*-180-*-*-*-*-*-*"; /* also texfont.c */
-  f = load_font_retry (dpy, font);
+    font = "monospace bold 18";   /* also texfont.c */
+  f = load_xft_font_retry (dpy, screen_number (xgwa.screen), font);
   if (!f) abort();
 
-  {
-    XGCValues gcv;
-    XGetWindowAttributes (dpy, window, &xgwa);
-    gcv.font = f->fid;
-    gcv.foreground = 
-      get_pixel_resource (st->dpy, xgwa.colormap, "foreground", "Foreground");
-    st->draw_gc = XCreateGC (dpy, window, GCFont|GCForeground, &gcv);
-    gcv.foreground =
-      get_pixel_resource (st->dpy, xgwa.colormap, "background", "Background");
-    st->erase_gc = XCreateGC (dpy, window, GCFont|GCForeground, &gcv);
-  }
+  s = get_string_resource (st->dpy, "foreground", "Foreground");
+  if (!s) s = strdup ("white");
+  XftColorAllocName (st->dpy, xgwa.visual, xgwa.colormap, s, &st->fg);
+  free (s);
+  st->xftdraw = XftDrawCreate (dpy, window, xgwa.visual, xgwa.colormap);
+  gcv.foreground =
+    get_pixel_resource (st->dpy, xgwa.colormap, "background", "Background");
+  st->erase_gc = XCreateGC (dpy, window, GCForeground, &gcv);
 
   st->font = f;
   st->x = 10;
@@ -65,14 +64,22 @@ fps_init (Display *dpy, Window window)
   if (top_p)
     st->y = - (st->font->ascent + st->font->descent + 10);
 
+  {
+    XGlyphInfo overall;
+    XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) "m", 1, &overall);
+    st->em = overall.xOff;
+  }
+
 # ifdef HAVE_IPHONE
   /* Don't hide the FPS display under the iPhone X bezel.
      #### This is the worst of all possible ways to do this!  But how else?
+     This magic number should catch iPhone X and larger, but unfortunately
+     also catches iPads which do not have the stupid bezel.
    */
-  if (xgwa.width == 2436 || xgwa.height == 2436)
+  if (xgwa.width >= 1218 || xgwa.height >= 1218)
     {
-      st->x += 48;
-      st->y += 48 * (top_p ? -1 : 1);
+      st->x += 18;
+      st->y += 18 * (top_p ? -1 : 1);
     }
 # endif
 
@@ -84,9 +91,9 @@ fps_init (Display *dpy, Window window)
 void
 fps_free (fps_state *st)
 {
-  if (st->draw_gc)  XFreeGC (st->dpy, st->draw_gc);
+  if (st->xftdraw) XftDrawDestroy (st->xftdraw);
   if (st->erase_gc) XFreeGC (st->dpy, st->erase_gc);
-  if (st->font) XFreeFont (st->dpy, st->font);
+  if (st->font) XftFontClose (st->dpy, st->font);
   free (st);
 }
 
@@ -212,37 +219,6 @@ fps_compute (fps_state *st, unsigned long polys, double depth)
 }
 
 
-
-/* Width (and optionally height) of the string in pixels.
- */
-static int
-string_width (XFontStruct *f, const char *c, int *height_ret)
-{
-  int x = 0;
-  int max_w = 0;
-  int h = f->ascent + f->descent;
-  while (*c)
-    {
-      int cc = *((unsigned char *) c);
-      if (*c == '\n')
-        {
-          if (x > max_w) max_w = x;
-          x = 0;
-          h += f->ascent + f->descent;
-        }
-      else
-        x += (f->per_char
-              ? f->per_char[cc-f->min_char_or_byte2].width
-              : f->min_bounds.rbearing);
-      c++;
-    }
-  if (x > max_w) max_w = x;
-  if (height_ret) *height_ret = h;
-
-  return max_w;
-}
-
-
 /* This function is used only in Xlib mode.  For GL mode, see glx/fps-gl.c.
  */
 void
@@ -272,12 +248,41 @@ fps_draw (fps_state *st)
   if (st->clear_p)
     {
       int w, h;
-      w = string_width (st->font, string, &h);
+      int olines = lines;
+      const char *ostring = string;
+      int maxw = 0;
+      while (lines)
+        {
+          s = strchr (string, '\n');
+          if (! s) s = string + strlen(string);
+# if 0
+          {
+            XGlyphInfo overall;
+            XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) string, 
+                                s - string, &overall);
+            w = overall.width - overall.x + st->em;
+          }
+# else
+          /* Measuring the font is slow, let's just assume this will fit. */
+          w = st->em * 12;   /* "Load: 100.0%" */
+# endif
+          if (w > maxw) maxw = w;
+          string = s;
+          string++;
+          lines--;
+        }
+      w = maxw;
+      h = olines * (st->font->ascent + st->font->descent);
+
       XFillRectangle (st->dpy, st->window, st->erase_gc,
                       x - st->font->descent,
                       y - lh,
                       w + 2*st->font->descent,
                       h + 2*st->font->descent);
+
+
+      lines = olines;
+      string = ostring;
     }
 
   /* draw the text */
@@ -285,8 +290,8 @@ fps_draw (fps_state *st)
     {
       s = strchr (string, '\n');
       if (! s) s = string + strlen(string);
-      XDrawString (st->dpy, st->window, st->draw_gc,
-                   x, y, string, (int) (s - string));
+      XftDrawStringUtf8 (st->xftdraw, &st->fg, st->font,
+                         x, y, (FcChar8 *) string, s - string);
       string = s;
       string++;
       lines--;

@@ -1,5 +1,5 @@
 /* screens.c --- dealing with RANDR, Xinerama, and VidMode Viewports.
- * xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,114 +11,113 @@
  */
 
 /*   There are a bunch of different mechanisms for multiple monitors
- *   available in X.  XScreenSaver needs to care about this for two
- *   reasons: first, to ensure that all visible areas go black; and
- *   second, so that the windows of screen savers exactly fill the
- *   glass of each monitor (instead of one saver spanning multiple
- *   monitors, or a monitor displaying only a sub-rectangle of the
- *   screen saver.)
+ *   available in X.  XScreenSaver needs to care about this for two reasons:
+ *   first, to ensure that all visible areas go black; and second, so that
+ *   the windows of screen savers exactly fill the glass of each monitor
+ *   (instead of one saver spanning multiple monitors, or a monitor
+ *   displaying only a sub-rectangle of the screen saver.)
  *
  *   1) Multi-screen:
  *
- *      This is the original way.  Each monitor gets its own display
- *      number.  :0.0 is the first one, :0.1 is the next, etc.  The
- *      value of $DISPLAY determines which screen windows open on by
- *      default.  A single app can open windows on multiple screens
- *      with the same display connection, but windows cannot be moved
- *      from one screen to another.  The mouse can be moved from one
- *      screen to another, though.  Screens may be different depths
- *      (e.g., one can be TrueColor and one can be PseudoColor.)
- *      Screens cannot be resized or moved without restarting X.
+ *      This is the original way.  Each monitor gets its own display number.
+ *      ":0.0" is the first one, ":0.1" is the next, and so on.  The value
+ *      of $DISPLAY determines which screen windows open on by default.  A
+ *      single app can open windows on multiple screens with the same
+ *      display connection, but windows cannot be moved from one screen to
+ *      another.  The mouse can be moved from one screen to another, though.
+ *      Screens may be different depths (e.g., one can be TrueColor and one
+ *      can be PseudoColor.)  Screens cannot be resized or moved without
+ *      restarting X.
  *
- *      Everyone hates this way of doing things because of the
- *      inability to move a window from one screen to another without
- *      restarting the application.
+ *      Everyone hates this way of doing things because of the inability to
+ *      move a window from one screen to another without restarting the
+ *      application.
  *
  *   2) Xinerama:
  *
- *      There is a single giant root window that spans all the
- *      monitors.  All monitors are the same depth, and windows can be
- *      moved around.  Applications can learn which rectangles are
- *      actually visible on monitors by querying the Xinerama server
- *      extension.  (If you don't do that, you end up with dialog
- *      boxes that try to appear in the middle of the screen actually
- *      spanning the gap between two monitors.)
+ *      There is a single giant root window that spans all the monitors.
+ *      All monitors are the same depth, and windows can be moved around.
+ *      Applications can learn which rectangles are actually visible on
+ *      monitors by querying the Xinerama server extension.  (If you don't
+ *      do that, you end up with dialog boxes that try to appear in the
+ *      middle of the screen actually spanning the gap between two
+ *      monitors.)
  *
- *      Xinerama doesn't work with DRI, which means that if you use
- *      it, you lose hardware acceleration on OpenGL programs.  Also,
- *      screens can't be resized or moved without restarting X.
+ *      Xinerama didn't? work with DRI, which means that Xinerama precluded
+ *      hardware acceleration in OpenGL programs.  Also, screens couldn't
+ *      be resized or moved without restarting X.
  *
  *   3) Vidmode Viewports:
  *
+ *      No longer supported as of XScreenSaver 6.
+ *
  *      With this extension, the root window can be bigger than the
- *      monitor.  Moving the mouse near the edges of the screen
- *      scrolls around, like a pan-and-scan movie.  There can also be
- *      a hot key for changing the monitor's resolution (zooming
- *      in/out).
+ *      monitor.  Moving the mouse near the edges of the screen scrolls
+ *      around, like a pan-and-scan movie.  There was also a hot-key for
+ *      changing the monitor's resolution (zooming in/out).
  *
- *      Trying to combine this with Xinerama crashes the server, so
- *      you can only use this if you have only a single screen, or are
- *      in old-multi-screen mode.
+ *      Trying to combine this with Xinerama crashes the server, so you
+ *      could only use this if you had only a single screen, or were in old
+ *      multi-screen mode.
  *
- *      Also, half the time it doesn't work at all: it tends to lie
- *      about the size of the rectangle in use.
+ *      Also, half the time it didn't work at all: it tended to lie about
+ *      the size of the rectangle in use.
  *
  *   4) RANDR 1.0:
  *
  *      The first version of the "Resize and Rotate" extension let you
  *      change the resolution of a screen on the fly.  The root window
  *      would actually resize.  However, it was also incompatible with
- *      Xinerama (did it crash, or just do nothing? I can't remember)
- *      so you needed to be in single-screen or old multi-screen mode.
- *      I believe RANDR could co-exist with Vidmode Viewports, but I'm
- *      not sure.
+ *      Xinerama (did it crash, or just do nothing? I can't remember) so
+ *      you needed to be in single-screen or old multi-screen mode.  I
+ *      believe RANDR could co-exist with Vidmode Viewports, but I'm not
+ *      sure.
  *
  *   5) RANDR 1.2:
  *
  *      Finally, RANDR added the functionality of Xinerama, plus some.
  *      Each X screen (in the sense of #1, "multi-screen") can have a
- *      number of sub-rectangles that are displayed on monitors, and
- *      each of those sub-rectangles can be displayed on more than one
- *      monitor.  So it's possible (I think) to have a hybrid of
- *      multi-screen and Xinerama (e.g., to have two monitors running
- *      in one depth, and three monitors running in another?)
- *      Typically though, there will be a single X screen, with
- *      Xinerama-like division of that large root window onto multiple
- *      monitors.  Also everything's dynamic: monitors can be added,
- *      removed, and resized at runtime.
+ *      number of sub-rectangles that are displayed on monitors, and each
+ *      of those sub-rectangles can be displayed on more than one monitor.
+ *      So it's possible (I think) to have a hybrid of multi-screen and
+ *      Xinerama (e.g., to have two monitors running in one depth, and
+ *      three monitors running in another?)  Typically though, there will
+ *      be a single X screen with one giant root window underlying the
+ *      rectangles of multiple monitors.  Also everything is dynamic:
+ *      monitors can be added, removed, and resized at runtime, with
+ *      notification events.
  *
- *      I believe that as of RANDR 1.2, the Xinerama extension still
- *      exists but only as a compatiblity layer: it's actually
- *      returning data from the RANDR extension.
+ *      RANDR rectangles can overlap, meaning one monitor can mirror
+ *      another, or show a sub-rectangle of another, or just overlap in
+ *      strange ways.  The proper way to respond to weird layouts is... not
+ *      always obvious.
  *
- *      Though RANDR 1.2 allows the same image to be cloned onto more
- *      than one monitor, and also allows one monitor to show a
- *      subsection of something on another monitor (e.g., the
- *      rectangles can be enclosed or overlap).  Since there's no way
- *      to put seperate savers on those duplicated-or-overlapping
- *      monitors, xscreensaver just ignores them (which allows them to
- *      display duplicates or overlaps).
+ *      Also sometimes RANDR says stupid shit like, "You have one screen,
+ *      and it has no available sizes or orientations."
  *
- *  5a) Nvidia fucks it up:
+ *      Sometimes RANDR and Xinerama report the same info, and sometimes
+ *      not, so we look at both and see which looks most plausible.
  *
- *      Nvidia drivers as of Aug 2008 running in "TwinView" mode
- *      apparently report correct screen geometry via Xinerama, but
- *      report one giant screen via RANDR.  The response from the
- *      nvidia developers is, "we don't support RANDR, use Xinerama
- *      instead."  Which is a seriously lame answer.  So, xscreensaver
- *      has to query *both* extensions, and make a guess as to which
- *      is to be believed.
- *
- *  5b) Also sometimes RANDR says stupid shit like, "You have one
- *      screen, and it has no available orientations or sizes."
- *
+ *      Also, Nvidia fucked it up: their drivers that were popular in 2008,
+ *      when running in "TwinView" mode, reported correct sizes via
+ *      Xinerama, but reported one giant screen via RANDR.  Nvidia's
+ *      response was, "We don't support RANDR, use Xinerama instead", which
+ *      is another reason that XScreenSaver historically had to query both
+ *      extensions and make a guess.  Maybe this is no longer necessary.
  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <X11/Xlib.h>
+
+#ifndef HAVE_RANDR_12
+# undef HAVE_RANDR  /* RANDR 1.1 is no longer supported */
+#endif
 
 #ifdef HAVE_RANDR
 # include <X11/extensions/Xrandr.h>
@@ -132,37 +131,14 @@
 # include <X11/extensions/xf86vmode.h>
 #endif /* HAVE_XF86VMODE */
 
-/* This file doesn't need the Xt headers, so stub these types out... */
-#undef XtPointer
-#define XtAppContext void*
-#define XrmDatabase  void*
-#define XtIntervalId void*
-#define XtPointer    void*
-#define Widget       void*
+#include "blurb.h"
+#include "screens.h"
 
-#include "xscreensaver.h"
-#include "visual.h"
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
 
 
-typedef enum { S_SANE, S_ENCLOSED, S_DUPLICATE, S_OVERLAP, 
-               S_OFFSCREEN, S_DISABLED } monitor_sanity;
-
-/* 'typedef monitor' is in types.h */
-struct _monitor {
-  int id;
-  char *desc;
-  Screen *screen;
-  int x, y, width, height;
-  monitor_sanity sanity;	/* I'm not crazy you're the one who's crazy */
-  int enemy;			/* which monitor it overlaps or duplicates */
-  char *err;			/* msg to print at appropriate later time;
-                                   exists only on monitor #0. */
-};
-
-static Bool layouts_differ_p (monitor **a, monitor **b);
-
-
-static void
+void
 free_monitors (monitor **monitors)
 {
   monitor **m2 = monitors;
@@ -231,122 +207,6 @@ xinerama_scan_monitors (Display *dpy, char **errP)
 #endif /* HAVE_XINERAMA */
 
 
-#ifdef HAVE_XF86VMODE
-
-static monitor **
-vidmode_scan_monitors (Display *dpy, char **errP)
-{
-  int event, error, nscreens, i;
-  monitor **monitors;
-
-  /* Note that XF86VidModeGetViewPort() tends to be full of lies on laptops
-     that have a docking station or external monitor that runs in a different
-     resolution than the laptop's screen:
-
-         http://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=81593
-         http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=208417
-         http://bugs.xfree86.org/show_bug.cgi?id=421
-
-     Presumably this is fixed by using RANDR instead of VidMode.
-   */
-
-# ifdef HAVE_XINERAMA
-  /* Attempts to use the VidMode extension when the Xinerama extension is
-     active can result in a server crash! Yay! */
-  if (XQueryExtension (dpy, "XINERAMA", &error, &event, &error))
-    return 0;
-#  endif /* !HAVE_XINERAMA */
-
-  if (! XF86VidModeQueryExtension (dpy, &event, &error))
-    return 0;
-
-  nscreens = ScreenCount (dpy);
-  monitors = (monitor **) calloc (nscreens + 1, sizeof(*monitors));
-  if (!monitors) return 0;
-
-  for (i = 0; i < nscreens; i++)
-    {
-      monitor *m = (monitor *) calloc (1, sizeof (monitor));
-      XF86VidModeModeLine ml;
-      int dot;
-      Screen *screen = ScreenOfDisplay (dpy, i);
-
-      monitors[i] = m;
-      m->id       = i;
-      m->screen   = screen;
-
-      if (! safe_XF86VidModeGetViewPort (dpy, i, &m->x, &m->y))
-        m->x = m->y = -1;
-
-      if (XF86VidModeGetModeLine (dpy, i, &dot, &ml))
-        {
-          m->width  = ml.hdisplay;
-          m->height = ml.vdisplay;
-        }
-
-      /* On a system that has VidMode but does not have RANDR, and that has
-         "Option Rotate" set, WidthOfScreen/HeightOfScreen are the rotated
-         size, but XF86VidModeModeLine contains the unrotated size.
-         Maybe there's something in 'flags' that indicates this?
-         Or, we can just notice that the aspect ratios are inverted:
-       */
-      if (m->width > 0 &&
-          m->height > 0 &&
-          ((m->width > m->height) != 
-           (WidthOfScreen(screen) > HeightOfScreen(screen))))
-        {
-          int swap = m->width;
-          m->width = m->height;
-          m->height = swap;
-        }
-
-
-      /* Apparently, though the server stores the X position in increments of
-         1 pixel, it will only make changes to the *display* in some other
-         increment.  With XF86_SVGA on a Thinkpad, the display only updates
-         in multiples of 8 pixels when in 8-bit mode, and in multiples of 4
-         pixels in 16-bit mode.  I don't know what it does in 24- and 32-bit
-         mode, because I don't have enough video memory to find out.
-
-         I consider it a bug that XF86VidModeGetViewPort() is telling me the
-         server's *target* scroll position rather than the server's *actual*
-         scroll position.  David Dawes agrees, and says they may fix this in
-         XFree86 4.0, but it's nontrivial.
-
-         He also confirms that this behavior is server-dependent, so the
-         actual scroll position cannot be reliably determined by the client.
-         So... that means the only solution is to provide a ``sandbox''
-         around the blackout window -- we make the window be up to N pixels
-         larger than the viewport on both the left and right sides.  That
-         means some part of the outer edges of each hack might not be
-         visible, but screw it.
-
-         I'm going to guess that 16 pixels is enough, and that the Y dimension
-         doesn't have this problem.
-
-         The drawback of doing this, of course, is that some of the screenhacks
-         will still look pretty stupid -- for example, "slidescreen" will cut
-         off the left and right edges of the grid, etc.
-      */
-#  define FUDGE 16
-      if (m->x > 0 && m->x < m->width - ml.hdisplay)
-        {
-          /* Not at left edge or right edge:
-             Round X position down to next lower multiple of FUDGE.
-             Increase width by 2*FUDGE in case some server rounds up.
-           */
-          m->x = ((m->x - 1) / FUDGE) * FUDGE;
-          m->width += (FUDGE * 2);
-        }
-#  undef FUDGE
-    }
-
-  return monitors;
-}
-
-#endif /* HAVE_XF86VMODE */
-
-
 #ifdef HAVE_RANDR
 
 static monitor **
@@ -354,7 +214,6 @@ randr_scan_monitors (Display *dpy, char **errP)
 {
   int event, error, major, minor, nscreens, i, j;
   monitor **monitors;
-  Bool new_randr_p = False;
 
   if (! XRRQueryExtension (dpy, &event, &error))
     return 0;
@@ -362,30 +221,17 @@ randr_scan_monitors (Display *dpy, char **errP)
   if (! XRRQueryVersion (dpy, &major, &minor))
     return 0;
 
-  if (major <= 0)    /* Protocol was still in flux back then -- fuck it. */
-    return 0;
+  if (! (major > 1 || (major == 1 && minor >= 2)))
+    return 0;  /* 1.2 ir newer is required */
 
-# ifdef HAVE_RANDR_12
-  new_randr_p = (major > 1 || (major == 1 && minor >= 2));
-# endif
-
-  if (! new_randr_p)
-    /* RANDR 1.0 -- no Xinerama-like virtual screens. */
-    nscreens = ScreenCount (dpy);
-  else  /* RANDR 1.2 or newer -- built-in Xinerama */
+  /* Add up the virtual screens on each X screen. */
+  nscreens = 0;
+  for (i = 0; i < ScreenCount (dpy); i++)
     {
-# ifdef HAVE_RANDR_12
-      int xsc = ScreenCount (dpy);
-      nscreens = 0;
-      /* Add up the virtual screens on each X screen. */
-      for (i = 0; i < xsc; i++)
-        {
-          XRRScreenResources *res = 
-            XRRGetScreenResources (dpy, RootWindow (dpy, i));
-          nscreens += res->noutput;
-          XRRFreeScreenResources (res);
-        }
-# endif /* HAVE_RANDR_12 */
+      XRRScreenResources *res =
+        XRRGetScreenResources (dpy, RootWindow (dpy, i));
+      nscreens += res->noutput;
+      XRRFreeScreenResources (res);
     }
 
   if (nscreens <= 0)
@@ -401,88 +247,43 @@ randr_scan_monitors (Display *dpy, char **errP)
   for (i = 0, j = 0; i < ScreenCount (dpy); i++)
     {
       Screen *screen = ScreenOfDisplay (dpy, i);
-
-      if (! new_randr_p)  /* RANDR 1.0 */
+      int k;
+      XRRScreenResources *res = 
+        XRRGetScreenResources (dpy, RootWindowOfScreen (screen));
+      for (k = 0; k < res->noutput; k++, j++)
         {
-          XRRScreenConfiguration *rrc;
           monitor *m = (monitor *) calloc (1, sizeof (monitor));
-          monitors[i] = m;
+          XRROutputInfo *rroi = XRRGetOutputInfo (dpy, res, 
+                                                  res->outputs[k]);
+          RRCrtc crtc = (rroi->crtc  ? rroi->crtc :
+                         rroi->ncrtc ? rroi->crtcs[0] : 0);
+          XRRCrtcInfo *crtci = (crtc ? XRRGetCrtcInfo(dpy, res, crtc) : 0);
+
+          monitors[j] = m;
           m->screen   = screen;
-          m->id       = i;
+          m->id       = (i * 1000) + j;
+          m->desc     = (rroi->name ? strdup (rroi->name) : 0);
 
-          rrc = XRRGetScreenInfo (dpy, RootWindowOfScreen (screen));
-          if (rrc)
+          if (crtci)
             {
-              SizeID size = -1;
-              Rotation rot = ~0;
-              XRRScreenSize *rrsizes;
-              int nsizes = 0;
-
-              size = XRRConfigCurrentConfiguration (rrc, &rot);
-              rrsizes = XRRConfigSizes (rrc, &nsizes);
-
-              if (nsizes <= 0)  /* WTF?  Shouldn't happen but does. */
-                {
-                  m->width  = DisplayWidth (dpy, i);
-                  m->height = DisplayHeight (dpy, i);
-                }
-              else if (rot & (RR_Rotate_90|RR_Rotate_270))
-                {
-                  m->width  = rrsizes[size].height;
-                  m->height = rrsizes[size].width;
-                }
-              else
-                {
-                  m->width  = rrsizes[size].width;
-                  m->height = rrsizes[size].height;
-                }
-
-              /* don't free 'rrsizes' */
-              XRRFreeScreenConfigInfo (rrc);
+              /* Note: if the screen is rotated, XRRConfigSizes contains
+                 the unrotated WxH, but XRRCrtcInfo contains rotated HxW.
+               */
+              m->x      = crtci->x;
+              m->y      = crtci->y;
+              m->width  = crtci->width;
+              m->height = crtci->height;
             }
+
+          if (rroi->connection == RR_Disconnected)
+            m->sanity = S_DISABLED;
+          /* #### do the same for RR_UnknownConnection? */
+
+          if (crtci) 
+            XRRFreeCrtcInfo (crtci);
+          XRRFreeOutputInfo (rroi);
         }
-      else   /* RANDR 1.2 or newer */
-        {
-# ifdef HAVE_RANDR_12
-          int k;
-          XRRScreenResources *res = 
-            XRRGetScreenResources (dpy, RootWindowOfScreen (screen));
-          for (k = 0; k < res->noutput; k++, j++)
-            {
-              monitor *m = (monitor *) calloc (1, sizeof (monitor));
-              XRROutputInfo *rroi = XRRGetOutputInfo (dpy, res, 
-                                                      res->outputs[k]);
-              RRCrtc crtc = (rroi->crtc  ? rroi->crtc :
-                             rroi->ncrtc ? rroi->crtcs[0] : 0);
-              XRRCrtcInfo *crtci = (crtc ? XRRGetCrtcInfo(dpy, res, crtc) : 0);
-
-              monitors[j] = m;
-              m->screen   = screen;
-              m->id       = (i * 1000) + j;
-              m->desc     = (rroi->name ? strdup (rroi->name) : 0);
-
-              if (crtci)
-                {
-                  /* Note: if the screen is rotated, XRRConfigSizes contains
-                     the unrotated WxH, but XRRCrtcInfo contains rotated HxW.
-                   */
-                  m->x      = crtci->x;
-                  m->y      = crtci->y;
-                  m->width  = crtci->width;
-                  m->height = crtci->height;
-                }
-
-              if (rroi->connection == RR_Disconnected)
-                m->sanity = S_DISABLED;
-              /* #### do the same for RR_UnknownConnection? */
-
-              if (crtci) 
-                XRRFreeCrtcInfo (crtci);
-              XRRFreeOutputInfo (rroi);
-            }
-          XRRFreeScreenResources (res);
-# endif /* HAVE_RANDR_12 */
-        }
+      XRRFreeScreenResources (res);
     }
 
   /* Work around more fucking brain damage. */
@@ -566,7 +367,7 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors,
   if (!xinerama_monitors)
     return randr_monitors;
 
-  if (! layouts_differ_p (randr_monitors, xinerama_monitors))
+  if (! monitor_layouts_differ_p (randr_monitors, xinerama_monitors))
     {
       free_monitors (xinerama_monitors);
       return randr_monitors;
@@ -582,9 +383,8 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors,
     }
   else
     {
-      *errP = append (*errP,
-                      "WARNING: RANDR and Xinerama report different\n"
-                      "         screen layouts!  Believing RANDR.");
+      *errP = append (*errP,  /* This is "normal" now, I guess. */
+                      "RANDR and Xinerama report different screen layouts");
       free_monitors (xinerama_monitors);
       return randr_monitors;
     }
@@ -642,7 +442,6 @@ debug_scan_monitors (Display *dpy, char **errP)
   index = (index+1) % countof(geoms);
   return monitors;
 }
-
 #endif /* DEBUG_MULTISCREEN */
 
 
@@ -683,42 +482,36 @@ quadruple (monitor **monitors, Bool debug_p, char **errP)
 #endif /* QUAD_MODE */
 
 
-static monitor **
-scan_monitors (saver_info *si)
+monitor **
+scan_monitors (Display *dpy)
 {
-  saver_preferences *p = &si->prefs;
   monitor **monitors = 0;
   char *err = 0;
 
 # ifdef DEBUG_MULTISCREEN
-    if (! monitors) monitors = debug_scan_monitors (si->dpy, &err);
+    if (! monitors) monitors = debug_scan_monitors (dpy, &err);
 # endif
 
 # ifdef HAVE_RANDR
-  if (! p->getviewport_full_of_lies_p)
-    if (! monitors) monitors = randr_scan_monitors (si->dpy, &err);
+    if (! monitors) monitors = randr_scan_monitors (dpy, &err);
 
 #  ifdef HAVE_XINERAMA
-   monitors = randr_versus_xinerama_fight (si->dpy, monitors, &err);
+   monitors = randr_versus_xinerama_fight (dpy, monitors, &err);
 #  endif
 # endif /* HAVE_RANDR */
 
-# ifdef HAVE_XF86VMODE
-  if (! monitors) monitors = vidmode_scan_monitors (si->dpy, &err);
-# endif
-
 # ifdef HAVE_XINERAMA
-  if (! monitors) monitors = xinerama_scan_monitors (si->dpy, &err);
+  if (! monitors) monitors = xinerama_scan_monitors (dpy, &err);
 # endif
 
-  if (! monitors) monitors = basic_scan_monitors (si->dpy, &err);
+  if (! monitors) monitors = basic_scan_monitors (dpy, &err);
 
 # ifdef QUAD_MODE
   if (p->quad_p)
     monitors = quadruple (monitors, p->debug_p, &err);
 # endif
 
-  if (monitors && err) monitors[0]->err = err;
+  if (monitors && *monitors && err) monitors[0]->err = err;
 
   return monitors;
 }
@@ -778,7 +571,7 @@ plausible_aspect_ratio_p (monitor **monitors)
 
 /* Mark the ones that overlap, etc.
  */
-static void
+void
 check_monitor_sanity (monitor **monitors)
 {
   int i, j, count = 0;
@@ -862,8 +655,8 @@ check_monitor_sanity (monitor **monitors)
 }
 
 
-static Bool
-layouts_differ_p (monitor **a, monitor **b)
+Bool
+monitor_layouts_differ_p (monitor **a, monitor **b)
 {
   if (!a || !b) return True;
   while (1)
@@ -886,10 +679,21 @@ layouts_differ_p (monitor **a, monitor **b)
 }
 
 
-void
-describe_monitor_layout (saver_info *si)
+static int
+screen_number (Screen *screen)
 {
-  monitor **monitors = si->monitor_layout;
+  Display *dpy = DisplayOfScreen (screen);
+  int i;
+  for (i = 0; i < ScreenCount (dpy); i++)
+    if (ScreenOfDisplay (dpy, i) == screen)
+      return i;
+  return 0;
+}
+
+
+void
+describe_monitor_layout (monitor **monitors)
+{
   int count = 0;
   int good_count = 0;
   int bad_count = 0;
@@ -904,7 +708,7 @@ describe_monitor_layout (saver_info *si)
       count++;
     }
 
-  if (monitors[0]->err)		/* deferred error msg */
+  if (monitors && *monitors && monitors[0]->err)   /* deferred error msg */
     {
       char *token = strtok (monitors[0]->err, "\n");
       while (token)
@@ -979,132 +783,4 @@ describe_monitor_layout (saver_info *si)
                  monitors[0]->width / (double) monitors[0]->height,
                  blurb());
     }
-}
-
-
-/* Synchronize the contents of si->ssi to the current state of the monitors.
-   Doesn't change anything if nothing has changed; otherwise, alters and
-   reuses existing saver_screen_info structs as much as possible.
-   Returns True if anything changed.
- */
-Bool
-update_screen_layout (saver_info *si)
-{
-  monitor **monitors = scan_monitors (si);
-  int count = 0;
-  int good_count = 0;
-  int i, j;
-  int seen_screens[100] = { 0, };
-
-  if (! layouts_differ_p (monitors, si->monitor_layout))
-    {
-      free_monitors (monitors);
-      return False;
-    }
-
-  free_monitors (si->monitor_layout);
-  si->monitor_layout = monitors;
-  check_monitor_sanity (si->monitor_layout);
-
-  while (monitors[count])
-    {
-      if (monitors[count]->sanity == S_SANE)
-        good_count++;
-      count++;
-    }
-
-  if (si->ssi_count == 0)
-    {
-      si->ssi_count = 10;
-      si->screens = (saver_screen_info *)
-        calloc (sizeof(*si->screens), si->ssi_count);
-    }
-
-  if (si->ssi_count <= good_count)
-    {
-      si->ssi_count = good_count + 10;
-      si->screens = (saver_screen_info *)
-        realloc (si->screens, sizeof(*si->screens) * si->ssi_count);
-      memset (si->screens + si->nscreens, 0, 
-              sizeof(*si->screens) * (si->ssi_count - si->nscreens));
-    }
-
-  if (! si->screens) abort();
-
-  si->nscreens = good_count;
-
-  /* Regenerate the list of GL visuals as needed. */
-  if (si->best_gl_visuals)
-    free (si->best_gl_visuals);
-  si->best_gl_visuals = 0;
-
-  for (i = 0, j = 0; i < count; i++)
-    {
-      monitor *m = monitors[i];
-      saver_screen_info *ssi = &si->screens[j];
-      Screen *old_screen = ssi->screen;
-      int sn;
-      if (monitors[i]->sanity != S_SANE) continue;
-
-      ssi->global = si;
-      ssi->number = j;
-
-      sn = screen_number (m->screen);
-      ssi->screen = m->screen;
-      ssi->real_screen_number = sn;
-      ssi->real_screen_p = (seen_screens[sn] == 0);
-      seen_screens[sn]++;
-
-      ssi->default_visual =
-	get_visual_resource (ssi->screen, "visualID", "VisualID", False);
-      ssi->current_visual = ssi->default_visual;
-      ssi->current_depth = visual_depth (ssi->screen, ssi->current_visual);
-
-      /* If the screen changed (or if this is the first time) we need
-         a new toplevel shell for this screen's depth.
-       */
-      if (ssi->screen != old_screen)
-        initialize_screen_root_widget (ssi);
-
-      ssi->last_poll_mouse.root_x = -1;
-      ssi->last_poll_mouse.root_y = -1;
-
-      ssi->x      = m->x;
-      ssi->y      = m->y;
-      ssi->width  = m->width;
-      ssi->height = m->height;
-
-# ifndef DEBUG_MULTISCREEN
-      {
-        saver_preferences *p = &si->prefs;
-        if (p->debug_p
-#  ifdef QUAD_MODE
-            && !p->quad_p
-#  endif
-            )
-          ssi->width /= 2;
-      }
-# endif
-
-      j++;
-    }
-
-  for (; j < count; j++)
-    {
-      saver_screen_info *ssi = &si->screens[j];
-      if (!ssi->screensaver_window)
-        continue;
-      fprintf (stderr, "%s: %d: screen now unused, disabling.\n",
-               blurb(), j);
-      /* Undo store_saver_id() so that xscreensaver-command doesn't attempt
-         to communicate with us through this window. It might make more
-         sense to destroy the window, but I'm not 100% sure that there are
-         no outstanding grabs on it that have yet been transferred.
-       */
-      XDeleteProperty (si->dpy, ssi->screensaver_window,
-                       XA_SCREENSAVER_VERSION);
-    }
-
-  si->default_screen = &si->screens[0];
-  return True;
 }

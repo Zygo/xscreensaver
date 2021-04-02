@@ -52,9 +52,6 @@
 #include "ximage-loader.h"
 #include <limits.h>
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 # undef MAX
 # undef MIN
 # define MAX(A,B) ((A)>(B)?(A):(B))

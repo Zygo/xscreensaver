@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
-<screensaver name="moire" _label="Moire">
+<screensaver name="moire" _label="Moiré">
 
   <command arg="-root"/>
 
@@ -29,7 +29,7 @@
   <_description>
   When the lines on the screen
   Make more lines in between,
-  That's a moire'!
+  That's a moiré!
 
 https://en.wikipedia.org/wiki/Moire_pattern
 

@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,29 +31,14 @@
 
 #include <X11/Intrinsic.h>	/* only needed to get through xscreensaver.h */
 
-
-/* You might think that to read an array of 32-bit quantities out of a
-   server-side property, you would pass an array of 32-bit data quantities
-   into XGetWindowProperty().  You would be wrong.  You have to use an array
-   of longs, even if long is 64 bits (using 32 of each 64.)
- */
-typedef long PROP32;
-
+#include "blurb.h"
 #include "remote.h"
 #include "version.h"
+#include "atoms.h"
 
 #ifdef _VROOT_H_
 ERROR! you must not include vroot.h in this file
 #endif
-
-char *progname;
-
-Atom XA_VROOT;
-Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_RESPONSE;
-Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO, XA_EXIT;
-Atom XA_BLANK, XA_LOCK, XA_ACTIVATE, XA_SUSPEND, XA_NEXT, XA_PREV;
-static Atom XA_DEACTIVATE, XA_CYCLE;
-static Atom XA_RESTART, XA_PREFS, XA_THROTTLE, XA_UNTHROTTLE;
 
 static char *screensaver_version;
 # ifdef __GNUC__
@@ -75,11 +60,6 @@ usage: %s -<option>\n\
   -quiet        Only print output if an error occurs.\n\
   -verbose      Opposite of -quiet. Default.\n\
 \n\
-  -demo         Ask the xscreensaver process to enter interactive demo mode.\n\
-\n\
-  -prefs        Ask the xscreensaver process to bring up the preferences\n\
-                panel.\n\
-\n\
   -activate     Turn on the screensaver (blank the screen), as if the user\n\
                 had been idle for long enough.\n\
 \n\
@@ -95,8 +75,7 @@ usage: %s -<option>\n\
                 is the next one in the list, instead of a randomly-chosen\n\
                 one.  In other words, repeatedly executing -next will cause\n\
                 the xscreensaver process to invoke each graphics demo\n\
-                sequentially.  (Though using the -demo option is probably\n\
-                an easier way to accomplish that.)\n\
+                sequentially.\n\
 \n\
   -prev         Like -next, but goes in the other direction.\n\
 \n\
@@ -105,15 +84,6 @@ usage: %s -<option>\n\
                 what order, you can use this to activate the screensaver\n\
                 with a particular graphics demo.  (The first element in the\n\
                 list is numbered 1, not 0.)\n\
-\n\
-  -exit         Causes the xscreensaver process to exit gracefully.\n\
-                This does nothing if the display is currently locked.\n\
-                (Note that one must *never* kill xscreensaver with -9!)\n\
-\n\
-  -restart      Causes the screensaver process to exit and then restart with\n\
-                the same command line arguments as last time.  You shouldn't\n\
-                really need to do this, since xscreensaver notices when the\n\
-                .xscreensaver file has changed and re-reads it as needed.\n\
 \n\
   -lock         Tells the running xscreensaver process to lock the screen\n\
                 immediately.  This is like -activate, but forces locking as\n\
@@ -125,10 +95,14 @@ usage: %s -<option>\n\
                 This is intended to be run just after your laptop's lid\n\
                 is closed, and just before the CPU halts.\n\
 \n\
-  -version      Prints the version of xscreensaver that is currently running\n\
-                on the display -- that is, the actual version number of the\n\
-                running xscreensaver background process, rather than the\n\
-                version number of xscreensaver-command.\n\
+  -exit         Causes the xscreensaver process to exit gracefully.\n\
+                This does nothing if the display is currently locked.\n\
+                (Note that one must *never* kill xscreensaver with -9!)\n\
+\n\
+  -restart      Causes the screensaver process to exit and then restart with\n\
+                the same command line arguments as last time.  You shouldn't\n\
+                really need to do this, since xscreensaver notices when the\n\
+                .xscreensaver file has changed and re-reads it as needed.\n\
 \n\
   -time         Prints the time at which the screensaver last activated or\n\
                 deactivated (roughly, how long the user has been idle or\n\
@@ -141,19 +115,19 @@ usage: %s -<option>\n\
                 use by shell scripts that want to react to the screensaver\n\
                 in some way.\n\
 \n\
+  -version      Prints the version of xscreensaver that is currently running\n\
+                on the display -- that is, the actual version number of the\n\
+                running xscreensaver background process, rather than the\n\
+                version number of xscreensaver-command.\n\
+\n\
   See the man page for more details.\n\
   For updates, check https://www.jwz.org/xscreensaver/\n\
 \n";
 
-/* Note: The "-throttle" command is deprecated -- it predates the XDPMS
-   extension.  Instead of using -throttle, users should instead just
-   power off the monitor (e.g., "xset dpms force off".)  In a few
-   minutes, the xscreensaver daemon will notice that the monitor is
-   off, and cease running hacks.
- */
-
-#define USAGE() do { \
- fprintf (stderr, usage, progname, screensaver_version, year); exit (1); \
+#define USAGE(A,B) do { \
+ fprintf (stderr, "%s: %s: %s\n%s: try --help\n",     \
+          progname, (A), ((B) ? (B) : ""), progname); \
+ exit (1);                                            \
  } while(0)
 
 static int watch (Display *);
@@ -165,6 +139,7 @@ main (int argc, char **argv)
   int i;
   char *dpyname = 0;
   Atom *cmd = 0;
+  const char *cmdstr = 0;
   long arg = 0L;
   char *s;
   Atom XA_WATCH = 0;  /* kludge: not really an atom */
@@ -175,9 +150,9 @@ main (int argc, char **argv)
   s = strrchr (progname, '/');
   if (s) progname = s+1;
 
-  screensaver_version = (char *) malloc (5);
-  memcpy (screensaver_version, screensaver_id + 17, 4);
-  screensaver_version [4] = 0;
+  screensaver_version = strdup (screensaver_id + 17);
+  s = strchr (screensaver_version, ' ');
+  *s = 0;
 
   s = strchr (screensaver_id, '-');
   s = strrchr (s, '-');
@@ -191,9 +166,16 @@ main (int argc, char **argv)
       int L;
       if (s[0] == '-' && s[1] == '-') s++;
       L = strlen (s);
-      if (L < 2) USAGE ();
-      if (!strncmp (s, "-display", L))		dpyname = argv [++i];
-      else if (cmd) USAGE();
+      if (L < 2) USAGE ("unrecognized", argv[i]);
+      if (!strncmp (s, "-display", L))	       dpyname = argv [++i];
+      else if (!strncmp (s, "-dpy", L))        dpyname = argv [++i];
+      else if (!strncmp (s, "-quiet", L))      verbose_p = FALSE;
+      else if (!strcmp  (s, "-verbose"))       verbose_p = TRUE;
+      else if (!strcmp  (s, "-v"))             verbose_p = TRUE;
+      else if (!strcmp  (s, "-vv"))            verbose_p = 2;
+      else if (!strcmp  (s, "-vvv"))           verbose_p = 3;
+      else if (!strcmp  (s, "-vvvv"))          verbose_p = 4;
+      else if (cmd) USAGE("extraneous", argv[i]);
       else if (!strncmp (s, "-activate", L))   cmd = &XA_ACTIVATE;
       else if (!strncmp (s, "-deactivate", L)) cmd = &XA_DEACTIVATE;
       else if (!strncmp (s, "-suspend", L))    cmd = &XA_SUSPEND;
@@ -207,14 +189,16 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-preferences",L)) cmd = &XA_PREFS;
       else if (!strncmp (s, "-prefs",L))       cmd = &XA_PREFS;
       else if (!strncmp (s, "-lock", L))       cmd = &XA_LOCK;
-      else if (!strncmp (s, "-throttle", L))   cmd = &XA_THROTTLE;
-      else if (!strncmp (s, "-unthrottle", L)) cmd = &XA_UNTHROTTLE;
       else if (!strncmp (s, "-version", L))    cmd = &XA_SCREENSAVER_VERSION;
       else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_STATUS;
       else if (!strncmp (s, "-watch", L))      cmd = &XA_WATCH;
-      else if (!strncmp (s, "-quiet", L))      verbose_p = FALSE;
-      else if (!strncmp (s, "-verbose", L))    verbose_p = TRUE;
-      else USAGE ();
+      else if (!strncmp (s, "-help", L))
+        {
+          fprintf (stderr, usage, progname, screensaver_version, year);
+          exit (1);
+        }
+      else USAGE ("unrecognized", argv[i]);
+      cmdstr = argv[i];
 
       if (cmd == &XA_SELECT || cmd == &XA_DEMO)
 	{
@@ -222,6 +206,7 @@ main (int argc, char **argv)
 	  char c;
 	  if (i+1 < argc && (1 == sscanf(argv[i+1], " %ld %c", &a, &c)))
 	    {
+              cmdstr = argv[i+1];
 	      arg = a;
 	      i++;
 	    }
@@ -229,39 +214,34 @@ main (int argc, char **argv)
     }
 
   if (!cmd)
-    USAGE ();
+    USAGE("no commands", "");
 
   if (arg < 0)
     /* no command may have a negative argument. */
-    USAGE();
+    USAGE("bad option", cmdstr);
   else if (arg == 0)
     {
       /* SELECT must have a non-zero argument. */
       if (cmd == &XA_SELECT)
-	USAGE();
+	USAGE("bad option", cmdstr);
     }
   else /* arg > 0 */
     {
       /* no command other than SELECT and DEMO may have a non-zero argument. */
       if (cmd != &XA_DEMO && cmd != &XA_SELECT)
-	USAGE();
+	USAGE("bad option", cmdstr);
     }
 
 
 
-  /* For backward compatibility: -demo with no arguments used to send a
-     "DEMO 0" ClientMessage to the xscreensaver process, which brought up
-     the built-in demo mode dialog.  Now that the demo mode dialog is no
-     longer built in, we bring it up by just running the "xscreensaver-demo"
-     program.
-
-     Note that "-DEMO <n>" still sends a ClientMessage.
+  /* -demo with no arguments launches xscreensaver-settings.
+     -demo N sends a message to the daemon demo that hack number.
    */
   if (cmd == &XA_PREFS ||
       (cmd == &XA_DEMO && arg == 0))
     {
       char buf [512];
-      char *new_argv[] = { "xscreensaver-demo", 0, 0, 0, 0, 0 };
+      char *new_argv[] = { "xscreensaver-settings", 0, 0, 0, 0, 0 };
       int ac = 1;
 
       if (dpyname)
@@ -292,7 +272,7 @@ main (int argc, char **argv)
     {
       dpyname = ":0.0";
       fprintf (stderr,
-               "%s: warning: $DISPLAY is not set: defaulting to \"%s\".\n",
+               "%s: warning: $DISPLAY is not set: defaulting to \"%s\"\n",
                progname, dpyname);
     }
 
@@ -304,29 +284,7 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  XA_VROOT = XInternAtom (dpy, "__SWM_VROOT", False);
-  XA_SCREENSAVER = XInternAtom (dpy, "SCREENSAVER", False);
-  XA_SCREENSAVER_ID = XInternAtom (dpy, "_SCREENSAVER_ID", False);
-  XA_SCREENSAVER_VERSION = XInternAtom (dpy, "_SCREENSAVER_VERSION",False);
-  XA_SCREENSAVER_STATUS = XInternAtom (dpy, "_SCREENSAVER_STATUS", False);
-  XA_SCREENSAVER_RESPONSE = XInternAtom (dpy, "_SCREENSAVER_RESPONSE", False);
-  XA_ACTIVATE = XInternAtom (dpy, "ACTIVATE", False);
-  XA_DEACTIVATE = XInternAtom (dpy, "DEACTIVATE", False);
-  XA_SUSPEND = XInternAtom (dpy, "SUSPEND", False);
-  XA_RESTART = XInternAtom (dpy, "RESTART", False);
-  XA_CYCLE = XInternAtom (dpy, "CYCLE", False);
-  XA_NEXT = XInternAtom (dpy, "NEXT", False);
-  XA_PREV = XInternAtom (dpy, "PREV", False);
-  XA_SELECT = XInternAtom (dpy, "SELECT", False);
-  XA_EXIT = XInternAtom (dpy, "EXIT", False);
-  XA_DEMO = XInternAtom (dpy, "DEMO", False);
-  XA_PREFS = XInternAtom (dpy, "PREFS", False);
-  XA_LOCK = XInternAtom (dpy, "LOCK", False);
-  XA_BLANK = XInternAtom (dpy, "BLANK", False);
-  XA_THROTTLE = XInternAtom (dpy, "THROTTLE", False);
-  XA_UNTHROTTLE = XInternAtom (dpy, "UNTHROTTLE", False);
-
-  XSync (dpy, 0);
+  init_xscreensaver_atoms (dpy);
 
   if (cmd == &XA_WATCH)
     {
@@ -396,7 +354,7 @@ watch (Display *dpy)
                 STATUS_LOSE:
                   if (last) XFree (last);
                   if (data) XFree (data);
-                  fprintf (stderr, "%s: bad status format on root window.\n",
+                  fprintf (stderr, "%s: bad status format on root window\n",
                            progname);
                   return -1;
                 }
@@ -454,7 +412,7 @@ watch (Display *dpy)
 	    {
 	      if (last) XFree (last);
 	      if (dataP) XFree (dataP);
-	      fprintf (stderr, "%s: no saver status on root window.\n",
+	      fprintf (stderr, "%s: no saver status on root window\n",
 		       progname);
 	      return -1;
 	    }

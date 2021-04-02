@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2018 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2021 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.29 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.36 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -80,7 +80,7 @@ sub parse_src($) {
   $file = "../hacks/$ofile"     unless (-f $file);
   $file = "../hacks/glx/$ofile" unless (-f $file);
   my $body = '';
-  open (my $in, '<', $file) || error ("$ofile: $!");
+  open (my $in, '<:utf8', $file) || error ("$ofile: $!");
   while (<$in>) { $body .= $_; }
   close $in;
   $file =~ s@^.*/@@;
@@ -103,6 +103,7 @@ sub parse_src($) {
       s/^\s*//s;
       s/\s*$//s;
       next if m/^0?$/s;
+      s/"[ \t]*\n\s*"//s;  # string-append continuation lines
       my ($key, $val) = m@^\"([^:\s]+)\s*:\s*(.*?)\s*\"$@;
       print STDERR "$progname: $file: unparsable: $_\n" unless $key;
       $key =~ s/^[.*]//s;
@@ -221,7 +222,7 @@ sub parse_xml($$$) {
   my $ofile = $file;
   $file = "../hacks/$ofile" unless (-f $file);
   my $body = '';
-  open (my $in, '<', $file) || error ("$ofile: $!");
+  open (my $in, '<:utf8', $file) || error ("$ofile: $!");
   while (<$in>) { $body .= $_; }
   close $in;
   $file =~ s@^.*/@@;
@@ -440,11 +441,12 @@ sub parse_xml($$$) {
 }
 
 
-sub check_config($) {
-  my ($saver) = @_;
+sub check_config($$) {
+  my ($saver, $android_p) = @_;
 
   # kludge
   return 0 if ($saver =~ m/(-helper)$/);
+  return 0 if ($saver =~ m/(xscreensaver-)/);
 
   my ($src_opts, $switchmap) = parse_src ($saver);
   my ($saver_title, $gl_p, $xml_opts, $widgets) =
@@ -461,6 +463,8 @@ sub check_config($) {
         if ($verbose > 1);
     } elsif (!defined($sval)) {
       print STDERR "$progname: $saver: $res: not in source\n";
+    } elsif ($res eq 'progclass') {
+      # Ignore this one
     } elsif ($claim !~ m/ = %$/s &&
              ($compare eq '!='
               ? $sval eq $xval
@@ -477,7 +481,7 @@ sub check_config($) {
   # the XCode target name.
   #
   my $obd = "../OSX/build/Debug";
-  if (-d $obd) {
+  if (!$android_p && -d $obd) {
     my $progclass = $src_opts->{progclass};
     $progclass = 'DNAlogo' if ($progclass eq 'DNALogo');
     my $f = (glob("$obd/$progclass.saver*"))[0];
@@ -577,7 +581,7 @@ sub write_file_if_changed($$;$) {
   my ($outfile, $body, $suffix_msg) = @_;
 
   my $file_tmp = "$outfile.tmp";
-  open (my $out, '>', $file_tmp) || error ("$file_tmp: $!");
+  open (my $out, '>:utf8', $file_tmp) || error ("$file_tmp: $!");
   (print $out $body) || error ("$file_tmp: $!");
   close $out || error ("$file_tmp: $!");
   rename_or_delete ($outfile, $file_tmp, $suffix_msg);
@@ -589,7 +593,7 @@ sub write_file_if_changed($$;$) {
 sub read_template($$) {
   my ($file, $subs) = @_;
   my $body = '';
-  open (my $in, '<', $file) || error ("$file: $!");
+  open (my $in, '<:utf8', $file) || error ("$file: $!");
   while (<$in>) { $body .= $_; }
   close $in;
 
@@ -680,6 +684,8 @@ sub munge_blurb($$$$) {
                "\n" .
                $desc .
                "\n");
+  utf8::decode($desc1);   # Pack UTF-8 into wide chars.
+  utf8::decode($desc2);
 
   # unwrap lines, but only when it's obviously ok: leave blank lines,
   # and don't unwrap if that would compress leading whitespace on a line.
@@ -719,7 +725,7 @@ sub build_android(@) {
   {
     my $file = "../utils/version.h";
     my $body = '';
-    open (my $in, '<', $file) || error ("$file: $!");
+    open (my $in, '<:utf8', $file) || error ("$file: $!");
     while (<$in>) { $body .= $_; }
     close $in;
     ($vers) = ($body =~ m@ (\d+\.[0-9a-z]+) @s);
@@ -735,16 +741,16 @@ sub build_android(@) {
     my ($saver_title, $gl_p, $xml_opts, $widgets) =
       parse_xml ($saver, $switchmap, $src_opts);
 
-    my $saver_class = "${saver_title}";
-    $saver_class =~ s/\s+//gs;
-    $saver_class =~ s/^([a-z])/\U$1/gs;  # upcase first letter
+    # The Android daydream list sorts the $saver_title strings with strcmp,
+    # meaning capitals come before lower case, and "ö" comes after "z".
+    # It doesn't matter how we order them in the XML files.
+    $saver_title =~ s/^([a-z])/\U$1/gs;  # upcase first letter
 
-    $saver_title =~ s/(.[a-z])([A-Z\d])/$1 $2/gs;	# Spaces in InterCaps
-    $saver_title =~ s/^(GL|RD)[- ]?(.)/$1 \U$2/gs;	# Space after "GL"
-    $saver_title =~ s/^Apple ?2$/Apple &#x5D;&#x5B;/gs;	# "Apple ]["
-    $saver_title =~ s/(m)oe(bius)/$1&#xF6;$2/gsi;	# &ouml;
-    $saver_title =~ s/(moir)e/$1&#xE9;/gsi;		# &eacute;
-    $saver_title =~ s/^([a-z])/\U$1/s;			# "M6502" for sorting
+    # This is a Java class name, so it could just be $saver, but it turns
+    # out that unicrud is allowed in class names, so why not.
+    my $saver_class = $saver_title;
+    $saver_class =~ s/\]\[/2/gs;
+    $saver_class =~ s/[-_\s]//gs;
 
     my $settings = '';
 
@@ -1091,6 +1097,19 @@ sub build_android(@) {
                "  android:versionCode=\"$versb\"\n" .
                "  android:versionName=\"$vers\">\n" .
 
+               # Without this shit we get "APP_PLATFORM android-18 is higher
+               # than android:minSdkVersion 1 in AndroidManifest.xml"
+               #
+               # But with it "lintVitalRelease" complains with:
+               # "The minSdk version should not be declared in the android
+               # manifest file. You can move the version from the manifest to
+               # the defaultConfig in the build.gradle file."
+               #
+               # That crap is already in android/xscreensaver/build.gradle.
+               #
+               # "  <uses-sdk android:minSdkVersion=\"18\"" .
+               # " android:targetSdkVersion=\"30\" />\n" .
+
                "  <uses-feature android:glEsVersion=\"0x00010001\"\n" .
                "    android:required=\"true\" />\n" .
 
@@ -1213,6 +1232,9 @@ sub usage() {
 }
 
 sub main() {
+  binmode (STDOUT, ':utf8');
+  binmode (STDERR, ':utf8');
+
   my $android_p = 0;
   my @files = ();
   while ($#ARGV >= 0) {
@@ -1229,7 +1251,7 @@ sub main() {
   usage unless ($#files >= 0);
   my $failures = 0;
   foreach my $file (@files) {
-    $failures += check_config ($file);
+    $failures += check_config ($file, $android_p);
   }
 
   build_android (@files) if ($android_p);

@@ -173,7 +173,18 @@ glXSwapBuffers (Display *dpy, Window window)
 GLXContext *
 init_GL (ModeInfo *mi)
 {
-  // Window win = mi->window;
+  /* The X11 version of this function is in hacks/glx/xlock-gl-utils.c
+     That version:
+       - Does the GLX or EGL initialization;
+       - Does glDrawBuffer GL_BACK/GL_FRONT depending on GL_DOUBLEBUFFER;
+       - Parses the "background" resource rather than assuming black.
+   */
+  glClearColor (0, 0, 0, 1);
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glClearColor(0,0,0,1);
+
+  glClearColor(0,0,0,1);
 
   // Caller expects a pointer to an opaque struct...  which it dereferences.
   // Don't ask me, it's historical...

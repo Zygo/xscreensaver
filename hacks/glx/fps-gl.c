@@ -10,23 +10,6 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#ifdef HAVE_COCOA
-# include "jwxyz.h"
-#elif defined(HAVE_ANDROID)
-# include <GLES/gl.h>
-#else /* real Xlib */
-# include <GL/glx.h>
-# include <GL/glu.h>
-#endif /* !HAVE_COCOA */
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #include "xlockmoreI.h"
 #include "fpsI.h"
 #include "texfont.h"

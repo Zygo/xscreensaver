@@ -22,10 +22,6 @@
  * which can be obtained from http://www.linas.org/gle/index.html
   */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #ifdef STANDALONE
 #define	DEFAULTS	"*delay:	 20000	\n" \
 					"*showFPS:	 False	\n" \
@@ -38,17 +34,6 @@
 #endif /* !STANDALONE */
 
 #ifdef USE_GL /* whole file */
-
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Drawing.h>
-#else  /* VMS */
-#  include <Xmu/Drawing.h>
-# endif /* VMS */
-#endif
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "ximage-loader.h"
 #include "rotator.h"

@@ -15,6 +15,7 @@ cubicgrid \- rotating 3D lattice seen from inside
 [\-ticks \fInumber\fP]
 [\-bigdots]
 [\-fps]
+[\-symmetry \fcrystalographic symmetry\fP]
 .SH DESCRIPTION
 This program shows the view of an observer located inside a set of points 
 arranged to a 3D lattice.  As the lattice rotates, various view-throughs appear 
@@ -59,6 +60,10 @@ Draw the points twice as big.
 .TP 8
 .B \-fps
 Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-symmetry \fSymmetry\fP
+Which crystalographic symmetry system to use. One of "auto", "cubic", or
+"hexagonal". "auto" will randomly select between symmetry systems.
 .SH ENVIRONMENT
 .PP
 .TP 8

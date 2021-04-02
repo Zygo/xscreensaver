@@ -35,9 +35,6 @@ History
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #include "xlockmore.h"
 #include "topblock.h"
 #include "sphere.h"
@@ -345,14 +342,16 @@ draw_topBlock (ModeInfo *mi)
 	/* rotate the world */
 	glRotatef(tb->rotation, 0.0, 0.0, 1.0);		
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+#if 0  /* This makes the blocks pop into existence already on screen */
+       /* We should just make them drop from higher, but it's not obvious
+          to me where that is set. */
         {
-          GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
-          int o = (int) current_device_rotation();
-          if (o != 0 && o != 180 && o != -180)
-            glScalef (1/h, 1/h, 1/h);
+          GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                       ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                       : 1);
+          glScalef (s, s, s);
         }
-# endif
+#endif
 
 	llCurrent = tb->blockNodeRoot;
 	if (drawCarpet) {

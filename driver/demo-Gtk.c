@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2020 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +15,8 @@
 #endif
 
 #ifdef HAVE_GTK /* whole file */
+
+#include "blurb.h"
 
 #include <xscreensaver-intl.h>
 
@@ -35,18 +37,13 @@
 # include <locale.h>
 #endif /* ENABLE_NLS */
 
-#ifndef VMS
-# include <pwd.h>		/* for getpwuid() */
-#else /* VMS */
-# include "vms-pwd.h"
-#endif /* VMS */
-
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>	/* for uname() */
 #endif /* HAVE_UNAME */
 
 #include <stdio.h>
 #include <time.h>
+#include <pwd.h>		/* for getpwuid() */
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -67,16 +64,6 @@
    so that gdb will have debug info for the widgets... */
 #include <X11/IntrinsicP.h>
 #include <X11/ShellP.h>
-
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Error.h>
-# else /* VMS */
-#  include <Xmu/Error.h>
-# endif
-#else
-# include "xmu.h"
-#endif
 
 #ifdef HAVE_XINERAMA
 # include <X11/extensions/Xinerama.h>
@@ -118,16 +105,19 @@
 
 
 #include "version.h"
-#include "prefs.h"
+#include "types.h"
 #include "resources.h"		/* for parse_time() */
-#include "visual.h"		/* for has_writable_cells() */
 #include "remote.h"		/* for xscreensaver_command() */
+#include "visual.h"
+#include "atoms.h"
 #include "usleep.h"
+#include "xmu.h"
 
 #include "logo-50.xpm"
 #include "logo-180.xpm"
 
 #include "demo-Gtk-conf.h"
+#include "atoms.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -186,14 +176,6 @@ static void hack_subproc_environment (Window preview_window_id, Bool debug_p);
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 
-/* You might think that to read an array of 32-bit quantities out of a
-   server-side property, you would pass an array of 32-bit data quantities
-   into XGetWindowProperty().  You would be wrong.  You have to use an array
-   of longs, even if long is 64 bits (using 32 of each 64.)
- */
-typedef long PROP32;
-
-char *progname = 0;
 char *progclass = "XScreenSaver";
 XrmDatabase db;
 
@@ -251,13 +233,6 @@ typedef struct {
    a closure object of our own down into the various widget callbacks. */
 static state *global_state_kludge;
 
-Atom XA_VROOT;
-Atom XA_SCREENSAVER, XA_SCREENSAVER_RESPONSE, XA_SCREENSAVER_VERSION;
-Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO;
-Atom XA_ACTIVATE, XA_SUSPEND, XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
-Atom XA_NEXT, XA_PREV;
-
-
 static void populate_demo_window (state *, int list_elt);
 static void populate_prefs_page (state *);
 static void populate_popup_window (state *);
@@ -306,32 +281,13 @@ void settings_switch_page_cb (GtkNotebook *, GtkNotebookPage *,
                               gint page_num, gpointer user_data);
 void settings_cancel_cb (GtkButton *, gpointer user_data);
 void settings_ok_cb (GtkButton *, gpointer user_data);
+void preview_theme_cb (GtkWidget *, gpointer user_data);
 
 static void kill_gnome_screensaver (void);
 static void kill_kde_screensaver (void);
 
-
 /* Some random utility functions
  */
-
-const char *blurb (void);
-
-const char *
-blurb (void)
-{
-  time_t now = time ((time_t *) 0);
-  char *ct = (char *) ctime (&now);
-  static char buf[255];
-  int n = strlen(progname);
-  if (n > 100) n = 99;
-  strncpy(buf, progname, n);
-  buf[n++] = ':';
-  buf[n++] = ' ';
-  strncpy(buf+n, ct+11, 8);
-  strcpy(buf+n+9, ": ");
-  return buf;
-}
-
 
 static GtkWidget *
 name_to_widget (state *s, const char *name)
@@ -347,7 +303,7 @@ name_to_widget (state *s, const char *name)
       /* First try to load the UI file from the current directory;
          if there isn't one there, check the installed directory.
        */
-# define UI_FILE "xscreensaver-demo.ui"
+# define UI_FILE "xscreensaver.ui"
       const char * const files[] = { UI_FILE,
                                      DEFAULT_ICONDIR "/" UI_FILE };
       int i;
@@ -814,22 +770,21 @@ wm_toplevel_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 G_MODULE_EXPORT void
 about_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
+#if 1
+  /* Let's just pop up the splash dialog instead. */
+  preview_theme_cb (NULL, user_data);
+#else
   char msg [2048];
-  char *vers = strdup (screensaver_id + 4);
-  char *s, *s2;
   char copy[1024];
-  char year[5];
   char *desc = _("For updates, check https://www.jwz.org/xscreensaver/");
 
-  s = strchr (vers, ',');
+  char *version = strdup (screensaver_id + 17);
+  char *year = strchr (version, '-');
+  char *s = strchr (version, ' ');
   *s = 0;
-  s += 2;
-
-  s2 = vers;
-  s2 = strrchr (vers, '-');
-  s2++;
-  strncpy (year, s2, 4);
-  year[4] = 0;
+  year = strchr (year+1, '-') + 1;
+  s = strchr (year, ')');
+  *s = 0;
 
   /* Ole Laursen <olau@hardworking.dk> says "don't use _() here because
      non-ASCII characters aren't allowed in localizable string keys."
@@ -851,7 +806,7 @@ about_menu_cb (GtkAction *menu_action, gpointer user_data)
      #ifdef HAVE_CRAPPLET
      {
        const gchar *auth[] = { 0 };
-       GtkWidget *about = gnome_about_new (progclass, vers, "", auth, desc,
+       GtkWidget *about = gnome_about_new (progclass, version, "", auth, desc,
                                            "xscreensaver.xpm");
        gtk_widget_show (about);
      }
@@ -886,7 +841,7 @@ about_menu_cb (GtkAction *menu_action, gpointer user_data)
     vbox = gtk_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, 0);
 
-    label1 = gtk_label_new (vers);
+    label1 = gtk_label_new (version);
     gtk_box_pack_start (GTK_BOX (vbox), label1, TRUE, TRUE, 0);
     gtk_label_set_justify (GTK_LABEL (label1), GTK_JUSTIFY_LEFT);
     gtk_misc_set_alignment (GTK_MISC (label1), 0.0, 0.75);
@@ -943,6 +898,7 @@ about_menu_cb (GtkAction *menu_action, gpointer user_data)
     gdk_window_show (GET_WINDOW (GTK_WIDGET (dialog)));
     gdk_window_raise (GET_WINDOW (GTK_WIDGET (dialog)));
   }
+#endif /* 0 */
 }
 
 
@@ -962,11 +918,11 @@ doc_menu_cb (GtkAction *menu_action, gpointer user_data)
     }
 
   help_command = (char *) malloc (strlen (p->load_url_command) +
-				  (strlen (p->help_url) * 4) + 20);
+				  (strlen (p->help_url) * 5) + 20);
   strcpy (help_command, "( ");
   sprintf (help_command + strlen(help_command),
            p->load_url_command,
-           p->help_url, p->help_url, p->help_url, p->help_url);
+           p->help_url, p->help_url, p->help_url, p->help_url, p->help_url);
   strcat (help_command, " ) &");
   if (system (help_command) < 0)
     fprintf (stderr, "%s: fork error\n", blurb());
@@ -1013,7 +969,7 @@ restart_menu_cb (GtkWidget *widget, gpointer user_data)
   flush_dialog_changes_and_save (s);
   xscreensaver_command (GDK_DISPLAY(), XA_EXIT, 0, False, NULL);
   sleep (1);
-  if (system ("xscreensaver -nosplash &") < 0)
+  if (system ("xscreensaver -splash &") < 0)
     fprintf (stderr, "%s: fork error\n", blurb());
 
   await_xscreensaver (s);
@@ -1098,12 +1054,6 @@ static int
 demo_write_init_file (state *s, saver_preferences *p)
 {
   Display *dpy = GDK_DISPLAY();
-
-#if 0
-  /* #### try to figure out why shit keeps getting reordered... */
-  if (strcmp (s->prefs.screenhacks[0]->name, "DNA Lounge Slideshow"))
-    abort();
-#endif
 
   if (!write_init_file (dpy, p, s->short_version, False))
     {
@@ -1500,6 +1450,25 @@ flush_checkbox  (GtkTreeModel *model,
 
 #endif /* HAVE_GTK2 */
 
+
+static char *
+theme_name_strip (const char *s)
+{
+  const char *in = s;
+  char *s2 = strdup(s);
+  char *out = s2;
+  for (; *in; in++)
+    if (*in >= 'A' && *in <= 'Z')
+      *out++ = *in + ('a'-'A');
+    else if (*in == ' ' || *in == '\t')
+      ;
+    else
+      *out++ = *in;
+  *out = 0;
+  return s2;
+}
+
+
 /* Flush out any changes made in the main dialog window (where changes
    take place immediately: clicking on a checkbox causes the init file
    to be written right away.)
@@ -1507,6 +1476,7 @@ flush_checkbox  (GtkTreeModel *model,
 static Bool
 flush_dialog_changes_and_save (state *s)
 {
+  Display *dpy = GDK_DISPLAY();
   saver_preferences *p = &s->prefs;
   saver_preferences P2, *p2 = &P2;
 #ifdef HAVE_GTK2
@@ -1593,7 +1563,6 @@ flush_dialog_changes_and_save (state *s)
 
 #if 0
   CHECKBOX (p2->verbose_p,        "verbose_button");
-  CHECKBOX (p2->capture_stderr_p, "capture_button");
   CHECKBOX (p2->splash_p,         "splash_button");
 #endif
 
@@ -1611,7 +1580,6 @@ flush_dialog_changes_and_save (state *s)
     TEXT     (p2->text_url,     "text_url_entry");
   }
 
-  CHECKBOX (p2->install_cmap_p,   "install_button");
   CHECKBOX (p2->fade_p,           "fade_button");
   CHECKBOX (p2->unfade_p,         "unfade_button");
   SECONDS  (&p2->fade_seconds,    "fade_spinbutton");
@@ -1625,12 +1593,13 @@ flush_dialog_changes_and_save (state *s)
   /* Warn if the image directory doesn't exist, when:
      - not being warned before
      - image directory is changed and the directory doesn't exist
-     - image directory does not begin with http://
+     - image directory is not a URL
    */
   if (p2->image_directory &&
       *p2->image_directory &&
       !directory_p (p2->image_directory) &&
-       strncmp(p2->image_directory, "http://", 6) &&
+       strncmp(p2->image_directory, "http://", 7) &&
+       strncmp(p2->image_directory, "https://", 8) &&
         ( !already_warned_about_missing_image_directory ||
           ( p->image_directory &&
             *p->image_directory &&
@@ -1663,11 +1632,33 @@ flush_dialog_changes_and_save (state *s)
                            : -1);
     }
 
+  /* Theme menu. */
+  {
+    GtkComboBox *cbox = GTK_COMBO_BOX (name_to_widget (s, "theme_menu"));
+    char *themes = get_string_resource (dpy, "themeNames", "ThemeNames");
+    int menu_index = gtk_combo_box_get_active (cbox);
+    char *token = themes;
+    char *name, *last;
+    int i = 0;
+    while ((name = strtok_r (token, ",", &last)))
+      {
+        token = 0;
+        if (i == menu_index)
+          {
+            char *name2 = theme_name_strip (name);
+            if (p->dialog_theme) free (p->dialog_theme);
+            p2->dialog_theme = name2;
+          }
+        i++;
+      }
+  }
+
 # define COPY(field, name) \
   if (p->field != p2->field) { \
     changed = True; \
     if (s->debug_p) \
-      fprintf (stderr, "%s: %s => %d\n", blurb(), name, (int) p2->field); \
+      fprintf (stderr, "%s: %s => %ld\n", blurb(), \
+               name, (unsigned long) p2->field);   \
   } \
   p->field = p2->field
 
@@ -1687,7 +1678,6 @@ flush_dialog_changes_and_save (state *s)
 
 #if 0
   COPY(verbose_p,        "verbose_p");
-  COPY(capture_stderr_p, "capture_stderr_p");
   COPY(splash_p,         "splash_p");
 #endif
 
@@ -1702,6 +1692,7 @@ flush_dialog_changes_and_save (state *s)
   COPY(grab_video_p,   "grab_video_p");
   COPY(random_image_p, "random_image_p");
 
+  COPY(dialog_theme,   "dialog_theme");
 # undef COPY
 
 # define COPYSTR(FIELD,NAME) \
@@ -1729,14 +1720,7 @@ flush_dialog_changes_and_save (state *s)
 
   if (changed)
     {
-      Display *dpy = GDK_DISPLAY();
-      Bool enabled_p = (p->dpms_enabled_p && p->mode != DONT_BLANK);
-      sync_server_dpms_settings (dpy, enabled_p, p->dpms_quickoff_p,
-                                 p->dpms_standby / 1000,
-                                 p->dpms_suspend / 1000,
-                                 p->dpms_off / 1000,
-                                 False);
-
+      sync_server_dpms_settings (GDK_DISPLAY(), p);
       changed = demo_write_init_file (s, p);
     }
 
@@ -2305,7 +2289,12 @@ browse_text_program_cb (GtkButton *button, gpointer user_data)
 }
 
 
-
+G_MODULE_EXPORT void
+preview_theme_cb (GtkWidget *w, gpointer user_data)
+{
+  if (system ("xscreensaver-auth --splash &") < 0)
+    fprintf (stderr, "%s: splash exec failed\n", blurb());
+}
 
 
 G_MODULE_EXPORT void
@@ -2761,6 +2750,7 @@ update_list_sensitivity (state *s)
 static void
 populate_prefs_page (state *s)
 {
+  Display *dpy = GDK_DISPLAY();
   saver_preferences *p = &s->prefs;
 
   Bool can_lock_p = True;
@@ -2813,7 +2803,6 @@ populate_prefs_page (state *s)
   TOGGLE_ACTIVE ("lock_button",       p->lock_p);
 #if 0
   TOGGLE_ACTIVE ("verbose_button",    p->verbose_p);
-  TOGGLE_ACTIVE ("capture_button",    p->capture_stderr_p);
   TOGGLE_ACTIVE ("splash_button",     p->splash_p);
 #endif
   TOGGLE_ACTIVE ("dpms_button",       p->dpms_enabled_p);
@@ -2821,7 +2810,6 @@ populate_prefs_page (state *s)
   TOGGLE_ACTIVE ("grab_desk_button",  p->grab_desktop_p);
   TOGGLE_ACTIVE ("grab_video_button", p->grab_video_p);
   TOGGLE_ACTIVE ("grab_image_button", p->random_image_p);
-  TOGGLE_ACTIVE ("install_button",    p->install_cmap_p);
   TOGGLE_ACTIVE ("fade_button",       p->fade_p);
   TOGGLE_ACTIVE ("unfade_button",     p->unfade_p);
 
@@ -2866,6 +2854,58 @@ populate_prefs_page (state *s)
                             p->tmode == TEXT_URL);
 
 
+  /* Theme menu */
+  {
+    GtkComboBox *cbox = GTK_COMBO_BOX (name_to_widget (s, "theme_menu"));
+
+    /* Without this, pref_changed_cb gets called an exponentially-increasing
+       number of times on the themes menu, despite the call to
+       gtk_list_store_clear(). */
+    static Bool done_once = False;
+
+    if (cbox && !done_once)
+      {
+        char *themes = get_string_resource (dpy, "themeNames", "ThemeNames");
+        char *token = themes;
+        char *name, *name2, *last;
+        GtkListStore *model;
+        GtkTreeIter iter;
+        int i = 0;
+        done_once = True;
+
+        g_object_get (G_OBJECT (cbox), "model", &model, NULL);
+        if (!model) abort();
+        gtk_list_store_clear (model);
+
+        gtk_signal_connect (GTK_OBJECT (cbox), "changed",
+                            GTK_SIGNAL_FUNC (pref_changed_cb), (gpointer) s);
+
+        while ((name = strtok_r (token, ",", &last)))
+          {
+            int L;
+            token = 0;
+
+            /* Strip leading and trailing whitespace */
+            while (*name == ' ' || *name == '\t' || *name == '\n')
+              name++;
+            L = strlen(name);
+            while (L && (name[L-1] == ' ' || name[L-1] == '\t' ||
+                         name[L-1] == '\n'))
+              name[--L] = 0;
+
+            gtk_list_store_append (model, &iter);
+            gtk_list_store_set (model, &iter, 0, name, -1);
+
+            name2 = theme_name_strip (name);
+            if (!strcmp (p->dialog_theme, name2))
+              gtk_combo_box_set_active (cbox, i);
+            free (name2);
+            i++;
+          }
+      }
+  }
+
+
   /* Map the `saver_mode' enum to mode menu to values. */
   {
     GtkComboBox *opt = GTK_COMBO_BOX (name_to_widget (s, "mode_menu"));
@@ -2879,27 +2919,8 @@ populate_prefs_page (state *s)
   }
 
   {
-    Bool found_any_writable_cells = False;
-    Bool fading_possible = False;
     Bool dpms_supported = False;
-
     Display *dpy = GDK_DISPLAY();
-    int nscreens = ScreenCount(dpy);  /* real screens, not Xinerama */
-    int i;
-    for (i = 0; i < nscreens; i++)
-      {
-	Screen *s = ScreenOfDisplay (dpy, i);
-	if (has_writable_cells (s, DefaultVisualOfScreen (s)))
-	  {
-	    found_any_writable_cells = True;
-	    break;
-	  }
-      }
-
-    fading_possible = found_any_writable_cells;
-#ifdef HAVE_XF86VMODE_GAMMA
-    fading_possible = True;
-#endif
 
 #ifdef HAVE_DPMS_EXTENSION
     {
@@ -2923,7 +2944,6 @@ populate_prefs_page (state *s)
      */
     SENSITIZE ("dpms_frame",              dpms_supported);
     SENSITIZE ("dpms_button",             dpms_supported);
-    SENSITIZE ("dpms_quickoff_button",    dpms_supported);
 
     SENSITIZE ("dpms_standby_label",      dpms_supported && p->dpms_enabled_p);
     SENSITIZE ("dpms_standby_mlabel",     dpms_supported && p->dpms_enabled_p);
@@ -2934,21 +2954,23 @@ populate_prefs_page (state *s)
     SENSITIZE ("dpms_off_label",          dpms_supported && p->dpms_enabled_p);
     SENSITIZE ("dpms_off_mlabel",         dpms_supported && p->dpms_enabled_p);
     SENSITIZE ("dpms_off_spinbutton",     dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_quickoff_button",    dpms_supported);
 
-    /* Colormaps
-     */
-    SENSITIZE ("cmap_frame",      found_any_writable_cells || fading_possible);
-    SENSITIZE ("install_button",  found_any_writable_cells);
-    SENSITIZE ("fade_button",     fading_possible);
-    SENSITIZE ("unfade_button",   fading_possible);
-
-    SENSITIZE ("fade_label",      (fading_possible &&
-                                   (p->fade_p || p->unfade_p)));
-    SENSITIZE ("fade_spinbutton", (fading_possible &&
-                                   (p->fade_p || p->unfade_p)));
+    SENSITIZE ("fade_label",      (p->fade_p || p->unfade_p));
+    SENSITIZE ("fade_spinbutton", (p->fade_p || p->unfade_p));
 
 # undef SENSITIZE
   }
+}
+
+
+/* Allow the documentation label to re-flow when the text is changed.
+   http://blog.borovsak.si/2009/05/wrapping-adn-resizing-gtklabel.html
+ */
+static void
+cb_allocate (GtkWidget *label, GtkAllocation *allocation, gpointer data)
+{
+  gtk_widget_set_size_request (label, allocation->width - 8, -1);
 }
 
 
@@ -2961,6 +2983,9 @@ populate_popup_window (state *s)
   /* #### not in Gtk 1.2
   gtk_label_set_selectable (doc);
    */
+
+  g_signal_connect (G_OBJECT (doc), "size-allocate", 
+                    G_CALLBACK (cb_allocate), NULL);
 
 # ifdef HAVE_XML
   if (s->cdata)
@@ -2998,6 +3023,14 @@ populate_popup_window (state *s)
   gtk_label_set_text (doc, (doc_string
                             ? _(doc_string)
                             : _("No description available.")));
+
+  {
+    GtkWidget *w = name_to_widget (s, "dialog_vbox");
+    gtk_widget_hide (w);
+    gtk_widget_unrealize (w);
+    gtk_widget_realize (w);
+    gtk_widget_show (w);
+  }
 }
 
 
@@ -3471,10 +3504,11 @@ initialize_sort_map (state *s)
       char *name = (hack->name && *hack->name
                     ? strdup (hack->name)
                     : make_hack_name (dpy, hack->command));
-      char *str;
-      for (str = name; *str; str++)
-        *str = tolower(*str);
-      sort_hack_cmp_names_kludge[i] = name;
+      gchar *s2 = g_str_to_ascii (name, 0);  /* Sort "Möbius" properly */
+      gchar *s3 = g_ascii_strdown (s2, -1);
+      free (name);
+      free (s2);
+      sort_hack_cmp_names_kludge[i] = s3;
     }
 
   /* Sort list->hack map alphabetically
@@ -3782,7 +3816,7 @@ get_best_gl_visual (state *s)
   char *av[10];
   int ac = 0;
 
-  av[ac++] = "xscreensaver-gl-helper";
+  av[ac++] = "xscreensaver-gl-visual";
   av[ac] = 0;
 
   if (pipe (fds))
@@ -4395,7 +4429,9 @@ gnome_screensaver_window (Screen *screen)
                               &bytesafter, &name)
           == Success
           && type != None
-          && !strcmp ((char *) name, "gnome-screensaver"))
+          && (!strcmp ((char *) name, "gnome-screensaver") ||
+              !strcmp ((char *) name, "mate-screensaver") ||
+              !strcmp ((char *) name, "cinnamon-screensaver")))
 	{
 	  gnome_window = kids[i];
           break;
@@ -4464,11 +4500,9 @@ the_network_is_not_the_computer (state *s)
     lhost = "<UNKNOWN>";
   else
     lhost = uts.nodename;
-# elif defined(VMS)
-  strcpy (lhost, getenv("SYS$NODE"));
-# else  /* !HAVE_UNAME && !VMS */
+# else  /* !HAVE_UNAME */
   strcat (lhost, "<UNKNOWN>");
-# endif /* !HAVE_UNAME && !VMS */
+# endif /* !HAVE_UNAME */
 
   if (p && p->pw_name)
     luser = p->pw_name;
@@ -4791,10 +4825,7 @@ main (int argc, char **argv)
 
   progname = real_progname;
 
-  s->short_version = (char *) malloc (5);
-  memcpy (s->short_version, screensaver_id + 17, 4);
-  s->short_version [4] = 0;
-
+  s->short_version = XSCREENSAVER_VERSION;
 
   /* Register our error message logger for every ``log domain'' known.
      There's no way to do this globally, so I grepped the Gtk/Gdk sources
@@ -5007,7 +5038,7 @@ main (int argc, char **argv)
 
   dpy = XtDisplay (toplevel_shell);
   db = XtDatabase (dpy);
-  XtGetApplicationNameAndClass (dpy, &progname, &progclass);
+  XtGetApplicationNameAndClass (dpy, (char **) &progname, &progclass);
   XSetErrorHandler (demo_ehandler);
 
   /* Let's just ignore these.  They seem to confuse Irix Gtk... */
@@ -5046,6 +5077,7 @@ main (int argc, char **argv)
   p->db = db;
   s->nscreens = screen_count (dpy);
 
+  init_xscreensaver_atoms (dpy);
   hack_environment (s);  /* must be before initialize_sort_map() */
 
   load_init_file (dpy, p);
@@ -5069,26 +5101,7 @@ main (int argc, char **argv)
   }
 #endif
 
-
-  /* Intern the atoms that xscreensaver_command() needs.
-   */
-  XA_VROOT = XInternAtom (dpy, "__SWM_VROOT", False);
-  XA_SCREENSAVER = XInternAtom (dpy, "SCREENSAVER", False);
-  XA_SCREENSAVER_VERSION = XInternAtom (dpy, "_SCREENSAVER_VERSION",False);
-  XA_SCREENSAVER_STATUS = XInternAtom (dpy, "_SCREENSAVER_STATUS", False);
-  XA_SCREENSAVER_ID = XInternAtom (dpy, "_SCREENSAVER_ID", False);
-  XA_SCREENSAVER_RESPONSE = XInternAtom (dpy, "_SCREENSAVER_RESPONSE", False);
-  XA_SELECT = XInternAtom (dpy, "SELECT", False);
-  XA_DEMO = XInternAtom (dpy, "DEMO", False);
-  XA_ACTIVATE = XInternAtom (dpy, "ACTIVATE", False);
-  XA_SUSPEND = XInternAtom (dpy, "SUSPEND", False);
-  XA_BLANK = XInternAtom (dpy, "BLANK", False);
-  XA_LOCK = XInternAtom (dpy, "LOCK", False);
-  XA_NEXT = XInternAtom (dpy, "NEXT", False);
-  XA_PREV = XInternAtom (dpy, "PREV", False);
-  XA_EXIT = XInternAtom (dpy, "EXIT", False);
-  XA_RESTART = XInternAtom (dpy, "RESTART", False);
-
+  init_xscreensaver_atoms (dpy);
 
   /* Create the window and all its widgets.
    */
@@ -5300,7 +5313,7 @@ main (int argc, char **argv)
     the_network_is_not_the_computer (s);
 
 
-  if (senesculent_p())
+  if (time ((time_t *) 0) - XSCREENSAVER_RELEASED > 60*60*24*30*17)
     warning_dialog (s->toplevel_widget,
       _("Warning:\n\n"
         "This version of xscreensaver is VERY OLD!\n"
@@ -5312,7 +5325,6 @@ main (int argc, char **argv)
         "your distro is doing you a disservice. Build from source.)\n"
         ),
       D_NONE, 7);
-
 
   /* Run the Gtk event loop, and not the Xt event loop.  This means that
      if there were Xt timers or fds registered, they would never get serviced,

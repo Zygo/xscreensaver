@@ -1,4 +1,5 @@
 # XScreenSaver for Android
+# The rest of this Makefile is in xscreensaver/jni/Android.mk
 
 export TERM=dumb
 GRADLE = ./gradlew
@@ -10,15 +11,24 @@ all:: release
 local.properties:
 	touch local.properties
 
-clean:: local.properties
-	@\
-  if [ "x" = x"$$JAVA_HOME" ] && ! ( which java >&- 2>&- ) ; then	\
-    echo "android: not cleaning: no java" >&2 ;				\
-  else									\
-    echo $(GRADLE) clean ;						\
-         $(GRADLE) clean ;						\
-  fi
+clean::
+	rm -rf .gradle
+	rm -rf xscreensaver/.idea
+	rm -f  android.iml
+	rm -rf build
+	rm -rf gen
+	rm -rf xscreensaver/build
+	rm -rf xscreensaver/libs
+	rm -rf xscreensaver/obj
+	rm -rf xscreensaver/res/values
+	rm -rf xscreensaver/res/xml
+	rm -rf xscreensaver/src/org/jwz/xscreensaver/gen
+	rm -f  xscreensaver/AndroidManifest.xml
+	rm -f  GLWallpaperService/build
 
+
+# "make clean" should not require a functional gradle.
+#	$(GRADLE) clean
 
 distdepend:: local.properties
 
@@ -290,7 +300,12 @@ ANDROID_TODO=			\
 # Android actually wants these to be 160x160 but our source is 200x150.
 
 URL = https://www.jwz.org/xscreensaver/screenshots/
-WGET = wget -q -U xscreensaver-build-android
+
+# I find wget easier to deal with, but curl is usually installed by default.
+#WGET = wget -q -U xscreensaver-build-android --content-on-error=0 -O-
+WGET = curl -s -A xscreensaver-build-osx -f
+
+# ImageMagick isn't installed by default, but neither is anything similar.
 CVT  = -thumbnail '150x150^' -gravity center -extent 150x150 \
      \( +clone  -alpha extract \
         -draw 'fill black polygon 0,0 0,15 15,0 fill white circle 15,15 15,0' \
@@ -304,13 +319,15 @@ CVT  = -thumbnail '150x150^' -gravity center -extent 150x150 \
 
 # If we are making the m6502 hack, create the header file for Android
 m6502.h::
-	@for h in $(ANDROID_HACKS) ; do \
-		if [ $${h} = "m6502" ] ; then \
-			echo "Making $${h} header ..."; \
-			../hacks/m6502.sh ../hacks/m6502.h ../hacks/images/m6502/*.asm ; \
-			echo "Made $${h} header"; \
-		fi; \
-	done
+	../hacks/m6502.sh ../hacks/m6502.h ../hacks/images/m6502/*.asm
+
+molecules.h::
+	cd ../hacks/glx && \
+	./molecules.sh molecules.h ../images/molecules/*.pdb
+
+images_png_h:
+	cd ../hacks/images && make
+
 
 xscreensaver/res/drawable/%.png:
 	@\
@@ -321,7 +338,7 @@ xscreensaver/res/drawable/%.png:
 	URL="$(URL)$$FILE1" ;						\
 	echo "converting $$URL..." ;					\
 	rm -f "$$FILE2" ;						\
-	$(WGET) -O- "$$URL" |						\
+	$(WGET) "$$URL" |						\
 	convert jpg:- $(CVT) "$$FILE2" ;				\
 	if [ ! -s "$$FILE2" ]; then					\
 	  echo "$$FILE2 failed" >&2 ;					\
@@ -345,8 +362,8 @@ distclean:: clean_thumbs clean
 
 EXTRA_TARFILES = xscreensaver/res/drawable/thumbnail.png \
 
-echo_tarfiles:
-	@FILES=`find . $(EXTRA_TARFILES) \( \(	\
+list_tarfiles:
+	@find . $(EXTRA_TARFILES) \( \(		\
 		   -name .DS_Store		\
 		-o -name '*~'			\
 		-o -name '*.jks'		\
@@ -372,18 +389,14 @@ echo_tarfiles:
 		-o \( \( -type f -o -type l \)	\
 		      -print \)			\
 		| sed 's@^\./@@' 		\
-		| sort` ;			\
-	echo $$FILES
-
-images_png_h:
-	cd ../hacks/images && $(MAKE)
+		| sort
 
 run_check::
 	../hacks/check-configs.pl --build-android $(ANDROID_HACKS)
 
-debug::   local.properties m6502.h run_check images_png_h
+debug::   local.properties m6502.h molecules.h run_check images_png_h
 	$(GRADLE) assembleDebug
-release:: local.properties m6502.h run_check images_png_h
+release:: local.properties m6502.h molecules.h run_check images_png_h
 	export APP_ABI=all ; \
 	$(GRADLE) assembleRelease
 
@@ -425,8 +438,10 @@ sign_release::
 
 apk:: release
 	@\
-  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' ../utils/version.h` ; \
-  HEAD="xscreensaver-$$VERS" ;						      \
+  SRC=../utils/version.h ;						    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. \"]*\).*/\1/p' < $$SRC |	    \
+	 head -1`;							    \
+  HEAD="xscreensaver-$$VERS" ;						    \
   if [ ! -s $(APK_SIGNED) -o $(APK_UNSIGNED) -nt $(APK_SIGNED) ]; then	\
     $(MAKE) sign_release ;						\
   fi ;									\

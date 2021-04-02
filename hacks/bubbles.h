@@ -138,15 +138,6 @@
  *                        End of options                                    *
  ****************************************************************************/
 
-/* Some machines define M_PI and not PI.  If they don't define either, use
-own own.  Really, the accuracy of this is _not_ very important. */
-#ifndef PI
-# define PI  M_PI
-# ifndef M_PI
-#  define M_PI 3.1415926535
-# endif
-#endif
-
 /* for delete_bubble_in_mesh() */
 #define DELETE_BUBBLE      0
 #define KEEP_BUBBLE        1

@@ -8,19 +8,7 @@
 #if 0   /* for Mesa */
 # include "glutint.h"
 #else   /* for xscreensaver */
-# ifdef HAVE_CONFIG_H
-#  include "config.h"
-# endif
-# ifndef HAVE_JWXYZ
-#  include <GL/gl.h>
-# endif
-#ifdef HAVE_ANDROID
-#include <GLES/gl.h>
-#define Bool int
-#endif
-# ifdef HAVE_JWZGLES
-#  include "jwzgles.h"
-# endif /* HAVE_JWZGLES */
+# include "screenhackI.h"
 # undef APIENTRY
 # define APIENTRY /**/
 #endif

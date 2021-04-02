@@ -1333,7 +1333,7 @@ parameters_to_cmd_line (GList *parms, gboolean default_p)
 {
   int L = g_list_length (parms);
   int LL = 0;
-  char **strs = (char **) calloc (sizeof (*parms), L);
+  char **strs = (char **) calloc (sizeof (*strs), L);
   char *result;
   char *out;
   int i, j;
@@ -1441,7 +1441,7 @@ parse_command_line_into_parameters (const char *filename,
       char *option = rest->data;
       rest->data = 0;
 
-      if (option[0] != '-' && option[0] != '+')
+      if (option && option[0] != '-' && option[0] != '+')
         {
           if (debug_p)
             fprintf (stderr, "%s: WARNING: %s: not a switch: \"%s\"\n",
@@ -1750,7 +1750,8 @@ get_description (GList *parms, gboolean verbose_p)
               s++;
             else if (s[1] == ' ' || s[1] == '\t')
               s++;                 /* next line is indented: leave newline */
-            else if (!strncmp(s+1, "http:", 5))
+            else if (!strncmp(s+1, "http:", 5) ||
+                     !strncmp(s+1, "https:", 5))
               s++;                 /* next line begins a URL: leave newline */
             else
               s[0] = ' ';          /* delete newline to un-fold this line */
@@ -1783,7 +1784,7 @@ get_description (GList *parms, gboolean verbose_p)
 	  }
 
 #if 0
-      if (verbose_p)
+      /*if (verbose_p)*/
         {
           fprintf (stderr, "%s: text read   is \"%s\"\n", blurb(),doc->string);
           fprintf (stderr, "%s: description is \"%s\"\n", blurb(), d);

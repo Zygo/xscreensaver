@@ -49,8 +49,6 @@
 			"*geometry:    =800x800"   "\n" \
 
 # define release_unk 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "colors.h"

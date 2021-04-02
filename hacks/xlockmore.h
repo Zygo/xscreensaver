@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2018 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,10 +15,6 @@
  * in the older xlock.h by Charles Hannum <mycroft@ai.mit.edu>.  (I had
  * to redo it, since xlockmore has diverged so far from xlock...)
  */
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #ifndef __STDC__
 ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
@@ -239,7 +235,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 	   release_ ## PREFIX,						\
 	   free_    ## PREFIX,						\
 	   PREFIX   ## _handle_event,					\
-	   & PREFIX ## _opts						\
+	   & PREFIX ## _opts,						\
+	   0,								\
   };									\
 									\
   struct xscreensaver_function_table					\

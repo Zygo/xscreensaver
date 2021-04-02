@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2020 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.8 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.11 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -38,7 +38,8 @@ my %disable = (
    'webcollage'		=> 1,
    'testx11'		=> 1,
    'covid19'		=> 1,  # Fuck you, Apple.
-   'co____9'		=> 1,  # Double-fuck you.
+  #'co____9'		=> 1,  # Double-fuck you.
+   'xscreensaver-getimage' => 1,
   );
 
 # Parse specified variables from a Makefile.
@@ -48,7 +49,7 @@ sub parse_makefile_vars($@)
 {
   my ($mf, @vars) = @_;
 
-  open (my $in, '<', $mf) || error ("$mf: $!");
+  open (my $in, '<:utf8', $mf) || error ("$mf: $!");
   print STDERR "$progname: reading $mf\n" if ($verbose > 1);
   local $/ = undef;  # read entire file
   my $body = <$in>;
@@ -89,6 +90,8 @@ sub build_h($) {
     }
   }
 
+  $names{'dnalogo'} = 1;  # Not listed in GL_EXES
+
   my @names = sort (keys %names);
   error ("too few names") if (@names < 100);
 
@@ -112,27 +115,35 @@ sub build_h($) {
 
   sub line($$) {
     my ($s, $suf) = @_;
-    return "\t[NSValue valueWithPointer:&${s}_${suf}], @\"${s}\",\n";
+
+    my $xml_file = "../hacks/config/$s.xml";
+    open (my $in, '<:utf8', $xml_file) || error ("$xml_file: $!");
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
+    my ($title) = ($body =~ m@<screensaver[^<>]*?[ \t]_label=\"([^\"]+)\"@m);
+    error ("$xml_file: no title") unless $title;
+
+    return "\t@\"${title}\":\t[NSValue valueWithPointer:&${s}_${suf}],\n";
   }
 
   $body .= ("\n\n" .
-            "NSDictionary *make_function_table_dict(void)\n{\n" .
-            "  return\n    [NSDictionary dictionaryWithObjectsAndKeys:\n" .
-            "\n" .
+            "NSDictionary *make_function_table_dict(void) {\n" .
+            "  return \@{\n" .
             "#if defined(APPLE2_ONLY)\n" .
-            " " . line('apple2', $suf) .
+              line('apple2', $suf) .
             "#elif defined(PHOSPHOR_ONLY)\n" .
-            " " . line('phosphor', $suf) .
+              line('phosphor', $suf) .
             "#elif defined(TESTX11_ONLY)\n" .
-            " " . line('testx11', $suf) .
+              line('testx11', $suf) .
             "#else\n");
   foreach my $s (@names) { $body .= line($s, $suf); }
   $body .= ("#endif\n" .
-            "\tnil];\n" .
+            "\t};\n" .
             "}\n\n");
 
   my $obody = '';
-  if (open (my $in, '<', $outfile)) {
+  if (open (my $in, '<:utf8', $outfile)) {
     local $/ = undef;  # read entire file
     $obody = <$in>;
     close $in;
@@ -146,7 +157,7 @@ sub build_h($) {
     print STDERR "$progname: $outfile: unchanged\n" if ($verbose > 1);
   } else {
     my $file_tmp = "$outfile.tmp";
-    open (my $out, '>', $file_tmp) || error ("$file_tmp: $!");
+    open (my $out, '>:utf8', $file_tmp) || error ("$file_tmp: $!");
     print $out $body || error ("$file_tmp: $!");
     close $out || error ("$file_tmp: $!");
 

@@ -268,7 +268,6 @@
 #define glRasterPos4iv			jwzgles_glRasterPos4iv
 #define glRasterPos4s			jwzgles_glRasterPos4s
 #define glRasterPos4sv			jwzgles_glRasterPos4sv
-#define glReadBuffer			jwzgles_glReadBuffer
 #define glRectd				jwzgles_glRectf
 #define glRectdv			jwzgles_glRectdv
 #define glRectf				jwzgles_glRectf

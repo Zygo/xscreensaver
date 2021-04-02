@@ -26,7 +26,7 @@ This program requires a good video card capable of supporting large
 textures.
 
 To specify the directory that images are loaded from, run
-.BR xscreensaver-demo (1)
+.BR xscreensaver\-settings (1)
 and click on the "Advanced" tab.
 .SH OPTIONS
 .TP 8
@@ -90,8 +90,8 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver-demo (1)
-.BR xscreensaver-getimage (1)
+.BR xscreensaver\-settings (1)
+.BR xscreensaver\-getimage (MANSUFFIX)
 .BR xscreensaver (1)
 .BR glslideshow (MANSUFFIX)
 .BR photopile (MANSUFFIX)

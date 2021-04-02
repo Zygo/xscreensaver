@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,11 +11,10 @@
 
 /* JWXYZ Is Not Xlib.
 
-   But it's a bunch of function definitions that bear some resemblance to
-   Xlib and that do Cocoa-ish or OpenGL-ish things that bear some resemblance
-   to the things that Xlib might have done.
+   Cocoa glue for macOS and iOS: fonts and such.
 
-   This code is used by both the original jwxyz.m and the new jwxyz-gl.c.
+   See the comment at the top of jwxyz-common.c for an explanation of
+   the division of labor between these various modules.
  */
 
 #import "jwxyzI.h"
@@ -128,7 +127,7 @@ jwxyz_scale (Window main_window)
   return jwxyz_scale_1 (main_window, FALSE);
 }
 
-static float
+float
 jwxyz_font_scale (Window main_window)
 {
   return jwxyz_scale_1 (main_window, TRUE);
@@ -331,7 +330,7 @@ try_font (NSFontTraitMask traits, NSFontTraitMask mask,
         font_mask |= NSBoldFontMask;
       if (MATCH(@"Italic") || MATCH(@"Oblique"))
         font_mask |= NSItalicFontMask;
-      if (MATCH(@"Courier"))
+      if (MATCH(@"Courier") || MATCH(@"monospace") || MATCH(@"fixed"))
         font_mask |= NSFixedPitchFontMask;
     }
 

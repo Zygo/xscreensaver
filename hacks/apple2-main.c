@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,9 +13,10 @@
  * Pty and vt100 emulation by Fredrik Tolf <fredrik@dolda2000.com>
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "screenhack.h"
+#include "apple2.h"
+#include "textclient.h"
+#include "utf8wc.h"
 
 #include <math.h>
 #include <ctype.h>
@@ -23,14 +24,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
-#include "screenhack.h"
-#include "apple2.h"
-#include "textclient.h"
-#include "utf8wc.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define SCREEN_COLS 40
 #define SCREEN_ROWS 24

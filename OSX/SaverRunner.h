@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,14 +40,14 @@
 @interface SaverViewController : UIViewController
 {
   SaverRunner *_parent;
-  NSString *_saverName;
+  NSString *_saver_title;
   XScreenSaverView *_saverView;
   BOOL _showAboutBox;
   UIView *aboutBox;
   NSTimer *splashTimer;
 }
 
-@property(nonatomic, retain) NSString *saverName;
+@property(nonatomic, retain) NSString *saver_title;
 
 @end
 
@@ -60,8 +60,8 @@
   <NSWindowDelegate>
 # endif
 {
-  NSString *saverName;		// the one currently loaded
-  NSArray  *saverNames;		// Names of available savers
+  NSString *saver_title;	// Display name of currently loaded
+  NSDictionary *saverNames;	// Display and bundle names of available savers
   NSString *saverDir;		// Where we find saver bundles
 
 # ifndef HAVE_IPHONE

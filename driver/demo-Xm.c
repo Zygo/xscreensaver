@@ -1,5 +1,5 @@
 /* demo-Xm.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2003, 2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,23 +16,20 @@
 
 #ifdef HAVE_MOTIF /* whole file */
 
+#include "blurb.h"
+
 #include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-#ifndef VMS
-# include <pwd.h>		/* for getpwuid() */
-#else /* VMS */
-# include "vms-pwd.h"
-#endif /* VMS */
-
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>	/* for uname() */
 #endif /* HAVE_UNAME */
 
 #include <stdio.h>
+#include <pwd.h>		/* for getpwuid() */
 
 #include <X11/Xproto.h>		/* for CARD32 */
 #include <X11/Xatom.h>		/* for XA_INTEGER */
@@ -47,18 +44,6 @@
 #ifdef HAVE_XPM
 # include <X11/xpm.h>
 #endif /* HAVE_XPM */
-
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/Error.h>
-# else /* VMS */
-#  include <Xmu/Error.h>
-# endif
-#else
-# include "xmu.h"
-#endif
-
-
 
 #include <Xm/Xm.h>
 #include <Xm/List.h>
@@ -78,11 +63,12 @@
 #endif /* HAVE_XMCOMBOBOX */
 
 #include "version.h"
-#include "prefs.h"
+#include "types.h"
 #include "resources.h"		/* for parse_time() */
-#include "visual.h"		/* for has_writable_cells() */
 #include "remote.h"		/* for xscreensaver_command() */
-#include "usleep.h"
+#include "visual.h"
+#include "atoms.h"
+#include "xmu.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -92,7 +78,6 @@
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 
-char *progname = 0;
 char *progclass = "XScreenSaver";
 XrmDatabase db;
 
@@ -102,19 +87,11 @@ typedef struct {
 
 static void *global_prefs_pair;  /* I hate C so much... */
 
-char *blurb (void) { return progname; }
-
 extern Widget create_xscreensaver_demo (Widget parent);
 extern const char *visual_menu[];
 
 
 static char *short_version = 0;
-
-Atom XA_VROOT;
-Atom XA_SCREENSAVER, XA_SCREENSAVER_RESPONSE, XA_SCREENSAVER_VERSION;
-Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO;
-Atom XA_ACTIVATE, XA_SUSPEND, XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
-
 
 static void populate_demo_window (Widget toplevel,
                                   int which, prefs_pair *pair);
@@ -297,7 +274,7 @@ run_hack (Widget widget, int which, Bool report_errors_p)
 /* Button callbacks
  */
 
-void
+static void
 exit_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   apply_changes_and_save (XtParent (button));
@@ -313,7 +290,7 @@ wm_close_cb (Widget widget, GdkEvent *event, XtPointer data)
 }
 #endif
 
-void
+static void
 cut_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   /* #### */
@@ -323,7 +300,7 @@ cut_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 copy_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   /* #### */
@@ -333,7 +310,7 @@ copy_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 paste_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   /* #### */
@@ -343,7 +320,7 @@ paste_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 about_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   char buf [2048];
@@ -356,8 +333,8 @@ about_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 
   sprintf (buf, "%s\n%s\n"
            "\n"
-           "This is the Motif version of \"xscreensaver-demo\".  The Motif\n"
-           "version is no longer maintained.  Please use the GTK version\n"
+           "This is the Motif version of \"xscreensaver-settings\".\n"
+           "It is no longer maintained.  Please use the GTK version\n"
            "instead, which has many more features.\n"
            "\n"
            "For xscreensaver updates, check https://www.jwz.org/xscreensaver/",
@@ -368,7 +345,7 @@ about_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 doc_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   prefs_pair *pair = (prefs_pair *) client_data;
@@ -385,39 +362,39 @@ doc_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
     }
 
   help_command = (char *) malloc (strlen (p->load_url_command) +
-				  (strlen (p->help_url) * 4) + 20);
+				  (strlen (p->help_url) * 5) + 20);
   strcpy (help_command, "( ");
   sprintf (help_command + strlen(help_command),
            p->load_url_command,
-           p->help_url, p->help_url, p->help_url, p->help_url);
+           p->help_url, p->help_url, p->help_url, p->help_url, p->help_url);
   strcat (help_command, " ) &");
   system (help_command);
   free (help_command);
 }
 
 
-void
+static void
 activate_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   run_cmd (XtParent (button), XA_ACTIVATE, 0);
 }
 
 
-void
+static void
 lock_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   run_cmd (XtParent (button), XA_LOCK, 0);
 }
 
 
-void
+static void
 kill_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   run_cmd (XtParent (button), XA_EXIT, 0);
 }
 
 
-void
+static void
 restart_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
 #if 0
@@ -427,7 +404,7 @@ restart_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
   apply_changes_and_save (button);
   xscreensaver_command (XtDisplay (button), XA_EXIT, 0, False, NULL);
   sleep (1);
-  system ("xscreensaver -nosplash &");
+  system ("xscreensaver -splash &");
 #endif
 
   await_xscreensaver (button);
@@ -641,7 +618,7 @@ apply_changes_and_save (Widget widget)
   return 0;
 }
 
-void
+static void
 run_this_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   int which = selected_hack_number (XtParent (button));
@@ -651,7 +628,7 @@ run_this_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 manual_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   prefs_pair *pair = (prefs_pair *) client_data;
@@ -695,7 +672,7 @@ manual_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 run_next_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   prefs_pair *pair = (prefs_pair *) client_data;
@@ -725,7 +702,7 @@ run_next_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 run_prev_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   prefs_pair *pair = (prefs_pair *) client_data;
@@ -781,7 +758,7 @@ hack_time_text (Widget button, const char *line, Time *store, Bool sec_p)
 }
 
 
-void
+static void
 prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   prefs_pair *pair = (prefs_pair *) client_data;
@@ -825,7 +802,6 @@ prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
   MINUTES (&p2->timeout,        "timeoutText");
   MINUTES (&p2->cycle,          "cycleText");
   SECONDS (&p2->fade_seconds,   "fadeSecondsText");
-  INTEGER (&p2->fade_ticks,     "fadeTicksText");
   MINUTES (&p2->lock_timeout,   "lockText");
   SECONDS (&p2->passwd_timeout, "passwdText");
   CHECKBOX (p2->verbose_p,      "verboseToggle");
@@ -848,7 +824,6 @@ prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
   COPY(lock_timeout);
   COPY(passwd_timeout);
   COPY(fade_seconds);
-  COPY(fade_ticks);
   COPY(verbose_p);
   COPY(install_cmap_p);
   COPY(fade_p);
@@ -863,7 +838,7 @@ prefs_ok_cb (Widget button, XtPointer client_data, XtPointer ignored)
 }
 
 
-void
+static void
 prefs_cancel_cb (Widget button, XtPointer client_data, XtPointer ignored)
 {
   prefs_pair *pair = (prefs_pair *) client_data;
@@ -996,8 +971,6 @@ populate_prefs_page (Widget top, prefs_pair *pair)
   XtVaSetValues (name_to_widget (top, "passwdText"),      XmNvalue, s, NULL);
   format_time (s, p->fade_seconds);
   XtVaSetValues (name_to_widget (top, "fadeSecondsText"), XmNvalue, s, NULL);
-  sprintf (s, "%u", p->fade_ticks);
-  XtVaSetValues (name_to_widget (top, "fadeTicksText"),   XmNvalue, s, NULL);
 
   XtVaSetValues (name_to_widget (top, "verboseToggle"),
                  XmNset, p->verbose_p, NULL);
@@ -1009,42 +982,6 @@ populate_prefs_page (Widget top, prefs_pair *pair)
                  XmNset, p->unfade_p, NULL);
   XtVaSetValues (name_to_widget (top, "lockToggle"),
                  XmNset, p->lock_p, NULL);
-
-
-  {
-    Bool found_any_writable_cells = False;
-    Display *dpy = XtDisplay (top);
-    int nscreens = ScreenCount(dpy);
-    int i;
-    for (i = 0; i < nscreens; i++)
-      {
-	Screen *s = ScreenOfDisplay (dpy, i);
-	if (has_writable_cells (s, DefaultVisualOfScreen (s)))
-	  {
-	    found_any_writable_cells = True;
-	    break;
-	  }
-      }
-
-#ifdef HAVE_XF86VMODE_GAMMA
-    found_any_writable_cells = True;  /* if we can gamma fade, go for it */
-#endif
-
-    XtVaSetValues (name_to_widget (top, "fadeSecondsLabel"), XtNsensitive,
-                           found_any_writable_cells, NULL);
-    XtVaSetValues (name_to_widget (top, "fadeTicksLabel"), XtNsensitive,
-                           found_any_writable_cells, NULL);
-    XtVaSetValues (name_to_widget (top, "fadeSecondsText"), XtNsensitive,
-                           found_any_writable_cells, NULL);
-    XtVaSetValues (name_to_widget (top, "fadeTicksText"), XtNsensitive,
-                           found_any_writable_cells, NULL);
-    XtVaSetValues (name_to_widget (top, "cmapToggle"), XtNsensitive,
-                           found_any_writable_cells, NULL);
-    XtVaSetValues (name_to_widget (top, "fadeToggle"), XtNsensitive,
-                           found_any_writable_cells, NULL);
-    XtVaSetValues (name_to_widget (top, "unfadeToggle"), XtNsensitive,
-                           found_any_writable_cells, NULL);
-  }
 }
 
 
@@ -1054,7 +991,7 @@ sensitize_demo_widgets (Widget toplevel, Bool sensitive_p)
   const char *names[] = { "cmdLabel", "cmdText", "enabled",
                           "visLabel", "combo", "demo", "man" };
   int i;
-  for (i = 0; i < sizeof(names)/countof(*names); i++)
+  for (i = 0; i < countof(names); i++)
     {
       Widget w = name_to_widget (toplevel, names[i]);
       XtVaSetValues (w, XtNsensitive, sensitive_p, NULL);
@@ -1063,7 +1000,7 @@ sensitize_demo_widgets (Widget toplevel, Bool sensitive_p)
   /* I don't know how to handle these yet... */
   {
     const char *names2[] = { "cut", "copy", "paste" };
-    for (i = 0; i < sizeof(names2)/countof(*names2); i++)
+    for (i = 0; i < countof(names2); i++)
       {
         Widget w = name_to_widget (toplevel, names2[i]);
         XtVaSetValues (w, XtNsensitive, FALSE, NULL);
@@ -1208,7 +1145,7 @@ pixmapify_buttons (Widget toplevel)
 
 
 
-char *
+static char *
 get_hack_blurb (Display *dpy, screenhack *hack)
 {
   char *doc_string;
@@ -1301,8 +1238,8 @@ get_hack_blurb (Display *dpy, screenhack *hack)
 # endif /* 0 */
         doc_string = strdup (
            "\n"
-           "This is the Motif version of \"xscreensaver-demo\".  The Motif "
-           "version is no longer maintained.  Please use the GTK version "
+           "This is the Motif version of \"xscreensaver-settings\"."
+           "It is no longer maintained.  Please use the GTK version "
            "instead, which has many more features."
            "\n\n"
            "If you were running the GTK version, there would be a preview "
@@ -1475,10 +1412,10 @@ sanity_check_resources (Widget toplevel)
 {
   const char *names[] = { "demoTab", "optionsTab", "cmdLabel", "visLabel",
                           "enabled", "demo", "man", "timeoutLabel",
-                          "cycleLabel", "fadeSecondsLabel", "fadeTicksLabel",
+                          "cycleLabel", "fadeSecondsLabel",
                           "lockLabel", "passwdLabel" };
   int i;
-  for (i = 0; i < sizeof(names)/countof(*names); i++)
+  for (i = 0; i < countof(names); i++)
     {
       Widget w = name_to_widget (toplevel, names[i]);
       const char *name = XtName(w);
@@ -1566,11 +1503,9 @@ the_network_is_not_the_computer (Widget parent)
     lhost = "<UNKNOWN>";
   else
     lhost = uts.nodename;
-# elif defined(VMS)
-  strcpy (lhost, getenv("SYS$NODE"));
-# else  /* !HAVE_UNAME && !VMS */
+# else  /* !HAVE_UNAME */
   strcat (lhost, "<UNKNOWN>");
-# endif /* !HAVE_UNAME && !VMS */
+# endif /* !HAVE_UNAME */
 
   if (p && p->pw_name)
     luser = p->pw_name;
@@ -1738,7 +1673,7 @@ main (int argc, char **argv)
 
   dpy = XtDisplay (toplevel_shell);
   db = XtDatabase (dpy);
-  XtGetApplicationNameAndClass (dpy, &progname, &progclass);
+  XtGetApplicationNameAndClass (dpy, (char **) &progname, &progclass);
   XSetErrorHandler (demo_ehandler);
 
   /* Complain about unrecognized command-line arguments.
@@ -1758,9 +1693,9 @@ main (int argc, char **argv)
 	}
     }
 
-  short_version = (char *) malloc (5);
-  memcpy (short_version, screensaver_id + 17, 4);
-  short_version [4] = 0;
+  short_version = strdup (screensaver_id + 17);
+  s = strchr (short_version, ' ');
+  *s = 0;
 
   /* Load the init file, which may end up consulting the X resource database
      and the site-wide app-defaults file.  Note that at this point, it's
@@ -1789,22 +1724,7 @@ main (int argc, char **argv)
 #endif
 
 
-  /* Intern the atoms that xscreensaver_command() needs.
-   */
-  XA_VROOT = XInternAtom (dpy, "__SWM_VROOT", False);
-  XA_SCREENSAVER = XInternAtom (dpy, "SCREENSAVER", False);
-  XA_SCREENSAVER_VERSION = XInternAtom (dpy, "_SCREENSAVER_VERSION",False);
-  XA_SCREENSAVER_STATUS = XInternAtom (dpy, "_SCREENSAVER_STATUS", False);
-  XA_SCREENSAVER_ID = XInternAtom (dpy, "_SCREENSAVER_ID", False);
-  XA_SCREENSAVER_RESPONSE = XInternAtom (dpy, "_SCREENSAVER_RESPONSE", False);
-  XA_SELECT = XInternAtom (dpy, "SELECT", False);
-  XA_DEMO = XInternAtom (dpy, "DEMO", False);
-  XA_ACTIVATE = XInternAtom (dpy, "ACTIVATE", False);
-  XA_SUSPEND = XInternAtom (dpy, "SUSPEND", False);
-  XA_BLANK = XInternAtom (dpy, "BLANK", False);
-  XA_LOCK = XInternAtom (dpy, "LOCK", False);
-  XA_EXIT = XInternAtom (dpy, "EXIT", False);
-  XA_RESTART = XInternAtom (dpy, "RESTART", False);
+  init_xscreensaver_atoms (dpy);
 
   /* Create the window and all its widgets.
    */

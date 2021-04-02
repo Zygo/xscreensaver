@@ -26,30 +26,12 @@
 
 /* chessmodels.c: Contains the code for piece model creation */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
+#include "screenhackI.h"
+#include "chessmodels.h"
 
 #include <math.h>
 #include <stdlib.h>
 
-#ifndef HAVE_JWXYZ
-# include <GL/glx.h>
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_ANDROID
-#include <GLES/gl.h>
-#define Bool int
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
-#include "chessmodels.h"
-
-/* End of Data */
 #define ENDOFDATA 65535
 
 /* Section headers */

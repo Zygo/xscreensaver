@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2018 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1999-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,21 +21,78 @@
  */
 
 #include "utils.h"
-#include "visual.h"
 #include "resources.h"
 
 #ifdef HAVE_GL
 # include <GL/gl.h>
-# include <GL/glx.h>
+# ifdef HAVE_EGL
+#  include <EGL/egl.h>
+#  include <EGL/eglext.h>
+# else
+#  include <GL/glx.h>
+# endif
 #endif /* HAVE_GL */
 
+#include "visual.h"		/* after EGL/egl.h */
+
+#undef countof
+#define countof(x) (sizeof(x)/sizeof(*(x)))
+
+
 extern char *progname;
+
 
 Visual *
 get_gl_visual (Screen *screen)
 {
 #ifdef HAVE_GL
+
   Display *dpy = DisplayOfScreen (screen);
+
+# ifdef HAVE_EGL
+
+  Visual *v;
+  EGLint vid;
+  EGLDisplay *egl_display;
+  EGLConfig egl_config = 0;
+  int egl_major = -1, egl_minor = -1;
+
+  /* This is re-used, no need to close it. */
+  egl_display = eglGetDisplay ((EGLNativeDisplayType) dpy);
+  if (!egl_display)
+    {
+      fprintf (stderr, "%s: eglGetDisplay failed\n", progname);
+      return 0;
+    }
+
+  if (! eglInitialize (egl_display, &egl_major, &egl_minor))
+    {
+      fprintf (stderr, "%s: eglInitialize failed\n", progname);
+      abort();
+    }
+
+  /* Get the best EGL config on any visual, then see what visual it used. */
+  get_egl_config (dpy, egl_display, -1, &egl_config);
+  if (!egl_config) abort();
+
+  if (!eglGetConfigAttrib (egl_display, egl_config,
+                           EGL_NATIVE_VISUAL_ID, &vid))
+    {
+      fprintf (stderr, "%s: EGL: no native visual ID\n", progname);
+      abort();
+    }
+        
+  v = id_to_visual (screen, vid);
+  if (!v)
+    {
+      fprintf (stderr, "%s: EGL: no X11 visual 0x%x\n", progname, vid);
+      abort();
+    }
+
+    return v;
+
+# else  /* !HAVE_EGL -- GLX */
+
   int screen_num = screen_number (screen);
 
 # define R GLX_RED_SIZE
@@ -60,7 +117,6 @@ get_gl_visual (Screen *screen)
 #  define SB GL_SAMPLE_BUFFERS
 #  define SM GL_SAMPLES
 # endif
-
 
   int attrs[][40] = {
 # ifdef SB				  /* rgba double stencil multisample */
@@ -107,10 +163,132 @@ get_gl_visual (Screen *screen)
           return v;
         }
     }
+
+# endif  /* !HAVE_EGL -- GLX */
 #endif /* !HAVE_GL */
 
   return 0;
 }
+
+
+#ifdef HAVE_EGL
+/* An X11 "visual" is an object that encapsulates the available display
+   formats: color mapping, depth and so on.  So is a GLE "config".
+   So why isn't there a one-to-one mapping between visuals and configs?
+   Once again, I can only assume the answer is that the people responsible
+   for every post-2002 version of the OpenGL specification are incompetent.
+
+   Under GLX, there will be multiple X11 visuals that appear (and behave)
+   identically to X11 programs, code but that have different GL parameters.
+   Two RGB visuals might have different alpha, depth, or stencil sizes,
+   for example, that would matter to a GL program but not to an X11 program.
+
+   But EGL has dozens of 'configs' for each visual, so we can't just pass
+   around a Window and a Visual to describe the display parameters: we need
+   to pass around the 'config' as well.  Or, do what we do here, have both
+   sides use the same code to convert a visual to the best 'config'.
+   (It goes down a list of parameter settings, from higher quality to lower,
+   and takes the first config that matches.)
+
+   SGI solved this problem in like 1988, and like so many things, GLES went
+   and fucked it all up again.
+ */
+void
+get_egl_config (Display *dpy, EGLDisplay *egl_display,
+                EGLint x11_visual_id, EGLConfig *egl_config)
+{
+# define COMMON \
+    EGL_SURFACE_TYPE,      EGL_WINDOW_BIT, \
+    EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER
+# define R EGL_RED_SIZE
+# define G EGL_GREEN_SIZE
+# define B EGL_BLUE_SIZE
+# define A EGL_ALPHA_SIZE
+# define D EGL_DEPTH_SIZE
+# define I EGL_BUFFER_SIZE
+# define ST EGL_STENCIL_SIZE
+# define SB EGL_SAMPLE_BUFFERS
+# define SM EGL_SAMPLES
+
+  const EGLint templates[][40] = {
+# ifdef SB
+   { COMMON, R,8, G,8, B,8, A,8, D,8, ST,1, SB,1, SM,8, EGL_NONE },
+   { COMMON, R,8, G,8, B,8, A,8, D,8, ST,1, SB,1, SM,6, EGL_NONE },
+   { COMMON, R,8, G,8, B,8, A,8, D,8, ST,1, SB,1, SM,4, EGL_NONE },
+   { COMMON, R,8, G,8, B,8, A,8, D,8, ST,1, SB,1, SM,2, EGL_NONE },
+#  define SB_COUNT 4 /* #### Kludgey count of preceeding lines! */
+# endif
+   { COMMON, R,8, G,8, B,8, A,8, D,8, ST,1, EGL_NONE }, /* rgba stencil */
+   { COMMON, R,8, G,8, B,8,      D,8, ST,1, EGL_NONE }, /* rgb  stencil */
+   { COMMON, R,4, G,4, B,4,      D,4, ST,1, EGL_NONE },
+   { COMMON, R,2, G,2, B,2,      D,2, ST,1, EGL_NONE },
+   { COMMON, R,8, G,8, B,8, A,8, D,8,       EGL_NONE }, /* rgba */
+   { COMMON, R,8, G,8, B,8,      D,8,       EGL_NONE }, /* rgb  */
+   { COMMON, R,4, G,4, B,4,      D,4,       EGL_NONE },
+   { COMMON, R,2, G,2, B,2,      D,2,       EGL_NONE },
+   { COMMON, R,1, G,1, B,1,      D,1,       EGL_NONE }  /* monochrome */
+  };
+  EGLint attrs[40];
+  EGLint nconfig;
+  int i, j, k, iter, pass;
+  Bool glslp;
+
+  i = 0;
+# ifdef SB
+  if (! get_boolean_resource (dpy, "multiSample", "MultiSample"))
+    i = SB_COUNT;  /* skip over the multibuffer entries in 'attrs' */
+# endif /* SB */
+
+  glslp = get_boolean_resource (dpy, "prefersGLSL", "PrefersGLSL");
+  iter = (glslp ? 2 : 1);
+
+  *egl_config = 0;
+  for (pass = 0; pass < iter; pass++)
+    {
+      for (; i < countof(templates); i++)
+        {
+          for (j = 0, k = 0; templates[i][j] != EGL_NONE; j += 2)
+            {
+              attrs[k++] = templates[i][j];
+              attrs[k++] = templates[i][j+1];
+            }
+
+          attrs[k++] = EGL_RENDERABLE_TYPE;
+# ifdef HAVE_GLES3
+          if (glslp && pass == 0)
+            attrs[k++] = EGL_OPENGL_ES3_BIT;
+          else
+            attrs[k++] = EGL_OPENGL_ES_BIT;
+# elif defined(HAVE_JWZGLES)
+          attrs[k++] = EGL_OPENGL_ES_BIT;
+# else
+          attrs[k++] = EGL_OPENGL_BIT;
+# endif
+
+          if (x11_visual_id != -1)
+            {
+              attrs[k++] = EGL_NATIVE_VISUAL_ID;
+              attrs[k++] = x11_visual_id;
+            }
+
+          attrs[k++] = EGL_NONE;
+
+          nconfig = -1;
+          if (eglChooseConfig (egl_display, attrs, egl_config, 1, &nconfig)
+              && nconfig == 1)
+            break;
+        }
+      if (i < countof(templates))
+        break;
+    }
+
+  if (! *egl_config)
+    {
+      fprintf (stderr, "%s: eglChooseConfig: no configs found\n", progname);
+      abort();
+    }
+}
+#endif /* HAVE_EGL */
 
 
 void
@@ -121,8 +299,13 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
 
 #ifdef HAVE_GL
   {
+# ifdef HAVE_EGL
+    EGLDisplay *egl_display;
+    EGLConfig config = 0;
+# else  /* !HAVE_EGL -- GLX */
     int status;
     int value = False;
+# endif /* !HAVE_EGL -- GLX */
 
     Display *dpy = DisplayOfScreen (screen);
     XVisualInfo vi_in, *vi_out;
@@ -133,6 +316,108 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
     vi_out = XGetVisualInfo (dpy, (VisualScreenMask | VisualIDMask),
                              &vi_in, &out_count);
     if (! vi_out) abort ();
+
+# ifdef HAVE_EGL
+
+    /* This is re-used, no need to close it. */
+    egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR,
+                                         (EGLNativeDisplayType) dpy, NULL);
+    if (!egl_display)
+      {
+        fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);
+        return;
+      }
+
+    get_egl_config (dpy, egl_display, vi_out->visualid, &config);
+    if (!config)
+      {
+        fprintf (stderr, "%s: no matching EGL config for X11 visual 0x%lx\n",
+                 progname, vi_out->visualid);
+        abort();
+      }
+
+    {
+      int i;
+      const struct { int hexp; EGLint i; const char *s; } fields[] = {
+        { 1, EGL_CONFIG_ID,		"config ID:"	 },
+        { 1, EGL_CONFIG_CAVEAT,		"caveat:"	 },
+        { 1, EGL_CONFORMANT,		"conformant:"	 },
+        { 0, EGL_COLOR_BUFFER_TYPE,	"buffer type:"	 },
+        { 0, EGL_RED_SIZE,		"color size:"	 },
+        { 0, EGL_TRANSPARENT_RED_VALUE,	"transparency:"	 },
+        { 0, EGL_BUFFER_SIZE,		"buffer size:"	 },
+        { 0, EGL_DEPTH_SIZE,		"depth size:"	 },
+        { 0, EGL_LUMINANCE_SIZE,	"lum size:"	 },
+        { 0, EGL_STENCIL_SIZE,		"stencil size:"	 },
+        { 0, EGL_ALPHA_MASK_SIZE,	"alpha mask:"	 },
+        { 0, EGL_LEVEL,			"level:"	 },
+        { 0, EGL_SAMPLES,		"samples:"	 },
+        { 0, EGL_SAMPLE_BUFFERS,	"sample bufs:"	 },
+        { 0, EGL_NATIVE_RENDERABLE,	"native render:" },
+        { 1, EGL_NATIVE_VISUAL_TYPE,	"native type:"	 },
+        { 1, EGL_RENDERABLE_TYPE,	"render type:"	 },
+        { 0, EGL_SURFACE_TYPE,		"surface type:"	 },
+        { 0, EGL_BIND_TO_TEXTURE_RGB,	"bind RGB:"	 },
+        { 0, EGL_BIND_TO_TEXTURE_RGBA,	"bind RGBA:"	 },
+        { 0, EGL_MAX_PBUFFER_WIDTH,	"buffer width:"	 },
+        { 0, EGL_MAX_PBUFFER_HEIGHT,	"buffer height:" },
+        { 0, EGL_MAX_PBUFFER_PIXELS,	"buffer pixels:" },
+        { 0, EGL_MAX_SWAP_INTERVAL,	"max swap:"	 },
+        { 0, EGL_MIN_SWAP_INTERVAL,	"min swap:"	 },
+        };
+      EGLint r=0, g=0, b=0, a=0, tt=0, tr=0, tg=0, tb=0;
+      eglGetConfigAttrib (egl_display, config, EGL_RED_SIZE,   &r);
+      eglGetConfigAttrib (egl_display, config, EGL_GREEN_SIZE, &g);
+      eglGetConfigAttrib (egl_display, config, EGL_BLUE_SIZE,  &b);
+      eglGetConfigAttrib (egl_display, config, EGL_ALPHA_SIZE, &a);
+      eglGetConfigAttrib (egl_display, config, EGL_TRANSPARENT_TYPE, &tt);
+      eglGetConfigAttrib (egl_display, config, EGL_TRANSPARENT_RED_VALUE,  &tr);
+      eglGetConfigAttrib (egl_display, config, EGL_TRANSPARENT_GREEN_VALUE,&tg);
+      eglGetConfigAttrib (egl_display, config, EGL_TRANSPARENT_BLUE_VALUE, &tb);
+      for (i = 0; i < countof(fields); i++)
+        {
+          EGLint v = 0;
+          char s[100];
+          eglGetConfigAttrib (egl_display, config, fields[i].i, &v);
+          if (fields[i].i == EGL_RED_SIZE)
+            sprintf (s, "%d, %d, %d, %d", r, g, b, a);
+          else if (fields[i].i == EGL_TRANSPARENT_RED_VALUE && tt != EGL_NONE)
+            sprintf (s, "%d, %d, %d", tr, tg, tb);
+          else if (fields[i].i == EGL_CONFIG_CAVEAT)
+            strcpy (s, (v == EGL_NONE ? "none" :
+                        v == EGL_SLOW_CONFIG ? "slow" :
+# ifdef EGL_NON_CONFORMANT
+                        v == EGL_NON_CONFORMANT ? "non-conformant" :
+# endif
+                        "???"));
+          else if (fields[i].i == EGL_COLOR_BUFFER_TYPE)
+            strcpy (s, (v == EGL_RGB_BUFFER ? "RGB" :
+                        v == EGL_LUMINANCE_BUFFER ? "luminance" :
+                        "???"));
+          else if (fields[i].i == EGL_CONFORMANT ||
+                   fields[i].i == EGL_RENDERABLE_TYPE)
+            {
+              sprintf (s, "0x%02x", v);
+              if (v & EGL_OPENGL_BIT)     strcat (s, " OpenGL");
+              if (v & EGL_OPENGL_ES_BIT)  strcat (s, " GLES-1.x");
+              if (v & EGL_OPENGL_ES2_BIT) strcat (s, " GLES-2.0");
+# ifdef EGL_OPENGL_ES3_BIT
+              if (v & EGL_OPENGL_ES3_BIT) strcat (s, " GLES-3.0");
+# endif
+              if (v & EGL_OPENVG_BIT)     strcat (s, " OpenVG");
+            }
+          else if (fields[i].hexp)
+            sprintf (s, "0x%02x", v);
+          else if (v)
+            sprintf (s, "%d", v);
+          else
+            *s = 0;
+
+          if (*s) fprintf (f, "    EGL %-14s %s\n", fields[i].s, s);
+        }
+    }
+
+# else /* !HAVE_EGL -- GLX */
 
     status = glXGetConfig (dpy, vi_out, GLX_USE_GL, &value);
 
@@ -146,7 +431,7 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
     
     if (!glXGetConfig (dpy, vi_out, GLX_LEVEL, &value) &&
         value != 0)
-      printf ("    GLX level:         %d\n", value);
+      fprintf (f, "    GLX level:         %d\n", value);
 
     if (!glXGetConfig (dpy, vi_out, GLX_RGBA, &value) && value)
       {
@@ -155,22 +440,22 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
         glXGetConfig (dpy, vi_out, GLX_GREEN_SIZE, &g);
         glXGetConfig (dpy, vi_out, GLX_BLUE_SIZE,  &b);
         glXGetConfig (dpy, vi_out, GLX_ALPHA_SIZE, &a);
-        printf ("    GLX type:          RGBA (%2d, %2d, %2d, %2d)\n",
-                r, g, b, a);
+        fprintf (f, "    GLX type:          RGBA (%2d, %2d, %2d, %2d)\n",
+                 r, g, b, a);
 
         r=0, g=0, b=0, a=0;
         glXGetConfig (dpy, vi_out, GLX_ACCUM_RED_SIZE,   &r);
         glXGetConfig (dpy, vi_out, GLX_ACCUM_GREEN_SIZE, &g);
         glXGetConfig (dpy, vi_out, GLX_ACCUM_BLUE_SIZE,  &b);
         glXGetConfig (dpy, vi_out, GLX_ACCUM_ALPHA_SIZE, &a);
-        printf ("    GLX accum:         RGBA (%2d, %2d, %2d, %2d)\n",
-                r, g, b, a);
+        fprintf (f, "    GLX accum:         RGBA (%2d, %2d, %2d, %2d)\n",
+                 r, g, b, a);
       }
     else
       {
         value = 0;
         glXGetConfig (dpy, vi_out, GLX_BUFFER_SIZE, &value);
-        printf ("    GLX type:          indexed (%d)\n", value);
+        fprintf (f, "    GLX type:          indexed (%d)\n", value);
       }
 
 # ifndef  GLX_NONE_EXT       /* Hooray for gratuitious name changes. */
@@ -189,36 +474,36 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
     if (!glXGetConfig (dpy, vi_out, GLX_VISUAL_CAVEAT_EXT, &value) &&
         value != GLX_NONE_EXT)
 #   ifdef GLX_NON_CONFORMANT_EXT
-      printf ("    GLX rating:        %s\n",
-              (value == GLX_NONE_EXT ? "none" :
-               value == GLX_SLOW_VISUAL_EXT ? "slow" :
-               value == GLX_NON_CONFORMANT_EXT ? "non-conformant" :
-               "???"));
+      fprintf (f, "    GLX rating:        %s\n",
+               (value == GLX_NONE_EXT ? "none" :
+                value == GLX_SLOW_VISUAL_EXT ? "slow" :
+                value == GLX_NON_CONFORMANT_EXT ? "non-conformant" :
+                "???");
 #   else      
-      printf ("    GLX rating:        %s\n",
-              (value == GLX_NONE_EXT ? "none" :
-               value == GLX_SLOW_VISUAL_EXT ? "slow" :
-               "???"));
+      fprintf (f, "    GLX rating:        %s\n",
+               (value == GLX_NONE_EXT ? "none" :
+                value == GLX_SLOW_VISUAL_EXT ? "slow" :
+                "???"));
 #   endif /* GLX_NON_CONFORMANT_EXT */
 # endif /* GLX_VISUAL_CAVEAT_EXT */
 
     if (!glXGetConfig (dpy, vi_out, GLX_DOUBLEBUFFER, &value))
-      printf ("    GLX double-buffer: %s\n", (value ? "yes" : "no"));
+      fprintf (f, "    GLX double-buffer: %s\n", (value ? "yes" : "no"));
 
     if (!glXGetConfig (dpy, vi_out, GLX_STEREO, &value) &&
         value)
-      printf ("    GLX stereo:        %s\n", (value ? "yes" : "no"));
+      fprintf (f, "    GLX stereo:        %s\n", (value ? "yes" : "no"));
 
     if (!glXGetConfig (dpy, vi_out, GLX_AUX_BUFFERS, &value) &&
         value != 0)
-      printf ("    GLX aux buffers:   %d\n", value);
+      fprintf (f, "    GLX aux buffers:   %d\n", value);
 
     if (!glXGetConfig (dpy, vi_out, GLX_DEPTH_SIZE, &value))
-      printf ("    GLX depth size:    %d\n", value);
+      fprintf (f, "    GLX depth size:    %d\n", value);
 
     if (!glXGetConfig (dpy, vi_out, GLX_STENCIL_SIZE, &value) &&
         value != 0)
-      printf ("    GLX stencil size:  %d\n", value);
+      fprintf (f, "    GLX stencil size:  %d\n", value);
 
 # ifdef SB  /* GL_SAMPLE_BUFFERS || GLX_SAMPLE_BUFFERS_* */
     if (!glXGetConfig (dpy, vi_out, SB, &value) &&
@@ -226,7 +511,7 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
       {
         int bufs = value;
         if (!glXGetConfig (dpy, vi_out, SM, &value))
-          printf ("    GLX multisample:   %d, %d\n", bufs, value);
+          fprintf (f, "    GLX multisample:   %d, %d\n", bufs, value);
       }
 # endif  /* GL_SAMPLE_BUFFERS || GLX_SAMPLE_BUFFERS_* */
 
@@ -234,12 +519,12 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
         value != GLX_NONE_EXT)
       {
         if (value == GLX_NONE_EXT)
-          printf ("    GLX transparency:  none\n");
+          fprintf (f, "    GLX transparency:  none\n");
         else if (value == GLX_TRANSPARENT_INDEX_EXT)
           {
             if (!glXGetConfig (dpy, vi_out, GLX_TRANSPARENT_INDEX_VALUE_EXT,
                                &value))
-              printf ("    GLX transparency:  indexed (%d)\n", value);
+              fprintf (f, "    GLX transparency:  indexed (%d)\n", value);
           }
         else if (value == GLX_TRANSPARENT_RGB_EXT)
           {
@@ -248,10 +533,11 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
             glXGetConfig (dpy, vi_out, GLX_TRANSPARENT_GREEN_VALUE_EXT, &g);
             glXGetConfig (dpy, vi_out, GLX_TRANSPARENT_BLUE_VALUE_EXT,  &b);
             glXGetConfig (dpy, vi_out, GLX_TRANSPARENT_ALPHA_VALUE_EXT, &a);
-            printf ("    GLX transparency:  RGBA (%2d, %2d, %2d, %2d)\n",
-                    r, g, b, a);
+            fprintf (f, "    GLX transparency:  RGBA (%2d, %2d, %2d, %2d)\n",
+                     r, g, b, a);
           }
       }
+# endif /* !HAVE_EGL */
   }
 #endif  /* HAVE_GL */
 }
@@ -262,13 +548,15 @@ validate_gl_visual (FILE *out, Screen *screen, const char *window_desc,
                     Visual *visual)
 {
 #ifdef HAVE_GL
+# ifndef HAVE_EGL
   int status;
   int value = False;
+  unsigned int id;
+# endif
 
   Display *dpy = DisplayOfScreen (screen);
   XVisualInfo vi_in, *vi_out;
   int out_count;
-  unsigned int id;
 
   vi_in.screen = screen_number (screen);
   vi_in.visualid = XVisualIDFromVisual (visual);
@@ -276,6 +564,7 @@ validate_gl_visual (FILE *out, Screen *screen, const char *window_desc,
                              &vi_in, &out_count);
   if (! vi_out) abort ();
 
+# ifndef HAVE_EGL
   status = glXGetConfig (dpy, vi_out, GLX_USE_GL, &value);
 
   id = (unsigned int) vi_out->visualid;
@@ -295,6 +584,7 @@ validate_gl_visual (FILE *out, Screen *screen, const char *window_desc,
       return False;
     }
   else
+# endif /* !HAVE_EGL */
     {
       return True;
     }

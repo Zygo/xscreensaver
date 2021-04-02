@@ -217,6 +217,10 @@
 - (NSString *) makeKey:(NSString *)key
 {
 # ifdef HAVE_IPHONE
+  if ([key isEqualToString:@"globalCycle"] ||
+      [key isEqualToString:@"globalCycleTimeout"])
+    return key;  // These two are global, not per-saver.
+
   NSString *prefix = [saver_name stringByAppendingString:@"."];
   if (! [key hasPrefix:prefix])  // Don't double up!
     key = [prefix stringByAppendingString:key];
@@ -381,6 +385,7 @@
     NSObject *val = [d objectForKey:key];
     NSLog (@"%@ = %@", key, val);
   }
+# ifndef HAVE_IPHONE  // They are the same
   NSLog(@"globalDefaults:");
   d = [globalDefaults dictionaryRepresentation];
   for (NSObject *key in [[d allKeys]
@@ -388,6 +393,7 @@
     NSObject *val = [d objectForKey:key];
     NSLog (@"%@ = %@", key, val);
   }
+# endif
 #endif
 
 }

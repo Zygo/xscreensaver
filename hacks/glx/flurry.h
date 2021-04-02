@@ -35,33 +35,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __GLCODE__
 #define __GLCODE__
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#ifndef HAVE_JWXYZ
-# include <GL/gl.h>
-# include <GL/glu.h>
-# include <GL/glx.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
-
-#include <stdlib.h>
-#include <math.h>
-
+#include "xlockmoreI.h"
 #include "yarandom.h"
 #include "rotator.h"
 #include "gltrackball.h"
+
+#include <stdlib.h>
+#include <math.h>
 
 typedef struct _global_info_t global_info_t;
 typedef struct _flurry_info_t flurry_info_t;
 
 #define sqr(X)     ((X) * (X))
-#define PI         3.14159265358979323846f
+#define PI         M_PI
 #define DEG2RAD(X) (PI*(X)/180.0)
 #define RAD2DEG(X) ((X)*180.0/PI)
 #define rnd()      (frand(1.0))

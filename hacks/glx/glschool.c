@@ -19,9 +19,6 @@
 #define release_glschool		(0)
 #define glschool_handle_event	(xlockmore_no_events)
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #define DEF_NFISH	"100"
 #define DEF_FOG		"False"
 #define DEF_DRAWBBOX	"True"

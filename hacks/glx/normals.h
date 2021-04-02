@@ -1,4 +1,4 @@
-/* normals, Copyright (c) 2002-2012 Jamie Zawinski <jwz@jwz.org>
+/* normals, Copyright (c) 2002-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,22 +13,6 @@
 
 #ifndef __NORMALS_H__
 #define __NORMALS_H__
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
-#ifndef HAVE_JWXYZ
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_ANDROID
-# include <GLES/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
 
 typedef struct {
   double x,y,z;

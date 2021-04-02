@@ -295,22 +295,21 @@ distdepend: generate_potfiles_in update-po $(DISTFILES)
 generate_potfiles_in:
 	@tmp=po.$$$$ ;				\
 	 file=POTFILES.in ;			\
-	 echo "sleeping 3 seconds..." ;\
-	 sleep 3; \
 	 ( cd $(top_srcdir);			\
 	   echo "# Auto-generated: `LANG=C date`" ;	\
 	   ( grep -l '_("' driver/*.[ch] ;	\
 	     ls driver/*.ui			\
 		driver/*.desktop.in		\
 		hacks/config/*.xml ) |		\
+	   grep -v rdbomb |			\
 	   grep -v co____9 |			\
 	   sort					\
 	  ) > $$tmp &&				\
 	 mv $$tmp $$file &&			\
 	 echo "created `pwd`/$$file"
 
-echo_tarfiles:
-	@echo $(TARFILES)
+list_tarfiles:
+	@find $(TARFILES) -type f -print | sort
 
 distdir = ../$(GETTEXT_PACKAGE)-$(VERSION)/$(subdir)
 dist distdir: update-po $(DISTFILES)

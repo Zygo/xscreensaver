@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,41 +23,40 @@
 
 typedef struct ModeInfo ModeInfo;
 
-#ifdef HAVE_GL
-
-/* I'm told that the Sun version of OpenGL needs to have the constant
-   SUN_OGL_NO_VERTEX_MACROS defined in order for morph3d to compile
-   (the number of arguments to the glNormal3f macro changes...)
-   Verified with gcc 2.7.2.2 and Sun cc 4.2 with OpenGL 1.1.1 dev 4
-   on Solaris 2.5.1.
+/* Keep slots for these pointers in ModeInfo even if this header is
+   included in a file that is not being compiled in GL-mode. so that
+   sizeof(ModeInfo) doesn't vary.
  */
-# ifndef HAVE_MESA_GL
-#  if defined(__sun) && defined(__SVR4)	/* Solaris */
-#   define SUN_OGL_NO_VERTEX_MACROS 1
-#  endif /* Solaris */
-# endif /* !HAVE_MESA_GL */
-
-# ifdef HAVE_COCOA
-#  ifndef HAVE_IPHONE
-#   include <OpenGL/gl.h>
-#   include <OpenGL/glu.h>
-#  endif
-# elif defined(HAVE_ANDROID)
-#  include <GLES/gl.h>
-# else
-#  include <GL/gl.h>
-#  include <GL/glu.h>
-#  include <GL/glx.h>
-# endif
-
+#if defined(HAVE_GL) && !defined(USE_GL)
 # ifdef HAVE_JWZGLES
-#  include "jwzgles.h"
-# endif /* HAVE_JWZGLES */
-#endif /* HAVE_GL */
+   typedef struct jwzgles_state jwzgles_state;
+# endif
+# ifdef HAVE_EGL
+   typedef struct egl_data egl_data;
+# elif !defined(HAVE_COCOA) && !defined(HAVE_ANDROID)
+  typedef void *GLXContext;
+# endif
+#endif /* HAVE_GL && !USE_GL */
+
+#ifdef HAVE_EGL
+  typedef struct egl_data *GLXContext;
+  typedef Drawable GLXDrawable;
+#endif /* !HAVE_EGL */
+
+#if defined(HAVE_EGL) && defined(USE_GL)
+  typedef struct egl_data {
+    EGLDisplay egl_display;
+    EGLSurface egl_surface;
+    EGLContext egl_context;  /* Unused */
+    EGLConfig  egl_config;   /* Unused */
+  } egl_data;
+
+  extern Bool glXMakeCurrent (Display *, GLXDrawable, GLXContext);
+  extern void glXSwapBuffers (Display *, GLXDrawable);
+#endif /* HAVE_EGL && USE_GL */
 
 
 #ifdef USE_GL
-
   extern GLXContext *init_GL (ModeInfo *);
   extern void xlockmore_reset_gl_state(void);
   extern void clear_gl_error (void);
@@ -65,8 +64,8 @@ typedef struct ModeInfo ModeInfo;
 
   extern Visual *xlockmore_pick_gl_visual (Screen *);
   extern Bool xlockmore_validate_gl_visual (Screen *, const char *, Visual *);
-
 #endif /* USE_GL */
+
 
 /* These are only used in GL mode, but I don't understand why XCode
    isn't seeing the prototypes for them in glx/fps-gl.c... */
@@ -81,7 +80,6 @@ extern void xlockmore_setup (struct xscreensaver_function_table *, void *);
 extern void xlockmore_do_fps (Display *, Window, fps_state *, void *);
 extern void xlockmore_mi_init (ModeInfo *, size_t, void **);
 extern Bool xlockmore_no_events (ModeInfo *, XEvent *);
-
 
 /* The xlockmore RNG API is implemented in utils/yarandom.h. */
 
@@ -121,9 +119,15 @@ struct ModeInfo {
   Bool fps_p;
   unsigned long polygon_count;  /* These values are for -fps display only */
   double recursion_depth;
-#if !defined HAVE_JWXYZ && defined HAVE_GL
-  GLXContext glx_context;
-#endif
+
+# ifdef HAVE_GL
+#  ifndef HAVE_JWXYZ
+    GLXContext glx_context;  /* or egl_data */
+#  endif
+#  ifdef HAVE_JWZGLES
+    jwzgles_state *jwzgles_state;
+#  endif
+# endif /* HAVE_GL */
 };
 
 typedef enum {  t_String, t_Float, t_Int, t_Bool } xlockmore_type;
@@ -163,6 +167,11 @@ struct xlockmore_function_table {
   void (*hack_free) (ModeInfo *);
   Bool (*hack_handle_events) (ModeInfo *, XEvent *);
   ModeSpecOpt *opts;
+
+# ifdef HAVE_JWZGLES    /* set in xlock-gl-utils.c */
+  void (*jwzgles_make_current) (jwzgles_state *);
+  void (*jwzgles_free) (void);
+# endif /* HAVE_JWZGLES */
 
   void **state_array;
   unsigned long live_displays, got_init;

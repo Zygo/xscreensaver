@@ -15,25 +15,10 @@
    by Jamie Zawinski <jwz@jwz.org>, 22-Jan-2001.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#ifdef HAVE_COCOA
-# include "jwxyz.h"
-#elif defined(HAVE_ANDROID)
-# include <GLES/gl.h>
-#else /* real Xlib */
-# include <GL/glx.h>
-# include <GL/glu.h>
-#endif /* !HAVE_COCOA */
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
+#include "screenhackI.h"
+#include "stonerview.h"
 
 #include <stdlib.h>
-#include "stonerview.h"
 
 static GLfloat view_rotx = -45.0, view_roty = 0.0, view_rotz = 15.0;
 static GLfloat view_scale = 4.0;

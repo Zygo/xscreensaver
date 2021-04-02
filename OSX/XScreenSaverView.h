@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -75,6 +75,7 @@
 {
   struct xscreensaver_function_table *xsft;
   PrefsReader *prefsReader;
+  NSString *saver_title;  // "Möbius Gears", not "MoebiusGears"
 
   BOOL setup_p;		   // whether xsft->setup_cb() has been run
   BOOL initted_p;          // whether xsft->init_cb() has been run
@@ -95,6 +96,7 @@
   BOOL _ignoreRotation;		// whether hack requested "always portrait".
 				// some want this, some do not.
   NSTimer *crash_timer;
+  NSTimer *cycle_timer;
 
   NSDictionary *function_tables;
 
@@ -146,7 +148,7 @@
 # endif // JWXYZ_GL && HAVE_IPHONE
 }
 
-- (id)initWithFrame:(NSRect)frame saverName:(NSString*)n isPreview:(BOOL)p;
+- (id)initWithFrame:(NSRect)frame title:(NSString*)n isPreview:(BOOL)p;
 
 - (void) render_x11;
 - (NSOpenGLContext *) oglContext;

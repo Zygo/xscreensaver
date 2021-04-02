@@ -63,12 +63,10 @@
 #define DEFAULTS "*delay:	30000	    \n" \
 		 "*showFPS:	False	    \n" \
 		 "*wireframe:	False	    \n" \
+	         "*labelfont:   sans-serif 18\n" \
 		 "*suppressRotationAnimation: True\n" \
-	 "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n"
 
 # define release_spheremonics 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "texfont.h"
@@ -80,7 +78,7 @@
 
 #ifdef USE_GL /* whole file */
 
-#define DEF_DURATION    "100"
+#define DEF_DURATION    "200"
 #define DEF_SPIN        "XYZ"
 #define DEF_WANDER      "False"
 #define DEF_RESOLUTION  "64"
@@ -95,7 +93,7 @@ typedef struct {
   trackball_state *trackball;
   Bool button_down_p;
 
-  GLuint dlist, dlist2;
+  GLuint dlist, dlist2, grid_dlist;
   GLfloat scale;
   XYZ bbox[2];
 
@@ -115,6 +113,7 @@ typedef struct {
 
   int change_tick;
   int done_once;
+  double fade;
 
 } spheremonics_configuration;
 
@@ -185,14 +184,13 @@ reshape_spheremonics (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
-    int o = (int) current_device_rotation();
-    if (o != 0 && o != 180 && o != -180)
-      glScalef (1/h, 1/h, 1/h);
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glScalef (s, s, s);
   }
 
-# endif
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -328,7 +326,6 @@ draw_bounding_box (ModeInfo *mi)
   /* spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)]; */
 
   static const GLfloat c1[4] = { 0.2, 0.2, 0.6, 1.0 };
-  static const GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
   int wire = MI_IS_WIREFRAME(mi);
 
   GLfloat x1,y1,z1,x2,y2,z2;
@@ -382,36 +379,6 @@ draw_bounding_box (ModeInfo *mi)
       glVertex3f(x2, y2, z2); glVertex3f(x2, y2, z1);
       glEnd();
       glDisable(GL_CULL_FACE);
-    }
-
-  if (do_grid)
-    {
-      glDisable (GL_LIGHTING);
-      glColor3f (c2[0], c2[1], c2[2]);
-      glPushMatrix();
-      glBegin(GL_LINES);
-      glVertex3f(0, -0.66, 0);
-      glVertex3f(0,  0.66, 0); 
-      glEnd();
-      draw_circle (mi, True);
-      glRotatef(90, 1, 0, 0);
-      draw_circle (mi, True);
-      glRotatef(90, 0, 1, 0);
-      draw_circle (mi, True);
-      glPopMatrix();
-    }
-  else
-    {
-#if 0
-      glBegin(GL_LINES);
-      if (x1 > 0) x1 = 0; if (x2 < 0) x2 = 0;
-      if (y1 > 0) y1 = 0; if (y2 < 0) y2 = 0;
-      if (z1 > 0) z1 = 0; if (z2 < 0) z2 = 0;
-      glVertex3f(x1, 0,  0);  glVertex3f(x2, 0,  0); 
-      glVertex3f(0 , y1, 0);  glVertex3f(0,  y2, 0); 
-      glVertex3f(0,  0,  z1); glVertex3f(0,  0,  z2); 
-      glEnd();
-#endif
     }
 }
 
@@ -674,23 +641,42 @@ generate_spheremonics (ModeInfo *mi)
   tweak_parameters (mi);
 
   if (!cc->done_once || (0 == (random() % 20)))
+    init_colors (mi);
+
+  glNewList(cc->dlist, GL_COMPILE);
+  cc->polys1 = unit_spheremonics (mi, cc->resolution, wire,cc->m,cc->colors);
+  glEndList();
+
+  glNewList(cc->dlist2, GL_COMPILE);
+  glPushMatrix();
+  glScalef (1.05, 1.05, 1.05);
+  cc->polys2 = unit_spheremonics (mi, cc->resolution, 2, cc->m, cc->colors);
+  glPopMatrix();
+  glEndList();
+
+  if (! cc->done_once)
     {
-      init_colors (mi);
-      cc->done_once = True;
+      glNewList(cc->grid_dlist, GL_COMPILE);
+      if (do_grid)
+        {
+          static const GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
+          glPushMatrix();
+          glColor3f (c2[0], c2[1], c2[2]);
+          glBegin(GL_LINES);
+          glVertex3f(0, -0.66, 0);
+          glVertex3f(0,  0.66, 0); 
+          glEnd();
+          draw_circle (mi, True);
+          glRotatef(90, 1, 0, 0);
+          draw_circle (mi, True);
+          glRotatef(90, 0, 1, 0);
+          draw_circle (mi, True);
+          glPopMatrix();
+        }
+      glEndList();
     }
 
-  {
-    glNewList(cc->dlist, GL_COMPILE);
-    cc->polys1 = unit_spheremonics (mi, cc->resolution, wire,cc->m,cc->colors);
-    glEndList();
-
-    glNewList(cc->dlist2, GL_COMPILE);
-    glPushMatrix();
-    glScalef (1.05, 1.05, 1.05);
-    cc->polys2 = unit_spheremonics (mi, cc->resolution, 2, cc->m, cc->colors);
-    glPopMatrix();
-    glEndList();
-  }
+  cc->done_once = True;
 }
 
 
@@ -750,6 +736,7 @@ init_spheremonics (ModeInfo *mi)
 
   cc->dlist = glGenLists(1);
   cc->dlist2 = glGenLists(1);
+  cc->grid_dlist = glGenLists(1);
 
   cc->m_max = 4; /* 9? */
   {
@@ -826,8 +813,48 @@ draw_spheremonics (ModeInfo *mi)
 
   mi->polygon_count = 0;
 
+  if (do_grid)
+    {
+      GLfloat s = 1.5;
+      glDisable (GL_LIGHTING);
+      glPushMatrix();
+      glScalef (s, s, s);
+      glCallList (cc->grid_dlist);
+      glPopMatrix();
+      if (! MI_IS_WIREFRAME(mi))
+        glEnable (GL_LIGHTING);
+    }
+
   glScalef (cc->scale, cc->scale, cc->scale);
-  glCallList (cc->dlist);
+  glPushMatrix();
+  {
+    double fade_speed = 0.15;
+    GLfloat s;
+    if (cc->fade == 0)
+      s = 1;
+    else if (cc->fade > 0)
+      {
+        s = cc->fade;
+        cc->fade -= fade_speed;
+        cc->change_tick = 0;
+        if (cc->fade <= 0)
+          {
+            cc->fade = -1.0;
+            generate_spheremonics (mi);
+          }
+      }
+    else
+      {
+        s = 1 + cc->fade;
+        cc->fade += fade_speed;
+        cc->change_tick = 0;
+        if (cc->fade >= 0) cc->fade = 0;
+      }
+
+    glScalef (s, s, s);
+    glCallList (cc->dlist);
+  }
+  glPopMatrix();
   mi->polygon_count += cc->polys1;
 
   if (cc->mesher >= 0 /* || cc->button_down_p */)
@@ -838,8 +865,9 @@ draw_spheremonics (ModeInfo *mi)
       if (cc->mesher >= 0)
         cc->mesher--;
     }
-  do_tracer(mi);
 
+  if (cc->fade == 0)
+    do_tracer(mi);
 
   if (cc->button_down_p)
     {
@@ -862,8 +890,8 @@ draw_spheremonics (ModeInfo *mi)
     {
       if (cc->change_tick++ >= duration && !cc->button_down_p)
         {
-          generate_spheremonics(mi);
           cc->change_tick = 0;
+          cc->fade = 1.0;
           cc->mesher = -1;  /* turn off the mesh when switching objects */
         }
     }
@@ -889,6 +917,7 @@ free_spheremonics (ModeInfo *mi)
   if (cc->font_data) free_texture_font (cc->font_data);
   if (glIsList(cc->dlist)) glDeleteLists(cc->dlist, 1);
   if (glIsList(cc->dlist2)) glDeleteLists(cc->dlist2, 1);
+  if (glIsList(cc->grid_dlist)) glDeleteLists(cc->grid_dlist, 1);
 }
 
 XSCREENSAVER_MODULE ("Spheremonics", spheremonics)

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,13 +11,47 @@
 
 /* JWXYZ Is Not Xlib.
 
-   But it's a bunch of function definitions that bear some resemblance to
-   Xlib and that do Cocoa-ish or OpenGL-ish things that bear some resemblance
-   to the things that Xlib might have done.
+   macOS and iOS:
 
-   This is the version of jwxyz for Android.  The version used by MacOS
-   and iOS is in jwxyz.m.
+       jwxyz.m         -- Xlib in terms of Quartz / Core Graphics rendering,
+                          Renders into a CGContextRef that points to a CGImage
+                          in CPU RAM.
+       jwxyz-cocoa.m   -- Cocoa glue: fonts and such.
+
+   Android:
+
+       jwxyz-android.c -- Java / JNI glue.  Renders into an FBO texture if
+                          possible, otherwise an EGL PBuffer.
+
+       jwxyz-image.c   -- Pixmaps implemented in CPU RAM, for OpenGL hacks.
+                          Renders into an XImage, basically.
+
+       jwxyz-gl.c      -- Pixmaps implemented in terms of OpenGL textures,
+                          for X11 hacks (except kumppa, petri and slip).
+
+   Shared code:
+
+       jwxyz-common.c  -- Most of the Xlib implementation, used by all 3 OSes.
+       jwzgles.c       -- OpenGL 1.3 implemented in terms of OpenGLES 1.1.
+
+
+   Why two implemementations of Pixmaps for Android?
+
+     - GL hacks don't tend to need much in the way of Xlib, and having a
+       GL context to render Xlib alongside a GL context for rendering GL
+       seemed like trouble.
+
+     - X11 hacks render to a GL context because hardware acceleration tends
+       to work well with Xlib geometric stuff.  Better framerates, lower
+       power.
+
+   Why not eliminate jwxyz-cocoa.m and use jwxyz-gl.c on macOS and iOS
+   as well?
+
+     - Yeah, maybe.
+
  */
+
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -1134,7 +1168,7 @@ try_xlfd_font (Display *dpy, const char *name, Font fid)
     // This used to substitute Georgia for Times. Now it doesn't.
     if (CMP ("random")) {
       rand = True;
-    } else if (CMP ("fixed")) {
+    } else if (CMP ("fixed") || CMP ("monospace")) {
       require |= JWXYZ_STYLE_MONOSPACE;
       family_name = "Courier";
       family_name_size = strlen(family_name);

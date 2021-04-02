@@ -48,7 +48,7 @@ The \fIromanboy\fP program shows a 3d immersion of the real projective
 plane that smoothly deforms between the Roman surface and the Boy
 surface.  You can walk on the projective plane or turn in 3d.  The
 smooth deformation (homotopy) between these two famous immersions of
-the real projective plane was constructed by François Apéry.
+the real projective plane was constructed by FranÃ§ois ApÃ©ry.
 .PP
 The real projective plane is a non-orientable surface.  To make this
 apparent, the two-sided color mode can be used.  Alternatively,
@@ -172,7 +172,7 @@ case is a surface order of 2, which results in an immersion of the
 halfway model of Morin's sphere eversion (if the deformation is
 switched off).
 .PP
-This program is inspired by François Apéry's book "Models of the Real
+This program is inspired by FranÃ§ois ApÃ©ry's book "Models of the Real
 Projective Plane", Vieweg, 1987.
 .SH OPTIONS
 .I romanboy

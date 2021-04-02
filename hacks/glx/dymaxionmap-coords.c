@@ -140,7 +140,7 @@ static double radians(double degrees)
 
     double pi2, c1;
 
-    pi2 = 2 * 3.14159265358979323846;
+    pi2 = 2 * M_PI;
     c1 = pi2 / 360;
     return(c1 * degrees);
 

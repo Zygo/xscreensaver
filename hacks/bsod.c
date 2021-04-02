@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1998-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -36,6 +36,7 @@
 
 
 #include "screenhack.h"
+#include "xft.h"
 #include "ximage-loader.h"
 #include "apple2.h"
 
@@ -94,7 +95,9 @@ struct bsod_state {
   Display *dpy;
   Window window;
   XWindowAttributes xgwa;
-  XFontStruct *font, *fontA, *fontB, *fontC;
+  XftFont *font, *fontA, *fontB, *fontC;
+  XftDraw *xftdraw;
+  XftColor xft_fg, xft_bg;
   unsigned long fg, bg;
   GC gc;
   int left_margin, right_margin;	/* for text wrapping */
@@ -377,16 +380,15 @@ position_for_text (struct bsod_state *bst, const char *line)
       bst->queue[bst->pos].type != LEFT_FULL)
     while (*start)
       {
-        int dir, ascent, descent;
-        XCharStruct ov;
+        XGlyphInfo ov;
         const char *end = start;
         while (*end && *end != '\r' && *end != '\n')
           end++;
 
-        XTextExtents (bst->font, start, end-start,
-                      &dir, &ascent, &descent, &ov);
-        if (ov.width > max_width)
-          max_width = ov.width;
+        XftTextExtentsUtf8 (bst->dpy, bst->font,
+                            (FcChar8 *) start, end-start, &ov);
+        if (ov.xOff > max_width)
+          max_width = ov.xOff;
         if (!*end) break;
         start = end+1;
       }
@@ -442,6 +444,23 @@ bst_crlf (struct bsod_state *bst)
 }
 
 
+/* This is slow, use it sparingly. */
+static void
+set_xft_color (Display *dpy, Colormap cmap, XftColor *c, unsigned long pixel)
+{
+  XColor xc;
+  if (c->pixel == pixel && c->color.alpha)
+    return;  /* Using alpha as "is initialized" */
+  xc.pixel = pixel;
+  XQueryColor (dpy, cmap, &xc);
+  c->pixel = pixel;
+  c->color.red   = xc.red;
+  c->color.green = xc.green;
+  c->color.blue  = xc.blue;
+  c->color.alpha = 0xFFFF;
+}
+
+
 static void
 draw_char (struct bsod_state *bst, char c)
 {
@@ -463,47 +482,47 @@ draw_char (struct bsod_state *bst, char c)
       if (bst->macx_eol_kludge)
         {
           /* Special case for the weird way OSX crashes print newlines... */
-          XDrawImageString (bst->dpy, bst->window, bst->gc,
-                            bst->x, bst->y, " ", 1);
-          XDrawImageString (bst->dpy, bst->window, bst->gc,
-                            bst->x,
-                            bst->y + bst->font->ascent + bst->font->descent,
-                            " ", 1);
+          XGlyphInfo ov;
+          XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+          XSetForeground (bst->dpy, bst->gc, bst->bg);
+          XFillRectangle (bst->dpy, bst->window, bst->gc,
+                          bst->x, bst->y - bst->font->ascent,
+                          ov.width,
+                          (bst->font->ascent + bst->font->descent) * 2);
+          XSetForeground (bst->dpy, bst->gc, bst->fg);
         }
       bst_crlf (bst);
     }
   else if (c == '\b')	/* backspace */
     {
-      int cw = (bst->font->per_char
-		? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
-		: bst->font->min_bounds.width);
-      bst->x -= cw;
+      XGlyphInfo ov;
+      XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+      bst->x -= ov.xOff;
       if (bst->x < bst->left_margin + bst->xoff)
         bst->x = bst->left_margin + bst->xoff;
     }
   else
     {
-      int dir, ascent, descent;
-      XCharStruct ov;
+      XGlyphInfo ov;
       Bool cursorp = (c == '\033');  /* apparently \e is non-standard now! */
 
       if (cursorp) c = ' ';
-      XTextExtents (bst->font, &c, 1, &dir, &ascent, &descent, &ov);
+      XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) &c, 1, &ov);
 
       if (bst->x < bst->left_margin)
         bst->x = bst->left_margin;
 
       if ((bst->wrap_p || bst->word_wrap_p) &&
-          bst->x + ov.width > bst->xgwa.width - bst->right_margin - bst->xoff)
+          bst->x + ov.xOff > bst->xgwa.width - bst->right_margin - bst->xoff)
         {
-          XCharStruct ov2;
+          XGlyphInfo ov2;
           int L = 0;
 
           if (bst->word_wrap_p && *bst->word_buf)
             {
               L = strlen(bst->word_buf);
-              XTextExtents (bst->font, bst->word_buf, L,
-                      &dir, &ascent, &descent, &ov2);
+              XftTextExtentsUtf8 (bst->dpy, bst->font,
+                                  (FcChar8 *) bst->word_buf, L, &ov2);
             }
 
           if (L)  /* Erase the truncated wrapped word */
@@ -521,8 +540,17 @@ draw_char (struct bsod_state *bst, char c)
 
           if (L)  /* Draw wrapped partial word on the next line, no delay */
             {
-              XDrawImageString (bst->dpy, bst->window, bst->gc,
-                                bst->x, bst->y, bst->word_buf, L);
+              XftTextExtentsUtf8 (bst->dpy, bst->font,
+                                  (FcChar8 *) bst->word_buf, L, &ov);
+              XSetForeground (bst->dpy, bst->gc, bst->bg);
+              XFillRectangle (bst->dpy, bst->window, bst->gc,
+                              bst->x,
+                              bst->y - bst->font->ascent,
+                              ov.xOff,
+                              bst->font->ascent + bst->font->descent);
+              XftDrawStringUtf8 (bst->xftdraw, &bst->xft_fg, bst->font,
+                                 bst->x, bst->y, 
+                                 (FcChar8 *) bst->word_buf, L);
               bst->x += ov2.width;
               bst->last_nonwhite = bst->x;
             }
@@ -532,27 +560,41 @@ draw_char (struct bsod_state *bst, char c)
 
       if (cursorp)
         {
+          XftColor cswap = bst->xft_fg;
           unsigned long swap = bst->fg;
           bst->fg = bst->bg;
+          bst->xft_fg = bst->xft_bg;
           bst->bg = swap;
+          bst->xft_bg = cswap;
           XSetForeground (bst->dpy, bst->gc, bst->fg);
           XSetBackground (bst->dpy, bst->gc, bst->bg);
         }
 
-      XDrawImageString (bst->dpy, bst->window, bst->gc,
-                        bst->x, bst->y, &c, 1);
+      XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) &c, 1, &ov);
+      XSetForeground (bst->dpy, bst->gc, bst->bg);
+      XFillRectangle (bst->dpy, bst->window, bst->gc,
+                      bst->x,
+                      bst->y - bst->font->ascent,
+                      ov.xOff,
+                      bst->font->ascent + bst->font->descent);
+      XSetForeground (bst->dpy, bst->gc, bst->fg);
+      XftDrawStringUtf8 (bst->xftdraw, &bst->xft_fg, bst->font,
+                         bst->x, bst->y, (FcChar8 *) &c, 1);
 
       if (cursorp)
         {
+          XftColor cswap = bst->xft_fg;
           unsigned long swap = bst->fg;
           bst->fg = bst->bg;
+          bst->xft_fg = bst->xft_bg;
           bst->bg = swap;
+          bst->xft_bg = cswap;
           XSetForeground (bst->dpy, bst->gc, bst->fg);
           XSetBackground (bst->dpy, bst->gc, bst->bg);
           c = ' ';
         }
 
-      bst->x += ov.width;
+      bst->x += ov.xOff;
 
       if (bst->word_wrap_p)
         {
@@ -639,9 +681,12 @@ bsod_pop (struct bsod_state *bst)
     }
   case INVERT:
     {
+      XftColor cswap = bst->xft_fg;
       unsigned long swap = bst->fg;
       bst->fg = bst->bg;
+      bst->xft_fg = bst->xft_bg;
       bst->bg = swap;
+      bst->xft_bg = cswap;
       XSetForeground (bst->dpy, bst->gc, bst->fg);
       XSetBackground (bst->dpy, bst->gc, bst->bg);
       bst->pos++;
@@ -653,6 +698,7 @@ bsod_pop (struct bsod_state *bst)
       bst->bg = (unsigned long) bst->queue[bst->pos].arg2;
       XSetForeground (bst->dpy, bst->gc, bst->fg);
       XSetBackground (bst->dpy, bst->gc, bst->bg);
+      set_xft_color (bst->dpy, bst->xgwa.colormap, &bst->xft_fg, bst->fg);
       bst->pos++;
       return 0;
     }
@@ -738,7 +784,6 @@ bsod_pop (struct bsod_state *bst)
       case 2: bst->font = bst->fontC; break;
       default: abort(); break;
       }
-      XSetFont (bst->dpy, bst->gc, bst->font->fid);
       bst->pos++;
       return 0;
     }
@@ -783,11 +828,20 @@ bsod_pop (struct bsod_state *bst)
 
       if (type == CURSOR_BLOCK)
         {
+          XGlyphInfo ov;
+          XftColor cswap = bst->xft_fg;
           unsigned long swap = bst->fg;
           bst->fg = bst->bg;
+          bst->xft_fg = bst->xft_bg;
           bst->bg = swap;
+          bst->xft_bg = cswap;
           XSetForeground (bst->dpy, bst->gc, bst->fg);
           XSetBackground (bst->dpy, bst->gc, bst->bg);
+          XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+          XFillRectangle (bst->dpy, bst->window, bst->gc,
+                          bst->x, bst->y - bst->font->ascent,
+                          ov.width,
+                          bst->font->ascent + bst->font->descent);
           draw_char (bst, ' ');
         }
       else
@@ -876,6 +930,7 @@ make_bsod_state (Display *dpy, Window window,
   char buf5[1024], buf6[1024];
   char buf7[1024], buf8[1024];
   char *font1, *font3, *font4;
+  int screen_no;
 
   bst = (struct bsod_state *) calloc (1, sizeof (*bst));
   bst->queue_size = 10;
@@ -884,6 +939,7 @@ make_bsod_state (Display *dpy, Window window,
   bst->dpy = dpy;
   bst->window = window;
   XGetWindowAttributes (dpy, window, &bst->xgwa);
+  screen_no = screen_number (bst->xgwa.screen);
 
   /* If the window is small, use ".font"; if big, ".bigFont". */
   if (
@@ -927,33 +983,39 @@ make_bsod_state (Display *dpy, Window window,
 #undef RES2
 
   if (font1 && *font1)
-    bst->font = load_font_retry (dpy, font1);
+    bst->font = load_xft_font_retry (dpy, screen_no, font1);
 
   if (! bst->font)
     abort();
 
   if (font3 && *font3)
-    bst->fontB = load_font_retry (dpy, font3);
+    bst->fontB = load_xft_font_retry (dpy, screen_no, font3);
   if (font4 && *font4)
-    bst->fontC = load_font_retry (dpy, font4);
+    bst->fontC = load_xft_font_retry (dpy, screen_no, font4);
 
   if (! bst->fontB) bst->fontB = bst->font;
   if (! bst->fontC) bst->fontC = bst->font;
 
   bst->fontA = bst->font;
 
-
-  gcv.font = bst->font->fid;
+  bst->xftdraw = XftDrawCreate (dpy, bst->window, bst->xgwa.visual,
+                                bst->xgwa.colormap);
 
   sprintf (buf1, "%.100s.foreground", name);
   sprintf (buf2, "%.100s.Foreground", class);
   bst->fg = gcv.foreground = get_pixel_resource (dpy, bst->xgwa.colormap,
                                                  buf1, buf2);
+  set_xft_color (bst->dpy, bst->xgwa.colormap, &bst->xft_fg, bst->fg);
+
   sprintf (buf1, "%.100s.background", name);
   sprintf (buf2, "%.100s.Background", class);
   bst->bg = gcv.background = get_pixel_resource (dpy, bst->xgwa.colormap,
                                                  buf1, buf2);
-  bst->gc = XCreateGC (dpy, window, GCFont|GCForeground|GCBackground, &gcv);
+
+  set_xft_color (bst->dpy, bst->xgwa.colormap, &bst->xft_fg, bst->fg);
+  set_xft_color (bst->dpy, bst->xgwa.colormap, &bst->xft_bg, bst->bg);
+
+  bst->gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
 
 #ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (dpy, bst->gc, True);
@@ -961,9 +1023,11 @@ make_bsod_state (Display *dpy, Window window,
 
 # ifdef HAVE_IPHONE
   /* Stupid iPhone X bezel.
-     #### This is the worst of all possible ways to do this!
+     #### This is the worst of all possible ways to do this!  But how else?
+     This magic number should catch iPhone X and larger, but unfortunately
+     also catches iPads which do not have the stupid bezel.
    */
-  if (bst->xgwa.width == 2436 || bst->xgwa.height == 2436) {
+  if (bst->xgwa.width >= 1218 || bst->xgwa.height >= 1218) {
     if (bst->xgwa.width > bst->xgwa.height)
       bst->xoff = 96;
     else
@@ -997,10 +1061,14 @@ free_bsod_state (struct bsod_state *bst)
   if (bst->mask)
     XFreePixmap(bst->dpy, bst->mask);
 
-  XFreeFont (bst->dpy, bst->font);
-  if (bst->fontB && bst->fontB != bst->font) XFreeFont (bst->dpy, bst->fontB);
-  if (bst->fontC && bst->fontC != bst->font) XFreeFont (bst->dpy, bst->fontC);
+  XftFontClose (bst->dpy, bst->font);
+  if (bst->fontB && bst->fontB != bst->font)
+    XftFontClose (bst->dpy, bst->fontB);
+  if (bst->fontC && bst->fontC != bst->font)
+    XftFontClose (bst->dpy, bst->fontC);
   XFreeGC (bst->dpy, bst->gc);
+
+  XftDrawDestroy (bst->xftdraw);
 
   for (i = 0; i < bst->queue_size; i++)
     switch (bst->queue[i].type) {
@@ -1059,25 +1127,105 @@ static struct bsod_state *
 windows_31 (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "windows", "Windows");
+  int lines = 9;
 
   bst->xoff = bst->left_margin = bst->right_margin = 0;
 
-  BSOD_INVERT (bst);
-  BSOD_TEXT   (bst, CENTER, "Windows\n");
-  BSOD_INVERT (bst);
-  BSOD_TEXT   (bst, CENTER,
-               "A fatal exception 0E has occurred at F0AD:42494C4C\n"
-               "the current application will be terminated.\n"
-               "\n"
-               "* Press any key to terminate the current application.\n"
-               "* Press CTRL+ALT+DELETE again to restart your computer.\n"
-               "  You will lose any unsaved information in all applications.\n"
-               "\n"
-               "\n");
-  BSOD_TEXT   (bst, CENTER, "Press any key to continue");
+  switch (random() % 8) {
+
+  case 0:  /* Windows 3.1 */
+  case 1:
+  case 2:
+    BSOD_INVERT (bst);
+    BSOD_TEXT   (bst, CENTER, "Windows\n");
+    BSOD_INVERT (bst);
+    BSOD_TEXT (bst, CENTER,
+      "A fatal exception 0E has occurred at F0AD:42494C4C\n"
+      "the current application will be terminated.\n"
+      "\n"
+      "* Press any key to terminate the current application.\n"
+      "* Press CTRL+ALT+DELETE again to restart your computer.\n"
+      "  You will lose any unsaved information in all applications.\n"
+      "\n"
+      "\n");
+    BSOD_TEXT (bst, CENTER, "Press any key to continue ");
+    BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
+    break;
+
+  case 3:  /* Windows 3.1 */
+  case 4:
+    BSOD_INVERT (bst);
+    BSOD_TEXT   (bst, CENTER, "NETSCAPE.EXE\n");
+    BSOD_INVERT (bst);
+    BSOD_TEXT (bst, CENTER,
+      "   This windows application has stopped responding to the system.\n"
+      "\n"
+      "*  Press ESC to cancel and return to Windows.\n"
+      "*  Press ENTER to close this application that is not responding.\n"
+      "   You will lose any unsaved information in this application.\n"
+      "*  Press CTRL+ALT+DEL again to restart your computer. You will\n"
+      "   lose any unsaved information in all applications.\n"
+      "\n");
+    BSOD_TEXT (bst, CENTER, "Press ENTER for OK or ESC to Cancel: OK\b\b");
+    BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
+    break;
+
+  case 5:  /* Windows 95 */
+    BSOD_INVERT (bst);
+    BSOD_TEXT   (bst, CENTER, "Windows\n");
+    BSOD_INVERT (bst);
+    BSOD_TEXT (bst, CENTER,
+      "An exception 00 has occurred at 0028:C18580AE in VxD HSFLOP(03) +\n"
+      "0000156E.  This was called from 0028:C1858AED in VxD HSFLOP(03) +\n"
+      "0000F0AD.  It may be possible to continue normally.\n"
+      "\n"
+      "*  Press any key to attempt to continue.\n"
+      "*  Press CTRL+ALT+DEL to restart your computer.  You will\n"
+      "   lose any unsaved information in all applications.\n"
+      "\n");
+    BSOD_TEXT (bst, CENTER, "Press any key to continue ");
+    BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
+    break;
+
+  case 6:  /* Windows 95 */
+    BSOD_INVERT (bst);
+    BSOD_TEXT   (bst, CENTER, "Windows\n");
+    BSOD_INVERT (bst);
+    BSOD_TEXT (bst, CENTER,
+      "A fatal exception 0E has occurred at F0AD:011747F3.  The current\n"
+      "application will be terminated.\n"
+      "\n"
+      "*  Press any key to terminate the current application.\n"
+      "*  Press CTRL+ALT+DEL again to restart your computer. You will\n"
+      "   lose any unsaved information in all applications.\n"
+      "\n");
+    BSOD_TEXT (bst, CENTER, "Press any key to continue ");
+    BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
+    break;
+
+  case 7:  /* Windows 95 */
+    BSOD_INVERT (bst);
+    BSOD_TEXT   (bst, CENTER, "WARNING!\n");
+    BSOD_INVERT (bst);
+    BSOD_TEXT (bst, CENTER,
+      "The system is either busy or has become unstable. You can wait and\n"
+      "see if it becomes available again, or you can restart your computer.\n"
+      "\n"
+      "*  Press any key to return to Windows and wait.\n"
+      "*  Press CTRL+ALT+DEL again to restart your computer. You will\n"
+      "   lose unsaved information in any programs that are running.\n"
+      "\n");
+    BSOD_TEXT (bst, CENTER, "Press any key to continue ");
+    BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
+    break;
+
+  default:
+    abort();
+    break;
+  }
 
   bst->y = ((bst->xgwa.height - bst->yoff -
-             ((bst->font->ascent + bst->font->descent) * 9))
+             ((bst->font->ascent + bst->font->descent) * lines))
             / 2);
 
   XClearWindow (dpy, window);
@@ -1142,13 +1290,16 @@ vmware (Display *dpy, Window window)
 }
 
 
-
+/* Windows NT 3.1 - 4.0
+ */
 static struct bsod_state *
 windows_nt (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "nt", "NT");
 
-  BSOD_TEXT (bst, LEFT,
+  switch (random() % 4) {
+  case 0: case 1: case 2:
+    BSOD_TEXT (bst, LEFT,
    "*** STOP: 0x0000001E (0x80000003,0x80106fc0,0x8025ea21,0xfd6829e8)\n"
    "Unhandled Kernel exception c0000047 from fa8418b4 (8025ea21,fd6829e8)\n"
    "\n"
@@ -1195,6 +1346,37 @@ windows_nt (Display *dpy, Window window)
    );
 
   bst->line_delay = 750;
+  break;
+
+  case 3:
+    BSOD_TEXT (bst, CENTER,
+   "Microsoft (R) Windows NT (R) Version 5.0 (Build 1796)\n"
+   "1 System Processor [128 MB Memory] MultiProcessor Kernel\n"
+   "\n"
+   "*** STOP: 0x0000006B (0xC000003A, 0x00000002,0x00000000,0x00000000)\n"
+   "PROCESS1_INITIALIZATION_FAILED\n"
+   "\n"
+   "If this is the first time you[ve seen this Stop error screen,\n"
+   "restart your computer. If this screen appears again, follow\n"
+   "these steps:\n"
+   "\n"
+   "Check to make sure any new hardware or software is properly installed.\n"
+   "If this is a new installation, ask your hardware or software manufacturer\n"
+   "for any Windows NT updates you might need.\n"
+   "\n"
+   "If problems continue, disable or remove any newly installed hardware\n"
+   "or software. Disable BIOS memory options such as caching or shadowing.\n"
+   "If you need to use Safe Mode to remove or disable components, restart\n"
+   "your computer, press F8 to select Advanced Startup Options, and then\n"
+   "select Safe Mode.\n"
+   "\n"
+   "Refer to your Getting Started manual for more information on\n"
+   "troubleshooting Stop errors.\n"
+      "\n");
+    break;
+  default:
+    abort();
+  }
 
   XClearWindow (dpy, window);
   return bst;
@@ -1206,21 +1388,50 @@ windows_2k (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "windows", "Windows");
 
-  BSOD_TEXT (bst, LEFT,
+  switch (random() % 4) {
+  case 0: case 1: case 2:
+    BSOD_TEXT (bst, LEFT,
     "*** STOP: 0x000000D1 (0xE1D38000,0x0000001C,0x00000000,0xF09D42DA)\n"
     "DRIVER_IRQL_NOT_LESS_OR_EQUAL \n"
     "\n"
     "*** Address F09D42DA base at F09D4000, DateStamp 39f459ff - CRASHDD.SYS\n"
     "\n"
     "Beginning dump of physical memory\n");
-  BSOD_PAUSE (bst, 4000000);
-  BSOD_TEXT (bst, LEFT,
-    "Physical memory dump complete. Contact your system administrator or\n"
-    "technical support group.\n");
+    BSOD_PAUSE (bst, 4000000);
+    BSOD_TEXT (bst, LEFT,
+      "Physical memory dump complete. Contact your system administrator or\n"
+      "technical support group.\n");
 
-  bst->left_margin = 40;
-  bst->y = (bst->font->ascent + bst->font->descent) * 10;
-  bst->line_delay = 750;
+    bst->left_margin = 40;
+    bst->y = (bst->font->ascent + bst->font->descent) * 10;
+    bst->line_delay = 750;
+    break;
+
+  case 3:
+    BSOD_TEXT (bst, CENTER,
+      "\n\n\n"
+      "*** STOP: 0x0000007B (0xF641F84C,0xC00000034,0x00000000,0x00000000)\n"
+      "INACCESSIBLE_BOOT_DEVICE\n"
+      "\n"
+      "If this is the first time you[ve seen this Stop error screen,\n"
+      "restart your computer. If this screen appears again, follow\n"
+      "these steps:\n"
+      "\n"
+      "Check for viruses on your computer. Remove any newly installed\n"
+      "hard drives or hard drive controllers. Chcek your hard drive\n"
+      "to make sure it is properly configured and terminated.\n"
+      "Run CHKDSK /F to check for hard drive corruption, and then\n"
+      "restart your computer.\n"
+      "\n"
+      "Refer to your Getting Started manual for more information on\n"
+      "troubleshooting Stop errors.\n"
+      "\n"
+      "\n");
+    break;
+
+  default:
+    abort();
+  }
 
   XClearWindow (dpy, window);
   return bst;
@@ -1232,15 +1443,42 @@ windows_me (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "windows", "Windows");
 
-  BSOD_TEXT (bst, LEFT,
-    "Windows protection error.  You need to restart your computer.\n\n"
-    "System halted.");
-  BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
+  switch (random() % 3) {
+  case 0: case 1:
+    BSOD_TEXT (bst, LEFT,
+      "Windows protection error.  You need to restart your computer.\n\n"
+      "System halted.");
+    BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
 
-  bst->left_margin = 40;
-  bst->y = ((bst->xgwa.height - bst->yoff -
-             ((bst->font->ascent + bst->font->descent) * 3))
-            / 2);
+    bst->left_margin = 40;
+    bst->y = ((bst->xgwa.height - bst->yoff -
+               ((bst->font->ascent + bst->font->descent) * 3))
+              / 2);
+    break;
+  case 2:
+    BSOD_INVERT (bst);
+    BSOD_TEXT   (bst, CENTER, "Windows\n");
+    BSOD_INVERT (bst);
+    BSOD_TEXT (bst, CENTER,
+      "\n"
+      "An error has occurred. To continue:\n"
+      "\n"
+      "Press Enter to return to Windows, or\n"
+      "\n"
+      "Press CTRL+ALT+DEL to restart your computer. If you do this,\n"
+      "you will lose any unsaved information in all open applications.\n"
+      "\n"
+      "Error: 0E : 015F : FOAD0D0D\n"
+      "\n");
+    BSOD_TEXT (bst, CENTER, "Press any key to continue ");
+    BSOD_CURSOR (bst, CURSOR_LINE, 120000, 999999);
+    bst->y = ((bst->xgwa.height - bst->yoff -
+               ((bst->font->ascent + bst->font->descent) * 11))
+              / 2);
+    break;
+  default:
+    abort();
+  }
 
   XClearWindow (dpy, window);
   return bst;
@@ -1252,7 +1490,9 @@ windows_xp (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "windows", "Windows");
 
-  BSOD_TEXT (bst, LEFT,  /* From Wm. Rhodes <xscreensaver@27.org> */
+  switch (random() % 6) {
+  case 0: case 1: case 2:
+    BSOD_TEXT (bst, LEFT,  /* From Wm. Rhodes <xscreensaver@27.org> */
       "A problem has been detected and windows has been shut down to prevent "
       "damage\n"
       "to your computer.\n"
@@ -1281,12 +1521,73 @@ windows_xp (Display *dpy, Window window)
       "3b9f3248\n"
       "\n"
       "Beginning dump of physical memory\n");
-  BSOD_PAUSE (bst, 4000000);
-  BSOD_TEXT (bst, LEFT,
+    BSOD_PAUSE (bst, 4000000);
+    BSOD_TEXT (bst, LEFT,
       "Physical memory dump complete.\n"
       "Contact your system administrator or technical support group for "
       "further\n"
       "assistance.\n");
+    break;
+  case 3:  /* Windows XP/Vista/7 */
+    BSOD_TEXT (bst, LEFT,
+      "STOP: C0000021a {Fatal System Error}\n"
+      "The Session Manager Initialization system process terminated"
+      " unexpectedly\n"
+      "with a status of 0x00000001 (0x00000000 0x00000000).\n"
+      "The system has been shut down.\n");
+    break;
+  case 4:  /* Windows CE */
+    BSOD_TEXT (bst, LEFT,
+      "A error has occurred and Windows CE has been shut down to prevent\n"
+      "damage to your computer.\n"
+      "If you will try to restart your computer, press Ctrl+Alt+Delete.\n"
+      "\n"
+      "Technical information:\n"
+      "\n"
+      "*** STOP: 0x0004c2 (inaccessible embedded device)\n"
+      "\n"
+      "\n"
+      "The computer will restart automatically\n"
+      "after 23 seconds.\n");
+    break;
+  case 5:  /* Windows 8 */
+    BSOD_TEXT (bst, LEFT,
+      "A problem has been detected and windows has been shut down to prevent\n"
+      "damage to your computer.\n"
+      "\n"
+      "SYSTEM_SERVICE_EXCEPTION\n"
+      "\n"
+      "If this is the first time you[ve seen this Stop error screen,\n"
+      "restart your computer. If this screen appears again, follow\n"
+      "these steps:\n"
+      "\n"
+      "Check to make sure any new hardware or software is properly installed.\n"
+      "If this is a new installation, ask your hardware or software"
+      " manufacturer\n"
+      "for any Windows NT updates you might need.\n"
+      "\n"
+      "If problems continue, disable or remove any newly installed hardware\n"
+      "or software. Disable BIOS memory options such as caching or shadowing.\n"
+      "If you need to use Safe Mode to remove or disable components, restart\n"
+      "your computer, press F8 to select Advanced Startup Options, and then\n"
+      "select Safe Mode.\n"
+      "\n"
+      "Technical information:\n"
+      "\n"
+      "*** STOP: 0x0000003B (0x00000000c000005,0xFFFFF880041C9062,"
+               "0xFFFFF88002E22F60,0x0000000000000000(\n"
+      "\n"
+      "***   dxgmms1.sys - Address FFFFF880041C9062 base at FFFFF8800418F000,"
+               " DateStamp 4cdb7409\n"
+      "\n"
+      "Collecting data for crash dump ...\n");
+    BSOD_PAUSE (bst, 4000000);
+    BSOD_TEXT (bst, LEFT,
+      "Initializing disk for for crash dump ...\n");
+    break;
+  default:
+    abort();
+  }
 
   XClearWindow (dpy, window);
   return bst;
@@ -1447,12 +1748,11 @@ windows_10 (Display *dpy, Window window)
          / 2);
 
   {
-    int dir, ascent, descent;
-    XCharStruct ov;
+    XGlyphInfo ov;
     const char *s = lines[2];
-    XTextExtents (bst->fontA, s, strlen(s),
-                  &dir, &ascent, &descent, &ov);
-    left = left0 = (bst->xgwa.width - ov.width) / 2;
+
+    XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) s, strlen(s), &ov);
+    left = left0 = (bst->xgwa.width - ov.xOff) / 2;
   }
 
   pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) qr_bits,
@@ -2312,11 +2612,13 @@ atari (Display *dpy, Window window)
                                         atari_png, sizeof(atari_png),
                                         &pix_w, &pix_h, &mask);
 
-  pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
-                          pixmap, pix_w, pix_h);
-  mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
-  pix_w *= 2;
-  pix_h *= 2;
+  for (i = 0; i < 3; i++)
+    {
+      pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
+                              pixmap, pix_w, pix_h);
+      mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
+      pix_w *= 2; pix_h *= 2;
+    }
 
   offset = pix_w;
   x = 0;
@@ -2484,6 +2786,7 @@ macsbug (Display *dpy, Window window)
 						"EmToNatEndMoveParams+00014\n"
 		      "  24DAF780    PPC  003AA180  __DisposePtr+00010");
 
+  XGlyphInfo ov;
   const char *s;
   int body_lines = 1;
 
@@ -2501,9 +2804,8 @@ macsbug (Display *dpy, Window window)
 
   for (s = body; *s; s++) if (*s == '\n') body_lines++;
 
-  char_width = (bst->font->per_char
-		? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
-		: bst->font->min_bounds.width);
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+  char_width = ov.xOff;
   line_height = bst->font->ascent + bst->font->descent;
 
   col_right   = char_width  * 12;  /* number of columns in `left' */
@@ -2627,17 +2929,13 @@ static struct bsod_state *
 macx_10_0 (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "macx", "MacX");
-
+  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "macx.textForeground",
+                                          "MacX.TextForeground");
+  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "macx.textBackground",
+                                          "MacX.TextBackground");
   XClearWindow (dpy, window);
-  XSetForeground (dpy, bst->gc,
-                  get_pixel_resource (dpy, bst->xgwa.colormap,
-                                      "macx.textForeground",
-                                      "MacX.TextForeground"));
-  XSetBackground (dpy, bst->gc,
-                  get_pixel_resource (dpy, bst->xgwa.colormap,
-                                      "macx.textBackground",
-                                      "MacX.TextBackground"));
-
   {
     Pixmap pixmap = 0;
     Pixmap mask = 0;
@@ -2646,7 +2944,7 @@ macx_10_0 (Display *dpy, Window window)
                                    hmac_png, sizeof(hmac_png),
                                    &pix_w, &pix_h, &mask);
 
-# ifdef HAVE_MOBILE
+/*# ifdef HAVE_MOBILE*/
     if (pixmap)
       {
         pixmap = double_pixmap (dpy, bst->xgwa.visual,
@@ -2656,7 +2954,7 @@ macx_10_0 (Display *dpy, Window window)
         pix_w *= 2;
         pix_h *= 2;
       }
-# endif
+/*# endif*/
 
     x = (bst->xgwa.width - pix_w) / 2;
     y = (bst->xgwa.height - pix_h) / 2;
@@ -2676,6 +2974,7 @@ macx_10_0 (Display *dpy, Window window)
   bst->wrap_p = True;
 
   BSOD_PAUSE (bst, 3000000);
+  BSOD_COLOR(bst, fg2, bg2);
   BSOD_TEXT (bst, LEFT,
     "panic(cpu 0): Unable to find driver for this platform: "
     "\"PowerMac 3,5\".\n"
@@ -2728,7 +3027,7 @@ macx_10_2 (Display *dpy, Window window, Bool v10_3_p)
   if (! pixmap) abort();
   if (! mask) abort();
 
-#if 0
+#if 1
   if (bst->xgwa.height > 600)	/* scale up the bitmap */
     {
       pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
@@ -2761,18 +3060,20 @@ static struct bsod_state *
 mac_diskfail (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "macdisk", "Mac");
-  int cw = (bst->font->per_char
-            ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
-            : bst->font->min_bounds.width);
-  int h = bst->font->ascent + bst->font->descent;
-  int L = (bst->xgwa.width - (cw * 80)) / 2;
-  int T = (bst->xgwa.height - (h  * 10)) / 2;
+  XGlyphInfo ov;
+  int cw, h, L, T;
+  unsigned long fg, bg, bg2;
 
-  unsigned long fg = bst->fg;
-  unsigned long bg = bst->bg;
-  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
-                                          "macx.background",
-                                          "Mac.Background");
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+  cw = ov.xOff;
+  h = bst->font->ascent + bst->font->descent;
+  L = (bst->xgwa.width - (cw * 80)) / 2;
+  T = (bst->xgwa.height - (h  * 10)) / 2;
+
+  fg = bst->fg;
+  bg = bst->bg;
+  bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                            "macx.background", "Mac.Background");
   if (L < 0) L = 0;
   if (T < 0) T = 0;
 
@@ -3030,7 +3331,7 @@ macx_install (Display *dpy, Window window)
 static struct bsod_state *
 macx (Display *dpy, Window window)
 {
-  switch (1?4:random() % 5) {
+  switch (random() % 5) {
   case 0: return macx_10_0 (dpy, window);        break;
   case 1: return macx_10_2 (dpy, window, False); break;
   case 2: return macx_10_2 (dpy, window, True);  break;
@@ -3269,10 +3570,9 @@ sparc_solaris (Display *dpy, Window window)
   Pixmap pixmap = image_data_to_pixmap (dpy, window,
                                         sun_png, sizeof(sun_png),
                                         &pix_w, &pix_h, &mask);
-
-  char_width = (bst->font->per_char
-		? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
-		: bst->font->min_bounds.width);
+  XGlyphInfo ov;
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+  char_width = ov.xOff;
 
   if (pixmap)
     while (pix_w < char_width * 4)
@@ -5653,14 +5953,14 @@ static struct bsod_state *
 tivo (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "tivo", "Tivo");
-  int char_width =
-    (bst->font->per_char
-     ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
-     : bst->font->min_bounds.width);
+  XGlyphInfo ov;
   int line_height = bst->font->ascent + bst->font->descent;
+  int char_width, left, top;
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+  char_width = ov.xOff;
 
-  int left = (bst->xgwa.width - char_width * 44) / 2;
-  int top = (bst->xgwa.height - line_height * 15) / 2;
+  left = (bst->xgwa.width - char_width * 44) / 2;
+  top = (bst->xgwa.height - line_height * 15) / 2;
   if (left < 0) left = 0;
   if (top < 0) top = 0;
 
@@ -5706,16 +6006,17 @@ nintendo (Display *dpy, Window window)
   unsigned long fg = get_pixel_resource (dpy, bst->xgwa.colormap,
                                          "nintendo.foreground",
                                          "Nintendo.Foreground");
-  int char_width =
-    (bst->font->per_char
-     ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
-     : bst->font->min_bounds.width);
   int line_height = bst->font->ascent + bst->font->descent;
+  XGlyphInfo ov;
+  int char_width;
+  int left, top, left2, top2;
 
-  int left = (bst->xgwa.width - char_width * 30) / 2;
-  int top = (bst->xgwa.height - line_height * 9) / 2;
-  int left2 = left - char_width * 4;
-  int top2  = top - line_height;
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+  char_width = ov.xOff;
+  left = (bst->xgwa.width - char_width * 30) / 2;
+  top = (bst->xgwa.height - line_height * 9) / 2;
+  left2 = left - char_width * 4;
+  top2  = top - line_height;
   if (left < 0) left = 0;
   if (top < 0) top = 0;
   if (left2 < 0) left2 = 0;
@@ -5742,8 +6043,7 @@ nintendo (Display *dpy, Window window)
          ビデオゲームのコピーは法律で禁じられています。
          詳しくは取扱説明書をご覧になってください。
 
-     but BSOD_TEXT doesn't do Xft, and more importantly, "PxPlus IBM VGA8"
-     doesn't contain Japanese characters.
+     but "PxPlus IBM VGA8" doesn't contain Japanese characters.
    */
 
   BSOD_TEXT (bst, CENTER, "WARNING");
@@ -5764,7 +6064,7 @@ nintendo (Display *dpy, Window window)
 }
 
 
-/* An Android phone boot loader, by jwz.
+/* A 2013 Android phone boot loader, by jwz.
  */
 static struct bsod_state *
 android (Display *dpy, Window window)
@@ -5842,15 +6142,15 @@ android (Display *dpy, Window window)
     "  No image!\n",
   };
 
-  int cw = (bst->font->per_char
-            ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
-            : bst->font->min_bounds.width);
   int line_height = bst->font->ascent + bst->font->descent;
-
+  int cw;
+  XGlyphInfo ov;
   int state = 0;
-
   Pixmap pixmap = 0, mask = 0;
   int pix_w = 0, pix_h = 0;
+
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
+  cw = ov.xOff;
 
   pixmap = image_data_to_pixmap (dpy, window, 
                                  android_png, sizeof(android_png),
@@ -6226,8 +6526,9 @@ bsod_draw (Display *dpy, Window window, void *closure)
 
       /* XSync (dpy, False);  slows down char drawing too much on HAVE_JWXYZ */
 
-      if (this_delay == 0)
+      if (this_delay == 0){
         goto AGAIN;			/* no delay, not expired: stay here */
+}
       else if (this_delay >= 0)
         {
           dst->delay_remaining = this_delay;	/* return; time to sleep */
@@ -6560,182 +6861,63 @@ static const char *bsod_defaults [] = {
 
   ".lowrez: false",  /* This is required on macOS */
 
-  "*fontB:		   ",
-  "*fontC:		   ",
 
-# if defined(HAVE_IPHONE)
+  /* "bigFont" replaces "font" on desktop if window height >= 640. */
 
-  "*font:		   PxPlus IBM VGA8 16, Courier-Bold 14",
-  "*bigFont:		   ",
 
-  ".mac.font:		   Courier-Bold 18",
-  ".macsbug.font:	   Courier-Bold 8",
-  ".macx.font:		   Courier-Bold 14",
-  ".macdisk.font:	   Courier-Bold 14",
-  ".macinstall.font:	   Helvetica 12, Arial 12",
-  ".macinstall.bigFont:	   Helvetica 12, Arial 12",
-  ".msdos.font:		   PxPlus IBM VGA8 32, Courier-Bold 28",
-  ".nt.font:		   PxPlus IBM VGA8 12, Courier-Bold 10",
-  ".win10.font:		   Arial 12, Helvetica 12",
-  ".win10.bigFont:	   Arial 12, Helvetica 12",
-  ".win10.fontB:	   Arial 50, Helvetica 50",
-  ".win10.fontC:	   Arial 9, Helvetica 9",
+  /* Some of the following fonts can only display ASCII, but that's
+     ok because this program only displays static ASCII text. */
 
-  /* The real Solaris font is Gallant (../OSX/gallant12x22.ttf)
-     but Luxi Mono (../OSX/luximr.ttf) is pretty close as well. */
-  ".solaris.font:	   Gallant12x22 12, Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
+
+  /* "Classic Console" is the MS-DOS 8x16 VGA font. */
+  "*font:		Classic Console 12, Courier Bold 12",
+  "*bigFont:		Classic Console 24, Courier Bold 24",
+  "*fontB:		",
+  "*fontC:		",
+
+  ".win10.font:		Arial 24, Helvetica 24",
+  ".win10.bigFont:	Arial 24, Helvetica 24",
+  ".win10.fontB:	Arial 36, Helvetica 36",
+  ".win10.fontC:	Arial 16, Helvetica 16",
 
   /* "Arial" loads "ArialMT" but "Arial Bold" does not load "Arial-BoldMT"? */
-  ".ransomware.font:         Arial 11, Helvetica 11",
-  ".ransomware.fontB:        Arial 9, Helvetica 9",
-  ".ransomware.fontC:        Arial Bold 11, Arial-BoldMT 11, Helvetica Bold 11",
+  ".ransomware.font:    Arial 12, Helvetica 12",
+  ".ransomware.bigFont: Arial 12, Helvetica 12",
+  ".ransomware.fontB:   Arial 8, Helvetica 8",
+  ".ransomware.fontC:   Arial Bold 16, Arial-BoldMT 16, Helvetica Bold 16",
 
-  ".tivo.font:		   Helvetica-Bold 13",
-  ".tivo.fontB:		   Helvetica-Bold 17",
+  ".macsbug.font:	Monaco 8, Courier Bold 8",
+  ".macsbug.bigFont:	Monaco 14, Courier Bold 14",
 
-  ".nintendo.font:	   PxPlus IBM VGA8 18, Courier-Bold 18",
+  ".macx.font:		Courier Bold 10",
+  ".macx.bigFont:	Courier Bold 14",
 
-  ".gnome.font:		   Helvetica-Bold 13",
-  ".gnome.bigFont:	   Helvetica-Bold 13",
-  ".gnome.fontB:	   Helvetica 13",
+  ".macdisk.font:	Courier Bold 14",
+  ".macdisk.bigFont:	Courier Bold 14",
 
-# elif defined(HAVE_ANDROID)
+  ".macinstall.font:	Helvetica 12, Arial 12",
+  ".macinstall.bigFont:	Helvetica 24, Arial 24",
 
-  "*font:		   PxPlus IBM VGA8 16",
-  "*bigFont:		   ",
+  /* "Gallant" was the original Solaris 2.x console font. */
+  ".solaris.font:	Gallant12x22 12, Luxi Mono 12, Courier Bold 12",
+  ".solaris.bigFont:	Gallant12x22 24, Luxi Mono 24, Courier Bold 24",
 
-  ".mac.font:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  ".macsbug.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
-  ".macx.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".macdisk.font:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".macinstall.font:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
-  ".macinstall.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
-  ".msdos.font:		   PxPlus IBM VGA8 32",
-  ".nt.font:		   PxPlus IBM VGA8 12",
-  ".solaris.font:	   Gallant12x22 14, Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
+  /* "Luxi Mono" was the Red Hat console font. */
+  ".linux.font:		Luxi Mono 12, Gallant12x22 12, Courier Bold 12",
+  ".linux.bigFont:	Luxi Mono 24, Gallant12x22 24, Courier Bold 24",
 
-  ".win10.font:		   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
-  ".win10.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
-  ".win10.fontB:	   -*-helvetica-medium-r-*-*-*-500-*-*-*-*-*-*",
-  ".win10.fontC:	   -*-helvetica-medium-r-*-*-*-90-*-*-*-*-*-*",
+  ".android.font:	Courier Bold 12",
+  ".android.bigFont:	Courier Bold 24",
 
-  ".ransomware.font:	   -*-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*",
-  ".ransomware.fontB:	   -*-helvetica-medium-r-*-*-*-80-*-*-*-*-*-*",
-  ".ransomware.fontC:	   -*-helvetica-bold-r-*-*-*-100-*-*-*-*-*-*",
+  ".tivo.font:		Helvetica Bold 16",
+  ".tivo.bigFont:	Helvetica Bold 28",
 
-  ".tivo.font:		   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-  ".tivo.fontB:		   -*-helvetica-bold-r-*-*-*-240-*-*-*-*-*-*",
+  ".nintendo.font:	Classic Console 18, Courier Bold 18",
+  ".nintendo.bigFont:	Classic Console 40, Courier Bold 40",
 
-  ".nintendo.font:	   PxPlus IBM VGA8 18",
-
-  ".gnome.font:		   Helvetica-Bold 13",
-  ".gnome.bigFont:	   Helvetica-Bold 13",
-  ".gnome.fontB:	   Helvetica 13",
-
-# elif defined(HAVE_COCOA)
-
-  "*font:		   PxPlus IBM VGA8 8,  Courier Bold 9",
-  "*bigFont:		   PxPlus IBM VGA8 32, Courier Bold 24",
-
-  ".mac.font:		   Monaco 10, Courier Bold 9",
-  ".mac.bigFont:	   Monaco 18, Courier Bold 18",
-
-  ".macsbug.font:	   Monaco 10, Courier Bold 9",
-  ".macsbug.bigFont:	   Monaco 10, Courier Bold 9",
-
-  ".macx.font:		   Courier Bold 9",
-  ".macx.bigFont:	   Courier Bold 14",
-  ".macdisk.font:	   Courier Bold 9",
-  ".macdisk.bigFont:	   Courier Bold 18",
-  ".macinstall.font:	   Helvetica 24, Arial 24",
-  ".macinstall.bigFont:	   Helvetica 24, Arial 24",
-
-  ".hvx.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
-  ".hppalinux.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
-  ".linux.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
-  ".hpux.bigFont:	   PxPlus IBM VGA8 24, Courier Bold 14",
-  ".msdos.font:		   PxPlus IBM VGA8 24, Courier Bold 14",
-  ".solaris.font:	   Gallant12x22 12, Luxi Mono 12, PxPlus IBM VGA8 12, Courier Bold 12",
-  ".solaris.bigFont:	   Gallant12x22 22, Luxi Mono 16, PxPlus IBM VGA8 16, Courier Bold 14",
-
-  ".win10.font:		   Arial 24, Helvetica 24",
-  ".win10.bigFont:	   Arial 24, Helvetica 24",
-  ".win10.fontB:	   Arial 100, Helvetica 100",
-  ".win10.fontC:	   Arial 16, Helvetica 16",
-
-  ".ransomware.font:       Arial 24, Helvetica 24",
-  ".ransomware.bigFont:    Arial 24, Helvetica 24",
-  ".ransomware.fontB:      Arial 16, Helvetica 16",
-  ".ransomware.fontC:      Arial Bold 24, Helvetica Bold 24",
-
-  ".tivo.font:		   Helvetica 36",
-  ".tivo.fontB:		   Helvetica 48",
-
-  ".nintendo.font:	   PxPlus IBM VGA8 12, Courier Bold 12",
-  ".nintendo.bigFont:	   PxPlus IBM VGA8 48, Courier Bold 48",
-
-  ".gnome.font:		   Helvetica-Bold 14",
-  ".gnome.bigFont:	   Helvetica-Bold 14",
-  ".gnome.fontB:	   Helvetica 14",
-
-# else   /* X11 */
-
-  "*font:		   9x15bold",
-  "*bigFont:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-
-  ".macsbug.font:	   -*-courier-medium-r-*-*-*-80-*-*-m-*-*-*",
-  ".macsbug.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-
-  ".macdisk.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
-  ".macdisk.bigFont:	   -*-courier-bold-r-*-*-*-100-*-*-m-*-*-*",
-  ".macinstall.font:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-  ".macinstall.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-
-  ".sco.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".hvx.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".hppalinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".sparclinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-
-  /* Some systems might have this, but I'm not sure where it comes from: */
-  /* ".bsd.font:	   -*-vga-normal-r-*-*-*-120-*-*-c-*-*-*", */
-  /* The fonts/misc/vga.pcf that comes with xdosemu has no XLFD name: */
-  ".bsd.font:		   vga",
-  ".bsd.bigFont:	   -*-vga-normal-r-*-*-*-220-*-*-c-*-*-*",
-
-  /* The original Solaris console font was:
-     -sun-gallant-demi-r-normal-*-*-140-*-*-c-*-*-*
-     Red Hat introduced Luxi Mono as its console font, which is similar
-     to Gallant. X.Org includes it but Debian and Fedora do not. */
-  ".solaris.font:	   -*-luxi mono-medium-r-normal--*-140-*-*-m-*-*-*",
-
-  ".hpux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".os390.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".tru64.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".vms.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-  ".msdos.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
-
-  ".win10.font:		   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-  ".win10.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-  ".win10.fontB:	   -*-helvetica-medium-r-*-*-*-240-*-*-*-*-*-*",
-  ".win10.fontC:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
-
-  ".ransomware.font:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-  ".ransomware.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-  ".ransomware.fontB:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
-  ".ransomware.fontC:	   -*-helvetica-bold-r-*-*-*-180-*-*-*-*-*-*",
-
-  ".tivo.font:		   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
-  ".tivo.fontB:		   -*-helvetica-bold-r-*-*-*-240-*-*-*-*-*-*",
-
-  ".nintendo.font:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  ".nintendo.bigFont:	   -*-courier-bold-r-*-*-*-360-*-*-m-*-*-*",
-
-  ".gnome.font:		   -*-helvetica-bold-r-*-*-*-140-*-*-*-*-*-*",
-  ".gnome.bigFont:	   -*-helvetica-bold-r-*-*-*-140-*-*-*-*-*-*",
-  ".gnome.fontB:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
-
-# endif  /* X11 */
-
+  ".gnome.font:		Helvetica Bold 13",
+  ".gnome.bigFont:	Helvetica Bold 13",
+  ".gnome.fontB:	Helvetica 13",
   0
 };
 

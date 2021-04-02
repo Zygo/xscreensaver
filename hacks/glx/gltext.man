@@ -1,16 +1,3 @@
-.de EX		\"Begin example
-.ne 5
-.if n .sp 1
-.if t .sp .5
-.nf
-.in +.5i
-..
-.de EE
-.fi
-.in -.5i
-.if n .sp 1
-.if t .sp .5
-..
 .TH XScreenSaver 1 "25-Jul-98" "X Version 11"
 .SH NAME
 gltext \- draws text spinning around in 3D
@@ -56,9 +43,11 @@ and
 .BR strftime (3) ,
 in which case, it will be updated once a second.  So to make this
 program display a spinning digital clock, you could do this:
-.EX
-gltext -text "%A%n%d %b %Y%n%l:%M:%S %p"
-.EE
+.nf
+.sp
+	gltext -text "%A%n%d %b %Y%n%l:%M:%S %p"
+.sp
+.fi
 To include a literal `%', you must double it: `%%'.
 
 See the man page for
@@ -71,9 +60,11 @@ If specified, this overrides \fI\-text\fP.
 The output of this program will be repeatedely displayed, with new
 pages of text shifting in every few seconds.  Lines should be relatively
 short.  You might try:
-.EX
--program 'xscreensaver-text --cols 20'
-.EE
+.nf
+.sp
+	-program 'xscreensaver-text --cols 20'
+.sp
+.fi
 .TP 8
 .B \-maxlines
 Set the number of lines of text to display.  By default, 
@@ -138,7 +129,7 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
-.BR xscreensaver-text (1)
+.BR xscreensaver\-text (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2001-2014 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software and

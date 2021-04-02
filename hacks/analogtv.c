@@ -85,6 +85,7 @@
 #include "yarandom.h"
 #include "grabscreen.h"
 #include "visual.h"
+#include "xft.h"
 #include "font-retry.h"
 #include "ximage-loader.h"
 
@@ -1799,8 +1800,8 @@ analogtv_draw(analogtv *it, double noiselevel,
      all relevant XML files. But that makes all the colors go really green
      and saturated, so apparently that's not right.  -- jwz, Nov 2020.
    */
-  it->tint_i = -cos((103 + it->tint_control)*3.1415926/180);
-  it->tint_q = sin((103 + it->tint_control)*3.1415926/180);
+  it->tint_i = -cos((103 + it->tint_control)*M_PI/180);
+  it->tint_q = sin((103 + it->tint_control)*M_PI/180);
   
   for (lineno=ANALOGTV_TOP; lineno<ANALOGTV_BOT; lineno++) {
     int slineno, ytop, ybot;
@@ -2024,7 +2025,7 @@ analogtv_load_ximage(analogtv *it, analogtv_input *input,
   for (i=0; i<x_length+4; i++) {
     double phase=90.0-90.0*i;
     double ampl=1.0;
-    multiq[i]=(int)(-cos(3.1415926/180.0*(phase-303)) * 4096.0 * ampl);
+    multiq[i]=(int)(-cos(M_PI/180.0*(phase-303)) * 4096.0 * ampl);
   }
 
   for (y=0; y<y_scanlength; y++) {
@@ -2210,8 +2211,6 @@ analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
                    int w, int h, char *fontname)
 {
   int i;
-  XFontStruct *font;
-  Pixmap text_pm;
   GC gc;
   XGCValues gcv;
   XWindowAttributes xgwa;
@@ -2256,40 +2255,63 @@ analogtv_make_font(Display *dpy, Window window, analogtv_font *f,
 
   } else if (fontname) {
 
-    font = load_font_retry (dpy, fontname);
+    XftFont *font;
+    XftColor xft_fg;
+    XftDraw *xftdraw;
+    Pixmap text_pm;
+    XImage *xim;
+    int x, y;
+
+    font = load_xft_font_retry (dpy, screen_number (xgwa.screen), fontname);
     if (!font) {
       fprintf(stderr, "analogtv: can't load font %s\n", fontname);
       abort();
     }
 
-    text_pm=XCreatePixmap(dpy, window, 256*f->char_w, f->char_h, 1);
+    text_pm=XCreatePixmap(dpy, window, 256*f->char_w, f->char_h, xgwa.depth);
 
     memset(&gcv, 0, sizeof(gcv));
     gcv.foreground=1;
     gcv.background=0;
-    gcv.font=font->fid;
-    gc=XCreateGC(dpy, text_pm, GCFont|GCBackground|GCForeground, &gcv);
+    gc=XCreateGC(dpy, text_pm, GCBackground|GCForeground, &gcv);
 # ifdef HAVE_JWXYZ
-  jwxyz_XSetAntiAliasing (dpy, gc, False);
+    jwxyz_XSetAntiAliasing (dpy, gc, False);
 # endif
 
     XSetForeground(dpy, gc, 0);
     XFillRectangle(dpy, text_pm, gc, 0, 0, 256*f->char_w, f->char_h);
-    XSetForeground(dpy, gc, 1);
+
+    xftdraw = XftDrawCreate (dpy, text_pm, xgwa.visual, xgwa.colormap);
+    xft_fg.pixel = ~0L;
+    xft_fg.color.red = xft_fg.color.green = xft_fg.color.blue = ~0L;
+
     for (i=0; i<256; i++) {
       char c=i;
       int x=f->char_w*i+1;
       int y=f->char_h*8/10;
-      XDrawString(dpy, text_pm, gc, x, y, &c, 1);
+      XftDrawStringUtf8 (xftdraw, &xft_fg, font, x, y, (FcChar8 *) &c, 1);
     }
-    f->text_im = XGetImage(dpy, text_pm, 0, 0, 256*f->char_w, f->char_h,
-                           1, XYPixmap);
+    xim = XGetImage(dpy, text_pm, 0, 0, 256*f->char_w, f->char_h,
+                    xgwa.depth, ZPixmap);
+    f->text_im = XCreateImage(dpy, xgwa.visual, 1, XYPixmap, 0, 0,
+                              256*f->char_w, f->char_h, 8, 0);
+    f->text_im->data = (char *)calloc(f->text_im->height,
+                                      f->text_im->bytes_per_line);
+    for (y = 0; y < xim->height; y++)
+      for (x = 0; x < xim->width; x++)
+        XPutPixel (f->text_im, x, y, XGetPixel (xim, x, y) ? 1 : 0);
+
+    XDestroyImage (xim);
+    xim = 0;
+
 # if 0
     XWriteBitmapFile(dpy, "/tmp/tvfont.xbm", text_pm, 
                      256*f->char_w, f->char_h, -1, -1);
 # endif
     XFreeGC(dpy, gc);
     XFreePixmap(dpy, text_pm);
+    XftDrawDestroy (xftdraw);
+
   } else {
     f->text_im = XCreateImage(dpy, xgwa.visual, 1, XYPixmap, 0, 0,
                               256*f->char_w, f->char_h, 8, 0);
@@ -2343,7 +2365,7 @@ analogtv_lcp_to_ntsc(double luma, double chroma, double phase, int ntsc[4])
   int i;
   for (i=0; i<4; i++) {
     double w=90.0*i + phase;
-    double val=luma + chroma * (cos(3.1415926/180.0*w));
+    double val=luma + chroma * (cos(M_PI/180.0*w));
     if (val<0.0) val=0.0;
     if (val>127.0) val=127.0;
     ntsc[i]=(int)val;

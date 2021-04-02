@@ -40,9 +40,6 @@
 #include "yarandom.h"
 #include "hsv.h"
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #ifndef HAVE_JWXYZ
 # include <X11/cursorfont.h> 
 #endif

@@ -55,9 +55,6 @@ static const char sccsid[] = "@(#)polyominoes.c 5.01 2000/12/18 xlockmore";
 static Bool identical;
 static Bool plain;
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 static XrmOptionDescRec opts[] =
 {
   {"-identical", ".polyominoes.identical", XrmoptionNoArg, "on"},

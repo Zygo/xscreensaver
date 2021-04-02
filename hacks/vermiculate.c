@@ -13,13 +13,10 @@
  * implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "screenhack.h"
 
 #include <ctype.h>
 #include <math.h>
-#include "screenhack.h"
 
 #define degs 360
 #define degs2 (degs/2)

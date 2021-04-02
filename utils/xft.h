@@ -118,7 +118,7 @@ typedef unsigned char FcChar8;
 
 
 XftFont *XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd);
-#define XftFontOpenName XftFontOpenXlfd
+XftFont *XftFontOpenName (Display *dpy, int screen, _Xconst char *name);
 
 void XftFontClose (Display *dpy, XftFont *font);
 
@@ -143,7 +143,10 @@ XftDraw *XftDrawCreate (Display   *dpy,
                         Drawable  drawable,
                         Visual    *visual,
                         Colormap  colormap);
-
+Display *XftDrawDisplay (XftDraw *);
+Bool XftDrawSetClipRectangles (XftDraw *, int x, int y, 
+                               _Xconst XRectangle *rects, int n);
+Bool XftDrawSetClip (XftDraw *draw, Region region);
 void XftDrawDestroy (XftDraw *draw);
 
 void

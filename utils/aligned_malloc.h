@@ -18,9 +18,13 @@ implied warranty.
 
 #include <stdlib.h>
 
+extern unsigned int aligned_malloc_default_alignment;
+
+unsigned get_cache_line_size(void);
+
  /* This can't simply be named posix_memalign, since the real thing uses
     free(), but this one can't. */
- int aligned_malloc(void **ptr, unsigned alignment, size_t size);
- void aligned_free(void *);
+int aligned_malloc(void **ptr, unsigned alignment, size_t size);
+void aligned_free(void *);
 
 #endif /* __ALIGNED_MALLOC_H__ */

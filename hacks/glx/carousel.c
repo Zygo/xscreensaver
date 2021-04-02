@@ -12,15 +12,9 @@
  * Created: 21-Feb-2005
  */
 
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
-# define DEF_FONT "OCR A Std 48, Lucida Console 48, Monaco 48"
-#elif 0  /* real X11, XQueryFont() */
-# define DEF_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
-#else    /* real X11, load_font_retry() */
-# define DEF_FONT "-*-ocr a std-medium-r-*-*-*-480-*-*-m-*-*-*"
-#endif
-
-#define DEF_TITLE_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
+#define DEF_FONT \
+  "OCR A Std 48, Lucida Console 48, Monaco 48, Courier 48, monospace 48"
+#define DEF_TITLE_FONT "sans-serif bold 48"
 
 #define DEFAULTS  "*count:           7         \n" \
 		  "*delay:           10000     \n" \
@@ -36,9 +30,6 @@
 
 # define release_carousel 0
 # include "xlockmore.h"
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #ifdef USE_GL
 
@@ -548,14 +539,13 @@ loading_msg (ModeInfo *mi, int n)
   }
 */
 
-# ifdef HAVE_MOBILE
-  if (MI_WIDTH(mi) < MI_HEIGHT(mi))  /* portrait orientation */
-    {
-      GLfloat s = (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi));
-      glScalef (s, s, s);
-      glTranslatef(-s/2, 0, 0);
-    }
-# endif
+  {
+    GLfloat s = (MI_WIDTH(mi) < MI_HEIGHT(mi)
+                 ? (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi))
+                 : 1);
+    glRotatef (current_device_rotation(), 0, 0, 1);
+    glScalef (s, s, s);
+  }
 
   glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
   glTranslatef ((MI_WIDTH(mi)  - ss->loading_sw) / 2,
@@ -802,8 +792,8 @@ draw_frame (ModeInfo *mi, image_frame *frame, time_t now, Bool body_p)
       glEnd();
 
     }
-  else					/* Draw a title under the image. */
-    {
+  else if (frame->current.title && *frame->current.title)
+    {					/* Draw a title under the image. */
       XCharStruct e;
       int sw, sh;
       GLfloat scale = 0.05;

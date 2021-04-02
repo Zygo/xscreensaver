@@ -21,9 +21,8 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include "blurb.h"
 #include "yarandom.h"
-
-char *progname = 0;
 
 int
 main (int argc, char **argv)

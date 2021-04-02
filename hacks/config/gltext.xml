@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="gltext" _label="GLText" gl="yes">
+<screensaver name="gltext" _label="GL Text" gl="yes">
 
   <command arg="-root"/>
 

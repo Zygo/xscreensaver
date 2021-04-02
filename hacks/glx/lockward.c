@@ -50,9 +50,6 @@
 #define	COLORIDX_SHF	4
 #define	SUBDIV		6
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 
 /***************************************************************************
  * Structure definitions.

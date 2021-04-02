@@ -111,6 +111,7 @@
 #include "usleep.h"
 #include "yarandom.h"
 #include "resources.h"
+#include "xft.h"
 #include "font-retry.h"
 #include "vroot.h"
 

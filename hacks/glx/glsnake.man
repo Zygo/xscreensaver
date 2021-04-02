@@ -1,4 +1,3 @@
-.\"                                      Hey, EMACS: -*- nroff -*-
 .TH XScreenSaver 1 "January 15, 2001" "X Version 11"
 .SH NAME
 glsnake \- OpenGL enhanced Rubik's Snake cyclewaster.
@@ -66,24 +65,21 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
-.SH FILES
-.TP
-\fB/usr/share/glsnake/*.glsnake\fP
-This XScreenSaver will attempt to read model files installed with the interactive \fBglsnake\fP.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1),
-.BR glsnake (MANSUFFIX)
+.BR xscreensaver (1)
 .PP
-.EX
-http://spacepants.org/src/glsnake/
-.EE
+.nf
+.sp
+	https://spacepants.org/src/glsnake/
+.sp
+.fi
 .SH BUGS
 The snake will happily intersect itself while morphing (this is not a bug).
 .PP
 The rotation/camera position sucks.
 .SH COPYRIGHT
-Copyright \(co 2001,2002 by Jamie Wilkinson, Andrew Bennetts, and Peter Aylett.
+Copyright \(co 2001, 2002 by Jamie Wilkinson, Andrew Bennetts, and Peter Aylett.
 .PP
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

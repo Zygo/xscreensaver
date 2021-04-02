@@ -73,6 +73,8 @@ typedef struct jwxyz_XCharStruct	XCharStruct;
 typedef struct jwxyz_XComposeStatus	XComposeStatus;
 typedef struct jwxyz_XPixmapFormatValues XPixmapFormatValues;
 typedef struct jwxyz_XChar2b            XChar2b;
+typedef struct jwxyz_XRegion *		Region;
+typedef struct jwxyz_Box		Box;
 
 typedef union  jwxyz_XEvent		XEvent;
 typedef struct jwxyz_XAnyEvent		XAnyEvent;
@@ -285,6 +287,11 @@ typedef struct jwxyz_linked_point	linked_point;
 // #define GXorInverted		0xd		/* NOT src OR dst */
 // #define GXnand		0xe		/* NOT src OR NOT dst */
 #define GXset			0xf		/* 1 */
+
+#define Unsorted		0
+#define YSorted			1
+#define YXSorted		2
+#define YXBanded		3
 
 #define XA_FONT                 18
 
@@ -827,6 +834,17 @@ struct jwxyz_XChar2b {
   unsigned char byte2;
 };
 
+/* Xregion.h */
+struct jwxyz_Box {
+  short x1, x2, y1, y2;
+};
+
+struct jwxyz_XRegion {
+  long size;
+  long numRects;
+  Box *rects;
+  Box extents;
+};
 
 struct jwxyz_vtbl {
   Window (*root) (Display *);

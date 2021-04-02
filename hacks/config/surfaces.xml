@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <screensaver name="surfaces" _label="Surfaces" gl="yes">
 
@@ -25,7 +25,7 @@
      <option id="dini"      _label="Dini's Surface"      arg-set="-surface dini"/>
      <option id="enneper"   _label="Enneper's Surface"   arg-set="-surface enneper"/>
      <option id="kuen"      _label="Kuen Surface"        arg-set="-surface kuen"/>
-     <option id="moebius"   _label="Moebius Strip"       arg-set="-surface moebius"/>
+     <option id="moebius"   _label="Möbius Strip"        arg-set="-surface moebius"/>
      <option id="seashell"  _label="Seashell"            arg-set="-surface seashell"/>
      <option id="swallow"   _label="Swallowtail"         arg-set="-surface swallowtail"/>
      <option id="bohemian"  _label="Bohemian Dome"       arg-set="-surface bohemian"/>

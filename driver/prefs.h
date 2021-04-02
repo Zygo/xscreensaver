@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,26 +12,10 @@
 #ifndef __XSCREENSAVER_PREFS_H__
 #define __XSCREENSAVER_PREFS_H__
 
-#include "types.h"
-
-extern void load_init_file (Display *, saver_preferences *);
-extern Bool init_file_changed_p (saver_preferences *);
-extern int write_init_file (Display *,
-                            saver_preferences *, const char *version_string,
-                            Bool verbose_p);
-const char *init_file_name (void);
-extern Bool senesculent_p (void);
-
-extern screenhack *parse_screenhack (const char *line);
-extern void free_screenhack (screenhack *);
-extern char *format_hack (Display *, screenhack *, Bool wrap_p);
-char *make_hack_name (Display *, const char *shell_command);
-
-/* From dpms.c */
-extern void sync_server_dpms_settings (Display *, Bool enabled_p,
-                                       Bool dpms_quickoff_p,
-                                       int standby_secs, int suspend_secs,
-                                       int off_secs,
-                                       Bool verbose_p);
+extern int parse_init_file (const char *name,
+                            void (*handler) (int lineno, 
+                                             const char *key, const char *val,
+                                             void *closure),
+                            void *closure);
 
 #endif /* __XSCREENSAVER_PREFS_H__ */

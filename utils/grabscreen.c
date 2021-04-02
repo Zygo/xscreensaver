@@ -25,10 +25,8 @@
 
    On MacOS systems running X11, which nobody does any more:
 
-       "driver/xscreensaver-getimage" runs the Perl script
-       "driver/xscreensaver-getimage-desktop", which in turn runs the MacOS
-       program "/usr/sbin/screencapture" to get the Mac desktop image as a
-       PNG file.
+       "driver/xscreensaver-getimage" runs "/usr/sbin/screencapture" to
+       get the Mac desktop image as a PNG.
 
    On MacOS systems running the native Cocoa build, or on iOS or Android
    systems:
@@ -47,14 +45,6 @@
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
-
-#ifdef HAVE_XMU
-# ifndef VMS
-#  include <X11/Xmu/WinUtil.h>
-# else  /* VMS */
-#  include <Xmu/WinUtil.h>
-# endif /* VMS */
-#endif
 
 #include "usleep.h"
 #include "colors.h"
@@ -264,10 +254,7 @@ install_screen_colormaps (Screen *screen)
       {
 	XWindowAttributes xgwa;
 	Window client;
-#ifdef HAVE_XMU
-	/* #### need to put XmuClientWindow() in xmu.c, sigh... */
-	if (! (client = XmuClientWindow (dpy, kids[i])))
-#endif
+	/* if (! (client = XmuClientWindow (dpy, kids[i]))) */
 	  client = kids[i];
 	xgwa.colormap = 0;
 	XGetWindowAttributes (dpy, client, &xgwa);

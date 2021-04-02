@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="projectiveplane" _label="ProjectivePlane" gl="yes">
+<screensaver name="projectiveplane" _label="Projective Plane" gl="yes">
 
   <command arg="-root"/>
 

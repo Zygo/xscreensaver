@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -184,6 +184,7 @@ extern void jwzgles_glDepthFunc (GLuint);
 extern void jwzgles_glDepthMask (GLuint);
 extern void jwzgles_glDisable (GLuint);
 extern void jwzgles_glDrawArrays (GLuint, GLuint, GLuint);
+extern void jwzgles_glDrawElements (GLenum, GLsizei, GLenum, const GLvoid *);
 extern GLboolean jwzgles_glIsEnabled (GLuint);
 extern void jwzgles_glEnable (GLuint);
 extern void jwzgles_glFrontFace (GLuint);
@@ -206,7 +207,6 @@ extern void jwzgles_glViewport (GLuint, GLuint, GLuint, GLuint);
 extern void jwzgles_glTranslatef (GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glRotatef (GLfloat, GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glRotated (GLdouble, GLdouble x, GLdouble y, GLdouble z);
-extern void jwzgles_glReadBuffer (GLuint);
 extern void jwzgles_glScalef (GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glColor3f (GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glColor4f (GLfloat, GLfloat, GLfloat, GLfloat);

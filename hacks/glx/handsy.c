@@ -17,8 +17,6 @@
 			"*wireframe:    False       \n"
 
 # define release_hands 0
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
 #include "sphere.h"

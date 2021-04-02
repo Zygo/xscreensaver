@@ -36,6 +36,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 
+#include "screenhackI.h"
 #include "resources.h"
 #include "visual.h"
 #include "yarandom.h"
@@ -53,10 +54,6 @@ const char *progname;
 const char *progclass;
 int mono_p = 0;
 static Bool verbose_p = 0;
-
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define MAX_MULTICHAN 2
 static int N_CHANNELS=12;
@@ -119,6 +116,9 @@ XCreateGC(Display *dpy, Drawable d, unsigned long mask, XGCValues *gcv)
 {
   return 0;
 }
+
+int screen_number (Screen *screen) { return 0; }
+
 
 XImage *
 XCreateImage (Display *dpy, Visual *v, unsigned int depth,

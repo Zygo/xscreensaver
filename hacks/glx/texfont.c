@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2018 Jamie Zawinski <jwz@jwz.org>
+/* texfont, Copyright © 2005-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -8,55 +8,95 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * Renders X11 fonts into textures for use with OpenGL.
+ * Renders X11 fonts into textures for use with OpenGL or GLSL.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "screenhackI.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
-#ifdef HAVE_COCOA
-# ifdef HAVE_IPHONE
-#  include "jwzgles.h"
-# else
-#  include <OpenGL/glu.h>
-# endif
-#elif defined(HAVE_ANDROID)
-# include <GLES/gl.h>
-# include "jwzgles.h"
-#else
-# include <GL/glx.h>
-# include <GL/glu.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"
 #endif /* HAVE_XSHM_EXTENSION */
 
-#include "xft.h"
+#include "fps.h"    /* for current_device_rotation() */
 #include "pow2.h"
 #include "resources.h"
 #include "texfont.h"
-#include "fps.h"	/* for current_device_rotation() */
+#include "utf8wc.h"
+
+#ifdef HAVE_GLSL
+# include "glsl-utils.h"
+#endif /* HAVE_GLSL */
 
 #undef HAVE_XSHM_EXTENSION  /* doesn't actually do any good here */
 
-
-/* These are in xlock-gl.c */
-extern void clear_gl_error (void);
+extern void clear_gl_error (void);		/* xlock-gl.c */
 extern void check_gl_error (const char *type);
+extern float jwxyz_font_scale (Window);		/* jwxyz-cocoa.m */
 
-/* screenhack.h */
-extern char *progname;
+
+#ifdef HAVE_GLSL
+/* Shader programs for rendering text textures when the caller is using
+   GLSL and the GLES 3.x API rather than the OpenGL 3.1 or GLES 1.x APIs.
+ */
+static const GLchar *shader_version_2_1 = "#version 120\n";
+static const GLchar *shader_version_3_0 = "#version 130\n";
+static const GLchar *shader_version_3_0_es = "#version 300 es		\n\
+   precision highp float;						\n\
+   precision highp int;							\n\
+";
+static const GLchar *vertex_shader_attribs_2_1 = "\
+   attribute vec2 VertexCoord;						\n\
+   attribute vec2 VertexTex;						\n\
+   varying vec2 TexCoord;						\n\
+   varying vec4 Color;							\n\
+";
+static const GLchar *vertex_shader_attribs_3_0 = "\
+   in vec2 VertexCoord;							\n\
+   in vec2 VertexTex;							\n\
+   out vec2 TexCoord;							\n\
+   out vec4 Color;							\n\
+";
+static const GLchar *vertex_shader_main = "\
+   uniform mat4 ProjMat;						\n\
+   uniform vec4 FontColor;						\n\
+   void main (void)							\n\
+   {									\n\
+     gl_Position = ProjMat*vec4 (VertexCoord, 0, 1);			\n\
+     TexCoord = VertexTex;						\n\
+     Color = FontColor;							\n\
+   }									\n\
+";
+static const GLchar *fragment_shader_attribs_2_1 = "\
+   varying vec4 Color;							\n\
+   varying vec2 TexCoord;						\n\
+";
+static const GLchar *fragment_shader_attribs_3_0 = "\
+   in vec4 Color;							\n\
+   in vec2 TexCoord;							\n\
+   out vec4 FragColor;							\n\
+";
+static const GLchar *fragment_shader_main = "\
+   uniform sampler2D TexSampler;					\n\
+   void main (void)							\n\
+   {									\n\
+     const float MinAlpha = 0.01;					\n\
+     const float LODBias = 0.25;					\n\
+     if (Color.a <= MinAlpha)						\n\
+       discard;								\n\
+";
+static const GLchar *fragment_shader_out_2_1 = "\
+     gl_FragColor = Color*texture2D (TexSampler, TexCoord.st, LODBias); \n\
+   }\n";
+static const GLchar *fragment_shader_out_3_0 = "\
+     FragColor = Color*texture (TexSampler, TexCoord.st, LODBias);	\n\
+   }\n";
+#endif /* HAVE_GLSL */
+
 
 /* LRU cache of textures, to optimize the case where we're drawing the
    same strings repeatedly.
@@ -75,11 +115,13 @@ struct texture_font_data {
   XftFont *xftfont;
   int cache_size;
   texfont_cache *cache;
+# ifdef HAVE_GLSL
+  Bool shaders_initialized, use_shaders;
+  GLuint shader_program;
+  GLint vertex_coord_index, vertex_tex_index;
+  GLint proj_mat_index, font_color_index, tex_sampler_index;
+# endif /* HAVE_GLSL */
 };
-
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 
 
 /* Given a Pixmap (of screen depth), converts it to an OpenGL luminance mipmap.
@@ -91,9 +133,10 @@ struct texture_font_data {
    were drawn with antialiasing, that is preserved.
  */
 static void
-bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int depth,
-                   int *wP, int *hP)
+bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
+                   Visual *visual, int depth, int *wP, int *hP)
 {
+  Display *dpy = tfdata->dpy;
   Bool mipmap_p = True;
   int ow = *wP;
   int oh = *hP;
@@ -229,10 +272,23 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int depth,
 # endif
     GLuint type    = GL_UNSIGNED_BYTE;
 
-    if (mipmap_p)
-      gluBuild2DMipmaps (GL_TEXTURE_2D, iformat, w2, h2, format, type, data);
+#ifdef HAVE_GLSL
+    if (tfdata->use_shaders)
+      {
+        glTexImage2D (GL_TEXTURE_2D, 0, iformat, w2, h2, 0, format,
+                      type, data);
+        glGenerateMipmap (GL_TEXTURE_2D);
+      }
     else
-      glTexImage2D (GL_TEXTURE_2D, 0, iformat, w2, h2, 0, format, type, data);
+#endif /* HAVE_GLSL */
+      {
+        if (mipmap_p)
+          gluBuild2DMipmaps (GL_TEXTURE_2D, iformat, w2, h2, format, 
+                             type, data);
+        else
+          glTexImage2D (GL_TEXTURE_2D, 0, iformat, w2, h2, 0, format,
+                        type, data);
+      }
   }
 
   {
@@ -258,9 +314,9 @@ load_texture_font (Display *dpy, char *res)
 {
   int screen = DefaultScreen (dpy);
   char *font = get_string_resource (dpy, res, "Font");
-  const char *def1 = "-*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*";
-  const char *def2 = "-*-helvetica-medium-r-normal-*-*-140-*-*-*-*-*-*";
-  const char *def3 = "fixed";
+  const char *def1 = "sans-serif 18";
+  const char *def2 = "sans-serif 14";
+  const char *def3 = "monospace";
   XftFont *f = 0;
   texture_font_data *data;
   int cache_size = get_integer_resource (dpy, "texFontCacheSize", "Integer");
@@ -273,20 +329,20 @@ load_texture_font (Display *dpy, char *res)
   if (!res || !*res) abort();
 
   if (!strcmp (res, "fpsFont")) {  /* Kludge. */
-    def1 = "-*-courier-bold-r-normal-*-*-180-*-*-*-*-*-*"; /* also fps.c */
+    def1 = "monospace bold 18"; /* also fps.c */
     cache_size = 0;  /* No need for a cache on FPS: already throttled. */
   }
 
   if (!font) font = strdup(def1);
 
-  f = XftFontOpenXlfd (dpy, screen, font);
+  f = load_xft_font_retry (dpy, screen, font);
   if (!f && !!strcmp (font, def1))
     {
       fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
                progname, font, def1);
       free (font);
       font = strdup (def1);
-      f = XftFontOpenXlfd (dpy, screen, font);
+      f = load_xft_font_retry (dpy, screen, font);
     }
 
   if (!f && !!strcmp (font, def2))
@@ -295,7 +351,7 @@ load_texture_font (Display *dpy, char *res)
                progname, font, def2);
       free (font);
       font = strdup (def2);
-      f = XftFontOpenXlfd (dpy, screen, font);
+      f = load_xft_font_retry (dpy, screen, font);
     }
 
   if (!f && !!strcmp (font, def3))
@@ -304,7 +360,7 @@ load_texture_font (Display *dpy, char *res)
                progname, font, def3);
       free (font);
       font = strdup (def3);
-      f = XftFontOpenXlfd (dpy, screen, font);
+      f = load_xft_font_retry (dpy, screen, font);
     }
 
   if (!f)
@@ -321,6 +377,22 @@ load_texture_font (Display *dpy, char *res)
   data->dpy = dpy;
   data->xftfont = f;
   data->cache_size = cache_size;
+
+#ifdef HAVE_GLSL
+  /* Setting data->shaders_initialized to False will cause
+     initialize_textfont_shaders_glsl to be called by print_texture_label,
+     if necessary.  If strings are displayed by print_texture_string, the
+     caller is responsible for calling initialize_textfont_shaders_glsl
+     first. */
+  data->shaders_initialized = False;
+  data->use_shaders = False;
+  data->shader_program = 0;
+  data->vertex_coord_index = -1;
+  data->vertex_tex_index = -1;
+  data->proj_mat_index = -1;
+  data->font_color_index = -1;
+  data->tex_sampler_index = -1;
+#endif /* HAVE_GLSL */
 
   return data;
 }
@@ -455,7 +527,7 @@ texture_string_metrics (texture_font_data *data, const char *s,
    Otherwise it is an empty entry waiting to be rendered.
  */
 static struct texfont_cache *
-get_cache (texture_font_data *data, const char *string)
+texfont_get_cache (texture_font_data *data, const char *string)
 {
   int count = 0;
   texfont_cache *prev = 0, *prev2 = 0, *curr = 0, *next = 0;
@@ -512,13 +584,10 @@ get_cache (texture_font_data *data, const char *string)
 }
 
 
-/* Renders the given string into the prevailing texture.
-   Returns the metrics of the text, and size of the texture.
- */
-void
-string_to_texture (texture_font_data *data, const char *string,
-                   XCharStruct *extents_ret,
-                   int *tex_width_ret, int *tex_height_ret)
+static Pixmap
+string_to_pixmap (texture_font_data *data, const char *string,
+                  XCharStruct *extents_ret,
+                  int *width_ret, int *height_ret)
 {
   Window window = RootWindow (data->dpy, 0);
   Pixmap p;
@@ -557,36 +626,160 @@ string_to_texture (texture_font_data *data, const char *string,
                           xftdraw, &xftcolor, 0);
   XftDrawDestroy (xftdraw);
   XftColorFree (data->dpy, xgwa.visual, xgwa.colormap, &xftcolor);
+  if (width_ret)   *width_ret   = width;
+  if (height_ret)  *height_ret  = height;
+  if (extents_ret) *extents_ret = overall;
+  return p;
+}
+
+
+/* Renders the given string into the prevailing texture.
+   Returns the metrics of the text, and size of the texture.
+ */
+void
+string_to_texture (texture_font_data *data, const char *string,
+                   XCharStruct *extents_ret,
+                   int *tex_width_ret, int *tex_height_ret)
+{
+  Window window = RootWindow (data->dpy, 0);
+  XWindowAttributes xgwa;
+  int width, height;
+  Pixmap p = string_to_pixmap (data, string, extents_ret, &width, &height);
 
   /* Copy the bits from the Pixmap into a texture, unless it's cached.
    */
-  bitmap_to_texture (data->dpy, p, xgwa.visual, xgwa.depth, 
-                     &width, &height);
+  XGetWindowAttributes (data->dpy, window, &xgwa);
+  bitmap_to_texture (data, p, xgwa.visual, xgwa.depth, &width, &height);
   XFreePixmap (data->dpy, p);
 
-  if (extents_ret)    *extents_ret    = overall;
   if (tex_width_ret)  *tex_width_ret  = width;
   if (tex_height_ret) *tex_height_ret = height;
 }
+
+
+/* True if the string appears to be a "missing" character.
+   The string should contain a single UTF8 character.
+
+   Since there may be no reliable way to tell whether a font contains a
+   character or has substituted a "missing" glyph for it, this function
+   examines the bits to see if it is either solid black, or is a simple
+   rectangle, which is what most fonts use.
+ */
+Bool
+blank_character_p (texture_font_data *data, const char *string)
+{
+  Window window = RootWindow (data->dpy, 0);
+  int width, height;
+  Pixmap p;
+  XImage *im;
+  int x, y, j;
+  int *xings;
+  XWindowAttributes xgwa;
+  Bool ret = False;
+
+# ifdef HAVE_XFT
+  /* Xft lets us actually ask whether the character is in the font!
+     I'm not sure that this is a guarantee that the character is not
+     a substitution rectangle, however. */
+  {
+    unsigned long uc = 0;
+    utf8_decode ((const unsigned char *) string, strlen (string), &uc);
+    ret = !XftCharExists (data->dpy, data->xftfont, (FcChar32) uc);
+
+#  if 0
+    {
+      const unsigned char *s = (unsigned char *) string;
+      fprintf (stderr, "## %d %lu", ret, uc);
+      for (; *s; s++) fprintf (stderr, " %02x", *s);
+      fprintf (stderr, "\t [%s]\n", string);
+    }
+#  endif
+
+    if (ret) return ret;   /* If Xft says it is blank, believe it. */
+  }
+# endif /* HAVE_XFT */
+
+  /* If we don't have real Xft, we have to check the bits.
+     If we do have Xft and it says that the character exists,
+     verify that by checking the bits anyway.
+   */
+
+  p = string_to_pixmap (data, string, 0, &width, &height);
+  im = XGetImage (data->dpy, p, 0, 0, width, height, ~0L, ZPixmap);
+  xings = (int *) calloc (height, sizeof(*xings));
+  XFreePixmap (data->dpy, p);
+  XGetWindowAttributes (data->dpy, window, &xgwa);
+
+  for (y = 0, j = 0; y < im->height; y++)
+    {
+      unsigned long prev = 0;
+      int c = 0;
+      for (x = 0; x < im->width; x++)
+        {
+          unsigned long p = XGetPixel (im, x, y);
+          p = (p & 0x0000FF00);	 /* Take just one channel, any channel */
+          p = p ? 1 : 0;	 /* Only care about B&W */
+          if (p != prev) c++;
+          prev = p;
+        }
+      if (j == 0 || xings[j-1] != c)
+        xings[j++] = c;
+    }
+
+  /* xings contains a schematic of how many times the color changed
+     on a line, with duplicates removed, e.g.:
+
+             *     1      *****   1       ****   1       ****   1
+            * *    3      *    *  3      *    *  3      *    *  3
+           *   *   .      *****   1      *       1      *    *  .
+          *******  1      *    *  3      *       .      *    *  .
+          *     *  3      *    *  .      *    *  3      *    *  .
+          *     *  .      *****   1       ****   1       ****   1
+
+     So "131" is the pattern for a hollow rectangle, which is what most
+     fonts use for missing characters.  It also gets a false positive on
+     capital or lower case O, and on 0 without a slash, but I can live
+     with that.
+   */
+
+  if (j <= 1)
+    ret = True;
+  else if (j == 3 && xings[0] == 1 && xings[1] == 3 && xings[2] == 1)
+    ret = True;
+  else if (im->width < 2 || im->height < 2)
+    ret = True;
+
+  XDestroyImage (im);
+  free (xings);
+  return ret;
+}
+
 
 
 /* Set the various OpenGL parameters for properly rendering things
    with a texture generated by string_to_texture().
  */
 void
-enable_texture_string_parameters (void)
+enable_texture_string_parameters (texture_font_data *data)
 {
-  glEnable (GL_TEXTURE_2D);
-
-  /* Texture-rendering parameters to make font pixmaps tolerable to look at.
-   */
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                    GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glEnable (GL_BLEND);
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+# ifdef HAVE_GLSL
+  if (data->use_shaders)
+    return;
+# endif /* HAVE_GLSL */
+
+  glEnable (GL_TEXTURE_2D);
 
   /* LOD bias is part of OpenGL 1.4.
      GL_EXT_texture_lod_bias has been present since the original iPhone.
-  */
+   */
 # if !defined(GL_TEXTURE_LOD_BIAS) && defined(GL_TEXTURE_LOD_BIAS_EXT)
 #   define GL_TEXTURE_LOD_BIAS GL_TEXTURE_LOD_BIAS_EXT
 # endif
@@ -595,17 +788,14 @@ enable_texture_string_parameters (void)
 # endif
   clear_gl_error();  /* invalid enum on iPad 3 */
 
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
   /* Don't write the transparent parts of the quad into the depth buffer. */
+# ifndef HAVE_ANDROID /* WTF? */
   glAlphaFunc (GL_GREATER, 0.01);
+# endif
   glEnable (GL_ALPHA_TEST);
-  glEnable (GL_BLEND);
   glDisable (GL_LIGHTING);
   glDisable (GL_TEXTURE_GEN_S);
   glDisable (GL_TEXTURE_GEN_T);
-  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 
@@ -632,7 +822,7 @@ print_texture_string (texture_font_data *data, const char *string)
   /* Save the prevailing texture ID, and bind ours.  Restored at the end. */
   glGetIntegerv (GL_TEXTURE_BINDING_2D, &old_texture);
 
-  cache = get_cache (data, string);
+  cache = texfont_get_cache (data, string);
 
   glBindTexture (GL_TEXTURE_2D, cache->texid);
   check_gl_error ("texture font binding");
@@ -648,19 +838,13 @@ print_texture_string (texture_font_data *data, const char *string)
     }
   else
     {
-# if defined HAVE_JWXYZ && defined JWXYZ_GL
-      /* TODO, JWXYZ_GL: Mixing Xlib and GL has issues. */
-      memset (&overall, 0, sizeof(overall));
-      tex_width = 8;
-      tex_height = 8;
-# else
       string_to_texture (data, string, &overall, &tex_width, &tex_height);
-# endif
     }
 
   {
     int ofront, oblend;
-    Bool alpha_p, blend_p, light_p, gen_s_p, gen_t_p;
+    Bool alpha_p = False, blend_p = False, light_p = False;
+    Bool gen_s_p = False, gen_t_p = False;
     GLfloat omatrix[16];
     GLfloat qx0, qy0, qx1, qy1;
     GLfloat tx0, ty0, tx1, ty1;
@@ -668,28 +852,34 @@ print_texture_string (texture_font_data *data, const char *string)
     /* If face culling is not enabled, draw front and back. */
     Bool draw_back_face_p = !glIsEnabled (GL_CULL_FACE);
 
-    /* Save the prevailing texture environment, and set up ours.
-     */
+    /* Save the prevailing texture environment. */
     glGetIntegerv (GL_FRONT_FACE, &ofront);
-    glGetIntegerv (GL_BLEND_DST, &oblend);
-    glGetFloatv (GL_TEXTURE_MATRIX, omatrix);
-    check_gl_error ("texture font matrix");
-    blend_p = glIsEnabled (GL_BLEND);
-    alpha_p = glIsEnabled (GL_ALPHA_TEST);
-    light_p = glIsEnabled (GL_LIGHTING);
-    gen_s_p = glIsEnabled (GL_TEXTURE_GEN_S);
-    gen_t_p = glIsEnabled (GL_TEXTURE_GEN_T);
 
-    glPushMatrix();
+# ifdef HAVE_GLSL
+    if (!data->use_shaders)
+# endif /* HAVE_GLSL */
+      {
+        glGetIntegerv (GL_BLEND_DST, &oblend);
+        glGetFloatv (GL_TEXTURE_MATRIX, omatrix);
+        check_gl_error ("texture font matrix");
+        blend_p = glIsEnabled (GL_BLEND);
+        alpha_p = glIsEnabled (GL_ALPHA_TEST);
+        light_p = glIsEnabled (GL_LIGHTING);
+        gen_s_p = glIsEnabled (GL_TEXTURE_GEN_S);
+        gen_t_p = glIsEnabled (GL_TEXTURE_GEN_T);
 
-    glNormal3f (0, 0, 1);
+        glPushMatrix();
+
+        glNormal3f (0, 0, 1);
+
+        glMatrixMode (GL_TEXTURE);
+        glLoadIdentity ();
+        glMatrixMode (GL_MODELVIEW);
+      }
+
     glFrontFace (GL_CW);
 
-    glMatrixMode (GL_TEXTURE);
-    glLoadIdentity ();
-    glMatrixMode (GL_MODELVIEW);
-
-    enable_texture_string_parameters();
+    enable_texture_string_parameters (data);
 
     /* Draw a quad with that texture on it, possibly using a cached texture.
        Position the XCharStruct origin at 0,0 in the scene.
@@ -704,44 +894,89 @@ print_texture_string (texture_font_data *data, const char *string)
     tx1 = (overall.rbearing - overall.lbearing) / (GLfloat) tex_width;
     ty0 = (overall.ascent + overall.descent)    / (GLfloat) tex_height;
 
-    glEnable (GL_CULL_FACE);
-    glFrontFace (GL_CCW);
-    glBegin (GL_QUADS);
-    glTexCoord2f (tx0, ty0); glVertex3f (qx0, qy0, 0);
-    glTexCoord2f (tx1, ty0); glVertex3f (qx1, qy0, 0);
-    glTexCoord2f (tx1, ty1); glVertex3f (qx1, qy1, 0);
-    glTexCoord2f (tx0, ty1); glVertex3f (qx0, qy1, 0);
-    glEnd();
-
-    if (draw_back_face_p)
+# ifdef HAVE_GLSL
+    if (data->use_shaders)
       {
-        glFrontFace (GL_CW);
+        static const GLuint indices[6] = { 0, 1, 2, 2, 3, 0 };
+        GLfloat v[4][2], t[4][2];
+
+        v[0][0] = qx0; v[0][1] = qy0; t[0][0] = tx0; t[0][1] = ty0;
+        v[1][0] = qx1; v[1][1] = qy0; t[1][0] = tx1; t[1][1] = ty0;
+        v[2][0] = qx1; v[2][1] = qy1; t[2][0] = tx1; t[2][1] = ty1;
+        v[3][0] = qx0; v[3][1] = qy1; t[3][0] = tx0; t[3][1] = ty1;
+
+        glEnableVertexAttribArray (data->vertex_coord_index);
+        glVertexAttribPointer (data->vertex_coord_index, 2, GL_FLOAT, GL_FALSE,
+                               2 * sizeof(GLfloat), v);
+
+        glEnableVertexAttribArray (data->vertex_tex_index);
+        glVertexAttribPointer (data->vertex_tex_index, 2, GL_FLOAT, GL_FALSE,
+                               2 * sizeof(GLfloat), t);
+
+        glEnable (GL_CULL_FACE);
+        glFrontFace (GL_CCW);
+        glDrawElements (GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
+
+        if (draw_back_face_p)
+          {
+            glFrontFace (GL_CW);
+            glDrawElements (GL_TRIANGLE_STRIP, 2, GL_UNSIGNED_INT, indices);
+          }
+
+        glDisableVertexAttribArray (data->vertex_coord_index);
+        glDisableVertexAttribArray (data->vertex_tex_index);
+
+        glDisable(GL_CULL_FACE);
+      }
+    else
+# endif /* HAVE_GLSL */
+      {
+        glEnable (GL_CULL_FACE);
+        glFrontFace (GL_CCW);
         glBegin (GL_QUADS);
         glTexCoord2f (tx0, ty0); glVertex3f (qx0, qy0, 0);
         glTexCoord2f (tx1, ty0); glVertex3f (qx1, qy0, 0);
         glTexCoord2f (tx1, ty1); glVertex3f (qx1, qy1, 0);
         glTexCoord2f (tx0, ty1); glVertex3f (qx0, qy1, 0);
         glEnd();
-        glDisable (GL_CULL_FACE);
-      }
 
-    glPopMatrix();
+        if (draw_back_face_p)
+          {
+            glFrontFace (GL_CW);
+            glBegin (GL_QUADS);
+            glTexCoord2f (tx0, ty0); glVertex3f (qx0, qy0, 0);
+            glTexCoord2f (tx1, ty0); glVertex3f (qx1, qy0, 0);
+            glTexCoord2f (tx1, ty1); glVertex3f (qx1, qy1, 0);
+            glTexCoord2f (tx0, ty1); glVertex3f (qx0, qy1, 0);
+            glEnd();
+          }
+
+        glDisable (GL_CULL_FACE);
+
+        glPopMatrix();
+      }
 
     /* Reset to the caller's texture environment.
      */
-    glBindTexture (GL_TEXTURE_2D, old_texture);
-    glFrontFace (ofront);
-    if (!alpha_p) glDisable (GL_ALPHA_TEST);
-    if (!blend_p) glDisable (GL_BLEND);
-    if (light_p) glEnable (GL_LIGHTING);
-    if (gen_s_p) glEnable (GL_TEXTURE_GEN_S);
-    if (gen_t_p) glEnable (GL_TEXTURE_GEN_T);
+# ifdef HAVE_GLSL
+    if (!data->use_shaders)
+# endif /* HAVE_GLSL */
+      {
+        glBlendFunc (GL_SRC_ALPHA, oblend);
+        glMatrixMode (GL_TEXTURE);
+        glMultMatrixf (omatrix);
+        glMatrixMode (GL_MODELVIEW);
+        if (!alpha_p) glDisable (GL_ALPHA_TEST);
+        if (light_p) glEnable (GL_LIGHTING);
+        if (gen_s_p) glEnable (GL_TEXTURE_GEN_S);
+        if (gen_t_p) glEnable (GL_TEXTURE_GEN_T);
+      }
 
-    glBlendFunc (GL_SRC_ALPHA, oblend);
+    if (!blend_p) glDisable (GL_BLEND);
+
+    glFrontFace (ofront);
   
-    glMatrixMode (GL_TEXTURE);
-    glMultMatrixf (omatrix);
-    glMatrixMode (GL_MODELVIEW);
+    glBindTexture (GL_TEXTURE_2D, old_texture);
 
     check_gl_error ("texture font print");
 
@@ -755,6 +990,135 @@ print_texture_string (texture_font_data *data, const char *string)
         cache->tex_height = tex_height;
       }
   }
+}
+
+
+#ifdef HAVE_GLSL
+/* Initialize the texture font shaders that are used if the hack prefers
+   to use a GLSL implementation of the text drawing functionality.  This
+   function must be called before the first string is displayed. It assumes
+   that the OpenGL graphics context is set to the actual context in which
+   the shaders will be used.  Note that this is not necessarily true in
+   load_texture_font (for example, if the -pair option is used to run a
+   hack). */
+static void
+initialize_textfont_shaders_glsl (texture_font_data *data)
+{
+  GLint gl_major, gl_minor, glsl_major, glsl_minor;
+  GLboolean gl_gles3;
+  const GLchar *vertex_shader_source[3];
+  const GLchar *fragment_shader_source[4];
+
+  data->use_shaders = False;
+
+  if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
+                                 &gl_gles3))
+    {
+      data->shaders_initialized = True;
+      return;
+    }
+
+  if (!gl_gles3)
+    {
+      if (gl_major < 3 ||
+          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
+        {
+          if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
+              (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
+            {
+              data->shaders_initialized = True;
+              return;
+            }
+          /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
+          vertex_shader_source[0] = shader_version_2_1;
+          vertex_shader_source[1] = vertex_shader_attribs_2_1;
+          vertex_shader_source[2] = vertex_shader_main;
+          fragment_shader_source[0] = shader_version_2_1;
+          fragment_shader_source[1] = fragment_shader_attribs_2_1;
+          fragment_shader_source[2] = fragment_shader_main;
+          fragment_shader_source[3] = fragment_shader_out_2_1;
+        }
+      else
+        {
+          /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
+          vertex_shader_source[0] = shader_version_3_0;
+          vertex_shader_source[1] = vertex_shader_attribs_3_0;
+          vertex_shader_source[2] = vertex_shader_main;
+          fragment_shader_source[0] = shader_version_3_0;
+          fragment_shader_source[1] = fragment_shader_attribs_3_0;
+          fragment_shader_source[2] = fragment_shader_main;
+          fragment_shader_source[3] = fragment_shader_out_3_0;
+        }
+    }
+  else /* gl_gles3 */
+    {
+      if (gl_major < 3 || glsl_major < 3)
+        {
+          data->shaders_initialized = True;
+          return;
+        }
+      /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
+      vertex_shader_source[0] = shader_version_3_0_es;
+      vertex_shader_source[1] = vertex_shader_attribs_3_0;
+      vertex_shader_source[2] = vertex_shader_main;
+      fragment_shader_source[0] = shader_version_3_0_es;
+      fragment_shader_source[1] = fragment_shader_attribs_3_0;
+      fragment_shader_source[2] = fragment_shader_main;
+      fragment_shader_source[3] = fragment_shader_out_3_0;
+    }
+  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
+                                  4,fragment_shader_source,
+                                  &data->shader_program))
+    {
+      data->shaders_initialized = True;
+      return;
+    }
+  data->vertex_coord_index = glGetAttribLocation(data->shader_program,
+                                                 "VertexCoord");
+  data->vertex_tex_index = glGetAttribLocation(data->shader_program,
+                                               "VertexTex");
+  data->proj_mat_index = glGetUniformLocation(data->shader_program,
+                                              "ProjMat");
+  data->font_color_index = glGetUniformLocation(data->shader_program,
+                                                "FontColor");
+  data->tex_sampler_index = glGetUniformLocation(data->shader_program,
+                                                 "TexSampler");
+  if (data->vertex_coord_index != -1 && data->vertex_tex_index != -1 &&
+      data->proj_mat_index != -1 && data->font_color_index != -1 &&
+      data->tex_sampler_index != -1)
+    {
+      data->use_shaders = True;
+      data->shaders_initialized = True;
+    }
+  else
+    {
+      glDeleteProgram(data->shader_program);
+      data->shader_program = 0;
+      data->shaders_initialized = True;
+    }
+}
+#endif /* HAVE_GLSL */
+
+
+
+static void
+texfont_transrot (texture_font_data *data, 
+                  GLfloat mat[16],
+                  GLfloat tx, GLfloat ty, GLfloat tz,
+                  GLfloat r, GLfloat rx, GLfloat ry, GLfloat rz)
+{
+# ifdef HAVE_GLSL
+  if (data->use_shaders)
+    {
+      glsl_Translate (mat, tx, ty, tz);
+      glsl_Rotate (mat, r, rx, ry, rz);
+    }
+  else
+# endif /* HAVE_GLSL */
+    {
+      glTranslatef (tx, ty, tz);
+      glRotatef (r, rx, ry, rz);
+    }
 }
 
 
@@ -772,164 +1136,255 @@ print_texture_label (Display *dpy,
                      int position,
                      const char *string)
 {
-  GLfloat color[4];
-
-  Bool tex_p   = glIsEnabled (GL_TEXTURE_2D);
-  Bool texs_p  = glIsEnabled (GL_TEXTURE_GEN_S);
-  Bool text_p  = glIsEnabled (GL_TEXTURE_GEN_T);
-  Bool depth_p = glIsEnabled (GL_DEPTH_TEST);
-  Bool cull_p  = glIsEnabled (GL_CULL_FACE);
-  Bool fog_p   = glIsEnabled (GL_FOG);
+  GLfloat color[4] = { 1, 1, 1, 1 };
+  Bool tex_p = False, texs_p = False, text_p = False;
+  Bool depth_p = False, fog_p = False, cull_p = False;
   GLint ovp[4];
-
-#  ifndef HAVE_JWZGLES
+  GLfloat proj_mat[16];
+# ifndef HAVE_JWZGLES
   GLint opoly[2];
-  glGetIntegerv (GL_POLYGON_MODE, opoly);
-#  endif
+# endif
+
+  cull_p = glIsEnabled (GL_CULL_FACE);
+  depth_p = glIsEnabled (GL_DEPTH_TEST);
 
   glGetIntegerv (GL_VIEWPORT, ovp);
 
+  /* This call will fail with an OpenGL ES 3.0 context. color will maintain
+     its initial value of {1,1,1,1} in this case. We clear the potential
+     error afterwards. */
+  clear_gl_error();
   glGetFloatv (GL_CURRENT_COLOR, color);
+  clear_gl_error ();
+#ifdef HAVE_ANDROID
+  Log ("texfont current color 0x%04X (%5.3f,%5.3f,%5.3f,%5.3f)",
+       GL_CURRENT_COLOR,color[0], color[1], color[2], color[3]);
+#endif
 
-  glEnable (GL_TEXTURE_2D);
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glPolygonMode (GL_FRONT, GL_FILL);
-
-  glDisable (GL_TEXTURE_GEN_S);
-  glDisable (GL_TEXTURE_GEN_T);
-  glDisable (GL_CULL_FACE);
-  glDisable (GL_FOG);
 
   glDisable (GL_DEPTH_TEST);
 
-  /* Each matrix mode has its own stack, so we need to push/pop
-     them separately.
-   */
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  {
-    glLoadIdentity();
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+# ifdef HAVE_GLSL
+  if (!data->shaders_initialized)
     {
-      XCharStruct cs;
-      int ascent, descent;
-      int x, y, w, h, swap;
-      /* int rot = (int) current_device_rotation(); */
-      int rot = 0;  /* Since GL hacks rotate now */
+      if (get_boolean_resource (dpy, "prefersGLSL", "PrefersGLSL"))
+        initialize_textfont_shaders_glsl (data);
+    }
 
+  if (data->use_shaders)
+    {
+      glUseProgram (data->shader_program);
+      glActiveTexture (GL_TEXTURE0);
+      glUniform1i (data->tex_sampler_index, 0);
+    }
+  else
+# endif /* HAVE_GLSL */
+    {
+      tex_p   = glIsEnabled (GL_TEXTURE_2D);
+      texs_p  = glIsEnabled (GL_TEXTURE_GEN_S);
+      text_p  = glIsEnabled (GL_TEXTURE_GEN_T);
+      fog_p   = glIsEnabled (GL_FOG);
+
+      glDisable (GL_TEXTURE_GEN_S);
+      glDisable (GL_TEXTURE_GEN_T);
+      glDisable (GL_CULL_FACE);
+      glDisable (GL_FOG);
+      glEnable (GL_TEXTURE_2D);
+
+#ifndef HAVE_JWZGLES
+      glGetIntegerv (GL_POLYGON_MODE, opoly);
+#endif
+      glPolygonMode (GL_FRONT, GL_FILL);
+
+      /* Each matrix mode has its own stack, so we need to push/pop
+         them separately.
+       */
+      glMatrixMode(GL_PROJECTION);
+      glPushMatrix();
       glLoadIdentity();
-      glViewport (0, 0, window_width, window_height);
-      glOrtho (0, window_width, 0, window_height, -1, 1);
 
-      while (rot <= -180) rot += 360;
-      while (rot >   180) rot -= 360;
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+      glLoadIdentity();
+    }
 
-      texture_string_metrics (data, string, &cs, &ascent, &descent);
-      h = cs.ascent + cs.descent;
-      w  = cs.width;
+  {
+    XCharStruct cs;
+    int ascent, descent;
+    int x, y, w, h, swap;
+    /* int rot = (int) current_device_rotation(); */
+    int rot = 0;  /* Since GL hacks rotate now */
+
+    glViewport (0, 0, window_width, window_height);
+
+# ifdef HAVE_GLSL
+    if (data->use_shaders)
+      {
+        glsl_Identity (proj_mat);
+        glsl_Orthographic (proj_mat, 0, window_width, 0, window_height, -1 ,1);
+      }
+    else
+# endif /* HAVE_GLSL */
+      {
+        glOrtho (0, window_width, 0, window_height, -1, 1);
+      }
+
+    while (rot <= -180) rot += 360;
+    while (rot >   180) rot -= 360;
+
+    texture_string_metrics (data, string, &cs, &ascent, &descent);
+    h = cs.ascent + cs.descent;
+    w  = cs.width;
 
 # ifdef HAVE_IPHONE
-      {
-        /* Size of the font is in points, so scale iOS pixels to points. */
-        GLfloat scale = ((window_width > window_height
-                          ? window_width : window_height)
-                         / 768.0);
-        if (scale < 1) scale = 1;
+    {
+      /* Size of the font is in points, so scale iOS pixels to points. */
+      GLfloat scale = ((window_width > window_height
+                        ? window_width : window_height)
+                       / 768.0);
+      if (scale < 1) scale = 1;
 
-        /* jwxyz-XLoadFont has already doubled the font size, to compensate
-           for physically smaller screens.  Undo that, since OpenGL hacks
-           use full-resolution framebuffers, unlike X11 hacks. */
-        scale /= 2;
+      /* jwxyz-XLoadFont has already doubled the font size, to compensate
+         for physically smaller screens.  Undo that, since OpenGL hacks
+         use full-resolution framebuffers, unlike X11 hacks. */
+      scale /= jwxyz_font_scale (RootWindow (dpy, 0));
 
-        window_width  /= scale;
-        window_height /= scale;
+      window_width  /= scale;
+      window_height /= scale;
+
+#  ifdef HAVE_GLSL
+      if (data->use_shaders)
+        glsl_Scale (proj_mat, scale, scale, scale);
+      else
+#  endif /* HAVE_GLSL */
         glScalef (scale, scale, scale);
-      }
+    }
 # endif /* HAVE_IPHONE */
 
-      if (rot > 135 || rot < -135)		/* 180 */
-        {
-          glTranslatef (window_width, window_height, 0);
-          glRotatef (180, 0, 0, 1);
-        }
-      else if (rot > 45)			/* 90 */
-        {
-          glTranslatef (window_width, 0, 0);
-          glRotatef (90, 0, 0, 1);
-          swap = window_width;
-          window_width = window_height;
-          window_height = swap;
-        }
-      else if (rot < -45)			/* 270 */
-        {
-          glTranslatef(0, window_height, 0);
-          glRotatef (-90, 0, 0, 1);
-          swap = window_width;
-          window_width = window_height;
-          window_height = swap;
-        }
-
-      switch (position) {
-      case 0:					/* center */
-        x = (window_width  - w) / 2;
-        y = (window_height + h) / 2 - ascent;
-        break;
-      case 1:					/* top */
-        x = ascent;
-        y = window_height - ascent*2;
-        break;
-      case 2:					/* bottom */
-        x = ascent;
-        y = h;
-        break;
-      default:
-        abort();
-      }
-
-      glTranslatef (x, y, 0);
-
-      /* draw the text five times, to give it a border. */
+    if (rot > 135 || rot < -135)	/* 180 */
       {
-        const XPoint offsets[] = {{ -1, -1 },
-                                  { -1,  1 },
-                                  {  1,  1 },
-                                  {  1, -1 },
-                                  {  0,  0 }};
-        int i;
-
-        glColor3f (0, 0, 0);
-        for (i = 0; i < countof(offsets); i++)
-          {
-            if (offsets[i].x == 0)
-              glColor4fv (color);
-            glPushMatrix();
-            glTranslatef (offsets[i].x, offsets[i].y, 0);
-            print_texture_string (data, string);
-            glPopMatrix();
-          }
+        texfont_transrot (data, proj_mat,
+                          window_width, window_height, 0,
+                          180, 0, 0, 1);
       }
-    }
-    glPopMatrix();
-  }
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
+    else if (rot > 45)			/* 90 */
+      {
+        texfont_transrot (data, proj_mat,
+                          window_width, 0, 0,
+                          90, 0, 0, 1);
+        swap = window_width;
+        window_width = window_height;
+        window_height = swap;
+      }
+    else if (rot < -45)			/* 270 */
+      {
+        texfont_transrot (data, proj_mat,
+                          0, window_height, 0,
+                          -90, 0, 0, 1);
+        swap = window_width;
+        window_width = window_height;
+        window_height = swap;
+      }
 
-  if (tex_p)   glEnable (GL_TEXTURE_2D); else glDisable (GL_TEXTURE_2D);
-  if (texs_p)  glEnable (GL_TEXTURE_GEN_S);/*else glDisable(GL_TEXTURE_GEN_S);*/
-  if (text_p)  glEnable (GL_TEXTURE_GEN_T);/*else glDisable(GL_TEXTURE_GEN_T);*/
-  if (depth_p) glEnable (GL_DEPTH_TEST); else glDisable (GL_DEPTH_TEST);
-  if (cull_p)  glEnable (GL_CULL_FACE); /*else glDisable (GL_CULL_FACE);*/
-  if (fog_p)   glEnable (GL_FOG); /*else glDisable (GL_FOG);*/
+    switch (position) {
+    case 0:					/* center */
+      x = (window_width  - w) / 2;
+      y = (window_height + h) / 2 - ascent;
+      break;
+    case 1:					/* top */
+      x = ascent;
+      y = window_height - ascent*2;
+      break;
+    case 2:					/* bottom */
+      x = ascent;
+      y = h;
+      break;
+    default:
+      abort();
+    }
+
+    texfont_transrot (data, proj_mat,
+                      x, y, 0,
+                      0, 0, 0, 1);
+
+    /* draw the text five times, to give it a border. */
+    {
+      const XPoint offsets[] = {{ -1, -1 },
+                                { -1,  1 },
+                                {  1,  1 },
+                                {  1, -1 },
+                                {  0,  0 }};
+      int i;
+
+# ifdef HAVE_GLSL
+      if (data->use_shaders)
+        glUniform4f (data->font_color_index, 0, 0, 0, 1);
+      else
+# endif /* HAVE_GLSL */
+        glColor3f (0, 0, 0);
+
+      for (i = 0; i < countof(offsets); i++)
+        {
+          if (offsets[i].x == 0)
+            {
+# ifdef HAVE_GLSL
+              if (data->use_shaders)
+                glUniform4fv (data->font_color_index, 1, color);
+              else
+# endif /* HAVE_GLSL */
+                glColor4fv (color);
+            }
+
+# ifdef HAVE_GLSL
+          if (data->use_shaders)
+            {
+              GLfloat proj_mat_trans[16];
+              glsl_CopyMatrix (proj_mat_trans, proj_mat);
+              glsl_Translate (proj_mat_trans, offsets[i].x,offsets[i].y, 0);
+              glUniformMatrix4fv (data->proj_mat_index, 1, GL_FALSE, 
+                                  proj_mat_trans);
+              print_texture_string (data, string);
+            }
+          else
+# endif /* HAVE_GLSL */
+            {
+              glPushMatrix();
+              glTranslatef (offsets[i].x, offsets[i].y, 0);
+              print_texture_string (data, string);
+              glPopMatrix();
+            }
+        }
+    }
+  }
+
+# ifdef HAVE_GLSL
+  if (data->use_shaders)
+    {
+      glUseProgram (0);
+    }
+  else
+# endif /* HAVE_GLSL */
+    {
+      glPopMatrix();
+      glMatrixMode(GL_PROJECTION);
+      glPopMatrix();
+      glMatrixMode(GL_MODELVIEW);
+
+      if (tex_p)   glEnable (GL_TEXTURE_2D); else glDisable (GL_TEXTURE_2D);
+      if (texs_p)  glEnable (GL_TEXTURE_GEN_S);
+      if (text_p)  glEnable (GL_TEXTURE_GEN_T);
+      if (fog_p)   glEnable (GL_FOG); /*else glDisable (GL_FOG);*/
+#ifndef HAVE_JWZGLES
+      glPolygonMode (GL_FRONT, opoly[0]);
+#endif
+    }
 
   glViewport (ovp[0], ovp[1], ovp[2], ovp[3]);
 
-# ifndef HAVE_JWZGLES
-  glPolygonMode (GL_FRONT, opoly[0]);
-# endif
-
-  glMatrixMode(GL_MODELVIEW);
+  if (cull_p) glEnable (GL_CULL_FACE); /*else glDisable (GL_CULL_FACE);*/
+  if (depth_p) glEnable (GL_DEPTH_TEST); else glDisable (GL_DEPTH_TEST);
 }
 
 
@@ -959,5 +1414,16 @@ free_texture_font (texture_font_data *data)
     }
   if (data->xftfont)
     XftFontClose (data->dpy, data->xftfont);
+
+# ifdef HAVE_GLSL
+  if (data->use_shaders &&
+      data->shaders_initialized &&
+      data->shader_program != 0)
+    {
+      glUseProgram (0);
+      glDeleteProgram (data->shader_program);
+    }
+# endif /* HAVE_GLSL */
+
   free (data);
 }

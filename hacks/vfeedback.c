@@ -23,10 +23,6 @@
  *   for that Amiga Genlock, Cabaret Voltaire look.
  */
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include "screenhack.h"
 #include "analogtv.h"
 
@@ -39,11 +35,6 @@
 # include "ximage-loader.h"
 # include "images/gen/testcard_bbcf_png.h"
 #endif
-
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
 
 struct state {
   Display *dpy;

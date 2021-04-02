@@ -1,5 +1,5 @@
 /* passwd-pwent.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,13 +28,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#ifndef VMS
-# include <pwd.h>
-# include <grp.h>
-#else /* VMS */
-# include "vms-pwd.h"
-#endif /* VMS */
-
+#include <pwd.h>
+#include <grp.h>
 
 #ifdef __bsdi__
 # include <sys/param.h>
@@ -47,6 +42,7 @@
 #if defined(HAVE_SHADOW_PASSWD)	      /* passwds live in /etc/shadow */
 
 #   include <shadow.h>
+#   define PWNAME   "spnam"
 #   define PWTYPE   struct spwd *
 #   define PWPSLOT  sp_pwdp
 #   define GETPW    getspnam
@@ -56,6 +52,7 @@
 #   include <sys/security.h>
 #   include <prot.h>
 
+#   define PWNAME   "prpwnam"
 #   define PWTYPE   struct pr_passwd *
 #   define PWPSLOT  ufld.fd_encrypt
 #   define GETPW    getprpwnam
@@ -66,6 +63,7 @@
 #   include <sys/audit.h>
 #   include <pwdadj.h>
 
+#   define PWNAME   "pwanam"
 #   define PWTYPE   struct passwd_adjunct *
 #   define PWPSLOT  pwa_passwd
 #   define GETPW    getpwanam
@@ -75,43 +73,33 @@
 #   include <hpsecurity.h>
 #   include <prot.h>
 
+#   define PWNAME   "spwnam"
 #   define PWTYPE   struct s_passwd *
 #   define PWPSLOT  pw_passwd
 #   define GETPW    getspwnam
 
 #   define HAVE_BIGCRYPT
 
+#elif defined(HAVE_PWNAM_SHADOW_PASSWD)
+
+#   define PWNAME   "pwnam_shadow"
+#   define PWTYPE   struct passwd *
+#   define PWPSLOT  pw_passwd
+#   define GETPW    getpwnam_shadow
+
 #endif
 
-
-/* blargh */
-#undef  Bool
-#undef  True
-#undef  False
-#define Bool  int
-#define True  1
-#define False 0
+#include "blurb.h"
+#include "auth.h"
 
 
-extern const char *blurb(void);
-
+#ifdef ALLOW_ROOT_PASSWD
 static char *encrypted_root_passwd = 0;
+#endif
 static char *encrypted_user_passwd = 0;
 
-#ifdef VMS
-# define ROOT "SYSTEM"
-#else
-# define ROOT "root"
-#endif
+#define ROOT "root"
 
-#ifndef VMS
-Bool pwent_priv_init (int argc, char **argv, Bool verbose_p);
-Bool pwent_lock_init (int argc, char **argv, Bool verbose_p);
-Bool pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
-#endif
-
-
-#ifndef VMS
 
 static char *
 user_name (void)
@@ -140,17 +128,6 @@ user_name (void)
   return (u ? strdup(u) : 0);
 }
 
-#else  /* VMS */
-
-static char *
-user_name (void)
-{
-  char *u = getenv("USER");
-  return (u ? strdup(u) : 0);
-}
-
-#endif /* VMS */
-
 
 static Bool
 passwd_known_p (const char *pw)
@@ -162,24 +139,28 @@ passwd_known_p (const char *pw)
 
 
 static char *
-get_encrypted_passwd(const char *user)
+get_encrypted_passwd (const char *user)
 {
   char *result = 0;
+  const char *pwtype = "pwnam";
 
-#ifdef PWTYPE
+# ifdef PWTYPE
   if (user && *user && !result)
     {					/* First check the shadow passwords. */
       PWTYPE p = GETPW((char *) user);
       if (p && passwd_known_p (p->PWPSLOT))
-	result = strdup(p->PWPSLOT);
+        {
+          result = strdup(p->PWPSLOT);
+          pwtype = PWNAME;
+        }
     }
-#endif /* PWTYPE */
+# endif /* PWTYPE */
 
   if (user && *user && !result)
     {					/* Check non-shadow passwords too. */
       struct passwd *p = getpwnam(user);
       if (p && passwd_known_p (p->pw_passwd))
-	result = strdup(p->pw_passwd);
+        result = strdup(p->pw_passwd);
     }
 
   /* The manual for passwd(4) on HPUX 10.10 says:
@@ -200,15 +181,20 @@ get_encrypted_passwd(const char *user)
 	*s = 0;
     }
 
-#ifndef HAVE_PAM
-  /* We only issue this warning if not compiled with support for PAM.
-     If we're using PAM, it's not unheard of that normal pwent passwords
-     would be unavailable. */
+  /* We only issue this warning in non-verbose mode if not compiled with
+     support for PAM.  If we're using PAM, it's common for pwent passwords
+     to be unavailable. */
 
-  if (!result)
-    fprintf (stderr, "%s: couldn't get password of \"%s\"\n",
-	     blurb(), (user ? user : "(null)"));
-#endif /* !HAVE_PAM */
+  if (!result &&
+      (verbose_p
+# ifdef HAVE_PAM
+       || 0
+# else
+       || 1
+# endif
+       ))
+    fprintf (stderr, "%s: %s: couldn't get password of \"%s\"\n",
+	     blurb(), pwtype, (user ? user : "(null)"));
 
   return result;
 }
@@ -221,10 +207,8 @@ get_encrypted_passwd(const char *user)
    locking isn't possible.  (It will also have written to stderr.)
  */
 
-#ifndef VMS
-
 Bool
-pwent_priv_init (int argc, char **argv, Bool verbose_p)
+pwent_priv_init (void)
 {
   char *u;
 
@@ -235,7 +219,9 @@ pwent_priv_init (int argc, char **argv, Bool verbose_p)
 
   u = user_name();
   encrypted_user_passwd = get_encrypted_passwd(u);
+#ifdef ALLOW_ROOT_PASSWD
   encrypted_root_passwd = get_encrypted_passwd(ROOT);
+#endif
   if (u) free (u);
 
   if (encrypted_user_passwd)
@@ -246,7 +232,7 @@ pwent_priv_init (int argc, char **argv, Bool verbose_p)
 
 
 Bool
-pwent_lock_init (int argc, char **argv, Bool verbose_p)
+pwent_lock_init (void)
 {
   if (encrypted_user_passwd)
     return True;
@@ -287,7 +273,7 @@ passwds_match_p (const char *cleartext, const char *ciphertext)
    to root.
  */
 Bool
-pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
+pwent_passwd_valid_p (void *closure, const char *typed_passwd)
 {
   if (encrypted_user_passwd &&
       passwds_match_p (typed_passwd, encrypted_user_passwd))
@@ -305,8 +291,6 @@ pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
     return False;
 }
 
-#else  /* VMS */
-Bool pwent_lock_init (int argc, char **argv, Bool verbose_p) { return True; }
-#endif /* VMS */
-
+#else  /* NO_LOCKING */
+int _ignore_;
 #endif /* NO_LOCKING -- whole file */

@@ -15,10 +15,11 @@
  * other special, indirect and consequential damages.
  */
 
-#include <assert.h>
+#include "screenhackI.h"
 #include "pacman.h"
 #include "pacman_level.h"
 
+#include <assert.h>
 
 #define NONE 0x0000
 #define LT   0x1000

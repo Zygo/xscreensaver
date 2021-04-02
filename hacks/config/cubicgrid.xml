@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="cubicgrid" _label="CubicGrid" gl="yes">
+<screensaver name="cubicgrid" _label="Cubic Grid" gl="yes">
 
   <command arg="-root"/>
 
@@ -20,6 +20,12 @@
 
   <boolean id="bigdots" _label="Big dots"            arg-unset="-no-bigdots"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <select id="symmetry">
+    <option id="random"    _label="Random symmetry"/>
+    <option id="cubic"     _label="Cubic symmetry" arg-set="-symmetry cubic"/>
+    <option id="hexagonal" _label="Hexagonal symmetry" arg-set="-symmetry hexagonal"/>
+  </select>
 
   <xscreensaver-updater />
 

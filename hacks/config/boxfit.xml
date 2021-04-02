@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="boxfit" _label="BoxFit">
+<screensaver name="boxfit" _label="Box Fit">
 
   <command arg="-root"/>
 

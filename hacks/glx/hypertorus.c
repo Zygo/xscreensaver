@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2020 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2021 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -27,9 +27,10 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
  * C. Steger - 09/08/22: Removed check-config.pl warnings
  * C. Steger - 20/01/11: Added the changing colors mode
  * C. Steger - 20/05/18: Added per-fragment shading
- * C. Steger - 20/07/26: Make the shader code work under Mac OS X
+ * C. Steger - 20/07/26: Make the shader code work under maxOS
  * C. Steger - 20/11/19: Remove all unnecessary global variables
- * C. Steger - 20/12/06: Moved all GLSL support code into glsl_support.[hc]
+ * C. Steger - 20/12/06: Moved all GLSL support code into glsl-utils.[hc]
+ * C. Steger - 20/12/30: Make the shader code work under iOS
  */
 
 /*
@@ -105,16 +106,19 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #define DEF_SPEEDYZ                "2.1"
 
 
-/* glsl_support.h must be included before any other headers to make the
-   OpenGL 2.0 (GLSL) function prototypes available by defining
-   GL_GLEXT_PROTOTYPES. */
-#include "glsl_support.h"
+/* For some strange reason, the color buffer must be initialized
+   and used on macOS. Otherwise one- and two-sided lighting will
+   not work. */
+#if (defined(HAVE_COCOA) || defined(__APPLE__)) && !defined(HAVE_IPHONE)
+#define VERTEXATTRIBARRAY_WORKAROUND
+#endif
+
 
 
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      25000 \n" \
                             "*showFPS:    False \n" \
-			    "*suppressRotationAnimation: True\n" \
+                            "*prefersGLSL: True \n" \
 
 # define release_hypertorus 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
@@ -124,6 +128,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 
 #ifdef USE_GL
 
+#include "glsl-utils.h"
 #include "gltrackball.h"
 
 
@@ -251,7 +256,7 @@ typedef struct {
   GLint specular_index, shininess_index;
   GLuint vertex_uv_buffer;
   GLuint color_buffer, indices_buffer;
-  GLint ni, ne;
+  GLint ni, ne, nt;
 #endif /* HAVE_GLSL */
 } hypertorusstruct;
 
@@ -266,15 +271,19 @@ static const GLchar *shader_version_2_1 =
   "#version 120\n";
 static const GLchar *shader_version_3_0 =
   "#version 130\n";
+static const GLchar *shader_version_3_0_es =
+  "#version 300 es\n"
+  "precision highp float;\n"
+  "precision highp int;\n";
 
 /* The vertex shader code is composed of code fragments that depend on
    the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init(). */
+   They are concatenated by glsl_CompileAndLinkShaders in the function
+   init_glsl(). */
 static const GLchar *vertex_shader_attribs_2_1 =
   "attribute vec2 VertexUV;\n"
   "attribute vec4 VertexColor;\n"
   "\n"
-  "varying vec4 Position;\n"
   "varying vec3 Normal;\n"
   "varying vec4 Color;\n"
   "\n";
@@ -282,7 +291,6 @@ static const GLchar *vertex_shader_attribs_3_0 =
   "in vec2 VertexUV;\n"
   "in vec4 VertexColor;\n"
   "\n"
-  "out vec4 Position;\n"
   "out vec3 Normal;\n"
   "out vec4 Color;\n"
   "\n";
@@ -295,48 +303,47 @@ static const GLchar *vertex_shader_main =
   "\n"
   "void main (void)\n"
   "{\n"
-  "  vec3 P, PU, PV;\n"
-  "  float SU = sin(VertexUV.x)\n;"
-  "  float CU = cos(VertexUV.x)\n;"
-  "  float SV = sin(VertexUV.y)\n;"
-  "  float CV = cos(VertexUV.y)\n;"
-  "  vec4 XX = vec4(CU,SU,CV,SV);"
-  "  vec4 XXU = vec4(-SU,CU,0.0,0.0);"
-  "  vec4 XXV = vec4(0.0,0.0,-SV,CV);"
-  "  vec4 X = MatRot4D*XX+Offset4D;\n"
-  "  vec4 XU = MatRot4D*XXU;\n"
-  "  vec4 XV = MatRot4D*XXV;\n"
+  "  vec3 p, pu, pv;\n"
+  "  float su = sin(VertexUV.x)\n;"
+  "  float cu = cos(VertexUV.x)\n;"
+  "  float sv = sin(VertexUV.y)\n;"
+  "  float cv = cos(VertexUV.y)\n;"
+  "  vec4 xx = vec4(cu,su,cv,sv);"
+  "  vec4 xxu = vec4(-su,cu,0.0,0.0);"
+  "  vec4 xxv = vec4(0.0,0.0,-sv,cv);"
+  "  vec4 x = MatRot4D*xx+Offset4D;\n"
+  "  vec4 xu = MatRot4D*xxu;\n"
+  "  vec4 xv = MatRot4D*xxv;\n"
   "  if (BoolPersp)\n"
   "  {\n"
-  "    vec3 R = X.xyz;\n"
-  "    float S = X.w;\n"
-  "    float T = S*S;\n"
-  "    P = R/S+Offset3D.xyz;\n"
-  "    PU = (S*XU.xyz-R*XU.w)/T;\n"
-  "    PV = (S*XV.xyz-R*XV.w)/T;\n"
+  "    vec3 r = x.xyz;\n"
+  "    float s = x.w;\n"
+  "    float t = s*s;\n"
+  "    p = r/s+Offset3D.xyz;\n"
+  "    pu = (s*xu.xyz-r*xu.w)/t;\n"
+  "    pv = (s*xv.xyz-r*xv.w)/t;\n"
   "  }\n"
   "  else\n"
   "  {\n"
-  "    P = X.xyz/1.5+Offset3D.xyz;\n"
-  "    PU = XU.xyz;\n"
-  "    PV = XV.xyz;\n"
+  "    p = x.xyz/1.5f+Offset3D.xyz;\n"
+  "    pu = xu.xyz;\n"
+  "    pv = xv.xyz;\n"
   "  }\n"
-  "  Normal = normalize(cross(PU,PV));\n"
-  "  Color = VertexColor;\n"
-  "  Position = vec4(P,1.0);\n"
+  "  vec4 Position = vec4(p,1.0);\n"
+  "  Normal = normalize(cross(pu,pv));\n"
   "  gl_Position = MatProj*Position;\n"
+  "  Color = VertexColor;\n"
   "}\n";
 
 /* The fragment shader code is composed of code fragments that depend on
    the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init(). */
+   They are concatenated by glsl_CompileAndLinkShaders in the function
+   init_glsl_glsl(). */
 static const GLchar *fragment_shader_attribs_2_1 =
-  "varying vec4 Position;\n"
   "varying vec3 Normal;\n"
   "varying vec4 Color;\n"
   "\n";
 static const GLchar *fragment_shader_attribs_3_0 =
-  "in vec4 Position;\n"
   "in vec3 Normal;\n"
   "in vec4 Color;\n"
   "\n"
@@ -827,7 +834,8 @@ static int hypertorus_ff(ModeInfo *mi, double umin, double umax, double vmin,
   }
   else  /* display_mode == DISP_WIREFRAME */
   {
-    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glShadeModel(GL_FLAT);
     glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     glDisable(GL_LIGHTING);
@@ -913,7 +921,7 @@ static int hypertorus_ff(ModeInfo *mi, double umin, double umax, double vmin,
     {
       for (k=0; k<=1; k++)
       {
-        l = (i+k);
+        l = i+k;
         m = j;
         u = ur*l/numu+umin;
         v = vr*m/numv+vmin;
@@ -998,7 +1006,7 @@ static int hypertorus_ff(ModeInfo *mi, double umin, double umax, double vmin,
     glEnd();
   }
 
-  polys = numu*numv;
+  polys = 2*numu*numv;
   if (appearance != APPEARANCE_SOLID)
     polys /= 2;
   return polys;
@@ -1039,6 +1047,9 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
   int polys;
 
+  if (!hp->use_shaders)
+    return 0;
+
   if (change_colors)
     rotateall3d(hp->rho,hp->sigma,hp->tau,matc);
 
@@ -1050,14 +1061,13 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
 
   mult_rotmat(r2,r1,mat);
 
-  skew = num_spirals;
-  ur = umax-umin;
-  vr = vmax-vmin;
-
   if (!hp->buffers_initialized)
   {
     /* The u and v values need to be computed once (or each time the value
        of appearance changes, once we support that). */
+    skew = num_spirals;
+    ur = umax-umin;
+    vr = vmax-vmin;
     for (i=0; i<=numu; i++)
     {
       for (j=0; j<=numv; j++)
@@ -1102,11 +1112,46 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
                    hp->col,GL_STATIC_DRAW);
       glBindBuffer(GL_ARRAY_BUFFER,0);
     }
+#ifdef VERTEXATTRIBARRAY_WORKAROUND
+    if (colors != COLORS_COLORWHEEL)
+    {
+      for (i=0; i<=numu; i++)
+      {
+        for (j=0; j<=numv; j++)
+        {
+          o = i*(numv+1)+j;
+          if (display_mode == DISP_WIREFRAME)
+          {
+            if (colors == COLORS_ONESIDED)
+            {
+              for (k=0; k<4; k++)
+                hp->col[o][k] = mat_diff_oneside[k];
+            }
+            else if (colors == COLORS_TWOSIDED)
+            {
+              for (k=0; k<4; k++)
+                hp->col[o][k] = mat_diff_red[k];
+            }
+          }
+          else
+          {
+            for (k=0; k<4; k++)
+              hp->col[o][k] = mat_diff_white[k];
+          }
+        }
+      }
+      glBindBuffer(GL_ARRAY_BUFFER,hp->color_buffer);
+      glBufferData(GL_ARRAY_BUFFER,4*(NUMU+1)*(NUMV+1)*sizeof(GLfloat),
+                   hp->col,GL_STATIC_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER,0);
+    }
+#endif /* VERTEXATTRIBARRAY_WORKAROUND */
 
     /* The indices only need to be computed once (or each time the value
        of appearance changes, once we support that). */
     hp->ne = 0;
     hp->ni = 0;
+    hp->nt = 0;
     if (display_mode != DISP_WIREFRAME)
     {
       for (i=0; i<numu; i++)
@@ -1126,6 +1171,7 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
         }
         hp->ne++;
       }
+      hp->nt = 2*(numv+1);
     }
     else /* display_mode == DISP_WIREFRAME */
     {
@@ -1163,6 +1209,9 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
 
   if (change_colors && colors == COLORS_COLORWHEEL)
   {
+    skew = num_spirals;
+    ur = umax-umin;
+    vr = vmax-vmin;
     for (i=0; i<=numu; i++)
     {
       for (j=0; j<=numv; j++)
@@ -1183,22 +1232,40 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
       }
     }
   }
+#ifdef VERTEXATTRIBARRAY_WORKAROUND
+  else if (change_colors && colors != COLORS_COLORWHEEL)
+  {
+    if (display_mode == DISP_WIREFRAME)
+    {
+      color(0.0,matc,mat_diff_dyn);
+      for (i=0; i<=numu; i++)
+      {
+        for (j=0; j<=numv; j++)
+        {
+          o = i*(numv+1)+j;
+          for (k=0; k<4; k++)
+            hp->col[o][k] = mat_diff_dyn[k];
+        }
+      }
+    }
+  }
+#endif /* VERTEXATTRIBARRAY_WORKAROUND */
 
   glUseProgram(hp->shader_program);
 
-  glslsIdentity(p_mat);
+  glsl_Identity(p_mat);
   if (projection_3d == DISP_3D_ORTHOGRAPHIC)
   {
     if (hp->aspect >= 1.0)
-      glslsOrthographic(p_mat,-hp->aspect,hp->aspect,-1.0,1.0,
+      glsl_Orthographic(p_mat,-hp->aspect,hp->aspect,-1.0,1.0,
                         0.1,10.0);
     else
-      glslsOrthographic(p_mat,-1.0,1.0,-1.0/hp->aspect,1.0/hp->aspect,
+      glsl_Orthographic(p_mat,-1.0,1.0,-1.0/hp->aspect,1.0/hp->aspect,
                         0.1,10.0);
   }
   else
   {
-    glslsPerspective(p_mat,60.0f,hp->aspect,0.1f,10.0f);
+    glsl_Perspective(p_mat,60.0f,hp->aspect,0.1f,10.0f);
   }
   glUniformMatrix4fv(hp->mat_rot_index,1,GL_TRUE,(GLfloat *)mat);
   glUniformMatrix4fv(hp->mat_p_index,1,GL_FALSE,p_mat);
@@ -1228,7 +1295,6 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     glUniform4fv(hp->glbl_ambient_index,1,light_model_ambient);
     glUniform4fv(hp->lt_ambient_index,1,light_ambient);
     glUniform4fv(hp->lt_diffuse_index,1,light_diffuse);
@@ -1245,7 +1311,6 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     glUniform4fv(hp->glbl_ambient_index,1,light_model_ambient);
     glUniform4fv(hp->lt_ambient_index,1,light_ambient);
     glUniform4fv(hp->lt_diffuse_index,1,light_diffuse);
@@ -1258,8 +1323,9 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
   }
   else /* display_mode == DISP_WIREFRAME */
   {
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
     glUniform1i(hp->draw_lines_index,GL_TRUE);
   }
@@ -1364,6 +1430,17 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
                    hp->col,GL_STREAM_DRAW);
     glVertexAttribPointer(hp->color_index,4,GL_FLOAT,GL_FALSE,0,0);
   }
+#ifdef VERTEXATTRIBARRAY_WORKAROUND
+  else
+  {
+    glEnableVertexAttribArray(hp->color_index);
+    glBindBuffer(GL_ARRAY_BUFFER,hp->color_buffer);
+    if (change_colors)
+      glBufferData(GL_ARRAY_BUFFER,4*(NUMU+1)*(NUMV+1)*sizeof(GLfloat),
+                   hp->col,GL_STREAM_DRAW);
+    glVertexAttribPointer(hp->color_index,4,GL_FLOAT,GL_FALSE,0,0);
+  }
+#endif /* VERTEXATTRIBARRAY_WORKAROUND */
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,hp->indices_buffer);
 
@@ -1371,8 +1448,8 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
   {
     for (i=0; i<hp->ne; i++)
     {
-      index_offset = 2*(numv+1)*i*sizeof(GLuint);
-      glDrawElements(GL_TRIANGLE_STRIP,2*(numv+1),GL_UNSIGNED_INT,
+      index_offset = hp->nt*i*sizeof(GLuint);
+      glDrawElements(GL_TRIANGLE_STRIP,hp->nt,GL_UNSIGNED_INT,
                      (const void *)index_offset);
     }
   }
@@ -1387,81 +1464,84 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
   glDisableVertexAttribArray(hp->vertex_uv_index);
   if (colors == COLORS_COLORWHEEL)
     glDisableVertexAttribArray(hp->color_index);
+#ifdef VERTEXATTRIBARRAY_WORKAROUND
+  else
+    glDisableVertexAttribArray(hp->color_index);
+#endif /* VERTEXATTRIBARRAY_WORKAROUND */
   glBindBuffer(GL_ARRAY_BUFFER,0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
   glUseProgram(0);
 
-  polys = numu*numv;
+  polys = 2*numu*numv;
   if (appearance != APPEARANCE_SOLID)
     polys /= 2;
   return polys;
 }
 
-#endif /* HAVE_GLSL */
 
-
-static void init(ModeInfo *mi)
+static void init_glsl(ModeInfo *mi)
 {
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
-#ifdef HAVE_GLSL
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
+  GLboolean gl_gles3;
   const GLchar *vertex_shader_source[3];
   const GLchar *fragment_shader_source[4];
-#endif /* HAVE_GLSL */
 
-  hp->alpha = 0.0;
-  hp->beta = 0.0;
-  hp->delta = 0.0;
-  hp->zeta = 0.0;
-  hp->eta = 0.0;
-  hp->theta = 0.0;
-
-  hp->rho = frand(360.0);
-  hp->sigma = frand(360.0);
-  hp->tau = frand(360.0);
-
-#ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
-  if (display_mode == DISP_WIREFRAME)
-    display_mode = DISP_SURFACE;
-#endif /* HAVE_JWZGLES */
-
-#ifdef HAVE_GLSL
   /* Determine whether to use shaders to render the hypertorus. */
   hp->use_shaders = False;
   hp->buffers_initialized = False;
   hp->shader_program = 0;
   hp->ni = 0;
   hp->ne = 0;
-  if (!glslsGetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor))
+  hp->nt = 0;
+
+  if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
+                                 &gl_gles3))
     return;
-  if (gl_major < 3 ||
-      (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
+  if (!gl_gles3)
   {
-    if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-      return;
-    /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-    vertex_shader_source[0] = shader_version_2_1;
-    vertex_shader_source[1] = vertex_shader_attribs_2_1;
-    vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_2_1;
-    fragment_shader_source[1] = fragment_shader_attribs_2_1;
-    fragment_shader_source[2] = fragment_shader_main;
-    fragment_shader_source[3] = fragment_shader_out_2_1;
+    if (gl_major < 3 ||
+        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
+    {
+      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
+          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
+        return;
+      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
+      vertex_shader_source[0] = shader_version_2_1;
+      vertex_shader_source[1] = vertex_shader_attribs_2_1;
+      vertex_shader_source[2] = vertex_shader_main;
+      fragment_shader_source[0] = shader_version_2_1;
+      fragment_shader_source[1] = fragment_shader_attribs_2_1;
+      fragment_shader_source[2] = fragment_shader_main;
+      fragment_shader_source[3] = fragment_shader_out_2_1;
+    }
+    else
+    {
+      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
+      vertex_shader_source[0] = shader_version_3_0;
+      vertex_shader_source[1] = vertex_shader_attribs_3_0;
+      vertex_shader_source[2] = vertex_shader_main;
+      fragment_shader_source[0] = shader_version_3_0;
+      fragment_shader_source[1] = fragment_shader_attribs_3_0;
+      fragment_shader_source[2] = fragment_shader_main;
+      fragment_shader_source[3] = fragment_shader_out_3_0;
+    }
   }
-  else
+  else /* gl_gles3 */
   {
-    /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-    vertex_shader_source[0] = shader_version_3_0;
+    if (gl_major < 3 || glsl_major < 3)
+      return;
+    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
+    vertex_shader_source[0] = shader_version_3_0_es;
     vertex_shader_source[1] = vertex_shader_attribs_3_0;
     vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0;
+    fragment_shader_source[0] = shader_version_3_0_es;
     fragment_shader_source[1] = fragment_shader_attribs_3_0;
     fragment_shader_source[2] = fragment_shader_main;
     fragment_shader_source[3] = fragment_shader_out_3_0;
   }
-  if (!glslsCompileAndLinkShaders(3,vertex_shader_source,
+  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
                                   4,fragment_shader_source,
                                   &hp->shader_program))
     return;
@@ -1521,11 +1601,42 @@ static void init(ModeInfo *mi)
     glDeleteProgram(hp->shader_program);
     return;
   }
+
   glGenBuffers(1,&hp->vertex_uv_buffer);
   glGenBuffers(1,&hp->color_buffer);
   glGenBuffers(1,&hp->indices_buffer);
+
   hp->use_shaders = True;
+}
+
 #endif /* HAVE_GLSL */
+
+
+static void init(ModeInfo *mi)
+{
+  hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
+
+  hp->alpha = 0.0;
+  hp->beta = 0.0;
+  hp->delta = 0.0;
+  hp->zeta = 0.0;
+  hp->eta = 0.0;
+  hp->theta = 0.0;
+
+  hp->rho = frand(360.0);
+  hp->sigma = frand(360.0);
+  hp->tau = frand(360.0);
+
+#ifdef HAVE_GLSL
+  init_glsl(mi);
+#endif /* HAVE_GLSL */
+
+#ifdef HAVE_ANDROID
+  /* glPolygonMode(...,GL_LINE) is not supported for an OpenGL ES 1.1
+     context. */
+  if (!hp->use_shaders && display_mode == DISP_WIREFRAME)
+    display_mode = DISP_SURFACE;
+#endif /* HAVE_ANDROID */
 }
 
 
@@ -1786,7 +1897,6 @@ ENTRYPOINT void init_hypertorus(ModeInfo *mi)
   if ((hp->glx_context = init_GL(mi)) != NULL)
   {
     reshape_hypertorus(mi,MI_WIDTH(mi),MI_HEIGHT(mi));
-    glDrawBuffer(GL_BACK);
     init(mi);
   }
   else
@@ -1817,6 +1927,7 @@ ENTRYPOINT void draw_hypertorus(ModeInfo *mi)
   glXMakeCurrent(display, window, *hp->glx_context);
 
   glClearColor(0.0f,0.0f,0.0f,1.0f);
+  glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
   display_hypertorus(mi);
@@ -1843,6 +1954,7 @@ ENTRYPOINT void change_hypertorus(ModeInfo *mi)
 }
 #endif /* !STANDALONE */
 
+
 ENTRYPOINT void free_hypertorus(ModeInfo *mi)
 {
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
@@ -1864,6 +1976,7 @@ ENTRYPOINT void free_hypertorus(ModeInfo *mi)
   }
 #endif /* HAVE_GLSL */
 }
+
 
 XSCREENSAVER_MODULE ("Hypertorus", hypertorus)
 

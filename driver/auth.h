@@ -1,9 +1,7 @@
 /* auth.h --- Providing authentication mechanisms.
- *
+ * Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
  * (c) 2007, Quest Software, Inc. All rights reserved.
- *
- * This file is part of XScreenSaver,
- * Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+ * This file is part of XScreenSaver.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,10 +11,8 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  */
-#ifndef XSS_AUTH_H
-#define XSS_AUTH_H
-
-#include "types.h"
+#ifndef __XSCREENSAVER_AUTH_H__
+#define __XSCREENSAVER_AUTH_H__
 
 #undef Bool
 #undef True
@@ -25,7 +21,9 @@
 #define True 1
 #define False 0
 
-struct auth_message {
+extern Bool verbose_p;
+
+typedef struct {
   enum {
     AUTH_MSGTYPE_INFO,
     AUTH_MSGTYPE_ERROR,
@@ -33,22 +31,61 @@ struct auth_message {
     AUTH_MSGTYPE_PROMPT_ECHO
   } type;
   const char *msg;
-};
+} auth_message;
 
-struct auth_response {
+typedef struct {
   char *response;
-};
+} auth_response;
 
-int
-gui_auth_conv(int num_msg,
-	  const struct auth_message auth_msgs[],
-	  struct auth_response **resp,
-	  saver_info *si);
 
-void
-xss_authenticate(saver_info *si, Bool verbose_p);
+/* To run all authentication methods.
+ */
+extern void disavow_privileges (void);
+extern Bool lock_priv_init (void);
+extern Bool lock_init (void);
 
-void
-auth_finished_cb (saver_info *si);
+/* Returns true if authenticated. */
+extern Bool xscreensaver_auth (void *closure,
+                               Bool (*conv_fn) (void *closure,
+                                                int nmsgs,
+                                                const auth_message *msg,
+                                                auth_response **resp),
+                               void (*finished_fn) (void *closure,
+                                                    Bool authenticated_p));
 
+
+/* The implementations, called by xscreensaver_auth.
+ */
+#ifdef HAVE_KERBEROS
+extern Bool kerberos_lock_init (void);
+extern Bool kerberos_passwd_valid_p (void *closure, const char *plaintext);
 #endif
+
+#ifdef HAVE_PAM
+extern Bool pam_priv_init (void);
+extern Bool pam_try_unlock (void *closure,
+                            Bool (*conv_fn) (void *closure,
+                                             int nmsgs,
+                                             const auth_message *msg,
+                                             auth_response **resp));
+#endif
+
+#ifdef PASSWD_HELPER_PROGRAM
+extern Bool ext_priv_init (void);
+extern Bool ext_passwd_valid_p (void *closure, const char *plaintext);
+#endif
+
+extern Bool pwent_lock_init (void);
+extern Bool pwent_priv_init (void);
+extern Bool pwent_passwd_valid_p (void *closure, const char *plaintext);
+
+/* GUI conversation function to pass to xscreensaver_auth. */
+extern Bool xscreensaver_auth_conv (void *closure,
+                                    int num_msg,
+                                    const auth_message *msg,
+                                    auth_response **resp);
+extern void xscreensaver_auth_finished (void *closure, Bool authenticated_p);
+extern void xscreensaver_splash (void *root_widget);
+
+#endif /* __XSCREENSAVER_AUTH_H__ */
+

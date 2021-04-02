@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2018 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2018-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,13 +12,17 @@
 #ifndef __FONT_RETRY_H__
 #define __FONT_RETRY_H__
 
-/* Like XLoadQueryFont, but if it fails, it tries some heuristics to
-   load something close.
+/* Like XLoadQueryFont, XftFontOpenXlfd or XftFontOpenName, except that the
+   argument can be a comma-separated list of font names.  Each name can be
+   either an XLFD or Xft pattern.  Returns the first exact match it finds, or
+   if there is no exact match, applies heuristics to the last font in the list
+   until it finds a substitution.
  */
-extern XFontStruct *load_font_retry (Display *, const char *xlfd);
+extern XFontStruct *load_font_retry (Display *, const char *font_list);
 
 # ifdef __XSCREENSAVER_XFT_H__  /* if xft.h has been included */
-extern XftFont *load_xft_font_retry (Display *, int screen, const char *xlfd);
+extern XftFont *load_xft_font_retry (Display *, int screen,
+                                     const char *font_list);
 # endif
 
 #endif /* __FONT_RETRY_H__ */

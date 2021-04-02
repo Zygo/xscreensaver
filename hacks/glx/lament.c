@@ -41,8 +41,6 @@
 
 /* #define DEBUG_MODE LAMENT_LEVIATHAN_COLLAPSE */
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
 #undef MAX
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #undef MIN

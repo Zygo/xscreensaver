@@ -30,9 +30,6 @@
 #define SMEAR_BASE 400
 #define SPEED_BASE 0.02
 
-#undef countof
-#define countof(x) (sizeof((x))/sizeof((*x)))
-
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 

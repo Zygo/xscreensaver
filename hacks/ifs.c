@@ -37,9 +37,6 @@ Multi-coloured mode added by Jack Grahl <j.grahl@ucl.ac.uk>, Jan 2007
 
 #include "screenhack.h"
 
-#undef countof
-#define countof(x) (sizeof((x)) / sizeof(*(x)))
-
 typedef struct {
   float r, s, tx, ty;   /* Rotation, Scale, Translation X & Y */
   float ro, rt, rc;     /* Old Rotation, Rotation Target, Rotation Counter */
@@ -99,7 +96,7 @@ static const char *ifs_defaults [] = {
   "*colors:		200",
   "*delay:		20000",
   "*translate:		True",
-  "*scale:		True",
+  "*ifsScale:		True",
   "*rotate:		True",
   "*recurse:		False",
   "*multi:              True",
@@ -121,7 +118,7 @@ static XrmOptionDescRec ifs_options [] = {
   { "-colors",		".colors",	XrmoptionSepArg, 0 },
   { "-functions",	".lensnum", 	XrmoptionSepArg, 0 },
   { "-no-translate",	".translate",   XrmoptionNoArg, "False" },
-  { "-no-scale",	".scale",	XrmoptionNoArg, "False" },
+  { "-no-scale",	".ifsScale",	XrmoptionNoArg, "False" },
   { "-no-rotate",	".rotate",	XrmoptionNoArg, "False" },
   { "-recurse",		".recurse",	XrmoptionNoArg, "True" },
   { "-iterate",		".recurse",	XrmoptionNoArg, "False" },
@@ -452,7 +449,8 @@ ifs_init (Display *d_arg, Window w_arg)
   st->mode = get_integer_resource(st->dpy, "mode", "Mode");
 
   st->rotate    = get_boolean_resource(st->dpy, "rotate", "Boolean");
-  st->scale     = get_boolean_resource(st->dpy, "scale", "Boolean");
+                  /* Xft uses 'scale' */
+  st->scale     = get_boolean_resource(st->dpy, "ifsScale", "Boolean");
   st->translate = get_boolean_resource(st->dpy, "translate", "Boolean");
   st->recurse = get_boolean_resource(st->dpy, "recurse", "Boolean");
   st->multi = get_boolean_resource(st->dpy, "multi", "Boolean");
