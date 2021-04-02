@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="ifs" _label="IFS">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=0uOIrVFsECM"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+    _label="Frame rate" _low-label="Low" _high-label="High"
+    low="0" high="100000" default="20000"
+    convert="invert"/>
+
+  <number id="functions" type="slider" arg="-functions %"
+    _label="Number of functions" _low-label="2" _high-label="6"
+           low="2" high="6" default="3"/>
+
+  <number id="detail" type="slider" arg="-detail %"
+    _label="Detail" _low-label="Low" _high-label="High"
+    low="4" high="14" default="9"/>
+
+<!--
+  On a 2.93 gHz iMac i7, I get these rates with -delay 0:
+
+    detail 3:  invisible
+    detail 4:  barely visible
+    detail 5:  1000+ fps, looks like noise at -delay 0, ok at -delay 20000
+    detail 8:  ~700+ fps
+    detail 9:  ~400 fps
+    detail 10: ~300 fps
+    detail 11: ~100 fps
+    detail 12:  ~50 fps
+    detail 13:  ~17 fps
+    detail 14:   ~8 fps
+    detail 15:   ~2 fps
+
+  With the default -delay, CPU load only starts causing the frame rate
+  to drop below 30 fps detail 12 or higher.
+-->
+
+  <number id="colors" type="slider" arg="-colors %"
+    _label="Number of colors" _low-label="2" _high-label="Many"
+    low="2" high="255" default="200" />
+
+  <hgroup>
+   <boolean id="translate" _label="Translate" arg-unset="-no-translate"/>
+   <boolean id="scale"     _label="Scale"     arg-unset="-no-scale"/>
+   <boolean id="rotate"    _label="Rotate"    arg-unset="-no-rotate"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+
+Clouds of iterated function systems spin and collide.
+
+Note that the "Detail" parameter is exponential.  Number of points
+drawn is functions^detail.
+
+https://en.wikipedia.org/wiki/Iterated_function_system
+
+Written by Chris Le Sueur and Robby Griffin; 1997.
+  </_description>
+</screensaver>

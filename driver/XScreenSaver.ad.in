@@ -1,0 +1,691 @@
+!
+!                              XScreenSaver
+!
+!            a screen saver and locker for the X window system
+!                            by Jamie Zawinski
+!
+!                              version 6.00
+!                              01-Apr-2021
+!
+! See "man xscreensaver" for more info.  The latest version is always
+! available at https://www.jwz.org/xscreensaver/
+
+
+! These resources, when placed in the system-wide app-defaults directory
+! (e.g., /usr/lib/X11/app-defaults/XScreenSaver) will provide the default
+! settings for new users.  However, if you have a ".xscreensaver" file in
+! your home directory, the settings in that file take precedence.
+
+
+! Don't hand this file to "xrdb" -- that isn't how app-defaults files work.
+! Though app-defaults files have (mostly) the same syntax as your ~/.Xdefaults
+! file, they are used differently, and if you run this file through xrdb,
+! you will probably mess things up.
+
+#error Do not run app-defaults files through xrdb!
+#error That does not do what you might expect.
+#error Put this file in /usr/lib/X11/app-defaults/XScreenSaver instead.
+
+! /* (xrdb prevention kludge: whole file)
+
+*mode:			random
+*timeout:		0:10:00
+*cycle:			0:10:00
+*lockTimeout:		0:00:00
+*passwdTimeout:		0:00:30
+*dpmsEnabled:		False
+*dpmsQuickoffEnabled:	False
+*dpmsStandby:		2:00:00
+*dpmsSuspend:		2:00:00
+*dpmsOff:		4:00:00
+*grabDesktopImages:	True
+*grabVideoFrames:	False
+*chooseRandomImages:	@DEFAULT_IMAGES_P@
+! This can be a local directory name, or the URL of an RSS or Atom feed.
+*imageDirectory:	@DEFAULT_IMAGE_DIRECTORY@
+*nice:			10
+*memoryLimit:		0
+*lock:			False
+*verbose:		False
+*fade:			True
+*unfade:		True
+*fadeSeconds:		0:00:03
+*fadeTicks:		20
+*splash:		True
+*splashDuration:	0:00:05
+*visualID:		default
+*installColormap:	True
+*ignoreUninstalledPrograms: False
+*authWarningSlack:	20
+
+*textMode:		file
+*textLiteral:		XScreenSaver
+*textFile:		@DEFAULT_TEXT_FILE@
+*textProgram:		fortune
+*textURL:		https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss
+
+! This is what the "Settings" button on the splash screen runs.
+*demoCommand: xscreensaver-settings
+
+! This is the URL loaded by the "Help" button on the splash screen,
+! and by the "Documentation" menu item in xscreensaver-settings.
+*helpURL: https://www.jwz.org/xscreensaver/man.html
+
+! loadURL       -- how the "Help" buttons load the helpURL (/bin/sh syntax.)
+! manualCommand -- how the "Documentation" buttons display man pages.
+!
+! And there are so very many options to choose from!
+!
+!   Gnome 2.4, 2.6:
+!
+@GNOME24@*loadURL: @WITH_BROWSER@ '%s'
+@GNOME24@*manualCommand: yelp man:%s || \
+@GNOME24@			x-terminal-emulator -t '%s manual' \
+@GNOME24@			  -e /bin/sh -c "man %s; read foo"
+
+!
+!   Gnome 2.2:
+!
+@GNOME22@*loadURL: gnome-url-show '%s'
+@GNOME22@*manualCommand: gnome-terminal --title '%s manual' \
+@GNOME22@		--command '/bin/sh -c "man %s; read foo"'
+!
+!   Gnome 1.4:
+!
+!	*loadURL: gnome-moz-remote --newwin '%s'
+!	*manualCommand: gnome-help-browser 'man:%s'
+!
+!   non-Gnome systems:
+!
+@NOGNOME@*loadURL: x-www-browser '%s' || firefox '%s' || chromium-browser '%s'
+@NOGNOME@*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
+@NOGNOME@		    -e /bin/sh -c 'man "%s" ; read foo'
+
+
+! The strftime(3) format string for printing the time on the password dialog.
+*dateFormat:		%I:%M %p, %a %b %e
+! DD MMM:
+! *dateFormat:		%I:%M %p, %e %b (%a)
+! 12 hour time only:
+! *dateFormat:		%I:%M %p
+! 24 hour time only:
+! *dateFormat:		%H:%M
+! ISO 8601:
+! *dateFormat:		%Y-%m-%d %H:%M:%S
+
+! This command is executed by the "New Login" button on the lock dialog.
+! (That button does not appear on the dialog if this program does not exist.)
+! For Gnome: probably "gdmflexiserver -ls".  KDE, probably "kdmctl reserve".
+! Or maybe yet another wheel-reinvention, "lxdm -c USER_SWITCH".
+! Oh wait, this wheel just keeps getting better: "dm-tool switch-to-greeter".
+!
+@NEW_LOGIN_COMMAND_P@*newLoginCommand:	@NEW_LOGIN_COMMAND@
+
+! Mouse motions less than this many pixels per second are ignored.
+! This helps with cats, trucks and earthquakes.
+XScreenSaver.pointerHysteresis:		10
+
+! Change this at your peril:
+XScreenSaver.bourneShell:		/bin/sh
+
+
+!=============================================================================
+!
+!      Colors and fonts for the unlock dialog and splash screen.
+!
+!=============================================================================
+
+! Which of the following color schemes is in use for the unlock dialog.
+*dialogTheme:			default
+
+! Resources for theme names are downcased with spaces stripped.
+*themeNames: Default, Borderless, Dark Gray, Borderless Black, \
+             Green Black, White, Blue, Aqua Black, Wine
+
+*Dialog.headingFont:	sans-serif bold 16
+*Dialog.bodyFont:	sans-serif 14
+*Dialog.errorFont:	sans-serif bold 14
+*Dialog.labelFont:	sans-serif bold 14
+*Dialog.unameFont:	sans-serif 12
+*Dialog.buttonFont:	sans-serif bold 14
+*Dialog.dateFont:	sans-serif 9
+
+! Whether to display the local host name in the unlock dialog.
+*passwd.uname:		True
+
+! Whether typed passwords should echo as asterisks, or as nothing.
+*passwd.asterisks:	True
+
+! The default theme is similar to the Gtk defaults.
+!
+*default.Dialog.foreground:			#000000
+*default.Dialog.background:			#E6E6E6
+*default.Dialog.button.foreground:		#000000
+*default.Dialog.button.background:		#F5F5F5
+*default.Dialog.logo.background:		#BBBBBB
+*default.Dialog.text.foreground:		#000000
+*default.Dialog.error.foreground:		#FF0000
+*default.Dialog.text.background:		#FFFFFF
+*default.Dialog.topShadowColor:			#FFFFFF
+*default.Dialog.bottomShadowColor:		#CECECE
+*default.Dialog.shadowWidth:			2
+*default.Dialog.logo.width:			210
+*default.Dialog.logo.height:			210
+*default.Dialog.thermometer.foreground:		#4464AC
+*default.Dialog.thermometer.background:		#FFFFFF
+*default.Dialog.thermometer.width:		8
+*default.Dialog.borderColor:			#CECECE
+*default.Dialog.borderWidth:			0
+*default.Dialog.internalPadding:		24
+
+! Borderless theme:
+!
+*borderless.Dialog.topShadowColor:		#E6E6E6
+*borderless.Dialog.button.background:		#FFFFFF
+*borderless.Dialog.bottomShadowColor:		#E6E6E6
+*borderless.Dialog.logo.background:		#E6E6E6
+*borderless.Dialog.borderColor:			#888888
+*borderless.Dialog.thermometer.width:		6
+*borderless.Dialog.borderWidth:			1
+
+! Dark gray theme:
+!
+*darkgray.Dialog.foreground:			#CCCCCC
+*darkgray.Dialog.background:			#333333
+*darkgray.Dialog.topShadowColor:		#444444
+*darkgray.Dialog.bottomShadowColor:		#111111
+*darkgray.Dialog.borderColor:			#111111
+*darkgray.Dialog.text.foreground:		#DDDDDD
+*darkgray.Dialog.text.background:		#666666
+*darkgray.Dialog.button.foreground:		#CCCCCC
+*darkgray.Dialog.button.background:		#666666
+*darkgray.Dialog.logo.background:		#444444
+*darkgray.Dialog.thermometer.foreground:	#4464AC
+*darkgray.Dialog.thermometer.background:	#666666
+*darkgray.Dialog.borderWidth:			0
+
+! Borderless black theme:
+!
+*borderlessblack.Dialog.foreground:		#CCCCCC
+*borderlessblack.Dialog.background:		#000000
+*borderlessblack.Dialog.topShadowColor:		#000000
+*borderlessblack.Dialog.bottomShadowColor:	#000000
+*borderlessblack.Dialog.text.foreground:	#CCCCCC
+*borderlessblack.Dialog.text.background:	#000000
+*borderlessblack.Dialog.button.foreground:	#CCCCCC
+*borderlessblack.Dialog.button.background:	#333333
+*borderlessblack.Dialog.logo.background:	#000000
+*borderlessblack.Dialog.thermometer.foreground:	#CCCCCC
+*borderlessblack.Dialog.thermometer.background:	#333333
+*borderlessblack.Dialog.thermometer.width:	3
+*borderlessblack.Dialog.borderColor:		#333333
+*borderlessblack.Dialog.borderWidth:		1
+
+! Green on black theme:
+!
+*greenblack.Dialog.foreground:			#00FF00
+*greenblack.Dialog.background:			#000000
+*greenblack.Dialog.topShadowColor:		#000000
+*greenblack.Dialog.bottomShadowColor:		#000000
+*greenblack.Dialog.shadowWidth:			1
+*greenblack.Dialog.text.foreground:		#00FF00
+*greenblack.Dialog.text.background:		#006600
+*greenblack.Dialog.button.foreground:		#00FF00
+*greenblack.Dialog.button.background:		#006600
+*greenblack.Dialog.logo.background:		#000000
+*greenblack.Dialog.thermometer.foreground:	#00CC00
+*greenblack.Dialog.thermometer.background:	#006600
+*greenblack.Dialog.borderColor:			#006600
+*greenblack.Dialog.borderWidth:			1
+
+! White theme:
+!
+*white.Dialog.foreground:			#000000
+*white.Dialog.background:			#FFFFFF
+*white.Dialog.topShadowColor:			#CCCCCC
+*white.Dialog.bottomShadowColor:		#CCCCCC
+*white.Dialog.shadowWidth:			1
+*white.Dialog.borderColor:			#CCCCCC
+*white.Dialog.text.foreground:			#000000
+*white.Dialog.text.background:			#FFFFFF
+*white.Dialog.button.foreground:		#000000
+*white.Dialog.button.background:		#FFFFFF
+*white.Dialog.logo.background:			#FFFFFF
+*white.Dialog.borderWidth:			0
+
+! Blue theme:
+!
+*blue.Dialog.foreground:			#000000
+*blue.Dialog.background:			#BBCCDD
+*blue.Dialog.topShadowColor:			#CCDDEE
+*blue.Dialog.bottomShadowColor:			#AABBCC
+*blue.Dialog.borderColor:			#AABBCC
+*blue.Dialog.text.foreground:			#000000
+*blue.Dialog.text.background:			#DDEEFF
+*blue.Dialog.button.foreground:			#000000
+*blue.Dialog.button.background:			#DDEEFF
+*blue.Dialog.logo.background:			#BBCCDD
+*blue.Dialog.thermometer.foreground:		#5566AA
+*blue.Dialog.thermometer.background:		#BBCCDD
+*blue.Dialog.borderWidth:			0
+
+! Aqua on black borderless theme:
+!
+*aquablack.Dialog.foreground:			#00EFEF
+*aquablack.Dialog.background:			#000000
+*aquablack.Dialog.topShadowColor:		#000000
+*aquablack.Dialog.bottomShadowColor:		#000000
+*aquablack.Dialog.shadowWidth:			2
+*aquablack.Dialog.button.foreground:		#000000
+*aquablack.Dialog.button.background:		#2244EE
+*aquablack.Dialog.logo.background:		#000000
+*aquablack.Dialog.text.foreground:		#2244EE
+*aquablack.Dialog.text.background:		#EEEEEE
+*aquablack.Dialog.thermometer.foreground:	#2244EE
+*aquablack.Dialog.thermometer.background:	#000088
+*aquablack.Dialog.borderColor:			#000066
+*aquablack.Dialog.borderWidth:			1
+*aquablack.Dialog.internalPadding:		36
+
+! Wine theme, similar to the login screen of "Ubuntu 18.04 Community".
+!
+*wine.Dialog.foreground:			#AD8FA6
+*wine.Dialog.background:			#2C041E
+*wine.Dialog.topShadowColor:			#2C041E
+*wine.Dialog.bottomShadowColor:			#2C041E
+*wine.Dialog.text.foreground:			#706B70
+*wine.Dialog.text.background:			#F9F9F8
+*wine.Dialog.button.foreground:			#5F585B
+*wine.Dialog.logo.background:			#2C041E
+*wine.Dialog.thermometer.foreground:		#AD8FA6
+*wine.Dialog.thermometer.background:		#4D2946
+*wine.Dialog.borderColor:			#4D2946
+*wine.Dialog.thermometer.width:			6
+*wine.Dialog.borderWidth:			1
+
+
+! For displaying error messages about crashed screen savers.
+!
+*errorFont:  sans-serif bold 18
+*errorColor: #FF0000
+
+
+!=============================================================================
+!
+! This is the list of installed screen saver modes.  See "man xscreensaver"
+! for the syntax used here.
+!
+! If you want to disable a screensaver, DO NOT remove it from this list:
+! instead, mark it as inactive by placing a "-" at the beginning of the line.
+!
+! You can use the `xscreensaver-settings' program to edit the current list of
+! screen savers interactively.
+!
+!=============================================================================
+
+*programs:								      \
+				maze -root				    \n\
+@GL_KLUDGE@ GL: 				superquadrics -root			    \n\
+				attraction -root			    \n\
+				blitspin -root				    \n\
+				greynetic -root				    \n\
+				helix -root				    \n\
+				hopalong -root				    \n\
+				imsmap -root				    \n\
+-				noseguy -root				    \n\
+-				pyro -root				    \n\
+				qix -root				    \n\
+-				rocks -root				    \n\
+				rorschach -root				    \n\
+				decayscreen -root			    \n\
+				flame -root				    \n\
+				halo -root				    \n\
+				slidescreen -root			    \n\
+				pedal -root				    \n\
+				bouboule -root				    \n\
+-				braid -root				    \n\
+				coral -root				    \n\
+				deco -root				    \n\
+				drift -root				    \n\
+-				fadeplot -root				    \n\
+				galaxy -root				    \n\
+				goop -root				    \n\
+				grav -root				    \n\
+				ifs -root				    \n\
+@GL_KLUDGE@ GL: 				jigsaw -root				    \n\
+				julia -root				    \n\
+-				kaleidescope -root			    \n\
+@GL_KLUDGE@ GL: 				moebius -root				    \n\
+				moire -root				    \n\
+@GL_KLUDGE@ GL: 				morph3d -root				    \n\
+				mountain -root				    \n\
+				munch -root				    \n\
+				penrose -root				    \n\
+@GL_KLUDGE@ GL: 				pipes -root				    \n\
+				rd-bomb -root				    \n\
+@GL_KLUDGE@ GL: 				rubik -root				    \n\
+-				sierpinski -root			    \n\
+				slip -root				    \n\
+@GL_KLUDGE@ GL: 				sproingies -root			    \n\
+				starfish -root				    \n\
+				strange -root				    \n\
+				swirl -root				    \n\
+				triangle -root				    \n\
+				xjack -root				    \n\
+				xlyap -root				    \n\
+@GL_KLUDGE@ GL: 				atlantis -root				    \n\
+				bsod -root				    \n\
+@GL_KLUDGE@ GL: 				bubble3d -root				    \n\
+@GL_KLUDGE@ GL: 				cage -root				    \n\
+-				crystal -root				    \n\
+				cynosure -root				    \n\
+				discrete -root				    \n\
+				distort -root				    \n\
+				epicycle -root				    \n\
+				flow -root				    \n\
+@GL_KLUDGE@ GL: 				glplanet -root				    \n\
+				interference -root			    \n\
+				kumppa -root				    \n\
+@GL_KLUDGE@ GL: 				lament -root				    \n\
+				moire2 -root				    \n\
+@GL_KLUDGE@ GL: 				sonar -root				    \n\
+@GL_KLUDGE@ GL: 				stairs -root				    \n\
+				truchet -root				    \n\
+-				vidwhacker -root			    \n\
+				blaster -root				    \n\
+				bumps -root				    \n\
+				ccurve -root				    \n\
+				compass -root				    \n\
+				deluxe -root				    \n\
+-				demon -root				    \n\
+@GLE_KLUDGE@ GL: 				extrusion -root				    \n\
+-				loop -root				    \n\
+				penetrate -root				    \n\
+				petri -root				    \n\
+				phosphor -root				    \n\
+@GL_KLUDGE@ GL: 				pulsar -root				    \n\
+				ripples -root				    \n\
+				shadebobs -root				    \n\
+@GL_KLUDGE@ GL: 				sierpinski3d -root			    \n\
+				spotlight -root				    \n\
+				squiral -root				    \n\
+				wander -root				    \n\
+-				webcollage -root			    \n\
+				xflame -root				    \n\
+				xmatrix -root				    \n\
+@GL_KLUDGE@ GL: 				gflux -root				    \n\
+-				nerverot -root				    \n\
+				xrayswarm -root				    \n\
+				xspirograph -root			    \n\
+@GL_KLUDGE@ GL: 				circuit -root				    \n\
+@GL_KLUDGE@ GL: 				dangerball -root			    \n\
+- GL: 				dnalogo -root				    \n\
+@GL_KLUDGE@ GL: 				engine -root				    \n\
+@GL_KLUDGE@ GL: 				flipscreen3d -root			    \n\
+@GL_KLUDGE@ GL: 				gltext -root				    \n\
+@GL_KLUDGE@ GL: 				menger -root				    \n\
+@GL_KLUDGE@ GL: 				molecule -root				    \n\
+				rotzoomer -root				    \n\
+				scooter -root				    \n\
+				speedmine -root				    \n\
+@GL_KLUDGE@ GL: 				starwars -root				    \n\
+@GL_KLUDGE@ GL: 				stonerview -root			    \n\
+				vermiculate -root			    \n\
+				whirlwindwarp -root			    \n\
+				zoom -root				    \n\
+				anemone -root				    \n\
+				apollonian -root			    \n\
+@GL_KLUDGE@ GL: 				boxed -root				    \n\
+@GL_KLUDGE@ GL: 				cubenetic -root				    \n\
+@GL_KLUDGE@ GL: 				endgame -root				    \n\
+				euler2d -root				    \n\
+				fluidballs -root			    \n\
+@GL_KLUDGE@ GL: 				flurry -root				    \n\
+- GL: 				glblur -root				    \n\
+@GL_KLUDGE@ GL: 				glsnake -root				    \n\
+				halftone -root				    \n\
+@GL_KLUDGE@ GL: 				juggler3d -root				    \n\
+@GL_KLUDGE@ GL: 				lavalite -root				    \n\
+-				polyominoes -root			    \n\
+@GL_KLUDGE@ GL: 				queens -root				    \n\
+- GL: 				sballs -root				    \n\
+@GL_KLUDGE@ GL: 				spheremonics -root			    \n\
+-				thornbird -root				    \n\
+				twang -root				    \n\
+- GL: 				antspotlight -root			    \n\
+				apple2 -root				    \n\
+@GL_KLUDGE@ GL: 				atunnel -root				    \n\
+				barcode -root				    \n\
+@GL_KLUDGE@ GL: 				blinkbox -root				    \n\
+@GL_KLUDGE@ GL: 				blocktube -root				    \n\
+@GL_KLUDGE@ GL: 				bouncingcow -root			    \n\
+				cloudlife -root				    \n\
+@GL_KLUDGE@ GL: 				cubestorm -root				    \n\
+				eruption -root				    \n\
+@GL_KLUDGE@ GL: 				flipflop -root				    \n\
+@GL_KLUDGE@ GL: 				flyingtoasters -root			    \n\
+				fontglide -root				    \n\
+@GL_KLUDGE@ GL: 				gleidescope -root			    \n\
+@GL_KLUDGE@ GL: 				glknots -root				    \n\
+@GL_KLUDGE@ GL: 				glmatrix -root				    \n\
+- GL: 				glslideshow -root			    \n\
+@GL_KLUDGE@ GL: 				hypertorus -root			    \n\
+- GL: 				jigglypuff -root			    \n\
+				metaballs -root				    \n\
+@GL_KLUDGE@ GL: 				mirrorblob -root			    \n\
+				piecewise -root				    \n\
+@GL_KLUDGE@ GL: 				polytopes -root				    \n\
+				pong -root				    \n\
+				popsquares -root			    \n\
+@GL_KLUDGE@ GL: 				surfaces -root				    \n\
+				xanalogtv -root				    \n\
+				abstractile -root			    \n\
+				anemotaxis -root			    \n\
+- GL: 				antinspect -root			    \n\
+				fireworkx -root				    \n\
+				fuzzyflakes -root			    \n\
+				interaggregate -root			    \n\
+				intermomentary -root			    \n\
+				memscroller -root			    \n\
+@GL_KLUDGE@ GL: 				noof -root				    \n\
+				pacman -root				    \n\
+@GL_KLUDGE@ GL: 				pinion -root				    \n\
+@GL_KLUDGE@ GL: 				polyhedra -root				    \n\
+- GL: 				providence -root			    \n\
+				substrate -root				    \n\
+				wormhole -root				    \n\
+- GL: 				antmaze -root				    \n\
+@GL_KLUDGE@ GL: 				boing -root				    \n\
+				boxfit -root				    \n\
+@GL_KLUDGE@ GL: 				carousel -root				    \n\
+				celtic -root				    \n\
+@GL_KLUDGE@ GL: 				crackberg -root				    \n\
+@GL_KLUDGE@ GL: 				cube21 -root				    \n\
+				fiberlamp -root				    \n\
+@GL_KLUDGE@ GL: 				fliptext -root				    \n\
+@GL_KLUDGE@ GL: 				glhanoi -root				    \n\
+@GL_KLUDGE@ GL: 				tangram -root				    \n\
+@GL_KLUDGE@ GL: 				timetunnel -root			    \n\
+@GL_KLUDGE@ GL: 				glschool -root				    \n\
+@GL_KLUDGE@ GL: 				topblock -root				    \n\
+@GL_KLUDGE@ GL: 				cubicgrid -root				    \n\
+				cwaves -root				    \n\
+@GL_KLUDGE@ GL: 				gears -root				    \n\
+@GL_KLUDGE@ GL: 				glcells -root				    \n\
+@GL_KLUDGE@ GL: 				lockward -root				    \n\
+				m6502 -root				    \n\
+@GL_KLUDGE@ GL: 				moebiusgears -root			    \n\
+@GL_KLUDGE@ GL: 				voronoi -root				    \n\
+@GL_KLUDGE@ GL: 				hypnowheel -root			    \n\
+@GL_KLUDGE@ GL: 				klein -root				    \n\
+-				lcdscrub -root				    \n\
+@GL_KLUDGE@ GL: 				photopile -root				    \n\
+@GL_KLUDGE@ GL: 				skytentacles -root			    \n\
+@GL_KLUDGE@ GL: 				rubikblocks -root			    \n\
+@GL_KLUDGE@ GL: 				companioncube -root			    \n\
+@GL_KLUDGE@ GL: 				hilbert -root				    \n\
+@GL_KLUDGE@ GL: 				tronbit -root				    \n\
+@GL_KLUDGE@ GL: 				geodesic -root				    \n\
+				hexadrop -root				    \n\
+@GL_KLUDGE@ GL: 				kaleidocycle -root			    \n\
+@GL_KLUDGE@ GL: 				quasicrystal -root			    \n\
+@GL_KLUDGE@ GL: 				unknownpleasures -root			    \n\
+				binaryring -root			    \n\
+@GL_KLUDGE@ GL: 				cityflow -root				    \n\
+@GL_KLUDGE@ GL: 				geodesicgears -root			    \n\
+@GL_KLUDGE@ GL: 				projectiveplane -root			    \n\
+@GL_KLUDGE@ GL: 				romanboy -root				    \n\
+				tessellimage -root			    \n\
+@GL_KLUDGE@ GL: 				winduprobot -root			    \n\
+@GL_KLUDGE@ GL: 				splitflap -root				    \n\
+@GL_KLUDGE@ GL: 				cubestack -root				    \n\
+@GL_KLUDGE@ GL: 				cubetwist -root				    \n\
+@GL_KLUDGE@ GL: 				discoball -root				    \n\
+@GL_KLUDGE@ GL: 				dymaxionmap -root			    \n\
+@GL_KLUDGE@ GL: 				energystream -root			    \n\
+@GL_KLUDGE@ GL: 				hexstrut -root				    \n\
+@GL_KLUDGE@ GL: 				hydrostat -root				    \n\
+@GL_KLUDGE@ GL: 				raverhoop -root				    \n\
+@GL_KLUDGE@ GL: 				splodesic -root				    \n\
+@GL_KLUDGE@ GL: 				unicrud -root				    \n\
+@GL_KLUDGE@ GL: 				esper -root				    \n\
+@GL_KLUDGE@ GL: 				vigilance -root				    \n\
+@GL_KLUDGE@ GL: 				crumbler -root				    \n\
+				filmleader -root			    \n\
+				glitchpeg -root				    \n\
+@GL_KLUDGE@ GL: 				handsy -root				    \n\
+@GL_KLUDGE@ GL: 				maze3d -root				    \n\
+@GL_KLUDGE@ GL: 				peepers -root				    \n\
+@GL_KLUDGE@ GL: 				razzledazzle -root			    \n\
+				vfeedback -root				    \n\
+@GL_KLUDGE@ GL: 				deepstars -root				    \n\
+@GL_KLUDGE@ GL: 				gravitywell -root			    \n\
+@GL_KLUDGE@ GL: 				beats -root				    \n\
+@GL_KLUDGE@ GL: 				covid19 -root				    \n\
+@GL_KLUDGE@ GL: 				etruscanvenus -root			    \n\
+@GL_KLUDGE@ GL: 				gibson -root				    \n\
+@GL_KLUDGE@ GL: 				headroom -root				    \n\
+@GL_KLUDGE@ GL: 				sphereeversion -root			    \n
+
+
+
+!=============================================================================
+!
+! Pretty names for the hacks that have unusual capitalization.
+! Used by xscreensaver-settings.
+!
+!=============================================================================
+
+*hacks.antinspect.name:     Ant Inspect
+*hacks.antmaze.name:        Ant Maze
+*hacks.antspotlight.name:   Ant Spotlight
+*hacks.apple2.name:         Apple ][
+*hacks.binaryring.name:     Binary Ring
+*hacks.blinkbox.name:       Blink Box
+*hacks.blitspin.name:       Blit Spin
+*hacks.blocktube.name:      Block Tube
+*hacks.bouncingcow.name:    Bouncing Cow
+*hacks.boxfit.name:         Box Fit
+*hacks.bsod.name:           BSOD
+*hacks.bubble3d.name:       Bubble 3D
+*hacks.ccurve.name:         C Curve
+*hacks.cityflow.name:       City Flow
+*hacks.cloudlife.name:      Cloud Life
+*hacks.companioncube.name:  Companion Cube
+*hacks.covid19.name:        COVID19
+*hacks.cube21.name:         Cube 21
+*hacks.cubestack.name:      Cube Stack
+*hacks.cubestorm.name:      Cube Storm
+*hacks.cubetwist.name:      Cube Twist
+*hacks.cubicgrid.name:      Cubic Grid
+*hacks.cwaves.name:         C Waves
+*hacks.dangerball.name:     Danger Ball
+*hacks.decayscreen.name:    Decay Screen
+*hacks.deepstars.name:      Deep Stars
+*hacks.dnalogo.name:        DNA Logo
+*hacks.dymaxionmap.name:    Dymaxion Map
+*hacks.energystream.name:   Energy Stream
+*hacks.etruscanvenus.name:  Etruscan Venus
+*hacks.euler2d.name:        Euler 2D
+*hacks.fadeplot.name:       Fade Plot
+*hacks.fiberlamp.name:      Fiber Lamp
+*hacks.filmleader.name:     Film Leader
+*hacks.flipflop.name:       Flip Flop
+*hacks.flipscreen3d.name:   Flip Screen 3D
+*hacks.fliptext.name:       Flip Text
+*hacks.fluidballs.name:     Fluid Balls
+*hacks.flyingtoasters.name: Flying Toasters
+*hacks.fontglide.name:      Font Glide
+*hacks.fuzzyflakes.name:    Fuzzy Flakes
+*hacks.geodesicgears.name:  Geodesic Gears
+*hacks.gflux.name:          GFlux
+*hacks.glblur.name:         GL Blur
+*hacks.glcells.name:        GL Cells
+*hacks.gleidescope.name:    Gleidescope
+*hacks.glforestfire.name:   GL Forest Fire
+*hacks.glhanoi.name:        GL Hanoi
+*hacks.glitchpeg.name:      GlitchPEG
+*hacks.glknots.name:        GL Knots
+*hacks.glmatrix.name:       GL Matrix
+*hacks.glplanet.name:       GL Planet
+*hacks.glschool.name:       GL School
+*hacks.glslideshow.name:    GL Slideshow
+*hacks.glsnake.name:        GL Snake
+*hacks.gltext.name:         GL Text
+*hacks.gravitywell.name:    Gravity Well
+*hacks.hexstrut.name:       Hex Strut
+*hacks.ifs.name:            IFS
+*hacks.imsmap.name:         IMS Map
+*hacks.jigglypuff.name:     Jiggly Puff
+*hacks.juggler3d.name:      Juggler 3D
+*hacks.lcdscrub.name:       LCD Scrub
+*hacks.lmorph.name:         LMorph
+*hacks.m6502.name:          m6502
+*hacks.maze3d.name:         Maze 3D
+*hacks.memscroller.name:    Mem Scroller
+*hacks.metaballs.name:      Meta Balls
+*hacks.mirrorblob.name:     Mirror Blob
+*hacks.moebius.name:        Möbius
+*hacks.moebiusgears.name:   Möbius Gears
+*hacks.moire.name:          Moiré
+*hacks.moire2.name:         Moiré 2
+*hacks.morph3d.name:        Morph 3D
+*hacks.nerverot.name:       Nerve Rot
+*hacks.noseguy.name:        Nose Guy
+*hacks.pacman.name:         Pac-Man
+*hacks.photopile.name:      Photo Pile
+*hacks.popsquares.name:     Pop Squares
+*hacks.projectiveplane.name:Projective Plane
+*hacks.quasicrystal.name:   Quasi-Crystal
+*hacks.raverhoop.name:      Raver Hoop
+*hacks.razzledazzle.name:   Razzle Dazzle
+*hacks.rd-bomb.name:        RD-Bomb
+*hacks.rd-bomb.name:        RD-Bomb
+*hacks.romanboy.name:       Roman Boy
+*hacks.rotzoomer.name:      Rot Zoomer
+*hacks.rubikblocks.name:    Rubik Blocks
+*hacks.sballs.name:         SBalls
+*hacks.shadebobs.name:      Shade Bobs
+*hacks.sierpinski3d.name:   Sierpinski 3D
+*hacks.skytentacles.name:   Sky Tentacles
+*hacks.slidescreen.name:    Slide Screen
+*hacks.speedmine.name:      Speed Mine
+*hacks.sphereeversion.name: Sphere Eversion
+*hacks.splitflap.name:      Split-Flap
+*hacks.starwars.name:       Star Wars
+*hacks.stonerview.name:     Stoner View
+*hacks.t3d.name:            T3D
+*hacks.testx11.name:        Test X11
+*hacks.timetunnel.name:     Time Tunnel
+*hacks.topblock.name:       Top Block
+*hacks.tronbit.name:        Tron Bit
+*hacks.unknownpleasures.name:Unknown Pleasures
+*hacks.vfeedback.name:      VFeedback
+*hacks.vidwhacker.name:     Vid Whacker
+*hacks.webcollage.name:     Web Collage
+*hacks.whirlwindwarp.name:  Whirlwind Warp
+*hacks.winduprobot.name:    Windup Robot
+*hacks.xanalogtv.name:      XAnalogTV
+*hacks.xrayswarm.name:      XRaySwarm
+
+! (xrdb prevention kludge: whole file) */

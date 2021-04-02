@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="pong" _label="Pong">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=2jPmisDwwi0"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Game speed" _low-label="Slow" _high-label="Fast"
+            low="1" high="20" default="6"/>
+
+    <number id="noise" type="slider" arg="-noise %"
+             _label="Noise" _low-label="Crisp" _high-label="Noisy"
+             low="0.00" high="5.00" default="0.04"/>
+
+    <hgroup>
+     <boolean id="clock" _label="Clock mode" arg-set="-clock"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </hgroup>
+   </vgroup>
+
+   <vgroup>
+    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+            _label="Brightness Knob" _low-label="Low" _high-label="High"
+            low="-75.0" high="100.0" default="3.0"/>
+    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+            _label="Contrast Knob" _low-label="Low" _high-label="High"
+            low="0" high="500" default="150"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The 1971 Pong home video game, including artifacts of an old color TV set.
+
+In clock mode, the score keeps track of the current time.
+
+https://en.wikipedia.org/wiki/Pong
+
+Written by Jeremy English, Trevor Blackwell and Jamie Zawinski; 2003.
+  </_description>
+</screensaver>

@@ -1,0 +1,94 @@
+.TH XScreenSaver 1 "January 15, 2001" "X Version 11"
+.SH NAME
+glsnake \- OpenGL enhanced Rubik's Snake cyclewaster.
+.SH SYNOPSIS
+.B glsnake
+[\-display \fIhost:display.screen\fP] [\-window] [\-root]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-wireframe] [\-altcolour]
+[\-angvel \fIangular\fP]
+[\-explode \fIdistance\fP]
+[\-statictime \fImilliseconds\fP]
+[\-yangvel \fIangle\fP]
+[\-zangvel \fIangle\fP]
+.SH DESCRIPTION
+.PP
+.B glsnake
+is an imitation of Rubiks\' Snake, using OpenGL.
+.SH OPTIONS
+.I glsnake
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-wireframe
+Display the snake in wireframe mode, rather than the default solid mode.
+.TP 8
+.B \-altcolour
+Use the alternate colour scheme for the snake.  Shape identification using
+colour will be disabled.
+.TP 8
+.B -angvel \fIangular\fP
+Change the speed at which the snake morphs to a new shape.
+.TP 8
+.B -explode \fIdistance\fP
+Change the distance between the nodes of a snake.
+.TP 8
+.B \-statictime \fImilliseconds\fP
+Change the time between morphs.
+.TP 8
+.B \-yangvel \fIangle\fP
+Change the angle of rotation around the Y axis per frame.
+.TP 8
+.B \-zangvel \fIangle\fP
+Change the angle of rotation around the Z axis per frame.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.PP
+.nf
+.sp
+	https://spacepants.org/src/glsnake/
+.sp
+.fi
+.SH BUGS
+The snake will happily intersect itself while morphing (this is not a bug).
+.PP
+The rotation/camera position sucks.
+.SH COPYRIGHT
+Copyright \(co 2001, 2002 by Jamie Wilkinson, Andrew Bennetts, and Peter Aylett.
+.PP
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+.PP
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+.SH AUTHOR
+Jamie Wilkinson <jaq@spacepants.org>, Andrew Bennetts <andrew@puzzling.org>,
+and Peter Aylett <peter@ylett.com>.  Ported to XScreenSaver by Jamie Wilkinson.

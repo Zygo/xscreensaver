@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="geodesicgears" _label="Geodesic Gears" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=gd_nTnJQ4Ps"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
+          convert="invert"/>
+
+  <number id="timeout" type="slider" arg="-timeout %"
+          _label="Duration" _low-label="5 seconds" _high-label="2 minutes"
+          low="5" high="120" default="20"/>
+
+  <hgroup>
+   <boolean id="labels"  _label="Describe gears" arg-set="-labels"/>
+   <boolean id="numbers" _label="Number gears"   arg-set="-numbers"/>
+   <boolean id="wire"    _label="Wireframe"      arg-set="-wireframe"/>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="wander"  _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="spin"    _label="Spin"      arg-unset="-no-spin"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A set of meshed gears arranged on the surface of a sphere.
+
+https://en.wikipedia.org/wiki/Geodesic_dome
+https://en.wikipedia.org/wiki/Involute_gear
+https://en.wikipedia.org/wiki/Buckminster_Fuller
+
+Written by Jamie Zawinski; 2014.
+  </_description>
+</screensaver>
