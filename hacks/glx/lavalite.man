@@ -1,0 +1,147 @@
+.TH XScreenSaver 1 "18-May-2002" "X Version 11"
+.SH NAME
+lavalite \- 3D OpenGL simulation of a Lavalite.
+.SH SYNOPSIS
+.B lavalite
+[\-display \fIhost:display.screen\fP] [\-window] [\-root]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-style \fIstyle\fP ]
+[\-spin \fIxyz\fP ] [\-no-spin ]
+[\-speed \fIfloat\fP ]
+[\-resolution \fIinteger\fP ]
+[\-count \fIinteger\fP ]
+[\-no-smooth ]
+[\-wireframe ]
+[\-impatient ]
+[\-lava-color \fIcolor\fP ]
+[\-fluid-color \fIcolor\fP ]
+[\-base-color \fIcolor\fP ]
+[\-table-color \fIcolor\fP ]
+[\-fluid-texture \fIfilename\fP ]
+[\-base-texture \fIfilename\fP ]
+[\-table-texture \fIfilename\fP ]
+.SH DESCRIPTION
+The \fIlavalite\fP program displays a 3D simulation of the famous lamp
+of the same name.  It requires a fast computer with fast OpenGL support.
+.SH OPTIONS
+.I lavalite
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-style \fIstyle\fP\fP
+Specify which model of lamp to draw.  Available models 
+are: \fBClassic\fP, \fBGiant\fP, \fBCone\fP, and \fBRocket\fP.
+Default: random.
+.TP 8
+.B \-spin \fIxyz\fP
+Around which axes the model should auto-spin.  Defaults to "Z", meaning
+it rotates horizontally, but otherwise pitch or roll.
+.TP 8
+.B \-no-spin
+Same as \fB\-spin ''\fP.
+.TP 8
+.B \-speed \fIfloat\fP
+A number controlling the frequency at which new blobs launch: you can
+think of this as being related to the the heat of the lightbulb in
+the base.  Default: 0.003.
+.TP 8
+.B \-delay \fIusecs\fP
+The delay between steps of the animation; default is 30000 (0.03 second.)
+.TP 8
+.B \-resolution \fIinteger\fP
+The size of the grid from which the mesh is created that is used
+to polygonize the blobs.  higher values will give very smooth looking
+blobs, at the expense of speed.  Default: 40.
+
+The options "-resolution 10 -no-smooth" look kind of interesting.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-count \fIinteger\fP
+The maximum number of blobs that can be in motion at once.
+Default: 3.
+.TP 8
+.B \-no-smooth
+Turn off smoothing: the objects in the scene will be facetted.
+.TP 8
+.B \-wireframe
+Render all objects in wireframe instead of as solids.
+.TP 8
+.B \-impatient
+Provide this option if you are.  This will pre-warm the lamp, so when it
+starts up, the first frame will show a blob already halfway up the lamp.
+.TP 8
+.B \-lava-color \fIcolor\fP
+Specifies the color of the blobbies.  Default: red.
+.TP 8
+.B \-fluid-color \fIcolor\fP
+Specifies the color of the fluid that the blobbies float in.
+Default: light blue.
+.TP 8
+.B \-base-color \fIcolor\fP
+Specifies the color of the lamp base, and the cap on top of the bottle.
+Default: very dark gray.
+.TP 8
+.B \-table-color \fIcolor\fP
+Specifies the color of the table that the lamp is sitting on.
+Default: black (meaning it is invisible.)
+.TP 8
+.B \-fluid-texture \fIfilename\fP
+An image file to wrap around the glass.
+
+Note that on most systems, GL textures must have dimensions that are a
+power of two.
+
+Note also that colors and textures are both applied: so, if you apply a
+texture and it isn't showing up, try specifying the corresponding color
+as "white".  Otherwise, the combination of the two might be too dark to
+see.
+.TP 8
+.B \-base-texture \fIfilename\fP
+An image file to wrap around the base of the lamp, and the cap on top
+of the bottle.
+.TP 8
+.B \-table-texture \fItexture\fP
+An image file to spread across the table that the lamp is sitting on.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+ http://www.lavaworld.com/
+ http://www.lavarnd.org/
+.SH COPYRIGHT
+Copyright \(co 2002 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+
+LAVA LITE\(rg and the configuration of the LAVA\(rg brand motion lamp
+are registered trademarks of Haggerty Enterprises, Inc.  The
+configuration of the globe and base of the motion lamp are registered
+trademarks of Haggerty Enterprises, Inc. in the U.S.A. and in other
+countries around the world.
+
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="rocks" _label="Rocks">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=7x7PMI7LFK0"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="50000"
+          convert="invert"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Count" _low-label="Few" _high-label="Many"
+           low="0" high="200" default="100"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Velocity" _low-label="Slow" _high-label="Fast"
+          low="1" high="100" default="100"/>
+
+  <hgroup>
+    <boolean id="rotate" _label="Rotation" arg-unset="-no-rotate"/>
+    <boolean id="steer" _label="Steering" arg-unset="-no-move"/>
+    <boolean id="3d" _label="Do Red/Blue 3D separation" arg-set="-3d"/>
+  </hgroup>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="5"/>
+
+  <!-- #### -delta3d [1.5] -->
+  <!-- #### -left3d [Blue] -->
+  <!-- #### -right3d [Red] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+An asteroid field zooms by.
+
+Written by Jamie Zawinski; 1992.
+  </_description>
+</screensaver>
