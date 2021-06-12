@@ -70,6 +70,17 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.01	* X11: Properly disable the server's built-in screen saver.
+	* X11: The passwdTimeout option was being ignored.
+	* X11: The display of the unlock thermometer was weird.
+	* X11: Fixed password entry on old-school multi-screen setups (:0.1).
+	* X11: Worked around a KDE 5 compositor bug that caused the desktop
+          to momentarily become visible when cycling.
+	* X11: Fixed possible high CPU usage in `xscreensaver-systemd'.
+	* X11: Fixed some spurious warnings in `xscreensaver-text'.
+	* X11: Warn when Wayland is in use, since it makes both screen saving
+          and locking impossible.
+
 6.00	* X11: Major refactor of the `xscreensaver' daemon for improved
 	  security, dividing it into three programs: `xscreensaver',
 	  `xscreensaver-gfx' and `xscreensaver-auth'.

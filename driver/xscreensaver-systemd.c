@@ -228,7 +228,18 @@
  *    I'm told that the proprietary Zoom executable for Linux sends "inhibit"
  *    to "org.freedesktop.ScreenSaver", but I don't have any further details.
  *
+ *
  *****************************************************************************
+ *
+ * Steam:
+ *
+ *     Inhibits as "My SDL application" (ooh, "Baby's First Hello World",
+ *     nice!  You get a gold star sticker) and then 30 seconds later,
+ *     uninhibits and immediately re-inhibits, forever.  This works, but
+ *     is dumb.
+ *
+ *****************************************************************************
+ *
  *
  * TO DO:
  *
@@ -294,7 +305,13 @@
 #include <signal.h>
 #include <X11/Xlib.h>
 
-#include <systemd/sd-bus.h>
+#if defined (HAVE_LIBSYSTEMD)
+# include <systemd/sd-bus.h>
+#elif defined (HAVE_LIBELOGIND)
+# include <elogind/sd-bus.h>
+#else
+# error Neither HAVE_LIBSYSTEMD nor HAVE_LIBELOGIND is defined.
+#endif
 
 #include "version.h"
 #include "blurb.h"
@@ -797,7 +814,7 @@ xscreensaver_systemd_loop (void)
    */
   while (1) {
     struct pollfd fds[3];
-    uint64_t poll_timeout, system_timeout, user_timeout;
+    uint64_t poll_timeout_msec, system_timeout_usec, user_timeout_usec;
     struct inhibit_entry *entry;
 
     /* We MUST call sd_bus_process() on each bus at least once before calling
@@ -820,32 +837,6 @@ xscreensaver_systemd_loop (void)
         goto FAIL;
       }
     } while (rc > 0);
-
-    fds[0].fd = sd_bus_get_fd (system_bus);
-    fds[0].events = sd_bus_get_events (system_bus);
-    fds[0].revents = 0;
-
-    fds[1].fd = sd_bus_get_fd (user_bus);
-    fds[1].events = sd_bus_get_events (user_bus);
-    fds[1].revents = 0;
-
-    fds[2].fd = XConnectionNumber (dpy);
-    fds[2].events = POLLIN;
-    fds[2].revents = 0;
-
-
-    sd_bus_get_timeout (system_bus, &system_timeout);
-    sd_bus_get_timeout (user_bus, &user_timeout);
-
-    if (system_timeout == 0 && user_timeout == 0)
-      poll_timeout = 0;
-    else if (system_timeout == UINT64_MAX && user_timeout == UINT64_MAX)
-      poll_timeout = -1;
-    else {
-      poll_timeout = (system_timeout < user_timeout
-                      ? system_timeout : user_timeout);
-      poll_timeout /= 1000000;
-    }
 
     /* Prune any entries whose original sender has gone away: this happens
        if a program inhibits, then exits without having called uninhibit.
@@ -873,24 +864,8 @@ xscreensaver_systemd_loop (void)
       }
     }
 
-
-    /* We want to wake up at least once every N seconds to de-activate
-       the screensaver if we have been inhibited.
-     */
-    if (poll_timeout > HEARTBEAT_INTERVAL * 1000)
-      poll_timeout = HEARTBEAT_INTERVAL * 1000;
-
-    rc = poll (fds, 3, poll_timeout);
-    if (rc < 0) {
-      fprintf (stderr, "%s: poll failed: %s\n", blurb(), strerror(-rc));
-      exit (EXIT_FAILURE);
-    }
-
-    if (fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-      fprintf (stderr, "%s: X connection closed\n", blurb());
-      goto FAIL;
-    }
-
+    /* If we are inhibited and HEARTBEAT_INTERVAL has passed, de-activate the
+       screensaver. */
     if (ctx->is_inhibited) {
       time_t now = time ((time_t *) 0);
       if (now - last_deactivate_time >= HEARTBEAT_INTERVAL) {
@@ -906,11 +881,99 @@ xscreensaver_systemd_loop (void)
         last_deactivate_time = now;
       }
     }
-  }
+
+    /* The remainder of the code that follows is concerned solely with
+       determining how long we should wait until the next iteration of the
+       event loop.
+    */
+    rc = sd_bus_get_fd (system_bus);
+    if (rc < 0) {
+      fprintf (stderr, "%s: sd_bus_get_fd failed for system bus: %s\n",
+               blurb(), strerror(-rc));
+      goto FAIL;
+    }
+    fds[0].fd = rc;
+    rc = sd_bus_get_events (system_bus);
+    if (rc < 0) {
+      fprintf (stderr, "%s: sd_bus_get_events failed for system bus: %s\n",
+               blurb(), strerror(-rc));
+      goto FAIL;
+    }
+    fds[0].events = rc;
+    fds[0].revents = 0;
+
+    rc = sd_bus_get_fd (user_bus);
+    if (rc < 0) {
+      fprintf (stderr, "%s: sd_bus_get_fd failed for user bus: %s\n",
+               blurb(), strerror(-rc));
+      goto FAIL;
+    }
+    fds[1].fd = rc;
+    rc = sd_bus_get_events (user_bus);
+    if (rc < 0) {
+      fprintf (stderr, "%s: sd_bus_get_events failed for user bus: %s\n",
+               blurb(), strerror(-rc));
+      goto FAIL;
+    }
+    fds[1].events = rc;
+    fds[1].revents = 0;
+
+    /* Activity on the X server connection will wake us from the poll(). */
+    fds[2].fd = XConnectionNumber (dpy);
+    fds[2].events = POLLIN;
+    fds[2].revents = 0;
+
+    rc = sd_bus_get_timeout (system_bus, &system_timeout_usec);
+    if (rc < 0) {
+      fprintf (stderr, "%s: sd_bus_get_timeout failed for system bus: %s\n",
+               blurb(), strerror(-rc));
+      goto FAIL;
+    }
+    sd_bus_get_timeout (user_bus, &user_timeout_usec);
+    if (rc < 0) {
+      fprintf (stderr, "%s: sd_bus_get_timeout failed for user bus: %s\n",
+               blurb(), strerror(-rc));
+      goto FAIL;
+    }
+
+    /* Pick the smaller of the two bus timeouts and convert from microseconds
+       to milliseconds expected by poll(). */
+    poll_timeout_msec = ((system_timeout_usec < user_timeout_usec
+                          ? system_timeout_usec : user_timeout_usec)
+                         / 1000);
+
+    /* If we have been inhibited, we want to wake up at least once every N
+       seconds to de-activate the screensaver.
+     */
+    if (ctx->is_inhibited &&
+        poll_timeout_msec > HEARTBEAT_INTERVAL * 1000)
+      poll_timeout_msec = HEARTBEAT_INTERVAL * 1000;
+
+    if (poll_timeout_msec < 1000)
+      poll_timeout_msec = 1000;
+
+    rc = poll (fds, 3, poll_timeout_msec);
+    if (rc < 0) {
+      fprintf (stderr, "%s: poll failed: %s\n", blurb(), strerror(errno));
+      goto FAIL;
+    }
+
+    if (fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+      fprintf (stderr, "%s: X connection closed\n", blurb());
+      dpy = 0;
+      goto FAIL;
+    } else if (fds[2].revents & POLLIN) {
+      /* Even though we have requested no events, there are some events that
+         the X server sends anyway, e.g. MappingNotify, and if we don't flush
+         the fd, it will constantly be ready for reading, and we busy-loop. */
+      char buf[1024];
+      while (read (fds[2].fd, buf, sizeof(buf)) > 0)
+        ;
+    }
+
+  } /* Event loop end */
 
  FAIL:
-
-  XCloseDisplay(dpy);
 
   if (system_bus)
     sd_bus_flush_close_unref (system_bus);
@@ -922,6 +985,9 @@ xscreensaver_systemd_loop (void)
     sd_bus_flush_close_unref (user_bus);
 
   sd_bus_error_free (&error);
+
+  if (dpy)
+    XCloseDisplay (dpy);
 
   return EXIT_FAILURE;
 }

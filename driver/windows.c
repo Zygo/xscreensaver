@@ -218,7 +218,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
 
   if (ssi->error_dialog)
     {
-      XDestroyWindow (si->dpy, ssi->error_dialog);
+      defer_XDestroyWindow (si->app, si->dpy, ssi->error_dialog);
       ssi->error_dialog = 0;
     }
 
@@ -260,7 +260,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
           fprintf (stderr,
             "%s: someone horked our saver window (0x%lx)!  Recreating it...\n",
                    blurb(), (unsigned long) horked_window);
-          XDestroyWindow (si->dpy, horked_window);
+          defer_XDestroyWindow (si->app, si->dpy, horked_window);
         }
 
       if (p->verbose_p > 1)
@@ -687,7 +687,7 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
       raise_window (ssi);
 
       /* Now we can destroy the old window without horking our grabs. */
-      XDestroyWindow (si->dpy, old_w);
+      defer_XDestroyWindow (si->app, si->dpy, old_w);
 
       if (p->verbose_p > 1)
 	fprintf (stderr, "%s: %d: destroyed old saver window 0x%lx\n",
@@ -814,7 +814,7 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
 
   if (ssi->error_dialog)
     {
-      XDestroyWindow (si->dpy, ssi->error_dialog);
+      defer_XDestroyWindow (si->app, si->dpy, ssi->error_dialog);
       ssi->error_dialog = 0;
     }
 
@@ -884,7 +884,7 @@ screenhack_obituary (saver_screen_info *ssi,
    */
   cmap = ssi->cmap ? ssi->cmap : DefaultColormapOfScreen (ssi->screen);
   window = ssi->error_dialog;
-  if (window) XDestroyWindow (si->dpy, window);
+  if (window) defer_XDestroyWindow (si->app, si->dpy, window);
   attrs.override_redirect = True;
   attrs.background_pixel = ssi->black_pixel;
   attrs.border_pixel = ssi->black_pixel;

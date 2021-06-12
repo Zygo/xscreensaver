@@ -680,7 +680,8 @@ analogtv-cli.o: $(srcdir)/analogtv-cli.c
 	$(CC) -o $@ -c $(ATVCLI_CFLAGS) $<
 
 ATVCLI = analogtv2.o $(UTILS_BIN)/yarandom.o \
-	 $(UTILS_BIN)/aligned_malloc.o $(THRO) $(PNG) @ANIM_OBJS@
+	 $(UTILS_BIN)/aligned_malloc.o $(THRO) $(PNG) \
+	 $(UTILS_BIN)/font-retry.o @ANIM_OBJS@
 analogtv-cli: 	analogtv-cli.o	$(ATVCLI)
 	$(CC_HACK) -o $@ $@.o	$(ATVCLI) $(THRL) $(PNG_LIBS) -lpng
 clean::

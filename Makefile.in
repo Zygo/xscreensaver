@@ -16,7 +16,9 @@ TARFILES	= README README.hacking INSTALL \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
 		  xscreensaver.spec
 
-TAR		= tar
+TAR		= gnutar
+TAR_ARGS	= --owner=0 --group=0 --posix --no-acls --no-xattrs --no-selinux
+
 
 # Using $(MAKE) directly means the shell executes things even with "make -n"
 MAKE2 = $(MAKE)
@@ -94,7 +96,7 @@ _tar:
   echo creating tar file $$ADIR$$NAME.tar.gz... ;			    \
   export COPYFILE_DISABLE=true ;					    \
   export GZIP="-9v" ;							    \
-  $(TAR) -vczf $$ADIR$$NAME.tar.gz -T "$$LIST" ;			    \
+  $(TAR) -vczf $$ADIR$$NAME.tar.gz -T "$$LIST" $(TAR_ARGS) ;		    \
   rm "$$LIST" "$$NAME"
 
 
@@ -361,7 +363,7 @@ www::
   diff -U0 download.html $$TMP ;					    \
   echo '' ;								    \
 									    \
-  for EXT in tar.gz dmg ; do						    \
+  for EXT in tar.gz dmg apk ; do					    \
     OLDEST=`ls xscreensaver*.$$EXT | 					    \
       fgrep -v 5.14 |							    \
       fgrep -v 5.34 |							    \
@@ -413,7 +415,7 @@ count::
 #	rsync -vax . cerebrum:src/xscreensaver/ \
 
 cerebrum::
-	rsync -vax . pi@10.0.1.19:xscreensaver/ \
+	rsync -vax . pi@10.0.1.10:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \

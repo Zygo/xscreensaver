@@ -154,6 +154,9 @@
 /* Define this if your system has libcap. */
 #undef HAVE_LIBCAP
 
+/* Define this if you have libelogind. */
+#undef HAVE_LIBELOGIND
+
 /* Define this if you have the Portable Network Graphics library. */
 #undef HAVE_LIBPNG
 

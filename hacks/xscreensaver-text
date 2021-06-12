@@ -39,7 +39,7 @@ BEGIN { eval 'use Text::Wrap qw(wrap);' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.60 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.62 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -379,6 +379,8 @@ sub output() {
     #
     # In a truly shocking turn of events, nearly every distro uses a different
     # file to identify itself.  Are you shocked?  I for one am shocked.
+
+    $ENV{LC_NUMERIC} = 'C';   # Decimals with periods, not commas, plz.
 
     if (open (my $in, "<:utf8", "/etc/os-release")) {
       while (<$in>) {			  # PRETTY_NAME="CentOS Linux 7 (Core)"
@@ -991,7 +993,7 @@ sub main() {
     # amount of time (e.g., url-mode.)
     #
     my $secs = 10;
-    $secs = 1 if ($truncate_lines < 10);  # for 'gltext'
+    $secs = 1 if (($truncate_lines || 0) < 10);  # for 'gltext'
     sleep ($secs);
   }
 }

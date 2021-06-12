@@ -839,6 +839,7 @@ with_xkb_ext
 with_proc_interrupts
 with_proc_oom
 with_systemd
+with_elogind
 enable_locking
 enable_root_passwd
 with_pam
@@ -1496,6 +1497,7 @@ Server Extension Options:
   --with-proc-oom         Include support to duck the out-of-memory killer.
   --with-systemd          Support systemd requests to lock on suspend, and to
                           allow video players to inhibit the screen saver.
+  --with-elogind          Use elogind instead of systemd.
 
 Screen Locking Options:
 
@@ -10502,6 +10504,219 @@ fi
 
 ###############################################################################
 #
+#       Check for -lelogind, a stripped down subset of systemd.
+#
+###############################################################################
+
+have_elogind=no
+with_elogind_req=unspecified
+elogind_halfassed=no
+elogind_too_old=no
+
+# Check whether --with-elogind was given.
+if test "${with_elogind+set}" = set; then :
+  withval=$with_elogind; with_elogind="$withval"; with_elogind_req="$withval"
+else
+  with_elogind=yes
+fi
+
+   case "$with_elogind" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for elogind headers" >&5
+$as_echo_n "checking for elogind headers... " >&6; }
+     d=$with_elogind/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for elogind libs" >&5
+$as_echo_n "checking for elogind libs... " >&6; }
+     d=$with_elogind/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     # replace the directory string with "yes".
+     with_elogind_req="yes"
+     with_elogind=$with_elogind_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-elogind must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+if test "$with_elogind" != yes -a "$with_elogind" != no ; then
+  echo "error: must be yes or no: --with-elogind=$with_elogind"
+  exit 1
+fi
+
+if test "$with_elogind" = yes; then
+
+  pkgs=''
+  ok="yes"
+  pkg_check_version libelogind 221
+  have_elogind="$ok"
+
+  if test "$have_elogind" = no; then
+    if $pkg_config --exists libelogind ; then
+      elogind_too_old=yes
+    fi
+  fi
+
+  if test "$have_elogind" = yes; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libelogind includes" >&5
+$as_echo_n "checking for libelogind includes... " >&6; }
+if ${ac_cv_elogind_config_cflags+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_elogind_config_cflags=`$pkg_config --cflags $pkgs`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_elogind_config_cflags" >&5
+$as_echo "$ac_cv_elogind_config_cflags" >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libelogind libs" >&5
+$as_echo_n "checking for libelogind libs... " >&6; }
+if ${ac_cv_elogind_config_libs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_elogind_config_libs=`$pkg_config --libs $pkgs`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_elogind_config_libs" >&5
+$as_echo "$ac_cv_elogind_config_libs" >&6; }
+  fi
+
+  ac_elogind_config_cflags=$ac_cv_elogind_config_cflags
+  ac_elogind_config_libs=$ac_cv_elogind_config_libs
+
+  if test "$have_elogind" = yes; then
+    #
+    # we appear to have libelogind; check for headers/libs to be sure.
+    #
+    ac_save_elogind_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_elogind_config_cflags"
+
+    have_elogind=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  ac_fn_c_check_header_mongrel "$LINENO" "elogind/sd-bus.h" "ac_cv_header_elogind_sd_bus_h" "$ac_includes_default"
+if test "x$ac_cv_header_elogind_sd_bus_h" = xyes; then :
+  have_elogind=yes
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+
+    CPPFLAGS="$ac_save_elogind_CPPFLAGS"
+  fi
+
+  if test "$have_elogind" = yes; then
+    # we have the headers, now check for the libraries
+    have_elogind=no
+    elogind_halfassed=yes
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for libelogind usability..." >&5
+$as_echo "checking for libelogind usability..." >&6; }
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sd_bus_open_system in -lc" >&5
+$as_echo_n "checking for sd_bus_open_system in -lc... " >&6; }
+if ${ac_cv_lib_c_sd_bus_open_system+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc $ac_elogind_config_libs -lX11 -lXext -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sd_bus_open_system ();
+int
+main ()
+{
+return sd_bus_open_system ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_c_sd_bus_open_system=yes
+else
+  ac_cv_lib_c_sd_bus_open_system=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_c_sd_bus_open_system" >&5
+$as_echo "$ac_cv_lib_c_sd_bus_open_system" >&6; }
+if test "x$ac_cv_lib_c_sd_bus_open_system" = xyes; then :
+  have_elogind=yes; elogind_halfassed=no
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+  fi
+
+  if test "$have_elogind" = no; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for libelogind usability... no" >&5
+$as_echo "checking for libelogind usability... no" >&6; }
+  fi
+fi
+
+if test "$have_elogind" = yes; then
+  INCLUDES="$INCLUDES $ac_elogind_config_cflags"
+  EXES_SYSTEMD='$(EXES_SYSTEMD)'
+  SYSTEMD_LIBS="$ac_elogind_config_libs"
+  $as_echo "#define HAVE_LIBELOGIND 1" >>confdefs.h
+
+fi
+
+###############################################################################
+#
 #       The --enable-locking option
 #
 #	Note: "configure --help" list all "--enable" options before any
@@ -19080,7 +19295,7 @@ if test \! -z "$rpm_vers" ; then
   pkg_bindir2=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)xscreensaver-demo$@\1@p'`
   pkg_hackdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)popsquares$@\1@p'`
   pkg_confdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)popsquares\.xml$@\1@p'`
-  pkg_fontdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)\.ttf$@\1@p'`
+  pkg_fontdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\).*\.ttf$@\1@p' | head -1`
   pkg_addir=`rpm   -ql $rpmnames | sed -n 's@^\(.*/\)XScreenSaver$@\1@p'`
 
   if test -z "$pkg_bindir" ; then pkg_bindir="$pkg_bindir2" ; fi
@@ -19109,7 +19324,7 @@ if test \! -z "$deb_vers" ; then
   pkg_bindir2=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)xscreensaver-demo$@\1@p'`
   pkg_hackdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)popsquares$@\1@p'`
   pkg_confdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)popsquares\.xml$@\1@p'`
-  pkg_fontdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)\.ttf$@\1@p'`
+  pkg_fontdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\).*\.ttf$@\1@p' | head -1`
   pkg_addir=`dpkg   -L $debnames 2>&- | sed -n 's@^\(.*/\)XScreenSaver[^/]*$@\1@p'`
 
   if test -z "$pkg_bindir" ; then pkg_bindir="$pkg_bindir2" ; fi

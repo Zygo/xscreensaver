@@ -73,8 +73,8 @@ main (int argc, char **argv)
   int xi_opcode;
   Bool grab_kbd_p   = False;
   Bool grab_mouse_p = False;
-  Bool mouse_sync_p = True;
-  Bool kbd_sync_p   = True;
+  Bool mouse_sync_p = False;
+  Bool kbd_sync_p   = False;
   int i;
 
   progname = argv[0];

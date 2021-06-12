@@ -43,6 +43,7 @@ xscreensaver_set_wm_atoms (Display *dpy, Window window, int width, int height,
 # endif
   Atom va[10];
   long vl[10];
+  int i;
   class_hints.res_name  = "xscreensaver";  /* not progname */
   class_hints.res_class = "XScreenSaver";
   size_hints.flags      = PMinSize | PMaxSize;
@@ -73,22 +74,27 @@ xscreensaver_set_wm_atoms (Display *dpy, Window window, int width, int height,
      grubby paws off of our windows.
    */
 
-  vl[0] = 1;  /* _NET_WM_BYPASS_COMPOSITOR = 1 */
+  i = 0;
+  vl[i++] = 1;  /* _NET_WM_BYPASS_COMPOSITOR = 1 */
   XChangeProperty (dpy, window, XA_NET_WM_BYPASS_COMPOSITOR, XA_CARDINAL, 32,
-                   PropModeReplace, (unsigned char *) vl, 1);
+                   PropModeReplace, (unsigned char *) vl, i);
 
   /* _NET_WM_STATE = [ _NET_WM_STATE_ABOVE, _NET_WM_STATE_FULLSCREEN ] */
-  va[0] = XA_NET_WM_STATE_ABOVE;
-  va[1] = XA_NET_WM_STATE_FULLSCREEN;
+  i = 0;
+  va[i++] = XA_NET_WM_STATE_ABOVE;
+  va[i++] = XA_NET_WM_STATE_FULLSCREEN;
+  va[i++] = XA_NET_WM_STATE_STAYS_ON_TOP;  /* Does this do anything? */
   XChangeProperty (dpy, window, XA_NET_WM_STATE, XA_ATOM, 32,
-                   PropModeReplace, (unsigned char *) va, 2);
+                   PropModeReplace, (unsigned char *) va, i);
 
   /* As there is no _NET_WM_WINDOW_TYPE_SCREENSAVER, which property is
      most likely to effectively communicate "on top always" to the WM?
      _NET_WM_WINDOW_TYPE = NORMAL, SPLASH, DIALOG or NOTIFICATION? */
-  va[0] = XA_NET_WM_WINDOW_TYPE_NOTIFICATION;
+  i = 0;
+  va[i++] = XA_NET_WM_WINDOW_TYPE_NOTIFICATION;
+  va[i++] = XA_KDE_NET_WM_WINDOW_TYPE_OVERRIDE;  /* Does this do anything? */
   XChangeProperty (dpy, window, XA_NET_WM_WINDOW_TYPE, XA_ATOM, 32,
-                   PropModeReplace, (unsigned char *) va, 1);
+                   PropModeReplace, (unsigned char *) va, i);
 
   if (for_window)  /* This is the error dialog for a saver window */
     {

@@ -126,6 +126,9 @@ AH_TEMPLATE([HAVE_XKB],
 AH_TEMPLATE([HAVE_LIBSYSTEMD],
 	    [Define this if you have libsystemd.])
 
+AH_TEMPLATE([HAVE_LIBELOGIND],
+	    [Define this if you have libelogind.])
+
 AH_TEMPLATE([HAVE_PROC_INTERRUPTS],
 	    [Define this if you have a Linux-like /proc/interrupts file which
 	    can be examined to determine when keyboard activity has
@@ -2135,6 +2138,87 @@ if test "$have_systemd" = yes; then
 else
   EXES_SYSTEMD=''
   SYSTEMD_LIBS=''
+fi
+
+
+###############################################################################
+#
+#       Check for -lelogind, a stripped down subset of systemd.
+#
+###############################################################################
+
+have_elogind=no
+with_elogind_req=unspecified
+elogind_halfassed=no
+elogind_too_old=no
+AC_ARG_WITH(elogind,
+[  --with-elogind          Use elogind instead of systemd.],
+  [with_elogind="$withval"; with_elogind_req="$withval"],
+  [with_elogind=yes])
+
+HANDLE_X_PATH_ARG(with_elogind, --with-elogind, elogind)
+
+if test "$with_elogind" != yes -a "$with_elogind" != no ; then
+  echo "error: must be yes or no: --with-elogind=$with_elogind"
+  exit 1
+fi
+
+if test "$with_elogind" = yes; then
+
+  pkgs=''
+  ok="yes"
+  pkg_check_version libelogind 221
+  have_elogind="$ok"
+
+  if test "$have_elogind" = no; then
+    if $pkg_config --exists libelogind ; then
+      elogind_too_old=yes
+    fi
+  fi
+
+  if test "$have_elogind" = yes; then
+    AC_CACHE_CHECK([for libelogind includes], ac_cv_elogind_config_cflags,
+               [ac_cv_elogind_config_cflags=`$pkg_config --cflags $pkgs`])
+    AC_CACHE_CHECK([for libelogind libs], ac_cv_elogind_config_libs,
+               [ac_cv_elogind_config_libs=`$pkg_config --libs $pkgs`])
+  fi
+
+  ac_elogind_config_cflags=$ac_cv_elogind_config_cflags
+  ac_elogind_config_libs=$ac_cv_elogind_config_libs
+
+  if test "$have_elogind" = yes; then
+    #
+    # we appear to have libelogind; check for headers/libs to be sure.
+    #
+    ac_save_elogind_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_elogind_config_cflags"
+
+    have_elogind=no
+    AC_CHECK_X_HEADER(elogind/sd-bus.h, [have_elogind=yes])
+
+    CPPFLAGS="$ac_save_elogind_CPPFLAGS"
+  fi
+
+  if test "$have_elogind" = yes; then
+    # we have the headers, now check for the libraries
+    have_elogind=no
+    elogind_halfassed=yes
+    AC_MSG_RESULT(checking for libelogind usability...)
+    AC_CHECK_X_LIB(c, sd_bus_open_system,
+                   [have_elogind=yes; elogind_halfassed=no],,
+                   $ac_elogind_config_libs -lX11 -lXext -lm)
+  fi
+
+  if test "$have_elogind" = no; then
+    AC_MSG_RESULT(checking for libelogind usability... no)
+  fi
+fi
+
+if test "$have_elogind" = yes; then
+  INCLUDES="$INCLUDES $ac_elogind_config_cflags"
+  EXES_SYSTEMD='$(EXES_SYSTEMD)'
+  SYSTEMD_LIBS="$ac_elogind_config_libs"
+  AC_DEFINE(HAVE_LIBELOGIND)
 fi
 
 
@@ -4774,7 +4858,7 @@ if test \! -z "$rpm_vers" ; then
   pkg_bindir2=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)xscreensaver-demo$@\1@p'`
   pkg_hackdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)popsquares$@\1@p'`
   pkg_confdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)popsquares\.xml$@\1@p'`
-  pkg_fontdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\)\.ttf$@\1@p'`
+  pkg_fontdir=`rpm -ql $rpmnames | sed -n 's@^\(.*/\).*\.ttf$@\1@p' | head -1`
   pkg_addir=`rpm   -ql $rpmnames | sed -n 's@^\(.*/\)XScreenSaver$@\1@p'`
 
   if test -z "$pkg_bindir" ; then pkg_bindir="$pkg_bindir2" ; fi
@@ -4804,7 +4888,7 @@ if test \! -z "$deb_vers" ; then
   pkg_bindir2=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)xscreensaver-demo$@\1@p'`
   pkg_hackdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)popsquares$@\1@p'`
   pkg_confdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)popsquares\.xml$@\1@p'`
-  pkg_fontdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\)\.ttf$@\1@p'`
+  pkg_fontdir=`dpkg -L $debnames 2>&- | sed -n 's@^\(.*/\).*\.ttf$@\1@p' | head -1`
   pkg_addir=`dpkg   -L $debnames 2>&- | sed -n 's@^\(.*/\)XScreenSaver[^/]*$@\1@p'`
   changequote([,])
 

@@ -1,4 +1,4 @@
-/* xanalogtv-cli, Copyright (c) 2018-2020 Jamie Zawinski <jwz@jwz.org>
+/* xanalogtv-cli, Copyright © 2018-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -342,12 +342,6 @@ unsigned int
 get_pixel_resource (Display *dpy, Colormap cmap, char *name, char *class)
 {
   if (!strcmp(name, "background")) return 0;
-  abort();
-}
-
-XFontStruct *
-load_font_retry (Display *dpy, const char *xlfd)
-{
   abort();
 }
 

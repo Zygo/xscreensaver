@@ -456,8 +456,10 @@ handle_sigchld (Display *dpy, Bool blanked_p)
                   int ac = 0;
                   av[ac++] = SAVER_GFX_PROGRAM;
                   av[ac++] = "--emergency";
-                  if (verbose_p) av[ac++] = "--verbose";
-                  if (debug_p)   av[ac++] = "--debug";
+                  if (verbose_p)     av[ac++] = "--verbose";
+                  if (verbose_p > 1) av[ac++] = "--verbose";
+                  if (verbose_p > 2) av[ac++] = "--verbose";
+                  if (debug_p)       av[ac++] = "--debug";
                   av[ac] = 0;
                   fprintf (stderr, "%s: pid %lu: " SAVER_GFX_PROGRAM
                            " exited unexpectedly %s: re-launching\n",
@@ -1304,6 +1306,8 @@ static void
 maybe_disable_locking (Display *dpy)
 {
   const char *why = 0;
+  Bool wayland_p = (getenv ("WAYLAND_DISPLAY") ||
+                    getenv ("WAYLAND_SOCKET"));
 
 # ifdef NO_LOCKING
   why = "locking disabled at compile time";
@@ -1322,7 +1326,7 @@ maybe_disable_locking (Display *dpy)
 
   /* X11 grabs don't work under Wayland's embedded X11 server.  The Wayland
      window manager lives at a higher level than the X11 emulation layer. */
-  if (!why && getenv ("WAYLAND_DISPLAY"))
+  if (!why && wayland_p)
     why = "cannot lock securely under Wayland";
 
   if (!why)
@@ -1343,6 +1347,25 @@ maybe_disable_locking (Display *dpy)
           fprintf (stderr, "%s: %s\n", blurb(), why);
           fprintf (stderr, "%s: DEBUG MODE: allowing locking anyway!\n",
                    blurb());
+        }
+      else if (wayland_p)
+        {
+          const char *s = blurb();
+          locking_disabled_p = True;
+
+          /* Maybe we should just refuse to launch instead?  We can operate
+             properly only if the user uses only X11 programs, and doesn't
+             want to lock the screen.
+           */
+          fprintf (stderr, "\n"
+              "%s: WARNING: Wayland is not supported.\n"
+              "\n"
+              "%s:     Under Wayland, idle-detection fails when non-X11\n"
+              "%s:     programs are selected, meaning the screen may\n"
+              "%s:     blank prematurely.  Also, locking is impossible.\n"
+              "%s:     See the manual for instructions on configuring\n"
+              "%s:     your system to use X11 instead of Wayland.\n\n",
+                   s, s, s, s, s, s);
         }
       else
         {
@@ -1377,6 +1400,14 @@ main_loop (Display *dpy)
   if (! init_xinput (dpy, &xi_opcode))
     saver_exit (1);
 
+  /* Disable server built-in screen saver. */
+  XSetScreenSaver (dpy, 0, 0, 0, 0);
+  XForceScreenSaver (dpy, ScreenSaverReset);
+
+  /* It would be nice to sync the server's DPMS settings here to what is
+     specified in the .xscreensaver file, but xscreensaver-gfx handles that,
+     so that won't happen until the first time the screen blanks. */
+
   create_daemon_window (dpy);
 
   handle_signals();
@@ -1402,7 +1433,7 @@ main_loop (Display *dpy)
     saver_auth_pid = fork_and_exec (dpy, ac, av);
   }
 
-# ifdef HAVE_LIBSYSTEMD
+# if defined(HAVE_LIBSYSTEMD) || defined(HAVE_LIBELOGIND) 
   /* Launch xscreensaver-systemd at startup. */
   {
     char *av[10];
@@ -1413,7 +1444,7 @@ main_loop (Display *dpy)
     av[ac] = 0;
     saver_systemd_pid = fork_and_exec (dpy, ac, av);
   }
-# endif /* HAVE_LIBSYSTEMD */
+# endif /* HAVE_LIBSYSTEMD || HAVE_LIBELOGIND */
 
 
   /* X11 errors during startup initialization were fatal.
@@ -1930,9 +1961,11 @@ main_loop (Display *dpy)
                 char *av[20];
                 int ac = 0;
                 av[ac++] = SAVER_GFX_PROGRAM;
-                if (first_time_p) av[ac++] = "--init";
-                if (verbose_p) av[ac++] = "--verbose";
-                if (debug_p)   av[ac++] = "--debug";
+                if (first_time_p)  av[ac++] = "--init";
+                if (verbose_p)     av[ac++] = "--verbose";
+                if (verbose_p > 1) av[ac++] = "--verbose";
+                if (verbose_p > 2) av[ac++] = "--verbose";
+                if (debug_p)       av[ac++] = "--debug";
 
                 if (blank_mode == XA_NEXT)
                   av[ac++] = "--next";

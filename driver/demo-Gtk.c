@@ -4407,7 +4407,7 @@ mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
 
 
 static Window
-gnome_screensaver_window (Screen *screen)
+gnome_screensaver_window (Screen *screen, char **name_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   Window root = RootWindowOfScreen (screen);
@@ -4418,6 +4418,8 @@ gnome_screensaver_window (Screen *screen)
 
   if (! XQueryTree (dpy, root, &root, &parent, &kids, &nkids))
     abort ();
+  if (name_ret)
+    *name_ret = 0;
   for (i = 0; i < nkids; i++)
     {
       Atom type;
@@ -4434,6 +4436,8 @@ gnome_screensaver_window (Screen *screen)
               !strcmp ((char *) name, "cinnamon-screensaver")))
 	{
 	  gnome_window = kids[i];
+          if (name_ret)
+            *name_ret = strdup ((char *) name);
           break;
 	}
     }
@@ -4443,10 +4447,10 @@ gnome_screensaver_window (Screen *screen)
 }
 
 static Bool
-gnome_screensaver_active_p (void)
+gnome_screensaver_active_p (char **name_ret)
 {
   Display *dpy = GDK_DISPLAY();
-  Window w = gnome_screensaver_window (DefaultScreenOfDisplay (dpy));
+  Window w = gnome_screensaver_window (DefaultScreenOfDisplay (dpy), name_ret);
   return (w ? True : False);
 }
 
@@ -4454,13 +4458,18 @@ static void
 kill_gnome_screensaver (void)
 {
   Display *dpy = GDK_DISPLAY();
-  Window w = gnome_screensaver_window (DefaultScreenOfDisplay (dpy));
+  Window w = gnome_screensaver_window (DefaultScreenOfDisplay (dpy), NULL);
   if (w) XKillClient (dpy, (XID) w);
 }
 
 static Bool
 kde_screensaver_active_p (void)
 {
+  /* Apparently this worked in KDE 3, but not 4 or 5.
+     Maybe parsing the output of this would work in KDE 5:
+     kreadconfig5 --file kscreenlockerrc --group Daemon --key Autolock
+     but there's probably no way to kill the KDE saver.
+     Fuck it. */
   FILE *p = popen ("dcop kdesktop KScreensaverIface isEnabled 2>/dev/null",
                    "r");
   char buf[255];
@@ -4491,6 +4500,7 @@ the_network_is_not_the_computer (state *s)
   char *rversion = 0, *ruser = 0, *rhost = 0;
   char *luser, *lhost;
   char *msg = 0;
+  char *oname = 0;
   struct passwd *p = getpwuid (getuid ());
   const char *d = DisplayString (dpy);
 
@@ -4608,14 +4618,18 @@ the_network_is_not_the_computer (state *s)
      running" dialog so that these are on top.  Good enough.
    */
 
-  if (gnome_screensaver_active_p ())
-    warning_dialog (s->toplevel_widget,
-                    _("Warning:\n\n"
-                      "The GNOME screensaver daemon appears to be running.\n"
-                      "It must be stopped for XScreenSaver to work properly.\n"
-                      "\n"
-                      "Stop the GNOME screen saver daemon now?\n"),
-                    D_GNOME, 1);
+  if (gnome_screensaver_active_p (&oname))
+    {
+      char msg [1024];
+      sprintf (msg,
+               _("Warning:\n\n"
+                 "The GNOME screen saver daemon (%s) appears to be running.\n"
+                 "It must be stopped for XScreenSaver to work properly.\n"
+                 "\n"
+                 "Stop the \"%s\" daemon now?\n"),
+               oname, oname);
+      warning_dialog (s->toplevel_widget, msg, D_GNOME, 1);
+    }
 
   if (kde_screensaver_active_p ())
     warning_dialog (s->toplevel_widget,
@@ -4625,6 +4639,19 @@ the_network_is_not_the_computer (state *s)
                       "\n"
                       "Stop the KDE screen saver daemon now?\n"),
                     D_KDE, 1);
+
+  if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
+    warning_dialog (s->toplevel_widget,
+                    _("Warning:\n\n"
+                   "You are running Wayland rather than the X Window System.\n"
+                   "\n"
+                   "Under Wayland, idle-detection fails when non-X11 programs\n"
+                   "are selected, meaning the screen may blank prematurely.\n"
+                   "Also, locking is impossible.\n"
+                   "\n"
+                   "See the XScreenSaver manual for instructions on\n"
+                   "configuring your system to use X11 instead of Wayland.\n"),
+                    D_NONE, 1);
 }
 
 

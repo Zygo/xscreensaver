@@ -315,16 +315,13 @@ the screen will be powered off when black.
 .B Blanking
 
 These options control how the screen fades to or from black when
-a screen saver begins or ends.  Note: fading doesn't work with all
-video drivers.
-In particular, it does not work on the 2020-vintage Raspberry Pi.
+a screen saver begins or ends.
 .RS 4
 
 .TP 4
 .B Fade To Black When Blanking
 If selected, then when the screensaver activates, the current contents
-of the screen will fade to black instead of simply winking out.  A fade
-will also be done when switching from one display mode to another.
+of the screen will fade to black instead of simply winking out.
 
 .TP 4
 .B Unfade From Black When Unblanking

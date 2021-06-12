@@ -117,11 +117,62 @@ init_xinput (Display *dpy, int *opcode_ret)
 }
 
 
+/* If there is more than one Screen on the Display, XInput2 sends a duplicate
+   event for each Screen.  You'd think that they would have the 'root' member
+   set to the root window of that screen, so that we could ignore events not
+   destined for our screen, but no, they all have the same root window.  But
+   they also have the same 'serial' and 'time', so (in theory) we can ignore
+   the duplicates by noticing recently-duplicated event serial numbers, which
+   ought never happen.  BUT...!
+ */
+static Bool
+duplicate_xinput_event_p (int evtype, XIDeviceEvent *in)
+{
+  static unsigned long dups[50] = { 0, };
+  int i;
+
+  /* Great news, everybody: XEvent.xany.serial is apparently not unique.  Wny?
+     Because fuck you that's why.  XtAppNextEvent is returning a RawKeyRelease
+     followed by a RawKeyPress with the same serial.  It doesn't happen every
+     time, but seems to happen most often if a second key goes down before the
+     first key is released, e.g., which often happens when typing fast.
+
+     I have not seen it duplicating serials between two different KeyPress
+     events, but I have seen it being duplicated between a KeyPress and a
+     non-corresponding KeyRelease event; and between two different KeyRelease
+     events.  It does this even when there is only one Screen.
+
+     So we must compare both 'serial' and 'type' when looking for duplicates.
+     This should be ok if it really does not duplicate serials between
+     unrelated KeyPress events.  And we ignore KeyRelease events, so what
+     happens with those doesn't matter.
+
+     Between this shit and the random noise that shows up in XIDeviceEvent,
+     I'm starting to suspect that maybe, just maybe, the XInput2 library is
+     extremely careless about memory management!
+   */
+  unsigned long key = (in->serial & 0xFFFF) | (evtype << 16);
+
+  for (i = 0; i < countof(dups); i++)
+    if (dups[i] == key)
+      {
+        if (debug_p)
+          fprintf (stderr, "%s: discard duplicate XInput event %08lx\n",
+                   blurb(), key);
+        return True;
+      }
+  for (i = 0; i < countof(dups)-1; i++)
+    dups[i] = dups[i+1];
+  dups[i] = key;
+  return False;
+}
+
+
 /* Convert an XInput2 event to corresponding old-school Xlib event.
    Returns true on success.
  */
-Bool
-xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
+static Bool
+xinput_event_to_xlib_1 (int evtype, XIDeviceEvent *in, XEvent *out)
 {
   Display *dpy = in->display;
   Bool ok = False;
@@ -228,6 +279,16 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
   return ok;
 }
 
+Bool
+xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
+{
+  Bool ok = xinput_event_to_xlib_1 (evtype, in, out);
+  if (ok && duplicate_xinput_event_p (evtype, in))
+    ok = False;
+  return ok;
+}
+
+
 
 static void
 print_kbd_event (XEvent *xev, XComposeStatus *compose, Bool x11_p)
@@ -321,9 +382,9 @@ print_xinput_event (Display *dpy, XEvent *xev, const char *desc)
       {
         /* Fake up an XKeyEvent in order to call XKeysymToString(). */
         XEvent ev2;
-        Bool ok = xinput_event_to_xlib (xev->xcookie.evtype,
-                                        (XIDeviceEvent *) re,
-                                        &ev2);
+        Bool ok = xinput_event_to_xlib_1 (re->evtype,
+                                          (XIDeviceEvent *) re,
+                                          &ev2);
         if (!ok)
           fprintf (stderr, "%s: unable to translate XInput2 event\n", blurb());
         else

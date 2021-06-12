@@ -294,6 +294,46 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
 }
 
 
+/* Like XDestroyWindow, but destroys the window later, on a timer.  This is
+   necessary to work around a KDE 5 compositor bug.  Without this, destroying
+   an old window causes the desktop to briefly become visible, even though a
+   new window has already been mapped that is obscuring both of them!
+ */
+typedef struct {
+  XtAppContext app;
+  Display *dpy;
+  Window window;
+} defer_destroy_closure;
+
+static void
+defer_destroy_handler (XtPointer closure, XtIntervalId *id)
+{
+  defer_destroy_closure *c = (defer_destroy_closure *) closure;
+  XErrorHandler old_handler;
+  XSync (c->dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+  XDestroyWindow (c->dpy, c->window);
+  XSync (c->dpy, False);
+  XSetErrorHandler (old_handler);
+  if (verbose_p > 1 && !error_handler_hit_p)
+    fprintf (stderr, "%s: destroyed old window 0x%lx\n",
+             blurb(), (unsigned long) c->window);
+  free (c);
+}
+
+/* Used here and in windows.c */
+void
+defer_XDestroyWindow (XtAppContext app, Display *dpy, Window w)
+{
+  defer_destroy_closure *c = (defer_destroy_closure *) malloc (sizeof (*c));
+  c->app = app;
+  c->dpy = dpy;
+  c->window = w;
+  XtAppAddTimeOut (app, 5 * 1000, defer_destroy_handler, (XtPointer) c);
+}
+
+
 /* Returns true if canceled by user activity. */
 Bool
 fade_screens (XtAppContext app, Display *dpy,
@@ -1659,8 +1699,10 @@ xshm_fade (XtAppContext app, Display *dpy,
 	{
           XClearWindow (dpy, saver_windows[screen]);
 	  XMapRaised (dpy, saver_windows[screen]);
-          if (info[screen].window)
-            XUnmapWindow (dpy, info[screen].window);
+          /* Doing this here triggers the same KDE 5 compositor bug that
+             defer_XDestroyWindow is to work around. */
+          /* if (info[screen].window)
+            XUnmapWindow (dpy, info[screen].window); */
 	}
     }
 
@@ -1688,7 +1730,7 @@ xshm_fade (XtAppContext app, Display *dpy,
           if (info[screen].intermediate)
             destroy_xshm_image (dpy, info[screen].intermediate, &shm_info);
           if (info[screen].window)
-            XDestroyWindow (dpy, info[screen].window);
+            defer_XDestroyWindow (app, dpy, info[screen].window);
           if (info[screen].gc)
             XFreeGC (dpy, info[screen].gc);
         }

@@ -20,17 +20,59 @@
 
 #include "xscreensaver.h"
 
+/* Disable the X11 built-in screen saver. This is not directly related
+   to DPMS, but it does need to be prevented from fighting with us.
+  */
+static void
+disable_builtin_saver (Display *dpy)
+{
+  int otimeout   = -1;
+  int ointerval  = -1;
+  int oblanking  = -1;
+  int oexposures = -1;
+  XGetScreenSaver (dpy, &otimeout, &ointerval, &oblanking, &oexposures);
+  if (otimeout == 0 && ointerval == 0 && oblanking == 0 && oexposures == 0)
+    {
+      if (verbose_p > 1)
+        fprintf (stderr, "%s: builtin saver already disabled\n", blurb());
+    }
+  else
+    {
+      if (verbose_p)
+        fprintf (stderr, "%s: disabling server's builtin saver\n", blurb());
+      XSetScreenSaver (dpy, 0, 0, 0, 0);
+      XForceScreenSaver (dpy, ScreenSaverReset);
+    }
+}
+
+
 #ifndef HAVE_DPMS_EXTENSION   /* almost the whole file */
 
 void
 sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
 {
+  disable_builtin_saver (dpy);
   if (p->verbose_p)
     fprintf (stderr, "%s: DPMS not supported at compile time\n", blurb());
 }
 
-Bool monitor_powered_on_p (Display *dpy) { return True; }
-void monitor_power_on (saver_info *si, Bool on_p) { return; }
+Bool monitor_powered_on_p (Display *dpy)
+{
+  if (verbose_p > 1)
+    fprintf (stderr,
+             "%s: DPMS disabled at compile time, assuming monitor on\n",
+             blurb());
+  return True;
+}
+
+void monitor_power_on (saver_info *si, Bool on_p)
+{
+  if (verbose_p > 1)
+    fprintf (stderr,
+             "%s: DPMS disabled at compile time, not turning monitor %s\n",
+             blurb(), (on ? "on" : "off"));
+  return;
+}
 
 #else /* HAVE_DPMS_EXTENSION -- whole file */
 
@@ -68,12 +110,13 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
   /* If the monitor is currently powered off, defer any changes until
      we are next called while it is powered on. */
   if (! monitor_powered_on_p (dpy))
-    return;
+    {
+      if (verbose_p > 1)
+        fprintf (stderr, "%s: DPMS: monitor off, skipping sync\n", blurb());
+      return;
+    }
 
-  /* Why did I do this?  It makes DPMS never happen.
-     XSetScreenSaver (dpy, 0, 0, 0, 0);
-     XForceScreenSaver (dpy, ScreenSaverReset);
-   */
+  disable_builtin_saver (dpy);
 
   if (dpms_quickoff_p && !off_secs)
     {
@@ -102,7 +145,7 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
 
   if (! DPMSQueryExtension (dpy, &event, &error))
     {
-      if (verbose_p && !warned_p)
+      if (verbose_p > 1 || (verbose_p && !warned_p))
         fprintf (stderr, "%s: XDPMS extension not supported\n", blurb());
       warned_p = True;
       return;
@@ -110,7 +153,7 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
 
   if (! DPMSCapable (dpy))
     {
-      if (verbose_p && !warned_p)
+      if (verbose_p > 1 || (verbose_p && !warned_p))
         fprintf (stderr, "%s: DPMS not supported\n", blurb());
       warned_p = True;
       return;
@@ -118,7 +161,7 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
 
   if (! DPMSInfo (dpy, &o_power, &o_enabled))
     {
-      if (verbose_p && !warned_p)
+      if (verbose_p > 1 || (verbose_p && !warned_p))
         fprintf (stderr, "%s: unable to get DPMS state\n", blurb());
       warned_p = True;
       return;
@@ -167,6 +210,9 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
         fprintf (stderr, "%s: set DPMS timeouts: %d %d %d\n", blurb(),
                  standby_secs, suspend_secs, off_secs);
     }
+  else if (verbose_p > 1)
+    fprintf (stderr, "%s: DPMS timeouts already %d %d %d\n", blurb(),
+             o_standby, o_suspend, o_off);
 }
 
 Bool
@@ -178,19 +224,34 @@ monitor_powered_on_p (Display *dpy)
   CARD16 state;
 
   if (!DPMSQueryExtension(dpy, &event_number, &error_number))
-    /* Server doesn't know -- assume the monitor is on. */
-    result = True;
+    {
+      /* Server doesn't know -- assume the monitor is on. */
+      if (verbose_p > 1)
+        fprintf (stderr, "%s: DPMSQueryExtension failed, assuming monitor on\n",
+                 blurb());
+      result = True;
+    }
 
   else if (!DPMSCapable(dpy))
-    /* Server says the monitor doesn't do power management -- so it's on. */
-    result = True;
+    {
+      /* Server says the monitor doesn't do power management -- so it's on. */
+      if (verbose_p > 1)
+        fprintf (stderr, "%s: DPMSCapable false; assuming monitor on\n",
+                 blurb());
+      result = True;
+    }
 
   else
     {
       DPMSInfo(dpy, &state, &onoff);
       if (!onoff)
-	/* Server says DPMS is disabled -- so the monitor is on. */
-	result = True;
+        {
+          /* Server says DPMS is disabled -- so the monitor is on. */
+          if (verbose_p > 1)
+            fprintf (stderr, "%s: DPMSInfo disabled; assuming monitor on\n",
+                     blurb());
+          result = True;
+        }
       else
 	switch (state) {
 	case DPMSModeOn:      result = True;  break;  /* really on */
@@ -199,6 +260,13 @@ monitor_powered_on_p (Display *dpy)
 	case DPMSModeOff:     result = False; break;  /* really off */
 	default:	      result = True;  break;  /* protocol error? */
 	}
+      if (verbose_p > 1)
+        fprintf (stderr, "%s: DPMSInfo = %s %s\n", blurb(),
+                 (state == DPMSModeOn      ? "DPMSModeOn" :
+                  state == DPMSModeStandby ? "DPMSModeStandby" :
+                  state == DPMSModeSuspend ? "DPMSModeSuspend" :
+                  state == DPMSModeOff     ? "DPMSModeOff" : "???"),
+                 (result ? "True" : "False"));
     }
 
   return result;
@@ -207,6 +275,7 @@ monitor_powered_on_p (Display *dpy)
 void
 monitor_power_on (saver_info *si, Bool on_p)
 {
+  Bool verbose_p = si->prefs.verbose_p;
   if ((!!on_p) != monitor_powered_on_p (si->dpy))
     {
       XErrorHandler old_handler;
@@ -215,7 +284,7 @@ monitor_power_on (saver_info *si, Bool on_p)
       if (!DPMSQueryExtension(si->dpy, &event_number, &error_number) ||
           !DPMSCapable(si->dpy))
         {
-          if (si->prefs.verbose_p && !warned_p)
+          if (verbose_p > 1 || (verbose_p && !warned_p))
             fprintf (stderr,
                      "%s: unable to power %s monitor: no DPMS extension\n",
                      blurb(), (on_p ? "on" : "off"));
@@ -243,12 +312,18 @@ monitor_power_on (saver_info *si, Bool on_p)
       XSetErrorHandler (old_handler);
       /* Ignore error_handler_hit_p, just probe monitor instead */
 
+      if (verbose_p > 1 && error_handler_hit_p)
+        fprintf (stderr, "%s: DPMSForceLevel got an X11 error\n", blurb());
+
       if ((!!on_p) != monitor_powered_on_p (si->dpy))  /* double-check */
 	fprintf (stderr,
        "%s: DPMSForceLevel(dpy, %s) did not change monitor power state\n",
 		 blurb(),
                  (on_p ? "DPMSModeOn" : "DPMSModeOff"));
     }
+  else if (verbose_p > 1)
+    fprintf (stderr, "%s: monitor is already %s\n", blurb(),
+             on_p ? "on" : "off");
 }
 
 #endif /* HAVE_DPMS_EXTENSION -- whole file */

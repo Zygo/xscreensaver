@@ -27,7 +27,7 @@
  *      another.  The mouse can be moved from one screen to another, though.
  *      Screens may be different depths (e.g., one can be TrueColor and one
  *      can be PseudoColor.)  Screens cannot be resized or moved without
- *      restarting X.
+ *      restarting X.  Sometimes this mode is referred to as "ZaphodHeads".
  *
  *      Everyone hates this way of doing things because of the inability to
  *      move a window from one screen to another without restarting the
@@ -43,7 +43,7 @@
  *      middle of the screen actually spanning the gap between two
  *      monitors.)
  *
- *      Xinerama didn't? work with DRI, which means that Xinerama precluded
+ *      Xinerama didn't work with DRI, which means that Xinerama precluded
  *      hardware acceleration in OpenGL programs.  Also, screens couldn't
  *      be resized or moved without restarting X.
  *
@@ -51,14 +51,14 @@
  *
  *      No longer supported as of XScreenSaver 6.
  *
- *      With this extension, the root window can be bigger than the
- *      monitor.  Moving the mouse near the edges of the screen scrolls
- *      around, like a pan-and-scan movie.  There was also a hot-key for
- *      changing the monitor's resolution (zooming in/out).
+ *      With this extension, the root window could be bigger than the
+ *      monitor.  Moving the mouse near the edges of the screen would
+ *      scroll around, like a pan-and-scan movie.  There was also a
+ *      hot-key for changing the monitor's resolution (zooming in/out).
  *
- *      Trying to combine this with Xinerama crashes the server, so you
- *      could only use this if you had only a single screen, or were in old
- *      multi-screen mode.
+ *      Trying to combine this with Xinerama crashed the server, so you
+ *      could ONLY use this if you had only a single screen, or were in
+ *      old multi-screen mode.
  *
  *      Also, half the time it didn't work at all: it tended to lie about
  *      the size of the rectangle in use.

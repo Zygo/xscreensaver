@@ -190,8 +190,13 @@ print_available_extensions (saver_info *si)
 
 # ifdef HAVE_LIBSYSTEMD
   fprintf (stderr, "%s:   libsystemd\n", blurb());
-# else
-  fprintf (stderr, "%s:   libsystemd (disabled at compile time)\n", blurb());
+# endif
+# ifdef HAVE_LIBELOGIND
+  fprintf (stderr, "%s:   libelogind\n", blurb());
+# endif
+# if !defined(HAVE_LIBSYSTEMD) && !defined(HAVE_LIBELOGIND)
+  fprintf (stderr, "%s:   libsystemd/libelogind (disabled at compile time)\n",
+           blurb());
 # endif
 
   for (i = 0; i < si->nscreens; i++)

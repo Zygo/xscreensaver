@@ -180,6 +180,7 @@ struct window_state {
   int i_beam;
 
   double start_time, end_time;
+  int passwd_timeout;
 
   Bool show_stars_p; /* "I regret that I have but one asterisk for my country."
                         -- Nathan Hale, 1776. */
@@ -733,43 +734,44 @@ splash_pick_window_position (Display *dpy, Position *xP, Position *yP)
 static void unlock_cb (window_state *ws);
 
 
-/* This program only needs one option from the init file, so it
-   just reads the .ad file and the .xscreensaver file directly rather
-   than going through Xt and Xrm.
+/* This program only needs a few options from .xscreensaver.
+   Read that file directly and store those into the Xrm database.
  */
-static void init_line_handler (int lineno, 
+static void init_line_handler (int lineno,
                                const char *key, const char *val,
                                void *closure)
 {
   window_state *ws = (window_state *) closure;
-  if (val && *val && !strcmp (key, "dialogTheme"))
+  if (!val || !*val)
+    ;
+  else if (!strcmp (key, "dialogTheme") ||
+           !strcmp (key, "passwdTimeout"))
     {
-      if (ws->dialog_theme) free (ws->dialog_theme);
-      ws->dialog_theme = strdup (val);
+      XrmDatabase db = XtDatabase (ws->dpy);
+      char *key2 = (char *) malloc (strlen (progname) + strlen (val) + 10);
+      sprintf (key2, "%s.%s", progname, key);
+      XrmPutStringResource (&db, key2, val);
+      free (key2);
     }
+  /* We read additional resources, such as "PROGCLASS.THEME.Dialog.foreground",
+     but those are from the .ad file only, not from .xscreensaver, so they
+     don't need a clause here in the file parser.  They have already been
+     read into the DB by Xt's Xrm initialization. */
 }
+
 
 static void
 read_init_file_simple (window_state *ws)
 {
   const char *home = getenv("HOME");
-  const char *fn1 = AD_DIR "/XScreenSaver";
-  char *fn2;
+  char *fn;
   if (!home || !*home) return;
-  fn2 = (char *) malloc (strlen(home) + 40);
-  sprintf (fn2, "%s/.xscreensaver", home);
-
+  fn = (char *) malloc (strlen(home) + 40);
+  sprintf (fn, "%s/.xscreensaver", home);
   if (debug_p)
-    fprintf (stderr, "%s: reading %s\n", blurb(), fn1);
-  parse_init_file (fn1, init_line_handler, ws);
-
-  if (debug_p)
-    fprintf (stderr, "%s: reading %s\n", blurb(), fn2);
-  parse_init_file (fn2, init_line_handler, ws);
-
-  if (verbose_p)
-    fprintf (stderr, "%s: theme: %s\n", blurb(),
-             (ws->dialog_theme ? ws->dialog_theme : "none"));
+    fprintf (stderr, "%s: reading %s\n", blurb(), fn);
+  parse_init_file (fn, init_line_handler, ws);
+  free (fn);
 }
 
 
@@ -921,15 +923,9 @@ window_init (Widget root_widget, Bool splash_p)
   ws->dpy = dpy;
   ws->screen = screen;
   ws->app = XtWidgetToApplicationContext (root_widget);
-
-  /* Read default theme from resources before the init file. */
-  ws->dialog_theme =
-    get_string_resource (ws->dpy, "dialogTheme", "DialogTheme");
-  if (!ws->dialog_theme || !*ws->dialog_theme)
-    ws->dialog_theme = strdup ("default");
-
-  /* Read theme from init file before any other resources. */
-  read_init_file_simple (ws);
+  ws->cmap = XCreateColormap (dpy, RootWindowOfScreen (screen), /* Old skool */
+                              DefaultVisualOfScreen (screen),
+                              AllocNone);
 
   {
     struct passwd *p = getpwuid (getuid());
@@ -937,14 +933,24 @@ window_init (Widget root_widget, Bool splash_p)
     ws->user = p->pw_name;
   }
 
-  ws->cmap = XCreateColormap (dpy, RootWindowOfScreen (screen), /* Old skool */
-                              DefaultVisualOfScreen (screen),
-                              AllocNone);
+  /* Read resources and .xscreensaver file settings.
+   */
+  read_init_file_simple (ws);
+
+  ws->dialog_theme =  /* must be first */
+    get_string_resource (ws->dpy, "dialogTheme", "DialogTheme");
+  if (!ws->dialog_theme || !*ws->dialog_theme)
+    ws->dialog_theme = strdup ("default");
+  if (verbose_p)
+    fprintf (stderr, "%s: theme: %s\n", blurb(), ws->dialog_theme);
 
   ws->newlogin_cmd = get_str (ws, "newLoginCommand", "NewLoginCommand");
   ws->date_format = get_str (ws, "dateFormat", "DateFormat"); 
   ws->show_stars_p =
     get_boolean_resource (ws->dpy, "passwd.asterisks", "Passwd.Boolean");
+
+  ws->passwd_timeout = get_seconds_resource (ws->dpy, "passwdTimeout", "Time");
+  if (ws->passwd_timeout <= 5) ws->passwd_timeout = 5;
 
   /* Put the version number in the label. */
   {
@@ -1234,8 +1240,6 @@ window_draw (window_state *ws)
   char date_text[100];
   time_t now = time ((time_t *) 0);
   struct tm *tm = localtime (&now);
-  double ratio = 1 - ((double_time() - ws->start_time) /
-                      (ws->end_time - ws->start_time));
   dialog_line *lines =
     (dialog_line *) calloc (ws->nmsgs + 40, sizeof(*lines));
   Bool emitted_user_p = False;
@@ -1536,10 +1540,12 @@ window_draw (window_state *ws)
     {
       if (ws->auth_state != AUTH_NOTIFY)
         {
+          double remain = ws->end_time - double_time();
+          double ratio = remain / ws->passwd_timeout;
           int thermo_w = ws->thermo_width;
           int thermo_h = window_height - ext_border * 2;
           int thermo_h2 = thermo_h - ws->shadow_width * 2;
-          int thermo_h3 = thermo_h2 * (1.0 - ratio);
+          int thermo_h3 = thermo_h2 * (1.0 - (ratio > 1 ? 1 : ratio));
 
           XSetForeground (dpy, gc, ws->thermo_foreground);
           XFillRectangle (dpy, dbuf, gc,
@@ -1914,15 +1920,13 @@ handle_keypress (window_state *ws, XKeyEvent *event)
   /* Add 10% to the time remaining every time a key is pressed, but don't
      go past the max duration. */
   {
-    time_t now = time ((time_t *) 0);
-    int max = get_seconds_resource (ws->dpy, "passwdTimeout", "Time");
-    int remain = ws->end_time - now;
+    double now = double_time();
+    double remain = ws->end_time - now;
     remain *= 1.1;
-    if (remain > max) remain = max;
+    if (remain > ws->passwd_timeout) remain = ws->passwd_timeout;
     if (remain < 3) remain = 3;
     ws->end_time = now + remain;
   }
-    
 
   if (decoded_size == 1)		/* Handle single-char commands */
     {
@@ -2121,8 +2125,7 @@ gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
     timeout = 5;
   else
     {
-      timeout = get_seconds_resource (ws->dpy, "passwdTimeout", "Time");
-      if (timeout <= 5) timeout = 5;
+      timeout = ws->passwd_timeout;
       cursor_timer (ws, 0);
     }
 

@@ -17,4 +17,12 @@ extern Bool fade_screens (XtAppContext app, Display *dpy,
                           Window *black_windows, int nwindows,
 			  double seconds, Bool out_p, Bool from_desktop_p,
                           void **closureP);
+
+/* Like XDestroyWindow, but destroys the window later, on a timer.  This is
+   necessary to work around a KDE 5 compositor bug.  Without this, destroying
+   an old window causes the desktop to briefly become visible, even though a
+   new window has already been mapped that is obscuring both of them!
+ */
+extern void defer_XDestroyWindow (XtAppContext, Display *, Window);
+
 #endif /* __FADE_H__ */

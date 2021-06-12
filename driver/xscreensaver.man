@@ -86,7 +86,7 @@ then closing the lid of your laptop will cause the screen to lock immediately.
 If not, then the screen might not lock until a few seconds \fIafter\fP you
 re-open the lid.  Which is less than ideal.  So if you don't 
 use \fIsystemd\fP, you might want to get in the habit of
-doing \fIxscreensaver-command --lock\fP before closing the lid.
+doing \fIxscreensaver-command \-\-lock\fP before closing the lid.
 
 .SH PLAYING VIDEOS
 Likewise, if you have
@@ -146,10 +146,7 @@ Be careful that it doesn't try to uninstall all of GNOME.
 
 Select "\fIStartup Applications\fP" from the menu (or manually
 launch "\fIgnome-session-properties\fP") and add "\fIxscreensaver\fP".
-
 Do this as your normal user account, not as root.
-(This should go without saying, because you should never, ever, ever
-be logged in to the graphical desktop as user "root".)
 .TP 3
 \fB3: Make GNOME's "Lock Screen" use XScreenSaver.\fP
 .nf
@@ -158,12 +155,6 @@ be logged in to the graphical desktop as user "root".)
             /usr/bin/gnome-screensaver-command
 .sp
 .fi
-That doesn't work under Unity, though.  Apparently it has its own
-built-in screen locker which is not gnome-screensaver, and cannot be
-removed, and yet still manages to be bug-addled and insecure. 
-Keep reinventing that wheel, guys!  (If you have figured out how to
-replace Unity's locking "feature" with XScreenSaver, let me know.)
-
 .TP 3
 \fB4: Turn off Unity's built-in blanking.\fP
 
@@ -173,6 +164,7 @@ Un-check "\fIStart Automatically\fP";
 .br
 Set \fI"Turn screen off when inactive for"\fP to \fI"Never".\fP
 .br
+
 Or possibly that has been randomly renamed again:
 .br
 Set "\fISettings / Power / Power Settings\fP" to \fI"Never".\fP
@@ -181,13 +173,15 @@ Set "\fISettings / Power / Power Settings\fP" to \fI"Never".\fP
 .nf
 .sp
 	sudo systemctl \-\-user mask gsd\-screensaver\-proxy.service
+	sudo systemctl \-\-user mask \\
+	  org.gnome.SettingsDaemon.ScreensaverProxy.service
 .sp
 .fi
 Without the above, video players will not be able to tell XScreenSaver
 not to blank the screen while videos are playing, and the screen will not
 auto-lock when you close your laptop's lid.
 
-After running that command, reboot.  Yes, you have to reboot; it won't let
+After running those commands, reboot.  Yes, you have to reboot; it won't let
 you simply stop the service.  Logging out won't do it either.
 
 .SS INSTALLING XSCREENSAVER ON KDE
@@ -217,7 +211,7 @@ If that doesn't work, then try this:
 Open "\fISystem Settings / Startup/Shutdown / Autostart\fP", and then
 add "\fI/usr/bin/xscreensaver\fP".
 
-If you are lucky, that will create a \fI"xscreensaver.desktop"\fP file 
+If you are lucky, that will create an \fI"xscreensaver.desktop"\fP file 
 for you in \fI~/.config/autostart/\fP or \fI~/.kde/Autostart/\fP.
 .TP 3
 \fB3: Make XScreenSaver be an Autostart program.\fP
@@ -250,16 +244,22 @@ of that file with these two lines:
 .sp
 .fi
 Make sure the file is executable (chmod a+x).
+
+This change will probably get blown away the next time your system
+upgrades KDE.
 .TP 3
 \fB5: Stop KDE from blocking XScreenSaver's "systemd" integration:\fP
 You must arrange for KDE's
 .BR ksmserver (1)
-daemon to be launched with the command line switch \fI\-\-no\-lockscreen\fP.
+daemon to be launched with the command line option \fI\-\-no\-lockscreen\fP.
 
-One way to accomplish that is to edit the
+Under KDE 5.00 through 5.16, you can accomplish that by editing the
 .BR startkde (1)
-script in \fI/usr/bin/\fP by hand, then log out and log back in.  Another
-way would be to wrap the \fIksmserver\fP program:
+script in \fI/usr/bin/\fP by hand, then logging out and back in again.
+
+Under KDE 5.17 through 5.20, you must wrap
+.BR ksmserver (1)
+instead:
 .nf
 .sp
 	mv /usr/bin/ksmserver /usr/bin/ksmserver-orig
@@ -276,17 +276,27 @@ Either change will, of course, get blown away the next time your system
 upgrades KDE.
 
 Instead of being in \fI/usr/bin/\fP, the \fIksmserver\fP program might be
-in \fI/usr/lib/\fP or \fIusr/lib*/libexec/\fP or \fIusr/lib/*/libexec/\fP
+in \fI/usr/lib/\fP or \fI/usr/lib*/libexec/\fP or \fIusr/lib/*/libexec/\fP
 or somewhere else, depending on your distro.
 
-But without this, video players will not be able to tell XScreenSaver not to
-blank the screen while videos are playing, and the screen will not auto-lock
-when you close your laptop's lid.
-
-It seems that KDE 5.17 replaced \fIstartkde\fP with \fIstartplasma-x11\fP,
-and I don't know how to change how \fIthat\fP launches \fIksmserver\fP.
-Let me know if you figure it out.
-
+Under KDE 5.21+ this might work instead, and might persist through upgrades:
+.nf
+.sp
+	systemctl edit plasma-ksmserver.service
+.sp
+.fi
+and then put this in the file you get to edit:
+.nf
+.sp
+	[Service]
+	ExecStart=/usr/bin/ksmserver \-\-no\-lockscreen
+.sp
+.fi
+Regardless of which approach you need to use, if you do not force
+.BR ksmserver (1)
+to stop squatting on the DBus endpoint, video players will not be able to tell
+XScreenSaver not to blank the screen while videos are playing, and the screen
+will not auto-lock when you close your laptop's lid.
 .SS LAUNCHING XSCREENSAVER FROM SYSTEMD
 If the above didn't do it, and your system has
 .BR systemd (1),
@@ -343,7 +353,7 @@ On the \fIGeneral\fP page set the \fILocal Greeter\fP to
 \fIStandard Greeter\fP.
 
 On the \fIBackground\fP page, type the
-command \fB"xscreensaver \-\-nosplash"\fP into the \fIBackground Program\fP
+command \fI"xscreensaver \-\-nosplash"\fP into the \fIBackground Program\fP
 field.  That will cause gdm to run XScreenSaver while nobody is logged
 in, and kill it as soon as someone does log in.  (The user will then
 be responsible for starting XScreenSaver on their own, if they want.)
@@ -390,11 +400,58 @@ might have luck by adding \fIxscreensaver\-command \-\-suspend\fP to
 some appropriate spot in \fI/etc/acpi/events/anything\fP or in
 \fI/etc/acpi/handler.sh\fP, if those files exist.
 
+.SH THE WAYLAND PROBLEM
+Wayland is a completely different window system that is intended to replace
+X11.  After 13+ years of trying, some Linux distros have finally begun
+enabling it by default.  Most deployments of it also include XWayland, which
+is a compatibility layer that allows \fIsome\fP X11 programs to continue to
+work within a Wayland environment.
+
+Unfortunately, XScreenSaver is not one of those programs.
+
+If your system is running XWayland, XScreenSaver will malfunction in two
+ways:
+.RS 0
+.TP 3
+\fB1:\fP It will be unable to detect user activity in non-X11 programs.
+
+This means that while a native Wayland program is selected, XScreenSaver will
+think that you are idle, and may blank the screen prematurely.
+.TP 3
+\fB2:\fP It will be unable to lock the screen.
+
+This is because X11 grabs don't work properly under XWayland, so there is no
+way for XScreenSaver to prevent the user from switching away from the screen
+locker to another application.
+.RE
+
+In short, for XScreenSaver to work properly, you will need to switch off
+Wayland and use the X Window System like in the "good old days".
+.SS TO DISABLE WAYLAND UNDER GNOME
+The login screen should have a gear-icon menu that lets you change the session
+type from "GNOME" (the Wayland session) to "GNOME on Xorg" (the X11 session).
+
+Alternately, edit \fI/etc/gdm/custom.conf\fP and make sure it includes this
+line:
+.nf
+.sp
+	WaylandEnable=false
+.fi
+.SS TO DISABLE WAYLAND UNDER KDE
+The login screen should have a menu that lets you change the session type to
+"Plasma (X11)".
+
+Alternately, edit \fI/etc/sddm.conf\fP and change the \fISessionDir\fP line
+under the \fI[Wayland]\fP section to say:
+.nf
+.sp
+	 SessionDir=/dev/null
+.fi
+
 .SH SECURITY CONCERNS
 XScreenSaver has a decades-long track record of securely locking your screen.
 However, there are many things that can go wrong.  X11 is a very old system,
 and has a number of design flaws that make it susceptible to foot-shooting.
-
 .SS MAGIC BACKDOOR KEYSTROKES
 The XFree86 and Xorg X servers, as well as the Linux kernel, both trap
 certain magic keystrokes before X11 client programs ever see them.
@@ -791,9 +848,9 @@ might set this in your \fI~/.xscreensaver\fP file:
 .sp
 .fi
 .RS 8
-Make sure your \fB$PATH\fP environment variable is set up correctly
-\fIbefore\fP XScreenSaver is launched, or it won't be able to find the
-programs listed in the \fIprograms\fP resource.
+The default XScreenSaver hacks directory (typically
+\fI/usr/libexec/xscreensaver/\fP) is prepended to \fB$PATH\fP
+before searching for these programs.
 
 To use a program as a screensaver, it must be able to render onto
 the window provided to it in the \fB$XSCREENSAVER_WINDOW\fP environment
@@ -921,6 +978,9 @@ If the mouse moves less than this-many pixels in a second, ignore it
 doesn't un-blank (or fail to blank) just because you bumped the desk.
 Default: 10 pixels.
 
+A single pixel of motion will still cause the monitor to power back on,
+but not un-blank. This is because the X11 server itself unfortunately handles
+power-management-related activity detection rather than XScreenSaver.
 .SH BUGS
 https://www.jwz.org/xscreensaver/bugs.html explains how to write the most
 useful bug reports.  If you find a bug, please let me know!
