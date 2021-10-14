@@ -85,12 +85,28 @@
 #define SHARKSIZE 6000
 
 typedef struct _fishRec {
-	float       x, y, z, phi, theta, psi, v;
+	/* Position in global coordinate system */
+	float       x, y, z;
+	/* Three rotation angles to determine heading; phi=roll, psi=bearing/yaw, theta=elevation/pitch */
+	float phi, theta, psi;
+	/* Speed along forward direction vector. */
+	float v;
 	float       xt, yt, zt;
+	/* Tail position adjustments; htail controls the phase of the
+	   thrash animation for the whales and dolphin. */
 	float       htail, vtail;
+	/* Scale factor for the whale/dolphin tail thrash
+	   speed. Normally bigger creatures move more slowly; since
+	   the fish size isn’t stored anywhere adjust this speed
+	   instead. */
+	float       tail_speed_scale;
+	/* Scale factor for the size of the loop the whale/dolphin is
+	   swimming around in. */
+	float       loop_scale;
+	/* Parameters used for shark swimming */
 	float       dtheta;
 	int         spurt, attack;
-        int         sign;
+	int         sign;
 } fishRec;
 
 typedef struct {

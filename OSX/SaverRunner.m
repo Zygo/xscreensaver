@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -75,6 +75,7 @@
 }
 #pragma clang diagnostic pop
 
+# ifndef HAVE_TVOS
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
 {
   return allowRotation;
@@ -84,6 +85,7 @@
 {
   return UIInterfaceOrientationMaskAll;
 }
+# endif // !HAVE_TVOS
 
 @end
 
@@ -107,11 +109,14 @@
   return self;
 }
 
+# ifndef HAVE_TVOS
 - (BOOL) prefersStatusBarHidden
 {
   // Requires UIViewControllerBasedStatusBarAppearance = true in plist
   return YES;
 }
+# endif // !HAVE_TVOS
+
 
 - (void)dealloc
 {
@@ -141,6 +146,7 @@
 }
 
 
+# ifndef HAVE_TVOS
 - (void)aboutPanel:(UIView *)saverView
        orientation:(UIInterfaceOrientation)orient
 {
@@ -299,6 +305,7 @@
              userInfo:nil
              repeats:NO];
 }
+# endif // !HAVE_TVOS
 
 
 - (void)aboutOff
@@ -371,8 +378,10 @@
   // heirarchy.
   [_saverView becomeFirstResponder]; // For shakes on iOS 6.
   [_saverView startAnimation];
+# ifndef HAVE_TVOS
   [self aboutPanel:_saverView
        orientation: UIInterfaceOrientationPortrait];
+# endif // !HAVE_TVOS
 }
 
 
@@ -382,6 +391,8 @@
   [self createSaverView];
 }
 
+
+# ifndef HAVE_TVOS
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-implementations"
@@ -416,6 +427,8 @@
   return UIInterfaceOrientationPortrait;
 }
 */
+
+# endif // !HAVE_TVOS
 
 
 - (void)setSaverTitle:(NSString *)title
@@ -715,6 +728,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   // iOS 8: Needs to be UIInterfaceOrientationPortrait.
   // (interfaceOrientation deprecated in iOS 8)
 
+# ifndef HAVE_TVOS
   UIInterfaceOrientation orient = UIInterfaceOrientationPortrait;
   /* iOS 8 broke -[UIScreen bounds]. */
 
@@ -725,6 +739,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     size.width = size.height;
     size.height = s;
   }
+# endif // !HAVE_TVOS
 
 
   // Create a graphics context with the target size
@@ -737,6 +752,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   CGContextRef ctx = UIGraphicsGetCurrentContext();
 
 
+# ifndef HAVE_TVOS
   // Rotate the graphics context to match current hardware rotation.
   //
   switch (orient) {
@@ -762,6 +778,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   default:
     break;
   }
+# endif // !HAVE_TVOS
+
 
   // Iterate over every window from back to front
   //
@@ -1535,6 +1553,7 @@ FAIL:
   ya_rand_init (0);	// Now's a good time.
 
 
+# ifndef HAVE_TVOS
   /* iOS docs say:
      "You must call this method before attempting to get orientation data from
       the receiver. This method enables the device's accelerometer hardware
@@ -1543,6 +1562,7 @@ FAIL:
      Adding or removing this doesn't seem to make any difference. It's
      probably getting called by the UINavigationController. Still... */
   [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+# endif // !HAVE_TVOS
 
   rotating_nav = [[[RotateyViewController alloc] initWithRotation:YES]
                          retain];
@@ -1563,7 +1583,9 @@ FAIL:
   [menu becomeFirstResponder];
   [menu autorelease];
 
+# ifndef HAVE_TVOS
   application.applicationSupportsShakeToEdit = YES;
+# endif // !HAVE_TVOS
 
 
 # endif // HAVE_IPHONE

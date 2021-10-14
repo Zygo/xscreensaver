@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2013-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2013-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,6 +18,9 @@
  */
 
 #define IN_UPDATER
+
+#pragma clang diagnostic ignored "-Wquoted-include-in-framework-header"
+
 #import "Updater.h"
 #import "Sparkle/SUUpdater.h"
 
@@ -82,6 +85,10 @@
   BOOL found = NO;
   NSString *target = @"/ScreenSaverEngine.app";
   ProcessSerialNumber psn = { kNoProcess, kNoProcess };
+
+# pragma clang diagnostic push   // "GetNextProcess deprecated in 10.9"
+# pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
   while (GetNextProcess(&psn) == noErr) {
     CFDictionaryRef cfdict =
       ProcessInformationCopyDictionary (&psn,
@@ -96,6 +103,8 @@
     if (found)
       break;
   }
+# pragma clang diagnostic pop
+
   return found;
 }
 

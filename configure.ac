@@ -2120,7 +2120,8 @@ if test "$with_systemd" = yes; then
     have_systemd=no
     systemd_halfassed=yes
     AC_MSG_RESULT(checking for libsystemd usability...)
-    AC_CHECK_X_LIB(c, sd_bus_open_system,
+    # sd_bus_track_count_name was added in some later version of systemd.
+    AC_CHECK_X_LIB(c, sd_bus_track_count_name,
                    [have_systemd=yes; systemd_halfassed=no],,
                    $ac_systemd_config_libs -lX11 -lXext -lm)
   fi
@@ -2204,7 +2205,7 @@ if test "$with_elogind" = yes; then
     have_elogind=no
     elogind_halfassed=yes
     AC_MSG_RESULT(checking for libelogind usability...)
-    AC_CHECK_X_LIB(c, sd_bus_open_system,
+    AC_CHECK_X_LIB(c, sd_bus_track_count_name,
                    [have_elogind=yes; elogind_halfassed=no],,
                    $ac_elogind_config_libs -lX11 -lXext -lm)
   fi

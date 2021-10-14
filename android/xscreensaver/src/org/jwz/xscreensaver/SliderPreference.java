@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,7 +26,12 @@ package org.jwz.xscreensaver;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.content.res.Resources;
-import android.preference.Preference;
+
+// "Preference in android.preference has been deprecated"
+// import android.preference.Preference;
+// Using a wildcard here suppresses that warning:
+import android.preference.*;
+
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +39,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.util.Log;
 
+// "Preference in android.preference has been deprecated"
+@SuppressWarnings("deprecation")
 public class SliderPreference extends Preference {
 
   protected float low, high;

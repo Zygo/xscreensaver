@@ -740,13 +740,13 @@ update_screen_layout (saver_info *si)
         calloc (sizeof(*si->screens), si->ssi_count);
     }
 
-  if (si->ssi_count <= good_count)
+  if (si->ssi_count < count)
     {
-      si->ssi_count = good_count + 10;
       si->screens = (saver_screen_info *)
-        realloc (si->screens, sizeof(*si->screens) * si->ssi_count);
-      memset (si->screens + si->nscreens, 0, 
-              sizeof(*si->screens) * (si->ssi_count - si->nscreens));
+        realloc (si->screens, sizeof(*si->screens) * count);
+      memset (si->screens + si->ssi_count, 0,
+              sizeof(*si->screens) * (count - si->ssi_count));
+      si->ssi_count = count;
     }
 
   if (! si->screens) abort();
@@ -912,7 +912,10 @@ screenhack_obituary (saver_screen_info *ssi,
   gcv.line_width = bw;
   gc = XCreateGC (si->dpy, window, GCForeground | GCLineWidth, &gcv);
 
-  sprintf (buf, "\"%.100s\" %.100s", name, error);
+  if (name && *name)
+    sprintf (buf, "\"%.100s\" %.100s", name, error);
+  else
+    sprintf (buf, "%.100s", error);
 
   XftTextExtentsUtf8 (si->dpy, font, (FcChar8 *) buf, strlen(buf), &overall);
   x = (ssi->width - overall.width) / 2;
@@ -961,6 +964,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 {
   saver_info *si = (saver_info *) closure;
   saver_preferences *p = &si->prefs;
+  Bool running_p, on_p;
 
   /* If the DPMS settings on the server have changed, change them back to
      what ~/.xscreensaver says they should be. */
@@ -971,8 +975,9 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 
   raise_windows (si);
 
-  if (any_screenhacks_running_p (si) &&
-      !monitor_powered_on_p (si->dpy))
+  running_p = any_screenhacks_running_p (si);
+  on_p = monitor_powered_on_p (si->dpy);
+  if (running_p && !on_p)
     {
       int i;
       if (si->prefs.verbose_p)
@@ -981,6 +986,26 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
                  blurb());
       for (i = 0; i < si->nscreens; i++)
         kill_screenhack (&si->screens[i]);
+      /* Do not clear current_hack here. */
+    }
+  else if (!running_p && on_p)
+    {
+      /* If the hack number is set but no hack is running, it is because the
+         hack was killed when the monitor powered off, above.  This assumes
+         that kill_screenhack() clears pid but not current_hack.  Start the
+         hack going again.  The cycle_timer will also do this (unless "cycle"
+         is 0) but watchdog_timer runs more frequently.
+       */
+      if (si->screens[0].current_hack >= 0)
+        {
+          int i;
+          if (si->prefs.verbose_p)
+            fprintf (stderr,
+                     "%s: monitor has powered back on; re-launching hacks\n",
+                     blurb());
+          for (i = 0; i < si->nscreens; i++)
+            spawn_screenhack (&si->screens[i]);
+        }
     }
 
   /* Re-schedule this timer.  The watchdog timer defaults to a bit less

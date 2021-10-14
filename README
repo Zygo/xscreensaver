@@ -70,6 +70,17 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.02	* New hacks, `marbling' and `binaryhorizon'.
+	* `atlantis' behaviors are more random and lifelike.
+	* `headroom' is now Mask Headroom.
+	* X11: `fontglide' skips fonts that can't display ASCII.
+	* X11: Use asterisks in the password dialog if the system fonts don't
+          have bullets in them.
+	* X11: "Disable Screen Saver" was behaving like "Blank Screen Only".
+	* Android: These hacks work now: `antinspect', `barcode',
+          `energystream', `fliptext', `fontglide', `glsnake', `raverhoop',
+          `starwars', `unicrud'.
+
 6.01	* X11: Properly disable the server's built-in screen saver.
 	* X11: The passwdTimeout option was being ignored.
 	* X11: The display of the unlock thermometer was weird.

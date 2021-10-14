@@ -8,7 +8,9 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
+ * ==========================================================================
  * XScreenSaver Daemon, version 6.
+ * ==========================================================================
  *
  * Having started its life in 1991, XScreenSaver acquired a lot of optional
  * features to allow it to detect user activity, lock the screen and
@@ -101,6 +103,95 @@
  *      causes the screen to lock, and how video players request that blanking
  *      be inhibited.  This program invokes "xscreensaver-command" as needed
  *      to pass those requests along to "xscreensaver" via ClientMessages.
+ *
+ *
+ * ==========================================================================
+ * Ancient History
+ * ==========================================================================
+ *
+ * As mentioned above, XScreenSaver version 6 (released in 2021) requires
+ * the XInput 2 server extension for idle detection and password input.
+ * In XScreenSaver 5 and earlier (1991 through 2020), idle-detection was
+ * far more convoluted.  Basically, we selected input events on every window,
+ * and noticed when new windows were created so that we could track them too.
+ * Over the decades, there have also been three optional X11 server extensions
+ * that were applicable to screen saving:
+ *
+ *  - XIdle
+ *
+ *    This extension provided a function to poll the user's idle time.
+ *    It was simple and direct and worked great.  Therefore, it was
+ *    removed from the X11 distribution in 1994, with the release of
+ *    X11R6.  https://bugs.freedesktop.org/show_bug.cgi?id=1419
+ *
+ *  - SGI SCREEN_SAVER
+ *
+ *    This extension sent two new events: "user is idle", and "user is no
+ *    longer idle". It was simple and direct and worked great.  But as
+ *    the name implies, it only ever worked on Silicon Graphics machines.
+ *    SGI became irrelevant around 1998 and went out of business in 2009.
+ *
+ *  - MIT-SCREEN-SAVER
+ *
+ *    This extension still exists, but it is useless to us.  Since it still
+ *    exists, people sometimes ask why XScreenSaver no longer makes use of it.
+ *    The MIT-SCREEN-SAVER extension took the following approach:
+ *
+ *      - When the user is idle, immediately map full screen black windows
+ *        on each screen.
+ *
+ *      - Inform the screen saver client that the screen is now black.
+ *
+ *      - When user activity occurs, unmap the windows and then inform the
+ *        screen saver client.
+ *
+ *    The screen saver client was able to specify a few parameters of that
+ *    window, like visual and depth, but that was all.
+ *
+ *    The extension was designed with the assumption that a screen saver would
+ *    render onto the provided window.  However:
+ *
+ *      - OpenGL programs may require different visuals than 2D X11 programs,
+ *        and you can't change the visual of a window after it has been
+ *        created.
+ *
+ *      - The extension mapped one window per X11 "Screen", which, in this
+ *        modern world, tend to span the entire virtual desktop; whereas
+ *        XScreenSaver runs savers full screen on each *monitor* instead.
+ *        In other words, it was incompatible with Xinerama / RANDR.
+ *
+ *      - Since this extension mapped its own full-screen black windows and
+ *        informed us of that after the fact, it precluded "fade" and "unfade"
+ *        animations from being implemented.
+ *
+ *      - Since it only told us when the user was idle or non-idle, it
+ *        precluded the "hysteresis" option from being implemented (ignoring
+ *        tiny mouse motions).
+ *
+ *    In summary, it created its windows too early, removed them too late,
+ *    created windows of the wrong quantity and wrong shape, could not create
+ *    them with the proper visuals, and delivered too little information about
+ *    what caused the user activity.
+ *
+ *    Also, the MIT-SCREEN-SAVER extension was flaky, and using it at all led
+ *    to frequent server crashes.  Worse, those server crashes were highly
+ *    dependent on your particular video driver.
+ *
+ *     So that's why, even if the server supports the MIT-SCREEN-SAVER
+ *     extension, we don't use it.
+ *
+ *     Some video players attempt to inhibit blanking during playback by
+ *     calling XResetScreenSaver and/or XScreenSaverSuspend, which affect
+ *     only the X server's *built-in* screen saver, and the window created
+ *     by the MIT-SCREEN-SAVER extension.  To rely upon those calls alone
+ *     and then call it a day would betray a willful ignorance of why the
+ *     MIT-SCREEN-SAVER extension is a useless foundation upon which to
+ *     build a screen saver or screen locker.
+ *
+ *     Fortunately, every modern video player and web browser also makes
+ *     use of systemd / logind / dbus to request blanking inhibition, and
+ *     we receive those requests via our systemd integration in
+ *     xscreensaver-systemd (which see).
  */
 
 #ifdef HAVE_CONFIG_H
@@ -168,6 +259,7 @@ static const char *version_number = 0;
 /* Preferences. */
 static Bool lock_p = False;
 static Bool locking_disabled_p = False;
+static Bool blanking_disabled_p = False;
 static unsigned int blank_timeout = 0;
 static unsigned int lock_timeout = 0;
 static unsigned int pointer_hysteresis = 0;
@@ -689,17 +781,19 @@ static void init_line_handler (int lineno,
   if      (!strcmp (key, "verbose")) verbose_p = !strcasecmp (val, "true");
   else if (!strcmp (key, "splash"))  splash_p  = !strcasecmp (val, "true");
   else if (!strcmp (key, "lock"))    lock_p    = !strcasecmp (val, "true");
+  else if (!strcmp (key, "mode"))    blanking_disabled_p =
+                                       !strcasecmp (val, "off");
   else if (!strcmp (key, "timeout"))
     {
       int t = parse_time (val);
       if (t > 0) blank_timeout = t;
     }
-  if (!strcmp (key, "lockTimeout"))
+  else if (!strcmp (key, "lockTimeout"))
     {
       int t = parse_time (val);
       if (t >= 0) lock_timeout = t;
     }
-  if (!strcmp (key, "pointerHysteresis"))
+  else if (!strcmp (key, "pointerHysteresis"))
     {
       int i = atoi (val);
       if (i >= 0)
@@ -1923,7 +2017,8 @@ main_loop (Display *dpy)
              (lock_p && 
               now >= active_at + blank_timeout + lock_timeout)))
           {
-            fprintf (stderr, "%s: locking\n", blurb());
+            if (verbose_p)
+              fprintf (stderr, "%s: locking\n", blurb());
             if (grab_keyboard_and_mouse (mouse_screen (dpy)))
               {
                 current_state = LOCKED;
@@ -1940,16 +2035,25 @@ main_loop (Display *dpy)
         else if (force_blank_p ||
                  now >= active_at + blank_timeout)
           {
-            fprintf (stderr, "%s: blanking\n", blurb());
-            if (grab_keyboard_and_mouse (mouse_screen (dpy)))
+            if (blanking_disabled_p && !force_blank_p)
               {
-                current_state = BLANKED;
-                blanked_at = now;
-                store_saver_status (dpy, True, False, now);
+                if (verbose_p)
+                  fprintf (stderr, "%s: not blanking: disabled\n", blurb());
               }
             else
-              fprintf (stderr, "%s: unable to grab -- blanking aborted!\n",
-                       blurb());
+              {
+                if (verbose_p)
+                  fprintf (stderr, "%s: blanking\n", blurb());
+                if (grab_keyboard_and_mouse (mouse_screen (dpy)))
+                  {
+                    current_state = BLANKED;
+                    blanked_at = now;
+                    store_saver_status (dpy, True, False, now);
+                  }
+                else
+                  fprintf (stderr, "%s: unable to grab -- blanking aborted!\n",
+                           blurb());
+              }
           }
 
         if (current_state == BLANKED || current_state == LOCKED)

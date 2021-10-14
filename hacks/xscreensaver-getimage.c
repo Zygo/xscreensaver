@@ -1212,7 +1212,7 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
       {
         const char *tmpdir = getenv("TMPDIR");
         if (!tmpdir) tmpdir = "/tmp";
-        outfile = (char *) malloc (strlen(tmpdir) + 20);
+        outfile = (char *) malloc (strlen(tmpdir) + 100);
         sprintf (outfile, "%s/xscreensaver.%08x.png",
                  tmpdir, random() % 0xFFFFFFFF);
         av[ac++] = outfile;

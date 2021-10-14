@@ -29,6 +29,7 @@
   <hgroup>
    <boolean id="wander" _label="Wander"    arg-set="-wander"/>
    <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+   <boolean id="mask"   _label="Mask Headroom" arg-unset="-no-mask"/>
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 

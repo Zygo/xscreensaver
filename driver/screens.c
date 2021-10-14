@@ -228,6 +228,10 @@ randr_scan_monitors (Display *dpy, char **errP)
   nscreens = 0;
   for (i = 0; i < ScreenCount (dpy); i++)
     {
+      /* This first time around, use XRRGetScreenResources and not
+         XRRGetScreenResourcesCurrent to make sure we are polling the
+         actual hardware and populating the server's cache.
+       */
       XRRScreenResources *res =
         XRRGetScreenResources (dpy, RootWindow (dpy, i));
       nscreens += res->noutput;
@@ -246,10 +250,16 @@ randr_scan_monitors (Display *dpy, char **errP)
 
   for (i = 0, j = 0; i < ScreenCount (dpy); i++)
     {
+      /* This second time around, we can use use XRRGetScreenResourcesCurrent
+         instead of XRRGetScreenResources, since we just polled the hardware
+         and populated the cache, above.  Sometimes XRRGetScreenResources is
+         slow, and can delay the mapping of the unlock dialog by a full second
+         or longer.  Cutting the number of calls to it in half helps.
+      */
       Screen *screen = ScreenOfDisplay (dpy, i);
       int k;
       XRRScreenResources *res = 
-        XRRGetScreenResources (dpy, RootWindowOfScreen (screen));
+        XRRGetScreenResourcesCurrent (dpy, RootWindowOfScreen (screen));
       for (k = 0; k < res->noutput; k++, j++)
         {
           monitor *m = (monitor *) calloc (1, sizeof (monitor));

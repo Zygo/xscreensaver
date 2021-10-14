@@ -1932,7 +1932,8 @@ DrawDolphin(fishRec * fish, int wire)
 	float       pitch, thrash, chomp;
 	GLenum      cap;
 
-	fish->htail = (int) (fish->htail - (int) (10 * fish->v)) % 360;
+	float tail_speed_scale = fish->tail_speed_scale == 0.0 ? 1.0 : fish->tail_speed_scale;
+	fish->htail = (int) (fish->htail - (int) (5 * tail_speed_scale * fish->v)) % 360;
 
 	thrash = 70 * fish->v;
 

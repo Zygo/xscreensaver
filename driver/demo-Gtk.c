@@ -1646,8 +1646,18 @@ flush_dialog_changes_and_save (state *s)
         if (i == menu_index)
           {
             char *name2 = theme_name_strip (name);
-            if (p->dialog_theme) free (p->dialog_theme);
-            p2->dialog_theme = name2;
+            if (p->dialog_theme && !!strcmp (p->dialog_theme, name2))
+              {
+                free (p->dialog_theme);
+                p2->dialog_theme = name2;
+                if (s->debug_p)
+                  fprintf (stderr, "%s: theme => \"%s\"\n", blurb(),
+                           p2->dialog_theme);
+              }
+            else
+              {
+                free (name2);
+              }
           }
         i++;
       }
@@ -1721,7 +1731,12 @@ flush_dialog_changes_and_save (state *s)
   if (changed)
     {
       sync_server_dpms_settings (GDK_DISPLAY(), p);
-      changed = demo_write_init_file (s, p);
+      demo_write_init_file (s, p);
+
+      /* Tell the xscreensaver daemon to wake up and reload the init file,
+         in case the timeout has changed.  Without this, it would wait
+         until the *old* timeout had expired before reloading. */
+        xscreensaver_command (GDK_DISPLAY(), XA_DEACTIVATE, 0, 0, 0);
     }
 
   s->saving_p = False;
@@ -4407,42 +4422,46 @@ mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
 
 
 static Window
-gnome_screensaver_window (Screen *screen, char **name_ret)
+gnome_screensaver_window (Display *dpy, char **name_ret)
 {
-  Display *dpy = DisplayOfScreen (screen);
-  Window root = RootWindowOfScreen (screen);
-  Window parent, *kids;
-  unsigned int nkids;
+  int nscreens = ScreenCount (dpy);
+  int i, screen;
   Window gnome_window = 0;
-  int i;
-
-  if (! XQueryTree (dpy, root, &root, &parent, &kids, &nkids))
-    abort ();
-  if (name_ret)
-    *name_ret = 0;
-  for (i = 0; i < nkids; i++)
+  for (screen = 0; screen < nscreens; screen++)
     {
-      Atom type;
-      int format;
-      unsigned long nitems, bytesafter;
-      unsigned char *name;
-      if (XGetWindowProperty (dpy, kids[i], XA_WM_COMMAND, 0, 128,
-                              False, XA_STRING, &type, &format, &nitems,
-                              &bytesafter, &name)
-          == Success
-          && type != None
-          && (!strcmp ((char *) name, "gnome-screensaver") ||
-              !strcmp ((char *) name, "mate-screensaver") ||
-              !strcmp ((char *) name, "cinnamon-screensaver")))
-	{
-	  gnome_window = kids[i];
-          if (name_ret)
-            *name_ret = strdup ((char *) name);
-          break;
-	}
-    }
+      Window root = RootWindow (dpy, screen);
+      Window parent, *kids;
+      unsigned int nkids;
 
-  if (kids) XFree ((char *) kids);
+      if (! XQueryTree (dpy, root, &root, &parent, &kids, &nkids))
+        abort ();
+      if (name_ret)
+        *name_ret = 0;
+      for (i = 0; i < nkids; i++)
+        {
+          Atom type;
+          int format;
+          unsigned long nitems, bytesafter;
+          unsigned char *name;
+          if (XGetWindowProperty (dpy, kids[i], XA_WM_COMMAND, 0, 128,
+                                  False, XA_STRING, &type, &format, &nitems,
+                                  &bytesafter, &name)
+              == Success
+              && type != None
+              && (!strcmp ((char *) name, "gnome-screensaver") ||
+                  !strcmp ((char *) name, "mate-screensaver") ||
+                  !strcmp ((char *) name, "cinnamon-screensaver")))
+            {
+              gnome_window = kids[i];
+              if (name_ret)
+                *name_ret = strdup ((char *) name);
+              break;
+            }
+        }
+      if (kids) XFree ((char *) kids);
+      if (gnome_window)
+        break;
+    }
   return gnome_window;
 }
 
@@ -4450,7 +4469,7 @@ static Bool
 gnome_screensaver_active_p (char **name_ret)
 {
   Display *dpy = GDK_DISPLAY();
-  Window w = gnome_screensaver_window (DefaultScreenOfDisplay (dpy), name_ret);
+  Window w = gnome_screensaver_window (dpy, name_ret);
   return (w ? True : False);
 }
 
@@ -4458,7 +4477,7 @@ static void
 kill_gnome_screensaver (void)
 {
   Display *dpy = GDK_DISPLAY();
-  Window w = gnome_screensaver_window (DefaultScreenOfDisplay (dpy), NULL);
+  Window w = gnome_screensaver_window (dpy, NULL);
   if (w) XKillClient (dpy, (XID) w);
 }
 

@@ -61,13 +61,16 @@ export ANDROID_HACKS=		\
 	abstractile		\
 	anemone			\
 	anemotaxis		\
+	antinspect		\
 	antmaze			\
 	antspotlight		\
 	apollonian		\
 	atlantis		\
 	attraction		\
 	atunnel			\
+	barcode			\
 	beats			\
+	binaryhorizon		\
 	binaryring		\
 	blaster			\
 	blinkbox		\
@@ -116,6 +119,7 @@ export ANDROID_HACKS=		\
 	drift			\
 	dymaxionmap		\
 	endgame			\
+	energystream		\
 	engine			\
 	epicycle		\
 	eruption		\
@@ -129,9 +133,11 @@ export ANDROID_HACKS=		\
 	flame			\
 	flipflop		\
 	flipscreen3d		\
+	fliptext		\
 	flow			\
 	fluidballs		\
 	flyingtoasters		\
+	fontglide		\
 	fuzzyflakes		\
 	galaxy			\
 	gears			\
@@ -148,6 +154,7 @@ export ANDROID_HACKS=		\
 	glplanet		\
 	glschool		\
 	glslideshow		\
+	glsnake			\
 	gltext			\
 	goop			\
 	grav			\
@@ -181,6 +188,7 @@ export ANDROID_HACKS=		\
 	lavalite		\
 	loop			\
 	m6502			\
+	marbling		\
 	maze			\
 	maze3d			\
 	memscroller		\
@@ -216,6 +224,7 @@ export ANDROID_HACKS=		\
 	pyro			\
 	quasicrystal		\
 	queens			\
+	raverhoop		\
 	razzledazzle		\
 	rd-bomb			\
 	ripples			\
@@ -240,6 +249,7 @@ export ANDROID_HACKS=		\
 	spotlight		\
 	squiral			\
 	stairs			\
+	starwars		\
 	stonerview		\
 	strange			\
 	substrate		\
@@ -255,6 +265,7 @@ export ANDROID_HACKS=		\
 	tronbit			\
 	truchet			\
 	twang			\
+	unicrud			\
 	unknownpleasures	\
 	vermiculate		\
 	vfeedback		\
@@ -277,20 +288,11 @@ export ANDROID_HACKS=		\
 # These don't work well enough to turn on by default:
 #
 ANDROID_TODO=			\
-	antinspect		\
-	barcode			\
-	energystream		\
-	fliptext		\
-	fontglide		\
-	glsnake			\
 	pedal			\
 	phosphor		\
 	qix			\
-	raverhoop		\
 	speedmine		\
 	starfish		\
-	starwars		\
-	unicrud			\
 
 
 # Download and resize images from jwz.org.
@@ -303,7 +305,7 @@ URL = https://www.jwz.org/xscreensaver/screenshots/
 
 # I find wget easier to deal with, but curl is usually installed by default.
 #WGET = wget -q -U xscreensaver-build-android --content-on-error=0 -O-
-WGET = curl -s -A xscreensaver-build-osx -f
+WGET = curl -s -A xscreensaver-build-android -f
 
 # ImageMagick isn't installed by default, but neither is anything similar.
 CVT  = -thumbnail '150x150^' -gravity center -extent 150x150 \

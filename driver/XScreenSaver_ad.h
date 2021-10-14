@@ -420,11 +420,14 @@
   GL: 				etruscanvenus -root			    \\n\
   GL: 				gibson -root				    \\n\
   GL: 				headroom -root				    \\n\
-  GL: 				sphereeversion -root			    \\n",
+  GL: 				sphereeversion -root			    \\n\
+				binaryhorizon -root			    \\n\
+				marbling -root				    \\n",
 "*hacks.antinspect.name:     Ant Inspect",
 "*hacks.antmaze.name:        Ant Maze",
 "*hacks.antspotlight.name:   Ant Spotlight",
 "*hacks.apple2.name:         Apple ][",
+"*hacks.binaryhorizon.name:  Binary Horizon",
 "*hacks.binaryring.name:     Binary Ring",
 "*hacks.blinkbox.name:       Blink Box",
 "*hacks.blitspin.name:       Blit Spin",

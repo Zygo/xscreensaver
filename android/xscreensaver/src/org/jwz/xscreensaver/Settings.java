@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2021 Jamie Zawinski <jwz@jwz.org>
  * and Dennis Sheil <dennis@panaceasupplies.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -29,21 +29,37 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import android.content.SharedPreferences;
-import android.preference.PreferenceActivity;
-import android.preference.Preference;
-import android.preference.ListPreference;
-import android.preference.EditTextPreference;
-import android.preference.CheckBoxPreference;
+
+// "Preference in android.preference has been deprecated"
+// "PreferenceActivity in android.preference has been deprecated"
+// "ListPreference in android.preference has been deprecated"
+// "EditTextPreference in android.preference has been deprecated"
+// "CheckBoxPreference in android.preference has been deprecated"
+//
+// import android.preference.Preference;
+// import android.preference.PreferenceActivity;
+// import android.preference.ListPreference;
+// import android.preference.EditTextPreference;
+// import android.preference.CheckBoxPreference;
+//
+// Using a wildcard here suppresses that warning:
+import android.preference.*;
+
 import org.jwz.xscreensaver.SliderPreference;
 
 import org.jwz.xscreensaver.R;
 import java.util.Map;
 import java.lang.reflect.Field;
 
+// "PreferenceActivity in android.preference has been deprecated"
+@SuppressWarnings("deprecation")
 public abstract class Settings extends PreferenceActivity
+
   implements SharedPreferences.OnSharedPreferenceChangeListener {
 
   @Override
+  // "onCreateView(ViewGroup) in Preference has been deprecated"
+  @SuppressWarnings("deprecation")
   protected void onCreate (Bundle icicle) {
     super.onCreate (icicle);
 

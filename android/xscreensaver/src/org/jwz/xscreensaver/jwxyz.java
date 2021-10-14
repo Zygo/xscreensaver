@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright (c) 2016-2019 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -668,6 +668,8 @@ public class jwxyz
         }
   }
 
+  // "getBitmap(ContentResolver,Uri) in Media has been deprecated"
+  @SuppressWarnings("deprecation")
   public Object[] loadRandomImage (int target_width, int target_height,
                                    boolean rotate_p) {
 
@@ -677,6 +679,9 @@ public class jwxyz
     ArrayList<String> imgs = new ArrayList<String>();
 
     ContentResolver cr = app.getContentResolver();
+
+    // "DATA in MediaColumns has been deprecated"
+    @SuppressWarnings("deprecation")
     String[] cols = { MediaColumns.DATA,
                       MediaColumns.MIME_TYPE,
                       MediaColumns.WIDTH,
@@ -732,6 +737,9 @@ public class jwxyz
 
     try {
       try {
+        // "getBitmap(ContentResolver,Uri) in Media has been deprecated"
+        // How do I do this for this block, instead of for the whole function?
+        // @SuppressWarnings("deprecation")
         bitmap = MediaStore.Images.Media.getBitmap (cr, uri);
       } catch (Exception e) {
         LOG ("image %s unloadable: %s", which, e.toString());

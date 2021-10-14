@@ -123,7 +123,8 @@ SRCS		= xscreensaver-getimage.c \
 		  asm6502.c abstractile.c lcdscrub.c hexadrop.c \
 		  tessellimage.c delaunay.c recanim.c binaryring.c \
 		  glitchpeg.c vfeedback.c scooter.c webcollage-cocoa.m \
-		  webcollage-helper-cocoa.m testx11.c
+		  webcollage-helper-cocoa.m testx11.c marbling.c \
+		  binaryhorizon.c
 SCRIPTS		= xscreensaver-getimage-file xscreensaver-getimage-video \
 		  xscreensaver-text vidwhacker webcollage
 
@@ -161,7 +162,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  webcollage-cocoa.o webcollage-helper-cocoa.o m6502.o \
 		  asm6502.o abstractile.o lcdscrub.o hexadrop.o \
 		  tessellimage.o delaunay.o recanim.o binaryring.o \
-		  glitchpeg.o vfeedback.o scooter.o testx11.o
+		  glitchpeg.o vfeedback.o scooter.o testx11.o marbling.o \
+		  binaryhorizon.c
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -184,6 +186,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
 		  celtic cwaves m6502 abstractile lcdscrub hexadrop \
 		  tessellimage binaryring glitchpeg vfeedback scooter \
+		  marbling binaryhorizon \
 		  xscreensaver-getimage @JPEG_EXES@
 JPEG_EXES	= webcollage-helper
 
@@ -241,7 +244,8 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
 		  lcdscrub.man hexadrop.man tessellimage.man binaryring.man \
-		  glitchpeg.man vfeedback.man scooter.man \
+		  glitchpeg.man vfeedback.man scooter.man marbling.man \
+		  binaryhorizon.man \
 		  xscreensaver-text.man \
 		  xscreensaver-getimage.man \
 		  xscreensaver-getimage-file.man \
@@ -876,6 +880,13 @@ filmleader: 	filmleader.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
 vfeedback: 	vfeedback.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
 
+MARBLING_OBJS=$(COLOR_OBJS) $(THRO) $(XSHM_OBJS) $(HACK_OBJS)
+marbling:	marbling.o	$(MARBLING_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(MARBLING_OBJS) $(HACK_LIBS) $(THRL)
+
+binaryhorizon:  binaryhorizon.o $(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
 
 testx11:	testx11.o	glx/rotator.o $(HACK_OBJS) $(COL) $(PNG) $(BARS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	glx/rotator.o $(HACK_OBJS) $(COL) $(PNG) $(BARS) $(ERASE) $(PNG_LIBS)
@@ -1203,6 +1214,20 @@ barcode.o: $(UTILS_SRC)/usleep.h
 barcode.o: $(UTILS_SRC)/visual.h
 barcode.o: $(UTILS_SRC)/xft.h
 barcode.o: $(UTILS_SRC)/yarandom.h
+binaryhorizon.o: ../config.h
+binaryhorizon.o: $(srcdir)/fps.h
+binaryhorizon.o: $(srcdir)/recanim.h
+binaryhorizon.o: $(srcdir)/screenhackI.h
+binaryhorizon.o: $(srcdir)/screenhack.h
+binaryhorizon.o: $(UTILS_SRC)/colors.h
+binaryhorizon.o: $(UTILS_SRC)/font-retry.h
+binaryhorizon.o: $(UTILS_SRC)/grabscreen.h
+binaryhorizon.o: $(UTILS_SRC)/hsv.h
+binaryhorizon.o: $(UTILS_SRC)/resources.h
+binaryhorizon.o: $(UTILS_SRC)/usleep.h
+binaryhorizon.o: $(UTILS_SRC)/visual.h
+binaryhorizon.o: $(UTILS_SRC)/xft.h
+binaryhorizon.o: $(UTILS_SRC)/yarandom.h
 binaryring.o: ../config.h
 binaryring.o: $(srcdir)/fps.h
 binaryring.o: $(srcdir)/recanim.h
@@ -2328,6 +2353,23 @@ m6502.o: $(UTILS_SRC)/visual.h
 m6502.o: $(UTILS_SRC)/xft.h
 m6502.o: $(UTILS_SRC)/xshm.h
 m6502.o: $(UTILS_SRC)/yarandom.h
+marbling.o: ../config.h
+marbling.o: $(srcdir)/fps.h
+marbling.o: $(srcdir)/recanim.h
+marbling.o: $(srcdir)/screenhackI.h
+marbling.o: $(srcdir)/screenhack.h
+marbling.o: $(UTILS_SRC)/aligned_malloc.h
+marbling.o: $(UTILS_SRC)/colors.h
+marbling.o: $(UTILS_SRC)/font-retry.h
+marbling.o: $(UTILS_SRC)/grabscreen.h
+marbling.o: $(UTILS_SRC)/hsv.h
+marbling.o: $(UTILS_SRC)/resources.h
+marbling.o: $(UTILS_SRC)/thread_util.h
+marbling.o: $(UTILS_SRC)/usleep.h
+marbling.o: $(UTILS_SRC)/visual.h
+marbling.o: $(UTILS_SRC)/xft.h
+marbling.o: $(UTILS_SRC)/xshm.h
+marbling.o: $(UTILS_SRC)/yarandom.h
 maze.o: ../config.h
 maze.o: $(srcdir)/fps.h
 maze.o: images/gen/logo-180_png.h

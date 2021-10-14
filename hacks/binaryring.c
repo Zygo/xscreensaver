@@ -139,11 +139,6 @@ static pixel_t rgb2point(int depth, int r, int g, int b)
     return ret;
 }
 
-void print_color ( struct state* st, pixel_t color );
-/* alpha blended point drawing -- this is Not Right and will likely fail on 
- * non-intel platforms as it is now, needs fixing
- */
-
 static
 void draw_point ( struct state* st,
                  int x, int y, pixel_t myc, float a ) {
@@ -174,14 +169,6 @@ void draw_point ( struct state* st,
     XPutPixel( st->buf, x, y, c );
 }
 
-
-
-
-void print_color ( struct state* st, pixel_t color ) {
-    int r=0, g=0, b=0;
-    point2rgb(st->depth, color, &r, &g, &b);
-    printf( "%d %d %d\n", r, g, b);
-}
 
 
 

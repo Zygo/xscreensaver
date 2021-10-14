@@ -53,6 +53,7 @@
 #include "pow2.h"
 
 
+#undef countof
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 
 extern struct xscreensaver_function_table *xscreensaver_function_table;

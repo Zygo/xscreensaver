@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,8 +27,17 @@
 
 - (void) titleTapped:(id) sender
 {
-  [[UIApplication sharedApplication]
-    openURL:[NSURL URLWithString:@"https://www.jwz.org/xscreensaver/"]];
+  UIApplication *app = [UIApplication sharedApplication];
+  NSURL *url = [NSURL URLWithString:@"https://www.jwz.org/xscreensaver/"];
+
+  if ([app respondsToSelector:@selector(openURL:options:completionHandler:)]) {
+    [app openURL:url options:@{} completionHandler:nil];
+  } else {
+#   pragma clang diagnostic push   // "openURL deprecated in iOS 10"
+#   pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [app openURL:url];
+#   pragma clang diagnostic pop
+  }
 }
 
 
@@ -97,10 +106,12 @@
 
   self.navigationItem.titleView = v;
 
+# ifndef HAVE_TVOS
   search = [[UISearchBar alloc] init];
   search.delegate = self;
   search.placeholder = NSLocalizedString(@"Search...", @"");
   self.tableView.tableHeaderView = search;
+# endif // !HAVE_TVOS
 
   // Dismiss the search field's keyboard as soon as we scroll.
 # ifdef __IPHONE_7_0
@@ -301,7 +312,9 @@
              autorelease];
 
   cell.textLabel.text = title;
+# ifndef HAVE_TVOS
   cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
+# endif // !HAVE_TVOS
   cell.detailTextLabel.text = desc;
 
   return cell;

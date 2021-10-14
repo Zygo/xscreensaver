@@ -18,7 +18,7 @@
 
     <number id="poles" type="slider" arg="-poles %"
             _label="Number of poles" _low-label="0" _high-label="31"
-            default="0" low="3" high="31"/>
+            default="0" low="0" high="31"/>
    </vgroup>
 
    <vgroup>

@@ -14,7 +14,7 @@
     android:background="?android:attr/selectableItemBackground" >
 
     <ImageView
-        android:id="@+android:id/icon"
+        android:id="@android:id/icon"
         android:layout_gravity="top"
         android:layout_width="40dip"
         android:layout_height="40dip"
@@ -30,7 +30,7 @@
         android:layout_marginBottom="6dip"
         android:layout_weight="1">
 
-        <TextView android:id="@+android:id/summary"
+        <TextView android:id="@android:id/summary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@android:id/title"

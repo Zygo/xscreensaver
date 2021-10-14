@@ -8,6 +8,18 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 6.02</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.02.dmg</link>
+   <description><![CDATA[&bull; New hacks, `marbling' and `binaryhorizon'. <BR>&bull; `atlantis' behaviors are more random and lifelike. <BR>&bull; `headroom' is now Mask Headroom. ]]></description>
+   <pubDate>Mon, 11 Oct 2021 17:59:05 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.02.dmg"
+    sparkle:version="6.02"
+    sparkle:dsaSignature="MC0CFEMgHT9197n3dB0BGkBlrdfGDiz+AhUAjR06lKtPNhN1/4rt2BZIaCeEaa4="
+    sparkle:edSignature="K/bR5Wmowr6kYBLgSstuH6ZWSPddaKl8FUZYgbxps1OA9SG//+i7ALJw81ATJlGWwFa74yYtDLhsaMK84Da+Bw=="
+    length="67267269"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 6.00</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-6.00.dmg</link>
    <description><![CDATA[&bull; Improved GLSL and GLES3 support: Phong shading in `etruscanvenus', `hypertorus', `klein', `projectiveplane',`romanboy' and `sphereeversion'. <BR>&bull; Updates to `cubicgrid'. <BR>&bull; Added a `Random XScreenSaver' screen saver, which implements cycle mode, among other things. ]]></description>
@@ -29,30 +41,6 @@
     sparkle:dsaSignature="MCwCFHczJ/PDQtWHm5Jy5qL42+LYJ2JxAhRih4+VsmQwzjJzFz0Q0EyYF+JExw=="
     sparkle:edSignature="UNj3hYcW4KcjEZcVA/Iz364donhc6T5FAPN+JFzpUQgLdc98QlIjGqDXdPwE4+Y9IfQpw/WyxMzJmZOpvNHCAw=="
     length="38766929"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.44.1</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.44.1.dmg</link>
-   <description><![CDATA[&bull; fixed some signing problems in the DMG.]]></description>
-   <pubDate>Sat, 21 Mar 2020 16:31:41 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.44.1.dmg"
-    sparkle:version="5.44.1"
-    sparkle:dsaSignature="MCwCFB5H0wm1ziAogfmS11N9yUZNT9ZlAhQMo1pDn3nbdp8FSQxXmxobcV68PQ=="
-    sparkle:edSignature="MsJheMb1QrrlI58iAQQb/e7GUYMGChaiXgsQFvHaszyVr1iO7frBEabm9hKbDZ+dn1bRmsI3fx4qWE3ykqNTAg=="
-    length="37690456"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.44</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.44.dmg</link>
-   <description><![CDATA[&bull; New hacks, `gibson', `etruscanvenus' and `scooter'. <BR>&bull; BSOD supports Tivo and Nintendo. <BR>&bull; New color options in `romanboy', `projectiveplane', `hypertorus' and `klein'. <BR>&bull; Fixed "Use random screen saver" on macOS 10.15. <BR>&bull; Performance tweaks for `eruption', `fireworkx', `halftone', `halo', `moire2', `rd-bomb'. <BR>&bull; Various bug fixes.]]></description>
-   <pubDate>Fri, 20 Mar 2020 18:28:33 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.44.dmg"
-    sparkle:version="5.44"
-    sparkle:dsaSignature="MCwCFAbbR5ENYHtmTm8MOOOR7zNN3Ms6AhRx2ktxv2xNpa4Wve7JKRnaZTZ7vA=="
-    sparkle:edSignature="2KBqFcIamFbOVfIUSYFjpQcFEW1XYozYh71wlMyS9jEGSIGIDJvbK2N50gdpiKfxCwDZspncEVncFnTzPv44Bw=="
-    length="36839532"
     type="application/octet-stream" />
   </item>
   <item>

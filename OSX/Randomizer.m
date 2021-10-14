@@ -44,7 +44,11 @@ screen_id (NSScreen *screen)
   // The EDID of a display contains manufacturer, product ID, and most
   // importantly, serial number.  So that should persist.
   //
+# pragma clang diagnostic push   // "CGDisplayIOServicePort deprecated in 10.9"
+# pragma clang diagnostic ignored "-Wdeprecated-declarations"
   io_service_t display_port = CGDisplayIOServicePort(id);
+# pragma clang diagnostic pop
+
   if (display_port == MACH_PORT_NULL) {
     // No physical device to get a name from... are we in Screen Sharing?
     NSLog(@"no device for display %lu", id);

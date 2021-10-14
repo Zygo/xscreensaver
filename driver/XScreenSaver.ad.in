@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 6.01
-!                              09-Jun-2021
+!                              version 6.02
+!                              11-Oct-2021
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -565,7 +565,9 @@ XScreenSaver.bourneShell:		/bin/sh
 @GL_KLUDGE@ GL: 				etruscanvenus -root			    \n\
 @GL_KLUDGE@ GL: 				gibson -root				    \n\
 @GL_KLUDGE@ GL: 				headroom -root				    \n\
-@GL_KLUDGE@ GL: 				sphereeversion -root			    \n
+@GL_KLUDGE@ GL: 				sphereeversion -root			    \n\
+				binaryhorizon -root			    \n\
+				marbling -root				    \n
 
 
 
@@ -580,6 +582,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.antmaze.name:        Ant Maze
 *hacks.antspotlight.name:   Ant Spotlight
 *hacks.apple2.name:         Apple ][
+*hacks.binaryhorizon.name:  Binary Horizon
 *hacks.binaryring.name:     Binary Ring
 *hacks.blinkbox.name:       Blink Box
 *hacks.blitspin.name:       Blit Spin

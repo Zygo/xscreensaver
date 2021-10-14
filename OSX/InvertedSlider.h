@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,6 +22,8 @@
 # import <Cocoa/Cocoa.h>
 #endif
 
+#ifndef HAVE_TVOS
+
 @interface InvertedSlider : NSSlider
 {
   BOOL inverted;
@@ -40,3 +42,5 @@
 # endif
 
 @end
+
+#endif // !HAVE_TVOS

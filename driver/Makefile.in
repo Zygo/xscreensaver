@@ -225,7 +225,7 @@ HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
 MENA		= xscreensaver.man xscreensaver-settings.man \
 		  xscreensaver-command.man
 MENB		= xscreensaver-gfx.man xscreensaver-auth.man \
-		  xscreensaver-command.man xscreensaver-systemd.man
+		  xscreensaver-systemd.man
 
 EXTRAS		= README Makefile.in \
 		  XScreenSaver.ad.in XScreenSaver-Xm.ad xscreensaver.pam.in \

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="marbling" _label="Marbling">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=D20sPMLwS1c"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="gridsize" type="slider" arg="-gridsize %"
+          _label="Magnification" _low-label="Low" _high-label="High"
+          low="1" high="20" default="2"/>
+
+  <number id="scale" type="slider" arg="-scale %"
+          _label="Scale" _low-label="Sparse" _high-label="Dense"
+          low="0" high="20" default="10"/>
+
+  <number id="iterations" type="slider" arg="-iterations %"
+          _label="Complexity" _low-label="Low" _high-label="High"
+          low="0" high="10" default="5"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Marble-like or cloud-like patterns generated using Perlin Noise and Fractal
+Brownian Motion.
+
+https://en.wikipedia.org/wiki/Perlin_noise
+https://en.wikipedia.org/wiki/Fractional_Brownian_motion
+
+Written by Jamie Zawinski and Dave Odell; 2021.
+  </_description>
+</screensaver>

@@ -1,4 +1,4 @@
-/* headroom, Copyright (c) 2020 Jamie Zawinski <jwz@jwz.org>
+/* headroom, Copyright © 2020-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,6 +21,7 @@
 			"*teethColor:   #FFFFFF"   "\n" \
 			"*torsoColor:   #447744"   "\n" \
 			"*torsoCapColor:#222222"   "\n" \
+			"*maskColor:    #444488"   "\n" \
 			"*gridColor1:   #AA0000"   "\n" \
 			"*gridColor2:   #00FF00"   "\n" \
 			"*gridColor3:   #6666FF"   "\n" \
@@ -28,9 +29,11 @@
 
 # define release_headroom 0
 
-#define DEF_SPEED       "1.0"
-#define DEF_SPIN        "XYZ"
-#define DEF_WANDER      "False"
+#define DEF_SPEED        "1.0"
+#define DEF_SPIN         "XYZ"
+#define DEF_WANDER       "False"
+#define DEF_MASK         "True"
+#define DEF_MASK_OPACITY "0.97"
 
 #include "xlockmore.h"
 
@@ -45,16 +48,18 @@
 extern const struct gllist
   *headroom_model_skull_half, *headroom_model_jaw_half,
   *headroom_model_teeth_upper_half, *headroom_model_teeth_lower_half,
-  *headroom_model_torso_half, *headroom_model_torso_cap_half;
+  *headroom_model_torso_half, *headroom_model_torso_cap_half,
+  *headroom_model_mask_half;
 
 static const struct gllist * const *all_objs[] = {
   &headroom_model_skull_half, &headroom_model_jaw_half,
   &headroom_model_teeth_upper_half, &headroom_model_teeth_lower_half,
   &headroom_model_torso_half, &headroom_model_torso_cap_half,
+  &headroom_model_mask_half,
 };
 
 enum { SKULL_HALF, JAW_HALF, TEETH_UPPER_HALF, TEETH_LOWER_HALF, TORSO_HALF,
-       TORSO_CAP_HALF };
+       TORSO_CAP_HALF, MASK_HALF };
 
 typedef struct { GLfloat x, y, z; } XYZ;
 
@@ -78,6 +83,8 @@ static headroom_configuration *bps = NULL;
 static GLfloat speed;
 static char *do_spin;
 static Bool do_wander;
+static Bool mask_p;
+static float mask_opacity;
 
 static XrmOptionDescRec opts[] = {
   { "-speed",   ".speed",     XrmoptionSepArg, 0 },
@@ -85,12 +92,16 @@ static XrmOptionDescRec opts[] = {
   { "+spin",    ".spin",      XrmoptionNoArg, "" },
   { "-wander",  ".wander",    XrmoptionNoArg, "True" },
   { "+wander",  ".wander",    XrmoptionNoArg, "False" },
+  { "-mask",    ".mask",      XrmoptionNoArg, "True" },
+  { "+mask",    ".mask",      XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {
   {&speed,       "speed",      "Speed",     DEF_SPEED,      t_Float},
   {&do_spin,      "spin",      "Spin",      DEF_SPIN,       t_String},
   {&do_wander,    "wander",    "Wander",    DEF_WANDER,     t_Bool},
+  {&mask_p,       "mask",      "Mask",      DEF_MASK,       t_Bool},
+  {&mask_opacity, "maskOpacity", "MaskOpacity", DEF_MASK_OPACITY, t_Float},
 };
 
 ENTRYPOINT ModeSpecOpt headroom_opts = {
@@ -287,6 +298,9 @@ init_headroom (ModeInfo *mi)
       case TORSO_CAP_HALF:
         key = "torsoCapColor";
         break;
+      case MASK_HALF:
+        key = "maskColor";
+        break;
       default:
         abort();
       }
@@ -400,6 +414,37 @@ draw_component (ModeInfo *mi, int i)
 }
 
 
+static int
+draw_transparent_component (ModeInfo *mi, int i, GLfloat alpha)
+{
+  headroom_configuration *bp = &bps[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  int count = 0;
+
+  if (alpha < 0) return 0;
+  if (alpha > 1) alpha = 1;
+  bp->component_colors[i][3] = alpha;
+
+  if (wire || alpha >= 1)
+    return draw_component (mi, i);
+
+  /* Draw into the depth buffer but not the frame buffer */
+  glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+  count += draw_component (mi, i);
+
+  /* Now draw into the frame buffer only where there's already depth */
+  glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthFunc (GL_EQUAL);
+  glEnable (GL_BLEND);
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  count += draw_component (mi, i);
+  glDepthFunc (GL_LESS);
+  glDisable (GL_BLEND);
+  return count;
+}
+
+
 ENTRYPOINT void
 draw_headroom (ModeInfo *mi)
 {
@@ -496,6 +541,9 @@ draw_headroom (ModeInfo *mi)
 
     mi->polygon_count += draw_component (mi, JAW_HALF);
     mi->polygon_count += draw_component (mi, TEETH_LOWER_HALF);
+    if (mask_p)
+      mi->polygon_count +=
+        draw_transparent_component (mi, MASK_HALF, mask_opacity);
 
     glFrontFace (GL_CCW);
   }

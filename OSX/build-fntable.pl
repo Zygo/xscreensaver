@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.11 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.12 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -75,9 +75,9 @@ sub build_h($) {
   my %names = ();
 
   foreach my $var (
-    (values parse_makefile_vars ('../hacks/Makefile.in', 'EXES')),
-    (values parse_makefile_vars ('../hacks/glx/Makefile.in', 'GL_EXES',
-                                 'SUID_EXES'))) {
+    (values %{ parse_makefile_vars ('../hacks/Makefile.in', 'EXES') }),
+    (values %{ parse_makefile_vars ('../hacks/glx/Makefile.in', 'GL_EXES',
+                                 'SUID_EXES') })) {
     $var =~ s/covid19/co____9/gs;
     foreach my $name (split (/\s+/, $var)) {
       if ($name =~ /@/ || $disable{$name}) {

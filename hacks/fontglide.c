@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2003-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2003-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -270,6 +270,7 @@ pick_font_1 (state *s, sentence *se)
       /* #### This gets a link error with FcFontSetDestroy missing. */
       /* if (fs) XftFontSetDestroy (fs); */
 
+      sprintf(pattern, "%s", name2);
       se->xftfont = font;
       ok = True;
       goto DONE_2;
@@ -571,6 +572,22 @@ pick_font_1 (state *s, sentence *se)
       }
   }
 
+# if defined(HAVE_XFT) && !defined(HAVE_JWXYZ)   /* Real Xft under real X11 */
+  {
+    unsigned long uc = 0;
+    utf8_decode ((const unsigned char *) "M", 1, &uc);
+    if (!XftCharExists (s->dpy, se->xftfont, (FcChar32) uc))
+      {
+# ifdef DEBUG
+        if (s->debug_p)
+          fprintf (stderr, "%s: skipping font without ASCII: %s\n",
+                   progname, pattern2);
+# endif
+        return False;
+      }
+  }
+# endif
+
 
 # ifdef DEBUG
   if (s->debug_p) 
@@ -681,6 +698,7 @@ get_word_text (state *s)
       int n = end - s->buf;
       memmove (s->buf, end, sizeof(s->buf) - n);
       s->buf_tail -= n;
+      if (s->buf_tail < 0) abort();
     }
 
   return result;
@@ -2266,6 +2284,7 @@ drain_input (state *s)
       else
         break;
     }
+  s->buf[s->buf_tail] = 0;
 }
 
 

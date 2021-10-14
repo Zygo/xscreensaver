@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2020 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.54 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.55 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -96,6 +96,7 @@ sub read_saver_xml($) {
   my $name  = $1;
 
   return () if ($name eq 'XScreenSaver');
+  return () if ($name eq 'XScreenSaver-tvOS');
   return () if ($name eq 'SaverTester');
   return () if ($name eq 'XScreenSaverUpdater');
   return () if ($name eq 'RandomXScreenSaver');
@@ -493,6 +494,7 @@ sub update($) {
   set_thumb ($app_dir);
 # enable_gc ($app_dir);
   fix_coretext ($app_dir)
+    unless ($app_dir =~ m@-appletv@s);
 }
 
 

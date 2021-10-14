@@ -1,4 +1,4 @@
-# Auto-generated: Wed Jun  9 08:47:14 PDT 2021
+# Auto-generated: Mon Oct 11 18:04:31 PDT 2021
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/dialog.c
@@ -19,6 +19,7 @@ hacks/config/attraction.xml
 hacks/config/atunnel.xml
 hacks/config/barcode.xml
 hacks/config/beats.xml
+hacks/config/binaryhorizon.xml
 hacks/config/binaryring.xml
 hacks/config/blaster.xml
 hacks/config/blinkbox.xml
@@ -156,6 +157,7 @@ hacks/config/lmorph.xml
 hacks/config/lockward.xml
 hacks/config/loop.xml
 hacks/config/m6502.xml
+hacks/config/marbling.xml
 hacks/config/maze.xml
 hacks/config/maze3d.xml
 hacks/config/memscroller.xml

@@ -96,7 +96,7 @@ Building for older operating systems:
   9: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
  10: File / Add Files / the new .c and .xml.
  11: Re-order them in the file list. This will bring up an Options dialog.
-     Add To Targets: the new target, and "XScreenSaver-iOS".
+     Add To Targets: the new target, and "XScreenSaver-iOS" and "-tvOS".
  12: The files might not have moved. This means Xcode is gonna crash soon.
      It will repair itself after.
  13: In target "All Savers (OpenGL)" add the new target as Build Phases /

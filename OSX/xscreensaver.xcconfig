@@ -6,6 +6,6 @@
 //   "10.6", "", ""
 // and the generate builds will only work on 10.6 or later.
 //
-MACOSX_DEPLOYMENT_TARGET=10.7
+MACOSX_DEPLOYMENT_TARGET=10.9
 OBJC_GC_CFLAGS=
 OBJC_NO_GC_CFLAGS=

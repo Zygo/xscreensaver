@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.36 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.37 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -971,6 +971,7 @@ sub build_android(@) {
                        $localize0->("${saver_underscore}_saver_desc",
                                     $daydream_desc) . "\"\n" .
                   "  android:name=\".gen.Wallpaper\$$saver_class\"\n" .
+                  "  android:exported=\"true\"\n" .
                   "  android:permission=\"android.permission" .
                        ".BIND_WALLPAPER\">\n" .
                   "  <intent-filter>\n" .
@@ -1043,6 +1044,7 @@ sub build_android(@) {
   $manifest .= ("<activity android:name=\"" .
                 "$package.Activity\"\n" .
                 "  android:theme=\"\@android:style/Theme.Holo\"\n" .
+                "  android:exported=\"true\"\n" .
                 "  android:label=\"\@string/app_name\">\n" .
                 "  <intent-filter>\n" .
                 "    <action android:name=\"android.intent.action" .
@@ -1064,6 +1066,7 @@ sub build_android(@) {
   $manifest .= ("<activity android:name=\"" .
                 "$package.TVActivity\"\n" .
                 "  android:theme=\"\@android:style/Theme.Holo\"\n" .
+                "  android:exported=\"true\"\n" .
                 "  android:label=\"\@string/app_name\">\n" .
                 "  <intent-filter>\n" .
                 "    <action android:name=\"android.intent.action" .

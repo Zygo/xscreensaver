@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Thu Dec 24 07:44:49 2020 by build-fntable.pl 1.10.
+   Created: Mon Oct  4 14:33:40 2021 by build-fntable.pl 1.11.
  */
 
 #import <Foundation/Foundation.h>
@@ -21,6 +21,7 @@ extern struct xscreensaver_function_table
  atunnel_xscreensaver_function_table,
  barcode_xscreensaver_function_table,
  beats_xscreensaver_function_table,
+ binaryhorizon_xscreensaver_function_table,
  binaryring_xscreensaver_function_table,
  blaster_xscreensaver_function_table,
  blinkbox_xscreensaver_function_table,
@@ -140,6 +141,7 @@ extern struct xscreensaver_function_table
  lavalite_xscreensaver_function_table,
  loop_xscreensaver_function_table,
  m6502_xscreensaver_function_table,
+ marbling_xscreensaver_function_table,
  maze_xscreensaver_function_table,
  maze3d_xscreensaver_function_table,
  memscroller_xscreensaver_function_table,
@@ -267,6 +269,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Atunnel":	[NSValue valueWithPointer:&atunnel_xscreensaver_function_table],
 	@"Barcode":	[NSValue valueWithPointer:&barcode_xscreensaver_function_table],
 	@"Beats":	[NSValue valueWithPointer:&beats_xscreensaver_function_table],
+	@"Binary Horizon":	[NSValue valueWithPointer:&binaryhorizon_xscreensaver_function_table],
 	@"Binary Ring":	[NSValue valueWithPointer:&binaryring_xscreensaver_function_table],
 	@"Blaster":	[NSValue valueWithPointer:&blaster_xscreensaver_function_table],
 	@"Blink Box":	[NSValue valueWithPointer:&blinkbox_xscreensaver_function_table],
@@ -386,6 +389,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Lavalite":	[NSValue valueWithPointer:&lavalite_xscreensaver_function_table],
 	@"Loop":	[NSValue valueWithPointer:&loop_xscreensaver_function_table],
 	@"m6502":	[NSValue valueWithPointer:&m6502_xscreensaver_function_table],
+	@"Marbling":	[NSValue valueWithPointer:&marbling_xscreensaver_function_table],
 	@"Maze":	[NSValue valueWithPointer:&maze_xscreensaver_function_table],
 	@"Maze 3D":	[NSValue valueWithPointer:&maze3d_xscreensaver_function_table],
 	@"Mem Scroller":	[NSValue valueWithPointer:&memscroller_xscreensaver_function_table],

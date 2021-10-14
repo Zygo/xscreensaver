@@ -34,7 +34,21 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
  * Eric Lassauge  (May-13-1998)
  *
  * REVISION HISTORY:
- * 
+ *
+ * Daniel Brooks, 4∕29∕21: - Random offsets for the starting positions of the
+ *                           whales and dolphin, their swim speeds, their tail
+ *                           thrash animation phase angle, and the size of the
+ *                           loop they swim in.
+ *                         - Fish now have customizable tail thrash speeds.
+ *                           Adjusted tail thrash speeds to better match their
+ *                           relative sizes: gave the mom whale a thrash speed
+ *                           ⅓ that of the baby whale and the dolphin ½.
+ *                         - Dolphins and whales now bank into their turn,
+ *                           rather than always listing to the right.
+ *                         - Added some documention for fishRec, since it
+ *                           wasn’t immediately obvious to me what some of the
+ *                           numbers were for.
+ *
  * Jamie Zawinski, 2-Apr-01:  - The fishies were inside out!  The back faces
  *                              were being drawn, not the front faces.
  *                            - Added a texture to simulate light from the
@@ -183,6 +197,7 @@ static void
 InitFishs(atlantisstruct * ap)
 {
 	int         i;
+	int dolphin_offset, whale_offset;
 
 	for (i = 0; i < ap->num_sharks; i++) {
 		ap->sharks[i].x = 70000.0 + NRAND(ap->sharksize);
@@ -190,31 +205,47 @@ InitFishs(atlantisstruct * ap)
 		ap->sharks[i].z = NRAND(ap->sharksize);
 		ap->sharks[i].psi = NRAND(360) - 180.0;
 		ap->sharks[i].v = 1.0;
+		ap->sharks[i].tail_speed_scale = 0.0;
+		ap->sharks[i].loop_scale = 0.0;
 	}
 
 	/* Random whale direction */
 	ap->whaledir = LRAND() & 1;
 
+	dolphin_offset = NRAND(20000) - 10000;
 	ap->dolph.x = 30000.0;
-	ap->dolph.y = 0.0;
-	ap->dolph.z = (float) (ap->sharksize);
-	ap->dolph.psi = (ap->whaledir) ? 90.0 : -90.0;
+	ap->dolph.y = 0.0 + dolphin_offset;
+	ap->dolph.z = 0.0 + dolphin_offset;
+	ap->dolph.phi = -20.0;
 	ap->dolph.theta = 0.0;
-	ap->dolph.v = 6.0;
+	ap->dolph.psi = (ap->whaledir) ? 90.0 : -90.0;
+	ap->dolph.v = 5.0 + frand(2.0); /* 5.0 ± 1.0 */;
+	ap->dolph.tail_speed_scale = 0.5;
+	ap->dolph.htail = NRAND(360);
+	ap->dolph.loop_scale = 1.0 + frand(0.5); /* ×1.0 ± 0.5 */
 
+	whale_offset = NRAND(40000) - 20000;
 	ap->momWhale.x = 70000.0;
-	ap->momWhale.y = 0.0;
-	ap->momWhale.z = 0.0;
-	ap->momWhale.psi = (ap->whaledir) ? 90.0 : -90.0;
+	ap->momWhale.y = 0.0 + whale_offset;
+	ap->momWhale.z = 0.0 + whale_offset;
+	ap->momWhale.phi = -20.0;
 	ap->momWhale.theta = 0.0;
-	ap->momWhale.v = 3.0;
+	ap->momWhale.psi = (ap->whaledir) ? 90.0 : -90.0;
+	ap->momWhale.v = 2.5 + frand(1.0); /* 3.0 ± 0.5 */
+	ap->momWhale.tail_speed_scale = 1.0 / 3.0;
+	ap->momWhale.htail = NRAND(360);
+	ap->momWhale.loop_scale = 1.0  + frand(0.5); /* ×1.0 ± 0.5 */
 
-	ap->babyWhale.x = 60000.0;
-	ap->babyWhale.y = -2000.0;
-	ap->babyWhale.z = -2000.0;
-	ap->babyWhale.psi = (ap->whaledir) ? 90.0 : -90.0;
-	ap->babyWhale.theta = 0.0;
-	ap->babyWhale.v = 3.0;
+	ap->babyWhale.x = ap->momWhale.x - 10000.0;
+	ap->babyWhale.y = ap->momWhale.y - 2000.0;
+	ap->babyWhale.z = ap->momWhale.z - 2000.0;
+	ap->babyWhale.phi = ap->momWhale.phi;
+	ap->babyWhale.theta = ap->momWhale.theta;
+	ap->babyWhale.psi = ap->momWhale.psi;
+	ap->babyWhale.v = ap->momWhale.v;
+	ap->babyWhale.tail_speed_scale = 1.0;
+	ap->babyWhale.htail = NRAND(360);
+	ap->babyWhale.loop_scale = ap->momWhale.loop_scale;
 }
 
 static void
@@ -402,11 +433,8 @@ Animate(atlantisstruct * ap)
 		SharkMiss(ap, i);
 	}
 	WhalePilot(&(ap->dolph), ap->whalespeed, ap->whaledir);
-	ap->dolph.phi++;
 	WhalePilot(&(ap->momWhale), ap->whalespeed, ap->whaledir);
-	ap->momWhale.phi++;
 	WhalePilot(&(ap->babyWhale), ap->whalespeed, ap->whaledir);
-	ap->babyWhale.phi++;
 }
 
 static void

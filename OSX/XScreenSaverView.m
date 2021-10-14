@@ -510,8 +510,10 @@ static void catch_signals (void)
 # ifdef HAVE_IPHONE
   [self initGestures];
 
+# ifndef HAVE_TVOS
   // So we can tell when we're docked.
   [UIDevice currentDevice].batteryMonitoringEnabled = YES;
+# endif // !HAVE_TVOS
 
   [self setBackgroundColor:[NSColor blackColor]];
 # endif // HAVE_IPHONE
@@ -723,8 +725,10 @@ static void catch_signals (void)
   // and an animation is running.
   //
 # ifdef HAVE_IPHONE
+#  ifndef HAVE_TVOS
   [UIApplication sharedApplication].idleTimerDisabled =
     ([UIDevice currentDevice].batteryState != UIDeviceBatteryStateUnplugged);
+#  endif // !HAVE_TVOS
 # endif
 
   xwindow = (Window) calloc (1, sizeof(*xwindow));
@@ -1099,6 +1103,9 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
 double
 current_device_rotation (void)
 {
+# ifdef HAVE_TVOS
+  return 0;
+# else  // !HAVE_TVOS
   UIDeviceOrientation o = [[UIDevice currentDevice] orientation];
 
   /* Sometimes UIDevice doesn't know the proper orientation, or the device is
@@ -1130,6 +1137,7 @@ current_device_rotation (void)
   case UIDeviceOrientationPortraitUpsideDown: return 180; break;
   default:                                    return 0;   break;
   }
+# endif // !HAVE_TVOS
 }
 
 
@@ -2480,7 +2488,11 @@ gl_check_ver (const struct gl_version *caps,
   attrs[i++] = NSOpenGLPFABackingStore;
 # endif
 
+# pragma clang diagnostic push   // "NSOpenGLPFAWindow deprecated in 10.9"
+# pragma clang diagnostic ignored "-Wdeprecated"
   attrs[i++] = NSOpenGLPFAWindow;
+# pragma clang diagnostic pop
+
 # ifdef JWXYZ_GL
   attrs[i++] = NSOpenGLPFAPixelBuffer;
   /* ...But not NSOpenGLPFAFullScreen, because that would be for
@@ -2558,26 +2570,34 @@ gl_check_ver (const struct gl_version *caps,
                                    initWithTarget:self
                                    action:@selector(handleDoubleTap)];
   dtap.numberOfTapsRequired = 2;
+# ifndef HAVE_TVOS
   dtap.numberOfTouchesRequired = 1;
+# endif // !HAVE_TVOS
 
   UITapGestureRecognizer *stap = [[UITapGestureRecognizer alloc]
                                    initWithTarget:self
                                    action:@selector(handleTap:)];
   stap.numberOfTapsRequired = 1;
+# ifndef HAVE_TVOS
   stap.numberOfTouchesRequired = 1;
+# endif // !HAVE_TVOS
  
   UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc]
                                   initWithTarget:self
                                   action:@selector(handlePan:)];
+# ifndef HAVE_TVOS
   pan.maximumNumberOfTouches = 1;
   pan.minimumNumberOfTouches = 1;
+# endif // !HAVE_TVOS
  
   // I couldn't get Swipe to work, but using a second Pan recognizer works.
   UIPanGestureRecognizer *pan2 = [[UIPanGestureRecognizer alloc]
                                    initWithTarget:self
                                    action:@selector(handlePan2:)];
+# ifndef HAVE_TVOS
   pan2.maximumNumberOfTouches = 2;
   pan2.minimumNumberOfTouches = 2;
+# endif // !HAVE_TVOS
 
   // Also handle long-touch, and treat that the same as Pan.
   // Without this, panning doesn't start until there's motion, so the trick
@@ -2587,35 +2607,45 @@ gl_check_ver (const struct gl_version *caps,
                                          initWithTarget:self
                                          action:@selector(handleLongPress:)];
   hold.numberOfTapsRequired = 0;
+# ifndef HAVE_TVOS
   hold.numberOfTouchesRequired = 1;
+# endif // !HAVE_TVOS
   hold.minimumPressDuration = 0.25;   /* 1/4th second */
 
+# ifndef HAVE_TVOS
   // Two finger pinch to zoom in on the view.
   UIPinchGestureRecognizer *pinch = [[UIPinchGestureRecognizer alloc] 
                                       initWithTarget:self 
                                       action:@selector(handlePinch:)];
+# endif // !HAVE_TVOS
 
   [stap requireGestureRecognizerToFail: dtap];
   [stap requireGestureRecognizerToFail: hold];
   [dtap requireGestureRecognizerToFail: hold];
   [pan  requireGestureRecognizerToFail: hold];
+# ifndef HAVE_TVOS
   [pan2 requireGestureRecognizerToFail: pinch];
 
   [self setMultipleTouchEnabled:YES];
+# endif // !HAVE_TVOS
 
   [self addGestureRecognizer: dtap];
   [self addGestureRecognizer: stap];
   [self addGestureRecognizer: pan];
   [self addGestureRecognizer: pan2];
   [self addGestureRecognizer: hold];
+# ifndef HAVE_TVOS
   [self addGestureRecognizer: pinch];
+# endif // !HAVE_TVOS
 
   [dtap release];
   [stap release];
   [pan  release];
   [pan2 release];
   [hold release];
+# ifndef HAVE_TVOS
   [pinch release];
+# endif // !HAVE_TVOS
 }
 
 
@@ -2875,6 +2905,7 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
+# ifndef HAVE_TVOS
 /* Pinch with 2 fingers: zoom in around the center of the fingers.
  */
 - (void) handlePinch:(UIPinchGestureRecognizer *)sender
@@ -2969,6 +3000,7 @@ gl_check_ver (const struct gl_version *caps,
     abort();
   }
 }
+# endif // !HAVE_TVOS
 
 
 /* We need this to respond to "shake" gestures

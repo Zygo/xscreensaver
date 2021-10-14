@@ -40,17 +40,24 @@ distclean:
 distdepend:: Sparkle.framework
 distdepend:: update_plist_version
 
-debug: distdepend
+_debug: distdepend
 	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Debug   build
 
-release:: distdepend
+_release:: distdepend
 	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Release build
 
-release:: check_versions
+_release:: check_versions
+
+debug::
+	$(MAKE2) _debug > /dev/null
+
+release::
+	$(MAKE2) _release > /dev/null
+
 
 Sparkle.framework:
 	rm -rf bin sparkle-bin
-	tar -vxjf ../archive/Sparkle-1.21.2.tar.bz2 \
+	tar -vxjf ../archive/Sparkle-1.27.0.tar.xz \
 	  --exclude CHANGELOG \
 	  --exclude LICENSE \
 	  --exclude SampleAppcast.xml \
@@ -292,6 +299,18 @@ test_sig::
   rm -f "$$SIGB" "$$HASH" ;						    \
 
 
+# As of Xcode 13, I think it's no longer possible to check signatures on the
+# saver bundles: they must be signed with "Developer ID Application" but as
+# the individual savers are not notarized, "spctl --assess --type install"
+# reports "rejected, Unnotarized Developer ID".
+#
+# Also, after running "productsign" on the pkg, "codesign" reports that it
+# is unsigned, so WTF?
+#
+# "codesign -vv --deep --strict" complains: "resource fork, Finder
+# information, or similar detritus not allowed".  Maybe it is complaining
+# about the "Icon\r" file?
+
 build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.png ../utils/version.h
 	@\
   set -e ;								\
@@ -321,7 +340,10 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 	       --package-path "$$STAGE" --version "$$V" "$$PRODUCT" ;	\
 									\
   productsign --sign $(CERT) "$$PRODUCT" "$$FINAL" ;			\
-  spctl --assess --verbose=4 --type install "$$FINAL" ;			\
+									\
+  if false; then							\
+    spctl --assess --verbose=4 --type install "$$FINAL" ;		\
+  fi ;									\
 									\
   rm -rf "$$STAGE" ;							\
 
@@ -329,7 +351,7 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 dmg:: distdepend check_versions check_coretext
 #dmg:: check_gc
 dmg:: build/Release/installer.pkg
-dmg:: _dmg notarize
+dmg:: _dmg notarize staple updates.xml
 
 _dmg::
 	@								      \
@@ -412,10 +434,18 @@ _dmg::
   sudo chown -R root:wheel "$$STAGE/"* ;				      \
 									      \
   echo "Checking signatures..." ;					      \
-  spctl --assess --type install "$$PKG" ;				      \
-  spctl --assess --type execute "$$SRC/XScreenSaverUpdater.app" ;	      \
-  spctl --assess --type execute "$$DST/"*.app ;				      \
-  spctl --assess --type install "$$DST/"*.saver ;			      \
+  if false; then							      \
+    spctl --assess --type install "$$PKG" ;				      \
+    spctl --assess --type execute "$$SRC/XScreenSaverUpdater.app" ;	      \
+    spctl --assess --type execute "$$DST/"*.app ;			      \
+    spctl --assess --type install "$$DST/"*.saver ;			      \
+  else									      \
+    true codesign -vv --deep --strict "$$PKG" ;				      \
+    codesign -vv --deep --strict "$$SRC/XScreenSaverUpdater.app" ;	      \
+    true codesign -vv --deep --strict "$$DST/"*.app ;			      \
+    true codesign -vv --deep --strict "$$DST/"*.saver ;			      \
+  fi ;									      \
+									      \
   set -x ;								      \
 									      \
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
@@ -429,7 +459,11 @@ _dmg::
   rm -f "$$TMPDMG" ;							      \
 									      \
   codesign --sign $(CERT2) "$$DMG" ;					      \
-  spctl --assess --type install "$$DMG" ;				      \
+  if false; then							      \
+    spctl --assess --type install "$$DMG" ;				      \
+  else									      \
+    codesign -vvv --deep --strict "$$DMG" ;				      \
+  fi ;									      \
 									      \
   ls -ldhgF "$$DMG" ;							      \
 
@@ -441,20 +475,25 @@ _dmg::
 #  - Name: "altool-notarizer", Account: "jwz@jwz.org",
 #    Pass: the one you just generated.
 #
-# "make notarize", which will upload the DMG (slow).
-# "notarize_wait" waits for the response to be ready (takes 5+ minutes).
-# Only once that has arrived can we "staple" it onto the DMG.
+# As of Xcode 13, "altool" is obsolete because of course it is.
+# The new way is "notarytool".
 #
-# https://developer.apple.com/documentation/security/notarizing_your_app_before_distribution/customizing_the_notarization_workflow?language=objc
+# "make notarize" will upload the DMG (slow).
 #
 # Note that if Sparkle.framework/.../Autoupdate.app is not independently
 # signed, it won't pass. I had to add a build phase for that.
 #
-NOTARGS=-u "jwz@jwz.org" -p "@keychain:altool-notarizer"
+# - xcrun notarytool store-credentials --apple-id jwz@jwz.org
+#   - Profile name: altool-notarizer
+#   - App-specific password: [the above]
+#   - Developer Team ID: 4627ATJELP
+# - Credentials saved to Keychain.
+#   To use them, specify `--keychain-profile "altool-notarizer"
+#
+#NOTARGS=-u "jwz@jwz.org" -p "@keychain:altool-notarizer"
 
 
 # Send a notarization request, and then wait for the result.
-# Staple once the results are in.
 #
 notarize::
 	@								      \
@@ -464,51 +503,31 @@ notarize::
   BASE="xscreensaver-$$V" ;						      \
   OUTDIR="../archive" ;							      \
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
-  CMD='xcrun altool --notarize-app --primary-bundle-id org.jwz.xscreensaver'; \
-  CMD="$$CMD --file $$DMG $(NOTARGS)" ;					      \
+  CMD="xcrun notarytool submit $$DMG" ;					      \
+  CMD="$$CMD --keychain-profile altool-notarizer" ;			      \
+  CMD="$$CMD --apple-id jwz@jwz.org --team-id 4627ATJELP --wait" ;	      \
   echo "+ $$CMD" ;  							      \
   echo "" ;								      \
   RET=`$$CMD` ;  							      \
   echo "$$RET";  							      \
   echo "" ;								      \
-  ID=`echo "$$RET" | sed -n 's/RequestUUID *= *\(.*\)/\1/p'` ;		      \
+  ID=`echo "$$RET" | sed -n 's/.*id: *\([^ ]*\).*/\1/p' | head -1` ;	      \
+  STATUS=`echo "$$RET" | sed -n 's/.*status: *\([^ .]*\).*/\1/p' | head -1` ; \
   if [ "x$$ID" = "x" ]; then						      \
-    echo "unparsable RequestUUID" ;					      \
+    echo "unparsable ID" ;						      \
     exit 1 ;								      \
-  else									      \
-    set -x ;								      \
-    export NOTARIZE_UUID="$$ID" ;					      \
-    $(MAKE2) notarize_wait staple updates.xml ;				      \
   fi ;									      \
+  if [ x"$$STATUS" != "xAccepted" ]; then				      \
+    echo "ERROR: Bad status: $$STATUS" ;				      \
+    echo "" ;								      \
+    CMD="xcrun notarytool log $$ID --keychain-profile altool-notarizer" ;     \
+    echo "+ $$CMD" ;  							      \
+    $$CMD ;								      \
+    exit 1 ;								      \
+  fi ;									      \
+  echo "Notarization success: $$STATUS" ;				      \
+  exit 0
 
-
-# Keep probing Apple's server until we have a result for this notarization.
-# We can't staple until the results are in.
-#
-notarize_wait::
-	@if [ "x$$NOTARIZE_UUID" = "x" ]; then				      \
-	   echo "NOTARIZE_UUID is unset" ;				      \
-	   exit 1 ;							      \
-	 fi ;								      \
-	 CMD="xcrun altool --notarization-info $$NOTARIZE_UUID $(NOTARGS)" ;  \
-	 echo "+ $$CMD" ;						      \
-	 while true ; do						      \
-	   RET=`$$CMD` ;						      \
-	   STATUS=`echo "$$RET" | sed -n 's/^ *Status: *\(.*\)/\1/p'` ;	      \
-	   if [ "x$$STATUS" = 'xin progress' ]; then			      \
-	     echo " `date +%H:%M:%S` $$STATUS..." ;			      \
-	     sleep 15 ;							      \
-	   elif [ "x$$STATUS" = 'xsuccess' ]; then			      \
-	     echo "" ;							      \
-	     echo "$$RET" ;						      \
-	     echo "" ;							      \
-	     exit 0 ;							      \
-	   else								      \
-	     echo "" ;							      \
-	     echo "$$RET" ;						      \
-	     exit 1 ;							      \
-	   fi ;								      \
-	 done ;								      \
 
 staple::
 	@								      \
@@ -521,11 +540,6 @@ staple::
   set -x ;								      \
   xcrun stapler staple "$$DMG" ;					      \
   xcrun stapler validate "$$DMG" ;					      \
-
-notarization_history::
-	xcrun altool --notarization-history 0 $(NOTARGS)
-	@echo 'now do: xcrun altool $(NOTARGS) --notarization-info <UUID>' ;  \
-	echo 'and wget the LogFileURL' ;				      \
 
 
 # When debugging, sometimes I have to reset the preferences for all

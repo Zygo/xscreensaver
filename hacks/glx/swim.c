@@ -96,10 +96,11 @@ FishTransform(fishRec * fish)
 void
 WhalePilot(fishRec * fish, float whalespeed, Bool whaledir)
 {
+	float turn_speed_scale = 1.0 / (fish->loop_scale == 0.0 ? 1.0 : fish->loop_scale);
 
-	fish->phi = -20.0;
-	fish->theta = 0.0;
-	fish->psi += ((whaledir) ? -0.5 : 0.5);
+	fish->psi += turn_speed_scale * ((whaledir) ? -0.5 : 0.5); /* turning in a circle */
+	fish->phi = ((whaledir) ? -20.0 : 20.0); /* banking into the turn */
+	fish->theta = 0.0; /* not rising or falling */
 
 	fish->x += whalespeed * fish->v * cos(fish->psi / RAD) * cos(fish->theta / RAD);
 	fish->y += whalespeed * fish->v * sin(fish->psi / RAD) * cos(fish->theta / RAD);

@@ -11,6 +11,7 @@ headroom \- a twitchy head.
 [\-speed \fInumber\fP]
 [\-spin \fI[XYZ]\fP]
 [\-no-wander]
+[\-no-mask]
 [\-wireframe]
 [\-fps]
 .SH DESCRIPTION
@@ -42,6 +43,9 @@ Around which axes should the object spin?
 .TP 8
 .B \-wander | \-no-wander
 Whether the object should wander around the screen.
+.TP 8
+.B \-mask | \-no-mask
+Mask Headroom.
 .TP 8
 .B \-wireframe | \-no-wireframe
 Render in wireframe instead of solid.

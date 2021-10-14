@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -38,6 +38,11 @@
 
 #ifdef HAVE_IPHONE
 
+# if defined(TARGET_OS_TV) && !defined(HAVE_TVOS)
+   // We aren't receiving this from Xcode when compiling libjwxyz.a for tvOS.
+#  define HAVE_TVOS 1
+# endif
+
 @class XScreenSaverView;
 
 @protocol XScreenSaverViewDelegate
@@ -67,7 +72,9 @@
 # define BACKBUFFER_OPENGL
 
 @interface XScreenSaverView : ScreenSaverView
-# ifdef HAVE_IPHONE
+# if defined(HAVE_TVOS)
+			      <UIApplicationDelegate>
+# elif defined(HAVE_IPHONE)
 			      <UIAlertViewDelegate>
 # elif defined(USE_TOUCHBAR)
 			      <NSTouchBarDelegate>

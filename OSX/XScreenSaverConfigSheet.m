@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,7 +48,9 @@
 # define LABEL       NSTextField
 #endif // HAVE_IPHONE
 
-# if defined(HAVE_IPHONE) && (__IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0)
+# if defined(HAVE_IPHONE) && \
+     !defined(HAVE_TVOS) && \
+     (__IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0)
 #  define USE_WEBKIT
 # endif
 
@@ -60,7 +62,10 @@
 
 
 #undef LABEL_ABOVE_SLIDER
-#define USE_HTML_LABELS
+
+#ifndef HAVE_TVOS
+# define USE_HTML_LABELS
+#endif
 
 
 #pragma mark XML Parser
@@ -496,7 +501,19 @@ static char *anchorize (const char *url);
 {
   // Force clicked links to open in Safari, not in this window.
   if (type == UIWebViewNavigationTypeLinkClicked) {
-    [[UIApplication sharedApplication] openURL:[req URL]];
+    UIApplication *app = [UIApplication sharedApplication];
+    NSURL *url = [req URL];
+
+    if ([app respondsToSelector:
+              @selector(openURL:options:completionHandler:)]) {
+      [app openURL:url options:@{} completionHandler:nil];
+    } else {
+#     pragma clang diagnostic push   // "openURL deprecated in iOS 10"
+#     pragma clang diagnostic ignored "-Wdeprecated-declarations"
+      [app openURL:url];
+#     pragma clang diagnostic pop
+    }
+
     return NO;
   }
   return YES;
@@ -733,6 +750,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
 
 // Called when a slider is bonked.
 //
+# ifndef HAVE_TVOS
 - (void)sliderAction:(UISlider*)sender
 {
   if ([active_text_field canResignFirstResponder])
@@ -750,7 +768,10 @@ static void layout_group (NSView *group, BOOL horiz_p);
                : [NSNumber numberWithDouble: v])
     forKey:pref_key];
 }
+# endif // !HAVE_TVOS
 
+
+# ifndef HAVE_TVOS
 // Called when a checkbox/switch is bonked.
 //
 - (void)switchAction:(UISwitch*)sender
@@ -761,6 +782,8 @@ static void layout_group (NSView *group, BOOL horiz_p);
   NSString *v = ([sender isOn] ? @"true" : @"false");
   [[self controllerForKey:pref_key] setObject:v forKey:pref_key];
 }
+# endif // !HAVE_TVOS
+
 
 # ifdef USE_PICKER_VIEW
 // Called when a picker is bonked.
@@ -924,6 +947,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
     sval = [(NSNumber *) val stringValue];
   }
 
+# ifndef HAVE_TVOS
   if ([control isKindOfClass:[UISlider class]]) {
     sel = @selector(sliderAction:);
     // Hacky API. See comment in InvertedSlider.m.
@@ -934,6 +958,10 @@ static void layout_group (NSView *group, BOOL horiz_p);
   } else if ([control isKindOfClass:[UISwitch class]]) {
     sel = @selector(switchAction:);
     [(UISwitch *) control setOn: ((int) dval != 0)];
+# else  // HAVE_TVOS
+  if (0) {
+# endif // HAVE_TVOS
+
 # ifdef USE_PICKER_VIEW
   } else if ([control isKindOfClass:[UIPickerView class]]) {
     sel = 0;
@@ -1433,17 +1461,21 @@ hreffify (NSText *nstext)
 
   LABEL *lab = [self makeLabel:label];
   [self placeChild:lab on:parent];
+# ifndef HAVE_TVOS
   UISwitch *button = [[UISwitch alloc] initWithFrame:rect];
   [self placeChild:button on:parent right:YES];
+# endif // !HAVE_TVOS
 
 # endif // HAVE_IPHONE
   
+# ifndef HAVE_TVOS
   if (disabledp)
     [button setEnabled:NO];
   else
     [self bindSwitch:button cmdline:(arg_set ? arg_set : arg_unset)];
 
   [button release];
+# endif // !HAVE_TVOS
 }
 
 
@@ -1518,6 +1550,7 @@ hreffify (NSText *nstext)
     rect.origin.x = rect.origin.y = 0;    
     rect.size.width = 150;
     rect.size.height = 23;  // apparent min height for slider with ticks...
+# ifndef HAVE_TVOS
     InvertedSlider *slider =
       [[InvertedSlider alloc] initWithFrame:rect
                                    inverted: !!cvt
@@ -1548,6 +1581,7 @@ hreffify (NSText *nstext)
               (range == range2 &&  // we are showing the actual number of ticks
                !float_p)];         // and we want integer results
 # endif // !HAVE_IPHONE
+# endif // !HAVE_TVOS
 
     // #### Note: when the slider's range is large enough that we aren't
     //      showing all possible ticks, the slider's value is not constrained
@@ -1559,16 +1593,20 @@ hreffify (NSText *nstext)
       lab = [self makeLabel:label];
       [self placeChild:lab on:parent];
 # ifdef HAVE_IPHONE
+# ifndef HAVE_TVOS
       if (low_label) {
         CGFloat s = [NSFont systemFontSize] + 4;
         [lab setFont:[NSFont boldSystemFontOfSize:s]];
       }
+# endif // !HAVE_TVOS
 # endif
     }
     
     if (low_label) {
       lab = [self makeLabel:low_label];
-      [lab setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];      
+# ifndef HAVE_TVOS
+      [lab setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+# endif // !HAVE_TVOS
 # ifndef HAVE_IPHONE
       [lab setAlignment:1];  // right aligned
       rect = [lab frame];
@@ -1585,6 +1623,8 @@ hreffify (NSText *nstext)
 # endif // HAVE_IPHONE
      }
     
+# ifndef HAVE_TVOS
+
 # ifndef HAVE_IPHONE
     [self placeChild:slider on:parent right:(low_label ? YES : NO)];
 # else  // HAVE_IPHONE
@@ -1622,6 +1662,7 @@ hreffify (NSText *nstext)
 
     [self bindSwitch:slider cmdline:arg];
     [slider release];
+# endif // !HAVE_TVOS
     
 #ifndef HAVE_IPHONE  // On iPhone, we use sliders for all numeric values.
 
@@ -2025,7 +2066,9 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 #  ifndef USE_HTML_LABELS
 
   UILabel *lab = [self makeLabel:text];
+# ifndef HAVE_TVOS
   [lab setFont:[NSFont systemFontOfSize: [NSFont systemFontSize]]];
+# endif // !HAVE_TVOS
   hreffify (lab);
 
 #  else  // USE_HTML_LABELS
@@ -3542,6 +3585,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 }
 
 
+# ifndef HAVE_TVOS
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-implementations"
 - (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
@@ -3554,6 +3599,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 {
   return YES;
 }
+# endif // !HAVE_TVOS
+
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tv {
   // Number of vertically-stacked white boxes.
@@ -3754,6 +3801,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 
         CGRect r = [ctl frame];
 
+# ifndef HAVE_TVOS
         if ([ctl isKindOfClass:[UISwitch class]]) {	// Checkboxes.
           r.size.width = 80;  // Magic.
           r.origin.x = right_edge - r.size.width + 30;  // beats me
@@ -3761,7 +3809,9 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
           if (os_version < 7)  // checkboxes were wider on iOS 6.1
             r.origin.x -= 25;
 
-        } else {
+        } else
+# endif // !HAVE_TVOS
+        {
           r.origin.x = left_width;			// Text fields, etc.
           r.size.width = right_edge - r.origin.x;
         }

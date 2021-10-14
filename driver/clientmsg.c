@@ -36,59 +36,66 @@ error_handler (Display *dpy, XErrorEvent *error)
 Window
 find_screensaver_window (Display *dpy, char **version)
 {
-  int i;
-  Window root = RootWindowOfScreen (DefaultScreenOfDisplay (dpy));
-  Window root2, parent, *kids;
-  unsigned int nkids;
-  XErrorHandler old_handler;
+  int nscreens = ScreenCount (dpy);
+  int i, screen;
   Window ret = 0;
+  XErrorHandler old_handler;
 
   XSync (dpy, False);
   old_handler = XSetErrorHandler (error_handler);
 
-  if (version) *version = 0;
-
-  if (! XQueryTree (dpy, root, &root2, &parent, &kids, &nkids))
-    abort ();
-  if (root != root2)
-    abort ();
-  if (parent)
-    abort ();
-  if (! (kids && nkids))
-    goto DONE;
-  for (i = 0; i < nkids; i++)
+  for (screen = 0; screen < nscreens; screen++)
     {
-      Atom type;
-      int format;
-      unsigned long nitems, bytesafter;
-      unsigned char *v = 0;
-      int status;
+      Window root = RootWindow (dpy, screen);
+      Window root2, parent, *kids;
+      unsigned int nkids;
 
-      /* We're walking the list of root-level windows and trying to find
-         the one that has a particular property on it.  We need to trap
-         BadWindows errors while doing this, because it's possible that
-         some random window might get deleted in the meantime.  (That
-         window won't have been the one we're looking for.)
-       */
-      status = XGetWindowProperty (dpy, kids[i],
-                                   XA_SCREENSAVER_VERSION,
-                                   0, 200, False, XA_STRING,
-                                   &type, &format, &nitems, &bytesafter,
-                                   &v);
-      if (status == Success && type != None)
-	{
-          ret = kids[i];
-	  if (version)
-	    *version = (char *) v;
-          else
-            XFree (v);
-          goto DONE;
-	}
-      if (v) XFree (v);
+      if (version) *version = 0;
+
+      if (! XQueryTree (dpy, root, &root2, &parent, &kids, &nkids))
+        abort ();
+      if (root != root2)
+        abort ();
+      if (parent)
+        abort ();
+      if (! (kids && nkids))
+        goto DONE;
+      for (i = 0; i < nkids; i++)
+        {
+          Atom type;
+          int format;
+          unsigned long nitems, bytesafter;
+          unsigned char *v = 0;
+          int status;
+
+          /* We're walking the list of root-level windows and trying to find
+             the one that has a particular property on it.  We need to trap
+             BadWindows errors while doing this, because it's possible that
+             some random window might get deleted in the meantime.  (That
+             window won't have been the one we're looking for.)
+           */
+          status = XGetWindowProperty (dpy, kids[i],
+                                       XA_SCREENSAVER_VERSION,
+                                       0, 200, False, XA_STRING,
+                                       &type, &format, &nitems, &bytesafter,
+                                       &v);
+          if (status == Success && type != None)
+            {
+              ret = kids[i];
+              if (version)
+                *version = (char *) v;
+              else
+                XFree (v);
+              goto DONE;
+            }
+          if (v) XFree (v);
+
+        DONE:
+          if (ret) break;
+        }
+      if (kids) XFree (kids);
     }
 
- DONE:
-  if (kids) XFree (kids);
   XSetErrorHandler (old_handler);
   return ret;
 }

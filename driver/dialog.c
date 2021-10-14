@@ -79,6 +79,10 @@
 #include "font-retry.h"
 #include "prefs.h"
 #include "usleep.h"
+#include "utf8wc.h"
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
 
 extern Bool debug_p;
 
@@ -193,6 +197,7 @@ struct window_state {
   char *date_format;
   char *kbd_layout_label;
   char *newlogin_cmd;
+  const char *asterisk_utf8;
 
   /* Resources for fonts and colors */
   XftDraw *xftdraw;
@@ -675,32 +680,72 @@ get_int (window_state *ws, const char *name, const char *rclass)
 }
 
 
+static const char *
+choose_asterisk (window_state *ws)
+{
+  static char picked[8];
+  const unsigned long candidates[] = { 0x25CF,  /* Black Circle */
+                                       0x2022,  /* Bullet */
+                                       0x2731,  /* Heavy Asterisk */
+                                       '*' };   /* Ἀστερίσκος */
+  const unsigned long *uc = candidates;
+  int i, L;
+  for (i = 0; i < countof (candidates) - 1; i++)
+    {
+      if (XftCharExists (ws->dpy, ws->label_font, (FcChar32) *uc))
+        break;
+      if (debug_p)
+        fprintf (stderr, "%s: char U+%0lX does not exist\n", blurb(), *uc);
+      uc++;
+    }
+
+  L = utf8_encode (*uc, picked, sizeof (picked) - 1);
+  picked[L] = 0;
+
+  return picked;
+}
+
+
 /* Decide where on the X11 screen to place the dialog.
    This is complicated because, in the face of RANDR and Xinerama, we want
    to center it on a *monitor*, not on what X calls a 'Screen'.  So get the
    monitor state, then figure out which one of those the mouse is in.
  */
 static void
-splash_pick_window_position (Display *dpy, Position *xP, Position *yP)
+splash_pick_window_position (Display *dpy, Position *xP, Position *yP,
+                             Screen **screenP)
 {
-  Window pointer_root, pointer_child;
-  int root_x = 0, root_y = 0, win_x, win_y;
-  unsigned int mask;
+  Screen *mouse_screen = DefaultScreenOfDisplay (dpy);
+  int root_x = 0, root_y = 0;
+  int nscreens = ScreenCount (dpy);
+  int i, screen;
   monitor **monitors;
   monitor *m = 0;
-  int i;
 
-  XQueryPointer (dpy, RootWindow (dpy, 0),
-                 &pointer_root, &pointer_child,
-                 &root_x, &root_y, &win_x, &win_y, &mask);
+  /* Find the mouse screen, and position on it. */
+  for (screen = 0; screen < nscreens; screen++)
+    {
+      Window pointer_root, pointer_child;
+      int win_x, win_y;
+      unsigned int mask;
+      int status = XQueryPointer (dpy, RootWindow (dpy, screen),
+                                  &pointer_root, &pointer_child,
+                                  &root_x, &root_y, &win_x, &win_y, &mask);
+      if (status != None)
+        {
+          mouse_screen = ScreenOfDisplay (dpy, screen);
+          break;
+        }
+    }
 
-  monitors = scan_monitors (dpy);
+  monitors = scan_monitors (dpy);  /* This scans all Screens */
   if (!monitors || !*monitors) abort();
 
   for (i = 0; monitors[i]; i++)
     {
       monitor *m0 = monitors[i];
       if (m0->sanity == S_SANE &&
+          mouse_screen == m0->screen &&
           root_x >= m0->x &&
           root_y >= m0->y &&
           root_x < m0->x + m0->width &&
@@ -726,6 +771,7 @@ splash_pick_window_position (Display *dpy, Position *xP, Position *yP)
 
   *xP = m->x + m->width/2;
   *yP = m->y + m->height/2;
+  *screenP = mouse_screen;
   
   free_monitors (monitors);
 }
@@ -912,7 +958,6 @@ static window_state *
 window_init (Widget root_widget, Bool splash_p)
 {
   Display *dpy = XtDisplay (root_widget);
-  Screen *screen  = XtScreen (root_widget);
   window_state *ws;
   Bool resource_error_p = False;
 
@@ -921,10 +966,13 @@ window_init (Widget root_widget, Bool splash_p)
 
   ws->splash_p = splash_p;
   ws->dpy = dpy;
-  ws->screen = screen;
   ws->app = XtWidgetToApplicationContext (root_widget);
-  ws->cmap = XCreateColormap (dpy, RootWindowOfScreen (screen), /* Old skool */
-                              DefaultVisualOfScreen (screen),
+
+  splash_pick_window_position (ws->dpy, &ws->cx, &ws->cy, &ws->screen);
+
+  ws->cmap = XCreateColormap (dpy,
+                              RootWindowOfScreen (ws->screen), /* Old skool */
+                              DefaultVisualOfScreen (ws->screen),
                               AllocNone);
 
   {
@@ -981,6 +1029,8 @@ window_init (Widget root_widget, Bool splash_p)
   ws->label_font    = get_font (ws, "labelFont");
   ws->date_font     = get_font (ws, "dateFont");
   ws->hostname_font = get_font (ws, "unameFont");
+
+  ws->asterisk_utf8 = choose_asterisk (ws);
   
   ws->foreground = get_color (ws, "foreground", "Foreground");
   ws->background = get_color (ws, "background", "Background");
@@ -1008,8 +1058,8 @@ window_init (Widget root_widget, Bool splash_p)
   if (resource_error_p)
     {
       /* Make sure the error messages show up. */
-      ws->foreground = BlackPixelOfScreen (screen);
-      ws->background = WhitePixelOfScreen (screen);
+      ws->foreground = BlackPixelOfScreen (ws->screen);
+      ws->background = WhitePixelOfScreen (ws->screen);
     }
 
   ws->preferred_logo_width  = get_int (ws, "logo.width",  "Logo.Width");
@@ -1046,7 +1096,7 @@ window_init (Widget root_widget, Bool splash_p)
     Window root = RootWindowOfScreen(ws->screen);
     Visual *visual = DefaultVisualOfScreen (ws->screen);
     int logo_size = (ws->heading_font->ascent > 24 ? 2 : 1);
-    ws->logo_pixmap = xscreensaver_logo (screen, visual, root, ws->cmap,
+    ws->logo_pixmap = xscreensaver_logo (ws->screen, visual, root, ws->cmap,
                                          ws->background, 
                                          &ws->logo_pixels, &ws->logo_npixels,
                                          &ws->logo_clipmask, logo_size);
@@ -1054,8 +1104,6 @@ window_init (Widget root_widget, Bool splash_p)
     XGetGeometry (dpy, ws->logo_pixmap, &root, &x, &y,
                   &ws->logo_width, &ws->logo_height, &bw, &d);
   }
-
-  splash_pick_window_position (ws->dpy, &ws->cx, &ws->cy);
 
   ws->x = ws->y = 0;
   create_window (ws, 1, 1);
@@ -1218,7 +1266,7 @@ static void
 window_draw (window_state *ws)
 {
   Display *dpy = ws->dpy;
-  Screen *screen = DefaultScreenOfDisplay (dpy);
+  Screen *screen = ws->screen;
   Window root = RootWindowOfScreen (screen);
   Visual *visual = DefaultVisualOfScreen(screen);
   int depth = DefaultDepthOfScreen (screen);
@@ -1759,7 +1807,7 @@ destroy_window (window_state *ws)
   XftColorFree (ws->dpy, DefaultVisualOfScreen (ws->screen),
                 DefaultColormapOfScreen (ws->screen),
                 &ws->xft_error_foreground);
-  XftDrawDestroy (ws->xftdraw);
+  if (ws->xftdraw) XftDrawDestroy (ws->xftdraw);
 
 # if 0  /* screw this, we're exiting anyway */
   if (ws->foreground != black && ws->foreground != white)
@@ -2001,9 +2049,7 @@ handle_keypress (window_state *ws, XKeyEvent *event)
     *out = 0;
     for (i = 0; i < MAX_PASSWD_CHARS && ws->plaintext_passwd_char_size[i]; i++)
       {
-        const char *b = /* "\xE2\x80\xA2"; */	/* U+2022 Bullet */
-			   "\xe2\x97\x8f";	/* U+25CF Black Circle */
-        strcat (out, b);
+        strcat (out, ws->asterisk_utf8);
         out += strlen(out);
       }
   }
@@ -2239,7 +2285,12 @@ gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
         break;
       }
 
-      /* Since MappingNotify doesn't work, we have to do this crap instead. */
+      /* Since MappingNotify doesn't work, we have to do this crap instead.
+         Probably some of these events could be ignored, as it seems that
+         any.xkb_type == XkbStateNotify comes in every time a modifier key is
+         touched.  What event comes in when there is a keyboard layout change,
+         the only thing we actually care about?
+       */
       if (xev.xany.type == ws->xkb_opcode)
         {
           XkbEvent *xkb = (XkbEvent *) &xev;

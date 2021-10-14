@@ -39,7 +39,7 @@ BEGIN { eval 'use Text::Wrap qw(wrap);' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.62 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.63 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -430,15 +430,19 @@ sub output() {
     # we're running on.  This info also exists in various /proc/ files,
     # but if /proc/ exists, lscpu probably exists as well.
     #
+    $ENV{LANGUAGE} = 'en_US';  # If lscpu prints Japanese, we don't match.
     my $cpu = `lscpu 2>&-`;
     if ($cpu) {
       my ($model) = ($cpu =~ m/^Model name:\s*(.*)$/mi);
      #my ($arch)  = ($cpu =~ m/^Architecture:\s*(.*)$/mi);
       my ($speed) = ($cpu =~ m/^CPU max MHz:\s*(.*)$/mi);
          ($speed) = ($cpu =~ m/^CPU MHz:\s*(.*)$/mi) unless $speed;
-      if ($speed && $speed >= 1000) {
+      my ($speed_ghz) = ($cpu =~ m/^Model name.*CPU @ \s*(.*)GHz$/mi);
+      if ($speed_ghz) {
+        $speed = sprintf("%.1fGHz", $speed_ghz);
+      } elsif ($speed && $speed >= 1000) {
         $speed = sprintf("%.1fGHz", $speed/1000);
-      } else {
+      } elsif ($speed) {
         $speed = sprintf("%.1fMHz", $speed);
       }
 

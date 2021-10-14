@@ -367,6 +367,7 @@ www::
     OLDEST=`ls xscreensaver*.$$EXT | 					    \
       fgrep -v 5.14 |							    \
       fgrep -v 5.34 |							    \
+      fgrep -v 6.00 |							    \
       head -n 1` ;							    \
     /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
     read line;								    \
@@ -415,7 +416,7 @@ count::
 #	rsync -vax . cerebrum:src/xscreensaver/ \
 
 cerebrum::
-	rsync -vax . pi@10.0.1.10:xscreensaver/ \
+	rsync -vax . pi@10.0.1.46:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \
@@ -430,6 +431,9 @@ cerebrum::
 	--include xscreensaver-getimage-file \
 	--include xscreensaver-getimage-video \
 	--include xscreensaver-text \
+	--exclude xscreensaver-5.45 \
+	--exclude xscreensaver-6.00 \
+	--exclude xscreensaver-6.01 \
 	--exclude '*~' \
 	--include '*.asm' \
 	--include '*.c' \
@@ -449,6 +453,10 @@ cerebrum::
 	--include '*.otf' \
 	--include '*.ui' \
 	--include 'configure*' \
+	--include 'config.sub' \
+	--include 'config.guess' \
+	--include 'install-sh' \
+	--include 'bin2c' \
 	--include '*/' \
 	--exclude '*'
 

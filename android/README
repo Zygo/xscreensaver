@@ -95,6 +95,16 @@ us know:
     There are identical copies of gradle and gradlew in both
     "android/" and in "android/xscreensaver/".  I don't know why.
 
+    The latest Gradle requires Java 11.  Because why wouldn't it, a
+    build system needs the bleeding edge, right? That's totally normal.
+    To download Java from Oracle, they want you to make an account and
+    verify your email address, but if you don't want to go through that
+    nonsense (because fuck those guys) you can find a mirror of it at
+    https://www.techspot.com/downloads/5553-java-jdk.html -- but make
+    sure that you verify that download with "shasum -a 256" against
+    https://www.oracle.com/webfolder/s/digest/11-0-10-checksum.html so
+    that you don't get a trojan.
+
 
 ############################################################################
 #
@@ -226,16 +236,16 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
   - Retrieving GL_MODELVIEW_MATRIX doesn't seem to work.  Affects:
 
       - discoball (back faces not masked out, billboarded lights)
-      - energystream (blank)
-      - glsnake (blank)
+      - energystream -- blank in emulator, works on real devices?
+      - glsnake -- blank in emulator, works on real devices?
       - molecule (billboarded atom labels)
-      - raverhoop (blank, billboarded lights)
+      - raverhoop -- blank in emulator, works on real devices?
       - starwars (blank)
       - winduprobot (billboarded word bubbles)
 
  - Pixmap masks don't work.  Affects:
 
-      - barcode (everything)
+      - barcode -- fails in emulator, works on real devices?
       - bsod (logos and such)
       - noseguy (character display as rectangle)
       - pacman (characters display as rectangles)
@@ -277,7 +287,7 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
 
   - Undiagnosed problems:
 
-      - antinspect has some kind of masking problem.
+      - antinspect has some kind of masking problem. Maybe only in emulator?
       - cityflow colors and shading are all wrong.
       - discoball doesn't draw rays.
       - endgame is insanely slow.

@@ -605,13 +605,21 @@ apply_changes_and_save (Widget widget)
       /* Something was changed -- store results into the struct,
          and write the file.
        */
+      int status;
       free (p->screenhacks[which]->visual);
       free (p->screenhacks[which]->command);
       p->screenhacks[which]->visual = strdup (visual);
       p->screenhacks[which]->command = strdup (command);
       p->screenhacks[which]->enabled_p = enabled_p;
 
-      return demo_write_init_file (widget, p);
+      status = demo_write_init_file (widget, p);
+
+      /* Tell the xscreensaver daemon to wake up and reload the init file,
+         in case the timeout has changed.  Without this, it would wait
+         until the *old* timeout had expired before reloading. */
+      xscreensaver_command (XtDisplay (widget), XA_DEACTIVATE, 0, 0, 0);
+
+      return status;
     }
 
   /* No changes made */
