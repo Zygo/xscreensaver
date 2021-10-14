@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="slidescreen" _label="Slide Screen">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=uKNE4xCdlno"/>
+
+  <hgroup>
+   <vgroup>
+   <number id="delay" type="slider" arg="-delay %"
+           _label="Frame rate" _low-label="Low" _high-label="High"
+           low="0" high="100000" default="50000"
+           convert="invert"/>
+
+   <number id="delay2" type="slider" arg="-delay2 %"
+          _label="Pause" _low-label="Short" _high-label="Long"
+          low="0" high="2000000" default="1000000"/>
+
+   <number id="duration" type="slider" arg="-duration %"
+           _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+           low="10" high="600" default="120"/>
+
+    <xscreensaver-image />
+
+   </vgroup>
+   <vgroup>
+   <number id="increment" type="slider" arg="-increment %"
+           _label="Slide speed" _low-label="Slow" _high-label="Fast"
+           low="1" high="30" default="10"/>
+
+   <number id="grid-size" type="slider" arg="-grid-size %"
+          _label="Cell size" _low-label="Small" _high-label="Large" 
+          low="12" high="500" default="70"/>
+
+   <number id="ibw" type="spinbutton" arg="-ibw %"
+          _label="Gutter size" low="0" high="50" default="4"/>
+
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   <xscreensaver-updater />
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+A variant on a "fifteen puzzle", operating on the screen or an image.
+It divides the image into a grid and randomly shuffles the squares.
+
+https://en.wikipedia.org/wiki/Fifteen_puzzle
+
+Written by Jamie Zawinski; 1994.
+  </_description>
+</screensaver>

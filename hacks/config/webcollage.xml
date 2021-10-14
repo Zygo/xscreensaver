@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="webcollage" _label="Web Collage">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=u8esWjcR4eI"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Delay between images" _low-label="None" _high-label="30 secs"
+            low="0" high="30" default="2"/>
+
+    <number id="timeout" type="slider" arg="-timeout %"
+            _label="Network timeout" _low-label="2 secs" _high-label="2 min"
+            low="2" high="120" default="30"/>
+   </vgroup>
+   <vgroup>
+    <number id="opacity" type="slider" arg="-opacity %"
+            _label="Image opacity" _low-label="Transparent" _high-label="Opaque"
+            low="0.1" high="1.0" default="0.85"/>
+
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+  </hgroup>
+
+<!--
+  <string id="filter"  _label="Per-image filter program" arg="-filter %"/>
+  <string id="filter2" _label="Overall filter program" arg="-filter2 %"/>
+  <file id="dictionary" _label="Dictionary file" arg="-dictionary %"/>
+  <file id="dir" _label="Image directory" arg="-directory %"/>
+ -->
+
+  <xscreensaver-updater />
+
+  <_description>
+This is what the Internet looks like.
+
+This creates collages out of random images from the World Wide Web.
+It finds the images by feeding random words into various search
+engines, and pulling images (or sections of images) out of the pages
+returned.
+
+WARNING: THE INTERNET SOMETIMES CONTAINS PORNOGRAPHY.
+
+The Internet being what it is, absolutely anything might show up in the
+collage including -- quite possibly -- pornography, or even nudity.
+Please act accordingly.
+
+See also https://www.jwz.org/webcollage/
+
+Written by Jamie Zawinski; 1999.
+  </_description>
+</screensaver>

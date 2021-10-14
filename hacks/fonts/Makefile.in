@@ -1,0 +1,96 @@
+# hacks/fonts/Makefile.in --- xscreensaver, Copyright © 2021 Jamie Zawinski.
+# the `../configure' script generates `hacks/fonts/Makefile' from this file.
+
+@SET_MAKE@
+srcdir		= @srcdir@
+VPATH		= ${srcdir}
+top_srcdir	= @top_srcdir@
+top_builddir	= ..
+
+install_prefix	=
+prefix		= @prefix@
+datarootdir	= @datarootdir@
+datadir		= @datadir@
+FONT_DIR	= @FONT_DIR@
+
+RM		= rm -f
+
+STAR		= *
+TARFILES	= Makefile.in \
+		  $(STAR).ttf \
+		  $(STAR).otf
+
+INSTALL		= @INSTALL@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
+
+# "Classic Console" is a reproduction of the MS-DOS 8x16 VGA font by
+# Deejayy. Freely redistributable. http://webdraft.hu/fonts/classic-console/
+# It us used by BSOD.
+#
+# "Gallant" was the original Solaris 2.x console font.  It is used by BSOD.
+#
+# "Luxi Mono" was the Red Hat console font; it is very similar to "Gallant".
+# Also used by BSOD.
+#
+# "OCR-A Std" is the ANSI Standard Optical Character Recognition font,
+# ANSI X3.17-1981 / ISO 1073-1:1976.  It is used by Esper, MemScroller,
+# Carousel and Photopile.
+#
+# "Special Elite Regular" is a typewriter font by Astigmatic One Eye
+# Typographic Institute, Brian J. Bonislawsky.  Apache 2.0 license.
+# https://www.1001fonts.com/special-elite-font.html
+# Used by XJack.
+#
+FONTS		= clacon.ttf \
+		  gallant12x22.ttf \
+		  luximr.ttf \
+		  OCRAStd.otf \
+		  SpecialElite.ttf
+
+default: all
+
+all:
+clean:
+distclean:: clean
+	-rm -f Makefile TAGS *~ "#"*
+
+list_tarfiles:
+	@find $(TARFILES) -type f -print | sort
+
+install:: install-fonts
+install-fonts:
+	@if [ -z "$(FONT_DIR)" ]; then					\
+	   echo "not installing fonts" ;				\
+	 else								\
+	   dest="$(install_prefix)$(FONT_DIR)" ;			\
+	   if [ ! -d "$$dest" ]; then					\
+	     echo $(INSTALL_DIRS) "$$dest" ;				\
+		  $(INSTALL_DIRS) "$$dest" ;				\
+	   fi ;								\
+	   for f in $(FONTS) ; do					\
+	     echo $(INSTALL_DATA) $$f $$dest/$$f ;			\
+		  $(INSTALL_DATA) $$f $$dest/$$f ;			\
+	   done ;							\
+	 fi
+
+uninstall:: uninstall-fonts
+uninstall-fonts:
+	@if ! [ -z "$(FONT_DIR)" ]; then				\
+	   dest="$(install_prefix)$(FONT_DIR)" ;			\
+	   for f in $(FONTS) ; do					\
+	     echo $(RM) $$dest/$$f ;					\
+		  $(RM) $$dest/$$f ;					\
+	   done ;							\
+	   rmdir "$(install_prefix)$(FONT_DIR)" ;			\
+	   exit 0 ;							\
+	 fi
+
+install-program:
+install-man:
+install-strip:
+uninstall-program:
+uninstall-man:
+depend:
+distdepend:
+tags:

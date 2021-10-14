@@ -1,0 +1,181 @@
+'\" t
+.\" ** The above line should force tbl to be used as a preprocessor **
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+juggle \- juggling man screen saver.
+.SH SYNOPSIS
+.B juggle
+[\-display host:display.screen ]
+[\-root ]
+[\-window ]
+[\-mono ]
+[\-install | \-noinstall ]
+[\-visual visual ]
+[\-window\-id id ]
+[\-pattern pattern ]
+[\-tail number ]
+[\-real | \-no\-real ]
+[\-describe | \-no\-describe ]
+[\-balls | \-no\-balls ]
+[\-clubs | \-no\-clubs ]
+[\-torches | \-no\-torches ]
+[\-knives | \-no\-knives ]
+[\-rings | \-no\-rings ]
+[\-bballs | \-no\-bballs ]
+[\-count count ]
+[\-cycles cycles ]
+[\-delay delay ]
+[\-ncolors ncolors ]
+[\-fps]
+.SH DESCRIPTION
+Draws a stick-man juggling various collections of objects.
+.SH OPTIONS
+.I juggle
+accepts the following options:
+.TP 8
+.B \-display host:display.screen
+X11 display to use.  Overrides
+.B DISPLAY
+environment variable.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-window
+Draw on a newly-created X window.  This is the default.
+.TP 8
+.B \-mono
+Draw in monochrome.
+.TP 8
+.B \-install | \-noinstall
+Turn on/off installing colormap.
+.TP 8
+.B \-visual visual
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window\-id id
+Draw on an already existing X window.
+.TP 8
+.B \-pattern\ \(dq pattern \(dq
+Specify juggling pattern in annotated
+.B site-swap
+notation.  In 
+.B site-swap
+notation, the "height" of each throw is given.  E.g., "3" is the height
+needed to juggle a 3\-Cascade.  Note that these sequences need to be
+chosen carefully, to avoid collisions.
+
+Annotations indicate relative hand movements or tricks:
+.TS
+cb l.
+\&\-	Inside throw (default)
++	Outside throw
+\&=	Cross Throw
+&	Cross Catch
+x	Cross Throw and Catch
+\&_	Bounce
+.TE
+.TP 8
+.B \-pattern\ \(dq[ pattern ]\(dq
+Specify juggling pattern in annotated
+.B Adam
+notation.  Adam notation is a little harder to visualize.  Each
+integer
+.B n
+represents a cyclic permutation of (0...n).  The equivalent
+.B site-swap
+value is determined by calculating how many of the permutations it
+takes to get back to the identity.  The largest number used is the
+same as the number of objects in the pattern.  The advantage of Adam
+notation is that these sequences do not need to be chosen carefully,
+since all possible sequences are juggle-able.  Annotations are the same
+as in
+.B site-swap
+notation.
+
+For example, both of these describe a 3\-Shower:
+.IP
+.B \-pattern\ "+5 1"
+.IP
+.B \-pattern\ "[+3 1]"
+
+For further examples, see the
+.B portfolio
+list in the source code.
+.TP 8
+.B \-tail number
+Minimum Trail Length.  0 \- 100.  Default: 1.  Objects may override
+this, for example flaming torches always leave a trail.
+.TP 8
+.BR \-real | \-no\-real
+Turn on/off real-time juggling.
+.B Deprecated.
+There should be no need to turn off real-time juggling, even on slow
+systems.  Adjust speed using
+.B \-count
+above.
+.TP 8
+.BR \-describe | \-no\-describe
+Turn on/off pattern descriptions.
+.TP 8 
+.BR \-balls | \-no\-balls
+Turn on/off Balls.
+.TP 8
+.BR \-clubs | \-no\-clubs
+Turn on/off Clubs.
+.TP 8
+.BR \-torches | \-no\-torches
+Turn on/off Flaming Torches.
+.TP 8
+.BR \-knives | \-no\-knives
+Turn on/off Knives.
+.TP 8
+.BR \-rings | \-no\-rings
+Turn on/off Rings.
+.TP 8
+.BR \-bballs | \-no\-bballs
+Turn on/off Bowling Balls.
+.TP 8
+.B \-count number
+Speed. 50 \- 1000.  Default: 200.  This determines the expected time
+interval between a throw and the next catch, in milliseconds.
+.TP 8
+.B \-cycles number
+Performance Length. 50 \- 1000.  Default: 1000.  Setting this smaller
+will force the juggler to switch patterns (and objects) more often.
+.TP 8
+.B \-delay delay
+Additional delay between frames, in microseconds.  Default: 10000.
+.B Deprecated.
+Adjust speed using
+.BR \-count .
+.TP 8
+.B \-ncolors ncolors
+Maximum number of colors to use.  Default: 32.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1996,2000,2002,2004 by Tim Auckland.  Permission to
+use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided
+that the above copyright notice appear in all copies and that both
+that copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+.SH AUTHOR
+Tim Auckland.

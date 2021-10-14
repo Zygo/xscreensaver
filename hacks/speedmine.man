@@ -1,0 +1,208 @@
+.TH XScreenSaver 1 "23-Apr-01" "X Version 11"
+.SH NAME
+speedmine \- simulates speeding down a rocky mineshaft, or a funky dancing worm
+.SH SYNOPSIS
+.B speedmine 
+[\-display \fIhost:display.screen\fP] [\-root] [\-window]
+[\-install] [\-noinstall] [\-visual \fIvisual\fP] [\-wire] [\-nowire]
+[\-worm]
+[\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-darkground \fIcolor\fP] [\-lightground \fIcolor\fP] [\-tunnelend \fIcolor\fP] [\-delay \fImicroseconds\fP] [\-maxspeed \fInumber\fP] [\-thrust \fInumber\fP] [\-gravity \fInumber\fP] [\-vertigo \fInumber\fP] [\-terrain] [\-noterrain] [\-smoothness \fInumber\fP] [\-curviness \fInumber\fP] [\-twistiness \fInumber\fP] [\-widening] [\-nowidening] [\-bumps] [\-nobumps] [\-bonuses] [\-crosshair] [\-nocrosshair] [\-psychedelic] [\-nopsychedelic]
+[\-fps]
+.SH DESCRIPTION
+.TP 8
+Speedmine!
+ 
+Down the speedmine, you'll find speed
+
+to satisfy your moving needs;
+
+So if you're looking for a blast
+
+then hit the speedmine, really fast.
+.PP
+Speedworm loves you.
+ 
+Speedworm likes to bump and grind
+
+and chase her tail, and dance around
+
+she really is a funky friend;
+
+she's made of speed from end to end.
+.PP
+You can configure stuff
+either with command-line options or X resources.
+.SH OPTIONS
+.TP 8
+.B \-display \fIhost:display.screen\fP
+Specifies which X display we should use (see the section DISPLAY NAMES in
+.BR X (1)
+for more information about this option).
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-noinstall
+Don't install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual
+class, or the id number (decimal or hex) of a specific visual.
+Possible choices include
+
+.RS
+default, best, mono, monochrome, gray, grey, color, staticgray, staticcolor, 
+truecolor, grayscale, greyscale, pseudocolor, directcolor, \fInumber\fP
+
+If a decimal or hexadecimal number is used, 
+.BR XGetVisualInfo (3X)
+is consulted to obtain the required visual.
+.RE
+.TP 8
+.B \-worm
+Be a happy spastic worm instead of a tunnel.
+.TP 8
+.B \-wire
+Specifies that the tunnel/worm should always be rendered in wireframe style.
+.TP 8
+.B \-nowire
+Specifies that the tunnel/worm should be rendered normally. Note that 
+tunnel rendering may still temporarily switch to wireframe style when 
+a wireframe bonus is hit, if
+.B bonuses
+are enabled.
+.TP 8
+.B \-foreground \fIcolor\fP
+Specifies the default foreground color.
+.TP 8
+.B \-background \fIcolor\fP
+Specifies the default background color.
+.TP 8
+.B \-darkground \fIcolor\fP
+Specifies the color of the darkest portions of the ground (or the
+worm's belly.)  The ground/belly is colored by a gradient between
+.B darkground
+and
+.B lightground.
+.TP 8
+.B \-lightground \fIcolor\fP
+Specifies the color of the lightest portions of the ground/belly. 
+The ground/belly is colored by a gradient between
+.B darkground
+and
+.B lightground.
+.TP 8
+.B \-tunnelend \fIcolor\fP
+Specifies the color of the light at the end of the tunnel.
+.TP 8
+.B \-delay \fImicroseconds\fP
+Specifies the delay between drawing successive frames. If you do not specify 
+.BR -sync ,
+some X servers may batch up several drawing operations together,
+producing a less smooth effect.   This is more likely to happen 
+in monochrome mode (on monochrome servers or when 
+.B \-mono 
+is specified).
+.TP 8
+.B -maxspeed \fInumber\fP
+Specifies an upper bound on the speed of normal movement. This does not
+affect the speed that may be attained when hitting a speed bonus.
+.TP 8
+.B -thrust \fInumber\fP
+Specifies the thrust constantly applied. Positive numbers indicate a forwards
+thrust, negative numbers indicate a backwards thrust.
+.TP 8
+.B -gravity \fInumber\fP
+Specifies the effect of gravity. Larger numbers will increase acceleration
+downhill and decrease acceleration uphill.
+.TP 8
+.B -vertigo \fInumber\fP
+Specifies to what level the demo should accentuate the curvature and
+windiness of the tunnel or worm.
+.TP 8
+.B -terrain
+Continuously generate a fractal terrain to simulate the rockiness of the
+tunnel walls, or the texture of the worm's skin.
+.TP 8
+.B -noterrain
+Do not generate terrain. When this option is set, all surfaces are flat.
+.TP 8
+.B -smoothness \fInumber\fP
+When
+.BR -terrain
+is set, specifies how smooth the walls or skin are.
+.TP 8
+.B -curviness \fInumber\fP
+Controls how much the generated tunnel (or worm) should curve left 
+and right, and dip up and down.
+.TP 8
+.B -twistiness \fInumber\fP
+Controls how much the generated tunnel (or worm) twists around itself.
+.TP 8
+.B -widening
+Specifies that the generated tunnel (or worm) may vary in width.
+.TP 8
+.B -nowidening
+Specifies that the average width should be kept constant.
+.TP 8
+.B -bumps
+Indicates that the simulation should take the bumpiness of the ground into
+account and allow the animation to shake and rattle when travelling over
+rough ground.  Or that the worm should be allowed to bump around and 
+shake her booty.
+.TP 8
+.B -nobumps
+Indicates that the bumpiness of the ground should be ignored, such that the
+simulation will glide through the tunnel.  Or that the worm should calm
+down and behave herself.
+.TP 8
+.B -bonuses
+Indicates that the demo should include bonus events. These include speed
+bonuses, spins, and changes of viewpoint and rendering style.
+.TP 8
+.B -nobonuses
+Indicates that bonuses should not be included in the demo.
+.TP 8
+.B -crosshair
+Specifies that a gaming style crosshair be drawn on the simulation. This
+serves little purpose but may make hardcore gamers feel more comfortable.
+.TP 8
+.B -nocrosshair
+Specifies that no crosshair be drawn.
+.TP 8
+.B -psychedelic
+Specifies that a psychedelic colormap should be generated. When this is
+set, the walls and ground of the tunnel are drawn in an often changing
+rainbow of colours.
+.TP 8
+.B -nopsychedelic
+Specifies that a normal colormap should be used, with muted walls and a
+grey road.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH WARNING
+Speedworm is a trained professional. Do not try this at home.
+
+Prolonged viewing of this demo with
+.B maxspeed
+and
+.B vertigo
+above the defaults may have short-term psychological side effects including
+hyperactivity and attention deficiency.
+.SH COPYRIGHT
+Copyright \(co 2001, Conrad Parker.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Conrad Parker <conrad@deephackmode.org>, April 2001.

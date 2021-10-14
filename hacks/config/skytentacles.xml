@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="skytentacles" _label="Sky Tentacles" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=iCjtXUSQv1A"/>
+
+ <hgroup>
+  <vgroup>
+  <number id="count" type="slider" arg="-count %"
+          _label="Tentacles" _low-label="1" _high-label="20"
+          low="1" high="20" default="9"/>
+
+   <number id="length" type="slider" arg="-length %"
+           _label="Length" _low-label="Short" _high-label="Long"
+           low="1.0" high="20.0" default="9.0"/>
+
+   <number id="thickness" type="slider" arg="-thickness %"
+           _label="Thickness" _low-label="Thin" _high-label="Thick"
+           low="0.1" high="5.0" default="1.0"/>
+
+   <number id="flexibility" type="slider" arg="-flexibility %"
+           _label="Flexibility" _low-label="Low" _high-label="High"
+           low="0.1" high="1.0" default="0.35"/>
+
+   <number id="wiggliness" type="slider" arg="-wiggliness %"
+           _label="Wiggliness" _low-label="Low" _high-label="High"
+           low="0.1" high="1.0" default="0.35"/>
+
+  </vgroup>
+
+  <vgroup>
+   <number id="delay" type="slider" arg="-delay %"
+           _label="Frame rate" _low-label="Slow" _high-label="Fast"
+           low="0" high="100000" default="30000"
+           convert="invert"/>
+
+   <number id="speed" type="slider" arg="-speed %"
+           _label="Speed" _low-label="Slow" _high-label="Fast"
+           low="0.1" high="8.0" default="1.0"/>
+
+   <number id="slices" type="slider" arg="-slices %"
+           _label="X resolution" _low-label="Low" _high-label="High"
+           low="3" high="50" default="16"/>
+   <number id="segments" type="slider" arg="-segments %"
+           _label="Y resolution" _low-label="Low" _high-label="High"
+           low="2" high="50" default="24"/>
+
+   <hgroup>
+    <boolean id="skin" _label="Draw skin"           arg-unset="-no-texture"/>
+    <boolean id="cel"  _label="Cartoony"            arg-set="-cel"/>
+    <boolean id="intersect" _label="Tentacles can intersect" arg-set="-intersect"/>
+   </hgroup>
+   <hgroup>
+    <boolean id="smooth" _label="Smooth"           arg-unset="-no-smooth"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </hgroup>
+
+  </vgroup>
+ </hgroup>
+
+
+  <xscreensaver-updater />
+
+ <_description>
+There is a tentacled abomination in the sky.   From above you it devours.
+
+Written by Jamie Zawinski; 2008.
+ </_description>
+</screensaver>

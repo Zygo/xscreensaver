@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glslideshow" _label="GL Slideshow" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=Hi0xUWnqBhQ"/>
+
+  <hgroup>
+   <vgroup>
+   <number id="delay" type="slider" arg="-delay %"
+           _label="Frame rate" _low-label="Low" _high-label="High"
+           low="0" high="100000" default="20000"
+           convert="invert"/>
+
+   <number id="duration" type="slider" arg="-duration %"
+           _label="Time until loading a new image"
+           _low-label="10 seconds" _high-label="5 minutes"
+           low="10" high="300" default="30"/>
+
+   <number id="zoom" type="slider" arg="-zoom %"
+           _label="Always show at least this much of the image"
+           _low-label="50%" _high-label="100%"
+           low="50" high="100" default="75"/>
+
+   <number id="pan" type="slider" arg="-pan %"
+           _label="Pan/zoom duration"
+           _low-label="1 second" _high-label="30 seconds"
+           low="1" high="30" default="6"/>
+
+   <number id="fade" type="slider" arg="-fade %"
+           _label="Crossfade duration"
+           _low-label="None" _high-label="30 seconds"
+           low="0" high="30" default="2"/>
+   </vgroup>
+   <vgroup>
+
+    <boolean id="letterbox" _label="Letterbox" arg-unset="-no-letterbox"/>
+    <boolean id="titles" _label="Show file names" arg-set="-titles"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+    <xscreensaver-image />
+
+    <xscreensaver-updater />
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Loads a random sequence of images and smoothly scans and zooms around
+in each, fading from pan to pan.  
+
+Written by Jamie Zawinski and Mike Oliphant; 2003.
+  </_description>
+</screensaver>
