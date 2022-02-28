@@ -15,6 +15,7 @@
 
 #import "Randomizer.h"
 #import "yarandom.h"
+#include <sys/sysctl.h>
 
 # undef ya_rand_init
 # undef abort
@@ -420,6 +421,11 @@ resource_key_for_name (NSString *s, BOOL screen_p)
   saver2.wantsLayer = YES;
   [saver2 retain];
   [saver2 setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
+
+  // XScreenSaverView catches signals in initWithFrame (to log a backtrace)
+  // so we have to catch our signals after that.
+  [self initSignalHandlers];
+
   return saver2;
 }
 
@@ -449,28 +455,118 @@ resource_key_for_name (NSString *s, BOOL screen_p)
 // error text shows up on the screen, and after that we're hung and you
 // can't unlock the screen.  So... that's worse.
 //
-#if 0
+// But let's try re-invoking the current process on signal, and just 
+// restarting legacyScreenSaver or whatever from scratch.  Maybe that
+// will work?  Nope.  The re-exec works under SaverTester, but when
+// legacyScreenSaver is re-exec'd with the same args, the savers do
+// not re-launch.
+//
+#if 1
+
+static int saved_argc = 0;
+static char **saved_argv, *saved_execpath;
+
+
 static void
-signal_exception (int sig)
+sighandler (int sig)
 {
   signal (sig, SIG_DFL);
+
+  const char *s = "randomizer caught signal\n";
+  write (fileno (stderr), s, strlen(s));  // no fprintf in signal handler
+
+# if 0
   [[NSException exceptionWithName: NSInternalInconsistencyException
                            reason: [NSString stringWithFormat: @"Signal %s",
                                              sys_signame[sig]]
                          userInfo: nil]
     raise];
+# else
+  if (saved_argc) {
+    NSLog (@"randomizer: signal: re-executing %s", saved_execpath);
+    execvp (saved_execpath, saved_argv);
+    // Somehow after the exec, SIGTERM stops working. So that's great.
+#  undef exit
+    exit (1);
+  }
+# endif
 }
+
+static void
+catch_signal (int sig, void (*handler) (int))
+{
+  struct sigaction a;
+  a.sa_handler = handler;
+  sigemptyset (&a.sa_mask);
+  a.sa_flags = SA_NODEFER;
+
+# if 0				// This isn't working
+  a.sa_handler = SIG_IGN;
+
+  dispatch_source_t src = 
+    dispatch_source_create (DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0,
+                            dispatch_get_global_queue (0, 0));
+  dispatch_source_set_event_handler (src, ^{ (*handler) (sig); });
+  dispatch_resume (src);
+# endif
+
+  if (sigaction (sig, &a, 0) < 0)
+    NSLog (@"randomizer: couldn't catch signal %d", sig);
+}
+
 
 - (void) initSignalHandlers
 {
-  signal (SIGABRT, signal_exception);
-  signal (SIGBUS,  signal_exception);
-  signal (SIGSEGV, signal_exception);
-  signal (SIGFPE,  signal_exception);
-  signal (SIGILL,  signal_exception);
-  signal (SIGIOT,  signal_exception);
-  signal (SIGSYS,  signal_exception);
+  if (! saved_argc) {
+    // Get the current process's argv from the kernel.
+
+    int mib[3] = { CTL_KERN, KERN_PROCARGS2, getpid() };
+    char *buf, *s;
+    int i;
+    size_t L;
+
+    if (sysctl (mib, 3, NULL, &L, NULL, 0) < 0) goto ERR;  // get buffer size
+    buf = malloc (L);
+    if (sysctl (mib, 3, buf, &L, NULL, 0)  < 0) goto ERR;  // get buffer data
+
+    saved_argc = ((int *) buf)[0];
+    if (saved_argc <= 0 || saved_argc > 100) goto ERR;
+    saved_argv = (char **) calloc (saved_argc + 2, sizeof (*saved_argv));
+
+    s = buf + sizeof(int);
+    saved_execpath = strdup (s);
+    while (*s) s++;
+    while (!*s) s++;		// execpath is followed by one or more nulls
+
+    for (i = 0; i < saved_argc; i++) {	// then we have null-separated argv
+      saved_argv[i] = strdup (s);
+      while (*s) s++; s++;
+    }
+    saved_argv[i] = 0;
+  }
+
+//catch_signal (SIGINT,  sighandler);  // shell ^C
+//catch_signal (SIGQUIT, sighandler);  // shell ^|
+  catch_signal (SIGILL,  sighandler);
+  catch_signal (SIGTRAP, sighandler);
+  catch_signal (SIGABRT, sighandler);
+  catch_signal (SIGEMT,  sighandler);
+  catch_signal (SIGFPE,  sighandler);
+  catch_signal (SIGBUS,  sighandler);
+  catch_signal (SIGSEGV, sighandler);
+  catch_signal (SIGSYS,  sighandler);
+//catch_signal (SIGTERM, sighandler);  // kill default
+//catch_signal (SIGKILL, sighandler);  // -9 untrappable
+  catch_signal (SIGXCPU, sighandler);
+  catch_signal (SIGXFSZ, sighandler);
+  NSLog (@"randomizer: installed signal handlers for %s", saved_execpath);
+  return;
+
+ ERR:
+  saved_argc = 0;
+  NSLog (@"randomizer: error getting argv");
 }
+
 #else
 - (void) initSignalHandlers {}
 #endif
@@ -690,7 +786,6 @@ signal_exception (int sig)
   NSLog(@"cycle timer");
   if (cycle_timer) [cycle_timer invalidate];
   cycle_timer = 0;
-  [self initSignalHandlers];
   [crash_label removeFromSuperview];
   [crash_label setStringValue:@""];
   [self fadeSaverOut];
@@ -787,6 +882,15 @@ signal_exception (int sig)
 
 - (void)animateOneFrame
 {
+#if 0
+  if (! (random() % 2000)) {
+    NSLog(@"randomizer: BOOM ####");
+    // int x = 123; char segv = * ((char *)x);
+    #undef abort
+    abort();
+  }
+#endif
+
   if (saver1) {
     @try { [saver1 animateOneFrame]; }
     @catch (NSException *e) {

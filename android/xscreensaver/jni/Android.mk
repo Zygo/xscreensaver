@@ -104,6 +104,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/swim.c \
     hacks/glx/tangram_shapes.c \
     hacks/glx/teapot.c \
+    hacks/glx/timezones.c \
     hacks/glx/toast.c \
     hacks/glx/toast2.c \
     hacks/glx/toaster.c \
@@ -120,6 +121,8 @@ LOCAL_SRC_FILES += \
     hacks/glx/tronbit_yes.c \
     hacks/glx/tunnel_draw.c \
     hacks/glx/whale.c \
+    hacks/glx/sphereeversion-analytic.c \
+    hacks/glx/sphereeversion-corrugations.c \
 
 # The source files of the currently active GL hacks:
 LOCAL_SRC_FILES += $(shell \

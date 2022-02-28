@@ -66,6 +66,7 @@
 # pragma GCC diagnostic ignored "-Wlong-long"
 # pragma GCC diagnostic ignored "-Wvariadic-macros"
 # pragma GCC diagnostic ignored "-Wpedantic"
+# pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
 #include <gtk/gtk.h>

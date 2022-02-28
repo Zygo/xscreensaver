@@ -83,7 +83,7 @@ test (int testnum, const char *screens, const char *desired)
         {
           sprintf (out, "%dx%d+%d+%d", m->width, m->height, m->x, m->y);
           if (m->screen)
-            sprintf (out + strlen(out), "@%d", (int) m->screen);
+            sprintf (out + strlen(out), "@%ld", (long) m->screen);
         }
       else
         strcpy (out, failstr (m->sanity));

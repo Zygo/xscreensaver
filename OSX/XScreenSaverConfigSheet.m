@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2072,9 +2072,17 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   hreffify (lab);
 
 #  else  // USE_HTML_LABELS
+
+  // if (self.view.frame.size.width > 640)  // A little vertical padding
+  text = [@"\n" stringByAppendingString: text];
+
+  // Small font on iPhone; normal font on iPad.
+  double pointsize = (self.view.frame.size.width > 800
+                      ? FONT_SIZE
+                      : [NSFont systemFontSize]);
   HTMLLabel *lab = [[HTMLLabel alloc] 
                      initWithText:text
-                     font:[NSFont systemFontOfSize: [NSFont systemFontSize]]];
+                             font:[NSFont systemFontOfSize: pointsize]];
   [lab autorelease];
   [lab setFrame:rect];
   [lab sizeToFit];
@@ -3442,10 +3450,41 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   CGRect r = [parent frame];
   r.size = [[UIScreen mainScreen] bounds].size;
   [parent setFrame:r];
+
   [self traverseChildren:node on:parent];
 
 # endif // HAVE_IPHONE
 }
+
+
+#ifdef HAVE_IPHONE
+- (void)viewWillLayoutSubviews
+{
+  // Add left and right padding so that the lines aren't super wide.
+  // The whitespace looks a little odd, but short lines are easier to read.
+  //
+  double max = 700;
+  double w = self.tableView.frame.size.width;
+  if (w > max) {
+    double margin = (w - max) / 2;
+# if 0  // Why doesn't this work?
+    self.tableView.layoutMargins = UIEdgeInsetsMake (0, margin, 0, margin);
+# else
+    NSRect f = self.tableView.frame;
+    f.origin.x += margin;
+    f.size.width -= margin * 2;
+    [self.tableView setFrame: f];
+
+    // Use white instead of gray between sections.
+    self.tableView.backgroundColor = [UIColor whiteColor];
+# endif
+  }
+
+  // Make the left and right margins match our background color.
+  self.tableView.superview.backgroundColor = self.tableView.backgroundColor;
+
+}
+#endif // HAVE_IPHONE
 
 
 - (void)parser:(NSXMLParser *)parser

@@ -10,11 +10,10 @@
  *
  * Matrix -- simulate the text scrolls from the movie "The Matrix".
  *
- * The movie people distribute their own Windows/Mac screensaver that does
- * a similar thing, so I wrote one for Unix.  However, that version (the
- * Windows/Mac version at http://www.whatisthematrix.com/) doesn't match
- * what the computer screens in the movie looked like, so my `xmatrix' does
- * things differently.
+ * In 1999, the movie people released their own Mac OS 9 / Windows screen
+ * saver, but it was very inaccurate and did not match what the computer
+ * screens in the movie did.  Mine is better.
+ * https://web.archive.org/web/19990508211539/http%3A//whatisthematrix.com/cmp/screensaver_index.html
  *
  * See also my `glmatrix' program, which does a 3D rendering of the similar
  * effect that appeared in the title sequence of the movies.

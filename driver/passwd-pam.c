@@ -1,5 +1,5 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
- * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2022 Jamie Zawinski <jwz@jwz.org>
  * By Bill Nottingham <notting@redhat.com> and jwz.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -34,12 +34,16 @@
    those files are not a part of PAM's C API, but it's how real-world systems
    actually work.
 
-   Also note that FreeBSD's implementation of PAM requires the calling process
-   to be running as root during the entire interactive PAM conversation: it
-   can't ever disavow privileges.  Linux's PAM implementation uses a setuid
-   helper so that a non-root process can still authenticate, as is right and
-   proper.  Consequently, XScreenSaver does not support PAM on FreeBSD.
-   Dear FreeBSD, get your shit together.
+   Also note that FreeBSD's PAM configuration requires the calling process to
+   be running as root during the *entire* interactive PAM conversation: it
+   can't ever disavow privileges.  Whereas Linux's PAM configurations use a
+   setuid helper within the PAM stack so that a non-root process can still
+   authenticate, as is right and proper.  Consequently, PAM does not work with
+   XScreenSaver on FreeBSD by default.  Dear FreeBSD, get your shit together.
+
+   I am told that only *some* of the FreeBSD PAM modules have this bug, e.g.,
+   "pam_unix" fails, but "pam_winbind" works.  So this problem is demonstrably
+   fixable entirely within the PAM stack, and that's where it should be fixed.
  */
 
 #ifdef HAVE_CONFIG_H

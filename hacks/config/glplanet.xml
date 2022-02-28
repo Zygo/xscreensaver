@@ -23,9 +23,9 @@
    <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
    <boolean id="stars"  _label="Stars"     arg-unset="-no-stars"/>
    <select id="mode">
-    <option id="globe" _label="Globe"/>
-    <option id="mercator" _label="Mercator"
-            arg-set="-mode mercator"/>
+    <option id="random" _label="Random Shape"/>
+    <option id="globe" _label="Globe" arg-set="-mode globe"/>
+    <option id="mercator" _label="Mercator" arg-set="-mode mercator"/>
     <option id="equirectangular" _label="Equirectangular"
             arg-set="-mode equirectangular"/>
    </select>

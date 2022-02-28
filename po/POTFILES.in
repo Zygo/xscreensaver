@@ -1,4 +1,4 @@
-# Auto-generated: Mon Oct 11 18:04:31 PDT 2021
+# Auto-generated: Sun Feb 27 13:30:09 PST 2022
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/dialog.c
@@ -157,6 +157,7 @@ hacks/config/lmorph.xml
 hacks/config/lockward.xml
 hacks/config/loop.xml
 hacks/config/m6502.xml
+hacks/config/mapscroller.xml
 hacks/config/marbling.xml
 hacks/config/maze.xml
 hacks/config/maze3d.xml
@@ -201,7 +202,6 @@ hacks/config/quasicrystal.xml
 hacks/config/queens.xml
 hacks/config/raverhoop.xml
 hacks/config/razzledazzle.xml
-hacks/config/rd-bomb.xml
 hacks/config/ripples.xml
 hacks/config/rocks.xml
 hacks/config/romanboy.xml
@@ -229,6 +229,7 @@ hacks/config/splodesic.xml
 hacks/config/spotlight.xml
 hacks/config/sproingies.xml
 hacks/config/squiral.xml
+hacks/config/squirtorus.xml
 hacks/config/stairs.xml
 hacks/config/starfish.xml
 hacks/config/starwars.xml

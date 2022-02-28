@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2021 Jamie Zawinski.
+# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2022 Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
 @SET_MAKE@
@@ -42,6 +42,7 @@ SHELL		= /bin/sh
 INSTALL		= @INSTALL@
 SUID_FLAGS      = -o root -m 4755
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT  = @INSTALL_SCRIPT@
 INSTALL_SETUID	= $(INSTALL_PROGRAM) $(SUID_FLAGS)
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
@@ -99,7 +100,7 @@ SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
 		  moebius.c morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c \
 		  s1_3.c s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
 		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
-		  xlock-gl-utils.c glplanet.c pulsar.c \
+		  xlock-gl-utils.c glplanet.c timezones.c pulsar.c \
 		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
 		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
 		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c \
@@ -139,8 +140,13 @@ SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
 		  splodesic.c hexstrut.c vigilance.c seccam.c esper.c \
 		  razzledazzle.c ships.c peepers.c crumbler.c quickhull.c \
 		  maze3d.c handsy.c handsy_model.c gravitywell.c deepstars.c \
-		  gibson.c etruscanvenus.c sphereeversion.c covid19.c \
-		  co____9.c headroom.c headroom_model.c beats.c glsl-utils.c
+		  gibson.c etruscanvenus.c covid19.c co____9.c \
+		  headroom.c headroom_model.c beats.c glsl-utils.c \
+		  sphereeversion.c sphereeversion-analytic.c \
+		  sphereeversion-corrugations.c \
+		  mapscroller.c squirtorus.c
+
+SCRIPTS		= mapscroller.pl
 
 OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -148,7 +154,7 @@ OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  moebius.o morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o \
 		  s1_3.o s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
 		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
-		  xlock-gl-utils.o glplanet.o pulsar.o \
+		  xlock-gl-utils.o glplanet.o timezones.o pulsar.o \
 		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
 		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
 		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o \
@@ -188,8 +194,11 @@ OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  splodesic.o hexstrut.o vigilance.o seccam.o esper.o \
 		  razzledazzle.o ships.o peepers.o crumbler.o quickhull.o \
 		  maze3d.o handsy.o handsy_model.o gravitywell.o deepstars.o \
-		  gibson.o etruscanvenus.o sphereeversion.o covid19.o \
-		  headroom.o headroom_model.o beats.o glsl-utils.o
+		  gibson.o etruscanvenus.o covid19.o headroom.o \
+		  headroom_model.o beats.o glsl-utils.o \
+		  sphereeversion.c sphereeversion-analytic.c \
+		  sphereeversion-corrugations.c \
+		  mapscroller.o squirtorus.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -211,7 +220,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  hydrostat discoball cubetwist cubestack splodesic \
 		  hexstrut vigilance esper razzledazzle peepers crumbler \
 		  maze3d handsy gravitywell deepstars gibson etruscanvenus \
-		  sphereeversion covid19 headroom beats
+		  sphereeversion covid19 headroom beats mapscroller \
+		  squirtorus
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
@@ -257,7 +267,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h \
 		  glschool_alg.h topblock.h involute.h teapot.h sonar.h \
 		  dropshadow.h starwars.h teapot2.h dnapizza.h curlicue.h \
 		  quickhull.h dymaxionmap-coords.h handsy_anim.h \
-		  glsl-utils.h
+		  glsl-utils.h mapcities.h sphereeversion.h
 GL_MEN		= xscreensaver-gl-visual.man \
 		  atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
@@ -289,19 +299,20 @@ GL_MEN		= xscreensaver-gl-visual.man \
 		  hexstrut.man vigilance.man esper.man razzledazzle.man \
 		  peepers.man crumbler.man maze3d.man handsy.man \
 		  gravitywell.man deepstars.man gibson.man etruscanvenus.man \
-		  sphereeversion.man covid19.man headroom.man beats.man
+		  sphereeversion.man covid19.man headroom.man beats.man \
+		  mapscroller.man squirtorus.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
 		  molecules.sh starwars.txt zalgo.txt *.dxf
 
-TARFILES	= $(SRCS) $(HDRS) $(GL_MEN) $(RETIRED_MEN) $(EXTRAS)
+TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(GL_MEN) $(RETIRED_MEN) $(EXTRAS)
 
 
 default: all
 all: $(EXES) $(RETIRED_EXES)
 
-install:   install-program    install-xml   install-man
+install:   install-program    install-scripts install-xml   install-man
 uninstall: uninstall-program  uninstall-xml uninstall-man
 
 install-strip:
@@ -311,7 +322,7 @@ install-strip:
 install-program:: $(EXES)
 	@exes="$(HACK_EXES_1) @GL_UTIL_EXES@" ;				\
 	 idir="$(install_prefix)$(HACKDIR)" ;				\
-	 if [ "$$exes" != "" ]; then					\
+	 if ( echo $$exes | grep -q . ); then				\
 	   if [ ! -d $$idir ]; then					\
 	     $(INSTALL_DIRS) $$idir ;					\
 	   fi ;								\
@@ -361,6 +372,38 @@ install-program:: $(EXES)
 	 fi
 
 
+install-scripts: $(SCRIPTS) munge-scripts
+	@								\
+	if ! ( echo $(HACK_EXES_1) | grep -q . ); then exit 0 ; fi ;	\
+	if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
+	 fi ;								\
+	for program in $(SCRIPTS); do					\
+	  if [ -r $$program ] ; then					\
+	    p=$$program ;						\
+	  else								\
+	    p=$(srcdir)/$$program ;					\
+	  fi ;								\
+	  echo $(INSTALL_SCRIPT) $$p					\
+	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	  $(INSTALL_SCRIPT) $$p						\
+	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	done
+
+munge-scripts: $(SCRIPTS)
+	@tmp=/tmp/mf.$$$$ ;						\
+	perl="${PERL}" ;						\
+	rm -f $$tmp ;							\
+	for program in $(SCRIPTS); do					\
+	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
+	      < $(srcdir)/$$program > $$tmp ;				\
+	  if ! cmp -s $(srcdir)/$$program $$tmp ; then			\
+	    echo "$$program: setting interpreter to $$perl" >&2 ;	\
+	    cat $$tmp > ./$$program ;					\
+	  fi ;								\
+	done ;								\
+	rm -f $$tmp
+
 # When installing man pages, we install "foo.man" as "foo.N" and update
 # the .TH line in the installed file with one like
 #
@@ -374,6 +417,8 @@ install-man: $(MEN)
 	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;	\
 	T=/tmp/xs$$$$.$(mansuffix) ;					\
 	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+									\
+	if ! ( echo $(HACK_EXES_1) | grep -q . ); then exit 0 ; fi ;	\
 	echo "installing man pages: $$TH" ;				\
 									\
 	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
@@ -409,7 +454,7 @@ install-xml:
 
 # the hacks, in $HACKDIR
 uninstall-program::
-	@exes="$(HACK_EXES) $(RETIRED_EXES) @GL_UTIL_EXES@" ;		\
+	@exes="$(HACK_EXES) $(RETIRED_EXES) $(SCRIPTS) @GL_UTIL_EXES@" ;\
 	 idir="$(install_prefix)$(HACKDIR)" ;				\
 	 for program in $$exes; do					\
 	   echo rm -f $$idir/$$program ;				\
@@ -643,7 +688,10 @@ B3D_OBJS = b_sphere.o b_draw.o b_lockglue.o $(HACK_OBJS)
 bubble3d:	bubble3d.o	$(B3D_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(B3D_OBJS) $(HACK_LIBS)
 
-PLANET_OBJS=sphere.o $(PNG) $(HACK_TRACK_OBJS)
+timezones_dxf::
+	./dxf2gl.pl --normalize --wireframe timezones.dxf timezones.c
+
+PLANET_OBJS=sphere.o gllist.o timezones.o $(PNG) $(HACK_TRACK_OBJS)
 glplanet:	glplanet.o	$(PLANET_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(PLANET_OBJS) $(PNG_LIBS)
 
@@ -791,8 +839,10 @@ romanboy:	romanboy.o	$(HACK_TRACK_OBJS)
 etruscanvenus:	etruscanvenus.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-sphereeversion:	sphereeversion.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	 $(HACK_TRACK_OBJS) $(HACK_LIBS)
+SPHEREEV_OBJS=sphereeversion-analytic.o sphereeversion-corrugations.o \
+              $(PNG) $(HACK_TRACK_OBJS)
+sphereeversion:	sphereeversion.o $(SPHEREEV_OBJS)
+	$(CC_HACK) -o $@ $@.o	 $(SPHEREEV_OBJS) $(HACK_LIBS) $(PNG_LIBS)
 
 glmatrix:	glmatrix.o	$(PNG) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(PNG) $(HACK_OBJS) $(PNG_LIBS)
@@ -1054,6 +1104,13 @@ headroom_dxf::
 
 beats:		beats.o		sphere.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_OBJS) $(HACK_LIBS)
+
+mapscroller:	mapscroller.o	$(PNG) $(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(PNG) $(HACK_GRAB_OBJS) $(PNG_LIBS)
+
+SQOBJ = normals.o $(UTILS_BIN)/spline.o
+squirtorus:	squirtorus.o	$(SQOBJ) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(SQOBJ) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -2569,6 +2626,7 @@ glmatrix.o: $(HACK_SRC)/xlockmoreI.h
 glmatrix.o: $(HACK_SRC)/xlockmore.h
 glplanet.o: ../../config.h
 glplanet.o: $(HACK_SRC)/fps.h
+glplanet.o: $(srcdir)/gllist.h
 glplanet.o: $(srcdir)/gltrackball.h
 glplanet.o: ../images/gen/earth_night_png.h
 glplanet.o: ../images/gen/earth_png.h
@@ -3137,6 +3195,26 @@ lockward.o: $(UTILS_SRC)/xft.h
 lockward.o: $(UTILS_SRC)/yarandom.h
 lockward.o: $(HACK_SRC)/xlockmoreI.h
 lockward.o: $(HACK_SRC)/xlockmore.h
+mapscroller.o: ../../config.h
+mapscroller.o: $(HACK_SRC)/fps.h
+mapscroller.o: ../images/gen/oceantiles_12_png.h
+mapscroller.o: $(srcdir)/mapcities.h
+mapscroller.o: $(HACK_SRC)/recanim.h
+mapscroller.o: $(HACK_SRC)/screenhackI.h
+mapscroller.o: $(srcdir)/texfont.h
+mapscroller.o: $(UTILS_SRC)/colors.h
+mapscroller.o: $(UTILS_SRC)/erase.h
+mapscroller.o: $(UTILS_SRC)/font-retry.h
+mapscroller.o: $(UTILS_SRC)/grabscreen.h
+mapscroller.o: $(UTILS_SRC)/hsv.h
+mapscroller.o: $(UTILS_SRC)/resources.h
+mapscroller.o: $(UTILS_SRC)/usleep.h
+mapscroller.o: $(UTILS_SRC)/visual.h
+mapscroller.o: $(UTILS_SRC)/xft.h
+mapscroller.o: $(UTILS_SRC)/yarandom.h
+mapscroller.o: $(HACK_SRC)/ximage-loader.h
+mapscroller.o: $(HACK_SRC)/xlockmoreI.h
+mapscroller.o: $(HACK_SRC)/xlockmore.h
 marching.o: ../../config.h
 marching.o: $(HACK_SRC)/fps.h
 marching.o: $(srcdir)/marching.h
@@ -3956,23 +4034,65 @@ sonar-sim.o: $(UTILS_SRC)/usleep.h
 sonar-sim.o: $(UTILS_SRC)/visual.h
 sonar-sim.o: $(UTILS_SRC)/xft.h
 sonar-sim.o: $(UTILS_SRC)/yarandom.h
+sphereeversion-analytic.o: ../../config.h
+sphereeversion-analytic.o: $(HACK_SRC)/fps.h
+sphereeversion-analytic.o: $(srcdir)/glsl-utils.h
+sphereeversion-analytic.o: $(srcdir)/gltrackball.h
+sphereeversion-analytic.o: $(HACK_SRC)/recanim.h
+sphereeversion-analytic.o: $(HACK_SRC)/screenhackI.h
+sphereeversion-analytic.o: $(srcdir)/sphereeversion.h
+sphereeversion-analytic.o: $(UTILS_SRC)/colors.h
+sphereeversion-analytic.o: $(UTILS_SRC)/erase.h
+sphereeversion-analytic.o: $(UTILS_SRC)/font-retry.h
+sphereeversion-analytic.o: $(UTILS_SRC)/grabscreen.h
+sphereeversion-analytic.o: $(UTILS_SRC)/hsv.h
+sphereeversion-analytic.o: $(UTILS_SRC)/resources.h
+sphereeversion-analytic.o: $(UTILS_SRC)/usleep.h
+sphereeversion-analytic.o: $(UTILS_SRC)/visual.h
+sphereeversion-analytic.o: $(UTILS_SRC)/xft.h
+sphereeversion-analytic.o: $(UTILS_SRC)/yarandom.h
+sphereeversion-analytic.o: $(HACK_SRC)/xlockmoreI.h
+sphereeversion-analytic.o: $(HACK_SRC)/xlockmore.h
+sphereeversion-corrugations.o: ../../config.h
+sphereeversion-corrugations.o: $(HACK_SRC)/fps.h
+sphereeversion-corrugations.o: $(srcdir)/glsl-utils.h
+sphereeversion-corrugations.o: $(srcdir)/gltrackball.h
+sphereeversion-corrugations.o: $(HACK_SRC)/recanim.h
+sphereeversion-corrugations.o: $(HACK_SRC)/screenhackI.h
+sphereeversion-corrugations.o: $(srcdir)/sphereeversion.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/colors.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/erase.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/font-retry.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/grabscreen.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/hsv.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/resources.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/usleep.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/visual.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/xft.h
+sphereeversion-corrugations.o: $(UTILS_SRC)/yarandom.h
+sphereeversion-corrugations.o: $(HACK_SRC)/xlockmoreI.h
+sphereeversion-corrugations.o: $(HACK_SRC)/xlockmore.h
 sphereeversion.o: ../../config.h
 sphereeversion.o: $(HACK_SRC)/fps.h
 sphereeversion.o: $(srcdir)/glsl-utils.h
 sphereeversion.o: $(srcdir)/gltrackball.h
+sphereeversion.o: ../images/gen/earth_night_png.h
+sphereeversion.o: ../images/gen/earth_png.h
+sphereeversion.o: ../images/gen/earth_water_png.h
 sphereeversion.o: $(HACK_SRC)/recanim.h
 sphereeversion.o: $(HACK_SRC)/screenhackI.h
+sphereeversion.o: $(srcdir)/sphereeversion.h
 sphereeversion.o: $(UTILS_SRC)/colors.h
 sphereeversion.o: $(UTILS_SRC)/erase.h
 sphereeversion.o: $(UTILS_SRC)/font-retry.h
 sphereeversion.o: $(UTILS_SRC)/grabscreen.h
 sphereeversion.o: $(UTILS_SRC)/hsv.h
-sphereeversion.o: $(UTILS_SRC)/pow2.h
 sphereeversion.o: $(UTILS_SRC)/resources.h
 sphereeversion.o: $(UTILS_SRC)/usleep.h
 sphereeversion.o: $(UTILS_SRC)/visual.h
 sphereeversion.o: $(UTILS_SRC)/xft.h
 sphereeversion.o: $(UTILS_SRC)/yarandom.h
+sphereeversion.o: $(HACK_SRC)/ximage-loader.h
 sphereeversion.o: $(HACK_SRC)/xlockmoreI.h
 sphereeversion.o: $(HACK_SRC)/xlockmore.h
 spheremonics.o: ../../config.h
@@ -4101,6 +4221,25 @@ sproingiewrap.o: $(UTILS_SRC)/xft.h
 sproingiewrap.o: $(UTILS_SRC)/yarandom.h
 sproingiewrap.o: $(HACK_SRC)/xlockmoreI.h
 sproingiewrap.o: $(HACK_SRC)/xlockmore.h
+squirtorus.o: ../../config.h
+squirtorus.o: $(HACK_SRC)/fps.h
+squirtorus.o: $(srcdir)/gltrackball.h
+squirtorus.o: $(srcdir)/normals.h
+squirtorus.o: $(HACK_SRC)/recanim.h
+squirtorus.o: $(HACK_SRC)/screenhackI.h
+squirtorus.o: $(UTILS_SRC)/colors.h
+squirtorus.o: $(UTILS_SRC)/erase.h
+squirtorus.o: $(UTILS_SRC)/font-retry.h
+squirtorus.o: $(UTILS_SRC)/grabscreen.h
+squirtorus.o: $(UTILS_SRC)/hsv.h
+squirtorus.o: $(UTILS_SRC)/resources.h
+squirtorus.o: $(UTILS_SRC)/spline.h
+squirtorus.o: $(UTILS_SRC)/usleep.h
+squirtorus.o: $(UTILS_SRC)/visual.h
+squirtorus.o: $(UTILS_SRC)/xft.h
+squirtorus.o: $(UTILS_SRC)/yarandom.h
+squirtorus.o: $(HACK_SRC)/xlockmoreI.h
+squirtorus.o: $(HACK_SRC)/xlockmore.h
 stairs.o: ../../config.h
 stairs.o: $(HACK_SRC)/fps.h
 stairs.o: $(srcdir)/gltrackball.h
@@ -4327,6 +4466,22 @@ timetunnel.o: $(UTILS_SRC)/yarandom.h
 timetunnel.o: $(HACK_SRC)/ximage-loader.h
 timetunnel.o: $(HACK_SRC)/xlockmoreI.h
 timetunnel.o: $(HACK_SRC)/xlockmore.h
+timezones.o: ../../config.h
+timezones.o: $(HACK_SRC)/fps.h
+timezones.o: $(srcdir)/gllist.h
+timezones.o: $(HACK_SRC)/recanim.h
+timezones.o: $(HACK_SRC)/screenhackI.h
+timezones.o: $(UTILS_SRC)/colors.h
+timezones.o: $(UTILS_SRC)/erase.h
+timezones.o: $(UTILS_SRC)/font-retry.h
+timezones.o: $(UTILS_SRC)/grabscreen.h
+timezones.o: $(UTILS_SRC)/hsv.h
+timezones.o: $(UTILS_SRC)/resources.h
+timezones.o: $(UTILS_SRC)/usleep.h
+timezones.o: $(UTILS_SRC)/visual.h
+timezones.o: $(UTILS_SRC)/xft.h
+timezones.o: $(UTILS_SRC)/yarandom.h
+timezones.o: $(HACK_SRC)/xlockmoreI.h
 toast2.o: ../../config.h
 toast2.o: $(HACK_SRC)/fps.h
 toast2.o: $(srcdir)/gllist.h

@@ -1,4 +1,4 @@
-/* xanalogtv-cli, Copyright © 2018-2021 Jamie Zawinski <jwz@jwz.org>
+/* xanalogtv-cli, Copyright © 2018-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -445,8 +445,9 @@ update_smpte_colorbars(analogtv_input *input)
     {
       double aspect = (double)
         st->output_frame->width / st->output_frame->height;
-      int w2 = st->tv->xgwa.width  * 0.35;
-      int h2 = st->tv->xgwa.height * 0.35 * aspect;
+      double scale = (aspect > 1 ? 0.35 : 0.6);
+      int w2 = st->tv->xgwa.width  * scale;
+      int h2 = st->tv->xgwa.height * scale * aspect;
       analogtv_load_ximage (st->tv, input, st->logo, st->logo_mask,
                             (st->tv->xgwa.width - w2) / 2,
                             st->tv->xgwa.height * 0.20,
@@ -516,7 +517,7 @@ analogtv_save_frame (struct state *st, const char *outfile,
 # endif /* ! HAVE_LIBPNG */
 
   fclose (f);
-  if (verbose_p > 1)
+  if (verbose_p > 2)
     fprintf (stderr, "%s: wrote %s\n", progname, pngfile);
   free (pngfile);
 }
@@ -531,7 +532,7 @@ delete_tmp_files(void)
   for (i = 0; i <= st->frames_written; i++)
     {
       sprintf (outfile, st->framefile_fmt, i);
-      if (verbose_p > 2)
+      if (verbose_p > 3)
         fprintf (stderr, "%s: rm %s\n", progname, outfile);
       unlink (outfile);
     }
@@ -926,7 +927,18 @@ analogtv_convert (const char **infiles, const char *outfile,
         st->curinputi = 0;
       } else {
         /* Otherwise random */
+        int prev = st->curinputi;
+      AGAIN:
         st->curinputi = 1 + (random() % (N_CHANNELS - 1));
+
+        /* In single mode, always alternate to the unadulterated image:
+           no two noisy images in a row, always intersperse clean. */
+        if (singlep && prev != 0)
+          st->curinputi = 0;
+
+        /* In single mode, do colorbars-only a bit less often. */
+        if (singlep && st->curinputi == 1 && !(random() % 3))
+          goto AGAIN;
       }
 
       stats[st->curinputi]++;
@@ -935,7 +947,7 @@ analogtv_convert (const char **infiles, const char *outfile,
       st->tv->channel_change_cycles=200000;
 
       if (verbose_p > 1)
-        fprintf (stderr, "%s: %.1f: channel %d\n",
+        fprintf (stderr, "%s: %5.1f sec: channel %d\n",
                  progname, curticks/1000.0, st->curinputi);
 
       /* Turn the knobs every now and then */

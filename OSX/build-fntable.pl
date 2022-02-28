@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2022 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.12 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.14 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -35,6 +35,7 @@ my %disable = (
    'glitchpeg'		=> 1,
    'lcdscrub'		=> 1,
    'lockward'		=> 1,
+   'mapscroller'	=> 1,
    'webcollage'		=> 1,
    'testx11'		=> 1,
    'covid19'		=> 1,  # Fuck you, Apple.
@@ -84,7 +85,6 @@ sub build_h($) {
         print STDERR "$progname: skipping $name\n" if ($verbose > 1);
         next;
       }
-      $name =~ s/-//g;
       print STDERR "$progname: found $name\n" if ($verbose > 1);
       $names{$name} = 1;
     }
@@ -109,7 +109,9 @@ sub build_h($) {
 
   $body .= "extern struct $suf";
   foreach my $s (@names, 'testx11') {
-    $body .= "\n ${s}_${suf},";
+    my $s2 = $s;
+    $s2 =~ s/-/_/g;
+    $body .= "\n ${s2}_${suf},";
   }
   $body =~ s/,\s*$/;/s;
 

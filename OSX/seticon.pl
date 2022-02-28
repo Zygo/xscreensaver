@@ -9,79 +9,98 @@
 # software for any purpose.  It is provided "as is" without express or
 # implied warranty.
 
+# Change the Finder icon of a file, folder or bundle.
 # This is a replacement for seticon from http://osxutils.sourceforge.net/.
 
 require 5;
 use diagnostics;
 use strict;
-#use IPC::Open2;
-use File::Temp;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.7 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.9 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
-sub set_icon ($$) {
-  my ($icon, $target) = @_;
-  my $target_res = $target;
 
-  if (-d $target) {
-    $target_res = $target_res . "/Icon\r";
+# Anything placed on this list gets unconditionally deleted when this
+# script exits, even if abnormally.
+#
+my @rm_f = ();
+END {
+  my $exit = $?;
+  if (@rm_f) {
+    print STDERR "$progname: rm " . join(' ', @rm_f) . "\n" if ($verbose);
+    unlink @rm_f;
   }
+  $? = $exit;  # Don't clobber this script's exit code.
+}
 
-  # Rez hates absolute paths, apparently.
-  if ($icon =~ m@^/@s) {
-    my $cwd = `pwd`;
-    chomp $cwd;
-    $icon =~ s@^\Q$cwd/@@s;
+
+# Like system but handles error conditions.
+#
+sub safe_system(@) {
+  my (@cmd) = @_;
+  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n" if ($verbose);
+  system @cmd;
+  my $exit_value  = $? >> 8;
+  my $signal_num  = $? & 127;
+  my $dumped_core = $? & 128;
+  error ("$cmd[0]: core dumped!") if ($dumped_core);
+  error ("$cmd[0]: signal $signal_num!") if ($signal_num);
+  return $exit_value;
+}
+
+
+sub set_icon($$) {
+  my ($icon, $target) = @_;
+
+  error ("no such file: $icon") unless (-f $icon);
+  error ("no such file or directory: $target") unless (-e $target);
+  error ("icon must be an .icns file") unless ($icon =~ m/\.icns$/si);
+
+  my $otarget = $target;
+  if (-d $target) {
+    $target =~ s@/+$@@s;
+    $target .= "/Icon\r";
   }
 
   # The Rez language is documented in "Building and Managing Programs in MPW,
-  # Second Edition". No longer available on Apple's servers, it can now be
-  # found at:
+  # Second Edition", Appendix C.  Here are some unarchived 404 URLs!
+  # ftp://ftp.apple.com/developer/Tool_Chest/Core_Mac_OS_Tools/MPW_etc./Documentation/MPW_Reference/Building_Progs_In_MPW.sit.hqx
   # http://www.powerpc.hu/manila/static/home/Apple/developer/Tool_Chest/Core_Mac_OS_Tools/MPW_etc./Documentation/MPW_Reference/Building_Progs_In_MPW.sit.hqx
 
-  my $pgm = "Read 'icns' (kCustomIconResource) \"$icon\";\n";
+  # Rez can't read stdin, and input files must be in the current directory.
 
-  # Rez can read from stdin, but only if it is a file handle, not if it
-  # is a pipe (OS X 10.9, Xcode 5; OSX 10.11, Xcode 6).
+  my $n = rand() * 0xFFFFFFFF;
+  my $rsrc_tmp = sprintf("rez_%08X.rsrc", $n);
+  my $icon_tmp = sprintf("rez_%08X.icns", $n);
+  push @rm_f, ($rsrc_tmp, $icon_tmp);
+  unlink ($rsrc_tmp, $icon_tmp);
 
-  my ($rez_fh, $rez_filename) = File::Temp::tempfile(DIR => '.', UNLINK => 1);
-  print $rez_fh $pgm;
-  close $rez_fh;
+  safe_system ("cp", "-p", $icon, $icon_tmp);
 
-  my @cmd = ('Rez',
+  my $cmd = "Read 'icns' (kCustomIconResource) \"$icon_tmp\";\n";
+  open (my $out, '>:raw', $rsrc_tmp) || error ("$rsrc_tmp: $!");
+  print $out $cmd;
+  close $out;
+  print STDERR "$progname: $rsrc_tmp: $cmd" if ($verbose);
 
-             '-isysroot', 
-             '/Applications/Xcode.app/Contents/Developer/Platforms' .
-             '/MacOSX.platform/Developer/SDKs/MacOSX.sdk',
+  safe_system ('Rez',
 
-             'CoreServices.r',
-             $rez_filename,
-             '-o', $target_res);
+               '-isysroot',     # Makes it undrstand kCustomIconResource
+               '/Applications/Xcode.app/Contents/Developer/Platforms' .
+               '/MacOSX.platform/Developer/SDKs/MacOSX.sdk',
+               'CoreServices.r',
 
-  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n$pgm\n"
-    if ($verbose);
-
-#  my ($in, $out);
-#  my $pid = open2 ($out, $in, @cmd);
-#  print $in $pgm;
-#  close ($in);
-#  waitpid ($pid, 0);
-
-  system (@cmd);
-
-  my $exit  = $? >> 8;
-  exit ($exit) if $exit;
+               '-a', $rsrc_tmp,
+               '-o', $target);
 
   # Have to also inform Finder that the icon is there, with the
   # com.apple.FinderInfo xattr (a FolderInfo struct).
-  @cmd = ('SetFile', '-a', 'C', $target);
-  system (@cmd);
-  $exit  = $? >> 8;
-  exit ($exit) if $exit;
+  safe_system ('SetFile', '-a', 'C', $target);
+  safe_system ('SetFile', '-a', 'C', $otarget) if ($target ne $otarget);
 }
+
 
 sub error($) {
   my ($err) = @_;
@@ -90,7 +109,7 @@ sub error($) {
 }
 
 sub usage() {
-  print "Usage: $progname -d source [file...]\n";
+  print "Usage: $progname -d icon.icns [ files-or-folders ... ]\n";
   exit 1;
 }
 
@@ -104,7 +123,7 @@ sub main() {
     elsif (m/^-/s)             { usage(); }
     else { push @dst, $_; }
   }
-  error ("no source") unless defined($src);
+  error ("no icon") unless defined($src);
   error ("no files") unless @dst;
   foreach my $f (@dst) {
     set_icon ($src, $f);

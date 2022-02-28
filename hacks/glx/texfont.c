@@ -1,4 +1,4 @@
-/* texfont, Copyright © 2005-2021 Jamie Zawinski <jwz@jwz.org>
+/* texfont, Copyright © 2005-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -115,6 +115,7 @@ struct texture_font_data {
   XftFont *xftfont;
   int cache_size;
   texfont_cache *cache;
+  Bool dropshadow_p;
 # ifdef HAVE_GLSL
   Bool shaders_initialized, use_shaders;
   GLuint shader_program;
@@ -377,6 +378,8 @@ load_texture_font (Display *dpy, char *res)
   data->dpy = dpy;
   data->xftfont = f;
   data->cache_size = cache_size;
+  data->dropshadow_p =
+    !get_boolean_resource (dpy, "texFontOmitDropShadow", "Boolean");
 
 #ifdef HAVE_GLSL
   /* Setting data->shaders_initialized to False will cause
@@ -1320,12 +1323,13 @@ print_texture_label (Display *dpy,
 
 # ifdef HAVE_GLSL
       if (data->use_shaders)
-        glUniform4f (data->font_color_index, 0, 0, 0, 1);
+        glUniform4f (data->font_color_index, 0, 0, 0, color[3]);
       else
 # endif /* HAVE_GLSL */
-        glColor3f (0, 0, 0);
+        glColor4f (0, 0, 0, color[3]);
 
-      for (i = 0; i < countof(offsets); i++)
+      for (i = (data->dropshadow_p ? 0 : countof(offsets)-1);
+           i < countof(offsets); i++)
         {
           if (offsets[i].x == 0)
             {

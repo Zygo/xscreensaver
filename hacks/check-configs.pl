@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.37 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.38 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -73,7 +73,6 @@ sub parse_src($) {
   $file = 'b_lockglue.c' if ($file eq 'bubble3d.c');
   $file = 'polyhedra-gl.c' if ($file eq 'polyhedra.c');
   $file = 'companion.c' if ($file eq 'companioncube.c');
-  $file = 'rd-bomb.c' if ($file eq 'rdbomb.c');
 
   my $ofile = $file;
   $file = "glx/$ofile"          unless (-f $file);
@@ -735,7 +734,6 @@ sub build_android(@) {
 
   foreach my $saver (@savers) {
     next if ($saver =~ m/(-helper)$/);
-    $saver = 'rdbomb' if ($saver eq 'rd-bomb');
 
     my ($src_opts, $switchmap) = parse_src ($saver);
     my ($saver_title, $gl_p, $xml_opts, $widgets) =

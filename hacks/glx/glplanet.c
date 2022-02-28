@@ -15,20 +15,18 @@
  *
  * Revision History:
  *
- * 10-Nov-14: jwz@jwz.org   Night map. Better stars.
- * 16-Jan-02: jwz@jwz.org   gdk_pixbuf support.
- * 21-Mar-01: jwz@jwz.org   Broke sphere routine out into its own file.
- *
- * 9-Oct-98:  dek@cgl.ucsf.edu  Added stars.
- *
- * 8-Oct-98:  jwz@jwz.org   Made the 512x512x1 xearth image be built in.
- *                          Made it possible to load XPM or XBM files.
- *                          Made the planet bounce and roll around.
- *
- * 8-Oct-98: Released initial version of "glplanet"
- * (David Konerding, dek@cgl.ucsf.edu)
+ * 26-Feb-2022 jwz@jwz.org      Display timezones.
+ * 04-Feb-2019 jwz@jwz.org      Mercator and Equirectangular modes.
+ * 17-Apr-2018 jwz@jwz.org      Blended terminator on day/night images.
+ * 10-Nov-2014 jwz@jwz.org      Day and night images. Better stars.
+ * 16-Jan-2002 jwz@jwz.org      gdk_pixbuf support.
+ * 21-Mar-2001 jwz@jwz.org      Broke sphere routine out into its own file.
+ * 09-Oct-1998 dek@cgl.ucsf.edu Added stars.
+ * 08-Oct-1998 jwz@jwz.org      Made the 512x512x1 xearth image be built in.
+ *                              Made it possible to load XPM or XBM files.
+ *                              Made the planet bounce and roll around.
+ * 08-Oct-1998 dek@cgl.ucsf.edu Created.
  */
-
 
 #ifdef STANDALONE
 #define DEFAULTS	"*delay:			20000   \n"	\
@@ -57,7 +55,7 @@
 #define DEF_RESOLUTION "128"
 #define DEF_IMAGE   "BUILTIN"
 #define DEF_IMAGE2  "BUILTIN"
-#define DEF_MODE    "globe"
+#define DEF_MODE    "RANDOM"
 
 #define BLENDED_TERMINATOR
 
@@ -123,7 +121,9 @@ ModStruct   planet_description =
 #include "ximage-loader.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "gllist.h"
 
+extern const struct gllist *timezones;
 
 /*-
  * slices and stacks are used in the sphere parameterization routine.
@@ -136,8 +136,10 @@ typedef struct {
   GLuint platelist;
   GLuint shadowlist;
   GLuint latlonglist;
+  GLuint tzlist;
   GLuint starlist;
   int starcount;
+  int tzpoints;
   int screen_width, screen_height;
   GLXContext *glx_context;
   Window window;
@@ -148,7 +150,9 @@ typedef struct {
   Bool button_down_p;
   GLuint tex1, tex2;
   int draw_axis;
+  Bool timezones_p;
   enum { GLOBE, EQUIRECTANGULAR, MERCATOR } mode;
+  Bool random_p;
 
 } planetstruct;
 
@@ -269,9 +273,9 @@ unit_mercator (int stacks, int slices, int wire_p, Bool mercp)
   GLfloat x, y, ty, xs, ys;
   GLfloat lastx = 0, lasty = 0, lastty = 0;
   GLfloat r, north, south;
+  GLfloat eqoff = 0;
 
-  /* #### TODO: the grid lines are always rendered as Equirectangular,
-     not Mercator. */
+  if (wire_p && mercp) stacks += 4;
 
   stacks /= 2;
   xs = 1.0 / slices;
@@ -294,17 +298,21 @@ unit_mercator (int stacks, int slices, int wire_p, Bool mercp)
     }
   else
     {
-      /* Antarctica should be roughly the same width as North America,
-         but even Equirectangular is crazypants here. */
-      north = 80 / 180.0;
+      /* Empirically, this puts the parallels in the right place. */
+      north = 73.5 / 180.0;
       south = -north;
     }
 
+  if (wire_p && mercp)
+    eqoff = (south + (north - south) / 2);  /* equator offset */
 
   for (j = 0, y = -0.5, ty = 0; j <= stacks; 
        lasty = y, lastty = ty, y += ys, j++)
     {
       GLfloat th;
+
+      if (j == 1) y += eqoff;  /* don't adjust end caps for equator */
+      else if (j == stacks) y -= eqoff;
 
       ty = (0.5 - y) * (south - north) - south;
       ty += 0.5;
@@ -319,19 +327,44 @@ unit_mercator (int stacks, int slices, int wire_p, Bool mercp)
           ty += 0.5;
         }
 
+      /* Draw one ring of quads.
+       */
+      if (j > 0)
+        {
+          if (!wire_p) glBegin (GL_QUADS);
+          for (i = 0, x = 0, lastx = 0; i <= slices; lastx = x, x += xs, i++)
+            {
+              GLfloat xx = r * cos(M_PI * 2 * x);
+              GLfloat yy = r * sin(M_PI * 2 * x);
+              GLfloat lx = r * cos(M_PI * 2 * lastx);
+              GLfloat ly = r * sin(M_PI * 2 * lastx);
+              GLfloat y2  = y;
+              GLfloat ly2 = lasty;
+
+              if (i == 0) continue;
+              if (wire_p) glBegin(GL_LINE_LOOP);
+              glNormal3f (lx, 0, ly);
+              glTexCoord2f (lastx, lastty); glVertex3f (lx, ly2, ly);
+              glNormal3f (xx, 0, yy);
+              glTexCoord2f (x,     lastty); glVertex3f (xx, ly2, yy);
+              glNormal3f (xx, 0, yy);
+              glTexCoord2f (x,     ty);     glVertex3f (xx, y2,   yy);
+              glNormal3f (lx, 0, ly);
+              glTexCoord2f (lastx, ty);     glVertex3f (lx, y2,   ly);
+              if (wire_p) glEnd();
+            }
+          if (!wire_p) glEnd();
+        }
+
       /* Draw the end caps
        */
       if (j == 0 || j == stacks)
         {
           GLfloat xx, yy, lxx, lyy;
-          glFrontFace(j == 0 ? GL_CCW : GL_CW);
-
-          if (j == stacks && !wire_p) glEnd();
 
           glNormal3f (0, (j == 0 ? -1 : 1), 0);
-
+          glFrontFace(j == 0 ? GL_CCW : GL_CW);
           glBegin (wire_p ? GL_LINE_LOOP : GL_TRIANGLES);
-
           for (i = 0, x = 0, lastx = 0, lxx = 0;
                i <= slices;
                lastx = x, lxx = xx, lyy = yy, x += xs, i++)
@@ -346,48 +379,10 @@ unit_mercator (int stacks, int slices, int wire_p, Bool mercp)
               glTexCoord2f (x, ty);     glVertex3f (xx,  y, yy);
             }
           glEnd();
-          glFrontFace(GL_CW);
-
-          if (!wire_p) glBegin (GL_QUADS);
-        }
-
-      if (j == 0)
-        continue;
-
-      /* Draw one ring of quads.
-       */
-      for (i = 0, x = 0, lastx = 0; i <= slices; lastx = x, x += xs, i++)
-        {
-          GLfloat xx = r * cos(M_PI * 2 * x);
-          GLfloat yy = r * sin(M_PI * 2 * x);
-          GLfloat lx = r * cos(M_PI * 2 * lastx);
-          GLfloat ly = r * sin(M_PI * 2 * lastx);
-          GLfloat y2  = y;
-          GLfloat ly2 = lasty;
-
-#if 0
-          if (mercp)
-            {
-              y2 = ty - 0.5;
-              ly2 = lastty - 0.5;
-            }
-#endif
-
-          if (i == 0) continue;
-          if (wire_p) glBegin(GL_LINE_LOOP);
-          glNormal3f (lx, 0, ly);
-          glTexCoord2f (lastx, lastty); glVertex3f (lx, ly2, ly);
-          glNormal3f (xx, 0, yy);
-          glTexCoord2f (x,     lastty); glVertex3f (xx, ly2, yy);
-          glNormal3f (xx, 0, yy);
-          glTexCoord2f (x,     ty);     glVertex3f (xx, y2,   yy);
-          glNormal3f (lx, 0, ly);
-          glTexCoord2f (lastx, ty);     glVertex3f (lx, y2,   ly);
-          if (wire_p) glEnd();
+          if (j == 0)
+            glFrontFace (GL_CW);
         }
     }
-
-  if (!wire_p) glEnd();
 
   glPopMatrix();
 }
@@ -537,13 +532,15 @@ reshape_planet (ModeInfo *mi, int width, int height)
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -40);
 
-# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
   {
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
     int o = (int) current_device_rotation();
+# else
+    int o = (width > height ? 0 : 90);
+# endif
     if (o != 0 && o != 180 && o != -180)
       glScalef (h, h, h);
   }
-# endif
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -579,11 +576,23 @@ init_planet (ModeInfo * mi)
 	reshape_planet(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
 
-  if (!mode_arg || !*mode_arg || !strcasecmp(mode_arg, "GLOBE"))
+  if (!mode_arg || !*mode_arg || !strcasecmp(mode_arg, "random"))
+    {
+      if (random() % 6)
+        gp->mode = GLOBE;
+      else
+        gp->mode = MERCATOR, gp->random_p = True;
+    }
+  else if (!strcasecmp(mode_arg, "globe"))
     gp->mode = GLOBE;
-  else if (!strcasecmp(mode_arg, "EQUIRECTANGULAR"))
+  else if (!strcasecmp(mode_arg, "equirectangular") ||
+           !strcasecmp(mode_arg, "rectangular") ||
+           !strcasecmp(mode_arg, "rect") ||
+           !strcasecmp(mode_arg, "equi") ||
+           !strcasecmp(mode_arg, "eq"))
     gp->mode = EQUIRECTANGULAR;
-  else if (!strcasecmp(mode_arg, "mercator"))
+  else if (!strcasecmp(mode_arg, "mercator") ||
+           !strcasecmp(mode_arg, "merc"))
     gp->mode = MERCATOR;
   else
     {
@@ -617,7 +626,7 @@ init_planet (ModeInfo * mi)
     gp->rot = make_rotator (do_roll ? spin_speed : 0,
                             do_roll ? spin_speed : 0,
                             0, 1,
-                            do_wander ? wander_speed : 0,
+                            (do_wander && !gp->random_p) ? wander_speed : 0,
                             True);
     gp->z = frand (1.0);
     gp->tilt = frand (23.4);
@@ -719,6 +728,72 @@ init_planet (ModeInfo * mi)
   glEnd();
   glPopMatrix ();
   glEndList();
+
+  /* Construct the line segments of the timezone lines.  The list of line
+     segments is in a flat equirectangular map, so we need to project that
+     onto a sphere, and interpolate additional segments within each line to
+     make it curve.  It would be possible to also project these to a cone for
+     the Mercator and Equirectangular modes, but I haven't bothered.
+   */
+  gp->tzpoints = 0;
+  gp->tzlist = glGenLists(1);
+  glNewList (gp->tzlist, GL_COMPILE);
+  glPushMatrix ();
+  glRotatef (90, 1, 0, 0);
+  glRotatef (180, 0, 0, 1);
+  glRotatef (180,  0, 1, 0);  /* line up the time zones */
+  {
+    GLfloat minx = 99999, miny = 99999, maxx = -99999, maxy = -99999;
+    const GLfloat *p = (GLfloat *) timezones->data;
+    int lines = timezones->points / 2;
+    GLfloat min_seg = 0.05;
+    int i;
+    if (timezones->primitive != GL_LINES) abort();
+    if (timezones->format != GL_V3F) abort();
+
+    /* Find the bounding box. */
+    for (i = 0; i < timezones->points; i++)
+      {
+        GLfloat x = p[i * 3];
+        GLfloat y = p[i * 3 + 1];
+        if (x < minx) minx = x;
+        if (x > maxx) maxx = x;
+        if (y < miny) miny = y;
+        if (y > maxy) maxy = y;
+      }
+
+    for (i = 0; i < lines; i++)
+      {
+        GLfloat x0 = minx + p[0] / (maxx-minx);
+        GLfloat y0 = miny + p[1] / (maxy-miny);
+        GLfloat x1 = minx + p[3] / (maxx-minx);
+        GLfloat y1 = miny + p[4] / (maxy-miny);
+
+        GLfloat d = sqrt ((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
+        int steps = d / min_seg;
+        int i;
+        if (steps == 0) steps = 1;
+
+        glBegin (GL_LINE_STRIP);
+        for (i = 0; i <= steps; i++)
+          {
+            GLfloat r = i / (GLfloat) steps;
+            GLfloat x2 = x0 + r * (x1 - x0);
+            GLfloat y2 = y0 + r * (y1 - y0);
+            GLfloat th1 =  y2 * M_PI - M_PI_2;  /* longitude radians */
+            GLfloat th2 = -x2 * M_PI * 2;       /* latitude radians */
+            GLfloat x3 = cos(th1) * cos(th2);
+            GLfloat y3 = sin(th1);
+            GLfloat z3 = cos(th1) * sin(th2);
+            glVertex3f (x3, y3, z3);
+            gp->tzpoints++;
+          }
+        glEnd();
+        p += 6;
+      }
+  }
+  glPopMatrix ();
+  glEndList();
 }
 
 
@@ -742,9 +817,16 @@ draw_planet (ModeInfo * mi)
   mi->polygon_count = 0;
 
   if (gp->button_down_p)
-    gp->draw_axis = 60;
+    {
+      if (! gp->draw_axis)
+        gp->timezones_p = (gp->mode == GLOBE && !(random() % 2));
+      gp->draw_axis = 60;
+    }
   else if (!gp->draw_axis && !(random() % 1000))
-    gp->draw_axis = 60 + (random() % 90);
+    {
+      gp->draw_axis = 60 + (random() % 90);
+      gp->timezones_p = (gp->mode == GLOBE && !(random() % 10));
+    }
 
   if (do_rotate && !gp->button_down_p)
     {
@@ -958,7 +1040,7 @@ draw_planet (ModeInfo * mi)
       glDisable (GL_BLEND);
     }
 
-  if (gp->draw_axis)
+  if (gp->draw_axis && !gp->timezones_p)
     {
       glPushMatrix();
       glRotatef (gp->z * 360, 0.0, 0.0, 1.0);
@@ -974,6 +1056,23 @@ draw_planet (ModeInfo * mi)
         glEnable (GL_LIGHTING);
       if (gp->draw_axis) gp->draw_axis--;
     }
+  else if (gp->draw_axis && gp->timezones_p)
+    {
+      glPushMatrix();
+      glRotatef (gp->z * 360, 0.0, 0.0, 1.0);
+      glScalef (1.02, 1.02, 1.02);
+      glDisable (GL_TEXTURE_2D);
+      glDisable (GL_LIGHTING);
+      glDisable (GL_LINE_SMOOTH);
+      glColor3f (0.1, 0.3, 0.1);
+      glCallList (gp->tzlist);
+      mi->polygon_count += gp->tzpoints;
+      glPopMatrix();
+      if (!wire && !do_texture)
+        glEnable (GL_LIGHTING);
+      if (gp->draw_axis) gp->draw_axis--;
+    }
+
   glPopMatrix();
 
   if (mi->fps_p) do_fps (mi);
@@ -993,6 +1092,7 @@ free_planet (ModeInfo * mi)
   if (glIsList(gp->platelist))   glDeleteLists(gp->platelist, 1);
   if (glIsList(gp->shadowlist))  glDeleteLists(gp->shadowlist, 1);
   if (glIsList(gp->latlonglist)) glDeleteLists(gp->latlonglist, 1);
+  if (glIsList(gp->tzlist))      glDeleteLists(gp->tzlist, 1);
   if (glIsList(gp->starlist))    glDeleteLists(gp->starlist, 1);
   glDeleteTextures(1, &gp->tex1);
   glDeleteTextures(1, &gp->tex2);

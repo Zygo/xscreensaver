@@ -44,13 +44,13 @@ find_screensaver_window (Display *dpy, char **version)
   XSync (dpy, False);
   old_handler = XSetErrorHandler (error_handler);
 
+  if (version) *version = 0;
+
   for (screen = 0; screen < nscreens; screen++)
     {
       Window root = RootWindow (dpy, screen);
       Window root2, parent, *kids;
       unsigned int nkids;
-
-      if (version) *version = 0;
 
       if (! XQueryTree (dpy, root, &root2, &parent, &kids, &nkids))
         abort ();
@@ -94,6 +94,7 @@ find_screensaver_window (Display *dpy, char **version)
           if (ret) break;
         }
       if (kids) XFree (kids);
+      if (ret) break;
     }
 
   XSetErrorHandler (old_handler);

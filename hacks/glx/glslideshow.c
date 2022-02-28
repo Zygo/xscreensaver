@@ -1,4 +1,4 @@
-/* glslideshow, Copyright (c) 2003-2020 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright © 2003-2022 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
@@ -72,10 +72,15 @@
 # define DEF_TITLES         "False"
 # define DEF_LETTERBOX      "True"
 # define DEF_DEBUG          "False"
+# define DEF_VERBOSE        "False"
 # define DEF_MIPMAP         "True"
 
 #include "grab-ximage.h"
 #include "texfont.h"
+
+# ifndef HAVE_JWXYZ
+#  include <X11/Intrinsic.h>     /* for XrmDatabase in -verbose mode */
+# endif
 
 typedef struct {
   double x, y, w, h;
@@ -93,7 +98,8 @@ typedef struct {
                                       on screen */
   GLuint texid;			   /* which texture contains the image */
   int refcount;			   /* how many sprites refer to this image */
-  texture_loader_t *loader; /* asynchronous image loader */
+  texture_loader_t *loader;	   /* asynchronous image loader */
+  int steps;			   /* How many steps it took to load */
 } image;
 
 
@@ -167,7 +173,8 @@ static Bool letterbox_p;    /* When a loaded image is not the same aspect
                              */
 static Bool mipmap_p;	    /* Use mipmaps instead of single textures. */
 static Bool do_titles;	    /* Display image titles. */
-static Bool debug_p;	    /* Be loud and do weird things. */
+static Bool verbose_p;	    /* Print to stderr. */
+static Bool debug_p;	    /* Show image extents with boxes. */
 
 
 static XrmOptionDescRec opts[] = {
@@ -182,6 +189,8 @@ static XrmOptionDescRec opts[] = {
   {"-clip",         ".letterbox",     XrmoptionNoArg, "False" },
   {"-mipmaps",      ".mipmap",        XrmoptionNoArg, "True"  },
   {"-no-mipmaps",   ".mipmap",        XrmoptionNoArg, "False" },
+  {"-v",            ".verbose",       XrmoptionNoArg, "True"  },
+  {"-verbose",      ".verbose",       XrmoptionNoArg, "True"  },
   {"-debug",        ".debug",         XrmoptionNoArg, "True"  },
 };
 
@@ -193,6 +202,7 @@ static argtype vars[] = {
   { &mipmap_p,      "mipmap",       "Mipmap",       DEF_MIPMAP,        t_Bool},
   { &letterbox_p,   "letterbox",    "Letterbox",    DEF_LETTERBOX,     t_Bool},
   { &fps_cutoff,    "FPScutoff",    "FPSCutoff",    DEF_FPS_CUTOFF,     t_Int},
+  { &verbose_p,     "verbose",      "Verbose",      DEF_VERBOSE,       t_Bool},
   { &debug_p,       "debug",        "Debug",        DEF_DEBUG,         t_Bool},
   { &do_titles,     "titles",       "Titles",       DEF_TITLES,        t_Bool},
 };
@@ -294,6 +304,7 @@ alloc_image_incremental (ModeInfo *mi)
   img->loaded_p = False;
   img->used_p = False;
   img->mi = mi;
+  img->steps = 0;
 
   glGenTextures (1, &img->texid);
   if (img->texid <= 0) abort();
@@ -390,9 +401,10 @@ image_loaded_cb (const char *filename, XRectangle *geom,
       if (s) strcpy (img->title, s+1);
     }
 
-  if (debug_p)
-    fprintf (stderr, "%s: loaded   img %2d: \"%s\"\n",
-             blurb(), img->id, (img->title ? img->title : "(null)"));
+  if (verbose_p)
+    fprintf (stderr, "%s: loaded   img %2d: \"%s\" (%d steps)\n",
+             blurb(), img->id, (img->title ? img->title : "(null)"),
+             img->steps + 1);
  DONE:
 
   img->loaded_p = True;
@@ -429,7 +441,7 @@ destroy_image (ModeInfo *mi, image *img)
 
   if (!freed_p) abort();
 
-  if (debug_p)
+  if (verbose_p)
     fprintf (stderr, "%s: unloaded img %2d: \"%s\"\n",
              blurb(), img->id, (img->title ? img->title : "(null)"));
 
@@ -709,9 +721,9 @@ tick_sprite (ModeInfo *mi, sprite *sp)
     {
       double secs = now - sp->state_time;
 
-      if (debug_p)
+      if (verbose_p)
         fprintf (stderr,
-                 "%s: %s %3d frames %2.0f sec %5.1f fps (%.1f fps?)\n",
+                 "%s: %s %3d frames %2.0f sec %5.1f fps (max %.1f fps?)\n",
                  blurb(),
                  (sp->prev_state == IN ? "fade" : "pan "),
                  sp->frame_count,
@@ -739,7 +751,7 @@ tick_sprite (ModeInfo *mi, sprite *sp)
    its creation time compared to the current wall clock.
  */
 static void
-draw_sprite (ModeInfo *mi, sprite *sp)
+draw_sprite (ModeInfo *mi, sprite *sp, Bool keep_title_p)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
@@ -795,6 +807,7 @@ draw_sprite (ModeInfo *mi, sprite *sp)
         GLfloat texx2 = texx1 + texw;
         GLfloat texy2 = texy1 + texh;
 
+        glEnable (GL_TEXTURE_2D);
         glBindTexture (GL_TEXTURE_2D, img->texid);
         glColor4f (1, 1, 1, sp->opacity);
         glNormal3f (0, 0, 1);
@@ -826,11 +839,9 @@ draw_sprite (ModeInfo *mi, sprite *sp)
       }
 
 
-    if (do_titles &&
-        img->title && *img->title &&
-        (sp->state == IN || sp->state == FULL))
+    if (do_titles && img->title && *img->title)
       {
-        glColor4f (1, 1, 1, sp->opacity);
+        glColor4f (1, 1, 1, keep_title_p ? 1 : sp->opacity);
         print_texture_label (mi->dpy, ss->font_data,
                              mi->xgwa.width, mi->xgwa.height,
                              1, img->title);
@@ -882,6 +893,7 @@ static void
 draw_sprites (ModeInfo *mi)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  char *last_title = 0;
   int i;
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -904,7 +916,16 @@ draw_sprites (ModeInfo *mi)
 */
 
   for (i = 0; i < ss->nsprites; i++)
-    draw_sprite (mi, ss->sprites[i]);
+    {
+      sprite *s = ss->sprites[i];
+      /* If the two sprites have the same title, draw the second title at
+         full intensity to avoid a weird blooming effect when crossfading
+         an image with itself. */
+      Bool keep_title_p = (do_titles && last_title && s->img->title &&
+                           !strcmp (last_title, s->img->title));
+      draw_sprite (mi, s, keep_title_p);
+      last_title = s->img->title;
+    }
   glPopMatrix();
 
   if (debug_p)				/* draw a white box (the "screen") */
@@ -961,11 +982,11 @@ slideshow_handle_event (ModeInfo *mi, XEvent *event)
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
 
   if (event->xany.type == Expose ||
-           event->xany.type == GraphicsExpose ||
-           event->xany.type == VisibilityNotify)
+      event->xany.type == GraphicsExpose ||
+      event->xany.type == VisibilityNotify)
     {
       ss->redisplay_needed_p = True;
-      if (debug_p)
+      if (verbose_p)
         fprintf (stderr, "%s: exposure\n", blurb());
       return False;
     }
@@ -1043,7 +1064,7 @@ check_fps (ModeInfo *mi)
 
   if (fps >= fps_cutoff)
     {
-      if (debug_p)
+      if (verbose_p)
         fprintf (stderr,
                  "%s: %.1f fps is fast enough (with %d frames in %.1f secs)\n",
                  blurb(), fps, ss->frames_elapsed, wall_elapsed);
@@ -1073,24 +1094,25 @@ check_fps (ModeInfo *mi)
 }
 
 
-/* Kludge to add "-v" to invocation of "xscreensaver-getimage" in -debug mode
+/* Add "-v" to invocation of "xscreensaver-getimage" in -debug mode.
  */
 static void
-hack_resources (void)
+hack_resources (Display *dpy)
 {
-#if 0
+# ifndef HAVE_JWXYZ
   char *res = "desktopGrabber";
-  char *val = get_string_resource (res, "DesktopGrabber");
+  char *val = get_string_resource (dpy, res, "DesktopGrabber");
   char buf1[255];
   char buf2[255];
   XrmValue value;
-  sprintf (buf1, "%.100s.%.100s", progclass, res);
+  XrmDatabase db = XtDatabase (dpy);
+  sprintf (buf1, "%.100s.%.100s", progname, res);
   sprintf (buf2, "%.200s -v", val);
   value.addr = buf2;
   value.size = strlen(buf2);
   XrmPutResource (&db, buf1, "String", &value);
   free (val);
-#endif
+# endif /* !HAVE_JWXYZ */
 }
 
 
@@ -1110,13 +1132,15 @@ init_slideshow (ModeInfo *mi)
     MI_CLEARWINDOW(mi);
   }
 
-  if (debug_p)
+  if (debug_p) verbose_p = True;
+
+  if (verbose_p)
     fprintf (stderr, "%s: pan: %d; fade: %d; img: %d; zoom: %d%%\n",
              blurb(), pan_seconds, fade_seconds, image_seconds, zoom);
 
   sanity_check(mi);
 
-  if (debug_p)
+  if (verbose_p)
     fprintf (stderr, "%s: pan: %d; fade: %d; img: %d; zoom: %d%%\n\n",
              blurb(), pan_seconds, fade_seconds, image_seconds, zoom);
 
@@ -1139,7 +1163,7 @@ init_slideshow (ModeInfo *mi)
   ss->font_data = load_texture_font (mi->dpy, "titleFont");
 
   if (debug_p)
-    hack_resources();
+    hack_resources (MI_DISPLAY(mi));
 
   ss->now = double_time();
   ss->dawn_of_time = ss->now;
@@ -1150,8 +1174,7 @@ init_slideshow (ModeInfo *mi)
 }
 
 
-static void
-slideshow_idle (ModeInfo *mi);
+static void slideshow_idle (ModeInfo *mi);
 
 
 ENTRYPOINT void
@@ -1235,7 +1258,7 @@ draw_slideshow (ModeInfo *mi)
       return;
     }
 
-  if (debug_p && ss->now - ss->prev_frame_time > 1)
+  if (verbose_p && ss->now - ss->prev_frame_time > 1)
     fprintf (stderr, "%s: static screen for %.1f secs\n",
              blurb(), ss->now - ss->prev_frame_time);
 
@@ -1286,7 +1309,7 @@ static void
 slideshow_idle (ModeInfo *mi)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  double end_by_time = ss->now + ((double) mi->pause) / 2000000;
+  double allowed_time = ((double) mi->pause) / 2000000; /* 0.01 sec */
   int i;
 
   for (i = 0; i < ss->nimages; i++)
@@ -1296,8 +1319,9 @@ slideshow_idle (ModeInfo *mi)
         {
           if (texture_loader_failed (img->loader))
             abort();
-          step_texture_loader (img->loader, end_by_time - double_time(),
+          step_texture_loader (img->loader, allowed_time,
                                image_loaded_cb, img);
+          img->steps++;
           break; /* only do the first one! */
         }
     }

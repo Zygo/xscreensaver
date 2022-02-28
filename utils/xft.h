@@ -66,7 +66,7 @@
 
 # ifdef HAVE_COCOA
 #  include "jwxyz.h"
-#elif defined(HAVE_ANDROID)
+# elif defined(HAVE_ANDROID)
 #  include "jwxyz.h"
 # else
 #  include <X11/Xlib.h>

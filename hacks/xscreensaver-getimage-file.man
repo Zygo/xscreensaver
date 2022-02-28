@@ -33,7 +33,7 @@ Print diagnostics.
 .B --no-cache
 Ignore the cache when searching for images.  This may be slow.
 .TP 4
-.B --flush-caches
+.B --flush-cache
 Discard all caches immediately.  They will be re-generated as needed.
 .TP 4
 .I directory-or-URL
@@ -45,6 +45,15 @@ in the feed will be downloaded to a local cache directory.  The URL
 will be polled again when the cache times out.  Any new images will
 be downloaded and cached, and any images no longer in the feed will
 be discarded.
+.SH FILES
+Depending on your operating system, the cache file will be one of:
+.nf
+.sp
+        $HOME/.cache/xscreensaver/xscreensaver-getimage.cache
+        $HOME/tmp/.xscreensaver-getimage.cache
+        $HOME/.xscreensaver-getimage.cache
+        $HOME/Library/Caches/org.jwz.xscreensaver.getimage.cache
+.fi
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

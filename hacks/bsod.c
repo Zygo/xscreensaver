@@ -641,7 +641,10 @@ bsod_pop (struct bsod_state *bst)
           /* Reset the string back to the beginning, in case we loop. */
           bst->queue[bst->pos].arg2 = bst->queue[bst->pos].arg1;
           bst->queue[bst->pos].arg3 = 0;
-          bst->queue[bst->pos].type = (bsod_event_type) 
+          /* I have no idea what this means, but the extra cast seems to
+             silence it: "warning: cast to smaller integer type
+             'bsod_event_type' from 'void *' [-Wvoid-pointer-to-enum-cast]" */
+          bst->queue[bst->pos].type = (bsod_event_type) (size_t)
             bst->queue[bst->pos].arg4;
           bst->pos++;
           bst->current_left = bst->left_margin + bst->xoff;
@@ -895,7 +898,11 @@ bsod_pop (struct bsod_state *bst)
         case RIGHT:  case RIGHT_FULL:
           bst->queue[i].arg2 = bst->queue[i].arg1;
           bst->queue[i].arg3 = 0;
-          bst->queue[i].type = (bsod_event_type) bst->queue[i].arg4;
+          /* I have no idea what this means, but the extra cast seems to
+             silence it: "warning: cast to smaller integer type
+             'bsod_event_type' from 'void *' [-Wvoid-pointer-to-enum-cast]" */
+          bst->queue[i].type = (bsod_event_type) (size_t)
+            bst->queue[i].arg4;
           break;
         default: break;
         }

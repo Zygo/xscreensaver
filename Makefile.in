@@ -416,7 +416,7 @@ count::
 #	rsync -vax . cerebrum:src/xscreensaver/ \
 
 cerebrum::
-	rsync -vax . pi@10.0.1.46:xscreensaver/ \
+	rsync -vax . pi@10.0.1.24:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \
@@ -434,6 +434,7 @@ cerebrum::
 	--exclude xscreensaver-5.45 \
 	--exclude xscreensaver-6.00 \
 	--exclude xscreensaver-6.01 \
+	--exclude xscreensaver-6.02 \
 	--exclude '*~' \
 	--include '*.asm' \
 	--include '*.c' \
@@ -452,11 +453,14 @@ cerebrum::
 	--include '*.ttf' \
 	--include '*.otf' \
 	--include '*.ui' \
+	--include '*.sh' \
+	--include '*.pl' \
 	--include 'configure*' \
 	--include 'config.sub' \
 	--include 'config.guess' \
 	--include 'install-sh' \
 	--include 'bin2c' \
+	--include 'ad2c' \
 	--include '*/' \
 	--exclude '*'
 

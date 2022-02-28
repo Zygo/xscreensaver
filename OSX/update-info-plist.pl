@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.55 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.57 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -344,8 +344,6 @@ sub set_thumb($) {
   $name =~ s@\..*?$@@s;
   $name = lc($name);
 
-  $name = 'rd-bomb' if ($name eq 'rdbomb');  # sigh
-
   my $src = "$thumbdir/$name.png";
 
   if (! -f $src) {
@@ -364,53 +362,6 @@ sub set_thumb($) {
   }
 
   system ("cp", "-p", $src, "$app_dir/thumbnail.png");
-  my $exit  = $? >> 8;
-  exit ($exit) if $exit;
-}
-
-
-sub enable_gc($) {
-  my ($app_dir) = @_;
-
-  return unless ($app_dir =~ m@\.saver/?$@s);
-  my ($dir, $name) = ($app_dir =~ m@^(.*)/([^/]+)\.saver$@s);
-  error ("unparsable: $app_dir") unless $name;
-  my $exe = "$app_dir/Contents/MacOS/$name";
-  my @cmd = ("$dir/enable_gc", $exe);
-  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n"
-    if ($verbose > 1);
-  system (@cmd);
-  my $exit  = $? >> 8;
-  exit ($exit) if $exit;
-}
-
-
-sub fix_coretext($) {
-  my ($app_dir) = @_;
-
-  # In MacOS 10.8, they moved CoreText.framework from
-  # /System/Library/Frameworks/ApplicationServices.framework/Frameworks/
-  # to /System/Library/Frameworks/ which means that executables compiled
-  # on 10.8 and newer won't run on 10.7 and older because they can't find
-  # the library. Fortunately, 10.8 and later leave a symlink behind, so
-  # the old location still works. So we need our executables to contain
-  # an LC_LOAD_DYLIB pointing at the old directory instead of the new
-  # one.
-  # 
-  return if ($app_dir =~ m@-iphone@s);
-  my ($dir, $name) = ($app_dir =~ m@^(.*)/([^/]+)\.(app|saver)$@s);
-  error ("unparsable: $app_dir") unless $name;
-  my $exe = "$app_dir/Contents/MacOS/$name";
-
-  my $new = ("/System/Library/Frameworks/CoreText.framework/" .
-             "Versions/A/CoreText");
-  my $old = ("/System/Library/Frameworks/ApplicationServices.framework/" .
-             "Frameworks/CoreText.framework/Versions/A/CoreText");
-  my @cmd = ("install_name_tool", "-change", $new, $old, $exe);
-
-  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n"
-    if ($verbose > 1);
-  system (@cmd);
   my $exit  = $? >> 8;
   exit ($exit) if $exit;
 }
@@ -492,9 +443,6 @@ sub update($) {
   # set_icon ($app_dir);
 
   set_thumb ($app_dir);
-# enable_gc ($app_dir);
-  fix_coretext ($app_dir)
-    unless ($app_dir =~ m@-appletv@s);
 }
 
 

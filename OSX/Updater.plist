@@ -17,7 +17,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>6.02</string>
+	<string>6.03</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>NSPrincipalClass</key>
@@ -25,13 +25,13 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.02</string>
+	<string>6.03</string>
 	<key>CFBundleLongVersionString</key>
-	<string>6.02</string>
+	<string>6.03</string>
 	<key>CFBundleGetInfoString</key>
-	<string>6.02</string>
+	<string>6.03</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>6.02</string>
+	<string>6.03</string>
 	<key>NSMainNibFile</key>
 	<string>Updater</string>
 	<key>CFBundleIconFile</key>
@@ -46,6 +46,8 @@
 	<string>https://www.jwz.org/xscreensaver/updates.xml</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>sparkle_dsa_pub.pem</string>
+	<key>SUPublicEDKey</key>
+	<string>D5YfJDsnJeiG/OhmYBGrPytPDxPsq8p0lholwaueaBo=</string>
 	<key>SUScheduledCheckInterval</key>
 	<integer>604800</integer>
 </dict>

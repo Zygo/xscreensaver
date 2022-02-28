@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -175,7 +175,7 @@ main (int argc, char **argv)
   Widget root_widget;
   char *dpy_str = getenv ("DISPLAY");
   Bool xsync_p = False;
-  Bool splash_p = False;
+  int splash_p = 0;
   Bool init_p = False;
   int i;
 
@@ -231,7 +231,7 @@ main (int argc, char **argv)
                !strcmp (argv[i], "-synchronise"))
         xsync_p = True;
       else if (!strcmp (argv[i], "-splash"))
-        splash_p = True;
+        splash_p++;  /* 0, 1 or 2 */
       else if (!strcmp (argv[i], "-init"))
         init_p = True;
       else if (!strcmp (argv[i], "-h") || !strcmp (argv[i], "-help"))
@@ -266,7 +266,7 @@ main (int argc, char **argv)
     }
 
 # ifdef HAVE_PROC_OOM
-  if (splash_p || init_p)
+  if (splash_p == 1 || init_p)
     oom_assassin_immunity ();
 # endif
 
@@ -318,7 +318,8 @@ main (int argc, char **argv)
 
   if (splash_p)
     {
-      xscreensaver_splash (root_widget);
+      /* Settings button is disabled with --splash --splash */
+      xscreensaver_splash (root_widget, splash_p > 1);
       exit (0);
     }
   else if (xscreensaver_auth ((void *) root_widget,

@@ -226,7 +226,7 @@ export ANDROID_HACKS=		\
 	queens			\
 	raverhoop		\
 	razzledazzle		\
-	rd-bomb			\
+	rdbomb			\
 	ripples			\
 	rocks			\
 	romanboy		\
@@ -248,6 +248,7 @@ export ANDROID_HACKS=		\
 	splodesic		\
 	spotlight		\
 	squiral			\
+	squirtorus		\
 	stairs			\
 	starwars		\
 	stonerview		\
@@ -305,7 +306,7 @@ URL = https://www.jwz.org/xscreensaver/screenshots/
 
 # I find wget easier to deal with, but curl is usually installed by default.
 #WGET = wget -q -U xscreensaver-build-android --content-on-error=0 -O-
-WGET = curl -s -A xscreensaver-build-android -f
+WGET = curl -sL -A xscreensaver-build-android -f
 
 # ImageMagick isn't installed by default, but neither is anything similar.
 CVT  = -thumbnail '150x150^' -gravity center -extent 150x150 \
@@ -335,8 +336,6 @@ xscreensaver/res/drawable/%.png:
 	@\
 	FILE1=`echo "$@" | sed 's!^.*/\([^/]*\)\.png$$!\1.jpg!'` ;	\
 	FILE2="$@" ;							\
-	FILE1=`echo "$$FILE1" | sed s/rdbomb/rd-bomb/` ;		\
-	FILE2=`echo "$$FILE2" | sed s/rd-bomb/rdbomb/` ;		\
 	URL="$(URL)$$FILE1" ;						\
 	echo "converting $$URL..." ;					\
 	rm -f "$$FILE2" ;						\

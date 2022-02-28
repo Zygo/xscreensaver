@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -105,13 +105,12 @@
  */
 #undef HAVE_RANDR_12
 
-#define HAVE_XINPUT2 1  /* Mandatory */
-
-
-#ifdef HAVE_XINPUT2
-# include <X11/extensions/XInput2.h>
-# include "xinput.h"
+#ifndef HAVE_XINPUT
+# error The XInput2 extension is required
 #endif
+
+#include <X11/extensions/XInput2.h>
+#include "xinput.h"
 
 
 typedef struct {
@@ -157,7 +156,7 @@ double_time (void)
 }
 
 
-#ifdef HAVE_XINPUT2
+#ifdef HAVE_XINPUT
 static int xi_opcode = -1;
 #endif
 
@@ -176,7 +175,7 @@ user_event_p (Display *dpy, XEvent *event, XPointer arg)
   case MotionNotify:
     if (motion_p) return True;
     break;
-# ifdef HAVE_XINPUT2
+# ifdef HAVE_XINPUT
   case GenericEvent:
     {
       XIRawEvent *re;
@@ -197,7 +196,7 @@ user_event_p (Display *dpy, XEvent *event, XPointer arg)
       /* Calling XFreeEventData here is bad news */
     }
     break;
-# endif /* HAVE_XINPUT2 */
+# endif /* HAVE_XINPUT */
   default: break;
   }
 
@@ -213,7 +212,7 @@ user_active_p (XtAppContext app, Display *dpy, Bool fade_out_p)
   Bool motion_p = fade_out_p;   /* Motion aborts fade-out, not fade-in. */
   motion_p = False;		/* Naah, never abort on motion only */
 
-# ifdef HAVE_XINPUT2
+# ifdef HAVE_XINPUT
   if (xi_opcode == -1)
     {
       Bool ov = verbose_p;

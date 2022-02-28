@@ -15,7 +15,7 @@ xmatrix \- simulates the computer displays from the movie
 [\-fps]
 .SH DESCRIPTION
 The \fIxmatrix\fP program draws the 2D "digital rain" effect, as seen on
-the computer monitors in the Wachowski brothers' film, "The Matrix".
+the computer monitors in the 1999 film, "The Matrix".
 
 Also see
 .BR glmatrix (MANSUFFIX)

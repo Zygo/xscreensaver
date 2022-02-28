@@ -30,6 +30,10 @@
 # endif /* !HAVE_GTK2 */
 #endif /* HAVE_GDK_PIXBUF */
 
+#if (__GNUC__ >= 4)
+# pragma GCC diagnostic pop
+#endif
+
 #ifdef USE_GL
 # ifdef HAVE_JWXYZ
 #  include "jwxyz.h"

@@ -1,4 +1,4 @@
-# driver/Makefile.in --- xscreensaver, Copyright © 1997-2021 Jamie Zawinski.
+# driver/Makefile.in --- xscreensaver, Copyright © 1997-2022 Jamie Zawinski.
 # the `../configure' script generates `driver/Makefile' from this file.
 
 @SET_MAKE@
@@ -134,9 +134,6 @@ KERBEROS_OBJS	= passwd-kerberos.o
 PAM_SRCS	= passwd-pam.c
 PAM_OBJS	= passwd-pam.o
 
-PWHELPER_SRCS	= passwd-helper.c
-PWHELPER_OBJS	= passwd-helper.o
-
 PASSWD_SRCS	= @PASSWD_SRCS@
 PASSWD_OBJS	= @PASSWD_OBJS@
 
@@ -234,7 +231,7 @@ EXTRAS		= README Makefile.in \
 
 TARFILES	= $(DAEMON_SRCS) $(GFX_SRCS) $(AUTH_SRCS) $(SYSTEMD_SRCS) \
 		  $(CMD_SRCS) $(GTK_SRCS) $(MOTIF_SRCS) $(PWENT_SRCS) \
-		  $(PWHELPER_SRCS) $(KERBEROS_SRCS) $(PAM_SRCS) \
+		  $(KERBEROS_SRCS) $(PAM_SRCS) \
 		  $(HDRS) $(MENA) $(MENB) $(TEST_SRCS) $(EXTRAS) 
 
 default: $(EXES) $(UTIL_EXES) $(SETUID_EXES)
@@ -687,7 +684,7 @@ distdepend: check_men update_ad_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \
 	$(SAVER_SRCS_1) $(SYSTEMD_SRCS) $(MOTIF_SRCS) $(GTK_SRCS)	    \
-	$(PWENT_SRCS) $(PWHELPER_SRCS) $(KERBEROS_SRCS) $(PAM_SRCS)	    \
+	$(PWENT_SRCS) $(KERBEROS_SRCS) $(PAM_SRCS)			    \
 	$(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS)			    \
 	$(TEST_SRCS) 2>/dev/null |					    \
 	sort -d |							    \
@@ -915,10 +912,14 @@ XScreenSaver_Xm_ad.h::
 
 # Replace this with @INTLTOOL_DESKTOP_RULE@ once
 # https://bugs.launchpad.net/intltool/+bug/1749904 is fixed.
-.desktop.in.desktop:   $(INTLTOOL_MERGE) $(top_srcdir)/po/*.po
-	$(INTLTOOL_V_MERGE)LC_ALL=C $(INTLTOOL_MERGE) \
-	  $(INTLTOOL_V_MERGE_OPTIONS) -d -u \
-	  -c $(top_builddir)/po/.intltool-merge-cache $(top_srcdir)/po $< $@
+# gmake 4.3: "warning: ignoring prerequisites on suffix rule definition"
+#.desktop.in.desktop:   $(INTLTOOL_MERGE) $(top_srcdir)/po/*.po
+#	$(INTLTOOL_V_MERGE)LC_ALL=C $(INTLTOOL_MERGE) \
+#	  $(INTLTOOL_V_MERGE_OPTIONS) -d -u \
+#	  -c $(top_builddir)/po/.intltool-merge-cache $(top_srcdir)/po $< $@
+# Feb 2022: is it fixed yet? Let's find out.
+@INTLTOOL_DESKTOP_RULE@
+
 
 
 ##############################################################################
@@ -1020,9 +1021,6 @@ demo-Xm.o: $(UTILS_SRC)/version.h
 demo-Xm.o: $(UTILS_SRC)/visual.h
 demo-Xm.o: $(UTILS_SRC)/xmu.h
 demo-Xm-widgets.o: ../config.h
-passwd-helper.o: $(srcdir)/auth.h
-passwd-helper.o: $(srcdir)/blurb.h
-passwd-helper.o: ../config.h
 passwd-kerberos.o: $(srcdir)/auth.h
 passwd-kerberos.o: $(srcdir)/blurb.h
 passwd-kerberos.o: ../config.h
@@ -1063,7 +1061,6 @@ test-xdpms.o: $(srcdir)/blurb.h
 test-xdpms.o: ../config.h
 test-xinerama.o: $(srcdir)/blurb.h
 test-xinerama.o: ../config.h
-test-xinput.o: $(srcdir)/blurb.h
 test-xinput.o: ../config.h
 test-xinput.o: $(srcdir)/xinput.h
 test-xkb.o: $(srcdir)/blurb.h

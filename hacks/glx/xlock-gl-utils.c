@@ -125,9 +125,12 @@ init_GL(ModeInfo * mi)
     get_egl_config (dpy, d->egl_display, vid, &d->egl_config);
     if (!d->egl_config)
       {
+        /* get_egl_config already printed this:
         fprintf (stderr, "%s: no matching EGL config for X11 visual 0x%lx\n",
-                 progname, vi_out->visualid);
-        abort();
+                 progname, vi_out->visualid); */
+        /* returning 0 might be reasonable, but makes all the GL hacks
+           simply draw nothing in a loop. */
+        exit (1);
       }
 
     d->egl_surface = eglCreatePlatformWindowSurface (d->egl_display,

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -36,22 +36,6 @@
 # import "jwzglesI.h"
 #else
 # import <OpenGL/glu.h>
-#endif
-
-/* Garbage collection only exists if we are being compiled against the 
-   10.6 SDK or newer, not if we are building against the 10.4 SDK.
- */
-#ifndef  MAC_OS_X_VERSION_10_6
-# define MAC_OS_X_VERSION_10_6 1060  /* undefined in 10.4 SDK, grr */
-#endif
-#ifndef  MAC_OS_X_VERSION_10_12
-# define MAC_OS_X_VERSION_10_12 101200
-#endif
-#if (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6 && \
-     MAC_OS_X_VERSION_MAX_ALLOWED <  MAC_OS_X_VERSION_10_12)
-  /* 10.6 SDK or later, and earlier than 10.12 SDK */
-# import <objc/objc-auto.h>
-# define DO_GC_HACKERY
 #endif
 
 #undef countof
@@ -411,7 +395,7 @@ add_default_options (const XrmOptionDescRec *opts,
 static void sighandler (int sig)
 {
   const char *s = strsignal(sig);
-  if (!s) s = "Unknowng";
+  if (!s) s = "Unknown";
 # ifdef HAVE_IPHONE
   jwxyz_abort ("Signal: %s", s);	// Throw NSException, show dialog
 # else
@@ -438,21 +422,38 @@ static void sighandler (int sig)
 # endif
 }
 
+static void
+catch_signal (int sig, void (*handler) (int))
+{
+  struct sigaction a;
+  a.sa_handler = handler;
+  sigemptyset (&a.sa_mask);
+  a.sa_flags = SA_NODEFER;
+  if (sigaction (sig, &a, 0) < 0)
+    {
+      char buf [255];
+      sprintf (buf, "%s: couldn't catch signal %d", progname, sig);
+      NSLog (@"%s", buf);
+    }
+}
+
 static void catch_signals (void)
 {
-  signal (SIGINT,  sighandler);
-  signal (SIGQUIT, sighandler);
-  signal (SIGILL,  sighandler);
-  signal (SIGTRAP, sighandler);
-  signal (SIGABRT, sighandler);
-  signal (SIGEMT,  sighandler);
-  signal (SIGFPE,  sighandler);
-  signal (SIGBUS,  sighandler);
-  signal (SIGSEGV, sighandler);
-  signal (SIGSYS,  sighandler);
-  signal (SIGTERM, sighandler);
-  signal (SIGXCPU, sighandler);
-  signal (SIGXFSZ, sighandler);
+//catch_signal (SIGINT,  sighandler);  // shell ^C
+//catch_signal (SIGQUIT, sighandler);  // shell ^|
+  catch_signal (SIGILL,  sighandler);
+  catch_signal (SIGTRAP, sighandler);
+  catch_signal (SIGABRT, sighandler);
+  catch_signal (SIGEMT,  sighandler);
+  catch_signal (SIGFPE,  sighandler);
+  catch_signal (SIGBUS,  sighandler);
+  catch_signal (SIGSEGV, sighandler);
+  catch_signal (SIGSYS,  sighandler);
+//catch_signal (SIGTERM, sighandler);  // kill default
+//catch_signal (SIGKILL, sighandler);  // -9 untrappable
+  catch_signal (SIGXCPU, sighandler);
+  catch_signal (SIGXFSZ, sighandler);
+  NSLog (@"installed signal handlers");
 }
 
 
@@ -550,20 +551,6 @@ static void catch_signals (void)
     [self stopAnimation];
 }
 #endif  // HAVE_IPHONE
-
-
-#ifdef USE_TOUCHBAR
-- (id) initWithFrame:(NSRect)frame
-               title:(NSString *)_title
-           isPreview:(BOOL)isPreview
-           isTouchbar:(BOOL)isTouchbar
-{
-  if (! (self = [self initWithFrame:frame title:_title isPreview:isPreview]))
-    return 0;
-  touchbar_p = isTouchbar;
-  return self;
-}
-#endif // USE_TOUCHBAR
 
 
 #ifdef HAVE_IPHONE
@@ -866,10 +853,6 @@ static void catch_signals (void)
 
   [self setViewport];
   [self createBackbuffer:new_backbuffer_size];
-
-# ifdef USE_TOUCHBAR
-  if (touchbar_view) [touchbar_view startAnimation];
-# endif // USE_TOUCHBAR
 }
 
 
@@ -955,14 +938,6 @@ static void catch_signals (void)
   backbuffer_data = NULL;
   backbuffer_len = 0;
 # endif
-
-# ifdef USE_TOUCHBAR
-  if (touchbar_view) {
-    [touchbar_view stopAnimation];
-    [touchbar_view release];
-    touchbar_view = nil;
-  }
-# endif
 }
 
 
@@ -988,56 +963,6 @@ static void catch_signals (void)
 #endif
   }
 }
-
-
-#ifdef USE_TOUCHBAR
-
-static NSString *touchbar_cid = @"org.jwz.xscreensaver.touchbar";
-static NSString *touchbar_iid = @"org.jwz.xscreensaver.touchbar";
-
-- (NSTouchBar *) makeTouchBar
-{
-  NSTouchBar *t = [[NSTouchBar alloc] init];
-  t.delegate = self;
-  t.customizationIdentifier = touchbar_cid;
-  t.defaultItemIdentifiers = @[touchbar_iid,
-                               NSTouchBarItemIdentifierOtherItemsProxy];
-  t.customizationAllowedItemIdentifiers = @[touchbar_iid];
-  t.principalItemIdentifier = touchbar_iid;
-  return t;
-}
-
-- (NSTouchBarItem *)touchBar:(NSTouchBar *)touchBar
-       makeItemForIdentifier:(NSTouchBarItemIdentifier)id
-{
-  if ([id isEqualToString:touchbar_iid])
-    {
-      NSRect rect = [self frame];
-      // #### debugging
-      rect.origin.x = 0;
-      rect.origin.y = 0;
-      rect.size.width = 200;
-      rect.size.height = 40;
-      touchbar_view = [[[self class] alloc]
-                        initWithFrame: rect
-                                title: saver_title
-                            isPreview: self.isPreview
-                           isTouchbar: True];
-      [touchbar_view setAutoresizingMask:
-                       NSViewWidthSizable|NSViewHeightSizable];
-      NSCustomTouchBarItem *item =
-        [[NSCustomTouchBarItem alloc] initWithIdentifier:id];
-      item.view = touchbar_view;
-      item.customizationLabel = touchbar_cid;
-
-      if ([self isAnimating])
-        // TouchBar was created after animation begun.
-        [touchbar_view startAnimation];
-    }
-  return nil;
-}
-
-#endif // USE_TOUCHBAR
 
 
 static void
@@ -1827,17 +1752,6 @@ gl_check_ver (const struct gl_version *caps,
     [[self window] setAcceptsMouseMovedEvents:YES];
 # endif
 
-    /* In MacOS 10.5, this enables "QuartzGL", meaning that the Quartz
-       drawing primitives will run on the GPU instead of the CPU.
-       It seems like it might make things worse rather than better,
-       though...  Plus it makes us binary-incompatible with 10.4.
-
-# if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
-    [[self window] setPreferredBackingLocation:
-                     NSWindowBackingLocationVideoMemory];
-# endif
-     */
-
     /* Kludge: even though the init_cb functions are declared to take 2 args,
       actually call them with 3, for the benefit of xlockmore_init() and
       xlockmore_setup().
@@ -1988,36 +1902,6 @@ gl_check_ver (const struct gl_version *caps,
     [self setAnimationTimeInterval:(delay / 1000000.0)];
 # endif
 
-# ifdef DO_GC_HACKERY
-  /* Current theory is that the 10.6 garbage collector sucks in the
-     following way:
-
-     It only does a collection when a threshold of outstanding
-     collectable allocations has been surpassed.  However, CoreGraphics
-     creates lots of small collectable allocations that contain pointers
-     to very large non-collectable allocations: a small CG object that's
-     collectable referencing large malloc'd allocations (non-collectable)
-     containing bitmap data.  So the large allocation doesn't get freed
-     until GC collects the small allocation, which triggers its finalizer
-     to run which frees the large allocation.  So GC is deciding that it
-     doesn't really need to run, even though the process has gotten
-     enormous.  GC eventually runs once pageouts have happened, but by
-     then it's too late, and the machine's resident set has been
-     sodomized.
-
-     So, we force an exhaustive garbage collection in this process
-     approximately every 5 seconds whether the system thinks it needs 
-     one or not.
-  */
-  {
-    static int tick = 0;
-    if (++tick > 5*30) {
-      tick = 0;
-      objc_collect (OBJC_EXHAUSTIVE_COLLECTION);
-    }
-  }
-# endif // DO_GC_HACKERY
-
 # ifdef HAVE_IPHONE
   }
   @catch (NSException *e) {
@@ -2055,10 +1939,6 @@ gl_check_ver (const struct gl_version *caps,
 {
   // Render X11 into the backing store bitmap...
 
-# ifdef USE_TOUCHBAR
-  if (touchbar_p) return;
-# endif
-
 # ifdef JWXYZ_QUARTZ
   NSAssert (backbuffer, @"no back buffer");
 
@@ -2071,10 +1951,6 @@ gl_check_ver (const struct gl_version *caps,
 
 # if defined HAVE_IPHONE && defined JWXYZ_QUARTZ
   UIGraphicsPopContext();
-# endif
-
-# ifdef USE_TOUCHBAR
-  if (touchbar_view) [touchbar_view animateOneFrame];
 # endif
 }
 
@@ -2629,10 +2505,15 @@ gl_check_ver (const struct gl_version *caps,
   [self setMultipleTouchEnabled:YES];
 # endif // !HAVE_TVOS
 
+  // As of Oct 2021 (macOS 11.6, iOS 15.1) minimumNumberOfTouches and
+  // maximumNumberOfTouches are being ignored in gesture recognisers,
+  // so the 'pan2' recognizer was firing for single-touch pans.
+  // Instead, we now have the 'pan' do a horrible kludge, see below.
+
   [self addGestureRecognizer: dtap];
   [self addGestureRecognizer: stap];
   [self addGestureRecognizer: pan];
-  [self addGestureRecognizer: pan2];
+//[self addGestureRecognizer: pan2];
   [self addGestureRecognizer: hold];
 # ifndef HAVE_TVOS
   [self addGestureRecognizer: pinch];
@@ -2762,8 +2643,6 @@ gl_check_ver (const struct gl_version *caps,
 }
 
 
-/* Single click exits saver.
- */
 - (void) handleTap:(UIGestureRecognizer *)sender
 {
   if (!xwindow)
@@ -2785,6 +2664,10 @@ gl_check_ver (const struct gl_version *caps,
   xe.xbutton.x = p.x;
   xe.xbutton.y = p.y;
 
+# ifndef __OPTIMIZE__
+  NSLog (@"tap ButtonPress %d %d", xe.xbutton.x, xe.xbutton.y);
+# endif
+
   if (! [self sendEvent: &xe])
     ; //[self beep];
 
@@ -2805,6 +2688,10 @@ gl_check_ver (const struct gl_version *caps,
 
   [self showCloseButton];
 
+# ifndef __OPTIMIZE__
+  NSLog (@"double-tap KeyPress Space");
+# endif
+
   XEvent xe;
   memset (&xe, 0, sizeof(xe));
   xe.xkey.keycode = ' ';
@@ -2822,6 +2709,29 @@ gl_check_ver (const struct gl_version *caps,
 - (void) handlePan:(UIGestureRecognizer *)sender
 {
   if (!xsft->event_cb || !xwindow) return;
+
+  // As of Oct 2021 (macOS 11.6, iOS 15.1) minimumNumberOfTouches and
+  // maximumNumberOfTouches are being ignored in gesture recognisers.
+  // Thus, this bullshit.  If we get a multi-touch in this recogniser
+  // (which we should not, as it set max and min touches to 1) then
+  // do the double-touch swipe handler instead.  the static state is
+  // needed because 'StateEnded' is called with numberOfTouches == 0.
+  {
+    static BOOL pan2_p = FALSE;
+    if (sender.state == UIGestureRecognizerStateBegan) {
+      pan2_p = FALSE;
+      if (sender.numberOfTouches == 2)
+        pan2_p = TRUE;
+    }
+
+    if (pan2_p) {
+      [self handlePan2: (UIPanGestureRecognizer *) sender];
+      return;
+    }
+  }
+
+  if (sender.numberOfTouches > 1)
+    return;
 
   [self showCloseButton];
 
@@ -2859,6 +2769,16 @@ gl_check_ver (const struct gl_version *caps,
     break;
   }
 
+# ifndef __OPTIMIZE__
+  if (xe.xany.type != MotionNotify)
+    NSLog (@"pan (%lu) %s %d %d",
+           sender.numberOfTouches,
+           (xe.xany.type == ButtonPress ? "ButtonPress" :
+            xe.xany.type == ButtonRelease ? "ButtonRelease" :
+            xe.xany.type == MotionNotify ? "MotionNotify" : "???"),
+           (int) p.x, (int) p.y);
+# endif
+
   BOOL ok = [self sendEvent: &xe];
   if (!ok && xe.xany.type == ButtonRelease)
     [self beep];
@@ -2870,6 +2790,9 @@ gl_check_ver (const struct gl_version *caps,
  */
 - (void) handleLongPress:(UIGestureRecognizer *)sender
 {
+# ifndef __OPTIMIZE__
+  NSLog (@"long-press");
+# endif
   [self handlePan:sender];
 }
 
@@ -2889,7 +2812,7 @@ gl_check_ver (const struct gl_version *caps,
   XEvent xe;
   memset (&xe, 0, sizeof(xe));
 
-  CGPoint p = [sender locationInView:self];  // this is in points, not pixels
+  CGPoint p = [sender translationInView:self];  // this is in points, not pixels
   [self convertMouse:&p];
 
   if (fabs(p.x) > fabs(p.y))
@@ -2897,6 +2820,15 @@ gl_check_ver (const struct gl_version *caps,
   else
     xe.xkey.keycode = (p.y > 0 ? XK_Down : XK_Up);
 
+# ifndef __OPTIMIZE__
+  NSLog (@"pan2 (%lu) KeyPress %s",
+         sender.numberOfTouches,
+         (xe.xkey.keycode == XK_Right ? "Right" :
+          xe.xkey.keycode == XK_Left ? "Left" :
+          xe.xkey.keycode == XK_Up ? "Up" : "Down"));
+# endif
+
+  xe.xany.type = KeyPress;
   BOOL ok1 = [self sendEvent: &xe];
   xe.xany.type = KeyRelease;
   BOOL ok2 = [self sendEvent: &xe];
@@ -2919,6 +2851,9 @@ gl_check_ver (const struct gl_version *caps,
 
   switch (sender.state) {
   case UIGestureRecognizerStateBegan:
+# ifndef __OPTIMIZE__
+    NSLog (@"Pinch start");
+# endif
   case UIGestureRecognizerStateChanged:
     {
       double scale = sender.scale;
@@ -2948,12 +2883,18 @@ gl_check_ver (const struct gl_version *caps,
       pos.y += np.y;
       self.layer.position = pos;
       self.layer.anchorPoint = p;
+
+
     }
     break;
 
   case UIGestureRecognizerStateEnded:
     {
       // When released, snap back to the default zoom (but animate it).
+
+# ifndef __OPTIMIZE__
+      NSLog (@"Pinch end");
+# endif
 
       CABasicAnimation *a1 = [CABasicAnimation
                                animationWithKeyPath:@"position.x"];
@@ -3029,12 +2970,13 @@ gl_check_ver (const struct gl_version *caps,
 
 - (void) showCloseButton
 {
-  double iw = 24;
+  int width = self.bounds.size.width;
+  double scale = width > 800 ? 2 : 1;  // iPad
+  double iw = 24 * scale;
   double ih = iw;
-  double off = 4;
+  double off = 4 * scale;
 
   if (!closeBox) {
-    int width = self.bounds.size.width;
     closeBox = [[UIView alloc]
                 initWithFrame:CGRectMake(0, 0, width, ih + off)];
     closeBox.backgroundColor = [UIColor clearColor];

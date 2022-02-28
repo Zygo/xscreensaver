@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Mon Oct  4 14:33:40 2021 by build-fntable.pl 1.11.
+   Created: Fri Jan 14 19:56:18 2022 by build-fntable.pl 1.14.
  */
 
 #import <Foundation/Foundation.h>
@@ -209,6 +209,7 @@ extern struct xscreensaver_function_table
  spotlight_xscreensaver_function_table,
  sproingies_xscreensaver_function_table,
  squiral_xscreensaver_function_table,
+ squirtorus_xscreensaver_function_table,
  stairs_xscreensaver_function_table,
  starfish_xscreensaver_function_table,
  starwars_xscreensaver_function_table,
@@ -457,6 +458,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Spotlight":	[NSValue valueWithPointer:&spotlight_xscreensaver_function_table],
 	@"Sproingies":	[NSValue valueWithPointer:&sproingies_xscreensaver_function_table],
 	@"Squiral":	[NSValue valueWithPointer:&squiral_xscreensaver_function_table],
+	@"Squirtorus":	[NSValue valueWithPointer:&squirtorus_xscreensaver_function_table],
 	@"Stairs":	[NSValue valueWithPointer:&stairs_xscreensaver_function_table],
 	@"Starfish":	[NSValue valueWithPointer:&starfish_xscreensaver_function_table],
 	@"Star Wars":	[NSValue valueWithPointer:&starwars_xscreensaver_function_table],

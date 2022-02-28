@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -158,9 +158,18 @@
 
   search.frame = win;
 
+  // Add left and right padding so that the lines aren't super wide.
+  // The whitespace looks a little odd, but short lines are easier to read.
+  //
+  double max = 640;
+  double w = self.tableView.frame.size.width;
+  if (w > max) {
+    double margin = (w - max) / 2;
+    self.tableView.layoutMargins = UIEdgeInsetsMake (0, margin, 0, margin);
+  }
+
   [super viewWillLayoutSubviews];
 }
-
 
 - (id)initWithNames:(NSArray *)_names descriptions:(NSDictionary *)_descs;
 {
@@ -316,6 +325,7 @@
   cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
 # endif // !HAVE_TVOS
   cell.detailTextLabel.text = desc;
+  cell.detailTextLabel.numberOfLines = 2;
 
   return cell;
 }

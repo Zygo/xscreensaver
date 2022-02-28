@@ -1702,10 +1702,17 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
         fprintf (stderr, "%s: re-using icmp socket\n", progname);
 
     } 
+# if defined(__APPLE__) && defined(__MACH__)
+  /* As of Debian 11.1 (kernel 5.10) this call *succeeds* but no ping
+     responses are received, even when sonar is setuid root.  Previously,
+     this call would fail on Linux, and would only succeed on macOS, and
+     did not require root there.  I have no idea what happens on the BSDs.
+   */
   else if ((pd->icmpsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)) >= 0)
     {
       socket_initted_p = True;
     }
+# endif /* macOS */
   else if (set_ping_capability() &&
            (pd->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0)
     {

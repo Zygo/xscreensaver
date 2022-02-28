@@ -90,7 +90,7 @@ utf8_decode (const unsigned char *in, long length, unsigned long *unicode_ret)
     if (in+3 > end) PREMATURE_EOF;
     min = 1 << 16;
     uc = (((c     & 0x07) << 18) | /* 00000111--+-------+------- */
-          ((in[0] & 0x3F) << 12) | /*       01111111----+------- */
+          ((in[0] & 0x3F) << 12) | /*       00111111----+------- */
           ((in[1] & 0x3F) <<  6) | /*             00111111------ */
           ((in[2] & 0x3F)));       /*                   00111111 */
     in += 3;

@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -76,6 +76,7 @@
 # pragma GCC diagnostic ignored "-Wlong-long"
 # pragma GCC diagnostic ignored "-Wvariadic-macros"
 # pragma GCC diagnostic ignored "-Wpedantic"
+# pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
 #include <gtk/gtk.h>
@@ -661,6 +662,10 @@ run_cmd (state *s, Atom command, int arg)
   int status;
 
   flush_dialog_changes_and_save (s);
+
+  if (s->debug_p)
+    fprintf (stderr, "%s: command: %s %d\n", blurb(),
+             XGetAtomName (GDK_DISPLAY(), command), arg);
   status = xscreensaver_command (GDK_DISPLAY(), command, arg, False, &err);
 
   /* Kludge: ignore the spurious "window unexpectedly deleted" errors... */
@@ -696,6 +701,8 @@ run_hack (state *s, int list_elt, Bool report_errors_p)
   flush_dialog_changes_and_save (s);
   schedule_preview (s, 0);
 
+  if (s->debug_p)
+    fprintf (stderr, "%s: command: DEMO %d\n", blurb(), hack_number + 1);
   status = xscreensaver_command (GDK_DISPLAY(), XA_DEMO, hack_number + 1,
                                  False, &err);
 
@@ -902,6 +909,7 @@ about_menu_cb (GtkAction *menu_action, gpointer user_data)
 }
 
 
+/* Help menu / Documentation */
 G_MODULE_EXPORT void
 doc_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
@@ -930,6 +938,7 @@ doc_menu_cb (GtkAction *menu_action, gpointer user_data)
 }
 
 
+/* File menu opened */
 G_MODULE_EXPORT void
 file_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
@@ -938,6 +947,7 @@ file_menu_cb (GtkAction *menu_action, gpointer user_data)
 }
 
 
+/* File menu / Activate */
 G_MODULE_EXPORT void
 activate_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
@@ -946,6 +956,7 @@ activate_menu_cb (GtkAction *menu_action, gpointer user_data)
 }
 
 
+/* File menu / Lock */
 G_MODULE_EXPORT void
 lock_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
@@ -954,6 +965,7 @@ lock_menu_cb (GtkAction *menu_action, gpointer user_data)
 }
 
 
+/* File menu / Kill daemon */
 G_MODULE_EXPORT void
 kill_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
@@ -962,11 +974,14 @@ kill_menu_cb (GtkAction *menu_action, gpointer user_data)
 }
 
 
+/* File menu / Restart */
 G_MODULE_EXPORT void
 restart_menu_cb (GtkWidget *widget, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
   flush_dialog_changes_and_save (s);
+  if (s->debug_p)
+    fprintf (stderr, "%s: command: EXIT\n", blurb());
   xscreensaver_command (GDK_DISPLAY(), XA_EXIT, 0, False, NULL);
   sleep (1);
   if (system ("xscreensaver -splash &") < 0)
@@ -1080,17 +1095,19 @@ demo_write_init_file (state *s, saver_preferences *p)
 }
 
 
+/* The "Preview" button */
 G_MODULE_EXPORT void
 run_this_cb (GtkButton *button, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
   int list_elt = selected_list_element (s);
   if (list_elt < 0) return;
-  if (!flush_dialog_changes_and_save (s))
-    run_hack (s, list_elt, True);
+  flush_dialog_changes_and_save (s);
+  run_hack (s, list_elt, True);
 }
 
 
+/* The "Documentation" button on the Settings dialog */
 G_MODULE_EXPORT void
 manual_cb (GtkButton *button, gpointer user_data)
 {
@@ -1170,6 +1187,7 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
 }
 
 
+/* The down arrow */
 G_MODULE_EXPORT void
 run_next_cb (GtkButton *button, gpointer user_data)
 {
@@ -1199,6 +1217,7 @@ run_next_cb (GtkButton *button, gpointer user_data)
 }
 
 
+/* The up arrow */
 G_MODULE_EXPORT void
 run_prev_cb (GtkButton *button, gpointer user_data)
 {
@@ -1736,7 +1755,9 @@ flush_dialog_changes_and_save (state *s)
       /* Tell the xscreensaver daemon to wake up and reload the init file,
          in case the timeout has changed.  Without this, it would wait
          until the *old* timeout had expired before reloading. */
-        xscreensaver_command (GDK_DISPLAY(), XA_DEACTIVATE, 0, 0, 0);
+      if (s->debug_p)
+        fprintf (stderr, "%s: command: DEACTIVATE\n", blurb());
+      xscreensaver_command (GDK_DISPLAY(), XA_DEACTIVATE, 0, 0, 0);
     }
 
   s->saving_p = False;
@@ -2307,7 +2328,9 @@ browse_text_program_cb (GtkButton *button, gpointer user_data)
 G_MODULE_EXPORT void
 preview_theme_cb (GtkWidget *w, gpointer user_data)
 {
-  if (system ("xscreensaver-auth --splash &") < 0)
+  /* Settings button is disabled with --splash --splash so that we don't
+     end up with two copies of xscreensaver-settings running. */
+  if (system ("xscreensaver-auth --splash --splash &") < 0)
     fprintf (stderr, "%s: splash exec failed\n", blurb());
 }
 

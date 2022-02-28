@@ -67,8 +67,10 @@ get_gl_visual (Screen *screen)
 
   if (! eglInitialize (egl_display, &egl_major, &egl_minor))
     {
-      fprintf (stderr, "%s: eglInitialize failed\n", progname);
-      abort();
+      /* The library already printed this, but without progname:
+         "libEGL warning: DRI2: failed to create any config" */
+      /* fprintf (stderr, "%s: eglInitialize failed\n", progname); */
+      return 0;  /* We get here if running Xephyr in 8-bit pseudocolor */
     }
 
   /* Get the best EGL config on any visual, then see what visual it used. */
@@ -230,13 +232,13 @@ get_egl_config (Display *dpy, EGLDisplay *egl_display,
   };
   EGLint attrs[40];
   EGLint nconfig;
-  int i, j, k, iter, pass;
+  int i, i_start, j, k, iter, pass;
   Bool glslp;
 
-  i = 0;
+  i_start = 0;
 # ifdef SB
   if (! get_boolean_resource (dpy, "multiSample", "MultiSample"))
-    i = SB_COUNT;  /* skip over the multibuffer entries in 'attrs' */
+    i_start = SB_COUNT;  /* skip over the multibuffer entries in 'attrs' */
 # endif /* SB */
 
   glslp = get_boolean_resource (dpy, "prefersGLSL", "PrefersGLSL");
@@ -245,7 +247,7 @@ get_egl_config (Display *dpy, EGLDisplay *egl_display,
   *egl_config = 0;
   for (pass = 0; pass < iter; pass++)
     {
-      for (; i < countof(templates); i++)
+      for (i = i_start ; i < countof(templates); i++)
         {
           for (j = 0, k = 0; templates[i][j] != EGL_NONE; j += 2)
             {
@@ -284,8 +286,9 @@ get_egl_config (Display *dpy, EGLDisplay *egl_display,
 
   if (! *egl_config)
     {
-      fprintf (stderr, "%s: eglChooseConfig: no configs found\n", progname);
-      abort();
+      fprintf (stderr, "%s: no matching EGL config for X11 visual 0x%lx\n",
+               progname, (unsigned long) x11_visual_id);
+      return;
     }
 }
 #endif /* HAVE_EGL */

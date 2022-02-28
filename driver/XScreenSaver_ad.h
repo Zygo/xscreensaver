@@ -36,10 +36,9 @@
 "*textURL:		https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
 "*demoCommand: xscreensaver-settings",
 "*helpURL: https://www.jwz.org/xscreensaver/man.html",
-"*loadURL: gnome-open '%s'",
-"*manualCommand: yelp man:%s || \
-			x-terminal-emulator -t '%s manual' \
-			  -e /bin/sh -c \"man %s; read foo\"",
+"*loadURL: x-www-browser '%s' || firefox '%s' || chromium-browser '%s'",
+"*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
+		    -e /bin/sh -c 'man \"%s\" ; read foo'",
 "*dateFormat:		%I:%M %p, %a %b %e",
 "*newLoginCommand:	no-such-login-manager",
 "XScreenSaver.pointerHysteresis:		10",
@@ -217,7 +216,7 @@
 				munch -root				    \\n\
 				penrose -root				    \\n\
   GL: 				pipes -root				    \\n\
-				rd-bomb -root				    \\n\
+				rdbomb -root				    \\n\
   GL: 				rubik -root				    \\n\
 -				sierpinski -root			    \\n\
 				slip -root				    \\n\
@@ -253,7 +252,7 @@
 				compass -root				    \\n\
 				deluxe -root				    \\n\
 -				demon -root				    \\n\
-  GL: 				extrusion -root				    \\n\
+- GL: 				extrusion -root				    \\n\
 -				loop -root				    \\n\
 				penetrate -root				    \\n\
 				petri -root				    \\n\
@@ -422,7 +421,9 @@
   GL: 				headroom -root				    \\n\
   GL: 				sphereeversion -root			    \\n\
 				binaryhorizon -root			    \\n\
-				marbling -root				    \\n",
+				marbling -root				    \\n\
+  GL: 				mapscroller -root			    \\n\
+  GL: 				squirtorus -root			    \\n",
 "*hacks.antinspect.name:     Ant Inspect",
 "*hacks.antmaze.name:        Ant Maze",
 "*hacks.antspotlight.name:   Ant Spotlight",
@@ -489,6 +490,7 @@
 "*hacks.lcdscrub.name:       LCD Scrub",
 "*hacks.lmorph.name:         LMorph",
 "*hacks.m6502.name:          m6502",
+"*hacks.mapscroller.name:    Map Scroller",
 "*hacks.maze3d.name:         Maze 3D",
 "*hacks.memscroller.name:    Mem Scroller",
 "*hacks.metaballs.name:      Meta Balls",
@@ -507,8 +509,7 @@
 "*hacks.quasicrystal.name:   Quasi-Crystal",
 "*hacks.raverhoop.name:      Raver Hoop",
 "*hacks.razzledazzle.name:   Razzle Dazzle",
-"*hacks.rd-bomb.name:        RD-Bomb",
-"*hacks.rd-bomb.name:        RD-Bomb",
+"*hacks.rdbomb.name:         RD-Bomb",
 "*hacks.romanboy.name:       Roman Boy",
 "*hacks.rotzoomer.name:      Rot Zoomer",
 "*hacks.rubikblocks.name:    Rubik Blocks",

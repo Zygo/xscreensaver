@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2021 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1276,6 +1276,7 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
         int wait_status = 0;
         FILE *f = fdopen (in, "r");
         int L;
+        char *outfile_full;
 
         close (out);  /* don't need this one */
         *buf = 0;
@@ -1296,26 +1297,30 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
             outfile = strdup (buf);
           }
 
+        outfile_full = outfile;
         if (*outfile != '/')
           {
             /* Program returned path relative to directory.  Prepend dir
                to buf so that we can properly stat it. */
-            char *s2 = (char *) malloc (strlen(buf) + strlen(directory) + 20);
-            strcpy (s2, directory);
+            outfile_full = (char *)
+              malloc (strlen(buf) + strlen(directory) + 20);
+            strcpy (outfile_full, directory);
             if (directory[strlen(directory)-1] != '/')
-              strcat (s2, "/");
-            strcat (s2, outfile);
-            free (outfile);
-            outfile = s2;
+              strcat (outfile_full, "/");
+            strcat (outfile_full, outfile);
           }
 
-        if (! stat (outfile, &st))
-          return outfile;
+        if (stat (outfile_full, &st))
+          {
+            fprintf (stderr, "%s: file does not exist: \"%s\"\n",
+                     progname, outfile_full);
+            free (outfile);
+            outfile = 0;
+          }
 
-        fprintf (stderr, "%s: file does not exist: \"%s\"\n",
-                 progname, outfile);
-        free (outfile);
-        return 0;
+        if (outfile_full && outfile_full != outfile)
+          free (outfile_full);
+        return outfile;
       }
     }
 

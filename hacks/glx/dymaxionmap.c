@@ -1,5 +1,5 @@
 /* dymaxionmap --- Buckminster Fuller's unwrapped icosahedral globe.
- * Copyright (c) 2016-2018 Jamie Zawinski.
+ * Copyright © 2016-2022 Jamie Zawinski.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -49,6 +49,16 @@
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 #undef RANDSIGN
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
+
+#undef BUILD_CACHE_PNG
+
+#ifdef BUILD_CACHE_PNG
+# ifdef HAVE_LIBPNG
+#  include <png.h>
+# else
+#  error BUILD_CACHE_PNG requires HAVE_LIBPNG
+# endif
+#endif /* BUILD_CACHE_PNG */
 
 static int do_roll;
 static int do_wander;
@@ -301,6 +311,30 @@ create_daylight_mask (Display *dpy, Visual *v, int w, int h)
 }
 
 
+/* Reduce the XImage size by half.
+ */
+static XImage *
+shrink_image (Display *dpy, Visual *visual, XImage *image)
+{
+  int x, y;
+  int w = image->width;
+  int h = image->height;
+  XImage *out = XCreateImage (dpy, visual, image->depth, ZPixmap, 0, 0,
+                              w/2, h/2, 32, 0);
+  out->data = (char *) calloc (out->height, out->bytes_per_line);
+
+  /* We could do some blending or dithering here, but at these scales, and
+     with texture scaling happening anyway, I'm not sure we'd be able to
+     tell the difference.
+   */
+  for (y = 0; y < h; y++)
+    for (x = 0; x < w; x++)
+      XPutPixel (out, x >> 1, y >> 1, XGetPixel (image, x, y));
+  XDestroyImage (image);
+  return out;
+}
+
+
 static void
 load_images (ModeInfo *mi)
 {
@@ -325,17 +359,28 @@ load_images (ModeInfo *mi)
     {
       char *s = (i == 0 ? which_image : which_image2);
       XImage *image;
+      Bool builtin_p = False;
+
       if (!strcmp (s, "BUILTIN_DAY"))
-        image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                      earth_png, sizeof(earth_png));
+        {
+          image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                        earth_png, sizeof(earth_png));
+          builtin_p = True;
+        }
       else if (!strcmp (s, "BUILTIN_NIGHT"))
-        image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                      earth_night_png,sizeof(earth_night_png));
+        {
+          image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                     earth_night_png, sizeof(earth_night_png));
+          builtin_p = True;
+        }
       else if (!strcmp (s, "BUILTIN") ||
                !strcmp (s, "BUILTIN_FLAT") ||
                (i == 0 && !strcmp (s, "")))
-        image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                      earth_flat_png, sizeof(earth_flat_png));
+        {
+          image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                       earth_flat_png, sizeof(earth_flat_png));
+          builtin_p = True;
+        }
       else if (!strcmp (s, "NONE"))
         image = 0;
       else if (*s)
@@ -344,6 +389,11 @@ load_images (ModeInfo *mi)
         image = 0;
 
       /* if (image) fprintf (stderr, "%s: %d: loaded %s\n", progname, i, s); */
+
+      /* The 2038x1024 images kill performance.  Turn this off in a few
+         years when Moore's Law has caught up again. */
+      while (builtin_p && image->width >= 2048)
+        image = shrink_image (MI_DISPLAY (mi), MI_VISUAL (mi), image);
 
       if (i == 0)
         gp->day = image;
@@ -410,6 +460,11 @@ load_images (ModeInfo *mi)
      by half pixel to make sure we hit every pixel in 'out'. It would be
      cleaner to iterate over 'out' instead of over 'in' but
      dymaxionmap-coords.c only goes forward. This is... not super fast.
+
+     If the source image is 2048x1024, it takes ~7 seconds to compute this
+     4096x2034 'cvt' map on a 3.2 GHz iMac Pro.  I tried pre-computing it
+     and saving it as a PNG, but that PNG was an unreasonable 1.4 MB!
+     It's pretty cool looking, though: https://jwz.org/b/yjwx
    */
   {
     double W = 5.5;
@@ -444,13 +499,70 @@ load_images (ModeInfo *mi)
       }
   }
 
+# ifdef BUILD_CACHE_PNG
+  {
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_bytep row;
+    char *pngfile = "dymaxionmap_coords.png";
+    FILE *f = fopen (pngfile, "wb");
+    XImage *img = gp->cvt;
+    int x, y;
+    if (! f)
+      {
+        fprintf (stderr, "%s: unable to write %s\n", progname, pngfile);
+        exit (1);
+      }
+      
+    png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, 0, 0, 0);
+    if (!png_ptr) abort();
+    info_ptr = png_create_info_struct (png_ptr);
+    if (!info_ptr) abort();
+    if (setjmp (png_jmpbuf (png_ptr))) abort();
+
+    png_init_io (png_ptr, f);
+
+    png_set_IHDR (png_ptr, info_ptr, img->width, img->height, 8,
+                  PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                  PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    png_write_info (png_ptr, info_ptr);
+
+    row = (png_bytep) malloc (4 * img->width * sizeof(png_byte));
+    if (!row) abort();
+    for (y = 0 ; y < img->height ; y++) {
+      for (x = 0 ; x < img->width ; x++) {
+        unsigned long p = XGetPixel (img, x, y);
+        row[x*4+3] = (p & 0xFF000000L) >> 24;
+        row[x*4+2] = (p & 0x00FF0000L) >> 16;
+        row[x*4+1] = (p & 0x0000FF00L) >> 8;
+        row[x*4+0] = (p & 0x000000FFL);
+      }
+      png_write_row (png_ptr, row);
+    }
+
+    png_write_end (png_ptr, 0);
+
+    png_free_data (png_ptr, info_ptr, PNG_FREE_ALL, -1);
+    png_destroy_write_struct (&png_ptr, 0);
+    free (row);
+
+    fclose (f);
+    fprintf (stderr, "%s: wrote %s\n", progname, pngfile);
+    exit (0);
+  }
+# endif /* BUILD_CACHE_PNG */
+
   /* A 128 GB iPhone 6s dies at around 540 frames, ~1 GB of XImages.
      A 16 GB iPad Air 2 dies at around 320 frames, ~640 MB.
      Caching on mobile doesn't matter much: we can just run at 100% CPU.
 
      On some systems it would be more efficient to cache the images inside
      a texture on the GPU instead of moving it from RAM to GPU every few
-     frames; but on other systems, we'd just run out of GPU memory instead. */
+     frames; but on other systems, we'd just run out of GPU memory instead.
+
+     The cache is all-or-nothing: caching every frame is useful, but
+     caching a subset is not.  If we have only cached, say, midnight to
+     1am, then that hour will move more quickly than the others. */
   {
     unsigned long cache_size = (gp->day->width * gp->day->height * 4 *
                                 gp->nimages);
@@ -508,13 +620,14 @@ cache_current_frame (ModeInfo *mi)
           uint32_t n = *night++;
           uint32_t x = i % w;
           uint32_t y = i / w;
+          /* This is W*H*8 float ops; can we do this with integer math? */
           double r = dusk[y * w + ((x + xoff) % w)] / 256.0;
           double r2 = 1-r;
 # define ADD(M) (((unsigned long)             \
                   ((((d >> M) & 0xFF) * r) +  \
                    (((n >> M) & 0xFF) * r2))) \
                  << M)
-          /* #### Why is this ABGR instead of RGBA? */
+          /* Why is this ABGR instead of RGBA? */
           *out++ = (0xFF << 24) | ADD(16) | ADD(8) | ADD(0);
 # undef ADD
         }
@@ -539,7 +652,7 @@ cache_current_frame (ModeInfo *mi)
         unsigned long p  = day[(y>>1) * w + (x>>1)];
         unsigned long p2 = out[dy * w + dx];
         if (p2 & 0xFF000000)
-          /* RGBA nonzero alpha: initialized. Average with existing,
+          /* AGBR nonzero alpha: initialized. Average with existing,
              otherwise the grid lines look terrible. */
           p = (((((p>>24) & 0xFF) + ((p2>>24) & 0xFF)) >> 1) << 24 |
                ((((p>>16) & 0xFF) + ((p2>>16) & 0xFF)) >> 1) << 16 |

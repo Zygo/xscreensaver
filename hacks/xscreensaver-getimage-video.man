@@ -30,14 +30,15 @@ Print diagnostics.
 .BR atitv (1),
 .BR bttvgrab (1),
 .BR ffmpeg (1),
+.BR gqcam (1),
 .BR grab (1),
+.BR motioneye (1),
 .BR mplayer (1),
 .BR qcam (1),
 .BR streamer (1),
+.BR v4lctl (1),
 .BR vidcat (1),
-.BR vidtomem (1),
-.BR vrlctl (1),
-.bR motioneye (1).
+.BR vidtomem (1).
 .SH COPYRIGHT
 Copyright \(co 2001-2021 by Jamie Zawinski.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for

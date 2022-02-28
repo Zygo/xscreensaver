@@ -160,6 +160,16 @@
  *     playing audio.  Unlike Firefox, it sends exactly the same "reason"
  *     string as it does when playing video, so we can't tell them apart.
  *
+ * Another Annoying Chromium Bug:
+ *
+ *     Twitter (and many other sites) auto-convert GIFs to looping MP4s to
+ *     save bandwidth.  Chromium inhibits the screen saver any time a Twitter
+ *     GIF is on screen (either in the browser or in Tweetdeck).
+ *
+ *     The proper way for Chrome to fix this would be to stop inhibiting once
+ *     the video loops.  That way your multi-hour movie inhibits properly, but
+ *     your looping GIF only inhibits for the first few seconds.
+ *
  *
  *****************************************************************************
  *
@@ -561,7 +571,7 @@ xscreensaver_method_uninhibit (sd_bus_message *m, void *arg,
 {
   struct handler_ctx *ctx = arg;
   uint32_t cookie;
-  struct inhibit_entry *entry;
+  struct inhibit_entry *entry, *entry_next;
   int found = 0;
   const char *sender;
 
@@ -574,7 +584,7 @@ xscreensaver_method_uninhibit (sd_bus_message *m, void *arg,
 
   sender = sd_bus_message_get_sender (m);
 
-  SLIST_FOREACH(entry, &inhibit_head, entries) {
+  SLIST_FOREACH_SAFE(entry, &inhibit_head, entries, entry_next) {
     if (entry->cookie == cookie) {
       if (verbose_p)
         fprintf (stderr, "%s: uninhibited by \"%s\" (%s) with cookie %08X\n",
@@ -815,7 +825,7 @@ xscreensaver_systemd_loop (void)
   while (1) {
     struct pollfd fds[3];
     uint64_t poll_timeout_msec, system_timeout_usec, user_timeout_usec;
-    struct inhibit_entry *entry;
+    struct inhibit_entry *entry, *entry_next;
 
     /* We MUST call sd_bus_process() on each bus at least once before calling
        sd_bus_get_events(), so just always start the event loop by processing
@@ -843,7 +853,7 @@ xscreensaver_systemd_loop (void)
        That would have left us inhibited forever, even if the inhibiting
        program was re-launched, since the new instance won't have the
        same cookie. */
-    SLIST_FOREACH (entry, &inhibit_head, entries) {
+    SLIST_FOREACH_SAFE (entry, &inhibit_head, entries, entry_next) {
       if (entry->peer &&
           !sd_bus_track_count_name (ctx->track, entry->peer)) {
         if (verbose_p)

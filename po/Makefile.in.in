@@ -142,8 +142,12 @@ INCLUDES = -I.. -I$(top_srcdir)/intl
 COMPILE = $(CC) -c $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(XCFLAGS)
 
 SOURCES = 
-POFILES = @POFILES@
-GMOFILES = @GMOFILES@
+# Feb 2022, jwz: now these are undefined. WTF.
+#POFILES = @POFILES@
+#GMOFILES = @GMOFILES@
+POFILES = $(shell echo *.po)
+GMOFILES = $(shell echo *.gmo)
+
 DISTFILES_1 = ChangeLog Makefile.in.in POTFILES.in update.sh
 DISTFILES = $(DISTFILES_1) $(GETTEXT_PACKAGE).pot \
 	    $(POFILES) $(GMOFILES) $(SOURCES)

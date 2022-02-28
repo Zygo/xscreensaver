@@ -308,6 +308,8 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
 
   - Search for "Google play developer console".
   - When that doesn't work search for "play console" "create a release".
+  - The button is in the upper right, lately.
+  - You might need to use Chrome instead of Safari.
   - Drag and drop the APK.
 
   - Next Google will complain that "Your app currently targets API level N".

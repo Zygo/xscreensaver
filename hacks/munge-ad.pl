@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.14 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.15 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -47,7 +47,6 @@ my %disable = (
    'polyominoes'	=> 1,
    'providence'		=> 1,
    'pyro'		=> 1,
-   'rdbomb'		=> 2,  # alternate name
    'rocks'		=> 1,
    'sballs'		=> 1,
    'sierpinski'		=> 1,

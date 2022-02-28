@@ -215,6 +215,7 @@ XftFontOpenName (Display *dpy, int screen, _Xconst char *xft_name)
 void
 XftFontClose (Display *dpy, XftFont *font)
 {
+  if (!dpy || !font) return;   /* Fuck it, just leak */
   if (!dpy || !font) abort();
   free (font->name);
   XFreeFont (dpy, font->xfont);
@@ -333,6 +334,7 @@ XftColorFree (Display *dpy,
               Colormap cmap,
               XftColor *color)
 {
+  if (!dpy || !visual || !color) return;   /* Fuck it, just leak */
   if (!dpy || !visual || !color) abort();
   if (visual->class != TrueColor)
     XFreeColors (dpy, cmap, &color->pixel, 1, 0);
@@ -361,6 +363,7 @@ XftDrawCreate (Display   *dpy,
 void
 XftDrawDestroy (XftDraw	*draw)
 {
+  if (!draw) return;   /* Fuck it, just leak */
   if (!draw) abort();
   XFreeGC (draw->dpy, draw->gc);
   free (draw);

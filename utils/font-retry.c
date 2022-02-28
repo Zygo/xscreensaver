@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2018-2021 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2018-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -348,6 +348,27 @@ load_font_retry_1 (Display *dpy, int screen, const char *font_list, Bool xft_p)
     }
 
   if (!font_name) abort();
+
+# if !defined(HAVE_XFT) && !defined(HAVE_JWXYZ)
+  /* Xft is now REQUIRED. All of XScreenSaver's resource settings use
+     font names that assume that it is available. However, this lets you
+     limp along without it. But, really, don't do that to yourself. */
+#   define FALLBACK2(F) do {    \
+      free (font_name);         \
+      font_name = (strdup(F));  \
+      f = LOADFONT (font_name); \
+      if (f) fprintf (stderr, "%s: non-XFT fallback \"%s\"\n", \
+                      progname, font_name);                    \
+    } while (0)
+    if (!f && !strcasestr (font_name, "mono")) {
+      if (!f) FALLBACK2 ("-*-sans serif-medium-r-*-*-*-180-*-*-*-*-*-*");
+      if (!f) FALLBACK2 ("-*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*");
+      if (!f) FALLBACK2 ("-*-nimbus sans l-medium-r-*-*-*-180-*-*-*-*-*-*");
+    }
+    if (!f) FALLBACK2 ("-*-courier-medium-r-*-*-*-180-*-*-*-*-*-*");
+    if (!f) FALLBACK2 ("fixed");
+# endif
+
   if (!f) abort();
 
 # ifdef DEBUG

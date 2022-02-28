@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xscreensaver 6.00b2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-22 22:55+0900\n"
+"POT-Creation-Date: 2021-12-16 20:57-0800\n"
 "PO-Revision-Date: 2021-03-23 23:52+0900\n"
 "Last-Translator: Mamoru TASAKA <mtasaka@fedoraproject.org>\n"
 "Language-Team: Japanese <translation@gnome.gr.jp>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Former-Translator: Takeshi Aihana <aihana@gnome.gr.jp>\n"
 "X-Generator: Poedit 2.4.2\n"
 
-#: ../driver/demo-Gtk-conf.c:897
+#: ../driver/demo-Gtk-conf.c:898
 msgid "Browse..."
 msgstr "参照..."
 
-#: ../driver/demo-Gtk-conf.c:1100
+#: ../driver/demo-Gtk-conf.c:1101
 msgid "Select file."
 msgstr "ファイルを選択して下さい。"
 
-#: ../driver/demo-Gtk.c:729 ../driver/demo-Gtk.c:4528
+#: ../driver/demo-Gtk.c:736 ../driver/demo-Gtk.c:4568
 #, c-format
 msgid ""
 "Warning:\n"
@@ -38,15 +38,15 @@ msgstr ""
 "ディスプレイ \"%s\" 上で XScreenSaver デーモンが\n"
 "起動されていないようです。起動しますか？"
 
-#: ../driver/demo-Gtk.c:779
+#: ../driver/demo-Gtk.c:786
 msgid "For updates, check https://www.jwz.org/xscreensaver/"
 msgstr "更新情報については http://www.jwz.org/xscreensaver/ を参照して下さい"
 
-#: ../driver/demo-Gtk.c:876 ../driver/dialog.c:1513
+#: ../driver/demo-Gtk.c:883 ../driver/dialog.c:1568
 msgid "OK"
 msgstr "OK"
 
-#: ../driver/demo-Gtk.c:915
+#: ../driver/demo-Gtk.c:922
 msgid ""
 "Error:\n"
 "\n"
@@ -56,7 +56,7 @@ msgstr ""
 "\n"
 "ヘルプの URL が指定されていません。\n"
 
-#: ../driver/demo-Gtk.c:1012
+#: ../driver/demo-Gtk.c:1021
 msgid ""
 "Error:\n"
 "\n"
@@ -68,7 +68,7 @@ msgstr ""
 "XScreenSaver デーモンが正しく起動されていません。\n"
 "\n"
 
-#: ../driver/demo-Gtk.c:1018
+#: ../driver/demo-Gtk.c:1027
 msgid ""
 "You are running as root.  This usually means that xscreensaver\n"
 "was unable to contact your X server because access control is\n"
@@ -82,11 +82,11 @@ msgstr ""
 "X環境をルートで実行すべきではありません.代わりに、通常ユーザで\n"
 "ログインして、必要なときに`sudo'を実行してください."
 
-#: ../driver/demo-Gtk.c:1037
+#: ../driver/demo-Gtk.c:1046
 msgid "Please check your $PATH and permissions."
 msgstr "環境変数 $PATH とその権限を確認して下さい。"
 
-#: ../driver/demo-Gtk.c:1069
+#: ../driver/demo-Gtk.c:1078
 msgid ""
 "Error:\n"
 "\n"
@@ -96,7 +96,7 @@ msgstr ""
 "\n"
 "初期化ファイル名を特定できませんでした！\n"
 
-#: ../driver/demo-Gtk.c:1074
+#: ../driver/demo-Gtk.c:1083
 #, c-format
 msgid ""
 "Error:\n"
@@ -107,7 +107,7 @@ msgstr ""
 "\n"
 "%s に書き込めませんでした。\n"
 
-#: ../driver/demo-Gtk.c:1137
+#: ../driver/demo-Gtk.c:1146
 msgid ""
 "Error:\n"
 "\n"
@@ -117,7 +117,7 @@ msgstr ""
 "\n"
 "リソース 'manualCommand' がセットされていません。"
 
-#: ../driver/demo-Gtk.c:1320
+#: ../driver/demo-Gtk.c:1329
 #, c-format
 msgid ""
 "Error:\n"
@@ -128,12 +128,11 @@ msgstr ""
 "\n"
 "時刻の書式を解析できません: \"%s\"\n"
 
-#: ../driver/demo-Gtk.c:1791 ../driver/demo-Gtk.c:3403
-#: ../driver/xscreensaver.ui.h:7
+#: ../driver/demo-Gtk.c:1817 ../driver/demo-Gtk.c:3429
 msgid "Any"
 msgstr "任せる"
 
-#: ../driver/demo-Gtk.c:2076
+#: ../driver/demo-Gtk.c:2102
 #, c-format
 msgid ""
 "Error:\n"
@@ -144,7 +143,7 @@ msgstr ""
 "\n"
 "次のディレクトリが存在しません: \"%s\"\n"
 
-#: ../driver/demo-Gtk.c:2106 ../driver/demo-Gtk.c:2137
+#: ../driver/demo-Gtk.c:2132 ../driver/demo-Gtk.c:2163
 #, c-format
 msgid ""
 "Error:\n"
@@ -155,40 +154,40 @@ msgstr ""
 "\n"
 "次のファイルが存在しません: \"%s\"\n"
 
-#: ../driver/demo-Gtk.c:2523
+#: ../driver/demo-Gtk.c:2549
 msgid "Use"
 msgstr "ON"
 
-#: ../driver/demo-Gtk.c:2533
+#: ../driver/demo-Gtk.c:2559
 msgid "Screen Saver"
 msgstr "スクリーンセーバー名"
 
-#: ../driver/demo-Gtk.c:3020
+#: ../driver/demo-Gtk.c:3046
 msgid "Descriptions not available: no XML support compiled in."
 msgstr "説明が有効ではありません: XML サポートでコンパイルされていません。"
 
-#: ../driver/demo-Gtk.c:3025
+#: ../driver/demo-Gtk.c:3051
 msgid "No description available."
 msgstr "有効な説明はありません。"
 
-#: ../driver/demo-Gtk.c:3355
+#: ../driver/demo-Gtk.c:3381
 msgid "Blank Screen"
 msgstr "ブランク・スクリーン"
 
-#: ../driver/demo-Gtk.c:3361
+#: ../driver/demo-Gtk.c:3387
 msgid "Screen Saver Disabled"
 msgstr "スクリーンセーバーは無効です"
 
-#: ../driver/demo-Gtk.c:3384
+#: ../driver/demo-Gtk.c:3410
 msgid "Preview"
 msgstr "プレビュー"
 
-#: ../driver/demo-Gtk.c:3394
+#: ../driver/demo-Gtk.c:3420
 #, c-format
 msgid "%s: %.100s Settings"
 msgstr "%s: %.100s の設定"
 
-#: ../driver/demo-Gtk.c:3559
+#: ../driver/demo-Gtk.c:3585
 #, c-format
 msgid ""
 "Warning:\n"
@@ -199,23 +198,23 @@ msgstr ""
 "\n"
 "ファイル \"%s\" が変更されました。再読込みします。\n"
 
-#: ../driver/demo-Gtk.c:3646
+#: ../driver/demo-Gtk.c:3672
 msgid "No Preview"
 msgstr "プレビューを"
 
-#: ../driver/demo-Gtk.c:3646
+#: ../driver/demo-Gtk.c:3672
 msgid "Available"
 msgstr "利用できません"
 
-#: ../driver/demo-Gtk.c:3647
+#: ../driver/demo-Gtk.c:3673
 msgid "Not"
 msgstr "インストール"
 
-#: ../driver/demo-Gtk.c:3647
+#: ../driver/demo-Gtk.c:3673
 msgid "Installed"
 msgstr "されていません"
 
-#: ../driver/demo-Gtk.c:4538
+#: ../driver/demo-Gtk.c:4578
 #, c-format
 msgid ""
 "Warning:\n"
@@ -248,7 +247,7 @@ msgstr ""
 "\n"
 "XScreenSaver デーモンを再起動しますか？\n"
 
-#: ../driver/demo-Gtk.c:4563
+#: ../driver/demo-Gtk.c:4603
 #, c-format
 msgid ""
 "Warning:\n"
@@ -275,7 +274,7 @@ msgstr ""
 "\n"
 "XScreenSaver デーモンを \"%s\" 上で \"%s\" から再起動しますか？\n"
 
-#: ../driver/demo-Gtk.c:4585
+#: ../driver/demo-Gtk.c:4625
 #, c-format
 msgid ""
 "Warning:\n"
@@ -294,14 +293,15 @@ msgstr ""
 "\n"
 "XScreenSaver デーモンを再起動しますか？\n"
 
-#: ../driver/demo-Gtk.c:4613
+#: ../driver/demo-Gtk.c:4655
+#, fuzzy, c-format
 msgid ""
 "Warning:\n"
 "\n"
-"The GNOME screensaver daemon appears to be running.\n"
+"The GNOME screen saver daemon (%s) appears to be running.\n"
 "It must be stopped for XScreenSaver to work properly.\n"
 "\n"
-"Stop the GNOME screen saver daemon now?\n"
+"Stop the \"%s\" daemon now?\n"
 msgstr ""
 "Warning:\n"
 "\n"
@@ -310,7 +310,7 @@ msgstr ""
 "\n"
 "GNOMEスクリーンセーバーを直ちに停止しますか？\n"
 
-#: ../driver/demo-Gtk.c:4622
+#: ../driver/demo-Gtk.c:4666
 msgid ""
 "Warning:\n"
 "\n"
@@ -326,16 +326,30 @@ msgstr ""
 "\n"
 "KDEスクリーンセーバーを直ちに停止しますか？\n"
 
-#: ../driver/demo-Gtk.c:5065
+#: ../driver/demo-Gtk.c:4675
+msgid ""
+"Warning:\n"
+"\n"
+"You are running Wayland rather than the X Window System.\n"
+"\n"
+"Under Wayland, idle-detection fails when non-X11 programs\n"
+"are selected, meaning the screen may blank prematurely.\n"
+"Also, locking is impossible.\n"
+"\n"
+"See the XScreenSaver manual for instructions on\n"
+"configuring your system to use X11 instead of Wayland.\n"
+msgstr ""
+
+#: ../driver/demo-Gtk.c:5122
 #, c-format
 msgid "%s: unknown option: %s\n"
 msgstr "%s: 不明なオプション: %s\n"
 
-#: ../driver/demo-Gtk.c:5115
+#: ../driver/demo-Gtk.c:5172
 msgid "Screensaver Preferences"
 msgstr "XScreenSaverの設定"
 
-#: ../driver/demo-Gtk.c:5318
+#: ../driver/demo-Gtk.c:5375
 msgid ""
 "Warning:\n"
 "\n"
@@ -355,14 +369,14 @@ msgstr ""
 "https://www.jwz.org/xscreensaver/\n"
 "\n"
 
-#: ../driver/dialog.c:965
+#: ../driver/dialog.c:1020
 #, c-format
 msgid ""
 "Copyright © 1991-%.4s by\n"
 "Jamie Zawinski <jwz@jwz.org>"
 msgstr ""
 
-#: ../driver/dialog.c:1283
+#: ../driver/dialog.c:1338
 msgid ""
 "Update available!\n"
 "This version is very old.\n"
@@ -370,11 +384,11 @@ msgstr ""
 "パッケージが更新可能です!\n"
 "このバージョンはとても古いです.\n"
 
-#: ../driver/dialog.c:1294
+#: ../driver/dialog.c:1349
 msgid "PRE-RELEASE VERSION"
 msgstr "プレリリースバージョンです"
 
-#: ../driver/dialog.c:1328
+#: ../driver/dialog.c:1383
 msgid ""
 "DEBUG MODE:\n"
 "All keystrokes are being logged to stderr.\n"
@@ -382,64 +396,64 @@ msgstr ""
 "デバッグモードです:\n"
 "キーストロークは、全てエラー出力に表示されます。\n"
 
-#: ../driver/dialog.c:1374
+#: ../driver/dialog.c:1429
 msgid "Username:"
 msgstr "ユーザ名:"
 
-#: ../driver/dialog.c:1402
+#: ../driver/dialog.c:1457
 msgid "Checking..."
 msgstr "確認しています..."
 
-#: ../driver/dialog.c:1479 ../driver/xscreensaver.ui.h:112
+#: ../driver/dialog.c:1534
 msgid "Settings"
 msgstr "設定"
 
-#: ../driver/dialog.c:1489
+#: ../driver/dialog.c:1544
 msgid "Help"
 msgstr "ヘルプ"
 
-#: ../driver/dialog.c:1502
+#: ../driver/dialog.c:1557
 msgid "New Login"
 msgstr "別ユーザに切り替え"
 
-#: ../driver/dialog.c:2440
+#: ../driver/dialog.c:2497
 msgid "Password initialization failed"
 msgstr "パスワード画面の初期化に失敗しました"
 
-#: ../driver/dialog.c:2442
+#: ../driver/dialog.c:2499
 msgid "Authentication failed (Caps Lock?)"
 msgstr "認証に失敗しました（Caps Lock?）"
 
-#: ../driver/dialog.c:2444
+#: ../driver/dialog.c:2501
 msgid "Authentication failed!"
 msgstr "認証に失敗しました!"
 
-#: ../driver/dialog.c:2464
+#: ../driver/dialog.c:2521
 #, c-format
 msgid "%d days ago"
 msgstr "%d 日前でした"
 
-#: ../driver/dialog.c:2465
+#: ../driver/dialog.c:2522
 #, c-format
 msgid "%d hours ago"
 msgstr "%d 時間前でした"
 
-#: ../driver/dialog.c:2466
+#: ../driver/dialog.c:2523
 #, c-format
 msgid "%d minutes ago"
 msgstr "%d 分前でした"
 
-#: ../driver/dialog.c:2467
+#: ../driver/dialog.c:2524
 #, c-format
 msgid "just now"
 msgstr "今さっきでした"
 
-#: ../driver/dialog.c:2470
+#: ../driver/dialog.c:2527
 #, c-format
 msgid "There has been 1 failed login attempt, %s."
 msgstr "過去1回認証に失敗しました. %s."
 
-#: ../driver/dialog.c:2473
+#: ../driver/dialog.c:2530
 #, c-format
 msgid "There have been %d failed login attempts, oldest %s."
 msgstr "過去%d回認証に失敗しました.一番古い失敗は%s."
@@ -452,505 +466,28 @@ msgstr "スクリーンセーバー"
 msgid "Change screensaver properties"
 msgstr "スクリーンセーバーの設定を変更する"
 
-#: ../driver/subprocs.c:571
+#: ../driver/subprocs.c:573
 #, c-format
 msgid "crashed with status %d"
 msgstr "はステータス%d で異常終了しました"
 
 #. Expected notification after we killed it.
-#: ../driver/subprocs.c:588
+#: ../driver/subprocs.c:590
 #, c-format
 msgid "exited normally with %.100s"
 msgstr "%.100s で正常に終了しました"
 
 #. Unexpected signal.
-#: ../driver/subprocs.c:597
+#: ../driver/subprocs.c:599
 #, c-format
 msgid "crashed with %.100s"
 msgstr "%.100s でクラッシュしました"
 
 #. Didn't exit, signal or stop; is this even possible?
-#: ../driver/subprocs.c:618
+#: ../driver/subprocs.c:620
 #, c-format
 msgid "crashed mysteriously"
 msgstr "不明な原因でクラッシュしました"
-
-#: ../driver/xscreensaver.ui.h:1
-msgid "Disable Screen Saver"
-msgstr "スクリーンセーバーを無効にする"
-
-#: ../driver/xscreensaver.ui.h:2
-msgid "Blank Screen Only"
-msgstr "ブランク・スクリーンのみ"
-
-#: ../driver/xscreensaver.ui.h:3
-msgid "Only One Screen Saver"
-msgstr "一つのスクリーンセーバーのみ"
-
-#: ../driver/xscreensaver.ui.h:4
-msgid "Random Screen Saver"
-msgstr "ランダムなスクリーンセーバー"
-
-#: ../driver/xscreensaver.ui.h:5
-msgid "Same Random Savers"
-msgstr "同じランダムなセーバ"
-
-#: ../driver/xscreensaver.ui.h:6
-msgid "Default"
-msgstr "デフォルト"
-
-#: ../driver/xscreensaver.ui.h:8
-msgid "Best"
-msgstr "最適"
-
-#: ../driver/xscreensaver.ui.h:9
-msgid "Default-N"
-msgstr "デフォルト-N"
-
-#: ../driver/xscreensaver.ui.h:10
-msgid "GL"
-msgstr "GL"
-
-#: ../driver/xscreensaver.ui.h:11
-msgid "TrueColor"
-msgstr "TrueColor"
-
-#: ../driver/xscreensaver.ui.h:12
-msgid "PseudoColor"
-msgstr "PseudoColor"
-
-#: ../driver/xscreensaver.ui.h:13
-msgid "StaticGray"
-msgstr "StaticGray"
-
-#: ../driver/xscreensaver.ui.h:14
-msgid "GrayScale"
-msgstr "グレースケール"
-
-#: ../driver/xscreensaver.ui.h:15
-msgid "DirectColor"
-msgstr "DirectColor"
-
-#: ../driver/xscreensaver.ui.h:16
-msgid "Color"
-msgstr "色"
-
-#: ../driver/xscreensaver.ui.h:17
-msgid "Gray"
-msgstr "グレー"
-
-#: ../driver/xscreensaver.ui.h:18 ../hacks/config/razzledazzle.xml.h:8
-#: ../hacks/config/scooter.xml.h:14
-msgid "Mono"
-msgstr "単色"
-
-#: ../driver/xscreensaver.ui.h:19
-msgid "_File"
-msgstr "ファイル(_F)"
-
-#: ../driver/xscreensaver.ui.h:20
-msgid "_Blank Screen Now"
-msgstr "XScreenSaver の起動(_B)"
-
-#: ../driver/xscreensaver.ui.h:21
-msgid "_Lock Screen Now"
-msgstr "画面のロック(_L)"
-
-#: ../driver/xscreensaver.ui.h:22
-msgid "_Kill Daemon"
-msgstr "デーモンの強制終了(_K)"
-
-#: ../driver/xscreensaver.ui.h:23
-msgid "_Restart Daemon"
-msgstr "デーモンの再起動(_R)"
-
-#: ../driver/xscreensaver.ui.h:24
-msgid "_Quit"
-msgstr "終了(_Q)"
-
-#: ../driver/xscreensaver.ui.h:25
-msgid "_Help"
-msgstr "ヘルプ(_H)"
-
-#: ../driver/xscreensaver.ui.h:26
-msgid "_About..."
-msgstr "情報(_A)..."
-
-#: ../driver/xscreensaver.ui.h:27
-msgid "_Documentation..."
-msgstr "ドキュメント(_D)..."
-
-#: ../driver/xscreensaver.ui.h:28
-msgid "XScreenSaver"
-msgstr "XScreenSaver"
-
-#: ../driver/xscreensaver.ui.h:29
-msgid "_Cycle After"
-msgstr "セーバーの周期(_C)"
-
-#: ../driver/xscreensaver.ui.h:30
-msgid "Whether a password should be required to un-blank the screen."
-msgstr ""
-"画面をブランクした後、しばらくして自動的にロックしたい時は、これを選択して下"
-"さい。"
-
-#: ../driver/xscreensaver.ui.h:31
-msgid "_Lock Screen After  "
-msgstr "画面をロックするまで(_L): "
-
-#: ../driver/xscreensaver.ui.h:32
-msgid "Lock Screen"
-msgstr "画面をロックする"
-
-#: ../driver/xscreensaver.ui.h:33
-msgid "How long before the screen saver activates."
-msgstr "セーバーが起動するまでの時間を指定して下さい。"
-
-#: ../driver/xscreensaver.ui.h:34
-msgid "How long after the screen blanks until a password will be required."
-msgstr "画面がブランクになってからロックするまでの時間を指定して下さい。"
-
-#: ../driver/xscreensaver.ui.h:35
-msgid "Lock Screen After"
-msgstr "画面をロックするまで"
-
-#: ../driver/xscreensaver.ui.h:36
-msgid ""
-"How long each display mode should run before choosing a new one (in Random "
-"mode.)"
-msgstr ""
-"ランダムなセーバーモードの時、次のセーバーに移るまでの時間を指定して下さい。"
-
-#: ../driver/xscreensaver.ui.h:37
-msgid "minutes"
-msgstr "分"
-
-#: ../driver/xscreensaver.ui.h:38
-msgid "_Blank After"
-msgstr "ブランクになるまで(_B)"
-
-#: ../driver/xscreensaver.ui.h:39
-msgid ""
-"Demo the selected screen saver in full-screen mode (click the mouse to "
-"return.)"
-msgstr ""
-"指定したスクリーンセーバーを全画面モードでデモします (解除する場合はマウスを"
-"クリックして下さい)。"
-
-#: ../driver/xscreensaver.ui.h:40
-msgid "_Preview"
-msgstr "プレビュー(_P)"
-
-#: ../driver/xscreensaver.ui.h:41
-msgid "Customization and explanation of the selected screen saver."
-msgstr "指定したスクリーンセーバーの紹介とそのカスタマイズです。"
-
-#: ../driver/xscreensaver.ui.h:42
-msgid "_Settings..."
-msgstr "設定(_S)"
-
-#: ../driver/xscreensaver.ui.h:43
-msgid "_Mode:"
-msgstr "モード(_M):"
-
-#: ../driver/xscreensaver.ui.h:44
-msgid ""
-"Run the next screen saver in the list in full-screen mode (click the mouse "
-"to return.)"
-msgstr ""
-"一つ次のスクリーンセーバーを全画面モードで起動します (解除する場合はマウスを"
-"クリックして下さい)。"
-
-#: ../driver/xscreensaver.ui.h:45
-msgid ""
-"Run the previous screen saver in the list in full-screen mode (click the "
-"mouse to return.)"
-msgstr ""
-"一つ前のスクリーンセーバーを全画面モードで起動します (解除する場合はマウスを"
-"クリックして下さい)。"
-
-#: ../driver/xscreensaver.ui.h:46
-msgid "preview"
-msgstr "プレビュー"
-
-#: ../driver/xscreensaver.ui.h:47
-msgid ""
-"No Preview\n"
-"Available"
-msgstr "プレビューを利用できません"
-
-#: ../driver/xscreensaver.ui.h:49
-msgid "no preview"
-msgstr "プレビューを利用出来ません"
-
-#: ../driver/xscreensaver.ui.h:50
-msgid ""
-"Not\n"
-"Installed"
-msgstr "インストールされていません"
-
-#: ../driver/xscreensaver.ui.h:52
-msgid "not installed"
-msgstr "インストールされていません"
-
-#: ../driver/xscreensaver.ui.h:53
-msgid ""
-"Very few (or no) screen savers appear to be available.\n"
-"\n"
-"This probably means that the \"xscreensaver-extras\" and\n"
-"\"xscreensaver-gl-extras\" packages are not installed."
-msgstr ""
-"セーバーの数が少ない、若しくは全く無いようです。\n"
-"これは、恐らく\"xscreensaver-extras\"、あるいは\n"
-"\"xscreensaver-gl-extras\"のパッケージがインストールされていない\n"
-"ためだと思われます。"
-
-#: ../driver/xscreensaver.ui.h:57
-msgid "nothing"
-msgstr ""
-
-#: ../driver/xscreensaver.ui.h:58
-msgid "Description"
-msgstr "説明"
-
-#: ../driver/xscreensaver.ui.h:59
-msgid "_Display Modes"
-msgstr "表示モード(_D)"
-
-#: ../driver/xscreensaver.ui.h:60
-msgid ""
-"Whether the image-manipulating modes should be allowed to operate on an "
-"image of your desktop."
-msgstr "画像の操作モードで、デスクトップの画像を使うかどうかを選択して下さい。"
-
-#: ../driver/xscreensaver.ui.h:61
-msgid "Grab Desktop _Images"
-msgstr "デスクトップ画像を用いる(_I)"
-
-#: ../driver/xscreensaver.ui.h:62
-msgid ""
-"Whether the image-manipulating modes should operate on images captured from "
-"the system's video input (if there is one.)"
-msgstr ""
-"画像の操作モードで (可能な時) ビデオ入力の画像を使うかどうかを選択して下さ"
-"い。"
-
-#: ../driver/xscreensaver.ui.h:63
-msgid "Grab _Video Frames"
-msgstr "ビデオ入力を用いる(_V)"
-
-#: ../driver/xscreensaver.ui.h:64
-msgid "Whether the image-manipulating modes should load image files."
-msgstr "画像の操作モードで、画像ファイルをを取得するかどうかを選択して下さい。"
-
-#: ../driver/xscreensaver.ui.h:65
-msgid "Choose _Random Image:"
-msgstr "画像をランダムに選択する(_R):"
-
-#: ../driver/xscreensaver.ui.h:66
-msgid ""
-"The local directory, RSS feed or Atom feed from which images will be "
-"randomly chosen."
-msgstr ""
-"ランダムに取得する画像が格納されているローカルのディレクトリや、RSSフィード、"
-"またはAtomフィードのURLを選択して下さい。"
-
-#: ../driver/xscreensaver.ui.h:67
-msgid "_Browse"
-msgstr "参照(_B)"
-
-#: ../driver/xscreensaver.ui.h:68
-msgid "Local directory, or RSS feed URL."
-msgstr "ローカルのディレクトリや、RSSフィードのURL."
-
-#: ../driver/xscreensaver.ui.h:69
-msgid "Image Manipulation"
-msgstr "画像の操作"
-
-#: ../driver/xscreensaver.ui.h:70
-msgid "Text-displaying modes will display the text typed here."
-msgstr "（テキストを表示するセーバの時は）次の文字列が出力されます。"
-
-#: ../driver/xscreensaver.ui.h:71
-msgid "_Text"
-msgstr "文字列(_T)"
-
-#: ../driver/xscreensaver.ui.h:72
-msgid "Text-displaying modes will display the contents of this file."
-msgstr ""
-"（テキストを表示するセーバの時は）次のテキストファイルの内容が表示されます。"
-
-#: ../driver/xscreensaver.ui.h:73
-msgid "Text _file"
-msgstr "ファイル(_f)"
-
-#: ../driver/xscreensaver.ui.h:74
-msgid "Text-displaying modes will display the output of this program."
-msgstr ""
-"（テキストを表示するセーバの時は）次のプログラムの出力結果が表示されます。"
-
-#: ../driver/xscreensaver.ui.h:75
-msgid "_Program"
-msgstr "プログラム(_P)"
-
-#: ../driver/xscreensaver.ui.h:76
-msgid ""
-"Text-displaying modes will display the contents of this URL (HTML or RSS)."
-msgstr ""
-"（テキストを表示するセーバの時）次のURLの内容が表示されます。HTMLかRSSで書か"
-"れている必要があります。"
-
-#: ../driver/xscreensaver.ui.h:77
-msgid "_URL"
-msgstr "_URL"
-
-#: ../driver/xscreensaver.ui.h:78
-msgid "Text-displaying modes will display the local host name, date, and time."
-msgstr "（テキストを表示するセーバの時は）ホスト名と、日時が表示されます。"
-
-#: ../driver/xscreensaver.ui.h:79
-msgid "_Host Name and Time"
-msgstr "ホスト名と日時(_H)"
-
-#: ../driver/xscreensaver.ui.h:80
-msgid "Text Manipulation"
-msgstr "表示するテキストの設定"
-
-#: ../driver/xscreensaver.ui.h:81
-msgid "Whether the monitor should be powered down after a while."
-msgstr "モニタの電源管理を設定するかを選択して下さい。"
-
-#: ../driver/xscreensaver.ui.h:82
-msgid "_Power Management Enabled"
-msgstr "電源管理を有効にする(_P)"
-
-#: ../driver/xscreensaver.ui.h:83
-msgid "Stand_by After"
-msgstr "スタンバイまで(_b)"
-
-#: ../driver/xscreensaver.ui.h:84
-msgid "Sus_pend After"
-msgstr "サスペンドまで(_p)"
-
-#: ../driver/xscreensaver.ui.h:85
-msgid "_Off After"
-msgstr "電源OFFまで(_O)"
-
-#: ../driver/xscreensaver.ui.h:86
-msgid "How long until the monitor powers down."
-msgstr "モニタの電源を OFF にするまでの時間を指定して下さい。"
-
-#: ../driver/xscreensaver.ui.h:87
-msgid "How long until the monitor goes into power-saving mode."
-msgstr "パワーセービング・モードに移行するまでの時間を指定して下さい。"
-
-#: ../driver/xscreensaver.ui.h:88
-msgid "How long until the monitor goes completely black."
-msgstr "モニターがスタンドバイになるまでの時間を指定して下さい。"
-
-#: ../driver/xscreensaver.ui.h:89
-msgid ""
-"Whether the monitor should be powered off immediately in \"Blank Screen Only"
-"\" mode, regardless of the above power-management timeouts."
-msgstr ""
-"ブランク・スクリーンのみのモードの時、上の電源管理の時間設定にもかかわらずに"
-"直ちにモニターの電源を切るかを選択して下さい。"
-
-#: ../driver/xscreensaver.ui.h:90
-msgid "_Quick Power-off in Blank Only Mode"
-msgstr "ブランクモードの時直ちに電源を切る(_Q)"
-
-#: ../driver/xscreensaver.ui.h:91
-msgid "Display Power Management"
-msgstr "モニタのパワーマネージメント"
-
-#: ../driver/xscreensaver.ui.h:92
-msgid ""
-"Whether the screen should slowly fade to black when the screen saver "
-"activates."
-msgstr ""
-"スクリーンセーバーを起動する時、スクリーンをゆっくりとフェードインするかどう"
-"かを選択して下さい。"
-
-#: ../driver/xscreensaver.ui.h:93
-msgid "Fade to Black when _Blanking"
-msgstr "ブランクにする時にフェードイン(_B)"
-
-#: ../driver/xscreensaver.ui.h:94
-msgid ""
-"Whether the screen should slowly fade in from black when the screen saver "
-"deactivates."
-msgstr ""
-"画面を再び明るくする時、スクリーンをゆっくりとフェードアウトするかどうかを選"
-"択して下さい。"
-
-#: ../driver/xscreensaver.ui.h:95
-msgid "Fade from Black When _Unblanking"
-msgstr "明るくする時フェードアウト(_U)"
-
-#: ../driver/xscreensaver.ui.h:96
-msgid "F_ade Duration"
-msgstr "フェードする時間(_a)"
-
-#: ../driver/xscreensaver.ui.h:97
-msgid "How long it should take for the screen to fade in and out."
-msgstr "スクリーンをフェードイン/アウトする時間を指定して下さい。"
-
-#: ../driver/xscreensaver.ui.h:98
-msgid "seconds"
-msgstr "秒間"
-
-#: ../driver/xscreensaver.ui.h:99
-msgid "_Theme:"
-msgstr "テーマ(_T):"
-
-#: ../driver/xscreensaver.ui.h:100
-msgid "The color scheme to use on the unlock dialog."
-msgstr "パスワード画面で使うカラースキームを設定してください."
-
-#: ../driver/xscreensaver.ui.h:101
-msgid "Show the what the unlock dialog will look like."
-msgstr "実際どのように見えるかを表示します."
-
-#: ../driver/xscreensaver.ui.h:102
-msgid "Blanking"
-msgstr "ブランク・スクリーン"
-
-#: ../driver/xscreensaver.ui.h:103
-msgid "_Advanced"
-msgstr "拡張オプション(_A)"
-
-#: ../driver/xscreensaver.ui.h:104
-msgid "dialog1"
-msgstr "ダイアログ1"
-
-#: ../driver/xscreensaver.ui.h:105
-msgid "_Advanced >>"
-msgstr "拡張オプション(_A)>>"
-
-#: ../driver/xscreensaver.ui.h:106
-msgid "_Standard <<"
-msgstr "標準オプション(_S)<<"
-
-#: ../driver/xscreensaver.ui.h:107
-msgid "_Reset to Defaults"
-msgstr "デフォルトに戻す(_R)"
-
-#: ../driver/xscreensaver.ui.h:108
-msgid "Standard"
-msgstr "標準"
-
-#: ../driver/xscreensaver.ui.h:109
-msgid "_Command Line:"
-msgstr "コマンド(_C):"
-
-#: ../driver/xscreensaver.ui.h:110
-msgid "_Visual:"
-msgstr "ビジュアル(_V):"
-
-#: ../driver/xscreensaver.ui.h:111
-msgid "Advanced"
-msgstr "拡張オプション"
 
 #: ../hacks/config/abstractile.xml.h:1
 msgid "Abstractile"
@@ -985,14 +522,14 @@ msgstr ""
 #: ../hacks/config/interference.xml.h:5 ../hacks/config/jigglypuff.xml.h:14
 #: ../hacks/config/jigsaw.xml.h:5 ../hacks/config/juggle.xml.h:5
 #: ../hacks/config/juggler3d.xml.h:5 ../hacks/config/kaleidocycle.xml.h:8
-#: ../hacks/config/maze3d.xml.h:2 ../hacks/config/moebiusgears.xml.h:5
-#: ../hacks/config/peepers.xml.h:5 ../hacks/config/penetrate.xml.h:2
-#: ../hacks/config/petri.xml.h:16 ../hacks/config/phosphor.xml.h:6
-#: ../hacks/config/photopile.xml.h:12 ../hacks/config/piecewise.xml.h:8
-#: ../hacks/config/pinion.xml.h:5 ../hacks/config/polyhedra.xml.h:5
-#: ../hacks/config/pong.xml.h:2 ../hacks/config/pyro.xml.h:2
-#: ../hacks/config/quasicrystal.xml.h:5 ../hacks/config/raverhoop.xml.h:11
-#: ../hacks/config/razzledazzle.xml.h:5 ../hacks/config/rd-bomb.xml.h:2
+#: ../hacks/config/mapscroller.xml.h:5 ../hacks/config/maze3d.xml.h:2
+#: ../hacks/config/moebiusgears.xml.h:5 ../hacks/config/peepers.xml.h:5
+#: ../hacks/config/penetrate.xml.h:2 ../hacks/config/petri.xml.h:16
+#: ../hacks/config/phosphor.xml.h:6 ../hacks/config/photopile.xml.h:12
+#: ../hacks/config/piecewise.xml.h:8 ../hacks/config/pinion.xml.h:5
+#: ../hacks/config/polyhedra.xml.h:5 ../hacks/config/pong.xml.h:2
+#: ../hacks/config/pyro.xml.h:2 ../hacks/config/quasicrystal.xml.h:5
+#: ../hacks/config/raverhoop.xml.h:11 ../hacks/config/razzledazzle.xml.h:5
 #: ../hacks/config/rocks.xml.h:8 ../hacks/config/rubik.xml.h:6
 #: ../hacks/config/rubikblocks.xml.h:8 ../hacks/config/skytentacles.xml.h:15
 #: ../hacks/config/slidescreen.xml.h:11 ../hacks/config/sonar.xml.h:5
@@ -1059,15 +596,15 @@ msgstr "スピード"
 #: ../hacks/config/hypnowheel.xml.h:4 ../hacks/config/interference.xml.h:7
 #: ../hacks/config/jigglypuff.xml.h:16 ../hacks/config/jigsaw.xml.h:7
 #: ../hacks/config/juggle.xml.h:7 ../hacks/config/juggler3d.xml.h:7
-#: ../hacks/config/kaleidocycle.xml.h:10 ../hacks/config/maze3d.xml.h:4
-#: ../hacks/config/moebiusgears.xml.h:7 ../hacks/config/peepers.xml.h:7
-#: ../hacks/config/penetrate.xml.h:4 ../hacks/config/petri.xml.h:18
-#: ../hacks/config/phosphor.xml.h:8 ../hacks/config/photopile.xml.h:14
-#: ../hacks/config/piecewise.xml.h:10 ../hacks/config/pinion.xml.h:7
-#: ../hacks/config/polyhedra.xml.h:7 ../hacks/config/pong.xml.h:4
-#: ../hacks/config/pyro.xml.h:4 ../hacks/config/quasicrystal.xml.h:7
-#: ../hacks/config/raverhoop.xml.h:13 ../hacks/config/razzledazzle.xml.h:7
-#: ../hacks/config/rd-bomb.xml.h:4 ../hacks/config/rocks.xml.h:10
+#: ../hacks/config/kaleidocycle.xml.h:10 ../hacks/config/mapscroller.xml.h:7
+#: ../hacks/config/maze3d.xml.h:4 ../hacks/config/moebiusgears.xml.h:7
+#: ../hacks/config/peepers.xml.h:7 ../hacks/config/penetrate.xml.h:4
+#: ../hacks/config/petri.xml.h:18 ../hacks/config/phosphor.xml.h:8
+#: ../hacks/config/photopile.xml.h:14 ../hacks/config/piecewise.xml.h:10
+#: ../hacks/config/pinion.xml.h:7 ../hacks/config/polyhedra.xml.h:7
+#: ../hacks/config/pong.xml.h:4 ../hacks/config/pyro.xml.h:4
+#: ../hacks/config/quasicrystal.xml.h:7 ../hacks/config/raverhoop.xml.h:13
+#: ../hacks/config/razzledazzle.xml.h:7 ../hacks/config/rocks.xml.h:10
 #: ../hacks/config/rubik.xml.h:8 ../hacks/config/rubikblocks.xml.h:10
 #: ../hacks/config/skytentacles.xml.h:17 ../hacks/config/slidescreen.xml.h:13
 #: ../hacks/config/sonar.xml.h:7 ../hacks/config/speedmine.xml.h:7
@@ -1156,95 +693,96 @@ msgstr ""
 #: ../hacks/config/apple2.xml.h:9 ../hacks/config/atlantis.xml.h:19
 #: ../hacks/config/attraction.xml.h:32 ../hacks/config/atunnel.xml.h:8
 #: ../hacks/config/barcode.xml.h:9 ../hacks/config/beats.xml.h:16
-#: ../hacks/config/blaster.xml.h:11 ../hacks/config/blinkbox.xml.h:12
-#: ../hacks/config/blitspin.xml.h:9 ../hacks/config/blocktube.xml.h:11
-#: ../hacks/config/boing.xml.h:14 ../hacks/config/bouboule.xml.h:11
-#: ../hacks/config/bouncingcow.xml.h:13 ../hacks/config/boxed.xml.h:23
-#: ../hacks/config/boxfit.xml.h:15 ../hacks/config/braid.xml.h:13
-#: ../hacks/config/bubble3d.xml.h:11 ../hacks/config/bubbles.xml.h:11
-#: ../hacks/config/bumps.xml.h:11 ../hacks/config/cage.xml.h:6
-#: ../hacks/config/carousel.xml.h:18 ../hacks/config/ccurve.xml.h:11
-#: ../hacks/config/celtic.xml.h:9 ../hacks/config/circuit.xml.h:14
-#: ../hacks/config/cityflow.xml.h:17 ../hacks/config/cloudlife.xml.h:12
-#: ../hacks/config/companioncube.xml.h:14 ../hacks/config/compass.xml.h:5
-#: ../hacks/config/coral.xml.h:14 ../hacks/config/covid19.xml.h:14
-#: ../hacks/config/crackberg.xml.h:18 ../hacks/config/critical.xml.h:8
-#: ../hacks/config/crumbler.xml.h:15 ../hacks/config/crystal.xml.h:15
-#: ../hacks/config/cube21.xml.h:26 ../hacks/config/cubenetic.xml.h:26
-#: ../hacks/config/cubestack.xml.h:16 ../hacks/config/cubestorm.xml.h:20
-#: ../hacks/config/cubetwist.xml.h:18 ../hacks/config/cubicgrid.xml.h:12
-#: ../hacks/config/cwaves.xml.h:9 ../hacks/config/cynosure.xml.h:11
-#: ../hacks/config/dangerball.xml.h:14 ../hacks/config/decayscreen.xml.h:23
-#: ../hacks/config/deco.xml.h:14 ../hacks/config/deepstars.xml.h:9
-#: ../hacks/config/deluxe.xml.h:16 ../hacks/config/demon.xml.h:15
-#: ../hacks/config/discoball.xml.h:14 ../hacks/config/discrete.xml.h:11
-#: ../hacks/config/distort.xml.h:22 ../hacks/config/dnalogo.xml.h:9
-#: ../hacks/config/drift.xml.h:11 ../hacks/config/dymaxionmap.xml.h:16
-#: ../hacks/config/endgame.xml.h:6 ../hacks/config/energystream.xml.h:7
-#: ../hacks/config/engine.xml.h:19 ../hacks/config/epicycle.xml.h:14
-#: ../hacks/config/eruption.xml.h:22 ../hacks/config/esper.xml.h:9
-#: ../hacks/config/etruscanvenus.xml.h:42 ../hacks/config/euler2d.xml.h:29
-#: ../hacks/config/extrusion.xml.h:17 ../hacks/config/fadeplot.xml.h:14
-#: ../hacks/config/fiberlamp.xml.h:11 ../hacks/config/filmleader.xml.h:9
-#: ../hacks/config/fireworkx.xml.h:10 ../hacks/config/flag.xml.h:13
-#: ../hacks/config/flame.xml.h:14 ../hacks/config/flipflop.xml.h:14
-#: ../hacks/config/flipscreen3d.xml.h:6 ../hacks/config/fliptext.xml.h:15
-#: ../hacks/config/flow.xml.h:21 ../hacks/config/fluidballs.xml.h:22
-#: ../hacks/config/flurry.xml.h:2 ../hacks/config/flyingtoasters.xml.h:15
-#: ../hacks/config/fontglide.xml.h:16 ../hacks/config/forest.xml.h:8
-#: ../hacks/config/fuzzyflakes.xml.h:12 ../hacks/config/galaxy.xml.h:13
-#: ../hacks/config/gears.xml.h:14 ../hacks/config/geodesic.xml.h:10
-#: ../hacks/config/geodesicgears.xml.h:13 ../hacks/config/gflux.xml.h:19
-#: ../hacks/config/gibson.xml.h:15 ../hacks/config/glblur.xml.h:17
-#: ../hacks/config/glcells.xml.h:32 ../hacks/config/gleidescope.xml.h:14
-#: ../hacks/config/glforestfire.xml.h:16 ../hacks/config/glhanoi.xml.h:16
-#: ../hacks/config/glknots.xml.h:24 ../hacks/config/glmatrix.xml.h:20
-#: ../hacks/config/glplanet.xml.h:19 ../hacks/config/glschool.xml.h:17
-#: ../hacks/config/glslideshow.xml.h:20 ../hacks/config/glsnake.xml.h:18
-#: ../hacks/config/gltext.xml.h:19 ../hacks/config/goop.xml.h:13
-#: ../hacks/config/grav.xml.h:12 ../hacks/config/greynetic.xml.h:6
-#: ../hacks/config/halftone.xml.h:17 ../hacks/config/halo.xml.h:14
-#: ../hacks/config/handsy.xml.h:23 ../hacks/config/headroom.xml.h:18
-#: ../hacks/config/helix.xml.h:8 ../hacks/config/hexadrop.xml.h:22
-#: ../hacks/config/hexstrut.xml.h:17 ../hacks/config/hilbert.xml.h:20
-#: ../hacks/config/hopalong.xml.h:23 ../hacks/config/hydrostat.xml.h:29
-#: ../hacks/config/hyperball.xml.h:8 ../hacks/config/hypercube.xml.h:8
-#: ../hacks/config/hypertorus.xml.h:5 ../hacks/config/hypnowheel.xml.h:8
-#: ../hacks/config/ifs.xml.h:68 ../hacks/config/imsmap.xml.h:18
-#: ../hacks/config/interaggregate.xml.h:8 ../hacks/config/interference.xml.h:21
-#: ../hacks/config/intermomentary.xml.h:8 ../hacks/config/jigglypuff.xml.h:10
-#: ../hacks/config/jigsaw.xml.h:15 ../hacks/config/juggle.xml.h:21
-#: ../hacks/config/juggler3d.xml.h:21 ../hacks/config/julia.xml.h:14
-#: ../hacks/config/kaleidescope.xml.h:13 ../hacks/config/kaleidocycle.xml.h:21
-#: ../hacks/config/klein.xml.h:47 ../hacks/config/kumppa.xml.h:8
-#: ../hacks/config/lament.xml.h:7 ../hacks/config/laser.xml.h:12
-#: ../hacks/config/lavalite.xml.h:16 ../hacks/config/lcdscrub.xml.h:7
-#: ../hacks/config/lightning.xml.h:8 ../hacks/config/lisa.xml.h:16
-#: ../hacks/config/lissie.xml.h:15 ../hacks/config/lmorph.xml.h:17
-#: ../hacks/config/lockward.xml.h:9 ../hacks/config/loop.xml.h:12
-#: ../hacks/config/m6502.xml.h:3 ../hacks/config/maze.xml.h:12
-#: ../hacks/config/maze3d.xml.h:10 ../hacks/config/memscroller.xml.h:9
-#: ../hacks/config/menger.xml.h:20 ../hacks/config/metaballs.xml.h:16
-#: ../hacks/config/mirrorblob.xml.h:25 ../hacks/config/mismunch.xml.h:13
-#: ../hacks/config/moebius.xml.h:7 ../hacks/config/moebiusgears.xml.h:14
-#: ../hacks/config/moire.xml.h:12 ../hacks/config/moire2.xml.h:9
-#: ../hacks/config/molecule.xml.h:15 ../hacks/config/morph3d.xml.h:11
-#: ../hacks/config/mountain.xml.h:11 ../hacks/config/munch.xml.h:16
-#: ../hacks/config/nerverot.xml.h:21 ../hacks/config/noof.xml.h:5
-#: ../hacks/config/noseguy.xml.h:2 ../hacks/config/pacman.xml.h:6
-#: ../hacks/config/pedal.xml.h:9 ../hacks/config/peepers.xml.h:17
-#: ../hacks/config/penetrate.xml.h:8 ../hacks/config/penrose.xml.h:12
-#: ../hacks/config/petri.xml.h:5 ../hacks/config/phosphor.xml.h:13
-#: ../hacks/config/photopile.xml.h:22 ../hacks/config/piecewise.xml.h:15
-#: ../hacks/config/pinion.xml.h:16 ../hacks/config/pipes.xml.h:20
-#: ../hacks/config/polyhedra.xml.h:168 ../hacks/config/polyominoes.xml.h:12
-#: ../hacks/config/polytopes.xml.h:18 ../hacks/config/pong.xml.h:9
-#: ../hacks/config/popsquares.xml.h:21 ../hacks/config/projectiveplane.xml.h:45
-#: ../hacks/config/providence.xml.h:7 ../hacks/config/pulsar.xml.h:14
-#: ../hacks/config/pyro.xml.h:14 ../hacks/config/qix.xml.h:24
-#: ../hacks/config/quasicrystal.xml.h:13 ../hacks/config/queens.xml.h:6
-#: ../hacks/config/raverhoop.xml.h:20 ../hacks/config/razzledazzle.xml.h:20
-#: ../hacks/config/rd-bomb.xml.h:17 ../hacks/config/ripples.xml.h:18
+#: ../hacks/config/binaryhorizon.xml.h:14 ../hacks/config/blaster.xml.h:11
+#: ../hacks/config/blinkbox.xml.h:12 ../hacks/config/blitspin.xml.h:9
+#: ../hacks/config/blocktube.xml.h:11 ../hacks/config/boing.xml.h:14
+#: ../hacks/config/bouboule.xml.h:11 ../hacks/config/bouncingcow.xml.h:13
+#: ../hacks/config/boxed.xml.h:23 ../hacks/config/boxfit.xml.h:15
+#: ../hacks/config/braid.xml.h:13 ../hacks/config/bubble3d.xml.h:11
+#: ../hacks/config/bubbles.xml.h:11 ../hacks/config/bumps.xml.h:11
+#: ../hacks/config/cage.xml.h:6 ../hacks/config/carousel.xml.h:18
+#: ../hacks/config/ccurve.xml.h:11 ../hacks/config/celtic.xml.h:9
+#: ../hacks/config/circuit.xml.h:14 ../hacks/config/cityflow.xml.h:17
+#: ../hacks/config/cloudlife.xml.h:12 ../hacks/config/companioncube.xml.h:14
+#: ../hacks/config/compass.xml.h:5 ../hacks/config/coral.xml.h:14
+#: ../hacks/config/covid19.xml.h:14 ../hacks/config/crackberg.xml.h:18
+#: ../hacks/config/critical.xml.h:8 ../hacks/config/crumbler.xml.h:15
+#: ../hacks/config/crystal.xml.h:15 ../hacks/config/cube21.xml.h:26
+#: ../hacks/config/cubenetic.xml.h:26 ../hacks/config/cubestack.xml.h:16
+#: ../hacks/config/cubestorm.xml.h:20 ../hacks/config/cubetwist.xml.h:18
+#: ../hacks/config/cubicgrid.xml.h:12 ../hacks/config/cwaves.xml.h:9
+#: ../hacks/config/cynosure.xml.h:11 ../hacks/config/dangerball.xml.h:14
+#: ../hacks/config/decayscreen.xml.h:23 ../hacks/config/deco.xml.h:14
+#: ../hacks/config/deepstars.xml.h:9 ../hacks/config/deluxe.xml.h:16
+#: ../hacks/config/demon.xml.h:15 ../hacks/config/discoball.xml.h:14
+#: ../hacks/config/discrete.xml.h:11 ../hacks/config/distort.xml.h:22
+#: ../hacks/config/dnalogo.xml.h:9 ../hacks/config/drift.xml.h:11
+#: ../hacks/config/dymaxionmap.xml.h:16 ../hacks/config/endgame.xml.h:6
+#: ../hacks/config/energystream.xml.h:7 ../hacks/config/engine.xml.h:19
+#: ../hacks/config/epicycle.xml.h:14 ../hacks/config/eruption.xml.h:22
+#: ../hacks/config/esper.xml.h:9 ../hacks/config/etruscanvenus.xml.h:42
+#: ../hacks/config/euler2d.xml.h:29 ../hacks/config/extrusion.xml.h:17
+#: ../hacks/config/fadeplot.xml.h:14 ../hacks/config/fiberlamp.xml.h:11
+#: ../hacks/config/filmleader.xml.h:9 ../hacks/config/fireworkx.xml.h:10
+#: ../hacks/config/flag.xml.h:13 ../hacks/config/flame.xml.h:14
+#: ../hacks/config/flipflop.xml.h:14 ../hacks/config/flipscreen3d.xml.h:6
+#: ../hacks/config/fliptext.xml.h:15 ../hacks/config/flow.xml.h:21
+#: ../hacks/config/fluidballs.xml.h:22 ../hacks/config/flurry.xml.h:2
+#: ../hacks/config/flyingtoasters.xml.h:15 ../hacks/config/fontglide.xml.h:16
+#: ../hacks/config/forest.xml.h:8 ../hacks/config/fuzzyflakes.xml.h:12
+#: ../hacks/config/galaxy.xml.h:13 ../hacks/config/gears.xml.h:14
+#: ../hacks/config/geodesic.xml.h:10 ../hacks/config/geodesicgears.xml.h:13
+#: ../hacks/config/gflux.xml.h:19 ../hacks/config/gibson.xml.h:15
+#: ../hacks/config/glblur.xml.h:17 ../hacks/config/glcells.xml.h:32
+#: ../hacks/config/gleidescope.xml.h:14 ../hacks/config/glforestfire.xml.h:16
+#: ../hacks/config/glhanoi.xml.h:16 ../hacks/config/glknots.xml.h:24
+#: ../hacks/config/glmatrix.xml.h:20 ../hacks/config/glplanet.xml.h:19
+#: ../hacks/config/glschool.xml.h:17 ../hacks/config/glslideshow.xml.h:20
+#: ../hacks/config/glsnake.xml.h:18 ../hacks/config/gltext.xml.h:19
+#: ../hacks/config/goop.xml.h:13 ../hacks/config/grav.xml.h:12
+#: ../hacks/config/greynetic.xml.h:6 ../hacks/config/halftone.xml.h:17
+#: ../hacks/config/halo.xml.h:14 ../hacks/config/handsy.xml.h:23
+#: ../hacks/config/headroom.xml.h:19 ../hacks/config/helix.xml.h:8
+#: ../hacks/config/hexadrop.xml.h:22 ../hacks/config/hexstrut.xml.h:17
+#: ../hacks/config/hilbert.xml.h:20 ../hacks/config/hopalong.xml.h:23
+#: ../hacks/config/hydrostat.xml.h:29 ../hacks/config/hyperball.xml.h:8
+#: ../hacks/config/hypercube.xml.h:8 ../hacks/config/hypertorus.xml.h:5
+#: ../hacks/config/hypnowheel.xml.h:8 ../hacks/config/ifs.xml.h:68
+#: ../hacks/config/imsmap.xml.h:18 ../hacks/config/interaggregate.xml.h:8
+#: ../hacks/config/interference.xml.h:21 ../hacks/config/intermomentary.xml.h:8
+#: ../hacks/config/jigglypuff.xml.h:10 ../hacks/config/jigsaw.xml.h:15
+#: ../hacks/config/juggle.xml.h:21 ../hacks/config/juggler3d.xml.h:21
+#: ../hacks/config/julia.xml.h:14 ../hacks/config/kaleidescope.xml.h:13
+#: ../hacks/config/kaleidocycle.xml.h:21 ../hacks/config/klein.xml.h:47
+#: ../hacks/config/kumppa.xml.h:8 ../hacks/config/lament.xml.h:7
+#: ../hacks/config/laser.xml.h:12 ../hacks/config/lavalite.xml.h:16
+#: ../hacks/config/lcdscrub.xml.h:7 ../hacks/config/lightning.xml.h:8
+#: ../hacks/config/lisa.xml.h:16 ../hacks/config/lissie.xml.h:15
+#: ../hacks/config/lmorph.xml.h:17 ../hacks/config/lockward.xml.h:9
+#: ../hacks/config/loop.xml.h:12 ../hacks/config/m6502.xml.h:3
+#: ../hacks/config/mapscroller.xml.h:63 ../hacks/config/marbling.xml.h:10
+#: ../hacks/config/maze.xml.h:12 ../hacks/config/maze3d.xml.h:10
+#: ../hacks/config/memscroller.xml.h:9 ../hacks/config/menger.xml.h:20
+#: ../hacks/config/metaballs.xml.h:16 ../hacks/config/mirrorblob.xml.h:25
+#: ../hacks/config/mismunch.xml.h:13 ../hacks/config/moebius.xml.h:7
+#: ../hacks/config/moebiusgears.xml.h:14 ../hacks/config/moire.xml.h:12
+#: ../hacks/config/moire2.xml.h:9 ../hacks/config/molecule.xml.h:15
+#: ../hacks/config/morph3d.xml.h:11 ../hacks/config/mountain.xml.h:11
+#: ../hacks/config/munch.xml.h:16 ../hacks/config/nerverot.xml.h:21
+#: ../hacks/config/noof.xml.h:5 ../hacks/config/noseguy.xml.h:2
+#: ../hacks/config/pacman.xml.h:6 ../hacks/config/pedal.xml.h:9
+#: ../hacks/config/peepers.xml.h:17 ../hacks/config/penetrate.xml.h:8
+#: ../hacks/config/penrose.xml.h:12 ../hacks/config/petri.xml.h:5
+#: ../hacks/config/phosphor.xml.h:13 ../hacks/config/photopile.xml.h:22
+#: ../hacks/config/piecewise.xml.h:15 ../hacks/config/pinion.xml.h:16
+#: ../hacks/config/pipes.xml.h:20 ../hacks/config/polyhedra.xml.h:168
+#: ../hacks/config/polyominoes.xml.h:12 ../hacks/config/polytopes.xml.h:18
+#: ../hacks/config/pong.xml.h:9 ../hacks/config/popsquares.xml.h:21
+#: ../hacks/config/projectiveplane.xml.h:45 ../hacks/config/providence.xml.h:7
+#: ../hacks/config/pulsar.xml.h:14 ../hacks/config/pyro.xml.h:14
+#: ../hacks/config/qix.xml.h:24 ../hacks/config/quasicrystal.xml.h:13
+#: ../hacks/config/queens.xml.h:6 ../hacks/config/raverhoop.xml.h:20
+#: ../hacks/config/razzledazzle.xml.h:20 ../hacks/config/ripples.xml.h:18
 #: ../hacks/config/rocks.xml.h:17 ../hacks/config/romanboy.xml.h:43
 #: ../hacks/config/rorschach.xml.h:11 ../hacks/config/rotor.xml.h:13
 #: ../hacks/config/rotzoomer.xml.h:15 ../hacks/config/rubik.xml.h:11
@@ -1293,32 +831,32 @@ msgid "Anemone"
 msgstr ""
 
 #: ../hacks/config/anemone.xml.h:5 ../hacks/config/anemotaxis.xml.h:8
-#: ../hacks/config/beats.xml.h:5 ../hacks/config/binaryring.xml.h:8
-#: ../hacks/config/blaster.xml.h:7 ../hacks/config/bouboule.xml.h:5
-#: ../hacks/config/boxed.xml.h:8 ../hacks/config/cityflow.xml.h:5
-#: ../hacks/config/coral.xml.h:11 ../hacks/config/crackberg.xml.h:8
-#: ../hacks/config/crumbler.xml.h:8 ../hacks/config/cubenetic.xml.h:5
-#: ../hacks/config/cubestorm.xml.h:8 ../hacks/config/dangerball.xml.h:8
-#: ../hacks/config/eruption.xml.h:5 ../hacks/config/euler2d.xml.h:5
-#: ../hacks/config/fiberlamp.xml.h:5 ../hacks/config/flame.xml.h:8
-#: ../hacks/config/flow.xml.h:5 ../hacks/config/fluidballs.xml.h:5
-#: ../hacks/config/fuzzyflakes.xml.h:8 ../hacks/config/glcells.xml.h:8
-#: ../hacks/config/glschool.xml.h:5 ../hacks/config/goop.xml.h:8
-#: ../hacks/config/grav.xml.h:5 ../hacks/config/halftone.xml.h:5
-#: ../hacks/config/halo.xml.h:5 ../hacks/config/hydrostat.xml.h:14
-#: ../hacks/config/interaggregate.xml.h:5 ../hacks/config/interference.xml.h:11
-#: ../hacks/config/jigsaw.xml.h:8 ../hacks/config/julia.xml.h:5
-#: ../hacks/config/kaleidescope.xml.h:5 ../hacks/config/lisa.xml.h:5
-#: ../hacks/config/lmorph.xml.h:5 ../hacks/config/nerverot.xml.h:8
-#: ../hacks/config/pedal.xml.h:5 ../hacks/config/peepers.xml.h:8
-#: ../hacks/config/petri.xml.h:10 ../hacks/config/piecewise.xml.h:5
-#: ../hacks/config/qix.xml.h:5 ../hacks/config/rocks.xml.h:5
-#: ../hacks/config/sierpinski.xml.h:5 ../hacks/config/slip.xml.h:5
-#: ../hacks/config/spiral.xml.h:5 ../hacks/config/substrate.xml.h:8
-#: ../hacks/config/swirl.xml.h:5 ../hacks/config/thornbird.xml.h:5
-#: ../hacks/config/topblock.xml.h:13 ../hacks/config/unknownpleasures.xml.h:5
-#: ../hacks/config/voronoi.xml.h:5 ../hacks/config/whirlwindwarp.xml.h:2
-#: ../hacks/config/wormhole.xml.h:8
+#: ../hacks/config/beats.xml.h:5 ../hacks/config/binaryhorizon.xml.h:5
+#: ../hacks/config/binaryring.xml.h:8 ../hacks/config/blaster.xml.h:7
+#: ../hacks/config/bouboule.xml.h:5 ../hacks/config/boxed.xml.h:8
+#: ../hacks/config/cityflow.xml.h:5 ../hacks/config/coral.xml.h:11
+#: ../hacks/config/crackberg.xml.h:8 ../hacks/config/crumbler.xml.h:8
+#: ../hacks/config/cubenetic.xml.h:5 ../hacks/config/cubestorm.xml.h:8
+#: ../hacks/config/dangerball.xml.h:8 ../hacks/config/eruption.xml.h:5
+#: ../hacks/config/euler2d.xml.h:5 ../hacks/config/fiberlamp.xml.h:5
+#: ../hacks/config/flame.xml.h:8 ../hacks/config/flow.xml.h:5
+#: ../hacks/config/fluidballs.xml.h:5 ../hacks/config/fuzzyflakes.xml.h:8
+#: ../hacks/config/glcells.xml.h:8 ../hacks/config/glschool.xml.h:5
+#: ../hacks/config/goop.xml.h:8 ../hacks/config/grav.xml.h:5
+#: ../hacks/config/halftone.xml.h:5 ../hacks/config/halo.xml.h:5
+#: ../hacks/config/hydrostat.xml.h:14 ../hacks/config/interaggregate.xml.h:5
+#: ../hacks/config/interference.xml.h:11 ../hacks/config/jigsaw.xml.h:8
+#: ../hacks/config/julia.xml.h:5 ../hacks/config/kaleidescope.xml.h:5
+#: ../hacks/config/lisa.xml.h:5 ../hacks/config/lmorph.xml.h:5
+#: ../hacks/config/nerverot.xml.h:8 ../hacks/config/pedal.xml.h:5
+#: ../hacks/config/peepers.xml.h:8 ../hacks/config/petri.xml.h:10
+#: ../hacks/config/piecewise.xml.h:5 ../hacks/config/qix.xml.h:5
+#: ../hacks/config/rocks.xml.h:5 ../hacks/config/sierpinski.xml.h:5
+#: ../hacks/config/slip.xml.h:5 ../hacks/config/spiral.xml.h:5
+#: ../hacks/config/substrate.xml.h:8 ../hacks/config/swirl.xml.h:5
+#: ../hacks/config/thornbird.xml.h:5 ../hacks/config/topblock.xml.h:13
+#: ../hacks/config/unknownpleasures.xml.h:5 ../hacks/config/voronoi.xml.h:5
+#: ../hacks/config/whirlwindwarp.xml.h:2 ../hacks/config/wormhole.xml.h:8
 msgid "Few"
 msgstr ""
 
@@ -1381,16 +919,16 @@ msgstr ""
 #: ../hacks/config/penrose.xml.h:7 ../hacks/config/petri.xml.h:12
 #: ../hacks/config/piecewise.xml.h:7 ../hacks/config/polyominoes.xml.h:11
 #: ../hacks/config/qix.xml.h:7 ../hacks/config/razzledazzle.xml.h:10
-#: ../hacks/config/rd-bomb.xml.h:16 ../hacks/config/rocks.xml.h:7
-#: ../hacks/config/rotor.xml.h:10 ../hacks/config/shadebobs.xml.h:10
-#: ../hacks/config/sierpinski.xml.h:7 ../hacks/config/slip.xml.h:7
-#: ../hacks/config/sphere.xml.h:7 ../hacks/config/spiral.xml.h:7
-#: ../hacks/config/squiral.xml.h:15 ../hacks/config/starfish.xml.h:16
-#: ../hacks/config/strange.xml.h:22 ../hacks/config/swirl.xml.h:7
-#: ../hacks/config/thornbird.xml.h:7 ../hacks/config/topblock.xml.h:15
-#: ../hacks/config/triangle.xml.h:7 ../hacks/config/unknownpleasures.xml.h:7
-#: ../hacks/config/vines.xml.h:7 ../hacks/config/voronoi.xml.h:7
-#: ../hacks/config/whirlwindwarp.xml.h:4 ../hacks/config/worm.xml.h:7
+#: ../hacks/config/rocks.xml.h:7 ../hacks/config/rotor.xml.h:10
+#: ../hacks/config/shadebobs.xml.h:10 ../hacks/config/sierpinski.xml.h:7
+#: ../hacks/config/slip.xml.h:7 ../hacks/config/sphere.xml.h:7
+#: ../hacks/config/spiral.xml.h:7 ../hacks/config/squiral.xml.h:15
+#: ../hacks/config/starfish.xml.h:16 ../hacks/config/strange.xml.h:22
+#: ../hacks/config/swirl.xml.h:7 ../hacks/config/thornbird.xml.h:7
+#: ../hacks/config/topblock.xml.h:15 ../hacks/config/triangle.xml.h:7
+#: ../hacks/config/unknownpleasures.xml.h:7 ../hacks/config/vines.xml.h:7
+#: ../hacks/config/voronoi.xml.h:7 ../hacks/config/whirlwindwarp.xml.h:4
+#: ../hacks/config/worm.xml.h:7
 msgid "Many"
 msgstr ""
 
@@ -1460,121 +998,122 @@ msgstr ""
 #: ../hacks/config/antspotlight.xml.h:2 ../hacks/config/apple2.xml.h:10
 #: ../hacks/config/atlantis.xml.h:2 ../hacks/config/attraction.xml.h:11
 #: ../hacks/config/atunnel.xml.h:2 ../hacks/config/barcode.xml.h:2
-#: ../hacks/config/beats.xml.h:2 ../hacks/config/binaryring.xml.h:2
-#: ../hacks/config/blaster.xml.h:2 ../hacks/config/blinkbox.xml.h:2
-#: ../hacks/config/blocktube.xml.h:2 ../hacks/config/bouboule.xml.h:2
-#: ../hacks/config/bouncingcow.xml.h:2 ../hacks/config/boxed.xml.h:2
-#: ../hacks/config/boxfit.xml.h:2 ../hacks/config/braid.xml.h:2
-#: ../hacks/config/bubble3d.xml.h:2 ../hacks/config/bubbles.xml.h:2
-#: ../hacks/config/bumps.xml.h:3 ../hacks/config/cage.xml.h:2
-#: ../hacks/config/carousel.xml.h:2 ../hacks/config/ccurve.xml.h:8
-#: ../hacks/config/celtic.xml.h:2 ../hacks/config/circuit.xml.h:2
-#: ../hacks/config/cityflow.xml.h:2 ../hacks/config/cloudlife.xml.h:2
-#: ../hacks/config/companioncube.xml.h:2 ../hacks/config/compass.xml.h:2
-#: ../hacks/config/coral.xml.h:2 ../hacks/config/covid19.xml.h:2
-#: ../hacks/config/crackberg.xml.h:2 ../hacks/config/critical.xml.h:2
-#: ../hacks/config/crumbler.xml.h:2 ../hacks/config/crystal.xml.h:2
-#: ../hacks/config/cube21.xml.h:2 ../hacks/config/cubenetic.xml.h:2
-#: ../hacks/config/cubestack.xml.h:2 ../hacks/config/cubestorm.xml.h:2
-#: ../hacks/config/cubetwist.xml.h:2 ../hacks/config/cubicgrid.xml.h:2
-#: ../hacks/config/cwaves.xml.h:2 ../hacks/config/cynosure.xml.h:2
-#: ../hacks/config/dangerball.xml.h:2 ../hacks/config/decayscreen.xml.h:2
-#: ../hacks/config/deepstars.xml.h:2 ../hacks/config/deluxe.xml.h:2
-#: ../hacks/config/demon.xml.h:2 ../hacks/config/discoball.xml.h:2
-#: ../hacks/config/discrete.xml.h:2 ../hacks/config/distort.xml.h:2
-#: ../hacks/config/dnalogo.xml.h:2 ../hacks/config/drift.xml.h:2
-#: ../hacks/config/dymaxionmap.xml.h:2 ../hacks/config/endgame.xml.h:2
-#: ../hacks/config/engine.xml.h:2 ../hacks/config/epicycle.xml.h:2
-#: ../hacks/config/eruption.xml.h:2 ../hacks/config/esper.xml.h:2
-#: ../hacks/config/etruscanvenus.xml.h:39 ../hacks/config/euler2d.xml.h:2
-#: ../hacks/config/extrusion.xml.h:2 ../hacks/config/fadeplot.xml.h:2
-#: ../hacks/config/fiberlamp.xml.h:2 ../hacks/config/filmleader.xml.h:2
-#: ../hacks/config/fireworkx.xml.h:2 ../hacks/config/flag.xml.h:3
-#: ../hacks/config/flame.xml.h:2 ../hacks/config/flipflop.xml.h:2
-#: ../hacks/config/flipscreen3d.xml.h:2 ../hacks/config/fliptext.xml.h:2
-#: ../hacks/config/flow.xml.h:2 ../hacks/config/fluidballs.xml.h:2
-#: ../hacks/config/flyingtoasters.xml.h:2 ../hacks/config/fontglide.xml.h:2
-#: ../hacks/config/forest.xml.h:2 ../hacks/config/fuzzyflakes.xml.h:2
-#: ../hacks/config/galaxy.xml.h:2 ../hacks/config/gears.xml.h:2
-#: ../hacks/config/geodesic.xml.h:11 ../hacks/config/geodesicgears.xml.h:2
-#: ../hacks/config/gflux.xml.h:2 ../hacks/config/gibson.xml.h:2
-#: ../hacks/config/glblur.xml.h:2 ../hacks/config/glcells.xml.h:2
-#: ../hacks/config/gleidescope.xml.h:2 ../hacks/config/glforestfire.xml.h:2
-#: ../hacks/config/glhanoi.xml.h:2 ../hacks/config/glitchpeg.xml.h:2
-#: ../hacks/config/glknots.xml.h:2 ../hacks/config/glmatrix.xml.h:2
-#: ../hacks/config/glplanet.xml.h:3 ../hacks/config/glschool.xml.h:2
-#: ../hacks/config/glslideshow.xml.h:2 ../hacks/config/glsnake.xml.h:2
-#: ../hacks/config/gltext.xml.h:2 ../hacks/config/goop.xml.h:2
-#: ../hacks/config/grav.xml.h:2 ../hacks/config/gravitywell.xml.h:2
-#: ../hacks/config/greynetic.xml.h:2 ../hacks/config/halftone.xml.h:2
-#: ../hacks/config/halo.xml.h:2 ../hacks/config/handsy.xml.h:2
-#: ../hacks/config/headroom.xml.h:2 ../hacks/config/helix.xml.h:2
-#: ../hacks/config/hexadrop.xml.h:2 ../hacks/config/hexstrut.xml.h:2
-#: ../hacks/config/hopalong.xml.h:2 ../hacks/config/hydrostat.xml.h:2
-#: ../hacks/config/hyperball.xml.h:2 ../hacks/config/hypercube.xml.h:2
-#: ../hacks/config/hypertorus.xml.h:2 ../hacks/config/hypnowheel.xml.h:14
-#: ../hacks/config/ifs.xml.h:2 ../hacks/config/imsmap.xml.h:2
-#: ../hacks/config/interaggregate.xml.h:2 ../hacks/config/interference.xml.h:2
-#: ../hacks/config/intermomentary.xml.h:2 ../hacks/config/jigglypuff.xml.h:11
-#: ../hacks/config/jigsaw.xml.h:2 ../hacks/config/juggle.xml.h:2
-#: ../hacks/config/juggler3d.xml.h:2 ../hacks/config/julia.xml.h:2
-#: ../hacks/config/kaleidescope.xml.h:2 ../hacks/config/kaleidocycle.xml.h:2
-#: ../hacks/config/klein.xml.h:44 ../hacks/config/kumppa.xml.h:2
-#: ../hacks/config/lament.xml.h:2 ../hacks/config/laser.xml.h:2
-#: ../hacks/config/lavalite.xml.h:2 ../hacks/config/lcdscrub.xml.h:2
-#: ../hacks/config/lightning.xml.h:2 ../hacks/config/lisa.xml.h:2
-#: ../hacks/config/lissie.xml.h:2 ../hacks/config/lmorph.xml.h:2
-#: ../hacks/config/lockward.xml.h:2 ../hacks/config/loop.xml.h:2
-#: ../hacks/config/m6502.xml.h:7 ../hacks/config/maze.xml.h:2
-#: ../hacks/config/maze3d.xml.h:5 ../hacks/config/memscroller.xml.h:2
-#: ../hacks/config/menger.xml.h:2 ../hacks/config/metaballs.xml.h:2
-#: ../hacks/config/mirrorblob.xml.h:2 ../hacks/config/mismunch.xml.h:2
-#: ../hacks/config/moebius.xml.h:2 ../hacks/config/moebiusgears.xml.h:2
-#: ../hacks/config/moire2.xml.h:2 ../hacks/config/molecule.xml.h:2
-#: ../hacks/config/morph3d.xml.h:2 ../hacks/config/mountain.xml.h:2
-#: ../hacks/config/munch.xml.h:2 ../hacks/config/nerverot.xml.h:2
-#: ../hacks/config/noof.xml.h:2 ../hacks/config/pacman.xml.h:2
-#: ../hacks/config/peepers.xml.h:2 ../hacks/config/penrose.xml.h:2
-#: ../hacks/config/petri.xml.h:2 ../hacks/config/phosphor.xml.h:2
-#: ../hacks/config/photopile.xml.h:15 ../hacks/config/piecewise.xml.h:2
-#: ../hacks/config/pinion.xml.h:2 ../hacks/config/pipes.xml.h:2
-#: ../hacks/config/polyhedra.xml.h:2 ../hacks/config/polyominoes.xml.h:3
-#: ../hacks/config/polytopes.xml.h:24 ../hacks/config/pong.xml.h:10
-#: ../hacks/config/popsquares.xml.h:2 ../hacks/config/projectiveplane.xml.h:37
-#: ../hacks/config/providence.xml.h:2 ../hacks/config/pulsar.xml.h:2
-#: ../hacks/config/pyro.xml.h:11 ../hacks/config/qix.xml.h:2
-#: ../hacks/config/quasicrystal.xml.h:2 ../hacks/config/queens.xml.h:2
-#: ../hacks/config/raverhoop.xml.h:2 ../hacks/config/razzledazzle.xml.h:2
-#: ../hacks/config/ripples.xml.h:2 ../hacks/config/rocks.xml.h:2
-#: ../hacks/config/romanboy.xml.h:40 ../hacks/config/rotor.xml.h:2
-#: ../hacks/config/rotzoomer.xml.h:2 ../hacks/config/rubik.xml.h:2
-#: ../hacks/config/rubikblocks.xml.h:2 ../hacks/config/sballs.xml.h:2
-#: ../hacks/config/scooter.xml.h:2 ../hacks/config/shadebobs.xml.h:2
-#: ../hacks/config/sierpinski.xml.h:2 ../hacks/config/sierpinski3d.xml.h:2
-#: ../hacks/config/skytentacles.xml.h:11 ../hacks/config/slidescreen.xml.h:2
-#: ../hacks/config/slip.xml.h:2 ../hacks/config/sonar.xml.h:2
-#: ../hacks/config/speedmine.xml.h:2 ../hacks/config/sphere.xml.h:2
-#: ../hacks/config/spheremonics.xml.h:2 ../hacks/config/spiral.xml.h:2
-#: ../hacks/config/splitflap.xml.h:2 ../hacks/config/splodesic.xml.h:2
-#: ../hacks/config/spotlight.xml.h:2 ../hacks/config/sproingies.xml.h:2
-#: ../hacks/config/squiral.xml.h:2 ../hacks/config/stairs.xml.h:2
-#: ../hacks/config/starfish.xml.h:5 ../hacks/config/stonerview.xml.h:2
-#: ../hacks/config/strange.xml.h:2 ../hacks/config/substrate.xml.h:2
-#: ../hacks/config/superquadrics.xml.h:2 ../hacks/config/surfaces.xml.h:2
-#: ../hacks/config/swirl.xml.h:2 ../hacks/config/t3d.xml.h:2
-#: ../hacks/config/tangram.xml.h:2 ../hacks/config/tessellimage.xml.h:2
-#: ../hacks/config/thornbird.xml.h:2 ../hacks/config/topblock.xml.h:2
-#: ../hacks/config/triangle.xml.h:2 ../hacks/config/tronbit.xml.h:2
-#: ../hacks/config/truchet.xml.h:2 ../hacks/config/twang.xml.h:2
-#: ../hacks/config/unicrud.xml.h:2 ../hacks/config/unknownpleasures.xml.h:2
-#: ../hacks/config/vfeedback.xml.h:2 ../hacks/config/vigilance.xml.h:2
-#: ../hacks/config/vines.xml.h:2 ../hacks/config/wander.xml.h:2
-#: ../hacks/config/whirlygig.xml.h:4 ../hacks/config/winduprobot.xml.h:2
-#: ../hacks/config/worm.xml.h:2 ../hacks/config/wormhole.xml.h:2
-#: ../hacks/config/xanalogtv.xml.h:4 ../hacks/config/xflame.xml.h:2
-#: ../hacks/config/xlyap.xml.h:2 ../hacks/config/xmatrix.xml.h:15
-#: ../hacks/config/xrayswarm.xml.h:2 ../hacks/config/xspirograph.xml.h:2
-#: ../hacks/config/zoom.xml.h:2
+#: ../hacks/config/beats.xml.h:2 ../hacks/config/binaryhorizon.xml.h:2
+#: ../hacks/config/binaryring.xml.h:2 ../hacks/config/blaster.xml.h:2
+#: ../hacks/config/blinkbox.xml.h:2 ../hacks/config/blocktube.xml.h:2
+#: ../hacks/config/bouboule.xml.h:2 ../hacks/config/bouncingcow.xml.h:2
+#: ../hacks/config/boxed.xml.h:2 ../hacks/config/boxfit.xml.h:2
+#: ../hacks/config/braid.xml.h:2 ../hacks/config/bubble3d.xml.h:2
+#: ../hacks/config/bubbles.xml.h:2 ../hacks/config/bumps.xml.h:3
+#: ../hacks/config/cage.xml.h:2 ../hacks/config/carousel.xml.h:2
+#: ../hacks/config/ccurve.xml.h:8 ../hacks/config/celtic.xml.h:2
+#: ../hacks/config/circuit.xml.h:2 ../hacks/config/cityflow.xml.h:2
+#: ../hacks/config/cloudlife.xml.h:2 ../hacks/config/companioncube.xml.h:2
+#: ../hacks/config/compass.xml.h:2 ../hacks/config/coral.xml.h:2
+#: ../hacks/config/covid19.xml.h:2 ../hacks/config/crackberg.xml.h:2
+#: ../hacks/config/critical.xml.h:2 ../hacks/config/crumbler.xml.h:2
+#: ../hacks/config/crystal.xml.h:2 ../hacks/config/cube21.xml.h:2
+#: ../hacks/config/cubenetic.xml.h:2 ../hacks/config/cubestack.xml.h:2
+#: ../hacks/config/cubestorm.xml.h:2 ../hacks/config/cubetwist.xml.h:2
+#: ../hacks/config/cubicgrid.xml.h:2 ../hacks/config/cwaves.xml.h:2
+#: ../hacks/config/cynosure.xml.h:2 ../hacks/config/dangerball.xml.h:2
+#: ../hacks/config/decayscreen.xml.h:2 ../hacks/config/deepstars.xml.h:2
+#: ../hacks/config/deluxe.xml.h:2 ../hacks/config/demon.xml.h:2
+#: ../hacks/config/discoball.xml.h:2 ../hacks/config/discrete.xml.h:2
+#: ../hacks/config/distort.xml.h:2 ../hacks/config/dnalogo.xml.h:2
+#: ../hacks/config/drift.xml.h:2 ../hacks/config/dymaxionmap.xml.h:2
+#: ../hacks/config/endgame.xml.h:2 ../hacks/config/engine.xml.h:2
+#: ../hacks/config/epicycle.xml.h:2 ../hacks/config/eruption.xml.h:2
+#: ../hacks/config/esper.xml.h:2 ../hacks/config/etruscanvenus.xml.h:39
+#: ../hacks/config/euler2d.xml.h:2 ../hacks/config/extrusion.xml.h:2
+#: ../hacks/config/fadeplot.xml.h:2 ../hacks/config/fiberlamp.xml.h:2
+#: ../hacks/config/filmleader.xml.h:2 ../hacks/config/fireworkx.xml.h:2
+#: ../hacks/config/flag.xml.h:3 ../hacks/config/flame.xml.h:2
+#: ../hacks/config/flipflop.xml.h:2 ../hacks/config/flipscreen3d.xml.h:2
+#: ../hacks/config/fliptext.xml.h:2 ../hacks/config/flow.xml.h:2
+#: ../hacks/config/fluidballs.xml.h:2 ../hacks/config/flyingtoasters.xml.h:2
+#: ../hacks/config/fontglide.xml.h:2 ../hacks/config/forest.xml.h:2
+#: ../hacks/config/fuzzyflakes.xml.h:2 ../hacks/config/galaxy.xml.h:2
+#: ../hacks/config/gears.xml.h:2 ../hacks/config/geodesic.xml.h:11
+#: ../hacks/config/geodesicgears.xml.h:2 ../hacks/config/gflux.xml.h:2
+#: ../hacks/config/gibson.xml.h:2 ../hacks/config/glblur.xml.h:2
+#: ../hacks/config/glcells.xml.h:2 ../hacks/config/gleidescope.xml.h:2
+#: ../hacks/config/glforestfire.xml.h:2 ../hacks/config/glhanoi.xml.h:2
+#: ../hacks/config/glitchpeg.xml.h:2 ../hacks/config/glknots.xml.h:2
+#: ../hacks/config/glmatrix.xml.h:2 ../hacks/config/glplanet.xml.h:3
+#: ../hacks/config/glschool.xml.h:2 ../hacks/config/glslideshow.xml.h:2
+#: ../hacks/config/glsnake.xml.h:2 ../hacks/config/gltext.xml.h:2
+#: ../hacks/config/goop.xml.h:2 ../hacks/config/grav.xml.h:2
+#: ../hacks/config/gravitywell.xml.h:2 ../hacks/config/greynetic.xml.h:2
+#: ../hacks/config/halftone.xml.h:2 ../hacks/config/halo.xml.h:2
+#: ../hacks/config/handsy.xml.h:2 ../hacks/config/headroom.xml.h:2
+#: ../hacks/config/helix.xml.h:2 ../hacks/config/hexadrop.xml.h:2
+#: ../hacks/config/hexstrut.xml.h:2 ../hacks/config/hopalong.xml.h:2
+#: ../hacks/config/hydrostat.xml.h:2 ../hacks/config/hyperball.xml.h:2
+#: ../hacks/config/hypercube.xml.h:2 ../hacks/config/hypertorus.xml.h:2
+#: ../hacks/config/hypnowheel.xml.h:14 ../hacks/config/ifs.xml.h:2
+#: ../hacks/config/imsmap.xml.h:2 ../hacks/config/interaggregate.xml.h:2
+#: ../hacks/config/interference.xml.h:2 ../hacks/config/intermomentary.xml.h:2
+#: ../hacks/config/jigglypuff.xml.h:11 ../hacks/config/jigsaw.xml.h:2
+#: ../hacks/config/juggle.xml.h:2 ../hacks/config/juggler3d.xml.h:2
+#: ../hacks/config/julia.xml.h:2 ../hacks/config/kaleidescope.xml.h:2
+#: ../hacks/config/kaleidocycle.xml.h:2 ../hacks/config/klein.xml.h:44
+#: ../hacks/config/kumppa.xml.h:2 ../hacks/config/lament.xml.h:2
+#: ../hacks/config/laser.xml.h:2 ../hacks/config/lavalite.xml.h:2
+#: ../hacks/config/lcdscrub.xml.h:2 ../hacks/config/lightning.xml.h:2
+#: ../hacks/config/lisa.xml.h:2 ../hacks/config/lissie.xml.h:2
+#: ../hacks/config/lmorph.xml.h:2 ../hacks/config/lockward.xml.h:2
+#: ../hacks/config/loop.xml.h:2 ../hacks/config/m6502.xml.h:7
+#: ../hacks/config/mapscroller.xml.h:2 ../hacks/config/marbling.xml.h:2
+#: ../hacks/config/maze.xml.h:2 ../hacks/config/maze3d.xml.h:5
+#: ../hacks/config/memscroller.xml.h:2 ../hacks/config/menger.xml.h:2
+#: ../hacks/config/metaballs.xml.h:2 ../hacks/config/mirrorblob.xml.h:2
+#: ../hacks/config/mismunch.xml.h:2 ../hacks/config/moebius.xml.h:2
+#: ../hacks/config/moebiusgears.xml.h:2 ../hacks/config/moire2.xml.h:2
+#: ../hacks/config/molecule.xml.h:2 ../hacks/config/morph3d.xml.h:2
+#: ../hacks/config/mountain.xml.h:2 ../hacks/config/munch.xml.h:2
+#: ../hacks/config/nerverot.xml.h:2 ../hacks/config/noof.xml.h:2
+#: ../hacks/config/pacman.xml.h:2 ../hacks/config/peepers.xml.h:2
+#: ../hacks/config/penrose.xml.h:2 ../hacks/config/petri.xml.h:2
+#: ../hacks/config/phosphor.xml.h:2 ../hacks/config/photopile.xml.h:15
+#: ../hacks/config/piecewise.xml.h:2 ../hacks/config/pinion.xml.h:2
+#: ../hacks/config/pipes.xml.h:2 ../hacks/config/polyhedra.xml.h:2
+#: ../hacks/config/polyominoes.xml.h:3 ../hacks/config/polytopes.xml.h:24
+#: ../hacks/config/pong.xml.h:10 ../hacks/config/popsquares.xml.h:2
+#: ../hacks/config/projectiveplane.xml.h:37 ../hacks/config/providence.xml.h:2
+#: ../hacks/config/pulsar.xml.h:2 ../hacks/config/pyro.xml.h:11
+#: ../hacks/config/qix.xml.h:2 ../hacks/config/quasicrystal.xml.h:2
+#: ../hacks/config/queens.xml.h:2 ../hacks/config/raverhoop.xml.h:2
+#: ../hacks/config/razzledazzle.xml.h:2 ../hacks/config/ripples.xml.h:2
+#: ../hacks/config/rocks.xml.h:2 ../hacks/config/romanboy.xml.h:40
+#: ../hacks/config/rotor.xml.h:2 ../hacks/config/rotzoomer.xml.h:2
+#: ../hacks/config/rubik.xml.h:2 ../hacks/config/rubikblocks.xml.h:2
+#: ../hacks/config/sballs.xml.h:2 ../hacks/config/scooter.xml.h:2
+#: ../hacks/config/shadebobs.xml.h:2 ../hacks/config/sierpinski.xml.h:2
+#: ../hacks/config/sierpinski3d.xml.h:2 ../hacks/config/skytentacles.xml.h:11
+#: ../hacks/config/slidescreen.xml.h:2 ../hacks/config/slip.xml.h:2
+#: ../hacks/config/sonar.xml.h:2 ../hacks/config/speedmine.xml.h:2
+#: ../hacks/config/sphere.xml.h:2 ../hacks/config/spheremonics.xml.h:2
+#: ../hacks/config/spiral.xml.h:2 ../hacks/config/splitflap.xml.h:2
+#: ../hacks/config/splodesic.xml.h:2 ../hacks/config/spotlight.xml.h:2
+#: ../hacks/config/sproingies.xml.h:2 ../hacks/config/squiral.xml.h:2
+#: ../hacks/config/stairs.xml.h:2 ../hacks/config/starfish.xml.h:5
+#: ../hacks/config/stonerview.xml.h:2 ../hacks/config/strange.xml.h:2
+#: ../hacks/config/substrate.xml.h:2 ../hacks/config/superquadrics.xml.h:2
+#: ../hacks/config/surfaces.xml.h:2 ../hacks/config/swirl.xml.h:2
+#: ../hacks/config/t3d.xml.h:2 ../hacks/config/tangram.xml.h:2
+#: ../hacks/config/tessellimage.xml.h:2 ../hacks/config/thornbird.xml.h:2
+#: ../hacks/config/topblock.xml.h:2 ../hacks/config/triangle.xml.h:2
+#: ../hacks/config/tronbit.xml.h:2 ../hacks/config/truchet.xml.h:2
+#: ../hacks/config/twang.xml.h:2 ../hacks/config/unicrud.xml.h:2
+#: ../hacks/config/unknownpleasures.xml.h:2 ../hacks/config/vfeedback.xml.h:2
+#: ../hacks/config/vigilance.xml.h:2 ../hacks/config/vines.xml.h:2
+#: ../hacks/config/wander.xml.h:2 ../hacks/config/whirlygig.xml.h:4
+#: ../hacks/config/winduprobot.xml.h:2 ../hacks/config/worm.xml.h:2
+#: ../hacks/config/wormhole.xml.h:2 ../hacks/config/xanalogtv.xml.h:4
+#: ../hacks/config/xflame.xml.h:2 ../hacks/config/xlyap.xml.h:2
+#: ../hacks/config/xmatrix.xml.h:15 ../hacks/config/xrayswarm.xml.h:2
+#: ../hacks/config/xspirograph.xml.h:2 ../hacks/config/zoom.xml.h:2
 msgid "Low"
 msgstr ""
 
@@ -1647,7 +1186,8 @@ msgstr ""
 #: ../hacks/config/lcdscrub.xml.h:3 ../hacks/config/lightning.xml.h:3
 #: ../hacks/config/lisa.xml.h:3 ../hacks/config/lissie.xml.h:3
 #: ../hacks/config/lmorph.xml.h:3 ../hacks/config/lockward.xml.h:3
-#: ../hacks/config/loop.xml.h:3 ../hacks/config/maze.xml.h:3
+#: ../hacks/config/loop.xml.h:3 ../hacks/config/mapscroller.xml.h:3
+#: ../hacks/config/marbling.xml.h:3 ../hacks/config/maze.xml.h:3
 #: ../hacks/config/maze3d.xml.h:6 ../hacks/config/memscroller.xml.h:3
 #: ../hacks/config/menger.xml.h:3 ../hacks/config/metaballs.xml.h:3
 #: ../hacks/config/mirrorblob.xml.h:3 ../hacks/config/mismunch.xml.h:3
@@ -1666,36 +1206,35 @@ msgstr ""
 #: ../hacks/config/pulsar.xml.h:3 ../hacks/config/pyro.xml.h:3
 #: ../hacks/config/qix.xml.h:3 ../hacks/config/quasicrystal.xml.h:3
 #: ../hacks/config/queens.xml.h:3 ../hacks/config/raverhoop.xml.h:3
-#: ../hacks/config/razzledazzle.xml.h:3 ../hacks/config/rd-bomb.xml.h:3
-#: ../hacks/config/ripples.xml.h:3 ../hacks/config/rocks.xml.h:3
-#: ../hacks/config/romanboy.xml.h:41 ../hacks/config/rotor.xml.h:3
-#: ../hacks/config/rotzoomer.xml.h:3 ../hacks/config/rubik.xml.h:3
-#: ../hacks/config/rubikblocks.xml.h:3 ../hacks/config/sballs.xml.h:3
-#: ../hacks/config/scooter.xml.h:3 ../hacks/config/shadebobs.xml.h:3
-#: ../hacks/config/sierpinski.xml.h:3 ../hacks/config/sierpinski3d.xml.h:3
-#: ../hacks/config/skytentacles.xml.h:16 ../hacks/config/slidescreen.xml.h:3
-#: ../hacks/config/slip.xml.h:3 ../hacks/config/sonar.xml.h:3
-#: ../hacks/config/speedmine.xml.h:3 ../hacks/config/sphere.xml.h:3
-#: ../hacks/config/spheremonics.xml.h:3 ../hacks/config/spiral.xml.h:3
-#: ../hacks/config/splitflap.xml.h:3 ../hacks/config/splodesic.xml.h:3
-#: ../hacks/config/spotlight.xml.h:3 ../hacks/config/sproingies.xml.h:3
-#: ../hacks/config/squiral.xml.h:3 ../hacks/config/stairs.xml.h:3
-#: ../hacks/config/starfish.xml.h:6 ../hacks/config/stonerview.xml.h:3
-#: ../hacks/config/strange.xml.h:3 ../hacks/config/substrate.xml.h:3
-#: ../hacks/config/superquadrics.xml.h:3 ../hacks/config/surfaces.xml.h:3
-#: ../hacks/config/swirl.xml.h:3 ../hacks/config/t3d.xml.h:3
-#: ../hacks/config/tangram.xml.h:3 ../hacks/config/tessellimage.xml.h:3
-#: ../hacks/config/thornbird.xml.h:3 ../hacks/config/topblock.xml.h:3
-#: ../hacks/config/triangle.xml.h:3 ../hacks/config/tronbit.xml.h:3
-#: ../hacks/config/truchet.xml.h:3 ../hacks/config/twang.xml.h:3
-#: ../hacks/config/unicrud.xml.h:3 ../hacks/config/unknownpleasures.xml.h:3
-#: ../hacks/config/vigilance.xml.h:3 ../hacks/config/vines.xml.h:3
-#: ../hacks/config/voronoi.xml.h:3 ../hacks/config/wander.xml.h:3
-#: ../hacks/config/winduprobot.xml.h:3 ../hacks/config/worm.xml.h:3
-#: ../hacks/config/wormhole.xml.h:3 ../hacks/config/xflame.xml.h:3
-#: ../hacks/config/xlyap.xml.h:3 ../hacks/config/xmatrix.xml.h:16
-#: ../hacks/config/xrayswarm.xml.h:3 ../hacks/config/xspirograph.xml.h:3
-#: ../hacks/config/zoom.xml.h:3
+#: ../hacks/config/razzledazzle.xml.h:3 ../hacks/config/ripples.xml.h:3
+#: ../hacks/config/rocks.xml.h:3 ../hacks/config/romanboy.xml.h:41
+#: ../hacks/config/rotor.xml.h:3 ../hacks/config/rotzoomer.xml.h:3
+#: ../hacks/config/rubik.xml.h:3 ../hacks/config/rubikblocks.xml.h:3
+#: ../hacks/config/sballs.xml.h:3 ../hacks/config/scooter.xml.h:3
+#: ../hacks/config/shadebobs.xml.h:3 ../hacks/config/sierpinski.xml.h:3
+#: ../hacks/config/sierpinski3d.xml.h:3 ../hacks/config/skytentacles.xml.h:16
+#: ../hacks/config/slidescreen.xml.h:3 ../hacks/config/slip.xml.h:3
+#: ../hacks/config/sonar.xml.h:3 ../hacks/config/speedmine.xml.h:3
+#: ../hacks/config/sphere.xml.h:3 ../hacks/config/spheremonics.xml.h:3
+#: ../hacks/config/spiral.xml.h:3 ../hacks/config/splitflap.xml.h:3
+#: ../hacks/config/splodesic.xml.h:3 ../hacks/config/spotlight.xml.h:3
+#: ../hacks/config/sproingies.xml.h:3 ../hacks/config/squiral.xml.h:3
+#: ../hacks/config/stairs.xml.h:3 ../hacks/config/starfish.xml.h:6
+#: ../hacks/config/stonerview.xml.h:3 ../hacks/config/strange.xml.h:3
+#: ../hacks/config/substrate.xml.h:3 ../hacks/config/superquadrics.xml.h:3
+#: ../hacks/config/surfaces.xml.h:3 ../hacks/config/swirl.xml.h:3
+#: ../hacks/config/t3d.xml.h:3 ../hacks/config/tangram.xml.h:3
+#: ../hacks/config/tessellimage.xml.h:3 ../hacks/config/thornbird.xml.h:3
+#: ../hacks/config/topblock.xml.h:3 ../hacks/config/triangle.xml.h:3
+#: ../hacks/config/tronbit.xml.h:3 ../hacks/config/truchet.xml.h:3
+#: ../hacks/config/twang.xml.h:3 ../hacks/config/unicrud.xml.h:3
+#: ../hacks/config/unknownpleasures.xml.h:3 ../hacks/config/vigilance.xml.h:3
+#: ../hacks/config/vines.xml.h:3 ../hacks/config/voronoi.xml.h:3
+#: ../hacks/config/wander.xml.h:3 ../hacks/config/winduprobot.xml.h:3
+#: ../hacks/config/worm.xml.h:3 ../hacks/config/wormhole.xml.h:3
+#: ../hacks/config/xflame.xml.h:3 ../hacks/config/xlyap.xml.h:3
+#: ../hacks/config/xmatrix.xml.h:16 ../hacks/config/xrayswarm.xml.h:3
+#: ../hacks/config/xspirograph.xml.h:3 ../hacks/config/zoom.xml.h:3
 msgid "Frame rate"
 msgstr "フレームレート"
 
@@ -1706,121 +1245,123 @@ msgstr "フレームレート"
 #: ../hacks/config/antspotlight.xml.h:4 ../hacks/config/apple2.xml.h:12
 #: ../hacks/config/atlantis.xml.h:4 ../hacks/config/attraction.xml.h:13
 #: ../hacks/config/atunnel.xml.h:4 ../hacks/config/barcode.xml.h:4
-#: ../hacks/config/beats.xml.h:4 ../hacks/config/binaryring.xml.h:4
-#: ../hacks/config/blaster.xml.h:4 ../hacks/config/blinkbox.xml.h:4
-#: ../hacks/config/blocktube.xml.h:4 ../hacks/config/bouboule.xml.h:4
-#: ../hacks/config/bouncingcow.xml.h:4 ../hacks/config/boxed.xml.h:4
-#: ../hacks/config/boxfit.xml.h:4 ../hacks/config/braid.xml.h:4
-#: ../hacks/config/bubble3d.xml.h:4 ../hacks/config/bubbles.xml.h:4
-#: ../hacks/config/bumps.xml.h:7 ../hacks/config/cage.xml.h:4
-#: ../hacks/config/carousel.xml.h:4 ../hacks/config/ccurve.xml.h:10
-#: ../hacks/config/celtic.xml.h:4 ../hacks/config/circuit.xml.h:4
-#: ../hacks/config/cityflow.xml.h:4 ../hacks/config/cloudlife.xml.h:4
-#: ../hacks/config/companioncube.xml.h:4 ../hacks/config/compass.xml.h:4
-#: ../hacks/config/coral.xml.h:4 ../hacks/config/covid19.xml.h:4
-#: ../hacks/config/crackberg.xml.h:4 ../hacks/config/critical.xml.h:4
-#: ../hacks/config/crumbler.xml.h:4 ../hacks/config/crystal.xml.h:4
-#: ../hacks/config/cube21.xml.h:4 ../hacks/config/cubenetic.xml.h:4
-#: ../hacks/config/cubestack.xml.h:4 ../hacks/config/cubestorm.xml.h:4
-#: ../hacks/config/cubetwist.xml.h:4 ../hacks/config/cubicgrid.xml.h:4
-#: ../hacks/config/cwaves.xml.h:4 ../hacks/config/cynosure.xml.h:4
-#: ../hacks/config/dangerball.xml.h:4 ../hacks/config/decayscreen.xml.h:4
-#: ../hacks/config/deepstars.xml.h:4 ../hacks/config/deluxe.xml.h:4
-#: ../hacks/config/demon.xml.h:4 ../hacks/config/discoball.xml.h:4
-#: ../hacks/config/discrete.xml.h:4 ../hacks/config/distort.xml.h:4
-#: ../hacks/config/dnalogo.xml.h:4 ../hacks/config/drift.xml.h:4
-#: ../hacks/config/dymaxionmap.xml.h:4 ../hacks/config/endgame.xml.h:4
-#: ../hacks/config/engine.xml.h:4 ../hacks/config/epicycle.xml.h:4
-#: ../hacks/config/eruption.xml.h:4 ../hacks/config/esper.xml.h:4
-#: ../hacks/config/etruscanvenus.xml.h:41 ../hacks/config/euler2d.xml.h:4
-#: ../hacks/config/extrusion.xml.h:4 ../hacks/config/fadeplot.xml.h:4
-#: ../hacks/config/fiberlamp.xml.h:4 ../hacks/config/filmleader.xml.h:4
-#: ../hacks/config/fireworkx.xml.h:4 ../hacks/config/flag.xml.h:5
-#: ../hacks/config/flame.xml.h:4 ../hacks/config/flipflop.xml.h:4
-#: ../hacks/config/flipscreen3d.xml.h:4 ../hacks/config/fliptext.xml.h:4
-#: ../hacks/config/flow.xml.h:4 ../hacks/config/fluidballs.xml.h:4
-#: ../hacks/config/flyingtoasters.xml.h:4 ../hacks/config/fontglide.xml.h:4
-#: ../hacks/config/forest.xml.h:4 ../hacks/config/fuzzyflakes.xml.h:4
-#: ../hacks/config/galaxy.xml.h:4 ../hacks/config/gears.xml.h:4
-#: ../hacks/config/geodesic.xml.h:13 ../hacks/config/geodesicgears.xml.h:4
-#: ../hacks/config/gflux.xml.h:4 ../hacks/config/gibson.xml.h:4
-#: ../hacks/config/glblur.xml.h:4 ../hacks/config/glcells.xml.h:4
-#: ../hacks/config/gleidescope.xml.h:4 ../hacks/config/glforestfire.xml.h:4
-#: ../hacks/config/glhanoi.xml.h:4 ../hacks/config/glitchpeg.xml.h:4
-#: ../hacks/config/glknots.xml.h:4 ../hacks/config/glmatrix.xml.h:4
-#: ../hacks/config/glplanet.xml.h:7 ../hacks/config/glschool.xml.h:4
-#: ../hacks/config/glslideshow.xml.h:4 ../hacks/config/glsnake.xml.h:4
-#: ../hacks/config/gltext.xml.h:4 ../hacks/config/goop.xml.h:4
-#: ../hacks/config/grav.xml.h:4 ../hacks/config/gravitywell.xml.h:4
-#: ../hacks/config/greynetic.xml.h:4 ../hacks/config/halftone.xml.h:4
-#: ../hacks/config/halo.xml.h:4 ../hacks/config/handsy.xml.h:4
-#: ../hacks/config/headroom.xml.h:4 ../hacks/config/helix.xml.h:4
-#: ../hacks/config/hexadrop.xml.h:4 ../hacks/config/hexstrut.xml.h:4
-#: ../hacks/config/hopalong.xml.h:4 ../hacks/config/hydrostat.xml.h:4
-#: ../hacks/config/hyperball.xml.h:4 ../hacks/config/hypercube.xml.h:4
-#: ../hacks/config/hypertorus.xml.h:4 ../hacks/config/hypnowheel.xml.h:16
-#: ../hacks/config/ifs.xml.h:4 ../hacks/config/imsmap.xml.h:4
-#: ../hacks/config/interaggregate.xml.h:4 ../hacks/config/interference.xml.h:4
-#: ../hacks/config/intermomentary.xml.h:4 ../hacks/config/jigglypuff.xml.h:13
-#: ../hacks/config/jigsaw.xml.h:4 ../hacks/config/juggle.xml.h:4
-#: ../hacks/config/juggler3d.xml.h:4 ../hacks/config/julia.xml.h:4
-#: ../hacks/config/kaleidescope.xml.h:4 ../hacks/config/kaleidocycle.xml.h:4
-#: ../hacks/config/klein.xml.h:46 ../hacks/config/kumppa.xml.h:4
-#: ../hacks/config/lament.xml.h:4 ../hacks/config/laser.xml.h:4
-#: ../hacks/config/lavalite.xml.h:4 ../hacks/config/lcdscrub.xml.h:4
-#: ../hacks/config/lightning.xml.h:4 ../hacks/config/lisa.xml.h:4
-#: ../hacks/config/lissie.xml.h:4 ../hacks/config/lmorph.xml.h:4
-#: ../hacks/config/lockward.xml.h:4 ../hacks/config/loop.xml.h:4
-#: ../hacks/config/m6502.xml.h:9 ../hacks/config/maze.xml.h:4
-#: ../hacks/config/maze3d.xml.h:7 ../hacks/config/memscroller.xml.h:4
-#: ../hacks/config/menger.xml.h:4 ../hacks/config/metaballs.xml.h:4
-#: ../hacks/config/mirrorblob.xml.h:4 ../hacks/config/mismunch.xml.h:4
-#: ../hacks/config/moebius.xml.h:4 ../hacks/config/moebiusgears.xml.h:4
-#: ../hacks/config/moire2.xml.h:4 ../hacks/config/molecule.xml.h:4
-#: ../hacks/config/morph3d.xml.h:4 ../hacks/config/mountain.xml.h:4
-#: ../hacks/config/munch.xml.h:4 ../hacks/config/nerverot.xml.h:4
-#: ../hacks/config/noof.xml.h:4 ../hacks/config/pacman.xml.h:4
-#: ../hacks/config/peepers.xml.h:4 ../hacks/config/penrose.xml.h:4
-#: ../hacks/config/petri.xml.h:4 ../hacks/config/phosphor.xml.h:4
-#: ../hacks/config/photopile.xml.h:17 ../hacks/config/piecewise.xml.h:4
-#: ../hacks/config/pinion.xml.h:4 ../hacks/config/pipes.xml.h:4
-#: ../hacks/config/polyhedra.xml.h:4 ../hacks/config/polyominoes.xml.h:5
-#: ../hacks/config/polytopes.xml.h:26 ../hacks/config/pong.xml.h:12
-#: ../hacks/config/popsquares.xml.h:4 ../hacks/config/projectiveplane.xml.h:39
-#: ../hacks/config/providence.xml.h:4 ../hacks/config/pulsar.xml.h:4
-#: ../hacks/config/pyro.xml.h:13 ../hacks/config/qix.xml.h:4
-#: ../hacks/config/quasicrystal.xml.h:4 ../hacks/config/queens.xml.h:4
-#: ../hacks/config/raverhoop.xml.h:4 ../hacks/config/razzledazzle.xml.h:4
-#: ../hacks/config/ripples.xml.h:4 ../hacks/config/rocks.xml.h:4
-#: ../hacks/config/romanboy.xml.h:42 ../hacks/config/rotor.xml.h:4
-#: ../hacks/config/rotzoomer.xml.h:4 ../hacks/config/rubik.xml.h:4
-#: ../hacks/config/rubikblocks.xml.h:4 ../hacks/config/sballs.xml.h:4
-#: ../hacks/config/scooter.xml.h:4 ../hacks/config/shadebobs.xml.h:4
-#: ../hacks/config/sierpinski.xml.h:4 ../hacks/config/sierpinski3d.xml.h:4
-#: ../hacks/config/skytentacles.xml.h:13 ../hacks/config/slidescreen.xml.h:4
-#: ../hacks/config/slip.xml.h:4 ../hacks/config/sonar.xml.h:4
-#: ../hacks/config/speedmine.xml.h:4 ../hacks/config/sphere.xml.h:4
-#: ../hacks/config/spheremonics.xml.h:4 ../hacks/config/spiral.xml.h:4
-#: ../hacks/config/splitflap.xml.h:4 ../hacks/config/splodesic.xml.h:4
-#: ../hacks/config/spotlight.xml.h:4 ../hacks/config/sproingies.xml.h:4
-#: ../hacks/config/squiral.xml.h:4 ../hacks/config/stairs.xml.h:4
-#: ../hacks/config/starfish.xml.h:7 ../hacks/config/starwars.xml.h:3
-#: ../hacks/config/stonerview.xml.h:4 ../hacks/config/strange.xml.h:4
-#: ../hacks/config/substrate.xml.h:4 ../hacks/config/superquadrics.xml.h:4
-#: ../hacks/config/surfaces.xml.h:4 ../hacks/config/swirl.xml.h:4
-#: ../hacks/config/t3d.xml.h:4 ../hacks/config/tangram.xml.h:4
-#: ../hacks/config/tessellimage.xml.h:4 ../hacks/config/thornbird.xml.h:4
-#: ../hacks/config/topblock.xml.h:4 ../hacks/config/triangle.xml.h:4
-#: ../hacks/config/tronbit.xml.h:4 ../hacks/config/truchet.xml.h:4
-#: ../hacks/config/twang.xml.h:4 ../hacks/config/unicrud.xml.h:4
-#: ../hacks/config/unknownpleasures.xml.h:4 ../hacks/config/vfeedback.xml.h:4
-#: ../hacks/config/vigilance.xml.h:4 ../hacks/config/vines.xml.h:4
-#: ../hacks/config/wander.xml.h:4 ../hacks/config/whirlygig.xml.h:6
-#: ../hacks/config/winduprobot.xml.h:4 ../hacks/config/worm.xml.h:4
-#: ../hacks/config/wormhole.xml.h:4 ../hacks/config/xanalogtv.xml.h:6
-#: ../hacks/config/xflame.xml.h:4 ../hacks/config/xlyap.xml.h:4
-#: ../hacks/config/xmatrix.xml.h:17 ../hacks/config/xrayswarm.xml.h:4
-#: ../hacks/config/xspirograph.xml.h:4 ../hacks/config/zoom.xml.h:4
+#: ../hacks/config/beats.xml.h:4 ../hacks/config/binaryhorizon.xml.h:4
+#: ../hacks/config/binaryring.xml.h:4 ../hacks/config/blaster.xml.h:4
+#: ../hacks/config/blinkbox.xml.h:4 ../hacks/config/blocktube.xml.h:4
+#: ../hacks/config/bouboule.xml.h:4 ../hacks/config/bouncingcow.xml.h:4
+#: ../hacks/config/boxed.xml.h:4 ../hacks/config/boxfit.xml.h:4
+#: ../hacks/config/braid.xml.h:4 ../hacks/config/bubble3d.xml.h:4
+#: ../hacks/config/bubbles.xml.h:4 ../hacks/config/bumps.xml.h:7
+#: ../hacks/config/cage.xml.h:4 ../hacks/config/carousel.xml.h:4
+#: ../hacks/config/ccurve.xml.h:10 ../hacks/config/celtic.xml.h:4
+#: ../hacks/config/circuit.xml.h:4 ../hacks/config/cityflow.xml.h:4
+#: ../hacks/config/cloudlife.xml.h:4 ../hacks/config/companioncube.xml.h:4
+#: ../hacks/config/compass.xml.h:4 ../hacks/config/coral.xml.h:4
+#: ../hacks/config/covid19.xml.h:4 ../hacks/config/crackberg.xml.h:4
+#: ../hacks/config/critical.xml.h:4 ../hacks/config/crumbler.xml.h:4
+#: ../hacks/config/crystal.xml.h:4 ../hacks/config/cube21.xml.h:4
+#: ../hacks/config/cubenetic.xml.h:4 ../hacks/config/cubestack.xml.h:4
+#: ../hacks/config/cubestorm.xml.h:4 ../hacks/config/cubetwist.xml.h:4
+#: ../hacks/config/cubicgrid.xml.h:4 ../hacks/config/cwaves.xml.h:4
+#: ../hacks/config/cynosure.xml.h:4 ../hacks/config/dangerball.xml.h:4
+#: ../hacks/config/decayscreen.xml.h:4 ../hacks/config/deepstars.xml.h:4
+#: ../hacks/config/deluxe.xml.h:4 ../hacks/config/demon.xml.h:4
+#: ../hacks/config/discoball.xml.h:4 ../hacks/config/discrete.xml.h:4
+#: ../hacks/config/distort.xml.h:4 ../hacks/config/dnalogo.xml.h:4
+#: ../hacks/config/drift.xml.h:4 ../hacks/config/dymaxionmap.xml.h:4
+#: ../hacks/config/endgame.xml.h:4 ../hacks/config/engine.xml.h:4
+#: ../hacks/config/epicycle.xml.h:4 ../hacks/config/eruption.xml.h:4
+#: ../hacks/config/esper.xml.h:4 ../hacks/config/etruscanvenus.xml.h:41
+#: ../hacks/config/euler2d.xml.h:4 ../hacks/config/extrusion.xml.h:4
+#: ../hacks/config/fadeplot.xml.h:4 ../hacks/config/fiberlamp.xml.h:4
+#: ../hacks/config/filmleader.xml.h:4 ../hacks/config/fireworkx.xml.h:4
+#: ../hacks/config/flag.xml.h:5 ../hacks/config/flame.xml.h:4
+#: ../hacks/config/flipflop.xml.h:4 ../hacks/config/flipscreen3d.xml.h:4
+#: ../hacks/config/fliptext.xml.h:4 ../hacks/config/flow.xml.h:4
+#: ../hacks/config/fluidballs.xml.h:4 ../hacks/config/flyingtoasters.xml.h:4
+#: ../hacks/config/fontglide.xml.h:4 ../hacks/config/forest.xml.h:4
+#: ../hacks/config/fuzzyflakes.xml.h:4 ../hacks/config/galaxy.xml.h:4
+#: ../hacks/config/gears.xml.h:4 ../hacks/config/geodesic.xml.h:13
+#: ../hacks/config/geodesicgears.xml.h:4 ../hacks/config/gflux.xml.h:4
+#: ../hacks/config/gibson.xml.h:4 ../hacks/config/glblur.xml.h:4
+#: ../hacks/config/glcells.xml.h:4 ../hacks/config/gleidescope.xml.h:4
+#: ../hacks/config/glforestfire.xml.h:4 ../hacks/config/glhanoi.xml.h:4
+#: ../hacks/config/glitchpeg.xml.h:4 ../hacks/config/glknots.xml.h:4
+#: ../hacks/config/glmatrix.xml.h:4 ../hacks/config/glplanet.xml.h:7
+#: ../hacks/config/glschool.xml.h:4 ../hacks/config/glslideshow.xml.h:4
+#: ../hacks/config/glsnake.xml.h:4 ../hacks/config/gltext.xml.h:4
+#: ../hacks/config/goop.xml.h:4 ../hacks/config/grav.xml.h:4
+#: ../hacks/config/gravitywell.xml.h:4 ../hacks/config/greynetic.xml.h:4
+#: ../hacks/config/halftone.xml.h:4 ../hacks/config/halo.xml.h:4
+#: ../hacks/config/handsy.xml.h:4 ../hacks/config/headroom.xml.h:4
+#: ../hacks/config/helix.xml.h:4 ../hacks/config/hexadrop.xml.h:4
+#: ../hacks/config/hexstrut.xml.h:4 ../hacks/config/hopalong.xml.h:4
+#: ../hacks/config/hydrostat.xml.h:4 ../hacks/config/hyperball.xml.h:4
+#: ../hacks/config/hypercube.xml.h:4 ../hacks/config/hypertorus.xml.h:4
+#: ../hacks/config/hypnowheel.xml.h:16 ../hacks/config/ifs.xml.h:4
+#: ../hacks/config/imsmap.xml.h:4 ../hacks/config/interaggregate.xml.h:4
+#: ../hacks/config/interference.xml.h:4 ../hacks/config/intermomentary.xml.h:4
+#: ../hacks/config/jigglypuff.xml.h:13 ../hacks/config/jigsaw.xml.h:4
+#: ../hacks/config/juggle.xml.h:4 ../hacks/config/juggler3d.xml.h:4
+#: ../hacks/config/julia.xml.h:4 ../hacks/config/kaleidescope.xml.h:4
+#: ../hacks/config/kaleidocycle.xml.h:4 ../hacks/config/klein.xml.h:46
+#: ../hacks/config/kumppa.xml.h:4 ../hacks/config/lament.xml.h:4
+#: ../hacks/config/laser.xml.h:4 ../hacks/config/lavalite.xml.h:4
+#: ../hacks/config/lcdscrub.xml.h:4 ../hacks/config/lightning.xml.h:4
+#: ../hacks/config/lisa.xml.h:4 ../hacks/config/lissie.xml.h:4
+#: ../hacks/config/lmorph.xml.h:4 ../hacks/config/lockward.xml.h:4
+#: ../hacks/config/loop.xml.h:4 ../hacks/config/m6502.xml.h:9
+#: ../hacks/config/mapscroller.xml.h:4 ../hacks/config/marbling.xml.h:4
+#: ../hacks/config/maze.xml.h:4 ../hacks/config/maze3d.xml.h:7
+#: ../hacks/config/memscroller.xml.h:4 ../hacks/config/menger.xml.h:4
+#: ../hacks/config/metaballs.xml.h:4 ../hacks/config/mirrorblob.xml.h:4
+#: ../hacks/config/mismunch.xml.h:4 ../hacks/config/moebius.xml.h:4
+#: ../hacks/config/moebiusgears.xml.h:4 ../hacks/config/moire2.xml.h:4
+#: ../hacks/config/molecule.xml.h:4 ../hacks/config/morph3d.xml.h:4
+#: ../hacks/config/mountain.xml.h:4 ../hacks/config/munch.xml.h:4
+#: ../hacks/config/nerverot.xml.h:4 ../hacks/config/noof.xml.h:4
+#: ../hacks/config/pacman.xml.h:4 ../hacks/config/peepers.xml.h:4
+#: ../hacks/config/penrose.xml.h:4 ../hacks/config/petri.xml.h:4
+#: ../hacks/config/phosphor.xml.h:4 ../hacks/config/photopile.xml.h:17
+#: ../hacks/config/piecewise.xml.h:4 ../hacks/config/pinion.xml.h:4
+#: ../hacks/config/pipes.xml.h:4 ../hacks/config/polyhedra.xml.h:4
+#: ../hacks/config/polyominoes.xml.h:5 ../hacks/config/polytopes.xml.h:26
+#: ../hacks/config/pong.xml.h:12 ../hacks/config/popsquares.xml.h:4
+#: ../hacks/config/projectiveplane.xml.h:39 ../hacks/config/providence.xml.h:4
+#: ../hacks/config/pulsar.xml.h:4 ../hacks/config/pyro.xml.h:13
+#: ../hacks/config/qix.xml.h:4 ../hacks/config/quasicrystal.xml.h:4
+#: ../hacks/config/queens.xml.h:4 ../hacks/config/raverhoop.xml.h:4
+#: ../hacks/config/razzledazzle.xml.h:4 ../hacks/config/ripples.xml.h:4
+#: ../hacks/config/rocks.xml.h:4 ../hacks/config/romanboy.xml.h:42
+#: ../hacks/config/rotor.xml.h:4 ../hacks/config/rotzoomer.xml.h:4
+#: ../hacks/config/rubik.xml.h:4 ../hacks/config/rubikblocks.xml.h:4
+#: ../hacks/config/sballs.xml.h:4 ../hacks/config/scooter.xml.h:4
+#: ../hacks/config/shadebobs.xml.h:4 ../hacks/config/sierpinski.xml.h:4
+#: ../hacks/config/sierpinski3d.xml.h:4 ../hacks/config/skytentacles.xml.h:13
+#: ../hacks/config/slidescreen.xml.h:4 ../hacks/config/slip.xml.h:4
+#: ../hacks/config/sonar.xml.h:4 ../hacks/config/speedmine.xml.h:4
+#: ../hacks/config/sphere.xml.h:4 ../hacks/config/spheremonics.xml.h:4
+#: ../hacks/config/spiral.xml.h:4 ../hacks/config/splitflap.xml.h:4
+#: ../hacks/config/splodesic.xml.h:4 ../hacks/config/spotlight.xml.h:4
+#: ../hacks/config/sproingies.xml.h:4 ../hacks/config/squiral.xml.h:4
+#: ../hacks/config/stairs.xml.h:4 ../hacks/config/starfish.xml.h:7
+#: ../hacks/config/starwars.xml.h:3 ../hacks/config/stonerview.xml.h:4
+#: ../hacks/config/strange.xml.h:4 ../hacks/config/substrate.xml.h:4
+#: ../hacks/config/superquadrics.xml.h:4 ../hacks/config/surfaces.xml.h:4
+#: ../hacks/config/swirl.xml.h:4 ../hacks/config/t3d.xml.h:4
+#: ../hacks/config/tangram.xml.h:4 ../hacks/config/tessellimage.xml.h:4
+#: ../hacks/config/thornbird.xml.h:4 ../hacks/config/topblock.xml.h:4
+#: ../hacks/config/triangle.xml.h:4 ../hacks/config/tronbit.xml.h:4
+#: ../hacks/config/truchet.xml.h:4 ../hacks/config/twang.xml.h:4
+#: ../hacks/config/unicrud.xml.h:4 ../hacks/config/unknownpleasures.xml.h:4
+#: ../hacks/config/vfeedback.xml.h:4 ../hacks/config/vigilance.xml.h:4
+#: ../hacks/config/vines.xml.h:4 ../hacks/config/wander.xml.h:4
+#: ../hacks/config/whirlygig.xml.h:6 ../hacks/config/winduprobot.xml.h:4
+#: ../hacks/config/worm.xml.h:4 ../hacks/config/wormhole.xml.h:4
+#: ../hacks/config/xanalogtv.xml.h:6 ../hacks/config/xflame.xml.h:4
+#: ../hacks/config/xlyap.xml.h:4 ../hacks/config/xmatrix.xml.h:17
+#: ../hacks/config/xrayswarm.xml.h:4 ../hacks/config/xspirograph.xml.h:4
+#: ../hacks/config/zoom.xml.h:4
 msgid "High"
 msgstr ""
 
@@ -1875,11 +1416,11 @@ msgstr ""
 #: ../hacks/config/lissie.xml.h:5 ../hacks/config/loop.xml.h:5
 #: ../hacks/config/metaballs.xml.h:12 ../hacks/config/moire.xml.h:8
 #: ../hacks/config/penrose.xml.h:8 ../hacks/config/photopile.xml.h:2
-#: ../hacks/config/piecewise.xml.h:11 ../hacks/config/rd-bomb.xml.h:11
-#: ../hacks/config/rorschach.xml.h:2 ../hacks/config/rubikblocks.xml.h:5
-#: ../hacks/config/sierpinski.xml.h:8 ../hacks/config/slidescreen.xml.h:14
-#: ../hacks/config/slip.xml.h:8 ../hacks/config/spotlight.xml.h:8
-#: ../hacks/config/topblock.xml.h:8 ../hacks/config/twang.xml.h:14
+#: ../hacks/config/piecewise.xml.h:11 ../hacks/config/rorschach.xml.h:2
+#: ../hacks/config/rubikblocks.xml.h:5 ../hacks/config/sierpinski.xml.h:8
+#: ../hacks/config/slidescreen.xml.h:14 ../hacks/config/slip.xml.h:8
+#: ../hacks/config/spotlight.xml.h:8 ../hacks/config/topblock.xml.h:8
+#: ../hacks/config/twang.xml.h:14
 msgid "Small"
 msgstr ""
 
@@ -1908,11 +1449,10 @@ msgstr ""
 #: ../hacks/config/lissie.xml.h:7 ../hacks/config/loop.xml.h:7
 #: ../hacks/config/moire.xml.h:10 ../hacks/config/penrose.xml.h:10
 #: ../hacks/config/photopile.xml.h:4 ../hacks/config/piecewise.xml.h:13
-#: ../hacks/config/rd-bomb.xml.h:13 ../hacks/config/rorschach.xml.h:4
-#: ../hacks/config/rubikblocks.xml.h:7 ../hacks/config/sierpinski.xml.h:10
-#: ../hacks/config/slidescreen.xml.h:16 ../hacks/config/slip.xml.h:10
-#: ../hacks/config/spotlight.xml.h:10 ../hacks/config/topblock.xml.h:10
-#: ../hacks/config/twang.xml.h:16
+#: ../hacks/config/rorschach.xml.h:4 ../hacks/config/rubikblocks.xml.h:7
+#: ../hacks/config/sierpinski.xml.h:10 ../hacks/config/slidescreen.xml.h:16
+#: ../hacks/config/slip.xml.h:10 ../hacks/config/spotlight.xml.h:10
+#: ../hacks/config/topblock.xml.h:10 ../hacks/config/twang.xml.h:16
 msgid "Large"
 msgstr ""
 
@@ -1971,15 +1511,14 @@ msgstr ""
 #: ../hacks/config/metaballs.xml.h:9 ../hacks/config/moire.xml.h:6
 #: ../hacks/config/moire2.xml.h:6 ../hacks/config/mountain.xml.h:9
 #: ../hacks/config/penrose.xml.h:6 ../hacks/config/polyominoes.xml.h:10
-#: ../hacks/config/popsquares.xml.h:7 ../hacks/config/rd-bomb.xml.h:15
-#: ../hacks/config/rocks.xml.h:15 ../hacks/config/rotor.xml.h:9
-#: ../hacks/config/scooter.xml.h:15 ../hacks/config/shadebobs.xml.h:8
-#: ../hacks/config/sierpinski.xml.h:12 ../hacks/config/slip.xml.h:12
-#: ../hacks/config/sphere.xml.h:6 ../hacks/config/spiral.xml.h:10
-#: ../hacks/config/squiral.xml.h:14 ../hacks/config/starfish.xml.h:15
-#: ../hacks/config/strange.xml.h:21 ../hacks/config/swirl.xml.h:9
-#: ../hacks/config/triangle.xml.h:6 ../hacks/config/vines.xml.h:6
-#: ../hacks/config/worm.xml.h:6
+#: ../hacks/config/popsquares.xml.h:7 ../hacks/config/rocks.xml.h:15
+#: ../hacks/config/rotor.xml.h:9 ../hacks/config/scooter.xml.h:15
+#: ../hacks/config/shadebobs.xml.h:8 ../hacks/config/sierpinski.xml.h:12
+#: ../hacks/config/slip.xml.h:12 ../hacks/config/sphere.xml.h:6
+#: ../hacks/config/spiral.xml.h:10 ../hacks/config/squiral.xml.h:14
+#: ../hacks/config/starfish.xml.h:15 ../hacks/config/strange.xml.h:21
+#: ../hacks/config/swirl.xml.h:9 ../hacks/config/triangle.xml.h:6
+#: ../hacks/config/vines.xml.h:6 ../hacks/config/worm.xml.h:6
 msgid "Number of colors"
 msgstr "色の数"
 
@@ -2102,14 +1641,14 @@ msgstr ""
 #: ../hacks/config/metaballs.xml.h:8 ../hacks/config/moire.xml.h:5
 #: ../hacks/config/moire2.xml.h:5 ../hacks/config/mountain.xml.h:8
 #: ../hacks/config/nerverot.xml.h:11 ../hacks/config/penrose.xml.h:5
-#: ../hacks/config/polyominoes.xml.h:9 ../hacks/config/rd-bomb.xml.h:14
-#: ../hacks/config/rocks.xml.h:14 ../hacks/config/rotor.xml.h:8
-#: ../hacks/config/shadebobs.xml.h:6 ../hacks/config/sierpinski.xml.h:11
-#: ../hacks/config/slip.xml.h:11 ../hacks/config/sphere.xml.h:5
-#: ../hacks/config/spiral.xml.h:9 ../hacks/config/squiral.xml.h:13
-#: ../hacks/config/starfish.xml.h:14 ../hacks/config/strange.xml.h:20
-#: ../hacks/config/swirl.xml.h:8 ../hacks/config/triangle.xml.h:5
-#: ../hacks/config/vines.xml.h:5 ../hacks/config/worm.xml.h:5
+#: ../hacks/config/polyominoes.xml.h:9 ../hacks/config/rocks.xml.h:14
+#: ../hacks/config/rotor.xml.h:8 ../hacks/config/shadebobs.xml.h:6
+#: ../hacks/config/sierpinski.xml.h:11 ../hacks/config/slip.xml.h:11
+#: ../hacks/config/sphere.xml.h:5 ../hacks/config/spiral.xml.h:9
+#: ../hacks/config/squiral.xml.h:13 ../hacks/config/starfish.xml.h:14
+#: ../hacks/config/strange.xml.h:20 ../hacks/config/swirl.xml.h:8
+#: ../hacks/config/triangle.xml.h:5 ../hacks/config/vines.xml.h:5
+#: ../hacks/config/worm.xml.h:5
 msgid "Two"
 msgstr ""
 
@@ -2158,29 +1697,29 @@ msgstr "10秒間"
 #. _label="Power" _low-label="Low" _high-label="High"
 #. low="0.5" high="3.0" default="1.0"/>
 #.
-#: ../hacks/config/apple2.xml.h:7 ../hacks/config/blitspin.xml.h:7
-#: ../hacks/config/braid.xml.h:6 ../hacks/config/bsod.xml.h:3
-#: ../hacks/config/bumps.xml.h:9 ../hacks/config/cynosure.xml.h:9
-#: ../hacks/config/decayscreen.xml.h:6 ../hacks/config/deco.xml.h:3
-#: ../hacks/config/distort.xml.h:6 ../hacks/config/drift.xml.h:6
-#: ../hacks/config/eruption.xml.h:20 ../hacks/config/euler2d.xml.h:26
-#: ../hacks/config/galaxy.xml.h:7 ../hacks/config/geodesicgears.xml.h:6
-#: ../hacks/config/glitchpeg.xml.h:6 ../hacks/config/glsnake.xml.h:6
-#: ../hacks/config/hopalong.xml.h:6 ../hacks/config/laser.xml.h:7
-#: ../hacks/config/menger.xml.h:6 ../hacks/config/metaballs.xml.h:6
-#: ../hacks/config/mismunch.xml.h:6 ../hacks/config/moire.xml.h:3
-#: ../hacks/config/molecule.xml.h:6 ../hacks/config/munch.xml.h:6
-#: ../hacks/config/nerverot.xml.h:6 ../hacks/config/pedal.xml.h:3
-#: ../hacks/config/polyhedra.xml.h:9 ../hacks/config/polyominoes.xml.h:7
-#: ../hacks/config/ripples.xml.h:6 ../hacks/config/rotzoomer.xml.h:6
-#: ../hacks/config/shadebobs.xml.h:14 ../hacks/config/sierpinski3d.xml.h:6
-#: ../hacks/config/slidescreen.xml.h:9 ../hacks/config/spheremonics.xml.h:6
-#: ../hacks/config/spotlight.xml.h:6 ../hacks/config/starfish.xml.h:9
-#: ../hacks/config/substrate.xml.h:6 ../hacks/config/superquadrics.xml.h:10
-#: ../hacks/config/surfaces.xml.h:6 ../hacks/config/tessellimage.xml.h:9
-#: ../hacks/config/twang.xml.h:6 ../hacks/config/vermiculate.xml.h:3
-#: ../hacks/config/vidwhacker.xml.h:3 ../hacks/config/wander.xml.h:7
-#: ../hacks/config/zoom.xml.h:6
+#: ../hacks/config/apple2.xml.h:7 ../hacks/config/binaryhorizon.xml.h:9
+#: ../hacks/config/blitspin.xml.h:7 ../hacks/config/braid.xml.h:6
+#: ../hacks/config/bsod.xml.h:3 ../hacks/config/bumps.xml.h:9
+#: ../hacks/config/cynosure.xml.h:9 ../hacks/config/decayscreen.xml.h:6
+#: ../hacks/config/deco.xml.h:3 ../hacks/config/distort.xml.h:6
+#: ../hacks/config/drift.xml.h:6 ../hacks/config/eruption.xml.h:20
+#: ../hacks/config/euler2d.xml.h:26 ../hacks/config/galaxy.xml.h:7
+#: ../hacks/config/geodesicgears.xml.h:6 ../hacks/config/glitchpeg.xml.h:6
+#: ../hacks/config/glsnake.xml.h:6 ../hacks/config/hopalong.xml.h:6
+#: ../hacks/config/laser.xml.h:7 ../hacks/config/menger.xml.h:6
+#: ../hacks/config/metaballs.xml.h:6 ../hacks/config/mismunch.xml.h:6
+#: ../hacks/config/moire.xml.h:3 ../hacks/config/molecule.xml.h:6
+#: ../hacks/config/munch.xml.h:6 ../hacks/config/nerverot.xml.h:6
+#: ../hacks/config/pedal.xml.h:3 ../hacks/config/polyhedra.xml.h:9
+#: ../hacks/config/polyominoes.xml.h:7 ../hacks/config/ripples.xml.h:6
+#: ../hacks/config/rotzoomer.xml.h:6 ../hacks/config/shadebobs.xml.h:14
+#: ../hacks/config/sierpinski3d.xml.h:6 ../hacks/config/slidescreen.xml.h:9
+#: ../hacks/config/spheremonics.xml.h:6 ../hacks/config/spotlight.xml.h:6
+#: ../hacks/config/starfish.xml.h:9 ../hacks/config/substrate.xml.h:6
+#: ../hacks/config/superquadrics.xml.h:10 ../hacks/config/surfaces.xml.h:6
+#: ../hacks/config/tessellimage.xml.h:9 ../hacks/config/twang.xml.h:6
+#: ../hacks/config/vermiculate.xml.h:3 ../hacks/config/vidwhacker.xml.h:3
+#: ../hacks/config/wander.xml.h:7 ../hacks/config/zoom.xml.h:6
 msgid "Duration"
 msgstr ""
 
@@ -2575,32 +2114,68 @@ msgid ""
 "2020."
 msgstr ""
 
-#: ../hacks/config/binaryring.xml.h:1
-msgid "Binary Ring"
+#: ../hacks/config/binaryhorizon.xml.h:1
+msgid "Binary Horizon"
 msgstr ""
 
-#: ../hacks/config/binaryring.xml.h:3
+#: ../hacks/config/binaryhorizon.xml.h:3 ../hacks/config/binaryring.xml.h:3
 msgid "Growth delay"
+msgstr ""
+
+#: ../hacks/config/binaryhorizon.xml.h:6 ../hacks/config/binaryring.xml.h:9
+#: ../hacks/config/eruption.xml.h:9
+msgid "Number of particles"
+msgstr ""
+
+#: ../hacks/config/binaryhorizon.xml.h:7 ../hacks/config/binaryring.xml.h:10
+#: ../hacks/config/boxed.xml.h:10 ../hacks/config/circuit.xml.h:7
+#: ../hacks/config/glschool.xml.h:7 ../hacks/config/gravitywell.xml.h:14
+#: ../hacks/config/julia.xml.h:7 ../hacks/config/mountain.xml.h:7
+#: ../hacks/config/pipes.xml.h:13 ../hacks/config/sproingies.xml.h:6
+#: ../hacks/config/substrate.xml.h:10 ../hacks/config/vigilance.xml.h:10
+#: ../hacks/config/winduprobot.xml.h:10 ../hacks/config/wormhole.xml.h:10
+msgid "Lots"
+msgstr ""
+
+#: ../hacks/config/binaryhorizon.xml.h:8
+#, fuzzy
+msgid "1 sec"
+msgstr "5秒間"
+
+#: ../hacks/config/binaryhorizon.xml.h:10 ../hacks/config/bsod.xml.h:4
+#: ../hacks/config/geodesicgears.xml.h:7 ../hacks/config/m6502.xml.h:6
+#: ../hacks/config/molecule.xml.h:7 ../hacks/config/vidwhacker.xml.h:4
+msgid "2 minutes"
+msgstr "2分間"
+
+#: ../hacks/config/binaryhorizon.xml.h:11 ../hacks/config/fuzzyflakes.xml.h:11
+msgid "Random colors"
+msgstr ""
+
+#: ../hacks/config/binaryhorizon.xml.h:12
+msgid "Two contrasting colors"
+msgstr ""
+
+#: ../hacks/config/binaryhorizon.xml.h:13
+#, fuzzy
+msgid "Randomize every particle's color"
+msgstr "ランダムなスクリーンセーバー"
+
+#: ../hacks/config/binaryhorizon.xml.h:15
+msgid ""
+"A system of path tracing particles evolves continuously from an initial "
+"horizon, alternating between colors. Written by Patrick Leiser, J. Tarbell "
+"and Emilio Del Tessandoro; 2021."
+msgstr ""
+
+#: ../hacks/config/binaryring.xml.h:1
+msgid "Binary Ring"
 msgstr ""
 
 #: ../hacks/config/binaryring.xml.h:6
 #, fuzzy
 msgid "Ring Radius"
 msgstr "設定"
-
-#: ../hacks/config/binaryring.xml.h:9 ../hacks/config/eruption.xml.h:9
-msgid "Number of particles"
-msgstr ""
-
-#: ../hacks/config/binaryring.xml.h:10 ../hacks/config/boxed.xml.h:10
-#: ../hacks/config/circuit.xml.h:7 ../hacks/config/glschool.xml.h:7
-#: ../hacks/config/gravitywell.xml.h:14 ../hacks/config/julia.xml.h:7
-#: ../hacks/config/mountain.xml.h:7 ../hacks/config/pipes.xml.h:13
-#: ../hacks/config/sproingies.xml.h:6 ../hacks/config/substrate.xml.h:10
-#: ../hacks/config/vigilance.xml.h:10 ../hacks/config/winduprobot.xml.h:10
-#: ../hacks/config/wormhole.xml.h:10
-msgid "Lots"
-msgstr ""
 
 #: ../hacks/config/binaryring.xml.h:11
 #, fuzzy
@@ -2932,12 +2507,6 @@ msgstr ""
 #: ../hacks/config/molecule.xml.h:5
 msgid "5 seconds"
 msgstr "5秒間"
-
-#: ../hacks/config/bsod.xml.h:4 ../hacks/config/geodesicgears.xml.h:7
-#: ../hacks/config/m6502.xml.h:6 ../hacks/config/molecule.xml.h:7
-#: ../hacks/config/vidwhacker.xml.h:4
-msgid "2 minutes"
-msgstr "2分間"
 
 #: ../hacks/config/bsod.xml.h:5
 msgid "Windows 3.1"
@@ -3518,9 +3087,10 @@ msgstr "1秒間"
 #: ../hacks/config/gflux.xml.h:8 ../hacks/config/glblur.xml.h:5
 #: ../hacks/config/glmatrix.xml.h:5 ../hacks/config/gravitywell.xml.h:11
 #: ../hacks/config/imsmap.xml.h:8 ../hacks/config/lavalite.xml.h:5
-#: ../hacks/config/pyro.xml.h:5 ../hacks/config/qix.xml.h:8
-#: ../hacks/config/raverhoop.xml.h:8 ../hacks/config/razzledazzle.xml.h:11
-#: ../hacks/config/squiral.xml.h:10 ../hacks/config/xmatrix.xml.h:18
+#: ../hacks/config/marbling.xml.h:6 ../hacks/config/pyro.xml.h:5
+#: ../hacks/config/qix.xml.h:8 ../hacks/config/raverhoop.xml.h:8
+#: ../hacks/config/razzledazzle.xml.h:11 ../hacks/config/squiral.xml.h:10
+#: ../hacks/config/xmatrix.xml.h:18
 msgid "Sparse"
 msgstr ""
 
@@ -3528,9 +3098,9 @@ msgstr ""
 #: ../hacks/config/gflux.xml.h:10 ../hacks/config/glblur.xml.h:7
 #: ../hacks/config/glmatrix.xml.h:7 ../hacks/config/gravitywell.xml.h:9
 #: ../hacks/config/imsmap.xml.h:10 ../hacks/config/lavalite.xml.h:7
-#: ../hacks/config/pyro.xml.h:7 ../hacks/config/qix.xml.h:10
-#: ../hacks/config/raverhoop.xml.h:10 ../hacks/config/razzledazzle.xml.h:13
-#: ../hacks/config/squiral.xml.h:12
+#: ../hacks/config/marbling.xml.h:8 ../hacks/config/pyro.xml.h:7
+#: ../hacks/config/qix.xml.h:10 ../hacks/config/raverhoop.xml.h:10
+#: ../hacks/config/razzledazzle.xml.h:13 ../hacks/config/squiral.xml.h:12
 msgid "Dense"
 msgstr ""
 
@@ -3563,8 +3133,7 @@ msgstr ""
 
 #: ../hacks/config/covid19.xml.h:15
 msgid ""
-"SARS-CoV-2. Stay the fuck home. Wear a fucking mask. Written by Jamie "
-"Zawinski; 2020."
+"SARS-CoV-2. Get vaccinated. Wear a mask. Written by Jamie Zawinski; 2020."
 msgstr ""
 
 #: ../hacks/config/crackberg.xml.h:1
@@ -3966,7 +3535,8 @@ msgid "C Waves"
 msgstr ""
 
 #: ../hacks/config/cwaves.xml.h:5 ../hacks/config/flame.xml.h:11
-#: ../hacks/config/jigglypuff.xml.h:21 ../hacks/config/tessellimage.xml.h:12
+#: ../hacks/config/jigglypuff.xml.h:21 ../hacks/config/marbling.xml.h:9
+#: ../hacks/config/tessellimage.xml.h:12
 msgid "Complexity"
 msgstr ""
 
@@ -4714,10 +4284,10 @@ msgid ""
 "video entitled \"The Etruscan Venus\" by Donna J. Cox, George K. Francis, "
 "and Raymond L. Idaszak, presented at SIGGRAPH 1989. https://en.wikipedia.org/"
 "wiki/Boy%27s_surface https://en.wikipedia.org/wiki/Roman_surface https://en."
-"wikipedia.org/wiki/Klein_bottle http://mathworld.wolfram.com/BoySurface.html "
-"http://mathworld.wolfram.com/RomanSurface.html http://mathworld.wolfram.com/"
-"EtruscanVenusSurface.html http://mathworld.wolfram.com/IdaSurface.html "
-"Written by Carsten Steger; 2020."
+"wikipedia.org/wiki/Klein_bottle https://mathworld.wolfram.com/BoySurface."
+"html https://mathworld.wolfram.com/RomanSurface.html https://mathworld."
+"wolfram.com/EtruscanVenusSurface.html https://mathworld.wolfram.com/"
+"IdaSurface.html Written by Carsten Steger; 2020."
 msgstr ""
 
 #: ../hacks/config/euler2d.xml.h:1
@@ -5217,10 +4787,6 @@ msgstr ""
 msgid "Layers"
 msgstr ""
 
-#: ../hacks/config/fuzzyflakes.xml.h:11
-msgid "Random colors"
-msgstr ""
-
 #: ../hacks/config/fuzzyflakes.xml.h:13
 msgid "Red"
 msgstr ""
@@ -5537,8 +5103,9 @@ msgid "Move"
 msgstr "モード:"
 
 #: ../hacks/config/gleidescope.xml.h:13 ../hacks/config/hyperball.xml.h:6
-#: ../hacks/config/hypercube.xml.h:6 ../hacks/config/mirrorblob.xml.h:6
-#: ../hacks/config/strange.xml.h:14 ../hacks/config/zoom.xml.h:1
+#: ../hacks/config/hypercube.xml.h:6 ../hacks/config/mapscroller.xml.h:9
+#: ../hacks/config/mirrorblob.xml.h:6 ../hacks/config/strange.xml.h:14
+#: ../hacks/config/zoom.xml.h:1
 msgid "Zoom"
 msgstr ""
 
@@ -5781,8 +5348,7 @@ msgstr ""
 msgid "Always show at least this much of the image"
 msgstr ""
 
-#: ../hacks/config/glslideshow.xml.h:12 ../hacks/config/rd-bomb.xml.h:10
-#: ../hacks/config/substrate.xml.h:15
+#: ../hacks/config/glslideshow.xml.h:12 ../hacks/config/substrate.xml.h:15
 #, no-c-format
 msgid "100%"
 msgstr ""
@@ -6099,7 +5665,11 @@ msgstr ""
 msgid "Wobble around all three axes"
 msgstr ""
 
-#: ../hacks/config/headroom.xml.h:19
+#: ../hacks/config/headroom.xml.h:18
+msgid "Mask Headroom"
+msgstr ""
+
+#: ../hacks/config/headroom.xml.h:20
 msgid ""
 "\"Back in my day, we used to say 'No future'. Well. This is it.\" -- Blank "
 "Reg \"I can dump down all the information in the mind. Then I can eliminate "
@@ -6581,7 +6151,7 @@ msgstr "デフォルト"
 msgid "Translate"
 msgstr ""
 
-#: ../hacks/config/ifs.xml.h:66
+#: ../hacks/config/ifs.xml.h:66 ../hacks/config/marbling.xml.h:7
 msgid "Scale"
 msgstr ""
 
@@ -6658,7 +6228,8 @@ msgstr ""
 msgid "Number of waves"
 msgstr ""
 
-#: ../hacks/config/interference.xml.h:14 ../hacks/config/t3d.xml.h:11
+#: ../hacks/config/interference.xml.h:14 ../hacks/config/marbling.xml.h:5
+#: ../hacks/config/t3d.xml.h:11
 msgid "Magnification"
 msgstr ""
 
@@ -7101,16 +6672,17 @@ msgstr ""
 msgid "Solid black"
 msgstr ""
 
-#: ../hacks/config/lcdscrub.xml.h:17
+#: ../hacks/config/lcdscrub.xml.h:18
+#, no-c-format
 msgid ""
 "repairs burn-in on LCD monitors. This saver is functional, rather than "
 "pretty. Believe it or not, screen burn is not a thing of the past. It can "
 "happen to LCD screens pretty easily, even in this modern age. However, "
 "leaving the screen on and displaying high contrast images can often repair "
-"the damage. That's what this screen saver does. See also: http://docs.info."
-"apple.com/article.html?artnum=88343 http://toastycode.com/blog/2008/02/05/"
-"lcd-scrub/ Inspired by the like-named program by Daniel Sandler. Written by "
-"Jamie Zawinski; 2008."
+"the damage. That's what this screen saver does. See also: https://web."
+"archive.org/web/20020817075924/http%3A//docs.info.apple.com/article.html?"
+"artnum=88343 Inspired by the like-named and long-defunct program by Daniel "
+"Sandler. Written by Jamie Zawinski; 2008."
 msgstr ""
 
 #: ../hacks/config/lightning.xml.h:1
@@ -7276,6 +6848,250 @@ msgid ""
 "input. Original JavaScript Version by Stian Soreng: http://www.6502asm.com/. "
 "Ported to XScreenSaver by Jeremy English. Written by Stian Soreng and Jeremy "
 "English; 2007."
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:1
+msgid "Map Scroller"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:6
+#, fuzzy
+msgid "Scroll speed"
+msgstr "落下速度"
+
+#: ../hacks/config/mapscroller.xml.h:8
+msgid "Countries"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:10
+msgid "Streets"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:11
+msgid "Open Street Map"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:12
+msgid "OSM Humanitarian Map"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:13
+msgid "Stamen Toner B&W Map"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:14
+msgid "Stamen Terrain Map"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:15
+msgid "Stamen Watercolor Map"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:16
+msgid "WFM B&W Map"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:17
+msgid "WFM No Labels Map"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:18
+#, fuzzy
+msgid "Fully random location"
+msgstr "フェードする時間: "
+
+#: ../hacks/config/mapscroller.xml.h:19
+#, fuzzy
+msgid "Random city"
+msgstr "表示モード"
+
+#. New York, London, Paris, Munich, everybody talk about pop muzik
+#: ../hacks/config/mapscroller.xml.h:21
+msgid "Amsterdam"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:22
+msgid "Athens"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:23
+msgid "Austin"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:24
+msgid "Barcelona"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:25
+msgid "Berlin"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:26
+msgid "Boston"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:27
+msgid "Budapest"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:28
+msgid "Buenos Aires"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:29
+msgid "Cairo"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:30
+msgid "Casablanca"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:31
+msgid "Chicago"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:32
+msgid "Havana"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:33
+msgid "Hong Kong"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:34
+msgid "Honolulu"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:35
+msgid "Las Vegas"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:36
+msgid "London"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:37
+msgid "Los Angeles"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:38
+msgid "Luxembourg"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:39
+msgid "Madrid"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:40
+msgid "Melbourne"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:41
+msgid "Mexico City"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:42
+msgid "Moscow"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:43
+msgid "Mumbai"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:44
+msgid "Munich"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:45
+msgid "New Orleans"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:46
+msgid "New York"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:47
+msgid "Paris"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:48
+msgid "Portland"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:49
+msgid "Prague"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:50
+msgid "Rome"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:51
+msgid "San Francisco"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:52
+msgid "Seattle"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:53
+msgid "Seoul"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:54
+msgid "Shanghai"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:55
+msgid "Stockholm"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:56
+msgid "Sydney"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:57
+msgid "São Paulo"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:58
+msgid "Tokyo"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:59
+msgid "Toronto"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:60
+msgid "Washington"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:61
+#, fuzzy
+msgid "Show coordinates"
+msgstr "ファイル名を表示する"
+
+#: ../hacks/config/mapscroller.xml.h:62
+msgid "Show arrow"
+msgstr ""
+
+#: ../hacks/config/mapscroller.xml.h:64
+msgid ""
+"A slowly-scrolling map of a random place on Earth. The map images are loaded "
+"from openstreetmap.org, or any compatible service. OpenStreetMap data is © "
+"OpenStreetMap contributors. Written by Jamie Zawinski; 2021."
+msgstr ""
+
+#: ../hacks/config/marbling.xml.h:1
+msgid "Marbling"
+msgstr ""
+
+#: ../hacks/config/marbling.xml.h:11
+msgid ""
+"Marble-like or cloud-like patterns generated using Perlin Noise and Fractal "
+"Brownian Motion. https://en.wikipedia.org/wiki/Perlin_noise https://en."
+"wikipedia.org/wiki/Fractional_Brownian_motion Written by Jamie Zawinski and "
+"Dave Odell; 2021."
 msgstr ""
 
 #: ../hacks/config/maze.xml.h:1
@@ -8918,9 +8734,9 @@ msgid ""
 "Geometry, Computer Graphics, and Higher Dimensions\", Scientific American "
 "Library, 1990. https://en.wikipedia.org/wiki/Real_projective_plane https://"
 "en.wikipedia.org/wiki/Roman_surface https://en.wikipedia.org/wiki/Cross_cap "
-"https://en.wikipedia.org/wiki/Moebius_strip http://mathworld.wolfram.com/"
-"RealProjectivePlane.html http://mathworld.wolfram.com/RomanSurface.html "
-"http://mathworld.wolfram.com/Cross-Cap.html http://mathworld.wolfram.com/"
+"https://en.wikipedia.org/wiki/Moebius_strip https://mathworld.wolfram.com/"
+"RealProjectivePlane.html https://mathworld.wolfram.com/RomanSurface.html "
+"https://mathworld.wolfram.com/Cross-Cap.html https://mathworld.wolfram.com/"
 "MoebiusStrip.html Written by Carsten Steger; 2014."
 msgstr ""
 
@@ -9103,6 +8919,10 @@ msgstr ""
 msgid "Razzle Dazzle"
 msgstr ""
 
+#: ../hacks/config/razzledazzle.xml.h:8 ../hacks/config/scooter.xml.h:14
+msgid "Mono"
+msgstr "単色"
+
 #: ../hacks/config/razzledazzle.xml.h:17
 #, fuzzy
 msgid "Ship Outlines"
@@ -9130,57 +8950,6 @@ msgid ""
 "https://en.wikipedia.org/wiki/Dazzle_Ships_%28album%29 https://en.wikipedia."
 "org/wiki/Acoustic_mirror https://en.wikipedia.org/wiki/Radar Written by "
 "Jamie Zawinski; 2018."
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:1
-msgid "RD-Bomb"
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:5 ../hacks/config/voronoi.xml.h:12
-msgid "Wander speed"
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:7
-#, no-c-format
-msgid "1%"
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:8 ../hacks/config/tessellimage.xml.h:17
-#, fuzzy
-msgid "Fill screen"
-msgstr "ブランク・スクリーン"
-
-#: ../hacks/config/rd-bomb.xml.h:12
-msgid "Epoch"
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:18
-msgid "X tile size"
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:19
-msgid "Y tile size"
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:20
-#, fuzzy
-msgid "Reaction"
-msgstr "説明"
-
-#: ../hacks/config/rd-bomb.xml.h:21
-msgid "Diffusion"
-msgstr ""
-
-#. #### default is wrong
-#: ../hacks/config/rd-bomb.xml.h:23
-msgid "Seed radius"
-msgstr ""
-
-#: ../hacks/config/rd-bomb.xml.h:24
-msgid ""
-"Reaction-diffusion: draws a grid of growing square-like shapes that, once "
-"they overtake each other, react in unpredictable ways. Written by Scott "
-"Draves; 1997."
 msgstr ""
 
 #: ../hacks/config/ripples.xml.h:1
@@ -9276,8 +9045,8 @@ msgid ""
 "Boy surface while turning it or walking on it. Inspired by François Apéry's "
 "book \"Models of the Real Projective Plane\", Vieweg, 1987. https://en."
 "wikipedia.org/wiki/Boy%27s_surface https://en.wikipedia.org/wiki/"
-"Roman_surface http://mathworld.wolfram.com/BoySurface.html http://mathworld."
-"wolfram.com/RomanSurface.html Written by Carsten Steger; 2014."
+"Roman_surface https://mathworld.wolfram.com/BoySurface.html https://"
+"mathworld.wolfram.com/RomanSurface.html Written by Carsten Steger; 2014."
 msgstr ""
 
 #: ../hacks/config/rorschach.xml.h:1
@@ -10099,16 +9868,16 @@ msgstr ""
 
 #: ../hacks/config/surfaces.xml.h:28
 msgid ""
-"Parametric surfaces. http://mathworld.wolfram.com/DinisSurface.html https://"
-"en.wikipedia.org/wiki/Enneper_surface http://mathworld.wolfram.com/"
-"EnnepersMinimalSurface.html http://mathworld.wolfram.com/KuenSurface.html "
-"https://en.wikipedia.org/wiki/Moebius_strip http://mathworld.wolfram.com/"
-"Seashell.html http://mathworld.wolfram.com/SwallowtailCatastrophe.html "
-"http://mathworld.wolfram.com/BohemianDome.html https://en.wikipedia.org/wiki/"
-"Whitney_umbrella http://mathworld.wolfram.com/PlueckersConoid.html http://"
-"mathworld.wolfram.com/HennebergsMinimalSurface.html http://mathworld.wolfram."
-"com/CatalansSurface.html http://mathworld.wolfram.com/CorkscrewSurface.html "
-"Written by Andrey Mirtchovski and Carsten Steger; 2003."
+"Parametric surfaces. https://mathworld.wolfram.com/DinisSurface.html https://"
+"en.wikipedia.org/wiki/Enneper_surface https://mathworld.wolfram.com/"
+"EnnepersMinimalSurface.html https://mathworld.wolfram.com/KuenSurface.html "
+"https://en.wikipedia.org/wiki/Moebius_strip https://mathworld.wolfram.com/"
+"Seashell.html https://mathworld.wolfram.com/SwallowtailCatastrophe.html "
+"https://mathworld.wolfram.com/BohemianDome.html https://en.wikipedia.org/"
+"wiki/Whitney_umbrella https://mathworld.wolfram.com/PlueckersConoid.html "
+"https://mathworld.wolfram.com/HennebergsMinimalSurface.html https://"
+"mathworld.wolfram.com/CatalansSurface.html https://mathworld.wolfram.com/"
+"CorkscrewSurface.html Written by Andrey Mirtchovski and Carsten Steger; 2003."
 msgstr ""
 
 #: ../hacks/config/swirl.xml.h:1
@@ -10204,6 +9973,11 @@ msgstr ""
 #: ../hacks/config/tessellimage.xml.h:16 ../hacks/config/voronoi.xml.h:1
 msgid "Voronoi"
 msgstr ""
+
+#: ../hacks/config/tessellimage.xml.h:17
+#, fuzzy
+msgid "Fill screen"
+msgstr "ブランク・スクリーン"
 
 #: ../hacks/config/tessellimage.xml.h:18
 msgid "Outline triangles"
@@ -10484,12 +10258,7 @@ msgstr ""
 msgid "2 seconds"
 msgstr "2秒間"
 
-#.
-#. <string id="filter"  _label="Per-image filter program" arg="-filter %"/>
-#. <string id="filter2" _label="Overall filter program" arg="-filter2 %"/>
-#. <file id="dictionary" _label="Dictionary file" arg="-dictionary %"/>
-#.
-#: ../hacks/config/vidwhacker.xml.h:5 ../hacks/config/webcollage.xml.h:17
+#: ../hacks/config/vidwhacker.xml.h:5
 msgid "Image directory"
 msgstr "画像のディレクトリ"
 
@@ -10532,6 +10301,10 @@ msgstr ""
 
 #: ../hacks/config/voronoi.xml.h:10
 msgid "50 pixels"
+msgstr ""
+
+#: ../hacks/config/voronoi.xml.h:12
+msgid "Wander speed"
 msgstr ""
 
 #: ../hacks/config/voronoi.xml.h:13
@@ -10596,7 +10369,7 @@ msgstr ""
 msgid "Image opacity"
 msgstr ""
 
-#: ../hacks/config/webcollage.xml.h:18
+#: ../hacks/config/webcollage.xml.h:12
 msgid ""
 "This is what the Internet looks like. This creates collages out of random "
 "images from the World Wide Web. It finds the images by feeding random words "
@@ -10604,10 +10377,8 @@ msgid ""
 "of the pages returned. WARNING: THE INTERNET SOMETIMES CONTAINS PORNOGRAPHY. "
 "The Internet being what it is, absolutely anything might show up in the "
 "collage including -- quite possibly -- pornography, or even nudity. Please "
-"act accordingly. See also https://www.jwz.org/webcollage/ NOTE: Webcollage "
-"on Fedora does not connect to internet by default and uses image files on "
-"your local disk. If you want webcollage to search for image files on net, "
-"use webcollage.original . Written by Jamie Zawinski; 1999."
+"act accordingly. See also https://www.jwz.org/webcollage/ Written by Jamie "
+"Zawinski; 1999."
 msgstr ""
 
 #: ../hacks/config/whirlwindwarp.xml.h:1
@@ -10971,6 +10742,380 @@ msgid ""
 "lenses rather than just a simple zoom. Written by James Macnicol; 2001."
 msgstr ""
 
+#~ msgid "Disable Screen Saver"
+#~ msgstr "スクリーンセーバーを無効にする"
+
+#~ msgid "Blank Screen Only"
+#~ msgstr "ブランク・スクリーンのみ"
+
+#~ msgid "Only One Screen Saver"
+#~ msgstr "一つのスクリーンセーバーのみ"
+
+#~ msgid "Random Screen Saver"
+#~ msgstr "ランダムなスクリーンセーバー"
+
+#~ msgid "Same Random Savers"
+#~ msgstr "同じランダムなセーバ"
+
+#~ msgid "Default"
+#~ msgstr "デフォルト"
+
+#~ msgid "Best"
+#~ msgstr "最適"
+
+#~ msgid "Default-N"
+#~ msgstr "デフォルト-N"
+
+#~ msgid "GL"
+#~ msgstr "GL"
+
+#~ msgid "TrueColor"
+#~ msgstr "TrueColor"
+
+#~ msgid "PseudoColor"
+#~ msgstr "PseudoColor"
+
+#~ msgid "StaticGray"
+#~ msgstr "StaticGray"
+
+#~ msgid "GrayScale"
+#~ msgstr "グレースケール"
+
+#~ msgid "DirectColor"
+#~ msgstr "DirectColor"
+
+#~ msgid "Color"
+#~ msgstr "色"
+
+#~ msgid "Gray"
+#~ msgstr "グレー"
+
+#~ msgid "_File"
+#~ msgstr "ファイル(_F)"
+
+#~ msgid "_Blank Screen Now"
+#~ msgstr "XScreenSaver の起動(_B)"
+
+#~ msgid "_Lock Screen Now"
+#~ msgstr "画面のロック(_L)"
+
+#~ msgid "_Kill Daemon"
+#~ msgstr "デーモンの強制終了(_K)"
+
+#~ msgid "_Restart Daemon"
+#~ msgstr "デーモンの再起動(_R)"
+
+#~ msgid "_Quit"
+#~ msgstr "終了(_Q)"
+
+#~ msgid "_Help"
+#~ msgstr "ヘルプ(_H)"
+
+#~ msgid "_About..."
+#~ msgstr "情報(_A)..."
+
+#~ msgid "_Documentation..."
+#~ msgstr "ドキュメント(_D)..."
+
+#~ msgid "XScreenSaver"
+#~ msgstr "XScreenSaver"
+
+#~ msgid "_Cycle After"
+#~ msgstr "セーバーの周期(_C)"
+
+#~ msgid "Whether a password should be required to un-blank the screen."
+#~ msgstr ""
+#~ "画面をブランクした後、しばらくして自動的にロックしたい時は、これを選択して"
+#~ "下さい。"
+
+#~ msgid "_Lock Screen After  "
+#~ msgstr "画面をロックするまで(_L): "
+
+#~ msgid "Lock Screen"
+#~ msgstr "画面をロックする"
+
+#~ msgid "How long before the screen saver activates."
+#~ msgstr "セーバーが起動するまでの時間を指定して下さい。"
+
+#~ msgid "How long after the screen blanks until a password will be required."
+#~ msgstr "画面がブランクになってからロックするまでの時間を指定して下さい。"
+
+#~ msgid "Lock Screen After"
+#~ msgstr "画面をロックするまで"
+
+#~ msgid ""
+#~ "How long each display mode should run before choosing a new one (in "
+#~ "Random mode.)"
+#~ msgstr ""
+#~ "ランダムなセーバーモードの時、次のセーバーに移るまでの時間を指定して下さ"
+#~ "い。"
+
+#~ msgid "minutes"
+#~ msgstr "分"
+
+#~ msgid "_Blank After"
+#~ msgstr "ブランクになるまで(_B)"
+
+#~ msgid ""
+#~ "Demo the selected screen saver in full-screen mode (click the mouse to "
+#~ "return.)"
+#~ msgstr ""
+#~ "指定したスクリーンセーバーを全画面モードでデモします (解除する場合はマウス"
+#~ "をクリックして下さい)。"
+
+#~ msgid "_Preview"
+#~ msgstr "プレビュー(_P)"
+
+#~ msgid "Customization and explanation of the selected screen saver."
+#~ msgstr "指定したスクリーンセーバーの紹介とそのカスタマイズです。"
+
+#~ msgid "_Settings..."
+#~ msgstr "設定(_S)"
+
+#~ msgid "_Mode:"
+#~ msgstr "モード(_M):"
+
+#~ msgid ""
+#~ "Run the next screen saver in the list in full-screen mode (click the "
+#~ "mouse to return.)"
+#~ msgstr ""
+#~ "一つ次のスクリーンセーバーを全画面モードで起動します (解除する場合はマウス"
+#~ "をクリックして下さい)。"
+
+#~ msgid ""
+#~ "Run the previous screen saver in the list in full-screen mode (click the "
+#~ "mouse to return.)"
+#~ msgstr ""
+#~ "一つ前のスクリーンセーバーを全画面モードで起動します (解除する場合はマウス"
+#~ "をクリックして下さい)。"
+
+#~ msgid "preview"
+#~ msgstr "プレビュー"
+
+#~ msgid ""
+#~ "No Preview\n"
+#~ "Available"
+#~ msgstr "プレビューを利用できません"
+
+#~ msgid "no preview"
+#~ msgstr "プレビューを利用出来ません"
+
+#~ msgid ""
+#~ "Not\n"
+#~ "Installed"
+#~ msgstr "インストールされていません"
+
+#~ msgid "not installed"
+#~ msgstr "インストールされていません"
+
+#~ msgid ""
+#~ "Very few (or no) screen savers appear to be available.\n"
+#~ "\n"
+#~ "This probably means that the \"xscreensaver-extras\" and\n"
+#~ "\"xscreensaver-gl-extras\" packages are not installed."
+#~ msgstr ""
+#~ "セーバーの数が少ない、若しくは全く無いようです。\n"
+#~ "これは、恐らく\"xscreensaver-extras\"、あるいは\n"
+#~ "\"xscreensaver-gl-extras\"のパッケージがインストールされていない\n"
+#~ "ためだと思われます。"
+
+#~ msgid "Description"
+#~ msgstr "説明"
+
+#~ msgid "_Display Modes"
+#~ msgstr "表示モード(_D)"
+
+#~ msgid ""
+#~ "Whether the image-manipulating modes should be allowed to operate on an "
+#~ "image of your desktop."
+#~ msgstr ""
+#~ "画像の操作モードで、デスクトップの画像を使うかどうかを選択して下さい。"
+
+#~ msgid "Grab Desktop _Images"
+#~ msgstr "デスクトップ画像を用いる(_I)"
+
+#~ msgid ""
+#~ "Whether the image-manipulating modes should operate on images captured "
+#~ "from the system's video input (if there is one.)"
+#~ msgstr ""
+#~ "画像の操作モードで (可能な時) ビデオ入力の画像を使うかどうかを選択して下さ"
+#~ "い。"
+
+#~ msgid "Grab _Video Frames"
+#~ msgstr "ビデオ入力を用いる(_V)"
+
+#~ msgid "Whether the image-manipulating modes should load image files."
+#~ msgstr ""
+#~ "画像の操作モードで、画像ファイルをを取得するかどうかを選択して下さい。"
+
+#~ msgid "Choose _Random Image:"
+#~ msgstr "画像をランダムに選択する(_R):"
+
+#~ msgid ""
+#~ "The local directory, RSS feed or Atom feed from which images will be "
+#~ "randomly chosen."
+#~ msgstr ""
+#~ "ランダムに取得する画像が格納されているローカルのディレクトリや、RSSフィー"
+#~ "ド、またはAtomフィードのURLを選択して下さい。"
+
+#~ msgid "_Browse"
+#~ msgstr "参照(_B)"
+
+#~ msgid "Local directory, or RSS feed URL."
+#~ msgstr "ローカルのディレクトリや、RSSフィードのURL."
+
+#~ msgid "Image Manipulation"
+#~ msgstr "画像の操作"
+
+#~ msgid "Text-displaying modes will display the text typed here."
+#~ msgstr "（テキストを表示するセーバの時は）次の文字列が出力されます。"
+
+#~ msgid "_Text"
+#~ msgstr "文字列(_T)"
+
+#~ msgid "Text-displaying modes will display the contents of this file."
+#~ msgstr ""
+#~ "（テキストを表示するセーバの時は）次のテキストファイルの内容が表示されま"
+#~ "す。"
+
+#~ msgid "Text _file"
+#~ msgstr "ファイル(_f)"
+
+#~ msgid "Text-displaying modes will display the output of this program."
+#~ msgstr ""
+#~ "（テキストを表示するセーバの時は）次のプログラムの出力結果が表示されます。"
+
+#~ msgid "_Program"
+#~ msgstr "プログラム(_P)"
+
+#~ msgid ""
+#~ "Text-displaying modes will display the contents of this URL (HTML or RSS)."
+#~ msgstr ""
+#~ "（テキストを表示するセーバの時）次のURLの内容が表示されます。HTMLかRSSで書"
+#~ "かれている必要があります。"
+
+#~ msgid "_URL"
+#~ msgstr "_URL"
+
+#~ msgid ""
+#~ "Text-displaying modes will display the local host name, date, and time."
+#~ msgstr "（テキストを表示するセーバの時は）ホスト名と、日時が表示されます。"
+
+#~ msgid "_Host Name and Time"
+#~ msgstr "ホスト名と日時(_H)"
+
+#~ msgid "Text Manipulation"
+#~ msgstr "表示するテキストの設定"
+
+#~ msgid "Whether the monitor should be powered down after a while."
+#~ msgstr "モニタの電源管理を設定するかを選択して下さい。"
+
+#~ msgid "_Power Management Enabled"
+#~ msgstr "電源管理を有効にする(_P)"
+
+#~ msgid "Stand_by After"
+#~ msgstr "スタンバイまで(_b)"
+
+#~ msgid "Sus_pend After"
+#~ msgstr "サスペンドまで(_p)"
+
+#~ msgid "_Off After"
+#~ msgstr "電源OFFまで(_O)"
+
+#~ msgid "How long until the monitor powers down."
+#~ msgstr "モニタの電源を OFF にするまでの時間を指定して下さい。"
+
+#~ msgid "How long until the monitor goes into power-saving mode."
+#~ msgstr "パワーセービング・モードに移行するまでの時間を指定して下さい。"
+
+#~ msgid "How long until the monitor goes completely black."
+#~ msgstr "モニターがスタンドバイになるまでの時間を指定して下さい。"
+
+#~ msgid ""
+#~ "Whether the monitor should be powered off immediately in \"Blank Screen "
+#~ "Only\" mode, regardless of the above power-management timeouts."
+#~ msgstr ""
+#~ "ブランク・スクリーンのみのモードの時、上の電源管理の時間設定にもかかわらず"
+#~ "に直ちにモニターの電源を切るかを選択して下さい。"
+
+#~ msgid "_Quick Power-off in Blank Only Mode"
+#~ msgstr "ブランクモードの時直ちに電源を切る(_Q)"
+
+#~ msgid "Display Power Management"
+#~ msgstr "モニタのパワーマネージメント"
+
+#~ msgid ""
+#~ "Whether the screen should slowly fade to black when the screen saver "
+#~ "activates."
+#~ msgstr ""
+#~ "スクリーンセーバーを起動する時、スクリーンをゆっくりとフェードインするかど"
+#~ "うかを選択して下さい。"
+
+#~ msgid "Fade to Black when _Blanking"
+#~ msgstr "ブランクにする時にフェードイン(_B)"
+
+#~ msgid ""
+#~ "Whether the screen should slowly fade in from black when the screen saver "
+#~ "deactivates."
+#~ msgstr ""
+#~ "画面を再び明るくする時、スクリーンをゆっくりとフェードアウトするかどうかを"
+#~ "選択して下さい。"
+
+#~ msgid "Fade from Black When _Unblanking"
+#~ msgstr "明るくする時フェードアウト(_U)"
+
+#~ msgid "F_ade Duration"
+#~ msgstr "フェードする時間(_a)"
+
+#~ msgid "How long it should take for the screen to fade in and out."
+#~ msgstr "スクリーンをフェードイン/アウトする時間を指定して下さい。"
+
+#~ msgid "seconds"
+#~ msgstr "秒間"
+
+#~ msgid "_Theme:"
+#~ msgstr "テーマ(_T):"
+
+#~ msgid "The color scheme to use on the unlock dialog."
+#~ msgstr "パスワード画面で使うカラースキームを設定してください."
+
+#~ msgid "Show the what the unlock dialog will look like."
+#~ msgstr "実際どのように見えるかを表示します."
+
+#~ msgid "Blanking"
+#~ msgstr "ブランク・スクリーン"
+
+#~ msgid "_Advanced"
+#~ msgstr "拡張オプション(_A)"
+
+#~ msgid "dialog1"
+#~ msgstr "ダイアログ1"
+
+#~ msgid "_Advanced >>"
+#~ msgstr "拡張オプション(_A)>>"
+
+#~ msgid "_Standard <<"
+#~ msgstr "標準オプション(_S)<<"
+
+#~ msgid "_Reset to Defaults"
+#~ msgstr "デフォルトに戻す(_R)"
+
+#~ msgid "Standard"
+#~ msgstr "標準"
+
+#~ msgid "_Command Line:"
+#~ msgstr "コマンド(_C):"
+
+#~ msgid "_Visual:"
+#~ msgstr "ビジュアル(_V):"
+
+#~ msgid "Advanced"
+#~ msgstr "拡張オプション"
+
+#, fuzzy
+#~ msgid "Reaction"
+#~ msgstr "説明"
+
 #~ msgid ""
 #~ "You are running as root.  This usually means that xscreensaver\n"
 #~ "was unable to contact your X server because access control is\n"
@@ -11302,5 +11447,3 @@ msgstr ""
 
 #~ msgid "Copyright 息 1991-2002 %s"
 #~ msgstr "Copyright  1991-2002 %s"
-
-

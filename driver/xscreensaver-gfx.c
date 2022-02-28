@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,6 +35,10 @@
 #include <netdb.h>	/* for gethostbyname() */
 #include <sys/types.h>
 #include <pwd.h>
+
+#ifndef HAVE_XINPUT
+# error The XInput2 extension is required
+#endif
 
 #include <X11/extensions/XInput2.h>
 
@@ -86,11 +90,15 @@ maybe_reload_init_file (saver_info *si)
   saver_preferences *p = &si->prefs;
   if (init_file_changed_p (p))
     {
+      Bool ov = p->verbose_p;
       if (p->verbose_p)
 	fprintf (stderr, "%s: file \"%s\" has changed, reloading\n",
 		 blurb(), init_file_name());
 
       load_init_file (si->dpy, p);
+
+      if (ov)
+        p->verbose_p = True;
 
       /* If the DPMS settings in the init file have changed, change the
          settings on the server to match.  This also would have happened at

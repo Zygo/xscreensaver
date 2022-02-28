@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Modified by Richard Weeks <rtweeks21@gmail.com> Copyright (c) 2020
  *
@@ -462,7 +462,9 @@ typedef struct {
 
 } img_closure;
 
-typedef enum { TLP_LOADING = 0, TLP_IMPORTING, TLP_COMPLETE, TLP_ERROR } texture_loader_phase;
+typedef enum { TLP_LOADING = 0, TLP_IMPORTING, TLP_COMPLETE, TLP_ERROR }
+  texture_loader_phase;
+
 struct texture_loader_t {
   texture_loader_phase phase;
   Screen *screen;
@@ -958,6 +960,8 @@ incremental_load_texture_async_cb (Screen *screen, Window window,
   loader->img_width = loader->ximage->width;
   loader->img_height = loader->ximage->height;
   loader->stripe_height = (1 << 19) / loader->img_width;
+  if (loader->stripe_height < 1)
+    loader->stripe_height = 1;
   if (dd.texid != -1)
     glBindTexture (GL_TEXTURE_2D, dd.texid);
 
@@ -1012,12 +1016,21 @@ step_texture_loader (texture_loader_t *loader, double allowed_seconds,
   if (loader->phase != TLP_IMPORTING)
     return;
 
+  if (allowed_seconds < 0.001)
+    allowed_seconds = 0.001;
+
   if (loader->y < loader->ximage->height)
   {
     loader->steps++;
     if (loader->steps == 1)
-      /* Initial tune on the loader for the number of allowed_seconds */
-      loader->stripe_height = ((unsigned int) (perf * allowed_seconds / loader->ximage->width)) / 8 + 1;
+      {
+        /* Initial tune on the loader for the number of allowed_seconds */
+        loader->stripe_height = ((unsigned int)
+                                 (perf * allowed_seconds /
+                                  loader->ximage->width)) / 8 + 1;
+        if (loader->stripe_height < 1)
+          loader->stripe_height = 1;
+      }
     else
       advance_texture_loader (loader, allowed_seconds);
   }

@@ -75,7 +75,7 @@ void glsl_Rotate(GLfloat c[16], GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
   n[0] = x/l;
   n[1] = y/l;
   n[2] = z/l;
-  t = angle*180.0f/M_PI;
+  t = angle*M_PI/180.0f;
   ct = cosf(t);
   st = sinf(t);
   omct = 1.0f-ct;

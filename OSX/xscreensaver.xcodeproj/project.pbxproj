@@ -262,6 +262,7 @@
 				AF777A0F09B660B200EA3033 /* PBXTargetDependency */,
 				AF777A0D09B660B200EA3033 /* PBXTargetDependency */,
 				AF4FD6FF0CE7A4F9005EE58E /* PBXTargetDependency */,
+				AF6E25CE276C40D70032E38F /* PBXTargetDependency */,
 				AF796D3826E5C25300DA6562 /* PBXTargetDependency */,
 				AFAAE3A5207D6470007A515C /* PBXTargetDependency */,
 				AF777A0B09B660B200EA3033 /* PBXTargetDependency */,
@@ -296,6 +297,7 @@
 				AFCF835C1AF5B683008BB7E1 /* PBXTargetDependency */,
 				AFEE10A91D17E32100AAC8F7 /* PBXTargetDependency */,
 				AF7779E909B660B000EA3033 /* PBXTargetDependency */,
+				AFAE148F2792774700C62683 /* PBXTargetDependency */,
 				AF7779E709B660B000EA3033 /* PBXTargetDependency */,
 				AF7779E509B660B000EA3033 /* PBXTargetDependency */,
 				AF7779E309B660B000EA3033 /* PBXTargetDependency */,
@@ -2206,7 +2208,7 @@
 		AF568A4126E7060500CCBA38 /* qix.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6425FF09A18A94000F4CD4 /* qix.c */; };
 		AF568A4226E7060500CCBA38 /* penrose.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD5700C0996B49D00BA26F7 /* penrose.c */; };
 		AF568A4326E7060500CCBA38 /* polyominoes.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD572800996EF2B00BA26F7 /* polyominoes.c */; };
-		AF568A4426E7060500CCBA38 /* rd-bomb.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9757D5099C3EB800B05160 /* rd-bomb.c */; };
+		AF568A4426E7060500CCBA38 /* rdbomb.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9757D5099C3EB800B05160 /* rdbomb.c */; };
 		AF568A4526E7060500CCBA38 /* ripples.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D493E09B53D55006E59CF /* ripples.c */; };
 		AF568A4626E7060500CCBA38 /* ships.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD9D5BD201E686A0070E99D /* ships.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF568A4726E7060500CCBA38 /* rocks.c in Sources */ = {isa = PBXBuildFile; fileRef = AF975D66099CA16A00B05160 /* rocks.c */; };
@@ -2465,6 +2467,12 @@
 		AF5ECEC42116B2CC00069433 /* vfeedback.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5ECEC22116B2CC00069433 /* vfeedback.c */; };
 		AF5ECEC62116B2FE00069433 /* vfeedback.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF5ECEC52116B2FE00069433 /* vfeedback.xml */; };
 		AF5ECEC72116B2FE00069433 /* vfeedback.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF5ECEC52116B2FE00069433 /* vfeedback.xml */; };
+		AF603F4927C9744300EE2206 /* sphereeversion-corrugations.c in Sources */ = {isa = PBXBuildFile; fileRef = AF603F4727C9744300EE2206 /* sphereeversion-corrugations.c */; };
+		AF603F4A27C9744300EE2206 /* sphereeversion-corrugations.c in Sources */ = {isa = PBXBuildFile; fileRef = AF603F4727C9744300EE2206 /* sphereeversion-corrugations.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF603F4B27C9744300EE2206 /* sphereeversion-corrugations.c in Sources */ = {isa = PBXBuildFile; fileRef = AF603F4727C9744300EE2206 /* sphereeversion-corrugations.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF603F4C27C9744300EE2206 /* sphereeversion-analytic.c in Sources */ = {isa = PBXBuildFile; fileRef = AF603F4827C9744300EE2206 /* sphereeversion-analytic.c */; };
+		AF603F4D27C9744300EE2206 /* sphereeversion-analytic.c in Sources */ = {isa = PBXBuildFile; fileRef = AF603F4827C9744300EE2206 /* sphereeversion-analytic.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF603F4E27C9744300EE2206 /* sphereeversion-analytic.c in Sources */ = {isa = PBXBuildFile; fileRef = AF603F4827C9744300EE2206 /* sphereeversion-analytic.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF6048FB157C07C600CA21E4 /* jwzgles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6048F8157C07C600CA21E4 /* jwzgles.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF6048FC157C07C600CA21E4 /* jwzgles.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048F9157C07C600CA21E4 /* jwzgles.h */; };
 		AF6048FD157C07C600CA21E4 /* jwzglesI.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048FA157C07C600CA21E4 /* jwzglesI.h */; };
@@ -2654,6 +2662,17 @@
 		AF6C6D8E226AE6370065A748 /* gravitywell.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF6C6D8D226AE6370065A748 /* gravitywell.xml */; };
 		AF6C6D8F226AE6370065A748 /* gravitywell.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF6C6D8D226AE6370065A748 /* gravitywell.xml */; };
 		AF6C6D92226AE6CE0065A748 /* gravitywell.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6C6D8B226AE6120065A748 /* gravitywell.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF6E25B9276C3F030032E38F /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF6E25BB276C3F030032E38F /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF6E25BC276C3F030032E38F /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF6E25BD276C3F030032E38F /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF6E25BE276C3F030032E38F /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF6E25BF276C3F030032E38F /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF6E25C0276C3F030032E38F /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF6E25C1276C3F030032E38F /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF6E25CB276C402F0032E38F /* mapscroller.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6E25C9276C402E0032E38F /* mapscroller.c */; };
+		AF6E25CC276C402F0032E38F /* mapscroller.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF6E25CA276C402F0032E38F /* mapscroller.xml */; };
+		AF6E25D0276C49FF0032E38F /* mapscroller.pl in Resources */ = {isa = PBXBuildFile; fileRef = AF6E25CF276C49FF0032E38F /* mapscroller.pl */; };
 		AF70D21522A59A080004BAAD /* gallant12x22.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AF70D21422A59A080004BAAD /* gallant12x22.ttf */; };
 		AF70D21622A5A0840004BAAD /* gallant12x22.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AF70D21422A59A080004BAAD /* gallant12x22.ttf */; };
 		AF73FF211A08AB9400E485E9 /* iSaverRunner57t.png in Resources */ = {isa = PBXBuildFile; fileRef = AF73FF201A08AB9400E485E9 /* iSaverRunner57t.png */; };
@@ -3076,7 +3095,7 @@
 		AF9189DA158FC334002B5D1E /* popsquares.c in Sources */ = {isa = PBXBuildFile; fileRef = AF47727E099D5808001F091E /* popsquares.c */; };
 		AF9189DB158FC334002B5D1E /* pyro.c in Sources */ = {isa = PBXBuildFile; fileRef = AF47759C099D9CA3001F091E /* pyro.c */; };
 		AF9189DC158FC334002B5D1E /* qix.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6425FF09A18A94000F4CD4 /* qix.c */; };
-		AF9189DD158FC334002B5D1E /* rd-bomb.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9757D5099C3EB800B05160 /* rd-bomb.c */; };
+		AF9189DD158FC334002B5D1E /* rdbomb.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9757D5099C3EB800B05160 /* rdbomb.c */; };
 		AF9189DE158FC334002B5D1E /* ripples.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D493E09B53D55006E59CF /* ripples.c */; };
 		AF9189DF158FC35D002B5D1E /* rocks.c in Sources */ = {isa = PBXBuildFile; fileRef = AF975D66099CA16A00B05160 /* rocks.c */; };
 		AF9189E0158FC35D002B5D1E /* rorschach.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE1FD620981E40800F7970E /* rorschach.c */; };
@@ -3490,7 +3509,7 @@
 		AF975788099C378B00B05160 /* moire.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258E50988A469000655EE /* moire.xml */; };
 		AF97578A099C37A500B05160 /* moire.c in Sources */ = {isa = PBXBuildFile; fileRef = AF975789099C37A500B05160 /* moire.c */; };
 		AF9757C8099C3E6300B05160 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
-		AF9757D6099C3EB800B05160 /* rd-bomb.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9757D5099C3EB800B05160 /* rd-bomb.c */; };
+		AF9757D6099C3EB800B05160 /* rdbomb.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9757D5099C3EB800B05160 /* rdbomb.c */; };
 		AF97580E099C41D500B05160 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF97581B099C423600B05160 /* xflame.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC259370988A469000655EE /* xflame.xml */; };
 		AF975830099C427500B05160 /* xflame.c in Sources */ = {isa = PBXBuildFile; fileRef = AF97582F099C427500B05160 /* xflame.c */; };
@@ -3653,7 +3672,6 @@
 		AF9D4DF509B5BB19006E59CF /* apple2.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4DD309B5B990006E59CF /* apple2.c */; };
 		AF9D4E0409B5BC85006E59CF /* apple2.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2586F0988A468000655EE /* apple2.xml */; };
 		AF9D4E0609B5BC9D006E59CF /* apple2-main.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4E0509B5BC9D006E59CF /* apple2-main.c */; };
-		AF9E7EC9190F4C4000A8B01F /* enable_gc.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9E7EC8190F4C4000A8B01F /* enable_gc.c */; };
 		AFA0B122241CE69E0071E35D /* dangerball.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258920988A468000655EE /* dangerball.xml */; };
 		AFA0B125241CE69E0071E35D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFA0B127241CE69E0071E35D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -3879,6 +3897,20 @@
 		AFADD34424B67204005456DC /* sphereeversion.c in Sources */ = {isa = PBXBuildFile; fileRef = AFADD34224B67204005456DC /* sphereeversion.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFADD34624B67223005456DC /* sphereeversion.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFADD34524B67223005456DC /* sphereeversion.xml */; };
 		AFADD34724B67223005456DC /* sphereeversion.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFADD34524B67223005456DC /* sphereeversion.xml */; };
+		AFAE1476279275BE00C62683 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFAE1478279275BE00C62683 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFAE1479279275BE00C62683 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFAE147A279275BE00C62683 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFAE147B279275BE00C62683 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFAE147C279275BE00C62683 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFAE147D279275BE00C62683 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AFAE147E279275BE00C62683 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFAE1488279276BC00C62683 /* squirtorus.c in Sources */ = {isa = PBXBuildFile; fileRef = AFAE1486279276BB00C62683 /* squirtorus.c */; };
+		AFAE1489279276BC00C62683 /* squirtorus.c in Sources */ = {isa = PBXBuildFile; fileRef = AFAE1486279276BB00C62683 /* squirtorus.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFAE148A279276BC00C62683 /* squirtorus.c in Sources */ = {isa = PBXBuildFile; fileRef = AFAE1486279276BB00C62683 /* squirtorus.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFAE148B279276BC00C62683 /* squirtorus.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFAE1487279276BC00C62683 /* squirtorus.xml */; };
+		AFAE148C279276BC00C62683 /* squirtorus.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFAE1487279276BC00C62683 /* squirtorus.xml */; };
+		AFAE148D279276BC00C62683 /* squirtorus.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFAE1487279276BC00C62683 /* squirtorus.xml */; };
 		AFB591AE178B812C00EA4005 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFB591B0178B812C00EA4005 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFB591B1178B812C00EA4005 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -3933,6 +3965,9 @@
 		AFC211950E4E30C800D87B6E /* teapot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC211930E4E30C800D87B6E /* teapot.c */; };
 		AFC43E7C1C6AA78800C89999 /* OCRAStd.otf in Resources */ = {isa = PBXBuildFile; fileRef = AFEC68361BD6CA85004C1B64 /* OCRAStd.otf */; };
 		AFC523C31FED9420001C300A /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
+		AFC5262E27C9CB3300ECED0B /* timezones.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5262D27C9CB3300ECED0B /* timezones.c */; };
+		AFC5262F27C9CB3300ECED0B /* timezones.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5262D27C9CB3300ECED0B /* timezones.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFC5263027C9CB3300ECED0B /* timezones.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5262D27C9CB3300ECED0B /* timezones.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFC5CFDD2044AA23004CEB5E /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFC5CFDF2044AA23004CEB5E /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFC5CFE02044AA23004CEB5E /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -3942,7 +3977,7 @@
 		AFC5CFE42044AA23004CEB5E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
 		AFC5CFE52044AA23004CEB5E /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
 		AFC5CFEF2044AB04004CEB5E /* quickhull.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5CFED2044AB03004CEB5E /* quickhull.c */; };
-		AFC5CFF02044AB04004CEB5E /* quickhull.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5CFED2044AB03004CEB5E /* quickhull.c */; };
+		AFC5CFF02044AB04004CEB5E /* quickhull.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5CFED2044AB03004CEB5E /* quickhull.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFC5CFF12044AB04004CEB5E /* crumbler.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5CFEE2044AB03004CEB5E /* crumbler.c */; };
 		AFC5CFF22044AB04004CEB5E /* crumbler.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC5CFEE2044AB03004CEB5E /* crumbler.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFC5CFF42044AB28004CEB5E /* crumbler.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC5CFF32044AB27004CEB5E /* crumbler.xml */; };
@@ -5640,6 +5675,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF6C6D74226AE4FC0065A748;
 			remoteInfo = GravityWell;
+		};
+		AF6E25B4276C3F030032E38F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF6E25CD276C40D70032E38F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF6E25B2276C3F030032E38F;
+			remoteInfo = MapScroller;
 		};
 		AF714E4E105613410046AB1D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -7853,6 +7902,20 @@
 			remoteGlobalIDString = AFADD32B24B67100005456DC;
 			remoteInfo = SphereEversion;
 		};
+		AFAE1471279275BE00C62683 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFAE148E2792774700C62683 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFAE146F279275BE00C62683;
+			remoteInfo = Squirtorus;
+		};
 		AFB581AF102F363300342B11 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -8461,15 +8524,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AF9E7EBD190F4C1B00A8B01F /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
 		AFB9B5C024269AF900A5740D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -8786,6 +8840,8 @@
 		AF5ECEC02116B1A400069433 /* VFeedback.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VFeedback.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF5ECEC22116B2CC00069433 /* vfeedback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vfeedback.c; path = hacks/vfeedback.c; sourceTree = "<group>"; };
 		AF5ECEC52116B2FE00069433 /* vfeedback.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vfeedback.xml; sourceTree = "<group>"; };
+		AF603F4727C9744300EE2206 /* sphereeversion-corrugations.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "sphereeversion-corrugations.c"; path = "hacks/glx/sphereeversion-corrugations.c"; sourceTree = "<group>"; };
+		AF603F4827C9744300EE2206 /* sphereeversion-analytic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "sphereeversion-analytic.c"; path = "hacks/glx/sphereeversion-analytic.c"; sourceTree = "<group>"; };
 		AF6048F8157C07C600CA21E4 /* jwzgles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jwzgles.c; path = ../jwxyz/jwzgles.c; sourceTree = "<group>"; };
 		AF6048F9157C07C600CA21E4 /* jwzgles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzgles.h; path = ../jwxyz/jwzgles.h; sourceTree = "<group>"; };
 		AF6048FA157C07C600CA21E4 /* jwzglesI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzglesI.h; path = ../jwxyz/jwzglesI.h; sourceTree = "<group>"; };
@@ -8844,6 +8900,10 @@
 		AF6C6D89226AE4FC0065A748 /* GravityWell.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GravityWell.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6C6D8B226AE6120065A748 /* gravitywell.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gravitywell.c; path = hacks/glx/gravitywell.c; sourceTree = "<group>"; };
 		AF6C6D8D226AE6370065A748 /* gravitywell.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = gravitywell.xml; sourceTree = "<group>"; };
+		AF6E25C7276C3F030032E38F /* MapScroller.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MapScroller.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF6E25C9276C402E0032E38F /* mapscroller.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mapscroller.c; path = hacks/glx/mapscroller.c; sourceTree = "<group>"; };
+		AF6E25CA276C402F0032E38F /* mapscroller.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = mapscroller.xml; sourceTree = "<group>"; };
+		AF6E25CF276C49FF0032E38F /* mapscroller.pl */ = {isa = PBXFileReference; lastKnownFileType = text.script.perl; name = mapscroller.pl; path = hacks/glx/mapscroller.pl; sourceTree = "<group>"; };
 		AF70D21422A59A080004BAAD /* gallant12x22.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = gallant12x22.ttf; path = ../hacks/fonts/gallant12x22.ttf; sourceTree = "<group>"; };
 		AF73FF201A08AB9400E485E9 /* iSaverRunner57t.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = iSaverRunner57t.png; sourceTree = "<group>"; };
 		AF73FF361A09877F00E485E9 /* BinaryRing.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BinaryRing.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -8933,7 +8993,7 @@
 		AF975785099C374A00B05160 /* Moire.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Moire.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF975789099C37A500B05160 /* moire.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = moire.c; path = hacks/moire.c; sourceTree = "<group>"; };
 		AF9757D2099C3E6300B05160 /* RDbomb.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RDbomb.saver; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF9757D5099C3EB800B05160 /* rd-bomb.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "rd-bomb.c"; path = "hacks/rd-bomb.c"; sourceTree = "<group>"; };
+		AF9757D5099C3EB800B05160 /* rdbomb.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = rdbomb.c; path = hacks/rdbomb.c; sourceTree = "<group>"; };
 		AF975818099C41D500B05160 /* XFlame.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XFlame.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF97582F099C427500B05160 /* xflame.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = xflame.c; path = hacks/xflame.c; sourceTree = "<group>"; };
 		AF975875099C475900B05160 /* ShadeBobs.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShadeBobs.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -9001,8 +9061,6 @@
 		AF9D4DD309B5B990006E59CF /* apple2.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = apple2.c; path = hacks/apple2.c; sourceTree = "<group>"; };
 		AF9D4DFE09B5BB19006E59CF /* Apple2.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Apple2.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF9D4E0509B5BC9D006E59CF /* apple2-main.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "apple2-main.c"; path = "hacks/apple2-main.c"; sourceTree = "<group>"; };
-		AF9E7EBF190F4C1B00A8B01F /* enable_gc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = enable_gc; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF9E7EC8190F4C4000A8B01F /* enable_gc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = enable_gc.c; sourceTree = "<group>"; };
 		AFA0B133241CE69E0071E35D /* Gibson.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Gibson.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFA0B135241CE7B60071E35D /* gibson.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gibson.c; path = hacks/glx/gibson.c; sourceTree = "<group>"; };
 		AFA0B138241CE7E10071E35D /* gibson.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = gibson.xml; sourceTree = "<group>"; };
@@ -9187,6 +9245,9 @@
 		AFADD34024B67100005456DC /* SphereEversion.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SphereEversion.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFADD34224B67204005456DC /* sphereeversion.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sphereeversion.c; path = hacks/glx/sphereeversion.c; sourceTree = "<group>"; };
 		AFADD34524B67223005456DC /* sphereeversion.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = sphereeversion.xml; sourceTree = "<group>"; };
+		AFAE1484279275BE00C62683 /* Squirtorus.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Squirtorus.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFAE1486279276BB00C62683 /* squirtorus.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = squirtorus.c; path = hacks/glx/squirtorus.c; sourceTree = "<group>"; };
+		AFAE1487279276BC00C62683 /* squirtorus.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = squirtorus.xml; sourceTree = "<group>"; };
 		AFB591BA178B812C00EA4005 /* Hexadrop.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Hexadrop.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFB591BC178B81E600EA4005 /* hexadrop.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = hexadrop.xml; sourceTree = "<group>"; };
 		AFB591BD178B81E600EA4005 /* hexadrop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hexadrop.c; path = hacks/hexadrop.c; sourceTree = "<group>"; };
@@ -9415,6 +9476,7 @@
 		AFC25B5E0988BA63000655EE /* deco.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = deco.c; path = hacks/deco.c; sourceTree = "<group>"; };
 		AFC25B990988BC08000655EE /* colors.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = colors.c; path = utils/colors.c; sourceTree = "<group>"; };
 		AFC25B9A0988BC08000655EE /* colors.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = colors.h; path = utils/colors.h; sourceTree = "<group>"; };
+		AFC5262D27C9CB3300ECED0B /* timezones.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = timezones.c; path = hacks/glx/timezones.c; sourceTree = "<group>"; };
 		AFC5CFEB2044AA23004CEB5E /* Crumbler.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Crumbler.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFC5CFED2044AB03004CEB5E /* quickhull.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = quickhull.c; path = hacks/glx/quickhull.c; sourceTree = "<group>"; };
 		AFC5CFEE2044AB03004CEB5E /* crumbler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crumbler.c; path = hacks/glx/crumbler.c; sourceTree = "<group>"; };
@@ -11007,6 +11069,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF6E25BA276C3F030032E38F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF6E25BB276C3F030032E38F /* libjwxyz.a in Frameworks */,
+				AF6E25BC276C3F030032E38F /* ScreenSaver.framework in Frameworks */,
+				AF6E25BD276C3F030032E38F /* QuartzCore.framework in Frameworks */,
+				AF6E25BE276C3F030032E38F /* Cocoa.framework in Frameworks */,
+				AF6E25BF276C3F030032E38F /* Carbon.framework in Frameworks */,
+				AF6E25C0276C3F030032E38F /* OpenGL.framework in Frameworks */,
+				AF6E25C1276C3F030032E38F /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF73FF2A1A09877F00E485E9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -11816,13 +11892,6 @@
 				AF1FD722158FF96500C40F17 /* Carbon.framework in Frameworks */,
 				CEE0BC671A6B0E0600C098BF /* OpenGL.framework in Frameworks */,
 				AF78369B17DBA580003B9FC0 /* libz.dylib in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9E7EBC190F4C1B00A8B01F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -12679,6 +12748,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFAE1477279275BE00C62683 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFAE1478279275BE00C62683 /* libjwxyz.a in Frameworks */,
+				AFAE1479279275BE00C62683 /* ScreenSaver.framework in Frameworks */,
+				AFAE147A279275BE00C62683 /* QuartzCore.framework in Frameworks */,
+				AFAE147B279275BE00C62683 /* Cocoa.framework in Frameworks */,
+				AFAE147C279275BE00C62683 /* Carbon.framework in Frameworks */,
+				AFAE147D279275BE00C62683 /* OpenGL.framework in Frameworks */,
+				AFAE147E279275BE00C62683 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFB591AF178B812C00EA4005 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -13507,7 +13590,6 @@
 				AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */,
 				AFC254C409882C97000655EE /* XScreenSaverView.h */,
 				AFC254C509882C97000655EE /* XScreenSaverView.m */,
-				AF9E7EC8190F4C4000A8B01F /* enable_gc.c */,
 			);
 			name = libjwxyz;
 			sourceTree = "<group>";
@@ -13746,7 +13828,6 @@
 				AFB591BA178B812C00EA4005 /* Hexadrop.saver */,
 				AFF3C9FB17CCAC440028F240 /* Geodesic.saver */,
 				AF1AD9E218500F9F00932759 /* XScreenSaverUpdater.app */,
-				AF9E7EBF190F4C1B00A8B01F /* enable_gc */,
 				AFFAB32919158CE40020F021 /* ProjectivePlane.saver */,
 				AF68A49219196CF800D41CD1 /* Tessellimage.saver */,
 				AF39E296198A11F60064A58D /* WindupRobot.saver */,
@@ -13792,6 +13873,8 @@
 				AF796D2F26E5C10700DA6562 /* Marbling.saver */,
 				AF568B3026E7060500CCBA38 /* XScreenSaver-tvOS.app */,
 				AF69E206270BA54600358595 /* BinaryHorizon.saver */,
+				AF6E25C7276C3F030032E38F /* MapScroller.saver */,
+				AFAE1484279275BE00C62683 /* Squirtorus.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -13996,7 +14079,7 @@
 				AF47727E099D5808001F091E /* popsquares.c */,
 				AF47759C099D9CA3001F091E /* pyro.c */,
 				AF6425FF09A18A94000F4CD4 /* qix.c */,
-				AF9757D5099C3EB800B05160 /* rd-bomb.c */,
+				AF9757D5099C3EB800B05160 /* rdbomb.c */,
 				AF9D493E09B53D55006E59CF /* ripples.c */,
 				AF975D66099CA16A00B05160 /* rocks.c */,
 				AFE1FD620981E40800F7970E /* rorschach.c */,
@@ -14184,6 +14267,7 @@
 				AFA5600E09936CB300F3E977 /* glknots.c */,
 				AFA55F870993648500F3E977 /* glmatrix.c */,
 				AFA55B2109933E4A00F3E977 /* glplanet.c */,
+				AFC5262D27C9CB3300ECED0B /* timezones.c */,
 				AF48E1660A0C268500F94CF9 /* glschool.c */,
 				AF48E1670A0C268500F94CF9 /* glschool.h */,
 				AF48E1620A0C268400F94CF9 /* glschool_alg.c */,
@@ -14216,6 +14300,8 @@
 				AFF1BA0E19A96D8B0016A88D /* lament_model.c */,
 				AFA55DDD09935DB600F3E977 /* lavalite.c */,
 				AF4FD7000CE7A577005EE58E /* lockward.c */,
+				AF6E25C9276C402E0032E38F /* mapscroller.c */,
+				AF6E25CF276C49FF0032E38F /* mapscroller.pl */,
 				AFA55DE109935DFB00F3E977 /* marching.c */,
 				AFA55DE209935DFB00F3E977 /* marching.h */,
 				AFAAE39E207D6420007A515C /* maze3d.c */,
@@ -14265,6 +14351,8 @@
 				AFE30C000E52B1DC00CCF4A5 /* sonar-sim.c */,
 				AFE30C010E52B1DC00CCF4A5 /* sonar.c */,
 				AFADD34224B67204005456DC /* sphereeversion.c */,
+				AF603F4827C9744300EE2206 /* sphereeversion-analytic.c */,
+				AF603F4727C9744300EE2206 /* sphereeversion-corrugations.c */,
 				AFA55D940993590F00F3E977 /* spheremonics.c */,
 				AFCF83541AF5B5FD008BB7E1 /* splitflap.c */,
 				AFCF83531AF5B5FD008BB7E1 /* splitflap_obj.c */,
@@ -14272,6 +14360,7 @@
 				AFA55A470993351F00F3E977 /* sproingies.c */,
 				AF7778C009B65C0F00EA3033 /* sproingies.h */,
 				AFA55A480993351F00F3E977 /* sproingiewrap.c */,
+				AFAE1486279276BB00C62683 /* squirtorus.c */,
 				AFA55A1A0993345900F3E977 /* stairs.c */,
 				AF77782809B650FF00EA3033 /* starwars.c */,
 				AF77782909B650FF00EA3033 /* starwars.txt */,
@@ -14475,6 +14564,7 @@
 				AF4FD7020CE7A5BC005EE58E /* lockward.xml */,
 				AFC258DD0988A468000655EE /* loop.xml */,
 				AF0DCA370C4C74B700D76972 /* m6502.xml */,
+				AF6E25CA276C402F0032E38F /* mapscroller.xml */,
 				AF796D3426E5C21C00DA6562 /* marbling.xml */,
 				AFC258DE0988A468000655EE /* maze.xml */,
 				AFAAE3A1207D6438007A515C /* maze3d.xml */,
@@ -14547,6 +14637,7 @@
 				AFC259150988A469000655EE /* spotlight.xml */,
 				AFC259160988A469000655EE /* sproingies.xml */,
 				AFC259170988A469000655EE /* squiral.xml */,
+				AFAE1487279276BC00C62683 /* squirtorus.xml */,
 				AFC259190988A469000655EE /* stairs.xml */,
 				AFC2591A0988A469000655EE /* starfish.xml */,
 				AFC2591B0988A469000655EE /* starwars.xml */,
@@ -16771,6 +16862,26 @@
 			productReference = AF6C6D89226AE4FC0065A748 /* GravityWell.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AF6E25B2276C3F030032E38F /* MapScroller */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF6E25C4276C3F030032E38F /* Build configuration list for PBXNativeTarget "MapScroller" */;
+			buildPhases = (
+				AF6E25B5276C3F030032E38F /* Resources */,
+				AF6E25B7276C3F030032E38F /* Sources */,
+				AF6E25BA276C3F030032E38F /* Frameworks */,
+				AF6E25C2276C3F030032E38F /* Rez */,
+				AF6E25C3276C3F030032E38F /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF6E25B3276C3F030032E38F /* PBXTargetDependency */,
+			);
+			name = MapScroller;
+			productName = DangerBall;
+			productReference = AF6E25C7276C3F030032E38F /* MapScroller.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AF73FF221A09877F00E485E9 /* BinaryRing */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AF73FF331A09877F00E485E9 /* Build configuration list for PBXNativeTarget "BinaryRing" */;
@@ -17933,23 +18044,6 @@
 			productName = Apple2;
 			productReference = AF9D4DFE09B5BB19006E59CF /* Apple2.saver */;
 			productType = "com.apple.product-type.bundle";
-		};
-		AF9E7EBE190F4C1B00A8B01F /* enable_gc */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AF9E7EC5190F4C1C00A8B01F /* Build configuration list for PBXNativeTarget "enable_gc" */;
-			buildPhases = (
-				AF9E7EBB190F4C1B00A8B01F /* Sources */,
-				AF9E7EBC190F4C1B00A8B01F /* Frameworks */,
-				AF9E7EBD190F4C1B00A8B01F /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = enable_gc;
-			productName = enable_gc;
-			productReference = AF9E7EBF190F4C1B00A8B01F /* enable_gc */;
-			productType = "com.apple.product-type.tool";
 		};
 		AFA0B11E241CE69E0071E35D /* Gibson */ = {
 			isa = PBXNativeTarget;
@@ -19172,6 +19266,26 @@
 			productReference = AFADD34024B67100005456DC /* SphereEversion.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AFAE146F279275BE00C62683 /* Squirtorus */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFAE1481279275BE00C62683 /* Build configuration list for PBXNativeTarget "Squirtorus" */;
+			buildPhases = (
+				AFAE1472279275BE00C62683 /* Resources */,
+				AFAE1474279275BE00C62683 /* Sources */,
+				AFAE1477279275BE00C62683 /* Frameworks */,
+				AFAE147F279275BE00C62683 /* Rez */,
+				AFAE1480279275BE00C62683 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFAE1470279275BE00C62683 /* PBXTargetDependency */,
+			);
+			name = Squirtorus;
+			productName = DangerBall;
+			productReference = AFAE1484279275BE00C62683 /* Squirtorus.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AFB591A7178B812C00EA4005 /* Hexadrop */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFB591B7178B812C00EA4005 /* Build configuration list for PBXNativeTarget "Hexadrop" */;
@@ -20323,7 +20437,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1300;
+				LastUpgradeCheck = 1320;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -20643,6 +20757,9 @@
 					AF6C6D74226AE4FC0065A748 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
+					AF6E25B2276C3F030032E38F = {
+						DevelopmentTeam = 4627ATJELP;
+					};
 					AF73FF221A09877F00E485E9 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
@@ -20815,9 +20932,6 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF9D4DEC09B5BB19006E59CF = {
-						DevelopmentTeam = 4627ATJELP;
-					};
-					AF9E7EBE190F4C1B00A8B01F = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AFA0B11E241CE69E0071E35D = {
@@ -21010,6 +21124,9 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AFADD32B24B67100005456DC = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AFAE146F279275BE00C62683 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AFB591A7178B812C00EA4005 = {
@@ -21412,6 +21529,7 @@
 				AFA55A790993364300F3E977 /* Lament */,
 				AFA55DC809935D7000F3E977 /* Lavalite */,
 				AF4FD6E60CE7A486005EE58E /* Lockward */,
+				AF6E25B2276C3F030032E38F /* MapScroller */,
 				AF796D1A26E5C10700DA6562 /* Marbling */,
 				AFAAE387207D6343007A515C /* Maze3D */,
 				AFA55BE40993429100F3E977 /* Menger */,
@@ -21447,6 +21565,7 @@
 				AFCF833B1AF5B515008BB7E1 /* SplitFlap */,
 				AFEE108B1D17E20B00AAC8F7 /* Splodesic */,
 				AFA55A20099334A000F3E977 /* Sproingies */,
+				AFAE146F279275BE00C62683 /* Squirtorus */,
 				AFA55A030993340300F3E977 /* Stairs */,
 				AF77781009B6504400EA3033 /* StarWars */,
 				AF7777A809B64B2600EA3033 /* StonerView */,
@@ -21485,7 +21604,6 @@
 				AFD56F0B0996AAFA00BA26F7 /* Vines */,
 				AF477208099D4EE8001F091E /* Whirlygig */,
 				AFD5709B0996B88E00BA26F7 /* Worm */,
-				AF9E7EBE190F4C1B00A8B01F /* enable_gc */,
 				AF9771D60989DC4A001F8B92 /* SaverTester */,
 				AF918977158FC00A002B5D1E /* XScreenSaver-iOS */,
 				AF5688D826E7060500CCBA38 /* XScreenSaver-tvOS */,
@@ -22345,6 +22463,7 @@
 				AF5689B726E7060500CCBA38 /* spotlight.xml in Resources */,
 				AF5689B826E7060500CCBA38 /* sproingies.xml in Resources */,
 				AF5689B926E7060500CCBA38 /* squiral.xml in Resources */,
+				AFAE148D279276BC00C62683 /* squirtorus.xml in Resources */,
 				AF5689BA26E7060500CCBA38 /* stairs.xml in Resources */,
 				AF5689BB26E7060500CCBA38 /* starfish.xml in Resources */,
 				AF5689BC26E7060500CCBA38 /* starwars.xml in Resources */,
@@ -22560,6 +22679,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF6C6D8E226AE6370065A748 /* gravitywell.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF6E25B5276C3F030032E38F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF6E25CC276C402F0032E38F /* mapscroller.xml in Resources */,
+				AF6E25D0276C49FF0032E38F /* mapscroller.pl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22970,6 +23098,7 @@
 				AF918B6B158FC53E002B5D1E /* spotlight.xml in Resources */,
 				AF918B6C158FC53E002B5D1E /* sproingies.xml in Resources */,
 				AF918B6D158FC53E002B5D1E /* squiral.xml in Resources */,
+				AFAE148C279276BC00C62683 /* squirtorus.xml in Resources */,
 				AF918B6E158FC53E002B5D1E /* stairs.xml in Resources */,
 				AF918B6F158FC53E002B5D1E /* starfish.xml in Resources */,
 				AF918B70158FC53E002B5D1E /* starwars.xml in Resources */,
@@ -23790,6 +23919,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFADD34624B67223005456DC /* sphereeversion.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFAE1472279275BE00C62683 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFAE148B279276BC00C62683 /* squirtorus.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -24916,6 +25053,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF6E25C2276C3F030032E38F /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF73FF311A09877F00E485E9 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -25728,6 +25872,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFAE147F279275BE00C62683 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFB591B5178B812C00EA4005 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -26196,7 +26347,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AF1B0FB81D7AB4740011DBE4 /* Run Update Info Plist */ = {
@@ -26796,6 +26947,22 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AF6E25C3276C3F030032E38F /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AF73FF321A09877F00E485E9 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -26825,7 +26992,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AF78D185142DD8F3002AAF77 /* Run Update Info Plist */ = {
@@ -30134,6 +30301,22 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AFAE1480279275BE00C62683 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AFB591B6178B812C00EA4005 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -30273,7 +30456,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AFCCCBC709C03AAF00353F4D /* Run Update Info Plist */ = {
@@ -31516,7 +31699,6 @@
 				AF568A0926E7060500CCBA38 /* discrete.c in Sources */,
 				AF568A0A26E7060500CCBA38 /* distort.c in Sources */,
 				AF568A0B26E7060500CCBA38 /* drift.c in Sources */,
-				AF568A0C26E7060500CCBA38 /* dymaxionmap-coords.c in Sources */,
 				AF568A0D26E7060500CCBA38 /* epicycle.c in Sources */,
 				AF568A0E26E7060500CCBA38 /* eruption.c in Sources */,
 				AF568A0F26E7060500CCBA38 /* euler2d.c in Sources */,
@@ -31573,7 +31755,7 @@
 				AF568A4126E7060500CCBA38 /* qix.c in Sources */,
 				AF568A4226E7060500CCBA38 /* penrose.c in Sources */,
 				AF568A4326E7060500CCBA38 /* polyominoes.c in Sources */,
-				AF568A4426E7060500CCBA38 /* rd-bomb.c in Sources */,
+				AF568A4426E7060500CCBA38 /* rdbomb.c in Sources */,
 				AF568A4526E7060500CCBA38 /* ripples.c in Sources */,
 				AF568A4626E7060500CCBA38 /* ships.c in Sources */,
 				AF568A4726E7060500CCBA38 /* rocks.c in Sources */,
@@ -31656,6 +31838,7 @@
 				AF568A9426E7060500CCBA38 /* dnalogo.c in Sources */,
 				AF568A9526E7060500CCBA38 /* dolphin.c in Sources */,
 				AF568A9626E7060500CCBA38 /* dymaxionmap.c in Sources */,
+				AF568A0C26E7060500CCBA38 /* dymaxionmap-coords.c in Sources */,
 				AF568A9726E7060500CCBA38 /* dropshadow.c in Sources */,
 				AF568A9826E7060500CCBA38 /* endgame.c in Sources */,
 				AF568A9926E7060500CCBA38 /* energystream.c in Sources */,
@@ -31707,8 +31890,8 @@
 				AF568AC826E7060500CCBA38 /* maze3d.c in Sources */,
 				AF568AC926E7060500CCBA38 /* menger.c in Sources */,
 				AF568ACA26E7060500CCBA38 /* mirrorblob.c in Sources */,
-				AF568ACB26E7060500CCBA38 /* moebius.c in Sources */,
 				AF568ACC26E7060500CCBA38 /* geodesic.c in Sources */,
+				AF568ACB26E7060500CCBA38 /* moebius.c in Sources */,
 				AF568ACD26E7060500CCBA38 /* moebiusgears.c in Sources */,
 				AF568ACE26E7060500CCBA38 /* molecule.c in Sources */,
 				AF568ACF26E7060500CCBA38 /* morph3d.c in Sources */,
@@ -31750,12 +31933,15 @@
 				AF568AF326E7060500CCBA38 /* sonar-sim.c in Sources */,
 				AF568AF426E7060500CCBA38 /* sonar.c in Sources */,
 				AF568AF526E7060500CCBA38 /* sphereeversion.c in Sources */,
+				AF603F4E27C9744300EE2206 /* sphereeversion-analytic.c in Sources */,
+				AF603F4B27C9744300EE2206 /* sphereeversion-corrugations.c in Sources */,
 				AF568AF626E7060500CCBA38 /* spheremonics.c in Sources */,
 				AF568AF726E7060500CCBA38 /* splitflap.c in Sources */,
 				AF568AF826E7060500CCBA38 /* splitflap_obj.c in Sources */,
 				AF568AF926E7060500CCBA38 /* splodesic.c in Sources */,
 				AF568AFA26E7060500CCBA38 /* sproingies.c in Sources */,
 				AF568AFB26E7060500CCBA38 /* sproingiewrap.c in Sources */,
+				AFAE148A279276BC00C62683 /* squirtorus.c in Sources */,
 				AF568AFC26E7060500CCBA38 /* stairs.c in Sources */,
 				AF568AFD26E7060500CCBA38 /* starwars.c in Sources */,
 				AF568AFE26E7060500CCBA38 /* stonerview-move.c in Sources */,
@@ -31769,6 +31955,7 @@
 				AF568B0626E7060500CCBA38 /* tangram_shapes.c in Sources */,
 				AF568B0726E7060500CCBA38 /* teapot.c in Sources */,
 				AF568B0826E7060500CCBA38 /* timetunnel.c in Sources */,
+				AFC5263027C9CB3300ECED0B /* timezones.c in Sources */,
 				AF568B0926E7060500CCBA38 /* toast.c in Sources */,
 				AF568B0A26E7060500CCBA38 /* toast2.c in Sources */,
 				AF568B0B26E7060500CCBA38 /* toaster.c in Sources */,
@@ -32007,6 +32194,15 @@
 			files = (
 				AF6C6D8C226AE6130065A748 /* gravitywell.c in Sources */,
 				AF6C6D7B226AE4FC0065A748 /* XScreenSaverSubclass.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF6E25B7276C3F030032E38F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF6E25CB276C402F0032E38F /* mapscroller.c in Sources */,
+				AF6E25B9276C3F030032E38F /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32263,7 +32459,6 @@
 				AF918A04158FC38A002B5D1E /* discrete.c in Sources */,
 				AF9189B2158FC311002B5D1E /* distort.c in Sources */,
 				AF918A05158FC38A002B5D1E /* drift.c in Sources */,
-				AF4C300F208569AA00BE1DEF /* dymaxionmap-coords.c in Sources */,
 				AF9189B3158FC311002B5D1E /* epicycle.c in Sources */,
 				AF9189B4158FC311002B5D1E /* eruption.c in Sources */,
 				AF918A06158FC38A002B5D1E /* euler2d.c in Sources */,
@@ -32320,7 +32515,7 @@
 				AF9189DC158FC334002B5D1E /* qix.c in Sources */,
 				AF918A1B158FC38A002B5D1E /* penrose.c in Sources */,
 				AF918A1C158FC38A002B5D1E /* polyominoes.c in Sources */,
-				AF9189DD158FC334002B5D1E /* rd-bomb.c in Sources */,
+				AF9189DD158FC334002B5D1E /* rdbomb.c in Sources */,
 				AF9189DE158FC334002B5D1E /* ripples.c in Sources */,
 				AFD9D5C0201E686B0070E99D /* ships.c in Sources */,
 				AF9189DF158FC35D002B5D1E /* rocks.c in Sources */,
@@ -32403,6 +32598,7 @@
 				AFCF453715986A2100E6E8CC /* dnalogo.c in Sources */,
 				AF918A48158FC3BB002B5D1E /* dolphin.c in Sources */,
 				AFEC23E91CB6EC7F00DE138F /* dymaxionmap.c in Sources */,
+				AF4C300F208569AA00BE1DEF /* dymaxionmap-coords.c in Sources */,
 				AF918A49158FC3BB002B5D1E /* dropshadow.c in Sources */,
 				AF918A4A158FC3E5002B5D1E /* endgame.c in Sources */,
 				AFACE88F1CC83617008B24CD /* energystream.c in Sources */,
@@ -32497,12 +32693,15 @@
 				AF918A94158FC417002B5D1E /* sonar-sim.c in Sources */,
 				AF918A95158FC417002B5D1E /* sonar.c in Sources */,
 				AFADD34424B67204005456DC /* sphereeversion.c in Sources */,
+				AF603F4D27C9744300EE2206 /* sphereeversion-analytic.c in Sources */,
+				AF603F4A27C9744300EE2206 /* sphereeversion-corrugations.c in Sources */,
 				AF918A96158FC417002B5D1E /* spheremonics.c in Sources */,
 				AFCF835A1AF5B5FD008BB7E1 /* splitflap.c in Sources */,
 				AFCF83581AF5B5FD008BB7E1 /* splitflap_obj.c in Sources */,
 				AFEE10A41D17E2BA00AAC8F7 /* splodesic.c in Sources */,
 				AF918A97158FC473002B5D1E /* sproingies.c in Sources */,
 				AF918A98158FC473002B5D1E /* sproingiewrap.c in Sources */,
+				AFAE1489279276BC00C62683 /* squirtorus.c in Sources */,
 				AF918A99158FC473002B5D1E /* stairs.c in Sources */,
 				AF918A9A158FC473002B5D1E /* starwars.c in Sources */,
 				AF918A9B158FC473002B5D1E /* stonerview-move.c in Sources */,
@@ -32516,6 +32715,7 @@
 				AF918AA3158FC473002B5D1E /* tangram_shapes.c in Sources */,
 				AF918AA4158FC473002B5D1E /* teapot.c in Sources */,
 				AF918AA5158FC473002B5D1E /* timetunnel.c in Sources */,
+				AFC5262F27C9CB3300ECED0B /* timezones.c in Sources */,
 				AF918AA6158FC473002B5D1E /* toast.c in Sources */,
 				AF918AA7158FC473002B5D1E /* toast2.c in Sources */,
 				AF918AA8158FC473002B5D1E /* toaster.c in Sources */,
@@ -32584,7 +32784,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF9757C8099C3E6300B05160 /* XScreenSaverSubclass.m in Sources */,
-				AF9757D6099C3EB800B05160 /* rd-bomb.c in Sources */,
+				AF9757D6099C3EB800B05160 /* rdbomb.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32865,14 +33065,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AF9E7EBB190F4C1B00A8B01F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AF9E7EC9190F4C4000A8B01F /* enable_gc.c in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		AFA0B123241CE69E0071E35D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -33006,6 +33198,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFA55B2209933E4A00F3E977 /* glplanet.c in Sources */,
+				AFC5262E27C9CB3300ECED0B /* timezones.c in Sources */,
 				AF9CCAC609959D500075E99B /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -33453,8 +33646,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AFADD33224B67100005456DC /* XScreenSaverSubclass.m in Sources */,
 				AFADD34324B67204005456DC /* sphereeversion.c in Sources */,
+				AF603F4C27C9744300EE2206 /* sphereeversion-analytic.c in Sources */,
+				AF603F4927C9744300EE2206 /* sphereeversion-corrugations.c in Sources */,
+				AFADD33224B67100005456DC /* XScreenSaverSubclass.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFAE1474279275BE00C62683 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFAE1488279276BC00C62683 /* squirtorus.c in Sources */,
+				AFAE1476279275BE00C62683 /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34809,6 +35013,16 @@
 			isa = PBXTargetDependency;
 			target = AF6C6D74226AE4FC0065A748 /* GravityWell */;
 			targetProxy = AF6C6D90226AE6780065A748 /* PBXContainerItemProxy */;
+		};
+		AF6E25B3276C3F030032E38F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF6E25B4276C3F030032E38F /* PBXContainerItemProxy */;
+		};
+		AF6E25CE276C40D70032E38F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF6E25B2276C3F030032E38F /* MapScroller */;
+			targetProxy = AF6E25CD276C40D70032E38F /* PBXContainerItemProxy */;
 		};
 		AF714E4F105613410046AB1D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -36389,6 +36603,16 @@
 			isa = PBXTargetDependency;
 			target = AFADD32B24B67100005456DC /* SphereEversion */;
 			targetProxy = AFADD34824B67256005456DC /* PBXContainerItemProxy */;
+		};
+		AFAE1470279275BE00C62683 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFAE1471279275BE00C62683 /* PBXContainerItemProxy */;
+		};
+		AFAE148F2792774700C62683 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFAE146F279275BE00C62683 /* Squirtorus */;
+			targetProxy = AFAE148E2792774700C62683 /* PBXContainerItemProxy */;
 		};
 		AFB581B0102F363300342B11 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -38556,6 +38780,28 @@
 			};
 			name = Release;
 		};
+		AF6E25C5276C3F030032E38F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF6E25C6276C3F030032E38F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		AF73FF341A09877F00E485E9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -39426,26 +39672,6 @@
 		AF9D4DFD09B5BB19006E59CF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-			};
-			name = Release;
-		};
-		AF9E7EC6190F4C1C00A8B01F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
-				ENABLE_HARDENED_RUNTIME = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_IDENTIFIER}";
-				SKIP_INSTALL = YES;
-			};
-			name = Debug;
-		};
-		AF9E7EC7190F4C1C00A8B01F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
-				ENABLE_HARDENED_RUNTIME = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_IDENTIFIER}";
-				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -40708,6 +40934,28 @@
 					"USE_GL=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
+			};
+			name = Release;
+		};
+		AFAE1482279275BE00C62683 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFAE1483279275BE00C62683 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -42758,6 +43006,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AF6E25C4276C3F030032E38F /* Build configuration list for PBXNativeTarget "MapScroller" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF6E25C5276C3F030032E38F /* Debug */,
+				AF6E25C6276C3F030032E38F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AF73FF331A09877F00E485E9 /* Build configuration list for PBXNativeTarget "BinaryRing" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -43276,15 +43533,6 @@
 			buildConfigurations = (
 				AF9D4DFC09B5BB19006E59CF /* Debug */,
 				AF9D4DFD09B5BB19006E59CF /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		AF9E7EC5190F4C1C00A8B01F /* Build configuration list for PBXNativeTarget "enable_gc" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AF9E7EC6190F4C1C00A8B01F /* Debug */,
-				AF9E7EC7190F4C1C00A8B01F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -43861,6 +44109,15 @@
 			buildConfigurations = (
 				AFADD33E24B67100005456DC /* Debug */,
 				AFADD33F24B67100005456DC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFAE1481279275BE00C62683 /* Build configuration list for PBXNativeTarget "Squirtorus" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFAE1482279275BE00C62683 /* Debug */,
+				AFAE1483279275BE00C62683 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

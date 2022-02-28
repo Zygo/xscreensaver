@@ -858,7 +858,7 @@ jwxyz_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
 
 
 void
-jwxyz_assert_gl ()
+jwxyz_assert_gl (void)
 {
   // This is like check_gl_error, except this happens for debug builds only.
 #ifndef __OPTIMIZE__

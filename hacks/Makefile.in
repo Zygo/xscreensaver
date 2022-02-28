@@ -101,7 +101,7 @@ SRCS		= xscreensaver-getimage.c \
 		  rocks.c rorschach.c screenhack.c sierpinski.c slidescreen.c \
 		  slip.c sphere.c spiral.c strange.c swirl.c xlockmore.c \
 		  fps.c goop.c starfish.c munch.c fadeplot.c \
-		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
+		  rdbomb.c coral.c mountain.c triangle.c lissie.c worm.c \
 		  rotor.c ant.c xjack.c xlyap.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
 		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c \
@@ -140,7 +140,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rocks.o rorschach.o screenhack.o sierpinski.o slidescreen.o \
 		  slip.o sphere.o spiral.o strange.o swirl.o xlockmore.o \
 		  fps.o goop.o starfish.o munch.o fadeplot.o \
-		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
+		  rdbomb.o coral.o mountain.o triangle.o lissie.o worm.o \
 		  rotor.o ant.o xjack.o xlyap.o xscreensaver-getimage.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
 		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o \
@@ -171,7 +171,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  maze moire noseguy pedal \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
 		  slip strange swirl goop starfish munch \
-		  fadeplot rd-bomb coral mountain triangle \
+		  fadeplot rdbomb coral mountain triangle \
 		  xjack xlyap cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
 		  demon loop penetrate deluxe compass squiral xflame \
@@ -226,7 +226,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 	          loop.man maze.man moire.man \
 	          moire2.man mountain.man munch.man nerverot.man noseguy.man \
 	          pedal.man penetrate.man penrose.man petri.man phosphor.man \
-	          polyominoes.man pyro.man qix.man rd-bomb.man ripples.man \
+	          polyominoes.man pyro.man qix.man rdbomb.man ripples.man \
 	          rocks.man rorschach.man rotzoomer.man \
 	          shadebobs.man sierpinski.man slidescreen.man slip.man \
 	          speedmine.man \
@@ -641,7 +641,7 @@ starfish:	starfish.o	$(HACK_OBJS) $(COL) $(SPL)
 munch:		munch.o		$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(UTILS_BIN)/pow2.o $(HACK_LIBS)
 
-rd-bomb:	rd-bomb.o	$(HACK_OBJS) $(COL) $(SHM)
+rdbomb:		rdbomb.o	$(HACK_OBJS) $(COL) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS) $(THRL)
 
 coral:	 	coral.o		$(HACK_OBJS) $(COL) $(ERASE)
@@ -2742,21 +2742,21 @@ qix.o: $(UTILS_SRC)/usleep.h
 qix.o: $(UTILS_SRC)/visual.h
 qix.o: $(UTILS_SRC)/xft.h
 qix.o: $(UTILS_SRC)/yarandom.h
-rd-bomb.o: ../config.h
-rd-bomb.o: $(srcdir)/fps.h
-rd-bomb.o: $(srcdir)/recanim.h
-rd-bomb.o: $(srcdir)/screenhackI.h
-rd-bomb.o: $(srcdir)/screenhack.h
-rd-bomb.o: $(UTILS_SRC)/colors.h
-rd-bomb.o: $(UTILS_SRC)/font-retry.h
-rd-bomb.o: $(UTILS_SRC)/grabscreen.h
-rd-bomb.o: $(UTILS_SRC)/hsv.h
-rd-bomb.o: $(UTILS_SRC)/resources.h
-rd-bomb.o: $(UTILS_SRC)/usleep.h
-rd-bomb.o: $(UTILS_SRC)/visual.h
-rd-bomb.o: $(UTILS_SRC)/xft.h
-rd-bomb.o: $(UTILS_SRC)/xshm.h
-rd-bomb.o: $(UTILS_SRC)/yarandom.h
+rdbomb.o: ../config.h
+rdbomb.o: $(srcdir)/fps.h
+rdbomb.o: $(srcdir)/recanim.h
+rdbomb.o: $(srcdir)/screenhackI.h
+rdbomb.o: $(srcdir)/screenhack.h
+rdbomb.o: $(UTILS_SRC)/colors.h
+rdbomb.o: $(UTILS_SRC)/font-retry.h
+rdbomb.o: $(UTILS_SRC)/grabscreen.h
+rdbomb.o: $(UTILS_SRC)/hsv.h
+rdbomb.o: $(UTILS_SRC)/resources.h
+rdbomb.o: $(UTILS_SRC)/usleep.h
+rdbomb.o: $(UTILS_SRC)/visual.h
+rdbomb.o: $(UTILS_SRC)/xft.h
+rdbomb.o: $(UTILS_SRC)/xshm.h
+rdbomb.o: $(UTILS_SRC)/yarandom.h
 recanim.o: ../config.h
 recanim.o: $(srcdir)/fps.h
 recanim.o: $(srcdir)/recanim.h

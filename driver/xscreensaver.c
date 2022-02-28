@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -223,6 +223,10 @@
 
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>		/* for waitpid() and associated macros */
+#endif
+
+#ifndef HAVE_XINPUT
+# error The XInput2 extension is required
 #endif
 
 #include <X11/Xlib.h>
@@ -1925,6 +1929,9 @@ main_loop (Display *dpy)
           case XI_RawKeyRelease:
           case XI_RawButtonPress:
           case XI_RawButtonRelease:
+          case XI_RawTouchBegin:
+          case XI_RawTouchEnd:
+          case XI_RawTouchUpdate:
             if (current_state != AUTH &&  /* logged by xscreensaver-auth */
                 (verbose_p > 1 ||
                  (verbose_p && now - active_at > 1)))
@@ -2355,6 +2362,7 @@ main (int argc, char **argv)
         {
           logfile = argv[++i];
           if (!logfile) goto HELP;
+          verbose_p = cmdline_verbose_p = cmdline_verbose_val = True;
         }
       else if (!strcmp (argv[i], "-d") ||
                !strcmp (argv[i], "-dpy") ||

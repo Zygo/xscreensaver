@@ -1,5 +1,5 @@
 /* test-xinput.c --- playing with the XInput2 extension.
- * xscreensaver, Copyright © 2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2021-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -8,6 +8,26 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * This verbosely prints out all events received from Xlib and the XInput2
+ * extension.
+ *
+ *     --grab, --grab-kbd, --grab-mouse
+ *     Read events while grabbed.  The grab is released after 15 seconds.
+ *
+ *     --sync, --async
+ *     Async grabs queue up events and deliver them all at release.
+ *
+ * Real X11 multi-head ("Zaphod Heads") has different behaviors than 
+ * single-screen displays with multiple monitors (Xinerama, XRANDR).
+ * To test X11 multi-head or different visual depths on Raspberry Pi
+ * you have to do it inside a nested server:
+ *
+ *    apt install xserver-xephyr
+ *    sudo rm /tmp/.X1-lock /tmp/.X11-unix/X1
+ *    export DISPLAY=:0
+ *    Xephyr :1 -ac -screen 1280x720 -screen 640x480x8 &
+ *    export DISPLAY=:1
  */
 
 #ifdef HAVE_CONFIG_H
@@ -29,11 +49,48 @@
 #include <X11/Xproto.h>
 #include <X11/extensions/XInput2.h>
 
-#include "blurb.h"
+/* #include "blurb.h" */
+extern const char *progname;
+extern int verbose_p;
+
 #include "xinput.h"
 
 char *progclass = "XScreenSaver";
 Bool debug_p = True;
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+#define RST "\x1B[0m"
+#define RED "\x1B[31m"
+#define GRN "\x1B[32m"
+#define YEL "\x1B[33m"
+#define BLU "\x1B[34m"
+#define MAG "\x1B[35m"
+#define CYN "\x1B[36m"
+#define WHT "\x1B[37m"
+#define BLD "\x1B[1m"
+#define UL  "\x1B[4m"
+
+static const char *
+blurb(void)
+{
+  static char buf[255] = { 0 };
+  struct tm *tm;
+  struct timeval tv;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday (&tv, &tzp);
+# else
+  gettimeofday (&tv);
+# endif
+  tm = localtime (&tv.tv_sec);
+  sprintf (buf, "%s: %02d:%02d:%02d.%03lu", progname,
+           tm->tm_hour, tm->tm_min, tm->tm_sec, 
+           (unsigned long) (tv.tv_usec / 1000));
+  return buf;
+}
+
 
 static void
 ungrab_timer (XtPointer closure, XtIntervalId *id)
@@ -64,6 +121,477 @@ grab_string (int status)
 }
 
 
+typedef enum { 
+  ETYPE, ETIME, ESERIAL, EROOT, EWIN, ESUB, EX, EY, EXR, EYR,
+  ERAW0, ERAW1, EFLAGS, ESTATE, EKEYCODE, EKEY, EHINT, ESSCR,
+  EEND
+} coltype;
+
+typedef struct {
+  const char *name;
+  int width;
+  enum { TSTR, TSTRL, TINT, TUINT, THEX, TTIME } type;
+} columns;
+
+
+static const columns cols[] = {
+  /* ETYPE	*/ { "Type", 	  17, TSTRL },
+  /* ETIME	*/ { "Timestamp", 11, TTIME },
+  /* ESERIAL	*/ { "Serial",     9, TUINT },
+  /* EROOT	*/ { "Root", 	   8, THEX },
+  /* EWIN	*/ { "Window",	   8, THEX },
+  /* ESUB	*/ { "Subwin", 	   8, THEX },
+  /* EX		*/ { "X", 	  11, TINT },
+  /* EY		*/ { "Y", 	  11, TINT },
+  /* EXR	*/ { "X Root", 	  11, TINT },
+  /* EYR	*/ { "Y Root", 	  11, TINT },
+  /* ERAW0	*/ { "RAW 0", 	   8, THEX },
+  /* ERAW1	*/ { "RAW 1", 	   8, THEX },
+  /* EFLAGS	*/ { "Flags", 	   8, THEX },
+  /* ESTATE	*/ { "State", 	   8, THEX },
+  /* EKEYCODE	*/ { "Code", 	   5, THEX },
+  /* EKEY	*/ { "Key", 	   3, TSTR },
+  /* EHINT	*/ { "Hint", 	   9, TINT },
+  /* ESSCR	*/ { "Same", 	   4, TINT },
+};
+
+static struct { Time t; XEvent e; } history[100] = { 0, };
+
+static void
+print_header (void)
+{
+  char buf[1024] = { 0 };
+  char *s = buf;
+  coltype t;
+
+  if (countof(cols) != EEND) abort();
+
+  for (t = 0; t < EEND; t++)
+    {
+      if (t > 0) *s++ = ' ';
+      if (cols[t].type == TSTRL)
+        sprintf (s, "%-*s", cols[t].width, cols[t].name);
+      else
+        sprintf (s, "%*s",  cols[t].width, cols[t].name);
+      s += strlen(s);
+    }
+  *s++ = '\n';
+  for (t = 0; t < EEND; t++)
+    {
+      int i;
+      if (t > 0) *s++ = ' ';
+      for (i = 0; i < cols[t].width; i++)
+        *s++ = '=';
+    }
+  fprintf (stderr, "\n%s\n", buf);
+}
+
+
+static void
+print_field (char *out, coltype t, void *val)
+{
+  const columns *col = &cols[t];
+  if (! val)
+    {
+      sprintf (out, "%*s", col->width, "-");
+      return;
+    }
+
+  switch (col->type) {
+  case TSTRL: sprintf (out, "%-*s", col->width, (char *) val); break;
+  case TSTR:  sprintf (out, "%*s", col->width, (char *) val); break;
+  case TINT:  sprintf (out, "%*d", col->width, *((int *) val)); break;
+  case TUINT: sprintf (out, "%*u", col->width, *((unsigned int *) val)); break;
+  case THEX:  sprintf (out, "%*X", col->width, *((unsigned int *) val)); break;
+  case TTIME: sprintf (out, "%*.3f", col->width, 
+                       (double) (*((unsigned int *) val)) / 1000.0); break;
+  default: abort(); break;
+  }
+}
+
+
+static void
+push_history (Time t, XEvent *xev)
+{
+  memmove (history + 1, history, sizeof(history) - sizeof(*history));
+  history[0].t = t;
+  history[0].e = *xev;
+}
+
+
+static void
+asciify (char *c, int L)
+{
+  if      (!strcmp(c,"\n")) strcpy(c, "\\n");
+  else if (!strcmp(c,"\r")) strcpy(c, "\\r");
+  else if (!strcmp(c,"\t")) strcpy(c, "\\t");
+  else if (!strcmp(c," "))  strcpy(c, "SPC");
+  else if (L == 1 && c[0] < ' ')
+    sprintf (c, "^%c", c[0] + '@');
+}
+
+
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
+}
+
+
+/* Whether the field's value is sane. */
+static Bool
+validate_field (Display *dpy, coltype t, void *val)
+{
+  const char *err = 0;
+  if (!val) return True;
+
+  switch (t) {
+  case ETIME:
+    {
+      Time t = *(Time *) val;
+      int i;
+      for (i = 0; i < countof(history); i++)
+        {
+          if (t && t == history[i].t)
+            {
+              err = "DUP TIME";
+              break;
+            }
+          else if (t && t < history[i].t)
+            {
+              err = "TIME TRAVEL";
+              break;
+            }
+        }
+    }
+    break;
+
+  case ESERIAL:
+    {
+      unsigned long s = *(unsigned long *) val;
+      int i;
+      for (i = 0; i < countof(history); i++)
+        {
+          if (s && s == history[i].e.xany.serial)
+            {
+              err = "DUP SERIAL";
+              break;
+            }
+          else if (s && s < history[i].e.xany.serial)
+            {
+              err = "TIME TRAVEL";
+              break;
+            }
+        }
+    }
+    break;
+
+  case EROOT: case EWIN: case ESUB:
+    {
+      Window w = *(Window *) val;
+      if (w)
+        {
+          XWindowAttributes xgwa;
+          error_handler_hit_p = False;
+          XSync (dpy, False);
+          XSetErrorHandler (ignore_all_errors_ehandler);
+          XSync (dpy, False);
+          XGetWindowAttributes (dpy, w, &xgwa);
+          XSync (dpy, False);
+          if (error_handler_hit_p)
+            {
+              err = "BAD WINDOW";
+              break;
+            }
+        }
+    }
+
+  case EX: case EY: case EXR: case EYR:
+    {
+      int i = *(int *) val;
+      if (i < 0 || i > 0xFFFF)
+        {
+          err = "BAD COORD";
+          break;
+        }
+    }
+    break;
+
+  case EFLAGS:
+    {
+      /* "The only defined flag is XIKeyRepeat for XI_KeyPress events."
+         But XI_RawKeyPress events don't repeat! */
+      int i = *(int *) val;
+      if (i != 0 && 1 != XIKeyRepeat)
+        {
+          err = "BAD BOOL";
+          break;
+        }
+    }
+    break;
+
+  case ESTATE:
+    {
+      unsigned int i = *(int *) val;
+
+      if (i & ~(ShiftMask | LockMask | ControlMask | Mod1Mask |
+                Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask |
+                Button1Mask | Button2Mask | Button3Mask |
+                Button4Mask | Button5Mask))
+        {
+          err = "BAD MODS";
+          break;
+        }
+    }
+    break;
+
+  case EKEYCODE:
+    {
+      int i = *(int *) val;
+      if (i < 0 || i > 0xFFFF)
+        {
+          err = "BAD KEYCODE";
+          break;
+        }
+    }
+    break;
+
+  case EHINT: case ESSCR:
+    {
+      int i = *(int *) val;
+      if (i != 0 && 1 != 1)
+        {
+          err = "BAD BOOL";
+          break;
+        }
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  if (err) return False;
+  return True;
+}
+
+
+static void
+print_event (Display *dpy, XEvent *xev, int xi_opcode)
+{
+  XIRawEvent *re = 0;
+  XIDeviceEvent *de = 0;
+  void *fields[EEND] = { 0, };
+
+  switch (xev->xany.type) {
+  case KeyPress:
+  case KeyRelease:
+    {
+      static XComposeStatus compose = { 0, };
+      KeySym keysym = 0;
+      static char c[100];
+      int n;
+
+      fields[ETYPE] = (void *)
+        (xev->xany.type == KeyPress ? "KeyPress" : "KeyRelease");
+      fields[ETIME]    = &xev->xkey.time;
+      fields[ESERIAL]  = &xev->xkey.serial;
+      fields[EWIN]     = &xev->xkey.window;
+      fields[EROOT]    = &xev->xkey.root;
+      fields[ESUB]     = &xev->xkey.subwindow;
+      fields[EX]       = &xev->xkey.x;
+      fields[EY]       = &xev->xkey.y;
+      fields[EXR]      = &xev->xkey.x_root;
+      fields[EYR]      = &xev->xkey.y_root;
+      fields[ESTATE]   = &xev->xkey.state;
+      fields[EKEYCODE] = &xev->xkey.keycode;
+
+      n = XLookupString (&xev->xkey, c, sizeof(c)-1, &keysym, &compose);
+      c[n] = 0;
+      asciify (c, n);
+      fields[EKEY] = c;
+    }
+    break;
+  case ButtonPress:
+  case ButtonRelease:
+    {
+      fields[ETYPE] = (void *)
+        (xev->xany.type == ButtonPress ? "ButtonPress" : "ButtonRelease");
+      fields[ETIME]    = &xev->xbutton.time;
+      fields[ESERIAL]  = &xev->xbutton.serial;
+      fields[EWIN]     = &xev->xbutton.window;
+      fields[EROOT]    = &xev->xbutton.root;
+      fields[ESUB]     = &xev->xbutton.subwindow;
+      fields[EX]       = &xev->xbutton.x;
+      fields[EY]       = &xev->xbutton.y;
+      fields[EXR]      = &xev->xbutton.x_root;
+      fields[EYR]      = &xev->xbutton.y_root;
+      fields[ESTATE]   = &xev->xbutton.state;
+      fields[EKEYCODE] = &xev->xbutton.button;
+    }
+    break;
+  case MotionNotify:
+    {
+      fields[ETYPE] = (void *) "MotionNotify";
+      fields[ETIME]    = &xev->xmotion.time;
+      fields[ESERIAL]  = &xev->xmotion.serial;
+      fields[EWIN]     = &xev->xmotion.window;
+      fields[EROOT]    = &xev->xmotion.root;
+      fields[ESUB]     = &xev->xmotion.subwindow;
+      fields[EX]       = &xev->xmotion.x;
+      fields[EY]       = &xev->xmotion.y;
+      fields[EXR]      = &xev->xmotion.x_root;
+      fields[EYR]      = &xev->xmotion.y_root;
+      fields[ESTATE]   = &xev->xmotion.state;
+      fields[EHINT]    = &xev->xmotion.is_hint;
+    }
+    break;
+  case GenericEvent:
+    break;
+  case EnterNotify:
+  case LeaveNotify:
+    break;
+  default:
+    {
+      static char ee[100];
+      sprintf (ee, "EVENT %2d", xev->xany.type);
+      fields[ETYPE]   = &ee;
+      fields[ESERIAL] = &xev->xany.serial;
+      fields[EWIN]    = &xev->xany.window;
+    }
+    break;
+  }
+
+  if (xev->xcookie.type != GenericEvent ||
+      xev->xcookie.extension != xi_opcode)
+    goto DONE;  /* not an XInput event */
+  if (!xev->xcookie.data)
+    XGetEventData (dpy, &xev->xcookie);
+  if (!xev->xcookie.data)
+    {
+      fields[ETYPE] = "BAD XIINPUT";
+      goto DONE;
+    }
+
+  re = xev->xcookie.data;
+  de = (XIDeviceEvent *) re;
+
+  if (xev->xany.serial != re->serial) abort();
+
+  switch (xev->xcookie.evtype) {
+  case XI_RawKeyPress:      fields[ETYPE] = "XI_RawKeyPress";   break;
+  case XI_RawKeyRelease:    fields[ETYPE] = "XI_RawKeyRelease"; break;
+  case XI_RawButtonPress:   fields[ETYPE] = "XI_RawBtnPress";   break;
+  case XI_RawButtonRelease: fields[ETYPE] = "XI_RawBtnRelease"; break;
+  case XI_RawMotion:        fields[ETYPE] = "XI_RawMotion";     break;
+  case XI_RawTouchBegin:    fields[ETYPE] = "XI_RawTouchBegin"; break;
+  case XI_RawTouchEnd:      fields[ETYPE] = "XI_RawTouchEnd";   break;
+  case XI_RawTouchUpdate:   fields[ETYPE] = "XI_RawTouchUpd";   break;
+  default:
+    {
+      static char ee[100];
+      sprintf (ee, "XI EVENT %2d", xev->xany.type);
+      fields[ETYPE]   = &ee;
+      fields[ESERIAL] = &xev->xany.serial;
+      fields[EWIN]    = &xev->xany.window;
+    }
+    break;
+  }
+
+  fields[ESERIAL]  = &xev->xany.serial;
+  fields[ETIME]    = &re->time;
+  fields[EWIN]     = &de->event;
+  fields[EROOT]    = &de->root;
+  fields[ESUB]     = &de->child;
+  fields[EX]       = &de->event_x;
+  fields[EY]       = &de->event_y;
+  fields[EXR]      = &de->root_x;
+  fields[EYR]      = &de->root_y;
+  fields[ERAW0]    = &re->raw_values[0];
+  fields[ERAW1]    = &re->raw_values[1];
+  fields[EFLAGS]   = &re->flags;
+  fields[ESTATE]   = &de->mods.effective;
+  fields[EKEYCODE] = &re->detail;
+  /* ignoring XIValuatorState valuators */
+
+  switch (xev->xcookie.evtype) {
+  case XI_RawKeyPress:
+  case XI_RawKeyRelease:
+    {
+      XKeyEvent xkey = { 0, };
+      static XComposeStatus compose = { 0, };
+      KeySym keysym = 0;
+      static char c[100];
+      int n;
+      xkey.type      = (de->evtype == XI_RawKeyPress ? KeyPress : KeyRelease);
+      xkey.serial    = de->serial;
+      xkey.display   = de->display;
+      xkey.window    = de->event;
+      xkey.root      = de->root;
+      xkey.subwindow = de->child;
+      xkey.time      = de->time;
+      xkey.state     = de->mods.effective;
+      xkey.keycode   = de->detail;
+      n = XLookupString (&xkey, c, sizeof(c)-1, &keysym, &compose);
+      c[n] = 0;
+      asciify (c, n);
+      fields[EKEY] = c;
+    }
+    break;
+  case XI_RawButtonPress:
+  case XI_RawButtonRelease:
+    {
+      static char c[10];
+      sprintf (c, "b%d", re->detail);
+      fields[EKEY] = &c;
+    }
+    break;
+  default: break;
+  }
+
+ DONE:
+
+  if (fields[ETYPE])
+    {
+      char buf[10240];
+      char *s = buf;
+      coltype t;
+      *s = 0;
+      for (t = 0; t < EEND; t++)
+        {
+          Bool ok = validate_field (dpy, t, fields[t]);
+
+          if (t > 0) { *s++ = ' '; *s = 0; }
+
+          if (!ok)
+            {
+              strcat (s, BLD);
+              strcat (s, RED);
+              s += strlen(s);
+            }
+
+          print_field (s, t, fields[t]);
+          s += strlen(s);
+
+          if (!ok)
+            {
+              strcat (s, RST);
+              s += strlen(s);
+            }
+        }
+      fprintf (stderr, "%s\n", buf);
+    }
+
+  {
+    Time t = (fields[ETIME] ? * (Time *) fields[ETIME] : 0);
+    push_history (t, xev);
+  }
+}
+
+
 int
 main (int argc, char **argv)
 {
@@ -76,8 +604,11 @@ main (int argc, char **argv)
   Bool mouse_sync_p = False;
   Bool kbd_sync_p   = False;
   int i;
+  char *s;
 
   progname = argv[0];
+  s = strrchr (progname, '/');
+  if (s) progname = s+1;
 
   for (i = 1; i < argc; i++)
     {
@@ -104,9 +635,18 @@ main (int argc, char **argv)
       else if (!strcmp (argv[i], "-mouse-async") ||
                !strcmp (argv[i], "-pointer-async"))
         mouse_sync_p = False;
+      else if (!strcmp (argv[i], "-sync"))
+        kbd_sync_p = mouse_sync_p = True;
+      else if (!strcmp (argv[i], "-async"))
+        kbd_sync_p = mouse_sync_p = False;
       else
         {
           fprintf (stderr, "%s: unknown option: %s\n", blurb(), oa);
+          fprintf (stderr, "usage: %s "
+                            "[--grab]       [--sync       | --async]"
+                   "\n\t\t   [--grab-kbd]   [--kbd-sync   | --kbd-async]"
+                   "\n\t\t   [--grab-mouse] [--mouse-sync | --mouse-async]\n",
+                   progname);
           exit (1);
         }
     }
@@ -118,6 +658,10 @@ main (int argc, char **argv)
 
   if (! init_xinput (dpy, &xi_opcode))
     exit (1);
+
+  fprintf (stderr, "\n%s: Make your window wide. "
+           "Bogus values are " BLD RED "RED" RST ".\n",
+           blurb());
 
   if (grab_kbd_p || grab_mouse_p)
     {
@@ -180,125 +724,13 @@ main (int argc, char **argv)
       XtAppAddTimeOut (app, 1000 * timeout, ungrab_timer, (XtPointer) dpy);
     }
 
+  print_header();
   while (1)
     {
-      XEvent xev;
-      XIRawEvent *re;
-
+      XEvent xev = { 0, };
       XtAppNextEvent (app, &xev);
       XtDispatchEvent (&xev);
-
-      switch (xev.xany.type) {
-      case KeyPress:
-      case KeyRelease:
-        {
-          static XComposeStatus compose = { 0, };
-          KeySym keysym = 0;
-          char c[100];
-          int n;
-          n = XLookupString (&xev.xkey, c, sizeof(c)-1, &keysym, &compose);
-          c[n] = 0;
-          fprintf (stderr, "%s: X11 Key%s      %02x %02x %s \"%s\"\n", blurb(),
-                   (xev.xkey.type == KeyPress ? "Press  " : "Release"),
-                   xev.xkey.keycode, xev.xkey.state,
-                   XKeysymToString (keysym), c);
-        }
-        break;
-      case ButtonPress:
-      case ButtonRelease:
-        fprintf (stderr, "%s: X11 Button%s   %d %d\n", blurb(),
-                 (xev.xany.type == ButtonPress ? "Press  " : "Release"),
-                 xev.xbutton.button, xev.xbutton.state);
-        break;
-      case MotionNotify:
-        fprintf (stderr, "%s: X11 MotionNotify   %4d, %-4d\n",
-                 blurb(), xev.xmotion.x_root, xev.xmotion.y_root);
-        break;
-      case GenericEvent:
-        break;
-      case EnterNotify:
-      case LeaveNotify:
-        break;
-      default:
-        fprintf (stderr, "%s: X11 event %d on 0x%lx\n",
-                 blurb(), xev.xany.type, xev.xany.window);
-        break;
-      }
-
-      if (xev.xcookie.type != GenericEvent ||
-          xev.xcookie.extension != xi_opcode)
-        continue;  /* not an XInput event */
-      if (!xev.xcookie.data)
-        XGetEventData (dpy, &xev.xcookie);
-      if (!xev.xcookie.data)
-        continue;  /* Bogus XInput event */
-
-      re = xev.xcookie.data;
-      switch (xev.xcookie.evtype) {
-      case XI_RawKeyPress:
-      case XI_RawKeyRelease:
-        {
-          /* Fake up an XKeyEvent in order to call XKeysymToString(). */
-          XEvent ev2;
-          Bool ok = xinput_event_to_xlib (xev.xcookie.evtype,
-                                          (XIDeviceEvent *) re,
-                                          &ev2);
-          if (!ok)
-            fprintf (stderr, "%s: unable to translate XInput2 event\n",
-                     blurb());
-          else
-            {
-              static XComposeStatus compose = { 0, };
-              KeySym keysym = 0;
-              char c[100];
-              int n;
-              n = XLookupString (&ev2.xkey, c, sizeof(c)-1, &keysym, &compose);
-              c[n] = 0;
-              fprintf (stderr, "%s: XI_RawKey%s    %02x %02x %s \"%s\"\n",
-                       blurb(),
-                       (ev2.xkey.type == KeyPress ? "Press  " : "Release"),
-                       ev2.xkey.keycode, ev2.xkey.state,
-                       XKeysymToString (keysym), c);
-            }
-        }
-        break;
-      case XI_RawButtonPress:
-      case XI_RawButtonRelease:
-        fprintf (stderr, "%s: XI_RawButton%s %d\n", blurb(),
-                 (re->evtype == XI_RawButtonPress ? "Press  " : "Release"),
-                 re->detail);
-        break;
-      case XI_RawMotion:
-        {
-          Window root_ret, child_ret;
-          int root_x, root_y;
-          int win_x, win_y;
-          unsigned int mask;
-          XQueryPointer (dpy, DefaultRootWindow (dpy),
-                         &root_ret, &child_ret, &root_x, &root_y,
-                         &win_x, &win_y, &mask);
-          fprintf (stderr, "%s: XI_RawMotion       %4d, %-4d  %7.02f, %-7.02f\n",
-                   blurb(),
-                   root_x, root_y,
-                   re->raw_values[0], re->raw_values[1]);
-        }
-        break;
-      case XI_RawTouchBegin:
-        fprintf (stderr, "%s: XI_RawTouchBegin\n", blurb());
-        break;
-      case XI_RawTouchEnd:
-        fprintf (stderr, "%s: XI_RawTouchEnd", blurb());
-        break;
-      case XI_RawTouchUpdate:
-        fprintf (stderr, "%s: XI_RawTouchUpdate", blurb());
-        break;
-
-      default:
-        fprintf (stderr, "%s: XInput unknown event %d\n", blurb(),
-                 xev.xcookie.evtype);
-        break;
-      }
-
+      print_event (dpy, &xev, xi_opcode);
       XFreeEventData (dpy, &xev.xcookie);
     }
 

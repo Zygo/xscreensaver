@@ -70,6 +70,17 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.03	* New hack, `squirtorus'.
+	* New hack, `mapscroller' (X11 and macOS only).
+	* `sphereeversion' now has corrugation-mode, and can evert the Earth.
+	* `glplanet' is higher resolution, and displays time zones.
+	* `glslideshow' displays relative pathnames again.
+	* iOS: Apple broke drag-to-rotate again. Fixed.
+	* macOS: fixed spurious error message in auto-update installer.
+	* X11: fixed `sonar' failing to ping on some Linux systems.
+	* X11: Touch-screens work.
+	* X11: Hold down Backspace to clear the whole password field.
+
 6.02	* New hacks, `marbling' and `binaryhorizon'.
 	* `atlantis' behaviors are more random and lifelike.
 	* `headroom' is now Mask Headroom.

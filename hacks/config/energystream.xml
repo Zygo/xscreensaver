@@ -11,8 +11,8 @@
           low="0.01" high="5.0" default="1.0"/>
 
   <hgroup>
-   <boolean id="wander" _label="Wander"    arg-unset="-wander" />
-   <boolean id="spin"   _label="Spin"      arg-unset="-spin" />
+   <boolean id="wander" _label="Wander" arg-set="-wander" />
+   <boolean id="spin"   _label="Spin"   arg-set="-spin" />
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 

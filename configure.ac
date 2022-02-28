@@ -1,8 +1,17 @@
-# configure.in --- xscreensaver, Copyright © 1997-2021 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright © 1997-2022 Jamie Zawinski.
 #
 
-# Note: upgrading past 2.69_5 breaks the world.
+# Note: upgrading past 2.69_5 breaks the world, mostly the po/ shitshow.
 AC_PREREQ([2.69])
+
+# If you accidentally upgraded autoconf, re-install the 2019-08-23 version:
+#
+#    git clone --single-branch https://github.com/macports/macports-ports.git
+#    cd macports-ports/
+#    git checkout 1d802b48a7b00b6c154e971119a2a309550c79c2
+#    cd devel/autoconf
+#    sudo port install
+#    port installed autoconf
 
 AC_INIT
 AC_CONFIG_SRCDIR([driver/subprocs.c])
@@ -273,9 +282,6 @@ AH_TEMPLATE([HAVE_ADJUNCT_PASSWD],
 
 AH_TEMPLATE([HAVE_HPUX_PASSWD],
 	    [Define this for HPUX so-called "Secure Passwords".])
-
-#AH_TEMPLATE([PASSWD_HELPER_PROGRAM],
-#	    [Define this to use a third-party password helper program.])
 
 AH_TEMPLATE([HAVE_SYSLOG],
 	    [Define this if you have openlog/syslog/closelog.])
@@ -1185,8 +1191,18 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
 AC_SUBST(GETTEXT_PACKAGE)
 
 ALL_LINGUAS="da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
-AM_GLIB_GNU_GETTEXT
+AM_GNU_GETTEXT([external])
 MKINSTALLDIRS="$INSTALL_DIRS"
+
+# The library is there, but neither $INTLLIBS nor $LIBINTL are getting set.
+if test -z "$INTLLIBS" ; then INTLLIBS="$LIBINTL" ; fi
+if test -z "$INTLLIBS" ; then
+  AC_CHECK_X_LIB(intl, gettext, [INTLLIBS="-lintl"])
+fi
+LIBINTL="$INTLLIBS"
+AC_SUBST(INTLLIBS)
+AC_SUBST(LIBINTL)
+AC_SUBST(CATALOGS)
 
 
 ###############################################################################
@@ -2709,47 +2725,6 @@ if test "$enable_locking" = yes ; then
 fi
 
 
-###############################################################################
-#
-#       Strongly suspect that this hasn't been used in years.  Also, the same
-#       goal is achieved by xscreensaver-auth in XScreenSaver 6.  -- jwz, 2021
-#
-#       Check for external password helper
-#	On SuSE in 1993, instead of having xscreensaver be a setuid program,
-#	they fork an external program that takes the password on stdin, and
-#	returns true if that password is a valid one.  Then only that smaller
-#	program needs to be setuid.
-#
-#       (Note that this external program is not a GUI: the GUI is still
-#	all in xscreensaver itself; the external program just does auth.)
-#
-###############################################################################
-
-#have_passwd_helper=no
-#with_passwd_helper_req=unspecified
-#
-#AC_ARG_WITH(passwd-helper,
-#[  --with-passwd-helper    Include support for external password verification.],
-#  [with_passwd_helper="$withval"; with_passwd_helper_req="$withval"],[with_passwd_helper=no])
-## no HANDLE_X_PATH_ARG for this one
-#
-#if test "$enable_locking" = no ; then
-#  with_passwd_helper_req=no
-#  with_passwd_helper=no
-#fi
-#
-#case "$with_passwd_helper" in
-#  ""|no) : ;;
-#  /*)
-#    AC_DEFINE_UNQUOTED(PASSWD_HELPER_PROGRAM, "$with_passwd_helper")
-#    have_passwd_helper=yes;;
-#  *)
-#    echo "error: --with-passwd-helper needs full pathname of helper (not '$with_passwd_helper')." >&2
-#    exit 1
-#esac
-
-
-
 # Most of the above shadow mechanisms will have set setuid_auth to yes,
 # if they were found.  But, on some systems, we need setuid even when
 # using plain old vanilla passwords.
@@ -4117,7 +4092,7 @@ fi
 
 if test "$record_anim" = yes; then
   if test "$have_gdk_pixbuf" != yes; then
-    AC_MSG_ERROR(--with-record-animation requires GDK-Pixbuf)
+    AC_MSG_WARN(--with-record-animation requires GDK-Pixbuf)
   else
     AC_MSG_RESULT(enabling --with-record-animation)
     AC_DEFINE(HAVE_RECORD_ANIM)
@@ -4174,12 +4149,8 @@ if test "$enable_pam_check_account_type" = yes; then
 else
   COMMENT_PAM_CHECK_ACCOUNT="#"
 fi
-#if test "$have_passwd_helper" = yes; then
-#  PASSWD_SRCS="$PASSWD_SRCS \$(PWHELPER_SRCS)"
-#  PASSWD_OBJS="$PASSWD_OBJS \$(PWHELPER_OBJS)"
-#fi
-  PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
-  PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
+PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
+PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
 
 
 if test "$enable_locking" = yes; then
@@ -4401,6 +4372,8 @@ AC_OUTPUT
 #
 ###############################################################################
 
+CONF_STATUS=0
+
 warn_prefix_1="    Warning:"
 warn_prefix_2="       Note:"
 warn_prefix="$warn_prefix_1"
@@ -4459,65 +4432,81 @@ if test "$ac_prog_cc_no_pthread" ; then
   warn2 "support POSIX threads."
   echo ""
   warn2 "If you have multiple CPU cores, try CC=$PTHREAD_CC."
+  CONF_STATUS=1
 elif test "$with_pthread_req" = yes -a "$have_pthread" = no ; then
   warn 'POSIX threads were requested, but were not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_sgi_req" = yes -a "$have_sgi" = no ; then
   warn 'The SGI saver extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_xidle_req" = yes -a "$have_xidle" = no ; then
   warn 'The XIdle extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_mit_req" = yes -a "$have_mit" = no ; then
   warn 'The MIT-SCREEN-SAVER extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_xshm_req" = yes -a "$have_xshm" = no ; then
   warn 'The XSHM extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_xdbe_req" = yes -a "$have_xdbe" = no ; then
   warn 'The DOUBLE-BUFFER extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 #if test "$with_xcomposite_req" = yes -a "$have_xcomposite" = no ; then
 #  warn 'The XCOMPOSITE extension was requested, but was not found.'
+#  CONF_STATUS=1
 #fi
 
 if test "$with_xkb_req" = yes -a "$have_xkb" = no ; then
   warn 'The X Keyboard extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_sgivc_req" = yes -a "$have_sgivc" = no ; then
   warn 'The SGI-VIDEO-CONTROL extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_dpms_req" = yes -a "$have_dpms" = no ; then
   warn 'The DPMS extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_xinerama_req" = yes -a "$have_xinerama" = no ; then
   warn 'The Xinerama extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
   warn 'The XF86VMODE extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_randr_req" = yes -a "$have_randr" = no ; then
   warn 'The RANDR extension was requested, but was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
   warn "Checking of /proc/interrupts was requested, but it's bogus."
+  CONF_STATUS=1
 fi
 
 if test "$pkg_config" = false ; then
   warnL 'The "pkg-config" program was not found.  Without that,'
   warn2 "detection of the various GTK libraries won't work."
+  CONF_STATUS=1
 else
   pkgerr=`$pkg_config --list-all 2>&1 >/dev/null`
   if test "x$pkgerr" != "x" ; then
@@ -4526,20 +4515,27 @@ else
     warn2 "The errors are:"
     echo ''
     echo "$pkgerr" | sed 's/^/             > /g'
+    CONF_STATUS=1
   fi
 fi
 
 if test "$gtk_halfassed" != no ; then
-  warnL "GTK was found, but $gtk_halfassed_lib was not, so GTK can't be used."
+  warnL "GTK was found, but $gtk_halfassed_lib was not, so GTK"
+  warn2 "can't be used."
+  CONF_STATUS=1
+
+  if ( echo $gtk_halfassed_lib | grep -qi pixbuf-xlib ); then
+    echo ''
+    warn2 "Recently, some distros have stopped distributing"
+    warn2 "gdk-pixbuf-xlib entirely.  So good luck with that."
+  fi
+
 fi
 
 motif_warn2() {
-  warn2 'Though the Motif front-end to xscreensaver is still'
-  warn2 'maintained, it is no longer being updated with new'
-  warn2 'features: all new development on the xscreensaver-settings'
-  warn2 'program is happening in the GTK version, and not in the'
-  warn2 'Motif version.  It is recommended that you build against'
-  warn2 'GTK instead of Motif.  See <http://www.gtk.org/>.'
+  warn2 "The Motif version of \`xscreensaver-settings' is missing many"
+  warn2 'features.  It is strongly recommended that you build the GTK'
+  warn2 'version instead.'
 }
 
 if test "$have_motif" = no -a "$have_gtk" = no; then
@@ -4549,9 +4545,11 @@ if test "$have_motif" = no -a "$have_gtk" = no; then
     warn2 "\`xscreensaver-settings' program requires one of these."
     echo ''
     motif_warn2
+    CONF_STATUS=1
   else
     warnL "The GTK libraries do not seem to be available; the"
     warn2 "\`xscreensaver-settings' program requires them."
+    CONF_STATUS=1
 #   echo ''
 #   warn2 'You can use Motif or Lesstif instead of GTK (use the'
 #   warn2 "\`--with-motif' option) but that is NOT recommended."
@@ -4561,20 +4559,24 @@ if test "$have_motif" = no -a "$have_gtk" = no; then
 elif test "$with_motif_req" = yes -a "$have_motif" = no ; then
   warnL "Use of Motif was requested, but it wasn't found;"
   warn2 "Gtk will be used instead."
+  CONF_STATUS=1
 
 elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
   warnL "Use of Gtk was requested, but it wasn't found."
+  CONF_STATUS=1
 fi
 
 
 if test "$ac_cv_libxt" != yes ; then
   warnL 'The Xt library was not found.  It is required.'
+  CONF_STATUS=1
 fi
 
 if test "$have_gtk" = yes -a "$have_gdk_pixbuf" = no ; then
   warn  "GTK is being used, but the GDK-Pixbuf library and/or"
   warn2 "headers were not found.  That can't be good.  Please"
   warn2 "install the GDK-Pixbuf development kit and re-configure."
+  CONF_STATUS=1
 fi
 
 if test "$have_motif" = yes -a "$have_lesstif" = yes ; then
@@ -4592,6 +4594,7 @@ if test "$have_motif" = yes -a "$have_lesstif" = yes ; then
     warn2 "use with XScreenSaver; it is strongly recommended"
     warn2 "that you upgrade to at least version $preferred_lesstif!"
     warn2 "See <http://www.lesstif.org/>."
+    CONF_STATUS=1
   fi
 fi
 
@@ -4610,6 +4613,7 @@ halfassery() {
 
 if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
   warnL 'Use of GDK-Pixbuf was requested, but it was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
@@ -4639,6 +4643,7 @@ fi
 if test "$have_jpeg" = no ; then
   if test "$with_jpeg_req" = yes ; then
     warnL 'Use of libjpeg was requested, but it was not found.'
+    CONF_STATUS=1
   elif test "$with_jpeg_req" = no ; then
     warnL 'The JPEG library is not being used.'
   else
@@ -4651,6 +4656,7 @@ if test "$have_jpeg" = no ; then
     warn2 "This means that it won't be possible for the image-manipulating"
     warn2 "display modes to load files from disk; and it also means that"
     warn2 "the \`webcollage' program will be much slower."
+    CONF_STATUS=1
   else
     warn2 "This means the \`webcollage' program will be much slower."
   fi
@@ -4660,6 +4666,7 @@ fi
 if test "$have_png" = no ; then
   if test "$with_png_req" = yes ; then
     warnL 'Use of libpng was requested, but it was not found.'
+    CONF_STATUS=1
   elif test "$with_png_req" = no ; then
     warnL 'The PNG library is not being used.'
   else
@@ -4668,18 +4675,21 @@ if test "$have_png" = no ; then
 
   if test "$png_halfassed" = yes ; then halfassery ; fi
   warn2 "Many things aren't going to work right."
+  CONF_STATUS=1
 fi
 
 
 if test "$have_xinput" = no ; then
   warnL 'The XInput2 library was not found.  It is required.'
   if test "$xinput_halfassed" = yes ; then halfassery ; else echo '' ; fi
+  CONF_STATUS=1
 fi
 
 
 if test "$have_xft" = no ; then
   warnL 'The XFreeType library was not found.  It is required.'
   if test "$xft_halfassed" = yes ; then halfassery ; else echo '' ; fi
+  CONF_STATUS=1
 fi
 
 
@@ -4688,9 +4698,11 @@ if test "$have_systemd" = no ; then
   if test "$systemd_too_old" = yes ; then
     warnL "The systemd library is too old."
     systemd_warned=yes
+    CONF_STATUS=1
   elif test "$with_systemd_req" = yes ; then
     warnL "Use of systemd was requested, but it was not found."
     systemd_warned=yes
+    CONF_STATUS=1
   elif test "$ac_macosx" = yes; then
     true
   elif test "$with_systemd_req" = no ; then
@@ -4704,6 +4716,7 @@ if test "$have_systemd" = no ; then
   if test "$systemd_halfassed" = yes ; then
     halfassery
     systemd_warned=yes
+    CONF_STATUS=1
   fi
 
   if test "$systemd_warned" = yes; then
@@ -4719,10 +4732,13 @@ fi
 if test "$have_gl" = no ; then
   if test "$with_gl_req" = yes ; then
     warnL 'Use of GL was requested, but it was not found.'
+    CONF_STATUS=1
   elif test "$with_gl_req" = no ; then
     noteL 'The OpenGL 3D library is not being used.'
+    CONF_STATUS=1
   else
     noteL 'The OpenGL 3D library was not found.'
+    CONF_STATUS=1
   fi
 
   if test "$gl_halfassed" = yes ; then
@@ -4735,9 +4751,7 @@ if test "$have_gl" = no ; then
 
   echo ''
   warn2 'Those demos which use 3D will not be built or installed.'
-  warn2 'You might want to consider installing OpenGL and'
-  warn2 're-running configure.'
-
+  warn2 'That is most of them.'
 fi
 
 if test "$have_gl" = yes -a "$have_gle" = no ; then
@@ -4750,6 +4764,7 @@ if test "$have_gl" = yes -a "$have_gle" = no ; then
     noteL 'Use of the GLE (GL Extrusion) library was requested, but'
     warn2 'it was not found (though the OpenGL library was found, and'
     warn2 'is being used.)'
+    CONF_STATUS=1
   elif test "$with_gle_req" = no ; then
     noteL 'The OpenGL Library is being used, but the GLE (GL Extrusion)'
     warn2 'library is not.'
@@ -4772,28 +4787,33 @@ fi
 
 if test "$with_readdisplay_req" = yes -a "$have_readdisplay" = no ; then
   warn 'Use of XReadDisplay was requested, but it was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_kerberos_req" = yes -a "$have_kerberos" = no ; then
   warn 'Use of Kerberos was requested, but it was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$with_pam_req" = yes -a "$have_pam" = no ; then
   warn 'Use of PAM was requested, but it was not found.'
+  CONF_STATUS=1
 elif test "$have_pam" = no ; then
   if test -d /etc/pam.d -o -f /etc/pam.conf ; then
     warn  "Your system seems to have PAM, but PAM is not being used."
     warn2 "That is probably not going to work out well."
-    
+    CONF_STATUS=1
   fi
 fi
 
 if test "$with_shadow_req" = yes -a "$have_shadow" = no ; then
   warn 'Use of shadow passwords was requested, but they were not found.'
+  CONF_STATUS=1
 fi
 
 if test "$setcap_hacks_req" = yes -a "$have_libcap" = no ; then
   warn 'Use of libcap was requested, but it was not found.'
+  CONF_STATUS=1
 fi
 
 if test "$ac_macosx" = yes -a "$enable_locking" = yes ; then
@@ -4942,3 +4962,5 @@ echo "             Configuration: ${HACK_CONF_DIR}/$confdir_err"
 echo "             Extra Fonts:   ${FONT_DIR}$fontdir_err"
 echo "             App Defaults:  ${APPDEFAULTS}/$addir_err"
 echo ""
+
+exit $CONF_STATUS

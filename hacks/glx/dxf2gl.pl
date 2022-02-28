@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003-2018 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2003-2022 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -39,7 +39,7 @@ use Math::Trig qw(acos);
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.13 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.14 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -402,10 +402,13 @@ sub parse_dxf($$$$$) {
     my $maxz = -999999999;
     my $i = 0;
 
-    foreach my $layer (keys %triangles) {
+    foreach my $layer ($wireframe_p
+                       ? keys %lines
+                       : keys %triangles) {
       my %dups;
-      my @triangles = @{$triangles{$layer}};
-
+      my @triangles = ($wireframe_p
+                       ? @{$lines{$layer}}
+                       : @{$triangles{$layer}});
       foreach my $n (@{$lines{$layer}}, @{$triangles{$layer}}) {
         if    ($i == 0) { $minx = $n if ($n < $minx);
                           $maxx = $n if ($n > $maxx); }
