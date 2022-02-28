@@ -1,0 +1,72 @@
+.TH XScreenSaver 1 "20-Mar-2005 (4.21)" "X Version 11"
+.SH NAME
+xscreensaver-getimage-file - select a random image file for use by screen savers
+.SH SYNOPSIS
+.B xscreensaver-getimage-file
+[\--verbose]
+[\--no-cache]
+[\--flush-caches]
+directory-or-URL
+.SH DESCRIPTION
+The \fIxscreensaver\-getimage\-file\fP program is a helper program
+for the xscreensaver hacks that manipulate images.  It is invoked by
+.BR xscreensaver\-getimage (MANSUFFIX)
+as needed.
+
+It prints the name of a randomly-selected image file.  The directory
+is searched recursively.  Non-image files and images smaller than 500x500
+are excluded.
+
+The directory may also be the URL of an RSS/Atom feed.  Enclosed
+images will be downloaded and cached locally.
+
+The contents of the directory are cached, for performance.  The cache
+is re-generated if 3 hours have passed.
+
+.SH OPTIONS
+.I xscreensaver-getimage-file
+accepts the following options:
+.TP 4
+.B --verbose
+Print diagnostics.
+.TP 4
+.B --no-cache
+Ignore the cache when searching for images.  This may be slow.
+.TP 4
+.B --flush-cache
+Discard all caches immediately.  They will be re-generated as needed.
+.TP 4
+.I directory-or-URL
+If a pathname it is the directory tree whose images should be used.
+
+If a URL is specified, it should be the URL of an RSS or Atom feed
+containing images.  The first time it is accessed, all of the images
+in the feed will be downloaded to a local cache directory.  The URL
+will be polled again when the cache times out.  Any new images will
+be downloaded and cached, and any images no longer in the feed will
+be discarded.
+.SH FILES
+Depending on your operating system, the cache file will be one of:
+.nf
+.sp
+        $HOME/.cache/xscreensaver/xscreensaver-getimage.cache
+        $HOME/tmp/.xscreensaver-getimage.cache
+        $HOME/.xscreensaver-getimage.cache
+        $HOME/Library/Caches/org.jwz.xscreensaver.getimage.cache
+.fi
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-settings (1),
+.BR xscreensaver\-getimage (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co 2001-2021 by Jamie Zawinski.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 14-Apr-2001.

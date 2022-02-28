@@ -1,0 +1,141 @@
+.TH XScreenSaver 1 "29-Aug-2008" "X Version 11"
+.SH NAME
+munch \- munching squares
+.SH SYNOPSIS
+.B munch
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-xor] [\-noxor] 
+[\-clear \fInumber\fP] [\-simul \fInumber\fP]
+[\-classic | \-mismunch | \-random]
+[\-fps]
+.SH DESCRIPTION
+The
+.I munch
+program performs the munching squares hack.  It picks square
+size, position, and gravity randomly.  It also displays a
+creatively broken misimplementation of the classic algorithm.
+
+The munching squares hack consists of drawing Y = X XOR T for a range of X
+and T over and over until all the possible combinations of X and T have
+come up.  It was reportedly discovered by Jackson Wright in 1962 and took 5
+instructions of PDP-6 code.
+.SH OPTIONS
+.I munch
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fIusecs\fP
+The delay between steps of the animation, in microseconds.  Default: 2500.
+.TP 8
+.B \-xor
+Use the XOR drawing function.  This is the default.
+.TP 8
+.B \-no\-xor
+Don't use the XOR drawing function.
+.TP 8
+.B \-clear \fInumber\fP
+Number of squares to misdraw before clearing the display.  Default: 65.
+.TP 8
+.B \-simul \fInumber\fP
+Number of squares to misdraw simultaneously.  Default: 5.
+.TP 8
+.B \-classic
+Draw classic munching squares only.
+.TP 8
+.B \-mismunch
+Draw "mismunch" only.
+.TP 8
+.B \-random
+Do one or the other.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.RS 0
+.BR http://www.inwap.com/pdp10/hbaker/hakmem/hakmem.html
+.SH HISTORY
+.B HAKMEM: MIT AI Memo 239, Feb. 29, 1972.
+Beeler, M., Gosper, R.W., and Schroeppel, R.
+
+"Unless otherwise stated, all computer programs are in PDP-6/10
+assembly language."
+
+.SS ITEM 146: MUNCHING SQUARES
+
+Another simple display program. It is thought that this was discovered by
+Jackson Wright on the RLE PDP-1 circa 1962.
+.nf
+.sp
+	DATAI 2
+	ADDB 1,2
+	ROTC 2,-22
+	XOR 1,2
+	JRST .-4
+.sp
+.fi
+
+2=X, 3=Y. Try things like 1001002 in data switches. This also does
+interesting things with operations other than XOR, and rotations other 
+than -22. (Try IOR; AND; TSC; FADR; FDV(!); ROT -14, -9, -20, ...)
+
+.SS
+ITEM 147 (Schroeppel):
+
+Munching squares is just views of the graph Y = X XOR T for consecutive
+values of T = time.
+
+.SS ITEM 148 (Cohen, Beeler):
+
+A modification to munching squares which reveals them in frozen states
+through opening and closing curtains: insert FADR 2,1 before the XOR. Try
+data switches =
+.nf
+.sp
+	4000,,4    1000,,2002    2000,,4    0,,1002
+.sp
+.fi
+
+(Notation: <left half>,,<right half>)
+.RS 0
+Also try the FADR after the XOR, switches = 1001,,1. 
+.SH COPYRIGHT
+Copyright 1997 Tim Showalter.
+.RS 0
+Copyright 2004 Steven Hazel.
+.RS 0
+Copyright 1992-2008 Jamie Zawinski.
+.PP
+Permission to use, copy, modify, distribute, and sell this software
+and its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="vidwhacker" _label="Vid Whacker">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=u8esWjcR4eI"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Duration" _low-label="2 seconds" _high-label="2 minutes"
+          low="2" high="120" default="5"/>
+
+  <file id="directory" _label="Image directory" arg="-directory %"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Displays a distorted frame video.
+
+This is a shell script that grabs a frame of video from the system's
+video input, and then uses some PBM filters (chosen at random) to
+manipulate and recombine the video frame in various ways (edge
+detection, subtracting the image from a rotated version of itself,
+etc.)  Then it displays that image for a few seconds, and does it
+again.  This works really well if you just feed broadcast television
+into it.
+
+Written by Jamie Zawinski; 1998.
+  </_description>
+</screensaver>

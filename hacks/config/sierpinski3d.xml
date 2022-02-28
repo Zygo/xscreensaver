@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="sierpinski3d" _label="Sierpinski 3D" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=TGQRLAhDLv0"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="descent" type="slider" arg="-speed %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="2" high="500" default="150"
+          convert="invert"/>
+
+  <number id="depth" type="spinbutton" arg="-depth %"
+          _label="Max depth" low="1" high="6" default="5"/>
+
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+The recursive Sierpinski tetrahedron fractal.
+
+https://en.wikipedia.org/wiki/Sierpinski_triangle#Analogs_in_higher_dimension
+
+Written by Jamie Zawinski and Tim Robinson; 1999.
+  </_description>
+</screensaver>
