@@ -1,0 +1,73 @@
+.TH Intermomentary 1 "08-Oct-04" "X Version 11"
+.SH NAME
+intermomentary \- Visualize the momentary and aggregate intersections 
+between slowly moving circles.
+.SH SYNOPSIS
+.B intermomentary
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-num\-discs \fIdisc count\fP]
+[\-draw\-delay \fIdelayms\fP]
+[\-max\-riders \fImaxr\fP]
+[\-max\-radius \fImaxradius\fP]
+[\-fps]
+.SH DESCRIPTION
+The Intersection Momentary is a fun visualization defining the relationships 
+between objects with Casey Reas, William Ngan, and Robert Hodgin. Commissioned 
+for display at the Whitney Museum of American Art.
+
+A surface filled with 100 medium to small sized circles. Each circle has a 
+different size and direction, but moves at the same slow rate. Display:
+
+    A. The instantaneous intersections of the circles.
+    B. The aggregate intersections of the circles.
+
+The circles begin with a radius of 1 pixel and slowly increase to some
+arbitrary size.  Circles are drawn with small moving points along the
+perimeter. The intersections are rendered as glowing orbs.  Glowing
+orbs are rendered only when a perimeter point moves past the
+intersection point.
+.SH OPTIONS
+Intermomentary accepts the following options:
+.TP 8
+.B \-num\-discs \fIdisc count\fP (Default: \fI85\fP)
+Number of slowly moving and growing discs to use.  The more discs, 
+the more CPU power.
+.TP 8
+.B \-draw\-delay \fIdelayms\fP (Default: \fI30000\fP)
+Delay in ms between drawing cycles.  More delay, slower (but smoother 
+and less CPU intensive.)
+art.
+.TP 8
+.B \-max\-riders \fImaxrider\fP (Default: \fI40\fP)
+Maximum number of 'riders', single dots moving around the edge of the discs.
+.TP 8
+.B \-max\-radius \fImaxradius\fP (Default: \fI100\fP)
+Maximum possible radius of a disc.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global
+resources stored in the RESOURCE_MANAGER property.
+.SH BUGS
+Setting the background to anything besides black confuses the intensity 
+algorithm and will look terrible.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2003 by J. Tarbell <complex@complexification.net>.
+.br
+XScreenSaver port: Mike Kershaw <dragorn@kismetwireless.net>
+.SH AUTHOR
+J. Tarbell <complex@complexification.net>, Jun 2003.
+.br
+Mike Kershaw <dragorn@kismetwireless.net>, Oct 2004.

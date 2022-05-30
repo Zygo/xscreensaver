@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hypertorus" _label="Hypertorus" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=KJWe4G4Qa1Q"/>
+
+  <hgroup>
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="25000"
+          convert="invert"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <hgroup>
+    <select id="display-mode">
+      <option id="wire"        _label="Wireframe"
+              arg-set="-mode wireframe"/>
+      <option id="surface"     _label="Solid"/>
+      <option id="transparent" _label="Transparent"
+              arg-set="-mode transparent"/>
+    </select>
+
+    <select id="appearance">
+      <option id="solid" _label="Solid object"
+              arg-set="-appearance solid"/>
+      <option id="bands" _label="Transparent bands"/>
+      <option id="bands" _label="1 transparent spiral"
+              arg-set="-appearance spirals-1"/>
+      <option id="bands" _label="2 transparent spirals"
+              arg-set="-appearance spirals-2"/>
+      <option id="bands" _label="4 transparent spirals"
+              arg-set="-appearance spirals-4"/>
+      <option id="bands" _label="8 transparent spirals"
+              arg-set="-appearance spirals-8"/>
+      <option id="bands" _label="16 Transparent spirals"
+              arg-set="-appearance spirals-16"/>
+    </select>
+
+    <select id="colors">
+      <option id="onesided"   _label="One-sided" arg-set="-onesided"/>
+      <option id="twosided"   _label="Two-sided" arg-set="-twosided"/>
+      <option id="colorwheel" _label="Color wheel"/>
+    </select>
+
+    <boolean id="change-colors" _label="Change colors"
+              arg-set="-change-colors"/>
+
+    <select id="projection3d">
+      <option id="perspective-3d" _label="Perspective 3D"/>
+      <option id="orthographic-3d" _label="Orthographic 3D"
+              arg-set="-orthographic-3d"/>
+    </select>
+
+    <select id="projection4d">
+      <option id="perspective-4d" _label="Perspective 4D"/>
+      <option id="orthographic-4d" _label="Orthographic 4D"
+              arg-set="-orthographic-4d"/>
+    </select>
+  </hgroup>
+
+  <hgroup>
+
+    <vgroup>
+
+      <number id="speed-wx" type="slider" arg="-speed-wx %"
+              _label="WX rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.1"/>
+
+      <number id="speed-wy" type="slider" arg="-speed-wy %"
+              _label="WY rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.3"/>
+
+      <number id="speed-wz" type="slider" arg="-speed-wz %"
+              _label="WZ rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.5"/>
+
+    </vgroup>
+
+    <vgroup>
+
+      <number id="speed-xy" type="slider" arg="-speed-xy %"
+              _label="XY rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.7"/>
+    
+      <number id="speed-xz" type="slider" arg="-speed-xz %"
+              _label="XZ rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.9"/>
+    
+      <number id="speed-yz" type="slider" arg="-speed-yz %"
+              _label="YZ rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="2.1"/>
+    
+    </vgroup>
+
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A Clifford Torus is a torus lying on the surface of a 4D hypersphere.
+
+Inspired by Thomas Banchoff's book "Beyond the Third Dimension:
+Geometry, Computer Graphics, and Higher Dimensions", Scientific
+American Library, 1990.
+
+https://en.wikipedia.org/wiki/N-sphere
+https://en.wikipedia.org/wiki/Clifford_torus
+https://en.wikipedia.org/wiki/Regular_polytope
+
+Written by Carsten Steger; 2003.
+  </_description>
+</screensaver>

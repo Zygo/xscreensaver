@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="abstractile" _label="Abstractile">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=NgSetBY6VP4"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="5" default="3"
+          convert="ratio"/>
+
+  <number id="sleep" type="slider" arg="-sleep %"
+            _label="Linger" _low-label="0 seconds" _high-label="60 seconds"
+            low="0" high="60" default="3"/>
+
+  <select id="tile">
+    <option id="random" _label="Random tile layout"/>
+    <option id="random" _label="Flat tiles"    arg-set="-tile flat"/>
+    <option id="random" _label="Thin tiles"    arg-set="-tile thin"/>
+    <option id="random" _label="Outline tiles" arg-set="-tile outline"/>
+    <option id="random" _label="Block tiles"   arg-set="-tile block"/>
+    <option id="random" _label="Neon tiles"    arg-set="-tile neon"/>
+    <option id="random" _label="Tiled tiles"   arg-set="-tile tiled"/>
+  </select>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Mosaic patterns of interlocking tiles.  
+
+Written by Steve Sundstrom; 2004.
+  </_description>
+</screensaver>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="dymaxionmap" _label="Dymaxion Map" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=4LnO0UiccGs"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Animation speed" _low-label="Slow" _high-label="Fast"
+            low="0.05" high="10.0" default="1.0"
+            convert="ratio"/>
+   </vgroup>
+   <vgroup>
+
+    <hgroup>
+     <select id="map">
+      <option id="flat"  _label="Flat map"/>
+      <option id="day"   _label="Satellite map" arg-set="-image BUILTIN_SAT"/>
+     </select>
+
+     <!-- <file id="image" _label="Image file" arg="-image %"/> -->
+    </hgroup>
+
+    <number id="frames" type="slider" arg="-frames %"
+            _label="Day / night smoothness" _low-label="Low" _high-label="High"
+            low="24" high="1440" default="720"/>
+   </vgroup>
+  </hgroup>
+  <hgroup>
+
+   <vgroup>
+    <hgroup>
+     <boolean id="stars"  _label="Stars"       arg-unset="-no-stars"/>
+     <boolean id="grid"   _label="Lat / Long"  arg-unset="-no-grid"/>
+     <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+     <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
+     <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </hgroup>
+
+    <xscreensaver-updater />
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Buckminster Fuller's map of the Earth projected onto the surface of
+an unfolded icosahedron.  It depicts the Earth's continents as one
+island, or nearly contiguous land masses.
+
+This screen saver animates the progression of the dusk terminator across
+the flattened globe. It includes both satellite and flat-colored map
+imagery, and can load and convert other Equirectangular-projected maps.
+
+"Dymaxion Map" and "The Fuller Projection Map" are trademarks of
+The Buckminster Fuller Institute.
+
+The original Dymaxion Map image is copyright 1982 by
+The Buckminster Fuller Institute. (This program does not use their
+imagery, only similar trigonometry.)
+
+The Dymaxion Map was covered by now-expired US Patent 2,393,676
+(Richard Buckminster Fuller, 1946).
+
+https://en.wikipedia.org/wiki/Dymaxion_map
+https://en.wikipedia.org/wiki/Buckminster_Fuller
+https://en.wikipedia.org/wiki/List_of_map_projections
+https://en.wikipedia.org/wiki/Cahill%E2%80%93Keyes_projection
+https://en.wikipedia.org/wiki/Waterman_butterfly_projection
+
+Written by Jamie Zawinski; 2016.
+  </_description>
+</screensaver>

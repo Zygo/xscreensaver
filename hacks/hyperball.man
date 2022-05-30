@@ -1,0 +1,88 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+hyperball \- 2d projection of a 4d object
+.SH SYNOPSIS
+.B hyperball
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-xy \fIfloat\fP]
+[\-xz \fIfloat\fP]
+[\-yz \fIfloat\fP]
+[\-xw \fIfloat\fP]
+[\-yw \fIfloat\fP]
+[\-zw \fIfloat\fP]
+[\-delay \fIusecs\fP]
+[\-window]
+[\-root]
+[\-mono]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-fps]
+.SH DESCRIPTION
+The \fIhyperball\fP program displays a wireframe projection of a hyperball
+which is rotating at user-specified rates around any or all of its four axes.
+.SH OPTIONS
+.I hyperball
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the animation.
+Default 20000, or about 0.02 seconds.
+.TP 8
+.B \-xw \fIfloat\fP
+.TP 8
+.B \-xy \fIfloat\fP
+.TP 8
+.B \-xz \fIfloat\fP
+.TP 8
+.B \-yw \fIfloat\fP
+.TP 8
+.B \-yz \fIfloat\fP
+.TP 8
+.B \-zw \fIfloat\fP
+The amount that the ball should be rotated around the specified axis at
+each frame of the animation, expressed in 0.001 radians.  These should be small
+floating-point values (less than 50 works best.)  Default: xy=3,
+xz=5, yw=10.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2000 by Joe Keane.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Joe Keane <jgk@jgk.org>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="distort" _label="Distort">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=ENaG3gwtukM"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="200000" default="20000"
+          convert="invert"/>
+
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+          low="10" high="600" default="120"/>
+
+  <!-- #### -speed [0] -->
+  <!-- #### -slow -->
+
+  <number id="radius" type="slider" arg="-radius %"
+          _label="Lens size" _low-label="Small" _high-label="Large"
+          low="0" high="1000" default="0"/>
+
+  <hgroup>
+   <number id="count" type="spinbutton" arg="-number %"
+           _label="Lens count" low="0" high="10" default="0"/>
+
+   <select id="effect">
+    <option id="normal" _label="Normal"/>
+    <option id="swamp"  _label="Swamp thing" arg-set="-effect swamp"/>
+    <option id="bounce" _label="Bounce"      arg-set="-effect bounce"/>
+   </select>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="reflect" _label="Reflect"      arg-set="-reflect"/>
+   <boolean id="magnify" _label="Magnify"      arg-set="-magnify"/>
+   <boolean id="blackhole" _label="Black hole" arg-set="-blackhole"/>
+   <boolean id="vortex" _label="Vortex"        arg-set="-vortex"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-image />
+
+  <xscreensaver-updater />
+
+  <_description>
+Wandering lenses distort an image in various ways.
+
+Written by Jonas Munsin; 1998.
+  </_description>
+</screensaver>

@@ -1,0 +1,129 @@
+.TH XScreenSaver 1 "06-Jul-2000" "X Version 11"
+.SH NAME
+petri \- simulates mold growing in a petri dish
+.SH SYNOPSIS
+.B petri
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-size \fIinteger\fP] [\-mem-throttle \fIamount\fP] [\-count \fIinteger\fP] [\-originalcolors] [\-diaglim \fIreal\fP] [\-anychan \fIreal\fP] [\-minorchan \fIreal\fP] [\-instantdeathchan \fIreal\fP] [\-minlifespeed \fIreal\fP] [\-maxlifespeed \fIreal\fP] [\-mindeathspeed \fIreal\fP] [\-maxdeathspeed \fIreal\fP] [\-minlifespan \fIinteger\fP] [\-maxlifespan \fIinteger\fP]
+[\-fps]
+.SH DESCRIPTION
+\fIpetri\fP simulates mold growing in a petri dish via a state-heavy grid
+of automata (vaguely like Conway's Life, only with much more state per
+cell).
+.SH OPTIONS
+.I petri
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+The interframe delay, in microseconds. Defaults to 10000, resource
+\fIdelay\fP.
+.TP 8
+.B \-size \fIinteger\fP
+The size of a cell in pixels. Defaults to 4, resource \fIsize\fP.
+.TP 8
+.B \-mem-throttle \fIamount\fP
+The maximum amount of memory to consume, specified either in megabytes
+(suffix "M"), kilobytes (suffix "K"), or bytes (sans suffix). In order
+to meet the memory requirement, the cell size may be increased.
+Defaults to 22M, resource \fImemThrottle\fP.
+.TP 8
+.B \-count \fIinteger\fP
+How many different varieties of mold to grow (including Black Death).
+Defaults to 8, resource \fIcount\fP.
+.TP 8
+.B \-originalcolors
+If specified, indicates that the colors used should be the artist's
+original choices (a fixed set of primary and secondary colors). In this
+case, count must be 8 or less. Defaults to not specified (i.e., false), 
+resource \fIoriginalcolors\fP.
+.TP 8
+.B \-diaglim \fIreal\fP 
+The age limit for diagonal growth as a multiplier of
+orthogonal growth (range 1..2). 1 means square growth, 1.414
+(i.e., \fIsqrt(2)\fP) means approximately circular growth, 2 means
+diamond growth. Defaults to 1.414, resource \fIdiaglim\fP.
+.TP 8
+.B \-anychan \fIreal\fP 
+The chance (range 0..1) that at each iteration, one or more
+new cells will be born. Defaults to 0.0015, resource \fIanychan\fP.
+.TP 8
+.B \-minorchan \fIreal\fP
+The chance (range 0..1) that, given that new cells will be born, that only
+two will be added (hence being a minor cell birth event).
+Defaults to 0.5, resource \fIminorchan\fP.
+.TP 8
+.B \-instantdeathchan \fIreal\fP
+The chance (range 0..1) that, given that death and destruction will happen,
+that instead of using Black Death cells, death will come instantaneously.
+Defaults to 0.2, resource \fIinstantdeathchan\fP.
+.TP 8
+.B \-minlifespeed \fIreal\fP 
+The minimum speed for living cells as a fraction of the maximum possible
+speed (range 0..1). Defaults to 0.04, resource \fIminlifespeed\fP.
+.TP 8
+.B \-maxlifespeed \fIreal\fP
+The maximum speed for living cells as a fraction of the maximum possible
+speed (range 0..1). Defaults to 0.13, resource \fImaxlifespeed\fP.
+.TP 8
+.B \-mindeathspeed \fIreal\fP
+The minimum speed for Black Death cells as a fraction of the maximum possible
+speed (range 0..1). Defaults to 0.42, resource \fImindeathspeed\fP.
+.TP 8
+.B \-maxdeathspeed \fIreal\fP
+The maximum speed for Black Death cells as a fraction of the maximum possible
+speed (range 0..1). Defaults to 0.46, resource \fImaxdeathspeed\fP.
+.TP 8
+.B \-minlifespan \fIinteger\fP 
+The minimum lifespan for a colony, in iterations, before Black Death
+comes. Defaults to 500, resource \fIminlifespan\fP.
+.TP 8
+.B \-maxlifespan \fIinteger\fP
+The maximum lifespan for a colony, in iterations, before Black Death
+comes. Defaults to 1500, resource \fImaxlifespan\fP.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH X RESOURCES
+There are resource equivalents for each option, noted above.
+.SH BUGS
+There are no known bugs in
+.I petri
+as of this writing.
+.SH SEE ALSO
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1992-2000 by Dan Bornstein.
+
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of this
+software for any purpose.  It is provided "as is" without express or 
+implied warranty.
+.SH AUTHOR
+Dan Bornstein <danfuzz@milk.com>, 06-Jul-2000.

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="projectiveplane" _label="Projective Plane" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=Zg6ONPUTwUQ"/>
+
+  <hgroup>
+    <select id="display-mode">
+      <option id="random"      _label="Random surface"/>
+      <option id="wire"        _label="Wireframe mesh"      arg-set="-mode wireframe"/>
+      <option id="surface"     _label="Solid surface"       arg-set="-mode surface"/>
+      <option id="transparent" _label="Transparent surface" arg-set="-mode transparent"/>
+    </select>
+
+    <select id="appearance">
+      <option id="random" _label="Random pattern"/>
+      <option id="solid"  _label="Solid object"    arg-set="-appearance solid"/>
+      <option id="bands"  _label="Distance bands"  arg-set="-appearance distance-bands"/>
+      <option id="bands"  _label="Direction bands" arg-set="-appearance direction-bands"/>
+    </select>
+
+    <select id="colors">
+      <option id="random"   _label="Random coloration"/>
+      <option id="twosided" _label="One-sided"        arg-set="-colors one-sided"/>
+      <option id="twosided" _label="Two-sided"        arg-set="-colors two-sided"/>
+      <option id="rainbow"  _label="Distance colors"  arg-set="-colors distance"/>
+      <option id="rainbow"  _label="Direction colors" arg-set="-colors direction"/>
+      <option id="depth"    _label="4d depth colors"  arg-set="-colors depth"/>
+    </select>
+
+    <boolean id="change-colors" _label="Change colors"
+              arg-set="-change-colors"/>
+
+    <select id="projection3d">
+      <option id="random"          _label="Random 3D"/>
+      <option id="perspective-3d"  _label="Perspective 3D"  arg-set="-projection-3d perspective"/>
+      <option id="orthographic-3d" _label="Orthographic 3D" arg-set="-projection-3d orthographic"/>
+    </select>
+
+    <select id="projection4d">
+      <option id="random"          _label="Random 4D"/>
+      <option id="perspective-4d"  _label="Perspective 4D"  arg-set="-projection-4d perspective"/>
+      <option id="orthographic-4d" _label="Orthographic 4D" arg-set="-projection-4d orthographic"/>
+    </select>
+  </hgroup>
+
+  <hgroup>
+    <vgroup>
+     <hgroup>
+      <number id="speed-wx" type="slider" arg="-speed-wx %"
+              _label="WX speed"
+              _low-label="-4" _high-label="4"
+              low="-4.0" high="4.0" default="1.1"/>
+     </hgroup>
+
+     <hgroup>
+      <number id="speed-wy" type="slider" arg="-speed-wy %"
+              _label="WY speed"
+              _low-label="-4" _high-label="4"
+              low="-4.0" high="4.0" default="1.3"/>
+     </hgroup>
+
+     <hgroup>
+      <number id="speed-wz" type="slider" arg="-speed-wz %"
+              _label="WZ speed"
+              _low-label="-4" _high-label="4"
+              low="-4.0" high="4.0" default="1.5"/>
+     </hgroup>
+    </vgroup>
+
+    <vgroup>
+     <hgroup>
+      <number id="speed-xy" type="slider" arg="-speed-xy %"
+              _label="XY speed"
+              _low-label="-4" _high-label="4"
+              low="-4.0" high="4.0" default="1.7"/>
+     </hgroup>
+
+     <hgroup>
+      <number id="speed-xz" type="slider" arg="-speed-xz %"
+              _label="XZ speed"
+              _low-label="-4" _high-label="4"
+              low="-4.0" high="4.0" default="1.9"/>
+     </hgroup>
+
+     <hgroup>
+      <number id="speed-yz" type="slider" arg="-speed-yz %"
+              _label="YZ speed"
+              _low-label="-4" _high-label="4"
+              low="-4.0" high="4.0" default="2.1"/>
+     </hgroup>
+    </vgroup>
+
+    <vgroup>
+     <hgroup>
+     <number id="walk-direction" type="slider" arg="-walk-direction %"
+             _label="Walk dir     "
+             _low-label="-180" _high-label="180"
+             low="-180.0" high="180.0" default="83.0"/>
+     </hgroup>
+
+     <hgroup>
+     <number id="walk-speed" type="slider" arg="-walk-speed %"
+             _label="Walk speed"
+             _low-label="1" _high-label="100"
+             low="1.0" high="100.0" default="20.0"/>
+     </hgroup>
+
+     <hgroup>
+     <number id="delay" type="slider" arg="-delay %"
+             _label="Frame rate" _low-label="Low" _high-label="High"
+             low="0" high="100000" default="25000"
+             convert="invert"/>
+     </hgroup>
+    </vgroup>
+  </hgroup>
+
+  <hgroup>
+    <select id="view-mode">
+      <option id="walk"      _label="Random motion"/>
+      <option id="walk"      _label="Walk"          arg-set="-view-mode walk"/>
+      <option id="turn"      _label="Turn"          arg-set="-view-mode turn"/>
+      <option id="walk-turn" _label="Walk and turn" arg-set="-view-mode walk-turn"/>
+    </select>
+
+    <boolean id="orientation-marks" _label="Show orientation marks"
+              arg-set="-orientation-marks"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+    <xscreensaver-updater />
+  </hgroup>
+
+
+
+  <_description>
+A 4D embedding of the real projective plane.
+
+You can walk on the surface of the real projective plane or rotate it
+in 4D or walk on it while it rotates in 4D.  Inspired by Thomas
+Banchoff's book "Beyond the Third Dimension: Geometry, Computer
+Graphics, and Higher Dimensions", Scientific American Library, 1990.
+
+https://en.wikipedia.org/wiki/Real_projective_plane
+https://en.wikipedia.org/wiki/Roman_surface
+https://en.wikipedia.org/wiki/Cross_cap
+https://en.wikipedia.org/wiki/Moebius_strip
+https://mathworld.wolfram.com/RealProjectivePlane.html
+https://mathworld.wolfram.com/RomanSurface.html
+https://mathworld.wolfram.com/Cross-Cap.html
+https://mathworld.wolfram.com/MoebiusStrip.html
+
+Written by Carsten Steger; 2014.
+  </_description>
+</screensaver>

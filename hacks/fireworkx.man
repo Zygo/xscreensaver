@@ -1,0 +1,80 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+fireworkx \- pyrotechnic explosions eye-candy.
+.SH SYNOPSIS
+.B fireworkx
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-verbose]
+[\-noflash]
+[\-shoot]
+[\-delay \fInumber\fP]
+[\-maxlife \fInumber\fP]
+[\-fps]
+.SH DESCRIPTION
+Animates explosions.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-noflash 
+Turn off light flash effect. (Runs faster)
+.TP 8
+.B \-shoot
+Fire shells up using mortar.
+.TP 8
+.B \-delay \fInumber\fP
+Delay between frames. In microseconds. (Default: 10000)
+.TP 8
+.B \-maxlife \fInumber\fP
+Maximum decay period for an explosion. (Range: 0-100)
+.TP 8
+.B \-verbose
+For scientific research purposes only..!
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1999-2013 by Rony B Chandran.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+ 
+.br
+Written by Rony B Chandran <ronybc@gmail.com> https://www.ronybc.com/
+.br
+Additional programming and support: 
+.br
+Rugmini R Chandran <rugmini@ronybc.com>
+.br
+Renuka S <renuka@ronybc.com>
+.br
+Jean-Pierre Demailly <Jean-Pierre.Demailly@ujf-grenoble.fr>
+.br
+Nicholas Miell <nmiell@gmail.com>

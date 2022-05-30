@@ -1,0 +1,106 @@
+.TH "Binary Horizon" 1 "23-Mar-20" "X Version 11"
+.SH NAME
+binaryhorizon - A system of path tracing particles evolves continuously. 
+.SH SYNOPSIS
+.B binaryhorizon
+[\-fps]
+[\-install]
+[\-noinstall]
+[\-mono]
+[\-root]
+[\-visual \fIvisual\fP]
+[\-window] 
+[\-window\-id \fIwindow\-id\fP]
+[\-color]
+[\-no\-color]
+[\-growth\-delay \fIdelayms\fP]
+[\-particle\-number \fIparticles\fP]
+[\-duration \fIsecs\fP]
+[\-bicolor]
+[\-monocolor]
+.SH DESCRIPTION
+A system of path tracing particles evolves continuously from an
+initial horizon, alternating between colors. 
+.SH OPTIONS
+.I binaryhorizon
+accepts the following options:
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-mono
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-noinstall
+Don't install a private colormap for the window.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use. Legal values are the name of a visual
+class or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window. This is the default.
+.TP 8
+.B \-window\-id \fIwindow\-id\fP
+Specify which window id to use.
+.TP 8
+.B \-color (Default)
+Particles have random generated colors that gradually change over time.
+.TP 8
+.B \-no\-color
+Use the original black and white visualization.
+.TP 8
+.B \-bicolor (Default)
+Particles have 2 random colors, starting as white and black.
+.TP 8
+.B \-monocolor
+Particles have 2 colors, one starting as white and gradually changing,
+and one staying black.
+.TP 8
+.B \-fade (Default)
+Particles gradually fade between colors over time.
+.TP 8
+.B \-no-fade
+Every particle is a random color.
+.TP 8
+.B \-growth\-delay \fIdelayms\fP (Default: \fI10000\fP)
+Delay in ms between growth cycles. More delay, slower (but less CPU intensive).
+.TP 8
+.B \-particles\-number \fIparticles\fP (Default: \fI5000\fP)
+The number of particles in the system. With more particles the fps
+can also be affected.
+.TP 8
+.B \-duration \fIsecs\fP (Default: \fI30\fP)
+How long between full resets.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global
+resources stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.br
+http://complexification.net/
+.SH COPYRIGHT
+Copyright 2020 by Patrick Leiser <patrick27leiser@yahoo.com>.
+.br
+Based on code \(co 2003 by J. Tarbell <complex@complexification.net>.
+.br
+XScreenSaver port: Emilio Del Tessandoro <emilio.deltessa@gmail.com>
+.SH AUTHOR
+Patrick Leiser <patrick27leiser@yahoo.org>, Mar 2020.
+.br
+J. Tarbell <complex@complexification.net>, Jun 2003.
+.br
+Emilio Del Tessandoro <emilio.deltessa@gmail.com>, Aug 2014.

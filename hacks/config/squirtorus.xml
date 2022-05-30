@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="squirtorus" _label="Squirtorus" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=_JJvTDFPaN4"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Scrolling speed" _low-label="Slow" _high-label="Fast"
+            low="0.01" high="8.0" default="1.0"
+            convert="ratio"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Count" _low-label="One" _high-label="Lots"
+            low="1" high="50" default="16"/>
+   </vgroup>
+
+   <vgroup>
+    <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A scrolling landscape vents toroidal rainbows into the sky.
+Above, the stars are slowly going out.
+
+Written by Jamie Zawinski; 2022.
+  </_description>
+</screensaver>

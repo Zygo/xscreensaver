@@ -1,0 +1,80 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+nakagin \- Nakagin Capsule Tower screen saver.
+.SH SYNOPSIS
+.B nakagin
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-delay \fInumber\fP]
+[\-speed \fInumber\fP]
+[\-no-spin]
+[\-wander]
+[\-no-tilt]
+[\-wireframe]
+[\-fps]
+.SH DESCRIPTION
+The Nakagin Capsule Tower was demolished in 2022, but this version will
+continue to grow forever.
+
+Constructed in 1972, the building was composed of small prefabricated rooms
+attached to the two central towers.  The capsules were intended to be mass
+produced and replaceable.  Utilities and fittings were installed before the
+capsules were shipped to the site.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds).
+.TP 8
+.B \-speed \fInumber\fP
+Animation speed.  2.0 means twice as fast, 0.5 means half as fast.
+.TP 8
+.B \-spin | \-no-spin
+Whether the building should slowly rotate.
+.TP 8
+.B \-wander | \-no-wander
+Whether the building should wander around the screen.
+.TP 8
+.B \-tilt | \-no-tilt
+Whether the observer should look up and down.
+.TP 8
+.B \-wireframe | \-no-wireframe
+Render in wireframe instead of solid.
+.TP 8
+.B \-fps | \-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+https://en.wikipedia.org/wiki/Nakagin_Capsule_Tower,
+.br
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2022 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.

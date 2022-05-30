@@ -1,0 +1,72 @@
+.TH Substrate 1 "08-Oct-04" "X Version 11"
+.SH NAME
+substrate \- Grow crystal-like lines on a computational substrate
+.SH SYNOPSIS
+.B substrate
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-wireframe]
+[\-max\-cycles \fIcyclecount\fP]
+[\-growth\-delay \fIdelayms\fP]
+[\-initial\-cracks \fInuminitial\fP]
+[\-max\-cracks \fInummax\fP]
+[\-sand\-grains \fInumgrains\fP]
+[\-circle\-percent \fIcirclepercent\fP]
+[\-fps]
+.SH DESCRIPTION
+Lines like crystals grow on a computational substrate.  A simple perpendicular
+growth rule creates intricate city-like structures.  Optionally, cracks may
+also be circular, producing a cityscape more familiar to places for which city
+planning is a distant, theoretical concern.
+.SH OPTIONS
+.I substrate
+accepts the following options:
+.TP 8
+.B \-wireframe (Default: \fIFalse\fP)
+Don't draw sand-painting colored effects, only make a wireframe.
+.TP 8
+.B \-max\-cycles \fIcyclecount\fP (Default: \fI10000\fP)
+Maximum number of growth cycles before restarting.  The higher this is,
+the more complex the art.
+.TP 8
+.B \-growth\-delay \fIdelayms\fP (Default: \fI18000\fP)
+Delay in ms between growth cycles.  More delay, slower (but smoother
+and less CPU intensive)
+art.
+.TP 8
+.B \-initial\-cracks \fInuminitial\fP (Default: \fI3\fP)
+Initial number of cracks in the substrate
+.TP 8
+.B \-max\-cracks \fInummax\fP (Default: \fI100\fP)
+Maximum number of cracks in the substrate at a single time
+.TP 8
+.B \-sand\-grains \fInumgrains\fP (Default: \fI64\fP)
+Number of sand grains dropped during coloring.  More grains cause 
+a denser colour but use more cpu power.
+.TP 8
+.B \-circle-percent \fIcirclepercent\fP (Default: \fI0\fP)
+The percentage of the cracks will be circular.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global
+resources stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2003 by J. Tarbell <complex@complexification.net>.
+.br
+XScreenSaver port: Mike Kershaw <dragorn@kismetwireless.net>
+.SH AUTHOR
+J. Tarbell <complex@complexification.net>, Jun 2003.
+.br
+Mike Kershaw <dragorn@kismetwireless.net>, Oct 2004.

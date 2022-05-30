@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="maze3d" _label="Maze 3D" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=VTAwxTVdyLc"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.02" high="4.0" default="1.0"
+          convert="ratio"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+    _label="Frame rate" _low-label="Low" _high-label="High"
+    low="0" high="100000" default="20000"
+    convert="invert"/>
+
+  <hgroup>
+   <boolean id="showOverlay" _label="Show Overlay" arg-set="-overlay"/>
+   <boolean id="acid" _label="Acid" arg-set="-drop-acid"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <hgroup>
+    <number id="numRows" type="spinbutton" arg="-rows %"
+      _label="Rows" low="2" high="24" default="12"/>
+    <number id="numColumns" type="spinbutton" arg="-columns %"
+      _label="Columns" low="2" high="24" default="12"/>
+  </hgroup>
+
+<!--
+  <hgroup>
+    <file id="wallTextureFile" _label="Wall Texture" arg="-wall-texture %"/>
+    <select id="wallTextureSelect">
+      <option id="wallTextureBrickWall" _label="Brick Wall"/>
+      <option id="wallTextureWoodFloor" _label="Wood Floor"
+        arg-set="-wall-texture wood-floor"/>
+      <option id="wallTextureCeilingTiles" _label="Ceiling Tiles"
+        arg-set="-wall-texture ceiling-tiles"/>
+      <option id="wallTextureFractal1" _label="Fractal 1"
+        arg-set="-wall-texture fractal-1"/>
+      <option id="wallTextureFractal2" _label="Fractal 2"
+        arg-set="-wall-texture fractal-2"/>
+      <option id="wallTextureFractal3" _label="Fractal 3"
+        arg-set="-wall-texture fractal-3"/>
+      <option id="wallTextureFractal4" _label="Fractal 4"
+        arg-set="-wall-texture fractal-4"/>
+    </select>
+    <boolean id="dropAcidWalls" _label="Drop acid"
+      arg-set="-drop-acid-walls"/>
+  </hgroup>
+
+  <hgroup>
+    <file id="floorTextureFile" _label="Floor Texture"
+      arg="-floor-texture %"/>
+    <select id="floorTextureSelect">
+      <option id="floorTextureWoodFloor" _label="Wood Floor"/>
+      <option id="floorTextureBrickWall" _label="Brick Wall"
+        arg-set="-floor-texture brick-wall"/>
+      <option id="floorTextureCeilingTiles" _label="Ceiling Tiles"
+        arg-set="-floor-texture ceiling-tiles"/>
+      <option id="floorTextureFractal1" _label="Fractal 1"
+        arg-set="-floor-texture fractal-1"/>
+      <option id="floorTextureFractal2" _label="Fractal 2"
+        arg-set="-floor-texture fractal-2"/>
+      <option id="floorTextureFractal3" _label="Fractal 3"
+        arg-set="-floor-texture fractal-3"/>
+      <option id="floorTextureFractal4" _label="Fractal 4"
+        arg-set="-floor-texture fractal-4"/>
+    </select>
+    <boolean id="dropAcidFloor" _label="Drop acid"
+      arg-set="-drop-acid-floor"/>
+  </hgroup>
+
+  <hgroup>
+    <file id="ceilingTextureFile" _label="Ceiling Texture"
+      arg="-ceiling-texture %"/>
+    <select id="ceilingTextureSelect">
+      <option id="ceilingTextureCeilingTiles" _label="Ceiling Tiles"/>
+      <option id="ceilingTextureBrickWall" _label="Brick Wall"
+        arg-set="-ceiling-texture brick-wall"/>
+      <option id="ceilingTextureWoodFloor" _label="Wood Floor"
+        arg-set="-ceiling-texture wood-floor"/>
+      <option id="ceilingTextureFractal1" _label="Fractal 1"
+        arg-set="-ceiling-texture fractal-1"/>
+      <option id="ceilingTextureFractal2" _label="Fractal 2"
+        arg-set="-ceiling-texture fractal-2"/>
+      <option id="ceilingTextureFractal3" _label="Fractal 3"
+        arg-set="-ceiling-texture fractal-3"/>
+      <option id="ceilingTextureFractal4" _label="Fractal 4"
+        arg-set="-ceiling-texture fractal-4"/>
+    </select>
+    <boolean id="dropAcidCeiling" _label="Drop acid"
+      arg-set="-drop-acid-ceiling"/>
+  </hgroup>
+-->
+
+  <hgroup>
+    <number id="numInverters" type="spinbutton"
+      arg="-inverters %" _label="Inverters" low="0"
+      high="100" default="10"/>
+    <number id="numRats" type="spinbutton"
+      arg="-rats %" _label="Rats" low="0" high="100"
+      default="1"/>
+
+<!--
+    <vgroup>
+      <number id="numGl3dTexts" type="spinbutton"
+        arg="-gl-3d-texts %" _label="OpenGL"
+        low="0" high="100" default="3"/>
+      <number id="numGlRedbooks" type="spinbutton"
+        arg="-gl-redbooks %" _label="Redbooks"
+        low="0" high="100" default="3"/>
+    </vgroup>
+-->
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A re-creation of the 3D Maze screensaver from Windows 95.
+
+Written by Sudoer; 2018.
+</_description>
+</screensaver>

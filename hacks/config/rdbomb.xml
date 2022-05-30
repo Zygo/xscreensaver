@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="rdbomb" _label="RD-Bomb">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=xiooDyrZSsY"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Slow" _high-label="Fast"
+            low="0" high="250000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+             _label="Wander speed" _low-label="Slow" _high-label="Fast"
+             low="0.0" high="10.0" default="0.0"/>
+
+    <number id="size" type="slider" arg="-size %"
+             _label="Fill screen" _low-label="1%" _high-label="100%"
+             low="0.01" high="1.0" default="1.0"/>
+   </vgroup>
+   <vgroup>
+    <number id="epoch" type="slider" arg="-epoch %"
+             _label="Epoch" _low-label="Small" _high-label="Large"
+             low="1000" high="300000" default="40000"/>
+
+    <number id="ncolors" type="slider" arg="-ncolors %"
+              _label="Number of colors" _low-label="Two" _high-label="Many"
+              low="1" high="255" default="255"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+    <xscreensaver-updater />
+
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <vgroup>
+    <number id="width" type="spinbutton" arg="-width %"
+            _label="X tile size" low="0" high="500" default="0"/>
+    <number id="pixheight" type="spinbutton" arg="-height %"
+            _label="Y tile size" low="0" high="500" default="0"/>
+   </vgroup>
+   <vgroup>
+    <number id="reaction" type="spinbutton" arg="-reaction %"
+            _label="Reaction" low="-1" high="2" default="-1"/>
+    <number id="diffusion" type="spinbutton" arg="-diffusion %"
+            _label="Diffusion" low="-1" high="2" default="-1"/>
+
+    <!-- #### default is wrong -->
+    <number id="radius" type="spinbutton" arg="-radius %"
+           _label="Seed radius" low="-1" high="60" default="-1"/>
+
+   </vgroup>
+
+  </hgroup>
+
+  <_description>
+Reaction-diffusion: draws a grid of growing square-like shapes that,
+once they overtake each other, react in unpredictable ways.
+
+Written by Scott Draves; 1997.
+  </_description>
+</screensaver>

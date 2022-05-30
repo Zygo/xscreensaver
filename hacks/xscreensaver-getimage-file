@@ -1,0 +1,1627 @@
+#!/usr/bin/perl -w
+# Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# This program chooses a random file from under the given directory, and
+# prints its name.  The file will be an image file whose dimensions are
+# larger than a certain minimum size.
+#
+# If the directory is a URL, it is assumed to be an RSS or Atom feed.
+# The images from that feed will be downloaded, cached, and selected from
+# at random.  The feed will be re-polled periodically, as needed.
+#
+# The various xscreensaver hacks that manipulate images ("jigsaw", etc.) get
+# the image to manipulate by running the "xscreensaver-getimage" program.
+#
+# Under X11, the "xscreensaver-getimage" program invokes this script,
+# depending on the value of the "chooseRandomImages" and "imageDirectory"
+# settings in the ~/.xscreensaver file (or .../app-defaults/XScreenSaver).
+# The screen savers invoke "xscreensaver-getimage" via utils/grabclient.c,
+# which then invokes this script.
+#
+# Under Cocoa, this script lives inside the .saver bundle, and is invoked
+# directly from utils/grabclient.c.
+#
+# Created: 12-Apr-01.
+
+require 5;
+#use diagnostics;	# Fails on some MacOS 10.5 systems
+use strict;
+
+use POSIX;
+use Fcntl;
+
+use Fcntl ':flock'; # import LOCK_* constants
+
+use POSIX ':fcntl_h';				# S_ISDIR was here in Perl 5.6
+import Fcntl ':mode' unless defined &S_ISUID;	# but it is here in Perl 5.8
+	# but in Perl 5.10, both of these load, and cause errors!
+	# So we have to check for S_ISUID instead of S_ISDIR?  WTF?
+
+use Digest::MD5 qw(md5_base64);
+
+# Some Linux systems don't install LWP by default!
+# Only error out if we're actually loading a URL instead of local data.
+BEGIN { eval 'use LWP::Simple; use LWP::UserAgent;' }
+
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my ($version) = ('$Revision: 1.65 $' =~ m/\s(\d[.\d]+)\s/s);
+
+my $verbose = 0;
+
+# Whether to cache the results of the last run.
+#
+my $cache_p = 1;
+
+# Regenerate the cache if it is older than this many seconds.
+#
+my $cache_max_age = 60 * 60 * 3;   # 3 hours
+
+# Re-poll RSS/Atom feeds when local copy is older than this many seconds.
+#
+my $feed_max_age = $cache_max_age;
+
+
+# This matches files that we are allowed to use as images (case-insensitive.)
+# Anything not matching this is ignored.  This is so you can point your
+# imageDirectory at directory trees that have things other than images in
+# them, but it assumes that you gave your images sensible file extensions.
+#
+my @good_extensions = ('jpg', 'jpeg', 'pjpeg', 'pjpg', 'png', 'gif',
+                       'tif', 'tiff', 'xbm', 'xpm', 'svg');
+my $good_file_re = '\.(' . join("|", @good_extensions) . ')$';
+
+# This matches file extensions that might occur in an image directory,
+# and that are never used in the name of a subdirectory.  This is an
+# optimization that prevents us from having to stat() those files to
+# tell whether they are directories or not.  (It speeds things up a
+# lot.  Don't give your directories stupid names.)
+#
+my @nondir_extensions = ('ai', 'bmp', 'bz2', 'cr2', 'crw', 'db',
+   'dmg', 'eps', 'gz', 'hqx', 'htm', 'html', 'icns', 'ilbm', 'mov',
+   'nef', 'pbm', 'pdf', 'php', 'pl', 'ppm', 'ps', 'psd', 'sea', 'sh',
+   'shtml', 'tar', 'tgz', 'thb', 'txt', 'xcf', 'xmp', 'Z', 'zip' );
+my $nondir_re = '\.(' . join("|", @nondir_extensions) . ')$';
+
+
+# JPEG, GIF, and PNG files that are are smaller than this are rejected:
+# this is so that you can use an image directory that contains both big
+# images and thumbnails, and have it only select the big versions.
+# But, if all of your images are smaller than this, all will be rejected.
+#
+my $min_image_width  = 500;
+my $min_image_height = 500;
+
+my @all_files = ();         # list of "good" files we've collected
+my %seen_inodes;            # for breaking recursive symlink loops
+
+# For diagnostic messages:
+#
+my $dir_count = 1;          # number of directories seen
+my $stat_count = 0;	    # number of files/dirs stat'ed
+my $skip_count_unstat = 0;  # number of files skipped without stat'ing
+my $skip_count_stat = 0;    # number of files skipped after stat
+
+my $config_file = $ENV{HOME} . "/.xscreensaver";
+my $image_directory = undef;
+
+
+sub find_all_files($);
+sub find_all_files($) {
+  my ($dir) = @_;
+
+  print STDERR "$progname:  + reading dir $dir/...\n" if ($verbose > 1);
+
+  my $dd;
+  if (! opendir ($dd, $dir)) {
+    print STDERR "$progname: couldn't open $dir: $!\n" if ($verbose);
+    return;
+  }
+  my @files = readdir ($dd);
+  closedir ($dd);
+
+  my @dirs = ();
+
+  foreach my $file (@files) {
+    next if ($file =~ m/^\./);      # silently ignore dot files/dirs
+
+    if ($file =~ m/[~%\#]$/) {      # ignore backup files (and dirs...)
+      $skip_count_unstat++;
+      print STDERR "$progname:  - skip file  $file\n" if ($verbose > 1);
+    }
+
+    $file = "$dir/$file";
+
+    if ($file =~ m/$good_file_re/io) {
+      #
+      # Assume that files ending in .jpg exist and are not directories.
+      #
+      push @all_files, $file;
+      print STDERR "$progname:  - found file $file\n" if ($verbose > 1);
+
+    } elsif ($file =~ m/$nondir_re/io) {
+      #
+      # Assume that files ending in .html are not directories.
+      #
+      $skip_count_unstat++;
+      print STDERR "$progname: -- skip file  $file\n" if ($verbose > 1);
+
+    } else {
+      #
+      # Now we need to stat the file to see if it's a subdirectory.
+      #
+      # Note: we could use the trick of checking "nlinks" on the parent
+      # directory to see if this directory contains any subdirectories,
+      # but that would exclude any symlinks to directories.
+      #
+      my @st = stat($file);
+      my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+          $atime,$mtime,$ctime,$blksize,$blocks) = @st;
+
+      $stat_count++;
+
+      if ($#st == -1) {
+        if ($verbose) {
+          my $ll = readlink $file;
+          if (defined ($ll)) {
+            print STDERR "$progname: + dangling symlink: $file -> $ll\n";
+          } else {
+            print STDERR "$progname: + unreadable: $file\n";
+          }
+        }
+        next;
+      }
+
+      next if ($seen_inodes{"$dev:$ino"}); # break symlink loops
+      $seen_inodes{"$dev:$ino"} = 1;
+
+      if (S_ISDIR($mode)) {
+        push @dirs, $file;
+        $dir_count++;
+        print STDERR "$progname:  + found dir  $file\n" if ($verbose > 1);
+
+      } else {
+        $skip_count_stat++;
+        print STDERR "$progname:  + skip file  $file\n" if ($verbose > 1);
+      }
+    }
+  }
+
+  foreach (@dirs) {
+    find_all_files ($_);
+  }
+}
+
+
+# The cache file contains the full list of pathnames under the image directory
+# tree, to avoid having to recursively list it every time.  Read the cache
+# file and return its contents, if any.  This also holds an exclusive lock on
+# the cache file, which has the additional benefit that if two copies of this
+# program are running at once, one will wait for the other, instead of both of
+# them spanking the same file system at the same time.
+#
+my $cache_fd = undef;
+my $cache_file_name = undef;
+my $read_cache_p = 0;
+
+sub read_cache($) {
+  my ($dir) = @_;
+
+  return () unless ($cache_p);
+
+  my $dd = "$ENV{HOME}/Library/Caches";    # MacOS location
+  if (-d $dd) {
+    $cache_file_name = "$dd/org.jwz.xscreensaver.getimage.cache";
+  } elsif (-d "$ENV{HOME}/.cache") {	   # Gnome "FreeDesktop XDG" location
+    $dd = "$ENV{HOME}/.cache/xscreensaver";
+    if (! -d $dd) { mkdir ($dd) || error ("mkdir $dd: $!"); }
+    $cache_file_name = "$dd/xscreensaver-getimage.cache"
+  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/tmp/ exists, use it.
+    $cache_file_name = "$ENV{HOME}/tmp/.xscreensaver-getimage.cache";
+  } else {
+    $cache_file_name = "$ENV{HOME}/.xscreensaver-getimage.cache";
+  }
+
+  print STDERR "$progname: awaiting lock: $cache_file_name\n"
+    if ($verbose > 1);
+
+  my $file = $cache_file_name;
+  open ($cache_fd, '+>>', $file) || error ("unable to write $file: $!");
+  flock ($cache_fd, LOCK_EX)     || error ("unable to lock $file: $!");
+  seek ($cache_fd, 0, 0)         || error ("unable to rewind $file: $!");
+
+  my $mtime = (stat($cache_fd))[9];
+
+  if ($mtime + $cache_max_age < time) {
+    print STDERR "$progname: cache is too old\n" if ($verbose);
+    return ();
+  }
+
+  # First line of the file is the directory tree these files were read from.
+  my $odir = <$cache_fd>;
+  $odir =~ s/[\r\n]+$//s if defined ($odir);
+  if (!defined ($odir) || ($dir ne $odir)) {
+    print STDERR "$progname: cache is for $odir, not $dir\n"
+      if ($verbose && $odir);
+    return ();
+  }
+
+  # Subsequent lines are relative pathnames.
+  my @files = ();
+  while (<$cache_fd>) { 
+    s/[\r\n]+$//s;
+    push @files, "$odir/$_";
+  }
+
+  print STDERR "$progname: " . ($#files+1) . " files in cache\n"
+    if ($verbose);
+
+  $read_cache_p = 1;
+  return @files;
+}
+
+
+# Similar but different location for caching downloaded RSS feeds.
+#
+sub feed_dir() {
+  my $dir = "$ENV{HOME}/Library/Caches";    # MacOS location
+  if (-d $dir) {
+    $dir = "$dir/org.jwz.xscreensaver.feeds";
+  } elsif (-d "$ENV{HOME}/.cache") {	   # Gnome "FreeDesktop XDG" location
+    $dir = "$ENV{HOME}/.cache/xscreensaver";
+    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
+    $dir .= "/feeds";
+    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
+  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/tmp/ exists, use it.
+    $dir = "$ENV{HOME}/tmp/.xscreensaver-feeds";
+  } else {
+    $dir = "$ENV{HOME}/.xscreensaver-feeds";
+  }
+  return $dir;
+}
+
+
+sub write_cache($) {
+  my ($dir) = @_;
+
+  return unless ($cache_p);
+
+  # If we read the cache, just close it without rewriting it.
+  # If we didn't read it, then write it now.
+
+  if (! $read_cache_p) {
+
+    truncate ($cache_fd, 0) ||
+      error ("unable to truncate $cache_file_name: $!");
+    seek ($cache_fd, 0, 0) ||
+      error ("unable to rewind $cache_file_name: $!");
+
+    if ($#all_files >= 0) {
+      print $cache_fd "$dir\n";
+      foreach (@all_files) {
+        my $f = $_; # stupid Perl. do this to avoid modifying @all_files!
+        $f =~ s@^\Q$dir/@@so || die;  # remove $dir from front
+        print $cache_fd "$f\n";
+      }
+    }
+
+    print STDERR "$progname: cached " . ($#all_files+1) . " files\n"
+      if ($verbose);
+  }
+
+  flock ($cache_fd, LOCK_UN) ||
+    error ("unable to unlock $cache_file_name: $!");
+  close ($cache_fd);
+  $cache_fd = undef;
+}
+
+
+sub html_unquote($) {
+  my ($h) = @_;
+
+  # This only needs to handle entities that occur in RSS, not full HTML.
+  my %ent = ( 'amp' => '&', 'lt' => '<', 'gt' => '>', 
+              'quot' => '"', 'apos' => "'" );
+  $h =~ s/(&(\#)?([[:alpha:]\d]+);?)/
+    {
+     my ($o, $c) = ($1, $3);
+     if (! defined($2)) {
+       $c = $ent{$c};			# for &lt;
+     } else {
+       if ($c =~ m@^x([\dA-F]+)$@si) {	# for &#x41;
+         $c = chr(hex($1));
+       } elsif ($c =~ m@^\d+$@si) {	# for &#65;
+         $c = chr($c);
+       } else {
+         $c = undef;
+       }
+     }
+     ($c || $o);
+    }
+   /gexi;
+  return $h;
+}
+
+
+
+# Figure out what the proxy server should be, either from environment
+# variables or by parsing the output of the (MacOS) program "scutil",
+# which tells us what the system-wide proxy settings are.
+#
+sub set_proxy($) {
+  my ($ua) = @_;
+
+  my $proxy_data = `scutil --proxy 2>/dev/null`;
+  foreach my $proto ('http', 'https') {
+    my ($server) = ($proxy_data =~ m/\b${proto}Proxy\s*:\s*([^\s]+)/si);
+    my ($port)   = ($proxy_data =~ m/\b${proto}Port\s*:\s*([^\s]+)/si);
+    my ($enable) = ($proxy_data =~ m/\b${proto}Enable\s*:\s*([^\s]+)/si);
+
+    if ($server && $enable) {
+      # Note: this ignores the "ExceptionsList".
+      my $proto2 = 'http';
+      $ENV{"${proto}_proxy"} = ("${proto2}://" . $server .
+                                ($port ? ":$port" : "") . "/");
+      print STDERR "$progname: MacOS $proto proxy: " .
+                   $ENV{"${proto}_proxy"} . "\n"
+        if ($verbose > 2);
+    }
+  }
+
+  $ua->env_proxy();
+}
+
+
+sub init_lwp() {
+  my $ua = $LWP::Simple::ua;
+  if (! defined ($ua)) {
+    error ("\n\n\tPerl is broken. Do this to repair it:\n" .
+           "\n\tsudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA\n");
+  }
+  set_proxy ($ua);
+
+  if ($verbose > 6) {
+    $ua->add_handler("request_send",  sub { shift->dump; return });
+    $ua->add_handler("response_done", sub { shift->dump; return });
+  }
+}
+
+
+sub sanity_check_lwp() {
+  my $url1 = 'https://www.mozilla.org/';
+  my $url2 =  'http://www.mozilla.org/';
+  my $body = (LWP::Simple::get($url1) || '');
+  if (length($body) < 10240) {
+    my $err = "";
+    $body = (LWP::Simple::get($url2) || '');
+    if (length($body) < 10240) {
+      $err = "Perl is broken: neither HTTP nor HTTPS URLs work.";
+    } else {
+      $err = "Perl is broken: HTTP URLs work but HTTPS URLs don't.";
+    }
+    $err .= "\nMaybe try: sudo cpan -f Mozilla::CA LWP::Protocol::https";
+    $err =~ s/^/\t/gm;
+    error ("\n\n$err\n");
+  }
+}
+
+
+# If the URL does not already end with an extension appropriate for the
+# content-type, add it after a "#" search.
+#
+# This is for when we know the content type of the URL, but the URL is
+# some crazy thing without an extension. The files on disk need to have
+# proper extensions.
+#
+sub force_extension($$) {
+  my ($url, $ct) = @_;
+  return $url unless (defined($url) && defined($ct));
+  my ($ext) = ($ct =~ m@^image/([-a-z\d]+)@si);
+  return $url unless $ext;
+  $ext = lc($ext);
+  $ext = 'jpg' if ($ext eq 'jpeg');
+  return $url if ($url =~ m/\.$ext$/si);
+  return "$url#.$ext";
+}
+
+
+# Returns a list of the image enclosures in the RSS or Atom feed.
+# Elements of the list are references, [ "url", "guid" ].
+#
+sub parse_feed($);
+sub parse_feed($) {
+  my ($url) = @_;
+
+  init_lwp();
+  $LWP::Simple::ua->agent ("$progname/$version");
+  $LWP::Simple::ua->timeout (10);  # bail sooner than the default of 3 minutes
+
+  # Half the time, random Linux systems don't have Mozilla::CA installed,
+  # which results in "Can't verify SSL peers without knowning which
+  # Certificate Authorities to trust".
+  #
+  # In xscreensaver-text we just disabled certificate checks. However,
+  # malicious images really do exist, so for xscreensaver-getimage-file,
+  # let's actually require that SSL be installed properly.
+
+  print STDERR "$progname: loading $url\n" if ($verbose);
+  my $body = (LWP::Simple::get($url) || '');
+
+  if ($body !~ m@^\s*<(\?xml|rss)\b@si) {
+    # Not an RSS/Atom feed.  Try RSS autodiscovery.
+
+    # (Great news, everybody: Flickr no longer provides RSS for "Sets",
+    # only for "Photostreams", and only the first 20 images of those.
+    # Thanks, assholes.)
+
+    if ($body =~ m/^\s*$/s) {
+      sanity_check_lwp();
+      error ("null response: $url");
+    }
+
+    error ("not an RSS or Atom feed, or HTML: $url")
+      unless ($body =~ m@<(HEAD|BODY|A|IMG)\b@si);
+
+    # Find the first <link> with RSS or Atom in it, and use that instead.
+
+    $body =~ s@<LINK\s+([^<>]*)>@{
+      my $p = $1;
+      if ($p =~ m! \b REL  \s* = \s* ['"]? alternate \b!six &&
+          $p =~ m! \b TYPE \s* = \s* ['"]? application/(atom|rss) !six &&
+          $p =~ m! \b HREF \s* = \s* ['"]  ( [^<>'"]+ ) !six
+         ) {
+        my $u2 = html_unquote ($1);
+        if ($u2 =~ m!^/!s) {
+          my ($h) = ($url =~ m!^([a-z]+://[^/]+)!si);
+          $u2 = "$h$u2";
+        }
+
+        # Flickr sometimes provides autodiscover for comments, but not for
+        # the actual photos.  FFS, Flickr...
+        $u2 = '' if ($u2 =~ m!/groups_discuss\.gne!);
+        if ($u2) {
+          print STDERR "$progname: found feed: $u2\n"
+            if ($verbose);
+          return parse_feed ($u2);
+        }
+      }
+      '';
+    }@gsexi;
+
+    # As a last resort, special-case certain popular web sites that don't
+    # provide RSS autodiscovery.
+    my $u2 = guess_rss ($url, $body);
+    if ($u2) {
+      if (ref($u2) eq 'ARRAY') {
+        return @$u2;
+      } else {
+        return parse_feed ($u2);
+      }
+    }
+
+    error ("no RSS or Atom feed for HTML page: $url");
+  }
+
+
+  $body =~ s@(<ENTRY|<ITEM)@\001$1@gsi;
+  my @items = split(/\001/, $body);
+  shift @items;
+
+  my @imgs = ();
+  my %ids;
+
+  foreach my $item (@items) {
+    my $iurl = undef;
+    my $id = undef;
+    my $kind = '?';
+
+    # The <media:group> container groups the same content in different
+    # representations.  So first, edit each of those to contain only the
+    # highest resolution child.
+    #
+    $item =~ s@<MEDIA:GROUP[^<>]*>(.*?)</MEDIA:GROUP>@{
+      my $g = $1;
+      my $largest = undef;
+      my $last_size = 0;
+      foreach my $link ($g =~
+                        m%(<MEDIA:CONTENT[^<>]*>.*?</MEDIA:CONTENT>)%gsi) {
+        my ($w)    = ($link =~ m/\bWIDTH\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($h)    = ($link =~ m/\bHEIGHT\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($med)  = ($link =~ m/\bMEDIUM\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $type = 'image/jpeg' if (!$type && lc($med || '') eq 'image');
+        next unless ($type =~ m/^image/si);
+        my $size = ($w || 0) * ($h || 0);
+        if ($size > $last_size) {  # If no sizes, this will take the last.
+          $largest = $link;
+          $last_size = $size;
+        }
+      }
+    $largest || '';
+    }@gsexi;
+
+    # Look for <link rel="enclosure" href="...">
+    #
+    if (! $iurl) {
+      foreach my $link ($item =~ m@<LINK[^<>]*>@gsi) {
+        last if $iurl;
+        my ($href) = ($link =~ m/\bHREF\s*=\s*[\"\']([^<>\'\"]+)/si);
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($rel)  = ($link =~ m/\bREL\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $href = undef unless (lc($rel || '') eq 'enclosure');
+        $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
+        $iurl = html_unquote($href) if $href;
+        $iurl = force_extension ($iurl, $type);
+        $kind = 'link';
+      }
+    }
+
+    # Then look for <media:content url="...">
+    #
+    if (! $iurl) {
+      foreach my $link ($item =~ m@<MEDIA:CONTENT[^<>]*>@gsi) {
+        last if $iurl;
+        my ($href) = ($link =~ m/\bURL\s*=\s*[\"\']([^<>\'\"]+)/si);
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($med)  = ($link =~ m/\bMEDIUM\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($w)    = ($link =~ m/\bWIDTH\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($h)    = ($link =~ m/\bHEIGHT\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $type = 'image/jpeg' if (!$type && lc($med || '') eq 'image');
+        $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
+        $href = undef
+          if (($w && $w < $min_image_width) ||  # If we already know it's too
+              ($h && $h < $min_image_height));  # small, don't download it.
+        $iurl = html_unquote($href) if $href;
+        $iurl = force_extension ($iurl, $type);
+        $kind = 'media:content';
+      }
+    }
+
+    # Then look for <enclosure url="..."/> 
+    #
+    if (! $iurl) {
+      foreach my $link ($item =~ m@<ENCLOSURE[^<>]*>@gsi) {
+        last if $iurl;
+        my ($href) = ($link =~ m/\bURL\s*=\s*[\"\']([^<>\'\"]+)/si);
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
+        $iurl = html_unquote($href) if ($href);
+        $iurl = force_extension ($iurl, $type);
+        $kind = 'enclosure';
+      }
+    }
+
+    # Ok, maybe there's an image in the <url> field?
+    #
+    if (! $iurl) {
+      foreach my $link ($item =~ m@<URL\b[^<>]*>([^<>]*)@gsi) {
+        last if $iurl;
+        my $u2 = $1;
+        $iurl = html_unquote($u2) if ($u2 =~ m/$good_file_re/io);
+        if (! $iurl) {
+          my $u3 = $u2;
+          $u3 =~ s/#.*$//gs;
+          $u3 =~ s/[?&].*$//gs;
+          $iurl = html_unquote($u2) if ($u3 =~ m/$good_file_re/io);
+          $kind = 'url';
+        }
+      }
+    }
+
+    # Then look for <content:encoded> or <description>... with an
+    # <img src="..."> inside. If more than one image, take the first.
+    #
+    foreach my $t ('content:encoded', 'description') {
+      last if $iurl;
+      foreach my $link ($item =~ m@<$t[^<>]*>(.*?)</$t>@gsi) {
+        last if $iurl;
+        my $desc = $1;
+        if ($desc =~ m@<!\[CDATA\[\s*(.*?)\s*\]\]>@gs) {
+          $desc = $1;
+        } else {
+          $desc = html_unquote($desc);
+        }
+        my ($href) = ($desc =~ m@<IMG[^<>]*\bSRC=[\"\']?([^\"\'<>]+)@si);
+        $iurl = html_unquote($href) if ($href);
+        $kind = $t if $iurl;
+        # If IMG SRC has a bogus extension, pretend it's a JPEG.
+        $iurl = force_extension ($iurl, 'image/jpeg')
+          if ($iurl && $iurl !~ m/$good_file_re/io);
+      }
+    }
+
+    # Find a unique ID for this image, to defeat image farms.
+    # First look for <id>...</id>
+    ($id) = ($item =~ m!<ID\b[^<>]*>\s*([^<>]+?)\s*</ID>!si) unless $id;
+
+    # Then look for <guid isPermaLink=...> ... </guid>
+    ($id) = ($item =~ m!<GUID\b[^<>]*>\s*([^<>]+?)\s*</GUID>!si) unless $id;
+
+    # Then look for <link> ... </link>
+    ($id) = ($item =~ m!<LINK\b[^<>]*>\s*([^<>]+?)\s*</LINK>!si) unless $id;
+
+    # If we only have a GUID or LINK, but it's an image, use that.
+    $iurl = $id if (!$iurl && $id && $id =~ m/$good_file_re/io);
+
+    if ($iurl) {
+      $id = $iurl unless $id;
+      my $o = $ids{$id};
+      if (! $o) {
+        $ids{$id} = $iurl;
+        my @P = ($iurl, $id);
+        push @imgs, \@P;
+        print STDERR "$progname:   $kind: $iurl\n" if ($verbose > 4);
+      } elsif ($iurl ne $o) {
+        print STDERR "$progname: WARNING: dup ID \"$id\"" .
+                     " for \"$o\" and \"$iurl\"\n";
+      }
+    }
+  }
+
+  return @imgs;
+}
+
+
+# Hardcoded URL rewrites to special-case certain popular web sites that don't
+# provide RSS autodiscovery.
+#
+sub guess_rss($$) {
+  my ($url, $body) = @_;
+  return undef unless $url;
+  my $ret = undef;
+
+  # Flickr:
+  # Some of their pages have autodiscovery, some do not.
+  #
+  if ($url =~ m@^https?://([^/?#&]+\.)*flickr\.com/@si) {
+    my $base = 'https://api.flickr.com/services/feeds/';
+    if ($url =~ m@/photos/([^/?\#&]+)(/albums)?/?$@si) {	    # User
+      $ret = $base . 'photos_public.gne?id=' . $1;
+    } elsif ($url =~ m@/photos/([^/?\#&]+)/albums/([^/?\#&]+)@si) { # Album
+      $ret = $base . 'photoset.gne?nsid=' . $1 . '&set=' . $2;
+    } elsif ($url =~ m@/photos/([^/?\#&]+)/favorites/?$@si) {	    # Faves
+      $ret = $base . 'photos_faves.gne?id=' . $1;
+    } elsif ($url =~ m@/photos/tags/([^/?\#&]+)@si) {		    # Tag
+      $ret = $base . 'photos_public.gne?tags=' . $1;
+    } elsif ($url =~ m@/groups/([^/?\#&]+)@si) {		    # Group
+      my $name = $1; # Name unused, ID is embedded in JSON
+      my ($id) = ($body =~ m@"(?:groupId|nsid)":"(.*?)"@s);
+      $ret = $base . 'groups_pool.gne?id=' . $id
+        if ($id);
+    }
+
+  #
+  # Instagram:
+  # Unsurprisingly, this doesn't work reliably.  Sometimes the page has images
+  # on it, and sometimes it is the blank login page.  Rate limited, maybe?
+  #
+  } elsif ($url =~ m@^https?://([^/?#&]+\.)*instagram\.com/@si) {
+    my ($json) = ($body =~ m@\s+ = \s+ ( \{ \" .*? \} ) ;@six);
+    if (!$json) {
+      print STDERR "$progname: no JSON: $url\n" if ($verbose);
+    } else {
+      my @imgs;
+      $json =~ s%"display_url":"(.+?)"%{
+        my $img = $1;
+        $img =~ s/\\u0026/&/gs;
+        push @imgs, [ $img, $img ];
+      }%gsex;
+      if (@imgs) {
+        $ret = \@imgs;
+      } else {
+        print STDERR "$progname: no images in JSON: $url\n" if ($verbose);
+      }
+    }
+  }
+
+  print STDERR "$progname: guessed feed: " .
+               (ref($ret) eq 'ARRAY' ? scalar(@$ret) . ' items' : $ret) .
+               "\n"
+    if ($ret && $verbose);
+  return $ret;
+}
+
+
+my $flickr_api_key = undef;
+
+sub flickr_icebreaker($) {
+  my ($img) = @_;
+
+  my ($id) = ($img =~ m@/\d+/(\d+)_[a-f\d]+_@si);
+  return $img unless ($id);
+
+  if (! $flickr_api_key) {
+    my $url = 'https://www.flickr.com//hermes_error_beacon.gne';
+    print STDERR "$progname: loading $url\n" if ($verbose);
+    my $json = (LWP::Simple::get($url) || '');
+    ($flickr_api_key) = ($json =~ m/"site_key":"(.*?)"/s);
+    if (! $flickr_api_key) {
+      print STDERR "$progname: unable to load Flickr API key" if ($verbose);
+      return $url;
+    }
+  }
+
+  my $url = ('https://api.flickr.com/services/rest' .
+             '?method=flickr.photos.getSizes' .
+             '&photo_id=' . $id .
+             '&api_key=' . $flickr_api_key);
+  print STDERR "$progname: loading $url\n" if ($verbose > 1);
+  my $xml = LWP::Simple::get($url);
+  if (!$xml) {
+    print STDERR "$progname: no XML for $img" if ($verbose);
+    return $url;
+  }
+
+  $url = '';
+  my $max = 0;
+  $xml =~ s@^.*?<size\b@@s;
+  foreach (split(/<size\b/s, $xml)) {
+    my ($w)     = (m/\bwidth="(\d+)"/s);
+    my ($h)     = (m/\bheight="(\d+)"/s);
+    my ($src)   = (m/\bsource="(.*?)"/s);
+    my ($media) = (m/\bmedia="(.*?)"/s);
+
+    error ("no width in $_")  unless $w;
+    error ("no height in $_") unless $h;
+    error ("no source in $_") unless $src;
+    error ("no media in $_")  unless $media;
+    next if ($media eq 'video');
+
+    my $size = $w * $h;
+    if ($max < $size) {
+      $url = $src;
+      $max = $size;
+    }
+  }
+  $img = $url if ($url && $max);
+
+  return $img;
+}
+
+
+# If the image URL points to a small version, return the URL of a larger one.
+#
+sub embiggen_image($) {
+  my ($url) = @_;
+  return undef unless $url;
+  my $ourl = $url;
+
+  # Flickr
+  #
+  if ($url =~ m@^https?://([^/?\#&]+\.)*(static)?flickr\.com/@si) {
+
+    # Flickr's RSS feeds sometimes include only the small versions of the
+    # images.  So if the URL ends in one of the "small-size" letters, change
+    # it to "b".
+    #
+    #     _o  orig,  1600 +
+    #     _k  large, 2048 max
+    #     _h  large, 1600 max
+    #     _b  large, 1024 max
+    #     _c  medium, 800 max
+    #     _z  medium, 640 max
+    #     ""  medium, 500 max
+    #     _n  small,  320 max
+    #     _m  small,  240 max
+    #     _t  thumb,  100 max
+    #     _q  square, 150x150
+    #     _s  square,  75x75
+
+    # We can get the _b or _h by just replacing them in the URL:
+    $url =~ s@_[sqtmnzc](\.[a-z]+)$@_b$1@si;
+
+    # But to get the _k or _o versions, we need to load multiple URLs:
+    $url = flickr_icebreaker ($url)
+      unless ($url =~ m@_[ko](\.[a-z]+)$@si);
+
+  #
+  # Archive.org
+  #
+  } elsif ($url =~ m@^https?://([^/?\#&]+\.)*archive\.org
+                     /services/get-item-image\.php@six) {
+
+    # The RSS feeds for archive.org items and collections are criminally
+    # negligent.  The thumbnails are 180px wide and getting a larger version
+    # of that thumbnail is a LOT of work.
+    #
+    # Their party line is, "Create an account and use the Python command line
+    # interface".  But it would be far too onerous to require each XScreenSaver
+    # user to create an account on archive.org; nor would be it be reasonable
+    # for XScreenSaver to include a dependency on the "ia" program (or even
+    # on Python) just to load URLs from an otherwise-public web site.
+    #
+    # So, we scrape!
+
+    # First convert /services/get-item-image.php?identifier=...
+    # into /services/collection-rss.php?collection=...
+    #
+    my ($id)  = ($url =~ m@\bidentifier=([^/?\#&]+)@si);
+    my ($col) = ($url =~ m@\bcollection=([^/?\#&]+)@si);
+    my $u2 = 'https://archive.org/download/' . $id . '/' . $id . '_files.xml';
+    print STDERR "$progname: loading $u2\n" if ($verbose > 1);
+    my $res = $LWP::Simple::ua->get ($u2);
+    my $ret = ($res && $res->code) || 'null';
+    if (! $res->is_success) {
+      print STDERR "$progname: failed: $u2: $ret\n" if ($verbose);
+      return $url;
+    }
+
+    # That did a redirect to https://XXXXXXXX.YY.archive.org/ZZ/...
+    # which is the URL of the underlying server.  Save that.
+    #
+    $u2 = $res->request->uri;
+    my ($base, $subdir) = ($u2 =~ m@^(https?://[^/]+)/([^/]+)/@si);
+    if (! $base) {
+      print STDERR "$progname: unparsable: $u2\n" if ($verbose);
+      return $url;
+    }
+
+    my $xml = $res->decoded_content;
+
+    # Nuke the garbage "__ia_thumb.jpg" from the XML so we don't match it.
+    $xml =~ s@"__ia_thumb\.[^\"]*"@NOPE@gsi;
+
+    # For some collections, there might be a PNG or JPEG in the XML.
+    # This happens with some CD-ROM ISO items, for example.
+    #
+    my ($png) = ($xml =~
+                 m@<file \b [^<>]*? \b name="( [^\"<>]+
+                     \.(png | p?jpe?g | tiff? ) )"
+                   [^<>]* source="original"
+                  @six);
+    if ($png) {
+      $url = 'https://archive.org/download/' . $id . '/' . $png;
+
+      # Fun story!  Items in some collections, like this one:
+      # https://archive.org/details/internetarchivebooks?&sort=-addeddate
+      # there is a <file name="....png" source="original"> but it is 403,
+      # "The item is not available due to issues with the item's content".
+      # Does that maybe mean it's just not cached and replicated yet?
+      # Who can tell.
+
+    } else {
+
+      # For collections of books and magazines and such, those that display as
+      # multi-page PDFs in the book reader, we need to parse the XML to find
+      # the first "derivative ZIP".  It looks like:
+      #
+      #   <file name="${id}_jp2.zip" source="derivative">
+      #     <format>Single Page Processed JP2 ZIP</format>
+      #
+      # This fails if a collection includes another collection: we would need
+      # to parse the RSS of the sub-collection to get its first image.
+      #
+      my ($jp2) = ($xml =~
+                   m@<file \b [^<>]*? \b name="( [^\"<>]+ _jp2\.zip )" @six);
+      if (! $jp2) {
+        print STDERR "$progname: no JP2: $u2 via $url\n" if ($verbose);
+        return $url;
+      }
+
+      my $jp2a = $jp2;
+      $jp2a =~ s/_jp2\.zip$//si;
+
+      # The large image, as shown in the book reader UI, has the URL form:
+      #
+      #   https://${BASE}/BookReader/BookReaderImages.php
+      #     ?zip=/${SUBDIR}/items/${ITEM}/${ITEM}_jp2.zip
+      #     &file=${ITEM}_jp2/${ITEM}_0000.jp2
+      #     &id=${ITEM}
+      #
+      # But does this all assume that the item in the collection began its
+      # life as a PDF?  What if it was something else?
+      #
+      # Thanks, guys. You made this all sooooo easy.
+      #
+      $url = ($base . '/BookReader/BookReaderImages.php' .
+              '?zip=/' . $subdir . '/items/' . $id . '/' . $jp2 .
+              '&file=' . $jp2a . '_jp2/' . $jp2a . '_0000.jp2' .
+              '&id=' . $id);
+    }
+  }
+
+  print STDERR "$progname: embiggen: $ourl -> $url\n"
+    if ($verbose && $ourl ne $url);
+  return $url;
+}
+
+
+# Like md5_base64 but uses filename-safe characters.
+#
+sub md5_file($) {
+  my ($s) = @_;
+  $s = md5_base64($s);
+  $s =~ s@[/]@_@gs;
+  $s =~ s@[+]@-@gs;
+  return $s;
+}
+
+
+# expands the first URL relative to the second.
+#
+sub expand_url($$) {
+  my ($url, $base) = @_;
+
+  $url =~ s/^\s+//gs;  # lose whitespace at front and back
+  $url =~ s/\s+$//gs;
+
+  if (! ($url =~ m/^[a-z]+:/)) {
+
+    $base =~ s@(\#.*)$@@;       # strip anchors
+    $base =~ s@(\?.*)$@@;       # strip arguments
+    $base =~ s@/[^/]*$@/@;      # take off trailing file component
+
+    my $tail = '';
+    if ($url =~ s@(\#.*)$@@) { $tail = $1; }         # save anchors
+    if ($url =~ s@(\?.*)$@@) { $tail = "$1$tail"; }  # save arguments
+
+    my $base2 = $base;
+
+    $base2 =~ s@^([a-z]+:/+[^/]+)/.*@$1@        # if url is an absolute path
+      if ($url =~ m@^/@);
+
+    my $ourl = $url;
+
+    $url = $base2 . $url;
+    $url =~ s@/\./@/@g;                         # expand "."
+    1 while ($url =~ s@/[^/]+/\.\./@/@s);       # expand ".."
+
+    $url .= $tail;                              # put anchors/args back
+
+    print STDERR "$progname: relative URL: $ourl --> $url\n"
+      if ($verbose > 6);
+
+  } else {
+    print STDERR "$progname: absolute URL: $url\n"
+      if ($verbose > 6);
+  }
+
+  return $url;
+}
+
+
+# Given the URL of an image, download it into the given directory
+# and return the file name.
+#
+sub download_image($$$) {
+  my ($url, $uid, $dir) = @_;
+
+  my $url2 = $url;
+  $url2 =~ s/\#.*$//s;		# Omit search terms after file extension
+  $url2 =~ s/\?.*$//s;
+  my ($ext) = ($url  =~ m@\.([a-z\d]+)$@si);
+     ($ext) = ($url2 =~ m@\.([a-z\d]+)$@si) unless $ext;
+
+  # If the feed hasn't put a sane extension on their URLs, nothing's going
+  # to work. This code assumes that file names have extensions, even the
+  # ones in the cache directory.
+  #
+  if (! $ext) {
+    print STDERR "$progname: skipping extensionless URL: $url\n"
+      if ($verbose > 1);
+    return undef;
+  }
+
+  # Don't bother downloading files that we will reject anyway.
+  #
+  if (! ($url  =~ m/$good_file_re/io ||
+         $url2 =~ m/$good_file_re/io)) {
+    print STDERR "$progname: skipping non-image URL: $url\n"
+      if ($verbose > 1);
+    return undef;
+  }
+
+  my $file = md5_file ($uid);
+  $file .= '.' . lc($ext) if $ext;
+
+  # Don't bother doing If-Modified-Since to see if the URL has changed.
+  # If we have already downloaded it, assume it's good.
+  if (-f "$dir/$file") {
+    print STDERR "$progname: exists: $dir/$file for $uid / $url\n" 
+      if ($verbose > 1);
+    return $file;
+  }
+
+  $url = embiggen_image ($url);
+
+  print STDERR "$progname: downloading: $dir/$file for $uid / $url\n" 
+    if ($verbose > 1);
+  init_lwp();
+  $LWP::Simple::ua->agent ("$progname/$version");
+
+  $url =~ s/\#.*$//s;		# Omit search terms
+  my $status = LWP::Simple::mirror ($url, "$dir/$file");
+  if (!LWP::Simple::is_success ($status)) {
+    print STDERR "$progname: error $status: $url\n";   # keep going
+  }
+
+  return $file;
+}
+
+
+sub mirror_feed($) {
+  my ($url) = @_;
+
+  if ($url !~ m/^https?:/si) {   # not a URL: local directory.
+    return (undef, $url);
+  }
+
+  my $dir = feed_dir();
+  my $odir = $dir;
+
+  if (! -d $dir) {
+    mkdir ($dir) || error ("mkdir $dir: $!");
+    print STDERR "$progname: mkdir $dir/\n" if ($verbose);
+  }
+
+  # MD5 for directory name to use for cache of a feed URL.
+  $dir .= '/' . md5_file ($url);
+
+  if (! -d $dir) {
+    mkdir ($dir) || error ("mkdir $dir: $!");
+    print STDERR "$progname: mkdir $dir/ for $url\n" if ($verbose);
+  }
+
+  # At this point, we have the directory corresponding to this URL.
+  # Now check to see if the files in it are up to date, and download
+  # them if not.
+
+  my $stamp = '.timestamp';
+  my $lock = "$dir/$stamp";
+
+  print STDERR "$progname: awaiting lock: $lock\n"
+    if ($verbose > 1);
+
+  my $mtime = ((stat($lock))[9]) || 0;
+
+  my $lock_fd;
+  open ($lock_fd, '+>>', $lock) || error ("unable to write $lock: $!");
+  flock ($lock_fd, LOCK_EX)     || error ("unable to lock $lock: $!");
+  seek ($lock_fd, 0, 0)         || error ("unable to rewind $lock: $!");
+
+  my $poll_p = ($mtime + $feed_max_age < time);
+
+  # --no-cache cmd line arg means poll again right now.
+  $poll_p = 1 unless ($cache_p);
+
+  # Even if the cache is young, make sure there is at least one file,
+  # and re-check if not.
+  #
+  if (! $poll_p) {
+    my $count = 0;
+    opendir (my $dirh, $dir) || error ("$dir: $!");
+    foreach my $f (readdir ($dirh)) {
+      next if ($f =~ m/^\./s);
+      $count++;
+      last;
+    }
+    closedir $dirh;
+
+    if ($count <= 0) {
+      print STDERR "$progname: no image files in cache of $url\n"
+        if ($verbose);
+      $poll_p = 1;
+    }
+  }
+
+  if ($poll_p) {
+
+    print STDERR "$progname: checking $url\n" if ($verbose);
+
+    my %files;
+    opendir (my $dirh, $dir) || error ("$dir: $!");
+    foreach my $f (readdir ($dirh)) {
+      next if ($f eq '.' || $f eq '..');
+      $files{$f} = 0;  # 0 means "file exists, should be deleted"
+    }
+    closedir $dirh;
+
+    $files{$stamp} = 1;
+
+    # Download each image currently in the feed.
+    #
+    my $count = 0;
+    my @urls = parse_feed ($url);
+    print STDERR "$progname: " . ($#urls + 1) . " images\n"
+      if ($verbose > 1);
+    my %seen_src_urls;
+    foreach my $p (@urls) {
+      my ($furl, $id) = @$p;
+      $furl = expand_url ($furl, $url);
+
+      # No need to download the same image twice, even if it was in the feed
+      # multiple times under different GUIDs.
+      next if ($seen_src_urls{$furl});
+      $seen_src_urls{$furl} = 1;
+
+      my $f = download_image ($furl, $id, $dir);
+      next unless $f;
+      $files{$f} = 1;    # Got it, don't delete
+      $count++;
+    }
+
+    my $empty_p = ($count <= 0);
+
+    # Now delete any files that are no longer in the feed.
+    # But if there was nothing in the feed (network failure?)
+    # then don't blow away the old files.
+    #
+    my $kept = 0;
+    foreach my $f (keys(%files)) {
+      if ($count <= 0) {
+        $kept++;
+      } elsif ($files{$f}) {
+        $kept++;
+      } else {
+        if (unlink ("$dir/$f")) {
+          print STDERR "$progname: rm $dir/$f\n" if ($verbose > 1);
+        } else {
+          print STDERR "$progname: rm $dir/$f: $!\n";   # don't bail
+        }
+      }
+    }
+
+    # Both feed and cache are empty. No files at all. Bail.
+    error ("empty feed: $url") if ($kept <= 1);
+
+    # Feed is empty, but we have some files from last time. Warn.
+    print STDERR "$progname: empty feed: using cache: $url\n"
+      if ($empty_p);
+
+    $mtime = time();	# update the timestamp
+
+  } else {
+
+    # Not yet time to re-check the URL.
+    print STDERR "$progname: using cache: $url\n" if ($verbose);
+
+  }
+
+  # Unlock and update the write date on the .timestamp file.
+  #
+  truncate ($lock_fd, 0) || error ("unable to truncate $lock: $!");
+  seek ($lock_fd, 0, 0)  || error ("unable to rewind $lock: $!");
+
+  # macOS 11.6, perl 5.28.3: "The futimes function is unimplemented".
+  # This worked on macOS 10.14:
+ #utime ($mtime, $mtime, $lock_fd) || error ("unable to touch $lock: $!");
+  utime ($mtime, $mtime, $lock)    || error ("unable to touch $lock: $!");
+  flock ($lock_fd, LOCK_UN) || error ("unable to unlock $lock: $!");
+  close ($lock_fd);
+  $lock_fd = undef;
+  print STDERR "$progname: unlocked $lock\n" if ($verbose > 1);
+
+  # Don't bother using the imageDirectory cache.  We know that this directory
+  # is flat, and we can assume that an RSS feed doesn't contain 100,000 images
+  # like ~/Pictures/ might.
+  #
+  $cache_p = 0;
+
+  # Return the URL and directory name of the files of that URL's local cache.
+  #
+  return ($url, $dir);
+}
+
+
+sub find_random_file($) {
+  my ($dir) = @_;
+
+  my $url;
+  ($url, $dir) = mirror_feed ($dir);
+
+  if ($url) {
+    print STDERR "$progname: $dir is cache for $url\n" if ($verbose > 1);
+  }
+
+  @all_files = read_cache ($dir);
+
+  if ($#all_files >= 0) {
+    # got it from the cache...
+
+  } else {
+    print STDERR "$progname: recursively reading $dir...\n" if ($verbose);
+    find_all_files ($dir);
+    print STDERR "$progname: " .
+                 "f=" . ($#all_files+1) . "; " .
+                 "d=$dir_count; " .
+                 "s=$stat_count; " .
+                 "skip=${skip_count_unstat}+$skip_count_stat=" .
+                  ($skip_count_unstat + $skip_count_stat) .
+                 ".\n"
+      if ($verbose);
+  }
+
+  write_cache ($dir);
+
+  if ($#all_files < 0) {
+    print STDERR "$progname: no image files in $dir\n";
+    exit 1;
+  }
+
+  my $max_tries = 50;
+  my $total_files = @all_files;
+  my $sparse_p = ($total_files < 20);
+
+  # If the directory has a lot of files in it:
+  #   Make a pass through looking for hirez files (assume some are thumbs);
+  #   If we found none, then, select any other file at random.
+  # Otherwise if there are a small number of files:
+  #   Just select one at random (in case there's like, just one hirez).
+
+  for (my $check_size_p = $sparse_p ? 0 : 1;
+       $check_size_p >= 0; $check_size_p--) {
+
+    for (my $i = 0; $i < $max_tries; $i++) {
+      my $n = int (rand ($total_files));
+      my $file = $all_files[$n];
+      if (!$check_size_p || large_enough_p ($file)) {
+        if (! $url) {
+          $file =~ s@^\Q$dir/@@so || die;  # remove $dir from front
+        }
+        return $file;
+      }
+    }
+  }
+
+  print STDERR "$progname: no suitable images in " . ($url || $dir) . " -- " .
+               ($total_files <= $max_tries
+                ? "all $total_files images"
+                : "$max_tries of $total_files images") .
+               " are smaller than ${min_image_width}x${min_image_height}.\n";
+
+  # If we got here, blow away the cache.  Maybe it's stale.
+  unlink $cache_file_name if $cache_file_name;
+
+  exit 1;
+}
+
+
+sub large_enough_p($) {
+  my ($file) = @_;
+
+  my ($w, $h) = image_file_size ($file);
+
+  if (!defined ($h)) {
+
+    # Nonexistent files are obviously too small!
+    # Already printed $verbose message about the file not existing.
+    return 0 unless -f $file;
+
+    print STDERR "$progname: $file: unable to determine image size\n"
+      if ($verbose);
+    # Assume that unknown files are of good sizes: this will happen if
+    # they matched $good_file_re, but we don't have code to parse them.
+    # (This will also happen if the file is junk...)
+    return 1;
+  }
+
+  if ($w < $min_image_width || $h < $min_image_height) {
+    print STDERR "$progname: $file: too small ($w x $h)\n" if ($verbose);
+    return 0;
+  }
+
+  print STDERR "$progname: $file: $w x $h\n" if ($verbose);
+  return 1;
+}
+
+
+
+# Given the raw body of a GIF document, returns the dimensions of the image.
+#
+sub gif_size($) {
+  my ($body) = @_;
+  my $type = substr($body, 0, 6);
+  my $s;
+  return () unless ($type =~ /GIF8[7,9]a/);
+  $s = substr ($body, 6, 10);
+  my ($a,$b,$c,$d) = unpack ("C"x4, $s);
+  return (($b<<8|$a), ($d<<8|$c));
+}
+
+# Given the raw body of a JPEG document, returns the dimensions of the image.
+#
+sub jpeg_size($) {
+  my ($body) = @_;
+  my $i = 0;
+  my $L = length($body);
+
+  my $c1 = substr($body, $i, 1); $i++;
+  my $c2 = substr($body, $i, 1); $i++;
+  return () unless (ord($c1) == 0xFF && ord($c2) == 0xD8);
+
+  my $ch = "0";
+  while (ord($ch) != 0xDA && $i < $L) {
+    # Find next marker, beginning with 0xFF.
+    while (ord($ch) != 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+    # markers can be padded with any number of 0xFF.
+    while (ord($ch) == 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+
+    # $ch contains the value of the marker.
+    my $marker = ord($ch);
+
+    if (($marker >= 0xC0) &&
+        ($marker <= 0xCF) &&
+        ($marker != 0xC4) &&
+        ($marker != 0xCC)) {  # it's a SOFn marker
+      $i += 3;
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 4); $i += 4;
+      my ($a,$b,$c,$d) = unpack("C"x4, $s);
+      return (($c<<8|$d), ($a<<8|$b));
+
+    } else {
+      # We must skip variables, since FFs in variable names aren't
+      # valid JPEG markers.
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 2); $i += 2;
+      my ($c1, $c2) = unpack ("C"x2, $s);
+      my $length = ($c1 << 8) | $c2;
+      return () if ($length < 2);
+      $i += $length-2;
+    }
+  }
+  return ();
+}
+
+# Given the raw body of a PNG document, returns the dimensions of the image.
+#
+sub png_size($) {
+  my ($body) = @_;
+  return () unless ($body =~ m/^\211PNG\r/s);
+  my ($bits) = ($body =~ m/^.{12}(.{12})/s);
+  return () unless defined ($bits);
+  return () unless ($bits =~ /^IHDR/);
+  my ($ign, $w, $h) = unpack("a4N2", $bits);
+  return ($w, $h);
+}
+
+
+# Given the raw body of an SVG document, returns the dimensions of the image.
+#
+sub svg_size($) {
+  my ($body) = @_;
+  return () unless ($body =~ m/^<\?xml\s/s);
+  return () unless ($body =~ m/<svg\s/si);
+  my ($w) = ($body =~ m@\swidth=[\"\'](\d+)[\"\']@si);
+  my ($h) = ($body =~ m@\sheight=[\"\'](\d+)[\"\']@si);
+  return () unless (defined ($w) && defined ($h));
+  return ($w, $h);
+}
+
+
+# Given the raw body of a GIF, JPEG, PNG or SVG document, returns the
+# dimensions of the image.
+#
+sub image_size($) {
+  my ($body) = @_;
+  return () if (length($body) < 10);
+  my ($w, $h) = gif_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  ($w, $h) = jpeg_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  ($w, $h) = svg_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  # We don't have image parsers for TIFF, XPM and XBM, which means that
+  # those files are always assumed to be large enough.
+  return png_size ($body);
+}
+
+# Returns the dimensions of the image file.
+#
+sub image_file_size($) {
+  my ($file) = @_;
+  my $in;
+  if (! open ($in, '<:raw', $file)) {
+    print STDERR "$progname: $file: $!\n" if ($verbose);
+    return ();
+  }
+  my $body = '';
+  sysread ($in, $body, 1024 * 50);  # The first 50k should be enough.
+  close $in;			    # (It's not for certain huge jpegs...
+  return image_size ($body);	    # but we know they're huge!)
+}
+
+
+# Reads the prefs we use from ~/.xscreensaver
+#
+sub get_x11_prefs() {
+  my $got_any_p = 0;
+
+  if (open (my $in, '<', $config_file)) {
+    print STDERR "$progname: reading $config_file\n" if ($verbose > 1);
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
+    $got_any_p = get_x11_prefs_1 ($body);
+
+  } elsif ($verbose > 1) {
+    print STDERR "$progname: $config_file: $!\n";
+  }
+
+  if (! $got_any_p && defined ($ENV{DISPLAY})) {
+    # We weren't able to read settings from the .xscreensaver file.
+    # Fall back to any settings in the X resource database
+    # (/usr/X11R6/lib/X11/app-defaults/XScreenSaver)
+    #
+    print STDERR "$progname: reading X resources\n" if ($verbose > 1);
+    my $body = `appres XScreenSaver xscreensaver -1`;
+    $got_any_p = get_x11_prefs_1 ($body);
+  }
+}
+
+
+sub get_x11_prefs_1($) {
+  my ($body) = @_;
+
+  my $got_any_p = 0;
+  my $choosep = 1;
+  $body =~ s@\\\n@@gs;
+  $body =~ s@^[ \t]*#[^\n]*$@@gm;
+
+  foreach my $line (split (/\n/, $body)) {
+    $line =~ s/#.*//s;
+    if ($line =~ m/^[.*]*imageDirectory:[ \t]*([^\s]+)\s*$/si) {
+      $image_directory = $1;
+      $got_any_p = 1;
+    } elsif ($line =~ m/^[.*]*chooseRandomImages:[ \t]*([^\s]+)\s*$/si) {
+      $choosep = ($1 =~ m/^true$/si ? 1 : 0);
+      $got_any_p = 1;
+    }
+  }
+
+  # Don't allow image files to be loaded if chooseRandomImages is false.
+  $image_directory = undef unless $choosep;
+
+  return $got_any_p;
+}
+
+
+sub get_cocoa_prefs($) {
+  my ($id) = @_;
+  print STDERR "$progname: reading Cocoa prefs: \"$id\"\n" if ($verbose > 1);
+  my $v = get_cocoa_pref_1 ($id, "imageDirectory");
+  $v = '~/Pictures' unless defined ($v);  # Match default in XScreenSaverView
+  $image_directory = $v if defined ($v);
+}
+
+
+sub get_cocoa_pref_1($$) {
+  my ($id, $key) = @_;
+  # make sure there's nothing stupid/malicious in either string.
+  $id  =~ s/[^-a-z\d. ]/_/gsi;
+  $key =~ s/[^-a-z\d. ]/_/gsi;
+  my $cmd = "defaults -currentHost read \"$id\" \"$key\"";
+
+  print STDERR "$progname: executing $cmd\n"
+    if ($verbose > 3);
+
+  my $val = `$cmd 2>/dev/null`;
+  $val =~ s/^\s+//s;
+  $val =~ s/\s+$//s;
+
+  print STDERR "$progname: Cocoa: $id $key = \"$val\"\n"
+    if ($verbose > 2);
+
+  $val = undef if ($val =~ m/^$/s);
+
+  return $val;
+}
+
+
+sub error($) {
+  my ($err) = @_;
+  print STDERR "$progname: $err\n";
+  exit 1;
+}
+
+sub usage() {
+  print STDERR "usage: $progname [--verbose] [ directory-or-feed-url ]\n\n" .
+  "       Prints the name of a randomly-selected image file.  The directory\n" .
+  "       is searched recursively.  Images smaller than " .
+         "${min_image_width}x${min_image_height} are excluded.\n" .
+  "\n" .
+  "       The directory may also be the URL of an RSS/Atom feed.  Enclosed\n" .
+  "       images will be downloaded and cached locally.\n" .
+  "\n";
+  exit 1;
+}
+
+sub main() {
+  my $cocoa_id = undef;
+  my $abs_p = 0;
+  my $flush_p = 0;
+
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if    (m/^--?verbose$/s)      { $verbose++; }
+    elsif (m/^-v+$/s)             { $verbose += length($_)-1; }
+    elsif (m/^--?name$/s)         { }   # ignored, for compatibility
+    elsif (m/^--?cache$/s)        { $cache_p = 1; }
+    elsif (m/^--?no-?cache$/s)    { $cache_p = 0; }
+    elsif (m/^--?flush-?cache$/s) { $flush_p = 1; }
+    elsif (m/^--?cocoa$/)         { $cocoa_id = shift @ARGV; }
+    elsif (m/^--?abs(olute)?$/)   { $abs_p = 1; }
+    elsif (m/^-./)                { usage; }
+    elsif (!defined($image_directory)) { $image_directory = $_; }
+    else                          { usage; }
+  }
+
+  if ($flush_p) {
+    $feed_max_age = 0;
+    $cache_max_age = 0;
+    my $dir = feed_dir();
+    if (opendir (my $dirh, $dir)) {
+      foreach my $f (sort readdir ($dirh)) {
+        next if ($f =~ m/^\./s);
+        next unless ($f =~ m/^[-+_=a-zA-Z0-9]{22}$/);  # base64 MD5
+        print STDERR "$progname: rm -r $dir/$f\n" if ($verbose);
+        system ('rm', '-r', "$dir/$f");  # Ignore errors
+      }
+      closedir $dirh;
+    }
+  }
+
+  # Most hacks (X11 and Cocoa) pass a --directory value on the command line,
+  # but if they don't, look it up from the resources.  Currently this only
+  # happens with "glitchpeg" which invokes xscreensaver-getimage-file
+  # directly instead of going through the traditional path.
+  #
+  if (! $image_directory) {
+    if (!defined ($cocoa_id)) {
+      # see OSX/XScreenSaverView.m
+      $cocoa_id = $ENV{XSCREENSAVER_CLASSPATH};
+    }
+
+    if (defined ($cocoa_id)) {
+      get_cocoa_prefs ($cocoa_id);
+    } else {
+      get_x11_prefs();
+    }
+    error ("image file loading is not configured") unless $image_directory;
+  }
+
+  usage unless ($image_directory);
+
+  $image_directory =~ s@^feed:@http:@si;
+
+  if ($image_directory =~ m/^https?:/si) {
+    # ok
+  } else {
+    $image_directory =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
+    $image_directory =~ s@/+$@@s;		 # omit trailing /
+
+    if (! -d $image_directory) {
+      print STDERR "$progname: not a directory or URL: $image_directory\n";
+      exit (1);
+    }
+  }
+
+  my $file = find_random_file ($image_directory);
+
+  # With --absolute return fully qualified paths instead of relative to --dir.
+  if ($abs_p &&
+      $file !~ m@^/@ &&
+      $image_directory =~ m@^/@s) {
+    $file = "$image_directory/$file";
+    $file =~ s@//+@/@gs;
+  }
+
+  print STDOUT "$file\n";
+}
+
+main;
+exit 0;

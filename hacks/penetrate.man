@@ -1,0 +1,83 @@
+.TH XScreenSaver 1 "18-Jun-01" "X Version 11"
+.SH NAME
+penetrate \- simulates a classic arcade shooting game
+.SH SYNOPSIS
+.B penetrate
+[\-display \fIhost:display.screen\fP] [\-root] [\-window]
+[\-install] [\-noinstall] [\-visual \fIvisual\fP]
+[\-bgrowth \fImicroseconds\fP] [\-lrate \fInumber\fP] [\-smart \fInumber\fP]
+[\-fps]
+.SH DESCRIPTION
+.PP
+\fIPenetrate\fP simulates the arcade classic with the cities and the stuff
+shooting down from the sky and stuff.  The computer plays against itself,
+desperately defending the forces of good against those thingies raining
+down.  Bonus cities are awarded at ever-increasing intervals.  Every five
+levels appears a bonus round.  The computer player gets progressively
+more intelligent as the game progresses.  Better aim, more economical with
+ammo, and better target selection.  Points are in the bottom right, and
+high score is in the bottom left.  Start with -smart to have the computer
+player skip the learning process.
+.SH OPTIONS
+.TP 8
+.B \-display \fIhost:display.screen\fP
+Specifies which X display we should use.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-noinstall
+Don't install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual
+class, or the id number (decimal or hex) of a specific visual.
+Possible choices include
+
+.RS
+default, best, mono, monochrome, gray, grey, color, staticgray, staticcolor, 
+truecolor, grayscale, greyscale, pseudocolor, directcolor, \fInumber\fP
+
+If a decimal or hexadecimal number is used, 
+.BR XGetVisualInfo (3X)
+is consulted to obtain the required visual.
+.RE
+.TP 8
+.B \-foreground \fIcolor\fP
+Specifies the default foreground color.
+.TP 8
+.B \-background \fIcolor\fP
+Specifies the default background color.
+.TP 8
+.B \-bgrowth \fIinteger\fP
+Specifies the growth rate of the bomb explosions.
+.TP 8
+.B \-lrate \fIinteger\fP
+Set the initial rate of laser fire.
+.TP 8
+.B -smart
+Have the computer player skip the learning process.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH BUGS
+The layout of the screen isn't quite the same as the game this program
+tries to emulate.  In this this program, the missiles come out of the
+cities; when really, there are supposed to be three missile bases on
+hills, with the cities in the valleys between them.
+.SH COPYRIGHT
+Copyright \(co 1999 Adam Miller.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Adam Miller <adum@aya.yale.edu>, 1999.

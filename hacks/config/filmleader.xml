@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="filmleader" _label="Film Leader">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=Cng7hmsuLo0"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="tvcolor" type="slider" arg="-tv-color %"
+            _label="Color Knob" _low-label="Low" _high-label="High"
+            low="0" high="400" default="70"/>
+    <number id="tvtint" type="slider" arg="-tv-tint %"
+            _label="Tint Knob" _low-label="Low" _high-label="High"
+            low="0" high="360" default="5"/>
+    <number id="noise" type="slider" arg="-noise %"
+            _label="Noise" _low-label="Low" _high-label="High"
+            low="0.0" high="0.2" default="0.04"/>
+   </vgroup>
+   <vgroup>
+    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+            _label="Brightness Knob" _low-label="Low" _high-label="High"
+            low="-75.0" high="100.0" default="3.0"/>
+    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+            _label="Contrast Knob" _low-label="Low" _high-label="High"
+            low="0" high="500" default="150"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A looping countdown based on the SMPTE Universal Film leader
+on a simulation of an old analog television.
+
+https://en.wikipedia.org/wiki/Film_leader
+
+Written by Jamie Zawinski; 2018.
+  </_description>
+</screensaver>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="rubikblocks" _label="Rubik Blocks" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=B2sGaRLWz-A"/>
+
+  <hgroup>
+   <vgroup>
+
+    <number id="speed" type="slider" arg="-delay %"
+      _label="Frame rate" _low-label="Low" _high-label="High"
+      low="0" high="100000" default="20000" convert="invert"/>
+
+    <number id="cubesize" type="slider" arg="-cubesize %"
+      _label="Cube size" _low-label="Small" _high-label="Large"
+      low="0.4" high="2.0" default="1.0"
+      convert="ratio"/>
+
+    <number id="rotspeed" type="slider" arg="-rotspeed %"
+      _label="Rotation" _low-label="Slow" _high-label="Fast"
+      low="1.0" high="10.0" default="3.0"/>
+
+    <select id="start">
+     <option id="cube"    _label="Start as cube"/>
+     <option id="shuffle" _label="Start as random shape" arg-set="-randomize"/>
+    </select>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="spinspeed" type="slider" arg="-spinspeed %"
+      _label="Spin" _low-label="Slow" _high-label="Fast"
+      low="0.01" high="4.0" default="0.1"/>
+
+    <number id="wanderspeed" type="slider" arg="-wanderspeed %"
+      _label="Wander" _low-label="Slow" _high-label="Fast"
+      low="0.001" high="0.1" default="0.005"/>
+
+    <number id="wait" type="slider" arg="-wait %"
+      _label="Linger" _low-label="Short" _high-label="Long"
+      low="10.0" high="100.0" default="40.0"/>
+
+    <hgroup>
+     <boolean id="spin"    _label="Spin"     arg-unset="-no-spin"/>
+     <boolean id="wander"  _label="Wander"   arg-unset="-no-wander"/>
+     <boolean id="tex"     _label="Outlines" arg-unset="-no-texture"/>
+    </hgroup>
+    <hgroup>
+     <boolean id="wire"    _label="Wireframe"      arg-set="-wireframe"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </hgroup>
+
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The "Rubik's Mirror Blocks" puzzle.
+
+See also the "Rubik", "Cube21", and "GLSnake" screen savers.
+
+https://en.wikipedia.org/wiki/Combination_puzzles#Irregular_cuboids
+
+Written by Vasek Potocek; 2009.
+  </_description>
+</screensaver>
