@@ -156,7 +156,9 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.br
+https://www.jumpstation.co.uk/xscreensaver/topblock/
 .SH COPYRIGHT
 Copyright \(co 2006 by rednuht.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
@@ -167,4 +169,4 @@ suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
 rednuht <topblock.xscreensaver@jumpstation.co.uk> 
-<http://www.jumpstation.co.uk/xscreensaver/topblock/>
+

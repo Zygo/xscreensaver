@@ -110,11 +110,13 @@
   </hgroup>
 
   <_description>
-A 3D immersion of of a Klein bottle that smoothly deforms between the
+A 3D immersion of a Klein bottle that smoothly deforms between the
 Etruscan Venus surface, the Roman surface, the Boy surface, and the
-Ida surface.  Topologically, all surfaces are Klein bottles, even the
-Roman and Boy surfaces, which are doubly covered and therefore appear
-to be an immersed real projective plane.
+Ida surface.
+
+Topologically, all surfaces are Klein bottles, even the Roman and Boy
+surfaces, which are doubly covered and therefore appear to be an immersed
+real projective plane.
 
 You can walk on the Klein bottle or rotate it in 3D.  Since all the
 surfaces except the Ida surfaces have points where the surface normal

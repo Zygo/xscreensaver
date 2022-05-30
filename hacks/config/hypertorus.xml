@@ -106,7 +106,8 @@
   <xscreensaver-updater />
 
   <_description>
-A Clifford Torus: a torus lying on the "surface" of a 4D hypersphere.
+A Clifford Torus is a torus lying on the surface of a 4D hypersphere.
+
 Inspired by Thomas Banchoff's book "Beyond the Third Dimension:
 Geometry, Computer Graphics, and Higher Dimensions", Scientific
 American Library, 1990.

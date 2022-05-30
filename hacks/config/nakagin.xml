@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="nakagin" _label="Nakagin" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="https://www.youtube.com/watch?v=JRXglvnKb6A"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Scrolling speed" _low-label="Slow" _high-label="Fast"
+            low="0.01" high="8.0" default="1.0"
+            convert="ratio"/>
+
+    <hgroup>
+      <boolean id="spin"    _label="Spin"   arg-unset="-no-spin"/>
+      <boolean id="wander"  _label="Wander" arg-set="-wander"/>
+      <boolean id="tilt"    _label="Tilt"   arg-unset="-no-tilt"/>
+      <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+      <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </hgroup>
+   </vgroup>
+
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The Nakagin Capsule Tower was demolished in 2022, but this version will
+continue to grow forever.
+
+Constructed in 1972, the building was composed of small prefabricated rooms
+attached to the two central towers.  The capsules were intended to be mass
+produced and replaceable.  Utilities and fittings were installed before the
+capsules were shipped to the site.
+
+https://en.wikipedia.org/wiki/Nakagin_Capsule_Tower
+
+Written by Jamie Zawinski; 2022.
+  </_description>
+</screensaver>

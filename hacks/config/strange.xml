@@ -32,7 +32,8 @@
 
       <number id="brightness" type="slider" arg="-brightness %"
                 _label="Brightness" _low-label="10%" _high-label="400%"
-                low="0.1" high="4.0" default="1.0"/>
+                low="0.1" high="4.0" default="1.0"
+                convert="ratio"/>
 
       <number id="motionBlur" type="slider" arg="-motion-blur %"
                 _label="Motion blur" _low-label="1" _high-label="10"

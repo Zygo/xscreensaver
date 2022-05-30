@@ -36,7 +36,7 @@
 
 #define DEF_SPIN        "True"
 #define DEF_WANDER      "True"
-#define DEF_SPEED       "1"
+#define DEF_SPEED       "1.0"
 
 #define SPIKE_FACES   12
 #define SMOOTH_SPIKES True

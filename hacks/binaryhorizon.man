@@ -1,6 +1,6 @@
 .TH "Binary Horizon" 1 "23-Mar-20" "X Version 11"
 .SH NAME
-binaryhorizon - A system of path tracing particles evolves continuously from an initial horizon. 
+binaryhorizon - A system of path tracing particles evolves continuously. 
 .SH SYNOPSIS
 .B binaryhorizon
 [\-fps]
@@ -19,10 +19,8 @@ binaryhorizon - A system of path tracing particles evolves continuously from an 
 [\-bicolor]
 [\-monocolor]
 .SH DESCRIPTION
-A system of path tracing particles evolves continuously from an initial horizon, alternating between colors. 
-
-
-Ported (with some extensions) from the code by J. Tarbell at http://complexification.net
+A system of path tracing particles evolves continuously from an
+initial horizon, alternating between colors. 
 .SH OPTIONS
 .I binaryhorizon
 accepts the following options:
@@ -91,17 +89,18 @@ to get the name of a resource file that overrides the global
 resources stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.br
+http://complexification.net/
 .SH COPYRIGHT
-Copyright \co 2020 by Patrick Leiser, (patrick27leiser@yahoo.com, http://www.patronics.org).
-
-based on Copyright \(co 2003 by J. Tarbell
-(complex@complexification.net, http://www.complexification.net).
-
-Ported to XScreensaver by Emilio Del Tessandoro (emilio.deltessa@gmail.com)
+Copyright 2020 by Patrick Leiser <patrick27leiser@yahoo.com>.
+.br
+Based on code \(co 2003 by J. Tarbell <complex@complexification.net>.
+.br
+XScreenSaver port: Emilio Del Tessandoro <emilio.deltessa@gmail.com>
 .SH AUTHOR
-Patrick Leiser <patrick27leiser@yahoo.org>, Mar-20
-
-J. Tarbell <complex@complexification.net>, Jun-03
-
-Emilio Del Tessandoro <emilio.deltessa@gmail.com>, Aug-14
+Patrick Leiser <patrick27leiser@yahoo.org>, Mar 2020.
+.br
+J. Tarbell <complex@complexification.net>, Jun 2003.
+.br
+Emilio Del Tessandoro <emilio.deltessa@gmail.com>, Aug 2014.

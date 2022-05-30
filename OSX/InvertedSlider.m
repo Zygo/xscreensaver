@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,15 +23,21 @@
   self = [super initWithFrame:r];
   if (! self) return 0;
   inverted = YES;
+  ratio    = NO;
   integers = NO;
   return self;
 }
 
-- (id) initWithFrame:(NSRect)r inverted:(BOOL)_inv integers:(BOOL)_int
+- (id) initWithFrame:(NSRect)r
+            inverted:(BOOL)_inv
+               ratio:(BOOL)_ratio
+            integers:(BOOL)_int
 {
   self = [self initWithFrame:r];
   inverted = _inv;
+  ratio    = _ratio;
   integers = _int;
+  NSAssert (!(inverted && ratio), @"inverted and ratio can't both be true");
   return self;
 }
 
@@ -48,7 +54,50 @@
 }
 
 
--(double) transformValue:(double) value
+// For simplicity, "ratio" sliders in the UI all run from 0.0 to 1.0,
+// so we need to wrap the setters.
+
+#ifdef HAVE_IPHONE
+# define VTYPE float
+#else
+# define VTYPE double
+#endif
+
+-(void) setMinValue:(VTYPE)v
+{
+  origMinValue = v;
+  if (ratio) v = 0;
+  [super setMinValue: v];
+}
+
+-(void) setMaxValue:(VTYPE)v
+{
+  origMaxValue = v;
+  if (ratio) v = 1;
+  [super setMaxValue: v];
+}
+
+
+/* In: 0-1; Out: low-high. */
+static float
+ratio_to_range (double low, double high, double ratio)
+{
+  return (ratio > 0.5
+          ? (1   + (2 * (ratio - 0.5) * (high - 1)))
+          : (low + (2 * ratio         * (1 - low))));
+}
+
+/* In: low-high; Out: 0-1. */
+static double
+range_to_ratio (double low, double high, double value)
+{
+  return (value > 1
+          ? ((value - 1)   / (2 * (high - 1))) + 0.5
+          : ((value - low) / (2 * (1 - low))));
+}
+
+
+-(double) transformValue:(double) value set:(BOOL)set
 {
   double v2 = value;
 
@@ -57,12 +106,24 @@
   if (integers)
     v2 = (int) (v2 + (v2 < 0 ? -0.5 : 0.5));
 
-  double low   = [self minValue];
-  double high  = [self maxValue];
+  double low   = origMinValue;
+  double high  = origMaxValue;
   double range = high - low;
   double off   = v2 - low;
+
   if (inverted)
     v2 = low + (range - off);
+  else if (ratio)
+    v2 = (set
+          ? range_to_ratio (low, high, v2)
+          : ratio_to_range (low, high, v2));
+
+  // if (ratio)
+  //   NSLog(@"... %d %.2f %.2f %.2f  mm %.2f %.2f  v %.2f %.2f",
+  //         set, low, high, range,
+  //         [self minValue], [self maxValue], 
+  //         value, v2);
+
   // NSLog (@" ... %.1f -> %.1f    [%.1f - %.1f]", value, v2, low, high);
   return v2;
 }
@@ -78,12 +139,12 @@
 
 -(double) doubleValue
 {
-  return [self transformValue:[super doubleValue]];
+  return [self transformValue:[super doubleValue] set:NO];
 }
 
 -(void) setDoubleValue:(double)v
 {
-  return [super setDoubleValue:[self transformValue:v]];
+  return [super setDoubleValue:[self transformValue:v set:YES]];
 }
 
 -(float)floatValue       { return (float) [self doubleValue]; }
@@ -132,7 +193,7 @@
 
 /* On iOS, we have control over how the value is displayed, but there's no
    way to transform the value on input and output: if we wrap 'value' and
-   'setValue' analagously to what we do on MacOS, things fail in weird
+   'setValue' analogously to what we do on MacOS, things fail in weird
    ways.  Presumably some parts of the system are accessing the value
    instance variable directly instead of going through the methods.
 
@@ -145,22 +206,26 @@
                    trackRect:(CGRect)rect
                        value:(float)value
 {
-  CGRect thumb = [super thumbRectForBounds: bounds
-                                 trackRect: rect 
-                                     value: [self transformValue:value]];
+  CGRect thumb =
+    [super thumbRectForBounds: bounds
+                    trackRect: rect 
+                        value: (ratio
+                                ? value
+                                : [self transformValue:value set:NO])];
   if (inverted)
     thumb.origin.x = rect.size.width - thumb.origin.x - thumb.size.width;
+
   return thumb;
 }
 
 -(double) transformedValue
 {
-  return [self transformValue: [self value]];
+  return [self transformValue: [self value] set:FALSE];
 }
 
 -(void) setTransformedValue:(double)v
 {
-  [self setValue: [self transformValue: v]];
+  [self setValue: [self transformValue: v set:TRUE]];
 }
 
 #endif // HAVE_IPHONE

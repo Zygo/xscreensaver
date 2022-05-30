@@ -1,5 +1,5 @@
 
-This directory contains the MacOS-specific code for building a Cocoa
+This directory contains the macOS-specific code for building a Cocoa
 version of xscreensaver without using X11.
 
 ############################################################################
@@ -67,7 +67,7 @@ To build and test an iOS saver:
 Building for older operating systems:
 
   Basically, you can't.  If you build using anything later than Xcode 5.0.2,
-  the resultant savers will require MacOS 10.7 or later.  To support macOS
+  the resultant savers will require macOS 10.7 or later.  To support macOS
   10.4 through 10.6, you would need to be running Xcode 5.0.2 or earlier.
   Apple's longstanding corporate policy of planned obsolescence means that
   they make it as difficult as possible for you to support anything that's

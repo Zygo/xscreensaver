@@ -44,8 +44,7 @@
   </hgroup>
 
   <_description>
-A variant on a "fifteen puzzle", operating on the screen or an image.
-It divides the image into a grid and randomly shuffles the squares.
+A "fifteen puzzle" variant, dividing the image into a grid and shuffling.
 
 https://en.wikipedia.org/wiki/Fifteen_puzzle
 

@@ -12,7 +12,8 @@
           convert="invert"/>
   <number id="speed" type="slider" arg="-speed %"
           _label="Eruption frequency" _low-label="Seldom" _high-label="Often"
-          low="0.01" high="5.0" default="1.0"/>
+          low="0.01" high="5.0" default="1.0"
+          convert="ratio"/>
 
   <hgroup>
    <number id="freq" type="spinbutton" arg="-depth %"

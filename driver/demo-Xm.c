@@ -451,6 +451,7 @@ await_xscreensaver (Widget widget)
                              support" in the following expression... */
 # endif
         strcat (buf,
+/*
             "You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
             "turned on.  Try running this command:\n"
@@ -465,7 +466,11 @@ await_xscreensaver (Widget widget)
             "manual and FAQ for more information.\n"
             "\n"
             "You shouldn't run X as root. Instead, you should log in as a\n"
-            "normal user, and `su' as necessary.");
+            "normal user, and `su' as necessary."
+ */
+            "You are running as root.  Don't do that.  Instead, you should\n"
+            "log in as a normal user and use `sudo' as necessary."
+            );
       else
         strcat (buf, "Please check your $PATH and permissions.");
 
@@ -1538,7 +1543,7 @@ the_network_is_not_the_computer (Widget parent)
       sprintf (msg,
 	       "Warning:\n\n"
                "The XScreenSaver daemon doesn't seem to be running\n"
-               "on display \"%s\".  You can launch it by selecting\n"
+               "on display \"%.25s\".  You can launch it by selecting\n"
                "`Restart Daemon' from the File menu, or by typing\n"
                "\"xscreensaver &\" in a shell.",
 	       d);

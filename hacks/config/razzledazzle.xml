@@ -15,7 +15,8 @@
 
     <number id="speed" type="slider" arg="-speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
-            low="0.1" high="10" default="1.0"/>
+            low="0.1" high="10" default="1.0"
+            convert="ratio"/>
 
     <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Colors" _low-label="Mono" _high-label="Many"

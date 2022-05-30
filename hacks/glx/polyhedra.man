@@ -118,7 +118,7 @@ express or implied warranty.
 .SH AUTHOR
 Based on the program \fIkaleido\fP ("Kaleidoscopic construction of 
 uniform polyhedra"), by Dr. Zvi Har'El <rl@math.technion.ac.il>
-    http://www.math.technion.ac.il/~rl/
-    ftp://ftp.math.technion.ac.il/kaleido/
+.br
+https://web.archive.org/web/20040807023850/https%3A//www.math.technion.ac.il/kaleido/
 
 Adapted for OpenGL and XScreenSaver by Jamie Zawinski, 2004.

@@ -37,16 +37,14 @@ Ignore the cache when searching for images.  This may be slow.
 Discard all caches immediately.  They will be re-generated as needed.
 .TP 4
 .I directory-or-URL
-If a pathname it is the directory tree whose images should be used.
+If it is a pathname, it will be searched recursively for images.
 
-If a URL is specified, it should be the URL of an RSS or Atom feed
-containing images.  The first time it is accessed, all of the images
-in the feed will be downloaded to a local cache directory.  The URL
-will be polled again when the cache times out.  Any new images will
-be downloaded and cached, and any images no longer in the feed will
-be discarded.
+If it is a URL, it should be an RSS or Atom feed, or an HTML page whose
+metadata links to its feed.  All of the feed's images will be downloaded to a
+local cache.  The URL will be re-polled periodically, downloading any new
+images and removing expired ones.
 .SH FILES
-Depending on your operating system, the cache file will be one of:
+Depending on your operating system, the filename cache will be one of:
 .nf
 .sp
         $HOME/.cache/xscreensaver/xscreensaver-getimage.cache
@@ -54,13 +52,22 @@ Depending on your operating system, the cache file will be one of:
         $HOME/.xscreensaver-getimage.cache
         $HOME/Library/Caches/org.jwz.xscreensaver.getimage.cache
 .fi
+
+Images from feeds will be downloaded and cached at one of:
+.nf
+.sp
+        $HOME/.cache/xscreensaver/\fISUBDIR\fP/
+        $HOME/tmp/.xscreensaver-feeds/\fISUBDIR\fP/
+        $HOME/.xscreensaver-feeds/\fISUBDIR\fP/
+        $HOME/Library/Caches/org.jwz.xscreensaver.feeds/\fISUBDIR\fP/
+.fi
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
 .BR xscreensaver\-settings (1),
 .BR xscreensaver\-getimage (MANSUFFIX)
 .SH COPYRIGHT
-Copyright \(co 2001-2021 by Jamie Zawinski.  Permission to use, copy,
+Copyright \(co 2001-2022 by Jamie Zawinski.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
 any purpose is hereby granted without fee, provided that the above
 copyright notice appear in all copies and that both that copyright

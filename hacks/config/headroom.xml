@@ -11,9 +11,10 @@
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <number id="spikespeed" type="slider" arg="-speed %"
+  <number id="speed" type="slider" arg="-speed %"
           _label="Spike growth" _low-label="Slow" _high-label="Fast"
-          low="0.1" high="10.0" default="1.0"/>
+          low="0.1" high="10.0" default="1.0"
+          convert="ratio"/>
 
     <select id="rotation">
      <option id="no"  _label="Don't wobble"               arg-set="-spin 0"/>
@@ -29,7 +30,7 @@
   <hgroup>
    <boolean id="wander" _label="Wander"    arg-set="-wander"/>
    <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
-   <boolean id="mask"   _label="Mask Headroom" arg-unset="-no-mask"/>
+   <boolean id="mask"   _label="Mask Headroom" arg-set="-mask"/>
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 

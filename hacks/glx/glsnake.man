@@ -67,13 +67,9 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
-.PP
-.nf
-.sp
-	https://spacepants.org/src/glsnake/
-.sp
-.fi
+.BR xscreensaver (1),
+.br
+https://spacepants.org/src/glsnake/
 .SH BUGS
 The snake will happily intersect itself while morphing (this is not a bug).
 .PP

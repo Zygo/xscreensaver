@@ -1,5 +1,5 @@
 /* prefs.c --- reading and writing the ~/.xscreensaver file.
- * xscreensaver, Copyright © 1998-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1998-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -889,9 +889,6 @@ load_init_file (Display *dpy, saver_preferences *p)
   p->install_cmap_p = get_boolean_resource (dpy, "installColormap", "Boolean");
   p->nice_inferior  = get_integer_resource (dpy, "nice", "Nice");
   p->splash_p       = get_boolean_resource (dpy, "splash", "Boolean");
-# ifdef QUAD_MODE
-  p->quad_p         = get_boolean_resource (dpy, "quad", "Boolean");
-# endif
   p->ignore_uninstalled_p = get_boolean_resource (dpy, 
                                                   "ignoreUninstalledPrograms",
                                                   "Boolean");

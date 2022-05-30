@@ -67,13 +67,9 @@ express or implied warranty.
 .SH AUTHOR
  
 .br
-Written by Rony B Chandran <ronybc@gmail.com>
-.br
- 
+Written by Rony B Chandran <ronybc@gmail.com> https://www.ronybc.com/
 .br
 Additional programming and support: 
-.br
---------------------------------------------------------------------
 .br
 Rugmini R Chandran <rugmini@ronybc.com>
 .br
@@ -82,7 +78,3 @@ Renuka S <renuka@ronybc.com>
 Jean-Pierre Demailly <Jean-Pierre.Demailly@ujf-grenoble.fr>
 .br
 Nicholas Miell <nmiell@gmail.com>
-
-.SH URL 
-http://www.ronybc.com
-

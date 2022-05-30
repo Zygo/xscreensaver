@@ -96,7 +96,7 @@ static void
 ungrab_timer (XtPointer closure, XtIntervalId *id)
 {
   Display *dpy = (Display *) closure;
-  fprintf (stderr, "\n%s: ungrabbing\n\n", blurb());
+  fprintf (stdout, "\n%s: ungrabbing\n\n", blurb());
   XUngrabKeyboard (dpy, CurrentTime);
   XUngrabPointer (dpy, CurrentTime);
 }
@@ -123,7 +123,7 @@ grab_string (int status)
 
 typedef enum { 
   ETYPE, ETIME, ESERIAL, EROOT, EWIN, ESUB, EX, EY, EXR, EYR,
-  ERAW0, ERAW1, EFLAGS, ESTATE, EKEYCODE, EKEY, EHINT, ESSCR,
+  EFLAGS, ESTATE, EKEYCODE, EKEY, EHINT, ESSCR,
   EEND
 } coltype;
 
@@ -145,8 +145,6 @@ static const columns cols[] = {
   /* EY		*/ { "Y", 	  11, TINT },
   /* EXR	*/ { "X Root", 	  11, TINT },
   /* EYR	*/ { "Y Root", 	  11, TINT },
-  /* ERAW0	*/ { "RAW 0", 	   8, THEX },
-  /* ERAW1	*/ { "RAW 1", 	   8, THEX },
   /* EFLAGS	*/ { "Flags", 	   8, THEX },
   /* ESTATE	*/ { "State", 	   8, THEX },
   /* EKEYCODE	*/ { "Code", 	   5, THEX },
@@ -165,7 +163,6 @@ print_header (void)
   coltype t;
 
   if (countof(cols) != EEND) abort();
-
   for (t = 0; t < EEND; t++)
     {
       if (t > 0) *s++ = ' ';
@@ -183,7 +180,7 @@ print_header (void)
       for (i = 0; i < cols[t].width; i++)
         *s++ = '=';
     }
-  fprintf (stderr, "\n%s\n", buf);
+  fprintf (stdout, "\n%s\n", buf);
 }
 
 
@@ -322,8 +319,7 @@ validate_field (Display *dpy, coltype t, void *val)
 
   case EFLAGS:
     {
-      /* "The only defined flag is XIKeyRepeat for XI_KeyPress events."
-         But XI_RawKeyPress events don't repeat! */
+      /* "The only defined flag is XIKeyRepeat for XI_KeyPress events." */
       int i = *(int *) val;
       if (i != 0 && 1 != XIKeyRepeat)
         {
@@ -477,7 +473,6 @@ print_event (Display *dpy, XEvent *xev, int xi_opcode)
     }
 
   re = xev->xcookie.data;
-  de = (XIDeviceEvent *) re;
 
   if (xev->xany.serial != re->serial) abort();
 
@@ -490,51 +485,79 @@ print_event (Display *dpy, XEvent *xev, int xi_opcode)
   case XI_RawTouchBegin:    fields[ETYPE] = "XI_RawTouchBegin"; break;
   case XI_RawTouchEnd:      fields[ETYPE] = "XI_RawTouchEnd";   break;
   case XI_RawTouchUpdate:   fields[ETYPE] = "XI_RawTouchUpd";   break;
+  case XI_KeyPress:         fields[ETYPE] = "XI_KeyPress";      break;
+  case XI_KeyRelease:       fields[ETYPE] = "XI_KeyRelease";    break;
+  case XI_ButtonPress:      fields[ETYPE] = "XI_BtnPress";      break;
+  case XI_ButtonRelease:    fields[ETYPE] = "XI_BtnRelease";    break;
+  case XI_Motion:           fields[ETYPE] = "XI_Motion";        break;
+  case XI_TouchBegin:       fields[ETYPE] = "XI_TouchBegin";    break;
+  case XI_TouchEnd:         fields[ETYPE] = "XI_TouchEnd";      break;
+  case XI_TouchUpdate:      fields[ETYPE] = "XI_TouchUpd";      break;
   default:
     {
       static char ee[100];
       sprintf (ee, "XI EVENT %2d", xev->xany.type);
       fields[ETYPE]   = &ee;
-      fields[ESERIAL] = &xev->xany.serial;
-      fields[EWIN]    = &xev->xany.window;
     }
     break;
   }
 
   fields[ESERIAL]  = &xev->xany.serial;
   fields[ETIME]    = &re->time;
-  fields[EWIN]     = &de->event;
-  fields[EROOT]    = &de->root;
-  fields[ESUB]     = &de->child;
-  fields[EX]       = &de->event_x;
-  fields[EY]       = &de->event_y;
-  fields[EXR]      = &de->root_x;
-  fields[EYR]      = &de->root_y;
-  fields[ERAW0]    = &re->raw_values[0];
-  fields[ERAW1]    = &re->raw_values[1];
   fields[EFLAGS]   = &re->flags;
-  fields[ESTATE]   = &de->mods.effective;
   fields[EKEYCODE] = &re->detail;
-  /* ignoring XIValuatorState valuators */
+
+  /* Only these events are XIDeviceEvents. The "XI_Raw" variants are not.
+   */
+  switch (xev->xcookie.evtype) {
+  case XI_KeyPress:
+  case XI_KeyRelease:
+  case XI_ButtonPress:
+  case XI_ButtonRelease:
+  case XI_Motion:
+  case XI_TouchBegin:
+  case XI_TouchEnd:
+  case XI_TouchUpdate:
+    de = (XIDeviceEvent *) re;
+    fields[EROOT]  = &de->root;
+    fields[EWIN]   = &de->event;
+    fields[ESUB]   = &de->child;
+    fields[EX]     = &de->event_x;
+    fields[EY]     = &de->event_y;
+    fields[EXR]    = &de->root_x;
+    fields[EYR]    = &de->root_y;
+    fields[ESTATE] = &de->mods.effective;
+    break;
+  default: break;
+  }
 
   switch (xev->xcookie.evtype) {
   case XI_RawKeyPress:
   case XI_RawKeyRelease:
+  case XI_KeyPress:
+  case XI_KeyRelease:
     {
       XKeyEvent xkey = { 0, };
       static XComposeStatus compose = { 0, };
       KeySym keysym = 0;
       static char c[100];
       int n;
-      xkey.type      = (de->evtype == XI_RawKeyPress ? KeyPress : KeyRelease);
-      xkey.serial    = de->serial;
-      xkey.display   = de->display;
-      xkey.window    = de->event;
-      xkey.root      = de->root;
-      xkey.subwindow = de->child;
-      xkey.time      = de->time;
-      xkey.state     = de->mods.effective;
-      xkey.keycode   = de->detail;
+      xkey.type    = ((xev->xcookie.evtype == XI_RawKeyPress ||
+                       xev->xcookie.evtype == XI_KeyPress)
+                      ? KeyPress : KeyRelease);
+      xkey.serial  = xev->xany.serial;
+      xkey.display = xev->xany.display;
+      xkey.window  = 0; /* xev->xany.window; */
+      xkey.keycode = re->detail;
+
+      if (de)  /* Available for non-raw events only */
+        {
+          xkey.root      = de->root;
+          xkey.subwindow = 0; /* de->child; */
+          xkey.time      = de->time;
+          xkey.state     = de->mods.effective;
+        }
+
       n = XLookupString (&xkey, c, sizeof(c)-1, &keysym, &compose);
       c[n] = 0;
       asciify (c, n);
@@ -543,13 +566,16 @@ print_event (Display *dpy, XEvent *xev, int xi_opcode)
     break;
   case XI_RawButtonPress:
   case XI_RawButtonRelease:
+  case XI_ButtonPress:
+  case XI_ButtonRelease:
     {
       static char c[10];
       sprintf (c, "b%d", re->detail);
       fields[EKEY] = &c;
     }
     break;
-  default: break;
+  default:
+    break;
   }
 
  DONE:
@@ -582,7 +608,7 @@ print_event (Display *dpy, XEvent *xev, int xi_opcode)
               s += strlen(s);
             }
         }
-      fprintf (stderr, "%s\n", buf);
+      fprintf (stdout, "%s\n", buf);
     }
 
   {
@@ -659,7 +685,7 @@ main (int argc, char **argv)
   if (! init_xinput (dpy, &xi_opcode))
     exit (1);
 
-  fprintf (stderr, "\n%s: Make your window wide. "
+  fprintf (stdout, "\n%s: Make your window wide. "
            "Bogus values are " BLD RED "RED" RST ".\n",
            blurb());
 
@@ -679,12 +705,12 @@ main (int argc, char **argv)
                                   (kbd_sync_p   ? GrabModeSync : GrabModeAsync),
                                   CurrentTime);
           if (status == GrabSuccess)
-            fprintf (stderr, "%s: grabbed keyboard (%s, %s)\n", blurb(),
+            fprintf (stdout, "%s: grabbed keyboard (%s, %s)\n", blurb(),
                      (mouse_sync_p ? "sync" : "async"),
                      (kbd_sync_p   ? "sync" : "async"));
           else
             {
-              fprintf (stderr, "%s: failed to grab keyboard (%s, %s): %s\n",
+              fprintf (stdout, "%s: failed to grab keyboard (%s, %s): %s\n",
                        blurb(),
                        (mouse_sync_p ? "sync" : "async"),
                        (kbd_sync_p   ? "sync" : "async"),
@@ -706,12 +732,12 @@ main (int argc, char **argv)
                                  (kbd_sync_p   ? GrabModeSync : GrabModeAsync),
                                  w, cursor, CurrentTime);
           if (status == GrabSuccess)
-            fprintf (stderr, "%s: grabbed mouse (%s, %s)\n", blurb(),
+            fprintf (stdout, "%s: grabbed mouse (%s, %s)\n", blurb(),
                      (mouse_sync_p ? "sync" : "async"),
                      (kbd_sync_p   ? "sync" : "async"));
           else
             {
-              fprintf (stderr, "%s: failed to grab mouse (%s, %s): %s\n",
+              fprintf (stdout, "%s: failed to grab mouse (%s, %s): %s\n",
                        blurb(),
                        (mouse_sync_p ? "sync" : "async"),
                        (kbd_sync_p   ? "sync" : "async"),
@@ -720,7 +746,7 @@ main (int argc, char **argv)
             }
         }
 
-      fprintf (stderr, "%s: ungrabbing in %d seconds\n", blurb(), timeout);
+      fprintf (stdout, "%s: ungrabbing in %d seconds\n", blurb(), timeout);
       XtAppAddTimeOut (app, 1000 * timeout, ungrab_timer, (XtPointer) dpy);
     }
 

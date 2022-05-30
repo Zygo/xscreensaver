@@ -101,13 +101,7 @@ Unlike the systems being simulated, \fIbsod\fP does not require a
 reboot after running.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1),
-.BR http://www.microsoft.com/ ,
-.BR http://www.apple.com/ ,
-.BR http://www.sco.com/ ,
-.BR http://www.kernel.org/ ,
-and
-.BR http://www.amiga.de/ .
+.BR xscreensaver (1)
 .SH TRADEMARKS
 Microsoft Windows, Microsoft Windows 95, and Microsoft Windows NT are all
 registered trademarks of Microsoft Corporation.  Apple Macintosh is a
@@ -123,7 +117,7 @@ Corporation. VMware is a registered trademark of VMware, Inc.  Android is a
 trademark of Google LLC. GladOS is a trademark of Aperture Science
 Incorporated.
 .SH COPYRIGHT
-Copyright \(co 1998-2018 by Jamie Zawinski.  Permission to use, copy, modify, 
+Copyright \(co 1998-2022 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice

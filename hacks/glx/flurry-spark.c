@@ -99,7 +99,7 @@ void UpdateSparkColour(global_info_t *global, flurry_info_t *flurry, Spark *s)
 	const float rotationsPerSecond = (float) (2.0*PI*fieldSpeed/MAXANGLES);
 	double thisPointInRadians;
 	double thisAngle = flurry->fTime*rotationsPerSecond;
-	float cf;
+	/*float cf;*/
 	float cycleTime = 20.0f;
 	float colorRot;
 	float redPhaseShift;
@@ -164,9 +164,11 @@ void UpdateSparkColour(global_info_t *global, flurry_info_t *flurry, Spark *s)
 		baseBlue = 0.109375f * ((float) cos((colorTime+bluePhaseShift)*colorRot)+1.0f);
 	}
 	
+/*
 	cf = ((float) (cos(7.0*((flurry->fTime)*rotationsPerSecond))+cos(3.0*((flurry->fTime)*rotationsPerSecond))+cos(13.0*((flurry->fTime)*rotationsPerSecond))));
 	cf /= 6.0f;
 	cf += 2.0f;
+*/
 	thisPointInRadians = 2.0 * PI * (double) s->mystery / (double) BIGMYSTERY;
 	
 	s->color[0] = baseRed + 0.0625f * (0.5f + (float) cos((15.0 * (thisPointInRadians + 3.0*thisAngle))) + (float) sin((7.0 * (thisPointInRadians + thisAngle))));

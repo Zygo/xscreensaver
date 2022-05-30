@@ -18,19 +18,23 @@
    <vgroup>
     <number id="xspeed" type="slider" arg="-xspeed %"
             _label="X speed" _low-label="Low" _high-label="High"
-            low="0.0" high="10.0" default="1.0"/>
+            low="0.0" high="10.0" default="1.0"
+            convert="ratio"/>
     <number id="yspeed" type="slider" arg="-yspeed %"
             _label="Y speed" _low-label="Low" _high-label="High"
-             low="0.0" high="10.0" default="1.0"/>
+             low="0.0" high="10.0" default="1.0"
+            convert="ratio"/>
    </vgroup>
 
    <vgroup>
     <number id="xamplitude" type="slider" arg="-xamplitude %"
             _label="X amplitude" _low-label="Low" _high-label="High"
-             low="0.0" high="10.0" default="1.0"/>
+             low="0.0" high="10.0" default="1.0"
+            convert="ratio"/>
     <number id="yamplitude" type="slider" arg="-yamplitude %"
             _label="Y amplitude" _low-label="Low" _high-label="High"
-             low="0.0" high="10.0" default="1.0"/>
+             low="0.0" high="10.0" default="1.0"
+            convert="ratio"/>
    </vgroup>
   </hgroup>
 

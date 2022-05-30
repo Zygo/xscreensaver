@@ -15,12 +15,14 @@
 
     <number id="speed" type="slider" arg="-speed %"
              _label="Speed" _low-label="Slow" _high-label="Fast"
-             low="0.1" high="8.0" default="1.0"/>
+             low="0.1" high="8.0" default="1.0"
+             convert="ratio"/>
    </vgroup>
    <vgroup>
     <number id="density" type="slider" arg="-complexity %"
              _label="Puzzle pieces" _low-label="Few" _high-label="Many"
-             low="1.0" high="4.0" default="1.0"/>
+             low="1.0" high="4.0" default="1.0"
+             convert="ratio"/>
 
     <number id="resolution" type="slider" arg="-resolution %"
              _label="Resolution" _low-label="Chunky" _high-label="Smooth"

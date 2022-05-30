@@ -17,7 +17,8 @@
 
   <number id="speed" type="slider" arg="-speed %"
           _label="Glyph speed" _low-label="Slow" _high-label="Fast"
-          low="0.1" high="8.0" default="1.0"/>
+          low="0.1" high="8.0" default="1.0"
+          convert="ratio"/>
 
   <select id="mode">
     <option id="matrix" _label="Matrix encoding"/>

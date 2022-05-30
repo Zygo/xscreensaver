@@ -1,5 +1,5 @@
 /* webcollage-helper --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002-2020 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2002-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,6 +12,10 @@
 
 /* This is the GDK + JPEGlib implementation.  See webcollage-helper-cocoa.m
    for the Cocoa implementation.
+
+   It is annoying that this requires libjpeg, but you may be surprised to
+   learn that, massive as the GdkPixbuf library is, it has no facility for
+   writing image files, only reading.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -52,23 +56,13 @@ static void write_pixbuf (GdkPixbuf *pb, const char *file);
 static GdkPixbuf *
 load_pixbuf (const char *file)
 {
-  GdkPixbuf *pb;
-#ifdef HAVE_GTK2
   GError *err = NULL;
-
-  pb = gdk_pixbuf_new_from_file (file, &err);
-#else  /* !HAVE_GTK2 */
-  pb = gdk_pixbuf_new_from_file (file);
-#endif /* HAVE_GTK2 */
+  GdkPixbuf *pb = gdk_pixbuf_new_from_file (file, &err);
 
   if (!pb)
     {
-#ifdef HAVE_GTK2
       fprintf (stderr, "%s: %s\n", progname, err->message);
       g_error_free (err);
-#else  /* !HAVE_GTK2 */
-      fprintf (stderr, "%s: unable to load %s\n", progname, file);
-#endif /* !HAVE_GTK2 */
       exit (1);
     }
 
@@ -572,11 +566,9 @@ main (int argc, char **argv)
       if (w < 0) usage();
       if (h < 0) usage();
 
-# ifdef HAVE_GTK2
-#  if !GLIB_CHECK_VERSION(2, 36 ,0)
+# if !GLIB_CHECK_VERSION(2, 36 ,0)
       g_type_init ();
-#  endif
-# endif /* HAVE_GTK2 */
+# endif
 
       paste (paste_file, base_file,
              from_scale, opacity, bevel_pct,

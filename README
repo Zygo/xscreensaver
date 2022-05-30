@@ -37,10 +37,10 @@ To compile for a Unix system with X11:
     tell you what is missing.  At the least, you will need development
     versions of these libraries:
 
-        perl pkg-config gettext intltool libx11 libxext libxi libxt
-        libxft libxinerama libxrandr libxxf86vm libgl libglu libgle
-        libgtk2 gdk-pixbuf-2.0 gdk-pixbuf-xlib-2.0 libxml2 libpam
-        dbus libsystemd elogind
+        perl pkg-config gettext intltool libx11 libxext libxi libxt libxft
+        libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk2.0
+        libgdk-pixbuf2.0 libgdk-pixbuf-xlib-2.0 libjpeg libxml2 libpam
+        libsystemd elogind
 
     BSD systems might need gmake instead of make.
 
@@ -69,6 +69,18 @@ Interested in writing a new screen saver?
 ===============================================================================
 Version History
 ===============================================================================
+
+6.04	* New hacks, `nakagin' and `chompytower'.
+	* Settings dialog shows diagnostics for bad image folders and feeds.
+	* URLs for `imageDirectory' can now point at archive.org collections.
+	* Sliders for various "Speed" preferences are easier to use.
+	* X11: Settings dialog shows saver description below embedded preview.
+	* X11: Better behavior when zero monitors are attached.
+	* X11: Improvements to inhibiting blanking while videos are playing:
+          No longer necessary to hack GNOME and KDE to get them to not usurp
+          the org.freedesktop.ScreenSaver endpoint.
+	* X11: `unicrud' displays character names.
+	* Updated `webcollage'.
 
 6.03	* New hack, `squirtorus'.
 	* New hack, `mapscroller' (X11 and macOS only).

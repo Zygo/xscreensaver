@@ -55,10 +55,8 @@
   <xscreensaver-updater />
 
   <_description>
-Packs the screen with growing squares or circles, colored according to
-a horizontal or vertical gradient, or according to the colors of a
-loaded image.  The objects grow until they touch, then stop.  When the
-screen is full, they shrink away and the process restarts.
+Packs the screen with growing squares or circles which grow until they touch,
+then stop.
 
 Written by Jamie Zawinski; 2005.
   </_description>

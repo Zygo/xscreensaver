@@ -1,9 +1,10 @@
-# Auto-generated: Sun Feb 27 13:30:09 PST 2022
+# Auto-generated: Sun May 29 13:46:24 PDT 2022
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/dialog.c
-driver/screensaver-properties.desktop.in
 driver/subprocs.c
+driver/xscreensaver-settings.desktop.in
+driver/xscreensaver.desktop.in
 driver/xscreensaver.ui
 hacks/config/abstractile.xml
 hacks/config/anemone.xml
@@ -39,6 +40,7 @@ hacks/config/cage.xml
 hacks/config/carousel.xml
 hacks/config/ccurve.xml
 hacks/config/celtic.xml
+hacks/config/chompytower.xml
 hacks/config/circuit.xml
 hacks/config/cityflow.xml
 hacks/config/cloudlife.xml
@@ -174,6 +176,7 @@ hacks/config/molecule.xml
 hacks/config/morph3d.xml
 hacks/config/mountain.xml
 hacks/config/munch.xml
+hacks/config/nakagin.xml
 hacks/config/nerverot.xml
 hacks/config/noof.xml
 hacks/config/noseguy.xml

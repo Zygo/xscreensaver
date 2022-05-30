@@ -12,7 +12,8 @@
 
   <number id="speed" type="slider" arg="-speed %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0.1" high="10.0" default="1.0"/>
+          low="0.1" high="10.0" default="1.0"
+          convert="ratio"/>
 
   <vgroup>
    <hgroup>
@@ -36,13 +37,10 @@
 
   <_description>
 
-A clone of the first graphics demo for the Amiga 1000, which was
-written by Dale Luck and RJ Mical during a break at the 1984 Consumer
-Electronics Show (or so the legend goes.)
+A clone of the first graphics demo for the Amiga 1000.
 
-This looks like the original Amiga demo if you turn off "smoothing"
-and "lighting" and turn on "scanlines", and is somewhat more modern
-otherwise.
+The original Boing was written by Dale Luck and RJ Mical during a break
+at the 1984 Consumer Electronics Show (or so the legend goes.)
 
 https://en.wikipedia.org/wiki/Amiga#Boing_Ball
 

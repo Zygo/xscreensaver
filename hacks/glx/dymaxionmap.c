@@ -390,7 +390,7 @@ load_images (ModeInfo *mi)
 
       /* if (image) fprintf (stderr, "%s: %d: loaded %s\n", progname, i, s); */
 
-      /* The 2038x1024 images kill performance.  Turn this off in a few
+      /* The 2048x1024 images kill performance.  Turn this off in a few
          years when Moore's Law has caught up again. */
       while (builtin_p && image->width >= 2048)
         image = shrink_image (MI_DISPLAY (mi), MI_VISUAL (mi), image);
@@ -562,7 +562,8 @@ load_images (ModeInfo *mi)
 
      The cache is all-or-nothing: caching every frame is useful, but
      caching a subset is not.  If we have only cached, say, midnight to
-     1am, then that hour will move more quickly than the others. */
+     1am, then that hour will move more quickly than the others.  Likewise,
+     caching every 4th frame would just give the stutter a backbeat. */
   {
     unsigned long cache_size = (gp->day->width * gp->day->height * 4 *
                                 gp->nimages);
@@ -620,7 +621,9 @@ cache_current_frame (ModeInfo *mi)
           uint32_t n = *night++;
           uint32_t x = i % w;
           uint32_t y = i / w;
-          /* This is W*H*8 float ops; can we do this with integer math? */
+          /* This is W*H*8 float ops; can we do this with integer math?
+             This also might benefit from pthreads and vector ops, as
+             seen in "marbling", but that's a lot of work. */
           double r = dusk[y * w + ((x + xoff) % w)] / 256.0;
           double r2 = 1-r;
 # define ADD(M) (((unsigned long)             \

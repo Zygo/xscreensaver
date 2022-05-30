@@ -19,11 +19,6 @@ Believe it or not, screen burn is not a thing of the past.
 It can happen to LCD screens pretty easily, even in this modern age.
 However, leaving the screen on and displaying high contrast images
 can often repair the damage.  That's what this screen saver does.
-
-See also:
-
-	http://docs.info.apple.com/article.html?artnum=88343
-	http://toastycode.com/blog/2008/02/05/lcd-scrub/
 .SH OPTIONS
 .TP 8
 .B \-visual \fIvisual\fP
@@ -58,7 +53,11 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.br
+https://support.apple.com/de-at/HT2387
+.br
+https://web.archive.org/web/20080207220955/http%3A//toastycode.com/blog/2008/02/05/lcd-scrub/
 .SH COPYRIGHT
 Copyright \(co 2008 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

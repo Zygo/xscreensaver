@@ -982,7 +982,9 @@ ensure_no_screensaver_running (Display *dpy)
                    && type != None
                    && (!strcmp ((char *) version, "gnome-screensaver") ||
                        !strcmp ((char *) version, "mate-screensaver") ||
-                       !strcmp ((char *) version, "cinnamon-screensaver")))
+                       !strcmp ((char *) version, "cinnamon-screensaver") ||
+                       !strcmp ((char *) version, "xfce4-screensaver") ||
+                       !strcmp ((char *) version, "light-locker")))
             {
               fprintf (stderr,
                        "%s: \"%s\" is already running on display %s"

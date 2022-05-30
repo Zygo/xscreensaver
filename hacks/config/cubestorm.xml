@@ -15,7 +15,8 @@
 
     <number id="speed" type="slider" arg="-speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
-            low="0.01" high="5.0" default="1.0"/>
+            low="0.01" high="5.0" default="1.0"
+            convert="ratio"/>
 
     <number id="count" type="slider" arg="-count %"
             _label="Cubes" _low-label="Few" _high-label="Many"

@@ -1,4 +1,4 @@
-/* headroom, Copyright © 2020-2021 Jamie Zawinski <jwz@jwz.org>
+/* headroom, Copyright © 2020-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,7 +32,7 @@
 #define DEF_SPEED        "1.0"
 #define DEF_SPIN         "XYZ"
 #define DEF_WANDER       "False"
-#define DEF_MASK         "True"
+#define DEF_MASK         "False"
 #define DEF_MASK_OPACITY "0.97"
 
 #include "xlockmore.h"

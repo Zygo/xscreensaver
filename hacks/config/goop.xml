@@ -53,12 +53,7 @@
   <xscreensaver-updater />
 
   <_description>
-Amoeba-like blobs change shape as they wander around the screen.
-They are translucent, so you can see the lower blobs through the
-higher ones, and when one passes over another, their colors merge.  I
-got the idea for this from a mouse pad I had once, which achieved the
-same kind of effect in real life by having several layers of plastic
-with colored oil between them.
+Translucent amoeba-like blobs wander the screen.
 
 Written by Jamie Zawinski; 1997.
   </_description>

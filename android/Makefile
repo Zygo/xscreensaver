@@ -3,6 +3,7 @@
 
 export TERM=dumb
 GRADLE = ./gradlew
+THUMBDIR = .
 
 default:: debug
 all:: release
@@ -88,6 +89,7 @@ export ANDROID_HACKS=		\
 	carousel		\
 	ccurve			\
 	celtic			\
+	chompytower		\
 	circuit			\
 	cityflow		\
 	cloudlife		\
@@ -203,6 +205,7 @@ export ANDROID_HACKS=		\
 	morph3d			\
 	mountain		\
 	munch			\
+	nakagin			\
 	nerverot		\
 	noof			\
 	noseguy			\
@@ -296,30 +299,6 @@ ANDROID_TODO=			\
 	starfish		\
 
 
-# Download and resize images from jwz.org.
-# This saves us having to include 4MB of images in the tar file
-# that will only be used by a vast minority of people building
-# from source.
-# Android actually wants these to be 160x160 but our source is 200x150.
-
-URL = https://www.jwz.org/xscreensaver/screenshots/
-
-# I find wget easier to deal with, but curl is usually installed by default.
-#WGET = wget -q -U xscreensaver-build-android --content-on-error=0 -O-
-WGET = curl -sL -A xscreensaver-build-android -f
-
-# ImageMagick isn't installed by default, but neither is anything similar.
-CVT  = -thumbnail '150x150^' -gravity center -extent 150x150 \
-     \( +clone  -alpha extract \
-        -draw 'fill black polygon 0,0 0,15 15,0 fill white circle 15,15 15,0' \
-        \( +clone -flip \) -compose Multiply -composite \
-        \( +clone -flop \) -compose Multiply -composite \
-     \) -alpha off -compose CopyOpacity -composite \
-    -colorspace sRGB \
-    -strip \
-    -quality 95 \
-    +dither -colors 128
-
 # If we are making the m6502 hack, create the header file for Android
 m6502.h::
 	../hacks/m6502.sh ../hacks/m6502.h ../hacks/images/m6502/*.asm
@@ -332,18 +311,68 @@ images_png_h:
 	cd ../hacks/images && make
 
 
+# Download and resize images from jwz.org.
+# Largely duplicated in OSX/Makefile.
+# This saves us having to include 4MB of images in the tar file that
+# will only be used by a vast minority of people building from source.
+# Android actually wants these to be 160x160 but our source is 200x150.
+
+BASE = xscreensaver/screenshots/
+URL = https://cdn.jwz.org/$(BASE)
+
+# I find wget easier to deal with, but curl is usually installed by default.
+#WGET = wget -q -U xscreensaver-build-android --content-on-error=0 -O-
+WGET = curl -sL -A xscreensaver-build-android -f
+
+# ImageMagick isn't installed by default, but neither is anything similar.
+#
+# This recipe takes our source images (usually 200x150) and fits them into
+# a 150x150 box, cropping either horizontally or vertically as needed, with
+# rounded corners in the alpha mask.
+#
+THUMB_SIZE=150x150
+THUMB_CURVE=15
+CVT  = -thumbnail $(THUMB_SIZE)'^' -gravity center -extent $(THUMB_SIZE) \
+     \( +clone  -alpha extract \
+        -draw \
+          'fill black polygon 0,0 0,$(THUMB_CURVE) $(THUMB_CURVE),0 \
+           fill white circle $(THUMB_CURVE),$(THUMB_CURVE) $(THUMB_CURVE),0' \
+        \( +clone -flip \) -compose Multiply -composite \
+        \( +clone -flop \) -compose Multiply -composite \
+     \) -alpha off -compose CopyOpacity -composite \
+    -colorspace sRGB \
+    -strip \
+    -quality 95 \
+    +dither -colors 128
+
 xscreensaver/res/drawable/%.png:
 	@\
 	FILE1=`echo "$@" | sed 's!^.*/\([^/]*\)\.png$$!\1.jpg!'` ;	\
 	FILE2="$@" ;							\
+	TMP="$$FILE2".tmp ;						\
 	URL="$(URL)$$FILE1" ;						\
-	echo "converting $$URL..." ;					\
+	if [ ! -d $(THUMBDIR) ]; then mkdir -p $(THUMBDIR) ; fi ;	\
+	rm -f "$$FILE2" "$$TMP" ;					\
+	set +e ;							\
+	if [ -f "$$HOME/www/$(BASE)/$$FILE1" ]; then			\
+	  cp -p "$$HOME/www/$(BASE)/$$FILE1" "$$TMP" ;			\
+	else								\
+	  echo "downloading $$URL..." ;					\
+	  $(WGET) "$$URL" > "$$TMP" ;					\
+	  if [ ! -s "$$TMP" ]; then					\
+	    rm -f "$$TMP" ;						\
+	    echo "failed: $$URL" ;					\
+	    exit 1 ;							\
+	  fi ;								\
+	fi ;								\
 	rm -f "$$FILE2" ;						\
-	$(WGET) "$$URL" |						\
-	convert jpg:- $(CVT) "$$FILE2" ;				\
+	convert jpg:- $(CVT) "$$FILE2" < "$$TMP" ;			\
 	if [ ! -s "$$FILE2" ]; then					\
 	  echo "$$FILE2 failed" >&2 ;					\
+	  rm -f "$$FILE2" "$$TMP" ;					\
 	  exit 1 ;							\
+	else								\
+	  rm -f "$$TMP" ;						\
 	fi
 
 thumbs::

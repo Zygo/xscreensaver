@@ -144,7 +144,8 @@ SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
 		  headroom.c headroom_model.c beats.c glsl-utils.c \
 		  sphereeversion.c sphereeversion-analytic.c \
 		  sphereeversion-corrugations.c \
-		  mapscroller.c squirtorus.c
+		  mapscroller.c squirtorus.c nakagin.c chompytower.c \
+		  teeth_model.c
 
 SCRIPTS		= mapscroller.pl
 
@@ -198,7 +199,8 @@ OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  headroom_model.o beats.o glsl-utils.o \
 		  sphereeversion.c sphereeversion-analytic.c \
 		  sphereeversion-corrugations.c \
-		  mapscroller.o squirtorus.o
+		  mapscroller.o squirtorus.o nakagin.o chompytower.o \
+		  teeth_model.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -221,7 +223,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  hexstrut vigilance esper razzledazzle peepers crumbler \
 		  maze3d handsy gravitywell deepstars gibson etruscanvenus \
 		  sphereeversion covid19 headroom beats mapscroller \
-		  squirtorus
+		  squirtorus nakagin chompytower
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
@@ -300,7 +302,7 @@ GL_MEN		= xscreensaver-gl-visual.man \
 		  peepers.man crumbler.man maze3d.man handsy.man \
 		  gravitywell.man deepstars.man gibson.man etruscanvenus.man \
 		  sphereeversion.man covid19.man headroom.man beats.man \
-		  mapscroller.man squirtorus.man
+		  mapscroller.man squirtorus.man nakagin.man chompytower.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -1112,6 +1114,16 @@ SQOBJ = normals.o $(UTILS_BIN)/spline.o
 squirtorus:	squirtorus.o	$(SQOBJ) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(SQOBJ) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
+nakagin:	nakagin.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+CHOBJS = gllist.o teeth_model.o normals.o sphere.o $(UTILS_BIN)/spline.o
+chompytower:	chompytower.o	$(CHOBJS) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(CHOBJS) $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+teeth_dxf::
+	./dxf2gl.pl --layers --smooth --normalize teeth.dxf teeth_model.c
+
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
@@ -1451,6 +1463,28 @@ chessmodels.o: $(UTILS_SRC)/usleep.h
 chessmodels.o: $(UTILS_SRC)/visual.h
 chessmodels.o: $(UTILS_SRC)/xft.h
 chessmodels.o: $(UTILS_SRC)/yarandom.h
+chompytower.o: ../../config.h
+chompytower.o: $(HACK_SRC)/fps.h
+chompytower.o: $(srcdir)/gllist.h
+chompytower.o: $(srcdir)/gltrackball.h
+chompytower.o: $(srcdir)/normals.h
+chompytower.o: $(HACK_SRC)/recanim.h
+chompytower.o: $(srcdir)/rotator.h
+chompytower.o: $(HACK_SRC)/screenhackI.h
+chompytower.o: $(srcdir)/sphere.h
+chompytower.o: $(UTILS_SRC)/colors.h
+chompytower.o: $(UTILS_SRC)/erase.h
+chompytower.o: $(UTILS_SRC)/font-retry.h
+chompytower.o: $(UTILS_SRC)/grabscreen.h
+chompytower.o: $(UTILS_SRC)/hsv.h
+chompytower.o: $(UTILS_SRC)/resources.h
+chompytower.o: $(UTILS_SRC)/spline.h
+chompytower.o: $(UTILS_SRC)/usleep.h
+chompytower.o: $(UTILS_SRC)/visual.h
+chompytower.o: $(UTILS_SRC)/xft.h
+chompytower.o: $(UTILS_SRC)/yarandom.h
+chompytower.o: $(HACK_SRC)/xlockmoreI.h
+chompytower.o: $(HACK_SRC)/xlockmore.h
 circuit.o: ../../config.h
 circuit.o: $(HACK_SRC)/fps.h
 circuit.o: $(HACK_SRC)/recanim.h
@@ -3367,6 +3401,25 @@ morph3d.o: $(UTILS_SRC)/xft.h
 morph3d.o: $(UTILS_SRC)/yarandom.h
 morph3d.o: $(HACK_SRC)/xlockmoreI.h
 morph3d.o: $(HACK_SRC)/xlockmore.h
+nakagin.o: ../../config.h
+nakagin.o: $(HACK_SRC)/fps.h
+nakagin.o: $(srcdir)/gltrackball.h
+nakagin.o: $(srcdir)/normals.h
+nakagin.o: $(HACK_SRC)/recanim.h
+nakagin.o: $(srcdir)/rotator.h
+nakagin.o: $(HACK_SRC)/screenhackI.h
+nakagin.o: $(UTILS_SRC)/colors.h
+nakagin.o: $(UTILS_SRC)/erase.h
+nakagin.o: $(UTILS_SRC)/font-retry.h
+nakagin.o: $(UTILS_SRC)/grabscreen.h
+nakagin.o: $(UTILS_SRC)/hsv.h
+nakagin.o: $(UTILS_SRC)/resources.h
+nakagin.o: $(UTILS_SRC)/usleep.h
+nakagin.o: $(UTILS_SRC)/visual.h
+nakagin.o: $(UTILS_SRC)/xft.h
+nakagin.o: $(UTILS_SRC)/yarandom.h
+nakagin.o: $(HACK_SRC)/xlockmoreI.h
+nakagin.o: $(HACK_SRC)/xlockmore.h
 noof.o: ../../config.h
 noof.o: $(HACK_SRC)/fps.h
 noof.o: $(HACK_SRC)/recanim.h
@@ -4424,6 +4477,22 @@ teapot.o: $(UTILS_SRC)/usleep.h
 teapot.o: $(UTILS_SRC)/visual.h
 teapot.o: $(UTILS_SRC)/xft.h
 teapot.o: $(UTILS_SRC)/yarandom.h
+teeth_model.o: ../../config.h
+teeth_model.o: $(HACK_SRC)/fps.h
+teeth_model.o: $(srcdir)/gllist.h
+teeth_model.o: $(HACK_SRC)/recanim.h
+teeth_model.o: $(HACK_SRC)/screenhackI.h
+teeth_model.o: $(UTILS_SRC)/colors.h
+teeth_model.o: $(UTILS_SRC)/erase.h
+teeth_model.o: $(UTILS_SRC)/font-retry.h
+teeth_model.o: $(UTILS_SRC)/grabscreen.h
+teeth_model.o: $(UTILS_SRC)/hsv.h
+teeth_model.o: $(UTILS_SRC)/resources.h
+teeth_model.o: $(UTILS_SRC)/usleep.h
+teeth_model.o: $(UTILS_SRC)/visual.h
+teeth_model.o: $(UTILS_SRC)/xft.h
+teeth_model.o: $(UTILS_SRC)/yarandom.h
+teeth_model.o: $(HACK_SRC)/xlockmoreI.h
 texfont.o: ../../config.h
 texfont.o: $(HACK_SRC)/fps.h
 texfont.o: $(srcdir)/glsl-utils.h

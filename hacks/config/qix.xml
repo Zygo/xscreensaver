@@ -62,10 +62,8 @@
   <xscreensaver-updater />
 
   <_description>
-Bounces a series of line segments around the screen, and uses
-variations on this basic motion pattern to produce all sorts of
-different presentations: line segments, filled polygons, and
-overlapping translucent areas.
+Bounces a series of line segments around the screen with various
+presentations.
 
 https://en.wikipedia.org/wiki/Qix
 

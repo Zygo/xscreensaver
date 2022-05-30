@@ -81,24 +81,13 @@
 
 #include <gtk/gtk.h>
 
-#ifdef HAVE_CRAPPLET
-# include <gnome.h>
-# include <capplet-widget.h>
-#endif
-
 #include <gdk/gdkx.h>
 
-#ifdef HAVE_GTK2
-# include <gmodule.h>
-#else  /* !HAVE_GTK2 */
-# define G_MODULE_EXPORT /**/
-#endif /* !HAVE_GTK2 */
-
-#ifndef HAVE_XML
- /* Kludge: this is defined in demo-Gtk-conf.c when HAVE_XML.
-    It is unused otherwise, so in that case, stub it out. */
- static const char *hack_configuration_path = 0;
+#ifndef HAVE_GTK2
+# error GTK 2.x is required
 #endif
+
+#include <gmodule.h>
 
 #if (__GNUC__ >= 4)
 # pragma GCC diagnostic pop
@@ -109,6 +98,7 @@
 #include "types.h"
 #include "resources.h"		/* for parse_time() */
 #include "remote.h"		/* for xscreensaver_command() */
+#include "screens.h"
 #include "visual.h"
 #include "atoms.h"
 #include "usleep.h"
@@ -124,13 +114,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_GTK2
 enum {
   COL_ENABLED,
   COL_NAME,
   COL_LAST
 };
-#endif /* HAVE_GTK2 */
 
 /* Deal with deprecation of direct access to struct fields on the way to GTK3
    See http://live.gnome.org/GnomeGoals/UseGseal
@@ -194,9 +182,7 @@ typedef struct {
   GtkWidget *popup_widget;	/* the "Settings" dialog */
   conf_data *cdata;		/* private data for per-hack configuration */
 
-#ifdef HAVE_GTK2
   GtkBuilder *gtk_ui;           /* UI file */
-#endif /* HAVE_GTK2 */
 
   Bool debug_p;			/* whether to print diagnostics */
   Bool initializing_p;		/* flag for breaking recursion loops */
@@ -223,7 +209,7 @@ typedef struct {
   int _selected_list_element;	/* don't use this: call
                                    selected_list_element() instead */
 
-  int nscreens;			/* How many X or Xinerama screens there are */
+  Bool multi_screen_p;		/* Is there more than one monitor */
 
   saver_preferences prefs;
 
@@ -251,7 +237,7 @@ static void schedule_preview (state *, const char *cmd);
 static void kill_preview_subproc (state *, Bool reset_p);
 static void schedule_preview_check (state *);
 
-
+
 /* Prototypes of functions used by the Gtk-generated code, to avoid warnings.
  */
 void exit_menu_cb (GtkAction *, gpointer user_data);
@@ -268,6 +254,8 @@ void run_next_cb (GtkButton *, gpointer user_data);
 void run_prev_cb (GtkButton *, gpointer user_data);
 void pref_changed_cb (GtkWidget *, gpointer user_data);
 gboolean pref_changed_event_cb (GtkWidget *, GdkEvent *, gpointer user_data);
+gboolean image_text_pref_changed_event_cb (GtkWidget *, GdkEvent *,
+                                           gpointer user_data);
 void mode_menu_item_cb (GtkWidget *, gpointer user_data);
 void switch_page_cb (GtkNotebook *, GtkNotebookPage *, 
                      gint page_num, gpointer user_data);
@@ -298,7 +286,6 @@ name_to_widget (state *s, const char *name)
   if (!name) abort();
   if (!*name) abort();
 
-#ifdef HAVE_GTK2
   if (!s->gtk_ui)
     {
       /* First try to load the UI file from the current directory;
@@ -343,14 +330,6 @@ name_to_widget (state *s, const char *name)
 
   w = GTK_WIDGET (gtk_builder_get_object (s->gtk_ui, name));
 
-#else /* !HAVE_GTK2 */
-
-  w = (GtkWidget *) gtk_object_get_data (GTK_OBJECT (s->base_widget),
-                                         name);
-  if (w) return w;
-  w = (GtkWidget *) gtk_object_get_data (GTK_OBJECT (s->popup_widget),
-                                         name);
-#endif /* HAVE_GTK2 */
   if (w) return w;
 
   fprintf (stderr, "%s: no widget \"%s\" (wrong UI file?)\n",
@@ -365,7 +344,6 @@ name_to_widget (state *s, const char *name)
 static void
 ensure_selected_item_visible (GtkWidget *widget)
 {
-#ifdef HAVE_GTK2
   GtkTreePath *path;
   GtkTreeSelection *selection;
   GtkTreeIter iter;
@@ -380,96 +358,10 @@ ensure_selected_item_visible (GtkWidget *widget)
   gtk_tree_view_set_cursor (GTK_TREE_VIEW (widget), path, NULL, FALSE);
 
   gtk_tree_path_free (path);
-
-#else /* !HAVE_GTK2 */
-
-  GtkScrolledWindow *scroller = 0;
-  GtkViewport *vp = 0;
-  GtkList *list_widget = 0;
-  GList *slist;
-  GList *kids;
-  int nkids = 0;
-  GtkWidget *selected = 0;
-  int list_elt = -1;
-  GtkAdjustment *adj;
-  gint parent_h, child_y, child_h, children_h, ignore;
-  double ratio_t, ratio_b;
-
-  if (GTK_IS_SCROLLED_WINDOW (widget))
-    {
-      scroller = GTK_SCROLLED_WINDOW (widget);
-      vp = GTK_VIEWPORT (GTK_BIN (scroller)->child);
-      list_widget = GTK_LIST (GTK_BIN(vp)->child);
-    }
-  else if (GTK_IS_VIEWPORT (widget))
-    {
-      vp = GTK_VIEWPORT (widget);
-      scroller = GTK_SCROLLED_WINDOW (GTK_WIDGET (vp)->parent);
-      list_widget = GTK_LIST (GTK_BIN(vp)->child);
-    }
-  else if (GTK_IS_LIST (widget))
-    {
-      list_widget = GTK_LIST (widget);
-      vp = GTK_VIEWPORT (GTK_WIDGET (list_widget)->parent);
-      scroller = GTK_SCROLLED_WINDOW (GTK_WIDGET (vp)->parent);
-    }
-  else
-    abort();
-
-  slist = list_widget->selection;
-  selected = (slist ? GTK_WIDGET (slist->data) : 0);
-  if (!selected)
-    return;
-
-  list_elt = gtk_list_child_position (list_widget, GTK_WIDGET (selected));
-
-  for (kids = gtk_container_children (GTK_CONTAINER (list_widget));
-       kids; kids = kids->next)
-    nkids++;
-
-  adj = gtk_scrolled_window_get_vadjustment (scroller);
-
-  gdk_window_get_geometry (GET_WINDOW (GTK_WIDGET (vp)),
-                           &ignore, &ignore, &ignore, &parent_h, &ignore);
-  gdk_window_get_geometry (GET_WINDOW (GTK_WIDGET (selected)),
-                           &ignore, &child_y, &ignore, &child_h, &ignore);
-  children_h = nkids * child_h;
-
-  ratio_t = ((double) child_y) / ((double) children_h);
-  ratio_b = ((double) child_y + child_h) / ((double) children_h);
-
-  if (adj->upper == 0.0)  /* no items in list */
-    return;
-
-  if (ratio_t < (adj->value / adj->upper) ||
-      ratio_b > ((adj->value + adj->page_size) / adj->upper))
-    {
-      double target;
-      int slop = parent_h * 0.75; /* how much to overshoot by */
-
-      if (ratio_t < (adj->value / adj->upper))
-        {
-          double ratio_w = ((double) parent_h) / ((double) children_h);
-          double ratio_l = (ratio_b - ratio_t);
-          target = ((ratio_t - ratio_w + ratio_l) * adj->upper);
-          target += slop;
-        }
-      else /* if (ratio_b > ((adj->value + adj->page_size) / adj->upper))*/
-        {
-          target = ratio_t * adj->upper;
-          target -= slop;
-        }
-
-      if (target > adj->upper - adj->page_size)
-        target = adj->upper - adj->page_size;
-      if (target < 0)
-        target = 0;
-
-      gtk_adjustment_set_value (adj, target);
-    }
-#endif /* !HAVE_GTK2 */
 }
 
+
+/* The "OK" button on a warning dialog. */
 static void
 warning_dialog_dismiss_cb (GtkWidget *widget, gpointer user_data)
 {
@@ -482,18 +374,21 @@ warning_dialog_dismiss_cb (GtkWidget *widget, gpointer user_data)
 
 void restart_menu_cb (GtkWidget *widget, gpointer user_data);
 
+/* The "Restart daemon" button on a warning dialog. */
 static void warning_dialog_restart_cb (GtkWidget *widget, gpointer user_data)
 {
   restart_menu_cb (widget, user_data);
   warning_dialog_dismiss_cb (widget, user_data);
 }
 
+/* The "Kill gnome-screensaver" button on a warning dialog. */
 static void warning_dialog_killg_cb (GtkWidget *widget, gpointer user_data)
 {
   kill_gnome_screensaver ();
   warning_dialog_dismiss_cb (widget, user_data);
 }
 
+/* The "Kill kde-screensaver" button on a warning dialog. */
 static void warning_dialog_killk_cb (GtkWidget *widget, gpointer user_data)
 {
   kill_kde_screensaver ();
@@ -513,6 +408,8 @@ warning_dialog (GtkWidget *parent, const char *message,
   GtkWidget *label = 0;
   GtkWidget *ok = 0;
   GtkWidget *cancel = 0;
+  int margin_x = 48;
+  int margin_y = 4;
   int i = 0;
 
   while (parent && !GET_WINDOW (parent))
@@ -529,6 +426,13 @@ warning_dialog (GtkWidget *parent, const char *message,
       return False;
     }
 
+  /* Top margin */
+  label = gtk_label_new ("");
+  gtk_misc_set_padding (GTK_MISC (label), 0, margin_y);
+  gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
+                      label, TRUE, TRUE, 0);
+  gtk_widget_show (label);
+
   head = msg;
   while (head)
     {
@@ -540,22 +444,9 @@ warning_dialog (GtkWidget *parent, const char *message,
 
       {
         label = gtk_label_new (head);
-#ifdef HAVE_GTK2
 	gtk_label_set_selectable (GTK_LABEL (label), TRUE);
-#endif /* HAVE_GTK2 */
+        gtk_misc_set_padding (GTK_MISC (label), margin_x, 0);
 
-#ifndef HAVE_GTK2
-        if (i == 1)
-          {
-            GTK_WIDGET (label)->style =
-              gtk_style_copy (GTK_WIDGET (label)->style);
-            GTK_WIDGET (label)->style->font =
-              gdk_font_load (get_string_resource("warning_dialog.headingFont",
-                                                 "Dialog.Font"));
-            gtk_widget_set_style (GTK_WIDGET (label),
-                                  GTK_WIDGET (label)->style);
-          }
-#endif /* !HAVE_GTK2 */
         if (center <= 0)
           gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
         gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
@@ -571,7 +462,9 @@ warning_dialog (GtkWidget *parent, const char *message,
       center--;
     }
 
+  /* Bottom margin */
   label = gtk_label_new ("");
+  gtk_misc_set_padding (GTK_MISC (label), 0, margin_y * 2);
   gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
                       label, TRUE, TRUE, 0);
   gtk_widget_show (label);
@@ -580,7 +473,6 @@ warning_dialog (GtkWidget *parent, const char *message,
   gtk_box_pack_start (GTK_BOX (GET_ACTION_AREA (GTK_DIALOG (dialog))),
                       label, TRUE, TRUE, 0);
 
-#ifdef HAVE_GTK2
   if (button_type != D_NONE)
     {
       cancel = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
@@ -589,19 +481,6 @@ warning_dialog (GtkWidget *parent, const char *message,
 
   ok = gtk_button_new_from_stock (GTK_STOCK_OK);
   gtk_container_add (GTK_CONTAINER (label), ok);
-
-#else /* !HAVE_GTK2 */
-
-  ok = gtk_button_new_with_label ("OK");
-  gtk_container_add (GTK_CONTAINER (label), ok);
-
-  if (button_type != D_NONE)
-    {
-      cancel = gtk_button_new_with_label ("Cancel");
-      gtk_container_add (GTK_CONTAINER (label), cancel);
-    }
-
-#endif /* !HAVE_GTK2 */
 
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
@@ -643,12 +522,7 @@ warning_dialog (GtkWidget *parent, const char *message,
   gdk_window_set_transient_for (GET_WINDOW (GTK_WIDGET (dialog)),
                                 GET_WINDOW (GTK_WIDGET (parent)));
 
-#ifdef HAVE_GTK2
   gtk_window_present (GTK_WINDOW (dialog));
-#else  /* !HAVE_GTK2 */
-  gdk_window_show (GTK_WIDGET (dialog)->window);
-  gdk_window_raise (GTK_WIDGET (dialog)->window);
-#endif /* !HAVE_GTK2 */
 
   free (msg);
   return True;
@@ -735,7 +609,7 @@ run_hack (state *s, int list_elt, Bool report_errors_p)
           sprintf (msg,
                    _("Warning:\n\n"
                      "The XScreenSaver daemon doesn't seem to be running\n"
-                     "on display \"%s\".  Launch it now?"),
+                     "on display \"%.25s\".  Launch it now?"),
                    d);
           warning_dialog (s->toplevel_widget, msg, D_LAUNCH, 1);
         }
@@ -747,14 +621,10 @@ run_hack (state *s, int list_elt, Bool report_errors_p)
 }
 
 
-
-/* Button callbacks
-
-   According to Eric Lassauge, this G_MODULE_EXPORT crud is needed to make
-   GTK work on Cygwin; apparently all GTK callbacks need this magic extra
-   declaration.  I do not pretend to understand.
+/* Button callbacks, referenced by xscreensaver.ui.
  */
 
+/* File menu / Exit */
 G_MODULE_EXPORT void
 exit_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
@@ -764,6 +634,7 @@ exit_menu_cb (GtkAction *menu_action, gpointer user_data)
   gtk_main_quit ();
 }
 
+/* Close (X) button */
 static gboolean
 wm_toplevel_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 {
@@ -774,138 +645,12 @@ wm_toplevel_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 }
 
 
+/* Help menu / About */
 G_MODULE_EXPORT void
 about_menu_cb (GtkAction *menu_action, gpointer user_data)
 {
-#if 1
-  /* Let's just pop up the splash dialog instead. */
+  /* Let's just pop up the splash dialog. */
   preview_theme_cb (NULL, user_data);
-#else
-  char msg [2048];
-  char copy[1024];
-  char *desc = _("For updates, check https://www.jwz.org/xscreensaver/");
-
-  char *version = strdup (screensaver_id + 17);
-  char *year = strchr (version, '-');
-  char *s = strchr (version, ' ');
-  *s = 0;
-  year = strchr (year+1, '-') + 1;
-  s = strchr (year, ')');
-  *s = 0;
-
-  /* Ole Laursen <olau@hardworking.dk> says "don't use _() here because
-     non-ASCII characters aren't allowed in localizable string keys."
-     (I don't want to just use (c) instead of © because that doesn't
-     look as good in the plain-old default Latin1 "C" locale.)
-   */
-#ifdef HAVE_GTK2
-  sprintf(copy, ("Copyright \xC2\xA9 1991-%s %s"), year, s);
-#else  /* !HAVE_GTK2 */
-  sprintf(copy, ("Copyright \251 1991-%s %s"), year, s);
-#endif /* !HAVE_GTK2 */
-
-  sprintf (msg, "%s\n\n%s", copy, desc);
-
-  /* I can't make gnome_about_new() work here -- it starts dying in
-     gdk_imlib_get_visual() under gnome_about_new().  If this worked,
-     then this might be the thing to do:
-
-     #ifdef HAVE_CRAPPLET
-     {
-       const gchar *auth[] = { 0 };
-       GtkWidget *about = gnome_about_new (progclass, version, "", auth, desc,
-                                           "xscreensaver.xpm");
-       gtk_widget_show (about);
-     }
-     #else / * GTK but not GNOME * /
-      ...
-   */
-  {
-    GdkColormap *colormap;
-    GdkPixmap *gdkpixmap;
-    GdkBitmap *mask;
-
-    GtkWidget *dialog = gtk_dialog_new ();
-    GtkWidget *hbox, *icon, *vbox, *label1, *label2, *hb, *ok;
-    GSList *proxies = gtk_action_get_proxies (menu_action);
-    GtkWidget *parent = GTK_WIDGET (proxies->data);
-    while (GET_PARENT (parent))
-      parent = GET_PARENT (parent);
-
-    hbox = gtk_hbox_new (FALSE, 20);
-    gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
-                        hbox, TRUE, TRUE, 0);
-
-    colormap = gtk_widget_get_colormap (parent);
-    gdkpixmap =
-      gdk_pixmap_colormap_create_from_xpm_d (NULL, colormap, &mask, NULL,
-                                             (gchar **) logo_180_xpm);
-    icon = gtk_pixmap_new (gdkpixmap, mask);
-    gtk_misc_set_padding (GTK_MISC (icon), 10, 10);
-
-    gtk_box_pack_start (GTK_BOX (hbox), icon, FALSE, FALSE, 0);
-
-    vbox = gtk_vbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, 0);
-
-    label1 = gtk_label_new (version);
-    gtk_box_pack_start (GTK_BOX (vbox), label1, TRUE, TRUE, 0);
-    gtk_label_set_justify (GTK_LABEL (label1), GTK_JUSTIFY_LEFT);
-    gtk_misc_set_alignment (GTK_MISC (label1), 0.0, 0.75);
-
-#ifndef HAVE_GTK2
-    GTK_WIDGET (label1)->style = gtk_style_copy (GTK_WIDGET (label1)->style);
-    GTK_WIDGET (label1)->style->font =
-      gdk_font_load (get_string_resource ("about.headingFont","Dialog.Font"));
-    gtk_widget_set_style (GTK_WIDGET (label1), GTK_WIDGET (label1)->style);
-#endif /* HAVE_GTK2 */
-
-    label2 = gtk_label_new (msg);
-    gtk_box_pack_start (GTK_BOX (vbox), label2, TRUE, TRUE, 0);
-    gtk_label_set_justify (GTK_LABEL (label2), GTK_JUSTIFY_LEFT);
-    gtk_misc_set_alignment (GTK_MISC (label2), 0.0, 0.25);
-
-#ifndef HAVE_GTK2
-    GTK_WIDGET (label2)->style = gtk_style_copy (GTK_WIDGET (label2)->style);
-    GTK_WIDGET (label2)->style->font =
-      gdk_font_load (get_string_resource ("about.bodyFont","Dialog.Font"));
-    gtk_widget_set_style (GTK_WIDGET (label2), GTK_WIDGET (label2)->style);
-#endif /* HAVE_GTK2 */
-
-    hb = gtk_hbutton_box_new ();
-
-    gtk_box_pack_start (GTK_BOX (GET_ACTION_AREA (GTK_DIALOG (dialog))),
-                        hb, TRUE, TRUE, 0);
-
-#ifdef HAVE_GTK2
-    ok = gtk_button_new_from_stock (GTK_STOCK_OK);
-#else /* !HAVE_GTK2 */
-    ok = gtk_button_new_with_label (_("OK"));
-#endif /* !HAVE_GTK2 */
-    gtk_container_add (GTK_CONTAINER (hb), ok);
-
-    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
-    gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
-    gtk_window_set_title (GTK_WINDOW (dialog), progclass);
-
-    gtk_widget_show (hbox);
-    gtk_widget_show (icon);
-    gtk_widget_show (vbox);
-    gtk_widget_show (label1);
-    gtk_widget_show (label2);
-    gtk_widget_show (hb);
-    gtk_widget_show (ok);
-    gtk_widget_show (dialog);
-
-    gtk_signal_connect_object (GTK_OBJECT (ok), "clicked",
-                               GTK_SIGNAL_FUNC (warning_dialog_dismiss_cb),
-                               (gpointer) dialog);
-    gdk_window_set_transient_for (GET_WINDOW (GTK_WIDGET (dialog)),
-                                  GET_WINDOW (GTK_WIDGET (parent)));
-    gdk_window_show (GET_WINDOW (GTK_WIDGET (dialog)));
-    gdk_window_raise (GET_WINDOW (GTK_WIDGET (dialog)));
-  }
-#endif /* 0 */
 }
 
 
@@ -984,7 +729,7 @@ restart_menu_cb (GtkWidget *widget, gpointer user_data)
     fprintf (stderr, "%s: command: EXIT\n", blurb());
   xscreensaver_command (GDK_DISPLAY(), XA_EXIT, 0, False, NULL);
   sleep (1);
-  if (system ("xscreensaver -splash &") < 0)
+  if (system ("xscreensaver --splash &") < 0)
     fprintf (stderr, "%s: fork error\n", blurb());
 
   await_xscreensaver (s);
@@ -1030,11 +775,12 @@ await_xscreensaver (state *s)
 
       if (root_p)
         strcat (buf, STFU
+/*
 	  _("You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
-            "turned on."
-/*
-            "  Try running this command:\n"
+            "turned on.\n"
+            "\n"
+            "Try running this command:\n"
             "\n"
             "                        xhost +localhost\n"
             "\n"
@@ -1044,10 +790,13 @@ await_xscreensaver (state *s)
             "on to this machine to access your screen, which might be\n"
             "considered a security problem.  Please read the xscreensaver\n"
             "manual and FAQ for more information.\n"
- */
             "\n"
             "You shouldn't run X as root. Instead, you should log in as a\n"
-            "normal user, and `sudo' as necessary."));
+            "normal user, and `sudo' as necessary.")
+*/
+          _("You are running as root.  Don't do that.  Instead, you should\n"
+            "log in as a normal user and use `sudo' as necessary.")
+          );
       else
         strcat (buf, _("Please check your $PATH and permissions."));
 
@@ -1065,6 +814,8 @@ selected_list_element (state *s)
 }
 
 
+/* Write the settings to disk; call this only when changes have been made.
+ */
 static int
 demo_write_init_file (state *s, saver_preferences *p)
 {
@@ -1095,7 +846,7 @@ demo_write_init_file (state *s, saver_preferences *p)
 }
 
 
-/* The "Preview" button */
+/* The "Preview" button on the main page. */
 G_MODULE_EXPORT void
 run_this_cb (GtkButton *button, gpointer user_data)
 {
@@ -1164,14 +915,11 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
 {
   GtkWidget *parent = name_to_widget (s, "scroller");
   gboolean was = GET_SENSITIVE (parent);
-#ifdef HAVE_GTK2
   GtkTreeIter iter;
   GtkTreeModel *model;
   GtkTreeSelection *selection;
-#endif /* HAVE_GTK2 */
 
   if (!was) gtk_widget_set_sensitive (parent, True);
-#ifdef HAVE_GTK2
   model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
   if (!model) abort();
   if (gtk_tree_model_iter_nth_child (model, &iter, NULL, list_elt))
@@ -1179,9 +927,6 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
       selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
       gtk_tree_selection_select_iter (selection, &iter);
     }
-#else  /* !HAVE_GTK2 */
-  gtk_list_select_item (GTK_LIST (list), list_elt);
-#endif /* !HAVE_GTK2 */
   if (scroll_p) ensure_selected_item_visible (GTK_WIDGET (list));
   if (!was) gtk_widget_set_sensitive (parent, False);
 }
@@ -1211,6 +956,7 @@ run_next_cb (GtkButton *button, gpointer user_data)
   flush_dialog_changes_and_save (s);
   force_list_select_item (s, list_widget, list_elt, True);
   populate_demo_window (s, list_elt);
+  populate_popup_window (s);
   run_hack (s, list_elt, False);
 
   s->preview_suppressed_p = ops;
@@ -1241,6 +987,7 @@ run_prev_cb (GtkButton *button, gpointer user_data)
   flush_dialog_changes_and_save (s);
   force_list_select_item (s, list_widget, list_elt, True);
   populate_demo_window (s, list_elt);
+  populate_popup_window (s);
   run_hack (s, list_elt, False);
 
   s->preview_suppressed_p = ops;
@@ -1375,6 +1122,66 @@ file_p (const char *path)
     return True;
 }
 
+/* See if the directory has at least one image file under it.
+   Recurses to at most the given depth, chasing symlinks.
+   To do this properly would mean running "xscreensaver-getimage-file"
+   and seeing if it found anything, but that might take a long time to
+   build the cache the first time, so this is close enough.
+ */
+static Bool
+image_files_p (const char *path, int max_depth)
+{
+  const char * const exts[] = {
+    "jpg", "jpeg", "pjpeg", "pjpg", "png", "gif", 
+    "tif", "tiff", "xbm", "xpm", "svg",
+  };
+  struct dirent *de;
+  Bool ok = False;
+  DIR *dir = opendir (path);
+  if (!dir) return False;
+
+  while (!ok && (de = readdir (dir)))
+    {
+      struct stat st;
+      const char *f = de->d_name;
+      char *f2;
+      if (*f == '.') continue;
+
+      f2 = (char *) malloc (strlen(path) + strlen(f) + 10);
+      strcpy (f2, path);
+      strcat (f2, "/");
+      strcat (f2, f);
+
+      if (!stat (f2, &st))
+        {
+          if (S_ISDIR (st.st_mode))
+            {
+              if (max_depth > 0 && image_files_p (f2, max_depth - 1))
+                ok = True;
+            }
+          else
+            {
+              int i;
+              const char *ext = strrchr (f, '.');
+              if (ext)
+                for (i = 0; i < countof(exts); i++)
+                  if (!strcasecmp (ext+1, exts[i]))
+                    {
+                      /* fprintf (stderr, "%s: found %s\n", blurb(), f2); */
+                      ok = True;
+                      break;
+                    }
+            }
+        }
+
+      free (f2);
+    }
+
+  closedir (dir);
+  return ok;
+}
+
+
 static char *
 normalize_directory (const char *path)
 {
@@ -1436,8 +1243,6 @@ normalize_directory (const char *path)
 }
 
 
-#ifdef HAVE_GTK2
-
 typedef struct {
   state *s;
   int i;
@@ -1445,10 +1250,10 @@ typedef struct {
 } FlushForeachClosure;
 
 static gboolean
-flush_checkbox  (GtkTreeModel *model,
-		 GtkTreePath *path,
-		 GtkTreeIter *iter,
-		 gpointer data)
+flush_checkbox (GtkTreeModel *model,
+		GtkTreePath *path,
+		GtkTreeIter *iter,
+		gpointer data)
 {
   FlushForeachClosure *closure = data;
   gboolean checked;
@@ -1466,8 +1271,6 @@ flush_checkbox  (GtkTreeModel *model,
   /* don't remove row */
   return FALSE;
 }
-
-#endif /* HAVE_GTK2 */
 
 
 static char *
@@ -1498,17 +1301,9 @@ flush_dialog_changes_and_save (state *s)
   Display *dpy = GDK_DISPLAY();
   saver_preferences *p = &s->prefs;
   saver_preferences P2, *p2 = &P2;
-#ifdef HAVE_GTK2
   GtkTreeView *list_widget = GTK_TREE_VIEW (name_to_widget (s, "list"));
   GtkTreeModel *model = gtk_tree_view_get_model (list_widget);
   FlushForeachClosure closure;
-#else /* !HAVE_GTK2 */
-  GtkList *list_widget = GTK_LIST (name_to_widget (s, "list"));
-  GList *kids = gtk_container_children (GTK_CONTAINER (list_widget));
-  int i;
-#endif /* !HAVE_GTK2 */
-  static Bool already_warned_about_missing_image_directory = False; /* very long name... */
-
   Bool changed = False;
   GtkWidget *w;
 
@@ -1519,27 +1314,10 @@ flush_dialog_changes_and_save (state *s)
 
   /* Flush any checkbox changes in the list down into the prefs struct.
    */
-#ifdef HAVE_GTK2
   closure.s = s;
   closure.changed = &changed;
   closure.i = 0;
   gtk_tree_model_foreach (model, flush_checkbox, &closure);
-
-#else /* !HAVE_GTK2 */
-
-  for (i = 0; kids; kids = kids->next, i++)
-    {
-      GtkWidget *line = GTK_WIDGET (kids->data);
-      GtkWidget *line_hbox = GTK_WIDGET (GTK_BIN (line)->child);
-      GtkWidget *line_check =
-        GTK_WIDGET (gtk_container_children (GTK_CONTAINER (line_hbox))->data);
-      Bool checked =
-        gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (line_check));
-
-      if (flush_changes (s, i, (checked ? 1 : 0), 0, 0))
-        changed = True;
-    }
-#endif /* ~HAVE_GTK2 */
 
   /* Flush the non-hack-specific settings down into the prefs struct.
    */
@@ -1608,32 +1386,6 @@ flush_dialog_changes_and_save (state *s)
 # undef CHECKBOX
 # undef PATHNAME
 # undef TEXT
-
-  /* Warn if the image directory doesn't exist, when:
-     - not being warned before
-     - image directory is changed and the directory doesn't exist
-     - image directory is not a URL
-   */
-  if (p2->image_directory &&
-      *p2->image_directory &&
-      !directory_p (p2->image_directory) &&
-       strncmp(p2->image_directory, "http://", 7) &&
-       strncmp(p2->image_directory, "https://", 8) &&
-        ( !already_warned_about_missing_image_directory ||
-          ( p->image_directory &&
-            *p->image_directory &&
-            strcmp(p->image_directory, p2->image_directory)
-          )
-        )
-      )
-    {
-      char b[255];
-      sprintf (b, "Warning:\n\n" "Directory does not exist: \"%s\"\n",
-               p2->image_directory);
-      if (warning_dialog (s->toplevel_widget, b, D_NONE, 100))
-        already_warned_about_missing_image_directory = True;
-    }
-
 
   /* Map the mode menu to `saver_mode' enum values. */
   {
@@ -1761,6 +1513,7 @@ flush_dialog_changes_and_save (state *s)
     }
 
   s->saving_p = False;
+
   return changed;
 }
 
@@ -1776,7 +1529,8 @@ flush_popup_changes_and_save (state *s)
   int list_elt = selected_list_element (s);
 
   GtkEntry *cmd = GTK_ENTRY (name_to_widget (s, "cmd_text"));
-  GtkComboBoxEntry *vis = GTK_COMBO_BOX_ENTRY (name_to_widget (s, "visual_combo"));
+  GtkComboBoxEntry *vis =
+    GTK_COMBO_BOX_ENTRY (name_to_widget (s, "visual_combo"));
   GtkEntry *visent = GTK_ENTRY (gtk_bin_get_child (GTK_BIN (vis)));
 
   const char *visual = gtk_entry_get_text (visent);
@@ -1843,6 +1597,8 @@ flush_popup_changes_and_save (state *s)
 }
 
 
+/* Called when any field in the prefs dialog may have been changed.
+   Referenced by many items in xscreensaver.ui. */
 G_MODULE_EXPORT void
 pref_changed_cb (GtkWidget *widget, gpointer user_data)
 {
@@ -1855,6 +1611,7 @@ pref_changed_cb (GtkWidget *widget, gpointer user_data)
     }
 }
 
+/* Same as pref_changed_cb but different. */
 G_MODULE_EXPORT gboolean
 pref_changed_event_cb (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
@@ -1887,6 +1644,7 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
     saver_mode old_mode = p->mode;
     p->mode = new_mode;
     populate_demo_window (s, list_elt);
+    populate_popup_window (s);
     force_list_select_item (s, list, list_elt, True);
     p->mode = old_mode;  /* put it back, so the init file gets written */
   }
@@ -1895,6 +1653,7 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
 }
 
 
+/* Called when a new tab is selected. */
 G_MODULE_EXPORT void
 switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
                 gint page_num, gpointer user_data)
@@ -1905,12 +1664,15 @@ switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
   /* If we're switching to page 0, schedule the current hack to be run.
      Otherwise, schedule it to stop. */
   if (page_num == 0)
-    populate_demo_window (s, selected_list_element (s));
+    {
+      populate_demo_window (s, selected_list_element (s));
+      populate_popup_window (s);
+    }
   else
     schedule_preview (s, 0);
 }
 
-#ifdef HAVE_GTK2
+/* Called when a line is double-clicked in the saver list. */
 static void
 list_activated_cb (GtkTreeView       *list,
 		   GtkTreePath       *path,
@@ -1931,6 +1693,7 @@ list_activated_cb (GtkTreeView       *list,
     run_hack (s, list_elt, True);
 }
 
+/* Called when a line is selected/highlighted in the saver list. */
 static void
 list_select_changed_cb (GtkTreeSelection *selection, gpointer data)
 {
@@ -1952,6 +1715,7 @@ list_select_changed_cb (GtkTreeSelection *selection, gpointer data)
   g_free (str);
 
   populate_demo_window (s, list_elt);
+  populate_popup_window (s);
   flush_dialog_changes_and_save (s);
 
   /* Re-populate the Settings window any time a new item is selected
@@ -1960,57 +1724,6 @@ list_select_changed_cb (GtkTreeSelection *selection, gpointer data)
   populate_popup_window (s);
 }
 
-#else /* !HAVE_GTK2 */
-
-static time_t last_doubleclick_time = 0;   /* FMH!  This is to suppress the
-                                              list_select_cb that comes in
-                                              *after* we've double-clicked.
-                                            */
-
-static gint
-list_doubleclick_cb (GtkWidget *button, GdkEventButton *event,
-                     gpointer data)
-{
-  state *s = (state *) data;
-  if (event->type == GDK_2BUTTON_PRESS)
-    {
-      GtkList *list = GTK_LIST (name_to_widget (s, "list"));
-      int list_elt = gtk_list_child_position (list, GTK_WIDGET (button));
-
-      last_doubleclick_time = time ((time_t *) 0);
-
-      if (list_elt >= 0)
-        run_hack (s, list_elt, True);
-    }
-
-  return FALSE;
-}
-
-
-static void
-list_select_cb (GtkList *list, GtkWidget *child, gpointer data)
-{
-  state *s = (state *) data;
-  time_t now = time ((time_t *) 0);
-
-  if (now >= last_doubleclick_time + 2)
-    {
-      int list_elt = gtk_list_child_position (list, GTK_WIDGET (child));
-      populate_demo_window (s, list_elt);
-      flush_dialog_changes_and_save (s);
-    }
-}
-
-static void
-list_unselect_cb (GtkList *list, GtkWidget *child, gpointer data)
-{
-  state *s = (state *) data;
-  populate_demo_window (s, -1);
-  flush_dialog_changes_and_save (s);
-}
-
-#endif /* !HAVE_GTK2 */
-
 
 /* Called when the checkboxes that are in the left column of the
    scrolling list are clicked.  This both populates the right pane
@@ -2018,18 +1731,12 @@ list_unselect_cb (GtkList *list, GtkWidget *child, gpointer data)
    also syncs this checkbox with  the right pane Enabled checkbox.
  */
 static void
-list_checkbox_cb (
-#ifdef HAVE_GTK2
-		  GtkCellRendererToggle *toggle,
+list_checkbox_cb (GtkCellRendererToggle *toggle,
 		  gchar                 *path_string,
-#else  /* !HAVE_GTK2 */
-		  GtkWidget *cb,
-#endif /* !HAVE_GTK2 */
 		  gpointer               data)
 {
   state *s = (state *) data;
 
-#ifdef HAVE_GTK2
   GtkScrolledWindow *scroller =
     GTK_SCROLLED_WINDOW (name_to_widget (s, "scroller"));
   GtkTreeView *list = GTK_TREE_VIEW (name_to_widget (s, "list"));
@@ -2037,20 +1744,11 @@ list_checkbox_cb (
   GtkTreePath *path = gtk_tree_path_new_from_string (path_string);
   GtkTreeIter iter;
   gboolean active;
-#else /* !HAVE_GTK2 */
-  GtkWidget *line_hbox = GTK_WIDGET (cb)->parent;
-  GtkWidget *line = GTK_WIDGET (line_hbox)->parent;
-
-  GtkList *list = GTK_LIST (GTK_WIDGET (line)->parent);
-  GtkViewport *vp = GTK_VIEWPORT (GTK_WIDGET (list)->parent);
-  GtkScrolledWindow *scroller = GTK_SCROLLED_WINDOW (GTK_WIDGET (vp)->parent);
-#endif /* !HAVE_GTK2 */
   GtkAdjustment *adj;
   double scroll_top;
 
   int list_elt;
 
-#ifdef HAVE_GTK2
   if (!gtk_tree_model_get_iter (model, &iter, path))
     {
       g_warning ("bad path: %s", path_string);
@@ -2067,9 +1765,6 @@ list_checkbox_cb (
 		      -1);
 
   list_elt = strtol (path_string, NULL, 10);  
-#else  /* !HAVE_GTK2 */
-  list_elt = gtk_list_child_position (list, line);
-#endif /* !HAVE_GTK2 */
 
   /* remember previous scroll position of the top of the list */
   adj = gtk_scrolled_window_get_vadjustment (scroller);
@@ -2078,10 +1773,272 @@ list_checkbox_cb (
   flush_dialog_changes_and_save (s);
   force_list_select_item (s, GTK_WIDGET (list), list_elt, False);
   populate_demo_window (s, list_elt);
+  populate_popup_window (s);
   
   /* restore the previous scroll position of the top of the list.
      this is weak, but I don't really know why it's moving... */
   gtk_adjustment_set_value (adj, scroll_top);
+}
+
+
+/* If the directory or URL does not have images in it, pop up a warning
+   dialog.  This happens at startup, and is fast.
+ */
+static void
+validate_image_directory_quick (state *s)
+{
+  saver_preferences *p = &s->prefs;
+  char *warn = 0;
+  char buf[10240];
+
+  if (!p->random_image_p) return;
+
+  if (!p->image_directory || !*p->image_directory)
+    warn = _("Image directory is unset");
+  else if (!strncmp (p->image_directory, "http://", 7) ||
+           !strncmp (p->image_directory, "https://", 8))
+    warn = 0;
+  else if (!directory_p (p->image_directory))
+    warn = _("Image directory does not exist");
+  else if (!image_files_p (p->image_directory, 10))
+    warn = _("Image directory is empty");
+  
+  if (!warn) return;
+
+  sprintf (buf,
+    _("Warning: %s:\n\n"
+      "\"%.100s\"\n\n"
+      "Select the 'Advanced' tab and choose a directory with some\n"
+      "pictures in it, or you're going to see a lot of boring colorbars!"),
+           warn,
+           p->image_directory);
+  warning_dialog (s->toplevel_widget, buf, D_NONE, 3);
+}
+
+
+static Bool validate_image_directory_cancelled_p;
+
+/* "Cancel" button on the validate image directory progress dialog. */
+static void
+validate_image_directory_cancel_cb (GtkWidget *widget, gpointer user_data)
+{
+  validate_image_directory_cancelled_p = True;
+  warning_dialog_dismiss_cb (widget, user_data);
+}
+
+/* Close (X) button on the validate image directory progress dialog. */
+static gboolean
+validate_image_directory_close_cb (GtkWidget *widget, GdkEvent *event,
+                                   gpointer data)
+{
+  validate_image_directory_cancel_cb (widget, data);
+  return TRUE;
+}
+
+
+
+/* If the directory or URL does not have images in it, pop up a warning
+   dialog and return false. This happens when the imageDirectory preference
+   is edited, and might be slow.
+ */
+static Bool
+validate_image_directory (state *s, const char *path)
+{
+  GtkWidget *parent = s->toplevel_widget;
+  GtkWidget *dialog = gtk_dialog_new ();
+  GtkWidget *label = 0;
+  GtkWidget *cancel = 0;
+  char buf[1024];
+  char err[1024];
+
+  sprintf (buf, _("Populating image cache for \"%.100s\"..."), path);
+
+  label = gtk_label_new (buf);
+  gtk_label_set_selectable (GTK_LABEL (label), TRUE);
+  gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
+                      label, TRUE, TRUE, 0);
+  gtk_widget_show (label);
+
+  label = gtk_label_new ("");
+  gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
+                      label, TRUE, TRUE, 0);
+  gtk_widget_show (label);
+
+  label = gtk_hbutton_box_new ();
+  gtk_box_pack_start (GTK_BOX (GET_ACTION_AREA (GTK_DIALOG (dialog))),
+                      label, TRUE, TRUE, 0);
+
+  cancel = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
+  gtk_container_add (GTK_CONTAINER (label), cancel);
+
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
+  gtk_window_set_title (GTK_WINDOW (dialog), progclass);
+  SET_CAN_DEFAULT (cancel);
+  gtk_widget_show (cancel);
+  gtk_widget_grab_focus (cancel);
+  gtk_widget_show (label);
+  gtk_widget_show (dialog);
+
+  validate_image_directory_cancelled_p = False;
+
+  gtk_signal_connect_object (GTK_OBJECT (cancel), "clicked",
+                         GTK_SIGNAL_FUNC (validate_image_directory_cancel_cb),
+                             (gpointer) dialog);
+  gtk_signal_connect (GTK_OBJECT (dialog), "delete_event",
+                      GTK_SIGNAL_FUNC (validate_image_directory_close_cb),
+                      (gpointer *) dialog);
+
+  gdk_window_set_transient_for (GET_WINDOW (GTK_WIDGET (dialog)),
+                                GET_WINDOW (GTK_WIDGET (parent)));
+
+  gtk_window_present (GTK_WINDOW (dialog));
+
+  while (gtk_events_pending ())  /* Paint the window now. */
+    gtk_main_iteration ();
+
+  {
+    Display *dpy = GDK_DISPLAY();
+    pid_t forked;
+    int fds [2];
+    int in, out;
+
+    char *av[10];
+    int ac = 0;
+
+    *err = 0;
+    av[ac++] = "xscreensaver-getimage-file";
+    av[ac++] = (char *) path;
+    av[ac] = 0;
+
+    if (pipe (fds))
+      {
+        strcpy (err, "error creating pipe");
+        goto FAIL;
+      }
+
+    in = fds [0];
+    out = fds [1];
+
+    switch ((int) (forked = fork ()))
+      {
+      case -1:
+        {
+          strcpy (err, "couldn't fork");
+          goto FAIL;
+        }
+      case 0:						/* Child fork */
+        {
+          int stderr_fd = 2;
+
+          close (in);  /* don't need this one */
+          if (! s->debug_p)
+            close (fileno (stdout));
+          close (ConnectionNumber (dpy));		/* close display fd */
+
+          if (dup2 (out, stderr_fd) < 0)		/* pipe stdout */
+            {
+              perror ("could not dup() a new stderr:");
+              exit (1);
+            }
+
+          execvp (av[0], av);			/* shouldn't return. */
+
+          sprintf (buf, "%s: running %s", blurb(), av[0]);
+          perror (buf);
+
+          /* Note that one must use _exit() instead of exit() in procs forked
+             off of Gtk programs -- Gtk installs an atexit handler that has a
+             copy of the X connection (which we've already closed, for safety.)
+             If one uses exit() instead of _exit(), then one sometimes gets a
+             spurious "Gdk-ERROR: Fatal IO error on X server" error message.
+          */
+          _exit (1);                              /* exits fork */
+          break;
+        }
+      default:						/* Parent fork */
+        {
+          char *ss = err;
+          int bufsiz = sizeof(err);
+
+          close (out);  /* don't need this one */
+
+          if (s->debug_p)
+            fprintf (stderr, "%s: forked %s\n", blurb(), av[0]);
+
+          while (1)
+            {
+              fd_set rset;
+              struct timeval tv;
+              tv.tv_sec  = 0;
+              tv.tv_usec = 1000000 / 10;
+              FD_ZERO (&rset);
+              FD_SET (in, &rset);
+              if (0 < select (in+1, &rset, 0, 0, &tv))
+                {
+                  int n = read (in, (void *) ss, bufsiz);
+                  if (n <= 0)
+                    {
+                      if (s->debug_p)
+                        fprintf (stderr, "%s: read EOF\n", blurb());
+                      break;
+                    }
+                  else
+                    {
+                      ss += n;
+                      bufsiz -= n;
+                      *ss = 0;
+
+                      if (s->debug_p)
+                        fprintf (stderr, "%s: read: \"%s\"\n", blurb(),
+                                 ss - n);
+                    }
+                }
+
+              while (gtk_events_pending ())
+                gtk_main_iteration ();
+
+              if (validate_image_directory_cancelled_p)
+                {
+                  kill (forked, SIGTERM);
+
+                  if (s->debug_p)
+                    fprintf (stderr, "%s: cancel\n", blurb());
+                  break;
+                }
+            }
+
+          *ss = 0;
+          close (in);
+
+          if (s->debug_p)
+            fprintf (stderr, "%s: %s exited\n", blurb(), av[0]);
+
+          /* Wait for the child to die. */
+          {
+            int wait_status = 0;
+            waitpid (-1, &wait_status, 0);
+          }
+        }
+      }
+  }
+
+  if (! validate_image_directory_cancelled_p)
+    {
+      if (s->debug_p)
+        fprintf (stderr, "%s: dismiss\n", blurb());
+      warning_dialog_dismiss_cb (dialog, dialog);
+    }
+
+ FAIL:
+  if (*err)
+    {
+      sprintf (buf, _("Warning:\n\n%s\n"), err);
+      warning_dialog (s->toplevel_widget, buf, D_NONE, 1);
+      return False;
+    }
+
+  return True;
 }
 
 
@@ -2092,30 +2049,56 @@ typedef struct {
 
 
 
+/* Called when the imageDirectory text field is edited directly (focus-out).
+ */
+G_MODULE_EXPORT gboolean
+image_text_pref_changed_event_cb (GtkWidget *widget, GdkEvent *event,
+                                  gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
+  GtkEntry *w = GTK_ENTRY (name_to_widget (s, "image_text"));
+  const char *path = gtk_entry_get_text (w);
+
+  if (p->image_directory && !strcmp(p->image_directory, path))
+    {
+      if (! validate_image_directory (s, path))
+        /* Don't save the bad new value into the preferences. */
+        return FALSE;
+    }
+
+  return pref_changed_event_cb (widget, event, user_data);
+}
+
+
 static void
 store_image_directory (GtkWidget *button, gpointer user_data)
 {
   file_selection_data *fsd = (file_selection_data *) user_data;
   state *s = fsd->state;
   GtkFileSelection *selector = fsd->widget;
-  GtkWidget *top = s->toplevel_widget;
   saver_preferences *p = &s->prefs;
-  const char *path = gtk_file_selection_get_filename (selector);
+  char *path =
+    normalize_directory (gtk_file_selection_get_filename (selector));
 
-  if (p->image_directory && !strcmp(p->image_directory, path))
-    return;  /* no change */
+  if (s->debug_p)
+    fprintf (stderr, "%s: selected \"%s\n", blurb(), path);
 
-  /* No warning for URLs. */
-  if ((!directory_p (path)) && strncmp(path, "http://", 6))
+  if (! validate_image_directory (s, path))
     {
-      char b[255];
-      sprintf (b, _("Error:\n\n" "Directory does not exist: \"%s\"\n"), path);
-      warning_dialog (GTK_WIDGET (top), b, D_NONE, 100);
+      /* Don't save the bad new value into the preferences. */
+      free (path);
       return;
     }
 
+  if (p->image_directory && !strcmp(p->image_directory, path))
+    {
+      free (path);
+      return;  /* no change */
+    }
+
   if (p->image_directory) free (p->image_directory);
-  p->image_directory = normalize_directory (path);
+  p->image_directory = path;
 
   gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "image_text")),
                       (p->image_directory ? p->image_directory : ""));
@@ -2131,21 +2114,26 @@ store_text_file (GtkWidget *button, gpointer user_data)
   GtkFileSelection *selector = fsd->widget;
   GtkWidget *top = s->toplevel_widget;
   saver_preferences *p = &s->prefs;
-  const char *path = gtk_file_selection_get_filename (selector);
+  char *path =
+    normalize_directory (gtk_file_selection_get_filename (selector));
 
   if (p->text_file && !strcmp(p->text_file, path))
-    return;  /* no change */
+    {
+      free (path);
+      return;  /* no change */
+    }
 
   if (!file_p (path))
     {
       char b[255];
       sprintf (b, _("Error:\n\n" "File does not exist: \"%s\"\n"), path);
       warning_dialog (GTK_WIDGET (top), b, D_NONE, 100);
+      free (path);
       return;
     }
 
   if (p->text_file) free (p->text_file);
-  p->text_file = normalize_directory (path);
+  p->text_file = path;
 
   gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_file_entry")),
                       (p->text_file ? p->text_file : ""));
@@ -2161,10 +2149,14 @@ store_text_program (GtkWidget *button, gpointer user_data)
   GtkFileSelection *selector = fsd->widget;
   /*GtkWidget *top = s->toplevel_widget;*/
   saver_preferences *p = &s->prefs;
-  const char *path = gtk_file_selection_get_filename (selector);
+  char *path =
+    normalize_directory (gtk_file_selection_get_filename (selector));
 
   if (p->text_program && !strcmp(p->text_program, path))
-    return;  /* no change */
+    {
+      free (path);
+      return;  /* no change */
+    }
 
 # if 0
   if (!file_p (path))
@@ -2177,7 +2169,7 @@ store_text_program (GtkWidget *button, gpointer user_data)
 # endif
 
   if (p->text_program) free (p->text_program);
-  p->text_program = normalize_directory (path);
+  p->text_program = path;
 
   gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "text_program_entry")),
                       (p->text_program ? p->text_program : ""));
@@ -2186,41 +2178,47 @@ store_text_program (GtkWidget *button, gpointer user_data)
 
 
 
+/* "Cancel" button on any "Browse" file selector */
 static void
-browse_image_dir_cancel (GtkWidget *button, gpointer user_data)
+browse_any_dir_cancel (GtkWidget *button, gpointer user_data)
 {
   file_selection_data *fsd = (file_selection_data *) user_data;
   gtk_widget_hide (GTK_WIDGET (fsd->widget));
 }
 
+/* "OK" button on imageDirectory "Browse" file selector */
 static void
 browse_image_dir_ok (GtkWidget *button, gpointer user_data)
 {
-  browse_image_dir_cancel (button, user_data);
+  browse_any_dir_cancel (button, user_data);
   store_image_directory (button, user_data);
 }
 
+/* "OK" button on textProgram "Browse" file selector */
 static void
 browse_text_file_ok (GtkWidget *button, gpointer user_data)
 {
-  browse_image_dir_cancel (button, user_data);
+  browse_any_dir_cancel (button, user_data);
   store_text_file (button, user_data);
 }
 
+/* "OK" button on textProgram "Browse" file selector */
 static void
 browse_text_program_ok (GtkWidget *button, gpointer user_data)
 {
-  browse_image_dir_cancel (button, user_data);
+  browse_any_dir_cancel (button, user_data);
   store_text_program (button, user_data);
 }
 
+/* Close (X) button on any "Browse" file selector */
 static void
-browse_image_dir_close (GtkWidget *widget, GdkEvent *event, gpointer user_data)
+browse_any_dir_close (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
-  browse_image_dir_cancel (widget, user_data);
+  browse_any_dir_cancel (widget, user_data);
 }
 
 
+/* The "Browse" button next to the imageDirectory text field. */
 G_MODULE_EXPORT void
 browse_image_dir_cb (GtkButton *button, gpointer user_data)
 {
@@ -2238,16 +2236,25 @@ browse_image_dir_cb (GtkButton *button, gpointer user_data)
   fsd->state = s;
 
   if (p->image_directory && *p->image_directory)
-    gtk_file_selection_set_filename (selector, p->image_directory);
+    {
+      /* It has to end in a slash, I guess? */
+      char *ss = (char *) malloc (strlen (p->image_directory) + 2);
+      strcpy (ss, p->image_directory);
+      if (ss[strlen(ss)-1] != '/')
+        strcat (ss, "/");
+      gtk_file_selection_set_filename (selector, ss);
+      free (ss);
+    }
 
+  gtk_file_selection_hide_fileop_buttons (selector);
   gtk_signal_connect (GTK_OBJECT (selector->ok_button),
                       "clicked", GTK_SIGNAL_FUNC (browse_image_dir_ok),
                       (gpointer *) fsd);
   gtk_signal_connect (GTK_OBJECT (selector->cancel_button),
-                      "clicked", GTK_SIGNAL_FUNC (browse_image_dir_cancel),
+                      "clicked", GTK_SIGNAL_FUNC (browse_any_dir_cancel),
                       (gpointer *) fsd);
   gtk_signal_connect (GTK_OBJECT (selector), "delete_event",
-                      GTK_SIGNAL_FUNC (browse_image_dir_close),
+                      GTK_SIGNAL_FUNC (browse_any_dir_close),
                       (gpointer *) fsd);
 
   gtk_widget_set_sensitive (GTK_WIDGET (selector->file_list), False);
@@ -2257,6 +2264,7 @@ browse_image_dir_cb (GtkButton *button, gpointer user_data)
 }
 
 
+/* The "Browse" button next to the textFile text field. */
 G_MODULE_EXPORT void
 browse_text_file_cb (GtkButton *button, gpointer user_data)
 {
@@ -2276,14 +2284,15 @@ browse_text_file_cb (GtkButton *button, gpointer user_data)
   if (p->text_file && *p->text_file)
     gtk_file_selection_set_filename (selector, p->text_file);
 
+  gtk_file_selection_hide_fileop_buttons (selector);
   gtk_signal_connect (GTK_OBJECT (selector->ok_button),
                       "clicked", GTK_SIGNAL_FUNC (browse_text_file_ok),
                       (gpointer *) fsd);
   gtk_signal_connect (GTK_OBJECT (selector->cancel_button),
-                      "clicked", GTK_SIGNAL_FUNC (browse_image_dir_cancel),
+                      "clicked", GTK_SIGNAL_FUNC (browse_any_dir_cancel),
                       (gpointer *) fsd);
   gtk_signal_connect (GTK_OBJECT (selector), "delete_event",
-                      GTK_SIGNAL_FUNC (browse_image_dir_close),
+                      GTK_SIGNAL_FUNC (browse_any_dir_close),
                       (gpointer *) fsd);
 
   gtk_window_set_modal (GTK_WINDOW (selector), True);
@@ -2291,6 +2300,7 @@ browse_text_file_cb (GtkButton *button, gpointer user_data)
 }
 
 
+/* The "Browse" button next to the textProgram text field. */
 G_MODULE_EXPORT void
 browse_text_program_cb (GtkButton *button, gpointer user_data)
 {
@@ -2310,14 +2320,15 @@ browse_text_program_cb (GtkButton *button, gpointer user_data)
   if (p->text_program && *p->text_program)
     gtk_file_selection_set_filename (selector, p->text_program);
 
+  gtk_file_selection_hide_fileop_buttons (selector);
   gtk_signal_connect (GTK_OBJECT (selector->ok_button),
                       "clicked", GTK_SIGNAL_FUNC (browse_text_program_ok),
                       (gpointer *) fsd);
   gtk_signal_connect (GTK_OBJECT (selector->cancel_button),
-                      "clicked", GTK_SIGNAL_FUNC (browse_image_dir_cancel),
+                      "clicked", GTK_SIGNAL_FUNC (browse_any_dir_cancel),
                       (gpointer *) fsd);
   gtk_signal_connect (GTK_OBJECT (selector), "delete_event",
-                      GTK_SIGNAL_FUNC (browse_image_dir_close),
+                      GTK_SIGNAL_FUNC (browse_any_dir_close),
                       (gpointer *) fsd);
 
   gtk_window_set_modal (GTK_WINDOW (selector), True);
@@ -2325,6 +2336,7 @@ browse_text_program_cb (GtkButton *button, gpointer user_data)
 }
 
 
+/* The "Preview" button next to the Theme option menu. */
 G_MODULE_EXPORT void
 preview_theme_cb (GtkWidget *w, gpointer user_data)
 {
@@ -2335,6 +2347,7 @@ preview_theme_cb (GtkWidget *w, gpointer user_data)
 }
 
 
+/* The "Settings" button on the main page. */
 G_MODULE_EXPORT void
 settings_cb (GtkButton *button, gpointer user_data)
 {
@@ -2349,15 +2362,14 @@ settings_cb (GtkButton *button, gpointer user_data)
 static void
 settings_sync_cmd_text (state *s)
 {
-# ifdef HAVE_XML
   GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
   char *cmd_line = get_configurator_command_line (s->cdata, False);
   gtk_entry_set_text (GTK_ENTRY (cmd), cmd_line);
   gtk_entry_set_position (GTK_ENTRY (cmd), strlen (cmd_line));
   free (cmd_line);
-# endif /* HAVE_XML */
 }
 
+/* The "Advanced" button on the settings dialog. */
 G_MODULE_EXPORT void
 settings_adv_cb (GtkButton *button, gpointer user_data)
 {
@@ -2369,6 +2381,7 @@ settings_adv_cb (GtkButton *button, gpointer user_data)
   gtk_notebook_set_page (notebook, 1);
 }
 
+/* The "Standard" button on the settings dialog. */
 G_MODULE_EXPORT void
 settings_std_cb (GtkButton *button, gpointer user_data)
 {
@@ -2382,10 +2395,10 @@ settings_std_cb (GtkButton *button, gpointer user_data)
   gtk_notebook_set_page (notebook, 0);
 }
 
+/* The "Reset to Defaults" button on the settings dialog. */
 G_MODULE_EXPORT void
 settings_reset_cb (GtkButton *button, gpointer user_data)
 {
-# ifdef HAVE_XML
   state *s = global_state_kludge;  /* I hate C so much... */
   GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
   char *cmd_line = get_configurator_command_line (s->cdata, True);
@@ -2393,9 +2406,9 @@ settings_reset_cb (GtkButton *button, gpointer user_data)
   gtk_entry_set_position (GTK_ENTRY (cmd), strlen (cmd_line));
   free (cmd_line);
   populate_popup_window (s);
-# endif /* HAVE_XML */
 }
 
+/* Called when "Advanced/Standard" buttons change the displayed page. */
 G_MODULE_EXPORT void
 settings_switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
                          gint page_num, gpointer user_data)
@@ -2419,7 +2432,7 @@ settings_switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
 }
 
 
-
+/* The "Cancel" button on the Settings dialog. */
 G_MODULE_EXPORT void
 settings_cancel_cb (GtkButton *button, gpointer user_data)
 {
@@ -2427,6 +2440,7 @@ settings_cancel_cb (GtkButton *button, gpointer user_data)
   gtk_widget_hide (s->popup_widget);
 }
 
+/* The "Ok" button on the Settings dialog. */
 G_MODULE_EXPORT void
 settings_ok_cb (GtkButton *button, gpointer user_data)
 {
@@ -2444,6 +2458,7 @@ settings_ok_cb (GtkButton *button, gpointer user_data)
   gtk_widget_hide (s->popup_widget);
 }
 
+/* The "Close" (X) button on the Settings dialog. */
 static gboolean
 wm_popup_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 {
@@ -2453,7 +2468,6 @@ wm_popup_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 }
 
 
-
 /* Populating the various widgets
  */
 
@@ -2530,6 +2544,7 @@ scroll_to_current_hack (state *s)
       GtkWidget *list = name_to_widget (s, "list");
       force_list_select_item (s, list, list_elt, True);
       populate_demo_window (s, list_elt);
+      populate_popup_window (s);
     }
 }
 
@@ -2538,7 +2553,6 @@ static void
 populate_hack_list (state *s)
 {
   Display *dpy = GDK_DISPLAY();
-#ifdef HAVE_GTK2
   saver_preferences *p = &s->prefs;
   GtkTreeView *list = GTK_TREE_VIEW (name_to_widget (s, "list"));
   GtkListStore *model;
@@ -2628,102 +2642,6 @@ populate_hack_list (state *s)
 			  -1);
       free (pretty_name);
     }
-
-#else /* !HAVE_GTK2 */
-
-  saver_preferences *p = &s->prefs;
-  GtkList *list = GTK_LIST (name_to_widget (s, "list"));
-  int i;
-  for (i = 0; i < s->list_count; i++)
-    {
-      int hack_number = s->list_elt_to_hack_number[i];
-      screenhack *hack = (hack_number < 0 ? 0 : p->screenhacks[hack_number]);
-
-      /* A GtkList must contain only GtkListItems, but those can contain
-         an arbitrary widget.  We add an Hbox, and inside that, a Checkbox
-         and a Label.  We handle single and double click events on the
-         line itself, for clicking on the text, but the interior checkbox
-         also handles its own events.
-       */
-      GtkWidget *line;
-      GtkWidget *line_hbox;
-      GtkWidget *line_check;
-      GtkWidget *line_label;
-      char *pretty_name;
-      Bool available_p = (hack && s->hacks_available_p [hack_number]);
-
-      if (!hack) continue;
-
-      /* If we're to suppress uninstalled hacks, check $PATH now. */
-      if (p->ignore_uninstalled_p && !available_p)
-        continue;
-
-      pretty_name = (hack->name
-                     ? strdup (hack->name)
-                     : make_hack_name (hack->command));
-
-      line = gtk_list_item_new ();
-      line_hbox = gtk_hbox_new (FALSE, 0);
-      line_check = gtk_check_button_new ();
-      line_label = gtk_label_new (pretty_name);
-
-      gtk_container_add (GTK_CONTAINER (line), line_hbox);
-      gtk_box_pack_start (GTK_BOX (line_hbox), line_check, FALSE, FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (line_hbox), line_label, FALSE, FALSE, 0);
-
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (line_check),
-                                    hack->enabled_p);
-      gtk_label_set_justify (GTK_LABEL (line_label), GTK_JUSTIFY_LEFT);
-
-      gtk_widget_show (line_check);
-      gtk_widget_show (line_label);
-      gtk_widget_show (line_hbox);
-      gtk_widget_show (line);
-
-      free (pretty_name);
-
-      gtk_container_add (GTK_CONTAINER (list), line);
-      gtk_signal_connect (GTK_OBJECT (line), "button_press_event",
-                          GTK_SIGNAL_FUNC (list_doubleclick_cb),
-                          (gpointer) s);
-
-      gtk_signal_connect (GTK_OBJECT (line_check), "toggled",
-                          GTK_SIGNAL_FUNC (list_checkbox_cb),
-                          (gpointer) s);
-
-      gtk_widget_show (line);
-
-      if (!available_p)
-        {
-          /* Make the widget be colored like insensitive widgets
-             (but don't actually make it be insensitive, since we
-             still want to be able to click on it.)
-           */
-          GtkRcStyle *rc_style;
-          GdkColor fg, bg;
-
-          gtk_widget_realize (GTK_WIDGET (line_label));
-
-          fg = GTK_WIDGET (line_label)->style->fg[GTK_STATE_INSENSITIVE];
-          bg = GTK_WIDGET (line_label)->style->bg[GTK_STATE_INSENSITIVE];
-
-          rc_style = gtk_rc_style_new ();
-          rc_style->fg[GTK_STATE_NORMAL] = fg;
-          rc_style->bg[GTK_STATE_NORMAL] = bg;
-          rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_FG|GTK_RC_BG;
-
-          gtk_widget_modify_style (GTK_WIDGET (line_label), rc_style);
-          gtk_rc_style_unref (rc_style);
-        }
-    }
-
-  gtk_signal_connect (GTK_OBJECT (list), "select_child",
-                      GTK_SIGNAL_FUNC (list_select_cb),
-                      (gpointer) s);
-  gtk_signal_connect (GTK_OBJECT (list), "unselect_child",
-                      GTK_SIGNAL_FUNC (list_unselect_cb),
-                      (gpointer) s);
-#endif /* !HAVE_GTK2 */
 }
 
 static void
@@ -2737,51 +2655,16 @@ update_list_sensitivity (state *s)
                     p->mode == RANDOM_HACKS_SAME);
   Bool blankable = (p->mode != DONT_BLANK);
 
-#ifndef HAVE_GTK2
-  GtkWidget *head     = name_to_widget (s, "col_head_hbox");
-  GtkWidget *use      = name_to_widget (s, "use_col_frame");
-#endif /* HAVE_GTK2 */
   GtkWidget *scroller = name_to_widget (s, "scroller");
   GtkWidget *buttons  = name_to_widget (s, "next_prev_hbox");
   GtkWidget *blanker  = name_to_widget (s, "blanking_table");
-
-#ifdef HAVE_GTK2
   GtkTreeView *list      = GTK_TREE_VIEW (name_to_widget (s, "list"));
   GtkTreeViewColumn *use = gtk_tree_view_get_column (list, COL_ENABLED);
-#else /* !HAVE_GTK2 */
-  GtkList *list = GTK_LIST (name_to_widget (s, "list"));
-  GList *kids   = gtk_container_children (GTK_CONTAINER (list));
 
-  gtk_widget_set_sensitive (GTK_WIDGET (head),     sensitive);
-#endif /* !HAVE_GTK2 */
   gtk_widget_set_sensitive (GTK_WIDGET (scroller), sensitive);
   gtk_widget_set_sensitive (GTK_WIDGET (buttons),  sensitive);
-
   gtk_widget_set_sensitive (GTK_WIDGET (blanker),  blankable);
-
-#ifdef HAVE_GTK2
   gtk_tree_view_column_set_visible (use, checkable);
-#else  /* !HAVE_GTK2 */
-  if (checkable)
-    gtk_widget_show (use);   /* the "Use" column header */
-  else
-    gtk_widget_hide (use);
-
-  while (kids)
-    {
-      GtkBin *line = GTK_BIN (kids->data);
-      GtkContainer *line_hbox = GTK_CONTAINER (line->child);
-      GtkWidget *line_check =
-        GTK_WIDGET (gtk_container_children (line_hbox)->data);
-      
-      if (checkable)
-        gtk_widget_show (line_check);
-      else
-        gtk_widget_hide (line_check);
-
-      kids = kids->next;
-    }
-#endif /* !HAVE_GTK2 */
 }
 
 
@@ -2803,7 +2686,7 @@ populate_prefs_page (state *s)
   /* If there is only one screen, the mode menu contains
      "random" but not "random-same".
    */
-  if (s->nscreens <= 1 && p->mode == RANDOM_HACKS_SAME)
+  if (!s->multi_screen_p && p->mode == RANDOM_HACKS_SAME)
     p->mode = RANDOM_HACKS;
 
 
@@ -3012,20 +2895,153 @@ cb_allocate (GtkWidget *label, GtkAllocation *allocation, gpointer data)
 }
 
 
+/* Creates a human-readable anchor to put on a URL.
+ */
+static char *
+anchorize (const char *url)
+{
+  const char *wiki1 =  "http://en.wikipedia.org/wiki/";
+  const char *wiki2 = "https://en.wikipedia.org/wiki/";
+  const char *math1 =  "http://mathworld.wolfram.com/";
+  const char *math2 = "https://mathworld.wolfram.com/";
+  if (!strncmp (wiki1, url, strlen(wiki1)) ||
+      !strncmp (wiki2, url, strlen(wiki2))) {
+    char *anchor = (char *) malloc (strlen(url) * 3 + 10);
+    const char *in;
+    char *out;
+    strcpy (anchor, "Wikipedia: \"");
+    in = url + strlen(!strncmp (wiki1, url, strlen(wiki1)) ? wiki1 : wiki2);
+    out = anchor + strlen(anchor);
+    while (*in) {
+      if (*in == '_') {
+        *out++ = ' ';
+      } else if (*in == '#') {
+        *out++ = ':';
+        *out++ = ' ';
+      } else if (*in == '%') {
+        char hex[3];
+        unsigned int n = 0;
+        hex[0] = in[1];
+        hex[1] = in[2];
+        hex[2] = 0;
+        sscanf (hex, "%x", &n);
+        *out++ = (char) n;
+        in += 2;
+      } else {
+        *out++ = *in;
+      }
+      in++;
+    }
+    *out++ = '"';
+    *out = 0;
+    return anchor;
+
+  } else if (!strncmp (math1, url, strlen(math1)) ||
+             !strncmp (math2, url, strlen(math2))) {
+    char *anchor = (char *) malloc (strlen(url) * 3 + 10);
+    const char *start, *in;
+    char *out;
+    strcpy (anchor, "MathWorld: \"");
+    start = url + strlen(!strncmp (math1, url, strlen(math1)) ? math1 : math2);
+    in = start;
+    out = anchor + strlen(anchor);
+    while (*in) {
+      if (*in == '_') {
+        *out++ = ' ';
+      } else if (in != start && *in >= 'A' && *in <= 'Z') {
+        *out++ = ' ';
+        *out++ = *in;
+      } else if (!strncmp (in, ".htm", 4)) {
+        break;
+      } else {
+        *out++ = *in;
+      }
+      in++;
+    }
+    *out++ = '"';
+    *out = 0;
+    return anchor;
+
+  } else {
+    return strdup (url);
+  }
+}
+
+/* Quote the text as HTML and make URLs be clickable links. 
+ */
+static char *
+hreffify (const char *in)
+{
+  char *ret, *out;
+  if (!in) return 0;
+
+  ret = out = malloc (strlen(in) * 3);
+  while (*in)
+    {
+      if (!strncmp (in, "http://", 7) ||
+          !strncmp (in, "https://", 8))
+        {
+          char *url, *anchor;
+          const char *end = in;
+          while (*end &&
+                 *end != ' ' && *end != '\t' && *end != '\r' && *end != '\n')
+            end++;
+
+          url = (char *) malloc (end - in + 1);
+          strncpy (url, in, end-in);
+          url [end-in] = 0;
+
+          anchor = anchorize (url);
+
+          strcpy (out, "<a href=\""); out += strlen (out);
+          strcpy (out, url);          out += strlen (out);
+          strcpy (out, "\">");        out += strlen (out);
+          strcpy (out, anchor);       out += strlen (out);
+          strcpy (out, "</a>"); out += strlen (out);
+          free (url);
+          free (anchor);
+          in = end;
+        }
+      else if (*in == '<')
+        {
+          strcpy (out, "&lt;");
+          out += strlen (out);
+          in++;
+        }
+      else if (*in == '>')
+        {
+          strcpy (out, "&gt;");
+          out += strlen (out);
+          in++;
+        }
+      else if (*in == '&')
+        {
+          strcpy (out, "&amp;");
+          out += strlen (out);
+          in++;
+        }
+      else
+        {
+          *out++ = *in++;
+        }
+    }
+  *out = 0;
+  return ret;
+}
+
+
+/* Fill in the contents of the "Settings" dialog for the current hack.
+   It may or may not currently be visible. 
+ */
 static void
 populate_popup_window (state *s)
 {
   GtkLabel *doc = GTK_LABEL (name_to_widget (s, "doc"));
   char *doc_string = 0;
 
-  /* #### not in Gtk 1.2
-  gtk_label_set_selectable (doc);
-   */
-
   g_signal_connect (G_OBJECT (doc), "size-allocate", 
                     G_CALLBACK (cb_allocate), NULL);
 
-# ifdef HAVE_XML
   if (s->cdata)
     {
       free_conf_data (s->cdata);
@@ -3048,19 +3064,55 @@ populate_popup_window (state *s)
         if (s->cdata && s->cdata->widget)
           gtk_box_pack_start (GTK_BOX (parent), s->cdata->widget,
                               TRUE, TRUE, 0);
+
+        /* Make the pretty name on the tab boxes include the year.
+         */
+        if (s->cdata && s->cdata->year)
+          {
+            Display *dpy = GDK_DISPLAY();
+            GtkFrame *frame1 = GTK_FRAME (name_to_widget (s, "preview_frame"));
+            GtkFrame *frame2 = GTK_FRAME (name_to_widget (s, "opt_frame"));
+            GtkWidget *label1, *label2;
+            GtkStyle *style;
+            PangoFontDescription *font;
+            char *pretty_name = (hack->name
+                                 ? strdup (hack->name)
+                                 : make_hack_name (dpy, hack->command));
+            char *s2 = (char *) malloc (strlen (pretty_name) + 10);
+            sprintf (s2, "%s (%d)", pretty_name, s->cdata->year);
+            free (pretty_name);
+            pretty_name = s2;
+
+            gtk_frame_set_label (frame1, _(pretty_name));
+            gtk_frame_set_label (frame2, _(pretty_name));
+
+            /* Make the labels be bold. Must be after gtk_frame_set_label.
+               You'd think you could specify this in "xscreensaver.ui"...
+             */
+            label1 = gtk_frame_get_label_widget (frame1);
+            label2 = gtk_frame_get_label_widget (frame2);
+
+            style = gtk_widget_get_style (label1);
+            font = pango_font_description_copy_static (style->font_desc);
+            pango_font_description_set_weight (font, PANGO_WEIGHT_BOLD);
+
+            gtk_widget_modify_font (label1, font);
+            gtk_widget_modify_font (label2, font);
+
+            pango_font_description_free (font);
+            free (pretty_name);
+          }
       }
   }
 
-  doc_string = (s->cdata
-                ? s->cdata->description
+  doc_string = (s->cdata && s->cdata->description && *s->cdata->description
+                ? _(s->cdata->description)
                 : 0);
-# else  /* !HAVE_XML */
-  doc_string = _("Descriptions not available: no XML support compiled in.");
-# endif /* !HAVE_XML */
-
+  doc_string = hreffify (doc_string);
   gtk_label_set_text (doc, (doc_string
-                            ? _(doc_string)
+                            ? doc_string
                             : _("No description available.")));
+  gtk_label_set_use_markup (doc, True);
 
   {
     GtkWidget *w = name_to_widget (s, "dialog_vbox");
@@ -3069,6 +3121,44 @@ populate_popup_window (state *s)
     gtk_widget_realize (w);
     gtk_widget_show (w);
   }
+
+  /* Also set the documentation on the main window, below the preview. */
+  {
+    GtkLabel *doc2 = GTK_LABEL (name_to_widget (s, "short_preview_label"));
+    GtkLabel *doc3 = GTK_LABEL (name_to_widget (s, "preview_author_label"));
+    char *s2 = 0;
+    char *s3 = 0;
+
+# if 0
+    g_signal_connect (G_OBJECT (doc2), "size-allocate", 
+                      G_CALLBACK (cb_allocate), NULL);
+    g_signal_connect (G_OBJECT (doc3), "size-allocate", 
+                      G_CALLBACK (cb_allocate), NULL);
+# endif
+
+    if (doc_string)
+      {
+        /* Keep only the first paragraph, and the last line.
+           Omit everything in between. */
+        char *second_para = strstr (doc_string, "\n\n");
+        char *last_line = strrchr (doc_string, '\n');
+        s2 = strdup (doc_string);
+        if (second_para)
+          s2[second_para - doc_string] = 0;
+        if (last_line)
+          s3 = strdup (last_line + 1);
+      }
+
+    gtk_label_set_text (doc2, (s2
+                               ? _(s2)
+                               : _("No description available.")));
+    gtk_label_set_text (doc3, (s3 ? _(s3) : ""));
+    if (s2) free (s2);
+    if (s3) free (s3);
+  }
+
+  if (doc_string)
+    free (doc_string);
 }
 
 
@@ -3147,233 +3237,8 @@ force_dialog_repaint (state *s)
 }
 
 
-/* Even though we've given these text fields a maximum number of characters,
-   their default size is still about 30 characters wide -- so measure out
-   a string in their font, and resize them to just fit that.
+/* Fill in the contents of the main page.
  */
-static void
-fix_text_entry_sizes (state *s)
-{
-  GtkWidget *w;
-
-# if 0   /* appears no longer necessary with Gtk 1.2.10 */
-  const char * const spinbuttons[] = {
-    "timeout_spinbutton", "cycle_spinbutton", "lock_spinbutton",
-    "dpms_standby_spinbutton", "dpms_suspend_spinbutton",
-    "dpms_off_spinbutton",
-    "-fade_spinbutton" };
-  int i;
-  int width = 0;
-
-  for (i = 0; i < countof(spinbuttons); i++)
-    {
-      const char *n = spinbuttons[i];
-      int cols = 4;
-      while (*n == '-') n++, cols--;
-      w = GTK_WIDGET (name_to_widget (s, n));
-      width = gdk_text_width (w->style->font, "MMMMMMMM", cols);
-      gtk_widget_set_usize (w, width, -2);
-    }
-
-  /* Now fix the width of the combo box.
-   */
-  w = GTK_WIDGET (name_to_widget (s, "visual_combo"));
-  w = GTK_COMBO_BOX_ENTRY (w)->entry;
-  width = gdk_string_width (w->style->font, "PseudoColor___");
-  gtk_widget_set_usize (w, width, -2);
-
-  /* Now fix the width of the file entry text.
-   */
-  w = GTK_WIDGET (name_to_widget (s, "image_text"));
-  width = gdk_string_width (w->style->font, "mmmmmmmmmmmmmm");
-  gtk_widget_set_usize (w, width, -2);
-
-  /* Now fix the width of the command line text.
-   */
-  w = GTK_WIDGET (name_to_widget (s, "cmd_text"));
-  width = gdk_string_width (w->style->font, "mmmmmmmmmmmmmmmmmmmm");
-  gtk_widget_set_usize (w, width, -2);
-
-# endif /* 0 */
-
-  /* Now fix the height of the list widget:
-     make it default to being around 10 text-lines high instead of 4.
-   */
-  w = GTK_WIDGET (name_to_widget (s, "list"));
-  {
-    int lines = 10;
-    int height;
-    int leading = 3;  /* approximate is ok... */
-    int border = 2;
-
-#ifdef HAVE_GTK2
-    PangoFontMetrics *pain =
-      pango_context_get_metrics (gtk_widget_get_pango_context (w),
-                                 gtk_widget_get_style (w)->font_desc,
-                                 gtk_get_default_language ());
-    height = PANGO_PIXELS (pango_font_metrics_get_ascent (pain) +
-                           pango_font_metrics_get_descent (pain));
-#else  /* !HAVE_GTK2 */
-    height = w->style->font->ascent + w->style->font->descent;
-#endif /* !HAVE_GTK2 */
-
-    height += leading;
-    height *= lines;
-    height += border * 2;
-    w = GTK_WIDGET (name_to_widget (s, "scroller"));
-    gtk_widget_set_usize (w, -2, height);
-  }
-}
-
-
-#ifndef HAVE_GTK2
-
-/* Pixmaps for the up and down arrow buttons (yeah, this is sleazy...)
- */
-
-static char *up_arrow_xpm[] = {
-  "15 15 4 1",
-  " 	c None",
-  "-	c #FFFFFF",
-  "+	c #D6D6D6",
-  "@	c #000000",
-
-  "       @       ",
-  "       @       ",
-  "      -+@      ",
-  "      -+@      ",
-  "     -+++@     ",
-  "     -+++@     ",
-  "    -+++++@    ",
-  "    -+++++@    ",
-  "   -+++++++@   ",
-  "   -+++++++@   ",
-  "  -+++++++++@  ",
-  "  -+++++++++@  ",
-  " -+++++++++++@ ",
-  " @@@@@@@@@@@@@ ",
-  "               ",
-
-  /* Need these here because gdk_pixmap_create_from_xpm_d() walks off
-     the end of the array (Gtk 1.2.5.) */
-  "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
-  "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
-};
-
-static char *down_arrow_xpm[] = {
-  "15 15 4 1",
-  " 	c None",
-  "-	c #FFFFFF",
-  "+	c #D6D6D6",
-  "@	c #000000",
-
-  "               ",
-  " ------------- ",
-  " -+++++++++++@ ",
-  "  -+++++++++@  ",
-  "  -+++++++++@  ",
-  "   -+++++++@   ",
-  "   -+++++++@   ",
-  "    -+++++@    ",
-  "    -+++++@    ",
-  "     -+++@     ",
-  "     -+++@     ",
-  "      -+@      ",
-  "      -+@      ",
-  "       @       ",
-  "       @       ",
-
-  /* Need these here because gdk_pixmap_create_from_xpm_d() walks off
-     the end of the array (Gtk 1.2.5.) */
-  "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000",
-  "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
-};
-
-static void
-pixmapify_button (state *s, int down_p)
-{
-  GdkPixmap *pixmap;
-  GdkBitmap *mask;
-  GtkWidget *pixmapwid;
-  GtkStyle *style;
-  GtkWidget *w;
-
-  w = GTK_WIDGET (name_to_widget (s, (down_p ? "next" : "prev")));
-  style = gtk_widget_get_style (w);
-  mask = 0;
-  pixmap = gdk_pixmap_create_from_xpm_d (w->window, &mask,
-                                         &style->bg[GTK_STATE_NORMAL],
-                                         (down_p
-                                          ? (gchar **) down_arrow_xpm
-                                          : (gchar **) up_arrow_xpm));
-  pixmapwid = gtk_pixmap_new (pixmap, mask);
-  gtk_widget_show (pixmapwid);
-  gtk_container_remove (GTK_CONTAINER (w), GTK_BIN (w)->child);
-  gtk_container_add (GTK_CONTAINER (w), pixmapwid);
-}
-
-static void
-map_next_button_cb (GtkWidget *w, gpointer user_data)
-{
-  state *s = (state *) user_data;
-  pixmapify_button (s, 1);
-}
-
-static void
-map_prev_button_cb (GtkWidget *w, gpointer user_data)
-{
-  state *s = (state *) user_data;
-  pixmapify_button (s, 0);
-}
-#endif /* !HAVE_GTK2 */
-
-
-#ifndef HAVE_GTK2
-/* Work around a Gtk bug that causes label widgets to wrap text too early.
- */
-
-static void
-you_are_not_a_unique_or_beautiful_snowflake (GtkWidget *label,
-                                             GtkAllocation *allocation,
-					     void *foo)
-{
-  GtkRequisition req;
-  GtkWidgetAuxInfo *aux_info;
-
-  aux_info = gtk_object_get_data (GTK_OBJECT (label), "gtk-aux-info");
-
-  aux_info->width = allocation->width;
-  aux_info->height = -2;
-  aux_info->x = -1;
-  aux_info->y = -1;
-
-  gtk_widget_size_request (label, &req);
-}
-
-/* Feel the love.  Thanks to Nat Friedman for finding this workaround.
- */
-static void
-eschew_gtk_lossage (GtkLabel *label)
-{
-  GtkWidgetAuxInfo *aux_info = g_new0 (GtkWidgetAuxInfo, 1);
-  aux_info->width = GTK_WIDGET (label)->allocation.width;
-  aux_info->height = -2;
-  aux_info->x = -1;
-  aux_info->y = -1;
-
-  gtk_object_set_data (GTK_OBJECT (label), "gtk-aux-info", aux_info);
-
-  gtk_signal_connect (GTK_OBJECT (label), "size_allocate",
-                      GTK_SIGNAL_FUNC (you_are_not_a_unique_or_beautiful_snowflake),
-                      0);
-
-  gtk_widget_set_usize (GTK_WIDGET (label), -2, -2);
-
-  gtk_widget_queue_resize (GTK_WIDGET (label));
-}
-#endif /* !HAVE_GTK2 */
-
-
 static void
 populate_demo_window (state *s, int list_elt)
 {
@@ -3386,6 +3251,23 @@ populate_demo_window (state *s, int list_elt)
   GtkEntry *cmd    = GTK_ENTRY (name_to_widget (s, "cmd_text"));
   GtkComboBoxEntry *vis = GTK_COMBO_BOX_ENTRY (name_to_widget (s, "visual_combo"));
   GtkWidget *list  = GTK_WIDGET (name_to_widget (s, "list"));
+
+  /* Enforce a minimum size on the preview pane. */
+  int dw = DisplayWidth (dpy, 0);
+  int dh = DisplayHeight (dpy, 0);
+  int minw, minh;
+# define TRY(W) do { \
+    minw = (W); minh = minw * 9/16;         \
+    if (dw > minw * 1.5 && dh > minh * 1.5) \
+      gtk_widget_set_size_request (GTK_WIDGET (frame1), minw, minh); \
+    } while(0)
+  TRY (300);
+  TRY (400);
+  TRY (480);
+  TRY (640);
+  TRY (800);
+/*  TRY (960); */
+# undef TRY
 
   if (p->mode == BLANK_ONLY)
     {
@@ -3610,6 +3492,7 @@ maybe_reload_init_file (state *s)
       force_list_select_item (s, list, list_elt, True);
       populate_prefs_page (s);
       populate_demo_window (s, list_elt);
+      populate_popup_window (s);
       ensure_selected_item_visible (list);
 
       status = 1;
@@ -3620,7 +3503,6 @@ maybe_reload_init_file (state *s)
 }
 
 
-
 /* Making the preview window have the right X visual (so that GL works.)
  */
 
@@ -3671,39 +3553,12 @@ clear_preview_window (state *s)
                         : True);
     Bool nothing_p = (s->total_available < 5);
 
-#ifdef HAVE_GTK2
     GtkWidget *notebook = name_to_widget (s, "preview_notebook");
     gtk_notebook_set_page (GTK_NOTEBOOK (notebook),
 			   (s->running_preview_error_p
                             ? (available_p ? 1 :
                                nothing_p ? 3 : 2)
                             : 0));
-#else /* !HAVE_GTK2 */
-    if (s->running_preview_error_p)
-      {
-        const char * const lines1[] = { N_("No Preview"), N_("Available") };
-        const char * const lines2[] = { N_("Not"), N_("Installed") };
-        int nlines = countof(lines1);
-        int lh = p->style->font->ascent + p->style->font->descent;
-        int y, i;
-        gint w, h;
-
-        const char * const *lines = (available_p ? lines1 : lines2);
-
-        gdk_window_get_size (window, &w, &h);
-        y = (h - (lh * nlines)) / 2;
-        y += p->style->font->ascent;
-        for (i = 0; i < nlines; i++)
-          {
-            int sw = gdk_string_width (p->style->font, _(lines[i]));
-            int x = (w - sw) / 2;
-            gdk_draw_string (window, p->style->font,
-                             p->style->fg_gc[GTK_STATE_NORMAL],
-                             x, y, _(lines[i]));
-            y += lh;
-          }
-      }
-#endif /* !HAVE_GTK2 */
   }
 
   gdk_flush ();
@@ -3790,7 +3645,6 @@ fix_preview_visual (state *s)
   gtk_widget_show (widget);
 }
 
-
 /* Subprocesses
  */
 
@@ -4219,7 +4073,7 @@ static int
 settings_timer (gpointer data)
 {
   settings_cb (0, 0);
-  return FALSE;
+  return FALSE;  /* Only run timer once */
 }
 
 
@@ -4379,29 +4233,17 @@ check_blanked_timer (gpointer data)
 }
 
 
-/* How many screens are there (including Xinerama.)
- */
-static int
-screen_count (Display *dpy)
+/* Is there more than one active monitor? */
+static Bool
+multi_screen_p (Display *dpy)
 {
-  int nscreens = ScreenCount(dpy);
-# ifdef HAVE_XINERAMA
-  if (nscreens <= 1)
-    {
-      int event_number, error_number;
-      if (XineramaQueryExtension (dpy, &event_number, &error_number) &&
-          XineramaIsActive (dpy))
-        {
-          XineramaScreenInfo *xsi = XineramaQueryScreens (dpy, &nscreens);
-          if (xsi) XFree (xsi);
-        }
-    }
-# endif /* HAVE_XINERAMA */
-
-  return nscreens;
+  monitor **monitors = scan_monitors (dpy);
+  Bool ret = monitors && monitors[0] && monitors[1];
+  if (monitors) free_monitors (monitors);
+  return ret;
 }
 
-
+
 /* Setting window manager icon
  */
 
@@ -4416,7 +4258,7 @@ init_icon (GdkWindow *window)
     gdk_window_set_icon (window, 0, pixmap, mask);
 }
 
-
+
 /* The main demo-mode command loop.
  */
 
@@ -4473,7 +4315,9 @@ gnome_screensaver_window (Display *dpy, char **name_ret)
               && type != None
               && (!strcmp ((char *) name, "gnome-screensaver") ||
                   !strcmp ((char *) name, "mate-screensaver") ||
-                  !strcmp ((char *) name, "cinnamon-screensaver")))
+                  !strcmp ((char *) name, "cinnamon-screensaver") ||
+                  !strcmp ((char *) name, "xfce4-screensaver") ||
+                  !strcmp ((char *) name, "light-locker")))
             {
               gnome_window = kids[i];
               if (name_ret)
@@ -4535,9 +4379,10 @@ kill_kde_screensaver (void)
 }
 
 
-static void
-the_network_is_not_the_computer (state *s)
+static int
+the_network_is_not_the_computer (gpointer data)
 {
+  state *s = (state *) data;
   Display *dpy = GDK_DISPLAY();
   char *rversion = 0, *ruser = 0, *rhost = 0;
   char *luser, *lhost;
@@ -4579,7 +4424,7 @@ the_network_is_not_the_computer (state *s)
       sprintf (msg,
 	       _("Warning:\n\n"
 		 "The XScreenSaver daemon doesn't seem to be running\n"
-		 "on display \"%s\".  Launch it now?"),
+		 "on display \"%.25s\".  Launch it now?"),
 	       d);
     }
   else if (p && ruser && *ruser && !!strcmp (ruser, p->pw_name))
@@ -4645,6 +4490,7 @@ the_network_is_not_the_computer (state *s)
 	       rversion);
     }
 
+  validate_image_directory_quick (s);
 
   if (*msg)
     warning_dialog (s->toplevel_widget, msg, D_LAUNCH, 1);
@@ -4694,6 +4540,8 @@ the_network_is_not_the_computer (state *s)
                    "See the XScreenSaver manual for instructions on\n"
                    "configuring your system to use X11 instead of Wayland.\n"),
                     D_NONE, 1);
+
+  return False;  /* Only run timer once */
 }
 
 
@@ -4749,34 +4597,9 @@ static char *defaults[] = {
  0
 };
 
-#if 0
-#ifdef HAVE_CRAPPLET
-static struct poptOption crapplet_options[] = {
-  {NULL, '\0', 0, NULL, 0}
-};
-#endif /* HAVE_CRAPPLET */
-#endif /* 0 */
-
 const char *usage = "[--display dpy] [--prefs | --settings]"
-# ifdef HAVE_CRAPPLET
-                    " [--crapplet]"
-# endif
             "\n\t\t   [--debug] [--sync] [--no-xshm] [--configdir dir]";
 
-static void
-map_popup_window_cb (GtkWidget *w, gpointer user_data)
-{
-  state *s = (state *) user_data;
-  Boolean oi = s->initializing_p;
-#ifndef HAVE_GTK2
-  GtkLabel *label = GTK_LABEL (name_to_widget (s, "doc"));
-#endif
-  s->initializing_p = True;
-#ifndef HAVE_GTK2
-  eschew_gtk_lossage (label);
-#endif
-  s->initializing_p = oi;
-}
 
 
 #if 0
@@ -4821,7 +4644,6 @@ delayed_scroll_kludge (gpointer data)
   return FALSE;  /* do not re-execute timer */
 }
 
-#ifdef HAVE_GTK2
 
 static GtkWidget *
 create_xscreensaver_demo (void)
@@ -4850,7 +4672,6 @@ create_xscreensaver_settings_dialog (void)
   return name_to_widget (global_state_kludge, "xscreensaver_settings_dialog");
 }
 
-#endif /* HAVE_GTK2 */
 
 int
 main (int argc, char **argv)
@@ -4866,21 +4687,13 @@ main (int argc, char **argv)
   char *real_progname = argv[0];
   char *window_title;
   char *geom = 0;
-  Bool crapplet_p = False;
   char *str;
 
-#ifdef ENABLE_NLS
+# ifdef ENABLE_NLS
   bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
   textdomain (GETTEXT_PACKAGE);
-
-# ifdef HAVE_GTK2
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-# else  /* !HAVE_GTK2 */
-  if (!setlocale (LC_ALL, ""))
-    fprintf (stderr, "%s: locale not supported by C library\n", real_progname);
-# endif /* !HAVE_GTK2 */
-
-#endif /* ENABLE_NLS */
+# endif /* ENABLE_NLS */
 
   str = strrchr (real_progname, '/');
   if (str) real_progname = str+1;
@@ -4908,15 +4721,6 @@ main (int argc, char **argv)
       g_log_set_handler (domains[i], G_LOG_LEVEL_MASK, g_log_handler, 0);
   }
 
-#ifdef DEFAULT_ICONDIR  /* from -D on compile line */
-# ifndef HAVE_GTK2
-  {
-    const char *dir = DEFAULT_ICONDIR;
-    if (*dir) add_pixmap_directory (dir);
-  }
-# endif /* !HAVE_GTK2 */
-#endif /* DEFAULT_ICONDIR */
-
   /* This is gross, but Gtk understands --display and not -display...
    */
   for (i = 1; i < argc; i++)
@@ -4929,26 +4733,9 @@ main (int argc, char **argv)
   for (i = 1; i < argc; i++)
     {
       if (argv[i] &&
-          (!strcmp(argv[i], "--crapplet") ||
-           !strcmp(argv[i], "--capplet")))
-        {
-# if defined(HAVE_CRAPPLET) || defined(HAVE_GTK2)
-          int j;
-          crapplet_p = True;
-          for (j = i; j < argc; j++)  /* remove it from the list */
-            argv[j] = argv[j+1];
-          argc--;
-# else  /* !HAVE_CRAPPLET && !HAVE_GTK2 */
-          fprintf (stderr, "%s: not compiled with --crapplet support\n",
-                   real_progname);
-          fprintf (stderr, "%s: %s\n", real_progname, usage);
-          exit (1);
-# endif /* !HAVE_CRAPPLET && !HAVE_GTK2 */
-        }
-      else if (argv[i] &&
-               (!strcmp(argv[i], "--debug") ||
-                !strcmp(argv[i], "-debug") ||
-                !strcmp(argv[i], "-d")))
+          (!strcmp(argv[i], "--debug") ||
+           !strcmp(argv[i], "-debug") ||
+           !strcmp(argv[i], "-d")))
         {
           int j;
           s->debug_p = True;
@@ -5010,79 +4797,7 @@ main (int argc, char **argv)
   /* Let Gtk open the X connection, then initialize Xt to use that
      same connection.  Doctor Frankenstein would be proud.
    */
-# ifdef HAVE_CRAPPLET
-  if (crapplet_p)
-    {
-      GnomeClient *client;
-      GnomeClientFlags flags = 0;
-
-      int init_results = gnome_capplet_init ("screensaver-properties",
-                                             s->short_version,
-                                             argc, argv, NULL, 0, NULL);
-      /* init_results is:
-         0 upon successful initialization;
-         1 if --init-session-settings was passed on the cmdline;
-         2 if --ignore was passed on the cmdline;
-        -1 on error.
-
-         So the 1 signifies just to init the settings, and quit, basically.
-         (Meaning launch the xscreensaver daemon.)
-       */
-
-      if (init_results < 0)
-        {
-#  if 0
-          g_error ("An initialization error occurred while "
-                   "starting xscreensaver-capplet.\n");
-#  else  /* !0 */
-          fprintf (stderr, "%s: gnome_capplet_init failed: %d\n",
-                   real_progname, init_results);
-          exit (1);
-#  endif /* !0 */
-        }
-
-      client = gnome_master_client ();
-
-      if (client)
-        flags = gnome_client_get_flags (client);
-
-      if (flags & GNOME_CLIENT_IS_CONNECTED)
-        {
-          int token =
-            gnome_startup_acquire_token ("GNOME_SCREENSAVER_PROPERTIES",
-                                         gnome_client_get_id (client));
-          if (token)
-            {
-              char *session_args[20];
-              int i = 0;
-              session_args[i++] = real_progname;
-              session_args[i++] = "--capplet";
-              session_args[i++] = "--init-session-settings";
-              session_args[i] = 0;
-              gnome_client_set_priority (client, 20);
-              gnome_client_set_restart_style (client, GNOME_RESTART_ANYWAY);
-              gnome_client_set_restart_command (client, i, session_args);
-            }
-          else
-            {
-              gnome_client_set_restart_style (client, GNOME_RESTART_NEVER);
-            }
-
-          gnome_client_flush (client);
-        }
-
-      if (init_results == 1)
-	{
-	  system ("xscreensaver -nosplash &");
-	  return 0;
-	}
-
-    }
-  else
-# endif /* HAVE_CRAPPLET */
-    {
-      gtk_init (&argc, &argv);
-    }
+  gtk_init (&argc, &argv);
 
 
   /* We must read exactly the same resources as xscreensaver.
@@ -5125,10 +4840,6 @@ main (int argc, char **argv)
 	prefs_p = True;
       else if (!strcmp (str, "-settings"))
 	settings_p = True;
-      else if (crapplet_p)
-        /* There are lots of random args that we don't care about when we're
-           started as a crapplet, so just ignore unknown args in that case. */
-        ;
       else
 	{
 	  fprintf (stderr, _("%s: unknown option: %s\n"), real_progname,
@@ -5144,7 +4855,7 @@ main (int argc, char **argv)
      was in argv[0].
    */
   p->db = db;
-  s->nscreens = screen_count (dpy);
+  s->multi_screen_p = multi_screen_p (dpy);
 
   init_xscreensaver_atoms (dpy);
   hack_environment (s);  /* must be before initialize_sort_map() */
@@ -5208,17 +4919,7 @@ main (int argc, char **argv)
     GtkWidget *std = GTK_WIDGET (name_to_widget (s, "std_button"));
     int page = 0;
 
-# ifdef HAVE_XML
     gtk_widget_hide (std);
-# else  /* !HAVE_XML */
-    /* Make the advanced page be the only one available. */
-    gtk_widget_set_sensitive (std, False);
-    std = GTK_WIDGET (name_to_widget (s, "adv_button"));
-    gtk_widget_hide (std);
-    std = GTK_WIDGET (name_to_widget (s, "reset_button"));
-    gtk_widget_hide (std);
-    page = 1;
-# endif /* !HAVE_XML */
 
     gtk_notebook_set_page (notebook, page);
     gtk_notebook_set_show_tabs (notebook, False);
@@ -5236,27 +4937,13 @@ main (int argc, char **argv)
   populate_hack_list (s);
   populate_prefs_page (s);
   sensitize_demo_widgets (s, False);
-  fix_text_entry_sizes (s);
   scroll_to_current_hack (s);
-
-  gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "cancel_button")),
-                      "map", GTK_SIGNAL_FUNC(map_popup_window_cb),
-                      (gpointer) s);
-
-#ifndef HAVE_GTK2
-  gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "prev")),
-                      "map", GTK_SIGNAL_FUNC(map_prev_button_cb),
-                      (gpointer) s);
-  gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "next")),
-                      "map", GTK_SIGNAL_FUNC(map_next_button_cb),
-                      (gpointer) s);
-#endif /* !HAVE_GTK2 */
 
   /* Hook up callbacks to the items on the mode menu. */
   gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "mode_menu")),
                       "changed", GTK_SIGNAL_FUNC (mode_menu_item_cb),
                       (gpointer) s);
-  if (s->nscreens <= 1)
+  if (! s->multi_screen_p)
     {
       GtkComboBox *opt = GTK_COMBO_BOX (name_to_widget (s, "mode_menu"));
       GtkTreeModel *list = gtk_combo_box_get_model (opt);
@@ -5289,70 +4976,12 @@ main (int argc, char **argv)
       gtk_notebook_set_page (notebook, 1);
     }
 
-# ifdef HAVE_CRAPPLET
-  if (crapplet_p)
-    {
-      GtkWidget *capplet;
-      GtkWidget *outer_vbox;
-
-      gtk_widget_hide (s->toplevel_widget);
-
-      capplet = capplet_widget_new ();
-
-      /* Make there be a "Close" button instead of "OK" and "Cancel" */
-# ifdef HAVE_CRAPPLET_IMMEDIATE
-      capplet_widget_changes_are_immediate (CAPPLET_WIDGET (capplet));
-# endif /* HAVE_CRAPPLET_IMMEDIATE */
-      /* In crapplet-mode, take off the menubar. */
-      gtk_widget_hide (name_to_widget (s, "menubar"));
-
-      /* Reparent our top-level container to be a child of the capplet
-         window.
-       */
-      outer_vbox = GTK_BIN (s->toplevel_widget)->child;
-      gtk_widget_ref (outer_vbox);
-      gtk_container_remove (GTK_CONTAINER (s->toplevel_widget),
-                            outer_vbox);
-      STFU GTK_OBJECT_SET_FLAGS (outer_vbox, GTK_FLOATING);
-      gtk_container_add (GTK_CONTAINER (capplet), outer_vbox);
-
-      /* Find the window above us, and set the title and close handler. */
-      {
-        GtkWidget *window = capplet;
-        while (window && !GTK_IS_WINDOW (window))
-          window = GET_PARENT (window);
-        if (window)
-          {
-            gtk_window_set_title (GTK_WINDOW (window), window_title);
-            gtk_signal_connect (GTK_OBJECT (window), "delete_event",
-                                GTK_SIGNAL_FUNC (wm_toplevel_close_cb),
-                                (gpointer) s);
-          }
-      }
-
-      s->toplevel_widget = capplet;
-    }
-# endif /* HAVE_CRAPPLET */
-
-
-  /* The Gnome folks hate the menubar.  I think it's important to have access
-     to the commands on the File menu (Restart Daemon, etc.) and to the
-     About and Documentation commands on the Help menu.
-   */
-#if 0
-#ifdef HAVE_GTK2
-  gtk_widget_hide (name_to_widget (s, "menubar"));
-#endif
-#endif
-
   free (window_title);
   window_title = 0;
 
-#ifdef HAVE_GTK2
   /* After picking the default size, allow -geometry to override it. */
   if (geom)
     gtk_window_parse_geometry (GTK_WINDOW (s->toplevel_widget), geom);
-#endif
 
   gtk_widget_show (s->toplevel_widget);
   init_icon (GET_WINDOW (GTK_WIDGET (s->toplevel_widget)));  /* after `show' */
@@ -5377,9 +5006,10 @@ main (int argc, char **argv)
     gtk_timeout_add (500, settings_timer, 0);
 
 
-  /* Issue any warnings about the running xscreensaver daemon. */
+  /* Issue any warnings about the running xscreensaver daemon.
+     Wait a few seconds, in case things are still starting up. */
   if (! s->debug_p)
-    the_network_is_not_the_computer (s);
+    gtk_timeout_add (5 * 1000, the_network_is_not_the_computer, s);
 
 
   if (time ((time_t *) 0) - XSCREENSAVER_RELEASED > 60*60*24*30*17)
@@ -5425,12 +5055,7 @@ main (int argc, char **argv)
 #endif
 
 
-# ifdef HAVE_CRAPPLET
-  if (crapplet_p)
-    capplet_gtk_main ();
-  else
-# endif /* HAVE_CRAPPLET */
-    gtk_main ();
+  gtk_main ();
 
   kill_preview_subproc (s, False);
   exit (0);

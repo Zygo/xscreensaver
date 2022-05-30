@@ -20,6 +20,11 @@ AC_CONFIG_HEADERS([config.h])
 echo "current directory: `pwd`"
 echo "command line was: $0 $@"
 
+if ! test -z "$ac_unrecognized_opts" ; then
+  echo "" >&2
+  exit 2
+fi
+
 ###############################################################################
 #
 #       Autoheader stuff
@@ -162,20 +167,8 @@ AH_TEMPLATE([HAVE_GTK],
 AH_TEMPLATE([HAVE_GTK2],
             [Define this if you have Gtk 2.x.])
 
-AH_TEMPLATE([HAVE_CRAPPLET],
-	    [Define this if you have Gnome and want to build support for the
-	    xscreensaver control panel in the Gtk 1.x Gnome Control Center.])
-
-AH_TEMPLATE([HAVE_CRAPPLET_IMMEDIATE],
-	    [Define this if HAVE_CRAPPLET is defined, and the function
-	    capplet_widget_changes_are_immediate is available.])
-
 AH_TEMPLATE([HAVE_XML],
             [Define this if you have the XML library.])
-
-AH_TEMPLATE([HAVE_OLD_XML_HEADERS],
-	    [Define this if you the XML library headers lack the
-            gnome-xml/libxml symlink.])
 
 AH_TEMPLATE([HAVE_GDK_PIXBUF],
 	    [Define this if you have GDK_Pixbuf.])
@@ -1455,7 +1448,8 @@ if test "$with_xinerama" = yes; then
     # if that failed, look in -lXinerama (this is where it is in XFree86 4.1.)
     if test "$have_xinerama" = no; then
       AC_CHECK_X_LIB(Xinerama, XineramaQueryScreens,
-                     [have_xinerama=yes; XINERAMA_LIBS="-lXinerama"],
+                     [have_xinerama=yes;
+                      XINERAMA_LIBS="$XINERAMA_LIBS -lXinerama"],
                      [true], -lXext -lX11)
     fi
   fi
@@ -1512,7 +1506,8 @@ if test "$with_randr" = yes; then
     # if that failed, look in -lXrandr
     if test "$have_randr" = no; then
       AC_CHECK_X_LIB(Xrandr, XRRGetScreenInfo,
-             [have_randr=yes; SAVER_LIBS="$SAVER_LIBS -lXrandr $xrender_libs"],
+             [have_randr=yes;
+              XINERAMA_LIBS="$XINERAMA_LIBS -lXrandr $xrender_libs"],
                      [true], $xrender_libs -lXext -lX11)
     fi
   fi
@@ -1556,7 +1551,7 @@ have_xinput=no
 with_xinput_req=unspecified
 xinput_halfassed=no
 AC_ARG_WITH(xinput-ext,
-[  --with-xinput-ext       Include support for the XInput2 extension.],
+[  --with-xinput-ext       The XInput2 extension is required.],
   [with_xinput="$withval"; with_xinput_req="$withval"], [with_xinput=yes])
 
 HANDLE_X_PATH_ARG(with_xinput, --with-xinput-ext, XINPUT)
@@ -1581,6 +1576,10 @@ if test "$with_xinput" = yes; then
   if test "$have_xinput" = yes; then
     AC_DEFINE(HAVE_XINPUT)
   fi
+
+elif test "$with_xinput" = no; then
+  echo "error: --without-xinput-ext is not supported."
+  exit 1
 
 elif test "$with_xinput" != no; then
   echo "error: must be yes or no: --with-xinput-ext=$with_xinput"
@@ -2320,7 +2319,7 @@ AC_ARG_WITH(pam,[
 Screen Locking Options:
 
   --disable-locking       Do not allow locking of the display at all.
-  --with-pam              Include support for PAM (Pluggable Auth Modules).],
+  --with-pam              Use Pluggable Authentication Modules.],
   [with_pam="$withval"; with_pam_req="$withval"],[with_pam=$with_pam_default])
 
 AC_ARG_WITH([pam_service_name],
@@ -2328,7 +2327,7 @@ AC_ARG_WITH([pam_service_name],
   --enable-pam-account    Whether PAM should check the result of account
 	    		  modules when authenticating.  Only do this if you
 	    		  have "account" modules configured on your system.
-  --enable-root-passwd	  Allow the root passwd to unlock, if not using PAM.],
+  --enable-root-passwd	  Allow the root password to unlock, if not using PAM.],
   [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
 
 AC_ARG_ENABLE(pam-check-account-type,
@@ -3355,7 +3354,6 @@ AC_ARG_WITH(gl,
 [
 Graphics Options:
 
-  --with-gl               Build those demos which depend on OpenGL.
   --with-gles             Emulate OpenGL 1.3 in terms of OpenGL ES 1.x.],
   [with_gl="$withval"; with_gl_req="$withval"],[with_gl=yes])
 
@@ -3511,6 +3509,13 @@ if test "$with_gl" = yes; then
 
   fi
 
+elif test "$with_gl" = no; then
+  echo "error: --without-opengl is not supported."
+  # You may be saying "but but but microcontrollers" -- bullshit.
+  # It is the Twenty-First Century, and in This Modern World, every
+  # extant microcontroller is more performant than the desktop
+  # computers on which I developed most of the OpenGL hacks.
+  exit 1
 
 elif test "$with_gl" != no; then
   echo "error: must be yes or no: --with-gl=$with_gl"
@@ -4731,7 +4736,7 @@ fi
 
 if test "$have_gl" = no ; then
   if test "$with_gl_req" = yes ; then
-    warnL 'Use of GL was requested, but it was not found.'
+    warnL 'The OpenGL 3D library is required, but it was not found.'
     CONF_STATUS=1
   elif test "$with_gl_req" = no ; then
     noteL 'The OpenGL 3D library is not being used.'
@@ -4819,6 +4824,17 @@ fi
 if test "$ac_macosx" = yes -a "$enable_locking" = yes ; then
   warn  "You have specified --enable-locking on macOS."
   warn2 "THIS DOES NOT WORK!  Don't do this!"
+fi
+
+if test "$have_jwzgles" = yes ; then
+  warn  "Do not use --with-gles unless you are sure that you know"
+  warn2 "what you are doing!  It is not recommended on normal X11"
+  warn2 "systems."
+
+  if test "$have_egl" = no; then
+    warn2 ""
+    warn2 "Using --with-gles and --with-glx probably won't work."
+  fi
 fi
 
 

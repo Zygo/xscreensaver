@@ -1835,7 +1835,9 @@ static void drawOverlay(ModeInfo *mi)
     glOrtho(-1/h, 1/h, 1, -1, -1, 1);
 
 	glEnable(GL_BLEND);
+	/* glViewport(0, 0.75 * MI_HEIGHT(mi), MI_HEIGHT(mi) / 4, MI_HEIGHT(mi) / 4); */
 	glColor4f(0, 0, 1, 0.75);
+	/* glScalef(0.25 * 1/h, 0.25, 0.25); */
 	glScalef(0.25, 0.25, 0.25);
 
 	glCallList(maze->dlists[ARROW]);
@@ -1906,6 +1908,7 @@ static void drawOverlay(ModeInfo *mi)
 	}
 
 	glDisable(GL_BLEND);
+	/* glViewport(0, 0, MI_WIDTH(mi), MI_HEIGHT(mi)); */
 
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);

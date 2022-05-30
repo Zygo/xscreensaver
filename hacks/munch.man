@@ -75,18 +75,12 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
-.SH SEE ALSO
-.BR X (1),
-.BR xscreensaver (1),
-.RS 0
-.BR http://www.inwap.com/pdp10/hbaker/hakmem/hakmem.html
 .SH HISTORY
 .B HAKMEM: MIT AI Memo 239, Feb. 29, 1972.
 Beeler, M., Gosper, R.W., and Schroeppel, R.
 
 "Unless otherwise stated, all computer programs are in PDP-6/10
 assembly language."
-
 .SS ITEM 146: MUNCHING SQUARES
 
 Another simple display program. It is thought that this was discovered by
@@ -100,17 +94,14 @@ Jackson Wright on the RLE PDP-1 circa 1962.
 	JRST .-4
 .sp
 .fi
-
 2=X, 3=Y. Try things like 1001002 in data switches. This also does
 interesting things with operations other than XOR, and rotations other 
 than -22. (Try IOR; AND; TSC; FADR; FDV(!); ROT -14, -9, -20, ...)
-
 .SS
 ITEM 147 (Schroeppel):
 
 Munching squares is just views of the graph Y = X XOR T for consecutive
 values of T = time.
-
 .SS ITEM 148 (Cohen, Beeler):
 
 A modification to munching squares which reveals them in frozen states
@@ -121,16 +112,20 @@ data switches =
 	4000,,4    1000,,2002    2000,,4    0,,1002
 .sp
 .fi
-
 (Notation: <left half>,,<right half>)
 .RS 0
 Also try the FADR after the XOR, switches = 1001,,1. 
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.br
+https://www.inwap.com/pdp10/hbaker/hakmem/hakmem.html
 .SH COPYRIGHT
-Copyright 1997 Tim Showalter.
-.RS 0
-Copyright 2004 Steven Hazel.
-.RS 0
-Copyright 1992-2008 Jamie Zawinski.
+Copyright \(co 1997 Tim Show alter.
+.br
+Copyright \(co 2004 Steven Hazel.
+.br
+Copyright \(co 1992-2008 Jamie Zawinski.
 .PP
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,

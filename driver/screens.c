@@ -1,5 +1,5 @@
 /* screens.c --- dealing with RANDR, Xinerama, and VidMode Viewports.
- * xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -154,6 +154,27 @@ free_monitors (monitor **monitors)
 }
 
 
+static monitor **
+append_monitors (monitor **a, monitor **b)
+{
+  int na = 0, nb = 0, i;
+  if (!b) return a;
+  if (!a) return b;
+
+  while (a[na]) na++;
+  while (b[nb]) nb++;
+
+  a = (monitor **) realloc (a, sizeof(*a) * (na + nb + 1));
+  if (!a) return b;  /* If this happens, the end is nigh */
+
+  for (i = 0; i < nb; i++)
+    a[na++] = b[i];
+  a[na] = 0;
+  free (b);
+  return a;
+}
+
+
 static char *
 append (char *s1, const char *s2)
 {
@@ -187,12 +208,34 @@ xinerama_scan_monitors (Display *dpy, char **errP)
   xsi = XineramaQueryScreens (dpy, &nscreens);
   if (!xsi) return 0;
 
+  if (nscreens <= 0)
+    {
+      *errP = append (*errP,
+                      "WARNING: Xinerama reported no screens!  Ignoring it.");
+      /* Fall back to basic X11. */
+      return 0;
+    }
+
   monitors = (monitor **) calloc (nscreens + 1, sizeof(*monitors));
-  if (!monitors) return 0;
+  if (!monitors)
+    {
+      XFree (xsi);
+      return 0;
+    }
 
   for (i = 0; i < nscreens; i++)
     {
       monitor *m = (monitor *) calloc (1, sizeof (monitor));
+      char buf[255];
+      if (!m)
+        {
+          free_monitors (monitors);
+          XFree (xsi);
+          return 0;
+        }
+
+      sprintf (buf, "Xinerama-%d", i);
+
       monitors[i] = m;
       m->id       = i;
       m->screen   = screen;
@@ -200,7 +243,10 @@ xinerama_scan_monitors (Display *dpy, char **errP)
       m->y        = xsi[i].y_org;
       m->width    = xsi[i].width;
       m->height   = xsi[i].height;
+      m->desc     = strdup (buf);
     }
+
+  XFree (xsi);
   return monitors;
 }
 
@@ -222,7 +268,7 @@ randr_scan_monitors (Display *dpy, char **errP)
     return 0;
 
   if (! (major > 1 || (major == 1 && minor >= 2)))
-    return 0;  /* 1.2 ir newer is required */
+    return 0;  /* 1.2 or newer is required */
 
   /* Add up the virtual screens on each X screen. */
   nscreens = 0;
@@ -242,6 +288,7 @@ randr_scan_monitors (Display *dpy, char **errP)
     {
       *errP = append (*errP,
                       "WARNING: RANDR reported no screens!  Ignoring it.");
+      /* Fall back to Xinerama or basic X11. */
       return 0;
     }
 
@@ -260,19 +307,40 @@ randr_scan_monitors (Display *dpy, char **errP)
       int k;
       XRRScreenResources *res = 
         XRRGetScreenResourcesCurrent (dpy, RootWindowOfScreen (screen));
+      if (!res)
+        {
+          free_monitors (monitors);
+          return 0;
+        }
+
       for (k = 0; k < res->noutput; k++, j++)
         {
           monitor *m = (monitor *) calloc (1, sizeof (monitor));
-          XRROutputInfo *rroi = XRRGetOutputInfo (dpy, res, 
-                                                  res->outputs[k]);
-          RRCrtc crtc = (rroi->crtc  ? rroi->crtc :
-                         rroi->ncrtc ? rroi->crtcs[0] : 0);
+          XRROutputInfo *rroi = XRRGetOutputInfo (dpy, res, res->outputs[k]);
+          RRCrtc crtc = (rroi && rroi->crtc  ? rroi->crtc :
+                         rroi && rroi->ncrtc ? rroi->crtcs[0] : 0);
           XRRCrtcInfo *crtci = (crtc ? XRRGetCrtcInfo(dpy, res, crtc) : 0);
+          char buf[255];
+
+          if (!m)
+            {
+              free_monitors (monitors);
+              if (crtci) 
+                XRRFreeCrtcInfo (crtci);
+              if (rroi)
+                XRRFreeOutputInfo (rroi);
+              XRRFreeScreenResources (res);
+              return 0;
+            }
+
+          sprintf (buf, "RANDR-%d.%d", i, k);
 
           monitors[j] = m;
           m->screen   = screen;
           m->id       = (i * 1000) + j;
-          m->desc     = (rroi->name ? strdup (rroi->name) : 0);
+          m->desc     = (rroi && rroi->name
+                         ? strdup (rroi->name)
+                         : strdup (buf));
 
           if (crtci)
             {
@@ -285,13 +353,14 @@ randr_scan_monitors (Display *dpy, char **errP)
               m->height = crtci->height;
             }
 
-          if (rroi->connection == RR_Disconnected)
+          if (!rroi || rroi->connection == RR_Disconnected)
             m->sanity = S_DISABLED;
           /* #### do the same for RR_UnknownConnection? */
 
           if (crtci) 
             XRRFreeCrtcInfo (crtci);
-          XRRFreeOutputInfo (rroi);
+          if (rroi)
+            XRRFreeOutputInfo (rroi);
         }
       XRRFreeScreenResources (res);
     }
@@ -309,7 +378,9 @@ randr_scan_monitors (Display *dpy, char **errP)
     if (! ok)
       {
         *errP = append (*errP,
-              "WARNING: RANDR says all screens are 0x0!  Ignoring it.");
+                        (i == 0
+                         ? "WARNING: RANDR reports no screens"
+                         : "WARNING: RANDR says all screens are 0x0"));
         free_monitors (monitors);
         monitors = 0;
       }
@@ -333,6 +404,15 @@ basic_scan_monitors (Display *dpy, char **errP)
     {
       Screen *screen = ScreenOfDisplay (dpy, i);
       monitor *m = (monitor *) calloc (1, sizeof (monitor));
+      char buf[255];
+      if (!m)
+        {
+          free_monitors (monitors);
+          return 0;
+        }
+
+      sprintf (buf, "Xlib-%d", i);
+
       monitors[i] = m;
       m->id       = i;
       m->screen   = screen;
@@ -340,6 +420,7 @@ basic_scan_monitors (Display *dpy, char **errP)
       m->y        = 0;
       m->width    = WidthOfScreen (screen);
       m->height   = HeightOfScreen (screen);
+      m->desc     = strdup (buf);
     }
   return monitors;
 }
@@ -369,6 +450,9 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors,
                              char **errP)
 {
   monitor **xinerama_monitors;
+  int randr_count = 0;
+  int xinerama_count = 0;
+  char buf[1024];
 
   if (!randr_monitors) 
     return 0;
@@ -379,22 +463,33 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors,
 
   if (! monitor_layouts_differ_p (randr_monitors, xinerama_monitors))
     {
+      *errP = append (*errP, "RANDR and Xinerama agree");
       free_monitors (xinerama_monitors);
       return randr_monitors;
     }
-  else if (   randr_monitors[0] &&   !randr_monitors[1] &&  /* 1 monitor */
-           xinerama_monitors[0] && xinerama_monitors[1])    /* >1 monitor */
+
+  while (randr_monitors[randr_count])
+    randr_count++;
+  while (xinerama_monitors[xinerama_count])
+    xinerama_count++;
+
+  if (randr_count == xinerama_count)
+    strcpy (buf, "RANDR and Xinerama differ");
+  else
+    sprintf (buf, "RANDR screens: %d, Xinerama: %d",
+             randr_count, xinerama_count);
+
+  if (xinerama_count > randr_count)
     {
-      *errP = append (*errP,
-                      "WARNING: RANDR reports 1 screen but Xinerama\n"
-                      "         reports multiple.  Believing Xinerama.");
+      strcat (buf, "; believing Xinerama");
+      *errP = append (*errP, buf);
       free_monitors (randr_monitors);
       return xinerama_monitors;
     }
   else
     {
-      *errP = append (*errP,  /* This is "normal" now, I guess. */
-                      "RANDR and Xinerama report different screen layouts");
+      strcat (buf, "; believing RANDR");
+      *errP = append (*errP, buf);
       free_monitors (xinerama_monitors);
       return randr_monitors;
     }
@@ -455,43 +550,6 @@ debug_scan_monitors (Display *dpy, char **errP)
 #endif /* DEBUG_MULTISCREEN */
 
 
-#ifdef QUAD_MODE
-static monitor **
-quadruple (monitor **monitors, Bool debug_p, char **errP)
-{
-  int i, j, count = 0;
-  monitor **monitors2;
-  while (monitors[count])
-    count++;
-  monitors2 = (monitor **) calloc (count * 4 + 1, sizeof(*monitors));
-  if (!monitors2) abort();
-
-  for (i = 0, j = 0; i < count; i++)
-    {
-      int k;
-      for (k = 0; k < 4; k++)
-        {
-          monitors2[j+k] = (monitor *) calloc (1, sizeof (monitor));
-          *monitors2[j+k] = *monitors[i];
-          monitors2[j+k]->width  /= (debug_p ? 4 : 2);
-          monitors2[j+k]->height /= 2;
-          monitors2[j+k]->id = (monitors[i]->id * 4) + k;
-          monitors2[j+k]->name = (monitors[i]->name
-                                  ? strdup (monitors[i]->name) : 0);
-        }
-      monitors2[j+1]->x += monitors2[j]->width;
-      monitors2[j+2]->y += monitors2[j]->height;
-      monitors2[j+3]->x += monitors2[j]->width;
-      monitors2[j+3]->y += monitors2[j]->height;
-      j += 4;
-    }
-
-  free_monitors (monitors);
-  return monitors2;
-}
-#endif /* QUAD_MODE */
-
-
 monitor **
 scan_monitors (Display *dpy)
 {
@@ -516,10 +574,31 @@ scan_monitors (Display *dpy)
 
   if (! monitors) monitors = basic_scan_monitors (dpy, &err);
 
-# ifdef QUAD_MODE
-  if (p->quad_p)
-    monitors = quadruple (monitors, p->debug_p, &err);
-# endif
+  if (monitors)
+    {
+      int count = 0;
+      int good_count = 0;
+
+      check_monitor_sanity (monitors);
+      while (monitors[count])
+        {
+          if (monitors[count]->sanity == S_SANE)
+            good_count++;
+          count++;
+        }
+
+      if (good_count == 0)
+        {
+          monitor **m2 = basic_scan_monitors (dpy, &err);
+          err = append(err, "No usable screens! Falling back to root window");
+          /* Append the fallback monitors to the old, bad ones so that
+             describe_monitor_layout() still describes the monitors that
+             were rejected.  Don't call check_monitor_sanity(m2) to leave
+             the new ones marked as sane.
+           */
+          monitors = append_monitors (monitors, m2);
+        }
+    }
 
   if (monitors && *monitors && err) monitors[0]->err = err;
 
@@ -677,7 +756,8 @@ monitor_layouts_differ_p (monitor **a, monitor **b)
           (*a)->x      != (*b)->x      ||
           (*a)->y      != (*b)->y      ||
           (*a)->width  != (*b)->width  ||
-          (*a)->height != (*b)->height)
+          (*a)->height != (*b)->height ||
+          (*a)->sanity != (*b)->sanity)
         return True;
       a++;
       b++;
@@ -721,9 +801,10 @@ describe_monitor_layout (monitor **monitors)
   if (monitors && *monitors && monitors[0]->err)   /* deferred error msg */
     {
       char *token = strtok (monitors[0]->err, "\n");
+      const char *b = blurb();
       while (token)
         {
-          fprintf (stderr, "%s: %s\n", blurb(), token);
+          fprintf (stderr, "%s:    %s\n", b, token);
           token = strtok (0, "\n");
         }
       free (monitors[0]->err);
@@ -735,12 +816,12 @@ describe_monitor_layout (monitor **monitors)
   else
     {
       int i;
-      fprintf (stderr, "%s: screens in use: %d\n", blurb(), good_count);
+      fprintf (stderr, "%s:    screens in use: %d\n", blurb(), good_count);
       for (i = 0; i < count; i++)
         {
           monitor *m = monitors[i];
           if (m->sanity != S_SANE) continue;
-          fprintf (stderr, "%s:  %3d/%d: %dx%d+%d+%d",
+          fprintf (stderr, "%s:     %3d/%d: %dx%d+%d+%d",
                    blurb(), m->id, screen_number (m->screen),
                    m->width, m->height, m->x, m->y);
           if (m->desc && *m->desc) fprintf (stderr, " (%s)", m->desc);
@@ -748,13 +829,13 @@ describe_monitor_layout (monitor **monitors)
         }
       if (bad_count > 0)
         {
-          fprintf (stderr, "%s: rejected screens: %d\n", blurb(), bad_count);
+          fprintf (stderr, "%s:    rejected screens: %d\n", blurb(), bad_count);
           for (i = 0; i < count; i++)
             {
               monitor *m = monitors[i];
               monitor *e = monitors[m->enemy];
               if (m->sanity == S_SANE) continue;
-              fprintf (stderr, "%s:  %3d/%d: %dx%d+%d+%d",
+              fprintf (stderr, "%s:     %3d/%d: %dx%d+%d+%d",
                        blurb(), m->id, screen_number (m->screen),
                        m->width, m->height, m->x, m->y);
               if (m->desc && *m->desc) fprintf (stderr, " (%s)", m->desc);
@@ -787,10 +868,8 @@ describe_monitor_layout (monitor **monitors)
 
       if (implausible_p)
         fprintf (stderr,
-                 "%s: WARNING: single screen aspect ratio is %dx%d = %.2f\n"
-                 "%s:          probable X server bug in Xinerama/RANDR!\n",
-                 blurb(), monitors[0]->width, monitors[0]->height,
-                 monitors[0]->width / (double) monitors[0]->height,
-                 blurb());
+                 "%s: implausible single screen aspect ratio %.2f\n",
+                 blurb(),
+                 monitors[0]->width / (double) monitors[0]->height);
     }
 }

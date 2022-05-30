@@ -17,7 +17,7 @@
   <xscreensaver-updater />
 
   <_description>
-Displays a distorted frame video.
+Displays a distorted frame of video from the system's camera.
 
 This is a shell script that grabs a frame of video from the system's
 video input, and then uses some PBM filters (chosen at random) to

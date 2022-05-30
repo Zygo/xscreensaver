@@ -1,4 +1,4 @@
-# XScreenSaver for MacOS X, Copyright © 2006-2021 Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright © 2006-2022 Jamie Zawinski.
 
 XCODE_APP  = /Applications/Xcode.app
 TARGETS    = All Savers
@@ -58,29 +58,34 @@ Sparkle.framework:
 	mv bin sparkle-bin
 
 # Download and resize images from jwz.org.
-# This saves us having to include 4MB of images in the tar file
-# that will only be used by a vast minority of people building
-# from source.
-# update-info-plist.pl runs this as needed.
-# Might be better to do this with curl, since that is installed by default.
+# Largely duplicated in android/Makefile.
+# This saves us having to include 4MB of images in the tar file that
+# will only be used by a vast minority of people building from source.
+# update-info-plist.pl runs "make" to do this as needed.
 
 BASE = xscreensaver/screenshots/
-URL = https://www.jwz.org/$(BASE)
+URL = https://cdn.jwz.org/$(BASE)
 
 # I find wget easier to deal with, but curl is usually installed by default.
 #WGET = wget -q -U xscreensaver-build-osx --content-on-error=0 -O-
 WGET = curl -sL -A xscreensaver-build-osx -f
 
+# ImageMagick isn't installed by default, but neither is anything similar.
+#
 # Apple savers have "thumbnail.png" at 90x58 and "thumbnail@2x.png" at 180x116.
 # System Preferences stretches those to fill a bordered 170x105 frame.
-# These args take our source images (usually 200x150) and fits them into a
-# 180x116 box, cropping either horizontally or vertically as needed.
-# It also makes the alpha mask have rounded corners.
+#
+# This recipe takes our source images (usually 200x150) and fits them into
+# a 180x116 box, cropping either horizontally or vertically as needed, with
+# rounded corners in the alpha mask.
 #
 THUMB_SIZE=180x116
+THUMB_CURVE=15
 CVT  = -thumbnail $(THUMB_SIZE)'^' -gravity center -extent $(THUMB_SIZE) \
      \( +clone  -alpha extract \
-        -draw 'fill black polygon 0,0 0,6 6,0 fill white circle 6,6 6,0' \
+        -draw \
+          'fill black polygon 0,0 0,$(THUMB_CURVE) $(THUMB_CURVE),0 \
+           fill white circle $(THUMB_CURVE),$(THUMB_CURVE) $(THUMB_CURVE),0' \
         \( +clone -flip \) -compose Multiply -composite \
         \( +clone -flop \) -compose Multiply -composite \
      \) -alpha off -compose CopyOpacity -composite \
@@ -95,7 +100,6 @@ $(THUMBDIR)/%.png:
 	FILE2="$@" ;							\
 	TMP="$$FILE2".tmp ;						\
 	URL="$(URL)$$FILE1" ;						\
-	URL2="$(URL)retired/$$FILE1" ;					\
 	if [ ! -d $(THUMBDIR) ]; then mkdir -p $(THUMBDIR) ; fi ;	\
 	rm -f "$$FILE2" "$$TMP" ;					\
 	set +e ;							\
@@ -104,10 +108,6 @@ $(THUMBDIR)/%.png:
 	else								\
 	  echo "downloading $$URL..." ;					\
 	  $(WGET) "$$URL" > "$$TMP" ;					\
-	  if [ ! -s "$$TMP" ]; then					\
-	    echo "downloading $$URL2..." ;				\
-	    $(WGET) "$$URL2" > "$$TMP" ;				\
-	  fi ;								\
 	  if [ ! -s "$$TMP" ]; then					\
 	    rm -f "$$TMP" ;						\
 	    echo "failed: $$URL" ;					\
@@ -470,6 +470,13 @@ notarize::
   exit 0
 
 
+# Uploading the DMG to the notarizer generated a gatekeeper ticket for
+# each enclosed item.  Staple those tickets to the DMG file.
+#
+# If we had uploaded a .zip, we would need to staple to the enclosed item
+# and re-generate the .zip, but I think we can staple directly to a DMG
+# without needing to re-generate it?
+#
 staple::
 	@								      \
   set -e ;								      \

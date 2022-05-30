@@ -29,7 +29,7 @@
 "*installColormap:	True",
 "*ignoreUninstalledPrograms: False",
 "*authWarningSlack:	20",
-"*textMode:		file",
+"*textMode:		url",
 "*textLiteral:		XScreenSaver",
 "*textFile:		",
 "*textProgram:		fortune",
@@ -422,7 +422,9 @@
   GL: 				sphereeversion -root			    \\n\
 				binaryhorizon -root			    \\n\
 				marbling -root				    \\n\
+  GL: 				chompytower -root			    \\n\
   GL: 				mapscroller -root			    \\n\
+  GL: 				nakagin -root				    \\n\
   GL: 				squirtorus -root			    \\n",
 "*hacks.antinspect.name:     Ant Inspect",
 "*hacks.antmaze.name:        Ant Maze",
@@ -438,6 +440,7 @@
 "*hacks.bsod.name:           BSOD",
 "*hacks.bubble3d.name:       Bubble 3D",
 "*hacks.ccurve.name:         C Curve",
+"*hacks.chompytower.name:    Chompy Tower",
 "*hacks.cityflow.name:       City Flow",
 "*hacks.cloudlife.name:      Cloud Life",
 "*hacks.companioncube.name:  Companion Cube",

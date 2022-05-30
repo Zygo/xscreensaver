@@ -364,7 +364,11 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.br
+https://profs.etsmtl.ca/mmcguffin/eversion/,
+.br
+http://www.geom.uiuc.edu/docs/outreach/oi/software.html
 .SH COPYRIGHT
 Copyright \(co 2020 by Carsten Steger.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
@@ -376,11 +380,8 @@ any purpose.  It is provided "as is" without express or implied
 warranty.
 .PP
 Parts of the code in this program are based on the program
-sphereEversion-0.4-src.zip
-(https://profs.etsmtl.ca/mmcguffin/eversion/) by Michael J. McGuffin,
-which, in turn, is based on the program evert.tar.Z
-(http://www.geom.uiuc.edu/docs/outreach/oi/software.html) developed
-by Nathaniel Thurston at the Geometry Center.  The modified code is
-used with permission.
+"sphereEversion 0.4" by Michael J. McGuffin, which, in turn, is based
+on the program "Evert" developed by Nathaniel Thurston at the Geometry
+Center.  The modified code is used with permission.
 .SH AUTHOR
 Carsten Steger <carsten@mirsanmir.org>, 01-jun-2020.

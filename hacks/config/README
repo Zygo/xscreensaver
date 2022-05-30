@@ -4,8 +4,8 @@
             a screen saver and locker for the X window system
                             by Jamie Zawinski
 
-                              version 6.03
-                               27-Feb-2022
+                              version 6.04
+                               29-May-2022
 
                      https://www.jwz.org/xscreensaver/
 
@@ -78,6 +78,7 @@ The tags and parameters used here are:
           step="MODULUS"
           default="DEFAULT VALUE"
           [ convert="invert" ]
+          [ convert="ratio" ]
           />
 
         This creates a slider.
@@ -97,8 +98,19 @@ The tags and parameters used here are:
         would be 17.)  This is useful for converting between the
         concepts of "delay" and "speed".
 
+        If convert="ratio" is specified, then the value is interpreted as
+        a speed multiplier (2 meaning twice as fast, 0.5 meaning half as
+        fast).  Rather than squashing the "reduction" side of the range
+        all the way over to the left, "1" is moved to the center.  E.g.,
+        if the range was 0.3 - 20.0, the difference between the standard,
+        linear spacing and the "ratio" spacing would be:
+
+        std:  0.3  1.9  3.6  5.2  6.9  8.5 10.2 11.8 13.4 15.1 16.7 18.4 20.0
+             ---- ---- ---- ---- ---- ---- ++++ ---- ---- ---- ---- ---- ----
+      ratio:  0.3  0.4  0.5  0.6  0.8  0.9  1.0  4.2  7.3 10.5 13.7 16.8 20.0
+
         In the "arg" string, the first occurence of "%" is replaced
-        with the numeric value, when creating the command line.
+        with the numeric value when creating the command line.
 
 -----------------------------------------------------------------------
 
@@ -109,7 +121,6 @@ The tags and parameters used here are:
           low="MIN VALUE"
           high="MAX VALUE"
           default="DEFAULT VALUE"
-          [ convert="invert" ]
           />
 
         This creates a spinbox (a text field with a number in it,
@@ -178,8 +189,9 @@ The tags and parameters used here are:
         preferences are in the main Screen Saver Preferences window,
         not in the per-display-mode preferences.
 
-        In the MacOS version, the text-related preferences appear
-        in this pane, and this tag emits those several controls.
+        In the macOS, iOS and Android versions, the text-related
+        preferences appear in this pane, and this tag emits those
+        several controls.
 
 -----------------------------------------------------------------------
 
@@ -193,21 +205,23 @@ The tags and parameters used here are:
         Screen Saver Preferences window, not in the per-display-mode
         preferences.
 
-        In the MacOS version, the image-related preferences appear
-        in this pane, and this tag emits those several controls.
+        In the macOS, iOS and Android versions, the image-related
+        preferences appear in this pane, and this tag emits those
+        several controls.
 
 -----------------------------------------------------------------------
 
   <xscreensaver-updater />
 
         Where to position the "Check for Updates" options.
-        This is used on MacOS and ignored on X11.
+        This is used on macOS and ignored on X11, iOS and Android.
 
 -----------------------------------------------------------------------
 
   <video href="URL" />
 
         A link to a Youtube preview of this screen saver.
+        This is not presented in the UI, but is used elsewhere.
 
 -----------------------------------------------------------------------
 

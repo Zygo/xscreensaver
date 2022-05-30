@@ -42,7 +42,8 @@
   <xscreensaver-updater />
 
   <_description>
-Displays a few lines of text spinning around in a solid 3D font.
+A few lines of text spinning around in a solid 3D font.
+
 The text can use strftime() escape codes to display the current 
 date and time.
 

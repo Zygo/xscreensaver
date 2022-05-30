@@ -1,4 +1,4 @@
-/* xscreensaver-systemd, Copyright (c) 2019-2021
+/* xscreensaver-systemd, Copyright (c) 2019-2022
  * Martin Lucina <martin@lucina.net> and Jamie Zawinski <jwz@jwz.org>
  *
  * ISC License
@@ -17,6 +17,7 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
+ *****************************************************************************
  *
  * This utility provides systemd integration for XScreenSaver.
  * It does two things:
@@ -33,10 +34,15 @@
  *     display un-blanked.  It does this until the other program asks for
  *     it to stop.
  *
- * For this to work at all, you must prevent Gnome and KDE from usurping
- * the "org.freedesktop.ScreenSaver" messages, or else this program can't
- * receive them.  The "xscreensaver" man page contains the (complicated)
- * installation instructions.
+ * For this to work at all, you must either:
+ *
+ *     A: Be running GNOME's "org.gnome.SessionManager" D-Bus service; or
+ *     B: Be running KDE's "org.kde.Solid.PowerManagement.PolicyAgent" svc; or
+ *     C: Prevent your desktop environment from running the
+ *        "org.freedesktop.ScreenSaver "service.
+ *
+ *
+ *****************************************************************************
  *
  * Background:
  *
@@ -60,21 +66,29 @@
  *         "Did IQs just drop sharply while I was away?" -- Ellen Ripley
  *
  *     We can sometimes detect that the inhibiting app has exited abnormally
- *     by using "tracking peers" but I'm not sure how reliable that is.
+ *     by using "tracking peers" but that seems to not work on all systems.
  *
  *     Furthermore, we can't listen for these "inhibit blanking" requests
- *     if some other program is already listening for them -- which Gnome and
+ *     if some other program is already listening for them -- which GNOME and
  *     KDE do by default, even if their screen savers are otherwise disabled.
- *     That makes it far more complicated for the user to install XScreenSaver
- *     in such a way that "xscreensaver-systemd" can even launch at all.
+ *
+ *     Both GNOME and KDE bind to "org.freedesktop.ScreenSaver" by default,
+ *     meaning that we can't listen for events sent there.  However, after
+ *     receiving events at "org.freedesktop.ScreenSaver" they both *also*
+ *     sends out a secondary set of notifications that we *are* able to
+ *     receive.  Naturally GNOME and KDE do this in differently idiosyncratic
+ *     ways.
+ *
+ *     If you use some third desktop system that registers itself as
+ *     "org.freedesktop.ScreenSaver", you will need to convince it to stop
+ *     doing that.
  *
  *     To recap: because the existing video players decided to delete the
  *     single line of code that they already had -- the heartbeat call to
- *     "xscreensaver-command -deactivate" -- we had to respond by adding a
- *     THOUSAND LINES of complicated code that talks to a server that may
- *     not be running, and that may not allow us to connect, and that may
- *     not work properly anyway, and that makes installation hellaciously
- *     difficult and confusing for the end user.
+ *     "xscreensaver-command -deactivate" -- we had to respond by adding
+ *     TWELVE HUNDRED LINES of complicated code that talks to a server that
+ *     may not be running, and that may not allow us to connect, and that may
+ *     not work properly anyway.
  *
  *     This is what is laughingly referred to as "progress".
  *
@@ -84,96 +98,90 @@
  *
  *****************************************************************************
  *
- * Firefox (version 78.5)
+ * Firefox 91.9.0esr, Raspbian 11.1:
  *
- *     When playing media, Firefox will send "inhibit" to one of these
- *     targets: "org.freedesktop.ScreenSaver" or "org.gnome.SessionManager".
+ *     Sends "Inhibit" to the first of these targets that exists at launch:
+ *     "org.freedesktop.ScreenSaver /ScreenSaver" or
+ *     "org.gnome.SessionManager /org/gnome/SessionManager".
+ *     In the source, "WakeLockListener.cpp".
  *
- *     However, Firefox decides which, if any, of those to use at launch time,
- *     and does not revisit that decision.  So if xscreensaver-systemd has not
- *     been launched before Firefox, it won't work.  Fortunately, in most use
- *     cases, xscreensaver will have been launched earlier in the startup
- *     sequence than the web browser.
+ *   Inhibit:	Kind:				Reason:
  *
- *     If you close the tab or exit while playing, Firefox sends "uninhibit".
- *
- * Critical Firefox Bug:
- *
- *     If Firefox crashes or is killed while playing, it never sends
- *     "uninhibit", leaving the screen saver permanently inhibited.  Once
- *     that happens, the only way to un-fuck things is to kill and restart
- *     the "xscreensaver-systemd" program.
- *
- * Annoying Firefox Bug:
- *
- *     Firefox sends an "inhibit" message when it is merely playing audio.
- *     That's horrible.  Playing audio should prevent your machine from going
- *     to sleep, but it should NOT prevent your screen from blanking or
- *     locking.
- *
- *     However at least it sends it with the reason "audio-playing" instead
- *     of "video-playing", meaning we can (and do) special-case Firefox and
- *     ignore that one.
+ *      Yes	MP4 URL				"video-playing"
+ *      Yes	MP3 URL				"audio-playing"
+ *      Yes	<VIDEO>				"video-playing"
+ *      No	<VIDEO AUTOPLAY>		-
+ *      No	<VIDEO AUTOPLAY LOOP>		-
+ *      Yes	<AUDIO>				"audio-playing"
+ *      No	<AUDIO AUTOPLAY>		-
+ *      Yes	YouTube IFRAME			"video-playing"
+ *      Yes	YouTube IFRAME, autoplay	"video-playing"
+ *      Yes	Uninhibit on quit
+ *      No	Uninhibit on kill
  *
  *
  *****************************************************************************
  *
- * Chrome (version 87)
+ * Chromium 98.0.4758.106-rpt1, Raspbian 11.1:
  *
- *     Sends "inhibit" to "org.freedesktop.ScreenSaver" (though it uses a
- *     a different object path than Firefox does).  Unlike Firefox, Chrome
- *     does not send an "inhibit" message when only audio is playing.
+ *     Sends "Inhibit" to the first of these targets that exists at launch:
+ *     "org.gnome.SessionManager /org/gnome/SessionManager" or
+ *     "org.freedesktop.ScreenSaver /org/freedesktop/ScreenSaver".
+ *     In the source, "power_save_blocker_linux.cc".
  *
- * Critical Chrome Bug:
+ *   Inhibit:	Kind:				Reason:
  *
- *     If Chrome crashes or is killed while playing, it never sends
- *     "uninhibit", leaving the screen saver permanently inhibited.
+ *      Yes	MP4 URL				"chromium-browser-v7"
+ *      Yes	MP3 URL				"chromium-browser-v7" <-- BAD
+ *      Yes	<VIDEO>				"chromium-browser-v7"
+ *      Yes	<VIDEO AUTOPLAY>		"chromium-browser-v7"
+ *      Yes	<VIDEO AUTOPLAY LOOP>		"chromium-browser-v7" <-- BAD
+ *      No	<AUDIO>				-
+ *      No	<AUDIO AUTOPLAY>		-
+ *      Yes	YouTube IFRAME			"chromium-browser-v7"
+ *      Yes	YouTube IFRAME, autoplay	"chromium-browser-v7"
+ *      Yes	Uninhibit on quit
+ *      No	Uninhibit on kill
  *
+ *  Bad Chromium bug #1:
  *
- *****************************************************************************
+ *     It inhibits when only audio is playing, and does so with the same
+ *     message as for audio, so we can't tell them apart.  This means that,
+ *     unlike Firefox, playing audio-only in Chromium will prevent your
+ *     screen from blanking.
  *
- * Chromium (version 78, Raspbian 10.4)
+ *  Bad Chromium bug #2:
  *
- *     Does not use "org.freedesktop.ScreenSaver" or "xdg-screensaver".
- *     It appears to make no attempt to inhibit the screen saver while
- *     video is playing.
- *
- *
- *****************************************************************************
- *
- * Chromium (version 84.0.4147.141, Raspbian 10.6)
- *
- *     Sends "inhibit" to "org.freedesktop.ScreenSaver" (though it uses a
- *     a different object path than Firefox does).  Unlike Firefox, Chrome
- *     does not send an "inhibit" message when only audio is playing.
- *
- *     If you close the tab or exit while playing, Chromium sends "uninhibit".
- *
- * Critical Chromium Bug:
- *
- *     If Chromium crashes or is killed while playing, it never sends
- *     "uninhibit", leaving the screen saver permanently inhibited.
- *
- * Annoying Chromium Bug:
- *
- *     Like Firefox, Chromium sends an "inhibit" message when it is merely
- *     playing audio.  Unlike Firefox, it sends exactly the same "reason"
- *     string as it does when playing video, so we can't tell them apart.
- *
- * Another Annoying Chromium Bug:
- *
- *     Twitter (and many other sites) auto-convert GIFs to looping MP4s to
- *     save bandwidth.  Chromium inhibits the screen saver any time a Twitter
- *     GIF is on screen (either in the browser or in Tweetdeck).
+ *     It inhibits when short looping videos are playing.  Many sites
+ *     (including Twitter) auto-convert GIFs to looping MP4s to save
+ *     bandwidth, so Chromium will inhibit any time such a GIF is visible.
  *
  *     The proper way for Chrome to fix this would be to stop inhibiting once
  *     the video loops.  That way your multi-hour movie inhibits properly, but
  *     your looping GIF only inhibits for the first few seconds.
+ *     
+ *
+ *****************************************************************************
+ *
+ * Chromium 101.0.4951.64, Debian 11.3:
+ *
+ *     Same as the above, except that "chromium-browser-v7" has changed to
+ *     "Video Wake Lock".
+ *
+ *     When playing videos, it sends two "Inhibit" requests: "Video Wake Lock"
+ *     and "Playing audio".  When playing audio, it also sends those same two
+ *     requests.  Closer!  Still wrong.
  *
  *
  *****************************************************************************
  *
- * MPV (version 0.29.1)
+ * Chrome 101.0.4951.64 (Official Google Build), Debian 11.3:
+ *
+ *     Same.
+ *
+ *****************************************************************************
+ *
+ * MPV 0.32.0-3, Raspbian 11.1:
  *
  *     While playing, it runs "xdg-screensaver reset" every 10 seconds as a
  *     heartbeat.  That program is a super-complicated shell script that will
@@ -181,7 +189,7 @@
  *     xscreensaver daemon directly rather than going through systemd.
  *     That's fine.
  *
- *     On Debian 10.4 and 10.6, MPV does not have a dependency on the
+ *     On Debian 10.4 through 11.1, MPV does not have a dependency on the
  *     "xdg-utils" package, so "xdg-screensaver" might not be installed.
  *     Oddly, Chromium *does* have a dependency on "xdg-utils", even though
  *     Chromium doesn't run "xdg-screensaver".
@@ -195,75 +203,58 @@
  *     extension because it is worse than useless.  See the commentary at
  *     the top of xscreensaver.c for details.
  *
- * Annoying MPV Bug:
  *
- *     Like Firefox and Chromium, MPV inhibits screen blanking when only
- *     audio is playing.
+ *****************************************************************************
+ *
+ * VLC 3.0.16-1, Raspbian 11.1 & Debian 11.3:
+ *
+ *     Sends "Inhibit" to the first of these targets that exists at launch:
+ *     "org.freedesktop.ScreenSaver /ScreenSaver" or
+ *     "org.mate.SessionManager /org/mate/SessionManager" or
+ *     "org.gnome.SessionManager /org/gnome/SessionManager".
+ *
+ *     For video, it sends the reason "Playing some media."  It does not send
+ *     "Inhibit" when playing audio only.  Also it is the only program to
+ *     properly send "Uninhibit" when killed.
+ *
+ *     It also contains code to run "xdg-screensaver reset" as a heartbeat,
+ *     but I have never seen that happen.
+ *     In the source, "vlc/modules/misc/inhibit/dbus.c" and "xdg.c".
  *
  *
  *****************************************************************************
  *
- * MPlayer (version mplayer-gui 2:1.3.0)
+ * MPlayer 2:1.4, Raspbian 11.1:
  *
- *     I can't get this thing to play video at all.  It only plays the audio
- *     of MP4 files, so I can't guess what it might or might not do with video.
- *     It appears to make no attempt to inhibit the screen saver.
+ *     Apparently makes no attempt to inhibit the screen saver.
  *
  *
  *****************************************************************************
  *
- * VLC (version 3.0.11-0+deb10u1+rpt3)
+ * Zoom 5.10.4.2845, Debian 11.3:
  *
- *     VLC sends "inhibit" to "org.freedesktop.ScreenSaver" when playing
- *     video.  It does not send "inhibit" when playing audio only, and it
- *     sends "uninhibit" under all the right circumstances.
- *
- *     NOTE: that's what I saw when I tested it on Raspbian 10.6. However,
- *     the version that came with Raspbian 10.4 -- which also called itself
- *     "VLC 3.0.11" -- did not send "uninhibit" when using the window
- *     manager's "close" button!  Or when killed with "kill".
- *
- *     NOTE ALSO: The VLC source code suggests that under some circumstances
- *     it might be talking to these instead: "org.freedesktop.ScreenSaver",
- *     "org.freedesktop.PowerManagement.Inhibit", "org.mate.SessionManager",
- *     and/or "org.gnome.SessionManager".  It also contains code to run
- *     "xdg-screensaver reset" as a heartbeat.  I can't tell how it decides
- *     which system to use.  I have never seen it run "xdg-screensaver".
+ *    Sends "Inhibit" to "org.freedesktop.ScreenSaver" with "in a meeting".
+ *    I think it does this for both video and audio-only meetings, but that
+ *    seems reasonable.
  *
  *
  *****************************************************************************
  *
- * Zoom
+ * Steam 1:1.0.0.74, Debian 11.3:
  *
- *    I'm told that the proprietary Zoom executable for Linux sends "inhibit"
- *    to "org.freedesktop.ScreenSaver", but I don't have any further details.
+ *     Inhibits, then uninhibits and immediately reinhibits every 30 seconds
+ *     forever.  Sometimes it identifies as "Steam", sometimes as "My SDL
+ *     application", AKA "Baby's First Hello World".  Perfect, no notes.
  *
- *
- *****************************************************************************
- *
- * Steam:
- *
- *     Inhibits as "My SDL application" (ooh, "Baby's First Hello World",
- *     nice!  You get a gold star sticker) and then 30 seconds later,
- *     uninhibits and immediately re-inhibits, forever.  This works, but
- *     is dumb.
  *
  *****************************************************************************
  *
  *
  * TO DO:
  *
- *   - What precisely does the standalone Zoom executable do on Linux?
- *     There doesn't seem to be a Raspbian build, so I can't test it.
- *
- *   - xscreensaver_method_uninhibit() does not actually send a reply, are
- *     we doing the right thing when registering it?
- *
- *   - Currently this code is only listening to "org.freedesktop.ScreenSaver".
- *     Perhaps it should listen to "org.mate.SessionManager" and
- *     "org.gnome.SessionManager"?  Where are those documented?
- *
- *   - Do we need to call sd_bus_release_name() explicitly on exit?
+ *   - What is "org.mate.SessionManager"?  If it is just a re-branded
+ *     "org.gnome.SessionManager" with the same behavior, we should probably
+ *     listen to "InhibitorAdded" on that as well.
  *
  *   - Run under valgrind to check for any memory leaks.
  *
@@ -271,29 +262,41 @@
  *     *three* different ways for dbus clients to ask the question, "is the
  *     screen currently blanked?"  We should probably also respond to these:
  *
- *     qdbus org.freedesktop.ScreenSaver /ScreenSaver org.freedesktop.ScreenSaver.GetActive
- *     qdbus org.kde.screensaver         /ScreenSaver org.freedesktop.ScreenSaver.GetActive
- *     qdbus org.gnome.ScreenSaver       /ScreenSaver org.gnome.ScreenSaver.GetActive
+ *     qdbus org.freedesktop.ScreenSaver /ScreenSaver
+ *           org.freedesktop.ScreenSaver.GetActive
+ *     qdbus org.kde.screensaver         /ScreenSaver
+ *           org.freedesktop.ScreenSaver.GetActive
+ *     qdbus org.gnome.ScreenSaver       /ScreenSaver
+ *           org.gnome.ScreenSaver.GetActive
+ *
+ *   - Some people think that "loginctl lock-session" should do something.
+ *     I can't tell what uses that, or what mechanism underlies it.
  *
  *
+ *****************************************************************************
  *
  * TESTING:
  *
+ *   To snoop the bus, "dbus-monitor" or "dbus-monitor --system".
+ *
  *   To call the D-BUS methods manually, you can use "busctl":
  *
- *   busctl --user call org.freedesktop.ScreenSaver \
- *     /ScreenSaver org.freedesktop.ScreenSaver \
- *     Inhibit ss test-application test-reason
+ *     busctl --user call org.freedesktop.ScreenSaver \
+ *       /ScreenSaver org.freedesktop.ScreenSaver \
+ *       Inhibit ss test-application test-reason
  *
  *   This will hand out a cookie, which you can pass back to UnInhibit:
  *
- *   u 1792821391
+ *     u 1792821391
  *
- *   busctl --user call org.freedesktop.ScreenSaver \
- *     /ScreenSaver org.freedesktop.ScreenSaver \
- *     UnInhibit u 1792821391
+ *     busctl --user call org.freedesktop.ScreenSaver \
+ *       /ScreenSaver org.freedesktop.ScreenSaver \
+ *       UnInhibit u 1792821391
  *
  * https://github.com/mato/xscreensaver-systemd
+ *
+ *
+ *****************************************************************************
  */
 
 #ifdef HAVE_CONFIG_H
@@ -330,6 +333,8 @@
 
 static char *screensaver_version;
 
+/* This is for power management, on the system bus.
+ */
 #define DBUS_CLIENT_NAME     "org.jwz.XScreenSaver"
 #define DBUS_SD_SERVICE_NAME "org.freedesktop.login1"
 #define DBUS_SD_OBJECT_PATH  "/org/freedesktop/login1"
@@ -340,15 +345,39 @@ static char *screensaver_version;
 #define DBUS_SD_METHOD_WHO   "xscreensaver"
 #define DBUS_SD_METHOD_WHY   "lock screen on suspend"
 #define DBUS_SD_METHOD_MODE  "delay"
+#define DBUS_SD_MATCH        "type='signal'," \
+                             "interface='" DBUS_SD_INTERFACE "'," \
+                             "member='PrepareForSleep'"
 
-#define DBUS_SD_MATCH "type='signal'," \
-                      "interface='" DBUS_SD_INTERFACE "'," \
-                      "member='PrepareForSleep'"
-
+/* This is for blanking inhibition, on the user bus.
+ */
 #define DBUS_FDO_NAME          "org.freedesktop.ScreenSaver"
-#define DBUS_FDO_OBJECT_PATH   "/ScreenSaver"			/* Firefox */
+#define DBUS_FDO_INTERFACE     DBUS_FDO_NAME
+#define DBUS_FDO_OBJECT_PATH_1 "/ScreenSaver"		   /* Firefox, VLC */
 #define DBUS_FDO_OBJECT_PATH_2 "/org/freedesktop/ScreenSaver"	/* Chrome  */
-#define DBUS_FDO_INTERFACE     "org.freedesktop.ScreenSaver"
+
+#define DBUS_GSN_INTERFACE     "org.gnome.SessionManager"
+#define DBUS_GSN_PATH          "/org/gnome/SessionManager"
+#define DBUS_GSN_MATCH_1       "type='signal'," \
+                               "interface='" DBUS_GSN_INTERFACE "'," \
+                               "member='InhibitorAdded'"
+#define DBUS_GSN_MATCH_2       "type='signal'," \
+                               "interface='" DBUS_GSN_INTERFACE "'," \
+                               "member='InhibitorRemoved'"
+
+#define DBUS_KDE_INTERFACE     "org.kde.Solid.PowerManagement.PolicyAgent"
+#define DBUS_KDE_PATH         "/org/kde/Solid/PowerManagement/PolicyAgent"
+#define DBUS_KDE_MATCH         "type='signal'," \
+                               "interface='" DBUS_KDE_INTERFACE "'," \
+                               "member='InhibitionsChanged'"
+#define INTERNAL_KDE_COOKIE "_KDE_"
+
+/* This is for metadata about D-Bus itself.
+ */
+#define DBUS_SERVICE_DBUS    "org.freedesktop.DBus"
+#define DBUS_PATH_DBUS      "/org/freedesktop/DBus"
+#define DBUS_INTERFACE_DBUS  DBUS_SERVICE_DBUS
+
 
 #define HEARTBEAT_INTERVAL 50  /* seconds */
 
@@ -360,7 +389,7 @@ struct handler_ctx {
   sd_bus *system_bus;
   sd_bus_message *lock_message;
   int lock_fd;
-  int is_inhibited;
+  int inhibit_count;
   sd_bus_track *track;
 };
 
@@ -370,10 +399,13 @@ SLIST_HEAD(inhibit_head, inhibit_entry) inhibit_head =
   SLIST_HEAD_INITIALIZER(inhibit_head);
 
 struct inhibit_entry {
-  uint32_t cookie;
+  char *cookie;
   time_t start_time;
   char *appname;
   char *peer;
+  char *reason;
+  Bool ignored_p;
+  Bool seen_p;
   SLIST_ENTRY(inhibit_entry) entries;
 };
 
@@ -384,7 +416,7 @@ xscreensaver_command (const char *cmd)
   char buf[1024];
   int rc;
   sprintf (buf, "xscreensaver-command %.100s -%.100s",
-           (verbose_p ? "-verbose" : "-quiet"),
+           (verbose_p ? "--verbose" : "--quiet"),
            cmd);
   if (verbose_p)
     fprintf (stderr, "%s: exec: %s\n", blurb(), buf);
@@ -394,6 +426,47 @@ xscreensaver_command (const char *cmd)
   else if (WEXITSTATUS(rc) != 0)
     fprintf (stderr, "%s: exec: \"%s\" exited with status %d\n", 
              blurb(), buf, WEXITSTATUS(rc));
+}
+
+
+/* Make a method call and read a single string reply.
+   Like "dbus-send --print-reply --dest=$dest $path $interface.$msg"
+ */
+static const char *
+dbus_send (sd_bus *bus, const char *dest, const char *path,
+           const char *interface, const char *msg)
+{
+  int rc;
+  sd_bus_message *m = 0;
+  sd_bus_error error = SD_BUS_ERROR_NULL;
+  sd_bus_message *reply = 0;
+  const char *ret = 0;
+
+  rc = sd_bus_message_new_method_call (bus, &m, dest, path, interface, msg);
+  if (rc < 0) {
+    fprintf (stderr, "%s: dbus_send: failed to create message: %s%s: %s\n",
+             blurb(), interface, msg, strerror(-rc));
+    return 0;
+  }
+
+  sd_bus_message_set_auto_start (m, 1);
+  sd_bus_message_set_expect_reply (m, 1);
+
+  rc = sd_bus_call (bus, m, -1, &error, &reply);
+  if (rc < 0) {
+    fprintf (stderr, "%s: dbus_send: call failed: %s.%s: %s\n", 
+             blurb(), interface, msg, strerror(-rc));
+    return 0;
+  }
+
+  rc = sd_bus_message_read (reply, "s", &ret);
+  if (rc < 0) {
+    fprintf (stderr, "%s: dbus_send: failed to read reply: %s.%s: %s\n", 
+             blurb(), interface, msg, strerror(-rc));
+    return 0;
+  }
+
+  return ret;
 }
 
 
@@ -434,12 +507,12 @@ xscreensaver_register_sleep_lock (struct handler_ctx *ctx)
 }
 
 
-/* Called when DBUS_SD_INTERFACE sends a "PrepareForSleep" signal.
-   The event is sent twice: before sleep, and after.
+/* Called when "org.freedesktop.login1.Manager" sends a "PrepareForSleep"
+   signal.  The event is sent twice: before sleep, and after.
  */
 static int
-xscreensaver_systemd_handler (sd_bus_message *m, void *arg,
-                              sd_bus_error *ret_error)
+xscreensaver_prepare_for_sleep_cb (sd_bus_message *m, void *arg,
+                                   sd_bus_error *ret_error)
 {
   struct handler_ctx *ctx = arg;
   int before_sleep;
@@ -487,19 +560,163 @@ xscreensaver_systemd_handler (sd_bus_message *m, void *arg,
 }
 
 
-/* Called from the vtable when another process sends a request to systemd
-   to inhibit the screen saver.  We return to them a cookie which they must
+/* Is this "reason" string one that means we should inhibit blanking?
+   If the string is e.g. "audio-playing", (Firefox) the answer is no.
+   If the string is "Download in progress", (Chromium) the answer is no.
+ */
+static Bool
+good_reason_p (const char *s)
+{
+  if (!s || !*s) return True;
+  if (strcasestr (s, "video")) return True;
+  if (strcasestr (s, "audio")) return False;
+  if (strcasestr (s, "download")) return False;
+  return True;
+}
+
+
+static const char *
+remove_dir (const char *s)
+{
+  if (s) {
+    const char *s2 = strrchr (s, '/');
+    if (s2 && s2[1]) return s2+1;
+  }
+  return s;
+}
+
+
+static struct inhibit_entry *
+add_new_entry (struct handler_ctx *ctx,
+               const char *cookie,
+               const char *application_name,
+               const char *sender,
+               const char *via,
+               const char *inhibit_reason)
+{
+  struct inhibit_entry *entry = calloc (1, sizeof (*entry));
+  entry->cookie     = strdup(cookie);
+  entry->appname    = strdup(application_name);
+  entry->peer       = sender ? strdup(sender) : NULL;
+  entry->reason     = strdup(inhibit_reason ? inhibit_reason : "");
+  entry->start_time = time ((time_t *)0);
+  entry->ignored_p  = ! good_reason_p (inhibit_reason);
+  SLIST_INSERT_HEAD (&inhibit_head, entry, entries);
+
+  if (! entry->ignored_p)
+    ctx->inhibit_count++;
+
+  if (verbose_p) {
+    char *c2 = (char *)
+      malloc ((entry->cookie ? strlen(entry->cookie) : 0) + 20);
+    if (cookie && !!strcmp (cookie, INTERNAL_KDE_COOKIE))
+      sprintf (c2, " cookie \"%s\"", remove_dir (entry->cookie));
+    else
+      *c2 = 0;
+    fprintf (stderr,
+             "%s: inhibited by \"%s\" (%s%s%s) with \"%s\"%s%s\n",
+             blurb(), remove_dir (application_name),
+             (via ? "via " : ""),
+             (via ? via : ""),
+             (sender ? sender : ""),
+             inhibit_reason,
+             c2,
+             (entry->ignored_p ? " (ignored)" : ""));
+  }
+
+  return entry;
+}
+
+
+static void
+free_entry (struct handler_ctx *ctx, struct inhibit_entry *entry)
+{
+  if (entry->peer) {
+    int rc = sd_bus_track_remove_name (ctx->track, entry->peer);
+    if (rc < 0) {
+      fprintf (stderr, "%s: failed to stop tracking peer \"%s\": %s\n",
+               blurb(), entry->peer, strerror(-rc));
+    }
+    free (entry->peer);
+  }
+
+  if (entry->appname) free (entry->appname);
+  if (entry->cookie)  free (entry->cookie);
+  if (entry->reason)  free (entry->reason);
+
+  if (! entry->ignored_p)
+    ctx->inhibit_count--;
+  if (ctx->inhibit_count < 0)
+    ctx->inhibit_count = 0;
+
+  free (entry);
+}
+
+
+/* Remove any entries with the given cookie.
+   If cookie is NULL, instead remove any entries whose peer is dead.
+ */
+static Bool
+remove_matching_entry (struct handler_ctx *ctx,
+                       const char *matching_cookie,
+                       const char *sender,
+                       const char *via)
+{
+  struct inhibit_entry *entry, *entry_next;
+  Bool found = False;
+
+  SLIST_FOREACH_SAFE (entry, &inhibit_head, entries, entry_next) {
+    if (matching_cookie
+        ? !strcmp (entry->cookie, matching_cookie)
+        : !sd_bus_track_count_name (ctx->track, entry->peer)) {
+      if (verbose_p) {
+        if (matching_cookie)
+          fprintf (stderr,
+                   "%s: uninhibited by \"%s\" (%s%s%s) with \"%s\""
+                   " cookie \"%s\"%s\n",
+                   blurb(), remove_dir (entry->appname),
+                   (via ? "via " : ""),
+                   (via ? via : ""),
+                   (sender ? sender : ""),
+                   entry->reason,
+                   remove_dir (entry->cookie),
+                   (entry->ignored_p ? " (ignored)" : ""));
+        else
+          fprintf (stderr, "%s: peer %s for inhibiting app \"%s\" has died:"
+                           " uninhibiting %s%s\n",
+                   blurb(), entry->peer, entry->appname,
+                   remove_dir (entry->cookie),
+                   (entry->ignored_p ? " (ignored)" : ""));
+      }
+      SLIST_REMOVE (&inhibit_head, entry, inhibit_entry, entries);
+      free_entry (ctx, entry);
+      found = True;
+      break;
+    }
+  }
+
+  if (!found && matching_cookie && verbose_p)
+    fprintf (stderr, "%s: uninhibit: no match for cookie \"%s\"\n",
+             blurb(), remove_dir (matching_cookie));
+
+  return found;
+}
+
+
+/* Called from the vtable when another process sends a request to
+   "org.freedesktop.ScreenSaver" (on which we are authoritative) to
+   inhibit the screen saver.  We return to them a cookie which they must
    present with their "uninhibit" request.
  */
 static int
-xscreensaver_method_inhibit (sd_bus_message *m, void *arg,
-                             sd_bus_error *ret_error)
+xscreensaver_inhibit_cb (sd_bus_message *m, void *arg,
+                         sd_bus_error *ret_error)
 {
   struct handler_ctx *ctx = arg;
   const char *application_name = 0, *inhibit_reason = 0;
-  struct inhibit_entry *entry = 0;
-  const char *s;
   const char *sender;
+  uint32_t cookie;
+  char cookie_str[20];
 
   int rc = sd_bus_message_read(m, "ss", &application_name, &inhibit_reason);
   if (rc < 0) {
@@ -521,22 +738,8 @@ xscreensaver_method_inhibit (sd_bus_message *m, void *arg,
 
   sender = sd_bus_message_get_sender (m);
 
-  /* Omit directory (Chrome does this shit) */
-  s = strrchr (application_name, '/');
-  if (s && s[1]) application_name = s+1;
+  application_name = remove_dir (application_name);
 
-  if (strcasestr (inhibit_reason, "audio") &&
-      !strcasestr (inhibit_reason, "video")) {
-    /* Firefox 78 sends an inhibit when playing audio only, with reason
-       "audio-playing".  This is horrible.  Ignore it.  (But perhaps it
-       would be better to accept it, issue them a cookie, and then just
-       ignore that entry?) */
-    if (verbose_p)
-      fprintf (stderr, "%s: inhibited by \"%s\" (%s) with \"%s\", ignored\n",
-               blurb(), application_name, sender, inhibit_reason);
-    return -1;
-  }
-  
   /* Tell the global tracker object to monitor when this peer exits. */
   rc = sd_bus_track_add_name(ctx->track, sender);
   if (rc < 0) {
@@ -545,34 +748,26 @@ xscreensaver_method_inhibit (sd_bus_message *m, void *arg,
     sender = NULL;
   }
 
-  entry = malloc(sizeof (struct inhibit_entry));
-  entry->cookie = ya_random();
-  entry->appname = strdup(application_name);
-  entry->peer = sender ? strdup(sender) : NULL;
-  entry->start_time = time ((time_t *)0);
-  SLIST_INSERT_HEAD(&inhibit_head, entry, entries);
-  ctx->is_inhibited++;
-  if (verbose_p)
-    fprintf (stderr, "%s: inhibited by \"%s\" (%s) with \"%s\""
-             " -> cookie %08X\n",
-             blurb(), application_name, sender, inhibit_reason, entry->cookie);
+  cookie = ya_random();
+  sprintf (cookie_str, "%08X", cookie);
 
-  return sd_bus_reply_method_return (m, "u", entry->cookie);
+  add_new_entry (ctx, cookie_str, application_name, sender, 0, inhibit_reason);
+  return sd_bus_reply_method_return (m, "u", cookie);
 }
 
 
-/* Called from the vtable when another process sends a request to systemd
-   to uninhibit the screen saver.  The cookie must match an earlier "inhibit"
+/* Called from the vtable when another process sends a request to
+   "org.freedesktop.ScreenSaver" (on which we are authoritative) to
+   uninhibit the screen saver.  The cookie must match an earlier "inhibit"
    request.
  */
 static int
-xscreensaver_method_uninhibit (sd_bus_message *m, void *arg,
-                               sd_bus_error *ret_error)
+xscreensaver_uninhibit_cb (sd_bus_message *m, void *arg,
+                           sd_bus_error *ret_error)
 {
   struct handler_ctx *ctx = arg;
   uint32_t cookie;
-  struct inhibit_entry *entry, *entry_next;
-  int found = 0;
+  char cookie_str[20];
   const char *sender;
 
   int rc = sd_bus_message_read (m, "u", &cookie);
@@ -582,50 +777,228 @@ xscreensaver_method_uninhibit (sd_bus_message *m, void *arg,
     return rc;
   }
 
+  sprintf (cookie_str, "%08X", cookie);
   sender = sd_bus_message_get_sender (m);
-
-  SLIST_FOREACH_SAFE(entry, &inhibit_head, entries, entry_next) {
-    if (entry->cookie == cookie) {
-      if (verbose_p)
-        fprintf (stderr, "%s: uninhibited by \"%s\" (%s) with cookie %08X\n",
-                 blurb(), entry->appname, sender, cookie);
-      SLIST_REMOVE (&inhibit_head, entry, inhibit_entry, entries);
-      if (entry->appname) free (entry->appname);
-      if (entry->peer) {
-        rc = sd_bus_track_remove_name(ctx->track, entry->peer);
-        if (rc < 0) {
-          fprintf (stderr, "%s: failed to stop tracking peer \"%s\": %s\n",
-                   blurb(), entry->peer, strerror(-rc));
-        }
-        free(entry->peer);
-      }
-      free(entry);
-      ctx->is_inhibited--;
-      if (ctx->is_inhibited < 0)
-        ctx->is_inhibited = 0;
-      found = 1;
-      break;
-    }
-  }
-
-  if (! found)
-    fprintf (stderr, "%s: uninhibit: no match for cookie %08X\n",
-             blurb(), cookie);
+  remove_matching_entry (ctx, cookie_str, sender, 0);
 
   return sd_bus_reply_method_return (m, "");
 }
 
-/*
- * This vtable defines the service interface we implement.
+
+/* Called when "org.gnome.SessionManager" (gnome-shell) sends out a broadcast
+   announcement that some other process has received an inhibitor lock.
+   Anyone can receive this signal: it is non-exclusive.
  */
-static const sd_bus_vtable
-xscreensaver_dbus_vtable[] = {
-    SD_BUS_VTABLE_START(0),
-    SD_BUS_METHOD("Inhibit", "ss", "u", xscreensaver_method_inhibit,
-                  SD_BUS_VTABLE_UNPRIVILEGED),
-    SD_BUS_METHOD("UnInhibit", "u", "", xscreensaver_method_uninhibit,
-                  SD_BUS_VTABLE_UNPRIVILEGED),
-    SD_BUS_VTABLE_END
+static int
+xscreensaver_gnome_inhibitor_added_cb (sd_bus_message *m, void *arg,
+                                       sd_bus_error *err)
+{
+  struct handler_ctx *ctx = arg;
+  sd_bus *bus = sd_bus_message_get_bus (m);
+  const char *path = 0;
+  const char *iface = 0;
+  const char *sender = 0;
+  const char *appid = 0;
+  const char *reason = 0;
+  char *via;
+  int rc;
+
+  rc = sd_bus_message_read (m, "o", &path);
+  if (rc < 0) {
+    fprintf (stderr, "%s: failed to parse method call: %s\n",
+             blurb(), strerror(-rc));
+    return rc;
+  }
+
+  sender = sd_bus_message_get_sender (m);
+  iface = sd_bus_message_get_interface (m);
+
+  appid = dbus_send (bus, DBUS_GSN_INTERFACE, path,
+                     DBUS_GSN_INTERFACE ".Inhibitor", "GetAppId");
+  if (!appid) return 0;
+
+  appid = remove_dir (appid);
+  reason = dbus_send (bus, DBUS_GSN_INTERFACE, path,
+                      DBUS_GSN_INTERFACE ".Inhibitor", "GetReason");
+  if (!reason) return 0;
+
+  /* We can't get the original peer sender of this message: this is
+     a rebroadcast from gnome-shell. */
+
+  via = (char *) malloc (strlen(iface) + strlen(sender) + 10);
+  sprintf (via, "%s%s", iface, sender);
+  add_new_entry (ctx, path, appid, 0, via, reason);
+  free (via);
+
+  return 0;
+}
+
+
+/* Called when "org.gnome.SessionManager" (gnome-shell) sends out a broadcast
+   announcement that some other process has relinquished an inhibitor lock.
+   Anyone can receive this signal: it is non-exclusive.
+ */
+static int
+xscreensaver_gnome_inhibitor_removed_cb (sd_bus_message *m, void *arg,
+                                         sd_bus_error *err)
+{
+  struct handler_ctx *ctx = arg;
+  const char *path = 0;
+  const char *sender = 0;
+  const char *iface = 0;
+  int rc;
+
+  rc = sd_bus_message_read (m, "o", &path);
+  if (rc < 0) {
+    fprintf (stderr, "%s: failed to parse method call: %s\n",
+             blurb(), strerror(-rc));
+    return rc;
+  }
+
+  iface = sd_bus_message_get_interface (m);
+  sender = sd_bus_message_get_sender (m);
+  remove_matching_entry (ctx, path, sender, iface);
+  return 0;
+}
+
+
+/* Called when "org.kde.Solid.PowerManagement.PolicyAgent" (powerdevil)
+   sends out a broadcast announcement that some other process has received
+   or relinquished an inhibitor lock.  Anyone can receive this signal: it
+   is non-exclusive.
+ */
+static int
+xscreensaver_kde_inhibitor_changed_cb (sd_bus_message *m, void *arg,
+                                       sd_bus_error *err)
+{
+  /* When an inhibitor is being added, this message contains the appname
+     and reason as an array of two strings.  When one is being removed, the
+     message contains an empty array, followed by an array of one element,
+     the appname.  So one can tell "inhibit" and "uninhibit" apart, but
+     can't tell *which* inhibition was being removed, since the uninhibit
+     message doesn't contain the reason or a cookie.  So that's pretty
+     worthless.
+
+     Instead of parsing the contents of this message, any time we get
+     "InhibitionsChanged", we send a "ListInhibitions" message and parse
+     the result of that instead: the current list of inhibitions.
+   */
+  struct handler_ctx *ctx = arg;
+  sd_bus *bus = sd_bus_message_get_bus (m);
+  sd_bus_error error = SD_BUS_ERROR_NULL;
+  sd_bus_message *reply = 0;
+  const char *dest = DBUS_KDE_INTERFACE;
+  const char *path = DBUS_KDE_PATH;
+  const char *interface = dest;
+  const char *msg = "ListInhibitions";
+  struct inhibit_entry *entry, *entry_next;
+  int rc;
+
+  rc = sd_bus_message_new_method_call (bus, &m, dest, path, interface, msg);
+  if (rc < 0) {
+    fprintf (stderr, "%s: KDE: failed to create message: %s%s: %s\n",
+             blurb(), interface, msg, strerror(-rc));
+    return rc;
+  }
+
+  sd_bus_message_set_auto_start (m, 1);
+  sd_bus_message_set_expect_reply (m, 1);
+
+  rc = sd_bus_call (bus, m, -1, &error, &reply);
+  if (rc < 0) {
+    fprintf (stderr, "%s: KDE: call failed: %s.%s: %s\n", 
+             blurb(), interface, msg, strerror(-rc));
+    return rc;
+  }
+
+  m = reply;
+
+  /* It's an array of an arbitrary number of structs of 2 strings each. */
+  rc = sd_bus_message_enter_container (m, 'a', "(ss)");
+  if (rc < 0) {
+    fprintf (stderr, "%s: KDE: enter container failed: %s.%s: %s\n", 
+             blurb(), interface, msg, strerror(-rc));
+    return rc;
+  }
+
+  /* Since they don't give us the original inhibiting cookie, we have to
+     assume that the appname/reason pair is unique: that means that if
+     someone sends two identical inhibits, that counts as one.  No nesting.
+   */
+  interface = "KDE";  /* That string is so long */
+
+  /* Clear the "seen" flags for our internal tracking. */
+  SLIST_FOREACH_SAFE (entry, &inhibit_head, entries, entry_next) {
+    if (!strcmp (entry->cookie, INTERNAL_KDE_COOKIE))
+      entry->seen_p = False;
+  }
+
+  /* Iterate over each entry in this message reply.
+   */
+  while (1) {
+    const char *appname = 0, *reason = 0;
+    Bool seen_p = False;
+
+    rc = sd_bus_message_read (m, "(ss)", &appname, &reason);
+    if (rc < 0) {
+      fprintf (stderr, "%s: KDE: message read failed: %s.%s: %s\n", 
+               blurb(), interface, msg, strerror(-rc));
+      return rc;
+    }
+
+    if (rc == 0) break;
+
+    /* Tag any existing entries that match an entry in the new list.
+     */
+    SLIST_FOREACH_SAFE (entry, &inhibit_head, entries, entry_next) {
+      if (!strcmp (entry->cookie, INTERNAL_KDE_COOKIE) &&
+          !strcmp (entry->appname, appname) &&
+          !strcmp (entry->reason, reason)) {
+        entry->seen_p = True;
+        seen_p = True;
+      }
+    }
+
+    /* Add a new entry if this one is not already in the list.
+     */
+    if (! seen_p) {
+      entry = add_new_entry (ctx, INTERNAL_KDE_COOKIE, appname, 0,
+                             interface, reason);
+      entry->seen_p = True;
+    }
+  }
+
+  /* Remove any existing entries that were not mentioned.
+   */
+  SLIST_FOREACH_SAFE (entry, &inhibit_head, entries, entry_next) {
+    if (!strcmp (entry->cookie, INTERNAL_KDE_COOKIE) &&
+        !entry->seen_p) {
+      if (verbose_p)
+        fprintf (stderr,
+                 "%s: uninhibited by \"%s\" (via %s) with \"%s\"%s\n",
+                 blurb(), remove_dir (entry->appname),
+                 interface,
+                 entry->reason,
+                 (entry->ignored_p ? " (ignored)" : ""));
+      SLIST_REMOVE (&inhibit_head, entry, inhibit_entry, entries);
+      free_entry (ctx, entry);
+    }
+  }
+
+  return 0;
+}
+
+
+/* This vtable defines the services we implement on the
+   "org.freedesktop.ScreenSaver" endpoint.
+ */
+static const sd_bus_vtable xscreensaver_dbus_vtable[] = {
+  SD_BUS_VTABLE_START(0),
+  SD_BUS_METHOD ("Inhibit", "ss", "u", xscreensaver_inhibit_cb,
+                 SD_BUS_VTABLE_UNPRIVILEGED),
+  SD_BUS_METHOD ("UnInhibit", "u", "", xscreensaver_uninhibit_cb,
+                 SD_BUS_VTABLE_UNPRIVILEGED),
+  SD_BUS_VTABLE_END
 };
 
 
@@ -695,6 +1068,55 @@ process_name (pid_t pid)
 }
 
 
+/* Whether the given service name is currently registered on the bus.
+ */
+static Bool
+service_exists_p (sd_bus *bus, const char *name)
+{
+  int rc;
+  sd_bus_message *m = 0;
+  sd_bus_error error = SD_BUS_ERROR_NULL;
+  sd_bus_message *reply = 0;
+  int ret = 0;
+  const char *dest = DBUS_SERVICE_DBUS;
+  const char *path = DBUS_PATH_DBUS;
+  const char *interface = DBUS_INTERFACE_DBUS;
+  const char *msg = "NameHasOwner";
+
+  rc = sd_bus_message_new_method_call (bus, &m, dest, path, interface, msg);
+  if (rc < 0) {
+    fprintf (stderr, "%s: dbus_send: failed to create message: %s%s: %s\n",
+             blurb(), interface, msg, strerror(-rc));
+    return 0;
+  }
+
+  rc = sd_bus_message_append (m, "s", name);
+  if (rc < 0) {
+    fprintf (stderr, "%s: dbus_send: failed append arg: %s%s: %s\n",
+             blurb(), interface, msg, strerror(-rc));
+    return 0;
+  }
+
+  sd_bus_message_set_auto_start (m, 1);
+
+  rc = sd_bus_call (bus, m, -1, &error, &reply);
+  if (rc < 0) {
+    fprintf (stderr, "%s: dbus_send: call failed: %s.%s: %s\n", 
+             blurb(), interface, msg, strerror(-rc));
+    return 0;
+  }
+
+  rc = sd_bus_message_read (reply, "b", &ret);
+  if (rc < 0) {
+    fprintf (stderr, "%s: dbus_send: failed to read reply: %s.%s: %s\n", 
+             blurb(), interface, msg, strerror(-rc));
+    return 0;
+  }
+
+  return ret;
+}
+
+
 static int
 xscreensaver_systemd_loop (void)
 {
@@ -705,9 +1127,22 @@ xscreensaver_systemd_loop (void)
   time_t last_deactivate_time = 0;
   Display *dpy = open_dpy();
 
-  /* 'user_bus' is where we receive messages from other programs sending
-     inhibit/uninhibit to org.freedesktop.ScreenSaver, etc.
+  /* 'system_bus' is where we hold a lock on "org.freedesktop.login1", meaning
+     that we will receive a "PrepareForSleep" message when the system is about
+     to suspend.
+
+     'user_bus' is where we receive messages from other programs sending
+     "Inhibit" and "Uninhibit" requests to "org.freedesktop.ScreenSaver", and
+     notifications of same from "org.gnome.SessionManager" and
+     "org.kde.Solid.PowerManagement.PolicyAgent".
    */
+
+  rc = sd_bus_open_system (&system_bus);
+  if (rc < 0) {
+    fprintf (stderr, "%s: system bus connection failed: %s\n",
+             blurb(), strerror(-rc));
+    goto FAIL;
+  }
 
   rc = sd_bus_open_user (&user_bus);
   if (rc < 0) {
@@ -730,106 +1165,215 @@ xscreensaver_systemd_loop (void)
     goto FAIL;
   }
 
-  rc = sd_bus_add_object_vtable (user_bus,
-                                 NULL,
-                                 DBUS_FDO_OBJECT_PATH,
-                                 DBUS_FDO_INTERFACE,
-                                 xscreensaver_dbus_vtable,
-                                 &global_ctx);
-  if (rc < 0) {
-    fprintf (stderr, "%s: vtable registration failed: %s\n",
-             blurb(), strerror(-rc));
-    goto FAIL;
-  }
-
-  rc = sd_bus_add_object_vtable (user_bus,
-                                 NULL,
-                                 DBUS_FDO_OBJECT_PATH_2,
-                                 DBUS_FDO_INTERFACE,
-                                 xscreensaver_dbus_vtable,
-                                 &global_ctx);
-  if (rc < 0) {
-    fprintf (stderr, "%s: vtable registration failed: %s\n",
-             blurb(), strerror(-rc));
-    goto FAIL;
-  }
-
+  /* Exit if "org.jwz.XScreenSaver" is already registered on the user bus.
+     We don't receive any events on that endpoint, but this is a good mutex
+     to prevent more than one copy of "xscreensaver-systemd" from running.
+   */
   {
-    const char * const names[] = { DBUS_FDO_NAME, DBUS_CLIENT_NAME };
-    int i = 0;
-    for (i = 0; i < countof(names); i++) {
-      rc = sd_bus_request_name (user_bus, names[i], 0);
-      if (rc < 0) {
-        pid_t pid = get_bus_name_pid (user_bus, names[i]);
-        if (pid != -1) {
-          char *pname = process_name (pid);
-          if (pname) {
-            fprintf (stderr,
-                     "%s: connection failed: \"%s\" in use by pid %lu (%s)\n",
-                     blurb(), names[i], (unsigned long) pid, pname);
+    const char *name = DBUS_CLIENT_NAME;
+    rc = sd_bus_request_name (user_bus, name, 0);
+    if (rc < 0) {
+      pid_t pid = get_bus_name_pid (user_bus, name);
+      if (pid != -1) {
+        char *pname = process_name (pid);
+        if (pname) {
+          fprintf (stderr, "%s: \"%s\" in use by pid %lu (%s)\n",
+                   blurb(), name, (unsigned long) pid, remove_dir (pname));
+          free (pname);
+        } else {
+          fprintf (stderr, "%s: \"%s\" in use by pid %lu\n",
+                   blurb(), name, (unsigned long) pid);
+        }
+      } else if (-rc == EEXIST || -rc == EALREADY) {
+        fprintf (stderr, "%s: \"%s\" already in use\n", blurb(), name);
+      } else {
+        fprintf (stderr, "%s: unknown error: \"%s\": %s\n",
+                 blurb(), name, strerror(-rc));
+      }
+      goto FAIL;
+    } else if (verbose_p) {
+      fprintf (stderr, "%s: registered as \"%s\"\n", blurb(), name);
+    }
+  }
+
+    
+  /* Register ourselves as "org.freedesktop.ScreenSaver" if possible.
+     If "org.gnome.SessionManager" or "org.kde.Solid.PowerManagement.
+     PolicyAgent" are registered, this is optional; otherwise it is
+     mandatory.
+   */
+  {
+    const char *gname = DBUS_GSN_INTERFACE;
+    const char *kname = DBUS_KDE_INTERFACE;
+    const char *name  = DBUS_FDO_NAME;
+    Bool fd_p    = False;
+    Bool gnome_p = False;
+    Bool kde_p   = False;
+    time_t start = time ((time_t *) 0);
+    time_t now   = start;
+    int timeout  = 30;
+    int retries  = 0;
+
+    rc = sd_bus_request_name (user_bus, name, 0);
+    if (rc >= 0) {
+      fd_p = True;
+      if (verbose_p)
+        fprintf (stderr, "%s: registered as \"%s\"\n", blurb(), name);
+    } else {
+      pid_t pid = get_bus_name_pid (user_bus, name);
+      if (pid != -1) {
+        char *pname = process_name (pid);
+        if (verbose_p) {
+          fprintf (stderr, "%s: \"%s\" in use by pid %lu (%s)\n",
+                   blurb(), name, (unsigned long) pid, remove_dir (pname));
+          free (pname);
+        } else {
+          if (verbose_p)
+            fprintf (stderr, "%s: \"%s\" in use by pid %lu\n",
+                     blurb(), name, (unsigned long) pid);
+        }
+      } else if (-rc == EEXIST || -rc == EALREADY) {
+        if (verbose_p)
+          fprintf (stderr, "%s: \"%s\" already in use\n", blurb(), name);
+      } else {
+        fprintf (stderr, "%s: unknown error for \"%s\": %s\n",
+                 blurb(), name, strerror(-rc));
+      }
+    }
+
+    /* If XScreenSaver was launched at login, it's possible that
+       "org.freedesktop.ScreenSaver" has been registered by "ksmserver" but
+       "org.kde.Solid.PowerManagement.PolicyAgent" hasn't yet been registered
+       by "org_kde_powerdevil".  So give it 30 seconds to see if things
+       settle down.
+     */
+    while (1) {
+      gnome_p = service_exists_p (user_bus, gname);
+      kde_p   = service_exists_p (user_bus, kname);
+      if (fd_p || gnome_p || kde_p)
+        break;
+      now = time ((time_t *) 0);
+      if (now >= start + timeout)
+        break;
+      
+      retries++;
+      sleep (3);
+    }
+
+    if (verbose_p) {
+      int i = 0;
+      for (i = 0; i < 2; i++) {
+        Bool exists_p    = (i == 0 ? gnome_p : kde_p);
+        const char *name = (i == 0 ? gname   : kname);
+        char rr[20];
+        if (now == start)
+          *rr = 0;
+        else
+          sprintf (rr, " after %lu seconds", now - start);
+
+        if (exists_p) {
+          pid_t pid = get_bus_name_pid (user_bus, name);
+          if (pid != -1) {
+            char *pname = process_name (pid);
+            fprintf (stderr, "%s: \"%s\" in use by pid %lu (%s)%s\n",
+                     blurb(), name, (unsigned long) pid, remove_dir (pname),
+                     rr);
             free (pname);
           } else {
-            fprintf (stderr,
-                     "%s: connection failed: \"%s\" in use by pid %lu\n",
-                     blurb(), names[i], (unsigned long) pid);
+            fprintf (stderr, "%s: \"%s\" in use%s\n", blurb(), name, rr);
           }
-        } else if (-rc == EEXIST || -rc == EALREADY) {
-          fprintf (stderr, "%s: connection failed: \"%s\" already in use\n",
-                   blurb(), names[i]);
         } else {
-          fprintf (stderr, "%s: connection failed for \"%s\": %s\n",
-                   blurb(), names[i], strerror(-rc));
+          fprintf (stderr, "%s: \"%s\" not in use%s\n", blurb(), name, rr);
         }
-        goto FAIL;
+      }
+    }
+
+    if (! (fd_p || gnome_p || kde_p))  /* Must have at least one */
+      goto FAIL;
+
+    /* Register our callbacks for things sent to
+       "org.freedesktop.ScreenSaver /ScreenSaver" and
+       "org.freedesktop.ScreenSaver /org/freedesktop/ScreenSaver"
+     */
+    if (fd_p) {
+      const char * const names[] = { DBUS_FDO_OBJECT_PATH_1,
+                                     DBUS_FDO_OBJECT_PATH_2 };
+      int i = 0;
+      for (i = 0; i < countof(names); i++) {
+        rc = sd_bus_add_object_vtable (user_bus, NULL, names[i],
+                                       DBUS_FDO_INTERFACE,
+                                       xscreensaver_dbus_vtable,
+                                       &global_ctx);
+        if (rc < 0) {
+          fprintf (stderr, "%s: vtable registration failed for %s: %s\n",
+                   blurb(), names[i], strerror(-rc));
+          goto FAIL;
+        }
       }
     }
   }
 
-  /* 'system_bus' is where we hold a lock on org.freedesktop.login1, meaning
-     that the system will send us a PrepareForSleep message when the system is
-     about to suspend.
-  */
-
-  rc = sd_bus_open_system (&system_bus);
-  if (rc < 0) {
-    fprintf (stderr, "%s: system bus connection failed: %s\n",
-             blurb(), strerror(-rc));
-    goto FAIL;
-  }
 
   /* Obtain a lock fd from the "Inhibit" method, so that we can delay
-     sleep when a "PrepareForSleep" signal is posted. */
-
+     sleep when a "PrepareForSleep" signal is posted.
+   */
   ctx->system_bus = system_bus;
   rc = xscreensaver_register_sleep_lock (ctx);
   if (rc < 0)
     goto FAIL;
 
-  /* This is basically an event mask, saying that we are interested in
-     "PrepareForSleep", and to run our callback when that signal is thrown.
-  */
+  /* Register a callback for "org.freedesktop.login1.Manager.PrepareForSleep".
+   */
   rc = sd_bus_add_match (system_bus, NULL, DBUS_SD_MATCH,
-                         xscreensaver_systemd_handler,
-                         &global_ctx);
+                         xscreensaver_prepare_for_sleep_cb, &global_ctx);
   if (rc < 0) {
-    fprintf (stderr, "%s: add match failed: %s\n", blurb(), strerror(-rc));
+    fprintf (stderr, "%s: registering sleep callback failed: %s\n",
+             blurb(), strerror(-rc));
     goto FAIL;
   }
 
-  if (verbose_p)
-    fprintf (stderr, "%s: connected\n", blurb());
+  /* Register a callback for "org.gnome.SessionManager.InhibitorAdded".
+   */
+  rc = sd_bus_add_match (user_bus, NULL, DBUS_GSN_MATCH_1,
+                         xscreensaver_gnome_inhibitor_added_cb, &global_ctx);
+  if (rc < 0) {
+    fprintf (stderr, "%s: registering GNOME inhibitor callback failed: %s\n",
+             blurb(), strerror(-rc));
+    goto FAIL;
+  }
+
+  /* Register a callback for "org.gnome.SessionManager.InhibitorRemoved".
+   */
+  rc = sd_bus_add_match (user_bus, NULL, DBUS_GSN_MATCH_2,
+                         xscreensaver_gnome_inhibitor_removed_cb, &global_ctx);
+  if (rc < 0) {
+    fprintf (stderr, "%s: registering GNOME de-inhibitor callback failed: %s\n",
+             blurb(), strerror(-rc));
+    goto FAIL;
+  }
+
+  /* Register a callback for "org.kde.Solid.PowerManagement.PolicyAgent.
+     InhibitionsChanged".
+   */
+  rc = sd_bus_add_match (user_bus, NULL, DBUS_KDE_MATCH,
+                         xscreensaver_kde_inhibitor_changed_cb, &global_ctx);
+  if (rc < 0) {
+    fprintf (stderr, "%s: registering KDE inhibitor callback failed: %s\n",
+             blurb(), strerror(-rc));
+    goto FAIL;
+  }
 
 
-  /* Run an event loop forever, and wait for our callback to run.
+  /* Run an event loop forever, and wait for our callbacks to run.
    */
   while (1) {
     struct pollfd fds[3];
     uint64_t poll_timeout_msec, system_timeout_usec, user_timeout_usec;
-    struct inhibit_entry *entry, *entry_next;
 
     /* We MUST call sd_bus_process() on each bus at least once before calling
        sd_bus_get_events(), so just always start the event loop by processing
-       all outstanding requests on both busses. */
+       all outstanding requests on both busses.
+     */
     do {
       rc = sd_bus_process (system_bus, NULL);
       if (rc < 0) {
@@ -852,39 +1396,23 @@ xscreensaver_systemd_loop (void)
        if a program inhibits, then exits without having called uninhibit.
        That would have left us inhibited forever, even if the inhibiting
        program was re-launched, since the new instance won't have the
-       same cookie. */
-    SLIST_FOREACH_SAFE (entry, &inhibit_head, entries, entry_next) {
-      if (entry->peer &&
-          !sd_bus_track_count_name (ctx->track, entry->peer)) {
-        if (verbose_p)
-          fprintf (stderr,
-                   "%s: peer %s for inhibiting app \"%s\" has died:"
-                   " uninhibiting %08X\n",
-                   blurb(),
-                   entry->peer,
-                   entry->appname,
-                   entry->cookie);
-        SLIST_REMOVE (&inhibit_head, entry, inhibit_entry, entries);
-        if (entry->appname) free (entry->appname);
-        free(entry->peer);
-        free (entry);
-        ctx->is_inhibited--;
-        if (ctx->is_inhibited < 0)
-          ctx->is_inhibited = 0;
-      }
-    }
+       same cookie.
+     */
+    remove_matching_entry (ctx, NULL, 0, 0);
 
     /* If we are inhibited and HEARTBEAT_INTERVAL has passed, de-activate the
-       screensaver. */
-    if (ctx->is_inhibited) {
+       screensaver.
+     */
+    if (ctx->inhibit_count > 0) {
       time_t now = time ((time_t *) 0);
       if (now - last_deactivate_time >= HEARTBEAT_INTERVAL) {
         if (verbose_p) {
+          struct inhibit_entry *entry;
           SLIST_FOREACH (entry, &inhibit_head, entries) {
             char ct[100];
             ctime_r (&entry->start_time, ct);
             fprintf (stderr, "%s: inhibited by \"%s\" since %s",
-                     blurb(), entry->appname, ct);
+                     blurb(), remove_dir (entry->appname), ct);
           }
         }
         xscreensaver_command ("deactivate");
@@ -947,7 +1475,8 @@ xscreensaver_systemd_loop (void)
     }
 
     /* Pick the smaller of the two bus timeouts and convert from microseconds
-       to milliseconds expected by poll(). */
+       to milliseconds expected by poll().
+     */
     poll_timeout_msec = ((system_timeout_usec < user_timeout_usec
                           ? system_timeout_usec : user_timeout_usec)
                          / 1000);
@@ -955,7 +1484,7 @@ xscreensaver_systemd_loop (void)
     /* If we have been inhibited, we want to wake up at least once every N
        seconds to de-activate the screensaver.
      */
-    if (ctx->is_inhibited &&
+    if (ctx->inhibit_count > 0 &&
         poll_timeout_msec > HEARTBEAT_INTERVAL * 1000)
       poll_timeout_msec = HEARTBEAT_INTERVAL * 1000;
 
@@ -1035,9 +1564,7 @@ main (int argc, char **argv)
 
   screensaver_version = version;
 
-  progname = argv[0];
-  s = strrchr (progname, '/');
-  if (s) progname = s+1;
+  progname = remove_dir (argv[0]);
 
   for (i = 1; i < argc; i++)
     {
@@ -1046,8 +1573,13 @@ main (int argc, char **argv)
       if (s[0] == '-' && s[1] == '-') s++;
       L = strlen (s);
       if (L < 2) USAGE ();
-      else if (!strncmp (s, "-verbose", L)) verbose_p = 1;
+      else if (!strncmp (s, "-q",       L)) verbose_p = 0;
       else if (!strncmp (s, "-quiet",   L)) verbose_p = 0;
+      else if (!strncmp (s, "-verbose", L)) verbose_p++;
+      else if (!strncmp (s, "-v",       L)) verbose_p++;
+      else if (!strncmp (s, "-vv",      L)) verbose_p += 2;
+      else if (!strncmp (s, "-vvv",     L)) verbose_p += 3;
+      else if (!strncmp (s, "-vvvv",    L)) verbose_p += 4;
       else USAGE ();
     }
 

@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -724,7 +724,6 @@ update_screen_layout (saver_info *si)
 
   free_monitors (si->monitor_layout);
   si->monitor_layout = monitors;
-  check_monitor_sanity (si->monitor_layout);
 
   while (monitors[count])
     {
@@ -787,11 +786,7 @@ update_screen_layout (saver_info *si)
 # ifndef DEBUG_MULTISCREEN
       {
         saver_preferences *p = &si->prefs;
-        if (p->debug_p
-#  ifdef QUAD_MODE
-            && !p->quad_p
-#  endif
-            )
+        if (p->debug_p)
           ssi->width /= 2;
       }
 # endif
@@ -996,7 +991,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
          hack going again.  The cycle_timer will also do this (unless "cycle"
          is 0) but watchdog_timer runs more frequently.
        */
-      if (si->screens[0].current_hack >= 0)
+      if (si->nscreens > 0 && si->screens[0].current_hack >= 0)
         {
           int i;
           if (si->prefs.verbose_p)

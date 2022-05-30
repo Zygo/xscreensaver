@@ -185,13 +185,26 @@ user_event_p (Display *dpy, XEvent *event, XPointer arg)
         XGetEventData (dpy, &event->xcookie);
       if (! event->xcookie.data)
         return False;
-      re = event->xcookie.data;    
 
-      if (re->evtype == XI_RawKeyPress ||
-          re->evtype == XI_RawButtonPress)
+      re = event->xcookie.data;
+      switch (re->evtype) {
+      case XI_RawKeyPress:
+      case XI_RawButtonPress:
+      case XI_RawTouchBegin:
+      case XI_KeyPress:
+      case XI_ButtonPress:
+      case XI_TouchBegin:
         return True;
-      else if (motion_p && re->evtype == XI_RawMotion)
-        return True;
+        break;
+      case XI_RawMotion:
+      case XI_RawTouchUpdate:
+      case XI_Motion:
+      case XI_TouchUpdate:
+        if (motion_p) return True;
+        break;
+      default:
+        break;
+      }
 
       /* Calling XFreeEventData here is bad news */
     }
@@ -343,8 +356,8 @@ fade_screens (XtAppContext app, Display *dpy,
   int status = False;
   fade_state *state = 0;
 
-  if (nwindows <= 0) abort();
-  if (!saver_windows) abort();
+  if (nwindows <= 0) return False;
+  if (!saver_windows) return False;
 
   if (!closureP) abort();
   state = (fade_state *) *closureP;

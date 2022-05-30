@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2019 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2022 Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -60,7 +60,7 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.183 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.185 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2017" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
@@ -105,8 +105,9 @@ my @search_methods = (
                      # Not included in default methods, since these images
                      # aren't terribly interesting by themselves.
                      # See also "SurveillanceSaver".
+                     # Stopped working some time in before 2022
                      #
-                        0, "securitycam",   \&pick_from_security_camera,
+                     #  0, "securitycam",   \&pick_from_security_camera,
 
                      # Nonfunctional as of June 2011.
                      #  0, "altavista",     \&pick_from_alta_vista_random_link,
@@ -247,6 +248,7 @@ my %warningless_sites = (
   "yfrog.com"               => 1,
   "cdninstagram.com"        => 1,
   "gstatic.com"		    => 1,
+  "pinimg.com"		    => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -395,7 +397,8 @@ sub get_document_1($$$) {
   if ($url =~ m@^https?://www\.altavista\.com/@s ||
       $url =~ m@^https?://random\.yahoo\.com/@s  ||
       $url =~ m@^https?://[^./]+\.google\.com/@s ||
-      $url =~ m@^https?://www\.livejournal\.com/@s) {
+      $url =~ m@^https?://www\.livejournal\.com/@s ||
+      $url =~ m@^https?://imgur\.com/@s) {
     # block this, you turkeys.
     $user_agent = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)' .
                   ' Gecko/20070914 Firefox/2.0.0.7';
@@ -1203,41 +1206,41 @@ sub pick_image_from_pages($$$$@) {
 ############################################################################
 
 # altavista
-my $alta_vista_random_link = "http://www.altavista.com/image/randomlink";
-
-
-# Picks a random page; picks a random image on that page;
-# returns two URLs: the page containing the image, and the image.
-# Returns () if nothing found this time.
+#my $alta_vista_random_link = "http://www.altavista.com/image/randomlink";
 #
-sub pick_from_alta_vista_random_link($) {
-  my ($timeout) = @_;
-
-  print STDERR "\n\n" if ($verbose_load);
-  LOG ($verbose_load, "URL: $alta_vista_random_link");
-
-  $last_search = $alta_vista_random_link;   # for warnings
-
-  $suppress_audit = 1;
-
-  my ( $base, $body ) = get_document ($alta_vista_random_link,
-                                      undef, $timeout);
-  if (!$base || !$body) {
-    $body = undef;
-    return;
-  }
-
-  LOG ($verbose_load, "redirected to: $base");
-
-  my $img = pick_image_from_body ($base, $body);
-  $body = undef;
-
-  if ($img) {
-    return ($base, $img);
-  } else {
-    return ();
-  }
-}
+#
+## Picks a random page; picks a random image on that page;
+## returns two URLs: the page containing the image, and the image.
+## Returns () if nothing found this time.
+##
+#sub pick_from_alta_vista_random_link($) {
+#  my ($timeout) = @_;
+#
+#  print STDERR "\n\n" if ($verbose_load);
+#  LOG ($verbose_load, "URL: $alta_vista_random_link");
+#
+#  $last_search = $alta_vista_random_link;   # for warnings
+#
+#  $suppress_audit = 1;
+#
+#  my ( $base, $body ) = get_document ($alta_vista_random_link,
+#                                      undef, $timeout);
+#  if (!$base || !$body) {
+#    $body = undef;
+#    return;
+#  }
+#
+#  LOG ($verbose_load, "redirected to: $base");
+#
+#  my $img = pick_image_from_body ($base, $body);
+#  $body = undef;
+#
+#  if ($img) {
+#    return ($base, $img);
+#  } else {
+#    return ();
+#  }
+#}
 
 
 ############################################################################
@@ -1247,54 +1250,54 @@ sub pick_from_alta_vista_random_link($) {
 ############################################################################
 
 
-my $alta_vista_images_url = "http://www.altavista.com/image/results" .
-                            "?ipht=1" .       # photos
-                            "&igrph=1" .      # graphics
-                            "&iclr=1" .       # color
-                            "&ibw=1" .        # b&w
-                            "&micat=1" .      # no partner sites
-                            "&sc=on" .        # "site collapse"
-                            "&q=";
-
-# avimages
-sub pick_from_alta_vista_images($) {
-  my ($timeout) = @_;
-
-  my $words = random_word();
-  my $page = (int(rand(9)) + 1);
-  my $search_url = $alta_vista_images_url . $words;
-
-  if ($page > 1) {
-    $search_url .= "&pgno=" . $page;		# page number
-    $search_url .= "&stq=" . (($page-1) * 12);  # first hit result on page
-  }
-
-  my ($search_hit_count, @subpages) =
-    pick_from_search_engine ($timeout, $search_url, $words);
-
-  my @candidates = ();
-  foreach my $u (@subpages) {
-
-    # avimages is encoding their URLs now.
-    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
-    $u = url_unquote($u);
-
-    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
-    next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
-    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
-    next if ($u =~ m@[/.]doubleclick\.net\b@i);   # you cretins
-    next if ($u =~ m@[/.]clicktomarket\.com\b@i); # more cretins
-
-    next if ($u =~ m@[/.]viewimages\.com\b@i);    # stacked deck
-    next if ($u =~ m@[/.]gettyimages\.com\b@i);
-
-    LOG ($verbose_filter, "  candidate: $u");
-    push @candidates, $u;
-  }
-
-  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
-                                $timeout, @candidates);
-}
+#my $alta_vista_images_url = "http://www.altavista.com/image/results" .
+#                            "?ipht=1" .       # photos
+#                            "&igrph=1" .      # graphics
+#                            "&iclr=1" .       # color
+#                            "&ibw=1" .        # b&w
+#                            "&micat=1" .      # no partner sites
+#                            "&sc=on" .        # "site collapse"
+#                            "&q=";
+#
+## avimages
+#sub pick_from_alta_vista_images($) {
+#  my ($timeout) = @_;
+#
+#  my $words = random_word();
+#  my $page = (int(rand(9)) + 1);
+#  my $search_url = $alta_vista_images_url . $words;
+#
+#  if ($page > 1) {
+#    $search_url .= "&pgno=" . $page;		# page number
+#    $search_url .= "&stq=" . (($page-1) * 12);  # first hit result on page
+#  }
+#
+#  my ($search_hit_count, @subpages) =
+#    pick_from_search_engine ($timeout, $search_url, $words);
+#
+#  my @candidates = ();
+#  foreach my $u (@subpages) {
+#
+#    # avimages is encoding their URLs now.
+#    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
+#    $u = url_unquote($u);
+#
+#    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
+#    next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+#    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
+#    next if ($u =~ m@[/.]doubleclick\.net\b@i);   # you cretins
+#    next if ($u =~ m@[/.]clicktomarket\.com\b@i); # more cretins
+#
+#    next if ($u =~ m@[/.]viewimages\.com\b@i);    # stacked deck
+#    next if ($u =~ m@[/.]gettyimages\.com\b@i);
+#
+#    LOG ($verbose_filter, "  candidate: $u");
+#    push @candidates, $u;
+#  }
+#
+#  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+#                                $timeout, @candidates);
+#}
 
 
 
@@ -1306,45 +1309,46 @@ sub pick_from_alta_vista_images($) {
 #
 ############################################################################
 
-my $aptix_images_url = ("http://www.google.com/search" .
-                        "?q=inurl:%22jpg/image.jpg%3Fr%3D%22");
-
-# securitycam
-sub pick_from_security_camera($) {
-  my ($timeout) = @_;
-
-  my $page = (int(rand(9)) + 1);
-  my $num = 20;					# 20 images per page
-  my $search_url = $aptix_images_url;
-
-  if ($page > 1) {
-    $search_url .= "&start=" . $page*$num;	# page number
-    $search_url .= "&num="   . $num;		#images per page
-  }
-
-  my ($search_hit_count, @subpages) =
-    pick_from_search_engine ($timeout, $search_url, '');
-
-  my @candidates = ();
-  my %referers;
-  foreach my $u (@subpages) {
-    next if ($u =~ m@[/.]google\.com\b@i); # skip google builtins (most links)
-    next unless ($u =~ m@jpg/image.jpg\?r=@i);    #  All pics contain this
-
-    LOG ($verbose_filter, "  candidate: $u");
-    push @candidates, $u;
-    $referers{$u} = $u;
-    }
-
-  @candidates = depoison (@candidates);
-  return () if ($#candidates < 0);
-  my $i = int(rand($#candidates+1));
-  my $img = $candidates[$i];
-  my $ref = $referers{$img};
-
-  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
-  return ($ref, $img);
-}
+# Stopped working some time in before 2022
+#my $aptix_images_url = ("http://www.google.com/search" .
+#                        "?q=inurl:%22jpg/image.jpg%3Fr%3D%22");
+#
+## securitycam
+#sub pick_from_security_camera($) {
+#  my ($timeout) = @_;
+#
+#  my $page = (int(rand(9)) + 1);
+#  my $num = 20;					# 20 images per page
+#  my $search_url = $aptix_images_url;
+#
+#  if ($page > 1) {
+#    $search_url .= "&start=" . $page*$num;	# page number
+#    $search_url .= "&num="   . $num;		#images per page
+#  }
+#
+#  my ($search_hit_count, @subpages) =
+#    pick_from_search_engine ($timeout, $search_url, '');
+#
+#  my @candidates = ();
+#  my %referers;
+#  foreach my $u (@subpages) {
+#    next if ($u =~ m@[/.]google\.com\b@i); # skip google builtins (most links)
+#    next unless ($u =~ m@jpg/image.jpg\?r=@i);    #  All pics contain this
+#
+#    LOG ($verbose_filter, "  candidate: $u");
+#    push @candidates, $u;
+#    $referers{$u} = $u;
+#    }
+#
+#  @candidates = depoison (@candidates);
+#  return () if ($#candidates < 0);
+#  my $i = int(rand($#candidates+1));
+#  my $img = $candidates[$i];
+#  my $ref = $referers{$img};
+#
+#  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
+#  return ($ref, $img);
+#}
 
 
 ############################################################################
@@ -1489,7 +1493,7 @@ sub pick_from_google_image_photos($) {
 #
 ############################################################################
 
-my $bing_images_url =	"http://www.bing.com/images/async?q=";
+my $bing_images_url =	"https://www.bing.com/images/async?q=";
 
 
 # bingimgs
@@ -1574,52 +1578,52 @@ sub pick_from_bing_image_photos($) {
 ############################################################################
 
 
-my $alta_vista_url = "http://www.altavista.com/web/results" .
-                     "?pg=aq" .
-                     "&aqmode=s" .
-                     "&filetype=html" .
-                     "&sc=on" .        # "site collapse"
-                     "&nbq=50" .
-                     "&aqo=";
-
-# avtext
-sub pick_from_alta_vista_text($) {
-  my ($timeout) = @_;
-
-  my $words = random_words('%20');
-  my $page = (int(rand(9)) + 1);
-  my $search_url = $alta_vista_url . $words;
-
-  if ($page > 1) {
-    $search_url .= "&pgno=" . $page;
-    $search_url .= "&stq=" . (($page-1) * 10);
-  }
-
-  my ($search_hit_count, @subpages) =
-    pick_from_search_engine ($timeout, $search_url, $words);
-
-  my @candidates = ();
-  foreach my $u (@subpages) {
-
-    # Those altavista fuckers are playing really nasty redirection games
-    # these days: the filter your clicks through their site, but use
-    # onMouseOver to make it look like they're not!  Well, it makes it
-    # easier for us to identify search results...
-    #
-    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
-    $u = url_unquote($u);
-
-    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
-    next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
-    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
-
-    LOG ($verbose_filter, "  candidate: $u");
-    push @candidates, $u;
-  }
-
-  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
-                                $timeout, @candidates);
-}
+#my $alta_vista_url = "http://www.altavista.com/web/results" .
+#                     "?pg=aq" .
+#                     "&aqmode=s" .
+#                     "&filetype=html" .
+#                     "&sc=on" .        # "site collapse"
+#                     "&nbq=50" .
+#                     "&aqo=";
+#
+## avtext
+#sub pick_from_alta_vista_text($) {
+#  my ($timeout) = @_;
+#
+#  my $words = random_words('%20');
+#  my $page = (int(rand(9)) + 1);
+#  my $search_url = $alta_vista_url . $words;
+#
+#  if ($page > 1) {
+#    $search_url .= "&pgno=" . $page;
+#    $search_url .= "&stq=" . (($page-1) * 10);
+#  }
+#
+#  my ($search_hit_count, @subpages) =
+#    pick_from_search_engine ($timeout, $search_url, $words);
+#
+#  my @candidates = ();
+#  foreach my $u (@subpages) {
+#
+#    # Those altavista fuckers are playing really nasty redirection games
+#    # these days: the filter your clicks through their site, but use
+#    # onMouseOver to make it look like they're not!  Well, it makes it
+#    # easier for us to identify search results...
+#    #
+#    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
+#    $u = url_unquote($u);
+#
+#    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
+#    next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+#    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
+#
+#    LOG ($verbose_filter, "  candidate: $u");
+#    push @candidates, $u;
+#  }
+#
+#  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+#                                $timeout, @candidates);
+#}
 
 
 
@@ -1629,54 +1633,54 @@ sub pick_from_alta_vista_text($) {
 #
 ############################################################################
 
-my $hotbot_search_url =("http://hotbot.lycos.com/default.asp" .
-                        "?ca=w" .
-                        "&descriptiontype=0" .
-                        "&imagetoggle=1" .
-                        "&matchmode=any" .
-                        "&nummod=2" .
-                        "&recordcount=50" .
-                        "&sitegroup=1" .
-                        "&stem=1" .
-                        "&cobrand=undefined" .
-                        "&query=");
-
-sub pick_from_hotbot_text($) {
-  my ($timeout) = @_;
-
-  $last_search = $hotbot_search_url;   # for warnings
-
-  # lycos seems to always give us back dictionaries and word lists if
-  # we search for more than one word...
-  #
-  my $words = random_word();
-
-  my $start = int(rand(8)) * 10 + 1;
-  my $search_url = $hotbot_search_url . $words . "&first=$start&page=more";
-
-  my ($search_hit_count, @subpages) =
-    pick_from_search_engine ($timeout, $search_url, $words);
-
-  my @candidates = ();
-  foreach my $u (@subpages) {
-
-    # Hotbot plays redirection games too
-    # (not any more?)
-#    next unless ($u =~ m@/director.asp\?.*\btarget=([^&]+)@);
-#    $u = url_decode($1);
-
-    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
-    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip hotbot builtins
-    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip hotbot builtins
-    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip hotbot builtins
-
-    LOG ($verbose_filter, "  candidate: $u");
-    push @candidates, $u;
-  }
-
-  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
-                                $timeout, @candidates);
-}
+#my $hotbot_search_url =("http://hotbot.lycos.com/default.asp" .
+#                        "?ca=w" .
+#                        "&descriptiontype=0" .
+#                        "&imagetoggle=1" .
+#                        "&matchmode=any" .
+#                        "&nummod=2" .
+#                        "&recordcount=50" .
+#                        "&sitegroup=1" .
+#                        "&stem=1" .
+#                        "&cobrand=undefined" .
+#                        "&query=");
+#
+#sub pick_from_hotbot_text($) {
+#  my ($timeout) = @_;
+#
+#  $last_search = $hotbot_search_url;   # for warnings
+#
+#  # lycos seems to always give us back dictionaries and word lists if
+#  # we search for more than one word...
+#  #
+#  my $words = random_word();
+#
+#  my $start = int(rand(8)) * 10 + 1;
+#  my $search_url = $hotbot_search_url . $words . "&first=$start&page=more";
+#
+#  my ($search_hit_count, @subpages) =
+#    pick_from_search_engine ($timeout, $search_url, $words);
+#
+#  my @candidates = ();
+#  foreach my $u (@subpages) {
+#
+#    # Hotbot plays redirection games too
+#    # (not any more?)
+##    next unless ($u =~ m@/director.asp\?.*\btarget=([^&]+)@);
+##    $u = url_decode($1);
+#
+#    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
+#    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip hotbot builtins
+#    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip hotbot builtins
+#    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip hotbot builtins
+#
+#    LOG ($verbose_filter, "  candidate: $u");
+#    push @candidates, $u;
+#  }
+#
+#  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+#                                $timeout, @candidates);
+#}
 
 
 
@@ -1686,54 +1690,54 @@ sub pick_from_hotbot_text($) {
 #
 ############################################################################
 
-my $lycos_search_url = "http://search.lycos.com/default.asp" .
-                       "?lpv=1" .
-                       "&loc=searchhp" .
-                       "&tab=web" .
-                       "&query=";
-
-sub pick_from_lycos_text($) {
-  my ($timeout) = @_;
-
-  $last_search = $lycos_search_url;   # for warnings
-
-  # lycos seems to always give us back dictionaries and word lists if
-  # we search for more than one word...
-  #
-  my $words = random_word();
-
-  my $start = int(rand(8)) * 10 + 1;
-  my $search_url = $lycos_search_url . $words . "&first=$start&page=more";
-
-  my ($search_hit_count, @subpages) =
-    pick_from_search_engine ($timeout, $search_url, $words);
-
-  my @candidates = ();
-  foreach my $u (@subpages) {
-
-    # Lycos plays redirection games.
-    # (not any more?)
-#    next unless ($u =~ m@^https?://click.lycos.com/director.asp
-#                         .*
-#                         \btarget=([^&]+)
-#                         .*
-#                        @x);
-#    $u = url_decode($1);
-
-    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
-    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip lycos builtins
-    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip lycos builtins
-    next if ($u =~ m@[/.]terralycos\.com\b@i); # skip lycos builtins
-    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip lycos builtins
-
-
-    LOG ($verbose_filter, "  candidate: $u");
-    push @candidates, $u;
-  }
-
-  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
-                                $timeout, @candidates);
-}
+#my $lycos_search_url = "http://search.lycos.com/default.asp" .
+#                       "?lpv=1" .
+#                       "&loc=searchhp" .
+#                       "&tab=web" .
+#                       "&query=";
+#
+#sub pick_from_lycos_text($) {
+#  my ($timeout) = @_;
+#
+#  $last_search = $lycos_search_url;   # for warnings
+#
+#  # lycos seems to always give us back dictionaries and word lists if
+#  # we search for more than one word...
+#  #
+#  my $words = random_word();
+#
+#  my $start = int(rand(8)) * 10 + 1;
+#  my $search_url = $lycos_search_url . $words . "&first=$start&page=more";
+#
+#  my ($search_hit_count, @subpages) =
+#    pick_from_search_engine ($timeout, $search_url, $words);
+#
+#  my @candidates = ();
+#  foreach my $u (@subpages) {
+#
+#    # Lycos plays redirection games.
+#    # (not any more?)
+##    next unless ($u =~ m@^https?://click.lycos.com/director.asp
+##                         .*
+##                         \btarget=([^&]+)
+##                         .*
+##                        @x);
+##    $u = url_decode($1);
+#
+#    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
+#    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip lycos builtins
+#    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip lycos builtins
+#    next if ($u =~ m@[/.]terralycos\.com\b@i); # skip lycos builtins
+#    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip lycos builtins
+#
+#
+#    LOG ($verbose_filter, "  candidate: $u");
+#    push @candidates, $u;
+#  }
+#
+#  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+#                                $timeout, @candidates);
+#}
 
 
 
@@ -1743,40 +1747,40 @@ sub pick_from_lycos_text($) {
 #
 ############################################################################
 
-my $yahoo_news_url = "http://news.search.yahoo.com/search/news" .
-                     "?c=news_photos" .
-                     "&p=";
-
-# yahoonews
-sub pick_from_yahoo_news_text($) {
-  my ($timeout) = @_;
-
-  $last_search = $yahoo_news_url;   # for warnings
-
-  my $words = random_word();
-  my $search_url = $yahoo_news_url . $words;
-
-  my ($search_hit_count, @subpages) =
-    pick_from_search_engine ($timeout, $search_url, $words);
-
-  my @candidates = ();
-  foreach my $u (@subpages) {
-
-    # de-redirectize the URLs
-    $u =~ s@^https?://rds\.yahoo\.com/.*-http%3A@http:@s;
-
-    # only accept URLs on Yahoo's news site
-    next unless ($u =~ m@^https?://dailynews\.yahoo\.com/@i ||
-                 $u =~ m@^https?://story\.news\.yahoo\.com/@i);
-    next unless ($u =~ m@&u=/@);
-
-    LOG ($verbose_filter, "  candidate: $u");
-    push @candidates, $u;
-  }
-
-  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
-                                $timeout, @candidates);
-}
+#my $yahoo_news_url = "http://news.search.yahoo.com/search/news" .
+#                     "?c=news_photos" .
+#                     "&p=";
+#
+## yahoonews
+#sub pick_from_yahoo_news_text($) {
+#  my ($timeout) = @_;
+#
+#  $last_search = $yahoo_news_url;   # for warnings
+#
+#  my $words = random_word();
+#  my $search_url = $yahoo_news_url . $words;
+#
+#  my ($search_hit_count, @subpages) =
+#    pick_from_search_engine ($timeout, $search_url, $words);
+#
+#  my @candidates = ();
+#  foreach my $u (@subpages) {
+#
+#    # de-redirectize the URLs
+#    $u =~ s@^https?://rds\.yahoo\.com/.*-http%3A@http:@s;
+#
+#    # only accept URLs on Yahoo's news site
+#    next unless ($u =~ m@^https?://dailynews\.yahoo\.com/@i ||
+#                 $u =~ m@^https?://story\.news\.yahoo\.com/@i);
+#    next unless ($u =~ m@&u=/@);
+#
+#    LOG ($verbose_filter, "  candidate: $u");
+#    push @candidates, $u;
+#  }
+#
+#  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+#                                $timeout, @candidates);
+#}
 
 
 
@@ -1786,7 +1790,7 @@ sub pick_from_yahoo_news_text($) {
 #
 ############################################################################
 
-my $livejournal_img_url = "http://www.livejournal.com/stats/latest-img.bml";
+my $livejournal_img_url = "https://www.livejournal.com/stats/latest-img.bml";
 
 # With most of our image sources, we get a random page and then select
 # from the images on it.  However, in the case of LiveJournal, the page
@@ -1860,54 +1864,54 @@ sub pick_from_livejournal_images($) {
 #
 ############################################################################
 
-my $ircimages_url = "http://ircimages.com/";
-
-# ircimages
-sub pick_from_ircimages($) {
-  my ($timeout) = @_;
-
-  $last_search = $ircimages_url;   # for warnings
-
-  my $n = int(rand(2900));
-  my $search_url = $ircimages_url . "page-$n";
-
-  my ( $base, $body ) = get_document ($search_url, undef, $timeout);
-  return () unless $body;
-
-  my @candidates = ();
-
-  $body =~ s/\n/ /gs;
-  $body =~ s/(<A)\b/\n$1/gsi;
-
-  foreach (split (/\n/, $body)) {
-
-    my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
-    next unless $u;
-
-    if ($u =~ m/^\"([^\"]*)\"/) { $u = $1; }   # quoted string
-    elsif ($u =~ m/^([^\s]*)\s/) { $u = $1; }  # or token
-
-    next unless ($u =~ m/^https?:/i);
-    next if ($u =~ m@^https?://(searchirc\.com\|ircimages\.com)@i);
-    next unless ($u =~ m@[.](gif|jpg|jpeg|pjpg|pjpeg|png)$@i);
-
-    LOG ($verbose_http, "    HREF: $u");
-    push @candidates, $u;
-  }
-
-  LOG ($verbose_filter, "" . $#candidates+1 . " links on $search_url");
-
-  return () if ($#candidates == -1);
-
-  my $i = int(rand($#candidates+1));
-  my $img = $candidates[$i];
-
-  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#candidates+1) .
-       ": $img");
-
-  $search_url = $img;  # hmm...
-  return ($search_url, $img);
-}
+#my $ircimages_url = "http://ircimages.com/";
+#
+## ircimages
+#sub pick_from_ircimages($) {
+#  my ($timeout) = @_;
+#
+#  $last_search = $ircimages_url;   # for warnings
+#
+#  my $n = int(rand(2900));
+#  my $search_url = $ircimages_url . "page-$n";
+#
+#  my ( $base, $body ) = get_document ($search_url, undef, $timeout);
+#  return () unless $body;
+#
+#  my @candidates = ();
+#
+#  $body =~ s/\n/ /gs;
+#  $body =~ s/(<A)\b/\n$1/gsi;
+#
+#  foreach (split (/\n/, $body)) {
+#
+#    my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
+#    next unless $u;
+#
+#    if ($u =~ m/^\"([^\"]*)\"/) { $u = $1; }   # quoted string
+#    elsif ($u =~ m/^([^\s]*)\s/) { $u = $1; }  # or token
+#
+#    next unless ($u =~ m/^https?:/i);
+#    next if ($u =~ m@^https?://(searchirc\.com\|ircimages\.com)@i);
+#    next unless ($u =~ m@[.](gif|jpg|jpeg|pjpg|pjpeg|png)$@i);
+#
+#    LOG ($verbose_http, "    HREF: $u");
+#    push @candidates, $u;
+#  }
+#
+#  LOG ($verbose_filter, "" . $#candidates+1 . " links on $search_url");
+#
+#  return () if ($#candidates == -1);
+#
+#  my $i = int(rand($#candidates+1));
+#  my $img = $candidates[$i];
+#
+#  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#candidates+1) .
+#       ": $img");
+#
+#  $search_url = $img;  # hmm...
+#  return ($search_url, $img);
+#}
 
 
 ############################################################################
@@ -1916,100 +1920,100 @@ sub pick_from_ircimages($) {
 #
 ############################################################################
 
-my $twitpic_img_url = "http://twitpic.com/public_timeline/feed.rss";
-
-# With most of our image sources, we get a random page and then select
-# from the images on it.  However, in the case of Twitpic, the page
-# of images tends to update slowly; so we'll remember the last N entries
-# on it and randomly select from those, to get a wider variety each time.
-
-my $twitpic_cache_size = 1000;
-my @twitpic_cache = (); # fifo, for ordering by age
-my %twitpic_cache = (); # hash, for detecting dups
-
-# twitpic
-sub pick_from_twitpic_images($) {
-  my ($timeout) = @_;
-
-  $last_search = $twitpic_img_url;   # for warnings
-
-  my ( $base, $body ) = get_document ($twitpic_img_url, undef, $timeout);
-
-  # Update the cache.
-
-  if ($body) {
-    $body =~ s/\n/ /gs;
-    $body =~ s/(<item)\b/\n$1/gsi;
-
-    my @items = split (/\n/, $body);
-    shift @items;
-    foreach (@items) {
-      next unless (m@<link>([^<>]*)</link>@si);
-      my $page = html_unquote ($1);
-
-      $page =~ s@/$@@s;
-      $page .= '/full';
-
-      next if ($twitpic_cache{$page}); # already have it
-
-      LOG ($verbose_filter, "  candidate: $page");
-      push @twitpic_cache, $page;
-      $twitpic_cache{$page} = $page;
-    }
-  }
-
-  # Pull from the cache.
-
-  return () if ($#twitpic_cache == -1);
-
-  my $n = $#twitpic_cache+1;
-  my $i = int(rand($n));
-  my $page = $twitpic_cache[$i];
-
-  # delete this one from @twitpic_cache and from %twitpic_cache.
-  #
-  @twitpic_cache = ( @twitpic_cache[0 .. $i-1],
-                     @twitpic_cache[$i+1 .. $#twitpic_cache] );
-  delete $twitpic_cache{$page};
-
-  # Keep the size of the cache under the limit by nuking older entries
-  #
-  while ($#twitpic_cache >= $twitpic_cache_size) {
-    my $page = shift @twitpic_cache;
-    delete $twitpic_cache{$page};
-  }
-
-  ( $base, $body ) = get_document ($page, undef, $timeout);
-  my $img = undef;
-  $body = '' unless defined($body);
-
-  foreach (split (/<img\s+/, $body)) {
-    my ($src) = m/\bsrc=[\"\'](.*?)[\"\']/si;
-    next unless $src;
-    next if m@/js/@s;
-    next if m@/images/@s;
-
-    $img = $src;
-
-    $img = "http:$img" if ($img =~ m@^//@s);  # Oh come on
-
-    # Sometimes these images are hosted on twitpic, sometimes on Amazon.
-    if ($img =~ m@^/@) {
-      $base =~ s@^(https?://[^/]+)/.*@$1@s;
-      $img = $base . $img;
-    }
-    last;
-  }
-
-  if (!$img) {
-    LOG ($verbose_load, "no matching images on $page\n");
-    return ();
-  }
-
-  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
-
-  return ($page, $img);
-}
+#my $twitpic_img_url = "http://twitpic.com/public_timeline/feed.rss";
+#
+## With most of our image sources, we get a random page and then select
+## from the images on it.  However, in the case of Twitpic, the page
+## of images tends to update slowly; so we'll remember the last N entries
+## on it and randomly select from those, to get a wider variety each time.
+#
+#my $twitpic_cache_size = 1000;
+#my @twitpic_cache = (); # fifo, for ordering by age
+#my %twitpic_cache = (); # hash, for detecting dups
+#
+## twitpic
+#sub pick_from_twitpic_images($) {
+#  my ($timeout) = @_;
+#
+#  $last_search = $twitpic_img_url;   # for warnings
+#
+#  my ( $base, $body ) = get_document ($twitpic_img_url, undef, $timeout);
+#
+#  # Update the cache.
+#
+#  if ($body) {
+#    $body =~ s/\n/ /gs;
+#    $body =~ s/(<item)\b/\n$1/gsi;
+#
+#    my @items = split (/\n/, $body);
+#    shift @items;
+#    foreach (@items) {
+#      next unless (m@<link>([^<>]*)</link>@si);
+#      my $page = html_unquote ($1);
+#
+#      $page =~ s@/$@@s;
+#      $page .= '/full';
+#
+#      next if ($twitpic_cache{$page}); # already have it
+#
+#      LOG ($verbose_filter, "  candidate: $page");
+#      push @twitpic_cache, $page;
+#      $twitpic_cache{$page} = $page;
+#    }
+#  }
+#
+#  # Pull from the cache.
+#
+#  return () if ($#twitpic_cache == -1);
+#
+#  my $n = $#twitpic_cache+1;
+#  my $i = int(rand($n));
+#  my $page = $twitpic_cache[$i];
+#
+#  # delete this one from @twitpic_cache and from %twitpic_cache.
+#  #
+#  @twitpic_cache = ( @twitpic_cache[0 .. $i-1],
+#                     @twitpic_cache[$i+1 .. $#twitpic_cache] );
+#  delete $twitpic_cache{$page};
+#
+#  # Keep the size of the cache under the limit by nuking older entries
+#  #
+#  while ($#twitpic_cache >= $twitpic_cache_size) {
+#    my $page = shift @twitpic_cache;
+#    delete $twitpic_cache{$page};
+#  }
+#
+#  ( $base, $body ) = get_document ($page, undef, $timeout);
+#  my $img = undef;
+#  $body = '' unless defined($body);
+#
+#  foreach (split (/<img\s+/, $body)) {
+#    my ($src) = m/\bsrc=[\"\'](.*?)[\"\']/si;
+#    next unless $src;
+#    next if m@/js/@s;
+#    next if m@/images/@s;
+#
+#    $img = $src;
+#
+#    $img = "http:$img" if ($img =~ m@^//@s);  # Oh come on
+#
+#    # Sometimes these images are hosted on twitpic, sometimes on Amazon.
+#    if ($img =~ m@^/@) {
+#      $base =~ s@^(https?://[^/]+)/.*@$1@s;
+#      $img = $base . $img;
+#    }
+#    last;
+#  }
+#
+#  if (!$img) {
+#    LOG ($verbose_load, "no matching images on $page\n");
+#    return ();
+#  }
+#
+#  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+#
+#  return ($page, $img);
+#}
 
 
 ############################################################################
@@ -2023,80 +2027,80 @@ sub pick_from_twitpic_images($) {
 # of images only updates once a minute; so we'll remember the last N entries
 # on it and randomly select from those, to get a wider variety each time.
 
-my $twitter_img_url = "http://api.twitter.com/1/statuses/" .
-		      "public_timeline.json" .
-		      "?include_entities=true" .
-		      "&include_rts=true" .
-		      "&count=200";
-
-my $twitter_cache_size = 1000;
-
-my @twitter_cache = (); # fifo, for ordering by age
-my %twitter_cache = (); # hash, for detecting dups
-
-
-# twitter
-sub pick_from_twitter_images($) {
-  my ($timeout) = @_;
-
-  $last_search = $twitter_img_url;   # for warnings
-
-  my ( $base, $body ) = get_document ($twitter_img_url, undef, $timeout);
-  # Update the cache.
-
-  if ($body) {
-    $body =~ s/[\r\n]+/ /gs;
-
-    # Parsing JSON is a pain in the ass.  So we halfass it as usual.
-    $body =~ s/^\[|\]$//s;
-    $body =~ s/(\[.*?\])/{ $_ = $1; s@\},@\} @gs; $_; }/gsexi;
-    my @items = split (/\},\{/, $body);
-    foreach (@items) {
-      my ($name) = m@"screen_name":"([^\"]+)"@si;
-      my ($img)  = m@"media_url":"([^\"]+)"@si;
-      my ($page) = m@"display_url":"([^\"]+)"@si;
-      next unless ($name && $img && $page);
-      foreach ($img, $page) {
-        s/\\//gs;
-        $_ = "http://$_" unless (m/^http/si);
-      }
-
-      next if ($twitter_cache{$page}); # already have it
-
-      LOG ($verbose_filter, "  candidate: $page - $img");
-      push @twitter_cache, $page;
-      $twitter_cache{$page} = $img;
-    }
-  }
-
-  # Pull from the cache.
-
-  return () if ($#twitter_cache == -1);
-
-  my $n = $#twitter_cache+1;
-  my $i = int(rand($n));
-  my $page = $twitter_cache[$i];
-  my $url  = $twitter_cache{$page};
-
-  # delete this one from @twitter_cache and from %twitter_cache.
-  #
-  @twitter_cache = ( @twitter_cache[0 .. $i-1],
-                     @twitter_cache[$i+1 .. $#twitter_cache] );
-  delete $twitter_cache{$page};
-
-  # Keep the size of the cache under the limit by nuking older entries
-  #
-  while ($#twitter_cache >= $twitter_cache_size) {
-    my $page = shift @twitter_cache;
-    delete $twitter_cache{$page};
-  }
-
-  LOG ($verbose_load, "picked page $url");
-
-  $suppress_audit = 1;
-
-  return ($page, $url);
-}
+#my $twitter_img_url = "http://api.twitter.com/1/statuses/" .
+#		      "public_timeline.json" .
+#		      "?include_entities=true" .
+#		      "&include_rts=true" .
+#		      "&count=200";
+#
+#my $twitter_cache_size = 1000;
+#
+#my @twitter_cache = (); # fifo, for ordering by age
+#my %twitter_cache = (); # hash, for detecting dups
+#
+#
+## twitter
+#sub pick_from_twitter_images($) {
+#  my ($timeout) = @_;
+#
+#  $last_search = $twitter_img_url;   # for warnings
+#
+#  my ( $base, $body ) = get_document ($twitter_img_url, undef, $timeout);
+#  # Update the cache.
+#
+#  if ($body) {
+#    $body =~ s/[\r\n]+/ /gs;
+#
+#    # Parsing JSON is a pain in the ass.  So we halfass it as usual.
+#    $body =~ s/^\[|\]$//s;
+#    $body =~ s/(\[.*?\])/{ $_ = $1; s@\},@\} @gs; $_; }/gsexi;
+#    my @items = split (/\},\{/, $body);
+#    foreach (@items) {
+#      my ($name) = m@"screen_name":"([^\"]+)"@si;
+#      my ($img)  = m@"media_url":"([^\"]+)"@si;
+#      my ($page) = m@"display_url":"([^\"]+)"@si;
+#      next unless ($name && $img && $page);
+#      foreach ($img, $page) {
+#        s/\\//gs;
+#        $_ = "http://$_" unless (m/^http/si);
+#      }
+#
+#      next if ($twitter_cache{$page}); # already have it
+#
+#      LOG ($verbose_filter, "  candidate: $page - $img");
+#      push @twitter_cache, $page;
+#      $twitter_cache{$page} = $img;
+#    }
+#  }
+#
+#  # Pull from the cache.
+#
+#  return () if ($#twitter_cache == -1);
+#
+#  my $n = $#twitter_cache+1;
+#  my $i = int(rand($n));
+#  my $page = $twitter_cache[$i];
+#  my $url  = $twitter_cache{$page};
+#
+#  # delete this one from @twitter_cache and from %twitter_cache.
+#  #
+#  @twitter_cache = ( @twitter_cache[0 .. $i-1],
+#                     @twitter_cache[$i+1 .. $#twitter_cache] );
+#  delete $twitter_cache{$page};
+#
+#  # Keep the size of the cache under the limit by nuking older entries
+#  #
+#  while ($#twitter_cache >= $twitter_cache_size) {
+#    my $page = shift @twitter_cache;
+#    delete $twitter_cache{$page};
+#  }
+#
+#  LOG ($verbose_load, "picked page $url");
+#
+#  $suppress_audit = 1;
+#
+#  return ($page, $url);
+#}
 
 
 ############################################################################
@@ -2105,7 +2109,7 @@ sub pick_from_twitter_images($) {
 #
 ############################################################################
 
-my $flickr_img_url = "http://www.flickr.com/explore/";
+my $flickr_img_url = "https://www.flickr.com/explore/";
 
 # Like LiveJournal, the Flickr page of images tends to update slowly,
 # so remember the last N entries on it and randomly select from those.
@@ -2150,7 +2154,7 @@ sub pick_from_flickr_recent($) {
     my ($img) = ($chunk =~ m@"displayUrl": *"(.*?)"@six);
     next unless defined ($img);
     $img =~ s/\\//gs;
-    $img = "http:$img" unless ($img =~ m/^http/s);
+    $img = "https:$img" unless ($img =~ m/^http/s);
 
     my ($user) = ($chunk =~ m/"pathAlias": *"(.*?)"/si);
     next unless defined ($user);
@@ -2158,7 +2162,7 @@ sub pick_from_flickr_recent($) {
     my ($id) = ($img =~ m@/\d+/(\d+)_([\da-f]+)_@si);
     my ($page) = "https://www.flickr.com/photos/$user/$id/";
 
-    # $img =~ s/_[a-z](\.[a-z\d]+)$/$1/si;  # take off "thumb" suffix
+    $img =~ s/_[a-z](\.[a-z\d]+)$/$1/si;  # take off "thumb" suffix
 
     $count++;
     next if ($flickr_cache{$img}); # already have it
@@ -2202,7 +2206,7 @@ sub pick_from_flickr_recent($) {
 #
 ############################################################################
 
-my $flickr_rss_base = ("http://www.flickr.com/services/feeds/" .
+my $flickr_rss_base = ("https://www.flickr.com/services/feeds/" .
                        "photos_public.gne" .
                        "?format=rss_200_enc&tagmode=any&tags=");
 
@@ -2249,69 +2253,69 @@ sub pick_from_flickr_random($) {
 #
 ############################################################################
 
-my $instagram_url_base = "https://api.instagram.com/v1/media/popular";
-
-# instagram_random
-sub pick_from_instagram($) {
-  my $timeout = shift;
-
-  # Liberated access tokens.
-  # jsdo.it search for: instagram client_id
-  # Google search for: instagram "&client_id=" site:jsfiddle.net
-  my @tokens = (#'b59fbe4563944b6c88cced13495c0f49', # gramfeed.com
-                #'fa26679250df49c48a33fbcf30aae989', # instac.at
-                #'d9494686198d4dfeb954979a3e270e5e', # iconosquare.com
-                #'793ef48bb18e4197b61afce2d799b81c', # jsdo.it
-                #'67b8a3e0073449bba70600d0fc68e6cb', # jsdo.it
-                #'26a098e0df4d4b9ea8b4ce6c505b7742', # jsdo.it
-                #'2437cbcd906a4c10940f990d283d3cd5', # jsdo.it
-                #'191c7d7d5312464cbd92134f36ffdab5', # jsdo.it
-                #'acfec809437b4340b2c38f66503af774', # jsdo.it
-                #'e9f77604a3a24beba949c12d18130988', # jsdo.it
-                #'2cd7bcf68ae346529770073d311575b3', # jsdo.it
-                #'830c600fe8d742e2ab3f3b94f9bb22b7', # jsdo.it
-                #'55865a0397ad41e5997dd95ef4df8da1', # jsdo.it
-                #'192a5742f3644ea8bed1d25e439286a8', # jsdo.it
-                #'38ed1477e7a44595861b8842cdb8ba23', # jsdo.it
-                #'e52f79f645f54488ad0cc47f6f55ade6', # jsfiddle.net
-                );
-
-  my $tok = $tokens[int(rand($#tokens+1))];
-  $last_search = $instagram_url_base . "?client_id=" . $tok;
-
-  print STDERR "\n\n" if ($verbose_load);
-  LOG ($verbose_load, "URL: $last_search");
-
-  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
-  if (!$base || !$body) {
-    $body = undef;
-    return;
-  }
-
-  $body =~ s/("link")/\001$1/gs;
-  my @chunks = split(/\001/, $body);
-  shift @chunks;
-  my @urls = ();
-  foreach (@chunks) {
-    s/\\//gs;
-    my ($url) = m/"link":\s*"(.*?)"/s;
-    my ($img) = m/"standard_resolution":\{"url":\s*"(.*?)"/s;
-       ($img) = m/"url":\s*"(.*?)"/s unless $url;
-    next unless ($url && $img);
-    push @urls, [ $url, $img ];
-  }
-
-  if ($#urls < 0) {
-    LOG ($verbose_load, "no images on $last_search");
-    return ();
-  }
-
-  my $i = int(rand($#urls+1));
-  my ($url, $img) = @{$urls[$i]};
-
-  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#urls+1) . ": $url");
-  return ($url, $img);
-}
+#my $instagram_url_base = "https://api.instagram.com/v1/media/popular";
+#
+## instagram_random
+#sub pick_from_instagram($) {
+#  my $timeout = shift;
+#
+#  # Liberated access tokens.
+#  # jsdo.it search for: instagram client_id
+#  # Google search for: instagram "&client_id=" site:jsfiddle.net
+#  my @tokens = (#'b59fbe4563944b6c88cced13495c0f49', # gramfeed.com
+#                #'fa26679250df49c48a33fbcf30aae989', # instac.at
+#                #'d9494686198d4dfeb954979a3e270e5e', # iconosquare.com
+#                #'793ef48bb18e4197b61afce2d799b81c', # jsdo.it
+#                #'67b8a3e0073449bba70600d0fc68e6cb', # jsdo.it
+#                #'26a098e0df4d4b9ea8b4ce6c505b7742', # jsdo.it
+#                #'2437cbcd906a4c10940f990d283d3cd5', # jsdo.it
+#                #'191c7d7d5312464cbd92134f36ffdab5', # jsdo.it
+#                #'acfec809437b4340b2c38f66503af774', # jsdo.it
+#                #'e9f77604a3a24beba949c12d18130988', # jsdo.it
+#                #'2cd7bcf68ae346529770073d311575b3', # jsdo.it
+#                #'830c600fe8d742e2ab3f3b94f9bb22b7', # jsdo.it
+#                #'55865a0397ad41e5997dd95ef4df8da1', # jsdo.it
+#                #'192a5742f3644ea8bed1d25e439286a8', # jsdo.it
+#                #'38ed1477e7a44595861b8842cdb8ba23', # jsdo.it
+#                #'e52f79f645f54488ad0cc47f6f55ade6', # jsfiddle.net
+#                );
+#
+#  my $tok = $tokens[int(rand($#tokens+1))];
+#  $last_search = $instagram_url_base . "?client_id=" . $tok;
+#
+#  print STDERR "\n\n" if ($verbose_load);
+#  LOG ($verbose_load, "URL: $last_search");
+#
+#  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+#  if (!$base || !$body) {
+#    $body = undef;
+#    return;
+#  }
+#
+#  $body =~ s/("link")/\001$1/gs;
+#  my @chunks = split(/\001/, $body);
+#  shift @chunks;
+#  my @urls = ();
+#  foreach (@chunks) {
+#    s/\\//gs;
+#    my ($url) = m/"link":\s*"(.*?)"/s;
+#    my ($img) = m/"standard_resolution":\{"url":\s*"(.*?)"/s;
+#       ($img) = m/"url":\s*"(.*?)"/s unless $url;
+#    next unless ($url && $img);
+#    push @urls, [ $url, $img ];
+#  }
+#
+#  if ($#urls < 0) {
+#    LOG ($verbose_load, "no images on $last_search");
+#    return ();
+#  }
+#
+#  my $i = int(rand($#urls+1));
+#  my ($url, $img) = @{$urls[$i]};
+#
+#  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#urls+1) . ": $url");
+#  return ($url, $img);
+#}
 
 
 ############################################################################
@@ -2320,7 +2324,7 @@ sub pick_from_instagram($) {
 #
 ############################################################################
 
-my $imgur_base = 'http://imgur.com/search?qs=thumb&q_any=';
+my $imgur_base = 'https://imgur.com/search?qs=thumb&q_any=';
 
 sub pick_from_imgur($) {
   my $timeout = shift;
@@ -2350,10 +2354,10 @@ sub pick_from_imgur($) {
   my $i = int(rand($n));
   my $page = $imgs[$i];
   $page =~ s/[?&].*$//s;
-  $page = "http://imgur.com$page" if ($page =~ m@^/@s);
+  $page = "https://imgur.com$page" if ($page =~ m@^/@s);
 
   my ($id) = ($page =~ m@([^/?&]+)$@s);
-  my $img = "http://i.imgur.com/$id.jpg";
+  my $img = "https://i.imgur.com/$id.jpg";
 
   LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
 
@@ -2390,15 +2394,24 @@ sub pick_from_tumblr($) {
     return;
   }
 
-  my @imgs0 = ($body =~ m@<IMG\b([^<>]*)>@gsi);
+  my @imgs0 = ($body =~ m@<FIGURE.*?</FIGURE>@gsi);
   return () unless @imgs0;
   my @imgs;
   foreach my $img (@imgs0) {
     my ($src)  = ($img =~ m@\bsrc=[\"\'](.*?)[\"\']@si);
+       ($src)  = ($img =~ m@\bsrcset= [\"\'] .*? , \s* 
+                             ( [^\s\"\']+ ) \s+ [^\s\"\']+ [\"\'] @six)
+         unless $src;
     my ($href) = ($img =~ m@\bdata-pin-url=[\"\'](.*?)[\"\']@si);
+    if (! $href) {
+      my ($u) = ($img =~ m@\bblog-name=[\"\'](.*?)[\"\']@si);
+      my ($p) = ($img =~ m@\bpost-id=[\"\'](.*?)[\"\']@si);
+      $href = "https://$u.tumblr.com/post/$p" if ($u && $p);
+    }
     next unless ($src && $href);
     next if ($src =~ m/^data:/s);
-    foreach ($src, $href) { $_ = "http://www.tumblr.com$_" if (m@^/@s); }
+    foreach ($src, $href) { $_ = "https://www.tumblr.com$_" if (m@^/@s); }
+    $src =~ s/(\.gif)v/$1/gsi;
     push @imgs, [$href, $src];
   }
   return () unless @imgs;

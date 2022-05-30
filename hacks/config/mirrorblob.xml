@@ -16,7 +16,8 @@
     <number id="zoom" type="slider" arg="-zoom %"
             _label="Zoom"
             _low-label="0.1x" _high-label="3.0x"
-            low="0.1" high="3.0" default="1.0"/>
+            low="0.1" high="3.0" default="1.0"
+            convert="ratio"/>
 
     <number id="hold_time" type="slider" arg="-hold-time %"
             _label="Time until loading a new image"

@@ -15,11 +15,13 @@
 
     <number id="speed" type="slider" arg="-speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
-            low="0.05" high="2.0" default="1.0"/>
+            low="0.05" high="2.0" default="1.0"
+            convert="ratio"/>
 
     <number id="density" type="slider" arg="-density %"
             _label="Polygons" _low-label="Few" _high-label="Many"
-            low="0.2" high="5.0" default="1.0"/>
+            low="0.2" high="5.0" default="1.0"
+            convert="ratio"/>
 
     <number id="fracture" type="slider" arg="-fracture %"
             _label="Fractures" _low-label="Few" _high-label="Many"

@@ -1,4 +1,4 @@
-/* pinion, Copyright (c) 2004-2014 Jamie Zawinski <jwz@jwz.org>
+/* pinion, Copyright © 2004-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,6 +48,7 @@ typedef struct {
 
   trackball_state *trackball;
   Bool button_down_p;
+  Bool root_p;
   unsigned long mouse_gear_id;
 
   texture_font_data *font1, *font2, *font3;
@@ -1158,8 +1159,10 @@ find_mouse_gear (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
 
-# ifndef HAVE_JWZGLES
-
+# ifdef HAVE_JWZGLES
+  goto FAIL;
+# else /* !HAVE_JWZGLES -- real X11 */
+  {
   int screen_width = MI_WIDTH (mi);
   int screen_height = MI_HEIGHT (mi);
   GLfloat h = (GLfloat) screen_height / (GLfloat) screen_width;
@@ -1176,6 +1179,15 @@ find_mouse_gear (ModeInfo *mi)
     XQueryPointer (MI_DISPLAY (mi), MI_WINDOW (mi),
                    &r, &c, &rx, &ry, &x, &y, &m);
   }
+
+  /* #### Mar 2022: The Linux version of this keeps crashing in
+          LLVMBuildBitCast() <- glCallList() <- draw_gear() below (and
+          trashing the stack) while trying to render into the select buffer.
+          But not always: it seems to reliably happen in full screen, but not
+          when in a smaller window.  Not crashing on macOS X11.
+          So... Fuck it, I guess? */
+  if (pp->root_p)
+    goto FAIL;
 
   if (x < 0 || y < 0 || x > screen_width || y > screen_height)
     return;  /* out of window */
@@ -1227,14 +1239,11 @@ find_mouse_gear (ModeInfo *mi)
           pp->mouse_gear_id = pnames[0];
       }
   }
-
-#else  /* HAVE_JWZGLES */
-  /* #### not yet implemented */
-  pp->mouse_gear_id = (pp->ngears > 1 ? pp->gears[1]->id : 0);
+  }
   return;
-#endif /* HAVE_JWZGLES */
-
-
+#endif /* !HAVE_JWZGLES */
+ FAIL:
+  pp->mouse_gear_id = (pp->ngears > 1 ? pp->gears[1]->id : 0);
 }
 
 
@@ -1332,6 +1341,7 @@ init_pinion (ModeInfo *mi)
   pp->ngears = 0;
   pp->gears_size = 0;
   pp->gears = 0;
+  pp->root_p = get_boolean_resource (MI_DISPLAY(mi), "root", "Boolean");
 
   pp->plane_displacement = gear_size * 0.1;
 

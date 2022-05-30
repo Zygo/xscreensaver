@@ -30,7 +30,9 @@
   <_description>
 The Julia set is a close relative of the Mandelbrot set.  The
 small moving dot indicates the control point from which the rest of
-the image was generated.  See also the "Discrete" screen saver.
+the image was generated.
+
+See also the "Discrete" screen saver.
 
 https://en.wikipedia.org/wiki/Julia_set
 

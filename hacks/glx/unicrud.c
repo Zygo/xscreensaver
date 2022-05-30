@@ -1,4 +1,4 @@
-/* unicrud, Copyright (c) 2016-2021 Jamie Zawinski <jwz@jwz.org>
+/* unicrud, Copyright © 2016-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -569,6 +569,64 @@ matches (const char *pattern, const char *string)
 }
 
 
+#ifndef HAVE_JWXYZ
+static void
+capitalize (char *s)
+{
+  int brk = 1;
+  for (; *s; s++)
+    {
+      if (*s == ' ' || *s == '\t' || *s == '\r' || *s == '\n')
+        brk = 1;
+      else if (brk)
+        brk = 0;
+      else if (*s >= 'A' && *s <= 'Z')
+        *s += 'a' - 'A';
+    }
+}
+#endif /* HAVE_JWXYZ */
+
+
+static const char *
+unicrud_charname (texture_font_data *font, unsigned long unichar)
+{
+# ifdef HAVE_JWXYZ
+  /* macOS, iOS and Android have APIs for this. */
+  return texfont_unicode_character_name (font, unichar);
+
+# else
+  /* X11 has so many to choose from!
+     Options include:
+
+     1: perl -e 'use charnames (); print charnames::viacode(0x1234);'
+     2: grep "^01234\t" /opt/local/lib/perl5/\*\/unicore/Name.pl
+     3: python3 -c 'import unicodedata; print (unicodedata.name("\u1234"))'
+     4: Hardcode all the names into this hack directly.
+        https://www.unicode.org/Public/UCD/latest/ucd/NamesList.txt is 1.6 MB.
+        Stripped down to just names, it would be around 943 KB and 30K lines.
+        We could embed that here and just binary-search the data.
+   */
+  FILE *pipe;
+  char cmd[255], *s;
+  static char ret[255];
+  int L;
+  sprintf (cmd,
+           "perl -e 'use charnames (); print charnames::viacode (%lu);' 2>&-",
+           unichar);
+  pipe = popen (cmd, "r");
+  s = fgets (ret, sizeof(ret)-1, pipe);
+  pclose (pipe);
+  if (!s || !*s) return 0;
+  L = strlen(s);
+  while (L > 0 && (s[L-1] == '\r' || s[L-1] == '\n'))
+    s[--L] = 0;
+  if (L <= 0) return 0;
+  capitalize (s);
+  return s;
+# endif /* X11 */
+}
+
+
 static void
 pick_unichar (ModeInfo *mi)
 {
@@ -642,9 +700,7 @@ pick_unichar (ModeInfo *mi)
       }
   }
 
-# ifdef HAVE_JWXYZ
-  bp->charname = texfont_unicode_character_name (bp->char_font, bp->unichar);
-# endif
+  bp->charname = unicrud_charname (bp->char_font, bp->unichar);
 
   bp->color[0] = 0.5 + frand(0.5);
   bp->color[1] = 0.5 + frand(0.5);
@@ -670,10 +726,8 @@ draw_unichar (ModeInfo *mi)
   *title = 0;
   sprintf (title + strlen(title), "Plane:\t%s\n", bp->charplane);
   sprintf (title + strlen(title), "Block:\t%s\n", bp->charblock);
-# ifdef HAVE_JWXYZ
   sprintf (title + strlen(title), "Name:\t%s\n",
            (bp->charname ? bp->charname : ""));
-#endif
   sprintf (title + strlen(title), "Unicode:\t%04lX\n", bp->unichar);
   sprintf (title + strlen(title), "UTF-8:\t");
   for (j = 0; j < i; j++)

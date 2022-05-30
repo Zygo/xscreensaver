@@ -9,6 +9,49 @@
  * implied warranty.
  */
 
+/* For our purposes, here are the salient facts about the XInput2 extension:
+
+   - Available by default as of X11R7 in 2009.
+
+   - We receive events from the XIRawEvent family while other processes
+     have the keyboard and mouse grabbed (XI_RawKeyPress, etc.)
+     The entire xscreensaver-auth security model hinges on this fact.
+
+   - We cannot receive events from the XIDeviceEvent family (XI_KeyPress,
+     etc.) so while XIDeviceEvents contain many fields that we would like
+     to have, don't be fooled, those are not available.  XIRawEvents such
+     as XI_RawKeyPress cannot be cast to XIDeviceEvent.
+
+   - XI_RawButtonPress, XI_RawButtonRelease and XI_RawMotion contain no
+     usable position information.  The non-raw versions do, but we don't
+     receive those, so we have to read that info via XQueryPointer.
+
+   - XI_RawKeyPress and XI_RawKeyRelease contain the keycode (in 'detail')
+     but no modifier info, so, again, to be able to tell "a" from "A" we
+     need to call XQueryPointer.
+
+   - XI_RawKeyPress does not auto-repeat the way Xlib KeyPress does.
+
+   - Raw events have no window, subwindow, etc.
+
+   - Event serial numbers are not unique.
+
+   - If *this* process has the keyboard and mouse grabbed, it receives:
+
+     - KeyPress, KeyRelease
+     - ButtonPress, ButtonRelease, MotionNotify
+     - XI_RawButtonPress, XI_RawButtonRelease, XI_RawMotion (doubly reported)
+
+   - If this process *does not* have keyboard and mouse grabbed, it receives:
+
+     - XI_RawKeyPress, XI_RawKeyRelease
+     - XI_RawButtonPress, XI_RawButtonRelease, XI_RawMotion
+
+   The closest thing to actual documentation on XInput2 seems to be a series
+   of blog posts by Peter Hutterer.  There's basically nothing about it on
+   www.x.org.  https://who-t.blogspot.com/2009/07/xi2-recipes-part-4.html
+ */
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -63,6 +106,10 @@ init_xinput (Display *dpy, int *opcode_ret)
 
   memset (mask1, 0, sizeof(mask1));
 
+  /* The XIRawEvent family of events are delivered to us while someone else
+     holds a grab, but the non-raw versions are not.  In fact, attempting to
+     select XI_KeyPress, etc. results in a BadAccess X error.
+   */
   XISetMask (mask1, XI_RawMotion);
   XISetMask (mask1, XI_RawKeyPress);
   XISetMask (mask1, XI_RawKeyRelease);
@@ -72,7 +119,7 @@ init_xinput (Display *dpy, int *opcode_ret)
   XISetMask (mask1, XI_RawTouchUpdate);
   XISetMask (mask1, XI_RawTouchEnd);
 
-  /* If we use XIAllDevices instead, we get double events. */
+  /* If we use XIAllDevices instead, we get duplicate events. */
   evmasks[0].deviceid = XIAllMasterDevices;
   evmasks[0].mask_len = sizeof(mask1);
   evmasks[0].mask = mask1;
@@ -125,41 +172,10 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
   Bool ok = False;
 
   int root_x = 0, root_y = 0;
+  int win_x = 0,  win_y = 0;
   unsigned int mods = 0;
+  Window subw = 0;
 
-  /* The closest thing to actual documentation on XInput2 seems to be a series
-     of blog posts by Peter Hutterer.  There's basically nothing about it on
-     www.x.org.  In http://who-t.blogspot.com/2009/07/xi2-recipes-part-4.html
-     he says: 
-
-       "XIDeviceEvent [...] contains the state of the modifier keys [...]
-       The base modifiers are the ones currently pressed, latched the ones
-       pressed until a key is pressed that's configured to unlatch it (e.g.
-       some shift-capslock interactions have this behaviour) and finally
-       locked modifiers are the ones permanently active until unlocked
-       (default capslock behaviour in the US layout). The effective modifiers
-       are a bitwise OR of the three above - which is essentially equivalent
-       to the modifiers state supplied in the core protocol events."
-
-     However, it appears that the XInput2 library is returning uninitialized
-     data for *many* of the components of its XIDeviceEvent responses.  In
-     particular, the XIModifierState fields have ludicrously large and
-     incorrect values like 0x6045FB3D; and the root_x/y and event_x/y values
-     on XI_RawButton* and XI_RawMotion events are always nonsense.
-
-     This is very worrying, as it suggests that the XInput2 extension is
-     returning uninitialized or freed memory from the X11 server process.
-     Build and run the "driver/test-xinput" program for an easy way to see
-     this bug in action.
-
-     To work around this, we just always get the current modifier state and
-     mouse position by calling XQueryPointer instead of reading the fields
-     from the event structures.  (This can technically race: maybe the
-     modifier state changed between when the server generated the keyboard
-     event, and when we receive it and poll.  But we're talking nanoseconds
-     here: the window for that race is way smaller than the precision of human
-     finger muscles.)
-   */
   switch (evtype) {
   case XI_RawKeyPress:
   case XI_RawKeyRelease:
@@ -167,12 +183,12 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
   case XI_RawButtonRelease:
   case XI_RawMotion:
     {
-      Window root_ret, child_ret;
+      Window root_ret;
       int win_x, win_y;
       int i;
       for (i = 0; i < ScreenCount (dpy); i++)   /* query on correct screen */
         if (XQueryPointer (dpy, RootWindow (dpy, i),
-                           &root_ret, &child_ret, &root_x, &root_y,
+                           &root_ret, &subw, &root_x, &root_y,
                            &win_x, &win_y, &mods))
           break;
     }
@@ -184,12 +200,12 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
   case XI_RawKeyRelease:
     out->xkey.type      = (evtype == XI_RawKeyPress ? KeyPress : KeyRelease);
     out->xkey.display   = in->display;
-    out->xkey.window    = in->event;
     out->xkey.root      = in->root;
-    out->xkey.subwindow = in->child;
+    out->xkey.window    = subw;
+    out->xkey.subwindow = subw;
     out->xkey.time      = in->time;
-    out->xkey.x         = root_x;
-    out->xkey.y         = root_y;
+    out->xkey.x         = win_x;
+    out->xkey.y         = win_y;
     out->xkey.x_root    = root_x;
     out->xkey.y_root    = root_y;
     out->xkey.state     = mods;
@@ -201,12 +217,12 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
     out->xbutton.type      = (evtype == XI_RawButtonPress 
                               ? ButtonPress : ButtonRelease);
     out->xbutton.display   = in->display;
-    out->xbutton.window    = in->event;
     out->xbutton.root      = in->root;
-    out->xbutton.subwindow = in->child;
+    out->xbutton.window    = subw;
+    out->xbutton.subwindow = subw;
     out->xbutton.time      = in->time;
-    out->xbutton.x         = root_x;
-    out->xbutton.y         = root_y;
+    out->xbutton.x         = win_x;
+    out->xbutton.y         = win_y;
     out->xbutton.x_root    = root_x;
     out->xbutton.y_root    = root_y;
     out->xbutton.state     = mods;
@@ -216,12 +232,12 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
   case XI_RawMotion:
     out->xmotion.type      = MotionNotify;
     out->xmotion.display   = in->display;
-    out->xmotion.window    = in->event;
     out->xmotion.root      = in->root;
-    out->xmotion.subwindow = in->child;
+    out->xmotion.window    = subw;
+    out->xmotion.subwindow = subw;
     out->xmotion.time      = in->time;
-    out->xmotion.x         = root_x;
-    out->xmotion.y         = root_y;
+    out->xmotion.x         = win_x;
+    out->xmotion.y         = win_y;
     out->xmotion.x_root    = root_x;
     out->xmotion.y_root    = root_y;
     out->xmotion.state     = mods;
@@ -232,12 +248,12 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
     out->xbutton.type      = (evtype == XI_RawTouchBegin 
                               ? ButtonPress : ButtonRelease);
     out->xbutton.display   = in->display;
-    out->xbutton.window    = in->event;
     out->xbutton.root      = in->root;
-    out->xbutton.subwindow = in->child;
+    out->xbutton.window    = subw;
+    out->xbutton.subwindow = subw;
     out->xbutton.time      = in->time;
-    out->xbutton.x         = root_x;
-    out->xbutton.y         = root_y;
+    out->xbutton.x         = win_x;
+    out->xbutton.y         = win_y;
     out->xbutton.x_root    = root_x;
     out->xbutton.y_root    = root_y;
     out->xbutton.state     = mods;
@@ -253,14 +269,14 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
 
 
 static void
-print_kbd_event (XEvent *xev, XComposeStatus *compose, Bool x11_p)
+print_kbd_event (XKeyEvent *xkey, XComposeStatus *compose, Bool x11_p)
 {
   if (debug_p)		/* Passwords show up in plaintext! */
     {
       KeySym keysym = 0;
       char c[100];
       char M[100], *mods = M;
-      int n = XLookupString (&xev->xkey, c, sizeof(c)-1, &keysym, compose);
+      int n = XLookupString (xkey, c, sizeof(c)-1, &keysym, compose);
       const char *ks = keysym ? XKeysymToString (keysym) : "NULL";
       c[n] = 0;
       if      (*c == '\n') strcpy (c, "\\n");
@@ -268,31 +284,31 @@ print_kbd_event (XEvent *xev, XComposeStatus *compose, Bool x11_p)
       else if (*c == '\t') strcpy (c, "\\t");
 
       *mods = 0;
-      if (xev->xkey.state & ShiftMask)   strcat (mods, "-Sh");
-      if (xev->xkey.state & LockMask)    strcat (mods, "-Lk");
-      if (xev->xkey.state & ControlMask) strcat (mods, "-C");
-      if (xev->xkey.state & Mod1Mask)    strcat (mods, "-M1");
-      if (xev->xkey.state & Mod2Mask)    strcat (mods, "-M2");
-      if (xev->xkey.state & Mod3Mask)    strcat (mods, "-M3");
-      if (xev->xkey.state & Mod4Mask)    strcat (mods, "-M4");
-      if (xev->xkey.state & Mod5Mask)    strcat (mods, "-M5");
+      if (xkey->state & ShiftMask)   strcat (mods, "-Sh");
+      if (xkey->state & LockMask)    strcat (mods, "-Lk");
+      if (xkey->state & ControlMask) strcat (mods, "-C");
+      if (xkey->state & Mod1Mask)    strcat (mods, "-M1");
+      if (xkey->state & Mod2Mask)    strcat (mods, "-M2");
+      if (xkey->state & Mod3Mask)    strcat (mods, "-M3");
+      if (xkey->state & Mod4Mask)    strcat (mods, "-M4");
+      if (xkey->state & Mod5Mask)    strcat (mods, "-M5");
       if (*mods) mods++;
       if (!*mods) strcat (mods, "0");
 
       fprintf (stderr, "%s: %s    0x%02X %s %s \"%s\"\n", blurb(),
                (x11_p
-                ? (xev->xkey.type == KeyPress
+                ? (xkey->type == KeyPress
                    ? "X11 KeyPress    "
                    : "X11 KeyRelease  ")
-                : (xev->xkey.type == KeyPress
+                : (xkey->type == KeyPress
                    ? "XI_RawKeyPress  "
                    : "XI_RawKeyRelease")),
-               xev->xkey.keycode, mods, ks, c);
+               xkey->keycode, mods, ks, c);
     }
   else			/* Log only that the KeyPress happened. */
     {
       fprintf (stderr, "%s: X11 Key%s\n", blurb(),
-               (xev->xkey.type == KeyPress ? "Press  " : "Release"));
+               (xkey->type == KeyPress ? "Press  " : "Release"));
     }
 }
 
@@ -307,7 +323,7 @@ print_xinput_event (Display *dpy, XEvent *xev, const char *desc)
   case KeyRelease:
     {
       static XComposeStatus compose = { 0, };
-      print_kbd_event (xev, &compose, True);
+      print_kbd_event (&xev->xkey, &compose, True);
     }
     break;
 
@@ -352,7 +368,7 @@ print_xinput_event (Display *dpy, XEvent *xev, const char *desc)
         else
           {
             static XComposeStatus compose = { 0, };
-            print_kbd_event (&ev2, &compose, False);
+            print_kbd_event (&ev2.xkey, &compose, False);
           }
         break;
       }
@@ -371,11 +387,9 @@ print_xinput_event (Display *dpy, XEvent *xev, const char *desc)
         XQueryPointer (dpy, DefaultRootWindow (dpy),
                        &root_ret, &child_ret, &root_x, &root_y,
                        &win_x, &win_y, &mask);
-        fprintf (stderr, "%s: XI _RawButton%s %4d, %-4d  %7.02f, %-7.02f\n",
-                 blurb(),
+        fprintf (stderr, "%s: XI _RawButton%s %4d, %-4d\n", blurb(),
                  (re->evtype == XI_RawButtonPress ? "Press  " : "Release"),
-                 root_x, root_y,
-                 re->raw_values[0], re->raw_values[1]);
+                 root_x, root_y);
       }
     break;
 

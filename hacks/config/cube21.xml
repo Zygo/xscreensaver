@@ -40,7 +40,8 @@
 
     <number id="spinspeed" type="slider" arg="-spinspeed %"
       _label="Spin" _low-label="Slow" _high-label="Fast"
-      low="0.01" high="4.0" default="1.0"/>
+      low="0.01" high="4.0" default="1.0"
+      convert="ratio"/>
 
     <number id="wanderspeed" type="slider" arg="-wanderspeed %"
       _label="Wander" _low-label="Slow" _high-label="Fast"

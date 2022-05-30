@@ -29,7 +29,8 @@
 
     <number id="mag" type="slider" arg="-mag %"
             _label="Magnification" _low-label="Smaller" _high-label="Bigger"
-            low="0.1" high="4.0" default="1.0"/>
+            low="0.1" high="4.0" default="1.0"
+            convert="ratio"/>
 
     <select id="mins">
       <option id="min2" _label="Minute tick marks" arg-set="-minutes"/>

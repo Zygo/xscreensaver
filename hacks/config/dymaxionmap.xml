@@ -14,7 +14,8 @@
             convert="invert"/>
     <number id="speed" type="slider" arg="-speed %"
             _label="Animation speed" _low-label="Slow" _high-label="Fast"
-            low="0.05" high="10.0" default="1.0"/>
+            low="0.05" high="10.0" default="1.0"
+            convert="ratio"/>
    </vgroup>
    <vgroup>
 

@@ -15,17 +15,20 @@
 
     <number id="spin" type="slider" arg="-spin %"
             _label="Rotation speed" _low-label="Slow" _high-label="Fast"
-            low="0.1" high="7.0" default="1.0"/>
+            low="0.1" high="7.0" default="1.0"
+            convert="ratio"/>
 
     <number id="scroll" type="slider" arg="-scroll %"
             _label="Scrolling speed" _low-label="Slow" _high-label="Fast"
-            low="0.1" high="8.0" default="1.0"/>
+            low="0.1" high="8.0" default="1.0"
+            convert="ratio"/>
 
    </vgroup>
    <vgroup>
     <number id="size" type="slider" arg="-size %"
             _label="Gear size" _low-label="Tiny" _high-label="Huge"
-            low="0.1" high="3.0" default="1.0"/>
+            low="0.1" high="3.0" default="1.0"
+            convert="ratio"/>
 
     <number id="max-rpm" type="slider" arg="-max-rpm %"
             _label="Max RPM" _low-label="100" _high-label="2000"
@@ -40,6 +43,7 @@
 
   <_description>
 A gear system marches across the screen.
+
 See also the "Gears" and "Möbius Gears" screen savers.
 
 https://en.wikipedia.org/wiki/Involute_gear

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1998-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1998-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1717,7 +1717,7 @@ windows_10 (Display *dpy, Window window)
     0xFF,0xFF,0xFF,0xFF,0xFF,0x01};
   Pixmap pixmap;
 
-  const char *lines[] = {
+  const char * const lines[] = {
     ":(\n",
     "\n",
     "Your PC ran into a problem and needs to restart. We're just\n",
@@ -1823,16 +1823,100 @@ windows_10 (Display *dpy, Window window)
 
 
 static struct bsod_state *
+windows_safe (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "winSafe", "WinSafe");
+
+  unsigned long fg = bst->fg;
+  unsigned long bg = bst->bg;
+  const char * const lines[] = {
+    "We apologize for the inconvenience, but Windows did not start"
+    " successfully.  A\n",
+    "recent hardware or software change might have caused this.\n",
+    "\n",
+    "If your computer stopped responding, restarted unexpectedly, or was\n",
+    "automatically shut down to protect your files and folders, choose Last"
+    " Known\n",
+    "Good Configuration to refert to the most recent settings that worked.\n",
+    "\n",
+    "If a previous startup attempt was interrupted due to a power failure or"
+    " because\n",
+    "the Power or Reset button was pressed, or if you aren't sure what caused"
+    " the\n",
+    "problem, choose Start Windows Normally.\n",
+    "\n",
+    "    Safe Mode\n",
+    "    Safe Mode with Networking\n",
+    "    Safe Mode with Command Prompt\n",
+    "\n",
+    "    Last Known Good Configuration (your most recent settings that"
+    " worked)\n",
+    "\n",
+    "*    Start Windows Normally\n",
+    "\n",
+    "Use the up and down arrow keys to move the highlight to your choice.\n",
+    "Seconds until Windows starts:  ",
+  };
+  int i, j;
+  int bit = random() % 8;  /* Dead bus line */
+
+  if (bit && (random() % 4))
+    bit = 3;
+
+  /* 1: Stapt Windous Nmrmally
+     2: Start Windoss Nkrmahly
+     3: Start Wandows Ngrmadly
+     4: Stabt Windogs Normally
+     5: StaRt WIndoWs NOrmaLly
+     6: Sta2t W)ndo7s N/rma,ly
+   */
+  BSOD_COLOR (bst, fg, bg);
+  for (j = 0; j < countof(lines); j++)
+    {
+      int col;
+      int inv = (lines[j][0] == '*');
+      char *L = strdup (lines[j] + inv);
+
+      for (i = 0, col = 1; i < strlen(L); i++, col++)
+        {
+          if (L[i] > ' ' && !(col % 4))
+            {
+              L[i] &= ~(1 << bit);
+              if (!L[i]) L[i] = ' ';
+            }
+        }
+      if (inv) BSOD_INVERT (bst);
+      BSOD_TEXT (bst, LEFT, L);
+      if (inv) BSOD_INVERT (bst);
+      free (L);
+    }
+
+  for (i = 9; i >= 0; i--)
+    {
+      char c[10];
+      sprintf (c, "\b%d", i);
+      BSOD_TEXT (bst, LEFT, c);
+      BSOD_PAUSE (bst, 1000000);
+    }
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
+
+
+static struct bsod_state *
 windows_other (Display *dpy, Window window)
 {
   /* Lump all of the 2K-ish crashes together and select them randomly...
    */
-  int which = (random() % 4);
+  int which = (random() % 5);
   switch (which) {
   case 0: return windows_2k (dpy, window); break;
   case 1: return windows_me (dpy, window); break;
   case 2: return windows_xp (dpy, window); break;
   case 3: return windows_lh (dpy, window); break;
+  case 4: return windows_safe (dpy, window); break;
   default: abort(); break;
   }
 }
@@ -1868,7 +1952,7 @@ windows_ransomware (Display *dpy, Window window)
   int line_height  = bst->font->ascent + bst->font->descent;
   int line_height1 = bst->fontA->ascent + bst->fontA->descent;
 
-  const char *currencies[] = {
+  const char * const currencies[] = {
     "Blitcoin",
     "Bitcorn",
     "Buttcorn",
@@ -1891,7 +1975,7 @@ windows_ransomware (Display *dpy, Window window)
 
   const char *currency = currencies[random() % countof(currencies)];
 
-  const char *header_quips[] = {
+  const char * const header_quips[] = {
     "Oops, your screens have been encrypted!",
     "Oops, your screens have been encrypted!",
     "Oops, your screens have been encrypted!",
@@ -1920,7 +2004,7 @@ windows_ransomware (Display *dpy, Window window)
   const char *header_quip = header_quips[random() % countof(header_quips)];
 
   /* You got this because... */
-  const char *excuse_quips[] = {
+  const char * const excuse_quips[] = {
     "all human actions are equivalent and all are on principle doomed "
     "to failure",
     "you hold a diverse portfolio of cryptocurrencies",
@@ -1936,7 +2020,7 @@ windows_ransomware (Display *dpy, Window window)
   const char *excuse_quip = excuse_quips[random() % countof(excuse_quips)];
 
   /* WELL ACTUALLY, screensavers aren't really necessary anymore because... */
-  const char *screensaver_quips[] = {
+  const char * const screensaver_quips[] = {
     "I read it on hacker news",
     "that's official Debian policy now",
     "that is the official policy of United Airlines",
@@ -1950,7 +2034,7 @@ windows_ransomware (Display *dpy, Window window)
   const char *screensaver_quip =
     screensaver_quips[random() % countof(screensaver_quips)];
 
-  const char *lines[] = {
+  const char * const lines[] = {
     "*What Happened To My Computer?\n",
     "Your important pixels are paintcrypted. All of your documents, photos, ",
     "videos, databases, icons, dick pics are not accessible because they ",
@@ -2314,7 +2398,7 @@ static struct bsod_state *
 glados (Display *dpy, Window window)
 {
   struct bsod_state *bst = make_bsod_state (dpy, window, "glaDOS", "GlaDOS");
-  const char * panicstr[] = {
+  const char * const panicstr[] = {
     "\n",
     "MOLTEN CORE WARNING\n",
     "\n",
@@ -4014,7 +4098,7 @@ linux_fsck (Display *dpy, Window window)
   struct utsname uts;
 #endif /* UNAME */
 
-  const char *linux_panic[] = {
+  const char * const linux_panic[] = {
    " kernel: Unable to handle kernel paging request at virtual "
      "address 0000f0ad\n",
    " kernel:  printing eip:\n",
@@ -4571,7 +4655,7 @@ vms (Display *dpy, Window window)
 
   __extension__
 
-  const char *lines[] = {
+  const char * const lines[] = {
     "%CNXMAN,  Lost connection to system #\n"
     "%SHADOW-I-VOLPROC, DSA0: shadow master has changed.  "
     "Dump file WILL be written if system crashes.\n"
@@ -6106,7 +6190,7 @@ android (Display *dpy, Window window)
                                          "android.color7",
                                          "Android.Foreground");
 
-  const char *lines0[] = {
+  const char * const lines0[] = {
     "Calculating... please wait\n",
     "osbl:     0x499DF907\n",
     "amss:     0x73162409\n",
@@ -6118,7 +6202,7 @@ android (Display *dpy, Window window)
     "Press power key to go back.\n",
   };
 
-  const char *lines1[] = {
+  const char * const lines1[] = {
     "Checking SD card update...\n",
     "",
     "  SD Checking...\n",
@@ -6131,7 +6215,7 @@ android (Display *dpy, Window window)
     "Please plug off USB\n",
   };
 
-  const char *lines2[] = {
+  const char * const lines2[] = {
     "  SD Checking...\n",
     "  Loading...[PK76DIAG.zip]\n",
     "  No image!\n",

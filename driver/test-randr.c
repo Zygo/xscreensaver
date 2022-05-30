@@ -1,5 +1,5 @@
 /* test-randr.c --- playing with the Resize And Rotate extension.
- * xscreensaver, Copyright © 2004-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2004-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,6 +40,51 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
 {
   error_handler_hit_p = True;
   return 0;
+}
+
+
+static void
+query_outputs (Display *dpy, int screen)
+{
+# ifdef HAVE_RANDR_12
+  int major = -1, minor = -1;
+
+  if (!XRRQueryVersion(dpy, &major, &minor))
+    abort();
+
+  if (major > 1 || (major == 1 && minor >= 2))
+    {
+      int j;
+      XRRScreenResources *res = 
+        XRRGetScreenResources (dpy, RootWindow (dpy, screen));
+      fprintf (stderr, "\n");
+      for (j = 0; j < res->noutput; j++)
+        {
+          int k;
+          XRROutputInfo *rroi = XRRGetOutputInfo (dpy, res, res->outputs[j]);
+          fprintf (stderr, "%s:   Output %d: %s: %s (%d)\n", blurb(), j,
+                   rroi->name,
+                   (rroi->connection == RR_Connected         ? "connected" :
+                    rroi->connection == RR_Disconnected      ? "disconnected" :
+                    rroi->connection == RR_UnknownConnection ? "unknown" :
+                    "ERROR"),
+                   (int) rroi->crtc);
+          for (k = 0; k < rroi->ncrtc; k++)
+            {
+              XRRCrtcInfo *crtci = XRRGetCrtcInfo (dpy, res, rroi->crtcs[k]);
+              fprintf(stderr, "%s:   %c CRTC %d (%d): %dx%d+%d+%d\n", 
+                      blurb(),
+                      (rroi->crtc == rroi->crtcs[k] ? '+' : ' '),
+                      k, (int) rroi->crtcs[k],
+                      crtci->width, crtci->height, crtci->x, crtci->y);
+              XRRFreeCrtcInfo (crtci);
+            }
+          XRRFreeOutputInfo (rroi);
+          fprintf (stderr, "\n");
+        }
+      XRRFreeScreenResources (res);
+    }
+# endif /* HAVE_RANDR_12 */
 }
 
 
@@ -217,42 +262,7 @@ main (int argc, char **argv)
                   blurb(), i);
         }
 
-
-# ifdef HAVE_RANDR_12
-      if (major > 1 || (major == 1 && minor >= 2))
-        {
-          int j;
-          XRRScreenResources *res = 
-            XRRGetScreenResources (dpy, RootWindow (dpy, i));
-          fprintf (stderr, "\n");
-          for (j = 0; j < res->noutput; j++)
-            {
-              int k;
-              XRROutputInfo *rroi = 
-                XRRGetOutputInfo (dpy, res, res->outputs[j]);
-              fprintf (stderr, "%s:   Output %d: %s: %s (%d)\n", blurb(), j,
-                       rroi->name,
-                       (rroi->connection == RR_Disconnected ? "disconnected" :
-                        rroi->connection == RR_UnknownConnection ? "unknown" :
-                        "connected"),
-                       (int) rroi->crtc);
-              for (k = 0; k < rroi->ncrtc; k++)
-                {
-                  XRRCrtcInfo *crtci = XRRGetCrtcInfo (dpy, res, 
-                                                       rroi->crtcs[k]);
-                  fprintf(stderr, "%s:   %c CRTC %d (%d): %dx%d+%d+%d\n", 
-                          blurb(),
-                          (rroi->crtc == rroi->crtcs[k] ? '+' : ' '),
-                          k, (int) rroi->crtcs[k],
-                          crtci->width, crtci->height, crtci->x, crtci->y);
-                  XRRFreeCrtcInfo (crtci);
-                }
-              XRRFreeOutputInfo (rroi);
-              fprintf (stderr, "\n");
-            }
-          XRRFreeScreenResources (res);
-        }
-# endif /* HAVE_RANDR_12 */
+      query_outputs (dpy, i);
     }
 
   if (major > 0)
@@ -272,7 +282,7 @@ main (int argc, char **argv)
       fprintf (stderr, "\n%s: awaiting events...\n\n"
           "\t(If you resize the screen or add/remove monitors, this should\n"
           "\tnotice that and print stuff.  Otherwise, hit ^C.)\n\n",
-               progname);
+               blurb());
       while (1)
         {
 	  XEvent event;
@@ -285,34 +295,38 @@ main (int argc, char **argv)
               int screen = XRRRootToScreen (dpy, xrr_event->window);
 
               fprintf (stderr, "%s: screen %d: RRScreenChangeNotify event\n",
-                       progname, screen);
+                       blurb(), screen);
 
               fprintf (stderr, "%s: screen %d: old size: \t%d x %d\n",
-                       progname, screen,
+                       blurb(), screen,
                        DisplayWidth (dpy, screen),
                        DisplayHeight (dpy, screen));
-              fprintf (stderr, "%s: screen %d: old root 0x%lx:\t%d x %d\n",
-                       progname, screen, (unsigned long) w[screen],
-                       xgwa[screen].width, xgwa[screen].height);
+              fprintf (stderr, "%s: screen %d: old root: \t%d x %d\t0x%lx\n",
+                       blurb(), screen,
+                       xgwa[screen].width, xgwa[screen].height,
+                       (unsigned long) w[screen]);
 
               XRRUpdateConfiguration (&event);
               XSync (dpy, False);
 
               fprintf (stderr, "%s: screen %d: new size: \t%d x %d\n",
-                       progname, screen,
+                       blurb(), screen,
                        DisplayWidth (dpy, screen),
                        DisplayHeight (dpy, screen));
 
               w[screen] = RootWindow (dpy, screen);
               XGetWindowAttributes (dpy, w[screen], &xgwa[screen]);
-              fprintf (stderr, "%s: screen %d: new root 0x%lx:\t%d x %d\n",
-                       progname, screen, (unsigned long) w[screen],
-                       xgwa[screen].width, xgwa[screen].height);
-              fprintf (stderr, "\n");
+              fprintf (stderr, "%s: screen %d: new root:\t%d x %d\t0x%lx\n",
+                       blurb(), screen,
+                       xgwa[screen].width, xgwa[screen].height,
+                       (unsigned long) w[screen]);
+
+              for (i = 0; i < nscreens; i++)
+                query_outputs (dpy, i);
             }
           else
             {
-              fprintf (stderr, "%s: event %d\n", progname, event.type);
+              fprintf (stderr, "%s: event %d\n", blurb(), event.type);
             }
         }
     }

@@ -139,14 +139,14 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver (1)
 .PP
 Documentation on the PDB file format:
-
-    http://www.wwpdb.org/docs.html
-    http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html
+.P
+https://web.archive.org/web/20070108054535/https%3A//www.wwpdb.org/docs.html
+.br
+https://web.archive.org/web/19990819134547/https%3A//www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html
 
 A good source of PDB files:
-
-    http://www.umass.edu/microbio/rasmol/whereget.htm
-    http://www.wwpdb.org/docs.html
+.br
+https://www.umass.edu/microbio/rasmol/whereget.htm
 .SH COPYRIGHT
 Copyright \(co 2001-2005 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software and

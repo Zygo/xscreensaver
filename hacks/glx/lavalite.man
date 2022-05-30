@@ -125,8 +125,10 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
- http://www.lavaworld.com/
- http://www.lavarnd.org/
+.br
+https://www.mathmos.com/
+.br
+https://web.archive.org/web/20010418035116/https%3A//www.lavarnd.org/
 .SH COPYRIGHT
 Copyright \(co 2002 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software and

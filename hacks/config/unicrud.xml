@@ -13,7 +13,8 @@
 
   <number id="speed" type="slider" arg="-speed %"
           _label="Animation speed" _low-label="Slow" _high-label="Fast"
-          low="0.05" high="10.0" default="1.0"/>
+          low="0.05" high="10.0" default="1.0"
+          convert="ratio"/>
 
   <hgroup>
    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
@@ -35,7 +36,8 @@
 
   <_description>
 Chooses a random Unicode character and displays it full screen,
-along with some information about it.
+along with some information about it.  If you only see squares,
+install better fonts.
 
 https://en.wikipedia.org/wiki/Unicode
 

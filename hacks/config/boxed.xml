@@ -15,7 +15,8 @@
             convert="invert"/>
     <number id="speed" type="slider" arg="-speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
-            low="0.001" high="4.0" default="0.5"/>
+            low="0.001" high="4.0" default="0.5"
+            convert="ratio"/>
 
     <number id="balls" type="slider" arg="-balls %"
             _label="Number of balls" _low-label="Few" _high-label="Lots"

@@ -1,11 +1,11 @@
-.TH XScreenSaver 1 "6-Jan-2021 (6.00)" "X Version 11"
+.TH XScreenSaver 1 "6-Jan-2022 (6.00)" "X Version 11"
 .SH NAME
 xscreensaver-systemd - lock the screen upon suspend, and inhibit
 screen-blanking during video playback.
 .SH SYNOPSIS
 .B xscreensaver-systemd [-verbose]
 .SH DESCRIPTION
-The \fIxscreensaver\-systemd\fP program is a helper program launched by
+The \fIxscreensaver\-systemd\fP program is a helper daemon launched by
 .BR xscreensaver (1)
 for
 .BR systemd (1)
@@ -16,30 +16,61 @@ integration.  It does two things:
 \fB*
 When the system is about to go to sleep (e.g., the laptop lid has just been
 closed) it locks the screen just \fIbefore\fP the system sleeps, by running
-\fIxscreensaver-command -suspend\fP.  When the system wakes up again, it
-runs \fIxscreensaver-command -deactivate\fP to make the unlock dialog appear
+\fIxscreensaver-command \-\-suspend\fP.  When the system wakes up again, it
+runs \fIxscreensaver\-command \-\-deactivate\fP to make the unlock dialog appear
 immediately.  It does this through the
 .BR org.freedesktop.login1 (5)
 D-Bus interface.
 .TP 2
 \fB*
-When another process on the system asks for the screen saver to be
-inhibited (e.g. because a video is playing) this program periodically runs
-\fIxscreensaver-command -deactivate\fP to keep the display un-blanked.
-It does this until the other program asks for it to stop, or exits.
-It does this through the
-.BR org.freedesktop.ScreenSaver (5)
-D-Bus interface.
+When another process asks for the screen saver to be inhibited (e.g. because
+a video is playing) this program periodically runs \fIxscreensaver\-command
+\-\-deactivate\fP to keep the display un-blanked.  It does this until that
+other program asks for it to stop, or exits.  It does this through the
+.BR org.freedesktop.ScreenSaver (5),
+.BR org.gnome.SessionManager (5)
+and
+.BR org.kde.Solid.PowerManagement.PolicyAgent (5)
+D-Bus interfaces.
 .RS 0
 .SH BUGS
+Blanking-related problems take two forms: failing to connect to D-Bus; and
+other programs requesting stupid things.
+.SS D-BUS
 Only one program at a time can register with
 .BR systemd (1)
+or
+.BR elogind (8)
 for screen-saver-related events, so if another screen saver is running as a
-part of the desktop environment, \fIxscreensaver-systemd\fP will be unable to
-launch.  Likely adversaries include
-.BR ksmserver (1)
-and
-.BR gsd\-screensaver\-proxy (1).
+part of the desktop environment, \fIxscreensaver\-systemd\fP will be unable
+to launch.  This program has workarounds for Gnome and KDE, but if you are
+using something else, that might be a problem.
+.SS CHROME & CHROMIUM (101.0)
+.TP 2
+\fB*
+Playing only audio in Chrome will prevent your screen from blanking.  Chrome
+sends the exact same "inhibit" reason for audio as for video, so we can't tell
+them apart.
+.TP 2
+\fB*
+Chrome prevents your screen from blanking when playing short, looping videos.
+This means that your screen won't blank when Chrome is showing a Twitter page
+(because those animated GIFs aren't really GIFs, they are MP4s).  This affects
+Tweetdeck as well.
+
+The proper way to fix this would be for Chrome to stop inhibiting once a video
+loops.  That way your multi-hour movie inhibits properly, but your looping GIF
+only inhibits for the first few seconds.
+.PP
+Firefox does not have either of these problems.
+.SS MPLAYER (2:1.4)
+Makes no attempt to inhibit the screen saver.  Use VLC or MPV instead.
+.SS VARIOUS
+Most programs fail to inhibit screen blanking if they crash or are killed
+while playing.  We try to detect when this has happened and auto-uninhibit,
+but that might not work with all versions of systemd, resulting in blanking
+remaining permanently inhibited.  If that happens, killing and restarting
+\fIxscreensaver\-systemd\fP is a workaround.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
@@ -49,7 +80,7 @@ and
 .BR sd-bus (3),
 .BR elogind (8)
 .SH COPYRIGHT
-Copyright \(co 2019-2021 by Martin Lucina and Jamie Zawinski.
+Copyright \(co 2019-2022 by Martin Lucina and Jamie Zawinski.
 Permission to use, copy, modify, and/or distribute this software
 for any purpose with or without fee is hereby granted, provided
 that the above copyright notice and this permission notice appear

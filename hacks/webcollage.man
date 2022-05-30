@@ -108,7 +108,8 @@ If this option is specified, then instead of writing an image to the
 root window, two files will be created: "\fIbase\fP.html" and "\fIbase\fP.jpg".
 The JPEG will be the collage; the HTML file will include that image, and
 an image-map making the sub-images be linked to the pages on which they
-were found (just like \fIhttps://www.jwz.org/webcollage/\fP.)
+were found, as seen on the web version of WebCollage at
+\fIhttps://www.jwz.org/webcollage/\fP
 .TP 8
 .B \-filter \fIcommand\fP
 Filter all source images through this command.  The command must take
@@ -188,27 +189,13 @@ to get the default HTTP proxy host and port.
 .I /usr/share/lib/dict/words,\fP
 or
 .I /usr/share/dict/words
-to find the random words to feed to certain search engines.
-
-    \fIhttp://www.altavista.com/image/randomlink\fP,
-    \fIhttp://random.yahoo.com/fast/ryl\fP,
-    \fIhttp://www.livejournal.com/stats/latest-img.bml\fP, and
-    \fIhttp://www.google.com/\fP
-to find random web pages.
+to find the random words to feed into to various search fields, including
+Google, Bing, Flickr, Imgur and Tumblr.
 .SH BOOBIES
 The Internet being what it is, absolutely anything might show up in the
 collage including -- quite possibly -- pornography, or even nudity.
 .SH BUGS
 Animating GIFs are not supported: only the first frame will be used.
-.SH UPGRADES
-The latest version of webcollage can be found as a part of
-xscreensaver, at 
-.B https://www.jwz.org/xscreensaver/,
-or on the WebCollage page at 
-.B https://www.jwz.org/webcollage/.
-
-DriftNet:
-.B http://www.ex-parrot.com/~chris/driftnet/
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
@@ -227,7 +214,11 @@ DriftNet:
 .BR dadadodo (1),
 .BR driftnet (1)
 .BR EtherPEG ,
-.BR EtherPeek
+.BR EtherPeek ,
+.br
+https://www.jwz.org/webcollage/,
+.br
+https://www.ex-parrot.com/~chris/driftnet/
 .SH COPYRIGHT
 Copyright \(co 1998-2018 by Jamie Zawinski.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is

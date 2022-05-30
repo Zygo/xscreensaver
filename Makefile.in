@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright © 1999-2021 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright © 1999-2022 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -11,7 +11,7 @@ SUBDIRS 	= utils jwxyz hacks/images hacks hacks/glx hacks/fonts \
 SUBDIRS2	= $(SUBDIRS) OSX android
 TARFILES	= README README.hacking INSTALL \
 		  configure configure.ac Makefile.in config.h.in \
-		  install-sh config.guess aclocal.m4 \
+		  install-sh config.guess config.rpath aclocal.m4 \
 		  ax_pthread.m4 config.sub \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
 		  xscreensaver.spec
@@ -358,7 +358,7 @@ www::
   cd $$DEST ;								    \
 									    \
   TMP=/tmp/xd.$$$$ ;							    \
-  sed "s/xscreensaver-5\.[0-9][0-9ab]*/$$HEAD/g" download.html > $$TMP ;    \
+  sed "s/xscreensaver-[56]\.[0-9][0-9ab]*/$$HEAD/g" download.html > $$TMP ; \
   echo '' ;								    \
   diff -U0 download.html $$TMP ;					    \
   echo '' ;								    \
@@ -412,11 +412,8 @@ count::
   echo "  Total:" $$C ;							\
 
 
-#cerebrum::
-#	rsync -vax . cerebrum:src/xscreensaver/ \
-
 cerebrum::
-	rsync -vax . pi@10.0.1.24:xscreensaver/ \
+	rsync -vax . 10.0.1.29:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \
@@ -458,6 +455,7 @@ cerebrum::
 	--include 'configure*' \
 	--include 'config.sub' \
 	--include 'config.guess' \
+	--include 'config.rpath' \
 	--include 'install-sh' \
 	--include 'bin2c' \
 	--include 'ad2c' \

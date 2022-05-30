@@ -357,7 +357,7 @@ init_camera (ModeInfo *mi)
 static XYZ
 normalize (XYZ p)
 {
-  GLfloat d = sqrt(p.x*p.x + p.y*p.y * p.z*p.z);
+  GLfloat d = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
   if (d < 0.0000001)
     p.x = p.y = p.z = 0;
   else

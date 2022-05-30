@@ -732,8 +732,8 @@ init_planet (ModeInfo * mi)
   /* Construct the line segments of the timezone lines.  The list of line
      segments is in a flat equirectangular map, so we need to project that
      onto a sphere, and interpolate additional segments within each line to
-     make it curve.  It would be possible to also project these to a cone for
-     the Mercator and Equirectangular modes, but I haven't bothered.
+     make it curve.  It would be possible to also project these to a tube
+     for the Mercator and Equirectangular modes, but I haven't bothered.
    */
   gp->tzpoints = 0;
   gp->tzlist = glGenLists(1);

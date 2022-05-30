@@ -18,7 +18,8 @@
 
    <number id="thickness" type="slider" arg="-thickness %"
            _label="Thickness" _low-label="Thin" _high-label="Thick"
-           low="0.1" high="5.0" default="1.0"/>
+           low="0.1" high="5.0" default="1.0"
+           convert="ratio"/>
 
    <number id="flexibility" type="slider" arg="-flexibility %"
            _label="Flexibility" _low-label="Low" _high-label="High"
@@ -38,7 +39,8 @@
 
    <number id="speed" type="slider" arg="-speed %"
            _label="Speed" _low-label="Slow" _high-label="Fast"
-           low="0.1" high="8.0" default="1.0"/>
+           low="0.1" high="8.0" default="1.0"
+           convert="ratio"/>
 
    <number id="slices" type="slider" arg="-slices %"
            _label="X resolution" _low-label="Low" _high-label="High"

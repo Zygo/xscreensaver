@@ -826,188 +826,254 @@
                           <relation target="label1" type="labelled-by"/>
                         </accessibility>
                         <child>
-                          <object class="GtkNotebook" id="preview_notebook">
+                          <object class="GtkVBox" id="preview_vbox">
+                            <property name="border_width">5</property>
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="show_tabs">True</property>
-                            <property name="show_border">False</property>
-                            <property name="tab_pos">GTK_POS_BOTTOM</property>
-                            <property name="scrollable">False</property>
-                            <property name="enable_popup">False</property>
+                            <property name="homogeneous">False</property>
+                            <property name="spacing">5</property>
                             <child>
-                              <object class="GtkAspectFrame" id="preview_aspectframe">
-                                <property name="border_width">8</property>
+                              <object class="GtkNotebook" id="preview_notebook">
                                 <property name="visible">True</property>
-                                <property name="label_xalign">0</property>
-                                <property name="label_yalign">0.5</property>
-                                <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
-                                <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
-                                <property name="ratio">1.33000004292</property>
-                                <property name="obey_child">False</property>
+                                <property name="can_focus">True</property>
+                                <property name="show_tabs">True</property>
+                                <property name="show_border">False</property>
+                                <property name="tab_pos">GTK_POS_BOTTOM</property>
+                                <property name="scrollable">False</property>
+                                <property name="enable_popup">False</property>
                                 <child>
-                                  <object class="GtkDrawingArea" id="preview">
+                                  <object class="GtkAspectFrame" id="preview_aspectframe">
+                                    <property name="border_width">8</property>
                                     <property name="visible">True</property>
+                                    <property name="label_xalign">0</property>
+                                    <property name="label_yalign">0.5</property>
+                                    <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="ratio">1.777777</property>
+                                    <property name="obey_child">False</property>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="preview">
+                                        <property name="visible">True</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="tab_expand">False</property>
+                                    <property name="tab_fill">True</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="preview_tab">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">preview</property>
+                                    <property name="use_underline">False</property>
+                                    <property name="use_markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width_chars">-1</property>
+                                    <property name="single_line_mode">False</property>
+                                    <property name="angle">0</property>
                                   </object>
                                 </child>
-                              </object>
-                              <packing>
-                                <property name="tab_expand">False</property>
-                                <property name="tab_fill">True</property>
-                              </packing>
-                            </child>
-                            <child type="tab">
-                              <object class="GtkLabel" id="preview_tab">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">preview</property>
-                                <property name="use_underline">False</property>
-                                <property name="use_markup">False</property>
-                                <property name="justify">GTK_JUSTIFY_LEFT</property>
-                                <property name="wrap">False</property>
-                                <property name="selectable">False</property>
-                                <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
-                                <property name="xpad">0</property>
-                                <property name="ypad">0</property>
-                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-                                <property name="width_chars">-1</property>
-                                <property name="single_line_mode">False</property>
-                                <property name="angle">0</property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="no_preview_label">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">No Preview
+                                <child>
+                                  <object class="GtkLabel" id="no_preview_label">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">No Preview
 Available</property>
-                                <property name="use_underline">False</property>
-                                <property name="use_markup">False</property>
-                                <property name="justify">GTK_JUSTIFY_CENTER</property>
-                                <property name="wrap">False</property>
-                                <property name="selectable">False</property>
-                                <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
-                                <property name="xpad">0</property>
-                                <property name="ypad">0</property>
-                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-                                <property name="width_chars">-1</property>
-                                <property name="single_line_mode">False</property>
-                                <property name="angle">0</property>
-                              </object>
-                              <packing>
-                                <property name="tab_expand">False</property>
-                                <property name="tab_fill">True</property>
-                              </packing>
-                            </child>
-                            <child type="tab">
-                              <object class="GtkLabel" id="no_preview_tab">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">no preview</property>
-                                <property name="use_underline">False</property>
-                                <property name="use_markup">False</property>
-                                <property name="justify">GTK_JUSTIFY_LEFT</property>
-                                <property name="wrap">False</property>
-                                <property name="selectable">False</property>
-                                <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
-                                <property name="xpad">0</property>
-                                <property name="ypad">0</property>
-                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-                                <property name="width_chars">-1</property>
-                                <property name="single_line_mode">False</property>
-                                <property name="angle">0</property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="not_installed_label">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">Not
+                                    <property name="use_underline">False</property>
+                                    <property name="use_markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width_chars">-1</property>
+                                    <property name="single_line_mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab_expand">False</property>
+                                    <property name="tab_fill">True</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="no_preview_tab">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">no preview</property>
+                                    <property name="use_underline">False</property>
+                                    <property name="use_markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width_chars">-1</property>
+                                    <property name="single_line_mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="not_installed_label">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Not
 Installed</property>
-                                <property name="use_underline">False</property>
-                                <property name="use_markup">False</property>
-                                <property name="justify">GTK_JUSTIFY_CENTER</property>
-                                <property name="wrap">False</property>
-                                <property name="selectable">False</property>
-                                <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
-                                <property name="xpad">0</property>
-                                <property name="ypad">0</property>
-                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-                                <property name="width_chars">-1</property>
-                                <property name="single_line_mode">False</property>
-                                <property name="angle">0</property>
-                              </object>
-                              <packing>
-                                <property name="tab_expand">False</property>
-                                <property name="tab_fill">True</property>
-                              </packing>
-                            </child>
-                            <child type="tab">
-                              <object class="GtkLabel" id="not_installed_tab">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">not installed</property>
-                                <property name="use_underline">False</property>
-                                <property name="use_markup">False</property>
-                                <property name="justify">GTK_JUSTIFY_LEFT</property>
-                                <property name="wrap">False</property>
-                                <property name="selectable">False</property>
-                                <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
-                                <property name="xpad">0</property>
-                                <property name="ypad">0</property>
-                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-                                <property name="width_chars">-1</property>
-                                <property name="single_line_mode">False</property>
-                                <property name="angle">0</property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="nothing_label">
-                                <property name="visible">True</property>
-                                <property name="label" translatable="yes">Very few (or no) screen savers appear to be available.
+                                    <property name="use_underline">False</property>
+                                    <property name="use_markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width_chars">-1</property>
+                                    <property name="single_line_mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab_expand">False</property>
+                                    <property name="tab_fill">True</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="not_installed_tab">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">not installed</property>
+                                    <property name="use_underline">False</property>
+                                    <property name="use_markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width_chars">-1</property>
+                                    <property name="single_line_mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="nothing_label">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Very few (or no) screen savers appear to be available.
 
 This probably means that the "xscreensaver-extras" and
 "xscreensaver-gl-extras" packages are not installed.</property>
-                                <property name="use_underline">False</property>
-                                <property name="use_markup">False</property>
-                                <property name="justify">GTK_JUSTIFY_CENTER</property>
-                                <property name="wrap">False</property>
-                                <property name="selectable">False</property>
-                                <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
-                                <property name="xpad">0</property>
-                                <property name="ypad">0</property>
-                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-                                <property name="width_chars">-1</property>
-                                <property name="single_line_mode">False</property>
-                                <property name="angle">0</property>
+                                    <property name="use_underline">False</property>
+                                    <property name="use_markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width_chars">-1</property>
+                                    <property name="single_line_mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab_expand">False</property>
+                                    <property name="tab_fill">True</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="nothing_tab">
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">nothing</property>
+                                    <property name="use_underline">False</property>
+                                    <property name="use_markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width_chars">-1</property>
+                                    <property name="single_line_mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                </child>
                               </object>
-                              <packing>
-                                <property name="tab_expand">False</property>
-                                <property name="tab_fill">True</property>
-                              </packing>
                             </child>
-                            <child type="tab">
-                              <object class="GtkLabel" id="nothing_tab">
+
+                            <child>
+                              <object class="GtkLabel" id="short_preview_label">
                                 <property name="visible">True</property>
-                                <property name="label" translatable="yes">nothing</property>
+                                <property name="label" translatable="yes"></property>
                                 <property name="use_underline">False</property>
                                 <property name="use_markup">False</property>
                                 <property name="justify">GTK_JUSTIFY_LEFT</property>
-                                <property name="wrap">False</property>
+                                <property name="wrap">True</property>
                                 <property name="selectable">False</property>
                                 <property name="xalign">0.5</property>
-                                <property name="yalign">0.5</property>
+                                <property name="yalign">0.0</property>
                                 <property name="xpad">0</property>
                                 <property name="ypad">0</property>
                                 <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-                                <property name="width_chars">-1</property>
+                                <property name="width_chars">72</property>
                                 <property name="single_line_mode">False</property>
                                 <property name="angle">0</property>
+                                <accessibility>
+                                  <relation target="preview_aspectframe" type="label-for"/>
+                                </accessibility>
                               </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                              </packing>
                             </child>
+
+                            <child>
+                              <object class="GtkLabel" id="preview_author_label">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes"></property>
+                                <property name="use_underline">False</property>
+                                <property name="use_markup">False</property>
+                                <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                <property name="wrap">True</property>
+                                <property name="selectable">False</property>
+                                <property name="xalign">0.5</property>
+                                <property name="yalign">0.0</property>
+                                <property name="xpad">0</property>
+                                <property name="ypad">0</property>
+                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                <property name="width_chars">72</property>
+                                <property name="single_line_mode">False</property>
+                                <property name="angle">0</property>
+                                <accessibility>
+                                  <relation target="preview_aspectframe" type="label-for"/>
+                                </accessibility>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+
                           </object>
                         </child>
+
                         <child type="label">
                           <object class="GtkLabel" id="label1">
                             <property name="visible">True</property>
@@ -1221,7 +1287,7 @@ This probably means that the "xscreensaver-extras" and
                                           <relation target="grab_image_button" type="controlled-by"/>
                                         </accessibility>
                                         <signal handler="pref_changed_cb" name="activate"/>
-                                        <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                                        <signal handler="image_text_pref_changed_event_cb" name="focus_out_event"/>
                                       </object>
                                       <packing>
                                         <property name="padding">2</property>
@@ -1255,7 +1321,7 @@ This probably means that the "xscreensaver-extras" and
                                 <child>
                                   <object class="GtkLabel" id="label8">
                                     <property name="visible">True</property>
-                                    <property name="label" translatable="yes">Local directory, or RSS feed URL.</property>
+                                    <property name="label" translatable="yes">Local directory, or URL of RSS or Atom feed.</property>
                                     <property name="use_underline">False</property>
                                     <property name="use_markup">False</property>
                                     <property name="justify">GTK_JUSTIFY_LEFT</property>
@@ -2875,7 +2941,7 @@ This probably means that the "xscreensaver-extras" and
                 </child>
               </object>
               <packing>
-                <property name="padding">0</property>
+                <property name="padding">5</property>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
               </packing>

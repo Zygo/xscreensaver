@@ -15,10 +15,10 @@ substrate \- Grow crystal-like lines on a computational substrate
 [\-circle\-percent \fIcirclepercent\fP]
 [\-fps]
 .SH DESCRIPTION
-Lines like crystals grow on a computational substrate.  A simple 
-perpendicular growth rule creates intricate city-like structures.  Optionally, cracks may also be circular, producing a cityscape more familiar to places for which city planning is a distant, theoretical concern.
-
-Ported from the code by j.tarbell at http://complexification.net
+Lines like crystals grow on a computational substrate.  A simple perpendicular
+growth rule creates intricate city-like structures.  Optionally, cracks may
+also be circular, producing a cityscape more familiar to places for which city
+planning is a distant, theoretical concern.
 .SH OPTIONS
 .I substrate
 accepts the following options:
@@ -63,11 +63,10 @@ resources stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2003 by J. Tarbell
-(complex@complexification.net, http://www.complexification.net).
-
-Ported to XScreensaver 2004 by Mike Kershaw (dragorn@kismetwireless.net)
+Copyright \(co 2003 by J. Tarbell <complex@complexification.net>.
+.br
+XScreenSaver port: Mike Kershaw <dragorn@kismetwireless.net>
 .SH AUTHOR
-J. Tarbell <complex@complexification.net>, Jun-03
-
-Mike Kershaw <dragorn@kismetwireless.net>, Oct-04
+J. Tarbell <complex@complexification.net>, Jun 2003.
+.br
+Mike Kershaw <dragorn@kismetwireless.net>, Oct 2004.

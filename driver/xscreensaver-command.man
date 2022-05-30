@@ -24,39 +24,23 @@ xscreensaver-command - control a running xscreensaver process
 The \fIxscreensaver\-command\fP program controls a running
 .BR xscreensaver (1)
 daemon.
-
 .SH OPTIONS
 .I xscreensaver-command
 accepts the following command-line options:
-
 .TP 8
 .B \-\-help
 Prints a brief summary of command-line options.
-
 .TP 8
 .B \-\-quiet
 Only print output if an error occurs.
-
 .TP 8
 .B \-\-verbose
 Opposite of \-\-quiet. Default.
-
 .TP 8
 .B \-\-activate
 Tell xscreensaver to turn on immediately (that is, blank the screen, as if
 the user had been idle for long enough.)  The screensaver will deactivate as
 soon as there is any user activity, as usual.
-
-It is useful to run this from a menu; you may wish to run it as
-.nf
-.sp
-	sleep 5 ; xscreensaver-command -activate
-.sp
-.fi
-to be sure that you have time to take your hand off the mouse before
-the screensaver comes on.  (Because if you jiggle the mouse, xscreensaver
-will notice, and deactivate.)
-
 .TP 8
 .B \-\-deactivate
 This tells xscreensaver to pretend that there has just been user activity.
@@ -67,12 +51,10 @@ dialog will pop up first, as usual.  If the screen is not blanked, then
 this simulated user activity will re-start the countdown (so, issuing
 the \fI\-\-deactivate\fP command periodically is \fIone\fP way to prevent
 the screen from blanking.)
-
 .TP 8
 .B \-\-cycle
 If the screensaver is active (the screen is blanked), then stop the current
 graphics demo and run a new one (chosen randomly.)
-
 .TP 8
 .B \-\-next
 This is like either \fI\-\-activate\fP or \fI\-\-cycle\fP, depending on which
@@ -81,18 +63,15 @@ next one in the list, instead of a randomly-chosen one.  In other words,
 repeatedly executing -next will cause the xscreensaver process to invoke each
 graphics demo sequentially.  (Though using the \fI\-\-settings\fP option is
 probably an easier way to accomplish that.)
-
 .TP 8
 .B \-\-prev
 This is like \fI\-\-next\fP, but cycles in the other direction.
-
 .TP 8
 .B \-\-select \fInumber\fP
 Like \fI\-\-activate\fP, but runs the \fIN\fPth element in the list of hacks.
 By knowing what is in the \fIprograms\fP list, and in what order, you can use
 this to activate the screensaver with a particular graphics demo.  (The first
 element in the list is numbered 1, not 0.)
-
 .TP 8
 .B \-\-lock
 Tells the running xscreensaver process to lock the screen immediately.  
@@ -104,39 +83,33 @@ Note that locking doesn't work unless the \fIxscreensaver\fP process is
 running as you.  See 
 .BR xscreensaver (1)
 for details.
-
 .TP 8
 .B \-\-suspend
 Like \fI\-\-activate\fP, but ignores \fIlockTimeout\fP and immediately
 powers off the screen without fading out.  This is intended to be run
 just after your laptop's lid is closed, and just before the CPU halts,
 to lock things down quickly.
-
 .TP 8
 .B \-\-exit
 Causes the xscreensaver process to exit gracefully.  
 This does nothing if the display is currently locked.
-
 .B Warning:
 never use \fIkill -9\fP with \fIxscreensaver\fP while the screensaver is
 active.  If you are using a virtual root window manager, that can leave
 things in an inconsistent state, and you may need to restart your window
 manager to repair the damage.
-
 .TP 8
 .B \-\-restart
 Causes the screensaver process to exit and then restart with the same command
 line arguments as last time.  You shouldn't really need to do this,
 since xscreensaver notices when the \fI.xscreensaver\fP file has
 changed and re-reads it as needed.
-
 .TP 8
 .B \-\-time
 Prints the time at which the screensaver last activated or 
 deactivated (roughly, how long the user has been idle or non-idle: but 
 not quite, since it only tells you when the screen became blanked or
 un-blanked.)
-
 .TP 8
 .B \-\-watch
 Prints a line each time the screensaver changes state: when the screen
@@ -188,7 +161,6 @@ the \fI\-\-watch\fP command and reacts accordingly:
 Note that LOCK might come either with or without a preceding BLANK
 (depending on whether the lock-timeout is non-zero), so the above program
 keeps track of both of them.
-
 .TP 8
 .B \-\-version
 Prints the version of xscreensaver that is currently running on the display:
@@ -196,7 +168,6 @@ that is, the actual version number of the running xscreensaver background
 process, rather than the version number of xscreensaver-command.  (To see
 the version number of \fIxscreensaver-command\fP itself, use 
 the \fI\-\-help\fP option.)
-
 .SH STOPPING GRAPHICS
 If xscreensaver is running, but you want it to stop running screen hacks
 (e.g., if you are logged in remotely, and you want the console to remain

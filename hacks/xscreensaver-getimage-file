@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2020 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -49,21 +49,13 @@ use Digest::MD5 qw(md5_base64);
 
 # Some Linux systems don't install LWP by default!
 # Only error out if we're actually loading a URL instead of local data.
-BEGIN { eval 'use LWP::Simple;' }
+BEGIN { eval 'use LWP::Simple; use LWP::UserAgent;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.57 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.65 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
-
-# Whether to use MacOS X's Spotlight to generate the list of files.
-# When set to -1, uses Spotlight if "mdfind" exists.
-#
-# (In my experience, this isn't actually any faster, and might not find
-# everything if your Spotlight index is out of date, which happens often.)
-#
-my $use_spotlight_p = 0;
 
 # Whether to cache the results of the last run.
 #
@@ -209,34 +201,11 @@ sub find_all_files($) {
 }
 
 
-sub spotlight_all_files($) {
-  my ($dir) = @_;
-
-  my @terms = ();
-  # "public.image" matches all (indexed) images, including Photoshop, etc.
-#  push @terms, "kMDItemContentTypeTree == 'public.image'";
-  foreach (@good_extensions) {
-
-    # kMDItemFSName hits the file system every time: much worse than "find".
-#    push @terms, "kMDItemFSName == '*.$_'";
-
-    # kMDItemDisplayName matches against the name in the Spotlight index,
-    # but won't find files that (for whatever reason) didn't get indexed.
-    push @terms, "kMDItemDisplayName == '*.$_'";
-  }
-
-  $dir =~ s@([^-_/a-z\d.,])@\\$1@gsi;  # quote for sh
-  my $cmd = "mdfind -onlyin $dir \"" . join (' || ', @terms) . "\"";
-
-  print STDERR "$progname: executing: $cmd\n" if ($verbose > 1);
-  @all_files = split (/[\r\n]+/, `$cmd`);
-}
-
-
-# If we're using cacheing, read the cache file and return its contents,
-# if any.  This also holds an exclusive lock on the cache file, which 
-# has the additional benefit that if two copies of this program are
-# running at once, one will wait for the other, instead of both of
+# The cache file contains the full list of pathnames under the image directory
+# tree, to avoid having to recursively list it every time.  Read the cache
+# file and return its contents, if any.  This also holds an exclusive lock on
+# the cache file, which has the additional benefit that if two copies of this
+# program are running at once, one will wait for the other, instead of both of
 # them spanking the same file system at the same time.
 #
 my $cache_fd = undef;
@@ -276,6 +245,7 @@ sub read_cache($) {
     return ();
   }
 
+  # First line of the file is the directory tree these files were read from.
   my $odir = <$cache_fd>;
   $odir =~ s/[\r\n]+$//s if defined ($odir);
   if (!defined ($odir) || ($dir ne $odir)) {
@@ -284,6 +254,7 @@ sub read_cache($) {
     return ();
   }
 
+  # Subsequent lines are relative pathnames.
   my @files = ();
   while (<$cache_fd>) { 
     s/[\r\n]+$//s;
@@ -295,6 +266,26 @@ sub read_cache($) {
 
   $read_cache_p = 1;
   return @files;
+}
+
+
+# Similar but different location for caching downloaded RSS feeds.
+#
+sub feed_dir() {
+  my $dir = "$ENV{HOME}/Library/Caches";    # MacOS location
+  if (-d $dir) {
+    $dir = "$dir/org.jwz.xscreensaver.feeds";
+  } elsif (-d "$ENV{HOME}/.cache") {	   # Gnome "FreeDesktop XDG" location
+    $dir = "$ENV{HOME}/.cache/xscreensaver";
+    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
+    $dir .= "/feeds";
+    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
+  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/tmp/ exists, use it.
+    $dir = "$ENV{HOME}/tmp/.xscreensaver-feeds";
+  } else {
+    $dir = "$ENV{HOME}/.xscreensaver-feeds";
+  }
+  return $dir;
 }
 
 
@@ -390,11 +381,17 @@ sub set_proxy($) {
 
 
 sub init_lwp() {
-  if (! defined ($LWP::Simple::ua)) {
+  my $ua = $LWP::Simple::ua;
+  if (! defined ($ua)) {
     error ("\n\n\tPerl is broken. Do this to repair it:\n" .
            "\n\tsudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA\n");
   }
-  set_proxy ($LWP::Simple::ua);
+  set_proxy ($ua);
+
+  if ($verbose > 6) {
+    $ua->add_handler("request_send",  sub { shift->dump; return });
+    $ua->add_handler("response_done", sub { shift->dump; return });
+  }
 }
 
 
@@ -447,7 +444,6 @@ sub parse_feed($) {
   $LWP::Simple::ua->agent ("$progname/$version");
   $LWP::Simple::ua->timeout (10);  # bail sooner than the default of 3 minutes
 
-
   # Half the time, random Linux systems don't have Mozilla::CA installed,
   # which results in "Can't verify SSL peers without knowning which
   # Certificate Authorities to trust".
@@ -487,12 +483,29 @@ sub parse_feed($) {
           my ($h) = ($url =~ m!^([a-z]+://[^/]+)!si);
           $u2 = "$h$u2";
         }
-        print STDERR "$progname: found feed: $u2\n"
-          if ($verbose);
-        return parse_feed ($u2);
+
+        # Flickr sometimes provides autodiscover for comments, but not for
+        # the actual photos.  FFS, Flickr...
+        $u2 = '' if ($u2 =~ m!/groups_discuss\.gne!);
+        if ($u2) {
+          print STDERR "$progname: found feed: $u2\n"
+            if ($verbose);
+          return parse_feed ($u2);
+        }
       }
       '';
     }@gsexi;
+
+    # As a last resort, special-case certain popular web sites that don't
+    # provide RSS autodiscovery.
+    my $u2 = guess_rss ($url, $body);
+    if ($u2) {
+      if (ref($u2) eq 'ARRAY') {
+        return @$u2;
+      } else {
+        return parse_feed ($u2);
+      }
+    }
 
     error ("no RSS or Atom feed for HTML page: $url");
   }
@@ -508,8 +521,34 @@ sub parse_feed($) {
   foreach my $item (@items) {
     my $iurl = undef;
     my $id = undef;
+    my $kind = '?';
 
-    # First look for <link rel="enclosure" href="...">
+    # The <media:group> container groups the same content in different
+    # representations.  So first, edit each of those to contain only the
+    # highest resolution child.
+    #
+    $item =~ s@<MEDIA:GROUP[^<>]*>(.*?)</MEDIA:GROUP>@{
+      my $g = $1;
+      my $largest = undef;
+      my $last_size = 0;
+      foreach my $link ($g =~
+                        m%(<MEDIA:CONTENT[^<>]*>.*?</MEDIA:CONTENT>)%gsi) {
+        my ($w)    = ($link =~ m/\bWIDTH\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($h)    = ($link =~ m/\bHEIGHT\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($med)  = ($link =~ m/\bMEDIUM\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        $type = 'image/jpeg' if (!$type && lc($med || '') eq 'image');
+        next unless ($type =~ m/^image/si);
+        my $size = ($w || 0) * ($h || 0);
+        if ($size > $last_size) {  # If no sizes, this will take the last.
+          $largest = $link;
+          $last_size = $size;
+        }
+      }
+    $largest || '';
+    }@gsexi;
+
+    # Look for <link rel="enclosure" href="...">
     #
     if (! $iurl) {
       foreach my $link ($item =~ m@<LINK[^<>]*>@gsi) {
@@ -521,6 +560,7 @@ sub parse_feed($) {
         $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
         $iurl = html_unquote($href) if $href;
         $iurl = force_extension ($iurl, $type);
+        $kind = 'link';
       }
     }
 
@@ -532,10 +572,16 @@ sub parse_feed($) {
         my ($href) = ($link =~ m/\bURL\s*=\s*[\"\']([^<>\'\"]+)/si);
         my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
         my ($med)  = ($link =~ m/\bMEDIUM\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($w)    = ($link =~ m/\bWIDTH\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($h)    = ($link =~ m/\bHEIGHT\s*=\s*[\"\']?([^<>\'\"]+)/si);
         $type = 'image/jpeg' if (!$type && lc($med || '') eq 'image');
         $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
+        $href = undef
+          if (($w && $w < $min_image_width) ||  # If we already know it's too
+              ($h && $h < $min_image_height));  # small, don't download it.
         $iurl = html_unquote($href) if $href;
         $iurl = force_extension ($iurl, $type);
+        $kind = 'media:content';
       }
     }
 
@@ -549,6 +595,7 @@ sub parse_feed($) {
         $href = undef if ($type && $type !~ m@^image/@si);  # omit videos
         $iurl = html_unquote($href) if ($href);
         $iurl = force_extension ($iurl, $type);
+        $kind = 'enclosure';
       }
     }
 
@@ -564,6 +611,7 @@ sub parse_feed($) {
           $u3 =~ s/#.*$//gs;
           $u3 =~ s/[?&].*$//gs;
           $iurl = html_unquote($u2) if ($u3 =~ m/$good_file_re/io);
+          $kind = 'url';
         }
       }
     }
@@ -583,6 +631,7 @@ sub parse_feed($) {
         }
         my ($href) = ($desc =~ m@<IMG[^<>]*\bSRC=[\"\']?([^\"\'<>]+)@si);
         $iurl = html_unquote($href) if ($href);
+        $kind = $t if $iurl;
         # If IMG SRC has a bogus extension, pretend it's a JPEG.
         $iurl = force_extension ($iurl, 'image/jpeg')
           if ($iurl && $iurl !~ m/$good_file_re/io);
@@ -609,6 +658,7 @@ sub parse_feed($) {
         $ids{$id} = $iurl;
         my @P = ($iurl, $id);
         push @imgs, \@P;
+        print STDERR "$progname:   $kind: $iurl\n" if ($verbose > 4);
       } elsif ($iurl ne $o) {
         print STDERR "$progname: WARNING: dup ID \"$id\"" .
                      " for \"$o\" and \"$iurl\"\n";
@@ -617,6 +667,270 @@ sub parse_feed($) {
   }
 
   return @imgs;
+}
+
+
+# Hardcoded URL rewrites to special-case certain popular web sites that don't
+# provide RSS autodiscovery.
+#
+sub guess_rss($$) {
+  my ($url, $body) = @_;
+  return undef unless $url;
+  my $ret = undef;
+
+  # Flickr:
+  # Some of their pages have autodiscovery, some do not.
+  #
+  if ($url =~ m@^https?://([^/?#&]+\.)*flickr\.com/@si) {
+    my $base = 'https://api.flickr.com/services/feeds/';
+    if ($url =~ m@/photos/([^/?\#&]+)(/albums)?/?$@si) {	    # User
+      $ret = $base . 'photos_public.gne?id=' . $1;
+    } elsif ($url =~ m@/photos/([^/?\#&]+)/albums/([^/?\#&]+)@si) { # Album
+      $ret = $base . 'photoset.gne?nsid=' . $1 . '&set=' . $2;
+    } elsif ($url =~ m@/photos/([^/?\#&]+)/favorites/?$@si) {	    # Faves
+      $ret = $base . 'photos_faves.gne?id=' . $1;
+    } elsif ($url =~ m@/photos/tags/([^/?\#&]+)@si) {		    # Tag
+      $ret = $base . 'photos_public.gne?tags=' . $1;
+    } elsif ($url =~ m@/groups/([^/?\#&]+)@si) {		    # Group
+      my $name = $1; # Name unused, ID is embedded in JSON
+      my ($id) = ($body =~ m@"(?:groupId|nsid)":"(.*?)"@s);
+      $ret = $base . 'groups_pool.gne?id=' . $id
+        if ($id);
+    }
+
+  #
+  # Instagram:
+  # Unsurprisingly, this doesn't work reliably.  Sometimes the page has images
+  # on it, and sometimes it is the blank login page.  Rate limited, maybe?
+  #
+  } elsif ($url =~ m@^https?://([^/?#&]+\.)*instagram\.com/@si) {
+    my ($json) = ($body =~ m@\s+ = \s+ ( \{ \" .*? \} ) ;@six);
+    if (!$json) {
+      print STDERR "$progname: no JSON: $url\n" if ($verbose);
+    } else {
+      my @imgs;
+      $json =~ s%"display_url":"(.+?)"%{
+        my $img = $1;
+        $img =~ s/\\u0026/&/gs;
+        push @imgs, [ $img, $img ];
+      }%gsex;
+      if (@imgs) {
+        $ret = \@imgs;
+      } else {
+        print STDERR "$progname: no images in JSON: $url\n" if ($verbose);
+      }
+    }
+  }
+
+  print STDERR "$progname: guessed feed: " .
+               (ref($ret) eq 'ARRAY' ? scalar(@$ret) . ' items' : $ret) .
+               "\n"
+    if ($ret && $verbose);
+  return $ret;
+}
+
+
+my $flickr_api_key = undef;
+
+sub flickr_icebreaker($) {
+  my ($img) = @_;
+
+  my ($id) = ($img =~ m@/\d+/(\d+)_[a-f\d]+_@si);
+  return $img unless ($id);
+
+  if (! $flickr_api_key) {
+    my $url = 'https://www.flickr.com//hermes_error_beacon.gne';
+    print STDERR "$progname: loading $url\n" if ($verbose);
+    my $json = (LWP::Simple::get($url) || '');
+    ($flickr_api_key) = ($json =~ m/"site_key":"(.*?)"/s);
+    if (! $flickr_api_key) {
+      print STDERR "$progname: unable to load Flickr API key" if ($verbose);
+      return $url;
+    }
+  }
+
+  my $url = ('https://api.flickr.com/services/rest' .
+             '?method=flickr.photos.getSizes' .
+             '&photo_id=' . $id .
+             '&api_key=' . $flickr_api_key);
+  print STDERR "$progname: loading $url\n" if ($verbose > 1);
+  my $xml = LWP::Simple::get($url);
+  if (!$xml) {
+    print STDERR "$progname: no XML for $img" if ($verbose);
+    return $url;
+  }
+
+  $url = '';
+  my $max = 0;
+  $xml =~ s@^.*?<size\b@@s;
+  foreach (split(/<size\b/s, $xml)) {
+    my ($w)     = (m/\bwidth="(\d+)"/s);
+    my ($h)     = (m/\bheight="(\d+)"/s);
+    my ($src)   = (m/\bsource="(.*?)"/s);
+    my ($media) = (m/\bmedia="(.*?)"/s);
+
+    error ("no width in $_")  unless $w;
+    error ("no height in $_") unless $h;
+    error ("no source in $_") unless $src;
+    error ("no media in $_")  unless $media;
+    next if ($media eq 'video');
+
+    my $size = $w * $h;
+    if ($max < $size) {
+      $url = $src;
+      $max = $size;
+    }
+  }
+  $img = $url if ($url && $max);
+
+  return $img;
+}
+
+
+# If the image URL points to a small version, return the URL of a larger one.
+#
+sub embiggen_image($) {
+  my ($url) = @_;
+  return undef unless $url;
+  my $ourl = $url;
+
+  # Flickr
+  #
+  if ($url =~ m@^https?://([^/?\#&]+\.)*(static)?flickr\.com/@si) {
+
+    # Flickr's RSS feeds sometimes include only the small versions of the
+    # images.  So if the URL ends in one of the "small-size" letters, change
+    # it to "b".
+    #
+    #     _o  orig,  1600 +
+    #     _k  large, 2048 max
+    #     _h  large, 1600 max
+    #     _b  large, 1024 max
+    #     _c  medium, 800 max
+    #     _z  medium, 640 max
+    #     ""  medium, 500 max
+    #     _n  small,  320 max
+    #     _m  small,  240 max
+    #     _t  thumb,  100 max
+    #     _q  square, 150x150
+    #     _s  square,  75x75
+
+    # We can get the _b or _h by just replacing them in the URL:
+    $url =~ s@_[sqtmnzc](\.[a-z]+)$@_b$1@si;
+
+    # But to get the _k or _o versions, we need to load multiple URLs:
+    $url = flickr_icebreaker ($url)
+      unless ($url =~ m@_[ko](\.[a-z]+)$@si);
+
+  #
+  # Archive.org
+  #
+  } elsif ($url =~ m@^https?://([^/?\#&]+\.)*archive\.org
+                     /services/get-item-image\.php@six) {
+
+    # The RSS feeds for archive.org items and collections are criminally
+    # negligent.  The thumbnails are 180px wide and getting a larger version
+    # of that thumbnail is a LOT of work.
+    #
+    # Their party line is, "Create an account and use the Python command line
+    # interface".  But it would be far too onerous to require each XScreenSaver
+    # user to create an account on archive.org; nor would be it be reasonable
+    # for XScreenSaver to include a dependency on the "ia" program (or even
+    # on Python) just to load URLs from an otherwise-public web site.
+    #
+    # So, we scrape!
+
+    # First convert /services/get-item-image.php?identifier=...
+    # into /services/collection-rss.php?collection=...
+    #
+    my ($id)  = ($url =~ m@\bidentifier=([^/?\#&]+)@si);
+    my ($col) = ($url =~ m@\bcollection=([^/?\#&]+)@si);
+    my $u2 = 'https://archive.org/download/' . $id . '/' . $id . '_files.xml';
+    print STDERR "$progname: loading $u2\n" if ($verbose > 1);
+    my $res = $LWP::Simple::ua->get ($u2);
+    my $ret = ($res && $res->code) || 'null';
+    if (! $res->is_success) {
+      print STDERR "$progname: failed: $u2: $ret\n" if ($verbose);
+      return $url;
+    }
+
+    # That did a redirect to https://XXXXXXXX.YY.archive.org/ZZ/...
+    # which is the URL of the underlying server.  Save that.
+    #
+    $u2 = $res->request->uri;
+    my ($base, $subdir) = ($u2 =~ m@^(https?://[^/]+)/([^/]+)/@si);
+    if (! $base) {
+      print STDERR "$progname: unparsable: $u2\n" if ($verbose);
+      return $url;
+    }
+
+    my $xml = $res->decoded_content;
+
+    # Nuke the garbage "__ia_thumb.jpg" from the XML so we don't match it.
+    $xml =~ s@"__ia_thumb\.[^\"]*"@NOPE@gsi;
+
+    # For some collections, there might be a PNG or JPEG in the XML.
+    # This happens with some CD-ROM ISO items, for example.
+    #
+    my ($png) = ($xml =~
+                 m@<file \b [^<>]*? \b name="( [^\"<>]+
+                     \.(png | p?jpe?g | tiff? ) )"
+                   [^<>]* source="original"
+                  @six);
+    if ($png) {
+      $url = 'https://archive.org/download/' . $id . '/' . $png;
+
+      # Fun story!  Items in some collections, like this one:
+      # https://archive.org/details/internetarchivebooks?&sort=-addeddate
+      # there is a <file name="....png" source="original"> but it is 403,
+      # "The item is not available due to issues with the item's content".
+      # Does that maybe mean it's just not cached and replicated yet?
+      # Who can tell.
+
+    } else {
+
+      # For collections of books and magazines and such, those that display as
+      # multi-page PDFs in the book reader, we need to parse the XML to find
+      # the first "derivative ZIP".  It looks like:
+      #
+      #   <file name="${id}_jp2.zip" source="derivative">
+      #     <format>Single Page Processed JP2 ZIP</format>
+      #
+      # This fails if a collection includes another collection: we would need
+      # to parse the RSS of the sub-collection to get its first image.
+      #
+      my ($jp2) = ($xml =~
+                   m@<file \b [^<>]*? \b name="( [^\"<>]+ _jp2\.zip )" @six);
+      if (! $jp2) {
+        print STDERR "$progname: no JP2: $u2 via $url\n" if ($verbose);
+        return $url;
+      }
+
+      my $jp2a = $jp2;
+      $jp2a =~ s/_jp2\.zip$//si;
+
+      # The large image, as shown in the book reader UI, has the URL form:
+      #
+      #   https://${BASE}/BookReader/BookReaderImages.php
+      #     ?zip=/${SUBDIR}/items/${ITEM}/${ITEM}_jp2.zip
+      #     &file=${ITEM}_jp2/${ITEM}_0000.jp2
+      #     &id=${ITEM}
+      #
+      # But does this all assume that the item in the collection began its
+      # life as a PDF?  What if it was something else?
+      #
+      # Thanks, guys. You made this all sooooo easy.
+      #
+      $url = ($base . '/BookReader/BookReaderImages.php' .
+              '?zip=/' . $subdir . '/items/' . $id . '/' . $jp2 .
+              '&file=' . $jp2a . '_jp2/' . $jp2a . '_0000.jp2' .
+              '&id=' . $id);
+    }
+  }
+
+  print STDERR "$progname: embiggen: $ourl -> $url\n"
+    if ($verbose && $ourl ne $url);
+  return $url;
 }
 
 
@@ -663,11 +977,11 @@ sub expand_url($$) {
     $url .= $tail;                              # put anchors/args back
 
     print STDERR "$progname: relative URL: $ourl --> $url\n"
-      if ($verbose > 1);
+      if ($verbose > 6);
 
   } else {
     print STDERR "$progname: absolute URL: $url\n"
-      if ($verbose > 2);
+      if ($verbose > 6);
   }
 
   return $url;
@@ -716,29 +1030,7 @@ sub download_image($$$) {
     return $file;
   }
 
-  # Special-case kludge for Flickr:
-  # Their RSS feeds sometimes include only the small versions of the images.
-  # So if the URL ends in one of the "small-size" letters, change it to "b".
-  #
-  #     _o  orig,  1600 +
-  #     _k  large, 2048 max
-  #     _h  large, 1600 max
-  #     _b  large, 1024 max
-  #     _c  medium, 800 max
-  #     _z  medium, 640 max
-  #     ""  medium, 500 max
-  #     _n  small,  320 max
-  #     _m  small,  240 max
-  #     _t  thumb,  100 max
-  #     _q  square, 150x150
-  #     _s  square,  75x75
-  #
-  # Note: if we wanted to get the _k or _o version instead of the _b or _h
-  # version, we'd need to crack the DRM -- which is easy: see crack_secret
-  # in "https://www.jwz.org/hacks/galdown".
-  #
-  $url =~ s@_[sqtmnzc](\.[a-z]+)$@_b$1@si
-    if ($url =~ m@^https?://[^/?#&]*?flickr\.com/@si);
+  $url = embiggen_image ($url);
 
   print STDERR "$progname: downloading: $dir/$file for $uid / $url\n" 
     if ($verbose > 1);
@@ -762,19 +1054,8 @@ sub mirror_feed($) {
     return (undef, $url);
   }
 
-  my $dir = "$ENV{HOME}/Library/Caches";    # MacOS location
-  if (-d $dir) {
-    $dir = "$dir/org.jwz.xscreensaver.feeds";
-  } elsif (-d "$ENV{HOME}/.cache") {	   # Gnome "FreeDesktop XDG" location
-    $dir = "$ENV{HOME}/.cache/xscreensaver";
-    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
-    $dir .= "/feeds";
-    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
-  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/tmp/ exists, use it.
-    $dir = "$ENV{HOME}/tmp/.xscreensaver-feeds";
-  } else {
-    $dir = "$ENV{HOME}/.xscreensaver-feeds";
-  }
+  my $dir = feed_dir();
+  my $odir = $dir;
 
   if (! -d $dir) {
     mkdir ($dir) || error ("mkdir $dir: $!");
@@ -833,7 +1114,7 @@ sub mirror_feed($) {
 
   if ($poll_p) {
 
-    print STDERR "$progname: loading $url\n" if ($verbose);
+    print STDERR "$progname: checking $url\n" if ($verbose);
 
     my %files;
     opendir (my $dirh, $dir) || error ("$dir: $!");
@@ -908,7 +1189,11 @@ sub mirror_feed($) {
   #
   truncate ($lock_fd, 0) || error ("unable to truncate $lock: $!");
   seek ($lock_fd, 0, 0)  || error ("unable to rewind $lock: $!");
-  utime ($mtime, $mtime, $lock_fd) || error ("unable to touch $lock: $!");
+
+  # macOS 11.6, perl 5.28.3: "The futimes function is unimplemented".
+  # This worked on macOS 10.14:
+ #utime ($mtime, $mtime, $lock_fd) || error ("unable to touch $lock: $!");
+  utime ($mtime, $mtime, $lock)    || error ("unable to touch $lock: $!");
   flock ($lock_fd, LOCK_UN) || error ("unable to unlock $lock: $!");
   close ($lock_fd);
   $lock_fd = undef;
@@ -929,18 +1214,10 @@ sub mirror_feed($) {
 sub find_random_file($) {
   my ($dir) = @_;
 
-  if ($use_spotlight_p == -1) {
-    $use_spotlight_p = 0;
-    if (-x '/usr/bin/mdfind') {
-      $use_spotlight_p = 1;
-    }
-  }
-
   my $url;
   ($url, $dir) = mirror_feed ($dir);
 
   if ($url) {
-    $use_spotlight_p = 0;
     print STDERR "$progname: $dir is cache for $url\n" if ($verbose > 1);
   }
 
@@ -949,13 +1226,6 @@ sub find_random_file($) {
   if ($#all_files >= 0) {
     # got it from the cache...
 
-  } elsif ($use_spotlight_p) {
-    print STDERR "$progname: spotlighting $dir...\n" if ($verbose);
-    spotlight_all_files ($dir);
-    print STDERR "$progname: found " . ($#all_files+1) .
-                 " file" . ($#all_files == 0 ? "" : "s") .
-                 " via Spotlight\n"
-      if ($verbose);
   } else {
     print STDERR "$progname: recursively reading $dir...\n" if ($verbose);
     find_all_files ($dir);
@@ -1145,7 +1415,8 @@ sub image_size($) {
   if ($w && $h) { return ($w, $h); }
   ($w, $h) = svg_size ($body);
   if ($w && $h) { return ($w, $h); }
-  # #### TODO: need image parsers for TIFF, XPM, XBM.
+  # We don't have image parsers for TIFF, XPM and XBM, which means that
+  # those files are always assumed to be large enough.
   return png_size ($body);
 }
 
@@ -1272,22 +1543,36 @@ sub usage() {
 sub main() {
   my $cocoa_id = undef;
   my $abs_p = 0;
+  my $flush_p = 0;
 
   while ($_ = $ARGV[0]) {
     shift @ARGV;
     if    (m/^--?verbose$/s)      { $verbose++; }
     elsif (m/^-v+$/s)             { $verbose += length($_)-1; }
     elsif (m/^--?name$/s)         { }   # ignored, for compatibility
-    elsif (m/^--?spotlight$/s)    { $use_spotlight_p = 1; }
-    elsif (m/^--?no-spotlight$/s) { $use_spotlight_p = 0; }
     elsif (m/^--?cache$/s)        { $cache_p = 1; }
     elsif (m/^--?no-?cache$/s)    { $cache_p = 0; }
-    elsif (m/^--?flush-?cache$/s) { $feed_max_age = $cache_max_age = 0; }
+    elsif (m/^--?flush-?cache$/s) { $flush_p = 1; }
     elsif (m/^--?cocoa$/)         { $cocoa_id = shift @ARGV; }
     elsif (m/^--?abs(olute)?$/)   { $abs_p = 1; }
     elsif (m/^-./)                { usage; }
     elsif (!defined($image_directory)) { $image_directory = $_; }
     else                          { usage; }
+  }
+
+  if ($flush_p) {
+    $feed_max_age = 0;
+    $cache_max_age = 0;
+    my $dir = feed_dir();
+    if (opendir (my $dirh, $dir)) {
+      foreach my $f (sort readdir ($dirh)) {
+        next if ($f =~ m/^\./s);
+        next unless ($f =~ m/^[-+_=a-zA-Z0-9]{22}$/);  # base64 MD5
+        print STDERR "$progname: rm -r $dir/$f\n" if ($verbose);
+        system ('rm', '-r', "$dir/$f");  # Ignore errors
+      }
+      closedir $dirh;
+    }
   }
 
   # Most hacks (X11 and Cocoa) pass a --directory value on the command line,
@@ -1309,7 +1594,7 @@ sub main() {
     error ("image file loading is not configured") unless $image_directory;
   }
 
-  usage unless (defined($image_directory));
+  usage unless ($image_directory);
 
   $image_directory =~ s@^feed:@http:@si;
 
@@ -1320,8 +1605,8 @@ sub main() {
     $image_directory =~ s@/+$@@s;		 # omit trailing /
 
     if (! -d $image_directory) {
-      print STDERR "$progname: $image_directory not a directory or URL\n";
-      usage;
+      print STDERR "$progname: not a directory or URL: $image_directory\n";
+      exit (1);
     }
   }
 

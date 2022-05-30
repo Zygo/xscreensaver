@@ -27,7 +27,8 @@
    <vgroup>
     <number id="pointSpeed" type="slider" arg="-point-speed %"
             _label="Wander speed" _low-label="Slow" _high-label="Fast"
-            low="0.0" high="10.0" default="1.0"/>
+            low="0.0" high="10.0" default="1.0"
+            convert="ratio"/>
 
     <number id="pointDelay" type="slider" arg="-point-delay %"
             _label="Insertion speed" _low-label="Slow" _high-label="Fast"
@@ -36,7 +37,8 @@
 
     <number id="zoomSpeed" type="slider" arg="-zoom-speed %"
             _label="Zoom speed" _low-label="Slow" _high-label="Fast"
-            low="0.1" high="10.0" default="1.0"/>
+            low="0.1" high="10.0" default="1.0"
+            convert="ratio"/>
 
     <number id="zoomDelay" type="slider" arg="-zoom-delay %"
             _label="Zoom frequency" _low-label="0" _high-label="60 seconds"

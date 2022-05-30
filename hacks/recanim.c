@@ -1,4 +1,4 @@
-/* recanim, Copyright (c) 2014-2021 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright © 2014-2022 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -23,11 +23,7 @@
 #endif
 
 #ifdef HAVE_GDK_PIXBUF
-# ifdef HAVE_GTK2
-#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
-# else  /* !HAVE_GTK2 */
-#  include <gdk-pixbuf/gdk-pixbuf-xlib.h>
-# endif /* !HAVE_GTK2 */
+# include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
 #endif /* HAVE_GDK_PIXBUF */
 
 #if (__GNUC__ >= 4)
@@ -176,13 +172,9 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
     XGetGeometry (dpy, window, &root, &x, &y, &w, &h, &bw, &d);
     gdk_pixbuf_xlib_init_with_depth (dpy, screen_number (screen), d);
 
-#  ifdef HAVE_GTK2
-#   if !GLIB_CHECK_VERSION(2, 36 ,0)
+#  if !GLIB_CHECK_VERSION(2, 36 ,0)
     g_type_init();
-#   endif
-#  else  /* !HAVE_GTK2 */
-    xlib_rgb_init (dpy, screen);
-#  endif /* !HAVE_GTK2 */
+#  endif
   }
 # else  /* !HAVE_GDK_PIXBUF */
 #  error GDK_PIXBUF is required

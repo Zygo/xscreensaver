@@ -1,5 +1,5 @@
 /* test-uid.c --- playing with grabs.
- * xscreensaver, Copyright © 1999-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1999-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -80,9 +80,18 @@ main (int argc, char **argv)
       else if (!strcmp (argv[i], "-mouse-async") ||
                !strcmp (argv[i], "-pointer-async"))
         mouse_sync_p = False;
+      else if (!strcmp (argv[i], "-sync"))
+        kbd_sync_p = mouse_sync_p = True;
+      else if (!strcmp (argv[i], "-async"))
+        kbd_sync_p = mouse_sync_p = False;
       else
         {
           fprintf (stderr, "%s: unknown option: %s\n", blurb(), oa);
+          fprintf (stderr, "usage: %s "
+                            "[--sync | --async]"
+                   "\n\t\t   [--kbd]   [--kbd-sync   | --kbd-async]"
+                   "\n\t\t   [--mouse] [--mouse-sync | --mouse-async]\n",
+                   progname);
           exit (1);
         }
     }

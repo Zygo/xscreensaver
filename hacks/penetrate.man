@@ -71,8 +71,6 @@ The layout of the screen isn't quite the same as the game this program
 tries to emulate.  In this this program, the missiles come out of the
 cities; when really, there are supposed to be three missile bases on
 hills, with the cities in the valleys between them.
-
-See http://www.mame.net/ for details.
 .SH COPYRIGHT
 Copyright \(co 1999 Adam Miller.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is

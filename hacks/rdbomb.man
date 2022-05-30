@@ -11,19 +11,8 @@ rd-bomb \- reaction/diffusion textures
 [\-fps]
 .SH DESCRIPTION
 
-The \fIrd-bomb\fP program draws reaction/diffusion textures.  The code
-is derived from the 'd' mode of the "bomb" visual musical instrument
-(see http://www.cs.cmu.edu/~spot/bomb.html).  I got the equations from
-xmorphia (http://www.ccsf.caltech.edu/ismap/image.html), which is
-based on a version of the Gray-Scott model taken from:
-    John E. Pearson "Complex Patterns in a Simple System"
-    Science, 261,189, 9 July 1993.
-
-If the frame-rate is too low, consider decreasing the width and height
-of the tile, or decreasing the size of the active part of the screen.
-
+The \fIrd-bomb\fP program draws reaction/diffusion textures.
 .SH OPTIONS
-
 If one of the reaction, diffusion, radius, and palette options is set
 to a negative value, then that option will be set to a random
 appropriate value.
@@ -75,6 +64,14 @@ about 1/1000th of a second.
 .TP 8
 .B \-fps
 Display the current frame rate and CPU load.
+.SH HISTORY
+The code is derived from the 'd' mode of the "Bomb" visual musical
+instrument, also by Scott Draves.  The equations come from Xmorphia,
+which is based on a version of the Gray-Scott model taken from:
+.PP
+John E. Pearson "Complex Patterns in a Simple System"
+.br
+Science, 261,189, 9 July 1993.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -87,7 +84,10 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR xlock (1)
+.br
+https://scottdraves.com/bomb.html
+.br
+https://web.archive.org/web/19981206145216/http%3A//www.ccsf.caltech.edu/ismap/image.html
 .SH COPYRIGHT
 Copyright \(co 1997 by Scott Draves.
 
@@ -97,4 +97,4 @@ provided that the above copyright notice appear in all copies and that
 both that copyright notice and this permission notice appear in
 supporting documentation. 
 .SH AUTHOR
-Scott Draves <spot@cs.cmu.edu>, 9/97
+Scott Draves <spot@cs.cmu.edu>, Sep 1997

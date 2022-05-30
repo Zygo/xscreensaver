@@ -39,7 +39,7 @@
   <xscreensaver-updater />
 
   <_description>
-repairs burn-in on LCD monitors.  This saver is functional,
+Repairs burn-in on LCD monitors.  This saver is functional,
 rather than pretty.
 
 Believe it or not, screen burn is not a thing of the past.
@@ -50,7 +50,7 @@ can often repair the damage.  That's what this screen saver does.
 See also:
 https://web.archive.org/web/20020817075924/http%3A//docs.info.apple.com/article.html?artnum=88343
 
-Inspired by the like-named and long-defunct program by Daniel Sandler.
+Inspired by a like-named and long-defunct program by Daniel Sandler.
 
 Written by Jamie Zawinski; 2008.
   </_description>

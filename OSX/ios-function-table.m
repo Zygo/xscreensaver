@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Fri Jan 14 19:56:18 2022 by build-fntable.pl 1.14.
+   Created: Thu May 26 13:26:42 2022 by build-fntable.pl 1.14.
  */
 
 #import <Foundation/Foundation.h>
@@ -40,6 +40,7 @@ extern struct xscreensaver_function_table
  carousel_xscreensaver_function_table,
  ccurve_xscreensaver_function_table,
  celtic_xscreensaver_function_table,
+ chompytower_xscreensaver_function_table,
  circuit_xscreensaver_function_table,
  cityflow_xscreensaver_function_table,
  cloudlife_xscreensaver_function_table,
@@ -156,6 +157,7 @@ extern struct xscreensaver_function_table
  morph3d_xscreensaver_function_table,
  mountain_xscreensaver_function_table,
  munch_xscreensaver_function_table,
+ nakagin_xscreensaver_function_table,
  nerverot_xscreensaver_function_table,
  noof_xscreensaver_function_table,
  noseguy_xscreensaver_function_table,
@@ -289,6 +291,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Carousel":	[NSValue valueWithPointer:&carousel_xscreensaver_function_table],
 	@"C Curve":	[NSValue valueWithPointer:&ccurve_xscreensaver_function_table],
 	@"Celtic":	[NSValue valueWithPointer:&celtic_xscreensaver_function_table],
+	@"Chompy Tower":	[NSValue valueWithPointer:&chompytower_xscreensaver_function_table],
 	@"Circuit":	[NSValue valueWithPointer:&circuit_xscreensaver_function_table],
 	@"City Flow":	[NSValue valueWithPointer:&cityflow_xscreensaver_function_table],
 	@"Cloud Life":	[NSValue valueWithPointer:&cloudlife_xscreensaver_function_table],
@@ -405,6 +408,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Morph 3D":	[NSValue valueWithPointer:&morph3d_xscreensaver_function_table],
 	@"Mountain":	[NSValue valueWithPointer:&mountain_xscreensaver_function_table],
 	@"Munch":	[NSValue valueWithPointer:&munch_xscreensaver_function_table],
+	@"Nakagin":	[NSValue valueWithPointer:&nakagin_xscreensaver_function_table],
 	@"Nerve Rot":	[NSValue valueWithPointer:&nerverot_xscreensaver_function_table],
 	@"Noof":	[NSValue valueWithPointer:&noof_xscreensaver_function_table],
 	@"Nose Guy":	[NSValue valueWithPointer:&noseguy_xscreensaver_function_table],

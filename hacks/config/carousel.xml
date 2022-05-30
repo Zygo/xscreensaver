@@ -16,7 +16,8 @@
 
     <number id="speed" type="slider" arg="-speed %"
             _label="Animation speed" _low-label="Slow" _high-label="Fast"
-            low="0.1" high="8.0" default="1.0"/>
+            low="0.1" high="8.0" default="1.0"
+            convert="ratio"/>
 
     <number id="duration" type="slider" arg="-duration %"
             _label="Time until loading a new image"
@@ -49,8 +50,7 @@
 
   <_description>
 Loads several random images, and displays them flying in a circular
-formation.  The formation changes speed and direction randomly, and
-images periodically drop out to be replaced by new ones.
+formation.  Images are replaced periodically.
 
 Written by Jamie Zawinski; 2005.
   </_description>

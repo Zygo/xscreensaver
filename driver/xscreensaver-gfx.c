@@ -352,7 +352,9 @@ main_loop (saver_info *si, Bool init_p)
 
   initialize_randr (si);
   update_screen_layout (si);
-  describe_monitor_layout (si->monitor_layout);
+
+  if (p->verbose_p)
+    describe_monitor_layout (si->monitor_layout);
 
   initialize_screensaver_window (si);
   init_sigchld (si);
@@ -397,26 +399,26 @@ main_loop (saver_info *si, Bool init_p)
           /* The Resize and Rotate extension sends an event when the
              size, rotation, or refresh rate of any screen has changed.
            */
-          if (p->verbose_p)
-            {
-              int screen = XRRRootToScreen (si->dpy, event.xrr_event.window);
-              fprintf (stderr, "%s: %d: screen change event received\n",
-                       blurb(), screen);
-            }
+          Bool changed_p;
 
           /* Inform Xlib that it's ok to update its data structures. */
           XRRUpdateConfiguration (&event.x_event);
 
           /* Resize the existing xscreensaver windows and cached ssi data. */
-          if (update_screen_layout (si))
+          changed_p = update_screen_layout (si);
+
+          if (p->verbose_p)
             {
-              if (p->verbose_p)
-                {
-                  fprintf (stderr, "%s: new layout:\n", blurb());
-                  describe_monitor_layout (si->monitor_layout);
-                }
-              resize_screensaver_window (si);
+              int screen = XRRRootToScreen (si->dpy, event.xrr_event.window);
+              fprintf (stderr, "%s: %d: screen change event: %s\n",
+                       blurb(), screen,
+                       (changed_p ? "new layout:" : "layout unchanged"));
+              if (changed_p)
+                describe_monitor_layout (si->monitor_layout);
             }
+
+          if (changed_p)
+            resize_screensaver_window (si);
         }
 # endif /* HAVE_RANDR */
 

@@ -26,17 +26,17 @@ glschool \- a 3D schooling simulation
 [\-drawgoal]
 [\-drawbbox]
 .SH DESCRIPTION
-Uses Craig Reynolds Boids algorithm to simulate a 3d school of
-fish.  See <http://www.red3d.com/cwr/boids> for a description
-of the algorithm and the original paper.  This is a lightly modified
-version of the algorithm that supports goal attraction.
+Uses the Craig Reynolds \fIBoids\fP algorithm to simulate a 3D school of
+fish.  This is a lightly modified version of the algorithm that supports
+goal attraction.
 
-Many different behaviors are possible by tweaking the parameters.  No sanity checking is performed
-on the command line params, so if you want to use negative accelerations or minimum velocity that is
-larger than maximum velocity or that sort of thing, the simulation will try to digest it.
+Many different behaviors are possible by tweaking the parameters.  No sanity
+checking is performed on the command line params, so if you want to use
+negative accelerations or minimum velocity that is larger than maximum
+velocity or that sort of thing, the simulation will try to digest it.
 
-It looks best with the highest number of fish that will give you an FPS of > 25 or so.
-
+It looks best with the highest number of fish that will give you an FPS of >
+25 or so.
 .SH OPTIONS
 .TP 8
 .B \-visual \fIvisual\fP
@@ -113,7 +113,9 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.br
+https://www.red3d.com/cwr/boids
 .SH COPYRIGHT
 Copyright \(co 2005-2006 by David C. Lambert.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

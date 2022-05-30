@@ -15,7 +15,8 @@
 
     <number id="cubesize" type="slider" arg="-cubesize %"
       _label="Cube size" _low-label="Small" _high-label="Large"
-      low="0.4" high="2.0" default="1.0"/>  
+      low="0.4" high="2.0" default="1.0"
+      convert="ratio"/>
 
     <number id="rotspeed" type="slider" arg="-rotspeed %"
       _label="Rotation" _low-label="Slow" _high-label="Fast"
@@ -58,6 +59,7 @@
 
   <_description>
 The "Rubik's Mirror Blocks" puzzle.
+
 See also the "Rubik", "Cube21", and "GLSnake" screen savers.
 
 https://en.wikipedia.org/wiki/Combination_puzzles#Irregular_cuboids

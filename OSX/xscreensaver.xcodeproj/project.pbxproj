@@ -203,6 +203,7 @@
 				AF777A5109B660B600EA3033 /* PBXTargetDependency */,
 				AF777A4F09B660B600EA3033 /* PBXTargetDependency */,
 				AF777A4D09B660B600EA3033 /* PBXTargetDependency */,
+				AF2A636528401671003791B4 /* PBXTargetDependency */,
 				AF777A4B09B660B600EA3033 /* PBXTargetDependency */,
 				AF5C9B161A0CCF8000B0147A /* PBXTargetDependency */,
 				AF4F10EE143450C300E34F3F /* PBXTargetDependency */,
@@ -271,6 +272,7 @@
 				AFE6A19C0CDD7B7F002805BF /* PBXTargetDependency */,
 				AF777A0509B660B200EA3033 /* PBXTargetDependency */,
 				AF777A0309B660B200EA3033 /* PBXTargetDependency */,
+				AFD704E2283088BA002A8EB0 /* PBXTargetDependency */,
 				AF777A0109B660B200EA3033 /* PBXTargetDependency */,
 				AF3EC996203517EE00180A35 /* PBXTargetDependency */,
 				AFD51B350F063B7800471C02 /* PBXTargetDependency */,
@@ -1329,6 +1331,23 @@
 		AF21B16C2594EE6F00671377 /* glsl-utils.c in Sources */ = {isa = PBXBuildFile; fileRef = AF88B0382593A2EE006F9EB1 /* glsl-utils.c */; };
 		AF21B16D2594EEC300671377 /* glsl-utils.c in Sources */ = {isa = PBXBuildFile; fileRef = AF88B0382593A2EE006F9EB1 /* glsl-utils.c */; };
 		AF241F83107C38DF00046A84 /* dropshadow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF241F81107C38DF00046A84 /* dropshadow.c */; };
+		AF2A634828401496003791B4 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF2A634A28401496003791B4 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF2A634B28401496003791B4 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF2A634C28401496003791B4 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2A634D28401496003791B4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF2A634E28401496003791B4 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF2A634F28401496003791B4 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF2A635028401496003791B4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF2A6359284015D8003791B4 /* teeth_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2A6358284015D8003791B4 /* teeth_model.c */; };
+		AF2A635A284015D8003791B4 /* teeth_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2A6358284015D8003791B4 /* teeth_model.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2A635B284015D8003791B4 /* teeth_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2A6358284015D8003791B4 /* teeth_model.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2A635E284015FB003791B4 /* chompytower.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2A635C284015FA003791B4 /* chompytower.c */; };
+		AF2A635F284015FB003791B4 /* chompytower.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2A635C284015FA003791B4 /* chompytower.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2A6360284015FB003791B4 /* chompytower.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2A635C284015FA003791B4 /* chompytower.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2A6361284015FB003791B4 /* chompytower.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2A635D284015FA003791B4 /* chompytower.xml */; };
+		AF2A6362284015FB003791B4 /* chompytower.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2A635D284015FA003791B4 /* chompytower.xml */; };
+		AF2A6363284015FB003791B4 /* chompytower.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2A635D284015FA003791B4 /* chompytower.xml */; };
 		AF2C2A8A22754C31002112B9 /* deepstars.c in Sources */ = {isa = PBXBuildFile; fileRef = AFF449F722754B2300DB8EDB /* deepstars.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF2C31E615C0F7FE007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
 		AF2C31EA15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
@@ -4114,6 +4133,20 @@
 		AFD573700997418D00BA26F7 /* strange.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2591D0988A469000655EE /* strange.xml */; };
 		AFD57372099741A200BA26F7 /* strange.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD57371099741A200BA26F7 /* strange.c */; };
 		AFD5E98525672E8500704C83 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFD5E98425672E8500704C83 /* WebKit.framework */; };
+		AFD704C928308724002A8EB0 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFD704CB28308724002A8EB0 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFD704CC28308724002A8EB0 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFD704CD28308724002A8EB0 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFD704CE28308724002A8EB0 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFD704CF28308724002A8EB0 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFD704D028308724002A8EB0 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AFD704D128308724002A8EB0 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFD704DB2830880B002A8EB0 /* nakagin.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD704D92830880B002A8EB0 /* nakagin.c */; };
+		AFD704DC2830880B002A8EB0 /* nakagin.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD704D92830880B002A8EB0 /* nakagin.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFD704DD2830880B002A8EB0 /* nakagin.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD704D92830880B002A8EB0 /* nakagin.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFD704DE2830880B002A8EB0 /* nakagin.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFD704DA2830880B002A8EB0 /* nakagin.xml */; };
+		AFD704DF2830880B002A8EB0 /* nakagin.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFD704DA2830880B002A8EB0 /* nakagin.xml */; };
+		AFD704E02830880B002A8EB0 /* nakagin.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFD704DA2830880B002A8EB0 /* nakagin.xml */; };
 		AFD77E6220C23F8600A3638D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFD77E6420C23F8600A3638D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFD77E6520C23F8600A3638D /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -4723,6 +4756,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF2107711FD23BDD00B61EA9;
 			remoteInfo = Esper;
+		};
+		AF2A634328401496003791B4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF2A636428401671003791B4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF2A634128401496003791B4;
+			remoteInfo = ChompyTower;
 		};
 		AF2D0D27241D7C870001D8B8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -8287,6 +8334,20 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AFD704C428308724002A8EB0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFD704E1283088BA002A8EB0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFD704C228308724002A8EB0;
+			remoteInfo = Nakagin;
+		};
 		AFD77E5D20C23F8600A3638D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -8619,6 +8680,10 @@
 		AF21078B1FD23D5000B61EA9 /* esper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esper.c; path = hacks/glx/esper.c; sourceTree = "<group>"; };
 		AF241F81107C38DF00046A84 /* dropshadow.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = dropshadow.c; path = hacks/glx/dropshadow.c; sourceTree = "<group>"; };
 		AF241F82107C38DF00046A84 /* dropshadow.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = dropshadow.h; path = hacks/glx/dropshadow.h; sourceTree = "<group>"; };
+		AF2A635628401496003791B4 /* ChompyTower.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChompyTower.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF2A6358284015D8003791B4 /* teeth_model.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = teeth_model.c; path = hacks/glx/teeth_model.c; sourceTree = "<group>"; };
+		AF2A635C284015FA003791B4 /* chompytower.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = chompytower.c; path = hacks/glx/chompytower.c; sourceTree = "<group>"; };
+		AF2A635D284015FA003791B4 /* chompytower.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = chompytower.xml; sourceTree = "<group>"; };
 		AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		AF2D0D3A241D7C870001D8B8 /* EtruscanVenus.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EtruscanVenus.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF2D0D3C241D7D600001D8B8 /* etruscanvenus.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = etruscanvenus.xml; sourceTree = "<group>"; };
@@ -9565,6 +9630,9 @@
 		AFD5736D0997411200BA26F7 /* Strange.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Strange.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFD57371099741A200BA26F7 /* strange.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = strange.c; path = hacks/strange.c; sourceTree = "<group>"; };
 		AFD5E98425672E8500704C83 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS13.2.sdk/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
+		AFD704D728308724002A8EB0 /* Nakagin.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Nakagin.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFD704D92830880B002A8EB0 /* nakagin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = nakagin.c; path = hacks/glx/nakagin.c; sourceTree = "<group>"; };
+		AFD704DA2830880B002A8EB0 /* nakagin.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = nakagin.xml; sourceTree = "<group>"; };
 		AFD77E7020C23F8600A3638D /* FilmLeader.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FilmLeader.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFD77E7220C2417F00A3638D /* filmleader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = filmleader.c; path = hacks/filmleader.c; sourceTree = "<group>"; };
 		AFD77E7620C2419600A3638D /* filmleader.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = filmleader.xml; sourceTree = "<group>"; };
@@ -9775,6 +9843,20 @@
 				AF21077E1FD23BDD00B61EA9 /* Carbon.framework in Frameworks */,
 				AF21077F1FD23BDD00B61EA9 /* OpenGL.framework in Frameworks */,
 				AF2107801FD23BDD00B61EA9 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2A634928401496003791B4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2A634A28401496003791B4 /* libjwxyz.a in Frameworks */,
+				AF2A634B28401496003791B4 /* ScreenSaver.framework in Frameworks */,
+				AF2A634C28401496003791B4 /* QuartzCore.framework in Frameworks */,
+				AF2A634D28401496003791B4 /* Cocoa.framework in Frameworks */,
+				AF2A634E28401496003791B4 /* Carbon.framework in Frameworks */,
+				AF2A634F28401496003791B4 /* OpenGL.framework in Frameworks */,
+				AF2A635028401496003791B4 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -13320,6 +13402,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFD704CA28308724002A8EB0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFD704CB28308724002A8EB0 /* libjwxyz.a in Frameworks */,
+				AFD704CC28308724002A8EB0 /* ScreenSaver.framework in Frameworks */,
+				AFD704CD28308724002A8EB0 /* QuartzCore.framework in Frameworks */,
+				AFD704CE28308724002A8EB0 /* Cocoa.framework in Frameworks */,
+				AFD704CF28308724002A8EB0 /* Carbon.framework in Frameworks */,
+				AFD704D028308724002A8EB0 /* OpenGL.framework in Frameworks */,
+				AFD704D128308724002A8EB0 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFD77E6320C23F8600A3638D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -13875,6 +13971,8 @@
 				AF69E206270BA54600358595 /* BinaryHorizon.saver */,
 				AF6E25C7276C3F030032E38F /* MapScroller.saver */,
 				AFAE1484279275BE00C62683 /* Squirtorus.saver */,
+				AFD704D728308724002A8EB0 /* Nakagin.saver */,
+				AF2A635628401496003791B4 /* ChompyTower.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -14203,6 +14301,8 @@
 				AFA55E2209935F2B00F3E977 /* chessgames.h */,
 				AFA55E2309935F2B00F3E977 /* chessmodels.c */,
 				AFA55E2409935F2B00F3E977 /* chessmodels.h */,
+				AF2A635C284015FA003791B4 /* chompytower.c */,
+				AF2A6358284015D8003791B4 /* teeth_model.c */,
 				AFA55BC00993416E00F3E977 /* circuit.c */,
 				AF5C9B101A0CCF4E00B0147A /* cityflow.c */,
 				AF3581D91431D5FC00E09C51 /* companion.c */,
@@ -14312,6 +14412,7 @@
 				AFA561120993786800F3E977 /* molecule.c */,
 				AF7778BE09B65BA300EA3033 /* molecules.sh */,
 				AFA559CC099332E800F3E977 /* morph3d.c */,
+				AFD704D92830880B002A8EB0 /* nakagin.c */,
 				AFA5619009937D3600F3E977 /* noof.c */,
 				AF3EC992203517CC00180A35 /* peepers.c */,
 				AFD51DB60F063BCE00471C02 /* photopile.c */,
@@ -14444,6 +14545,7 @@
 				AFC258830988A468000655EE /* carousel.xml */,
 				AFC258840988A468000655EE /* ccurve.xml */,
 				AFC258850988A468000655EE /* celtic.xml */,
+				AF2A635D284015FA003791B4 /* chompytower.xml */,
 				AFC258860988A468000655EE /* circuit.xml */,
 				AF5C9B0F1A0CCF4E00B0147A /* cityflow.xml */,
 				AFC258870988A468000655EE /* cloudlife.xml */,
@@ -14581,6 +14683,7 @@
 				AFC258E80988A469000655EE /* morph3d.xml */,
 				AFC258E90988A469000655EE /* mountain.xml */,
 				AFC258EA0988A469000655EE /* munch.xml */,
+				AFD704DA2830880B002A8EB0 /* nakagin.xml */,
 				AFC258EB0988A469000655EE /* nerverot.xml */,
 				AFC258EC0988A469000655EE /* noof.xml */,
 				AFC258ED0988A469000655EE /* noseguy.xml */,
@@ -15011,6 +15114,26 @@
 			name = Esper;
 			productName = DangerBall;
 			productReference = AF2107861FD23BDE00B61EA9 /* Esper.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF2A634128401496003791B4 /* ChompyTower */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF2A635328401496003791B4 /* Build configuration list for PBXNativeTarget "ChompyTower" */;
+			buildPhases = (
+				AF2A634428401496003791B4 /* Resources */,
+				AF2A634628401496003791B4 /* Sources */,
+				AF2A634928401496003791B4 /* Frameworks */,
+				AF2A635128401496003791B4 /* Rez */,
+				AF2A635228401496003791B4 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF2A634228401496003791B4 /* PBXTargetDependency */,
+			);
+			name = ChompyTower;
+			productName = DangerBall;
+			productReference = AF2A635628401496003791B4 /* ChompyTower.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF2D0D25241D7C870001D8B8 /* EtruscanVenus */ = {
@@ -20090,6 +20213,26 @@
 			productReference = AFD5736D0997411200BA26F7 /* Strange.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AFD704C228308724002A8EB0 /* Nakagin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFD704D428308724002A8EB0 /* Build configuration list for PBXNativeTarget "Nakagin" */;
+			buildPhases = (
+				AFD704C528308724002A8EB0 /* Resources */,
+				AFD704C728308724002A8EB0 /* Sources */,
+				AFD704CA28308724002A8EB0 /* Frameworks */,
+				AFD704D228308724002A8EB0 /* Rez */,
+				AFD704D328308724002A8EB0 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFD704C328308724002A8EB0 /* PBXTargetDependency */,
+			);
+			name = Nakagin;
+			productName = DangerBall;
+			productReference = AFD704D728308724002A8EB0 /* Nakagin.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AFD77E5B20C23F8600A3638D /* FilmLeader */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFD77E6D20C23F8600A3638D /* Build configuration list for PBXNativeTarget "FilmLeader" */;
@@ -20437,7 +20580,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1320;
+				LastUpgradeCheck = 1340;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -20464,6 +20607,9 @@
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF2107711FD23BDD00B61EA9 = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+					AF2A634128401496003791B4 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
 					AF2D0D25241D7C870001D8B8 = {
@@ -21254,6 +21400,9 @@
 					AFD5735D0997411200BA26F7 = {
 						DevelopmentTeam = 4627ATJELP;
 					};
+					AFD704C228308724002A8EB0 = {
+						DevelopmentTeam = 4627ATJELP;
+					};
 					AFD77E5B20C23F8600A3638D = {
 						DevelopmentTeam = 4627ATJELP;
 					};
@@ -21470,6 +21619,7 @@
 				AFA55ACF09933CEF00F3E977 /* Bubble3D */,
 				AFA55946099330B000F3E977 /* Cage */,
 				AF77784409B6528100EA3033 /* Carousel */,
+				AF2A634128401496003791B4 /* ChompyTower */,
 				AFA55BAB099340CE00F3E977 /* Circuit */,
 				AF5C9AF91A0CCE6E00B0147A /* Cityflow */,
 				AF3581BF1431D47B00E09C51 /* CompanionCube */,
@@ -21539,6 +21689,7 @@
 				AFA56119099378CB00F3E977 /* molecules.h */,
 				AFA560FD0993781600F3E977 /* Molecule */,
 				AFA559B50993328000F3E977 /* Morph3D */,
+				AFD704C228308724002A8EB0 /* Nakagin */,
 				AFA5617B09937CF100F3E977 /* Noof */,
 				AF3EC9782035154C00180A35 /* Peepers */,
 				AFD51B1B0F063B4A00471C02 /* Photopile */,
@@ -21680,6 +21831,14 @@
 				AF2107891FD23D2800B61EA9 /* esper.xml in Resources */,
 				AFC523C31FED9420001C300A /* xscreensaver-getimage-file in Resources */,
 				AF2107901FD23FEC00B61EA9 /* OCRAStd.otf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2A634428401496003791B4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2A6361284015FB003791B4 /* chompytower.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22294,6 +22453,7 @@
 				AF56890D26E7060500CCBA38 /* carousel.xml in Resources */,
 				AF56890E26E7060500CCBA38 /* ccurve.xml in Resources */,
 				AF56890F26E7060500CCBA38 /* celtic.xml in Resources */,
+				AF2A6363284015FB003791B4 /* chompytower.xml in Resources */,
 				AF56891026E7060500CCBA38 /* circuit.xml in Resources */,
 				AF56891126E7060500CCBA38 /* cityflow.xml in Resources */,
 				AF56891226E7060500CCBA38 /* cloudlife.xml in Resources */,
@@ -22411,6 +22571,7 @@
 				AF56898226E7060500CCBA38 /* mountain.xml in Resources */,
 				AF56898326E7060500CCBA38 /* munch.xml in Resources */,
 				AF56898426E7060500CCBA38 /* nerverot.xml in Resources */,
+				AFD704E02830880B002A8EB0 /* nakagin.xml in Resources */,
 				AF56898526E7060500CCBA38 /* noof.xml in Resources */,
 				AF56898626E7060500CCBA38 /* noseguy.xml in Resources */,
 				AF56898726E7060500CCBA38 /* pacman.xml in Resources */,
@@ -22929,6 +23090,7 @@
 				AF918AD0158FC53D002B5D1E /* carousel.xml in Resources */,
 				AF918AD1158FC53D002B5D1E /* ccurve.xml in Resources */,
 				AF918AD2158FC53D002B5D1E /* celtic.xml in Resources */,
+				AF2A6362284015FB003791B4 /* chompytower.xml in Resources */,
 				AF918AD3158FC53D002B5D1E /* circuit.xml in Resources */,
 				AF5C9B121A0CCF4E00B0147A /* cityflow.xml in Resources */,
 				AF918AD4158FC53D002B5D1E /* cloudlife.xml in Resources */,
@@ -23046,6 +23208,7 @@
 				AF918B3E158FC53D002B5D1E /* mountain.xml in Resources */,
 				AF918B3F158FC53D002B5D1E /* munch.xml in Resources */,
 				AF918B40158FC53D002B5D1E /* nerverot.xml in Resources */,
+				AFD704DF2830880B002A8EB0 /* nakagin.xml in Resources */,
 				AF918B41158FC53D002B5D1E /* noof.xml in Resources */,
 				AF918B42158FC53D002B5D1E /* noseguy.xml in Resources */,
 				AF918B43158FC53D002B5D1E /* pacman.xml in Resources */,
@@ -24256,6 +24419,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFD704C528308724002A8EB0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFD704DE2830880B002A8EB0 /* nakagin.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFD77E5E20C23F8600A3638D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -24438,6 +24609,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF2107811FD23BDD00B61EA9 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2A635128401496003791B4 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -26145,6 +26323,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFD704D228308724002A8EB0 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFD77E6B20C23F8600A3638D /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -26367,6 +26552,22 @@
 			showEnvVarsInLog = 0;
 		};
 		AF2107821FD23BDD00B61EA9 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF2A635228401496003791B4 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -30603,6 +30804,22 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AFD704D328308724002A8EB0 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AFD77E6C20C23F8600A3638D /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -30954,6 +31171,16 @@
 			files = (
 				AF2107781FD23BDD00B61EA9 /* XScreenSaverSubclass.m in Sources */,
 				AF21078C1FD23D5000B61EA9 /* esper.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2A634628401496003791B4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2A635E284015FB003791B4 /* chompytower.c in Sources */,
+				AF2A6359284015D8003791B4 /* teeth_model.c in Sources */,
+				AF2A634828401496003791B4 /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -31812,6 +32039,8 @@
 				AF568A7A26E7060500CCBA38 /* discoball.c in Sources */,
 				AF568A7B26E7060500CCBA38 /* carousel.c in Sources */,
 				AF568A7C26E7060500CCBA38 /* chessmodels.c in Sources */,
+				AF2A6360284015FB003791B4 /* chompytower.c in Sources */,
+				AF2A635B284015D8003791B4 /* teeth_model.c in Sources */,
 				AF568A7D26E7060500CCBA38 /* circuit.c in Sources */,
 				AF568A7E26E7060500CCBA38 /* cityflow.c in Sources */,
 				AF568A7F26E7060500CCBA38 /* companion.c in Sources */,
@@ -31895,6 +32124,7 @@
 				AF568ACD26E7060500CCBA38 /* moebiusgears.c in Sources */,
 				AF568ACE26E7060500CCBA38 /* molecule.c in Sources */,
 				AF568ACF26E7060500CCBA38 /* morph3d.c in Sources */,
+				AFD704DD2830880B002A8EB0 /* nakagin.c in Sources */,
 				AF568AD026E7060500CCBA38 /* noof.c in Sources */,
 				AF568AD126E7060500CCBA38 /* peepers.c in Sources */,
 				AF568AD226E7060500CCBA38 /* projectiveplane.c in Sources */,
@@ -32572,6 +32802,8 @@
 				AF3938351D0FBF1D00205406 /* discoball.c in Sources */,
 				AF918A38158FC3BB002B5D1E /* carousel.c in Sources */,
 				AF918A39158FC3BB002B5D1E /* chessmodels.c in Sources */,
+				AF2A635F284015FB003791B4 /* chompytower.c in Sources */,
+				AF2A635A284015D8003791B4 /* teeth_model.c in Sources */,
 				AF918A3A158FC3BB002B5D1E /* circuit.c in Sources */,
 				AF5C9B141A0CCF4E00B0147A /* cityflow.c in Sources */,
 				AF9189A6158FC310002B5D1E /* companion.c in Sources */,
@@ -32655,6 +32887,7 @@
 				AF918A78158FC417002B5D1E /* moebiusgears.c in Sources */,
 				AF918A79158FC417002B5D1E /* molecule.c in Sources */,
 				AF918A7A158FC417002B5D1E /* morph3d.c in Sources */,
+				AFD704DC2830880B002A8EB0 /* nakagin.c in Sources */,
 				AF918A7B158FC417002B5D1E /* noof.c in Sources */,
 				AF3EC994203517CC00180A35 /* peepers.c in Sources */,
 				AFFAB33319158EA80020F021 /* projectiveplane.c in Sources */,
@@ -34027,6 +34260,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFD704C728308724002A8EB0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFD704C928308724002A8EB0 /* XScreenSaverSubclass.m in Sources */,
+				AFD704DB2830880B002A8EB0 /* nakagin.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFD77E6020C23F8600A3638D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -34333,6 +34575,16 @@
 			isa = PBXTargetDependency;
 			target = AF2107711FD23BDD00B61EA9 /* Esper */;
 			targetProxy = AF21078E1FD23D9800B61EA9 /* PBXContainerItemProxy */;
+		};
+		AF2A634228401496003791B4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF2A634328401496003791B4 /* PBXContainerItemProxy */;
+		};
+		AF2A636528401671003791B4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF2A634128401496003791B4 /* ChompyTower */;
+			targetProxy = AF2A636428401671003791B4 /* PBXContainerItemProxy */;
 		};
 		AF2D0D26241D7C870001D8B8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -36879,6 +37131,16 @@
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AFD5735F0997411200BA26F7 /* PBXContainerItemProxy */;
 		};
+		AFD704C328308724002A8EB0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFD704C428308724002A8EB0 /* PBXContainerItemProxy */;
+		};
+		AFD704E2283088BA002A8EB0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFD704C228308724002A8EB0 /* Nakagin */;
+			targetProxy = AFD704E1283088BA002A8EB0 /* PBXContainerItemProxy */;
+		};
 		AFD77E5C20C23F8600A3638D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -37236,6 +37498,28 @@
 					"USE_GL=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
+			};
+			name = Release;
+		};
+		AF2A635428401496003791B4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF2A635528401496003791B4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -41511,6 +41795,28 @@
 			};
 			name = Release;
 		};
+		AFD704D528308724002A8EB0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFD704D628308724002A8EB0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		AFD77E6E20C23F8600A3638D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -42129,6 +42435,15 @@
 			buildConfigurations = (
 				AF2107841FD23BDD00B61EA9 /* Debug */,
 				AF2107851FD23BDD00B61EA9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF2A635328401496003791B4 /* Build configuration list for PBXNativeTarget "ChompyTower" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF2A635428401496003791B4 /* Debug */,
+				AF2A635528401496003791B4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -44478,6 +44793,15 @@
 			buildConfigurations = (
 				AFD5736B0997411200BA26F7 /* Debug */,
 				AFD5736C0997411200BA26F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFD704D428308724002A8EB0 /* Build configuration list for PBXNativeTarget "Nakagin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFD704D528308724002A8EB0 /* Debug */,
+				AFD704D628308724002A8EB0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

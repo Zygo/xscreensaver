@@ -1650,7 +1650,7 @@ copy_pixmap (Display *dpy, Pixmap p)
 
 
 // Returns the verbose Unicode name of this character, like "agrave" or
-// "daggerdouble".  Used by fontglide debugMetrics.
+// "daggerdouble".  Used by Unicrud, and by Fontglide with debugMetrics.
 //
 char *
 jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)

@@ -48,7 +48,7 @@
         JRST .-4
 
 As reported by HAKMEM (MIT AI Memo 239, 1972), Jackson Wright wrote
-the above PDP-1 code in 1962. That code still lives on here, some 46
+the above PDP-1 code in 1962. That code still lives on here, 60+
 years later.
 
 In "mismunch" mode, it displays a creatively broken misimplementation

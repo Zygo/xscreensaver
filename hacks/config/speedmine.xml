@@ -19,7 +19,8 @@
 
     <number id="thrust" type="slider" arg="-thrust %"
             _label="Thrust" _low-label="Slow" _high-label="Fast"
-            low="0.0" high="4.0" default="1.0"/>
+            low="0.0" high="4.0" default="1.0"
+            convert="ratio"/>
 
     <number id="gravity" type="slider" arg="-gravity %"
             _label="Gravity" _low-label="Low" _high-label="High"

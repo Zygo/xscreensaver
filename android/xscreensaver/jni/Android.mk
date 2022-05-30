@@ -104,6 +104,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/swim.c \
     hacks/glx/tangram_shapes.c \
     hacks/glx/teapot.c \
+    hacks/glx/teeth_model.c \
     hacks/glx/timezones.c \
     hacks/glx/toast.c \
     hacks/glx/toast2.c \

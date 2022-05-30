@@ -13,7 +13,8 @@
 
   <number id="speed" type="slider" arg="-speed %"
           _label="Air speed" _low-label="Slow" _high-label="Fast"
-          low="0.01" high="8.0" default="1.0"/>
+          low="0.01" high="8.0" default="1.0"
+          convert="ratio"/>
 
   <number id="ntoasters" type="slider" arg="-ntoasters %"
           _label="Number of toasters" _low-label="None" _high-label="Swarm"
@@ -34,6 +35,7 @@
 
   <_description>
 A fleet of 3d space-age jet-powered flying toasters (and toast!)
+
 Inspired by the ancient Berkeley Systems After Dark flying toasters.
 
 https://en.wikipedia.org/wiki/After_Dark_%28software%29#Flying_Toasters

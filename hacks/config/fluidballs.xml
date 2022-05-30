@@ -45,10 +45,7 @@
   <xscreensaver-updater />
 
   <_description>
-Models the physics of bouncing balls, or of particles in a gas or
-fluid, depending on the settings.  If "Shake Box" is selected, then
-every now and then, the box will be rotated, changing which direction
-is down (in order to keep the settled balls in motion.)
+A particle system of bouncing balls.  Gravity moves around to shake the box.
 
 Written by Peter Birtles and Jamie Zawinski; 2002.
   </_description>

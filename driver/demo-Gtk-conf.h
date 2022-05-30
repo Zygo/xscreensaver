@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,7 @@ typedef struct {
   char *progname;
   char *progclass;
   char *description;
+  int year;
 } conf_data;
 
 extern conf_data *load_configurator (const char *cmd_line, gboolean verbose_p);

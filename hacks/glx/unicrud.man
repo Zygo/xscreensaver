@@ -16,7 +16,7 @@ unicrud \- Bounces a random Unicode character on the screen.
 [\-fps]
 .SH DESCRIPTION
 Chooses a random Unicode character and displays it full screen, along with
-some information about it. https://en.wikipedia.org/wiki/Unicode
+some information about it.
 .SH OPTIONS
 .TP 8
 .B \-visual \fIvisual\fP
@@ -60,6 +60,8 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
+https://en.wikipedia.org/wiki/Unicode,
+.br
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT

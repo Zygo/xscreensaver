@@ -32,7 +32,8 @@
 
       <number id="speed" type="slider" arg="-speed %"
               _label="Speed" _low-label="Slow" _high-label="Fast"
-              low="0.02" high="10.0" default="1.0"/>
+              low="0.02" high="10.0" default="1.0"
+              convert="ratio"/>
      </vgroup>
 
      <vgroup>
@@ -60,8 +61,6 @@
 
   <_description>
 The recursive Hilbert space-filling curve, both 2D and 3D variants.
-It incrementally animates the growth and recursion to the maximum
-depth, then unwinds it back.
 
 The Hilbert path is a single contiguous line that can fill a volume
 without crossing itself.  As a data structure, Hilbert paths are

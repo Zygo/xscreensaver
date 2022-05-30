@@ -55,11 +55,7 @@
 #  pragma GCC diagnostic ignored "-Wpedantic"
 # endif
 
-# ifdef HAVE_GTK2
-#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
-# else  /* !HAVE_GTK2 */
-#  include <gdk-pixbuf/gdk-pixbuf-xlib.h>
-# endif /* !HAVE_GTK2 */
+# include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
 
 # if (__GNUC__ >= 4)
 #  pragma GCC diagnostic pop
@@ -399,9 +395,7 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
   GdkPixbuf *pb;
   Display *dpy = DisplayOfScreen (screen);
   unsigned int win_width, win_height, win_depth;
-# ifdef HAVE_GTK2
   GError *gerr = 0;
-# endif /* HAVE_GTK2 */
 
   /* Find the size of the Drawable. */
   {
@@ -413,27 +407,17 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
   }
 
   gdk_pixbuf_xlib_init_with_depth (dpy, screen_number (screen), win_depth);
-# ifdef HAVE_GTK2
 # if !GLIB_CHECK_VERSION(2, 36 ,0)
   g_type_init();
 # endif
-# else  /* !HAVE_GTK2 */
-  xlib_rgb_init (dpy, screen);
-# endif /* !HAVE_GTK2 */
 
-  pb = gdk_pixbuf_new_from_file (filename
-# ifdef HAVE_GTK2
-                                 , &gerr
-# endif /* HAVE_GTK2 */
-                                 );
+  pb = gdk_pixbuf_new_from_file (filename, &gerr);
 
   if (!pb)
     {
       fprintf (stderr, "%s: unable to load \"%s\"\n", progname, filename);
-#  ifdef HAVE_GTK2
       if (gerr && gerr->message && *gerr->message)
         fprintf (stderr, "%s: reason: %s\n", progname, gerr->message);
-#  endif /* HAVE_GTK2 */
       return False;
     }
   else

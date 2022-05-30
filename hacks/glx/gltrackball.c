@@ -310,7 +310,7 @@ gltrackball_event_handler (XEvent *event,
             event->xbutton.button == Button6 ||
             event->xbutton.button == Button7))
     {
-      gltrackball_mousewheel (ts, event->xbutton.button, 10,
+      gltrackball_mousewheel (ts, event->xbutton.button, 1,
                               !!event->xbutton.state);
       return True;
     }

@@ -1,5 +1,5 @@
 #!/bin/bash
-# XScreenSaver, Copyright © 2013-2021 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2022 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -85,7 +85,7 @@ free=`df -k "$DSTVOLUME" |
      tail -1 | head -1 | awk '{print $4}'`
 need=$(( $REQUIRED_SPACE * 1024 ))
 if [ "$free" -lt "$need" ]; then
- free=`echo $free / 1024 | bc`
+ free=$(( $free / 1024 ))
  error "Not enough disk space: $free MB available, $REQUIRED_SPACE MB required."
 else
  free=$(( $free / 1024 ))

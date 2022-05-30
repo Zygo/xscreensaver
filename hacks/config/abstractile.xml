@@ -8,7 +8,8 @@
 
   <number id="speed" type="slider" arg="-speed %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="5" default="3"/>
+          low="0" high="5" default="3"
+          convert="ratio"/>
 
   <number id="sleep" type="slider" arg="-sleep %"
             _label="Linger" _low-label="0 seconds" _high-label="60 seconds"
