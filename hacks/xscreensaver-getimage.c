@@ -55,7 +55,11 @@
 #  pragma GCC diagnostic ignored "-Wpedantic"
 # endif
 
-# include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+# include <gdk-pixbuf/gdk-pixbuf.h>
+
+# ifdef HAVE_GDK_PIXBUF_XLIB
+#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+# endif
 
 # if (__GNUC__ >= 4)
 #  pragma GCC diagnostic pop
@@ -406,7 +410,13 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
                   &root, &x, &y, &win_width, &win_height, &bw, &win_depth);
   }
 
+# ifdef HAVE_GDK_PIXBUF_XLIB
+  /* Aug 2022: nothing seems to go wrong if we don't do this at all?
+     gtk-2.24.33, gdk-pixbuf 2.42.8. */
   gdk_pixbuf_xlib_init_with_depth (dpy, screen_number (screen), win_depth);
+  xlib_rgb_init (dpy, screen_number (screen));
+# endif
+
 # if !GLIB_CHECK_VERSION(2, 36 ,0)
   g_type_init();
 # endif
@@ -485,12 +495,76 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
        */
       if (srcx > 0) w -= srcx;
       if (srcy > 0) h -= srcy;
+# ifdef HAVE_GDK_PIXBUF_XLIB
       gdk_pixbuf_xlib_render_to_drawable_alpha (pb, drawable,
                                                 srcx, srcy, destx, desty,
                                                 w, h,
                                                 GDK_PIXBUF_ALPHA_FULL, 127,
                                                 XLIB_RGB_DITHER_NORMAL,
                                                 0, 0);
+# else /* !HAVE_GDK_PIXBUF_XLIB */
+      {
+        /* Get the bits from GDK and render them out by hand.
+           #### This only handles 24 or 32-bit RGB TrueColor visuals.
+                Suck it, PseudoColor!
+         */
+        XWindowAttributes xgwa;
+        int w = gdk_pixbuf_get_width (pb);
+        int h = gdk_pixbuf_get_height (pb);
+        guchar *row = gdk_pixbuf_get_pixels (pb);
+        int stride = gdk_pixbuf_get_rowstride (pb);
+        int chan = gdk_pixbuf_get_n_channels (pb);
+        int x, y;
+        XImage *image;
+        XGCValues gcv;
+        GC gc;
+
+        XGetWindowAttributes (dpy, window, &xgwa);
+        image = XCreateImage (dpy, xgwa.visual, xgwa.depth, ZPixmap,
+                              0, 0, w, h, 8, 0);
+        image->data = (char *) malloc (h * image->bytes_per_line);
+        gc = XCreateGC (dpy, drawable, 0, &gcv);
+
+        if (!image->data)
+          {
+            fprintf (stderr, "%s: out of memory (%d x %d)\n", progname, w, h);
+            return False;
+          }
+
+        for (y = 0; y < h; y++)
+          {
+            guchar *i = row;
+            for (x = 0; x < w; x++)
+              {
+                unsigned long rgba = 0;
+                switch (chan) {
+                case 1:
+                  rgba = ((*i << 16) |
+                          (*i <<  8) |
+                          (*i <<  0));
+                  break;
+                case 3:
+                case 4:
+                  rgba = ((i[0] << 16) |
+                          (i[1] <<  8) |
+                          (i[2] <<  0));
+                  break;
+                default:
+                  abort();
+                  break;
+                }
+                i += chan;
+                XPutPixel (image, x, y, rgba);
+              }
+            row += stride;
+          }
+
+        XPutImage (dpy, drawable, gc, image, srcx, srcy, destx, desty, w, h);
+        XDestroyImage (image);
+        XFreeGC (dpy, gc);
+      }
+# endif /* !HAVE_GDK_PIXBUF_XLIB */
+
       if (bg_p)
         {
           XSetWindowBackgroundPixmap (dpy, window, drawable);

@@ -3,49 +3,50 @@
 klein \- Draws a 4d Klein bottle.
 .SH SYNOPSIS
 .B klein
-[\-display \fIhost:display.screen\fP]
-[\-install]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fIusecs\fP]
-[\-fps]
-[\-klein-bottle \fIbottle-name\fP]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-install]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-fps]
+[\-\-klein-bottle \fIbottle-name\fP]
 [-figure-8]
 [-pinched-torus]
 [-lawson]
-[\-mode \fIdisplay-mode\fP]
-[\-wireframe]
-[\-surface]
-[\-transparent]
-[\-appearance \fIappearance\fP]
-[\-solid]
-[\-bands]
-[\-colors \fIcolor-scheme\fP]
-[\-onesided]
-[\-twosided]
-[\-rainbow]
-[\-depth]
-[\-change-colors]
-[\-view-mode \fIview-mode\fP]
-[\-walk]
-[\-turn]
-[\-walk-turn]
-[\-orientation-marks]
-[\-projection-3d \fImode\fP]
-[\-perspective-3d]
-[\-orthographic-3d]
-[\-projection-4d \fImode\fP]
-[\-perspective-4d]
-[\-orthographic-4d]
-[\-speed-wx \fIfloat\fP]
-[\-speed-wy \fIfloat\fP]
-[\-speed-wz \fIfloat\fP]
-[\-speed-xy \fIfloat\fP]
-[\-speed-xz \fIfloat\fP]
-[\-speed-yz \fIfloat\fP]
-[\-walk-direction \fIfloat\fP]
-[\-walk-speed \fIfloat\fP]
+[\-\-mode \fIdisplay-mode\fP]
+[\-\-wireframe]
+[\-\-surface]
+[\-\-transparent]
+[\-\-appearance \fIappearance\fP]
+[\-\-solid]
+[\-\-bands]
+[\-\-colors \fIcolor-scheme\fP]
+[\-\-onesided]
+[\-\-twosided]
+[\-\-rainbow]
+[\-\-depth]
+[\-\-change-colors]
+[\-\-view-mode \fIview-mode\fP]
+[\-\-walk]
+[\-\-turn]
+[\-\-walk-turn]
+[\-\-orientation-marks]
+[\-\-projection-3d \fImode\fP]
+[\-\-perspective-3d]
+[\-\-orthographic-3d]
+[\-\-projection-4d \fImode\fP]
+[\-\-perspective-4d]
+[\-\-orthographic-4d]
+[\-\-speed-wx \fIfloat\fP]
+[\-\-speed-wy \fIfloat\fP]
+[\-\-speed-wz \fIfloat\fP]
+[\-\-speed-xy \fIfloat\fP]
+[\-\-speed-xz \fIfloat\fP]
+[\-\-speed-yz \fIfloat\fP]
+[\-\-walk-direction \fIfloat\fP]
+[\-\-walk-speed \fIfloat\fP]
 .SH DESCRIPTION
 The \fIklein\fP program shows three different Klein bottles in 4d: the
 figure-8 Klein bottle, the pinched torus Klein bottle, or the Lawson
@@ -118,114 +119,117 @@ Dimensions", Scientific American Library, 1990.
 .I klein
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual
 class, or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the
 animation.  Default 10000, or 1/100th second.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .PP
 The following three options are mutually exclusive.  They determine
 which Klein bottle is displayed.
 .TP 8
-.B \-klein-bottle random
+.B \-\-klein-bottle random
 Display a random Klein bottle (default).
 .TP 8
-.B \-klein-bottle figure-8 \fP(Shortcut: \fB\-figure-8\fP)
+.B \-\-klein-bottle figure-8 \fP(Shortcut: \fB\-\-figure-8\fP)
 Display the figure-8 Klein bottle.
 .TP 8
-.B \-klein-bottle pinched-torus \fP(Shortcut: \fB\-pinched-torus\fP)
+.B \-\-klein-bottle pinched-torus \fP(Shortcut: \fB\-\-pinched-torus\fP)
 Display the pinched torus Klein bottle.
 .TP 8
-.B \-klein-bottle lawson \fP(Shortcut: \fB\-lawson\fP)
+.B \-\-klein-bottle lawson \fP(Shortcut: \fB\-\-lawson\fP)
 Display the Lawson Klein bottle.
 .PP
 The following four options are mutually exclusive.  They determine
 how the Klein bottle is displayed.
 .TP 8
-.B \-mode random
+.B \-\-mode random
 Display the Klein bottle in a random display mode (default).
 .TP 8
-.B \-mode wireframe \fP(Shortcut: \fB\-wireframe\fP)
+.B \-\-mode wireframe \fP(Shortcut: \fB\-\-wireframe\fP)
 Display the Klein bottle as a wireframe mesh.
 .TP 8
-.B \-mode surface \fP(Shortcut: \fB\-surface\fP)
+.B \-\-mode surface \fP(Shortcut: \fB\-\-surface\fP)
 Display the Klein bottle as a solid surface.
 .TP 8
-.B \-mode transparent \fP(Shortcut: \fB\-transparent\fP)
+.B \-\-mode transparent \fP(Shortcut: \fB\-\-transparent\fP)
 Display the Klein bottle as a transparent surface.
 .PP
 The following three options are mutually exclusive.  They determine the
 appearance of the Klein bottle.
 .TP 8
-.B \-appearance random
+.B \-\-appearance random
 Display the Klein bottle with a random appearance (default).
 .TP 8
-.B \-appearance solid \fP(Shortcut: \fB\-solid\fP)
+.B \-\-appearance solid \fP(Shortcut: \fB\-\-solid\fP)
 Display the Klein bottle as a solid object.
 .TP 8
-.B \-appearance bands \fP(Shortcut: \fB\-bands\fP)
+.B \-\-appearance bands \fP(Shortcut: \fB\-\-bands\fP)
 Display the Klein bottle as see-through bands.
 .PP
 The following five options are mutually exclusive.  They determine
 how to color the Klein bottle.
 .TP 8
-.B \-colors random
+.B \-\-colors random
 Display the Klein bottle with a random color scheme (default).
 .TP 8
-.B \-colors one-sided \fP(Shortcut: \fB\-onesided\fP)
+.B \-\-colors one-sided \fP(Shortcut: \fB\-\-onesided\fP)
 Display the Klein bottle with a single color.
 .TP 8
-.B \-colors two-sided \fP(Shortcut: \fB\-twosided\fP)
+.B \-\-colors two-sided \fP(Shortcut: \fB\-\-twosided\fP)
 Display the Klein bottle with two colors: one color one "side" and the
 complementary color on the "other side."  For static colors, the
 colors are red and green.
 .TP 8
-.B \-colors rainbow \fP(Shortcut: \fB\-rainbow\fP)
+.B \-\-colors rainbow \fP(Shortcut: \fB\-\-rainbow\fP)
 Display the Klein bottle with fully saturated rainbow colors.  If the
 Klein bottle is displayed as see-through bands, each band will be
 displayed with a different color.
 .TP 8
-.B \-colors depth \fP(Shortcut: \fB\-depth\fP)
+.B \-\-colors depth \fP(Shortcut: \fB\-\-depth\fP)
 Display the Klein bottle with colors chosen depending on the 4d
 "depth" of the points.
 .PP
 The following options determine whether the colors with which the
 Klein bottle is displayed are static or are changing dynamically.
 .TP 8
-.B \-change-colors
+.B \-\-change-colors
 Change the colors with which the Klein bottle is displayed
 dynamically.
 .TP 8
-.B \-no-change-colors
+.B \-\-no-change-colors
 Use static colors to display the Klein bottle (default).
 .PP
 The following four options are mutually exclusive.  They determine
 how to view the Klein bottle.
 .TP 8
-.B \-view-mode random
+.B \-\-view-mode random
 View the Klein bottle in a random view mode (default).
 .TP 8
-.B \-view-mode walk \fP(Shortcut: \fB\-walk\fP)
+.B \-\-view-mode walk \fP(Shortcut: \fB\-\-walk\fP)
 View the Klein bottle as if walking on its surface.
 .TP 8
-.B \-view-mode turn \fP(Shortcut: \fB\-turn\fP)
+.B \-\-view-mode turn \fP(Shortcut: \fB\-\-turn\fP)
 View the Klein bottle while it turns in 4d.
 .TP 8
-.B \-view-mode walk-turn \fP(Shortcut: \fB\-walk-turn\fP)
+.B \-\-view-mode walk-turn \fP(Shortcut: \fB\-\-walk-turn\fP)
 View the Klein bottle as if walking on its surface.  Additionally, the
 Klein bottle turns around the true 4d planes (the xy, xz, and yz
 planes).
@@ -233,37 +237,37 @@ planes).
 The following options determine whether orientation marks are shown on
 the Klein bottle.
 .TP 8
-.B \-orientation-marks
+.B \-\-orientation-marks
 Display orientation marks on the Klein bottle.
 .TP 8
-.B \-no-orientation-marks
+.B \-\-no-orientation-marks
 Don't display orientation marks on the Klein bottle (default).
 .PP
 The following three options are mutually exclusive.  They determine
 how the Klein bottle is projected from 3d to 2d (i.e., to the screen).
 .TP 8
-.B \-projection-3d random
+.B \-\-projection-3d random
 Project the Klein bottle from 3d to 2d using a random projection mode
 (default).
 .TP 8
-.B \-projection-3d perspective \fP(Shortcut: \fB\-perspective-3d\fP)
+.B \-\-projection-3d perspective \fP(Shortcut: \fB\-\-perspective-3d\fP)
 Project the Klein bottle from 3d to 2d using a perspective projection.
 .TP 8
-.B \-projection-3d orthographic \fP(Shortcut: \fB\-orthographic-3d\fP)
+.B \-\-projection-3d orthographic \fP(Shortcut: \fB\-\-orthographic-3d\fP)
 Project the Klein bottle from 3d to 2d using an orthographic
 projection.
 .PP
 The following three options are mutually exclusive.  They determine
 how the Klein bottle is projected from 4d to 3d.
 .TP 8
-.B \-projection-4d random
+.B \-\-projection-4d random
 Project the Klein bottle from 4d to 3d using a random projection mode
 (default).
 .TP 8
-.B \-projection-4d perspective \fP(Shortcut: \fB\-perspective-4d\fP)
+.B \-\-projection-4d perspective \fP(Shortcut: \fB\-\-perspective-4d\fP)
 Project the Klein bottle from 4d to 3d using a perspective projection.
 .TP 8
-.B \-projection-4d orthographic \fP(Shortcut: \fB\-orthographic-4d\fP)
+.B \-\-projection-4d orthographic \fP(Shortcut: \fB\-\-orthographic-4d\fP)
 Project the Klein bottle from 4d to 3d using an orthographic
 projection.
 .PP
@@ -277,32 +281,32 @@ smaller speeds must be used than in the turn mode to achieve a nice
 visualization.  Therefore, in walk-and-turn mode the speeds you have
 selected are divided by 5 internally.
 .TP 8
-.B \-speed-wx \fIfloat\fP
+.B \-\-speed-wx \fIfloat\fP
 Rotation speed around the wx plane (default: 1.1).
 .TP 8
-.B \-speed-wy \fIfloat\fP
+.B \-\-speed-wy \fIfloat\fP
 Rotation speed around the wy plane (default: 1.3).
 .TP 8
-.B \-speed-wz \fIfloat\fP
+.B \-\-speed-wz \fIfloat\fP
 Rotation speed around the wz plane (default: 1.5).
 .TP 8
-.B \-speed-xy \fIfloat\fP
+.B \-\-speed-xy \fIfloat\fP
 Rotation speed around the xy plane (default: 1.7).
 .TP 8
-.B \-speed-xz \fIfloat\fP
+.B \-\-speed-xz \fIfloat\fP
 Rotation speed around the xz plane (default: 1.9).
 .TP 8
-.B \-speed-yz \fIfloat\fP
+.B \-\-speed-yz \fIfloat\fP
 Rotation speed around the yz plane (default: 2.1).
 .PP
 The following two options determine the walking speed and direction.
 .TP 8
-.B \-walk-direction \fIfloat\fP
+.B \-\-walk-direction \fIfloat\fP
 The walking direction is measured as an angle in degrees in the 2d
 square that forms the coordinate system of the surface of the Klein
 bottle (default: 7.0).
 .TP 8
-.B \-walk-speed \fIfloat\fP
+.B \-\-walk-speed \fIfloat\fP
 The walking speed is measured in percent of some sensible maximum
 speed (default: 20.0).
 .SH INTERACTION
@@ -324,6 +328,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

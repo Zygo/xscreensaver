@@ -3,20 +3,21 @@
 boing \- draws a bouncing ball like the ancient Amiga demo
 .SH SYNOPSIS
 .B boing
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] 
-[\-delay \fIusecs\fP] 
-[\-smooth]
-[\-lighting]
-[\-scanlines]
-[\-speed]
-[\-no\-spin]
-[\-angle \fIdegrees\fP]
-[\-size \fIratio\fP]
-[\-parallels \fIn\fP]
-[\-meridians \fIn\fP]
-[\-wireframe]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] 
+[\-\-delay \fIusecs\fP] 
+[\-\-smooth]
+[\-\-lighting]
+[\-\-scanlines]
+[\-\-speed]
+[\-\-no\-spin]
+[\-\-angle \fIdegrees\fP]
+[\-\-size \fIratio\fP]
+[\-\-parallels \fIn\fP]
+[\-\-meridians \fIn\fP]
+[\-\-wireframe]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIboing\fP program draws a bouncing checkered ball on a grid.
 
@@ -32,52 +33,55 @@ demo. With "-smooth -lighting", it looks... less old.
 .I boing
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fIusecs\fP
+.B \-\-delay \fIusecs\fP
 The delay between frames of the animation, in microseconds: default 15000.
 .TP 8
-.B \-smooth
+.B \-\-smooth
 Draw a smooth sphere instead of a faceted polyhedron.
 .TP 8
-.B \-lighting
+.B \-\-lighting
 Do shaded lighting instead of flat colors.
 .TP 8
-.B \-scanlines
+.B \-\-scanlines
 If the window is large enough, draw horizontal lines to simulate the
 scanlines on a low resolution monitor.
 .TP 8
-.B \-speed \fIratio\fP
+.B \-\-speed \fIratio\fP
 Change the animation speed; 0.5 to go half as fast, 2.0 to go twice as fast.
 .TP 8
-.B \-no\-spin
+.B \-\-no\-spin
 Don't rotate the ball.
 .TP 8
-.B \-angle \fIdegrees\fP
+.B \-\-angle \fIdegrees\fP
 The jaunty angle at which the ball sits.  Default 15 degrees.
 .TP 8
-.B \-size \fIratio\fP
+.B \-\-size \fIratio\fP
 How big the ball is; default 0.5 meaning about half the size of the window.
 .TP 8
-.B \-parallels \fIn\fP
-.B \-meridians \fIn\fP
+.B \-\-parallels \fIn\fP
+.B \-\-meridians \fIn\fP
 The pattern of rectangles on the ball.  Default 8x16.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Look crummy.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -88,6 +92,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR bsod (MANSUFFIX),
 .BR pong (MANSUFFIX),

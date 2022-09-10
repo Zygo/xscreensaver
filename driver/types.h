@@ -105,6 +105,7 @@ struct saver_preferences {
   char *load_url_command;	/* How one loads URLs. */
   char *new_login_command;	/* Command for the "New Login" button. */
   char *dialog_theme;		/* Color scheme on the unlock dialog */
+  char *settings_geom;		/* Saved positions of the settings windows */
 
   int auth_warning_slack;	/* Don't warn about login failures if they
                                    all happen within this many seconds of
@@ -139,6 +140,8 @@ struct saver_info {
   Bool demoing_p;		/* Whether we are demoing a single hack
 				   (without UI.) */
   Bool emergency_p;		/* Restarted because of a crash */
+  Bool terminating_p;		/* In the process of shutting down */
+
   XtIntervalId watchdog_id;	/* Timer to implement `prefs.watchdog */
 
   int selection_mode;		/* Set to -1 if the NEXT ClientMessage has just

@@ -2,24 +2,23 @@
 
 <screensaver name="dnalogo" _label="DNA Logo" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=B7I5A7E3SP0"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame Rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="25000"
           convert="invert"/>
 
   <select id="mode">
-   <option id="glyph"    _label="DNA Lounge logo" arg-set="-mode helix"/>
-   <option id="pizza"    _label="DNA Pizza logo"  arg-set="-mode pizza"/>
+   <option id="glyph"    _label="DNA Lounge logo" arg-set="--mode helix"/>
+   <option id="pizza"    _label="DNA Pizza logo"  arg-set="--mode pizza"/>
    <option id="both"     _label="DNA Lounge and DNA Pizza logos"/>
-<!--<option id="codeword" _label="Codeword logo"  arg-set="-mode codeword"/>-->
   </select>
   <hgroup>
-   <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wire"    _label="Wireframe"       arg-set="--wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
   <xscreensaver-updater />

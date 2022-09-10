@@ -2,55 +2,26 @@
 
 <screensaver name="blaster" _label="Blaster">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=bp3J3si2Hr0"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000"
           convert="invert"/>
 
-  <number id="num_robots" type="spinbutton" arg="-num_robots %"
+  <number id="num_robots" type="spinbutton" arg="--num_robots %"
           _label="Robots" low="2" high="50" default="5"/>
 
-  <number id="num_lasers" type="spinbutton" arg="-num_lasers %"
+  <number id="num_lasers" type="spinbutton" arg="--num_lasers %"
           _label="Lasers" low="1" high="100" default="3"/>
 
-  <number id="num_stars" type="slider" arg="-num_stars %"
+  <number id="num_stars" type="slider" arg="--num_stars %"
           _label="Stars" _low-label="Few" _high-label="Many"
           low="5" high="200" default="50"/>
 
-  <!-- #### -move_stars_x [2] -->
-  <!-- #### -move_stars_y [1] -->
-  <!-- #### -move_stars_random [0] -->
-  <!-- #### -star_color [white] -->
-
-  <!-- #### -explode_size_1 [27] -->
-  <!-- #### -explode_size_2 [19] -->
-  <!-- #### -explode_size_3 [7] -->
-  <!-- #### -explode_color_1 [yellow] -->
-  <!-- #### -explode_color_2 [orange] -->
-
-  <!-- #### -r_color0 [magenta] -->
-  <!-- #### -r_color1 [orange] -->
-  <!-- #### -r_color2 [yellow] -->
-  <!-- #### -r_color3 [white] -->
-  <!-- #### -r_color4 [blue] -->
-  <!-- #### -r_color5 [cyan] -->
-  <!-- #### -l_color0 [green] -->
-  <!-- #### -l_color1 [red] -->
-
-  <!-- #### -mother_ship -->
-  <!-- #### -mother_ship_width [25] -->
-  <!-- #### -mother_ship_height [7] -->
-  <!-- #### -mother_ship_laser [15] -->
-  <!-- #### -mother_ship_period [150] -->
-  <!-- #### -mother_ship_hits [10] -->
-  <!-- #### -mother_ship_color0 [darkblue] -->
-  <!-- #### -mother_ship_color1 [white] -->
-
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

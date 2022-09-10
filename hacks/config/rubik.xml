@@ -2,29 +2,29 @@
 
 <screensaver name="rubik" _label="Rubik" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=AQdJgvyVkXU"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <number id="count" type="spinbutton" arg="-count %"
+  <number id="count" type="spinbutton" arg="--count %"
           _label="Count" low="-100" high="100" default="-30"/>
 
-  <number id="cycles" type="slider" arg="-cycles %"
+  <number id="cycles" type="slider" arg="--cycles %"
            _label="Rotation" _low-label="Slow" _high-label="Fast"
           low="3" high="200" default="20"
           convert="invert"/>
 
-  <number id="size" type="spinbutton" arg="-size %"
+  <number id="size" type="spinbutton" arg="--size %"
            _label="Size" low="-20" high="20" default="-6"/>
 
-  <boolean id="shuffle" _label="Hide shuffling" arg-set="-hideshuffling"/>
+  <boolean id="shuffle" _label="Hide shuffling" arg-set="--hideshuffling"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

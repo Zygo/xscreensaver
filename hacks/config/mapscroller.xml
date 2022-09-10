@@ -2,28 +2,28 @@
 
 <screensaver name="mapscroller" _label="Map Scroller" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=99w8VfCU3Pg"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="30000"
             convert="invert"/>
 
-    <number id="speed" type="slider" arg="-speed %"
+    <number id="speed" type="slider" arg="--speed %"
             _label="Scroll speed" _low-label="Slow" _high-label="Fast"
             low="0.01" high="10.0" default="1.0"
             convert="ratio"/>
    </vgroup>
    <vgroup>
-    <number id="level" type="slider" arg="-level %"
+    <number id="level" type="slider" arg="--level %"
             _label="Zoom level" _low-label="Countries" _high-label="Streets"
             low="5" high="18" default="15"/>
 
-    <number id="duration" type="slider" arg="-duration %"
+    <number id="duration" type="slider" arg="--duration %"
             _label="Re-randomize every"
              _low-label="1 minute" _high-label="2 hours"
             low="60" high="7200" default="1800"/>
@@ -35,69 +35,69 @@
      -->
     <select id="map">
      <option id="osm"		_label="Open Street Map"/>
-     <option id="osmhot"	_label="OSM Humanitarian Map"	  arg-set="-url-template https://{a-b}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"/>
-     <option id="toner"		_label="Stamen Toner B&amp;W Map" arg-set="-url-template http://{a-c}.tile.stamen.com/toner/{z}/{x}/{y}.png"/>
-     <option id="sterrain"	_label="Stamen Terrain Map"	  arg-set="-url-template http://{a-c}.tile.stamen.com/terrain/{z}/{x}/{y}.png"/>
-     <option id="swatercolor"	_label="Stamen Watercolor Map"	  arg-set="-url-template http://{a-c}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg"/>
+     <option id="osmhot"	_label="OSM Humanitarian Map"	  arg-set="--url-template https://{a-b}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"/>
+     <option id="toner"		_label="Stamen Toner B&amp;W Map" arg-set="--url-template http://{a-c}.tile.stamen.com/toner/{z}/{x}/{y}.png"/>
+     <option id="sterrain"	_label="Stamen Terrain Map"	  arg-set="--url-template http://{a-c}.tile.stamen.com/terrain/{z}/{x}/{y}.png"/>
+     <option id="swatercolor"	_label="Stamen Watercolor Map"	  arg-set="--url-template http://{a-c}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg"/>
 <!--
-     <option id="wfmbw"		_label="WFM B&amp;W Map"	  arg-set="-url-template https://{a-c}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"/>
-     <option id="wfmnolabel"	_label="WFM No Labels Map"	  arg-set="-url-template https://{a-c}.tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png"/>
+     <option id="wfmbw"		_label="WFM B&amp;W Map"	  arg-set="- -url-template https://{a-c}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"/>
+     <option id="wfmnolabel"	_label="WFM No Labels Map"	  arg-set="- -url-template https://{a-c}.tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png"/>
 -->
     </select>
 
     <select id="origin">
-     <option id="random" _label="Fully random location" arg-set="-origin random"/>
+     <option id="random" _label="Fully random location" arg-set="--origin random"/>
      <option id="randomcity" _label="Random city"/>
 
      <!-- New York, London, Paris, Munich, everybody talk about pop muzik -->
-     <option id="amsterdam"	_label="Amsterdam"	arg-set="-origin 52.3667,4.8833"/>
-     <option id="athens"	_label="Athens"		arg-set="-origin 37.9842,23.7281"/>
-     <option id="austin"	_label="Austin"		arg-set="-origin 30.3004,-97.7522"/>
-     <option id="barcelona"	_label="Barcelona"	arg-set="-origin 41.3825,2.1769"/>
-     <option id="berlin"	_label="Berlin"		arg-set="-origin 52.5167,13.3833"/>
-     <option id="boston"	_label="Boston"		arg-set="-origin 42.3188,-71.0846"/>
-     <option id="budapest"	_label="Budapest"	arg-set="-origin 47.4983,19.0408"/>
-     <option id="buenosaires"	_label="Buenos Aires"	arg-set="-origin -34.5997,-58.3819"/>
-     <option id="cairo"		_label="Cairo"		arg-set="-origin 30.0561,31.2394"/>
-     <option id="casablanca"	_label="Casablanca"	arg-set="-origin 33.5992,-7.6200"/>
-     <option id="chicago"	_label="Chicago"	arg-set="-origin 41.8373,-87.6862"/>
-     <option id="havana"	_label="Havana"		arg-set="-origin 23.1367,-82.3589"/>
-     <option id="hongkong"	_label="Hong Kong"	arg-set="-origin 22.3050,114.1850"/>
-     <option id="honolulu"	_label="Honolulu"	arg-set="-origin 21.3294,-157.8460"/>
-     <option id="lasvegas"	_label="Las Vegas"	arg-set="-origin 36.2333,-115.2654"/>
-     <option id="london"	_label="London"		arg-set="-origin 51.5072,-0.1275"/>
-     <option id="losangeles"	_label="Los Angeles"	arg-set="-origin 34.1139,-118.4068"/>
-     <option id="luxembourg"	_label="Luxembourg"	arg-set="-origin 49.6106,6.1328"/>
-     <option id="madrid"	_label="Madrid"		arg-set="-origin 40.4167,-3.7167"/>
-     <option id="melbourne"	_label="Melbourne"	arg-set="-origin -37.8136,144.9631"/>
-     <option id="mexicocity"	_label="Mexico City"	arg-set="-origin 19.4333,-99.1333"/>
-     <option id="moscow"	_label="Moscow"		arg-set="-origin 55.7558,37.6178"/>
-     <option id="mumbai"	_label="Mumbai"		arg-set="-origin 18.9667,72.8333"/>
-     <option id="munich"	_label="Munich"		arg-set="-origin 48.1372,11.5755"/>
-     <option id="neworleans"	_label="New Orleans"	arg-set="-origin 30.0687,-89.9288"/>
-     <option id="newyork"	_label="New York"	arg-set="-origin 40.7834,-73.9662"/>
-     <option id="paris"		_label="Paris"		arg-set="-origin 48.8566,2.3522"/>
-     <option id="portland"	_label="Portland"	arg-set="-origin 45.5372,-122.6500"/>
-     <option id="prague"	_label="Prague"		arg-set="-origin 50.0833,14.4167"/>
-     <option id="rome"		_label="Rome"		arg-set="-origin 41.8931,12.4828"/>
-     <option id="sanfrancisco"	_label="San Francisco"	arg-set="-origin 37.7710,-122.4126"/>
-     <option id="seattle"	_label="Seattle"	arg-set="-origin 47.6211,-122.3244"/>
-     <option id="seoul"		_label="Seoul"		arg-set="-origin 37.5600,126.9900"/>
-     <option id="shanghai"	_label="Shanghai"	arg-set="-origin 31.1667,121.4667"/>
-     <option id="stockholm"	_label="Stockholm"	arg-set="-origin 59.3294,18.0686"/>
-     <option id="sydney"	_label="Sydney"		arg-set="-origin -33.8650,151.2094"/>
-     <option id="saopaulo"	_label="São Paulo"	arg-set="-origin -23.5504,-46.6339"/>
-     <option id="tokyo"		_label="Tokyo"		arg-set="-origin 35.6897,139.6922"/>
-     <option id="toronto"	_label="Toronto"	arg-set="-origin 43.7417,-79.3733"/>
-     <option id="washington"	_label="Washington"	arg-set="-origin 38.9047,-77.0163"/>
+     <option id="amsterdam"	_label="Amsterdam"	arg-set="--origin 52.3667,4.8833"/>
+     <option id="athens"	_label="Athens"		arg-set="--origin 37.9842,23.7281"/>
+     <option id="austin"	_label="Austin"		arg-set="--origin 30.3004,-97.7522"/>
+     <option id="barcelona"	_label="Barcelona"	arg-set="--origin 41.3825,2.1769"/>
+     <option id="berlin"	_label="Berlin"		arg-set="--origin 52.5167,13.3833"/>
+     <option id="boston"	_label="Boston"		arg-set="--origin 42.3188,-71.0846"/>
+     <option id="budapest"	_label="Budapest"	arg-set="--origin 47.4983,19.0408"/>
+     <option id="buenosaires"	_label="Buenos Aires"	arg-set="--origin -34.5997,-58.3819"/>
+     <option id="cairo"		_label="Cairo"		arg-set="--origin 30.0561,31.2394"/>
+     <option id="casablanca"	_label="Casablanca"	arg-set="--origin 33.5992,-7.6200"/>
+     <option id="chicago"	_label="Chicago"	arg-set="--origin 41.8373,-87.6862"/>
+     <option id="havana"	_label="Havana"		arg-set="--origin 23.1367,-82.3589"/>
+     <option id="hongkong"	_label="Hong Kong"	arg-set="--origin 22.3050,114.1850"/>
+     <option id="honolulu"	_label="Honolulu"	arg-set="--origin 21.3294,-157.8460"/>
+     <option id="lasvegas"	_label="Las Vegas"	arg-set="--origin 36.2333,-115.2654"/>
+     <option id="london"	_label="London"		arg-set="--origin 51.5072,-0.1275"/>
+     <option id="losangeles"	_label="Los Angeles"	arg-set="--origin 34.1139,-118.4068"/>
+     <option id="luxembourg"	_label="Luxembourg"	arg-set="--origin 49.6106,6.1328"/>
+     <option id="madrid"	_label="Madrid"		arg-set="--origin 40.4167,-3.7167"/>
+     <option id="melbourne"	_label="Melbourne"	arg-set="--origin -37.8136,144.9631"/>
+     <option id="mexicocity"	_label="Mexico City"	arg-set="--origin 19.4333,-99.1333"/>
+     <option id="moscow"	_label="Moscow"		arg-set="--origin 55.7558,37.6178"/>
+     <option id="mumbai"	_label="Mumbai"		arg-set="--origin 18.9667,72.8333"/>
+     <option id="munich"	_label="Munich"		arg-set="--origin 48.1372,11.5755"/>
+     <option id="neworleans"	_label="New Orleans"	arg-set="--origin 30.0687,-89.9288"/>
+     <option id="newyork"	_label="New York"	arg-set="--origin 40.7834,-73.9662"/>
+     <option id="paris"		_label="Paris"		arg-set="--origin 48.8566,2.3522"/>
+     <option id="portland"	_label="Portland"	arg-set="--origin 45.5372,-122.6500"/>
+     <option id="prague"	_label="Prague"		arg-set="--origin 50.0833,14.4167"/>
+     <option id="rome"		_label="Rome"		arg-set="--origin 41.8931,12.4828"/>
+     <option id="sanfrancisco"	_label="San Francisco"	arg-set="--origin 37.7710,-122.4126"/>
+     <option id="seattle"	_label="Seattle"	arg-set="--origin 47.6211,-122.3244"/>
+     <option id="seoul"		_label="Seoul"		arg-set="--origin 37.5600,126.9900"/>
+     <option id="shanghai"	_label="Shanghai"	arg-set="--origin 31.1667,121.4667"/>
+     <option id="stockholm"	_label="Stockholm"	arg-set="--origin 59.3294,18.0686"/>
+     <option id="sydney"	_label="Sydney"		arg-set="--origin -33.8650,151.2094"/>
+     <option id="saopaulo"	_label="São Paulo"	arg-set="--origin -23.5504,-46.6339"/>
+     <option id="tokyo"		_label="Tokyo"		arg-set="--origin 35.6897,139.6922"/>
+     <option id="toronto"	_label="Toronto"	arg-set="--origin 43.7417,-79.3733"/>
+     <option id="washington"	_label="Washington"	arg-set="--origin 38.9047,-77.0163"/>
     </select>
    </vgroup>
   </hgroup>
 
   <hgroup>
-   <boolean id="titles" _label="Show coordinates" arg-unset="-no-titles"/>
-   <boolean id="arrow"  _label="Show arrow"       arg-unset="-no-arrow"/>
-   <boolean id="showfps"  _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="titles" _label="Show coordinates" arg-unset="--no-titles"/>
+   <boolean id="arrow"  _label="Show arrow"       arg-unset="--no-arrow"/>
+   <boolean id="showfps"  _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
   <xscreensaver-updater />

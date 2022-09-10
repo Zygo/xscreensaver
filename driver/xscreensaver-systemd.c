@@ -206,6 +206,19 @@
  *
  *****************************************************************************
  *
+ * MPV 0.33+, I think:
+ *
+ *     The developer had a hissy fit and removed "xdg-screensaver" support:
+ *
+ *     https://github.com/mpv-player/mpv/commit/c498b2846af0ee8835b9144c9f6893568a4e49c6
+ *
+ *     So now I guess you're back to figuring out how to add a "heartbeat"
+ *     command to have MPV periodically call "xscreensaver-command -reset".
+ *     Good luck with that.  Maybe you should just use VLC instead.
+ *
+ *
+ *****************************************************************************
+ *
  * VLC 3.0.16-1, Raspbian 11.1 & Debian 11.3:
  *
  *     Sends "Inhibit" to the first of these targets that exists at launch:

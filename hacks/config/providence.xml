@@ -2,19 +2,19 @@
 
 <screensaver name="providence" _label="Providence" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=bnwRPPMopWc"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="speed" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <boolean id="eye" _label="Draw eye" arg-unset="-no-eye"/>
+  <boolean id="eye" _label="Draw eye" arg-unset="--no-eye"/>
 
-  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="wire"    _label="Wireframe"              arg-set="--wireframe"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

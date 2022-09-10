@@ -450,14 +450,14 @@ colormap_fade (XtAppContext app, Display *dpy,
   int status = -1;
   Colormap *window_cmaps = 0;
   int i, j, k;
-  int cmaps_per_screen = 5;
-  int nscreens = ScreenCount(dpy);
-  int ncmaps = nscreens * cmaps_per_screen;
+  unsigned int cmaps_per_screen = 5;
+  unsigned int nscreens = ScreenCount(dpy);
+  unsigned int ncmaps = nscreens * cmaps_per_screen;
   Colormap *fade_cmaps = 0;
   Bool installed = False;
-  int total_ncolors;
+  unsigned int total_ncolors;
   XColor *orig_colors, *current_colors, *screen_colors, *orig_screen_colors;
-  int screen;
+  unsigned int screen;
 
   window_cmaps = (Colormap *) calloc(sizeof(Colormap), nwindows);
   if (!window_cmaps) abort();

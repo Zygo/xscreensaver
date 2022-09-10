@@ -2,55 +2,44 @@
 
 <screensaver name="gflux" _label="GFlux" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=vbRFlKH-LpA"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="20000"
             convert="invert"/>
 
-    <number id="wave" type="slider" arg="-speed %"
+    <number id="wave" type="slider" arg="--speed %"
             _label="Wave speed" _low-label="Slow" _high-label="Fast"
             low="0" high="0.50" default="0.05"
             convert="invert"/>
    </vgroup>
    <vgroup>
-    <number id="squares" type="slider" arg="-squares %"
+    <number id="squares" type="slider" arg="--squares %"
              _label="Mesh density" _low-label="Sparse" _high-label="Dense"
             low="2" high="40" default="19"/>
 
-    <number id="waves" type="slider" arg="-waves %"
+    <number id="waves" type="slider" arg="--waves %"
             _label="Waves" _low-label="1" _high-label="10"
              low="1" high="10" default="3"/>
    </vgroup>
   </hgroup>
 
   <select id="mode">
-   <option id="wire"    _label="Wire mesh"            arg-set="-mode wire"/>
-   <option id="solid"   _label="Flat lighting"        arg-set="-mode solid"/>
-   <option id="light"   _label="Directional lighting" arg-set="-mode light"/>
-   <option id="checker" _label="Checkerboard"         arg-set="-mode checker"/>
+   <option id="wire"    _label="Wire mesh"            arg-set="--mode wire"/>
+   <option id="solid"   _label="Flat lighting"        arg-set="--mode solid"/>
+   <option id="light"   _label="Directional lighting" arg-set="--mode light"/>
+   <option id="checker" _label="Checkerboard"         arg-set="--mode checker"/>
    <option id="grab"    _label="Picture"              />
   </select>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
-
-  <!-- #### -resolution [4] -->
-  <!-- #### -flat [0] -->
-  <!-- #### -rotationx [0.01] -->
-  <!-- #### -rotationy [0.0] -->
-  <!-- #### -rotationz [0.1] -->
-  <!-- #### -waveChange [50] -->
-  <!-- #### -waveHeight [1.0] -->
-  <!-- #### -waveFreq [3.0] -->
-  <!-- #### -zoom [1.0] -->
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-image />
-
   <xscreensaver-updater />
 
   <_description>

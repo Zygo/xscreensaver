@@ -58,20 +58,12 @@ The
 .BR xscreensaver\-settings (1)
 program is where you configure if and when your monitor should power off.
 It saves the settings in your \fI~/.xscreensaver\fP file.
-
-If the power management section is grayed out in the
-.BR xscreensaver\-settings (1)
-window,  then that means that your X server does not support
-the XDPMS extension, and so control over the monitor's power state
-is not available.
-
-When the monitor is powered down, the display hacks are stopped
-(though it may take a minute or two for XScreenSaver to notice).
-
-Note: if you use
+Do not use
 .BR xset (1)
-to change the power management settings, XScreenSaver will override those
-changes.  Whatever is in the \fI~/.xscreensaver\fP file takes precedence.
+to manually change the power management settings, that won't work.
+
+When the monitor is powered down, the display hacks will stop running
+(though it may take a minute or two for XScreenSaver to notice).
 .SH LAPTOP LIDS
 If your system uses
 .BR systemd (1)
@@ -183,7 +175,7 @@ now:
 .br
 "\fIHardware / Power Management / Suspend session\fP"
 .br
-"\fIHardware / Power Management / Laptop lid closed => Do Nothing\fP"
+"\fIHardware / Power Management / Laptop lid closed" = Do Nothing\fP
 
 If there are multiple tabs, you may to change these settings on all three
 of them: "On AC power", "Battery" and "Low Battery".
@@ -267,6 +259,14 @@ these lines:
 	Comment: XScreenSaver
 .sp
 .fi
+.SS LAPTOP LIDS WITHOUT SYSTEMD
+BSD systems or other systems without
+.BR systemd (1)
+or
+.BR elogind (8)
+might have luck by adding "\fIxscreensaver\-command \-\-suspend\fP" to
+some appropriate spot in \fI/etc/acpi/events/anything\fP or in
+\fI/etc/acpi/handler.sh\fP, if those files exist.
 .SS LAUNCHING XSCREENSAVER FROM GDM
 You can run \fIxscreensaver\fP from your 
 .BR gdm (1)
@@ -309,14 +309,6 @@ and
 
 There might be a way to accomplish this with other display managers.
 It's a mystery!
-.SS LAPTOP LIDS WITHOUT SYSTEMD
-BSD systems or other systems without
-.BR systemd (1)
-or
-.BR elogind (8)
-might have luck by adding "\fIxscreensaver\-command \-\-suspend\fP" to
-some appropriate spot in \fI/etc/acpi/events/anything\fP or in
-\fI/etc/acpi/handler.sh\fP, if those files exist.
 .SH THE WAYLAND PROBLEM
 Wayland is a completely different window system that is intended to replace
 X11.  After 14+ years of trying, some Linux distros have finally begun
@@ -433,6 +425,16 @@ You can disable the OOM-killer entirely with:
 .sp
 	echo 2 > /proc/sys/vm/overcommit_memory
 	echo vm.overcommit_memory = 2 >> /etc/sysctl.conf
+.sp
+.fi
+In addition to the kernel's OOM-killer, 
+.BR systemd (1)
+has its own.  The included \fIxscreensaver.service\fP file attempts to
+evade it, but you may want to just turn it off anyway:
+.nf
+.sp
+	sudo systemctl disable --now systemd-oomd
+	sudo systemctl mask systemd-oomd
 .sp
 .fi
 .SS X SERVER ACCESS IS GAME OVER

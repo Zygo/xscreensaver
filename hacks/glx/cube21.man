@@ -3,25 +3,26 @@
 cube21 \- animates the Cube 21 puzzle
 .SH SYNOPSIS
 .B cube21
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-install]
-[\-delay \fImicroseconds\fP]
-[\-texture] [\-no\-texture]
-[\-mono]
-[\-wireframe]
-[\-spin] [\-no\-spin]
-[\-wander] [\-no\-wander]
-[\-randomize] [\-no\-randomize]
-[\-spinspeed \fInumber\fP]
-[\-rotspeed \fInumber\fP]
-[\-wanderspeed \fInumber\fP]
-[\-wait \fInumber\fP]
-[\-cubesize \fInumber\fP]
-[\-colormode \fIarg\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-install]
+[\-\-delay \fImicroseconds\fP]
+[\-\-texture] [\-\-no\-texture]
+[\-\-mono]
+[\-\-wireframe]
+[\-\-spin] [\-\-no\-spin]
+[\-\-wander] [\-\-no\-wander]
+[\-\-randomize] [\-\-no\-randomize]
+[\-\-spinspeed \fInumber\fP]
+[\-\-rotspeed \fInumber\fP]
+[\-\-wanderspeed \fInumber\fP]
+[\-\-wait \fInumber\fP]
+[\-\-cubesize \fInumber\fP]
+[\-\-colormode \fIarg\fP]
+[\-\-fps]
 .SH DESCRIPTION
 This program animates a puzzle known as Cube 21 or Square-1.
 Its moves are chosen randomly.
@@ -34,70 +35,73 @@ more than 200 different shapes and the total number of configurations
 .I cube21
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How long to pause between frames.  Default is 20000, or 0.02 second.
 .TP 8
-.B \-texture
+.B \-\-texture
 Use texture maps.  This is the default.
 .TP 8
-.B \-no\-texture
+.B \-\-no\-texture
 Use solid colors.
 .TP 8
-.B \-mono
+.B \-\-mono
 Disable both texture maps and colors.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Only draw outlines.  Outlines of all pieces, not only the whole object, are drawn.
 .TP 8
-.B \-spin
+.B \-\-spin
 Spin the whole object around X, Y and Z axes.  This is the default.
 .TP 8
-.B \-no\-spin
+.B \-\-no\-spin
 Do not spin, showing the same three faces all the time.
 .TP 8
-.B \-wander
+.B \-\-wander
 Move the object around the screen.  This is the default.
 .TP 8
-.B \-no\-wander
+.B \-\-no\-wander
 Keep the object centered on the screen.
 .TP 8
-.B \-randomize
+.B \-\-randomize
 Shuffle the puzzle randomly at startup.  This is the default.
 .TP 8
-.B \-no\-randomize
+.B \-\-no\-randomize
 Do not shuffle at startup, begin at the shape of cube.
 .TP 8
-.B \-spinspeed \fInumber\fP
+.B \-\-spinspeed \fInumber\fP
 The relative speed of spinning.  Default is 1.0.
 .TP 8
-.B \-rotspeed \fInumber\fP
+.B \-\-rotspeed \fInumber\fP
 The relative speed of the moves.  Default is 3.0.  Setting to \(<= 0.0
 makes the object stay at one configuration.
 .TP 8
-.B \-wanderspeed \fInumber\fP
+.B \-\-wanderspeed \fInumber\fP
 The relative speed of wandering around the screen.  Default is 1.0.
 .TP 8
-.B \-wait \fInumber\fP
+.B \-\-wait \fInumber\fP
 How long to stay at ending position after each move.  The meaning of
 the argument is again relative.  Default is 40.0.
 .TP 8
-.B \-cubesize \fInumber\fP
+.B \-\-cubesize \fInumber\fP
 Size of the object.  Value of 3.0 fills roughly all the screen (its height).  Default is 0.7.
 .TP 8
-.B \-colormode \fIargument\fP
+.B \-\-colormode \fIargument\fP
 How many and which colors should the object have.  The colors are put on the piece
 faces so that the puzzle is solvable.  The inner faces are not influenced.
 .RS
@@ -121,7 +125,7 @@ Anything else
 All faces white.
 .RE
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -132,6 +136,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

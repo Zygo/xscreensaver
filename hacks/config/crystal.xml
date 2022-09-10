@@ -2,38 +2,35 @@
 
 <screensaver name="crystal" _label="Crystal">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=M27wWKGXIvw"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="60000"
           convert="invert"/>
 
-  <number id="ncolors" type="slider" arg="-ncolors %"
+  <number id="ncolors" type="slider" arg="--ncolors %"
             _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="100"/>
 
-  <!-- #### -maxsize -->
-  <!-- #### -shift (color cycling) -->
-
-  <number id="count" type="spinbutton" arg="-count %"
+  <number id="count" type="spinbutton" arg="--count %"
           _label="Number of crystals" low="-5000" high="5000" default="-500"/>
 
-  <number id="nx" type="spinbutton" arg="-nx %"
+  <number id="nx" type="spinbutton" arg="--nx %"
           _label="Horizontal symmetries" low="-10" high="10" default="-3"/>
 
-  <number id="ny" type="spinbutton" arg="-ny %"
+  <number id="ny" type="spinbutton" arg="--ny %"
           _label="Vertical symmetries" low="-10" high="10" default="-3"/>
 
   <hgroup>
-   <boolean id="grid" _label="Draw grid" arg-set="-grid"/>
-   <boolean id="cells" _label="Draw cell" arg-unset="-no-cell"/>
-   <boolean id="centre" _label="Center on screen" arg-set="-centre"/>
+   <boolean id="grid" _label="Draw grid" arg-set="--grid"/>
+   <boolean id="cells" _label="Draw cell" arg-unset="--no-cell"/>
+   <boolean id="centre" _label="Center on screen" arg-set="--centre"/>
   </hgroup>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

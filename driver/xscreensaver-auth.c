@@ -167,6 +167,66 @@ oom_assassin_immunity (void)
 #endif /* HAVE_PROC_OOM */
 
 
+#ifndef HAVE_DPMS_EXTENSION
+# define dpms_init (dpy) /** */
+
+#else /* HAVE_DPMS_EXTENSION */
+
+# include <X11/Xproto.h>
+# include <X11/extensions/dpms.h>
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  return 0;
+}
+
+/* When XScreenSaver first launches, power on the monitor and disable DPMS.
+   The DPMS settings will be re-written when 'xscreensaver-gfx' launches for
+   the first time to blank the screen, and will be re-enabled if that is what
+   is configured in ~/.xscreensaver.
+
+   Without this, if the server's default DPMS timeouts are different than, and
+   less than, the .xscreensaver file's 'timeout' and 'dpmsStandby' the monitor
+   will already be powered down when 'xscreensaver-gfx' launches for the first
+   time, and it will never change them, as it can't touch those settings if
+   the monitor is already powered off.
+
+   It would be better for us to call sync_server_dpms_settings() here, but
+   that requires a full 'saver_preferences' struct.  Once 'xscreensaver-gfx'
+   is launched, it will correct things.
+
+   The only way this behaves oddly is if the user has set their 'dpmsStandby'
+   to less than their 'timeout', but that would be weird, right?  That
+   probably shouldn't even be permitted (though currently it is).
+
+   This is in 'xscreensaver-auth' because that's run at startup with either
+   --splash or --init, long before 'xscreensaver-gfx' is run for the first
+   time; and putting this code into 'xscreensaver' would violate the principle
+   of linking only the bare minimum into the daemon itself.
+ */
+static void
+dpms_init (Display *dpy)
+{
+  int ev, err;
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+  XSync (dpy, False);
+
+  if (DPMSQueryExtension (dpy, &ev, &err))
+    {
+      DPMSForceLevel (dpy, DPMSModeOn);
+      DPMSDisable (dpy);
+    }
+  XSetScreenSaver (dpy, 0, 0, 0, 0);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+}
+#endif /* HAVE_DPMS_EXTENSION */
+
+
 int
 main (int argc, char **argv)
 {
@@ -273,12 +333,9 @@ main (int argc, char **argv)
   if (!splash_p && !init_p)
     lock_priv_init ();
 
-  if (!splash_p && init_p)
-    exit (0);
-
   disavow_privileges ();
 
-  if (!splash_p)
+  if (!splash_p && !init_p)
     lock_init ();
 
   /* Setting the locale is necessary for XLookupString to return multi-byte
@@ -316,7 +373,14 @@ main (int argc, char **argv)
   if (xsync_p) XSynchronize (dpy, True);
   init_xscreensaver_atoms (dpy);
 
-  if (splash_p)
+  if (splash_p == 1 || init_p)
+    dpms_init (dpy);
+
+  if (!splash_p && init_p)
+    {
+      exit (0);
+    }
+  else if (splash_p)
     {
       /* Settings button is disabled with --splash --splash */
       xscreensaver_splash (root_widget, splash_p > 1);

@@ -2,28 +2,28 @@
 
 <screensaver name="anemotaxis" _label="Anemotaxis">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=hIqmIQbQkW8"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <number id="distance" type="slider" arg="-distance %"
+  <number id="distance" type="slider" arg="--distance %"
            _label="Distance" _low-label="Near" _high-label="Far"
           low="10" high="250" default="40"/>
 
-  <number id="sources" type="slider" arg="-sources %"
+  <number id="sources" type="slider" arg="--sources %"
            _label="Sources" _low-label="Few" _high-label="Many"
           low="1" high="100" default="25"/>
 
-  <number id="searchers" type="slider" arg="-searchers %"
+  <number id="searchers" type="slider" arg="--searchers %"
            _label="Searchers" _low-label="Few" _high-label="Many"
           low="1" high="100" default="25"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

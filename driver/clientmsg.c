@@ -37,7 +37,7 @@ Window
 find_screensaver_window (Display *dpy, char **version)
 {
   int nscreens = ScreenCount (dpy);
-  int i, screen;
+  int screen;
   Window ret = 0;
   XErrorHandler old_handler;
 
@@ -51,6 +51,7 @@ find_screensaver_window (Display *dpy, char **version)
       Window root = RootWindow (dpy, screen);
       Window root2, parent, *kids;
       unsigned int nkids;
+      int i = 0;
 
       if (! XQueryTree (dpy, root, &root2, &parent, &kids, &nkids))
         abort ();

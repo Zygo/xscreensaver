@@ -2364,7 +2364,8 @@ main (int argc, char **argv)
         {
           logfile = argv[++i];
           if (!logfile) goto HELP;
-          verbose_p = cmdline_verbose_p = cmdline_verbose_val = True;
+          if (! verbose_p)  /* might already be -vv */
+            verbose_p = cmdline_verbose_p = cmdline_verbose_val = True;
         }
       else if (!strcmp (argv[i], "-d") ||
                !strcmp (argv[i], "-dpy") ||

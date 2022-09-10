@@ -2,18 +2,18 @@
 
 <screensaver name="antinspect" _label="Ant Inspect" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=Ecw9dDc0db0"/>
 
-  <number id="speed" type="slider" arg="-delay %"
+  <number id="speed" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
-  <boolean id="shadows" _label="Draw shadows" arg-set="-shadows"/>
+  <boolean id="shadows" _label="Draw shadows" arg-set="--shadows"/>
 
   <xscreensaver-updater />
 

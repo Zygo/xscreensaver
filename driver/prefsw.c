@@ -80,22 +80,6 @@ chase_symlinks (const char *file)
 }
 
 
-static Bool
-i_am_a_nobody (uid_t uid)
-{
-  struct passwd *p;
-
-  p = getpwnam ("nobody");
-  if (! p) p = getpwnam ("noaccess");
-  if (! p) p = getpwnam ("daemon");
-
-  if (! p) /* There is no nobody? */
-    return False;
-
-  return (uid == p->pw_uid);
-}
-
-
 const char *
 init_file_name (void)
 {
@@ -103,32 +87,7 @@ init_file_name (void)
 
   if (!file)
     {
-      uid_t uid = getuid ();
       const char *home = getenv("HOME");
-
-      if (i_am_a_nobody (uid) || !home || !*home)
-	{
-	  /* If we're running as nobody, then use root's .xscreensaver file
-	     (since ~root/.xscreensaver and ~nobody/.xscreensaver are likely
-	     to be different -- without this, xscreensaver-settings would
-	     appear to have no effect when the luser is running as root.)
-	   */
-          struct passwd *p = getpwuid (uid);
-	  if (!p || !p->pw_name || !*p->pw_name)
-	    {
-	      fprintf (stderr, "%s: couldn't get user info of uid %d\n",
-		       blurb(), getuid ());
-	    }
-	  else if (!p->pw_dir || !*p->pw_dir)
-	    {
-	      fprintf (stderr, "%s: couldn't get home directory of \"%s\"\n",
-		       blurb(), (p->pw_name ? p->pw_name : "???"));
-	    }
-	  else
-	    {
-	      home = p->pw_dir;
-	    }
-	}
       if (home && *home)
 	{
 	  const char *name = ".xscreensaver";
@@ -155,31 +114,28 @@ static const char *
 init_file_tmp_name (void)
 {
   static char *file = 0;
-  if (!file)
+  const char *name = init_file_name();
+  char *n2 = chase_symlinks (name);
+  if (n2) name = n2;
+
+  if (file) free (file);
+
+  if (!name || !*name)
+    file = 0;
+  else
     {
-      const char *name = init_file_name();
-      const char *suffix = ".tmp";
-
-      char *n2 = chase_symlinks (name);
-      if (n2) name = n2;
-
-      if (!name || !*name)
-	file = "";
-      else
-	{
-	  file = (char *) malloc(strlen(name) + strlen(suffix) + 2);
-	  strcpy(file, name);
-	  strcat(file, suffix);
-	}
-
-      if (n2) free (n2);
+      file = (char *) malloc(strlen(name) + 20);
+      sprintf (file, "%s.%08lX", name, (random() % 0xFFFFFFFF));
     }
+
+  if (n2) free (n2);
 
   if (file && *file)
     return file;
   else
     return 0;
 }
+
 
 static const char * const prefs[] = {
   "timeout",
@@ -226,6 +182,7 @@ static const char * const prefs[] = {
   "textProgram",
   "textURL",
   "dialogTheme",
+  "settingsGeom",
   "",
   "programs",
   "",
@@ -293,7 +250,7 @@ static void line_handler (int lineno,
 {
   struct parser_closure *c = (struct parser_closure *) closure;
   saver_preferences *p = c->prefs;
-  if (!p->db) abort();
+  if (!p->db) return;  /* Not X11, Wayland */
   handle_entry (&p->db, key, val, c->file, lineno);
 }
 
@@ -506,8 +463,6 @@ write_init_file (Display *dpy,
    */
   char *visual_name;
   char *programs;
-  Bool overlay_stderr_p;
-  char *stderr_font;
   FILE *out;
 
   if (!name) goto END;
@@ -535,18 +490,13 @@ write_init_file (Display *dpy,
 
   /* Give the new .xscreensaver file the same permissions as the old one;
      except ensure that it is readable and writable by owner, and not
-     executable.  Extra hack: if we're running as root, make the file
-     be world-readable (so that the daemon, running as "nobody", will
-     still be able to read it.)
+     executable.
    */
   if (stat(name, &st) == 0)
     {
       mode_t mode = st.st_mode;
       mode |= S_IRUSR | S_IWUSR;		/* read/write by user */
       mode &= ~(S_IXUSR | S_IXGRP | S_IXOTH);	/* executable by none */
-
-      if (getuid() == (uid_t) 0)		/* read by group/other */
-        mode |= S_IRGRP | S_IROTH;
 
       if (fchmod (fileno(out), mode) != 0)
 	{
@@ -559,11 +509,9 @@ write_init_file (Display *dpy,
 	}
     }
 
-  /* Kludge, since these aren't in the saver_preferences struct... */
+  /* Kludge, since this isn't in the saver_preferences struct... */
   visual_name = get_string_resource (dpy, "visualID", "VisualID");
   programs = 0;
-  overlay_stderr_p = get_boolean_resource (dpy, "overlayStderr", "Boolean");
-  stderr_font = get_string_resource (dpy, "font", "Font");
 
   i = 0;
   {
@@ -646,6 +594,7 @@ write_init_file (Display *dpy,
       CHECK("loadURL")		continue;  /* don't save */
       CHECK("newLoginCommand")	continue;  /* don't save */
       CHECK("dialogTheme")      type = pref_str,  s = p->dialog_theme;
+      CHECK("settingsGeom")     type = pref_str,  s = p->settings_geom;
       CHECK("nice")		type = pref_int,  i = p->nice_inferior;
       CHECK("memoryLimit")	continue;  /* don't save */
       CHECK("fade")		type = pref_bool, b = p->fade_p;
@@ -656,8 +605,6 @@ write_init_file (Display *dpy,
       CHECK("logFile")		continue;  /* don't save */
       CHECK("ignoreUninstalledPrograms")
                                 type = pref_bool, b = p->ignore_uninstalled_p;
-
-      CHECK("font")		type = pref_str,  s =    stderr_font;
 
       CHECK("dpmsEnabled")	type = pref_bool, b = p->dpms_enabled_p;
       CHECK("dpmsQuickOff")	type = pref_bool, b = p->dpms_quickoff_p;
@@ -692,7 +639,8 @@ write_init_file (Display *dpy,
 
       CHECK("programs")		type = pref_str,  s =    programs;
       CHECK("pointerHysteresis")type = pref_int,  i = p->pointer_hysteresis;
-      CHECK("overlayStderr")	type = pref_bool, b = overlay_stderr_p;
+      CHECK("font")		     continue;  /* don't save */
+      CHECK("overlayStderr")	     continue;  /* don't save */
       CHECK("overlayTextBackground") continue;  /* don't save */
       CHECK("overlayTextForeground") continue;  /* don't save */
       CHECK("bourneShell")	     continue;  /* don't save */
@@ -759,7 +707,6 @@ write_init_file (Display *dpy,
   fprintf(out, "\n");
 
   if (visual_name) free(visual_name);
-  if (stderr_font) free(stderr_font);
   if (programs) free(programs);
 
   if (fclose(out) == 0)
@@ -926,6 +873,7 @@ load_init_file (Display *dpy, saver_preferences *p)
   p->new_login_command = get_string_resource(dpy, "newLoginCommand",
                                              "Command");
   p->dialog_theme = get_string_resource(dpy, "dialogTheme", "String");
+  p->settings_geom = get_string_resource(dpy, "settingsGeom", "String");
   p->auth_warning_slack = get_integer_resource(dpy, "authWarningSlack",
                                                "Integer");
 
@@ -1135,7 +1083,7 @@ format_command (const char *cmd, Bool wrap_p)
 {
   int tab = 30;
   int col = tab;
-  char *cmd2 = (char *) calloc (1, 2 * (strlen (cmd) + 1));
+  char *cmd2 = (char *) calloc (1, 2 * (strlen (cmd) + 10));
   const char *in = cmd;
   char *out = cmd2;
   while (*in)
@@ -1171,6 +1119,14 @@ format_command (const char *cmd, Bool wrap_p)
   /* Strip trailing whitespace */
   while (out > cmd2 && isspace (out[-1]))
     *(--out) = 0;
+
+  /* In version 6.05, the defaults were changed from "-root" to "--root".
+     If anything in .xscreensaver still ends with "-root", silently change
+     it, so that the "Reset to Defaults" button is enabled/disabled as
+     appropriate, and doesn't think the command differs from the default.
+   */
+  if (out > cmd2+7 && !strcmp (out-6, " -root"))
+    strcpy (out-6, " --root");  /* malloc had enough slack */
 
   return cmd2;
 }

@@ -2,23 +2,23 @@
 
 <screensaver name="binaryring" _label="Binary Ring">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=KPiJb0Qm1SE"/>
 
-  <number id="growth-delay" type="slider" arg="-growth-delay %"
+  <number id="growth-delay" type="slider" arg="--growth-delay %"
           _label="Growth delay" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000" />
 
-  <number id="ring-radius" type="slider" arg="-ring-radius %"
+  <number id="ring-radius" type="slider" arg="--ring-radius %"
           _label="Ring Radius"  _low-label="Short" _high-label="Long"
           low="0" high="400" default="40" />
 
-  <number id="particles-number" type="slider" arg="-particles-number %"
+  <number id="particles-number" type="slider" arg="--particles-number %"
           _label="Number of particles" _low-label="Few" _high-label="Lots"
           low="500" high="20000" default="5000" />
 
-  <boolean id="color" _label="Fade with colors" arg-unset="-no-color"/>
+  <boolean id="color" _label="Fade with colors" arg-unset="--no-color"/>
 
   <xscreensaver-updater />
 

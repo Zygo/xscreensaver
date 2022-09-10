@@ -3,10 +3,11 @@
 vidwhacker \- grab images and apply random filters to them
 .SH SYNOPSIS
 .B vidwhacker
-[\-display \fIhost:display.screen\fP] [\-root] [\-verbose]
-[\-stdin] [\-stdout] [\-delay seconds]
+[\-\-display \fIhost:display.screen\fP] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-verbose]
+[\-\-stdin] [\-\-stdout] [\-\-delay seconds]
 [-directory \fIdirectory\fP]
-[\-fps]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIvidwhacker\fP program grabs an image from disk, or  from the
 system's video input, then applies random image filters to it, and
@@ -26,32 +27,35 @@ search for images, are specified in the \fI~/.xscreensaver\fP file.
 .I vidwhacker
 accepts the following options:
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.  This is the default.
 .TP 8
-.B \-verbose
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-verbose
 Print diagnostics.
 .TP 8
-.B \-stdin
+.B \-\-stdin
 Instead of grabbing an image from disk or video, read an image
 to manipulate from stdin.  This image must be in
 .BR ppm (5)
 format.  The program will still perform repeated random image 
 transformations, but it will always use this one image as its starting point.
 .TP 8
-.B \-delay \fIseconds\fP
+.B \-\-delay \fIseconds\fP
 How long to sleep between images.  Default 5 seconds (the actual
 elapsed time is significantly longer, due to processing time.)
 .TP 8
-.B \-stdout
+.B \-\-stdout
 Instead of displaying the image on a window or on the root, write the new
 image on stdout, and exit.
 .TP 8
-.B \-directory \fIdirectory\fP
+.B \-\-directory \fIdirectory\fP
 Use this directory instead of the \fBimageDirectory\fP specified in 
 the \fI~/.xscreensaver\fP file.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -62,6 +66,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH BUGS
 It's slow.
 .SH TO DO

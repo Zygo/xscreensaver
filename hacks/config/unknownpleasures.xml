@@ -2,51 +2,50 @@
 
 <screensaver name="unknownpleasures" _label="Unknown Pleasures" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=DEWPiUbwnt0"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="30000"
             convert="invert"/>
 
-    <number id="count" type="slider" arg="-count %"
+    <number id="count" type="slider" arg="--count %"
             _label="Scanlines" _low-label="Few" _high-label="Many"
             low="3" high="200" default="80"/>
 
-    <number id="speed" type="slider" arg="-speed %"
+    <number id="speed" type="slider" arg="--speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
             low="0.1" high="20.0" default="1.0"
             convert="ratio"/>
    </vgroup>
 
    <vgroup>
-    <number id="resolution" type="slider" arg="-resolution %"
+    <number id="resolution" type="slider" arg="--resolution %"
             _label="Resolution" _low-label="Low" _high-label="High"
             low="5" high="300" default="100"/>
 
-    <number id="amplitude" type="slider" arg="-amplitude %"
+    <number id="amplitude" type="slider" arg="--amplitude %"
             _label="Amplitude" _low-label="Low" _high-label="High"
             low="0.01" high="0.25" default="0.13"/>
 
-    <number id="noise" type="slider" arg="-noise %"
+    <number id="noise" type="slider" arg="--noise %"
             _label="Noise" _low-label="Low" _high-label="High"
-            low="0.0" high="3.0" default="1.0"
-            convert="ratio"/>
+            low="0.0" high="3.0" default="1.0"/>
    </vgroup>
   </hgroup>
 
   <hgroup>
-   <boolean id="ortho" _label="Orthographic Projection" arg-unset="-no-ortho"/>
-   <boolean id="buzz"    _label="Buzz"                  arg-set="-buzz"/>
-   <boolean id="wire"    _label="Wireframe"             arg-set="-wireframe"/>
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="ortho" _label="Orthographic Projection" arg-unset="--no-ortho"/>
+   <boolean id="buzz"    _label="Buzz"                  arg-set="--buzz"/>
+   <boolean id="wire"    _label="Wireframe"             arg-set="--wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
-  <file id="mask" _label="Mask image" arg="-mask %"/>
+  <file id="mask" _label="Mask image" arg="--mask %"/>
 
   <xscreensaver-updater />
 

@@ -33,14 +33,13 @@ To compile for a Unix system with X11:
         xscreensaver &
         xscreensaver-settings
 
-    There are many compilation dependencies.  The configure script will
-    tell you what is missing.  At the least, you will need development
-    versions of these libraries:
+    There are many compilation dependencies.  The configure script will tell
+    you what is missing.  At the least, you will need development versions of
+    these libraries.  Append "-dev" or "-devel" to most of these:
 
         perl pkg-config gettext intltool libx11 libxext libxi libxt libxft
-        libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk2.0
-        libgdk-pixbuf2.0 libgdk-pixbuf-xlib-2.0 libjpeg libxml2 libpam
-        libsystemd elogind
+        libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk-3-0
+        libgdk-pixbuf2.0 libjpeg libxml2 libpam libsystemd elogind
 
     BSD systems might need gmake instead of make.
 
@@ -69,6 +68,14 @@ Interested in writing a new screen saver?
 ===============================================================================
 Version History
 ===============================================================================
+
+6.05	* X11: Cope with dumb DPMS settings that existed pre-startup.
+	* X11: Silence new Perl warnings from `xscreensaver-getimage-file'.
+	* X11: Fix `sonar' pthreads crash on recent Pi systems.
+	* X11: Removed dependence on `gdk-pixbuf-xlib-2.0'.
+	* X11: GTK 3 is now required.
+	* macOS: Fixed the "Run savers on screens" preference in Random mode
+          on multi-screen M1 systems.
 
 6.04	* New hacks, `nakagin' and `chompytower'.
 	* Settings dialog shows diagnostics for bad image folders and feeds.
@@ -1738,7 +1745,7 @@ Version History
 	  the parameters which are normally read as minutes can be specified
 	  in seconds.
 	* Added colormap cycling to `imsmap'.
-	* Made hyper work with K&R compilers.
+	* Made `hyper' work with K&R compilers.
 
 1.14	* Added `orbit' option to `attraction' hack.
 	* Added `lock-timeout' option.
@@ -1747,14 +1754,26 @@ Version History
 1.09	* Added demo mode, and locking.
 	* Added `maze' hack.
 	* Added `norotate' option to `rocks' hack.
+	* Uploaded to export.lcs.mit.edu:contrib/xscreensaver.tar.Z and posted
+	  to comp.windows.x.announce, 25-Feb-1993.
+	* Added `hypercube' and `slidescreen' (or they may have been added
+	  earlier).
 
 1.05	* Works when run from XDM before anyone logs in.
 	* Sped up `imsmap'.
 	* Can use `xv' as a slideshow without using up colormap entries while
 	  the screen is not blanked.
 	* Fixed a BadDrawable error in non-XIdle mode.
-	* Added `blitspin' and `imsmap'.
+	* Uploaded to export.lcs.mit.edu:contrib/xsaver.tar.Z and posted to
+	  comp.windows.x.announce, 30-Nov-1992.
 
-1.01	* Current list of included hacks is now: `qix', `helix', `rorschach',
-	  `attraction', `greynetic', `rocks', `pyro', `hopalong', and
-	  `noseguy'.
+1.04	* Added `blitspin' and `imsmap' (or they may have been earlier).
+	* Appeared on the X11R5 contrib tape, a mirror of export.lcs.mit.edu,
+	  29-Nov-1992.
+
+1.00	* Uploaded to export.lcs.mit.edu:contrib/xsaver.tar.Z and posted to
+	  comp.windows.x.announce, 17-Aug-1992.
+	* Initial list of included hacks:
+	  `qix', `helix', `rorschach', `attraction', `greynetic', `rocks',
+	  `pyro', `hopalong', and `noseguy'.
+

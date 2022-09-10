@@ -3,8 +3,9 @@
 epicycle \- draws a point moving around a circle which moves around a cicle which...
 .SH SYNOPSIS
 .B epicycle 
-[\-display \fIhost:display.screen\fP] [\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIviz\fP] [\-colors \fIN\fP] [\-foreground \fIname\fP] [\-color\-shift \fIN\fP] [\-delay \fImicroseconds\fP] [\-holdtime \fIseconds\fP] [\-linewidth \fIN\fP] [\-min_circles \fIN\fP] [\-max_circles \fIN\fP] [\-min_speed \fInumber\fP] [\-max_speed \fInumber\fP] [\-harmonics \fIN\fP] [\-timestep \fInumber\fP] [\-divisor_poisson \fIprobability\fP] [\-size_factor_min \fInumber\fP] [\-size_factor_max \fInumber\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-window] [\-\-mono] [\-\-install] [\-\-noinstall] [\-\-visual \fIviz\fP] [\-\-colors \fIN\fP] [\-\-foreground \fIname\fP] [\-\-color\-shift \fIN\fP] [\-\-delay \fImicroseconds\fP] [\-\-holdtime \fIseconds\fP] [\-\-linewidth \fIN\fP] [\-\-min_circles \fIN\fP] [\-\-max_circles \fIN\fP] [\-\-min_speed \fInumber\fP] [\-\-max_speed \fInumber\fP] [\-\-harmonics \fIN\fP] [\-\-timestep \fInumber\fP] [\-\-divisor_poisson \fIprobability\fP] [\-\-size_factor_min \fInumber\fP] [\-\-size_factor_max \fInumber\fP]
+[\-\-fps]
 .SH DESCRIPTION
 The epicycle program draws the path traced out by a point on the edge
 of a circle.  That circle rotates around a point on the rim of another
@@ -17,28 +18,31 @@ which the random sequence of circles is generated, either with
 command-line options or X resources.
 .SH OPTIONS
 .TP 8
-.B \-display \fIhost:display.screen\fP
+.B \-\-display \fIhost:display.screen\fP
 Specifies which X display we should use (see the section DISPLAY NAMES in
 .BR X (1)
 for more information about this option).
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-window
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-mono
+.B \-\-mono
 If on a color display, pretend we're on a monochrome display.
 If we're on a mono display, we have no choice.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-noinstall
+.B \-\-noinstall
 Don't install a private colormap for the window.
 .TP 8
-.B \-visual \fIviz\fP
+.B \-\-visual \fIviz\fP
 Specify which visual to use.  Legal values are the name of a visual
 class, or the id number (decimal or hex) of a specific visual.
 Possible choices include
@@ -52,82 +56,82 @@ If a decimal or hexadecimal number is used,
 is consulted to obtain the required visual.
 .RE
 .TP 8
-.B \-colors \fIN\fP
+.B \-\-colors \fIN\fP
 How many colors should be used (if possible).  The colors are chosen
 randomly.
 .TP 8
-.B \-foreground \fIname\fP
+.B \-\-foreground \fIname\fP
 With 
-.BR \-mono ,
+.BR \-\-mono ,
 this option selects the foreground colour.   
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 Specifies the delay between drawing successive line segments of the
 path.   If you do not specify 
 .BR -sync ,
 some X servers may batch up several drawing operations together,
 producing a less smooth effect.   This is more likely to happen 
 in monochrome mode (on monochrome servers or when 
-.B \-mono 
+.B \-\-mono 
 is specified).
 .TP 8
-.B \-holdtime \fIseconds\fP
+.B \-\-holdtime \fIseconds\fP
 When the figure is complete, 
 .I epicycle
 pauses this number of seconds.
 .TP 8
-.B \-linewidth \fIN\fP
+.B \-\-linewidth \fIN\fP
 Width in pixels of the body's track.   Specifying values greater than
 one may cause slower drawing.   The fastest value is usually zero,
 meaning one pixel.   
 .TP 8
-.B \-min_circles \fIN\fP
+.B \-\-min_circles \fIN\fP
 Smallest number of epicycles in the figure.
 .TP 8
-.B \-max_circles \fIN\fP
+.B \-\-max_circles \fIN\fP
 Largest number of epicycles in the figure.
 .TP 8
-.B \-min_speed \fInumber\fP
+.B \-\-min_speed \fInumber\fP
 Smallest possible value for the base speed of revolution of the
 epicycles.  The actual speeds of the epicycles vary from this down
 to
 .IB "min_speed / harmonics" .
 .TP 8
-.B \-max_speed \fInumber\fP
+.B \-\-max_speed \fInumber\fP
 Smallest possible value for the base speed of revolution of the 
 epicycles.
 .TP 8
-.B \-harmonics \fIN\fP
+.B \-\-harmonics \fIN\fP
 Number of possible harmonics; the larger this value is, the greater
 the possible variety of possible speeds of epicycle.
 .TP 8
-.B \-timestep \fInumber\fP
+.B \-\-timestep \fInumber\fP
 Decreasing this value will reduce the distance the body moves for
 each line segment, possibly producing a smoother figure.  Increasing
 it may produce faster results.  
 .TP 8
-.B \-divisor_poisson \fIprobability\fP
+.B \-\-divisor_poisson \fIprobability\fP
 Each epicycle rotates at a rate which is a factor of the base speed.
 The speed of each epicycle is the base speed divided by some integer
 between 1 and the value of the 
-.B \-harmonics 
+.B \-\-harmonics 
 option.  This integer is decided by starting at 1 and tossing 
 a biased coin.  For each consecutive head, the value is incremented by
 one.  The integer will not be incremented above the value of the 
-.B \-harmonics
+.B \-\-harmonics
 option.  The argument of this option decides the bias of the coin; it
 is the probability that that coin will produce a head at any given toss.
 .TP 8
-.B \-size_factor_min \fInumber\fP
+.B \-\-size_factor_min \fInumber\fP
 Epicycles are always at least this factor smaller than their
 parents.  
 .TP 8
-.B \-size_factor_max \fInumber\fP
+.B \-\-size_factor_max \fInumber\fP
 Epicycles are never more than this factor smaller than their parents.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
-.B \-timestep 
+.B \-\-timestep 
 option multiplied by the timestepCoarseFactor resource.  The default
 value of 1 will almost always work fast enough and so this resource
 is not available as a command-line option.
@@ -155,6 +159,21 @@ Newtonian gravitation.
 The colour selection is re-done for every figure.  This may 
 generate too much network traffic for this program to work well 
 over slow or long links.   
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
 .SH COPYRIGHT
 Copyright \(co 1998, James Youngman.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is

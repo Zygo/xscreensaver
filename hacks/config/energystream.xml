@@ -2,19 +2,19 @@
 
 <screensaver name="energystream" _label="Energy Stream" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=TbWZ6v5Zzk8"/>
 
-  <number id="speed" type="slider" arg="-speed %"
+  <number id="speed" type="slider" arg="--speed %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0.01" high="5.0" default="1.0"
           convert="ratio"/>
 
   <hgroup>
-   <boolean id="wander" _label="Wander" arg-set="-wander" />
-   <boolean id="spin"   _label="Spin"   arg-set="-spin" />
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wander" _label="Wander" arg-set="--wander" />
+   <boolean id="spin"   _label="Spin"   arg-set="--spin" />
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
   <xscreensaver-updater />

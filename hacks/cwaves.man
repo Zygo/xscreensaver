@@ -3,18 +3,19 @@
 cwaves \- languid sinusoidal colors
 .SH SYNOPSIS
 .B cwaves
-[\-display \fIhost:display.screen\fP]
-[\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP]
-[\-window]
-[\-root]
-[\-mono]
-[\-install]
-[\-visual \fIvisual\fP]
-[\-delay \fIusecs\fP]
-[\-waves \fIint\fP]
-[\-colors \fIint\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-mono]
+[\-\-install]
+[\-\-visual \fIvisual\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-waves \fIint\fP]
+[\-\-colors \fIint\fP]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIcwaves\fP program draws a languidly-scrolling vertical field
 of sinusoidal colors.
@@ -22,35 +23,38 @@ of sinusoidal colors.
 .I cwaves
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 20000, or about 1/50th second.
 .TP 8
-.B \-waves \fIint\fP
+.B \-\-waves \fIint\fP
 How many cosines to add together.  The more waves, the more complex
 the apparent motion.
 .TP 8
-.B \-colors \fIint\fP
+.B \-\-colors \fIint\fP
 How many colors to use.  Default 800.  The more colors, the smoother the
 blending will be.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -61,6 +65,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

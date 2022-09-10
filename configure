@@ -683,6 +683,7 @@ NEW_LOGIN_COMMAND_P
 NEW_LOGIN_COMMAND
 COMMENT_PAM_CHECK_ACCOUNT
 HAVE_PAM_FAIL_DELAY
+GLIB_COMPILE_RESOURCES
 INSTALL_PAM
 INSTALL_DIRS
 SETCAP_HACKS
@@ -6719,6 +6720,9 @@ printf "%s\n" "$ac_macosx" >&6; }
 #       pkg-config
 #
 ###############################################################################
+
+# Note: In the decades since I wrote this, PKG_CHECK_MODULES came into
+# existence, which could probably simplify the following quite a bit.
 
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
@@ -14981,13 +14985,14 @@ gtk_halfassed=no
 if test "$with_gtk" = yes; then
   have_gtk=no
 
+  pkgs=''
   ok="yes"
-  pkg_check_version            gtk+-2.0  2.22.0 ; ac_gtk_version_string="$vers"
-  pkg_check_version         gmodule-2.0  2.0.0
-  pkg_check_version          libxml-2.0  2.4.6
-  pkg_check_version      gdk-pixbuf-2.0  2.0.0
-  pkg_check_version gdk-pixbuf-xlib-2.0  2.0.0
+  pkg_check_version       gtk+-3.0  2.22.0 ; ac_gtk_version_string="$vers"
+  pkg_check_version    gmodule-2.0  2.0.0
+  pkg_check_version     libxml-2.0  2.4.6
+  pkg_check_version gdk-pixbuf-2.0  2.0.0
   have_gtk="$ok"
+  gtk_pkgs="$pkgs"
 
   if test "$have_gtk" = no; then
     if test -n "$ac_gtk_version_string" ; then
@@ -15033,11 +15038,24 @@ printf "%s\n" "$ac_cv_gtk_config_libs" >&6; }
     GTK_LIBS="$GTK_LIBS $ac_gtk_config_libs"
     printf "%s\n" "#define HAVE_GTK 1" >>confdefs.h
 
-    printf "%s\n" "#define HAVE_GTK2 1" >>confdefs.h
-
     printf "%s\n" "#define HAVE_XML 1" >>confdefs.h
 
   fi
+
+  if test "$have_gtk" = yes; then
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for Glib resource compiler" >&5
+printf %s "checking for Glib resource compiler... " >&6; }
+if test ${ac_cv_glib_res+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_cv_glib_res=`$pkg_config --variable=glib_compile_resources gio-2.0`
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_glib_res" >&5
+printf "%s\n" "$ac_cv_glib_res" >&6; }
+    GLIB_COMPILE_RESOURCES="$ac_cv_glib_res"
+  fi
+
 fi
 
 # Check for the various Gnome help and URL loading programs.
@@ -19016,6 +19034,7 @@ fi
 ###############################################################################
 
 have_gdk_pixbuf=no
+have_gdk_pixbuf_xlib=no
 with_gdk_pixbuf_req=unspecified
 
 # Check whether --with-pixbuf was given.
@@ -19090,11 +19109,10 @@ if test "$with_gdk_pixbuf" = yes; then
 
   pkgs=''
   ok="yes"
-
-  pkg_check_version gdk-pixbuf-2.0      2.0.0
-  pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
-  pkg_check_version gio-2.0             2.0.0
+  pkg_check_version gdk-pixbuf-2.0  2.0.0
+  pkg_check_version gio-2.0         2.0.0
   have_gdk_pixbuf="$ok"
+  pixbuf_pkgs="$pkgs"
 
   if test "$have_gdk_pixbuf" = yes; then
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gdk-pixbuf includes" >&5
@@ -19128,10 +19146,7 @@ printf "%s\n" "$ac_cv_gdk_pixbuf_config_libs" >&6; }
     #
     ac_save_gdk_pixbuf_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_config_cflags"
-
     have_gdk_pixbuf=no
-
-    # check for header A...
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then
@@ -19146,60 +19161,14 @@ then :
 fi
 
   CPPFLAGS="$ac_save_CPPFLAGS"
-
-    # if that worked, check for header B...
-    if test "$have_gdk_pixbuf" = yes; then
-      have_gdk_pixbuf=no
-      gdk_pixbuf_halfassed=yes
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "gdk-pixbuf/gdk-pixbuf-xlib.h" "ac_cv_header_gdk_pixbuf_gdk_pixbuf_xlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_gdk_pixbuf_gdk_pixbuf_xlib_h" = xyes
-then :
-  have_gdk_pixbuf=yes
-                         gdk_pixbuf_halfassed=no
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-      # yay, it has a new name in Gtk 2.x...
-      if test "$have_gdk_pixbuf" = no; then
-        have_gdk_pixbuf=no
-        gdk_pixbuf_halfassed=yes
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "gdk-pixbuf-xlib/gdk-pixbuf-xlib.h" "ac_cv_header_gdk_pixbuf_xlib_gdk_pixbuf_xlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_gdk_pixbuf_xlib_gdk_pixbuf_xlib_h" = xyes
-then :
-  have_gdk_pixbuf=yes
-                           gdk_pixbuf_halfassed=no
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-      fi
-    fi
     CPPFLAGS="$ac_save_gdk_pixbuf_CPPFLAGS"
   fi
 
   if test "$have_gdk_pixbuf" = yes; then
     # we have the headers, now check for the libraries
     have_gdk_pixbuf=no
-    gdk_pixbuf_halfassed=yes
-
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: checking for gdk_pixbuf usability..." >&5
 printf "%s\n" "checking for gdk_pixbuf usability..." >&6; }
-
-    # library A...
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LDFLAGS="$LDFLAGS"
@@ -19263,74 +19232,6 @@ fi
   LDFLAGS="$ac_save_LDFLAGS"
 #  LIBS="$ac_save_LIBS"
 
-    # library B...
-    if test "$have_gdk_pixbuf" = yes; then
-      have_gdk_pixbuf=no
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gdk_pixbuf_xlib_init in -lc" >&5
-printf %s "checking for gdk_pixbuf_xlib_init in -lc... " >&6; }
-if test ${ac_cv_lib_c_gdk_pixbuf_xlib_init+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lc $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char gdk_pixbuf_xlib_init ();
-int
-main (void)
-{
-return gdk_pixbuf_xlib_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_c_gdk_pixbuf_xlib_init=yes
-else $as_nop
-  ac_cv_lib_c_gdk_pixbuf_xlib_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_c_gdk_pixbuf_xlib_init" >&5
-printf "%s\n" "$ac_cv_lib_c_gdk_pixbuf_xlib_init" >&6; }
-if test "x$ac_cv_lib_c_gdk_pixbuf_xlib_init" = xyes
-then :
-  have_gdk_pixbuf=yes
-                      gdk_pixbuf_halfassed=no
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-    fi
   fi
 
   if test "$have_gdk_pixbuf" = yes; then
@@ -19410,6 +19311,68 @@ fi
 
   fi
 fi
+
+# Now that we have checked for gdk_pixbuf, check for gdk_pixbuf_xlib
+# separately, since it has fallen out of fashion in recent years.
+#
+#have_gdk_pixbuf_xlib=no
+#gdk_pixbuf_xlib_halfassed=no
+#if test "$with_gdk_pixbuf" = yes -a "$have_gdk_pixbuf" = yes; then
+#
+#  have_gdk_pixbuf_xlib=no
+#  pkgs="$pixbuf_pkgs"
+#  ok="yes"
+#  pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
+#  pkg_check_version gdk-pixbuf-2.0      2.0.0
+#  have_gdk_pixbuf_xlib="$ok"
+#  pixbuf_xlib_pkgs="$pkgs"
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    AC_CACHE_CHECK([for gdk-pixbuf-xlib includes],
+#                   ac_cv_gdk_pixbuf_xlib_config_cflags,
+#            [ac_cv_gdk_pixbuf_xlib_config_cflags=`$pkg_config --cflags $pkgs`])
+#    AC_CACHE_CHECK([for gdk-pixbuf-xlib libs],
+#                   ac_cv_gdk_pixbuf_xlib_config_libs,
+#               [ac_cv_gdk_pixbuf_xlib_config_libs=`$pkg_config --libs $pkgs`])
+#  fi
+#
+#  ac_gdk_pixbuf_xlib_config_cflags=$ac_cv_gdk_pixbuf_xlib_config_cflags
+#  ac_gdk_pixbuf_xlib_config_libs=$ac_cv_gdk_pixbuf_xlib_config_libs
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    #
+#    # we appear to have pixbuf_xlib; check for headers/libs to be sure.
+#    #
+#    ac_save_gdk_pixbuf_xlib_CPPFLAGS="$CPPFLAGS"
+#    CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_xlib_config_cflags"
+#    have_gdk_pixbuf_xlib=no
+#    gdk_pixbuf_xlib_halfassed=yes
+#    AC_CHECK_X_HEADER(gdk-pixbuf-xlib/gdk-pixbuf-xlib.h,
+#                      [have_gdk_pixbuf_xlib=yes
+#                       gdk_pixbuf_xlib_halfassed=no])
+#    CPPFLAGS="$ac_save_gdk_pixbuf_xlib_CPPFLAGS"
+#  fi
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    # we have the headers, now check for the libraries
+#    have_gdk_pixbuf_xlib=no
+#    gdk_pixbuf_xlib_halfassed=yes
+#
+#    AC_MSG_RESULT(checking for gdk_pixbuf_xlib usability...)
+#    AC_CHECK_X_LIB(c, gdk_pixbuf_xlib_init,
+#                   [have_gdk_pixbuf_xlib=yes
+#                    gdk_pixbuf_xlib_halfassed=no],,
+#                    $ac_gdk_pixbuf_xlib_config_libs -lX11 -lXext -lm)
+#  fi
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    INCLUDES="$INCLUDES $ac_gdk_pixbuf_xlib_config_cflags"
+#    PNG_LIBS="$ac_gdk_pixbuf_xlib_config_libs"
+#    AC_DEFINE(HAVE_GDK_PIXBUF_XLIB)
+#  else
+#    AC_MSG_RESULT(checking for gdk_pixbuf_xlib usability... no)
+#  fi
+#fi
 
 ###############################################################################
 #
@@ -21799,13 +21762,6 @@ if test "$gtk_halfassed" != no ; then
   warnL "GTK was found, but $gtk_halfassed_lib was not, so GTK"
   warn2 "can't be used."
   CONF_STATUS=1
-
-  if ( echo $gtk_halfassed_lib | grep -qi pixbuf-xlib ); then
-    echo ''
-    warn2 "Recently, some distros have stopped distributing"
-    warn2 "gdk-pixbuf-xlib entirely.  So good luck with that."
-  fi
-
 fi
 
 motif_warn2() {
@@ -21890,8 +21846,7 @@ if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
   CONF_STATUS=1
 fi
 
-if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
-   test "$have_gdk_pixbuf" = no ; then
+if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes ; then
 
   if test "$with_gdk_pixbuf_req" = yes ; then
     true
@@ -21912,6 +21867,25 @@ if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
   warn2 'You should consider installing GDK-Pixbuf and re-running'
   warn2 'configure.'
 fi
+
+#if test "$have_gdk_pixbuf" = yes -a "$have_gdk_pixbuf_xlib" = no ; then
+#
+#  warnL 'The GDK-Pixbuf-Xlib library was not found.'
+#
+#  if test "$gdk_pixbuf_xlib_halfassed" = yes ; then halfassery ; fi
+#  if test "$have_png" = yes ; then
+#    echo ''
+#    warn2 'The PNG library is being used instead.'
+#  fi
+#
+#  echo ''
+#  warn2 'Some of the demos will not use images as much as they could.'
+#  warn2 'You should consider installing GDK-Pixbuf-Xlib and re-running'
+#  warn2 'configure.'
+#  echo ''
+#  warn2 "Recently, some distros have stopped distributing"
+#  warn2 "GDK-Pixbuf-Xlib entirely.  So good luck with that."
+#fi
 
 if test "$have_jpeg" = no ; then
   if test "$with_jpeg_req" = yes ; then

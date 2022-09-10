@@ -3,51 +3,56 @@
 galaxy \- draws spinning galaxies
 .SH SYNOPSIS
 .B galaxy
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP] [\-tracks] [\-no\-tracks] [\-spin] [\-no\-spin]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install] [\-\-visual \fIvisual\fP] [\-\-ncolors \fIinteger\fP] [\-\-delay \fImicroseconds\fP] [\-\-cycles \fIinteger\fP] [\-\-count \fIinteger\fP] [\-\-size \fIinteger\fP] [\-\-tracks] [\-\-no\-tracks] [\-\-spin] [\-\-no\-spin]
 
-[\-fps]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIgalaxy\fP program draws spinning galaxies.
 .SH OPTIONS
 .I galaxy
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-ncolors \fIinteger\fP
+.B \-\-ncolors \fIinteger\fP
 How many colors should be used (if possible).  Default 64.
 The colors used cycle through the hue, making N stops around
 the color wheel.
 .TP 8
-.B \-cycles \fIinteger\fP
+.B \-\-cycles \fIinteger\fP
 .TP 8
-.B \-count \fIinteger\fP
+.B \-\-count \fIinteger\fP
 .TP 8
-.B \-size \fIinteger\fP
+.B \-\-size \fIinteger\fP
 .TP 8
-.B \-tracks
+.B \-\-tracks
 .TP 8
-.B \-no\-tracks
+.B \-\-no\-tracks
 .TP 8
-.B \-spin
+.B \-\-spin
 .TP 8
-.B \-no\-spin
+.B \-\-no\-spin
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -58,6 +63,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

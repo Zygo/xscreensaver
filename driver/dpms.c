@@ -1,5 +1,5 @@
 /* dpms.c --- syncing the X Display Power Management System values
- * xscreensaver, Copyright © 2001-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -107,8 +107,10 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
   Bool verbose_p       = p->verbose_p;
   static Bool warned_p = False;
 
-  /* If the monitor is currently powered off, defer any changes until
-     we are next called while it is powered on. */
+  /* If the monitor is currently powered off, defer any changes until we are
+     next called while it is powered on.  Making changes to the DPMS settings
+     can have the side-effect of powering the monitor back on.
+    */
   if (! monitor_powered_on_p (dpy))
     {
       if (verbose_p > 1)

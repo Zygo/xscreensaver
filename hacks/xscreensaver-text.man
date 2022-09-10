@@ -22,7 +22,7 @@ appropriate.
 .I xscreensaver\-text
 accepts the following options:
 .TP 8
-.B \-\-verbose \fRor\fP \-v
+.B \-\-verbose \fRor\fP \-\-v
 Print diagnostics to stderr.  Multiple \fI-v\fP switches increase the
 amount of output.
 .TP 8

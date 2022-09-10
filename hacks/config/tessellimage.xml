@@ -2,26 +2,26 @@
 
 <screensaver name="tessellimage" _label="Tessellimage">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=JNgybysnYU8"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="30000"
             convert="invert"/>
 
-    <number id="duration2" type="slider" arg="-duration2 %"
+    <number id="duration2" type="slider" arg="--duration2 %"
             _label="Speed" _low-label="0.1 second" _high-label="4 seconds"
             low="0.1" high="4.0" default="0.4"/>
 
-    <number id="duration" type="slider" arg="-duration %"
+    <number id="duration" type="slider" arg="--duration %"
             _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
             low="10" high="600" default="120"/>
 
-    <number id="depth" type="slider" arg="-max-depth %"
+    <number id="depth" type="slider" arg="--max-depth %"
             _label="Complexity" _low-label="Shallow" _high-label="Deep"
             low="1000" high="100000" default="30000"/>
    </vgroup>
@@ -30,15 +30,15 @@
 
     <select id="mode">
      <option id="random" _label="Delaunay or voronoi"/>
-     <option _label="Delaunay" arg-set="-mode delaunay"/>
-     <option _label="Voronoi"  arg-set="-mode voronoi"/>
+     <option _label="Delaunay" arg-set="--mode delaunay"/>
+     <option _label="Voronoi"  arg-set="--mode voronoi"/>
     </select>
 
     <xscreensaver-image />
 
-    <boolean id="fill"    _label="Fill screen" arg-unset="-no-fill-screen"/>
-    <boolean id="outline" _label="Outline triangles" arg-unset="-no-outline"/>
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="fill"    _label="Fill screen" arg-unset="--no-fill-screen"/>
+    <boolean id="outline" _label="Outline triangles" arg-unset="--no-outline"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
     <xscreensaver-updater />
    </vgroup>

@@ -3,12 +3,13 @@
 munch \- munching squares
 .SH SYNOPSIS
 .B munch
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-xor] [\-noxor] 
-[\-clear \fInumber\fP] [\-simul \fInumber\fP]
-[\-classic | \-mismunch | \-random]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install]
+[\-\-visual \fIvisual\fP] [\-\-delay \fIusecs\fP] [\-\-xor] [\-\-noxor] 
+[\-\-clear \fInumber\fP] [\-\-simul \fInumber\fP]
+[\-\-classic | \-\-mismunch | \-\-random]
+[\-\-fps]
 .SH DESCRIPTION
 The
 .I munch
@@ -24,47 +25,50 @@ instructions of PDP-6 code.
 .I munch
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fIusecs\fP
+.B \-\-delay \fIusecs\fP
 The delay between steps of the animation, in microseconds.  Default: 2500.
 .TP 8
-.B \-xor
+.B \-\-xor
 Use the XOR drawing function.  This is the default.
 .TP 8
-.B \-no\-xor
+.B \-\-no\-xor
 Don't use the XOR drawing function.
 .TP 8
-.B \-clear \fInumber\fP
+.B \-\-clear \fInumber\fP
 Number of squares to misdraw before clearing the display.  Default: 65.
 .TP 8
-.B \-simul \fInumber\fP
+.B \-\-simul \fInumber\fP
 Number of squares to misdraw simultaneously.  Default: 5.
 .TP 8
-.B \-classic
+.B \-\-classic
 Draw classic munching squares only.
 .TP 8
-.B \-mismunch
+.B \-\-mismunch
 Draw "mismunch" only.
 .TP 8
-.B \-random
+.B \-\-random
 Do one or the other.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -75,6 +79,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH HISTORY
 .B HAKMEM: MIT AI Memo 239, Feb. 29, 1972.
 Beeler, M., Gosper, R.W., and Schroeppel, R.

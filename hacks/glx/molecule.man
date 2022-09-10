@@ -3,21 +3,22 @@
 molecule \- draws 3D molecular structures
 .SH SYNOPSIS
 .B molecule
-[\-display \fIhost:display.screen\fP] [\-window] [\-root]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
-[\-wander] [\-no-wander]
-[\-spin \fIaxes\fP]
-[\-no-spin]
-[\-timeout \fIseconds\fP]
-[\-labels] [\-no-labels]
-[\-titles] [\-no-titles]
-[\-atoms] [\-no-atoms]
-[\-bonds] [\-no-bonds]
-[\-shells] [\-no-shells]
-[\-molecule \fIfile-or-directory\fP]
-[\-verbose]
-[\-wireframe]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-visual \fIvisual\fP] [\-\-delay \fImicroseconds\fP]
+[\-\-wander] [\-\-no-wander]
+[\-\-spin \fIaxes\fP]
+[\-\-no-spin]
+[\-\-timeout \fIseconds\fP]
+[\-\-labels] [\-\-no-labels]
+[\-\-titles] [\-\-no-titles]
+[\-\-atoms] [\-\-no-atoms]
+[\-\-bonds] [\-\-no-bonds]
+[\-\-shells] [\-\-no-shells]
+[\-\-molecule \fIfile-or-directory\fP]
+[\-\-verbose]
+[\-\-wireframe]
+[\-\-fps]
 .SH DESCRIPTION
 The \fImolecule\fP program draws several different representations of
 molecules.  Some common molecules are built in, and it can read PDB
@@ -26,89 +27,92 @@ molecules.  Some common molecules are built in, and it can read PDB
 .I molecule
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .TP 8
-.B \-verbose
+.B \-\-verbose
 Print debugging info on stderr about files being loaded, etc.
 .TP 8
-.B \-wander
+.B \-\-wander
 Move the molecules around the screen.
 .TP 8
-.B \-no\-wander
+.B \-\-no\-wander
 Keep the molecule centered on the screen.  This is the default.
 .TP 8
-.B \-spin
+.B \-\-spin
 Which axes around which the molecule should spin.  The default is "XYZ",
-meaning rotate it freely in space.  "\fB\-spin Z\fP" would rotate the
+meaning rotate it freely in space.  "\fB\-\-spin Z\fP" would rotate the
 molecule in the plane of the screen while not rotating it into or out
 of the screen; etc.
 .TP 8
-.B \-no\-spin
-Don't spin it at all: the same as \fB\-spin ""\fP.
+.B \-\-no\-spin
+Don't spin it at all: the same as \fB\-\-spin ""\fP.
 .TP 8
-.B \-labels
+.B \-\-labels
 Draw labels on the atoms (or the spot where the atoms would be.)
 This is the default.
 .TP 8
-.B \-no\-labels
+.B \-\-no\-labels
 Do not draw labels on the atoms.
 .TP 8
-.B \-titles
+.B \-\-titles
 Print the name of the molecule and its chemical formula at the top of
 the screen.
 .TP 8
-.B \-no\-titles
+.B \-\-no\-titles
 Do not print the molecule name.
 .TP 8
-.B \-atoms
+.B \-\-atoms
 Represent the atoms as shaded spheres of appropriate sizes.
 This is the default.
 .TP 8
-.B \-no\-atoms
+.B \-\-no\-atoms
 Do not draw spheres for the atoms: only draw bond lines.
 .TP 8
-.B \-bonds
+.B \-\-bonds
 Represent the atomic bonds as solid tubes of appropriate thicknesses.
 This is the default.
 .TP 8
-.B \-no\-bonds
+.B \-\-no\-bonds
 Do not draw the bonds: instead, make the spheres for the atoms be
 larger, for a "space-filling" representation of the molecule.
 .TP 8
-.B \-shells
+.B \-\-shells
 Draw transparent electron shells around the atoms.  This only works
 if bonds are also being drawn.
 .TP 8
-.B \-no\-shells
+.B \-\-no\-shells
 Do not draw electron shells.  This is the default.
 .TP 8
-.B \-shell\-alpha
+.B \-\-shell\-alpha
 When drawing shells, how transparent to make them.  Default 0.4.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Draw a wireframe rendition of the molecule: this will consist only of
 single-pixel lines for the bonds, and text labels where the atoms go.
 This will be very fast.
 .TP 8
-.B \-timeout \fIseconds\fP
+.B \-\-timeout \fIseconds\fP
 When using the built-in data set, change to a new molecule every
 this-many seconds.  Default is 20 seconds.
 .TP 8
-.B \-molecule \fIfile-or-directory\fP
+.B \-\-molecule \fIfile-or-directory\fP
 Instead of using the built-in molecules, read one from the given file.
 This file must be in PDB (Protein Data Base) format.  (Note that it's
 not uncommon for PDB files to contain only the atoms, with no (or
@@ -116,10 +120,10 @@ little) information about the atomic bonds.)
 
 This can also be a directory, in which case, all of the .pdb files in
 that directory will be loaded.  A new one will be displayed at random
-every few seconds (as per the \fI\-timeout\fP option.)
+every few seconds (as per the \fI\-\-timeout\fP option.)
 .PP
 When the molecule is too large (bigger than about 30 angstroms from
-side to side), the \fI\-label\fP option will be automatically turned
+side to side), the \fI\-\-label\fP option will be automatically turned
 off, because otherwise, the labels would overlap and completely obscure
 the display.
 
@@ -134,6 +138,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

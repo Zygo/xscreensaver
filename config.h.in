@@ -1,7 +1,7 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 
-/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski.
+/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski.
  * Generate this file by running 'configure' rather than editing it by hand.
  */
 
@@ -59,12 +59,15 @@
 /* Define this if you have forkpty. */
 #undef HAVE_FORKPTY
 
-/* Define this if you have GDK_Pixbuf. */
+/* Define this if you have GDK-Pixbuf. */
 #undef HAVE_GDK_PIXBUF
 
 /* Define this if you have the gdk_pixbuf_apply_embedded_orientation function
    (gdk-pixbuf 2.12). */
 #undef HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION
+
+/* Define this if you have GDK-Pixbuf-Xlib. */
+#undef HAVE_GDK_PIXBUF_XLIB
 
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
@@ -108,11 +111,8 @@
 /* Define this if OpenGL supports the OpenGL Shading Language. */
 #undef HAVE_GLSL
 
-/* Define this if you have Gtk */
-#undef HAVE_GTK
-
 /* Define this if you have Gtk 2.x. */
-#undef HAVE_GTK2
+#undef HAVE_GTK
 
 /* Define this for HPUX so-called "Secure Passwords". */
 #undef HAVE_HPUX_PASSWD

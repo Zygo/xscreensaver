@@ -3,11 +3,12 @@
 phosphor \- simulates an old terminal with long-sustain phosphor
 .SH SYNOPSIS
 .B phosphor
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] [\-font \fIfont\fP] [\-scale \fIint\fP]
-[\-ticks \fIint\fP] [\-delay \fIusecs\fP] [\-program \fIcommand\fP]
-[\-meta] [\-esc] [\-bs] [\-del]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] [\-\-font \fIfont\fP] [\-\-scale \fIint\fP]
+[\-\-ticks \fIint\fP] [\-\-delay \fIusecs\fP] [\-\-program \fIcommand\fP]
+[\-\-meta] [\-\-esc] [\-\-bs] [\-\-del]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIphosphor\fP program draws text on the screen in a very large 
 pixelated font that looks like an old low resolution dumb tty.  The
@@ -17,48 +18,51 @@ long-sustain.  It is also a fully functional vt100 terminal emulator.
 .I phosphor
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-font \fIfont-name\fP
+.B \-\-font \fIfont-name\fP
 The X font to use.  Phosphor can take any font and scale it up to pixelate
 it.  The default is \fIfixed\fP.
 .TP 8
-.B \-scale \fIint\fP
+.B \-\-scale \fIint\fP
 How much to scale the font up: in other words, the size in real pixels of
 the simulated pixels.  Default 6.
 .TP 8
-.B \-ticks \fIint\fP
+.B \-\-ticks \fIint\fP
 The number of colors to use when fading to black.  Default 20.
 .TP 8
-.B \-delay \fIusecs\fP
+.B \-\-delay \fIusecs\fP
 The speed of the terminal: how long to wait between drawing each character.
 Default 50000, or about 1/20th second.
 .TP 8
-.B \-pty
+.B \-\-pty
 Launch the sub-program under a PTY, so that it can address the screen
 directly.  This is the default.
 .TP 8
-.B \-pipe
+.B \-\-pipe
 Launch the sub-program at the end of a pipe: do not let it address the
 screen directly.
 .TP 8
-.B \-program \fIsh-command\fP
+.B \-\-program \fIsh-command\fP
 The command to run to generate the text to display.  This option may
 be any string acceptable to /bin/sh.  The program will be run at the
 end of a pty or pipe, and any characters that it prints to \fIstdout\fP
 will be printed on phosphor's window.  The characters will be printed
-artificially slowly, as per the \fI\-delay\fP option above.  If the
+artificially slowly, as per the \fI\-\-delay\fP option above.  If the
 program exits, it will be launched again after 5 seconds.
 
 For example:
@@ -97,20 +101,20 @@ terminal emulators:
 	phosphor -delay 0 -program tcsh
 .sp
 .fi
-.B \-esc
+.B \-\-esc
 When the user types a key with the Alt or Meta keys held down, send an
 ESC character first.  This is the default.
 .TP 8
-.B \-meta
+.B \-\-meta
 When Meta or Alt are held down, set the high bit on the character instead.
 .TP 8
-.B \-del
+.B \-\-del
 Swap Backspace and Delete.  This is the default.
 .TP 8
-.B \-bs
+.B \-\-bs
 Do not swap Backspace and Delete.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH TERMINAL EMULATION
 By default, \fIphosphor\fP allocates a pseudo-tty for the sub-process to
@@ -125,7 +129,7 @@ variable \fITERM\fP to \fIvt100\fP in the child process.
 
 Any characters typed on the phosphor window will be passed along to
 the sub-process.  (Note that this only works when running in "window"
-mode, not when running in \fI\-root\fP mode under xscreensaver.)
+mode, not when running in \fI\-\-root\fP mode under xscreensaver.)
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -135,6 +139,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .TP 8
 .B TERM
 to inform the sub-process of the type of terminal emulation.

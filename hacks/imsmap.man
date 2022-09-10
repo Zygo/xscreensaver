@@ -3,8 +3,10 @@
 imsmap \- generate fractal maps
 .SH SYNOPSIS
 .B imsmap
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIint\fP] [\-delay \fIseconds\fP] [\-delay2 \fImicroseconds\fP] [\-iterations \fIint\fP] [\-mode h|s|v|random]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install] [\-\-visual \fIvisual\fP] [\-\-ncolors \fIint\fP] [\-\-delay \fIseconds\fP] [\-\-delay2 \fImicroseconds\fP] [\-\-iterations \fIint\fP] [\-\-mode h|s|v|random]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIimsmap\fP program generates map or cloud-like patterns.  It looks
 quite different in monochrome and color.
@@ -12,39 +14,42 @@ quite different in monochrome and color.
 .I imsmap
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-ncolors \fIinteger\fP
+.B \-\-ncolors \fIinteger\fP
 How many colors to use.  Default 50.
 .TP 8
-.B \-delay \fIinteger\fP
+.B \-\-delay \fIinteger\fP
 How long to delay between images.  Default 10 seconds.
 .TP 8
-.B \-delay2 \fIinteger\fP
+.B \-\-delay2 \fIinteger\fP
 How long to delay between bitmaps.  Default 200000 (0.2 seconds).
 .TP 8
-.B \-iterations \fIinteger\fP
+.B \-\-iterations \fIinteger\fP
 A measure of the resolution of the resultant image, from 0 to 7.  Default 7.
 .TP 8
-.B \-mode [ hue | saturation | value | random ]
+.B \-\-mode [ hue | saturation | value | random ]
 The axis upon which colors should be interpolated between the foreground
 and background color.  Default random.  
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -55,6 +60,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

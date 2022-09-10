@@ -3,14 +3,18 @@
 jigsaw \- permute an image like a jigsaw puzzle
 .SH SYNOPSIS
 .B jigsaw
-[\-display \fIhost:display.screen\fP]
-[\-delay \fIusecs\fP]
-[\-speed \fIratio\fP]
-[\-complexity \fIratio\fP]
-[\-resolution \fIint\fP]
-[\-thickness \fIfloat\fP]
-[\-no\-wobble]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-speed \fIratio\fP]
+[\-\-complexity \fIratio\fP]
+[\-\-resolution \fIint\fP]
+[\-\-thickness \fIfloat\fP]
+[\-\-no\-wobble]
+[\-\-fps]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
 .SH DESCRIPTION
 The \fIjigsaw\fP program loads an image, carves it up into
 a jigsaw puzzle, shuffles it, and then solves it.
@@ -27,41 +31,44 @@ for more details.
 .I jigsaw
 accepts the following options:
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How long to wait between animation frames; default 20000.
 .TP 8
-.B \-speed \fIratio\fP
+.B \-\-speed \fIratio\fP
 Less than 1 for slower, greater than 1 for faster.  Default 1.
 .TP 8
-.B \-complexity \fIratio\fP
+.B \-\-complexity \fIratio\fP
 Less than 1 for simpler puzzles (fewer pieces), greater than 1 for
 more complex puzzles (more pieces).  Default 1.
 .TP 8
-.B \-resolution \fIratio\fP
+.B \-\-resolution \fIratio\fP
 Smoothness of the edges of the pieces.  Less than 1 for rougher pieces
 (fewer polygons), greater than 1 for more smoother pieces (more polygons).
 Default 1.
 .TP 8
-.B \-thickness \fIfloat\fP
+.B \-\-thickness \fIfloat\fP
 Thickness of the puzzle pieces (relative to their width).
 Default 0.06.
 .TP 8
-.B \-no\-wobble
+.B \-\-no\-wobble
 Keep the display stationary instead of very slowly wobbling back and forth.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, polygon count, and CPU load.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .SH ENVIRONMENT
@@ -73,6 +80,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

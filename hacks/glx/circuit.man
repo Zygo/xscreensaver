@@ -3,50 +3,54 @@
 circuit \- animates a number of 3D electronic components.
 .SH SYNOPSIS
 .B circuit
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fInumber\fP]
-[\-parts \fInumber\fP]
-[\-no-spin]
-[\-rotate]
-[\-speed \fInumber\fP]
-[\-no-light]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-parts \fInumber\fP]
+[\-\-no-spin]
+[\-\-rotate]
+[\-\-speed \fInumber\fP]
+[\-\-no-light]
+[\-\-fps]
 .SH DESCRIPTION
 Animates a number of 3D electronic components.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-delay \fInumber\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 .TP 8
-.B \-parts \fInumber\fP
+.B \-\-parts \fInumber\fP
 Number of parts.  Default: 10.
 .TP 8
-.B \-spin | \-no-spin
+.B \-\-spin | \-\-no-spin
 Whether the objects should spin.
 .TP 8
-.B \-rotate | \-no-rotate
+.B \-\-rotate | \-\-no-rotate
 Whether the scene should spin.
 .TP 8
-.B \-speed \fInumber\fP
+.B \-\-speed \fInumber\fP
 Rotation speed, 0 - 100.  Default: 1.
 .TP 8
-.B \-light | \-no-light
+.B \-\-light | \-\-no-light
 Whether to use lighting, or flat coloring.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -57,6 +61,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

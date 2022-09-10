@@ -2,39 +2,39 @@
 
 <screensaver name="quasicrystal" _label="Quasi-Crystal" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=JsGf65d5TfM"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="30000"
             convert="invert"/>
 
-    <number id="speed" type="slider" arg="-speed %"
+    <number id="speed" type="slider" arg="--speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
             low="0.1" high="5.0" default="1.0"
             convert="ratio"/>
    </vgroup>
    <vgroup>
-    <number id="count" type="slider" arg="-count %"
+    <number id="count" type="slider" arg="--count %"
             _label="Density" _low-label="Low" _high-label="High"
             low="7" high="37" default="17"
             convert="invert"/>
 
-    <number id="contrast" type="slider" arg="-contrast %"
+    <number id="contrast" type="slider" arg="--contrast %"
             _label="Contrast" _low-label="Low" _high-label="High"
             low="0" high="100" default="30"/>
    </vgroup>
   </hgroup>
 
   <hgroup>
-   <boolean id="wander"    _label="Displacement" arg-unset="-no-wander"/>
-   <boolean id="spin"      _label="Rotation"     arg-unset="-no-spin"/>
-   <boolean id="symmetric" _label="Symmetry"     arg-unset="-no-symmetry"/>
-   <boolean id="showfps"   _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wander"    _label="Displacement" arg-unset="--no-wander"/>
+   <boolean id="spin"      _label="Rotation"     arg-unset="--no-spin"/>
+   <boolean id="symmetric" _label="Symmetry"     arg-unset="--no-symmetry"/>
+   <boolean id="showfps"   _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
   <xscreensaver-updater />

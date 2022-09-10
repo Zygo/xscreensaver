@@ -2,7 +2,7 @@
 
 <screensaver name="xanalogtv" _label="XAnalogTV">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=VmM1KkFsry0"/>
 
@@ -11,25 +11,25 @@
     <xscreensaver-image />
    </vgroup>
    <vgroup>
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
-    <boolean id="colorbars" _label="Colorbars only" arg-set="-colorbars-only"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+    <boolean id="colorbars" _label="Colorbars only" arg-set="--colorbars-only"/>
    </vgroup>
   </hgroup>
 
   <hgroup>
    <vgroup>
-    <number id="tvcolor" type="slider" arg="-tv-color %"
+    <number id="tvcolor" type="slider" arg="--tv-color %"
             _label="Color Knob" _low-label="Low" _high-label="High"
             low="0" high="400" default="70"/>
-    <number id="tvtint" type="slider" arg="-tv-tint %"
+    <number id="tvtint" type="slider" arg="--tv-tint %"
             _label="Tint Knob" _low-label="Low" _high-label="High"
             low="0" high="360" default="5"/>
    </vgroup>
    <vgroup>
-    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+    <number id="tvbrightness" type="slider" arg="--tv-brightness %"
             _label="Brightness Knob" _low-label="Low" _high-label="High"
             low="-75.0" high="100.0" default="3.0"/>
-    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+    <number id="tvcontrast" type="slider" arg="--tv-contrast %"
             _label="Contrast Knob" _low-label="Low" _high-label="High"
             low="0" high="1500" default="1000"/>
    </vgroup>

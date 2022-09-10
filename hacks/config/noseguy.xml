@@ -2,12 +2,12 @@
 
 <screensaver name="noseguy" _label="Nose Guy">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=ONJlg9Y_TLI"/>
 
   <xscreensaver-text />
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

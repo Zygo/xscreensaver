@@ -3,18 +3,19 @@
 glforestfire \- draws a GL animation of sprinkling fire-like 3D triangles
 .SH SYNOPSIS
 .B glforestfire
-[\-display \fIhost:display.screen\fP] [\-window] [\-root]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
-[\-count \fInumber_of_particles\fP] 
-[\-trees \fInumber_of_trees\fP] 
-[\-size \fIviewport_size\fP] 
-[\-texture] [\-no-texture]
-[\-shadows] [\-no-shadows]
-[\-fog] [\-no-fog]
-[\-wireframe] [\-no-wireframe]
-[\-wander] [\-no-wander]
-[\-trackmouse] [\-no-trackmouse]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-visual \fIvisual\fP] [\-\-delay \fImicroseconds\fP]
+[\-\-count \fInumber_of_particles\fP] 
+[\-\-trees \fInumber_of_trees\fP] 
+[\-\-size \fIviewport_size\fP] 
+[\-\-texture] [\-\-no-texture]
+[\-\-shadows] [\-\-no-shadows]
+[\-\-fog] [\-\-no-fog]
+[\-\-wireframe] [\-\-no-wireframe]
+[\-\-wander] [\-\-no-wander]
+[\-\-trackmouse] [\-\-no-trackmouse]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIglforestfire\fP program draws an animation of sprinkling fire-like 3D triangles in
 a landscape filled with trees.
@@ -22,67 +23,70 @@ a landscape filled with trees.
 .I glforestfire
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .TP 8
-.B \-trees \fInumber_of_trees\fP\fP
+.B \-\-trees \fInumber_of_trees\fP\fP
 Specify how much trees are drawn in the landscape. 
 .TP 8
-.B \-count \fInumber_of_particles\fP\fP
+.B \-\-count \fInumber_of_particles\fP\fP
 Specify how much fire particles are drawn. A very special case is 0
 wich means that you get
 .B rain
 !
 .TP 8
-.B \-size \fIviewport_size\fP\fP
+.B \-\-size \fIviewport_size\fP\fP
 Viewport of GL scene is specified size if greater than 32 and less than screensize. Default value is 0, meaning full screensize.
 .TP 8
-.B \-texture
+.B \-\-texture
 Show a textured ground and the trees. This is the default.
 .TP 8
-.B \-no\-texture
+.B \-\-no\-texture
 Disables texturing the landscape. This implies that no trees are drawn.
 .TP 8
-.B \-shadows
+.B \-\-shadows
 Show a shadow for each particle on the ground. This is the default.
 .TP 8
-.B \-no\-shadows
+.B \-\-no\-shadows
 Disables the drawing of the shadows.
 .TP 8
-.B \-fog
+.B \-\-fog
 Show a fog in the distance.
 .TP 8
-.B \-no\-fog
+.B \-\-no\-fog
 Disables the fog. This is the default.
 .TP 8
-.B \-wander
+.B \-\-wander
 Move the observer around the landscape. This is the default.
 .TP 8
-.B \-no\-wander
+.B \-\-no\-wander
 Keep the fire centered on the screen.
 .TP 8
-.B \-trackmouse
+.B \-\-trackmouse
 Let the mouse be a joystick to change the view of the landscape.
 This implies 
-.I \-no\-wander.
+.I \-\-no\-wander.
 .TP 8
-.B \-no\-trackmouse
+.B \-\-no\-trackmouse
 Disables mouse tracking. This is the default.
 .TP 8
-.B \-wire
+.B \-\-wire
 Draw a wireframe rendition of the fire: this will consist only of
 single-pixel lines for the triangles.
 .SH ENVIRONMENT
@@ -94,6 +98,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

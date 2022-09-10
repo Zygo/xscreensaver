@@ -3,17 +3,18 @@
 attraction \- interactions of opposing forces
 .SH SYNOPSIS
 .B attraction
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-points \fIint\fP] [\-threshold \fIint\fP]
-[\-mode balls | lines | polygons | splines | filled-splines | tails ]
-[\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP]
-[\-color-shift \fIint\fP] [\-radius \fIint\fP]
-[\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow]
-[\-orbit] [\-viscosity \fIfloat\fP]
-[\-walls] [\-nowalls] [\-maxspeed] [\-nomaxspeed]
-[\-correct-bounce] [\-fast-bounce]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install]
+[\-\-visual \fIvisual\fP] [\-\-points \fIint\fP] [\-\-threshold \fIint\fP]
+[\-\-mode balls | lines | polygons | splines | filled-splines | tails ]
+[\-\-size \fIint\fP] [\-\-segments \fIint\fP] [\-\-delay \fIusecs\fP]
+[\-\-color-shift \fIint\fP] [\-\-radius \fIint\fP]
+[\-\-vx \fIint\fP] [\-\-vy \fIint\fP] [\-\-glow] [\-\-noglow]
+[\-\-orbit] [\-\-viscosity \fIfloat\fP]
+[\-\-walls] [\-\-nowalls] [\-\-maxspeed] [\-\-nomaxspeed]
+[\-\-correct-bounce] [\-\-fast-bounce]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIattraction\fP program has several visually different modes of 
 operation, all of which are based on the interactions of a set of control
@@ -24,31 +25,34 @@ distance between any two particles.
 .I attraction
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-points integer
+.B \-\-points integer
 How many control points should be used, or 0 to select the number randomly.
 Default 0.  Between 3 and 15 works best.
 .TP 8
-.B \-threshold integer
+.B \-\-threshold integer
 The distance (in pixels) from each particle at which the attractive force
 becomes repulsive.  Default 100.
 .TP 8
-.B \-mode "balls | lines | polygons | tails | splines | filled-splines"
+.B \-\-mode "balls | lines | polygons | tails | splines | filled-splines"
 In \fIballs\fP mode (the default) the control points are drawn as filled
 circles.  The larger the circle, the more massive the particle.
 
@@ -68,34 +72,34 @@ In \fItails\fP mode, the path which each particle follows is indicated
 by a worm-like trail, whose length is controlled by the \fIsegments\fP
 parameter.
 .TP 8
-.B \-size integer
+.B \-\-size integer
 The size of the balls in pixels, or 0, meaning to select the sizes 
 randomly (the default.)  If this is specified, then all balls will be 
 the same size.  This option has an effect in all modes, since the ``size''
 of the balls controls their mass.
 .TP 8
-.B \-segments integer
+.B \-\-segments integer
 If in \fIlines\fP or \fIpolygons\fP mode, how many sets of line segments
 or polygons should be drawn. Default 500.  This has no effect in \fIballs\fP
 mode.  If \fIsegments\fP is 0, then no segments will ever be erased (this
 is only useful in color.)
 .TP 8
-.B \-delay microseconds
+.B \-\-delay microseconds
 How much of a delay should be introduced between steps of the animation.
 Default 10000, or about 0.01 seconds.
 .TP 8
-.B \-color-shift int
+.B \-\-color-shift int
 If on a color display, the color of the line segments or polygons will 
 cycle through the color map.  This specifies how many lines will be drawn
 before a new color is chosen.  (When a small number of colors are available,
 increasing this value will yield smoother transitions.)  Default 3.
 This has no effect in \fIballs\fP mode.
 .TP 8
-.B \-radius
+.B \-\-radius
 The size in pixels of the circle on which the points are initially positioned.
 The default is slightly smaller than the size of the window.
 .TP 8
-.B \-glow
+.B \-\-glow
 This is consulted only in \fIballs\fP mode.  If this is specified, then 
 the saturation of the colors of the points will vary according to their
 current acceleration.  This has the effect that the balls flare brighter
@@ -105,27 +109,27 @@ In \fIglow\fP mode, all of the balls will be drawn the same (random)
 color, modulo the saturation shifts.  In non-glow mode, the balls will
 each be drawn in a random color that doesn't change.
 .TP 8
-.B \-noglow
+.B \-\-noglow
 Don't do ``glowing.''  This is the default.
 .TP 8
-.B \-vx pixels
+.B \-\-vx pixels
 .TP 8
-.B \-vy pixels
-Initial velocity of the balls.  This has no effect in \fB\-orbit\fP mode.
+.B \-\-vy pixels
+Initial velocity of the balls.  This has no effect in \fB\-\-orbit\fP mode.
 .TP 8
-.B \-orbit
+.B \-\-orbit
 Make the initial force on each ball be tangential to the circle on which
 they are initially placed, with the right velocity to hold them in orbit
 about each other.  After a while, roundoff errors will cause the orbit
 to decay.
 .TP 8
-.B \-vmult float
+.B \-\-vmult float
 In orbit mode, the initial velocity of the balls is multiplied by this;
 a number less than 1 will make the balls pull closer together, and a larger
 number will make them move apart.  The default is 0.9, meaning a slight
 inward pull.
 .TP 8
-.B \-viscosity float
+.B \-\-viscosity float
 This sets the viscosity of the hypothetical fluid through which the control
 points move; the default is 1, meaning no resistance.  Values higher than 1
 aren't interesting; lower values cause less motion.
@@ -140,42 +144,42 @@ One interesting thing to try is
 Give it a few seconds to settle down into a stable clump, and then move
 the drag the mouse through it to make "waves".
 .TP 8
-.B \-nowalls
+.B \-\-nowalls
 This will cause the balls to continue on past the edge of the
 screen or window.  They will still be kept track of and can come back.
 .TP 8
-.B \-walls
+.B \-\-walls
 This will cause the balls to bounce when they get
 to the edge of the screen or window.  This is the default behavior.
 .TP 8
-.B \-maxspeed
+.B \-\-maxspeed
 Imposes a maximum speed (default).  If a ball ends up going faster than
 this, it will be treated as though there were .9  viscosity until it is
 under the limit. This stops the balls from continually accelerating (which
 they have a tendency to do), but also causes balls moving very fast to
 tend to clump in the lower right corner.
 .TP 8
-.B \-nomaxspeed
+.B \-\-nomaxspeed
 If this is specified, no maximum speed is set for the balls.
 .TP 8
-.B \-fast-bounce
+.B \-\-fast-bounce
 Uses the old, simple bouncing algorithm (default).  This simply moves any
 ball that is out of bounds back to a wall and reverses its velocity.
 This works fine for most cases, but under some circumstances, the
 simplification can lead to annoying effects.
 .TP 8
-.B \-correct-bounce
+.B \-\-correct-bounce
 Uses a more intelligent bouncing algorithm.  This method actually reflects
 the balls off the walls until they are within bounds.  This can be slow
 if balls are bouncing a whole lot, perhaps because of -nomaxspeed.
 .TP 8
-.B \-graphmode none | x | y | both | speed
+.B \-\-graphmode none | x | y | both | speed
 For "x", "y", and "both", displays the given velocities of each ball as a
 bar graph in the same window as the balls.  For "speed", displays the total
 speed of each ball.  Default is "none".
 .BR
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .B DISPLAY
@@ -184,6 +188,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

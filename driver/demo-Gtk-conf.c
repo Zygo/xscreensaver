@@ -46,6 +46,7 @@
 # pragma GCC diagnostic pop
 #endif
 
+#include "blurb.h"
 #include "demo-Gtk-conf.h"
 
 /* Deal with deprecation of direct access to struct fields on the way to GTK3
@@ -64,12 +65,7 @@
 #endif
 
 
-extern const char *blurb (void);
-
-
-const char *hack_configuration_path = HACK_CONFIGURATION_PATH;
-
-static gboolean debug_p = FALSE;
+static gboolean debug_p = FALSE;  /* Copied from s->debug_p in parent */
 
 
 #define MIN_SLIDER_WIDTH     150
@@ -139,7 +135,9 @@ typedef struct {
 
 static parameter *make_select_option (const char *file, xmlNodePtr);
 static void make_parameter_widget (const char *filename, 
-                                   parameter *, GtkWidget *);
+                                   parameter *, GtkWidget *,
+                                   void (*changed_cb) (GtkWidget *, gpointer),
+                                   gpointer changed_data);
 static void browse_button_cb (GtkButton *button, gpointer user_data);
 
 
@@ -586,7 +584,6 @@ sanity_check_menu_options (const char *filename, const xmlChar *node_name,
   int nulls = 0;
   char *prefix = 0;
 
-/*  fprintf (stderr, "\n## %s\n", p->id);*/
   for (opts = p->options; opts; opts = opts->next)
     {
       parameter *s = (parameter *) opts->data;
@@ -700,7 +697,9 @@ sanity_check_parameters (const char *filename, GList *parms)
 /* Helper for make_parameters()
  */
 static GList *
-make_parameters_1 (const char *filename, xmlNodePtr node, GtkWidget *parent)
+make_parameters_1 (const char *filename, xmlNodePtr node, GtkWidget *parent,
+                   void (*changed_cb) (GtkWidget *, gpointer),
+                   gpointer changed_data)
 {
   GList *list = 0;
 
@@ -710,14 +709,16 @@ make_parameters_1 (const char *filename, xmlNodePtr node, GtkWidget *parent)
       if (!strcmp (name, "hgroup") ||
           !strcmp (name, "vgroup"))
         {
-          GtkWidget *box = (*name == 'h'
-                            ? gtk_hbox_new (FALSE, 0)
-                            : gtk_vbox_new (FALSE, 0));
+          GtkWidget *box = gtk_box_new (*name == 'h'
+                                        ? GTK_ORIENTATION_HORIZONTAL
+                                        : GTK_ORIENTATION_VERTICAL,
+                                        0);
           GList *list2;
           gtk_widget_show (box);
           gtk_box_pack_start (GTK_BOX (parent), box, FALSE, FALSE, 0);
 
-          list2 = make_parameters_1 (filename, node->xmlChildrenNode, box);
+          list2 = make_parameters_1 (filename, node->xmlChildrenNode, box,
+                                     changed_cb, changed_data);
           if (list2)
             list = g_list_concat (list, list2);
         }
@@ -727,7 +728,8 @@ make_parameters_1 (const char *filename, xmlNodePtr node, GtkWidget *parent)
           if (p)
             {
               list = g_list_append (list, p);
-              make_parameter_widget (filename, p, parent);
+              make_parameter_widget (filename, p, parent,
+                                     changed_cb, changed_data);
             }
         }
     }
@@ -740,13 +742,16 @@ make_parameters_1 (const char *filename, xmlNodePtr node, GtkWidget *parent)
    Returns a GList of `parameter' objects.
  */
 static GList *
-make_parameters (const char *filename, xmlNodePtr node, GtkWidget *parent)
+make_parameters (const char *filename, xmlNodePtr node, GtkWidget *parent,
+                 void (*changed_cb) (GtkWidget *, gpointer),
+                 gpointer changed_data)
 {
   for (; node; node = node->next)
     {
       if (node->type == XML_ELEMENT_NODE &&
           !strcmp ((char *) node->name, "screensaver"))
-        return make_parameters_1 (filename, node->xmlChildrenNode, parent);
+        return make_parameters_1 (filename, node->xmlChildrenNode, parent,
+                                  changed_cb, changed_data);
     }
   return 0;
 }
@@ -843,9 +848,9 @@ make_adjustment (const char *filename, parameter *p)
 static void
 set_widget_min_width (GtkWidget *w, int width)
 {
-  GtkRequisition req;
-  gtk_widget_size_request (GTK_WIDGET (w), &req);
-  if (req.width < width)
+  GtkRequisition min, nat;
+  gtk_widget_get_preferred_size (w, &min, &nat);
+  if (min.width < width)
     gtk_widget_set_size_request (GTK_WIDGET (w), width, -1);
 }
 
@@ -857,9 +862,10 @@ set_widget_min_width (GtkWidget *w, int width)
 static GtkWidget *
 insert_fake_hbox (GtkWidget *parent)
 {
-  if (GTK_IS_VBOX (parent))
+  if (gtk_orientable_get_orientation (GTK_ORIENTABLE (parent)) ==
+      GTK_ORIENTATION_VERTICAL)
     {
-      GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+      GtkWidget *hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
       gtk_box_pack_start (GTK_BOX (parent), hbox, FALSE, FALSE, 4);
       gtk_widget_show (hbox);
       return hbox;
@@ -869,15 +875,15 @@ insert_fake_hbox (GtkWidget *parent)
 
 
 static void
-link_atk_label_to_widget(GtkWidget *label, GtkWidget *widget)
+link_atk_label_to_widget (GtkWidget *label, GtkWidget *widget)
 {
-    AtkObject *atk_label = gtk_widget_get_accessible (label);
-    AtkObject *atk_widget = gtk_widget_get_accessible (widget);
+  AtkObject *atk_label = gtk_widget_get_accessible (label);
+  AtkObject *atk_widget = gtk_widget_get_accessible (widget);
 
-    atk_object_add_relationship (atk_label, ATK_RELATION_LABEL_FOR,
-				 atk_widget);
-    atk_object_add_relationship (atk_widget, ATK_RELATION_LABELLED_BY,
-				 atk_label);
+  atk_object_add_relationship (atk_label, ATK_RELATION_LABEL_FOR,
+                               atk_widget);
+  atk_object_add_relationship (atk_widget, ATK_RELATION_LABELLED_BY,
+                               atk_label);
 }
 
 /* Given a `parameter' struct, allocates an appropriate GtkWidget for it,
@@ -885,7 +891,9 @@ link_atk_label_to_widget(GtkWidget *label, GtkWidget *widget)
    `parent' must be a GtkBox.
  */
 static void
-make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
+make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent,
+                       void (*changed_cb) (GtkWidget *, gpointer data),
+                       gpointer changed_data)
 {
   const char *label = (char *) p->label;
   if (p->widget) return;
@@ -901,7 +909,8 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
             GtkWidget *w = gtk_label_new (_(label));
             link_atk_label_to_widget (w, entry);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
-            gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
+            gtk_label_set_xalign (GTK_LABEL (w), 1.0);
+            gtk_label_set_yalign (GTK_LABEL (w), 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
             gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
@@ -911,6 +920,8 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         if (p->string)
           gtk_entry_set_text (GTK_ENTRY (p->widget), (char *) p->string);
         gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
+        g_signal_connect (p->widget, "changed", G_CALLBACK (changed_cb),
+                          changed_data);
         break;
       }
     case FILENAME:
@@ -923,12 +934,12 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         gtk_widget_show (button);
         p->widget = entry;
 
-        gtk_signal_connect (GTK_OBJECT (button),
-                            "clicked", GTK_SIGNAL_FUNC (browse_button_cb),
-                            (gpointer) entry);
+        g_signal_connect (button, "clicked", G_CALLBACK (browse_button_cb),
+                          (gpointer) entry);
 
         gtk_label_set_justify (GTK_LABEL (L), GTK_JUSTIFY_RIGHT);
-        gtk_misc_set_alignment (GTK_MISC (L), 1.0, 0.5);
+        gtk_label_set_xalign (GTK_LABEL (L), 1.0);
+        gtk_label_set_yalign (GTK_LABEL (L), 0.5);
         set_widget_min_width (GTK_WIDGET (L), MIN_LABEL_WIDTH);
         gtk_widget_show (L);
 
@@ -939,12 +950,14 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         gtk_box_pack_start (GTK_BOX (parent), L,      FALSE, FALSE, 4);
         gtk_box_pack_start (GTK_BOX (parent), entry,  TRUE,  TRUE,  4);
         gtk_box_pack_start (GTK_BOX (parent), button, FALSE, FALSE, 4);
+        g_signal_connect (p->widget, "changed",
+                          G_CALLBACK (changed_cb), changed_data);
         break;
       }
     case SLIDER:
       {
         GtkAdjustment *adj = make_adjustment (filename, p);
-        GtkWidget *scale = gtk_hscale_new (adj);
+        GtkWidget *scale = gtk_scale_new (GTK_ORIENTATION_HORIZONTAL, adj);
         GtkWidget *labelw = 0;
 
         if (label)
@@ -952,7 +965,8 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
             labelw = gtk_label_new (_(label));
             link_atk_label_to_widget (labelw, scale);
             gtk_label_set_justify (GTK_LABEL (labelw), GTK_JUSTIFY_LEFT);
-            gtk_misc_set_alignment (GTK_MISC (labelw), 0.0, 0.5);
+            gtk_label_set_xalign (GTK_LABEL (labelw), 0.0);
+            gtk_label_set_yalign (GTK_LABEL (labelw), 0.5);
             set_widget_min_width (GTK_WIDGET (labelw), MIN_LABEL_WIDTH);
             gtk_widget_show (labelw);
             gtk_box_pack_start (GTK_BOX (parent), labelw, FALSE, FALSE, 2);
@@ -966,17 +980,20 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
             GtkWidget *w = gtk_label_new (_((char *) p->low_label));
             link_atk_label_to_widget (w, scale);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
-            gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
+            gtk_label_set_xalign (GTK_LABEL (w), 1.0);
+            gtk_label_set_yalign (GTK_LABEL (w), 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
             gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
           }
 
         gtk_scale_set_value_pos (GTK_SCALE (scale), GTK_POS_BOTTOM);
-        /* This is only in debug mode since it is wrong for "ratio" sliders. */
-        gtk_scale_set_draw_value (GTK_SCALE (scale), debug_p);
         gtk_scale_set_digits (GTK_SCALE (scale), (p->integer_p ? 0 : 2));
         set_widget_min_width (GTK_WIDGET (scale), MIN_SLIDER_WIDTH);
+
+        /* We can't show the value as it is wrong for ratio and inverted
+           sliders. */
+        gtk_scale_set_draw_value (GTK_SCALE (scale), FALSE);
 
         gtk_box_pack_start (GTK_BOX (parent), scale, FALSE, FALSE, 4);
 
@@ -987,13 +1004,16 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
             GtkWidget *w = gtk_label_new (_((char *) p->high_label));
             link_atk_label_to_widget (w, scale);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_LEFT);
-            gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
+            gtk_label_set_xalign (GTK_LABEL (w), 0.0);
+            gtk_label_set_yalign (GTK_LABEL (w), 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
             gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
           }
 
         p->widget = scale;
+        g_signal_connect (adj, "value-changed",
+                          G_CALLBACK (changed_cb), changed_data);
         break;
       }
     case SPINBUTTON:
@@ -1010,7 +1030,8 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
             GtkWidget *w = gtk_label_new (_(label));
             link_atk_label_to_widget (w, spin);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
-            gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
+            gtk_label_set_xalign (GTK_LABEL (w), 1.0);
+            gtk_label_set_yalign (GTK_LABEL (w), 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
             gtk_widget_show (w);
             parent = insert_fake_hbox (parent);
@@ -1021,6 +1042,8 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         gtk_box_pack_start (GTK_BOX (parent), spin, FALSE, FALSE, 4);
 
         p->widget = spin;
+        g_signal_connect (adj, "value-changed",
+                          G_CALLBACK (changed_cb), changed_data);
         break;
       }
     case BOOLEAN:
@@ -1030,26 +1053,37 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
            parent = insert_fake_hbox (parent);
          */
         gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
+        g_signal_connect (p->widget, "clicked",
+                          G_CALLBACK (changed_cb), changed_data);
         break;
       }
     case SELECT:
       {
-        GtkWidget *opt = gtk_option_menu_new ();
-        GtkWidget *menu = gtk_menu_new ();
+        GtkComboBox *cbox = GTK_COMBO_BOX (gtk_combo_box_new());
+        GtkListStore *model = gtk_list_store_new (1, G_TYPE_STRING);
+        GtkCellRenderer *view = gtk_cell_renderer_text_new();
+        GtkTreeIter iter;
         GList *opts;
+
+        g_object_set (G_OBJECT (cbox), "model", model, NULL);
+        g_object_unref (model);
+        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (cbox), view, TRUE);
+        gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (cbox), view,
+                                        "text", 0, NULL);
 
         for (opts = p->options; opts; opts = opts->next)
           {
             parameter *s = (parameter *) opts->data;
-            GtkWidget *i = gtk_menu_item_new_with_label (_((char *) s->label));
-            gtk_widget_show (i);
-            gtk_menu_append (GTK_MENU (menu), i);
+            const char *name = _((char *) s->label);
+            gtk_list_store_append (model, &iter);
+            gtk_list_store_set (model, &iter, 0, name, -1);
           }
 
-        gtk_option_menu_set_menu (GTK_OPTION_MENU (opt), menu);
-        p->widget = opt;
+        p->widget = GTK_WIDGET (cbox);
         parent = insert_fake_hbox (parent);
         gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
+        g_signal_connect (p->widget, "changed",
+                          G_CALLBACK (changed_cb), changed_data);
         break;
       }
 
@@ -1069,76 +1103,28 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
     }
 }
 
-
-/* File selection.
-   Absurdly, there is no GTK file entry widget, only a GNOME one,
-   so in order to avoid depending on GNOME in this code, we have
-   to do it ourselves.
- */
-
-/* cancel button on GtkFileSelection: user_data unused */
-static void
-file_sel_cancel (GtkWidget *button, gpointer user_data)
-{
-  GtkWidget *dialog = button;
-  while (GET_PARENT (dialog))
-    dialog = GET_PARENT (dialog);
-  gtk_widget_destroy (dialog);
-}
-
-/* ok button on GtkFileSelection: user_data is the corresponding GtkEntry */
-static void
-file_sel_ok (GtkWidget *button, gpointer user_data)
-{
-  GtkWidget *entry = GTK_WIDGET (user_data);
-  GtkWidget *dialog = button;
-  const char *path;
-
-  while (GET_PARENT (dialog))
-    dialog = GET_PARENT (dialog);
-  gtk_widget_hide (dialog);
-
-  path = gtk_file_selection_get_filename (GTK_FILE_SELECTION (dialog));
-  /* apparently one doesn't free `path' */
-
-  gtk_entry_set_text (GTK_ENTRY (entry), path);
-  gtk_entry_set_position (GTK_ENTRY (entry), strlen (path));
-
-  gtk_widget_destroy (dialog);
-}
-
-/* WM close on GtkFileSelection: user_data unused */
-static void
-file_sel_close (GtkWidget *widget, GdkEvent *event, gpointer user_data)
-{
-  file_sel_cancel (widget, user_data);
-}
 
 /* "Browse" button: user_data is the corresponding GtkEntry */
 static void
 browse_button_cb (GtkButton *button, gpointer user_data)
 {
-  GtkWidget *entry = GTK_WIDGET (user_data);
-  const char *text = gtk_entry_get_text (GTK_ENTRY (entry));
-  GtkFileSelection *selector =
-    GTK_FILE_SELECTION (gtk_file_selection_new (_("Select file.")));
+  GtkEntry *entry = GTK_ENTRY (user_data);
+  GtkWindow *win = GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (button)));
+  const char *ofile = gtk_entry_get_text (entry);
+  char *file = strdup (ofile);
 
-  gtk_file_selection_set_filename (selector, text);
-  gtk_signal_connect (GTK_OBJECT (selector->ok_button),
-                      "clicked", GTK_SIGNAL_FUNC (file_sel_ok),
-                      (gpointer) entry);
-  gtk_signal_connect (GTK_OBJECT (selector->cancel_button),
-                      "clicked", GTK_SIGNAL_FUNC (file_sel_cancel),
-                      (gpointer) entry);
-  gtk_signal_connect (GTK_OBJECT (selector), "delete_event",
-                      GTK_SIGNAL_FUNC (file_sel_close),
-                      (gpointer) entry);
-
-  gtk_window_set_modal (GTK_WINDOW (selector), TRUE);
-  gtk_widget_show (GTK_WIDGET (selector));
+  if (debug_p) fprintf (stderr, "%s: settings browse button\n", blurb());
+  if (file_chooser (win, entry, &file, _("Select file."),
+                    debug_p, FALSE, FALSE))
+    {
+      if (debug_p)
+        fprintf (stderr, "%s:   file: \"%s\" -> \"%s\n", blurb(), ofile, file);
+      gtk_entry_set_text (entry, file);
+    }
+  free (file);
 }
 
-
+
 /* Converting to and from command-lines
  */
 
@@ -1341,21 +1327,19 @@ parameter_to_switch (parameter *p)
     case SELECT:
       if (!p->widget) return 0;
       {
-        GtkOptionMenu *opt = GTK_OPTION_MENU (p->widget);
-        GtkMenu *menu = GTK_MENU (gtk_option_menu_get_menu (opt));
-        GtkWidget *selected = gtk_menu_get_active (menu);
-        GList *kids = gtk_container_children (GTK_CONTAINER (menu));
-        int menu_elt = g_list_index (kids, (gpointer) selected);
-        GList *ol = g_list_nth (p->options, menu_elt);
+        GtkComboBox *cbox = GTK_COMBO_BOX (p->widget);
+        int menu_elt = gtk_combo_box_get_active (cbox);
+        GList *ol = (menu_elt >= 0 ? g_list_nth (p->options, menu_elt) : NULL);
         parameter *o = (ol ? (parameter *) ol->data : 0);
         const char *s;
-        if (!o) abort();
-        if (o->type != SELECT_OPTION) abort();
-        s = (char *) o->arg_set;
-        if (s)
-          return strdup (s);
-        else
-          return 0;
+        if (o)
+          {
+            if (o->type != SELECT_OPTION) abort();
+            s = (char *) o->arg_set;
+            if (s)
+              return strdup (s);
+          }
+        return 0;
       }
     default:
       if (p->widget)
@@ -1494,10 +1478,12 @@ parse_command_line_into_parameters (const char *filename,
           if (rest->next)   /* pop off the arg to this option */
             {
               char *s = (char *) rest->next->data;
-              /* the next token is the next switch iff it matches "-[a-z]".
+              /* the next token is the next switch if it matches ^-[-a-z]
                  (To avoid losing on "-x -3.1".)
                */
-              if (s && (s[0] != '-' || !isalpha(s[1])))
+              if (! (s &&
+                     s[0] == '-' &&
+                     (s[1] == '-' || isalpha(s[1]))))
                 {
                   value = s;
                   rest->next->data = 0;
@@ -1519,8 +1505,13 @@ static gboolean
 compare_opts (const char *option, const char *value,
               const char *template)
 {
-  int ol = strlen (option);
+  int ol;
   char *c;
+
+  /* -arg and --arg are the same. */
+  if (option[0]   == '-' && option[1]   == '-') option++;
+  if (template[0] == '-' && template[1] == '-') template++;
+  ol = strlen (option);
 
   if (strncmp (option, template, ol))
     return FALSE;
@@ -1686,8 +1677,8 @@ parameter_set_switch (parameter *p, gpointer value)
       }
     case SELECT:
       {
-        gtk_option_menu_set_history (GTK_OPTION_MENU (p->widget),
-                                     GPOINTER_TO_INT(value));
+        GtkComboBox *cbox = GTK_COMBO_BOX (p->widget);
+        gtk_combo_box_set_active (cbox, GPOINTER_TO_INT(value));
         break;
       }
     default:
@@ -1752,7 +1743,7 @@ restore_defaults (const char *progname, GList *parms)
           }
         case SELECT:
           {
-            GtkOptionMenu *opt = GTK_OPTION_MENU (p->widget);
+            GtkComboBox *cbox = GTK_COMBO_BOX (p->widget);
             GList *opts;
             int selected = 0;
             int index;
@@ -1770,7 +1761,7 @@ restore_defaults (const char *progname, GList *parms)
                   }
               }
 
-            gtk_option_menu_set_history (GTK_OPTION_MENU (opt), selected);
+            gtk_combo_box_set_active (cbox, selected);
             break;
           }
         default:
@@ -1780,7 +1771,7 @@ restore_defaults (const char *progname, GList *parms)
 }
 
 
-
+
 /* Documentation strings
  */
 
@@ -1890,15 +1881,17 @@ get_year (const char *desc)
 }
 
 
-
+
 /* External interface.
  */
 
 static conf_data *
 load_configurator_1 (const char *program, const char *arguments,
+                     void (*changed_cb) (GtkWidget *, gpointer),
+                     gpointer changed_data,
                      gboolean verbose_p)
 {
-  const char *dir = hack_configuration_path;
+  const char *dir = HACK_CONFIGURATION_PATH;
   char *base_program;
   int L = strlen (dir);
   char *file;
@@ -1959,10 +1952,11 @@ load_configurator_1 (const char *program, const char *arguments,
 
       /* Parsed the XML file.  Now make some widgets. */
 
-      vbox0 = gtk_vbox_new (FALSE, 0);
+      vbox0 = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
       gtk_widget_show (vbox0);
 
-      parms = make_parameters (file, doc->xmlRootNode, vbox0);
+      parms = make_parameters (file, doc->xmlRootNode, vbox0,
+                               changed_cb, changed_data);
       sanity_check_parameters (file, parms);
 
       xmlFreeDoc (doc);
@@ -2034,14 +2028,17 @@ split_command_line (const char *full_command_line,
 
 
 conf_data *
-load_configurator (const char *full_command_line, gboolean verbose_p)
+load_configurator (const char *full_command_line,
+                   void (*changed_cb) (GtkWidget *, gpointer),
+                   gpointer changed_data,
+                   gboolean verbose_p)
 {
   char *prog;
   char *args;
   conf_data *cd;
   debug_p = verbose_p;
   split_command_line (full_command_line, &prog, &args);
-  cd = load_configurator_1 (prog, args, verbose_p);
+  cd = load_configurator_1 (prog, args, changed_cb, changed_data, verbose_p);
   free (prog);
   free (args);
   return cd;

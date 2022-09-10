@@ -2,18 +2,16 @@
 
 <screensaver name="xjack" _label="XJack">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=wSOiSrEbxu4"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="200000" default="50000"
           convert="invert"/>
 
-  <!-- #### -font [] -->
-
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

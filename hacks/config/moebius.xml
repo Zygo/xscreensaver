@@ -2,18 +2,18 @@
 
 <screensaver name="moebius" _label="Möbius" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=77Nib6jQrXc"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <boolean id="solid" _label="Solid floor" arg-set="-solidmoebius"/>
-  <boolean id="ants" _label="Draw ants" arg-unset="-no-ants"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="solid" _label="Solid floor" arg-set="--solidmoebius"/>
+  <boolean id="ants" _label="Draw ants" arg-unset="--no-ants"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

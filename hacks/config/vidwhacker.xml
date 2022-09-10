@@ -2,17 +2,17 @@
 
 <screensaver name="vidwhacker" _label="Vid Whacker">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=u8esWjcR4eI"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Duration" _low-label="2 seconds" _high-label="2 minutes"
           low="2" high="120" default="5"/>
 
-  <file id="directory" _label="Image directory" arg="-directory %"/>
+  <file id="directory" _label="Image directory" arg="--directory %"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

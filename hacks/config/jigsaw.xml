@@ -2,29 +2,28 @@
 
 <screensaver name="jigsaw" _label="Jigsaw" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=T5_hiY2eEeo"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="20000"
             convert="invert"/>
 
-    <number id="speed" type="slider" arg="-speed %"
+    <number id="speed" type="slider" arg="--speed %"
              _label="Speed" _low-label="Slow" _high-label="Fast"
              low="0.1" high="8.0" default="1.0"
              convert="ratio"/>
    </vgroup>
    <vgroup>
-    <number id="density" type="slider" arg="-complexity %"
+    <number id="density" type="slider" arg="--complexity %"
              _label="Puzzle pieces" _low-label="Few" _high-label="Many"
-             low="1.0" high="4.0" default="1.0"
-             convert="ratio"/>
+             low="1.0" high="4.0" default="1.0"/>
 
-    <number id="resolution" type="slider" arg="-resolution %"
+    <number id="resolution" type="slider" arg="--resolution %"
              _label="Resolution" _low-label="Chunky" _high-label="Smooth"
              low="50" high="300" default="100"/>
    </vgroup>
@@ -35,8 +34,8 @@
     <xscreensaver-image />
    </vgroup>
    <vgroup>
-    <boolean id="wobble"  _label="Tilt"  arg-unset="-no-wobble"/>
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="wobble"  _label="Tilt"  arg-unset="--no-wobble"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
    </vgroup>
   </hgroup>
 

@@ -2,26 +2,26 @@
 
 <screensaver name="binaryhorizon" _label="Binary Horizon">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=upB7CSoxNTs"/>
 
-  <number id="growth-delay" type="slider" arg="-growth-delay %"
+  <number id="growth-delay" type="slider" arg="--growth-delay %"
           _label="Growth delay" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000" />
 
-  <number id="particles-number" type="slider" arg="-particles-number %"
+  <number id="particles-number" type="slider" arg="--particles-number %"
           _label="Number of particles" _low-label="Few" _high-label="Lots"
           low="100" high="20000" default="5000" />
 
-  <number id="duration" type="slider" arg="-duration %"
+  <number id="duration" type="slider" arg="--duration %"
           _label="Duration" _low-label="1 sec" _high-label="2 minutes"
           low="1" high="120" default="30" />
 
-  <boolean id="color" _label="Random colors" arg-unset="-no-color"/>
-  <boolean id="bicolor" _label="Two contrasting colors" arg-unset="-monocolor"/>
-  <boolean id="no-fade" _label="Randomize every particle's color" arg-set="-no-fade"/>
-  <boolean id="fps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="color" _label="Random colors" arg-unset="--no-color"/>
+  <boolean id="bicolor" _label="Two contrasting colors" arg-unset="--monocolor"/>
+  <boolean id="no-fade" _label="Randomize every particle's color" arg-set="--no-fade"/>
+  <boolean id="fps" _label="Show frame rate" arg-set="--fps"/>
   <xscreensaver-updater />
 
   <_description>

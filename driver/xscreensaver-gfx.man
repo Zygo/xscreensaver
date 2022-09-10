@@ -3,7 +3,7 @@
 xscreensaver - extensible screen saver and screen locking framework
 .SH SYNOPSIS
 .B xscreensaver-gfx
-[\-display \fIhost:display.screen\fP]
+[\-\-display \fIhost:display.screen\fP]
 .SH DESCRIPTION
 The
 .BR xscreensaver (1)

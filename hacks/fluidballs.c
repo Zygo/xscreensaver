@@ -815,8 +815,10 @@ fluidballs_free (Display *dpy, Window window, void *closure)
   XFreeGC (dpy, state->draw_gc);
   XFreeGC (dpy, state->draw_gc2);
   XFreeGC (dpy, state->erase_gc);
-  XftFontClose (state->dpy, state->font);
-  XftDrawDestroy (state->xftdraw);
+  if (state->font)
+    XftFontClose (state->dpy, state->font);
+  if (state->xftdraw)
+    XftDrawDestroy (state->xftdraw);
   free (state->m);
   free (state->r);
   free (state->vx);

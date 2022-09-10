@@ -2,30 +2,30 @@
 
 <screensaver name="dangerball" _label="Danger Ball" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=QU0aPwWwHbg"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="30000"
           convert="invert"/>
 
-  <number id="spikespeed" type="slider" arg="-speed %"
+  <number id="spikespeed" type="slider" arg="--speed %"
           _label="Spike growth" _low-label="Slow" _high-label="Fast"
           low="0.001" high="0.25" default="0.05"/>
 
-  <number id="count" type="slider" arg="-count %"
+  <number id="count" type="slider" arg="--count %"
           _label="Number of spikes" _low-label="Few" _high-label="Ouch"
           low="1" high="100" default="30"/>
 
   <hgroup>
-   <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
-   <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>
-   <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+   <boolean id="wander" _label="Wander"    arg-unset="--no-wander"/>
+   <boolean id="spin"   _label="Spin"      arg-unset="--no-spin"/>
+   <boolean id="wire"   _label="Wireframe" arg-set="--wireframe"/>
   </hgroup>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

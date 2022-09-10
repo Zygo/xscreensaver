@@ -2,29 +2,29 @@
 
 <screensaver name="geodesicgears" _label="Geodesic Gears" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=gd_nTnJQ4Ps"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="30000"
           convert="invert"/>
 
-  <number id="timeout" type="slider" arg="-timeout %"
+  <number id="timeout" type="slider" arg="--timeout %"
           _label="Duration" _low-label="5 seconds" _high-label="2 minutes"
           low="5" high="120" default="20"/>
 
   <hgroup>
-   <boolean id="labels"  _label="Describe gears" arg-set="-labels"/>
-   <boolean id="numbers" _label="Number gears"   arg-set="-numbers"/>
-   <boolean id="wire"    _label="Wireframe"      arg-set="-wireframe"/>
+   <boolean id="labels"  _label="Describe gears" arg-set="--labels"/>
+   <boolean id="numbers" _label="Number gears"   arg-set="--numbers"/>
+   <boolean id="wire"    _label="Wireframe"      arg-set="--wireframe"/>
   </hgroup>
 
   <hgroup>
-   <boolean id="wander"  _label="Wander"    arg-unset="-no-wander"/>
-   <boolean id="spin"    _label="Spin"      arg-unset="-no-spin"/>
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wander"  _label="Wander"    arg-unset="--no-wander"/>
+   <boolean id="spin"    _label="Spin"      arg-unset="--no-spin"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
   <xscreensaver-updater />

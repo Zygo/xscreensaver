@@ -2,44 +2,44 @@
 
 <screensaver name="hyperball" _label="Hyperball">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=BqOHgn0BQOc"/>
 
   <hgroup>
     <vgroup>
-     <number id="delay" type="slider" arg="-delay %"
+     <number id="delay" type="slider" arg="--delay %"
              _label="Frame rate" _low-label="Low" _high-label="High"
              low="0" high="100000" default="20000"
              convert="invert"/>
 
 
-      <number id="z" type="slider" arg="-observer-z %"
+      <number id="z" type="slider" arg="--observer-z %"
               _label="Zoom" _low-label="Near" _high-label="Far"
               low="1.125" high="10.0" default="3.0"/>
 
-     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
     </vgroup>
 
     <vgroup>
-      <number id="xw" type="slider" arg="-xw %"
+      <number id="xw" type="slider" arg="--xw %"
               _label="XW rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="0"/>
-      <number id="xy" type="slider" arg="-xy %"
+      <number id="xy" type="slider" arg="--xy %"
               _label="XY rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="3"/>
-      <number id="xz" type="slider" arg="-xz %"
+      <number id="xz" type="slider" arg="--xz %"
               _label="XZ rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="5"/>
     </vgroup>
     <vgroup>
-      <number id="yw" type="slider" arg="-yw %"
+      <number id="yw" type="slider" arg="--yw %"
               _label="YW rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="10"/>
-      <number id="yz" type="slider" arg="-yz %"
+      <number id="yz" type="slider" arg="--yz %"
               _label="YZ rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="0"/>
-      <number id="zw" type="slider" arg="-zw %"
+      <number id="zw" type="slider" arg="--zw %"
               _label="ZW rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="0"/>
     </vgroup>

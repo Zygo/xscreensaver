@@ -2,25 +2,25 @@
 
 <screensaver name="cynosure" _label="Cynosure">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=If7FOc8UnYs"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="1000000" default="500000"
           convert="invert"/>
 
-  <number id="ncolors" type="slider" arg="-ncolors %"
+  <number id="ncolors" type="slider" arg="--ncolors %"
             _label="Number of colors" _low-label="Two" _high-label="Many"
             low="2" high="255" default="128"/>
 
-  <number id="iterations" type="slider" arg="-iterations %"
+  <number id="iterations" type="slider" arg="--iterations %"
           _label="Duration" _low-label="Short" _high-label="Long"
           low="2" high="200" default="100"/>
 
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

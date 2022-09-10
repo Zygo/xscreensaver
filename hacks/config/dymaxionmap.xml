@@ -2,17 +2,17 @@
 
 <screensaver name="dymaxionmap" _label="Dymaxion Map" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=4LnO0UiccGs"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="20000"
             convert="invert"/>
-    <number id="speed" type="slider" arg="-speed %"
+    <number id="speed" type="slider" arg="--speed %"
             _label="Animation speed" _low-label="Slow" _high-label="Fast"
             low="0.05" high="10.0" default="1.0"
             convert="ratio"/>
@@ -22,13 +22,11 @@
     <hgroup>
      <select id="map">
       <option id="flat"  _label="Flat map"/>
-      <option id="day"   _label="Satellite map" arg-set="-image BUILTIN_SAT"/>
+      <option id="day"   _label="Satellite map" arg-set="--image BUILTIN_SAT"/>
      </select>
-
-     <!-- <file id="image" _label="Image file" arg="-image %"/> -->
     </hgroup>
 
-    <number id="frames" type="slider" arg="-frames %"
+    <number id="frames" type="slider" arg="--frames %"
             _label="Day / night smoothness" _low-label="Low" _high-label="High"
             low="24" high="1440" default="720"/>
    </vgroup>
@@ -37,12 +35,12 @@
 
    <vgroup>
     <hgroup>
-     <boolean id="stars"  _label="Stars"       arg-unset="-no-stars"/>
-     <boolean id="grid"   _label="Lat / Long"  arg-unset="-no-grid"/>
-     <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
-     <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
-     <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
-     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+     <boolean id="stars"  _label="Stars"       arg-unset="--no-stars"/>
+     <boolean id="grid"   _label="Lat / Long"  arg-unset="--no-grid"/>
+     <boolean id="wander" _label="Wander"    arg-unset="--no-wander"/>
+     <boolean id="roll"   _label="Roll"      arg-unset="--no-roll"/>
+     <boolean id="wire"    _label="Wireframe"       arg-set="--wireframe"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
     </hgroup>
 
     <xscreensaver-updater />

@@ -14,6 +14,7 @@
  * gethostby(name/addr), for Sonar.
  */
 
+#include <stdio.h>
 #include "async_netdb.h"
 
 #include "thread_util.h"
@@ -25,9 +26,9 @@
 #include <string.h>
 #include <unistd.h>
 
-/* This is very much system-dependent, but hopefully 64K covers it just about
-   everywhere. The threads here shouldn't need much. */
-#define ASYNC_NETDB_STACK 65536
+/* This is very much system-dependent, but hopefully 128K covers it just about
+everywhere. The threads here shouldn't need much. */
+#define ASYNC_NETDB_STACK 131072
 
 #if ASYNC_NETDB_USE_GAI
 

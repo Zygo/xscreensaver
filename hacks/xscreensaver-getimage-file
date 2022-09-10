@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple; use LWP::UserAgent;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.65 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.67 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -1544,6 +1544,13 @@ sub main() {
   my $cocoa_id = undef;
   my $abs_p = 0;
   my $flush_p = 0;
+
+  # Some time between perl 5.16.3 and 5.28.3, invoking a script with >&-
+  # started writing "Unable to flush stdout: Bad file descriptor" to stderr
+  # at exit. So if stdout is closed, open it as /dev/null instead.
+  #
+  open (STDOUT, '>', '/dev/null')
+    if (! defined (syswrite (STDOUT, "")));  # undef if fd closed; 0 if open.
 
   while ($_ = $ARGV[0]) {
     shift @ARGV;

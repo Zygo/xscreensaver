@@ -36,9 +36,10 @@
 "*textURL:		https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
 "*demoCommand: xscreensaver-settings",
 "*helpURL: https://www.jwz.org/xscreensaver/man.html",
-"*loadURL: x-www-browser '%s' || firefox '%s' || chromium-browser '%s'",
-"*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
-		    -e /bin/sh -c 'man \"%s\" ; read foo'",
+"*loadURL: gnome-open '%s'",
+"*manualCommand: yelp man:%s || \
+			x-terminal-emulator -t '%s manual' \
+			  -e /bin/sh -c \"man %s; read foo\"",
 "*dateFormat:		%I:%M %p, %a %b %e",
 "*newLoginCommand:	no-such-login-manager",
 "XScreenSaver.pointerHysteresis:		10",

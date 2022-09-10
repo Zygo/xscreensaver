@@ -3,72 +3,77 @@
 flipflop \- draws a grid of 3D squares that change positions
 .SH SYNOPSIS
 .B flipflop
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-count \fInumber\fP | \-free \fInumber\fP]
-[\-size \fInumber\fP]
-[\-size-x \fInumber\fP]
-[\-size-y \fInumber\fP]
-[\-spin \fInumber\fP]
-[\-mode sticks | tiles]
-[\-delay \fInumber\fP]
-[\-wireframe]
-[\-fps]
-[\-texture]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-count \fInumber\fP | \-\-free \fInumber\fP]
+[\-\-size \fInumber\fP]
+[\-\-size-x \fInumber\fP]
+[\-\-size-y \fInumber\fP]
+[\-\-spin \fInumber\fP]
+[\-\-mode sticks | tiles]
+[\-\-delay \fInumber\fP]
+[\-\-wireframe]
+[\-\-fps]
+[\-\-texture]
 .SH DESCRIPTION
 Flipflop draws a grid of 3D colored tiles that change positions with 
 each other.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-count \fInumber\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-count \fInumber\fP
 Number of tiles on the board. A value of "0" means "default". The
 default number of tiles depends on the size of the board and the mode:
 95% of total tiles for "tiles" mode and 80% of total sticks for
 "sticks" mode (e.g. 76 tiles or 64 sticks for a 9x9 board). 
 .TP 8
-.B \-free \fInumber\fP
+.B \-\-free \fInumber\fP
 Number of tiles missing from the board. See -count. 
 .TP 8
-.B \-size \fInumber\fP
+.B \-\-size \fInumber\fP
 Number of tiles on each side of the board. Takes precedence over
 -size-x and -size-y. Default: 9.
 .TP 8
-.B \-size-x \fInumber\fP
+.B \-\-size-x \fInumber\fP
 Width (in tiles) of the board. Default: 9.
 .TP 8
-.B \-size-y \fInumber\fP
+.B \-\-size-y \fInumber\fP
 Length (in tiles) of the board. Default: 9.
 .TP 8
-.B \-spin \fInumber\fP
+.B \-\-spin \fInumber\fP
 Angular velocity for the rotation of the board. 
 .TP 8
-.B \-mode sticks 
+.B \-\-mode sticks 
 Draw hopping sticks instead of flipping tiles. 
 .TP 8
-.B \-mode tiles 
+.B \-\-mode tiles 
 Draw flipping tiles. This is the default. 
 .TP 8
-.B \-delay \fInumber\fP
+.B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 .TP 8
-.B \-fps | \-no\-fps
+.B \-\-fps | \-\-no\-fps
 Display the current frame rate, CPU load, and polygon count.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Only draw outlines.
 .TP 8
-.B \-texture | \-no\-texture
+.B \-\-texture | \-\-no\-texture
 Whether to texture the tiles with a screen grab or an image.
 .SH ENVIRONMENT
 .PP
@@ -79,6 +84,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

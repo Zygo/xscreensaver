@@ -2,42 +2,42 @@
 
 <screensaver name="atlantis" _label="Atlantis" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=U78xPez5UGg"/>
 
-  <number id="sharkspeed" type="slider" arg="-delay %"
+  <number id="sharkspeed" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="25000"
           convert="invert"/>
 
-  <number id="whalespeed" type="slider" arg="-whalespeed %"
+  <number id="whalespeed" type="slider" arg="--whalespeed %"
            _label="Whale speed" _low-label="Slow" _high-label="Fast"
           low="0" high="1000" default="250"/>
 
-  <number id="sharkproximity" type="slider" arg="-size %"
+  <number id="sharkproximity" type="slider" arg="--size %"
           _label="Shark proximity" _low-label="Shy" _high-label="Agressive"
           low="100" high="10000" default="6000"/>
 
-  <number id="sharkcount" type="slider" arg="-count %"
+  <number id="sharkcount" type="slider" arg="--count %"
           _label="Number of sharks" _low-label="None" _high-label="20"
           low="0" high="20" default="4"/>
 
   <hgroup>
    <select id="water">
      <option id="shimmer" _label="Shimmering water"/>
-     <option id="clear"   _label="Clear water" arg-set="-no-texture"/>
+     <option id="clear"   _label="Clear water" arg-set="--no-texture"/>
    </select>
 
    <select id="bg">
-     <option id="flat"     _label="Flat background" arg-set="-no-gradient"/>
+     <option id="flat"     _label="Flat background" arg-set="--no-gradient"/>
      <option id="gradient" _label="Gradient background"/>
    </select>
   </hgroup>
 
   <hgroup>
-   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wire"    _label="Wireframe"              arg-set="--wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
   <xscreensaver-updater />

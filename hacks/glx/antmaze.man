@@ -3,27 +3,31 @@
 antmaze \- ant maze walker
 .SH SYNOPSIS
 .B antmaze
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] [\-\-delay \fImicroseconds\fP] [\-\-fps]
 .SH DESCRIPTION
 The \fIantmaze\fP code displays ants finding their way through a maze.
 .SH OPTIONS
 .I antmaze
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -34,6 +38,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

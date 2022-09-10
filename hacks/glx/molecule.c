@@ -1,4 +1,4 @@
-/* molecule, Copyright (c) 2001-2016 Jamie Zawinski <jwz@jwz.org>
+/* molecule, Copyright (c) 2001-2016 Jamie Zawinskin <jwz@jwz.org>
  * Draws molecules, based on coordinates from PDB (Protein Data Base) files.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -1444,7 +1444,7 @@ draw_labels (ModeInfo *mi)
 
         s = 1.0 / h;			/* Scale to unit */
         s *= mc->overall_scale;		/* Scale to size of atom */
-        s *= 0.8;			/* Shrink a bit */
+        s *= 0.5;			/* Shrink a bit */
         glScalef (s, s, 1);
         glTranslatef (-w/2, -h/2, 0);
 #ifndef HAVE_ANDROID   /* Doesn't work -- causes whole scene to be black */

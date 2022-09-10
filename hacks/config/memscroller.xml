@@ -2,11 +2,11 @@
 
 <screensaver name="memscroller" _label="Mem Scroller">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=DQJRNlTKCdA"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000"
           convert="invert"/>
@@ -14,16 +14,16 @@
   <hgroup>
    <select id="seedMode">
      <option id="ram"    _label="Dump memory"/>
-     <option id="random" _label="Draw random numbers" arg-set="-random"/>
+     <option id="random" _label="Draw random numbers" arg-set="--random"/>
    </select>
 
    <select id="drawMode">
      <option id="color" _label="Draw in RGB"/>
-     <option id="mono"  _label="Draw green" arg-set="-mono"/>
+     <option id="mono"  _label="Draw green" arg-set="--mono"/>
    </select>
   </hgroup>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

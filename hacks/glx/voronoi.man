@@ -3,17 +3,18 @@
 voronoi \- draws a randomly-colored Voronoi tessellation
 .SH SYNOPSIS
 .B voronoi
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-points \fIint\fP]
-[\-point\-size \fIint\fP]
-[\-point\-speed \fIratio\fP]
-[\-point\-delay \fIseconds\fP]
-[\-zoom\-speed \fIratio\fP]
-[\-zoom\-delay \fIseconds\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-points \fIint\fP]
+[\-\-point\-size \fIint\fP]
+[\-\-point\-speed \fIratio\fP]
+[\-\-point\-delay \fIseconds\fP]
+[\-\-zoom\-speed \fIratio\fP]
+[\-\-zoom\-delay \fIseconds\fP]
+[\-\-fps]
 .SH DESCRIPTION
 Draws a randomly-colored Voronoi tessellation, and periodically zooms 
 in and adds new points.  The existing points also wander around.
@@ -32,37 +33,40 @@ compute the cells for us, by rendering the intersection of overlapping
 cones in an orthographic plane.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-points \fIint\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-points \fIint\fP
 How many points to add each time we zoom in.
 .TP 8
-.B \-point\-size \fIint\fP
+.B \-\-point\-size \fIint\fP
 How big to draw the stars, in pixels.  0 for no stars.
 .TP 8
-.B \-point\-speed \fIratio\fP
+.B \-\-point\-speed \fIratio\fP
 How fast the points should wander.  
 Less than 1 for slower, greater than 1 for faster.
 .TP 8
-.B \-point\-delay \fIseconds\fP
+.B \-\-point\-delay \fIseconds\fP
 How quickly to insert new points, when adding.
 .TP 8
-.B \-zoom\-speed \fIratio\fP
+.B \-\-zoom\-speed \fIratio\fP
 How fast to zoom in.
 Less than 1 for slower, greater than 1 for faster.
 .TP 8
-.B \-zoom\-delay \fIseconds\fP
+.B \-\-zoom\-delay \fIseconds\fP
 Zoom in every this-many seconds.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -73,6 +77,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

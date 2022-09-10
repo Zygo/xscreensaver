@@ -3,43 +3,47 @@
 kumppa \- spiraling, spinning, splashes of color rush toward the screen.
 .SH SYNOPSIS
 .B kumppa
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fInumber\fP]
-[\-speed \fInumber\fP]
-[\-random]
-[\-dbuf]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-speed \fInumber\fP]
+[\-\-random]
+[\-\-dbuf]
+[\-\-fps]
 .SH DESCRIPTION
 Spiraling, spinning, and very, very fast splashes of color rush toward the
 screen.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-delay \fInumber\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
-.B \-speed \fInumber\fP
+.B \-\-speed \fInumber\fP
 Density.  0.0001 - 0.2.  Default: 0.1.
 .TP 8
-.B \-random | \-no-random
+.B \-\-random | \-\-no-random
 Whether to randomize.
 .TP 8
-.B \-dbuf | \-no-dbuf
+.B \-\-dbuf | \-\-no-dbuf
 Whether to double buffer.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -50,6 +54,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

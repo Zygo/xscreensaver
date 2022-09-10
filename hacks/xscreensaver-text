@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2021 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2022 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -39,7 +39,7 @@ BEGIN { eval 'use Text::Wrap qw(wrap);' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.64 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.66 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -421,11 +421,17 @@ sub output() {
         `/usr/sbin/system_profiler SPSoftwareDataType SPHardwareDataType 2>&-`;
       my ($v) = ($sp =~ m/^\s*System Version:\s*(.*)$/mi);
       my ($s) = ($sp =~ m/^\s*(?:CPU|Processor) Speed:\s*(.*)$/mi);
+      my ($c) = ($sp =~ m/^\s*Chip:\s*(.*)$/mi);
+      my ($o) = ($sp =~ m/^\s*Total Number of Cores:\s*(\d+)/mi);
       my ($t) = ($sp =~ m/^\s*(?:Machine|Model) Name:\s*(.*)$/mi);
       my ($m) = ($sp =~ m/^\s*Memory:\s*(.*)$/mi);
+      $c =~ s/^Apple //s if $c;
+      $c .= " $o core" if ($c && $o);
+      $t .= ", $c" if $c;
       $t .= ", $m" if $t;
       $body .= "$v\n" if ($v);
       $body .= "$s $t\n" if ($s && $t);
+      $body .= "$t\n" if (!$s && $t);
       $unamep = !defined ($v);
     }
 
@@ -930,6 +936,13 @@ sub main() {
 
   my $load_p = 1;
   my $cocoa_id = undef;
+
+  # Some time between perl 5.16.3 and 5.28.3, invoking a script with >&-
+  # started writing "Unable to flush stdout: Bad file descriptor" to stderr
+  # at exit. So if stdout is closed, open it as /dev/null instead.
+  #
+  open (STDOUT, '>', '/dev/null')
+    if (! defined (syswrite (STDOUT, "")));  # undef if fd closed; 0 if open.
 
   my @oargv = @ARGV;
   while ($#ARGV >= 0) {

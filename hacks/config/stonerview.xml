@@ -2,18 +2,18 @@
 
 <screensaver name="stonerview" _label="Stoner View" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=xvDK_wwnXWs"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <boolean id="wire"    _label="Wireframe"         arg-set="-wireframe"/>
-  <boolean id="trans"   _label="Translucent"     arg-unset="-no-transparent"/>
-  <boolean id="showfps" _label="Show frame rate"   arg-set="-fps"/>
+  <boolean id="wire"    _label="Wireframe"         arg-set="--wireframe"/>
+  <boolean id="trans"   _label="Translucent"     arg-unset="--no-transparent"/>
+  <boolean id="showfps" _label="Show frame rate"   arg-set="--fps"/>
 
   <xscreensaver-updater />
 

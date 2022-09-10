@@ -3,8 +3,10 @@
 starfish \- radially-symmetric throbbing colormap-hacking graphics demo
 .SH SYNOPSIS
 .B starfish
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-delay2 \fIsecs\fP] [\-thickness \fIpixels\fP] [\-rotation \fIdegrees\fP] [\-duration \fIseconds\fP] [\-colors \fIint\fP] [\-blob] [\-no\-blob]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install] [\-\-visual \fIvisual\fP] [\-\-delay \fIusecs\fP] [\-\-delay2 \fIsecs\fP] [\-\-thickness \fIpixels\fP] [\-\-rotation \fIdegrees\fP] [\-\-duration \fIseconds\fP] [\-\-colors \fIint\fP] [\-\-blob] [\-\-no\-blob]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIstarfish\fP program draws radially symmetric objects, which expand,
 contract, rotate, and turn inside out.  It uses these shapes to lay down a
@@ -13,52 +15,55 @@ field of smooth colors, and then rotates the colormap.
 .I starfish
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 10000, or about 1/100th second.
 .TP 8
-.B \-thickness \fIpixels\fP
+.B \-\-thickness \fIpixels\fP
 How wide each color band should be.  Default 0, meaning random (the chosen
 value will be between 0 and 15.)
 .TP 8
-.B \-rotation \fIdegrees\fP
+.B \-\-rotation \fIdegrees\fP
 How quickly the objects should rotate at each step.  Default 0, meaning 
 random (the chosen value will be between 0 and 12 degrees.)
 .TP 8
-.B \-colors \fIint\fP
+.B \-\-colors \fIint\fP
 How many colors to use.  Default 200.  The more colors, the smoother the
 transitions will be, and the nicer the resultant images.
 .TP 8
-.B \-duration \fIseconds\fP
+.B \-\-duration \fIseconds\fP
 How long to run before choosing a new shape.  Default 30 seconds.
 .TP 8
-.B \-delay2 \fIseconds\fP
+.B \-\-delay2 \fIseconds\fP
 When \fIduration\fP expires, how long to wait before starting a new run.
 Default 5 seconds.
 .TP 8
-.B \-blob
+.B \-\-blob
 .TP 8
-.B \-no\-blob
+.B \-\-no\-blob
 If \fIblob\fP option is specified, then the raw shapes will be shown, 
 instead of a field of colors generated from them.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -69,6 +74,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

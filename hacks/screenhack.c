@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -81,6 +81,40 @@
 
       - Don't forget to write an XML file to describe the user interface
         of your screen saver module.  See .../hacks/config/README for details.
+ */
+
+
+/* Flow of control for the "screenhack" API:
+
+      main
+      xscreensaver_function_table->setup_cb => none
+      XtAppInitialize
+      pick_visual
+      init_window
+      run_screenhack_table (loops forever)
+      !  xscreensaver_function_table.init_cb => HACK_init (once)
+         usleep_and_process_events
+      !    xscreensaver_function_table.event_cb => HACK_event
+      !  xscreensaver_function_table.draw_cb => HACK_draw
+
+   The "xlockmore" API (which is also the OpenGL API) acts like a screenhack
+   but then adds another layer underneath that, before eventually running the
+   hack's methods.  Flow of control for the "xlockmore" API:
+
+      main
+      + xscreensaver_function_table->setup_cb => xlockmore_setup (opt handling)
+      XtAppInitialize
+      pick_visual
+      init_window
+      run_screenhack_table (loops forever)
+      !  xscreensaver_function_table.init_cb => xlockmore_init (once)
+         usleep_and_process_events
+      !    xscreensaver_function_table.event_cb => xlockmore_event
+      +      xlockmore_function_table.hack_handle_events => HACK_handle_event
+      !  xscreensaver_function_table.draw_cb => xlockmore_draw
+      +    xlockmore_function_table.hack_init => init_HACK
+      +      init_GL (eglCreateContext or glXCreateContext)
+      +    xlockmore_function_table.hack_draw => draw_HACK
  */
 
 #define DEBUG_PAIR
@@ -329,8 +363,8 @@ pick_visual (Screen *screen)
 
 
 /* Notice when the user has requested a different visual or colormap
-   on a pre-existing window (e.g., "-root -visual truecolor" or
-   "-window-id 0x2c00001 -install") and complain, since when drawing
+   on a pre-existing window (e.g., "--root --visual truecolor" or
+   "--window-id 0x2c00001 --install") and complain, since when drawing
    on an existing window, we have no choice about these things.
  */
 static void
@@ -351,9 +385,9 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
     sprintf (win, "window 0x%lx", (unsigned long) window);
 
   if (window_p)
-    sprintf (why, "-window-id 0x%lx", (unsigned long) window);
+    sprintf (why, "--window-id 0x%lx", (unsigned long) window);
   else
-    strcpy (why, "-root");
+    strcpy (why, "--root");
 
   if (visual_string && *visual_string)
     {

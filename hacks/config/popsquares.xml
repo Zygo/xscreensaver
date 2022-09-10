@@ -2,49 +2,49 @@
 
 <screensaver name="popsquares" _label="Pop Squares">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=99Aweq7Nypc"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="25000"
           convert="invert"/>
 
-  <number id="subdivision" type="spinbutton" arg="-subdivision %"
+  <number id="subdivision" type="spinbutton" arg="--subdivision %"
           _label="Subdivision"
           low="1" high="64" default="5"/>
 
-  <number id="border" type="spinbutton" arg="-border %"
+  <number id="border" type="spinbutton" arg="--border %"
           _label="Border"
           low="0" high="5" default="1"/>
 
-  <number id="ncolors" type="spinbutton" arg="-ncolors %"
+  <number id="ncolors" type="spinbutton" arg="--ncolors %"
             _label="Number of colors" low="1" high="512" default="128"/>
 
   <hgroup>
    <select id="bg">
-    <option id="lred"     _label="Light red"     arg-set="-bg #FF0000"/>
-    <option id="lyellow"  _label="Light yellow"  arg-set="-bg #FFFF00"/>
-    <option id="lgreen"   _label="Light green"   arg-set="-bg #00FF00"/>
-    <option id="lcyan"    _label="Light cyan"    arg-set="-bg #00FFFF"/>
+    <option id="lred"     _label="Light red"     arg-set="--bg #FF0000"/>
+    <option id="lyellow"  _label="Light yellow"  arg-set="--bg #FFFF00"/>
+    <option id="lgreen"   _label="Light green"   arg-set="--bg #00FF00"/>
+    <option id="lcyan"    _label="Light cyan"    arg-set="--bg #00FFFF"/>
     <option id="lblue"    _label="Light blue"/>
-    <option id="lmagenta" _label="Light magenta" arg-set="-bg #FF00FF"/>
+    <option id="lmagenta" _label="Light magenta" arg-set="--bg #FF00FF"/>
    </select>
 
    <select id="fg">
-    <option id="dred"     _label="Dark red"     arg-set="-fg #8C0000"/>
-    <option id="dyellow"  _label="Dark yellow"  arg-set="-fg #8C8C00"/>
-    <option id="dgreen"   _label="Dark green"   arg-set="-fg #008C00"/>
-    <option id="dcyan"    _label="Dark cyan"    arg-set="-fg #008C8C"/>
+    <option id="dred"     _label="Dark red"     arg-set="--fg #8C0000"/>
+    <option id="dyellow"  _label="Dark yellow"  arg-set="--fg #8C8C00"/>
+    <option id="dgreen"   _label="Dark green"   arg-set="--fg #008C00"/>
+    <option id="dcyan"    _label="Dark cyan"    arg-set="--fg #008C8C"/>
     <option id="dblue"    _label="Dark blue"/>
-    <option id="dmagenta" _label="Dark magenta" arg-set="-fg #8C008C"/>
+    <option id="dmagenta" _label="Dark magenta" arg-set="--fg #8C008C"/>
    </select>
   </hgroup>
 
-  <boolean id="twitch" _label="Twitch" arg-set="-twitch"/>
+  <boolean id="twitch" _label="Twitch" arg-set="--twitch"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

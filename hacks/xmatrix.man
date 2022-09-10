@@ -3,16 +3,17 @@
 xmatrix \- simulates the computer displays from the movie
 .SH SYNOPSIS
 .B xmatrix
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] 
-[\-delay \fIusecs\fP] 
-[\-density \fIpercentage\fP]
-[\-top | \-bottom | \-both]
-[\-small | \-large]
-[\-trace]
-[\-mode \fImode\fP]
-[\-phone \fInumber\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] 
+[\-\-delay \fIusecs\fP] 
+[\-\-density \fIpercentage\fP]
+[\-\-top | \-\-bottom | \-\-both]
+[\-\-small | \-\-large]
+[\-\-trace]
+[\-\-mode \fImode\fP]
+[\-\-phone \fInumber\fP]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIxmatrix\fP program draws the 2D "digital rain" effect, as seen on
 the computer monitors in the 1999 film, "The Matrix".
@@ -25,23 +26,26 @@ sequence of the movie.
 .I xmatrix
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fIusecs\fP
+.B \-\-delay \fIusecs\fP
 The delay between steps of the animation, in microseconds: default 10000.
 .TP 8
-.B \-density \fIpercentage\fP
+.B \-\-density \fIpercentage\fP
 The approximate percentage of the screen that should be filled with 
 characters at any given time.  Default 75%.
 
@@ -49,51 +53,51 @@ When running in a window, typing \fB+\fP will increase the density and
 typing \fB-\fP will decrease it.  Typing \fB0\fP will momentarily
 drain the screen.
 .TP 8
-.B \-top\fP | \fB\-bottom\fP | \fB\-both
-If \fB\-top\fP is specified, the characters will only drop in from the
-top of the screen as sliding columns of characters.  If \fB\-bottom\fP
+.B \-\-top\fP | \fB\-\-bottom\fP | \fB\-\-both
+If \fB\-\-top\fP is specified, the characters will only drop in from the
+top of the screen as sliding columns of characters.  If \fB\-\-bottom\fP
 is specified, then instead of sliding columns, the characters will appear
-as columns that grow downwards and are erased from above.  If \fB\-both\fP
+as columns that grow downwards and are erased from above.  If \fB\-\-both\fP
 is specified, then a mixture of both styles will be used.  The default
-is \fB\-both\fP.
+is \fB\-\-both\fP.
 
 When running in a window, typing \fB[\fP will switch to top-mode, 
 typing \fB\]\fP will switch to bottom-mode, and typing \fB\\\fP will
 switch to both-mode.
 .TP 8
-.B \-small\fP | \fB\-large
+.B \-\-small\fP | \fB\-\-large
 These options specify the sizes of the characters.  The default
-is \fB\-large\fP.
+is \fB\-\-large\fP.
 .TP 8
-.B \-mode trace
+.B \-\-mode trace
 Start off with a representation of a phone number being traced.  
 When the number is finally found, display The Matrix as usual.
 This is the default.
 .TP 8
-.B \-phone\fP \fInumber\fP
-The phone number to trace, if \fB\-trace\fP is specified.
+.B \-\-phone\fP \fInumber\fP
+The phone number to trace, if \fB\-\-trace\fP is specified.
 .TP 8
-.B \-mode crack
+.B \-\-mode crack
 Start off by shutting down the power grid.
 .TP 8
-.B \-mode binary
+.B \-\-mode binary
 Instead of displaying Matrix glyphs, only display ones and zeros.
 .TP 8
-.B \-mode hexadecimal
+.B \-\-mode hexadecimal
 Instead of displaying Matrix glyphs, display hexadecimal digits.
 .TP 8
-.B \-mode dna
+.B \-\-mode dna
 Instead of displaying Matrix glyphs, display genetic code
 (guanine, adenine, thymine, and cytosine.)
 .TP 8
-.B \-mode ascii
+.B \-\-mode ascii
 Instead of displaying Matrix glyphs, display random ASCII characters.
 .TP 8
-.B \-mode pipe
+.B \-\-mode pipe
 Instead of displaying random characters, display the output of a subprocess,
 as ASCII.
 .TP 8
-.B \-program \fIsh-command\fP
+.B \-\-program \fIsh-command\fP
 The command to run to generate the text to display.  This option may
 be any string acceptable to /bin/sh.  The program will be run at the
 end of a pty or pipe, and any characters that it prints to
@@ -120,6 +124,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR glmatrix (MANSUFFIX),
 .BR X (1),

@@ -2,9 +2,9 @@
 
 <screensaver name="testx11" _label="Test X11">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

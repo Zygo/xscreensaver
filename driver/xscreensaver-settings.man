@@ -3,9 +3,9 @@
 xscreensaver-settings - configure and control the xscreensaver daemon
 .SH SYNOPSIS
 .B xscreensaver\-settings
-[\-display \fIhost:display.screen\fP]
-[\-prefs]
-[\-debug]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-prefs]
+[\-\-debug]
 .SH DESCRIPTION
 The \fIxscreensaver\-settings\fP program is a graphical front-end for 
 setting the parameters used by the
@@ -23,20 +23,20 @@ All of these commands are on either the \fBFile\fP or \fBHelp\fP menus:
 Activates the background \fIxscreensaver\fP daemon, which will then run
 a demo at random.  This is the same as running
 .BR xscreensaver\-command (1)
-with the \fI\-activate\fP option.
+with the \fI\-\-activate\fP option.
 .TP 4
 .B Lock Screen Now
 Just like \fBBlank Screen Now\fP, except the screen will be locked as 
 well (even if it is not configured to lock all the time.)  This is the
 same as running
 .BR xscreensaver\-command (1)
-with the \fI\-lock\fP option.
+with the \fI\-\-lock\fP option.
 .TP 4
 .B Kill Daemon
 If the xscreensaver daemon is running on this screen, kill it.
 This is the same as running
 .BR xscreensaver\-command (1)
-with the \fI\-exit\fP option.
+with the \fI\-\-exit\fP option.
 .TP 4
 .B Restart Daemon
 If the xscreensaver daemon is running on this screen, kill it.
@@ -293,16 +293,16 @@ file, or the X resource database.
 .I xscreensaver\-settings
 accepts the following command line options.
 .TP 8
-.B \-display \fIhost:display.screen\fP
+.B \-\-display \fIhost:display.screen\fP
 The X display to use.  The \fIxscreensaver\-settings\fP program will open its
 window on that display, and also control the \fIxscreensaver\fP daemon that
 is managing that same display.
 .TP 8
-.B \-prefs
+.B \-\-prefs
 Start up with the \fBAdvanced\fP tab selected by default
 instead of the \fBDisplay Modes\fP tab.
 .TP 8
-.B \-debug
+.B \-\-debug
 Causes lots of diagnostics to be printed on stderr.
 .PP
 The \fIxscreensaver\fP and \fIxscreensaver\-settings\fP processes must run
@@ -343,7 +343,7 @@ and a FAQ can always be found at https://www.jwz.org/xscreensaver/
 .BR xscreensaver\-getimage\-video (MANSUFFIX),
 .BR xscreensaver\-text (MANSUFFIX)
 .SH COPYRIGHT
-Copyright \(co 1992-2021 by Jamie Zawinski.
+Copyright \(co 1992-2022 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that
@@ -352,6 +352,6 @@ supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@jwz.org>, 13-aug-1992.
+Jamie Zawinski <jwz@jwz.org>.
 
 Please let me know if you find any bugs or make any improvements.

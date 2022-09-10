@@ -3,9 +3,11 @@
 hopalong \- draw real plane fractals
 .SH SYNOPSIS
 .B hopalong
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-jong] [\-no\-jong] [\-jong] [\-no\-sine]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install] [\-\-visual \fIvisual\fP] [\-\-ncolors \fIinteger\fP] [\-\-delay \fImicroseconds\fP] [\-\-cycles \fIinteger\fP] [\-\-count \fIinteger\fP] [\-\-jong] [\-\-no\-jong] [\-\-jong] [\-\-no\-sine]
 
-[\-fps]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIhop\fP program generates real plane fractals as described in
 the September 1986 issue of Scientific American.
@@ -13,46 +15,49 @@ the September 1986 issue of Scientific American.
 .I hopalong
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-ncolors \fIinteger\fP
+.B \-\-ncolors \fIinteger\fP
 How many colors should be used (if possible).  Default 200.
 The colors used cycle through the hue, making N stops around
 the color wheel.
 .TP 8
-.B \-cycles \fIinteger\fP
+.B \-\-cycles \fIinteger\fP
 How long to run each batch.  Default 2500 pixels.
 .TP 8
-.B \-count \fIinteger\fP
+.B \-\-count \fIinteger\fP
 How many pixels should be drawn before a color change.  Default 1000.
 .TP 8
-.B \-jong \fIinteger\fP
+.B \-\-jong \fIinteger\fP
 .TP 8
-.B \-no\-jong \fIinteger\fP
+.B \-\-no\-jong \fIinteger\fP
 Whether to use the Jong format (default is to choose randomly.)
 
 .TP 8
-.B \-sine \fIinteger\fP
+.B \-\-sine \fIinteger\fP
 .TP 8
-.B \-no\-sine \fIinteger\fP
+.B \-\-no\-sine \fIinteger\fP
 Whether to use the Sine format (default is to choose randomly.)
 
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -63,6 +68,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

@@ -3,19 +3,20 @@
 boxfit \- fills space with a gradient of growing boxes or circles.
 .SH SYNOPSIS
 .B boxfit
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fIusecs\fP]
-[\-count \fIint\fP]
-[\-growby \fIint\fP]
-[\-spacing \fIint\fP]
-[\-border \fIint\fP]
-[\-circles | \-squares | \-random]
-[\-grab]
-[\-peek]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-count \fIint\fP]
+[\-\-growby \fIint\fP]
+[\-\-spacing \fIint\fP]
+[\-\-border \fIint\fP]
+[\-\-circles | \-\-squares | \-\-random]
+[\-\-grab]
+[\-\-peek]
+[\-\-fps]
 .SH DESCRIPTION
 Packs the screen with growing boxes or circles, colored according to a
 horizontal or vertical gradient.  The objects grow until they touch,
@@ -23,39 +24,42 @@ then stop.  When the screen is full, they shrink away and the process
 restarts.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 20000, or about 0.02 seconds.
 .TP 8
-.B \-count \fIint\fP
+.B \-\-count \fIint\fP
 How many boxes or circles to animate simultaneously; default 50.
 Smaller numbers yield larger boxes/circles.
 .TP 8
-.B \-growby \fIint\fP
+.B \-\-growby \fIint\fP
 How many pixels the objects should grow by, each frame.  Default 1.
 .TP 8
-.B \-spacing \fIint\fP
+.B \-\-spacing \fIint\fP
 How many pixels of space should be left between the objects.  Default 1.
 .TP 8
-.B \-border \fIint\fP
+.B \-\-border \fIint\fP
 Thickness of the colored border around each object.  Default 1.
 .TP 8
-.B \-circles\fB | \-squares\fP | \-random\fP
+.B \-\-circles\fB | \-\-squares\fP | \-\-random\fP
 Draw circles, squares, or choose randomly (the default).
 .TP 8
-.B \-grab
+.B \-\-grab
 Normally it colors the boxes with a horizontal or vertical gradient.
-If \fI\-grab\fP is specified, it will instead load a random image,
+If \fI\-\-grab\fP is specified, it will instead load a random image,
 and color the boxes according to the colors in that image.
 As the picture fills in, some features of the underlying image
 may become recognisable.
@@ -69,12 +73,12 @@ file; see
 .BR xscreensaver\-settings (1)
 for more details.
 .TP 8
-.B \-peek
+.B \-\-peek
 This option says to briefly show you the underlying image before
 beginning.  The default is not to show the unadulterated image at all.
-(This only has an effect when \fI\-grab\fP is used.)
+(This only has an effect when \fI\-\-grab\fP is used.)
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -85,6 +89,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

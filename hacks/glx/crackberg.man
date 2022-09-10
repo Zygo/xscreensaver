@@ -3,24 +3,25 @@
 crackberg \- Lose your way wandering some height fields, and enjoy candy.
 .SH SYNOPSIS
 .B crackberg
-[\-root]
-[\-window]
-[\-install]
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window-id \fIid\fP]
-[\-delay \fIusecs\fP]
-[\-fps]
-[\-crack]
-[\-lit]
-[\-boring]
-[\-letterbox]
-[\-flat]
-[\-wire]
-[\-nowater]
-[\-visibility \fIfloat\fP]
-[\-color \fIstring\fP]
-[\-nsubdivs \fIinteger\fP]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-window]
+[\-\-install]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window-id \fIid\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-fps]
+[\-\-crack]
+[\-\-lit]
+[\-\-boring]
+[\-\-letterbox]
+[\-\-flat]
+[\-\-wire]
+[\-\-nowater]
+[\-\-visibility \fIfloat\fP]
+[\-\-color \fIstring\fP]
+[\-\-nsubdivs \fIinteger\fP]
 .SH DESCRIPTION
 Flies through height maps, optionally animating the instantiation and
 destruction of generated tiles; by default, tiles 'grow' into place (height
@@ -42,58 +43,61 @@ Return to automatic control.
 .I crackberg
 accepts the following options:
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-window
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual
 class, or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 Delay between frames; default 20000 (1/50th of a second).
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .TP 8
-.B \-crack
+.B \-\-crack
 Use all possible methods to animate tile instantiation.
 .TP 8
-.B \-boring
+.B \-\-boring
 Do not animate instatiation at all; use this to get standard landscape 
 generator behavior.
 .TP 8
-.B \-letterbox
+.B \-\-letterbox
 Drawable window region has a 16:9 aspect ratio, regardless of actual
 window size.
 .TP 8
-.B \-lit
+.B \-\-lit
 Enable lighting.
 .TP 8
-.B \-flat
+.B \-\-flat
 Flat shading (OpenGL will use one color per primitive, rather than
 interpolating betwixt vertices).
 .TP 8
-.B \-wire
+.B \-\-wire
 Wireframe.
 .TP 8
-.B \-nowater
+.B \-\-nowater
 Do not display 'water' (forces negative values to zero, and selects a 
 different coloring method).
 .TP 8
-.B \-visibility \fIfloat\fP
+.B \-\-visibility \fIfloat\fP
 Value in range [0.2,1.0] (default 0.6) specifying proportion of viewable 
 XY plane which is to be drawn upon.
 .TP 8
-.B \-color \fIstring\fP
+.B \-\-color \fIstring\fP
 Selects color scheme.  Use with no or bogus argument for current list.
 .TP 8
-.B \-nsubdivs \fIinteger\fP
+.B \-\-nsubdivs \fIinteger\fP
 Number of times to recursively subdivide each triangular tile.  Each 
 increment increases total triangles by a factor of 4; for instance the default
 setting 4 results in 256 triangles per tile.
@@ -107,6 +111,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

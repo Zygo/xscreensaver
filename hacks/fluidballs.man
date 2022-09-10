@@ -3,19 +3,20 @@
 fluidballs \- the physics of bouncing balls.
 .SH SYNOPSIS
 .B fluidballs
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-count \fInumber\fP]
-[\-size \fInumber\fP]
-[\-gravity \fInumber\fP]
-[\-wind \fInumber\fP]
-[\-elasticity \fInumber\fP]
-[\-delay \fInumber\fP]
-[\-nonrandom]
-[\-no-shake]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-count \fInumber\fP]
+[\-\-size \fInumber\fP]
+[\-\-gravity \fInumber\fP]
+[\-\-wind \fInumber\fP]
+[\-\-elasticity \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-nonrandom]
+[\-\-no-shake]
+[\-\-fps]
 .SH DESCRIPTION
 Models the physics of bouncing balls, or of particles in a gas or fluid,
 depending on the settings. If "Shake Box" is selected, then every now and
@@ -23,46 +24,49 @@ then, the box will be rotated, changing which direction is down (in order
 to keep the settled balls in motion.) 
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-count \fInumber\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-count \fInumber\fP
 How many balls to display.  Default: 300.
 .TP 8
-.B \-size \fInumber\fP
+.B \-\-size \fInumber\fP
 Maximum size of each ball.  Default: 25.
 .TP 8
-.B \-gravity \fInumber\fP
+.B \-\-gravity \fInumber\fP
 Coefficient of gravity.  Useful values are < 0.1.  Default: 0.01.
 .TP 8
-.B \-wind \fInumber\fP
+.B \-\-wind \fInumber\fP
 Wind.  Useful values are < 0.1.  Default: 0.00.
 .TP 8
-.B \-elasticity \fInumber\fP
+.B \-\-elasticity \fInumber\fP
 Coefficient of elasticity.  Useful values are 0.2 to 1.0.  Default: 0.97.
 Lower numbers make less bouncy balls.
 .TP 8
-.B \-delay \fInumber\fP
+.B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
-.B \-nonrandom
+.B \-\-nonrandom
 Make all balls be the same size.
 .TP 8
-.B \-no-nonrandom
+.B \-\-no-nonrandom
 Make the balls be random sizes.  Default.
 .TP 8
-.B \-shake | \-no-shake
+.B \-\-shake | \-\-no-shake
 Whether to shake the box if the system seems to have settled down.
 "Shake" means "change the direction of Down."
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -73,6 +77,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

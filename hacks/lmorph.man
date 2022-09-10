@@ -3,8 +3,10 @@
 lmorph \- morphing lines
 .SH SYNOPSIS
 .B lmorph
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-steps \fIint\fP] [\-delay \fIusecs\fP] [\-figtype \fItype\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install] [\-\-visual \fIvisual\fP] [\-\-points \fIint\fP] [\-\-steps \fIint\fP] [\-\-delay \fIusecs\fP] [\-\-figtype \fItype\fP]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIlmorph\fP program generates random spline-ish line drawings and
 morphs between them.
@@ -12,41 +14,44 @@ morphs between them.
 .I lmorph
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window. This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use. Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-points \fIinteger\fP
+.B \-\-points \fIinteger\fP
 Number of points in each line drawing. Default is 200 points.
 .TP 8
-.B \-steps \fIinteger\fP
+.B \-\-steps \fIinteger\fP
 Interpolation steps from one drawing to the next. Default is 150. You
 may specify 0, to get a random number between 100 and 500.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 70000.
 .TP 8
-.B \-figtype \fItype\fP
+.B \-\-figtype \fItype\fP
 Limit the figures to only open or closed figures. Possible types are
 "all" (default), "open" and "closed".
 .TP 8
-.B \-linewidth \fIinteger\fP
+.B \-\-linewidth \fIinteger\fP
 Width of lines. Default is 5 pixels.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -57,6 +62,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

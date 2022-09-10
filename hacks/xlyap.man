@@ -4,40 +4,36 @@ xlyap \- display an array of Lyapunov exponents graphically
 .SH SYNOPSIS
 .in +8n
 .ti -8n
-\fIxlyap\fR
-[-BLps][-W width][-H height][-o filename][-a 
-\fIn\fR ]
-[-b 
-\fIn\fR ]
-[-w 
-\fIn\fR ]
-[-h 
-\fIn\fR ]
-[-i xstart]
-[-M 
-\fIn\fR ]
-[-R 
-\fIp\fR ]
-[-S 
-\fIn\fR ]
-[-D 
-\fIn\fR ]
-[-F string][-f string][-r 
-\fIn\fR ]
-[-O 
-\fIn\fR ]
-[-C 
-\fIn\fR ]
-[-c 
-\fIn\fR ]
-[-m 
-\fIn\fR ]
-[-x xpos]
-[-y ypos]
-.in -8n
-[\-fps]
+\fIxlyap\fP
+[-BLps]
+[-W \fIwidth\fP]
+[-H \fIheight\fP]
+[-o \fIfilename\fP]
+[-a \fIn\fP]
+[-b \fIn\fP]
+[-w \fIn\fP]
+[-h \fIn\fP]
+[-i \fIxstart\fP]
+[-M \fIn\fP]
+[-R \fIp\fP]
+[-S \fIn\fP]
+[-D \fIn\fP]
+[-F \fIstring\fP]
+[-f \fIstring\fP]
+[-r \fIn\fP]
+[-O \fIn\fP]
+[-C \fIn\fP]
+[-c \fIn\fP]
+[-m \fIn\fP]
+[-x \fIxpos\fP]
+[-y \fIypos\fP]
+[\-\-fps]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
 .SH DESCRIPTION
-\fIxlyap\fR
+\fIxlyap\fP
 generates and graphically displays an array of Lyapunov exponents for a 
 variety of iterated periodically forced non-linear maps of the unit interval.
 .SH OPTIONS
@@ -136,7 +132,19 @@ Prints out the various values to be used and exits.
 -w \fIr\fP
 Specifies the real value to be used as the range over which the horizontal
 parameter values vary. The default is 1.0.
-.sp 2
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
 .SH NOTES
 .sp
 During display, pressing any mouse button allows you to select the area to
@@ -200,16 +208,29 @@ indicates:
 (X or x) Clear window
 .ti 10
 (Q or q) quit
-.sp 2
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
 .SH AUTHOR
 .nf
-        Ronald Joe Record
-     The Santa Cruz Operation 
-          P.O. Box 1900
-       Santa Cruz, CA 95061
-            rr@sco.com
+Ronald Joe Record
+The Santa Cruz Operation 
+P.O. Box 1900
+Santa Cruz, CA 95061
+rr@sco.com
 .fi
-.sp 2
 .SH ACKNOWLEDGEMENTS
 .PP
 The algorithm was taken from the September 1991 Scientific American article

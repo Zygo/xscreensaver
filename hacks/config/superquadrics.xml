@@ -2,29 +2,29 @@
 
 <screensaver name="superquadrics" _label="Superquadrics" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=Mjlc7iPA1N4"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="40000"
           convert="invert"/>
 
-  <number id="spinspeed" type="slider" arg="-spinspeed %"
+  <number id="spinspeed" type="slider" arg="--spinspeed %"
           _label="Spin speed" _low-label="Slow" _high-label="Fast"
           low="0.1" high="15.0" default="5.0"/>
 
-  <number id="count" type="slider" arg="-count %"
+  <number id="count" type="slider" arg="--count %"
            _label="Density" _low-label="Low" _high-label="High"
           low="0" high="100" default="25"/>
 
-  <number id="cycles" type="slider" arg="-cycles %"
+  <number id="cycles" type="slider" arg="--cycles %"
            _label="Duration" _low-label="Short" _high-label="Long"
           low="0" high="100" default="40"/>
 
-  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="wire"    _label="Wireframe"              arg-set="--wireframe"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

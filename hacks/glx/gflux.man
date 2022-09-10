@@ -3,41 +3,45 @@
 gflux \- rippling surface graphics hack
 .SH SYNOPSIS
 .B gflux
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
-[\-squares \fInum\fP] [\-resolution \fInum\fP] [\-mode \fImode\fP]
-[\-flat \fInum\fP] [\-speed \fInum\fP]
-[\-rotationx \fInum\fP] [\-rotationy \fInum\fP] [\-rotationz \fInum\fP]
-[\-waves \fInum\fP] [\-waveChange \fInum\fP] [\-waveHeight \fInum\fP]
-[\-waveFreq \fInum\fP] [\-zoom \fInum\fP]
-[\-wireframe]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] [\-\-delay \fImicroseconds\fP]
+[\-\-squares \fInum\fP] [\-\-resolution \fInum\fP] [\-\-mode \fImode\fP]
+[\-\-flat \fInum\fP] [\-\-speed \fInum\fP]
+[\-\-rotationx \fInum\fP] [\-\-rotationy \fInum\fP] [\-\-rotationz \fInum\fP]
+[\-\-waves \fInum\fP] [\-\-waveChange \fInum\fP] [\-\-waveHeight \fInum\fP]
+[\-\-waveFreq \fInum\fP] [\-\-zoom \fInum\fP]
+[\-\-wireframe]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIgflux\fP program draws a colourfull animated rippling square rotating in 3D space.
 .SH OPTIONS
 .I gflux
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-squares \fInum\fP\fP
+.B \-\-squares \fInum\fP\fP
 Specifies the size of the grid in squares. default 19
 .TP 8
-.B \-resolution \fInum\fP\fP
+.B \-\-resolution \fInum\fP\fP
 Specifies the wireframe detail of the squares. default 4
 .TP 8
-.B \-mode \fImode\fP\fP
+.B \-\-mode \fImode\fP\fP
 Specifies the draw method: wireframe; solid (meaning a solid colored
 surface); light (same as solid, but with lighting effects);
 checker (a texture-mapped checkerboard pattern); or grab (meaning
@@ -52,37 +56,37 @@ file; see
 .BR xscreensaver\-settings (1)
 for more details.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Same as "-mode wire".
 .TP 8
-.B \-flat \fInum\fP\fP
+.B \-\-flat \fInum\fP\fP
 0 for smooth shading 1 for flat. default 0
 .TP 8
-.B \-speed \fInum\fP\fP
+.B \-\-speed \fInum\fP\fP
 Specifies speed of ripples flowing over the surface. default 0.05
 .TP 8
-.B \-rotationx \fInum\fP \-rotationy \fInum\fP \-rotationz \fInum\fP\fP
+.B \-\-rotationx \fInum\fP \-\-rotationy \fInum\fP \-\-rotationz \fInum\fP\fP
 Specifies the speed of rotation of the surface in these axis 
 .TP 8
-.B \-waves \fInum\fP\fP
+.B \-\-waves \fInum\fP\fP
 Specifies the number of ripple centres at any one time.  Values should be greater than 1.  default 3
 .TP 8
-.B \-waveChange \fInum\fP\fP
+.B \-\-waveChange \fInum\fP\fP
 Specifies the duration of a ripple centre.  after this they fade away to be reborn elsewhere with a different frequency. default 50
 .TP 8
-.B \-waveHeight \fInum\fP\fP
+.B \-\-waveHeight \fInum\fP\fP
 Specifies the height of ripples on the surface. default 1.0
 .TP 8
-.B \-waveFreq \fInum\fP\fP
+.B \-\-waveFreq \fInum\fP\fP
 Specifies the maximum frequency of ripples. default 3.0
 .TP 8
-.B \-zoom \fInum\fP\fP
+.B \-\-zoom \fInum\fP\fP
 Specifies the size of the viewport. Smaller values fill the screen with rippling surface. default 1.0
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How long to pause between frames.  Default is 20000, or 0.02 second.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -93,6 +97,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

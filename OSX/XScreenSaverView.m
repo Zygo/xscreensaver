@@ -1642,7 +1642,7 @@ gl_check_ver (const struct gl_version *caps,
   jwxyz_window_resized (xdpy);
 
 # if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
-  NSLog(@"reshape %.0fx%.0f", new_size.width, new_size.height);
+  NSLog(@"reshape %.0fx%.0f %.1fx", new_size.width, new_size.height, s);
 # endif
 
   // Next time render_x11 is called, run the saver's reshape_cb.

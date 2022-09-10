@@ -3,12 +3,13 @@
 pong \- Pong Home Video Game Emulator
 .SH SYNOPSIS
 .B pong
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP]
-[\-clock \fIfloat\fP]
-[\-noise]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install]
+[\-\-visual \fIvisual\fP]
+[\-\-clock \fIfloat\fP]
+[\-\-noise]
+[\-\-fps]
 .SH DESCRIPTION
 The
 .I pong 
@@ -18,32 +19,35 @@ artifacts from displaying it on a color TV set.
 .I pong
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-clock
+.B \-\-clock
 The score of the game will be the current time.
 .TP 8
-.B \-noise \fIfloat\fP
+.B \-\-noise \fIfloat\fP
 How noisy the video signal should be (between 0.0 and 4.0 or so).
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .TP 8
-.B (\-p1 | \-p2) \fImode\fP
+.B (\-p1 | \-\-p2) \fImode\fP
 Set a player to either \fIai\fP, \fImouse\fP, \fItablet\fP, \fIkbleft\fP (for W and S), or
 \fIkbright\fP (or just \fIkb\fP, for arrow keys).
 .SH ENVIRONMENT
@@ -55,6 +59,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH X RESOURCES
 Notable X resources supported include the following which correspond
 to standard TV controls:

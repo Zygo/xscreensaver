@@ -3,55 +3,59 @@
 scooter \- shows a journey through space tunnel and stars
 .SH SYNOPSIS
 .B scooter
-[\-display \fIhost:display.screen\fP]
-[\-mono]
-[\-delay \fImillisecs\fP]
-[\-cycles \fIcycles\fP]
-[\-count \fIcount\fP]
-[\-size \fIsize\fP]
-[\-ncolors \fIcolors\fP]
-[\-window] [\-root] [\-install | \-noinstall] [\-visual \fIvisual\fP]
-[\-fps | \-no\-fps]
-[\-pair]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-mono]
+[\-\-delay \fImillisecs\fP]
+[\-\-cycles \fIcycles\fP]
+[\-\-count \fIcount\fP]
+[\-\-size \fIsize\fP]
+[\-\-ncolors \fIcolors\fP]
+[\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install | \-\-noinstall] [\-\-visual \fIvisual\fP]
+[\-\-fps | \-\-no\-fps]
+[\-\-pair]
 .SH DESCRIPTION
 \fIscooter\fP is a screensaver that shows endless journey through space tunnel and stars.
 .SH OPTIONS
 .I scooter
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImilliseconds\fP
+.B \-\-delay \fImilliseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 10, or about 1/100th second.
 .TP 8
-.B \-cycles \fIcycles\fP
+.B \-\-cycles \fIcycles\fP
 How fast/slow the screensaver is. \fIcycles\fP takes number of cycles. The default is 5 cycles.
 .TP 8
-.B \-count \fIcount\fP
+.B \-\-count \fIcount\fP
 Specifies how many doors in a tunnel can be rendered. Minimum is 4. Default is 24.
 .TP 8
-.B \-size \fIsize\fP
+.B \-\-size \fIsize\fP
 Specifies how many stars outside the tunnel can be rendered. Default is 100.
 .TP 8
-.B \-ncolors \fIcolors\fP
-Specifies number of colors. A number that is less than or equals 2 means monochrome. \-mono achieves the same thing.
+.B \-\-ncolors \fIcolors\fP
+Specifies number of colors. A number that is less than or equals 2 means monochrome. \-\-mono achieves the same thing.
 .TP 8
-.B \-pair
+.B \-\-pair
 Start screensaver in pairs (Not recommended)
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -62,6 +66,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

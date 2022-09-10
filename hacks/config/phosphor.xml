@@ -2,21 +2,21 @@
 
 <screensaver name="phosphor" _label="Phosphor">
 
- <command arg="-root"/>
+ <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=G6ZWTrl7pV0"/>
 
  <hgroup>
   <vgroup>
-   <number id="delay" type="slider" arg="-delay %"
+   <number id="delay" type="slider" arg="--delay %"
            _label="Frame rate" _low-label="Low" _high-label="High"
            low="0" high="100000" default="50000"
            convert="invert"/>
 
-   <number id="scale" type="spinbutton" arg="-scale %"
+   <number id="scale" type="spinbutton" arg="--scale %"
            _label="Font scale" low="1" high="20" default="6"/>
 
-   <number id="fade" type="slider" arg="-ticks %"
+   <number id="fade" type="slider" arg="--ticks %"
            _label="Fade" _low-label="Slow" _high-label="Fast"
            low="1" high="100" default="20"
            convert="invert"/>
@@ -24,11 +24,11 @@
    <select id="fg">
     <option id="green" _label="Green" />
     <!-- DarkOrange is probably the closest named color. -->
-    <option id="DarkOrange" _label="Amber" arg-set="-fg #ff7900" />
-    <option id="white" _label="White" arg-set="-fg white" />
+    <option id="DarkOrange" _label="Amber" arg-set="--fg #ff7900" />
+    <option id="white" _label="White" arg-set="--fg white" />
    </select>
 
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   </vgroup>
   <vgroup>
    <xscreensaver-text />

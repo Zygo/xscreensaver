@@ -3,12 +3,13 @@
 squiral \- square spirals screensaver
 .SH SYNOPSIS
 .B squiral
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-noinstall] [\-visual \fIvisual\fP] [\-fill \fIpercent\fP] [-count
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install]
+[\-\-noinstall] [\-\-visual \fIvisual\fP] [\-\-fill \fIpercent\fP] [-count
 \fInumber\fP] [-delay \fIusec\fP] [-disorder \fIfraction\fP] [-handedness
 \fIfraction\fP] [-cycle]
-[\-fps]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIsquiral\fP program displays interacting, spiral-producing automata
 
@@ -16,42 +17,45 @@ The \fIsquiral\fP program displays interacting, spiral-producing automata
 .I squiral
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-fill \fIpercent\fP
+.B \-\-fill \fIpercent\fP
 Specify the percent (0-100) of the screen which must be filled before
 the screen is cleared.  60-80 percent are good values.
 .TP 8
-.B \-count \fInumber\fP
+.B \-\-count \fInumber\fP
 The number of squiralies.  By default, the screen width divided by 32.
 .TP 8
-.B \-delay \fIusec\fP
+.B \-\-delay \fIusec\fP
 The wait between steps.  The default is 1000.
 .TP 8
-.B \-disorder \fIfraction\fP
+.B \-\-disorder \fIfraction\fP
 The fraction of the time a squiraly will choose a new direction.
 The default is 0.005.
 .TP 8
-.B \-handedness \fIfraction\fP
+.B \-\-handedness \fIfraction\fP
 The fraction of the time a squiraly will choose to enter lefthanded
 mode.  0.0 means exclusively right-handed behavior, 0.5 (the default) is
 a balance between the two, and 1.0 is exclusively left-handed behaviour.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -62,6 +66,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH BUGS
 None known
 .SH SEE ALSO

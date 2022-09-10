@@ -2,19 +2,19 @@
 
 <screensaver name="whirlwindwarp" _label="Whirlwind Warp">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=eWrRhSYzimY"/>
 
-  <number id="points" type="slider" arg="-points %"
+  <number id="points" type="slider" arg="--points %"
           _label="Particles" _low-label="Few" _high-label="Many"
           low="10" high="1000" default="400"/>
 
-  <number id="tails" type="slider" arg="-tails %"
+  <number id="tails" type="slider" arg="--tails %"
           _label="Trail size" _low-label="Short" _high-label="Long"
           low="1" high="50" default="8"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

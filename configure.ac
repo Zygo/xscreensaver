@@ -32,7 +32,7 @@ fi
 ###############################################################################
 
 AH_TOP([
-/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski.
+/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski.
  * Generate this file by running 'configure' rather than editing it by hand.
  */
 ])
@@ -163,15 +163,15 @@ AH_TEMPLATE([HAVE_XMCOMBOBOX],
 	    [Define this if you have the XmComboBox Motif 2.0 widget.])
 
 AH_TEMPLATE([HAVE_GTK],
-            [Define this if you have Gtk])
-AH_TEMPLATE([HAVE_GTK2],
             [Define this if you have Gtk 2.x.])
 
 AH_TEMPLATE([HAVE_XML],
             [Define this if you have the XML library.])
 
 AH_TEMPLATE([HAVE_GDK_PIXBUF],
-	    [Define this if you have GDK_Pixbuf.])
+	    [Define this if you have GDK-Pixbuf.])
+AH_TEMPLATE([HAVE_GDK_PIXBUF_XLIB],
+	    [Define this if you have GDK-Pixbuf-Xlib.])
 
 AH_TEMPLATE([HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION],
 	    [Define this if you have the gdk_pixbuf_apply_embedded_orientation
@@ -1126,6 +1126,9 @@ AC_MSG_RESULT($ac_macosx)
 #       pkg-config
 #
 ###############################################################################
+
+# Note: In the decades since I wrote this, PKG_CHECK_MODULES came into
+# existence, which could probably simplify the following quite a bit.
 
 AC_PATH_TOOL(pkg_config, pkg-config)
 
@@ -2791,13 +2794,14 @@ gtk_halfassed=no
 if test "$with_gtk" = yes; then
   have_gtk=no
   
+  pkgs=''
   ok="yes"
-  pkg_check_version            gtk+-2.0  2.22.0 ; ac_gtk_version_string="$vers"
-  pkg_check_version         gmodule-2.0  2.0.0
-  pkg_check_version          libxml-2.0  2.4.6
-  pkg_check_version      gdk-pixbuf-2.0  2.0.0
-  pkg_check_version gdk-pixbuf-xlib-2.0  2.0.0
+  pkg_check_version       gtk+-3.0  2.22.0 ; ac_gtk_version_string="$vers"
+  pkg_check_version    gmodule-2.0  2.0.0
+  pkg_check_version     libxml-2.0  2.4.6
+  pkg_check_version gdk-pixbuf-2.0  2.0.0
   have_gtk="$ok"
+  gtk_pkgs="$pkgs"
 
   if test "$have_gtk" = no; then
     if test -n "$ac_gtk_version_string" ; then
@@ -2826,9 +2830,15 @@ if test "$with_gtk" = yes; then
     INCLUDES="$INCLUDES $ac_gtk_config_cflags"
     GTK_LIBS="$GTK_LIBS $ac_gtk_config_libs"
     AC_DEFINE(HAVE_GTK)
-    AC_DEFINE(HAVE_GTK2)
     AC_DEFINE(HAVE_XML)
   fi
+
+  if test "$have_gtk" = yes; then
+    AC_CACHE_CHECK([for Glib resource compiler], ac_cv_glib_res,
+     [ac_cv_glib_res=`$pkg_config --variable=glib_compile_resources gio-2.0`])
+    GLIB_COMPILE_RESOURCES="$ac_cv_glib_res"
+  fi
+
 fi
 
 
@@ -3779,6 +3789,7 @@ fi
 ###############################################################################
 
 have_gdk_pixbuf=no
+have_gdk_pixbuf_xlib=no
 with_gdk_pixbuf_req=unspecified
 AC_ARG_WITH(pixbuf,
 [  --with-pixbuf           Include support for the GDK-Pixbuf library, which
@@ -3809,11 +3820,10 @@ if test "$with_gdk_pixbuf" = yes; then
 
   pkgs=''
   ok="yes"
-
-  pkg_check_version gdk-pixbuf-2.0      2.0.0
-  pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
-  pkg_check_version gio-2.0             2.0.0
+  pkg_check_version gdk-pixbuf-2.0  2.0.0
+  pkg_check_version gio-2.0         2.0.0
   have_gdk_pixbuf="$ok"
+  pixbuf_pkgs="$pkgs"
 
   if test "$have_gdk_pixbuf" = yes; then
     AC_CACHE_CHECK([for gdk-pixbuf includes], ac_cv_gdk_pixbuf_config_cflags,
@@ -3832,50 +3842,17 @@ if test "$with_gdk_pixbuf" = yes; then
     #
     ac_save_gdk_pixbuf_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_config_cflags"
-
     have_gdk_pixbuf=no
-
-    # check for header A...
     AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf.h, [have_gdk_pixbuf=yes])
-
-    # if that worked, check for header B...
-    if test "$have_gdk_pixbuf" = yes; then
-      have_gdk_pixbuf=no
-      gdk_pixbuf_halfassed=yes
-      AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf-xlib.h,
-                        [have_gdk_pixbuf=yes
-                         gdk_pixbuf_halfassed=no])
-
-      # yay, it has a new name in Gtk 2.x...
-      if test "$have_gdk_pixbuf" = no; then
-        have_gdk_pixbuf=no
-        gdk_pixbuf_halfassed=yes
-        AC_CHECK_X_HEADER(gdk-pixbuf-xlib/gdk-pixbuf-xlib.h,
-                          [have_gdk_pixbuf=yes
-                           gdk_pixbuf_halfassed=no])
-      fi
-    fi
     CPPFLAGS="$ac_save_gdk_pixbuf_CPPFLAGS"
   fi
 
   if test "$have_gdk_pixbuf" = yes; then
     # we have the headers, now check for the libraries
     have_gdk_pixbuf=no
-    gdk_pixbuf_halfassed=yes
-
     AC_MSG_RESULT(checking for gdk_pixbuf usability...)
-
-    # library A...
     AC_CHECK_X_LIB(c, gdk_pixbuf_new_from_file, [have_gdk_pixbuf=yes],,
                    $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm)
-    # library B...
-    if test "$have_gdk_pixbuf" = yes; then
-      have_gdk_pixbuf=no
-      AC_CHECK_X_LIB(c, gdk_pixbuf_xlib_init,
-                     [have_gdk_pixbuf=yes
-                      gdk_pixbuf_halfassed=no],,
-                     $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm)
-    fi
   fi
 
   if test "$have_gdk_pixbuf" = yes; then
@@ -3892,6 +3869,69 @@ if test "$with_gdk_pixbuf" = yes; then
                      $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm)
   fi
 fi
+
+
+# Now that we have checked for gdk_pixbuf, check for gdk_pixbuf_xlib
+# separately, since it has fallen out of fashion in recent years.
+#
+#have_gdk_pixbuf_xlib=no
+#gdk_pixbuf_xlib_halfassed=no
+#if test "$with_gdk_pixbuf" = yes -a "$have_gdk_pixbuf" = yes; then
+#
+#  have_gdk_pixbuf_xlib=no
+#  pkgs="$pixbuf_pkgs"
+#  ok="yes"
+#  pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
+#  pkg_check_version gdk-pixbuf-2.0      2.0.0
+#  have_gdk_pixbuf_xlib="$ok"
+#  pixbuf_xlib_pkgs="$pkgs"
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    AC_CACHE_CHECK([for gdk-pixbuf-xlib includes],
+#                   ac_cv_gdk_pixbuf_xlib_config_cflags,
+#            [ac_cv_gdk_pixbuf_xlib_config_cflags=`$pkg_config --cflags $pkgs`])
+#    AC_CACHE_CHECK([for gdk-pixbuf-xlib libs],
+#                   ac_cv_gdk_pixbuf_xlib_config_libs,
+#               [ac_cv_gdk_pixbuf_xlib_config_libs=`$pkg_config --libs $pkgs`])
+#  fi
+#
+#  ac_gdk_pixbuf_xlib_config_cflags=$ac_cv_gdk_pixbuf_xlib_config_cflags
+#  ac_gdk_pixbuf_xlib_config_libs=$ac_cv_gdk_pixbuf_xlib_config_libs
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    #
+#    # we appear to have pixbuf_xlib; check for headers/libs to be sure.
+#    #
+#    ac_save_gdk_pixbuf_xlib_CPPFLAGS="$CPPFLAGS"
+#    CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_xlib_config_cflags"
+#    have_gdk_pixbuf_xlib=no
+#    gdk_pixbuf_xlib_halfassed=yes
+#    AC_CHECK_X_HEADER(gdk-pixbuf-xlib/gdk-pixbuf-xlib.h,
+#                      [have_gdk_pixbuf_xlib=yes
+#                       gdk_pixbuf_xlib_halfassed=no])
+#    CPPFLAGS="$ac_save_gdk_pixbuf_xlib_CPPFLAGS"
+#  fi
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    # we have the headers, now check for the libraries
+#    have_gdk_pixbuf_xlib=no
+#    gdk_pixbuf_xlib_halfassed=yes
+#
+#    AC_MSG_RESULT(checking for gdk_pixbuf_xlib usability...)
+#    AC_CHECK_X_LIB(c, gdk_pixbuf_xlib_init,
+#                   [have_gdk_pixbuf_xlib=yes
+#                    gdk_pixbuf_xlib_halfassed=no],,
+#                    $ac_gdk_pixbuf_xlib_config_libs -lX11 -lXext -lm)
+#  fi
+#
+#  if test "$have_gdk_pixbuf_xlib" = yes; then
+#    INCLUDES="$INCLUDES $ac_gdk_pixbuf_xlib_config_cflags"
+#    PNG_LIBS="$ac_gdk_pixbuf_xlib_config_libs"
+#    AC_DEFINE(HAVE_GDK_PIXBUF_XLIB)
+#  else
+#    AC_MSG_RESULT(checking for gdk_pixbuf_xlib usability... no)
+#  fi
+#fi
 
 
 ###############################################################################
@@ -4306,6 +4346,7 @@ AC_SUBST(SETUID_HACKS)
 AC_SUBST(SETCAP_HACKS)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(INSTALL_PAM)
+AC_SUBST(GLIB_COMPILE_RESOURCES)
 AC_SUBST(HAVE_PAM_FAIL_DELAY)
 AC_SUBST(COMMENT_PAM_CHECK_ACCOUNT)
 AC_SUBST(NEW_LOGIN_COMMAND)
@@ -4528,13 +4569,6 @@ if test "$gtk_halfassed" != no ; then
   warnL "GTK was found, but $gtk_halfassed_lib was not, so GTK"
   warn2 "can't be used."
   CONF_STATUS=1
-
-  if ( echo $gtk_halfassed_lib | grep -qi pixbuf-xlib ); then
-    echo ''
-    warn2 "Recently, some distros have stopped distributing"
-    warn2 "gdk-pixbuf-xlib entirely.  So good luck with that."
-  fi
-
 fi
 
 motif_warn2() {
@@ -4621,8 +4655,7 @@ if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
   CONF_STATUS=1
 fi
 
-if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
-   test "$have_gdk_pixbuf" = no ; then
+if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes ; then
 
   if test "$with_gdk_pixbuf_req" = yes ; then
     true
@@ -4643,6 +4676,26 @@ if test "$have_gdk_pixbuf" = no -o "$gdk_pixbuf_halfassed" = yes || \
   warn2 'You should consider installing GDK-Pixbuf and re-running'
   warn2 'configure.'
 fi
+
+
+#if test "$have_gdk_pixbuf" = yes -a "$have_gdk_pixbuf_xlib" = no ; then
+#
+#  warnL 'The GDK-Pixbuf-Xlib library was not found.'
+#
+#  if test "$gdk_pixbuf_xlib_halfassed" = yes ; then halfassery ; fi
+#  if test "$have_png" = yes ; then
+#    echo ''
+#    warn2 'The PNG library is being used instead.'
+#  fi
+#
+#  echo ''
+#  warn2 'Some of the demos will not use images as much as they could.'
+#  warn2 'You should consider installing GDK-Pixbuf-Xlib and re-running'
+#  warn2 'configure.'
+#  echo ''
+#  warn2 "Recently, some distros have stopped distributing"
+#  warn2 "GDK-Pixbuf-Xlib entirely.  So good luck with that."
+#fi
 
 
 if test "$have_jpeg" = no ; then

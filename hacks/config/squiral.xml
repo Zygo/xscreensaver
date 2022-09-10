@@ -2,43 +2,41 @@
 
 <screensaver name="squiral" _label="Squiral">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=WPhqyM9Bb4o"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="10000"
             convert="invert"/>
 
-    <number id="disorder" type="slider" arg="-disorder %"
+    <number id="disorder" type="slider" arg="--disorder %"
             _label="Randomness" _low-label="Low" _high-label="High"
             low="0.0" high="0.5" default="0.005"/>
 
-    <number id="count" type="spinbutton" arg="-count %"
+    <number id="count" type="spinbutton" arg="--count %"
             _label="Seeds" low="0" high="200" default="0"/>
 
    </vgroup>
    <vgroup>
-    <number id="handedness" type="slider" arg="-handedness %"
+    <number id="handedness" type="slider" arg="--handedness %"
             _label="Handedness" _low-label="Left" _high-label="Right"
             low="0.0" high="1.0" default="0.5"/>
 
-    <number id="fill" type="slider" arg="-fill %"
+    <number id="fill" type="slider" arg="--fill %"
              _label="Density" _low-label="Sparse" _high-label="Dense"
             low="0" high="100" default="75"/>
 
-    <number id="ncolors" type="slider" arg="-ncolors %"
+    <number id="ncolors" type="slider" arg="--ncolors %"
               _label="Number of colors" _low-label="Two" _high-label="Many"
               low="1" high="255" default="100"/>
    </vgroup>
   </hgroup>
 
-  <!-- #### -cycle -->
-
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

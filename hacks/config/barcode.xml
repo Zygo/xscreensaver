@@ -2,23 +2,23 @@
 
 <screensaver name="barcode" _label="Barcode">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=gmtAySJdsfg"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000"
           convert="invert"/>
 
   <select id="mode">
     <option id="scroll"  _label="Scrolling barcodes"/>
-    <option id="scroll"  _label="Barcode grid"            arg-set="-mode grid"/>
-    <option id="clock12" _label="Barcode clock (AM/PM)"   arg-set="-mode clock12"/>
-    <option id="clock24" _label="Barcode clock (24 hour)" arg-set="-mode clock24"/>
+    <option id="scroll"  _label="Barcode grid"            arg-set="--mode grid"/>
+    <option id="clock12" _label="Barcode clock (AM/PM)"   arg-set="--mode clock12"/>
+    <option id="clock24" _label="Barcode clock (24 hour)" arg-set="--mode clock24"/>
   </select>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

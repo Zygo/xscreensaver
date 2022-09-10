@@ -2,7 +2,7 @@
 
 <screensaver name="apple2" _label="Apple ][">
 
- <command arg="-root"/>
+ <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=p3QZqhp67l8"/>
 
@@ -10,34 +10,34 @@
   <vgroup>
    <select id="mode">
     <option id="random"    _label="Choose display mode randomly"/>
-    <option id="text"      _label="Display scrolling text" arg-set="-mode text"/>
-    <option id="slideshow" _label="Display images"         arg-set="-mode slideshow"/>
-    <option id="basic"     _label="Run basic programs"     arg-set="-mode basic"/>
+    <option id="text"      _label="Display scrolling text" arg-set="--mode text"/>
+    <option id="slideshow" _label="Display images"         arg-set="--mode slideshow"/>
+    <option id="basic"     _label="Run basic programs"     arg-set="--mode basic"/>
    </select>
 
    <xscreensaver-text />
   </vgroup>
   <vgroup>
-   <number id="duration" type="slider" arg="-duration %"
+   <number id="duration" type="slider" arg="--duration %"
            _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
            low="10" high="600" default="60"/>
 
    <xscreensaver-image />
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
    <xscreensaver-updater />
   </vgroup>
 
    <vgroup>
-    <number id="tvcolor" type="slider" arg="-tv-color %"
+    <number id="tvcolor" type="slider" arg="--tv-color %"
             _label="Color Knob" _low-label="Low" _high-label="High"
             low="0" high="400" default="70"/>
-    <number id="tvtint" type="slider" arg="-tv-tint %"
+    <number id="tvtint" type="slider" arg="--tv-tint %"
             _label="Tint Knob" _low-label="Low" _high-label="High"
             low="0" high="360" default="5"/>
-    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+    <number id="tvbrightness" type="slider" arg="--tv-brightness %"
             _label="Brightness Knob" _low-label="Low" _high-label="High"
             low="-75.0" high="100.0" default="3.0"/>
-    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+    <number id="tvcontrast" type="slider" arg="--tv-contrast %"
             _label="Contrast Knob" _low-label="Low" _high-label="High"
             low="0" high="500" default="150"/>
    </vgroup>

@@ -3,8 +3,14 @@
 xjack \- all work and no play makes jack a dull boy
 .SH SYNOPSIS
 .B xjack
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-delay \fIusecs\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-fps]
 .SH DESCRIPTION
 All work and no play makes jack a dull boy.  All work and no play makes jack
 a dull boy.  All work and no play makes jack a dull boy.  All work and no
@@ -38,6 +44,10 @@ All work and no play makes jack a dull boy.
 .TP 8
 .B XENVIRONMENT
 All work and no play makes jack a dull boy.  All work and no play makes jack
+a dull boy.
+.TP 8
+.B XSCREENSAVER_WINDOW
+All work and no play makes jack a dull boy.
 a dull boy.
 .SH SEE ALSO
 .BR X (1),

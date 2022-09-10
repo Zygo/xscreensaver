@@ -2,44 +2,44 @@
 
 <screensaver name="razzledazzle" _label="Razzle Dazzle" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=tV_70VxJFfs" />
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="30000"
             convert="invert"/>
 
-    <number id="speed" type="slider" arg="-speed %"
+    <number id="speed" type="slider" arg="--speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
             low="0.1" high="10" default="1.0"
             convert="ratio"/>
 
-    <number id="ncolors" type="slider" arg="-ncolors %"
+    <number id="ncolors" type="slider" arg="--ncolors %"
             _label="Colors" _low-label="Mono" _high-label="Many"
             low="2" high="200" default="2"/>
 
    </vgroup>
    <vgroup>
 
-    <number id="density" type="slider" arg="-density %"
+    <number id="density" type="slider" arg="--density %"
             _label="Density" _low-label="Sparse" _high-label="Dense"
             low="1.0" high="10.0" default="5.0"/>
 
-    <number id="thickness" type="slider" arg="-thickness %"
+    <number id="thickness" type="slider" arg="--thickness %"
             _label="Lines" _low-label="Thin" _high-label="Thick"
             low="0.05" high="1.0" default="0.1"/>
 
     <select id="object">
-     <option _label="Ship Outlines" arg-set="-mode ships"/>
-     <option _label="Flat Pattern" arg-set="-mode flat"/>
+     <option _label="Ship Outlines" arg-set="--mode ships"/>
+     <option _label="Flat Pattern" arg-set="--mode flat"/>
      <option id="random" _label="Ships or flat pattern"/>
     </select>
 
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
    </vgroup>
   </hgroup>

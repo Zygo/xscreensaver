@@ -3,19 +3,20 @@
 binaryring \- A system of path tracing particles evolves continuously from an initial creation. 
 .SH SYNOPSIS
 .B binaryring
-[\-fps]
-[\-install]
-[\-noinstall]
-[\-mono]
-[\-root]
-[\-visual \fIvisual\fP]
-[\-window] 
-[\-window\-id \fIwindow\-id\fP]
-[\-color]
-[\-no\-color]
-[\-growth\-delay \fIdelayms\fP]
-[\-particle\-number \fIparticles\fP]
-[\-ring\-radius \fIradius\fP]
+[\-\-fps]
+[\-\-install]
+[\-\-noinstall]
+[\-\-mono]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window] 
+[\-\-window\-id \fIwindow\-id\fP]
+[\-\-color]
+[\-\-no\-color]
+[\-\-growth\-delay \fIdelayms\fP]
+[\-\-particle\-number \fIparticles\fP]
+[\-\-ring\-radius \fIradius\fP]
 .SH DESCRIPTION
 A system of path tracing particles evolves continuously from an
 initial circular creation.  Ages of darkness play arbitrarily with
@@ -24,45 +25,48 @@ ages of light.
 .I binaryring
 accepts the following options:
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-mono
+.B \-\-mono
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-noinstall
+.B \-\-noinstall
 Don't install a private colormap for the window.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-visual \fIvisual\fP
 Specify which visual to use. Legal values are the name of a visual
 class or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window. This is the default.
 .TP 8
-.B \-window\-id \fIwindow\-id\fP
+.B \-\-window\-id \fIwindow\-id\fP
 Specify which window id to use.
 .TP 8
-.B \-color (Default)
+.B \-\-color (Default)
 Particles have random generated colors that gradually change over time.
 .TP 8
-.B \-no\-color
+.B \-\-no\-color
 Use the original black and white visualization.
 .TP 8
-.B \-growth\-delay \fIdelayms\fP (Default: \fI10000\fP)
+.B \-\-growth\-delay \fIdelayms\fP (Default: \fI10000\fP)
 Delay in ms between growth cycles. More delay, slower (but less CPU intensive).
 .TP 8
-.B \-particles\-number \fIparticles\fP (Default: \fI5000\fP)
+.B \-\-particles\-number \fIparticles\fP (Default: \fI5000\fP)
 The number of particles in the system. With more particles the fps
 can also be affected.
 .TP 8
-.B \-ring\-radius \fIradius\fP (Default: \fI40\fP)
+.B \-\-ring\-radius \fIradius\fP (Default: \fI40\fP)
 The radius of the ring where the particles are born, in pixels.
 .SH ENVIRONMENT
 .PP
@@ -73,6 +77,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global
 resources stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

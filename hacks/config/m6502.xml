@@ -2,36 +2,36 @@
 
 <screensaver name="m6502" _label="m6502">
 
-  <command arg="-root" />
+  <command arg="--root" />
 
   <video href="https://www.youtube.com/watch?v=KlDw0nYwUe4"/>
 
-  <file id="file" _label="Assembly file" arg="-file %"/>
+  <file id="file" _label="Assembly file" arg="--file %"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <hgroup>
    <vgroup>
-    <number id="displaytime" type="slider" arg="-displaytime %"
+    <number id="displaytime" type="slider" arg="--displaytime %"
             _label="Display time for each program"
             _low-label="5 seconds" _high-label="2 minutes"
             low="5.0" high="120.0" default="30.0" />
-    <number id="tvcolor" type="slider" arg="-tv-color %"
+    <number id="tvcolor" type="slider" arg="--tv-color %"
             _label="Color Knob" _low-label="Low" _high-label="High"
             low="0" high="400" default="70"/>
-    <number id="tvtint" type="slider" arg="-tv-tint %"
+    <number id="tvtint" type="slider" arg="--tv-tint %"
             _label="Tint Knob" _low-label="Low" _high-label="High"
             low="0" high="360" default="5"/>
    </vgroup>
    <vgroup>
-    <number id="ips" type="slider" arg="-ips %"
+    <number id="ips" type="slider" arg="--ips %"
             _label="Instructions per second"
             _low-label="500" _high-label="120000"
             low="500" high="120000" default="15000" />
-    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+    <number id="tvbrightness" type="slider" arg="--tv-brightness %"
             _label="Brightness Knob" _low-label="Low" _high-label="High"
             low="-75.0" high="100.0" default="3.0"/>
-    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+    <number id="tvcontrast" type="slider" arg="--tv-contrast %"
             _label="Contrast Knob" _low-label="Low" _high-label="High"
             low="0" high="500" default="150"/>
    </vgroup>

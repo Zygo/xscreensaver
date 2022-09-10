@@ -2,19 +2,19 @@
 
 <screensaver name="fliptext" _label="Flip Text" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=vcB-6S7Hfuk"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="10000"
             convert="invert"/>
    </vgroup>
    <vgroup>
-    <number id="speed" type="slider" arg="-speed %"
+    <number id="speed" type="slider" arg="--speed %"
             _label="Speed" _low-label="Slow" _high-label="Fast"
             low="0.1" high="10.0" default="1.0"
             convert="ratio"/>
@@ -25,21 +25,21 @@
    <vgroup>
   <select id="align">
     <option id="left"   _label="Random text alignment"/>
-    <option id="left"   _label="Flush left text"  arg-set="-alignment left"/>
-    <option id="center" _label="Centered text"    arg-set="-alignment center"/>
-    <option id="right"  _label="Flush right text" arg-set="-alignment right"/>
+    <option id="left"   _label="Flush left text"  arg-set="--alignment left"/>
+    <option id="center" _label="Centered text"    arg-set="--alignment center"/>
+    <option id="right"  _label="Flush right text" arg-set="--alignment right"/>
   </select>
 
-    <number id="size" type="spinbutton" arg="-size %"
+    <number id="size" type="spinbutton" arg="--size %"
              _label="Font point size" low="1" high="100" default="20"/>
 
-    <number id="columns" type="spinbutton" arg="-columns %"
+    <number id="columns" type="spinbutton" arg="--columns %"
              _label="Text columns" low="1" high="200" default="80"/>
 
-    <number id="lines" type="spinbutton" arg="-lines %"
+    <number id="lines" type="spinbutton" arg="--lines %"
              _label="Text lines" low="1" high="99" default="8"/>
 
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
    </vgroup>
    <vgroup>
     <xscreensaver-text />

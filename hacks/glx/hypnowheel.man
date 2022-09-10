@@ -3,58 +3,62 @@
 hypnowheel \- draws overlapping, translucent spiral patterns
 .SH SYNOPSIS
 .B hypnowheel
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fIint\fP]
-[\-layers \fIint\fP]
-[\-count \fIint\fP]
-[\-twistiness \fIfloat\fP]
-[\-speed \fIfloat\fP]
-[\-wander\fP]
-[\-symmetric\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fIint\fP]
+[\-\-layers \fIint\fP]
+[\-\-count \fIint\fP]
+[\-\-twistiness \fIfloat\fP]
+[\-\-speed \fIfloat\fP]
+[\-\-wander\fP]
+[\-\-symmetric\fP]
+[\-\-fps]
 .SH DESCRIPTION
 Draws a series of overlapping, translucent spiral patterns.
 The tightness of their spirals fluctuates in and out.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-delay \fIint\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fIint\fP
 Delay between frames, in microseconds.  Default 20000.
 .TP 8
-.B \-layers \fIint\fP
+.B \-\-layers \fIint\fP
 How many different spirals to draw at once.  Default 4.
 .TP 8
-.B \-count \fIint\fP
+.B \-\-count \fIint\fP
 How many arms each spiral should have.  Default 11.
 .TP 8
-.B \-twistiness \fIfloat\fP
+.B \-\-twistiness \fIfloat\fP
 How tightly wound the spirals can become, measured in rotations.
 Default 4.0 (four times around).
 .TP 8
-.B \-speed \fIratio\fP
+.B \-\-speed \fIratio\fP
 Less than 1 for slower, greater than 1 for faster.  Default 1.
 .TP 8
-.B \-wander
+.B \-\-wander
 If specified, then the centers of the spirals will wander around,
 rather than them all having the same origin.
 .TP 8
-.B \-symmetric
+.B \-\-symmetric
 If specified, then each pair of left-wrapping and right-wrapping
 spirals will be mirror images of each other.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -65,6 +69,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

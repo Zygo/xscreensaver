@@ -2,56 +2,56 @@
 
 <screensaver name="ant" _label="Ant">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=PaG7RCO4ezs"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="20000"
             convert="invert"/>
 
-    <number id="cycles" type="slider" arg="-cycles %"
+    <number id="cycles" type="slider" arg="--cycles %"
              _label="Timeout" _low-label="Small" _high-label="Large"
             low="0" high="800000" default="40000"/>
 
     <hgroup>
-     <boolean id="sharpturn" _label="Sharp turns" arg-set="-sharpturn"/>
-     <boolean id="truchet" _label="Truchet lines" arg-set="-truchet"/>
-     <boolean id="eyes" _label="Draw eyes" arg-set="-eyes"/>
+     <boolean id="sharpturn" _label="Sharp turns" arg-set="--sharpturn"/>
+     <boolean id="truchet" _label="Truchet lines" arg-set="--truchet"/>
+     <boolean id="eyes" _label="Draw eyes" arg-set="--eyes"/>
     </hgroup>
    </vgroup>
 
    <vgroup>
-    <number id="ncolors" type="slider" arg="-ncolors %"
+    <number id="ncolors" type="slider" arg="--ncolors %"
               _label="Number of colors" _low-label="Three" _high-label="Many"
               low="3" high="255" default="64"/>
 
 
     <hgroup>
-     <number id="count" type="spinbutton" arg="-count %"
+     <number id="count" type="spinbutton" arg="--count %"
              _label="Ants count" low="-20" high="20" default="-3"/>
-     <number id="size" type="spinbutton" arg="-size %"
+     <number id="size" type="spinbutton" arg="--size %"
               _label="Ant size" low="-18" high="18" default="-12"/>
     </hgroup>
 
     <select id="neighbors">
       <option id="rand" _label="Random cell shape"/>
       <option id="three" _label="Three sided cells"
-              arg-set="-neighbors 3"/>
+              arg-set="--neighbors 3"/>
       <option id="four" _label="Four sided cells"
-              arg-set="-neighbors 4"/>
+              arg-set="--neighbors 4"/>
       <option id="six" _label="Six sided cells"
-              arg-set="-neighbors 6"/>
+              arg-set="--neighbors 6"/>
       <option id="nine" _label="Nine sided cells"
-              arg-set="-neighbors 9"/>
+              arg-set="--neighbors 9"/>
       <option id="twelve" _label="Twelve sided cells"
-              arg-set="-neighbors 12"/>
+              arg-set="--neighbors 12"/>
     </select>
 
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
    </vgroup>
   </hgroup>
 

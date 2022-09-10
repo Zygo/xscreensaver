@@ -64,7 +64,9 @@ only inhibits for the first few seconds.
 .PP
 Firefox does not have either of these problems.
 .SS MPLAYER (2:1.4)
-Makes no attempt to inhibit the screen saver.  Use VLC or MPV instead.
+Makes no attempt to inhibit the screen saver.  Use VLC instead.
+.SS MPV (0.33)
+Makes no attempt to inhibit the screen saver.  Use VLC instead.
 .SS VARIOUS
 Most programs fail to inhibit screen blanking if they crash or are killed
 while playing.  We try to detect when this has happened and auto-uninhibit,

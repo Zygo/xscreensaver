@@ -3,7 +3,7 @@
 xscreensaver-gl-visual \- figure out which X visual to use for GL programs
 .SH SYNOPSIS
 .B xscreensaver-gl-visual
-[\-display \fIhost:display.screen\fP]
+[\-\-display \fIhost:display.screen\fP]
 .SH DESCRIPTION
 This program prints the ID of the visual that should be used for proper
 operation of OpenGL programs.  This program only exists so that the 

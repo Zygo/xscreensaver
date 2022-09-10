@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2002-2014 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2002-2022 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,26 +24,26 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.8 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.11 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
-my $default_args = ("[\\-display \\fIhost:display.screen\\fP]\n" .
-                    "[\\-visual \\fIvisual\\fP]\n" .
-                    "[\\-window]\n" .
-                    "[\\-root]\n");
+my $default_args = ("[\\-\\-display \\fIhost:display.screen\\fP]\n" .
+                    "[\\-\\-visual \\fIvisual\\fP]\n" .
+                    "[\\-\\-window]\n" .
+                    "[\\-\\-root]\n");
 my $default_options = (".TP 8\n" .
-                       ".B \\-visual \\fIvisual\\fP\n" .
+                       ".B \\-\\-visual \\fIvisual\\fP\n" .
                        "Specify which visual to use.  Legal values " .
                        "are the name of a visual class,\n" .
                        "or the id number (decimal or hex) of a " .
                        "specific visual.\n" .
                        ".TP 8\n" .
-                       ".B \\-window\n" .
+                       ".B \\-\\-window\n" .
                        "Draw on a newly-created window.  " .
                        "This is the default.\n" .
                        ".TP 8\n" .
-                       ".B \\-root\n" .
+                       ".B \\-\\-root\n" .
                        "Draw on the root window.\n");
 
 my $man_suffix = (".SH ENVIRONMENT\n" .
@@ -56,6 +56,9 @@ my $man_suffix = (".SH ENVIRONMENT\n" .
                   "to get the name of a resource file that overrides " .
                   "the global resources\n" .
                   "stored in the RESOURCE_MANAGER property.\n" .
+                  ".TP 8\n" .
+                  ".B XSCREENSAVER_WINDOW\n" .
+                  "The window ID to use with \fI\-\-root\fP.\n" .
                   ".SH SEE ALSO\n" .
                   ".BR X (1),\n" .
                   ".BR xscreensaver (1)\n" .
@@ -124,7 +127,7 @@ sub xml2man($) {
     if ($arg && $arg =~ m/^-no(-.*)/) {
       $arg = "$1 | \\$arg";
     } elsif ($boolp && $arg) {
-      $arg = "$arg | \\-no$arg";
+      $arg = "$arg | \\-\\-no$arg";
     }
 
     if ($carg && $carg =~ m/colors/) {
@@ -202,7 +205,7 @@ sub xml2man($) {
     $author = "UNKNOWN";
   }
 
-  $desc =~ s@http://en\.wikipedia\.org/[^\s]+@@gs;
+  $desc =~ s@https?://en\.wikipedia\.org/[^\s]+@@gs;
 
   $desc = wrap ("", "", $desc);
 
@@ -225,8 +228,6 @@ sub xml2man($) {
 
   $body =~ s/%AUTHOR%/$author/g;
   $body =~ s/%YEAR%/$year/g;
-
-#print $body; exit 0;
 
   local *OUT;
   open (OUT, ">$man") || error ("$man: $!");

@@ -2,20 +2,20 @@
 
 <screensaver name="sphere" _label="Sphere">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=FswhxIVXdt8"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <number id="ncolors" type="slider" arg="-ncolors %"
+  <number id="ncolors" type="slider" arg="--ncolors %"
             _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

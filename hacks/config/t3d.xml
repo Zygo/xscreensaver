@@ -2,51 +2,45 @@
 
 <screensaver name="t3d" _label="T3D">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=5UohH7U2CAI"/>
 
   <hgroup>
    <vgroup>
-    <number id="delay" type="slider" arg="-delay %"
+    <number id="delay" type="slider" arg="--delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="40000"
             convert="invert"/>
 
-    <number id="move" type="slider" arg="-move %"
+    <number id="move" type="slider" arg="--move %"
             _label="Turn side-to-side" _low-label="0 deg" _high-label="90 deg"
             low="0.0" high="3.0" default="0.5"/>
 
-    <number id="wobble" type="slider" arg="-wobble %"
+    <number id="wobble" type="slider" arg="--wobble %"
             _label="Wobbliness" _low-label="Low" _high-label="High"
             low="0.0" high="3.0" default="2.0"/>
    </vgroup>
 
    <vgroup>
-    <number id="cycle" type="slider" arg="-cycle %"
+    <number id="cycle" type="slider" arg="--cycle %"
             _label="Cycle seconds" _low-label="Low" _high-label="High"
             low="0.0" high="60.0" default="10.0"/>
 
-    <number id="mag" type="slider" arg="-mag %"
+    <number id="mag" type="slider" arg="--mag %"
             _label="Magnification" _low-label="Smaller" _high-label="Bigger"
             low="0.1" high="4.0" default="1.0"
             convert="ratio"/>
 
     <select id="mins">
-      <option id="min2" _label="Minute tick marks" arg-set="-minutes"/>
+      <option id="min2" _label="Minute tick marks" arg-set="--minutes"/>
       <option id="min5" _label="5 minute tick marks"/>
     </select>
 
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
    </vgroup>
   </hgroup>
-
-  <!-- #### -fast [50] -->
-  <!-- #### -colcycle [?] -->
-  <!-- #### -hsvcycle [0.0] -->
-  <!-- #### -rgb [?] -->
-  <!-- #### -hsv [?] -->
 
   <xscreensaver-updater />
 

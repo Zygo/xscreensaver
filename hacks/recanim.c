@@ -23,8 +23,11 @@
 #endif
 
 #ifdef HAVE_GDK_PIXBUF
-# include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
-#endif /* HAVE_GDK_PIXBUF */
+# include <gdk-pixbuf/gdk-pixbuf.h>
+# ifdef HAVE_GDK_PIXBUF_XLIB
+#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+# endif
+#endif
 
 #if (__GNUC__ >= 4)
 # pragma GCC diagnostic pop
@@ -164,7 +167,9 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
   if (st->fade_frames >= (st->target_frames / 2) - st->fps)
     st->fade_frames = 0;
 
-# ifdef HAVE_GDK_PIXBUF
+# ifdef HAVE_GDK_PIXBUF_XLIB
+  /* Aug 2022: nothing seems to go wrong if we don't do this?
+     gtk-2.24.33, gdk-pixbuf 2.42.8. */
   {
     Window root;
     int x, y;
@@ -176,9 +181,7 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
     g_type_init();
 #  endif
   }
-# else  /* !HAVE_GDK_PIXBUF */
-#  error GDK_PIXBUF is required
-# endif /* !HAVE_GDK_PIXBUF */
+# endif /* !HAVE_GDK_PIXBUF_XLIB */
 
   XGetWindowAttributes (dpy, st->window, &st->xgwa);
 

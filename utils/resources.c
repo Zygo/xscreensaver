@@ -43,6 +43,7 @@ get_string_resource (Display *dpy, char *res_name, char *res_class)
   XrmValue value;
   char	*type;
   char full_name [1024], full_class [1024];
+  if (!dpy) return 0;
   strcpy (full_name, progname);
   strcat (full_name, ".");
   strcat (full_name, res_name);

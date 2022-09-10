@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,20 +17,29 @@
 
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 const char *progname = "";
 int verbose_p = 0;
+
+/* #define BLURB_CENTISECONDS */
 
 const char *
 blurb (void)
 {
   static char buf[255] = { 0 };
   struct tm tm;
-  time_t now;
+  struct timeval now;
   int i;
 
-  now = time ((time_t *) 0);
-  localtime_r (&now, &tm);
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday (&now, &tzp);
+# else
+  gettimeofday (&now);
+# endif
+
+  localtime_r (&now.tv_sec, &tm);
   i = strlen (progname);
   if (i > 40) i = 40;
   memcpy (buf, progname, i);
@@ -44,6 +53,16 @@ blurb (void)
   buf[i++] = ':';
   buf[i++] = '0' + (tm.tm_sec >= 10 ? tm.tm_sec/10 : 0);
   buf[i++] = '0' + (tm.tm_sec % 10);
+
+# ifdef BLURB_CENTISECONDS
+  {
+    int c = now.tv_usec / 10000;
+    buf[i++] = '.';
+    buf[i++] = '0' + (c >= 10 ? c/10 : 0);
+    buf[i++] = '0' + (c % 10);
+  }
+# endif
+
   buf[i] = 0;
   return buf;
 }

@@ -3,12 +3,13 @@
 rd-bomb \- reaction/diffusion textures
 .SH SYNOPSIS
 .B rd-bomb
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] [\-width \fIn\fP] [\-height \fIn\fP]
-[\-reaction \fIn\fP] [\-diffusion \fIn\fP]
-[\-size \fIf\fP] [\-speed \fIf\fP] [\-delay \fImillisecs\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] [\-\-width \fIn\fP] [\-\-height \fIn\fP]
+[\-\-reaction \fIn\fP] [\-\-diffusion \fIn\fP]
+[\-\-size \fIf\fP] [\-\-speed \fIf\fP] [\-\-delay \fImillisecs\fP]
+[\-\-fps]
 .SH DESCRIPTION
 
 The \fIrd-bomb\fP program draws reaction/diffusion textures.
@@ -22,47 +23,50 @@ Be sure to try "-speed 1 -size 0.1 -epoch 3000".
 .I rd-bomb
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-width \fIn\fP
+.B \-\-width \fIn\fP
 .TP 8
-.B \-height \fIn\fP
+.B \-\-height \fIn\fP
 Specify the size of the tile, in pixels.
 .TP 8
-.B \-reaction \fIn\fP
+.B \-\-reaction \fIn\fP
 .TP 8
-.B \-diffusion \fIn\fP
+.B \-\-diffusion \fIn\fP
 These are constants in the equations that effect its visual nature.
 Each may be one of 0, 1, or 2. Default is -1: these constants are
 chosen randomly.
 .TP 8
-.B \-radius \fIn\fP
+.B \-\-radius \fIn\fP
 Size of the seed.
 .TP 8
-.B \-size \fIf\fP
+.B \-\-size \fIf\fP
 What fraction of the window is actively drawn, a floating point number
 between 0 (exclusive) and 1 (inclusive).  Default is 1.0.
 .TP 8
-.B \-speed \fIf\fP
+.B \-\-speed \fIf\fP
 When a fraction of the screen is active, the active area moves at this
 rate (a floating point number).  Default is zero.  Suggested value: 1.0.
 .TP 8
-.B \-delay \fImillisecs\fP
+.B \-\-delay \fImillisecs\fP
 How many milliseconds to delay between frames; default 1, or 
 about 1/1000th of a second.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH HISTORY
 The code is derived from the 'd' mode of the "Bomb" visual musical
@@ -81,6 +85,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

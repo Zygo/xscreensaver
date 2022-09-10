@@ -2,40 +2,40 @@
 
 <screensaver name="zoom" _label="Zoom">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=LeQa9inGEKc"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000"
           convert="invert"/>
 
-  <number id="duration" type="slider" arg="-duration %"
+  <number id="duration" type="slider" arg="--duration %"
           _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
           low="10" high="600" default="120"/>
 
   <hgroup>
    <vgroup>
-    <number id="pixwidth" type="spinbutton" arg="-pixwidth %"
+    <number id="pixwidth" type="spinbutton" arg="--pixwidth %"
             _label="X mag" low="2" high="100" default="40" />
-    <number id="pixspacex" type="spinbutton" arg="-pixspacex %"
+    <number id="pixspacex" type="spinbutton" arg="--pixspacex %"
             _label=" X border" low="0" high="10" default="2" />
-    <number id="lensoffsetx" type="spinbutton" arg="-lensoffsetx %"
+    <number id="lensoffsetx" type="spinbutton" arg="--lensoffsetx %"
             _label="   X lens" low="1" high="100" default="5" />
    </vgroup>
    <vgroup>
-    <number id="pixheight" type="spinbutton" arg="-pixheight %"
+    <number id="pixheight" type="spinbutton" arg="--pixheight %"
             _label="Y mag" low="2" high="100" default="40" />
-    <number id="pixspacey" type="spinbutton" arg="-pixspacey %"
+    <number id="pixspacey" type="spinbutton" arg="--pixspacey %"
             _label=" Y border" low="0" high="10" default="2" />
-    <number id="lensoffsety" type="spinbutton" arg="-lensoffsety %"
+    <number id="lensoffsety" type="spinbutton" arg="--lensoffsety %"
             _label="    Y lens" low="1" high="100" default="5" />
    </vgroup>
 
    <vgroup>
-    <boolean id="lenses" _label="Lenses" arg-unset="-no-lenses"/>
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="lenses" _label="Lenses" arg-unset="--no-lenses"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
    </vgroup>
 
   </hgroup>

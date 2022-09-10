@@ -3,98 +3,102 @@
 topblock \- a 3D world of falling blocks that build up and up.
 .SH SYNOPSIS
 .B topblock
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fInumber\fP]
-[\-wireframe]
-[\-fps]
-[\-size \fInumber\fP]
-[\-spawn \fInumber\fP]
-[\-camX \fInumber\fP]
-[\-camY \fInumber\fP]
-[\-camZ \fInumber\fP]
-[\-rotate]
-[\-no-carpet]
-[\-no-nipples]
-[\-blob]
-[\-rotateSpeed \fInumber\fP]
-[\-follow]
-[\-maxFalling \fInumber\fP]
-[\-resolution \fInumber\fP]
-[\-maxColors \fInumber\fP]
-[\-dropSpeed \fInumber\fP]
-[\-override]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-wireframe]
+[\-\-fps]
+[\-\-size \fInumber\fP]
+[\-\-spawn \fInumber\fP]
+[\-\-camX \fInumber\fP]
+[\-\-camY \fInumber\fP]
+[\-\-camZ \fInumber\fP]
+[\-\-rotate]
+[\-\-no-carpet]
+[\-\-no-nipples]
+[\-\-blob]
+[\-\-rotateSpeed \fInumber\fP]
+[\-\-follow]
+[\-\-maxFalling \fInumber\fP]
+[\-\-resolution \fInumber\fP]
+[\-\-maxColors \fInumber\fP]
+[\-\-dropSpeed \fInumber\fP]
+[\-\-override]
 .SH DESCRIPTION
 Creates a world of falling blocks that build up and up.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-delay \fInumber\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
-.B \-wireframe | \-no-wireframe
+.B \-\-wireframe | \-\-no-wireframe
 Render in wireframe instead of solid.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .TP 8
-.B \-size \fInumber\fP
+.B \-\-size \fInumber\fP
 Size of the base/carpet.
 .TP 8
-.B \-spawn \fInumber\fP
+.B \-\-spawn \fInumber\fP
 Likeyhood of a new block being created per frame : 1 high, 1000 very low.
 .TP 8
-.B \-camX \fInumber\fP
+.B \-\-camX \fInumber\fP
 Initial camera X location in the world.
 .TP 8
-.B \-camY \fInumber\fP
+.B \-\-camY \fInumber\fP
 Initial camera Y location in the world.
 .TP 8
-.B \-camZ \fInumber\fP
+.B \-\-camZ \fInumber\fP
 Initial camera Z location in the world.
 .TP 8
-.B \-rotate | -no-rotate
+.B \-\-rotate | -no-rotate
 Add/Remove rotation to/from the animation.
 .TP 8
-.B \-no-carpet
+.B \-\-no-carpet
 Remove the base/carpet.
 .TP 8
-.B \-no-nipples
+.B \-\-no-nipples
 Remove nipples on the blocks (also applies to udders) (has no effect in blob mode).
 .TP 8
-.B \-blob
+.B \-\-blob
 Run in blob mode, blocks become over sized spheres.
 .TP 8
-.B \-rotateSpeed \fInumber\fP
+.B \-\-rotateSpeed \fInumber\fP
 Varries speed of world rotation.
 .TP 8
-.B \-follow
+.B \-\-follow
 Camera follows blocks as they fall instead of camera being semi static (stays with top block).
 .TP 8
-.B \-maxFalling \fInumber\fP
+.B \-\-maxFalling \fInumber\fP
 Maximum number of objects created before recycling occurs.
 .TP 8
-.B \-resolution \fInumber\fP
+.B \-\-resolution \fInumber\fP
 Resolution of tubes, disks and spheres.
 .TP 8
-.B \-maxColors \fInumber\fP
+.B \-\-maxColors \fInumber\fP
 Number of different colors available to falling objects.
 .TP 8
-.B \-dropSpeed \fInumber\fP
+.B \-\-dropSpeed \fInumber\fP
 Varries speed of falling objects.
 .TP 8
-.B \-override
+.B \-\-override
 Overrides camera settings and provides a tunnel view.
 
 .SH KEYS
@@ -154,6 +158,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

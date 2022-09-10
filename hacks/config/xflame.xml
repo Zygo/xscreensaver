@@ -2,27 +2,17 @@
 
 <screensaver name="xflame" _label="XFlame">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=jUJiULU4i0k"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000"
           convert="invert"/>
 
-<!--  <file id="bitmap" _label="Bitmap file" arg="-bitmap %"/> -->
-
-  <!-- #### -baseline [20] -->
-  <!-- #### -hspread [30] -->
-  <!-- #### -vspread [97] -->
-  <!-- #### -residual [99] -->
-  <!-- #### -variance [50] -->
-  <!-- #### -vartrend [20] -->
-
-  <boolean id="bloom" _label="Enable blooming" arg-unset="-no-bloom"/>
-
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="bloom" _label="Enable blooming" arg-unset="--no-bloom"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

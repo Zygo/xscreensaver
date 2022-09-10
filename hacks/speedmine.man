@@ -3,11 +3,41 @@
 speedmine \- simulates speeding down a rocky mineshaft, or a funky dancing worm
 .SH SYNOPSIS
 .B speedmine 
-[\-display \fIhost:display.screen\fP] [\-root] [\-window]
-[\-install] [\-noinstall] [\-visual \fIvisual\fP] [\-wire] [\-nowire]
-[\-worm]
-[\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-darkground \fIcolor\fP] [\-lightground \fIcolor\fP] [\-tunnelend \fIcolor\fP] [\-delay \fImicroseconds\fP] [\-maxspeed \fInumber\fP] [\-thrust \fInumber\fP] [\-gravity \fInumber\fP] [\-vertigo \fInumber\fP] [\-terrain] [\-noterrain] [\-smoothness \fInumber\fP] [\-curviness \fInumber\fP] [\-twistiness \fInumber\fP] [\-widening] [\-nowidening] [\-bumps] [\-nobumps] [\-bonuses] [\-crosshair] [\-nocrosshair] [\-psychedelic] [\-nopsychedelic]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-root]
+[\-\-window]
+[\-\-window\-id \fInumber\fP]
+[\-\-install]
+[\-\-noinstall]
+[\-\-visual \fIvisual\fP]
+[\-\-wire]
+[\-\-nowire]
+[\-\-worm]
+[\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP]
+[\-\-darkground \fIcolor\fP]
+[\-\-lightground \fIcolor\fP]
+[\-\-tunnelend \fIcolor\fP]
+[\-\-delay \fImicroseconds\fP]
+[\-\-maxspeed \fInumber\fP]
+[\-\-thrust \fInumber\fP]
+[\-\-gravity \fInumber\fP]
+[\-\-vertigo \fInumber\fP]
+[\-\-terrain]
+[\-\-noterrain]
+[\-\-smoothness \fInumber\fP]
+[\-\-curviness \fInumber\fP]
+[\-\-twistiness \fInumber\fP]
+[\-\-widening]
+[\-\-nowidening]
+[\-\-bumps]
+[\-\-nobumps]
+[\-\-bonuses]
+[\-\-crosshair]
+[\-\-nocrosshair]
+[\-\-psychedelic]
+[\-\-nopsychedelic]
+[\-\-fps]
 .SH DESCRIPTION
 .TP 8
 Speedmine!
@@ -34,24 +64,27 @@ You can configure stuff
 either with command-line options or X resources.
 .SH OPTIONS
 .TP 8
-.B \-display \fIhost:display.screen\fP
+.B \-\-display \fIhost:display.screen\fP
 Specifies which X display we should use (see the section DISPLAY NAMES in
 .BR X (1)
 for more information about this option).
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-window
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-noinstall
+.B \-\-noinstall
 Don't install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual
 class, or the id number (decimal or hex) of a specific visual.
 Possible choices include
@@ -65,49 +98,49 @@ If a decimal or hexadecimal number is used,
 is consulted to obtain the required visual.
 .RE
 .TP 8
-.B \-worm
+.B \-\-worm
 Be a happy spastic worm instead of a tunnel.
 .TP 8
-.B \-wire
+.B \-\-wire
 Specifies that the tunnel/worm should always be rendered in wireframe style.
 .TP 8
-.B \-nowire
+.B \-\-nowire
 Specifies that the tunnel/worm should be rendered normally. Note that 
 tunnel rendering may still temporarily switch to wireframe style when 
 a wireframe bonus is hit, if
 .B bonuses
 are enabled.
 .TP 8
-.B \-foreground \fIcolor\fP
+.B \-\-foreground \fIcolor\fP
 Specifies the default foreground color.
 .TP 8
-.B \-background \fIcolor\fP
+.B \-\-background \fIcolor\fP
 Specifies the default background color.
 .TP 8
-.B \-darkground \fIcolor\fP
+.B \-\-darkground \fIcolor\fP
 Specifies the color of the darkest portions of the ground (or the
 worm's belly.)  The ground/belly is colored by a gradient between
 .B darkground
 and
 .B lightground.
 .TP 8
-.B \-lightground \fIcolor\fP
+.B \-\-lightground \fIcolor\fP
 Specifies the color of the lightest portions of the ground/belly. 
 The ground/belly is colored by a gradient between
 .B darkground
 and
 .B lightground.
 .TP 8
-.B \-tunnelend \fIcolor\fP
+.B \-\-tunnelend \fIcolor\fP
 Specifies the color of the light at the end of the tunnel.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 Specifies the delay between drawing successive frames. If you do not specify 
 .BR -sync ,
 some X servers may batch up several drawing operations together,
 producing a less smooth effect.   This is more likely to happen 
 in monochrome mode (on monochrome servers or when 
-.B \-mono 
+.B \-\-mono 
 is specified).
 .TP 8
 .B -maxspeed \fInumber\fP
@@ -185,7 +218,7 @@ rainbow of colours.
 Specifies that a normal colormap should be used, with muted walls and a
 grey road.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH WARNING
 Speedworm is a trained professional. Do not try this at home.
@@ -196,6 +229,21 @@ and
 .B vertigo
 above the defaults may have short-term psychological side effects including
 hyperactivity and attention deficiency.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
 .SH COPYRIGHT
 Copyright \(co 2001, Conrad Parker.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is

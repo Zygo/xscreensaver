@@ -60,14 +60,14 @@ graphics demo and run a new one (chosen randomly.)
 This is like either \fI\-\-activate\fP or \fI\-\-cycle\fP, depending on which
 is more appropriate, except that the graphics hack that will be run is the
 next one in the list, instead of a randomly-chosen one.  In other words,
-repeatedly executing -next will cause the xscreensaver process to invoke each
-graphics demo sequentially.  (Though using the \fI\-\-settings\fP option is
-probably an easier way to accomplish that.)
+repeatedly executing \-\-next will cause the xscreensaver process to invoke
+each graphics demo sequentially.  (Though using the \fI\-\-settings\fP option
+is probably an easier way to accomplish that.)
 .TP 8
 .B \-\-prev
 This is like \fI\-\-next\fP, but cycles in the other direction.
 .TP 8
-.B \-\-select \fInumber\fP
+.B \-\-select\fP \fInumber\fP
 Like \fI\-\-activate\fP, but runs the \fIN\fPth element in the list of hacks.
 By knowing what is in the \fIprograms\fP list, and in what order, you can use
 this to activate the screensaver with a particular graphics demo.  (The first
@@ -94,10 +94,8 @@ to lock things down quickly.
 Causes the xscreensaver process to exit gracefully.  
 This does nothing if the display is currently locked.
 .B Warning:
-never use \fIkill -9\fP with \fIxscreensaver\fP while the screensaver is
-active.  If you are using a virtual root window manager, that can leave
-things in an inconsistent state, and you may need to restart your window
-manager to repair the damage.
+never use \fIkill -9\fP with \fIxscreensaver\fP.  That can leave things in an
+inconsistent state, and you may need to log out to repair the damage.
 .TP 8
 .B \-\-restart
 Causes the screensaver process to exit and then restart with the same command
@@ -217,7 +215,7 @@ and related tools can always be found at https://www.jwz.org/xscreensaver/
 .BR xscreensaver\-settings (1),
 .BR xset (1)
 .SH COPYRIGHT
-Copyright \(co 1992-2021 by Jamie Zawinski.
+Copyright \(co 1992-2022 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that
@@ -226,6 +224,6 @@ supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski <jwz@jwz.org>, 13-aug-1992.
+Jamie Zawinski <jwz@jwz.org>.
 
 Please let me know if you find any bugs or make any improvements.

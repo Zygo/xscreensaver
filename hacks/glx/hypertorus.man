@@ -3,33 +3,34 @@
 hypertorus \- Draws a hypertorus that rotates in 4d
 .SH SYNOPSIS
 .B hypertorus
-[\-display \fIhost:display.screen\fP]
-[\-install]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fIusecs\fP]
-[\-fps]
-[\-wireframe]
-[\-surface]
-[\-transparent]
-[\-solid]
-[\-bands]
-[\-spirals-{1,2,4,8,16}]
-[\-onesided]
-[\-twosided]
-[\-colorwheel]
-[\-change-colors]
-[\-perspective-3d]
-[\-orthographic-3d]
-[\-perspective-4d]
-[\-orthographic-4d]
-[\-speed-wx \fIfloat\fP]
-[\-speed-wy \fIfloat\fP]
-[\-speed-wz \fIfloat\fP]
-[\-speed-xy \fIfloat\fP]
-[\-speed-xz \fIfloat\fP]
-[\-speed-yz \fIfloat\fP]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-install]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-fps]
+[\-\-wireframe]
+[\-\-surface]
+[\-\-transparent]
+[\-\-solid]
+[\-\-bands]
+[\-\-spirals-{1,2,4,8,16}]
+[\-\-onesided]
+[\-\-twosided]
+[\-\-colorwheel]
+[\-\-change-colors]
+[\-\-perspective-3d]
+[\-\-orthographic-3d]
+[\-\-perspective-4d]
+[\-\-orthographic-4d]
+[\-\-speed-wx \fIfloat\fP]
+[\-\-speed-wy \fIfloat\fP]
+[\-\-speed-wz \fIfloat\fP]
+[\-\-speed-xy \fIfloat\fP]
+[\-\-speed-xz \fIfloat\fP]
+[\-\-speed-yz \fIfloat\fP]
 .SH DESCRIPTION
 The \fIhypertorus\fP program shows the Clifford torus as it rotates in
 4d.  The Clifford torus is a torus lies on the "surface" of the
@@ -67,60 +68,63 @@ Scientific American Library, 1990.
 .I hypertorus
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual
 class, or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the
 animation.  Default 25000, or 1/40th second.
 .PP
 The following three options are mutually exclusive.  They determine
 how the torus is displayed.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Display the torus as a wireframe mesh.
 .TP 8
-.B \-surface
+.B \-\-surface
 Display the torus as a solid surface (default).
 .TP 8
-.B \-transparent
+.B \-\-transparent
 Display the torus as a transparent surface.
 .PP
 The following seven options are mutually exclusive.  They determine the
 appearance of the torus.
 .TP 8
-.B \-solid
+.B \-\-solid
 Display the torus as a solid object.
 .TP 8
-.B \-bands
+.B \-\-bands
 Display the torus as see-through bands (default).
 .TP 8
-.B \-spirals-1, \-spirals-2, \-spirals-4, \-spirals-8, \-spirals-16
+.B \-\-spirals-1, \-\-spirals-2, \-\-spirals-4, \-\-spirals-8, \-\-spirals-16
 Display the torus as see-through spirals with the indicated number of
 spirals.
 .PP
 The following three options are mutually exclusive.  They determine
 how to color the torus.
 .TP 8
-.B \-onesided
+.B \-\-onesided
 Display the torus with a single color.
 .TP 8
-.B \-twosided
+.B \-\-twosided
 Display the torus with two colors: one color on the outside and the
 complementary on the inside.  For static colors, the colors are red
 and green.
 .TP 8
-.B \-colorwheel
+.B \-\-colorwheel
 Display the torus with a fully saturated color wheel (default).  If
 the torus is displayed as see-through bands, each band will be
 displayed with a different color.  Likewise, if the torus is displayed
@@ -129,30 +133,30 @@ as see-through spirals, each spiral will receive a different color.
 The following options determine whether the colors with which the
 torus is displayed are static or are changing dynamically.
 .TP 8
-.B \-change-colors
+.B \-\-change-colors
 Change the colors with which the torus is displayed dynamically.
 .TP 8
-.B \-no-change-colors
+.B \-\-no-change-colors
 Use static colors to display the torus (default).
 .PP
 The following two options are mutually exclusive.  They determine how
 the torus is projected from 3d to 2d (i.e., to the screen).
 .TP 8
-.B \-perspective-3d
+.B \-\-perspective-3d
 Project the torus from 3d to 2d using a perspective projection
 (default).
 .TP 8
-.B \-orthographic-3d
+.B \-\-orthographic-3d
 Project the torus from 3d to 2d using an orthographic projection.
 .PP
 The following two options are mutually exclusive.  They determine how
 the torus is projected from 4d to 3d.
 .TP 8
-.B \-perspective-4d
+.B \-\-perspective-4d
 Project the torus from 4d to 3d using a perspective projection
 (default).
 .TP 8
-.B \-orthographic-4d
+.B \-\-orthographic-4d
 Project the torus from 4d to 3d using an orthographic projection.
 .PP
 The following six options determine the rotation speed of the torus
@@ -160,25 +164,25 @@ around the six possible hyperplanes.  The rotation speed is measured
 in degrees per frame.  The speeds should be set to relatively small
 values, e.g., less than 4 in magnitude.
 .TP 8
-.B \-speed-wx \fIfloat\fP
+.B \-\-speed-wx \fIfloat\fP
 Rotation speed around the wx plane (default: 1.1).
 .TP 8
-.B \-speed-wy \fIfloat\fP
+.B \-\-speed-wy \fIfloat\fP
 Rotation speed around the wy plane (default: 1.3).
 .TP 8
-.B \-speed-wz \fIfloat\fP
+.B \-\-speed-wz \fIfloat\fP
 Rotation speed around the wz plane (default: 1.5).
 .TP 8
-.B \-speed-xy \fIfloat\fP
+.B \-\-speed-xy \fIfloat\fP
 Rotation speed around the xy plane (default: 1.7).
 .TP 8
-.B \-speed-xz \fIfloat\fP
+.B \-\-speed-xz \fIfloat\fP
 Rotation speed around the xz plane (default: 1.9).
 .TP 8
-.B \-speed-yz \fIfloat\fP
+.B \-\-speed-yz \fIfloat\fP
 Rotation speed around the yz plane (default: 2.1).
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH INTERACTION
 If you run this program in standalone mode you can rotate the
@@ -198,6 +202,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

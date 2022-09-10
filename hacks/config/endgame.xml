@@ -2,17 +2,17 @@
 
 <screensaver name="endgame" _label="Endgame" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=QfglC_lvUTA"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
           convert="invert"/>
 
-  <boolean id="classic" _label="Low resolution chess pieces" arg-set="-classic"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="classic" _label="Low resolution chess pieces" arg-set="--classic"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

@@ -4,17 +4,21 @@ interaggregate \- Visualize the momentary and aggregate intersections
 between slowly moving circles.
 .SH SYNOPSIS
 .B interaggregate
-[\-display \fIhost:display.screen\fP]
-[\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP]
-[\-num\-circles \fIdisc count\fP]
-[\-growth\-delay \fIdelayms\fP]
-[\-max\-cycles \fImaxr\fP]
-[\-percent\-orbits \fIpercent\fP]
-[\-base\-orbits \fIpercent\fP]
-[\-base\-on\-center]
-[\-draw\-centers]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP]
+[\-\-num\-circles \fIdisc count\fP]
+[\-\-growth\-delay \fIdelayms\fP]
+[\-\-max\-cycles \fImaxr\fP]
+[\-\-percent\-orbits \fIpercent\fP]
+[\-\-base\-orbits \fIpercent\fP]
+[\-\-base\-on\-center]
+[\-\-draw\-centers]
+[\-\-fps]
 .SH DESCRIPTION
 The Intersection Aggregate is a fun visualization defining the relationships 
 between objects with Casey Reas, William Ngan, and Robert Hodgin. Commissioned 
@@ -29,17 +33,30 @@ different size and direction, but moves at the same slow rate. Display:
 .I interaggregate
 accepts the following options:
 .TP 8
-.B \-num\-circles \fIdisc count\fP (Default: \fI100\fP)
+.B \-\-num\-circles \fIdisc count\fP (Default: \fI100\fP)
 Number of slowly moving and growing discs to use.  The more discs, 
 the more CPU power.
 .TP 8
-.B \-growth\-delay \fIdelayms\fP (Default: \fI18000\fP)
+.B \-\-growth\-delay \fIdelayms\fP (Default: \fI18000\fP)
 Delay in ms between drawing cycles.  More delay, slower (but smoother 
 and less CPU intensive.)
 art.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -50,6 +67,8 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global
 resources stored in the RESOURCE_MANAGER property.
 .TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH BUGS
 .PP
 .TP 8

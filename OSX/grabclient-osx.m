@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -65,9 +65,73 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
 }
 
 
-#else /* macOS 10.5+ */
+#else /* !HAVE_IPHONE */
 
 extern float jwxyz_scale (Window);  /* jwxyzI.h */
+
+static void
+authorize_screen_capture (void)
+{
+  static Bool done_once = False;
+  if (done_once) return;
+  done_once = True;
+
+  /* The following nonsense is intended to get the system to pop up the dialog
+     saying "do you want to allow legacyScreenSaver to be able to record your
+     screen?"  Without the user saying yes to that, we are only able to get
+     the desktop background image instead of a screen shot.  Also this is
+     async, so if that dialog has popped up, the *current* screen grab will
+     still fail.
+
+     To reset answers given to that dialog: "tccutil reset ScreenCapture".
+
+     Sadly, this is not working at all.  If the .saver bundle is launched by
+     SaverTester, the dialog is triggered on behalf of SaverTester, and works.
+     But if it the bundle is launched by the real screen saver, or by System
+     Preferences, the dialog is not triggered.
+
+     Manually dragging "/System/Library/Frameworks/ScreenSaver.framework/
+     PlugIns/legacyScreenSaver.appex" onto the "System Preferences / Security /
+     Privacy / Screen Recording" list makes screen grabbing work, but that's
+     a lot to ask of the end user.  And, oddly, after dragging it there, it
+     does not appear in the list at all (and there's no way to un-check it).
+
+     We can open that preferences pane with
+     "open x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+     but there's no way to auto-add legacyScreenSaver to it, even unchecked.
+  */
+
+# if 1
+  /* CGDisplayStreamRef stream = */  /* Just leak it, I guess? */
+  CGDisplayStreamCreateWithDispatchQueue (CGMainDisplayID(), 
+                                          1, 1, kCVPixelFormatType_32BGRA,
+                                          nil,
+                                          dispatch_get_main_queue(),
+                                          nil);
+  /* I think that if the returned value is nil, it means the screen grab
+     will be returning just the background image instead of the desktop.
+     So in that case we could return False here to go with colorbars.
+     But the desktop background image is still more interesting than
+     colorbars, so let's just use that. */
+
+# elif 0
+  /* This also does not work. */
+  if (@available (macos 10.15, *)) {
+    CGImageRef img =
+      CGWindowListCreateImage (CGRectMake(0, 0, 1, 1),
+                               kCGWindowListOptionOnScreenOnly,
+                               kCGNullWindowID,
+                               kCGWindowImageDefault);
+    CFRelease (img);
+  }
+
+# elif 0
+  /* This also does not work. */
+  if (@available (macos 10.15, *))
+    CGRequestScreenCaptureAccess();
+# endif
+}
+
 
 /* Loads an image into the Drawable, returning once the image is loaded.
  */
@@ -80,6 +144,8 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
   XWindowAttributes xgwa;
   int window_x, window_y;
   Window unused;
+
+  authorize_screen_capture();
 
   // Figure out where this window is on the screen.
   //
@@ -96,44 +162,6 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
   cgrect.size.width  = xgwa.width  / s;
   cgrect.size.height = xgwa.height / s;
 
-  /* The following nonsense is intended to get the system to pop up the dialog
-     saying "do you want to allow legacyScreenSaver to be able to record your
-     screen?"  Without the user saying yes to that, we are only able to get
-     the desktop background image instead of a screen shot.  Also this is
-     async, so if that dialog has popped up, the *current* screen grab will
-     still fail.
-
-     To reset answers given to that dialog: "tccutil reset ScreenCapture".
-
-     Sadly, this is not working at all.  If the .saver bundle is launched by
-     SaverTester, the dialog is triggered on behalf of SaverTester, but it is
-     not triggered on behalf of ScreenSaverEngine or System Preferences.
-
-     Manually dragging "/System/Library/Frameworks/ScreenSaver.framework/
-     PlugIns/legacyScreenSaver.appex" onto the "System Preferences / Security /
-     Privacy / Screen Recording" list makes screen grabbing work, but that's
-     a lot to ask of the end user.  And, oddly, after dragging it there, it
-     does not appear in the list.
-   */
-  {
-    static Bool done_once = False;
-    if (! done_once) {
-      done_once = True;
-      /* CGDisplayStreamRef stream = */  /* Just leak it, I guess? */
-      CGDisplayStreamCreateWithDispatchQueue (CGMainDisplayID(), 
-                                              1, 1, kCVPixelFormatType_32BGRA,
-                                              nil,
-                                              dispatch_get_main_queue(),
-                                              nil);
-      /* I think that if the returned value is nil, it means the screen grab
-         will be returning just the background image instead of the desktop.
-         So in that case we could return False here to go with colorbars.
-         But the desktop background image is still more interesting than
-         colorbars, so let's just use that. */
-    }
-  }
-
-
   CGWindowID windowNumber = (CGWindowID) nsview.window.windowNumber;
 
   /* If a password is required to unlock the screen, a large black
@@ -145,8 +173,8 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
 
      Oct 2016: Surprise, this trick no longer works on MacOS 10.12.  Sigh.
 
-     Nov 2021, macOS 11.6, 12.0: I'm pretty sure none of this works this way
-     any more, and so probably the following clause is no longer necessary?
+     Nov 2021, macOS 11.6, 12.0: This works again.  Without the following
+     clause, we do indeed grab a black image.
    */
   {
     CFArrayRef L = CGWindowListCopyWindowInfo (kCGWindowListOptionOnScreenOnly,
@@ -185,20 +213,7 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
   return True;
 }
 
-
-/* Returns the EXIF rotation property of the image, if any.
- */
-static int
-exif_rotation (const char *filename)
-{
-  /* As of 10.6, NSImage rotates according to EXIF by default:
-     http://developer.apple.com/mac/library/releasenotes/cocoa/appkit.html
-     Prior to that, we had to do it by hand.
-   */
-  return -1;
-}
-
-# endif /* macOS 10.5+ */
+# endif /* !HAVE_IPHONE */
 
 
 
@@ -222,8 +237,7 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
     return False;
 
   jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (screen), drawable, 
-                                 True, img, geom_ret,
-                                 exif_rotation (filename));
+                                 True, img, geom_ret, -1);
   [img release];
   return True;
 

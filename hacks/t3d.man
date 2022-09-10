@@ -90,7 +90,7 @@ Rotates the hue axis every 10 seconds*
 .B -help
 Prints a short usage message.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .PP
 .SH AUTHOR

@@ -4,8 +4,8 @@ xscreensaver-getimage - loads a randomly-selected image onto an X11 Drawable
 for use by screen savers
 .SH SYNOPSIS
 .B xscreensaver-getimage
-[\-display \fIhost:display.screen\fP]
-[\-verbose]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-verbose]
 window-id
 [pixmap-id]
 .SH DESCRIPTION

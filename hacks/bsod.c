@@ -217,7 +217,7 @@ struct bsod_state {
   (bst)->pos++; \
   } while (0)
 
-/* Set the prevailing top/bottom margins (used when scrolling and cropping text)
+/* Set the prevailing top/bottom margins (used when scrolling/cropping text)
  */
 #define BSOD_VERT_MARGINS(bst,top,bottom) do { \
   ensure_queue (bst); \
@@ -1254,21 +1254,21 @@ vmware (Display *dpy, Window window)
 		"VMware ESX Server [Releasebuild-98103]\n");
   BSOD_COLOR (bst, fg, bg);
   BSOD_TEXT   (bst, LEFT,
-		"PCPU 1 locked up. Failed to ack TLB invalidate.\n"
-		"frame=0x3a37d98 ip=0x625e94 cr2=0x0 cr3=0x40c66000 cr4=0x16c\n"
-		"es=0xffffffff ds=0xffffffff fs=0xffffffff gs=0xffffffff\n"
-		"eax=0xffffffff ebx=0xffffffff ecx=0xffffffff edx=0xffffffff\n"
-		"ebp=0x3a37ef4 esi=0xffffffff edi=0xffffffff err=-1 eflags=0xffffffff\n"
-		"*0:1037/helper1-4 1:1107/vmm0:Fagi 2:1121/vmware-vm 3:1122/mks:Franc\n"
-		"0x3a37ef4:[0x625e94]Panic+0x17 stack: 0x833ab4, 0x3a37f10, 0x3a37f48\n"
-		"0x3a37f04:[0x625e94]Panic+0x17 stack: 0x833ab4, 0x1, 0x14a03a0\n"
-		"0x3a37f48:[0x64bfa4]TLBDoInvalidate+0x38f stack: 0x3a37f54, 0x40, 0x2\n"
-		"0x3a37f70:[0x66da4d]XMapForceFlush+0x64 stack: 0x0, 0x4d3a, 0x0\n"
-		"0x3a37fac:[0x652b8b]helpFunc+0x2d2 stack: 0x1, 0x14a4580, 0x0\n"
-		"0x3a37ffc:[0x750902]CpuSched_StartWorld+0x109 stack: 0x0, 0x0, 0x0\n"
-		"0x3a38000:[0x0]blk_dev+0xfd76461f stack: 0x0, 0x0, 0x0\n"
-		"VMK uptime: 7:05:43:45.014 TSC: 1751259712918392\n"
-		"Starting coredump to disk\n");
+    "PCPU 1 locked up. Failed to ack TLB invalidate.\n"
+    "frame=0x3a37d98 ip=0x625e94 cr2=0x0 cr3=0x40c66000 cr4=0x16c\n"
+    "es=0xffffffff ds=0xffffffff fs=0xffffffff gs=0xffffffff\n"
+    "eax=0xffffffff ebx=0xffffffff ecx=0xffffffff edx=0xffffffff\n"
+    "ebp=0x3a37ef4 esi=0xffffffff edi=0xffffffff err=-1 eflags=0xffffffff\n"
+    "*0:1037/helper1-4 1:1107/vmm0:Fagi 2:1121/vmware-vm 3:1122/mks:Franc\n"
+    "0x3a37ef4:[0x625e94]Panic+0x17 stack: 0x833ab4, 0x3a37f10, 0x3a37f48\n"
+    "0x3a37f04:[0x625e94]Panic+0x17 stack: 0x833ab4, 0x1, 0x14a03a0\n"
+    "0x3a37f48:[0x64bfa4]TLBDoInvalidate+0x38f stack: 0x3a37f54, 0x40, 0x2\n"
+    "0x3a37f70:[0x66da4d]XMapForceFlush+0x64 stack: 0x0, 0x4d3a, 0x0\n"
+    "0x3a37fac:[0x652b8b]helpFunc+0x2d2 stack: 0x1, 0x14a4580, 0x0\n"
+    "0x3a37ffc:[0x750902]CpuSched_StartWorld+0x109 stack: 0x0, 0x0, 0x0\n"
+    "0x3a38000:[0x0]blk_dev+0xfd76461f stack: 0x0, 0x0, 0x0\n"
+    "VMK uptime: 7:05:43:45.014 TSC: 1751259712918392\n"
+    "Starting coredump to disk\n");
   BSOD_CHAR_DELAY (bst, 10000);		
   BSOD_TEXT (bst, LEFT,	"using slot 1 of 1... ");
   BSOD_CHAR_DELAY (bst, 300000);
@@ -1284,13 +1284,225 @@ vmware (Display *dpy, Window window)
   BSOD_CHAR_DELAY (bst, 10000);
   BSOD_TEXT (bst, LEFT, "Press Escape to enter local debugger\n");
   BSOD_CHAR_DELAY (bst, 10000);
-  BSOD_TEXT (bst, LEFT, "Remote debugger activated. Local debugger no longer available.\n");
+  BSOD_TEXT (bst, LEFT,
+    "Remote debugger activated. Local debugger no longer available.\n");
 
 /*  BSOD_CURSOR (bst, CURSOR_LINE, 240000, 999999);*/
 		
 /*  bst->y = ((bst->xgwa.height - bst->yoff -
              ((bst->font->ascent + bst->font->descent) * 9))
             / 2);*/
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
+/* VMware ESXi 7.0 on a 64-bit Arm host (actually ESXi-Arm Fling)
+   by Andrei E. Warkentin <andreiw@mm.st>.
+ */
+static struct bsod_state *
+vmware_arm (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window,
+                                            "vmware-arm", "VMwareArm");
+
+  unsigned i = 2;
+  unsigned msg_row;
+  unsigned long fg = bst->fg;
+  char t_string[25];
+  time_t t_now = time(NULL);
+  unsigned long font_height = bst->font->ascent + bst->font->descent;
+
+  unsigned long psod_bg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-psod.background",
+					    "vmware-arm-psod.background");
+  unsigned long term_bg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-term.background",
+					    "vmware-arm-term.background");
+  unsigned long term_fg2 = get_pixel_resource(dpy, bst->xgwa.colormap,
+					     "vmware-arm-term.foreground2",
+					     "vmware-arm-term.foreground2");
+  unsigned long term_fg3 = get_pixel_resource(dpy, bst->xgwa.colormap,
+					     "vmware-arm-term.foreground3",
+					     "vmware-arm-term.foreground3");
+  unsigned long dbg_bg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-dbg.background",
+					    "vmware-arm-dbg.background");
+  unsigned long dbg_fg = get_pixel_resource(dpy, bst->xgwa.colormap,
+					    "vmware-arm-dbg.foreground",
+					    "vmware-arm-dbg.foreground");
+  unsigned long fg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "vmware-arm.foreground2",
+                                          "vmware-arm.foreground2");
+
+  BSOD_WRAP (bst);
+  BSOD_MARGINS(bst, 0, 0);
+  BSOD_VERT_MARGINS(bst, 0, 0);
+
+  /*
+   * statusterm.
+   */
+  BSOD_TRUNCATE(bst);
+  BSOD_COLOR (bst, term_bg, fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_MOVETO(bst, 0, font_height * 6);
+  BSOD_COLOR (bst, fg, term_bg);
+  BSOD_TEXT (bst, LEFT,
+    "                VMware ESXi 7.0.0 (VMKernel Release Build 19076756)");
+  BSOD_MOVETO(bst, 0, font_height * 8);
+  BSOD_COLOR (bst, fg, term_bg);
+  BSOD_TEXT (bst, LEFT, "                PINE64 Quartz64 Model A");
+  BSOD_MOVETO(bst, 0, font_height * 10);
+  BSOD_COLOR (bst, term_fg2, term_bg);
+  BSOD_TEXT (bst, LEFT, "                ARM Limited Cortex-A55 r2p0");
+  BSOD_MOVETO(bst, 0, font_height * 11);
+  BSOD_COLOR (bst, term_fg2, term_bg);
+  BSOD_TEXT (bst, LEFT, "                7.7 GiB Memory");
+
+  msg_row = 1 + (bst->xgwa.height / (font_height * 2));
+  if (msg_row > 11) {
+    BSOD_WRAP(bst);
+    BSOD_MOVETO(bst, 0, font_height * msg_row);
+    BSOD_COLOR (bst, term_fg3, term_bg);
+    strftime(t_string, sizeof(t_string), "%Y-%m-%dT%H:%M:%S.000Z",
+             localtime(&t_now));
+    BSOD_TEXT (bst, LEFT, t_string);
+    BSOD_TEXT (bst, LEFT,
+      " cpu0:65802)Failed to verify signatures of the following vib(s):"
+      " [bnxtnet bnxtroce brcmfcoe brcmnvmefc elx-esx-libelxima.so"
+      " eslxiscsi elxnet ena esx base esx-dvfilter-generic-fastpath"
+      " esx-ui esx-update i40en i40iwn iavmd igbn iser$");
+  }
+
+  BSOD_PAUSE (bst, 10000000);
+
+  /*
+   * Now the PSOD.
+   */
+  BSOD_TRUNCATE(bst);
+  BSOD_COLOR (bst, psod_bg, fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_MOVETO(bst, 0, bst->font->ascent);
+  BSOD_COLOR (bst, fg2, psod_bg);
+  BSOD_TEXT   (bst, LEFT,
+		"VMware ESX 7.0.0 [Releasebuild-19076756 aarch64]\n");
+  BSOD_COLOR (bst, fg, psod_bg);
+  BSOD_LINE_DELAY (bst, 1000);
+  BSOD_TEXT   (bst, LEFT,
+    "EXCVEC_CUREL_SP_EL0_SYNCH Exception 0 in world 131126:HELPER_UPLIN"
+    " (ec 0x25 il 1 iss 0x47 far_el1 0x315d3541b8 far_el2 0x4501843b1000)"
+    "\nTTB=0x12ade8000"
+    "\nCurrentEL=2 SP_EL0 DAIF"
+    "\nSCTLR_EL2=0x30c0180d sa0 SA C a M"
+    "\n[ 0]     4501843b0000 [ 1]                0 [ 2]"
+    "             1000 [ 3]     4501843b1000"
+    "\n[ 4]     451a01b1be20 [ 5]                0 [ 6]"
+    "     4305be607a5a [ 7]     4200400001c0"
+    "\n[ 8]                0 [ 9]     451a01b1be20 [10]"
+    "                1 [11]                1"
+    "\n[12]         ffffed40 [13]     420040000080 [14]"
+    "     41fffa5d7000 [15]     41fffa5d7c20"
+    "\n[16]                1 [17]                4 [18]"
+    "     41fffa5d7c08 [19]     451a01b1be70"
+    "\n[20]     43024240b680 [21]     4305be601900 [22]"
+    "     4305be6012c0 [23]     41ffd0c00000"
+    "\n[24]     4305be601220 [25]          bad0001 [26]"
+    "                0 [27]     43006fc01220"
+    "\n[28]     4303d5001220 [29]                0 [30]     42003b3ceb6c"
+    "\n[pc]     42003a344d54 [sp]     451a01b1bdd0 [psr]        20000248"
+    "\n*PCPU0:131126/HELPER_UPLINK_ASYNC_CALL_QUEUE"
+    "\nPCPU  0: SUUU"
+    "\nCode start: 0x42003a200000 VMK uptime: 0:00:05:35.425"
+    "\n0x451a01b1bdd0:[0x42003a344d54]vmk_Memset@vmkernel#nover+0x28"
+    " stack: 0x42003b3cfa48"
+    "\n0x451a01b1bdd0:[0x42003b3ceb68]EQOSEnable@(eqos)#<None>+0xe0"
+    " stack: 0x42003b3cfa48"
+    "\n0x451a01b1be20:[0x42003b3c9220]SETHUplAssociate@(eqos)#<None>+0x88"
+    " stack: 0x43024240b680"
+    "\n0x451a01b1be80:[0x42003a48a078]UplinkDeviceAssociateAsyncCB"
+    "@vmkernel#nover+0x50 stack: 0x43024240bb08"
+    "\n0x451a01b1bed0:[0x42003a555a6c]UplinkAsyncProcessCallsHelperCB"
+    "@vmkernel#nover+0x12c stack: 0x451a01b21000"
+    "\n0x451a01b1bf20:[0x42003a2fd510]HelperQueueFunc@vmkernel#nover+0x174"
+    " stack: 0x451a01b21100"
+    "\n0x451a01b1bfe0:[0x42003a59e4fc]CpuSched_StartWorld@vmkernel#nover+0x70"
+    " stack: 0x0"
+    "\n0x451a01b1c000:[0x42003a5ec610]CpuSched_UseMwaitCallback"
+    "@vmkernel#nover+0x8 stack: 0x0"
+    "\nNo place on disk to dump data."
+    "\nCoredump to file: /vmfs/volumes/3a4fcb25-5f6ca096-c940-70886b86100c"
+    "/vmkdump/00000000-0000-0000-0000-000000000000.dumpfile."
+    "\nFaulting world regs (01/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nVmm code/data (02/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT,  "\nVmk code/rodata/stack (03/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nVmk data/heap (04/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nPCPU (05/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nWorld-specific data (06/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nVASpace (08/15)");
+  BSOD_PAUSE (bst, 1000000);
+  BSOD_TEXT (bst, LEFT,	"\nPFrame (09/15)");
+  BSOD_PAUSE (bst, 1000000);
+  BSOD_TEXT (bst, LEFT, "\nMemXferFs (11/15)");
+  BSOD_PAUSE (bst, 300000);
+  BSOD_TEXT (bst, LEFT, "\nDump Files (13/15)");
+  BSOD_PAUSE (bst, 600000);
+  BSOD_TEXT (bst, LEFT, "\nCollecting userworld dumps (14/15)");
+  BSOD_PAUSE (bst, 600000);
+  BSOD_TEXT (bst, LEFT,
+    "\nFinalized dump header (15/15) FileDump: Successful.");
+  BSOD_PAUSE (bst, 10000);
+  BSOD_TEXT (bst, LEFT,
+    "\nNo port for remote debugger. Press \"Escape\" for local debugger.");
+  BSOD_PAUSE (bst, 1000000);
+
+  /*
+   * Local debugger.
+   */
+  BSOD_COLOR (bst, dbg_bg, dbg_fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_MOVETO(bst, 0, bst->font->ascent);
+  BSOD_TEXT (bst, LEFT, "vmkernel debugger (h for help)");
+  BSOD_RECT (bst, True, 0, bst->font->ascent + bst->font->descent / 2,
+	     bst->xgwa.width, bst->font->ascent);
+  BSOD_COLOR (bst, dbg_fg, dbg_bg);
+  BSOD_TEXT (bst, LEFT, "\n[PCPU2] VMKDBG> _");
+  while (i--) {
+    BSOD_PAUSE (bst, 1000000);
+    BSOD_TEXT (bst, LEFT, "\bh_");
+    BSOD_PAUSE (bst, 10000);
+    BSOD_TEXT (bst, LEFT, "\b \nh       : help"
+	       "\nreboot  : reboot"
+	       "\nlivedump: Create live coredump without crashing system"
+	       "\nl       : display vmkernel log"
+	       "\np       : display content of symbol"
+	       "\ns       : display storage dump+boot info"
+	       "\nx       : display 32-bit content of address"
+	       "\nx/N     : display N bytes of content at address"
+	       "\ng port  : bind remote debugger to port (com1 or com2)"
+	       "\nbt N    : show backtrace for CPU N"
+	       "\nq       : quit debug terminal"
+	       "\n[PCPU2] VMKDBG> _");
+  }
+  BSOD_PAUSE (bst, 100000);
+  BSOD_TEXT (bst, LEFT, "\bre_");
+  BSOD_PAUSE (bst, 500000);
+  BSOD_TEXT (bst, LEFT, "\bb_");
+  BSOD_PAUSE (bst, 50000);
+  BSOD_TEXT (bst, LEFT, "\bo_");
+  BSOD_PAUSE (bst, 50000);
+  BSOD_TEXT (bst, LEFT, "\bo_");
+  BSOD_PAUSE (bst, 50000);
+  BSOD_TEXT (bst, LEFT, "\bt_");
+  BSOD_PAUSE (bst, 2000000);
+  BSOD_COLOR (bst, dbg_bg, dbg_fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_PAUSE (bst, 1000000);
 
   XClearWindow (dpy, window);
   return bst;
@@ -1357,29 +1569,30 @@ windows_nt (Display *dpy, Window window)
 
   case 3:
     BSOD_TEXT (bst, CENTER,
-   "Microsoft (R) Windows NT (R) Version 5.0 (Build 1796)\n"
-   "1 System Processor [128 MB Memory] MultiProcessor Kernel\n"
-   "\n"
-   "*** STOP: 0x0000006B (0xC000003A, 0x00000002,0x00000000,0x00000000)\n"
-   "PROCESS1_INITIALIZATION_FAILED\n"
-   "\n"
-   "If this is the first time you[ve seen this Stop error screen,\n"
-   "restart your computer. If this screen appears again, follow\n"
-   "these steps:\n"
-   "\n"
-   "Check to make sure any new hardware or software is properly installed.\n"
-   "If this is a new installation, ask your hardware or software manufacturer\n"
-   "for any Windows NT updates you might need.\n"
-   "\n"
-   "If problems continue, disable or remove any newly installed hardware\n"
-   "or software. Disable BIOS memory options such as caching or shadowing.\n"
-   "If you need to use Safe Mode to remove or disable components, restart\n"
-   "your computer, press F8 to select Advanced Startup Options, and then\n"
-   "select Safe Mode.\n"
-   "\n"
-   "Refer to your Getting Started manual for more information on\n"
-   "troubleshooting Stop errors.\n"
-      "\n");
+     "Microsoft (R) Windows NT (R) Version 5.0 (Build 1796)\n"
+     "1 System Processor [128 MB Memory] MultiProcessor Kernel\n"
+     "\n"
+     "*** STOP: 0x0000006B (0xC000003A, 0x00000002,0x00000000,0x00000000)\n"
+     "PROCESS1_INITIALIZATION_FAILED\n"
+     "\n"
+     "If this is the first time you[ve seen this Stop error screen,\n"
+     "restart your computer. If this screen appears again, follow\n"
+     "these steps:\n"
+     "\n"
+     "Check to make sure any new hardware or software is properly installed.\n"
+     "If this is a new installation, ask your hardware or software"
+     " manufacturer\n"
+     "for any Windows NT updates you might need.\n"
+     "\n"
+     "If problems continue, disable or remove any newly installed hardware\n"
+     "or software. Disable BIOS memory options such as caching or shadowing.\n"
+     "If you need to use Safe Mode to remove or disable components, restart\n"
+     "your computer, press F8 to select Advanced Startup Options, and then\n"
+     "select Safe Mode.\n"
+     "\n"
+     "Refer to your Getting Started manual for more information on\n"
+     "troubleshooting Stop errors.\n"
+     "\n");
     break;
   default:
     abort();
@@ -1559,35 +1772,35 @@ windows_xp (Display *dpy, Window window)
     break;
   case 5:  /* Windows 8 */
     BSOD_TEXT (bst, LEFT,
-      "A problem has been detected and windows has been shut down to prevent\n"
-      "damage to your computer.\n"
-      "\n"
-      "SYSTEM_SERVICE_EXCEPTION\n"
-      "\n"
-      "If this is the first time you[ve seen this Stop error screen,\n"
-      "restart your computer. If this screen appears again, follow\n"
-      "these steps:\n"
-      "\n"
-      "Check to make sure any new hardware or software is properly installed.\n"
-      "If this is a new installation, ask your hardware or software"
-      " manufacturer\n"
-      "for any Windows NT updates you might need.\n"
-      "\n"
-      "If problems continue, disable or remove any newly installed hardware\n"
-      "or software. Disable BIOS memory options such as caching or shadowing.\n"
-      "If you need to use Safe Mode to remove or disable components, restart\n"
-      "your computer, press F8 to select Advanced Startup Options, and then\n"
-      "select Safe Mode.\n"
-      "\n"
-      "Technical information:\n"
-      "\n"
-      "*** STOP: 0x0000003B (0x00000000c000005,0xFFFFF880041C9062,"
-               "0xFFFFF88002E22F60,0x0000000000000000(\n"
-      "\n"
-      "***   dxgmms1.sys - Address FFFFF880041C9062 base at FFFFF8800418F000,"
-               " DateStamp 4cdb7409\n"
-      "\n"
-      "Collecting data for crash dump ...\n");
+     "A problem has been detected and windows has been shut down to prevent\n"
+     "damage to your computer.\n"
+     "\n"
+     "SYSTEM_SERVICE_EXCEPTION\n"
+     "\n"
+     "If this is the first time you[ve seen this Stop error screen,\n"
+     "restart your computer. If this screen appears again, follow\n"
+     "these steps:\n"
+     "\n"
+     "Check to make sure any new hardware or software is properly installed.\n"
+     "If this is a new installation, ask your hardware or software"
+     " manufacturer\n"
+     "for any Windows NT updates you might need.\n"
+     "\n"
+     "If problems continue, disable or remove any newly installed hardware\n"
+     "or software. Disable BIOS memory options such as caching or shadowing.\n"
+     "If you need to use Safe Mode to remove or disable components, restart\n"
+     "your computer, press F8 to select Advanced Startup Options, and then\n"
+     "select Safe Mode.\n"
+     "\n"
+     "Technical information:\n"
+     "\n"
+     "*** STOP: 0x0000003B (0x00000000c000005,0xFFFFF880041C9062,"
+              "0xFFFFF88002E22F60,0x0000000000000000(\n"
+     "\n"
+     "***   dxgmms1.sys - Address FFFFF880041C9062 base at FFFFF8800418F000,"
+              " DateStamp 4cdb7409\n"
+     "\n"
+     "Collecting data for crash dump ...\n");
     BSOD_PAUSE (bst, 4000000);
     BSOD_TEXT (bst, LEFT,
       "Initializing disk for for crash dump ...\n");
@@ -1999,6 +2212,13 @@ windows_ransomware (Display *dpy, Window window)
     "Well actually, your screen isn't needed anymore.",
     "u just got popped with some 0day shit!!",
     "M'lady,",
+    "ALL UR APES ARE GONE!!1",
+    "Oops, all your apes are gone!",
+    "Oops, all your apes are gone!!",
+    "Oops, all ur tokens have been funged!",
+    "Oops, all your turkens have been funged!",
+    "Oops, all your tokens have been funged!",
+    "YOUR TOKENS ARE FUNGED. PRAY I DO NOT FUNGE THEM FURTHER.",
   };
 
   const char *header_quip = header_quips[random() % countof(header_quips)];
@@ -2015,9 +2235,19 @@ windows_ransomware (Display *dpy, Window window)
     "you are bad and you should feel bad",
     "you used the wifi at defcon",
     "you lack official Clown Strike[TM] threaty threat technology",
+    "Capitalism is a death cult",
+    "Web3 is in full effect",
+    "paperclip maximizers gonna paperclip maximize",
+    "the line is pleased",
+    "line goes up",
+    "you didn't HODL",
+    "you didn't click hard enough and now Tinkerbelle is dead",
+    "of your tesla stonks",
+    "MAMMON HUNGERS",
   };
 
-  const char *excuse_quip = excuse_quips[random() % countof(excuse_quips)];
+  const char *excuse_quip   = excuse_quips[random() % countof(excuse_quips)];
+  const char *excuse_quip_2 = excuse_quips[random() % countof(excuse_quips)];
 
   /* WELL ACTUALLY, screensavers aren't really necessary anymore because... */
   const char * const screensaver_quips[] = {
@@ -2062,8 +2292,7 @@ windows_ransomware (Display *dpy, Window window)
     "payment, press <Check Payment>. Best time to check: 4-6am, Mon-Fri.\n",
     "\n",
     "*Why Did I Get This?\n",
-    "You got this because ", "[Q]",
-    ". Also you didn't click hard enough and now Tinkerbelle is dead.\n",
+    "You got this because ", "[Q]", ". Also ", "[Q2]", ".\n",
     "\n",
     "*But Aren't Screensavers Are Necessary?\n",
     "WELL ACTUALLY, screensavers aren't really necessary anymore because ",
@@ -2135,6 +2364,9 @@ windows_ransomware (Display *dpy, Window window)
   int margin;
   int top_height, bottom_height;
   int x, y;
+
+  while (excuse_quip == excuse_quip_2)
+    excuse_quip_2 = excuse_quips[random() % countof(excuse_quips)];
 
   if (bst->xgwa.width > 2560) n++;  /* Retina displays */
   for (i = 0; i < n; i++)
@@ -2278,7 +2510,8 @@ windows_ransomware (Display *dpy, Window window)
     {
       const char *s = lines[i];
       if (!strcmp(s, "[C]")) s = currency;
-      else if  (!strcmp(s, "[Q]")) s = excuse_quip;
+      else if  (!strcmp(s, "[Q]"))  s = excuse_quip;
+      else if  (!strcmp(s, "[Q2]")) s = excuse_quip_2;
       else if  (!strcmp(s, "[S]")) s = screensaver_quip;
 
       if (*s == '*')
@@ -2312,7 +2545,8 @@ windows_ransomware (Display *dpy, Window window)
                x + left_column_width + margin,
                y + top_height + right_column_height + line_height * 2);
 
-  sprintf(buf, "Send $%.2f of %s to this address:\n", 101+frand(888), currency);
+  sprintf(buf, "Send $%.2f of %s to this address:\n", 101+frand(888),
+          currency);
   BSOD_TEXT (bst, LEFT, buf);
   BSOD_COLOR (bst, fg2, bg2);
 
@@ -6489,6 +6723,7 @@ static const struct {
   { "GLaDOS",		glados },
   { "Android",		android },
   { "VMware",		vmware },
+  { "VMwareArm",	vmware_arm },
   { "Encom",		encom },
   { "DVD",		dvd },
   { "Tivo",		tivo },
@@ -6814,6 +7049,7 @@ static const char *bsod_defaults [] = {
   "*doGLaDOS:		   True",
   "*doAndroid:		   False",
   "*doVMware:		   True",
+  "*doVMwareArm:	   True",
   "*doEncom:		   True",
   "*doDVD:		   True",
   "*doTivo:		   True",
@@ -6929,6 +7165,16 @@ static const char *bsod_defaults [] = {
   ".vmware.foreground:	   White",
   ".vmware.foreground2:	   Yellow",
   ".vmware.background:	   #a700a8",    /* purple */
+
+  ".vmware-arm.foreground:       #FFFFFF",
+  ".vmware-arm.foreground2:      #FFFF00",
+  ".vmware-arm.background:       #555555",
+  ".vmware-arm-psod.background:  #a700a8",
+  ".vmware-arm-dbg.background:   #000000",
+  ".vmware-arm-dbg.foreground:   #ABABAB",
+  ".vmware-arm-term.background:  #555555",
+  ".vmware-arm-term.foreground2: #AAAAAA",
+  ".vmware-arm-term.foreground3: #FF5757",
 
   ".tivo.background:	   #339020",
   ".tivo.foreground:	   #B8E6BA",
@@ -7078,6 +7324,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-android",	".doAndroid",		XrmoptionNoArg,  "False" },
   { "-vmware",		".doVMware",		XrmoptionNoArg,  "True"  },
   { "-no-vmware",	".doVMware",		XrmoptionNoArg,  "False" },
+  { "-vmware-arm",	".doVMwareArm",		XrmoptionNoArg,  "True"  },
+  { "-no-vmware-arm",	".doVMwareArm",		XrmoptionNoArg,  "False" },
   { "-encom",		".doEncom",		XrmoptionNoArg,  "True"  },
   { "-no-encom",	".doEncom",		XrmoptionNoArg,  "False" },
   { "-dvd",		".doDVD",		XrmoptionNoArg,  "True"  },

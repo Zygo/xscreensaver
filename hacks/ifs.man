@@ -3,74 +3,78 @@
 ifs \- draws spinning, colliding iterated-function-system images
 .SH SYNOPSIS
 .B ifs
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-no\-db]
-[\-delay \fInumber\fP]
-[\-detail \fInumber\fP]
-[\-colors \fInumber\fP]
-[\-functions \fInumber\fP]
-[\-iterate | \-recurse]
-[\-no\-rotate]
-[\-no\-scale]
-[\-no\-translate]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-no\-db]
+[\-\-delay \fInumber\fP]
+[\-\-detail \fInumber\fP]
+[\-\-colors \fInumber\fP]
+[\-\-functions \fInumber\fP]
+[\-\-iterate | \-\-recurse]
+[\-\-no\-rotate]
+[\-\-no\-scale]
+[\-\-no\-translate]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIifs\fP program draws spinning, colliding iterated-function-system images.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-no\-db
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-no\-db
 Disable double-buffering.
 .TP 8
-.B \-delay \fInumber\fP
+.B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 20000
 .TP 8
-.B \-colors \fInumber\fP
+.B \-\-colors \fInumber\fP
 Number of colours to use. Default: 200
 .TP 8
-.B \-detail \fInumber\fP
-In \fI\-iterate\fP mode, number of times to randomly iterate the
-functions, in thousands.  In \fI\-recurse\fP mode, number of times
+.B \-\-detail \fInumber\fP
+In \fI\-\-iterate\fP mode, number of times to randomly iterate the
+functions, in thousands.  In \fI\-\-recurse\fP mode, number of times
 to apply functions (recursion depth) before drawing each point.
 Default: 9
 .TP 8
-.B \-functions \fInumber\fP
+.B \-\-functions \fInumber\fP
 Number of functions to be iterated. Default: 3
 .TP 8
-.B \-iterate
+.B \-\-iterate
 Calculate by iteratively applying the functions in a random order,
-usually faster than \fI\-recurse\fP.  This is the default.
+usually faster than \fI\-\-recurse\fP.  This is the default.
 .TP 8
-.B \-recurse
+.B \-\-recurse
 Calculate by recursively applying all combinations of the functions.
 This is the historical behavior and may produce neater output than
-\fI\-iterate\fP.
+\fI\-\-iterate\fP.
 .TP 8
-.B \-no-rotate
+.B \-\-no-rotate
 Disable the rotation component of the functions.
 .TP 8
-.B \-no-scale
+.B \-\-no-scale
 Disable the scaling component of the functions.
 .TP 8
-.B \-no-translate
+.B \-\-no-translate
 Disable the varying translation component of the functions.
 .TP 8
-.B \-no-multi
+.B \-\-no-multi
 Turn off multi-coloured mode, only one colour is used to colour the whole set.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -81,6 +85,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

@@ -286,6 +286,22 @@ dmg::
 apk::
 	$(MAKE2) -C android apk
 
+# Update the version numbers in faq.html, bugs.html, etc.
+www_versions::
+	@								    \
+  DEST=$$HOME/www/xscreensaver ;					    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h |   \
+	  head -1` ;							    \
+  TMP=/tmp/xd.$$$$ ;							    \
+  for f in $$DEST/*.html ; do						    \
+    sed "s/\(CLASS=.latest.>\)[^<>]*\(<\)/\1$$VERS\2/gi" < "$$f" > "$$TMP" ;\
+    if ! cmp -s "$$f" "$$TMP" ; then					    \
+      diff -U0 "$$f" "$$TMP" ;						    \
+      cp -p "$$TMP" "$$f" ;						    \
+    fi ;								    \
+    rm -f "$$TMP" ;							    \
+  done
+
 www::
 	@								    \
   DEST=$$HOME/www/xscreensaver ;					    \
@@ -308,6 +324,7 @@ www::
     exit 1 ;								    \
   fi ;									    \
 									    \
+  $(MAKE2) www_versions ;						    \
   $(MAKE2) -C OSX updates.xml ;						    \
 									    \
   if [ ! -f $$NAME ]; then						    \

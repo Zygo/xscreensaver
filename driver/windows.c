@@ -959,7 +959,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 {
   saver_info *si = (saver_info *) closure;
   saver_preferences *p = &si->prefs;
-  Bool running_p, on_p;
+  Bool running_p, on_p, terminating_p;
 
   /* If the DPMS settings on the server have changed, change them back to
      what ~/.xscreensaver says they should be. */
@@ -972,6 +972,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 
   running_p = any_screenhacks_running_p (si);
   on_p = monitor_powered_on_p (si->dpy);
+  terminating_p = si->terminating_p;
   if (running_p && !on_p)
     {
       int i;
@@ -982,6 +983,11 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
       for (i = 0; i < si->nscreens; i++)
         kill_screenhack (&si->screens[i]);
       /* Do not clear current_hack here. */
+    }
+  else if (terminating_p)
+    {
+       /* If we are in the process of shutting down and are about to exit,
+          don't re-launch anything just because the monitor came back on. */
     }
   else if (!running_p && on_p)
     {

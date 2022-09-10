@@ -3,22 +3,23 @@
 distort \- distort the content of the screen in interesting ways
 .SH SYNOPSIS
 .B distort
-[\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIvisual\fP]
-[\-window\-id \fIwindow\-id\fP]
-[\-delay \fIusecs\fP]
-[\-duration \fIsecs\fP]
-[\-radius \fIpixels\fP]
-[\-speed \fIint\fP]
-[\-number \fIint\fP]
-[\-swamp]
-[\-bounce]
-[\-reflect]
-[\-vortex]
-[\-magnify]
-[\-blackhole]
-[\-slow]
-[\-shm] [\-no\-shm]
-[\-fps]
+[\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-window] [\-\-mono] [\-\-install] [\-\-noinstall] [\-\-visual \fIvisual\fP]
+[\-\-window\-id \fIwindow\-id\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-duration \fIsecs\fP]
+[\-\-radius \fIpixels\fP]
+[\-\-speed \fIint\fP]
+[\-\-number \fIint\fP]
+[\-\-swamp]
+[\-\-bounce]
+[\-\-reflect]
+[\-\-vortex]
+[\-\-magnify]
+[\-\-blackhole]
+[\-\-slow]
+[\-\-shm] [\-\-no\-shm]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIdistort\fP program takes an image and lets circular zones of
 distortion wander randomly around it, distorting what is under them.
@@ -37,77 +38,80 @@ for more details.
 .I distort
 accepts the following options:
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-window
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-window
 Draw on a newly-created window. This is the default.
 .TP 8
-.B \-mono
+.B \-\-mono
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-noinstall
+.B \-\-noinstall
 Don't install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use. Legal values are the name of a visual
 class or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window\-id \fIwindow\-id\fP
+.B \-\-window\-id \fIwindow\-id\fP
 Specify which window id to use.
 .TP 8
-.B \-delay \fIusecs\fP
+.B \-\-delay \fIusecs\fP
 Specify the delay between subsequent animation frames in microseconds.
 .TP 8
-.B \-duration \fIseconds\fP
+.B \-\-duration \fIseconds\fP
 How long to run before loading a new image.  Default 120 seconds.
 .TP 8
-.B \-radius \fIpixels\fP
+.B \-\-radius \fIpixels\fP
 Specify the radius of the distortion zone in pixels.
 .TP 8
-.B \-speed \fIint\fP
+.B \-\-speed \fIint\fP
 Specify the speed at which the distortion zone moves, where 0 is slow,
 higher numbers are faster (10 is pretty fast.)
 .TP 8
-.B \-number \fIint\fP
+.B \-\-number \fIint\fP
 Specify the number of distortion zones.
 .TP 8
-.B \-swamp
+.B \-\-swamp
 Instead of letting zones wander around, let small zones pop up like
 bubbles in a swamp and leave permanent distortion.  \fBWARNING:\fP
-this option uses a \fIcolossal\fP amount of memory: keep the \fI\-radius\fP
-small when using \fI\-swamp\fP.
+this option uses a \fIcolossal\fP amount of memory: keep the \fI\-\-radius\fP
+small when using \fI\-\-swamp\fP.
 .TP 8
-.B \-bounce
+.B \-\-bounce
 Let zones wander around and bounce off the window border. This is the
 default.
 .TP 8
-.B \-reflect
+.B \-\-reflect
 Mode of distortion that resembles reflection by a cylindrical mirror.
 .TP 8
-.B \-vortex
+.B \-\-vortex
 Whirlpool-shaped distortion. Way cool.
 .TP 8
-.B \-magnify
+.B \-\-magnify
 This mode of distortion looks like a magnifying glass.
 .TP 8
-.B \-blackhole
+.B \-\-blackhole
 Suck your pixels beyond the event horizon. Favourite mode of Dr
 Stephen Hawking.
 .TP 8
-.B \-slow
+.B \-\-slow
 Make the zone wander slower.
 .TP 8
-.B \-shm
+.B \-\-shm
 Use shared memory extension.
 .TP 8
-.B \-no\-shm
+.B \-\-no\-shm
 Don't use shared memory extension.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -118,6 +122,9 @@ to get the default host and display number
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

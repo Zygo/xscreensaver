@@ -2,23 +2,23 @@
 
 <screensaver name="sproingies" _label="Sproingies" gl="yes">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=fmHl17ppgc0"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="30000"
           convert="invert"/>
 
-  <number id="count" type="slider" arg="-count %"
+  <number id="count" type="slider" arg="--count %"
            _label="Sproingies" _low-label="One" _high-label="Lots"
           low="1" high="30" default="8"/>
 
   <hgroup>
-   <boolean id="nofall" _label="Fall off edge" arg-set="-fall"/>
-   <boolean id="wire" _label="Wireframe" arg-set="-wireframe"/>
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="nofall" _label="Fall off edge" arg-set="--fall"/>
+   <boolean id="wire" _label="Wireframe" arg-set="--wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   </hgroup>
 
   <xscreensaver-updater />

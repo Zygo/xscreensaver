@@ -3,10 +3,11 @@
 bsod \- Blue Screen of Death emulator
 .SH SYNOPSIS
 .B bsod
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
-[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIseconds\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install]
+[\-\-visual \fIvisual\fP] [\-\-delay \fIseconds\fP]
+[\-\-fps]
 .SH DESCRIPTION
 The
 .I bsod
@@ -24,29 +25,32 @@ NCD X Terminals.
 .I bsod
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-mono 
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-install
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fIdelay\fP
+.B \-\-delay \fIdelay\fP
 The duration each crash-mode is displayed before selecting another.
 .TP 8
-.B \-only \fIwhich\fP
-Tell it to run only one mode, e.g., \fI\-only HPUX\fP.
+.B \-\-only \fIwhich\fP
+Tell it to run only one mode, e.g., \fI\-\-only HPUX\fP.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -57,6 +61,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH X RESOURCES
 Notable X resources supported include the following, which control which
 hacks are displayed and which aren't.
@@ -95,7 +102,7 @@ by default, because they're really not all that interesting looking
 unless you're a fan of those systems.  
 
 There are command-line options for all of these:
-e.g., \fI\-bsd\fP, \fI\-no-bsd\fP.  (Also note the \fI\-only\fP option.)
+e.g., \fI\-\-bsd\fP, \fI\-\-no-bsd\fP.  (Also note the \fI\-\-only\fP option.)
 .SH BUGS
 Unlike the systems being simulated, \fIbsod\fP does not require a
 reboot after running.

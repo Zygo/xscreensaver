@@ -35,7 +35,10 @@
 # endif
 
 # include <gdk-pixbuf/gdk-pixbuf.h>
-# include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+
+# ifdef HAVE_GDK_PIXBUF_XLIB
+#  include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
+# endif
 
 # if (__GNUC__ >= 4)
 #  pragma GCC diagnostic pop
@@ -84,8 +87,12 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
         {
           /* Turns out gdk-pixbuf works even if you don't have display
              connection, which is good news for analogtv-cli. */
+# ifdef HAVE_GDK_PIXBUF_XLIB
+          /* Aug 2022: nothing seems to go wrong if we don't do this at all?
+             gtk-2.24.33, gdk-pixbuf 2.42.8. */
           gdk_pixbuf_xlib_init (dpy, DefaultScreen (dpy));
           xlib_rgb_init (dpy, DefaultScreenOfDisplay (dpy));
+# endif
         }
       initted = 1;
     }

@@ -3,37 +3,42 @@
 pedal \- pretty geometric picture program
 .SH SYNOPSIS
 .B pedal
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-delay \fIseconds\fP] [-maxlines \fInumber\fP] [-mono] [\-install] [\-visual \fIvisual\fP]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-delay \fIseconds\fP] [-maxlines \fInumber\fP] [-mono] [\-\-install] [\-\-visual \fIvisual\fP]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIpedal\fP program displays pretty geometric pictures.
 .SH OPTIONS
 .I pedal
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-foreground \fIcolor\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-foreground \fIcolor\fP
 The color for the foreground.  Default is white.
 .TP 8
-.B \-background \fIcolor\fP
+.B \-\-background \fIcolor\fP
 The color for the background.  Default is black.
 .TP 8
-.B \-delay \fIseconds\fP
+.B \-\-delay \fIseconds\fP
 The number of seconds to pause between each picture.
 .TP 8
-.B \-maxlines \fInumber\fP
+.B \-\-maxlines \fInumber\fP
 The maximum number of lines in the drawing.  Good values are
 between 20 and 2000.  Maximum value is 16K.
 .PP
 To make your X server grunt under load, and to impress your
-friends, try \fIpedal -mono -delay 0 -maxlines 100\fp.
+friends, try \fIpedal -mono -delay 0 -maxlines 100\fP.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
@@ -44,6 +49,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

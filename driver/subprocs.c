@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -460,6 +460,16 @@ xt_sigterm_handler (XtPointer data, XtSignalId *id)
       if (p->verbose_p)
         fprintf (stderr, "%s: %s: unblanking\n", blurb(), 
                  signal_name (sigterm_received));
+
+       /* We are in the process of shutting down and are about to exit,
+          so don't accidentally re-launch hacks. */
+      si->terminating_p = True;
+
+      if (si->watchdog_id)
+        {
+          XtRemoveTimeOut (si->watchdog_id);
+          si->watchdog_id = 0;
+        }
 
       /* Kill before unblanking, to stop drawing as soon as possible. */
       for (i = 0; i < si->nscreens; i++)

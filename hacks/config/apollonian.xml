@@ -2,31 +2,29 @@
 
 <screensaver name="apollonian" _label="Apollonian">
 
-  <command arg="-root"/>
+  <command arg="--root"/>
 
   <video href="https://www.youtube.com/watch?v=aeWnjSROR8U"/>
 
-  <boolean id="label" _label="Draw labels" arg-unset="-no-label"/>
+  <boolean id="label" _label="Draw labels" arg-unset="--no-label"/>
 
   <boolean id="altgeom" _label="Include alternate geometries"
-           arg-unset="-no-altgeom"/>
+           arg-unset="--no-altgeom"/>
 
-<!-- don't know what -count does -->
-
-  <number id="cycles" type="slider" arg="-cycles %"
+  <number id="cycles" type="slider" arg="--cycles %"
            _label="Depth" _low-label="Shallow" _high-label="Deep"
           low="1" high="20" default="20"/>
 
-  <number id="ncolors" type="slider" arg="-ncolors %"
+  <number id="ncolors" type="slider" arg="--ncolors %"
             _label="Number of colors" _low-label="Two" _high-label="Many"
             low="2" high="255" default="64"/>
 
-  <number id="delay" type="slider" arg="-delay %"
+  <number id="delay" type="slider" arg="--delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="1000000" default="1000000"
           convert="invert"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <xscreensaver-updater />
 

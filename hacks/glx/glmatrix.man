@@ -3,21 +3,22 @@
 glmatrix \- simulates the title sequence effect of the movie
 .SH SYNOPSIS
 .B glmatrix
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] 
-[\-delay \fIusecs\fP] 
-[\-speed \fIratio\fP]
-[\-density \fIpct\fP]
-[\-no\-fog]
-[\-no\-waves]
-[\-no\-rotate]
-[\-binary]
-[\-hexadecimal]
-[\-dna]
-[\-clock]
-[\-timefmt \fIfmt\fP]
-[\-wireframe]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] 
+[\-\-delay \fIusecs\fP] 
+[\-\-speed \fIratio\fP]
+[\-\-density \fIpct\fP]
+[\-\-no\-fog]
+[\-\-no\-waves]
+[\-\-no\-rotate]
+[\-\-binary]
+[\-\-hexadecimal]
+[\-\-dna]
+[\-\-clock]
+[\-\-timefmt \fIfmt\fP]
+[\-\-wireframe]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIglmatrix\fP program draws the 3D "digital rain" effect, as seen
 in the title sequence of the Wachowski brothers' film, "The Matrix".
@@ -30,66 +31,69 @@ computer monitors actually \fIin\fP the movie.
 .I glmatrix
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fIusecs\fP
+.B \-\-delay \fIusecs\fP
 The delay between frames of the animation, in microseconds: default 30000.
 .TP 8
-.B \-speed \fIratio\fP
+.B \-\-speed \fIratio\fP
 How fast the glyphs should move; default 1.0.  2.0 means twice as fast,
 0.5 means half as fast.
 .TP 8
-.B \-density \fIpercentage\fP
+.B \-\-density \fIpercentage\fP
 The approximate percentage of the screen that should be filled with 
 characters at any given time.  Default 20%.
 .TP 8
-.B \-no\-fog
+.B \-\-no\-fog
 By default, glyphs are dimmer the farther away they are.  This 
 argument disables that.
 .TP 8
-.B \-no\-waves
+.B \-\-no\-waves
 By default, waves of color roll down the columns of glyphs.  This
 argument disables that.
 .TP 8
-.B \-no-rotate\fP
+.B \-\-no-rotate\fP
 By default, the scene slowly tilts and rotates.  This
 argument disables that.
 .TP 8
-.B \-binary\fP
+.B \-\-binary\fP
 Instead of displaying Matrix glyphs, only display ones and zeros.
 .TP 8
-.B \-hexadecimal\fP
+.B \-\-hexadecimal\fP
 Instead of displaying Matrix glyphs, display hexadecimal digits.
 .TP 8
-.B \-dna\fP
+.B \-\-dna\fP
 Instead of displaying Matrix glyphs, display genetic code
 (guanine, adenine, thymine, and cytosine.)
 .TP 8
-.B \-clock\fP
+.B \-\-clock\fP
 Hide a clock displaying the current time somewhere in the glyphs.
 .TP 8
-.B \-timefmt\fP \fIstrftime-string\fP
-How to format the clock when \fI\-clock\fP is specified.
+.B \-\-timefmt\fP \fIstrftime-string\fP
+How to format the clock when \fI\-\-clock\fP is specified.
 Default "\ %l%M%p\ ".
 .TP 8
-.B \-speed \fIratio\fP
+.B \-\-speed \fIratio\fP
 Less than 1 for slower, greater than 1 for faster.  Default 1.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Just draw boxes instead of textured characters.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -100,6 +104,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR xmatrix (MANSUFFIX),
 .BR X (1),

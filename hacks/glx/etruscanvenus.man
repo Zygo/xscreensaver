@@ -5,46 +5,47 @@ deforms between the Etruscan Venus surface, the Roman surface, the Boy
 surface surface, and the Ida surface.
 .SH SYNOPSIS
 .B etruscanvenus
-[\-display \fIhost:display.screen\fP]
-[\-install]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-delay \fIusecs\fP]
-[\-fps]
-[\-mode \fIdisplay-mode\fP]
-[\-wireframe]
-[\-surface]
-[\-transparent]
-[\-appearance \fIappearance\fP]
-[\-solid]
-[\-distance-bands]
-[\-direction-bands]
-[\-colors \fIcolor-scheme\fP]
-[\-onesided-colors]
-[\-twosided-colors]
-[\-distance-colors]
-[\-direction-colors]
-[\-no-change-colors]
-[\-view-mode \fIview-mode\fP]
-[\-walk]
-[\-turn]
-[\-no-deform]
-[\-deformation-speed \fIfloat\fP]
-[\-initial-deformation \fIfloat\fP]
-[\-etruscan-venus]
-[\-roman]
-[\-boy]
-[\-ida]
-[\-orientation-marks]
-[\-projection \fImode\fP]
-[\-perspective]
-[\-orthographic]
-[\-speed-x \fIfloat\fP]
-[\-speed-y \fIfloat\fP]
-[\-speed-z \fIfloat\fP]
-[\-walk-direction \fIfloat\fP]
-[\-walk-speed \fIfloat\fP]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-install]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-fps]
+[\-\-mode \fIdisplay-mode\fP]
+[\-\-wireframe]
+[\-\-surface]
+[\-\-transparent]
+[\-\-appearance \fIappearance\fP]
+[\-\-solid]
+[\-\-distance-bands]
+[\-\-direction-bands]
+[\-\-colors \fIcolor-scheme\fP]
+[\-\-onesided-colors]
+[\-\-twosided-colors]
+[\-\-distance-colors]
+[\-\-direction-colors]
+[\-\-no-change-colors]
+[\-\-view-mode \fIview-mode\fP]
+[\-\-walk]
+[\-\-turn]
+[\-\-no-deform]
+[\-\-deformation-speed \fIfloat\fP]
+[\-\-initial-deformation \fIfloat\fP]
+[\-\-etruscan-venus]
+[\-\-roman]
+[\-\-boy]
+[\-\-ida]
+[\-\-orientation-marks]
+[\-\-projection \fImode\fP]
+[\-\-perspective]
+[\-\-orthographic]
+[\-\-speed-x \fIfloat\fP]
+[\-\-speed-y \fIfloat\fP]
+[\-\-speed-z \fIfloat\fP]
+[\-\-walk-direction \fIfloat\fP]
+[\-\-walk-speed \fIfloat\fP]
 .SH DESCRIPTION
 The \fIetruscanvenus\fP program shows a 3d immersion of a Klein bottle
 that smoothly deforms between the Etruscan Venus surface, the Roman
@@ -147,79 +148,82 @@ Raymond L. Idaszak, presented at SIGGRAPH 1989.
 .I etruscanvenus
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual
 class, or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fImicroseconds\fP
+.B \-\-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the
 animation.  Default 10000, or 1/100th second.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .PP
 The following four options are mutually exclusive.  They determine how
 the Klein bottle is displayed.
 .TP 8
-.B \-mode random
+.B \-\-mode random
 Display the Klein bottle in a random display mode (default).
 .TP 8
-.B \-mode wireframe \fP(Shortcut: \fB\-wireframe\fP)
+.B \-\-mode wireframe \fP(Shortcut: \fB\-\-wireframe\fP)
 Display the Klein bottle as a wireframe mesh.
 .TP 8
-.B \-mode surface \fP(Shortcut: \fB\-surface\fP)
+.B \-\-mode surface \fP(Shortcut: \fB\-\-surface\fP)
 Display the Klein bottle as a solid surface.
 .TP 8
-.B \-mode transparent \fP(Shortcut: \fB\-transparent\fP)
+.B \-\-mode transparent \fP(Shortcut: \fB\-\-transparent\fP)
 Display the Klein bottle as a transparent surface.
 .PP
 The following four options are mutually exclusive.  They determine the
 appearance of the Klein bottle.
 .TP 8
-.B \-appearance random
+.B \-\-appearance random
 Display the Klein bottle with a random appearance (default).
 .TP 8
-.B \-appearance solid \fP(Shortcut: \fB\-solid\fP)
+.B \-\-appearance solid \fP(Shortcut: \fB\-\-solid\fP)
 Display the Klein bottle as a solid object.
 .TP 8
-.B \-appearance distance-bands \fP(Shortcut: \fB\-distance-bands\fP)
+.B \-\-appearance distance-bands \fP(Shortcut: \fB\-\-distance-bands\fP)
 Display the Klein bottle as see-through bands that lie at increasing
 distances from the origin (see above for an explanation).
 .PP
 .TP 8
-.B \-appearance direction-bands \fP(Shortcut: \fB\-direction-bands\fP)
+.B \-\-appearance direction-bands \fP(Shortcut: \fB\-\-direction-bands\fP)
 Display the Klein bottle as see-through bands that lie at increasing
 angles with respect to the origin (see above for an explanation).
 .PP
 The following five options are mutually exclusive.  They determine how
 to color the Klein bottle.
 .TP 8
-.B \-colors random
+.B \-\-colors random
 Display the Klein bottle with a random color scheme (default).
 .TP 8
-.B \-colors onesided \fP(Shortcut: \fB\-onesided-colors\fP)
+.B \-\-colors onesided \fP(Shortcut: \fB\-\-onesided-colors\fP)
 Display the Klein bottle with a single color.
 .TP 8
-.B \-colors twosided \fP(Shortcut: \fB\-twosided-colors\fP)
+.B \-\-colors twosided \fP(Shortcut: \fB\-\-twosided-colors\fP)
 Display the Klein bottle with two colors: one color on one "side" and
 the complementary color on the "other side."
 .TP 8
-.B \-colors distance \fP(Shortcut: \fB\-distance-colors\fP)
+.B \-\-colors distance \fP(Shortcut: \fB\-\-distance-colors\fP)
 Display the Klein bottle with fully saturated colors that depend on
 the distance of the points on the projective plane to the origin (see
 above for an explanation).  If the Klein bottle is displayed as
 distance bands, each band will be displayed with a different color.
 .TP 8
-.B \-colors direction \fP(Shortcut: \fB\-direction-colors\fP)
+.B \-\-colors direction \fP(Shortcut: \fB\-\-direction-colors\fP)
 Display the Klein bottle with fully saturated colors that depend on
 the angle of the points on the projective plane with respect to the
 origin (see above for an explanation).  If the Klein bottle is
@@ -229,83 +233,83 @@ different color.
 The following options determine whether the colors with which the
 Klein bottle are displayed are static or are changing dynamically.
 .TP 8
-.B \-change-colors
+.B \-\-change-colors
 Change the colors with which the Klein bottle is displayed
 dynamically (default).
 .TP 8
-.B \-no-change-colors
+.B \-\-no-change-colors
 Use static colors to display the Klein bottle.
 .PP
 The following three options are mutually exclusive.  They determine
 how to view the Klein bottle.
 .TP 8
-.B \-view-mode random
+.B \-\-view-mode random
 View the Klein bottle in a random view mode (default).  The walking
 mode will be randomly selected in approximately 10% of the cases.
 .TP 8
-.B \-view-mode turn \fP(Shortcut: \fB\-turn\fP)
+.B \-\-view-mode turn \fP(Shortcut: \fB\-\-turn\fP)
 View the Klein bottle while it turns in 3d.
 .TP 8
-.B \-view-mode walk \fP(Shortcut: \fB\-walk\fP)
+.B \-\-view-mode walk \fP(Shortcut: \fB\-\-walk\fP)
 View the Klein bottle as if walking on its surface.
 .PP
 The following options determine whether the surface is being deformed.
 .TP 8
-.B \-deform
+.B \-\-deform
 Deform the surface smoothly between the Etruscan Venus surface, the
 Roman surface, the Boy surface surface, and the Ida surface (default).
 .TP 8
-.B \-no-deform
+.B \-\-no-deform
 Don't deform the surface.
 .PP
 The following option determines the deformation speed.
 .TP 8
-.B \-deformation-speed \fIfloat\fP
+.B \-\-deformation-speed \fIfloat\fP
 The deformation speed is measured in percent of some sensible maximum
 speed (default: 10.0).
 .PP
 The following options determine the initial deformation of the
 surface.  As described above, this is mostly useful if
-\fB\-no-deform\fP is specified.
+\fB\-\-no-deform\fP is specified.
 .TP 8
-.B \-initial-deformation \fIfloat\fP
+.B \-\-initial-deformation \fIfloat\fP
 The initial deformation is specified as a number between 0 and 4000.
 A value of 0 corresponds to the Etruscan Venus surface, a value of
 1000 to the Roman surface, a value of 2000 to the Boy surface, and a
 value of 3000 to the Ida surface.  The default value is 0.
 .TP 8
-.B \-etruscan-venus
-This is a shortcut for \fB\-initial-deformation 0\fP.
+.B \-\-etruscan-venus
+This is a shortcut for \fB\-\-initial-deformation 0\fP.
 .TP 8
-.B \-roman
-This is a shortcut for \fB\-initial-deformation 1000\fP.
+.B \-\-roman
+This is a shortcut for \fB\-\-initial-deformation 1000\fP.
 .TP 8
-.B \-boy
-This is a shortcut for \fB\-initial-deformation 2000\fP.
+.B \-\-boy
+This is a shortcut for \fB\-\-initial-deformation 2000\fP.
 .TP 8
-.B \-ida
-This is a shortcut for \fB\-initial-deformation 3000\fP.
+.B \-\-ida
+This is a shortcut for \fB\-\-initial-deformation 3000\fP.
 .PP
 The following options determine whether orientation marks are shown on
 the Klein bottle.
 .TP 8
-.B \-orientation-marks
+.B \-\-orientation-marks
 Display orientation marks on the Klein bottle.
 .TP 8
-.B \-no-orientation-marks
+.B \-\-no-orientation-marks
 Don't display orientation marks on the Klein bottle (default).
 .PP
 The following three options are mutually exclusive.  They determine
 how the Klain bottle is projected from 3d to 2d (i.e., to the screen).
 .TP 8
-.B \-projection random
+.B \-\-projection random
 Project the Klein bottle from 3d to 2d using a random projection mode
 (default).
 .TP 8
-.B \-projection perspective \fP(Shortcut: \fB\-perspective\fP)
+.B \-\-projection perspective \fP(Shortcut: \fB\-\-perspective\fP)
 Project the Klein bottle from 3d to 2d using a perspective projection.
 .TP 8
-.B \-projection orthographic \fP(Shortcut: \fB\-orthographic\fP)
+.B \-\-projection orthographic \fP(Shortcut: \fB\-\-orthographic\fP)
 Project the Klein bottle from 3d to 2d using an orthographic
 projection.
 .PP
@@ -315,18 +319,18 @@ in degrees per frame.  The speeds should be set to relatively small
 values, e.g., less than 4 in magnitude.  In walk mode, all speeds are
 ignored.
 .TP 8
-.B \-speed-x \fIfloat\fP
+.B \-\-speed-x \fIfloat\fP
 Rotation speed around the x axis (default: 1.1).
 .TP 8
-.B \-speed-y \fIfloat\fP
+.B \-\-speed-y \fIfloat\fP
 Rotation speed around the y axis (default: 1.3).
 .TP 8
-.B \-speed-z \fIfloat\fP
+.B \-\-speed-z \fIfloat\fP
 Rotation speed around the z axis (default: 1.5).
 .PP
 The following two options determine the walking speed and direction.
 .TP 8
-.B \-walk-direction \fIfloat\fP
+.B \-\-walk-direction \fIfloat\fP
 The walking direction is measured as an angle in degrees in the 2d
 square that forms the coordinate system of the surface of the Klein
 bottle (default: 83.0).  A value of 0 or 180 means that the walk is
@@ -336,7 +340,7 @@ directly along a direction band.  Any other value results in a curved
 path along the surface.  As noted above, walking is performed only on
 the Ida surface.
 .TP 8
-.B \-walk-speed \fIfloat\fP
+.B \-\-walk-speed \fIfloat\fP
 The walking speed is measured in percent of some sensible maximum
 speed (default: 20.0).
 .SH INTERACTION
@@ -356,6 +360,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)

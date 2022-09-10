@@ -1,5 +1,5 @@
 /* passwd-pwent.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -163,6 +163,7 @@ get_encrypted_passwd (const char *user)
         result = strdup(p->pw_passwd);
     }
 
+# ifdef HAVE_HPUX_PASSWD
   /* The manual for passwd(4) on HPUX 10.10 says:
 
 	  Password aging is put in effect for a particular user if his
@@ -173,6 +174,9 @@ get_encrypted_passwd (const char *user)
      So this means that passwd->pw_passwd isn't simply a string of cyphertext,
      it might have trailing junk.  So, if there is a comma in the string, and
      that comma is beyond position 13, terminate the string before the comma.
+
+     This behavior can break other systems where comma separated data is
+     significant, such as argon2 passwords on NetBSD.
    */
   if (result && strlen(result) > 13)
     {
@@ -180,6 +184,7 @@ get_encrypted_passwd (const char *user)
       if (s)
 	*s = 0;
     }
+# endif /* HAVE_HPUX_PASSWD */
 
   /* We only issue this warning in non-verbose mode if not compiled with
      support for PAM.  If we're using PAM, it's common for pwent passwords

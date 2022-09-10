@@ -3,15 +3,16 @@
 pinion \- draws a scrolling sequence of interconnected gears
 .SH SYNOPSIS
 .B pinion
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
-[\-visual \fIvisual\fP] 
-[\-delay \fIusecs\fP] 
-[\-scroll \fIratio\fP]
-[\-spin \fIratio\fP]
-[\-size \fIratio\fP]
-[\-max-rpm \fIint\fP]
-[\-wireframe]
-[\-fps]
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] 
+[\-\-delay \fIusecs\fP] 
+[\-\-scroll \fIratio\fP]
+[\-\-spin \fIratio\fP]
+[\-\-size \fIratio\fP]
+[\-\-max-rpm \fIint\fP]
+[\-\-wireframe]
+[\-\-fps]
 .SH DESCRIPTION
 The \fIpinion\fP program draws an interconnected set of gears moving
 across the screen.
@@ -19,43 +20,46 @@ across the screen.
 .I pinion
 accepts the following options:
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-install
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
 Install a private colormap for the window.
 .TP 8
-.B \-visual \fIvisual\fP\fP
+.B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fIusecs\fP
+.B \-\-delay \fIusecs\fP
 The delay between frames of the animation, in microseconds: default 15000.
 .TP 8
-.B \-spin \fIratio\fP
+.B \-\-spin \fIratio\fP
 How fast the gears should spin; default 1.0.  2.0 means twice as fast,
 0.5 means half as fast.
 .TP 8
-.B \-scroll \fIratio\fP
+.B \-\-scroll \fIratio\fP
 How fast the gears should scroll past the screen; default 1.0.  
 2.0 means twice as fast, 0.5 means half as fast.
 .TP 8
-.B \-size \fIratio\fP
+.B \-\-size \fIratio\fP
 How big the gears should be, on average; default 1.0. 
 2.0 means twice as large, 0.5 means half as large.
 .TP 8
-.B \-max\-rpm \fIinteger\fP
+.B \-\-max\-rpm \fIinteger\fP
 If any gear exceeds the maximum RPM, the current gear train is broken there,
 and we start a new train.  Default: 900 RPM.  (At 30 FPS, that's about half
 a rotation per frame.)
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Render in wireframe instead of solid.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .SH ENVIRONMENT
 .PP
@@ -66,6 +70,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR gears (MANSUFFIX),
 .BR xscreensaver (1),

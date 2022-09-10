@@ -3,22 +3,23 @@
 photopile \- displays multiple images in a periodically shuffled pile
 .SH SYNOPSIS
 .B photopile
-[\-display \fIhost:display.screen\fP]
-[\-visual \fIvisual\fP]
-[\-window]
-[\-root]
-[\-count \fIint\fP]
-[\-scale \fIfactor\fP]
-[\-maxTilt \fIdegrees\fP]
-[\-titles | \-no\-titles]
-[\-polaroid | \-no\-polaroid]
-[\-shadows | \-no\-shadows]
-[\-font \fIfont\fP]
-[\-speed \fIratio\fP]
-[\-duration \fIseconds\fP]
-[\-fps]
-[\-debug]
-[\-wireframe]
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-count \fIint\fP]
+[\-\-scale \fIfactor\fP]
+[\-\-maxTilt \fIdegrees\fP]
+[\-\-titles | \-\-no\-titles]
+[\-\-polaroid | \-\-no\-polaroid]
+[\-\-shadows | \-\-no\-shadows]
+[\-\-font \fIfont\fP]
+[\-\-speed \fIratio\fP]
+[\-\-duration \fIseconds\fP]
+[\-\-fps]
+[\-\-debug]
+[\-\-wireframe]
 .SH DESCRIPTION
 Loads several random images, and displays them as if lying in a random pile.
 The pile is periodically reshuffled, with new images coming in and old ones
@@ -32,55 +33,58 @@ To specify the directory that images are loaded from, run
 and click on the "Advanced" tab.
 .SH OPTIONS
 .TP 8
-.B \-visual \fIvisual\fP
+.B \-\-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-window
+.B \-\-window
 Draw on a newly-created window.  This is the default.
 .TP 8
-.B \-root
+.B \-\-root
 Draw on the root window.
 .TP 8
-.B \-count \fIint\fP
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-count \fIint\fP
 How many images to display.  Default 7.
 .TP 8
-.B \-scale \fIfactor\fP
+.B \-\-scale \fIfactor\fP
 Size of images in relation to the size of the window.  Default 0.4.
 .TP 8
-.B \-maxTilt \fIdegrees\fP
+.B \-\-maxTilt \fIdegrees\fP
 Maximum deviation from vertical.  Default 50 degrees.
 .TP 8
-.B \-duration \fIseconds\fP
+.B \-\-duration \fIseconds\fP
 Every \fIduration\fP seconds, one of the images will be replaced
 with a new one.  Default 5 seconds.
 .TP 8
-.B \-speed \fIratio\fP
+.B \-\-speed \fIratio\fP
 Speed up or slow down the animation.  0.5 means half as fast as the
 default; 2.0 means twice as fast.
 .TP 8
-.B \-delay \fInumber\fP
+.B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
-.B \-titles \fB| \-no\-titles\fP
+.B \-\-titles \fB| \-\-no\-titles\fP
 Whether to display the file names of the images beneath them.  Default: yes.
 .TP 8
-.B \-polaroid \fB| \-no\-polaroid\fP
+.B \-\-polaroid \fB| \-\-no\-polaroid\fP
 Whether to simulate images taken by an instant camera.  Default: yes.
 .TP 8
-.B \-shadows \fB| \-no\-shadows\fP
+.B \-\-shadows \fB| \-\-no\-shadows\fP
 Whether to draw images with drop shadows.  Default: no.
 .TP 8
-.B \-font \fIfont-name\fP
+.B \-\-font \fIfont-name\fP
 The font to use for the initial loading screen and for image titles.
 .TP 8
-.B \-fps
+.B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .TP 8
-.B \-debug
+.B \-\-debug
 Prints debugging info to stderr.
 .TP 8
-.B \-wireframe
+.B \-\-wireframe
 Another debug mode.
 .SH ENVIRONMENT
 .PP
@@ -91,6 +95,9 @@ to get the default host and display number.
 .B XENVIRONMENT
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver\-settings (1)
