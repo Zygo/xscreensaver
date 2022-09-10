@@ -1,0 +1,1779 @@
+
+                              XScreenSaver
+
+                             a collection of
+                            free screen savers
+                             for X11, macOS,
+                             iOS and Android
+
+                            By Jamie Zawinski
+                             and many others
+
+                     https://www.jwz.org/xscreensaver/
+
+===============================================================================
+
+This is the XScreenSaver source code distribution.  It is strongly recommended
+that you install a binary release rather than trying to compile it yourself.
+Executables are available for almost all platforms, including macOS, iOS, and
+Android.  See the XScreenSaver web site for details.
+
+
+===============================================================================
+To compile for a Unix system with X11:
+===============================================================================
+
+        ./configure --help
+
+        ./configure --prefix=/usr
+        make
+        sudo make install
+        make clean
+
+        xscreensaver &
+        xscreensaver-settings
+
+    There are many compilation dependencies.  The configure script will tell
+    you what is missing.  At the least, you will need development versions of
+    these libraries.  Append "-dev" or "-devel" to most of these:
+
+        perl pkg-config gettext intltool libx11 libxext libxi libxt libxft
+        libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk-3-0
+        libgdk-pixbuf2.0 libjpeg libxml2 libpam libsystemd elogind
+
+    BSD systems might need gmake instead of make.
+
+
+===============================================================================
+To compile for macOS or iOS:
+===============================================================================
+
+    See OSX/README.  Use the included Xcode project.
+
+
+===============================================================================
+To compile for Android:
+===============================================================================
+
+    See android/README.
+
+
+===============================================================================
+Interested in writing a new screen saver?
+===============================================================================
+
+    See the README.hacking file.
+
+
+===============================================================================
+Version History
+===============================================================================
+
+6.05	* X11: Cope with dumb DPMS settings that existed pre-startup.
+	* X11: Silence new Perl warnings from `xscreensaver-getimage-file'.
+	* X11: Fix `sonar' pthreads crash on recent Pi systems.
+	* X11: Removed dependence on `gdk-pixbuf-xlib-2.0'.
+	* X11: GTK 3 is now required.
+	* macOS: Fixed the "Run savers on screens" preference in Random mode
+          on multi-screen M1 systems.
+
+6.04	* New hacks, `nakagin' and `chompytower'.
+	* Settings dialog shows diagnostics for bad image folders and feeds.
+	* URLs for `imageDirectory' can now point at archive.org collections.
+	* Sliders for various "Speed" preferences are easier to use.
+	* X11: Settings dialog shows saver description below embedded preview.
+	* X11: Better behavior when zero monitors are attached.
+	* X11: Improvements to inhibiting blanking while videos are playing:
+          No longer necessary to hack GNOME and KDE to get them to not usurp
+          the org.freedesktop.ScreenSaver endpoint.
+	* X11: `unicrud' displays character names.
+	* Updated `webcollage'.
+
+6.03	* New hack, `squirtorus'.
+	* New hack, `mapscroller' (X11 and macOS only).
+	* `sphereeversion' now has corrugation-mode, and can evert the Earth.
+	* `glplanet' is higher resolution, and displays time zones.
+	* `glslideshow' displays relative pathnames again.
+	* iOS: Apple broke drag-to-rotate again. Fixed.
+	* macOS: fixed spurious error message in auto-update installer.
+	* X11: fixed `sonar' failing to ping on some Linux systems.
+	* X11: Touch-screens work.
+	* X11: Hold down Backspace to clear the whole password field.
+
+6.02	* New hacks, `marbling' and `binaryhorizon'.
+	* `atlantis' behaviors are more random and lifelike.
+	* `headroom' is now Mask Headroom.
+	* X11: `fontglide' skips fonts that can't display ASCII.
+	* X11: Use asterisks in the password dialog if the system fonts don't
+          have bullets in them.
+	* X11: "Disable Screen Saver" was behaving like "Blank Screen Only".
+	* Android: These hacks work now: `antinspect', `barcode',
+          `energystream', `fliptext', `fontglide', `glsnake', `raverhoop',
+          `starwars', `unicrud'.
+
+6.01	* X11: Properly disable the server's built-in screen saver.
+	* X11: The passwdTimeout option was being ignored.
+	* X11: The display of the unlock thermometer was weird.
+	* X11: Fixed password entry on old-school multi-screen setups (:0.1).
+	* X11: Worked around a KDE 5 compositor bug that caused the desktop
+          to momentarily become visible when cycling.
+	* X11: Fixed possible high CPU usage in `xscreensaver-systemd'.
+	* X11: Fixed some spurious warnings in `xscreensaver-text'.
+	* X11: Warn when Wayland is in use, since it makes both screen saving
+          and locking impossible.
+
+6.00	* X11: Major refactor of the `xscreensaver' daemon for improved
+	  security, dividing it into three programs: `xscreensaver',
+	  `xscreensaver-gfx' and `xscreensaver-auth'.
+	* X11: Dropped support for systems older than X11R7 (2009).
+	* X11: Renamed `xscreensaver-demo' to `xscreensaver-settings'.
+	* X11: Unlock dialog has user-selectable color schemes.
+	* X11: Everything uses XFreeType for fonts now.
+	* X11: Install a few custom fonts needed by some savers.
+	* X11: Fading works on systems without gamma (e.g. Raspberry Pi).
+	* X11: Use EGL instead of GLX when available.
+	* X11: `xscreensaver-systemd' now detects when a video player has
+	  inhibited screen blanking and then exits without uninhibiting.
+	* Improved GLSL and GLES3 support: Phong shading in `etruscanvenus',
+	  `hypertorus', `klein', `projectiveplane',`romanboy' and
+	  `sphereeversion'.
+	* Updates to `cubicgrid'.
+	* macOS: Added a `Random XScreenSaver' screen saver, which implements
+	  cycle mode, among other things.
+	* iOS: Also added cycle mode.
+
+5.45	* New hacks, `covid19', `headroom', `sphereeversion' and `beats'.
+	* Shader updates to `hypertorus'.
+	* No more image-loading pause in `glslideshow'.
+	* BSOD supports GNOME.
+	* Image loaders support SVG.
+	* macOS: Fixed text loading on 10.15.
+	* X11: `xscreensaver-systemd' now allows video players to request that
+	  the screen not blank.
+	* X11: -log implies -verbose -no-capture-stderr.
+	* X11: Glade -> GtkBuilder.
+	* Android: These hacks work now: `carousel', `juggler3d', `molecule',
+          `photopile', `polyominoes'.
+	* Various bug fixes.
+
+5.44.1	* macOS: fixed some signing problems in the DMG.
+
+5.44	* New hacks, `gibson', `etruscanvenus' and `scooter'.
+	* BSOD supports Tivo and Nintendo.
+	* New color options in `romanboy', `projectiveplane', `hypertorus'
+          and `klein'.
+	* macOS: Fixed "Use random screen saver" on macOS 10.15.
+	* iOS: Supports dark mode.
+	* iOS: Fixed image loading on iOS 13.
+	* iOS: Fixed rotation on iOS 13 (Apple incompatibly breaks rotation
+          every two years as a matter of policy).
+        * Performance tweaks for `eruption', `fireworkx', `halftone', `halo',
+          `moire2', `rd-bomb'.
+	* X11: Always use $HOME/.xscreensaver, not getpwuid's directory.
+	* Various bug fixes.
+
+5.43	* New hacks, `GravityWell', `DeepStars'.
+	* GLPlanet now supports the Mercator projection.
+	* Bouncing Cow has mathematically ideal cows (spherical, frictionless).
+	* Foggy toasters.
+	* Unknown Pleasures can now use an image file as a clip mask.
+	* Updated `webcollage' for recent changes.
+	* macOS: Fixed BSOD fonts on UWQHD+ displays.
+	* X11: Added some sample unlock dialog color schemes to the .ad file.
+	* X11: On systemd systems, closing your laptop lid might actually lock
+          your screen now, maybe.
+	* X11: 'sonar' can ping without being setuid by using setcap.
+
+5.42	* macOS: Fixed Sparkle auto-updater.
+
+5.41	* X11: Those new font-loading fallback heuristics work again. Oops.
+	* iOS, Android: Plugged many memory leaks at exit.
+	* New hack, `handsy'.
+	* Fixed `noof' from displaying minimalistically.
+	* Rewrote `unknownpleasures' to be faster, and a true waterfall graph.
+	* BSOD Solaris improved. DVD added.
+	* Linux: If the xscreensaver daemon is setuid, then we can implore the
+          kernel's out-of-memory killer to pretty please not unlock the screen.
+	* macOS: Upgraded Sparkle (the "Check for Updates" library).
+	* macOS: Screen saver settings work again on 10.14.
+
+5.40	* New hacks, `filmleader', `vfeedback'.
+	* New hack, `glitchpeg' (X11 and macOS only).
+	* GLPlanet blends between day and night maps at the dusk terminator.
+	* DymaxionMap can display arbitrary map images, and animate sunlight
+          across the flattened globe.
+	* Tessellimage can draw either Delaunay or Voronoi tilings.
+	* XAnalogTV includes test cards.
+	* Android: These hacks work now: `blitspin', `bumps', `cityflow',
+	  `endgame', `esper', `flipscreen3d', `gleidescope', `glslideshow',
+	  `jigglypuff', `queens', `tessellimage', `xanalogtv', `xmatrix',
+	  `zoom'.
+
+5.39	* New hacks, `razzledazzle', `peepers', `crumbler' and `maze3d'.
+	* More heuristics for using RSS feeds as image sources.
+	* Android: Image loading works.
+	* Built-in image assets are now PNG instead of XPM or XBM.
+	* X11: Better font-loading fallback heuristics on systems with a
+	  terrible selection of installed fonts.
+	* macOS: Retina display-related bug fixes.
+
+5.38	* New hack, `esper'.
+	* macOS: Support for Retina displays.
+	* X11: `webcollage' now works with ImageMagick instead of with
+	  pbmtools if `webcollage-helper' is not installed.
+	* `bsod' now accepts Dunning-Krugerrands.
+	* Android: These hacks work now: `anemone', `anemotaxis', `atlantis',
+	  `bouboule', `celtic', `compass', `crackberg', `epicycle',
+	  `fuzzyflakes', `goop', `kumppa' `munch', `pacman', `polyominoes',
+	  `slip'.
+	* Android: Thick lines work better for: `anemone', `anemotaxis',
+	  `celtic', `compass', `deluxe', `epicycle', `fuzzyflakes', `pacman'.
+	* Android: Assorted performance improvements, especially for `kumppa'
+	  and `slip'.
+        * Android TV: Daydreams work.
+	* iOS: Tweaks for iPhone X.
+	* Lots of xlockmore-derived hacks now have animated erase routines.
+	* `crystal' works properly on non-X11 systems.
+	* `m6502' now includes `texture.asm'.
+	* X11: Try harder to find sensible fonts for the password dialog.
+
+5.37	* New hack, `vigilance'.
+	* Added Mac Software Update and VMware to `bsod'.
+	* macOS: Grabbing the desktop works again.
+	* macOS: Pinch to zoom.
+	* Android: Both Daydreams and Live Wallpapers are implemented.
+	* Updated `webcollage' for recent changes.
+	* Various bug fixes.
+
+5.36	* New hacks, `discoball', `cubetwist', `cubestack', `splodesic'
+          and `hexstrut'.
+	* macOS: loading image files works in `dymaxionmap', `glplanet',
+	  `lavalite', `pulsar', `gleidescope' and `extrusion'.
+        * Several new programs in `m6502'.
+        * `rotzoomer -mode circle'.
+        * Better titles in `photopile'.
+
+5.35	* New hacks, `dymaxionmap', `unicrud', `energystream', `raverhoop'
+          and `hydrostat'.
+	* Added Windows 10 to `bsod'.
+	* X11: ignore WM_USER_TIME property changes with days-old timestamps.
+          Thanks, KDE.
+        * macOS, iOS: Better fonts in `bsod' and `memscroller'.
+	* macOS 10.8 or later and iOS 6.0 or later are now required, since
+	  Xcode 6 can no longer build executables that work on older OSes.
+	* Many, many Android improvements.
+	* iOS: Fixed rotation to work with the new iOS 8+ API.
+	* X11: `pong' is now playable.
+
+5.34	* Fixed a crash when hot-swapping monitors while locked.
+	* Fixed some incorrect output from `xscreensaver-command -watch'.
+	* Various macOS and iOS performance improvements.
+
+5.33	* New hacks, `splitflap' and `romanboy'.
+	* Better detection of user activity on modern GNOME systems.
+	* Sonar now does asynchronous host name resolution.
+	* Improved Unicode support.
+	* Updated `webcollage' for recent changes.
+	* Various minor fixes.
+
+5.32	* Fixed some X11 compilation problems.
+	* Fixed display size and shake gestures on iOS.
+	* macOS/iOS Performance improvements.
+
+5.31	* New hacks, `geodesicgears', `binaryring' and `cityflow'.
+        * UTF-8 text support (instead of only Latin1) and antialiased text
+          on X11 with Xft (instead of only on macOS/iOS) in `fontglide',
+          `noseguy', `fliptext', `starwars', and `winduprobot'.
+          The other text-displaying hacks (`apple2', `phosphor', `xmatrix',
+          and `gltext') also now accept UTF-8 input, though they convert it
+          to Latin1 or ASCII.
+	* `glplanet' now has both day and night maps, and a sharp terminator.
+	* Fixed `webcollage' on macOS.
+	* Fixed a transparency glitch in `winduprobot'.
+	* `lockward' works on iOS.
+	* Text and image loading work on macOS 10.10.
+	* Rotation works properly on iOS 8.
+	* Added a search field on iOS.
+	* Preliminary, unfinished support for Android.
+
+5.30	* New hack, `winduprobot'.
+	* Many improvements to `lament', including Leviathan.
+	* Fixed the normals in `flyingtoasters': shading is correct now.
+	* Implemented TEXTURE_GEN in GLES: flying toast is now toasted on iOS.
+	* Make cel-shading sort-of work in `skytentacles' on iOS.
+	* Fixed dragging-to-rotate on rotated iOS devices, I think.
+	* Dragging has inertia now.
+	* Most hacks respond to mouse-clicks, double-taps and swipes as
+          meaning "do something different now".
+	* Reworked OpenGL fonts.
+	* The macOS auto-update installer wasn't working. This time for sure?
+	* Various minor fixes.
+
+5.29	* Downgraded to Xcode 5.0.2 to make it possible to build savers
+          that will still run on 10.6 and 10.7.  Sigh.
+	* Updated `webcollage' for recent changes.
+
+5.28	* Fixed some compilation problems and intermittent crashes.
+        * Turned off the macOS 10.6 enable_gc hack. It didn't work.
+
+5.27	* New hacks, `tessellimage' and `projectiveplane'.
+        * Added support for pthreads, because Dave Odell is a madman.
+	* Updated `webcollage' for recent changes.
+	* Minor iOS tweaks to the `analogtv' hacks.
+        * X11: Don't assume Suspend = 0 implies "No DPMS".
+	* Minor updates to `boxed' and `klein'.
+        * Fixed possible crash in `apple2', `noseguy', `xmatrix', `shadebobs'.
+        * Fixed possible crash in macOS preferences.
+        * macOS Performance improvements.
+        * Plugged some leaks.
+
+5.26	* More auto-updater tweaks.
+
+5.25	* Try harder to bypass Quarrantine and Gatekeeper in macOS installer.
+	* Some files were missing from the tarball.
+
+5.24	* Added "Automatically check for updates" option on macOS.
+	* Updated feed-loading for recent Flickr changes.
+	* Updated `webcollage' for recent Google changes.
+	* Added Instagram and Bing as `webcollage' image sources.
+	* Updated to latest autoconf.
+	* Bug fixes.
+
+5.23	* New hack, `geodesic'.
+	* iOS and macOS: huge XCopyArea performance improvements.
+	* More heuristics for using RSS feeds as image sources.
+	* Improved Wikipedia parser.
+	* Updated `webcollage' for recent Flickr changes.
+	* Added Android to `bsod'.
+	* macOS: Added a real installer.
+	* iOS and macOS: fixed a font-metrics bug.
+	* iOS: Fixed aspect ratio bug in non-rotating apps when launched in
+	  landscape mode.
+	* Made `quasicrystal' work on weak graphics cards.
+	* iOS: fixed `ifs'.
+	* Better compression on icons, plists and XML files: smaller
+	  distribution and installation footprint.
+	* Reverted that DEACTIVATE change. Bad idea.
+	* `Phosphor' now supports amber as well as green.
+
+5.22	* New hacks, `kaleidocycle', `quasicrystal', `unknownpleasures' and
+	  `hexadrop'.
+	* Performance improvements for `interference'.
+	* Fixed possible crashes in `apple2', `maze', `pacman', `polyominoes',
+	  `fireworkx', `engine'.
+	* Fix for `bumps' in 64 bit.
+	* Fixed preferences crash on old iOS 5 devices.
+	* Fixed "Shake to Randomize"; display name of saver.
+	* Fixed weirdness with "Frame Rate" sliders on iOS.
+	* Fixed rotation problems with `pacman', `decayscreen'.
+	* Better dragging in `fluidballs'.
+	* Ignore rotation in hacks that don't benefit from it.
+	* Ignore DEACTIVATE messages when locked, instead of popping up the
+	  password dialog box.
+
+5.21	* Changed default text source from Twitter to Wikipedia, since Twitter
+	  now requires a login to get any feeds.
+	* New version of `fireworkx'.
+	* Minor fixes to `distort', `fontglide', `xmatrix'.
+	* New macOS crash in `bsod'.
+	* New mode in `lcdscrub'.
+
+5.20	* Support for iPhone 5 screen size.
+	* Fixed modifier key handing in Apple2.app and Phosphor.app on macOS.
+	* Various minor bug fixes.
+
+5.19	* macOS 10.8.0 compatibility.
+	* iOS performance improvements.
+
+5.18	* iOS responds to shake gestures to randomize.
+	* iOS can load images from your Photo Library.
+	* iOS has clickable Wikipedia links in Settings panels.
+	* Made `pipes' be ridiculously less efficient, but spin.
+	* Added better mouse control to `rubik', `cube21', `crackberg', and
+	  `julia'.
+	* Cosmetic improvements to `queens' and `endgame'.
+	* `sonar' can now ping local subnet on DHCP.
+	* Most savers now resize/rotate properly.
+	* Various fixes.
+
+5.17	* More iOS tweaks.
+	* Fixed some compilation problems.
+	* Enlarged the texture image for `lament'.
+
+5.16	* Ported to iPhone and iPad.
+	* XInput devices now also ignore small mouse motions.
+	* Loading images via RSS feeds is much improved.
+	* Various minor fixes.
+
+5.15	* New hacks, `hilbert', `companioncube' and `tronbit'.
+	* Image-manipulating hacks can now load from RSS or Atom feeds:
+	  `imageDirectory' may contain a URL.
+	* Updated `webcollage' for recent search engine changes.
+	* `phosphor' and `apple2' can now be run as standalone terminal
+	  emulator applications on macOS.
+	* `photopile' sped up.
+	* New molecule in `molecule'.
+	* "Upgraded" to XCode 4.0, which means that macOS 10.4 PPC builds are
+	  impossible, and Intel is now required.
+	* Turned on LC_CTYPE on Linux; maybe Japanese password entry works
+	  now?
+
+5.14	* Fixed crash in Blank Only Mode when DPMS disabled.
+	* Added "Quick Power-off in Blank Only Mode" option.
+	* BSOD GLaDOS.
+
+5.13	* Optionally enabled full-scene OpenGL antialiasing.  Set the resource
+	  `*multiSample' to true if doing so doesn't kill performance with
+	  your video hardware.
+	* New version of `glhanoi'.
+	* Image-loading hacks that display the file name now also display the
+	  sub-directory (xscreensaver-getimage now returns relative paths
+	  under imageDirectory).
+	* Passwords that contain UTF-8 non-Latin1 chars are now typeable.
+	* Numerous minor stability fixes.
+
+5.12	* Big speed improvement on macOS for heavy XCopyArea users (`xmatrix',
+	  `moire2', `phosphor', etc.)
+	* Plugged a bad macOS-only Pixmap leak.
+	* Kludged around the macOS pty bug that caused text to be truncated in
+	  phosphor, starwars, apple2, etc.
+	* New molecule in `molecule'.
+	* `glhanoi' now supports an arbitrary number of poles.
+	* Turned on "New Login" button by default.
+	* Added support for XInput-style alternate input devices.
+
+5.11	* New versions of `photopile', `strange'.
+	* Worked around macOS 10.6 garbage collector bug that caused the
+	  screen saver process to become enormous.
+	* Fixed flicker in `pipes', `cubestorm', and `noof'.
+	* Fixed EXIF rotation on macOS 10.6.
+	* Fixed desktop-grabbing when screen locked on macOS.
+	* Minor fixes to `circuit', `polyhedra', `tangram', `gears', `pinion',
+	  `substrate', `xanalogtv'.
+	* Fixed some leaks in `xanalogtv' and `apple2'.
+	* Better seeding of the RNG.
+
+5.10	* Fixed some crashes and color problems on macOS 10.6.
+	* Retired `hypercube' and `hyperball', which are redundant with
+	  `polytopes'.
+
+
+5.09	* Ported to macOS 10.6, including various 64-bit fixes.
+	* New hack, `rubikblocks'.
+	* Fixed another potential RANDR crash.
+	* Use correct proxy server on macOS.
+	* `molecule' now correctly displays PDB 3.2 files.
+	* Updates to `mirrorblob', `glhanoi', and `sonar'.
+	* Rewritten version of `klein' hack.
+	* New hack, `surfaces', incorporating objects from old `klein' hack,
+	  plus new ones.
+	* Merged `juggle' and `juggler3d' hacks.
+	* Fixed compilation under gcc 4.4.0 (strict aliasing).
+	* Fixed intermittent failure in `xscreensaver-command'.
+
+5.08	* New hack, `photopile'.
+	* Rewrote `sonar' and `jigsaw' as OpenGL programs.
+	* Minor tweaks to `maze', `m6502', `hypnowheel', and `timetunnel'.
+	* Savers that load images now obey EXIF rotation tags.
+	* Arrgh, more RANDR noise!  Fixes this time for rotated screens, and
+	  for systems where RANDR lies and says the screen size is 0x0.
+	* When the password dialog has timed out or been cancelled, don't pop
+	  it right back up a second time.
+	* Password timeouts/cancels don't count as "failed logins".
+	* Retired some of the older, less interesting savers: say goodbye to
+	  `bubbles', `critical', `flag', `forest', `glforestfire', `lmorph',
+	  `laser', `lightning', `lisa', `lissie', `rotor', `sphere', `spiral',
+	  `t3d', `vines', `whirlygig', and `worm'.
+	* Merged `munch' and `mismunch'.
+	* Updated `webcollage' to use twitpic.com as well.
+
+5.07	* Xinerama/RANDR tweaks for old-style multi-screen.
+	* Added bumpy skin and cel shading to `skytentacles'.
+	* `flipflop' can load images onto the tiles.
+	* Fixed the bouncing ball in `stairs'.
+	* Added the missing Utah Teapotahedron to `polyhedra'.
+	* `blitspin' works with color images on macOS now.
+	* Added transparency to `stonerview'.
+	* Improved layout of the preferences dialogs: they should all now be
+	  usable even on ridiculously tiny laptop screens.
+	* macOS preferences text fields now prevent you from entering numbers
+	  that are out of range.
+	* Added "Reset to Defaults" button on X11.
+	* Added relevant Wikipedia links to many of the screen saver
+	  descriptions.
+	* All hacks support the `-fps' option, not just GL ones.
+	* The `-fps' option now shows CPU load.
+
+5.06	* Xinerama/RANDR fixes: this time for sure.  It should now work to
+	  add/remove monitors or resize screens at any time.
+	* New hack, `skytentacles'.
+	* New version of `gleidescope'.
+	* Added the `-log' option to the xscreensaver daemon, since a truly
+	  shocking number of Linux users seem to have no idea how to redirect
+	  output to a file.
+	* Added `-duration' arg to most image-loading hacks, so that they pick
+	  a new image every few minutes.
+	* Added an ATM crash to `bsod'.
+
+5.05	* New hacks, `cubicgrid', `hypnowheel', and `lcdscrub' (which isn't
+	  really a screen saver).
+	* Updates to `m6502' and `gears'.
+	* Fixed double-buffering problems in `cubestorm' and `noof'.
+	* Better handling of horizontal scroll wheels.
+	* Attempt to work around latest Xinerama braindamage: if the server
+	  reports overlapping screens, use the largest non-overlapping
+	  rectangles available.
+	* Don't warning about receipt of bogus ClientMessages, since Gnome's
+	  just never going to stop sending those.
+	* Worked around macOS 10.5 perl bug that caused the text-displaying
+	  hacks to fail on some systems.
+	* Hopefully fixed font-related System Preferences crashes in macOS
+	  savers.
+	* The recent PAM changes broke the "Caps Lock" warning in the password
+	  dialog, the failed login warnings, and syslogging.  Fixed all that.
+
+5.04	* Fixed a possible crash in the unlock dialog (more fallout from the
+	  recent PAM changes...)
+	* New hacks, `moebiusgears', `abstractile', and `lockward'.
+	* Rewrote `gears' to use better (involute) gear models, and to be more
+	  random.
+	* Minor updates to `cwaves', `voronoi', `deco', `glcells', `rd-bomb',
+	  `fireworkx' and `webcollage'.
+	* `pong' can now display the current time as the score.
+	* `xmatrix -mode pipe' works better.
+	* Minor tweaks for compilation on macOS 10.5.0.
+
+5.03	* New hacks, `cwaves', `glcells', `m6502', and `voronoi'.
+	* Minor fixes to `bsod'.
+	* Fixed possible crash with PAM USB-dongle auth.
+	* Updated `webcollage' to track recent Google Images and Flickr
+	  changes.
+
+5.02	* Reworked PAM code to support fingerprint readers, etc.
+	* Ported `webcollage' to macOS.
+	* Added macOS 10.2 and 10.3 kernel panics to `bsod'.
+	* Fixed a Xinerama crash when changing the screen count.
+	* New blobbier `mirrorblob'.
+	* Minor updates to `lisa', `bsod', `ifs', `hypertorus', `polytopes',
+	  `circuit', `endgame', `crackberg', `flipflop', `flipscreen3d',
+	  `fliptext', and `carousel'.
+	* Enabled multi-threaded OpenGL on macOS.
+
+5.01	* Backed out recent locale-related changes, since they broke far more
+	  things than they fixed.
+	* Fail gracefully with ridiculously small window sizes.
+	* `xflame' and `flag' ignore bitmap option on macOS.
+	* `speedmine' prefs work on macOS.
+	* Better explosions in `boxed'.
+	* More dynamic motion in `sproingies'.
+	* More options in `flipflop'.
+	* Minor updates to `topblock'.
+	* Various other minor fixes.
+
+5.00	* Ported to macOS! (10.4.0 or newer)
+	* API change: instead of providing a single screenhack() function that
+	  does not return, screen savers using the screenhack.h framework must
+	  now provide "init" and "draw one frame" functions instead.  All
+	  bundled savers have been updated; third-party patches will need
+	  work.
+	* All image-loading happens asynchronously.
+	* xscreensaver-getimage-file caches the contents of the image
+	  directory for a few hours, so consecutive runs won't have to re-list
+	  the whole directory tree.
+	* New hacks, `topblock' and `glschool'.
+	* Removed `xteevee' (superceded by `xanalogtv').
+	* Added variable-sized puzzle pieces to `jigsaw'.
+	* Changes to the defaults and command-line options of many hacks to
+	  make the .xml files more consistent.
+	* Reap zombies in `glslideshow' and `carousel'.
+	* `sonar' works without setuid on macOS (dgram icmp).
+	* `xmatrix -mode pipe' displays the text of a subprocess.
+	* `endgame' has higher resolution chess-piece models.
+	* `webcollage' takes a -directory option to get images from a local
+	  directory.
+	* The RPM spec file no longer auto-restarts xscreensaver when a new
+	  version is installed.  Restart it manually.
+
+4.24	* New versions of `cube21', `glsnake', `celtic'.
+	* Backed out a DPMS-related patch that cause desktop flickering with
+	  some X servers.
+	* Fixed startup crash in getgroups() when running setuid.
+	* Default to not displaying stderr on the saver window.
+	* Fixed bad free() in "Documentation" button.
+	* Don't try to run hacks that aren't installed.
+	* Minor fixes to various XML config files and man pages.
+
+4.23	* New hacks, `glhanoi', `cube21', `timetunnel', `juggler3d', and
+	  `celtic'.
+	* New versions of `tangram', `webcollage', `hypertorus', `polytopes',
+	  and `ripples'.
+	* `sonar' is now quiet about unresolvable hosts.
+	* Minor corrections to BASIC code in `apple2'.
+	* xscreensaver-demo now provides an RPM clue when none of the hacks
+	  seem to be installed.
+	* Don't install `ant' by default, since there is some Java tool of
+	  that name, which was causing confusion.  And also it's boring.
+	* Made screen grabbing work again on macOS 10.4.2.
+	* No longer prints bogus warnings about ClientMessages intended for
+	  the window manager.
+	* Ignore unprintable characters in passwd entry field.
+	* Fixed yet another cross-host-display image-loading endian problem.
+	* `xscreensaver-command -watch' and `-time' now work on 64-bit
+	  machines.
+
+4.22	* Fixed a bug in the new mouse-motion code that caused the screen to
+	  never blank on multi-head non-Xinerama systems.  Oops.
+	* New hacks, `interaggregate', `antmaze', `tangram', and `crackberg'.
+	* Minor tweaks to `fiberlamp', `ifs', `slidescreen', `zoom', `sonar',
+	  `fireworkx', `whirlwindwarp', `bubble3d', and `rd-bomb'.
+	* Added motion blur to `blinkbox'.
+	* `bsod' now includes Longhorn's "RSOD", and OS/2.
+	* Fixed `-wireframe' usage in most hacks and man pages.
+
+4.21	* New hack: `fliptext'.
+	* Changed default configure installation directories: /usr/bin/ for
+	  xscreensaver, etc.; /usr/libexec/xscreensaver/ for hacks;
+	  /usr/share/xscreensaver/config/ for xml files.
+	* All the text-manipulating screen savers can have their text source
+	  configured via `xscreensaver-demo' now.
+	* xscreensaver.spec now builds three RPMs: base (no hacks); extras (2d
+	  hacks); and gl-extras.
+	* Added `-program' and `-front' option to `gltext'.
+	* Added `-shells' to `molecule'.
+	* Fixed text-alpha glitch in `carousel'.
+	* New `pacman': the ghosts can be killed now.
+	* Fixed a bug in screen-grabbing GL hacks where images would be tiled
+	  instead of scaled on machines that can't do large textures.
+	* `webcollage' can hit Flickr now.
+	* New (rewritten) implementation of `ifs'.
+	* The unlock dialog can be made to have a "New Login" button that will
+	  run `gdmflexiserver'.  Experimental!
+	* Fixed non-ASCII display bug in `starwars'.
+	* Configure finds a default for imageDirectory.
+	* `xscreensaver-command -lock' now works even if in "screensaver
+	  disabled" mode.
+	* If a bad password is typed while CapsLock is on, the unlock dialog
+	  says "CapsLock?" instead of "Sorry".
+	* Mouse motion only counts as activity if the mouse moved more than 10
+	  pixels (so the screen won't unblank every time you bump your desk.)
+	* New mode option "random-same": if you have multiple monitors, this
+	  will run the *same* randomly chosen hack on each screen, instead of
+	  different ones on each.
+
+4.20	* New hacks, `fiberlamp', `boing', `boxfit', and `carousel'.
+	* Rewrote `glslideshow' again: should be faster now.
+	* Sped up loading of images in GL programs.
+	* `starwars' uses texture-mapped fonts now.
+	* New `bsod' modes: tru64, hppa, and nvidia.
+	* Updates to `webcollage', `juggle', `pinion', `fireworkx', `sonar',
+	  `extrusion', `substrate', and `pong'.
+
+4.19	* New hacks, `substrate', `intermomentary', `fireworkx', and `pinion'.
+	* New version of `flow'.
+	* Made /proc/interrupts work again on Linux 2.6.
+	* Made `analogtv' not hog the CPU.
+	* Made analogtv-based hacks work properly on PPC/ARM.
+	* Fixed a bad memory leak in `piecewise'.
+	* Minor updates to `sonar', `molecule', `glmatrix', `galaxy', and
+	  `webcollage'.
+	* Removed support for GTK 1.x (everyone uses 2.x now.)
+
+4.18	* Oops, pay no attention to the man behind the curtain.
+
+4.17	* New hacks, `anemotaxis' and `memscroller'.
+	* Fixed a bad bug that caused `vidwhacker' to never die.
+	* Fixed normals and lighting in `polyhedra'.
+	* Don't reuse the window when changing hacks (to work around bugs in
+	  some GL implementations.)
+	* Made `xscreensaver-getimage-file' skip thumbnail-sized images.
+	* Fixed endian problem in `barcode' on non-x86.
+	* Updates to `webcollage', `apple2', `fuzzyflakes', `atunnel', and
+	  `pacman'.
+	* Timing tweaks to `bubble3d', `bouncingcow', `engine', `gltext',
+	  `lavalite', `molecule', `spotlight', `sballs', `boxed', `blinkbox',
+	  and `circuit'.
+	* Configure updates for Fedora core 2 / xorg 6.7.0.
+	* Compile without warnings under gcc 3.3.3.
+	* I give up: don't blank or lock the screen if we can't get a keyboard
+	  grab.  In that case, both choices are bad.
+
+4.16	* New hacks, `polyhedra', `fuzzyflakes', `antinspect', and
+	  `providence'.
+	* Minor updates to `webcollage', `bsod', `endgame', `antspotlight',
+	  `xmatrix', and `glmatrix'.
+	* Added support for the RANDR (Resize and Rotate) extension to detect
+	  when the size of the desktop has been changed while xscreensaver is
+	  already running.
+	* Possibly-futile attempt to work around "rdesktop" focus/grab idiocy.
+	* Made `xscreensaver-getimage -file' still work even if imageDirectory
+	  is unset.
+	* Convert Latin1 to ASCII in `starwars' and `phosphor' (since the GLUT
+	  font only has ASCII glyphs.)
+	* Fixed randomization in `noof'.
+	* Added "GetViewPortIsFullOfLies" preference to work around
+	  longstanding XFree86 bug #421.
+	* Made `sonar' subnet pinging work properly on bigendian machines
+	  (e.g., PPC.)
+
+4.15	* New hacks, `wormhole', `mismunch', `noof', and `pacman'.
+	* `phosphor' and `apple2' include vt100 emulators now: this means you
+	  can do "phosphor -program top", or can use either program as an
+	  xterm replacement: "apple2 -text -fast -program 'xemacs -nw'".
+	* `analogtv' (and related) fill the screen better.
+	* The '-gradient' option works in `atlantis' now.
+	* Minor updates to `blinkbox', `queens', `endgame', `glmatrix',
+	  `mirrorblob', `blocktube', and `molecule'.
+	* Integrated SuSE's "external passwd helper" support.
+	* Marginally better /tmp handling in various programs.
+	* Updated config defaults for xplanet 1.0.3.
+	* Portability fixes.
+
+4.14	* New hacks, `fontglide', `apple2', `xanalogtv', `pong',
+	  `gleidescope', `mirrorblob', and `blinkbox'.
+	* New version of `glsnake' (with many more models.)
+	* Another Windows crash in `bsod'; also HVX/GCOS6/TPS6.
+	* New version of `endgame'.
+	* Screen grabbing works on macOS.
+	* Various minor fixes.
+
+4.13	* On Xinerama systems, xscreensaver now runs one hack on each monitor
+	  (just like in "real" multi-head mode) instead of running one hack
+	  stretching across all the screens.  Note that for this to work with
+	  any 3rd party screensavers, they must update their "vroot.h" file.
+	* `webcollage' and `vidwhacker' display images using
+	  `xscreensaver-getimage' now.
+	* Added `ljlatest' script for use with `starwars' and `phosphor'.
+
+4.12	* New GL hacks, `flipflop', `antspotlight', and `polytopes'.
+	* Added VMS to `bsod'.
+	* Compile without warnings in `gcc -pedantic'.
+	* Updates to `webcollage' and `queens'.
+	* Fixed a bug that could cause PAM to hang.
+
+4.11	* New hacks, `hypertorus', `cubestorm', `glknots', `blocktube', and
+	  `glmatrix'.
+	* Updates to `cloudlife', `engine', `xmatrix', and `sonar'.
+	* Rewrote `glslideshow': it should work on somewhat wimpier video
+	  cards now.
+	* Various portability tweaks.
+
+4.10	* New hacks, `cloudlife' and `klein'.
+	* Added Apple ][+, HPUX, and OS/390 sessions to `bsod'.
+	* Added some Matrix Reloaded text to `xmatrix'.
+	* Updates to `webcollage', `eruption', `jigglypuff', `metaballs', and
+	  `endgame'.
+	* Completely ignore the `memoryLimit' setting now, since it was still
+	  causing people GL grief.
+	* Various minor fixes.
+
+4.09	* New hacks, `flyingtoasters', `bouncingcow', `jigglypuff', and
+	  `glslideshow'.
+	* More models in `engine'.
+	* Rewrote `xscreensaver-getimage' to remove reliance on external image
+	  loaders (xv, chbg, xloadimage, etc.)  and to reduce flicker when
+	  loading files.
+	* Made `gflux' and `flipscreen3d' be mouse-spinnable.
+
+4.08	* New hacks, `atunnels' and `piecewise'.
+	* Physics improvement in `fluidballs'.
+	* Various fixes for XDarwin systems (X11 on macOS.)
+	* Added -clock option to `barcode'.
+	* Minor fixes to `endgame', `flurry', `flipscreen3d', and `gflux'.
+
+
+4.07	* New hacks, `flurry', `metaballs', `eruption', `popsquares', and
+	  `barcode'.
+	* Minor updates to `maze' for high density mazes.
+	* Added double buffering to `fluidballs' and `whirlygig'.
+	* Bug fixes for running xscreensaver to a remote XFree86 display
+	  (which nobody would ever do...)
+	* Updated `webcollage' (faster Alta Vista searching.)
+	* Updated `glplanet' so the sun sets in the west.
+	* Updated `sproingies' with smooth, unsegmented surfaces.
+	* Fixed Perl version-sensitivity in `xscreensaver-getimage-file'.
+	* Fixed GTK2 scrolling bug in `xscreensaver-demo'.
+
+4.06	* New hack, `glblur' (disabled by default, since it requires fast
+	  OpenGL texture support.)
+	* New hack, `halftone'.
+	* Updates to `endgame', `queens', `bumps', `glplanet', `engine', and
+	  `circuit'.
+	* New version of `menger' that uses far fewer polygons.
+	* Fixed minor bug in `critical' that could cause some bogus X servers
+	  to crash.
+	* Better labels in `molecule': the labels now appear to be attached to
+	  the atoms, instead of floating in front of the whole scene.
+	* Fixed bug that could rarely cause GL hacks to fail to double-buffer
+	  (causing intermittent flickering.)
+	* Fixed a relative-URL-parsing bug in `webcollage'.
+	* Fixed a bug that (sometimes) caused the window manager close box to
+	  kill `xscreensaver-demo' with a crash instead of a graceful exit.
+	* Updated xscreensaver.pam to the Red Hat 7.3 way.
+	* More Gnome2-related configure crap.
+	* Updated to latest `config.guess' and `config.sub'.
+	* Fixed occasional core dump in `distort'.
+	* Added a Linux fsck failure and kernel panic to `bsod'.
+	* Added macOS kernel panic to `bsod'.
+	* Fixed a bug in `bsod' (all bsod bugs are ironic.)
+	* Fixed a bug that caused `xscreensaver-gl-helper' to print a nonsense
+	  visual ID with some versions of `printf': this could cause GL
+	  programs to display incorrectly (e.g., flickery.)
+
+4.05	* More `configure' tweaks to try and get things working on systems
+	  that both Gtk 1.x and 2.x installed.
+	* New hack, `endgame'.
+	* Minor updates to `gltext'.
+
+4.04	* Support for GTK 2.x / GNOME 2.x.
+	* The `configure' script will now use `pkg-config' if you have it, in
+	  preference to `gtk-config', etc.
+	* New hacks, `lavalite', `queens', and `anemone'.
+	* Minor updates to `spheremonics', `gltext', `xmatrix'.
+	* You can use the mouse to manually spin most of the GL hacks now
+	  (when they are displaying in a window.)
+	* Fixed a bug in `webcollage' (due to recent Alta Vista url changes)
+	  that was causing it to try and load incorrect image URLs.
+	* Made `xscreensaver-getimage' use gdk_pixbuf if it is available: this
+	  means that those hacks that load images will no longer rely on `xv',
+	  `xloadimage', etc.  This will close a race condition that could
+	  sometimes cause your desktop background to be changed; and also
+	  makes it possible for those programs to operate on image files when
+	  running in windowed mode.
+	* `webcollage' can now be used in conjunction with `driftnet' to
+	  display images snooped from your local ethernet instead of obtained
+	  from search engines.
+	* Added man pages for all the hacks that didn't have them.
+
+4.03	* New hack, `spheremonics'.
+	* Minor updates to `webcollage', `cage', `moebius', `morph3d',
+	  `boxed', `circuit', and `helix'.
+	* `pulsar' and `extrusion' can now load texture JPEGs.
+	* `rubik' now does non-square cubes.
+	* `fluidballs' now does various sizes of balls.
+	* `menger' and `sierpinski3d' now also show polygon counts in -fps
+	  mode.
+	* `molecule' displays real subscripts in the formulae.
+	* GTK internationalization/localization support.
+	* Better detection of the various versions of libxml.
+	* Upgraded to autoconf 2.53 (from 2.13.)
+
+4.02	* Plugged a few minor leaks in `xscreensaver' and `xscreensaver-demo'.
+	* New hacks, `cubenetic' and `fluidballs'.
+	* Sped up `pipes'.
+	* Fixed sphere projection error in `glplanet'; installed a better
+	  image of earth.
+	* Added Win2K and MacOS 1 crashes to `bsod'.
+	* Put back previous (better) version of `forest' that was
+	  accidentially downgraded in the last release.
+	* New version of `bumps'.
+	* Made FPS computation in GL hacks more efficient: it will influence
+	  the results less, thus resulting in higher (but more accurate)
+	  reported frame rates.
+
+4.01	* New hacks: `twang', `glsnake', `boxed', `sballs', and
+	  `glforestfire'.
+	* New hacks `apollonian', `euler2d', `juggle', `polyominoes' and
+	  `thornbird', from xlockmore.
+	* Merged recent xlockmore changes into `ant', `braid', `demon',
+	  `discrete', `drift', `fadeplot', `forest', `grav', `hopalong',
+	  `ifs', `laser', `lightning', `lisa', `lissie', `loop', `mountain',
+	  `penrose', `rotor', `sierpinski', `slip', `sphere', `spiral',
+	  `strange', and `vines'.
+	* Fixed the `gltext' bug that sometimes caused horizontal lines to
+	  vanish again.  This time for sure.
+	* Sped up `webcollage' by adding a C helper program to replace the PPM
+	  pipeline.  It also pastes images semi-transparently now.
+	* Added support for the gdk_pixbuf library: if this lib is available,
+	  then `blitspin', `xflame', and `flag' can load GIF, JPEG, and PNG
+	  images in addition to XPM and XBM.
+	* Fixed a rare race condition where the desktop-grabbing hacks could
+	  sometimes leave the screen wedged, if the user moved the mouse
+	  exactly when they were grabbing the screen image (it would un-wedge
+	  the next time the saver timed out or was activated.)
+	* Fixed incorrect colors in the screen-grabbing GL hacks (`gflux' and
+	  `flipscreen3d'.)
+	* Made SIGHUP restart the daemon process (though using
+	  `xscreensaver-command -restart' is still the preferred way.)
+	* Tweaks to `xspirograph'.
+	* Minor configure and portability tweaks.
+
+4.00	* Redesigned `xscreensaver-demo' GUI: it now includes small-preview
+	  and per-hack configuration dialogs.
+	* Added three new modes of operation: `One Screen Saver', `Blank
+	  Screen', and `Don't Blank' (in addition to the historical `Random
+	  Screen Saver').
+	* Configure now defaults to installing the hacks in
+	  <prefix>/lib/xscreensaver/ instead of <prefix>/bin/.  (Most distros
+	  already did it this way.)
+	* New GL hacks, `menger', `engine', `flipscreen3d'.
+	* Made `sierpinski3d' be more colorful.
+	* New versions of `xmatrix' and `nerverot'.
+	* Fixed a bug in `starwars' that made the font be drawn with thin
+	  lines in -root mode.
+	* Fixed a bad colormap bug in `crystal' that could make *subsequent*
+	  hacks malfunction!
+	* Made `gflux' able to grab screen images (`-mode grab').
+	* Updated `webcollage' for recent search engine changes.
+	* Removed most command-line options to `xscreensaver': just edit the
+	  ~/.xscreensaver file instead.
+	* Improved behavior on multi-screen and Xinerama systems: the mouse
+	  now stays on the screen where the user left it, and the password and
+	  splash dialogs always appear on the screen that has the mouse.
+	* Made the splash dialog use more Gtk-like colors; made it have only
+	  two buttons, "Settings" and "Help".
+	* Made `sonar' understand `.ssh/known_hosts2' format files, and be
+	  better about stripping out illegal addresses.
+
+3.34	* Turned `memoryLimit' off by default, sigh.  Apparently some versions
+	  of the GL libraries (appear to) allocate hundreds of megs for every
+	  GL program, so `memoryLimit' was causing GL programs to malfunction
+	  or crash on those systems.
+	* Improved fading on TrueColor XFree86 4.1.x systems.
+	* New GL hack, `circuit'.
+	* Added `fuzz' mode to `decayscreen'.
+	* New version of `whirlygig'.
+	* Added links to `xplanet' and `sphereEversion'.
+	* Fixed rare race condition that could make `sonar' hang.
+	* Fixed potential crash in `speedmine'.
+	* Made `xscreensaver-demo' not crash when imageDirectory was set to a
+	  non-existent directory.
+	* Made `xscreensaver-getimage-video' invoke XawTV's `streamer' program
+	  better.
+	* Made `phosphor' and `starwars' deal with CR, LF, or CRLF line
+	  endings.
+	* Changes for Cygwin compilation environments.
+	* Made `sonar' compile on systems that can't ping.
+	* Configure changes for HPUX 10.20.
+	* Made PAM code work on Red Had 4.2 systems.
+	* Made `xscreensaver-command -deactivate' work when the saver is not
+	  active: what that does is reset the idle timer, as if keyboard input
+	  had been detected.  This was added for the benefit of people writing
+	  DVD-playing software: they can now prevent the screensaver from
+	  kicking in by sending a -deactivate message once a minute while the
+	  movie is playing and not paused.
+	* Various minor portability tweaks.
+
+3.33	* New hacks, `speedmine' and `whirlygig'.
+	* Sped up `pyro', made the explosions look a bit better.
+	* Added better stars to `glplanet' and `starwars'.
+	* Many internal changes to `webcollage'.
+	* Some new options to `attraction'.
+	* Minor fix to `noseguy' to avoid un-erased pixels.
+	* Rewrote the screen-eraser effects so that they complete in the same
+	  amount of time regardless of how slow your X server is (some of them
+	  were glacial on servers with slow blitting.)
+	* Fixed a potential free memory reference that could sometimes cause a
+	  crash at startup.
+	* Possibly fixed a problem that could cause the daemon to crash with
+	  an X error.  I was never able to reproduce this problem, but I think
+	  I might have figured out what caused it.
+	* Worked around a problem that caused PAM authentication to fail on
+	  some Red Hat 7.x systems.
+	* Added a `memoryLimit' parameter that controls the amount of memory a
+	  graphics hack may allocate: if they try to allocate more than this,
+	  malloc() will fail (and they will exit or (safely) crash, rather
+	  than hogging memory.)  Default is 50M.
+	* Made `gnome-help-browser' be the default way to display man pages in
+	  `xscreensaver-demo', if running on a GNOME system.
+
+3.32	* The image-manipulating hacks (`slidescreen', etc.) can now operate
+	  on randomly chosen image files from disk, or on frames captured from
+	  the system's video input, instead of (or in addition to)
+	  manipulating images of the desktop.
+	* Rewrote `vidwhacker' to use the new image-grabbing mechanism.
+	* Made fading work on TrueColor XFree86 4.x systems.
+	* Fixed a subtle rendering bug in `atlantis' (the fish were inside
+	  out!)
+	* Made `atlantis' have a texture simulating light reflections from the
+	  surface of the ocean.
+	* Fixed up label placement in `molecule'.
+	* Better color bars in `xteevee'.
+	* Made `install-strip' not try to strip scripts.
+
+3.31	* Put in more sensible defaults for DPMS, and updated the
+	  documentation to reflect the fact that all your DPMS settings are
+	  now belong to xscreensaver.
+	* Fixed the `xscreensaver.spec' file so that `--force' is no longer
+	  needed.
+	* New versions of `rotzoomer' and `nerverot'.
+	* Fixed an OSF/1 compilation problem in `molecule'.
+
+3.30	* New hacks, `molecule', `dangerball', and `rotzoomer'.
+	* New version of `gflux'.
+	* Made `gltext' able to display the current time.
+	* Fixed a floating-point-precision problem in `gltext' that sometimes
+	  caused horizontal lines to vanish.
+	* Removed the `-window-id' option from the hacks: it never worked
+	  right, and was unnecessary.
+	* Made the `starwars' hack use thicker lines, antialias the text, and
+	  fade out at the far edge instead of just dropping off.
+	* Fixed an SHM segment leak in `moire'.
+
+3.29	* Better rendering of the new logo.
+	* New hack, `gltext'.
+	* Added `-planetary' option to `gears', to draw a different kind of
+	  gear system.
+	* Made motion and rotation be smoother in `gears', `glplanet',
+	  `moebius', `rubik', and `sierpinski3d'.
+	* Improved coloration in `sierpinski3d'.
+	* Made the GL hacks react to window size changes.
+	* Made most of the GL hacks take a -fps option (like `pulsar' did), so
+	  you can use them to benchmark your 3D hardware.
+	* Fixed the previous fix to `sonar'.
+	* Minor fix to `nerverot'.  Made sonar able to ping hosts on DEC OSF1.
+	* Eliminated a bogus "didn't get enough colors" warning in some of the
+	  hacks.
+
+3.28	* New logo for xscreensaver!
+	* New hacks, `starwars' and `stonerview'.
+	* Made the motion of the bouncing ball in `stairs' be a little less
+	  jerky.
+	* Made newly-added screenhacks be added to .xscreensaver
+	  automatically: if there are hacks in the app-defaults file that are
+	  not also in ~/.xscreensaver, they will be added to the end of the
+	  list.
+	* Redid the `Screensaver Options' part of the control panel;
+	  xscreensaver now lets you configure your DPMS settings.
+	* Fixed some Makefile problems with non-GL builds.
+	* Fixed detection of MesaGL for version 3.3.
+	* Better workaround to Red Hat 7.0's broken gcc.
+	* Added Sparc Solaris kernel panic to `bsod'.
+
+3.27	* New hacks: `zoom' and `whirlwindwarp'.
+	* Fixed a free-memory-reference bug in `sonar'.
+	* Better error handling when there are no suitable GL visuals.
+	* Added diagnostic dialog when xscreensaver-demo is unable to launch
+	  xscreensaver (e.g., when running as root.)
+	* Fixed a bug that caused screenhack argument changes to be ignored
+	  when xscreensaver-demo was running as root (if "root" and "nobody"
+	  have different home directories.)
+	* Made the programs default to ":0" if $DISPLAY is unset.
+	* Made the `-verbose' output include information about which server
+	  extensions were supported at compile time.
+	* Worked around Red Hat 7.0's broken gcc 2.96.
+	* Updated default delays on the GL hacks to look better on machines
+	  with super-fast 3D hardware.
+	* Install `screensaver-properties-capplet' to work around the usual
+	  egregious GNOME lossage.
+
+3.26	* Added "enabled" checkboxes in the list of hacks in xscreensaver-demo
+	  (Gtk version only.)
+	* New hacks `hyperball', `xrayswarm', and `gflux'.
+	* New versions of `nerverot', `galaxy', and `hypercube'.
+	* Small fixes to `phosphor', `shadebobs', `xflame', and `sonar'.
+	* Added external helper program `xscreensaver-gl-helper' to figure out
+	  which X visual to use for OpenGL programs.
+	* Configure updates for XFree86 4.0, and for BSD.
+	* Made it be more tolerant of bogus /etc/group files.
+	* When installing the PAM config file, first try to just copy an
+	  existing "xdm" or "login" config file, so that xscreensaver does
+	  authentication in the same way as the rest of the system.
+
+3.25	* New hack, `nerverot'.
+	* Added BSD kernel panic to `bsod'.
+	* New version of `shadebobs'.
+	* New version of `petri'.
+	* Updated `webcollage' to handle recent Altavista URL format changes;
+	  made it search the AP photo gallery.
+	* Revamped command-line options of `sonar' and made it properly handle
+	  subnets.
+	* The `bubbles' hack can now trickle up or down the screen.
+	* The `xsublim' hack can now read its text from programs.
+	* Support for GLE version 3 in `extrusion'.
+	* Fixed compilation problems in `maze'.
+	* Fixed a rare crash in `flow'.
+	* Fixes for minor installation problems.
+
+3.24	* Added `-ignorant' option to `maze' hack.
+	* Updates to `critical', `bsod', `xflame', and `flow'.
+	* Added support for Kerberos 5 (via its Kerberos 4 compatibility
+	  layer.)
+	* Fixed a bad leak in `xteevee'.
+	* Updated `webcollage' to handle recent Altavista URL format changes.
+	* Removed xscreensaver-demo's `Ok' and `Cancel' buttons, since they
+	  were confusing people: all changes are now instantanious.
+	* Made xscreensaver-demo install itself into the Gnome Control Center.
+
+3.23	* Fixed some misplaced text fields in the Motif version of
+	  xscreensaver-demo; fixed a crash in the Gtk version that would
+	  happen if the programs list was empty.
+	* Fixed a recently-introduced bug in `pulsar'.
+	* Made `sierpinski3d' use solid tetrahedrons instead of points.
+	* Added `-trace' option to `xmatrix'.
+	* Added new hacks `xteevee' and `xspirograph'.
+
+3.22	* Fixed some bugs in xscreensaver-demo.
+	* Rewrote the Motif version of xscreensaver-demo to match the new Gtk
+	  version.
+	* The Athena toolkit is no longer supported.
+
+3.21	* Tweaked the xscreensaver-demo UI (Gtk only.)
+	* Fixed a few visual selection bugs.  I think the proper GL visual
+	  should be used with nVidia systems now.
+	* Made the Makefiles obey $install_prefix.
+	* Made the `xscreensaver.spec' file able to generate both GL and
+	  non-GL packages simultaneously.
+
+3.20	* Added new hacks `ripples' and `sierpinski3d'.
+	* Made `xscreensaver-command -exit' be silent when no screen saver was
+	  running (instead of complaining.)
+	* Made `webcollage' and `vidwhacker' use `xloadimage' when available
+	  (in addition to `xli' and `xv'.)
+	* Improved memory usage in `petri' and gave it a hard cap on how much
+	  memory it can allocate.
+	* Added `-watch' option to `xscreensaver-command'.
+	* Made `xscreensaver-demo' come up with the most-recently-run hack
+	  selected by default.
+	* Rewrote the Gtk version of `xscreensaver-demo'.  It's a lot easier
+	  to use now.
+	* Extended the format of the programs list in the .xscreensaver file,
+	  for the benefit of the new capabilities of `xscreensaver-demo'.
+	  NOTE: you might want to delete your ~/.xscreensaver file and allow
+	  it to be re-created!  The old one should still work, but
+	  xscreensaver-demo won't be as pretty.
+
+3.19	* Fixed gcc dependencies in `bumps' and `ccurve'.
+	* New hack, `extrusion'.
+	* Some of the web sites that `webcollage' was using as its sources
+	  changed formats; tweaked it to understand the current layouts.
+	* Added typeahead in the password dialog: if the screen is locked, and
+	  you unlock it by typing a character, that key will be automatically
+	  inserted in the password dialog (unless it is Return, Enter, Space,
+	  or a non-printing key like Shift.)
+	* Made `xmatrix' take a `-small' option, since some folks with tiny
+	  screens prefer a smaller font.
+
+3.18	* New versions of `shadebobs', `lmorph', and `distort'.
+	* Added `ccurve', `blaster', and `bumps' hacks.
+	* Replaced `forest' hack with a rewritten version.
+	* Worked around a Xinerama server bug.
+	* Fixed a bug I introduced in 3.10 that caused some hacks to print out
+	  superfluous warnings about not having gotten enough colors.
+	* Made `sproingies' obey the `-delay' option.
+	* Fixed a portability bug in `shadebobs'.
+	* Made `webcollage' and `vidwhacker' use `xli' in preference to `xv',
+	  if it is available.
+	* Added a new source of images to `webcollage'.
+	* If running under KDE, xscreensaver will add itself to KDE's list of
+	  screensavers (via xscreensaver.kss.)
+	* Improved detection of GL libraries.
+	* Made the password dialog include the date and time.
+
+3.17	* New version of `webcollage' -- deals better with corrupted images,
+	  and can use an http proxy.
+	* New hack, `xsublim' (run it in the background, rather than adding it
+	  to the programs list.)
+	* The xscreensaver daemon was leaking a file descriptor each time you
+	  edited your .xscreensaver file.  Fixed.
+
+3.16	* New version of `shadebobs'.
+	* Improved image selection in `webcollage', and sped it up slightly.
+	* Made configure find the right version of perl.
+	* Rewrote the CGI part of `webcollage'.
+	* `make clean' was deleting some things it shouldn't.
+	* Fixed a typo in the default programs list.
+
+3.15	* Added `webcollage' and `shadebobs' hacks.
+	* Added a `-stdout' arg to `vidwhacker' so that it can be used in a
+	  pipeline.
+	* Made `petri' use less memory.
+
+3.14	* Various improvements to the Gtk port.
+	* Turned off PAM by default on Solaris, since PAM seems generally to
+	  be misconfigured out-of-the-box.
+	* Made the `--without-gtk' configure option work.
+	* Made configure check the Gtk version number, since it requires 1.2.
+	* Fixed a bug in the code that attempted to prevent changes of screen
+	  resolution while the screen is locked.
+	* Fixed a race condition in `xscreensaver-demo' that could cause an X
+	  error at startup.
+	* Added `-transparent' option to `deluxe'.
+	* Added `petri' hack.
+
+3.13	* Ported `xscreensaver-demo' to Gtk.
+	* Made it possible to build Motif, Gtk, and Athena versions of
+	  `xscreensaver-demo' in the same directory without reconfiguring.
+	* Made `xscreensaver-demo' chase symlinks before writing the
+	  .xscreensaver file, so that if .xscreensaver is itself a symlink,
+	  the underlying file will be replaced instead.
+	* Some Makefile and configure tweaks for Solaris and FreeBSD.
+	* Made it possible to set the fire color in `xflame'.
+	* Made transparency work in TrueColor (for `goop' and `qix'.)
+	* Fixed a multi-head bug introduced by the virtual viewports stuff.
+
+
+3.12	* Made it so that you can't scroll the screen while the lock dialog is
+	  up (with XFree86 virtual viewports.)
+	* Fixed a bug in `flag' that caused bob's chin to get cut off after a
+	  few iterations.
+
+3.11	* Made `xjack' be black-on-white-ish, so that it looks less like a
+	  computer screen and more like the typewritten paper it's supposed to
+	  be.
+	* New version of `pulsar'.
+	* Fixed Solaris compilation problem in `phosphor'.
+	* Made xscreensaver notice XFree86's virtual root window hack, so that
+	  if the X server's root window is larger than the monitor's
+	  displayable resolution, the screen saver will limit itself to the
+	  area that actually appears on the screen.
+	* Made the xscreensaver daemon do a better job of picking the visual
+	  class that should be used for GL programs.  Less user intervention
+	  should be needed now: you can use the logical visual name `GL'
+	  instead of having to figure out by hand which one to use.
+	* Oops, the visual was defaulting to "best" instead of
+	  "default", because the .xscreensaver file was not being
+	  loaded quite early enough.
+	* Made configure figure out how to build icmp ping support into the
+	  `sonar' hack automatically.
+	* Made warnings about not being able to read shadow passwords not be
+	  printed if compiled with PAM support.
+	* Improved PAM startup diagnostics.
+	* Worked around the Solaris PAM bug that was causing crashes there, so
+	  now PAM is turned on by default.
+	* Made configure detect the number of arguments that pam_strerror()
+	  takes, since on Linux, this apparently changed between 2.0 and 2.2,
+	  sigh.
+	* Made the /proc/interrupts kludge look for "PS/2 Mouse" as well as
+	  "keyboard".
+	* Made xscreensaver notice when there has been a sudden large jump in
+	  wall-clock time, and if so, lock right away, instead of waiting for
+	  "lockTimeout" to expire first.  (Laptops need this for safer
+	  recovery from hibernation.)
+	* Added `-throttle' option to `xscreensaver-command'.
+
+3.10	* Added `phosphor', `xmatrix', and `pulsar' hacks.
+	* Fixed a bug in the color allocator that sometimes caused `starfish'
+	  to fall back to monochrome.
+	* Reduced the amount of code that runs before root privileges are
+	  disavowed: "normal" and "shadow" passwords now do some
+	  initialization as root, but the PAM and Kerberos authorization
+	  schemes will be initialized while running as "nobody".  Supposedly
+	  this closes a potential security hole when using Kerberos.
+	* Added some more sanity checking to configure.
+
+3.09	* Added `compass', `squiral', `xflame', `wander', `spotlight', and
+	  `critical' hacks.
+	* Added some new modes to `decayscreen'.
+	* Made `deluxe' work in monochrome.
+	* Generalized usage of the Double-Buffer server extension in several
+	  hacks (`compass', `deluxe', `interference', `kumppa', and `moire2'.)
+	* Fixed another visual-depth problem in `rd-bomb'.
+	* The screen saver will now defer blanking if neither the keyboard nor
+	  the mouse could be grabbed.  Instead, it will just try again in a
+	  few minutes.  This fixes a bad interaction between xscreensaver and
+	  programs like VMware that hold the mouse and keyboard grabbed for a
+	  long time.
+	* Added a new erase mode (expanding spiral.)
+
+3.08	* Fixed some bugs in my port of `t3d'.
+	* Added `penetrate' and `deluxe' hacks.
+	* When linking against Motif 2.x, also link against XPM.
+	* Added support for using /proc/interrupts for idle detection on
+	  Linux.  Now xscreensaver shouldn't kick in when the user is active
+	  on a non-X virtual console.
+	* Upgraded to autoconf 2.13.
+
+3.07	* Configure tweaks (sometimes -lXmu wasn't getting linked in properly;
+	  check for _Xsetlocale in -lXintl.)
+	* Portability fixes for sonar.c.
+	* Fixed a compilation problem when you have GL but don't have XPM.
+	* Made configure notice when MesaGL requires -lpthread.
+	* Made `flame' ignore SIGFPE (not sure if this is the right fix; it
+	  seems only to be needed on FreeBSD.)
+	* Kludged `rd-bomb' work on visuals that are of depth 24 but that *do
+	  not* support pixmaps of depth 32.
+	* Fixed `halo' to work properly in TrueColor.
+	* Changed `xscreensaver.spec' to install the hacks in
+	  /usr/X11R6/lib/xscreensaver/ by default, since that's where recent
+	  Red Hat distributions put them.
+	* Added `t3d' hack.
+	* Updated versions of `crystal', `hopalong', and `flow' from
+	  xlockmore.
+	* Imported `demon' and `loop' modes from xlockmore.
+
+3.06	* Oops, the "default-n" visual descriptor was broken; it was always
+	  installing a colormap if the `installColormap' preference was set,
+	  meaning that `xearth', `xv' and friends were using the wrong colors
+	  on 8-bit systems.
+	* Turned off HAVE_PING in `sonar', since it compiles on some Linux
+	  systems, but not others of similar vintage...
+
+3.05	* Fixed an off-by-1 in `distort'.
+	* Added `sonar' hack.
+	* New version of `glplanet' (with stars.)
+	* Made all hacks exit when you type `q' or `ESC' at them, and made
+	  them obey the WM_DELETE_WINDOW ClientMessage.
+	* Fixed a nonfatal buffer overrun in lament (note: lament still
+	  doesn't work with MesaGL 3.0: it dies in
+	  lambda_textured_triangle1(), which is Mesa's bug, not mine.)
+
+3.04	* Added an `xscreensaver.spec' file, to make it easier for other folks
+	  to generate RPMs.
+	* Made the password code work on HPUX in the situation where:
+	  "enhanced security" is available; but not used; but the user typed
+	  a password more than 8 characters long anyway.  FTSOHPUX.
+
+3.03	* Made locking work when passwd aging is enabled.
+	* Added support for PAM (Pluggable Authentication Modules.)  It is
+	  still turned off by default, though, since it doesn't seem to work
+	  on Solaris 2.6, and has been behaving erratically on Red Hat 5.1.
+	* Made each possible authentication method be tried in turn until one
+	  succeeds; this means that Kerberos is being used, we will first
+	  check Kerberos, and if that fails, will then consult the local
+	  password file.  Likewise with PAM.
+	* Save and restore the bits under the passwd dialog, to avoid leaving
+	  a black rectangle behind when unlocking is cancelled.
+
+3.02	* Not everyone has sys/select.h, sigh...
+
+3.01	* Some fixes to `reflect'.
+	* Configure tweaks.
+	* Made it log unsuccessful attempts to unlock the screen to syslog.
+	* Fixed a bug where `xscreensaver-demo' could be seeing a different
+	  programs list than `xscreensaver' did.
+
+3.00	* The xscreensaver daemon no longer links against Motif or Athena:
+	  demo-mode and the preferences panel are no longer built in to the
+	  daemon, but are now handled by an external program,
+	  `xscreensaver-demo'.  (I decided that this, along with the recent
+	  addition of the `.xscreensaver' config file, justified bumping the
+	  version number to 3.00, since this is a fairly major architectural
+	  change.)
+	* Lines in the `*programs' resource may now begin with the character
+	  "-", meaning "don't run this hack."  In this way, it's possible to
+	  disable a hack without throwing away the information about it
+	  (making it easier to change your mind later.)  Eventually the
+	  preferences/demo mode GUI should represent this as a checkbox or
+	  something.
+	* Fixed a short race condition where it was possible for xscreensaver
+	  to die with a BadWindow error if it was blanking the screen just as
+	  another window was being deleted.
+	* Made it possible to disable specific modes in `bsod'.
+
+2.34	* Fixed a bug that was making `pipes' generate way too many valves.
+	  Made the viewpoint in `pipes' be selected randomly instead of always
+	  being -10 degrees.
+	* Fixed a bug in the XSHM code, in the case where the server supports
+	  the XSHM extension but is not the same machine as the client.
+	* Made `rd-bomb' default to taking up the whole screen.
+	* Made it not try to do fading/unfading if no PseudoColor visuals
+	  exist.
+	* Initial attempt at supporting VT-locking (doesn't work yet.)
+	* Eliminated the `captureStdout' resource; now `captureStderr'
+	  controls both streams.
+	* Added `-capture-stderr' and `-no-capture-stderr' command-line
+	  arguments.
+	* Added `glplanet' hack.
+	* When a hack is selected with `xscreensaver-command -select', that
+	  hack will be used until further notice (until the saver turns off,
+	  or another activation command is issued.)
+
+2.33	* Made `xscreensaver-command' print error messages: the xscreensaver
+	  daemon now responds to ClientMessage events by writing a response
+	  message on a window property, instead of just writing to its stderr.
+	* Made the ~/.xscreensaver file be automatically reloaded when the
+	  file date changes.
+	* The password dialog and splash screen no longer depend on Motif or
+	  Athena.  This should clear up a number of focus problems, and is the
+	  first step on the path toward moving all of the
+	  Motif/Athena/whatever code out of the xscreensaver daemon, and into
+	  external processes.
+	* Don't complain about LessTif 0.86 any more, since the new password
+	  dialog makes that problem go away.
+	* Configure tweaks for Irix 6.5, SunOS 5.something.
+	* New `-reflect' option to `distort'.
+
+2.32	* Added reading and writing of a ~/.xscreensaver file, so that the
+	  Preferences panel can save its settings.
+	* New version of `rubik'.
+	* Added `-select N' argument to `xscreensaver-command'.
+	* Oops, left out some of the `bubbles3d' files...
+
+2.31	* The cursor was invisible in the password dialog. Fixed.
+	* Made configure warn against MesaGL 2.6.
+	* Fixed X error at startup when using non-default visual.
+	* New version of `crystal', `ant', and `atlantis' from xlockmore.
+	* New hack, `bubble3d'.
+	* Added some new modes to `bsod'.
+
+2.30	* Changed the order in which -lSM and -lICE are linked to be after
+	  Motif instead of before (Lesstif on Irix needs this.)
+
+2.29	* Work around a bash bug in configure.
+	* Tweaked HPUX paths again.  FTSOHPUX.
+	* Made configure recommend against LessTif 0.86, due to a bug in that
+	  version that causes a security hole in the screen locking code.
+	  LessTif 0.87 will fix it.
+	* Made all of the `--with' options to `configure' accept a directory
+	  option as well (so that --with-motif=/FOO will add -I/FOO/include
+	  -L/FOO/lib).  I believe this is the Configure Party Line of how do
+	  to such things.
+	* Fixed a bug where the mouse was left un-grabbed after the first time
+	  the graphics hack was changed (simplified all of the mouse-grabbing
+	  logic.)
+	* Maybe possibly perhaps made `vidwhacker' really not leave stray xv
+	  windows around.  This time for sure.
+	* Added a new erase mode (random dots fizzling out.)
+	* Added `-prefs' argument to `xscreensaver-command', that brings up
+	  the Preferences dialog directly (it seems that nobody ever noticed
+	  the `Preferences' button on the Demo Mode dialog, maybe this will
+	  help.)
+	* Added a splash screen.  Turn it off with *splash:false.
+
+2.28	* Better macsbug text in `bsod'.
+	* New version of `distort' with many new modes.
+	* Plugged a leak in `coral'.
+	* Tweaked configure for HPUX.
+	* Removed some compiler warnings.
+	* More consistent usage of stderr versus stdout.
+	* More diagnostics should an X error occur.
+	* Fixed a possible crash in SGI-specific unfading code.
+
+2.27	* Improved version of `distort'.
+	* Made `lament' compile against OpenGL 1.0 (though it still requires
+	  1.1 to work properly.)
+	* Updated my email address and home page.
+
+2.25	* Improved motion in `rd-bomb'.
+	* Added XSHM (shared memory extension) support to the `distort',
+	  `interference', `moire', `rd-bomb', and `swirl' hacks, which speeds
+	  them up a bit.
+	* Added `lament' hack.
+
+2.24	* Tweaked the order of the -L options again.
+	* Cleaned up configure's `--help' message.
+	* Added `kumppa' hack.
+	* Smarter maze-solving algorithm in `maze'.
+	* Took `xlyap' out of the default list of hacks, since it's just
+	  incredibly buggy (and slow.)  Maybe someday someone will fix it...
+	* Added `distort' hack, but didn't add it to the default list (yet)
+	  because it's still too slow.
+	* Made the Athena demo dialog look more like the Motif version; it has
+	  a text-entry field now, too.
+	* Made the Athena password dialog echo asterisks, like Motif does,
+	  instead of using a flyspeck font.
+	* Some random configure tweaks.
+	* Added a `timestamp' resource that makes the `-verbose' messages
+	  include the time at which they were printed.
+
+2.23	* The fix for SGI's "scheme" nonsense broke things, and let the
+	  user's "*background" resource show through.  Fixed it in a different
+	  way.
+
+2.22	* Added support for the DPMS server extension (Display Power
+	  Management System.)
+	* Made configure advertize the `--enable-subdir' option a little more,
+	  since that seemed to cause some people stress.  Also, made that
+	  directory be built into the xscreensaver executable, as a hardcoded
+	  prefix to $PATH.  (Might help, shouldn't hurt.)
+	* Made configure prefer the two-arg gettimeofday to the one-arg
+	  version, since AIX doesn't have any prototypes.
+	* Made it work with Xaw3d (the 3D Athena library.)
+	* Made `make install' create directories as necessary.
+	* New version of lmorph from Sverre.
+	* Added `crystal' and `discreet' hacks from xlockmore.
+	* Added a new mode to `bsod'.
+
+2.21	* Made `xscreensaver-command -time' use different words.  (It now
+	  describes the two states as "screen blanked since..."  and "screen
+	  non-blanked since..." instead of "active since..." and "inactive
+	  since..." which a lot of people interpreted as meaning the opposite
+	  of what was intended.)
+	* Improved some error messages, in the hopes of making the distinction
+	  between the xscreensaver and xscreensaver-command programs more
+	  obvious.
+	* Rewrote (and reorganized) parts of the xscreensaver and
+	  xscreensaver-command manual pages.
+	* Renamed xscreensaver's `-lock' command-line option to be
+	  `-lock-mode', to avoid confusion with the `-lock' option to
+	  xscreensaver-command, which does a totally different thing.
+	* Removed xscreensaver's `-demo' command-line option for a similar
+	  reason; use `xscreensaver-command -demo' instead.
+	* Disabled SGI's "scheme" nonsense in a better way than
+	  fully-qualifying the background colors in every single hack.
+	* Fixed some other minor cosmetic problems when *sgiMode is turned on.
+	* Fixed an X error in `bsod -root' (how ironic...)
+
+2.20	* Fixed a bug that caused the mouse to sometimes not be grabbed
+	  properly (meaning the window manager menu could pop up over the
+	  demo-mode display.)
+	* Fixed a bug that made the stderr output sometimes get printed twice.
+	* Fixed a bug that made the demo-mode scrollbar move too fast.
+	* Protected against a possible buffer overflow.
+	* Made `vidwhacker' not leave stray xv windows around.
+	* New version of `ant' so that Bagley doesn't calve.
+	* Make configure on AIX get XShm from the right library.
+
+2.19	* One file was missing from the tar file.
+
+2.18	* Oops, atlantis wasn't being built by default.
+	* Added `epicycle' hack.
+	* Added `interference' hack.
+	* Added `truchet' hack.
+	* Added `bsod' hack.
+	* Added some new modes to `vidwhacker'.
+
+2.17	* Added a -window-id argument to most hacks, so that they can draw on
+	  arbitrary externally-provided windows.
+	* Synched with xlockmore 4.11a01.
+	* Added `flow' hack.
+	* Added `atlantis' GL hack.
+	* Renamed `puzzle' hack to `jigsaw', since xlock already had a
+	  different mode called `puzzle'.
+	* Made it self-configure properly when Motif 2.1.0 is being used
+	  (requires -lXp now, sigh...)
+
+2.16	* Made `flag' able to do XPM images.
+	* New look for the xscreensaver logo (`xroger').
+	* Fixed compilation error on Suns with adjunct passwords.
+	* Got multi-architecture builds working again.
+	* Some configure tweaks for building on HPUX and Solaris.
+	* Fixed bug in decayscreen.
+	* Fixed typo in passwd.c.
+	* Made `cynosure' not die when colormap is full.
+
+2.15	* Added `cynosure' hack.
+	* Added `moire2' hack.
+	* Tweaked `erase.c' some more.
+	* Made unfading a bit smoother.
+	* Added `vidwhacker' hack (not installed by default.)
+	* Added `stairs' hack.
+	* Split `escher' into `cage' and `moebius', as per xlockmore.
+	* Changed subprocess handling to use sigaction() instead of signal()
+	  if it's available (this is necessary for SCO but should work fine on
+	  other systems too.)
+	* Various other tweaks.
+
+2.14	* Better fix for the Motif drag-and-die lossage.
+	* Put in some kludges to work around a LessTif bug.
+	* XScreenSaver is known to work with LessTif 0.82 now.
+	* Made fading work on high-end SGI video hardware.
+	* Fixed another SGI-specific bug in screen grabbing; will the madness
+	  never cease?
+	* Fixed another crash in `xlyap'.
+
+2.13	* Made `decayscreen' do directions other than down.
+	* Improved `puzzle'.
+	* Fixed a crash in `xlyap'.
+	* Added CDE info to the man page, removed `cde.txt'.
+	* Configure tweaks for Zippy.
+	* Turned off the signal handling in `bubbles' because it was sometimes
+	  failing to die.
+	* Added `hacks/xscreensaver-sgigl.c' to make it possible to run SGI's
+	  ElectroPaint hack (/usr/demos/bin/ep) with xscreensaver.  Finally!
+	* Fixed a buffer overrun in the locking code that some wily, malicious
+	  cracker must have slipped in.
+	* Disabled Motif drag-and-drool in the dialog box buttons, since it's
+	  broken in some old versions of Motif.
+
+2.12	* Added `README.debugging'.
+	* Added `puzzle' hack.
+	* Added `xlyap' hack.
+	* Added `default-n' as a visual name, so that one can have -install on
+	  by default, but turn it off for certain poorly-behaved hacks (like
+	  xv.)
+	* Added support for grabbing frames of external video (on SGI) to the
+	  screen-grabbing hacks (decayscreen, slidescreen, slip, blitspin, and
+	  puzzle.)
+	* Improved look of tiles in `slidescreen'; fixed its color allocation
+	  problem.
+
+2.11	* Tweaked `blitspin', added it to the default list.
+	* Added `lissie', `mountain', `triangle', `worm', `rotor', and `ant'
+	  from xlockmore.
+	* Updated `sierpinski', `galaxy', and `lisa'.
+	* Thickened the lines in `braid' and `lmorph'.
+	* Updated VMS makefiles.
+	* Renamed `fract' to `vines'.
+	* Added `xjack' hack.
+	* Made a few more hacks use erase.c, and added a few more wipe styles.
+	* Fixed compilation problem with Sun's version of OpenGL.
+	* Added ability to use sigaction() instead of signal()
+	  to work around a SCO kernel bug.
+
+2.10	* Fixed colormap bugs in `rd-bomb'; sped up `coral'.
+	* Configure tweaks for *BSD.
+
+2.08	* New hacks `rd-bomb' and `coral'.
+	* New version of `maze' with some new algorithms.
+	* New colorized version of `rocks'.
+	* Fixed a bug in qix on 64-bit machines.
+	* Fixed a bug in the -time option.
+	* Fixed a bug in configure related to LessTif.
+
+2.07	* Minor header tweaks in windows.c and flag.c.
+	* Made multi-architecture ($VPATH) builds work properly.
+	* Merged new GL stuff from xlockmore (rubik, morph3d.)
+	* Fixed intermittent crashes in `imsmap' and `munch'.
+	* Added `fadeplot' hack from xlockmore.
+
+2.06	* Merged in VMS support from Patrick Moreau.
+
+2.05	* Fixed a MIT-SCREEN-SAVER-related crash, and tweaked
+	  configure to detect the extra-random -lXss library.
+
+2.04	* HP configure tweaks.  Detect and warn about LessTif.
+	* Fixed low-color behavior of `goop', `pyro', `starfish',
+	  `greynetic', `flame', `halo', and `moire'.
+
+2.03	* Fixed flicker in `pipes'.  Fixed 3d in `bouboule'.
+	* Added `munch' hack.
+	* Added basic dependencies to the Makefile.in files.
+
+2.02	* Fixes for compiling with the MIT saver extension.
+	* Made the yow/fortune program be a configure option.
+	* Various configure tweaks.
+
+2.01	* Added `goop' and `starfish' hacks.
+	* Added colomap cycling to `halo'.
+	* Made `attraction' use the new colormap allocator.
+	* Added better $PATH diagnostics.
+	* There was a bug in frand!  Color selection should be much improved
+	  now.
+
+2.00	* Converted to use `configure' instead of `imake'.
+	* ANSI C is now required.
+	* Added Kerberos locking support, from Nat Lanza.
+	* Made the stderr text use overlay planes, if possible.
+	* Reworked the xlockmore compatibility stuff again.
+	* Added `gears', `superquadrics', `escher', `pipes', and `sproingies'
+	  hacks (depend on OpenGL.)
+
+1.34	* Fixed some bugs, made fading be a little smoother.
+
+1.33	* Made it work with multi-headed displays.
+	* Generalized sub-process management (Unix sucks!)
+	* Added interactive mouse frobbing to Julia.
+	* Added (untested) support for HPUX shadow passwords.
+	* Made normal non-shadow passwords be checked if the shadow passwords
+	  aren't accessible for some reason.
+
+1.32	* Removed *colorPrograms and *monoPrograms resources: made it possible
+	  to specify the desired visual on a per-hack basis.
+	* Cleaned up / restructured the driver: no more globals.
+	* Made the Motif and Athena dialogs share more code.
+	* Probably fixed some Athena colormap-installation bugs.
+	* Fixed screen grabbing (cmap) on SGI 12-bit PseudoColor.
+	* Fixed divide-by-zero in bright random colormaps.
+	* Added an improved version of xlock's `flag' hack.
+	* Made unfading work better, and not flicker on SGIs.
+	* Added `sphere', `forest', `lisa' hacks from xlockmore.
+	* Added (untested) support for SunOS Adjunct passwords.
+
+1.31	* Improved colors and colormap cycling of many hacks.
+	* Cleaned up xlockmore compatibility layer.
+	* Made `blitspin' able to grab an image off the screen.
+	* Ported `swirl' and `bouboule' hacks from xlockmore.
+	* Made the driver more careful about not leaving bits on the screen,
+	  or allowing other windows to raise themselves: it now re-blanks the
+	  screen every so often.
+	* Added `-time' option to `xscreensaver-command'.
+	* Improved SGI screen-grabbing some more: now it can grab TrueColor
+	  screens into PseudoColor windows and have the colors still come out
+	  semi-reasonably.
+
+1.30	* Made `slidescreen' and `decayscreen' work better on SGIs when
+	  windows of different visuals are present, by using the
+	  XReadDisplay() extension to get a true 24-bit image out of the frame
+	  buffer.
+	* Made `noseguy' be in color, if compiled with XPM.
+	* Ported `braid', `drift', `fract', `galaxy', `grav', `ifs', `julia',
+	  `laser', `lightning', `penrose', `sierpinski', `slip', `spiral', and
+	  `strange' hacks from xlockmore.
+	* Merged `hopalong' hack with a more recent version.
+	* Added `cde.txt'.
+
+1.28	* Added `deco', `moire', and `kaleidescope' hacks.
+	* Merged in support for non-Motif locking and demo mode.
+	* Made `blitspin' and `bubbles' work in TrueColor.
+	* Fixed a stupid bug I introduced in `imsmap'.
+	* Added `poly' and `gravity' options to `qix'.
+
+1.27	* Added support for SGI SCREEN_SAVER extension.
+	* Made `fade' and `unfade' work on 8-bit SGIs.
+	* Made the dialog boxes more Motify.
+	* Added `bubbles' hack.
+
+1.26	* Added `lmorph' hack.
+	* Added viscosity and mouse-control to attraction.
+	* Fixed possible bad color choices in qix and attraction.
+	* Added ramp-mode to halo.
+	* Added a new RNG, which is faster and more portable than using the
+	  RNG in libc.
+	* Made locking work on SCO.
+	* Various other minor tweaks that I don't remember.
+
+1.25	* Made it capture the stdout/stderr of its subprocesses and present
+	  them on the screensaver window itself.
+	* Made demo mode work correctly with non-default visuals and color
+	  maps, instead of always using the defaults.
+	* Added -visual argument to all included screenhacks.
+	* Support for the R6 MIT-SCREEN-SAVER server extension.
+	* Made the demo mode list scroll properly.
+	* Added `pedal' hack.
+
+1.24	* Fixed some private-colormap oddities in slidescreen, decayscreen,
+	  and xroger.  Fixed apparent conservation- of-mass problem in pyro;
+	  made the shrapnel round.
+
+1.23	* Minor tweaks for IRIX5; fixed locking race condition.
+
+1.22	* Minor tweaks for X11R6.
+	* Fixes for non-default visuals.
+
+1.21	* Fixed bug in color blitspin; added default image.
+	* Added diagnostics to noseguy.  Fixed off-by-one error in flame.
+	* Added some missing casts.
+
+1.19	* Added `flame' hack.
+	* Fixed a minor Motif dialog text field bug.
+	* Fixed yet another XPointer-not-defined-in-R4 bug.
+
+1.18	* Added support for shadow password files.
+	* Fixed some Motif-related locking bugs.
+	* Added diagnostics when locking is disabled.
+	* Made blitspin able to use the XPM library.
+	* Added `decayscreen' hack.
+
+1.17	* Added `halo' hack.
+
+1.16	* Portability fixes.
+
+1.15	* Broke the driver up into more source files.
+	* Moved the hacks into their own directory.
+	* Made all `time' parameters accept the 00:00:00 syntax, so that even
+	  the parameters which are normally read as minutes can be specified
+	  in seconds.
+	* Added colormap cycling to `imsmap'.
+	* Made `hyper' work with K&R compilers.
+
+1.14	* Added `orbit' option to `attraction' hack.
+	* Added `lock-timeout' option.
+	* Cleaned up options of `maze' hack.
+
+1.09	* Added demo mode, and locking.
+	* Added `maze' hack.
+	* Added `norotate' option to `rocks' hack.
+	* Uploaded to export.lcs.mit.edu:contrib/xscreensaver.tar.Z and posted
+	  to comp.windows.x.announce, 25-Feb-1993.
+	* Added `hypercube' and `slidescreen' (or they may have been added
+	  earlier).
+
+1.05	* Works when run from XDM before anyone logs in.
+	* Sped up `imsmap'.
+	* Can use `xv' as a slideshow without using up colormap entries while
+	  the screen is not blanked.
+	* Fixed a BadDrawable error in non-XIdle mode.
+	* Uploaded to export.lcs.mit.edu:contrib/xsaver.tar.Z and posted to
+	  comp.windows.x.announce, 30-Nov-1992.
+
+1.04	* Added `blitspin' and `imsmap' (or they may have been earlier).
+	* Appeared on the X11R5 contrib tape, a mirror of export.lcs.mit.edu,
+	  29-Nov-1992.
+
+1.00	* Uploaded to export.lcs.mit.edu:contrib/xsaver.tar.Z and posted to
+	  comp.windows.x.announce, 17-Aug-1992.
+	* Initial list of included hacks:
+	  `qix', `helix', `rorschach', `attraction', `greynetic', `rocks',
+	  `pyro', `hopalong', and `noseguy'.
+

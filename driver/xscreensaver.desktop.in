@@ -1,0 +1,8 @@
+[Desktop Entry]
+Exec=xscreensaver
+Icon=xscreensaver
+_Name=XScreenSaver
+_Comment=XScreenSaver daemon: screen saver and locker
+Type=Application
+Categories=Screensaver;Security
+Terminal=false

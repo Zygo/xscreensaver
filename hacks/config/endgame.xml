@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="endgame" _label="Endgame" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=QfglC_lvUTA"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="classic" _label="Low resolution chess pieces" arg-set="--classic"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Black slips out of three mating nets, but the fourth one holds him tight!
+A brilliant composition! 
+
+See also the "Queens" screen saver.
+
+https://en.wikipedia.org/wiki/Chess_endgame
+
+Written by Blair Tennessy and Jamie Zawinski; 2002.
+  </_description>
+</screensaver>

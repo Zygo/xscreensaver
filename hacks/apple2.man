@@ -1,0 +1,204 @@
+.TH XScreenSaver 1 "5-May-2004" "X Version 11"
+.SH NAME
+apple2 \- Apple ][ display emulator
+.SH SYNOPSIS
+.B apple2
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install]
+[\-\-visual \fIvisual\fP]
+[\-\-program \fIcommand to run\fP]
+[\-\-basic] [\-\-slideshow] [\-\-text]
+[\-\-meta] [\-\-esc] [\-\-bs] [\-\-del] [\-\-fast]
+[\-\-fps]
+.SH DESCRIPTION
+The
+.I apple2 
+program simulates an original Apple ][ Plus computer in all its 1979
+glory. It also reproduces the appearance of display on a color
+television set of the period.
+.PP
+There are 3 modes: basic, slideshow, and text. Normally it chooses a
+mode randomly, but you can override with the \fI\-\-basic\fP,
+\fI\-\-slideshow\fP, or \fI\-\-text\fP options.
+
+In basic mode a simulated user types in a Basic program and runs it.
+
+In slideshow mode it chooses a number of images from the image source
+you configured into XScreenSaver and displays them within the
+limitations of the Apple ][ display hardware. With only 6 available
+colors, you can only make out the general shape of the pictures.
+
+In text mode it displays the output of a command or the contents of
+a file or URL (via the default
+.BR xscreensaver\-text (MANSUFFIX)
+program, which can be overridden with \fI\-\-program\fP).
+
+In text mode, it is also a fully functional (if anachronistic)
+vt100 terminal emulator.
+.SH OPTIONS
+.I apple2
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-basic
+Choose basic mode
+.TP 8
+.B \-\-slideshow
+Choose slideshow mode
+.TP 8
+.B \-\-text
+Choose text mode
+.TP 8
+.B \-\-program \fIsh-command\fP
+In text mode, the command to run to generate the text to display. This
+option may be any string acceptable to /bin/sh. The program will be
+run at the end of a pipe, and any characters that it prints to
+\fIstdout\fP will be printed on the Apple ][ display. If the program
+exits, it will be launched again after 3 seconds.  Default:
+.BR xscreensaver\-text (MANSUFFIX).
+
+In text mode, \fIapple2\fP emulates a vt100 terminal running on a 40x24
+uppercase-only screen.
+
+For example:
+.nf
+.sp
+	apple2 -text \\
+	       -program 'cat /usr/src/linux*/README | fold -sw40'
+	apple2 -text -program 'ping apple.com'
+	apple2 -text -program 'ps -e'
+	apple2 -text -program 'od -txCz -w7 /dev/urandom'
+	apple2 -text -program 'cat /dev/random'
+	apple2 -text -fast -program 'xemacs -nw -q -f life'
+	apple2 -text -fast \\
+	       -program 'xemacs -nw -q --eval "(hanoi 5)"'
+.sp
+.fi
+You can also use \fIapple2\fP as an extremely lo-fi replacement for the
+.BR xterm (1)
+and
+.BR gnome-terminal (1)
+terminal emulators:
+.nf
+.sp
+	apple2 -text -fast -program tcsh
+.sp
+.fi
+.TP 8
+.B \-\-pty
+In \fI\-\-text\fP mode, launch the sub-program under a pty so that it
+can address the screen directly.  This is the default.
+.TP 8
+.B \-\-pipe
+In \fI\-\-text\fP mode, launch the sub-program at the end of a pipe: 
+do not let it address the screen directly.
+.TP 8
+.B \-\-esc
+When the user types a key with the Alt or Meta keys held down, send an
+ESC character first.  This is the default.
+.TP 8
+.B \-\-meta
+When Meta or Alt are held down, set the high bit on the character instead.
+.TP 8
+.B \-\-del
+Swap Backspace and Delete.  This is the default.
+.TP 8
+.B \-\-bs
+Do not swap Backspace and Delete.
+.TP 8
+.B \-\-fast
+Normally, characters are printed at the speed of an original Apple][
+computer; however, when using this program as a terminal emulator,
+the novelty of those 300 baud characters might wear off.  You can use
+the \fI\-\-fast\fP option to speed things up a bit.
+.TP 8
+.B \-\-fps
+Display the current frame rate and CPU load.
+.SH TERMINAL EMULATION
+By default, \fIapple2\fP allocates a pseudo-tty for the \fI\-\-text\fP-mode
+sub-process to run under.  This has the desirable side effect that the
+program will be able to use
+.BR ioctl (2)
+to fetch information about terminal parameters and window size, which
+many programs (such as
+.BR top (1))
+need to run properly. \fIapple2\fP will also set the environment
+variable \fITERM\fP to \fIvt100\fP in the child process.
+
+Any characters typed on the apple2 window will be passed along to
+the sub-process.  (Note that this only works when running in "window"
+mode, not when running in \fI\-\-root\fP mode under xscreensaver.)
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.TP 8
+.B TERM
+to inform the sub-process of the type of terminal emulation.
+.SH X RESOURCES
+Notable X resources supported include the following which correspond
+to standard TV controls:
+.BR analogTVTint ,
+.BR analogTVColor ,
+.BR analogTVBrightness , 
+and
+.BR analogTVContrast
+which correspond to standard TV controls. They range from 0 to
+100,except for tint which is an angle between -180 and +180.
+.SH TRADEMARKS
+Apple ][ and Applesoft are trademarks of Apple Computer.
+
+.SH SEE ALSO
+.BR xscreensaver (1),
+.BR bsod (MANSUFFIX),
+.BR xscreensaver\-text (MANSUFFIX),
+.BR fortune (1),
+.BR phosphor (MANSUFFIX),
+.BR starwars (MANSUFFIX),
+.BR ljlatest (MANSUFFIX),
+.BR dadadodo (1),
+.BR webcollage (MANSUFFIX),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek ,
+.BR console_codes (4).
+.SH COPYRIGHT
+Copyright \(co 2002-2003 by Trevor Blackwell.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Television and Apple ][ emulation by Trevor Blackwell <tlb@tlb.org>.
+Slideshow and text mode by Jamie Zawinski <jwz@jwz.org>.
+Pty and vt100 emulation by Fredrik Tolf <fredrik@dolda2000.com>.
