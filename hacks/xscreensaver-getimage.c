@@ -2030,6 +2030,20 @@ main (int argc, char **argv)
   random_image_p  = get_boolean_resource(dpy, "chooseRandomImages", "Boolean");
   image_directory = get_string_resource (dpy, "imageDirectory", "String");
 
+  if (!strncmp (image_directory, "~/", 2))
+    {
+      const char *home = getenv("HOME");
+      if (home && *home)
+        {
+          char *s2 = (char *)
+            malloc (strlen(image_directory) + strlen(home) + 10);
+          strcpy (s2, home);
+          strcat (s2, image_directory + 1);
+          free (image_directory);
+          image_directory = s2;
+        }
+    }
+
   progname = argv[0] = oprogname;
 
   for (i = 1; i < argc; i++)

@@ -829,6 +829,7 @@ load_random_image_cocoa (Screen *screen, Window window, Drawable drawable,
 
 # ifndef HAVE_IPHONE
   if (filep)
+    /* On macOS, get_string_resource() already expanded "~/". */
     dir = get_string_resource (dpy, "imageDirectory", "ImageDirectory");
 
   if (!dir || !*dir)

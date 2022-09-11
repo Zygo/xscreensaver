@@ -699,7 +699,11 @@ static void layout_group (NSView *group, BOOL horiz_p);
   }
   
   while (opts_array[0].option) {
-    if (!strcmp (opts_array[0].option, buf)) {
+    const char *s1 = opts_array[0].option;
+    const char *s2 = buf;
+    if (s1[0] == '-' && s1[1] == '-') s1++;  /* -x and --x are the same */
+    if (s2[0] == '-' && s2[1] == '-') s2++;
+    if (!strcmp (s1, s2)) {
       const char *ret = 0;
 
       if (opts_array[0].argKind == XrmoptionNoArg) {
