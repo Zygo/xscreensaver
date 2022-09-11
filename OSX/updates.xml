@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>https://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 6.04</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.04.dmg</link>
+   <description><![CDATA[&bull; New hacks, `nakagin' and `chompytower'. <BR>&bull; Settings dialog shows diagnostics for bad image folders and feeds. <BR>&bull; URLs for `imageDirectory' can now point at archive.org collections. <BR>&bull; Sliders for various "Speed" preferences are easier to use. <BR>&bull; Updated `webcollage'.]]></description>
+   <pubDate>Sun, 29 May 2022 12:37:00 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.04.dmg"
+    sparkle:version="6.04"
+    sparkle:dsaSignature="MC0CFExIyc3qbLXOmqR7RpUB6vUhCar5AhUAqJWzUXa4CvM1uTCtP0HDfDr/ygQ="
+    sparkle:edSignature="ZSeW3fPX/xe8x/I/VVYBKZYm3WWZpf8kqUepdX/VlAhWxk6Q5ALtNqQg7vU0DqpHyROr3q6bHQhutCeu4HceDg=="
+    length="85181483"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.03</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.03.dmg</link>
+   <description><![CDATA[&bull; New hack, `squirtorus'. <BR>&bull; New hack, `mapscroller' (X11 and macOS only). <BR>&bull; `sphereeversion' now has corrugation-mode, and can evert the Earth. <BR>&bull; `glplanet' is higher resolution, and displays time zones. <BR>&bull; `glslideshow' displays relative pathnames again. <BR>&bull; fixed spurious error message in auto-update installer. ]]></description>
+   <pubDate>Sun, 27 Feb 2022 13:08:45 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.03.dmg"
+    sparkle:version="6.03"
+    sparkle:dsaSignature="MCwCFHmHUuPDybgnZmZFzihLVbrKqvcrAhQPPYNu66IRvYfWQ1Tx1+A0UKo+2A=="
+    sparkle:edSignature="fhmSZ+KsfuGcLfqHmR3gRrCYqjOrmiMHseXr3nTx91ugLRX5G+eYkT+LdFiqSjPD3vIJeh74oNYLArlzOM4RDA=="
+    length="82451193"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.02</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.02.dmg</link>
+   <description><![CDATA[&bull; New hacks, `marbling' and `binaryhorizon'. <BR>&bull; `atlantis' behaviors are more random and lifelike. <BR>&bull; `headroom' is now Mask Headroom. ]]></description>
+   <pubDate>Mon, 11 Oct 2021 17:59:05 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.02.dmg"
+    sparkle:version="6.02"
+    sparkle:dsaSignature="MC0CFEMgHT9197n3dB0BGkBlrdfGDiz+AhUAjR06lKtPNhN1/4rt2BZIaCeEaa4="
+    sparkle:edSignature="K/bR5Wmowr6kYBLgSstuH6ZWSPddaKl8FUZYgbxps1OA9SG//+i7ALJw81ATJlGWwFa74yYtDLhsaMK84Da+Bw=="
+    length="67267269"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.00</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.00.dmg</link>
+   <description><![CDATA[&bull; Improved GLSL and GLES3 support: Phong shading in `etruscanvenus', `hypertorus', `klein', `projectiveplane',`romanboy' and `sphereeversion'. <BR>&bull; Updates to `cubicgrid'. <BR>&bull; Added a `Random XScreenSaver' screen saver, which implements cycle mode, among other things. ]]></description>
+   <pubDate>Thu, 01 Apr 2021 02:18:28 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.00.dmg"
+    sparkle:version="6.00"
+    sparkle:dsaSignature="MCwCFBxhmIrsI5fzulYpnqb786HAAHsDAhR2rtZihZUc7wWjxEiZPS1dY9O+ig=="
+    sparkle:edSignature="33OZlfSDYILARuBcbLGVHHCMq8NZPDK0BYGDhLfyagfVHeGYiBruq9EkqpNZ/IAaeyDoZwoIB0ZqdQwZOPZuBw=="
+    length="39207177"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.34</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.34.dmg</link>
+   <description><![CDATA[&bull; Fixed a crash when hot-swapping monitors while locked. <BR>&bull; Fixed some incorrect output from `xscreensaver-command -watch'. <BR>&bull; Various macOS and iOS performance improvements.]]></description>
+   <pubDate>Sat, 24 Oct 2015 12:16:41 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.34.dmg"
+    sparkle:version="5.34"
+    sparkle:dsaSignature="MCwCFAoZpMknlOVF0zFXlzFruzFvRXufAhQVKY0qlzelKcArrlC6k7EbHLTcyg=="
+    sparkle:edSignature="yUaWHZ0W91rhh0jsFUgtdcH17SPq66A4SdLMRqf/AU7cnVwNNBvlEJOKAJGJIMTVPpBMtYgk93YJL3/5R4+1BA=="
+    length="58850776"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.14</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
+   <description><![CDATA[&bull; Fixed crash in Blank Only Mode when DPMS disabled. <BR>&bull; Added "Quick Power-off in Blank Only Mode" option. <BR>&bull; BSOD GLaDOS.]]></description>
+   <pubDate>Fri, 20 May 2011 11:42:36 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
+    sparkle:version="5.14"
+    sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
+    sparkle:edSignature="yAg5vrtkqVdOXnloYeZ/XlwNK6VA3yWdKIOvMbpFEEGUfmsRm5/besIJBMjQkZg5BxXG8DTVh9NMHWrzZ9KvCg=="
+    length="54485615"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

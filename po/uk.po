@@ -1,0 +1,2695 @@
+# Copyright (C) 1998-2002 Free Software Foundation, Inc.
+# Yuriy Syrota <rasta@renome.rovno.ua>, 1998-2002.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: xscreensaver\n"
+"POT-Creation-Date: 2002-03-08 17:59-0500\n"
+"PO-Revision-Date: 2002-04-24 15:35+0200\n"
+"Last-Translator: Yuriy Syrota <yuri@renome.rovno.ua>\n"
+"Language-Team: Ukrainian <linux@linux.org.ua>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: driver/demo-Gtk-conf.c:704
+#: driver/demo-Gtk-conf.c:996
+#: driver/screensaver-properties.desktop.in.h:1
+#: driver/screensaver-properties.desktop.in.h:2
+#: hacks/config/ant.xml.h:1
+msgid "A cellular automaton that is really a two-dimensional Turing machine: as the heads (``ants'') walk along the screen, they change pixel values in their path. Then, as they pass over changed pixels, their behavior is influenced. Written by David Bagley."
+msgstr ""
+
+#: hacks/config/ant.xml.h:2
+#: hacks/config/ant.xml.h:3
+#: hacks/config/ant.xml.h:4
+#: hacks/config/ant.xml.h:5
+#: hacks/config/atlantis.xml.h:4
+#: hacks/config/attraction.xml.h:8
+#: hacks/config/blaster.xml.h:3
+#: hacks/config/blitspin.xml.h:4
+#: hacks/config/bouboule.xml.h:3
+#: hacks/config/braid.xml.h:4
+#: hacks/config/bubble3d.xml.h:3
+#: hacks/config/bubbles.xml.h:8
+#: hacks/config/bumps.xml.h:3
+#: hacks/config/cage.xml.h:2
+#: hacks/config/circuit.xml.h:4
+#: hacks/config/compass.xml.h:3
+#: hacks/config/coral.xml.h:7
+#: hacks/config/critical.xml.h:3
+#: hacks/config/crystal.xml.h:6
+#: hacks/config/cynosure.xml.h:4
+#: hacks/config/dangerball.xml.h:3
+#: hacks/config/decayscreen.xml.h:2
+#: hacks/config/deluxe.xml.h:4
+#: hacks/config/demon.xml.h:4
+#: hacks/config/discrete.xml.h:2
+#: hacks/config/distort.xml.h:4
+#: hacks/config/drift.xml.h:3
+#: hacks/config/engine.xml.h:3
+#: hacks/config/epicycle.xml.h:5
+#: hacks/config/extrusion.xml.h:3
+#: hacks/config/fadeplot.xml.h:4
+#: hacks/config/flag.xml.h:2
+#: hacks/config/flame.xml.h:6
+#: hacks/config/flipscreen3d.xml.h:1
+#: hacks/config/flow.xml.h:4
+#: hacks/config/forest.xml.h:1
+#: hacks/config/galaxy.xml.h:3
+#: hacks/config/gears.xml.h:2
+#: hacks/config/gflux.xml.h:6
+#: hacks/config/glplanet.xml.h:2
+#: hacks/config/gltext.xml.h:3
+#: hacks/config/goop.xml.h:4
+#: hacks/config/grav.xml.h:2
+#: hacks/config/greynetic.xml.h:1
+#: hacks/config/halo.xml.h:2
+#: hacks/config/hopalong.xml.h:9
+#: hacks/config/hyperball.xml.h:2
+#: hacks/config/hypercube.xml.h:2
+#: hacks/config/ifs.xml.h:1
+#: hacks/config/interference.xml.h:5
+#: hacks/config/jigsaw.xml.h:3
+#: hacks/config/julia.xml.h:2
+#: hacks/config/kaleidescope.xml.h:2
+#: hacks/config/kumppa.xml.h:3
+#: hacks/config/lament.xml.h:2
+#: hacks/config/laser.xml.h:3
+#: hacks/config/lightning.xml.h:1
+#: hacks/config/lisa.xml.h:2
+#: hacks/config/lissie.xml.h:3
+#: hacks/config/lmorph.xml.h:3
+#: hacks/config/loop.xml.h:1
+#: hacks/config/maze.xml.h:4
+#: hacks/config/menger.xml.h:3
+#: hacks/config/moebius.xml.h:3
+#: hacks/config/moire2.xml.h:2
+#: hacks/config/molecule.xml.h:10
+#: hacks/config/morph3d.xml.h:3
+#: hacks/config/mountain.xml.h:2
+#: hacks/config/munch.xml.h:3
+#: hacks/config/nerverot.xml.h:9
+#: hacks/config/penetrate.xml.h:3
+#: hacks/config/penrose.xml.h:6
+#: hacks/config/petri.xml.h:5
+#: hacks/config/phosphor.xml.h:3
+#: hacks/config/pipes.xml.h:4
+#: hacks/config/pulsar.xml.h:11
+#: hacks/config/pyro.xml.h:4
+#: hacks/config/qix.xml.h:7
+#: hacks/config/rdbomb.xml.h:9
+#: hacks/config/ripples.xml.h:4
+#: hacks/config/rocks.xml.h:4
+#: hacks/config/rotor.xml.h:3
+#: hacks/config/rubik.xml.h:3
+#: hacks/config/shadebobs.xml.h:3
+#: hacks/config/sierpinski.xml.h:2
+#: hacks/config/sierpinski3d.xml.h:2
+#: hacks/config/slidescreen.xml.h:2
+#: hacks/config/slip.xml.h:2
+#: hacks/config/speedmine.xml.h:3
+#: hacks/config/sphere.xml.h:2
+#: hacks/config/spiral.xml.h:3
+#: hacks/config/spotlight.xml.h:2
+#: hacks/config/sproingies.xml.h:2
+#: hacks/config/squiral.xml.h:4
+#: hacks/config/stairs.xml.h:1
+#: hacks/config/starfish.xml.h:3
+#: hacks/config/starwars.xml.h:6
+#: hacks/config/strange.xml.h:2
+#: hacks/config/superquadrics.xml.h:3
+#: hacks/config/swirl.xml.h:2
+#: hacks/config/t3d.xml.h:6
+#: hacks/config/triangle.xml.h:1
+#: hacks/config/truchet.xml.h:1
+#: hacks/config/vines.xml.h:1
+#: hacks/config/webcollage.xml.h:4
+#: hacks/config/worm.xml.h:3
+#: hacks/config/xearth.xml.h:7
+#: hacks/config/xfishtank.xml.h:3
+#: hacks/config/xflame.xml.h:4
+#: hacks/config/xjack.xml.h:1
+#: hacks/config/xmatrix.xml.h:4
+#: hacks/config/xmountains.xml.h:1
+#: hacks/config/xrayswarm.xml.h:2
+#: hacks/config/zoom.xml.h:2
+#: hacks/config/ant.xml.h:6
+#: hacks/config/ant.xml.h:7
+#: hacks/config/attraction.xml.h:13
+#: hacks/config/demon.xml.h:5
+#: hacks/config/discrete.xml.h:3
+#: hacks/config/distort.xml.h:5
+#: hacks/config/fadeplot.xml.h:5
+#: hacks/config/flag.xml.h:4
+#: hacks/config/flow.xml.h:7
+#: hacks/config/hopalong.xml.h:13
+#: hacks/config/interference.xml.h:8
+#: hacks/config/julia.xml.h:5
+#: hacks/config/lissie.xml.h:4
+#: hacks/config/loop.xml.h:2
+#: hacks/config/moire.xml.h:4
+#: hacks/config/rdbomb.xml.h:11
+#: hacks/config/rorschach.xml.h:5
+#: hacks/config/rubik.xml.h:4
+#: hacks/config/sierpinski.xml.h:3
+#: hacks/config/slip.xml.h:3
+#: hacks/config/ant.xml.h:8
+#: hacks/config/attraction.xml.h:18
+#: hacks/config/blaster.xml.h:6
+#: hacks/config/bouboule.xml.h:5
+#: hacks/config/braid.xml.h:7
+#: hacks/config/coral.xml.h:9
+#: hacks/config/critical.xml.h:4
+#: hacks/config/crystal.xml.h:8
+#: hacks/config/cynosure.xml.h:6
+#: hacks/config/deco.xml.h:5
+#: hacks/config/deluxe.xml.h:6
+#: hacks/config/demon.xml.h:6
+#: hacks/config/discrete.xml.h:4
+#: hacks/config/drift.xml.h:9
+#: hacks/config/epicycle.xml.h:8
+#: hacks/config/fadeplot.xml.h:6
+#: hacks/config/flag.xml.h:5
+#: hacks/config/flame.xml.h:11
+#: hacks/config/flow.xml.h:8
+#: hacks/config/forest.xml.h:3
+#: hacks/config/galaxy.xml.h:6
+#: hacks/config/grav.xml.h:4
+#: hacks/config/halo.xml.h:4
+#: hacks/config/hopalong.xml.h:15
+#: hacks/config/ifs.xml.h:3
+#: hacks/config/imsmap.xml.h:9
+#: hacks/config/interference.xml.h:11
+#: hacks/config/julia.xml.h:6
+#: hacks/config/kaleidescope.xml.h:5
+#: hacks/config/laser.xml.h:6
+#: hacks/config/lightning.xml.h:3
+#: hacks/config/lisa.xml.h:5
+#: hacks/config/lissie.xml.h:6
+#: hacks/config/loop.xml.h:4
+#: hacks/config/moire.xml.h:5
+#: hacks/config/moire2.xml.h:3
+#: hacks/config/mountain.xml.h:4
+#: hacks/config/nerverot.xml.h:15
+#: hacks/config/pedal.xml.h:6
+#: hacks/config/penrose.xml.h:7
+#: hacks/config/petri.xml.h:11
+#: hacks/config/qix.xml.h:14
+#: hacks/config/rdbomb.xml.h:12
+#: hacks/config/ripples.xml.h:7
+#: hacks/config/rocks.xml.h:5
+#: hacks/config/rotor.xml.h:6
+#: hacks/config/shadebobs.xml.h:5
+#: hacks/config/sierpinski.xml.h:4
+#: hacks/config/slip.xml.h:4
+#: hacks/config/sphere.xml.h:3
+#: hacks/config/spiral.xml.h:6
+#: hacks/config/squiral.xml.h:9
+#: hacks/config/starfish.xml.h:5
+#: hacks/config/strange.xml.h:5
+#: hacks/config/swirl.xml.h:3
+#: hacks/config/triangle.xml.h:3
+#: hacks/config/vines.xml.h:2
+#: hacks/config/whirlwindwarp.xml.h:4
+#: hacks/config/worm.xml.h:4
+#: hacks/config/xearth.xml.h:12
+#: hacks/config/xfishtank.xml.h:8
+#: hacks/config/ant.xml.h:9
+#: hacks/config/ant.xml.h:10
+#: hacks/config/attraction.xml.h:19
+#: hacks/config/bouboule.xml.h:6
+#: hacks/config/braid.xml.h:9
+#: hacks/config/critical.xml.h:5
+#: hacks/config/crystal.xml.h:10
+#: hacks/config/cynosure.xml.h:7
+#: hacks/config/deco.xml.h:8
+#: hacks/config/deluxe.xml.h:7
+#: hacks/config/demon.xml.h:7
+#: hacks/config/discrete.xml.h:6
+#: hacks/config/drift.xml.h:10
+#: hacks/config/epicycle.xml.h:9
+#: hacks/config/fadeplot.xml.h:7
+#: hacks/config/flag.xml.h:6
+#: hacks/config/flame.xml.h:12
+#: hacks/config/flow.xml.h:9
+#: hacks/config/forest.xml.h:4
+#: hacks/config/galaxy.xml.h:7
+#: hacks/config/grav.xml.h:5
+#: hacks/config/halo.xml.h:6
+#: hacks/config/hopalong.xml.h:17
+#: hacks/config/ifs.xml.h:4
+#: hacks/config/imsmap.xml.h:10
+#: hacks/config/interference.xml.h:12
+#: hacks/config/julia.xml.h:7
+#: hacks/config/laser.xml.h:8
+#: hacks/config/lightning.xml.h:4
+#: hacks/config/lisa.xml.h:6
+#: hacks/config/lissie.xml.h:7
+#: hacks/config/loop.xml.h:5
+#: hacks/config/moire.xml.h:7
+#: hacks/config/moire2.xml.h:5
+#: hacks/config/mountain.xml.h:6
+#: hacks/config/penrose.xml.h:8
+#: hacks/config/rdbomb.xml.h:13
+#: hacks/config/rocks.xml.h:6
+#: hacks/config/rotor.xml.h:7
+#: hacks/config/shadebobs.xml.h:6
+#: hacks/config/sierpinski.xml.h:5
+#: hacks/config/slip.xml.h:5
+#: hacks/config/sphere.xml.h:4
+#: hacks/config/spiral.xml.h:8
+#: hacks/config/squiral.xml.h:10
+#: hacks/config/starfish.xml.h:6
+#: hacks/config/strange.xml.h:6
+#: hacks/config/swirl.xml.h:5
+#: hacks/config/triangle.xml.h:4
+#: hacks/config/vines.xml.h:3
+#: hacks/config/worm.xml.h:5
+#: hacks/config/xearth.xml.h:17
+#: hacks/config/xfishtank.xml.h:9
+#: hacks/config/ant.xml.h:11
+#: hacks/config/ant.xml.h:12
+#: hacks/config/speedmine.xml.h:11
+msgid "Sharp Turns"
+msgstr ""
+
+#: hacks/config/ant.xml.h:13
+#: hacks/config/ant.xml.h:14
+#: hacks/config/atlantis.xml.h:13
+#: hacks/config/attraction.xml.h:26
+#: hacks/config/blaster.xml.h:8
+#: hacks/config/blitspin.xml.h:7
+#: hacks/config/bouboule.xml.h:8
+#: hacks/config/braid.xml.h:11
+#: hacks/config/bubble3d.xml.h:5
+#: hacks/config/bubbles.xml.h:10
+#: hacks/config/bumps.xml.h:4
+#: hacks/config/cage.xml.h:4
+#: hacks/config/circuit.xml.h:10
+#: hacks/config/compass.xml.h:4
+#: hacks/config/coral.xml.h:12
+#: hacks/config/critical.xml.h:6
+#: hacks/config/crystal.xml.h:11
+#: hacks/config/cynosure.xml.h:9
+#: hacks/config/dangerball.xml.h:5
+#: hacks/config/decayscreen.xml.h:17
+#: hacks/config/deluxe.xml.h:8
+#: hacks/config/demon.xml.h:8
+#: hacks/config/discrete.xml.h:7
+#: hacks/config/distort.xml.h:11
+#: hacks/config/drift.xml.h:12
+#: hacks/config/engine.xml.h:5
+#: hacks/config/epicycle.xml.h:10
+#: hacks/config/extrusion.xml.h:11
+#: hacks/config/fadeplot.xml.h:8
+#: hacks/config/flag.xml.h:7
+#: hacks/config/flame.xml.h:14
+#: hacks/config/flipscreen3d.xml.h:5
+#: hacks/config/flow.xml.h:13
+#: hacks/config/forest.xml.h:5
+#: hacks/config/galaxy.xml.h:10
+#: hacks/config/gears.xml.h:7
+#: hacks/config/gflux.xml.h:12
+#: hacks/config/glplanet.xml.h:6
+#: hacks/config/gltext.xml.h:13
+#: hacks/config/goop.xml.h:10
+#: hacks/config/grav.xml.h:8
+#: hacks/config/greynetic.xml.h:3
+#: hacks/config/halo.xml.h:9
+#: hacks/config/hopalong.xml.h:21
+#: hacks/config/hyperball.xml.h:8
+#: hacks/config/hypercube.xml.h:7
+#: hacks/config/ifs.xml.h:5
+#: hacks/config/interference.xml.h:14
+#: hacks/config/jigsaw.xml.h:5
+#: hacks/config/julia.xml.h:8
+#: hacks/config/kaleidescope.xml.h:7
+#: hacks/config/kumppa.xml.h:8
+#: hacks/config/lament.xml.h:6
+#: hacks/config/laser.xml.h:10
+#: hacks/config/lightning.xml.h:5
+#: hacks/config/lisa.xml.h:8
+#: hacks/config/lissie.xml.h:9
+#: hacks/config/lmorph.xml.h:11
+#: hacks/config/loop.xml.h:7
+#: hacks/config/maze.xml.h:14
+#: hacks/config/menger.xml.h:16
+#: hacks/config/moebius.xml.h:7
+#: hacks/config/moire2.xml.h:6
+#: hacks/config/molecule.xml.h:22
+#: hacks/config/morph3d.xml.h:6
+#: hacks/config/mountain.xml.h:7
+#: hacks/config/munch.xml.h:7
+#: hacks/config/nerverot.xml.h:20
+#: hacks/config/penetrate.xml.h:6
+#: hacks/config/penrose.xml.h:11
+#: hacks/config/petri.xml.h:23
+#: hacks/config/phosphor.xml.h:6
+#: hacks/config/pipes.xml.h:14
+#: hacks/config/pulsar.xml.h:15
+#: hacks/config/pyro.xml.h:13
+#: hacks/config/qix.xml.h:19
+#: hacks/config/rdbomb.xml.h:17
+#: hacks/config/ripples.xml.h:11
+#: hacks/config/rocks.xml.h:9
+#: hacks/config/rotor.xml.h:11
+#: hacks/config/rubik.xml.h:9
+#: hacks/config/shadebobs.xml.h:9
+#: hacks/config/sierpinski.xml.h:7
+#: hacks/config/sierpinski3d.xml.h:8
+#: hacks/config/slidescreen.xml.h:6
+#: hacks/config/slip.xml.h:7
+#: hacks/config/speedmine.xml.h:13
+#: hacks/config/sphere.xml.h:5
+#: hacks/config/spiral.xml.h:9
+#: hacks/config/spotlight.xml.h:4
+#: hacks/config/sproingies.xml.h:6
+#: hacks/config/squiral.xml.h:14
+#: hacks/config/stairs.xml.h:3
+#: hacks/config/starfish.xml.h:8
+#: hacks/config/starwars.xml.h:12
+#: hacks/config/strange.xml.h:7
+#: hacks/config/superquadrics.xml.h:7
+#: hacks/config/swirl.xml.h:6
+#: hacks/config/t3d.xml.h:11
+#: hacks/config/triangle.xml.h:5
+#: hacks/config/truchet.xml.h:2
+#: hacks/config/vines.xml.h:4
+#: hacks/config/webcollage.xml.h:7
+#: hacks/config/worm.xml.h:7
+#: hacks/config/xearth.xml.h:22
+#: hacks/config/xfishtank.xml.h:10
+#: hacks/config/xflame.xml.h:5
+#: hacks/config/xjack.xml.h:2
+#: hacks/config/xmatrix.xml.h:13
+#: hacks/config/xmountains.xml.h:4
+#: hacks/config/xrayswarm.xml.h:3
+#: hacks/config/zoom.xml.h:6
+#: hacks/config/ant.xml.h:15
+#: hacks/config/attraction.xml.h:27
+#: hacks/config/demon.xml.h:9
+#: hacks/config/discrete.xml.h:8
+#: hacks/config/distort.xml.h:12
+#: hacks/config/fadeplot.xml.h:9
+#: hacks/config/flag.xml.h:8
+#: hacks/config/flow.xml.h:15
+#: hacks/config/hopalong.xml.h:22
+#: hacks/config/interference.xml.h:15
+#: hacks/config/julia.xml.h:9
+#: hacks/config/lissie.xml.h:10
+#: hacks/config/loop.xml.h:8
+#: hacks/config/moire.xml.h:9
+#: hacks/config/rdbomb.xml.h:18
+#: hacks/config/rorschach.xml.h:8
+#: hacks/config/rubik.xml.h:10
+#: hacks/config/sierpinski.xml.h:8
+#: hacks/config/slip.xml.h:8
+#: hacks/config/ant.xml.h:16
+#: hacks/config/attraction.xml.h:28
+#: hacks/config/blaster.xml.h:9
+#: hacks/config/bouboule.xml.h:9
+#: hacks/config/braid.xml.h:12
+#: hacks/config/bubble3d.xml.h:6
+#: hacks/config/bubbles.xml.h:11
+#: hacks/config/bumps.xml.h:5
+#: hacks/config/cage.xml.h:6
+#: hacks/config/circuit.xml.h:11
+#: hacks/config/compass.xml.h:5
+#: hacks/config/coral.xml.h:14
+#: hacks/config/critical.xml.h:7
+#: hacks/config/crystal.xml.h:12
+#: hacks/config/cynosure.xml.h:10
+#: hacks/config/dangerball.xml.h:6
+#: hacks/config/decayscreen.xml.h:18
+#: hacks/config/deluxe.xml.h:9
+#: hacks/config/demon.xml.h:10
+#: hacks/config/discrete.xml.h:9
+#: hacks/config/distort.xml.h:13
+#: hacks/config/drift.xml.h:13
+#: hacks/config/engine.xml.h:6
+#: hacks/config/epicycle.xml.h:11
+#: hacks/config/extrusion.xml.h:13
+#: hacks/config/fadeplot.xml.h:10
+#: hacks/config/flag.xml.h:9
+#: hacks/config/flame.xml.h:15
+#: hacks/config/flipscreen3d.xml.h:6
+#: hacks/config/flow.xml.h:16
+#: hacks/config/forest.xml.h:6
+#: hacks/config/galaxy.xml.h:11
+#: hacks/config/glplanet.xml.h:8
+#: hacks/config/gltext.xml.h:15
+#: hacks/config/goop.xml.h:11
+#: hacks/config/grav.xml.h:9
+#: hacks/config/greynetic.xml.h:4
+#: hacks/config/halo.xml.h:10
+#: hacks/config/hopalong.xml.h:23
+#: hacks/config/hyperball.xml.h:9
+#: hacks/config/hypercube.xml.h:8
+#: hacks/config/ifs.xml.h:6
+#: hacks/config/jigsaw.xml.h:7
+#: hacks/config/julia.xml.h:10
+#: hacks/config/kaleidescope.xml.h:8
+#: hacks/config/kumppa.xml.h:9
+#: hacks/config/lament.xml.h:7
+#: hacks/config/laser.xml.h:11
+#: hacks/config/lightning.xml.h:6
+#: hacks/config/lisa.xml.h:9
+#: hacks/config/lissie.xml.h:11
+#: hacks/config/lmorph.xml.h:12
+#: hacks/config/loop.xml.h:9
+#: hacks/config/menger.xml.h:18
+#: hacks/config/moebius.xml.h:10
+#: hacks/config/moire2.xml.h:7
+#: hacks/config/molecule.xml.h:24
+#: hacks/config/morph3d.xml.h:7
+#: hacks/config/mountain.xml.h:8
+#: hacks/config/munch.xml.h:9
+#: hacks/config/nerverot.xml.h:22
+#: hacks/config/penrose.xml.h:12
+#: hacks/config/petri.xml.h:25
+#: hacks/config/phosphor.xml.h:7
+#: hacks/config/pipes.xml.h:15
+#: hacks/config/pulsar.xml.h:17
+#: hacks/config/qix.xml.h:22
+#: hacks/config/rotor.xml.h:12
+#: hacks/config/rubik.xml.h:11
+#: hacks/config/shadebobs.xml.h:10
+#: hacks/config/sierpinski.xml.h:9
+#: hacks/config/sierpinski3d.xml.h:10
+#: hacks/config/slidescreen.xml.h:7
+#: hacks/config/slip.xml.h:9
+#: hacks/config/speedmine.xml.h:15
+#: hacks/config/sphere.xml.h:6
+#: hacks/config/spiral.xml.h:10
+#: hacks/config/spotlight.xml.h:5
+#: hacks/config/sproingies.xml.h:8
+#: hacks/config/squiral.xml.h:16
+#: hacks/config/stairs.xml.h:5
+#: hacks/config/starfish.xml.h:9
+#: hacks/config/strange.xml.h:8
+#: hacks/config/superquadrics.xml.h:9
+#: hacks/config/swirl.xml.h:7
+#: hacks/config/t3d.xml.h:13
+#: hacks/config/triangle.xml.h:6
+#: hacks/config/truchet.xml.h:3
+#: hacks/config/vines.xml.h:5
+#: hacks/config/webcollage.xml.h:8
+#: hacks/config/whirlygig.xml.h:4
+#: hacks/config/worm.xml.h:8
+#: hacks/config/xearth.xml.h:25
+#: hacks/config/xflame.xml.h:6
+#: hacks/config/xjack.xml.h:3
+#: hacks/config/xmatrix.xml.h:16
+#: hacks/config/xmountains.xml.h:5
+#: hacks/config/xrayswarm.xml.h:4
+#: hacks/config/zoom.xml.h:7
+#: hacks/config/ant.xml.h:17
+#: hacks/config/ant.xml.h:18
+#: hacks/config/demon.xml.h:12
+#: hacks/config/discrete.xml.h:10
+#: hacks/config/fadeplot.xml.h:11
+#: hacks/config/flag.xml.h:12
+#: hacks/config/flow.xml.h:17
+#: hacks/config/lissie.xml.h:12
+#: hacks/config/loop.xml.h:11
+#: hacks/config/rubik.xml.h:12
+#: hacks/config/sierpinski.xml.h:11
+#: hacks/config/slip.xml.h:11
+#: hacks/config/ant.xml.h:19
+#: hacks/config/ant.xml.h:20
+#: hacks/config/ant.xml.h:21
+#: hacks/config/attraction.xml.h:32
+#: hacks/config/bouboule.xml.h:11
+#: hacks/config/braid.xml.h:13
+#: hacks/config/critical.xml.h:8
+#: hacks/config/crystal.xml.h:13
+#: hacks/config/cynosure.xml.h:11
+#: hacks/config/deco.xml.h:10
+#: hacks/config/deluxe.xml.h:14
+#: hacks/config/demon.xml.h:13
+#: hacks/config/discrete.xml.h:11
+#: hacks/config/drift.xml.h:14
+#: hacks/config/epicycle.xml.h:13
+#: hacks/config/fadeplot.xml.h:12
+#: hacks/config/flag.xml.h:13
+#: hacks/config/flame.xml.h:16
+#: hacks/config/flow.xml.h:18
+#: hacks/config/forest.xml.h:8
+#: hacks/config/galaxy.xml.h:13
+#: hacks/config/grav.xml.h:11
+#: hacks/config/halo.xml.h:12
+#: hacks/config/hopalong.xml.h:25
+#: hacks/config/ifs.xml.h:8
+#: hacks/config/imsmap.xml.h:15
+#: hacks/config/interference.xml.h:16
+#: hacks/config/julia.xml.h:12
+#: hacks/config/laser.xml.h:12
+#: hacks/config/lightning.xml.h:8
+#: hacks/config/lisa.xml.h:12
+#: hacks/config/lissie.xml.h:13
+#: hacks/config/loop.xml.h:12
+#: hacks/config/moire.xml.h:11
+#: hacks/config/moire2.xml.h:9
+#: hacks/config/mountain.xml.h:9
+#: hacks/config/nerverot.xml.h:23
+#: hacks/config/penrose.xml.h:13
+#: hacks/config/rdbomb.xml.h:20
+#: hacks/config/rocks.xml.h:12
+#: hacks/config/rotor.xml.h:13
+#: hacks/config/shadebobs.xml.h:12
+#: hacks/config/sierpinski.xml.h:12
+#: hacks/config/slip.xml.h:12
+#: hacks/config/sphere.xml.h:8
+#: hacks/config/spiral.xml.h:12
+#: hacks/config/squiral.xml.h:18
+#: hacks/config/starfish.xml.h:14
+#: hacks/config/strange.xml.h:11
+#: hacks/config/swirl.xml.h:9
+#: hacks/config/triangle.xml.h:8
+#: hacks/config/vines.xml.h:7
+#: hacks/config/worm.xml.h:9
+#: hacks/config/xearth.xml.h:28
+#: hacks/config/xfishtank.xml.h:11
+#: hacks/config/atlantis.xml.h:1
+msgid "Agressive"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:2
+#: hacks/config/atlantis.xml.h:3
+#: hacks/config/atlantis.xml.h:5
+#: hacks/config/atlantis.xml.h:6
+#: hacks/config/atlantis.xml.h:7
+#: hacks/config/atlantis.xml.h:8
+#: hacks/config/atlantis.xml.h:9
+#: hacks/config/atlantis.xml.h:10
+#: hacks/config/atlantis.xml.h:11
+#: hacks/config/bubble3d.xml.h:4
+#: hacks/config/cage.xml.h:3
+#: hacks/config/circuit.xml.h:9
+#: hacks/config/dangerball.xml.h:4
+#: hacks/config/engine.xml.h:4
+#: hacks/config/extrusion.xml.h:10
+#: hacks/config/flipscreen3d.xml.h:4
+#: hacks/config/gears.xml.h:6
+#: hacks/config/gflux.xml.h:11
+#: hacks/config/glplanet.xml.h:5
+#: hacks/config/gltext.xml.h:12
+#: hacks/config/lament.xml.h:5
+#: hacks/config/menger.xml.h:15
+#: hacks/config/moebius.xml.h:6
+#: hacks/config/molecule.xml.h:21
+#: hacks/config/morph3d.xml.h:5
+#: hacks/config/pipes.xml.h:13
+#: hacks/config/pulsar.xml.h:14
+#: hacks/config/rubik.xml.h:6
+#: hacks/config/sierpinski3d.xml.h:6
+#: hacks/config/sproingies.xml.h:4
+#: hacks/config/stairs.xml.h:2
+#: hacks/config/starwars.xml.h:11
+#: hacks/config/superquadrics.xml.h:6
+#: hacks/config/atlantis.xml.h:12
+msgid "Shy"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:14
+#: hacks/config/cage.xml.h:5
+#: hacks/config/extrusion.xml.h:12
+#: hacks/config/gears.xml.h:8
+#: hacks/config/glplanet.xml.h:7
+#: hacks/config/gltext.xml.h:14
+#: hacks/config/menger.xml.h:17
+#: hacks/config/molecule.xml.h:23
+#: hacks/config/munch.xml.h:8
+#: hacks/config/sierpinski3d.xml.h:9
+#: hacks/config/speedmine.xml.h:14
+#: hacks/config/sproingies.xml.h:7
+#: hacks/config/stairs.xml.h:4
+#: hacks/config/stonerview.xml.h:2
+#: hacks/config/superquadrics.xml.h:8
+#: hacks/config/atlantis.xml.h:15
+#: hacks/config/atlantis.xml.h:16
+#: hacks/config/atlantis.xml.h:17
+#: hacks/config/cage.xml.h:8
+#: hacks/config/dangerball.xml.h:11
+#: hacks/config/extrusion.xml.h:19
+#: hacks/config/gears.xml.h:11
+#: hacks/config/glplanet.xml.h:11
+#: hacks/config/gltext.xml.h:18
+#: hacks/config/lament.xml.h:9
+#: hacks/config/menger.xml.h:21
+#: hacks/config/moebius.xml.h:11
+#: hacks/config/molecule.xml.h:26
+#: hacks/config/pulsar.xml.h:20
+#: hacks/config/sierpinski3d.xml.h:12
+#: hacks/config/speedmine.xml.h:18
+#: hacks/config/sproingies.xml.h:10
+#: hacks/config/stairs.xml.h:7
+#: hacks/config/stonerview.xml.h:4
+#: hacks/config/superquadrics.xml.h:11
+msgid "Wireframe"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:1
+#: hacks/config/attraction.xml.h:2
+#: hacks/config/attraction.xml.h:3
+#: hacks/config/attraction.xml.h:4
+#: hacks/config/attraction.xml.h:5
+msgid "Bounce Off Walls"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:6
+#: hacks/config/hopalong.xml.h:1
+#: hacks/config/interference.xml.h:3
+#: hacks/config/qix.xml.h:2
+#: hacks/config/wander.xml.h:3
+#: hacks/config/attraction.xml.h:7
+#: hacks/config/attraction.xml.h:9
+msgid "Filled Splines"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:10
+#: hacks/config/ccurve.xml.h:9
+#: hacks/config/flame.xml.h:9
+#: hacks/config/goop.xml.h:6
+#: hacks/config/hopalong.xml.h:10
+#: hacks/config/hyperball.xml.h:3
+#: hacks/config/hypercube.xml.h:3
+#: hacks/config/interference.xml.h:6
+#: hacks/config/kumppa.xml.h:4
+#: hacks/config/nerverot.xml.h:11
+#: hacks/config/petri.xml.h:8
+#: hacks/config/pyro.xml.h:5
+#: hacks/config/qix.xml.h:10
+#: hacks/config/speedmine.xml.h:5
+#: hacks/config/spiral.xml.h:4
+#: hacks/config/squiral.xml.h:6
+#: hacks/config/strange.xml.h:3
+#: hacks/config/superquadrics.xml.h:4
+#: hacks/config/t3d.xml.h:7
+#: hacks/config/wander.xml.h:8
+#: hacks/config/attraction.xml.h:11
+#: hacks/config/attraction.xml.h:12
+#: hacks/config/attraction.xml.h:14
+msgid "Like qix, this uses a simple simple motion model to generate many different display modes. The control points attract each other up to a certain distance, and then begin to repel each other. The attraction/repulsion is proportional to the distance between any two particles, similar to the strong and weak nuclear forces. One of the most interesting ways to watch this hack is simply as bouncing balls, because their motions and interactions with each other are so odd. Sometimes two balls will get into a tight orbit around each other, to be interrupted later by a third, or by the edge of the screen. It looks quite chaotic. Written by Jamie Zawinski, based on Lisp code by John Pezaris."
+msgstr ""
+
+#: hacks/config/attraction.xml.h:15
+#: hacks/config/deluxe.xml.h:5
+#: hacks/config/lmorph.xml.h:7
+#: hacks/config/pedal.xml.h:5
+#: hacks/config/starfish.xml.h:4
+#: hacks/config/whirlygig.xml.h:3
+#: hacks/config/attraction.xml.h:16
+#: hacks/config/braid.xml.h:6
+#: hacks/config/cynosure.xml.h:5
+#: hacks/config/drift.xml.h:8
+#: hacks/config/galaxy.xml.h:5
+#: hacks/config/laser.xml.h:5
+#: hacks/config/menger.xml.h:4
+#: hacks/config/munch.xml.h:4
+#: hacks/config/nerverot.xml.h:13
+#: hacks/config/petri.xml.h:9
+#: hacks/config/rotor.xml.h:5
+#: hacks/config/shadebobs.xml.h:4
+#: hacks/config/sierpinski3d.xml.h:3
+#: hacks/config/wander.xml.h:10
+#: hacks/config/whirlwindwarp.xml.h:3
+#: hacks/config/attraction.xml.h:17
+#: hacks/config/ccurve.xml.h:10
+#: hacks/config/flame.xml.h:10
+#: hacks/config/goop.xml.h:7
+#: hacks/config/hopalong.xml.h:14
+#: hacks/config/hyperball.xml.h:6
+#: hacks/config/hypercube.xml.h:5
+#: hacks/config/interference.xml.h:9
+#: hacks/config/kumppa.xml.h:6
+#: hacks/config/nerverot.xml.h:14
+#: hacks/config/petri.xml.h:10
+#: hacks/config/pyro.xml.h:7
+#: hacks/config/qix.xml.h:13
+#: hacks/config/speedmine.xml.h:6
+#: hacks/config/spiral.xml.h:5
+#: hacks/config/squiral.xml.h:8
+#: hacks/config/strange.xml.h:4
+#: hacks/config/superquadrics.xml.h:5
+#: hacks/config/t3d.xml.h:8
+#: hacks/config/wander.xml.h:11
+#: hacks/config/attraction.xml.h:20
+#: hacks/config/attraction.xml.h:21
+#: hacks/config/attraction.xml.h:22
+#: hacks/config/attraction.xml.h:23
+#: hacks/config/spotlight.xml.h:3
+#: hacks/config/attraction.xml.h:24
+#: hacks/config/attraction.xml.h:25
+#: hacks/config/braid.xml.h:10
+#: hacks/config/cynosure.xml.h:8
+#: hacks/config/drift.xml.h:11
+#: hacks/config/galaxy.xml.h:8
+#: hacks/config/laser.xml.h:9
+#: hacks/config/menger.xml.h:14
+#: hacks/config/munch.xml.h:6
+#: hacks/config/nerverot.xml.h:19
+#: hacks/config/petri.xml.h:22
+#: hacks/config/rotor.xml.h:9
+#: hacks/config/shadebobs.xml.h:8
+#: hacks/config/sierpinski3d.xml.h:5
+#: hacks/config/wander.xml.h:12
+#: hacks/config/whirlwindwarp.xml.h:6
+#: hacks/config/attraction.xml.h:29
+#: hacks/config/attraction.xml.h:30
+#: hacks/config/attraction.xml.h:31
+#: hacks/config/blaster.xml.h:1
+#: hacks/config/blaster.xml.h:2
+msgid "Draws a simulation of flying space-combat robots (cleverly disguised as colored circles) doing battle in front of a moving star field. Written by Jonathan Lin."
+msgstr ""
+
+#: hacks/config/blaster.xml.h:4
+#: hacks/config/bouboule.xml.h:4
+#: hacks/config/coral.xml.h:8
+#: hacks/config/flame.xml.h:7
+#: hacks/config/kaleidescope.xml.h:3
+#: hacks/config/lisa.xml.h:3
+#: hacks/config/pedal.xml.h:4
+#: hacks/config/petri.xml.h:7
+#: hacks/config/qix.xml.h:8
+#: hacks/config/whirlwindwarp.xml.h:1
+#: hacks/config/xfishtank.xml.h:4
+#: hacks/config/blaster.xml.h:5
+#: hacks/config/penetrate.xml.h:4
+#: hacks/config/blaster.xml.h:7
+#: hacks/config/blaster.xml.h:10
+#: hacks/config/blitspin.xml.h:1
+#: hacks/config/blitspin.xml.h:2
+#: hacks/config/blitspin.xml.h:3
+msgid "BlitSpin"
+msgstr ""
+
+#: hacks/config/blitspin.xml.h:5
+#: hacks/config/blitspin.xml.h:6
+#: hacks/config/blitspin.xml.h:8
+msgid "The ``blitspin'' hack repeatedly rotates a bitmap by 90 degrees by using logical operations: the bitmap is divided into quadrants, and the quadrants are shifted clockwise. Then the same thing is done again with progressively smaller quadrants, except that all sub-quadrants of a given size are rotated in parallel. Written by Jamie Zawinski based on some cool SmallTalk code seen in in Byte Magazine in 1981. As you watch it, the image appears to dissolve into static and then reconstitute itself, but rotated. You can provide the image to use, as an XBM or XPM file, or tell it to grab a screen image and rotate that."
+msgstr ""
+
+#: hacks/config/bouboule.xml.h:1
+#: hacks/config/bouboule.xml.h:2
+#: hacks/config/rocks.xml.h:3
+#: hacks/config/bouboule.xml.h:7
+#: hacks/config/bouboule.xml.h:10
+msgid "This draws what looks like a spinning, deforming baloon with varying-sized spots painted on its invisible surface. Written by Jeremie Petit."
+msgstr ""
+
+#: hacks/config/braid.xml.h:1
+#: hacks/config/braid.xml.h:2
+msgid "Draws random color-cycling inter-braided concentric circles. Written by John Neil."
+msgstr ""
+
+#: hacks/config/braid.xml.h:3
+#: hacks/config/bsod.xml.h:8
+#: hacks/config/ccurve.xml.h:7
+#: hacks/config/coral.xml.h:6
+#: hacks/config/cynosure.xml.h:3
+#: hacks/config/deco.xml.h:4
+#: hacks/config/drift.xml.h:2
+#: hacks/config/epicycle.xml.h:3
+#: hacks/config/flame.xml.h:5
+#: hacks/config/galaxy.xml.h:2
+#: hacks/config/helix.xml.h:3
+#: hacks/config/hopalong.xml.h:2
+#: hacks/config/imsmap.xml.h:6
+#: hacks/config/laser.xml.h:2
+#: hacks/config/menger.xml.h:2
+#: hacks/config/moire.xml.h:3
+#: hacks/config/molecule.xml.h:9
+#: hacks/config/munch.xml.h:2
+#: hacks/config/nerverot.xml.h:8
+#: hacks/config/pedal.xml.h:3
+#: hacks/config/penrose.xml.h:5
+#: hacks/config/rorschach.xml.h:3
+#: hacks/config/rotzoomer.xml.h:5
+#: hacks/config/shadebobs.xml.h:2
+#: hacks/config/sierpinski3d.xml.h:1
+#: hacks/config/starfish.xml.h:2
+#: hacks/config/vidwhacker.xml.h:3
+#: hacks/config/wander.xml.h:7
+#: hacks/config/xspirograph.xml.h:3
+#: hacks/config/braid.xml.h:5
+#: hacks/config/epicycle.xml.h:7
+#: hacks/config/nerverot.xml.h:12
+#: hacks/config/braid.xml.h:8
+msgid "Max Rings"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:1
+#: hacks/config/molecule.xml.h:1
+#: hacks/config/vidwhacker.xml.h:1
+#: hacks/config/webcollage.xml.h:1
+#: hacks/config/bsod.xml.h:2
+#: hacks/config/molecule.xml.h:2
+#: hacks/config/bsod.xml.h:3
+msgid "AmigaDOS"
+msgstr "AmigaDOS"
+
+#: hacks/config/bsod.xml.h:4
+msgid "Atari"
+msgstr "Atari"
+
+#: hacks/config/bsod.xml.h:5
+msgid "BSD"
+msgstr "BSD"
+
+#: hacks/config/bsod.xml.h:6
+msgid "BSOD"
+msgstr "BSOD"
+
+#: hacks/config/bsod.xml.h:7
+#: hacks/config/bsod.xml.h:9
+msgid "MacOS"
+msgstr "MacOS"
+
+#: hacks/config/bsod.xml.h:10
+msgid "MacsBug"
+msgstr "MacsBug"
+
+#: hacks/config/bsod.xml.h:11
+msgid "NCD X Terminal"
+msgstr "NCD X Terminal"
+
+#: hacks/config/bsod.xml.h:12
+msgid "SCO"
+msgstr "SCO"
+
+#: hacks/config/bsod.xml.h:13
+msgid "Solaris"
+msgstr "Solaris"
+
+#: hacks/config/bsod.xml.h:14
+msgid "Sparc Linux"
+msgstr "Sparc Linux"
+
+#: hacks/config/bsod.xml.h:15
+msgid "Windows"
+msgstr "Windows"
+
+#: hacks/config/bsod.xml.h:16
+msgid "Windows NT"
+msgstr "Windows NT"
+
+#: hacks/config/bubble3d.xml.h:1
+#: hacks/config/bubble3d.xml.h:2
+msgid "Draws a stream of rising, undulating 3D bubbles, rising toward the top of the screen, with nice specular reflections. Written by Richard Jones."
+msgstr ""
+
+#: hacks/config/bubbles.xml.h:1
+#: hacks/config/xfishtank.xml.h:2
+#: hacks/config/bubbles.xml.h:2
+#: hacks/config/bubbles.xml.h:3
+#: hacks/config/bubbles.xml.h:4
+#: hacks/config/bubbles.xml.h:5
+#: hacks/config/bubbles.xml.h:6
+#: hacks/config/bubbles.xml.h:7
+#: hacks/config/bubbles.xml.h:9
+#: hacks/config/bubbles.xml.h:12
+msgid "This simulates the kind of bubble formation that happens when water boils:small bubbles appear, and as they get closer to each other, they combine to form larger bubbles, which eventually pop. Written by James Macnicol."
+msgstr ""
+
+#: hacks/config/bumps.xml.h:1
+msgid "A bit like `Spotlight', except that instead of merely exposing part of your desktop, it creates a bump map from it. Basically, it 3D-izes a roaming section of your desktop, based on color intensity. Written by Shane Smit."
+msgstr ""
+
+#: hacks/config/bumps.xml.h:2
+#: hacks/config/cage.xml.h:1
+#: hacks/config/cage.xml.h:7
+msgid "This draws Escher's ``Impossible Cage,'' a 3d analog of a moebius strip, and rotates it in three dimensions. Written by Marcelo Vianna."
+msgstr ""
+
+#: hacks/config/ccurve.xml.h:1
+#: hacks/config/ccurve.xml.h:2
+#: hacks/config/epicycle.xml.h:1
+#: hacks/config/ccurve.xml.h:3
+#: hacks/config/epicycle.xml.h:2
+#: hacks/config/ccurve.xml.h:4
+msgid "C Curve"
+msgstr ""
+
+#: hacks/config/ccurve.xml.h:5
+#: hacks/config/ccurve.xml.h:6
+#: hacks/config/coral.xml.h:5
+#: hacks/config/imsmap.xml.h:5
+#: hacks/config/kumppa.xml.h:1
+#: hacks/config/qix.xml.h:6
+#: hacks/config/squiral.xml.h:2
+#: hacks/config/wander.xml.h:4
+#: hacks/config/ccurve.xml.h:8
+msgid "Generates self-similar linear fractals, including the classic ``C Curve.'' Written by Rick Campbell."
+msgstr ""
+
+#: hacks/config/circuit.xml.h:1
+msgid "Animates a number of 3D electronic components. Written by Ben Buxton."
+msgstr ""
+
+#: hacks/config/circuit.xml.h:2
+#: hacks/config/circuit.xml.h:3
+#: hacks/config/gflux.xml.h:4
+#: hacks/config/pulsar.xml.h:2
+#: hacks/config/circuit.xml.h:5
+msgid "Flat Coloring"
+msgstr ""
+
+#: hacks/config/circuit.xml.h:6
+#: hacks/config/circuit.xml.h:7
+#: hacks/config/flipscreen3d.xml.h:3
+#: hacks/config/circuit.xml.h:8
+#: hacks/config/circuit.xml.h:12
+#: hacks/config/dangerball.xml.h:9
+#: hacks/config/engine.xml.h:7
+msgid "Spin"
+msgstr ""
+
+#: hacks/config/compass.xml.h:1
+#: hacks/config/compass.xml.h:2
+#: hacks/config/deluxe.xml.h:3
+#: hacks/config/interference.xml.h:4
+#: hacks/config/kumppa.xml.h:2
+#: hacks/config/nerverot.xml.h:6
+#: hacks/config/compass.xml.h:6
+msgid "This draws a compass, with all elements spinning about randomly, for that ``lost and nauseous'' feeling. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/coral.xml.h:1
+#: hacks/config/deco.xml.h:1
+#: hacks/config/helix.xml.h:1
+#: hacks/config/imsmap.xml.h:1
+#: hacks/config/jigsaw.xml.h:2
+#: hacks/config/moire.xml.h:1
+#: hacks/config/pedal.xml.h:1
+#: hacks/config/rorschach.xml.h:1
+#: hacks/config/rotzoomer.xml.h:2
+#: hacks/config/wander.xml.h:2
+#: hacks/config/xspirograph.xml.h:1
+#: hacks/config/coral.xml.h:2
+#: hacks/config/deco.xml.h:2
+#: hacks/config/helix.xml.h:2
+#: hacks/config/imsmap.xml.h:2
+#: hacks/config/moire.xml.h:2
+#: hacks/config/pedal.xml.h:2
+#: hacks/config/penrose.xml.h:1
+#: hacks/config/rorschach.xml.h:2
+#: hacks/config/xspirograph.xml.h:2
+#: hacks/config/coral.xml.h:3
+#: hacks/config/coral.xml.h:4
+#: hacks/config/gflux.xml.h:3
+#: hacks/config/imsmap.xml.h:4
+#: hacks/config/pyro.xml.h:2
+#: hacks/config/qix.xml.h:5
+#: hacks/config/squiral.xml.h:1
+#: hacks/config/xearth.xml.h:4
+#: hacks/config/coral.xml.h:10
+#: hacks/config/squiral.xml.h:13
+#: hacks/config/coral.xml.h:11
+msgid "Simulates coral growth, albeit somewhat slowly. This image doesn't really do it justice. Written by Frederick Roeber."
+msgstr ""
+
+#: hacks/config/coral.xml.h:13
+#: hacks/config/gflux.xml.h:13
+#: hacks/config/imsmap.xml.h:13
+#: hacks/config/pyro.xml.h:14
+#: hacks/config/qix.xml.h:21
+#: hacks/config/squiral.xml.h:15
+#: hacks/config/xearth.xml.h:24
+#: hacks/config/xmatrix.xml.h:15
+#: hacks/config/cosmos.xml.h:1
+#: hacks/config/cosmos.xml.h:2
+msgid "Draws fireworks and zooming, fading flares. By Tom Campbell. You can find it at &lt;http://cosmos.dnsalias.net/cosmos/&gt;"
+msgstr ""
+
+#: hacks/config/critical.xml.h:1
+#: hacks/config/critical.xml.h:2
+msgid "Draws a system of self-organizing lines. It starts out as random squiggles, but after a few iterations, order begins to appear. Written by Martin Pool."
+msgstr ""
+
+#: hacks/config/crystal.xml.h:1
+#: hacks/config/crystal.xml.h:2
+#: hacks/config/deluxe.xml.h:1
+#: hacks/config/fadeplot.xml.h:1
+#: hacks/config/flow.xml.h:3
+#: hacks/config/galaxy.xml.h:1
+#: hacks/config/grav.xml.h:1
+#: hacks/config/julia.xml.h:1
+#: hacks/config/laser.xml.h:1
+#: hacks/config/lisa.xml.h:1
+#: hacks/config/lissie.xml.h:2
+#: hacks/config/morph3d.xml.h:2
+#: hacks/config/mountain.xml.h:1
+#: hacks/config/qix.xml.h:4
+#: hacks/config/rocks.xml.h:2
+#: hacks/config/rotor.xml.h:2
+#: hacks/config/rubik.xml.h:1
+#: hacks/config/shadebobs.xml.h:1
+#: hacks/config/sierpinski.xml.h:1
+#: hacks/config/slip.xml.h:1
+#: hacks/config/spiral.xml.h:1
+#: hacks/config/sproingies.xml.h:1
+#: hacks/config/superquadrics.xml.h:1
+#: hacks/config/swirl.xml.h:1
+#: hacks/config/worm.xml.h:2
+#: hacks/config/crystal.xml.h:3
+#: hacks/config/crystal.xml.h:4
+#: hacks/config/crystal.xml.h:5
+#: hacks/config/xearth.xml.h:6
+#: hacks/config/crystal.xml.h:7
+#: hacks/config/crystal.xml.h:9
+msgid "Moving polygons, similar to a kaleidescope (more like a kaleidescope than the hack called `kaleid,' actually.) This one by Jouk Jansen."
+msgstr ""
+
+#: hacks/config/crystal.xml.h:14
+#: hacks/config/cynosure.xml.h:1
+msgid "A hack similar to `greynetic', but less frenetic. The first implementation was by Stephen Linhart; then Ozymandias G. Desiderata wrote a Java applet clone. That clone was discovered by Jamie Zawinski, and ported to C for inclusion here."
+msgstr ""
+
+#: hacks/config/cynosure.xml.h:2
+#: hacks/config/dangerball.xml.h:1
+msgid "DangerBall"
+msgstr ""
+
+#: hacks/config/dangerball.xml.h:2
+msgid "Draws a ball that periodically extrudes many random spikes. Ouch! Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/dangerball.xml.h:7
+msgid "Spike Count"
+msgstr ""
+
+#: hacks/config/dangerball.xml.h:8
+msgid "Spike Growth"
+msgstr ""
+
+#: hacks/config/dangerball.xml.h:10
+#: hacks/config/engine.xml.h:8
+#: hacks/config/gltext.xml.h:17
+#: hacks/config/menger.xml.h:20
+#: hacks/config/molecule.xml.h:25
+#: hacks/config/wander.xml.h:15
+msgid "Wander"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:1
+msgid "DecayScreen"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:3
+msgid "Fuzzy Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:4
+msgid "Melt Away From Center"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:5
+msgid "Melt Down"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:6
+msgid "Melt Down, Left"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:7
+msgid "Melt Down, Right"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:8
+msgid "Melt Left"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:9
+msgid "Melt Right"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:10
+msgid "Melt Towards Center"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:11
+msgid "Melt Up"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:12
+msgid "Melt Up, Left"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:13
+msgid "Melt Up, Right"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:14
+msgid "Melty Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:15
+msgid "Random Melt Style"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:16
+msgid "Shuffle Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:19
+msgid "Stretchy Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:20
+msgid "This takes an image and makes it melt. You've no doubt seen this effect before, but no screensaver would really be complete without it. It works best if there's something colorful visible. Warning, if the effect continues after the screen saver is off, seek medical attention. Written by David Wald and Vivek Khera."
+msgstr ""
+
+#: hacks/config/deco.xml.h:3
+#: hacks/config/deco.xml.h:6
+#: hacks/config/menger.xml.h:5
+#: hacks/config/sierpinski3d.xml.h:4
+#: hacks/config/deco.xml.h:7
+#: hacks/config/deco.xml.h:9
+msgid "This one subdivides and colors rectangles randomly. It looks kind of like Brady-Bunch-era rec-room wall paneling. (Raven says: ``this screensaver is ugly enough to peel paint.'') Written by Jamie Zawinski, inspired by Java code by Michael Bayne."
+msgstr ""
+
+#: hacks/config/deco.xml.h:11
+#: hacks/config/rdbomb.xml.h:23
+#: hacks/config/whirlygig.xml.h:7
+#: hacks/config/xearth.xml.h:33
+#: hacks/config/zoom.xml.h:10
+msgid "x"
+msgstr "x"
+
+#: hacks/config/deluxe.xml.h:2
+#: hacks/config/deluxe.xml.h:10
+#: hacks/config/lmorph.xml.h:13
+#: hacks/config/starfish.xml.h:11
+#: hacks/config/deluxe.xml.h:11
+#: hacks/config/lmorph.xml.h:14
+#: hacks/config/starfish.xml.h:12
+#: hacks/config/deluxe.xml.h:12
+msgid "This draws a pulsing sequence of stars, circles, and lines. It would look better if it was faster, but as far as I can tell, there is no way to make this be both: fast, and flicker-free. Yet another reason X sucks. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/deluxe.xml.h:13
+#: hacks/config/demon.xml.h:1
+msgid "A cellular automaton that starts with a random field, and organizes it into stripes and spirals. Written by David Bagley."
+msgstr ""
+
+#: hacks/config/demon.xml.h:2
+#: hacks/config/petri.xml.h:1
+#: hacks/config/demon.xml.h:3
+#: hacks/config/demon.xml.h:11
+#: hacks/config/discrete.xml.h:1
+#: hacks/config/discrete.xml.h:5
+msgid "More ``discrete map'' systems, including new variants of Hopalong and Julia, and a few others. Written by Tim Auckland."
+msgstr ""
+
+#: hacks/config/distort.xml.h:1
+#: hacks/config/distort.xml.h:2
+#: hacks/config/distort.xml.h:3
+#: hacks/config/distort.xml.h:6
+#: hacks/config/distort.xml.h:7
+#: hacks/config/distort.xml.h:8
+#: hacks/config/distort.xml.h:9
+#: hacks/config/lament.xml.h:4
+#: hacks/config/distort.xml.h:10
+#: hacks/config/distort.xml.h:14
+msgid "Swamp Thing"
+msgstr ""
+
+#: hacks/config/distort.xml.h:15
+msgid "This hack grabs an image of the screen, and then lets a transparent lens wander around the screen, magnifying whatever is underneath. Written by Jonas Munsin."
+msgstr ""
+
+#: hacks/config/distort.xml.h:16
+#: hacks/config/moire.xml.h:12
+#: hacks/config/rdbomb.xml.h:21
+#: hacks/config/ripples.xml.h:15
+#: hacks/config/rotzoomer.xml.h:10
+#: hacks/config/swirl.xml.h:10
+#: hacks/config/xflame.xml.h:7
+#: hacks/config/distort.xml.h:17
+#: hacks/config/drift.xml.h:1
+#: hacks/config/drift.xml.h:4
+#: hacks/config/drift.xml.h:5
+#: hacks/config/drift.xml.h:6
+msgid "How could one possibly describe this except as ``drifting recursive fractal cosmic flames?'' Another fine hack from the Scott Draves collection of fine hacks."
+msgstr ""
+
+#: hacks/config/drift.xml.h:7
+#: hacks/config/electricsheep.xml.h:1
+#: hacks/config/electricsheep.xml.h:2
+msgid "ElectricSheep is an xscreensaver module that displays mpeg video of an animated fractal flame. In the background, it contributes render cycles to the next animation. Periodically it uploades completed frames to the server, where they are compressed for distribution to all clients. This program is recommended only if you have a high bandwidth connection to the Internet. By Scott Draves. You can find it at &lt;http://www.electricsheep.org/&gt;. See that web site for configuration information."
+msgstr ""
+
+#: hacks/config/engine.xml.h:1
+msgid "Draws a simple four-stroke engine that floats around the screen. Written by Ben Buxton."
+msgstr ""
+
+#: hacks/config/engine.xml.h:2
+msgid "Engine"
+msgstr ""
+
+#: hacks/config/epicycle.xml.h:4
+#: hacks/config/epicycle.xml.h:6
+#: hacks/config/epicycle.xml.h:12
+msgid "This program draws the path traced out by a point on the edge of a circle. That circle rotates around a point on the rim of another circle, and so on, several times. These were the basis for the pre-heliocentric model of planetary motion. Written by James Youngman."
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:1
+msgid "Draws various rotating extruded shapes that twist around, lengthen, and turn inside out. Created by David Konerding from the samples that come with the GL Extrusion library by Linas Vepstas."
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:2
+#: hacks/config/extrusion.xml.h:4
+#: hacks/config/extrusion.xml.h:5
+#: hacks/config/extrusion.xml.h:6
+#: hacks/config/extrusion.xml.h:7
+msgid "Join Offset"
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:8
+#: hacks/config/extrusion.xml.h:9
+msgid "Screw"
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:14
+msgid "Taper"
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:15
+#: hacks/config/extrusion.xml.h:16
+msgid "Twistoid"
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:17
+#: hacks/config/glplanet.xml.h:9
+#: hacks/config/pulsar.xml.h:19
+#: hacks/config/extrusion.xml.h:18
+#: hacks/config/glplanet.xml.h:10
+msgid "Use Lighting"
+msgstr ""
+
+#: hacks/config/fadeplot.xml.h:2
+msgid "Draws what looks like a waving ribbon following a sinusoidal path. Written by Bas van Gaalen and Charles Vidal."
+msgstr ""
+
+#: hacks/config/fadeplot.xml.h:3
+msgid "FadePlot"
+msgstr ""
+
+#: hacks/config/flag.xml.h:1
+#: hacks/config/flag.xml.h:3
+#: hacks/config/flag.xml.h:10
+#: hacks/config/flag.xml.h:11
+msgid "This draws a waving colored flag, that undulates its way around the screen. The trick is the flag can contain arbitrary text and images. By default, it displays either the current system name and OS type, or a picture of ``Bob,'' but you can replace the text or the image with a command-line option. Written by Charles Vidal and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/flame.xml.h:1
+#: hacks/config/jigsaw.xml.h:1
+#: hacks/config/maze.xml.h:1
+#: hacks/config/rotzoomer.xml.h:1
+#: hacks/config/wander.xml.h:1
+#: hacks/config/flame.xml.h:2
+#: hacks/config/maze.xml.h:2
+#: hacks/config/flame.xml.h:3
+#: hacks/config/flame.xml.h:4
+#: hacks/config/flame.xml.h:8
+#: hacks/config/flame.xml.h:13
+#: hacks/config/flipscreen3d.xml.h:2
+msgid "Flipscreen3d"
+msgstr ""
+
+#: hacks/config/flow.xml.h:1
+msgid "Allow 2D Attractors"
+msgstr ""
+
+#: hacks/config/flow.xml.h:2
+msgid "Another series of strange attractors: a flowing series of points, making strange rotational shapes. Written by Jeff Butterworth."
+msgstr ""
+
+#: hacks/config/flow.xml.h:5
+#: hacks/config/flow.xml.h:6
+msgid "Freeze Some Bees"
+msgstr ""
+
+#: hacks/config/flow.xml.h:10
+msgid "Ride a Trained Bee"
+msgstr ""
+
+#: hacks/config/flow.xml.h:11
+msgid "Rotate Around Attractor"
+msgstr ""
+
+#: hacks/config/flow.xml.h:12
+msgid "Show Bounding Box"
+msgstr ""
+
+#: hacks/config/flow.xml.h:14
+msgid "Slow Bees with Antifreeze"
+msgstr ""
+
+#: hacks/config/flow.xml.h:19
+#: hacks/config/forest.xml.h:2
+#: hacks/config/forest.xml.h:7
+msgid "This draws fractal trees. Written by Peter Baumung. Everybody loves fractals, right?"
+msgstr ""
+
+#: hacks/config/galaxy.xml.h:4
+#: hacks/config/galaxy.xml.h:9
+#: hacks/config/lisa.xml.h:7
+#: hacks/config/lissie.xml.h:8
+#: hacks/config/loop.xml.h:6
+#: hacks/config/penrose.xml.h:10
+#: hacks/config/rotor.xml.h:10
+#: hacks/config/rubik.xml.h:8
+#: hacks/config/sproingies.xml.h:5
+#: hacks/config/wander.xml.h:13
+#: hacks/config/worm.xml.h:6
+#: hacks/config/galaxy.xml.h:12
+msgid "This draws spinning galaxies, which then collide and scatter their stars to the, uh, four winds or something. Originally an Amiga program by Uli Siegmund."
+msgstr ""
+
+#: hacks/config/gears.xml.h:1
+#: hacks/config/gflux.xml.h:1
+#: hacks/config/pyro.xml.h:1
+#: hacks/config/rdbomb.xml.h:6
+#: hacks/config/rocks.xml.h:1
+#: hacks/config/starwars.xml.h:1
+#: hacks/config/xfishtank.xml.h:1
+#: hacks/config/gears.xml.h:3
+#: hacks/config/gears.xml.h:4
+msgid "Planetary Gear System"
+msgstr ""
+
+#: hacks/config/gears.xml.h:5
+#: hacks/config/goop.xml.h:9
+#: hacks/config/gears.xml.h:9
+msgid "This draws sets of turning, interlocking gears, rotating in three dimensions. Another GL hack, by Danny Sung, Brian Paul, Ed Mackey, and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/gears.xml.h:10
+msgid "Three Gear System"
+msgstr ""
+
+#: hacks/config/gflux.xml.h:2
+#: hacks/config/gflux.xml.h:5
+msgid "Draws a rippling waves on a rotating wireframe grid, using GL. Written by Josiah Pease."
+msgstr ""
+
+#: hacks/config/gflux.xml.h:7
+msgid "Flat Lighting"
+msgstr ""
+
+#: hacks/config/gflux.xml.h:8
+msgid "GFlux"
+msgstr "GFlux"
+
+#: hacks/config/gflux.xml.h:9
+msgid "Mesh Density"
+msgstr ""
+
+#: hacks/config/gflux.xml.h:10
+#: hacks/config/gflux.xml.h:14
+#: hacks/config/interference.xml.h:18
+#: hacks/config/gflux.xml.h:15
+#: hacks/config/gflux.xml.h:16
+msgid "Wire Mesh"
+msgstr ""
+
+#: hacks/config/glplanet.xml.h:1
+msgid "Draws a planet bouncing around in space. Written by David Konerding. The built-in image is a map of the earth (extracted from `xearth'), but you can wrap any texture around the sphere, e.g., the planetary textures that come with `ssystem'."
+msgstr ""
+
+#: hacks/config/glplanet.xml.h:3
+#: hacks/config/glplanet.xml.h:4
+#: hacks/config/gltext.xml.h:1
+msgid "Displays a few lines of text spinning around in a solid 3D font. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/gltext.xml.h:2
+#: hacks/config/menger.xml.h:1
+#: hacks/config/molecule.xml.h:4
+#: hacks/config/gltext.xml.h:4
+#: hacks/config/gltext.xml.h:5
+#: hacks/config/menger.xml.h:7
+#: hacks/config/molecule.xml.h:14
+#: hacks/config/gltext.xml.h:6
+#: hacks/config/menger.xml.h:8
+#: hacks/config/molecule.xml.h:15
+#: hacks/config/gltext.xml.h:7
+#: hacks/config/menger.xml.h:9
+#: hacks/config/molecule.xml.h:16
+#: hacks/config/gltext.xml.h:8
+#: hacks/config/menger.xml.h:10
+#: hacks/config/molecule.xml.h:17
+#: hacks/config/gltext.xml.h:9
+#: hacks/config/menger.xml.h:11
+#: hacks/config/molecule.xml.h:18
+#: hacks/config/gltext.xml.h:10
+#: hacks/config/menger.xml.h:12
+#: hacks/config/molecule.xml.h:19
+#: hacks/config/gltext.xml.h:11
+#: hacks/config/menger.xml.h:13
+#: hacks/config/molecule.xml.h:20
+#: hacks/config/gltext.xml.h:16
+#: hacks/config/noseguy.xml.h:5
+#: hacks/config/goban.xml.h:1
+msgid "Goban"
+msgstr ""
+
+#: hacks/config/goban.xml.h:2
+msgid "Replays historical games of go (aka wei-chi and baduk) on the screen. By Scott Draves. You can find it at &lt;http://www.draves.org/goban/&gt;."
+msgstr ""
+
+#: hacks/config/goop.xml.h:1
+#: hacks/config/goop.xml.h:2
+#: hacks/config/goop.xml.h:3
+#: hacks/config/goop.xml.h:5
+#: hacks/config/goop.xml.h:8
+#: hacks/config/goop.xml.h:12
+#: hacks/config/goop.xml.h:13
+#: hacks/config/goop.xml.h:14
+msgid "This draws set of animating, transparent, amoeba-like blobs. The blobs change shape as they wander around the screen, and they are translucent, so you can see the lower blobs through the higher ones, and when one passes over another, their colors merge. Written by Jamie Zawinski. I got the idea for this from a cool mouse pad I have, which achieves the same kind of effect in real life by having several layers plastic with colored oil between them. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/goop.xml.h:15
+#: hacks/config/goop.xml.h:16
+#: hacks/config/grav.xml.h:3
+#: hacks/config/grav.xml.h:6
+#: hacks/config/grav.xml.h:7
+#: hacks/config/grav.xml.h:10
+msgid "This program draws a simple orbital simulation. If you turn on trails, it looks kind of like a cloud-chamber photograph. Written by Greg Bowering."
+msgstr ""
+
+#: hacks/config/greynetic.xml.h:2
+#: hacks/config/greynetic.xml.h:5
+msgid "This draws random colored and stippled rectangles. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/halo.xml.h:1
+#: hacks/config/halo.xml.h:3
+#: hacks/config/halo.xml.h:5
+#: hacks/config/halo.xml.h:7
+#: hacks/config/imsmap.xml.h:11
+#: hacks/config/halo.xml.h:8
+msgid "Seuss Mode"
+msgstr ""
+
+#: hacks/config/halo.xml.h:11
+msgid "This draws trippy psychedelic circular patterns that hurt to look at. It can also animate the control-points, but that takes a lot of CPU and bandwidth. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/helix.xml.h:4
+#: hacks/config/helix.xml.h:5
+msgid "This repeatedly generates spirally string-art-ish patterns. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:3
+msgid "EJK1"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:4
+msgid "EJK2"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:5
+msgid "EJK3"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:6
+msgid "EJK4"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:7
+msgid "EJK5"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:8
+msgid "EJK6"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:11
+msgid "Hopalong"
+msgstr "Hopalong"
+
+#: hacks/config/hopalong.xml.h:12
+msgid "Jong"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:16
+msgid "Martin"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:18
+msgid "Popcorn"
+msgstr "Попкорн"
+
+#: hacks/config/hopalong.xml.h:19
+msgid "RR"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:20
+#: hacks/config/hopalong.xml.h:24
+msgid "This draws lacy fractal patterns, based on iteration in the imaginary plane, from a 1986 Scientific American article. Mostly written by Patrick Naughton."
+msgstr ""
+
+#: hacks/config/hyperball.xml.h:1
+#: hacks/config/hypercube.xml.h:1
+#: hacks/config/hyperball.xml.h:4
+#: hacks/config/hyperball.xml.h:5
+msgid "Hyperball is to hypercube as dodecahedron is to cube: this displays a 2D projection of the sequence of 3D objects which are the projections of the 4D analog to the dodecahedron. Written by Joe Keane."
+msgstr ""
+
+#: hacks/config/hyperball.xml.h:7
+#: hacks/config/hypercube.xml.h:6
+#: hacks/config/hyperball.xml.h:10
+#: hacks/config/hypercube.xml.h:10
+#: hacks/config/hyperball.xml.h:11
+#: hacks/config/hypercube.xml.h:11
+#: hacks/config/hyperball.xml.h:12
+#: hacks/config/hypercube.xml.h:12
+#: hacks/config/hyperball.xml.h:13
+#: hacks/config/hypercube.xml.h:13
+#: hacks/config/hyperball.xml.h:14
+#: hacks/config/hypercube.xml.h:14
+#: hacks/config/hyperball.xml.h:15
+#: hacks/config/hypercube.xml.h:15
+#: hacks/config/hyperball.xml.h:16
+#: hacks/config/hypercube.xml.h:16
+#: hacks/config/zoom.xml.h:8
+#: hacks/config/hypercube.xml.h:4
+#: hacks/config/hypercube.xml.h:9
+msgid "This displays 2D projections of the sequence of 3D objects which are the projections of the 4D analog to the cube: as a square is composed of four lines, each touching two others; and a cube is composed of six squares, each touching four others; a hypercube is composed of eight cubes, each touching six others. To make it easier to visualize the rotation, it uses a different color for the edges of each face. Don't think about it too long, or your brain will melt. Written by Joe Keane, Fritz Mueller, and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/ifs.xml.h:2
+msgid "IFS"
+msgstr ""
+
+#: hacks/config/ifs.xml.h:7
+msgid "This one draws spinning, colliding iterated-function-system images. Written by Massimino Pascal."
+msgstr ""
+
+#: hacks/config/imsmap.xml.h:3
+#: hacks/config/imsmap.xml.h:7
+#: hacks/config/imsmap.xml.h:8
+msgid "IMSmap"
+msgstr ""
+
+#: hacks/config/imsmap.xml.h:12
+#: hacks/config/imsmap.xml.h:14
+msgid "This generates random cloud-like patterns. It looks quite different in monochrome and color. The basic idea is to take four points on the edge of the image, and assign each a random ``elevation''. Then find the point between them, and give it a value which is the average of the other four, plus some small random offset. Then coloration is done based on elevation. The color selection is done by binding the elevation to either hue, saturation, or brightness, and assigning random values to the others. The ``brightness'' mode tends to yield cloudlike patterns, and the others tend to generate images that look like heat-maps or CAT-scans. Written by Juergen Nickelsen and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/interference.xml.h:1
+#: hacks/config/interference.xml.h:2
+msgid "Another color-field hack, this one works by computing decaying sinusoidal waves, and allowing them to interfere with each other as their origins move. Written by Hannu Mallat."
+msgstr ""
+
+#: hacks/config/interference.xml.h:7
+#: hacks/config/interference.xml.h:10
+#: hacks/config/t3d.xml.h:9
+#: hacks/config/xearth.xml.h:11
+#: hacks/config/zoom.xml.h:5
+#: hacks/config/interference.xml.h:13
+#: hacks/config/interference.xml.h:17
+#: hacks/config/jigsaw.xml.h:4
+#: hacks/config/jigsaw.xml.h:6
+msgid "Solved Duration"
+msgstr ""
+
+#: hacks/config/jigsaw.xml.h:8
+msgid "This grabs a screen image, carves it up into a jigsaw puzzle, shuffles it, and then solves the puzzle. This works especially well when you feed it an external video signal instead of letting it grab the screen image (actually, I guess this is generally true...) When it is grabbing a video image, it is sometimes pretty hard to guess what the image is going to look like once the puzzle is solved. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/julia.xml.h:3
+#: hacks/config/rorschach.xml.h:4
+#: hacks/config/julia.xml.h:4
+#: hacks/config/julia.xml.h:11
+msgid "This one draws spinning, animating (are you detecting a pattern here yet?) explorations of the Julia set. You've probably seen static images of this fractal form before, but it's a lot of fun to watch in motion as well. One interesting thing is that there is a small swinging dot passing in front of the image, which indicates the control point from which the rest of the image was generated. Written by Sean McCullough."
+msgstr ""
+
+#: hacks/config/kaleidescope.xml.h:1
+msgid "Another clone of an ancient meme, consisting largely of frenetic rotational motion of colored lines. This one is by Ron Tapia. The motion is nice, but I think it needs more solids, or perhaps just brighter colors. More variations in the rotational speed might help, too."
+msgstr ""
+
+#: hacks/config/kaleidescope.xml.h:4
+#: hacks/config/kaleidescope.xml.h:6
+#: hacks/config/qix.xml.h:18
+#: hacks/config/kaleidescope.xml.h:9
+#: hacks/config/kaleidescope.xml.h:10
+#: hacks/config/kumppa.xml.h:5
+msgid "Kumppa"
+msgstr "Kumppa"
+
+#: hacks/config/kumppa.xml.h:7
+#: hacks/config/kumppa.xml.h:10
+msgid "Spiraling, spinning, and very, very fast splashes of color rush toward the screen. Written by Teemu Suutari."
+msgstr ""
+
+#: hacks/config/lament.xml.h:1
+msgid "Animates a simulation of Lemarchand's Box, repeatedly solving itself. Requires OpenGL, and a machine with fast hardware support for texture maps. Warning: occasionally opens doors. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/lament.xml.h:3
+msgid "Lament"
+msgstr "Lament"
+
+#: hacks/config/lament.xml.h:8
+msgid "Untextured"
+msgstr ""
+
+#: hacks/config/laser.xml.h:4
+#: hacks/config/laser.xml.h:7
+msgid "Moving radiating lines, that look vaguely like scanning laser beams. Written by Pascal Pensa. (Frankie say: relax.)"
+msgstr ""
+
+#: hacks/config/lightning.xml.h:2
+#: hacks/config/lightning.xml.h:7
+msgid "This one draws crackling fractal lightning bolts. It's simple, direct, and to the point. If only it had sound... Written by Keith Romberg."
+msgstr ""
+
+#: hacks/config/lisa.xml.h:4
+#: hacks/config/lisa.xml.h:10
+#: hacks/config/lisa.xml.h:11
+msgid "This draws Lisajous loops, by Caleb Cullen. Remember that device they had the Phantom Zone prisoners in during their trial in Superman? I think that was one of these."
+msgstr ""
+
+#: hacks/config/lissie.xml.h:1
+msgid "Another Lissajous figure. This one draws the progress of circular shapes along a path. Written by Alexander Jolk."
+msgstr ""
+
+#: hacks/config/lissie.xml.h:5
+#: hacks/config/lmorph.xml.h:1
+#: hacks/config/lmorph.xml.h:2
+#: hacks/config/lmorph.xml.h:4
+#: hacks/config/lmorph.xml.h:5
+msgid "LMorph"
+msgstr ""
+
+#: hacks/config/lmorph.xml.h:6
+#: hacks/config/lmorph.xml.h:8
+#: hacks/config/lmorph.xml.h:9
+#: hacks/config/lmorph.xml.h:10
+#: hacks/config/lmorph.xml.h:15
+msgid "This generates random spline-ish line drawings and morphs between them. Written by Sverre H. Huseby and Glenn T. Lines."
+msgstr ""
+
+#: hacks/config/loop.xml.h:3
+#: hacks/config/loop.xml.h:10
+msgid "This one produces loop-shaped colonies that spawn, age, and eventually die. Written by David Bagley."
+msgstr ""
+
+#: hacks/config/maze.xml.h:3
+msgid "Backtracking Generator"
+msgstr ""
+
+#: hacks/config/maze.xml.h:5
+#: hacks/config/slidescreen.xml.h:3
+#: hacks/config/maze.xml.h:6
+msgid "Head Toward Exit"
+msgstr ""
+
+#: hacks/config/maze.xml.h:7
+msgid "Ignorant of Exit Direction"
+msgstr ""
+
+#: hacks/config/maze.xml.h:8
+msgid "Joining Generator"
+msgstr ""
+
+#: hacks/config/maze.xml.h:9
+#: hacks/config/maze.xml.h:10
+msgid "Post-Solve Delay"
+msgstr ""
+
+#: hacks/config/maze.xml.h:11
+msgid "Pre-Solve Delay"
+msgstr ""
+
+#: hacks/config/maze.xml.h:12
+msgid "Random Generator"
+msgstr ""
+
+#: hacks/config/maze.xml.h:13
+msgid "Seeding Generator"
+msgstr ""
+
+#: hacks/config/maze.xml.h:15
+msgid "Solve Speed"
+msgstr ""
+
+#: hacks/config/maze.xml.h:16
+msgid "This is the ancient X maze demo, modified to work with xscreensaver. It generates a random maze, then solves it with visual feedback. Originally by Jim Randell; modified by a cast of thousands."
+msgstr ""
+
+#: hacks/config/menger.xml.h:6
+msgid "Menger"
+msgstr ""
+
+#: hacks/config/menger.xml.h:19
+msgid "This draws the three-dimensional variant of the recursive Menger Gasket, a cube-based fractal object analagous to the Sierpinski Tetrahedron. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/moebius.xml.h:1
+msgid "Another M. C. Escher hack by Marcelo Vianna, this one draws ``Moebius Strip II,'' a GL image of ants walking along the surface of a moebius strip."
+msgstr ""
+
+#: hacks/config/moebius.xml.h:2
+msgid "Draw Ants"
+msgstr ""
+
+#: hacks/config/moebius.xml.h:4
+msgid "Mesh Floor"
+msgstr ""
+
+#: hacks/config/moebius.xml.h:5
+#: hacks/config/moebius.xml.h:8
+msgid "Solid Floor"
+msgstr ""
+
+#: hacks/config/moebius.xml.h:9
+#: hacks/config/qix.xml.h:20
+#: hacks/config/moire.xml.h:6
+#: hacks/config/moire.xml.h:8
+#: hacks/config/rorschach.xml.h:6
+#: hacks/config/moire.xml.h:10
+msgid "This one draws cool circular interference patterns. Most of the circles you see aren't explicitly rendered, but show up as a result of interactions between the other pixels that were drawn. Written by Jamie Zawinski, inspired by Java code by Michael Bayne. As he pointed out, the beauty of this one is that the heart of the display algorithm can be expressed with just a pair of loops and a handful of arithmetic, giving it a high ``display hack metric''."
+msgstr ""
+
+#: hacks/config/moire2.xml.h:1
+msgid "Another example of the fun you can have with moire interference patterns; this hack generates fields of concentric circles or ovals, and combines the planes with various operations. The planes are moving independently of one another, causing the interference lines to ``spray.'' Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/moire2.xml.h:4
+#: hacks/config/moire2.xml.h:8
+#: hacks/config/molecule.xml.h:3
+msgid "Describe Molecule"
+msgstr ""
+
+#: hacks/config/molecule.xml.h:5
+#: hacks/config/molecule.xml.h:6
+#: hacks/config/molecule.xml.h:7
+msgid "Draw Bounding Box"
+msgstr ""
+
+#: hacks/config/molecule.xml.h:8
+msgid "Draws several different representations of molecules. Some common molecules are built in, and it can also read PDB (Protein Data Base) files as input. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/molecule.xml.h:11
+#: hacks/config/molecule.xml.h:12
+#: hacks/config/molecule.xml.h:13
+#: hacks/config/morph3d.xml.h:1
+msgid "Another 3d shape-changing GL hack, by Marcelo Vianna. It has the same shiny-plastic feel as Superquadrics, as many computer-generated objects do..."
+msgstr ""
+
+#: hacks/config/morph3d.xml.h:4
+msgid "Morph3D"
+msgstr ""
+
+#: hacks/config/mountain.xml.h:3
+msgid "Generates random 3d plots that look vaguely mountainous. Written by Pascal Pensa."
+msgstr ""
+
+#: hacks/config/mountain.xml.h:5
+#: hacks/config/munch.xml.h:1
+msgid "DATAI 2 ADDB 1,2 ROTC 2,-22 XOR 1,2 JRST .-4 As reported by HAKMEM, in 1962, Jackson Wright wrote the above PDP-1 code. That code still lives on in this screenhack, some 35 years later. The number of lines of enclosing code has increased substantially, however. This version is by Tim Showalter."
+msgstr ""
+
+#: hacks/config/munch.xml.h:5
+#: hacks/config/munch.xml.h:10
+#: hacks/config/qix.xml.h:26
+msgid "XOR"
+msgstr "XOR"
+
+#: hacks/config/nerverot.xml.h:1
+msgid "Blot Count"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:2
+#: hacks/config/nerverot.xml.h:3
+#: hacks/config/nerverot.xml.h:4
+#: hacks/config/nerverot.xml.h:5
+msgid "Crunchiness"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:7
+msgid "Draws different shapes composed of nervously vibrating squiggles, as if seen through a camera operated by a monkey on crack. By Dan Bornstein."
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:10
+msgid "Frequent"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:16
+msgid "NerveRot"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:17
+msgid "Nervousness"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:18
+#: hacks/config/pyro.xml.h:12
+msgid "Seldom"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:21
+msgid "Spastic"
+msgstr ""
+
+#: hacks/config/noseguy.xml.h:1
+msgid "A little man with a big nose wanders around your screen saying things. The things which he says can come from a file, or from an external program like `zippy' or `fortune'. This was extracted from `xnlock' by Dan Heller. Colorized by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/noseguy.xml.h:2
+#: hacks/config/noseguy.xml.h:3
+#: hacks/config/noseguy.xml.h:4
+#: hacks/config/noseguy.xml.h:6
+#: hacks/config/noseguy.xml.h:7
+#: hacks/config/phosphor.xml.h:8
+#: hacks/config/starwars.xml.h:17
+#: hacks/config/noseguy.xml.h:8
+#: hacks/config/pedal.xml.h:7
+#: hacks/config/pedal.xml.h:8
+msgid "This is sort of a combination spirograph/string-art. It generates a large, complex polygon, and lets the X server do the bulk of the work by giving it an even/odd winding rule. Written by Dale Moore, based on some ancient PDP-11 code."
+msgstr ""
+
+#: hacks/config/penetrate.xml.h:1
+msgid "Always play well"
+msgstr ""
+
+#: hacks/config/penetrate.xml.h:2
+#: hacks/config/penetrate.xml.h:5
+#: hacks/config/penetrate.xml.h:7
+msgid "Start badly, but learn"
+msgstr ""
+
+#: hacks/config/penetrate.xml.h:8
+msgid "This hack simulates the classic arcade game Missile Command. Written by Adam Miller."
+msgstr ""
+
+#: hacks/config/penrose.xml.h:2
+#: hacks/config/penrose.xml.h:3
+msgid "Draw Ammann Lines"
+msgstr ""
+
+#: hacks/config/penrose.xml.h:4
+msgid "Draws quasiperiodic tilings; think of the implications on modern formica technology. Written by Timo Korvola. In April 1997, Sir Roger Penrose, a British math professor who has worked with Stephen Hawking on such topics as relativity, black holes, and whether time has a beginning, filed a copyright-infringement lawsuit against the Kimberly-Clark Corporation, which Penrose said copied a pattern he created (a pattern demonstrating that ``a nonrepeating pattern could exist in nature'') for its Kleenex quilted toilet paper. Penrose said he doesn't like litigation but, ``When it comes to the population of Great Britain being invited by a multinational to wipe their bottoms on what appears to be the work of a Knight of the Realm, then a last stand must be taken.'' As reported by News of the Weird #491, 4-jul-1997."
+msgstr ""
+
+#: hacks/config/penrose.xml.h:9
+#: hacks/config/petri.xml.h:2
+#: hacks/config/petri.xml.h:3
+msgid "Death Comes"
+msgstr ""
+
+#: hacks/config/petri.xml.h:4
+#: hacks/config/petri.xml.h:6
+#: hacks/config/petri.xml.h:12
+msgid "Maxium Lifespan"
+msgstr ""
+
+#: hacks/config/petri.xml.h:13
+#: hacks/config/petri.xml.h:14
+#: hacks/config/petri.xml.h:15
+msgid "Minium Lifespan"
+msgstr ""
+
+#: hacks/config/petri.xml.h:16
+#: hacks/config/petri.xml.h:17
+#: hacks/config/petri.xml.h:18
+msgid "Mold Varieties"
+msgstr ""
+
+#: hacks/config/petri.xml.h:19
+msgid "Offspring"
+msgstr ""
+
+#: hacks/config/petri.xml.h:20
+#: hacks/config/petri.xml.h:21
+#: hacks/config/petri.xml.h:24
+#: hacks/config/petri.xml.h:26
+#: hacks/config/petri.xml.h:27
+msgid "This simulates colonies of mold growing in a petri dish. Growing colored circles overlap and leave spiral interference in their wake. Written by Dan Bornstein."
+msgstr ""
+
+#: hacks/config/phosphor.xml.h:1
+msgid "Draws a simulation of an old terminal, with large pixels and long-sustain phosphor. It can run any program as a source of the text it displays. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/phosphor.xml.h:2
+msgid "Fade"
+msgstr ""
+
+#: hacks/config/phosphor.xml.h:4
+#: hacks/config/phosphor.xml.h:5
+#: hacks/config/pipes.xml.h:1
+msgid "Allow Tight Turns"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:2
+#: hacks/config/pipes.xml.h:3
+#: hacks/config/pipes.xml.h:5
+msgid "Fisheye Lens"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:6
+msgid "Gadgetry"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:7
+msgid "If you've ever been in the same room with a Windows NT machine, you've probably seen this GL hack. This version is by Marcelo Vianna."
+msgstr ""
+
+#: hacks/config/pipes.xml.h:8
+msgid "Lots"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:9
+#: hacks/config/pipes.xml.h:10
+msgid "Number of Pipe Systems"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:11
+msgid "Pipe Fittings"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:12
+#: hacks/config/pipes.xml.h:16
+msgid "System Length"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:1
+msgid "Anti-alias Lines"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:3
+msgid "Draws some intersecting planes, making use of alpha blending, fog, textures, and mipmaps, plus a ``frames per second'' meter so that you can tell how fast your graphics card is... Requires OpenGL. Written by David Konerding."
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:4
+msgid "Enable Blending"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:5
+msgid "Enable Depth Buffer"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:6
+#: hacks/config/pulsar.xml.h:7
+msgid "Enable Lighting"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:8
+#: hacks/config/pulsar.xml.h:9
+msgid "Enable Texture Mipmaps"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:10
+#: hacks/config/pulsar.xml.h:12
+#: hacks/config/pulsar.xml.h:13
+msgid "Quad Count"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:16
+#: hacks/config/pulsar.xml.h:18
+#: hacks/config/pyro.xml.h:3
+msgid "Explosive Yield"
+msgstr ""
+
+#: hacks/config/pyro.xml.h:6
+msgid "Launch Frequency"
+msgstr ""
+
+#: hacks/config/pyro.xml.h:8
+#: hacks/config/pyro.xml.h:9
+#: hacks/config/pyro.xml.h:10
+#: hacks/config/pyro.xml.h:11
+msgid "Pyro draws exploding fireworks. Blah blah blah. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/qix.xml.h:1
+#: hacks/config/qix.xml.h:3
+#: hacks/config/qix.xml.h:9
+#: hacks/config/speedmine.xml.h:4
+#: hacks/config/qix.xml.h:11
+#: hacks/config/qix.xml.h:12
+#: hacks/config/qix.xml.h:15
+#: hacks/config/qix.xml.h:16
+#: hacks/config/qix.xml.h:17
+#: hacks/config/qix.xml.h:23
+#: hacks/config/qix.xml.h:24
+msgid "This is the swiss army chainsaw of qix programs. It bounces a series of line segments around the screen, and uses variations on this basic motion pattern to produce all sorts of different presentations: line segments, filled polygons, overlapping translucent areas... Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/qix.xml.h:25
+#: hacks/config/rdbomb.xml.h:1
+msgid "/"
+msgstr "/"
+
+#: hacks/config/rdbomb.xml.h:3
+#, no-c-format
+msgid "1%"
+msgstr "1%"
+
+#: hacks/config/rdbomb.xml.h:5
+#, no-c-format
+msgid "100%"
+msgstr "100%"
+
+#: hacks/config/rdbomb.xml.h:7
+msgid "Another variation of the `Bomb' program by Scott Draves. This draws a grid of growing square-like shapes that, once they overtake each other, react in unpredictable ways. ``RD'' stands for reaction-diffusion."
+msgstr ""
+
+#: hacks/config/rdbomb.xml.h:8
+#: hacks/config/rdbomb.xml.h:10
+#: hacks/config/rdbomb.xml.h:14
+msgid "RD-Bomb"
+msgstr ""
+
+#: hacks/config/rdbomb.xml.h:15
+msgid "Reaction/Difusion"
+msgstr ""
+
+#: hacks/config/rdbomb.xml.h:16
+msgid "Seed Radius"
+msgstr ""
+
+#: hacks/config/rdbomb.xml.h:19
+msgid "Tile Size"
+msgstr ""
+
+#: hacks/config/rdbomb.xml.h:22
+msgid "Wander Speed"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:1
+msgid "Big Drops"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:2
+msgid "Colors    Two"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:3
+#: hacks/config/ripples.xml.h:5
+#: hacks/config/ripples.xml.h:6
+msgid "Lighting Effect"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:8
+msgid "Moving Splashes"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:9
+#: hacks/config/ripples.xml.h:10
+#: hacks/config/ripples.xml.h:12
+msgid "Small Drops"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:13
+#: hacks/config/ripples.xml.h:14
+msgid "This draws rippling interference patterns like splashing water. With the -water option, it manipulates your desktop image to look like something is dripping into it. Written by Tom Hammersley."
+msgstr ""
+
+#: hacks/config/rocks.xml.h:7
+#: hacks/config/rocks.xml.h:8
+#: hacks/config/rocks.xml.h:10
+msgid "Steering"
+msgstr ""
+
+#: hacks/config/rocks.xml.h:11
+msgid "This draws an animation of flight through an asteroid field, with changes in rotation and direction. It can also display 3D separations for red/blue glasses! Mostly written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/rocks.xml.h:13
+#: hacks/config/rorschach.xml.h:7
+#: hacks/config/rorschach.xml.h:9
+msgid "This generates random inkblot patterns. The algorithm is deceptively simple for how well it works; it merely walks a dot around the screen randomly, and then reflects the image horizontally, vertically, or both. Any deep-seated neurotic tendencies which this program reveals are your own problem. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/rorschach.xml.h:10
+#: hacks/config/rorschach.xml.h:11
+#: hacks/config/rotor.xml.h:1
+msgid "Another ancient xlock demo, this one by Tom Lawrence. It draws a line segment moving along a complex spiraling curve. I tweaked this to generate curvier lines, but still frames of it don't look like much."
+msgstr ""
+
+#: hacks/config/rotor.xml.h:4
+#: hacks/config/wander.xml.h:9
+#: hacks/config/rotor.xml.h:8
+#: hacks/config/rotzoomer.xml.h:3
+#: hacks/config/rotzoomer.xml.h:4
+msgid "Creates a collage of rotated and scaled portions of the screen. Written by Claudio Matsuoka."
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:6
+#: hacks/config/rotzoomer.xml.h:7
+msgid "RotZoomer"
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:8
+msgid "Stationary Rectangles"
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:9
+msgid "Sweeping Arcs"
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:11
+msgid "Wandering Rectangles"
+msgstr ""
+
+#: hacks/config/rubik.xml.h:2
+msgid "Draws a Rubik's Cube that rotates in three dimensions and repeatedly shuffles and solves itself. Another fine GL hack by Marcelo Vianna."
+msgstr ""
+
+#: hacks/config/rubik.xml.h:5
+#: hacks/config/rubik.xml.h:7
+msgid "Show Shuffling"
+msgstr ""
+
+#: hacks/config/shadebobs.xml.h:7
+msgid "ShadeBobs"
+msgstr ""
+
+#: hacks/config/shadebobs.xml.h:11
+msgid "This draws smoothly-shaded oscilating oval patterns, that look something like vapor trails or neon tubes. Written by Shane Smit."
+msgstr ""
+
+#: hacks/config/sierpinski.xml.h:6
+#: hacks/config/sierpinski.xml.h:10
+msgid "This draws the two-dimensional variant of the recursive Sierpinski triangle fractal. Written by Desmond Daignault."
+msgstr ""
+
+#: hacks/config/sierpinski3d.xml.h:7
+#: hacks/config/sierpinski3d.xml.h:11
+msgid "This draws the three-dimensional variant of the recursive Sierpinski triangle fractal, using GL. Written by Tim Robinson and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/slidescreen.xml.h:1
+#: hacks/config/zoom.xml.h:1
+#: hacks/config/slidescreen.xml.h:4
+msgid "Slide Speed"
+msgstr ""
+
+#: hacks/config/slidescreen.xml.h:5
+msgid "SlideScreen"
+msgstr ""
+
+#: hacks/config/slidescreen.xml.h:8
+msgid "This takes an image, divides it into a grid, and then randomly shuffles the squares around as if it was one of those annoying ``16-puzzle'' games, where there is a grid of squares, one of which is missing. I hate trying to solve those puzzles, but watching one permute itself is more amusing. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/slip.xml.h:6
+#: hacks/config/slip.xml.h:10
+msgid "This program throws some random bits on the screen, then sucks them through a jet engine and spews them out the other side. To avoid turning the image completely to mush, every now and then it will and then it interjects some splashes of color into the scene, or go into a spin cycle, or stretch the image like taffy, or (this is my addition) grab an image of your current desktop to chew on. Originally written by Scott Draves; whacked on by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/sonar.xml.h:1
+msgid "Ping Subnet"
+msgstr ""
+
+#: hacks/config/sonar.xml.h:2
+msgid "Simulation Team Members"
+msgstr ""
+
+#: hacks/config/sonar.xml.h:3
+#: hacks/config/sonar.xml.h:4
+#: hacks/config/sonar.xml.h:5
+#: hacks/config/sonar.xml.h:6
+msgid "This program draws a simulation of a sonar screen. Written by default, it displays a random assortment of ``bogies'' on the screen, but if compiled properly, it can ping (pun intended) your local network, and actually plot the proximity of the other hosts on your network to you. It would be easy to make it monitor other sources of data, too. (Processes? Active network connections? CPU usage per user?) Written by Stephen Martin."
+msgstr ""
+
+#: hacks/config/sonar.xml.h:7
+#: hacks/config/speedmine.xml.h:1
+msgid "Allow Wall Collisions"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:2
+msgid "Display Crosshair"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:7
+#: hacks/config/speedmine.xml.h:8
+msgid "Mine Shaft"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:9
+msgid "Present Bonuses"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:10
+msgid "Rocky Walls"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:12
+msgid "Simulates speeding down a rocky mineshaft, or a funky dancing worm. Written by Conrad Parker."
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:16
+msgid "SpeedMine"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:17
+#: hacks/config/speedmine.xml.h:19
+#: hacks/config/worm.xml.h:10
+#: hacks/config/sphere.xml.h:1
+msgid "Another of the classic screenhacks of the distant past, this one draws shaded spheres in multiple colors. This hack traces its lineage back to Tom Duff in 1982."
+msgstr ""
+
+#: hacks/config/sphere.xml.h:7
+#: hacks/config/sphereEversion.xml.h:1
+msgid "SphereEversion"
+msgstr ""
+
+#: hacks/config/sphereEversion.xml.h:2
+msgid "SphereEversion draws an animation of a sphere being turned inside out. A sphere can be turned inside out, without any tears, sharp creases or discontinuities, if the surface of the sphere is allowed to intersect itself. This program animates what is known as the Thurston Eversion. Written by Nathaniel Thurston and Michael McGuffin. This program is not included with the XScreenSaver package, but if you don't have it already, you can find it at &lt;http://www.dgp.utoronto.ca/~mjmcguff/eversion/&gt;."
+msgstr ""
+
+#: hacks/config/spiral.xml.h:2
+#: hacks/config/spiral.xml.h:7
+msgid "Moving circular patterns, by Peter Schmitzberger. Moving circular patterns means moire; interference patterns, of course."
+msgstr ""
+
+#: hacks/config/spiral.xml.h:11
+#: hacks/config/spotlight.xml.h:1
+msgid "Draws a spotlight scanning across a black screen, illumnating the underlying desktop when it passes. Written by Rick Schultz."
+msgstr ""
+
+#: hacks/config/spotlight.xml.h:6
+#: hacks/config/sproingies.xml.h:3
+msgid "Q-Bert meets Marble Madness! Written by Ed Mackey."
+msgstr ""
+
+#: hacks/config/sproingies.xml.h:9
+#: hacks/config/squiral.xml.h:3
+msgid "Draws a set of interacting, square-spiral-producing automata. The spirals grow outward until they hit something, then they go around it. Written by Jeff Epler."
+msgstr ""
+
+#: hacks/config/squiral.xml.h:5
+msgid "Handedness"
+msgstr ""
+
+#: hacks/config/squiral.xml.h:7
+#: hacks/config/squiral.xml.h:11
+#: hacks/config/squiral.xml.h:12
+#: hacks/config/squiral.xml.h:17
+#: hacks/config/ssystem.xml.h:1
+#: hacks/config/ssystem.xml.h:2
+msgid "SSystem is a GL Solar System simulator. It simulates flybys of Sun, the nine planets and a few major satellites, with four camera modes. Written by Raul Alonso. This is not included with the XScreenSaver package, but is packaged separately. Note: SSystem does not work as a screen saver on all systems, because it doesn't communicate with xscreensaver properly. It happens to work with some window managers, but not with others, so your mileage may vary. SSystem was once available at &lt;http://www1.las.es/~amil/ssystem/&gt;, but is now gone. You may still be able to find copies elsewhere. SSystem has since evolved into two different programs: OpenUniverse (http://openuniverse.sourceforge.net/) and Celestia (http://www.shatters.net/celestia/). Sadly, neither of these programs work with xscreensaver at all. You are encouraged to nag their authors into adding xscreensaver support!"
+msgstr ""
+
+#: hacks/config/stairs.xml.h:6
+#: hacks/config/stairs.xml.h:8
+msgid "by Marcelo Vianna's third Escher GL hack, this one draws an ``infinite'' staircase."
+msgstr ""
+
+#: hacks/config/starfish.xml.h:1
+#: hacks/config/starfish.xml.h:7
+msgid "Pulsating Blob"
+msgstr ""
+
+#: hacks/config/starfish.xml.h:10
+#: hacks/config/starfish.xml.h:13
+msgid "This generates a sequence of undulating, throbbing, star-like patterns which pulsate, rotate, and turn inside out. Another display mode uses these shapes to lay down a field of colors, which are then cycled. The motion is very organic. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/starwars.xml.h:2
+msgid "Anti-aliased Lines"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:3
+#: hacks/config/starwars.xml.h:4
+msgid "Draws a stream of text slowly scrolling into the distance at an angle, over a star field, like at the beginning of the movie of the same name. Written by Jamie Zawinski and Claudio Matauoka."
+msgstr ""
+
+#: hacks/config/starwars.xml.h:5
+#: hacks/config/starwars.xml.h:7
+msgid "Flush Left Text"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:8
+msgid "Flush Right Text"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:9
+#: hacks/config/starwars.xml.h:10
+#: hacks/config/starwars.xml.h:13
+msgid "Star Rotation Speed"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:14
+#: hacks/config/starwars.xml.h:15
+#: hacks/config/starwars.xml.h:16
+#: hacks/config/starwars.xml.h:18
+#: hacks/config/starwars.xml.h:19
+#: hacks/config/stonerview.xml.h:1
+msgid "Chains of colorful squares dance around each other in complex spiral patterns. Written by Andrew Plotkin, based on SGI's `electropaint' screensaver."
+msgstr ""
+
+#: hacks/config/stonerview.xml.h:3
+msgid "StonerView"
+msgstr ""
+
+#: hacks/config/strange.xml.h:1
+msgid "Curviness"
+msgstr ""
+
+#: hacks/config/strange.xml.h:9
+#: hacks/config/strange.xml.h:10
+msgid "This draws strange attractors: it's a colorful, unpredictably-animating field of dots that swoops and twists around. The motion is very nice. Written by Massimino Pascal."
+msgstr ""
+
+#: hacks/config/superquadrics.xml.h:2
+msgid "Ed Mackey reports that he wrote the first version of this program in BASIC on a Commodore 64 in 1987, as a 320x200 black and white wireframe. Now it is GL and has specular reflections."
+msgstr ""
+
+#: hacks/config/superquadrics.xml.h:10
+#: hacks/config/swirl.xml.h:4
+msgid "More flowing, swirly patterns. This version is by M. Dobie and R. Taylor, but you might have seen a Mac program similar to this called FlowFazer. There is also a cool Java applet of a similar concept."
+msgstr ""
+
+#: hacks/config/swirl.xml.h:8
+#: hacks/config/t3d.xml.h:1
+#: hacks/config/t3d.xml.h:2
+#: hacks/config/t3d.xml.h:3
+#: hacks/config/t3d.xml.h:4
+#: hacks/config/t3d.xml.h:5
+msgid "Cycle Seconds"
+msgstr ""
+
+#: hacks/config/t3d.xml.h:10
+#: hacks/config/t3d.xml.h:12
+#: hacks/config/t3d.xml.h:14
+msgid "T3D"
+msgstr "T3D"
+
+#: hacks/config/t3d.xml.h:15
+msgid "This draws a working analog clock composed of floating, throbbing bubbles. Written by Bernd Paysan."
+msgstr ""
+
+#: hacks/config/t3d.xml.h:16
+msgid "Turn Side-to-Side"
+msgstr ""
+
+#: hacks/config/t3d.xml.h:17
+msgid "Wobbliness"
+msgstr ""
+
+#: hacks/config/triangle.xml.h:2
+msgid "Generates random mountain ranges using iterative subdivision of triangles. Written by Tobias Gloth."
+msgstr ""
+
+#: hacks/config/triangle.xml.h:7
+#: hacks/config/truchet.xml.h:4
+msgid "This draws line- and arc-based Truchet patterns that tile the screen. Written by Adrian Likins."
+msgstr ""
+
+#: hacks/config/truchet.xml.h:5
+#: hacks/config/vermiculate.xml.h:1
+msgid "Draws squiggly worm-like paths. Written by Tyler Pierce."
+msgstr ""
+
+#: hacks/config/vermiculate.xml.h:2
+msgid "Vermiculate"
+msgstr ""
+
+#: hacks/config/vidwhacker.xml.h:2
+#: hacks/config/webcollage.xml.h:2
+#: hacks/config/vidwhacker.xml.h:4
+#: hacks/config/vidwhacker.xml.h:5
+msgid "This is actually just a shell script that grabs a frame of video from the system's video input, and then uses some PBM filters (chosen at random) to manipulate and recombine the video frame in various ways (edge detection, subtracting the image from a rotated version of itself, etc.) Then it displays that image for a few seconds, and does it again. This works really well if you just feed broadcast television into it."
+msgstr ""
+
+#: hacks/config/vidwhacker.xml.h:6
+msgid "VidWhacker"
+msgstr ""
+
+#: hacks/config/vines.xml.h:6
+msgid "This one generates a continuous sequence of small, curvy geometric patterns. It scatters them around your screen until it fills up, then it clears the screen and starts over. Written by Tracy Camp and David Hansen."
+msgstr ""
+
+#: hacks/config/vines.xml.h:8
+#: hacks/config/wander.xml.h:5
+msgid "Draw Spots"
+msgstr ""
+
+#: hacks/config/wander.xml.h:6
+msgid "Draws a colorful random-walk, in various forms. Written by Rick Campbell."
+msgstr ""
+
+#: hacks/config/wander.xml.h:14
+msgid "Sustain"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:3
+#: hacks/config/webcollage.xml.h:5
+msgid "Overall Filter Program"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:6
+msgid "Per-Image Filter Program"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:9
+msgid "This program makes collages out of random images pulled off of the World Wide Web. It finds these images by doing random web searches, and then extracting images from the returned pages. It can also be set up to filter the images through the `VidWhacker' program, above, which looks really great. (Note that most of the images it finds are text, and not pictures. This is because most of the web is pictures of text. Which is pretty sad.) Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:10
+msgid "URL Timeout"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:11
+msgid "WebCollage"
+msgstr ""
+
+#: hacks/config/whirlwindwarp.xml.h:2
+msgid "Floating stars are acted upon by a mixture of simple 2D forcefields. The strength of each forcefield changes continuously, and it is also switched on and off at random. By Paul 'Joey' Clark."
+msgstr ""
+
+#: hacks/config/whirlwindwarp.xml.h:5
+#: hacks/config/whirlwindwarp.xml.h:7
+#: hacks/config/whirlwindwarp.xml.h:8
+msgid "WhirlwindWarp"
+msgstr ""
+
+#: hacks/config/whirlygig.xml.h:1
+#: hacks/config/whirlygig.xml.h:2
+msgid "Draws zooming chains of sinusoidal spots. Written by Ashton Trey Belew."
+msgstr ""
+
+#: hacks/config/whirlygig.xml.h:5
+msgid "Whirlies"
+msgstr ""
+
+#: hacks/config/whirlygig.xml.h:6
+msgid "WhirlyGig"
+msgstr ""
+
+#: hacks/config/worm.xml.h:1
+msgid "An ancient xlock hack that draws multicolored worms that crawl around the screen. Written by Brad Taylor, Dave Lemke, Boris Putanec, and Henrik Theiling."
+msgstr ""
+
+#: hacks/config/xaos.xml.h:1
+msgid "XaoS"
+msgstr ""
+
+#: hacks/config/xaos.xml.h:2
+msgid "XaoS generates fast fly-through animations of the Mandelbrot and other fractal sets. Written by Thomas Marsh and Jan Hubicka. This is not included with the XScreenSaver package, but if you don't have it already, you can find it at &lt;http://limax.paru.cas.cz/~hubicka/XaoS/&gt;."
+msgstr ""
+
+#: hacks/config/xdaliclock.xml.h:1
+#: hacks/config/xdaliclock.xml.h:2
+#: hacks/config/xdaliclock.xml.h:3
+msgid "Cycle Colors"
+msgstr ""
+
+#: hacks/config/xdaliclock.xml.h:4
+msgid "Display Seconds"
+msgstr ""
+
+#: hacks/config/xdaliclock.xml.h:5
+#: hacks/config/xdaliclock.xml.h:6
+#: hacks/config/xmatrix.xml.h:8
+#: hacks/config/xdaliclock.xml.h:7
+#: hacks/config/xdaliclock.xml.h:8
+#: hacks/config/xmatrix.xml.h:14
+#: hacks/config/xdaliclock.xml.h:9
+msgid "XDaliClock"
+msgstr "XDaliClock"
+
+#: hacks/config/xdaliclock.xml.h:10
+msgid "XDaliClock draws a large digital clock, the numbers of which change by ``melting'' into their new shapes. Written by Jamie Zawinski. This is not included with the XScreenSaver package, but if you don't have it already, you can find it at &lt;http://www.jwz.org/xdaliclock/&gt;."
+msgstr ""
+
+#: hacks/config/xearth.xml.h:1
+#: hacks/config/xearth.xml.h:2
+msgid "Date/Time Stamp"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:3
+msgid "Day  Dim"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:5
+#: hacks/config/xearth.xml.h:8
+#: hacks/config/xearth.xml.h:9
+#: hacks/config/xearth.xml.h:10
+#: hacks/config/xearth.xml.h:13
+msgid "Mercator Projection"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:14
+msgid "Night   Dim"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:15
+#: hacks/config/xearth.xml.h:16
+msgid "North/South Rotation"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:18
+#: hacks/config/xearth.xml.h:19
+#: hacks/config/xearth.xml.h:20
+msgid "Shaded Image"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:21
+msgid "Sharp"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:23
+#: hacks/config/xearth.xml.h:26
+msgid "Terminator   Blurry"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:27
+msgid "Time Warp"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:29
+#: hacks/config/xearth.xml.h:30
+#: hacks/config/xearth.xml.h:31
+msgid "XEarth draws an image of the Earth, as seen from your favorite vantage point in space, correctly shaded for the current position of the Sun. Written by Kirk Johnson. This is not included with the XScreenSaver package, but if you don't have it already, you can find it at &lt;http://www.cs.colorado.edu/~tuna/xearth/&gt;."
+msgstr ""
+
+#: hacks/config/xearth.xml.h:32
+#: hacks/config/xfishtank.xml.h:5
+#: hacks/config/xfishtank.xml.h:6
+#: hacks/config/xfishtank.xml.h:7
+msgid "Fish! This is not included with the XScreenSaver package, but if you don't have it already, you can find it at &lt;http://metalab.unc.edu/pub/Linux/X11/demos/&gt;."
+msgstr ""
+
+#: hacks/config/xfishtank.xml.h:12
+#: hacks/config/xflame.xml.h:1
+#: hacks/config/xflame.xml.h:2
+msgid "Draws a simulation of pulsing fire. It can also take an arbitrary image and set it on fire too. Written by Carsten Haitzler, hacked on by many others."
+msgstr ""
+
+#: hacks/config/xflame.xml.h:3
+msgid "Enable Blooming"
+msgstr ""
+
+#: hacks/config/xflame.xml.h:8
+#: hacks/config/xjack.xml.h:4
+msgid "This program behaves schizophrenically and makes a lot of typos. Written by Jamie Zawinski. If you haven't seen Stanley Kubrick's masterpiece, ``The Shining,'' you won't get it. Those who have describe this hack as ``inspired.''"
+msgstr ""
+
+#: hacks/config/xjack.xml.h:5
+#: hacks/config/xlyap.xml.h:1
+msgid "This generates pretty fractal pictures by doing funky math involving the ``Lyapunov exponent.'' It has a cool interactive mode, too. Written by Ron Record."
+msgstr ""
+
+#: hacks/config/xlyap.xml.h:2
+#: hacks/config/xmatrix.xml.h:1
+msgid "A rendition of the text scrolls seen in the movie ``The Matrix.'' Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:2
+#: hacks/config/xmatrix.xml.h:3
+msgid "Expansion Algorithm"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:5
+#: hacks/config/xmatrix.xml.h:6
+#: hacks/config/xmatrix.xml.h:7
+#: hacks/config/xmatrix.xml.h:9
+#: hacks/config/xmatrix.xml.h:10
+#: hacks/config/xmatrix.xml.h:11
+msgid "Run Trace Program"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:12
+msgid "Slider Algorithm"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:17
+msgid "Synergistic Algorithm"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:18
+#: hacks/config/xmountains.xml.h:2
+#: hacks/config/xmountains.xml.h:3
+#: hacks/config/xmountains.xml.h:6
+#: hacks/config/xmountains.xml.h:7
+msgid "XMountains generates realistic-looking fractal terrains of snow-capped mountains near water, with either a top view or a side view. Written by Stephen Booth. This is not included with the XScreenSaver package, but if you don't have it already, you can find it at &lt;http://www.epcc.ed.ac.uk/~spb/xmountains/&gt;. Be sure to compile it with -DVROOT or it won't work right when launched by the xscreensaver daemon."
+msgstr ""
+
+#: hacks/config/xmountains.xml.h:8
+#: hacks/config/xrayswarm.xml.h:1
+msgid "Draws a few swarms of critters flying around the screen, with nicely faded color trails behind them. Written by Chris Leger."
+msgstr ""
+
+#: hacks/config/xrayswarm.xml.h:5
+msgid "XRaySwarm"
+msgstr ""
+
+#: hacks/config/xsnow.xml.h:1
+msgid "Draws falling snow and the occasional tiny Santa. By Rick Jansen. You can find it at &lt;http://www.euronet.nl/~rja/Xsnow/&gt;."
+msgstr ""
+
+#: hacks/config/xsnow.xml.h:2
+#: hacks/config/xspirograph.xml.h:4
+#: hacks/config/xspirograph.xml.h:5
+msgid "Simulates that pen-in-nested-plastic-gears toy from your childhood. By Rohit Singh."
+msgstr ""
+
+#: hacks/config/xspirograph.xml.h:6
+msgid "XSpiroGraph"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:1
+msgid "Color Bars Enabled"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:2
+msgid "Cycle Through Modes"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:3
+msgid "Rolling Enabled"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:4
+msgid "Static Enabled"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:5
+msgid "XTeeVee"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:6
+msgid "XTeeVee simulates various television problems, including static, loss of vertical hold, and a test pattern. By Greg Knauss."
+msgstr ""
+
+#: hacks/config/zoom.xml.h:3
+msgid "Lens Offset"
+msgstr ""
+
+#: hacks/config/zoom.xml.h:4
+#: hacks/config/zoom.xml.h:9
+msgid "Zooms in on a part of the screen and then moves around. With the -lenses option the result is like looking through many overlapping lenses rather than just a simple zoom. Written by James Macnicol."
+msgstr ""
+

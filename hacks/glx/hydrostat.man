@@ -1,0 +1,108 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+hydrostat \- Wiggly squid or jellyfish with many tentacles.
+.SH SYNOPSIS
+.B hydrostat
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-speed \fInumber\fP]
+[\-\-count \fInumber\fP]
+[\-\-head-radius \fInumber\fP]
+[\-\-tentacles \fInumber\fP]
+[\-\-thickness \fInumber\fP]
+[\-\-length \fInumber\fP]
+[\-\-gravity \fInumber\fP]
+[\-\-current \fInumber\fP]
+[\-\-friction \fInumber\fP]
+[\-\-no-pulse]
+[\-\-wireframe]
+[\-\-fps]
+.SH DESCRIPTION
+Wiggly squid or jellyfish with many tentacles.  A muscular hydrostat
+is a biological structure used to move its host about, consisting of
+muscles with no skeletal support. It performs its hydraulic movement
+without fluid in a separate compartment, as in a hydrostatic
+skeleton.
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
+.TP 8
+.B \-\-speed \fInumber\fP
+Animation speed.  2.0 means twice as fast, 0.5 means half as fast.
+.TP 8
+.B \-\-count \fInumber\fP
+Number of squid.  1 - 100.  Default: 10.
+.TP 8
+.B \-\-head-radius \fInumber\fP
+Head size.  10 - 100.  Default: 60.
+.TP 8
+.B \-\-tentacles \fInumber\fP
+Number of tentacles.  3 - 100.  Default: 40.
+.TP 8
+.B \-\-thickness \fInumber\fP
+Thickness of tentacles.  3 - 40.  Default: 18.
+.TP 8
+.B \-\-length \fInumber\fP
+Length of tentacles.  10 - 150.  Default: 70.
+.TP 8
+.B \-\-gravity \fInumber\fP
+Strength of gravity.  0 - 10.0.  Default: 0.5.
+.TP 8
+.B \-\-current \fInumber\fP
+Strength of current.  0.0 - 10.0.  Default: 0.25.
+.TP 8
+.B \-\-friction \fInumber\fP
+Coefficient of friction.  0.0 - 0.1.  Default: 0.02.
+.TP 8
+.B \-\-pulse | \-\-no-pulse
+Whether the squid should pulse. Default true.
+.TP 8
+.B \-\-wireframe | \-\-no-wireframe
+Render in wireframe instead of solid.
+.TP 8
+.B \-\-fps | \-\-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2016 by Justin Windle and Jamie Zawinski.  Permission
+to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided
+that the above copyright notice appear in all copies and that both
+that copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+.SH AUTHOR
+Justin Windle and Jamie Zawinski.
