@@ -30,7 +30,7 @@
    <vgroup>
     <number id="resolution" type="slider" arg="--resolution %"
             _label="Polygon count" _low-label="Low" _high-label="High"
-            low="4" high="20" default="4"/>
+            low="4" high="20" default="8"/>
 
   <number id="maxColors" type="slider" arg="--maxColors %"
           _label="Colors" _low-label="Few" _high-label="Many"

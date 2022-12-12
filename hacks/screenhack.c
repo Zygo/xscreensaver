@@ -855,7 +855,7 @@ main (int argc, char **argv)
 	      x = 18;
 	    }
 	  x += size;
-	  fprintf (stderr, "%s", sw);
+	  fprintf (stderr, "-%s", sw);  /* two dashes */
 	  if (argp) fprintf (stderr, " <arg>");
 	  if (i != merged_options_size - 1) fprintf (stderr, ", ");
 	}

@@ -70,6 +70,7 @@ typedef struct {
 	int         inc;
 	int         circsize;
 	int         erase;
+	int         scale;
 	int         pix;
 	long        itree;
 	int         buffer;
@@ -80,7 +81,7 @@ typedef struct {
 	Cursor      cursor;
 #endif
 	GC          stippledGC;
-	XPoint    **pointBuffer;	/* pointer for XDrawPoints */
+	XRectangle **pointBuffer;
     Bool        button_down_p;
     int         mouse_x, mouse_y;
 
@@ -173,6 +174,9 @@ init_julia(ModeInfo * mi)
 	if (jp->depth > 10)
 		jp->depth = 10;
 
+    jp->scale = 1;
+    if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560)
+      jp->scale *= 3;  /* Retina displays */
 
 #ifndef HAVE_JWXYZ
 	if (jp->button_down_p && !jp->cursor && !jp->cursor)
@@ -205,12 +209,13 @@ init_julia(ModeInfo * mi)
 		gcv.foreground = 0;
 		bg_gc = XCreateGC(display, jp->pixmap, GCForeground, &gcv);
 		XFillRectangle(display, jp->pixmap, bg_gc,
-			       0, 0, jp->circsize, jp->circsize);
+                       0, 0, jp->circsize, jp->circsize);
 		if (jp->circsize < 2)
-			XDrawPoint(display, jp->pixmap, fg_gc, 0, 0);
+          XFillRectangle(display, jp->pixmap, fg_gc, 0, 0,
+                         jp->scale, jp->scale);
 		else
-			XFillArc(display, jp->pixmap, fg_gc,
-				 0, 0, jp->circsize, jp->circsize, 0, 23040);
+          XFillArc(display, jp->pixmap, fg_gc,
+                   0, 0, jp->circsize, jp->circsize, 0, 23040);
 		if (fg_gc != None)
 			XFreeGC(display, fg_gc);
 		if (bg_gc != None)
@@ -238,13 +243,15 @@ init_julia(ModeInfo * mi)
 	jp->inc = ((LRAND() & 1) * 2 - 1) * NRAND(200);
 	jp->nbuffers = (MI_CYCLES(mi) + 1);
 	if (!jp->pointBuffer)
-		jp->pointBuffer = (XPoint **) calloc(jp->nbuffers, sizeof (XPoint *));
+		jp->pointBuffer = (XRectangle **)
+          calloc(jp->nbuffers, sizeof (*jp->pointBuffer));
 	for (i = 0; i < jp->nbuffers; ++i)
 		if (jp->pointBuffer[i])
-			(void) memset((char *) jp->pointBuffer[i], 0,
-				      numpoints * sizeof (XPoint));
+          memset(jp->pointBuffer[i], 0,
+                 numpoints * sizeof (**jp->pointBuffer));
 		else
-			jp->pointBuffer[i] = (XPoint *) calloc(numpoints, sizeof (XPoint));
+			jp->pointBuffer[i] = (XRectangle *)
+              calloc(numpoints, sizeof (**jp->pointBuffer));
 	jp->buffer = 0;
 	jp->redrawing = 0;
 	jp->erase = 0;
@@ -309,13 +316,15 @@ draw_julia (ModeInfo * mi)
 	double      r, theta;
 	register double xr = 0.0, xi = 0.0;
 	int         k = 64, rnd = 0, i, j;
-	XPoint     *xp = jp->pointBuffer[jp->buffer], old_circle, new_circle;
+	XRectangle *xp = jp->pointBuffer[jp->buffer], old_circle, new_circle;
 
 	old_circle.x = (int) (jp->centerx * jp->cr / 2) + jp->centerx - 2;
 	old_circle.y = (int) (jp->centery * jp->ci / 2) + jp->centery - 2;
+	old_circle.width = old_circle.height = jp->scale;
 	incr(mi, jp);
 	new_circle.x = (int) (jp->centerx * jp->cr / 2) + jp->centerx - 2;
 	new_circle.y = (int) (jp->centery * jp->ci / 2) + jp->centery - 2;
+	new_circle.width = new_circle.height = jp->scale;
 	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
 	XFillArc(display, window, gc, 
              old_circle.x-jp->circsize/2-2,
@@ -337,8 +346,8 @@ draw_julia (ModeInfo * mi)
              0, 360*64);
 
 	if (jp->erase == 1) {
-		XDrawPoints(display, window, gc,
-		    jp->pointBuffer[jp->buffer], numpoints, CoordModeOrigin);
+		XFillRectangles(display, window, gc,
+                        jp->pointBuffer[jp->buffer], numpoints);
 	}
 	jp->inc++;
 	if (MI_NPIXELS(mi) > 2) {
@@ -377,14 +386,15 @@ draw_julia (ModeInfo * mi)
 		}
 		xp->x = jp->centerx + (int) ((jp->centerx >> 1) * xr);
 		xp->y = jp->centery + (int) ((jp->centery >> 1) * xi);
+        xp->width = xp->height = jp->scale;
 		xp++;
 	}
 
 	jp->itree = 0;
 	apply(jp, xr, xi, jp->depth);
 
-	XDrawPoints(display, window, gc,
-		    jp->pointBuffer[jp->buffer], numpoints, CoordModeOrigin);
+	XFillRectangles (display, window, gc,
+                     jp->pointBuffer[jp->buffer], numpoints);
 
 	jp->buffer++;
 	if (jp->buffer > jp->nbuffers - 1) {
@@ -394,8 +404,8 @@ draw_julia (ModeInfo * mi)
 	if (jp->redrawing) {
 		for (i = 0; i < REDRAWSTEP; i++) {
 			j = (jp->buffer - jp->redrawpos + jp->nbuffers) % jp->nbuffers;
-			XDrawPoints(display, window, gc,
-			     jp->pointBuffer[j], numpoints, CoordModeOrigin);
+			XFillRectangles (display, window, gc,
+                             jp->pointBuffer[j], numpoints);
 
 			if (++(jp->redrawpos) >= jp->nbuffers) {
 				jp->redrawing = 0;

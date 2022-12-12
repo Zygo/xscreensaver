@@ -1980,7 +1980,8 @@ windows_10 (Display *dpy, Window window)
                                         bst->fg, bst->bg, bst->xgwa.depth);
   {
     int n = 2;
-    if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+    if (bst->xgwa.width > 2560 || bst->xgwa.height > 2560)
+      n++;  /* Retina displays */
     for (i = 0; i < n; i++)
       {
         pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
@@ -2368,7 +2369,8 @@ windows_ransomware (Display *dpy, Window window)
   while (excuse_quip == excuse_quip_2)
     excuse_quip_2 = excuse_quips[random() % countof(excuse_quips)];
 
-  if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+  if (bst->xgwa.width > 2560 || bst->xgwa.height > 2560)
+    n++;  /* Retina displays */
   for (i = 0; i < n; i++)
     {
       pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
@@ -2849,7 +2851,8 @@ amiga (Display *dpy, Window window)
     {
       int i, n = 0;
       if (MIN (bst->xgwa.width, bst->xgwa.height) > 600) n++;
-      if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+      if (bst->xgwa.width > 2560 || bst->xgwa.height > 2560)
+        n++;  /* Retina displays */
       for (i = 0; i < n; i++)
         {
           pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
@@ -3220,7 +3223,8 @@ mac1 (Display *dpy, Window window)
       pix_h < bst->xgwa.height / 2)
     {
       int i, n = 1;
-      if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+      if (bst->xgwa.width > 2560 || bst->xgwa.height > 2560)
+        n++;  /* Retina displays */
       for (i = 0; i < n; i++)
         {
           pixmap = double_pixmap (dpy, bst->xgwa.visual,
@@ -3590,7 +3594,8 @@ macx_install (Display *dpy, Window window)
   if (pixmap)
     {
       int i, n = 0;
-      if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+      if (bst->xgwa.width > 2560 || bst->xgwa.height > 2560)
+        n++;  /* Retina displays */
       for (i = 0; i < n; i++)
         {
           pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
@@ -6483,7 +6488,8 @@ android (Display *dpy, Window window)
   if (! pixmap) abort();
   {
     int i, n = 0;
-    if (bst->xgwa.width > 2560) n++;  /* Retina displays */
+    if (bst->xgwa.width > 2560 || bst->xgwa.height > 2560)
+      n++;  /* Retina displays */
     for (i = 0; i < n; i++)
       {
         pixmap = double_pixmap (dpy, bst->xgwa.visual, bst->xgwa.depth,
@@ -7324,8 +7330,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-android",	".doAndroid",		XrmoptionNoArg,  "False" },
   { "-vmware",		".doVMware",		XrmoptionNoArg,  "True"  },
   { "-no-vmware",	".doVMware",		XrmoptionNoArg,  "False" },
-  { "-vmware-arm",	".doVMwareArm",		XrmoptionNoArg,  "True"  },
-  { "-no-vmware-arm",	".doVMwareArm",		XrmoptionNoArg,  "False" },
+  { "-vmwarearm",	".doVMwareArm",		XrmoptionNoArg,  "True"  },
+  { "-no-vmwarearm",	".doVMwareArm",		XrmoptionNoArg,  "False" },
   { "-encom",		".doEncom",		XrmoptionNoArg,  "True"  },
   { "-no-encom",	".doEncom",		XrmoptionNoArg,  "False" },
   { "-dvd",		".doDVD",		XrmoptionNoArg,  "True"  },

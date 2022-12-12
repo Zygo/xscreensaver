@@ -22,6 +22,7 @@ struct state {
   Bool xsym, ysym;
   int sleep_time;
   int xlim, ylim;
+  int scale;
   XColor color;
   int current_x, current_y, remaining_iterations;
   eraser_state *eraser;
@@ -36,6 +37,12 @@ rorschach_init (Display *dpy, Window window)
   Colormap cmap;
   XWindowAttributes xgwa;
   XGetWindowAttributes (dpy, window, &xgwa);
+
+  st->scale = 1;
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    st->scale *= 3;  /* Retina displays */
+
+
   cmap = xgwa.colormap;
   gcv.foreground = st->default_fg_pixel =
     get_pixel_resource (dpy, cmap, "foreground", "Foreground");
@@ -93,7 +100,7 @@ static void
 rorschach_draw_step (Display *dpy, Window window, struct state *st)
 {
 # define ITER_CHUNK 300
-  XPoint points [4 * ITER_CHUNK];
+  XRectangle points [4 * ITER_CHUNK];
   int x = st->current_x;
   int y = st->current_y;
   int i, j = 0;
@@ -108,27 +115,31 @@ rorschach_draw_step (Display *dpy, Window window, struct state *st)
       y += ((random () % (1 + (st->offset << 1))) - st->offset);
       points [j].x = x;
       points [j].y = y;
+      points[j].width = points[j].height = st->scale;
       j++;
       if (st->xsym)
 	{
 	  points [j].x = st->xlim - x;
 	  points [j].y = y;
+          points[j].width = points[j].height = st->scale;
 	  j++;
 	}
       if (st->ysym)
 	{
 	  points [j].x = x;
 	  points [j].y = st->ylim - y;
+          points[j].width = points[j].height = st->scale;
 	  j++;
 	}
       if (st->xsym && st->ysym)
 	{
 	  points [j].x = st->xlim - x;
 	  points [j].y = st->ylim - y;
+          points[j].width = points[j].height = st->scale;
 	  j++;
 	}
     }
-  XDrawPoints (dpy, window, st->draw_gc, points, j, CoordModeOrigin);
+  XFillRectangles (dpy, window, st->draw_gc, points, j);
   st->remaining_iterations -= this_iterations;
   if (st->remaining_iterations < 0) st->remaining_iterations = 0;
   st->current_x = x;

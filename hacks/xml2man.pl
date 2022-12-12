@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.11 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.12 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -58,7 +58,7 @@ my $man_suffix = (".SH ENVIRONMENT\n" .
                   "stored in the RESOURCE_MANAGER property.\n" .
                   ".TP 8\n" .
                   ".B XSCREENSAVER_WINDOW\n" .
-                  "The window ID to use with \fI\-\-root\fP.\n" .
+                  "The window ID to use with \\fI\-\-root\\fP.\n" .
                   ".SH SEE ALSO\n" .
                   ".BR X (1),\n" .
                   ".BR xscreensaver (1)\n" .

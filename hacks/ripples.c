@@ -520,12 +520,7 @@ setup_X(struct state *st)
     long gcflags;
 
     gcv.function = GXcopy;
-    gcv.subwindow_mode = IncludeInferiors;
-
     gcflags = GCFunction;
-    if (use_subwindow_mode_p(xgwa.screen, st->window))	/* see grabscreen.c */
-      gcflags |= GCSubwindowMode;
-
     st->gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 
     st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,

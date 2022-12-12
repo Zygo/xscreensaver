@@ -663,6 +663,9 @@ _init_screen(struct state *st)
   if (st->tile==TILE_THIN)
     st->lwid=2;
 
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+    st->lwid *= 3;  /* Retina displays */
+
   _init_zlist(st);
 
   st->maxlen=(st->lwid>6) ? 2+(random()%4) :

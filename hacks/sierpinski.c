@@ -40,7 +40,8 @@ static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
 					"*ignoreRotation: True \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 # define BRIGHT_COLORS
 # define release_sierpinski 0

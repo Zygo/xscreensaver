@@ -385,8 +385,8 @@ clear_tank (atlantisstruct * ap)
 
   if (do_gradient && !ap->wire)
     {
-      GLfloat top[4] = { 0.00, 0.40, 0.70, };
-      GLfloat bot[4] = { 0.00, 0.05, 0.18, };
+      GLfloat top[4] = { 0.0, 0.400, 0.70, };
+      GLfloat bot[4] = { 0.0, 0.025, 0.09, };
 
       glMatrixMode(GL_PROJECTION);
       glPushMatrix();

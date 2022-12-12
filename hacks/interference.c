@@ -748,7 +748,8 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   if(radius < 1)
     radius = 1;
 
-  if (xgwa.width > 2560) scale = 3.5;  /* Retina displays */
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    scale = 3.5;  /* Retina displays */
   radius *= scale;
 
   create_image(dpy, c, &xgwa);

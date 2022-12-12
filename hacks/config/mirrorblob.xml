@@ -32,7 +32,7 @@
    <vgroup>
     <number id="resolution" type="slider" arg="--resolution %"
              _low-label="Low" _high-label="High"
-             _label="Resolution" low="4" high="50" default="30"/>
+             _label="Resolution" low="4" high="150" default="90"/>
 
     <number id="bumps" type="slider" arg="--bumps %"
             _low-label="None" _high-label="50 bumps"

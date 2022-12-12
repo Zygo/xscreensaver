@@ -1198,6 +1198,14 @@ static void initParams (struct state *st)
 	problems = 1;
     }
 
+    {
+      XWindowAttributes xgwa;
+      XGetWindowAttributes (st->dpy, st->window, &xgwa);
+      if (st->lineWidth <= 0) st->lineWidth = 1;
+      if (xgwa.width > 2560 || xgwa.height > 2560)
+        st->lineWidth *= 3;  /* Retina displays */
+    }
+
     st->nervousness = get_float_resource (st->dpy, "nervousness", "Float");
     if ((st->nervousness < 0) || (st->nervousness > 1))
     {

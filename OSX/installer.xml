@@ -3,7 +3,8 @@
   <title>XScreenSaver</title>
   <organization>org.jwz</organization>
   <!-- <domains enable_localSystem="true"/> -->
-  <options customize="never" require-scripts="true" rootVolumeOnly="true" />
+  <options customize="never" require-scripts="true" rootVolumeOnly="true"
+           hostArchitectures="x86_64,arm64" />
 
   <welcome file="welcome.rtf" mime-type="text/rtf" />
   <background file="background.png"  mime-type="image/png"
@@ -13,7 +14,7 @@
 
   <volume-check>
     <allowed-os-versions>
-      <os-version min="10.8.0"/>
+      <os-version min="10.13"/>
     </allowed-os-versions>
   </volume-check>
 

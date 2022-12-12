@@ -58,7 +58,8 @@ static const char sccsid[] = "@(#)lisa.c	5.00 2000/11/01 xlockmore";
 					"*size: 500 \n" \
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 # define UNIFORM_COLORS
 # define release_lisa 0
@@ -567,6 +568,9 @@ initlisa(ModeInfo * mi, lisas * loop)
 					 LINESTYLE, LINECAP, LINEJOIN);
 #endif  /* DRAWLINES */
   
+  if (mi->xgwa.width > 2560 || mi->xgwa.height > 2560)
+    loop->linewidth *= 2;  /* Retina displays */
+
   if ( loop->cstep < xMaxLines ) { 
 	/* we can send each color segment in a single request 
 	 * because the max request length is long enough 

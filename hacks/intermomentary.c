@@ -100,6 +100,7 @@ struct state {
 
   XColor *colors;
   int ncolors;
+  int pscale;
 };
 
 
@@ -230,7 +231,8 @@ draw_glowpoint(struct state *st, Drawable drawable,
 
             c = trans_point(st, px+i, py+j, 255, a, f);
             XSetForeground(st->dpy, fgc, get_pixel (st, c));
-            XDrawPoint(st->dpy, drawable, fgc, px + i, py + j);
+            XFillRectangle(st->dpy, drawable, fgc, px + i, py + j,
+                           st->pscale, st->pscale);
             XSetForeground(st->dpy, fgc, f->fgcolor);
         }
     }
@@ -279,7 +281,8 @@ moverender_rider(struct state *st, Drawable drawable,
         trans_point(st, px, py, c, 0.5, f);
 
         XSetForeground(st->dpy, fgc, get_pixel(st, c));
-        XDrawPoint(st->dpy, drawable, fgc, px, py);
+        XFillRectangle(st->dpy, drawable, fgc, px, py,
+                       st->pscale, st->pscale);
         XSetForeground(st->dpy, fgc, f->fgcolor);
     }
 }
@@ -325,12 +328,14 @@ render_disc(struct state *st, Drawable drawable, GC fgc, struct field *f, int dn
                 /* XPutPixel(f->off_map, p3ax, p3ay, f->fgcolor); */
                 c = trans_point(st, p3ax, p3ay, 255, 0.75, f);
                 XSetForeground(st->dpy, fgc, get_pixel (st, c));
-                XDrawPoint(st->dpy, drawable, fgc, p3ax, p3ay);
+                XFillRectangle(st->dpy, drawable, fgc, p3ax, p3ay,
+                               st->pscale, st->pscale);
 
                 /* XPutPixel(f->off_map, p3bx, p3by, f->fgcolor); */
                 c = trans_point(st, p3bx, p3by, 255, 0.75, f);
                 XSetForeground(st->dpy, fgc, get_pixel (st, c));
-                XDrawPoint(st->dpy, drawable, fgc, p3bx, p3by);
+                XFillRectangle(st->dpy, drawable, fgc, p3bx, p3by,
+                               st->pscale, st->pscale);
                 XSetForeground(st->dpy, fgc, f->fgcolor);
             }
         }
@@ -404,6 +409,12 @@ intermomentary_init (Display *dpy, Window window)
                                         "foreground", "Foreground");
     gcv.background = get_pixel_resource(dpy, st->xgwa.colormap,
                                         "background", "Background");
+
+    st->pscale = 1;
+    if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+      st->pscale *= 3;  /* Retina displays */
+    /* We aren't increasing the spacing between the pixels, just the size. */
+    /* #### This doesn't seem to help. Still needs lowrez. */
 
     {
       XColor fgc, bgc;

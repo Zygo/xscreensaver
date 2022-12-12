@@ -441,13 +441,32 @@ init_g (GLOBAL *g)
 
 }
 
+static void
+kaleidescope_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  GLOBAL *g = (GLOBAL *) closure;
+  int lw = 1;
+  g->xmax = w;
+  g->ymax = h;
+  g->xoff = g->xmax/2;
+  g->yoff = g->ymax/2;
+
+  if (w > 2560 || h > 2560) lw = 3;  /* Retina displays */
+  XSetLineAttributes (dpy, g->draw_gc,  lw, LineSolid, CapRound, JoinRound);
+  XSetLineAttributes (dpy, g->erase_gc, lw, LineSolid, CapRound, JoinRound);
+}
+
 static void *
 kaleidescope_init (Display *dpy, Window window)
 {
   GLOBAL *g = (GLOBAL *) calloc (1, sizeof(*g));
+  XWindowAttributes xgwa;
   g->dpy = dpy;
   g->window = window;
   init_g (g);
+  XGetWindowAttributes (dpy, window, &xgwa);
+  kaleidescope_reshape (dpy, window, g, xgwa.width, xgwa.height);
   create_objects(g);
   init_objects (g);
   return g;
@@ -463,17 +482,6 @@ kaleidescope_draw (Display *dpy, Window window, void *closure)
     g->done_once = 1;
   draw_objects (g);
   return g->delay;
-}
-
-static void
-kaleidescope_reshape (Display *dpy, Window window, void *closure, 
-                 unsigned int w, unsigned int h)
-{
-  GLOBAL *g = (GLOBAL *) closure;
-  g->xmax = w;
-  g->ymax = h;
-  g->xoff = g->xmax/2;
-  g->yoff = g->ymax/2;
 }
 
 static Bool

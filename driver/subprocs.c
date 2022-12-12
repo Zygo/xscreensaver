@@ -53,6 +53,7 @@
 #include "yarandom.h"
 #include "visual.h"		/* for id_to_visual() */
 #include "atoms.h"
+#include "screenshot.h"
 
 
 enum job_status {
@@ -64,6 +65,8 @@ enum job_status {
 		   handler.  Shortly after going into this state, the list
 		   element will be removed. */
 };
+
+#define EXEC_FAILED_EXIT_STATUS -33
 
 struct screenhack_job {
   char *name;
@@ -580,7 +583,10 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status,
       /* Treat exit code as a signed 8-bit quantity. */
       if (exit_status & 0x80) exit_status |= ~0xFF;
 
-      sprintf (msg, _("crashed with status %d"), exit_status);
+      if (exit_status == EXEC_FAILED_EXIT_STATUS)
+        strcpy (msg, _("is not installed"));
+      else
+        sprintf (msg, _("crashed with status %d"), exit_status);
       if (p->verbose_p)
         fprintf (stderr,
                  "%s: %d: child pid %lu (%s) exited abnormally"
@@ -777,7 +783,7 @@ fork_and_exec (saver_screen_info *ssi, const char *command)
 
       exec_command (p->shell, command, p->nice_inferior);
       /* If that returned, we were unable to exec the subprocess. */
-      exit (1);  /* exits child fork */
+      exit (EXEC_FAILED_EXIT_STATUS);  /* exits child fork */
       break;
 
     default:	/* parent */
@@ -960,6 +966,11 @@ spawn_screenhack (saver_screen_info *ssi)
 	  else
 	    goto AGAIN;
 	}
+
+      /* Install screenshot property on window. Must be after
+         select_visual_of_hack() which might replace the window. */
+      if (ssi->screenshot)
+        screenshot_save (si->dpy, ssi->screensaver_window, ssi->screenshot);
 
       if (getuid() == (uid_t) 0 || geteuid() == (uid_t) 0)
         /* Prior to XScreenSaver 6, if running as root, we would change the

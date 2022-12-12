@@ -571,7 +571,6 @@ tessellate (struct state *st)
     {
       XGCValues gcv;
       gcv.function = GXcopy;
-      gcv.subwindow_mode = IncludeInferiors;
       st->wgc = XCreateGC(st->dpy, st->window, GCFunction, &gcv);
       st->pgc = XCreateGC(st->dpy, st->image, GCFunction, &gcv);
     }
@@ -974,7 +973,7 @@ tessellimage_free (Display *dpy, Window window, void *closure)
 static const char *tessellimage_defaults [] = {
   ".background:			black",
   ".foreground:			white",
-  ".lowrez:                     True",
+/*  ".lowrez:                     True", */
   "*dontClearRoot:		True",
   "*fpsSolid:			true",
   "*mode:			random",

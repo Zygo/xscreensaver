@@ -213,6 +213,9 @@ deco_init (Display *dpy, Window window)
 
   XGetWindowAttributes (dpy, window, &st->xgwa);
 
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+    st->line_width *= 3;  /* Retina displays */
+
   st->ncolors = get_integer_resource (dpy, "ncolors", "Integer");
 
   gcv.foreground = get_pixel_resource(dpy, st->xgwa.colormap,
@@ -306,7 +309,7 @@ deco_free (Display *dpy, Window window, void *closure)
 static const char *deco_defaults [] = {
   ".background:		black",
   ".foreground:		white",
-  ".lowrez:		true",
+/*  ".lowrez:		true", */
   "*maxDepth:		12",
   "*minWidth:		20",
   "*minHeight:		20",

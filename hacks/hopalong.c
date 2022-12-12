@@ -185,8 +185,9 @@ typedef struct {
 	int         pix;
 	int         op;
 	int         count;
+	int         scale;
 	int         bufsize;
-	XPoint     *pointBuffer;	/* pointer for XDrawPoints */
+	XRectangle *pointBuffer;
 } hopstruct;
 
 static hopstruct *hops = (hopstruct *) NULL;
@@ -201,6 +202,11 @@ init_hop(ModeInfo * mi)
 
 	MI_INIT (mi, hops);
 	hp = &hops[MI_SCREEN(mi)];
+
+    hp->scale = 1;
+    if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560)
+      hp->scale *= 3;  /* Retina displays */
+    /* We aren't increasing the spacing between the pixels, just the size. */
 
 	hp->centerx = MI_WIDTH(mi) / 2;
 	hp->centery = MI_HEIGHT(mi) / 2;
@@ -377,8 +383,8 @@ init_hop(ModeInfo * mi)
 	hp->bufsize = MI_COUNT(mi);
 
 	if (hp->pointBuffer == NULL) {
-		if ((hp->pointBuffer = (XPoint *) malloc(hp->bufsize *
-				sizeof (XPoint))) == NULL)
+		if ((hp->pointBuffer = (XRectangle *) malloc(hp->bufsize *
+				sizeof (*hp->pointBuffer))) == NULL)
 			return;
 	}
 
@@ -393,7 +399,7 @@ ENTRYPOINT void
 draw_hop(ModeInfo * mi)
 {
 	double      oldj, oldi;
-	XPoint     *xp;
+	XRectangle *xp;
 	int         k;
 	hopstruct  *hp;
 
@@ -524,10 +530,11 @@ draw_hop(ModeInfo * mi)
 				xp->y = hp->centery - (int) (hp->i - hp->j);
 				break;
 		}
+        xp->width = xp->height = hp->scale;
 		xp++;
 	}
-	XDrawPoints(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
-		    hp->pointBuffer, hp->bufsize, CoordModeOrigin);
+	XFillRectangles(MI_DISPLAY(mi), MI_WINDOW(mi), MI_GC(mi),
+		    hp->pointBuffer, hp->bufsize);
 	if (++hp->count > MI_CYCLES(mi)) {
 		init_hop(mi);
 	}

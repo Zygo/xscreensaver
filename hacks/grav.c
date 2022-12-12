@@ -34,7 +34,8 @@ static const char sccsid[] = "@(#)grav.c	5.00 2000/11/01 xlockmore";
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
 					"*ignoreRotation: True \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 #define BRIGHT_COLORS
 # define release_grav 0
@@ -113,9 +114,6 @@ ModStruct   grav_description =
 
 #define Planet(x,y)\
   if ((x) >= 0 && (y) >= 0 && (x) <= gp->width && (y) <= gp->height) {\
-    if (planet->ri < 2)\
-     XDrawPoint(display, window, gc, (x), (y));\
-    else\
      XFillArc(display, window, gc,\
       (x) - planet->ri / 2, (y) - planet->ri / 2, planet->ri, planet->ri,\
       0, 23040);\
@@ -218,8 +216,13 @@ draw_planet(ModeInfo * mi, planetstruct * planet)
 	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 	Planet(gp->x, gp->y);
 	if (trail) {
+        int r = 1;
+        if (gp->width > 2560 || gp->height > 2560)
+          r *= 3;  /* Retina displays */
 		XSetForeground(display, gc, planet->colors);
-		XDrawPoint(display, MI_WINDOW(mi), gc, gp->x, gp->y);
+        XFillArc(display, MI_WINDOW(mi), gc,
+                 gp->x-r/2, gp->y-r/2, r, r,
+                 0, 23040);
 	}
 	/* Move */
 	gp->x = planet->xi;

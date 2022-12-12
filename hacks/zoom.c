@@ -118,12 +118,18 @@ zoom_init (Display *dpy, Window window)
   st->lensoffsety = get_integer_resource(st->dpy, "lensoffsety", "Integer");
   st->lensoffsety = MAX(0, MIN(st->pixwidth, st->lensoffsety));
 
+  if (st->sizex > 2560 || st->sizey > 2560)  /* Retina displays */
+    {
+      int s = 3;
+      st->pixwidth  *= s;
+      st->pixheight *= s;
+      st->pixspacex *= s;
+      st->pixspacey *= s;
+    }
+
   gcv.function = GXcopy;
-  gcv.subwindow_mode = IncludeInferiors;
   gcflags = GCForeground|GCFunction;
   gcv.foreground = bg;
-  if (!st->lenses && use_subwindow_mode_p(xgwa.screen, st->window))       /* see grabscreen.c */
-    gcflags |= GCSubwindowMode;
   st->window_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 
 
@@ -136,11 +142,6 @@ zoom_init (Display *dpy, Window window)
   st->start_time = time ((time_t *) 0);
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                             st->pm, 0, 0);
-
-  /* We might have needed this to grab the image, but if we leave this set
-     to GCSubwindowMode, then we'll *draw* right over subwindows too. */
-  XSetSubwindowMode (st->dpy, st->window_gc, ClipByChildren);
-
 
   nblocksx = (int)ceil((double)st->sizex / (double)(st->pixwidth + st->pixspacex));
   nblocksy = (int)ceil((double)st->sizey / (double)(st->pixheight + st->pixspacey));
@@ -251,22 +252,19 @@ zoom_free (Display *dpy, Window window, void *closure)
 
 static const char *zoom_defaults[] = {
   "*dontClearRoot: True",
-  ".foreground: white",
-  ".background: #111111",
-  ".lowrez: true",
-  "*fpsSolid:	true",
-#ifdef __sgi /* really, HAVE_READ_DISPLAY_EXTENSION */
-  "*visualID: Best",
-#endif
-  "*lenses:      true",
-  "*delay:       10000",
-  "*duration:    120",
-  "*pixwidth:    40",
-  "*pixheight:   40",
-  "*pixspacex:   2",
-  "*pixspacey:   2",
-  "*lensoffsetx: 5",
-  "*lensoffsety: 5",
+  ".foreground:    white",
+  ".background:    #111111",
+/* ".lowrez:        true", */
+  "*fpsSolid:	   true",
+  "*lenses:        true",
+  "*delay:         10000",
+  "*duration:      120",
+  "*pixwidth:      40",
+  "*pixheight:     40",
+  "*pixspacex:     2",
+  "*pixspacey:     2",
+  "*lensoffsetx:   5",
+  "*lensoffsety:   5",
 #ifdef HAVE_MOBILE
   "*ignoreRotation: True",
   "*rotateImages:   True",

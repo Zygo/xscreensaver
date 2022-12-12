@@ -37,7 +37,8 @@ static const char sccsid[] = "@(#)thornbird.c	5.00 2000/11/01 xlockmore";
 					 "*ncolors: 64    \n" \
 					 "*fpsSolid: true    \n" \
 					"*ignoreRotation: True \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 # define BRIGHT_COLORS
 # define release_thornbird 0
@@ -88,7 +89,8 @@ typedef struct {
 	int         pix;
 	int         count;
 	int         nbuffers;
-	XPoint    **pointBuffer;	/* pointer for XDrawPoints */
+	int         scale;
+	XRectangle **pointBuffer;
 } thornbirdstruct;
 
 static thornbirdstruct *thornbirds = (thornbirdstruct *) NULL;
@@ -104,7 +106,7 @@ free_thornbird(ModeInfo * mi)
 			if (hp->pointBuffer[buffer] != NULL)
 				(void) free((void *) hp->pointBuffer[buffer]);
 		(void) free((void *) hp->pointBuffer);
-		hp->pointBuffer = (XPoint **) NULL;
+		hp->pointBuffer = NULL;
 	}
 }
 
@@ -120,6 +122,10 @@ init_thornbird (ModeInfo * mi)
 	hp->maxx = MI_WIDTH(mi);
 	hp->maxy = MI_HEIGHT(mi);
 
+    hp->scale = 1;
+    if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560)
+      hp->scale *= 2;  /* Retina displays */
+
 	hp->b = 0.1;
 	hp->i = hp->j = 0.1;
 
@@ -129,15 +135,15 @@ init_thornbird (ModeInfo * mi)
 	hp->nbuffers = MI_CYCLES(mi);
 
 	if (hp->pointBuffer == NULL)
-		if ((hp->pointBuffer = (XPoint **) calloc(MI_CYCLES(mi),
-				sizeof (XPoint *))) == NULL) {
+		if ((hp->pointBuffer = (XRectangle **) calloc(MI_CYCLES(mi),
+				sizeof (*hp->pointBuffer))) == NULL) {
 			free_thornbird(mi);
 			return;
 		}
 
 	if (hp->pointBuffer[0] == NULL)
-		if ((hp->pointBuffer[0] = (XPoint *) malloc(MI_COUNT(mi) *
-				sizeof (XPoint))) == NULL) {
+		if ((hp->pointBuffer[0] = (XRectangle *) malloc(MI_COUNT(mi) *
+				sizeof (**hp->pointBuffer))) == NULL) {
 			free_thornbird(mi);
 			return;
 		}
@@ -167,7 +173,7 @@ draw_thornbird(ModeInfo * mi)
 	double      oldj, oldi;
 	int         batchcount = MI_COUNT(mi);
 	int         k;
-	XPoint     *xp;
+	XRectangle *xp;
 	GC          gc = MI_GC(mi);
 	int         erase;
 	int         current;
@@ -216,6 +222,7 @@ draw_thornbird(ModeInfo * mi)
 		xp->y = (short)
 		  (hp->maxy / 2 * (1
 						   - cost*hp->j + sint*cosp*hp->i - sint*sinp*hp->b));
+		xp->width = xp->height = hp->scale;
 		xp++;
 	}
 
@@ -223,15 +230,14 @@ draw_thornbird(ModeInfo * mi)
 
     if (MI_COUNT(mi) < 1) MI_COUNT(mi) = 1;
 	if (hp->pointBuffer[erase] == NULL) {
-		if ((hp->pointBuffer[erase] = (XPoint *) malloc(MI_COUNT(mi) *
-				sizeof (XPoint))) == NULL) {
+		if ((hp->pointBuffer[erase] = (XRectangle *) malloc(MI_COUNT(mi) *
+				sizeof (**hp->pointBuffer))) == NULL) {
 			free_thornbird(mi);
 			return;
 		}
 	} else {
 		XSetForeground(dsp, gc, MI_BLACK_PIXEL(mi));
-		XDrawPoints(dsp, win, gc, hp->pointBuffer[erase],
-			    batchcount, CoordModeOrigin);
+		XFillRectangles(dsp, win, gc, hp->pointBuffer[erase], batchcount);
 	}
 	if (MI_NPIXELS(mi) > 2) {
 		XSetForeground(dsp, gc, MI_PIXEL(mi, hp->pix));
@@ -245,8 +251,7 @@ draw_thornbird(ModeInfo * mi)
 	} else
 		XSetForeground(dsp, gc, MI_WHITE_PIXEL(mi));
 
-	XDrawPoints(dsp, win, gc, hp->pointBuffer[current],
-		    batchcount, CoordModeOrigin);
+	XFillRectangles(dsp, win, gc, hp->pointBuffer[current], batchcount);
 	hp->inc++;
 }
 

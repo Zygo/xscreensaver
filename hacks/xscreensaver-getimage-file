@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple; use LWP::UserAgent;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.67 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.68 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -1549,6 +1549,10 @@ sub main() {
   # started writing "Unable to flush stdout: Bad file descriptor" to stderr
   # at exit. So if stdout is closed, open it as /dev/null instead.
   #
+  # And then 5.36 changed STDOUT to :utf8 by default.
+  # "syswrite() isn't allowed on :utf8 handles".
+  #
+  binmode (STDOUT, ':raw');
   open (STDOUT, '>', '/dev/null')
     if (! defined (syswrite (STDOUT, "")));  # undef if fd closed; 0 if open.
 

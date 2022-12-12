@@ -505,6 +505,13 @@ main (int argc, char **argv)
           dpy_str = argv[++i];
           if (!dpy_str) goto HELP;
         }
+      else if (!strcmp (argv[i], "-ver") ||
+               !strcmp (argv[i], "-vers") ||
+               !strcmp (argv[i], "-version"))
+        {
+          fprintf (stderr, "%s\n", screensaver_id+4);
+          exit (1);
+        }
       else if (!strcmp (argv[i], "-sync") ||
                !strcmp (argv[i], "-synch") ||
                !strcmp (argv[i], "-synchronize") ||

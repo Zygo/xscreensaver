@@ -24,7 +24,7 @@
 #define MIN_DEPTH 2		/* rocks disappear when they get this close */
 #define MAX_DEPTH 60		/* this is where rocks appear */
 #define MIN_SIZE 3		/* how small where pixmaps are not used */
-#define MAX_SIZE 200		/* how big (in pixels) rocks are at depth 1 */
+#define MAX_SIZE 400		/* how big (in pixels) rocks are at depth 1 */
 #define DEPTH_SCALE 100		/* how many ticks there are between depths */
 #define SIN_RESOLUTION 1000
 
@@ -521,7 +521,7 @@ rocks_free (Display *dpy, Window window, void *closure)
 
 
 static const char *rocks_defaults [] = {
-  ".lowrez:     true",
+/*  ".lowrez:     true", */
   ".background:	Black",
   ".foreground:	#E9967A",
   "*fpsSolid:	true",

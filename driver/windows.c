@@ -38,6 +38,7 @@
 #include "atoms.h"
 #include "visual.h"
 #include "screens.h"
+#include "screenshot.h"
 #include "fade.h"
 #include "resources.h"
 #include "xft.h"
@@ -434,6 +435,16 @@ blank_screen (saver_info *si)
 
   initialize_screensaver_window (si);
   sync_server_dpms_settings (si->dpy, p);
+
+  /* Save a screenshot.  Must be before fade-out. */
+  for (i = 0; i < si->nscreens; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      if (ssi->screenshot)
+        XFreePixmap (si->dpy, ssi->screenshot);
+      ssi->screenshot =
+        screenshot_grab (si->dpy, ssi->screensaver_window, False, p->verbose_p);
+    }
 
   if (p->fade_p &&
       !si->demoing_p &&

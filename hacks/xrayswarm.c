@@ -56,7 +56,7 @@ from the X Consortium.
  **********************************************************************/
 
 static const char *xrayswarm_defaults [] ={
-        ".lowrez:               true",
+/*      ".lowrez:               true", */
 	".background:		black",
 	"*delay:		20000",
 	"*fpsSolid:		true",
@@ -297,8 +297,13 @@ static int initGraphics(struct state *st)
 
   st->delay = get_integer_resource(st->dpy, "delay","Integer");
   
+  xgcv.line_width = 1;
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    xgcv.line_width = 3;  /* Retina displays */
+
   xgcv.foreground=get_pixel_resource (st->dpy, cmap, "background", "Background");
-  st->fgc[0]=XCreateGC(st->dpy, st->win, GCForeground|GCFunction,&xgcv);
+  st->fgc[0]=XCreateGC(st->dpy, st->win, GCForeground|GCFunction|GCLineWidth,
+                       &xgcv);
 #ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (st->dpy, st->fgc[0], False);
 #endif
@@ -306,7 +311,8 @@ static int initGraphics(struct state *st)
   n=0;
   if (mono_p) {
     xgcv.foreground=get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
-    st->fgc[1]=XCreateGC(st->dpy,st->win,GCForeground|GCFunction,&xgcv);
+    st->fgc[1]=XCreateGC(st->dpy,st->win,GCForeground|GCFunction|GCLineWidth,
+                         &xgcv);
 #ifdef HAVE_JWXYZ
     jwxyz_XSetAntiAliasing (st->dpy, st->fgc[1], False);
 #endif
@@ -321,13 +327,16 @@ static int initGraphics(struct state *st)
       XAllocColor(st->dpy,cmap,&color);
       xgcv.foreground=color.pixel;
       if (st->fgc[i]) XFreeGC (st->dpy, st->fgc[i]);
-      st->fgc[i] = XCreateGC(st->dpy, st->win, GCForeground | GCFunction,&xgcv);
+      st->fgc[i] = XCreateGC(st->dpy, st->win,
+                             GCForeground|GCFunction|GCLineWidth, &xgcv);
 #ifdef HAVE_JWXYZ
       jwxyz_XSetAntiAliasing (st->dpy, st->fgc[i], False);
 #endif
     }
   }
-  st->cgc = XCreateGC(st->dpy,st->win,GCForeground|GCFunction,&xgcv);
+
+  st->cgc = XCreateGC(st->dpy,st->win,GCForeground|GCFunction|GCLineWidth,
+                      &xgcv);
   XSetGraphicsExposures(st->dpy,st->cgc,False);
 #ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (st->dpy, st->cgc, False);

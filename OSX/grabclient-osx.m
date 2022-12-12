@@ -25,7 +25,7 @@
 # import "SaverRunner.h"
 #endif
 #import "jwxyz-cocoa.h"
-#import "grabscreen.h"
+#import "grabclient.h"
 #import "colorbars.h"
 #import "resources.h"
 #import "usleep.h"

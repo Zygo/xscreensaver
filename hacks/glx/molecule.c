@@ -1235,15 +1235,15 @@ gl_init (ModeInfo *mi)
 static void
 startup_blurb (ModeInfo *mi)
 {
+#ifndef HAVE_ANDROID   /* Doesn't work -- causes whole scene to be black */
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   const char *s = "Constructing molecules...";
-#ifndef HAVE_ANDROID   /* Doesn't work -- causes whole scene to be black */
   print_texture_label (mi->dpy, mc->title_font,
                        mi->xgwa.width, mi->xgwa.height,
                        0, s);
-#endif
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
+#endif
 }
 
 ENTRYPOINT Bool

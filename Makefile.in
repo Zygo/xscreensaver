@@ -476,6 +476,8 @@ cerebrum::
 	--include 'install-sh' \
 	--include 'bin2c' \
 	--include 'ad2c' \
+	--include 'vidwhacker' \
+	--include 'webcollage' \
 	--include '*/' \
 	--exclude '*'
 

@@ -39,7 +39,8 @@ static const char sccsid[] = "@(#)discrete.c	5.00 2000/11/01 xlockmore";
 					"*ncolors: 100 \n" \
 					"*fpsSolid: true \n" \
 				    "*ignoreRotation: True \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 # define SMOOTH_COLORS
 # define release_discrete 0

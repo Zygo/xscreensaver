@@ -444,6 +444,10 @@ colour_init(struct state *st, XWindowAttributes *pxgwa)
   /* Set the line width
    */
   gcv.line_width = get_integer_resource (st->dpy, "lineWidth", "Integer");
+  if (gcv.line_width < 1) gcv.line_width = 1;
+  if (st->width > 2560 || st->height > 2560)
+    gcv.line_width *= 3;  /* Retina displays */
+
   if (gcv.line_width)
     {
       valuemask |= GCLineWidth;

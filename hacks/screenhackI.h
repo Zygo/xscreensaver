@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -120,7 +120,17 @@
 #  else
 #   include <GL/glx.h>
 #  endif
-# endif
+
+   /* Sep 2022: The current Raspberry Pi 4b drivers don't do GL_LINE_SMOOTH
+      properly: lines show up as barely-visible static noise.  So disable
+      it globally by just aliasing it to something mostly harmless. */
+#  if defined(__linux__) && defined(__aarch64__)
+#   undef GL_LINE_SMOOTH
+#   define GL_LINE_SMOOTH GL_NORMALIZE
+#   define GL_LINE_SMOOTH_BROKEN  /* To protect glDiable(GL_LINE_SMOOTH) */
+#  endif
+
+# endif /* real X11 */
 
 # ifdef HAVE_JWZGLES
 #  include "jwzgles.h"
@@ -158,7 +168,7 @@
 #include "resources.h"
 #include "hsv.h"
 #include "colors.h"
-#include "grabscreen.h"
+#include "grabclient.h"
 #include "visual.h"
 #include "fps.h"
 #include "xft.h"

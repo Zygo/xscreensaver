@@ -29,7 +29,7 @@ BEGIN { eval 'use LWP::Simple' }
 
 my $progname = $0; $progname =~ s@.*/@@g;
 $progname =~ s@\.pl$@@g;
-my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $url_template = undef;
@@ -42,17 +42,25 @@ my %cached_files;
 # script exits, even if abnormally.
 #
 my %rm_f;
-END {
-  my $exit = $?;
-  my @rm_f = keys %rm_f;
-  unlink @rm_f if (@rm_f);
-  $? = $exit;  # Don't clobber this script's exit code.
+END { rmf(); }
+
+sub rmf() {
+  foreach my $f (sort keys %rm_f) {
+    if (-e $f) {
+      print STDERR blurb() . "rm $f\n" if ($verbose > 1);
+      unlink $f;
+    }
+  }
+  %rm_f = ();
 }
 
 sub signal_cleanup($) {
   my ($s) = @_;
-  print STDERR "$progname: SIG$s\n" if ($verbose > 1);
-  exit (1);  # This causes END{} to run.
+  print STDERR blurb() . "SIG$s\n" if ($verbose > 1);
+  rmf();
+  # Propagate the signal and die. This does not cause END to run.
+  $SIG{$s} = 'DEFAULT';
+  kill ($s, $$);
 }
 
 $SIG{TERM} = \&signal_cleanup;  # kill
@@ -62,6 +70,12 @@ $SIG{KILL} = \&signal_cleanup;  # nope
 $SIG{ABRT} = \&signal_cleanup;
 $SIG{PIPE} = \&signal_cleanup;
 $SIG{HUP}  = \&signal_cleanup;
+
+# Add the file to the rm_f list, since you can't export hash variables.
+sub rm_atexit($) {
+  my ($file) = @_;
+  $rm_f{$file} = 1;
+}
 
 
 sub blurb() {
@@ -227,7 +241,7 @@ sub load_tile($$$$) {
   # Hit the network.
   #
   my $tmpfile = sprintf("%s/%08x.%s", $cache_dir, rand() * 0xFFFFFFFF, $suf);
-  $rm_f{$tmpfile} = 1;
+  rm_atexit ($tmpfile);
 
   acquire_lock();
   print STDERR blurb() . "downloading $url\n" if ($verbose > 1);

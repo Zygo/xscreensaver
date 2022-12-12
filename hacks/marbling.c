@@ -1,4 +1,4 @@
-/* marbling, Copyright (c) 2021 Jamie Zawinski <jwz@jwz.org>
+/* marbling, Copyright © 2021-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -161,7 +161,7 @@ const unsigned lerp_loss = 2; /* Min: 2 */
 
 /* == 8 for x86 and scalar. (Nice.) */
 /* const unsigned noise_out_bits = noise_work_bits - 3 * lerp_loss + 1; */
-#define noise_out_bits ((noise_work_bits - 3) * (lerp_loss + 1))
+#define noise_out_bits ((noise_work_bits - 3) * lerp_loss + 1)
 const unsigned noise_in_bits = 8;
 
 static INLINE v_uhi
@@ -188,6 +188,19 @@ fade (v_uhi t)
 
      The multiplications below should be unsigned, but the result is the same
      either way, because it's getting the low 16 bits (not the high 16).
+
+     All the v_(u)hi variables are vectors of 16-bit fixed-point ints, maybe
+     signed, maybe unsigned.  noise_in_bits and noise_out_bits determine how
+     many fractional bits are in use for the v_uhi variables that go into/come
+     out of noise().  And noise_out_bits is governed by the big expression at
+     the end of noise():
+
+     1. Going in, there's noise_work_bits worth of fraction in c0-c7.
+     2. The multiply in LERP() (either vqdmulhq_s16 or IMUL_HI) shifts
+        lerp_loss bits of fraction off the end of each int16. Because
+        LERP() is nested three deep, it's 3 * lerp_loss.
+     3. SCALE() shifts things one bit in the other direction.
+        Hence, noise_work_bits - 3 * lerp_loss + 1.
    */
 #if __ARM_NEON
   v_uhi ut2 = (t * t) >> 1;

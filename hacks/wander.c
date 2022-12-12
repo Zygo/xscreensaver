@@ -94,6 +94,8 @@ wander_init (Display *dpy, Window window)
     st->circles = get_boolean_resource (st->dpy, "circles", "Boolean");
     st->size = get_integer_resource (st->dpy, "size", "Integer");
     if (st->size < 1) st->size = 1;
+    if (st->width > 2560 || st->height > 2560)
+      st->size *= 3;  /* Retina displays */
     st->width = st->width / st->size;
     st->height = st->height / st->size;
     st->length = get_integer_resource (st->dpy, "length", "Integer");
@@ -247,7 +249,7 @@ wander_free (Display *dpy, Window window, void *closure)
 
 static const char *wander_defaults [] =
 {
-    ".lowrez:     true",
+/*    ".lowrez:     true", */
     ".background: black",
     ".foreground: white",
     ".fpsSolid:	  true",

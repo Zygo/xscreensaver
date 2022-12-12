@@ -172,6 +172,11 @@ boxfit_init (Display *dpy, Window window)
   if (st->inc < 1) st->inc = 1;
   if (st->border_size < 0) st->border_size = 0;
 
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560) {  /* Retina displays */
+    st->border_size *= 3;
+    st->spacing *= 3;
+  }
+
   gcv.line_width = st->border_size;
   gcv.background = st->bg_color;
   st->gc = XCreateGC (st->dpy, st->window, GCBackground|GCLineWidth, &gcv);

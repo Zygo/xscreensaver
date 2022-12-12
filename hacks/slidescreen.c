@@ -66,7 +66,8 @@ slidescreen_init (Display *dpy, Window window)
   st->grid_size = get_integer_resource (st->dpy, "gridSize", "Integer");
   st->pix_inc = get_integer_resource (st->dpy, "pixelIncrement", "Integer");
 
-  if (xgwa.width > 2560) st->grid_size *= 2;  /* Retina displays */
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    st->grid_size *= 2;  /* Retina displays */
 
 
   /* Don't let the grid be smaller than 5x5 */
@@ -177,10 +178,7 @@ slidescreen_init (Display *dpy, Window window)
 
   gcv.foreground = st->fg;
   gcv.function = GXcopy;
-  gcv.subwindow_mode = IncludeInferiors;
   gcflags = GCForeground |GCFunction;
-  if (use_subwindow_mode_p(xgwa.screen, st->window)) /* see grabscreen.c */
-    gcflags |= GCSubwindowMode;
   st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
 
   return st;
@@ -213,7 +211,8 @@ draw_grid (struct state *st)
       if (st->bitmap_h < st->grid_size*2) st->bitmap_h = st->grid_size*2;
     }
 
-  if (xgwa.width > 2560) border *= 2;  /* Retina displays */
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    border *= 2;  /* Retina displays */
 
   st->grid_w = st->bitmap_w / st->grid_size;
   st->grid_h = st->bitmap_h / st->grid_size;
@@ -479,11 +478,6 @@ slidescreen_free (Display *dpy, Window window, void *closure)
 static const char *slidescreen_defaults [] = {
   "*dontClearRoot:		True",
   "*fpsSolid:			true",
-
-#ifdef __sgi	/* really, HAVE_READ_DISPLAY_EXTENSION */
-  "*visualID:			Best",
-#endif
-
   ".background:			Black",
   ".foreground:			#BEBEBE",
   "*gridSize:			70",

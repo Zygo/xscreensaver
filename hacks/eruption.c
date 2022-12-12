@@ -580,7 +580,7 @@ static const char *eruption_defaults [] = {
   "*cooloff: 2",
   "*gravity: 1",
   "*heat: 256",
-  ".lowrez: true",  /* Too slow on Retina screens otherwise */
+  ".lowrez: true",  /* Too slow on macOS Retina screens otherwise */
   "*useSHM: True",
   0
 };

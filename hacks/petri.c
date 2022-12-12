@@ -252,9 +252,14 @@ setup_display (struct state *st)
     int mem_throttle = 0;
     char *s;
 
+    XGetWindowAttributes (st->dpy, st->window, &xgwa);
+
     if (cell_size < 1) cell_size = 1;
 
     osize = cell_size;
+
+    if (xgwa.width > 2560 || xgwa.height > 2560)
+      cell_size *= 2;  /* Retina displays */
 
     s = get_string_resource (st->dpy, "memThrottle", "MemThrottle");
     if (s)
@@ -278,8 +283,6 @@ setup_display (struct state *st)
         
         free (s);
       }
-
-    XGetWindowAttributes (st->dpy, st->window, &xgwa);
 
     st->originalcolors = get_boolean_resource (st->dpy, "originalcolors", "Boolean");
 

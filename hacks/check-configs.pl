@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.39 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.40 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -30,29 +30,29 @@ my $debug_p = 0;
 my $text_default_opts = '';
 foreach (qw(text-mode text-literal text-file text-url text-program)) {
   my $s = $_; $s =~ s/-(.)/\U$1/g; $s =~ s/url/URL/si;
-  $text_default_opts .= "{\"-$_\", \".$s\", XrmoptionSepArg, 0},\n";
+  $text_default_opts .= "{\"--$_\", \".$s\", XrmoptionSepArg, 0},\n";
 }
 my $image_default_opts = '';
 foreach (qw(choose-random-images grab-desktop-images)) {
   my $s = $_; $s =~ s/-(.)/\U$1/g;
-  $image_default_opts .= "{\"-$_\", \".$s\", XrmoptionSepArg, 0},\n";
+  $image_default_opts .= "{\"--$_\", \".$s\", XrmoptionSepArg, 0},\n";
 }
 my $xlockmore_default_opts = '';
 foreach (qw(count cycles delay ncolors size font)) {
-  $xlockmore_default_opts .= "{\"-$_\", \".$_\", XrmoptionSepArg, 0},\n";
+  $xlockmore_default_opts .= "{\"--$_\", \".$_\", XrmoptionSepArg, 0},\n";
 }
 $xlockmore_default_opts .= 
- "{\"-wireframe\", \".wireframe\", XrmoptionNoArg, \"true\"},\n" .
- "{\"-3d\", \".use3d\", XrmoptionNoArg, \"true\"},\n" .
- "{\"-no-3d\", \".use3d\", XrmoptionNoArg, \"false\"},\n";
+ "{\"--wireframe\", \".wireframe\", XrmoptionNoArg, \"true\"},\n" .
+ "{\"--3d\", \".use3d\", XrmoptionNoArg, \"true\"},\n" .
+ "{\"--no-3d\", \".use3d\", XrmoptionNoArg, \"false\"},\n";
 
 my $thread_default_opts = 
-  "{\"-threads\",    \".useThreads\", XrmoptionNoArg, \"True\"},\n" .
-  "{\"-no-threads\", \".useThreads\", XrmoptionNoArg, \"False\"},\n";
+  "{\"--threads\",    \".useThreads\", XrmoptionNoArg, \"True\"},\n" .
+  "{\"--no-threads\", \".useThreads\", XrmoptionNoArg, \"False\"},\n";
 
 my $analogtv_default_opts = '';
 foreach (qw(color tint brightness contrast)) {
-  $analogtv_default_opts .= "{\"-tv-$_\", \".TV$_\", XrmoptionSepArg, 0},\n";
+  $analogtv_default_opts .= "{\"--tv-$_\", \".TV$_\", XrmoptionSepArg, 0},\n";
 }
 
 $analogtv_default_opts .= $thread_default_opts;
@@ -61,7 +61,7 @@ $analogtv_default_opts .= $thread_default_opts;
 
 # Returns two tables:
 # - A table of the default resource values.
-# - A table of "-switch" => "resource: value", or "-switch" => "resource: %"
+# - A table of "--switch" => "resource: value", or "--switch" => "resource: %"
 #
 sub parse_src($) {
   my ($saver) = @_;
@@ -155,11 +155,11 @@ sub parse_src($) {
   print STDERR "$progname: $file: switches to resources:\n"
     if ($verbose > 2);
   my %switch_to_res;
-  $switch_to_res{'-fps'} = 'doFPS: true';
-  $switch_to_res{'-fg'}  = 'foreground: %';
-  $switch_to_res{'-bg'}  = 'background: %';
-  $switch_to_res{'-no-grab-desktop-images'}  = 'grabDesktopImages: false';
-  $switch_to_res{'-no-choose-random-images'}  = 'chooseRandomImages: false';
+  $switch_to_res{'--fps'} = 'doFPS: true';
+  $switch_to_res{'--fg'}  = 'foreground: %';
+  $switch_to_res{'--bg'}  = 'background: %';
+  $switch_to_res{'--no-grab-desktop-images'}  = 'grabDesktopImages: false';
+  $switch_to_res{'--no-choose-random-images'}  = 'chooseRandomImages: false';
 
   my ($ign, $opts) = ($body =~ m/(_options|\bopts)\s*\[\]\s*=\s*{(.*?)}\s*;/s);
   if  ($xlockmore_p || $thread_p || $analogtv_p || $opts) {
@@ -180,12 +180,13 @@ sub parse_src($) {
                   \s * \"([^\"]+)\" \s* ,
                   \s * ([^\s]+)     \s* ,
                   \s * (\"([^\"]*)\"|([a-zA-Z\d_]+)) \s* }@xi;
+      $switch =~ s/^(-[^-])/-$1/s;  # "-foo" => "--foo"
       print STDERR "$progname: $file: unparsable: $_\n" unless $switch;
       my $val = defined($v1) ? $v1 : $v2;
       $val = '%' if ($type eq 'XrmoptionSepArg');
       $res =~ s/^[.*]//s;
       $res =~ s/^[a-z\d]+\.//si;
-      $switch =~ s/^\+/-no-/s;
+      $switch =~ s/^\+/--no-/s;
 
       $val = "$res: $val";
       if (defined ($switch_to_res{$switch})) {
@@ -232,19 +233,19 @@ sub parse_xml($$$) {
     <select id="textMode">
       <option id="date"  _label="Display the date and time"/>
       <option id="text"  _label="Display static text"
-        arg-set="-text-mode literal"/>
+        arg-set="--text-mode literal"/>
       <option id="url"   _label="Display the contents of a URL"
-        arg-set="-text-mode url"/>
+        arg-set="--text-mode url"/>
     </select>
-    <string id="textLiteral" _label="Text to display" arg="-text-literal %"/>
-    <string id="textURL" _label="URL to display" arg="-text-url %"/>
+    <string id="textLiteral" _label="Text to display" arg="--text-literal %"/>
+    <string id="textURL" _label="URL to display" arg="--text-url %"/>
     @gs;
 
   $body =~ s@<xscreensaver-image\s*/?>@
     <boolean id="grabDesktopImages" _label="Grab screenshots"
-       arg-unset="-no-grab-desktop-images"/>
+       arg-unset="--no-grab-desktop-images"/>
     <boolean id="chooseRandomImages" _label="Use photo library"
-       arg-unset="-no-choose-random-images"/>
+       arg-unset="--no-choose-random-images"/>
     @gs;
 
   $body =~ s/<!--.*?-->/ /gsi;
@@ -386,6 +387,7 @@ sub parse_xml($$$) {
         my ($set)   = $ctrl->{'arg-set'};
         my ($unset) = $ctrl->{'arg-unset'};
         my ($arg) = $set || $unset || error ("$file: unparsable: $args");
+        $arg = lc($arg);
         my ($res) = $switch_to_res->{$arg};
           error ("$file: no resource for boolean switch \"$arg\"") unless $res;
 

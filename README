@@ -69,6 +69,16 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.06	* New hack, `hextrail'.
+	* `marbling' works again.
+	* Adjusted some of the very old hacks, which were written when pixels
+	  were larger, to be more visible on today's higher rez displays.
+	* X11: More robust desktop image grabbing.
+	* X11: Various improvements to `xscreensaver-settings'.
+	* X11: Silence new new Perl warnings from `xscreensaver-getimage-file'.
+	* X11: Supports "Lock" messages from systemd, e.g. when logind.conf
+          has "HandleLidSwitch=lock" instead of "suspend".
+
 6.05	* X11: Cope with dumb DPMS settings that existed pre-startup.
 	* X11: Silence new Perl warnings from `xscreensaver-getimage-file'.
 	* X11: Fix `sonar' pthreads crash on recent Pi systems.
@@ -76,6 +86,7 @@ Version History
 	* X11: GTK 3 is now required.
 	* macOS: Fixed the "Run savers on screens" preference in Random mode
           on multi-screen M1 systems.
+	* Retired `thornbird', which is redundant with `discrete'.
 
 6.04	* New hacks, `nakagin' and `chompytower'.
 	* Settings dialog shows diagnostics for bad image folders and feeds.

@@ -49,7 +49,8 @@ static const char sccsid[] = "@(#)vines.c	5.00 2000/11/01 xlockmore";
 					"*count: 0 \n" \
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # define free_vines 0
@@ -87,6 +88,7 @@ typedef struct {
 	int         ang;
 	int         centerx;
 	int         centery;
+	int         pscale;
 } vinestruct;
 
 static vinestruct *vines = (vinestruct *) NULL;
@@ -110,6 +112,13 @@ init_vines(ModeInfo * mi)
 	fp->i = 0;
 	fp->length = 0;
 	fp->iterations = 30 + NRAND(100);
+
+    fp->pscale = 1;  /* Retina displays */
+    if (MI_WIDTH(mi) > 1280 || MI_HEIGHT(mi) > 1280) fp->pscale *= 3;
+    if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560) fp->pscale *= 2;
+
+/*    XSetLineAttributes (MI_DISPLAY(mi), MI_GC(mi), fp->pscale,
+                          LineSolid, CapRound, JoinRound); */
 
 	MI_CLEARWINDOW(mi);
 }				/* init_vines */
@@ -137,6 +146,7 @@ draw_vines(ModeInfo * mi)
 
 		fp->ang = 60 + NRAND(720);
 		fp->length = 100 + NRAND(3000);
+        fp->length *= fp->pscale;
 		fp->constant = fp->length * (10 + NRAND(10));
 
 		fp->i = 0;

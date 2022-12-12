@@ -126,6 +126,7 @@ struct state {
 
    int draw_xlim, draw_ylim;
    int draw_reset;
+   int pscale;
 };
 
 
@@ -380,6 +381,10 @@ penetrate_init (Display *dpy, Window window)
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
   st->cmap = xgwa.colormap;
 
+  st->pscale = 1;
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    st->pscale *= 3;  /* Retina displays */
+
   st->lrate = 80;
   st->nextBonus = kFirstBonus;
   st->aim = 180;
@@ -502,11 +507,14 @@ static void DrawCity(struct state *st, int x, int y, XColor col)
 {
 	 XSetForeground (st->dpy, st->draw_gc, col.pixel);
 	 XFillRectangle(st->dpy, st->window, st->draw_gc,
-				  x - 30, y - 40, 60, 40);
+                        x - 30 * st->pscale, y - 40 * st->pscale,
+                        60 * st->pscale, 40 * st->pscale);
 	 XFillRectangle(st->dpy, st->window, st->draw_gc,
-						 x - 20, y - 50, 10, 10);
+                        x - 20 * st->pscale, y - 50 * st->pscale, 
+                        10 * st->pscale, 10 * st->pscale);
 	 XFillRectangle(st->dpy, st->window, st->draw_gc,
-				  x + 10, y - 50, 10, 10);
+                        x + 10 * st->pscale, y - 50 * st->pscale,
+                        10 * st->pscale, 10 * st->pscale);
 }
 
 static void DrawCities(struct state *st, int xlim, int ylim)
@@ -539,7 +547,7 @@ static void LoopMissiles(struct state *st, int xlim, int ylim)
 
       /* erase old one */
 
-	 XSetLineAttributes(st->dpy, st->draw_gc, 4, 0,0,0);
+	 XSetLineAttributes(st->dpy, st->draw_gc, 4*st->pscale, 0,0,0);
     XSetForeground (st->dpy, st->draw_gc, m->color.pixel);
 	 XDrawLine(st->dpy, st->window, st->draw_gc,
 				  old_x, old_y, m->x, m->y);
@@ -566,7 +574,7 @@ static void LoopMissiles(struct state *st, int xlim, int ylim)
 		else {
 		  int dx = abs(m->x - b->x);
 		  int dy = abs(m->y - b->y);
-		  int r = b->rad + 2;
+		  int r = b->rad + 2 * st->pscale;
 		  if ((dx < r) && (dy < r))
 			 if (dx * dx + dy * dy < r * r) {
 				m->alive = 0;
@@ -580,7 +588,7 @@ static void LoopMissiles(struct state *st, int xlim, int ylim)
 		float my_pos;
 		/* we just died */
 		Explode(st, m->x, m->y, kBoomRad + max, m->color, 0);
-		XSetLineAttributes(st->dpy, st->erase_gc, 4, 0,0,0);
+		XSetLineAttributes(st->dpy, st->erase_gc, 4*st->pscale, 0,0,0);
 		/* In a perfect world, we could simply erase a line from
 		   (m->startx, m->starty) to (m->x, m->y). This is not a
 		   perfect world. */
@@ -609,7 +617,7 @@ static void LoopLasers(struct state *st, int xlim, int ylim)
 		continue;
 
 	 if (m->oldx != -1) {
-		 XSetLineAttributes(st->dpy, st->erase_gc, 2, 0,0,0);
+		 XSetLineAttributes(st->dpy, st->erase_gc, 2*st->pscale, 0,0,0);
 		 XDrawLine(st->dpy, st->window, st->erase_gc,
 				  m->oldx2, m->oldy2, m->oldx, m->oldy);
 	 }
@@ -625,7 +633,7 @@ static void LoopLasers(struct state *st, int xlim, int ylim)
 	 m->oldx = x;
 	 m->oldy = y;
 
-	 XSetLineAttributes(st->dpy, st->draw_gc, 2, 0,0,0);
+	 XSetLineAttributes(st->dpy, st->draw_gc, 2*st->pscale, 0,0,0);
     XSetForeground (st->dpy, st->draw_gc, m->color.pixel);
 	 XDrawLine(st->dpy, st->window, st->draw_gc,
 				  m->x, m->y, x, y);
@@ -648,7 +656,7 @@ static void LoopLasers(struct state *st, int xlim, int ylim)
 		  else {
 			 int dx = abs(m->x - b->x);
 			 int dy = abs(m->y - b->y);
-			 int r = b->rad + 2;
+			 int r = b->rad + 2 * st->pscale;
 			 if (b->oflaser)
 				continue;
 			 if ((dx < r) && (dy < r))
@@ -683,13 +691,23 @@ static void LoopBooms(struct state *st, int xlim, int ylim)
 		  m->rad++;
 		  if (m->rad >= m->max)
 			 m->outgoing = 0;
-		  XSetLineAttributes(st->dpy, st->draw_gc, 1, 0,0,0);
+		  XSetLineAttributes(st->dpy, st->draw_gc, 1*st->pscale, 0,0,0);
 		  XSetForeground (st->dpy, st->draw_gc, m->color.pixel);
-		  XDrawArc(st->dpy, st->window, st->draw_gc, m->x - m->rad, m->y - m->rad, m->rad * 2, m->rad * 2, 0, 360 * 64);
+		  XDrawArc(st->dpy, st->window, st->draw_gc,
+                           m->x - m->rad * st->pscale,
+                           m->y - m->rad * st->pscale,
+                           m->rad * 2 * st->pscale,
+                           m->rad * 2 * st->pscale,
+                           0, 360 * 64);
 		}
 		else {
-		  XSetLineAttributes(st->dpy, st->erase_gc, 1, 0,0,0);
-		  XDrawArc(st->dpy, st->window, st->erase_gc, m->x - m->rad, m->y - m->rad, m->rad * 2, m->rad * 2, 0, 360 * 64);
+		  XSetLineAttributes(st->dpy, st->erase_gc, 1*st->pscale, 0,0,0);
+		  XDrawArc(st->dpy, st->window, st->erase_gc,
+                           m->x - m->rad * st->pscale,
+                           m->y - m->rad * st->pscale,
+                           m->rad * 2 * st->pscale,
+                           m->rad * 2 * st->pscale,
+                           0, 360 * 64);
 		  m->rad--;
 		  if (m->rad <= 0)
 			 m->alive = 0;
@@ -787,7 +805,7 @@ static void NewLevel(struct state *st, int xlim, int ylim)
 		int sumwidth;
 		/* draw live cities */
 		XFillRectangle(st->dpy, st->window, st->erase_gc,
-							0, ylim - 100, xlim, 100);
+                               0, ylim - 100 * st->pscale, xlim, 100 * st->pscale);
 
 		sprintf(buf, "X %ld", st->level * 100L);
 		/* how much they get */
@@ -851,7 +869,7 @@ static void NewLevel(struct state *st, int xlim, int ylim)
   }
 
   XFillRectangle(st->dpy, st->window, st->erase_gc,
-					  0, 0, xlim, ylim - 100);
+                 0, 0, xlim, ylim - 100 * st->pscale);
   
   if (!st->bround)
 	 st->level++;
@@ -882,7 +900,7 @@ static void NewLevel(struct state *st, int xlim, int ylim)
 		XSync(st->dpy, False);
 		usleep(1000000);
 		XFillRectangle(st->dpy, st->window, st->erase_gc,
-							0, 0, xlim, ylim - 100);
+                               0, 0, xlim, ylim - 100 * st->pscale);
 	 }
   }
 
@@ -997,7 +1015,7 @@ penetrate_free (Display *dpy, Window window, void *closure)
 
 
 static const char *penetrate_defaults [] = {
-  ".lowrez:     true",
+/*  ".lowrez:     true", */
   ".background:	black",
   ".foreground:	white",
   "*fpsTop:	true",

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2015 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -30,7 +30,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version  = q{ $Revision: 1.26 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version  = q{ $Revision: 1.28 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $tmpdir   = $ENV{TMPDIR} || "/tmp";
 my $tmpfile  = sprintf("%s/xssv.%08x.ppm", $tmpdir, rand(0xFFFFFFFF));
@@ -48,8 +48,13 @@ my $verbose = 0;
 my @programs = (
 
   "bttvgrab -d q -Q -l 1 -o ppm -f $tmpfile",	# BTTV
-  "qcam > $tmpfile",				# Connectix Qcam
   "gqcam -t PPM -d $tmpfile",			# GTK+ Qcam clone
+
+  # "qcam > $tmpfile",				# Connectix Qcam, circa 2001
+
+  # "qcam -s role=still > $tmpfile",		# libcamera-tools, circa 2022
+  # However, the above hangs for me on Raspbian 11.5, libcamera-tools 20221130
+  # with a USB camera on /dev/video0.
 
   "v4lctl snap ppm full $tmpfile",		# XawTV 3.94.
   "streamer -a -o $tmpfile",			# XawTV 3.76.
@@ -68,6 +73,10 @@ my @programs = (
 	"&& mv $tmpfile-00000.rgb $tmpfile",
 
   "ffmpeg -y -v quiet -i /dev/video0 -vframes:v 1 $tmpfile 2>&-",
+
+  # On macOS, adding "-f avfoundation" to the above "ffmpeg" command might
+  # work, but on an M1 I get "ChromaCamKit is an incompatible architecture".
+  # The version of "imagesnap" in MacPorts fails the same way (Sep 2022).
 
   # "mplayer -really-quiet tv://0 " .		# Maybe works with some cams?
   #         "-ao null -vo pnm -frames 1 2>&- " .

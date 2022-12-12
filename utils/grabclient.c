@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -83,9 +83,11 @@
  */
 
 #include "utils.h"
-#include "grabscreen.h"
+#include "grabclient.h"
 #include "resources.h"
 #include "yarandom.h"
+#include "xft.h"
+#include "font-retry.h"
 
 #ifdef HAVE_JWXYZ
 # include "jwxyz.h"
@@ -170,44 +172,6 @@ drawable_window_p (Display *dpy, Drawable d)
     return True;   /* It's a Window. */
   else
     return False;  /* It's a Pixmap, or an invalid ID. */
-}
-
-
-static Bool
-xscreensaver_window_p (Display *dpy, Window window)
-{
-  Atom type;
-  int format;
-  unsigned long nitems, bytesafter;
-  unsigned char *version;
-  if (XGetWindowProperty (dpy, window,
-			  XInternAtom (dpy, "_SCREENSAVER_VERSION", False),
-			  0, 1, False, XA_STRING,
-			  &type, &format, &nitems, &bytesafter,
-			  &version)
-      == Success
-      && type != None)
-    return True;
-  return False;
-}
-
-
-/* XCopyArea seems not to work right on SGI O2s if you draw in SubwindowMode
-   on a window whose depth is not the maximal depth of the screen?  Or
-   something.  Anyway, things don't work unless we: use SubwindowMode for
-   the real root window (or a legitimate virtual root window); but do not
-   use SubwindowMode for the xscreensaver window.  I make no attempt to
-   explain.
- */
-Bool
-use_subwindow_mode_p (Screen *screen, Window window)
-{
-  if (window != VirtualRootWindowOfScreen(screen))
-    return False;
-  else if (xscreensaver_window_p(DisplayOfScreen(screen), window))
-    return False;
-  else
-    return True;
 }
 
 
@@ -505,7 +469,7 @@ xscreensaver_getimage_cb (XtPointer closure, int *fd, XtIntervalId *id)
 
 
 /* Loads an image into the Drawable.
-   When grabbing desktop images, the Window will be unmapped first.
+   When grabbing desktop images, the Window may be temporarily unmapped.
    Used only when running "real" X11, not jwxyz.
  */
 static void
@@ -546,9 +510,10 @@ load_random_image_x11 (Screen *screen, Window window, Drawable drawable,
 
   /* In case "cmd" fails, leave some random image on the screen, not just
      black or white, so that it's more obvious what went wrong. */
-  checkerboard (screen, drawable);
   if (window == drawable)
     print_loading_msg (screen, window);
+  else
+    checkerboard (screen, drawable);
 
   XSync (dpy, True);
   hack_subproc_environment (dpy);
@@ -929,37 +894,36 @@ print_loading_msg (Screen *screen, Window window)
 {
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;
-  XGCValues gcv;
-  XFontStruct *f = 0;
-  GC gc;
-  char *fn = get_string_resource (dpy, "labelFont", "Font");
+  XftFont  *xftfont;
+  XftColor  xftcolor;
+  XftDraw  *xftdraw;
+  XGlyphInfo extents;
+  const char *fn = "sans-serif bold 36";
+  char *cname = get_string_resource (dpy, "foreground", "Foreground");
   const char *text = "Loading...";
   int w;
 
-  if (!fn) fn = get_string_resource (dpy, "titleFont", "Font");
-  if (!fn) fn = get_string_resource (dpy, "font", "Font");
-  if (!fn) fn = strdup ("-*-times-bold-r-normal-*-180-*");
-  f = XLoadQueryFont (dpy, fn);
-  if (!f) f = XLoadQueryFont (dpy, "fixed");
-  if (!f) abort();
-  free (fn);
-  fn = 0;
-
   XGetWindowAttributes (dpy, window, &xgwa);
-  w = XTextWidth (f, text, (int) strlen(text));
 
-  gcv.foreground = get_pixel_resource (dpy, xgwa.colormap,
-                                       "foreground", "Foreground");
-  gcv.background = get_pixel_resource (dpy, xgwa.colormap,
-                                       "background", "Background");
-  gcv.font = f->fid;
-  gc = XCreateGC (dpy, window, GCFont | GCForeground | GCBackground, &gcv);
-  XDrawImageString (dpy, window, gc,
-                    (xgwa.width - w) / 2,
-                    (xgwa.height - (f->ascent + f->descent)) / 2 + f->ascent,
-                    text, (int) strlen(text));
-  XFreeFont (dpy, f);
-  XFreeGC (dpy, gc);
+  xftfont = load_xft_font_retry (dpy, 0 /* screen_number(xgwa.screen) */, fn);
+
+  if (!cname) cname = strdup ("white");
+  XftColorAllocName (dpy, xgwa.visual, xgwa.colormap, cname, &xftcolor);
+  free (cname);
+
+  xftdraw = XftDrawCreate (dpy, window, xgwa.visual, xgwa.colormap);
+
+  XftTextExtentsUtf8 (dpy, xftfont, (FcChar8 *) text, strlen(text), &extents);
+  w = extents.xOff;
+
+  XftDrawStringUtf8 (xftdraw, &xftcolor, xftfont,
+                     (xgwa.width - w) / 2,
+                     (xgwa.height - (xftfont->ascent + xftfont->descent)) / 2 +
+                     xftfont->ascent,
+                     (FcChar8 *) text, strlen(text));
+
+  XftColorFree (dpy, xgwa.visual, xgwa.colormap, &xftcolor);
+  XftFontClose (dpy, xftfont);
   XSync (dpy, False);
 }
 

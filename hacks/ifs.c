@@ -61,10 +61,11 @@ struct state {
   int width, widthb, height;
   int width8, height8;
   unsigned int *board;
-  XPoint pointbuf[1000];
+  XRectangle pointbuf[1000];
   int npoints;
   int xmin, xmax, ymin, ymax;
   int x, y;
+  int pscale;
 
   int delay;
 
@@ -87,7 +88,7 @@ myrandom(float up)
 }
 
 static const char *ifs_defaults [] = {
-  ".lowrez:             true",
+/*  ".lowrez:             true", */
   ".background:		Black",
   "*lensnum:		3",
   "*fpsSolid:		true",
@@ -134,8 +135,7 @@ static XrmOptionDescRec ifs_options [] = {
 static void
 drawpoints(struct state *st)
 {
-  XDrawPoints(st->dpy, st->backbuffer, st->gc, st->pointbuf, st->npoints,
-	      CoordModeOrigin);
+  XFillRectangles(st->dpy, st->backbuffer, st->gc, st->pointbuf, st->npoints);
   st->npoints = 0;
 }
 
@@ -160,6 +160,8 @@ sp(struct state *st, int x, int y)
 
   st->pointbuf[st->npoints].x = x;
   st->pointbuf[st->npoints].y = y;
+  st->pointbuf[st->npoints].width =
+    st->pointbuf[st->npoints].height = st->pscale;
   st->npoints++;
 
   if (st->npoints >= countof(st->pointbuf)) {
@@ -348,9 +350,10 @@ ifs_draw (Display *dpy, Window window, void *closure)
     XSetForeground(st->dpy, st->gc, st->blackColor);
     XFillRectangle(st->dpy, st->backbuffer, st->gc,
 		   xmin, ymin,
-		   xmax - xmin + 1, ymax - ymin + 1);
-    st->xmin = st->width + 1;
-    st->xmax = st->ymax = -1;
+		   xmax - xmin + 1 * st->pscale,
+                   ymax - ymin + 1 * st->pscale);
+    st->xmin = st->width  + 1;
+    st->xmax = st->ymax =  -1;
     st->ymin = st->height + 1;
   }
 
@@ -430,6 +433,12 @@ ifs_init (Display *d_arg, Window w_arg)
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
   ifs_reshape(st->dpy, st->window, st, xgwa.width, xgwa.height);
 	
+  st->pscale = 1;
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    st->pscale *= 3;  /* Retina displays */
+  /* We aren't increasing the spacing between the pixels, just the size. */
+
+
   st->ncolours = get_integer_resource(st->dpy, "colors", "Colors");
   if (st->ncolours < st->lensnum)
     st->ncolours = st->lensnum;

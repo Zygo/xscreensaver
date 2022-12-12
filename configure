@@ -863,7 +863,6 @@ with_xf86gamma_ext
 with_xidle_ext
 with_sgi_ext
 with_sgivc_ext
-with_readdisplay
 with_xshm_ext
 with_xdbe_ext
 with_xkb_ext
@@ -1528,7 +1527,6 @@ Server Extension Options:
   --with-xidle-ext        Include support for the X11R5 XIDLE extension.
   --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.
   --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.
-  --with-readdisplay      Include support for the SGI XReadDisplay extension.
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-xkb-ext          Include support for the X Keyboard extension.
@@ -12284,88 +12282,6 @@ fi
 
 ###############################################################################
 #
-#       Check for the SGI XReadDisplay server extension.
-#
-###############################################################################
-
-have_readdisplay=no
-with_readdisplay_req=unspecified
-
-# Check whether --with-readdisplay was given.
-if test ${with_readdisplay+y}
-then :
-  withval=$with_readdisplay; with_readdisplay="$withval"; with_readdisplay_req="$withval"
-else $as_nop
-  with_readdisplay=$ac_irix
-fi
-
-   case "$with_readdisplay" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XReadDisplay headers" >&5
-printf %s "checking for XReadDisplay headers... " >&6; }
-     d=$with_readdisplay/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XReadDisplay libs" >&5
-printf %s "checking for XReadDisplay libs... " >&6; }
-     d=$with_readdisplay/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_readdisplay_req="yes"
-     with_readdisplay=$with_readdisplay_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-readdisplay must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-if test "$with_readdisplay" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/extensions/readdisplay.h" "ac_cv_header_X11_extensions_readdisplay_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_extensions_readdisplay_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_READ_DISPLAY_EXTENSION 1" >>confdefs.h
-
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-elif test "$with_readdisplay" != no; then
-  echo "error: must be yes or no: --with-readdisplay=$with_readdisplay"
-  exit 1
-fi
-
-###############################################################################
-#
 #       Check for the XSHM server extension.
 #
 ###############################################################################
@@ -14987,7 +14903,7 @@ if test "$with_gtk" = yes; then
 
   pkgs=''
   ok="yes"
-  pkg_check_version       gtk+-3.0  2.22.0 ; ac_gtk_version_string="$vers"
+  pkg_check_version       gtk+-3.0  3.0.0 ; ac_gtk_version_string="$vers"
   pkg_check_version    gmodule-2.0  2.0.0
   pkg_check_version     libxml-2.0  2.4.6
   pkg_check_version gdk-pixbuf-2.0  2.0.0
@@ -15029,7 +14945,7 @@ printf "%s\n" "$ac_cv_gtk_config_libs" >&6; }
 
   GTK_DATADIR=""
   if test "$have_gtk" = yes; then
-    GTK_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    GTK_DATADIR=`$pkg_config --variable=prefix gtk+-3.0`
     GTK_DATADIR="$GTK_DATADIR/share"
   fi
 
@@ -22039,7 +21955,7 @@ fi
 if test "$with_pam_req" = yes -a "$have_pam" = no ; then
   warn 'Use of PAM was requested, but it was not found.'
   CONF_STATUS=1
-elif test "$have_pam" = no ; then
+elif test "$have_pam" = no -a "$enable_locking" = yes ; then
   if test -d /etc/pam.d -o -f /etc/pam.conf ; then
     warn  "Your system seems to have PAM, but PAM is not being used."
     warn2 "That is probably not going to work out well."

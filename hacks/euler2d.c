@@ -557,6 +557,11 @@ init_euler2d (ModeInfo * mi)
         }
     }
 
+    if (sp->width > 2560 || sp->height > 2560)  /* Retina displays */
+      XSetLineAttributes (MI_DISPLAY(mi), MI_GC(mi),
+                          3, LineSolid, CapRound, JoinRound);
+
+
 	sp->N = MI_COUNT(mi)+number_of_vortex_points;
 	sp->Nvortex = number_of_vortex_points;
 

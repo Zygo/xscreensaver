@@ -34,8 +34,6 @@
 
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
-typedef struct { double a, o; } LL;	/* latitude + longitude */
-
 typedef struct triangle triangle;
 struct triangle {
   XYZ p[3];
@@ -423,7 +421,6 @@ init_hexstrut (ModeInfo *mi)
                      -0.4 + frand(0.8));
 
   if (thickness < 0.05) thickness = 0.05;
-  if (thickness < 0.05) MI_IS_WIREFRAME(mi) = True;
   if (thickness > 1.7) thickness = 1.7;
   if (speed > 2) speed = 2;
 

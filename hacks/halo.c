@@ -56,6 +56,7 @@ struct state {
   Bool done_once_no_really;
   int clear_tick;
   struct timeval then;
+  int scale;
 };
 
 #define min(x,y) ((x)<(y)?(x):(y))
@@ -80,12 +81,21 @@ init_circles_1 (struct state *st)
 	  int j = 8;
 	  int inc = ((random()%j) + (random()%j) + (random()%j)) - ((j*3)/2);
 	  if (inc < 0) inc = -inc + 3;
-	  st->circles [i].increment = inc + 3;
+	  st->circles [i].increment = (inc + 3) * st->scale;
 	}
       st->circles [i].radius = random () % st->circles [i].increment;
       st->circles [i].dx = ((random () % 3) - 1) * (1 + random () % 5);
       st->circles [i].dy = ((random () % 3) - 1) * (1 + random () % 5);
     }
+}
+
+static void
+halo_reshape (Display *dpy, Window window, void *closure, 
+                 unsigned int w, unsigned int h)
+{
+  struct state *st = (struct state *) closure;
+  st->scale = 1;
+  if (w > 2560 || h > 2560) st->scale *= 3;  /* Retina displays */
 }
 
 static void *
@@ -98,6 +108,8 @@ halo_init (Display *dpy, Window window)
   st->dpy = dpy;
   st->window = window;
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  halo_reshape (dpy, window, st, xgwa.width, xgwa.height);
+
   st->cmap = xgwa.colormap;
   st->global_count = get_integer_resource (st->dpy, "count", "Integer");
   if (st->global_count < 0) st->global_count = 0;
@@ -409,8 +421,7 @@ static const char *halo_defaults [] = {
 #ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
-  ".lowrez:		true",  /* Too slow on Retina screens otherwise */
-                     /* But that looks crappy too. It's bad either way. */
+/*  ".lowrez:		true",  */
   0
 };
 
@@ -422,12 +433,6 @@ static XrmOptionDescRec halo_options [] = {
   { "-colors",		".colors",	XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
-
-static void
-halo_reshape (Display *dpy, Window window, void *closure, 
-                 unsigned int w, unsigned int h)
-{
-}
 
 static Bool
 halo_event (Display *dpy, Window window, void *closure, XEvent *event)

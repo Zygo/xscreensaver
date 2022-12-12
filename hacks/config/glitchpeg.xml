@@ -19,7 +19,7 @@
 
     <number id="count" type="slider" arg="--count %"
             _label="Glitchiness" _low-label="Low" _high-label="High"
-            low="1" high="1024" default="100"/>
+            low="1" high="1024" default="400"/>
 
    </vgroup>
 

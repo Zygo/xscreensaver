@@ -1,5 +1,5 @@
 /* photopile, Copyright (c) 2008-2018 Jens Kilian <jjk@acm.org>
- * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
+ * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinskin <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its

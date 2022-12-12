@@ -460,7 +460,7 @@ init_penrose(ModeInfo * mi)
 	size = MI_SIZE(mi);
     tp->line_width = 1;
 
-   if (MI_WIDTH(mi) > 2560) {  /* Retina displays */
+   if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560) {  /* Retina displays */
      size *= 3;
      tp->line_width *= 3;
    }

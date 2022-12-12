@@ -1,0 +1,79 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+hextrail \- screen saver.
+.SH SYNOPSIS
+.B hextrail
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\--delay \fInumber\fP]
+[\--speed \fInumber\fP]
+[\--count \fInumber\fP]
+[\--thickness \fInumber\fP]
+[\--no-wander]
+[\--no-spin]
+[\--wireframe]
+[\--fps]
+.SH DESCRIPTION
+A network of colorful lines grows upon a hexagonal substrate.
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \--delay \fInumber\fP
+Frame rate.  0 - 100000.  Default: 30000.
+.TP 8
+.B \--speed \fInumber\fP
+Speed.	0.1 - 20.  Default: 1.0.
+.TP 8
+.B \--count \fInumber\fP
+Hexagon Size.  2 - 80.	Default: 20.
+.TP 8
+.B \--thickness \fInumber\fP
+Line Thickness.  0.01 - 0.5.  Default: 0.15.
+.TP 8
+.B \--no-wander | \-\-no--no-wander
+Wander.  Boolean.
+.TP 8
+.B \--no-spin | \-\-no--no-spin
+Spin.  Boolean.
+.TP 8
+.B \--wireframe | \-\-no--wireframe
+Wireframe.  Boolean.
+.TP 8
+.B \--fps | \-\-no--fps
+Show frame rate.  Boolean.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI--root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2022 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.

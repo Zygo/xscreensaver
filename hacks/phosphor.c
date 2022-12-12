@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1999-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1999-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -198,7 +198,11 @@ phosphor_init (Display *dpy, Window window)
   state->ticks = STATE_MAX + get_integer_resource (dpy, "ticks", "Integer");
   state->escstate = 0;
 
-  if (state->xgwa.width > 2560) state->scale *= 2;  /* Retina displays */
+  if (state->scale <= 0) state->scale = 1;
+  if (state->ticks <= 0) state->ticks = 1;
+
+  if (state->xgwa.width > 2560 || state->xgwa.height > 2560)
+    state->scale *= 2;  /* Retina displays */
 
   state->cursor_blink = get_integer_resource (dpy, "cursor", "Time");
 
@@ -1468,7 +1472,7 @@ phosphor_free (Display *dpy, Window window, void *closure)
 
 
 static const char *phosphor_defaults [] = {
-/*  ".lowrez:                true",*/
+/*  ".lowrez:                true", */
   ".background:		   Black",
   ".foreground:		   #00FF00",
   "*fpsSolid:		   true",

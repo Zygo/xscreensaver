@@ -1,11 +1,12 @@
-# Auto-generated: Sun May 29 13:46:24 PDT 2022
+# Auto-generated: Sun Nov  6 15:58:13 JST 2022
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
+driver/demo.ui
 driver/dialog.c
+driver/prefs.ui
 driver/subprocs.c
 driver/xscreensaver-settings.desktop.in
 driver/xscreensaver.desktop.in
-driver/xscreensaver.ui
 hacks/config/abstractile.xml
 hacks/config/anemone.xml
 hacks/config/anemotaxis.xml

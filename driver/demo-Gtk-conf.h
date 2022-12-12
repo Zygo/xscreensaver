@@ -48,6 +48,8 @@ extern void run_next_cb (GtkButton *, gpointer user_data);
 extern void run_prev_cb (GtkButton *, gpointer user_data);
 extern gboolean pref_changed_cb (GtkWidget *, gpointer user_data);
 extern gboolean pref_changed_event_cb (GtkWidget *, GdkEvent *, gpointer data);
+extern gboolean dpms_sanity_cb (GtkWidget *, gpointer user_data);
+extern gboolean dpms_sanity_event_cb (GtkWidget *, GdkEvent *, gpointer data);
 extern gboolean image_text_pref_changed_event_cb (GtkWidget *, GdkEvent *,
                                                   gpointer user_data);
 extern void mode_menu_item_cb (GtkWidget *, gpointer user_data);

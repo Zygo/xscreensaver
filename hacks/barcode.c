@@ -86,6 +86,7 @@ struct state {
   Bitmap *theBitmap; /* ginormo bitmap for drawing */
 
   enum { BC_SCROLL, BC_GRID, BC_CLOCK12, BC_CLOCK24 } mode;
+  int step;
 
   int grid_w;
   int grid_h;
@@ -1542,6 +1543,11 @@ static void setup (struct state *st)
     st->windowWidth = xgwa.width;
     st->windowHeight = xgwa.height;
 
+    st->step = get_integer_resource (st->dpy, "step", "Step");
+    if (st->step < 1) st->step = 1;
+    if (st->windowWidth > 2560 || st->windowHeight > 2560)
+      st->step *= 3;  /* Retina displays */
+
     gcv.background = get_pixel_resource (st->dpy, xgwa.colormap,
                                          "background", "Background");
     gcv.foreground = get_pixel_resource (st->dpy, xgwa.colormap,
@@ -1633,7 +1639,7 @@ static void scrollModel (struct state *st)
     for (i = 0; i < st->barcode_count; i++) 
     {
 	Barcode *b = &st->barcodes[i];
-	b->x--;
+	b->x -= st->step;
 	if ((b->x + BARCODE_WIDTH * b->mag) < 0) 
 	{
 	    /* fell off the edge */
@@ -1955,8 +1961,9 @@ barcode_free (Display *dpy, Window window, void *closure)
 static const char *barcode_defaults [] = {
     ".background:	black",
     ".foreground:	green",
-    ".lowrez:           true",
+/*  ".lowrez:           true", */
     "*fpsSolid: 	true",
+    "*step:	 	1",
     "*delay:		10000",
     "*mode:		scroll",
     0
@@ -1966,6 +1973,7 @@ static XrmOptionDescRec barcode_options [] = {
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
   { "-mode",             ".mode",           XrmoptionSepArg, 0 },
   { "-scroll",           ".mode",           XrmoptionNoArg, "scroll"  },
+  { "-step",             ".step",           XrmoptionNoArg, "step"    },
   { "-grid",             ".mode",           XrmoptionNoArg, "grid"    },
   { "-clock",            ".mode",           XrmoptionNoArg, "clock"   },
   { "-clock12",          ".mode",           XrmoptionNoArg, "clock12" },

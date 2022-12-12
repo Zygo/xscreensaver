@@ -28,11 +28,10 @@
  *     up again, it runs "xscreensaver-command -deactivate" to force the
  *     unlock dialog to appear immediately.
  *
- *   - When another process on the system makes asks for the screen saver
- *     to be inhibited (e.g. because a video is playing) this program
- *     periodically runs "xscreensaver-command -deactivate" to keep the
- *     display un-blanked.  It does this until the other program asks for
- *     it to stop.
+ *   - When another process on the system asks for the screen saver to be
+ *     inhibited (e.g. because a video is playing) this program periodically
+ *     runs "xscreensaver-command -deactivate" to keep the display un-blanked.
+ *     It does this until the other program asks for it to stop.
  *
  * For this to work at all, you must either:
  *
@@ -282,9 +281,6 @@
  *     qdbus org.gnome.ScreenSaver       /ScreenSaver
  *           org.gnome.ScreenSaver.GetActive
  *
- *   - Some people think that "loginctl lock-session" should do something.
- *     I can't tell what uses that, or what mechanism underlies it.
- *
  *
  *****************************************************************************
  *
@@ -362,7 +358,22 @@ static char *screensaver_version;
                              "interface='" DBUS_SD_INTERFACE "'," \
                              "member='PrepareForSleep'"
 
+/* This is for handling requests to lock or unlock, on the system bus.
+   This is sent by "loginctl lock-session", which in turn is run if someone
+   has added "HandleLidSwitch=lock" to /etc/systemd/logind.conf in order to
+   make closing the lid lock the screen *without* suspending.  Note that it
+   is sent on login1 *Session*, not *Manager*.
+ */
+#define DBUS_SD_LOCK_INTERFACE "org.freedesktop.login1.Session"
+#define DBUS_SD_LOCK_MATCH     "type='signal'," \
+                               "interface='" DBUS_SD_LOCK_INTERFACE "'," \
+                               "member='Lock'"
+#define DBUS_SD_UNLOCK_MATCH   "type='signal'," \
+                               "interface='" DBUS_SD_LOCK_INTERFACE "'," \
+                               "member='Unlock'"
+
 /* This is for blanking inhibition, on the user bus.
+   See the large comment above for the absolute mess that apps make of this.
  */
 #define DBUS_FDO_NAME          "org.freedesktop.ScreenSaver"
 #define DBUS_FDO_INTERFACE     DBUS_FDO_NAME
@@ -569,6 +580,32 @@ xscreensaver_prepare_for_sleep_cb (sd_bus_message *m, void *arg,
       fprintf (stderr, "%s: could not re-register sleep lock\n", blurb());
   }
 
+  return 1;  /* >= 0 means success */
+}
+
+
+/* Called when "org.freedesktop.login1.Session" sends a "Lock" signal.
+  The event is sent several times in quick succession.
+  https://www.freedesktop.org/software/systemd/man/org.freedesktop.login1.html
+ */
+static int
+xscreensaver_lock_cb (sd_bus_message *m, void *arg, sd_bus_error *ret_error)
+{
+  /* Tell xscreensaver that we are suspending, and to lock if desired.
+     Maybe sending "lock" here would be more appropriate, but that might
+     do a screen-fade first. */
+  xscreensaver_command ("suspend");
+  return 1;  /* >= 0 means success */
+}
+
+/* Called when "org.freedesktop.login1.Session" sends an "Unlock" signal.
+   I'm not sure if anything ever sends this.
+ */
+static int
+xscreensaver_unlock_cb (sd_bus_message *m, void *arg, sd_bus_error *ret_error)
+{
+  /* Tell xscreensaver to present the unlock dialog right now. */
+  xscreensaver_command ("deactivate");
   return 1;  /* >= 0 means success */
 }
 
@@ -1336,6 +1373,7 @@ xscreensaver_systemd_loop (void)
     goto FAIL;
 
   /* Register a callback for "org.freedesktop.login1.Manager.PrepareForSleep".
+     System bus.
    */
   rc = sd_bus_add_match (system_bus, NULL, DBUS_SD_MATCH,
                          xscreensaver_prepare_for_sleep_cb, &global_ctx);
@@ -1345,7 +1383,29 @@ xscreensaver_systemd_loop (void)
     goto FAIL;
   }
 
+  /* Register a callback for "org.freedesktop.login1.Session.Lock".
+     System bus.
+   */
+  rc = sd_bus_add_match (system_bus, NULL, DBUS_SD_LOCK_MATCH,
+                         xscreensaver_lock_cb, &global_ctx);
+  if (rc < 0) {
+    fprintf (stderr, "%s: registering lock-session callback failed: %s\n",
+             blurb(), strerror(-rc));
+    goto FAIL;
+  }
+
+  /* And for Unlock. */
+  rc = sd_bus_add_match (system_bus, NULL, DBUS_SD_UNLOCK_MATCH,
+                         xscreensaver_unlock_cb, &global_ctx);
+  if (rc < 0) {
+    fprintf (stderr, "%s: registering lock-session callback failed: %s\n",
+             blurb(), strerror(-rc));
+    goto FAIL;
+  }
+
+
   /* Register a callback for "org.gnome.SessionManager.InhibitorAdded".
+     User bus.
    */
   rc = sd_bus_add_match (user_bus, NULL, DBUS_GSN_MATCH_1,
                          xscreensaver_gnome_inhibitor_added_cb, &global_ctx);
@@ -1356,6 +1416,7 @@ xscreensaver_systemd_loop (void)
   }
 
   /* Register a callback for "org.gnome.SessionManager.InhibitorRemoved".
+     User bus.
    */
   rc = sd_bus_add_match (user_bus, NULL, DBUS_GSN_MATCH_2,
                          xscreensaver_gnome_inhibitor_removed_cb, &global_ctx);
@@ -1366,7 +1427,7 @@ xscreensaver_systemd_loop (void)
   }
 
   /* Register a callback for "org.kde.Solid.PowerManagement.PolicyAgent.
-     InhibitionsChanged".
+     InhibitionsChanged".  User bus.
    */
   rc = sd_bus_add_match (user_bus, NULL, DBUS_KDE_MATCH,
                          xscreensaver_kde_inhibitor_changed_cb, &global_ctx);
@@ -1593,6 +1654,14 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-vv",      L)) verbose_p += 2;
       else if (!strncmp (s, "-vvv",     L)) verbose_p += 3;
       else if (!strncmp (s, "-vvvv",    L)) verbose_p += 4;
+      else if (!strcmp (s, "-ver") ||
+               !strcmp (s, "-vers") ||
+               !strcmp (s, "-version"))
+        {
+          fprintf (stderr, "%s\n", screensaver_id+4);
+          exit (1);
+        }
+
       else USAGE ();
     }
 

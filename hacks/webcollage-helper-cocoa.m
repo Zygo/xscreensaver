@@ -215,7 +215,7 @@ bevel_image (NSImage *img, int bevel_pct,
   y = [img size].height - (y + h);
   [bevel_img drawAtPoint: NSMakePoint (x, y)
                 fromRect: NSMakeRect (0, 0, w, h)
-               operation: NSCompositeDestinationIn /* Destination image
+               operation: NSCompositingOperationDestinationIn /* Destination image
                                                       wherever both images are
                                                       opaque, transparent
                                                       elsewhere. */
@@ -270,7 +270,7 @@ paste (const char *paste_file,
   [base_img lockFocus];
   [paste_img drawInRect: NSMakeRect (to_x, to_y, scaled_w, scaled_h)
                fromRect: NSMakeRect (from_x, from_y, w, h)
-              operation: NSCompositeSourceOver
+              operation: NSCompositingOperationSourceOver
                fraction: opacity];
   [base_img unlockFocus];
 
@@ -369,7 +369,7 @@ write_image (NSImage *img, const char *file)
                          [NSGraphicsContext
                            graphicsContextWithBitmapImageRep:bit_rep]];
     [img drawInRect:NSMakeRect(0, 0, [img size].width, [img size].height)
-         fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+           fromRect:NSZeroRect operation:NSCompositingOperationCopy fraction:1.0];
     [NSGraphicsContext restoreGraphicsState];
 #endif
 

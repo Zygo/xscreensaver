@@ -70,6 +70,7 @@
 #include "atoms.h"
 #include "usleep.h"
 #include "atoms.h"
+#include "screenshot.h"
 #include "xmu.h"
 
 #include "demo-Gtk-conf.h"
@@ -109,12 +110,15 @@ typedef struct {
 
   Display *dpy;
   Bool wayland_p;
+  Pixmap screenshot;
 
   conf_data *cdata;		/* private data for per-hack configuration */
 
   Bool debug_p;			/* whether to print diagnostics */
   Bool initializing_p;		/* flag for breaking recursion loops */
+  Bool flushing_p;		/* flag for breaking recursion loops */
   Bool saving_p;		/* flag for breaking recursion loops */
+  Bool dpms_supported_p;	/* Whether XDPMS is available */
 
   char *desired_preview_cmd;	/* subprocess we intend to run */
   char *running_preview_cmd;	/* subprocess we are currently running */
@@ -168,6 +172,7 @@ G_DEFINE_TYPE (XScreenSaverApp, xscreensaver_app, GTK_TYPE_APPLICATION)
   W(activate_menuitem)		\
   W(lock_menuitem)		\
   W(kill_menuitem)		\
+  W(restart_menuitem)		\
   W(list)			\
   W(scroller)			\
   W(preview_frame)		\
@@ -286,6 +291,7 @@ static void populate_popup_window (state *);
 
 static Bool flush_dialog_changes_and_save (state *);
 static Bool flush_popup_changes_and_save (state *);
+static Bool validate_image_directory (state *, const char *path);
 
 static int maybe_reload_init_file (state *);
 static void await_xscreensaver (state *);
@@ -298,7 +304,6 @@ static void schedule_preview_check (state *);
 static void sensitize_demo_widgets (state *, Bool sensitive_p);
 static void kill_gnome_screensaver (state *);
 static void kill_kde_screensaver (state *);
-
 
 /* Some pathname utilities */
 
@@ -531,20 +536,46 @@ image_files_p (const char *path, int max_depth)
 /* Why this behavior isn't automatic, I'll never understand.
  */
 static void
-ensure_selected_item_visible (GtkWidget *widget)
+ensure_selected_item_visible (state *s, GtkWidget *widget)
 {
-  GtkTreePath *path;
-  GtkTreeSelection *selection;
-  GtkTreeIter iter;
+  XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
+
+  /* Find the path of the selected row in the list.
+   */
+  GtkTreeView *list_widget = GTK_TREE_VIEW (win->list);
+  GtkTreeSelection *selection = gtk_tree_view_get_selection (list_widget);
   GtkTreeModel *model;
-  
-  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
+  GtkTreeIter iter;
+  GtkTreePath *path;
+
   if (!gtk_tree_selection_get_selected (selection, &model, &iter))
     path = gtk_tree_path_new_first ();
   else
     path = gtk_tree_model_get_path (model, &iter);
-  
-  gtk_tree_view_set_cursor (GTK_TREE_VIEW (widget), path, NULL, FALSE);
+
+  /* Make this item be visible and selected. */
+  gtk_tree_view_set_cursor (list_widget, path, NULL, FALSE);
+
+  /* Make the scroller show that item at the center of the viewport.
+     The set_cursor() call, above, makes the item be visible, but it hugs
+     the top or bottom edge of the viewport, instead of providing more
+     surrounding context.
+
+     Doing the following in list_select_changed_cb() instead of here makes
+     the list vertically re-center when using the cursor keys instead of
+     hugging the top or bottom (good) but also makes it re-center when
+     clicking on a new item with the mouse (bad).
+   */
+  if (gtk_widget_get_realized (GTK_WIDGET (list_widget)))
+    {
+      GdkWindow *bin = gtk_tree_view_get_bin_window (list_widget);
+      int binh = gdk_window_get_height (bin);
+      GdkRectangle r;
+      gtk_tree_view_get_cell_area (list_widget, path, NULL, &r);
+      gtk_tree_view_convert_widget_to_tree_coords (list_widget,
+                                                   r.x, r.y, &r.x, &r.y);
+      gtk_tree_view_scroll_to_point (list_widget, r.x, r.y - binh / 2);
+    }
 
   gtk_tree_path_free (path);
 }
@@ -555,6 +586,8 @@ warning_dialog_cb (GtkDialog *dialog, gint response_id, gpointer user_data)
 {
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (user_data);
   state *s = &win->state;
+  if (s->debug_p)
+    fprintf (stderr, "%s: dialog response %d\n", blurb(), response_id);
   switch (response_id) {
   case D_LAUNCH: restart_menu_cb (GTK_WIDGET (dialog), user_data); break;
   case D_GNOME:  kill_gnome_screensaver (s); break;
@@ -715,6 +748,59 @@ run_hack (state *s, int list_elt, Bool report_errors_p)
 }
 
 
+static pid_t
+fork_and_exec (state *s, int argc, char **argv)
+{
+  char buf [255];
+  pid_t forked = fork();
+  switch ((int) forked) {
+  case -1:
+    sprintf (buf, "%s: couldn't fork", blurb());
+    perror (buf);
+    break;
+
+  case 0:
+    if (s->dpy) close (ConnectionNumber (s->dpy));
+    execvp (argv[0], argv);		/* shouldn't return. */
+
+    sprintf (buf, "%s: pid %lu: couldn't exec %s", blurb(),
+             (unsigned long) getpid(), argv[0]);
+    perror (buf);
+    exit (1);				/* exits child fork */
+    break;
+
+  default:				/* parent fork */
+
+    /* Put it in its own process group so that this process getting SIGTERM
+       does not propagate to the forked process. */
+    if (setpgid (forked, 0))
+      {
+        char buf [255];
+        sprintf (buf, "%s: setpgid %d", blurb(), forked);
+        perror (buf);
+      }
+
+    if (s->debug_p)
+      {
+        int i;
+        fprintf (stderr, "%s: pid %lu: forked:", blurb(),
+                 (unsigned long) forked);
+        for (i = 0; i < argc; i++)
+          if (strchr (argv[i], ' '))
+            fprintf (stderr, " \"%s\"", argv[i]);
+          else
+            fprintf (stderr, " %s", argv[i]);
+        fprintf (stderr, "\n");
+      }
+
+    break;
+  }
+
+  return forked;
+}
+
+
+
 /****************************************************************************
 
  XScreenSaverWindow callbacks, referenced by demo.ui.
@@ -754,6 +840,8 @@ doc_menu_cb (GtkAction *menu_action, gpointer user_data)
   state *s = &win->state;
   saver_preferences *p = &s->prefs;
   char *help_command;
+  int ac = 0;
+  char *av[10];
 
   if (s->debug_p) fprintf (stderr, "%s: doc menu\n", blurb());
 
@@ -766,13 +854,14 @@ doc_menu_cb (GtkAction *menu_action, gpointer user_data)
 
   help_command = (char *) malloc (strlen (p->load_url_command) +
 				  (strlen (p->help_url) * 5) + 20);
-  strcpy (help_command, "( ");
-  sprintf (help_command + strlen(help_command),
-           p->load_url_command,
+  sprintf (help_command, p->load_url_command,
            p->help_url, p->help_url, p->help_url, p->help_url, p->help_url);
-  strcat (help_command, " ) &");
-  if (system (help_command) < 0)
-    fprintf (stderr, "%s: fork error\n", blurb());
+
+  av[ac++] = "/bin/sh";
+  av[ac++] = "-c";
+  av[ac++] = help_command;
+  av[ac] = 0;
+  fork_and_exec (s, ac, av);
   free (help_command);
 }
 
@@ -827,14 +916,19 @@ restart_menu_cb (GtkWidget *widget, gpointer user_data)
 {
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (user_data);
   state *s = &win->state;
+  int ac = 0;
+  char *av[10];
   if (s->debug_p) fprintf (stderr, "%s: restart menu\n", blurb());
   if (!s->dpy) return;
   flush_dialog_changes_and_save (s);
   xscreensaver_command (s->dpy, XA_EXIT, 0, FALSE, NULL);
   sleep (1);
-  if (system ("xscreensaver --splash &") < 0)
-    fprintf (stderr, "%s: fork error\n", blurb());
 
+  av[ac++] = "xscreensaver";
+  av[ac++] = "--splash";
+  if (s->debug_p) av[ac++] = "--verbose";
+  av[ac] = 0;
+  fork_and_exec (s, ac, av);
   await_xscreensaver (s);
 }
 
@@ -842,10 +936,9 @@ restart_menu_cb (GtkWidget *widget, gpointer user_data)
 static Bool
 xscreensaver_running_p (state *s)
 {
-  Display *dpy = s->dpy;
   char *rversion = 0;
-  if (!dpy) return FALSE;
-  server_xscreensaver_version (dpy, &rversion, 0, 0);
+  if (!s->dpy) return FALSE;
+  server_xscreensaver_version (s->dpy, &rversion, 0, 0);
   if (!rversion)
     return FALSE;
   free (rversion);
@@ -903,9 +996,8 @@ static int
 demo_write_init_file (state *s, saver_preferences *p)
 {
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
-  Display *dpy = s->dpy;
 
-  if (!write_init_file (dpy, p, s->short_version, FALSE))
+  if (!write_init_file (s->dpy, p, s->short_version, FALSE))
     {
       if (s->debug_p)
         fprintf (stderr, "%s: wrote %s\n", blurb(), init_file_name());
@@ -963,7 +1055,7 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
       if (s->debug_p)
         fprintf (stderr, "%s: select list elt %d\n", blurb(), list_elt);
     }
-  if (scroll_p) ensure_selected_item_visible (GTK_WIDGET (list));
+  if (scroll_p) ensure_selected_item_visible (s, GTK_WIDGET (list));
   if (!was) gtk_widget_set_sensitive (parent, FALSE);
 }
 
@@ -1193,6 +1285,7 @@ flush_dialog_changes_and_save (state *s)
   FlushForeachClosure closure;
   Bool changed = FALSE;
 
+  if (s->initializing_p) return FALSE;
   if (s->saving_p) return FALSE;
   s->saving_p = TRUE;
 
@@ -1283,9 +1376,8 @@ flush_dialog_changes_and_save (state *s)
 
   /* Theme menu. */
   {
-    Display *dpy = s->dpy;
     GtkComboBox *cbox = GTK_COMBO_BOX (win->theme_menu);
-    char *themes = get_string_resource (dpy, "themeNames", "ThemeNames");
+    char *themes = get_string_resource (s->dpy, "themeNames", "ThemeNames");
     int menu_index = gtk_combo_box_get_active (cbox);
     char *token = themes ? themes : "default";
     char *name, *last;
@@ -1313,7 +1405,27 @@ flush_dialog_changes_and_save (state *s)
       }
   }
 
-  /* Copy any changes from s2 into s, and log them.
+  /* It is difficult to get "editing completed" events out of GtkEntry.
+     I want something that fires on RET or focus-out, but I can't seem
+     to find a consistent way to get that.  So let's fake it here.
+   */
+  if (!s->initializing_p &&
+      !!strcmp (p->image_directory, p2->image_directory))
+    {
+      if (s->debug_p)
+        fprintf (stderr, "%s: imagedir validating \"%s\" -> \"%s\"\n",
+                 blurb(), p->image_directory, p2->image_directory);
+      if (! validate_image_directory (s, p2->image_directory))
+        {
+          /* Don't save the bad new value into the preferences. */
+          if (p2->image_directory != p->image_directory)
+            free (p2->image_directory);
+          p2->image_directory = strdup (p->image_directory);
+        }
+    }
+
+
+  /* Copy any changes from p2 into p, and log them.
    */
 # undef STR
 # define STR(S) #S
@@ -1410,17 +1522,19 @@ pref_changed_cb (GtkWidget *widget, gpointer user_data)
 
   if (s->debug_p)
     {
-      if (s->initializing_p)
-        fprintf (stderr, "%s:   (pref changed)\n", blurb());
+      if (s->flushing_p)
+        fprintf (stderr, "%s:   (pref changed: %s)\n", blurb(),
+                 gtk_widget_get_name (widget));
       else
-        fprintf (stderr, "%s: pref changed\n", blurb());
+        fprintf (stderr, "%s: pref changed: %s\n", blurb(),
+                 gtk_widget_get_name (widget));
     }
 
-  if (! s->initializing_p)
+  if (! s->flushing_p)
     {
-      s->initializing_p = TRUE;
+      s->flushing_p = TRUE;
       flush_dialog_changes_and_save (s);
-      s->initializing_p = FALSE;
+      s->flushing_p = FALSE;
     }
   return GDK_EVENT_PROPAGATE;
 }
@@ -1433,6 +1547,58 @@ pref_changed_event_cb (GtkWidget *widget, GdkEvent *event, gpointer user_data)
   pref_changed_cb (widget, user_data);
   return GDK_EVENT_PROPAGATE;
 }
+
+
+/* Called when the timeout or DPMS spinbuttons are changed, by demo.ui.
+ */
+G_MODULE_EXPORT gboolean
+dpms_sanity_cb (GtkWidget *widget, gpointer user_data)
+{
+  XScreenSaverWindow *win = XSCREENSAVER_WINDOW (user_data);
+  state *s = &win->state;
+  Time timeout, standby, suspend, off;
+
+  if (s->flushing_p) return GDK_EVENT_PROPAGATE;
+  if (s->initializing_p) return GDK_EVENT_PROPAGATE;
+  if (! s->dpms_supported_p) return GDK_EVENT_PROPAGATE;
+
+  /* Read the current values from the four spinbuttons. */
+# define MINUTES(V,WIDGET) \
+    hack_time_text (s, gtk_entry_get_text (GTK_ENTRY (win->WIDGET)), \
+                    &(V), FALSE)
+  MINUTES (timeout, timeout_spinbutton);
+  MINUTES (standby, dpms_standby_spinbutton);
+  MINUTES (suspend, dpms_suspend_spinbutton);
+  MINUTES (off,     dpms_off_spinbutton);
+# undef MINUTES
+
+  /* If the DPMS settings are non-zero, they must not go backwards:
+     standby >= timeout (screen saver activation)
+     suspend >= standby
+     off     >= suspend
+   */
+# define MINUTES(V,LOWER,WIDGET) \
+  if ((V) != 0 && (V) < LOWER) \
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (win->WIDGET), \
+                               (double) ((LOWER) + 59) / (60 * 1000))
+  MINUTES (standby, timeout, dpms_standby_spinbutton);
+  MINUTES (suspend, standby, dpms_suspend_spinbutton);
+  MINUTES (off,     standby, dpms_off_spinbutton);
+  MINUTES (off,     suspend, dpms_off_spinbutton);
+# undef MINUTES
+
+  return GDK_EVENT_PROPAGATE;
+}
+
+
+/* Same as dpms_sanity_cb but different. */
+G_MODULE_EXPORT gboolean
+dpms_sanity_event_cb (GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+  dpms_sanity_cb (widget, user_data);
+  return GDK_EVENT_PROPAGATE;
+}
+
 
 
 /* Callback on menu items in the "mode" options menu.
@@ -1449,7 +1615,8 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
   int menu_index = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
   saver_mode new_mode = mode_menu_order[menu_index];
 
-  if (s->initializing_p) return;  /* Called as a spurious side-effect */
+  if (s->flushing_p) return;  /* Called as a spurious side-effect */
+  if (s->initializing_p) return;
 
   if (s->debug_p) fprintf (stderr, "%s: mode menu\n", blurb());
 
@@ -1759,7 +1926,6 @@ validate_image_directory (state *s, const char *path)
     gtk_main_iteration ();
 
   {
-    Display *dpy = s->dpy;
     pid_t forked;
     int fds [2];
     int in, out;
@@ -1795,7 +1961,7 @@ validate_image_directory (state *s, const char *path)
           close (in);  /* don't need this one */
           if (! s->debug_p)
             close (fileno (stdout));
-          close (ConnectionNumber (dpy));		/* close display fd */
+          close (ConnectionNumber (s->dpy));		/* close display fd */
 
           if (dup2 (out, stderr_fd) < 0)		/* pipe stdout */
             {
@@ -1911,6 +2077,7 @@ G_MODULE_EXPORT gboolean
 image_text_pref_changed_event_cb (GtkWidget *widget, GdkEvent *event,
                                   gpointer user_data)
 {
+#if 0  /* This is handled in flush_dialog_changes_and_save now */
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (user_data);
   state *s = &win->state;
   saver_preferences *p = &s->prefs;
@@ -1934,6 +2101,7 @@ image_text_pref_changed_event_cb (GtkWidget *widget, GdkEvent *event,
     }
 
   free (path);
+# endif
   pref_changed_event_cb (widget, event, user_data);
   return GDK_EVENT_PROPAGATE;
 }
@@ -2107,13 +2275,18 @@ preview_theme_cb (GtkWidget *w, gpointer user_data)
 {
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (user_data);
   state *s = &win->state;
+  int ac = 0;
+  char *av[10];
 
   if (s->debug_p) fprintf (stderr, "%s: preview theme button\n", blurb());
 
   /* Settings button is disabled with --splash --splash so that we don't
      end up with two copies of xscreensaver-settings running. */
-  if (system ("xscreensaver-auth --splash --splash &") < 0)
-    fprintf (stderr, "%s: splash exec failed\n", blurb());
+  av[ac++] = "xscreensaver-auth";
+  av[ac++] = "--splash";
+  av[ac++] = "--splash";
+  av[ac] = 0;
+  fork_and_exec (s, ac, av);
 }
 
 
@@ -2178,11 +2351,10 @@ server_current_hack (state *s)
   int format;
   unsigned long nitems, bytesafter;
   unsigned char *dataP = 0;
-  Display *dpy = s->dpy;
   int hack_number = -1;
 
-  if (!dpy) return hack_number;
-  if (XGetWindowProperty (dpy, RootWindow (dpy, 0), /* always screen #0 */
+  if (!s->dpy) return hack_number;
+  if (XGetWindowProperty (s->dpy, RootWindow(s->dpy, 0), /* always screen #0 */
                           XA_SCREENSAVER_STATUS,
                           0, 3, FALSE, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
@@ -2251,7 +2423,6 @@ scroll_to_current_hack (state *s)
 static void
 populate_hack_list (state *s)
 {
-  Display *dpy = s->dpy;
   saver_preferences *p = &s->prefs;
   GtkTreeView *list = GTK_TREE_VIEW (XSCREENSAVER_WINDOW (s->window)->list);
   GtkListStore *model;
@@ -2311,7 +2482,7 @@ populate_hack_list (state *s)
 
       pretty_name = (hack->name
                      ? strdup (hack->name)
-                     : make_hack_name (dpy, hack->command));
+                     : make_hack_name (s->dpy, hack->command));
 
       if (!available_p)
         {
@@ -2369,7 +2540,6 @@ static void
 populate_prefs_page (state *s)
 {
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
-  Display *dpy = s->dpy;
   saver_preferences *p = &s->prefs;
 
   Bool can_lock_p = TRUE;
@@ -2416,8 +2586,9 @@ populate_prefs_page (state *s)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (win->NAME), (ACTIVEP))
 
   TOGGLE_ACTIVE (lock_button,       p->lock_p);
-  TOGGLE_ACTIVE (dpms_button,       p->dpms_enabled_p);
-  TOGGLE_ACTIVE (dpms_quickoff_button, p->dpms_quickoff_p);
+  TOGGLE_ACTIVE (dpms_button,       p->dpms_enabled_p && s->dpms_supported_p);
+  TOGGLE_ACTIVE (dpms_quickoff_button, (p->dpms_quickoff_p &&
+                                        s->dpms_supported_p));
   TOGGLE_ACTIVE (grab_desk_button,  p->grab_desktop_p);
   TOGGLE_ACTIVE (grab_video_button, p->grab_video_p);
   TOGGLE_ACTIVE (grab_image_button, p->random_image_p);
@@ -2469,7 +2640,7 @@ populate_prefs_page (state *s)
 
     if (cbox)
       {
-        char *themes = get_string_resource (dpy, "themeNames", "ThemeNames");
+        char *themes = get_string_resource(s->dpy, "themeNames", "ThemeNames");
         char *token = themes ? themes : strdup ("default");
         char *name, *last = 0;
         GtkListStore *model;
@@ -2518,9 +2689,9 @@ populate_prefs_page (state *s)
         if (! signal_connected_p)
           {
             g_signal_connect (G_OBJECT (cbox), "changed",
-                              G_CALLBACK (pref_changed_cb), (gpointer) s);
+                              G_CALLBACK (pref_changed_cb), (gpointer) win);
             signal_connected_p = TRUE;
-          }
+          } 
       }
   }
 
@@ -2536,51 +2707,47 @@ populate_prefs_page (state *s)
     update_list_sensitivity (s);
   }
 
-  {
-    Bool dpms_supported = FALSE;
-    Display *dpy = s->dpy;
+  s->dpms_supported_p = FALSE;
 
 #ifdef HAVE_DPMS_EXTENSION
-    {
-      int op = 0, event = 0, error = 0;
-      if (dpy && XQueryExtension (dpy, "DPMS", &op, &event, &error))
-        dpms_supported = TRUE;
-    }
+  {
+    int op = 0, event = 0, error = 0;
+    if (s->dpy && XQueryExtension (s->dpy, "DPMS", &op, &event, &error))
+      s->dpms_supported_p = TRUE;
+  }
 #endif /* HAVE_DPMS_EXTENSION */
 
-
 # define SENSITIZE(NAME,SENSITIVEP) \
-    gtk_widget_set_sensitive (win->NAME, (SENSITIVEP))
+  gtk_widget_set_sensitive (win->NAME, (SENSITIVEP))
 
-    /* Blanking and Locking
-     */
-    SENSITIZE (lock_button,     can_lock_p);
-    SENSITIZE (lock_spinbutton, can_lock_p && p->lock_p);
-    SENSITIZE (lock_mlabel,     can_lock_p && p->lock_p);
+  /* Blanking and Locking
+   */
+  SENSITIZE (lock_button,     can_lock_p);
+  SENSITIZE (lock_spinbutton, can_lock_p && p->lock_p);
+  SENSITIZE (lock_mlabel,     can_lock_p && p->lock_p);
 
-    /* DPMS
-     */
-    SENSITIZE (dpms_button,             dpms_supported);
-    SENSITIZE (dpms_standby_label,      dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_standby_mlabel,     dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_standby_spinbutton, dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_suspend_label,      dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_suspend_mlabel,     dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_suspend_spinbutton, dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_off_label,          dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_off_mlabel,         dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_off_spinbutton,     dpms_supported && p->dpms_enabled_p);
-    SENSITIZE (dpms_quickoff_button,    dpms_supported);
+  /* DPMS
+   */
+  SENSITIZE (dpms_button,            s->dpms_supported_p);
+  SENSITIZE (dpms_standby_label,     s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_standby_mlabel,    s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_standby_spinbutton,s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_suspend_label,     s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_suspend_mlabel,    s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_suspend_spinbutton,s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_off_label,         s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_off_mlabel,        s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_off_spinbutton,    s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_quickoff_button,   s->dpms_supported_p);
 
-    SENSITIZE (fade_label,      (p->fade_p || p->unfade_p));
-    SENSITIZE (fade_spinbutton, (p->fade_p || p->unfade_p));
+  SENSITIZE (fade_label,      (p->fade_p || p->unfade_p));
+  SENSITIZE (fade_spinbutton, (p->fade_p || p->unfade_p));
 
 # undef SENSITIZE
 
-    if (!dpms_supported)
-      gtk_frame_set_label (GTK_FRAME (win->dpms_frame),
-        _("Display Power Management (not supported by this display)"));
-  }
+  if (!s->dpms_supported_p)
+    gtk_frame_set_label (GTK_FRAME (win->dpms_frame),
+      _("Display Power Management (not supported by this display)"));
 }
 
 
@@ -2737,6 +2904,11 @@ sensitize_menu_items (state *s, Bool force_p)
   gtk_widget_set_sensitive (win->activate_menuitem, running_p);
   gtk_widget_set_sensitive (win->lock_menuitem, running_p);
   gtk_widget_set_sensitive (win->kill_menuitem, running_p);
+
+  gtk_menu_item_set_label (GTK_MENU_ITEM (win->restart_menuitem),
+                           (running_p
+                            ? _("Restart Daemon")
+                            : _("Launch Daemon")));
 }
 
 
@@ -2748,7 +2920,6 @@ populate_demo_window (state *s, int list_elt)
 {
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
   XScreenSaverDialog *dialog = XSCREENSAVER_DIALOG (s->dialog);
-  Display *dpy = s->dpy;
   saver_preferences *p = &s->prefs;
   screenhack *hack;
   char *pretty_name;
@@ -2756,16 +2927,15 @@ populate_demo_window (state *s, int list_elt)
   GtkFrame *frame2 = dialog ? GTK_FRAME (dialog->opt_frame) : 0;
   GtkEntry *cmd    = dialog ? GTK_ENTRY (dialog->cmd_text)  : 0;
   GtkComboBox *vis = dialog ? GTK_COMBO_BOX (dialog->visual_combo) : 0;
-  GtkWidget *list  = GTK_WIDGET (win->list);
 
   /* Enforce a minimum size on the preview pane. */
-  if (dpy)
+  if (s->dpy)
     {
-      int dw = DisplayWidth (dpy, 0);
-      int dh = DisplayHeight (dpy, 0);
+      int dw = DisplayWidth (s->dpy, 0);
+      int dh = DisplayHeight (s->dpy, 0);
       int minw, minh;
  # define TRY(W) do { \
-        minw = (W); minh = minw * 9/16;         \
+        minw = (W); minh = minw * 9/16 + 48;    \
         if (dw > minw * 1.5 && dh > minh * 1.5) \
           gtk_widget_set_size_request (GTK_WIDGET (frame1), minw, minh); \
         } while(0)
@@ -2800,7 +2970,7 @@ populate_demo_window (state *s, int list_elt)
       pretty_name = (hack
                      ? (hack->name
                         ? strdup (hack->name)
-                        : make_hack_name (dpy, hack->command))
+                        : make_hack_name (s->dpy, hack->command))
                      : 0);
 
       if (hack)
@@ -2843,7 +3013,9 @@ populate_demo_window (state *s, int list_elt)
 
   if (pretty_name) free (pretty_name);
 
-  ensure_selected_item_visible (list);
+  /* This causes the window to scroll out from under the mouse when 
+     clicking on an item, vertically centering it. That's annoying. */
+  /* ensure_selected_item_visible (s, list); */
 
   s->_selected_list_element = list_elt;
 }
@@ -2876,7 +3048,6 @@ sort_hack_cmp (const void *a, const void *b)
 static void
 initialize_sort_map (state *s)
 {
-  Display *dpy = s->dpy;
   saver_preferences *p = &s->prefs;
   int i, j;
 
@@ -2927,7 +3098,7 @@ initialize_sort_map (state *s)
       screenhack *hack = p->screenhacks[i];
       char *name = (hack->name && *hack->name
                     ? strdup (hack->name)
-                    : make_hack_name (dpy, hack->command));
+                    : make_hack_name (s->dpy, hack->command));
       gchar *s2 = g_str_to_ascii (name, 0);  /* Sort "Möbius" properly */
       gchar *s3 = g_ascii_strdown (s2, -1);
       free (name);
@@ -2962,7 +3133,6 @@ initialize_sort_map (state *s)
 static int
 maybe_reload_init_file (state *s)
 {
-  Display *dpy = s->dpy;
   saver_preferences *p = &s->prefs;
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
   int status = 0;
@@ -2984,7 +3154,7 @@ maybe_reload_init_file (state *s)
       warning_dialog (s->window, _("Warning"), b);
       free (b);
 
-      load_init_file (dpy, p);
+      load_init_file (s->dpy, p);
       initialize_sort_map (s);
 
       list_elt = selected_list_element (s);
@@ -2995,7 +3165,7 @@ maybe_reload_init_file (state *s)
       populate_prefs_page (s);
       populate_demo_window (s, list_elt);
       populate_popup_window (s);
-      ensure_selected_item_visible (list);
+      ensure_selected_item_visible (s, list);
 
       status = 1;
     }
@@ -3052,6 +3222,37 @@ clear_preview_window (state *s)
 }
 
 
+static gboolean
+preview_resize_cb (GtkWidget *self, GdkEvent *event, gpointer data)
+{
+  XScreenSaverWindow *win = XSCREENSAVER_WINDOW (data);
+  state *s = &win->state;
+
+  /* If a subproc is running, clear the window to black when we resize.
+     Without this, sometimes turds get left behind. */
+  if (s->dpy && !s->wayland_p && s->running_preview_cmd)
+    {
+      GdkWindow *window = gtk_widget_get_window (self);
+      Window id;
+      XWindowAttributes xgwa;
+      XGCValues gcv;
+      GC gc;
+
+      if (! window) return TRUE;
+      id = gdk_x11_window_get_xid (window);
+      if (! id) return TRUE;
+
+      /* Not sure why XClearWindow is insufficient here, but it is. */
+      XGetWindowAttributes (s->dpy, id, &xgwa);
+      gcv.foreground = BlackPixelOfScreen (xgwa.screen);
+      gc = XCreateGC (s->dpy, id, GCForeground, &gcv);
+      XFillRectangle (s->dpy, id, gc, 0, 0, xgwa.width, xgwa.height);
+      XFreeGC (s->dpy, gc);
+    }
+  return FALSE;
+}
+
+
 static void
 reset_preview_window (state *s)
 {
@@ -3073,7 +3274,7 @@ reset_preview_window (state *s)
       gtk_widget_realize (pr);
       gtk_widget_show (pr);
       id = (window ? gdk_x11_window_get_xid (window) : 0);
-      if (s->debug_p)
+      if (s->debug_p && oid != id)
         fprintf (stderr, "%s: window id 0x%X -> 0x%X\n", blurb(),
                  (unsigned int) oid,
                  (unsigned int) id);
@@ -3176,7 +3377,6 @@ reap_zombies (state *s)
 static Visual *
 get_best_gl_visual (state *s)
 {
-  Display *dpy = s->dpy;
   pid_t forked;
   int fds [2];
   int in, out;
@@ -3210,7 +3410,7 @@ get_best_gl_visual (state *s)
         int stdout_fd = 1;
 
         close (in);  /* don't need this one */
-        close (ConnectionNumber (dpy));		/* close display fd */
+        close (ConnectionNumber (s->dpy));	/* close display fd */
 
         if (dup2 (out, stdout_fd) < 0)		/* pipe stdout */
           {
@@ -3268,7 +3468,7 @@ get_best_gl_visual (state *s)
           }
         else
           {
-            Visual *v = id_to_visual (DefaultScreenOfDisplay (dpy), result);
+            Visual *v = id_to_visual (DefaultScreenOfDisplay (s->dpy), result);
             if (s->debug_p)
               fprintf (stderr, "%s: %s says the GL visual is 0x%X.\n",
                        blurb(), av[0], result);
@@ -3280,6 +3480,7 @@ get_best_gl_visual (state *s)
 
   abort();
 }
+
 
 static void
 kill_preview_subproc (state *s, Bool reset_p)
@@ -3392,6 +3593,9 @@ launch_preview_subproc (state *s)
                (unsigned int) id);
     }
 
+  if (id && s->screenshot)
+    screenshot_save (s->dpy, id, s->screenshot);
+
   kill_preview_subproc (s, FALSE);
   if (! new_cmd)
     {
@@ -3452,6 +3656,16 @@ launch_preview_subproc (state *s)
       }
     }
 
+  /* Put some props on the embedded preview window, for debugging. */
+  XStoreName (s->dpy, id, "XScreenSaver Settings Preview");
+  XChangeProperty (s->dpy, id, XA_WM_COMMAND,
+                   XA_STRING, 8, PropModeReplace,
+                   (unsigned char *) new_cmd,
+                   strlen (new_cmd));
+  XChangeProperty (s->dpy, id, XA_NET_WM_PID,
+                   XA_CARDINAL, 32, PropModeReplace,
+                   (unsigned char *) &forked, 1);
+
   schedule_preview_check (s);
 
  DONE:
@@ -3472,8 +3686,7 @@ hack_environment (state *s)
     "";
 # endif
 
-  Display *dpy = s->dpy;
-  const char *odpy = dpy ? DisplayString (dpy) : ":0.0";
+  const char *odpy = s->dpy ? DisplayString (s->dpy) : ":0.0";
   char *ndpy = (char *) malloc(strlen(odpy) + 20);
   strcpy (ndpy, "DISPLAY=");
   strcat (ndpy, odpy);
@@ -3599,7 +3812,7 @@ check_subproc_timer (gpointer data)
       if (status < 0 && errno == ESRCH)
         s->running_preview_error_p = TRUE;
 
-      if (s->debug_p)
+      if (s->debug_p && s->running_preview_error_p)
         {
           char *ss = subproc_pretty_name (s);
           fprintf (stderr, "%s: timer: pid %lu (%s) is %s\n", blurb(),
@@ -3664,11 +3877,10 @@ screen_blanked_p (state *s)
   int format;
   unsigned long nitems, bytesafter;
   unsigned char *dataP = 0;
-  Display *dpy = s->dpy;
   Bool blanked_p = FALSE;
 
   if (!s->dpy) return FALSE;
-  if (XGetWindowProperty (dpy, RootWindow (dpy, 0), /* always screen #0 */
+  if (XGetWindowProperty (s->dpy, RootWindow (s->dpy, 0), /* always screen 0 */
                           XA_SCREENSAVER_STATUS,
                           0, 3, FALSE, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
@@ -3712,8 +3924,20 @@ static Bool
 multi_screen_p (Display *dpy)
 {
   monitor **monitors = dpy ? scan_monitors (dpy) : NULL;
-  Bool ret = monitors && monitors[0] && monitors[1];
-  if (monitors) free_monitors (monitors);
+  Bool ret = FALSE;
+  if (monitors)
+    {
+      int count = 0;
+      int good_count = 0;
+      while (monitors[count])
+        {
+          if (monitors[count]->sanity == S_SANE)
+            good_count++;
+          count++;
+        }
+      free_monitors (monitors);
+      ret = (good_count > 1);
+    }
   return ret;
 }
 
@@ -3849,7 +4073,15 @@ kill_kde_screensaver (state *s)
      "warning: ignoring return value of 'system',
       declared with attribute warn_unused_result"
   */
-  if (system ("dcop kdesktop KScreensaverIface enable false")) {}
+  int ac = 0;
+  char *av[10];
+  av[ac++] = "dcop";
+  av[ac++] = "kdesktop";
+  av[ac++] = "KScreensaverIface";
+  av[ac++] = "enable";
+  av[ac++] = "false";
+  av[ac] = 0;
+  fork_and_exec (s, ac, av);
 }
 
 
@@ -3857,13 +4089,12 @@ static int
 the_network_is_not_the_computer (gpointer data)
 {
   state *s = (state *) data;
-  Display *dpy = s->dpy;
   char *rversion = 0, *ruser = 0, *rhost = 0;
   char *luser, *lhost;
   char *msg = 0;
   char *oname = 0;
   struct passwd *p = getpwuid (getuid ());
-  const char *d = dpy ? DisplayString (dpy) : ":0.0";
+  const char *d = s->dpy ? DisplayString (s->dpy) : ":0.0";
 
 # if defined(HAVE_UNAME)
   struct utsname uts;
@@ -3880,8 +4111,8 @@ the_network_is_not_the_computer (gpointer data)
   else
     luser = "???";
 
-  if (dpy)
-    server_xscreensaver_version (dpy, &rversion, &ruser, &rhost);
+  if (s->dpy)
+    server_xscreensaver_version (s->dpy, &rversion, &ruser, &rhost);
 
   /* Make a buffer that's big enough for a number of copies of all the
      strings, plus some. */
@@ -3896,10 +4127,12 @@ the_network_is_not_the_computer (gpointer data)
 
   if ((!rversion || !*rversion) && !s->debug_p)
     {
+# ifndef __APPLE__
       sprintf (msg,
 	       _("The XScreenSaver daemon doesn't seem to be running\n"
 		 "on display \"%.25s\".  Launch it now?"),
 	       d);
+# endif
     }
   else if (p && ruser && *ruser && !!strcmp (ruser, p->pw_name))
     {
@@ -4071,7 +4304,6 @@ manual_cb (GtkButton *button, gpointer user_data)
   XScreenSaverDialog *dialog = XSCREENSAVER_DIALOG (user_data);
   XScreenSaverWindow *win = dialog->main;
   state *s = &win->state;
-  Display *dpy = s->dpy;
   saver_preferences *p = &s->prefs;
   GtkWidget *list_widget = win->list;
   int list_elt = selected_list_element (s);
@@ -4083,7 +4315,7 @@ manual_cb (GtkButton *button, gpointer user_data)
   hack_number = s->list_elt_to_hack_number[list_elt];
 
   flush_dialog_changes_and_save (s);
-  ensure_selected_item_visible (list_widget);
+  ensure_selected_item_visible (s, list_widget);
 
   name = strdup (p->screenhacks[hack_number]->command);
   name2 = name;
@@ -4095,17 +4327,18 @@ manual_cb (GtkButton *button, gpointer user_data)
   str = strrchr (name2, '/');
   if (str) name2 = str+1;
 
-  cmd = get_string_resource (dpy, "manualCommand", "ManualCommand");
+  cmd = get_string_resource (s->dpy, "manualCommand", "ManualCommand");
   if (cmd)
     {
+      int ac = 0;
+      char *av[10];
       char *cmd2 = (char *) malloc (strlen (cmd) + (strlen (name2) * 4) + 100);
-      strcpy (cmd2, "( ");
-      sprintf (cmd2 + strlen (cmd2),
-               cmd,
-               name2, name2, name2, name2);
-      strcat (cmd2, " ) &");
-      if (system (cmd2) < 0)
-        fprintf (stderr, "%s: fork error\n", blurb());
+      sprintf (cmd2, cmd, name2, name2, name2, name2);
+      av[ac++] = "/bin/sh";
+      av[ac++] = "-c";
+      av[ac++] = cmd2;
+      av[ac] = 0;
+      fork_and_exec (s, ac, av);
       free (cmd2);
     }
   else
@@ -4323,12 +4556,11 @@ populate_popup_window (state *s)
         if (s->cdata && s->cdata->year)
           {
             XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
-            Display *dpy = s->dpy;
             GtkFrame *frame1 = GTK_FRAME (win->preview_frame);
             GtkFrame *frame2 = GTK_FRAME (dialog->opt_frame);
             char *pretty_name = (hack->name
                                  ? strdup (hack->name)
-                                 : make_hack_name (dpy, hack->command));
+                                 : make_hack_name (s->dpy, hack->command));
             char *s2 = (char *) malloc (strlen (pretty_name) + 20);
             sprintf (s2, "<b>%s (%d)</b>", pretty_name, s->cdata->year);
             free (pretty_name);
@@ -4538,6 +4770,7 @@ wm_decoration_origin (GtkWindow *gtkw, int *x, int *y)
   if (!dpy || !xw) return;
   if (! XQueryTree (dpy, xw, &root, &parent, &kids, &nkids))
     abort ();
+  if (kids) XFree ((char *) kids);
 
   if (parent == root)	/* No window above us at all */
     return;
@@ -4648,7 +4881,7 @@ delayed_scroll_kludge (gpointer data)
   state *s = (state *) data;
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
   GtkWidget *list_widget = win->list;
-  ensure_selected_item_visible (list_widget);
+  ensure_selected_item_visible (s, list_widget);
   return FALSE;  /* do not re-execute timer */
 }
 
@@ -4871,6 +5104,13 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
     }
 # endif
 
+  /* Grab the screenshot pixmap before mapping the window. */
+  if (s->dpy && !s->wayland_p)
+    {
+      GdkWindow *gw = gtk_widget_get_window (win->preview);
+      Window xw = gdk_x11_window_get_xid (gw);
+      s->screenshot = screenshot_grab (s->dpy, xw, TRUE, s->debug_p);
+    }
 
   /* Issue any warnings about the running xscreensaver daemon.
      Wait a few seconds, in case things are still starting up. */
@@ -4894,6 +5134,8 @@ xscreensaver_window_init (XScreenSaverWindow *win)
                     G_CALLBACK (xscreensaver_window_realize), win);
   g_signal_connect (win, "configure-event",
                     G_CALLBACK (xscreensaver_window_resize_cb),win);
+  g_signal_connect (win->preview, "configure-event",
+                    G_CALLBACK (preview_resize_cb),win);
 }
 
 
@@ -5094,6 +5336,13 @@ main (int argc, char *argv[])
   if (s) progname = s+1;
   g_log_set_default_handler (g_logger, NULL);
   g_log_set_writer_func (g_other_logger, NULL, NULL);
+
+# ifdef ENABLE_NLS
+  bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+  textdomain (GETTEXT_PACKAGE);
+  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+# endif /* ENABLE_NLS */
+
   return g_application_run (G_APPLICATION (xscreensaver_app_new()),
                             argc, argv);
 }

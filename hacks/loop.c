@@ -92,7 +92,8 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
 					"*ncolors: 15     \n" \
 					"*fpsSolid: true     \n" \
 					"*ignoreRotation: True \n" \
-					".lowrez: True \n" \
+
+/*					".lowrez: True \n" \ */
 
 # define reshape_loop 0
 # define loop_handle_event 0
@@ -1527,6 +1528,8 @@ init_loop (ModeInfo * mi)
     } else
       lp->ys = MIN(size, MAX(MINSIZE, MIN(lp->width, lp->height) /
                  HEX_MINGRIDSIZE));
+    if (lp->width > 2560 || lp->height > 2560)
+      lp->ys *= 3;  /* Retina displays */
     lp->xs = lp->ys;
     nccols = MAX(lp->width / lp->xs - 2, HEX_MINGRIDSIZE);
     ncrows = MAX(lp->height / lp->ys - 1, HEX_MINGRIDSIZE);
@@ -1551,6 +1554,8 @@ init_loop (ModeInfo * mi)
 		} else
 			lp->ys = MIN(size, MAX(MINSIZE, MIN(lp->width, lp->height) /
 					       MINGRIDSIZE));
+        if (lp->width > 2560 || lp->height > 2560)
+          lp->ys *= 3;  /* Retina displays */
 		lp->xs = lp->ys;
 		lp->ncols = MAX(lp->width / lp->xs, ADAM_LOOPX + 1);
 		lp->nrows = MAX(lp->height / lp->ys, ADAM_LOOPX + 1);

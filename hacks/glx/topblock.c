@@ -117,11 +117,11 @@ static XrmOptionDescRec opts[] = {
 #define DEF_BLOB     "False"
 #define DEF_NIPPLES  "True"
 #define DEF_ROTATE_SPEED  "10"
-#define DEF_MAX_FALLING   "500"
+#define DEF_MAX_FALLING   "75"  /* carpet is off screen by then */
 #define DEF_MAX_COLORS    "7"
 #define DEF_SIZE          "2"
 #define DEF_SPAWN         "50"
-#define DEF_RESOLUTION    "4"
+#define DEF_RESOLUTION    "8"
 #define DEF_CAM_X         "1"
 #define DEF_CAM_Y         "20"
 #define DEF_CAM_Z         "25"
@@ -315,6 +315,7 @@ draw_topBlock (ModeInfo *mi)
     return;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *tb->glx_context);
   mi->polygon_count = 0;
+  mi->recursion_depth = tb->numFallingBlocks;
 
 	generateNewBlock(mi);
 

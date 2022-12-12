@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Thu May 26 13:26:42 2022 by build-fntable.pl 1.14.
+   Created: Sat Dec 10 17:33:56 2022 by build-fntable.pl 1.14.
  */
 
 #import <Foundation/Foundation.h>
@@ -120,6 +120,7 @@ extern struct xscreensaver_function_table
  helix_xscreensaver_function_table,
  hexadrop_xscreensaver_function_table,
  hexstrut_xscreensaver_function_table,
+ hextrail_xscreensaver_function_table,
  hilbert_xscreensaver_function_table,
  hopalong_xscreensaver_function_table,
  hydrostat_xscreensaver_function_table,
@@ -223,7 +224,6 @@ extern struct xscreensaver_function_table
  swirl_xscreensaver_function_table,
  tangram_xscreensaver_function_table,
  tessellimage_xscreensaver_function_table,
- thornbird_xscreensaver_function_table,
  timetunnel_xscreensaver_function_table,
  topblock_xscreensaver_function_table,
  triangle_xscreensaver_function_table,
@@ -371,6 +371,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Helix":	[NSValue valueWithPointer:&helix_xscreensaver_function_table],
 	@"Hexadrop":	[NSValue valueWithPointer:&hexadrop_xscreensaver_function_table],
 	@"Hex Strut":	[NSValue valueWithPointer:&hexstrut_xscreensaver_function_table],
+	@"Hex Trail":	[NSValue valueWithPointer:&hextrail_xscreensaver_function_table],
 	@"Hilbert":	[NSValue valueWithPointer:&hilbert_xscreensaver_function_table],
 	@"Hopalong":	[NSValue valueWithPointer:&hopalong_xscreensaver_function_table],
 	@"Hydrostat":	[NSValue valueWithPointer:&hydrostat_xscreensaver_function_table],
@@ -474,7 +475,6 @@ NSDictionary *make_function_table_dict(void) {
 	@"Swirl":	[NSValue valueWithPointer:&swirl_xscreensaver_function_table],
 	@"Tangram":	[NSValue valueWithPointer:&tangram_xscreensaver_function_table],
 	@"Tessellimage":	[NSValue valueWithPointer:&tessellimage_xscreensaver_function_table],
-	@"Thornbird":	[NSValue valueWithPointer:&thornbird_xscreensaver_function_table],
 	@"Time Tunnel":	[NSValue valueWithPointer:&timetunnel_xscreensaver_function_table],
 	@"Top Block":	[NSValue valueWithPointer:&topblock_xscreensaver_function_table],
 	@"Triangle":	[NSValue valueWithPointer:&triangle_xscreensaver_function_table],

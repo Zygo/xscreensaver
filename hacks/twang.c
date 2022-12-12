@@ -707,6 +707,13 @@ static void initParams (struct state *st)
 	problems = 1;
     }
     
+    {
+      XWindowAttributes xgwa;
+      XGetWindowAttributes (st->dpy, st->window, &xgwa);
+      if (xgwa.width > 2560 || xgwa.height > 2560)
+        st->tileSize *= 3;  /* Retina displays */
+    }
+
     st->transference = get_float_resource (st->dpy, "transference", "Double");
     if ((st->transference < 0.0) || (st->transference > 1.0))
     {
@@ -738,7 +745,7 @@ twang_init (Display *dpy, Window win)
 static const char *twang_defaults [] = {
     ".background:	black",
     ".foreground:	white",
-    ".lowrez:		true",
+    ".lowrez:		true",  /* Too slow on macOS Retina screens otherwise */
     "*borderColor:      blue",
     "*borderWidth:	3",
     "*delay:		10000",

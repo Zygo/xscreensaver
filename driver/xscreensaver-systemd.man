@@ -3,7 +3,7 @@
 xscreensaver-systemd - lock the screen upon suspend, and inhibit
 screen-blanking during video playback.
 .SH SYNOPSIS
-.B xscreensaver-systemd [-verbose]
+.B xscreensaver-systemd [\-\-verbose] [\-\-version]
 .SH DESCRIPTION
 The \fIxscreensaver\-systemd\fP program is a helper daemon launched by
 .BR xscreensaver (1)
@@ -68,10 +68,10 @@ Makes no attempt to inhibit the screen saver.  Use VLC instead.
 .SS MPV (0.33)
 Makes no attempt to inhibit the screen saver.  Use VLC instead.
 .SS VARIOUS
-Most programs fail to inhibit screen blanking if they crash or are killed
-while playing.  We try to detect when this has happened and auto-uninhibit,
-but that might not work with all versions of systemd, resulting in blanking
-remaining permanently inhibited.  If that happens, killing and restarting
+Most programs fail to re-enable screen blanking if they crash or are killed
+while playing.  We try to detect when this has happened, but that might not
+work with all versions of systemd, resulting in screen blanking remaining
+permanently disabled.  If that happens, killing and restarting
 \fIxscreensaver\-systemd\fP is a workaround.
 .SH SEE ALSO
 .BR X (1),

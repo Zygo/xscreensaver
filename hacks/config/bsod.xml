@@ -18,7 +18,7 @@
    <boolean id="nt"         _label="Windows NT"      arg-unset="--no-nt"/>
    <boolean id="2k"         _label="Windows 2000  "  arg-unset="--no-2k"/>
    <boolean id="win10"      _label="Windows 10    "  arg-unset="--no-win10"/>
-   <boolean id="vmwareArm"  _label="VMware ESXi-Arm" arg-unset="--no-vmwareArm"/>   
+   <boolean id="vmwareArm"  _label="VMware ESXi-Arm" arg-unset="--no-vmwarearm"/>   
   </vgroup>
   <vgroup>
    <boolean id="msdos"      _label="MS-DOS"         arg-unset="--no-msdos"/>

@@ -32,7 +32,8 @@ struct state {
    int height;
    int delay, delay2;
    int max_points;
-   XPoint *pointbuf;
+   XRectangle *pointbuf;
+   int scale;
 
    unsigned int *board;
 
@@ -62,6 +63,11 @@ init_coral(struct state *st)
     st->width = xgwa.width;
     st->widthb = ((xgwa.width + 31) >> 5);
     st->height = xgwa.height;
+
+    st->scale = 1;
+    if (st->width > 2560 || st->height > 2560)
+      st->scale *= 2;  /* Retina displays */
+
     if (st->board) free(st->board);
     st->board = (unsigned int *)calloc(st->widthb * xgwa.height, sizeof(unsigned int));
     if(!st->board) exit(1);
@@ -166,6 +172,8 @@ coral(struct state *st)
       /* XDrawPoint(dpy, window, draw_gc, x, y); */
       st->pointbuf[st->npoints].x = x;
       st->pointbuf[st->npoints].y = y;
+      st->pointbuf[st->npoints].width =
+        st->pointbuf[st->npoints].height = st->scale;
       st->npoints++;
 
       /* Mark the surrounding area as "sticky" */
@@ -181,8 +189,8 @@ coral(struct state *st)
       }
 		  
       if (flush || color || 0 == st->nwalkers || st->npoints >= st->max_points) {
-        XDrawPoints(st->dpy, st->window, st->draw_gc, st->pointbuf, st->npoints,
-                    CoordModeOrigin);
+        XFillRectangles(st->dpy, st->window, st->draw_gc,
+                        st->pointbuf, st->npoints);
         st->npoints = 0;
       }
 
@@ -197,20 +205,20 @@ coral(struct state *st)
       do {
         switch(rand_2()) {
         case 0:
-          if( 1 == x ) continue;
-          st->walkers[i].x--;
+          if( x <= st->scale ) continue;
+          st->walkers[i].x -= st->scale;
           break;
         case 1:
-          if( st->width-2 == x ) continue;
-          st->walkers[i].x++;
+          if( x >= st->width - 2 * st->scale ) continue;
+          st->walkers[i].x += st->scale;
           break;
         case 2:
-          if( 1 == y ) continue;
-          st->walkers[i].y--;
+          if( y <= st->scale ) continue;
+          st->walkers[i].y -= st->scale;
           break;
         default: /* case 3: */
-          if( st->height-2 == y ) continue;
-          st->walkers[i].y++;
+          if( y >= st->height - 2 * st->scale ) continue;
+          st->walkers[i].y += st->scale;
           break;
           /* default:
              abort(); */
@@ -229,7 +237,8 @@ coral_init (Display *dpy, Window window)
   st->dpy = dpy;
   st->window = window;
   st->max_points = 200;
-  st->pointbuf = (XPoint *) calloc(sizeof(XPoint), st->max_points+2);
+  st->pointbuf =
+    (XRectangle *) calloc(sizeof(*st->pointbuf), st->max_points+2);
   if (!st->pointbuf) exit(-1);
 
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
@@ -293,7 +302,7 @@ coral_free (Display *dpy, Window window, void *closure)
 }
 
 static const char *coral_defaults[] = {
-  ".lowrez:	true",
+/*  ".lowrez:	true", */
   ".background:	black",
   ".foreground:	white",
   "*fpsSolid:	true",

@@ -3,7 +3,7 @@
 xscreensaver - extensible screen saver and screen locking framework
 .SH SYNOPSIS
 .B xscreensaver-auth
-[\-\-display \fIhost:display.screen\fP]
+[\-\-display \fIhost:display.screen\fP] [\-\-version]
 .SH DESCRIPTION
 The
 .BR xscreensaver (1)
@@ -15,7 +15,7 @@ Do not run this program directly.
 .BR xscreensaver\-gfx (MANSUFFIX),
 .BR xscreensaver\-systemd (MANSUFFIX).
 .SH COPYRIGHT
-Copyright \(co 2021 by Jamie Zawinski.
+Copyright \(co 2021-2022 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

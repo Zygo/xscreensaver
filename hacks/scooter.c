@@ -45,7 +45,9 @@
  					"*fullrandom: True \n" \
  					"*verbose: False \n" \
 					"*fpsSolid: true \n" \
-				    "*lowrez: True \n"
+
+/*				    "*lowrez: True \n" */
+
 # define reshape_scooter 0
 # define scooter_handle_event 0
 #include "xlockmore.h"          /* in xscreensaver distribution */
@@ -130,6 +132,7 @@ typedef struct {
 	float aspect_scale;
 
 	Bool halt_scooter;
+    int pscale;
 } scooterstruct;
 
 static scooterstruct *scooters = (scooterstruct *) NULL;
@@ -389,6 +392,10 @@ static void init_scooter(ModeInfo *mi)
 
 	sp->rotationDuration = 1;
 	sp->rotationStep = 0;
+
+    sp->pscale = 1;
+    if (mi->xgwa.width > 2560 || mi->xgwa.height > 2560)
+      sp->pscale = 2;  /* Retina displays */
 }
 
 static void cleardoors(ModeInfo *mi)
@@ -742,7 +749,8 @@ static void drawdoors(ModeInfo *mi)
 
         rect.rightbottom.x = width - 1;
         rect.rightbottom.y = height - 1;
-	XSetLineAttributes(display, gc, 2, LineSolid, CapNotLast, JoinRound);
+	XSetLineAttributes(display, gc, 2*sp->pscale,
+                       LineSolid, CapNotLast, JoinRound);
 
 #ifdef _DRAW_ZELEMENTS
         XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
@@ -753,7 +761,8 @@ static void drawdoors(ModeInfo *mi)
                 proj = projection(sp, zelements[i].pos.z) * sp->aspect_scale;
                 p.x = midx + (sp->zelements[i].pos.x * proj / SPACE_XY_FACTOR);
                 p.y = midy - (sp->zelements[i].pos.y * proj / SPACE_XY_FACTOR);
-                XDrawPoint(display, window, gc, p.x, p.y);
+                XFillRectangle(display, window, gc, p.x, p.y,
+                               st->pscale, st->pscale);
         }
 #endif
 
@@ -862,6 +871,7 @@ ENTRYPOINT void drawstars(ModeInfo *mi)
 
 		XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
 
+#if 0
 		if ((lefttop.x == rightbottom.x) &&
 				(lefttop.y == rightbottom.y)) {
 			/* star is exactly 1 pixel */
@@ -895,6 +905,13 @@ ENTRYPOINT void drawstars(ModeInfo *mi)
 				rightbottom.x - lefttop.x,
 				rightbottom.y - lefttop.y);
 		}
+# else
+        XFillArc (display, window, gc,
+                  lefttop.x, lefttop.y,
+                  rightbottom.x - lefttop.x,
+                  rightbottom.y - lefttop.y,
+                  0, 360 * 64);
+# endif
 	}
 }
 

@@ -17,7 +17,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.9 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.10 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -25,14 +25,39 @@ my $verbose = 0;
 # Anything placed on this list gets unconditionally deleted when this
 # script exits, even if abnormally.
 #
-my @rm_f = ();
-END {
-  my $exit = $?;
-  if (@rm_f) {
-    print STDERR "$progname: rm " . join(' ', @rm_f) . "\n" if ($verbose);
-    unlink @rm_f;
+my %rm_f;
+END { rmf(); }
+
+sub rmf() {
+  foreach my $f (sort keys %rm_f) {
+    if (-e $f) {
+      print STDERR "$progname: rm $f\n" if ($verbose > 1);
+      unlink $f;
+    }
   }
-  $? = $exit;  # Don't clobber this script's exit code.
+  %rm_f = ();
+}
+
+sub signal_cleanup($) {
+  my ($s) = @_;
+  print STDERR "$progname: SIG$s\n" if ($verbose > 1);
+  rmf();
+  # Propagate the signal and die. This does not cause END to run.
+  $SIG{$s} = 'DEFAULT';
+  kill ($s, $$);
+}
+
+$SIG{TERM} = \&signal_cleanup;  # kill
+$SIG{INT}  = \&signal_cleanup;  # shell ^C
+$SIG{QUIT} = \&signal_cleanup;  # shell ^|
+$SIG{KILL} = \&signal_cleanup;  # nope
+$SIG{ABRT} = \&signal_cleanup;
+$SIG{HUP}  = \&signal_cleanup;
+
+# Add the file to the rm_f list, since you can't export hash variables.
+sub rm_atexit($) {
+  my ($file) = @_;
+  $rm_f{$file} = 1;
 }
 
 
@@ -74,7 +99,8 @@ sub set_icon($$) {
   my $n = rand() * 0xFFFFFFFF;
   my $rsrc_tmp = sprintf("rez_%08X.rsrc", $n);
   my $icon_tmp = sprintf("rez_%08X.icns", $n);
-  push @rm_f, ($rsrc_tmp, $icon_tmp);
+  rm_atexit ($rsrc_tmp);
+  rm_atexit ($icon_tmp);
   unlink ($rsrc_tmp, $icon_tmp);
 
   safe_system ("cp", "-p", $icon, $icon_tmp);

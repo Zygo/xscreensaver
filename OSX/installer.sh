@@ -196,7 +196,13 @@ su "$USER" -c "open \"$DST1/$UPDATER_DST\"" &
 sleep 5
 
 
-# Launch System Preferences with the Screen Saver pane selected.
+# Launch System Preferences with the "Desktop" pane selected.  In the olden
+# days, this was a single pane with two tabs, "Desktop" and "Screen Saver",
+# and it would always come up with "Desktop" selected.  As of macOS 13, these
+# are two top-level pages, and this still opens the "Desktop" one.  There is
+# still no way to open the "Screen Saver" page directly.  I'm guessing they
+# are the same code, despite displaying two tabs.  Well, at least this scrolls
+# the list of pages to *approximately* the right spot...
 #
 su "$USER" -c \
  "open /System/Library/PreferencePanes/DesktopScreenEffectsPref.prefPane" &

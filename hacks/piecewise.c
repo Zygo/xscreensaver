@@ -895,12 +895,16 @@ piecewise_init (Display *dd, Window ww)
   else
     st->b = st->window;
 
+  st->gcv.line_width = 1;
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+    st->gcv.line_width *= 3;  /* Retina displays */
+
   /* erasure gc */
   st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap, "background", "Background");
-  st->erase_gc = XCreateGC (st->dpy, st->b, GCForeground, &st->gcv);
+  st->erase_gc = XCreateGC (st->dpy, st->b, GCForeground|GCLineWidth, &st->gcv);
 
   /* drawing gc */
-  st->flags = GCForeground;
+  st->flags = GCForeground|GCLineWidth;
   st->color_index = random() % st->ncolors;
   st->gcv.foreground = st->colors[st->color_index].pixel;
   st->draw_gc = XCreateGC(st->dpy, st->b, st->flags, &st->gcv);

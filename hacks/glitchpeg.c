@@ -445,7 +445,7 @@ static const char *glitchpeg_defaults [] = {
   "*fpsSolid:			true",
   "*delay:			30000",
   "*duration:			120",
-  "*count:			100",
+  "*count:			400",
   "*grabDesktopImages:		False",   /* HAVE_JWXYZ */
   "*chooseRandomImages:		True",    /* HAVE_JWXYZ */
 #ifdef HAVE_MOBILE

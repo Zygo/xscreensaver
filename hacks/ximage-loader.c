@@ -22,7 +22,7 @@
 #endif
 
 #ifdef HAVE_COCOA
-# include "grabscreen.h"  /* for osx_load_image_file() */
+# include "grabclient.h"  /* for osx_load_image_file() */
 #endif
 
 #ifdef HAVE_GDK_PIXBUF

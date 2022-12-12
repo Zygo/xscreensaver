@@ -460,7 +460,9 @@ draw_ground (ModeInfo *mi)
       GLfloat fog_color[4] = { 0, 0, 0, 1 };
 
       glLineWidth (4);
+# ifndef GL_LINE_SMOOTH_BROKEN
       glEnable (GL_LINE_SMOOTH);
+# endif
       glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
       glEnable (GL_BLEND);
@@ -500,7 +502,9 @@ draw_ground (ModeInfo *mi)
 
   if (!wire)
     {
+# ifndef GL_LINE_SMOOTH_BROKEN
       glDisable (GL_LINE_SMOOTH);
+# endif
       glDisable (GL_BLEND);
       glDisable (GL_FOG);
     }

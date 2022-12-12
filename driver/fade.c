@@ -19,7 +19,7 @@
    - XF86 Gamma or RANDR Gamma: These do the fade by altering the brightness
      settings of the screen.  This works on any system that has the "XF86
      Video-Mode" extension (which is every modern system) AND ALSO has gamma
-     support in the video driver.  But it turns out that as of 2021, the
+     support in the video driver.  But it turns out that as of 2022, the
      Raspberry Pi HDMI video driver still does not support gamma.  And there's
      no way to determine that the video driver lacks gamma support even though
      the extension exists.  Since the Pi is probably the single most popular

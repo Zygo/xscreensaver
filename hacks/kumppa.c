@@ -46,7 +46,7 @@ from the X Consortium.
 
 static const char *kumppa_defaults [] ={
   ".background:		black",
-  ".lowrez:		true",
+/*  ".lowrez:		true", */
   "*fpsSolid:		true",
   "*speed:		0.1",
   "*delay:		10000",
@@ -117,6 +117,7 @@ struct state {
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
   int draw_count;
+  int pscale;
 };
 
 
@@ -366,15 +367,20 @@ static Bool InitializeAll(struct state *st)
   XChangeWindowAttributes(st->dpy,st->win[0],CWBackingStore,&xswa);*/
   xgcv.function=GXcopy;
 
+  st->pscale = 1;
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    st->pscale *= 3;  /* Retina displays */
+
   xgcv.foreground=get_pixel_resource (st->dpy, cmap, "background", "Background");
-  st->fgc[32]=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction,&xgcv);
+  xgcv.line_width = st->pscale;
+  st->fgc[32]=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction|GCLineWidth,&xgcv);
 
   n=0;
   if (mono_p)
     {
       st->fgc[0]=st->fgc[32];
       xgcv.foreground=get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
-      st->fgc[1]=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction,&xgcv);
+      st->fgc[1]=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction|GCLineWidth,&xgcv);
       for (i=0;i<32;i+=2) st->fgc[i]=st->fgc[0];
       for (i=1;i<32;i+=2) st->fgc[i]=st->fgc[1];
     } else
@@ -386,9 +392,9 @@ static Bool InitializeAll(struct state *st)
         color.flags=DoRed|DoGreen|DoBlue;
         XAllocColor(st->dpy,cmap,&color);
         xgcv.foreground=color.pixel;
-        st->fgc[i]=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction,&xgcv);
+        st->fgc[i]=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction|GCLineWidth,&xgcv);
       }
-  st->cgc=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction,&xgcv);
+  st->cgc=XCreateGC(st->dpy,st->win[0],GCForeground|GCFunction|GCLineWidth,&xgcv);
   XSetGraphicsExposures(st->dpy,st->cgc,False);
 
   st->cosilines = get_boolean_resource(st->dpy, "random","Boolean");
@@ -484,10 +490,12 @@ kumppa_draw (Display *d, Window w, void *closure)
         if (a>=32) a=32;
         b=Satnum(32)-16+st->midx;
         st->draw_count=Satnum(32)-16+st->midy;
-        XFillRectangle(st->dpy,st->win[0],st->fgc[a],b,st->draw_count,2,2);
+        XFillRectangle(st->dpy,st->win[0],st->fgc[a],b,st->draw_count,
+                       2*st->pscale,2*st->pscale);
       }
   }
-  XFillRectangle(st->dpy,st->win[0],st->fgc[32],st->midx-2,st->midy-2,4,4);
+  XFillRectangle(st->dpy,st->win[0],st->fgc[32],st->midx-2,st->midy-2,
+                 4*st->pscale,4*st->pscale);
   rotate(st);
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   if (st->usedouble) XdbeSwapBuffers(st->dpy,&st->xdswp,1);

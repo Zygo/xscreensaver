@@ -58,9 +58,12 @@ init_tsg (struct state *st)
 
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
   cmap = st->xgwa.colormap;
+  gcv.line_width = 1;
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+    gcv.line_width = 3;  /* Retina displays */
   gcv.foreground = st->default_fg_pixel =
     get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
-  st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground|GCLineWidth, &gcv);
   gcv.foreground = get_pixel_resource (st->dpy, cmap, "background", "Background");
 }
 

@@ -100,6 +100,7 @@ struct state {
   XWindowAttributes xgwa;
 
   int initted;
+  int scale;
 
   int draw_x;
   int draw_y;
@@ -123,7 +124,7 @@ static void make_new_robot(struct state *st, int index)
 	if(laser_check==0) {
 		st->robots[index].alive=1;
 
-		st->robots[index].radius = 7+(random()%7);
+		st->robots[index].radius = (7+(random()%7)) * st->scale;
 
 		st->robots[index].move_style = random()%st->NUM_MOVE_STYLES;
 		if(random()%2==0) {
@@ -204,16 +205,16 @@ static void move_robots(struct state *st)
 		if(st->robots[x].alive) {
 			if((st->robots[x].new_x == st->robots[x].old_x) && (st->robots[x].new_y == st->robots[x].old_y)) {
 				if(st->robots[x].new_x==0) {
-					st->robots[x].old_x = -((random()%3)+1);
+					st->robots[x].old_x = -((random()%3)+1) * st->scale;
 				}
 				else {
-					st->robots[x].old_x = st->robots[x].old_x + (random()%3)+1;
+					st->robots[x].old_x = st->robots[x].old_x + ((random()%3)+1) * st->scale;
 				}
 				if(st->robots[x].new_y==0) {
-					st->robots[x].old_y = -((random()%3)+1);
+					st->robots[x].old_y = -((random()%3)+1) * st->scale;
 				}
 				else {
-					st->robots[x].old_y = st->robots[x].old_y + (random()%3)+1;
+					st->robots[x].old_y = st->robots[x].old_y + ((random()%3)+1) * st->scale;
 				}
 			}
 			if(st->robots[x].move_style==st->LINE_MOVE_STYLE) {
@@ -234,8 +235,8 @@ static void move_robots(struct state *st)
 				st->robots[x].old_x = st->robots[x].new_x;
 				st->robots[x].old_y = st->robots[x].new_y;
 
-				st->robots[x].new_x = st->robots[x].new_x + dx;
-				st->robots[x].new_y = st->robots[x].new_y + dy;
+				st->robots[x].new_x = st->robots[x].new_x + dx * st->scale;
+				st->robots[x].new_y = st->robots[x].new_y + dy * st->scale;
 			}
 			else if(st->robots[x].move_style==st->RANDOM_MOVE_STYLE) {
 				dx = st->robots[x].new_x - st->robots[x].old_x;
@@ -259,10 +260,10 @@ static void move_robots(struct state *st)
 
 				y = random()%3;
 				if(y==0) {
-					dy = dy - ((random()%7)+1);
+					dy = dy - ((random()%7)+1) * st->scale;
 				}
 				else if(y==1){
-					dy = dy + ((random()%7)+1);
+					dy = dy + ((random()%7)+1) * st->scale;
 				}
 				else {
 					dx = (-1)*dx;
@@ -276,8 +277,8 @@ static void move_robots(struct state *st)
 				st->robots[x].old_x = st->robots[x].new_x;
 				st->robots[x].old_y = st->robots[x].new_y;
 
-				st->robots[x].new_x = st->robots[x].new_x + dx;
-				st->robots[x].new_y = st->robots[x].new_y + dy;
+				st->robots[x].new_x = st->robots[x].new_x + dx * st->scale;
+				st->robots[x].new_y = st->robots[x].new_y + dy * st->scale;
 			}
 
 			/* bounds corrections */
@@ -315,28 +316,28 @@ static void move_robots(struct state *st)
 									if(random()%2==0) {
 										st->robots[x].lasers[y].start_x = st->robots[x].new_x+st->robots[x].radius;
 										st->robots[x].lasers[y].start_y = st->robots[x].new_y+st->robots[x].radius;
-										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x+7;
-										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x+7 * st->scale;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7 * st->scale;
 									}
 									else {
 										st->robots[x].lasers[y].start_x = st->robots[x].new_x-st->robots[x].radius;
 										st->robots[x].lasers[y].start_y = st->robots[x].new_y+st->robots[x].radius;
-										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x-7;
-										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x-7 * st->scale;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7 * st->scale;
 									}
 								}
 								else {
 									if(random()%2==0) {
 										st->robots[x].lasers[y].start_x = st->robots[x].new_x-st->robots[x].radius;
 										st->robots[x].lasers[y].start_y = st->robots[x].new_y-st->robots[x].radius;
-										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x-7;
-										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x-7 * st->scale;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7 * st->scale;
 									}
 									else {
 										st->robots[x].lasers[y].start_x = st->robots[x].new_x+st->robots[x].radius;
 										st->robots[x].lasers[y].start_y = st->robots[x].new_y-st->robots[x].radius;
-										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x+7;
-										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7;
+										st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x+7 * st->scale;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7 * st->scale;
 									}
 								}
 								y = st->NUM_LASERS;
@@ -354,11 +355,11 @@ static void move_robots(struct state *st)
 									if((slope<1) && (slope>-1)) {
 										if(target_x>st->robots[x].new_x) {
 											st->robots[x].lasers[y].start_x = st->robots[x].radius;
-											st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x + 7;
+											st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x + 7 * st->scale;
 										}
 										else {
 											st->robots[x].lasers[y].start_x = -st->robots[x].radius;
-											st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x - 7;
+											st->robots[x].lasers[y].end_x = st->robots[x].lasers[y].start_x - 7 * st->scale;
 										}
 										st->robots[x].lasers[y].start_y = (int)(st->robots[x].lasers[y].start_x * slope);
 										st->robots[x].lasers[y].end_y = (int)(st->robots[x].lasers[y].end_x * slope);
@@ -367,11 +368,11 @@ static void move_robots(struct state *st)
 										slope = (target_x-st->robots[x].new_x)/(target_y-st->robots[x].new_y);
 										if(target_y>st->robots[x].new_y) {
 											st->robots[x].lasers[y].start_y = st->robots[x].radius;
-											st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y + 7;
+											st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y + 7 * st->scale;
 										}
 										else {
 											st->robots[x].lasers[y].start_y = -st->robots[x].radius;
-											st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y - 7;
+											st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y - 7 * st->scale;
 										}
 										st->robots[x].lasers[y].start_x = (int)(st->robots[x].lasers[y].start_y * slope);;
 										st->robots[x].lasers[y].end_x = (int)(st->robots[x].lasers[y].end_y * slope);
@@ -386,20 +387,20 @@ static void move_robots(struct state *st)
 										st->robots[x].lasers[y].start_x = st->robots[x].new_x;
 										st->robots[x].lasers[y].start_y = st->robots[x].new_y+st->robots[x].radius;
 										st->robots[x].lasers[y].end_x = st->robots[x].new_x;
-										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y+7 * st->scale;
 									}
 									else {
 										st->robots[x].lasers[y].start_x = st->robots[x].new_x;
 										st->robots[x].lasers[y].start_y = st->robots[x].new_y-st->robots[x].radius;
 										st->robots[x].lasers[y].end_x = st->robots[x].new_x;
-										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7;
+										st->robots[x].lasers[y].end_y = st->robots[x].lasers[y].start_y-7 * st->scale;
 									}
 								}
 							
-								if((((st->robots[x].lasers[y].start_x - st->robots[x].lasers[y].end_x) > 7) || 
-									 ((st->robots[x].lasers[y].end_x - st->robots[x].lasers[y].start_x) > 7)) &&  
-									(((st->robots[x].lasers[y].start_y - st->robots[x].lasers[y].end_y) > 7) || 
-									 ((st->robots[x].lasers[y].end_y - st->robots[x].lasers[y].start_y) > 7))) {
+								if((((st->robots[x].lasers[y].start_x - st->robots[x].lasers[y].end_x) > 7 * st->scale) || 
+									 ((st->robots[x].lasers[y].end_x - st->robots[x].lasers[y].start_x) > 7 * st->scale)) &&  
+									(((st->robots[x].lasers[y].start_y - st->robots[x].lasers[y].end_y) > 7 * st->scale) || 
+									 ((st->robots[x].lasers[y].end_y - st->robots[x].lasers[y].start_y) > 7 * st->scale))) {
 								}
 								else {
 									st->robots[x].lasers[y].active = 1;
@@ -720,12 +721,13 @@ static void
 init_stars(struct state *st)
 {
   if(st->NUM_STARS) {
+
     if (! st->stars)
       st->stars = (XArc *) malloc (st->NUM_STARS * sizeof(XArc));
     for(st->draw_x=0;st->draw_x<st->NUM_STARS;st->draw_x++) {
       st->stars[st->draw_x].x = random()%st->xgwa.width;
       st->stars[st->draw_x].y = random()%st->xgwa.height;
-      st->stars[st->draw_x].width = random()%4 + 1;
+      st->stars[st->draw_x].width = (random()%4 + 1) * st->scale;
       st->stars[st->draw_x].height = st->stars[st->draw_x].width;
       st->stars[st->draw_x].angle1 = 0;
       st->stars[st->draw_x].angle2 = 360 * 64;
@@ -942,6 +944,10 @@ blaster_init (Display *d, Window w)
 	XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
 	cmap = st->xgwa.colormap;
 
+  st->scale = 1;
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+    st->scale = 3;  /* Retina displays */
+
   st->NUM_ROBOTS=5;
   st->NUM_LASERS=3;
 
@@ -989,14 +995,15 @@ blaster_init (Display *d, Window w)
 
 #define make_gc(color,name) \
 	gcv.foreground = get_pixel_resource (st->dpy, cmap, (name), "Foreground"); \
-	color = XCreateGC (st->dpy, st->window, GCForeground|GCFunction, &gcv)
+  gcv.line_width = st->scale; \
+	color = XCreateGC (st->dpy, st->window, GCForeground|GCFunction|GCLineWidth, &gcv)
 
 	if(mono_p) {
 		gcv.foreground = bg;
-		st->black = XCreateGC(st->dpy, st->window, GCForeground|GCFunction, &gcv);
+		st->black = XCreateGC(st->dpy, st->window, GCForeground|GCFunction|GCLineWidth, &gcv);
 		gcv.foreground = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
 		st->r_color0 = st->r_color1 = st->r_color2 = st->r_color3 = st->r_color4 = st->r_color5 = st->l_color0 = st->l_color1 = st->s_color=
-			XCreateGC(st->dpy, st->window, GCForeground|GCFunction, &gcv);
+			XCreateGC(st->dpy, st->window, GCForeground|GCFunction|GCLineWidth, &gcv);
 		if(get_boolean_resource(st->dpy, "mother_ship","Boolean")) {
 			st->MOTHER_SHIP_WIDTH=get_integer_resource(st->dpy, "mother_ship_width","Integer");
 			st->MOTHER_SHIP_HEIGHT=get_integer_resource(st->dpy, "mother_ship_height","Integer");
@@ -1048,6 +1055,13 @@ blaster_init (Display *d, Window w)
 #endif
 	}
 
+  st->MOTHER_SHIP_WIDTH *= st->scale;
+  st->MOTHER_SHIP_HEIGHT *= st->scale;
+  st->MOTHER_SHIP_LASER *= st->scale;
+  st->EXPLODE_SIZE_1 *= st->scale;
+  st->EXPLODE_SIZE_2 *= st->scale;
+  st->EXPLODE_SIZE_3 *= st->scale;
+
   return st;
 }
 
@@ -1098,7 +1112,7 @@ blaster_free (Display *dpy, Window window, void *closure)
 
 
 static const char *blaster_defaults [] = {
-  ".lowrez: true",
+/*  ".lowrez: true",*/
   ".background:	black",
   ".foreground:	white",
   "*fpsSolid:	true",

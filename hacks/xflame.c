@@ -229,7 +229,7 @@ InitFlame(struct state *st)
 # undef THROTTLE
 
 #if 0
-  if (st->width > 2560)  /* Retina displays */
+  if (st->width > 2560 || st->height > 2560)  /* Retina displays */
     {
       /* #### One of these knobs must mean "make the fire be twice as tall"
          but I can't figure out how. Changing any of the default values

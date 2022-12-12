@@ -76,9 +76,6 @@ AH_TEMPLATE([HAVE_LIBCAP],
 AH_TEMPLATE([XPointer],
             [Stare into the void.])
 
-AH_TEMPLATE([HAVE_READ_DISPLAY_EXTENSION],
-	    [Define this if you have the SGI XReadDisplay extension.])
-
 AH_TEMPLATE([HAVE_XINPUT],
 	    [Define this if you have the XInput2 extension.])
 
@@ -1800,31 +1797,6 @@ fi
 
 ###############################################################################
 #
-#       Check for the SGI XReadDisplay server extension.
-#
-###############################################################################
-
-have_readdisplay=no
-with_readdisplay_req=unspecified
-AC_ARG_WITH(readdisplay,
-[  --with-readdisplay      Include support for the SGI XReadDisplay extension.],
-  [with_readdisplay="$withval"; with_readdisplay_req="$withval"],
-  [with_readdisplay=$ac_irix])
-
-HANDLE_X_PATH_ARG(with_readdisplay, --with-readdisplay, XReadDisplay)
-
-if test "$with_readdisplay" = yes; then
-  AC_CHECK_X_HEADER(X11/extensions/readdisplay.h,
-                    AC_DEFINE(HAVE_READ_DISPLAY_EXTENSION),,
-                    [#include <X11/Xlib.h>])
-elif test "$with_readdisplay" != no; then
-  echo "error: must be yes or no: --with-readdisplay=$with_readdisplay"
-  exit 1
-fi
-
-
-###############################################################################
-#
 #       Check for the XSHM server extension.
 #
 ###############################################################################
@@ -2796,7 +2768,7 @@ if test "$with_gtk" = yes; then
   
   pkgs=''
   ok="yes"
-  pkg_check_version       gtk+-3.0  2.22.0 ; ac_gtk_version_string="$vers"
+  pkg_check_version       gtk+-3.0  3.0.0 ; ac_gtk_version_string="$vers"
   pkg_check_version    gmodule-2.0  2.0.0
   pkg_check_version     libxml-2.0  2.4.6
   pkg_check_version gdk-pixbuf-2.0  2.0.0
@@ -2822,7 +2794,7 @@ if test "$with_gtk" = yes; then
 
   GTK_DATADIR=""
   if test "$have_gtk" = yes; then
-    GTK_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    GTK_DATADIR=`$pkg_config --variable=prefix gtk+-3.0`
     GTK_DATADIR="$GTK_DATADIR/share"
   fi
 
@@ -4856,7 +4828,7 @@ fi
 if test "$with_pam_req" = yes -a "$have_pam" = no ; then
   warn 'Use of PAM was requested, but it was not found.'
   CONF_STATUS=1
-elif test "$have_pam" = no ; then
+elif test "$have_pam" = no -a "$enable_locking" = yes ; then
   if test -d /etc/pam.d -o -f /etc/pam.conf ; then
     warn  "Your system seems to have PAM, but PAM is not being used."
     warn2 "That is probably not going to work out well."

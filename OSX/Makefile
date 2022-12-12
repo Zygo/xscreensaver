@@ -215,8 +215,8 @@ test_sig::
   BASE="xscreensaver-$$V" ;						    \
   OUTDIR="../archive" ;							    \
   DMG="$$OUTDIR/$$BASE.dmg" ;						    \
-  SIG1=`sed -n 's/^.*dsaSignature="\(.*\)".*/\1/p' updates.xml` ;	    \
-  SIG2=`sed -n  's/^.*edSignature="\(.*\)".*/\1/p' updates.xml` ;	    \
+  SIG1=`sed -n 's/^.*dsaSignature="\(.*\)".*/\1/p' updates.xml | head -1` ; \
+  SIG2=`sed -n  's/^.*edSignature="\(.*\)".*/\1/p' updates.xml | head -1` ; \
   PUB1="sparkle_dsa_pub.pem" ;						    \
   NN="t.$$$$" ;								    \
   SIGB=/tmp/$$NN.sig ;							    \
@@ -412,7 +412,7 @@ _dmg::
 # To set up notarization:
 #  - Log in on https://appleid.apple.com/
 #  - Generate App-Specific Password, "altool-notarizer"
-#  - Keychain Access / New
+#  - Keychain Access / New Password Item...
 #  - Name: "altool-notarizer", Account: "jwz@jwz.org",
 #    Pass: the one you just generated.
 #

@@ -57,9 +57,6 @@ static const char *bumps_defaults [] = {
   "*duration:	120",
   "*soften:		1",
   "*invert:		FALSE",
-#ifdef __sgi    /* really, HAVE_READ_DISPLAY_EXTENSION */
-  "*visualID:	Best",
-#endif
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:		True",
 #endif /* HAVE_XSHM_EXTENSION */
@@ -301,10 +298,7 @@ static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
 	}
 	
 	GCValues.function = GXcopy;
-	GCValues.subwindow_mode = IncludeInferiors;
 	nGCFlags = GCFunction;
-	if( use_subwindow_mode_p( XWinAttribs.screen, pBumps->Win ) ) /* See grabscreen.c */
-		nGCFlags |= GCSubwindowMode;
 	pBumps->GraphicsContext = XCreateGC( pBumps->dpy, pBumps->Win, nGCFlags, &GCValues );
 	
 	SetPalette(dpy, pBumps, &XWinAttribs );
@@ -427,6 +421,10 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 	while( nSoften-- )
 		softenMultiplier *= 1.0f + ( 1.0f / 3.0f );	/* Softening takes the max height down, so scale up to compensate. */
 	maxHeight = pBumps->SpotLight.nLightRadius * softenMultiplier;
+
+    if (XWinAttribs.width > 2560 || XWinAttribs.height > 2560)
+      maxHeight *= 2;  /* Retina displays */
+
 	nAverager = maxHeight ? ( 3 * 0xFFFF ) / maxHeight : 0;
 
 	pBump = pBumps->aBumpMap;

@@ -2367,6 +2367,13 @@ main (int argc, char **argv)
           if (! verbose_p)  /* might already be -vv */
             verbose_p = cmdline_verbose_p = cmdline_verbose_val = True;
         }
+      else if (!strcmp (argv[i], "-ver") ||
+               !strcmp (argv[i], "-vers") ||
+               !strcmp (argv[i], "-version"))
+        {
+          fprintf (stderr, "%s\n", screensaver_id+4);
+          exit (1);
+        }
       else if (!strcmp (argv[i], "-d") ||
                !strcmp (argv[i], "-dpy") ||
                !strcmp (argv[i], "-disp") ||
@@ -2392,6 +2399,7 @@ main (int argc, char **argv)
                    "\t\t--verbose\n"
                    "\t\t--no-splash\n"
                    "\t\t--log logfile\n"
+                   "\t\t--version\n"
                    "\n"
                    "\tRun 'xscreensaver-settings' to configure.\n"
                    "\n");

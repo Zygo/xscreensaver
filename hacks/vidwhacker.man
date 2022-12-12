@@ -9,20 +9,14 @@ vidwhacker \- grab images and apply random filters to them
 [-directory \fIdirectory\fP]
 [\-\-fps]
 .SH DESCRIPTION
-The \fIvidwhacker\fP program grabs an image from disk, or  from the
-system's video input, then applies random image filters to it, and
-displays the result.  The \fIvidwhacker\fP program does not terminate
-until killed.  
-
-It depends heavily on the various PBM tools (e.g.,
-.BR ppmrelief (1).)
+Distorts an image using a random series of filters: edge detection,
+subtracting the image from a rotated version of itself, etc.
 
 Selection of random image files is done by running the
 .BR xscreensaver\-getimage\-file (MANSUFFIX)
 program.  Capture of video frames (if requested) is done by running the
 .BR xscreensaver\-getimage\-video (MANSUFFIX)
-program.  The options of whether to do video, and which directory to 
-search for images, are specified in the \fI~/.xscreensaver\fP file.
+program.
 .SH OPTIONS
 .I vidwhacker
 accepts the following options:
@@ -70,20 +64,24 @@ stored in the RESOURCE_MANAGER property.
 .B XSCREENSAVER_WINDOW
 The window ID to use with \fI\-\-root\fP.
 .SH BUGS
-It's slow.
-.SH TO DO
-It might be interesting to rewrite this to use
-.BR gimp (1)
-plugins instead of the pbm tools.  It probably wouldn't be any faster,
-but there would be a wider variety of effects available.
+It is poorly named; originally it worked only on grabbed video frames,
+before being expanded to work on any image.
+
+It requires the various PBM tools, e.g.,
+.BR ppmrelief (1).
+Though still available, the "pbmplus" suite has largely fallen out of
+favor these days, so it would be nice if someone were to port this script
+to make use of ImageMagick's
+.BR convert (1)
+instead.  That would also probably make it faster.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
+.BR xscreensaver\-getimage (MANSUFFIX),
 .BR xscreensaver\-getimage\-file (MANSUFFIX),
 .BR xscreensaver\-getimage\-video (MANSUFFIX),
-.BR xv (1),
 .BR ppmtogif (1),
-.BR cjpeg (1)
+.BR convert (1)
 .SH COPYRIGHT
 Copyright \(co 1998-2001 by Jamie Zawinski.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

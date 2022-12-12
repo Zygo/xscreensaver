@@ -15,7 +15,7 @@
 #ifdef HAVE_IPHONE  // whole file
 
 #import <Photos/Photos.h>
-#import "grabscreen.h"
+#import "grabclient.h"
 #import "yarandom.h"
 
 void

@@ -834,7 +834,8 @@ compass_init (Display *dpy, Window window)
 
   {
     int max = 600;
-    if (st->xgwa.width > 2560) max *= 2;  /* Retina displays */
+    if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+      max *= 2;  /* Retina displays */
     if (st->size2 > max) st->size2 = max;
   }
 

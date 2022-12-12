@@ -112,6 +112,7 @@ struct state {
 
   int reset_p;
   int cyc;
+  int pscale;
 };
 
 
@@ -174,7 +175,7 @@ static void
 sp (struct state *st, int x, int y, int c)
 {
   XSetForeground (st->dpy, st->mygc, st->mycolors[c].pixel);
-  XDrawPoint (st->dpy, st->window, st->mygc, x, y);
+  XFillRectangle (st->dpy, st->window, st->mygc, x, y, st->pscale, st->pscale);
   st->point[(st->wid * y) + x] = c;
 }
 
@@ -789,6 +790,11 @@ vermiculate_init (Display *d, Window w)
     st->mygc = XCreateGC (st->dpy, st->window, 0, &mygcv);
   }
 
+  st->pscale = 1;
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+    st->pscale = 3;  /* Retina displays */
+  /* We aren't increasing the spacing between the pixels, just the size. */
+
   st->point = (unsigned char *) calloc (1, st->wid * st->hei);
   maininit (st);
   palupdate (st, True);
@@ -1200,7 +1206,7 @@ vermiculate_free (Display *dpy, Window window, void *closure)
 
 
 static const char *vermiculate_defaults[] = {
-  ".lowrez: true",
+/*  ".lowrez: true", */
   ".background: Black",
   "*ticks: 20000",
   "*fpsSolid:	true",

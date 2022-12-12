@@ -28,19 +28,6 @@
 #
 # Requires that either the provided "webcollage-helper" program or
 # ImageMagick's "convert" be available on $PATH.
-#
-#
-# If you have the "driftnet" program installed, webcollage can display a
-# collage of images sniffed off your local ethernet, instead of pulled out
-# of search engines: in that way, your screensaver can display the images
-# that your co-workers are downloading!
-#
-# Driftnet is available here: http://www.ex-parrot.com/~chris/driftnet/
-# Use it like so:
-#
-#     webcollage --root --driftnet
-#
-# Driftnet is the Unix implementation of the MacOS "EtherPEG" program.
 
 
 require 5;
@@ -60,11 +47,51 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.185 $' =~ m/\s(\d[.\d]+)\s/s);
-my $copyright = "WebCollage $version, Copyright (c) 1999-2017" .
+my ($version) = ('$Revision: 1.189 $' =~ m/\s(\d[.\d]+)\s/s);
+my $copyright = "WebCollage $version, Copyright (c) 1999-2022" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
 
+
+# Anything placed on this list gets unconditionally deleted when this
+# script exits, even if abnormally.
+#
+my %rm_f;
+END { rmf(); }
+
+sub rmf() {
+  foreach my $f (sort keys %rm_f) {
+    if (-e $f) {
+      # print STDERR "$progname: rm $f\n" if ($verbose_exec > 1);
+      unlink $f;
+    }
+  }
+  %rm_f = ();
+}
+
+sub signal_cleanup($) {
+  my ($s) = @_;
+  # print STDERR "$progname: SIG$s\n" if ($verbose_exec > 1);
+  rmf();
+  # Propagate the signal and die. This does not cause END to run.
+  $SIG{$s} = 'DEFAULT';
+  kill ($s, $$);
+}
+
+$SIG{TERM} = \&signal_cleanup;  # kill
+$SIG{INT}  = \&signal_cleanup;  # shell ^C
+$SIG{QUIT} = \&signal_cleanup;  # shell ^|
+$SIG{KILL} = \&signal_cleanup;  # nope
+$SIG{ABRT} = \&signal_cleanup;
+$SIG{HUP}  = \&signal_cleanup;
+$SIG{PIPE} = 'IGNORE';  # So that if subprocs die, we don't.
+
+
+# Add the file to the rm_f list, since you can't export hash variables.
+sub rm_atexit($) {
+  my ($file) = @_;
+  $rm_f{$file} = 1;
+}
 
 
 my @search_methods = (
@@ -150,19 +177,6 @@ my @search_methods = (
                      #  0, "hotbot",        \&pick_from_hotbot_text,
                       );
 
-# programs we can use to write to the root window (tried in ascending order.)
-#
-my @root_displayers = (
-  "xscreensaver-getimage -root -file",
-  "chbg       -once -xscreensaver -max_size 100",
-  "xv         -root -quit -viewonly +noresetroot -quick24 -rmode 5" .
-  "           -rfg black -rbg black",
-  "xli        -quiet -onroot -center -border black",
-  "xloadimage -quiet -onroot -center -border black",
-
-# this lame program wasn't built with vroot.h:
-# "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
-);
 
 
 # Some sites need cookies to work properly.   These are they.
@@ -258,7 +272,6 @@ my %warningless_sites = (
   "images.quizilla.com"     => 1,
   "images.quizdiva.net"     => 1,
 
-  "driftnet"                => 1,  # builtin...
   "local-directory"         => 1,  # builtin...
 );
 
@@ -358,12 +371,6 @@ my $urls_only_p = 0;
 my $cocoa_p = 0;
 my $imagemap_base = undef;
 
-my @pids_to_kill = ();  # forked pids we should kill when we exit, if any.
-
-my $driftnet_magic = 'driftnet';
-my $driftnet_dir = undef;
-my $default_driftnet_cmd = "driftnet -a -m 100";
-
 my $local_magic = 'local-directory';
 my $local_dir = undef;
 
@@ -452,8 +459,8 @@ sub get_document_1($$$) {
   $head =~ s/\r\n/\n/gs;
   $head =~ s/\r/\n/gs;
   if ($verbose_http) {
-    foreach (split (/\n/, $head)) {
-      LOG ($verbose_http, "  <== $_");
+    foreach my $s (split (/\n/, $head)) {
+      LOG ($verbose_http, "  <== $s");
     }
   }
 
@@ -477,10 +484,6 @@ sub get_document_1($$$) {
 sub get_document($$;$) {
   my ($url, $referer, $timeout) = @_;
   my $start = time;
-
-  if (defined($referer) && $referer eq $driftnet_magic) {
-    return get_driftnet_file ($url);
-  }
 
   if (defined($referer) && $referer eq $local_magic) {
     return get_local_file ($url);
@@ -1816,9 +1819,9 @@ sub pick_from_livejournal_images($) {
   $body =~ s/\n/ /gs;
   $body =~ s/(<recent-image)\b/\n$1/gsi;
 
-  foreach (split (/\n/, $body)) {
-    next unless (m/^<recent-image\b/);
-    next unless (m/\bIMG=[\'\"]([^\'\"]+)[\'\"]/si);
+  foreach my $s (split (/\n/, $body)) {
+    next unless ($s =~ m/^<recent-image\b/);
+    next unless ($s =~ m/\bIMG=[\'\"]([^\'\"]+)[\'\"]/si);
     my $img = html_unquote ($1);
 
     next if ($lj_cache{$img}); # already have it
@@ -2426,110 +2429,13 @@ sub pick_from_tumblr($) {
   return ($page, $img);
 }
 
-
+
+
 ############################################################################
 #
-# Pick images by waiting for driftnet to populate a temp dir with files.
-# Requires driftnet version 0.1.5 or later.
-# (Driftnet is a program by Chris Lightfoot that sniffs your local ethernet
-# for images being downloaded by others.)
-# Driftnet/webcollage integration by jwz.
+# Pick images from a local directory.
 #
 ############################################################################
-
-# driftnet
-sub pick_from_driftnet($) {
-  my ($timeout) = @_;
-
-  my $id = $driftnet_magic;
-  my $dir = $driftnet_dir;
-  my $start = time;
-  my $now;
-
-  error ("\$driftnet_dir unset?") unless ($dir);
-  $dir =~ s@/+$@@;
-
-  error ("$dir unreadable") unless (-d "$dir/.");
-
-  $timeout = $http_timeout unless ($timeout);
-  $last_search = $id;
-
-  while ($now = time, $now < $start + $timeout) {
-    opendir (my $dir, $dir) || error ("$dir: $!");
-    while (my $file = readdir($dir)) {
-      next if ($file =~ m/^\./);
-      $file = "$dir/$file";
-      closedir ($dir);
-      LOG ($verbose_load, "picked file $file ($id)");
-      return ($id, $file);
-    }
-    closedir ($dir);
-  }
-  LOG (($verbose_net || $verbose_load), "timed out for $id");
-  return ();
-}
-
-
-sub get_driftnet_file($) {
-  my ($file) = @_;
-
-  error ("\$driftnet_dir unset?") unless ($driftnet_dir);
-
-  my $id = $driftnet_magic;
-  error ("$id: $file not in $driftnet_dir?")
-    unless ($file =~ m@^\Q$driftnet_dir@o);
-
-  open (my $in, '<', $file) || error ("$id: $file: $!");
-  my $body = '';
-  local $/ = undef;  # read entire file
-  $body = <$in>;
-  close ($in) || error ("$id: $file: $!");
-  unlink ($file) || error ("$id: $file: rm: $!");
-  return ($id, $body);
-}
-
-
-sub spawn_driftnet($) {
-  my ($cmd) = @_;
-
-  # make a directory to use.
-  while (1) {
-    my $tmp = $ENV{TEMPDIR} || "/tmp";
-    $driftnet_dir = sprintf ("$tmp/driftcollage-%08x", rand(0xffffffff));
-    LOG ($verbose_exec, "mkdir $driftnet_dir");
-    last if mkdir ($driftnet_dir, 0700);
-  }
-
-  if (! ($cmd =~ m/\s/)) {
-    # if the command didn't have any arguments in it, then it must be just
-    # a pointer to the executable.  Append the default args to it.
-    my $dargs = $default_driftnet_cmd;
-    $dargs =~ s/^[^\s]+//;
-    $cmd .= $dargs;
-  }
-
-  # point the driftnet command at our newly-minted private directory.
-  #
-  $cmd .= " -d $driftnet_dir";
-  $cmd .= ">/dev/null" unless ($verbose_exec);
-
-  my $pid = fork();
-  if ($pid < 0) { error ("fork: $!\n"); }
-  if ($pid) {
-    # parent fork
-    push @pids_to_kill, $pid;
-    LOG ($verbose_exec, "forked for \"$cmd\"");
-  } else {
-    # child fork
-    nontrapping_system ($cmd) || error ("exec: $!");
-  }
-
-  # wait a bit, then make sure the process actually started up.
-  #
-  sleep (1);
-  error ("pid $pid failed to start \"$cmd\"")
-    unless (1 == kill (0, $pid));
-}
 
 # local-directory
 sub pick_from_local_dir($) {
@@ -2657,8 +2563,8 @@ sub clearlog() {
 
 sub showlog() {
   my $head = "$progname: DEBUG: ";
-  foreach (split (/\n/, $lastlog)) {
-    print STDERR "$head$_\n";
+  foreach my $s (split (/\n/, $lastlog)) {
+    print STDERR "$head$s\n";
   }
   $lastlog = "";
 }
@@ -2819,14 +2725,14 @@ sub save_recent_url($$) {
   my ($site) = m@^https?://([^ \t\n\r/:]+)@;
   return unless defined ($site);
 
-  if ($base eq $driftnet_magic || $base eq $local_magic) {
+  if ($base eq $local_magic) {
     $site = $base;
     @recent_images = ();
   }
 
   my $done = 0;
-  foreach (@recent_images) {
-    if ($_ eq $url) {
+  foreach my $s (@recent_images) {
+    if ($s eq $url) {
       print STDERR blurb() . "WARNING: recently-duplicated image: $url" .
         " (on $base via $last_search)\n";
       $done = 1;
@@ -2847,8 +2753,8 @@ sub save_recent_url($$) {
   }
 
   if (!$done) {
-    foreach (@recent_sites) {
-      if ($_ eq $site) {
+    foreach my $s (@recent_sites) {
+      if ($s eq $site) {
         print STDERR blurb() . "WARNING: recently-duplicated site: $site" .
         " ($url on $base via $last_search)\n";
         last;
@@ -2985,8 +2891,8 @@ sub image_size($) {
 #
 sub which($) {
   my ($prog) = @_;
-  foreach (split (/:/, $ENV{PATH})) {
-    my $path = "$_/$prog";
+  foreach my $d (split (/:/, $ENV{PATH})) {
+    my $path = "$d/$prog";
     if (-x $path) {
       return $path;
     }
@@ -3002,27 +2908,6 @@ sub bellrand(;$) {
   $_ /= 3.0;
   return (rand($_) + rand($_) + rand($_));
 }
-
-
-sub exit_cleanup() {
-  x_cleanup();
-  print STDERR "$progname: exiting\n" if ($verbose_warnings);
-  if (@pids_to_kill) {
-    print STDERR blurb() . "killing: " . join(' ', @pids_to_kill) . "\n";
-    kill ('TERM', @pids_to_kill);
-  }
-}
-
-sub signal_cleanup($) {
-  my ($sig) = @_;
-  print STDERR blurb() . (defined($sig)
-                          ? "caught signal $sig."
-                          : "exiting.")
-                       . "\n"
-    if ($verbose_exec || $verbose_warnings);
-  exit 1;
-}
-
 
 
 ##############################################################################
@@ -3057,6 +2942,10 @@ my ($image_png, $image_tmp1, $image_tmp2);
   $image_tmp1 = $image_png . '-1.png';
   $image_tmp2 = $image_png . '-2.png';
   $image_png .= '.png';
+
+  rm_atexit ($image_png);
+  rm_atexit ($image_tmp1);
+  rm_atexit ($image_tmp2);
 }
 
 
@@ -3073,13 +2962,6 @@ my $img_width;            # size of the image being generated.
 my $img_height;
 
 my $delay = 2;
-
-sub x_cleanup() {
-  unlink $image_png, $image_tmp1, $image_tmp2;
-  unlink $imagemap_html_tmp, $imagemap_jpg_tmp
-    if (defined ($imagemap_html_tmp));
-}
-
 
 # Like system, but prints status about exit codes, and kills this process
 # with whatever signal killed the sub-process, if any.
@@ -3136,24 +3018,12 @@ sub pngmake($$$$) {
 sub pick_root_displayer() {
   my @names = ();
 
-  if ($cocoa_p) {
-    # see "xscreensaver/hacks/webcollage-cocoa.m"
-    return "echo COCOA LOAD ";
-  }
+  # See xscreensaver/hacks/webcollage-cocoa.m
+  return "echo COCOA LOAD " if ($cocoa_p);
 
-  foreach my $cmd (@root_displayers) {
-    $_ = $cmd;
-    my ($name) = m/^([^ ]+)/;
-    push @names, "\"$name\"";
-    LOG ($verbose_exec, "looking for $name...");
-    foreach my $dir (split (/:/, $ENV{PATH})) {
-      LOG ($verbose_exec, "  checking $dir/$name");
-      return $cmd if (-x "$dir/$name");
-    }
-  }
-
-  $names[$#names] = "or " . $names[$#names];
-  error "none of: " . join (", ", @names) . " were found on \$PATH.";
+  my $cmd = "xscreensaver-getimage";
+  error ("$cmd not on \$PATH") unless (which($cmd));
+  return "$cmd -root -file",
 }
 
 
@@ -3189,8 +3059,9 @@ sub x_or_image_output($) {
   }
 
   if (!$cocoa_p && defined ($webcollage_helper)) {
-    foreach ($image_png, $image_tmp1, $image_tmp2) {
-      s/\.png$/.jpg/si;
+    foreach my $p ($image_png, $image_tmp1, $image_tmp2) {
+      $p =~ s/\.png$/.jpg/si;
+      rm_atexit ($p);
     }
   }
 
@@ -3200,8 +3071,8 @@ sub x_or_image_output($) {
 
   push @progs, $convert_cmd unless defined($webcollage_helper);
 
-  foreach (@progs) {
-    which ($_) || error "$_ not found on \$PATH.";
+  foreach my $p (@progs) {
+    which ($p) || error ("$p not found on \$PATH.");
   }
 
   # find a root-window displayer program.
@@ -3228,22 +3099,34 @@ sub x_or_image_output($) {
     }
 
     if (!defined ($window_id)) {
-      $_ = "xdpyinfo";
-      which ($_) || error "$_ not found on \$PATH.";
-      $_ = `$_`;
-      ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
-      if (!defined($img_height)) {
-        error "xdpyinfo failed.";
+
+      $_ = "xrandr";
+      if (which ($_)) {
+        $_ = `$_`;
+        # Let's hope all the screens are the same size.
+        ($img_width, $img_height) = m/primary +(\d+) *x *(\d+)/;
       }
+
+      if (! $img_width) {
+        $_ = "xdpyinfo";
+        which ($_) || error ("$_ not found on \$PATH.");
+        $_ = `$_`;
+        ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
+
+        if (!defined($img_height)) {
+          error ("xdpyinfo failed.");
+        }
+      }
+
     } else {  # we have a window id
       $_ = "xwininfo";
-      which ($_) || error "$_ not found on \$PATH.";
+      which ($_) || error ("$_ not found on \$PATH.");
       $_ .= " -id $window_id";
       $_ = `$_`;
       ($img_width, $img_height) = m/^\s*Width:\s*(\d+)\n\s*Height:\s*(\d+)\n/m;
 
       if (!defined($img_height)) {
-        error "xwininfo failed.";
+        error ("xwininfo failed.");
       }
     }
   }
@@ -3259,7 +3142,7 @@ sub x_or_image_output($) {
       $bgimage = $background;
 
     } elsif (! $background =~ m@^[-a-z0-9 ]+$@i) {
-      error "not a color or readable file: $background";
+      error ("not a color or readable file: $background");
 
     } else {
       # default to assuming it's a color
@@ -3350,7 +3233,7 @@ sub paste_image($$$$;$) {
     # #### Historically, $filter_cmd read and write PPM files.
     #      This is doing PNG or JPEG now.  I'll bet nobody uses this.
 
-    my $rc = nontrapping_system "($filter_cmd) < $image_tmp1 >$image_tmp2";
+    my $rc = nontrapping_system ("($filter_cmd) < $image_tmp1 >$image_tmp2");
     if ($rc != 0) {
       LOG(($verbose_decode || $verbose_load),
           "failed command: \"$filter_cmd\"");
@@ -3645,12 +3528,13 @@ sub update_imagemap($$$$$$$$) {
 
   my $imagemap_html = $imagemap_base . ".html";
   my $imagemap_jpg  = $imagemap_base . ".jpg";
-  my $imagemap_jpg2 = $imagemap_jpg;
-  $imagemap_jpg2 =~ s@^.*/@@gs;
 
   if (!defined ($imagemap_html_tmp)) {
-    $imagemap_html_tmp = $imagemap_html . sprintf (".%08x", rand(0xffffffff));
-    $imagemap_jpg_tmp  = $imagemap_jpg  . sprintf (".%08x", rand(0xffffffff));
+    my $seed = sprintf (".%08x", rand(0xFFFFFFFF));
+    $imagemap_html_tmp = "$imagemap_base.map.$seed..html";
+    $imagemap_jpg_tmp  = "$imagemap_base.map.$seed.jpg";
+    rm_atexit ($imagemap_html_tmp);
+    rm_atexit ($imagemap_jpg_tmp);
   }
 
   # Read the imagemap html file (if any) to get a template.
@@ -3743,6 +3627,8 @@ sub update_imagemap($$$$$$$$) {
   #
   {
     my $body = $template_html;
+    my $imagemap_jpg2 = $imagemap_jpg;
+    $imagemap_jpg2 =~ s@^.*/@@gs;
     my $img = ("   <DIV CLASS=\"webcollage_box\">" .
                     "<IMG SRC=\"$imagemap_jpg2\">" .
                    "</DIV>\n");
@@ -3752,7 +3638,7 @@ sub update_imagemap($$$$$$$$) {
       $y /= $img_height / 100;
       $w /= $img_width  / 100;
       $h /= $img_height / 100;
-      foreach ($x, $y, $w, $h) { $_ = sprintf("%.1f%%", $_); }
+      foreach my $v ($x, $y, $w, $h) { $v = sprintf("%.1f%%", $v); }
       $u = html_quote($u);
       $img .= ("   <A HREF=\"$u\" STYLE=\"" .
                "left:$x;top:$y;width:$w;height:$h\"/>\n");
@@ -3785,12 +3671,12 @@ sub update_imagemap($$$$$$$$) {
   # Rename the two tmp files to the real files
   #
   rename ($imagemap_html_tmp, $imagemap_html) ||
-    error "renaming $imagemap_html_tmp to $imagemap_html";
+    error ("renaming $imagemap_html_tmp to $imagemap_html");
   LOG ($verbose_decode, "wrote $imagemap_html");
 
   if ($imagemap_jpg_tmp ne $image_png) {
     rename ($imagemap_jpg_tmp,  $imagemap_jpg) ||
-      error "renaming $imagemap_jpg_tmp to $imagemap_jpg";
+      error ("renaming $imagemap_jpg_tmp to $imagemap_jpg");
     LOG ($verbose_decode, "wrote $imagemap_jpg");
   }
 }
@@ -3839,20 +3725,6 @@ sub set_proxy() {
 }
 
 
-sub init_signals() {
-
-  $SIG{HUP}  = \&signal_cleanup;
-  $SIG{INT}  = \&signal_cleanup;
-  $SIG{QUIT} = \&signal_cleanup;
-  $SIG{ABRT} = \&signal_cleanup;
-  $SIG{KILL} = \&signal_cleanup;
-  $SIG{TERM} = \&signal_cleanup;
-
-  # Need this so that if subprocess filters die, we don't die.
-  $SIG{PIPE} = 'IGNORE';
-}
-
-END { exit_cleanup(); }
 
 
 sub main() {
@@ -3861,7 +3733,6 @@ sub main() {
 
   my $verbose = 0;
   my $dict;
-  my $driftnet_cmd = 0;
 
   $current_state = "init";
   $load_method = "none";
@@ -3908,7 +3779,7 @@ sub main() {
         $img_width = $1;
         $img_height = $2;
       } else {
-        error "argument to \"--size\" must be of the form \"640x400\"";
+        error ("argument to \"--size\" must be of the form \"640x400\"");
       }
     } elsif (m/^--?(http-)?proxy$/s) {
       $http_proxy = shift @ARGV;
@@ -3918,13 +3789,6 @@ sub main() {
       $opacity = shift @ARGV;
       error ("opacity must be between 0.0 and 1.0")
         if ($opacity <= 0 || $opacity > 1);
-    } elsif (m/^--?driftnet$/s) {
-      @search_methods = ( 100, "driftnet", \&pick_from_driftnet );
-      if (! ($ARGV[0] =~ m/^-/)) {
-        $driftnet_cmd = shift @ARGV;
-      } else {
-        $driftnet_cmd = $default_driftnet_cmd;
-      }
     } elsif (m/^--?dir(ectory)?$/s) {
       @search_methods = ( 100, "local", \&pick_from_local_dir );
       if (! ($ARGV[0] =~ m/^-/)) {
@@ -3950,7 +3814,7 @@ sub main() {
           last;
         }
       }
-      error "no such search method as \"$which\"" unless ($ok);
+      error ("no such search method as \"$which\"") unless ($ok);
       LOG (1, "DEBUG: using only \"$which\"");
       $report_performance_interval = 30;
 
@@ -3963,7 +3827,6 @@ sub main() {
         "\t\t  [--background color] [--opacity f]\n" .
         "\t\t  [--filter cmd] [--filter2 cmd]\n" .
         "\t\t  [--dictionary dictionary-file] [--http-proxy host[:port]]\n" .
-        "\t\t  [--driftnet [driftnet-program-and-args]]\n" .
         "\t\t  [--directory local-image-directory]\n" .
         "\n";
       exit 1;
@@ -3972,11 +3835,11 @@ sub main() {
 
   if (!$root_p && !$no_output_p && !$cocoa_p) {
     print STDERR $copyright;
-    error "the --root argument is mandatory (for now.)";
+    error ("the --root argument is mandatory");
   }
 
   if (!$no_output_p && !$cocoa_p && !$ENV{DISPLAY}) {
-    error "\$DISPLAY is not set.";
+    error ("\$DISPLAY is not set.");
   }
 
 
@@ -4043,13 +3906,10 @@ sub main() {
 
   if (defined ($local_dir)) {
     $_ = "xscreensaver-getimage-file";
-    which ($_) || error "$_ not found on \$PATH.";
+    which ($_) || error ("$_ not found on \$PATH.");
   }
 
-  init_signals();
   set_proxy();
-
-  spawn_driftnet ($driftnet_cmd) if ($driftnet_cmd);
 
   if ($urls_only_p) {
     url_only_output ();

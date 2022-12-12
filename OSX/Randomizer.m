@@ -1069,7 +1069,7 @@ catch_signal (int sig, void (*handler) (int))
   self.minSize = frame.size;
   frame.size.height = 99999;
   self.maxSize = frame.size;
-  self.styleMask |= NSResizableWindowMask;
+  self.styleMask |= NSWindowStyleMaskResizable;
 
   // In a sane world, almost all of this would be in a .xib file.  But after
   // I spent 4 hours unsuccessfully trying to figure out how to ctrl-drag
@@ -1208,7 +1208,7 @@ catch_signal (int sig, void (*handler) (int))
   mlab.editable = NO;
   mlab.bezeled = NO;
   mlab.drawsBackground = NO;
-  mlab.alignment = NSCenterTextAlignment;
+  mlab.alignment = NSTextAlignmentCenter;
   [mlab sizeToFit];
   mlab.autoresizingMask = NSViewMinXMargin | NSViewMinYMargin;
   frame = mlab.frame;
@@ -1638,7 +1638,7 @@ catch_signal (int sig, void (*handler) (int))
 - (void) okAction:(NSObject *)arg
 {
   [prefs save:self];
-  [NSApp endSheet:self returnCode:NSOKButton];
+  [NSApp endSheet:self returnCode:NSModalResponseOK];
   [self close];
 }
 

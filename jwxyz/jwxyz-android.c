@@ -49,7 +49,7 @@
 #include "jwzglesI.h"
 #include "jwxyz-android.h"
 #include "textclient.h"
-#include "grabscreen.h"
+#include "grabclient.h"
 #include "pow2.h"
 
 

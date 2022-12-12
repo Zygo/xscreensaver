@@ -891,8 +891,8 @@ fill_rects (Display *dpy, Drawable d, GC gc,
 
     int x = rectangles[i].x;
     int y = rectangles[i].y;
-    unsigned long width = rectangles[i].width;
-    unsigned long height = rectangles[i].height;
+    long width  = rectangles[i].width;    /* Might go negative */
+    long height = rectangles[i].height;
 
     if (fast_fill_p) {
       long   // negative_int > unsigned_int == 1

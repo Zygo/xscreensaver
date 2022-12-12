@@ -85,7 +85,8 @@ memscroller_init (Display *dpy, Window window)
   }
 
   st->border = get_integer_resource (dpy, "borderSize", "BorderSize");
-  if (st->xgwa.width > 2560) st->border *= 2;  /* Retina displays */
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+    st->border *= 2;  /* Retina displays */
 
   {
     int i;
@@ -179,7 +180,8 @@ memscroller_init (Display *dpy, Window window)
       sc->which = i;
       sc->speed = i+1;
 
-      if (st->xgwa.width > 2560) sc->speed *= 2.5;  /* Retina displays */
+      if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+        sc->speed *= 2.5;  /* Retina displays */
 
       sc->image = create_xshm_image (st->dpy, st->xgwa.visual,
                                      st->xgwa.depth,
@@ -214,7 +216,8 @@ reshape_memscroller (state *st)
         {
           sc->rez = 6;  /* #### */
 
-          if (st->xgwa.width > 2560) sc->rez *= 2.5;  /* Retina displays */
+          if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+            sc->rez *= 2.5;  /* Retina displays */
 
           sc->rect.width  = (((int) (st->xgwa.width * 0.8)
                               / sc->rez) * sc->rez);

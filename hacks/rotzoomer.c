@@ -474,10 +474,7 @@ setup_X (struct state *st)
     st->height--;
 
   gcv.function = GXcopy;
-  gcv.subwindow_mode = IncludeInferiors;
   gcflags = GCFunction;
-  if (use_subwindow_mode_p (xgwa.screen, st->window))	/* see grabscreen.c */
-    gcflags |= GCSubwindowMode;
   st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
   if (st->pm) XFreePixmap (st->dpy, st->pm);
   st->pm = XCreatePixmap (st->dpy, st->window,

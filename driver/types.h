@@ -191,7 +191,7 @@ struct saver_screen_info {
 				   real root window. */
   unsigned long black_pixel;	/* Black, allocated from `cmap'. */
   Window error_dialog;		/* Error message about crashed savers */
-
+  Pixmap screenshot;		/* Saved screen image before activation */
 
   XtIntervalId cycle_id;	/* Timer to implement `prefs.cycle' */
   time_t cycle_at;		/* When cycle_id will fire */

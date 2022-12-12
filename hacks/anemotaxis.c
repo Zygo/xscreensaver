@@ -511,7 +511,8 @@ static void draw_image(struct state *st, Drawable curr_window)
 
     for(j = 0; j < st->source[i]->n; j++) {
 
-      int size = (st->scrWidth > 2560 ? 8 : 4);  /* Retina displays */
+      int size = (st->scrWidth > 2560 || st->scrHeight > 2560
+                  ? 8 : 4);  /* Retina displays */
 
       if(st->source[i]->yv[j].v == 2)
 	continue;

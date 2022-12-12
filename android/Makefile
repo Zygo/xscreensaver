@@ -169,6 +169,7 @@ export ANDROID_HACKS=		\
 	helix			\
 	hexadrop		\
 	hexstrut		\
+	hextrail		\
 	hilbert			\
 	hopalong		\
 	hypertorus		\
@@ -262,7 +263,6 @@ export ANDROID_HACKS=		\
 	swirl			\
 	tangram			\
 	tessellimage		\
-	thornbird		\
 	timetunnel		\
 	topblock		\
 	triangle		\

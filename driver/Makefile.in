@@ -120,6 +120,7 @@ GFX_OBJS	= xscreensaver-gfx.o screens.o windows.o subprocs.o \
 		  $(UTILS_BIN)/font-retry.o \
 		  $(UTILS_BIN)/logo.o \
 		  $(UTILS_BIN)/minixpm.o \
+		  $(UTILS_BIN)/screenshot.o \
 		  $(UTILS_BIN)/xft.o \
 		  $(UTILS_BIN)/utf8wc.o \
 		  $(UTILS_BIN)/xshm.o \
@@ -183,6 +184,7 @@ GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o demo-Gtk-resources.o \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/screenshot.o \
 		  $(UTILS_BIN)/usleep.o
 GTK_LIBS	= $(LIBS_PRE) $(INTL_LIBS) $(XDPMS_LIBS) \
 		  $(XINERAMA_LIBS) $(XML_LIBS) @GTK_LIBS@ \
@@ -770,7 +772,7 @@ $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/colorbars.o:	$(UTILS_SRC)/colorbars.c
 $(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
 $(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
-$(UTILS_BIN)/grabscreen.o:	$(UTILS_SRC)/grabscreen.c
+$(UTILS_BIN)/grabclient.o:	$(UTILS_SRC)/grabclient.c
 $(UTILS_BIN)/utf8wc.o:		$(UTILS_SRC)/utf8wc.c
 $(UTILS_BIN)/xftwrap.o:		$(UTILS_SRC)/xftwrap.c
 $(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
@@ -789,7 +791,7 @@ UTIL_OBJS	= $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/colorbars.o \
 		  $(UTILS_BIN)/hsv.o \
 		  $(UTILS_BIN)/colors.o \
-		  $(UTILS_BIN)/grabscreen.o \
+		  $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/xft.o \
 		  $(UTILS_BIN)/xftwrap.o \
 		  $(UTILS_BIN)/utf8wc.o \
@@ -861,7 +863,7 @@ demo-Gtk-conf.o: demo-Gtk-conf.c
 
 GCRARGS = --sourcedir=$(srcdir) --sourcedir=$(ICON_SRC) --generate-source
 demo-Gtk-resources.c: gresource.xml demo.ui prefs.ui
-	$(GLIB_COMPILE_RESOURCES) gresource.xml --target=$@ $(GCRARGS)
+	$(GLIB_COMPILE_RESOURCES) $(srcdir)/gresource.xml --target=$@ $(GCRARGS)
 
 GTK_WARNINGS = -Wno-long-long -Wno-c99-extensions -Wno-pedantic
 demo-Gtk-resources.o: demo-Gtk-resources.c
@@ -992,6 +994,7 @@ xdpyinfo: xdpyinfo.o
 #
 # DO NOT DELETE: updated by make distdepend
 
+demo-Gtk-conf.o: $(srcdir)/blurb.h
 demo-Gtk-conf.o: ../config.h
 demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
 demo-Gtk-conf.o: $(UTILS_SRC)/xscreensaver-intl.h
@@ -1004,6 +1007,7 @@ demo-Gtk.o: $(srcdir)/remote.h
 demo-Gtk.o: $(srcdir)/screens.h
 demo-Gtk.o: $(srcdir)/types.h
 demo-Gtk.o: $(UTILS_SRC)/resources.h
+demo-Gtk.o: $(UTILS_SRC)/screenshot.h
 demo-Gtk.o: $(UTILS_SRC)/usleep.h
 demo-Gtk.o: $(UTILS_SRC)/version.h
 demo-Gtk.o: $(UTILS_SRC)/visual.h

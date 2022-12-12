@@ -5,6 +5,7 @@ xscreensaver - extensible screen saver and screen locking framework
 .B xscreensaver
 [\-\-display \fIhost:display.screen\fP] \
 [\-\-verbose] \
+[\-\-version] \
 [\-\-no\-splash] \
 [\-\-log \fIfilename\fP]
 .SH DESCRIPTION
@@ -46,6 +47,9 @@ will manage all screens on the display simultaneously.
 .TP 8
 .B \-\-verbose
 Print diagnostics to stderr.
+.TP 8
+.B \-\-version\fP
+Print the version number and exit.
 .TP 8
 .B \-\-log\fP \fIfilename\fP
 Append all diagnostic output to the given file.  This also 

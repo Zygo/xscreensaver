@@ -668,6 +668,9 @@ wormhole_init (Display *dpy, Window window)
 	XGetWindowAttributes( st->dpy, st->window, &attr );
 	st->cmap = attr.colormap;
 
+        if (attr.width > 2560 || attr.height > 2560)  /* Retina displays */
+          XSetLineAttributes (dpy, st->gc, 3, LineSolid, CapRound, JoinRound);
+
         return st;
 }
 
@@ -708,7 +711,7 @@ wormhole_free (Display *dpy, Window window, void *closure)
 
 
 static const char *wormhole_defaults [] = {
-  ".lowrez:     true",
+/*  ".lowrez:     true", */
   ".background:	Black",
   ".foreground:	#E9967A",
   "*delay:	10000",

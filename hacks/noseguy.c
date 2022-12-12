@@ -157,7 +157,7 @@ init_images (struct state *st)
       images[i]->m = mask;
     }
 
-  if (xgwa.width > 2560) /* Retina display */
+  if (xgwa.width > 2560 || xgwa.height > 2560) /* Retina displays */
     {
       for (i = 0; i < sizeof (images) / sizeof(*images); i++)
         {

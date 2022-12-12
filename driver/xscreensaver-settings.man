@@ -4,7 +4,6 @@ xscreensaver-settings - configure and control the xscreensaver daemon
 .SH SYNOPSIS
 .B xscreensaver\-settings
 [\-\-display \fIhost:display.screen\fP]
-[\-\-prefs]
 [\-\-debug]
 .SH DESCRIPTION
 The \fIxscreensaver\-settings\fP program is a graphical front-end for 
@@ -104,6 +103,8 @@ When \fBMode\fP is set to \fBRandom Screen Saver\fP, each name in the list
 has a checkbox next to it: this controls whether this display mode is
 enabled.  If it is unchecked, then that mode will not be chosen.  (Though
 you can still run it explicitly by double-clicking on its name.)
+
+If the list has focus, you can type any character to search within it.
 .SS Arrow Buttons
 Beneath the list are a pair of up and down arrows. Clicking on the down 
 arrow will select the next item in the list, and then run it in full-screen
@@ -145,16 +146,8 @@ to the display mode selected in the list.
 .SH SETTINGS DIALOG
 When you click on the \fISettings\fP button on the \fIDisplay Modes\fP
 tab, a configuration dialog will pop up that lets you customize settings
-of the selected display mode.  Each display mode has its own custom
-configuration controls on the left side.
-
-On the right side is a paragraph or two describing the display mode.
-Below that is a \fBDocumentation\fP button that will display the display
-mode's manual page in a new window.
-
-The \fBAdvanced\fP button reconfigures the dialog box so that you can
-edit the display mode's command line directly, instead of using the 
-graphical controls.
+of the selected display mode.  Each display mode has its own custom set
+of configuration controls.
 .SH ADVANCED TAB
 This tab lets you change various settings used by the xscreensaver daemon
 itself, as well as some global options shared by all of the display modes.
@@ -298,10 +291,6 @@ The X display to use.  The \fIxscreensaver\-settings\fP program will open its
 window on that display, and also control the \fIxscreensaver\fP daemon that
 is managing that same display.
 .TP 8
-.B \-\-prefs
-Start up with the \fBAdvanced\fP tab selected by default
-instead of the \fBDisplay Modes\fP tab.
-.TP 8
 .B \-\-debug
 Causes lots of diagnostics to be printed on stderr.
 .PP
@@ -317,10 +306,10 @@ file, or it won't work.
 to get the default host and display number.
 .TP 8
 .B PATH
-to find the sub-programs to run.  However, note that the sub-programs 
-are actually launched by the \fIxscreensaver\fP daemon, not 
-by \fIxscreensaver-settings\fP itself.  So, what matters is what \fB$PATH\fP
-that the \fIxscreensaver\fP program sees.
+to find the sub-programs to run.  However, note that the sub-programs
+actually launched by \fIxscreensaver-settings\fP for display in the
+inline preview pane, but are launched by the \fIxscreensaver\fP daemon
+when run full screen, so the \fB$PATH\fP setting in both processes matters.
 .TP 8
 .B HOME
 for the directory in which to read and write the \fI.xscreensaver\fP file.

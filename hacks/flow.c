@@ -792,9 +792,13 @@ init_flow (ModeInfo * mi)
 	/* no "NoExpose" events from XCopyArea wanted */
 	XSetGraphicsExposures(MI_DISPLAY(mi), MI_GC(mi), False);
 
-	/* Make sure we're using 'thin' lines */
-	XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), 0, LineSolid, CapNotLast,
-					   JoinMiter);
+    {
+        int lw = 1;
+        if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560)
+            lw = 3;  /* Retina displays */
+        XSetLineAttributes (MI_DISPLAY(mi), MI_GC(mi),
+                            lw, LineSolid, CapNotLast, JoinMiter);
+    }
 
 	/* Clear the background (may be slow depending on user prefs). */
 	MI_CLEARWINDOW(mi);

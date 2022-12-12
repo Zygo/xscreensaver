@@ -52,10 +52,16 @@ struct state {
 
    struct worm *worms;
    int inclear;
+   int scale, oscale;
 };
 
 #define CLEAR1(x,y) (!st->fill[((y)%st->height)*st->width+(x)%st->width])
-#define MOVE1(x,y) (st->fill[((y)%st->height)*st->width+(x)%st->width]=1, XDrawPoint(st->dpy, st->window, st->draw_gc, (x)%st->width,(y)%st->height), st->cov++)
+#define MOVE1(x,y) (st->fill[((y)%st->height)*st->width+(x)%st->width]=1, \
+                    XFillRectangle (st->dpy, st->window, st->draw_gc,   \
+                                    ((x) % st->width)  * st->scale,     \
+                                    ((y) % st->height) * st->scale,     \
+                                    st->scale, st->scale),              \
+                    st->cov++)
 
 #define CLEARDXY(x,y,dx,dy) CLEAR1(x+dx, y+dy) && CLEAR1(x+dx+dx, y+dy+dy)
 #define MOVEDXY(x,y,dx,dy)  MOVE1 (x+dx, y+dy), MOVE1 (x+dx+dx, y+dy+dy)
@@ -66,8 +72,12 @@ struct state {
 		  w->h=w->h+st->dirh[d]*2, \
 		  w->v=w->v+st->dirv[d]*2, dir=d)
 
-#define RANDOM (void) (w->h = R(st->width), w->v = R(st->height), w->c = R(st->ncolors), \
-		  type=R(2), dir=R(4), (st->cycle && (w->cc=R(3)+st->ncolors)))
+#define RANDOM (void) (w->h = R(st->width), \
+                       w->v = R(st->height), \
+                       w->c = R(st->ncolors), \
+                       type=R(2), \
+                       dir=R(4), \
+                       (st->cycle && (w->cc=R(3)+st->ncolors)))
 
 
 
@@ -145,8 +155,14 @@ squiral_init (Display *dpy, Window window)
 
     XClearWindow(st->dpy, st->window);
     XGetWindowAttributes(st->dpy, st->window, &xgwa);
-    st->width  = xgwa.width;
-    st->height = xgwa.height;
+
+    st->oscale = get_integer_resource(st->dpy, "scale", "Integer");
+    st->scale = st->oscale;
+    if (xgwa.width > 2560 || xgwa.height > 2560)
+      st->scale *= 3;  /* Retina displays */
+
+    st->width  = xgwa.width  / st->scale;
+    st->height = xgwa.height / st->scale;
 
     cmap = xgwa.colormap;
     gcv.foreground = get_pixel_resource(st->dpy, cmap, "foreground",
@@ -201,19 +217,35 @@ squiral_draw (Display *dpy, Window window, void *closure)
   int i;
 
   if(st->inclear<st->height) {
-    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->inclear, st->width-1, st->inclear);
+    XFillRectangle(st->dpy, st->window, st->erase_gc,
+                   0,
+                   st->inclear * st->scale,
+                   (st->width-1) * st->scale,
+                   st->scale);
     memset(&st->fill[st->inclear*st->width], 0, sizeof(int)*st->width);
-    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->height-st->inclear-1, st->width-1,
-              st->height-st->inclear-1);
-    memset(&st->fill[(st->height-st->inclear-1)*st->width], 0, sizeof(int)*st->width);
+    XFillRectangle(st->dpy, st->window, st->erase_gc,
+                   0,
+                   (st->height-st->inclear-1) * st->scale,
+                   (st->width-1) * st->scale,
+                   st->scale);
+    memset(&st->fill[(st->height-st->inclear-1)*st->width], 0,
+           sizeof(int)*st->width);
     st->inclear++;
-    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->inclear, st->width-1, st->inclear);
+    XFillRectangle(st->dpy, st->window, st->erase_gc,
+                   0,
+                   st->inclear * st->scale,
+                   (st->width-1) * st->scale,
+                   st->scale);
     if (st->inclear < st->height)
       memset(&st->fill[st->inclear*st->width], 0, sizeof(int)*st->width);
-    XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->height-st->inclear-1, st->width-1,
-              st->height-st->inclear-1);
+    XFillRectangle(st->dpy, st->window, st->erase_gc,
+                   0,
+                   (st->height-st->inclear-1) * st->scale,
+                   (st->width-1) * st->scale, 
+                   st->scale);
     if (st->height - st->inclear >= 1)
-      memset(&st->fill[(st->height-st->inclear-1)*st->width], 0, sizeof(int)*st->width);
+      memset(&st->fill[(st->height-st->inclear-1)*st->width], 0,
+             sizeof(int)*st->width);
     st->inclear++;
     if(st->inclear>st->height/2) st->inclear=st->height;
   }
@@ -230,8 +262,12 @@ squiral_reshape (Display *dpy, Window window, void *closure,
                  unsigned int w, unsigned int h)
 {
   struct state *st = (struct state *) closure;
-  st->width  = w;
-  st->height = h;
+
+  st->scale = st->oscale;
+  if (w > 2560 || h > 2560) st->scale *= 3;  /* Retina displays */
+
+  st->width  = w / st->scale;
+  st->height = h / st->scale;
   squiral_init_1 (st);
   XClearWindow (dpy, window);
 }
@@ -264,7 +300,7 @@ squiral_free (Display *dpy, Window window, void *closure)
 
 
 static const char *squiral_defaults[] = {
-  ".lowrez:     true",
+/*  ".lowrez:     true", */
   ".background: black",
   ".foreground: white",
   "*fpsSolid:	true",
@@ -275,6 +311,7 @@ static const char *squiral_defaults[] = {
   "*disorder:   0.005",
   "*cycle:      False",
   "*handedness: 0.5",
+  "*scale:      1",
 #ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
@@ -290,6 +327,7 @@ static XrmOptionDescRec squiral_options[] = {
     {"-ncolors", ".ncolors", XrmoptionSepArg, 0},
     {"-cycle", ".cycle", XrmoptionNoArg, "True"},
     {"-no-cycle", ".cycle", XrmoptionNoArg, "False"},
+    {"-scale", ".scale", XrmoptionSepArg, 0},
     { 0, 0, 0, 0 }
 };
 

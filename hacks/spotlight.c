@@ -34,6 +34,7 @@ struct state {
   Screen *screen;
 
   int sizex, sizey; /* screen size */
+  int depth;
   int delay;
   int duration;
   time_t start_time;
@@ -105,6 +106,7 @@ spotlight_init (Display *dpy, Window window)
   st->screen = xgwa.screen;
   st->sizex = xgwa.width;
   st->sizey = xgwa.height;
+  st->depth = xgwa.depth;
   cmap = xgwa.colormap;
   bg = get_pixel_resource (st->dpy, cmap, "background", "Background");
 
@@ -116,7 +118,8 @@ spotlight_init (Display *dpy, Window window)
   st->radius = get_integer_resource (st->dpy, "radius", "Integer");
   if (st->radius < 0) st->radius = 125;
 
-  if (xgwa.width > 2560) st->radius *= 2;  /* Retina displays */
+  if (xgwa.width > 2560 || xgwa.height > 2560)
+    st->radius *= 2;  /* Retina displays */
 
   /* Don't let the spotlight be bigger than the window */
   while (st->radius > xgwa.width * 0.45)
@@ -129,17 +132,11 @@ spotlight_init (Display *dpy, Window window)
 
   /* do the dance */
   gcv.function = GXcopy;
-  gcv.subwindow_mode = IncludeInferiors;
   gcflags = GCForeground | GCFunction;
   gcv.foreground = bg;
-
-#ifdef NOPE
-  if (use_subwindow_mode_p(xgwa.screen, st->window)) /* see grabscreen.c */
-    gcflags |= GCSubwindowMode;
-#endif
   st->window_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 
-  st->pm = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
+  st->pm = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, st->depth);
   XClearWindow(st->dpy, st->window);
 
   st->first_time = 1;
@@ -148,12 +145,15 @@ spotlight_init (Display *dpy, Window window)
 #ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   st->buffer = 0;
 #else
-  st->buffer = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
+  st->buffer = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey,
+                             st->depth);
 #endif
 
-  st->buffer_gc = XCreateGC(st->dpy, (st->buffer ? st->buffer : window), gcflags, &gcv);
+  st->buffer_gc = XCreateGC(st->dpy, (st->buffer ? st->buffer : window),
+                            gcflags, &gcv);
   if (st->buffer)
-    XFillRectangle(st->dpy, st->buffer, st->buffer_gc, 0, 0, st->sizex, st->sizey);
+    XFillRectangle(st->dpy, st->buffer, st->buffer_gc, 0, 0, st->sizex,
+                   st->sizey);
 
   /* create clip mask (so it's a circle, not a square) */
   clip_pm = XCreatePixmap(st->dpy, st->window, st->radius*4, st->radius*4, 1);
@@ -296,8 +296,11 @@ spotlight_draw (Display *dpy, Window window, void *closure)
   
 static void
 spotlight_reshape (Display *dpy, Window window, void *closure, 
-                 unsigned int w, unsigned int h)
+                   unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  XClearWindow(st->dpy, st->window);
+  /* Should resize the playfield, but let's at least not show whitespace */
 }
 
 static Bool
@@ -331,11 +334,6 @@ static const char *spotlight_defaults [] = {
   ".foreground:			white",
   "*dontClearRoot:		True",
   "*fpsSolid:			true",
-
-#ifdef __sgi	/* really, HAVE_READ_DISPLAY_EXTENSION */
-  "*visualID:			Best",
-#endif
-
   "*delay:			10000",
   "*duration:			120",
   "*radius:			125",

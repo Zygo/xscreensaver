@@ -172,11 +172,15 @@ create_new_bubbles(draw_context * c)
 	/* Create the bubble(s). */
 	for (i = 0; i < n; ++i) {
 		if ((b[i] = glb_bubble_new(c->d, x, y, z, size, speed, scale_incr)) == 0) {
+#if 0
 			/* Out of memory - recover. */
 			i--;
 			while (i >= 0)
 				glb_bubble_delete(b[i]);
 			return 0;
+#else
+                        abort();
+#endif
 		}
 		/* Create the next bubble below the last bubble. */
 		y -= size * 3;

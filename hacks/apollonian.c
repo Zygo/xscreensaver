@@ -67,7 +67,7 @@ static const char sccsid[] = "@(#)apollonian.c	5.02 2001/07/01 xlockmore";
 					"*count:   64      \n" \
 					"*cycles:  20      \n" \
 					"*ncolors: 64      \n" \
-					"*font:    sans-serif bold 10\n" \
+					"*font:    sans-serif bold 16\n" \
 					"*fpsTop: true     \n" \
 					"*fpsSolid: true   \n" \
 					"*ignoreRotation: True" \

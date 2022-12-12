@@ -884,7 +884,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
     [self validateImageDirectory: imagedir];
   }
 
-  [NSApp endSheet:self returnCode:NSOKButton];
+  [NSApp endSheet:self returnCode:NSModalResponseOK];
   [self close];
 }
 
@@ -892,7 +892,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
 {
   [userDefaultsController   revert:self];
   [globalDefaultsController revert:self];
-  [NSApp endSheet:self returnCode:NSCancelButton];
+  [NSApp endSheet:self returnCode:NSModalResponseCancel];
   [self close];
 }
 # endif // !HAVE_IPHONE
@@ -2243,7 +2243,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
                                    imagedir]];
   [alert setInformativeText: @"This may take a little while..."];
   [alert addButtonWithTitle: @"Cancel"];
-  [alert setAlertStyle: NSWarningAlertStyle];
+  [alert setAlertStyle: NSAlertStyleWarning];
 
   NSProgressIndicator *spinner =
     [[NSProgressIndicator alloc] initWithFrame: NSMakeRect(0,0,40,40)];
@@ -2290,7 +2290,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
                                     stringByAppendingString: txt]];
 
         [alert2 addButtonWithTitle: @"OK"];
-        [alert2 setAlertStyle: NSWarningAlertStyle];
+        [alert2 setAlertStyle: NSAlertStyleWarning];
         [alert2 beginSheetModalForWindow: self
                        completionHandler:^(NSModalResponse returnCode) {
           }];
@@ -2439,7 +2439,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   }
 
   NSInteger result = [panel runModal];
-  if (result == NSOKButton) {
+  if (result == NSModalResponseOK) {
     NSArray *files = [panel URLs];
     NSString *file = ([files count] > 0 ? [[files objectAtIndex:0] path] : @"");
 

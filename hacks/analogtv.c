@@ -83,7 +83,7 @@
 #include "resources.h"
 #include "analogtv.h"
 #include "yarandom.h"
-#include "grabscreen.h"
+#include "grabclient.h"
 #include "visual.h"
 #include "xft.h"
 #include "font-retry.h"

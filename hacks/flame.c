@@ -74,7 +74,7 @@ struct state {
   int pixcol;
   int ncolors;
   XColor *colors;
-  XPoint points [POINT_BUFFER_SIZE];
+  XRectangle points [POINT_BUFFER_SIZE];
   GC gc;
 
   int delay, delay2;
@@ -84,6 +84,7 @@ struct state {
 
   int flame_alt;
   int do_reset;
+  int scale;
 };
 
 
@@ -131,6 +132,10 @@ flame_init (Display *dpy, Window window)
 
   st->max_points = get_integer_resource (st->dpy, "iterations", "Integer");
   if (st->max_points <= 0) st->max_points = 100;
+
+  st->scale = 1;
+  if (st->width > 2560 || st->height > 2560)
+    st->scale *= 2;  /* Retina displays */
 
   st->max_levels = st->max_points;
 
@@ -187,10 +192,13 @@ recurse (struct state *st, double x, double y, int l, Display *dpy, Window win)
 	{
 	  st->points[st->num_points].x = (int) ((st->width / 2) * (x + 1.0));
 	  st->points[st->num_points].y = (int) ((st->height / 2) * (y + 1.0));
+          st->points[st->num_points].width = 
+            st->points[st->num_points].height = st->scale;
 	  st->num_points++;
 	  if (st->num_points >= POINT_BUFFER_SIZE)
 	    {
-	      XDrawPoints (st->dpy, win, st->gc, st->points, st->num_points, CoordModeOrigin);
+	      XFillRectangles (st->dpy, win, st->gc, st->points,
+                               st->num_points);
 	      st->num_points = 0;
 	    }
 	}
@@ -384,7 +392,7 @@ flame_draw (Display *dpy, Window window, void *closure)
   st->num_points = 0;
   st->total_points = 0;
   recurse (st, 0.0, 0.0, 0, st->dpy, st->window);
-  XDrawPoints (st->dpy, st->window, st->gc, st->points, st->num_points, CoordModeOrigin);
+  XFillRectangles (st->dpy, st->window, st->gc, st->points, st->num_points);
 
   return this_delay;
 }

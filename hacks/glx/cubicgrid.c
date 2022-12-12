@@ -162,11 +162,12 @@ static void init_gl(ModeInfo *mi)
   float i, j, k;
   float sqrt_3 = sqrtf(3.0f);
   float sqrt_6 = sqrtf(6.0f);
+  GLfloat ps = (bigdots ? 2.5 : 1);
+
+  if (MI_WIDTH(mi) > 2560) ps *= 2;  /* Retina displays */
+  glPointSize(ps);
 
   glDrawBuffer(GL_BACK);
-  if(bigdots) {
-    glPointSize(2.5);
-  }
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glShadeModel(GL_FLAT);
 

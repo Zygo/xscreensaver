@@ -126,8 +126,6 @@ distort_reset (struct state *st)
 	st->reflect = get_boolean_resource(st->dpy, "reflect", "Boolean");
 	st->slow = get_boolean_resource(st->dpy, "slow", "Boolean");
 	
-    if (st->xgwa.width > 2560) st->radius *= 3;  /* Retina displays */
-
     if (st->delay < 0) st->delay = 0;
     if (st->duration < 1) st->duration = 1;
 
@@ -232,17 +230,22 @@ distort_reset (struct state *st)
 		}
 	}
 
-    /* never allow the radius to be too close to the min window dimension
-     */
-    if (st->radius > st->xgwa.width  * 0.3) st->radius = st->xgwa.width  * 0.3;
-    if (st->radius > st->xgwa.height * 0.3) st->radius = st->xgwa.height * 0.3;
-
+    if (st->xgwa.width > 2560 || st->xgwa.height > 2560)
+      st->radius *= 2;  /* Retina displays */
 
     /* -swamp mode consumes vast amounts of memory, proportional to radius --
        so throttle radius to a small-ish value (60 => ~30MB.)
      */
     if (st->effect == &swamp_thing && st->radius > 60)
       st->radius = 60;
+
+    /* never allow the radius to be too close to the min window dimension
+     */
+    {
+      int max = (st->xgwa.width > st->xgwa.height
+                 ? st->xgwa.width : st->xgwa.height) / (2 * st->number);
+      if (st->radius > max) st->radius = max;
+    }
 
 	if (st->delay < 0)
 		st->delay = 0;
@@ -279,10 +282,7 @@ distort_init (Display *dpy, Window window)
 	st->black_pixel = BlackPixelOfScreen( st->xgwa.screen );
 
 	gcv.function = GXcopy;
-	gcv.subwindow_mode = IncludeInferiors;
 	gcflags = GCFunction;
-	if (use_subwindow_mode_p(st->xgwa.screen, st->window)) /* see grabscreen.c */
-		gcflags |= GCSubwindowMode;
 	st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
 
     /* On MacOS X11, XGetImage on a Window often gets an inexplicable BadMatch,
@@ -843,13 +843,9 @@ distort_free (Display *dpy, Window window, void *closure)
 
 
 static const char *distort_defaults [] = {
-	"*dontClearRoot:		True",
-	"*background:			Black",
-    "*fpsSolid:				true",
-#ifdef __sgi    /* really, HAVE_READ_DISPLAY_EXTENSION */
-	"*visualID:			Best",
-#endif
-
+	"*dontClearRoot:	True",
+	"*background:		Black",
+    "*fpsSolid:			true",
 	"*delay:			20000",
     "*duration:			120",
 	"*radius:			0",

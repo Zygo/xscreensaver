@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,23 +9,26 @@
  * implied warranty.
  */
 
-#ifndef __GRABSCREEN_H__
-#define __GRABSCREEN_H__
+#ifndef __GRABCLIENT_H__
+#define __GRABCLIENT_H__
 
 /* This will write an image onto the given Drawable.
    The Drawable (arg 3) may be a Window or a Pixmap.
 
    The Window must be the top-level window.  The image *may or may not*
-   be written to the window, though it will definitely be written to
-   the drawable.  It's fine for args 2 and 3 to be the same window, or
-   for arg 2 to be a Window, and arg 3 to be a Pixmap.
+   be written to the Window, though it will definitely be written to
+   the Drawable.  It's fine for the Window and Drawable to be equal,
+   or for the Drawable to be a Pixmap.
+
+   The Window and Drawable need not be the same size.
+   (Smaller pixmap: Tessellimage, XAnalogTV; larger pixmap: Esper)
 
    The loaded image might be from a file, or from a screen shot of the
    desktop, or from the system's video input, depending on user
    preferences.
 
    When the callback is called, the image data will have been loaded
-   into the given drawable.  Copy `name' if you want to keep it.
+   into the given Drawable.  Copy `name' if you want to keep it.
 
    If it is from a file, then the `filename' argument will be the name
    of the file.  It may be NULL.  If you want to keep this string, copy it.
@@ -59,30 +62,10 @@ extern async_load_state *load_image_async_simple (async_load_state *,
                                                   XRectangle *geometry_ret);
 
 
-/* Whether one should use GCSubwindowMode when drawing on this window
-   (assuming a screen image has been grabbed onto it.)  Yes, this is a
-   total kludge. */
-extern Bool use_subwindow_mode_p(Screen *screen, Window window);
-
-/* Whether the given window is:
-   - the real root window;
-   - the virtual root window;
-   - a direct child of the root window;
-   - a direct child of the window manager's decorations.
- */
-extern Bool top_level_window_p(Screen *screen, Window window);
-
-
-/* Don't call this: this is for the "xscreensaver-getimage" program only. */
-extern void grab_screen_image_internal (Screen *, Window);
-
 /* Don't use these: this is how "xscreensaver-getimage" and "grabclient.c"
    pass the file name around. */
 #define XA_XSCREENSAVER_IMAGE_FILENAME "_SCREENSAVER_IMAGE_FILENAME"
 #define XA_XSCREENSAVER_IMAGE_GEOMETRY "_SCREENSAVER_IMAGE_GEOMETRY"
-
-/* For debugging: turn on verbosity. */
-extern void grabscreen_verbose (void);
 
 #ifdef HAVE_JWXYZ
 /* Don't use these: internal interface of grabclient.c. */
@@ -102,8 +85,7 @@ extern void ios_load_random_image (void (*callback) (void *uiimage,
 #endif /* HAVE_IPHONE */
 
 #ifdef HAVE_ANDROID
-char *jwxyz_draw_random_image (Display *dpy,  /* utils/grabclient.c */
-                               Drawable drawable, GC gc);
+char *jwxyz_draw_random_image (Display *dpy, Drawable drawable, GC gc);
 #endif
 
-#endif /* __GRABSCREEN_H__ */
+#endif /* __GRABCLIENT_H__ */

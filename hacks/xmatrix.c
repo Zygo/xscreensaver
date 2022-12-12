@@ -215,6 +215,40 @@ typedef struct {
 } m_state;
 
 
+static Pixmap
+double_pixmap (Display *dpy, Visual *visual, int depth, Pixmap pixmap,
+               int pix_w, int pix_h)
+{
+  int x, y;
+  Pixmap p2 = XCreatePixmap(dpy, pixmap, pix_w*2, pix_h*2, depth);
+  XImage *i1 = XGetImage (dpy, pixmap, 0, 0, pix_w, pix_h, ~0L, 
+                          (depth == 1 ? XYPixmap : ZPixmap));
+  XImage *i2 = XCreateImage (dpy, visual, depth, 
+                             (depth == 1 ? XYPixmap : ZPixmap), 0, 0,
+                             pix_w*2, pix_h*2, 8, 0);
+  XGCValues gcv;
+  GC gc = XCreateGC (dpy, p2, 0, &gcv);
+  i2->data = (char *) calloc(i2->height, i2->bytes_per_line);
+  for (y = 0; y < pix_h; y++)
+    for (x = 0; x < pix_w; x++)
+      {
+	unsigned long p = XGetPixel(i1, x, y);
+	XPutPixel(i2, x*2,   y*2,   p);
+	XPutPixel(i2, x*2+1, y*2,   p);
+	XPutPixel(i2, x*2,   y*2+1, p);
+	XPutPixel(i2, x*2+1, y*2+1, p);
+      }
+  free(i1->data); i1->data = 0;
+  XDestroyImage(i1);
+  XPutImage(dpy, p2, gc, i2, 0, 0, 0, 0, i2->width, i2->height);
+  XFreeGC (dpy, gc);
+  free(i2->data); i2->data = 0;
+  XDestroyImage(i2);
+  XFreePixmap(dpy, pixmap);
+  return p2;
+}
+
+
 static void
 load_images_1 (Display *dpy, m_state *state, int which)
 {
@@ -237,6 +271,16 @@ load_images_1 (Display *dpy, m_state *state, int which)
   state->images[which] =
     image_data_to_pixmap (state->dpy, state->window, png, size,
                           &state->image_width, &state->image_height, 0);
+
+  if (state->xgwa.width > 1920 || state->xgwa.height > 1920)
+    { /* Retina displays */
+      state->images[which] =
+        double_pixmap (state->dpy, state->xgwa.visual,
+                       state->xgwa.depth, state->images[which],
+                       state->image_width, state->image_height);
+      state->image_width *= 2;
+      state->image_height *= 2;
+    }
 }
 
 
@@ -1822,7 +1866,7 @@ xmatrix_free (Display *dpy, Window window, void *closure)
 static const char *xmatrix_defaults [] = {
   ".background:		   black",
   ".foreground:		   #00AA00",
-  ".lowrez:		   true",  /* Small font is unreadable at 5120x2880 */
+/* ".lowrez:		   true", */
   "*fpsSolid:		   true",
   "*matrixFont:		   large",
   "*delay:		   10000",

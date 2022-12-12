@@ -149,10 +149,6 @@ halftone_init (Display *dpy, Window window)
   spacing = get_integer_resource (dpy, "spacing", "Integer");
   halftone->spacing = spacing < 1 ? DEFAULT_SPACING : spacing; 
 
-  factor = get_float_resource (dpy, "sizeFactor", "Double");
-  halftone->max_dot_size = 
-    (factor < 0 ? DEFAULT_SIZE_FACTOR : factor) * halftone->spacing; 
-
   min_mass = get_float_resource (dpy, "minMass", "Double");
   min_mass = min_mass < 0 ? DEFAULT_MIN_MASS : min_mass;
 
@@ -187,6 +183,13 @@ halftone_init (Display *dpy, Window window)
 
   /* Set up the dots. */
   XGetWindowAttributes(halftone->dpy, halftone->window, &attrs);  
+
+  if (attrs.width > 2560 || attrs.height > 2560)
+    halftone->spacing *= 3;  /* Retina displays */
+
+  factor = get_float_resource (dpy, "sizeFactor", "Double");
+  halftone->max_dot_size = 
+    (factor < 0 ? DEFAULT_SIZE_FACTOR : factor) * halftone->spacing; 
 
   halftone->ncolors = get_integer_resource (dpy, "colors", "Colors");
   if (halftone->ncolors < 4) halftone->ncolors = 4;
@@ -387,7 +390,7 @@ static const char *halftone_defaults [] = {
 #ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
-  ".lowrez:		true",  /* Too slow on Retina screens otherwise */
+/*  ".lowrez:		true",  */
   0
 };
 

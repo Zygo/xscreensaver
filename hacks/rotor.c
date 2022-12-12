@@ -39,7 +39,8 @@ static const char sccsid[] = "@(#)rotor.c	5.00 2000/11/01 xlockmore";
 					"*size: -6 \n" \
 					"*ncolors: 200 \n" \
 					"*fpsSolid: true \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 # define SMOOTH_COLORS
 # define release_rotor 0
@@ -223,6 +224,9 @@ init_rotor (ModeInfo * mi)
 		rp->linewidth = 1;
 	if (rp->linewidth < 0)
 		rp->linewidth = NRAND(-rp->linewidth) + 1;
+
+    if (mi->xgwa.width > 2560 || mi->xgwa.height > 2560)
+      rp->linewidth *= 2;  /* Retina displays */
 
 	MI_CLEARWINDOW(mi);
 }

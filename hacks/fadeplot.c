@@ -70,7 +70,8 @@ typedef struct {
 	int         pix;
 	int         angles;
 	int        *stab;
-	XPoint     *pts;
+	XRectangle *pts;
+	int         scale;
 } fadeplotstruct;
 
 static fadeplotstruct *fadeplots = (fadeplotstruct *) NULL;
@@ -81,7 +82,7 @@ free_fadeplot(ModeInfo * mi)
 	fadeplotstruct *fp = &fadeplots[MI_SCREEN(mi)];
 	if (fp->pts != NULL) {
 		(void) free((void *) fp->pts);
-		fp->pts = (XPoint *) NULL;
+		fp->pts = (XRectangle *) NULL;
 	}
 	if (fp->stab != NULL) {
 		(void) free((void *) fp->stab);
@@ -128,18 +129,25 @@ init_fadeplot (ModeInfo * mi)
 	fp->factor.x = MAX(fp->width / (2 * fp->min), 1);
 	fp->factor.y = MAX(fp->height / (2 * fp->min), 1);
 
+    fp->scale = 1;
+    if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560) {  /* Retina displays */
+      fp->scale  *= 3;
+      fp->step.x *= fp->scale;
+      fp->step.y *= fp->scale;
+    }
+
 	fp->nbstep = MI_COUNT(mi);
 	if (fp->nbstep < -MINSTEPS) {
 		fp->nbstep = NRAND(-fp->nbstep - MINSTEPS + 1) + MINSTEPS;
 	} else if (fp->nbstep < MINSTEPS)
 		fp->nbstep = MINSTEPS;
 
-	fp->maxpts = MI_CYCLES(mi);
+	fp->maxpts = MI_CYCLES(mi) / fp->scale;
 	if (fp->maxpts < 1)
 		fp->maxpts = 1;
 
 	if (fp->pts == NULL) {
-		if ((fp->pts = (XPoint *) calloc(fp->maxpts, sizeof (XPoint))) ==
+		if ((fp->pts = (XRectangle *) calloc(fp->maxpts, sizeof (*fp->pts))) ==
 				 NULL) {
 			free_fadeplot(mi);
 			return;
@@ -172,7 +180,7 @@ draw_fadeplot (ModeInfo * mi)
 
 	MI_IS_DRAWN(mi) = True;
 	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
-	XDrawPoints(display, window, gc, fp->pts, fp->maxpts, CoordModeOrigin);
+	XFillRectangles(display, window, gc, fp->pts, fp->maxpts);
 
 	if (MI_NPIXELS(mi) > 2) {
 		XSetForeground(display, gc, MI_PIXEL(mi, fp->pix));
@@ -190,10 +198,11 @@ draw_fadeplot (ModeInfo * mi)
 			fp->pts[temp].y =
 				fp->stab[(fp->st.y + fp->speed.y * j + i * fp->step.y) % fp->angles] *
 				fp->factor.y + fp->height / 2 - fp->min;
+			fp->pts[temp].width = fp->pts[temp].height = fp->scale;
 			temp++;
 		}
 	}
-	XDrawPoints(display, window, gc, fp->pts, temp, CoordModeOrigin);
+	XFillRectangles (display, window, gc, fp->pts, temp);
 	fp->st.x = (fp->st.x + fp->speed.x) % fp->angles;
 	fp->st.y = (fp->st.y + fp->speed.y) % fp->angles;
 	fp->temps++;

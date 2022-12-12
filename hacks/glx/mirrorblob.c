@@ -65,7 +65,7 @@
 #define DEF_TEXTURE          "True"
 #define DEF_OFFSET_TEXTURE   "False"
 #define DEF_PAINT_BACKGROUND "True"
-#define DEF_RESOLUTION       "30"
+#define DEF_RESOLUTION       "90"
 #define DEF_BUMPS            "10"
 #define DEF_MOTION_BLUR      "0.0"
 #define DEF_INCREMENTAL      "0"

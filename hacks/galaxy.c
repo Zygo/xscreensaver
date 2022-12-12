@@ -46,7 +46,8 @@ static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
 					"*ncolors:  64   \n" \
 					"*fpsSolid:  true   \n" \
 					"*ignoreRotation: True \n" \
-				    "*lowrez: True \n" \
+
+/*				    "*lowrez: True \n" \ */
 
 # define UNIFORM_COLORS
 # define release_galaxy 0
@@ -136,8 +137,8 @@ typedef struct {
  int         mass;
  int         nstars;
  Star       *stars;
- XPoint     *oldpoints;
- XPoint     *newpoints;
+ XRectangle *oldpoints;
+ XRectangle *newpoints;
  double      pos[3], vel[3];
  int         galcol;
 } Galaxy;
@@ -153,6 +154,7 @@ typedef struct {
  int         ngalaxies; /* # galaxies */
  int         f_hititerations; /* # iterations before restart */
  int         step; /* */
+ int         pscale;
  double      rot_y; /* rotation of eye around center of universe, around
 y-axis*/
  double      rot_x; /* rotation of eye around center of universe, around
@@ -221,8 +223,8 @@ startover(ModeInfo * mi)
   }
   gt->nstars = (NRAND(MAX_STARS / 2)) + MAX_STARS / 2;
   gt->stars = (Star *) malloc(gt->nstars * sizeof (Star));
-  gt->oldpoints = (XPoint *) malloc(gt->nstars * sizeof (XPoint));
-  gt->newpoints = (XPoint *) malloc(gt->nstars * sizeof (XPoint));
+  gt->oldpoints = (XRectangle *) malloc(gt->nstars * sizeof (*gt->oldpoints));
+  gt->newpoints = (XRectangle *) malloc(gt->nstars * sizeof (*gt->newpoints));
 
   w1 = 2.0 * M_PI * FLOATRAND;
   w2 = 2.0 * M_PI * FLOATRAND;
@@ -257,8 +259,8 @@ startover(ModeInfo * mi)
 
   for (j = 0; j < gt->nstars; ++j) {
    Star       *st = &gt->stars[j];
-   XPoint     *oldp = &gt->oldpoints[j];
-   XPoint     *newp = &gt->newpoints[j];
+   XRectangle *oldp = &gt->oldpoints[j];
+   XRectangle *newp = &gt->newpoints[j];
 
    double      sinw, cosw;
 
@@ -290,8 +292,10 @@ gt->vel[2];
 
    oldp->x = 0;
    oldp->y = 0;
+   oldp->width = oldp->height = gp->pscale;
    newp->x = 0;
    newp->y = 0;
+   newp->width = newp->height = gp->pscale;
   }
 
  }
@@ -323,6 +327,14 @@ init_galaxy(ModeInfo * mi)
  gp->scale = (double) (MI_WIN_WIDTH(mi) + MI_WIN_HEIGHT(mi)) / 8.0;
  gp->midx =  MI_WIN_WIDTH(mi)  / 2;
  gp->midy =  MI_WIN_HEIGHT(mi) / 2;
+
+ gp->pscale = 1;
+ if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560)  /* Retina displays */
+   {
+     gp->pscale *= 2;
+     gp->scale /= gp->pscale;
+   }
+
  startover(mi);
 }
 
@@ -335,7 +347,7 @@ draw_galaxy(ModeInfo * mi)
   unistruct  *gp = &universes[MI_SCREEN(mi)];
   double      d, eps, cox, six, cor, sir;  /* tmp */
   int         i, j, k; /* more tmp */
-  XPoint    *dummy = NULL;
+  XRectangle *dummy = NULL;
 
   if (! dbufp)
     XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
@@ -357,7 +369,7 @@ draw_galaxy(ModeInfo * mi)
 
     for (j = 0; j < gp->galaxies[i].nstars; ++j) {
       Star       *st = &gt->stars[j];
-      XPoint     *newp = &gt->newpoints[j];
+      XRectangle *newp = &gt->newpoints[j];
       double      v0 = st->vel[0];
       double      v1 = st->vel[1];
       double      v2 = st->vel[2];
@@ -387,11 +399,11 @@ draw_galaxy(ModeInfo * mi)
       st->pos[2] += v2;
 
       newp->x = (short) (((cox * st->pos[0]) - (six * st->pos[2])) *
-                         gp->scale) + gp->midx;
+                         gp->scale * gp->pscale) + gp->midx;
       newp->y = (short) (((cor * st->pos[1]) - (sir * ((six * st->pos[0]) +
                                                        (cox * st->pos[2]))))
-                         * gp->scale) + gp->midy;
-
+                         * gp->scale * gp->pscale) + gp->midy;
+      newp->width = newp->height = gp->pscale;
     }
 
     for (k = i + 1; k < gp->ngalaxies; ++k) {
@@ -423,12 +435,10 @@ draw_galaxy(ModeInfo * mi)
 
     if (dbufp) {
       XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
-      XDrawPoints(display, window, gc, gt->oldpoints, gt->nstars,
-                  CoordModeOrigin);
+      XFillRectangles(display, window, gc, gt->oldpoints, gt->nstars);
     }
     XSetForeground(display, gc, MI_PIXEL(mi, COLORSTEP * gt->galcol));
-    XDrawPoints(display, window, gc, gt->newpoints, gt->nstars,
-                CoordModeOrigin);
+    XFillRectangles (display, window, gc, gt->newpoints, gt->nstars);
 
     dummy = gt->oldpoints;
     gt->oldpoints = gt->newpoints;

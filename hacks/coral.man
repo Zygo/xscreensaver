@@ -14,7 +14,7 @@ coral \- simulates coral growth, albeit somewhat slowly.
 [\-\-seeds \fInumber\fP]
 [\-\-fps]
 .SH DESCRIPTION
-Simulates coral growth, albeit somewhat slowly.
+Simulates coral growth.
 .SH OPTIONS
 .TP 8
 .B \-\-visual \fIvisual\fP

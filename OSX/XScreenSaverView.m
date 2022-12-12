@@ -2153,11 +2153,11 @@ gl_check_ver (const struct gl_version *caps,
   int state = 0;
   
   int flags = [e modifierFlags];
-  if (flags & NSAlphaShiftKeyMask) state |= LockMask;
-  if (flags & NSShiftKeyMask)      state |= ShiftMask;
-  if (flags & NSControlKeyMask)    state |= ControlMask;
-  if (flags & NSAlternateKeyMask)  state |= Mod1Mask;
-  if (flags & NSCommandKeyMask)    state |= Mod2Mask;
+  if (flags & NSEventModifierFlagCapsLock) state |= LockMask;
+  if (flags & NSEventModifierFlagShift)    state |= ShiftMask;
+  if (flags & NSEventModifierFlagControl)  state |= ControlMask;
+  if (flags & NSEventModifierFlagOption)   state |= Mod1Mask;
+  if (flags & NSEventModifierFlagCommand)  state |= Mod2Mask;
   
   NSPoint p = [[[e window] contentView] convertPoint:[e locationInWindow]
                                             toView:self];
@@ -2172,7 +2172,7 @@ gl_check_ver (const struct gl_version *caps,
       xe.xbutton.x = x;
       xe.xbutton.y = y;
       xe.xbutton.state = state;
-      if ([e type] == NSScrollWheel)
+      if ([e type] == NSEventTypeScrollWheel)
         xe.xbutton.button = ([e deltaY] > 0 ? Button4 :
                              [e deltaY] < 0 ? Button5 :
                              [e deltaX] > 0 ? Button6 :
@@ -2189,7 +2189,7 @@ gl_check_ver (const struct gl_version *caps,
     case KeyPress:
     case KeyRelease:
       {
-        NSString *ns = (([e type] == NSFlagsChanged) ? 0 :
+        NSString *ns = (([e type] == NSEventTypeFlagsChanged) ? 0 :
                         [e charactersIgnoringModifiers]);
         KeySym k = 0;
 
@@ -2199,11 +2199,11 @@ gl_check_ver (const struct gl_version *caps,
             // Also we only get KeyPress events for these, no KeyRelease
             // (unless we hack the mod state manually.  Bleh.)
             //
-            if      (flags & NSAlphaShiftKeyMask)   k = XK_Caps_Lock;
-            else if (flags & NSShiftKeyMask)        k = XK_Shift_L;
-            else if (flags & NSControlKeyMask)      k = XK_Control_L;
-            else if (flags & NSAlternateKeyMask)    k = XK_Alt_L;
-            else if (flags & NSCommandKeyMask)      k = XK_Meta_L;
+            if      (flags & NSEventModifierFlagCapsLock) k = XK_Caps_Lock;
+            else if (flags & NSEventModifierFlagShift)    k = XK_Shift_L;
+            else if (flags & NSEventModifierFlagControl)  k = XK_Control_L;
+            else if (flags & NSEventModifierFlagOption)   k = XK_Alt_L;
+            else if (flags & NSEventModifierFlagCommand)  k = XK_Meta_L;
           }
         else if ([ns length] == 1)			// real key
           {

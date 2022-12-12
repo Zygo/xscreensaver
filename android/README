@@ -31,6 +31,9 @@ us know:
 
     Install ImageMagick ("convert").
 
+    On an M1 Mac, you might also need to do this to make the emulator work:
+    ln -s darwin-aarch64 ~/Library/Android/sdk/emulator/qemu/darwin-x86_64
+
 
 ############################################################################
 #

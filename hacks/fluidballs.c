@@ -298,7 +298,8 @@ fluidballs_init (Display *dpy, Window window)
   state->max_radius = get_float_resource (dpy, "size", "Size") / 2;
   if (state->max_radius < 1.0) state->max_radius = 1.0;
 
-  if (state->xgwa.width > 2560) state->max_radius *= 2;  /* Retina displays */
+  if (state->xgwa.width > 2560 || state->xgwa.height > 2560)
+    state->max_radius *= 3;  /* Retina displays */
 
   if (state->xgwa.width < 100 || state->xgwa.height < 100) /* tiny window */
     {

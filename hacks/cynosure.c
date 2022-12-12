@@ -98,6 +98,7 @@ cynosure_init (Display *d, Window w)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
+  int lw = 1;
 
   st->dpy = d;
   st->window = w;
@@ -112,6 +113,12 @@ cynosure_init (Display *d, Window w)
   st->timeLeft    = 0;
 
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+
+  if (st->xgwa.width > 2560 || st->xgwa.height > 2560) {  /* Retina displays */
+    st->shadowWidth *= 2;
+    st->elevation *= 2;
+    lw *= 2;
+  }
 
   st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
   if (st->ncolors < 2) st->ncolors = 2;
@@ -141,10 +148,11 @@ cynosure_init (Display *d, Window w)
   st->fg_pixel = get_pixel_resource(st->dpy,
 				st->xgwa.colormap, "foreground", "Foreground");
 
+  gcv.line_width = lw;
   gcv.foreground = st->fg_pixel;
-  st->fg_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+  st->fg_gc = XCreateGC(st->dpy, st->window, GCForeground|GCLineWidth, &gcv);
   gcv.foreground = st->bg_pixel;
-  st->bg_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
+  st->bg_gc = XCreateGC(st->dpy, st->window, GCForeground|GCLineWidth, &gcv);
 
 #ifdef DO_STIPPLE
   gcv.fill_style = FillStippled;
@@ -421,7 +429,7 @@ cynosure_free (Display *dpy, Window window, void *closure)
 static const char *cynosure_defaults [] = {
   ".background:		black",
   ".foreground:		white",
-  ".lowrez:		true",
+/*  ".lowrez:		true", */
   "*fpsSolid:		true",
   "*delay:		500000",
   "*colors:		128",

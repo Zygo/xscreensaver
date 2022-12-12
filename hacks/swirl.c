@@ -37,7 +37,8 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 					"*useSHM:		True    \n" \
 					"*fpsSolid:		true    \n" \
 					"*ignoreRotation: True \n" \
-					".lowrez:         True \n" \
+
+/*					".lowrez:         True \n" \ */
 
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS
@@ -59,7 +60,7 @@ ENTRYPOINT ModeSpecOpt swirl_opts = {
 /****************************************************************/
 
 #define MASS            4	/* maximum mass of a knot */
-#define MIN_RES         5	/* minimim resolution (>= MIN_RES) */
+#define MIN_RES         7	/* minimim resolution (>= MAX_RES, < 8) */
 #define MAX_RES         1	/* maximum resolution (>0) */
 #define TWO_PLANE_PCNT  30	/* probability for two plane mode (0-100) */
 #define RESTART         2500	/* number of cycles before restart */
@@ -1280,7 +1281,7 @@ init_swirl(ModeInfo * mi)
 	/* resolution starts off chunky */
 	swirl->resolution = MIN_RES + 1;
 
-	/* calculate the pixel step for this resulution */
+	/* calculate the pixel step for this resolution */
 	swirl->r = (1 << (swirl->resolution - 1));
 
 	/* how many knots? */

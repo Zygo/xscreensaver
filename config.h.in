@@ -204,9 +204,6 @@
 /* Define this if the RANDR library is version 1.2 or newer. */
 #undef HAVE_RANDR_12
 
-/* Define this if you have the SGI XReadDisplay extension. */
-#undef HAVE_READ_DISPLAY_EXTENSION
-
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
 

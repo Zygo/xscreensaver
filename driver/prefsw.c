@@ -1340,36 +1340,29 @@ stop_the_insanity (saver_preferences *p)
     p->fade_p = False;
   if (! p->fade_p) p->unfade_p = False;
 
-  /* The DPMS settings may have the value 0.
-     But if they are negative, or are a range less than 10 seconds,
-     reset them to sensible defaults.  (Since that must be a mistake.)
-   */
-  if (p->dpms_standby != 0 &&
-      p->dpms_standby < 10 * 1000)
-    p->dpms_standby =  2 * 60 * 60 * 1000;			 /* 2 hours */
-  if (p->dpms_suspend != 0 &&
-      p->dpms_suspend < 10 * 1000)
-    p->dpms_suspend =  2 * 60 * 60 * 1000;			 /* 2 hours */
-  if (p->dpms_off != 0 &&
-      p->dpms_off < 10 * 1000)
-    p->dpms_off      = 4 * 60 * 60 * 1000;			 /* 4 hours */
+  /* DPMS settings may be zero, but otherwise, if they < 10 sec or negative,
+     set them to 2 minutes. */
+# define THROTTLE(FIELD) \
+    if (p->FIELD != 0 && ((long) p->FIELD) < 10 * 1000) \
+      p->FIELD = 2 * 60 * 60 * 1000
+  THROTTLE (dpms_standby);
+  THROTTLE (dpms_suspend);
+  THROTTLE (dpms_off);
+# undef THROTTLE
 
-  /* suspend may not be greater than off, unless off is 0.
-     standby may not be greater than suspend, unless suspend is 0.
+  /* If the DPMS settings are non-zero, they must not go backwards:
+     standby >= timeout (screen saver activation)
+     suspend >= standby
+     off     >= suspend
    */
-  if (p->dpms_off != 0 &&
-      p->dpms_suspend > p->dpms_off)
-    p->dpms_suspend = p->dpms_off;
-  if (p->dpms_suspend != 0 &&
-      p->dpms_standby > p->dpms_suspend)
-    p->dpms_standby = p->dpms_suspend;
-
-  /* These fixes above ignores the case
-     suspend = 0 and standby > off ...
-   */
-  if (p->dpms_off != 0 &&
-      p->dpms_standby > p->dpms_off)
-    p->dpms_standby = p->dpms_off;
+# define THROTTLE(FIELD,LOWER) \
+    if (p->FIELD != 0 && ((long) p->FIELD) < ((long) p->LOWER)) \
+      p->FIELD = p->LOWER
+  THROTTLE (dpms_standby, timeout);
+  THROTTLE (dpms_suspend, dpms_standby);
+  THROTTLE (dpms_off,     dpms_standby);
+  THROTTLE (dpms_off,     dpms_suspend);
+#undef THROTTLE
 
   if (p->dpms_standby == 0 &&	   /* if *all* are 0, then DPMS is disabled */
       p->dpms_suspend == 0 &&

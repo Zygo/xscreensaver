@@ -133,13 +133,10 @@ decayscreen_init (Display *dpy, Window window)
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
   gcv.function = GXcopy;
-  gcv.subwindow_mode = IncludeInferiors;
   bg = get_pixel_resource (st->dpy, st->xgwa.colormap, "background", "Background");
   gcv.foreground = bg;
 
   gcflags = GCForeground | GCFunction;
-  if (use_subwindow_mode_p(st->xgwa.screen, st->window)) /* see grabscreen.c */
-    gcflags |= GCSubwindowMode;
   st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
 
   st->start_time = time ((time_t *) 0);
@@ -174,7 +171,7 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
     static const int downright_bias[] = { L,L,L,R, R,R,R,R, U,U,U,D, D,D,D,D };
 
     int off = 1;
-    if (st->sizex > 2560) off *= 2;  /* Retina displays */
+    if (st->sizex > 2560 || st->sizey > 2560) off *= 2;  /* Retina displays */
 
     if (st->img_loader)   /* still loading */
       {
@@ -373,11 +370,6 @@ static const char *decayscreen_defaults [] = {
   ".foreground:			Yellow",
   "*dontClearRoot:		True",
   "*fpsSolid:			True",
-
-#ifdef __sgi	/* really, HAVE_READ_DISPLAY_EXTENSION */
-  "*visualID:			Best",
-#endif
-
   "*delay:			10000",
   "*mode:			random",
   "*duration:			120",

@@ -237,9 +237,14 @@ init_fiberlamp(ModeInfo * mi)
   /* no "NoExpose" events from XCopyArea wanted */
   XSetGraphicsExposures(MI_DISPLAY(mi), MI_GC(mi), False);
 
-  /* Make sure we're using 'thin' lines */
-  XSetLineAttributes(MI_DISPLAY(mi), MI_GC(mi), 0, LineSolid, CapNotLast,
-					 JoinMiter);
+  {
+    int lw = 1;
+    if (MI_WIDTH(mi) > 2560 || MI_HEIGHT(mi) > 2560)
+      lw = 3;  /* Retina displays */
+    XSetLineAttributes (MI_DISPLAY(mi), MI_GC(mi),
+                        lw, LineSolid, CapNotLast, JoinMiter);
+  }
+
 #ifdef CHECKCOLORWHEEL
   /* Only interested in tips, leave the rest black */
   fl->bright = fl->medium = fl->dim = MI_BLACK_PIXEL(mi);

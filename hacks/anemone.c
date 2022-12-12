@@ -208,6 +208,12 @@ anemone_init (Display *disp, Window window)
   st->scrHeight = wa.height;
   st->cmap = wa.colormap;
 
+  if (st->scrWidth > 2560 || st->scrHeight > 2560) {  /* Retina displays */
+    st->width *= 4;
+    st->finpoints *= 2;
+    st->withdraw *= 2;
+  }
+
   st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
   st->ncolors += 3;
   st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));

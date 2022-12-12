@@ -20,6 +20,10 @@
     <number id="count" type="spinbutton" arg="--count %"
             _label="Seeds" low="0" high="200" default="0"/>
 
+    <number id="scale" type="slider" arg="--scale %"
+            _label="Scale" _low-label="Small" _high-label="Large"
+            low="1" high="10" default="1"/>
+
    </vgroup>
    <vgroup>
     <number id="handedness" type="slider" arg="--handedness %"

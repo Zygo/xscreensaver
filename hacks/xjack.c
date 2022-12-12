@@ -93,7 +93,9 @@ xjack_init (Display *dpy, Window window)
 
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
-  if (st->xgwa.width > 480)
+  if (st->xgwa.width > 1200 || st->xgwa.height > 1200)  /* Retina displays */
+    fontname = get_string_resource (st->dpy, "font3", "Font");
+  else if (st->xgwa.width > 480)
     fontname = get_string_resource (st->dpy, "font", "Font");
   else
     fontname = get_string_resource (st->dpy, "font2", "Font");
@@ -350,10 +352,13 @@ xjack_draw (Display *dpy, Window window, void *closure)
                          (FcChar8 *) &c, 1);
       if (xshift == 0 && yshift == 0 && (0 == (random() & 3000)))
         {
+          int off = st->font->ascent / 10;
+          if (off <= 0) off = 1;
+          if (random() & 1) off *= 1.5;
           if (random() & 1)
-            xshift--;
+            xshift -= off;
           else
-            yshift--;
+            yshift -= off;
           goto OVERSTRIKE;
         }
 
@@ -488,6 +493,7 @@ static const char *xjack_defaults [] = {
   "*fpsTop:		true",
   ".font:  Special Elite 24, American Typewriter 24, Courier 24, monospace 24",
   ".font2: Special Elite 12, American Typewriter 12, Courier 12, monospace 12",
+  ".font3: Special Elite 48, American Typewriter 48, Courier 48, monospace 48",
   "*delay:		50000",
   0
 };

@@ -429,7 +429,7 @@ munch_free (Display *dpy, Window window, void *closure)
 
 
 static const char *munch_defaults [] = {
-  ".lowrez:           true",
+/*  ".lowrez:           true", */
   ".background:       black",
   ".foreground:       white",
   "*fpsSolid:	      true",

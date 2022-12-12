@@ -41,7 +41,7 @@ Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds).
 How many seconds before loading a new image.  Default: 120.
 .TP 8
 .B \-\-count \fInumber\fP
-Number of glitches to introduce per iteration. Default: 100.
+Number of glitches to introduce per iteration. Default: 400.
 .SH ENVIRONMENT
 .PP
 .TP 8

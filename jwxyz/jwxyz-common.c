@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -164,9 +164,15 @@ jwxyz_validate_pixel (Display *dpy, unsigned long pixel, unsigned int depth,
 
   if (depth == 1)
     Assert ((pixel == 0 || pixel == 1), "bogus mono  pixel: 0x%08X", pixel);
+
+# if !defined __OPTIMIZE__
+  // This test fails somewhat regularly with certain X11 hacks.  This might
+  // indicate the use of uninitialized data, or an assumption that BlackPixel
+  // is 0, but either way, crashing here is not super helpful.
   else if (!alpha_allowed_p)
     Assert (((pixel & BlackPixel(dpy,0)) == BlackPixel(dpy,0)),
             "bogus color pixel: 0x%08X", pixel);
+# endif
 }
 
 
@@ -1851,13 +1857,6 @@ int
 screen_number (Screen *screen)
 {
   return 0;
-}
-
-// declared in utils/grabclient.h
-Bool
-use_subwindow_mode_p (Screen *screen, Window window)
-{
-  return False;
 }
 
 #endif /* HAVE_JWXYZ */

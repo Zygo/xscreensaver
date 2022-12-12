@@ -14,7 +14,7 @@
 
 #include "xlockmoreI.h"
 #include "grab-ximage.h"
-#include "grabscreen.h"
+#include "grabclient.h"
 #include "pow2.h"
 #include "visual.h"
 #include "xshm.h"
