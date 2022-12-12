@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>6.06</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.entertainment</string>
+	<key>CFBundleShortVersionString</key>
+	<string>6.06</string>
+	<key>CFBundleLongVersionString</key>
+	<string>6.06</string>
+	<key>CFBundleGetInfoString</key>
+	<string>6.06</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>6.06</string>
+	<key>NSMainNibFile</key>
+	<string>Updater</string>
+	<key>CFBundleIconFile</key>
+	<string>SaverRunner</string>
+	<key>CFBundleDisplayName</key>
+	<string>XScreenSaver</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>SUEnableSystemProfiling</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://www.jwz.org/xscreensaver/updates.xml</string>
+	<key>SUPublicDSAKeyFile</key>
+	<string>sparkle_dsa_pub.pem</string>
+	<key>SUPublicEDKey</key>
+	<string>D5YfJDsnJeiG/OhmYBGrPytPDxPsq8p0lholwaueaBo=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>604800</integer>
+</dict>
+</plist>

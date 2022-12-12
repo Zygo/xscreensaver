@@ -1,0 +1,8 @@
+[Desktop Entry]
+Exec=xscreensaver-settings
+Icon=xscreensaver
+_Name=XScreenSaver Settings
+_Comment=Change screensaver properties
+Type=Application
+Categories=Settings;DesktopSettings;Screensaver;Security
+Terminal=false

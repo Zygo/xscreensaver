@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="carousel" _label="Carousel" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=IyqWkGVrFIY"/>
+
+  <hgroup>
+   <vgroup>
+
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="--speed %"
+            _label="Animation speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="8.0" default="1.0"
+            convert="ratio"/>
+
+    <number id="duration" type="slider" arg="--duration %"
+            _label="Time until loading a new image"
+            _low-label="5 seconds" _high-label="1 minute"
+            low="5" high="60" default="20"/>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="count" type="spinbutton" arg="--count %"
+            _label="Number of images" low="1" high="20" default="7"/>
+
+    <select id="mode">
+      <option id="tiltxy"  _label="Tilt in/out and left/right"/>
+      <option id="tiltx"   _label="Tilt in/out only"     arg-set="--tilt x"/>
+      <option id="tilty"   _label="Tilt left/right only" arg-set="--tilt y"/>
+      <option id="notilt"  _label="No tilting"           arg-set="--tilt 0"/>
+    </select>
+
+    <boolean id="zoom" _label="Zoom in/out" arg-unset="--no-zoom"/>
+    <boolean id="titles" _label="Show file names" arg-unset="--no-titles"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-image />
+
+  <xscreensaver-updater />
+
+  <_description>
+Loads several random images, and displays them flying in a circular
+formation.  Images are replaced periodically.
+
+Written by Jamie Zawinski; 2005.
+  </_description>
+</screensaver>
