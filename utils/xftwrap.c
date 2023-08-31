@@ -174,7 +174,6 @@ XftDrawStringUtf8_multi (XftDraw *xftdraw, const XftColor *color,
 {
   Display *dpy = XftDrawDisplay (xftdraw);
   int i, start = 0;
-  int lines = 0;
   XGlyphInfo overall;
   if (len == 0) return;
 
@@ -198,7 +197,6 @@ XftDrawStringUtf8_multi (XftDraw *xftdraw, const XftColor *color,
                              str + start,
                              i - start);
           y += font->ascent + font->descent;
-          lines++;
           start = i+1;
         }
     }

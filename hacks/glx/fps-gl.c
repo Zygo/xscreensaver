@@ -65,13 +65,7 @@ xlockmore_gl_draw_fps (ModeInfo *mi)
     {
       gl_fps_data *data = (gl_fps_data *) st->gl_fps_data;
       XWindowAttributes xgwa;
-      int lines = 1;
-      const char *s;
-
       XGetWindowAttributes (st->dpy, st->window, &xgwa);
-      for (s = st->string; *s; s++) 
-        if (*s == '\n') lines++;
-
       glColor3f (1, 1, 1);
       print_texture_label (st->dpy, data->texfont,
                            xgwa.width, xgwa.height,

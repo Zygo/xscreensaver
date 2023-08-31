@@ -14,14 +14,21 @@ us know:
 #
 ############################################################################
 
-    Install JDK: http://www.oracle.com/technetwork/java/javase/downloads/
+    Install JDK: https://www.oracle.com/java/technologies/downloads/
+      You might need to nuke the old ones first:
+      rm -r /Library/Java/JavaVirtualMachines/*
     Install Android Studio: http://developer.android.com/sdk/
     Install Android NDK: http://developer.android.com/ndk/downloads
       Rename or link the "android-ndk-*" directory to "ndk" inside your
       $ANDROID_HOME (the "sdk/" directory that is the parent of
       "build-tools/", etc.)  That is, it should be "sdk/ndk/".
+
+      Update 2023: these seem to be DMGs now?  Sigh.  Mount it and then do:
+      cp -pr /Volumes/Android\ NDK\ r25c/AndroidNDK*.app/Contents/NDK \
+        ~/Library/Android/sdk/android-ndk-r25c
+
     ln -sf sdk/ndk/ndk-build .
-    cd sdk ; ln -sf android-ndk-rNNN ndk
+    cd sdk ; ln -sf android-ndk-r* ndk
     Delete any old NDKs or they get used anyway.
 
     Set $ANDROID_HOME to where your SDK is installed, or
@@ -57,16 +64,19 @@ us know:
     To create and configure an emulator image, use the GUI tool and and
     give the emulator a name (say, "Nexus_5").
 
-      $ANDROID_HOME/sdk/tools/android avd
+      View / Tool Windows / Device Manager
 
       E.g.: Nexus 5, Android 5, Intel Atom x86_64, RAM 2048 VM 64,
       storage 200, use host GPU.
+
+      This used to work but no longer does:
+      $ANDROID_HOME/sdk/tools/android avd
 
     Configuration options are in $HOME/.android/avd/*.avd/config.ini
 
     To launch it:
 
-      $ANDROID_HOME/sdk/tools/emulator -avd Nexus_5
+      $ANDROID_HOME/sdk/emulator/emulator -avd Nexus_5
 
     To load xscreensaver into the currently-running emulator or device:
       $ANDROID_HOME/platform-tools/adb install -r \
@@ -107,6 +117,10 @@ us know:
     sure that you verify that download with "shasum -a 256" against
     https://www.oracle.com/webfolder/s/digest/11-0-10-checksum.html so
     that you don't get a trojan.
+
+    Not all versions of Gradle work with all versions of Java because of
+    course they don't.  Here's a table listing compatible versions:
+    https://docs.gradle.org/current/userguide/compatibility.html
 
 
 ############################################################################

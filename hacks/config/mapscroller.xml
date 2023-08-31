@@ -31,18 +31,38 @@
 
    <vgroup>
     <!-- List of map servers: https://wiki.openstreetmap.org/wiki/Tiles#Servers
-        Map comparator: https://mc.bbbike.org/mc/
-     -->
+         Map comparator: https://mc.bbbike.org/mc/
+      -->
     <select id="map">
-     <option id="osm"		_label="Open Street Map"/>
-     <option id="osmhot"	_label="OSM Humanitarian Map"	  arg-set="--url-template https://{a-b}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"/>
-     <option id="toner"		_label="Stamen Toner B&amp;W Map" arg-set="--url-template http://{a-c}.tile.stamen.com/toner/{z}/{x}/{y}.png"/>
-     <option id="sterrain"	_label="Stamen Terrain Map"	  arg-set="--url-template http://{a-c}.tile.stamen.com/terrain/{z}/{x}/{y}.png"/>
-     <option id="swatercolor"	_label="Stamen Watercolor Map"	  arg-set="--url-template http://{a-c}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg"/>
-<!--
-     <option id="wfmbw"		_label="WFM B&amp;W Map"	  arg-set="- -url-template https://{a-c}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"/>
-     <option id="wfmnolabel"	_label="WFM No Labels Map"	  arg-set="- -url-template https://{a-c}.tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png"/>
--->
+
+     <option id="osm"         _label="Open Street Map"/>    <!-- Default: "-\-url-template https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png" -->
+
+     <option id="osmhot"      _label="OSM Humanitarian Map"        arg-set="--url-template https://{a-b}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"/>
+
+<!-- These will stop working in Aug 2023:
+     <option id="toner"       _label="Stamen Toner B&amp;W Map"    arg-set="-\-url-template http://{a-c}.tile.stamen.com/toner/{z}/{x}/{y}.png"/>
+     <option id="sterrain"    _label="Stamen Terrain Map"          arg-set="-\-url-template http://{a-c}.tile.stamen.com/terrain/{z}/{x}/{y}.png"/>
+     <option id="swatercolor" _label="Stamen Watercolor Map"       arg-set="-\-url-template http://{a-c}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg"/>
+  -->
+
+<!-- New home of the above Stamen tiles, but may some day require registration:
+  -->
+     <option id="toner"       _label="Stamen Toner B&amp;W Map"    arg-set="--url-template https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.jpg"/>
+     <option id="sterrain"    _label="Stamen Terrain Map"          arg-set="--url-template https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.jpg"/>
+     <option id="swatercolor" _label="Stamen Watercolor Map"       arg-set="--url-template https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}{r}.jpg"/>
+
+<!-- Free usage for up to 75,000 map views per month: -->
+     <option id="cartovger"   _label="Carto Voyager Map"           arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartovgerno" _label="Carto Voyager No Labels Map" arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartolight"  _label="Carto Light Map"             arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartodark"   _label="Carto Dark Map"              arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartolightn" _label="Carto Light No Labels Map"   arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartodarkn"  _label="Carto Dark No Labels Map"    arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.jpg"/>
+
+<!-- These stopped working around Feb 2022:
+     <option id="wfmbw"       _label="WFM B&amp;W Map"             arg-set="-\-url-template https://{a-c}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"/>
+     <option id="wfmnolabel"  _label="WFM No Labels Map"           arg-set="-\-url-template https://{a-c}.tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png"/>
+  -->
     </select>
 
     <select id="origin">

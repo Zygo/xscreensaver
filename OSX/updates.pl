@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2013-2020 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2013-2023 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,14 +21,45 @@ use open ":encoding(utf8)";
 use POSIX;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.9 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.13 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
 
 my $base_url = "https://www.jwz.org/";
-my $dsa_priv_key_file = "$ENV{HOME}/.ssh/sparkle_dsa_priv.pem";
-my $dsa_sign_update = "sparkle-bin/old_dsa_scripts/sign_update";
+
+
+# Sparkle used DSA signatures and began transitioning to EdDSA in version 1.21.
+# https://sparkle-project.org/documentation/eddsa-migration/
+#
+# For DSA keys, the XML file had "dsaSignature" attributes, Updater.plist
+# had a "SUPublicDSAKeyFile" key, and XScreenSaverUpdater.app contained
+# "Contents/Resources/sparkle_dsa_pub.pem".
+#
+# For EdDSA keys, the XML file has "edSignature", Updater.plist has a
+# "SUPublicEDKey" (with inline base64 data), and the PEM file is not used.
+#
+# Version history:
+#
+#   5.24 (Dec 2013) Sparkle 1.5b,   DSA key, first release with Sparkle
+#   5.41 (Dec 2018) Sparkle 1.21.2, DSA key
+#   6.02 (Oct 2011) Sparkle 1.27.0, DSA key
+#   6.03 (Feb 2022) Sparkle 1.27.0, DSA key and EdDSA key
+#   6.06 (Dec 2022) same
+#   6.07 (Aug 2023) Sparkle 1.27.0, EdDSA key only
+#
+# Once you ship an EdDSA-only version, users running releases that did not
+# contain EdDSA keys will not be able to auto-update, which in our case is
+# the 18 months between versions 6.03 and 6.07.  For Dali Clock, it was
+# 5 years between first EdDSA and dropping DSA:
+#
+#   2.40 (Nov 2013) Sparkle 1.5b,   DSA key, first release with Sparkle
+#   2.44 (Dec 2018) Sparkle 1.21.2, DSA key and EdDSA key
+#   2.48 (Aug 2023) Sparkle 1.27.0, EdDSA key only
+
+
+#my $dsa_priv_key_file = "$ENV{HOME}/.ssh/sparkle_dsa_priv.pem";
+#my $dsa_sign_update = "sparkle-bin/old_dsa_scripts/sign_update";
 my $edddsa_sign_update = "sparkle-bin/sign_update";
 
 
@@ -50,13 +81,13 @@ sub generate_xml($$$$) {
     shift @i;
     foreach my $item (@i) {
       my ($v)    = ($item =~ m/version="(.*?)"/si);
-      my ($sig1) = ($item =~ m/dsaSignature="(.*?)"/si);
+#     my ($sig1) = ($item =~ m/dsaSignature="(.*?)"/si);
       my ($sig2) = ($item =~ m/edSignature="(.*?)"/si);
       my ($date) = ($item =~ m/<pubDate>(.*?)</si);
       next unless $v;
-      $sig1 = '' if ($sig1 eq 'ERROR');
-      $sig2 = '' if ($sig2 eq 'ERROR');
-      $sig1s{$v}  = $sig1 if $sig1;
+#     $sig1 = '' if (!defined($sig1) || $sig1 eq 'ERROR');
+      $sig2 = '' if (!defined($sig2) || $sig2 eq 'ERROR');
+#     $sig1s{$v}  = $sig1 if $sig1;
       $sig2s{$v}  = $sig2 if $sig2;
       $dates{$v} = $date if $date;
       print STDERR "$progname: existing: $v: " . ($date || '?') . "\n"
@@ -105,6 +136,9 @@ sub generate_xml($$$$) {
     #foreach my $ext ('zip', 'dmg', 'tar.gz', 'tar.Z') {
     foreach my $ext ('dmg') {
       foreach my $v ($v1, $v2) {
+        next if ($app_name =~ m/xscreensaver/i
+                 ? $v le '6.00'   # Skip the really old DMGs (5.14 PPC, etc.)
+                 : $v le '243');
         foreach my $name ($app_name, "x" . lc($app_name)) {
           my $f = "$name-$v.$ext";
           if (-f "$archive_dir/$f") {
@@ -132,26 +166,28 @@ sub generate_xml($$$$) {
              : "");
 
     my $odate = $dates{$v1};
-    my $sig1  = $sig1s{$v1};
+#   my $sig1  = $sig1s{$v1};
     my $sig2  = $sig2s{$v1};
     # Re-generate the sig if the file date changed.
-    $sig1 = undef if ($odate && $odate ne $date);
+#   $sig1 = undef if ($odate && $odate ne $date);
     $sig2 = undef if ($odate && $odate ne $date);
 
     print STDERR "$progname: $v1: $date " .
-                  ($sig1 ? "Y" : "N") . ($sig2 ? "Y" : "N") . "\n"
+#                 ($sig1 ? "Y" : "N") .
+                  ($sig2 ? "Y" : "N") .
+                  "\n"
       if ($verbose > 1);
 
-    if (!$sig1 && $zip) {	# Old-style sigs
-      local %ENV = %ENV;
-      $ENV{PATH} = "/usr/bin:$ENV{PATH}";
-      my $cmd = ("$dsa_sign_update" .
-                 " \"$archive_dir/$zip\"" .
-                 " \"$dsa_priv_key_file\"");
-      print STDERR "$progname: exec: $cmd\n" if ($verbose > 1);
-      $sig1 = `$cmd`;
-      $sig1 =~ s/\s+//gs;
-    }
+#    if (!$sig1 && $zip) {	# Old-style sigs
+#      local %ENV = %ENV;
+#      $ENV{PATH} = "/usr/bin:$ENV{PATH}";
+#      my $cmd = ("$dsa_sign_update" .
+#                 " \"$archive_dir/$zip\"" .
+#                 " \"$dsa_priv_key_file\"");
+#      print STDERR "$progname: exec: $cmd\n" if ($verbose > 1);
+#      $sig1 = `$cmd`;
+#      $sig1 =~ s/\s+//gs;
+#    }
 
     if (!$sig2 && $zip) {	# New-style sigs
       local %ENV = %ENV;
@@ -163,13 +199,13 @@ sub generate_xml($$$$) {
       error ("unparsable: $edddsa_sign_update: $xml") unless $sig2;
     }
 
-    $sig1 = 'ERROR' unless defined($sig1);
+#   $sig1 = 'ERROR' unless defined($sig1);
     $sig2 = 'ERROR' unless defined($sig2);
     $size = -1 unless defined($size);
     my $enc = ($publishedp
                ? ("<enclosure url=\"$url\"\n" .
                   " sparkle:version=\"$v1\"\n" .
-                  " sparkle:dsaSignature=\"$sig1\"\n" .
+#                 " sparkle:dsaSignature=\"$sig1\"\n" .
                   " sparkle:edSignature=\"$sig2\"\n" .
                   " length=\"$size\"\n" .
                   " type=\"application/octet-stream\" />\n")

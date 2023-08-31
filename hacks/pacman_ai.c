@@ -511,7 +511,7 @@ pac_check_trace (const pacmanstruct * p, const int vx, const int vy)
 static void
 pac_eating (pacmangamestruct * pp, pacmanstruct * p)
 {
-    int posdirs[DIRVECS], nrdirs, i, highest = -(1 << 16),
+    int posdirs[DIRVECS], /* nrdirs, */ i, highest = -(1 << 16),
         score, dir = 0, dotfound = 0, prox, worst = 0;
     int vx, vy;
 
@@ -532,7 +532,7 @@ pac_eating (pacmangamestruct * pp, pacmanstruct * p)
     if (prox < 3 * 3)
         p->state_change = 1;
 
-    nrdirs = pac_get_posdirs (pp, p, posdirs);
+    /* nrdirs = */ pac_get_posdirs (pp, p, posdirs);
 
     /* remove directions which lead to ghosts */
     if (p->aistate == ps_hiding) {
@@ -546,7 +546,7 @@ pac_eating (pacmangamestruct * pp, pacmanstruct * p)
             }
             dir = i;
         }
-        nrdirs--;
+        /* nrdirs--; */
         posdirs[worst] = 0;
         highest = -(1 << 16);
     }
@@ -610,11 +610,11 @@ pac_eating (pacmangamestruct * pp, pacmanstruct * p)
 static void
 pac_chasing (pacmangamestruct * pp, pacmanstruct * p)
 {
-    int posdirs[DIRVECS], nrdirs, i, highest = -(1 << 16),
+    int posdirs[DIRVECS], /* nrdirs, */ i, highest = -(1 << 16),
         score, dir = 0, worst = 0;
     int vx = 0, vy = 0;
 
-    nrdirs = pac_get_posdirs (pp, p, posdirs);
+    /* nrdirs = */ pac_get_posdirs (pp, p, posdirs);
 
     /* keep directions which lead to ghosts */
     for (i = 0; i < DIRVECS; i++) {
@@ -627,7 +627,7 @@ pac_chasing (pacmangamestruct * pp, pacmanstruct * p)
         }
         dir = i;
     }
-    nrdirs--;
+    /* nrdirs--; */
     posdirs[worst] = 0;
 
 

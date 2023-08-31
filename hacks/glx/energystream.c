@@ -157,7 +157,7 @@ static GLuint gen_texture (void)
 
     float tint[3];
     for (i = 0; i < 3; i++)
-      tint[i] = 1.0 * random() / RAND_MAX;
+      tint[i] = 1.0 * (double) random() / RAND_MAX;
 
     for (y = 0; y < TEX_HEIGHT; y++) {
         for (x = 0; x < TEX_WIDTH; x++) {
@@ -230,9 +230,9 @@ static void init_flare_stream (flare_stream *s, int num_flares, float bx, float 
 
   for (i = 0; i != s->num_flares; i++)
   {
-    s->flares[i].x = -800.0f * random() / RAND_MAX - 1150 + bx;
-    s->flares[i].y =   10.0f * random() / RAND_MAX -   20 + by;
-    s->flares[i].z =   10.0f * random() / RAND_MAX -   20 + bz;
+    s->flares[i].x = -800.0 * (double) random() / RAND_MAX - 1150 + bx;
+    s->flares[i].y =   10.0 * (double) random() / RAND_MAX -   20 + by;
+    s->flares[i].z =   10.0 * (double) random() / RAND_MAX -   20 + bz;
   }
 }
 

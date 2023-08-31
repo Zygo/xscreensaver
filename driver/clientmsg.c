@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -113,8 +113,15 @@ clientmessage_response (Display *dpy, XEvent *xev, Bool ok, const char *msg)
     {
       Atom cmd = xev->xclient.data.l[0];
       char *name = XGetAtomName (dpy, cmd);
-      fprintf (stderr, "%s: ClientMessage %s: %s\n", blurb(), 
-               (name ? name : "???"), msg);
+      pid_t caller = (cmd == XA_DEACTIVATE
+                      ? (pid_t) xev->xclient.data.l[1]
+                      : 0);
+      if (caller)
+        fprintf (stderr, "%s: ClientMessage %s: %s (from pid %lu)\n", blurb(), 
+                 (name ? name : "???"), msg, (unsigned long) caller);
+      else
+        fprintf (stderr, "%s: ClientMessage %s: %s\n", blurb(), 
+                 (name ? name : "???"), msg);
     }
 
   L = strlen (msg);

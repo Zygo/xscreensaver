@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2022 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2023 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.40 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.43 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -487,8 +487,8 @@ sub check_config($$) {
     $progclass = 'DNAlogo' if ($progclass eq 'DNALogo');
     my $f = (glob("$obd/$progclass.saver*"))[0];
     if (!$f && $progclass ne 'Flurry') {
-      print STDERR "$progname: $progclass.saver does not exist\n";
-      $failures++;
+      print STDERR "$progname: WARNING: $progclass.saver does not exist\n";
+      # $failures++;
     }
   }
 
@@ -993,6 +993,7 @@ sub build_android(@) {
 
     my $dream = ("<dream xmlns:android=\"" .
                    "http://schemas.android.com/apk/res/android\"\n" .
+                 "  android:previewImage=\"\@drawable/$saver_underscore\"\n" .
                  "  android:settingsActivity=\"" .
                      "$package.gen.Settings\$$saver_class\" />\n");
     $write_files{"$xml_dir/${saver_underscore}_dream.xml"} = $dream;
@@ -1001,7 +1002,7 @@ sub build_android(@) {
                        "http://schemas.android.com/apk/res/android\"\n" .
                      "  android:settingsActivity=\"" .
                      "$package.gen.Settings\$$saver_class\"\n" .
-                     "  android:thumbnail=\"\@drawable/${saver_underscore}\" />\n");
+                     "  android:thumbnail=\"\@drawable/$saver_underscore\" />\n");
     $write_files{"$xml_dir/${saver_underscore}_wallpaper.xml"} = $wallpaper;
 
     $daydream_java .=
@@ -1069,12 +1070,19 @@ sub build_android(@) {
                 "  android:theme=\"\@android:style/Theme.Holo\"\n" .
                 "  android:exported=\"true\"\n" .
                 "  android:label=\"\@string/app_name\">\n" .
-                "  <intent-filter>\n" .
-                "    <action android:name=\"android.intent.action" .
-                ".MAIN\" />\n" .
-                "    <category android:name=\"android.intent.category" .
-                ".LEANBACK_LAUNCHER\" />\n" .
-                "  </intent-filter>\n" .
+
+                # I have no idea what this error means, when uploading to
+                # the Play store: "app must be published as an app bundle
+                # instead". I also don't know what leanback means or why
+                # I should care, so fuck it.
+                #
+#               "  <intent-filter>\n" .
+#               "    <action android:name=\"android.intent.action" .
+#               ".MAIN\" />\n" .
+#               "    <category android:name=\"android.intent.category" .
+#               ".LEANBACK_LAUNCHER\" />\n" .
+#               "  </intent-filter>\n" .
+
                 "  <intent-filter>\n" .
                 "    <action android:name=\"android.intent.action" .
                 ".VIEW\" />\n" .
@@ -1117,8 +1125,9 @@ sub build_android(@) {
                "  <uses-feature android:glEsVersion=\"0x00010001\"\n" .
                "    android:required=\"true\" />\n" .
 
-               "  <uses-feature android:name=\"android.software.leanback\"\n" .
-               "    android:required=\"false\" />\n" .
+               # See above
+#              "  <uses-feature android:name=\"android.software.leanback\"\n" .
+#              "    android:required=\"false\" />\n" .
 
                "  <uses-feature" .
                " android:name=\"android.hardware.touchscreen\"\n" .

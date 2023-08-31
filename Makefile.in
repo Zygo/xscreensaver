@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright © 1999-2022 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright © 1999-2023 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -56,7 +56,7 @@ tags::
 	@$(MAKE_SUBDIR)
 
 clean::
-	@$(MAKE_SUBDIR2)
+	@$(MAKE_SUBDIR)
 
 distclean:: clean
 	@$(MAKE_SUBDIR2)
@@ -207,7 +207,7 @@ bump-version::
 									    \
   echo "Updated $$SRC version to \"$$VERS3\"" ;				    \
 									    \
-  $(MAKE) version-date ;						    \
+  $(MAKE2) version-date ;						    \
   ls -lFd $$SRC
 
 bump_version:: bump-version
@@ -430,7 +430,7 @@ count::
 
 
 cerebrum::
-	rsync -vax . 10.0.1.29:xscreensaver/ \
+	rsync -vax . 10.0.1.12:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \

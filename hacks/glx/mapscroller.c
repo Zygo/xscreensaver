@@ -1,4 +1,4 @@
-/* mapscroller, Copyright © 2021-2022 Jamie Zawinski <jwz@jwz.org>
+/* mapscroller, Copyright © 2021-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -113,6 +113,8 @@ typedef struct {
   Bool button_down_p;
   LL drag_start_deg;
   XYi drag_start_px;
+  long tile_count;
+  Bool dead_p;
 
 } map_configuration;
 
@@ -364,6 +366,7 @@ reshape_tiles (ModeInfo *mi)
 
   /* Queue a loader for any tiles that don't have them.
      Enqueue them from the center out, rather than left to right. */
+  if (! bp->dead_p)
   {
     tile **queue = (tile **) malloc (w2 * h2 * sizeof(*queue));
     int count = 0;
@@ -772,7 +775,9 @@ read_loader (ModeInfo *mi)
       else if (n == 0)
         {
           fprintf (stderr, "%s: subprocess died\n", blurb(mi));
-          exit (1);
+          bp->dead_p = TRUE;
+          bp->mode = FADE_OUT;
+          return;
         }
       else
         {
@@ -796,6 +801,8 @@ read_loader (ModeInfo *mi)
     file = s+1;
     if (3 != sscanf (coords, " %ld %ld %ld ", &x, &y, &z))
       abort();
+
+    bp->tile_count++;
 
     for (i = 0; i < bp->grid_w * bp->grid_h; i++)
       {
@@ -1053,7 +1060,7 @@ randomize_position (ModeInfo *mi)
 {
   map_configuration *bp = &bps[MI_SCREEN(mi)];
   Bool city_p = !strcasecmp (origin_arg, "random-city");
-  LL pos;
+  LL pos = { 0, 0 };
   int i;
   for (i = 0; i < 1000; i++)  /* Don't get stuck */
     {
@@ -1333,7 +1340,9 @@ draw_map (ModeInfo *mi)
   if (bp->mode == FADE_OUT)
     {
       bp->opacity -= 0.02;
-      if (bp->opacity < 0)
+      if (bp->opacity < 0 && bp->dead_p)
+        bp->opacity = 0;
+      else if (bp->opacity < 0)
         {
           bp->opacity = 1;
           bp->mode = RUN;
@@ -1346,7 +1355,7 @@ draw_map (ModeInfo *mi)
         }
     }
 
-  if (bp->input_available_p)
+  if (bp->input_available_p && !bp->dead_p)
     read_loader (mi);
 
   if (!MI_IS_WIREFRAME(mi))
@@ -1380,7 +1389,7 @@ draw_map (ModeInfo *mi)
                alon,
                (alon - (int) alon) * 60,
                ((alon * 60) - (int) (alon * 60)) * 60,
-               (bp->pos.lat >= 0 ? 'E' : 'W'));
+               (bp->pos.lon >= 0 ? 'E' : 'W'));
 # else
       /* 37° 46' N, 122° 24' W */
       double alat = bp->pos.lat >= 0 ? bp->pos.lat : -bp->pos.lat;
@@ -1393,14 +1402,32 @@ draw_map (ModeInfo *mi)
                (bp->pos.lat >= 0 ? 'N' : 'S'),
                alon,
                (alon - (int) alon) * 60,
-               (bp->pos.lat >= 0 ? 'E' : 'W'));
+               (bp->pos.lon >= 0 ? 'E' : 'W'));
 # endif
       glColor3f (0.3, 0.3, 0.3);
       print_texture_label (mi->dpy, bp->font_data,
                            MI_WIDTH(mi), MI_HEIGHT(mi), 1, buf);
     }
 
-  if (mi->fps_p)
+  if (bp->dead_p)
+    {
+      static char buf[1024] = "";
+      if (! *buf)
+        {
+          char *s = get_string_resource (mi->dpy, "loaderProgram", "Program");
+          sprintf (buf, "\n\n\n\n\n\n%.100s subprocess died.", s);
+          free (s);
+          if (bp->tile_count < 10)
+            strcat (buf,
+                    " Is Perl broken? Maybe try:\n\n"
+                    "sudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA");
+        }
+      glColor3f (0.3, 0.3, 0.3);
+      print_texture_label (mi->dpy, bp->font_data,
+                           MI_WIDTH(mi), MI_HEIGHT(mi), 0, buf);
+    }
+
+  if (mi->fps_p && !bp->dead_p)
     {
       if (!MI_IS_WIREFRAME(mi))
         {
@@ -1410,7 +1437,7 @@ draw_map (ModeInfo *mi)
           glScalef (1.0 / MI_WIDTH(mi),
                     1.0 / MI_HEIGHT(mi),
                     1);
-          glScalef (220, 150, 1);
+          glScalef (320, 190, 1);
           glDisable (GL_TEXTURE_2D);
           glColor4f (0, 0, 0, 0.4);
           glBegin(GL_QUADS);

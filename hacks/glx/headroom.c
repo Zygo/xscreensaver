@@ -1,4 +1,4 @@
-/* headroom, Copyright © 2020-2022 Jamie Zawinski <jwz@jwz.org>
+/* headroom, Copyright © 2020-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -44,6 +44,11 @@
 #include "gltrackball.h"
 #include "rotator.h"
 #include "gllist.h"
+
+#define headroom_model_jaw_half skull_model_jaw_half
+#define headroom_model_skull_half skull_model_skull_half
+#define headroom_model_teeth_lower_half skull_model_teeth_lower_half
+#define headroom_model_teeth_upper_half skull_model_teeth_upper_half
 
 extern const struct gllist
   *headroom_model_skull_half, *headroom_model_jaw_half,

@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2022 Jamie Zawinski.
+# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2023 Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
 @SET_MAKE@
@@ -60,9 +60,9 @@ XFT_LIBS	= @XFT_LIBS@
 HACK_PRE	= $(LIBS) $(X_LIBS)
 HACK_POST     = $(X_PRE_LIBS) $(XFT_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
 HACK_POST2	= @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
-HACK_LIBS	= $(HACK_PRE)           @ANIM_LIBS@ $(HACK_POST2)
-PNG_LIBS	= $(HACK_PRE)            @PNG_LIBS@ $(HACK_POST2)
-GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @PNG_LIBS@ $(HACK_POST2)
+HACK_LIBS	= $(HACK_PRE)                       @FFMPEG_LIBS@ $(HACK_POST2)
+PNG_LIBS	= $(HACK_PRE)            @PNG_LIBS@ @FFMPEG_LIBS@ $(HACK_POST2)
+GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @PNG_LIBS@ @FFMPEG_LIBS@ $(HACK_POST2)
 TEXT_LIBS	= @PTY_LIBS@
 #### Is LIBCAP_CFLAGS necessary?
 LIBCAP_CFLAGS	= @LIBCAP_CFLAGS@
@@ -91,7 +91,8 @@ UTILDIR_OBJS	= $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/font-retry.o
 JWXYZ_OBJS	= $(JWXYZ_BIN)/jwzgles.o
 HACKDIR_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/xlockmore.o \
-		  $(HACK_BIN)/fps.o $(HACK_BIN)/ximage-loader.o
+		  $(HACK_BIN)/fps.o $(HACK_BIN)/ximage-loader.o \
+		  $(HACK_BIN)/ffmpeg-out.o
 PNG		= $(HACK_BIN)/ximage-loader.o
 
 SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
@@ -141,11 +142,12 @@ SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
 		  razzledazzle.c ships.c peepers.c crumbler.c quickhull.c \
 		  maze3d.c handsy.c handsy_model.c gravitywell.c deepstars.c \
 		  gibson.c etruscanvenus.c covid19.c co____9.c \
-		  headroom.c headroom_model.c beats.c glsl-utils.c \
-		  sphereeversion.c sphereeversion-analytic.c \
+		  headroom.c headroom_model.c skull_model.c beats.c \
+		  glsl-utils.c sphereeversion.c sphereeversion-analytic.c \
 		  sphereeversion-corrugations.c \
 		  mapscroller.c squirtorus.c nakagin.c chompytower.c \
-		  teeth_model.c hextrail.c
+		  teeth_model.c hextrail.c papercube.c cubocteversion.c \
+		  skulloop.c
 
 SCRIPTS		= mapscroller.pl
 
@@ -196,11 +198,12 @@ OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  razzledazzle.o ships.o peepers.o crumbler.o quickhull.o \
 		  maze3d.o handsy.o handsy_model.o gravitywell.o deepstars.o \
 		  gibson.o etruscanvenus.o covid19.o headroom.o \
-		  headroom_model.o beats.o glsl-utils.o \
+		  headroom_model.o skull_model.o beats.o glsl-utils.o \
 		  sphereeversion.c sphereeversion-analytic.c \
 		  sphereeversion-corrugations.c \
 		  mapscroller.o squirtorus.o nakagin.o chompytower.o \
-		  teeth_model.o hextrail.o
+		  teeth_model.o hextrail.o papercube.o cubocteversion.o \
+		  skulloop.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -223,7 +226,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  hexstrut vigilance esper razzledazzle peepers crumbler \
 		  maze3d handsy gravitywell deepstars gibson etruscanvenus \
 		  sphereeversion covid19 headroom beats mapscroller \
-		  squirtorus nakagin chompytower hextrail
+		  squirtorus nakagin chompytower hextrail papercube \
+		  cubocteversion skulloop
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
@@ -233,8 +237,7 @@ HACK_EXES_1	= @GL_EXES@ @GLE_EXES@
 HACK_EXES	= $(HACK_EXES_1) @SUID_EXES@
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o $(UTILS_BIN)/aligned_malloc.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o $(XSHM_OBJS)
-ANIM_OBJS	= recanim-gl.o
-ANIM_LIBS	= @PNG_LIBS@
+ANIM_OBJS	= recanim-gl.o $(HACK_BIN)/ffmpeg-out.o
 EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
 
 RETIRED_EXES	= @RETIRED_GL_EXES@
@@ -303,7 +306,7 @@ GL_MEN		= xscreensaver-gl-visual.man \
 		  gravitywell.man deepstars.man gibson.man etruscanvenus.man \
 		  sphereeversion.man covid19.man headroom.man beats.man \
 		  mapscroller.man squirtorus.man nakagin.man chompytower.man \
-		  hextrail.man
+		  hextrail.man papercube.man cubocteversion.man skulloop.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -311,15 +314,18 @@ EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
 
 TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(GL_MEN) $(RETIRED_MEN) $(EXTRAS)
 
+# Using $(MAKE) directly means the shell executes things even with "make -n"
+MAKE2 = $(MAKE)
+MAKE2CC = $(MAKE2) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 default: all
-all: $(EXES) $(RETIRED_EXES)
+all: validate_xml $(EXES) $(RETIRED_EXES)
 
 install:   install-program    install-scripts install-xml   install-man
 uninstall: uninstall-program  uninstall-xml uninstall-man
 
 install-strip:
-	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+	$(MAKE2) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 # the hacks, in $HACKDIR
 install-program:: $(EXES)
@@ -550,8 +556,7 @@ check_men:
 	 fi
 
 validate_xml:
-	@echo "Validating XML..." ; \
-	cd $(HACK_SRC) ; ./check-configs.pl $(GL_EXES) $(GLE_EXES) $(SUID_EXES)
+	@cd $(HACK_SRC) && ./check-configs.pl $(EXES) $(RETIRED_EXES)
 
 distdepend:: check_men validate_xml
 
@@ -584,13 +589,14 @@ $(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
 $(HACK_BIN)/screenhack.o:	$(HACK_SRC)/screenhack.c
 $(HACK_BIN)/xlockmore.o:	$(HACK_SRC)/xlockmore.c
 $(HACK_BIN)/fps.o:		$(HACK_SRC)/fps.c
+$(HACK_BIN)/ffmpeg-out.o:	$(HACK_SRC)/ffmpeg-out.c
 
 $(UTILDIR_OBJS):
-	cd $(UTILS_BIN) ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+	$(MAKE2CC) -C $(UTILS_BIN) $(@F)
 $(JWXYZ_OBJS):
-	cd $(JWXYZ_BIN) ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+	$(MAKE2CC) -C $(JWXYZ_BIN) $(@F)
 $(HACKDIR_OBJS):
-	cd $(HACK_BIN)  ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+	$(MAKE2CC) -C $(HACK_BIN)  $(@F)
 
 
 # How we build object files in this directory.
@@ -601,7 +607,7 @@ HACK_CFLAGS_BASE=$(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 # Make sure the images have been packaged. This is the first one hit.
 #
 ../images/gen/wood_png.h:
-	cd ../images && $(MAKE)
+	$(MAKE2) -C ../images
 	@if ! [ -f "$@" ]; then \
 	  echo; echo $@ "wasn't built -- try 'gmake' instead?"; echo; exit 1; \
 	fi
@@ -1098,12 +1104,14 @@ gibson:		gibson.o	$(PNG) $(HACK_TRACK_OBJS)
 covid19:	covid19.o	$(DB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(DB_OBJS) $(HACK_LIBS)
 
-HEADROOM_OBJS=gllist.o headroom_model.o normals.o $(HACK_TRACK_OBJS)
+HEADROOM_OBJS=gllist.o headroom_model.o skull_model.o normals.o \
+	      $(HACK_TRACK_OBJS)
 headroom:	headroom.o	 $(HEADROOM_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(HEADROOM_OBJS) $(HACK_LIBS)
 
 headroom_dxf::
 	./dxf2gl.pl --layers headroom.dxf headroom_model.c
+	./dxf2gl.pl --layers skull.dxf skull_model.c
 
 beats:		beats.o		sphere.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_OBJS) $(HACK_LIBS)
@@ -1127,6 +1135,17 @@ teeth_dxf::
 
 hextrail:	hextrail.o	 normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+papercube:	papercube.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+CUBOCT_OBJS=$(PNG) $(HACK_TRACK_OBJS)
+cubocteversion:	cubocteversion.o $(CUBOCT_OBJS)
+	$(CC_HACK) -o $@ $@.o	 $(CUBOCT_OBJS) $(HACK_LIBS) $(PNG_LIBS)
+
+SKULLOOP_OBJS=gllist.o skull_model.o normals.o $(HACK_TRACK_OBJS)
+skulloop:	skulloop.o	 $(SKULLOOP_OBJS)
+	$(CC_HACK) -o $@ $@.o	 $(SKULLOOP_OBJS) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -1871,6 +1890,28 @@ cubicgrid.o: $(UTILS_SRC)/xft.h
 cubicgrid.o: $(UTILS_SRC)/yarandom.h
 cubicgrid.o: $(HACK_SRC)/xlockmoreI.h
 cubicgrid.o: $(HACK_SRC)/xlockmore.h
+cubocteversion.o: ../../config.h
+cubocteversion.o: $(HACK_SRC)/fps.h
+cubocteversion.o: $(srcdir)/glsl-utils.h
+cubocteversion.o: $(srcdir)/gltrackball.h
+cubocteversion.o: ../images/gen/earth_night_png.h
+cubocteversion.o: ../images/gen/earth_png.h
+cubocteversion.o: ../images/gen/earth_water_png.h
+cubocteversion.o: $(HACK_SRC)/recanim.h
+cubocteversion.o: $(HACK_SRC)/screenhackI.h
+cubocteversion.o: $(UTILS_SRC)/colors.h
+cubocteversion.o: $(UTILS_SRC)/erase.h
+cubocteversion.o: $(UTILS_SRC)/font-retry.h
+cubocteversion.o: $(UTILS_SRC)/grabclient.h
+cubocteversion.o: $(UTILS_SRC)/hsv.h
+cubocteversion.o: $(UTILS_SRC)/resources.h
+cubocteversion.o: $(UTILS_SRC)/usleep.h
+cubocteversion.o: $(UTILS_SRC)/visual.h
+cubocteversion.o: $(UTILS_SRC)/xft.h
+cubocteversion.o: $(UTILS_SRC)/yarandom.h
+cubocteversion.o: $(HACK_SRC)/ximage-loader.h
+cubocteversion.o: $(HACK_SRC)/xlockmoreI.h
+cubocteversion.o: $(HACK_SRC)/xlockmore.h
 dangerball.o: ../../config.h
 dangerball.o: $(HACK_SRC)/fps.h
 dangerball.o: $(srcdir)/gltrackball.h
@@ -3475,6 +3516,24 @@ normals.o: $(UTILS_SRC)/usleep.h
 normals.o: $(UTILS_SRC)/visual.h
 normals.o: $(UTILS_SRC)/xft.h
 normals.o: $(UTILS_SRC)/yarandom.h
+papercube.o: ../../config.h
+papercube.o: $(HACK_SRC)/fps.h
+papercube.o: $(srcdir)/gltrackball.h
+papercube.o: $(HACK_SRC)/recanim.h
+papercube.o: $(srcdir)/rotator.h
+papercube.o: $(HACK_SRC)/screenhackI.h
+papercube.o: $(UTILS_SRC)/colors.h
+papercube.o: $(UTILS_SRC)/erase.h
+papercube.o: $(UTILS_SRC)/font-retry.h
+papercube.o: $(UTILS_SRC)/grabclient.h
+papercube.o: $(UTILS_SRC)/hsv.h
+papercube.o: $(UTILS_SRC)/resources.h
+papercube.o: $(UTILS_SRC)/usleep.h
+papercube.o: $(UTILS_SRC)/visual.h
+papercube.o: $(UTILS_SRC)/xft.h
+papercube.o: $(UTILS_SRC)/yarandom.h
+papercube.o: $(HACK_SRC)/xlockmoreI.h
+papercube.o: $(HACK_SRC)/xlockmore.h
 peepers.o: ../../config.h
 peepers.o: $(HACK_SRC)/fps.h
 peepers.o: $(srcdir)/gltrackball.h
@@ -4036,6 +4095,42 @@ sierpinski3d.o: $(UTILS_SRC)/xft.h
 sierpinski3d.o: $(UTILS_SRC)/yarandom.h
 sierpinski3d.o: $(HACK_SRC)/xlockmoreI.h
 sierpinski3d.o: $(HACK_SRC)/xlockmore.h
+skull_model.o: ../../config.h
+skull_model.o: $(HACK_SRC)/fps.h
+skull_model.o: $(srcdir)/gllist.h
+skull_model.o: $(HACK_SRC)/recanim.h
+skull_model.o: $(HACK_SRC)/screenhackI.h
+skull_model.o: $(UTILS_SRC)/colors.h
+skull_model.o: $(UTILS_SRC)/erase.h
+skull_model.o: $(UTILS_SRC)/font-retry.h
+skull_model.o: $(UTILS_SRC)/grabclient.h
+skull_model.o: $(UTILS_SRC)/hsv.h
+skull_model.o: $(UTILS_SRC)/resources.h
+skull_model.o: $(UTILS_SRC)/usleep.h
+skull_model.o: $(UTILS_SRC)/visual.h
+skull_model.o: $(UTILS_SRC)/xft.h
+skull_model.o: $(UTILS_SRC)/yarandom.h
+skull_model.o: $(HACK_SRC)/xlockmoreI.h
+skulloop.o: ../../config.h
+skulloop.o: $(HACK_SRC)/fps.h
+skulloop.o: $(srcdir)/gllist.h
+skulloop.o: $(srcdir)/gltrackball.h
+skulloop.o: $(srcdir)/normals.h
+skulloop.o: $(HACK_SRC)/recanim.h
+skulloop.o: $(HACK_SRC)/screenhackI.h
+skulloop.o: $(srcdir)/texfont.h
+skulloop.o: $(UTILS_SRC)/colors.h
+skulloop.o: $(UTILS_SRC)/erase.h
+skulloop.o: $(UTILS_SRC)/font-retry.h
+skulloop.o: $(UTILS_SRC)/grabclient.h
+skulloop.o: $(UTILS_SRC)/hsv.h
+skulloop.o: $(UTILS_SRC)/resources.h
+skulloop.o: $(UTILS_SRC)/usleep.h
+skulloop.o: $(UTILS_SRC)/visual.h
+skulloop.o: $(UTILS_SRC)/xft.h
+skulloop.o: $(UTILS_SRC)/yarandom.h
+skulloop.o: $(HACK_SRC)/xlockmoreI.h
+skulloop.o: $(HACK_SRC)/xlockmore.h
 skytentacles.o: ../../config.h
 skytentacles.o: $(HACK_SRC)/fps.h
 skytentacles.o: $(srcdir)/gltrackball.h

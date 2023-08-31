@@ -1976,7 +1976,7 @@ analogtv_draw(analogtv *it, double noiselevel,
 }
 
 analogtv_input *
-analogtv_input_allocate()
+analogtv_input_allocate(void)
 {
   analogtv_input *ret=(analogtv_input *)calloc(1,sizeof(analogtv_input));
 

@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -587,6 +587,7 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status,
         strcpy (msg, _("is not installed"));
       else
         sprintf (msg, _("crashed with status %d"), exit_status);
+
       if (p->verbose_p)
         fprintf (stderr,
                  "%s: %d: child pid %lu (%s) exited abnormally"
@@ -984,6 +985,27 @@ spawn_screenhack (saver_screen_info *ssi)
           goto DONE;
         }
 
+      if (! si->best_gl_visuals ||
+          ! si->best_gl_visuals[ssi->real_screen_number])
+        {
+          /* Lots of things malfunction in mysterious ways if only *part* of
+             the XScreenSaver application is installed.  That some distros
+             still insist on dividing XScreenSaver into multiple
+             bafflingly-named sub-packages that can be omitted willy nilly
+             causes repeated, predicted, time-wasting and extremely irritating
+             problems for everybody, while solving no problems whatsoever.
+
+             Here's your car, but let's make it trivially easy for everyone to
+             accidentally omit the seat belts and distributor cap, because
+             some weirdo once wanted that in 2002.
+
+             Install all of XScreenSaver or none.
+           */
+          screenhack_obituary (ssi, "",
+            "No GL visuals: the xscreensaver-gl* packages are required.");
+          goto DONE;
+        }
+
       forked = fork_and_exec (ssi, hack->command);
       switch ((int) forked)
 	{
@@ -1207,13 +1229,14 @@ get_best_gl_visual (saver_info *si, Screen *screen)
             sprintf (buf, "%s: running %s", blurb(), av[0]);
             perror (buf);
           }
-        exit (1);                               /* exits fork */
+        exit (EXEC_FAILED_EXIT_STATUS);		/* exits fork */
         break;
       }
     default:
       {
         int result = 0;
         int wait_status = 0;
+        int exit_status = EXEC_FAILED_EXIT_STATUS;
         pid_t pid = -1;
         FILE *f;
         unsigned long v = 0;
@@ -1244,6 +1267,16 @@ get_best_gl_visual (saver_info *si, Screen *screen)
         if (si->prefs.debug_p)
           fprintf (stderr, "%s: waitpid(%ld) => %ld\n", blurb(),
                    (long) forked, (long) pid);
+
+        exit_status = WEXITSTATUS (wait_status);
+        /* Treat exit code as a signed 8-bit quantity. */
+        if (exit_status & 0x80) exit_status |= ~0xFF;
+
+        if (exit_status == EXEC_FAILED_EXIT_STATUS)
+          {
+            fprintf (stderr, "%s: %s is not installed\n", blurb(), av[0]);
+            return 0;
+          }
 
         if (1 == sscanf (buf, "0x%lx %c", &v, &c))
           result = (int) v;

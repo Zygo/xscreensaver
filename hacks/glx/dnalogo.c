@@ -61,7 +61,7 @@
 		        "*cwFont:           " CWFONT "\n" \
 			"*geometry:	    =640x640\n" \
 
-#define CWFONT "Yearling 28, OCR A Std 24, Courier 24"
+#define CWFONT "Yearling 28, OCR A 24, OCR A Std 24, Courier 24"
 
 # define release_logo 0
 

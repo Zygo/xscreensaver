@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2019 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2023 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -16,7 +16,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -55,8 +55,11 @@ sub sanity_check() {
   print STDERR "ERROR:\t" . join(' ',  # "\n\t",
      'The "Sonar" module won\'t build properly unless you repair your',
      'SDK first.  The ICMP header files are missing from the SDK.',
-     'Fix it by doing this:') .
-       "\n\n$fail\n";
+     'Fix it by doing this:',
+     "\n\n$fail\n" .
+     'If you get "Operation not permitted", first grant "Full Disk Access"',
+     'permission to "Terminal" in "System Preferences / Privacy & Security".'
+     ) . "\n";
   exit (1);
 }
 

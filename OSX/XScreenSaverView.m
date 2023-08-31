@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -36,6 +36,10 @@
 # import "jwzglesI.h"
 #else
 # import <OpenGL/glu.h>
+#endif
+
+#ifndef HAVE_IPHONE
+# define VENTURA_KLUDGE
 #endif
 
 #undef countof
@@ -456,12 +460,17 @@ static void catch_signals (void)
   NSLog (@"installed signal handlers");
 }
 
+#ifdef VENTURA_KLUDGE   // Duplicated in Randomizer.m
+static NSMutableArray *all_saver_views = NULL;
+#endif
+
 
 - (id) initWithFrame:(NSRect)frame
                title:(NSString *)_title
-           isPreview:(BOOL)isPreview
+           isPreview:(BOOL)p
+          randomizer:(BOOL)randomizer_p
 {
-  if (! (self = [super initWithFrame:frame isPreview:isPreview]))
+  if (! (self = [super initWithFrame:frame isPreview:p]))
     return 0;
   
   saver_title = [_title retain];
@@ -505,7 +514,7 @@ static void catch_signals (void)
   // When the view fills the screen and double buffering is enabled, OS X will
   // use page flipping for a minor CPU/FPS boost. In windowed mode, double
   // buffering reduces the frame rate to 1/2 the screen's refresh rate.
-  double_buffered_p = !isPreview;
+  double_buffered_p = !p;  // isPreview
 # endif
 
 # ifdef HAVE_IPHONE
@@ -524,6 +533,23 @@ static void catch_signals (void)
   colorspace = CGColorSpaceCreateDeviceRGB ();
 # endif
 
+#ifdef VENTURA_KLUDGE
+  if (randomizer_p && !p) {
+    NSLog(@"skipping Ventura kludge: handled by Randomizer");
+  } else if (!p) {  // isPreview
+    if (!all_saver_views) {
+      all_saver_views = [[NSMutableArray arrayWithCapacity:20] retain];
+      [NSTimer scheduledTimerWithTimeInterval: 1  // must be > 0
+                                       target: self
+                                     selector: @selector(venturaLaunchKludge:)
+                                     userInfo: nil
+                                      repeats: NO];
+    }
+    if (! [all_saver_views containsObject:self])
+      [all_saver_views addObject:self];
+  }
+#endif  // VENTURA_KLUDGE
+
   return self;
 }
 
@@ -538,10 +564,18 @@ static void catch_signals (void)
    Dec 2020, noticed that this also happens on 10.14.6 when *not* in random
    mode.  Both System Preferences and ScreenSaverEngine fail to call
    StartAnimation.
+
+   June 2023, macOS 13.4: On a system with 3 screens, initWithFrame is called
+   on every screen, but viewDidMoveToWindow is called only on screen 3 -- but
+   that screen's view has the frame of screen 0!  So we get only one saver
+   running, and it is the wrong size.  We detect and correct this insanity
+   with the VENTURA_KLUDGE stuff.
  */
 - (void) viewDidMoveToWindow
 {
-  if (self.window)
+  if (self.window &&
+      self.window.frame.size.width  > 0 &&
+      self.window.frame.size.height > 0)
     [self startAnimation];
 }
 
@@ -552,6 +586,127 @@ static void catch_signals (void)
 }
 #endif  // HAVE_IPHONE
 
+#ifdef VENTURA_KLUDGE
+/* Correct the insane shit that LegacyScreenSaver is throwing at us now.
+   We keep track of each ScreenSaverView that was created; and then a little
+   while after startup, we check to see which of those views have not been
+   attached to windows, or have the wrong geometry.
+   Duplicated in XScreenSaverView.m.
+ */
+- (void) venturaLaunchKludge: (NSTimer *) timer
+{
+  NSArray<NSWindow *> *windows = [NSApplication sharedApplication].windows;
+
+  const char *tag = "Ventura kludge";
+
+  // First log what was wrong.
+  //
+  int i = 0;
+  for (NSWindow *w in windows) {
+    NSView *v = NULL;
+    i++;
+
+    // Find the XScreenSaverView on this window.
+    for (NSView *v1 in all_saver_views) {
+      if (w.contentView == v1.superview) {
+        v = v1;
+        break;
+      }
+    }
+
+    if (!v) {
+      NSLog (@"%s: screen %d %gx%g+%g+%g had no saver view",
+             tag, i,
+             w.frame.size.width, w.frame.size.height,
+             w.frame.origin.x,   w.frame.origin.y);
+    } else {
+      NSRect target = w.frame;
+      target.origin.x = 0;
+      target.origin.y = 0;
+      if (v.frame.size.width  == target.size.width  &&
+          v.frame.size.height == target.size.height &&
+          v.frame.origin.x    == target.origin.x    &&
+          v.frame.origin.y    == target.origin.y) {
+        NSLog (@"%s: screen %d %gx%g+%g+%g had correct view frame"
+               " %gx%g+%g+%g",
+               tag, i,
+               w.frame.size.width, w.frame.size.height,
+               w.frame.origin.x,   w.frame.origin.y,
+               target.size.width,  target.size.height,
+               target.origin.x,    target.origin.y);
+      } else {
+        NSLog (@"%s: screen %d %gx%g+%g+%g had view frame"
+               " %gx%g+%g+%g instead of %gx%g+%g+%g",
+               tag, i,
+               w.frame.size.width, w.frame.size.height,
+               w.frame.origin.x,   w.frame.origin.y,
+               v.frame.size.width, v.frame.size.height,
+               v.frame.origin.x,   v.frame.origin.y,
+               target.size.width,  target.size.height,
+               target.origin.x,    target.origin.y);
+      }
+    }
+  }
+
+  // Now repair it.
+  //
+  i = 0;
+  for (NSWindow *w in windows) {
+    NSView *v = NULL;
+    i++;
+
+    // Find the XScreenSaverView on this window.
+    for (NSView *v1 in all_saver_views) {
+      if (w.contentView == v1.superview) {
+        v = v1;
+        break;
+      }
+    }
+
+    BOOL attached_p = FALSE;
+    if (!v) {
+      // This window has no ScreenSaverView.  Pick any unattached one.
+      for (NSView *v1 in all_saver_views) {
+        if (!v1.window) {
+          v = v1;
+          NSLog (@"%s: screen %d %gx%g+%g+%g: attaching saver view",
+                 tag, i,
+                 w.frame.size.width, w.frame.size.height,
+                 w.frame.origin.x,   w.frame.origin.y);
+          attached_p = TRUE;
+          [w.contentView addSubview: v];
+          break;
+        }
+      }
+    }
+
+    if (v) {
+      // A view is attached to this window, but the frame might have the
+      // wrong size or origin.
+      NSRect target = w.frame;
+      target.origin.x = 0;
+      target.origin.y = 0;
+      if (v.frame.size.width  != target.size.width  ||
+          v.frame.size.height != target.size.height ||
+          v.frame.origin.x    != target.origin.x    ||
+          v.frame.origin.y    != target.origin.y) {
+        if (!attached_p)
+          NSLog (@"%s: screen %d %gx%g+%g+%g: correcting frame: "
+                 "%gx%g+%g+%g => %gx%g+%g+%g",
+                 tag, i,
+                 w.frame.size.width, w.frame.size.height,
+                 w.frame.origin.x,   w.frame.origin.y,
+                 v.frame.size.width, v.frame.size.height,
+                 v.frame.origin.x,   v.frame.origin.y,
+                 target.size.width,  target.size.height,
+                 target.origin.x,    target.origin.y);
+        [v setFrame: target];
+      }
+    }
+  }
+}
+#endif // VENTURA_KLUDGE
+
 
 #ifdef HAVE_IPHONE
 + (Class) layerClass
@@ -561,9 +716,19 @@ static void catch_signals (void)
 #endif
 
 
-- (id) initWithFrame:(NSRect)frame isPreview:(BOOL)p
+- (id) initWithFrame:(NSRect)f isPreview:(BOOL)p
 {
-  return [self initWithFrame:frame title:0 isPreview:p];
+  return [self initWithFrame:f title:0 isPreview:p randomizer:FALSE];
+}
+
+- (id) initWithFrame:(NSRect)f title:(NSString*)t isPreview:(BOOL)p
+{
+  return [self initWithFrame:f title:t isPreview:p randomizer:FALSE];
+}
+
+- (id) initWithFrame:(NSRect)f isPreview:(BOOL)p randomizer:(BOOL)r
+{
+  return [self initWithFrame:f title:0 isPreview:p randomizer:r];
 }
 
 
@@ -997,7 +1162,7 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
   CGFloat s = self.window.backingScaleFactor;
 # endif
 
-  /* This notion of "scale fonts differently than the viewport seemed
+  /* This notion of "scale fonts differently than the viewport" seemed
      like it made sense for BSOD but it makes -fps text be stupidly
      large for all other hacks. So instead let's just make BSOD not
      be lowrez. There are no other lowrez hacks that make heavy use

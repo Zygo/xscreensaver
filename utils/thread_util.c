@@ -266,7 +266,7 @@ static unsigned _threadpool_count_serial(struct threadpool *self)
 #if HAVE_PTHREAD
 	assert(_has_pthread);
 	if(_has_pthread >= 0)
-		return self->count ? 1 : 0;
+		return 0;
 #endif
 	return self->count;
 }
@@ -290,7 +290,7 @@ static void _serial_destroy(struct threadpool *self)
 static void _parallel_abort(struct threadpool *self)
 {
 	assert(self->count > 1);
-	self->count = self->parallel_unfinished + 1 /* The '+ 1' should technically be _threadpool_count_serial(self). */;
+	self->count = self->parallel_unfinished;
 	PTHREAD_VERIFY(pthread_cond_broadcast(&self->cond));
 }
 
@@ -304,8 +304,7 @@ struct _parallel_startup_type
 static unsigned _threadpool_count_parallel(struct threadpool *self)
 {
 	assert(_has_pthread);
-	assert(self->count >= 1);
-	return self->count - 1 /* The '- 1' should technically be _threadpool_count_serial(self). */;
+	return self->count;
 }
 
 static void *_start_routine(void *startup_raw);
@@ -354,7 +353,6 @@ static void *_start_routine(void *startup_raw)
 	void *thread;
 
 	PTHREAD_VERIFY(pthread_mutex_lock(&parent->mutex));
-	++parent->parallel_unfinished;
 
 #	if HAVE_ALLOCA
 /*	Ideally, the thread object goes on the thread's stack. This guarantees no false sharing with other threads, and in a NUMA
@@ -391,6 +389,8 @@ static void *_start_routine(void *startup_raw)
 		_parallel_abort(parent);
 		return _thread_free_and_unlock(parent, thread); /* Tail calls make everything better. */
 	}
+
+	++parent->parallel_unfinished;
 
 	assert(!startup->last_errno);
 	_add_next_thread(startup); /* Calls _parallel_abort() on failure. */
@@ -717,6 +717,12 @@ void *io_thread_create(struct io_thread *self, void *parent, void *(*start_routi
 		int error;
 		pthread_attr_t attr;
 		pthread_attr_t *attr_ptr = NULL;
+
+#   if (defined __APPLE__ && defined __MACH__)
+		/* For Apple silicon. Requires macOS 10.10 or iOS 8.0. */
+		attr_ptr = &attr;
+		pthread_attr_set_qos_class_np(attr_ptr, QOS_CLASS_USER_INTERACTIVE, 0);
+#   endif
 
 		if(stacksize)
 		{

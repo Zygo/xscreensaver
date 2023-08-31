@@ -68,17 +68,14 @@ program exits, it will be launched again after 5 seconds.
 For example:
 .nf
 .sp
-	phosphor -program 'cat /usr/src/linux*/README'
-	phosphor -program 'ping localhost'
-	phosphor -program 'ps -e'
-	phosphor -program 'od -txC -w6 /dev/random'
-	phosphor -program 'cat /dev/random'
-	phosphor -scale 2 -geom =1280x1024 -program 'top'
-	phosphor -scale 4 -geom =1280x1024 \\
-	         -program 'mtr www.kernel.org'
-	phosphor -program 'xemacs -nw -q -f life'
-	phosphor -scale 5 -geom =1280x1024 \\
-	         -program 'xemacs -nw -q --eval "(hanoi 5)"'
+  phosphor --program 'ping 8.8.8.8'
+  phosphor --program 'ps -e'
+  phosphor --program 'od -txC -w6 /dev/random'
+  phosphor --program 'cat /dev/random'
+  phosphor --scale 2 --program 'top'
+  phosphor --scale 4 --program 'mtr www.kernel.org'
+  phosphor --scale 4 --program 'emacs -nw -q -f life'
+  phosphor --scale 4 --program 'emacs -nw -q --eval "(hanoi 5)"'
 .sp
 .fi
 If you have the
@@ -87,8 +84,8 @@ text-to-speech system installed, you can have it read the screen as
 phosphor prints it:
 .nf
 .sp
-	phosphor -program \\
-	    'xscreensaver-text | tee /dev/stderr | festival --tts'
+  phosphor --program \\
+      'xscreensaver-text | tee /dev/stderr | festival --tts'
 .sp
 .fi
 You can also use \fIphosphor\fP as a lo-fi replacement for the
@@ -98,9 +95,10 @@ and
 terminal emulators:
 .nf
 .sp
-	phosphor -delay 0 -program tcsh
+   phosphor -delay 0 -program $SHELL
 .sp
 .fi
+.TP 8
 .B \-\-esc
 When the user types a key with the Alt or Meta keys held down, send an
 ESC character first.  This is the default.

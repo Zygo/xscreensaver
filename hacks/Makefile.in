@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright © 1997-2022 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright © 1997-2023 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -55,8 +55,8 @@ XFT_LIBS	= @XFT_LIBS@
 #
 HACK_PRE	= $(LIBS) $(X_LIBS)
 HACK_POST     = $(X_PRE_LIBS) $(XFT_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
-HACK_LIBS	= $(HACK_PRE) @ANIM_LIBS@ @HACK_LIBS@ $(HACK_POST)
-PNG_LIBS	= $(HACK_PRE) @PNG_LIBS@ @HACK_LIBS@ $(HACK_POST)
+HACK_LIBS	= $(HACK_PRE) @FFMPEG_LIBS@ @HACK_LIBS@ $(HACK_POST)
+PNG_LIBS	= $(HACK_PRE) @PNG_LIBS@ @FFMPEG_LIBS@ @HACK_LIBS@ $(HACK_POST)
 JPEG_LIBS	= @JPEG_LIBS@
 XLOCK_LIBS	= $(HACK_LIBS)
 TEXT_LIBS	= @PTY_LIBS@
@@ -127,7 +127,7 @@ SRCS		= xscreensaver-getimage.c \
 		  tessellimage.c delaunay.c recanim.c binaryring.c \
 		  glitchpeg.c vfeedback.c scooter.c webcollage-cocoa.m \
 		  webcollage-helper-cocoa.m testx11.c marbling.c \
-		  binaryhorizon.c
+		  binaryhorizon.c droste.c ffmpeg-out.c
 SCRIPTS		= xscreensaver-getimage-file xscreensaver-getimage-video \
 		  xscreensaver-text vidwhacker webcollage
 
@@ -166,7 +166,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  asm6502.o abstractile.o lcdscrub.o hexadrop.o \
 		  tessellimage.o delaunay.o recanim.o binaryring.o \
 		  glitchpeg.o vfeedback.o scooter.o testx11.o marbling.o \
-		  binaryhorizon.c
+		  binaryhorizon.o droste.o
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -189,7 +189,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
 		  celtic cwaves m6502 abstractile lcdscrub hexadrop \
 		  tessellimage binaryring glitchpeg vfeedback scooter \
-		  marbling binaryhorizon \
+		  marbling binaryhorizon droste \
 		  xscreensaver-getimage @JPEG_EXES@
 JPEG_EXES	= webcollage-helper
 
@@ -208,13 +208,12 @@ COLOR_OBJS	= $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o $(UTILS_BIN)/aligned_malloc.o
 XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
-ANIM_OBJS	= recanim.o
-ANIM_LIBS	= @PNG_LIBS@
+ANIM_OBJS	= recanim.o ffmpeg-out.o
 
 HDRS		= screenhack.h screenhackI.h fps.h fpsI.h xlockmore.h \
 		  xlockmoreI.h automata.h bubbles.h ximage-loader.h \
 		  apple2.h analogtv.h pacman.h pacman_ai.h pacman_level.h \
-		  asm6502.h delaunay.h recanim.h
+		  asm6502.h delaunay.h recanim.h ffmpeg-out.h
 MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bumps.man ccurve.man compass.man coral.man \
@@ -248,7 +247,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
 		  lcdscrub.man hexadrop.man tessellimage.man binaryring.man \
 		  glitchpeg.man vfeedback.man scooter.man marbling.man \
-		  binaryhorizon.man \
+		  binaryhorizon.man droste.man \
 		  xscreensaver-text.man \
 		  xscreensaver-getimage.man \
 		  xscreensaver-getimage-file.man \
@@ -270,16 +269,18 @@ EXTRAS		= README Makefile.in xml2man.pl m6502.sh .gdbinit \
 
 TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(MEN) $(RETIRED_MEN) $(EXTRAS)
 
+# Using $(MAKE) directly means the shell executes things even with "make -n"
+MAKE2 = $(MAKE)
+MAKE2CC = $(MAKE2) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 default: all
-all: $(EXES) $(RETIRED_EXES)
+all: validate_xml $(EXES) $(RETIRED_EXES)
 
 install:   install-program   install-scripts install-xml install-man
 uninstall: uninstall-program uninstall-xml uninstall-man
 
 install-strip:
-	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
-		install
+	$(MAKE2) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 # the hacks, in $HACKDIR
 install-program:: $(EXES)
@@ -455,8 +456,7 @@ check_men:
 	 fi
 
 validate_xml:
-	@echo "Validating XML..." ; \
-	cd $(srcdir) ; ./check-configs.pl $(EXES)
+	@cd $(srcdir) && ./check-configs.pl $(EXES)
 
 munge_ad_file:
 	@echo "Updating hack list in XScreenSaver.ad.in..." ; \
@@ -490,16 +490,16 @@ $(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
 $(UTILS_BIN)/pow2.o:		$(UTILS_SRC)/pow2.c
 $(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
 
+
+
 $(UTIL_OBJS):
-	cd $(UTILS_BIN) ; \
-	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	$(MAKE2CC) -C $(UTILS_BIN) $(@F)
 
 # For xscreensaver-getimage
 $(DRIVER_BIN)/prefs.o:	$(DRIVER_SRC)/prefs.c
 $(DRIVER_BIN)/prefs.o:
-	cd $(DRIVER_BIN) ; \
-	cd $(srcdir)/../driver ; \
-	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	$(MAKE) -C $(DRIVER_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" 
+	LDFLAGS="$(LDFLAGS)"
 
 
 # How we build object files in this directory.
@@ -536,7 +536,7 @@ test-utf8wc: $(UTILS_SRC)/utf8wc.c
 # Make sure the images have been packaged. These are the first ones hit.
 #
 images/gen/som_png.h images/gen/6x10font_png.h:
-	cd $(srcdir)/images && $(MAKE)
+	$(MAKE2) -C $(srcdir)/images
 	@if ! [ -f "$@" ]; then \
 	  echo; echo $@ "wasn't built -- try 'gmake' instead?"; echo; exit 1; \
 	fi
@@ -689,9 +689,9 @@ analogtv-cli.o: $(srcdir)/analogtv-cli.c
 
 ATVCLI = analogtv2.o $(UTILS_BIN)/yarandom.o \
 	 $(UTILS_BIN)/aligned_malloc.o $(THRO) $(PNG) \
-	 $(UTILS_BIN)/font-retry.o @ANIM_OBJS@
+	 $(UTILS_BIN)/font-retry.o $(ANIM_OBJS)
 analogtv-cli: 	analogtv-cli.o	$(ATVCLI)
-	$(CC_HACK) -o $@ $@.o	$(ATVCLI) $(THRL) $(PNG_LIBS) -lpng
+	$(CC_HACK) -o $@ $@.o	$(ATVCLI) $(THRL) $(PNG_LIBS)
 clean::
 	-rm -f analogtv-cli
 
@@ -891,13 +891,16 @@ marbling:	marbling.o	$(MARBLING_OBJS)
 binaryhorizon:  binaryhorizon.o $(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+DROSTE_OBJS=$(HACK_OBJS) $(GRAB) $(SHM) $(THRO) $(UTILS_BIN)/pow2.o
+droste:	droste.o		$(DROSTE_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(DROSTE_OBJS) $(HACK_LIBS) $(THRL)
+
 
 testx11:	testx11.o	glx/rotator.o $(HACK_OBJS) $(COL) $(PNG) $(BARS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	glx/rotator.o $(HACK_OBJS) $(COL) $(PNG) $(BARS) $(ERASE) $(PNG_LIBS)
 
 glx/rotator.o:	glx/rotator.c
-	cd glx ; \
-	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	$(MAKE2CC) -C glx $(@F)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1052,6 +1055,7 @@ abstractile.o: $(UTILS_SRC)/xft.h
 abstractile.o: $(UTILS_SRC)/yarandom.h
 analogtv-cli.o: $(srcdir)/analogtv.h
 analogtv-cli.o: ../config.h
+analogtv-cli.o: $(srcdir)/ffmpeg-out.h
 analogtv-cli.o: $(srcdir)/fps.h
 analogtv-cli.o: $(srcdir)/recanim.h
 analogtv-cli.o: $(srcdir)/screenhackI.h
@@ -1680,6 +1684,24 @@ drift.o: $(UTILS_SRC)/xft.h
 drift.o: $(UTILS_SRC)/yarandom.h
 drift.o: $(srcdir)/xlockmoreI.h
 drift.o: $(srcdir)/xlockmore.h
+droste.o: ../config.h
+droste.o: $(srcdir)/fps.h
+droste.o: $(srcdir)/recanim.h
+droste.o: $(srcdir)/screenhackI.h
+droste.o: $(srcdir)/screenhack.h
+droste.o: $(UTILS_SRC)/aligned_malloc.h
+droste.o: $(UTILS_SRC)/colors.h
+droste.o: $(UTILS_SRC)/font-retry.h
+droste.o: $(UTILS_SRC)/grabclient.h
+droste.o: $(UTILS_SRC)/hsv.h
+droste.o: $(UTILS_SRC)/pow2.h
+droste.o: $(UTILS_SRC)/resources.h
+droste.o: $(UTILS_SRC)/thread_util.h
+droste.o: $(UTILS_SRC)/usleep.h
+droste.o: $(UTILS_SRC)/visual.h
+droste.o: $(UTILS_SRC)/xft.h
+droste.o: $(UTILS_SRC)/xshm.h
+droste.o: $(UTILS_SRC)/yarandom.h
 epicycle.o: ../config.h
 epicycle.o: $(srcdir)/fps.h
 epicycle.o: $(srcdir)/recanim.h
@@ -1742,6 +1764,21 @@ fadeplot.o: $(UTILS_SRC)/xft.h
 fadeplot.o: $(UTILS_SRC)/yarandom.h
 fadeplot.o: $(srcdir)/xlockmoreI.h
 fadeplot.o: $(srcdir)/xlockmore.h
+ffmpeg-out.o: ../config.h
+ffmpeg-out.o: $(srcdir)/ffmpeg-out.h
+ffmpeg-out.o: $(srcdir)/fps.h
+ffmpeg-out.o: $(srcdir)/recanim.h
+ffmpeg-out.o: $(srcdir)/screenhackI.h
+ffmpeg-out.o: $(UTILS_SRC)/colors.h
+ffmpeg-out.o: $(UTILS_SRC)/font-retry.h
+ffmpeg-out.o: $(UTILS_SRC)/grabclient.h
+ffmpeg-out.o: $(UTILS_SRC)/hsv.h
+ffmpeg-out.o: $(UTILS_SRC)/resources.h
+ffmpeg-out.o: $(UTILS_SRC)/usleep.h
+ffmpeg-out.o: $(UTILS_SRC)/version.h
+ffmpeg-out.o: $(UTILS_SRC)/visual.h
+ffmpeg-out.o: $(UTILS_SRC)/xft.h
+ffmpeg-out.o: $(UTILS_SRC)/yarandom.h
 fiberlamp.o: ../config.h
 fiberlamp.o: $(srcdir)/fps.h
 fiberlamp.o: $(srcdir)/recanim.h
@@ -2762,6 +2799,7 @@ rdbomb.o: $(UTILS_SRC)/xft.h
 rdbomb.o: $(UTILS_SRC)/xshm.h
 rdbomb.o: $(UTILS_SRC)/yarandom.h
 recanim.o: ../config.h
+recanim.o: $(srcdir)/ffmpeg-out.h
 recanim.o: $(srcdir)/fps.h
 recanim.o: $(srcdir)/recanim.h
 recanim.o: $(srcdir)/screenhackI.h

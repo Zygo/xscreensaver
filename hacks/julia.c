@@ -54,8 +54,6 @@ static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
 #endif /* !STANDALONE */
 
 
-#define DEF_MOUSE "False"
-
 ENTRYPOINT ModeSpecOpt julia_opts = { 0, };
 
 

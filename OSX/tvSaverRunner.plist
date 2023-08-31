@@ -17,17 +17,17 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>6.06</string>
+	<string>6.07</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.06</string>
+	<string>6.07</string>
 	<key>CFBundleLongVersionString</key>
-	<string>6.06</string>
+	<string>6.07</string>
 	<key>CFBundleGetInfoString</key>
-	<string>6.06</string>
+	<string>6.07</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>6.06</string>
+	<string>6.07</string>
 	<key>CFBundleDisplayName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleIcons</key>
@@ -40,7 +40,7 @@
 	<string>XScreenSaver displays manipulated versions of your photos.</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>OCRAStd.otf</string>
+		<string>OCRA.ttf</string>
 		<string>SpecialElite.ttf</string>
 		<string>clacon.ttf</string>
 		<string>gallant12x22.ttf</string>

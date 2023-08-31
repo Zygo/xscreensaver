@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright © 1993-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -87,7 +87,8 @@ extern int on_path_p (const char *program);
 const char *progclass = "XScreenSaver";
 
 #ifdef __GNUC__
-# define STFU __extension__  /* ignore gcc -pendantic warnings in next sexp */
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support". */
 #endif
 static char *defaults[] = {
 #include "XScreenSaver_ad.h"
@@ -111,6 +112,7 @@ typedef struct {
   Display *dpy;
   Bool wayland_p;
   Pixmap screenshot;
+  Visual *gl_visual;
 
   conf_data *cdata;		/* private data for per-hack configuration */
 
@@ -394,6 +396,11 @@ pathname_tilde (const char *p, gboolean add_p, gboolean dir_p)
 {
   char *p2;
   if (!p) return 0;
+
+  if (dir_p &&
+      (!strncasecmp (p, "http://",  7) ||
+       !strncasecmp (p, "https://", 8)))
+    dir_p = FALSE;
 
   p2 = normalize_pathname (p, dir_p);
   p = p2;
@@ -1677,6 +1684,7 @@ switch_page_cb (GtkNotebook *notebook, GtkWidget *page,
   state *s = &win->state;
 
   if (s->debug_p) fprintf (stderr, "%s: tab changed\n", blurb());
+  populate_prefs_page (s);
   pref_changed_cb (GTK_WIDGET (notebook), user_data);
 
   /* If we're switching to page 0, schedule the current hack to be run.
@@ -1739,13 +1747,12 @@ list_select_changed_cb (GtkTreeSelection *selection, gpointer data)
   g_free (str);
 
   populate_demo_window (s, list_elt);
-  populate_popup_window (s);
-  flush_dialog_changes_and_save (s);
 
   /* Re-populate the Settings window any time a new item is selected
-     in the list, in case both windows are currently visible.
-   */
+     in the list, in case both windows are currently visible. */
   populate_popup_window (s);
+
+  flush_dialog_changes_and_save (s);
 }
 
 
@@ -2707,16 +2714,6 @@ populate_prefs_page (state *s)
     update_list_sensitivity (s);
   }
 
-  s->dpms_supported_p = FALSE;
-
-#ifdef HAVE_DPMS_EXTENSION
-  {
-    int op = 0, event = 0, error = 0;
-    if (s->dpy && XQueryExtension (s->dpy, "DPMS", &op, &event, &error))
-      s->dpms_supported_p = TRUE;
-  }
-#endif /* HAVE_DPMS_EXTENSION */
-
 # define SENSITIZE(NAME,SENSITIVEP) \
   gtk_widget_set_sensitive (win->NAME, (SENSITIVEP))
 
@@ -3289,7 +3286,7 @@ static void
 fix_preview_visual (state *s)
 {
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
-  Visual *xvisual = get_best_gl_visual (s);
+  Visual    *xvisual = s->gl_visual;
   GtkWidget *widget  = win->preview;
   GdkWindow *gwindow = gtk_widget_get_window (GTK_WIDGET (win));
   GdkScreen *gscreen = gdk_window_get_screen (gwindow);
@@ -3301,8 +3298,8 @@ fix_preview_visual (state *s)
       gvisual2 = gvisual1;
       if (s->debug_p)
         fprintf (stderr, "%s: couldn't convert X Visual 0x%lx to a GdkVisual;"
-                 " winging it.\n",
-                 blurb(), (unsigned long) xvisual->visualid);
+                 " winging it.\n", blurb(),
+             (xvisual ? (unsigned long) xvisual->visualid : 0L));
     }
 
   if (s->debug_p)
@@ -3373,6 +3370,8 @@ reap_zombies (state *s)
 }
 
 
+#define EXEC_FAILED_EXIT_STATUS -33
+
 /* Mostly lifted from driver/subprocs.c */
 static Visual *
 get_best_gl_visual (state *s)
@@ -3407,12 +3406,10 @@ get_best_gl_visual (state *s)
       }
     case 0:
       {
-        int stdout_fd = 1;
-
         close (in);  /* don't need this one */
         close (ConnectionNumber (s->dpy));	/* close display fd */
 
-        if (dup2 (out, stdout_fd) < 0)		/* pipe stdout */
+        if (dup2 (out, STDOUT_FILENO) < 0)	/* pipe stdout */
           {
             perror ("could not dup() a new stdout:");
             return 0;
@@ -3434,13 +3431,14 @@ get_best_gl_visual (state *s)
            If one uses exit() instead of _exit(), then one sometimes gets a
            spurious "Gdk-ERROR: Fatal IO error on X server" error message.
         */
-        _exit (1);                              /* exits fork */
+        _exit (EXEC_FAILED_EXIT_STATUS);	/* exits fork */
         break;
       }
     default:
       {
         int result = 0;
         int wait_status = 0;
+        int exit_status = EXEC_FAILED_EXIT_STATUS;
 
         FILE *f = fdopen (in, "r");
         unsigned int v = 0;
@@ -3449,12 +3447,22 @@ get_best_gl_visual (state *s)
         close (out);  /* don't need this one */
 
         *buf = 0;
-        if (!fgets (buf, sizeof(buf)-1, f))
+        if (! fgets (buf, sizeof(buf)-1, f))
           *buf = 0;
         fclose (f);
 
         /* Wait for the child to die. */
-        waitpid (-1, &wait_status, 0);
+        waitpid (forked, &wait_status, 0);
+
+        exit_status = WEXITSTATUS (wait_status);
+        /* Treat exit code as a signed 8-bit quantity. */
+        if (exit_status & 0x80) exit_status |= ~0xFF;
+
+        if (exit_status == EXEC_FAILED_EXIT_STATUS)
+          {
+            fprintf (stderr, "%s: %s is not installed\n", blurb(), av[0]);
+            return 0;
+          }
 
         if (1 == sscanf (buf, "0x%x %c", &v, &c))
           result = (int) v;
@@ -3470,8 +3478,7 @@ get_best_gl_visual (state *s)
           {
             Visual *v = id_to_visual (DefaultScreenOfDisplay (s->dpy), result);
             if (s->debug_p)
-              fprintf (stderr, "%s: %s says the GL visual is 0x%X.\n",
-                       blurb(), av[0], result);
+              fprintf (stderr, "%s: GL visual is 0x%X\n", blurb(), result);
             if (!v) abort();
             return v;
           }
@@ -3564,7 +3571,7 @@ launch_preview_subproc (state *s)
 
   s->running_preview_error_p = FALSE;
 
-  if (s->preview_suppressed_p)
+  if (s->preview_suppressed_p || !s->gl_visual)
     {
       kill_preview_subproc (s, FALSE);
       goto DONE;
@@ -4066,13 +4073,10 @@ kde_screensaver_active_p (void)
     return FALSE;
 }
 
+
 static void
 kill_kde_screensaver (state *s)
 {
-  /* Use empty body to kill warning from gcc -Wall with
-     "warning: ignoring return value of 'system',
-      declared with attribute warn_unused_result"
-  */
   int ac = 0;
   char *av[10];
   av[ac++] = "dcop";
@@ -4229,6 +4233,10 @@ the_network_is_not_the_computer (gpointer data)
                       "\n"
                       "Stop the KDE screen saver daemon now?\n"),
                     D_KDE);
+
+  if (! s->gl_visual)
+    warning_dialog (s->window, _("Error"),
+      _("No GL visuals: the xscreensaver-gl* packages are required."));
 
   if (s->wayland_p)
     warning_dialog (s->window, _("Warning"),
@@ -4519,6 +4527,7 @@ dialog_change_cb (GtkWidget *widget, gpointer user_data)
 static void
 populate_popup_window (state *s)
 {
+  saver_preferences *p = &s->prefs;
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
   XScreenSaverDialog *dialog = XSCREENSAVER_DIALOG (s->dialog);
 
@@ -4532,12 +4541,15 @@ populate_popup_window (state *s)
     }
 
   {
-    saver_preferences *p = &s->prefs;
     int list_elt = selected_list_element (s);
     int hack_number = (list_elt >= 0 && list_elt < s->list_count
                        ? s->list_elt_to_hack_number[list_elt]
                        : -1);
     screenhack *hack = (hack_number >= 0 ? p->screenhacks[hack_number] : 0);
+
+    if (p->mode == BLANK_ONLY || p->mode == DONT_BLANK)
+      hack = 0;
+
     if (hack && dialog)
       {
         GtkWidget *parent = dialog->settings_vbox;
@@ -4618,9 +4630,12 @@ populate_popup_window (state *s)
           s3 = strdup (last_line + 1);
       }
 
-    gtk_label_set_text (doc2, (s2
-                               ? _(s2)
-                               : _("No description available.")));
+    gtk_label_set_text (doc2, 
+                        (s2
+                         ? _(s2)
+                         : (p->mode == BLANK_ONLY || p->mode == DONT_BLANK)
+                         ? ""
+                         : _("No description available.")));
     gtk_label_set_text (doc3, (s3 ? _(s3) : ""));
     if (s2) free (s2);
     if (s3) free (s3);
@@ -4824,7 +4839,8 @@ save_window_position (state *s, GtkWindow *win, int x, int y, Bool dialog_p)
   p->settings_geom = strdup (str);
 
   if (s->debug_p)
-    fprintf (stderr, "%s: geom: %s => %s\n", blurb(), old, str);
+    fprintf (stderr, "%s: geom: %s => %s\n", blurb(),
+             (old ? old : "null"), str);
 
   /* This writes the .xscreensaver file repeatedly as the window is dragged,
      which is too much.  We could defer it with a timer.  But instead let's
@@ -5023,6 +5039,13 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
       app = XtCreateApplicationContext ();
       XtAppSetFallbackResources (app, defaults);
       XtDisplayInitialize (app, s->dpy, progname, progclass, 0, 0, &argc, argv);
+
+      if (s->debug_p)
+        {
+          XSync (s->dpy, False);
+          XSynchronize (s->dpy, True);	/* Must be after XtDisplayInitialize */
+        }
+
       /* Result discarded and leaked */
       XtAppCreateShell (progname, progclass, applicationShellWidgetClass,
                         s->dpy, 0, 0);
@@ -5047,6 +5070,29 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
 
   s->multi_screen_p = multi_screen_p (s->dpy);
 
+  /* Let's see if the server supports DPMS.
+   */
+  s->dpms_supported_p = FALSE;
+# ifdef HAVE_DPMS_EXTENSION
+  {
+    int op = 0, event = 0, error = 0;
+    if (s->dpy && XQueryExtension (s->dpy, "DPMS", &op, &event, &error))
+      /* Technically this should also check DPMSCapable(), but this is
+         almost certainly close enough. */
+      s->dpms_supported_p = TRUE;
+    else if (s->debug_p)
+      fprintf (stderr, "%s: server does not support power management\n",
+               blurb());
+  }
+# else  /* !HAVE_DPMS_EXTENSION */
+  if (s->debug_p)
+    fprintf (stderr, "%s: DPMS not supported at compile time\n", blurb());
+# endif /* !HAVE_DPMS_EXTENSION */
+
+# if defined(__APPLE__) && !defined(__OPTIMIZE__)
+  s->dpms_supported_p = TRUE;  /* macOS X11: debugging kludge */
+# endif
+
   if (s->dpy)
     init_xscreensaver_atoms (s->dpy);
 
@@ -5054,6 +5100,7 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
   load_init_file (s->dpy, p);
   initialize_sort_map (s);
 
+  s->gl_visual = get_best_gl_visual (s);
   s->dialog = g_object_new (XSCREENSAVER_DIALOG_TYPE, NULL);
   XSCREENSAVER_DIALOG (s->dialog)->main = win;
 
@@ -5256,6 +5303,18 @@ static void
 xscreensaver_app_startup (GApplication *app)
 {
   G_APPLICATION_CLASS (xscreensaver_app_parent_class)->startup (app);
+
+  /* Without this, the floating point numbers in the XML files are not
+     parsed properly in locales that use commas instead of periods in
+     floats: sscanf %f expects "1.0" to be "1,0" and returns 0.
+
+     This must be called later than main() because something beneath
+     g_application_run() calls setlocale(LC_ALL, "") and would override it.
+  */
+# ifdef ENABLE_NLS
+  if (!setlocale (LC_NUMERIC, "C"))
+    fprintf (stderr, "%s: warning: could not set LC_NUMERIC=C\n", blurb());
+# endif /* ENABLE_NLS */
 }
 
 

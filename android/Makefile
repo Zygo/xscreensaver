@@ -45,7 +45,8 @@ export APP_ABI = all
 
 
 # These hacks have interdependencies with others, so we can't build without
-# including them or there are link errors:
+# including them or there are link errors.
+# See also $LOCAL_SRC_FILES in xscreensaver/jni/Android.mk
 #
 ANDROID_BASE_HACKS=		\
 	apple2			\
@@ -106,6 +107,7 @@ export ANDROID_HACKS=		\
 	cubestorm		\
 	cubetwist		\
 	cubicgrid		\
+	cubocteversion		\
 	cwaves			\
 	cynosure		\
 	dangerball		\
@@ -119,6 +121,7 @@ export ANDROID_HACKS=		\
 	distort			\
 	dnalogo			\
 	drift			\
+	droste			\
 	dymaxionmap		\
 	endgame			\
 	energystream		\
@@ -210,6 +213,7 @@ export ANDROID_HACKS=		\
 	nerverot		\
 	noof			\
 	noseguy			\
+	papercube		\
 	peepers			\
 	penetrate		\
 	penrose			\
@@ -243,6 +247,7 @@ export ANDROID_HACKS=		\
 	shadebobs		\
 	sierpinski		\
 	sierpinski3d		\
+	skulloop		\
 	skytentacles		\
 	slidescreen		\
 	slip			\
@@ -315,7 +320,7 @@ images_png_h:
 # Largely duplicated in OSX/Makefile.
 # This saves us having to include 4MB of images in the tar file that
 # will only be used by a vast minority of people building from source.
-# Android actually wants these to be 160x160 but our source is 200x150.
+# Android actually wants these to be 160x160 but our source is 720p.
 
 BASE = xscreensaver/screenshots/
 URL = https://cdn.jwz.org/$(BASE)
@@ -326,12 +331,24 @@ WGET = curl -sL -A xscreensaver-build-android -f
 
 # ImageMagick isn't installed by default, but neither is anything similar.
 #
-# This recipe takes our source images (usually 200x150) and fits them into
-# a 150x150 box, cropping either horizontally or vertically as needed, with
-# rounded corners in the alpha mask.
+# This recipe takes our source images (720p) and fits them into a 512x512 box,
+# cropping either horizontally or vertically as needed, with rounded corners
+# in the alpha mask.
 #
-THUMB_SIZE=150x150
-THUMB_CURVE=15
+# At one time I thought that Android wanted 150x150 resolution for these (the
+# android:previewImage property in <dream> and the android:thumbnail property
+# in <wallpaper>) but screen shots of the emulator demonstrate that 256x256
+# images are being scaled up.  The APK must be compressing the shit out of
+# the files, though:
+#
+#   150x150      2.3 MB of PNGs,  67 MB APK
+#   256x256      4.7 MB of PNGs,  70 MB APK
+#   512x512     14.0 MB of PNGs,  79 MB APK
+#   1024x1024  110.0 MB of PNGs, 110 MB APK
+#   (but at 1024, loading the list takes forever and/or crashes)
+#
+THUMB_SIZE=512x512
+THUMB_CURVE=52
 CVT  = -thumbnail $(THUMB_SIZE)'^' -gravity center -extent $(THUMB_SIZE) \
      \( +clone  -alpha extract \
         -draw \
@@ -443,19 +460,7 @@ APK_SIGNED    = $(APK_DIR)xscreensaver-release.apk
 
   TOOLDIR = $(shell ls -d $$HOME/Library/Android/sdk/build-tools/* | tail -1)
  ZIPALIGN = $(TOOLDIR)/zipalign
-JARSIGNER = jarsigner
 APKSIGNER = $(TOOLDIR)/apksigner
-
-sign_release_OLD::
-	cp -p $(APK_UNSIGNED) $(APK_UNALIGNED)
-	$(JARSIGNER) -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-		     -tsa http://timestamp.comodoca.com/rfc3161 \
-		     -keystore $(KEYSTORE) $(APK_UNALIGNED) xscreensaver
-	rm -f $(APK_SIGNED)
-	$(ZIPALIGN) -v 4 $(APK_UNALIGNED) $(APK_SIGNED)
-	rm -f $(APK_UNALIGNED)
-	$(JARSIGNER) -verify -verbose -certs $(APK_SIGNED)
-	@ls -lF $(APK_SIGNED)
 
 sign_release::
 	rm -f $(APK_UNALIGNED)

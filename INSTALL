@@ -11,14 +11,13 @@ XScreenSaver Installation
         xscreensaver &
         xscreensaver-settings
 
-    There are many compilation dependencies.  The configure script will
-    tell you what is missing.  At the least, you will need development
-    versions of these libraries:
+    There are many compilation dependencies.  The configure script will tell
+    you what is missing.  At the least, you will need development versions of
+    these libraries.  Append "-dev" or "-devel" to most of these:
 
-        perl pkg-config gettext intltool libx11 libxext libxi libxt
-        libxft libxinerama libxrandr libxxf86vm libgl libglu libgle
-        libgtk2 gdk-pixbuf-2.0 gdk-pixbuf-xlib-2.0 libxml2 libpam
-        dbus libsystemd elogind
+        perl pkg-config gettext intltool libx11 libxext libxi libxt libxft
+        libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk-3-0
+        libgdk-pixbuf2.0 libjpeg libxml2 libpam libsystemd elogind
 
     BSD systems might need gmake instead of make.
 

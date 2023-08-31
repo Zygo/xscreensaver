@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2020-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2020-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,8 +14,11 @@
  */
 
 #import "Randomizer.h"
+#import "XScreenSaverView.h"
 #import "yarandom.h"
 #include <sys/sysctl.h>
+
+#define VENTURA_KLUDGE
 
 # undef ya_rand_init
 # undef abort
@@ -62,7 +65,8 @@ screen_id (NSScreen *screen)
     // This returns the EDID as a 256-bytes binary blob that contains, among
     // other things, the manufacturer, product ID, and unique serial number.
     //
-    edid = [d2 objectForKey:[NSString stringWithUTF8String:kIODisplayEDIDKey]];
+    edid = [[d2 objectForKey:[NSString stringWithUTF8String:kIODisplayEDIDKey]]
+             retain];
 
     // Now get the human-readable name of the screen.
     // The dict has an entry like: "DisplayProductName": { "en_US": "iMac" };
@@ -96,7 +100,7 @@ screen_id (NSScreen *screen)
     bin[1] = CGDisplayModelNumber  (id);
     bin[2] = CGDisplaySerialNumber (id);
     if (bin[0] || bin[1] || bin[2])
-      edid = [NSData dataWithBytes:bin length:sizeof(bin)];
+      edid = [[NSData dataWithBytes:bin length:sizeof(bin)] retain];
   }
 
   if (!name || !name.length) {
@@ -116,13 +120,14 @@ screen_id (NSScreen *screen)
     // If we weren't able to find the EDID at all, use the display name, size
     // and position, and hope that is invariant across boots.  Good luck!
     //
-    edid = [[NSString stringWithFormat:@"%dx%d @ %d+%d, %@",
-                      (int) screen.frame.size.width,
-                      (int) screen.frame.size.height,
-                      (int) screen.frame.origin.x, 
-                      (int) screen.frame.origin.y,
-                      name]
-             dataUsingEncoding: NSUTF8StringEncoding];
+    edid = [[[NSString stringWithFormat:@"%dx%d @ %d+%d, %@",
+                       (int) screen.frame.size.width,
+                       (int) screen.frame.size.height,
+                       (int) screen.frame.origin.x, 
+                       (int) screen.frame.origin.y,
+                       name]
+              dataUsingEncoding: NSUTF8StringEncoding]
+             retain];
   }
 
   //
@@ -135,8 +140,9 @@ screen_id (NSScreen *screen)
     const char *bytes = [edid bytes];
     unsigned char out[CC_SHA256_DIGEST_LENGTH + 1];
     CC_SHA256 (bytes, edid.length, out);
-    edid = [NSData dataWithBytes: out
-                          length: CC_SHA256_DIGEST_LENGTH];
+    edid = [[NSData dataWithBytes: out
+                           length: CC_SHA256_DIGEST_LENGTH]
+             retain];
   }
 
   NSString *b64 = [edid base64EncodedStringWithOptions:0];
@@ -221,6 +227,11 @@ resource_key_for_name (NSString *s, BOOL screen_p, NSDictionary *screen_ids)
   enum { JUMPCUT, FADE, CROSSFADE } crossfade_mode;
 }
 
+#ifdef VENTURA_KLUDGE   // Duplicated in XScreenSaverView.m
+static NSMutableArray *all_saver_views = NULL;
+#endif
+
+
 - (id)initWithFrame:(NSRect)frame isPreview:(BOOL)p
 {
   // On macOS 10.15, isPreview is always YES, so if the window is big,
@@ -257,7 +268,9 @@ resource_key_for_name (NSString *s, BOOL screen_p, NSDictionary *screen_ids)
     // entries rather than setting them to 0. Oh well. Bummer.
     @"saver_albumartwork_disabled":    [NSNumber numberWithBool:TRUE],
     @"saver_floatingmessage_disabled": [NSNumber numberWithBool:TRUE],
+    @"saver_hello_disabled":           [NSNumber numberWithBool:TRUE],
     @"saver_itunesartwork_disabled":   [NSNumber numberWithBool:TRUE],
+    @"saver_monterey_disabled":        [NSNumber numberWithBool:TRUE],
     @"saver_wordoftheday_disabled":    [NSNumber numberWithBool:TRUE],
   };
   NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:100];
@@ -307,6 +320,21 @@ resource_key_for_name (NSString *s, BOOL screen_p, NSDictionary *screen_ids)
   }
     NSLog (@"---");
 # endif
+
+#ifdef VENTURA_KLUDGE
+  if (! p) {  // isPreview
+    if (!all_saver_views) {
+      all_saver_views = [[NSMutableArray arrayWithCapacity:20] retain];
+      [NSTimer scheduledTimerWithTimeInterval: 1  // must be > 0
+                                       target: self
+                                     selector: @selector(venturaLaunchKludge:)
+                                     userInfo: nil
+                                      repeats: NO];
+    }
+    if (! [all_saver_views containsObject:self])
+      [all_saver_views addObject:self];
+  }
+#endif  // VENTURA_KLUDGE
 
   return self;
 }
@@ -438,18 +466,30 @@ resource_key_for_name (NSString *s, BOOL screen_p, NSDictionary *screen_ids)
     
     frame.origin.x = frame.origin.y = 0;  // frame -> bounds
 
-   if ([saver2 respondsToSelector:
-                 @selector(initWithFrame:isPreview:saverBundlePaths:)]) {
-     saver2 = [(RandomizerAttractMode *) saver2
-                     initWithFrame: frame
-                         isPreview: [self isPreview]
-                  saverBundlePaths: bundle_paths_all];
-   } else if ([saver2 respondsToSelector: @selector(initWithFrame:isPreview:)])
-       saver2 = [(ScreenSaverView *) saver2
-                    initWithFrame: frame
-                        isPreview: [self isPreview]];
-    else
+    if ([saver2 respondsToSelector:
+                  @selector(initWithFrame:isPreview:saverBundlePaths:)]) {
+      saver2 = [(RandomizerAttractMode *) saver2
+                   initWithFrame: frame
+                       isPreview: [self isPreview]
+                saverBundlePaths: bundle_paths_all];
+# ifdef VENTURA_KLUDGE
+    } else if ([saver2 respondsToSelector:
+                         @selector(initWithFrame:isPreview:randomizer:)]) {
+      // Inform XScreenSaverView that it has been invoked by Randomizer,
+      // so that it does not try to process VENTURA_KLUDGE a second time.
+      saver2 = [(XScreenSaverView *) saver2
+                   initWithFrame: frame
+                       isPreview: [self isPreview]
+                      randomizer: TRUE];
+# endif // VENTURA_KLUDGE
+    } else if ([saver2 respondsToSelector:
+                         @selector(initWithFrame:isPreview:)]) {
+      saver2 = [(ScreenSaverView *) saver2
+                   initWithFrame: frame
+                       isPreview: [self isPreview]];
+    } else {
       saver2 = 0;
+    }
   }
 
   if (! saver2) {
@@ -603,7 +643,7 @@ catch_signal (int sig, void (*handler) (int))
 //catch_signal (SIGKILL, sighandler);  // -9 untrappable
   catch_signal (SIGXCPU, sighandler);
   catch_signal (SIGXFSZ, sighandler);
-  NSLog (@"randomizer: installed signal handlers for %s", saved_execpath);
+  NSLog (@"installed signal handlers for %s", saved_execpath);
   return;
 
  ERR:
@@ -961,10 +1001,18 @@ catch_signal (int sig, void (*handler) (int))
    Dec 2020, noticed that this also happens on 10.14.6 when *not* in random
    mode.  Both System Preferences and ScreenSaverEngine fail to call
    StartAnimation.
+
+   June 2023, macOS 13.4: On a system with 3 screens, initWithFrame is called
+   on every screen, but viewDidMoveToWindow is called only on screen 3 -- but
+   that screen's view has the frame of screen 0!  So we get only one saver
+   running, and it is the wrong size.  We detect and correct this insanity
+   with the VENTURA_KLUDGE stuff.
  */
 - (void) viewDidMoveToWindow
 {
-  if (self.window)
+  if (self.window &&
+      self.window.frame.size.width  > 0 &&
+      self.window.frame.size.height > 0)
     [self startAnimation];
 }
 
@@ -973,6 +1021,128 @@ catch_signal (int sig, void (*handler) (int))
   if (window == nil)
     [self stopAnimation];
 }
+
+
+#ifdef VENTURA_KLUDGE
+/* Correct the insane shit that LegacyScreenSaver is throwing at us now.
+   We keep track of each ScreenSaverView that was created; and then a little
+   while after startup, we check to see which of those views have not been
+   attached to windows, or have the wrong geometry.
+   Duplicated in XScreenSaverView.m.
+ */
+- (void) venturaLaunchKludge: (NSTimer *) timer
+{
+  NSArray<NSWindow *> *windows = [NSApplication sharedApplication].windows;
+
+  const char *tag = "Ventura kludge";
+
+  // First log what was wrong.
+  //
+  int i = 0;
+  for (NSWindow *w in windows) {
+    NSView *v = NULL;
+    i++;
+
+    // Find the XScreenSaverView on this window.
+    for (NSView *v1 in all_saver_views) {
+      if (w.contentView == v1.superview) {
+        v = v1;
+        break;
+      }
+    }
+
+    if (!v) {
+      NSLog (@"%s: screen %d %gx%g+%g+%g had no saver view",
+             tag, i,
+             w.frame.size.width, w.frame.size.height,
+             w.frame.origin.x,   w.frame.origin.y);
+    } else {
+      NSRect target = w.frame;
+      target.origin.x = 0;
+      target.origin.y = 0;
+      if (v.frame.size.width  == target.size.width  &&
+          v.frame.size.height == target.size.height &&
+          v.frame.origin.x    == target.origin.x    &&
+          v.frame.origin.y    == target.origin.y) {
+        NSLog (@"%s: screen %d %gx%g+%g+%g had correct view frame"
+               " %gx%g+%g+%g",
+               tag, i,
+               w.frame.size.width, w.frame.size.height,
+               w.frame.origin.x,   w.frame.origin.y,
+               target.size.width,  target.size.height,
+               target.origin.x,    target.origin.y);
+      } else {
+        NSLog (@"%s: screen %d %gx%g+%g+%g had view frame"
+               " %gx%g+%g+%g instead of %gx%g+%g+%g",
+               tag, i,
+               w.frame.size.width, w.frame.size.height,
+               w.frame.origin.x,   w.frame.origin.y,
+               v.frame.size.width, v.frame.size.height,
+               v.frame.origin.x,   v.frame.origin.y,
+               target.size.width,  target.size.height,
+               target.origin.x,    target.origin.y);
+      }
+    }
+  }
+
+  // Now repair it.
+  //
+  i = 0;
+  for (NSWindow *w in windows) {
+    NSView *v = NULL;
+    i++;
+
+    // Find the XScreenSaverView on this window.
+    for (NSView *v1 in all_saver_views) {
+      if (w.contentView == v1.superview) {
+        v = v1;
+        break;
+      }
+    }
+
+    BOOL attached_p = FALSE;
+    if (!v) {
+      // This window has no ScreenSaverView.  Pick any unattached one.
+      for (NSView *v1 in all_saver_views) {
+        if (!v1.window) {
+          v = v1;
+          NSLog (@"%s: screen %d %gx%g+%g+%g: attaching saver view",
+                 tag, i,
+                 w.frame.size.width, w.frame.size.height,
+                 w.frame.origin.x,   w.frame.origin.y);
+          attached_p = TRUE;
+          [w.contentView addSubview: v];
+          break;
+        }
+      }
+    }
+
+    if (v) {
+      // A view is attached to this window, but the frame might have the
+      // wrong size or origin.
+      NSRect target = w.frame;
+      target.origin.x = 0;
+      target.origin.y = 0;
+      if (v.frame.size.width  != target.size.width  ||
+          v.frame.size.height != target.size.height ||
+          v.frame.origin.x    != target.origin.x    ||
+          v.frame.origin.y    != target.origin.y) {
+        if (!attached_p)
+          NSLog (@"%s: screen %d %gx%g+%g+%g: correcting frame: "
+                 "%gx%g+%g+%g => %gx%g+%g+%g",
+                 tag, i,
+                 w.frame.size.width, w.frame.size.height,
+                 w.frame.origin.x,   w.frame.origin.y,
+                 v.frame.size.width, v.frame.size.height,
+                 v.frame.origin.x,   v.frame.origin.y,
+                 target.size.width,  target.size.height,
+                 target.origin.x,    target.origin.y);
+        [v setFrame: target];
+      }
+    }
+  }
+}
+#endif // VENTURA_KLUDGE
 
 
 - (BOOL)hasConfigureSheet

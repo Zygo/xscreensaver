@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1253,10 +1253,10 @@ void
 jwzgles_glColor4i (GLint r, GLint g, GLint b, GLint a)
 {
   /* -0x8000000 - 0x7FFFFFFF  =>  0.0 - 1.0 */
-  jwzgles_glColor4f (0.5 + (GLfloat) r / 0xFFFFFFFF,
-                     0.5 + (GLfloat) g / 0xFFFFFFFF, 
-                     0.5 + (GLfloat) b / 0xFFFFFFFF,
-                     0.5 + (GLfloat) a / 0xFFFFFFFF);
+  jwzgles_glColor4f (0.5 + (double) r / 0xFFFFFFFF,	/* Not GLfloat */
+                     0.5 + (double) g / 0xFFFFFFFF, 
+                     0.5 + (double) b / 0xFFFFFFFF,
+                     0.5 + (double) a / 0xFFFFFFFF);
 }
 
 void
@@ -1285,10 +1285,10 @@ void
 jwzgles_glColor4ui (GLuint r, GLuint g, GLuint b, GLuint a)
 {
   /* 0 - 0xFFFFFFFF  =>  0.0 - 1.0 */
-  jwzgles_glColor4f ((GLfloat) r / 0xFFFFFFFF,
-                     (GLfloat) g / 0xFFFFFFFF, 
-                     (GLfloat) b / 0xFFFFFFFF,
-                     (GLfloat) a / 0xFFFFFFFF);
+  jwzgles_glColor4f ((double) r / 0xFFFFFFFF,	/* Not GLfloat */
+                     (double) g / 0xFFFFFFFF, 
+                     (double) b / 0xFFFFFFFF,
+                     (double) a / 0xFFFFFFFF);
 }
 
 void
@@ -1316,10 +1316,10 @@ void
 jwzgles_glColor4s (GLshort r, GLshort g, GLshort b, GLshort a)
 {
   /* -0x8000 - 0x7FFF  =>  0.0 - 1.0 */
-  jwzgles_glColor4f (0.5 + (GLfloat) r / 0xFFFF,
-                     0.5 + (GLfloat) g / 0xFFFF,
-                     0.5 + (GLfloat) b / 0xFFFF,
-                     0.5 + (GLfloat) a / 0xFFFF);
+  jwzgles_glColor4f (0.5 + (double) r / 0xFFFF, 	/* Not GLfloat */
+                     0.5 + (double) g / 0xFFFF,
+                     0.5 + (double) b / 0xFFFF,
+                     0.5 + (double) a / 0xFFFF);
 }
 
 void
@@ -1378,10 +1378,10 @@ void
 jwzgles_glColor4b (GLbyte r, GLbyte g, GLbyte b, GLbyte a)
 {
   /* -128 - 127  =>  0.0 - 1.0 */
-  jwzgles_glColor4f (0.5 + (GLfloat) r / 255,
-                     0.5 + (GLfloat) g / 255,
-                     0.5 + (GLfloat) b / 255,
-                     0.5 + (GLfloat) a / 255);
+  jwzgles_glColor4f (0.5 + (double) r / 255,	/* Not GLfloat */
+                     0.5 + (double) g / 255,
+                     0.5 + (double) b / 255,
+                     0.5 + (double) a / 255);
 }
 
 void
@@ -4349,7 +4349,8 @@ void jwzgles_##NAME (ARGS_##SIG)					\
 WRAP (glActiveTexture,	I)
 WRAP (glAlphaFunc,	IF)
 WRAP (glBlendFunc,	II)
-/*WRAP (glBlendColor,     FFFF);*/
+WRAP (glBlendColor,     FFFF)
+WRAP (glBlendEquation,  I)
 WRAP (glClear,		I)
 WRAP (glClearColor,	FFFF)
 WRAP (glClearStencil,	I)

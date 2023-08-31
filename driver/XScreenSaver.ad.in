@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 6.05
-!                              04-Oct-2022
+!                              version 6.07
+!                              29-Aug-2023
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -571,7 +571,11 @@ XScreenSaver.bourneShell:		/bin/sh
 @GL_KLUDGE@ GL: 				hextrail --root				    \n\
 @GL_KLUDGE@ GL: 				mapscroller --root			    \n\
 @GL_KLUDGE@ GL: 				nakagin --root				    \n\
-@GL_KLUDGE@ GL: 				squirtorus --root			    \n
+@GL_KLUDGE@ GL: 				squirtorus --root			    \n\
+@GL_KLUDGE@ GL: 				cubocteversion --root			    \n\
+				droste --root				    \n\
+@GL_KLUDGE@ GL: 				papercube --root			    \n\
+@GL_KLUDGE@ GL: 				skulloop --root				    \n
 
 
 
@@ -606,6 +610,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.cubestorm.name:      Cube Storm
 *hacks.cubetwist.name:      Cube Twist
 *hacks.cubicgrid.name:      Cubic Grid
+*hacks.cubocteversion.name: Cuboctahedron Eversion
 *hacks.cwaves.name:         C Waves
 *hacks.dangerball.name:     Danger Ball
 *hacks.decayscreen.name:    Decay Screen
@@ -663,6 +668,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.nerverot.name:       Nerve Rot
 *hacks.noseguy.name:        Nose Guy
 *hacks.pacman.name:         Pac-Man
+*hacks.papercube.name:      Paper Cube
 *hacks.photopile.name:      Photo Pile
 *hacks.popsquares.name:     Pop Squares
 *hacks.projectiveplane.name:Projective Plane

@@ -116,6 +116,7 @@ struct texture_font_data {
   int cache_size;
   texfont_cache *cache;
   Bool dropshadow_p;
+  Bool mipmap_p;
 # ifdef HAVE_GLSL
   Bool shaders_initialized, use_shaders;
   GLuint shader_program;
@@ -138,7 +139,6 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
                    Visual *visual, int depth, int *wP, int *hP)
 {
   Display *dpy = tfdata->dpy;
-  Bool mipmap_p = True;
   int ow = *wP;
   int oh = *hP;
   GLsizei w2 = (GLsizei) to_pow2 (ow);
@@ -196,13 +196,8 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
     XGetSubImage (dpy, p, 0, 0, ow, oh, ~0L, ZPixmap, image, 0, 0);
   }
 
-# ifdef HAVE_JWZGLES
-  /* This would work, but it's wasteful for no benefit. */
-  mipmap_p = False;
-# endif
-
 # ifdef DUMP_BITMAPS
-  fprintf (stderr, "\n");
+  fprintf (stderr, "\n\n%d x %d => %d x %d, %d\n", ow, oh, w2, h2, scale);
 # endif
   for (y = 0; y < h2; y++) {
     for (x = 0; x < w2; x++) {
@@ -220,7 +215,7 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
       pixel = ((r >> 24) | (r >> 16) | (r >> 8) | r) & 0xFF;
 
 # ifdef DUMP_BITMAPS
-      if (sx < ow && sy < oh)
+      if (sx < ow && sy < oh && sx <= 79 && sy <= 40)
 #  ifdef HAVE_JWXYZ
         fprintf (stderr, "%c", 
                  r >= 0xFF000000 ? '#' : 
@@ -245,7 +240,7 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
       *out++ = pixel;
     }
 # ifdef DUMP_BITMAPS
-    fprintf (stderr, "\n");
+    if (y * scale <= 40) fprintf (stderr, "\n");
 # endif
   }
 
@@ -283,7 +278,7 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
     else
 #endif /* HAVE_GLSL */
       {
-        if (mipmap_p)
+        if (tfdata->mipmap_p)
           gluBuild2DMipmaps (GL_TEXTURE_2D, iformat, w2, h2, format, 
                              type, data);
         else
@@ -295,7 +290,7 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
   {
     char msg[100];
     sprintf (msg, "texture font %s (%d x %d)",
-             mipmap_p ? "gluBuild2DMipmaps" : "glTexImage2D",
+             tfdata->mipmap_p ? "gluBuild2DMipmaps" : "glTexImage2D",
              w2, h2);
     check_gl_error (msg);
   }
@@ -380,6 +375,13 @@ load_texture_font (Display *dpy, char *res)
   data->cache_size = cache_size;
   data->dropshadow_p =
     !get_boolean_resource (dpy, "texFontOmitDropShadow", "Boolean");
+
+  data->mipmap_p = True;
+# ifdef HAVE_JWZGLES
+  /* This would work, but it's wasteful for no benefit. */
+  /* Wait, is it ever useful? */
+  data->mipmap_p = False;
+# endif
 
 #ifdef HAVE_GLSL
   /* Setting data->shaders_initialized to False will cause
@@ -767,7 +769,7 @@ enable_texture_string_parameters (texture_font_data *data)
 {
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                   GL_LINEAR_MIPMAP_LINEAR);
+                   data->mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glEnable (GL_BLEND);
@@ -1091,6 +1093,7 @@ initialize_textfont_shaders_glsl (texture_font_data *data)
       data->tex_sampler_index != -1)
     {
       data->use_shaders = True;
+      data->mipmap_p = True;
       data->shaders_initialized = True;
     }
   else

@@ -127,7 +127,7 @@
 
 /* Use a small point size to keep it nice and grainy. */
 #define TITLE_FONT \
- "OCR A Std 10, Lucida Console 10, Monaco 10, Courier 10, monospace 10"
+ "OCR A 10, OCR A Std 10, Lucida Console 10, Monaco 10, Courier 10, monospace 10"
 
 #define DEFAULTS  "*delay:           20000                \n" \
 		  "*wireframe:       False                \n" \

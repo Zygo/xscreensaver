@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1579,6 +1579,9 @@ hreffify (NSText *nstext)
                                    inverted: [cvt isEqualToString:@"invert"]
                                    ratio:    [cvt isEqualToString:@"ratio"]
                                    integers: !float_p];
+    // Fortunately 'doubleValue' does not use locale-specific number parsing
+    // the way that sscanf %f does.  doubleValue always expects "1.0", but
+    // sscanf expects "1,0" if LC_NUMERIC is e.g. "de_DE".
     [slider setMaxValue:[high doubleValue]];
     [slider setMinValue:[low  doubleValue]];
     if (step_by)

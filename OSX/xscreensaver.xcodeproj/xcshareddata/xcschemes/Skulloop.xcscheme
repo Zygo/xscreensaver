@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1410"
-   version = "1.3">
+   LastUpgradeVersion = "1430"
+   version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AF0BF6CD29456B2E000D9473"
-               BuildableName = "Hextrail.saver"
-               BlueprintName = "Hextrail"
+               BlueprintIdentifier = "AF70B78E2A8320A6007C1EB8"
+               BuildableName = "Skulloop.saver"
+               BlueprintName = "Skulloop"
                ReferencedContainer = "container:xscreensaver.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -26,9 +26,8 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
-      <Testables>
-      </Testables>
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      shouldAutocreateTestPlan = "YES">
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -53,7 +52,7 @@
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "SELECTED_SAVER"
-            value = "Hextrail"
+            value = "Skulloop"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

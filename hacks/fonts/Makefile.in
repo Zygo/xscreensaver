@@ -1,4 +1,4 @@
-# hacks/fonts/Makefile.in --- xscreensaver, Copyright © 2021-2022 Jamie Zawinski.
+# hacks/fonts/Makefile.in --- xscreensaver, Copyright © 2021-2023 Jamie Zawinski.
 # the `../configure' script generates `hacks/fonts/Makefile' from this file.
 
 @SET_MAKE@
@@ -26,16 +26,19 @@ INSTALL_DIRS	= @INSTALL_DIRS@
 
 # "Classic Console" is a reproduction of the MS-DOS 8x16 VGA font by
 # Deejayy. Freely redistributable. http://webdraft.hu/fonts/classic-console/
-# It us used by BSOD.
+# It is used by BSOD.
 #
 # "Gallant" was the original Solaris 2.x console font.  It is used by BSOD.
+# BSD licensed: https://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/sys/dev/wsfont/gallant12x22.h
 #
 # "Luxi Mono" was the Red Hat console font; it is very similar to "Gallant".
 # Also used by BSOD.
 #
-# "OCR-A Std" is the ANSI Standard Optical Character Recognition font,
-# ANSI X3.17-1981 / ISO 1073-1:1976.  It is used by Esper, MemScroller,
-# Carousel and Photopile.
+# "OCR-A" is the ANSI Standard Optical Character Recognition font, defined
+# by ANSI X3.17-1977, ANSI X3.17-1981 and ISO 1073-1:1976.  The font design
+# itself is public domain.  This TTF file was created by Matthew Skala,
+# freely redistributable. https://tsukurimashou.osdn.jp/ocr.php.en
+# It is used by Esper, MemScroller, Carousel and Photopile.
 #
 # "Special Elite Regular" is a typewriter font by Astigmatic One Eye
 # Typographic Institute, Brian J. Bonislawsky.  Apache 2.0 license.
@@ -45,7 +48,7 @@ INSTALL_DIRS	= @INSTALL_DIRS@
 FONTS		= clacon.ttf \
 		  gallant12x22.ttf \
 		  luximr.ttf \
-		  OCRAStd.otf \
+		  OCRA.ttf \
 		  SpecialElite.ttf
 
 default: all

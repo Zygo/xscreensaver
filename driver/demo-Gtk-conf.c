@@ -580,7 +580,6 @@ sanity_check_menu_options (const char *filename, const xmlChar *node_name,
                            parameter *p)
 {
   GList *opts;
-  int noptions = 0;
   int nulls = 0;
   char *prefix = 0;
 
@@ -588,7 +587,6 @@ sanity_check_menu_options (const char *filename, const xmlChar *node_name,
     {
       parameter *s = (parameter *) opts->data;
       if (!s->arg_set) nulls++;
-      noptions++;
 
       if (s->arg_set)
         {

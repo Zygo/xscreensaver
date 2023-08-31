@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright © 1991-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -186,8 +186,6 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-exit", L))       cmd = &XA_EXIT;
       else if (!strncmp (s, "-restart", L))    cmd = &XA_RESTART;
       else if (!strncmp (s, "-demo", L))       cmd = &XA_DEMO;
-      else if (!strncmp (s, "-preferences",L)) cmd = &XA_PREFS;
-      else if (!strncmp (s, "-prefs",L))       cmd = &XA_PREFS;
       else if (!strncmp (s, "-lock", L))       cmd = &XA_LOCK;
       else if (!strncmp (s, "-version", L))    cmd = &XA_SCREENSAVER_VERSION;
       else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_STATUS;
@@ -221,9 +219,9 @@ main (int argc, char **argv)
     USAGE("bad option", cmdstr);
   else if (arg == 0)
     {
-      /* SELECT must have a non-zero argument. */
-      if (cmd == &XA_SELECT)
-	USAGE("bad option", cmdstr);
+      /* SELECT and DEMO must have a non-zero argument. */
+      if (cmd == &XA_SELECT || cmd == &XA_DEMO)
+	USAGE("missing hack number", cmdstr);
     }
   else /* arg > 0 */
     {
@@ -232,39 +230,10 @@ main (int argc, char **argv)
 	USAGE("bad option", cmdstr);
     }
 
-
-
-  /* -demo with no arguments launches xscreensaver-settings.
-     -demo N sends a message to the daemon demo that hack number.
-   */
-  if (cmd == &XA_PREFS ||
-      (cmd == &XA_DEMO && arg == 0))
-    {
-      char buf [512];
-      char *new_argv[] = { "xscreensaver-settings", 0, 0, 0, 0, 0 };
-      int ac = 1;
-
-      if (dpyname)
-	{
-	  new_argv[ac++] = "-display";
-	  new_argv[ac++] = dpyname;
-	}
-
-      if (cmd == &XA_PREFS)
-	new_argv[ac++] = "-prefs";
-
-      fflush(stdout);
-      fflush(stderr);
-      execvp (new_argv[0], new_argv);	/* shouldn't return */
-
-      sprintf (buf, "%s: could not exec %s", progname, new_argv[0]);
-      perror(buf);
-      fflush(stdout);
-      fflush(stderr);
-      exit (-1);
-    }
-
-
+  /* Include the parent's pid with --deactivate so that the logs can give a
+     hint as to what other process is preventing the screen from blanking. */
+  if (cmd == &XA_DEACTIVATE)
+    arg = (long) getppid();
 
   if (!dpyname) dpyname = (char *) getenv ("DISPLAY");
 

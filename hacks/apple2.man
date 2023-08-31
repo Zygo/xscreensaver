@@ -82,15 +82,13 @@ uppercase-only screen.
 For example:
 .nf
 .sp
-	apple2 -text \\
-	       -program 'cat /usr/src/linux*/README | fold -sw40'
-	apple2 -text -program 'ping apple.com'
-	apple2 -text -program 'ps -e'
-	apple2 -text -program 'od -txCz -w7 /dev/urandom'
-	apple2 -text -program 'cat /dev/random'
-	apple2 -text -fast -program 'xemacs -nw -q -f life'
-	apple2 -text -fast \\
-	       -program 'xemacs -nw -q --eval "(hanoi 5)"'
+  apple2 --text --program 'ping apple.com'
+  apple2 --text --program 'ps -e'
+  apple2 --text --program 'od -txCz -w7 /dev/urandom'
+  apple2 --text --program 'cat /dev/random'
+  apple2 --text --fast --program 'emacs -nw -q -f life'
+  apple2 --text --fast \\
+         --program 'emacs -nw -q --eval "(hanoi 5)"'
 .sp
 .fi
 You can also use \fIapple2\fP as an extremely lo-fi replacement for the
@@ -100,7 +98,7 @@ and
 terminal emulators:
 .nf
 .sp
-	apple2 -text -fast -program tcsh
+  apple2 -text -fast -program tcsh
 .sp
 .fi
 .TP 8

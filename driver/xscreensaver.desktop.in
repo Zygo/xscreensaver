@@ -1,8 +1,9 @@
+#!/usr/bin/env xdg-open
 [Desktop Entry]
 Exec=xscreensaver
 Icon=xscreensaver
 _Name=XScreenSaver
 _Comment=XScreenSaver daemon: screen saver and locker
 Type=Application
-Categories=Screensaver;Security
+Categories=Screensaver;Security;GNOME;GTK;KDE;Motif;Qt
 Terminal=false

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -147,7 +147,10 @@
 # endif // JWXYZ_GL && HAVE_IPHONE
 }
 
-- (id)initWithFrame:(NSRect)frame title:(NSString*)n isPreview:(BOOL)p;
+- (id)initWithFrame:(NSRect)f title:(NSString*)t isPreview:(BOOL)p
+         randomizer:(BOOL)r;
+- (id)initWithFrame:(NSRect)f title:(NSString*)t isPreview:(BOOL)p;
+- (id)initWithFrame:(NSRect)f isPreview:(BOOL)p randomizer:(BOOL)r;
 
 - (void) render_x11;
 - (NSOpenGLContext *) oglContext;

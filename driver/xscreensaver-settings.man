@@ -171,8 +171,9 @@ visible while your screen is locked.  Others will not be able to
 on your screen.
 .TP 4
 .B Grab Video Frames
-If your system has a video capture device, selecting this option may allow
-the image-manipulating modes to grab a still-frame of video to operate on.
+If your system has a camera or other video input, selecting this option may
+allow the image-manipulating modes to grab a still-frame of video to operate
+on.
 .TP 4
 .B Choose Random Image
 If this option is set, then the image-manipulating modes will select a

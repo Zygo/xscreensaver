@@ -955,7 +955,7 @@ static void setup_surface_colors(ModeInfo *mi, float phi_min, float phi_max,
     }
   }
 #ifdef VERTEXATTRIBARRAY_WORKAROUND
-  else /* se->colors[0] == COLORS_TWOSIDED || se->colors[0] == COLORS_EARTH*/
+  else /* se->colors[0] == COLORS_TWOSIDED || se->colors[0] == COLORS_EARTH */
   {
     /* For some strange reason, the color buffer must be initialized
        and used on macOS. Otherwise two-sided lighting will not

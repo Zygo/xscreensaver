@@ -1003,7 +1003,7 @@ static void
 redraw_cells (m_state *state, Bool active)
 {
   int x, y;
-  int count = 0;
+  /* int count = 0; */
   Bool use_back_p = False;
 
   for (y = 0; y < state->grid_height; y++)
@@ -1016,7 +1016,7 @@ redraw_cells (m_state *state, Bool active)
                          y == state->cursor_y);
 
         if (cell->glyph)
-          count++;
+          /* count++ */;
         else {
           if((state->start_reveal_back_p) && 
              (back->glyph) && !(state->mode == TRACE_A || 

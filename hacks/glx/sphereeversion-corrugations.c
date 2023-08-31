@@ -1322,7 +1322,7 @@ static void setup_surface_colors(ModeInfo *mi)
 
   angle_strip = 2.0f*M_PI_F/NUM_STRIPS;
 
-  if (se->colors[0] != COLORS_TWOSIDED)
+  if (se->colors[0] != COLORS_TWOSIDED && se->colors[0] != COLORS_EARTH)
   {
     for (hemisphere=0; hemisphere<2; hemisphere++)
     {
@@ -1353,7 +1353,7 @@ static void setup_surface_colors(ModeInfo *mi)
     }
   }
 #ifdef VERTEXATTRIBARRAY_WORKAROUND
-  else /* se->colors[0] == COLORS_TWOSIDED */
+  else /* se->colors[0] == COLORS_TWOSIDED || se->colors[0] == COLORS_EARTH */
   {
     /* For some strange reason, the color buffer must be initialized
        and used on macOS. Otherwise two-sided lighting will not

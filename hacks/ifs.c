@@ -81,10 +81,10 @@ struct state {
 #define getdot(x,y) (st->board[((y)*st->widthb)+((x)>>5)] &  (1<<((x) & 31)))
 #define setdot(x,y) (st->board[((y)*st->widthb)+((x)>>5)] |= (1<<((x) & 31)))
 
-static float
+static double
 myrandom(float up)
 {
-  return (((float)random() / RAND_MAX) * up);
+  return (((double)random() / RAND_MAX) * up);
 }
 
 static const char *ifs_defaults [] = {

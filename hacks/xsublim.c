@@ -531,7 +531,7 @@ int main(int argc,char* argv[])
 					exit(-1);
 				}
 			}
-			fclose(exe_Fs);
+			pclose(exe_Fs);
 		}
 		else
 		{

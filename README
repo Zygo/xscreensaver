@@ -69,6 +69,20 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.07	* New hacks, `droste', `skulloop', `papercube' and `cubocteversion'.
+	* `xscreensaver-settings' was sometimes turning off the DPMS checkbox.
+	* Log pid of caller of `deactivate' command, to give a hint about who
+	  is preventing the screen from blanking.
+	* recanim uses libffmpeg.
+	* Updates to `sphereeversion'.
+	* Added some new map sources to `mapscroller'.
+	* macOS: Worked around a macOS 13.4 bug where multi-head systems would
+          fail to launch savers on some or all screens.
+	* Minimum compiler target is now ISO C99 instead of ANSI C89.
+	  Didn't want to rush into it.
+	* macOS, Android: Better looking thunbmail images.
+	* Various other minor bug fixes.
+
 6.06	* New hack, `hextrail'.
 	* `marbling' works again.
 	* Adjusted some of the very old hacks, which were written when pixels
@@ -340,7 +354,7 @@ Version History
 
 5.26	* More auto-updater tweaks.
 
-5.25	* Try harder to bypass Quarrantine and Gatekeeper in macOS installer.
+5.25	* Try harder to bypass Quarantine and Gatekeeper in macOS installer.
 	* Some files were missing from the tarball.
 
 5.24	* Added "Automatically check for updates" option on macOS.

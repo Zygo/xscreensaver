@@ -181,14 +181,14 @@ now:
 .br
 "\fIHardware / Power Management / Laptop lid closed" = Do Nothing\fP
 
-If there are multiple tabs, you may to change these settings on all three
-of them: "On AC power", "Battery" and "Low Battery".
+If there are multiple tabs, you may need to change these settings on all
+three of them: "On AC power", "Battery" and "Low Battery".
 .TP 3
-\fB3: Launch XScreenSaver at login.\fP
+\fB2: Launch XScreenSaver at login.\fP
 Copy the file \fI/usr/share/applications/xscreensaver.desktop\fP into
 the directory \fI~/.config/autostart/\fP
 .TP 3
-\fB4: Make KDE's "Lock" icon use XScreenSaver.\fP
+\fB3: Make KDE's "Lock" icon use XScreenSaver.\fP
 Find the "\fIkscreenlocker_greet\fP" program.  It might be in 
 "\fI/usr/lib/*/libexec/\fP", or it might be somewhere else.
 Delete that file and replace it with a file containing these two lines.
@@ -201,7 +201,7 @@ Make it executable (chmod a+x).
 .fi
 This change will get blown away when you upgrade.
 .TP 3
-\fB5: Turn off KDE's built-in locking on suspend, even harder.\fP
+\fB4: Turn off KDE's built-in locking on suspend, even harder.\fP
 Even after disabling KDE's screen locking, above, it is \fIpossible\fP that
 KDE will still use its built-in locker when you close your laptop's lid.  If
 that is happening, double-check the settings above, but if those are correct,
@@ -282,7 +282,7 @@ On the \fIGeneral\fP page set the \fILocal Greeter\fP to
 \fIStandard Greeter\fP.
 
 On the \fIBackground\fP page, type the
-command \fI"xscreensaver \-\-nosplash"\fP into the \fIBackground Program\fP
+command \fI"xscreensaver \-\-no\-splash"\fP into the \fIBackground Program\fP
 field.  That will cause gdm to run XScreenSaver while nobody is logged
 in, and kill it as soon as someone does log in.  (The user will then
 be responsible for starting XScreenSaver on their own, if they want.)
@@ -292,7 +292,7 @@ If that doesn't work, you can edit the config file directly. Edit
 .nf
 .sp
 	Greeter=/usr/bin/gdmlogin
-	BackgroundProgram=xscreensaver \-\-nosplash
+	BackgroundProgram=xscreensaver \-\-no\-splash
 	RunBackgroundProgramAlways=true
 .sp
 .fi
@@ -685,6 +685,7 @@ To use a program as a screensaver, it must be able to render onto
 the window provided to it in the \fB$XSCREENSAVER_WINDOW\fP environment
 variable.  If it creates and maps its own window instead, it won't work.
 It must render onto the provided window.
+
 .B Visuals:
 
 Because XScreenSaver was created back when dinosaurs roamed the earth,

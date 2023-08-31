@@ -78,6 +78,13 @@ static const char sccsid[] = "@(#)sphereeversion.c  1.1 20/03/22 xlockmore";
 
 #include "sphereeversion.h"
 
+#ifndef TEXTURE_MAX_ANISOTROPY_EXT
+#define TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
+#endif
+#ifndef MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#define MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+#endif
+
 #include "images/gen/earth_png.h"
 #include "images/gen/earth_night_png.h"
 #include "images/gen/earth_water_png.h"
@@ -626,6 +633,9 @@ void setup_xpm_texture(ModeInfo *mi, const unsigned char *data,
 {
   sphereeversionstruct *se = &sphereeversion[MI_SCREEN(mi)];
   XImage *image;
+  char *gl_ext;
+  GLboolean have_aniso;
+  GLint max_aniso, aniso;
 
   image = image_data_to_ximage(MI_DISPLAY(mi),MI_VISUAL(mi),data,size);
   glEnable(GL_TEXTURE_2D);
@@ -645,6 +655,18 @@ void setup_xpm_texture(ModeInfo *mi, const unsigned char *data,
                     GL_LINEAR_MIPMAP_LINEAR);
   else
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  gl_ext = (char *)glGetString(GL_EXTENSIONS);
+  if (gl_ext == NULL)
+    have_aniso = GL_FALSE;
+  else
+    have_aniso = (strstr(gl_ext,"GL_EXT_texture_filter_anisotropic") != NULL ||
+                  strstr(gl_ext,"GL_ARB_texture_filter_anisotropic") != NULL);
+  if (have_aniso)
+  {
+    glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT,&max_aniso);
+    aniso = MIN(max_aniso,10);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAX_ANISOTROPY_EXT,aniso);
+  }
   XDestroyImage(image);
 }
 
@@ -922,7 +944,7 @@ void init_glsl(ModeInfo *mi)
   }
 
   glGetIntegerv(GL_MAX_TEXTURE_SIZE,&se->max_tex_size);
-  if (se->WindW <= se->max_tex_size || se->WindH <= se->max_tex_size)
+  if (se->WindW <= se->max_tex_size && se->WindH <= se->max_tex_size)
   {
     wt = se->WindW;
     ht = se->WindH;
@@ -992,7 +1014,7 @@ ENTRYPOINT void reshape_sphereeversion(ModeInfo *mi, int width, int height)
 #ifdef HAVE_GLSL
   if (se->use_shaders)
   {
-    if (se->WindW <= se->max_tex_size || se->WindH <= se->max_tex_size)
+    if (se->WindW <= se->max_tex_size && se->WindH <= se->max_tex_size)
     {
       wt = se->WindW;
       ht = se->WindH;

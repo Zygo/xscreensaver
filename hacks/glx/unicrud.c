@@ -1,4 +1,4 @@
-/* unicrud, Copyright © 2016-2022 Jamie Zawinski <jwz@jwz.org>
+/* unicrud, Copyright © 2016-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -643,7 +643,12 @@ pick_unichar (ModeInfo *mi)
 
   if (++retries > 0xF0000 / 2)
     {
-      fprintf (stderr, "%s: internal error: too many retries\n", progname);
+      if (do_block && *do_block && !!strcasecmp (do_block, "all"))
+        fprintf (stderr, "%s: no characters found in blocks \"%s\"\n",
+                 progname, do_block);
+      else
+        fprintf (stderr, "%s: internal error: no characters found\n",
+                 progname);
       exit (1);
     }
 

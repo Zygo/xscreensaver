@@ -17,8 +17,7 @@
 
   <number id="density" type="slider" arg="--density %"
           _label="Density" _low-label="Sparse" _high-label="Dense"
-          low="1" high="90" default="25"
-          convert="invert"/>
+          low="1" high="90" default="25"/>
 
   <number id="seeds" type="slider" arg="--seeds %"
           _label="Seeds" _low-label="Few" _high-label="Many"

@@ -39,9 +39,7 @@ Requirements for inclusion with the XScreenSaver collection
   include it in the xscreensaver distribution.  However, there are a few
   requirements for me to distribute it:
 
-  - Write in portable ANSI C.  No C++.  No nonstandard libraries.
-
-  - Write a .man page describing all command-line options.
+  - Write in portable ISO C99.  No C++.  No nonstandard libraries.
 
   - Write an .xml file describing the graphical configuration dialog box.
 
@@ -97,7 +95,8 @@ The XScreenSaver API
   You may not store global state in global variables, or in function-local
   static variables.  All of your runtime state must be encapsulated in the
   "state" object created by your "init" function.  If you use global or
-  static variables, your screen saver will not work properly on macOS.
+  static variables, your screen saver will not work properly on macOS,
+  iOS or Android.
 
   Do not call XSync() or XFlush().  If you think you need to do that, it
   probably means that you are you are relying on the speed of the graphics

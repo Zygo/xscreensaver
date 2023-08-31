@@ -12,7 +12,7 @@
  */
 
 #define DEF_FONT \
-  "OCR A Std 18, Lucida Console 18, Monaco 18, Courier 18, monospace 18"
+  "OCR A 18, OCR A Std 18, Lucida Console 18, Monaco 18, Courier 18, monospace 18"
 
 #define DEFAULTS  "*count:           7         \n" \
                   "*delay:           10000     \n" \

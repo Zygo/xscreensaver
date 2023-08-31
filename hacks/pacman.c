@@ -1140,7 +1140,7 @@ load_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
     pacmangamestruct *pp = *ps;
     Display *display = *dpy;
     Pixmap sprites, sprites_mask;
-    int i, j, k, m, sw, sh, srcy;
+    int i, j, k, /* m, */ sw, sh, srcy;
 /*    int w = pp->spritexs;
     int h = pp->spriteys;*/
     GC gc = 0;
@@ -1165,7 +1165,7 @@ load_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
                                   pp->spritexs, pp->spriteys);
 
     for (i = 0; i < 4; i++) {
-        m = 0;
+        /* m = 0; */
         for (j = 0; j < MAXGDIR; j++) {
             for (k = 0; k < MAXGWAG; k++) {
                 pp->ghostPixmap[i][j][k] =
@@ -1175,7 +1175,7 @@ load_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
                     scale_pixmap (&display, pp->stippledGC,
                                   pp->ghostPixmap[i][j][k], pp->spritexs,
                                   pp->spriteys);
-                m++;
+                /* m++; */
                 srcy += sw;
                 if (srcy >= sh) abort();
             }
@@ -1183,13 +1183,13 @@ load_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
     }
 
     /* load the scared ghost */
-    m = 0;
+    /* m = 0; */
     for (i = 0; i < MAXGFLASH; i++) {
         for (j = 0; j < MAXGWAG; j++) {
             pp->s_ghostPixmap[i][j] =
                 subpixmap (display, window, sprites, sw, sw, srcy,
                            xgwa.depth);
-            m++;
+            /* m++; */
             pp->s_ghostPixmap[i][j] = scale_pixmap (&display, pp->stippledGC,
                                                     pp->s_ghostPixmap[i][j],
                                                     pp->spritexs,
@@ -1214,7 +1214,7 @@ load_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
 
     /* Load the pacman pixmaps and their mask. */
 
-    m = 0;
+    /* m = 0; */
     for (i = 0; i < 4; i++) {
         for (j = 0; j < MAXMOUTH; j++) {
             pp->pacmanPixmap[i][j] =
@@ -1222,7 +1222,7 @@ load_pixmaps (Display ** dpy, Window window, pacmangamestruct ** ps)
                            xgwa.depth);
             pp->pacmanMask[i][j] =
                 subpixmap (display, window, sprites_mask, sw, sw, srcy, 1);
-            m++;
+            /* m++; */
             pp->pacmanPixmap[i][j] = scale_pixmap (&display, pp->stippledGC,
                                                    pp->pacmanPixmap[i][j],
                                                    pp->spritexs,

@@ -1,4 +1,4 @@
-# Auto-generated: Sun Nov  6 15:58:13 JST 2022
+# Auto-generated: Tue Aug 29 18:21:20 PDT 2023
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/demo.ui
@@ -59,6 +59,7 @@ hacks/config/cubestack.xml
 hacks/config/cubestorm.xml
 hacks/config/cubetwist.xml
 hacks/config/cubicgrid.xml
+hacks/config/cubocteversion.xml
 hacks/config/cwaves.xml
 hacks/config/cynosure.xml
 hacks/config/dangerball.xml
@@ -72,6 +73,7 @@ hacks/config/discrete.xml
 hacks/config/distort.xml
 hacks/config/dnalogo.xml
 hacks/config/drift.xml
+hacks/config/droste.xml
 hacks/config/dymaxionmap.xml
 hacks/config/endgame.xml
 hacks/config/energystream.xml
@@ -128,6 +130,7 @@ hacks/config/headroom.xml
 hacks/config/helix.xml
 hacks/config/hexadrop.xml
 hacks/config/hexstrut.xml
+hacks/config/hextrail.xml
 hacks/config/hilbert.xml
 hacks/config/hopalong.xml
 hacks/config/hydrostat.xml
@@ -182,6 +185,7 @@ hacks/config/nerverot.xml
 hacks/config/noof.xml
 hacks/config/noseguy.xml
 hacks/config/pacman.xml
+hacks/config/papercube.xml
 hacks/config/pedal.xml
 hacks/config/peepers.xml
 hacks/config/penetrate.xml
@@ -219,6 +223,7 @@ hacks/config/scooter.xml
 hacks/config/shadebobs.xml
 hacks/config/sierpinski.xml
 hacks/config/sierpinski3d.xml
+hacks/config/skulloop.xml
 hacks/config/skytentacles.xml
 hacks/config/slidescreen.xml
 hacks/config/slip.xml

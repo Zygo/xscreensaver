@@ -243,7 +243,7 @@ distort_reset (struct state *st)
      */
     {
       int max = (st->xgwa.width > st->xgwa.height
-                 ? st->xgwa.width : st->xgwa.height) / (2 * st->number);
+                 ? st->xgwa.height : st->xgwa.width) * 2 / (5 * st->number);
       if (st->radius > max) st->radius = max;
     }
 

@@ -1,4 +1,4 @@
-/* xscreensaver-systemd, Copyright (c) 2019-2022
+/* xscreensaver-systemd, Copyright (c) 2019-2023
  * Martin Lucina <martin@lucina.net> and Jamie Zawinski <jwz@jwz.org>
  *
  * ISC License
@@ -257,6 +257,16 @@
  *     Inhibits, then uninhibits and immediately reinhibits every 30 seconds
  *     forever.  Sometimes it identifies as "Steam", sometimes as "My SDL
  *     application", AKA "Baby's First Hello World".  Perfect, no notes.
+ *
+ *
+ *****************************************************************************
+ *
+ * XFCE Power Manager Presentation Mode:
+ *
+ *     This setting prevents the screen from blanking, and has a long history
+ *     of becoming turned on accidentally. Tries org.freedesktop.ScreenSaver
+ *     and others before falling back to "xscreensaver-command -deactivate"
+ *     as a heartbeat.
  *
  *
  *****************************************************************************

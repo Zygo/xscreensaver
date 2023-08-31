@@ -10,8 +10,6 @@
           _label="Duration" _low-label="2 seconds" _high-label="2 minutes"
           low="2" high="120" default="5"/>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
-
   <xscreensaver-updater />
 
   <_description>

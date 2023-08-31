@@ -1,4 +1,4 @@
-# utils/Makefile.in --- xscreensaver, Copyright © 1997-2022 Jamie Zawinski.
+# utils/Makefile.in --- xscreensaver, Copyright © 1997-2023 Jamie Zawinski.
 # the `../configure' script generates `utils/Makefile' from this file.
 
 
@@ -131,6 +131,8 @@ EXTRAS		= README Makefile.in ad2c bin2c
 
 TARFILES	= $(EXTRAS) $(SRCS) $(HDRS) $(LOGOS)
 
+# Using $(MAKE) directly means the shell executes things even with "make -n"
+MAKE2 = $(MAKE)
 
 default: all
 all: $(OBJS)
@@ -139,7 +141,7 @@ install:   install-program   install-man
 uninstall: uninstall-program uninstall-man
 
 install-strip:
-	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+	$(MAKE2) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 install-program:
 install-man:

@@ -56,6 +56,9 @@
 /* Define to 1 if you have the `fcntl' function. */
 #undef HAVE_FCNTL
 
+/* Define this if you have the ffmpeg libraries. */
+#undef HAVE_FFMPEG
+
 /* Define this if you have forkpty. */
 #undef HAVE_FORKPTY
 
@@ -390,15 +393,6 @@
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
-
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-#undef inline
-#endif
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t

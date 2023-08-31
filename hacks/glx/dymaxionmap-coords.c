@@ -147,7 +147,7 @@ static double radians(double degrees)
 } /* end of radians function */
 
 
-static void init_stuff()
+static void init_stuff(void)
 {
    /* initializes the global variables which includes the */
    /* vertix coordinates and mid-face coordinates.        */

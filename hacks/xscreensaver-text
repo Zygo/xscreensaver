@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2022 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2023 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,6 @@ require 5;
 #use diagnostics;	# Fails on some MacOS 10.5 systems
 use strict;
 
-use Socket;
 use POSIX qw(strftime);
 
 # Some Linux systems don't install LWP by default!
@@ -39,7 +38,7 @@ BEGIN { eval 'use Text::Wrap qw(wrap);' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.67 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.70 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -425,6 +424,31 @@ sub output() {
       my ($o) = ($sp =~ m/^\s*Total Number of Cores:\s*(\d+)/mi);
       my ($t) = ($sp =~ m/^\s*(?:Machine|Model) Name:\s*(.*)$/mi);
       my ($m) = ($sp =~ m/^\s*Memory:\s*(.*)$/mi);
+      my ($i) = ($sp =~ m/^\s*Model Identifier:\s*(.*)$/mi);
+
+      # This file sometimes has the model-identifier to marketing-name map,
+      # as displayed in "About This Mac":
+      #
+      #   "Macmini6,1"  =>  "Mac mini (Late 2012)"
+      #   "Macmini7,1"  =>  "Mac mini (Late 2014)"
+      #   "Macmini8,1"  =>  "Mac mini (Late 2018)"
+      #   "Macmini9,1"  =>  no entry (should be "Mac mini M1 (2020)")
+      #   "Mac13,2"     =>  no entry (should be "Mac Studio (2022)")
+      #
+      # The model name from "system_profiler" omits the year of release,
+      # as does "ioreg -arc IOPlatformDevice -k product-name".
+      #
+      if ($i) {
+        my $f2 = "/System/Library/PrivateFrameworks/" .
+                 "ServerInformation.framework/Versions/A/Resources/" .
+                 "en.lproj/SIMachineAttributes.plist";
+        $f2 =~ s@/en\.lproj@/English.lproj@ unless -f ($f2);
+        if (-f $f2) {
+          my $s2 = `defaults read '$f2' '$i' 2>&-`;
+          $t = $1 if ($s2 =~ m/marketingModel\s*=\s*"(.*?)"/s);
+        }
+      }
+
       $c =~ s/^Apple //s if $c;
       $c .= " $o core" if ($c && $o);
       $t .= ", $c" if $c;

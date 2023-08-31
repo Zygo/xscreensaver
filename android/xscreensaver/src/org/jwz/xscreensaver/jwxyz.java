@@ -358,32 +358,40 @@ public class jwxyz
 
 
   // Parses "Native Font Name One 12, Native Font Name Two 14".
-  // Returns [ String name, Typeface ]
+  // Returns [ String name, Typeface ] or null.
   private Object[] parseNativeFont (String name) {
     Object font2 = all_fonts.get (name.toLowerCase());
-    if (font2 instanceof String)
+    if (font2 == null)
+      return null;
+    if (font2 instanceof String)  // Might be a Typeface or a String
       font2 = Typeface.create (name, Typeface.NORMAL);
     return new Object[] { name, (Typeface)font2 };
   }
 
 
   // Returns [ Paint paint, String family_name, Float ascent, Float descent ]
+  // or null.
   public Object[] loadFont(int mask, int traits, String name, int name_type,
                            float size) {
-    Object pair[];
+    Object pair[] = null;
 
-    if (name_type != FONT_RANDOM && name.equals("")) return null;
+    if (name_type != FONT_RANDOM && name.equals(""))
+      return null;
 
-    if (name_type == FONT_FACE) {
+    if (name_type != FONT_RANDOM)	// First try native or bundled names
       pair = parseNativeFont (name);
-    } else {
+
+    if (pair == null)			// Then guess whether it's monospace
       pair = parseXLFD (mask, traits, name, name_type);
-    }
+
+    if (pair == null)
+      return null;
 
     String name2  = (String)   pair[0];
     Typeface font = (Typeface) pair[1];
 
-    if (font == null) return null;
+    if (font == null)
+      return null;
 
     size *= 2;
 

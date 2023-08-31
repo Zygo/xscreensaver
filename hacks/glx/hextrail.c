@@ -404,7 +404,6 @@ draw_hexagons (ModeInfo *mi)
     {
       hexagon *h = &bp->hexagons[i];
       int total_arms = 0;
-      int done_arms = 0;
       GLfloat color[4];
       int j;
 
@@ -413,8 +412,6 @@ draw_hexagons (ModeInfo *mi)
           arm *a = &h->arms[j];
           if (a->state == OUT || a->state == DONE)
             total_arms++;
-          if (a->state == DONE)
-            done_arms++;
         }
       
 

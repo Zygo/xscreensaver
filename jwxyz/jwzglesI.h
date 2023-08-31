@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -175,6 +175,7 @@ extern void jwzgles_glActiveTexture (GLuint);
 extern void jwzgles_glBindTexture (GLuint, GLuint);
 extern void jwzgles_glBlendFunc (GLuint, GLuint);
 extern void jwzgles_glBlendColor (GLfloat, GLfloat, GLfloat, GLfloat);
+extern void jwzgles_glBlendEquation (GLenum);
 extern void jwzgles_glClear (GLuint);
 extern void jwzgles_glClearColor (GLclampf, GLclampf, GLclampf, GLclampf);
 extern void jwzgles_glClearStencil (GLuint);

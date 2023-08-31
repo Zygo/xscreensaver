@@ -1,8 +1,8 @@
-# XScreenSaver for MacOS X, Copyright © 2006-2022 Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright © 2006-2023 Jamie Zawinski.
 
 XCODE_APP  = /Applications/Xcode.app
 TARGETS    = All Savers
-#ARCH      = -arch i386 -arch x86_64 ONLY_ACTIVE_ARCH=NO
+ARCH       = -destination platform=macOS
 CERT	   = 'Developer ID Installer: Jamie Zawinski (4627ATJELP)'
 CERT2	   = 'Developer ID Application: Jamie Zawinski (4627ATJELP)'
 PKGID	   = org.jwz.xscreensaver
@@ -33,10 +33,10 @@ distdepend:: Sparkle.framework
 distdepend:: update_plist_version
 
 _debug: distdepend
-	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Debug   build
+	$(XCODEBUILD) $(ARCH) -scheme "$(TARGETS)" -configuration Debug   build
 
 _release:: distdepend
-	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Release build
+	$(XCODEBUILD) $(ARCH) -scheme "$(TARGETS)" -configuration Release build
 
 _release:: check_versions
 
@@ -75,9 +75,9 @@ WGET = curl -sL -A xscreensaver-build-osx -f
 # Apple savers have "thumbnail.png" at 90x58 and "thumbnail@2x.png" at 180x116.
 # System Preferences stretches those to fill a bordered 170x105 frame.
 #
-# This recipe takes our source images (usually 200x150) and fits them into
-# a 180x116 box, cropping either horizontally or vertically as needed, with
-# rounded corners in the alpha mask.
+# This recipe takes our source images (720p) and fits them into a 180x116 box,
+# cropping either horizontally or vertically as needed, with rounded corners
+# in the alpha mask.
 #
 THUMB_SIZE=180x116
 THUMB_CURVE=15
@@ -208,6 +208,8 @@ updates.xml::
 	./updates.pl xscreensaver ../README ../archive ~/www/xscreensaver
 	@$(MAKE2) test_sig
 
+# This only knows how to test the DSA sig, which we no longer use.
+# I don't know how to test the EdDSA sig.
 test_sig::
 	@								    \
   U=../utils/version.h ;						    \
@@ -232,9 +234,11 @@ test_sig::
   set -e ;								    \
   echo "$$SIG1 " | base64 -D  > "$$SIGB" ;				    \
   for OPENSSL in /usr/bin/openssl /opt/local/bin/openssl ; do		    \
-    $$OPENSSL dgst -sha1 -binary  < "$$DMG"  > "$$HASH" ;		    \
-    /bin/echo -n "DSA $$OPENSSL    	`$$OPENSSL version`:	" ;	    \
-    $$OPENSSL dgst -sha1 -verify "$$PUB1" -signature "$$SIGB" "$$HASH" ;    \
+    if [ -f "$$PUB1" ]; then						    \
+      $$OPENSSL dgst -sha1 -binary  < "$$DMG"  > "$$HASH" ;		    \
+      /bin/echo -n "DSA $$OPENSSL    	`$$OPENSSL version`:	" ;	    \
+      $$OPENSSL dgst -sha1 -verify "$$PUB1" -signature "$$SIGB" "$$HASH" ;  \
+    fi ;								    \
   done ;								    \
   echo "Warning: not verifying edSignature because I don't know how..." ;   \
 									    \

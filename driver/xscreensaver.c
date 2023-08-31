@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -680,7 +680,9 @@ print_banner(void)
                  /* Hey jerks, the only time someone will see this particular
                     message is if they are running xscreensaver with '-log' in
                     order to send me a bug report, and they had damned well
-                    better try the latest release before they do that. */
+                    better try the latest release before they do that --
+                    even if your perma-out-of-date distro does not make that
+                    easily available to them. */
                  "\t   ###################################################\n"
                  "\t   ###                                             ###\n"
                  "\t   ###  THIS VERSION IS VERY OLD! PLEASE UPGRADE!  ###\n"
@@ -782,6 +784,8 @@ static void init_line_handler (int lineno,
                                const char *key, const char *val,
                                void *closure)
 {
+  if (*key == '*' || *key == '.') key++;	/* Xrm wildcards */
+
   if      (!strcmp (key, "verbose")) verbose_p = !strcasecmp (val, "true");
   else if (!strcmp (key, "splash"))  splash_p  = !strcasecmp (val, "true");
   else if (!strcmp (key, "lock"))    lock_p    = !strcasecmp (val, "true");

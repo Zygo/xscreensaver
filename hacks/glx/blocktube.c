@@ -159,14 +159,14 @@ static void newTargetColor(blocktube_configuration *lp)
 static void randomize_entity (blocktube_configuration *lp, entity *ent)
 {
     ent->id = lp->nextID++;
-    ent->tVal = 1 - ((float)random() / RAND_MAX / 1.5);
+    ent->tVal = 1 - ((double)random() / RAND_MAX / 1.5);
     ent->age = 0;
     ent->lifetime = 100;
     ent->angle = random() % 360;
-    ent->angularVelocity = 0.5-((float)(random()) / RAND_MAX);
-    ent->position[0] = (float)(random()) / RAND_MAX + lp->tunnelWidth;
-    ent->position[1] = (float)(random()) / RAND_MAX * 2;
-    ent->position[2] = -(float)(random()) / RAND_MAX * lp->tunnelLength;
+    ent->angularVelocity = 0.5-((double)(random()) / RAND_MAX);
+    ent->position[0] = (double)(random()) / RAND_MAX + lp->tunnelWidth;
+    ent->position[1] = (double)(random()) / RAND_MAX * 2;
+    ent->position[2] = -(double)(random()) / RAND_MAX * lp->tunnelLength;
 }
 
 static void entityTick(blocktube_configuration *lp, entity *ent)
@@ -174,7 +174,7 @@ static void entityTick(blocktube_configuration *lp, entity *ent)
     ent->angle += ent->angularVelocity;
     ent->position[2] += 0.1;
     if (ent->position[2] > lp->zoom) {
-        ent->position[2] = -lp->tunnelLength + ((float)(random()) / RAND_MAX) * 20;
+        ent->position[2] = -lp->tunnelLength + ((double)(random()) / RAND_MAX) * 20;
     }
     ent->age += 0.1;
 }

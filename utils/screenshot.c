@@ -7,6 +7,9 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * Grab images of the desktop.  See the comments at the top of
+ * ../hacks/xscreensaver-getimage.c for the how and why of it.
  */
 
 #ifdef HAVE_CONFIG_H

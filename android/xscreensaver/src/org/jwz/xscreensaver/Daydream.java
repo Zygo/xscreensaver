@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2016-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -212,7 +212,7 @@ public class Daydream extends DreamService {
 
   public void onDreamingStopped() {
     super.onDreamingStopped();
-    view.jwxyz_obj.pause();
+    if (view.jwxyz_obj != null) view.jwxyz_obj.pause();
   }
 
   public void onDetachedFromWindow() {

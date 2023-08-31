@@ -726,7 +726,7 @@ static const Morph morphs[] = {
         identity_free, identity_draw, identity_init_iter, identity_dying_iter}
 };    
 
-static const Morph *select_morph()
+static const Morph *select_morph(void)
 { 
     int nmorphs = countof(morphs);
     if (crack)

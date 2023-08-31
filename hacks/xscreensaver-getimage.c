@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2001-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -33,20 +33,30 @@
 
    Grabbing screen images works in a few different ways:
 
-   If the hack was invoked by XScreenSaver, then before it blanked the
-   screen, "xscreensaver-gfx" (or "xscreensaver-settings" in preview
-   mode) saved a screenshot as a pixmap on a property on the saver window.
-   This code loads that pixmap, and crops or scales it as needed.
+   A: If the hack was invoked by XScreenSaver, then before it blanked the
+      screen, "xscreensaver-gfx" (or "xscreensaver-settings", in preview
+      mode) saved a screenshot as a pixmap on a property on the saver
+      window.  This code loads that pixmap, and crops or scales it as
+      needed.  This means that the screenshot used will always be what the
+      desktop looked like at the time that the screen blanked, not what it
+      might look like now if the screen happened to be un-blanked.
 
-   If the pre-saved pixmap isn't there, then we do it the hard way:
-   un-map our window to expose what's under it; wait an arbitrary amount
-   of time for other processes to re-paint; copy a screen image; put our
-   window back; and then return that image.
+   B: If the pre-saved pixmap isn't there, then we do it the hard way:
+      un-map our window to expose what is under it; wait an arbitrary
+      amount of time for all other processes to re-paint their windows;
+      copy a screen image; put our window back; and then return that image.
+      This method is slow and unreliable, as there is no way to know how
+      long we have to wait for the re-paint, and if you don't wait long
+      enough, you get all black.  E.g. on 2022 Raspbian 11.5/Pi4b/LXDE, it
+      takes nearly *five seconds* for the frame buffer to update, which is
+      truly awful.  Also, the unmapping and remapping causes ugly flicker,
+      especially with the OpenGL hacks.  (Prior to XScreenSaver 6.06, we
+      always did it this way.)
 
-   Finally, on MacOS systems running X11 (which nobody does any more),
-   rootless XQuartz doesn't let you make screenshots by copying the X11
-   root window, so this instead runs "/usr/sbin/screencapture" to get
-   the Mac desktop image as a file.
+   C: On MacOS systems running X11 (which nobody does any more), rootless
+      XQuartz doesn't let you make screenshots by copying the X11 root
+      window, so this instead runs "/usr/sbin/screencapture" to get the
+      Mac desktop image as a file.
  */
 
 #include "utils.h"
@@ -1492,13 +1502,8 @@ grab_screen_image_xcopyarea (Screen *screen, Window window, Bool verbose_p)
            XCopyArea directly without needing to wait for other processes
            to react to the XUnmapWindow and re-paint.
 
-           This nonsense is what led me to write screenshot.c.  Instead of
-           unmapping the window and taking a screenshot at the time the image
-           is requested, xscreensaver-gfx takes the screenshot before mapping
-           the saver window and saves it on a property, which we then load.
-           Upside: it works, and it's faster.  Downside: the screen image will
-           be of the desktop as it appeared before the screen first blanked,
-           rather then as it appeared at the time the hack was launched.
+           This nonsense is what led me to write screenshot.c and used a
+           cached screenshot image instead.
          */
         unmap_time = 5.0;
     }
@@ -2271,6 +2276,7 @@ main (int argc, char **argv)
                 1 == sscanf (argv[i], " %lu %c",   &w, &dummy)) &&
                w != 0)
         {
+        WID:
           if (drawable)
             {
               fprintf (stderr, "%s: both %s and %s specified?\n",
@@ -2287,6 +2293,15 @@ main (int argc, char **argv)
               window_str = argv[i];
               window = (Window) w;
             }
+        }
+      else if (!strcmp (argv[i], "-window-id") && argv[i+1] &&
+               (1 == sscanf (argv[i+1], " 0x%lx %c", &w, &dummy)))
+        {
+          /* Allow "--window-id 0xNN" as well as plain "0xNN" for use by
+             xscreensaver-settings, even though that doesn't really work:
+             savers are expected to continue running, not exit immediately. */
+          i++;
+          goto WID;
         }
       else
         {

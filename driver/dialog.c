@@ -1,5 +1,5 @@
 /* dialog.c --- the password dialog and splash screen.
- * xscreensaver, Copyright © 1993-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1372,6 +1372,88 @@ window_draw (window_state *ws)
   lines[i].align = CENTER;
   i++;
 
+  /* If you are in here because you're planning on disabling this notice
+     before redistributing my software, please don't.
+
+     I sincerely request that you do one of the following:
+
+         1: leave this code intact and this warning in place, -OR-
+
+         2: Remove xscreensaver from your distribution.
+
+     I would seriously prefer that you not distribute my software at all
+     than that you distribute one version and then never update it for
+     years.
+
+     I am *constantly* getting email from users reporting bugs that have
+     been fixed for literally years who have no idea that the software
+     they are running is years out of date.  Yes, it would be great if we
+     lived in the ideal world where people checked that they were running
+     the latest release before they report a bug, but we don't.  To most
+     people, "running the latest release" is synonymous with "running the
+     latest release that my distro packages for me."
+
+     When they even bother to tell me what version they're running, I
+     say, "That version is three years old!", and they say "But this is
+     the latest version my distro ships".  Then I say, "your distro
+     sucks", and they say "but I don't know how to compile from source,
+     herp derp I eat paste", and *everybody* goes away unhappy.
+
+     It wastes an enormous amount of my time, but worse than that, it
+     does a grave disservice to the users, who are stuck experiencing
+     bugs that are already fixed!  These users think they are running the
+     latest release, and they are not.  They would like to be running the
+     actual latest release, but they don't know how, because their distro
+     makes that very difficult for them.  It's terrible for everyone, and
+     kind of makes me regret ever having released this software in the
+     first place.
+
+     So seriously. I ask that if you're planning on disabling this
+     obsolescence warning, that you instead just remove xscreensaver from
+     your distro entirely.  Everybody will be happier that way.  Check
+     out gnome-screensaver instead, I understand it's really nice.
+
+     Of course, my license allows you to ignore me and do whatever the
+     fuck you want, but as the author, I hope you will have the common
+     courtesy of complying with my request.
+
+     Thank you!
+
+     jwz, 2014, 2016, 2018, 2021.
+
+     PS: In particular, since Debian refuses to upgrade software on any
+     kind of rational timeline, I have asked that they stop shipping
+     xscreensaver at all.  They have refused.  Instead of upgrading the
+     software, they simply patched out this warning.
+
+     If you want to witness the sad state of the open source peanut
+     gallery, look no farther than the comments on my blog:
+     http://jwz.org/b/yiYo
+
+     Many of these people fall back on their go-to argument of, "If it is
+     legal, it must be right."  If you believe in that rhetorical device
+     then you are a terrible person, and possibly a sociopath.
+
+     There are also the armchair lawyers who say "Well, instead of
+     *asking* people to do the right thing out of common courtesy, you
+     should just change your license to prohibit them from acting
+     amorally."  Again, this is the answer of a sociopath, but that aside,
+     if you devote even a second's thought to this you will realize that
+     the end result of this would be for distros like Debian to just keep
+     shipping the last version with the old license and then never
+     upgrading it again -- which would be the worst possible outcome for
+     everyone involved, most especially the users.
+
+     Also, some have incorrectly characterized this as a "time bomb".
+     It is a software update notification, nothing more.  A "time bomb"
+     makes software stop working.  This merely alerts the user that the
+     security-critical software that they are running is dangerously out
+     of date.
+
+     If you have read all of the above, and still decide to intentionally
+     disrespect the wishes of the person who wrote all of this software for
+     you -- you are a terrible person.  Kindly go fuck yourself.
+  */
   if (time ((time_t *) 0) - XSCREENSAVER_RELEASED > 60*60*24*30*17)
     {
       lines[i].text  = _("Update available!\nThis version is very old.\n");
@@ -1383,8 +1465,7 @@ window_draw (window_state *ws)
       lines[i].align = CENTER;
       i++;
     }
-  else if (strstr (ws->version, "a") ||
-      strstr (ws->version, "b"))
+  else if (strstr (ws->version, "a") || strstr (ws->version, "b"))
     {
       lines[i].text  = _("PRE-RELEASE VERSION");
       lines[i].font  = ws->error_font;

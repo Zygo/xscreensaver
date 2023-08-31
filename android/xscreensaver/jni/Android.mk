@@ -94,6 +94,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/seccam.c \
     hacks/glx/shark.c \
     hacks/glx/ships.c \
+    hacks/glx/skull_model.c \
     hacks/glx/sonar-sim.c \
     hacks/glx/sonar-icmp.c \
     hacks/glx/splitflap_obj.c \

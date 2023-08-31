@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -39,6 +39,10 @@ typedef struct {
   FILE *pipe_fd;
   XtInputId pipe_id;
   Bool verbose_p;
+
+  XftColor xft_fg;
+  XftDraw *xftdraw;
+  XftFont *font;
 } state;
 
 
@@ -230,6 +234,8 @@ webcollage_init (Display *dpy, Window window)
 {
   state *st = (state *) calloc (1, sizeof(*st));
   int i;
+  static int done_once = 0;
+
   st->dpy = dpy;
   st->window = window;
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
@@ -239,8 +245,14 @@ webcollage_init (Display *dpy, Window window)
   // Log to syslog when FPS is turned on.
   st->verbose_p = get_boolean_resource (dpy, "doFPS", "DoFPS");
 
+  st->font = load_xft_font_retry (dpy, screen_number (st->xgwa.screen),
+                                  get_string_resource (dpy, "font", "Font"));
+  XftColorAllocName (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+                     get_string_resource (dpy, "foreground", "Foreground"),
+                     &st->xft_fg);
+  st->xftdraw = XftDrawCreate (st->dpy, st->window, st->xgwa.visual,
+                               st->xgwa.colormap);
 
-  static int done_once = 0;
   if (! done_once) {
     done_once = 1;
 
@@ -276,8 +288,27 @@ webcollage_draw (Display *dpy, Window window, void *closure)
 {
   state *st = (state *) closure;
 
-  if (! st->pipe_fd) 
-    exit (1);
+  if (! st->pipe_fd)
+    {
+      int lh = st->font->ascent + st->font->descent;
+      int x, y;
+      XGlyphInfo overall;
+      const char
+        *s1 = "The webcollage.pl subprocess died. Is Perl broken? Maybe try:",
+        *s2 = "sudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA";
+      XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) s1, strlen(s1),
+                          &overall);
+      XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+      x = (st->xgwa.width - overall.xOff) / 2;
+      y = st->xgwa.height / 2 - lh;
+      XClearWindow (st->dpy, st->window);
+      XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->font,
+                         x, y, (FcChar8 *) s1, strlen(s1));
+      y += lh * 2;
+      XftDrawStringUtf8 (st->xftdraw, &st->xft_fg, st->font,
+                         x, y, (FcChar8 *) s2, strlen(s2));
+      return st->delay;
+    }
 
   if (! input_available_p (fileno (st->pipe_fd)))
     return st->delay;
@@ -295,8 +326,7 @@ webcollage_draw (Display *dpy, Window window, void *closure)
 
       if (st->verbose_p)
         fprintf (stderr, "webcollage: subprocess has exited: bailing.\n");
-
-      return st->delay * 10;
+      return st->delay;
     }
 
   buf[n] = 0;
@@ -393,6 +423,11 @@ webcollage_free (Display *dpy, Window window, void *closure)
   if (st->pipe_fd)
     fclose (st->pipe_fd);
 
+  if (st->font)
+    XftFontClose (st->dpy, st->font);
+  if (st->xftdraw)
+    XftDrawDestroy (st->xftdraw);
+
   // Reap zombies.
 # undef sleep
   sleep (1);
@@ -405,8 +440,8 @@ webcollage_free (Display *dpy, Window window, void *closure)
 
 static const char *webcollage_defaults [] = {
   ".background:		black",
-  ".foreground:		white",
-
+  ".foreground:		yellow",
+  ".font:		sans-serif 18",
   "*timeout:		30",
   "*delay:		2",
   "*opacity:		0.85",

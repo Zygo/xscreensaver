@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright © 2016-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -57,6 +57,10 @@ public class SliderPreference extends Preference {
     super (context, attrs, defStyle);
 
     Resources res = context.getResources();
+
+    // Fortunately 'parseFloat' does not use locale-specific number parsing
+    // the way that sscanf %f does.  parseFloat always expects "1.0", but
+    // sscanf expects "1,0" if LC_NUMERIC is e.g. "de_DE".
 
     // Parse these from the "<SliderPreference>" tag
     low        = Float.parseFloat (attrs.getAttributeValue (null, "low"));

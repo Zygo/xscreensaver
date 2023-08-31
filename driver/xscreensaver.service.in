@@ -14,5 +14,5 @@ Restart=on-failure
 OOMScoreAdjust=-1000
 
 [Install]
-Alias=org.jwz.xscreensaver
-WantedBy=default.target
+Alias=org.jwz.xscreensaver.service
+WantedBy=graphical-session.target

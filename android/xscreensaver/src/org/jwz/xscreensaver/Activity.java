@@ -1,6 +1,6 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  *
- * xscreensaver, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2023 Jamie Zawinski <jwz@jwz.org>
  * and Dennis Sheil <dennis@panaceasupplies.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -18,22 +18,19 @@
 package org.jwz.xscreensaver;
 
 import android.app.WallpaperManager;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.provider.Settings;
 import android.Manifest;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.os.Build;
 import android.content.pm.PackageManager;
 
 public class Activity extends android.app.Activity
   implements View.OnClickListener {
 
-  private boolean wallpaperButtonClicked, daydreamButtonClicked;
+  private ScreenSaverType lastButtonClicked = null;
   private final static int MY_REQ_READ_EXTERNAL_STORAGE = 271828;
 
   @Override
@@ -41,8 +38,6 @@ public class Activity extends android.app.Activity
     super.onCreate(savedInstanceState);
     // openList();
     setContentView(R.layout.activity_xscreensaver);
-    wallpaperButtonClicked = false;
-    daydreamButtonClicked = false;
 
     findViewById(R.id.apply_wallpaper).setOnClickListener(this);
     findViewById(R.id.apply_daydream).setOnClickListener(this);
@@ -63,33 +58,36 @@ public class Activity extends android.app.Activity
   // synchronized when dealing with wallpaper state - perhaps can
   // narrow down more
   private synchronized void withProceed() {
-    if (daydreamButtonClicked) {
-      String action;
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-        action = Settings.ACTION_DREAM_SETTINGS;
-      } else {
-        action = Settings.ACTION_DISPLAY_SETTINGS;
+      if (lastButtonClicked != null) {
+          switch (lastButtonClicked) {
+              case DAYDREAM: {
+                  String action;
+                  action = Settings.ACTION_DREAM_SETTINGS;
+                  startActivity(new Intent(action));
+                  break;
+              }
+              case WALLPAPER: {
+                  startActivity(new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER));
+                  break;
+              }
+          }
       }
-      startActivity(new Intent(action));
-    } else if (wallpaperButtonClicked) {
-      startActivity(new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER));
-    }
   }
 
   private void wallpaperButtonClicked() {
-      wallpaperButtonClicked = true;
+      lastButtonClicked = ScreenSaverType.WALLPAPER;
       checkPermission();
   }
 
   private void daydreamButtonClicked() {
-      daydreamButtonClicked = true;
+      lastButtonClicked = ScreenSaverType.DAYDREAM;
       checkPermission();
   }
 
   void checkPermission() {
       // RES introduced in API 16
       String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
-      if (havePermission(permission)) {
+      if (permissionGranted(permission)) {
           withProceed();
       } else {
           noPermission(permission);
@@ -127,19 +125,6 @@ public class Activity extends android.app.Activity
     withProceed();
   }
 
-  boolean havePermission(String permission) {
-
-      if (Build.VERSION.SDK_INT < 16) {
-          return true;
-      }
-
-      if (permissionGranted(permission)) {
-          return true;
-      }
-
-      return false;
-  }
-
   private boolean permissionGranted(String permission) {
         boolean check = ContextCompat.checkSelfPermission(this, permission) ==
                 PackageManager.PERMISSION_GRANTED;
@@ -166,4 +151,7 @@ public class Activity extends android.app.Activity
     }
   }
 
+  enum ScreenSaverType {
+      DAYDREAM, WALLPAPER
+  }
 }

@@ -51,7 +51,7 @@
       </select>
 
       <select id="projection">
-        <option id="random"       _label="Random Projection"/>
+        <option id="random"       _label="Random projection"/>
         <option id="perspective"  _label="Perspective"  arg-set="--projection perspective"/>
         <option id="orthographic" _label="Orthographic" arg-set="--projection orthographic"/>
       </select>
@@ -61,24 +61,24 @@
       <!-- sphereeversion only, not outsidein -->
       <select id="surface-order">
         <option id="random" _label="Random surface order"/>
-        <option id="2"      _label="2" arg-set="--surface-order 2"/>
-        <option id="3"      _label="3" arg-set="--surface-order 3"/>
-        <option id="4"      _label="4" arg-set="--surface-order 4"/>
-        <option id="5"      _label="5" arg-set="--surface-order 5"/>
+        <option id="2"      _label="Surface order 2" arg-set="--surface-order 2"/>
+        <option id="3"      _label="Surface order 3" arg-set="--surface-order 3"/>
+        <option id="4"      _label="Surface order 4" arg-set="--surface-order 4"/>
+        <option id="5"      _label="Surface order 5" arg-set="--surface-order 5"/>
       </select>
 
       <!-- outsidein only, not sphereeversion -->
       <select id="lunes">
-        <option id="lunes8" _label="8"/>
-        <option id="lunes4" _label="4" arg-set="--lunes-4"/>
-        <option id="lunes2" _label="2" arg-set="--lunes-2"/>
-        <option id="lunes1" _label="1" arg-set="--lunes-1"/>
+        <option id="lunes8" _label="8 lunes"/>
+        <option id="lunes4" _label="4 lunes" arg-set="--lunes-4"/>
+        <option id="lunes2" _label="2 lunes" arg-set="--lunes-2"/>
+        <option id="lunes1" _label="1 lune" arg-set="--lunes-1"/>
       </select>
 
       <!-- outsidein only, not sphereeversion -->
       <select id="hemispheres">
-        <option id="hemispheres2" _label="2"/>
-        <option id="hemispheres1" _label="1" arg-set="--hemispheres-1"/>
+        <option id="hemispheres2" _label="2 hemispheres"/>
+        <option id="hemispheres1" _label="1 hemisphere" arg-set="--hemispheres-1"/>
       </select>
     </vgroup>
 

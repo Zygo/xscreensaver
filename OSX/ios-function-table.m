@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Sat Dec 10 17:33:56 2022 by build-fntable.pl 1.14.
+   Created: Tue Aug  8 18:32:50 2023 by build-fntable.pl 1.14.
  */
 
 #import <Foundation/Foundation.h>
@@ -57,6 +57,7 @@ extern struct xscreensaver_function_table
  cubestorm_xscreensaver_function_table,
  cubetwist_xscreensaver_function_table,
  cubicgrid_xscreensaver_function_table,
+ cubocteversion_xscreensaver_function_table,
  cwaves_xscreensaver_function_table,
  cynosure_xscreensaver_function_table,
  dangerball_xscreensaver_function_table,
@@ -70,6 +71,7 @@ extern struct xscreensaver_function_table
  distort_xscreensaver_function_table,
  dnalogo_xscreensaver_function_table,
  drift_xscreensaver_function_table,
+ droste_xscreensaver_function_table,
  dymaxionmap_xscreensaver_function_table,
  endgame_xscreensaver_function_table,
  energystream_xscreensaver_function_table,
@@ -163,6 +165,7 @@ extern struct xscreensaver_function_table
  noof_xscreensaver_function_table,
  noseguy_xscreensaver_function_table,
  pacman_xscreensaver_function_table,
+ papercube_xscreensaver_function_table,
  pedal_xscreensaver_function_table,
  peepers_xscreensaver_function_table,
  penetrate_xscreensaver_function_table,
@@ -200,6 +203,7 @@ extern struct xscreensaver_function_table
  shadebobs_xscreensaver_function_table,
  sierpinski_xscreensaver_function_table,
  sierpinski3d_xscreensaver_function_table,
+ skulloop_xscreensaver_function_table,
  skytentacles_xscreensaver_function_table,
  slidescreen_xscreensaver_function_table,
  slip_xscreensaver_function_table,
@@ -308,6 +312,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Cube Storm":	[NSValue valueWithPointer:&cubestorm_xscreensaver_function_table],
 	@"Cube Twist":	[NSValue valueWithPointer:&cubetwist_xscreensaver_function_table],
 	@"Cubic Grid":	[NSValue valueWithPointer:&cubicgrid_xscreensaver_function_table],
+	@"Cuboctahedron Eversion":	[NSValue valueWithPointer:&cubocteversion_xscreensaver_function_table],
 	@"C Waves":	[NSValue valueWithPointer:&cwaves_xscreensaver_function_table],
 	@"Cynosure":	[NSValue valueWithPointer:&cynosure_xscreensaver_function_table],
 	@"Danger Ball":	[NSValue valueWithPointer:&dangerball_xscreensaver_function_table],
@@ -321,6 +326,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Distort":	[NSValue valueWithPointer:&distort_xscreensaver_function_table],
 	@"DNA Logo":	[NSValue valueWithPointer:&dnalogo_xscreensaver_function_table],
 	@"Drift":	[NSValue valueWithPointer:&drift_xscreensaver_function_table],
+	@"Droste":	[NSValue valueWithPointer:&droste_xscreensaver_function_table],
 	@"Dymaxion Map":	[NSValue valueWithPointer:&dymaxionmap_xscreensaver_function_table],
 	@"Endgame":	[NSValue valueWithPointer:&endgame_xscreensaver_function_table],
 	@"Energy Stream":	[NSValue valueWithPointer:&energystream_xscreensaver_function_table],
@@ -414,6 +420,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Noof":	[NSValue valueWithPointer:&noof_xscreensaver_function_table],
 	@"Nose Guy":	[NSValue valueWithPointer:&noseguy_xscreensaver_function_table],
 	@"Pac-Man":	[NSValue valueWithPointer:&pacman_xscreensaver_function_table],
+	@"Paper Cube":	[NSValue valueWithPointer:&papercube_xscreensaver_function_table],
 	@"Pedal":	[NSValue valueWithPointer:&pedal_xscreensaver_function_table],
 	@"Peepers":	[NSValue valueWithPointer:&peepers_xscreensaver_function_table],
 	@"Penetrate":	[NSValue valueWithPointer:&penetrate_xscreensaver_function_table],
@@ -451,6 +458,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Shade Bobs":	[NSValue valueWithPointer:&shadebobs_xscreensaver_function_table],
 	@"Sierpinski":	[NSValue valueWithPointer:&sierpinski_xscreensaver_function_table],
 	@"Sierpinski 3D":	[NSValue valueWithPointer:&sierpinski3d_xscreensaver_function_table],
+	@"Skulloop":	[NSValue valueWithPointer:&skulloop_xscreensaver_function_table],
 	@"Sky Tentacles":	[NSValue valueWithPointer:&skytentacles_xscreensaver_function_table],
 	@"Slide Screen":	[NSValue valueWithPointer:&slidescreen_xscreensaver_function_table],
 	@"Slip":	[NSValue valueWithPointer:&slip_xscreensaver_function_table],

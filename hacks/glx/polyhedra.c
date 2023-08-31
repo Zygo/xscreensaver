@@ -905,7 +905,7 @@ kaleido(const char *sym,
  * Array and matrix field are allocated when needed.
  */
 static Polyhedron *
-polyalloc()
+polyalloc(void)
 {
   Polyhedron *P;
   Calloc(P, 1, Polyhedron);

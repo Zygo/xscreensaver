@@ -101,8 +101,9 @@ authorize_screen_capture (void)
      but there's no way to auto-add legacyScreenSaver to it, even unchecked.
   */
 
-# if 1
+# if 0
   /* CGDisplayStreamRef stream = */  /* Just leak it, I guess? */
+  /* ...aaaaaand this is also deprecated as of macOS 14.0. */
   CGDisplayStreamCreateWithDispatchQueue (CGMainDisplayID(), 
                                           1, 1, kCVPixelFormatType_32BGRA,
                                           nil,

@@ -11,8 +11,6 @@
 
 #include "pow2.h"
 
-#include <limits.h>
-
 int
 i_log2 (size_t x)
 {
@@ -21,8 +19,11 @@ i_log2 (size_t x)
     return -1;
 
   /* GCC 3.4 also has this. */
+  /* The preprocessor criteria here must match what's in pow2.h, to prevent
+   * infinite recursion.
+   */
 # if defined __GNUC__ && __GNUC__ >= 4 || defined __clang__
-  return sizeof(long) * CHAR_BIT - __builtin_clzl(x) - 1;
+  return i_log2_fast(x);
 # else
   {
     unsigned bits = sizeof(x) * CHAR_BIT;

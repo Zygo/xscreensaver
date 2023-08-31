@@ -347,7 +347,7 @@ draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th,
   int wire = MI_IS_WIREFRAME(mi);
   int polys = 0;
   GLfloat font_scale = 0.001 * (size > 0 ? size : font_size) / 14.0;
-  int lines = 0, max_w = 0, lh = 0;
+  int max_w = 0, lh = 0;
   char *string2 = strdup (string);
   char *token = string2;
   char *line;
@@ -376,7 +376,6 @@ draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th,
       w = e.width;
       lh = ascent + descent;
       if (w > max_w) max_w = w;
-      lines++;
       token = 0;
     }
 

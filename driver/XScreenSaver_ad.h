@@ -36,10 +36,9 @@
 "*textURL:		https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
 "*demoCommand: xscreensaver-settings",
 "*helpURL: https://www.jwz.org/xscreensaver/man.html",
-"*loadURL: gnome-open '%s'",
-"*manualCommand: yelp man:%s || \
-			x-terminal-emulator -t '%s manual' \
-			  -e /bin/sh -c \"man %s; read foo\"",
+"*loadURL: x-www-browser '%s' || firefox '%s' || chromium-browser '%s'",
+"*manualCommand: lxterminal -T '%s manual' \
+		    -e /bin/sh -c 'man \"%s\" ; read foo'",
 "*dateFormat:		%I:%M %p, %a %b %e",
 "*newLoginCommand:	no-such-login-manager",
 "XScreenSaver.pointerHysteresis:		10",
@@ -426,7 +425,11 @@
   GL: 				hextrail --root				    \\n\
   GL: 				mapscroller --root			    \\n\
   GL: 				nakagin --root				    \\n\
-  GL: 				squirtorus --root			    \\n",
+  GL: 				squirtorus --root			    \\n\
+  GL: 				cubocteversion --root			    \\n\
+				droste --root				    \\n\
+  GL: 				papercube --root			    \\n\
+  GL: 				skulloop --root				    \\n",
 "*hacks.antinspect.name:     Ant Inspect",
 "*hacks.antmaze.name:        Ant Maze",
 "*hacks.antspotlight.name:   Ant Spotlight",
@@ -451,6 +454,7 @@
 "*hacks.cubestorm.name:      Cube Storm",
 "*hacks.cubetwist.name:      Cube Twist",
 "*hacks.cubicgrid.name:      Cubic Grid",
+"*hacks.cubocteversion.name: Cuboctahedron Eversion",
 "*hacks.cwaves.name:         C Waves",
 "*hacks.dangerball.name:     Danger Ball",
 "*hacks.decayscreen.name:    Decay Screen",
@@ -508,6 +512,7 @@
 "*hacks.nerverot.name:       Nerve Rot",
 "*hacks.noseguy.name:        Nose Guy",
 "*hacks.pacman.name:         Pac-Man",
+"*hacks.papercube.name:      Paper Cube",
 "*hacks.photopile.name:      Photo Pile",
 "*hacks.popsquares.name:     Pop Squares",
 "*hacks.projectiveplane.name:Projective Plane",

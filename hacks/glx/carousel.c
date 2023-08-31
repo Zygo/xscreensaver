@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005-2018 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright © 2005-2023 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -13,7 +13,7 @@
  */
 
 #define DEF_FONT \
-  "OCR A Std 48, Lucida Console 48, Monaco 48, Courier 48, monospace 48"
+  "OCR A 48, OCR A Std 48, Lucida Console 48, Monaco 48, Courier 48, monospace 48"
 #define DEF_TITLE_FONT "sans-serif bold 48"
 
 #define DEFAULTS  "*count:           7         \n" \

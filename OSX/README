@@ -26,6 +26,15 @@ Make sure everything works:
 
   - ⌘B "Product / Build"
 
+  - If there is an error about "No signing certificate" or "No account for
+    team", this is because the project is configured to do code signing with
+    my account instead of yours.
+
+    - Select the "Signing & Capabilities" tab.
+    - Replace the existing "Team ID" with your own.
+    - Set "Signing Certificate" to "Apple Development" for Debug and Release.
+    - Change "Bundle Identifier" from "org.jwz" to "org.YOURNAME".
+
   - There will probably be a build error related to Sonar and ICMP.
     Click on the red error icon to see the error message and follow the
     instructions there to fix it.
@@ -41,7 +50,7 @@ To build and test a macOS saver:
   - Press "Play".  This will run the "SaverTester" app under the debugger.
     SaverTester is a testing framework that will load and run your selected
     ".saver" bundle in the same manner that "System Preferences" and
-    "ScreenSaverEngine" will.
+    "ScreenSaverEngine" would have.
 
   - To get the system's screen saver to use your debug builds, you can
     do something like this:
@@ -51,13 +60,15 @@ To build and test a macOS saver:
 
 To build and test an iOS saver:
 
-  - Pay Apple $100 per year for an iOS developer account.  There's no way
-    to build and debug iOS code without doing this, because they are evil.
-
   - Select "XScreenSaver-iOS" on the "Scheme" menu.
 
-  - On the platform menu, select your physically attached iOS device, or
-    select one of the simulators.  Press "Play".
+  - On the platform menu, select one of the iOS simulators.  Press "Play".
+    They take a while to start up the first time.
+
+  - To install and test it on a physical iOS device, you will need to first
+    pay Apple an additional $100 per year for an iOS developer account.
+    There's no way to install iOS code onto a device that you already own
+    without doing this, because Apple are evil.
 
   - If you have already installed the App Store version of XScreenSaver
     on your physical iOS device, you may need to delete it before you
@@ -66,12 +77,13 @@ To build and test an iOS saver:
 
 Building for older operating systems:
 
-  Basically, you can't.  If you build using anything later than Xcode 5.0.2,
-  the resultant savers will require macOS 10.7 or later.  To support macOS
-  10.4 through 10.6, you would need to be running Xcode 5.0.2 or earlier.
-  Apple's longstanding corporate policy of planned obsolescence means that
-  they make it as difficult as possible for you to support anything that's
-  more than two years old on desktop, or six months on mobile.
+  Basically, you can't.  For example, to produce code that is compatible
+  with macOS 10.6, you would need to build using Xcode 5.0.2 or earlier.
+  But you can't even *run* older versions of Xcode on newer versions of
+  macOS.  Apple's longstanding corporate policy of planned obsolescence
+  means that they make it as difficult as possible for you to support
+  anything that's more than two years old on desktop, or six months on
+  mobile.
 
 
 ############################################################################
@@ -86,17 +98,17 @@ Building for older operating systems:
 
   1: Duplicate a target (Dangerball for GL, or Attraction for X11).
   2: Rename it, and drag it to the right spot in the list.
-  3: Delete the dangerball.c and dangerball.xml files from Build Phases.
-  4: Delete the "DangerBall copy-Info.plist" file that got created.
-  5: Delete the "DangerBall copy-Info.plist" from the Build Settings too.
+  3: Delete the "DangerBall copy-Info.plist" file that got created.
+  4: Delete the dangerball.c and dangerball.xml files from Build Phases.
+  5: Delete the "DangerBall copy-Info.plist" from Build Settings.
   6: Manage Schemes, rename "DangerBall Copy".
   7: Move to the right place in the list.
   8. Scheme / Profile / Info: Executable: SaverTester.app.
      Scheme / Run / Info: Executable: SaverTester.app.
   9: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
  10: File / Add Files / the new .c and .xml.
- 11: Re-order them in the file list. This will bring up an Options dialog.
      Add To Targets: the new target, and "XScreenSaver-iOS" and "-tvOS".
+ 11: Re-order the two files in the file list on the left.
  12: The files might not have moved. This means Xcode is gonna crash soon.
      It will repair itself after.
  13: In target "All Savers (OpenGL)" add the new target as Build Phases /
@@ -104,11 +116,10 @@ Building for older operating systems:
  14: In target "XScreenSaver-iOS", reorder new files in Build Phases /
      "Copy" and "Compile", since they showed up in a random place.
  15: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
- 16: Put a 200x150 screen shot in ~/www/xscreensaver/screenshots/
+ 16: Put a 720p screen shot in ~/www/xscreensaver/screenshots/
  17: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
            ~/Library/Screen\ Savers/
  18: git add xscreensaver.xcodeproj/xcshareddata/xcschemes/*.xcscheme
- 19: Don't forget to create a man page from the XML with xml2man.pl,
-     and update Makefile.in.
- 20: Make a video: -record-animation 3600 -geom 1920x1080+128+64
+ 19: Create a man page from the XML with xml2man.pl, and update Makefile.in.
+ 20: Upload a YouTube video: -record-animation 3600 -geom 1920x1080+128+64
      ./upload-video.pl NAME

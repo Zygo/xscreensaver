@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2021-2022 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2021-2023 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -29,7 +29,7 @@ BEGIN { eval 'use LWP::Simple' }
 
 my $progname = $0; $progname =~ s@.*/@@g;
 $progname =~ s@\.pl$@@g;
-my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.9 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $url_template = undef;
@@ -98,10 +98,22 @@ sub sanity_check_lwp() {
   $sanity_checked_p = 1;
   my $url1 = 'https://www.mozilla.org/';
   my $url2 =  'http://www.mozilla.org/';
-  my $body = (LWP::Simple::get($url1) || '');
+  my $body = LWP::Simple::get($url1) || '';
+
   if (length($body) < 10240) {
+    sleep (3);
+    $body = LWP::Simple::get($url1) || '';
+  }
+
+  if (length($body) < 10240) {
+    $body = LWP::Simple::get($url2) || '';
+
+    if (length($body) < 10240) {
+      sleep (3);
+      $body = LWP::Simple::get($url2) || '';
+    }
+
     my $err = "";
-    $body = (LWP::Simple::get($url2) || '');
     if (length($body) < 10240) {
       $err = "Perl is broken: neither HTTP nor HTTPS URLs work.";
     } else {
@@ -192,11 +204,16 @@ sub apply_template($$$) {
     if    ($s =~ m/^\$?x$/si) { $s = $x; }       # {$x}
     elsif ($s =~ m/^\$?y$/si) { $s = $y; }       # {$y}
     elsif ($s =~ m/^\$?z$/si) { $s = $z; }       # {$z}
+    elsif ($s =~ m/^\$?r$/si) { $s = ''; }       # {$r} -- "" or "@2x"
     elsif ($s =~ m/^([a-z\d])-([a-z\d])$/si) {   # {a-c}
       my ($from, $to) = (ord($1), ord($2));
       my @a = ( $from .. $to );
-      $s = chr($a[rand() * @a]);
-    } else { error ("unparsable substitution: {$s} in $url"); }
+      $s = chr($a[rand() * @a]); }
+    elsif ($s =~ m/^\$?s$/si) {			 # {$s} means {a-d} only
+      my ($from, $to) = (ord('a'), ord('d'));
+      my @a = ( $from .. $to );
+      $s = chr($a[rand() * @a]); }
+    else { error ("unparsable substitution: {$s} in $url"); }
     $s;
   }%gsexi;
 
@@ -214,6 +231,7 @@ sub load_tile($$$$) {
 
   # Sanitize the template into a directory name
   my $site = lc($url_template);
+  $site =~ s/[?#].*$//s;
   my ($suf) = ($site =~ m@\.([^./?#]+)$@si);
   error ("no suffix in url template: $url_template") unless $suf;
 
