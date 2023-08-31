@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lightning" _label="Lightning">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=lUUdHtPvp5Y"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="--ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
+Crackling fractal lightning bolts.
+
+Written by Keith Romberg; 1997.
+  </_description>
+</screensaver>

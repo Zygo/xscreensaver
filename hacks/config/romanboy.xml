@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<screensaver name="romanboy" _label="Roman Boy" gl="yes">
+
+  <video href="https://www.youtube.com/watch?v=KEW5TuPbWyg"/>
+
+  <command arg="--root"/>
+
+  <hgroup>
+    <select id="view-mode">
+      <option id="walk"      _label="Random motion"/>
+      <option id="walk"      _label="Walk"      arg-set="--view-mode walk"/>
+      <option id="turn"      _label="Turn"      arg-set="--view-mode turn"/>
+    </select>
+
+    <number id="surface-order" type="spinbutton" arg="--surface-order %"
+            _label="Order of the surface" low="2" high="9" default="3"/>
+
+    <boolean id="orientation-marks" _label="Show orientation marks"
+              arg-set="--orientation-marks"/>
+  </hgroup>
+
+  <hgroup>
+    <boolean id="deform" _label="Deform the projective plane"
+              arg-unset="--no-deform"/>
+
+    <number id="deform-speed" type="slider" arg="--deformation-speed %"
+            _label="Deformation speed"
+            _low-label="1.0" _high-label="100.0"
+            low="1.0" high="100.0" default="10.0"/>
+
+    <number id="init-deform" type="slider" arg="--initial-deformation %"
+            _label="Initial deformation"
+            _low-label="0.0" _high-label="1000.0"
+            low="0.0" high="1000.0" default="1000.0"/>
+  </hgroup>
+
+
+  <hgroup>
+
+    <vgroup>
+      <select id="display-mode">
+        <option id="random"      _label="Random surface"/>
+        <option id="wire"        _label="Wireframe mesh"      arg-set="--mode wireframe"/>
+        <option id="surface"     _label="Solid surface"       arg-set="--mode surface"/>
+        <option id="transparent" _label="Transparent surface" arg-set="--mode transparent"/>
+      </select>
+
+      <select id="appearance">
+        <option id="random" _label="Random pattern"/>
+        <option id="solid"  _label="Solid object"    arg-set="--appearance solid"/>
+        <option id="bands"  _label="Distance bands"  arg-set="--appearance distance-bands"/>
+        <option id="bands"  _label="Direction bands" arg-set="--appearance direction-bands"/>
+      </select>
+
+      <select id="colors">
+        <option id="random"   _label="Random coloration"/>
+        <option id="twosided" _label="One-sided"        arg-set="--colors one-sided"/>
+        <option id="twosided" _label="Two-sided"        arg-set="--colors two-sided"/>
+        <option id="rainbow"  _label="Distance colors"  arg-set="--colors distance"/>
+        <option id="rainbow"  _label="Direction colors" arg-set="--colors direction"/>
+      </select>
+
+      <boolean id="change-colors" _label="Change colors"
+                arg-set="--change-colors"/>
+
+      <select id="projection">
+        <option id="random"          _label="Random Projection"/>
+        <option id="perspective"  _label="Perspective"  arg-set="--projection perspective"/>
+        <option id="orthographic" _label="Orthographic" arg-set="--projection orthographic"/>
+      </select>
+    </vgroup>
+
+    <vgroup>
+      <number id="speed-x" type="slider" arg="--speed-x %"
+              _label="X rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.1"/>
+
+      <number id="speed-y" type="slider" arg="--speed-y %"
+              _label="Y rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.3"/>
+
+      <number id="speed-z" type="slider" arg="--speed-z %"
+              _label="Z rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.5"/>
+    </vgroup>
+
+    <vgroup>
+     <number id="walk-direction" type="slider" arg="--walk-direction %"
+             _label="Walking direction"
+             _low-label="-180.0" _high-label="180.0"
+             low="-180.0" high="180.0" default="83.0"/>
+
+     <number id="walk-speed" type="slider" arg="--walk-speed %"
+             _label="Walking speed"
+             _low-label="1.0" _high-label="100.0"
+             low="1.0" high="100.0" default="20.0"/>
+
+     <number id="delay" type="slider" arg="--delay %"
+             _label="Frame rate" _low-label="Low" _high-label="High"
+             low="0" high="100000" default="25000"
+             convert="invert"/>
+    </vgroup>
+
+    <vgroup>
+     <xscreensaver-updater />
+     <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+    </vgroup>
+
+  </hgroup>
+
+  <_description>
+A 3D immersion of the real projective plane that smoothly deforms
+between the Roman surface and the Boy surface.
+
+You can walk on the surface of the real projective plane or rotate it
+in 3D.  Furthermore, it is possible to smoothly deform the real
+projective plane between the Roman surface and the Boy surface while
+turning it or walking on it.  Inspired by François Apéry's book
+"Models of the Real Projective Plane", Vieweg, 1987.
+
+https://en.wikipedia.org/wiki/Boy%27s_surface
+https://en.wikipedia.org/wiki/Roman_surface
+https://mathworld.wolfram.com/BoySurface.html
+https://mathworld.wolfram.com/RomanSurface.html
+
+Written by Carsten Steger; 2014.
+  </_description>
+</screensaver>

@@ -1,0 +1,1065 @@
+#!/usr/bin/perl -w
+# Copyright © 2005-2023 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# This program writes some text to stdout, based on preferences in the
+# .xscreensaver file.  It may load a file, a URL, run a program, or just
+# print the date.
+#
+# In a native MacOS build of xscreensaver, this script is included in
+# the Contents/Resources/ directory of each screen saver .bundle that
+# uses it; and in that case, it looks up its resources using
+# /usr/bin/defaults instead.
+#
+# Created: 19-Mar-2005.
+
+require 5;
+#use diagnostics;	# Fails on some MacOS 10.5 systems
+use strict;
+
+use POSIX qw(strftime);
+
+# Some Linux systems don't install LWP by default!
+# Only error out if we're actually loading a URL instead of local data.
+BEGIN { eval 'use LWP::UserAgent;' }
+
+# Not sure how prevalent this is. Hope it's part of the default install.
+BEGIN { eval 'use HTML::Entities;' }
+
+# I think this is part of the default install, but just in case.
+BEGIN { eval 'use Text::Wrap qw(wrap);' }
+
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my ($version) = ('$Revision: 1.70 $' =~ m/\s(\d[.\d]+)\s/s);
+
+my $verbose = 0;
+my $http_proxy = undef;
+
+my $config_file = $ENV{HOME} . "/.xscreensaver";
+my $text_mode     = 'date';
+my $text_literal  = '';
+my $text_file     = '';
+my $text_program  = '';
+my $text_url      = 'https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss';
+# Default URL needs to be set and match what's in OSX/XScreenSaverView.m
+
+my $wrap_columns   = undef;
+my $truncate_lines = undef;
+my $latin1_p = 0;
+my $nyarlathotep_p = 0;
+
+
+# Convert any HTML entities to Latin1 characters.
+#
+sub de_entify($) {
+  my ($text) = @_;
+
+  return '' unless defined($text);
+  return $text unless ($text =~ m/&/s);
+
+  # Convert any HTML entities to Unicode characters,
+  # if the HTML::Entities module is installed.
+  eval {
+    my $t2 = $text;
+    $text = undef;
+    $text = HTML::Entities::decode_entities ($t2);
+  };
+  return $text if defined($text);
+
+  # If it's not installed, just complain instead of trying to halfass it.
+  print STDOUT ("\n\tPerl is broken. Do this to repair it:\n" .
+                "\n\tsudo cpan HTML::Entities\n\n");
+  exit (1);
+}
+
+
+# Convert any Unicode characters to Latin1 if possible.
+# Unconvertable bytes are left alone.
+#
+sub utf8_to_latin1($) {
+  my ($text) = @_;
+
+  utf8::encode ($text);  # Unpack Unicode back to multi-byte UTF-8.
+
+  # Maybe it would be better to handle this in the Unicode domain
+  # by doing things like s/\x{2018}/\"/g, but without decoding the
+  # string back to UTF-8 first, I'm at a loss as to how to have
+  # "&aacute;" print as "\340" instead of as "\303\240".
+
+  $text =~ s/ \xC2 ( [\xA0-\xFF] ) / $1 /gsex;
+  $text =~ s/ \xC3 ( [\x80-\xFF] ) / chr (ord($1) | 0x40) /gsex;
+
+  # Handles a few 3-byte sequences too.
+  $text =~ s/\xE2\x80\x93/--/gs;
+  $text =~ s/\xE2\x80\x94/--/gs;
+  $text =~ s/\xE2\x80\x98/`/gs;
+  $text =~ s/\xE2\x80\x99/'/gs;
+  $text =~ s/\xE2\x80\x9C/``/gs;
+  $text =~ s/\xE2\x80\x9D/'/gs;
+  $text =~ s/\xE2\x80\xA2/&bull;/gs;
+  $text =~ s/\xE2\x80\xA6/.../gs;
+  $text =~ s/\xE2\x80\xB2/'/gs;
+  $text =~ s/\xE2\x84\xA2/&trade;/gs;
+  $text =~ s/\xE2\x86\x90/ &larr; /gs;
+
+  return $text;
+}
+
+
+# Reads the prefs we use from ~/.xscreensaver
+#
+sub get_x11_prefs() {
+  my $got_any_p = 0;
+
+  if (open (my $in, '<', $config_file)) {
+    print STDERR "$progname: reading $config_file\n" if ($verbose > 1);
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
+    $got_any_p = get_x11_prefs_1 ($body);
+
+  } elsif ($verbose > 1) {
+    print STDERR "$progname: $config_file: $!\n";
+  }
+
+  if (! $got_any_p && defined ($ENV{DISPLAY})) {
+    # We weren't able to read settings from the .xscreensaver file.
+    # Fall back to any settings in the X resource database
+    # (/usr/X11R6/lib/X11/app-defaults/XScreenSaver)
+    #
+    print STDERR "$progname: reading X resources\n" if ($verbose > 1);
+    my $body = `appres XScreenSaver xscreensaver -1`;
+    $got_any_p = get_x11_prefs_1 ($body);
+  }
+
+  if ($verbose > 1) {
+    print STDERR "$progname: mode:    $text_mode\n";
+    print STDERR "$progname: literal: $text_literal\n";
+    print STDERR "$progname: file:    $text_file\n";
+    print STDERR "$progname: program: $text_program\n";
+    print STDERR "$progname: url:     $text_url\n";
+  }
+
+  $text_mode =~ tr/A-Z/a-z/;
+  $text_literal =~ s@\\n@\n@gs;
+  $text_literal =~ s@\\\n@\n@gs;
+}
+
+
+sub get_x11_prefs_1($) {
+  my ($body) = @_;
+
+  my $got_any_p = 0;
+  $body =~ s@\\\n@@gs;
+  $body =~ s@^[ \t]*#[^\n]*$@@gm;
+
+  if ($body =~ m/^[.*]*textMode:[ \t]*([^\s]+)\s*$/im) {
+    $text_mode = $1;
+    $got_any_p = 1;
+  }
+  if ($body =~ m/^[.*]*textLiteral:[ \t]*(.*?)[ \t]*$/im) {
+    $text_literal = $1;
+  }
+  if ($body =~ m/^[.*]*textFile:[ \t]*(.*?)[ \t]*$/im) {
+    $text_file = $1;
+  }
+  if ($body =~ m/^[.*]*textProgram:[ \t]*(.*?)[ \t]*$/im) {
+    $text_program = $1;
+  }
+  if ($body =~ m/^[.*]*textURL:[ \t]*(.*?)[ \t]*$/im) {
+    $text_url = $1;
+  }
+
+  return $got_any_p;
+}
+
+
+sub get_cocoa_prefs($) {
+  my ($id) = @_;
+  my $v;
+ 
+  print STDERR "$progname: reading Cocoa prefs: \"$id\"\n" if ($verbose > 1);
+
+  $v = get_cocoa_pref_1 ($id, "textMode");
+  $text_mode = $v if defined ($v);
+
+  # The "textMode" pref is set to a number instead of a string because I
+  # couldn't figure out the black magic to make Cocoa bindings work right.
+  #
+  # Update: as of 5.33, Cocoa writes strings instead of numbers, but 
+  # pre-existing saved preferences might still have numbers in them.
+  #
+  if    ($text_mode eq '0') { $text_mode = 'date';    }
+  elsif ($text_mode eq '1') { $text_mode = 'literal'; }
+  elsif ($text_mode eq '2') { $text_mode = 'file';    }
+  elsif ($text_mode eq '3') { $text_mode = 'url';     }
+  elsif ($text_mode eq '4') { $text_mode = 'program'; }
+
+  $v = get_cocoa_pref_1 ($id, "textLiteral");
+  $text_literal = $v if defined ($v);
+  $text_literal =~ s@\\n@\n@gs;
+  $text_literal =~ s@\\\n@\n@gs;
+
+  $v = get_cocoa_pref_1 ($id, "textFile");
+  $text_file = $v if defined ($v);
+
+  $v = get_cocoa_pref_1 ($id, "textProgram");
+  $text_program = $v if defined ($v);
+
+  $v = get_cocoa_pref_1 ($id, "textURL");
+  $text_url = $v if defined ($v);
+}
+
+
+sub get_cocoa_pref_1($$) {
+  my ($id, $key) = @_;
+  # make sure there's nothing stupid/malicious in either string.
+  $id  =~ s/[^-a-z\d. ]/_/gsi;
+  $key =~ s/[^-a-z\d. ]/_/gsi;
+  my $cmd = "defaults -currentHost read \"$id\" \"$key\"";
+
+  print STDERR "$progname: executing $cmd\n"
+    if ($verbose > 3);
+
+  my $val = `$cmd 2>/dev/null`;
+  $val =~ s/^\s+//s;
+  $val =~ s/\s+$//s;
+
+  print STDERR "$progname: Cocoa: $id $key = \"$val\"\n"
+    if ($verbose > 2);
+
+  $val = undef if ($val =~ m/^$/s);
+
+  return $val;
+}
+
+
+# like system() but checks errors.
+#
+sub safe_system(@) {
+  my (@cmd) = @_;
+
+  print STDERR "$progname: executing " . join(' ', @cmd) . "\n"
+    if ($verbose > 3);
+
+  system @cmd;
+  my $exit_value  = $? >> 8;
+  my $signal_num  = $? & 127;
+  my $dumped_core = $? & 128;
+  error ("$cmd[0]: core dumped!") if ($dumped_core);
+  error ("$cmd[0]: signal $signal_num!") if ($signal_num);
+  error ("$cmd[0]: exited with $exit_value!") if ($exit_value);
+}
+
+
+sub which($) {
+  my ($cmd) = @_;
+
+  if ($cmd =~ m@^\./|^/@) {
+    error ("cannot execute $cmd") unless (-x $cmd);
+    return $cmd;
+  }
+ 
+ foreach my $dir (split (/:/, $ENV{PATH})) {
+    my $cmd2 = "$dir/$cmd";
+    print STDERR "$progname:   checking $cmd2\n" if ($verbose > 3);
+    return $cmd2 if (-x "$cmd2");
+  }
+  error ("$cmd not found on \$PATH");
+}
+
+
+sub output() {
+
+  binmode (STDOUT, ($latin1_p ? ':raw' : ':utf8'));
+  binmode (STDERR, ':utf8');
+
+  # Do some basic sanity checking (null text, null file names, etc.)
+  #
+  if (($text_mode eq 'literal' && $text_literal =~ m/^\s*$/i) ||
+      ($text_mode eq 'file'    && $text_file    =~ m/^\s*$/i) ||
+      ($text_mode eq 'program' && $text_program =~ m/^\s*$/i) ||
+      ($text_mode eq 'url'     && $text_url     =~ m/^\s*$/i)) {
+    print STDERR "$progname: falling back to 'date'\n" if ($verbose);
+    $text_mode = 'date';
+  }
+
+  if ($text_mode eq 'literal') {
+    $text_literal = strftime ($text_literal, localtime);
+    $text_literal = utf8_to_latin1($text_literal) if ($latin1_p);
+    $text_literal =~ y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
+    print STDOUT $text_literal;
+    print STDOUT "\n" unless ($text_literal =~ m/\n$/s);
+
+  } elsif ($text_mode eq 'file') {
+
+    $text_file =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
+
+    if (open (my $in, '<:raw', $text_file)) {
+      print STDERR "$progname: reading $text_file\n" if ($verbose);
+      binmode (STDOUT, ':raw');
+
+      if (($wrap_columns && $wrap_columns > 0) || $truncate_lines) {
+        # read it, then reformat it.
+        local $/ = undef;  # read entire file
+        my $body = <$in>;
+        $body = reformat_text ($body);
+        print STDOUT $body;
+      } else {
+        # stream it by lines
+        while (<$in>) { 
+          $_ = utf8_to_latin1($_) if ($latin1_p);
+          y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
+          print STDOUT $_;
+        }
+      }
+      close $in;
+    } else {
+      error ("$text_file: $!");
+    }
+
+  } elsif ($text_mode eq 'program') {
+
+    my ($prog, $args) = ($text_program =~ m/^([^\s]+)(.*)$/);
+    $text_program = which ($prog) . $args;
+    print STDERR "$progname: running $text_program\n" if ($verbose);
+
+    if (($wrap_columns && $wrap_columns > 0) || $truncate_lines) {
+      # read it, then reformat it.
+      my $lines = 0;
+      my $body = "";
+      my $cmd = "( $text_program ) 2>&1";
+      # $cmd .= " | sed -l"; # line buffer instead of 4k pipe buffer
+      open (my $pipe, '-|:unix', $cmd);
+      while (my $line = <$pipe>) {
+        $body .= $line;
+        $lines++;
+        last if ($truncate_lines && $lines > $truncate_lines);
+      }
+      close $pipe;
+
+      # I don't understand why we must do this here, but must not do this
+      # in the 'file' branch above, which reads the file with :raw...
+      utf8::decode ($body);  # Pack multi-byte UTF-8 back into wide chars.
+
+      $body = reformat_text ($body);
+      print STDOUT $body;
+    } else {
+      # stream it
+      safe_system ("$text_program");
+    }
+
+  } elsif ($text_mode eq 'url') {
+
+    get_url_text ($text_url);
+
+  } else { # $text_mode eq 'date'
+
+    my $body = '';
+
+    my $n = `uname -n`;
+    $n =~ s/\.local\n/\n/s;
+    $body .= $n;
+
+    my $unamep = 1;
+
+    # The following code makes an effort to figure out the version of the
+    # OS / distribution, and a one-line summary of the hardware.  We can
+    # easily get the kernel version from uname, but the kernel version has
+    # no relevance to anyone's life.  The userspace version is what matters.
+    #
+    # In a truly shocking turn of events, nearly every distro uses a different
+    # file to identify itself.  Are you shocked?  I for one am shocked.
+
+    $ENV{LC_NUMERIC} = 'C';   # Decimals with periods, not commas, plz.
+
+    if (open (my $in, "<:utf8", "/etc/os-release")) {
+      while (<$in>) {			  # PRETTY_NAME="CentOS Linux 7 (Core)"
+        if (m/^PRETTY_NAME="(.*)"/si) {   # PRETTY_NAME="Raspbian 10 (buster)"
+          my $line = $1;
+
+          # Annoying that "10.6" is only in /etc/debian_version and
+          # /etc/os-release only contains "10". So splice that in.
+          my $v1 = `cat /etc/debian_version 2>&-`;
+          my ($v2, $v3) = ($v1 =~ m/^((\d+)\.\d+)\s*$/s);
+          $line =~ s/\b\Q$v3\E\b/$v2/s
+            if ($v2 && !($line =~ m/\b\Q$v2\E\b/si));
+          $body .= "$line\n";
+          $unamep = 0;
+          last;
+        }
+      }
+      close $in;
+    } elsif (open ($in, "<:utf8", "/etc/lsb-release")) {
+      while (<$in>) {		     # DISTRIB_DESCRIPTION="Ubuntu 14.04.2 LTS"
+        if (m/^DISTRIB_DESCRIPTION="(.*)"/si) {
+          $body .= "$1\n";
+          $unamep = 0;
+          last;
+        }
+      }
+      close $in;
+    } elsif (-f "/etc/system-release") {    # "CentOS Linux release 7.7 (Core)"
+      $body .= `cat /etc/system-release`;
+    } elsif (-f "/etc/redhat-release") {    # "Fedora Core release 4 (Stentz)"
+      $body .= `cat /etc/redhat-release`;
+    } elsif (-f "/etc/SuSE-release") { 	    # "SUSE Linux Enterprise Server 11"
+      $body .= `head -1 /etc/SuSE-release`;
+    } elsif (-f "/etc/release") {    	    # "Solaris 10 3/05 s10_74L2a X86"
+      $body .= `head -1 /etc/release`;
+    } elsif (-f "/usr/sbin/system_profiler") {   # "Mac OS X 10.4.5 (8H14)"
+      my $sp =
+        `/usr/sbin/system_profiler SPSoftwareDataType SPHardwareDataType 2>&-`;
+      my ($v) = ($sp =~ m/^\s*System Version:\s*(.*)$/mi);
+      my ($s) = ($sp =~ m/^\s*(?:CPU|Processor) Speed:\s*(.*)$/mi);
+      my ($c) = ($sp =~ m/^\s*Chip:\s*(.*)$/mi);
+      my ($o) = ($sp =~ m/^\s*Total Number of Cores:\s*(\d+)/mi);
+      my ($t) = ($sp =~ m/^\s*(?:Machine|Model) Name:\s*(.*)$/mi);
+      my ($m) = ($sp =~ m/^\s*Memory:\s*(.*)$/mi);
+      my ($i) = ($sp =~ m/^\s*Model Identifier:\s*(.*)$/mi);
+
+      # This file sometimes has the model-identifier to marketing-name map,
+      # as displayed in "About This Mac":
+      #
+      #   "Macmini6,1"  =>  "Mac mini (Late 2012)"
+      #   "Macmini7,1"  =>  "Mac mini (Late 2014)"
+      #   "Macmini8,1"  =>  "Mac mini (Late 2018)"
+      #   "Macmini9,1"  =>  no entry (should be "Mac mini M1 (2020)")
+      #   "Mac13,2"     =>  no entry (should be "Mac Studio (2022)")
+      #
+      # The model name from "system_profiler" omits the year of release,
+      # as does "ioreg -arc IOPlatformDevice -k product-name".
+      #
+      if ($i) {
+        my $f2 = "/System/Library/PrivateFrameworks/" .
+                 "ServerInformation.framework/Versions/A/Resources/" .
+                 "en.lproj/SIMachineAttributes.plist";
+        $f2 =~ s@/en\.lproj@/English.lproj@ unless -f ($f2);
+        if (-f $f2) {
+          my $s2 = `defaults read '$f2' '$i' 2>&-`;
+          $t = $1 if ($s2 =~ m/marketingModel\s*=\s*"(.*?)"/s);
+        }
+      }
+
+      $c =~ s/^Apple //s if $c;
+      $c .= " $o core" if ($c && $o);
+      $t .= ", $c" if $c;
+      $t .= ", $m" if $t;
+      $body .= "$v\n" if ($v);
+      $body .= "$s $t\n" if ($s && $t);
+      $body .= "$t\n" if (!$s && $t);
+      $unamep = !defined ($v);
+    }
+
+    $body =~ s@ GNU/Linux @ @;		    # Line is too long for "gltext"
+    $body .= `uname -sr` if ($unamep);	    # "Linux 2.6.15-1.1831_FC4"
+
+    # If /bin/lscpu exists, we can get some details about the hardware
+    # we're running on.  This info also exists in various /proc/ files,
+    # but if /proc/ exists, lscpu probably exists as well.
+    #
+    $ENV{LANGUAGE} = 'en_US';  # If lscpu prints Japanese, we don't match.
+    my $cpu = `lscpu 2>&-`;
+    if ($cpu) {
+      my ($model) = ($cpu =~ m/^Model name:\s*(.*)$/mi);
+     #my ($arch)  = ($cpu =~ m/^Architecture:\s*(.*)$/mi);
+      my ($speed) = ($cpu =~ m/^CPU max MHz:\s*(.*)$/mi);
+         ($speed) = ($cpu =~ m/^CPU MHz:\s*(.*)$/mi) unless $speed;
+      my ($speed_ghz) = ($cpu =~ m/^Model name.*CPU @ \s*(.*)GHz$/mi);
+      if ($speed_ghz) {
+        $speed = sprintf("%.1fGHz", $speed_ghz);
+      } elsif ($speed && $speed >= 1000) {
+        $speed = sprintf("%.1fGHz", $speed/1000);
+      } elsif ($speed) {
+        $speed = sprintf("%.1fMHz", $speed);
+      }
+
+      # This file seems to be ARM-specific.  It gives us the better string
+      # "Raspberry Pi 4 Model B Rev 1.4" whereas lscpu gives us "Cortex-A72".
+      my $model2 = `cat /proc/device-tree/model 2>&-`;
+      $model2 =~ s/[\n\000].*$//s;
+      $model = $model2 if $model2;
+
+      # Abbreviate stupidly verbose marketing nonsense like:
+      # "Intel(R) Xeon(R) CPU E3-1275 v5 @ 3.60GHz" and
+      # "11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz"
+      $model =~ s/\s*\@.*//gs;			  # GHz
+      $model =~ s/\s*\((R|TM)\)//gs;		  # So useful!
+      $model =~ s/\s*\b(CPU|Processor)\b//gsi;	  # It is? Really?
+      $model =~ s/\b\d+[a-z]+ gen //gsi;	  # Nth Gen
+
+      # Line is too long for gltext:
+      # "Raspberry Pi 4 Model B Rev 1.4" -> "Pi 4b r1.4"
+      $model =~ s@\bRaspberry\b@@si;
+      $model =~ s@ Model ([A-Z\d]+)@\L$1@si;
+      $model =~ s@ Rev\.? @ r@si;
+
+      # Maybe we can tell how much RAM is installed.
+      my $ram = `cat /proc/meminfo 2>&-`;
+      if ($ram && $ram =~ m/^Memtotal:\s+(\d+)/mi) {
+        $ram = $1;
+        if    ($ram >= 1024*1024) { $ram = sprintf("%.0fGB", $ram/1024/1024); }
+        elsif ($ram >= 1024) { $ram = sprintf("%.0fMB", $ram/1024); }
+        else { $ram = sprintf("%.0fKB", $ram); }
+      }
+
+      $body .= "$speed"  if $speed;
+      $body .= " $model" if $model;
+     #$body .= " $arch"  if $arch;
+      $body .= " $ram"   if $ram;
+      $body .= "\n";
+    }
+
+    $body =~ s/[ \t]+/ /gm;
+    $body =~ s/^ | $//gm;
+
+    $body .= "\n";
+    $body .= strftime ('%c', localtime);
+    $body .= "\n";
+
+    my $ut = `uptime`;
+    $ut =~ s/^[ \d:]*(am|pm)? *//i;
+    $ut =~ s/,\s*(load)/\n$1/;
+    $body .= "$ut\n";
+
+    if ($truncate_lines) {
+      $body =~ s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
+    }
+
+    print STDOUT $body;
+  }
+}
+
+
+# Make an educated guess as to what's in this document.
+# We don't necessarily take the Content-Type header at face value.
+# Returns 'html', 'rss', or 'text';
+#
+sub guess_content_type($$) {
+  my ($ct, $body) = @_;
+
+  $body =~ s/^(.{512}).*/$1/s;  # only look in first half K of file
+
+  if ($ct =~ m@^text/.*html@i)          { return 'html'; }
+  if ($ct =~ m@\b(atom|rss|xml)\b@i)    { return 'rss';  }
+
+  if ($body =~ m@^\s*<\?xml@is)         { return 'rss';  }
+  if ($body =~ m@^\s*<!DOCTYPE RSS@is)  { return 'rss';  }
+  if ($body =~ m@^\s*<!DOCTYPE HTML@is) { return 'html'; }
+
+  if ($body =~ m@<(BASE|HTML|HEAD|BODY|SCRIPT|STYLE|TABLE|A\s+HREF)\b@i) {
+    return 'html';
+  }
+
+  if ($body =~ m@<(RSS|CHANNEL|GENERATOR|DESCRIPTION|CONTENT|FEED|ENTRY)\b@i) {
+    return 'rss';
+  }
+
+  return 'text';
+}
+
+
+sub reformat_html($$) {
+  my ($body, $rss_p) = @_;
+  $_ = $body;
+
+  # In HTML, try to preserve newlines inside of PRE.
+  #
+  if (! $rss_p) {
+    s@(<PRE\b[^<>]*>\s*)(.*?)(</PRE)@{
+      my ($a, $b, $c) = ($1, $2, $3);
+      $b =~ s/[\r\n]/<BR>/gs;
+      $a . $b . $c;
+     }@gsexi;
+  }
+
+  if (! $rss_p) {
+    # In HTML, unfold lines.
+    # In RSS, assume \n means literal line break.
+    s@[\r\n]@ @gsi;
+  }
+
+  # This right here is the part where I doom us all to inhuman
+  # toil for the One whose Name cannot be expressed in the
+  # Basic Multilingual Plane. http://jwz.org/b/yhAT He comes.
+
+  s@<!--.*?-->@@gsi;				 # lose comments
+  s@<(STYLE|SCRIPT)\b[^<>]*>.*?</\1\s*>@@gsi;    # lose css and js
+
+  s@</?(BR|TR|TD|LI|DIV)\b[^<>]*>@\n@gsi; # line break at BR, TD, DIV, etc
+  s@</?(P|UL|OL|BLOCKQUOTE)\b[^<>]*>@\n\n@gsi; # two line breaks
+
+  s@<lj\s+user=\"?([^<>\"]+)\"?[^<>]*>?@$1@gsi;  # handle <LJ USER=>
+  s@</?[BI]>@*@gsi;		                 # bold, italic => asterisks
+
+
+  s@<[^<>]*>?@@gs;                # lose all other HTML tags
+  $_ = de_entify ($_);            # convert HTML entities
+
+  # For Wikipedia: delete anything inside {{ }} and unwrap [[tags]],
+  # among other things.
+  #
+  if ($rss_p eq 'wiki') {
+
+    s@<!--.*?-->@@gsi;				 # lose HTML comments again
+
+    # Creation line is often truncated: screws up parsing with unbalanced {{.
+    s@(: +[^a-zA-Z ]* *Created page) with [^\n]+@$1@s;
+
+    s@/\*.*?\*/@@si;				   # /* ... */
+
+    # Try to omit all tables, since they're impossible to read as text.
+    #
+    1 while (s/\{\{[^{}]*}}/ /gs);		   # {{ ... }}
+    1 while (s/\{\|.*?\|\}/\n\n/gs);		   # {| ... |}
+    1 while (s/\|-.*?\|/ /gs);			   # |- ... |  (table cell)
+
+    # Convert anchors to something more readable.
+    #
+    s/\[\[([^\[\]\|]+)\|([^\[\]]+)\]\]/$2/gs;	   # [[link|anchor]]
+    s/\[\[([^:\[\]\|]+)\]\]/$1/gs;		   # [[anchor]]
+    s/\[https?:[^\[\]\s]+\s+([^\[\]]+)\]/$1/gs;	   # [url anchor]
+
+    # Convert all references to asterisks.
+    s@\s*<ref>\s*.*?</ref>@*@gs;		   # <ref> ... <ref> ->  "*"
+    s@\n[ \t]*\d+\s*\^\s*http[^\s]+[ \t]*\n@\n@gs; # 1 ^ URL (a Reflist)
+
+    s@\[\[File:([^\|\]]+).*?\]\]@\n$1\n@gs;	  # [[File: X | ... ]]
+    s@\[\[Category:.*?\]\]@@gs;			  # omit categories
+
+    s/<[^<>]*>//gs;	# Omit all remaining tags
+    s/\'{3,}//gs;	# Omit ''' and ''''
+    s/\'\'/\"/gs;	# ''  ->  "
+    s/\`\`/\"/gs;	# ``  ->  "
+    s/\"\"+/\"/gs;	# ""  ->  "
+
+    s/^[ \t]*[*#]+[ \t]*$//gm;	# Omit lines with just * or # on them
+
+    # Omit trailing headlines with no text after them (e.g. == Notes ==)
+    1 while (s/\n==+[ \t]*[^\n=]+[ \t]*==+\s*$/\n/s);
+
+    $_ = de_entify ($_);            # convert HTML entities, again
+  }
+
+
+  # elide any remaining non-Latin1 binary data.
+  if ($latin1_p) {
+    utf8::encode ($_);  # Unpack Unicode back to multi-byte UTF-8.
+    s/([^\000-\176]+(\s*[^\000-\176]+)[^a-z\d]*)/\xAB...\xBB /g;
+  }
+
+  $_ .= "\n";
+
+  s/[ \t]+$//gm;                  # lose whitespace at end of line
+  s@\n\n\n+@\n\n@gs;              # compress blank lines
+
+  if (!defined($wrap_columns) || $wrap_columns > 0) {
+    # Text::Wrap sometimes dies with "This shouldn't happen" if columns
+    # is small, but not in any predictable way.
+    # Also there's a chance it might not be installed.
+    eval {
+      $Text::Wrap::columns = ($wrap_columns || 72);
+      $Text::Wrap::break = '[\s/|]';  # wrap on slashes for URLs
+
+      $_ = wrap ("", "  ", $_);     # wrap the lines as a paragraph
+      s/[ \t]+$//gm;                # lose whitespace at end of line again
+    };
+  }
+
+  s/^\n+//gs;
+
+  if ($truncate_lines) {
+    s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
+  }
+
+  $_ = utf8_to_latin1($_) if ($latin1_p);
+  y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
+
+  return $_;
+}
+
+
+sub reformat_rss($) {
+  my ($body) = @_;
+
+  my $wiki_p = ($body =~ m@<generator>[^<>]*Wiki@si);
+
+  $body =~ s/(<(ITEM|ENTRY)\b)/\001\001$1/gsi;
+  my @items = split (/\001\001/, $body);
+
+  print STDERR "$progname: converting RSS ($#items items)...\n"
+    if ($verbose > 2);
+
+  shift @items;
+
+  # Let's skip forward in the stream by a random amount, so that if
+  # two copies of ljlatest are running at the same time (e.g., on a
+  # multi-headed machine), they get different text.  (Put the items
+  # that we take off the front back on the back.)
+  #
+  if ($#items > 7) {
+    my $n = int (rand ($#items - 5));
+    print STDERR "$progname: rotating by $n items...\n" if ($verbose > 2);
+    while ($n-- > 0) {
+      push @items, (shift @items);
+    }
+  }
+
+  my $out = '';
+
+  my $i = -1;
+  foreach (@items) {
+    $i++;
+
+    my ($title, $author, $body1, $body2, $body3);
+    
+    $title = $3 if (m@<((TITLE)       [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
+    $author= $3 if (m@<((DC:CREATOR)  [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
+    $body1 = $3 if (m@<((DESCRIPTION) [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
+    $body2 = $3 if (m@<((CONTENT)     [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
+    $body3 = $3 if (m@<((SUMMARY)     [^<>\s]*)[^<>]*>\s*(.*?)\s*</\1>@xsi);
+
+    # If there are both <description> and <content> or <content:encoded>,
+    # use whichever one contains more text.
+    #
+    if ($body3 && length($body3) >= length($body2 || '')) {
+      $body2 = $body3;
+    }
+    if ($body2 && length($body2) >= length($body1 || '')) {
+      $body1 = $body2;
+    }
+
+    if (! $body1) {
+      if ($title) {
+        print STDERR "$progname: no body in item $i (\"$title\")\n"
+          if ($verbose > 2);
+      } else {
+        print STDERR "$progname: no body or title in item $i\n"
+          if ($verbose > 2);
+        next;
+      }
+    }
+
+    $title = rss_field_to_html ($title || '');
+    $author= rss_field_to_html ($author || '');
+    $body1 = rss_field_to_html ($body1 || '');
+
+    $title = '' if ($body1 eq $title);  # Identical in Twitter's atom feed.
+
+    # Omit author if it's in the title or body
+    $author = '' if ($author &&
+                     ($title =~ m/\Q$author\E/si ||
+                      $body1 =~ m/\Q$author\E/si));
+
+    $title = $author if ($author && !$title);
+    $title = "$author: $title" if ($author && $title);
+
+    $out .= reformat_html ("$title<P>$body1", $wiki_p ? 'wiki' : 'rss');
+    $out .= "\n";
+  }
+
+  if ($truncate_lines) {
+    $out =~ s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
+  }
+
+  return $out;
+}
+
+
+sub rss_field_to_html($) {
+  my ($body) = @_;
+
+  # If <![CDATA[...]]> is present, everything inside that is HTML,
+  # and not double-encoded.
+  #
+  if ($body =~ m/^\s*<!\[CDATA\[(.*?)\]\s*\]/is) {
+    $body = $1;
+  } else {
+    $body = de_entify ($body);      # convert entities to get HTML from XML
+  }
+
+  return $body;
+}
+
+
+sub reformat_text($) {
+  my ($body) = @_;
+
+  # only re-wrap if --cols was specified.  Otherwise, dump it as is.
+  #
+  if ($wrap_columns && $wrap_columns > 0) {
+    print STDERR "$progname: wrapping at $wrap_columns...\n" if ($verbose > 2);
+
+    # Text::Wrap sometimes dies with "This shouldn't happen" if columns
+    # is small, but not in any predictable way.
+    # Also there's a chance it might not be installed.
+    eval {
+      $Text::Wrap::columns = $wrap_columns;
+      $Text::Wrap::break = '[\s/]';  # wrap on slashes for URLs
+
+      $body = wrap ("", "", $body);
+      $body =~ s/[ \t]+$//gm;
+    };
+  }
+
+  if ($truncate_lines) {
+    $body =~ s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
+  }
+
+  $body = utf8_to_latin1($body) if ($latin1_p);
+  $body =~ y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
+  return $body;
+}
+
+
+# Figure out what the proxy server should be, either from environment
+# variables or by parsing the output of the (MacOS) program "scutil",
+# which tells us what the system-wide proxy settings are.
+#
+sub set_proxy($) {
+  my ($ua) = @_;
+
+  my $proxy_data = `scutil --proxy 2>/dev/null`;
+  foreach my $proto ('http', 'https') {
+    my ($server) = ($proxy_data =~ m/\b${proto}Proxy\s*:\s*([^\s]+)/si);
+    my ($port)   = ($proxy_data =~ m/\b${proto}Port\s*:\s*([^\s]+)/si);
+    my ($enable) = ($proxy_data =~ m/\b${proto}Enable\s*:\s*([^\s]+)/si);
+
+    if ($server && $enable) {
+      # Note: this ignores the "ExceptionsList".
+      my $proto2 = 'http';
+      $ENV{"${proto}_proxy"} = ("${proto2}://" . $server .
+                                ($port ? ":$port" : "") . "/");
+      print STDERR "$progname: MacOS $proto proxy: " .
+                   $ENV{"${proto}_proxy"} . "\n"
+        if ($verbose > 2);
+    }
+  }
+
+  $ua->env_proxy();
+}
+
+
+sub get_url_text($) {
+  my ($url) = @_;
+
+  my $ua = eval 'LWP::UserAgent->new';
+
+  if (! $ua) {
+    print STDOUT ("\n\tPerl is broken. Do this to repair it:\n" .
+                  "\n\tsudo cpan LWP::UserAgent" .
+                  " LWP::Protocol::https Mozilla::CA\n\n");
+    return;
+  }
+
+  # Half the time, random Linux systems don't have Mozilla::CA installed,
+  # which results in "Can't verify SSL peers without knowning which
+  # Certificate Authorities to trust".
+  #
+  # I'm going to take a controversial stand here and say that, for the
+  # purposes of plain-text being displayed in a screen saver via RSS,
+  # the chances of a certificate-based man-in-the-middle attack having
+  # a malicious effect on anyone anywhere at any time is so close to
+  # zero that it can be discounted.  So, just don't bother validating
+  # SSL connections.
+  #
+  $ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0;
+  eval {
+    $ua->ssl_opts (verify_hostname => 0, SSL_verify_mode => 0);
+  };
+
+
+  set_proxy ($ua);
+  $ua->agent ("$progname/$version");
+  my $res = $ua->get ($url);
+  my $body;
+  my $ct;
+
+  if ($res && $res->is_success) {
+    $body = $res->decoded_content || '';
+    $ct   = $res->header ('Content-Type') || 'text/plain';
+
+  } else {
+    my $err = ($res ? $res->status_line : '') || '';
+    $err = 'unknown error' unless $err;
+    $err = "$url: $err";
+    # error ($err);
+    $body = "Error loading URL $err\n\n";
+    $ct = 'text/plain';
+  }
+
+  # This is not necessary, since HTTP::Message::decoded_content() has
+  # already done 'decode (<charset-header>, $body)'.
+  # utf8::decode ($body);  # Pack multi-byte UTF-8 back into wide chars.
+
+  $ct = guess_content_type ($ct, $body);
+  if ($ct eq 'html') {
+    print STDERR "$progname: converting HTML...\n" if ($verbose > 2);
+    $body = reformat_html ($body, 0);
+  } elsif ($ct eq 'rss')  {
+    $body = reformat_rss ($body);
+  } else {
+    print STDERR "$progname: plain text...\n" if ($verbose > 2);
+    $body = reformat_text ($body);
+  }
+  print STDOUT $body;
+}
+
+
+
+sub error($) {
+  my ($err) = @_;
+  print STDERR "$progname: $err\n";
+  exit 1;
+}
+
+sub usage() {
+  print STDERR "usage: $progname [ --options ... ]\n" .
+   ("\n" .
+    "       Prints out some text for use by various screensavers,\n" .
+    "       according to the options in the ~/.xscreensaver file.\n" .
+    "       This may dump the contents of a file, run a program,\n" .
+    "       or load a URL.\n".
+    "\n" .
+    "   Options:\n" .
+    "\n" .
+    "       --date           Print the host name and current time.\n" .
+    "\n" .
+    "       --text STRING    Print out the given text.  It may contain %\n" .
+    "                        escape sequences as per strftime(2).\n" .
+    "\n" .
+    "       --file PATH      Print the contents of the given file.\n" .
+    "                        If --cols is specified, re-wrap the lines;\n" .
+    "                        otherwise, print them as-is.\n" .
+    "\n" .
+    "       --program CMD    Run the given program and print its output.\n" .
+    "                        If --cols is specified, re-wrap the output.\n" .
+    "\n" .
+    "       --url HTTP-URL   Download and print the contents of the HTTP\n" .
+    "                        document.  If it contains HTML, RSS, or Atom,\n" .
+    "                        it will be converted to plain-text.\n" .
+    "\n" .
+    "       --cols N         Wrap lines at this column.  Default 72.\n" .
+    "\n" .
+    "       --lines N        No more than N lines of output.\n" .
+    "\n" .
+    "       --latin1         Emit Latin1 instead of UTF-8.\n" .
+    "\n");
+  exit 1;
+}
+
+sub main() {
+
+  my $load_p = 1;
+  my $cocoa_id = undef;
+
+  # Some time between perl 5.16.3 and 5.28.3, invoking a script with >&-
+  # started writing "Unable to flush stdout: Bad file descriptor" to stderr
+  # at exit. So if stdout is closed, open it as /dev/null instead.
+  #
+  # And then 5.36 changed STDOUT to :utf8 by default.
+  # "syswrite() isn't allowed on :utf8 handles".
+  #
+  binmode (STDOUT, ':raw');
+  open (STDOUT, '>', '/dev/null')
+    if (! defined (syswrite (STDOUT, "")));  # undef if fd closed; 0 if open.
+
+  my @oargv = @ARGV;
+  while ($#ARGV >= 0) {
+    $_ = shift @ARGV;
+    if ($_ eq "--verbose") { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif (m/^--?date$/)    { $text_mode = 'date';
+                              $load_p = 0; }
+    elsif (m/^--?text$/)    { $text_mode = 'literal';
+                              $text_literal = shift @ARGV || '';
+                              $text_literal =~ s@\\n@\n@gs;
+                              $text_literal =~ s@\\\n@\n@gs;
+                              $load_p = 0; }
+    elsif (m/^--?file$/)    { $text_mode = 'file';
+                              $text_file = shift @ARGV || '';
+                              $load_p = 0; }
+    elsif (m/^--?program$/) { $text_mode = 'program';
+                              $text_program = shift @ARGV || '';
+                              $load_p = 0; }
+    elsif (m/^--?url$/)     { $text_mode = 'url';
+                              $text_url = shift @ARGV || '';
+                              $load_p = 0; }
+    elsif (m/^--?col(umn)?s?$/) { $wrap_columns = 0 + shift @ARGV; }
+    elsif (m/^--?lines?$/)  { $truncate_lines = 0 + shift @ARGV; }
+    elsif (m/^--?cocoa$/)   { $cocoa_id = shift @ARGV; }
+    elsif (m/^--?latin1$/)  { $latin1_p++; }
+    elsif (m/^--?nyarlathotep$/) { $nyarlathotep_p++; }
+    elsif (m/^-./) { usage; }
+    else { usage; }
+  }
+
+  print STDERR "$progname: args: @oargv\n" if ($verbose > 1);
+
+  if (!defined ($cocoa_id)) {
+    # see OSX/XScreenSaverView.m
+    $cocoa_id = $ENV{XSCREENSAVER_CLASSPATH};
+  }
+
+  print STDERR "$progname: Cocoa ID: $cocoa_id\n"
+    if ($verbose > 1 && $cocoa_id);
+
+  if ($load_p) {
+    if (defined ($cocoa_id)) {
+      get_cocoa_prefs($cocoa_id);
+    } else {
+      get_x11_prefs();
+    }
+  }
+
+  output();
+
+
+  if (defined ($cocoa_id)) {
+    #
+    # On MacOS, sleep for 10 seconds between when the last output is
+    # printed, and when this process exits.  This is because MacOS
+    # 10.5.0 and later broke ptys in a new and exciting way: basically,
+    # once the process at the end of the pty exits, you have exactly
+    # 1 second to read all the queued data off the pipe before it is
+    # summarily flushed.
+    #
+    # Many of the screen savers were written to depend on being able
+    # to read a small number of bytes, and continue reading until they
+    # reached EOF.  This is no longer possible.
+    #
+    # Note that the current MacOS behavior has all four of these
+    # awesome properties: 1) Inconvenient; 2) Has no sane workaround;
+    # 3) Different behavior than MacOS 10.1 through 10.4; and 4)
+    # Different behavior than every other Unix in the world.
+    #
+    # See http://jwz.org/b/DHke, and for those of you inside Apple,
+    # "Problem ID 5606018".
+    #
+    # One workaround would be to rewrite the savers to have an
+    # internal buffer, and always read as much data as possible as
+    # soon as a pipe has input available.  However, that's a lot more
+    # work, so instead, let's just not exit right away, and hope that
+    # 10 seconds is enough.
+    #
+    # This will solve the problem for invocations of xscreensaver-text
+    # that produce little output (e.g., date-mode); and won't solve it
+    # in cases where a large amount of text is generated in a short
+    # amount of time (e.g., url-mode.)
+    #
+    my $secs = 10;
+    $secs = 1 if (($truncate_lines || 0) < 10);  # for 'gltext'
+    sleep ($secs);
+  }
+}
+
+main();
+exit 0;

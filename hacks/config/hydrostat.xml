@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hydrostat" _label="Hydrostat" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=nn-nA18hFt0"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="--speed %"
+            _label="Animation speed" _low-label="Slow" _high-label="Fast"
+            low="0.01" high="4.0" default="1.0"
+            convert="ratio"/>
+
+    <number id="count" type="slider" arg="--count %"
+            _label="Number of squid" _low-label="One" _high-label="Many"
+            low="1" high="100" default="3" />
+
+    <number id="head_radius" type="slider" arg="--head-radius %"
+            _label="Head size" _low-label="Small" _high-label="Large"
+            low="10" high="100" default="60" />
+
+    <number id="tentacles" type="slider" arg="--tentacles %"
+            _label="Number of tentacles" _low-label="Few" _high-label="Many"
+            low="3" high="100" default="35" />
+
+   </vgroup>
+   <vgroup>
+
+    <number id="thickness" type="slider" arg="--thickness %"
+            _label="Thickness" _low-label="Thin" _high-label="Thick"
+            low="3" high="40" default="18" />
+
+    <number id="length" type="slider" arg="--length %"
+            _label="Length of tentacles" _low-label="Short" _high-label="Long"
+            low="10" high="150" default="55" />
+
+    <number id="gravity" type="slider" arg="--gravity %"
+            _label="Gravity" _low-label="Weak" _high-label="Strong"
+            low="0" high="10.0" default="0.5" />
+
+    <number id="current" type="slider" arg="--current %"
+            _label="Current" _low-label="Weak" _high-label="Strong"
+            low="0.0" high="10.0" default="0.25" />
+
+    <number id="friction" type="slider" arg="--friction %"
+            _label="Viscosity" _low-label="Low" _high-label="High"
+            low="0.0" high="0.1" default="0.02" />
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="pulse" _label="Pulse"    arg-unset="--no-pulse" />
+   <boolean id="wire"   _label="Wireframe" arg-set="--wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+   <xscreensaver-updater />
+  </hgroup>
+
+  <_description>
+Wiggly squid or jellyfish with many tentacles.
+
+A muscular hydrostat is a biological structure used to move its host
+about, consisting of muscles with no skeletal support.  It performs
+its hydraulic movement without fluid in a separate compartment, as in
+a hydrostatic skeleton.
+
+https://en.wikipedia.org/wiki/Muscular_hydrostat
+
+Written by Justin Windle and Jamie Zawinski; 2016.
+  </_description>
+</screensaver>
