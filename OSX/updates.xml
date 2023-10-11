@@ -8,6 +8,17 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 6.08</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.08.dmg</link>
+   <description><![CDATA[&bull; Worked around a macOS 14.0 bug where savers would continue running invisibly in the background after un-blanking. <BR>&bull; Upgraded Sparkle (the "Check for Updates" library) for macOS 14.0 compatibility.]]></description>
+   <pubDate>Tue, 10 Oct 2023 17:34:41 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.08.dmg"
+    sparkle:version="6.08"
+    sparkle:edSignature="vdbfhkrzWTmduHv32WYACq/ubR6ZPITx6GvsJs9VCMUYO05SwOlUH0FF+yPwX4fkN/N6dfJrmn6YSW4VAZSxAw=="
+    length="89061022"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 6.07</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-6.07.dmg</link>
    <description><![CDATA[&bull; New hacks, `droste', `skulloop', `papercube' and `cubocteversion'. <BR>&bull; `xscreensaver-settings' was sometimes turning off the DPMS checkbox. <BR>&bull; Log pid of caller of `deactivate' command, to give a hint about who is preventing the screen from blanking. <BR>&bull; recanim uses libffmpeg. <BR>&bull; Updates to `sphereeversion'. <BR>&bull; Added some new map sources to `mapscroller'. <BR>&bull; Worked around a macOS 13.4 bug where multi-head systems would fail to launch savers on some or all screens. <BR>&bull; Minimum compiler target is now ISO C99 instead of ANSI C89. Didn't want to rush into it. <BR>&bull; macOS, Android: Better looking thunbmail images. <BR>&bull; Various other minor bug fixes.]]></description>
@@ -27,17 +38,6 @@
     sparkle:version="6.06"
     sparkle:edSignature="OaiwaLmdGky2vyjJVnDADT2Lquu4JypQ5GdDeUL0Rx+pPLr7thuVKawrdhn67Lr/2GB/IG+QSntFr23sDiuWAg=="
     length="80828727"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 6.04</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.04.dmg</link>
-   <description><![CDATA[&bull; New hacks, `nakagin' and `chompytower'. <BR>&bull; Settings dialog shows diagnostics for bad image folders and feeds. <BR>&bull; URLs for `imageDirectory' can now point at archive.org collections. <BR>&bull; Sliders for various "Speed" preferences are easier to use. <BR>&bull; Updated `webcollage'.]]></description>
-   <pubDate>Sun, 29 May 2022 12:37:00 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.04.dmg"
-    sparkle:version="6.04"
-    sparkle:edSignature="ZSeW3fPX/xe8x/I/VVYBKZYm3WWZpf8kqUepdX/VlAhWxk6Q5ALtNqQg7vU0DqpHyROr3q6bHQhutCeu4HceDg=="
-    length="85181483"
     type="application/octet-stream" />
   </item>
  </channel>

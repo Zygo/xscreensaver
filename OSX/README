@@ -35,9 +35,12 @@ Make sure everything works:
     - Set "Signing Certificate" to "Apple Development" for Debug and Release.
     - Change "Bundle Identifier" from "org.jwz" to "org.YOURNAME".
 
-  - There will probably be a build error related to Sonar and ICMP.
-    Click on the red error icon to see the error message and follow the
-    instructions there to fix it.
+  - If you get errors about curl being unable to download thumbnail images,
+    you need to add Xcode.app to "Full Disk Access" in System Settings.
+
+  - There might be a build error related to Sonar and ICMP.  Click on the red
+    error icon to see the error message and follow the instructions there to
+    fix it.
 
 
 To build and test a macOS saver:

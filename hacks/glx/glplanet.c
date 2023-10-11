@@ -835,10 +835,8 @@ draw_planet (ModeInfo * mi)
       if (gp->z < 0) gp->z += 1;
     }
 
-# ifndef GL_LINE_SMOOTH_BROKEN
   glEnable(GL_LINE_SMOOTH);
   glEnable(GL_POINT_SMOOTH);
-# endif
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK); 
@@ -1049,9 +1047,7 @@ draw_planet (ModeInfo * mi)
       glScalef (1.02, 1.02, 1.02);
       glDisable (GL_TEXTURE_2D);
       glDisable (GL_LIGHTING);
-# ifndef GL_LINE_SMOOTH_BROKEN
       glDisable (GL_LINE_SMOOTH);
-# endif
       glColor3f (0.1, 0.3, 0.1);
       glCallList (gp->latlonglist);
       mi->polygon_count += 24*24;
@@ -1067,9 +1063,7 @@ draw_planet (ModeInfo * mi)
       glScalef (1.02, 1.02, 1.02);
       glDisable (GL_TEXTURE_2D);
       glDisable (GL_LIGHTING);
-# ifndef GL_LINE_SMOOTH_BROKEN
       glDisable (GL_LINE_SMOOTH);
-# endif
       glColor3f (0.1, 0.3, 0.1);
       glCallList (gp->tzlist);
       mi->polygon_count += gp->tzpoints;

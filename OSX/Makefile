@@ -49,12 +49,16 @@ release::
 
 Sparkle.framework:
 	rm -rf bin sparkle-bin
-	tar -vxjf ../archive/Sparkle-1.27.0.tar.xz \
+	tar -vxjf ../archive/Sparkle-2.5.0.tar.xz \
 	  --exclude CHANGELOG \
 	  --exclude LICENSE \
+	  --exclude INSTALL \
+	  --exclude Entitlements \
 	  --exclude SampleAppcast.xml \
 	  --exclude Sparkle.framework.dSYM \
-	  --exclude Sparkle\ Test\ App\*
+	  --exclude Sparkle\ Test\ App\* \
+	  --exclude Symbols \
+	  --exclude sparkle.app
 	mv bin sparkle-bin
 
 # Download and resize images from jwz.org.
@@ -103,8 +107,8 @@ $(THUMBDIR)/%.png:
 	if [ ! -d $(THUMBDIR) ]; then mkdir -p $(THUMBDIR) ; fi ;	\
 	rm -f "$$FILE2" "$$TMP" ;					\
 	set +e ;							\
-	if [ -f "$$HOME/www/$(BASE)/$$FILE1" ]; then			\
-	  cp -p "$$HOME/www/$(BASE)/$$FILE1" "$$TMP" ;			\
+	if [ -f "$$HOME/www/$(BASE)$$FILE1" ]; then			\
+	  cp -p "$$HOME/www/$(BASE)$$FILE1" "$$TMP" ;			\
 	else								\
 	  echo "downloading $$URL..." ;					\
 	  $(WGET) "$$URL" > "$$TMP" ;					\
@@ -494,65 +498,143 @@ staple::
   xcrun stapler validate "$$DMG" ;					      \
 
 
-# When debugging, sometimes I have to reset the preferences for all
-# the savers.  Also I like FPS to be turned on, and them all to be
-# pointed at the same image directory.
+# When running under legacyScreenSaver or System Settings, saver preferences
+# are read from:
+#
+#   Library/Containers/com.apple.ScreenSaver.Engine.legacyScreenSaver/Data/\
+#   Library/Preferences/ByHost/org.jwz.xscreensaver.$NAME.$UUID.plist
+#
+# When running under SaverRunner, they are read from:
+#
+#   Library/Preferences/ByHost/org.jwz.xscreensaver.$NAME.$UUID.plist
+#
+# The "defaults read" and "defaults write" commands only access the
+# "Preferences" version, not the "Containers" version.  Some documentation
+# suggests that "defaults" should be using the "Containers" if run from
+# Terminal with "Full Disk Access" enabled, but that is not the case, at
+# least as of macOS 14.0.
+#
+# Extra kink: the "XScreenSaverUpdater.app" program, not being sandboxed
+# or by-host, writes to:
+#
+#   Library/Preferences/org.jwz.xscreensaver.XScreenSaverUpdater.plist
+#
+# but the screen savers' Settings panels, when changing the update frequency,
+# write to a sandboxed, but not by-host, plist file:
+#
+#   Library/Containers/com.apple.ScreenSaver.Engine.legacyScreenSaver/Data/\
+#   Library/Preferences/org.jwz.xscreensaver.XScreenSaverUpdater.plist
+#
+# XScreenSaverView checkForUpdates has a kludge to work around that.
+#
+#
+# "make show_prefs" lists both sets of preferences of each saver.
+#
+# "make reset_prefs" sets both sets of Preferences to my preferred
+# values for debugging.
 #
 show_prefs::
 	@cd build/Debug ;						      \
+	UUID=`/usr/sbin/system_profiler SPHardwareDataType |		      \
+           sed -n 's/^ *Hardware UUID: *//p'` ;				      \
+	DOM="org.jwz.xscreensaver" ;					      \
+	CNT="$$HOME/Library/Containers" ;				      \
+	CNT="$$CNT/com.apple.ScreenSaver.Engine.legacyScreenSaver" ;	      \
+	CN1="$$CNT/Data/Library/Preferences/$$DOM" ;			      \
+	CN2="$$CNT/Data/Library/Preferences/ByHost/$$DOM" ;		      \
+	TMP=/tmp/$$.plist ;						      \
 	for f in *.saver ; do						      \
 	  f=`echo "$$f" | sed 's/\..*//'` ;				      \
 	  echo "########################## $$f" ;			      \
+	  defaults -currentHost read "$$f" 2>&- ;			      \
+	  f2="$$CN2.$$f.$$UUID.plist" ;					      \
+	  if [ -f "$$f2" ] ; then					      \
+	    cp "$$f2" "$$TMP" ;						      \
+	    defaults read "$$TMP" ;					      \
+	  fi ;								      \
+	done ;								      \
+									      \
+	for f in Apple2 Phosphor ; do					      \
+	  echo "########################## $$f app" ;			      \
 	  defaults -currentHost read org.jwz.xscreensaver."$$f" 2>&- ;	      \
 	done ;								      \
-	for f in Apple2 Phosphor updater ; do				      \
-	  echo "########################## $$f" ;			      \
+	for f in XScreenSaverUpdater ; do				      \
+	  echo "########################## $$f app" ;			      \
 	  defaults read org.jwz.xscreensaver."$$f" 2>&- ;		      \
-	done
+	  f2="$$CN1.$$f.plist" ;					      \
+	  if [ -f "$$f2" ] ; then					      \
+	    cp "$$f2" "$$TMP" ;						      \
+	    defaults read "$$TMP" ;					      \
+	  fi ;								      \
+	done ;								      \
+	rm "$$TMP"
 
 reset_prefs::
 	@cd build/Debug ;						      \
-	W1='defaults' ;							      \
-	W2="$$W1 -currentHost write" ;					      \
-	img='~/Pictures/Screensaver' ;					      \
+	IMG='~/Pictures/Screensaver' ;					      \
+	UUID=`/usr/sbin/system_profiler SPHardwareDataType |		      \
+           sed -n 's/^ *Hardware UUID: *//p'` ;				      \
+	DOM="org.jwz.xscreensaver" ;					      \
+	LIB="$$HOME/Library/Preferences/ByHost/$$DOM" ;			      \
+	CNT="$$HOME/Library/Containers" ;				      \
+	CNT="$$CNT/com.apple.ScreenSaver.Engine.legacyScreenSaver" ;	      \
+	CN1="$$CNT/Data/Library/Preferences/$$DOM" ;			      \
+	CN2="$$CNT/Data/Library/Preferences/ByHost/$$DOM" ;		      \
+									      \
+	function ddelete() {						      \
+	  name="$$1" ;							      \
+	  rm -f "$$HOME/Library/Preferences/$$DOM.$$name.plist"		      \
+	        "$$LIB.$$name.$$UUID.plist"				      \
+	        "$$CN1.$$name.plist"					      \
+	        "$$CN2.$$name.$$UUID.plist" ;				      \
+	} ;								      \
+									      \
+	function dwrite() {						      \
+	  name="$$1" ;							      \
+	  shift ;							      \
+	  F1="$$LIB.$$name.$$UUID.plist" ;				      \
+	  F2="$$CN2.$$name.$$UUID.plist" ;				      \
+	  if [ -f "$$F2" ]; then mv "$$F2" "$$F1" ; fi ;		      \
+	  defaults -currentHost write "$$DOM.$$name" "$$@" ;		      \
+	  cp -p "$$F1" "$$F2" ;						      \
+	} ;								      \
+									      \
 	for f in *.saver ; do						      \
 	  name=`echo "$$f" | sed 's/\..*//'` ;				      \
+	  if [ "$$name" = RandomXScreenSaver ]; then continue ; fi ;	      \
 	  echo "########################## $$name" ;			      \
-	  domain="org.jwz.xscreensaver" ;				      \
-	  dd="$$domain.$$name" ;					      \
-	  $$W1 -currentHost delete "$$dd" 2>&- ;			      \
-	  $$W2 "$$dd" doFPS -bool true ;				      \
+	  ddelete $$name ;						      \
+	  dwrite $$name doFPS -bool true ;				      \
 	  if [ -f $$f/Contents/Resources/xscreensaver-text ] ; then	      \
-	    $$W2 "$$dd" textMode url ;					      \
+	    dwrite $$name textMode url ;				      \
 	  fi ;								      \
 	  if [ -f $$f/Contents/Resources/xscreensaver-getimage-file ] ; then  \
-	    $$W2 "$$dd" chooseRandomImages -bool true ;			      \
-	    $$W2 "$$dd" grabDesktopImages -bool false ;			      \
-	    $$W2 "$$dd" imageDirectory "$$img" ;       			      \
-	  fi ;								      \
-	  if ( strings "$$f/Contents/MacOS/$$name" |			      \
-		grep NSOpenGLContext >/dev/null ) ; then		      \
-	    $$W2 "$$dd" multiSample -bool true ;			      \
+	    dwrite $$name chooseRandomImages -bool true ;		      \
+	    dwrite $$name grabDesktopImages -bool false ;		      \
+	    dwrite $$name imageDirectory "$$IMG" ;       		      \
 	  fi ;								      \
 	done ;								      \
 									      \
-	$$W1 delete "$$domain.Apple2" 2>&- ;				      \
-	$$W1 delete "$$domain.Phosphor" 2>&- ;				      \
-	$$W1 delete "$$domain.updater" 2>&- ;				      \
-	$$W1 write  "$$domain.updater" SUScheduledCheckIntervalKey 86400;     \
-									      \
-	$$W2 "$$domain.BoxFit" grab -bool true ;			      \
-	$$W2 "$$domain.FlipFlop" textured -bool true ;			      \
-	$$W2 "$$domain.GLSlideshow" titles -bool true ;			      \
-	$$W2 "$$domain.Photopile" titles -bool true ;			      \
-	$$W2 "$$domain.SkyTentacles" mode cel ;				      \
-	$$W2 "$$domain.Sonar" ping					      \
+	dwrite "Apple2"       mode basic ;				      \
+	dwrite "BoxFit"       grab -bool true ;				      \
+	dwrite "FlipFlop"     textured -bool true ;			      \
+	dwrite "GLSlideshow"  titles -bool true ;			      \
+	dwrite "MapScroller"  mapLevel 18 ;				      \
+	dwrite "MapScroller"  origin "37.7710,-122.4126";		      \
+	dwrite "Photopile"    titles -bool true ;			      \
+	dwrite "SkyTentacles" mode cel ;				      \
+	dwrite "Sonar" ping						      \
 	  '/etc/hosts,$$HOME/.ssh/known_hosts,$$HOME/.ssh/known_hosts2' ;     \
-	$$W2 "$$domain.XMatrix" matrixFont small ;			      \
-	$$W2 "$$domain.XMatrix" textMode literal ;			      \
-	$$W2 "$$domain.XMatrix" textLiteral "MONKEY BUTTER" ;		      \
+	dwrite "XMatrix" matrixFont small ;				      \
+	dwrite "XMatrix" textMode literal ;				      \
+	dwrite "XMatrix" textLiteral "MONKEY BUTTER" ;			      \
+									      \
+	name="XScreenSaverUpdater" ;					      \
+	echo "########################## $$name" ;			      \
+	defaults delete "$$DOM.$$name" ;				      \
+	defaults write "$$DOM.$$name" SUScheduledCheckInterval -string 86400 ;\
+	cp -p "$$HOME/Library/Preferences/$$DOM.$$name.plist"		      \
+	      "$$CN1.$$name.plist" ;					      \
 
-# defaults -currentHost write org.jwz.xscreensaver.FontGlide debugMetrics -bool true
-# defaults -currentHost write org.jwz.xscreensaver.StarWars debug -bool true
-# defaults -currentHost write org.jwz.xscreensaver.StarWars textMode file
-# defaults -currentHost write org.jwz.xscreensaver.StarWars textFile ~/src/xscreensaver/hacks/glx/zalgo.txt
+
+# log stream --debug --pred 'process contains[cd] "saver"'

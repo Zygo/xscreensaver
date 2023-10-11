@@ -69,6 +69,11 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.08	* macOS: Worked around a macOS 14.0 bug where savers would continue
+          running invisibly in the background after un-blanking.
+	* macOS: Upgraded Sparkle (the "Check for Updates" library) for
+	  macOS 14.0 compatibility.
+
 6.07	* New hacks, `droste', `skulloop', `papercube' and `cubocteversion'.
 	* `xscreensaver-settings' was sometimes turning off the DPMS checkbox.
 	* Log pid of caller of `deactivate' command, to give a hint about who

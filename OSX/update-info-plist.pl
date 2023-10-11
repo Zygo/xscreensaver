@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.57 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.58 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -233,6 +233,18 @@ sub update_saver_xml($$) {
   # NSXMLParser doesn't seem to work properly on Latin1 XML documents,
   # so we convert these to UTF8 when embedding them in the .saver bundle.
   $body =~ s@encoding="ISO-8859-1"@encoding="UTF-8"@gsi;
+
+  # Make sure "xscreensaver-text" is included if and only if the XML 
+  # contains "<xscreensaver-text>".
+  #
+  my $text_p  = ($body =~ m/<xscreensaver-text/s);
+  my $image_p = ($body =~ m/<xscreensaver-image/s);
+  my $textf   = "$app_dir/Contents/Resources/xscreensaver-text";
+  my $imagef  = "$app_dir/Contents/Resources/xscreensaver-getimage-file";
+  error ($text_p ? "$textf does not exist" : "$textf should not exist")
+    if (!!$text_p != !!(-f $textf));
+  error ($image_p ? "$imagef does not exist" : "$imagef should not exist")
+    if (!!$image_p != !!(-f $imagef));
 
   if ($obody eq $body && $was_compressed_p) {
     print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);

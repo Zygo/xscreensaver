@@ -1,4 +1,4 @@
-/* vigilance, Copyright (c) 2017-2018 Jamie Zawinski <jwz@jwz.org>
+/* vigilance, Copyright © 2017-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -986,9 +986,7 @@ draw_ground (ModeInfo *mi, GLfloat color[4])
       GLfloat fog_color[4] = { 0, 0, 0, 1 };
 
       glLineWidth (2);
-# ifndef GL_LINE_SMOOTH_BROKEN
       glEnable (GL_LINE_SMOOTH);
-# endif
       glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
       glEnable (GL_BLEND);
@@ -1031,10 +1029,8 @@ draw_ground (ModeInfo *mi, GLfloat color[4])
       glRotatef (90, 1, 0, 0);
     }
 
-# ifndef GL_LINE_SMOOTH_BROKEN
   if (!wire)
     glDisable (GL_LINE_SMOOTH);
-# endif
 
   glPopMatrix();
 

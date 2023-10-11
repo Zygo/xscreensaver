@@ -279,6 +279,13 @@ _init_colors(struct state *st)
     /* 28 lpurple */  {0x9999,0x9999,0xFFFF},
     /* 29 pink */     {0xFFFF,0x9999,0xFFFF}};
 
+  {
+    int i;
+    memset (st->colors, 0, sizeof(st->colors));
+    for (i = 0; i < countof(st->colors); i++)
+      st->colors[i].pixel = BlackPixelOfScreen (st->xgwa.screen);
+  }
+
   if (st->d3d) {
     st->shades = (st->d3d==D3D_TILED) ? 5 : st->lwid/2+1;
     st->ncolors=4+random()%4;

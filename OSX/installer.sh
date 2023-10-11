@@ -1,5 +1,5 @@
 #!/bin/bash
-# XScreenSaver, Copyright © 2013-2022 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2023 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,7 @@
 #set -x
 
 DEBUG=0
-REQUIRED_SPACE=220	# MB. Highly approximate.
+REQUIRED_SPACE=360	# MB. Highly approximate; updated 6.07.
 
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:$PATH"
 
@@ -185,6 +185,19 @@ if [ "$V0" -ge 11 -o \
 fi
 
 
+# As of macOS 14.0, legacyScreenSaver remains running even while the screen
+# is unblanked.  It might have already loaded saver bundles from a previous
+# installation of XScreenSaver, so we must kill it to get it to load the
+# new versions.
+# 
+pid=`ps -Ac -o pid,comm | grep legacyScreenSaver | \
+     sed -e 's/^ *//' -e 's/ .*//'`
+if [ ! -z "$pid" ]; then
+  kill $pid   # Sometimes it will not die.
+  ( sleep 5 ; kill -9 $pid ) &
+fi
+
+
 # Launch the updater so that the user gets these dialogs now, instead of them
 # happening the first time a screen saver activates, and that screen saver
 # failing to run and showing up black.  (I'm not sure if this is working.)
@@ -194,6 +207,16 @@ fi
 #
 su "$USER" -c "open \"$DST1/$UPDATER_DST\"" &
 sleep 5
+
+
+# If System Preferences is running, it might have old saver bundles loaded
+# into it.  Kill it so we pick up the new ones.
+#
+pid=`ps -Ac -o pid,comm | grep 'System Settings' | \
+     sed -e 's/^ *//' -e 's/ .*//'`
+if [ ! -z "$pid" ]; then
+  kill $pid
+fi
 
 
 # Launch System Preferences with the "Desktop" pane selected.  In the olden

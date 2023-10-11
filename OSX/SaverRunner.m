@@ -34,6 +34,7 @@
 #import "SaverListController.h"
 #import "XScreenSaverGLView.h"
 #import "yarandom.h"
+#import "nslog.h"
 
 #ifdef HAVE_IPHONE
 
@@ -469,7 +470,6 @@
   [self aboutOff:TRUE];  // It does goofy things if we rotate while it's up
 
 # if 1
-  NSLog(@"## orient");
   [CATransaction commit];
   [_saverView orientationChanged];
   return;
@@ -479,17 +479,12 @@
   [coordinator animateAlongsideTransition:^
                (id <UIViewControllerTransitionCoordinatorContext> context) {
     // This executes repeatedly during the rotation.
-NSLog(@"## animate %@", context);
   } completion:^(id <UIViewControllerTransitionCoordinatorContext> context) {
-NSLog(@"## completion %@", context);
     // This executes once when the rotation has finished.
     [CATransaction commit];
     [_saverView orientationChanged];
   }];
   // No code goes here, as it would execute before the above completes.
-
-  NSLog(@"## queued = %d", queued);
-
 }
 
 /* Not called
@@ -1131,9 +1126,12 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
                      stringByDeletingLastPathComponent]];
 
   // Finally, look in standard MacOS screensaver directories.
-//  [dirs addObject: @"~/Library/Screen Savers"];
-//  [dirs addObject: @"/Library/Screen Savers"];
-//  [dirs addObject: @"/System/Library/Screen Savers"];
+//  [dirs addObject: [@"~/Library/Screen Savers" 
+//                     stringByExpandingTildeInPath]];
+//  [dirs addObject: [@"/Library/Screen Savers"
+//                     stringByExpandingTildeInPath]];
+//  [dirs addObject: [@"/System/Library/Screen Savers"
+//                     stringByExpandingTildeInPath]];
 
 # else  // HAVE_IPHONE
 
@@ -1605,7 +1603,7 @@ FAIL:
 
   // If there's only one saver, run that.
   if (!forced && [saverNames count] == 1)
-    forced = [[saverNames allValues] objectAtIndex:0];
+    forced = [[saverNames allKeys] objectAtIndex:0];
 
 # ifdef HAVE_IPHONE
   NSString *prev = [prefs stringForKey:@"selectedSaverName"];

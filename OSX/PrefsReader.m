@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2019 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,7 @@
 #import "PrefsReader.h"
 #import "Updater.h"
 #import "screenhackI.h"
+#import "nslog.h"
 
 #ifndef HAVE_IPHONE
 
@@ -34,9 +35,10 @@
    routines directly, while presenting the same API as NSUserDefaults.
 
    We need this so that global prefs will go into the file
-   Library/Preferences/org.jwz.xscreensaver.updater.plist instead of into
-   Library/Preferences/ByHost/org.jwz.xscreensaver.Maze.XXXXX.plist
-   with the per-saver prefs.
+   Library/Preferences/org.jwz.xscreensaver.XScreenSaverUpdater.plist
+   instead of into
+   Library/Containers/com.apple.ScreenSaver.Engine.legacyScreenSaver/Data/\
+   Library/Preferences/ByHost/org.jwz.xscreensaver.Maze.XXXXXXXXXXXX.plist
 
    The ScreenSaverDefaults class *almost* does this, but it always writes
    into the ByHost subdirectory, which means it's not readable by an app
@@ -473,11 +475,11 @@
       NSLog(@"warning: no preference \"%s\" [string]", name);
     return NULL;
   }
-  if (! [o isKindOfClass:[NSString class]]) {
-    // Yeah, we do this sometimes. It's fine.
-    // NSLog(@"asked for %s as a string, but it is a %@", name, [o class]);
+
+  if ([o isKindOfClass:[NSNumber class]])
     o = [(NSNumber *) o stringValue];
-  }
+  else if ([o isKindOfClass:[NSDate class]])
+    o = [(NSDate *) o description];
 
   NSString *os = (NSString *) o;
   char *result = strdup ([os cStringUsingEncoding:NSUTF8StringEncoding]);

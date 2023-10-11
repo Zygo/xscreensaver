@@ -47,7 +47,7 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.191 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.192 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2022" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
@@ -106,8 +106,8 @@ my @search_methods = (
                       # So let's try Bing instead. No rate limiting yet!
                       #
                        13, "bingphotos",    \&pick_from_bing_image_photos,
-                       11, "bingimgs",      \&pick_from_bing_images,
-                       10, "bingnums",      \&pick_from_bing_image_numbers,
+                       10, "bingimgs",      \&pick_from_bing_images,
+                        9, "bingnums",      \&pick_from_bing_image_numbers,
 
                        20, "flickr_recent", \&pick_from_flickr_recent,
                        15, "flickr_random", \&pick_from_flickr_random,
@@ -128,13 +128,9 @@ my @search_methods = (
                      #  0, "twitpic",       \&pick_from_twitpic_images,
                      #  0, "twitter",       \&pick_from_twitter_images,
 
-                     # This is a cute way to search for a certain webcams.
-                     # Not included in default methods, since these images
-                     # aren't terribly interesting by themselves.
-                     # See also "SurveillanceSaver".
-                     # Stopped working some time in before 2022
-                     #
-                     #  0, "securitycam",   \&pick_from_security_camera,
+                     # Images from random unsecured surveillance cameras,
+                     # via insecam.org.
+                        2, "securitycam",   \&pick_from_security_camera,
 
                      # Nonfunctional as of June 2011.
                      #  0, "altavista",     \&pick_from_alta_vista_random_link,
@@ -1306,53 +1302,139 @@ sub pick_image_from_pages($$$$@) {
 
 ############################################################################
 #
-# Pick images from Aptix security cameras
-# Cribbed liberally from google image search code.
-# By Jason Sullivan <jasonsul@us.ibm.com>
+# Pick security camera images from the insecam website.
+# Grab a random page from the "byrating" and the "bynew" list of pages.
+# Push all the image urls into the cache array (after converting to single
+# image if necessary), then return image URLs until the cache is empty.
+# By Jason Sullivan <jason0x21@gmail.com>
 #
 ############################################################################
 
-# Stopped working some time in before 2022
-#my $aptix_images_url = ("http://www.google.com/search" .
-#                        "?q=inurl:%22jpg/image.jpg%3Fr%3D%22");
-#
-## securitycam
-#sub pick_from_security_camera($) {
-#  my ($timeout) = @_;
-#
-#  my $page = (int(rand(9)) + 1);
-#  my $num = 20;					# 20 images per page
-#  my $search_url = $aptix_images_url;
-#
-#  if ($page > 1) {
-#    $search_url .= "&start=" . $page*$num;	# page number
-#    $search_url .= "&num="   . $num;		#images per page
-#  }
-#
-#  my ($search_hit_count, @subpages) =
-#    pick_from_search_engine ($timeout, $search_url, '');
-#
-#  my @candidates = ();
-#  my %referers;
-#  foreach my $u (@subpages) {
-#    next if ($u =~ m@[/.]google\.com\b@i); # skip google builtins (most links)
-#    next unless ($u =~ m@jpg/image.jpg\?r=@i);    #  All pics contain this
-#
-#    LOG ($verbose_filter, "  candidate: $u");
-#    push @candidates, $u;
-#    $referers{$u} = $u;
-#    }
-#
-#  @candidates = depoison (@candidates);
-#  return () if ($#candidates < 0);
-#  my $i = int(rand($#candidates+1));
-#  my $img = $candidates[$i];
-#  my $ref = $referers{$img};
-#
-#  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
-#  return ($ref, $img);
-#}
+my @insecam_urls = ("http://insecam.org/en/byrating/", "http://insecam.org/en/bynew/");
+my @insecam_cache = ();
+my @insecam_match_regex = map { qr{$_} } (
+  '(^.*\/webcapture\.jpg).*',
+  '(^.*cgi-bin\/viewer\/video\.jpg).*',
+  '(^.*cgi-bin)\/faststream\.jpg.*',
+  '(^.*\/GetOneShot).*',
+  '(^.*\/cgi-bin\/camera).*',
+  '(^.*\/cam_1)\.cgi.*',
+  '(^.*)\/mjpg\/video\.mjpg',
+  '(^.*\/jpg\/image\.jpg).*',
+  '(^.*\/jpgmulreq\/1\/image\.jpg.*)',
+  '(^.*\/onvif\/snapshot\/.*)',
+  '(^.*\/snap.jpg).*',
+  '(^.*\/SnapshotJPEG\?Resolution=\d+x\d+)\&.*',
+  '(^.*\/asp)\/video\.cgi.*',
+  '(^.*\/cgi-bin\/snapshot\.cgi\?chn=\d+),*',
+  '(^.*\/img)\/video\.mjpeg.*',
+  '(^.*)\/videostream\.cgi.*',
+  '(^.*\/oneshotimage1).*',
+  '(^.*)\/mjpeg\.cgi.*',
+  '(^.*\/__live\.jpg.*)',
+  '(^.*\/out\.jpg).*',
+  '(^.*\/cgi-bin\/CGIProxy\.fcgi\?cmd=snapPicture.*)',
+  '(^.*\/tmpfs\/auto\.jpg.*)',
+  '(^.*\/cgi-bin\/snapshot\.cgi.*)',
+  '(^.*)\/GetData.cgi\?.*',
+  '(^.*\/IMAGE\.JPG.*)',
+  '(^.*\/nph-jpeg\.cgi.*)',
+  '(^.*\/axis-cgi)/mjpg/video\.cgi.*',
+  '(^.*\/image\/Index.*)',
+  '(^.*)\/image\?speed.*',
+  '(^.*\/shot\.jpg\?rnd=.*)',
+  '(^.*)\/video\/mjpg\.cgi.*',
+  '(^.*\/\?action=)stream.*',
+  );
+my @insecam_match_replace = (
+  "?command=snap&channel=1",
+  "",
+  "/image.jpg",
+  "",
+  "",
+  ".jpg",
+  "/jpg/image.jpg",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "/image.cgi",
+  "/image.cgi",
+  "/snapshot.cgi",
+  "/snapshot.cgi",
+  "",
+  "image/jpeg.cgi",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "/Webcam.jpg",
+  "",
+  "",
+  "/jpg/image.cgi",
+  "",
+  "/oneshotimage.jpg",
+  "",
+  "/image/jpeg.cgi",
+  "SKIP",
+  );
 
+# securitycam
+sub pick_from_security_camera($) {
+  my ($timeout) = @_;
+
+  if(scalar(@insecam_cache) == 0) {
+    foreach my $oneURL (@insecam_urls) {
+      my $page = (int(rand(1000)) + 1);
+      my $cam_page_url = $oneURL . "?page=$page";
+    
+      my ( $base, $body ) = get_document ($cam_page_url, undef, $timeout);
+      if (!$base || !$body) {
+        $body = undef;
+        return;
+      }
+      
+      # Can't use pick_image_from_body because it wants actual images and we
+      # kinda have to massage the links here depending on the camera referenced.
+      # Most of this is just trimming off the ends.
+      foreach my $s (split (/\n/, $body)) {
+        if($s =~ /img\s+id=".*"\s+class=".*"\s+src="(.*)"/i) {
+          my($full) = $1;
+          my($match) = 0;
+          $full =~ s/\?COUNTER//;
+          $full =~ s/\?r=COUNTER//;
+          $full =~ s/(\&amp)?\;COUNTER//;
+          $full =~ s/(\&amp)?\;r(and)?=COUNTER//;
+          if($full =~ /COUNTER/) {
+            LOG($verbose_warnings, "Webcam source line unrecognized! $full");
+          }
+          LOG ($verbose_filter, "FOUND URL $full");
+          for(my $i = 0; $i < scalar(@insecam_match_regex); $i++) {
+            if($full =~ m{$insecam_match_regex[$i]}) {
+              if($insecam_match_replace[$i] ne "SKIP") {
+                push(@insecam_cache,$1 . $insecam_match_replace[$i]);
+              }
+              $match = 1;
+              last;
+            }
+          }
+          if($match == 0) {
+            LOG($verbose_warnings, "Webcam conversion unrecognized! $full");
+          }
+        }
+      }
+    }
+  }
+    
+  if (scalar(@insecam_cache) != 0) {
+    my $img = shift(@insecam_cache);
+    LOG ($verbose_load, "picked image $img");
+    return ($img, $img);
+  }
+  else {  return ();  }
+}
 
 ############################################################################
 #

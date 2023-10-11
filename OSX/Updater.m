@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2013-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2013-2023 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,42 +12,50 @@
  * via Sparkle.framework.
  *
  * Created: 7-Dec-2013
- *
- * NOTE: This does not work with Sparkle 1.5b6 -- it requires the "HEAD"
- *       version 4-Dec-2013 or later.
  */
 
 #define IN_UPDATER
 
-#pragma clang diagnostic ignored "-Wquoted-include-in-framework-header"
-
 #import "Updater.h"
-#import "Sparkle/SUUpdater.h"
+#import "Sparkle/SPUUpdater.h"
+#import "Sparkle/SPUStandardUpdaterController.h"
+#import "nslog.h"
 
-@implementation XScreenSaverUpdater : NSObject
+@implementation XScreenSaverUpdater
+{
+  NSTimer *timer;
+  SPUStandardUpdaterController *updater;
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
   NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
   [defs registerDefaults:UPDATER_DEFAULTS];
 
-  // If it's not time to run the updater, then bail immediately.
-  // I'm not sure why this is necessary, but Sparkle seems to be
-  // checking too often.
-  //
-  if (! [self timeToCheck])
+  updater = [[[SPUStandardUpdaterController alloc]
+               initWithUpdaterDelegate: self
+                    userDriverDelegate: self]
+              retain];
+
+  if (! [self timeToCheck]) {
+    NSLog (@"updater: not checking");
     [[NSApplication sharedApplication] terminate:self];
+  }
 
-  // If the screen saver is not running, then launch the updater now.
-  // Otherwise, wait until the screen saver deactivates, and then do
-  // it.  This is because if the updater tries to pop up a dialog box
-  // while the screen saver is active, everything goes to hell and it
-  // never shows up.  You'd expect the dialog to just map below the
-  // screen saver window, but no.
-
+  // On macOS 10.15, if we tried to pop up the Sparkle dialog while the
+  // screen was blanked, the dialog never showed up.  So on such systems,
+  // we wait until the screen becomes un-blanked before running the updater.
+  //
+  // On macOS 14.0, it works just fine to pop up the dialog while the screen
+  // is blanked: it becomes visible once the screen un-blanks, as you'd
+  // expect.  Which is good, because we also have no way of knowing whether
+  // the screen is blanked.
+  //
   if (! [self screenSaverActive]) {
+    NSLog (@"updater: running immediately");
     [self runUpdater];
   } else {
+    NSLog (@"updater: waiting for screen to unblank");
     // Run the updater when the "screensaver.didstop" notification arrives.
     [[NSDistributedNotificationCenter defaultCenter]
       addObserver:self
@@ -65,20 +73,59 @@
 }
 
 
+// This is mostly informational now, since XScreenSaverView checkForUpdates
+// also does this test, and only invokes us if it is time.
+//
 - (BOOL) timeToCheck
 {
   NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
-  NSTimeInterval interval = [defs doubleForKey:@SUScheduledCheckIntervalKey];
-  NSDate *last = [defs objectForKey:@SULastCheckTimeKey];
-  if (!interval || !last)
+
+  // This must always be small so we do an update each-ish time we're launched.
+  // We check it here but so does the Sparkle bundle.
+  NSTimeInterval interval = 60 * 60 * 24;
+  [defs setObject: [NSNumber numberWithInt: interval]
+           forKey: @SUScheduledCheckIntervalKey];
+  updater.updater.updateCheckInterval = interval;
+
+  NSDate *last_check = [defs objectForKey:@SULastCheckTimeKey];
+  if ([last_check isKindOfClass:[NSString class]]) {
+    NSString *s = (NSString *) last_check;
+    if (!s.length) {
+      last_check = nil;
+    } else {
+      NSDateFormatter *f = [[NSDateFormatter alloc] init];
+      [f setDateFormat:@"yyyy-MM-dd HH:mm:ss ZZZZZ"];
+      [f setTimeZone: [NSTimeZone timeZoneForSecondsFromGMT: 0]];
+      last_check = [f dateFromString: s];
+    }
+  }
+
+  if (!last_check) {
+    NSLog (@"updater: never checked for updates (interval %d days)",
+           (int) (interval / (60 * 60 * 24)));
     return YES;
-  NSTimeInterval since = [[NSDate date] timeIntervalSinceDate:last];
-  return (since > interval);
+  } else {
+    NSTimeInterval elapsed = -[last_check timeIntervalSinceNow];
+    if (elapsed < interval) {
+      NSLog (@"updater: last checked for updates %d days ago, skipping check"
+             " (interval %d days)",
+             (int) (elapsed / (60 * 60 * 24)),
+             (int) (interval / (60 * 60 * 24)));
+      return NO;
+    } else {
+      NSLog (@"updater: last checked for updates %d days ago"
+             " (interval %d days)",
+             (int) (elapsed / (60 * 60 * 24)),
+             (int) (interval / (60 * 60 * 24)));
+      return YES;
+    }
+  }
 }
 
 
 // Whether ScreenSaverEngine is currently running, meaning screen is blanked.
 // There's no easy way to determine this other than scanning the process table.
+// This always returns false as of macOS 14.0.
 //
 - (BOOL) screenSaverActive
 {
@@ -111,14 +158,17 @@
 
 - (void) saverStoppedNotification:(NSNotification *)note
 {
+  NSLog (@"updater: screen unblanked");
   [self runUpdater];
 }
 
 
 - (void) pollSaverTermination:(NSTimer *)t
 {
-  if (! [self screenSaverActive])
+  if (! [self screenSaverActive]) {
+    NSLog (@"updater: screen unblanked, polled");
     [self runUpdater];
+  }
 }
 
 
@@ -129,27 +179,60 @@
     timer = nil;
   }
 
-  SUUpdater *updater = [SUUpdater updaterForBundle:
-                                    [NSBundle bundleForClass:[self class]]];
-  [updater setDelegate:self];
-
   // Launch the updater thread.
-  [updater checkForUpdatesInBackground];
+  [updater.updater checkForUpdatesInBackground];
 
   // Now we need to wait for the Sparkle thread to finish before we can
   // exit, so just poll waiting for it.
   //
-  [NSTimer scheduledTimerWithTimeInterval:1
-           target:self
-           selector:@selector(pollUpdaterTermination:)
-           userInfo:updater
-           repeats:YES];
+  NSLog (@"updater: waiting for sparkle");
+  [NSTimer scheduledTimerWithTimeInterval: 1
+                                   target: self
+                                 selector: @selector(pollUpdaterTermination:)
+                                 userInfo: nil
+                                  repeats: YES];
 }
 
 
-// Delegate method that lets us append extra info to the system-info URL.
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
+{
+  return YES;
+}
+
+- (void) pollUpdaterTermination:(NSTimer *)t
+{
+  if ([updater.updater sessionInProgress]) {
+    // NSLog (@"updater: waiting for sparkle");
+  } else {
+    NSLog (@"updater: sparkle finished (polled)");
+    [[NSApplication sharedApplication] terminate:self];
+  }
+}
+
+- (void) updater: (SPUUpdater *) updater
+         didFinishUpdateCycleForUpdateCheck: (SPUUpdateCheck) uc
+           error: (NSError *) err
+{
+  if (err)
+    NSLog (@"updater: finished with error: %@", err);
+  else
+    NSLog (@"updater: finished");
+  [[NSApplication sharedApplication] terminate:self];
+}
+
+
 //
-- (NSArray *) feedParametersForUpdater:(SUUpdater *)updater
+// Sparkle configuration
+//
+
+- (BOOL) updaterShouldRelaunchApplication: (SPUStandardUpdaterController *) u
+{
+  return NO;  // No need for Sparkle to re-launch XScreenSaverUpdater
+}
+
+// Append extra info to the system-info URL.
+//
+- (NSArray *) feedParametersForUpdater:(SPUStandardUpdaterController *) u
                   sendingSystemProfile:(BOOL)sending
 {
   // Get the name of the saver that invoked us, and include that in the
@@ -170,17 +253,82 @@
 }
 
 
-- (void) pollUpdaterTermination:(NSTimer *)t
+// Just add some more logging to various delegate hooks.
+
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         didFinishLoadingAppcast: (SUAppcast *) appcast
 {
-  SUUpdater *updater = [t userInfo];
-  if (![updater updateInProgress])
-    [[NSApplication sharedApplication] terminate:self];
+  NSLog (@"updater: sparkle finished loading %@", appcast);
 }
 
-
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
+- (BOOL) updaterShouldShowUpdateAlertForScheduledUpdate:
+         (SPUStandardUpdaterController *) u
+         forItem: (SUAppcastItem *) item
 {
+  NSLog (@"updater: update alert: %@", item);
   return YES;
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         didDismissUpdateAlertPermanently: (BOOL) permanently
+         forItem: (SUAppcastItem *) item
+{
+  NSLog (@"updater: dismissed: %@", item);
+}
+
+- (void) updaterDidNotFindUpdate:(SPUStandardUpdaterController *) u
+{
+  NSLog (@"updater: no updates");
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         willDownloadUpdate: (SUAppcastItem *) item
+         withRequest: (NSMutableURLRequest *) request
+{
+  NSLog (@"updater: downloading %@", item);
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         didDownloadUpdate: (SUAppcastItem *) item
+{
+  NSLog (@"updater: downloaded %@", item);
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         failedToDownloadUpdate: (SUAppcastItem *) item
+         error: (NSError *) error
+{
+  NSLog (@"updater: download failed: %@ %@", item, error);
+}
+
+- (void) userDidCancelDownload: (SPUStandardUpdaterController *) u
+{
+  NSLog (@"updater: download cancelled");
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         willExtractUpdate: (SUAppcastItem *) item
+{
+  NSLog (@"updater: extracting %@", item);
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         didExtractUpdate: (SUAppcastItem *) item
+{
+  NSLog (@"updater: extracted %@", item);
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         willInstallUpdate: (SUAppcastItem *) item
+{
+  NSLog (@"updater: installing %@", item);
+}
+
+- (void) updater: (SPUStandardUpdaterController *) u
+         didAbortWithError: (NSError *) error
+{
+  NSLog (@"updater: failed: %@", error);
 }
 
 @end

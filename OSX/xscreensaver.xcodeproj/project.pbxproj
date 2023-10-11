@@ -2775,6 +2775,7 @@
 		AF75110B1782B5B900380EA1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		AF75110C1782B5B900380EA1 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
 		AF7511151782B64300380EA1 /* kaleidocycle.c in Sources */ = {isa = PBXBuildFile; fileRef = AF7511141782B64300380EA1 /* kaleidocycle.c */; };
+		AF7602542A9FBD7800460454 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF7776EA09B63ABF00EA3033 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF77770209B63B3900EA3033 /* phosphor.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258F30988A469000655EE /* phosphor.xml */; };
 		AF77770409B63B5F00EA3033 /* phosphor.c in Sources */ = {isa = PBXBuildFile; fileRef = AF77770309B63B5F00EA3033 /* phosphor.c */; };
@@ -8864,7 +8865,6 @@
 		AF3582211433318500E09C51 /* tronbit.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = tronbit.xml; sourceTree = "<group>"; };
 		AF35E8A00E63823600691F2F /* Jigsaw.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Jigsaw.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF35EB250E6382BA00691F2F /* jigsaw.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = jigsaw.c; path = hacks/glx/jigsaw.c; sourceTree = "<group>"; };
-		AF3633F918530DD90086A439 /* sparkle_dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sparkle_dsa_pub.pem; sourceTree = "<group>"; };
 		AF3633FA18530DD90086A439 /* Updater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Updater.h; sourceTree = "<group>"; };
 		AF3633FB18530DD90086A439 /* Updater.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Updater.m; sourceTree = "<group>"; };
 		AF3633FE18530DFF0086A439 /* Updater.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Updater.plist; sourceTree = "<group>"; };
@@ -14301,7 +14301,6 @@
 		AF1AD9E818500FA000932759 /* Updater */ = {
 			isa = PBXGroup;
 			children = (
-				AF3633F918530DD90086A439 /* sparkle_dsa_pub.pem */,
 				AF3633FA18530DD90086A439 /* Updater.h */,
 				AF3633FB18530DD90086A439 /* Updater.m */,
 				AF3633FE18530DFF0086A439 /* Updater.plist */,
@@ -15206,7 +15205,6 @@
 				AF08399209930B6B00277BE9 /* Resources */,
 				AF08399409930B6B00277BE9 /* Sources */,
 				AF08399709930B6B00277BE9 /* Frameworks */,
-				AF08399E09930B6B00277BE9 /* Rez */,
 				AFA3D95309C03D9800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15226,7 +15224,6 @@
 				AF083A35099311D700277BE9 /* Resources */,
 				AF083A37099311D700277BE9 /* Sources */,
 				AF083A3D099311D700277BE9 /* Frameworks */,
-				AF083A44099311D700277BE9 /* Rez */,
 				AFA3D95509C03D9C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15246,7 +15243,6 @@
 				AF0BF6D029456B2E000D9473 /* Resources */,
 				AF0BF6D229456B2E000D9473 /* Sources */,
 				AF0BF6D529456B2E000D9473 /* Frameworks */,
-				AF0BF6DD29456B2E000D9473 /* Rez */,
 				AF0BF6DE29456B2E000D9473 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15266,7 +15262,6 @@
 				AF0DC7AE0C4C73F600D76972 /* Resources */,
 				AF0DC7B00C4C73F600D76972 /* Sources */,
 				AF0DC7B40C4C73F600D76972 /* Frameworks */,
-				AF0DC7B80C4C73F600D76972 /* Rez */,
 				AF0DC7B90C4C73F600D76972 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15287,7 +15282,6 @@
 				AF0DCA450C4CBB0D00D76972 /* Resources */,
 				AF0DCA470C4CBB0D00D76972 /* Sources */,
 				AF0DCA4A0C4CBB0D00D76972 /* Frameworks */,
-				AF0DCA510C4CBB0D00D76972 /* Rez */,
 				AF0DCA520C4CBB0D00D76972 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15307,7 +15301,6 @@
 				AF1A17640D6D6EE3008AF328 /* Resources */,
 				AF1A17670D6D6EE3008AF328 /* Sources */,
 				AF1A176A0D6D6EE3008AF328 /* Frameworks */,
-				AF1A176E0D6D6EE3008AF328 /* Rez */,
 				AF1A176F0D6D6EE3008AF328 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15347,7 +15340,6 @@
 				AF1B0FAA1D7AB4740011DBE4 /* Resources */,
 				AF1B0FAC1D7AB4740011DBE4 /* Sources */,
 				AF1B0FAF1D7AB4740011DBE4 /* Frameworks */,
-				AF1B0FB71D7AB4740011DBE4 /* Rez */,
 				AF1B0FB81D7AB4740011DBE4 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15367,7 +15359,6 @@
 				AF2107741FD23BDD00B61EA9 /* Resources */,
 				AF2107761FD23BDD00B61EA9 /* Sources */,
 				AF2107791FD23BDD00B61EA9 /* Frameworks */,
-				AF2107811FD23BDD00B61EA9 /* Rez */,
 				AF2107821FD23BDD00B61EA9 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15387,7 +15378,6 @@
 				AF296A582A5A776D007441BF /* Resources */,
 				AF296A5A2A5A776D007441BF /* Sources */,
 				AF296A5D2A5A776D007441BF /* Frameworks */,
-				AF296A652A5A776D007441BF /* Rez */,
 				AF296A662A5A776D007441BF /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15407,7 +15397,6 @@
 				AF2A634428401496003791B4 /* Resources */,
 				AF2A634628401496003791B4 /* Sources */,
 				AF2A634928401496003791B4 /* Frameworks */,
-				AF2A635128401496003791B4 /* Rez */,
 				AF2A635228401496003791B4 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15427,7 +15416,6 @@
 				AF2D0D28241D7C870001D8B8 /* Resources */,
 				AF2D0D2A241D7C870001D8B8 /* Sources */,
 				AF2D0D2D241D7C870001D8B8 /* Frameworks */,
-				AF2D0D35241D7C870001D8B8 /* Rez */,
 				AF2D0D36241D7C870001D8B8 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15447,7 +15435,6 @@
 				AF32D9E30F3AD0B40080F535 /* Resources */,
 				AF32D9E50F3AD0B40080F535 /* Sources */,
 				AF32D9E80F3AD0B40080F535 /* Frameworks */,
-				AF32D9EF0F3AD0B40080F535 /* Rez */,
 				AF32D9F00F3AD0B40080F535 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15467,7 +15454,6 @@
 				AF3581C21431D47B00E09C51 /* Resources */,
 				AF3581C51431D47B00E09C51 /* Sources */,
 				AF3581C91431D47B00E09C51 /* Frameworks */,
-				AF3581D01431D47B00E09C51 /* Rez */,
 				AF3581D11431D47B00E09C51 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15487,7 +15473,6 @@
 				AF3581FE143330F900E09C51 /* Resources */,
 				AF358202143330F900E09C51 /* Sources */,
 				AF35820A143330F900E09C51 /* Frameworks */,
-				AF358211143330F900E09C51 /* Rez */,
 				AF358212143330F900E09C51 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15507,7 +15492,6 @@
 				AF35E88D0E63823600691F2F /* Resources */,
 				AF35E88F0E63823600691F2F /* Sources */,
 				AF35E8940E63823600691F2F /* Frameworks */,
-				AF35E89B0E63823600691F2F /* Rez */,
 				AF35E89C0E63823600691F2F /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15527,7 +15511,6 @@
 				AF39381D1D0FBD6A00205406 /* Resources */,
 				AF39381F1D0FBD6A00205406 /* Sources */,
 				AF3938221D0FBD6A00205406 /* Frameworks */,
-				AF39382A1D0FBD6A00205406 /* Rez */,
 				AF39382B1D0FBD6A00205406 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15547,7 +15530,6 @@
 				AF39E285198A11F60064A58D /* Resources */,
 				AF39E287198A11F60064A58D /* Sources */,
 				AF39E28A198A11F60064A58D /* Frameworks */,
-				AF39E291198A11F60064A58D /* Rez */,
 				AF39E292198A11F60064A58D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15567,7 +15549,6 @@
 				AF3C71480D624BF50030CC0D /* Resources */,
 				AF3C714A0D624BF50030CC0D /* Sources */,
 				AF3C714D0D624BF50030CC0D /* Frameworks */,
-				AF3C71540D624BF50030CC0D /* Rez */,
 				AF3C71550D624BF50030CC0D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15587,7 +15568,6 @@
 				AF3EC97B2035154C00180A35 /* Resources */,
 				AF3EC97D2035154C00180A35 /* Sources */,
 				AF3EC9802035154C00180A35 /* Frameworks */,
-				AF3EC9882035154C00180A35 /* Rez */,
 				AF3EC9892035154C00180A35 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15607,7 +15587,6 @@
 				AF41E955201D49DB0098E253 /* Resources */,
 				AF41E957201D49DB0098E253 /* Sources */,
 				AF41E95A201D49DB0098E253 /* Frameworks */,
-				AF41E962201D49DB0098E253 /* Rez */,
 				AF41E963201D49DB0098E253 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15627,7 +15606,6 @@
 				AF4363FF241D84CE00966603 /* Resources */,
 				AF436401241D84CE00966603 /* Sources */,
 				AF436404241D84CE00966603 /* Frameworks */,
-				AF43640C241D84CE00966603 /* Rez */,
 				AF43640D241D84CE00966603 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15647,7 +15625,6 @@
 				AF46E9D21CBBA2B300240FBC /* Resources */,
 				AF46E9D41CBBA2B300240FBC /* Sources */,
 				AF46E9D71CBBA2B300240FBC /* Frameworks */,
-				AF46E9DF1CBBA2B300240FBC /* Rez */,
 				AF46E9E01CBBA2B300240FBC /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15667,7 +15644,6 @@
 				AF476FB8099D154F001F091E /* Resources */,
 				AF476FBB099D154F001F091E /* Sources */,
 				AF476FBE099D154F001F091E /* Frameworks */,
-				AF476FC2099D154F001F091E /* Rez */,
 				AFA3D89509C03C4400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15687,7 +15663,6 @@
 				AF476FDD099D1686001F091E /* Resources */,
 				AF476FE0099D1686001F091E /* Sources */,
 				AF476FE3099D1686001F091E /* Frameworks */,
-				AF476FE7099D1686001F091E /* Rez */,
 				AFA3D8E309C03CCA00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15707,7 +15682,6 @@
 				AF47704F099D4385001F091E /* Resources */,
 				AF477051099D4385001F091E /* Sources */,
 				AF477054099D4385001F091E /* Frameworks */,
-				AF477058099D4385001F091E /* Rez */,
 				AFA3D86F09C03BF700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15727,7 +15701,6 @@
 				AF47716C099D4786001F091E /* Resources */,
 				AF47716E099D4786001F091E /* Sources */,
 				AF477171099D4786001F091E /* Frameworks */,
-				AF477175099D4786001F091E /* Rez */,
 				AFA3D86309C03BE200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15747,7 +15720,6 @@
 				AF477182099D4803001F091E /* Resources */,
 				AF477184099D4803001F091E /* Sources */,
 				AF477187099D4803001F091E /* Frameworks */,
-				AF47718B099D4803001F091E /* Rez */,
 				AFA3D8E909C03CD500E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15767,7 +15739,6 @@
 				AF4771AA099D4949001F091E /* Resources */,
 				AF4771AC099D4949001F091E /* Sources */,
 				AF4771AF099D4949001F091E /* Frameworks */,
-				AF4771B3099D4949001F091E /* Rez */,
 				AFA3D8E109C03CC400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15787,7 +15758,6 @@
 				AF4771DE099D4D9A001F091E /* Resources */,
 				AF4771E0099D4D9A001F091E /* Sources */,
 				AF4771E3099D4D9A001F091E /* Frameworks */,
-				AF4771E7099D4D9A001F091E /* Rez */,
 				AFA3D85D09C03BD700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15807,7 +15777,6 @@
 				AF4771F5099D4E63001F091E /* Resources */,
 				AF4771F7099D4E63001F091E /* Sources */,
 				AF4771FA099D4E63001F091E /* Frameworks */,
-				AF4771FE099D4E63001F091E /* Rez */,
 				AFA3D8AF09C03C7300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15827,7 +15796,6 @@
 				AF47720B099D4EE8001F091E /* Resources */,
 				AF47720D099D4EE8001F091E /* Sources */,
 				AF477210099D4EE8001F091E /* Frameworks */,
-				AF477214099D4EE8001F091E /* Rez */,
 				AFA3D8ED09C03CDB00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15847,7 +15815,6 @@
 				AF477221099D4F67001F091E /* Resources */,
 				AF477223099D4F67001F091E /* Sources */,
 				AF477226099D4F67001F091E /* Frameworks */,
-				AF47722A099D4F67001F091E /* Rez */,
 				AFCCCBB509C033DF00353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15867,7 +15834,6 @@
 				AF477256099D5717001F091E /* Resources */,
 				AF477258099D5717001F091E /* Sources */,
 				AF47725B099D5717001F091E /* Frameworks */,
-				AF47725F099D5717001F091E /* Rez */,
 				AFA3D88509C03C2700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15887,7 +15853,6 @@
 				AF47726E099D57B9001F091E /* Resources */,
 				AF477270099D57B9001F091E /* Sources */,
 				AF477273099D57B9001F091E /* Frameworks */,
-				AF477277099D57B9001F091E /* Rez */,
 				AFA3D8BF09C03C8D00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15907,7 +15872,6 @@
 				AF477286099D5926001F091E /* Resources */,
 				AF477288099D5926001F091E /* Sources */,
 				AF47728B099D5926001F091E /* Frameworks */,
-				AF47728F099D5926001F091E /* Rez */,
 				AFA3D8BB09C03C8600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15927,7 +15891,6 @@
 				AF477385099D65A1001F091E /* Resources */,
 				AF477387099D65A1001F091E /* Sources */,
 				AF47738A099D65A1001F091E /* Frameworks */,
-				AF47738E099D65A1001F091E /* Rez */,
 				AFA3D8EF09C03CDE00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15947,7 +15910,6 @@
 				AF47739D099D6648001F091E /* Resources */,
 				AF47739F099D6648001F091E /* Sources */,
 				AF4773A2099D6648001F091E /* Frameworks */,
-				AF4773A6099D6648001F091E /* Rez */,
 				AFA3D87F09C03C1E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15967,7 +15929,6 @@
 				AF4773C4099D67B9001F091E /* Resources */,
 				AF4773C6099D67B9001F091E /* Sources */,
 				AF4773C9099D67B9001F091E /* Frameworks */,
-				AF4773CD099D67B9001F091E /* Rez */,
 				AFCCCBC709C03AAF00353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -15987,7 +15948,6 @@
 				AF477404099D69E7001F091E /* Resources */,
 				AF477407099D69E7001F091E /* Sources */,
 				AF47740A099D69E7001F091E /* Frameworks */,
-				AF47740E099D69E7001F091E /* Rez */,
 				AFA3D89709C03C4700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16007,7 +15967,6 @@
 				AF477429099D7C70001F091E /* Resources */,
 				AF47742C099D7C70001F091E /* Sources */,
 				AF47742F099D7C70001F091E /* Frameworks */,
-				AF477433099D7C70001F091E /* Rez */,
 				AFA3D88F09C03C3900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16027,7 +15986,6 @@
 				AF477445099D7D33001F091E /* Resources */,
 				AF477447099D7D33001F091E /* Sources */,
 				AF47744A099D7D33001F091E /* Frameworks */,
-				AF47744E099D7D33001F091E /* Rez */,
 				AFA3D8F909C03CED00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16047,7 +16005,6 @@
 				AF477486099D89E4001F091E /* Resources */,
 				AF477488099D89E4001F091E /* Sources */,
 				AF47748B099D89E4001F091E /* Frameworks */,
-				AF47748F099D89E4001F091E /* Rez */,
 				AFA3D87909C03C1200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16067,7 +16024,6 @@
 				AF47749C099D8A74001F091E /* Resources */,
 				AF47749E099D8A74001F091E /* Sources */,
 				AF4774A1099D8A74001F091E /* Frameworks */,
-				AF4774A5099D8A74001F091E /* Rez */,
 				AFA3D89B09C03C4D00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16087,7 +16043,6 @@
 				AF4774B7099D8B5F001F091E /* Resources */,
 				AF4774B9099D8B5F001F091E /* Sources */,
 				AF4774BC099D8B5F001F091E /* Frameworks */,
-				AF4774C0099D8B5F001F091E /* Rez */,
 				AFA3D89F09C03C5300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16107,7 +16062,6 @@
 				AF4774D1099D8BFF001F091E /* Resources */,
 				AF4774D3099D8BFF001F091E /* Sources */,
 				AF4774D6099D8BFF001F091E /* Frameworks */,
-				AF4774DA099D8BFF001F091E /* Rez */,
 				AFA3D8A109C03C5600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16127,7 +16081,6 @@
 				AF477560099D9A1A001F091E /* Resources */,
 				AF477562099D9A1A001F091E /* Sources */,
 				AF477565099D9A1A001F091E /* Frameworks */,
-				AF477569099D9A1A001F091E /* Rez */,
 				AFA3D8B309C03C7900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16147,7 +16100,6 @@
 				AF477586099D9C28001F091E /* Resources */,
 				AF477588099D9C28001F091E /* Sources */,
 				AF47758B099D9C28001F091E /* Frameworks */,
-				AF47758F099D9C28001F091E /* Rez */,
 				AFA3D8C109C03C9000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16167,7 +16119,6 @@
 				AF4775A2099D9CF7001F091E /* Resources */,
 				AF4775A4099D9CF7001F091E /* Sources */,
 				AF4775A7099D9CF7001F091E /* Frameworks */,
-				AF4775AB099D9CF7001F091E /* Rez */,
 				AFA3D8DD09C03CBD00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16187,7 +16138,6 @@
 				AF4775DB099D9F69001F091E /* Resources */,
 				AF4775DD099D9F69001F091E /* Sources */,
 				AF4775E0099D9F69001F091E /* Frameworks */,
-				AF4775E4099D9F69001F091E /* Rez */,
 				AFA3D86509C03BE500E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16207,7 +16157,6 @@
 				AF4775F5099DA030001F091E /* Resources */,
 				AF4775F7099DA030001F091E /* Sources */,
 				AF4775FA099DA030001F091E /* Frameworks */,
-				AF4775FE099DA030001F091E /* Rez */,
 				AFA3D87309C03C0000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16227,7 +16176,6 @@
 				AF477616099DA26C001F091E /* Resources */,
 				AF477618099DA26C001F091E /* Sources */,
 				AF47761B099DA26C001F091E /* Frameworks */,
-				AF47761F099DA26C001F091E /* Rez */,
 				AFA3D89D09C03C5000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16247,7 +16195,6 @@
 				AF477647099DA6D0001F091E /* Resources */,
 				AF477649099DA6D0001F091E /* Sources */,
 				AF47764C099DA6D0001F091E /* Frameworks */,
-				AF477650099DA6D0001F091E /* Rez */,
 				AFA3D8DB09C03CBA00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16267,7 +16214,6 @@
 				AF47765D099DA78E001F091E /* Resources */,
 				AF47765F099DA78E001F091E /* Sources */,
 				AF477662099DA78E001F091E /* Frameworks */,
-				AF477666099DA78E001F091E /* Rez */,
 				AFA3D86709C03BE800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16287,7 +16233,6 @@
 				AF477673099DA849001F091E /* Resources */,
 				AF477675099DA849001F091E /* Sources */,
 				AF477678099DA849001F091E /* Frameworks */,
-				AF47767C099DA849001F091E /* Rez */,
 				AFA3D8B709C03C7F00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16307,7 +16252,6 @@
 				AF477692099DAA6F001F091E /* Resources */,
 				AF477694099DAA6F001F091E /* Sources */,
 				AF477697099DAA6F001F091E /* Frameworks */,
-				AF47769B099DAA6F001F091E /* Rez */,
 				AFCCCBD109C03AFC00353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16327,7 +16271,6 @@
 				AF4776AD099DABDD001F091E /* Resources */,
 				AF4776AF099DABDD001F091E /* Sources */,
 				AF4776B2099DABDD001F091E /* Frameworks */,
-				AF4776B6099DABDD001F091E /* Rez */,
 				AFA3D8FD09C03CF400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16347,7 +16290,6 @@
 				AF4776C3099DAC8A001F091E /* Resources */,
 				AF4776C5099DAC8A001F091E /* Sources */,
 				AF4776C8099DAC8A001F091E /* Frameworks */,
-				AF4776CC099DAC8A001F091E /* Rez */,
 				AFA3D8FB09C03CF100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16367,7 +16309,6 @@
 				AF4776DE099DADDF001F091E /* Resources */,
 				AF4776E0099DADDF001F091E /* Sources */,
 				AF4776E3099DADDF001F091E /* Frameworks */,
-				AF4776E7099DADDF001F091E /* Rez */,
 				AFA3D8EB09C03CD800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16387,7 +16328,6 @@
 				AF4776F4099DAE7A001F091E /* Resources */,
 				AF4776F6099DAE7A001F091E /* Sources */,
 				AF4776F9099DAE7A001F091E /* Frameworks */,
-				AF4776FD099DAE7A001F091E /* Rez */,
 				AFA3D8E709C03CD100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16407,7 +16347,6 @@
 				AF477710099DAF9F001F091E /* Resources */,
 				AF477712099DAF9F001F091E /* Sources */,
 				AF477715099DAF9F001F091E /* Frameworks */,
-				AF477719099DAF9F001F091E /* Rez */,
 				AFA3D86109C03BDE00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16427,7 +16366,6 @@
 				AF477726099DB044001F091E /* Resources */,
 				AF477728099DB044001F091E /* Sources */,
 				AF47772B099DB044001F091E /* Frameworks */,
-				AF47772F099DB044001F091E /* Rez */,
 				AFA3D8DF09C03CC000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16447,7 +16385,6 @@
 				AF477755099DB61E001F091E /* Resources */,
 				AF477757099DB61E001F091E /* Sources */,
 				AF47775A099DB61E001F091E /* Frameworks */,
-				AF47775E099DB61E001F091E /* Rez */,
 				AFA3D89309C03C4000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16467,7 +16404,6 @@
 				AF477777099DB965001F091E /* Resources */,
 				AF477779099DB965001F091E /* Sources */,
 				AF47777C099DB965001F091E /* Frameworks */,
-				AF477780099DB965001F091E /* Rez */,
 				AFA3D85F09C03BDA00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16487,7 +16423,6 @@
 				AF477793099DBA90001F091E /* Resources */,
 				AF477795099DBA90001F091E /* Sources */,
 				AF477798099DBA90001F091E /* Frameworks */,
-				AF47779C099DBA90001F091E /* Rez */,
 				AFA3D87B09C03C1700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16507,7 +16442,6 @@
 				AF4777D4099DC183001F091E /* Resources */,
 				AF4777D6099DC183001F091E /* Sources */,
 				AF4777D9099DC183001F091E /* Frameworks */,
-				AF4777DD099DC183001F091E /* Rez */,
 				AFCCCBD509C03B0500353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16527,7 +16461,6 @@
 				AF4778AE099DDB79001F091E /* Resources */,
 				AF4778B0099DDB79001F091E /* Sources */,
 				AF4778B3099DDB79001F091E /* Frameworks */,
-				AF4778B7099DDB79001F091E /* Rez */,
 				AFA3D8B509C03C7C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16547,7 +16480,6 @@
 				AF4778CA099DDCAE001F091E /* Resources */,
 				AF4778CC099DDCAE001F091E /* Sources */,
 				AF4778CF099DDCAE001F091E /* Frameworks */,
-				AF4778D3099DDCAE001F091E /* Rez */,
 				AFA3D8F509C03CE800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16567,7 +16499,6 @@
 				AF4778EB099DDDC8001F091E /* Resources */,
 				AF4778ED099DDDC8001F091E /* Sources */,
 				AF4778F0099DDDC8001F091E /* Frameworks */,
-				AF4778F4099DDDC8001F091E /* Rez */,
 				AFA3D86909C03BEC00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16587,7 +16518,6 @@
 				AF47790C099DE379001F091E /* Resources */,
 				AF47790E099DE379001F091E /* Sources */,
 				AF477911099DE379001F091E /* Frameworks */,
-				AF477915099DE379001F091E /* Rez */,
 				AFA3D91709C03D2400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16607,7 +16537,6 @@
 				AF47792D099DE4C7001F091E /* Resources */,
 				AF47792F099DE4C7001F091E /* Sources */,
 				AF477932099DE4C7001F091E /* Frameworks */,
-				AF477936099DE4C7001F091E /* Rez */,
 				AFA3D8D309C03CAE00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16645,7 +16574,6 @@
 				AF480C4C098E301400FB32B8 /* Resources */,
 				AF480C4E098E301400FB32B8 /* Sources */,
 				AF480C50098E301400FB32B8 /* Frameworks */,
-				AF480C54098E301400FB32B8 /* Rez */,
 				AFA3D88909C03C2E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16665,7 +16593,6 @@
 				AF480D75098EEDDE00FB32B8 /* Resources */,
 				AF480D77098EEDDE00FB32B8 /* Sources */,
 				AF480D79098EEDDE00FB32B8 /* Frameworks */,
-				AF480D7D098EEDDE00FB32B8 /* Rez */,
 				AFA3D90F09C03D1800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16685,7 +16612,6 @@
 				AF4810EE09909FBA00FB32B8 /* Resources */,
 				AF4810F009909FBA00FB32B8 /* Sources */,
 				AF4810F309909FBA00FB32B8 /* Frameworks */,
-				AF4810F709909FBA00FB32B8 /* Rez */,
 				AFA3D97109C03DD000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16705,7 +16631,6 @@
 				AF4812530990CE2700FB32B8 /* Resources */,
 				AF4812550990CE2700FB32B8 /* Sources */,
 				AF4812590990CE2700FB32B8 /* Frameworks */,
-				AF4812600990CE2700FB32B8 /* Rez */,
 				AFA3D98309C03DEE00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16725,7 +16650,6 @@
 				AF4812B60990D3D900FB32B8 /* Resources */,
 				AF4812B80990D3D900FB32B8 /* Sources */,
 				AF4812BB0990D3D900FB32B8 /* Frameworks */,
-				AF4812C20990D3D900FB32B8 /* Rez */,
 				AFA3D9B509C03E5700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16745,7 +16669,6 @@
 				AF48DEF20A0C25E000F94CF9 /* Resources */,
 				AF48DEF40A0C25E000F94CF9 /* Sources */,
 				AF48DEF70A0C25E000F94CF9 /* Frameworks */,
-				AF48DEFE0A0C25E000F94CF9 /* Rez */,
 				AF48DEFF0A0C25E000F94CF9 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16765,7 +16688,6 @@
 				AF4A344C102A593600A81B2A /* Resources */,
 				AF4A344E102A593600A81B2A /* Sources */,
 				AF4A3451102A593600A81B2A /* Frameworks */,
-				AF4A3458102A593600A81B2A /* Rez */,
 				AF4A3459102A593600A81B2A /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16785,7 +16707,6 @@
 				AF4FD6E90CE7A486005EE58E /* Resources */,
 				AF4FD6EB0CE7A486005EE58E /* Sources */,
 				AF4FD6EE0CE7A486005EE58E /* Frameworks */,
-				AF4FD6F50CE7A486005EE58E /* Rez */,
 				AF4FD6F60CE7A486005EE58E /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16805,7 +16726,6 @@
 				AF4FF4BD0D52CBDE00666F98 /* Resources */,
 				AF4FF4BF0D52CBDE00666F98 /* Sources */,
 				AF4FF4C20D52CBDE00666F98 /* Frameworks */,
-				AF4FF4C90D52CBDE00666F98 /* Rez */,
 				AF4FF4CA0D52CBDE00666F98 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16849,7 +16769,6 @@
 				AF5C9AFC1A0CCE6E00B0147A /* Resources */,
 				AF5C9AFE1A0CCE6E00B0147A /* Sources */,
 				AF5C9B011A0CCE6E00B0147A /* Frameworks */,
-				AF5C9B081A0CCE6E00B0147A /* Rez */,
 				AF5C9B091A0CCE6E00B0147A /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16869,7 +16788,6 @@
 				AF5ECEAC2116B1A400069433 /* Resources */,
 				AF5ECEAF2116B1A400069433 /* Sources */,
 				AF5ECEB32116B1A400069433 /* Frameworks */,
-				AF5ECEBB2116B1A400069433 /* Rez */,
 				AF5ECEBC2116B1A400069433 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16889,7 +16807,6 @@
 				AF62D61B2180070600C57C42 /* Resources */,
 				AF62D61D2180070600C57C42 /* Sources */,
 				AF62D6202180070600C57C42 /* Frameworks */,
-				AF62D6282180070600C57C42 /* Rez */,
 				AF62D6292180070600C57C42 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16909,7 +16826,6 @@
 				AF633C041EE0BA6F00AB33BD /* Resources */,
 				AF633C061EE0BA6F00AB33BD /* Sources */,
 				AF633C091EE0BA6F00AB33BD /* Frameworks */,
-				AF633C111EE0BA6F00AB33BD /* Rez */,
 				AF633C121EE0BA6F00AB33BD /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -16929,7 +16845,6 @@
 				AF63A7F41AB4EDDB00593C75 /* Resources */,
 				AF63A7F61AB4EDDB00593C75 /* Sources */,
 				AF63A7F91AB4EDDB00593C75 /* Frameworks */,
-				AF63A8011AB4EDDB00593C75 /* Rez */,
 				AF63A8021AB4EDDB00593C75 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17015,7 +16930,6 @@
 				AF6423F5099FF9C2000F4CD4 /* Resources */,
 				AF6423F7099FF9C2000F4CD4 /* Sources */,
 				AF6423FA099FF9C2000F4CD4 /* Frameworks */,
-				AF642401099FF9C2000F4CD4 /* Rez */,
 				AFA3D97909C03DDD00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17035,7 +16949,6 @@
 				AF6425CF09A18855000F4CD4 /* Resources */,
 				AF6425D109A18855000F4CD4 /* Sources */,
 				AF6425D409A18855000F4CD4 /* Frameworks */,
-				AF6425D809A18855000F4CD4 /* Rez */,
 				AFA3D88D09C03C3600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17055,7 +16968,6 @@
 				AF6425EF09A189EC000F4CD4 /* Resources */,
 				AF6425F109A189EC000F4CD4 /* Sources */,
 				AF6425F409A189EC000F4CD4 /* Frameworks */,
-				AF6425F809A189EC000F4CD4 /* Rez */,
 				AFA3D8C309C03C9300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17075,7 +16987,6 @@
 				AF64261209A18D6C000F4CD4 /* Resources */,
 				AF64261409A18D6C000F4CD4 /* Sources */,
 				AF64261709A18D6C000F4CD4 /* Frameworks */,
-				AF64261B09A18D6C000F4CD4 /* Rez */,
 				AFA3D88B09C03C3200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17095,7 +17006,6 @@
 				AF64262F09A18F54000F4CD4 /* Resources */,
 				AF64263109A18F54000F4CD4 /* Sources */,
 				AF64263409A18F54000F4CD4 /* Frameworks */,
-				AF64263809A18F54000F4CD4 /* Rez */,
 				AFA3D8AB09C03C6D00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17115,7 +17025,6 @@
 				AF64265209A19229000F4CD4 /* Resources */,
 				AF64265409A19229000F4CD4 /* Sources */,
 				AF64265709A19229000F4CD4 /* Frameworks */,
-				AF64265B09A19229000F4CD4 /* Rez */,
 				AFA3D8AD09C03C7000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17135,7 +17044,6 @@
 				AF64267E09A194B0000F4CD4 /* Resources */,
 				AF64268009A194B0000F4CD4 /* Sources */,
 				AF64268309A194B0000F4CD4 /* Frameworks */,
-				AF64268709A194B0000F4CD4 /* Rez */,
 				AFA3D88109C03C2100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17155,7 +17063,6 @@
 				AF64277409A1D37A000F4CD4 /* Resources */,
 				AF64277609A1D37A000F4CD4 /* Sources */,
 				AF64277909A1D37A000F4CD4 /* Frameworks */,
-				AF64277D09A1D37A000F4CD4 /* Rez */,
 				AFA3D8D709C03CB400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17175,7 +17082,6 @@
 				AF6427AB09A2DE36000F4CD4 /* Resources */,
 				AF6427AD09A2DE36000F4CD4 /* Sources */,
 				AF6427B009A2DE36000F4CD4 /* Frameworks */,
-				AF6427B409A2DE36000F4CD4 /* Rez */,
 				AFA3D69409C03B6200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17195,7 +17101,6 @@
 				AF688ABC257C04D200C91EAE /* Resources */,
 				AF688ABE257C04D200C91EAE /* Sources */,
 				AF688AC1257C04D200C91EAE /* Frameworks */,
-				AF688AC9257C04D200C91EAE /* Rez */,
 				AF688ACA257C04D200C91EAE /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17215,7 +17120,6 @@
 				AF68A48119196CF800D41CD1 /* Resources */,
 				AF68A48319196CF800D41CD1 /* Sources */,
 				AF68A48619196CF800D41CD1 /* Frameworks */,
-				AF68A48D19196CF800D41CD1 /* Rez */,
 				AF68A48E19196CF800D41CD1 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17235,7 +17139,6 @@
 				AF69E1F4270BA54600358595 /* Resources */,
 				AF69E1F6270BA54600358595 /* Sources */,
 				AF69E1F9270BA54600358595 /* Frameworks */,
-				AF69E201270BA54600358595 /* Rez */,
 				AF69E202270BA54600358595 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17255,7 +17158,6 @@
 				AF6C6D77226AE4FC0065A748 /* Resources */,
 				AF6C6D79226AE4FC0065A748 /* Sources */,
 				AF6C6D7C226AE4FC0065A748 /* Frameworks */,
-				AF6C6D84226AE4FC0065A748 /* Rez */,
 				AF6C6D85226AE4FC0065A748 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17275,7 +17177,6 @@
 				AF6E25B5276C3F030032E38F /* Resources */,
 				AF6E25B7276C3F030032E38F /* Sources */,
 				AF6E25BA276C3F030032E38F /* Frameworks */,
-				AF6E25C2276C3F030032E38F /* Rez */,
 				AF6E25C3276C3F030032E38F /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17295,7 +17196,6 @@
 				AF70B7702A81D025007C1EB8 /* Resources */,
 				AF70B7722A81D025007C1EB8 /* Sources */,
 				AF70B7752A81D025007C1EB8 /* Frameworks */,
-				AF70B77D2A81D025007C1EB8 /* Rez */,
 				AF70B77E2A81D025007C1EB8 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17315,7 +17215,6 @@
 				AF70B7912A8320A6007C1EB8 /* Resources */,
 				AF70B7932A8320A6007C1EB8 /* Sources */,
 				AF70B7962A8320A6007C1EB8 /* Frameworks */,
-				AF70B79E2A8320A6007C1EB8 /* Rez */,
 				AF70B79F2A8320A6007C1EB8 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17335,7 +17234,6 @@
 				AF73FF251A09877F00E485E9 /* Resources */,
 				AF73FF271A09877F00E485E9 /* Sources */,
 				AF73FF2A1A09877F00E485E9 /* Frameworks */,
-				AF73FF311A09877F00E485E9 /* Rez */,
 				AF73FF321A09877F00E485E9 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17355,7 +17253,6 @@
 				AF7511021782B5B900380EA1 /* Resources */,
 				AF7511041782B5B900380EA1 /* Sources */,
 				AF7511071782B5B900380EA1 /* Frameworks */,
-				AF75110D1782B5B900380EA1 /* Rez */,
 				AF75110E1782B5B900380EA1 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17375,7 +17272,6 @@
 				AF7776E709B63ABF00EA3033 /* Resources */,
 				AF7776E909B63ABF00EA3033 /* Sources */,
 				AF7776EE09B63ABF00EA3033 /* Frameworks */,
-				AF7776F209B63ABF00EA3033 /* Rez */,
 				AFA3D8B909C03C8200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17395,7 +17291,6 @@
 				AF77771D09B6416100EA3033 /* Resources */,
 				AF77771F09B6416100EA3033 /* Sources */,
 				AF77772209B6416100EA3033 /* Frameworks */,
-				AF77772609B6416100EA3033 /* Rez */,
 				AFA3D93509C03D5700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17415,7 +17310,6 @@
 				AF77774109B6446500EA3033 /* Resources */,
 				AF77774309B6446500EA3033 /* Sources */,
 				AF77774609B6446500EA3033 /* Frameworks */,
-				AF77774D09B6446500EA3033 /* Rez */,
 				AFA3D97D09C03DE400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17435,7 +17329,6 @@
 				AF77777709B6497800EA3033 /* Resources */,
 				AF77777909B6497800EA3033 /* Sources */,
 				AF77777D09B6497800EA3033 /* Frameworks */,
-				AF77778409B6497800EA3033 /* Rez */,
 				AFA3D98509C03DF100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17455,7 +17348,6 @@
 				AF77779109B64A5200EA3033 /* Resources */,
 				AF77779309B64A5200EA3033 /* Sources */,
 				AF77779709B64A5200EA3033 /* Frameworks */,
-				AF77779E09B64A5200EA3033 /* Rez */,
 				AFA3D9A909C03E3D00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17475,7 +17367,6 @@
 				AF7777AB09B64B2600EA3033 /* Resources */,
 				AF7777AD09B64B2600EA3033 /* Sources */,
 				AF7777B109B64B2600EA3033 /* Frameworks */,
-				AF7777B809B64B2600EA3033 /* Rez */,
 				AFA3D9CF09C03E8700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17495,7 +17386,6 @@
 				AF7777D309B64C6B00EA3033 /* Resources */,
 				AF7777D509B64C6B00EA3033 /* Sources */,
 				AF7777D909B64C6B00EA3033 /* Frameworks */,
-				AF7777E009B64C6B00EA3033 /* Rez */,
 				AFA3D99509C03E1900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17515,7 +17405,6 @@
 				AF7777ED09B64E3100EA3033 /* Resources */,
 				AF7777EF09B64E3100EA3033 /* Sources */,
 				AF7777F309B64E3100EA3033 /* Frameworks */,
-				AF7777FA09B64E3100EA3033 /* Rez */,
 				AFA3D97F09C03DE700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17535,7 +17424,6 @@
 				AF77781309B6504400EA3033 /* Resources */,
 				AF77781509B6504400EA3033 /* Sources */,
 				AF77781A09B6504400EA3033 /* Frameworks */,
-				AF77782109B6504400EA3033 /* Rez */,
 				AFA3D9CD09C03E8400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17555,7 +17443,6 @@
 				AF77784709B6528100EA3033 /* Resources */,
 				AF77784A09B6528100EA3033 /* Sources */,
 				AF77784D09B6528100EA3033 /* Frameworks */,
-				AF77785409B6528100EA3033 /* Rez */,
 				AFA3D96509C03DB900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17575,7 +17462,6 @@
 				AF77786409B6536000EA3033 /* Resources */,
 				AF77786609B6536000EA3033 /* Sources */,
 				AF77786909B6536000EA3033 /* Frameworks */,
-				AF77787009B6536000EA3033 /* Rez */,
 				AFA3D97309C03DD300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17595,7 +17481,6 @@
 				AF77788209B6563500EA3033 /* Resources */,
 				AF77788409B6563500EA3033 /* Sources */,
 				AF77788709B6563500EA3033 /* Frameworks */,
-				AF77788B09B6563500EA3033 /* Rez */,
 				AFA3D87D09C03C1B00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17615,7 +17500,6 @@
 				AF7778A809B659C800EA3033 /* Resources */,
 				AF7778AA09B659C800EA3033 /* Sources */,
 				AF7778AD09B659C800EA3033 /* Frameworks */,
-				AF7778B109B659C800EA3033 /* Rez */,
 				AFCCCBD309C03B0000353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17635,7 +17519,6 @@
 				AF78D178142DD8F3002AAF77 /* Resources */,
 				AF78D17A142DD8F3002AAF77 /* Sources */,
 				AF78D17D142DD8F3002AAF77 /* Frameworks */,
-				AF78D184142DD8F3002AAF77 /* Rez */,
 				AF78D185142DD8F3002AAF77 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17655,7 +17538,6 @@
 				AF794F67099748450059A8B0 /* Resources */,
 				AF794F69099748450059A8B0 /* Sources */,
 				AF794F6C099748450059A8B0 /* Frameworks */,
-				AF794F70099748450059A8B0 /* Rez */,
 				AFA3D90B09C03D1100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17675,7 +17557,6 @@
 				AF794F9109974A320059A8B0 /* Resources */,
 				AF794F9309974A320059A8B0 /* Sources */,
 				AF794F9609974A320059A8B0 /* Frameworks */,
-				AF794F9A09974A320059A8B0 /* Rez */,
 				AFA3D91509C03D2100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17695,7 +17576,6 @@
 				AF794FD009974FA60059A8B0 /* Resources */,
 				AF794FD209974FA60059A8B0 /* Sources */,
 				AF794FD509974FA60059A8B0 /* Frameworks */,
-				AF794FD909974FA60059A8B0 /* Rez */,
 				AFA3D93109C03D5100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17715,7 +17595,6 @@
 				AF796D1D26E5C10700DA6562 /* Resources */,
 				AF796D1F26E5C10700DA6562 /* Sources */,
 				AF796D2226E5C10700DA6562 /* Frameworks */,
-				AF796D2A26E5C10700DA6562 /* Rez */,
 				AF796D2B26E5C10700DA6562 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17735,7 +17614,6 @@
 				AF7ACFC319FF0A9200BD752B /* Resources */,
 				AF7ACFC519FF0A9200BD752B /* Sources */,
 				AF7ACFC819FF0A9200BD752B /* Frameworks */,
-				AF7ACFCF19FF0A9200BD752B /* Rez */,
 				AF7ACFD019FF0A9200BD752B /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17755,7 +17633,6 @@
 				AF7F05FC2A50BFAB00E35B45 /* Resources */,
 				AF7F05FE2A50BFAB00E35B45 /* Sources */,
 				AF7F06012A50BFAB00E35B45 /* Frameworks */,
-				AF7F06092A50BFAB00E35B45 /* Rez */,
 				AF7F060A2A50BFAB00E35B45 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17775,7 +17652,6 @@
 				AF81E00325845C2A00CFC475 /* Resources */,
 				AF81E00525845C2A00CFC475 /* Sources */,
 				AF81E00825845C2A00CFC475 /* Frameworks */,
-				AF81E01025845C2A00CFC475 /* Rez */,
 				AF81E01125845C2A00CFC475 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17819,7 +17695,6 @@
 				AF95058725670ECC00C1F257 /* Resources */,
 				AF95058925670ECC00C1F257 /* Sources */,
 				AF95058C25670ECC00C1F257 /* Frameworks */,
-				AF95059425670ECC00C1F257 /* Rez */,
 				AF95059525670ECC00C1F257 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17839,7 +17714,6 @@
 				AF96014125758F9F007FA31B /* Resources */,
 				AF96014325758F9F007FA31B /* Sources */,
 				AF96014625758F9F007FA31B /* Frameworks */,
-				AF96014E25758F9F007FA31B /* Rez */,
 				AF96014F25758F9F007FA31B /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17859,7 +17733,6 @@
 				AF975730099C317000B05160 /* Resources */,
 				AF975732099C317000B05160 /* Sources */,
 				AF975735099C317000B05160 /* Frameworks */,
-				AF975739099C317000B05160 /* Rez */,
 				AFA3D89109C03C3C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17879,7 +17752,6 @@
 				AF975778099C374A00B05160 /* Resources */,
 				AF97577A099C374A00B05160 /* Sources */,
 				AF97577D099C374A00B05160 /* Frameworks */,
-				AF975781099C374A00B05160 /* Rez */,
 				AFA3D8A909C03C6900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17899,7 +17771,6 @@
 				AF9757C5099C3E6300B05160 /* Resources */,
 				AF9757C7099C3E6300B05160 /* Sources */,
 				AF9757CA099C3E6300B05160 /* Frameworks */,
-				AF9757CE099C3E6300B05160 /* Rez */,
 				AFA3D8C509C03C9600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17919,7 +17790,6 @@
 				AF97580B099C41D500B05160 /* Resources */,
 				AF97580D099C41D500B05160 /* Sources */,
 				AF975810099C41D500B05160 /* Frameworks */,
-				AF975814099C41D500B05160 /* Rez */,
 				AFA3D8F109C03CE100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17939,7 +17809,6 @@
 				AF975868099C475900B05160 /* Resources */,
 				AF97586A099C475900B05160 /* Sources */,
 				AF97586D099C475900B05160 /* Frameworks */,
-				AF975871099C475900B05160 /* Rez */,
 				AFA3D8CF09C03CA800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17959,7 +17828,6 @@
 				AF975A39099C681F00B05160 /* Resources */,
 				AF975A3B099C681F00B05160 /* Sources */,
 				AF975A3E099C681F00B05160 /* Frameworks */,
-				AF975A42099C681F00B05160 /* Rez */,
 				AFA3D8A509C03C6200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17979,7 +17847,6 @@
 				AF975A6F099C6AB200B05160 /* Resources */,
 				AF975A71099C6AB200B05160 /* Sources */,
 				AF975A74099C6AB200B05160 /* Frameworks */,
-				AF975A78099C6AB200B05160 /* Rez */,
 				AFA3D87509C03C0400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -17999,7 +17866,6 @@
 				AF975A89099C6BC300B05160 /* Resources */,
 				AF975A8B099C6BC300B05160 /* Sources */,
 				AF975A8E099C6BC300B05160 /* Frameworks */,
-				AF975A92099C6BC300B05160 /* Rez */,
 				AFCCCBCF09C03AF800353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18019,7 +17885,6 @@
 				AF975ADA099C6EB100B05160 /* Resources */,
 				AF975ADC099C6EB100B05160 /* Sources */,
 				AF975ADF099C6EB100B05160 /* Frameworks */,
-				AF975AE3099C6EB100B05160 /* Rez */,
 				AFA3D87709C03C0A00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18039,7 +17904,6 @@
 				AF975AFF099C6FE400B05160 /* Resources */,
 				AF975B01099C6FE400B05160 /* Sources */,
 				AF975B04099C6FE400B05160 /* Frameworks */,
-				AF975B08099C6FE400B05160 /* Rez */,
 				AFA3D8A309C03C5F00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18059,7 +17923,6 @@
 				AF975C15099C8C1500B05160 /* Resources */,
 				AF975C17099C8C1500B05160 /* Sources */,
 				AF975C1A099C8C1500B05160 /* Frameworks */,
-				AF975C1E099C8C1500B05160 /* Rez */,
 				AFA3D88709C03C2A00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18079,7 +17942,6 @@
 				AF975C40099C8DCF00B05160 /* Resources */,
 				AF975C43099C8DCF00B05160 /* Sources */,
 				AF975C46099C8DCF00B05160 /* Frameworks */,
-				AF975C4A099C8DCF00B05160 /* Rez */,
 				AFA3D88309C03C2400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18099,7 +17961,6 @@
 				AF975C60099C8F3F00B05160 /* Resources */,
 				AF975C63099C8F3F00B05160 /* Sources */,
 				AF975C66099C8F3F00B05160 /* Frameworks */,
-				AF975C6A099C8F3F00B05160 /* Rez */,
 				AFA3D8B109C03C7600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18119,7 +17980,6 @@
 				AF975D55099CA0F000B05160 /* Resources */,
 				AF975D58099CA0F000B05160 /* Sources */,
 				AF975D5B099CA0F000B05160 /* Frameworks */,
-				AF975D5F099CA0F000B05160 /* Rez */,
 				AFA3D8C909C03C9E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18139,7 +17999,6 @@
 				AF976FB80989CAA2001F8B92 /* Resources */,
 				AF976FB90989CAA2001F8B92 /* Sources */,
 				AF976FBA0989CAA2001F8B92 /* Frameworks */,
-				AF9770150989D0F6001F8B92 /* Rez */,
 				AFA3D86D09C03BF300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18159,7 +18018,6 @@
 				AF97702A0989D1E6001F8B92 /* Resources */,
 				AF97702C0989D1E6001F8B92 /* Sources */,
 				AF9770390989D1E6001F8B92 /* Frameworks */,
-				AF97703C0989D1E6001F8B92 /* Rez */,
 				AFA3D8CB09C03CA100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18179,7 +18037,6 @@
 				AF9770670989D2F6001F8B92 /* Resources */,
 				AF9770690989D2F6001F8B92 /* Sources */,
 				AF9770760989D2F6001F8B92 /* Frameworks */,
-				AF9770790989D2F6001F8B92 /* Rez */,
 				AFCCCBCD09C03AF400353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18218,7 +18075,6 @@
 				AF998EDD0A083DB30051049D /* Resources */,
 				AF998EDF0A083DB30051049D /* Sources */,
 				AF998EE20A083DB30051049D /* Frameworks */,
-				AF998EE90A083DB30051049D /* Rez */,
 				AF998EEA0A083DB30051049D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18238,7 +18094,6 @@
 				AF9D466909B5109C006E59CF /* Resources */,
 				AF9D466B09B5109C006E59CF /* Sources */,
 				AF9D466E09B5109C006E59CF /* Frameworks */,
-				AF9D467209B5109C006E59CF /* Rez */,
 				AFA3D86B09C03BEF00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18258,7 +18113,6 @@
 				AF9D474709B5300A006E59CF /* Resources */,
 				AF9D474909B5300A006E59CF /* Sources */,
 				AF9D474C09B5300A006E59CF /* Frameworks */,
-				AF9D475009B5300A006E59CF /* Rez */,
 				AFA3D8D109C03CAB00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18278,7 +18132,6 @@
 				AF9D476209B53166006E59CF /* Resources */,
 				AF9D476409B53166006E59CF /* Sources */,
 				AF9D476709B53166006E59CF /* Frameworks */,
-				AF9D476B09B53166006E59CF /* Rez */,
 				AFA3D8FF09C03CF700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18298,7 +18151,6 @@
 				AF9D48DE09B53322006E59CF /* Resources */,
 				AF9D48E009B53322006E59CF /* Sources */,
 				AF9D48E309B53322006E59CF /* Frameworks */,
-				AF9D48E709B53322006E59CF /* Rez */,
 				AFA3D85B09C03BD300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18318,7 +18170,6 @@
 				AF9D48F709B535DA006E59CF /* Resources */,
 				AF9D48F909B535DA006E59CF /* Sources */,
 				AF9D48FC09B535DA006E59CF /* Frameworks */,
-				AF9D490009B535DA006E59CF /* Rez */,
 				AFA3D87109C03BFB00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18338,7 +18189,6 @@
 				AF9D492E09B53CBA006E59CF /* Resources */,
 				AF9D493009B53CBA006E59CF /* Sources */,
 				AF9D493309B53CBA006E59CF /* Frameworks */,
-				AF9D493709B53CBA006E59CF /* Rez */,
 				AFA3D8C709C03C9900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18358,7 +18208,6 @@
 				AF9D495709B53FC9006E59CF /* Resources */,
 				AF9D495909B53FC9006E59CF /* Sources */,
 				AF9D495C09B53FC9006E59CF /* Frameworks */,
-				AF9D496009B53FC9006E59CF /* Rez */,
 				AFA3D8CD09C03CA400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18378,7 +18227,6 @@
 				AF9D496F09B5411D006E59CF /* Resources */,
 				AF9D497109B5411D006E59CF /* Sources */,
 				AF9D497409B5411D006E59CF /* Frameworks */,
-				AF9D497809B5411D006E59CF /* Rez */,
 				AFA3D8E509C03CCD00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18398,7 +18246,6 @@
 				AF9D499A09B544C2006E59CF /* Resources */,
 				AF9D499C09B544C2006E59CF /* Sources */,
 				AF9D499F09B544C2006E59CF /* Frameworks */,
-				AF9D49A309B544C2006E59CF /* Rez */,
 				AFA3D8D909C03CB700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18418,7 +18265,6 @@
 				AF9D4C6C09B59F27006E59CF /* Resources */,
 				AF9D4C6E09B59F27006E59CF /* Sources */,
 				AF9D4C7109B59F27006E59CF /* Frameworks */,
-				AF9D4C7509B59F27006E59CF /* Rez */,
 				AFA3D8F709C03CEA00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18438,7 +18284,6 @@
 				AF9D4CEA09B5AA8E006E59CF /* Resources */,
 				AF9D4CEC09B5AA8E006E59CF /* Sources */,
 				AF9D4CEF09B5AA8E006E59CF /* Frameworks */,
-				AF9D4CF309B5AA8E006E59CF /* Rez */,
 				AFA3D8BD09C03C8900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18458,7 +18303,6 @@
 				AF9D4D8109B5B2DC006E59CF /* Resources */,
 				AF9D4D8309B5B2DC006E59CF /* Sources */,
 				AF9D4D8709B5B2DC006E59CF /* Frameworks */,
-				AF9D4D8B09B5B2DC006E59CF /* Rez */,
 				AFA3D8F309C03CE400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18478,7 +18322,6 @@
 				AF9D4DB209B5B71E006E59CF /* Resources */,
 				AF9D4DB409B5B71E006E59CF /* Sources */,
 				AF9D4DB809B5B71E006E59CF /* Frameworks */,
-				AF9D4DBC09B5B71E006E59CF /* Rez */,
 				AFA3D69209C03B5C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18498,7 +18341,6 @@
 				AF9D4DEF09B5BB19006E59CF /* Resources */,
 				AF9D4DF109B5BB19006E59CF /* Sources */,
 				AF9D4DF609B5BB19006E59CF /* Frameworks */,
-				AF9D4DFA09B5BB19006E59CF /* Rez */,
 				AFCCCBCB09C03AEE00353F4D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18518,7 +18360,6 @@
 				AFA0B121241CE69E0071E35D /* Resources */,
 				AFA0B123241CE69E0071E35D /* Sources */,
 				AFA0B126241CE69E0071E35D /* Frameworks */,
-				AFA0B12E241CE69E0071E35D /* Rez */,
 				AFA0B12F241CE69E0071E35D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18538,7 +18379,6 @@
 				AFA2118F1CD59DAF00C0D2A1 /* Resources */,
 				AFA211911CD59DAF00C0D2A1 /* Sources */,
 				AFA211941CD59DAF00C0D2A1 /* Frameworks */,
-				AFA2119C1CD59DAF00C0D2A1 /* Rez */,
 				AFA2119D1CD59DAF00C0D2A1 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18560,7 +18400,6 @@
 				AFB9B5C024269AF900A5740D /* CopyFiles */,
 				AFA339340B058505002B0E7D /* Sources */,
 				AFA339370B058505002B0E7D /* Frameworks */,
-				AFA3393B0B058505002B0E7D /* Rez */,
 				AFA3393C0B058505002B0E7D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18598,7 +18437,6 @@
 				AFA55949099330B000F3E977 /* Resources */,
 				AFA5594B099330B000F3E977 /* Sources */,
 				AFA5594F099330B000F3E977 /* Frameworks */,
-				AFA55956099330B000F3E977 /* Rez */,
 				AFA3D96309C03DB500E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18618,7 +18456,6 @@
 				AFA559700993317900F3E977 /* Resources */,
 				AFA559720993317900F3E977 /* Sources */,
 				AFA559740993317900F3E977 /* Frameworks */,
-				AFA5597B0993317900F3E977 /* Rez */,
 				AFA3D9AB09C03E4200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18638,7 +18475,6 @@
 				AFA559950993322100F3E977 /* Resources */,
 				AFA559970993322100F3E977 /* Sources */,
 				AFA559990993322100F3E977 /* Frameworks */,
-				AFA559A00993322100F3E977 /* Rez */,
 				AFA3D9D109C03E8B00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18658,7 +18494,6 @@
 				AFA559B80993328000F3E977 /* Resources */,
 				AFA559BA0993328000F3E977 /* Sources */,
 				AFA559BC0993328000F3E977 /* Frameworks */,
-				AFA559C30993328000F3E977 /* Rez */,
 				AFA3D9AF09C03E4B00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18678,7 +18513,6 @@
 				AFA559D20993330600F3E977 /* Resources */,
 				AFA559D40993330600F3E977 /* Sources */,
 				AFA559D60993330600F3E977 /* Frameworks */,
-				AFA559DD0993330600F3E977 /* Rez */,
 				AFA3D9C109C03E6E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18698,7 +18532,6 @@
 				AFA55A060993340300F3E977 /* Resources */,
 				AFA55A080993340300F3E977 /* Sources */,
 				AFA55A0A0993340300F3E977 /* Frameworks */,
-				AFA55A110993340300F3E977 /* Rez */,
 				AFA3D9CB09C03E7F00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18718,7 +18551,6 @@
 				AFA55A23099334A000F3E977 /* Resources */,
 				AFA55A25099334A000F3E977 /* Sources */,
 				AFA55A27099334A000F3E977 /* Frameworks */,
-				AFA55A2E099334A000F3E977 /* Rez */,
 				AFA3D9C909C03E7C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18738,7 +18570,6 @@
 				AFA55A7C0993364300F3E977 /* Resources */,
 				AFA55A7E0993364300F3E977 /* Sources */,
 				AFA55A800993364300F3E977 /* Frameworks */,
-				AFA55A870993364300F3E977 /* Rez */,
 				AFA3D9A309C03E3200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18758,7 +18589,6 @@
 				AFA55AD209933CEF00F3E977 /* Resources */,
 				AFA55AD409933CEF00F3E977 /* Sources */,
 				AFA55AD609933CEF00F3E977 /* Frameworks */,
-				AFA55ADD09933CEF00F3E977 /* Rez */,
 				AFA3D96109C03DB100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18778,7 +18608,6 @@
 				AFA55B0C09933E0500F3E977 /* Resources */,
 				AFA55B0E09933E0500F3E977 /* Sources */,
 				AFA55B1309933E0500F3E977 /* Frameworks */,
-				AFA55B1A09933E0500F3E977 /* Rez */,
 				AFA3D99309C03E1600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18798,7 +18627,6 @@
 				AFA55B2809933E8D00F3E977 /* Resources */,
 				AFA55B2A09933E8D00F3E977 /* Sources */,
 				AFA55B2C09933E8D00F3E977 /* Frameworks */,
-				AFA55B3309933E8D00F3E977 /* Rez */,
 				AFA3D9BD09C03E6500E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18818,7 +18646,6 @@
 				AFA55B7C09933F7200F3E977 /* Resources */,
 				AFA55B7E09933F7200F3E977 /* Sources */,
 				AFA55B8009933F7200F3E977 /* Frameworks */,
-				AFA55B8709933F7200F3E977 /* Rez */,
 				AFA3D9C509C03E7400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18838,7 +18665,6 @@
 				AFA55B9409933FDA00F3E977 /* Resources */,
 				AFA55B9609933FDA00F3E977 /* Sources */,
 				AFA55B9809933FDA00F3E977 /* Frameworks */,
-				AFA55B9F09933FDA00F3E977 /* Rez */,
 				AFA3D98709C03DF400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18858,7 +18684,6 @@
 				AFA55BAE099340CE00F3E977 /* Resources */,
 				AFA55BB0099340CE00F3E977 /* Sources */,
 				AFA55BB2099340CE00F3E977 /* Frameworks */,
-				AFA55BB9099340CE00F3E977 /* Rez */,
 				AFA3D96709C03DBC00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18878,7 +18703,6 @@
 				AFA55BE70993429100F3E977 /* Resources */,
 				AFA55BE90993429100F3E977 /* Sources */,
 				AFA55BEB0993429100F3E977 /* Frameworks */,
-				AFA55BF20993429100F3E977 /* Rez */,
 				AFA3D9A709C03E3A00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18898,7 +18722,6 @@
 				AFA55C110993431300F3E977 /* Resources */,
 				AFA55C130993431300F3E977 /* Sources */,
 				AFA55C150993431300F3E977 /* Frameworks */,
-				AFA55C1C0993431300F3E977 /* Rez */,
 				AFA3D97709C03DDA00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18918,7 +18741,6 @@
 				AFA55C7A099349A600F3E977 /* Resources */,
 				AFA55C7C099349A600F3E977 /* Sources */,
 				AFA55C7E099349A600F3E977 /* Frameworks */,
-				AFA55C85099349A600F3E977 /* Rez */,
 				AFA3D99709C03E1C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18938,7 +18760,6 @@
 				AFA55CAC09934BB200F3E977 /* Resources */,
 				AFA55CAE09934BB200F3E977 /* Sources */,
 				AFA55CB009934BB200F3E977 /* Frameworks */,
-				AFA55CB709934BB200F3E977 /* Rez */,
 				AFA3D95F09C03DAE00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18958,7 +18779,6 @@
 				AFA55CCF09934CE400F3E977 /* Resources */,
 				AFA55CD109934CE400F3E977 /* Sources */,
 				AFA55CD309934CE400F3E977 /* Frameworks */,
-				AFA55CDA09934CE400F3E977 /* Rez */,
 				AFA3D98B09C03DFC00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18978,7 +18798,6 @@
 				AFA55D3F0993565300F3E977 /* Resources */,
 				AFA55D410993565300F3E977 /* Sources */,
 				AFA55D430993565300F3E977 /* Frameworks */,
-				AFA55D4A0993565300F3E977 /* Rez */,
 				AFA3D9C309C03E7100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -18998,7 +18817,6 @@
 				AFA55D650993584B00F3E977 /* Resources */,
 				AFA55D670993584B00F3E977 /* Sources */,
 				AFA55D690993584B00F3E977 /* Frameworks */,
-				AFA55D700993584B00F3E977 /* Rez */,
 				AFA3D96D09C03DCA00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19018,7 +18836,6 @@
 				AFA55D82099358C400F3E977 /* Resources */,
 				AFA55D84099358C400F3E977 /* Sources */,
 				AFA55D86099358C400F3E977 /* Frameworks */,
-				AFA55D8D099358C400F3E977 /* Rez */,
 				AFA3D9C709C03E7800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19038,7 +18855,6 @@
 				AFA55DCB09935D7000F3E977 /* Resources */,
 				AFA55DCD09935D7000F3E977 /* Sources */,
 				AFA55DCF09935D7000F3E977 /* Frameworks */,
-				AFA55DD609935D7000F3E977 /* Rez */,
 				AFA3D9A509C03E3600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19058,7 +18874,6 @@
 				AFA55DF309935E4900F3E977 /* Resources */,
 				AFA55DF509935E4900F3E977 /* Sources */,
 				AFA55DF809935E4900F3E977 /* Frameworks */,
-				AFA55DFF09935E4900F3E977 /* Rez */,
 				AFA3D9BF09C03E6900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19078,7 +18893,6 @@
 				AFA55E1009935EDC00F3E977 /* Resources */,
 				AFA55E1209935EDC00F3E977 /* Sources */,
 				AFA55E1409935EDC00F3E977 /* Frameworks */,
-				AFA55E1B09935EDC00F3E977 /* Rez */,
 				AFA3D97509C03DD700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19098,7 +18912,6 @@
 				AFA55E3209935F8E00F3E977 /* Resources */,
 				AFA55E3409935F8E00F3E977 /* Sources */,
 				AFA55E3709935F8E00F3E977 /* Frameworks */,
-				AFA55E3E09935F8E00F3E977 /* Rez */,
 				AFA3D98909C03DF700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19118,7 +18931,6 @@
 				AFA55E5109935FF900F3E977 /* Resources */,
 				AFA55E5309935FF900F3E977 /* Sources */,
 				AFA55E5509935FF900F3E977 /* Frameworks */,
-				AFA55E5C09935FF900F3E977 /* Rez */,
 				AFA3D98109C03DEA00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19138,7 +18950,6 @@
 				AFA55ECA099360E300F3E977 /* Resources */,
 				AFA55ECC099360E300F3E977 /* Sources */,
 				AFA55ED8099360E300F3E977 /* Frameworks */,
-				AFA55EDF099360E300F3E977 /* Rez */,
 				AFA3D95D09C03DAB00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19158,7 +18969,6 @@
 				AFA55F09099361B700F3E977 /* Resources */,
 				AFA55F0B099361B700F3E977 /* Sources */,
 				AFA55F13099361B700F3E977 /* Frameworks */,
-				AFA55F1A099361B700F3E977 /* Rez */,
 				AFA3D99D09C03E2600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19178,7 +18988,6 @@
 				AFA55F2D0993622F00F3E977 /* Resources */,
 				AFA55F2F0993622F00F3E977 /* Sources */,
 				AFA55F310993622F00F3E977 /* Frameworks */,
-				AFA55F380993622F00F3E977 /* Rez */,
 				AFA3D9A109C03E2E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19198,7 +19007,6 @@
 				AFA55F450993629000F3E977 /* Resources */,
 				AFA55F470993629000F3E977 /* Sources */,
 				AFA55F490993629000F3E977 /* Frameworks */,
-				AFA55F500993629000F3E977 /* Rez */,
 				AFA3D99B09C03E2300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19218,7 +19026,6 @@
 				AFA55F750993643600F3E977 /* Resources */,
 				AFA55F770993643600F3E977 /* Sources */,
 				AFA55F790993643600F3E977 /* Frameworks */,
-				AFA55F800993643600F3E977 /* Rez */,
 				AFA3D99109C03E1200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19238,7 +19045,6 @@
 				AFA55FD609936BFA00F3E977 /* Resources */,
 				AFA55FD809936BFA00F3E977 /* Sources */,
 				AFA55FDA09936BFA00F3E977 /* Frameworks */,
-				AFA55FE109936BFA00F3E977 /* Rez */,
 				AFA3D96F09C03DCD00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19258,7 +19064,6 @@
 				AFA55FFC09936C6D00F3E977 /* Resources */,
 				AFA55FFE09936C6D00F3E977 /* Sources */,
 				AFA5600009936C6D00F3E977 /* Frameworks */,
-				AFA5600709936C6D00F3E977 /* Rez */,
 				AFA3D98F09C03E0F00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19278,7 +19083,6 @@
 				AFA5601709936CC800F3E977 /* Resources */,
 				AFA5601909936CC800F3E977 /* Sources */,
 				AFA5601B09936CC800F3E977 /* Frameworks */,
-				AFA5602209936CC800F3E977 /* Rez */,
 				AFA3D95909C03DA400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19298,7 +19102,6 @@
 				AFA5603509936D5100F3E977 /* Resources */,
 				AFA5603709936D5100F3E977 /* Sources */,
 				AFA5603909936D5100F3E977 /* Frameworks */,
-				AFA5604009936D5100F3E977 /* Rez */,
 				AFA3D97B09C03DE000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19318,7 +19121,6 @@
 				AFA5604D09936E2100F3E977 /* Resources */,
 				AFA5604F09936E2100F3E977 /* Sources */,
 				AFA5605109936E2100F3E977 /* Frameworks */,
-				AFA5605809936E2100F3E977 /* Rez */,
 				AFA3D94D09C03D8D00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19338,7 +19140,6 @@
 				AFA5606509936F3800F3E977 /* Resources */,
 				AFA5606709936F3800F3E977 /* Sources */,
 				AFA5606909936F3800F3E977 /* Frameworks */,
-				AFA5607009936F3800F3E977 /* Rez */,
 				AFA3D95109C03D9400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19358,7 +19159,6 @@
 				AFA560B10993718D00F3E977 /* Resources */,
 				AFA560B30993718D00F3E977 /* Sources */,
 				AFA560B50993718D00F3E977 /* Frameworks */,
-				AFA560BC0993718D00F3E977 /* Rez */,
 				AFA3D9B909C03E5E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19378,7 +19178,6 @@
 				AFA561000993781600F3E977 /* Resources */,
 				AFA561020993781600F3E977 /* Sources */,
 				AFA561040993781600F3E977 /* Frameworks */,
-				AFA5610B0993781600F3E977 /* Rez */,
 				AFA3D9AD09C03E4600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19399,7 +19198,6 @@
 				AFA5615B09937C0D00F3E977 /* Resources */,
 				AFA5615D09937C0D00F3E977 /* Sources */,
 				AFA5615F09937C0D00F3E977 /* Frameworks */,
-				AFA5616609937C0D00F3E977 /* Rez */,
 				AFA3D95709C03DA100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19419,7 +19217,6 @@
 				AFA5617E09937CF100F3E977 /* Resources */,
 				AFA5618009937CF100F3E977 /* Sources */,
 				AFA5618209937CF100F3E977 /* Frameworks */,
-				AFA5618909937CF100F3E977 /* Rez */,
 				AFA3D9B109C03E4E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19439,7 +19236,6 @@
 				AFA561A009937D7E00F3E977 /* Resources */,
 				AFA561A209937D7E00F3E977 /* Sources */,
 				AFA561A409937D7E00F3E977 /* Frameworks */,
-				AFA561AB09937D7E00F3E977 /* Rez */,
 				AFA3D9B709C03E5B00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19459,7 +19255,6 @@
 				AFA562090993849F00F3E977 /* Resources */,
 				AFA5620B0993849F00F3E977 /* Sources */,
 				AFA5620E0993849F00F3E977 /* Frameworks */,
-				AFA562150993849F00F3E977 /* Rez */,
 				AFA3D9BB09C03E6200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19479,7 +19274,6 @@
 				AFA562220993852500F3E977 /* Resources */,
 				AFA562240993852500F3E977 /* Sources */,
 				AFA562260993852500F3E977 /* Frameworks */,
-				AFA5622D0993852500F3E977 /* Rez */,
 				AFA3D9B309C03E5100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19499,7 +19293,6 @@
 				AFA562C2099392C600F3E977 /* Resources */,
 				AFA562C4099392C600F3E977 /* Sources */,
 				AFA562C6099392C600F3E977 /* Frameworks */,
-				AFA562CD099392C600F3E977 /* Rez */,
 				AFA3D95B09C03DA800E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19519,7 +19312,6 @@
 				AFA562DD099393C900F3E977 /* Resources */,
 				AFA562DF099393C900F3E977 /* Sources */,
 				AFA562E1099393C900F3E977 /* Frameworks */,
-				AFA562E8099393C900F3E977 /* Rez */,
 				AFA3D94F09C03D9100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19539,7 +19331,6 @@
 				AFA562F50993943B00F3E977 /* Resources */,
 				AFA562F70993943B00F3E977 /* Sources */,
 				AFA562F90993943B00F3E977 /* Frameworks */,
-				AFA563000993943B00F3E977 /* Rez */,
 				AFA3D9D309C03E8F00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19559,7 +19350,6 @@
 				AFA563160993951000F3E977 /* Resources */,
 				AFA563180993951000F3E977 /* Sources */,
 				AFA5631B0993951000F3E977 /* Frameworks */,
-				AFA563220993951000F3E977 /* Rez */,
 				AFA3D96909C03DBF00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19579,7 +19369,6 @@
 				AFA56334099395ED00F3E977 /* Resources */,
 				AFA56336099395ED00F3E977 /* Sources */,
 				AFA56338099395ED00F3E977 /* Frameworks */,
-				AFA5633F099395ED00F3E977 /* Rez */,
 				AFA3D98D09C03E0500E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19599,7 +19388,6 @@
 				AFA56354099396C000F3E977 /* Resources */,
 				AFA56356099396C000F3E977 /* Sources */,
 				AFA56358099396C000F3E977 /* Frameworks */,
-				AFA5635F099396C000F3E977 /* Rez */,
 				AFA3D96B09C03DC600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19619,7 +19407,6 @@
 				AFA5637C099397B300F3E977 /* Resources */,
 				AFA5637E099397B300F3E977 /* Sources */,
 				AFA56380099397B300F3E977 /* Frameworks */,
-				AFA56387099397B300F3E977 /* Rez */,
 				AFA3D9D509C03E9300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19639,7 +19426,6 @@
 				AFA563A7099398BB00F3E977 /* Resources */,
 				AFA563A9099398BB00F3E977 /* Sources */,
 				AFA563AB099398BB00F3E977 /* Frameworks */,
-				AFA563B2099398BB00F3E977 /* Rez */,
 				AFA3D99F09C03E2900E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19659,7 +19445,6 @@
 				AFA6AAF320999950006D2685 /* Resources */,
 				AFA6AAF520999950006D2685 /* Sources */,
 				AFA6AAF820999950006D2685 /* Frameworks */,
-				AFA6AB0020999950006D2685 /* Rez */,
 				AFA6AB0120999950006D2685 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19679,7 +19464,6 @@
 				AFAAE38A207D6343007A515C /* Resources */,
 				AFAAE38C207D6343007A515C /* Sources */,
 				AFAAE38F207D6343007A515C /* Frameworks */,
-				AFAAE397207D6343007A515C /* Rez */,
 				AFAAE398207D6343007A515C /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19699,7 +19483,6 @@
 				AFACE8761CC83458008B24CD /* Resources */,
 				AFACE8781CC83458008B24CD /* Sources */,
 				AFACE87B1CC83458008B24CD /* Frameworks */,
-				AFACE8831CC83458008B24CD /* Rez */,
 				AFACE8841CC83458008B24CD /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19719,7 +19502,6 @@
 				AFADD32E24B67100005456DC /* Resources */,
 				AFADD33024B67100005456DC /* Sources */,
 				AFADD33324B67100005456DC /* Frameworks */,
-				AFADD33B24B67100005456DC /* Rez */,
 				AFADD33C24B67100005456DC /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19739,7 +19521,6 @@
 				AFAE1472279275BE00C62683 /* Resources */,
 				AFAE1474279275BE00C62683 /* Sources */,
 				AFAE1477279275BE00C62683 /* Frameworks */,
-				AFAE147F279275BE00C62683 /* Rez */,
 				AFAE1480279275BE00C62683 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19759,7 +19540,6 @@
 				AFB591AA178B812C00EA4005 /* Resources */,
 				AFB591AC178B812C00EA4005 /* Sources */,
 				AFB591AF178B812C00EA4005 /* Frameworks */,
-				AFB591B5178B812C00EA4005 /* Rez */,
 				AFB591B6178B812C00EA4005 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19823,7 +19603,6 @@
 				AFC0E8AE1CDC601A008CAFAC /* Resources */,
 				AFC0E8B01CDC601A008CAFAC /* Sources */,
 				AFC0E8B31CDC601A008CAFAC /* Frameworks */,
-				AFC0E8BB1CDC601A008CAFAC /* Rez */,
 				AFC0E8BC1CDC601A008CAFAC /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19843,7 +19622,6 @@
 				AFC5CFD92044AA23004CEB5E /* Resources */,
 				AFC5CFDB2044AA23004CEB5E /* Sources */,
 				AFC5CFDE2044AA23004CEB5E /* Frameworks */,
-				AFC5CFE62044AA23004CEB5E /* Rez */,
 				AFC5CFE72044AA23004CEB5E /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19863,7 +19641,6 @@
 				AFCF833E1AF5B515008BB7E1 /* Resources */,
 				AFCF83401AF5B515008BB7E1 /* Sources */,
 				AFCF83431AF5B515008BB7E1 /* Frameworks */,
-				AFCF834B1AF5B515008BB7E1 /* Rez */,
 				AFCF834C1AF5B515008BB7E1 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19883,7 +19660,6 @@
 				AFD51B1E0F063B4A00471C02 /* Resources */,
 				AFD51B210F063B4A00471C02 /* Sources */,
 				AFD51B240F063B4A00471C02 /* Frameworks */,
-				AFD51B2B0F063B4A00471C02 /* Rez */,
 				AFD51B2C0F063B4A00471C02 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19903,7 +19679,6 @@
 				AFD56DF40996A03800BA26F7 /* Resources */,
 				AFD56DF60996A03800BA26F7 /* Sources */,
 				AFD56DF90996A03800BA26F7 /* Frameworks */,
-				AFD56E000996A03800BA26F7 /* Rez */,
 				AFA3D99909C03E2000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19923,7 +19698,6 @@
 				AFD56EB10996A72600BA26F7 /* Resources */,
 				AFD56EB30996A72600BA26F7 /* Sources */,
 				AFD56EB60996A72600BA26F7 /* Frameworks */,
-				AFD56EBA0996A72600BA26F7 /* Rez */,
 				AFA3D90709C03D0B00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19943,7 +19717,6 @@
 				AFD56EDD0996A95700BA26F7 /* Resources */,
 				AFD56EDF0996A95700BA26F7 /* Sources */,
 				AFD56EE20996A95700BA26F7 /* Frameworks */,
-				AFD56EE60996A95700BA26F7 /* Rez */,
 				AFA3D91D09C03D3000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19963,7 +19736,6 @@
 				AFD56F0E0996AAFA00BA26F7 /* Resources */,
 				AFD56F100996AAFA00BA26F7 /* Sources */,
 				AFD56F130996AAFA00BA26F7 /* Frameworks */,
-				AFD56F170996AAFA00BA26F7 /* Rez */,
 				AFA3D94909C03D8100E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -19983,7 +19755,6 @@
 				AFD56F260996AB8A00BA26F7 /* Resources */,
 				AFD56F280996AB8A00BA26F7 /* Sources */,
 				AFD56F2B0996AB8A00BA26F7 /* Frameworks */,
-				AFD56F2F0996AB8A00BA26F7 /* Rez */,
 				AFA3D91F09C03D3300E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20003,7 +19774,6 @@
 				AFD56F520996AEEE00BA26F7 /* Resources */,
 				AFD56F540996AEEE00BA26F7 /* Sources */,
 				AFD56F570996AEEE00BA26F7 /* Frameworks */,
-				AFD56F5B0996AEEE00BA26F7 /* Rez */,
 				AFA3D92109C03D3600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20023,7 +19793,6 @@
 				AFD56F6E0996B01600BA26F7 /* Resources */,
 				AFD56F700996B01600BA26F7 /* Sources */,
 				AFD56F730996B01600BA26F7 /* Frameworks */,
-				AFD56F770996B01600BA26F7 /* Rez */,
 				AFA3D92309C03D3A00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20043,7 +19812,6 @@
 				AFD56F8F0996B09400BA26F7 /* Resources */,
 				AFD56F910996B09400BA26F7 /* Sources */,
 				AFD56F940996B09400BA26F7 /* Frameworks */,
-				AFD56F980996B09400BA26F7 /* Rez */,
 				AFA3D92909C03D4400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20063,7 +19831,6 @@
 				AFD56FA60996B10F00BA26F7 /* Resources */,
 				AFD56FA80996B10F00BA26F7 /* Sources */,
 				AFD56FAB0996B10F00BA26F7 /* Frameworks */,
-				AFD56FAF0996B10F00BA26F7 /* Rez */,
 				AFA3D92B09C03D4700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20083,7 +19850,6 @@
 				AFD56FBC0996B18F00BA26F7 /* Resources */,
 				AFD56FBE0996B18F00BA26F7 /* Sources */,
 				AFD56FC10996B18F00BA26F7 /* Frameworks */,
-				AFD56FC50996B18F00BA26F7 /* Rez */,
 				AFA3D92D09C03D4A00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20103,7 +19869,6 @@
 				AFD56FD20996B20900BA26F7 /* Resources */,
 				AFD56FD40996B20900BA26F7 /* Sources */,
 				AFD56FD70996B20900BA26F7 /* Frameworks */,
-				AFD56FDB0996B20900BA26F7 /* Rez */,
 				AFA3D92F09C03D4E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20123,7 +19888,6 @@
 				AFD56FFB0996B43800BA26F7 /* Resources */,
 				AFD56FFD0996B43800BA26F7 /* Sources */,
 				AFD570000996B43800BA26F7 /* Frameworks */,
-				AFD570040996B43800BA26F7 /* Rez */,
 				AFA3D93709C03D5B00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20143,7 +19907,6 @@
 				AFD570120996B4CC00BA26F7 /* Resources */,
 				AFD570140996B4CC00BA26F7 /* Sources */,
 				AFD570170996B4CC00BA26F7 /* Frameworks */,
-				AFD5701B0996B4CC00BA26F7 /* Rez */,
 				AFA3DBA209C0424C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20163,7 +19926,6 @@
 				AFD570290996B56D00BA26F7 /* Resources */,
 				AFD5702B0996B56D00BA26F7 /* Sources */,
 				AFD5702E0996B56D00BA26F7 /* Frameworks */,
-				AFD570320996B56D00BA26F7 /* Rez */,
 				AFA3D93D09C03D6C00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20183,7 +19945,6 @@
 				AFD570460996B61600BA26F7 /* Resources */,
 				AFD570480996B61600BA26F7 /* Sources */,
 				AFD5704B0996B61600BA26F7 /* Frameworks */,
-				AFD5704F0996B61600BA26F7 /* Rez */,
 				AFA3D93F09C03D6F00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20203,7 +19964,6 @@
 				AFD5705C0996B6A300BA26F7 /* Resources */,
 				AFD5705E0996B6A300BA26F7 /* Sources */,
 				AFD570610996B6A300BA26F7 /* Frameworks */,
-				AFD570650996B6A300BA26F7 /* Rez */,
 				AFA3D91309C03D1E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20223,7 +19983,6 @@
 				AFD570720996B72700BA26F7 /* Resources */,
 				AFD570740996B72700BA26F7 /* Sources */,
 				AFD570770996B72700BA26F7 /* Frameworks */,
-				AFD5707B0996B72700BA26F7 /* Rez */,
 				AFA3D93309C03D5400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20243,7 +20002,6 @@
 				AFD570880996B80300BA26F7 /* Resources */,
 				AFD5708A0996B80300BA26F7 /* Sources */,
 				AFD5708D0996B80300BA26F7 /* Frameworks */,
-				AFD570910996B80300BA26F7 /* Rez */,
 				AFA3D94709C03D7E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20263,7 +20021,6 @@
 				AFD5709E0996B88E00BA26F7 /* Resources */,
 				AFD570A00996B88E00BA26F7 /* Sources */,
 				AFD570A30996B88E00BA26F7 /* Frameworks */,
-				AFD570A70996B88E00BA26F7 /* Rez */,
 				AFA3D94B09C03D8500E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20283,7 +20040,6 @@
 				AFD570B40996B93000BA26F7 /* Resources */,
 				AFD570B60996B93000BA26F7 /* Sources */,
 				AFD570B90996B93000BA26F7 /* Frameworks */,
-				AFD570BD0996B93000BA26F7 /* Rez */,
 				AFA3D93B09C03D6200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20303,7 +20059,6 @@
 				AFD570CC0996B9F800BA26F7 /* Resources */,
 				AFD570CE0996B9F800BA26F7 /* Sources */,
 				AFD570D10996B9F800BA26F7 /* Frameworks */,
-				AFD570D50996B9F800BA26F7 /* Rez */,
 				AFA3D90109C03D0000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20323,7 +20078,6 @@
 				AFD570ED0996BBBF00BA26F7 /* Resources */,
 				AFD570EF0996BBBF00BA26F7 /* Sources */,
 				AFD570F20996BBBF00BA26F7 /* Frameworks */,
-				AFD570F60996BBBF00BA26F7 /* Rez */,
 				AFA3D91909C03D2700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20343,7 +20097,6 @@
 				AFD571160996BE9300BA26F7 /* Resources */,
 				AFD571180996BE9300BA26F7 /* Sources */,
 				AFD5711B0996BE9300BA26F7 /* Frameworks */,
-				AFD5711F0996BE9300BA26F7 /* Rez */,
 				AFA3D90D09C03D1400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20363,7 +20116,6 @@
 				AFD5712F0996BF2E00BA26F7 /* Resources */,
 				AFD571310996BF2E00BA26F7 /* Sources */,
 				AFD571340996BF2E00BA26F7 /* Frameworks */,
-				AFD571380996BF2E00BA26F7 /* Rez */,
 				AFA3D90309C03D0400E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20383,7 +20135,6 @@
 				AFD571460996C01700BA26F7 /* Resources */,
 				AFD571480996C01700BA26F7 /* Sources */,
 				AFD5714B0996C01700BA26F7 /* Frameworks */,
-				AFD5714F0996C01700BA26F7 /* Rez */,
 				AFA3D91109C03D1B00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20403,7 +20154,6 @@
 				AFD5715C0996C0CE00BA26F7 /* Resources */,
 				AFD5715E0996C0CE00BA26F7 /* Sources */,
 				AFD571610996C0CE00BA26F7 /* Frameworks */,
-				AFD571650996C0CE00BA26F7 /* Rez */,
 				AFA3D94509C03D7A00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20423,7 +20173,6 @@
 				AFD571B80996D9DC00BA26F7 /* Resources */,
 				AFD571BA0996D9DC00BA26F7 /* Sources */,
 				AFD571BD0996D9DC00BA26F7 /* Frameworks */,
-				AFD571C10996D9DC00BA26F7 /* Rez */,
 				AFA3D92509C03D3D00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20443,7 +20192,6 @@
 				AFD572250996E4A300BA26F7 /* Resources */,
 				AFD572270996E4A300BA26F7 /* Sources */,
 				AFD5722A0996E4A300BA26F7 /* Frameworks */,
-				AFD5722E0996E4A300BA26F7 /* Rez */,
 				AFA3D94309C03D7600E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20463,7 +20211,6 @@
 				AFD572700996EE8500BA26F7 /* Resources */,
 				AFD572720996EE8500BA26F7 /* Sources */,
 				AFD572750996EE8500BA26F7 /* Frameworks */,
-				AFD572790996EE8500BA26F7 /* Rez */,
 				AFA3D93909C03D5E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20483,7 +20230,6 @@
 				AFD572A80996F99600BA26F7 /* Resources */,
 				AFD572AA0996F99600BA26F7 /* Sources */,
 				AFD572AD0996F99600BA26F7 /* Frameworks */,
-				AFD572B10996F99600BA26F7 /* Rez */,
 				AFA3D90509C03D0700E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20503,7 +20249,6 @@
 				AFD572C50996FC0F00BA26F7 /* Resources */,
 				AFD572C70996FC0F00BA26F7 /* Sources */,
 				AFD572CA0996FC0F00BA26F7 /* Frameworks */,
-				AFD572CE0996FC0F00BA26F7 /* Rez */,
 				AFA3D90909C03D0E00E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20523,7 +20268,6 @@
 				AFD572FC099701C000BA26F7 /* Resources */,
 				AFD572FE099701C000BA26F7 /* Sources */,
 				AFD57301099701C000BA26F7 /* Frameworks */,
-				AFD57305099701C000BA26F7 /* Rez */,
 				AFA3D92709C03D4000E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20543,7 +20287,6 @@
 				AFD573600997411200BA26F7 /* Resources */,
 				AFD573620997411200BA26F7 /* Sources */,
 				AFD573650997411200BA26F7 /* Frameworks */,
-				AFD573690997411200BA26F7 /* Rez */,
 				AFA3D94109C03D7200E4CFCA /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20563,7 +20306,6 @@
 				AFD704C528308724002A8EB0 /* Resources */,
 				AFD704C728308724002A8EB0 /* Sources */,
 				AFD704CA28308724002A8EB0 /* Frameworks */,
-				AFD704D228308724002A8EB0 /* Rez */,
 				AFD704D328308724002A8EB0 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20583,7 +20325,6 @@
 				AFD77E5E20C23F8600A3638D /* Resources */,
 				AFD77E6020C23F8600A3638D /* Sources */,
 				AFD77E6320C23F8600A3638D /* Frameworks */,
-				AFD77E6B20C23F8600A3638D /* Rez */,
 				AFD77E6C20C23F8600A3638D /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20603,7 +20344,6 @@
 				AFDA6591178A52B70070D24B /* Resources */,
 				AFDA6593178A52B70070D24B /* Sources */,
 				AFDA6596178A52B70070D24B /* Frameworks */,
-				AFDA659C178A52B70070D24B /* Rez */,
 				AFDA659D178A52B70070D24B /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20623,7 +20363,6 @@
 				AFE2A4590E2E904600ADB298 /* Resources */,
 				AFE2A45B0E2E904600ADB298 /* Sources */,
 				AFE2A45E0E2E904600ADB298 /* Frameworks */,
-				AFE2A4650E2E904600ADB298 /* Rez */,
 				AFE2A4660E2E904600ADB298 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20644,7 +20383,6 @@
 				AFE30BEB0E52B14700CCF4A5 /* Resources */,
 				AFE30BED0E52B14700CCF4A5 /* Sources */,
 				AFE30BF00E52B14700CCF4A5 /* Frameworks */,
-				AFE30BF70E52B14700CCF4A5 /* Rez */,
 				AFE30BF80E52B14700CCF4A5 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20664,7 +20402,6 @@
 				AFE6A1850CDD7B2E002805BF /* Resources */,
 				AFE6A1870CDD7B2E002805BF /* Sources */,
 				AFE6A18B0CDD7B2E002805BF /* Frameworks */,
-				AFE6A1920CDD7B2E002805BF /* Rez */,
 				AFE6A1930CDD7B2E002805BF /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20684,7 +20421,6 @@
 				AFE6A41E0CDD7FAA002805BF /* Resources */,
 				AFE6A4210CDD7FAA002805BF /* Sources */,
 				AFE6A4240CDD7FAA002805BF /* Frameworks */,
-				AFE6A4280CDD7FAA002805BF /* Rez */,
 				AFE6A4290CDD7FAA002805BF /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20704,7 +20440,6 @@
 				AFEC23D01CB6EAE100DE138F /* Resources */,
 				AFEC23D21CB6EAE100DE138F /* Sources */,
 				AFEC23D51CB6EAE100DE138F /* Frameworks */,
-				AFEC23DD1CB6EAE100DE138F /* Rez */,
 				AFEC23DE1CB6EAE100DE138F /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20724,7 +20459,6 @@
 				AFEE10501D13406000AAC8F7 /* Resources */,
 				AFEE10521D13406000AAC8F7 /* Sources */,
 				AFEE10551D13406000AAC8F7 /* Frameworks */,
-				AFEE105D1D13406000AAC8F7 /* Rez */,
 				AFEE105E1D13406000AAC8F7 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20744,7 +20478,6 @@
 				AFEE106F1D15EB0800AAC8F7 /* Resources */,
 				AFEE10711D15EB0800AAC8F7 /* Sources */,
 				AFEE10741D15EB0800AAC8F7 /* Frameworks */,
-				AFEE107C1D15EB0800AAC8F7 /* Rez */,
 				AFEE107D1D15EB0800AAC8F7 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20764,7 +20497,6 @@
 				AFEE108E1D17E20B00AAC8F7 /* Resources */,
 				AFEE10901D17E20B00AAC8F7 /* Sources */,
 				AFEE10931D17E20B00AAC8F7 /* Frameworks */,
-				AFEE109B1D17E20B00AAC8F7 /* Rez */,
 				AFEE109C1D17E20B00AAC8F7 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20784,7 +20516,6 @@
 				AFF2868217860E830050A578 /* Resources */,
 				AFF2868417860E830050A578 /* Sources */,
 				AFF2868717860E830050A578 /* Frameworks */,
-				AFF2868D17860E830050A578 /* Rez */,
 				AFF2868E17860E830050A578 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20804,7 +20535,6 @@
 				AFF3C9EB17CCAC440028F240 /* Resources */,
 				AFF3C9ED17CCAC440028F240 /* Sources */,
 				AFF3C9F017CCAC440028F240 /* Frameworks */,
-				AFF3C9F617CCAC440028F240 /* Rez */,
 				AFF3C9F717CCAC440028F240 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20824,7 +20554,6 @@
 				AFF449E32275494400DB8EDB /* Resources */,
 				AFF449E52275494400DB8EDB /* Sources */,
 				AFF449E82275494400DB8EDB /* Frameworks */,
-				AFF449F02275494400DB8EDB /* Rez */,
 				AFF449F12275494400DB8EDB /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20844,7 +20573,6 @@
 				AFF463390C4403E400EE6509 /* Resources */,
 				AFF4633B0C4403E400EE6509 /* Sources */,
 				AFF4633E0C4403E400EE6509 /* Frameworks */,
-				AFF463420C4403E400EE6509 /* Rez */,
 				AFF463430C4403E400EE6509 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20864,7 +20592,6 @@
 				AFF4635B0C440AEF00EE6509 /* Resources */,
 				AFF4635D0C440AEF00EE6509 /* Sources */,
 				AFF463600C440AEF00EE6509 /* Frameworks */,
-				AFF463670C440AEF00EE6509 /* Rez */,
 				AFF463680C440AEF00EE6509 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20884,7 +20611,6 @@
 				AFFAB31819158CE40020F021 /* Resources */,
 				AFFAB31A19158CE40020F021 /* Sources */,
 				AFFAB31D19158CE40020F021 /* Frameworks */,
-				AFFAB32419158CE40020F021 /* Rez */,
 				AFFAB32519158CE40020F021 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20904,7 +20630,6 @@
 				CE3D01541B76F4C100993C75 /* Resources */,
 				CE3D01561B76F4C100993C75 /* Sources */,
 				CE3D01591B76F4C100993C75 /* Frameworks */,
-				CE3D01611B76F4C100993C75 /* Rez */,
 				CE3D01621B76F4C100993C75 /* Run Update Info Plist */,
 			);
 			buildRules = (
@@ -20924,7 +20649,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -23421,6 +23146,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF7F06152A50C18C00E35B45 /* droste.xml in Resources */,
+				AF7602542A9FBD7800460454 /* xscreensaver-getimage-file in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -24961,1927 +24687,6 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
-/* Begin PBXRezBuildPhase section */
-		AF08399E09930B6B00277BE9 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF083A44099311D700277BE9 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF0BF6DD29456B2E000D9473 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF0DC7B80C4C73F600D76972 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF0DCA510C4CBB0D00D76972 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF1A176E0D6D6EE3008AF328 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF1B0FB71D7AB4740011DBE4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF2107811FD23BDD00B61EA9 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF296A652A5A776D007441BF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF2A635128401496003791B4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF2D0D35241D7C870001D8B8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF32D9EF0F3AD0B40080F535 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF3581D01431D47B00E09C51 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF358211143330F900E09C51 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF35E89B0E63823600691F2F /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF39382A1D0FBD6A00205406 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF39E291198A11F60064A58D /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF3C71540D624BF50030CC0D /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF3EC9882035154C00180A35 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF41E962201D49DB0098E253 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF43640C241D84CE00966603 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF46E9DF1CBBA2B300240FBC /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF476FC2099D154F001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF476FE7099D1686001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477058099D4385001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477175099D4786001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47718B099D4803001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4771B3099D4949001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4771E7099D4D9A001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4771FE099D4E63001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477214099D4EE8001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47722A099D4F67001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47725F099D5717001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477277099D57B9001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47728F099D5926001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47738E099D65A1001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4773A6099D6648001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4773CD099D67B9001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47740E099D69E7001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477433099D7C70001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47744E099D7D33001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47748F099D89E4001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4774A5099D8A74001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4774C0099D8B5F001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4774DA099D8BFF001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477569099D9A1A001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47758F099D9C28001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4775AB099D9CF7001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4775E4099D9F69001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4775FE099DA030001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47761F099DA26C001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477650099DA6D0001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477666099DA78E001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47767C099DA849001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47769B099DAA6F001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4776B6099DABDD001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4776CC099DAC8A001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4776E7099DADDF001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4776FD099DAE7A001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477719099DAF9F001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47772F099DB044001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47775E099DB61E001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477780099DB965001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF47779C099DBA90001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4777DD099DC183001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4778B7099DDB79001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4778D3099DDCAE001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4778F4099DDDC8001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477915099DE379001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF477936099DE4C7001F091E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF480C54098E301400FB32B8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF480D7D098EEDDE00FB32B8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4810F709909FBA00FB32B8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4812600990CE2700FB32B8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4812C20990D3D900FB32B8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF48DEFE0A0C25E000F94CF9 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4A3458102A593600A81B2A /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4FD6F50CE7A486005EE58E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF4FF4C90D52CBDE00666F98 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF5C9B081A0CCE6E00B0147A /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF5ECEBB2116B1A400069433 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF62D6282180070600C57C42 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF633C111EE0BA6F00AB33BD /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF63A8011AB4EDDB00593C75 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF642401099FF9C2000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF6425D809A18855000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF6425F809A189EC000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF64261B09A18D6C000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF64263809A18F54000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF64265B09A19229000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF64268709A194B0000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF64277D09A1D37A000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF6427B409A2DE36000F4CD4 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF688AC9257C04D200C91EAE /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF68A48D19196CF800D41CD1 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF69E201270BA54600358595 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF6C6D84226AE4FC0065A748 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF6E25C2276C3F030032E38F /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF70B77D2A81D025007C1EB8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF70B79E2A8320A6007C1EB8 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF73FF311A09877F00E485E9 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF75110D1782B5B900380EA1 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7776F209B63ABF00EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77772609B6416100EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77774D09B6446500EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77778409B6497800EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77779E09B64A5200EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7777B809B64B2600EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7777E009B64C6B00EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7777FA09B64E3100EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77782109B6504400EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77785409B6528100EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77787009B6536000EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF77788B09B6563500EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7778B109B659C800EA3033 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF78D184142DD8F3002AAF77 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF794F70099748450059A8B0 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF794F9A09974A320059A8B0 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF794FD909974FA60059A8B0 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF796D2A26E5C10700DA6562 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7ACFCF19FF0A9200BD752B /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7F06092A50BFAB00E35B45 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF81E01025845C2A00CFC475 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF95059425670ECC00C1F257 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF96014E25758F9F007FA31B /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975739099C317000B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975781099C374A00B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9757CE099C3E6300B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975814099C41D500B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975871099C475900B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975A42099C681F00B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975A78099C6AB200B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975A92099C6BC300B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975AE3099C6EB100B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975B08099C6FE400B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975C1E099C8C1500B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975C4A099C8DCF00B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975C6A099C8F3F00B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF975D5F099CA0F000B05160 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9770150989D0F6001F8B92 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF97703C0989D1E6001F8B92 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9770790989D2F6001F8B92 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF998EE90A083DB30051049D /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D467209B5109C006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D475009B5300A006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D476B09B53166006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D48E709B53322006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D490009B535DA006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D493709B53CBA006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D496009B53FC9006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D497809B5411D006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D49A309B544C2006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D4C7509B59F27006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D4CF309B5AA8E006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D4D8B09B5B2DC006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D4DBC09B5B71E006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF9D4DFA09B5BB19006E59CF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA0B12E241CE69E0071E35D /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA2119C1CD59DAF00C0D2A1 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA3393B0B058505002B0E7D /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55956099330B000F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5597B0993317900F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA559A00993322100F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA559C30993328000F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA559DD0993330600F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55A110993340300F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55A2E099334A000F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55A870993364300F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55ADD09933CEF00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55B1A09933E0500F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55B3309933E8D00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55B8709933F7200F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55B9F09933FDA00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55BB9099340CE00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55BF20993429100F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55C1C0993431300F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55C85099349A600F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55CB709934BB200F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55CDA09934CE400F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55D4A0993565300F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55D700993584B00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55D8D099358C400F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55DD609935D7000F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55DFF09935E4900F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55E1B09935EDC00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55E3E09935F8E00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55E5C09935FF900F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55EDF099360E300F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55F1A099361B700F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55F380993622F00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55F500993629000F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55F800993643600F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA55FE109936BFA00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5600709936C6D00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5602209936CC800F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5604009936D5100F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5605809936E2100F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5607009936F3800F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA560BC0993718D00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5610B0993781600F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5616609937C0D00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5618909937CF100F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA561AB09937D7E00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA562150993849F00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5622D0993852500F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA562CD099392C600F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA562E8099393C900F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA563000993943B00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA563220993951000F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5633F099395ED00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA5635F099396C000F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA56387099397B300F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA563B2099398BB00F3E977 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFA6AB0020999950006D2685 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFAAE397207D6343007A515C /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFACE8831CC83458008B24CD /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFADD33B24B67100005456DC /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFAE147F279275BE00C62683 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFB591B5178B812C00EA4005 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFC0E8BB1CDC601A008CAFAC /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFC5CFE62044AA23004CEB5E /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFCF834B1AF5B515008BB7E1 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD51B2B0F063B4A00471C02 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56E000996A03800BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56EBA0996A72600BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56EE60996A95700BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56F170996AAFA00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56F2F0996AB8A00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56F5B0996AEEE00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56F770996B01600BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56F980996B09400BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56FAF0996B10F00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56FC50996B18F00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD56FDB0996B20900BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570040996B43800BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD5701B0996B4CC00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570320996B56D00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD5704F0996B61600BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570650996B6A300BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD5707B0996B72700BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570910996B80300BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570A70996B88E00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570BD0996B93000BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570D50996B9F800BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD570F60996BBBF00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD5711F0996BE9300BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD571380996BF2E00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD5714F0996C01700BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD571650996C0CE00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD571C10996D9DC00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD5722E0996E4A300BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD572790996EE8500BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD572B10996F99600BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD572CE0996FC0F00BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD57305099701C000BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD573690997411200BA26F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD704D228308724002A8EB0 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFD77E6B20C23F8600A3638D /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFDA659C178A52B70070D24B /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFE2A4650E2E904600ADB298 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFE30BF70E52B14700CCF4A5 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFE6A1920CDD7B2E002805BF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFE6A4280CDD7FAA002805BF /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFEC23DD1CB6EAE100DE138F /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFEE105D1D13406000AAC8F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFEE107C1D15EB0800AAC8F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFEE109B1D17E20B00AAC8F7 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFF2868D17860E830050A578 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFF3C9F617CCAC440028F240 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFF449F02275494400DB8EDB /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFF463420C4403E400EE6509 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFF463670C440AEF00EE6509 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AFFAB32419158CE40020F021 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		CE3D01611B76F4C100993C75 /* Rez */ = {
-			isa = PBXRezBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXRezBuildPhase section */
-
 /* Begin PBXShellScriptBuildPhase section */
 		AF0BF6DE29456B2E000D9473 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -26951,7 +24756,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "codesign -v --force --deep -o runtime --sign ${EXPANDED_CODE_SIGN_IDENTITY} ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework/Versions/A/Resources/Autoupdate.app\ncodesign -v --force -o runtime --sign ${EXPANDED_CODE_SIGN_IDENTITY} ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework/Versions/A\n";
+			shellScript = "codesign -v --force --deep -o runtime --sign ${EXPANDED_CODE_SIGN_IDENTITY} ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework/Versions/B/Updater.app\ncodesign -v --force -o runtime --sign ${EXPANDED_CODE_SIGN_IDENTITY} ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework/Versions/B\n";
 			showEnvVarsInLog = 0;
 		};
 		AF1A176F0D6D6EE3008AF328 /* Run Update Info Plist */ = {
@@ -38346,6 +36151,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.updater";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -38355,6 +36162,7 @@
 				"OTHER_CFLAGS[sdk=macosx*]" = "${OBJC_NO_GC_CFLAGS}";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_IDENTIFIER)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -38363,6 +36171,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.updater";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -38372,6 +36182,7 @@
 				"OTHER_CFLAGS[sdk=macosx*]" = "${OBJC_NO_GC_CFLAGS}";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_IDENTIFIER)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

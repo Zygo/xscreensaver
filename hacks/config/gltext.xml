@@ -39,6 +39,10 @@
   <boolean id="wire"    _label="Wireframe"              arg-set="--wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
+  <!-- This line must be here for error checking in update-info-plist.pl
+  <xscreensaver-text />
+  -->
+
   <xscreensaver-updater />
 
   <_description>
