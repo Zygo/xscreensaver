@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>https://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 6.08</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.08.dmg</link>
+   <description><![CDATA[&bull; Worked around a macOS 14.0 bug where savers would continue running invisibly in the background after un-blanking. <BR>&bull; Upgraded Sparkle (the "Check for Updates" library) for macOS 14.0 compatibility.]]></description>
+   <pubDate>Tue, 10 Oct 2023 17:34:41 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.08.dmg"
+    sparkle:version="6.08"
+    sparkle:edSignature="vdbfhkrzWTmduHv32WYACq/ubR6ZPITx6GvsJs9VCMUYO05SwOlUH0FF+yPwX4fkN/N6dfJrmn6YSW4VAZSxAw=="
+    length="89061022"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.07</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.07.dmg</link>
+   <description><![CDATA[&bull; New hacks, `droste', `skulloop', `papercube' and `cubocteversion'. <BR>&bull; `xscreensaver-settings' was sometimes turning off the DPMS checkbox. <BR>&bull; Log pid of caller of `deactivate' command, to give a hint about who is preventing the screen from blanking. <BR>&bull; recanim uses libffmpeg. <BR>&bull; Updates to `sphereeversion'. <BR>&bull; Added some new map sources to `mapscroller'. <BR>&bull; Worked around a macOS 13.4 bug where multi-head systems would fail to launch savers on some or all screens. <BR>&bull; Minimum compiler target is now ISO C99 instead of ANSI C89. Didn't want to rush into it. <BR>&bull; macOS, Android: Better looking thunbmail images. <BR>&bull; Various other minor bug fixes.]]></description>
+   <pubDate>Tue, 29 Aug 2023 18:06:48 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.07.dmg"
+    sparkle:version="6.07"
+    sparkle:edSignature="HSb5FJ/VaOJ/V3s+8EVrelYhf1/vswYWBWFDrKq1PLeAd8fhOQ9BvS4bdzxSbnwL361lSoIKkip61eQIay7mAQ=="
+    length="88624232"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.06</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.06.dmg</link>
+   <description><![CDATA[&bull; New hack, `hextrail'. <BR>&bull; `marbling' works again. <BR>&bull; Adjusted some of the very old hacks, which were written when pixels were larger, to be more visible on today's higher rez displays. ]]></description>
+   <pubDate>Sun, 11 Dec 2022 13:39:02 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.06.dmg"
+    sparkle:version="6.06"
+    sparkle:edSignature="OaiwaLmdGky2vyjJVnDADT2Lquu4JypQ5GdDeUL0Rx+pPLr7thuVKawrdhn67Lr/2GB/IG+QSntFr23sDiuWAg=="
+    length="80828727"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

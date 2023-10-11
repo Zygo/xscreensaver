@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="pedal" _label="Pedal">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=VFibXcP1JH0"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Duration" _low-label="1 second" _high-label="1 minute"
+          low="1" high="60" default="5"/>
+
+  <number id="lines" type="slider" arg="--maxlines %"
+          _label="Lines" _low-label="Few" _high-label="Many"
+          low="100" high="5000" default="1000"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+The even-odd winding rule.
+
+https://en.wikipedia.org/wiki/Even-odd_rule
+https://en.wikipedia.org/wiki/Nonzero-rule
+
+Written by Dale Moore; 1995.
+  </_description>
+</screensaver>
