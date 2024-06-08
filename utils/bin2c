@@ -1,0 +1,46 @@
+#!/bin/sh
+# Copyright © 2018 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# Converts a binary file to a C source code string, e.g., to embed the
+# contents of a PNG file by including a .h file.
+#
+# Created:  7-Feb-2018.
+
+usage () {
+  echo "usage: $0 in.png out_png.h" >&2
+  exit 1
+}
+
+if [ $# != 2 ]; then usage; fi
+
+IN="$1"
+OUT="$2"
+
+NAME=`echo "$OUT" | sed \
+  -e 's@^.*/@@' \
+  -e 's/\.[^.]*$//' \
+  -e 's/[-.]/_/g' \
+  -e 's/^\([^a-z]\)/_\1/'`;
+
+if [ x"$PERL" = "x" ]; then PERL=perl ; fi
+
+# On Linux, we could do this and put the raw image into a .o data segment:
+#	$(LD) -r -b binary $< -o $@
+# but that doesn't work on MacOS.
+
+exec $PERL -0 -pe "
+  BEGIN { print \"#ifdef __GNUC__\\n\";
+	  print \"__extension__\\n\";
+	  print \"#endif\\n\";
+	  print \"static const unsigned char ${NAME}[] =\\n \\\"\"; }
+  END   { print \"\\\";\\n\"; }
+  s/([^ -\041\043-\076\100-\133\135-\176])/sprintf(\"\\\\%03o\",ord(\$1))/gse;"\
+  < "$IN" > "$OUT"
