@@ -230,7 +230,11 @@
   return NO;  // No need for Sparkle to re-launch XScreenSaverUpdater
 }
 
-// Append extra info to the system-info URL.
+// When the updater loads updates.xml, it appends some URL parameters with
+// OS and hardware versions.  This adds the currently-running saver name to
+// that list.  Except that as of 10.15 or so it longer works, thanks to
+// sandboxing.  The saver can't communicate shit to the updater, including
+// its name.
 //
 - (NSArray *) feedParametersForUpdater:(SPUStandardUpdaterController *) u
                   sendingSystemProfile:(BOOL)sending

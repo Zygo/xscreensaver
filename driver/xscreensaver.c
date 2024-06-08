@@ -1236,7 +1236,7 @@ ungrab_mouse (Display *dpy)
 /* Some remote desktop clients (e.g., "rdesktop") hold the keyboard GRABBED the
    whole time they have focus!  This is idiotic because the whole point of
    grabbing is to get events when you do *not* have focus, so grabbing only
-   when* you have focus is redundant.  Anyway, that prevents us from getting a
+   *when* you have focus is redundant.  Anyway, that prevents us from getting a
    keyboard grab.  It turns out that for some of these apps, de-focusing them
    forces them to release their grab.
 
@@ -1367,14 +1367,14 @@ grab_keyboard_and_mouse (Screen *screen)
      because I'm not completely convinced it is a safe thing to do.
    */
 
-  if (kstatus != GrabSuccess)	/* Do not blank without a kbd grab.   */
+  if (kstatus != GrabSuccess)	/* Do not blank without a kbd grab. */
     {
       /* If we didn't get both grabs, release the one we did get. */
       ungrab_keyboard_and_mouse (dpy);
       return False;
     }
 
-  return True;			/* Grab is good, go ahead and blank.  */
+  return True;			/* Grab is good, go ahead and blank. */
 }
 
 
@@ -1764,9 +1764,9 @@ main_loop (Display *dpy)
                      linking with additional libraries, doing additional X
                      protocol, and also some finicky error handling, since
                      the DPMS extension is a pain in the ass.  So instead,
-                     I made xscreensaver-command do that instead.  This
-                     somewhat breaks the abstraction of ClientMessage
-                     handling, but it's more robust. */
+                     I made xscreensaver-command:reset_dpms_timer() do that
+                     instead.  This somewhat breaks the abstraction of
+                     ClientMessage handling, but it's more robust. */
                 }
               else if (msg == XA_LOCK)
                 {

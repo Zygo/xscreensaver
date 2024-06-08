@@ -1081,8 +1081,16 @@ static NSMutableArray *all_saver_views = NULL;
    you call stopAnimation." */
 
 
-- (void)stopAnimation
+- (void)stopAnimation {
+  [self stopAnimationWithException: NULL];
+}
+
+- (void)stopAnimationWithException: (NSException *) error
 {
+  // #### When 'error' exists I would like to do a dirtier shutdown that
+  // kills subprocesses and resets things, but does not touch any more
+  // graphics state.  Not sure how to do that...
+
 # ifdef HAVE_IPHONE
   if (cycle_timer)
     [cycle_timer invalidate];

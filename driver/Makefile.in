@@ -1015,17 +1015,7 @@ demo-Gtk.o: $(UTILS_SRC)/version.h
 demo-Gtk.o: $(UTILS_SRC)/visual.h
 demo-Gtk.o: $(UTILS_SRC)/xmu.h
 demo-Gtk.o: $(UTILS_SRC)/xscreensaver-intl.h
-demo-Xm.o: XScreenSaver_Xm_ad.h
-demo-Xm.o: XScreenSaver_ad.h
-demo-Xm.o: $(srcdir)/atoms.h
-demo-Xm.o: $(srcdir)/blurb.h
 demo-Xm.o: ../config.h
-demo-Xm.o: $(srcdir)/remote.h
-demo-Xm.o: $(srcdir)/types.h
-demo-Xm.o: $(UTILS_SRC)/resources.h
-demo-Xm.o: $(UTILS_SRC)/version.h
-demo-Xm.o: $(UTILS_SRC)/visual.h
-demo-Xm.o: $(UTILS_SRC)/xmu.h
 demo-Xm-widgets.o: ../config.h
 passwd-kerberos.o: $(srcdir)/auth.h
 passwd-kerberos.o: $(srcdir)/blurb.h

@@ -69,6 +69,9 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.09	* New hacks,`kallisti' and `highvoltage'.
+	* Formal-wear for `headroom'.
+
 6.08	* macOS: Worked around a macOS 14.0 bug where savers would continue
           running invisibly in the background after un-blanking.
 	* macOS: Upgraded Sparkle (the "Check for Updates" library) for

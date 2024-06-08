@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2023 Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2024 Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -47,8 +47,8 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.192 $' =~ m/\s(\d[.\d]+)\s/s);
-my $copyright = "WebCollage $version, Copyright (c) 1999-2022" .
+my ($version) = ('$Revision: 1.193 $' =~ m/\s(\d[.\d]+)\s/s);
+my $copyright = "WebCollage $version, Copyright © 1999-2024" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
 
@@ -3713,7 +3713,7 @@ sub update_imagemap($$$$$$$$) {
     my $imagemap_jpg2 = $imagemap_jpg;
     $imagemap_jpg2 =~ s@^.*/@@gs;
     my $img = ("   <DIV CLASS=\"webcollage_box\">" .
-                    "<IMG SRC=\"$imagemap_jpg2\">" .
+                    "<IMG SRC=\"$imagemap_jpg2\" ALT=\"\">" .
                    "</DIV>\n");
     foreach my $a (@imagemap_areas) {
       my ($x, $y, $w, $h, $u) = @$a;
@@ -3724,7 +3724,7 @@ sub update_imagemap($$$$$$$$) {
       foreach my $v ($x, $y, $w, $h) { $v = sprintf("%.1f%%", $v); }
       $u = html_quote($u);
       $img .= ("   <A HREF=\"$u\" STYLE=\"" .
-               "left:$x;top:$y;width:$w;height:$h\"/>\n");
+               "left:$x;top:$y;width:$w;height:$h\"></A>\n");
     }
 
     $img = ("<DIV CLASS=\"webcollage_frame\">\n" .

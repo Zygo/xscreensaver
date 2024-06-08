@@ -151,6 +151,7 @@
          randomizer:(BOOL)r;
 - (id)initWithFrame:(NSRect)f title:(NSString*)t isPreview:(BOOL)p;
 - (id)initWithFrame:(NSRect)f isPreview:(BOOL)p randomizer:(BOOL)r;
+- (void) stopAnimationWithException:(NSException *)e;
 
 - (void) render_x11;
 - (NSOpenGLContext *) oglContext;

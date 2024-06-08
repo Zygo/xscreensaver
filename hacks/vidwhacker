@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# vidwhacker, for xscreensaver.  Copyright © 1998-2022 Jamie Zawinski.
+# vidwhacker, for xscreensaver.  Copyright © 1998-2023 Jamie Zawinski.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -22,7 +22,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.40 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.41 $' =~ m/\s(\d[.\d]+)\s/s);
 
 # Command line switches
 #
@@ -211,7 +211,7 @@ sub frob_ppm($) {
 
   error ("0-length data") if (!defined($ppm_data) || $ppm_data eq  "");
   error ("not a PPM file") unless ($ppm_data =~ m/^P\d\n/s);
-  my ($width, $height) = ($ppm_data =~ m/^P\d\n(\d+) (\d+)\n/s);
+  my ($width, $height) = ($ppm_data =~ m/^P\d\n(?:#.*\n)*(\d+) (\d+)\n/s);
   error ("got a bogus PPM") unless ($width && $height);
 
   my $tmpdir = $ENV{TMPDIR};

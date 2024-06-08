@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright © 1997-2023 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright © 1997-2024 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -237,12 +237,12 @@ MEN		= anemone.man apollonian.man attraction.man \
 	          twang.man vermiculate.man vidwhacker.man \
 	          wander.man webcollage.man whirlwindwarp.man \
 	          xflame.man xjack.man xlyap.man xmatrix.man \
-	          xrayswarm.man xspirograph.man \
-	          zoom.man halftone.man eruption.man metaballs.man \
+	          xrayswarm.man xspirograph.man zoom.man halftone.man \
+		  eruption.man popsquares.man metaballs.man \
 		  barcode.man piecewise.man cloudlife.man \
 		  fontglide.man apple2.man xanalogtv.man filmleader.man \
 		  pong.man wormhole.man pacman.man fuzzyflakes.man \
-		  anemotaxis.man memscroller.man substrate.man \
+		  anemotaxis.man memscroller.man substrate.man m6502.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
 		  lcdscrub.man hexadrop.man tessellimage.man binaryring.man \

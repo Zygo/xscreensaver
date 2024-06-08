@@ -1,4 +1,4 @@
-/* molecule, Copyright (c) 2001-2016 Jamie Zawinskin <jwz@jwz.org>
+/* molecule, Copyright © 2001-2023 Jamie Zawinskin <jwz@jwz.org>
  * Draws molecules, based on coordinates from PDB (Protein Data Base) files.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -110,7 +110,7 @@ static const atom_data all_atom_data[] = {
   { "H",    1.17,  0.40, "#FFFFFF", "#000000", { 0, }},
   { "C",    1.75,  0.58, "#999999", "#FFFFFF", { 0, }},
   { "CA",   1.80,  0.60, "#0000FF", "#ADD8E6", { 0, }},
-  { "N",    1.55,  0.52, "#A2B5CD", "#EE99FF", { 0, }},
+  { "N",    1.55,  0.52, "#428DC3", "#EE99FF", { 0, }},
   { "O",    1.40,  0.47, "#FF0000", "#FFB6C1", { 0, }},
   { "P",    1.28,  0.43, "#9370DB", "#DB7093", { 0, }},
   { "S",    1.80,  0.60, "#8B8B00", "#FFFF00", { 0, }},

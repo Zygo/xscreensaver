@@ -8,14 +8,14 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
-   <title>Version 6.08</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.08.dmg</link>
-   <description><![CDATA[&bull; Worked around a macOS 14.0 bug where savers would continue running invisibly in the background after un-blanking. <BR>&bull; Upgraded Sparkle (the "Check for Updates" library) for macOS 14.0 compatibility.]]></description>
-   <pubDate>Tue, 10 Oct 2023 17:34:41 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.08.dmg"
-    sparkle:version="6.08"
-    sparkle:edSignature="vdbfhkrzWTmduHv32WYACq/ubR6ZPITx6GvsJs9VCMUYO05SwOlUH0FF+yPwX4fkN/N6dfJrmn6YSW4VAZSxAw=="
-    length="89061022"
+   <title>Version 6.09</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.09.dmg</link>
+   <description><![CDATA[&bull; New hacks,`kallisti' and `highvoltage'. <BR>&bull; Formal-wear for `headroom'.]]></description>
+   <pubDate>Fri, 07 Jun 2024 22:00:40 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.09.dmg"
+    sparkle:version="6.09"
+    sparkle:edSignature="R83Wet7kF1AW9R9KihrZq0cbDnjFL8QF5wtEnK/6Adt7jPtUGCTXcpoFiCvxx3yKOuY+1FZ3pV87X6AQ4rQ8BA=="
+    length="90634351"
     type="application/octet-stream" />
   </item>
   <item>
@@ -27,17 +27,6 @@
     sparkle:version="6.07"
     sparkle:edSignature="HSb5FJ/VaOJ/V3s+8EVrelYhf1/vswYWBWFDrKq1PLeAd8fhOQ9BvS4bdzxSbnwL361lSoIKkip61eQIay7mAQ=="
     length="88624232"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 6.06</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.06.dmg</link>
-   <description><![CDATA[&bull; New hack, `hextrail'. <BR>&bull; `marbling' works again. <BR>&bull; Adjusted some of the very old hacks, which were written when pixels were larger, to be more visible on today's higher rez displays. ]]></description>
-   <pubDate>Sun, 11 Dec 2022 13:39:02 -0800</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.06.dmg"
-    sparkle:version="6.06"
-    sparkle:edSignature="OaiwaLmdGky2vyjJVnDADT2Lquu4JypQ5GdDeUL0Rx+pPLr7thuVKawrdhn67Lr/2GB/IG+QSntFr23sDiuWAg=="
-    length="80828727"
     type="application/octet-stream" />
   </item>
  </channel>

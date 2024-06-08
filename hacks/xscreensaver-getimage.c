@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2001-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2001-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1163,11 +1163,18 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
         FILE *f = fdopen (in, "r");
         int L;
         char *outfile_full;
+        int i = 0;
 
         close (out);  /* don't need this one */
+
         *buf = 0;
-        if (! fgets (buf, sizeof(buf)-1, f))
-          *buf = 0;
+        do {
+          errno = 0;
+          if (! fgets (buf, sizeof(buf)-1, f))
+            *buf = 0;
+        } while (errno == EINTR &&	/* fgets might fail due to SIGCHLD. */
+                 i++ < 1000);		/* And just in case. */
+
         fclose (f);
 
         /* Wait for the child to die. */

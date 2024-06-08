@@ -42,31 +42,32 @@
             _low-label="Clear" _high-label="Opaque"
             _label="Transparency" low="0.1" high="1.0" default="1.0"/>
    </vgroup>
-  </hgroup>
-
-   <hgroup>
-   <vgroup>
-  <boolean id="walls" _label="Enable walls" arg-set="--walls"/>
-  <boolean id="colour" _label="Enable colouring" arg-set="--colour"/>
-  <boolean id="texture" _label="Enable reflected image" arg-unset="--no-texture"/>
-   </vgroup>
-   <vgroup>
-  <boolean id="backgound" _label="Show image on background" arg-unset="--no-paint-background"/>
-  <boolean id="offset_texture" _label="Offset texture coordinates" arg-set="--offset-texture"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
-   </vgroup>
 
    <vgroup>
+
     <select id="render">
-        <option id="wire"  _label="Wireframe" arg-set="--wire"/>
-        <option id="solid" _label="Solid surface"/>
+     <option id="wire"  _label="Wireframe" arg-set="--wire"/>
+     <option id="solid" _label="Solid surface"/>
     </select>
+
+    <boolean id="walls" _label="Enable walls" arg-set="--walls"/>
+    <boolean id="colour" _label="Enable colouring" arg-set="--colour"/>
+    <boolean id="texture" _label="Enable reflected image" arg-unset="--no-texture"/>
+    <boolean id="backgound" _label="Show image on background" arg-unset="--no-paint-background"/>
+    <boolean id="offset_texture" _label="Offset texture coordinates" arg-set="--offset-texture"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
    </vgroup>
 
   </hgroup>
 
-  <xscreensaver-image />
-  <xscreensaver-updater />
+  <hgroup>
+   <vgroup>
+    <xscreensaver-image />
+   </vgroup>
+   <vgroup>
+    <xscreensaver-updater />
+   </vgroup>
+  </hgroup>
 
   <_description>
 A wobbly blob distorts images behind it.

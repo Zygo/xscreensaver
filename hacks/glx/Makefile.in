@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2023 Jamie Zawinski.
+# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2024 Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
 @SET_MAKE@
@@ -147,7 +147,8 @@ SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
 		  sphereeversion-corrugations.c \
 		  mapscroller.c squirtorus.c nakagin.c chompytower.c \
 		  teeth_model.c hextrail.c papercube.c cubocteversion.c \
-		  skulloop.c
+		  skulloop.c kallisti.c kallisti_model.c highvoltage.c \
+		  highvoltage_model.c
 
 SCRIPTS		= mapscroller.pl
 
@@ -203,7 +204,8 @@ OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  sphereeversion-corrugations.c \
 		  mapscroller.o squirtorus.o nakagin.o chompytower.o \
 		  teeth_model.o hextrail.o papercube.o cubocteversion.o \
-		  skulloop.o
+		  skulloop.o kallisti.o kallisti_model.o highvoltage.o \
+		  highvoltage_model.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -227,7 +229,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  maze3d handsy gravitywell deepstars gibson etruscanvenus \
 		  sphereeversion covid19 headroom beats mapscroller \
 		  squirtorus nakagin chompytower hextrail papercube \
-		  cubocteversion skulloop
+		  cubocteversion skulloop kallisti highvoltage
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
@@ -306,7 +308,8 @@ GL_MEN		= xscreensaver-gl-visual.man \
 		  gravitywell.man deepstars.man gibson.man etruscanvenus.man \
 		  sphereeversion.man covid19.man headroom.man beats.man \
 		  mapscroller.man squirtorus.man nakagin.man chompytower.man \
-		  hextrail.man papercube.man cubocteversion.man skulloop.man
+		  hextrail.man papercube.man cubocteversion.man skulloop.man \
+		  kallisti.man highvoltage.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -1146,6 +1149,33 @@ cubocteversion:	cubocteversion.o $(CUBOCT_OBJS)
 SKULLOOP_OBJS=gllist.o skull_model.o normals.o $(HACK_TRACK_OBJS)
 skulloop:	skulloop.o	 $(SKULLOOP_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(SKULLOOP_OBJS) $(HACK_LIBS)
+
+kallisti_dxf::
+	./dxf2gl.pl --smooth --normalize kallisti.dxf kallisti_model.c
+KALLISTI=kallisti.o kallisti_model.o gllist.o $(HACK_TRACK_OBJS)
+kallisti:			$(KALLISTI)
+	$(CC_HACK) -o $@	$(KALLISTI) $(HACK_LIBS)
+
+# highvoltage.dxf:  export towers as lines (except pole)
+# highvoltage2.dxf: export pole as triangles (except cables, connections)
+# highvoltage3.dxf: export pole cables as lines
+# highvoltage4.dxf: export pole connections as lines
+highvoltage_dxf::
+	./dxf2gl.pl --wireframe --layers highvoltage.dxf  highvoltage_model.c
+	mv highvoltage_model.c highvoltage_tmp1.c
+	./dxf2gl.pl --smooth highvoltage2.dxf highvoltage_model_tower_j_body.c
+	mv highvoltage_model_tower_j_body.c highvoltage_tmp2.c
+	./dxf2gl.pl --wireframe --layers highvoltage3.dxf highvoltage_model.c
+	mv highvoltage_model.c highvoltage_tmp3.c
+	./dxf2gl.pl --wireframe --layers highvoltage4.dxf highvoltage_model.c
+	mv highvoltage_model.c highvoltage_tmp4.c
+	cat highvoltage_tmp[1234].c > highvoltage_model.c
+	rm highvoltage_tmp[1234].c
+
+HIGHVOLTAGE=highvoltage.o highvoltage_model.o gllist.o tube.o \
+	$(HACK_TRACK_OBJS)
+highvoltage:			$(HIGHVOLTAGE)
+	$(CC_HACK) -o $@	$(HIGHVOLTAGE) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -3031,6 +3061,42 @@ hextrail.o: $(UTILS_SRC)/xft.h
 hextrail.o: $(UTILS_SRC)/yarandom.h
 hextrail.o: $(HACK_SRC)/xlockmoreI.h
 hextrail.o: $(HACK_SRC)/xlockmore.h
+highvoltage_model.o: ../../config.h
+highvoltage_model.o: $(HACK_SRC)/fps.h
+highvoltage_model.o: $(srcdir)/gllist.h
+highvoltage_model.o: $(HACK_SRC)/recanim.h
+highvoltage_model.o: $(HACK_SRC)/screenhackI.h
+highvoltage_model.o: $(UTILS_SRC)/colors.h
+highvoltage_model.o: $(UTILS_SRC)/erase.h
+highvoltage_model.o: $(UTILS_SRC)/font-retry.h
+highvoltage_model.o: $(UTILS_SRC)/grabclient.h
+highvoltage_model.o: $(UTILS_SRC)/hsv.h
+highvoltage_model.o: $(UTILS_SRC)/resources.h
+highvoltage_model.o: $(UTILS_SRC)/usleep.h
+highvoltage_model.o: $(UTILS_SRC)/visual.h
+highvoltage_model.o: $(UTILS_SRC)/xft.h
+highvoltage_model.o: $(UTILS_SRC)/yarandom.h
+highvoltage_model.o: $(HACK_SRC)/xlockmoreI.h
+highvoltage.o: ../../config.h
+highvoltage.o: $(HACK_SRC)/fps.h
+highvoltage.o: $(srcdir)/gllist.h
+highvoltage.o: $(srcdir)/gltrackball.h
+highvoltage.o: $(srcdir)/normals.h
+highvoltage.o: $(HACK_SRC)/recanim.h
+highvoltage.o: $(HACK_SRC)/screenhackI.h
+highvoltage.o: $(srcdir)/tube.h
+highvoltage.o: $(UTILS_SRC)/colors.h
+highvoltage.o: $(UTILS_SRC)/erase.h
+highvoltage.o: $(UTILS_SRC)/font-retry.h
+highvoltage.o: $(UTILS_SRC)/grabclient.h
+highvoltage.o: $(UTILS_SRC)/hsv.h
+highvoltage.o: $(UTILS_SRC)/resources.h
+highvoltage.o: $(UTILS_SRC)/usleep.h
+highvoltage.o: $(UTILS_SRC)/visual.h
+highvoltage.o: $(UTILS_SRC)/xft.h
+highvoltage.o: $(UTILS_SRC)/yarandom.h
+highvoltage.o: $(HACK_SRC)/xlockmoreI.h
+highvoltage.o: $(HACK_SRC)/xlockmore.h
 hilbert.o: ../../config.h
 hilbert.o: $(HACK_SRC)/fps.h
 hilbert.o: $(srcdir)/gltrackball.h
@@ -3201,6 +3267,41 @@ kaleidocycle.o: $(UTILS_SRC)/xft.h
 kaleidocycle.o: $(UTILS_SRC)/yarandom.h
 kaleidocycle.o: $(HACK_SRC)/xlockmoreI.h
 kaleidocycle.o: $(HACK_SRC)/xlockmore.h
+kallisti_model.o: ../../config.h
+kallisti_model.o: $(HACK_SRC)/fps.h
+kallisti_model.o: $(srcdir)/gllist.h
+kallisti_model.o: $(HACK_SRC)/recanim.h
+kallisti_model.o: $(HACK_SRC)/screenhackI.h
+kallisti_model.o: $(UTILS_SRC)/colors.h
+kallisti_model.o: $(UTILS_SRC)/erase.h
+kallisti_model.o: $(UTILS_SRC)/font-retry.h
+kallisti_model.o: $(UTILS_SRC)/grabclient.h
+kallisti_model.o: $(UTILS_SRC)/hsv.h
+kallisti_model.o: $(UTILS_SRC)/resources.h
+kallisti_model.o: $(UTILS_SRC)/usleep.h
+kallisti_model.o: $(UTILS_SRC)/visual.h
+kallisti_model.o: $(UTILS_SRC)/xft.h
+kallisti_model.o: $(UTILS_SRC)/yarandom.h
+kallisti_model.o: $(HACK_SRC)/xlockmoreI.h
+kallisti.o: ../../config.h
+kallisti.o: $(HACK_SRC)/fps.h
+kallisti.o: $(srcdir)/gllist.h
+kallisti.o: $(srcdir)/gltrackball.h
+kallisti.o: $(HACK_SRC)/recanim.h
+kallisti.o: $(srcdir)/rotator.h
+kallisti.o: $(HACK_SRC)/screenhackI.h
+kallisti.o: $(UTILS_SRC)/colors.h
+kallisti.o: $(UTILS_SRC)/erase.h
+kallisti.o: $(UTILS_SRC)/font-retry.h
+kallisti.o: $(UTILS_SRC)/grabclient.h
+kallisti.o: $(UTILS_SRC)/hsv.h
+kallisti.o: $(UTILS_SRC)/resources.h
+kallisti.o: $(UTILS_SRC)/usleep.h
+kallisti.o: $(UTILS_SRC)/visual.h
+kallisti.o: $(UTILS_SRC)/xft.h
+kallisti.o: $(UTILS_SRC)/yarandom.h
+kallisti.o: $(HACK_SRC)/xlockmoreI.h
+kallisti.o: $(HACK_SRC)/xlockmore.h
 klein.o: ../../config.h
 klein.o: $(srcdir)/curlicue.h
 klein.o: $(HACK_SRC)/fps.h

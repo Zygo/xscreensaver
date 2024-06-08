@@ -2349,12 +2349,12 @@ if test "$enable_locking" = yes -a "$with_pam" = yes; then
                         #include <stdlib.h>
                         #include <security/pam_appl.h>],
                        [pam_handle_t *pamh = 0;
-                        char *s = pam_strerror(pamh, PAM_SUCCESS);],
+                        const char *s = pam_strerror(pamh, PAM_SUCCESS);],
                        [ac_pam_strerror_args=2],
                        [AC_TRY_X_COMPILE([#include <stdio.h>
                                           #include <stdlib.h>
                                           #include <security/pam_appl.h>],
-                                         [char *s =
+                                         [const char *s =
                                            pam_strerror(PAM_SUCCESS);],
                                          [ac_pam_strerror_args=1],
                                          [ac_pam_strerror_args=0])])

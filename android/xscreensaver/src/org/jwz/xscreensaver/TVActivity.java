@@ -1,6 +1,6 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  *
- * xscreensaver, Copyright (c) 2017 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2017-2024 Jamie Zawinski <jwz@jwz.org>
  * and Dennis Sheil <dennis@panaceasupplies.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -38,13 +38,9 @@ public class TVActivity extends Activity
 
   @Override
   public void onClick(View v) {
-    switch (v.getId()) {
-
-    case R.id.apply_daydream:
-      String action;
+    if (v.getId() == R.id.apply_daydream) {
       Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
       startActivityForResult(intent, 0);
-      break;
     }
   }
 }

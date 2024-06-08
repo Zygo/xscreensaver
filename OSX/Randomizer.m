@@ -229,6 +229,8 @@ resource_key_for_name (NSString *s, BOOL screen_p, NSDictionary *screen_ids)
   Bool animating_p;
   Bool preview_p;
   NSTextField *crash_label;
+  time_t launch_time, cycle_time;
+  int cycle_count;
   enum { JUMPCUT, FADE, CROSSFADE } crossfade_mode;
 }
 
@@ -260,6 +262,8 @@ static NSMutableArray *all_saver_views = NULL;
   first_time_p   = TRUE;
   crossfade_mode = CROSSFADE;  // Maybe make this a preference?
   fade_duration  = 5;
+  launch_time    = time ((time_t *) 0);
+  cycle_time     = launch_time;
 
   NSBundle *nsb = [NSBundle bundleForClass:[self class]];
   NSAssert1 (nsb, @"no bundle for class %@", [self class]);
@@ -611,13 +615,38 @@ static NSMutableArray *all_saver_views = NULL;
          [self blurb],
          (o ? [o className] : @"<null>"),
          [e reason]);
-  [crash_label setStringValue:
-                 (o
-                  ? [NSString stringWithFormat: @"Error in %@:\n  %@\n\n%@",
-                              [o className], [e reason],
-                              [[e callStackSymbols]
-                                componentsJoinedByString: @"\n"]]
-                  : [NSString stringWithFormat: @"Error: %@", [e reason]])];
+
+  if (! crash_label.stringValue.length) {
+    struct tm *tm = localtime (&launch_time);
+    time_t dur = time ((time_t *) 0) - cycle_time;
+    NSString *s = [NSString stringWithFormat:
+                                  @"Launched at: %02d:%02d:%02d; "
+                                   "Cycles: %d; "
+                                   "Duration: %d:%02d:%02d",
+                            tm->tm_hour, tm->tm_min, tm->tm_sec,
+                            cycle_count,
+                            (int) (dur / (60*60)),
+                            (int) (dur / (60) % 60),
+                            (int) (dur % 60)];
+    [crash_label setStringValue:
+                   (o
+                    ? [NSString stringWithFormat:
+                                @"Error in %@:\n"
+                                "%@\n"
+                                "%@\n\n"
+                                "%@",
+                                [o className],
+                                s,
+                                [e reason],
+                                [[e callStackSymbols]
+                                  componentsJoinedByString: @"\n"]]
+                    : [NSString stringWithFormat: @"Error: %@\n%@",
+                                [e reason], s])];
+  } else {
+    [crash_label setStringValue:
+                   [NSString stringWithFormat: @"Double Exception: %@\n\n%@",
+                             [e reason], crash_label.stringValue]];
+  }
 
   [crash_label removeFromSuperview];
   [self addSubview: crash_label];
@@ -760,14 +789,31 @@ catch_signal (int sig, void (*handler) (int))
 
 - (void)unloadSaver:(BOOL)firstp
 {
+  [self unloadSaver:firstp exception:NULL];
+}
+
+- (void)unloadSaver:(BOOL)firstp exception:(NSException *)e
+{
   if (cycle_timer) [cycle_timer invalidate];
   cycle_timer = 0;
   ScreenSaverView *ss = (firstp ? saver1 : saver2);
   if (!ss) return;
   NSLog(@"%@: unloading saver %@", [self blurb], [ss className]);
 
-  @try { if ([ss isAnimating]) [ss stopAnimation]; }
-  @catch (NSException *e) { [self handleException:e in:ss]; }
+  @try {
+    if ([ss isAnimating]) {
+      if (e &&
+          [ss respondsToSelector: @selector(stopAnimationWithException:)]) {
+        // Emergency stop: don't do any more graphics when stopping; leak.
+        [(XScreenSaverView *) ss stopAnimationWithException: e];
+      } else {
+        [ss stopAnimation];
+      }
+    }
+  }
+  @catch (NSException *e) {
+    [self handleException:e in:ss];
+  }
 
   [ss removeFromSuperview];
   [ss release];
@@ -795,6 +841,7 @@ catch_signal (int sig, void (*handler) (int))
     if (saver1) first_time_p = FALSE;
     [self unloadSaver: TRUE];
 
+    saver1 = nil;
     @try { saver1 = [self loadSaverWithFrame:[self frame]]; }
     @catch (NSException *e) { [self handleException:e in:nil]; }
 
@@ -806,7 +853,8 @@ catch_signal (int sig, void (*handler) (int))
       }
       @catch (NSException *e) {
         [self handleException:e in:saver1];
-        [self unloadSaver: TRUE];
+        [self unloadSaver:TRUE  exception:e];
+        [self unloadSaver:FALSE exception:e];
       }
     }
 
@@ -834,6 +882,7 @@ catch_signal (int sig, void (*handler) (int))
     // Load a new saver, starts it running while invisible, launches a
     // background animation, then calls launchCycleTimer.
 
+    saver2 = nil;
     @try { saver2 = [self loadSaverWithFrame:[self frame]]; }
     @catch (NSException *e) { [self handleException:e in:nil]; }
 
@@ -853,16 +902,22 @@ catch_signal (int sig, void (*handler) (int))
     }
     @catch (NSException *e) {
       [self handleException:e in:saver2];
-      [self unloadSaver: FALSE];
+      [self unloadSaver:TRUE  exception:e];
+      [self unloadSaver:FALSE exception:e];
+      [self launchCycleTimer];
       return;
     }
     
     saver2.alphaValue = 0;
 
-    @try { [saver2 startAnimation]; }
+    @try {
+      [saver2 startAnimation];
+    }
     @catch (NSException *e) {
       [self handleException:e in:saver2];
-      [self unloadSaver: FALSE];
+      [self unloadSaver:TRUE  exception:e];
+      [self unloadSaver:FALSE exception:e];
+      [self launchCycleTimer];
       return;
     }
 
@@ -870,13 +925,15 @@ catch_signal (int sig, void (*handler) (int))
         context.duration = fade_duration * (saver1 ? 2 : 1);
         if (saver1)
           saver1.animator.alphaValue = 0;
-        saver2.animator.alphaValue = 1;
+        if (saver2)
+          saver2.animator.alphaValue = 1;
       }
     completionHandler:^{
         [self unloadSaver: TRUE];
         saver1 = saver2;
         saver2 = 0;
-        [self.window makeFirstResponder: saver1];
+        if (saver1)
+          [self.window makeFirstResponder: saver1];
         [self launchCycleTimer];
         first_time_p = FALSE;
       }];
@@ -893,6 +950,7 @@ catch_signal (int sig, void (*handler) (int))
 
   [self unloadSaver: TRUE];
 
+  saver1 = nil;
   @try { saver1 = [self loadSaverWithFrame:[self frame]]; }
   @catch (NSException *e) { [self handleException:e in:nil]; }
 
@@ -910,7 +968,7 @@ catch_signal (int sig, void (*handler) (int))
   @try { [saver1 startAnimation]; }
   @catch (NSException *e) {
     [self handleException:e in:saver1];
-    [self unloadSaver: TRUE];
+    [self unloadSaver:TRUE exception:e];
     return;
   }
 
@@ -1002,6 +1060,9 @@ catch_signal (int sig, void (*handler) (int))
     return;
   }
 
+  cycle_time = time ((time_t *) 0);
+  cycle_count++;
+
   NSLog(@"%@: cycle timer", [self blurb]);
   [self fadeSaverOut];
 }
@@ -1046,15 +1107,15 @@ catch_signal (int sig, void (*handler) (int))
     @try { [saver1 startAnimation]; }
     @catch (NSException *e) {
       [self handleException:e in:saver1];
-      [self unloadSaver: TRUE];
+      [self unloadSaver:TRUE exception:e];
     }
   }
 
   if (saver2) {
     @try { [saver2 startAnimation]; }
     @catch (NSException *e) {
-      [self handleException:e in:saver1];
-      [self unloadSaver: FALSE];
+      [self handleException:e in:saver2];
+      [self unloadSaver:FALSE exception:e];
     }
   }
 
@@ -1078,7 +1139,7 @@ catch_signal (int sig, void (*handler) (int))
     @try { [saver1 stopAnimation]; }
     @catch (NSException *e) {
       [self handleException:e in:saver1];
-      [self unloadSaver: TRUE];
+      [self unloadSaver:TRUE exception:e];
     }
   }
 
@@ -1086,7 +1147,7 @@ catch_signal (int sig, void (*handler) (int))
     @try { [saver2 stopAnimation]; }
     @catch (NSException *e) {
       [self handleException:e in:saver2];
-      [self unloadSaver: FALSE];
+      [self unloadSaver:FALSE exception:e];
     }
   }
 
@@ -1119,14 +1180,14 @@ catch_signal (int sig, void (*handler) (int))
     @try { [saver1 animateOneFrame]; }
     @catch (NSException *e) {
       [self handleException:e in:saver1];
-      [self unloadSaver: TRUE];
+      [self unloadSaver:TRUE exception:e];
     }
   }
   if (saver2) {
     @try { [saver2 animateOneFrame]; }
     @catch (NSException *e) {
       [self handleException:e in:saver2];
-      [self unloadSaver: FALSE];
+      [self unloadSaver:FALSE exception:e];
     }
   }
 }

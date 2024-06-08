@@ -2305,6 +2305,7 @@ static void display_projectiveplane(ModeInfo *mi)
     }
   }
 
+  gltrackball_rotate(pp->trackballs[pp->current_trackball]);
 #ifdef HAVE_GLSL
   if (pp->use_shaders)
     mi->polygon_count = projective_plane_pf(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
@@ -2347,6 +2348,7 @@ ENTRYPOINT Bool projectiveplane_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     pp->button_pressed = False;
+    gltrackball_stop(pp->trackballs[pp->current_trackball]);
     return True;
   }
   else if (event->xany.type == KeyPress)
@@ -2406,8 +2408,8 @@ ENTRYPOINT void init_projectiveplane(ModeInfo *mi)
   MI_INIT(mi, projectiveplane);
   pp = &projectiveplane[MI_SCREEN(mi)];
 
-  pp->trackballs[0] = gltrackball_init(True);
-  pp->trackballs[1] = gltrackball_init(True);
+  pp->trackballs[0] = gltrackball_init(False);
+  pp->trackballs[1] = gltrackball_init(False);
   pp->current_trackball = 0;
   pp->button_pressed = False;
 

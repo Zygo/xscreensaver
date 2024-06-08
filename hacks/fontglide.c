@@ -201,7 +201,9 @@ pick_font_1 (state *s, sentence *se)
 
 #  define _DONE_1 /**/
 #  define _DONE_2 /**/
+
 # if defined(HAVE_XFT) && !defined(HAVE_JWXYZ)   /* Real Xft under real X11 */
+
 #  undef  _DONE_1
 #  undef  _DONE_2
 #  define _DONE_1 DONE_1:
@@ -456,8 +458,13 @@ pick_font_1 (state *s, sentence *se)
 
   if (! ok) return False;
 
-  se->xftfont = XftFontOpenXlfd (s->dpy, screen_number (s->xgwa.screen),
-                                 pattern);
+  /* Try pattern as an XLFD first, then if that fails, as Xft "Name Size". */
+  if (! se->xftfont)
+    se->xftfont = XftFontOpenXlfd (s->dpy, screen_number (s->xgwa.screen),
+                                   pattern);
+  if (! se->xftfont)
+    se->xftfont = load_xft_font_retry (s->dpy, screen_number (s->xgwa.screen),
+                                       pattern);
 
   _DONE_2
 
@@ -606,11 +613,15 @@ static void
 pick_font (state *s, sentence *se)
 {
   int i;
-  for (i = 0; i < 50; i++)
+  for (i = 0; i < (s->font_override ? 1 : 50); i++)
     if (pick_font_1 (s, se))
       return;
-  fprintf (stderr, "%s: too many font-loading failures: giving up!\n",
-           progname);
+  if (s->font_override)
+    fprintf (stderr, "%s: unable to load font \"%s\"\n",
+             progname, s->font_override);
+  else
+    fprintf (stderr, "%s: too many font-loading failures: giving up!\n",
+             progname);
   exit (1);
 }
 

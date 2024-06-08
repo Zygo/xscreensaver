@@ -1,5 +1,5 @@
 /* xlock-gl.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright © 1997-2023 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1997-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,8 +52,8 @@ BadValue_ehandler (Display *dpy, XErrorEvent *error)
 #undef glEnable
 void (* glEnable_fn) (GLuint) = glEnable;
 
-#if defined(__linux__) && defined(__arm__)  /* Raspberry Pi-adjacent */
-# define PI_LIKE
+#if defined(__linux__) && (defined(__arm__) || defined(__ARM_ARCH))
+# define PI_LIKE  /* Raspberry Pi-adjacent */
 static void
 glEnable_bad_line_smooth (GLuint cap)
 {

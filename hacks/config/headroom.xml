@@ -4,7 +4,7 @@
 
   <command arg="--root"/>
 
-  <video href="https://www.youtube.com/watch?v=kuS_HK4bIFI"/>
+  <video href="https://www.youtube.com/watch?v=Y_F0o2Lx3mw"/>
 
   <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -45,6 +45,6 @@ information I don't want. My parrot squawks in much the same way. For the
 moment, the computer power is only enough to generate a human head."
 -- Bryce Lynch
 
-Written by Jamie Zawinski; 2020.
+Written by Jamie Zawinski and Jared Williams; 2020.
   </_description>
 </screensaver>

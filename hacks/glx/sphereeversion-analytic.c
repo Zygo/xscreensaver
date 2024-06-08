@@ -2214,6 +2214,7 @@ void display_sphereeversion_analytic(ModeInfo *mi)
     }
   }
 
+  gltrackball_rotate(se->trackball);
 #ifdef HAVE_GLSL
   if (se->use_shaders)
     mi->polygon_count = bednorz_sphere_eversion_pf(mi,-M_PI_F,M_PI_F,

@@ -6,8 +6,8 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion "33.0.0"
+    compileSdkVersion 34
+    buildToolsVersion "34.0.0"
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -104,6 +104,7 @@ android {
         // to change it because I managed to lose the signing key...
         // Note that the Java class tree is still "org.jwz.xscreensaver".
         applicationId "org.jwz.android.xscreensaver"
+        namespace "org.jwz.xscreensaver"
         minSdkVersion 18
         targetSdkVersion 33
     }

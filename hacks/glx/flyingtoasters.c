@@ -1,14 +1,14 @@
-/* flyingtoasters, Copyright (c) 2003-2019 Jamie Zawinski <jwz@jwz.org>
+/* flyingtoasters, Copyright © 2003-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
- * Draws 3D flying toasters, and toast.  Inspired by the ancient 
+ * Draws 3D flying toasters, and toast.  Inspired by the ancient
  * Berkeley Systems / After Dark hack, but now updated to the wide
  * wonderful workd of OpenGL and 3D!
  *
@@ -100,7 +100,9 @@ static const struct { GLfloat x, y; } nice_views[] = {
 
 typedef struct {
   GLfloat x, y, z;
+  GLfloat wz;          /* rotation around z axis */
   GLfloat dx, dy, dz;
+  GLfloat dwz;         /* speed of rotation around z axis */
   Bool toaster_p;
   int toast_type;      /* 0, 1 */
   GLfloat handle_pos;  /* 0.0 - 1.0 */
@@ -172,6 +174,8 @@ reset_floater (ModeInfo *mi, floater *f)
   f->dx = 0;
   f->dy = 0;
   f->dz = delta;
+  f->wz = 0;
+  f->dwz = 0.0;
 
   f->dz += BELLRAND(delta) - delta/3;
 
@@ -194,6 +198,11 @@ reset_floater (ModeInfo *mi, floater *f)
 
       if (f->handle_pos > 0.8 && (! (random() % 5)))
         f->loaded = (random() & 3);  /* let's toast! */
+
+      /* Only empty toasters barrel-roll, since we don't implement
+	 "toast falls out". */
+      if (f->loaded == 0 && !(random() % 10))
+        f->dwz = (BELLRAND(2.0) - 1.0) * (4 + BELLRAND(6));
     }
   else
     {
@@ -216,6 +225,7 @@ tick_floater (ModeInfo *mi, floater *f)
   f->x += f->dx;
   f->y += f->dy;
   f->z += f->dz;
+  f->wz = fmod(f->wz + f->dwz, 360.0);
 
   if (! (random() % 50000))  /* sudden gust of gravity */
     f->dy -= 2.8;
@@ -346,7 +356,7 @@ load_textures (ModeInfo *mi)
   toaster_configuration *bp = &bps[MI_SCREEN(mi)];
   XImage *xi;
 
-  xi = image_data_to_ximage (mi->dpy, mi->xgwa.visual, 
+  xi = image_data_to_ximage (mi->dpy, mi->xgwa.visual,
                              chromesphere_png, sizeof(chromesphere_png));
   clear_gl_error();
 
@@ -357,14 +367,14 @@ load_textures (ModeInfo *mi)
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
-                xi->width, xi->height, 0, 
+                xi->width, xi->height, 0,
                 GL_RGBA, GL_UNSIGNED_BYTE, xi->data);
   check_gl_error("texture");
   XDestroyImage (xi);
   xi = 0;
 #endif
 
-  xi = image_data_to_ximage (mi->dpy, mi->xgwa.visual, 
+  xi = image_data_to_ximage (mi->dpy, mi->xgwa.visual,
                              toast_png, sizeof(toast_png));
 
   glGenTextures (1, &bp->toast_texture);
@@ -386,7 +396,7 @@ load_textures (ModeInfo *mi)
 
 
 
-ENTRYPOINT void 
+ENTRYPOINT void
 init_toasters (ModeInfo *mi)
 {
   toaster_configuration *bp;
@@ -677,6 +687,8 @@ draw_floater (ModeInfo *mi, floater *f)
 
   glPushMatrix();
   glTranslatef (f->x, f->y, f->z);
+  glRotatef (f->wz, 0, 0, 1);
+
   if (f->toaster_p)
     {
       glPushMatrix();
@@ -827,6 +839,8 @@ draw_toasters (ModeInfo *mi)
     F.loaded = 3;
     F.x = F.y = F.z = 0;
     F.dx = F.dy = F.dz = 0;
+    F.wz = 0;
+    F.dwz = 0;
 
     glScalef(2,2,2);
     if (!MI_IS_WIREFRAME(mi)) glDisable(GL_LIGHTING);

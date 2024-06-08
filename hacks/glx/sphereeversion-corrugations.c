@@ -2271,6 +2271,7 @@ void display_sphereeversion_corrugations(ModeInfo *mi)
     }
   }
 
+  gltrackball_rotate(se->trackball);
 #ifdef HAVE_GLSL
   if (se->use_shaders)
     mi->polygon_count = outside_in_pf(mi);

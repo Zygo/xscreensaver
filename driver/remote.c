@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright © 1991-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright © 1991-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -80,8 +80,13 @@ reset_dpms_timer (Display *dpy)
   if (!enabled)
     goto DONE;
 
-  /* Do this even if power == DPMSModeOn to reset the timer */
   DPMSForceLevel (dpy, DPMSModeOn);
+
+  /* We want to reset the timer inside the X server.  DPMSForceLevel doesn't
+     do that if the monitor was already powered on: it keeps counting down.
+     But disabling and re-enabling seems to do the trick. */
+  DPMSDisable (dpy);
+  DPMSEnable (dpy);
 
  DONE:
   XSync (dpy, False);

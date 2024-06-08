@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003-2022 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2003-2024 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -39,7 +39,7 @@ use Math::Trig qw(acos);
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.14 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.15 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -405,6 +405,12 @@ sub parse_dxf($$$$$) {
     foreach my $layer ($wireframe_p
                        ? keys %lines
                        : keys %triangles) {
+      my $minx1 =  999999999;
+      my $miny1 =  999999999;
+      my $minz1 =  999999999;
+      my $maxx1 = -999999999;
+      my $maxy1 = -999999999;
+      my $maxz1 = -999999999;
       my %dups;
       my @triangles = ($wireframe_p
                        ? @{$lines{$layer}}
@@ -416,8 +422,33 @@ sub parse_dxf($$$$$) {
                           $maxy = $n if ($n > $maxy); }
         else            { $minz = $n if ($n < $minz);
                           $maxz = $n if ($n > $maxz); }
+
+        if    ($i == 0) { $minx1 = $n if ($n < $minx1);
+                          $maxx1 = $n if ($n > $maxx1); }
+        elsif ($i == 1) { $miny1 = $n if ($n < $miny1);
+                          $maxy1 = $n if ($n > $maxy1); }
+        else            { $minz1 = $n if ($n < $minz1);
+                          $maxz1 = $n if ($n > $maxz1); }
+
         $i = 0 if (++$i == 3);
       }
+
+      my $w1 = ($maxx1 - $minx1);
+      my $h1 = ($maxy1 - $miny1);
+      my $d1 = ($maxz1 - $minz1);
+      print STDERR "$progname: $filename: $layer: bbox is " .
+                    sprintf("%.2f x %.2f x %.2f\n", $w1, $h1, $d1)
+         if ($verbose);
+      print STDERR "$progname: $filename: $layer: extent is " .
+                    sprintf("%.4f - %.4f, %.4f - %.4f, %.4f - %.4f\n",
+                            $minx1, $maxx1, $miny1, $maxy1, $minz1, $maxz1)
+         if ($verbose > 1);
+      print STDERR "$progname: $filename: $layer: center is " .
+                    sprintf("%.2f, %.2f, %.2f\n",
+                            $minx1 + $w1 / 2,
+                            $miny1 + $h1 / 2,
+                            $minz1 + $d1 / 2)
+        if ($verbose);
     }
 
     my $w = ($maxx - $minx);
@@ -427,10 +458,14 @@ sub parse_dxf($$$$$) {
     my $sizeb = ($w > $d ? $w : $d);
     my $size = ($sizea > $sizeb ? $sizea : $sizeb);
 
-    print STDERR "$progname: $filename: bbox is " .
+    print STDERR "$progname: $filename: mode: bbox is " .
                   sprintf("%.2f x %.2f x %.2f\n", $w, $h, $d)
        if ($verbose);
-    print STDERR "$progname: $filename: center is " .
+    print STDERR "$progname: $filename: model: extent is " .
+                 sprintf("%.4f - %.4f, %.4f - %.4f, %.4f - %.4f\n",
+                         $minx, $maxx, $miny, $maxy, $minz, $maxz)
+      if ($verbose);
+    print STDERR "$progname: $filename: model: center is " .
                   sprintf("%.2f, %.2f, %.2f\n",
                           $minx + $w / 2,
                           $miny + $h / 2,

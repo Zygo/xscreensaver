@@ -3187,6 +3187,7 @@ static void display_klein(ModeInfo *mi)
     }
   }
 
+  gltrackball_rotate(kb->trackballs[kb->current_trackball]);
   if (kb->bottle_type == KLEIN_BOTTLE_FIGURE_8)
   {
 #ifdef HAVE_GLSL
@@ -3250,6 +3251,7 @@ ENTRYPOINT Bool klein_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     kb->button_pressed = False;
+    gltrackball_stop(kb->trackballs[kb->current_trackball]);
     return True;
   }
   else if (event->xany.type == KeyPress)
@@ -3310,8 +3312,8 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
   kb = &klein[MI_SCREEN(mi)];
 
   
-  kb->trackballs[0] = gltrackball_init(True);
-  kb->trackballs[1] = gltrackball_init(True);
+  kb->trackballs[0] = gltrackball_init(False);
+  kb->trackballs[1] = gltrackball_init(False);
   kb->current_trackball = 0;
   kb->button_pressed = False;
 

@@ -17,7 +17,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>6.08</string>
+	<string>6.09</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>NSPrincipalClass</key>
@@ -25,13 +25,13 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.08</string>
+	<string>6.09</string>
 	<key>CFBundleLongVersionString</key>
-	<string>6.08</string>
+	<string>6.09</string>
 	<key>CFBundleGetInfoString</key>
-	<string>6.08</string>
+	<string>6.09</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>6.08</string>
+	<string>6.09</string>
 	<key>NSMainNibFile</key>
 	<string>SaverRunner</string>
 	<key>CFBundleIconFile</key>

@@ -36,18 +36,20 @@
             _label="Noise" _low-label="Low" _high-label="High"
             low="0.0" high="3.0" default="1.0"/>
    </vgroup>
-  </hgroup>
 
-  <hgroup>
-   <boolean id="ortho" _label="Orthographic Projection" arg-unset="--no-ortho"/>
-   <boolean id="buzz"    _label="Buzz"                  arg-set="--buzz"/>
-   <boolean id="wire"    _label="Wireframe"             arg-set="--wireframe"/>
-   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
-  </hgroup>
+   <vgroup>
+    <boolean id="ortho" _label="Orthographic Projection" arg-unset="--no-ortho"/>
+    <boolean id="buzz"    _label="Buzz"                  arg-set="--buzz"/>
+    <boolean id="wire"    _label="Wireframe"             arg-set="--wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
 
   <file id="mask" _label="Mask image" arg="--mask %"/>
 
   <xscreensaver-updater />
+   </vgroup>
+
+  </hgroup>
+
 
   <_description>
 PSR B1919+21 (AKA CP 1919) was the first pulsar ever discovered:

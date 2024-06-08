@@ -38,7 +38,7 @@ BEGIN { eval 'use Text::Wrap qw(wrap);' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.70 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.71 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -470,6 +470,7 @@ sub output() {
     my $cpu = `lscpu 2>&-`;
     if ($cpu) {
       my ($model) = ($cpu =~ m/^Model name:\s*(.*)$/mi);
+      my ($vend)  = ($cpu =~ m/^Vendor ID:\s*(.*)$/mi);
      #my ($arch)  = ($cpu =~ m/^Architecture:\s*(.*)$/mi);
       my ($speed) = ($cpu =~ m/^CPU max MHz:\s*(.*)$/mi);
          ($speed) = ($cpu =~ m/^CPU MHz:\s*(.*)$/mi) unless $speed;
@@ -482,11 +483,23 @@ sub output() {
         $speed = sprintf("%.1fMHz", $speed);
       }
 
+      $model = '' unless $model;
+      $model = $vend unless $model;  # Amazon Linux 2023
+
       # This file seems to be ARM-specific.  It gives us the better string
       # "Raspberry Pi 4 Model B Rev 1.4" whereas lscpu gives us "Cortex-A72".
       my $model2 = `cat /proc/device-tree/model 2>&-`;
       $model2 =~ s/[\n\000].*$//s;
       $model = $model2 if $model2;
+
+      # For Amazon instances, get something like "r7g.xlarge us-east-2b".
+      my $aws = `/usr/bin/ec2-metadata 2>&-`;
+      if ($aws) {
+        my ($type)  = ($aws =~ m/^instance-type:\s*(.*)$/mi);
+        my ($place) = ($aws =~ m/^placement:\s*(.*)$/mi);
+        $model .= ($model ? ' ' : '') . $type  if $type;
+        $model .= ($model ? ' ' : '') . $place if $place;
+      }
 
       # Abbreviate stupidly verbose marketing nonsense like:
       # "Intel(R) Xeon(R) CPU E3-1275 v5 @ 3.60GHz" and

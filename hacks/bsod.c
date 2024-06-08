@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1998-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1998-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2118,19 +2118,63 @@ windows_safe (Display *dpy, Window window)
 }
 
 
+static struct bsod_state *
+windows_sb (Display *dpy, Window window)
+{
+  struct bsod_state *bst =
+    make_bsod_state (dpy, window, "windowssb", "WindowsSB");
+
+  unsigned long fg = bst->fg;
+  unsigned long bg = bst->bg;
+  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "windowssb.background2",
+                                          "WindowsSB.Background");
+  int line_height = bst->fontA->ascent + bst->fontA->descent;
+  int top = (bst->xgwa.height - line_height * 8) / 2;
+  XGlyphInfo em;
+  int left;
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "M", 1, &em);
+  left = (bst->xgwa.width - em.width * 46) / 2;
+
+  BSOD_MOVETO (bst, left, top);
+  BSOD_COLOR (bst, fg, bg2);
+  BSOD_MARGINS (bst, left, bst->xgwa.width);
+
+  /* Really these should be lines from Unicode Box Drawing Block 2500-257F,
+     but BSOD_TEXT doesn't support UTF-8 in strings.  Also the font might
+     not have those. Close enough. */
+  BSOD_TEXT (bst, LEFT,
+             "|----------- Secure Boot Violation ----------|\n"
+             "|                                            |\n"
+             "|  Invalid signature detected. Check Secure  |\n"
+             "|            Boot Policy in Setup            |\n"
+             "|                                            |\n"
+             "|--------------------------------------------|\n"
+             "|                     ");
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, LEFT,            "Ok");
+  BSOD_COLOR (bst, fg, bg2);
+  BSOD_TEXT (bst, LEFT,              "                     |\n"
+             "|--------------------------------------------|\n"
+    );
+  XClearWindow (dpy, window);
+  return bst;
+}
+
 
 static struct bsod_state *
 windows_other (Display *dpy, Window window)
 {
   /* Lump all of the 2K-ish crashes together and select them randomly...
    */
-  int which = (random() % 5);
+  int which = (random() % 6);
   switch (which) {
   case 0: return windows_2k (dpy, window); break;
   case 1: return windows_me (dpy, window); break;
   case 2: return windows_xp (dpy, window); break;
   case 3: return windows_lh (dpy, window); break;
   case 4: return windows_safe (dpy, window); break;
+  case 5: return windows_sb (dpy, window); break;
   default: abort(); break;
   }
 }
@@ -2785,7 +2829,7 @@ bsd (Display *dpy, Window window)
     "panic: Brain fried - core dumped\n"
    };
   int i, n, b;
-  char syncing[80], bbuf[5];
+  char syncing[80], bbuf[50];
 
   for (i = 0; i < sizeof(syncing); i++)
     syncing[i] = 0;
@@ -6242,6 +6286,7 @@ dvd (Display *dpy, Window window)
   int i = 0;
   int x, y, dx, dy;
   int steps = 10000;
+  int speed = 1;
 
   XClearWindow (dpy, window);
 
@@ -6253,6 +6298,7 @@ dvd (Display *dpy, Window window)
       mask = double_pixmap (dpy, bst->xgwa.visual, 1, mask, pix_w, pix_h);
       pix_w *= 2;
       pix_h *= 2;
+      speed *= 2;
       i++;
     }
 
@@ -6260,8 +6306,8 @@ dvd (Display *dpy, Window window)
   bst->mask = mask;
   x = random() % (bst->xgwa.width  - pix_w);
   y = random() % (bst->xgwa.height - pix_h);
-  dx = random() & 1 ? 1 : -1;
-  dy = random() & 1 ? 1 : -1;
+  dx = speed * (random() & 1 ? 1 : -1);
+  dy = speed * (random() & 1 ? 1 : -1);
 
   BSOD_INVERT(bst);
   for (i = 0; i < steps; i++)
@@ -6837,6 +6883,8 @@ bsod_draw (Display *dpy, Window window, void *closure)
       int inc = 10000;
       int this_delay = MIN (dst->delay_remaining, inc);
       dst->delay_remaining = MAX (0, dst->delay_remaining - inc);
+      if (time_left < 0 && dst->start > 0)
+        dst->delay_remaining = 0;
       return this_delay;
     }
 
@@ -7074,6 +7122,10 @@ static const char *bsod_defaults [] = {
   ".windowslh.foreground:  White",
   ".windowslh.background:  #AA0000",    /* EGA color 0x04. */
   ".windowslh.background2: #AAAAAA",    /* EGA color 0x07. */
+
+  ".windowssb.foreground:  White",
+  ".windowssb.background:  #000000",
+  ".windowssb.background2: #FF0000",
 
   ".win10.foreground:      White",
   ".win10.background:      #1070AA",

@@ -3527,6 +3527,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   // Enforce a max height on the dialog, so that it's obvious to me
   // (on a big screen) when the dialog will fall off the bottom of
   // a small screen (e.g., 1024x768 laptop with a huge bottom dock).
+# ifndef __OPTIMIZE__
   {
     NSRect f = [panel frame];
     int screen_height = (768    // shortest "modern" Mac display
@@ -3541,6 +3542,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
       [panel setFrame:f];
     }
   }
+# endif // !__OPTIMIZE__
 
   [pbox addSubview:panel];
   [pbox addSubview:bbox];

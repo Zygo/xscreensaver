@@ -2461,6 +2461,8 @@ static void project(ModeInfo *mi, const float vert[][4], float v[][4], int num)
   int i, j, k;
   polytopesstruct *pp = &poly[MI_SCREEN(mi)];
 
+  gltrackball_rotate(pp->trackballs[pp->current_trackball]);
+
   rotateall(pp->alpha,pp->beta,pp->delta,pp->zeta,pp->eta,pp->theta,r1);
 
   gltrackball_get_quaternion(pp->trackballs[0],q1);
@@ -2499,6 +2501,23 @@ static void project(ModeInfo *mi, const float vert[][4], float v[][4], int num)
     for (j=0; j<4; j++)
       v[i][j] += offset3d[j];
   }
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  if (projection_3d == DISP_3D_ORTHOGRAPHIC)
+  {
+    if (pp->aspect >= 1.0)
+      glOrtho(-pp->aspect,pp->aspect,-1.0,1.0,0.1,100.0);
+    else
+      glOrtho(-1.0,1.0,-1.0/pp->aspect,1.0/pp->aspect,0.1,100.0);
+  }
+  else
+  {
+    gluPerspective(60.0,pp->aspect,0.1,100.0);
+  }
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 }
 
 
@@ -2815,23 +2834,6 @@ static void display_polytopes(ModeInfo *mi)
       pp->theta -= 360.0;
   }
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  if (projection_3d == DISP_3D_ORTHOGRAPHIC)
-  {
-    if (pp->aspect >= 1.0)
-      glOrtho(-pp->aspect,pp->aspect,-1.0,1.0,0.1,100.0);
-    else
-      glOrtho(-1.0,1.0,-1.0/pp->aspect,1.0/pp->aspect,0.1,100.0);
-  }
-  else
-  {
-    gluPerspective(60.0,pp->aspect,0.1,100.0);
-  }
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
   if (pp->tick == 0)
   {
     if (polytope == POLYTOPE_RANDOM)
@@ -2892,6 +2894,7 @@ ENTRYPOINT Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     pp->button_pressed = False;
+    gltrackball_stop(pp->trackballs[pp->current_trackball]);
     return True;
   }
   else if (event->xany.type == KeyPress)
@@ -2951,8 +2954,8 @@ ENTRYPOINT void init_polytopes(ModeInfo *mi)
   MI_INIT(mi, poly);
   pp = &poly[MI_SCREEN(mi)];
 
-  pp->trackballs[0] = gltrackball_init(True);
-  pp->trackballs[1] = gltrackball_init(True);
+  pp->trackballs[0] = gltrackball_init(False);
+  pp->trackballs[1] = gltrackball_init(False);
   pp->current_trackball = 0;
   pp->button_pressed = False;
 
@@ -3092,7 +3095,6 @@ ENTRYPOINT void draw_polytopes(ModeInfo *mi)
 
   glXMakeCurrent(display, window, *hp->glx_context);
 
-
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   if (projection_3d == DISP_3D_PERSPECTIVE)
@@ -3149,11 +3151,9 @@ ENTRYPOINT void draw_polytopes(ModeInfo *mi)
     glDisable(GL_BLEND);
   }
 
-
   glClearColor(0.0f,0.0f,0.0f,1.0f);
   glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-  glLoadIdentity();
 
   display_polytopes(mi);
 

@@ -5488,6 +5488,7 @@ static void display_cubocteversion(ModeInfo *mi)
       ce->delta -= 360.0f;
   }
 
+  gltrackball_rotate(ce->trackball);
 #ifdef HAVE_GLSL
   if (ce->use_shaders)
     mi->polygon_count = cuboctahedron_eversion_pf(mi);
@@ -5549,6 +5550,7 @@ ENTRYPOINT Bool cubocteversion_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     ce->button_pressed = False;
+    gltrackball_stop(ce->trackball);
     return True;
   }
   else if (event->xany.type == MotionNotify && ce->button_pressed)
@@ -5575,7 +5577,7 @@ ENTRYPOINT void init_cubocteversion(ModeInfo *mi)
   MI_INIT(mi,cubocteversion);
   ce = &cubocteversion[MI_SCREEN(mi)];
 
-  ce->trackball = gltrackball_init(True);
+  ce->trackball = gltrackball_init(False);
   ce->button_pressed = False;
 
   /* Set the eversion method. */

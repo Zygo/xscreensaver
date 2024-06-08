@@ -2281,6 +2281,7 @@ static void display_romanboy(ModeInfo *mi)
     }
   }
 
+  gltrackball_rotate(pp->trackball);
 #ifdef HAVE_GLSL
   if (pp->use_shaders)
     mi->polygon_count = roman_boy_pf(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,
@@ -2318,6 +2319,7 @@ ENTRYPOINT Bool romanboy_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     pp->button_pressed = False;
+    gltrackball_stop(pp->trackball);
     return True;
   }
   else if (event->xany.type == MotionNotify && pp->button_pressed)
@@ -2359,7 +2361,7 @@ ENTRYPOINT void init_romanboy(ModeInfo *mi)
   else
     pp->g = surface_order;
 
-  pp->trackball = gltrackball_init(True);
+  pp->trackball = gltrackball_init(False);
   pp->button_pressed = False;
 
   /* Set the display mode. */

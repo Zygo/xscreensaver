@@ -1050,6 +1050,7 @@ ENTRYPOINT Bool sphereeversion_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     se->button_pressed = False;
+    gltrackball_stop(se->trackball);
     return True;
   }
   else if (event->xany.type == MotionNotify && se->button_pressed)
@@ -1076,7 +1077,7 @@ ENTRYPOINT void init_sphereeversion(ModeInfo *mi)
   MI_INIT(mi,sphereeversion);
   se = &sphereeversion[MI_SCREEN(mi)];
 
-  se->trackball = gltrackball_init(True);
+  se->trackball = gltrackball_init(False);
   se->button_pressed = False;
 
   /* Set the eversion method. */

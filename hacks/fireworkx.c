@@ -391,6 +391,8 @@ static void chromo_2x2_light(struct state *st)
 	xmm2 = _mm_setr_ps(fs[2].flash_b, fs[2].flash_g, fs[2].flash_r, 0.0);
 	xmm3 = _mm_setr_ps(fs[3].flash_b, fs[3].flash_g, fs[3].flash_r, 0.0);
 
+	xmi5 = _mm_setzero_si128();
+
 	for (y = st->height/2; y; y--, mem += nl)
 	{
 		for (x = st->width/4; x; x--, v += 8, mem += 16)

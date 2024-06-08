@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright © 1993-2023 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -3443,12 +3443,18 @@ get_best_gl_visual (state *s)
         FILE *f = fdopen (in, "r");
         unsigned int v = 0;
         char c;
+        int i = 0;
 
         close (out);  /* don't need this one */
 
         *buf = 0;
-        if (! fgets (buf, sizeof(buf)-1, f))
-          *buf = 0;
+        do {
+          errno = 0;
+          if (! fgets (buf, sizeof(buf)-1, f))
+            *buf = 0;
+        } while (errno == EINTR &&	/* fgets might fail due to SIGCHLD. */
+                 i++ < 1000);		/* And just in case. */
+
         fclose (f);
 
         /* Wait for the child to die. */
@@ -4064,8 +4070,17 @@ kde_screensaver_active_p (void)
   FILE *p = popen ("dcop kdesktop KScreensaverIface isEnabled 2>/dev/null",
                    "r");
   char buf[255];
+  int i = 0;
   if (!p) return FALSE;
-  if (!fgets (buf, sizeof(buf)-1, p)) return FALSE;
+
+  *buf = 0;
+  do {
+    errno = 0;
+    if (! fgets (buf, sizeof(buf)-1, p))
+      *buf = 0;
+  } while (errno == EINTR &&	/* fgets might fail due to SIGCHLD. */
+           i++ < 1000);		/* And just in case. */
+
   pclose (p);
   if (!strcmp (buf, "true\n"))
     return TRUE;

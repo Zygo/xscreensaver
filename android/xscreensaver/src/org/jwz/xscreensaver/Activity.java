@@ -1,6 +1,6 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  *
- * xscreensaver, Copyright © 2016-2023 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2024 Jamie Zawinski <jwz@jwz.org>
  * and Dennis Sheil <dennis@panaceasupplies.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -45,14 +45,9 @@ public class Activity extends android.app.Activity
 
   @Override
   public void onClick(View v) {
-    switch (v.getId()) {
-    case R.id.apply_wallpaper:
-      wallpaperButtonClicked();
-      break;
-    case R.id.apply_daydream:
-      daydreamButtonClicked();
-      break;
-    }
+    int viewId = v.getId();
+    if (viewId == R.id.apply_wallpaper) wallpaperButtonClicked();
+    else if (viewId ==  R.id.apply_daydream) daydreamButtonClicked();
   }
 
   // synchronized when dealing with wallpaper state - perhaps can

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2023 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2024 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.43 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.44 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -1105,7 +1105,7 @@ sub build_android(@) {
   $manifest = ($xml_header .
                "<manifest xmlns:android=\"" .
                "http://schemas.android.com/apk/res/android\"\n" .
-               "  package=\"$package\"\n" .
+#              "  package=\"$package\"\n" .
                "  android:versionCode=\"$versb\"\n" .
                "  android:versionName=\"$vers\">\n" .
 

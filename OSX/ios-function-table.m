@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Tue Aug  8 18:32:50 2023 by build-fntable.pl 1.14.
+   Created: Mon May  6 11:02:53 2024 by build-fntable.pl 1.14.
  */
 
 #import <Foundation/Foundation.h>
@@ -123,6 +123,7 @@ extern struct xscreensaver_function_table
  hexadrop_xscreensaver_function_table,
  hexstrut_xscreensaver_function_table,
  hextrail_xscreensaver_function_table,
+ highvoltage_xscreensaver_function_table,
  hilbert_xscreensaver_function_table,
  hopalong_xscreensaver_function_table,
  hydrostat_xscreensaver_function_table,
@@ -139,6 +140,7 @@ extern struct xscreensaver_function_table
  julia_xscreensaver_function_table,
  kaleidescope_xscreensaver_function_table,
  kaleidocycle_xscreensaver_function_table,
+ kallisti_xscreensaver_function_table,
  klein_xscreensaver_function_table,
  kumppa_xscreensaver_function_table,
  lament_xscreensaver_function_table,
@@ -378,6 +380,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Hexadrop":	[NSValue valueWithPointer:&hexadrop_xscreensaver_function_table],
 	@"Hex Strut":	[NSValue valueWithPointer:&hexstrut_xscreensaver_function_table],
 	@"Hex Trail":	[NSValue valueWithPointer:&hextrail_xscreensaver_function_table],
+	@"High Voltage":	[NSValue valueWithPointer:&highvoltage_xscreensaver_function_table],
 	@"Hilbert":	[NSValue valueWithPointer:&hilbert_xscreensaver_function_table],
 	@"Hopalong":	[NSValue valueWithPointer:&hopalong_xscreensaver_function_table],
 	@"Hydrostat":	[NSValue valueWithPointer:&hydrostat_xscreensaver_function_table],
@@ -394,6 +397,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Julia":	[NSValue valueWithPointer:&julia_xscreensaver_function_table],
 	@"Kaleidescope":	[NSValue valueWithPointer:&kaleidescope_xscreensaver_function_table],
 	@"Kaleidocycle":	[NSValue valueWithPointer:&kaleidocycle_xscreensaver_function_table],
+	@"Kallisti":	[NSValue valueWithPointer:&kallisti_xscreensaver_function_table],
 	@"Klein":	[NSValue valueWithPointer:&klein_xscreensaver_function_table],
 	@"Kumppa":	[NSValue valueWithPointer:&kumppa_xscreensaver_function_table],
 	@"Lament":	[NSValue valueWithPointer:&lament_xscreensaver_function_table],

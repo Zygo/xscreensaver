@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2014-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -370,7 +370,7 @@ utf8_to_latin1 (const char *string, Bool ascii_p)
   long in_len = strlen(string);
   const unsigned char *in = (const unsigned char *) string;
   const unsigned char *in_end = in + in_len;
-  unsigned char *ret = (unsigned char *) malloc (in_len + 1);
+  unsigned char *ret = (unsigned char *) malloc ((in_len * 4) + 1);
   unsigned char *out = ret;
 
   if (! ret) return 0;
@@ -463,12 +463,25 @@ utf8_to_latin1 (const char *string, Bool ascii_p)
 
       if (ascii_p)	/* Map Latin1 to the closest ASCII versions. */
         {
-          const unsigned char latin1_to_ascii[96] =
-             " !C##Y|S_C#<=-R_##23'uP.,1o>###?"
-             "AAAAAAECEEEEIIIIDNOOOOOx0UUUUYpS"
-             "aaaaaaeceeeeiiiionooooo/ouuuuypy";
+          const char * const latin1_to_ascii[96] = {
+            " ",  "!",   "C",  "#",  "#",   "Y",   "|",   "SS",
+            "_",  "(c)", "#",  "<",  "=",   "-",   "(r)", "_",
+            "#",  "+-",  "2",  "3",  "'",   "u",   "PP",  ".",
+            ",",  "1",   "o",  ">",  "1/4", "1/2", "3/4", "?",
+            "A",  "A",   "A",  "A",  "A",   "A",   "AE",  "C",
+            "E",  "E",   "E",  "E",  "I",   "I",   "I",   "I",
+            "D",  "N",   "O",  "O",  "O",   "O",   "O",   "x",
+            "0",  "U",   "U",  "U",  "U",   "Y",   "p",   "S",
+            "a",  "a",   "a",  "a",  "a",   "a",   "ae",  "c",
+            "e",  "e",   "e",  "e",  "i",   "i",   "i",   "i",
+            "o",  "n",   "o",  "o",  "o",   "o",   "o",   "/",
+            "o",  "u",   "u",  "u",  "u",   "y",   "p",   "y" };
           if (uc >= 0xA0)
-            uc = latin1_to_ascii[uc - 0xA0];
+            {
+              const char *c2 = latin1_to_ascii[uc - 0xA0];
+              while (*c2) { *out++ = *c2++; }
+              uc = 0;
+            }
         }
 
       if (uc > 0)
@@ -840,14 +853,18 @@ main (int argc, char **argv)
     const char *utf8 = ("son \303\256le int\303\251rieure, \303\240 "
                         "c\303\264t\303\251 de l'alc\303\264ve "
                         "ovo\303\257de, o\303\271 les b\303\273ches "
-                        "se consument dans l'\303\242tre");
+                        "se consument dans l'\303\242tre "
+                        "\302\251\302\256\302\261\302\274\302\275\302\276"
+                        "\303\206\303\246");
     const char *latin1 = ("son \356le int\351rieure, \340 "
                           "c\364t\351 de l'alc\364ve ovo\357de, "
                           "o\371 les b\373ches se consument dans "
-                          "l'\342tre");
+                          "l'\342tre "
+                          "\251\256\261\274\275\276\306\346");
     const char *ascii = ("son ile interieure, a cote de l'alcove "
                          "ovoide, ou les buches se consument dans "
-                         "l'atre");
+                         "l'atre "
+                         "(c)(r)+-1/41/23/4AEae");
     char *latin1b = utf8_to_latin1 (utf8, False);
     char *ascii2  = utf8_to_latin1 (utf8, True);
     if (strcmp (latin1, latin1b))

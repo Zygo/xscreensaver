@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -99,6 +99,7 @@
 #endif /* !HAVE_COCOA */
 
 #include <sys/stat.h>
+#include <errno.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -585,8 +586,16 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
   char buf[10240];
   const char *dir = clo2->directory;
   char *absfile = 0;
+  int i = 0;
+
   *buf = 0;
-  fgets (buf, sizeof(buf)-1, clo2->pipe);
+  do {
+    errno = 0;
+    if (! fgets (buf, sizeof(buf)-1, clo2->pipe))
+      *buf = 0;
+  } while (errno == EINTR &&	/* fgets might fail due to SIGCHLD. */
+           i++ < 1000);		/* And just in case. */
+
   pclose (clo2->pipe);
   clo2->pipe = 0;
   XtRemoveInput (clo2->pipe_id);

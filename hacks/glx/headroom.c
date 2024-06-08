@@ -1,4 +1,4 @@
-/* headroom, Copyright © 2020-2023 Jamie Zawinski <jwz@jwz.org>
+/* headroom, Copyright © 2020-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,6 +12,7 @@
  * find or commission a decent 3D model of Max.  So it's a skull instead.
  * This will have to do for now.
  *
+ * Code by jwz, 2020. Formal-wear model by Jared Williams, 2024.
  * Created 29-Nov-2020.
  */
 
@@ -19,8 +20,11 @@
 			"*showFPS:      False       \n" \
 			"*skullColor:   #777777"   "\n" \
 			"*teethColor:   #FFFFFF"   "\n" \
-			"*torsoColor:   #447744"   "\n" \
-			"*torsoCapColor:#222222"   "\n" \
+			"*suitColor:    #444444"   "\n" \
+			"*suitCapColor: #000000"   "\n" \
+			"*shirtColor:   #CCCCCC"   "\n" \
+			"*tieColor:     #662222"   "\n" \
+			"*tieColor:     #444444"   "\n" \
 			"*maskColor:    #444488"   "\n" \
 			"*gridColor1:   #AA0000"   "\n" \
 			"*gridColor2:   #00FF00"   "\n" \
@@ -53,18 +57,20 @@
 extern const struct gllist
   *headroom_model_skull_half, *headroom_model_jaw_half,
   *headroom_model_teeth_upper_half, *headroom_model_teeth_lower_half,
-  *headroom_model_torso_half, *headroom_model_torso_cap_half,
+  *headroom_model_suit_half, *headroom_model_shirt_half,
+  *headroom_model_tie_half, *headroom_model_suit_cap_half,
   *headroom_model_mask_half;
 
 static const struct gllist * const *all_objs[] = {
   &headroom_model_skull_half, &headroom_model_jaw_half,
   &headroom_model_teeth_upper_half, &headroom_model_teeth_lower_half,
-  &headroom_model_torso_half, &headroom_model_torso_cap_half,
+  &headroom_model_suit_half, &headroom_model_suit_cap_half,
+  &headroom_model_shirt_half,  &headroom_model_tie_half,
   &headroom_model_mask_half,
 };
 
-enum { SKULL_HALF, JAW_HALF, TEETH_UPPER_HALF, TEETH_LOWER_HALF, TORSO_HALF,
-       TORSO_CAP_HALF, MASK_HALF };
+enum { SKULL_HALF, JAW_HALF, TEETH_UPPER_HALF, TEETH_LOWER_HALF, SUIT_HALF,
+       SUIT_CAP_HALF, SHIRT_HALF, TIE_HALF, MASK_HALF };
 
 typedef struct { GLfloat x, y, z; } XYZ;
 
@@ -297,11 +303,17 @@ init_headroom (ModeInfo *mi)
       case TEETH_LOWER_HALF:
         key = "teethColor";
         break;
-      case TORSO_HALF:
-        key = "torsoColor";
+      case SUIT_HALF:
+        key = "suitColor";
         break;
-      case TORSO_CAP_HALF:
-        key = "torsoCapColor";
+      case SUIT_CAP_HALF:
+        key = "suitCapColor";
+        break;
+      case SHIRT_HALF:
+        key = "shirtColor";
+        break;
+      case TIE_HALF:
+        key = "tieColor";
         break;
       case MASK_HALF:
         key = "maskColor";
@@ -411,6 +423,7 @@ draw_component (ModeInfo *mi, int i)
 
   glPushMatrix();
   glScalef (-1, 1, 1);
+  glTranslatef (-0.14, 0, 0);  /* The model seems to have a gap */
   glFrontFace (GL_CW);
   glCallList (bp->dlists[i]);
   glPopMatrix();
@@ -528,8 +541,10 @@ draw_headroom (ModeInfo *mi)
     const XYZ head_base = { 0, 200, 0 };
     const XYZ jaw_base  = { 0, 270, 40 };
 
-    mi->polygon_count += draw_component (mi, TORSO_HALF);
-    mi->polygon_count += draw_component (mi, TORSO_CAP_HALF);
+    mi->polygon_count += draw_component (mi, SUIT_HALF);
+    mi->polygon_count += draw_component (mi, SHIRT_HALF);
+    mi->polygon_count += draw_component (mi, TIE_HALF);
+    mi->polygon_count += draw_component (mi, SUIT_CAP_HALF);
 
     glTranslatef (head_base.x, head_base.y, head_base.z);
     glRotatef (bp->head_pos.x, 1, 0, 0);

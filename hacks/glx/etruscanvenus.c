@@ -2456,6 +2456,7 @@ static void display_etruscanvenus(ModeInfo *mi)
     }
   }
 
+  gltrackball_rotate(ev->trackball);
 #ifdef HAVE_GLSL
   if (ev->use_shaders)
     mi->polygon_count = etruscan_venus_pf(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,
@@ -2499,6 +2500,7 @@ ENTRYPOINT Bool etruscanvenus_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     ev->button_pressed = False;
+    gltrackball_stop(ev->trackball);
     return True;
   }
   else if (event->xany.type == MotionNotify && ev->button_pressed)
@@ -2533,7 +2535,7 @@ ENTRYPOINT void init_etruscanvenus(ModeInfo *mi)
   MI_INIT (mi, etruscanvenus);
   ev = &etruscanvenus[MI_SCREEN(mi)];
 
-  ev->trackball = gltrackball_init(True);
+  ev->trackball = gltrackball_init(False);
   ev->button_pressed = False;
 
   /* Set the display mode. */

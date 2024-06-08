@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright © 1991-2023 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1241,6 +1241,7 @@ get_best_gl_visual (saver_info *si, Screen *screen)
         FILE *f;
         unsigned long v = 0;
         char c;
+        int i = 0;
 
         make_job (forked, 0, av[0]);  /* Bookkeeping for SIGCHLD */
 
@@ -1252,8 +1253,13 @@ get_best_gl_visual (saver_info *si, Screen *screen)
         close (out);  /* don't need this one */
 
         *buf = 0;
-        if (! fgets (buf, sizeof(buf)-1, f))
-          *buf = 0;
+        do {
+          errno = 0;
+          if (! fgets (buf, sizeof(buf)-1, f))
+            *buf = 0;
+        } while (errno == EINTR &&	/* fgets might fail due to SIGCHLD. */
+                 i++ < 1000);		/* And just in case. */
+
         fclose (f);
 
         if (! si->prefs.verbose_p)

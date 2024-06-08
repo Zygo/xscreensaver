@@ -1680,6 +1680,7 @@ static void display_hypertorus(ModeInfo *mi)
     }
   }
 
+  gltrackball_rotate(hp->trackballs[hp->current_trackball]);
 #ifdef HAVE_GLSL
   if (hp->use_shaders)
     mi->polygon_count = hypertorus_pf(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,NUMU,NUMV);
@@ -1722,6 +1723,7 @@ ENTRYPOINT Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
            event->xbutton.button == Button1)
   {
     hp->button_pressed = False;
+    gltrackball_stop(hp->trackballs[hp->current_trackball]);
     return True;
   }
   else if (event->xany.type == KeyPress)
@@ -1781,8 +1783,8 @@ ENTRYPOINT void init_hypertorus(ModeInfo *mi)
   MI_INIT(mi, hyper);
   hp = &hyper[MI_SCREEN(mi)];
 
-  hp->trackballs[0] = gltrackball_init(True);
-  hp->trackballs[1] = gltrackball_init(True);
+  hp->trackballs[0] = gltrackball_init(False);
+  hp->trackballs[1] = gltrackball_init(False);
   hp->current_trackball = 0;
   hp->button_pressed = False;
 

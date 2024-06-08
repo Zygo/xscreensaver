@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 6.08
-!                              10-Oct-2023
+!                              version 6.09
+!                              07-Jun-2024
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -575,7 +575,9 @@ XScreenSaver.bourneShell:		/bin/sh
 @GL_KLUDGE@ GL: 				cubocteversion --root			    \n\
 				droste --root				    \n\
 @GL_KLUDGE@ GL: 				papercube --root			    \n\
-@GL_KLUDGE@ GL: 				skulloop --root				    \n
+@GL_KLUDGE@ GL: 				skulloop --root				    \n\
+@GL_KLUDGE@ GL: 				highvoltage --root			    \n\
+@GL_KLUDGE@ GL: 				kallisti --root				    \n
 
 
 
@@ -648,6 +650,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.gravitywell.name:    Gravity Well
 *hacks.hexstrut.name:       Hex Strut
 *hacks.hextrail.name:       Hex Trail
+*hacks.highvoltage.name:    High Voltage
 *hacks.ifs.name:            IFS
 *hacks.imsmap.name:         IMS Map
 *hacks.jigglypuff.name:     Jiggly Puff

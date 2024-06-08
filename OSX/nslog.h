@@ -22,8 +22,8 @@ xscreensaver_nslog (NSString *format, ...)
 {
   va_list args;
   va_start (args, format);
-  va_end (args);
   NSString *s = [[NSString alloc] initWithFormat:format arguments:args];
+  va_end (args);
   NSLog (@"%@", s);
 
 # if 0

@@ -27,7 +27,7 @@
       <boolean id="spin"    _label="Spin"   arg-unset="--no-spin"/>
       <boolean id="wander"  _label="Wander" arg-set="--wander"/>
       <boolean id="tilt"    _label="Tilt"   arg-unset="--no-tilt"/>
-      <boolean id="smooth"  _label="Smooth" arg-set="--no-smooth"/>
+      <boolean id="smooth"  _label="Smooth" arg-unset="--no-smooth"/>
       <boolean id="wire"    _label="Wireframe" arg-set="--wireframe"/>
       <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
     </hgroup>

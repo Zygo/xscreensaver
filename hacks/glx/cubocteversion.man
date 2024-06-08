@@ -43,15 +43,15 @@ no fold edges or non-injective neighborhoods of vertices are allowed
 to occur.
 .PP
 The cuboctahedron can be deformed with two eversion methods:
-Morin-Denner or Apéry.  The Morin-Denner cuboctahedron eversion method
+Morin-Denner or ApÃ©ry.  The Morin-Denner cuboctahedron eversion method
 is described in the following two papers: Richard Denner: "Versions
-polyédriques du retournement de la sphère", L'Ouvert 94:32-45, March
-1999; Richard Denner: "Versions polyédriques du retournement de la
-sphère, retournement du cuboctaèdre", L'Ouvert 95:15-36, June 1999.
-The Apéry cuboctahedron eversion method is described in the following
-paper: François Apéry: "Le retournement du cuboctaèdre",
-Prépublication de l'institut de recherche mathématique avancée,
-Université Louis Pasteur et C.N.R.S., Strasbourg, 1994.
+polyÃ©driques du retournement de la sphÃ¨re", L'Ouvert 94:32-45, March
+1999; Richard Denner: "Versions polyÃ©driques du retournement de la
+sphÃ¨re, retournement du cuboctaÃ¨dre", L'Ouvert 95:15-36, June 1999.
+The ApÃ©ry cuboctahedron eversion method is described in the following
+paper: FranÃ§ois ApÃ©ry: "Le retournement du cuboctaÃ¨dre",
+PrÃ©publication de l'institut de recherche mathÃ©matique avancÃ©e,
+UniversitÃ© Louis Pasteur et C.N.R.S., Strasbourg, 1994.
 .PP
 The deformed cuboctahedron can be projected to the screen either
 perspectively or orthographically.
@@ -169,8 +169,8 @@ eversion has produced a cyan bicorne.  At this step, the cuboctahetron
 has been everted: it is an embedding of the everted sphere.  In the
 remaining 16 steps, the cyan bicorne is deformed to the everted
 cuboctahedron.
-.SH BRIEF DESCRIPTION OF THE APÉRY CUBOCTAHEDRON EVERSION METHOD
-The original approach of Apéry is to evert the cuboctahedron in four
+.SH BRIEF DESCRIPTION OF THE APÃ‰RY CUBOCTAHEDRON EVERSION METHOD
+The original approach of ApÃ©ry is to evert the cuboctahedron in four
 steps, resulting in five different polyhedra that occur as models.
 The eversion is symmetric in time, so the four steps can be visualized
 by time running from -2 to 2.  Of the five models, four possess a
@@ -179,7 +179,7 @@ fourfold rotational symmetry.  The halfway model is the model at which
 the cuboctahedron is turned halfway inside-out.  In addition to the
 start and end models at times -2 and 2, which both are cuboctahedra,
 and the halfway model at time 0, the two intermediate models at times
--1 and 1 are embeddings of the cuboctahedron.  Apéry calls them
+-1 and 1 are embeddings of the cuboctahedron.  ApÃ©ry calls them
 gastrula because they correspond to a cuboctahedron in which the
 northern hemi-cuboctahedron has been pushed downwards so that it lies
 inside the southern hemi-cuboctahedron.  In each of the four steps,
@@ -193,10 +193,10 @@ During the development of this program, it was discovered that the
 linear interpolation between the cuboctahedron and the gastrula causes
 the deformed cuboctahedron to intersect itself for a brief period of
 time shortly before the gastrula is reached.  Therefore, an additional
-model, devised by François Apéry and called pre-gastrula by him, was
+model, devised by FranÃ§ois ApÃ©ry and called pre-gastrula by him, was
 inserted at times -1.25 and 1.25.  This additional model avoids the
 self-intersections before the gastrula is reached.  The rest of
-Apéry's approach remains unaffected: the vertices are interpolated
+ApÃ©ry's approach remains unaffected: the vertices are interpolated
 linearly between successive models.
 .PP
 The following description assumes that the cuboctahedron is visualized
@@ -248,7 +248,7 @@ Use a random cuboctahedron eversion method (default).
 Use the Morin-Denner cuboctahedron eversion method.
 .TP 8
 .B \-\-eversion-method apery \fP(Shortcut: \fB\-\-apery\fP)
-Use the Apéry cuboctahedron eversion method.
+Use the ApÃ©ry cuboctahedron eversion method.
 .PP
 The following three options are mutually exclusive.  They determine
 how the deformed cuboctahedron is displayed.

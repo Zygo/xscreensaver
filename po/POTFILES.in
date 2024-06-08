@@ -1,4 +1,4 @@
-# Auto-generated: Tue Oct 10 17:37:06 PDT 2023
+# Auto-generated: Fri Jun  7 22:01:23 PDT 2024
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/demo.ui
@@ -131,6 +131,7 @@ hacks/config/helix.xml
 hacks/config/hexadrop.xml
 hacks/config/hexstrut.xml
 hacks/config/hextrail.xml
+hacks/config/highvoltage.xml
 hacks/config/hilbert.xml
 hacks/config/hopalong.xml
 hacks/config/hydrostat.xml
@@ -150,6 +151,7 @@ hacks/config/juggler3d.xml
 hacks/config/julia.xml
 hacks/config/kaleidescope.xml
 hacks/config/kaleidocycle.xml
+hacks/config/kallisti.xml
 hacks/config/klein.xml
 hacks/config/kumppa.xml
 hacks/config/lament.xml

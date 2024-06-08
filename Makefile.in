@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright © 1999-2023 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright © 1999-2024 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -429,6 +429,28 @@ count::
   echo "  Total:" $$C ;							\
 
 
+# Install symlinks pointing back to the source directory, for debugging.
+install_links::
+	@ \
+	cwd=`pwd` ;							\
+	for d in $(SUBDIRS) ; do (					\
+	  cd $$d ;							\
+	  $(MAKE2) install -k INSTALL=true INSTALL_DATA=true		\
+	       INSTALL_DIRS=false SUID_FLAGS= 2>&- |			\
+	  while read s ; do						\
+	    set - $$s ;							\
+	    if [ $$1 = true ]; then					\
+	      a="$$cwd/$$d/$$2" ;					\
+	      b="$$3" ;							\
+	      a=`echo "$$a" | sed -e 's@/\./@/@'			\
+		 -e 's@/[^/]*/\.\./@/@'` ;				\
+	      echo "ln -sf $$a $$b" ;					\
+	            ln -sf "$$a" "$$b" ;				\
+	    fi ;							\
+	  done ;							\
+	) ; done
+
+
 cerebrum::
 	rsync -vax . 10.0.1.12:xscreensaver/ \
 	--omit-dir-times \
@@ -469,6 +491,8 @@ cerebrum::
 	--include '*.ui' \
 	--include '*.sh' \
 	--include '*.pl' \
+	--include '*.spec' \
+	--include '*.ad' \
 	--include 'configure*' \
 	--include 'config.sub' \
 	--include 'config.guess' \

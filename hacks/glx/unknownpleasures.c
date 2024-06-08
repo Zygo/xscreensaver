@@ -1,5 +1,4 @@
-/* unknownpleasures, Copyright (c) 2013-2018, 2019
- * -Jamie Zawinski <jwz@jwz.org>
+/* unknownpleasures, Copyright © 2013-2019 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

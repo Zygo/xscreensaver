@@ -395,21 +395,26 @@ Iterate_X3(const ATTRACTOR * A, PRM x, PRM y, PRM * xo, PRM * yo)
 
 	Tmp_z = A->Prm[11] * xx + A->Prm[12] * xy + A->Prm[13] * yy + A->Prm[14] * y2x;
 	Tmp_z = A->Prm[10] + x + (Tmp_z >> UNIT_BITS);
-	Tmp_z = UNIT + ((Tmp_z * Tmp_z) >> UNIT_BITS);
+#ifdef __GNUC__
+	// Without this 'volatile', GCC incorrectly assumes that Tmp_z1
+	// cannot == 0, and optimizes away the 'if (!Tmp_z0)'.
+	volatile
+#endif
+    PRM Tmp_z0 = UNIT + ((Tmp_z * Tmp_z) >> UNIT_BITS);
 
 	/* Can happen with -curve 9. */
-	if (!Tmp_z)
-		Tmp_z = 1;
+	if (!Tmp_z0)
+		Tmp_z0 = 1;
 
 #ifdef HAVE_INTTYPES_H
 	{
-		uint64_t Tmp_z1 = (1 << 30) / Tmp_z;
+		uint64_t Tmp_z1 = (1 << 30) / Tmp_z0;
 		*xo = (Tmp_x * Tmp_z1) >> (30 - UNIT_BITS);
 		*yo = (Tmp_y * Tmp_z1) >> (30 - UNIT_BITS);
 	}
 #else
-	*xo = (Tmp_x * UNIT) / Tmp_z;
-	*yo = (Tmp_y * UNIT) / Tmp_z;
+    *xo = (Tmp_x * UNIT) / Tmp_z0;
+    *yo = (Tmp_y * UNIT) / Tmp_z0;
 #endif
 }
 

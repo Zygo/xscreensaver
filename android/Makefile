@@ -173,6 +173,7 @@ export ANDROID_HACKS=		\
 	hexadrop		\
 	hexstrut		\
 	hextrail		\
+	highvoltage		\
 	hilbert			\
 	hopalong		\
 	hypertorus		\
@@ -188,6 +189,7 @@ export ANDROID_HACKS=		\
 	julia			\
 	kaleidescope		\
 	kaleidocycle		\
+	kallisti		\
 	klein			\
 	kumppa			\
 	lament			\

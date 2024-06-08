@@ -1,4 +1,4 @@
-/* skulloop, Copyright (c) 2023 Jamie Zawinski <jwz@jwz.org>
+/* skulloop, Copyright © 2023-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -124,6 +124,7 @@ draw_component (ModeInfo *mi, int i)
 
   glPushMatrix();
   glScalef (-1, 1, 1);
+  glTranslatef (-0.05, 0, 0);  /* The model seems to have a gap */
   glFrontFace (GL_CW);
   glCallList (bp->dlists[i]);
   glPopMatrix();

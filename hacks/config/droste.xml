@@ -25,8 +25,7 @@
    <vgroup>
     <number id="speed" type="slider" arg="--speed %"
             _label="Zoom speed" _low-label="Out" _high-label="In"
-            low="-10.0" high="10.0" default="1.0"
-            convert="ratio" />
+            low="-10.0" high="10.0" default="1.0" />
 
     <number id="r1" type="slider" arg="--r1 %"
             _label="Radius One" _low-label="0.0" _high-label="1.0"

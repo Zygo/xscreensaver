@@ -1,4 +1,4 @@
-/* ffmpeg-out, Copyright © 2023 Jamie Zawinski <jwz@jwz.org>
+/* ffmpeg-out, Copyright © 2023-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,6 +40,11 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+
+#if (LIBAVUTIL_VERSION_INT >= ((57<<16) | (28<<8) | 100))
+# define HAVE_CH_LAYOUT
+#endif
+
 
 struct av_stream {
   AVCodec *codec;
@@ -109,11 +114,23 @@ write_frame (AVFormatContext *oc, struct av_stream *ost)
 }
 
 
+#ifdef HAVE_CH_LAYOUT
+
+AVChannelLayout
+guess_channel_layout (int channels)
+{
+  return (channels <= 1 ? (AVChannelLayout)AV_CHANNEL_LAYOUT_MONO : (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO);
+}
+
+#else   /* !HAVE_CH_LAYOUT */
+
 static uint64_t
 guess_channel_layout (int channels)
 {
   return (channels <= 1 ? AV_CH_LAYOUT_MONO : AV_CH_LAYOUT_STEREO);
 }
+
+#endif  /* !HAVE_CH_LAYOUT */
 
 
 static void
@@ -138,11 +155,19 @@ get_audio_frame (AVFormatContext *audio_fmt_ctx,
 
           if (ret >= 0)
             {
+# ifdef HAVE_CH_LAYOUT
+              if (!av_channel_layout_check(&audio_ist->frame->ch_layout))
+                {
+                  audio_ist->frame->ch_layout =
+                    guess_channel_layout (audio_ist->frame->ch_layout.nb_channels);
+                }
+# else   /* !HAVE_CH_LAYOUT */
               if (!audio_ist->frame->channel_layout)
                 {
                   audio_ist->frame->channel_layout =
                     guess_channel_layout (audio_ist->frame->channels);
                 }
+# endif  /* !HAVE_CH_LAYOUT */
 
               if (!swr_is_initialized (swr_ctx))
                 {
@@ -174,7 +199,11 @@ get_audio_frame (AVFormatContext *audio_fmt_ctx,
                                               audio_ost->frame->nb_samples,
                                               nb_samples -
                                               audio_ost->frame->nb_samples,
+# ifdef HAVE_CH_LAYOUT
+                                              audio_ost->frame->ch_layout.nb_channels,
+# else   /* !HAVE_CH_LAYOUT */
                                               audio_ost->frame->channels,
+# endif  /* !HAVE_CH_LAYOUT */
                                               audio_ost->frame->format);
                       audio_ost->frame->nb_samples = nb_samples;
                       return;
@@ -354,6 +383,50 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
           ffst->audio_ost.ctx->sample_rate = best;
         }
 
+# ifdef HAVE_CH_LAYOUT
+      if (! ffst->audio_ost.codec->ch_layouts)
+        {
+          if (! av_channel_layout_check(&ffst->audio_ist.ctx->ch_layout))
+            {
+              ffst->audio_ost.ctx->ch_layout =
+                guess_channel_layout (ffst->audio_ost.ctx->ch_layout.nb_channels);
+            }
+          else
+            {
+              av_channel_layout_copy(&ffst->audio_ost.ctx->ch_layout,
+                &ffst->audio_ist.ctx->ch_layout);
+            }
+        }
+      else
+        {
+          /* XXX: This may or may not work. With AAC, it doesn't matter. */
+          const AVChannelLayout *c = ffst->audio_ost.codec->ch_layouts;
+          uint64_t best_lost =
+            av_popcount64 (ffst->audio_ost.ctx->ch_layout.u.mask);
+          uint64_t best_added = 0;
+          uint64_t best = 0;
+          while (av_channel_layout_check(c))
+            {
+              if (c->u.mask == ffst->audio_ist.ctx->ch_layout.u.mask)
+                {
+                  uint64_t lost =
+                    av_popcount64 (ffst->audio_ist.ctx->ch_layout.u.mask & ~c->u.mask);
+                  uint64_t added =
+                    av_popcount64 (c->u.mask & ~ffst->audio_ist.ctx->ch_layout.u.mask);
+                  if (lost < best_lost ||
+                      (lost == best_lost &&
+                       added < best_added)) {
+                    best = c->u.mask;
+                    best_lost = lost;
+                    best_added = added;
+                  }
+                }
+              ++c;
+            }
+          av_channel_layout_uninit (&ffst->audio_ost.ctx->ch_layout);
+          av_channel_layout_from_mask (&ffst->audio_ost.ctx->ch_layout, best);
+        }
+# else   /* !HAVE_CH_LAYOUT */
       if (! ffst->audio_ost.codec->channel_layouts)
         {
           if (! ffst->audio_ist.ctx->channel_layout)
@@ -399,6 +472,8 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
 
       ffst->audio_ost.ctx->channels =
         av_get_channel_layout_nb_channels (ffst->audio_ost.ctx->channel_layout);
+# endif  /* !HAVE_CH_LAYOUT */
+
       ffst->audio_ost.st->time_base.num = 1;
       ffst->audio_ost.st->time_base.den = ffst->audio_ost.ctx->sample_rate;
 
@@ -434,9 +509,14 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
       open_stream (&ffst->audio_ost, NULL);
 
       ffst->audio_ost.frame->format = ffst->audio_ost.ctx->sample_fmt;
+#ifdef HAVE_CH_LAYOUT
+      av_channel_layout_copy(&ffst->audio_ost.frame->ch_layout,
+        &ffst->audio_ost.ctx->ch_layout);
+#else   /* !HAVE_CH_LAYOUT */
       ffst->audio_ost.frame->channel_layout =
         ffst->audio_ost.ctx->channel_layout;
-      ffst->audio_ost.frame->sample_rate = ffst->audio_ost.ctx->sample_rate;
+#endif  /* !HAVE_CH_LAYOUT */
+        ffst->audio_ost.frame->sample_rate = ffst->audio_ost.ctx->sample_rate;
       ffst->audio_ost.frame->nb_samples =
         (ffst->audio_ost.ctx->codec->capabilities &
          AV_CODEC_CAP_VARIABLE_FRAME_SIZE
