@@ -1,0 +1,124 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+mapscroller \- a slowly-scrolling map of a random place on Earth.
+.SH SYNOPSIS
+.B mapscroller
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-speed \fInumber\fP]
+[\-\-duration \fIseconds\fP]
+[\-\-map\-level \fInumber\fP]
+[\-\-url-template URL]
+[\-\-origin LAT/LON]
+[\-\-no-titles]
+[\-\-no-arrow]
+[\-\-fps]
+.SH DESCRIPTION
+A slowly-scrolling map of a random place on Earth.  The map images are loaded
+from openstreetmap.org, or any compatible service.
+
+The Earth is very big, and full of Things.
+
+As you ponder these maps, remember that traffic always expands to fill all
+available lanes, every car is a policy failure, and the concept of
+"jaywalking" was invented for profit by auto industry lobbyists in the 1920s.
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds).
+.TP 8
+.B \-\-speed \fInumber\fP
+Scrolling speed.  2.0 means twice as fast, 0.5 means half as fast.
+.TP 8
+.B \-\-duration \fIseconds\fP
+When in one of the random modes, re-select the map position every
+N seconds.  Default 20 minutes.
+.TP 8
+.B \-\-map\-level \fInumber\fP
+Larger numbers are zoomed in more. 5 - 18, default 15.
+.TP 8
+.B \-\-url-template \fIURL\fP
+The map tile server to use. Default: Open Street Map.  You can find
+others here:
+
+\fIhttps://wiki.openstreetmap.org/wiki/Tiles#Servers\fP
+.TP 8
+.B \-\-origin \fIlocation\fP
+"Random" means a fully random location somewhere on Earth, excluding
+the oceans.
+
+"Random-city" means to select from a built-in list of several hundred
+major cities.  This is the default.
+
+Otherwise, this must be a latitude/longitude pair, as floats.
+.TP 8
+.B \-\-titles | \-\-no-titles
+Whether to show the current coordinates in the upper left.  Default true.
+.TP 8
+.B \-\-arrow | \-\-no-arrow
+Whether to show a directional arrow in the middle of the screen.  Default true.
+.TP 8
+.B \-\-fps | \-\-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH FILES
+The map tile images are loaded from the network and cached on disk. Up to 20MB
+of them are retained.  Depending on your operating system, the cache directory
+will be one of:
+.nf
+.sp
+        $HOME/.cache/xscreensaver/mapscroller/
+        $HOME/tmp/.xscreensaver-mapscroller/
+        $HOME/.xscreensaver-mapscroller.cache/
+        $HOME/Library/Caches/org.jwz.xscreensaver.mapscroller/
+.fi
+.SH BUGS
+Some parts of the world are boring.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.TP 4
+.B HTTP_PROXY, HTTPS_PROXY, http_proxy, or https_proxy
+to get the default proxy host and port.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR https://www.openstreetmap.org/
+.SH COPYRIGHT
+Copyright \(co 2022 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+
+OpenStreetMap map data is \(co OpenStreetMap contributors under the
+Open Database License.
+.SH AUTHOR
+Jamie Zawinski.

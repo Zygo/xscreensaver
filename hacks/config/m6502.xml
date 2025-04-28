@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="m6502" _label="m6502">
+
+  <command arg="--root" />
+
+  <video href="https://www.youtube.com/watch?v=KlDw0nYwUe4"/>
+
+  <file id="file" _label="Assembly file" arg="--file %"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="displaytime" type="slider" arg="--displaytime %"
+            _label="Display time for each program"
+            _low-label="5 seconds" _high-label="2 minutes"
+            low="5.0" high="120.0" default="30.0" />
+    <number id="tvcolor" type="slider" arg="--tv-color %"
+            _label="Color Knob" _low-label="Low" _high-label="High"
+            low="0" high="400" default="70"/>
+    <number id="tvtint" type="slider" arg="--tv-tint %"
+            _label="Tint Knob" _low-label="Low" _high-label="High"
+            low="0" high="360" default="5"/>
+   </vgroup>
+   <vgroup>
+    <number id="ips" type="slider" arg="--ips %"
+            _label="Instructions per second"
+            _low-label="500" _high-label="120000"
+            low="500" high="120000" default="15000" />
+    <number id="tvbrightness" type="slider" arg="--tv-brightness %"
+            _label="Brightness Knob" _low-label="Low" _high-label="High"
+            low="-75.0" high="100.0" default="3.0"/>
+    <number id="tvcontrast" type="slider" arg="--tv-contrast %"
+            _label="Contrast Knob" _low-label="Low" _high-label="High"
+            low="0" high="500" default="150"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Emulates a 6502 microprocessor, and runs some example programs on it.
+
+The family of 6502 chips were used throughout the 70's and 80's in
+machines such as the Atari 2600, Commodore PET, VIC20 and C64, Apple
+][, and the NES. Some example programs are included, and it can also
+read in an assembly file as input.
+
+Original JavaScript Version by Stian Soreng:
+https://web.archive.org/web/20070516072609/http%3A//www.6502asm.com/
+Ported to XScreenSaver by Jeremy English.
+
+Written by Stian Soreng and Jeremy English; 2007.
+  </_description>
+</screensaver>
