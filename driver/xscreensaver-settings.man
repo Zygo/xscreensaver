@@ -307,10 +307,10 @@ file, or it won't work.
 to get the default host and display number.
 .TP 8
 .B PATH
-to find the sub-programs to run.  However, note that the sub-programs
-actually launched by \fIxscreensaver-settings\fP for display in the
-inline preview pane, but are launched by the \fIxscreensaver\fP daemon
-when run full screen, so the \fB$PATH\fP setting in both processes matters.
+to find the sub-programs to run.  However, note that the sub-programs are
+launched by \fIxscreensaver-settings\fP for display in the inline preview
+pane, but by the \fIxscreensaver\fP daemon when run full screen, so the
+\fB$PATH\fP setting in both processes matters.
 .TP 8
 .B HOME
 for the directory in which to read and write the \fI.xscreensaver\fP file.

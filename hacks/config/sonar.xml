@@ -23,8 +23,9 @@
      <option id="ssh" _label="Ping known SSH hosts"
   arg-set="--ping /etc/hosts,$HOME/.ssh/known_hosts,$HOME/.ssh/known_hosts2"/>
 
-     <option id="popular" _label="Ping Google, Facebook, etc."
-       arg-set="--ping google.com,facebook.com,twitter.com,yahoo.com,flickr.com,www.apple.com,wikipedia.org,linux.org,youtube.com,disqus.com,blogger.com,wordpress.com,tumblr.com,whitehouse.gov"/>
+     <!-- Most popular sites, as per Wikipedia 2025. -->
+     <option id="popular" _label="Ping popular web sites"
+       arg-set="--ping google.com,youtube.com,facebook.com,instagram.com,wikipedia.org,reddit.com,amazon.com,yandex.ru,baidu.com,tiktok.com,pornhub.com,apple.com,kernel.org,mastodon.social,nsa.gov"/>
 
      <option id="sim" _label="Simulation (don't ping)"
         arg-set="--ping simulation"/>

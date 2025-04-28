@@ -37,6 +37,7 @@
 
 #include "screenhack.h"
 #include "xft.h"
+#include "xftwrap.h"
 #include "ximage-loader.h"
 #include "apple2.h"
 
@@ -1899,6 +1900,78 @@ windows_10_update (Display *dpy, Window window)
 
 
 static struct bsod_state *
+windows_10_recovery (Display *dpy, Window window)
+{
+  struct bsod_state *bst =
+    make_bsod_state (dpy, window, "win10r", "Win10r");
+  const char *line1 = "Recovery";
+  const char *line2 = "It looks like Windows didn't load correctly";
+  const char *line3 = "If you'd like to restart and try again, choose "
+		      "\"Restart my PC\" below. Otherwise, choose "
+		      "\"See advanced repair options\" for troubleshooting "
+		      "tools and advanced options. If you don't know which "
+		      "option is right for you, contact someone you "
+		      "trust to help with this.";
+  const char *line4 = "  See advanced repair options  ";
+  const char *line5 = "  Restart my PC  ";
+  int line_height  = bst->fontA->ascent + bst->fontA->descent;
+  int line_heightB = bst->fontB->ascent + bst->fontB->descent;
+  int line_heightC = bst->fontC->ascent + bst->fontC->descent;
+  int y = line_heightC * 2;
+  int x, x2, x3;
+  XGlyphInfo ov;
+
+  XftTextExtentsUtf8 (bst->dpy, bst->fontB, (FcChar8 *) line2, strlen(line2),
+                      &ov);
+  x = (bst->xgwa.width - (ov.xOff * 1.7)) / 2;
+  if (x < 10) x = 10;
+  BSOD_MARGINS (bst, x, x);
+
+  BSOD_WORD_WRAP (bst);
+  BSOD_FONT (bst, 2);
+  BSOD_MOVETO (bst, 0, y);
+  BSOD_TEXT (bst, LEFT, line1);
+  BSOD_TEXT (bst, LEFT, "\n");
+
+  BSOD_FONT (bst, 1);
+  BSOD_TEXT (bst, LEFT, line2);
+  BSOD_TEXT (bst, LEFT, "\n");
+
+  BSOD_FONT (bst, 0);
+  BSOD_TEXT (bst, LEFT, line3);
+
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) line5, strlen(line5),
+                      &ov);
+  x2 = bst->xgwa.width - x - ov.xOff;
+
+  if ( bst->xgwa.width >  bst->xgwa.height)
+    y += line_heightB * 2 + line_height * 7;
+  else
+    y += line_heightB * 3 + line_height * 9;
+
+  BSOD_TRUNCATE (bst);
+  BSOD_MOVETO (bst, x2, y);
+  BSOD_TEXT (bst, LEFT, line5);
+  BSOD_RECT (bst, False, x2, y - line_height, ov.xOff,
+             line_height + bst->fontA->descent * 2);
+
+  XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) line4, strlen(line4),
+                      &ov);
+  x3 = x2 - ov.xOff - line_height;
+
+  BSOD_TRUNCATE (bst);
+  BSOD_MOVETO (bst, x3, y);
+  BSOD_TEXT (bst, LEFT, line4);
+  BSOD_RECT (bst, False, x3, y - line_height, ov.xOff,
+             line_height + bst->fontA->descent * 2);
+
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
+
+static struct bsod_state *
 windows_10 (Display *dpy, Window window)
 {
   struct bsod_state *bst =
@@ -1930,49 +2003,88 @@ windows_10 (Display *dpy, Window window)
     0xFF,0xFF,0xFF,0xFF,0xFF,0x01};
   Pixmap pixmap;
 
-  const char * const lines[] = {
-    ":(\n",
-    "\n",
-    "Your PC ran into a problem and needs to restart. We're just\n",
-    "collecting some error info, and then we'll restart for you.\n",
-    "\n",
-    "\n",
-    "\n",
-    "For more information about this issue and\n",
-    "possible fixes, visit\n",
-/*  "https://www.jwz.org/xscreensaver\n",*/
-    "http://youtu.be/-RjmN9RZyr4\n",
-    "\n",
-    "If you call a support person, give them this info:\n",
-    "Stop code CRITICAL_PROCESS_DIED",
- };
-  int i, y = 0, y0 = 0;
-  int line_height0 = bst->fontB->ascent;
-  int line_height1 = bst->fontA->ascent + bst->fontA->descent;
-  int line_height2 = bst->fontC->ascent + bst->fontC->descent;
-  int line_height = line_height0;
-  int top, left0, left;
-  int stop = 60 + (random() % 39);
+  const char * const lines1[] = {
+    ":(",
 
-  if (!(random() % 7))
+    "\n"
+    "Your PC ran into a problem and needs to restart. We're just"
+    " collecting some error info, and then we'll restart for you."
+    "\n\n\n",
+
+    "\n\n",
+
+    "For more information about this issue and possible fixes, visit\n"
+    "http://youtu.be/-RjmN9RZyr4\n\n"
+    "If you call a support person, give them this info:\n"
+    "Stop code CRITICAL_PROCESS_DIED",
+  };
+  const char * const lines2[] = {
+    "-\\_(:/)_/-",   /* ¯\\_(ツ)_/¯   BSOD_TEXT() does not support UTF-8. */
+
+    "\n"
+    "Your PC ran into a ClownStrike and needs to restart 15 or more times."
+    "\n\n\n",
+
+    "\n\n",
+
+    "For more information about this issue and possible fixes, visit\n"
+    "http://youtu.be/-RjmN9RZyr4\n\n"
+    "If you call a support person, give them this info:\n"
+    "Stop code COMPLIANCE_LINE_ITEM_OK",
+  };
+  const char * const lines3[] = {
+    "x__x",
+
+    "\n"
+    "This place is a message... "
+      "and part of a system of messages... "
+      "pay attention to it! "
+      "\n\n"
+      "Sending this message was important to us. "
+      "We considered ourselves to be a powerful culture."
+      "\n\n",
+
+    "\nThis place is not a place of honor... "
+      "no highly esteemed deed is commemorated here... "
+      "nothing valued is here. "
+      "\n\n"
+      "What is here was dangerous and repulsive to us. "
+      "This message is a warning about danger. "
+      "\n",
+
+      "The danger is in a particular location... "
+      "it increases towards a center... "
+      "the center of danger is here... "
+      "of a particular size and shape, and below us. "
+      "\n\n"
+      "The danger is still present, in your time, as it was in ours. "
+      "The danger is to the body, and it can kill. "
+      "\n\n"
+      "This place is best shunned and left uninhabited."
+  };
+  int i, y = 0;
+  int top, left0, left, right, y1;
+  Bool clownp = !(random() % 10);
+  Bool honorp = !clownp && !(random() % 20);
+  const char * const * lines = (clownp ? lines2 : honorp ? lines3 : lines1);
+  int stop = 60 + (random() % 39) + (clownp ? 1300 : 0);
+
+  if (!(random() % 4))
+    return windows_10_recovery (dpy, window);
+
+  if (!(random() % 14))
     return windows_10_update (dpy, window);
 
-
-  line_height1 *= 1.3;
-  line_height2 *= 1.5;
-
-  top = ((bst->xgwa.height - bst->yoff
-          - (line_height0 * 1 +
-             line_height1 * 6 +
-             line_height2 * 6))
-         / 2);
+  top = (bst->xgwa.height > 800 ? bst->fontB->ascent : 0);
 
   {
     XGlyphInfo ov;
-    const char *s = lines[2];
-
+    const char *s = lines1[1];
     XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) s, strlen(s), &ov);
-    left = left0 = (bst->xgwa.width - ov.xOff) / 2;
+    left = (bst->xgwa.width - (ov.xOff * 0.55)) / 2;
+    if (left < 10) left  = 10;
+    left0 = right = left;
+    BSOD_MARGINS (bst, left, right);
   }
 
   pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) qr_bits,
@@ -1993,39 +2105,59 @@ windows_10 (Display *dpy, Window window)
   bst->pixmap = pixmap;
 
   y = top;
-  line_height = line_height0;
   BSOD_FONT (bst, 1);
-  for (i = 0; i < countof(lines); i++)
+  for (i = 0; i < countof(lines1); i++)
     {
-      BSOD_MOVETO (bst, left, y);
-      BSOD_TEXT (bst, LEFT, lines[i]);
-      y += line_height;
+      int oy = y;
+      int fid = (i == 0 ? 1 : i >= 3 ? 2 : 0);
+      XftFont *font = (fid == 0 ? bst->font :
+                       fid == 1 ? bst->fontB : bst->fontC);
+      char *line;
+      XGlyphInfo ov;
+
+      line = xft_word_wrap (dpy, font, lines[i],
+                            bst->xgwa.width - left - right);
+      XftTextExtentsUtf8_multi (dpy, font, (FcChar8 *) line, strlen(line),
+                                &ov);
+
+      BSOD_MOVETO (bst, left, y + font->ascent);
+      BSOD_FONT (bst, fid);
+      BSOD_TEXT (bst, LEFT, line);
+
+      free (line);
+      line = 0;
+      y += ov.height + font->descent;
+
       if (i == 0)
         {
-          BSOD_FONT (bst, 0);
-          line_height = line_height1;
+          BSOD_MOVETO (bst, left, y);
         }
-      else if (i == 4)
+      else if (i == 1)
         {
-          y0 = y;
-          y += line_height / 2;
-          BSOD_PIXMAP (bst, 0, 0, qr_width, qr_height, left, y + line_height1);
-          BSOD_FONT (bst, 2);
-          line_height = line_height2;
-          left += qr_width + line_height2 / 2;
-# ifdef HAVE_MOBILE
-          y -= 14;
-# endif
+//          y += font->ascent + font->descent;
+          y1 = y;
+//          y += font->ascent + font->descent;
+        }
+      else if (i == 2)
+        {
+          left  += qr_width + font->ascent / 2;
+          if (bst->xgwa.width > bst->xgwa.height)
+            right += qr_width * 1.8;
+          BSOD_MARGINS (bst, left, right);
+        }
+      else if (i == 3)
+        {
+          BSOD_PIXMAP (bst, 0, 0, qr_width, qr_height, left0, oy);
         }
     }
 
-  left = left0;
+  BSOD_MARGINS (bst, left0, 0);
   BSOD_FONT (bst, 0);
   for (i = 0; i <= stop; i++)
     {
       char buf[100];
       sprintf (buf, "%d%% complete", i);
-      BSOD_MOVETO (bst, left, y0);
+      BSOD_MOVETO (bst, left0, y1);
       BSOD_TEXT (bst, LEFT, buf);
       BSOD_PAUSE (bst, 85000);
     }
@@ -2666,6 +2798,167 @@ windows_ransomware (Display *dpy, Window window)
      * enough to make the point before xscreensaver cycles us.
      */
   } while (stage1_deadline - now > 3600);
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
+
+static struct bsod_state *
+bitlocker (Display *dpy, Window window)
+{
+  struct bsod_state *bst =
+    make_bsod_state (dpy, window, "bitlocker", "Bitlocker");
+  int top = bst->fontB->ascent + bst->fontB->descent;
+  int left = top * 2;
+  int right = left + bst->fontB->ascent * 22;
+  const char *bottom = ("Press Enter to reboot and try again\n"
+                        "Press ESC for BitLocker recovery");
+  int which = random() % 5;
+
+  if (right > bst->xgwa.width) right = bst->xgwa.width;
+  BSOD_MARGINS (bst, left, bst->xgwa.width - right);
+  BSOD_WORD_WRAP (bst);
+  BSOD_FONT (bst, 1);
+  BSOD_MOVETO (bst, 0, top * 2);
+
+  switch (which) {
+    case 0:
+      BSOD_TEXT (bst, LEFT, "BitLocker\n\n");
+      BSOD_FONT (bst, 0);
+      BSOD_TEXT (bst, LEFT,
+                 "Plug in the USB drive that has the BitLocker key\n");
+      break;
+
+    case 1:
+      BSOD_TEXT (bst, LEFT, "BitLocker recovery\n\n");
+      BSOD_FONT (bst, 0);
+      BSOD_TEXT (bst, LEFT,
+                 "To recover this drive, plug in the USB drive that has "
+                 "the BitLocker recovery key\n\n");
+      BSOD_FONT (bst, 2);
+      BSOD_TEXT (bst, LEFT,
+                 "Bitlocker needs your recovery key to unlock your drive "
+                 "because Secure Boot policy has unexpectedly changed.\n"
+                 "For more information on how to retrieve this key, go to\n"
+                 "https://www.jwz.org/xscreensaver/ from another PC "
+                 "or mobile device.");
+      bottom = ("Press Enter to reboot and try again\n"
+                "Press Esc or the Windows key for more recovery options");
+      break;
+    case 2:
+      BSOD_TEXT (bst, LEFT, "BitLocker\n\n");
+      BSOD_FONT (bst, 0);
+      BSOD_TEXT (bst, LEFT,
+                 "Enter the PIN to unlock this drive\n");
+      BSOD_INVERT (bst);
+      BSOD_TRUNCATE (bst);
+      BSOD_TEXT (bst, LEFT,
+                 "                                                "
+                 "                                                ");
+      BSOD_INVERT (bst);
+      BSOD_WORD_WRAP (bst);
+      BSOD_TEXT (bst, LEFT,
+                 "\n\n\n"
+                 "Use the number keys or function keys F1-F10 "
+                 "(use F10 for 0)."
+                 "\n\n\n"
+                 "Press the Insert key to see the PIN as you type.");
+      break;
+
+    case 3:
+      BSOD_TEXT (bst, LEFT, "BitLocker recovery\n\n");
+      BSOD_FONT (bst, 0);
+      BSOD_TEXT (bst, LEFT,
+                 "Enter the recovery key for this drive\n");
+      BSOD_INVERT (bst);
+      BSOD_TRUNCATE (bst);
+      BSOD_TEXT (bst, LEFT,
+                 "                                                "
+                 "                                                ");
+      BSOD_INVERT (bst);
+      BSOD_WORD_WRAP (bst);
+
+      BSOD_FONT (bst, 2);
+      BSOD_TEXT (bst, LEFT,
+                 "\n\n\n"
+                 "Use the number keys or function keys F1-F10 "
+                 "(use F10 for 0).\n");
+      {
+        int which2;
+        char k[200];
+        sprintf (k, "Recovery key ID (to identify your key): "
+                 "%08X-%04X-%04X-%04X%08X\n\n",
+                 random() & 0xFFFFFFFF,
+                 random() & 0xFFFF,
+                 random() & 0xFFFF,
+                 random() & 0xFFFF,
+                 random() & 0xFFFFFFFF);
+        BSOD_TEXT (bst, LEFT, k);
+      
+        which2 = random() % 4;
+        switch (which2) {
+        case 0:
+          BSOD_TEXT (bst, LEFT,
+                     "Bitlocker needs your recovery key to unlock your "
+                     "drive because Secure Boot policy has unexpectedly "
+                     "changed."
+                     "\n\n");
+          break;
+        case 1:
+          BSOD_TEXT (bst, LEFT,
+                     "Bitlocker needs your recovery key to unlock your "
+                     "PC's configuration has changed. This may have happened "
+                     "because a disc or USB device ws inserted. Removing it "
+                     "and restarting your PC may fix this problem."
+                     "\n\n");
+          break;
+        case 3:
+          BSOD_TEXT (bst, LEFT,
+                     "Bitlocker needs your recovery key to unlock your drive "
+                     "because Secure Boot has been disabled. Either Secure "
+                     "Boot must be re-enabled, or BitLocker must be suspended "
+                     "for Windows to start normally."
+                     "\n\n");
+          break;
+        default:
+          break;
+        }
+      }
+
+      BSOD_TEXT (bst, LEFT,
+                 "Here's how to find your key:\n"
+                 "- Sign in on another device and go to: "
+                 "https://www.jwz.org/\n"
+                 "- For more information go to: "
+                 "https://www.jwz.org/xscreensaver/");
+      break;
+
+    case 4:
+      BSOD_TEXT (bst, LEFT, "Recovery\n\n");
+      BSOD_FONT (bst, 0);
+      BSOD_TEXT (bst, LEFT,
+                 "There are no more BitLocker recovery options on your PC"
+                 "\n\n");
+      BSOD_FONT (bst, 2);
+      BSOD_TEXT (bst, LEFT,
+                 "You'll need to use the recovery tools on your installation "
+                 "media. If you don't have any installation media (like a "
+                 "disc or USB device), contact your system administrator or "
+                 "PC manufacturer.");
+      bottom = ("Press Enter to try again\n"
+                "Press F8 for Startup Settings\n"
+                "Press Esc for UEFI Firmware Settings");
+      break;
+
+  default:
+    abort();
+  }
+
+  BSOD_FONT (bst, 0);
+  BSOD_MOVETO (bst, 0, bst->xgwa.height - top -
+               (bst->fontB->ascent + bst->fontB->descent) * 1);
+  BSOD_TEXT (bst, LEFT, bottom);
 
   XClearWindow (dpy, window);
   return bst;
@@ -6734,6 +7027,33 @@ gnome (Display *dpy, Window window)
 }
 
 
+/* Linux kernel panic obscured by systemd, 2024.
+   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/gpu/drm/drm_panic.c
+ */
+static struct bsod_state *
+systemd (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "systemd", "Systemd");
+  int lh = (bst->font->ascent + bst->font->descent);
+  BSOD_MOVETO (bst, 0, lh);
+  BSOD_TEXT (bst, LEFT,
+             "     .--.        _\n"
+             "    |o_o |      | |\n"
+             "    |:_/ |      | |\n"
+             "   //   \\ \\     |_|\n"
+             "  (|     | )     _\n"
+             " /'\\_   _/`\\    (_)\n"
+             " \\___)=(___/\n");
+  BSOD_MOVETO (bst, 0, (bst->xgwa.height / 2) - lh);
+  BSOD_TEXT (bst, CENTER,
+             "KERNEL PANIC !\n"
+             "\n"
+             "Please reboot your computer.");
+  XClearWindow (dpy, window);
+  return bst;
+}
+
+
 /*****************************************************************************
  *****************************************************************************/
 
@@ -6746,6 +7066,7 @@ static const struct {
   { "NT",		windows_nt },
   { "Win2K",		windows_other },
   { "Win10",		windows_10 },
+  { "Bitlocker",	bitlocker },
   { "Ransomware",	windows_ransomware },
   { "Amiga",		amiga },
   { "Mac",		mac },
@@ -6781,6 +7102,7 @@ static const struct {
   { "Tivo",		tivo },
   { "Nintendo",		nintendo },
   { "Gnome",		gnome },
+  { "Systemd",		systemd },
 };
 
 
@@ -7076,6 +7398,7 @@ static const char *bsod_defaults [] = {
   "*doNT:		   True",
   "*doWin2K:		   True",
   "*doWin10:		   True",
+  "*doBitlocker:	   True",
   "*doRansomware:	   True",
   "*doAmiga:		   True",
   "*doMac:		   True",
@@ -7109,6 +7432,7 @@ static const char *bsod_defaults [] = {
   "*doTivo:		   True",
   "*doNintendo:		   True",
   "*doGnome:		   True",
+  "*doSystemd:		   True",
 
   ".foreground:		   White",
   ".background:		   Black",
@@ -7129,6 +7453,12 @@ static const char *bsod_defaults [] = {
 
   ".win10.foreground:      White",
   ".win10.background:      #1070AA",
+
+  ".win10r.foreground:     White",
+  ".win10r.background:     #1070AA",
+
+  ".bitlocker.foreground:  White",
+  ".bitlocker.background:  #1070AA",
 
   ".ransomware.foreground:   White",
   ".ransomware.background:   #841212",
@@ -7246,6 +7576,9 @@ static const char *bsod_defaults [] = {
   ".gnome.background2:     #F0F0F0",
   ".gnome.foreground2:     #2E3436",
 
+  ".systemd.background:    #0000AA",
+  ".systemd.foreground:    White",
+
   "*dontClearRoot:         True",
 
   ANALOGTV_DEFAULTS
@@ -7272,8 +7605,18 @@ static const char *bsod_defaults [] = {
 
   ".win10.font:		Arial 24, Helvetica 24",
   ".win10.bigFont:	Arial 24, Helvetica 24",
-  ".win10.fontB:	Arial 36, Helvetica 36",
+  ".win10.fontB:	Arial 90, Helvetica 36",
   ".win10.fontC:	Arial 16, Helvetica 16",
+
+  ".win10r.font:	Arial 16, Helvetica 24",
+  ".win10r.bigFont:	Arial 16, Helvetica 24",
+  ".win10r.fontB:	Arial 28, Helvetica 36",
+  ".win10r.fontC:	Arial 50, Helvetica 16",
+
+  ".bitlocker.font:	Arial 24, Helvetica 24",
+  ".bitlocker.bigFont:	Arial 24, Helvetica 24",
+  ".bitlocker.fontB:	Arial 36, Helvetica 36",
+  ".bitlocker.fontC:	Arial 18, Helvetica 18",
 
   /* "Arial" loads "ArialMT" but "Arial Bold" does not load "Arial-BoldMT"? */
   ".ransomware.font:    Arial 12, Helvetica 12",
@@ -7313,6 +7656,9 @@ static const char *bsod_defaults [] = {
   ".gnome.font:		Helvetica Bold 13",
   ".gnome.bigFont:	Helvetica Bold 13",
   ".gnome.fontB:	Helvetica 13",
+
+  ".systemd.font:	Classic Console 14",
+  ".systemd.bigFont:	Classic Console 14",
   0
 };
 
@@ -7328,6 +7674,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-2k",		".doWin2K",		XrmoptionNoArg,  "False" },
   { "-win10",		".doWin10",		XrmoptionNoArg,  "True"  },
   { "-no-win10",	".doWin10",		XrmoptionNoArg,  "False" },
+  { "-bitlocker",	".doBitlocker",		XrmoptionNoArg,  "True"  },
+  { "-no-bitlocker",	".doBitlocker",		XrmoptionNoArg,  "False" },
   { "-ransomware",	".doRansomware",	XrmoptionNoArg,  "True"  },
   { "-no-ransomware",	".doRansomware",	XrmoptionNoArg,  "False" },
   { "-amiga",		".doAmiga",		XrmoptionNoArg,  "True"  },
@@ -7394,6 +7742,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-nintendo",	".doNintendo",		XrmoptionNoArg,  "False" },
   { "-gnome",		".doGnome",		XrmoptionNoArg,  "True"  },
   { "-no-gnome",	".doGnome",		XrmoptionNoArg,  "False" },
+  { "-systemd",		".doSystemd",		XrmoptionNoArg,  "True"  },
+  { "-no-systemd",	".doSystemd",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Mon May  6 11:02:53 2024 by build-fntable.pl 1.14.
+   Created: Sun Apr 27 13:13:54 2025 by build-fntable.pl 1.14.
  */
 
 #import <Foundation/Foundation.h>
@@ -72,6 +72,7 @@ extern struct xscreensaver_function_table
  dnalogo_xscreensaver_function_table,
  drift_xscreensaver_function_table,
  droste_xscreensaver_function_table,
+ dumpsterfire_xscreensaver_function_table,
  dymaxionmap_xscreensaver_function_table,
  endgame_xscreensaver_function_table,
  energystream_xscreensaver_function_table,
@@ -126,6 +127,7 @@ extern struct xscreensaver_function_table
  highvoltage_xscreensaver_function_table,
  hilbert_xscreensaver_function_table,
  hopalong_xscreensaver_function_table,
+ hopffibration_xscreensaver_function_table,
  hydrostat_xscreensaver_function_table,
  hypertorus_xscreensaver_function_table,
  hypnowheel_xscreensaver_function_table,
@@ -142,6 +144,7 @@ extern struct xscreensaver_function_table
  kaleidocycle_xscreensaver_function_table,
  kallisti_xscreensaver_function_table,
  klein_xscreensaver_function_table,
+ klondike_xscreensaver_function_table,
  kumppa_xscreensaver_function_table,
  lament_xscreensaver_function_table,
  lavalite_xscreensaver_function_table,
@@ -178,6 +181,7 @@ extern struct xscreensaver_function_table
  piecewise_xscreensaver_function_table,
  pinion_xscreensaver_function_table,
  pipes_xscreensaver_function_table,
+ platonicfolding_xscreensaver_function_table,
  polyhedra_xscreensaver_function_table,
  polyominoes_xscreensaver_function_table,
  polytopes_xscreensaver_function_table,
@@ -329,6 +333,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"DNA Logo":	[NSValue valueWithPointer:&dnalogo_xscreensaver_function_table],
 	@"Drift":	[NSValue valueWithPointer:&drift_xscreensaver_function_table],
 	@"Droste":	[NSValue valueWithPointer:&droste_xscreensaver_function_table],
+	@"Dumpster Fire":	[NSValue valueWithPointer:&dumpsterfire_xscreensaver_function_table],
 	@"Dymaxion Map":	[NSValue valueWithPointer:&dymaxionmap_xscreensaver_function_table],
 	@"Endgame":	[NSValue valueWithPointer:&endgame_xscreensaver_function_table],
 	@"Energy Stream":	[NSValue valueWithPointer:&energystream_xscreensaver_function_table],
@@ -383,6 +388,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"High Voltage":	[NSValue valueWithPointer:&highvoltage_xscreensaver_function_table],
 	@"Hilbert":	[NSValue valueWithPointer:&hilbert_xscreensaver_function_table],
 	@"Hopalong":	[NSValue valueWithPointer:&hopalong_xscreensaver_function_table],
+	@"Hopf Fibration":	[NSValue valueWithPointer:&hopffibration_xscreensaver_function_table],
 	@"Hydrostat":	[NSValue valueWithPointer:&hydrostat_xscreensaver_function_table],
 	@"Hypertorus":	[NSValue valueWithPointer:&hypertorus_xscreensaver_function_table],
 	@"Hypnowheel":	[NSValue valueWithPointer:&hypnowheel_xscreensaver_function_table],
@@ -399,6 +405,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Kaleidocycle":	[NSValue valueWithPointer:&kaleidocycle_xscreensaver_function_table],
 	@"Kallisti":	[NSValue valueWithPointer:&kallisti_xscreensaver_function_table],
 	@"Klein":	[NSValue valueWithPointer:&klein_xscreensaver_function_table],
+	@"Klondike":	[NSValue valueWithPointer:&klondike_xscreensaver_function_table],
 	@"Kumppa":	[NSValue valueWithPointer:&kumppa_xscreensaver_function_table],
 	@"Lament":	[NSValue valueWithPointer:&lament_xscreensaver_function_table],
 	@"Lavalite":	[NSValue valueWithPointer:&lavalite_xscreensaver_function_table],
@@ -435,6 +442,7 @@ NSDictionary *make_function_table_dict(void) {
 	@"Piecewise":	[NSValue valueWithPointer:&piecewise_xscreensaver_function_table],
 	@"Pinion":	[NSValue valueWithPointer:&pinion_xscreensaver_function_table],
 	@"Pipes":	[NSValue valueWithPointer:&pipes_xscreensaver_function_table],
+	@"Platonic Folding":	[NSValue valueWithPointer:&platonicfolding_xscreensaver_function_table],
 	@"Polyhedra":	[NSValue valueWithPointer:&polyhedra_xscreensaver_function_table],
 	@"Polyominoes":	[NSValue valueWithPointer:&polyominoes_xscreensaver_function_table],
 	@"Polytopes":	[NSValue valueWithPointer:&polytopes_xscreensaver_function_table],

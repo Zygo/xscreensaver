@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -121,10 +121,12 @@
 #   include <GL/glx.h>
 #  endif
 
+# ifndef HAVE_JWZGLES
    /* Sep 2022, Sep 2023: The Raspberry Pi 4b Broadcom driver doesn't do
       GL_LINE_SMOOTH properly, so we must disable it. See init_GL(). */
    extern void (* glEnable_fn) (GLuint);
 #  define glEnable (* glEnable_fn)
+# endif /* !HAVE_JWZGLES */
 
 # endif /* real X11 */
 

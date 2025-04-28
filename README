@@ -38,7 +38,7 @@ To compile for a Unix system with X11:
     these libraries.  Append "-dev" or "-devel" to most of these:
 
         perl pkg-config gettext intltool libx11 libxext libxi libxt libxft
-        libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk-3-0
+        libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk-3
         libgdk-pixbuf2.0 libjpeg libxml2 libpam libsystemd elogind
 
     BSD systems might need gmake instead of make.
@@ -68,6 +68,14 @@ Interested in writing a new screen saver?
 ===============================================================================
 Version History
 ===============================================================================
+
+6.10	* New hacks, `dumpsterfire', `hopffibration', `platonicfolding' and
+          `klondike'.
+	* Rewrote the VT100 emulator for 'apple2' and 'phosphor'.
+	  Supports inverse and DEC Special Graphics.
+	* X11: `phosphor' scrolls fast again on "modern" Linux systems.
+	* BSOD supports systemd and bitlocker.
+	* Android: Fixed bug where photo access was not being requested.
 
 6.09	* New hacks,`kallisti' and `highvoltage'.
 	* Formal-wear for `headroom'.

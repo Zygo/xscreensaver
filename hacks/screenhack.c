@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1021,7 +1021,50 @@ main (int argc, char **argv)
 
 #ifdef HAVE_RECORD_ANIM
   {
-    int frames = get_integer_resource (dpy, "recordAnim", "Integer");
+    char *str = get_string_resource (dpy, "recordAnim", "Time");
+    int fps = 30;
+    int h = 0, m = 0, s = 0;
+    int frames = 0;
+    char c, suf[20];
+    *suf = 0;
+
+    if (!str || !*str)
+      ;
+    else if (3 == sscanf (str, " %d:%d:%d %c", &h, &m, &s, &c))  /* H:MM:SS */
+      frames = fps * (h*60*60 + m*60 + s);
+    else if (2 == sscanf (str,    " %d:%d %c",     &m, &s, &c))  /*    M:SS */
+      frames = fps * (m*60 + s);
+    else if (1 == sscanf (str,       " %d %c",         &s, &c))  /* frames  */
+      frames = s;
+    else if (2 == sscanf (str, "%d %10s %c", &h, suf, &c))
+      {
+        if (!strcasecmp (suf, "h") ||				 /* 1 H     */
+            !strcasecmp (suf, "hour") ||
+            !strcasecmp (suf, "hours"))
+          frames = fps * h*60*60;
+        else if (!strcasecmp (suf, "m") ||			 /* 2 min   */
+                 !strcasecmp (suf, "min") ||
+                 !strcasecmp (suf, "mins") ||
+                 !strcasecmp (suf, "minute") ||
+                 !strcasecmp (suf, "minutes"))
+          frames = fps * h*60;
+        else if (!strcasecmp (suf, "s") ||			 /* 30 sec  */
+                 !strcasecmp (suf, "sec") ||
+                 !strcasecmp (suf, "secs") ||
+                 !strcasecmp (suf, "second") ||
+                 !strcasecmp (suf, "seconds"))
+          frames = fps * h;
+        else
+          goto FAIL;
+      }
+    else
+      {
+      FAIL:
+        fprintf (stderr, "%s: unparsable duration: %s\n", progname, str);
+        exit (1);
+      }
+
+    if (str) free (str);
     if (frames > 0)
       anim_state = screenhack_record_anim_init (xgwa.screen, window, frames);
   }

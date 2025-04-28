@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -798,7 +798,13 @@ textclient_getc (text_data *d)
 
 
 Bool
-textclient_putc (text_data *d, XKeyEvent *k)
+textclient_puts (text_data *d, const char *s)
+{
+  return False;
+}
+
+Bool
+textclient_putc_event (text_data *d, XKeyEvent *k)
 {
   return False;
 }

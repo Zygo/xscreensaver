@@ -3106,6 +3106,24 @@ jwzgles_glTexImage2D (GLenum target,
 }
 
 void
+jwzgles_glTexImage3D (GLenum	target,
+                      GLint  	level,
+                      GLint  	internalFormat,
+                      GLsizei  	width,
+                      GLsizei  	height,
+                      GLsizei  	depth,
+                      GLint  	border,
+                      GLenum  	format,
+                      GLenum  	type,
+                      const GLvoid *data)
+{
+# ifdef HAVE_GLSL
+  glTexImage3D (target, level, internalFormat, width, height, depth, border,
+                format, type, data);
+# endif
+}
+
+void
 jwzgles_glTexSubImage2D (GLenum target, GLint level,
                          GLint xoffset, GLint yoffset,
                          GLsizei width, GLsizei height,

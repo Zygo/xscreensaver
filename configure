@@ -20150,6 +20150,18 @@ have_swresample="$ok"
 # Check includes
 if test "$have_avutil" = yes; then
   ac_save_avutil_CPPFLAGS="$CPPFLAGS"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libavutil includes" >&5
+printf %s "checking for libavutil includes... " >&6; }
+if test ${ac_cv_avutil_config_cflags+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_cv_avutil_config_cflags=`$pkg_config --cflags libavutil` ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_avutil_config_cflags" >&5
+printf "%s\n" "$ac_cv_avutil_config_cflags" >&6; }
+  ac_avutil_config_cflags=$ac_cv_avutil_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_avutil_config_cflags"
   have_avutil=no
 
@@ -20171,6 +20183,18 @@ fi
 
 if test "$have_avcodec" = yes; then
   ac_save_avcodec_CPPFLAGS="$CPPFLAGS"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libavcodec includes" >&5
+printf %s "checking for libavcodec includes... " >&6; }
+if test ${ac_cv_avcodec_config_cflags+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_cv_avcodec_config_cflags=`$pkg_config --cflags libavcodec` ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_avcodec_config_cflags" >&5
+printf "%s\n" "$ac_cv_avcodec_config_cflags" >&6; }
+  ac_avcodec_config_cflags=$ac_cv_avcodec_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_avcodec_config_cflags"
   have_avcodec=no
 
@@ -20192,6 +20216,18 @@ fi
 
 if test "$have_avformat" = yes; then
   ac_save_avformat_CPPFLAGS="$CPPFLAGS"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libavformat includes" >&5
+printf %s "checking for libavformat includes... " >&6; }
+if test ${ac_cv_avformat_config_cflags+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_cv_avformat_config_cflags=`$pkg_config --cflags libavformat` ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_avformat_config_cflags" >&5
+printf "%s\n" "$ac_cv_avformat_config_cflags" >&6; }
+  ac_avformat_config_cflags=$ac_cv_avformat_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_avformat_config_cflags"
   have_avformat=no
 
@@ -20213,6 +20249,18 @@ fi
 
 if test "$have_swscale" = yes; then
   ac_save_swscale_CPPFLAGS="$CPPFLAGS"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libswscale includes" >&5
+printf %s "checking for libswscale includes... " >&6; }
+if test ${ac_cv_swscale_config_cflags+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_cv_swscale_config_cflags=`$pkg_config --cflags libswscale` ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_swscale_config_cflags" >&5
+printf "%s\n" "$ac_cv_swscale_config_cflags" >&6; }
+  ac_swscale_config_cflags=$ac_cv_swscale_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_swscale_config_cflags"
   have_swscale=no
 
@@ -20234,6 +20282,18 @@ fi
 
 if test "$have_swresample" = yes; then
   ac_save_swresample_CPPFLAGS="$CPPFLAGS"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libswresample includes" >&5
+printf %s "checking for libswresample includes... " >&6; }
+if test ${ac_cv_swresample_config_cflags+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_cv_swresample_config_cflags=`$pkg_config --cflags libswresample` ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_swresample_config_cflags" >&5
+printf "%s\n" "$ac_cv_swresample_config_cflags" >&6; }
+  ac_swresample_config_cflags=$ac_cv_swresample_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_swresample_config_cflags"
   have_swresample=no
 
@@ -20658,17 +20718,6 @@ if test "$have_avformat" = yes -a \
         "$have_swscale" = yes -a \
         "$have_swresample" = yes ; then
   have_ffmpeg=yes
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for ffmpeg includes" >&5
-printf %s "checking for ffmpeg includes... " >&6; }
-if test ${ac_cv_ffmpeg_config_cflags+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_cv_ffmpeg_config_cflags=`$pkg_config --cflags $pkgs` ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_ffmpeg_config_cflags" >&5
-printf "%s\n" "$ac_cv_ffmpeg_config_cflags" >&6; }
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for ffmpeg libs" >&5
 printf %s "checking for ffmpeg libs... " >&6; }
 if test ${ac_cv_ffmpeg_config_libs+y}
@@ -20684,7 +20733,13 @@ printf "%s\n" "$ac_cv_ffmpeg_config_libs" >&6; }
 
   FFMPEG_OBJS='$(FFMPEG_OBJS)'
 fi
-ac_ffmpeg_config_cflags=$ac_cv_ffmpeg_config_cflags
+ac_ffmpeg_config_cflags=" \
+  $ac_avutil_config_cflags \
+  $ac_avcodec_config_cflags \
+  $ac_avformat_config_cflags \
+  $ac_swscale_config_cflags \
+  $ac_swresample_config_cflags \
+"
 ac_ffmpeg_config_libs=$ac_cv_ffmpeg_config_libs
 FFMPEG_CFLAGS="$ac_ffmpeg_config_cflags"
 FFMPEG_LIBS="$ac_ffmpeg_config_libs"

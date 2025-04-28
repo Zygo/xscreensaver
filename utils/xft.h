@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2014-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2014-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -152,6 +152,7 @@ XftDraw *XftDrawCreate (Display   *dpy,
                         Drawable  drawable,
                         Visual    *visual,
                         Colormap  colormap);
+XftDraw *XftDrawCreateBitmap (Display *dpy, Pixmap bitmap);
 Display *XftDrawDisplay (XftDraw *);
 Bool XftDrawSetClipRectangles (XftDraw *, int x, int y, 
                                _Xconst XRectangle *rects, int n);

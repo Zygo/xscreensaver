@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright © 2018 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2018-2025 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -28,9 +28,13 @@ NAME=`echo "$OUT" | sed \
   -e 's@^.*/@@' \
   -e 's/\.[^.]*$//' \
   -e 's/[-.]/_/g' \
-  -e 's/^\([^a-z]\)/_\1/'`;
+  -e 's/^\([^a-zA-Z]\)/_\1/'`;
 
 if [ x"$PERL" = "x" ]; then PERL=perl ; fi
+
+# Perl fails if set to run in UTF-8 mode
+unset PERL5OPTS
+unset PERL_UNICODE
 
 # On Linux, we could do this and put the raw image into a .o data segment:
 #	$(LD) -r -b binary $< -o $@

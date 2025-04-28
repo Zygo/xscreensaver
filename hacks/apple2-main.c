@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1998-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,6 +16,7 @@
 #include "screenhack.h"
 #include "apple2.h"
 #include "textclient.h"
+#include "ansi-tty.h"
 #include "utf8wc.h"
 
 #include <math.h>
@@ -778,19 +779,24 @@ static void slideshow_controller(apple2_sim_t *sim, int *stepno,
 
 #define NPAR 16
 
+#define COUNTDOWN_BANNER   "intermission    "
+#define COUNTDOWN_DURATION 18*60+30
+#undef COUNTDOWN_BANNER
+
 struct terminal_controller_data {
   Display *dpy;
   char curword[256];
   unsigned char lastc;
   double last_emit_time;
+  time_t launch_time;
   text_data *tc;
+  ansi_tty *tty;
 
   int escstate;
   int csiparam[NPAR];
   int curparam;
   int cursor_x, cursor_y;
   int saved_x,  saved_y;
-  int unicruds; char unicrud[7];
   union {
     struct {
       unsigned int bold : 1;
@@ -802,6 +808,8 @@ struct terminal_controller_data {
   Bool fast_p;
 
 };
+
+static void a2_tty_send (void *, const char *);
 
 
 /* The structure of closure linkage throughout this code is so amazingly
@@ -817,6 +825,9 @@ terminal_closegen(struct terminal_controller_data *mine)
     textclient_close (mine->tc);
     mine->tc = 0;
   }
+
+  if (mine->tty)
+    ansi_tty_free (mine->tty);
 }
 
 static int
@@ -845,9 +856,53 @@ terminal_keypress_handler (Display *dpy, XEvent *event, void *data)
     (struct terminal_controller_data *) data;
   mine->dpy = dpy;
   if (event->xany.type == KeyPress && mine->tc)
-    return textclient_putc (mine->tc, &event->xkey);
+    return textclient_putc_event (mine->tc, &event->xkey);
   return 0;
 }
+
+
+#ifdef COUNTDOWN_BANNER
+static void
+a2_draw_banner (apple2_state_t *st, struct terminal_controller_data *mine)
+{
+  int x, y;
+  int w = 40;
+  int h = 3;
+  char buf[41], *s;
+  struct timeval tv;
+  double t;
+
+  for (y = 0; y < h; y++)
+    for (x = 0; x < w; x++)
+      st->textlines[y][x] = ' ' | 0xC0;
+
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  gettimeofday (&tv, NULL);
+# else
+  gettimeofday (&tv);
+# endif
+
+  t = ((mine->launch_time + COUNTDOWN_DURATION)  - 
+       (tv.tv_sec + ((double) tv.tv_usec * 0.000001)));
+  if (t < 0) t = 0;
+  sprintf (buf, "%.30s %d:%02d:%02d.%1d",
+           COUNTDOWN_BANNER,
+           (int) (t/60/60),
+           (int) (t/60) % 60,
+           (int) t % 60,
+           (int) (t * 10) % 10);
+  x = (w - strlen (buf)) / 2;
+  y = 0;
+  s = buf;
+  while (*s && x < w) {
+    char c = *s++;
+    if (c >= 'a' && c <= 'z') c &= 0xDF;
+    c |= 0xC0;
+    st->textlines[y][x] = c;
+    x++;
+  }
+}
+#endif /* COUNTDOWN_BANNER */
 
 
 static void
@@ -867,7 +922,9 @@ a2_ascii_printc (apple2_state_t *st, unsigned char c,
     }
   else if (c >= 'A' && c <= 'Z')            /* invert upper-case chars */
     {
+# ifndef COUNTDOWN_BANNER
       c |= 0x80;
+# endif
     }
 
   if (bold_p)  c |= 0xc0;
@@ -886,434 +943,81 @@ a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
                  unsigned char c)
 {
   apple2_state_t *st=sim->st;
-  int cols = SCREEN_COLS;
-  int rows = SCREEN_ROWS;
+  int w = SCREEN_COLS;
+  int h = SCREEN_ROWS;
+  int x, y;
+  ansi_tty *tty = state->tty;
+  ansi_tty_print (tty, c);
 
-  int i;
-  int start, end;
+  /* We could optimize this to not re-draw characters that haven't changed,
+     but it seems plenty fast enough. */
 
-  /* Mostly duplicated in phosphor.c */
-
-  switch (state->escstate)
-    {
-    case 0:
-      switch (c)
-        {
-        case 7: /* BEL */
-          /* Dummy case - we don't want the screensaver to beep */
-          /* #### But maybe this should flash the screen? */
-          break;
-        case 8: /* BS */
-          if (state->cursor_x > 0)
-            state->cursor_x--;
-          break;
-        case 9: /* HT */
-          if (state->cursor_x < cols - 8)
-            {
-              state->cursor_x = (state->cursor_x & ~7) + 8;
-            }
-          else
-            {
-              state->cursor_x = 0;
-              if (state->cursor_y < rows - 1)
-                state->cursor_y++;
-              else
-                a2_scroll (st);
-            }
-          break;
-        case 10: /* LF */
-# ifndef HAVE_FORKPTY
-          state->cursor_x = 0;	/* No ptys on iPhone; assume CRLF. */
-# endif
-        case 11: /* VT */
-        case 12: /* FF */
-          if (state->cursor_y < rows - 1)
-            state->cursor_y++;
-          else
-            a2_scroll (st);
-          break;
-        case 13: /* CR */
-          state->cursor_x = 0;
-          break;
-        case 14: /* SO */
-        case 15: /* SI */
-          /* Dummy case - there is one and only one font. */
-          break;
-        case 24: /* CAN */
-        case 26: /* SUB */
-          /* Dummy case - these interrupt escape sequences, so
-             they don't do anything in this state */
-          break;
-        case 27: /* ESC */
-          state->escstate = 1;
-          break;
-        case 127: /* DEL */
-          /* Dummy case - this is supposed to be ignored */
-          break;
-        case 155: /* CSI */
-          state->escstate = 2;
-          for(i = 0; i < NPAR; i++)
-            state->csiparam[i] = 0;
-          state->curparam = 0;
-          break;
-        default:
-
-          /* states 102-106 are for UTF-8 decoding */
-
-          if ((c & 0xE0) == 0xC0) {        /* 110xxxxx - 11 bits, 2 bytes */
-            state->unicruds = 1;
-            state->unicrud[0] = c;
-            state->escstate = 102;
-            break;
-          } else if ((c & 0xF0) == 0xE0) { /* 1110xxxx - 16 bits, 3 bytes */
-            state->unicruds = 1;
-            state->unicrud[0] = c;
-            state->escstate = 103;
-            break;
-          } else if ((c & 0xF8) == 0xF0) { /* 11110xxx - 21 bits, 4 bytes */
-            state->unicruds = 1;
-            state->unicrud[0] = c;
-            state->escstate = 104;
-            break;
-          } else if ((c & 0xFC) == 0xF8) { /* 111110xx - 26 bits, 5 bytes */
-            state->unicruds = 1;
-            state->unicrud[0] = c;
-            state->escstate = 105;
-            break;
-          } else if ((c & 0xFE) == 0xFC) { /* 1111110x - 31 bits, 6 bytes */
-            state->unicruds = 1;
-            state->unicrud[0] = c;
-            state->escstate = 106;
-            break;
-          }
-
-        PRINT:
-
-          /* If the cursor is in column 39 and we print a character, then
-             that character shows up in column 39, and the cursor is no longer
-             visible on the screen (it's in "column 40".)  If another character
-             is printed, then that character shows up in column 0, and the
-             cursor moves to column 1.
-
-             This is empirically what xterm and gnome-terminal do, so that must
-             be the right thing.  (In xterm, the cursor vanishes, whereas; in
-             gnome-terminal, the cursor overprints the character in col 39.)
-           */
-          if (state->cursor_x >= cols)
-            {
-              state->cursor_x = 0;
-              if (state->cursor_y >= rows - 1)
-                a2_scroll (st);
-              else
-                state->cursor_y++;
-            }
-
-          a2_goto(st, state->cursor_y, state->cursor_x);  /* clips range */
-          a2_ascii_printc (st, c,
-                           state->termattrib.bf.bold,
-                           state->termattrib.bf.blink,
-                           state->termattrib.bf.rev,
-                           False);
-          state->cursor_x++;
-
-          break;
-        }
-      break;
-    case 1:
-      switch (c)
-        {
-        case 24: /* CAN */
-        case 26: /* SUB */
-          state->escstate = 0;
-          break;
-        case 'c': /* Reset */
-          a2_cls(st);
-          state->escstate = 0;
-          break;
-        case 'D': /* Linefeed */
-          if (state->cursor_y < rows - 1)
-            state->cursor_y++;
-          else
-            a2_scroll (st);
-          state->escstate = 0;
-          break;
-        case 'E': /* Newline */
-          state->cursor_x = 0;
-          state->escstate = 0;
-          break;
-        case 'M': /* Reverse newline */
-          if (state->cursor_y > 0)
-            state->cursor_y--;
-          state->escstate = 0;
-          break;
-        case '7': /* Save state */
-          state->saved_x = state->cursor_x;
-          state->saved_y = state->cursor_y;
-          state->escstate = 0;
-          break;
-        case '8': /* Restore state */
-          state->cursor_x = state->saved_x;
-          state->cursor_y = state->saved_y;
-          state->escstate = 0;
-          break;
-        case '[': /* CSI */
-          state->escstate = 2;
-          for(i = 0; i < NPAR; i++)
-            state->csiparam[i] = 0;
-          state->curparam = 0;
-          break;
-        case '%': /* Select charset */
-          /* @: Select default (ISO 646 / ISO 8859-1)
-             G: Select UTF-8
-             8: Select UTF-8 (obsolete)
-
-             We can just ignore this and always process UTF-8, I think?
-             We must still catch the last byte, though.
-           */
-        case '(':
-        case ')':
-          /* I don't support different fonts either - see above
-             for SO and SI */
-          state->escstate = 3;
-          break;
-        default:
-          /* Escape sequences not supported:
-           * 
-           * H - Set tab stop
-           * Z - Terminal identification
-           * > - Keypad change
-           * = - Other keypad change
-           * ] - OS command
-           */
-          state->escstate = 0;
-          break;
-        }
-      break;
-    case 2:
-      switch (c)
-        {
-        case 24: /* CAN */
-        case 26: /* SUB */
-          state->escstate = 0;
-          break;
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
-          if (state->curparam < NPAR)
-            state->csiparam[state->curparam] =
-              (state->csiparam[state->curparam] * 10) + (c - '0');
-          break;
-        case ';':
-          state->csiparam[++state->curparam] = 0;
-          break;
-        case '[':
-          state->escstate = 3;
-          break;
-        case '@':
-          for (i = 0; i < state->csiparam[0]; i++)
-            {
-              if(++state->cursor_x > cols)
-                {
-                  state->cursor_x = 0;
-                  if (state->cursor_y < rows - 1)
-                    state->cursor_y++;
-                  else
-                    a2_scroll (st);
-                }
-            }
-          state->escstate = 0;
-          break;
-        case 'F':
-          state->cursor_x = 0;
-        case 'A':
-          if (state->csiparam[0] == 0)
-            state->csiparam[0] = 1;
-          if ((state->cursor_y -= state->csiparam[0]) < 0)
-            state->cursor_y = 0;
-          state->escstate = 0;
-          break;
-        case 'E':
-          state->cursor_x = 0;
-        case 'e':
-        case 'B':
-          if (state->csiparam[0] == 0)
-            state->csiparam[0] = 1;
-          if ((state->cursor_y += state->csiparam[0]) >= rows)
-            state->cursor_y = rows - 1;
-          state->escstate = 0;
-          break;
-        case 'a':
-        case 'C':
-          if (state->csiparam[0] == 0)
-            state->csiparam[0] = 1;
-          if ((state->cursor_x += state->csiparam[0]) >= cols)
-            state->cursor_x = cols - 1;
-          state->escstate = 0;
-          break;
-        case 'D':
-          if (state->csiparam[0] == 0)
-            state->csiparam[0] = 1;
-          if ((state->cursor_x -= state->csiparam[0]) < 0)
-            state->cursor_x = 0;
-          state->escstate = 0;
-          break;
-        case 'd':
-          if ((state->cursor_y = (state->csiparam[0] - 1)) >= rows)
-            state->cursor_y = rows - 1;
-          state->escstate = 0;
-          break;
-        case '`':
-        case 'G':
-          if ((state->cursor_x = (state->csiparam[0] - 1)) >= cols)
-            state->cursor_x = cols - 1;
-          state->escstate = 0;
-          break;
-        case 'f':
-        case 'H':
-          if ((state->cursor_y = (state->csiparam[0] - 1)) >= rows)
-            state->cursor_y = rows - 1;
-          if ((state->cursor_x = (state->csiparam[1] - 1)) >= cols)
-            state->cursor_x = cols - 1;
-          if(state->cursor_y < 0)
-            state->cursor_y = 0;
-          if(state->cursor_x < 0)
-            state->cursor_x = 0;
-          state->escstate = 0;
-          break;
-        case 'J':
-          start = 0;
-          end = rows * cols;
-          if (state->csiparam[0] == 0)
-            start = cols * state->cursor_y + state->cursor_x;
-          if (state->csiparam[0] == 1)
-            end = cols * state->cursor_y + state->cursor_x;
-
-          a2_goto(st, state->cursor_y, state->cursor_x);
-          for (i = start; i < end; i++)
-            {
-              a2_ascii_printc(st, ' ', False, False, False, False);
-            }
-          state->escstate = 0;
-          break;
-        case 'K':
-          start = 0;
-          end = cols;
-          if (state->csiparam[0] == 0)
-            start = state->cursor_x;
-          if (state->csiparam[1] == 1)
-            end = state->cursor_x;
-
-          a2_goto(st, state->cursor_y, state->cursor_x);
-          for (i = start; i < end; i++)
-            {
-              a2_ascii_printc(st, ' ', False, False, False, False);
-            }
-          state->escstate = 0;
-          break;
-        case 'm': /* Set attributes */
-          for (i = 0; i <= state->curparam; i++)
-            {
-              switch(state->csiparam[i])
-                {
-                case 0:
-                  state->termattrib.w = 0;
-                  break;
-                case 1:
-                  state->termattrib.bf.bold = 1;
-                  break;
-                case 5:
-                  state->termattrib.bf.blink = 1;
-                  break;
-                case 7:
-                  state->termattrib.bf.rev = 1;
-                  break;
-                case 21:
-                case 22:
-                  state->termattrib.bf.bold = 0;
-                  break;
-                case 25:
-                  state->termattrib.bf.blink = 0;
-                  break;
-                case 27:
-                  state->termattrib.bf.rev = 0;
-                  break;
-                }
-            }
-          state->escstate = 0;
-          break;
-        case 's': /* Save position */
-          state->saved_x = state->cursor_x;
-          state->saved_y = state->cursor_y;
-          state->escstate = 0;
-          break;
-        case 'u': /* Restore position */
-          state->cursor_x = state->saved_x;
-          state->cursor_y = state->saved_y;
-          state->escstate = 0;
-          break;
-        case '?': /* DEC Private modes */
-          if ((state->curparam != 0) || (state->csiparam[0] != 0))
-            state->escstate = 0;
-          break;
-        default:
-          /* Known unsupported CSIs:
-           *
-           * L - Insert blank lines
-           * M - Delete lines (I don't know what this means...)
-           * P - Delete characters
-           * X - Erase characters (difference with P being...?)
-           * c - Terminal identification
-           * g - Clear tab stop(s)
-           * h - Set mode (Mainly due to its complexity and lack of good
-           docs)
-           * l - Clear mode
-           * m - Set mode (Phosphor is, per defenition, green on black)
-           * n - Status report
-           * q - Set keyboard LEDs
-           * r - Set scrolling region (too exhausting - noone uses this,
-           right?)
-          */
-          state->escstate = 0;
-          break;
-        }
-      break;
-    case 3:
-      state->escstate = 0;
-      break;
-
-    case 102:
-    case 103:
-    case 104:
-    case 105:
-    case 106:
+  for (y = 0; y < h; y++)
+    for (x = 0; x < w; x++)
       {
-        int total = state->escstate - 100;  /* see what I did there */
-        if (state->unicruds < total) {
-          /* Buffer more bytes of the UTF-8 sequence */
-          state->unicrud[state->unicruds++] = c;
-        }
+        tty_char *tc = &tty->grid [tty->width * y + x];
+        unsigned char ascii = 0;
+        tty_flag flag = tc->flags;
+        int inv_p = flag & (TTY_INVERSE | TTY_BOLD);
+        if (tty->inverse_p) inv_p = !inv_p;
 
-        if (state->unicruds >= total) {
-          /* Done! Convert it to ASCII and print that. */
-          char *s;
-          state->unicrud[state->unicruds] = 0;
-          s = utf8_to_latin1 ((const char *) state->unicrud, True);
-          state->unicruds = 0;
-          state->escstate = 0;
-          if (s) {
-            c = s[0];
-            free (s);
-            goto PRINT;
-          } else {
-            /* c = 0; */
+        if (tc->c <= 128)
+          ascii = tc->c;
+        else
+          {
+            /* Convert non-ASCII Unicode to closest ASCII. */
+            char utf8[10];
+            int L = utf8_encode (tc->c, utf8, sizeof(utf8)-1);
+            utf8[L] = 0;
+            ascii = '?';
+            if (L)
+              {
+                char *s = utf8_to_latin1 (utf8, True);
+                if (s)
+                  {
+                    ascii = s[0];
+                    free (s);
+                  }
+              }
           }
-        }
-      }
-      break;
 
-    default:
-      abort();
-    }
-  a2_goto(st, state->cursor_y, state->cursor_x);
+        if (! ascii) ascii = ' ';
+
+        a2_goto (st, y, x);
+
+        if (flag & TTY_SYMBOLS)    /* Convert to the nearest ASCII */
+          switch (ascii) {
+          case 0x60: ascii = '*';  /* ◆ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x6A: ascii = 'J';  /* ┘ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x6B: ascii = 'T';  /* ┐ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x6C: ascii = 'r';  /* ┌ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x6D: ascii = 'L';  /* └ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x6E: ascii = '+';  /* ┼ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x6F: ascii = '-';  /* ⎺ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x70: ascii = '-';  /* ⎻ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x71: ascii = '=';  /* ─ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x72: ascii = '_';  /* ⎼ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x73: ascii = '_';  /* ⎽ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x74: ascii = 'F';  /* ├ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x75: ascii = '+';  /* ┤ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x76: ascii = '+';  /* ┴ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x77: ascii = 'T';  /* ┬ */  flag &= ~TTY_SYMBOLS; break;
+          case 0x78: ascii = '#';  /* │ */  flag &= ~TTY_SYMBOLS; break;
+          }
+
+
+        if (flag & TTY_SYMBOLS)
+          /* Draw unknown symbol font characters as a box. */
+          a2_ascii_printc (st, ' ', 0, 0, !inv_p, False);
+        else
+          a2_ascii_printc (st, ascii,
+                           0,
+                           flag & TTY_BLINK,
+                           inv_p,
+                           False);
+      }
+
+  a2_goto (st, tty->y, tty->x);
 }
 
 
@@ -1335,19 +1039,26 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
     sim->controller_data=calloc(sizeof(struct terminal_controller_data),1);
   mine=(struct terminal_controller_data *) sim->controller_data;
   mine->dpy = sim->dpy;
+  if (!mine->launch_time) mine->launch_time = time ((time_t *) 0);
 
   mine->fast_p           = global_fast_p;
 
   switch(*stepno) {
 
   case 0:
+# ifdef COUNTDOWN_BANNER
+    if (1)
+# else
     if (random()%2)
+# endif
       st->gr_mode |= A2_GR_FULL; /* Turn on color mode even through it's
                                     showing text */
     a2_cls(st);
+# ifndef COUNTDOWN_BANNER
     a2_goto(st,0,16);
     a2_prints(st, "APPLE ][");
     a2_goto(st,2,0);
+# endif
     mine->cursor_y = 2;
 
     if (! mine->tc) {
@@ -1356,6 +1067,12 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
                           SCREEN_COLS, SCREEN_ROWS,
                           SCREEN_COLS, SCREEN_ROWS,
                           0);
+    }
+
+    if (!mine->tty) {
+      mine->tty = ansi_tty_init (SCREEN_COLS, SCREEN_ROWS);
+      mine->tty->closure  = mine;
+      mine->tty->tty_send = a2_tty_send;
     }
 
     if (! mine->fast_p)
@@ -1400,6 +1117,10 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
         else
           a2_ascii_printc (st, c, False, False, False, True);
       }
+
+# ifdef COUNTDOWN_BANNER
+      a2_draw_banner (st, mine);
+# endif
     }
     break;
 
@@ -1410,6 +1131,15 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
     return;
   }
 }
+
+static void
+a2_tty_send (void *closure, const char *text)
+{
+  struct terminal_controller_data *mine =
+    (struct terminal_controller_data *) closure;
+  textclient_puts (mine->tc, text);
+}
+
 
 struct basic_controller_data {
   int prog_line;

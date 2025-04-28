@@ -61,6 +61,7 @@ xft_word_wrap (Display *dpy, XftFont *font, const char *str, int pixels)
           if (nl) in++;
           while (*in == ' ' || *in == '\t') in++;
           in--;
+          if (out < line_out) abort();
 
           XftTextExtentsUtf8 (dpy, font,
                               (FcChar8 *) line_out,
@@ -74,6 +75,7 @@ xft_word_wrap (Display *dpy, XftFont *font, const char *str, int pixels)
               word_out = 0;
               if (done) break;
               *out++ = *in;
+              if (out < line_out) abort();
             }
           else
             {
@@ -82,9 +84,10 @@ xft_word_wrap (Display *dpy, XftFont *font, const char *str, int pixels)
               *out++ = *in;
               if (nl)
                 {
-                  line_out = out + 1;
+                  line_out = out;  /* Why was I adding 1 to this? */
                   word_out = 0;
                 }
+              if (out < line_out) abort();
             }
 
           if (done) break;
@@ -105,6 +108,10 @@ xft_word_wrap (Display *dpy, XftFont *font, const char *str, int pixels)
 /* Like XftTextExtentsUtf8, but handles multi-line strings.
    XGlyphInfo will contain the bounding box that encloses all of the text.
    Return value is the number of lines in the text, >= 1.
+
+   overall->y will be the distance from the top of the ink to the origin of
+   the first character in the string, as usual.  If there are multiple lines,
+   you can think of them as extremely tall descenders below the origin.
  */
 int
 XftTextExtentsUtf8_multi (Display *dpy, XftFont *font,
@@ -132,18 +139,23 @@ XftTextExtentsUtf8_multi (Display *dpy, XftFont *font,
               int nx1, ny1, nx2, ny2;		/* bbox of 'gi' */
               int ux1, uy1, ux2, uy2;		/* union */
 
+              /* Cumulative bbox prior to this line */
               ox1 = overall->x;
               oy1 = overall->y;
               ox2 = ox1 + overall->width;
               oy2 = oy1 + overall->height;
 
-              line_y += font->ascent + font->descent;  /* advance origin */
+              /* Advance the origin of this line downward. */
+              line_y += font->ascent + font->descent;
 
+              /* Bounding box of this line, with origin adjusted to be
+                 the origin of line 0. */
               nx1 = gi.x;
               ny1 = gi.y + line_y;
               nx2 = nx1 + gi.width;
-              ny2 = ny1 + gi.height + line_y;
+              ny2 = ny1 + gi.height;
 
+              /* Find the union of the two same-origin bboxes. */
               ux1 = MIN (ox1, nx1);		/* upper left */
               uy1 = MIN (oy1, ny1);
               ux2 = MAX (ox2, nx2);		/* bottom right */

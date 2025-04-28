@@ -109,7 +109,7 @@ Building for older operating systems:
   8. Scheme / Profile / Info: Executable: SaverTester.app.
      Scheme / Run / Info: Executable: SaverTester.app.
   9: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
- 10: File / Add Files / the new .c and .xml.
+ 10: File / Add Files / [x] Reference In Place / the new .c and .xml.
      Add To Targets: the new target, and "XScreenSaver-iOS" and "-tvOS".
  11: Re-order the two files in the file list on the left.
  12: The files might not have moved. This means Xcode is gonna crash soon.
@@ -124,5 +124,5 @@ Building for older operating systems:
            ~/Library/Screen\ Savers/
  18: git add xscreensaver.xcodeproj/xcshareddata/xcschemes/*.xcscheme
  19: Create a man page from the XML with xml2man.pl, and update Makefile.in.
- 20: Upload a YouTube video: -record-animation 3600 -geom 1920x1080+128+64
+ 20: Upload a YouTube video: -record-animation 2min -geom 1920x1080+128+64
      ./upload-video.pl NAME

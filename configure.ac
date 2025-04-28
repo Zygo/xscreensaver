@@ -4015,6 +4015,9 @@ have_swresample="$ok"
 # Check includes
 if test "$have_avutil" = yes; then
   ac_save_avutil_CPPFLAGS="$CPPFLAGS"
+  AC_CACHE_CHECK([for libavutil includes], ac_cv_avutil_config_cflags,
+                 [ac_cv_avutil_config_cflags=`$pkg_config --cflags libavutil`])
+  ac_avutil_config_cflags=$ac_cv_avutil_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_avutil_config_cflags"
   have_avutil=no
   AC_CHECK_X_HEADER(libavutil/avutil.h, [have_avutil=yes])
@@ -4023,6 +4026,9 @@ fi
 
 if test "$have_avcodec" = yes; then
   ac_save_avcodec_CPPFLAGS="$CPPFLAGS"
+  AC_CACHE_CHECK([for libavcodec includes], ac_cv_avcodec_config_cflags,
+                 [ac_cv_avcodec_config_cflags=`$pkg_config --cflags libavcodec`])
+  ac_avcodec_config_cflags=$ac_cv_avcodec_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_avcodec_config_cflags"
   have_avcodec=no
   AC_CHECK_X_HEADER(libavcodec/avcodec.h, [have_avcodec=yes])
@@ -4031,6 +4037,9 @@ fi
 
 if test "$have_avformat" = yes; then
   ac_save_avformat_CPPFLAGS="$CPPFLAGS"
+  AC_CACHE_CHECK([for libavformat includes], ac_cv_avformat_config_cflags,
+                 [ac_cv_avformat_config_cflags=`$pkg_config --cflags libavformat`])
+  ac_avformat_config_cflags=$ac_cv_avformat_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_avformat_config_cflags"
   have_avformat=no
   AC_CHECK_X_HEADER(libavformat/avformat.h, [have_avformat=yes])
@@ -4039,6 +4048,9 @@ fi
 
 if test "$have_swscale" = yes; then
   ac_save_swscale_CPPFLAGS="$CPPFLAGS"
+  AC_CACHE_CHECK([for libswscale includes], ac_cv_swscale_config_cflags,
+                 [ac_cv_swscale_config_cflags=`$pkg_config --cflags libswscale`])
+  ac_swscale_config_cflags=$ac_cv_swscale_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_swscale_config_cflags"
   have_swscale=no
   AC_CHECK_X_HEADER(libswscale/swscale.h, [have_swscale=yes])
@@ -4047,6 +4059,9 @@ fi
 
 if test "$have_swresample" = yes; then
   ac_save_swresample_CPPFLAGS="$CPPFLAGS"
+  AC_CACHE_CHECK([for libswresample includes], ac_cv_swresample_config_cflags,
+                 [ac_cv_swresample_config_cflags=`$pkg_config --cflags libswresample`])
+  ac_swresample_config_cflags=$ac_cv_swresample_config_cflags
   CPPFLAGS="$CPPFLAGS $ac_swresample_config_cflags"
   have_swresample=no
   AC_CHECK_X_HEADER(libswresample/swresample.h, [have_swresample=yes])
@@ -4114,14 +4129,18 @@ if test "$have_avformat" = yes -a \
         "$have_swscale" = yes -a \
         "$have_swresample" = yes ; then
   have_ffmpeg=yes
-  AC_CACHE_CHECK([for ffmpeg includes], ac_cv_ffmpeg_config_cflags,
-                 [ac_cv_ffmpeg_config_cflags=`$pkg_config --cflags $pkgs`])
   AC_CACHE_CHECK([for ffmpeg libs], ac_cv_ffmpeg_config_libs,
                   [ac_cv_ffmpeg_config_libs=`$pkg_config --libs $pkgs`])
   AC_DEFINE(HAVE_FFMPEG)
   FFMPEG_OBJS='$(FFMPEG_OBJS)'
 fi
-ac_ffmpeg_config_cflags=$ac_cv_ffmpeg_config_cflags
+ac_ffmpeg_config_cflags=" \
+  $ac_avutil_config_cflags \
+  $ac_avcodec_config_cflags \
+  $ac_avformat_config_cflags \
+  $ac_swscale_config_cflags \
+  $ac_swresample_config_cflags \
+"
 ac_ffmpeg_config_libs=$ac_cv_ffmpeg_config_libs
 FFMPEG_CFLAGS="$ac_ffmpeg_config_cflags"
 FFMPEG_LIBS="$ac_ffmpeg_config_libs"

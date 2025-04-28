@@ -2337,6 +2337,19 @@ thermo_timer (XtPointer closure, XtIntervalId *id)
 }
 
 
+/* This is horrible, but if we don't ignore XInput events when running
+   test-passwd.c, then every mouse is delivered twice (both XI and Xlib)
+   so we only see every other page, because every click is a double-click.
+   Only test_auth_conv() calls this to set this flag.
+ */
+static Bool test_mode_ignore_xi_events = False;
+void
+xscreensaver_auth_test_mode (void)
+{
+  test_mode_ignore_xi_events = True;
+}
+
+
 static void
 gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
 {
@@ -2422,6 +2435,8 @@ gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
           Bool ok =
             xinput_event_to_xlib (xev.xcookie.evtype, xev.xcookie.data, &ev2);
           XFreeEventData (ws->dpy, &xev.xcookie);
+          if (test_mode_ignore_xi_events)
+            ok = False;
           if (ok)
             xev = ev2;
         }

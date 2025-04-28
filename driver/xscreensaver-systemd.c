@@ -25,12 +25,12 @@
  *   - When the system is about to go to sleep (e.g., laptop lid closing)
  *     it locks the screen *before* the system goes to sleep, by running
  *     "xscreensaver-command -suspend".  And then when the system wakes
- *     up again, it runs "xscreensaver-command -deactivate" to force the
+ *     up again, it runs "xscreensaver-command --deactivate" to force the
  *     unlock dialog to appear immediately.
  *
  *   - When another process on the system asks for the screen saver to be
  *     inhibited (e.g. because a video is playing) this program periodically
- *     runs "xscreensaver-command -deactivate" to keep the display un-blanked.
+ *     runs "xscreensaver-command --deactivate" to keep the display un-blanked.
  *     It does this until the other program asks for it to stop.
  *
  * For this to work at all, you must either:
@@ -38,7 +38,7 @@
  *     A: Be running GNOME's "org.gnome.SessionManager" D-Bus service; or
  *     B: Be running KDE's "org.kde.Solid.PowerManagement.PolicyAgent" svc; or
  *     C: Prevent your desktop environment from running the
- *        "org.freedesktop.ScreenSaver "service.
+ *        "org.freedesktop.ScreenSaver" service.
  *
  *
  *****************************************************************************
@@ -47,7 +47,7 @@
  *
  *     For decades, the traditional way for a video player to temporarily
  *     inhibit the screen saver was to have a heartbeat command that ran
- *     "xscreensaver-command -deactivate" once a minute while the video was
+ *     "xscreensaver-command --deactivate" once a minute while the video was
  *     playing, and ceased when the video was paused or stopped.  The reason
  *     to do it as a heartbeat rather than a toggle is so that the player
  *     fails SAFE -- if the player exits abnormally, the heart stops beating,
@@ -84,7 +84,7 @@
  *
  *     To recap: because the existing video players decided to delete the
  *     single line of code that they already had -- the heartbeat call to
- *     "xscreensaver-command -deactivate" -- we had to respond by adding
+ *     "xscreensaver-command --deactivate" -- we had to respond by adding
  *     TWELVE HUNDRED LINES of complicated code that talks to a server that
  *     may not be running, and that may not allow us to connect, and that may
  *     not work properly anyway.
@@ -145,20 +145,22 @@
  *  Bad Chromium bug #1:
  *
  *     It inhibits when only audio is playing, and does so with the same
- *     message as for audio, so we can't tell them apart.  This means that,
+ *     message as for video, so we can't tell them apart.  This means that,
  *     unlike Firefox, playing audio-only in Chromium will prevent your
  *     screen from blanking.
  *
  *  Bad Chromium bug #2:
  *
  *     It inhibits when short looping videos are playing.  Many sites
- *     (including Twitter) auto-convert GIFs to looping MP4s to save
- *     bandwidth, so Chromium will inhibit any time such a GIF is visible.
+ *     auto-convert GIFs to looping MP4s to save bandwidth, so Chromium will
+ *     inhibit any time such a GIF is visible.
  *
  *     The proper way for Chrome to fix this would be to stop inhibiting once
  *     the video loops.  That way your multi-hour movie inhibits properly, but
- *     your looping GIF only inhibits for the first few seconds.
- *     
+ *     your looping GIF only inhibits for the first few seconds.  Other
+ *     reasonable choices might include: do not inhibit for silent or muted
+ *     videos; only inhibit for full-screen videos.
+ *
  *
  *****************************************************************************
  *
@@ -244,7 +246,7 @@
  *     I have not verified this:
  *
  *       ~/.mplayer/config:
- *       heartbeat-cmd="xscreensaver-command -deactivate >&- 2>&- &"
+ *       heartbeat-cmd="xscreensaver-command --deactivate >&- 2>&- &"
  *
  *
  *****************************************************************************
@@ -271,7 +273,7 @@
  *
  *     This setting prevents the screen from blanking, and has a long history
  *     of becoming turned on accidentally. Tries org.freedesktop.ScreenSaver
- *     and others before falling back to "xscreensaver-command -deactivate"
+ *     and others before falling back to "xscreensaver-command --deactivate"
  *     as a heartbeat.
  *
  *
@@ -292,8 +294,6 @@
  *   - What is "org.mate.SessionManager"?  If it is just a re-branded
  *     "org.gnome.SessionManager" with the same behavior, we should probably
  *     listen to "InhibitorAdded" on that as well.
- *
- *   - Run under valgrind to check for any memory leaks.
  *
  *   - Apparently the two different desktops have managed to come up with
  *     *three* different ways for dbus clients to ask the question, "is the
@@ -326,8 +326,6 @@
  *     busctl --user call org.freedesktop.ScreenSaver \
  *       /ScreenSaver org.freedesktop.ScreenSaver \
  *       UnInhibit u 1792821391
- *
- * https://github.com/mato/xscreensaver-systemd
  *
  *
  *****************************************************************************
@@ -464,7 +462,7 @@ xscreensaver_command (const char *cmd)
 {
   char buf[1024];
   int rc;
-  sprintf (buf, "xscreensaver-command %.100s -%.100s",
+  sprintf (buf, "xscreensaver-command %.100s --%.100s",
            (verbose_p ? "--verbose" : "--quiet"),
            cmd);
   if (verbose_p)

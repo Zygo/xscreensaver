@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2014-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2014-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -357,6 +357,16 @@ XftDrawCreate (Display   *dpy,
   dd->colormap = colormap;
   dd->gc = XCreateGC (dpy, drawable, 0, 0);
   return dd;
+}
+
+
+XftDraw *
+XftDrawCreateBitmap (Display *dpy, Pixmap bitmap)
+{
+  Screen *screen = DefaultScreenOfDisplay (dpy);
+  return XftDrawCreate (dpy, bitmap,
+                        DefaultVisualOfScreen (screen),
+                        DefaultColormapOfScreen (screen));
 }
 
 

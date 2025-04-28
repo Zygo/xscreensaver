@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 6.09
+%define	version 6.10
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -74,7 +74,7 @@ Obsoletes: xscreensaver-screensaver-webcollage
 
 %description
 A modular screen saver and locker for the X Window System.
-More than 250 display modes are included in this package.
+More than 260 display modes are included in this package.
 
 %prep
 %setup -q

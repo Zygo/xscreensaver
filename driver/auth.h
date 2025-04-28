@@ -1,5 +1,5 @@
 /* auth.h --- Providing authentication mechanisms.
- * Copyright © 1993-2022 Jamie Zawinski <jwz@jwz.org>
+ * Copyright © 1993-2024 Jamie Zawinski <jwz@jwz.org>
  * (c) 2007, Quest Software, Inc. All rights reserved.
  * This file is part of XScreenSaver.
  *
@@ -86,6 +86,7 @@ extern Bool xscreensaver_auth_conv (void *closure,
                                     auth_response **resp);
 extern void xscreensaver_auth_finished (void *closure, Bool authenticated_p);
 extern void xscreensaver_splash (void *root_widget, Bool disable_settings_p);
+extern void xscreensaver_auth_test_mode (void);  /* for test-passwd.c */
 
 #endif /* __XSCREENSAVER_AUTH_H__ */
 

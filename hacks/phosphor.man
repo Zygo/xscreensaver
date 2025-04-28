@@ -6,7 +6,8 @@ phosphor \- simulates an old terminal with long-sustain phosphor
 [\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
 [\-\-window\-id \fInumber\fP][\-\-install]
 [\-\-visual \fIvisual\fP] [\-\-font \fIfont\fP] [\-\-scale \fIint\fP]
-[\-\-ticks \fIint\fP] [\-\-delay \fIusecs\fP] [\-\-program \fIcommand\fP]
+[\-\-ticks \fIint\fP] [\-\-delay \fIusecs\fP] [\-\-no\-cache]
+[\-\-program \fIcommand\fP]
 [\-\-meta] [\-\-esc] [\-\-bs] [\-\-del]
 [\-\-fps]
 .SH DESCRIPTION
@@ -48,6 +49,9 @@ The number of colors to use when fading to black.  Default 20.
 .B \-\-delay \fIusecs\fP
 The speed of the terminal: how long to wait between drawing each character.
 Default 50000, or about 1/20th second.
+.TP 8
+.B \-\-cache | \-\-no-cache
+Speed up rendering at the expense of memory and startup time. Default yes.
 .TP 8
 .B \-\-pty
 Launch the sub-program under a PTY, so that it can address the screen

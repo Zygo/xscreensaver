@@ -431,7 +431,11 @@
   GL: 				papercube --root			    \\n\
   GL: 				skulloop --root				    \\n\
   GL: 				highvoltage --root			    \\n\
-  GL: 				kallisti --root				    \\n",
+  GL: 				kallisti --root				    \\n\
+  GL: 				klondike --root				    \\n\
+  GL: 				dumpsterfire --root			    \\n\
+  GL: 				hopffibration --root			    \\n\
+  GL: 				platonicfolding --root			    \\n",
 "*hacks.antinspect.name:     Ant Inspect",
 "*hacks.antmaze.name:        Ant Maze",
 "*hacks.antspotlight.name:   Ant Spotlight",
@@ -462,6 +466,7 @@
 "*hacks.decayscreen.name:    Decay Screen",
 "*hacks.deepstars.name:      Deep Stars",
 "*hacks.dnalogo.name:        DNA Logo",
+"*hacks.dumpsterfire.name:   Dumpster Fire",
 "*hacks.dymaxionmap.name:    Dymaxion Map",
 "*hacks.energystream.name:   Energy Stream",
 "*hacks.etruscanvenus.name:  Etruscan Venus",
@@ -495,6 +500,7 @@
 "*hacks.hexstrut.name:       Hex Strut",
 "*hacks.hextrail.name:       Hex Trail",
 "*hacks.highvoltage.name:    High Voltage",
+"*hacks.hopffibration.name:  Hopf Fibration",
 "*hacks.ifs.name:            IFS",
 "*hacks.imsmap.name:         IMS Map",
 "*hacks.jigglypuff.name:     Jiggly Puff",
@@ -517,6 +523,7 @@
 "*hacks.pacman.name:         Pac-Man",
 "*hacks.papercube.name:      Paper Cube",
 "*hacks.photopile.name:      Photo Pile",
+"*hacks.platonicfolding.name:Platonic Folding",
 "*hacks.popsquares.name:     Pop Squares",
 "*hacks.projectiveplane.name:Projective Plane",
 "*hacks.quasicrystal.name:   Quasi-Crystal",

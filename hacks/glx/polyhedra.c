@@ -2431,7 +2431,7 @@ construct_polyhedra (polyhedron ***polyhedra_ret)
   Malloc (result, last_uniform * 2 + 3, polyhedron*);
 
   while (index < last_uniform) {
-    char sym[4];
+    char sym[20];
     Polyhedron *P;
 
     sprintf(sym, "#%d", index + 1);

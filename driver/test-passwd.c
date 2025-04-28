@@ -34,6 +34,8 @@ test_auth_conv (void *closure,
   nmsgs = 0;
   msg = (auth_message *) calloc (100, sizeof(*msg));
 
+  xscreensaver_auth_test_mode();
+
 # define DIALOG()                                                       \
   fprintf (stderr, "\n%s: page %d\n", blurb(), page++);                 \
   xscreensaver_auth_conv (closure, nmsgs, msg, resp);                   \
@@ -93,7 +95,8 @@ test_auth_conv (void *closure,
 
 
   msg[nmsgs].type = AUTH_MSGTYPE_PROMPT_ECHO;
-  msg[nmsgs].msg = "1/1 Page Five visible text";
+  msg[nmsgs].msg = "1/1 Page Five visible text"
+    "over several lines, probably like three or four; y and g.";
   nmsgs++;
 
   msg[nmsgs].type = AUTH_MSGTYPE_PROMPT_ECHO;

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -269,6 +269,40 @@ typedef struct jwxyz_linked_point	linked_point;
 #define XK_F10			0xFFC7
 #define XK_F11			0xFFC8
 #define XK_F12			0xFFC9
+#define XK_F13			0xFFCA
+#define XK_F14			0xFFCB
+#define XK_F15			0xFFCC
+#define XK_F16			0xFFCD
+#define XK_F17			0xFFCE
+#define XK_F18			0xFFCF
+#define XK_F19			0xFFD0
+#define XK_F20			0xFFD1
+
+#define XK_KP_F1		0xFF91
+#define XK_KP_F2		0xFF92
+#define XK_KP_F3		0xFF93
+#define XK_KP_F4		0xFF94
+
+#define XK_KP_Home		0xFF95
+#define XK_KP_Left		0xFF96
+#define XK_KP_Up		0xFF97
+#define XK_KP_Right		0xFF98
+#define XK_KP_Down		0xFF99
+#define XK_KP_Prior		0xFF9A
+#define XK_KP_Page_Up		0xFF9A
+#define XK_KP_Next		0xFF9B
+#define XK_KP_Page_Down		0xFF9B
+#define XK_KP_End		0xFF9C
+#define XK_KP_Begin		0xFF9D
+#define XK_KP_Insert		0xFF9E
+#define XK_KP_Delete		0xFF9F
+#define XK_KP_Equal		0xFFBD
+#define XK_KP_Multiply		0xFFAA
+#define XK_KP_Add		0xFFAB
+#define XK_KP_Separator		0xFFAC
+#define XK_KP_Subtract		0xFFAD
+#define XK_KP_Decimal		0xFFAE
+#define XK_KP_Divide		0xFFAF
 
 
 #define GXclear			0x0		/* 0 */

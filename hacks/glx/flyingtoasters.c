@@ -201,7 +201,7 @@ reset_floater (ModeInfo *mi, floater *f)
 
       /* Only empty toasters barrel-roll, since we don't implement
 	 "toast falls out". */
-      if (f->loaded == 0 && !(random() % 10))
+      if (f->loaded == 0 && !(random() % 50))
         f->dwz = (BELLRAND(2.0) - 1.0) * (4 + BELLRAND(6));
     }
   else

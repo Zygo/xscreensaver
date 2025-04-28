@@ -122,6 +122,7 @@ export ANDROID_HACKS=		\
 	dnalogo			\
 	drift			\
 	droste			\
+	dumpsterfire		\
 	dymaxionmap		\
 	endgame			\
 	energystream		\
@@ -176,6 +177,7 @@ export ANDROID_HACKS=		\
 	highvoltage		\
 	hilbert			\
 	hopalong		\
+	hopffibration		\
 	hypertorus		\
 	hypnowheel		\
 	ifs			\
@@ -191,6 +193,7 @@ export ANDROID_HACKS=		\
 	kaleidocycle		\
 	kallisti		\
 	klein			\
+	klondike		\
 	kumppa			\
 	lament			\
 	lavalite		\
@@ -224,6 +227,7 @@ export ANDROID_HACKS=		\
 	piecewise		\
 	pinion			\
 	pipes			\
+	platonicfolding		\
 	polyominoes		\
 	polytopes		\
 	pong			\

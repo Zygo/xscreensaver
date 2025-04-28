@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright © 2016-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2024 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -38,6 +38,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.Build;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -666,8 +667,13 @@ public class jwxyz
 
   public Object[] checkThenLoadRandomImage (int target_width, int target_height,
                                    boolean rotate_p) {
-      // RES introduced in API 16
-      String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+
+        String permission = "";
+        if (Build.VERSION.SDK_INT >= 33) {
+            permission = Manifest.permission.READ_MEDIA_IMAGES;
+        } else {
+            permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+        }
 
         if (havePermission(permission)) {
             return loadRandomImage(target_width,target_height,rotate_p);

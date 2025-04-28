@@ -20,11 +20,38 @@
 #include <string.h>
 
 
+#define M_PI_F 3.1415926535898f
+
+
 #ifdef HAVE_GLSL
 
 extern const char *progname;
 
-/* Copy a 4x4 column-major matrix: c = m. */
+
+/* Normalize a vector. */
+static inline void glsl_Normalize(float v[3])
+{
+  float l;
+
+  l = sqrtf(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+  if (l > 0.0f)
+    l = 1.0f/l;
+  v[0] *= l;
+  v[1] *= l;
+  v[2] *= l;
+}
+
+
+/* Compute the cross product v = v1 × v2. */
+static inline void glsl_Cross(float v[3], float v1[3], float v2[3])
+{
+  v[0] = v1[1]*v2[2]-v1[2]*v2[1];
+  v[1] = v1[2]*v2[0]-v1[0]*v2[2];
+  v[2] = v1[0]*v2[1]-v1[1]*v2[0];
+}
+
+
+/* Copy a 4×4 column-major matrix: c = m. */
 void glsl_CopyMatrix(GLfloat c[16], GLfloat m[16])
 {
   int i, j;
@@ -35,18 +62,18 @@ void glsl_CopyMatrix(GLfloat c[16], GLfloat m[16])
 }
 
 
-/* Create a 4x4 column-major identity matrix. */
+/* Create a 4×4 column-major identity matrix. */
 void glsl_Identity(GLfloat c[16])
 {
   int i, j;
 
   for (j=0; j<4; j++)
     for (i=0; i<4; i++)
-      c[GLSL__LINCOOR(i,j,4)] = (i==j);
+      c[GLSL__LINCOOR(i,j,4)] = (float)(i==j);
 }
 
 
-/* Multiply two 4x4 column-major matrices: c = c*m. */
+/* Multiply two 4×4 column-major matrices: c = c * m. */
 void glsl_MultMatrix(GLfloat c[16], GLfloat m[16])
 {
   int i, j;
@@ -65,8 +92,19 @@ void glsl_MultMatrix(GLfloat c[16], GLfloat m[16])
 }
 
 
-/* Multiply a 4x4 column-major matrix by a rotation matrix that rotates
-   around the axis (x,y,z) by the angle angle: c = c*r(angle,x,y,z). */
+/* Multiply a 4×4 column-major matrix with a vector: o = m * v. */
+void glsl_MultMatrixVector(GLfloat o[4], GLfloat m[16], GLfloat v[4])
+{
+  int i;
+
+  for (i=0; i<4; i++)
+    o[i] = (m[GLSL__LINCOOR(i,0,4)]*v[0]+m[GLSL__LINCOOR(i,1,4)]*v[1]+
+            m[GLSL__LINCOOR(i,2,4)]*v[2]+m[GLSL__LINCOOR(i,3,4)]*v[3]);
+}
+
+
+/* Multiply a 4×4 column-major matrix by a rotation matrix that rotates
+   around the axis (x,y,z) by the angle angle: c = c * r(angle,x,y,z). */
 void glsl_Rotate(GLfloat c[16], GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   GLfloat l, t, ct, st, omct, n[3], r[16];
@@ -75,7 +113,7 @@ void glsl_Rotate(GLfloat c[16], GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
   n[0] = x/l;
   n[1] = y/l;
   n[2] = z/l;
-  t = angle*M_PI/180.0f;
+  t = angle*M_PI_F/180.0f;
   ct = cosf(t);
   st = sinf(t);
   omct = 1.0f-ct;
@@ -104,23 +142,8 @@ void glsl_Rotate(GLfloat c[16], GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 }
 
 
-/* Multiply a 4x4 column-major matrix by a matrix that stretches, shrinks,
-   or reflects an object along the axes: c = c*m(sx,sy,sz). */
-void glsl_Scale(GLfloat c[16], GLfloat sx, GLfloat sy, GLfloat sz)
-{
-  int i;
-
-  for (i=0; i<4; i++)
-  {
-    c[GLSL__LINCOOR(i,0,4)] *= sx;
-    c[GLSL__LINCOOR(i,1,4)] *= sy;
-    c[GLSL__LINCOOR(i,2,4)] *= sz;
-  }
-}
-
-
-/* Multiply a 4x4 column-major matrix by a matrix that translates an object
-   by a translation vector: c = c*t(tx,ty,tz). */
+/* Multiply a 4×4 column-major matrix by a matrix that translates an object
+   by a translation vector: c = c * t(tx,ty,tz). */
 void glsl_Translate(GLfloat c[16], GLfloat tx, GLfloat ty, GLfloat tz)
 {
   int i;
@@ -135,15 +158,70 @@ void glsl_Translate(GLfloat c[16], GLfloat tx, GLfloat ty, GLfloat tz)
 }
 
 
-/* Add a perspective projection to a 4x4 column-major matrix. */
+/* Multiply a 4×4 column-major matrix by a matrix that stretches, shrinks,
+   or reflects an object along the axes: c = c*m(sx,sy,sz). */
+void glsl_Scale(GLfloat c[16], GLfloat sx, GLfloat sy, GLfloat sz)
+{
+  int i;
+
+  for (i=0; i<4; i++)
+  {
+    c[GLSL__LINCOOR(i,0,4)] *= sx;
+    c[GLSL__LINCOOR(i,1,4)] *= sy;
+    c[GLSL__LINCOOR(i,2,4)] *= sz;
+  }
+}
+
+
+/* Add a look-at viewing matrix to a 4×4 column-major matrix. */
+void glsl_LookAt(GLfloat c[16], GLfloat eyex, GLfloat eyey, GLfloat eyez,
+                 GLfloat centerx, GLfloat centery, GLfloat centerz,
+                 GLfloat upx, GLfloat upy, GLfloat upz)
+{
+  float forward[3], side[3], up[3];
+  GLfloat m[16];
+
+  forward[0] = centerx-eyex;
+  forward[1] = centery-eyey;
+  forward[2] = centerz-eyez;
+  glsl_Normalize(forward);
+
+  up[0] = upx;
+  up[1] = upy;
+  up[2] = upz;
+
+  /* side = forward × up */
+  glsl_Cross(side,forward,up);
+  glsl_Normalize(side);
+
+  /* up = side × forward */
+  glsl_Cross(up,side,forward);
+
+  glsl_Identity(m);
+  m[GLSL__LINCOOR(0,0,4)] = side[0];
+  m[GLSL__LINCOOR(0,1,4)] = side[1];
+  m[GLSL__LINCOOR(0,2,4)] = side[2];
+  m[GLSL__LINCOOR(1,0,4)] = up[0];
+  m[GLSL__LINCOOR(1,1,4)] = up[1];
+  m[GLSL__LINCOOR(1,2,4)] = up[2];
+  m[GLSL__LINCOOR(2,0,4)] = -forward[0];
+  m[GLSL__LINCOOR(2,1,4)] = -forward[1];
+  m[GLSL__LINCOOR(2,2,4)] = -forward[2];
+
+  glsl_MultMatrix(c,m);
+  glsl_Translate(c,-eyex,-eyey,-eyez);
+}
+
+
+/* Add a perspective projection to a 4×4 column-major matrix. */
 void glsl_Perspective(GLfloat c[16], GLfloat fovy, GLfloat aspect,
                       GLfloat z_near, GLfloat z_far)
 {
   GLfloat m[16];
-  double s, cot, dz;
-  double rad;
+  float s, cot, dz;
+  float rad;
 
-  rad = fovy*(0.5f*(float)M_PI/180.0f);
+  rad = fovy*(0.5f*(float)M_PI_F/180.0f);
   dz = z_far-z_near;
   s = sinf(rad);
   if (dz == 0.0f || s == 0.0f || aspect == 0.0f)
@@ -157,11 +235,12 @@ void glsl_Perspective(GLfloat c[16], GLfloat fovy, GLfloat aspect,
   m[GLSL__LINCOOR(3,2,4)] = -1.0f;
   m[GLSL__LINCOOR(2,3,4)] = -2.0f*z_near*z_far/dz;
   m[GLSL__LINCOOR(3,3,4)] = 0.0f;
+
   glsl_MultMatrix(c,m);
 }
 
 
-/* Add an orthographic projection to a 4x4 column-major matrix. */
+/* Add an orthographic projection to a 4×4 column-major matrix. */
 void glsl_Orthographic(GLfloat c[16], GLfloat left, GLfloat right,
                        GLfloat bottom, GLfloat top,
                        GLfloat nearval, GLfloat farval)
@@ -178,6 +257,7 @@ void glsl_Orthographic(GLfloat c[16], GLfloat left, GLfloat right,
   m[GLSL__LINCOOR(1,3,4)] = -(top+bottom)/(top-bottom);
   m[GLSL__LINCOOR(2,2,4)] = -2.0f/(farval-nearval);
   m[GLSL__LINCOOR(2,3,4)] = -(farval+nearval)/(farval-nearval);
+
   glsl_MultMatrix(c,m);
 }
 
@@ -189,48 +269,50 @@ GLboolean glsl_GetGlAndGlslVersions(GLint *gl_major, GLint *gl_minor,
 {
   const char *gl_version, *glsl_version;
   int n;
-  const char *err = 0;
+  const char *err = NULL;
 
   *gl_major = -1;
   *gl_minor = -1;
-  *glsl_major = 1;
+  *glsl_major = -1;
   *glsl_minor = -1;
   *gl_gles3 = GL_FALSE;
   gl_version = (const char *)glGetString(GL_VERSION);
   glsl_version = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
   if (gl_version == NULL || glsl_version == NULL)
-    {
-      err = "GL version unknown";
-      goto DONE;
-    }
+  {
+    err = "GL version unknown";
+    goto DONE;
+  }
   if (!strncmp(gl_version,"OpenGL ES",9))
   {
     if (!strncmp(glsl_version,"OpenGL ES GLSL ES",17))
+    {
       *gl_gles3 = GL_TRUE;
+    }
     else
-      {
-        err = "GLSL not supported";
-        goto DONE;
-      }
+    {
+      err = "GLSL not supported";
+      goto DONE;
+    }
   }
   if (*gl_gles3)
     n = sscanf(&gl_version[9],"%d.%d",gl_major,gl_minor);
   else
     n = sscanf(gl_version,"%d.%d",gl_major,gl_minor);
   if (n != 2)
-    {
-      err = "GL version number unparsable";
-      goto DONE;
-    }
+  {
+    err = "GL version number unparsable";
+    goto DONE;
+  }
   if (*gl_gles3)
     n = sscanf(&glsl_version[17],"%d.%d",glsl_major,glsl_minor);
   else
     n = sscanf(glsl_version,"%d.%d",glsl_major,glsl_minor);
   if (n != 2)
-    {
-      err = "GLSL version number unparsable";
-      goto DONE;
-    }
+  {
+    err = "GLSL version number unparsable";
+    goto DONE;
+  }
 
  DONE:
 

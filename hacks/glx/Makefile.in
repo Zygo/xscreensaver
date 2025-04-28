@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2024 Jamie Zawinski.
+# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2025 Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
 @SET_MAKE@
@@ -148,7 +148,9 @@ SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
 		  mapscroller.c squirtorus.c nakagin.c chompytower.c \
 		  teeth_model.c hextrail.c papercube.c cubocteversion.c \
 		  skulloop.c kallisti.c kallisti_model.c highvoltage.c \
-		  highvoltage_model.c
+		  highvoltage_model.c hopffibration.c hopfanimations.c \
+		  platonicfolding.c klondike.c klondike-game.c dumpsterfire.c \
+		  dumpster_model.c
 
 SCRIPTS		= mapscroller.pl
 
@@ -205,7 +207,8 @@ OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  mapscroller.o squirtorus.o nakagin.o chompytower.o \
 		  teeth_model.o hextrail.o papercube.o cubocteversion.o \
 		  skulloop.o kallisti.o kallisti_model.o highvoltage.o \
-		  highvoltage_model.o
+		  highvoltage_model.o platonicfolding.o klondike.o \
+		  klondike-game.o dumpsterfire.o 
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -229,7 +232,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  maze3d handsy gravitywell deepstars gibson etruscanvenus \
 		  sphereeversion covid19 headroom beats mapscroller \
 		  squirtorus nakagin chompytower hextrail papercube \
-		  cubocteversion skulloop kallisti highvoltage
+		  cubocteversion skulloop kallisti highvoltage hopffibration \
+		  platonicfolding klondike dumpsterfire
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
@@ -274,7 +278,8 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h \
 		  glschool_alg.h topblock.h involute.h teapot.h sonar.h \
 		  dropshadow.h starwars.h teapot2.h dnapizza.h curlicue.h \
 		  quickhull.h dymaxionmap-coords.h handsy_anim.h \
-		  glsl-utils.h mapcities.h sphereeversion.h
+		  glsl-utils.h mapcities.h sphereeversion.h hopfanimations.h \
+		  klondike-game.h
 GL_MEN		= xscreensaver-gl-visual.man \
 		  atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
@@ -309,7 +314,8 @@ GL_MEN		= xscreensaver-gl-visual.man \
 		  sphereeversion.man covid19.man headroom.man beats.man \
 		  mapscroller.man squirtorus.man nakagin.man chompytower.man \
 		  hextrail.man papercube.man cubocteversion.man skulloop.man \
-		  kallisti.man highvoltage.man
+		  kallisti.man highvoltage.man hopffibration.man \
+		  platonicfolding.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -559,7 +565,7 @@ check_men:
 	 fi
 
 validate_xml:
-	@cd $(HACK_SRC) && ./check-configs.pl $(EXES) $(RETIRED_EXES)
+	@cd $(HACK_SRC) && ./check-configs.pl --force $(EXES) $(RETIRED_EXES)
 
 distdepend:: check_men validate_xml
 
@@ -988,6 +994,9 @@ sonar-icmp.o: sonar-icmp.c
 	$(CC) -c $(HACK_CFLAGS_BASE) $(THREAD_CFLAGS) $<
 sonar:		sonar.o		$(SONAR_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(THREAD_CFLAGS) $(SONAR_OBJS) $(LIBCAP_LIBS) $(THREAD_LIBS) $(HACK_LIBS)
+	@if [ "$$USER" = jwz ]; then \
+	  set -x ; sudo chown root $@ ; sudo chmod u+s $@ ; \
+	fi
 
 JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o $(HACK_TRACK_GRAB_OBJS)
 jigsaw:		jigsaw.o	$(JIGSAW_OBJS)
@@ -1176,6 +1185,24 @@ HIGHVOLTAGE=highvoltage.o highvoltage_model.o gllist.o tube.o \
 	$(HACK_TRACK_OBJS)
 highvoltage:			$(HIGHVOLTAGE)
 	$(CC_HACK) -o $@	$(HIGHVOLTAGE) $(HACK_LIBS)
+
+HOPFFIBRATION_OBJS=hopfanimations.o $(HACK_TRACK_OBJS)
+hopffibration:	hopffibration.o $(HOPFFIBRATION_OBJS)
+	$(CC_HACK) -o $@ $@.o	 $(HOPFFIBRATION_OBJS) $(HACK_LIBS)
+
+PLATONIC_OBJS=$(PNG) $(HACK_TRACK_OBJS)
+platonicfolding: platonicfolding.o $(PLATONIC_OBJS)
+	$(CC_HACK) -o $@ $@.o	   $(PLATONIC_OBJS) $(HACK_LIBS) $(PNG_LIBS)
+
+KLONDIKE_OBJS=$(PNG) $(HACK_TRACK_OBJS) klondike-game.o
+klondike:	klondike.o $(KLONDIKE_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(KLONDIKE_OBJS) $(HACK_LIBS) $(PNG_LIBS)
+
+dumpster_dxf::
+	./dxf2gl.pl --smooth --layers --normalize dumpster.dxf dumpster_model.c
+DUMPSTERFIRE=dumpsterfire.o dumpster_model.o gllist.o $(HACK_TRACK_OBJS)
+dumpsterfire:			$(DUMPSTERFIRE)
+	$(CC_HACK) -o $@	$(DUMPSTERFIRE) $(HACK_LIBS)
 
 
 ##############################################################################
@@ -2052,6 +2079,25 @@ dropshadow.o: $(UTILS_SRC)/usleep.h
 dropshadow.o: $(UTILS_SRC)/visual.h
 dropshadow.o: $(UTILS_SRC)/xft.h
 dropshadow.o: $(UTILS_SRC)/yarandom.h
+dumpsterfire.o: ../../config.h
+dumpsterfire.o: $(HACK_SRC)/fps.h
+dumpsterfire.o: $(srcdir)/gllist.h
+dumpsterfire.o: $(srcdir)/gltrackball.h
+dumpsterfire.o: $(HACK_SRC)/recanim.h
+dumpsterfire.o: $(srcdir)/rotator.h
+dumpsterfire.o: $(HACK_SRC)/screenhackI.h
+dumpsterfire.o: $(UTILS_SRC)/colors.h
+dumpsterfire.o: $(UTILS_SRC)/erase.h
+dumpsterfire.o: $(UTILS_SRC)/font-retry.h
+dumpsterfire.o: $(UTILS_SRC)/grabclient.h
+dumpsterfire.o: $(UTILS_SRC)/hsv.h
+dumpsterfire.o: $(UTILS_SRC)/resources.h
+dumpsterfire.o: $(UTILS_SRC)/usleep.h
+dumpsterfire.o: $(UTILS_SRC)/visual.h
+dumpsterfire.o: $(UTILS_SRC)/xft.h
+dumpsterfire.o: $(UTILS_SRC)/yarandom.h
+dumpsterfire.o: $(HACK_SRC)/xlockmoreI.h
+dumpsterfire.o: $(HACK_SRC)/xlockmore.h
 dymaxionmap-coords.o: ../../config.h
 dymaxionmap-coords.o: $(srcdir)/dymaxionmap-coords.h
 dymaxionmap.o: ../../config.h
@@ -3117,6 +3163,26 @@ hilbert.o: $(UTILS_SRC)/xft.h
 hilbert.o: $(UTILS_SRC)/yarandom.h
 hilbert.o: $(HACK_SRC)/xlockmoreI.h
 hilbert.o: $(HACK_SRC)/xlockmore.h
+hopfanimations.o: $(srcdir)/hopfanimations.h
+hopffibration.o: ../../config.h
+hopffibration.o: $(HACK_SRC)/fps.h
+hopffibration.o: $(srcdir)/glsl-utils.h
+hopffibration.o: $(srcdir)/gltrackball.h
+hopffibration.o: $(srcdir)/hopfanimations.h
+hopffibration.o: $(HACK_SRC)/recanim.h
+hopffibration.o: $(HACK_SRC)/screenhackI.h
+hopffibration.o: $(UTILS_SRC)/colors.h
+hopffibration.o: $(UTILS_SRC)/erase.h
+hopffibration.o: $(UTILS_SRC)/font-retry.h
+hopffibration.o: $(UTILS_SRC)/grabclient.h
+hopffibration.o: $(UTILS_SRC)/hsv.h
+hopffibration.o: $(UTILS_SRC)/resources.h
+hopffibration.o: $(UTILS_SRC)/usleep.h
+hopffibration.o: $(UTILS_SRC)/visual.h
+hopffibration.o: $(UTILS_SRC)/xft.h
+hopffibration.o: $(UTILS_SRC)/yarandom.h
+hopffibration.o: $(HACK_SRC)/xlockmoreI.h
+hopffibration.o: $(HACK_SRC)/xlockmore.h
 hydrostat.o: ../../config.h
 hydrostat.o: $(HACK_SRC)/fps.h
 hydrostat.o: $(srcdir)/gltrackball.h
@@ -3321,6 +3387,96 @@ klein.o: $(UTILS_SRC)/xft.h
 klein.o: $(UTILS_SRC)/yarandom.h
 klein.o: $(HACK_SRC)/xlockmoreI.h
 klein.o: $(HACK_SRC)/xlockmore.h
+klondike-game.o: ../../config.h
+klondike-game.o: $(HACK_SRC)/fps.h
+klondike-game.o: $(srcdir)/gltrackball.h
+klondike-game.o: $(srcdir)/klondike-game.h
+klondike-game.o: $(HACK_SRC)/recanim.h
+klondike-game.o: $(HACK_SRC)/screenhackI.h
+klondike-game.o: $(UTILS_SRC)/colors.h
+klondike-game.o: $(UTILS_SRC)/erase.h
+klondike-game.o: $(UTILS_SRC)/font-retry.h
+klondike-game.o: $(UTILS_SRC)/grabclient.h
+klondike-game.o: $(UTILS_SRC)/hsv.h
+klondike-game.o: $(UTILS_SRC)/resources.h
+klondike-game.o: $(UTILS_SRC)/usleep.h
+klondike-game.o: $(UTILS_SRC)/visual.h
+klondike-game.o: $(UTILS_SRC)/xft.h
+klondike-game.o: $(UTILS_SRC)/yarandom.h
+klondike-game.o: $(HACK_SRC)/xlockmoreI.h
+klondike-game.o: $(HACK_SRC)/xlockmore.h
+klondike.o: ../../config.h
+klondike.o: $(HACK_SRC)/fps.h
+klondike.o: $(srcdir)/gltrackball.h
+klondike.o: ../images/gen/C2_png.h
+klondike.o: ../images/gen/C3_png.h
+klondike.o: ../images/gen/C4_png.h
+klondike.o: ../images/gen/C5_png.h
+klondike.o: ../images/gen/C6_png.h
+klondike.o: ../images/gen/C7_png.h
+klondike.o: ../images/gen/C8_png.h
+klondike.o: ../images/gen/C9_png.h
+klondike.o: ../images/gen/CA_png.h
+klondike.o: ../images/gen/CJ_png.h
+klondike.o: ../images/gen/CK_png.h
+klondike.o: ../images/gen/CQ_png.h
+klondike.o: ../images/gen/CT_png.h
+klondike.o: ../images/gen/D2_png.h
+klondike.o: ../images/gen/D3_png.h
+klondike.o: ../images/gen/D4_png.h
+klondike.o: ../images/gen/D5_png.h
+klondike.o: ../images/gen/D6_png.h
+klondike.o: ../images/gen/D7_png.h
+klondike.o: ../images/gen/D8_png.h
+klondike.o: ../images/gen/D9_png.h
+klondike.o: ../images/gen/DA_png.h
+klondike.o: ../images/gen/DJ_png.h
+klondike.o: ../images/gen/DK_png.h
+klondike.o: ../images/gen/DQ_png.h
+klondike.o: ../images/gen/DT_png.h
+klondike.o: ../images/gen/H2_png.h
+klondike.o: ../images/gen/H3_png.h
+klondike.o: ../images/gen/H4_png.h
+klondike.o: ../images/gen/H5_png.h
+klondike.o: ../images/gen/H6_png.h
+klondike.o: ../images/gen/H7_png.h
+klondike.o: ../images/gen/H8_png.h
+klondike.o: ../images/gen/H9_png.h
+klondike.o: ../images/gen/HA_png.h
+klondike.o: ../images/gen/HJ_png.h
+klondike.o: ../images/gen/HK_png.h
+klondike.o: ../images/gen/HQ_png.h
+klondike.o: ../images/gen/HT_png.h
+klondike.o: ../images/gen/S2_png.h
+klondike.o: ../images/gen/S3_png.h
+klondike.o: ../images/gen/S4_png.h
+klondike.o: ../images/gen/S5_png.h
+klondike.o: ../images/gen/S6_png.h
+klondike.o: ../images/gen/S7_png.h
+klondike.o: ../images/gen/S8_png.h
+klondike.o: ../images/gen/S9_png.h
+klondike.o: ../images/gen/SA_png.h
+klondike.o: ../images/gen/SJ_png.h
+klondike.o: ../images/gen/SK_png.h
+klondike.o: ../images/gen/SQ_png.h
+klondike.o: ../images/gen/ST_png.h
+klondike.o: ../images/gen/back_png.h
+klondike.o: $(srcdir)/klondike-game.h
+klondike.o: $(HACK_SRC)/recanim.h
+klondike.o: $(HACK_SRC)/screenhackI.h
+klondike.o: $(UTILS_SRC)/colors.h
+klondike.o: $(UTILS_SRC)/erase.h
+klondike.o: $(UTILS_SRC)/font-retry.h
+klondike.o: $(UTILS_SRC)/grabclient.h
+klondike.o: $(UTILS_SRC)/hsv.h
+klondike.o: $(UTILS_SRC)/resources.h
+klondike.o: $(UTILS_SRC)/usleep.h
+klondike.o: $(UTILS_SRC)/visual.h
+klondike.o: $(UTILS_SRC)/xft.h
+klondike.o: $(UTILS_SRC)/yarandom.h
+klondike.o: $(HACK_SRC)/ximage-loader.h
+klondike.o: $(HACK_SRC)/xlockmoreI.h
+klondike.o: $(HACK_SRC)/xlockmore.h
 lament_model.o: ../../config.h
 lament_model.o: $(HACK_SRC)/fps.h
 lament_model.o: $(srcdir)/gllist.h
@@ -3730,6 +3886,28 @@ pipes.o: $(UTILS_SRC)/xft.h
 pipes.o: $(UTILS_SRC)/yarandom.h
 pipes.o: $(HACK_SRC)/xlockmoreI.h
 pipes.o: $(HACK_SRC)/xlockmore.h
+platonicfolding.o: ../../config.h
+platonicfolding.o: $(HACK_SRC)/fps.h
+platonicfolding.o: $(srcdir)/glsl-utils.h
+platonicfolding.o: $(srcdir)/gltrackball.h
+platonicfolding.o: ../images/gen/earth_night_png.h
+platonicfolding.o: ../images/gen/earth_png.h
+platonicfolding.o: ../images/gen/earth_water_png.h
+platonicfolding.o: $(HACK_SRC)/recanim.h
+platonicfolding.o: $(HACK_SRC)/screenhackI.h
+platonicfolding.o: $(UTILS_SRC)/colors.h
+platonicfolding.o: $(UTILS_SRC)/erase.h
+platonicfolding.o: $(UTILS_SRC)/font-retry.h
+platonicfolding.o: $(UTILS_SRC)/grabclient.h
+platonicfolding.o: $(UTILS_SRC)/hsv.h
+platonicfolding.o: $(UTILS_SRC)/resources.h
+platonicfolding.o: $(UTILS_SRC)/usleep.h
+platonicfolding.o: $(UTILS_SRC)/visual.h
+platonicfolding.o: $(UTILS_SRC)/xft.h
+platonicfolding.o: $(UTILS_SRC)/yarandom.h
+platonicfolding.o: $(HACK_SRC)/ximage-loader.h
+platonicfolding.o: $(HACK_SRC)/xlockmoreI.h
+platonicfolding.o: $(HACK_SRC)/xlockmore.h
 polyhedra-gl.o: ../../config.h
 polyhedra-gl.o: $(HACK_SRC)/fps.h
 polyhedra-gl.o: $(srcdir)/gltrackball.h

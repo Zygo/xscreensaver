@@ -1,4 +1,4 @@
-/* xanalogtv-cli, Copyright © 2018-2023 Jamie Zawinski <jwz@jwz.org>
+/* xanalogtv-cli, Copyright © 2018-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -996,10 +996,11 @@ analogtv_convert (const char **infiles, const char *outfile,
 static void
 usage(const char *err)
 {
-  if (err) fprintf (stderr, "%s: %s unknown\n", progname, err);
-  fprintf (stderr, "usage: %s [--verbose] [--duration secs] [--slideshow secs]"
-           " [--audio mp3-file] [--powerup] [--size WxH]"
-           " infile.png ... outfile.mp4\n",
+  if (err && *err) fprintf (stderr, "%s: %s unknown\n", progname, err);
+  fprintf (stderr,
+           "usage: %s [--verbose] [--duration secs] [--slideshow secs]\n"
+           "\t\t    [--audio mp3-file] [--powerup] [--size WxH]\n"
+           "\t\t    infile.png infile2.png ... outfile.mp4\n",
            progname);
   exit (1);
 }
@@ -1035,6 +1036,11 @@ main (int argc, char **argv)
        else if (!strcmp(argv[i], "-vvv")) verbose_p += 3;
        else if (!strcmp(argv[i], "-vvvv")) verbose_p += 4;
        else if (!strcmp(argv[i], "-vvvvv")) verbose_p += 5;
+       else if (!strcmp(argv[i], "-vvvvvv")) verbose_p += 6;
+       else if (!strcmp(argv[i], "-vvvvvvv")) verbose_p += 7;
+       else if (!strcmp(argv[i], "-vvvvvvvv")) verbose_p += 8;
+       else if (!strcmp(argv[i], "-vvvvvvvvv")) verbose_p += 9;
+       else if (!strcmp(argv[i], "-vvvvvvvvvv")) verbose_p += 10;
        else if (!strcmp(argv[i], "-duration") && argv[i+1])
          {
            char dummy;
@@ -1079,6 +1085,17 @@ main (int argc, char **argv)
 
   outfile = infiles[nfiles-1];
   infiles[--nfiles] = 0;
+
+  for (i = 0; i < nfiles; i++)
+    {
+      const char *f = infiles[i];
+      struct stat st;
+      if (stat (f, &st))
+        {
+          fprintf (stderr, "%s: %s does not exist\n", progname, f);
+          usage("");
+        }
+    }
 
   if (nfiles == 1)
     slideshow = duration;

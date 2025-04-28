@@ -1,4 +1,4 @@
-/* ffmpeg-out, Copyright © 2023-2024 Jamie Zawinski <jwz@jwz.org>
+/* ffmpeg-out, Copyright © 2023-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,10 +34,12 @@
 # pragma GCC diagnostic ignored "-Wpragmas"
 # pragma GCC diagnostic ignored "-Wc99-extensions"
 # pragma GCC diagnostic ignored "-Wlong-long"
-  /* No "diagnostic pop" because some macrose use c99 features. */
+  /* No "diagnostic pop" because some macros use c99 features. */
 #endif
 
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/avutil.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
@@ -45,9 +47,12 @@
 # define HAVE_CH_LAYOUT
 #endif
 
+#if (LIBAVCODEC_VERSION_INT >= ((61<<16) | (12<<8) | 100))
+# define HAVE_AVCODEC_GET_SUPPORTED_CONFIG
+#endif
 
 struct av_stream {
-  AVCodec *codec;
+  const AVCodec *codec;
   AVStream *st;
   AVCodecContext *ctx;
   AVFrame *frame;
@@ -116,7 +121,7 @@ write_frame (AVFormatContext *oc, struct av_stream *ost)
 
 #ifdef HAVE_CH_LAYOUT
 
-AVChannelLayout
+static AVChannelLayout
 guess_channel_layout (int channels)
 {
   return (channels <= 1 ? (AVChannelLayout)AV_CHANNEL_LAYOUT_MONO : (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO);
@@ -131,6 +136,85 @@ guess_channel_layout (int channels)
 }
 
 #endif  /* !HAVE_CH_LAYOUT */
+
+
+#ifdef HAVE_AVCODEC_GET_SUPPORTED_CONFIG
+
+static const enum AVSampleFormat *
+get_sample_formats (struct av_stream *st)
+{
+  const enum AVSampleFormat *fmts;
+  av_check (avcodec_get_supported_config (st->ctx,
+                                          st->codec,
+                                          AV_CODEC_CONFIG_SAMPLE_FORMAT, 0,
+                                          (const void **) &fmts,
+                                          NULL));
+  return fmts;
+}
+
+static const int *
+get_sample_rates (struct av_stream *st)
+{
+  const int *rates;
+  av_check (avcodec_get_supported_config (st->ctx,
+                                          st->codec,
+                                          AV_CODEC_CONFIG_SAMPLE_RATE, 0,
+                                          (const void **) &rates,
+                                          NULL));
+  return rates;
+}
+
+/*
+static const AVChannelLayout *
+get_channel_layouts (struct av_stream *st)
+{
+  const AVChannelLayout *layouts;
+  av_check (avcodec_get_supported_config (st->ctx,
+                                          st->codec,
+                                          AV_CODEC_CONFIG_CHANNEL_LAYOUT, 0,
+                                          (const void **) &layouts,
+                                          NULL));
+  return layouts;
+}
+*/
+
+#else  /* !HAVE_AVCODEC_GET_SUPPORTED_CONFIG */
+
+static const enum AVSampleFormat *
+get_sample_formats (struct av_stream *st)
+{
+  return st->codec->sample_fmts;
+}
+
+static const int *
+get_sample_rates (struct av_stream *st)
+{
+  return st->codec->supported_samplerates;
+}
+
+# ifdef HAVE_CH_LAYOUT
+
+/*
+static const AVChannelLayout *
+get_channel_layouts (struct av_stream *st)
+{
+  return st->codec->ch_layouts;
+}
+*/
+
+# else  /* !HAVE_CH_LAYOUT */
+
+/*
+static const int *
+get_channel_layouts (struct av_stream *st)
+{
+  return st->codec->channel_layouts;
+}
+*/
+
+# endif  /* !HAVE_CH_LAYOUT */
+
+#endif  /* !HAVE_AVCODEC_GET_SUPPORTED_CONFIG */
 
 
 static void
@@ -291,6 +375,13 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
 
   const enum AVCodecID video_codec = AV_CODEC_ID_H264;
   const enum AVCodecID audio_codec = AV_CODEC_ID_AAC;
+  const enum AVSampleFormat *sample_fmts = NULL;
+  const int *sample_rates = NULL;
+# ifdef HAVE_CH_LAYOUT
+  const AVChannelLayout *channel_layouts = NULL;
+# else
+  const int *channel_layouts = NULL;
+# endif
   const enum AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
   const unsigned framerate = 30;
   int audio_bitrate = 96000;
@@ -356,19 +447,22 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
                                NULL));
 
       add_stream (&ffst->audio_ost, ffst->oc, audio_codec);
+
+      sample_fmts = get_sample_formats (&ffst->audio_ost);
       ffst->audio_ost.ctx->sample_fmt =
-        (ffst->audio_ost.codec->sample_fmts
-         ? ffst->audio_ost.codec->sample_fmts[0]
+        (sample_fmts && sample_fmts[0] != AV_SAMPLE_FMT_NONE
+         ? sample_fmts[0]
          : AV_SAMPLE_FMT_FLTP);
       ffst->audio_ost.ctx->bit_rate = audio_bitrate;
 
-      if (! ffst->audio_ost.codec->supported_samplerates)
+      sample_rates = get_sample_rates (&ffst->audio_ost);
+      if (! sample_rates || sample_rates[0] == 0)
         {
           ffst->audio_ost.ctx->sample_rate = ffst->audio_ist.ctx->sample_rate;
         }
       else
         {
-          const int *r = ffst->audio_ost.codec->supported_samplerates;
+          const int *r = sample_rates;
           int best = *r;
           ++r;
 
@@ -384,7 +478,7 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
         }
 
 # ifdef HAVE_CH_LAYOUT
-      if (! ffst->audio_ost.codec->ch_layouts)
+      if (! channel_layouts || ! av_channel_layout_check(&channel_layouts[0]))
         {
           if (! av_channel_layout_check(&ffst->audio_ist.ctx->ch_layout))
             {
@@ -400,7 +494,7 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
       else
         {
           /* XXX: This may or may not work. With AAC, it doesn't matter. */
-          const AVChannelLayout *c = ffst->audio_ost.codec->ch_layouts;
+          const AVChannelLayout *c = channel_layouts;
           uint64_t best_lost =
             av_popcount64 (ffst->audio_ost.ctx->ch_layout.u.mask);
           uint64_t best_added = 0;
@@ -427,7 +521,7 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
           av_channel_layout_from_mask (&ffst->audio_ost.ctx->ch_layout, best);
         }
 # else   /* !HAVE_CH_LAYOUT */
-      if (! ffst->audio_ost.codec->channel_layouts)
+      if (! channel_layouts || ! channel_layouts[0])
         {
           if (! ffst->audio_ist.ctx->channel_layout)
             {
@@ -443,7 +537,7 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
       else
         {
           /* XXX: This may or may not work. With AAC, it doesn't matter. */
-          const uint64_t *c = ffst->audio_ost.codec->channel_layouts;
+          const uint64_t *c = channel_layouts;
           unsigned int best_lost =
             av_popcount64 (ffst->audio_ost.ctx->channel_layout);
           unsigned int best_added = 0;
@@ -509,13 +603,13 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
       open_stream (&ffst->audio_ost, NULL);
 
       ffst->audio_ost.frame->format = ffst->audio_ost.ctx->sample_fmt;
-#ifdef HAVE_CH_LAYOUT
+# ifdef HAVE_CH_LAYOUT
       av_channel_layout_copy(&ffst->audio_ost.frame->ch_layout,
         &ffst->audio_ost.ctx->ch_layout);
-#else   /* !HAVE_CH_LAYOUT */
+# else   /* !HAVE_CH_LAYOUT */
       ffst->audio_ost.frame->channel_layout =
         ffst->audio_ost.ctx->channel_layout;
-#endif  /* !HAVE_CH_LAYOUT */
+# endif  /* !HAVE_CH_LAYOUT */
         ffst->audio_ost.frame->sample_rate = ffst->audio_ost.ctx->sample_rate;
       ffst->audio_ost.frame->nb_samples =
         (ffst->audio_ost.ctx->codec->capabilities &

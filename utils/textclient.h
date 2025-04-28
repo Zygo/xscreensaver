@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2016 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,8 @@ extern void textclient_reshape (text_data *,
                                 int char_w, int char_h,
                                 int max_lines);
 extern int textclient_getc (text_data *);
-extern Bool textclient_putc (text_data *, XKeyEvent *);
+extern Bool textclient_puts (text_data *, const char *);
+extern Bool textclient_putc_event (text_data *, XKeyEvent *);
 
 # if defined(HAVE_IPHONE) || defined(HAVE_ANDROID)
 extern char *textclient_mobile_date_string (void);

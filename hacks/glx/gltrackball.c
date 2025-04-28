@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002-2017 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright © 2002-2025 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -222,7 +222,14 @@ gltrackball_rotate (trackball_state *ts)
     }
 
   build_rotmatrix (m, ts->q);
+
+# ifndef HAVE_ANDROID
+  /* This crashes in the Android emulator, presumably because of the hellscape
+     that is OpenGLES 3.0. But since Android has no way to interact with hacks
+     as either screen savers or live wallpapers, the trackball code is all a
+     no-op anyway. */
   glMultMatrixf (&m[0][0]);
+# endif
 }
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.58 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.60 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -306,6 +306,30 @@ sub compress_all_xml_files($) {
 }
 
 
+sub minimize_scripts($) {
+  my ($dir) = @_;
+  my $d2 = $dir . '/Contents/Resources';
+  $dir = $d2 if (-d $d2);
+  opendir (my $dirp, $dir) || error ("$dir: $!");
+  my @files = readdir ($dirp);
+  closedir $dirp;
+  foreach my $f (sort @files) {
+    next if ($f =~ m/^\./s);
+    next if ($f eq 'XScreenSaver');
+    $f = "$dir/$f";
+    next if ($f =~ m/\.(xml|png|jpg|ttf)$/s);
+    next if (-d $f);
+    next unless (-x $f);	# Assume executable files are Perl scripts
+    my @cmd = "$exec_dir/perl-minimize.pl";
+    push @cmd, '--verbose' if ($verbose > 2);
+    push @cmd, ($f, $f);
+    print STDERR "$progname: exec: " . join(' ', @cmd) . "\n"
+      if ($verbose > 1);
+    system (@cmd);
+  }
+}
+
+
 sub set_plist_key($$$$) {
   my ($filename, $body, $key, $val) = @_;
 
@@ -395,9 +419,6 @@ sub update($) {
   my $vers = $1;
   my ($ignore, $info_str, $name) = update_saver_xml ($app_dir, $vers);
 
-  # No, don't do this -- the iOS version reads the XML file in a few
-  # different places, and most of those places don't understand gzip.
-
   if ($app_name eq 'XScreenSaver') {
     compress_all_xml_files ($app_dir);
   } else {
@@ -449,6 +470,8 @@ sub update($) {
       print STDERR "$progname: wrote $filename\n" if ($verbose);
     }
   }
+
+  minimize_scripts ($app_dir);
 
   # MacOS 10.12: codesign says "resource fork, Finder information, or
   # similar detritus not allowed" if any bundle has an Icon\r file.

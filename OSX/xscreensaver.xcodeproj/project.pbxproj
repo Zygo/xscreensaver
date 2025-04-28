@@ -222,6 +222,7 @@
 				AFF449FE22754B5600DB8EDB /* PBXTargetDependency */,
 				AF3938381D0FBF5300205406 /* PBXTargetDependency */,
 				AF777A3F09B660B500EA3033 /* PBXTargetDependency */,
+				AFCB48BB2DBC0C3E006296D3 /* PBXTargetDependency */,
 				AFEC23EB1CB6ED0800DE138F /* PBXTargetDependency */,
 				AF777A3D09B660B500EA3033 /* PBXTargetDependency */,
 				AFACE8911CC8365F008B24CD /* PBXTargetDependency */,
@@ -255,6 +256,7 @@
 				AF1B0FC51D7AB5740011DBE4 /* PBXTargetDependency */,
 				AF0BF6ED29456D50000D9473 /* PBXTargetDependency */,
 				AF42CF712BE8A56100675AC7 /* PBXTargetDependency */,
+				AFA82E402DB1ECC600BEEE3E /* PBXTargetDependency */,
 				AF4F10F0143450C300E34F3F /* PBXTargetDependency */,
 				AFC0E8C91CDC6125008CAFAC /* PBXTargetDependency */,
 				AF777A1709B660B300EA3033 /* PBXTargetDependency */,
@@ -265,6 +267,7 @@
 				AFBFE7421786407000432B21 /* PBXTargetDependency */,
 				AFC644742AE47A1000D589B9 /* PBXTargetDependency */,
 				AF777A1109B660B300EA3033 /* PBXTargetDependency */,
+				AF2D86B82DB2105300B4F248 /* PBXTargetDependency */,
 				AF777A0F09B660B200EA3033 /* PBXTargetDependency */,
 				AF777A0D09B660B200EA3033 /* PBXTargetDependency */,
 				AF4FD6FF0CE7A4F9005EE58E /* PBXTargetDependency */,
@@ -284,6 +287,7 @@
 				AFD51B350F063B7800471C02 /* PBXTargetDependency */,
 				AF7779FF09B660B200EA3033 /* PBXTargetDependency */,
 				AF7779FD09B660B100EA3033 /* PBXTargetDependency */,
+				AF2D86942DB2032D00B4F248 /* PBXTargetDependency */,
 				AF7779FB09B660B100EA3033 /* PBXTargetDependency */,
 				AF7779F909B660B100EA3033 /* PBXTargetDependency */,
 				AFFAB33519158F1E0020F021 /* PBXTargetDependency */,
@@ -1618,6 +1622,39 @@
 		AF2D0D40241D7D7F0001D8B8 /* etruscanvenus.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D0D3F241D7D7F0001D8B8 /* etruscanvenus.c */; };
 		AF2D0D41241D7D7F0001D8B8 /* etruscanvenus.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D0D3F241D7D7F0001D8B8 /* etruscanvenus.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF2D29E6270BE727000B8588 /* tvLaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AF2D29E5270BE726000B8588 /* tvLaunchScreen.storyboard */; };
+		AF2D867A2DB1FCC900B4F248 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF2D867C2DB1FCC900B4F248 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF2D867D2DB1FCC900B4F248 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF2D867E2DB1FCC900B4F248 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2D867F2DB1FCC900B4F248 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF2D86802DB1FCC900B4F248 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF2D86812DB1FCC900B4F248 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF2D86822DB1FCC900B4F248 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF2D868B2DB1FDB900B4F248 /* platonicfolding.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86892DB1FDB900B4F248 /* platonicfolding.c */; };
+		AF2D868C2DB1FDB900B4F248 /* platonicfolding.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2D868A2DB1FDB900B4F248 /* platonicfolding.xml */; };
+		AF2D868D2DB1FDB900B4F248 /* platonicfolding.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2D868A2DB1FDB900B4F248 /* platonicfolding.xml */; };
+		AF2D868E2DB1FDB900B4F248 /* platonicfolding.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86892DB1FDB900B4F248 /* platonicfolding.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2D868F2DB1FDB900B4F248 /* platonicfolding.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2D868A2DB1FDB900B4F248 /* platonicfolding.xml */; };
+		AF2D86902DB1FDB900B4F248 /* platonicfolding.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86892DB1FDB900B4F248 /* platonicfolding.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2D86912DB2013200B4F248 /* xftwrap.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBD953C2C504ADC000DA52A /* xftwrap.c */; };
+		AF2D86922DB2014100B4F248 /* xftwrap.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBD953C2C504ADC000DA52A /* xftwrap.c */; };
+		AF2D869C2DB20F2100B4F248 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF2D869E2DB20F2100B4F248 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF2D869F2DB20F2100B4F248 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF2D86A02DB20F2100B4F248 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2D86A12DB20F2100B4F248 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF2D86A22DB20F2100B4F248 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF2D86A32DB20F2100B4F248 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AF2D86A42DB20F2100B4F248 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF2D86AE2DB2100A00B4F248 /* klondike.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86AB2DB2100A00B4F248 /* klondike.c */; };
+		AF2D86AF2DB2100A00B4F248 /* klondike-game.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86AD2DB2100A00B4F248 /* klondike-game.c */; };
+		AF2D86B02DB2100A00B4F248 /* klondike.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2D86AC2DB2100A00B4F248 /* klondike.xml */; };
+		AF2D86B12DB2100A00B4F248 /* klondike.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2D86AC2DB2100A00B4F248 /* klondike.xml */; };
+		AF2D86B22DB2100A00B4F248 /* klondike.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86AB2DB2100A00B4F248 /* klondike.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2D86B32DB2100A00B4F248 /* klondike-game.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86AD2DB2100A00B4F248 /* klondike-game.c */; };
+		AF2D86B42DB2100A00B4F248 /* klondike.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF2D86AC2DB2100A00B4F248 /* klondike.xml */; };
+		AF2D86B52DB2100A00B4F248 /* klondike.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86AB2DB2100A00B4F248 /* klondike.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF2D86B62DB2100A00B4F248 /* klondike-game.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86AD2DB2100A00B4F248 /* klondike-game.c */; };
 		AF2D8F321CEBA10300198014 /* jwxyz-timers.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D8F301CEBA10300198014 /* jwxyz-timers.c */; };
 		AF2D8F331CEBA10300198014 /* jwxyz-timers.h in Headers */ = {isa = PBXBuildFile; fileRef = AF2D8F311CEBA10300198014 /* jwxyz-timers.h */; };
 		AF32D9E70F3AD0B40080F535 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
@@ -2522,6 +2559,10 @@
 		AF5C9B121A0CCF4E00B0147A /* cityflow.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF5C9B0F1A0CCF4E00B0147A /* cityflow.xml */; };
 		AF5C9B131A0CCF4E00B0147A /* cityflow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5C9B101A0CCF4E00B0147A /* cityflow.c */; };
 		AF5C9B141A0CCF4E00B0147A /* cityflow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5C9B101A0CCF4E00B0147A /* cityflow.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF5D4E3C2D6409AE009BE57E /* ansi-tty.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5D4E3B2D6409AE009BE57E /* ansi-tty.c */; };
+		AF5D4E3D2D6409AE009BE57E /* ansi-tty.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5D4E3B2D6409AE009BE57E /* ansi-tty.c */; };
+		AF5D4E3E2D6409AE009BE57E /* ansi-tty.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5D4E3B2D6409AE009BE57E /* ansi-tty.c */; };
+		AF5D4E3F2D6409AE009BE57E /* ansi-tty.c in Sources */ = {isa = PBXBuildFile; fileRef = AF5D4E3B2D6409AE009BE57E /* ansi-tty.c */; };
 		AF5ECEB02116B1A400069433 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF5ECEB12116B1A400069433 /* analogtv.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4CFA09B5AC94006E59CF /* analogtv.c */; };
 		AF5ECEB42116B1A400069433 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -3971,6 +4012,23 @@
 		AFA6AAFF20999950006D2685 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
 		AFA6AB0D20999A60006D2685 /* glitchpeg.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFA6AB0C20999A60006D2685 /* glitchpeg.xml */; };
 		AFA6AB0F20999A7B006D2685 /* glitchpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA6AB0E20999A7B006D2685 /* glitchpeg.c */; };
+		AFA82E242DB1EB4B00BEEE3E /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFA82E262DB1EB4B00BEEE3E /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFA82E272DB1EB4B00BEEE3E /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFA82E282DB1EB4B00BEEE3E /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFA82E292DB1EB4B00BEEE3E /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFA82E2A2DB1EB4B00BEEE3E /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFA82E2B2DB1EB4B00BEEE3E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AFA82E2C2DB1EB4B00BEEE3E /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFA82E362DB1EC3B00BEEE3E /* hopffibration.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFA82E352DB1EC3B00BEEE3E /* hopffibration.xml */; };
+		AFA82E372DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA82E342DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFA82E382DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA82E332DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFA82E392DB1EC3B00BEEE3E /* hopffibration.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFA82E352DB1EC3B00BEEE3E /* hopffibration.xml */; };
+		AFA82E3A2DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA82E342DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c */; };
+		AFA82E3B2DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA82E332DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c */; };
+		AFA82E3C2DB1EC3B00BEEE3E /* hopffibration.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFA82E352DB1EC3B00BEEE3E /* hopffibration.xml */; };
+		AFA82E3D2DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA82E342DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFA82E3E2DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA82E332DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFAA6B451773F07800DE720C /* ios-function-table.m in Sources */ = {isa = PBXBuildFile; fileRef = AFAA6B441773F07700DE720C /* ios-function-table.m */; };
 		AFAAE38E207D6343007A515C /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFAAE390207D6343007A515C /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -4037,6 +4095,7 @@
 		AFB8A69B1782BA34004EDB85 /* kaleidocycle.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFB8A69A1782BA34004EDB85 /* kaleidocycle.xml */; };
 		AFB8A69C1782BF6C004EDB85 /* kaleidocycle.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFB8A69A1782BA34004EDB85 /* kaleidocycle.xml */; };
 		AFB8A69D1782BFA6004EDB85 /* kaleidocycle.c in Sources */ = {isa = PBXBuildFile; fileRef = AF7511141782B64300380EA1 /* kaleidocycle.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFBD953D2C504AFC000DA52A /* xftwrap.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBD953C2C504ADC000DA52A /* xftwrap.c */; };
 		AFBE744019A7C6930018AA35 /* robot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBE743F19A7C6930018AA35 /* robot.c */; };
 		AFBE744119A7C6EF0018AA35 /* robot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBE743F19A7C6930018AA35 /* robot.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFBF893E0E41D930006A2D66 /* fps.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBF893C0E41D930006A2D66 /* fps.c */; };
@@ -4116,6 +4175,23 @@
 		AFC7592E158D8E8B00C5458E /* textclient.h in Headers */ = {isa = PBXBuildFile; fileRef = AFC7592C158D8E8B00C5458E /* textclient.h */; };
 		AFC75930158D9A7A00C5458E /* textclient-ios.m in Sources */ = {isa = PBXBuildFile; fileRef = AFC7592F158D9A7A00C5458E /* textclient-ios.m */; };
 		AFCA3EED25856B6200CBCF16 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFCA3EEC25856B6200CBCF16 /* IOKit.framework */; };
+		AFCB489F2DBC0958006296D3 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFCB48A12DBC0958006296D3 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFCB48A22DBC0958006296D3 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFCB48A32DBC0958006296D3 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFCB48A42DBC0958006296D3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFCB48A52DBC0958006296D3 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFCB48A62DBC0958006296D3 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
+		AFCB48A72DBC0958006296D3 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFCB48B12DBC0BDB006296D3 /* dumpster_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AFCB48AE2DBC0BDB006296D3 /* dumpster_model.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFCB48B22DBC0BDB006296D3 /* dumpsterfire.c in Sources */ = {isa = PBXBuildFile; fileRef = AFCB48AF2DBC0BDB006296D3 /* dumpsterfire.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFCB48B32DBC0BDB006296D3 /* dumpsterfire.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFCB48B02DBC0BDB006296D3 /* dumpsterfire.xml */; };
+		AFCB48B42DBC0BDB006296D3 /* dumpsterfire.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFCB48B02DBC0BDB006296D3 /* dumpsterfire.xml */; };
+		AFCB48B52DBC0BDB006296D3 /* dumpster_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AFCB48AE2DBC0BDB006296D3 /* dumpster_model.c */; };
+		AFCB48B62DBC0BDB006296D3 /* dumpsterfire.c in Sources */ = {isa = PBXBuildFile; fileRef = AFCB48AF2DBC0BDB006296D3 /* dumpsterfire.c */; };
+		AFCB48B72DBC0BDB006296D3 /* dumpster_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AFCB48AE2DBC0BDB006296D3 /* dumpster_model.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFCB48B82DBC0BDB006296D3 /* dumpsterfire.c in Sources */ = {isa = PBXBuildFile; fileRef = AFCB48AF2DBC0BDB006296D3 /* dumpsterfire.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFCB48B92DBC0BDB006296D3 /* dumpsterfire.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFCB48B02DBC0BDB006296D3 /* dumpsterfire.xml */; };
 		AFCCCBB009BFE4B000353F4D /* rdbomb.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFCCCBAD09BFE4B000353F4D /* rdbomb.xml */; };
 		AFCCCBB309BFE51900353F4D /* thornbird.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC259230988A469000655EE /* thornbird.xml */; };
 		AFCE26332337332000BDCE10 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AFCE26322337332000BDCE10 /* LaunchScreen.storyboard */; };
@@ -4923,6 +4999,34 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF2D0D25241D7C870001D8B8;
 			remoteInfo = EtruscanVenus;
+		};
+		AF2D86742DB1FCC900B4F248 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF2D86932DB2032D00B4F248 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF2D86722DB1FCC900B4F248;
+			remoteInfo = PlatonicFolding;
+		};
+		AF2D86972DB20F2100B4F248 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF2D86B72DB2105300B4F248 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF2D86952DB20F2100B4F248;
+			remoteInfo = Klondike;
 		};
 		AF32D9E20F3AD0B40080F535 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -8081,6 +8185,20 @@
 			remoteGlobalIDString = AFA6AAF020999950006D2685;
 			remoteInfo = GlitchPEG;
 		};
+		AFA82E1F2DB1EB4B00BEEE3E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFA82E3F2DB1ECC600BEEE3E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFA82E1D2DB1EB4B00BEEE3E;
+			remoteInfo = HopfFibration;
+		};
 		AFAAE389207D6343007A515C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -8276,6 +8394,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF9771D60989DC4A001F8B92;
 			remoteInfo = SaverTester;
+		};
+		AFCB489A2DBC0958006296D3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFCB48BA2DBC0C3E006296D3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFCB48982DBC0958006296D3;
+			remoteInfo = DumpsterFire;
 		};
 		AFCF833D1AF5B515008BB7E1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -8905,6 +9037,13 @@
 		AF2D0D3F241D7D7F0001D8B8 /* etruscanvenus.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = etruscanvenus.c; path = hacks/glx/etruscanvenus.c; sourceTree = "<group>"; };
 		AF2D29E5270BE726000B8588 /* tvLaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = tvLaunchScreen.storyboard; sourceTree = "<group>"; };
 		AF2D522513E954A0002AA818 /* SaverRunner.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SaverRunner.icns; sourceTree = "<group>"; };
+		AF2D86872DB1FCC900B4F248 /* PlatonicFolding.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PlatonicFolding.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF2D86892DB1FDB900B4F248 /* platonicfolding.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = platonicfolding.c; path = ../hacks/glx/platonicfolding.c; sourceTree = SOURCE_ROOT; };
+		AF2D868A2DB1FDB900B4F248 /* platonicfolding.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = platonicfolding.xml; path = ../hacks/config/platonicfolding.xml; sourceTree = SOURCE_ROOT; };
+		AF2D86A92DB20F2100B4F248 /* Klondike.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Klondike.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF2D86AB2DB2100A00B4F248 /* klondike.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = klondike.c; path = ../hacks/glx/klondike.c; sourceTree = SOURCE_ROOT; };
+		AF2D86AC2DB2100A00B4F248 /* klondike.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = klondike.xml; path = ../hacks/config/klondike.xml; sourceTree = SOURCE_ROOT; };
+		AF2D86AD2DB2100A00B4F248 /* klondike-game.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "klondike-game.c"; path = "../hacks/glx/klondike-game.c"; sourceTree = SOURCE_ROOT; };
 		AF2D8F301CEBA10300198014 /* jwxyz-timers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "jwxyz-timers.c"; path = "../jwxyz/jwxyz-timers.c"; sourceTree = "<group>"; };
 		AF2D8F311CEBA10300198014 /* jwxyz-timers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "jwxyz-timers.h"; path = "../jwxyz/jwxyz-timers.h"; sourceTree = "<group>"; };
 		AF32D9F40F3AD0B40080F535 /* RubikBlocks.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RubikBlocks.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -9120,6 +9259,7 @@
 		AF5C9B0D1A0CCE6E00B0147A /* Cityflow.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Cityflow.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF5C9B0F1A0CCF4E00B0147A /* cityflow.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = cityflow.xml; sourceTree = "<group>"; };
 		AF5C9B101A0CCF4E00B0147A /* cityflow.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cityflow.c; path = hacks/glx/cityflow.c; sourceTree = "<group>"; };
+		AF5D4E3B2D6409AE009BE57E /* ansi-tty.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "ansi-tty.c"; path = "hacks/ansi-tty.c"; sourceTree = "<group>"; };
 		AF5ECEC02116B1A400069433 /* VFeedback.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VFeedback.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF5ECEC22116B2CC00069433 /* vfeedback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vfeedback.c; path = hacks/vfeedback.c; sourceTree = "<group>"; };
 		AF5ECEC52116B2FE00069433 /* vfeedback.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = vfeedback.xml; sourceTree = "<group>"; };
@@ -9524,6 +9664,10 @@
 		AFA6AB0520999950006D2685 /* GlitchPEG.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GlitchPEG.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFA6AB0C20999A60006D2685 /* glitchpeg.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = glitchpeg.xml; sourceTree = "<group>"; };
 		AFA6AB0E20999A7B006D2685 /* glitchpeg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glitchpeg.c; path = hacks/glitchpeg.c; sourceTree = "<group>"; };
+		AFA82E312DB1EB4B00BEEE3E /* HopfFibration.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HopfFibration.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFA82E332DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = hacks/glx/hopfanimations.c; sourceTree = "<group>"; };
+		AFA82E342DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = hacks/glx/hopffibration.c; sourceTree = "<group>"; };
+		AFA82E352DB1EC3B00BEEE3E /* hopffibration.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = hopffibration.xml; sourceTree = "<group>"; };
 		AFAA6B441773F07700DE720C /* ios-function-table.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ios-function-table.m"; sourceTree = "<group>"; };
 		AFAAE39C207D6343007A515C /* Maze3D.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Maze3D.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFAAE39E207D6420007A515C /* maze3d.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = maze3d.c; path = hacks/glx/maze3d.c; sourceTree = "<group>"; };
@@ -9547,6 +9691,8 @@
 		AFB5A0ED0981FF8B00871B16 /* usleep.c */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.c; name = usleep.c; path = utils/usleep.c; sourceTree = "<group>"; };
 		AFB5A0EE0981FF8B00871B16 /* usleep.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = usleep.h; path = utils/usleep.h; sourceTree = "<group>"; };
 		AFB8A69A1782BA34004EDB85 /* kaleidocycle.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = kaleidocycle.xml; sourceTree = "<group>"; };
+		AFBD953B2C504ADB000DA52A /* xftwrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xftwrap.h; path = utils/xftwrap.h; sourceTree = "<group>"; };
+		AFBD953C2C504ADC000DA52A /* xftwrap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xftwrap.c; path = utils/xftwrap.c; sourceTree = "<group>"; };
 		AFBE743F19A7C6930018AA35 /* robot.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = robot.c; path = hacks/glx/robot.c; sourceTree = "<group>"; };
 		AFBF893C0E41D930006A2D66 /* fps.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = fps.c; path = hacks/fps.c; sourceTree = "<group>"; };
 		AFBF893D0E41D930006A2D66 /* fps.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = fps.h; path = hacks/fps.h; sourceTree = "<group>"; };
@@ -9781,6 +9927,10 @@
 		AFC7592C158D8E8B00C5458E /* textclient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = textclient.h; path = utils/textclient.h; sourceTree = "<group>"; };
 		AFC7592F158D9A7A00C5458E /* textclient-ios.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "textclient-ios.m"; path = "OSX/textclient-ios.m"; sourceTree = "<group>"; };
 		AFCA3EEC25856B6200CBCF16 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		AFCB48AC2DBC0958006296D3 /* DumpsterFire.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DumpsterFire.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFCB48AE2DBC0BDB006296D3 /* dumpster_model.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = dumpster_model.c; path = ../hacks/glx/dumpster_model.c; sourceTree = SOURCE_ROOT; };
+		AFCB48AF2DBC0BDB006296D3 /* dumpsterfire.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = dumpsterfire.c; path = ../hacks/glx/dumpsterfire.c; sourceTree = SOURCE_ROOT; };
+		AFCB48B02DBC0BDB006296D3 /* dumpsterfire.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = dumpsterfire.xml; path = ../hacks/config/dumpsterfire.xml; sourceTree = SOURCE_ROOT; };
 		AFCCCBAD09BFE4B000353F4D /* rdbomb.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = rdbomb.xml; sourceTree = "<group>"; };
 		AFCE26322337332000BDCE10 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AFCF83501AF5B515008BB7E1 /* SplitFlap.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SplitFlap.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -10130,6 +10280,34 @@
 				AF2D0D32241D7C870001D8B8 /* Carbon.framework in Frameworks */,
 				AF2D0D33241D7C870001D8B8 /* OpenGL.framework in Frameworks */,
 				AF2D0D34241D7C870001D8B8 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2D867B2DB1FCC900B4F248 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2D867C2DB1FCC900B4F248 /* libjwxyz.a in Frameworks */,
+				AF2D867D2DB1FCC900B4F248 /* ScreenSaver.framework in Frameworks */,
+				AF2D867E2DB1FCC900B4F248 /* QuartzCore.framework in Frameworks */,
+				AF2D867F2DB1FCC900B4F248 /* Cocoa.framework in Frameworks */,
+				AF2D86802DB1FCC900B4F248 /* Carbon.framework in Frameworks */,
+				AF2D86812DB1FCC900B4F248 /* OpenGL.framework in Frameworks */,
+				AF2D86822DB1FCC900B4F248 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2D869D2DB20F2100B4F248 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2D869E2DB20F2100B4F248 /* libjwxyz.a in Frameworks */,
+				AF2D869F2DB20F2100B4F248 /* ScreenSaver.framework in Frameworks */,
+				AF2D86A02DB20F2100B4F248 /* QuartzCore.framework in Frameworks */,
+				AF2D86A12DB20F2100B4F248 /* Cocoa.framework in Frameworks */,
+				AF2D86A22DB20F2100B4F248 /* Carbon.framework in Frameworks */,
+				AF2D86A32DB20F2100B4F248 /* OpenGL.framework in Frameworks */,
+				AF2D86A42DB20F2100B4F248 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -13103,6 +13281,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA82E252DB1EB4B00BEEE3E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA82E262DB1EB4B00BEEE3E /* libjwxyz.a in Frameworks */,
+				AFA82E272DB1EB4B00BEEE3E /* ScreenSaver.framework in Frameworks */,
+				AFA82E282DB1EB4B00BEEE3E /* QuartzCore.framework in Frameworks */,
+				AFA82E292DB1EB4B00BEEE3E /* Cocoa.framework in Frameworks */,
+				AFA82E2A2DB1EB4B00BEEE3E /* Carbon.framework in Frameworks */,
+				AFA82E2B2DB1EB4B00BEEE3E /* OpenGL.framework in Frameworks */,
+				AFA82E2C2DB1EB4B00BEEE3E /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFAAE38F207D6343007A515C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -13238,6 +13430,20 @@
 				AFC6445E2AE478FA00D589B9 /* Carbon.framework in Frameworks */,
 				AFC6445F2AE478FA00D589B9 /* OpenGL.framework in Frameworks */,
 				AFC644602AE478FA00D589B9 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFCB48A02DBC0958006296D3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFCB48A12DBC0958006296D3 /* libjwxyz.a in Frameworks */,
+				AFCB48A22DBC0958006296D3 /* ScreenSaver.framework in Frameworks */,
+				AFCB48A32DBC0958006296D3 /* QuartzCore.framework in Frameworks */,
+				AFCB48A42DBC0958006296D3 /* Cocoa.framework in Frameworks */,
+				AFCB48A52DBC0958006296D3 /* Carbon.framework in Frameworks */,
+				AFCB48A62DBC0958006296D3 /* OpenGL.framework in Frameworks */,
+				AFCB48A72DBC0958006296D3 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -14309,6 +14515,10 @@
 				AF70B7A32A8320A6007C1EB8 /* Skulloop.saver */,
 				AFC644652AE478FA00D589B9 /* Kallisti.saver */,
 				AF42CF622BE8A3B300675AC7 /* HighVoltage.saver */,
+				AFA82E312DB1EB4B00BEEE3E /* HopfFibration.saver */,
+				AF2D86872DB1FCC900B4F248 /* PlatonicFolding.saver */,
+				AF2D86A92DB20F2100B4F248 /* Klondike.saver */,
+				AFCB48AC2DBC0958006296D3 /* DumpsterFire.saver */,
 			);
 			name = Products;
 			path = ..;
@@ -14668,6 +14878,8 @@
 				AF0839AA09930C4900277BE9 /* dolphin.c */,
 				AF241F81107C38DF00046A84 /* dropshadow.c */,
 				AF241F82107C38DF00046A84 /* dropshadow.h */,
+				AFCB48AF2DBC0BDB006296D3 /* dumpsterfire.c */,
+				AFCB48AE2DBC0BDB006296D3 /* dumpster_model.c */,
 				AFEC23E41CB6EBC400DE138F /* dymaxionmap.c */,
 				AF4C300D208569A900BE1DEF /* dymaxionmap-coords.c */,
 				AF7778C109B65C6A00EA3033 /* e_textures.h */,
@@ -14725,6 +14937,8 @@
 				AF42CF652BE8A50E00675AC7 /* highvoltage_model.c */,
 				AF42CF662BE8A50E00675AC7 /* highvoltage.c */,
 				AF78D18A142DD96E002AAF77 /* hilbert.c */,
+				AFA82E332DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c */,
+				AFA82E342DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c */,
 				AFC0E8C21CDC60A9008CAFAC /* hydrostat.c */,
 				AFA55F59099362DF00F3E977 /* hypertorus.c */,
 				AF3C715D0D624C600030CC0D /* hypnowheel.c */,
@@ -14737,6 +14951,8 @@
 				AFC644672AE479BB00D589B9 /* kallisti_model.c */,
 				AFC644692AE479BC00D589B9 /* kallisti.c */,
 				AFA55F3F0993626E00F3E977 /* klein.c */,
+				AF2D86AB2DB2100A00B4F248 /* klondike.c */,
+				AF2D86AD2DB2100A00B4F248 /* klondike-game.c */,
 				AFA55A8E0993369100F3E977 /* lament.c */,
 				AFF1BA0E19A96D8B0016A88D /* lament_model.c */,
 				AFA55DDD09935DB600F3E977 /* lavalite.c */,
@@ -14765,6 +14981,7 @@
 				AFA561B309937DCC00F3E977 /* polyhedra.c */,
 				AFA561B409937DCC00F3E977 /* polyhedra.h */,
 				AFA560C3099371D500F3E977 /* polytopes.c */,
+				AF2D86892DB1FDB900B4F248 /* platonicfolding.c */,
 				AFFAB33119158EA80020F021 /* projectiveplane.c */,
 				AFA5621C099384F600F3E977 /* providence.c */,
 				AFA55B3F09933EC600F3E977 /* pulsar.c */,
@@ -14921,6 +15138,7 @@
 				AFC258970988A468000655EE /* discrete.xml */,
 				AFC258980988A468000655EE /* distort.xml */,
 				AF77787909B6545E00EA3033 /* dnalogo.xml */,
+				AFCB48B02DBC0BDB006296D3 /* dumpsterfire.xml */,
 				AFC258990988A468000655EE /* drift.xml */,
 				AF7F06112A50C18C00E35B45 /* droste.xml */,
 				AFEC23E51CB6EBDA00DE138F /* dymaxionmap.xml */,
@@ -14983,6 +15201,7 @@
 				AF42CF642BE8A50E00675AC7 /* highvoltage.xml */,
 				AF78D18E142DD99A002AAF77 /* hilbert.xml */,
 				AFC258C50988A468000655EE /* hopalong.xml */,
+				AFA82E352DB1EC3B00BEEE3E /* hopffibration.xml */,
 				AFC258C60988A468000655EE /* hyperball.xml */,
 				AFC0E8C31CDC60A9008CAFAC /* hydrostat.xml */,
 				AFC258C70988A468000655EE /* hypercube.xml */,
@@ -15003,6 +15222,7 @@
 				AFB8A69A1782BA34004EDB85 /* kaleidocycle.xml */,
 				AFC644682AE479BB00D589B9 /* kallisti.xml */,
 				AFC258D40988A468000655EE /* klein.xml */,
+				AF2D86AC2DB2100A00B4F248 /* klondike.xml */,
 				AFC258D50988A468000655EE /* kumppa.xml */,
 				AFC258D60988A468000655EE /* lament.xml */,
 				AFC258D70988A468000655EE /* laser.xml */,
@@ -15048,6 +15268,7 @@
 				AFC258F40988A469000655EE /* piecewise.xml */,
 				AFC258F50988A469000655EE /* pinion.xml */,
 				AFC258F60988A469000655EE /* pipes.xml */,
+				AF2D868A2DB1FDB900B4F248 /* platonicfolding.xml */,
 				AFC258F70988A469000655EE /* polyhedra.xml */,
 				AFC258F80988A469000655EE /* polyominoes.xml */,
 				AFC258F90988A469000655EE /* polytopes.xml */,
@@ -15145,6 +15366,7 @@
 			children = (
 				AFDA11211934424D003D397F /* aligned_malloc.c */,
 				AFDA11221934424D003D397F /* aligned_malloc.h */,
+				AF5D4E3B2D6409AE009BE57E /* ansi-tty.c */,
 				CE9289D119BD00E200961F22 /* async_netdb.c */,
 				CE9289D219BD00E300961F22 /* async_netdb.h */,
 				AF9D473609B52EE0006E59CF /* colorbars.c */,
@@ -15205,6 +15427,8 @@
 				AFA33BD00B0587EE002B0E7D /* webcollage-helper-cocoa.m */,
 				AFE943AF19DD54C1000A5E6D /* xft.c */,
 				AFE943B019DD54C1000A5E6D /* xft.h */,
+				AFBD953C2C504ADC000DA52A /* xftwrap.c */,
+				AFBD953B2C504ADB000DA52A /* xftwrap.h */,
 				AF480CBB098E37D600FB32B8 /* xlockmore.c */,
 				AF480C89098E346700FB32B8 /* xlockmore.h */,
 				AF480C8A098E34AB00FB32B8 /* xlockmoreI.h */,
@@ -15534,6 +15758,44 @@
 			name = EtruscanVenus;
 			productName = DangerBall;
 			productReference = AF2D0D3A241D7C870001D8B8 /* EtruscanVenus.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF2D86722DB1FCC900B4F248 /* PlatonicFolding */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF2D86842DB1FCC900B4F248 /* Build configuration list for PBXNativeTarget "PlatonicFolding" */;
+			buildPhases = (
+				AF2D86752DB1FCC900B4F248 /* Resources */,
+				AF2D86772DB1FCC900B4F248 /* Sources */,
+				AF2D867B2DB1FCC900B4F248 /* Frameworks */,
+				AF2D86832DB1FCC900B4F248 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF2D86732DB1FCC900B4F248 /* PBXTargetDependency */,
+			);
+			name = PlatonicFolding;
+			productName = DangerBall;
+			productReference = AF2D86872DB1FCC900B4F248 /* PlatonicFolding.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF2D86952DB20F2100B4F248 /* Klondike */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF2D86A62DB20F2100B4F248 /* Build configuration list for PBXNativeTarget "Klondike" */;
+			buildPhases = (
+				AF2D86982DB20F2100B4F248 /* Resources */,
+				AF2D869A2DB20F2100B4F248 /* Sources */,
+				AF2D869D2DB20F2100B4F248 /* Frameworks */,
+				AF2D86A52DB20F2100B4F248 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF2D86962DB20F2100B4F248 /* PBXTargetDependency */,
+			);
+			name = Klondike;
+			productName = DangerBall;
+			productReference = AF2D86A92DB20F2100B4F248 /* Klondike.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF32D9E00F3AD0B40080F535 /* RubikBlocks */ = {
@@ -19584,6 +19846,25 @@
 			productReference = AFA6AB0520999950006D2685 /* GlitchPEG.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AFA82E1D2DB1EB4B00BEEE3E /* HopfFibration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFA82E2E2DB1EB4B00BEEE3E /* Build configuration list for PBXNativeTarget "HopfFibration" */;
+			buildPhases = (
+				AFA82E202DB1EB4B00BEEE3E /* Resources */,
+				AFA82E222DB1EB4B00BEEE3E /* Sources */,
+				AFA82E252DB1EB4B00BEEE3E /* Frameworks */,
+				AFA82E2D2DB1EB4B00BEEE3E /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFA82E1E2DB1EB4B00BEEE3E /* PBXTargetDependency */,
+			);
+			name = HopfFibration;
+			productName = DangerBall;
+			productReference = AFA82E312DB1EB4B00BEEE3E /* HopfFibration.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AFAAE387207D6343007A515C /* Maze3D */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFAAE399207D6343007A515C /* Build configuration list for PBXNativeTarget "Maze3D" */;
@@ -19778,6 +20059,25 @@
 			name = Kallisti;
 			productName = DangerBall;
 			productReference = AFC644652AE478FA00D589B9 /* Kallisti.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AFCB48982DBC0958006296D3 /* DumpsterFire */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFCB48A92DBC0958006296D3 /* Build configuration list for PBXNativeTarget "DumpsterFire" */;
+			buildPhases = (
+				AFCB489B2DBC0958006296D3 /* Resources */,
+				AFCB489D2DBC0958006296D3 /* Sources */,
+				AFCB48A02DBC0958006296D3 /* Frameworks */,
+				AFCB48A82DBC0958006296D3 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFCB48992DBC0958006296D3 /* PBXTargetDependency */,
+			);
+			name = DumpsterFire;
+			productName = DangerBall;
+			productReference = AFCB48AC2DBC0958006296D3 /* DumpsterFire.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AFCF833B1AF5B515008BB7E1 /* SplitFlap */ = {
@@ -20795,7 +21095,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					AF08398F09930B6B00277BE9 = {
 						DevelopmentTeam = 4627ATJELP;
@@ -21852,6 +22152,7 @@
 				AFF449E02275494400DB8EDB /* DeepStars */,
 				AF39381A1D0FBD6A00205406 /* Discoball */,
 				AF77786109B6536000EA3033 /* DNAlogo */,
+				AFCB48982DBC0958006296D3 /* DumpsterFire */,
 				AFEC23CD1CB6EAE100DE138F /* DymaxionMap */,
 				AFACE8731CC83458008B24CD /* EnergyStream */,
 				AFA55E0D09935EDC00F3E977 /* Endgame */,
@@ -21886,6 +22187,7 @@
 				AF0BF6CD29456B2E000D9473 /* HexTrail */,
 				AF42CF4E2BE8A3B300675AC7 /* HighVoltage */,
 				AF78D175142DD8F3002AAF77 /* Hilbert */,
+				AFA82E1D2DB1EB4B00BEEE3E /* HopfFibration */,
 				AFC0E8AB1CDC601A008CAFAC /* Hydrostat */,
 				AFA55F420993629000F3E977 /* Hypertorus */,
 				AF3C71450D624BF50030CC0D /* Hypnowheel */,
@@ -21895,6 +22197,7 @@
 				AF7510FF1782B5B900380EA1 /* Kaleidocycle */,
 				AFC644512AE478FA00D589B9 /* Kallisti */,
 				AFA55F2A0993622F00F3E977 /* Klein */,
+				AF2D86952DB20F2100B4F248 /* Klondike */,
 				AFA55A790993364300F3E977 /* Lament */,
 				AFA55DC809935D7000F3E977 /* Lavalite */,
 				AF4FD6E60CE7A486005EE58E /* Lockward */,
@@ -21915,6 +22218,7 @@
 				AFD51B1B0F063B4A00471C02 /* Photopile */,
 				AFA5621F0993852500F3E977 /* Pinion */,
 				AF4812B30990D3D900FB32B8 /* Pipes */,
+				AF2D86722DB1FCC900B4F248 /* PlatonicFolding */,
 				AFA5619D09937D7E00F3E977 /* Polyhedra */,
 				AFA560AE0993718D00F3E977 /* Polytopes */,
 				AFFAB31519158CE40020F021 /* ProjectivePlane */,
@@ -22084,6 +22388,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF2D0D3D241D7D610001D8B8 /* etruscanvenus.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2D86752DB1FCC900B4F248 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2D868C2DB1FDB900B4F248 /* platonicfolding.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2D86982DB20F2100B4F248 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2D86B02DB2100A00B4F248 /* klondike.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22729,6 +23049,7 @@
 				AF56892A26E7060500CCBA38 /* distort.xml in Resources */,
 				AF56892B26E7060500CCBA38 /* dnalogo.xml in Resources */,
 				AF7F06172A50C18C00E35B45 /* droste.xml in Resources */,
+				AFCB48B92DBC0BDB006296D3 /* dumpsterfire.xml in Resources */,
 				AF56892C26E7060500CCBA38 /* dymaxionmap.xml in Resources */,
 				AF56892D26E7060500CCBA38 /* drift.xml in Resources */,
 				AF56892E26E7060500CCBA38 /* endgame.xml in Resources */,
@@ -22784,6 +23105,7 @@
 				AF42CF692BE8A50E00675AC7 /* highvoltage.xml in Resources */,
 				AF56895F26E7060500CCBA38 /* hilbert.xml in Resources */,
 				AF56896026E7060500CCBA38 /* hopalong.xml in Resources */,
+				AFA82E362DB1EC3B00BEEE3E /* hopffibration.xml in Resources */,
 				AF56896126E7060500CCBA38 /* hydrostat.xml in Resources */,
 				AF56896226E7060500CCBA38 /* hypertorus.xml in Resources */,
 				AF56896326E7060500CCBA38 /* hypnowheel.xml in Resources */,
@@ -22800,6 +23122,7 @@
 				AF56896E26E7060500CCBA38 /* kaleidescope.xml in Resources */,
 				AFC6446F2AE479BC00D589B9 /* kallisti.xml in Resources */,
 				AF56896F26E7060500CCBA38 /* klein.xml in Resources */,
+				AF2D86B12DB2100A00B4F248 /* klondike.xml in Resources */,
 				AF56897026E7060500CCBA38 /* kumppa.xml in Resources */,
 				AF56897126E7060500CCBA38 /* lament.xml in Resources */,
 				AF56897226E7060500CCBA38 /* lavalite.xml in Resources */,
@@ -22836,6 +23159,7 @@
 				AF56899026E7060500CCBA38 /* piecewise.xml in Resources */,
 				AF56899126E7060500CCBA38 /* pinion.xml in Resources */,
 				AF56899226E7060500CCBA38 /* pipes.xml in Resources */,
+				AF2D868F2DB1FDB900B4F248 /* platonicfolding.xml in Resources */,
 				AF56899326E7060500CCBA38 /* polyhedra.xml in Resources */,
 				AF56899426E7060500CCBA38 /* polyominoes.xml in Resources */,
 				AF56899526E7060500CCBA38 /* polytopes.xml in Resources */,
@@ -23397,6 +23721,7 @@
 				AF918AE7158FC53D002B5D1E /* distort.xml in Resources */,
 				AFCF453815986A3000E6E8CC /* dnalogo.xml in Resources */,
 				AF7F06162A50C18C00E35B45 /* droste.xml in Resources */,
+				AFCB48B32DBC0BDB006296D3 /* dumpsterfire.xml in Resources */,
 				AFEC23E81CB6EC6800DE138F /* dymaxionmap.xml in Resources */,
 				AF918AE9158FC53D002B5D1E /* drift.xml in Resources */,
 				AF918AEA158FC53D002B5D1E /* endgame.xml in Resources */,
@@ -23452,6 +23777,7 @@
 				AF42CF682BE8A50E00675AC7 /* highvoltage.xml in Resources */,
 				AF918B14158FC53D002B5D1E /* hilbert.xml in Resources */,
 				AF918B15158FC53D002B5D1E /* hopalong.xml in Resources */,
+				AFA82E3C2DB1EC3B00BEEE3E /* hopffibration.xml in Resources */,
 				AFC0E8C71CDC60DE008CAFAC /* hydrostat.xml in Resources */,
 				AF918B18158FC53D002B5D1E /* hypertorus.xml in Resources */,
 				AF918B19158FC53D002B5D1E /* hypnowheel.xml in Resources */,
@@ -23468,6 +23794,7 @@
 				AF918B24158FC53D002B5D1E /* kaleidescope.xml in Resources */,
 				AFC6446E2AE479BC00D589B9 /* kallisti.xml in Resources */,
 				AF918B25158FC53D002B5D1E /* klein.xml in Resources */,
+				AF2D86B42DB2100A00B4F248 /* klondike.xml in Resources */,
 				AF918B26158FC53D002B5D1E /* kumppa.xml in Resources */,
 				AF918B27158FC53D002B5D1E /* lament.xml in Resources */,
 				AF918B29158FC53D002B5D1E /* lavalite.xml in Resources */,
@@ -23504,6 +23831,7 @@
 				AF918B4A158FC53E002B5D1E /* piecewise.xml in Resources */,
 				AF918B4B158FC53E002B5D1E /* pinion.xml in Resources */,
 				AF918B4C158FC53E002B5D1E /* pipes.xml in Resources */,
+				AF2D868D2DB1FDB900B4F248 /* platonicfolding.xml in Resources */,
 				AFCF4547159878D500E6E8CC /* polyhedra.xml in Resources */,
 				AF918B4E158FC53E002B5D1E /* polyominoes.xml in Resources */,
 				AF918B4F158FC53E002B5D1E /* polytopes.xml in Resources */,
@@ -24343,6 +24671,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA82E202DB1EB4B00BEEE3E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA82E392DB1EC3B00BEEE3E /* hopffibration.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFAAE38A207D6343007A515C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -24422,6 +24758,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFC6446D2AE479BC00D589B9 /* kallisti.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFCB489B2DBC0958006296D3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFCB48B42DBC0BDB006296D3 /* dumpsterfire.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -25044,6 +25388,40 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF2D86832DB1FCC900B4F248 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF2D86A52DB20F2100B4F248 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AF32D9F00F3AD0B40080F535 /* Run Update Info Plist */ = {
@@ -25974,7 +26352,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AFA3D69409C03B6200E4CFCA /* Run Update Info Plist */ = {
@@ -28303,7 +28681,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AFA3D97309C03DD300E4CFCA /* Run Update Info Plist */ = {
@@ -29190,6 +29568,23 @@
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AFA82E2D2DB1EB4B00BEEE3E /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AFAAE398207D6343007A515C /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -29407,6 +29802,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AFCB48A82DBC0958006296D3 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AFCCCBB509C033DF00353F4D /* Run Update Info Plist */ = {
@@ -30002,6 +30414,25 @@
 				AF2D0D40241D7D7F0001D8B8 /* etruscanvenus.c in Sources */,
 				AF21B16D2594EEC300671377 /* glsl-utils.c in Sources */,
 				AF2D0D2C241D7C870001D8B8 /* XScreenSaverSubclass.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2D86772DB1FCC900B4F248 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2D867A2DB1FCC900B4F248 /* XScreenSaverSubclass.m in Sources */,
+				AF2D868B2DB1FDB900B4F248 /* platonicfolding.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF2D869A2DB20F2100B4F248 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF2D86AE2DB2100A00B4F248 /* klondike.c in Sources */,
+				AF2D86AF2DB2100A00B4F248 /* klondike-game.c in Sources */,
+				AF2D869C2DB20F2100B4F248 /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -30833,6 +31264,7 @@
 				AF568A6026E7060500CCBA38 /* wormhole.c in Sources */,
 				AF568A6126E7060500CCBA38 /* xanalogtv.c in Sources */,
 				AF568A6226E7060500CCBA38 /* xflame.c in Sources */,
+				AF2D86912DB2013200B4F248 /* xftwrap.c in Sources */,
 				AF568A6326E7060500CCBA38 /* xjack.c in Sources */,
 				AF568A6426E7060500CCBA38 /* xlyap.c in Sources */,
 				AF568A6526E7060500CCBA38 /* xmatrix.c in Sources */,
@@ -30887,6 +31319,8 @@
 				AF568A9326E7060500CCBA38 /* deepstars.c in Sources */,
 				AF568A9426E7060500CCBA38 /* dnalogo.c in Sources */,
 				AF568A9526E7060500CCBA38 /* dolphin.c in Sources */,
+				AFCB48B82DBC0BDB006296D3 /* dumpsterfire.c in Sources */,
+				AFCB48B72DBC0BDB006296D3 /* dumpster_model.c in Sources */,
 				AF568A9626E7060500CCBA38 /* dymaxionmap.c in Sources */,
 				AF568A0C26E7060500CCBA38 /* dymaxionmap-coords.c in Sources */,
 				AF568A9726E7060500CCBA38 /* dropshadow.c in Sources */,
@@ -30927,6 +31361,8 @@
 				AF42CF6C2BE8A50E00675AC7 /* highvoltage_model.c in Sources */,
 				AF42CF6F2BE8A50E00675AC7 /* highvoltage.c in Sources */,
 				AF568AB926E7060500CCBA38 /* hilbert.c in Sources */,
+				AFA82E372DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c in Sources */,
+				AFA82E382DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c in Sources */,
 				AF568ABA26E7060500CCBA38 /* hydrostat.c in Sources */,
 				AF568ABB26E7060500CCBA38 /* hypertorus.c in Sources */,
 				AF568ABC26E7060500CCBA38 /* hypnowheel.c in Sources */,
@@ -30938,6 +31374,8 @@
 				AFC644722AE479BC00D589B9 /* kallisti.c in Sources */,
 				AFC6446C2AE479BC00D589B9 /* kallisti_model.c in Sources */,
 				AF568AC226E7060500CCBA38 /* klein.c in Sources */,
+				AF2D86B22DB2100A00B4F248 /* klondike.c in Sources */,
+				AF2D86B32DB2100A00B4F248 /* klondike-game.c in Sources */,
 				AF568AC326E7060500CCBA38 /* lament.c in Sources */,
 				AF568AC426E7060500CCBA38 /* lament_model.c in Sources */,
 				AF568AC526E7060500CCBA38 /* lavalite.c in Sources */,
@@ -30959,6 +31397,7 @@
 				AF568AD426E7060500CCBA38 /* pinion.c in Sources */,
 				AF568AD526E7060500CCBA38 /* pipeobjs.c in Sources */,
 				AF568AD626E7060500CCBA38 /* pipes.c in Sources */,
+				AF2D86902DB1FDB900B4F248 /* platonicfolding.c in Sources */,
 				AF568AD726E7060500CCBA38 /* polyhedra-gl.c in Sources */,
 				AF568AD826E7060500CCBA38 /* polyhedra.c in Sources */,
 				AF568AD926E7060500CCBA38 /* polytopes.c in Sources */,
@@ -31020,6 +31459,7 @@
 				AF568B0A26E7060500CCBA38 /* toast2.c in Sources */,
 				AF568B0B26E7060500CCBA38 /* toaster.c in Sources */,
 				AF568B0C26E7060500CCBA38 /* toaster_base.c in Sources */,
+				AF5D4E3E2D6409AE009BE57E /* ansi-tty.c in Sources */,
 				AF568B0D26E7060500CCBA38 /* toaster_handle.c in Sources */,
 				AF568B0E26E7060500CCBA38 /* toaster_handle2.c in Sources */,
 				AF568B0F26E7060500CCBA38 /* toaster_jet.c in Sources */,
@@ -31309,6 +31749,7 @@
 			files = (
 				AF7776EA09B63ABF00EA3033 /* XScreenSaverSubclass.m in Sources */,
 				AF77770409B63B5F00EA3033 /* phosphor.c in Sources */,
+				AF5D4E3C2D6409AE009BE57E /* ansi-tty.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -31633,6 +32074,7 @@
 				AF9189F5158FC35E002B5D1E /* wormhole.c in Sources */,
 				AF9189F6158FC35E002B5D1E /* xanalogtv.c in Sources */,
 				AF9189F7158FC35E002B5D1E /* xflame.c in Sources */,
+				AF2D86922DB2014100B4F248 /* xftwrap.c in Sources */,
 				AF9189F8158FC35E002B5D1E /* xjack.c in Sources */,
 				AF9189F9158FC35E002B5D1E /* xlyap.c in Sources */,
 				AF9189FA158FC35E002B5D1E /* xmatrix.c in Sources */,
@@ -31687,6 +32129,8 @@
 				AF2C2A8A22754C31002112B9 /* deepstars.c in Sources */,
 				AFCF453715986A2100E6E8CC /* dnalogo.c in Sources */,
 				AF918A48158FC3BB002B5D1E /* dolphin.c in Sources */,
+				AFCB48B22DBC0BDB006296D3 /* dumpsterfire.c in Sources */,
+				AFCB48B12DBC0BDB006296D3 /* dumpster_model.c in Sources */,
 				AFEC23E91CB6EC7F00DE138F /* dymaxionmap.c in Sources */,
 				AF4C300F208569AA00BE1DEF /* dymaxionmap-coords.c in Sources */,
 				AF918A49158FC3BB002B5D1E /* dropshadow.c in Sources */,
@@ -31722,11 +32166,13 @@
 				AF62D6342180082100C57C42 /* handsy.c in Sources */,
 				AF96015D25759124007FA31B /* headroom.c in Sources */,
 				AF96015B25759124007FA31B /* headroom_model.c in Sources */,
-				AF42CF6E2BE8A50E00675AC7 /* highvoltage.c in Sources */,
 				AF1B0FC31D7AB5500011DBE4 /* hexstrut.c in Sources */,
 				AF0BF6E829456CCC000D9473 /* hextrail.c in Sources */,
+				AF42CF6E2BE8A50E00675AC7 /* highvoltage.c in Sources */,
 				AF42CF6B2BE8A50E00675AC7 /* highvoltage_model.c in Sources */,
 				AF918A6A158FC3E5002B5D1E /* hilbert.c in Sources */,
+				AFA82E3D2DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c in Sources */,
+				AFA82E3E2DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c in Sources */,
 				AFC0E8C41CDC60B0008CAFAC /* hydrostat.c in Sources */,
 				AF918A6B158FC3E5002B5D1E /* hypertorus.c in Sources */,
 				AF918A6C158FC3E5002B5D1E /* hypnowheel.c in Sources */,
@@ -31738,6 +32184,8 @@
 				AFC644712AE479BC00D589B9 /* kallisti.c in Sources */,
 				AFC6446B2AE479BC00D589B9 /* kallisti_model.c in Sources */,
 				AF918A70158FC417002B5D1E /* klein.c in Sources */,
+				AF2D86B52DB2100A00B4F248 /* klondike.c in Sources */,
+				AF2D86B62DB2100A00B4F248 /* klondike-game.c in Sources */,
 				AF918A71158FC417002B5D1E /* lament.c in Sources */,
 				AFF1BA1019A96D8B0016A88D /* lament_model.c in Sources */,
 				AF918A72158FC417002B5D1E /* lavalite.c in Sources */,
@@ -31759,6 +32207,7 @@
 				AF918A7D158FC417002B5D1E /* pinion.c in Sources */,
 				AF918A7E158FC417002B5D1E /* pipeobjs.c in Sources */,
 				AF918A7F158FC417002B5D1E /* pipes.c in Sources */,
+				AF2D868E2DB1FDB900B4F248 /* platonicfolding.c in Sources */,
 				AFCF4545159878C300E6E8CC /* polyhedra-gl.c in Sources */,
 				AFCF4546159878C300E6E8CC /* polyhedra.c in Sources */,
 				AF918A82158FC417002B5D1E /* polytopes.c in Sources */,
@@ -31820,6 +32269,7 @@
 				AF918AA7158FC473002B5D1E /* toast2.c in Sources */,
 				AF918AA8158FC473002B5D1E /* toaster.c in Sources */,
 				AF918AA9158FC473002B5D1E /* toaster_base.c in Sources */,
+				AF5D4E3D2D6409AE009BE57E /* ansi-tty.c in Sources */,
 				AF918AAA158FC473002B5D1E /* toaster_handle.c in Sources */,
 				AF918AAB158FC473002B5D1E /* toaster_handle2.c in Sources */,
 				AF918AAC158FC473002B5D1E /* toaster_jet.c in Sources */,
@@ -32152,6 +32602,7 @@
 				AF9D4DB609B5B71E006E59CF /* analogtv.c in Sources */,
 				AF9D4DC409B5B87D006E59CF /* bsod.c in Sources */,
 				AF9D4DD409B5B990006E59CF /* apple2.c in Sources */,
+				AFBD953D2C504AFC000DA52A /* xftwrap.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32160,6 +32611,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF9D4DF209B5BB19006E59CF /* XScreenSaverSubclass.m in Sources */,
+				AF5D4E3F2D6409AE009BE57E /* ansi-tty.c in Sources */,
 				AF9D4DF309B5BB19006E59CF /* analogtv.c in Sources */,
 				AF9D4DF509B5BB19006E59CF /* apple2.c in Sources */,
 				AF9D4E0609B5BC9D006E59CF /* apple2-main.c in Sources */,
@@ -32725,6 +33177,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFA82E222DB1EB4B00BEEE3E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA82E3A2DB1EC3B00BEEE3E /* hacks/glx/hopffibration.c in Sources */,
+				AFA82E3B2DB1EC3B00BEEE3E /* hacks/glx/hopfanimations.c in Sources */,
+				AFA82E242DB1EB4B00BEEE3E /* XScreenSaverSubclass.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFAAE38C207D6343007A515C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -32818,6 +33280,16 @@
 				AFC6446A2AE479BC00D589B9 /* kallisti_model.c in Sources */,
 				AFC644582AE478FA00D589B9 /* XScreenSaverSubclass.m in Sources */,
 				AFC644702AE479BC00D589B9 /* kallisti.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFCB489D2DBC0958006296D3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFCB48B52DBC0BDB006296D3 /* dumpster_model.c in Sources */,
+				AFCB48B62DBC0BDB006296D3 /* dumpsterfire.c in Sources */,
+				AFCB489F2DBC0958006296D3 /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33493,6 +33965,26 @@
 			isa = PBXTargetDependency;
 			target = AF2D0D25241D7C870001D8B8 /* EtruscanVenus */;
 			targetProxy = AF2D0D42241D7D9F0001D8B8 /* PBXContainerItemProxy */;
+		};
+		AF2D86732DB1FCC900B4F248 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF2D86742DB1FCC900B4F248 /* PBXContainerItemProxy */;
+		};
+		AF2D86942DB2032D00B4F248 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF2D86722DB1FCC900B4F248 /* PlatonicFolding */;
+			targetProxy = AF2D86932DB2032D00B4F248 /* PBXContainerItemProxy */;
+		};
+		AF2D86962DB20F2100B4F248 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF2D86972DB20F2100B4F248 /* PBXContainerItemProxy */;
+		};
+		AF2D86B82DB2105300B4F248 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF2D86952DB20F2100B4F248 /* Klondike */;
+			targetProxy = AF2D86B72DB2105300B4F248 /* PBXContainerItemProxy */;
 		};
 		AF32D9E10F3AD0B40080F535 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -35749,6 +36241,16 @@
 			target = AFA6AAF020999950006D2685 /* GlitchPEG */;
 			targetProxy = AFA6AB1020999A9A006D2685 /* PBXContainerItemProxy */;
 		};
+		AFA82E1E2DB1EB4B00BEEE3E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFA82E1F2DB1EB4B00BEEE3E /* PBXContainerItemProxy */;
+		};
+		AFA82E402DB1ECC600BEEE3E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFA82E1D2DB1EB4B00BEEE3E /* HopfFibration */;
+			targetProxy = AFA82E3F2DB1ECC600BEEE3E /* PBXContainerItemProxy */;
+		};
 		AFAAE388207D6343007A515C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -35888,6 +36390,16 @@
 			isa = PBXTargetDependency;
 			target = AF9771D60989DC4A001F8B92 /* SaverTester */;
 			targetProxy = AFCAD5F80992DFE00009617A /* PBXContainerItemProxy */;
+		};
+		AFCB48992DBC0958006296D3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFCB489A2DBC0958006296D3 /* PBXContainerItemProxy */;
+		};
+		AFCB48BB2DBC0C3E006296D3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFCB48982DBC0958006296D3 /* DumpsterFire */;
+			targetProxy = AFCB48BA2DBC0C3E006296D3 /* PBXContainerItemProxy */;
 		};
 		AFCF833C1AF5B515008BB7E1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -36538,6 +37050,50 @@
 					"USE_GL=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
+			};
+			name = Release;
+		};
+		AF2D86852DB1FCC900B4F248 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF2D86862DB1FCC900B4F248 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AF2D86A72DB20F2100B4F248 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AF2D86A82DB20F2100B4F248 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -40225,6 +40781,28 @@
 			};
 			name = Release;
 		};
+		AFA82E2F2DB1EB4B00BEEE3E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFA82E302DB1EB4B00BEEE3E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		AFAAE39A207D6343007A515C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -40441,6 +41019,28 @@
 			name = Debug;
 		};
 		AFC644642AE478FA00D589B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AFCB48AA2DBC0958006296D3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFCB48AB2DBC0958006296D3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
@@ -41579,6 +42179,24 @@
 			buildConfigurations = (
 				AF2D0D38241D7C870001D8B8 /* Debug */,
 				AF2D0D39241D7C870001D8B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF2D86842DB1FCC900B4F248 /* Build configuration list for PBXNativeTarget "PlatonicFolding" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF2D86852DB1FCC900B4F248 /* Debug */,
+				AF2D86862DB1FCC900B4F248 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF2D86A62DB20F2100B4F248 /* Build configuration list for PBXNativeTarget "Klondike" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF2D86A72DB20F2100B4F248 /* Debug */,
+				AF2D86A82DB20F2100B4F248 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -43554,6 +44172,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AFA82E2E2DB1EB4B00BEEE3E /* Build configuration list for PBXNativeTarget "HopfFibration" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFA82E2F2DB1EB4B00BEEE3E /* Debug */,
+				AFA82E302DB1EB4B00BEEE3E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AFAAE399207D6343007A515C /* Build configuration list for PBXNativeTarget "Maze3D" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -43649,6 +44276,15 @@
 			buildConfigurations = (
 				AFC644632AE478FA00D589B9 /* Debug */,
 				AFC644642AE478FA00D589B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFCB48A92DBC0958006296D3 /* Build configuration list for PBXNativeTarget "DumpsterFire" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFCB48AA2DBC0958006296D3 /* Debug */,
+				AFCB48AB2DBC0958006296D3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

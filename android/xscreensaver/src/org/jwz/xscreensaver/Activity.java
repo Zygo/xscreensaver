@@ -19,6 +19,7 @@ package org.jwz.xscreensaver;
 
 import android.app.WallpaperManager;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.provider.Settings;
@@ -80,8 +81,12 @@ public class Activity extends android.app.Activity
   }
 
   void checkPermission() {
-      // RES introduced in API 16
-      String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+      String permission = "";
+      if (Build.VERSION.SDK_INT >= 33) {
+          permission = Manifest.permission.READ_MEDIA_IMAGES;
+      } else {
+          permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+      }
       if (permissionGranted(permission)) {
           withProceed();
       } else {

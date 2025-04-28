@@ -7,7 +7,7 @@
 static const char sccsid[] = "@(#)cubocteversion.c  1.1 23/03/02 xlockmore";
 #endif
 
-/* Copyright (c) 2023-2023 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2023-2025 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -288,8 +288,9 @@ typedef struct {
   GLuint self_tri_num[NUMU*3*NUM_FACE+3*NUM_FACE];
   /* The number of triangle strips in the self-intersection tubes */
   GLuint self_tri_strips;
+  Bool use_shaders;
 #ifdef HAVE_GLSL
-  Bool use_shaders, use_mipmaps;
+  Bool use_mipmaps;
   /* The precomputed texture coordinates of the cuboctahedron */
   GLfloat tex[3*3*NUM_FACE];
   /* The textures of earth by day (index 0), earth by night (index 1), and
@@ -1268,7 +1269,8 @@ static const GLchar *shader_version_3_0 =
 static const GLchar *shader_version_3_0_es =
   "#version 300 es\n"
   "precision highp float;\n"
-  "precision highp int;\n";
+  "precision highp int;\n"
+  "precision highp sampler2D;\n";
 
 
 /* The vertex shader code is composed of code fragments that depend on
@@ -3341,7 +3343,8 @@ static int cuboctahedron_eversion_ff(ModeInfo *mi)
 
 #ifdef HAVE_GLSL
 
-/* Draw the sphere eversion using OpenGL's programmable functionality. */
+/* Draw the cuboctahedron eversion using OpenGL's programmable
+   functionality. */
 static int cuboctahedron_eversion_pf(ModeInfo *mi)
 {
   cubocteversionstruct *ce = &cubocteversion[MI_SCREEN(mi)];
@@ -4692,7 +4695,7 @@ static void init_glsl(ModeInfo *mi)
      1.0f,  1.0f,
   };
 
-  /* Determine whether to use shaders to render the sphere eversion. */
+  /* Determine whether to use shaders to render the cuboctahedron eversion. */
   ce->use_shaders = False;
   ce->use_mipmaps = False;
   ce->poly_shader_program = 0;
@@ -5507,8 +5510,7 @@ static void display_cubocteversion(ModeInfo *mi)
  */
 
 
-ENTRYPOINT void reshape_cubocteversion(ModeInfo *mi,
-                                              int width, int height)
+ENTRYPOINT void reshape_cubocteversion(ModeInfo *mi, int width, int height)
 {
   cubocteversionstruct *ce = &cubocteversion[MI_SCREEN(mi)];
   int y = 0;
@@ -5522,11 +5524,11 @@ ENTRYPOINT void reshape_cubocteversion(ModeInfo *mi,
 
   ce->WindW = (GLint)width;
   ce->WindH = (GLint)height;
-  ce->tex_scale[0] = 1.0f/(GLfloat)width;
-  ce->tex_scale[1] = 1.0f/(GLfloat)height;
   glViewport(0,y,width,height);
   ce->aspect = (GLfloat)width/(GLfloat)height;
 #ifdef HAVE_GLSL
+  ce->tex_scale[0] = 1.0f/(GLfloat)width;
+  ce->tex_scale[1] = 1.0f/(GLfloat)height;
   delete_dual_peeling_render_targets(mi);
   init_dual_peeling_render_targets(mi);
   delete_weighted_average_render_targets(mi);

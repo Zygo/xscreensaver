@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1999-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1999-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -58,10 +58,11 @@ get_gl_visual (Screen *screen)
   int egl_major = -1, egl_minor = -1;
 
   /* This is re-used, no need to close it. */
-  egl_display = eglGetDisplay ((EGLNativeDisplayType) dpy);
+  egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR,
+                                       (void *) dpy, NULL);
   if (!egl_display)
     {
-      fprintf (stderr, "%s: eglGetDisplay failed\n", progname);
+      fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);
       return 0;
     }
 
@@ -324,7 +325,7 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
 
     /* This is re-used, no need to close it. */
     egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR,
-                                         (EGLNativeDisplayType) dpy, NULL);
+                                         (void *) dpy, NULL);
     if (!egl_display)
       {
         fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);
@@ -387,12 +388,15 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
           else if (fields[i].i == EGL_TRANSPARENT_RED_VALUE && tt != EGL_NONE)
             sprintf (s, "%d, %d, %d", tr, tg, tb);
           else if (fields[i].i == EGL_CONFIG_CAVEAT)
-            strcpy (s, (v == EGL_NONE ? "none" :
-                        v == EGL_SLOW_CONFIG ? "slow" :
+            {
+              const char *s2 = (v == EGL_NONE ? "none" :
+                                v == EGL_SLOW_CONFIG ? "slow" :
 # ifdef EGL_NON_CONFORMANT
-                        v == EGL_NON_CONFORMANT ? "non-conformant" :
+                                v == EGL_NON_CONFORMANT ? "non-conformant" :
 # endif
-                        "???"));
+                                "???");
+              strcpy (s, s2);
+            }
           else if (fields[i].i == EGL_COLOR_BUFFER_TYPE)
             strcpy (s, (v == EGL_RGB_BUFFER ? "RGB" :
                         v == EGL_LUMINANCE_BUFFER ? "luminance" :

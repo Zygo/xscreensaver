@@ -30,18 +30,27 @@ extern void glsl_Identity(GLfloat c[16]);
 /* Multiply two 4x4 column-major matrices: c = c*m. */
 extern void glsl_MultMatrix(GLfloat c[16], GLfloat m[16]);
 
+/* Multiply a 4×4 column-major matrix with a vector: o = m * v. */
+extern void glsl_MultMatrixVector(GLfloat o[4], GLfloat m[16], GLfloat v[4]);
+
 /* Multiply a 4x4 column-major matrix by a rotation matrix that rotates
    around the axis (x,y,z) by the angle angle: c = c*r(angle,x,y,z). */
 extern void glsl_Rotate(GLfloat c[16], GLfloat angle, GLfloat x, GLfloat y,
                         GLfloat z);
 
+/* Multiply a 4x4 column-major matrix by a matrix that translates an object
+   by a translation vector: c = c * t(tx,ty,tz). */
+extern void glsl_Translate(GLfloat c[16], GLfloat tx, GLfloat ty, GLfloat tz);
+
 /* Multiply a 4x4 column-major matrix by a matrix that stretches, shrinks,
    or reflects an object along the axes: c = c*s(sx,sy,sz). */
 extern void glsl_Scale(GLfloat c[16], GLfloat sx, GLfloat sy, GLfloat sz);
 
-/* Multiply a 4x4 column-major matrix by a matrix that translates an object
-   by a translation vector: c = c*t(tx,ty,tz). */
-extern void glsl_Translate(GLfloat c[16], GLfloat tx, GLfloat ty, GLfloat tz);
+/* Add a look-at viewing matrix to a 4×4 column-major matrix. */
+extern void glsl_LookAt(GLfloat c[16],
+                        GLfloat eyex, GLfloat eyey, GLfloat eyez,
+                        GLfloat centerx, GLfloat centery, GLfloat centerz,
+                        GLfloat upx, GLfloat upy, GLfloat upz);
 
 /* Add a perspective projection to a 4x4 column-major matrix. */
 extern void glsl_Perspective(GLfloat c[16], GLfloat fovy, GLfloat aspect,

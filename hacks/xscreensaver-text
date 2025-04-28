@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2023 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2024 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -38,7 +38,7 @@ BEGIN { eval 'use Text::Wrap qw(wrap);' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.71 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.72 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -104,11 +104,13 @@ sub utf8_to_latin1($) {
   $text =~ s/\xE2\x80\x99/'/gs;
   $text =~ s/\xE2\x80\x9C/``/gs;
   $text =~ s/\xE2\x80\x9D/'/gs;
-  $text =~ s/\xE2\x80\xA2/&bull;/gs;
+  $text =~ s/\xE2\x80\xA2/\xB7/gs;	# &middot;
+  $text =~ s/\xE2\xC2\x80/\xB7/gs;	# &middot;
   $text =~ s/\xE2\x80\xA6/.../gs;
   $text =~ s/\xE2\x80\xB2/'/gs;
-  $text =~ s/\xE2\x84\xA2/&trade;/gs;
-  $text =~ s/\xE2\x86\x90/ &larr; /gs;
+  $text =~ s/\xE2\x84\xA2/[tm]/gs;	# &trade;
+  $text =~ s/\xE2\x86\x90/<=/gs;	# &larr;
+  $text =~ s/\xE2\x86\x92/=>/gs;	# &rarr;
 
   return $text;
 }
@@ -590,6 +592,7 @@ sub reformat_html($$) {
     s@(<PRE\b[^<>]*>\s*)(.*?)(</PRE)@{
       my ($a, $b, $c) = ($1, $2, $3);
       $b =~ s/[\r\n]/<BR>/gs;
+      $b =~ s/ /\240/gs;  # &nbsp;
       $a . $b . $c;
      }@gsexi;
   }
@@ -597,7 +600,8 @@ sub reformat_html($$) {
   if (! $rss_p) {
     # In HTML, unfold lines.
     # In RSS, assume \n means literal line break.
-    s@[\r\n]@ @gsi;
+    s/\s+/ /gs;
+    s@&nbsp;@\240@gs;
   }
 
   # This right here is the part where I doom us all to inhuman
@@ -607,6 +611,7 @@ sub reformat_html($$) {
   s@<!--.*?-->@@gsi;				 # lose comments
   s@<(STYLE|SCRIPT)\b[^<>]*>.*?</\1\s*>@@gsi;    # lose css and js
 
+  s/(<LI>)/$1&bull; /gsi;
   s@</?(BR|TR|TD|LI|DIV)\b[^<>]*>@\n@gsi; # line break at BR, TD, DIV, etc
   s@</?(P|UL|OL|BLOCKQUOTE)\b[^<>]*>@\n\n@gsi; # two line breaks
 
@@ -616,6 +621,11 @@ sub reformat_html($$) {
 
   s@<[^<>]*>?@@gs;                # lose all other HTML tags
   $_ = de_entify ($_);            # convert HTML entities
+
+  if (! $rss_p) {
+    s/[ \t]+/ /gs;
+    s/\240/ /gs;
+  }
 
   # For Wikipedia: delete anything inside {{ }} and unwrap [[tags]],
   # among other things.
@@ -665,7 +675,7 @@ sub reformat_html($$) {
 
   # elide any remaining non-Latin1 binary data.
   if ($latin1_p) {
-    utf8::encode ($_);  # Unpack Unicode back to multi-byte UTF-8.
+    $_ = utf8_to_latin1 ($_);
     s/([^\000-\176]+(\s*[^\000-\176]+)[^a-z\d]*)/\xAB...\xBB /g;
   }
 
@@ -693,7 +703,6 @@ sub reformat_html($$) {
     s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
   }
 
-  $_ = utf8_to_latin1($_) if ($latin1_p);
   y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
 
   return $_;

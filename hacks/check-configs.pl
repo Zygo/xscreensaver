@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2024 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2025 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.44 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.49 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -671,21 +671,25 @@ sub munge_blurb($$$$) {
     }
   }
 
+  my $desc0 = "$desc";
+  utf8::decode($desc0);   # Pack UTF-8 into wide chars.
+
   my $desc1 = ("$name, version $vers.\n\n" .		# savername.xml
                $desc . "\n" .
                "\n" . 
                "From the XScreenSaver collection: " .
                "https://www.jwz.org/xscreensaver/\n" .
-               "Copyright \302\251 $year by $authors.\n");
+               "Copyright \x{A9} $year by $authors.\n");
 
   my $desc2 = ("$name $vers,\n" .			# Info.plist
-               "\302\251 $year $authors.\n" .
+               "\x{A9} $year $authors.\n" .
                #"From the XScreenSaver collection:\n" .
                #"https://www.jwz.org/xscreensaver/\n" .
                "\n" .
                $desc .
                "\n");
-  utf8::decode($desc1);   # Pack UTF-8 into wide chars.
+
+  utf8::decode($desc1);   # Pack UTF-8 into wide chars (redundant?)
   utf8::decode($desc2);
 
   # unwrap lines, but only when it's obviously ok: leave blank lines,
@@ -751,6 +755,16 @@ sub build_android(@) {
     my $saver_class = $saver_title;
     $saver_class =~ s/\]\[/2/gs;
     $saver_class =~ s/[-_\s]//gs;
+
+    # If the saver's title is not case-insensitively the same as its progname
+    # after removing spaces, the class name has to be the progname, or
+    # jwxyz_nativeInit is not able to find it in the function_table.
+    # (Cuboctahedron Eversion, Möbius, MöbiusGears, Moiré, Moiré2.)
+    #
+    if (lc($saver_class) ne lc($saver)) {
+      $saver_class = $saver;
+      $saver_class =~ s/^(.)/\U$1/s;
+    }
 
     my $settings = '';
 
@@ -1137,6 +1151,8 @@ sub build_android(@) {
                    "android.permission.INTERNET\" />\n" .
                "  <uses-permission android:name=\"" .
                    "android.permission.READ_EXTERNAL_STORAGE\" />\n" .
+               "  <uses-permission android:name=\"" .
+                   "android.permission.READ_MEDIA_IMAGES\" />\n" .
 
                "  <application android:icon=\"\@drawable/thumbnail\"\n" .
                "    android:banner=\"\@drawable/thumbnail\"\n" .
@@ -1239,7 +1255,7 @@ sub error($) {
 }
 
 sub usage() {
-  print STDERR "usage: $progname [--verbose] [--debug]" .
+  print STDERR "usage: $progname [--verbose] [--debug] [--force]" .
     " [--build-android] files ...\n";
   exit 1;
 }
@@ -1248,11 +1264,13 @@ sub main() {
   binmode (STDOUT, ':utf8');
   binmode (STDERR, ':utf8');
 
+  my $force_p = 0;
   my $android_p = 0;
   my @files = ();
   while ($#ARGV >= 0) {
     $_ = shift @ARGV;
     if (m/^--?verbose$/) { $verbose++; }
+    elsif (m/^--?force$/) { $force_p++; }
     elsif (m/^-v+$/) { $verbose += length($_)-1; }
     elsif (m/^--?debug$/s) { $debug_p++; }
     elsif (m/^--?build-android$/s) { $android_p++; }
@@ -1261,7 +1279,7 @@ sub main() {
 #    else { usage; }
   }
 
-  usage unless ($#files >= 0);
+  usage unless ($#files >= 0 || $force_p);
   my $failures = 0;
   foreach my $file (@files) {
     $failures += check_config ($file, $android_p);

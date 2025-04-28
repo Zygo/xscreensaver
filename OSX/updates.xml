@@ -8,6 +8,17 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 6.10</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.10.dmg</link>
+   <description><![CDATA[&bull; New hacks, `dumpsterfire', `hopffibration', `platonicfolding' and `klondike'. <BR>&bull; Rewrote the VT100 emulator for 'apple2' and 'phosphor'. Supports inverse and DEC Special Graphics. <BR>&bull; BSOD supports systemd and bitlocker. ]]></description>
+   <pubDate>Sun, 27 Apr 2025 17:04:18 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.10.dmg"
+    sparkle:version="6.10"
+    sparkle:edSignature="7xGV6QfwYePmr/DRgisDoL7cuLoHelN9ftdzzUBxpvjtI8oVzWTjcO545qvbiLYAosgXdie8ZP9XUF9Yor9lAA=="
+    length="102575147"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 6.09</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-6.09.dmg</link>
    <description><![CDATA[&bull; New hacks,`kallisti' and `highvoltage'. <BR>&bull; Formal-wear for `headroom'.]]></description>
@@ -16,17 +27,6 @@
     sparkle:version="6.09"
     sparkle:edSignature="R83Wet7kF1AW9R9KihrZq0cbDnjFL8QF5wtEnK/6Adt7jPtUGCTXcpoFiCvxx3yKOuY+1FZ3pV87X6AQ4rQ8BA=="
     length="90634351"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 6.07</title>
-   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.07.dmg</link>
-   <description><![CDATA[&bull; New hacks, `droste', `skulloop', `papercube' and `cubocteversion'. <BR>&bull; `xscreensaver-settings' was sometimes turning off the DPMS checkbox. <BR>&bull; Log pid of caller of `deactivate' command, to give a hint about who is preventing the screen from blanking. <BR>&bull; recanim uses libffmpeg. <BR>&bull; Updates to `sphereeversion'. <BR>&bull; Added some new map sources to `mapscroller'. <BR>&bull; Worked around a macOS 13.4 bug where multi-head systems would fail to launch savers on some or all screens. <BR>&bull; Minimum compiler target is now ISO C99 instead of ANSI C89. Didn't want to rush into it. <BR>&bull; macOS, Android: Better looking thunbmail images. <BR>&bull; Various other minor bug fixes.]]></description>
-   <pubDate>Tue, 29 Aug 2023 18:06:48 -0700</pubDate>
-   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.07.dmg"
-    sparkle:version="6.07"
-    sparkle:edSignature="HSb5FJ/VaOJ/V3s+8EVrelYhf1/vswYWBWFDrKq1PLeAd8fhOQ9BvS4bdzxSbnwL361lSoIKkip61eQIay7mAQ=="
-    length="88624232"
     type="application/octet-stream" />
   </item>
  </channel>

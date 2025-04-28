@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -90,7 +90,7 @@ static void
 subproc_cb (XtPointer closure, int *source, XtInputId *id)
 {
   text_data *d = (text_data *) closure;
-# ifdef DEBUG
+# ifdef _DEBUG
   if (! d->input_available_p)
     fprintf (stderr, "%s: textclient: input available\n", progname);
 # endif
@@ -181,7 +181,7 @@ selftest (void)
 }
 
 
-static void start_timer (text_data *d);
+static void start_timer (text_data *, Bool);
 
 static void
 launch_text_generator (text_data *d)
@@ -212,7 +212,7 @@ launch_text_generator (text_data *d)
     {
       if (!d->out_buffer || !*d->out_buffer)
         d->out_buffer = "Can't exec; Gatekeeper problem?\r\n\r\n";
-      start_timer (d);
+      start_timer (d, False);
       free (cmd);
       return;
     }
@@ -350,8 +350,6 @@ launch_text_generator (text_data *d)
           /* This is the child fork. */
           char *av[10];
           int i = 0;
-	  if (putenv ("TERM=vt100"))
-            abort();
           av[i++] = "/bin/sh";
           av[i++] = "-c";
           av[i++] = cmd;
@@ -433,7 +431,7 @@ relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 
 
 static void
-start_timer (text_data *d)
+start_timer (text_data *d, Bool first_time_p)
 {
   XtAppContext app = XtDisplayToApplicationContext (d->dpy);
 
@@ -444,7 +442,9 @@ start_timer (text_data *d)
   if (d->pipe_timer)
     XtRemoveTimeOut (d->pipe_timer);
   d->pipe_timer =
-    XtAppAddTimeOut (app, d->subproc_relaunch_delay,
+    XtAppAddTimeOut (app, (first_time_p
+                           ? 250
+                           : d->subproc_relaunch_delay),
                      relaunch_generator_timer,
                      (XtPointer) d);
 }
@@ -498,6 +498,15 @@ textclient_reshape (text_data *d,
            pix_w, pix_h, char_w, char_h);
 # endif
 
+  {
+    char s1[30];
+    char s2[30];
+    sprintf (s1, "COLUMNS=%d", d->char_w);
+    sprintf (s2, "ROWS=%d",    d->char_h);
+    putenv (strdup (s1));  /* Some versions of putenv copy, some don't */
+    putenv (strdup (s2));  /* so we must leak */
+  }
+
   if (d->pid && d->pipe)
     {
       /* Tell the sub-process that the screen size has changed. */
@@ -526,7 +535,7 @@ textclient_reshape (text_data *d,
 # endif
       close_pipe (d);
       d->input_available_p = False;
-      start_timer (d);
+      start_timer (d, False);
     }
 }
 
@@ -589,7 +598,11 @@ textclient_open (Display *dpy)
   }
 # endif
 
-  start_timer (d);
+  putenv ("TERM=vt100");
+  unsetenv ("TERMCAP");
+  unsetenv ("INSIDE_EMACS");
+
+  start_timer (d, True);
 
   return d;
 }
@@ -655,7 +668,7 @@ textclient_getc (text_data *d)
               d->out_buffer = "\r\n\r\n";
             }
 
-          start_timer (d);
+          start_timer (d, False);
         }
       d->input_available_p = False;
     }
@@ -667,7 +680,7 @@ textclient_getc (text_data *d)
 
 # ifdef DEBUG
   if (ret <= 0)
-    fprintf (stderr, "%s: textclient: getc: %d\n", progname, ret);
+    /* fprintf (stderr, "%s: textclient: getc: %d\n", progname, ret) */;
   else if (ret < ' ')
     fprintf (stderr, "%s: textclient: getc: %03o\n", progname, ret);
   else
@@ -732,12 +745,94 @@ meta_modifier (text_data *d)
 
 
 Bool
-textclient_putc (text_data *d, XKeyEvent *k)
+textclient_puts (text_data *d, const char *s)
+{
+  fputs (s, d->pipe);
+  fflush (d->pipe);
+# ifdef DEBUG
+  fprintf (stderr, "%s: textclient: write: %s\n", progname, s);
+# endif
+  return True;
+}
+
+
+Bool
+textclient_putc_event (text_data *d, XKeyEvent *k)
 {
   KeySym keysym;
   unsigned char c = 0;
+  char *s = 0;
+  char ss[3];
+
+  if (! d->pipe) return False;
+
   XLookupString (k, (char *) &c, 1, &keysym, &d->compose);
-  if (c != 0 && d->pipe)
+
+# define ESC "\x1B"
+# define CSI ESC "["
+# define SS3 ESC "O"
+
+  /* https://vt100.net/docs/vt220-rm/chapter3.html#S3.2
+     https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+   */
+  switch (keysym) {
+  case XK_Up:		s = SS3 "A";   break;
+  case XK_Down:		s = SS3 "B";   break;
+  case XK_Right:	s = SS3 "C";   break;
+  case XK_Left:		s = SS3 "D";   break;
+  case XK_Home:		s = SS3 "H";   break;
+  case XK_End:		s = SS3 "F";   break;
+  case XK_Prior:	s = CSI "5~";  break;
+  case XK_Next:		s = CSI "6~";  break;
+
+  case XK_F1:		s = SS3 "P";   break;
+  case XK_F2:		s = SS3 "Q";   break;
+  case XK_F3:		s = SS3 "R";   break;
+  case XK_F4:		s = SS3 "S";   break;
+  case XK_F5:		s = CSI "15~"; break;
+  case XK_F6:		s = CSI "17~"; break;
+  case XK_F7:		s = CSI "18~"; break;
+  case XK_F8:		s = CSI "19~"; break;
+  case XK_F9:		s = CSI "20~"; break;
+  case XK_F10:		s = CSI "21~"; break;
+  case XK_F11:		s = CSI "23~"; break;
+  case XK_F12:		s = CSI "24~"; break;
+  case XK_F13:		s = CSI "25~"; break;
+  case XK_F14:		s = CSI "26~"; break;
+  case XK_F15:		s = CSI "28~"; break;
+  case XK_F16:		s = CSI "29~"; break;
+  case XK_F17:		s = CSI "31~"; break;
+  case XK_F18:		s = CSI "32~"; break;
+  case XK_F19:		s = CSI "33~"; break;
+  case XK_F20:		s = CSI "34~"; break;
+
+  case XK_KP_F1:	s = SS3 "P";   break;
+  case XK_KP_F2:	s = SS3 "Q";   break;
+  case XK_KP_F3:	s = SS3 "R";   break;
+  case XK_KP_F4:	s = SS3 "S";   break;
+
+  case XK_KP_Up:	s = SS3 "A";   break;
+  case XK_KP_Down:	s = SS3 "B";   break;
+  case XK_KP_Right:	s = SS3 "C";   break;
+  case XK_KP_Left:	s = SS3 "D";   break;
+  case XK_KP_Home:	s = SS3 "H";   break;
+  case XK_KP_End:	s = SS3 "F";   break;
+  case XK_KP_Prior:	s = CSI "5~";  break;
+  case XK_KP_Next:	s = CSI "6~";  break;
+
+  case XK_KP_Begin:	s = CSI "E";   break;
+  case XK_KP_Insert:	s = CSI "2~";  break;
+  case XK_KP_Delete:	s = CSI "3~";  break;
+  case XK_KP_Equal:	s = SS3 "X";   break;
+  case XK_KP_Multiply:	s = SS3 "j";   break;
+  case XK_KP_Add:	s = SS3 "k";   break;
+  case XK_KP_Subtract:	s = SS3 "m";   break;
+  case XK_KP_Decimal:	s = ESC "?n";  break;
+  case XK_KP_Divide:	s = ESC "?o";  break;
+  default: break;
+  }
+
+  if (c && !s)
     {
       if (!d->swap_bs_del_p) ;
       else if (c == 127) c = 8;
@@ -747,21 +842,33 @@ textclient_putc (text_data *d, XKeyEvent *k)
       if (k->state & meta_modifier (d))
         {
           if (d->meta_sends_esc_p)
-            fputc ('\033', d->pipe);
+            {
+              ss[0] = ESC[0];
+              ss[1] = c;
+              ss[2] = 0;
+            }
           else
-            c |= 0x80;
+            {
+              ss[0] = c | 0x80;
+              ss[1] = 0;
+            }
+        }
+      else
+        {
+          ss[0] = c;
+          ss[1] = 0;
         }
 
-      fputc (c, d->pipe);
-      fflush (d->pipe);
-      k->type = 0;  /* don't interpret this event defaultly. */
+      s = ss;
+    }
 
-# ifdef DEBUG
-      fprintf (stderr, "%s: textclient: putc '%c'\n", progname, (char) c);
-# endif
-
+  if (s)
+    {
+      textclient_puts (d, s);
+      k->type = 0;
       return True;
     }
+
   return False;
 }
 

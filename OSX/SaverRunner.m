@@ -1517,6 +1517,7 @@ FAIL:
 
 # ifndef HAVE_IPHONE
   int window_count = ([saverNames count] <= 1 ? 1 : 2);
+
   NSMutableArray *a = [[NSMutableArray arrayWithCapacity: window_count+1]
                         retain];
   windows = a;
