@@ -1,4 +1,4 @@
-# configure.in --- xscreensaver, Copyright © 1997-2023 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
 #
 
 # Note: upgrading past 2.69_5 breaks the world, mostly the po/ shitshow.
@@ -32,7 +32,7 @@ fi
 ###############################################################################
 
 AH_TOP([
-/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski.
+/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski.
  * Generate this file by running 'configure' rather than editing it by hand.
  */
 ])
@@ -221,6 +221,9 @@ AH_TEMPLATE([HAVE_GLE],
 
 AH_TEMPLATE([HAVE_GLE3],
             [Define this if GL Extrusion is version 3.])
+
+AH_TEMPLATE([HAVE_WAYLAND],
+            [Define this if you have the Wayland libraries.])
 
 
 AH_TEMPLATE([HAVE_FFMPEG],
@@ -1213,6 +1216,9 @@ Installation Options:
 	[eval ac_x_app_defaults="$withval"])
 AC_PATH_X_APP_DEFAULTS
 
+# Ignore --disable-dependency-tracking, which RHEL8 rpmbuild adds by default.
+AC_ARG_ENABLE(dependency-tracking,,)
+
 
 ###############################################################################
 #
@@ -1239,19 +1245,6 @@ HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
 
 # Expand HACKDIR as HACKDIR_FULL
 HACKDIR_FULL=`eval eval eval eval eval eval eval eval eval echo $HACKDIR`
-
-# This option used to be called --enable-subdir; make sure that is no longer
-# used, since configure brain-damagedly ignores unknown --enable options.
-
-obsolete_enable=
-AC_ARG_ENABLE(subdir,,[obsolete_enable=yes])
-if test -n "$obsolete_enable"; then
-  echo "error: the --enable-subdir option has been replaced with"
-  echo "       the new --with-hackdir option; see \`configure --help'"
-  echo "       for more information."
-  exit 1
-fi
-
 
 ###############################################################################
 #
@@ -2212,6 +2205,75 @@ fi
 
 ###############################################################################
 #
+#       Check for Wayland
+#
+###############################################################################
+
+have_wayland=no
+with_wayland_req=unspecified
+AC_ARG_WITH(wayland,
+[  --with-wayland          Use native Wayland when available.],
+  [with_wayland="$withval"; with_wayland_req="$withval"],[with_wayland=yes])
+
+HANDLE_X_PATH_ARG(with_wayland, --with-wayland, Wayland)
+
+if test "$with_wayland" != yes -a "$with_wayland" != no ; then
+  echo "error: must be yes or no: --with-wayland=$with_wayland"
+  exit 1
+fi
+
+
+if test "$with_wayland" = yes; then
+  have_wayland=no
+  
+  pkgs=''
+  ok="yes"
+  pkg_check_version       wayland-server  1.0
+  pkg_check_version       wayland-client  1.0
+  pkg_check_version       wayland-scanner 1.0
+  ac_wayland_version_string="$vers"
+  have_wayland="$ok"
+  wayland_pkgs="$pkgs"
+
+  if test "$have_wayland" = yes; then
+    AC_CACHE_CHECK([for Wayland includes], ac_cv_wayland_config_cflags,
+                   [ac_cv_wayland_config_cflags=`$pkg_config --cflags $pkgs`])
+    AC_CACHE_CHECK([for Wayland libs], ac_cv_wayland_config_libs,
+                   [ac_cv_wayland_config_libs=`$pkg_config --libs $pkgs`])
+  fi
+
+  ac_wayland_config_cflags=$ac_cv_wayland_config_cflags
+  ac_wayland_config_libs=$ac_cv_wayland_config_libs
+
+  WAYLAND_DATADIR=""
+  WAYLAND_GEN=""
+  WAYLAND_IDLE_OBJS=""
+  if test "$have_wayland" = yes; then
+    WAYLAND_DATADIR=`$pkg_config --variable=prefix wayland-client`
+    WAYLAND_DATADIR="$WAYLAND_DATADIR/share"
+    WAYLAND_GEN='$(WAYLAND_GEN_HDRS) $(WAYLAND_GEN_SRCS)'
+    WAYLAND_IDLE_OBJS='$(WAYLAND_IDLE_OBJS_1)'
+  fi
+
+  if test "$have_wayland" = yes; then
+    INCLUDES="$INCLUDES $ac_wayland_config_cflags"
+    WAYLAND_LIBS="$WAYLAND_LIBS $ac_wayland_config_libs"
+    AC_DEFINE(HAVE_WAYLAND)
+  fi
+fi
+
+
+# Check for the various Gnome help and URL loading programs.
+#
+WITH_BROWSER=gnome-open
+if test "$have_wayland" = yes; then
+  AC_CHECK_PROGS(gnome_open_program,     gnome-open)
+  AC_CHECK_PROGS(gnome_url_show_program, gnome-url-show)
+fi
+
+
+###############################################################################
+#
 #       The --enable-locking option
 #
 #	Note: "configure --help" list all "--enable" options before any
@@ -2296,10 +2358,11 @@ Screen Locking Options:
 
 AC_ARG_WITH([pam_service_name],
 [  --with-pam-service-name Set the name of the xscreensaver PAM service.
-  --enable-pam-account    Whether PAM should check the result of account
-	    		  modules when authenticating.  Only do this if you
-	    		  have "account" modules configured on your system.
-  --enable-root-passwd	  Allow the root password to unlock, if not using PAM.],
+  --enable-pam-check-account-type
+                          Whether PAM should check the result of account
+                          modules when authenticating.  Only do this if you
+                          have "account" modules configured on your system.
+  --enable-root-passwd    Allow the root password to unlock, if not using PAM.],
   [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
 
 AC_ARG_ENABLE(pam-check-account-type,
@@ -4325,14 +4388,6 @@ PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
 PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
 
 
-if test "$enable_locking" = yes; then
-  LOCK_SRCS='$(LOCK_SRCS_1) $(PASSWD_SRCS)'
-  LOCK_OBJS='$(LOCK_OBJS_1) $(PASSWD_OBJS)'
-else
-  LOCK_SRCS='$(NOLOCK_SRCS_1)'
-  LOCK_OBJS='$(NOLOCK_OBJS_1)'
-fi
-
 if test "$ac_macosx" = yes; then
   EXES_OSX='$(EXES_OSX)'
   SCRIPTS_OSX='$(SCRIPTS_OSX)'
@@ -4467,6 +4522,11 @@ AC_SUBST(XINERAMA_LIBS)
 AC_SUBST(PASSWD_LIBS)
 AC_SUBST(LIBCAP_CFLAGS)
 AC_SUBST(LIBCAP_LIBS)
+AC_SUBST(WAYLAND_CFLAGS)
+AC_SUBST(WAYLAND_LIBS)
+AC_SUBST(WAYLAND_DATADIR)
+AC_SUBST(WAYLAND_GEN)
+AC_SUBST(WAYLAND_IDLE_OBJS)
 AC_SUBST(PROG_SETCAP)
 AC_SUBST(SETUID_AUTH)
 AC_SUBST(SETUID_HACKS)

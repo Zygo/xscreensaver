@@ -23,6 +23,10 @@
 #define MAX_TEXTURE 53
 #define BACK_TEXTURE 52
 
+// random position offset for sloppy mode
+#define RANDOM_POSITION_OFFSET (bp->sloppy ? (((float)random()) / ((float)RAND_MAX) - 0.5) * 0.0125 : 0)
+
+
 typedef enum { DIAMONDS, CLUBS, HEARTS, SPADES } Suit;
 typedef enum { NONE=0, ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING } Rank;
 

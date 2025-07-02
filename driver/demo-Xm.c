@@ -1,5 +1,5 @@
 /* demo-Xm.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -911,35 +911,39 @@ scroll_to_current_hack (Widget toplevel, prefs_pair *pair)
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  unsigned char *data = 0;
+  unsigned char *dataP = 0;
   Display *dpy = XtDisplay (toplevel);
-  int which = 0;
+  int hack_number = -1;
   Widget list;
 
+  /* XA_SCREENSAVER_STATUS format documented in windows.c. */
   if (XGetWindowProperty (dpy, RootWindow (dpy, 0), /* always screen #0 */
                           XA_SCREENSAVER_STATUS,
-                          0, 3, False, XA_INTEGER,
+                          0, 999, False, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
-                          &data)
+                          &dataP)
       == Success
       && type == XA_INTEGER
       && nitems >= 3
-      && data)
-    which = (int) data[2] - 1;
+      && dataP)
+    {
+      PROP32 *data = (PROP32 *) dataP;
+      hack_number = (int) data[3] - 1;	/* Hack running on the first screen */
+    }
 
-  if (data) free (data);
+  if (dataP) XFree (dataP);
 
-  if (which < 0)
+  if (hack_number < 0)
     return;
 
   list = name_to_widget (toplevel, "list");
   apply_changes_and_save (toplevel);
 
   XmListDeselectAllItems (list);	/* LessTif lossage */
-  XmListSelectPos (list, which+1, True);
+  XmListSelectPos (list, hack_number+1, True);
 
   ensure_selected_item_visible (list);
-  populate_demo_window (toplevel, which, pair);
+  populate_demo_window (toplevel, hack_number, pair);
 }
 
 
@@ -1173,7 +1177,7 @@ get_hack_blurb (Display *dpy, screenhack *hack)
     ;
   *s = 0;
   s = strrchr (prog_name, '/');
-  if (s) strcpy (prog_name, s+1);
+  if (s) memmove (prog_name, s+1, strlen (s));
 
   sprintf (doc_name,  "hacks.%s.documentation", pretty_name);
   sprintf (doc_class, "hacks.%s.documentation", prog_name);

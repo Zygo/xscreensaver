@@ -548,7 +548,7 @@ random_squares (eraser_state *st)
 
 /* I first saw something like this, albeit in reverse, in an early Tetris
    implementation for the Mac.
-    -- Torbjörn Andersson <torbjorn@dev.eurotime.se>
+    -- TorbjÃ¶rn Andersson <torbjorn@dev.eurotime.se>
  */
 static void
 slide_lines (eraser_state *st)

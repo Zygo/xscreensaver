@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright © 1993-2024 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,6 +16,7 @@
 
 #ifdef HAVE_GTK /* whole file */
 
+#define _GNU_SOURCE
 #ifdef ENABLE_NLS
 # include <locale.h>
 #endif /* ENABLE_NLS */
@@ -55,6 +56,12 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>		/* For gdk_x11_get_default_xdisplay(), etc. */
 
+#ifdef GDK_WINDOWING_WAYLAND
+# include <gdk/gdkwayland.h>
+#else
+# define GDK_IS_WAYLAND_DISPLAY(dpy) False
+#endif
+
 #if (__GNUC__ >= 4)
 # pragma GCC diagnostic pop
 #endif
@@ -72,6 +79,10 @@
 #include "atoms.h"
 #include "screenshot.h"
 #include "xmu.h"
+
+#ifdef HAVE_WAYLAND
+# include "wayland-idle.h"
+#endif
 
 #include "demo-Gtk-conf.h"
 
@@ -110,7 +121,7 @@ typedef struct {
   GtkWindow *dialog;
 
   Display *dpy;
-  Bool wayland_p;
+  enum { X11_BACKEND, WAYLAND_BACKEND, XWAYLAND_BACKEND } backend;
   Pixmap screenshot;
   Visual *gl_visual;
 
@@ -121,6 +132,7 @@ typedef struct {
   Bool flushing_p;		/* flag for breaking recursion loops */
   Bool saving_p;		/* flag for breaking recursion loops */
   Bool dpms_supported_p;	/* Whether XDPMS is available */
+  Bool grabbing_supported_p;	/* Whether "Grab Desktop" and "Fade" work */
 
   char *desired_preview_cmd;	/* subprocess we intend to run */
   char *running_preview_cmd;	/* subprocess we are currently running */
@@ -974,7 +986,7 @@ await_xscreensaver (state *s)
       Bool root_p = (geteuid () == 0);
       
       strcpy (buf, 
-              _("The xscreensaver daemon did not start up properly.\n"
+              _("The XScreenSaver daemon did not start up properly.\n"
 		"\n"));
 
       if (root_p)
@@ -2202,7 +2214,7 @@ file_chooser (GtkWindow *parent, GtkEntry *entry, char **retP,
         }
     }
   else if (verbose_p)
-    fprintf (stderr, "%s:   chooser: cancelled\n", blurb());
+    fprintf (stderr, "%s:   chooser: canceled\n", blurb());
 
   gtk_widget_destroy (dialog);
   return changed_p;
@@ -2361,9 +2373,11 @@ server_current_hack (state *s)
   int hack_number = -1;
 
   if (!s->dpy) return hack_number;
+
+  /* XA_SCREENSAVER_STATUS format documented in windows.c. */
   if (XGetWindowProperty (s->dpy, RootWindow(s->dpy, 0), /* always screen #0 */
                           XA_SCREENSAVER_STATUS,
-                          0, 3, FALSE, XA_INTEGER,
+                          0, 999, FALSE, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
                           &dataP)
       == Success
@@ -2372,7 +2386,7 @@ server_current_hack (state *s)
       && dataP)
     {
       PROP32 *data = (PROP32 *) dataP;
-      hack_number = (int) data[2] - 1;
+      hack_number = (int) data[3] - 1;	/* Hack running on the first screen */
     }
 
   if (dataP) XFree (dataP);
@@ -2555,6 +2569,10 @@ populate_prefs_page (state *s)
   can_lock_p = FALSE;
 # endif
 
+  if (s->backend == WAYLAND_BACKEND ||
+      s->backend == XWAYLAND_BACKEND)
+    can_lock_p = FALSE;
+
   /* If there is only one screen, the mode menu contains
      "random" but not "random-same".
    */
@@ -2596,11 +2614,12 @@ populate_prefs_page (state *s)
   TOGGLE_ACTIVE (dpms_button,       p->dpms_enabled_p && s->dpms_supported_p);
   TOGGLE_ACTIVE (dpms_quickoff_button, (p->dpms_quickoff_p &&
                                         s->dpms_supported_p));
-  TOGGLE_ACTIVE (grab_desk_button,  p->grab_desktop_p);
+  TOGGLE_ACTIVE (grab_desk_button,  (p->grab_desktop_p &&
+                                     s->grabbing_supported_p));
   TOGGLE_ACTIVE (grab_video_button, p->grab_video_p);
   TOGGLE_ACTIVE (grab_image_button, p->random_image_p);
-  TOGGLE_ACTIVE (fade_button,       p->fade_p);
-  TOGGLE_ACTIVE (unfade_button,     p->unfade_p);
+  TOGGLE_ACTIVE (fade_button,       p->fade_p   && s->grabbing_supported_p);
+  TOGGLE_ACTIVE (unfade_button,     p->unfade_p && s->grabbing_supported_p);
 
   switch (p->tmode)
     {
@@ -2737,8 +2756,14 @@ populate_prefs_page (state *s)
   SENSITIZE (dpms_off_spinbutton,    s->dpms_supported_p && p->dpms_enabled_p);
   SENSITIZE (dpms_quickoff_button,   s->dpms_supported_p);
 
-  SENSITIZE (fade_label,      (p->fade_p || p->unfade_p));
-  SENSITIZE (fade_spinbutton, (p->fade_p || p->unfade_p));
+  /* Fading
+   */
+  SENSITIZE (fade_button,     s->grabbing_supported_p);
+  SENSITIZE (unfade_button,   s->grabbing_supported_p);
+  SENSITIZE (fade_label,      ((p->fade_p || p->unfade_p) &&
+                               s->grabbing_supported_p));
+  SENSITIZE (fade_spinbutton, ((p->fade_p || p->unfade_p) &&
+                               s->grabbing_supported_p));
 
 # undef SENSITIZE
 
@@ -3211,11 +3236,11 @@ clear_preview_window (state *s)
 
   GtkWidget *notebook = win->preview_notebook;
   gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook),
-                                 (!s->running_preview_error_p ? 0 :  /* ok */
-                                  nothing_p    ? 3 : /* no hacks installed */
-                                  !available_p ? 2 : /* hack not installed */
-                                  s->wayland_p ? 4 : /* fucking wayland */
-                                  1));		     /* preview failed */
+         (!s->running_preview_error_p	? 0 : /* ok */
+          nothing_p			? 3 : /* no hacks installed */
+          !available_p			? 2 : /* hack not installed */
+          s->backend == WAYLAND_BACKEND	? 4 : /* no previews without X11 */
+          1));				      /* preview failed */
 }
 
 
@@ -3227,7 +3252,9 @@ preview_resize_cb (GtkWidget *self, GdkEvent *event, gpointer data)
 
   /* If a subproc is running, clear the window to black when we resize.
      Without this, sometimes turds get left behind. */
-  if (s->dpy && !s->wayland_p && s->running_preview_cmd)
+  if (s->dpy &&
+      s->backend != WAYLAND_BACKEND &&
+      s->running_preview_cmd)
     {
       GdkWindow *window = gtk_widget_get_window (self);
       Window id;
@@ -3260,7 +3287,9 @@ reset_preview_window (state *s)
    */
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
   GtkWidget *pr = win->preview;
-  if (s->dpy && !s->wayland_p && gtk_widget_get_realized (pr))
+  if (s->dpy &&
+      s->backend != WAYLAND_BACKEND &&
+      gtk_widget_get_realized (pr))
     {
       GdkWindow *window = gtk_widget_get_window (pr);
       Window oid = (window ? gdk_x11_window_get_xid (window) : 0);
@@ -3585,7 +3614,7 @@ launch_preview_subproc (state *s)
 
   new_cmd = malloc (strlen (cmd) + 40);
 
-  id = (window && !s->wayland_p
+  id = (window && s->backend != WAYLAND_BACKEND
         ? gdk_x11_window_get_xid (window)
         : 0);
   if (id == 0)
@@ -3893,9 +3922,11 @@ screen_blanked_p (state *s)
   Bool blanked_p = FALSE;
 
   if (!s->dpy) return FALSE;
+
+  /* XA_SCREENSAVER_STATUS format documented in windows.c. */
   if (XGetWindowProperty (s->dpy, RootWindow (s->dpy, 0), /* always screen 0 */
                           XA_SCREENSAVER_STATUS,
-                          0, 3, FALSE, XA_INTEGER,
+                          0, 999, FALSE, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
                           &dataP)
       == Success
@@ -3904,7 +3935,7 @@ screen_blanked_p (state *s)
       && dataP)
     {
       Atom *data = (Atom *) dataP;
-      blanked_p = (data[0] == XA_BLANK || data[0] == XA_LOCK);
+      blanked_p = (data[0] != 0);
     }
 
   if (dataP) XFree (dataP);
@@ -4159,7 +4190,7 @@ the_network_is_not_the_computer (gpointer data)
        */
       sprintf(msg,
 	    _("%s is running as user \"%s\" on host \"%s\".\n"
-	      "But the xscreensaver managing display \"%.25s\"\n"
+	      "But the XScreenSaver managing display \"%.25s\"\n"
 	      "is running as user \"%s\" on host \"%s\".\n"
 	      "\n"
 	      "Since they are different users, they won't be reading/writing\n"
@@ -4169,7 +4200,7 @@ the_network_is_not_the_computer (gpointer data)
 	      "You should either re-run %s as \"%s\", or re-run\n"
 	      "xscreensaver as \"%s\".\n"
               "\n"
-              "Restart the xscreensaver daemon now?\n"),
+              "Restart the XScreenSaver daemon now?\n"),
 	      progname, luser, lhost,
 	      d,
 	      (ruser ? ruser : "???"), (rhost ? rhost : "???"),
@@ -4183,7 +4214,7 @@ the_network_is_not_the_computer (gpointer data)
        */
       sprintf (msg,
 	      _("%s is running as user \"%s\" on host \"%s\".\n"
-	       "But the xscreensaver managing display \"%s\"\n"
+	       "But the XScreenSaver managing display \"%s\"\n"
 	       "is running as user \"%s\" on host \"%s\".\n"
 	       "\n"
 	       "If those two machines don't share a file system (that is,\n"
@@ -4204,10 +4235,10 @@ the_network_is_not_the_computer (gpointer data)
        */
       sprintf (msg,
 	     _("This is %s version %s.\n"
-	       "But the xscreensaver managing display \"%s\"\n"
+	       "But the XScreenSaver managing display \"%s\"\n"
 	       "is version %s.  This could cause problems.\n"
 	       "\n"
-	       "Restart the xscreensaver daemon now?\n"),
+	       "Restart the XScreenSaver daemon now?\n"),
 	       progname, s->short_version,
 	       d,
 	       rversion);
@@ -4253,16 +4284,52 @@ the_network_is_not_the_computer (gpointer data)
     warning_dialog (s->window, _("Error"),
       _("No GL visuals: the xscreensaver-gl* packages are required."));
 
-  if (s->wayland_p)
-    warning_dialog (s->window, _("Warning"),
-                _("You are running Wayland rather than the X Window System.\n"
-                  "\n"
-                  "Under Wayland, idle-detection fails when non-X11 programs\n"
-                  "are selected, meaning the screen may blank prematurely.\n"
-                  "Also, locking is impossible.\n"
-                  "\n"
-                  "See the XScreenSaver manual for instructions on\n"
-                  "configuring your system to use X11 instead of Wayland.\n"));
+  if (s->backend != X11_BACKEND)
+    {
+# ifdef HAVE_WAYLAND
+      /* Connect to the Wayland server in the same way that the XScreenSaver
+         daemon will, and if we are in a state where the daemon won't work
+         properly, pop up a dialog box explaining why.
+       */
+      const char *wayland_err = 0;
+      wayland_state *wayland = wayland_idle_init (NULL, NULL, &wayland_err);
+
+      if (s->debug_p && wayland_err)
+        fprintf (stderr, "%s: wayland: %s\n", blurb(), wayland_err);
+
+      if (wayland)   /* Connected to Wayland, have necessary extensions. */
+        {
+          wayland_idle_free (wayland);
+        }
+      else if (wayland_err && !strcmp (wayland_err, "connection failed"))
+        {
+          if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
+            {
+              warning_dialog (s->window, _("Warning"),
+                _("Unable to connect to the Wayland server. "
+                  "The XScreenSaver daemon will not work.\n"));
+            }
+          /* Otherwise, presumably running under real X11. */
+        }
+      else if (wayland_err)
+        {
+          /* Connected but the necessary extensions are missing. */
+          char msg [1024];
+          sprintf (msg,
+                   _("Wayland error:\n\n"
+                     "%.100s\n\n"
+                     "The XScreenSaver daemon will not work.\n"),
+                   wayland_err);
+          warning_dialog (s->window, _("Warning"), msg);
+        }
+# else  /* !HAVE_WAYLAND */
+      if (s->debug_p)
+        fprintf (stderr, "%s: wayland: disabled at compile time\n", blurb());
+      warning_dialog (s->window, _("Warning"),
+        _("Not compiled with support for Wayland. "
+          "The XScreenSaver daemon will not work.\n"));
+# endif /* !HAVE_WAYLAND */
+    }
 
   return FALSE;  /* Only run timer once */
 }
@@ -4834,7 +4901,7 @@ save_window_position (state *s, GtkWindow *win, int x, int y, Bool dialog_p)
   char *old = p->settings_geom;
   char str[100];
 
-  if (!s->dpy || s->wayland_p) return;
+  if (!s->dpy || s->backend == WAYLAND_BACKEND) return;
   wm_decoration_origin (win, &x, &y);
 
   if (!old || !*old ||
@@ -4974,6 +5041,7 @@ const gchar *accels[][2] = {
 static void
 xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
 {
+  GdkDisplay *gdpy = gdk_display_get_default();
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (self);
   state *s = &win->state;
   saver_preferences *p = &s->prefs;
@@ -4982,48 +5050,31 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
   s->short_version = XSCREENSAVER_VERSION;
   s->window = GTK_WINDOW (win);
 
-  s->dpy = gdk_x11_get_default_xdisplay();
+  if (GDK_IS_WAYLAND_DISPLAY (gdpy))
+    s->backend = WAYLAND_BACKEND;		/* Should not happen */
+  else if (GDK_IS_X11_DISPLAY (gdpy) &&
+           (getenv ("WAYLAND_DISPLAY") ||
+            getenv ("WAYLAND_SOCKET")))
+    s->backend = XWAYLAND_BACKEND;
+  else
+    s->backend = X11_BACKEND;
 
-  /* Debian 11.4, Gtk 3.24.24, 2022: under Wayland, get_default_xdisplay is
-     returning uninitialized data!  However, gdk_x11_window_get_xid prints a
-     warning and returns NULL.  So let's try that, and as a fallback, also try
-     and sanity check the contents of the Display structure...
+  if (s->debug_p)
+    fprintf (stderr, "%s: GDK backend is %s\n", blurb(),
+             (s->backend == X11_BACKEND      ? "X11" :
+              s->backend == XWAYLAND_BACKEND ? "XWayland" :
+              s->backend == WAYLAND_BACKEND  ? "Wayland" : "???"));
+
+  if (s->backend != WAYLAND_BACKEND)
+    s->dpy = gdk_x11_get_default_xdisplay();
+
+
+  /* If GDK is using native Wayland, try to open an X11 connection to
+     XWayland anyway, so that get_string_resource and load_init_file work.
+     This should never happen, since we should always be either X11_BACKEND
+     or XWAYLAND_BACKEND, never WAYLAND_BACKEND.
    */
-  if (! gdk_x11_window_get_xid (gtk_widget_get_window (self)))
-    {
-      s->dpy = NULL;
-      s->wayland_p = TRUE;
-    }
-
-  if (s->dpy)
-    {
-      if (ProtocolVersion (s->dpy) != 11 ||
-          ProtocolRevision (s->dpy) != 0)
-        {
-          fprintf (stderr, "%s: uninitialized data in Display: "
-                   "protocol version %d.%d!\n", blurb(),
-                   ProtocolVersion(s->dpy), ProtocolRevision(s->dpy));
-          s->dpy = NULL;
-          s->wayland_p = TRUE;
-        }
-    }
-
-  /* If we don't have a display connection, then we are surely under Wayland
-     even if the environment variable is not set.
-   */
-  if (!s->dpy &&
-      !getenv ("WAYLAND_DISPLAY") &&
-      !getenv ("WAYLAND_SOCKET"))
-    putenv ("WAYLAND_DISPLAY=probably");
-
-  if (getenv ("WAYLAND_DISPLAY") ||
-      getenv ("WAYLAND_SOCKET"))
-    s->wayland_p = TRUE;
-
-  /* If GTK is running directly under Wayland, try to open an X11 connection
-     to XWayland anyway, so that get_string_resource and load_init_file work.
-   */
-  if (! s->dpy)
+  if (s->backend == WAYLAND_BACKEND)
     {
       s->dpy = XOpenDisplay (NULL);
       if (s->debug_p)
@@ -5104,9 +5155,42 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
     fprintf (stderr, "%s: DPMS not supported at compile time\n", blurb());
 # endif /* !HAVE_DPMS_EXTENSION */
 
-# if defined(__APPLE__) && !defined(__OPTIMIZE__)
+# if defined(__APPLE__) && !defined(HAVE_COCOA) && !defined(__OPTIMIZE__)
   s->dpms_supported_p = TRUE;  /* macOS X11: debugging kludge */
 # endif
+
+  /* Under Wayland, we can only grab screenshots if "grim" is installed,
+     and even so, there's no way to grab screenshots under GNOME or KDE.
+     See comment in xscreensaver-getimage.c, and discussion thread here:
+     https://www.jwz.org/blog/2025/06/wayland-screenshots/#comment-260326
+   */
+  s->grabbing_supported_p = True;
+  if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
+    {
+      const char *prog = "grim";
+      char *desk = getenv ("XDG_CURRENT_DESKTOP");
+fprintf(stderr,"##A %s\n", desk);
+      if (desk &&
+          (strcasestr (desk, "GNOME") ||
+           strcasestr (desk, "KDE")))
+        {
+fprintf(stderr,"##B %s\n", desk);
+          s->grabbing_supported_p = False;
+          if (s->debug_p)
+            fprintf (stderr,
+                     "%s: screenshots and fading not supported on Wayland %s\n",
+                     blurb(), desk);
+        }
+      else if (! on_path_p (prog))
+        {
+fprintf(stderr,"##C %s\n", desk);
+          s->grabbing_supported_p = False;
+          if (s->debug_p)
+            fprintf (stderr,
+                     "%s: screenshots and fading on Wayland require \"%s\"\n",
+                     blurb(), prog);
+        }
+    }
 
   if (s->dpy)
     init_xscreensaver_atoms (s->dpy);
@@ -5126,7 +5210,7 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
   populate_prefs_page (s);
   sensitize_demo_widgets (s, FALSE);
   scroll_to_current_hack (s);
-  if (s->dpy && !s->wayland_p)
+  if (s->dpy && s->backend != WAYLAND_BACKEND)
     fix_preview_visual (s);
   if (! s->multi_screen_p)
     hide_mode_menu_random_same (s);
@@ -5167,11 +5251,16 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
 # endif
 
   /* Grab the screenshot pixmap before mapping the window. */
-  if (s->dpy && !s->wayland_p)
+  if (s->dpy && s->backend != WAYLAND_BACKEND)
     {
       GdkWindow *gw = gtk_widget_get_window (win->preview);
       Window xw = gdk_x11_window_get_xid (gw);
-      s->screenshot = screenshot_grab (s->dpy, xw, TRUE, s->debug_p);
+      XWindowAttributes xgwa;
+      /* Make sure the grab is the size of the root window.
+         It would be better if it was the screen, but close enough. */
+      XGetWindowAttributes (s->dpy, xw, &xgwa);
+      if (s->grabbing_supported_p)
+        s->screenshot = screenshot_grab (s->dpy, xgwa.root, TRUE, s->debug_p);
     }
 
   /* Issue any warnings about the running xscreensaver daemon.
@@ -5397,6 +5486,14 @@ xscreensaver_app_new (void)
                                  "Print diagnostics to stderr",
                                  NULL);
   g_signal_connect (app, "handle-local-options", G_CALLBACK (opts_cb), app);
+
+  /* If we are under Wayland, tell GDK to use XWayland as the backend rather
+     than native Wayland.  This is the only way for hack previews to work.
+     If this setting is respected, we should always end up with 'backend' set
+     to either X11_BACKEND or XWAYLAND_BACKEND, and never to WAYLAND_BACKEND.
+   */
+  gdk_set_allowed_backends ("x11");
+
   return app;
 }
 

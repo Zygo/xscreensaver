@@ -1375,8 +1375,6 @@ draw_map (ModeInfo *mi)
       sprintf (buf, "%.3f\xC2\xB0, %.3f\xC2\xB0", bp->pos.lat, bp->pos.lon);
 # elif 0
       /* 37° 46' 15.63" N, 122° 24' 45.70" W */
-      /* This screws up the label image. Some kind of bug in texfont.c?
-         But only on X11, not Cocoa. */
       double alat = bp->pos.lat >= 0 ? bp->pos.lat : -bp->pos.lat;
       double alon = bp->pos.lon >= 0 ? bp->pos.lon : -bp->pos.lon;
       sprintf (buf,

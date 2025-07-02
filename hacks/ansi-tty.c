@@ -630,7 +630,7 @@ ansi_tty_print (ansi_tty *tty, unsigned long c)
   int scrolled_p = False;
 
   const char *kind = "?";
-  int av[255];
+  int av[255] = { UNDEF };
   int ac = 0;
   int i;
 

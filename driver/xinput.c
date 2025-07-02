@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -269,7 +269,8 @@ xinput_event_to_xlib (int evtype, XIDeviceEvent *in, XEvent *out)
 
 
 static void
-print_kbd_event (XKeyEvent *xkey, XComposeStatus *compose, Bool x11_p)
+print_kbd_event (XKeyEvent *xkey, XComposeStatus *compose, XIC ic,
+                 Bool x11_p, const char *desc)
 {
   if (debug_p)		/* Passwords show up in plaintext! */
     {
@@ -279,6 +280,40 @@ print_kbd_event (XKeyEvent *xkey, XComposeStatus *compose, Bool x11_p)
       int n = XLookupString (xkey, c, sizeof(c)-1, &keysym, compose);
       const char *ks = keysym ? XKeysymToString (keysym) : "NULL";
       c[n] = 0;
+
+      if (ic && xkey->type == KeyPress)
+        {
+          char c2[sizeof(c)];
+          Status s = 0;
+          KeySym keysym2 = 0;
+          n = Xutf8LookupString (ic, (XKeyPressedEvent *) xkey,
+                                 c2, sizeof(c2)-1, &keysym2, &s);
+          c2[n] = 0;
+
+          switch (s) {
+          case XLookupChars:		/* Set 'c2' to a UTF8 string */
+            if (*c2)
+              strcpy (c, c2);
+            break;
+          case XLookupKeySym:		/* Set 'keysym2' but not 'c2' */
+            if (keysym2)
+              keysym = keysym2;
+            break;
+          case XLookupBoth:		/* Set 'keysym2' and 'c2' */
+            if (keysym2)
+              keysym = keysym2;
+            if (*c2)
+              strcpy (c, c2);
+            break;
+          case XLookupNone:		/* No input yet */
+          case XBufferOverflow:		/* 'c2' was too small */
+            break;
+          default:
+            abort();
+            break;
+          }
+        }
+
       if      (*c == '\n') strcpy (c, "\\n");
       else if (*c == '\r') strcpy (c, "\\r");
       else if (*c == '\t') strcpy (c, "\\t");
@@ -295,7 +330,7 @@ print_kbd_event (XKeyEvent *xkey, XComposeStatus *compose, Bool x11_p)
       if (*mods) mods++;
       if (!*mods) strcat (mods, "0");
 
-      fprintf (stderr, "%s: %s    0x%02X %s %s \"%s\"\n", blurb(),
+      fprintf (stderr, "%s: %s    0x%02X %s %s \"%s\"%s\n", blurb(),
                (x11_p
                 ? (xkey->type == KeyPress
                    ? "X11 KeyPress    "
@@ -303,7 +338,8 @@ print_kbd_event (XKeyEvent *xkey, XComposeStatus *compose, Bool x11_p)
                 : (xkey->type == KeyPress
                    ? "XI_RawKeyPress  "
                    : "XI_RawKeyRelease")),
-               xkey->keycode, mods, ks, c);
+               xkey->keycode, mods, ks, c,
+               (desc ? desc : ""));
     }
   else			/* Log only that the KeyPress happened. */
     {
@@ -314,7 +350,7 @@ print_kbd_event (XKeyEvent *xkey, XComposeStatus *compose, Bool x11_p)
 
 
 void
-print_xinput_event (Display *dpy, XEvent *xev, const char *desc)
+print_xinput_event (Display *dpy, XEvent *xev, XIC ic, const char *desc)
 {
   XIRawEvent *re;
 
@@ -323,7 +359,7 @@ print_xinput_event (Display *dpy, XEvent *xev, const char *desc)
   case KeyRelease:
     {
       static XComposeStatus compose = { 0, };
-      print_kbd_event (&xev->xkey, &compose, True);
+      print_kbd_event (&xev->xkey, &compose, ic, True, desc);
     }
     break;
 
@@ -368,7 +404,7 @@ print_xinput_event (Display *dpy, XEvent *xev, const char *desc)
         else
           {
             static XComposeStatus compose = { 0, };
-            print_kbd_event (&ev2.xkey, &compose, False);
+            print_kbd_event (&ev2.xkey, &compose, ic, False, desc);
           }
         break;
       }

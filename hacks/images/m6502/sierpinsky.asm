@@ -1,7 +1,7 @@
 ; 6502 assembler Sierpinsky Triangle ver.2
 ; by Magnus Wedmark 2007-05-02
 ; This program is especially written for
-; the 6502asm.com competition and 
+; the 6502asm dot com competition and 
 ; uses the 32*32 pixel display used in that
 ; virtual platform. The sierpinsky 
 ; fractal is one of the simplest to

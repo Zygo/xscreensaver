@@ -1078,7 +1078,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     p = [dir stringByAppendingPathComponent: p];
 
     NSString *classname = [[p lastPathComponent] stringByDeletingPathExtension];
-    NSString *title = classname;
+    NSString *title;
 
     // Get the title's capitalization right by reading the XML file.
 
@@ -1095,6 +1095,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
       NSAssert1 (r.length, @"no name in %@", p);
       if (r.length)
         title = [xml substringToIndex: r.location];
+      else
+        title = classname;
     }
 # else  // !HAVE_IPHONE
     NSBundle *nsb = [NSBundle bundleWithPath:p];

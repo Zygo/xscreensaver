@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,11 +14,14 @@
 # include "config.h"
 #endif
 
+#define _GNU_SOURCE
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>	/* for uname() */
 #endif /* HAVE_UNAME */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <pwd.h>		/* for getpwuid() */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>		/* for XSetClassHint() */
@@ -39,6 +42,7 @@
 #include "visual.h"
 #include "screens.h"
 #include "screenshot.h"
+#include "exec.h"
 #include "fade.h"
 #include "resources.h"
 #include "xft.h"
@@ -52,16 +56,30 @@ ERROR!  You must not include vroot.h in this file.
 #endif
 
 
-static void reset_watchdog_timer (saver_info *si);
-
 void
 store_saver_status (saver_info *si)
 {
-  /* The contents of XA_SCREENSAVER_STATUS has LOCK/BLANK/0 in the first slot,
-     the time at which that state began in the second slot, and the ordinal of
-     the running hacks on each screen (1-based) in subsequent slots.  Since
-     we don't know the blank-versus-lock status here, we leave whatever was
-     there before unchanged: it will be updated by "xscreensaver".
+  /* Structure of the XA_SCREENSAVER_STATUS property:
+
+     XScreenSaver 3.20, 1999:	XScreenSaver 6.11, 2025:
+
+	0: BLANK | LOCK | 0	0: BLANK | LOCK | AUTH | 0
+	1: 32 bit time_t	1: 64 bit time_t hi
+	2: screen 0 hack	2: 64 bit time_t lo
+	3: screen 1 hack	3: screen 0 hack
+	   ...			4: screen 1 hack
+				   ...
+
+     The first slot is the status: blanked, locked, locked with the password
+     dialog posted, or 0 for unblanked.
+
+     The time_t is the time at which that status began.
+
+     Following all of that is the list of the ordinals of the hacks running on
+     each screen, 1-based.
+
+     Since we don't know the blank/lock/auth status here, we leave whatever
+     was there before unchanged: those will be updated by "xscreensaver".
 
      XA_SCREENSAVER_STATUS is stored on the (real) root window of screen 0.
 
@@ -82,44 +100,70 @@ store_saver_status (saver_info *si)
   PROP32 *status = 0;
   int format;
   unsigned long nitems, bytesafter;
-  int nitems2 = si->nscreens + 2;
-  int i;
+  int i, j;
+  PROP32 state = XA_BLANK;
+  time_t tt = 0;
+
+  /* I hate using XGrabServer, but the calls to read and then alter the
+     property must be atomic, and there's no other way to do that. */
+  XGrabServer (dpy);
+  XSync (dpy, False);
 
   /* Read the old property, so we can change just our parts. */
-  XGetWindowProperty (dpy, w,
-                      XA_SCREENSAVER_STATUS,
-                      0, 999, False, XA_INTEGER,
-                      &type, &format, &nitems, &bytesafter,
-                      &dataP);
-
-  status = (PROP32 *) calloc (nitems2, sizeof(PROP32));
-
-  if (dataP && type == XA_INTEGER && nitems >= 3)
+  if (XGetWindowProperty (dpy, w,
+                          XA_SCREENSAVER_STATUS,
+                          0, 999, False, XA_INTEGER,
+                          &type, &format, &nitems, &bytesafter,
+                          &dataP)
+      == Success
+      && type == XA_INTEGER
+      && nitems >= 3
+      && dataP)
     {
-      status[0] = ((PROP32 *) dataP)[0];
-      status[1] = ((PROP32 *) dataP)[1];
+      PROP32 *data = (PROP32 *) dataP;
+      state = data[0];
+      tt = (time_t)				/* 64 bit time_t */
+        ((((unsigned long) data[1] & 0xFFFFFFFFL) << 32) |
+          ((unsigned long) data[2] & 0xFFFFFFFFL));
     }
+
+  nitems = 3 + si->nscreens;
+  status = (PROP32 *) calloc (nitems, sizeof(*status));
+
+  j = 0;
+  status[j++] = state;
+  status[j++] = (PROP32) (((unsigned long) tt) >> 32);
+  status[j++] = (PROP32) (((unsigned long) tt) & 0xFFFFFFFFL);
 
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
-      status[2 + i] = ssi->current_hack + 1;  /* 1-based */
+      status[j++] = ssi->current_hack + 1;  /* 1-based */
     }
+  if (j != nitems) abort();
 
   XChangeProperty (si->dpy, w, XA_SCREENSAVER_STATUS, XA_INTEGER, 32,
-                   PropModeReplace, (unsigned char *) status, nitems2);
+                   PropModeReplace, (unsigned char *) status, nitems);
+  XUngrabServer (dpy);
   XSync (dpy, False);
 
   if (si->prefs.debug_p && si->prefs.verbose_p)
     {
       int i;
-      fprintf (stderr, "%s: wrote status property: 0x%lx: %s", blurb(),
-               (unsigned long) w,
-               (status[0] == XA_LOCK  ? "LOCK" :
-                status[0] == XA_BLANK ? "BLANK" :
-                status[0] == 0 ? "0" : "???"));
-      for (i = 1; i < nitems; i++)
-        fprintf (stderr, ", %lu", status[i]);
+      fprintf (stderr, "%s: wrote status property: 0x%lx: ", blurb(),
+               (unsigned long) w);
+      for (i = 0; i < nitems; i++)
+        {
+          if (i > 0) fprintf (stderr, ", ");
+          if (i == 0 || i == 2)
+            fprintf (stderr, "%s",
+                     (status[i] == XA_LOCK  ? "LOCK"  :
+                      status[i] == XA_BLANK ? "BLANK" :
+                      status[i] == XA_AUTH  ? "AUTH"  :
+                      status[i] == 0 ? "0" : "???"));
+          else
+            fprintf (stderr, "%lu", status[i]);
+        }
       fprintf (stderr, "\n");
     }
 
@@ -432,9 +476,45 @@ blank_screen (saver_info *si)
   saver_preferences *p = &si->prefs;
   Bool user_active_p = False;
   int i;
+  Bool grabbing_supported_p = True;
 
   initialize_screensaver_window (si);
   sync_server_dpms_settings (si->dpy, p);
+
+  /* Under Wayland, we can only grab screenshots if "grim" is installed,
+     and even so, there's no way to grab screenshots under GNOME or KDE.
+     See comment in xscreensaver-getimage.c, and discussion thread here:
+     https://www.jwz.org/blog/2025/06/wayland-screenshots/#comment-260326
+   */
+  if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
+    {
+      const char *prog = "grim";
+      char *desk = getenv ("XDG_CURRENT_DESKTOP");
+      if (desk &&
+          (strcasestr (desk, "GNOME") ||
+           strcasestr (desk, "KDE")))
+        {
+          grabbing_supported_p = False;
+          if (p->verbose_p || p->fade_p || p->unfade_p || p->grab_desktop_p)
+            fprintf (stderr,
+                     "%s: screenshots and fading not supported on Wayland %s\n",
+                     blurb(), desk);
+        }
+      else if (! on_path_p (prog))
+        {
+          grabbing_supported_p = False;
+          if (p->verbose_p || p->fade_p || p->unfade_p || p->grab_desktop_p)
+            fprintf (stderr,
+                     "%s: screenshots and fading on Wayland require \"%s\"\n",
+                     blurb(), prog);
+        }
+    }
+
+  if (! grabbing_supported_p)
+    {
+      p->fade_p   = False;
+      p->unfade_p = False;
+    }
 
   /* Save a screenshot.  Must be before fade-out. */
   for (i = 0; i < si->nscreens; i++)
@@ -442,8 +522,10 @@ blank_screen (saver_info *si)
       saver_screen_info *ssi = &si->screens[i];
       if (ssi->screenshot)
         XFreePixmap (si->dpy, ssi->screenshot);
-      ssi->screenshot =
-        screenshot_grab (si->dpy, ssi->screensaver_window, False, p->verbose_p);
+      if (grabbing_supported_p)
+        ssi->screenshot =
+          screenshot_grab (si->dpy, ssi->screensaver_window, False,
+                           p->verbose_p);
     }
 
   if (p->fade_p &&
@@ -546,6 +628,13 @@ unblank_screen (saver_info *si)
                                     True,  /* out_p */
                                     False, /* from_desktop_p */
                                     &si->fade_state);
+
+      for (i = 0; i < si->nscreens; i++)
+	{
+	  saver_screen_info *ssi = &si->screens[i];
+          XClearWindow (si->dpy, ssi->screensaver_window);
+	}
+
       if (! interrupted_p)
         interrupted_p = fade_screens (si->app, si->dpy,
                                       current_windows, si->nscreens,
@@ -976,10 +1065,19 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
      what ~/.xscreensaver says they should be. */
   sync_server_dpms_settings (si->dpy, p);
 
+  /* If the wall clock tells us that the monitor should be powered off now,
+     and the auth dialog is not currently on screen, make sure that the
+     monitor is off. */
+  brute_force_dpms (si->dpy, p,
+                    (si->auth_p
+                     ? 0
+                     : si->activity_time));
+
   if (si->prefs.debug_p)
     fprintf (stderr, "%s: watchdog timer raising screen\n", blurb());
 
-  raise_windows (si);
+  if (! si->auth_p)		/* Do not race with the password dialog */
+    raise_windows (si);
 
   running_p = any_screenhacks_running_p (si);
   on_p = monitor_powered_on_p (si->dpy);
@@ -1021,28 +1119,58 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
     }
 
   /* Re-schedule this timer.  The watchdog timer defaults to a bit less
-     than the hack cycle period, but is never longer than one hour.
+     than the hack cycle period, but is never longer than one minute.
    */
   si->watchdog_id = 0;
   reset_watchdog_timer (si);
 }
 
 
-static void
+void
 reset_watchdog_timer (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
+  time_t now = time ((time_t *) 0);
+
+  /* When should the watchdog next run?
+     We have a few choices, pick the one that comes soonest.
+     - A fraction of the cycle time;
+     - A minute from now;
+     - The next DPMS event;
+     - Shortly after the password dialog goes away;
+     - Not sooner than half a minute, except for DPMS or password.
+   */
+# define WHEN(TT) do { \
+    time_t tt = (TT); \
+    if (tt > now && tt < when) when = tt; \
+  } while (0)
+
+  int max = 57;
+  int min = 27;
+  time_t when = now + max;
+
+  WHEN (now + (p->cycle * 0.6) / 1000);
+  if (when < now + min) when = now + min;
+
+  WHEN (si->activity_time + p->dpms_standby / 1000);
+  WHEN (si->activity_time + p->dpms_suspend / 1000);
+  WHEN (si->activity_time + p->dpms_off     / 1000);
+
+  /* So that we do DPMS promptly after auth dialog is canceled. */
+  if (si->auth_p) WHEN (now + 2);
+
+  min = 2;
+  if (when < now + min) when = now + min;
 
   if (si->watchdog_id)
-    {
-      XtRemoveTimeOut (si->watchdog_id);
-      si->watchdog_id = 0;
-    }
+    XtRemoveTimeOut (si->watchdog_id);
 
-  if (p->watchdog_timeout <= 0) return;
-  si->watchdog_id = XtAppAddTimeOut (si->app, p->watchdog_timeout,
+  si->watchdog_id = XtAppAddTimeOut (si->app,
+                                     (when - now) * 1000,
                                      watchdog_timer, (XtPointer) si);
-  if (p->debug_p)
-    fprintf (stderr, "%s: restarting watchdog_timer (%ld, %ld)\n",
-             blurb(), p->watchdog_timeout, si->watchdog_id);
+  if (p->verbose_p > 1)
+    fprintf (stderr, "%s: watchdog in %d:%02d:%02d\n", blurb(),
+             (int)  (when - now) / (60 * 60),
+             (int) ((when - now) % (60 * 60)) / 60,
+             (int)  (when - now) % 60);
 }

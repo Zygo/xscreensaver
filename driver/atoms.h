@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright © 1991-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,7 +15,7 @@
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_RESPONSE,
      XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO, XA_EXIT,
      XA_BLANK, XA_LOCK, XA_ACTIVATE, XA_SUSPEND, XA_NEXT, XA_PREV,
-     XA_DEACTIVATE, XA_CYCLE, XA_RESTART,
+     XA_DEACTIVATE, XA_CYCLE, XA_RESTART, XA_AUTH,
      XA_NET_WM_PID, XA_NET_WM_STATE, XA_NET_WM_STATE_ABOVE,
      XA_NET_WM_STATE_FULLSCREEN, XA_NET_WM_BYPASS_COMPOSITOR,
      XA_NET_WM_STATE_STAYS_ON_TOP, XA_KDE_NET_WM_WINDOW_TYPE_OVERRIDE,
@@ -34,6 +34,5 @@ extern void xscreensaver_set_wm_atoms (Display *, Window,
    of longs, even if long is 64 bits (using 32 of each 64.)
  */
 typedef long PROP32;
-
 
 #endif /* _XSCREENSAVER_ATOMS_H_ */

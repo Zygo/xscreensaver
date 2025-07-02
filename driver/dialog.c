@@ -1,5 +1,5 @@
 /* dialog.c --- the password dialog and splash screen.
- * xscreensaver, Copyright © 1993-2023 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -158,6 +158,8 @@ struct window_state {
   auth_state auth_state;
   int xi_opcode;
   int xkb_opcode;
+  XIM im;
+  XIC ic;
 
   /* Variant strings
    */
@@ -880,6 +882,40 @@ grab_keyboard_and_mouse (window_state *ws)
 }
 
 
+/* In the olden days, the way to have multiple keyboard layouts was:
+
+   A) Run "xmodmap" to load a different layout, one at a time.  Fun!
+
+   B) Have a "Mode_switch" key somewhere on your keyboard (traditionally on
+      the key labeled "AltGr"), and attached to Mod5.  When "Mode_switch" was
+      toggled on, the KeyPress event's 'state' bitmask would have the Mod5 bit
+      set, meaning that the client should use the keycode's 3rd and 4th
+      columns in the map instead of the 1st and 2nd.  In this way you could
+      have exactly two layouts.
+
+   But in This Modern World, the XKeyboard extension does... other magic.
+
+   C) Under LXDE circa 2021-2025, the Keyboard Preferences dialog lets you
+      select one alternate keyboard, and a key combo, typically Ctrl + Alt.
+      Through some mechanism I do not understand, it configures XKB so that
+      pressing Ctrl + Alt causes XLookupString to map the keycode to a
+      different keysym.  It does this without the 'state' field having Mod5
+      set.  
+
+      Bit 13 is set in 'state', but I don't know what that is or where it is
+      defined.  If I had to guess, I'd say that XKB.h:XkbBuildCoreState()
+      uses bits 13 and 14 to indicate up to 4 alternate keyboard layouts, but
+      I have't found any documentation to this effect, nor do I know how
+      XLookupString knows to interpret those bits.  Or why LXDE limits you to
+      just 1 alternate layout.
+
+      When you press Ctrl + Alt, an XkbEvent comes in, which is our clue that
+      the keyboard layout *may* have changed.  When that happens, we call
+      this function to present the name of the current layout on the window.
+
+      Pressing Ctrl + Alt does not send a MappingNotify event, because that
+      would make too much sense.
+ */
 static void
 get_keyboard_layout (window_state *ws)
 {
@@ -979,6 +1015,24 @@ create_window (window_state *ws, int w, int h)
   XSetWindowBackground (ws->dpy, ws->window, ws->background);
   XSetWindowColormap (ws->dpy, ws->window, ws->cmap);
   xscreensaver_set_wm_atoms (ws->dpy, ws->window, w, h, 0);
+
+  /* An input method is necessary for dead keys to work.
+   */
+  if (! ws->im)
+    ws->im = XOpenIM (ws->dpy, NULL, NULL, NULL);
+  if (ws->ic)
+    XDestroyIC (ws->ic), ws->ic = 0;
+  if (ws->im)
+    ws->ic = XCreateIC (ws->im,
+                        XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+                        XNClientWindow, ws->window,
+                        NULL);
+  if (ws->ic)
+    XSetICFocus (ws->ic);
+
+  if (verbose_p)
+    fprintf (stderr, "%s: %s input method\n", blurb(),
+             ws->ic ? "attached" : "failed to attach");
 
   if (ow)
     {
@@ -2027,18 +2081,30 @@ persistent_auth_status_failure (window_state *ws,
 
   if (increment_p && clear_p) abort();
 
-  /* Read the old property so that we can increment it. */
+  /* Read the old property so that we can increment it.
+     Structure:
+
+     XScreenSaver 6.00, 2021:	XScreenSaver >= 6.11, 2025:
+
+	0: count		0: count
+	1: 32 bit time_t	1: 64 bit time_t hi
+				2: 64 bit time_t lo
+   */
   if (XGetWindowProperty (dpy, w, prop,
                           0, 999, False, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
                           &dataP)
       == Success
       && type == XA_INTEGER
-      && nitems >= 2
+      && nitems >= 3
       && dataP)
     {
-      count = ((PROP32 *) dataP) [0];
-      tt    = ((PROP32 *) dataP) [1];  /* Y2038 bug: unsigned 32 bit time_t */
+      PROP32 *data = (PROP32 *) dataP;
+      count = data[0];
+      tt = (time_t)				/* 64 bit time_t */
+        ((((unsigned long) data[1] & 0xFFFFFFFFL) << 32) |
+          ((unsigned long) data[2] & 0xFFFFFFFFL));
+
       if (verbose_p)
         fprintf (stderr, "%s: previous auth failures: %d @ %lu\n",
                  blurb(), count, (unsigned long) tt);
@@ -2055,7 +2121,7 @@ persistent_auth_status_failure (window_state *ws,
     }
   else if (increment_p)
     {
-      PROP32 vv[2];
+      PROP32 vv[3];
       count++;
 
       /* Remember the time of the *oldest* failed login.  A failed login
@@ -2065,9 +2131,11 @@ persistent_auth_status_failure (window_state *ws,
       if (tt <= 0) tt = time ((time_t *) 0);
 
       vv[0] = (PROP32) count;
-      vv[1] = (PROP32) tt;
+      vv[1] = (PROP32) (((unsigned long) tt) >> 32);
+      vv[2] = (PROP32) (((unsigned long) tt) & 0xFFFFFFFFL);
+
       XChangeProperty (dpy, w, prop, XA_INTEGER, 32,
-                       PropModeReplace, (unsigned char *) vv, 2);
+                       PropModeReplace, (unsigned char *) vv, 3);
       if (verbose_p)
         fprintf (stderr, "%s: saved auth failure: %d @ %lu\n",
                  blurb(), count, (unsigned long) tt);
@@ -2081,7 +2149,7 @@ persistent_auth_status_failure (window_state *ws,
 static void bs_timer (XtPointer, XtIntervalId *);
 
 static void
-handle_keypress (window_state *ws, XKeyEvent *event)
+handle_keypress (window_state *ws, XKeyEvent *event, Bool filter_p)
 {
   unsigned char decoded [MAX_BYTES_PER_CHAR * 10]; /* leave some slack */
   KeySym keysym = 0;
@@ -2102,6 +2170,48 @@ handle_keypress (window_state *ws, XKeyEvent *event)
    */
   int decoded_size = XLookupString (event, (char *)decoded, sizeof(decoded),
                                     &keysym, &ws->compose_status);
+
+  /* But if we have an input method, we can unambiguously get UTF8.
+   */
+  if (ws->ic && event->type == KeyPress)
+    {
+      char decoded2[sizeof(decoded)];
+      Status s = 0;
+      KeySym keysym2 = 0;
+      int size2 = Xutf8LookupString (ws->ic, (XKeyPressedEvent *) event,
+                                     decoded2, sizeof(decoded2)-1
+                                     , &keysym2, &s);
+      decoded2[size2] = 0;
+
+      switch (s) {
+      case XLookupChars:		/* Set 'c2' to a UTF8 string */
+        if (*decoded2)
+          {
+            strcpy ((char *) decoded, (char *) decoded2);
+            decoded_size = size2;
+          }
+        break;
+      case XLookupKeySym:		/* Set 'keysym2' but not 'decoded2' */
+        if (keysym2)
+          keysym = keysym2;
+        break;
+      case XLookupBoth:			/* Set 'keysym2' and 'decoded2' */
+        if (keysym2)
+          keysym = keysym2;
+        if (*decoded2)
+          {
+            strcpy ((char *) decoded, (char *) decoded2);
+            decoded_size = size2;
+          }
+        break;
+      case XLookupNone:			/* No input yet */
+      case XBufferOverflow:		/* 'c2' was too small */
+        break;
+      default:
+        abort();
+        break;
+      }
+    }
 
   if (decoded_size > MAX_BYTES_PER_CHAR)
     {
@@ -2184,7 +2294,10 @@ handle_keypress (window_state *ws, XKeyEvent *event)
     SELF_INSERT:
       nbytes = strlen (ws->plaintext_passwd);
       nchars = strlen (ws->plaintext_passwd_char_size);
-      if (nchars + 1 >= sizeof (ws->plaintext_passwd_char_size)-1 ||
+
+      if (filter_p)
+        ;  /* Ignore: it is probably the start of a dead-key sequence. */
+      else if (nchars + 1 >= sizeof (ws->plaintext_passwd_char_size)-1 ||
           nbytes + decoded_size >= sizeof (ws->plaintext_passwd)-1)
         XBell (ws->dpy, 0);  /* overflow */
       else if (decoded_size == 0)
@@ -2248,7 +2361,7 @@ handle_button (window_state *ws, XEvent *xev, line_button_state *bs)
 
 
 static Bool
-handle_event (window_state *ws, XEvent *xev)
+handle_event (window_state *ws, XEvent *xev, Bool filter_p)
 {
   Bool refresh_p = False;
   switch (xev->xany.type) {
@@ -2257,7 +2370,7 @@ handle_event (window_state *ws, XEvent *xev)
       ws->auth_state = AUTH_CANCEL;
     else
       {
-        handle_keypress (ws, &xev->xkey);
+        handle_keypress (ws, &xev->xkey, filter_p);
         ws->caps_p = (xev->xkey.state & LockMask);
         if (ws->auth_state == AUTH_NOTIFY)
           ws->auth_state = AUTH_CANCEL;
@@ -2393,6 +2506,7 @@ gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
     {
       XEvent xev;
       XtInputMask m = XtAppPending (ws->app);
+      Bool filtered_p = False;
 
       if (m & XtIMXEvent)
         /* Process timers then block on an X event (which we know is there) */
@@ -2422,26 +2536,38 @@ gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
       if ((m & ~XtIMXEvent) && !ws->splash_p)
         refresh_p = True;   /* In auth mode, all timers refresh */
 
-      if (verbose_p || debug_p)
-        print_xinput_event (ws->dpy, &xev, "");
-
       /* Convert XInput events to Xlib events, for simplicity and familiarity.
        */
-      if (xev.xcookie.type == GenericEvent &&
-          xev.xcookie.extension == ws->xi_opcode &&
-          (xev.xcookie.data || XGetEventData (ws->dpy, &xev.xcookie)))
-        {
-          XEvent ev2;
-          Bool ok =
-            xinput_event_to_xlib (xev.xcookie.evtype, xev.xcookie.data, &ev2);
-          XFreeEventData (ws->dpy, &xev.xcookie);
-          if (test_mode_ignore_xi_events)
-            ok = False;
-          if (ok)
-            xev = ev2;
-        }
+      {
+        XEvent ev2;
+        Bool swap_p = False;
 
-      if (handle_event (ws, &xev))
+        if (xev.xcookie.type == GenericEvent &&
+            xev.xcookie.extension == ws->xi_opcode &&
+            (xev.xcookie.data || XGetEventData (ws->dpy, &xev.xcookie)))
+          {
+            swap_p = xinput_event_to_xlib (xev.xcookie.evtype,
+                                           xev.xcookie.data, &ev2);
+            if (test_mode_ignore_xi_events)
+              swap_p = False;
+          }
+
+        /* XFilterEvent does not work on XInput events, so check the
+           newly-synthesized X11 event instead. */
+        filtered_p = XFilterEvent ((swap_p ? &ev2 : &xev), ws->window);
+
+        /* Log the original event, not the synthetic one. */
+        if (verbose_p || debug_p)
+          print_xinput_event (ws->dpy, &xev, ws->ic,
+                              (filtered_p ? " (filtered)" : ""));
+        if (swap_p)
+          {
+            XFreeEventData (ws->dpy, &xev.xcookie);
+            xev = ev2;
+          }
+      }
+
+      if (handle_event (ws, &xev, filtered_p))
         refresh_p = True;
 
       XtDispatchEvent (&xev);
@@ -2473,6 +2599,7 @@ gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
            keyboard layout would count as such.  It does not. */
         if (verbose_p)
           fprintf (stderr, "%s: MappingNotify\n", blurb());
+        XRefreshKeyboardMapping (&xev.xmapping);
         get_keyboard_layout (ws);
         refresh_p = True;
         break;
@@ -2492,6 +2619,7 @@ gui_main_loop (window_state *ws, Bool splash_p, Bool notification_p)
           XkbEvent *xkb = (XkbEvent *) &xev;
           if (verbose_p)
             fprintf (stderr, "%s: XKB event %d\n", blurb(), xkb->any.xkb_type);
+          /* Possibly the only event of interest here is XkbStateNotify = 2. */
           get_keyboard_layout (ws);
           refresh_p = True;
         }
@@ -2578,7 +2706,7 @@ window_state *global_ws = 0;
    to combine multiple messages onto a single dialog if PAM splits them
    between calls to this function.
 
-   Returns True on success.  If the user timed out or cancelled, we just exit.
+   Returns True on success.  If the user timed out or canceled, we just exit.
  */
 Bool
 xscreensaver_auth_conv (void *closure,

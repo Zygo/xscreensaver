@@ -79,7 +79,7 @@
 #ifdef USE_GL /* whole file */
 
 #define DEF_CAMERA_SPEED "50"
-#define DEF_SPEED "60"
+#define DEF_SPEED "50"
 #define DEF_DRAW_COUNT "3"
 #define DEF_SLOPPY "True"
 
@@ -180,6 +180,8 @@ reshape_klondike(ModeInfo *mi, int width, int height)
  }
 
  initialize_placeholders(&bps[MI_SCREEN(mi)], width, height);
+ bps[MI_SCREEN(mi)].redeal = 1;
+ 
 
  glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -227,8 +229,8 @@ static void animate_initial_board(klondike_configuration *bp)
              card->end_frame = card->start_frame + animation_ticks;
              card->start_x = bp->deck_x;
              card->start_y = bp->deck_y;
-             card->dest_x = bp->tableau_placeholders[j].x;
-             card->dest_y = bp->tableau_placeholders[j].y;
+             card->dest_x = bp->tableau_placeholders[j].x + RANDOM_POSITION_OFFSET;
+             card->dest_y = bp->tableau_placeholders[j].y + RANDOM_POSITION_OFFSET;
              card->angle = 0.0f;
              card->start_angle = 0.0f;
              card->is_face_up = i == bp->game_state->tableau_size[j] - 1;
@@ -368,6 +370,7 @@ init_klondike(ModeInfo *mi)
 
  bp->trackball = gltrackball_init (True);
 
+
  // initialize the game state
  bp->game_state = (game_state_struct *)malloc(sizeof(game_state_struct));
  bp->tick = 0;
@@ -434,12 +437,12 @@ static void animate_board_to_deck(klondike_configuration *bp)
      for (int j = 0; j < bp->game_state->tableau_size[i]; j++)
      {
          card_struct *card = &bp->game_state->tableau[i][j];
-         card->start_frame = bp->tick + n * animation_ticks / 12;
+         card->start_frame = bp->tick + n * animation_ticks / 3;
          card->end_frame = card->start_frame + animation_ticks;
          card->start_x = card->x;
          card->start_y = card->y;
-         card->dest_x = bp->deck_x;
-         card->dest_y = bp->deck_y;
+         card->dest_x = bp->deck_x + RANDOM_POSITION_OFFSET;
+         card->dest_y = bp->deck_y + RANDOM_POSITION_OFFSET;
          card->start_angle = card->angle;
          card->end_angle = 360.0f;
          card->is_face_up = 0;
@@ -452,12 +455,12 @@ static void animate_board_to_deck(klondike_configuration *bp)
      for (int j = 0; j < bp->game_state->foundation_size[i]; j++)
      {
          card_struct *card = &bp->game_state->foundation[i][j];
-         card->start_frame = bp->tick + n * animation_ticks / 12;
+         card->start_frame = bp->tick + n * animation_ticks / 3;
          card->end_frame = card->start_frame + animation_ticks;
          card->start_x = card->x;
          card->start_y = card->y;
-         card->dest_x = bp->deck_x;
-         card->dest_y = bp->deck_y;
+         card->dest_x = bp->deck_x + RANDOM_POSITION_OFFSET;
+         card->dest_y = bp->deck_y + RANDOM_POSITION_OFFSET;
          card->start_angle = card->angle;
          card->end_angle = 360.0f;
          card->is_face_up = 0;
@@ -468,19 +471,19 @@ static void animate_board_to_deck(klondike_configuration *bp)
  for (int i = 0; i < bp->game_state->waste_size; i++)
  {
      card_struct *card = &bp->game_state->waste[i];
-     card->start_frame = bp->tick + n * animation_ticks / 12;
+     card->start_frame = bp->tick + n * animation_ticks / 3;
      card->end_frame = card->start_frame + animation_ticks;
      card->start_x = card->x;
      card->start_y = card->y;
-     card->dest_x = bp->deck_x;
-     card->dest_y = bp->deck_y;
+     card->dest_x = bp->deck_x + RANDOM_POSITION_OFFSET;
+     card->dest_y = bp->deck_y + RANDOM_POSITION_OFFSET;
      card->start_angle = card->angle;
      card->end_angle = 360.0f;
      card->is_face_up = 0;
      n++;
  }
 
- bp->final_animation = bp->tick + n * animation_ticks / 12 + animation_ticks;
+ bp->final_animation = bp->tick + n * animation_ticks / 3 + animation_ticks;
 }
 
 ENTRYPOINT void
@@ -622,8 +625,8 @@ draw_klondike(ModeInfo *mi)
      0.1, -0.0, 0,     // Look-at point (center)
      0, 0, 1);    // Up vector
 
- glRotatef (current_device_rotation(), 0, 0, 1);
- gltrackball_rotate (bp->trackball);
+ glRotatef(current_device_rotation(), 0, 0, 1);
+ gltrackball_rotate(bp->trackball);
 
  for (int i = 0; i < animatedCardCount; i++)
  {
@@ -644,7 +647,6 @@ draw_klondike(ModeInfo *mi)
      {
          float n = ((float)bp->tick - (float)card->start_frame) / (card->end_frame - card->start_frame);
          float eased = ease_out_quart(n);
-         float eased2 = ease_in_out_quart(n);
 
          if (card->dest_x != card->start_x)
          {
@@ -668,7 +670,7 @@ draw_klondike(ModeInfo *mi)
 
          if (card->end_angle != card->start_angle)
          {
-             card->angle = card->start_angle + eased2 * (card->end_angle - card->start_angle);
+             card->angle = card->start_angle + n * (card->end_angle - card->start_angle);
          }
          else
          {
@@ -766,15 +768,6 @@ draw_klondike(ModeInfo *mi)
      else if (bp->final_animation == 0 && n == NULL)
      {
          animate_board_to_deck(bp);
-
-         // Check for win
-# if 0 // unused            
-         int won_game = 0;
-         for (int i = 0; i < 4; i++)
-         {
-             won_game &= (bp->game_state->foundation_size[i] == 13);
-         }
-# endif                
      }
 
      if (n != NULL)

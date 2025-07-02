@@ -75,9 +75,6 @@ I'm sure some of the programs contain trademarks.
 .BR xanalogtv (MANSUFFIX),
 .BR apple2 (MANSUFFIX)
 .SH COPYRIGHT
-Original Javascript Version by Stian Soreng - www.6502asm.com; 2006.
-Ported to XScreenSaver by Jeremy English; 2007.
- 
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that
@@ -86,6 +83,5 @@ supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 .SH AUTHOR
-Original Javascript Version by Stian Soreng - www.6502asm.com; 2006.
+Original Javascript Version by Stian Soreng; 2006.
 Ported to XScreenSaver by Jeremy English; 2007.
-

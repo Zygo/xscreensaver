@@ -1,5 +1,5 @@
 #!/bin/bash
-# XScreenSaver, Copyright © 2013-2023 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2025 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,7 @@
 #set -x
 
 DEBUG=0
-REQUIRED_SPACE=360	# MB. Highly approximate; updated 6.07.
+REQUIRED_SPACE=260  # MB
 
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:$PATH"
 

@@ -15,8 +15,9 @@
               convert="invert"/>
 
     <number id="animation_speed" type="slider" arg="--speed %"
-            _label="Animation Speed" _low-label="Fast" _high-label="Slow"
-            low="15" high="200" default="60"/>
+            _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+            low="15" high="200" default="50"
+            convert="invert"/>
 
     <number id="camera_speed" type="slider" arg="--camera_speed %"
             _label="Camera Speed" _low-label="Slow" _high-label="Fast"

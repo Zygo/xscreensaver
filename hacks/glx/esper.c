@@ -503,7 +503,7 @@ image_loaded_cb (const char *filename, XRectangle *geom,
     {
       /* strip filename to part between last "/" and last ".". */
       char *s = strrchr (img->title, '/');
-      if (s) strcpy (img->title, s+1);
+      if (s) memmove (img->title, s+1, strlen (s));
       s = strrchr (img->title, '.');
       if (s) *s = 0;
     }

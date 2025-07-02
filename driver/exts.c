@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -145,7 +145,17 @@ print_available_extensions (saver_info *si)
    }, { "Apple-DRI",		"Apple-DRI",	True, 0
    }, { "Apple-WM",		"Apple-WM",	True, 0
    }, { "XInputExtension",	"XInput",	True, 0
+   }, { "XWAYLAND",		"XWayland",	True, 0
    },
+  };
+  static const char * const envs[] = {
+    "GDMSESSION",
+    "RUNNING_UNDER_GDM",
+    "WAYLAND_DISPLAY",
+    "WAYLAND_SOCKET",
+    "XDG_CURRENT_DESKTOP",
+    "XDG_SESSION_DESKTOP",
+    "XDG_SESSION_TYPE",
   };
 
   fprintf (stderr, "%s: running on display \"%s\"\n", blurb(), 
@@ -192,6 +202,14 @@ print_available_extensions (saver_info *si)
       fprintf (stderr, "%s\n", buf);
     }
 
+# if !defined(HAVE_GL)
+  fprintf (stderr, "%s:   OpenGL disabled at compile time\n", blurb());
+# elif defined(HAVE_EGL)
+  fprintf (stderr, "%s:   Using EGL\n", blurb());
+# else
+  fprintf (stderr, "%s:   Using GLX\n", blurb());
+# endif
+
 # ifdef HAVE_LIBSYSTEMD
   fprintf (stderr, "%s:   libsystemd\n", blurb());
 # endif
@@ -199,9 +217,17 @@ print_available_extensions (saver_info *si)
   fprintf (stderr, "%s:   libelogind\n", blurb());
 # endif
 # if !defined(HAVE_LIBSYSTEMD) && !defined(HAVE_LIBELOGIND)
-  fprintf (stderr, "%s:   libsystemd/libelogind (disabled at compile time)\n",
+  fprintf (stderr, "%s:   libsystemd/libelogind disabled at compile time\n",
            blurb());
 # endif
+
+  for (i = 0; i < countof(envs); i++)
+    {
+      const char *key = envs[i];
+      char *val = getenv (key);
+      if (!val) continue;
+      fprintf (stderr, "%s: %s = \"%s\"\n", blurb(), key, val);
+    }
 
   for (i = 0; i < si->nscreens; i++)
     {

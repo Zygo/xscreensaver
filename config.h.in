@@ -1,7 +1,7 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 
-/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski.
+/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski.
  * Generate this file by running 'configure' rather than editing it by hand.
  */
 
@@ -298,6 +298,9 @@
 
 /* Define to 1 if you have the <util.h> header file. */
 #undef HAVE_UTIL_H
+
+/* Define this if you have the Wayland libraries. */
+#undef HAVE_WAYLAND
 
 /* Define this if you have XF86VidModeGetViewPort, for virtual desktops. */
 #undef HAVE_XF86VMODE

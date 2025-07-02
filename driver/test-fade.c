@@ -1,5 +1,5 @@
 /* test-fade.c --- playing with colormap and/or gamma fading.
- * xscreensaver, Copyright © 2001-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,6 +27,7 @@
 #include "xscreensaver.h"
 #include "resources.h"
 #include "screens.h"
+#include "screenshot.h"
 #include "fade.h"
 #include "atoms.h"
 
@@ -66,6 +67,7 @@ main (int argc, char **argv)
   Window root = RootWindow (dpy, 0);
   Visual *visual = DefaultVisual (dpy, 0);
   Pixmap logo, logo_clipmask;
+  Pixmap screenshot;
   int logo_npixels;
   unsigned long *logo_pixels;
   unsigned int logo_width, logo_height;
@@ -80,6 +82,20 @@ main (int argc, char **argv)
   db = XtDatabase (dpy);
 
   init_xscreensaver_atoms (dpy);
+
+  fprintf (stderr, "\n%s:\n"
+           "\n"
+           "\tYou should see the following, with no flickering:\n"
+           "\n"
+           "\t- Plain desktop;\n"
+           "\t- Four black rectangles slowly fade in (about 4 seconds);\n"
+           "\t- Once they are solid black, XScreenSaver logos flash in;\n"
+           "\t- Those logos fade out to solid black (about 2 seconds);\n"
+           "\t- Those black squares fade to desktop (about 2 seconds);\n"
+           "\t- Plain desktop (about 1 second);\n"
+           "\t- Repeat.\n"
+           "\n",
+           blurb());
 
   {
     const char * version_number = "test-fade";
@@ -135,6 +151,10 @@ main (int argc, char **argv)
                             &logo_clipmask, True);
   XGetGeometry (dpy, logo, &root, &x, &y, &logo_width, &logo_height, &bw, &d);
 
+  fprintf (stderr, "\n%s: grabbing shared screenshot\n", blurb());
+  screenshot = screenshot_grab (dpy, root, True, True);
+  fprintf (stderr, "\n");
+
   nwindows = 0;
   {
     int x, y;
@@ -155,11 +175,17 @@ main (int argc, char **argv)
                            attrmask, &attrs);
           XSetWindowBackground (dpy, windows[nwindows], BlackPixel (dpy, 0));
           XClearWindow (dpy, windows[nwindows]);
+          if (screenshot)
+            {
+              fprintf (stderr, "%s: saving screenshot 0x%0lX on 0x%lX\n",
+                       blurb(), (unsigned long) screenshot, windows[nwindows]);
+              screenshot_save (dpy, windows[nwindows], screenshot);
+            }
           nwindows++;
         }
   }
 
-  fprintf (stderr, "%s: fading %d screen%s\n",
+  fprintf (stderr, "\n%s: fading %d screen%s\n\n",
            blurb(), ScreenCount(dpy), ScreenCount(dpy) == 1 ? "" : "s");
 
   while (1)

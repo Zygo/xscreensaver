@@ -167,11 +167,11 @@ bump-version::
   MAJOR="$$1"; MINOR="$$2"; SUF="$$3";					    \
   VERS="$$MAJOR.$$MINOR$$SUF" ;						    \
   if [ -z "$$SUF" ]; then						    \
-    MINOR=`echo $$MINOR + 1 | bc | sed 's/^\(.\)$$/0\1/'` ;		    \
+    MINOR=`echo $$((MINOR + 1)) | sed 's/^\(.\)$$/0\1/'` ;		    \
   else									    \
     set - `echo $$SUF | sed 's/^\([^0-9]*\)/\1 /'` ;			    \
     AA="$$1"; BB="$$2";							    \
-    BB=`echo $$BB + 1 | bc` ;						    \
+    BB=$$((BB + 1)) ;							    \
     SUF="$$AA$$BB" ;							    \
   fi ;									    \
   VERS2="$$MAJOR.$$MINOR$$SUF" ;					    \
@@ -267,9 +267,12 @@ rpm::
   mkdir $$DIR ;								   \
   ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
   cp -p $${ADIR}$$TGZ $$DIR/SOURCES/ ;					   \
+  set -x ;								   \
   rpmbuild --define "_topdir $$DIR"					   \
            --define "USE_GL yes"					   \
+           --nodeps							   \
            -v -ba xscreensaver.spec ;					   \
+  set +x ;								   \
   echo '' ;								   \
   echo 'RPM build complete' ;						   \
   echo '' ;								   \
@@ -425,7 +428,7 @@ count::
   B=`cd hacks/glx ; ( make -s INSTALL=true install-man |		\
     grep true | grep -v helper | grep -v ljlatest | wc -l )` ;		\
   echo "    GLX:" $$B ;							\
-  C=`echo $$A + $$B | bc` ;						\
+  C=$$((A + B)) ;							\
   echo "  Total:" $$C ;							\
 
 

@@ -15,7 +15,7 @@
 /*
       This is a port of the javascript 6502 assembler, compiler and
       debugger. The orignal code was copyright 2006 by Stian Soreng -
-      www.6502asm.com
+      https://web.archive.org/web/20070516072609/http%3A//www.6502asm.com/
 
       I changed the structure of the assembler in this version.
 */

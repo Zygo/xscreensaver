@@ -315,30 +315,42 @@ There might be a way to accomplish this with other display managers.
 It's a mystery!
 .SH THE WAYLAND PROBLEM
 Wayland is a completely different window system that is intended to replace
-X11.  After 14+ years of trying, some Linux distros have finally begun
+X11.  After 16+ years of trying, some Linux distros have finally begun
 enabling it by default.  Most deployments of it also include XWayland, which
 is a compatibility layer that allows \fIsome\fP X11 programs to continue to
 work within a Wayland environment.
 
 Unfortunately, XScreenSaver is not one of those programs.
 
-If your system is running XWayland, XScreenSaver will malfunction in two
-ways:
+If your system is running Wayland, XScreenSaver will malfunction in a
+few ways, some small but one quite serious:
 .RS 0
 .TP 3
-\fB1:\fP It will be unable to detect user activity in non-X11 programs.
-
-This means that while a native Wayland program is selected, XScreenSaver will
-think that you are idle, and may blank the screen prematurely.
-.TP 3
-\fB2:\fP It will be unable to lock the screen.
+\fB1:\fP It will be unable to lock the screen.
 
 This is because X11 grabs don't work properly under XWayland, so there is no
 way for XScreenSaver to prevent the user from switching away from the screen
 locker to another application.
+.TP 3
+\fB2:\fP It won't work at all under GNOME.
+
+This is because the GNOME compositor does not support either of the Wayland
+protocols that allow us to tell when the user is idle.  It works with KDE
+and most other compositors, however.
+.TP 3
+\fB2:\fP Even a single pixel of mouse motion will cause the screen to
+un-blank: there is no pointer hysteresis.
+.TP 3
+\fB2:\fP Fading in and out might not work; hacks that grab and manipulate
+a desktop screenshot might not work.
+
+Under Wayland, these features depend on the program
+.BR grim (1)
+being installed to grab screenshots for us.  And \fBgrim\fP doesn't work
+under the GNOME or KDE compositors.
 .RE
 
-In short, for XScreenSaver to work properly, you will need to switch off
+For XScreenSaver to be able to lock, you will need to switch off
 Wayland and use the X Window System like in the "good old days".
 .SS TO DISABLE WAYLAND UNDER GNOME
 The login screen should have a gear-icon menu that lets you change the session

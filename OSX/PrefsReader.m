@@ -488,7 +488,7 @@
   // This happens when the .xml file says things like arg="-foo 'bar baz'"
   if (result[0] == '\'' && result[strlen(result)-1] == '\'') {
     result[strlen(result)-1] = 0;
-    strcpy (result, result+1);
+    memmove (result, result+1, strlen (result));
   }
 
   // Kludge: assume that any string that begins with "~" and has a "/"

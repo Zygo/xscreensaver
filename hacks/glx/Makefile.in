@@ -265,7 +265,7 @@ HACK_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/yarandom.o \
-		  ${FPS_OBJS} $(JWZGLES_OBJS) $(HACK_GLSL_OBJS) @ANIM_OBJS@
+		  $(FPS_OBJS) $(JWZGLES_OBJS) $(HACK_GLSL_OBJS) @ANIM_OBJS@
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h \
 		  grab-ximage.h tube.h sphere.h boxed.h \
@@ -374,7 +374,7 @@ install-program:: $(EXES)
 	     fi ;							\
 	   done ;							\
 									\
-	   exes="${SETCAP_EXES}" ;					\
+	   exes="$(SETCAP_EXES)" ;					\
 	   if [ @SETCAP_HACKS@ = yes ]; then				\
 	     for program in $$exes; do					\
 	       echo $(PROG_SETCAP) $(SETCAP_FLAGS) $$idir/$$program ;	\
@@ -410,7 +410,7 @@ install-scripts: $(SCRIPTS) munge-scripts
 
 munge-scripts: $(SCRIPTS)
 	@tmp=/tmp/mf.$$$$ ;						\
-	perl="${PERL}" ;						\
+	perl="$(PERL)" ;						\
 	rm -f $$tmp ;							\
 	for program in $(SCRIPTS); do					\
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
@@ -565,7 +565,7 @@ check_men:
 	 fi
 
 validate_xml:
-	@cd $(HACK_SRC) && ./check-configs.pl --force $(EXES) $(RETIRED_EXES)
+	@cd $(HACK_SRC) && $(PERL) check-configs.pl --force $(EXES) $(RETIRED_EXES)
 
 distdepend:: check_men validate_xml
 
@@ -2098,6 +2098,22 @@ dumpsterfire.o: $(UTILS_SRC)/xft.h
 dumpsterfire.o: $(UTILS_SRC)/yarandom.h
 dumpsterfire.o: $(HACK_SRC)/xlockmoreI.h
 dumpsterfire.o: $(HACK_SRC)/xlockmore.h
+dumpster_model.o: ../../config.h
+dumpster_model.o: $(HACK_SRC)/fps.h
+dumpster_model.o: $(srcdir)/gllist.h
+dumpster_model.o: $(HACK_SRC)/recanim.h
+dumpster_model.o: $(HACK_SRC)/screenhackI.h
+dumpster_model.o: $(UTILS_SRC)/colors.h
+dumpster_model.o: $(UTILS_SRC)/erase.h
+dumpster_model.o: $(UTILS_SRC)/font-retry.h
+dumpster_model.o: $(UTILS_SRC)/grabclient.h
+dumpster_model.o: $(UTILS_SRC)/hsv.h
+dumpster_model.o: $(UTILS_SRC)/resources.h
+dumpster_model.o: $(UTILS_SRC)/usleep.h
+dumpster_model.o: $(UTILS_SRC)/visual.h
+dumpster_model.o: $(UTILS_SRC)/xft.h
+dumpster_model.o: $(UTILS_SRC)/yarandom.h
+dumpster_model.o: $(HACK_SRC)/xlockmoreI.h
 dymaxionmap-coords.o: ../../config.h
 dymaxionmap-coords.o: $(srcdir)/dymaxionmap-coords.h
 dymaxionmap.o: ../../config.h

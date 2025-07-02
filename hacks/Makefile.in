@@ -314,7 +314,7 @@ install-scripts: $(SCRIPTS) munge-scripts
 
 munge-scripts: $(SCRIPTS)
 	@tmp=/tmp/mf.$$$$ ;						\
-	perl="${PERL}" ;						\
+	perl="$(PERL)" ;						\
 	rm -f $$tmp ;							\
 	for program in $(SCRIPTS); do					\
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
@@ -458,11 +458,11 @@ check_men:
 	 fi
 
 validate_xml:
-	@cd $(srcdir) && ./check-configs.pl --force $(EXES)
+	@cd $(srcdir) && $(PERL) check-configs.pl --force $(EXES)
 
 munge_ad_file:
 	@echo "Updating hack list in XScreenSaver.ad.in..." ; \
-	cd $(srcdir) ; ./munge-ad.pl ../driver/XScreenSaver.ad.in
+	cd $(srcdir) && $(PERL) munge-ad.pl ../driver/XScreenSaver.ad.in
 
 distdepend:: check_men validate_xml munge_ad_file
 

@@ -24,7 +24,7 @@
  *
  *   - When the system is about to go to sleep (e.g., laptop lid closing)
  *     it locks the screen *before* the system goes to sleep, by running
- *     "xscreensaver-command -suspend".  And then when the system wakes
+ *     "xscreensaver-command --suspend".  And then when the system wakes
  *     up again, it runs "xscreensaver-command --deactivate" to force the
  *     unlock dialog to appear immediately.
  *
@@ -186,7 +186,7 @@
  *
  *     While playing, it runs "xdg-screensaver reset" every 10 seconds as a
  *     heartbeat.  That program is a super-complicated shell script that will
- *     eventually run "xscreensaver-command -reset".  So MPV talks to the
+ *     eventually run "xscreensaver-command --reset".  So MPV talks to the
  *     xscreensaver daemon directly rather than going through systemd.
  *     That's fine.
  *
@@ -214,7 +214,7 @@
  *     https://github.com/mpv-player/mpv/commit/c498b2846af0ee8835b9144c9f6893568a4e49c6
  *
  *     So now I guess you're back to figuring out how to add a "heartbeat"
- *     command to have MPV periodically call "xscreensaver-command -reset".
+ *     command to have MPV periodically call "xscreensaver-command --reset".
  *     Good luck with that.  Maybe you should just use VLC instead.
  *
  *

@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright © 1991-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -245,6 +245,16 @@ main (int argc, char **argv)
                progname, dpyname);
     }
 
+  /* Make sure the X11 socket doesn't get allocated to stderr: >&- 2>&-. */
+  {
+    int fd0 = open ("/dev/null", O_RDWR);
+    int fd1 = open ("/dev/null", O_RDWR);
+    int fd2 = open ("/dev/null", O_RDWR);
+    if (fd0 > 2) close (fd0);
+    if (fd1 > 2) close (fd1);
+    if (fd2 > 2) close (fd2);
+  }
+
   dpy = XOpenDisplay (dpyname);
   if (!dpy)
     {
@@ -261,15 +271,20 @@ main (int argc, char **argv)
       exit (i);
     }
 
+# if 0
   if (*cmd == XA_ACTIVATE || *cmd == XA_LOCK || *cmd == XA_SUSPEND || 
       *cmd == XA_NEXT || *cmd == XA_PREV || *cmd == XA_SELECT)
     /* People never guess that KeyRelease deactivates the screen saver too,
        so if we're issuing an activation command, wait a second.
        No need to do this if stdin is not a tty, meaning we're not being
        run from the command line.
+
+       This isn't necessary as of 6.0, since the daemon ignores all user
+       activity for ~2 seconds after a ClientMessage activation.
      */
     if (isatty(0))
       sleep (1);
+# endif
 
   i = xscreensaver_command (dpy, *cmd, arg, verbose_p, NULL);
   if (i < 0) exit (i);
@@ -302,6 +317,7 @@ watch (Display *dpy)
 	  unsigned long nitems, bytesafter;
           unsigned char *dataP = 0;
 
+          /* XA_SCREENSAVER_STATUS format documented in windows.c. */
 	  if (XGetWindowProperty (dpy,
                                   RootWindow (dpy, 0),  /* always screen #0 */
 				  XA_SCREENSAVER_STATUS,
@@ -309,41 +325,34 @@ watch (Display *dpy)
 				  &type, &format, &nitems, &bytesafter,
 				  &dataP)
 	      == Success
-	      && type
-	      && dataP)
+              && type == XA_INTEGER
+              && nitems >= 3
+              && dataP)
 	    {
-              time_t tt;
+              PROP32 *data = (PROP32 *) dataP;
+              time_t tt = (time_t)			/* 64 bit time_t */
+                ((((unsigned long) data[1] & 0xFFFFFFFFL) << 32) |
+                  ((unsigned long) data[2] & 0xFFFFFFFFL));
               char *s;
               Bool changed = False;
               Bool running = False;
-              PROP32 *data = (PROP32 *) dataP;
-
-              if (type != XA_INTEGER || nitems < 3)
-                {
-                STATUS_LOSE:
-                  if (last) XFree (last);
-                  if (data) XFree (data);
-                  fprintf (stderr, "%s: bad status format on root window\n",
-                           progname);
-                  return -1;
-                }
-                  
-              tt = (time_t) data[1];
-              if (tt <= (time_t) 666000000L) /* early 1991 */
-                goto STATUS_LOSE;
+              Atom state = data[0];
 
               s = ctime(&tt);
               if (s[strlen(s)-1] == '\n')
                 s[strlen(s)-1] = 0;
 
-              if (!last || data[0] != last[0])
+              /* Do not print changes to password dialog presence. */
+              if (state == XA_AUTH) state = XA_LOCK;
+
+              if (!last || state != last[0])
                 {
                   /* State changed. */
-                  if (data[0] == XA_BLANK)
+                  if (state == XA_BLANK)
                     printf ("BLANK %s\n", s);
-                  else if (data[0] == XA_LOCK)
+                  else if (state == XA_LOCK)
                     printf ("LOCK %s\n", s);
-                  else if (data[0] == 0)
+                  else if (state == 0)
                     printf ("UNBLANK %s\n", s);
                   else
                     goto STATUS_LOSE;
@@ -365,9 +374,10 @@ watch (Display *dpy)
 
               if (running && changed)
                 {
+                  int off = 3;
                   int i;
                   fprintf (stdout, "RUN");
-                  for (i = 2; i < nitems; i++)
+                  for (i = off; i < nitems; i++)
                     fprintf (stdout, " %d", (int) data[i]);
                   fprintf (stdout, "\n");
                 }
@@ -379,10 +389,12 @@ watch (Display *dpy)
 	    }
 	  else
 	    {
-	      if (last) XFree (last);
-	      if (dataP) XFree (dataP);
+            STATUS_LOSE:
+	      fflush (stdout);
 	      fprintf (stderr, "%s: no saver status on root window\n",
 		       progname);
+	      if (last) XFree (last);
+	      if (dataP) XFree (dataP);
 	      return -1;
 	    }
         }

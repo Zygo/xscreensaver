@@ -69,6 +69,10 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.11	* X11: Now supports Wayland (blanking only, not locking).
+	* X11: More reliable and timely DPMS activation.
+	* X11: Dead keys work in password input.
+	* X11: Fixed a couple of minor Y2038 bugs.
 6.10	* New hacks, `dumpsterfire', `hopffibration', `platonicfolding' and
           `klondike'.
 	* Rewrote the VT100 emulator for 'apple2' and 'phosphor'.

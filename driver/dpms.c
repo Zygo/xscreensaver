@@ -1,5 +1,5 @@
 /* dpms.c --- syncing the X Display Power Management System values
- * xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +15,7 @@
 #endif
 
 #include <stdio.h>
+#include <time.h>
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 
@@ -23,7 +24,7 @@
 /* Disable the X11 built-in screen saver. This is not directly related
    to DPMS, but it does need to be prevented from fighting with us.
   */
-static void
+static Bool
 disable_builtin_saver (Display *dpy)
 {
   int otimeout   = -1;
@@ -35,6 +36,7 @@ disable_builtin_saver (Display *dpy)
     {
       if (verbose_p > 1)
         fprintf (stderr, "%s: builtin saver already disabled\n", blurb());
+      return False;
     }
   else
     {
@@ -42,6 +44,7 @@ disable_builtin_saver (Display *dpy)
         fprintf (stderr, "%s: disabling server's builtin saver\n", blurb());
       XSetScreenSaver (dpy, 0, 0, 0, 0);
       XForceScreenSaver (dpy, ScreenSaverReset);
+      return True;
     }
 }
 
@@ -98,6 +101,8 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
   CARD16 o_power = 0;
   CARD16 o_standby = 0, o_suspend = 0, o_off = 0;
   Bool bogus_p = False;
+  Bool changed_p = False;
+  static int change_count = 0;
 
   Bool enabled_p       = (p->dpms_enabled_p && p->mode != DONT_BLANK);
   Bool dpms_quickoff_p = p->dpms_quickoff_p;
@@ -118,7 +123,7 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
       return;
     }
 
-  disable_builtin_saver (dpy);
+  changed_p = disable_builtin_saver (dpy);
 
   if (dpms_quickoff_p && !off_secs)
     {
@@ -178,9 +183,13 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
           warned_p = True;
           return;
         }
-      else if (verbose_p)
-        fprintf (stderr, "%s: turned DPMS %s\n", blurb(),
-                 enabled_p ? "on" : "off");
+      else
+        {
+          if (verbose_p)
+            fprintf (stderr, "%s: turned DPMS %s\n", blurb(),
+                     enabled_p ? "on" : "off");
+          changed_p = True;
+        }
     }
 
   if (bogus_p)
@@ -208,13 +217,27 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
             fprintf (stderr, "%s: unable to set DPMS timeouts\n", blurb());
           return;
         }
-      else if (verbose_p)
-        fprintf (stderr, "%s: set DPMS timeouts: %d %d %d\n", blurb(),
-                 standby_secs, suspend_secs, off_secs);
+      else
+        {
+          if (verbose_p)
+            fprintf (stderr, "%s: set DPMS timeouts: %d %d %d\n", blurb(),
+                     standby_secs, suspend_secs, off_secs);
+          changed_p = True;
+        }
     }
   else if (verbose_p > 1)
     fprintf (stderr, "%s: DPMS timeouts already %d %d %d\n", blurb(),
              o_standby, o_suspend, o_off);
+
+  if (changed_p)
+    change_count++;
+
+  if (change_count > 3)
+    {
+      fprintf (stderr, "%s: WARNING: some other program keeps changing"
+               " the DPMS settings. That's bad.\n", blurb());
+      change_count = 0;
+    }
 }
 
 Bool
@@ -326,6 +349,77 @@ monitor_power_on (saver_info *si, Bool on_p)
   else if (verbose_p > 1)
     fprintf (stderr, "%s: monitor is already %s\n", blurb(),
              on_p ? "on" : "off");
+}
+
+
+/* Force the server DPMS state to be what the wall clock says it should be.
+ */
+void
+brute_force_dpms (Display *dpy, struct saver_preferences *p,
+                  time_t activity_time)
+{
+  XErrorHandler old_handler;
+  int event_number, error_number;
+  BOOL onoff = False;
+  CARD16 state;
+  CARD16 target;
+  time_t age = time ((time_t *) 0) - activity_time;
+
+  if (activity_time == 0)		/* Auth dialog is visible */
+    target = DPMSModeOn;
+  else if (p->mode == BLANK_ONLY && p->dpms_quickoff_p)
+    target = DPMSModeOff;
+  else if (p->dpms_off     && age >= (p->dpms_off     / 1000))
+    target = DPMSModeOff;
+  else if (p->dpms_suspend && age >= (p->dpms_suspend / 1000))
+    target = DPMSModeSuspend;
+  else if (p->dpms_standby && age >= (p->dpms_standby / 1000))
+    target = DPMSModeStandby;
+  else
+    /* We have no opinion about the desired DPMS state, so if it is off,
+       leave it off. It may have been powered down manually with xset. */
+    return;
+
+  if (!DPMSQueryExtension (dpy, &event_number, &error_number) ||
+      !DPMSCapable (dpy))
+    return;
+
+  DPMSInfo (dpy, &state, &onoff);
+  if (!onoff)
+    return;
+
+  if (state == target)
+    return;
+
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+  XSync (dpy, False);
+
+  DPMSForceLevel (dpy, target);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+
+  if (p->verbose_p > 1 && error_handler_hit_p)
+    {
+      fprintf (stderr, "%s: DPMSForceLevel got an X11 error\n", blurb());
+      return;
+    }
+
+  DPMSInfo (dpy, &state, &onoff);
+  {
+    const char *s = (target == DPMSModeOff     ? "Off"     :
+                     target == DPMSModeSuspend ? "Suspend" :
+                     target == DPMSModeStandby ? "Standby" :
+                     target == DPMSModeOn      ? "On" : "???");
+    if (state != target)
+      fprintf (stderr,
+          "%s: DPMSForceLevel(dpy, %s) did not change monitor power state\n",
+               blurb(), s);
+    else if (p->verbose_p)
+      fprintf (stderr, "%s: set monitor power to %s\n", blurb(), s);
+  }
 }
 
 #endif /* HAVE_DPMS_EXTENSION -- whole file */

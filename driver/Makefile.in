@@ -1,4 +1,4 @@
-# driver/Makefile.in --- xscreensaver, Copyright © 1997-2023 Jamie Zawinski.
+# driver/Makefile.in --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
 # the `../configure' script generates `driver/Makefile' from this file.
 
 @SET_MAKE@
@@ -32,6 +32,27 @@ GTK_ICONDIR	= $(GTK_DATADIR)/pixmaps
 GTK_SHAREDIR	= $(GTK_DATADIR)/xscreensaver
 UPDATE_ICON_CACHE = gtk-update-icon-cache
 GLIB_COMPILE_RESOURCES = @GLIB_COMPILE_RESOURCES@
+
+WAYLAND_CFLAGS	= @WAYLAND_CFLAGS@
+WAYLAND_LIBS	= @WAYLAND_LIBS@
+WAYLAND_DATADIR	= @WAYLAND_DATADIR@
+WAYLAND_GEN	= @WAYLAND_GEN@
+
+WAYLAND_GEN_XML	 = xdg-shell.xml \
+		   ext-idle-notify-v1.xml \
+		   idle.xml
+WAYLAND_GEN_HDRS = xdg-shell-v1-client-protocol.h \
+		   ext-idle-notify-v1-client-protocol.h \
+		   idle-client-protocol.h
+WAYLAND_GEN_SRCS = xdg-shell-v1-protocol.c \
+		   ext-idle-notify-v1-protocol.c \
+		   idle-protocol.c
+
+WAYLAND_IDLE_OBJS   = @WAYLAND_IDLE_OBJS@
+WAYLAND_IDLE_SRCS   = wayland-idle.c
+WAYLAND_IDLE_OBJS_1 = wayland-idle.o \
+		      ext-idle-notify-v1-protocol.o \
+		      idle-protocol.o
 
 HACKDIR		= @HACKDIR@
 HACK_CONF_DIR	= @HACK_CONF_DIR@
@@ -101,10 +122,11 @@ XINPUT_LIBS	= -lXi
 XML_LIBS	= @XML_LIBS@
 
 DAEMON_DEFS	= -DDEFAULT_PATH_PREFIX='"@HACKDIR@"' -DAD_DIR='"$(AD_DIR)"'
-DAEMON_SRCS	= xscreensaver.c blurb.c atoms.c clientmsg.c xinput.c prefs.c
+DAEMON_SRCS	= xscreensaver.c blurb.c atoms.c clientmsg.c xinput.c prefs.c \
+		  $(WAYLAND_IDLE_SRCS)
 DAEMON_OBJS	= xscreensaver.o blurb.o atoms.o clientmsg.o xinput.o prefs.o \
-		  $(UTILS_BIN)/xmu.o
-DAEMON_LIBS	= $(LIBS_PRE) $(XINPUT_LIBS) -lX11 $(LIBS_POST)
+		  $(UTILS_BIN)/xmu.o $(WAYLAND_IDLE_OBJS)
+DAEMON_LIBS	= $(LIBS_PRE) $(XINPUT_LIBS) -lX11 $(WAYLAND_LIBS) $(LIBS_POST)
 
 GFX_DEFS	= -DLOCALEDIR=\"$(localedir)\"
 GFX_SRCS	= xscreensaver-gfx.c screens.c windows.c subprocs.c \
@@ -139,10 +161,6 @@ PAM_OBJS	= passwd-pam.o
 
 PASSWD_SRCS	= @PASSWD_SRCS@
 PASSWD_OBJS	= @PASSWD_OBJS@
-
-LOCK_SRCS	= @LOCK_SRCS@
-LOCK_OBJS	= @LOCK_OBJS@
-
 
 AUTH_DEFS	= -DLOCALEDIR=\"$(localedir)\" -DAD_DIR='"$(AD_DIR)"'
 AUTH_SRCS	= xscreensaver-auth.c dialog.c passwd.c setuid.c
@@ -181,6 +199,7 @@ GTK_SRCS	= demo-Gtk.c demo-Gtk-conf.c
 GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o demo-Gtk-resources.o \
 		  blurb.o exec.o prefs.o prefsw.o dpms.o remote.o screens.o \
 		  clientmsg.o atoms.o \
+		  $(WAYLAND_IDLE_OBJS) \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/visual.o \
@@ -222,7 +241,8 @@ DESKS		= xscreensaver.desktop xscreensaver.service
 HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
 		  xscreensaver.h prefs.h remote.h exec.h \
 		  demo-Gtk-conf.h auth.h types.h blurb.h atoms.h clientmsg.h \
-		  screens.h xinput.h fade.h
+		  screens.h xinput.h fade.h wayland-idle.h \
+		  $(WAYLAND_GEN_HDRS)
 MENA		= xscreensaver.man xscreensaver-settings.man \
 		  xscreensaver-command.man
 MENB		= xscreensaver-gfx.man xscreensaver-auth.man \
@@ -231,12 +251,14 @@ MENB		= xscreensaver-gfx.man xscreensaver-auth.man \
 EXTRAS		= README Makefile.in \
 		  XScreenSaver.ad.in XScreenSaver-Xm.ad xscreensaver.pam.in \
 		  demo.ui prefs.ui gresource.xml xscreensaver.desktop.in \
-		  xscreensaver-settings.desktop.in xscreensaver.service.in
+		  xscreensaver-settings.desktop.in xscreensaver.service.in \
+		  $(WAYLAND_GEN_XML)
 
 TARFILES	= $(DAEMON_SRCS) $(GFX_SRCS) $(AUTH_SRCS) $(SYSTEMD_SRCS) \
 		  $(CMD_SRCS) $(GTK_SRCS) $(MOTIF_SRCS) $(PWENT_SRCS) \
 		  $(KERBEROS_SRCS) $(PAM_SRCS) \
-		  $(HDRS) $(MENA) $(MENB) $(TEST_SRCS) $(EXTRAS) 
+		  $(WAYLAND_GEN_SRCS) \
+		  $(HDRS) $(MENA) $(MENB) $(TEST_SRCS) $(EXTRAS)
 
 # Using $(MAKE) directly means the shell executes things even with "make -n"
 MAKE2 = $(MAKE)
@@ -654,6 +676,32 @@ uninstall-xml:
 	rm -f $(install_prefix)$(HACK_CONF_DIR)/README
 
 
+# Generate .c and .h files for various Wayland APIs.
+#
+xdg-shell.xml: $(WAYLAND_DATADIR)/wayland-protocols/stable/xdg-shell/xdg-shell.xml
+	cp -p $< $@
+xdg-shell-v1-client-protocol.h: xdg-shell.xml
+	wayland-scanner client-header < $< > $@
+xdg-shell-v1-protocol.c: xdg-shell.xml
+	wayland-scanner private-code  < $< > $@
+
+ext-idle-notify-v1.xml: \
+	$(WAYLAND_DATADIR)/wayland-protocols/staging/ext-idle-notify/ext-idle-notify-v1.xml
+	cp -p $< $@
+ext-idle-notify-v1-client-protocol.h: ext-idle-notify-v1.xml
+	wayland-scanner client-header < $< > $@
+ext-idle-notify-v1-protocol.c: ext-idle-notify-v1.xml
+	wayland-scanner private-code  < $< > $@
+
+# org_kde_kwin_idle -- I don't know why this isn't in WAYLAND_DATADIR
+#idle.xml: $(WAYLAND_DATADIR)/wayland-protocols/stable/ext-idle-notify/idle.xml
+#	cp -p $< $@
+idle-client-protocol.h: idle.xml
+	wayland-scanner client-header < $< > $@
+idle-protocol.c: idle.xml
+	wayland-scanner private-code  < $< > $@
+
+
 ##############################################################################
 #
 # Clean and dependencies
@@ -677,7 +725,9 @@ depend: XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
 	$(DEPEND_FLAGS) --						    \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \
-	$(SAVER_SRCS) $(CMD_SRCS)
+	$(DAEMON_SRCS) $(GFX_SRCS) $(AUTH_SRCS) $(SYSTEMD_SRCS) $(CMD_SRCS) \
+	$(GTK_SRCS) $(MOTIF_SRCS) $(PWENT_SRCS) $(KERBEROS_SRCS)	    \
+	$(PAM_SRCS) $(WAYLAND_GEN_SRCS) $(TEST_SRCS)
 
 # Adds some dependencies to Makefile.in -- not totally accurate, but pretty
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
@@ -688,10 +738,10 @@ distdepend: check_men update_ad_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \
-	$(SAVER_SRCS_1) $(SYSTEMD_SRCS) $(MOTIF_SRCS) $(GTK_SRCS)	    \
-	$(PWENT_SRCS) $(KERBEROS_SRCS) $(PAM_SRCS)			    \
-	$(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS)			    \
-	$(TEST_SRCS) 2>/dev/null |					    \
+	$(DAEMON_SRCS) $(GFX_SRCS) $(AUTH_SRCS) $(SYSTEMD_SRCS) $(CMD_SRCS) \
+	$(GTK_SRCS) $(MOTIF_SRCS) $(PWENT_SRCS) $(KERBEROS_SRCS)	    \
+	$(PAM_SRCS) $(WAYLAND_GEN_SRCS) $(TEST_SRCS)			    \
+	2>/dev/null |							    \
 	sort -d |							    \
 	(								    \
 	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
@@ -781,6 +831,7 @@ $(UTILS_BIN)/xftwrap.o:		$(UTILS_SRC)/xftwrap.c
 $(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 $(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
+$(UTILS_BIN)/screenshot.o:	$(UTILS_SRC)/screenshot.c
 
 
 UTIL_OBJS	= $(UTILS_BIN)/overlay.o \
@@ -800,7 +851,8 @@ UTIL_OBJS	= $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/utf8wc.o \
 		  $(UTILS_BIN)/font-retry.o \
 		  $(UTILS_BIN)/xshm.o \
-		  $(UTILS_BIN)/aligned_malloc.o
+		  $(UTILS_BIN)/aligned_malloc.o \
+		  $(UTILS_BIN)/screenshot.o
 
 $(UTIL_OBJS):
 	$(MAKE2CC) -C $(UTILS_BIN) $(@F)
@@ -825,6 +877,8 @@ CC_ALL=$(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 # xscreensaver takes an extra -D option.
 xscreensaver.o: xscreensaver.c
 	$(CC) -c $(CC_ALL) $(DAEMON_DEFS) $<
+
+xscreensaver.o: $(WAYLAND_GEN)
 
 xscreensaver-auth.o: XScreenSaver_ad.h
 xscreensaver-auth.o: xscreensaver-auth.c
@@ -872,7 +926,7 @@ demo-Gtk-resources.o: demo-Gtk-resources.c
 	$(CC) -c $(CC_ALL) $(GTK_DEFS) $(GTK_WARNINGS) $<
 
 xscreensaver-settings-Gtk: $(GTK_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(GTK_OBJS) $(GTK_LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(GTK_OBJS) $(GTK_LIBS) $(WAYLAND_LIBS)
 
 
 demo-Xm.o: XScreenSaver_ad.h
@@ -973,7 +1027,8 @@ test-grab: test-grab.o blurb.o
 TEST_FADE_OBJS = test-fade.o fade.o blurb.o atoms.o clientmsg.o xinput.o \
 	$(UTILS_BIN)/visual.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 	$(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o $(UTILS_BIN)/xshm.o \
-	$(UTILS_BIN)/xmu.o $(UTILS_BIN)/aligned_malloc.o
+	$(UTILS_BIN)/xmu.o $(UTILS_BIN)/aligned_malloc.o \
+	$(UTILS_BIN)/screenshot.o
 test-fade: $(TEST_FADE_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(TEST_FADE_OBJS) $(GFX_LIBS)
 
@@ -996,6 +1051,16 @@ xdpyinfo: xdpyinfo.o
 #
 # DO NOT DELETE: updated by make distdepend
 
+atoms.o: $(srcdir)/atoms.h
+atoms.o: ../config.h
+atomswm.o: $(srcdir)/atoms.h
+atomswm.o: ../config.h
+blurb.o: $(srcdir)/blurb.h
+blurb.o: ../config.h
+clientmsg.o: $(srcdir)/atoms.h
+clientmsg.o: $(srcdir)/blurb.h
+clientmsg.o: $(srcdir)/clientmsg.h
+clientmsg.o: ../config.h
 demo-Gtk-conf.o: $(srcdir)/blurb.h
 demo-Gtk-conf.o: ../config.h
 demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
@@ -1017,20 +1082,84 @@ demo-Gtk.o: $(UTILS_SRC)/xmu.h
 demo-Gtk.o: $(UTILS_SRC)/xscreensaver-intl.h
 demo-Xm.o: ../config.h
 demo-Xm-widgets.o: ../config.h
+dialog.o: $(srcdir)/atoms.h
+dialog.o: $(srcdir)/auth.h
+dialog.o: $(srcdir)/blurb.h
+dialog.o: ../config.h
+dialog.o: $(srcdir)/prefs.h
+dialog.o: $(srcdir)/screens.h
+dialog.o: $(UTILS_SRC)/font-retry.h
+dialog.o: $(UTILS_SRC)/resources.h
+dialog.o: $(UTILS_SRC)/usleep.h
+dialog.o: $(UTILS_SRC)/utf8wc.h
+dialog.o: $(UTILS_SRC)/version.h
+dialog.o: $(UTILS_SRC)/visual.h
+dialog.o: $(UTILS_SRC)/xft.h
+dialog.o: $(UTILS_SRC)/xftwrap.h
+dialog.o: $(srcdir)/xinput.h
+dpms.o: $(srcdir)/blurb.h
+dpms.o: ../config.h
+dpms.o: $(srcdir)/types.h
+dpms.o: $(srcdir)/xscreensaver.h
+exec.o: ../config.h
+exec.o: $(srcdir)/exec.h
+exts.o: $(srcdir)/blurb.h
+exts.o: ../config.h
+exts.o: $(srcdir)/types.h
+exts.o: $(srcdir)/xscreensaver.h
+fade.o: $(srcdir)/atoms.h
+fade.o: $(srcdir)/blurb.h
+fade.o: $(srcdir)/clientmsg.h
+fade.o: ../config.h
+fade.o: $(srcdir)/fade.h
+fade.o: $(UTILS_SRC)/usleep.h
+fade.o: $(UTILS_SRC)/visual.h
+fade.o: $(UTILS_SRC)/xmu.h
+fade.o: $(UTILS_SRC)/xshm.h
+fade.o: $(srcdir)/xinput.h
 passwd-kerberos.o: $(srcdir)/auth.h
 passwd-kerberos.o: $(srcdir)/blurb.h
 passwd-kerberos.o: ../config.h
+passwd.o: $(srcdir)/auth.h
+passwd.o: $(srcdir)/blurb.h
+passwd.o: ../config.h
+passwd.o: $(srcdir)/types.h
+passwd.o: $(srcdir)/xscreensaver.h
 passwd-pam.o: $(srcdir)/auth.h
 passwd-pam.o: $(srcdir)/blurb.h
 passwd-pam.o: ../config.h
 passwd-pwent.o: $(srcdir)/auth.h
 passwd-pwent.o: $(srcdir)/blurb.h
 passwd-pwent.o: ../config.h
+prefs.o: $(srcdir)/blurb.h
+prefs.o: ../config.h
+prefs.o: $(srcdir)/prefs.h
+prefsw.o: $(srcdir)/blurb.h
+prefsw.o: ../config.h
+prefsw.o: $(srcdir)/prefs.h
+prefsw.o: $(srcdir)/types.h
+prefsw.o: $(UTILS_SRC)/resources.h
+prefsw.o: $(UTILS_SRC)/version.h
 remote.o: $(srcdir)/atoms.h
 remote.o: $(srcdir)/blurb.h
 remote.o: $(srcdir)/clientmsg.h
 remote.o: ../config.h
 remote.o: $(srcdir)/remote.h
+screens.o: $(srcdir)/blurb.h
+screens.o: ../config.h
+screens.o: $(srcdir)/screens.h
+setuid.o: $(srcdir)/auth.h
+setuid.o: $(srcdir)/blurb.h
+setuid.o: ../config.h
+subprocs.o: $(srcdir)/atoms.h
+subprocs.o: $(srcdir)/blurb.h
+subprocs.o: ../config.h
+subprocs.o: $(srcdir)/exec.h
+subprocs.o: $(srcdir)/types.h
+subprocs.o: $(UTILS_SRC)/screenshot.h
+subprocs.o: $(UTILS_SRC)/visual.h
+subprocs.o: $(UTILS_SRC)/yarandom.h
+subprocs.o: $(srcdir)/xscreensaver.h
 test-fade.o: $(srcdir)/atoms.h
 test-fade.o: $(srcdir)/blurb.h
 test-fade.o: ../config.h
@@ -1038,6 +1167,7 @@ test-fade.o: $(srcdir)/fade.h
 test-fade.o: $(srcdir)/screens.h
 test-fade.o: $(srcdir)/types.h
 test-fade.o: $(UTILS_SRC)/resources.h
+test-fade.o: $(UTILS_SRC)/screenshot.h
 test-fade.o: $(srcdir)/xscreensaver.h
 test-grab.o: $(srcdir)/blurb.h
 test-grab.o: ../config.h
@@ -1064,11 +1194,64 @@ test-xkb.o: ../config.h
 test-yarandom.o: $(srcdir)/blurb.h
 test-yarandom.o: ../config.h
 test-yarandom.o: $(UTILS_SRC)/yarandom.h
+wayland-idle.o: $(srcdir)/blurb.h
+wayland-idle.o: ../config.h
+wayland-idle.o: $(srcdir)/ext-idle-notify-v1-client-protocol.h
+wayland-idle.o: $(srcdir)/idle-client-protocol.h
+wayland-idle.o: $(srcdir)/wayland-idle.h
+windows.o: $(srcdir)/atoms.h
+windows.o: $(srcdir)/blurb.h
+windows.o: ../config.h
+windows.o: $(srcdir)/exec.h
+windows.o: $(srcdir)/fade.h
+windows.o: $(srcdir)/screens.h
+windows.o: $(srcdir)/types.h
+windows.o: $(UTILS_SRC)/font-retry.h
+windows.o: $(UTILS_SRC)/resources.h
+windows.o: $(UTILS_SRC)/screenshot.h
+windows.o: $(UTILS_SRC)/visual.h
+windows.o: $(UTILS_SRC)/xft.h
+windows.o: $(srcdir)/xscreensaver.h
+xinput.o: $(srcdir)/blurb.h
+xinput.o: ../config.h
+xinput.o: $(srcdir)/xinput.h
+xscreensaver-auth.o: XScreenSaver_ad.h
+xscreensaver-auth.o: $(srcdir)/atoms.h
+xscreensaver-auth.o: $(srcdir)/auth.h
+xscreensaver-auth.o: $(srcdir)/blurb.h
+xscreensaver-auth.o: ../config.h
+xscreensaver-auth.o: $(srcdir)/types.h
+xscreensaver-auth.o: $(UTILS_SRC)/resources.h
+xscreensaver-auth.o: $(UTILS_SRC)/version.h
+xscreensaver-auth.o: $(UTILS_SRC)/visual.h
+xscreensaver-auth.o: $(UTILS_SRC)/yarandom.h
+xscreensaver-auth.o: $(srcdir)/xscreensaver.h
 xscreensaver-command.o: $(srcdir)/atoms.h
 xscreensaver-command.o: $(srcdir)/blurb.h
 xscreensaver-command.o: ../config.h
 xscreensaver-command.o: $(srcdir)/remote.h
 xscreensaver-command.o: $(UTILS_SRC)/version.h
+xscreensaver-gfx.o: XScreenSaver_ad.h
+xscreensaver-gfx.o: $(srcdir)/atoms.h
+xscreensaver-gfx.o: $(srcdir)/blurb.h
+xscreensaver-gfx.o: $(srcdir)/clientmsg.h
+xscreensaver-gfx.o: ../config.h
+xscreensaver-gfx.o: $(srcdir)/screens.h
+xscreensaver-gfx.o: $(srcdir)/types.h
+xscreensaver-gfx.o: $(UTILS_SRC)/resources.h
+xscreensaver-gfx.o: $(UTILS_SRC)/version.h
+xscreensaver-gfx.o: $(UTILS_SRC)/visual.h
+xscreensaver-gfx.o: $(UTILS_SRC)/xmu.h
+xscreensaver-gfx.o: $(UTILS_SRC)/yarandom.h
+xscreensaver-gfx.o: $(srcdir)/xscreensaver.h
+xscreensaver.o: $(srcdir)/atoms.h
+xscreensaver.o: $(srcdir)/blurb.h
+xscreensaver.o: $(srcdir)/clientmsg.h
+xscreensaver.o: ../config.h
+xscreensaver.o: $(srcdir)/prefs.h
+xscreensaver.o: $(UTILS_SRC)/version.h
+xscreensaver.o: $(UTILS_SRC)/xmu.h
+xscreensaver.o: $(srcdir)/xinput.h
 xscreensaver-systemd.o: $(srcdir)/blurb.h
 xscreensaver-systemd.o: ../config.h
 xscreensaver-systemd.o: $(UTILS_SRC)/queue.h

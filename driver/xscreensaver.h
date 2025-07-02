@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1993-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1993-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,6 +53,7 @@ extern void initialize_screensaver_window (saver_info *si);
 extern void blank_screen (saver_info *si);
 extern void unblank_screen (saver_info *si);
 extern void resize_screensaver_window (saver_info *si);
+extern void reset_watchdog_timer (saver_info *);
 
 extern void get_screen_viewport (saver_screen_info *ssi,
                                  int *x_ret, int *y_ret,
@@ -96,6 +97,6 @@ extern void screenhack_obituary (saver_screen_info *,
 
 extern Visual *get_best_gl_visual (saver_info *si, Screen *screen);
 extern void maybe_reload_init_file (saver_info *);
-void print_available_extensions (saver_info *);
+extern void print_available_extensions (saver_info *);
 
 #endif /* __XSCREENSAVER_H__ */

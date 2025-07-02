@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2001-2024 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2001-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,19 +34,19 @@
    Grabbing screen images works in a few different ways:
 
    A: If the hack was invoked by XScreenSaver, then before it blanked the
-      screen, "xscreensaver-gfx" (or "xscreensaver-settings", in preview
-      mode) saved a screenshot as a pixmap on a property on the saver
-      window.  This code loads that pixmap, and crops or scales it as
+      screen, "xscreensaver-gfx" (or "xscreensaver-settings", in preview mode)
+      saved a screenshot of the whole desktop as a pixmap on a property on the
+      saver window.  This code loads that pixmap, and crops or scales it as
       needed.  This means that the screenshot used will always be what the
       desktop looked like at the time that the screen blanked, not what it
       might look like now if the screen happened to be un-blanked.
 
-   B: If the pre-saved pixmap isn't there, then we do it the hard way:
-      un-map our window to expose what is under it; wait an arbitrary
-      amount of time for all other processes to re-paint their windows;
-      copy a screen image; put our window back; and then return that image.
-      This method is slow and unreliable, as there is no way to know how
-      long we have to wait for the re-paint, and if you don't wait long
+   B: Under plain-old X11, if the pre-saved pixmap isn't there, then we do it
+      the hard way: un-map our window to expose what is under it; wait an
+      arbitrary amount of time for all other processes to re-paint their
+      windows; copy a screen image; put our window back; and then return that
+      image.  This method is slow and unreliable, as there is no way to know
+      how long we have to wait for the re-paint, and if you don't wait long
       enough, you get all black.  E.g. on 2022 Raspbian 11.5/Pi4b/LXDE, it
       takes nearly *five seconds* for the frame buffer to update, which is
       truly awful.  Also, the unmapping and remapping causes ugly flicker,
@@ -57,6 +57,17 @@
       XQuartz doesn't let you make screenshots by copying the X11 root
       window, so this instead runs "/usr/sbin/screencapture" to get the
       Mac desktop image as a file.
+
+   D: On Wayland: We try to use "/usr/bin/grim" to get the desktop image
+      as a file.  That program is not installed by default on all Wayland
+      systems; and it doesn't work under GNOME or KDE.
+
+      "grim: compositor doesn't support wlr-screencopy-unstable-v1".
+
+      There is no way for XScreenSaver to get a screen image under GNOME
+      or KDE.  They invented their own, incompatible APIs, which always
+      play a camera noise and flash the screen white, and might also
+      pop up a confirmation dialog.
  */
 
 #include "utils.h"
@@ -121,16 +132,6 @@
 #endif
 
 
-#ifdef __APPLE__
-  /* On macOS under X11, the usual X11 mechanism of getting a screen shot
-     doesn't work, and we need to use an external program.  This is only
-     used when running under X11 on macOS.  If it's a Cocoa build, this
-     path is not taken, and OSX/grabclient-osx.m is used instead.
-   */
-# define USE_EXTERNAL_SCREEN_GRABBER
-#endif
-
-
 const char *progclass = "XScreenSaver";
 XrmDatabase db;
 XtAppContext app;
@@ -140,9 +141,30 @@ typedef enum {
 } grab_type;
 
 
-#define GETIMAGE_VIDEO_PROGRAM   "xscreensaver-getimage-video"
-#define GETIMAGE_FILE_PROGRAM    "xscreensaver-getimage-file"
-#define GETIMAGE_SCREEN_PROGRAM  "screencapture"
+#if defined(__APPLE__) && !defined(HAVE_COCOA)
+# define HAVE_MACOS_X11
+#elif !defined(HAVE_JWXYZ) /* Real X11, possibly Wayland */
+# define HAVE_REAL_X11
+#endif
+
+#define GETIMAGE_VIDEO_PROGRAM "xscreensaver-getimage-video"
+#define GETIMAGE_FILE_PROGRAM  "xscreensaver-getimage-file"
+
+#ifdef HAVE_MACOS_X11
+  /* On macOS under X11, the usual X11 mechanism of getting a screen shot
+     doesn't work, and we need to use an external program.  This is only
+     used when running under X11 on macOS.  If it's a Cocoa build, this
+     path is not taken, and OSX/grabclient-osx.m is used instead.
+   */
+# define USE_EXTERNAL_SCREEN_GRABBER
+# define GETIMAGE_SCREEN_PROGRAM "screencapture"
+
+#elif defined(HAVE_REAL_X11)
+  /* Under real X11, we can grab the screen directly.  Under XWayland,
+     we call out to an external program. */
+# define USE_EXTERNAL_SCREEN_GRABBER
+# define GETIMAGE_SCREEN_PROGRAM "grim"
+#endif
 
 
 static int
@@ -246,7 +268,8 @@ xscreensaver_window_p (Display *dpy, Window window)
 /* Figure out what kind of scaling/positioning we ought to do to display
    a src-sized image in a dest-sized window/pixmap.  Returns the width
    and height to which the image should be scaled, and the position where
-   it should be displayed to center it.
+   it should be displayed to center it.  The result may be letterboxed
+   or pillarboxed to center it, as well as being scaled.
  */
 static void
 compute_image_scaling (int src_w, int src_h,
@@ -1049,7 +1072,8 @@ display_file (Screen *screen, Window window, Drawable drawable,
    to run.  Returned pathname may be relative to 'directory', or absolute.
  */
 static char *
-get_filename_1 (Screen *screen, const char *directory, grab_type type,
+get_filename_1 (Screen *screen, Window window,
+                const char *directory, grab_type type,
                 Bool verbose_p)
 {
   Display *dpy = DisplayOfScreen (screen);
@@ -1086,15 +1110,18 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
         static char rect[100];
         if (!tmpdir) tmpdir = "/tmp";
 
-        /* Grab all screens */
-	XGetWindowAttributes (dpy, XRootWindowOfScreen (screen), &xgwa);
-        sprintf (rect, "%d,%d,%d,%d", xgwa.x, xgwa.y, xgwa.width, xgwa.height);
+	XGetWindowAttributes (dpy, window, &xgwa);
+        window_root_offset (dpy, window, &xgwa.x, &xgwa.y);
 
         outfile = (char *) malloc (strlen(tmpdir) + 100);
         sprintf (outfile, "%s/xscreensaver.%08x.png",
                  tmpdir, random() % 0xFFFFFFFF);
 
-        av[ac++] = GETIMAGE_SCREEN_PROGRAM;
+#if  defined(HAVE_MACOS_X11)
+
+        sprintf (rect, "%d,%d,%d,%d", xgwa.x, xgwa.y, xgwa.width, xgwa.height);
+
+        av[ac++] = GETIMAGE_SCREEN_PROGRAM;	/* "screencapture" */
         av[ac++] = "-x";   /* no sound */
         av[ac++] = "-C";   /* capture mouse */
         av[ac++] = "-R";   /* rect */
@@ -1102,9 +1129,24 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
         av[ac++] = "-t";   /* file type */
         av[ac++] = "png";
         av[ac++] = outfile;
+
+#  elif defined(HAVE_REAL_X11)
+
+        sprintf (rect, "%d,%d %dx%d", xgwa.x, xgwa.y, xgwa.width, xgwa.height);
+
+        av[ac++] = GETIMAGE_SCREEN_PROGRAM;	/* "grim" */
+        av[ac++] = "-c";   /* capture mouse */
+        av[ac++] = "-g";   /* geometry */
+        av[ac++] = rect;
+        av[ac++] = "-t";   /* file type */
+        av[ac++] = "png";
+        av[ac++] = outfile;
+#  else
+#   error USE_EXTERNAL_SCREEN_GRABBER is wrong
+#  endif
       }
       break;
-# endif
+# endif /* USE_EXTERNAL_SCREEN_GRABBER */
 
     default:
       abort();
@@ -1183,7 +1225,9 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
         L = strlen (buf);
         while (L && buf[L-1] == '\n')
           buf[--L] = 0;
-          
+
+        /* In GRAB_DESK mode, outfile is already set.
+           Otherwise, is must be printed by the subprocess. */
         if (! outfile)
           {
             if (!*buf) return 0;
@@ -1205,9 +1249,11 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
 
         if (stat (outfile_full, &st))
           {
-            fprintf (stderr, "%s: file does not exist: \"%s\"\n",
-                     blurb(), outfile_full);
-            free (outfile);
+            if (verbose_p)
+              fprintf (stderr, "%s: file does not exist: \"%s\"\n",
+                       blurb(), outfile_full);
+            if (outfile_full != outfile)
+              free (outfile);
             outfile = 0;
           }
 
@@ -1224,9 +1270,10 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
 /* Returns a pathname to an image file.  Free the string when you're done.
  */
 static char *
-get_filename (Screen *screen, const char *directory, Bool verbose_p)
+get_filename (Screen *screen, Window window, const char *directory,
+              Bool verbose_p)
 {
-  return get_filename_1 (screen, directory, GRAB_FILE, verbose_p);
+  return get_filename_1 (screen, window, directory, GRAB_FILE, verbose_p);
 }
 
 
@@ -1234,31 +1281,32 @@ get_filename (Screen *screen, const char *directory, Bool verbose_p)
    Delete that file when you are done with it (and free the string.)
  */
 static char *
-get_video_filename (Screen *screen, Bool verbose_p)
+get_video_filename (Screen *screen, Window window, Bool verbose_p)
 {
-  return get_filename_1 (screen, 0, GRAB_VIDEO, verbose_p);
+  return get_filename_1 (screen, window, 0, GRAB_VIDEO, verbose_p);
 }
 
-/* Grabs a desktop image to a file, and returns a pathname to that file.
+/* Grabs a screenshot to a file, and returns a pathname to that file.
+   It will be the size of the provided window.
    Delete that file when you are done with it (and free the string.)
  */
 # ifdef USE_EXTERNAL_SCREEN_GRABBER
 static char *
-get_desktop_filename (Screen *screen, Bool verbose_p)
+get_desktop_filename (Screen *screen, Window window, Bool verbose_p)
 {
-  return get_filename_1 (screen, 0, GRAB_DESK, verbose_p);
+  return get_filename_1 (screen, window, 0, GRAB_DESK, verbose_p);
 }
 #endif /* USE_EXTERNAL_SCREEN_GRABBER */
 
 
 /* Grabs a video frame, and renders it on the Drawable.
-   Returns False if it fails;
+   Returns False if it fails.
  */
 static Bool
 display_video (Screen *screen, Window window, Drawable drawable,
                Bool verbose_p, XRectangle *geom_ret)
 {
-  char *filename = get_video_filename (screen, verbose_p);
+  char *filename = get_video_filename (screen, window, verbose_p);
   Bool status;
 
   if (!filename)
@@ -1290,6 +1338,7 @@ display_video (Screen *screen, Window window, Drawable drawable,
    started with -install, we need to copy the contents of the default colormap
    into the screensaver's colormap.
  */
+# ifndef HAVE_MACOS_X11
 static void
 copy_default_colormap_contents (Screen *screen,
 				Colormap to_cmap,
@@ -1372,6 +1421,7 @@ copy_default_colormap_contents (Screen *screen,
   free (new_colors);
   free (pixels);
 }
+#endif /* !HAVE_MACOS_X11 */
 
 
 /* Install the colormaps of all visible windows, deepest first.
@@ -1428,7 +1478,7 @@ static void
 raise_window (Display *dpy, Window window, Bool dont_wait, Bool verbose_p)
 {
   if (verbose_p)
-    fprintf(stderr, "%s: raising window 0x%08lX (%s)\n",
+    fprintf(stderr, "%s: raising window 0x%0lX (%s)\n",
             blurb(), (unsigned long) window,
             (dont_wait ? "not waiting" : "waiting"));
 
@@ -1464,22 +1514,23 @@ raise_window (Display *dpy, Window window, Bool dont_wait, Bool verbose_p)
 /* Returns a pixmap of a screenshot, that is the size of the window
    and covers that window's extent.
 
-   This does it the hard way: by unmapping the window, waiting an arbitrary
-   amount of time, copying some bits from the root, then re-mapping the
-   window.
+   This unmaps the window, waits an arbitrary amount of time, grabs bits,
+   then re-maps the window.  Grabbing bits happens either with XCopyArea
+   (on real X11) or by running an external program (macOS or Wayland).
  */
 static Pixmap
-grab_screen_image_xcopyarea (Screen *screen, Window window, Bool verbose_p)
+grab_screen_image (Screen *screen, Window window, Bool cache_p, Bool verbose_p)
 {
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;
   Window real_root;
   Bool root_p;
   Bool saver_p;
+  Bool mapped_p;
   double unmap_time = 0;
-  Pixmap pixmap = None;
-  XGCValues gcv;
-  GC gc;
+  char *filename = 0;
+  Pixmap screenshot = None;
+  XRectangle geom;
 
   real_root = XRootWindowOfScreen (screen);  /* not vroot */
   root_p = (window == real_root);
@@ -1487,46 +1538,55 @@ grab_screen_image_xcopyarea (Screen *screen, Window window, Bool verbose_p)
 
   XGetWindowAttributes (dpy, window, &xgwa);
   screen = xgwa.screen;
+  mapped_p = (xgwa.map_state == IsViewable);
+
+  if (!cache_p)
+    {
+      /* This is maybe overloading the meaning of --cache, but for fading
+         to work, we need to be able to grab a screenshot that includes
+         the window itself.  This only comes into effect when using an
+         external screen grabber. */
+      mapped_p   = 0;
+      unmap_time = 0;
+    }
 
   if (root_p)
     unmap_time = 0;  /* real root window needs no delay */
-  else if (saver_p)
+  else if (!mapped_p)
+    unmap_time = 0;  /* not currently on screen */
+  else
     {
       unmap_time = get_float_resource (dpy, "grabRootDelay", "Seconds");
       if (unmap_time <= 0.00001 || unmap_time > 20)
-
-        /* 2022, Raspbian 11.5: after we call XUnmapWindow, it takes nearly
-           *five seconds* for the framebuffer to update!  If we delay for less
-           than that, the window grabs an image of itself, which usually means
-           black.  One would normally suspect the compositor of being
-           responsible for these sorts of shenanigans, but this is under
-           LXDE...
-
-           Oddly, running Debian 11.4 under VirtualBox (meaning slowwwwww)
-           does not have this problem, and a delay of 0.33 is plenty.
-
-           This problem does not afflict driver/fade.c as it just uses
-           XCopyArea directly without needing to wait for other processes
-           to react to the XUnmapWindow and re-paint.
-
-           This nonsense is what led me to write screenshot.c and used a
-           cached screenshot image instead.
-         */
-        unmap_time = 5.0;
-    }
-  else  /* managed window */
-    {
-      unmap_time = get_float_resource (dpy, "grabWindowDelay", "Seconds");
-      if (unmap_time <= 0.00001 || unmap_time > 20)
         unmap_time = 0.33;
+
+      /* 2022, Raspbian 11.5: after we call XUnmapWindow, it takes nearly
+         *five seconds* for the framebuffer to update!  If we delay for less
+         than that, the window grabs an image of itself, which usually means
+         black.  One would normally suspect the compositor of being
+         responsible for these sorts of shenanigans, but this is under
+         LXDE...
+  
+         Oddly, running Debian 11.4 under VirtualBox (meaning slowwwwww)
+         does not have this problem, and a delay of 0.33 is plenty.
+  
+         This problem does not afflict driver/fade.c as it just uses
+         XCopyArea directly without needing to wait for other processes
+         to react to the XUnmapWindow and re-paint.
+  
+         This nonsense is what led me to write screenshot.c and used a
+         cached screenshot image instead.
+       */
+      if (saver_p && unmap_time < 5.0)
+        unmap_time = 5.0;
     }
 
   if (verbose_p)
     {
-      fprintf (stderr, "\n%s: window 0x%08lX"
-               " root: %d saver: %d wait: %.1f\n",
+      fprintf (stderr, "%s: window 0x%0lX"
+               " root: %d saver: %d map: %d wait: %.1f\n",
                blurb(), (unsigned long) window,
-               root_p, saver_p, unmap_time);
+               root_p, saver_p, mapped_p, unmap_time);
 
       if (xgwa.visual->class != TrueColor)
         {
@@ -1537,48 +1597,140 @@ grab_screen_image_xcopyarea (Screen *screen, Window window, Bool verbose_p)
     }
 
 
-  if (!root_p && !top_level_window_p (screen, window))
+  if (!root_p &&
+      mapped_p &&
+      !top_level_window_p (screen, window))
     {
       if (verbose_p)
-        fprintf (stderr, "%s: not a top-level window: 0x%08lX: not grabbing\n",
+        fprintf (stderr, "%s: not a top-level window: 0x%0lX: not grabbing\n",
                  blurb(), (unsigned long) window);
       return None;
     }
 
-
   if (unmap_time > 0)
     {
       if (verbose_p)
-        fprintf (stderr, "%s: unmapping 0x%08lX\n", blurb(),
+        fprintf (stderr, "%s: unmapping 0x%0lX\n", blurb(),
                  (unsigned long) window);
       XUnmapWindow (dpy, window);
       if (xgwa.visual->class != TrueColor)
         install_screen_colormaps (screen);
       XSync (dpy, True);
+      if (verbose_p)
+        fprintf (stderr, "%s: sleeping %.02f\n", blurb(), unmap_time);
       /* wait for everyone to swap in and handle exposes */
       usleep ((unsigned long) (unmap_time * 1000000));
     }
 
-  /* Now that the window is off the screen and we have delayed, grab bits.
+  /* Now that the window is off the screen and we have delayed, grab bits,
+     then put the window back.
    */
-  pixmap = XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
+# ifdef USE_EXTERNAL_SCREEN_GRABBER
 
-  if (!root_p && xgwa.visual->class != TrueColor)
-    copy_default_colormap_contents (screen, xgwa.colormap, xgwa.visual,
-                                    verbose_p);
+#  if defined(HAVE_REAL_X11)
+  if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
+#  endif
 
-  gcv.function = GXcopy;
-  gcv.subwindow_mode = IncludeInferiors;
-  gc = XCreateGC (dpy, window, GCFunction | GCSubwindowMode, &gcv);
-  XCopyArea (dpy, real_root, pixmap, gc,
-             xgwa.x, xgwa.y, xgwa.width, xgwa.height, 0, 0);
-  XFreeGC (dpy, gc);
+    {
+      /* Wayland or macOS: Grab screen via external program. */
 
-  if (!root_p && xgwa.visual->class != TrueColor)
-    copy_default_colormap_contents (screen, xgwa.colormap, xgwa.visual,
-                                    verbose_p);
+      if (verbose_p)
+        fprintf (stderr, "%s: grabbing via \"%s\"\n", blurb(),
+                 GETIMAGE_SCREEN_PROGRAM);
+      filename = get_desktop_filename (screen, window, verbose_p);
 
-  raise_window (dpy, window, saver_p, verbose_p);
+      /* We can raise the window before parsing the file. */
+      if (unmap_time > 0)
+        raise_window (dpy, window, saver_p, verbose_p);
+      unmap_time = 0;
+
+      if (!filename)
+        {
+          /* if (verbose_p) */
+          fprintf (stderr, "%s: screenshot via \"%s\" failed\n", blurb(),
+                   GETIMAGE_SCREEN_PROGRAM);
+          return None;
+        }
+
+      /* Read the file into a pixmap the size of the destination drawable. */
+      screenshot = XCreatePixmap (dpy, window, xgwa.width, xgwa.height,
+                                  xgwa.depth);
+      if (!screenshot)
+        {
+          unlink (filename);
+          return None;
+        }
+
+#  if defined(HAVE_GDK_PIXBUF)
+      if (! read_file_gdk (screen, window, screenshot, filename,
+                           verbose_p, &geom))
+        {
+          unlink (filename);
+          XFreePixmap (dpy, screenshot);
+          return None;
+        }
+#  elif defined(HAVE_JPEGLIB)
+      if (! read_file_jpeglib (screen, window, screenshot, filename,
+                               verbose_p, &geom))
+        {
+          unlink (filename);
+          XFreePixmap (dpy, screenshot);
+          return None;
+        }
+#  else  /* !(HAVE_GDK_PIXBUF || HAVE_JPEGLIB) */
+      /* shouldn't get here if we have no image-loading methods available. */
+      abort();
+# endif /* !(HAVE_GDK_PIXBUF || HAVE_JPEGLIB) */
+
+      if (unlink (filename))
+        {
+          char buf[512];
+          sprintf (buf, "%s: rm %.100s", blurb(), filename);
+          perror (buf);
+        }
+      else if (verbose_p)
+        fprintf (stderr, "%s: rm %s\n", blurb(), filename);
+
+      if (verbose_p)
+        fprintf (stderr, "%s: screenshot %dx%d+%d+%d via \"%s\"\n", blurb(),
+                 xgwa.width, xgwa.height, xgwa.x, xgwa.y, 
+                 GETIMAGE_SCREEN_PROGRAM);
+    }
+# endif /* USE_EXTERNAL_SCREEN_GRABBER */
+# ifndef HAVE_MACOS_X11
+  else
+    {
+      /* Real X11: Grab screen via XCopyArea. */
+
+      XGCValues gcv;
+      GC gc;
+
+      if (verbose_p)
+        fprintf (stderr, "%s: grabbing via XCopyArea\n", blurb());
+
+      screenshot = XCreatePixmap (dpy, window, xgwa.width, xgwa.height,
+                                  xgwa.depth);
+
+      if (!root_p && xgwa.visual->class != TrueColor)
+        copy_default_colormap_contents (screen, xgwa.colormap, xgwa.visual,
+                                        verbose_p);
+
+      gcv.function = GXcopy;
+      gcv.subwindow_mode = IncludeInferiors;
+      gc = XCreateGC (dpy, window, GCFunction | GCSubwindowMode, &gcv);
+      window_root_offset (dpy, window, &xgwa.x, &xgwa.y);
+      XCopyArea (dpy, real_root, screenshot, gc,
+                 xgwa.x, xgwa.y, xgwa.width, xgwa.height, 0, 0);
+      XFreeGC (dpy, gc);
+
+      if (!root_p && xgwa.visual->class != TrueColor)
+        copy_default_colormap_contents (screen, xgwa.colormap, xgwa.visual,
+                                        verbose_p);
+    }
+# endif /* !HAVE_MACOS_X11 */
+
+  if (unmap_time > 0)
+    raise_window (dpy, window, saver_p, verbose_p);
 
   /* Generally it's bad news to call XInstallColormap() explicitly,
      but this file does a lot of sleazy stuff already...  This is to
@@ -1591,157 +1743,18 @@ grab_screen_image_xcopyarea (Screen *screen, Window window, Bool verbose_p)
     fprintf (stderr, "%s: grabbed screenshot to %s window\n", blurb(), 
              (root_p ? "real root" : saver_p ? "saver" : "top-level"));
 
-  return pixmap;
-}
-
-
-#ifdef USE_EXTERNAL_SCREEN_GRABBER
-static Pixmap
-grab_screen_image_external (Screen *screen, Window window, Bool verbose_p)
-{
-  Display *dpy = DisplayOfScreen (screen);
-  Window real_root;
-  Bool root_p;
-  Bool saver_p;
-  double unmap_time = 0;
-  XWindowAttributes xgwa;
-  char *filename;
-  Pixmap full, screenshot;
-  XGCValues gcv;
-  GC gc;
-  XRectangle geom;
-
-  real_root = XRootWindowOfScreen (screen);  /* not vroot */
-  root_p = (window == real_root);
-  saver_p = xscreensaver_window_p (dpy, window);
-
-  /* Using "screencapture" from within xscreensaver-settings doesn't work,
-     since we don't unmap the xscreensaver-settings window first. */
-  /* if (!root_p && !saver_p) return None; */
-
-  XGetWindowAttributes (dpy, XRootWindowOfScreen (screen), &xgwa);
-  screen = xgwa.screen;
-
-  if (root_p)
-    unmap_time = 0;  /* real root window needs no delay */
-  else
-    {
-      unmap_time = get_float_resource (dpy, "grabWindowDelay", "Seconds");
-      if (unmap_time <= 0.00001 || unmap_time > 20)
-        {
-          unmap_time = 0.33;
-          if (saver_p) unmap_time = 5.0;  /* WTF */
-        }
-    }
-
-  if (unmap_time > 0)
-    {
-      if (verbose_p)
-        fprintf (stderr, "%s: unmapping 0x%08lX\n", blurb(),
-                 (unsigned long) window);
-      XUnmapWindow (dpy, window);
-      if (xgwa.visual->class != TrueColor)
-        install_screen_colormaps (screen);
-      if (verbose_p)
-        fprintf (stderr, "%s: sleeping %.02f\n", blurb(), unmap_time);
-      /* wait for everyone to swap in and handle exposes */
-      usleep ((unsigned long) (unmap_time * 1000000));
-    }
-
-  /* Now that the window is off the screen and we have delayed, grab bits,
-     then put the window pack.
-   */
-  filename = get_desktop_filename (screen, verbose_p);
-  raise_window (dpy, window, saver_p, verbose_p);
-
-  if (!filename)
-    {
-      if (verbose_p)
-        fprintf (stderr, "%s: screenshot via \"%s\" failed\n", blurb(),
-                 GETIMAGE_SCREEN_PROGRAM);
-      return False;
-    }
-
-  /* Read the file into a pixmap the size of the root window.
-     If there are 2 screens, pixmap will be twice as wide as it needs
-     to be and the screenshot will be centered on it, per 'geom'.
-   */
-  full = XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-  if (!full)
-    {
-      unlink (filename);
-      return False;
-    }
-
-#  if defined(HAVE_GDK_PIXBUF)
-  if (! read_file_gdk (screen, window, full, filename, verbose_p, &geom))
-    {
-      unlink (filename);
-      XFreePixmap (dpy, full);
-      return False;
-    }
-#  elif defined(HAVE_JPEGLIB)
-  if (! read_file_jpeglib (screen, window, full, filename, verbose_p, &geom))
-    {
-      unlink (filename);
-      XFreePixmap (dpy, full);
-      return False;
-    }
-#  else  /* !(HAVE_GDK_PIXBUF || HAVE_JPEGLIB) */
-    /* shouldn't get here if we have no image-loading methods available. */
-    abort();
-# endif /* !(HAVE_GDK_PIXBUF || HAVE_JPEGLIB) */
-
-  if (unlink (filename))
-    {
-      char buf[512];
-      sprintf (buf, "%s: rm %.100s", blurb(), filename);
-      perror (buf);
-    }
-  else if (verbose_p)
-    fprintf (stderr, "%s: rm %s\n", blurb(), filename);
-
-  /* Retrieve the sub-rect of the full screen image that the window covers. */
-  XGetWindowAttributes (dpy, window, &xgwa);
-  if (!root_p && !saver_p)
-    {
-      /* Kludge for running inside xscreensaver-settings: show the upper
-         left of the screen instead, since otherwise we would have captured
-         the black rectangle that we are about to render into. */
-      xgwa.x = xgwa.y = 0;
-    }
-  else
-    {
-      window_root_offset (dpy, window, &xgwa.x, &xgwa.y);
-    }
-
-  screenshot = XCreatePixmap (dpy, window, xgwa.width, xgwa.height,
-                              xgwa.depth);
-  gc = XCreateGC (dpy, screenshot, 0, &gcv);
-  XCopyArea (dpy, full, screenshot, gc,
-             geom.x + xgwa.x, geom.y + xgwa.y,
-             xgwa.width, xgwa.height, 0, 0);
-  XFreeGC (dpy, gc);
-  XFreePixmap (dpy, full);
-
-  if (verbose_p)
-    fprintf (stderr, "%s: screenshot %dx%d+%d+%d via \"%s\"\n", blurb(),
-             xgwa.width, xgwa.height, xgwa.x, xgwa.y, 
-             GETIMAGE_SCREEN_PROGRAM);
-
   return screenshot;
 }
-#endif /* USE_EXTERNAL_SCREEN_GRABBER */
 
 
-/* Grabs a desktop screen shot onto the drawable and possibly the window.
+/* Grabs a desktop screen shot that is the size and position of the
+   Window (the bits under that window), and renders it onto the Drawable.  
    If the window and drawable are not the same size, the image in the
-   drawable is scaled to fit.
-   Returns False if it fails.
+   drawable is scaled.  Returns False if it fails.
  */
 static Bool
 display_desktop (Screen *screen, Window window, Drawable drawable,
-                 Bool verbose_p, XRectangle *geom_ret)
+                 Bool cache_p, Bool verbose_p, XRectangle *geom_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   Window root;
@@ -1754,23 +1767,21 @@ display_desktop (Screen *screen, Window window, Drawable drawable,
   if (verbose_p)
     fprintf (stderr, "%s: grabbing desktop image\n", blurb());
 
-  screenshot = screenshot_load (dpy, window, verbose_p);
+  root = XRootWindowOfScreen (screen);  /* not vroot */
 
-# ifdef USE_EXTERNAL_SCREEN_GRABBER
+  /* See if we already have a saved screenshot of the whole desktop;
+     if so, grab a sub-rectangle from that, of *this* window. */
+  if (cache_p)
+    screenshot = screenshot_load (dpy, window, verbose_p);
+
+  /* Otherwise, grab a new one. */
   if (! screenshot)
-    screenshot = grab_screen_image_external (screen, window, verbose_p);
-# endif /* USE_EXTERNAL_SCREEN_GRABBER */
-
-  if (!screenshot && !top_level_window_p (screen, window))
     {
       if (verbose_p)
-        fprintf (stderr, "%s: 0x%x not top-level: can't grab desktop\n",
-                 blurb(), (unsigned int) window);
-      return False;
+        fprintf (stderr, "%s: no saved screenshot on 0x%lx\n", blurb(),
+                 window);
+      screenshot = grab_screen_image (screen, window, cache_p, verbose_p);
     }
-
-  if (! screenshot)
-    screenshot = grab_screen_image_xcopyarea (screen, window, verbose_p);
 
   if (!screenshot)
     return False;
@@ -1836,7 +1847,7 @@ drawable_miniscule_p (Display *dpy, Drawable drawable)
 
 
 /* Grabs an image (from a file, video, or the desktop) and renders it on
-   the Drawable.  If `file' is specified, always use that file.  Otherwise,
+   the Drawable.  If 'file' is specified, always use that file.  Otherwise,
    select randomly, based on the other arguments.
  */
 static void
@@ -1844,6 +1855,7 @@ get_image (Screen *screen,
            Window window, Drawable drawable,
            Bool verbose_p,
            Bool desk_p,
+           Bool cache_p,
            Bool video_p,
            Bool image_p,
            const char *dir,
@@ -1899,7 +1911,7 @@ get_image (Screen *screen,
 
   if (file)
     {
-      desk_p = False;
+      desk_p  = False;
       video_p = False;
       image_p = True;
     }
@@ -1922,19 +1934,11 @@ get_image (Screen *screen,
       image_p = False;
     }
 
+
 # ifndef _VROOT_H_
 #  error Error!  This file definitely needs vroot.h!
 # endif
 
-  /* We can grab desktop images (using the normal X11 method) if:
-       - the window is the real root window;
-       - the window is a toplevel window.
-     We cannot grab desktop images that way if:
-       - the window is a non-top-level window.
-
-     Under X11 on macOS, desktops are just like loaded image files.
-     Under Cocoa on macOS, this code is not used at all.
-   */
   if (! (desk_p || video_p || image_p))
     which = GRAB_BARS;
   else
@@ -1964,7 +1968,7 @@ get_image (Screen *screen,
    */
   if (which == GRAB_FILE && !file)
     {
-      file = get_filename (screen, dir, verbose_p);
+      file = get_filename (screen, window, dir, verbose_p);
       if (!file)
         {
           which = GRAB_BARS;
@@ -2000,7 +2004,8 @@ get_image (Screen *screen,
       break;
 
     case GRAB_DESK:
-      if (! display_desktop (screen, window, drawable, verbose_p, &geom))
+      if (! display_desktop (screen, window, drawable, cache_p, 
+                             verbose_p, &geom))
         goto COLORBARS;
       file_prop = "desktop";
       break;
@@ -2069,6 +2074,8 @@ get_image (Screen *screen,
   }
 
   if (absfile) free (absfile);
+
+  XSync (dpy, False);
 }
 
 
@@ -2152,6 +2159,7 @@ mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
    "      --images  / --no-images     whether to allow image file loading\n"  \
    "      --video   / --no-video      whether to allow video grabs\n"	      \
    "      --desktop / --no-desktop    whether to allow desktop screen grabs\n"\
+   "      --cache   / --no-cache      whether to cache the desktop image\n"   \
    "      --directory <path>          where to find image files to load\n"    \
    "      --file <filename>           load this image file\n"                 \
    "\n"									      \
@@ -2177,6 +2185,7 @@ main (int argc, char **argv)
   int i;
 
   Bool verbose_p, grab_desktop_p, grab_video_p, random_image_p;
+  Bool cache_desktop_p;
   char *image_directory;
 
   progname = argv[0];
@@ -2231,6 +2240,8 @@ main (int argc, char **argv)
   grab_video_p    = get_boolean_resource(dpy, "grabVideoFrames", "Boolean");
   random_image_p  = get_boolean_resource(dpy, "chooseRandomImages", "Boolean");
   image_directory = get_string_resource (dpy, "imageDirectory", "String");
+  cache_desktop_p = True;
+  if (!image_directory) image_directory = "";
 
   if (!strncmp (image_directory, "~/", 2))
     {
@@ -2257,14 +2268,22 @@ main (int argc, char **argv)
       /* Have to re-process these, or else the .xscreensaver file
          has priority over the command line...
        */
-      if (!strcmp (argv[i], "-v") || !strcmp (argv[i], "-verbose"))
+      if (!strcmp (argv[i], "-v") ||
+          !strcmp (argv[i], "-vv") ||
+          !strcmp (argv[i], "-vvv") ||
+          !strcmp (argv[i], "-vvvv") ||
+          !strcmp (argv[i], "-vvvvv") ||
+          !strcmp (argv[i], "-vvvvvv") ||
+          !strcmp (argv[i], "-verbose"))
         verbose_p = True;
-      else if (!strcmp (argv[i], "-desktop"))    grab_desktop_p = True;
-      else if (!strcmp (argv[i], "-no-desktop")) grab_desktop_p = False;
-      else if (!strcmp (argv[i], "-video"))      grab_video_p = True;
-      else if (!strcmp (argv[i], "-no-video"))   grab_video_p = False;
-      else if (!strcmp (argv[i], "-images"))     random_image_p = True;
-      else if (!strcmp (argv[i], "-no-images"))  random_image_p = False;
+      else if (!strcmp (argv[i], "-desktop"))    grab_desktop_p  = True;
+      else if (!strcmp (argv[i], "-no-desktop")) grab_desktop_p  = False;
+      else if (!strcmp (argv[i], "-cache"))      cache_desktop_p = True;
+      else if (!strcmp (argv[i], "-no-cache"))   cache_desktop_p = False;
+      else if (!strcmp (argv[i], "-video"))      grab_video_p    = True;
+      else if (!strcmp (argv[i], "-no-video"))   grab_video_p    = False;
+      else if (!strcmp (argv[i], "-images"))     random_image_p  = True;
+      else if (!strcmp (argv[i], "-no-images"))  random_image_p  = False;
       else if (!strcmp (argv[i], "-file"))       file = argv[++i];
       else if (!strcmp (argv[i], "-directory") || !strcmp (argv[i], "-dir"))
         image_directory = argv[++i];
@@ -2352,7 +2371,7 @@ main (int argc, char **argv)
   if (!drawable) drawable = window;
 
   get_image (screen, window, drawable, verbose_p,
-             grab_desktop_p, grab_video_p, random_image_p,
+             grab_desktop_p, cache_desktop_p, grab_video_p, random_image_p,
              image_directory, file);
   XSync (dpy, False);
   exit (0);

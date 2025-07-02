@@ -18,9 +18,6 @@
 #include "gltrackball.h"
 #include "klondike-game.h"
 
-// random position offset for sloppy mode
-#define RANDOM_POSITION_OFFSET (bp->sloppy ? (((float)random()) / ((float)RAND_MAX) - 0.5) * 0.0125 : 0)
-
 // static const char *suits[] = {"Diamonds", "Clubs", "Hearts", "Spades"};
 // static const char *short_suits[] = {"D", "C", "H", "S"};
 // static const char *ranks[] = {"", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"};
@@ -44,10 +41,10 @@ void klondike_initialize_deck(klondike_configuration *bp)
             deck[index].is_face_up = 0;
             deck[index].x = bp->deck_x;
             deck[index].y = bp->deck_y;
-            deck[index].start_x = bp->deck_x;
-            deck[index].start_y = bp->deck_y;
-            deck[index].dest_x = bp->deck_x;
-            deck[index].dest_y = bp->deck_y;
+            deck[index].start_x = bp->deck_x + RANDOM_POSITION_OFFSET;
+            deck[index].start_y = bp->deck_y + RANDOM_POSITION_OFFSET;
+            deck[index].dest_x = bp->deck_x + RANDOM_POSITION_OFFSET;
+            deck[index].dest_y = bp->deck_y + RANDOM_POSITION_OFFSET;
             deck[index].start_frame = 0;
             deck[index].end_frame = 0;
             deck[index].start_angle = 0.0f;
@@ -176,8 +173,8 @@ static void reset_waste(klondike_configuration *bp, game_state_struct *game_stat
         game_state->deck[i] = game_state->waste[i];
 
         card_struct *animated_card = &game_state->deck[i];
-        animated_card->start_frame = bp->tick + (i+5) * bp->animation_ticks / 10;
-        animated_card->end_frame = bp->tick + (i+5) * bp->animation_ticks / 10 + bp->animation_ticks;
+        animated_card->start_frame = bp->tick + (i+5) * bp->animation_ticks / 3;
+        animated_card->end_frame = bp->tick + (i+5) * bp->animation_ticks / 3 + bp->animation_ticks;
         animated_card->start_x = animated_card->x;
         animated_card->start_y = animated_card->y;
         animated_card->dest_x = bp->deck_x + RANDOM_POSITION_OFFSET;

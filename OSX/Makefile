@@ -1,4 +1,4 @@
-# XScreenSaver for MacOS X, Copyright © 2006-2023 Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright © 2006-2025 Jamie Zawinski.
 
 XCODE_APP  = /Applications/Xcode.app
 TARGETS    = All Savers
@@ -45,6 +45,7 @@ debug::
 
 release::
 	$(MAKE2) _release > /dev/null
+	$(MAKE2) update_installer_size
 
 
 Sparkle.framework:
@@ -297,6 +298,27 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
   fi ;									\
 									\
   rm -rf "$$STAGE" ;							\
+
+
+# Set the installer's REQUIRED_SPACE to the size in MB of the build/Release/
+# directory, plus 8%, rounded up to the nearest 10.  That should be pretty
+# close to reality.
+#
+update_installer_size::
+	@								\
+  SIZE=`du -ks build/Release/ | sed 's/[^0-9].*//'` ;			\
+  SIZE=`perl -e "print int($$SIZE / 10240 * 1.08 + 0.999) * 10;"` ;	\
+  FILE="installer.sh" ;							\
+  TMP="/tmp/installer.$$$$.sh" ;					\
+  sed -e "s/^\(REQUIRED_SPACE=\)[0-9]*\(.*\)/\1$$SIZE\2/"		\
+	 < "$$FILE" > "$$TMP" ;						\
+  if cmp -s "$$FILE" "$$TMP" ; then					\
+    echo "$$FILE unchanged (required space $$SIZE MB)" ;		\
+  else									\
+    cat "$$TMP" > "$$FILE" ;						\
+    echo "$$FILE updated (required space $$SIZE MB)" ;			\
+  fi ;									\
+  rm -f "$$TMP"
 
 
 dmg:: distdepend check_versions

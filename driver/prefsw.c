@@ -1,5 +1,5 @@
 /* prefs.c --- reading and writing the ~/.xscreensaver file.
- * xscreensaver, Copyright © 1998-2023 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1998-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1370,13 +1370,6 @@ stop_the_insanity (saver_preferences *p)
       !p->dpms_quickoff_p)         /* ... but we want to do DPMS quick off */
     p->dpms_enabled_p = False;
 
-
-  /* Set watchdog timeout to about half of the cycle timeout, but
-     don't let it be faster than 1/2 minute or slower than 1 minute.
-   */
-  p->watchdog_timeout = p->cycle * 0.6;
-  if (p->watchdog_timeout < 27000) p->watchdog_timeout = 27000;	  /* 27 secs */
-  if (p->watchdog_timeout > 57000) p->watchdog_timeout = 57000;   /* 57 secs */
 
   if (p->pointer_hysteresis < 0)   p->pointer_hysteresis = 0;
 

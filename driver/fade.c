@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -33,38 +33,42 @@
      hours after it faded out) it has to retain that first screenshot of the
      desktop to fade back to.  But if the desktop had changed in the meantime,
      there will be a glitch at the end as it snaps from the screenshot to the
-     new current reality.
+     new current reality.  And under Wayland, it has to get that screenshot
+     by running "xscreensaver-getimage" which in turn runs "grim", if it is
+     installed, which it might not be.
 
    In summary, everything is terrible because X11 doesn't support alpha.
 
 
+   Another thing to consider is to implement fading with OpenGL: put the
+   screen shot in a textured quad and just change its color for fading.
+   That should be efficient on both X11 and Wayland.  However it would
+   require linking the OpenGL libraries into "xscreensaver-gfx".
+
+
    The fade process goes like this:
 
-   Screen saver activates:
-   - Fade out:
-     - Desktop is visible
-     - Save screenshot for later
-     - Map invisible temp windows
-     - Fade from desktop to black
-     - Erase saver windows to black and raise them
-     - Destroy temp windows
-
-   Screen saver deactivates:
-   - Fade out:
-     - Saver graphics are visible
-     - Map invisible temp windows
-     - Do not save a screenshot
-     - Fade from graphics to black
-     - Erase saver windows to black and raise them
-     - Destroy temp windows
-
-   - Fade in:
-     - Screen is black
-     - Map invisible temp windows
-     - Do not save a screenshot
-     - Unmap saver windows
-     - Fade from black to saved screenshot
-     - Destroy temp windows
+     Screen saver activates:
+  
+       - Desktop is visible
+       - Save screenshot for later
+       - Fade out:
+         - Map invisible temp windows
+         - Fade from desktop to black
+         - Erase saver windows to black and raise them
+         - Destroy temp windows
+  
+     Screen saver deactivates:
+  
+       - Saver graphics are visible
+       - Fade out:
+         - Get a screenshot of the current screenhack
+         - Map invisible temp windows
+         - Fade from screenhack screenshot to black
+       - Fade in:
+         - Fade from black to saved screenshot of desktop
+         - Unmap obscured saver windows
+         - Destroy temp windows
  */
 
 #ifdef HAVE_CONFIG_H
@@ -75,6 +79,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>		/* for waitpid() and associated macros */
+#endif
 
 #ifdef HAVE_JWXYZ
 # include "jwxyz.h"
@@ -111,6 +119,12 @@
 
 #include <X11/extensions/XInput2.h>
 #include "xinput.h"
+
+#if defined(__APPLE__) && !defined(HAVE_COCOA)
+# define HAVE_MACOS_X11
+#elif !defined(HAVE_JWXYZ) /* Real X11, possibly Wayland */
+# define HAVE_REAL_X11
+#endif
 
 
 typedef struct {
@@ -1517,6 +1531,119 @@ typedef struct {
 static int xshm_whack (Display *, XShmSegmentInfo *,
                        xshm_fade_info *, float ratio);
 
+
+/* Grab a screenshot and return it.
+   It will be the size and extent of the given window.
+   Or None if we failed.
+   Somewhat duplicated in screenshot.c:screenshot_grab().
+ */
+static Pixmap
+xshm_screenshot_grab (Display *dpy, Window window,
+                      Bool from_desktop_p, Bool verbose_p)
+{
+  XWindowAttributes xgwa;
+  Pixmap pixmap = 0;
+  Bool external_p = False;
+
+# ifdef HAVE_MACOS_X11
+  external_p = True;
+# else  /* X11, possibly Wayland */
+  external_p = getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET");
+# endif
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  pixmap = XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
+  if (!pixmap) return None;
+
+  XSync (dpy, False);  /* So that the pixmap exists before we exec. */
+
+  /* Run xscreensaver-getimage to get a screenshot.  It will, in turn,
+     run "screencapture" or "grim" to write the screenshot to a PNG file,
+     then will load that file onto our Pixmap.
+   */
+  if (external_p)
+    {
+      pid_t forked;
+      char *av[20];
+      int ac = 0;
+      char buf[1024];
+      char rootstr[20], pixstr[20];
+
+      sprintf (rootstr, "0x%0lx", (unsigned long) window);
+      sprintf (pixstr,  "0x%0lx", (unsigned long) pixmap);
+      av[ac++] = "xscreensaver-getimage";
+      if (verbose_p)
+        av[ac++] = "--verbose";
+      av[ac++] = "--desktop";
+      if (!from_desktop_p)
+        av[ac++] = "--no-cache";
+      av[ac++] = "--no-images";
+      av[ac++] = "--no-video";
+      av[ac++] = rootstr;
+      av[ac++] = pixstr;
+      av[ac] = 0;
+
+      if (verbose_p)
+        {
+          int i;
+          fprintf (stderr, "%s: fade: executing:", blurb());
+          for (i = 0; i < ac; i++)
+            fprintf (stderr, " %s", av[i]);
+          fprintf (stderr, "\n");
+        }
+
+      switch ((int) (forked = fork ())) {
+      case -1:
+        {
+          sprintf (buf, "%s: couldn't fork", blurb());
+          perror (buf);
+          return 0;
+        }
+      case 0:
+        {
+          close (ConnectionNumber (dpy));	/* close display fd */
+          execvp (av[0], av);			/* shouldn't return. */
+          exit (-1);				/* exits fork */
+          break;
+        }
+      default:
+        {
+          int wait_status = 0, exit_status = 0;
+          /* Wait for the child to die. */
+          waitpid (forked, &wait_status, 0);
+          exit_status = WEXITSTATUS (wait_status);
+          /* Treat exit code as a signed 8-bit quantity. */
+          if (exit_status & 0x80) exit_status |= ~0xFF;
+          if (exit_status != 0)
+            {
+              fprintf (stderr, "%s: fade: %s exited with %d\n",
+                       blurb(), av[0], exit_status);
+              if (pixmap) XFreePixmap (dpy, pixmap);
+              return None;
+            }
+        }
+      }
+    }
+# ifndef HAVE_MACOS_X11
+  else
+    {
+      /* Grab a screenshot using XCopyArea. */
+
+      XGCValues gcv;
+      GC gc;
+      gcv.function = GXcopy;
+      gcv.subwindow_mode = IncludeInferiors;
+      gc = XCreateGC (dpy, pixmap, GCFunction | GCSubwindowMode, &gcv);
+      XCopyArea (dpy, xgwa.root, pixmap, gc,
+                 xgwa.x, xgwa.y, xgwa.width, xgwa.height, 0, 0);
+      XFreeGC (dpy, gc);
+    }
+# endif /* HAVE_MACOS_X11 */
+
+  return pixmap;
+}
+
+
 /* Returns:
    0: faded normally
    1: canceled by user activity
@@ -1558,7 +1685,6 @@ xshm_fade (XtAppContext app, Display *dpy,
       XWindowAttributes xgwa;
       Window root;
       XGCValues gcv;
-      GC gc;
       unsigned long attrmask = 0;
       XSetWindowAttributes attrs;
 
@@ -1584,17 +1710,10 @@ xshm_fade (XtAppContext app, Display *dpy,
         }
       else
         {
-          /* Create a pixmap and grab a screenshot into it. */
           info[screen].screenshot =
-            XCreatePixmap (dpy, root, xgwa.width, xgwa.height, xgwa.depth);
+            xshm_screenshot_grab (dpy, saver_windows[screen], from_desktop_p,
+                                  verbose_p);
           if (!info[screen].screenshot) goto FAIL;
-
-          gcv.function = GXcopy;
-          gcv.subwindow_mode = IncludeInferiors;
-          gc = XCreateGC (dpy, root, GCFunction | GCSubwindowMode, &gcv);
-          XCopyArea (dpy, root, info[screen].screenshot, gc,
-                     xgwa.x, xgwa.y, xgwa.width, xgwa.height, 0, 0);
-          XFreeGC (dpy, gc);
         }
 
       /* Create the fader window for the animation. */
@@ -1654,11 +1773,16 @@ xshm_fade (XtAppContext app, Display *dpy,
 
       /* Now that we have mapped the screenshot on the fader windows,
          take the saver windows off the screen. */
+# if 0
+      /* Under macOS X11 and Wayland, this causes a single frame of flicker.
+         I don't see how that is possible, since we just did XMapRaised,
+         above. */
       if (out_p)
         {
           XUnmapWindow (dpy, saver_windows[screen]);
           XClearWindow (dpy, saver_windows[screen]);
         }
+# endif
     }
 
   /* Run the animation at the maximum frame rate in the time allotted. */

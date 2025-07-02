@@ -296,7 +296,7 @@ image_loaded_cb (const char *filename, XRectangle *geom,
   if (frame->loading.title && frame->loading.title[0] == '/')
     {    /* strip filename to part after last /. */
       char *s = strrchr (frame->loading.title, '/');
-      if (s) strcpy (frame->loading.title, s+1);
+      if (s) memmove (frame->loading.title, s+1, strlen (s));
     }
 
   if (debug_p)

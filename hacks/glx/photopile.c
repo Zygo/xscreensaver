@@ -1,5 +1,5 @@
-/* photopile, Copyright (c) 2008-2018 Jens Kilian <jjk@acm.org>
- * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinskin <jwz@jwz.org>
+/* photopile, Copyright © 2008-2018 Jens Kilian <jjk@acm.org>
+ * Based on carousel, Copyright © 2005-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -292,7 +292,7 @@ image_loaded_cb (const char *filename, XRectangle *geom,
     {
       /* strip filename to part after last /. */
       char *s = strrchr (frame->title, '/');
-      if (s) strcpy (frame->title, s+1);
+      if (s) memmove (frame->title, s+1, strlen (s));
     }
 
   if (debug_p)

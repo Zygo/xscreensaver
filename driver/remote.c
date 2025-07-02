@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright © 1991-2024 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -182,47 +182,32 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
 	  unsigned long nitems, bytesafter;
 	  unsigned char *dataP = 0;
 
+          /* XA_SCREENSAVER_STATUS format documented in windows.c. */
 	  if (XGetWindowProperty (dpy,
-                                  RootWindow (dpy, 0),
+                                  RootWindow (dpy, 0), /* always screen #0 */
 				  XA_SCREENSAVER_STATUS,
 				  0, 999, False, XA_INTEGER,
 				  &type, &format, &nitems, &bytesafter,
 				  &dataP)
 	      == Success
-	      && type
-	      && dataP)
-	    {
-              Atom blanked;
-              time_t tt;
+              && type == XA_INTEGER
+              && nitems >= 3
+              && dataP)
+            {
+              PROP32 *data = (PROP32 *) dataP;
+              Atom state = (Atom) data[0];
+              time_t tt = (time_t)			/* 64 bit time_t */
+                ((((unsigned long) data[1] & 0xFFFFFFFFL) << 32) |
+                  ((unsigned long) data[2] & 0xFFFFFFFFL));
               char *s;
-              Atom *data = (Atom *) dataP;
 
-              if (type != XA_INTEGER || nitems < 3)
-                {
-                STATUS_LOSE:
-                  if (data) free (data);
-                  fprintf (stdout, "\n");
-                  fflush (stdout);
-                  fprintf (stderr, "bad status format on root window\n");
-                  status = -1;
-                  goto DONE;
-                }
-                  
-              blanked = (Atom) data[0];
-              tt = (time_t) data[1];
-
-              if (tt <= (time_t) 666000000L) /* early 1991 */
-                goto STATUS_LOSE;
-
-	      if (blanked == XA_BLANK)
+	      if (state == XA_BLANK)
 		fputs (": screen blanked since ", stdout);
-	      else if (blanked == XA_LOCK)
+	      else if (state == XA_LOCK || state == XA_AUTH)
 		fputs (": screen locked since ", stdout);
-	      else if (blanked == 0)
-		/* suggestions for a better way to phrase this are welcome. */
+	      else if (state == 0)
 		fputs (": screen non-blanked since ", stdout);
               else
-                /* `blanked' has an unknown value - fail. */
                 goto STATUS_LOSE;
 
               s = ctime(&tt);
@@ -231,7 +216,8 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
               fputs (s, stdout);
 
               {
-                int nhacks = nitems - 2;
+                int off = 3;
+                int nhacks = nitems - off;
                 Bool any = False;
                 int i;
                 for (i = 0; i < nhacks; i++)
@@ -242,13 +228,13 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
                     }
 
                 if (any && nhacks == 1)
-                  fprintf (stdout, " (hack #%d)\n", (int) data[2]);
+                  fprintf (stdout, " (hack #%d)\n", (int) data[off]);
                 else if (any)
                   {
                     fprintf (stdout, " (hacks: ");
                     for (i = 0; i < nhacks; i++)
                       {
-                        fprintf (stdout, "#%d", (int) data[2 + i]);
+                        fprintf (stdout, "#%d", (int) data[off + i]);
                         if (i != nhacks-1)
                           fputs (", ", stdout);
                       }
@@ -258,14 +244,20 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
                   fputs ("\n", stdout);
               }
 
-	      if (data) free (data);
+	      if (dataP) free (dataP);
 	    }
 	  else
 	    {
-	      if (dataP) XFree (dataP);
 	      fprintf (stdout, "\n");
+            STATUS_LOSE:
 	      fflush (stdout);
-	      fprintf (stderr, "no saver status on root window\n");
+
+              if (dataP)
+                fprintf (stderr, "bad status format on root window\n");
+              else
+                fprintf (stderr, "no saver status on root window\n");
+
+	      if (dataP) XFree (dataP);
               status = -1;
               goto DONE;
 	    }
@@ -286,8 +278,11 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
 	abort();
       else if (arg != 0 && command == XA_DEMO)
 	{
-	  arg1 = 5000;	/* version number of the XA_DEMO protocol, */
-	  arg2 = arg;	/* since it didn't use to take an argument. */
+          /* 1.09, 1992: DEMO took no arguments
+             2.35, 1998: [ '300',  hack-number ]   1 indexed, 0 means random
+             5.00, 2006: [ '5000', hack-number ]   same */
+	  arg1 = 5000;
+	  arg2 = arg;
 	}
 
       if (command == XA_DEACTIVATE)
@@ -478,8 +473,8 @@ xscreensaver_command_wait_for_blank (Display *dpy,
       time_t now;
       struct timeval tv;
 
-      /* Wait until the status property on the root window changes to
-         BLANK or LOCKED. */
+      /* Wait until the status property changes to BLANK or LOCKED. */
+      /* XA_SCREENSAVER_STATUS format documented in windows.c. */
       if (XGetWindowProperty (dpy, w,
                               XA_SCREENSAVER_STATUS,
                               0, 999, False, XA_INTEGER,
@@ -498,15 +493,16 @@ xscreensaver_command_wait_for_blank (Display *dpy,
               int i;
               fprintf (stderr, "%s: read status property: 0x%lx: %s", progname,
                        (unsigned long) w,
-                       (status[0] == XA_LOCK  ? "LOCK" :
-                        status[0] == XA_BLANK ? "BLANK" :
+                       (status[0] == XA_BLANK ? "BLANK" :
+                        status[0] == XA_LOCK  ? "LOCK"  :
+                        status[0] == XA_AUTH  ? "AUTH"  :
                         status[0] == 0 ? "0" : "???"));
               for (i = 1; i < nitems; i++)
                 fprintf (stderr, ", %lu", status[i]);
               fprintf (stderr, "\n");
             }
 
-          if (state == XA_BLANK || state == XA_LOCK)
+          if (state != 0)
             {
               if (verbose_p > 1)
                 fprintf (stderr, "%s: screen blanked\n", progname);

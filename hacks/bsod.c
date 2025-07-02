@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1998-2024 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1998-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2063,7 +2063,7 @@ windows_10 (Display *dpy, Window window)
       "This place is best shunned and left uninhabited."
   };
   int i, y = 0;
-  int top, left0, left, right, y1;
+  int top, left0, left, right, y1 = 0;
   Bool clownp = !(random() % 10);
   Bool honorp = !clownp && !(random() % 20);
   const char * const * lines = (clownp ? lines2 : honorp ? lines3 : lines1);
@@ -2134,9 +2134,9 @@ windows_10 (Display *dpy, Window window)
         }
       else if (i == 1)
         {
-//          y += font->ascent + font->descent;
+          /* y += font->ascent + font->descent; */
           y1 = y;
-//          y += font->ascent + font->descent;
+          /* y += font->ascent + font->descent; */
         }
       else if (i == 2)
         {

@@ -47,7 +47,7 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.195 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.196 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright © 1999-2024" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
@@ -3101,6 +3101,8 @@ my $img_height;
 
 my $delay = 2;
 
+my $max_load = 0;
+
 # Like system, but prints status about exit codes, and kills this process
 # with whatever signal killed the sub-process, if any.
 #
@@ -3162,6 +3164,28 @@ sub pick_root_displayer() {
   my $cmd = "xscreensaver-getimage";
   error ("$cmd not on \$PATH") unless (which($cmd));
   return "$cmd -root -file",
+}
+
+
+# If the load average is higher than the --max-load arg, wait.
+sub await_load() {
+  return unless $max_load;
+  my $load;
+  my $count = 0;
+  do {
+    my $line = `cat /proc/loadavg 2>&-`;
+    ($load) = ($line =~ m/^([\d.]+)/s);
+    return unless defined ($load);
+    if ($load < $max_load) {
+      LOG($verbose_warnings, "Load is $load - resuming") if ($count);
+      return;
+    } else {
+      LOG($verbose_warnings, "Load is $load - pausing")
+        if ($count == 0 || $verbose_load);
+      sleep (60);
+    }
+    $count++;
+  } while ($load > $max_load);
 }
 
 
@@ -3321,6 +3345,7 @@ sub x_or_image_output($) {
 
     unlink $image_tmp1, $image_tmp2;
     sleep $delay;
+    await_load();
   }
 }
 
@@ -3905,6 +3930,8 @@ sub main() {
       $delay = shift @ARGV;
     } elsif (m/^--?timeout$/s) {
       $http_timeout = shift @ARGV;
+    } elsif (m/^--?max-load$/s) {
+      $max_load = shift @ARGV;
     } elsif (m/^--?filter$/s) {
       $filter_cmd = shift @ARGV;
     } elsif (m/^--?filter2$/s) {

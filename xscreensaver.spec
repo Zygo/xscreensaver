@@ -1,17 +1,22 @@
 %define	name xscreensaver
-%define	version 6.10
+%define	version 6.11
 
 Summary:	X screen saver and locker
 Name:		%{name}
 Version:	%{version}
-Release:	1
-Epoch:		1
+Release:	0
 License:	BSD
 Group:		Amusements/Graphics
 URL:		https://www.jwz.org/xscreensaver/
 Source0:	https://www.jwz.org/xscreensaver/xscreensaver-%{version}.tar.gz
 Vendor:		Jamie Zawinski <jwz@jwz.org>
 Buildroot:	%{_tmppath}/%{name}-root
+
+# Red Hat uses an epoch number to make RPM believe that their old RPM with
+# number "1:5.45" is newer than your "6.00".  The technical term for this
+# is "a dick move".  If that's happening to you, increment this number:
+#
+# Epoch:	2
 
 BuildRequires:	perl
 BuildRequires:	pkgconfig
@@ -28,7 +33,7 @@ BuildRequires:	libXxf86vm-devel
 BuildRequires:	xorg-x11-proto-devel
 BuildRequires:	mesa-libGL-devel
 BuildRequires:	mesa-libGLU-devel
-BuildRequires:	libgle-devel
+#BuildRequires:	libgle-devel
 BuildRequires:	pam-devel
 BuildRequires:	systemd-devel
 BuildRequires:	gtk3-devel
@@ -38,39 +43,40 @@ BuildRequires:	libxml2-devel
 BuildRequires:	gettext-devel
 BuildRequires:	libjpeg-turbo-devel
 
-Requires: SysVinit
+#Requires: SysVinit
 Requires: pam
 Requires: /etc/pam.d/system-auth
-Requires: htmlview
-Requires: desktop-backgrounds-basic
+#Requires: htmlview
+#Requires: desktop-backgrounds-basic
 Requires: xdg-utils
 Requires: systemd-libs
 
 Provides: xscreensaver
 
-Obsoletes: xscreensaver-base
-Obsoletes: xscreensaver-common
-Obsoletes: xscreensaver-data
-Obsoletes: xscreensaver-data-extra
-Obsoletes: xscreensaver-extra
-Obsoletes: xscreensaver-extra-base
-Obsoletes: xscreensaver-extra-gss
-Obsoletes: xscreensaver-extras
-Obsoletes: xscreensaver-extras-base
-Obsoletes: xscreensaver-extras-gss
-Obsoletes: xscreensaver-extrusion
-Obsoletes: xscreensaver-gl
-Obsoletes: xscreensaver-gl-base
-Obsoletes: xscreensaver-gl-extra
-Obsoletes: xscreensaver-gl-extra-gss
-Obsoletes: xscreensaver-gl-extras
-Obsoletes: xscreensaver-gl-extras-gss
-Obsoletes: xscreensaver-lang
-Obsoletes: xscreensaver-matrix
-Obsoletes: xscreensaver-bsod
-Obsoletes: xscreensaver-webcollage
-Obsoletes: xscreensaver-screensaver-bsod
-Obsoletes: xscreensaver-screensaver-webcollage
+Obsoletes: xscreensaver-base			< %{version}
+Obsoletes: xscreensaver-common			< %{version}
+Obsoletes: xscreensaver-data			< %{version}
+Obsoletes: xscreensaver-data-extra		< %{version}
+Obsoletes: xscreensaver-extra			< %{version}
+Obsoletes: xscreensaver-extra-base		< %{version}
+Obsoletes: xscreensaver-extra-gss		< %{version}
+Obsoletes: xscreensaver-extras			< %{version}
+Obsoletes: xscreensaver-extras-base		< %{version}
+Obsoletes: xscreensaver-extras-gss		< %{version}
+Obsoletes: xscreensaver-extrusion		< %{version}
+Obsoletes: xscreensaver-gl			< %{version}
+Obsoletes: xscreensaver-gl-base			< %{version}
+Obsoletes: xscreensaver-gl-extra		< %{version}
+Obsoletes: xscreensaver-gl-extra-gss		< %{version}
+Obsoletes: xscreensaver-gl-extras		< %{version}
+Obsoletes: xscreensaver-gl-extras-gss		< %{version}
+Obsoletes: xscreensaver-lang			< %{version}
+Obsoletes: xscreensaver-matrix			< %{version}
+Obsoletes: xscreensaver-bsod			< %{version}
+Obsoletes: xscreensaver-webcollage		< %{version}
+Obsoletes: xscreensaver-screensaver-bsod	< %{version}
+Obsoletes: xscreensaver-screensaver-webcollage	< %{version}
+
 
 %description
 A modular screen saver and locker for the X Window System.
@@ -78,6 +84,8 @@ More than 260 display modes are included in this package.
 
 %prep
 %setup -q
+
+autoreconf -v -f
 
 if [ -x %{_datadir}/libtool/config.guess ]; then
   # use system-wide copy
@@ -124,8 +132,8 @@ sed    -e 's@\(.*/app-defaults/\)@%config \1@' \
        -e 's@\(.*/pam\.d/\)@%config(missingok) \1@' \
 > $dd/all.files
 
-%find_lang %{name}
-cat %{name}.lang >> $dd/all.files
+#%find_lang %{name}
+#cat %{name}.lang >> $dd/all.files
 
 chmod -R a+r,u+w,og-w ${RPM_BUILD_ROOT}
 
@@ -136,7 +144,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %defattr(-,root,root)
 
 %changelog
-* Mon Nov 16 1998 jwz
-- Created.
 * Mon Jul 31 2023 jwz
 - Splitting this into multiple packages is a support nightmare, please don't.
+* Mon Nov 16 1998 jwz
+- Created.

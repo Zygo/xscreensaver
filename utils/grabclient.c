@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2024 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -301,22 +301,22 @@ hack_subproc_environment (Display *dpy)
   /* Store $DISPLAY into the environment, so that the $DISPLAY variable that
      the spawned processes inherit is what we are actually using.
    */
+
+# if !(defined(__APPLE__) && !defined(HAVE_COCOA))  /* not macOS X11 */
+  /* XQuartz's weird $DISPLAY pathnames do not match DisplayString() */
+
   const char *odpy = DisplayString (dpy);
   char *ndpy = (char *) malloc(strlen(odpy) + 20);
   strcpy (ndpy, "DISPLAY=");
   strcat (ndpy, odpy);
-
-  /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
-     any more, right?  It's not Posix, but everyone seems to have it. */
-# ifdef HAVE_PUTENV
   if (putenv (ndpy))
     abort ();
-# endif /* HAVE_PUTENV */
 
   /* don't free (ndpy) -- some implementations of putenv (BSD 4.4,
      glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2, MacOS)
      do not.  So we must leak it (and/or the previous setting). Yay.
    */
+# endif  /* not macOS X11 */
 }
 
 

@@ -1,4 +1,4 @@
-/* texfont, Copyright © 2005-2022 Jamie Zawinski <jwz@jwz.org>
+/* texfont, Copyright © 2005-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -147,6 +147,8 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
   XImage *image = 0;
   unsigned char *data = (unsigned char *) calloc (w2 * 2, (h2 + 1));
   unsigned char *out = data;
+  GLint rowpack = 0;
+  GLint alignment = 0;
 
   /* OpenGLES doesn't support GL_INTENSITY, so instead of using a
      texture with 1 byte per pixel, the intensity value, we have
@@ -258,6 +260,12 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
 
   image = 0;
 
+  glGetIntegerv (GL_UNPACK_ROW_LENGTH, &rowpack);
+  glGetIntegerv (GL_UNPACK_ALIGNMENT, &alignment);
+
+  glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
+  glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+
   {
 # ifdef GL_INTENSITY
     GLuint iformat = GL_INTENSITY;
@@ -286,6 +294,9 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
                         type, data);
       }
   }
+
+  glPixelStorei (GL_UNPACK_ROW_LENGTH, rowpack);
+  glPixelStorei (GL_UNPACK_ALIGNMENT, alignment);
 
   {
     char msg[100];
@@ -377,6 +388,12 @@ load_texture_font (Display *dpy, char *res)
     !get_boolean_resource (dpy, "texFontOmitDropShadow", "Boolean");
 
   data->mipmap_p = True;
+
+# if defined(__APPLE__) && !defined(HAVE_COCOA)   /* macOS X11 */
+  /* Some time before macOS 14.7.3, gluBuild2DMipmaps() started segfaulting. */
+  data->mipmap_p = False;
+# endif
+
 # ifdef HAVE_JWZGLES
   /* This would work, but it's wasteful for no benefit. */
   /* Wait, is it ever useful? */

@@ -182,6 +182,14 @@ Programming Tips
   - On modern machines, OpenGL will always run faster than Xlib.  It's
     also more portable.  Consider writing in OpenGL whenever possible.
 
+  - You must use OpenGL 1.3.  This means "immedidate mode", no shaders.
+    (It is possible to use GLSL shader language if you do so *optionally*
+    but it is a huge pain because the savers must run when that fails a
+    runtime check.)
+
+  - If you have static image assets, keep them PNG and small.  See
+    hacks/images/ and "maze" or "peepers" for examples.
+
   - Free any memory you allocate. While screen savers under X11 have
     their memory freed automatically when their process is killed by
     the XScreenSaver daemon, under iOS and Android screen savers exist

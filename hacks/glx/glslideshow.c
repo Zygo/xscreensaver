@@ -398,7 +398,7 @@ image_loaded_cb (const char *filename, XRectangle *geom,
       /* strip filename to part between last "/" and end. */
       /* xscreensaver-getimage has already stripped off the extension. */
       char *s = strrchr (img->title, '/');
-      if (s) strcpy (img->title, s+1);
+      if (s) memmove (img->title, s+1, strlen (s));
     }
 
   if (verbose_p)

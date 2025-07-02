@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -141,12 +141,24 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
 static void
 connect_to_server (saver_info *si)
 {
+  saver_preferences *p = &si->prefs;
   Widget toplevel_shell;
   Window daemon_window;
   XrmOptionDescRec options;
-  char *p;
+  char *name;
   int ac = 1;
   char *av[] = { "xscreensaver" };    /* For Xt and Xrm purposes */
+
+  /* Make sure the X11 socket doesn't get allocated to stderr: >&- 2>&-.
+     Parent "xscreensaver" already did this, but let's make sure. */
+  {
+    int fd0 = open ("/dev/null", O_RDWR);
+    int fd1 = open ("/dev/null", O_RDWR);
+    int fd2 = open ("/dev/null", O_RDWR);
+    if (fd0 > 2) close (fd0);
+    if (fd1 > 2) close (fd1);
+    if (fd2 > 2) close (fd2);
+  }
 
   XSetErrorHandler (saver_ehandler);
 
@@ -155,7 +167,7 @@ connect_to_server (saver_info *si)
 
   si->dpy = XtDisplay (toplevel_shell);
   si->prefs.db = XtDatabase (si->dpy);
-  XtGetApplicationNameAndClass (si->dpy, &p, &progclass);
+  XtGetApplicationNameAndClass (si->dpy, &name, &progclass);
 
   db = si->prefs.db;	/* resources.c needs this */
 
@@ -168,15 +180,62 @@ connect_to_server (saver_info *si)
   daemon_window = find_screensaver_window (si->dpy, 0);
   if (daemon_window)
     {
+      Window root = RootWindow (si->dpy, 0);  /* always screen 0 */
       XWindowAttributes xgwa;
       XGetWindowAttributes (si->dpy, daemon_window, &xgwa);
       XSelectInput (si->dpy, daemon_window,
                     xgwa.your_event_mask | PropertyChangeMask);
+
+      /* For tracking changes to XA_SCREENSAVER_STATUS on the root. */
+      XGetWindowAttributes (si->dpy, root, &xgwa);
+      XSelectInput (si->dpy, root,
+                    xgwa.your_event_mask | PropertyChangeMask);
     }
   else
     {
-      fprintf (stderr, "%s: xscreensaver does not seem to be running!\n",
-               blurb());
+      if (p->verbose_p ||
+          !(getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET")))
+        fprintf (stderr, "%s: xscreensaver does not seem to be running!\n",
+                 blurb());
+
+      /* Under normal circumstances, that window should have been created
+         by the "xscreensaver" process.  But if for some reason someone
+         has run "xscreensaver-gfx" directly (Wayland?) we need this window
+         to exist for ClientMessages to be receivable.  So let's make one.
+       */
+      XClassHint class_hints;
+      XSetWindowAttributes attrs;
+      unsigned long attrmask = 0;
+      pid_t pid = getpid();
+      char *id;
+      const char *version_number = XSCREENSAVER_VERSION;
+
+      class_hints.res_name  = (char *) progname;  /* not const? */
+      class_hints.res_class = "XScreenSaver";
+      id = (char *) malloc (20);
+      sprintf (id, "%lu", (unsigned long) pid);
+    
+      attrmask = CWOverrideRedirect | CWEventMask;
+      attrs.override_redirect = True;
+      attrs.event_mask = PropertyChangeMask;
+
+      daemon_window = XCreateWindow (si->dpy, RootWindow (si->dpy, 0),
+                                     0, 0, 1, 1, 0,
+                                     DefaultDepth (si->dpy, 0), InputOutput,
+                                     DefaultVisual (si->dpy, 0), attrmask, &attrs);
+      XStoreName (si->dpy, daemon_window, "XScreenSaver GFX");
+      XSetClassHint (si->dpy, daemon_window, &class_hints);
+      XChangeProperty (si->dpy, daemon_window, XA_WM_COMMAND, XA_STRING,
+                       8, PropModeReplace, (unsigned char *) progname,
+                       strlen (progname));
+      XChangeProperty (si->dpy, daemon_window, XA_SCREENSAVER_VERSION, XA_STRING,
+                       8, PropModeReplace, (unsigned char *) version_number,
+                       strlen (version_number));
+      XChangeProperty (si->dpy, daemon_window, XA_SCREENSAVER_ID, XA_STRING,
+                       8, PropModeReplace, (unsigned char *) id, strlen (id));
+      free (id);
+
+      si->all_clientmessages_p = True;
     }
 }
 
@@ -228,24 +287,66 @@ read_status_prop (saver_info *si)
       ssi->current_hack = -1;
     }
 
-  XGetWindowProperty (si->dpy, w, XA_SCREENSAVER_STATUS,
-                      0, 999, False, XA_INTEGER, &type, &format, &nitems,
-                      &bytesafter, &dataP);
-  if (dataP && type == XA_INTEGER && nitems >= 3)
+  /* XA_SCREENSAVER_STATUS format documented in windows.c. */
+  if (XGetWindowProperty (si->dpy, w,
+                          XA_SCREENSAVER_STATUS,
+                          0, 999, False, XA_INTEGER,
+                          &type, &format, &nitems, &bytesafter,
+                          &dataP)
+      == Success
+      && type == XA_INTEGER
+      && nitems >= 3
+      && dataP)
     {
-      for (i = 2; i < nitems; i++)
+      PROP32 *data = (PROP32 *) dataP;
+      int off = 3;
+      for (i = off; i < nitems; i++)
         {
-          int j = i - 2;
+          int j = i - off;
           if (j < si->nscreens)
             {
               saver_screen_info *ssi = &si->screens[j];
-              int n = ((PROP32 *) dataP)[i];
-              ssi->current_hack =  n-1;  /* 1-based */
+              int n = data[i];
+              ssi->current_hack = n-1;  /* 1-based */
             }
         }
     }
+
   if (dataP)
     XFree (dataP);
+}
+
+
+/* When we get a PropertyChange event on XA_SCREENSAVER_STATUS, note
+   whether the auth dialog is currently posted.
+ */
+static void
+status_prop_changed (saver_info *si)
+{
+  Window w = RootWindow (si->dpy, 0);  /* always screen 0 */
+  Atom type;
+  unsigned char *dataP = 0;
+  int format;
+  unsigned long nitems, bytesafter;
+  Bool oauth_p = si->auth_p;
+
+  if (XGetWindowProperty (si->dpy, w,
+                          XA_SCREENSAVER_STATUS,
+                          0, 999, False, XA_INTEGER,
+                          &type, &format, &nitems, &bytesafter,
+                          &dataP)
+      == Success
+      && type == XA_INTEGER
+      && nitems >= 3
+      && dataP)
+    {
+      PROP32 *data = (PROP32 *) dataP;
+      si->auth_p = (data[0] == XA_AUTH);
+      if (si->auth_p != oauth_p)  /* Faster watchdog while authenticating */
+        reset_watchdog_timer (si);
+    }
+  else
+    si->auth_p = False;
 }
 
 
@@ -312,6 +413,14 @@ handle_clientmessage (saver_info *si, XEvent *xev)
       si->selection_mode = which;
       goto CYCLE;
     }
+  else if (si->all_clientmessages_p)
+    {
+      /* The xscreensaver daemon is not running, so return an error response
+         for unhandled ClientMessages so that xscreensaver-command doesn't
+         have to time out waiting for a response that will not arrive. */
+      clientmessage_response (dpy, xev, False,
+                              "xscreensaver daemon not running");
+    }
   else
     {
       /* All other ClientMessages are handled by xscreensaver rather than
@@ -356,6 +465,15 @@ main_loop (saver_info *si, Bool init_p)
   if (p->verbose_p)
     describe_monitor_layout (si->monitor_layout);
 
+  /* The screen blanked (will blank) at xscreensaver-gfx's launch time.
+     The last user activity time is presumed to be 'timeout' before that.
+     Unless the command line included --next, --prev, --demo, etc.
+   */
+  si->blank_time = time ((time_t *) 0);
+  si->activity_time = (si->selection_mode == 0
+                       ? si->blank_time - p->timeout / 1000
+                       : si->blank_time);
+
   initialize_screensaver_window (si);
   init_sigchld (si);
   read_status_prop (si);
@@ -391,6 +509,12 @@ main_loop (saver_info *si, Bool init_p)
 
       if (event.x_event.xany.type == ClientMessage)
         handle_clientmessage (si, &event.x_event);
+
+      else if (event.x_event.xany.type == PropertyNotify &&
+               event.x_event.xproperty.state == PropertyNewValue &&
+               event.x_event.xproperty.atom == XA_SCREENSAVER_STATUS)
+        status_prop_changed (si);
+
 # ifdef HAVE_RANDR
       else if (si->using_randr_extension &&
                (event.x_event.type == 

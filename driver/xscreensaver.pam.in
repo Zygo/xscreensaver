@@ -1,10 +1,23 @@
 #%PAM-1.0
 
-# Fedora Core 5:
-auth       include	system-auth
+# Debian 12:
+# auth       requisite	pam_nologin.so
+# auth       optional	pam_group.so
+# @include common-auth
+# @include common-account
+# @include common-session
+# @include common-password
 
-# SuSE 9.0: (along with "configure --with-passwd-helper" and "unix2_chkpwd")
-# auth     required       pam_unix2.so	nullok
+# Ubuntu 18:
+# @include common-auth
+# @include common-account
+
+# AL2023:
+# auth       substack	system-auth
+# auth       include	postlogin
+
+# Fedora Core 5:
+# auth       include	system-auth
 
 # Distant past:
 # auth       required	/lib/security/pam_pwdb.so shadow nullok

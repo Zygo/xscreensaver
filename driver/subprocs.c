@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright © 1991-2024 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -704,10 +704,14 @@ hack_subproc_environment (Screen *screen, Window saver_window)
      them.  In that case, multiple hacks have the same $DISPLAY, screen and
      root window.
    */
+  char *nssw = (char *) malloc (40);
+
+# if !(defined(__APPLE__) && !defined(HAVE_COCOA))  /* not macOS X11 */
+  /* XQuartz's weird $DISPLAY pathnames do not match DisplayString() */
+
   Display *dpy = DisplayOfScreen (screen);
   const char *odpy = DisplayString (dpy);
   char *ndpy = (char *) malloc (strlen(odpy) + 20);
-  char *nssw = (char *) malloc (40);
   char *s, *c;
 
   strcpy (ndpy, "DISPLAY=");
@@ -724,10 +728,11 @@ hack_subproc_environment (Screen *screen, Window saver_window)
   if (s[-1] != '.') *s++ = '.';			/* put on a dot */
   sprintf(s, "%d", screen_number (screen));	/* put on screen number */
 
-  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%lX", (unsigned long) saver_window);
-
   if (putenv (ndpy))
     abort ();
+# endif  /* not macOS X11 */
+
+  sprintf (nssw, "XSCREENSAVER_WINDOW=0x%lX", (unsigned long) saver_window);
   if (putenv (nssw))
     abort ();
 
@@ -1103,11 +1108,12 @@ spawn_screenhack (saver_screen_info *ssi)
       ssi->cycle_at = now + how_long / 1000;
 
       if (p->verbose_p)
-        {
-          time_t t = time((time_t *) 0) + how_long/1000;
-          fprintf (stderr, "%s: %d: next cycle in %lu sec at %s\n",
-                   blurb(), ssi->number, how_long/1000, timestring(t));
-        }
+        fprintf (stderr, "%s: %d: next cycle in %d:%02d:%02d at %s\n",
+                 blurb(), ssi->number,
+                 (int)  (how_long / 1000) / (60 * 60),
+                 (int) ((how_long / 1000) % (60 * 60)) / 60,
+                 (int)  (how_long / 1000) % 60,
+                 timestring (ssi->cycle_at));
     }
 }
 
@@ -1126,8 +1132,13 @@ kill_screenhack (saver_screen_info *ssi)
      And some X servers apparently ignore XClearWindow if the monitor is
      powered off, meaning when the monitor powers back on, the stale bits
      that we just tried to erase are still in the frame buffer.
+
+     Do not clear the window when exiting, as that would prevent the
+     unfade from fading the now-dead hack to black, before fading from
+     black to desktop.
    */
-  XClearWindow (si->dpy, ssi->screensaver_window);
+  if (! si->terminating_p)
+    XClearWindow (si->dpy, ssi->screensaver_window);
 }
 
 
