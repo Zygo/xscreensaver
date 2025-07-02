@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>6.11</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.entertainment</string>
+	<key>CFBundleShortVersionString</key>
+	<string>6.11</string>
+	<key>CFBundleLongVersionString</key>
+	<string>6.11</string>
+	<key>CFBundleGetInfoString</key>
+	<string>6.11</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>6.11</string>
+	<key>CFBundleDisplayName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundleIcons</key>
+	<dict/>
+	<key>CFBundleIcons~ipad</key>
+	<dict/>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>XScreenSaver displays manipulated versions of your photos.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>OCRA.ttf</string>
+		<string>SpecialElite.ttf</string>
+		<string>clacon.ttf</string>
+		<string>gallant12x22.ttf</string>
+		<string>luximr.ttf</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>tvSaverRunner</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<dict>
+		<key>opengles-1</key>
+		<true/>
+	</dict>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+</dict>
+</plist>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="halo" _label="Halo">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=K7LbfXh3LTc"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="200000" default="100000"
+          convert="invert"/>
+
+  <number id="count" type="slider" arg="--count %"
+          _label="Number of circles" _low-label="Few" _high-label="Many"
+           low="0" high="20" default="0"/>
+
+  <number id="ncolors" type="slider" arg="--colors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
+
+  <select id="mode">
+    <option id="random"   _label="Random mode"/>
+    <option id="seuss"    _label="Seuss mode" arg-set="--mode seuss"/>
+    <option id="ramp"     _label="Ramp mode"  arg-set="--mode ramp"/>
+  </select>
+
+  <hgroup>
+  <boolean id="animate" _label="Animate circles" arg-set="--animate"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Circular interference patterns.
+
+https://en.wikipedia.org/wiki/Moire_pattern
+
+Written by Jamie Zawinski; 1993.
+  </_description>
+</screensaver>

@@ -1,0 +1,18 @@
+# Attributions of images for the klondike screensaver
+
+The card images in this file are derived from the following sources:
+
+## Card Fronts
+https://commons.wikimedia.org/wiki/Category:SVG_English_pattern_playing_cards
+Author: Дмитрий Фомин (Dmitry Fomin) 
+License: CC0 (public domain)
+
+## Card Back
+https://commons.wikimedia.org/wiki/File:Reverso_baraja_española_rojo.svg
+Author: Germarquezm
+License: Creative Commons Attribution-Share Alike 3.0 Unported 
+
+## Modifications
+The png files in this folder were made from the original SVG files by rendering the SVG to PNG with Inkscape, then padded with a drop shadow using ImageMagick.
+
+

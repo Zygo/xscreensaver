@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xmatrix" _label="XMatrix">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=dSJQHm-YoWc"/>
+
+  <hgroup>
+   <select id="size">
+     <option id="font1" _label="Small font"  arg-set="--small"/>
+     <option id="font2" _label="Large font"/>
+   </select>
+
+   <select id="mode">
+     <option id="matrix" _label="Matrix encoding"/>
+     <option id="binary" _label="Binary encoding"      arg-set="--mode binary"/>
+     <option id="hex"    _label="Hexadecimal encoding" arg-set="--mode hex"/>
+     <option id="dna"    _label="Genetic encoding"     arg-set="--mode dna"/>
+     <option id="pipe"   _label="Piped ASCII text"     arg-set="--mode pipe"/>
+   </select>
+
+   <select id="fill">
+     <option id="both"   _label="Synergistic algorithm"/>
+     <option id="top"    _label="Slider algorithm"    arg-set="--insert top"/>
+     <option id="bottom" _label="Expansion algorithm" arg-set="--insert bottom"/>
+   </select>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="trace" _label="Run trace program" arg-unset="--no-trace"/>
+   <boolean id="knock" _label="Knock knock"       arg-unset="--no-knock-knock"/>
+   <string id="phone" _label="Phone number" arg="--phone %"/>
+  </hgroup>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="density" type="slider" arg="--density %"
+            _label="Density" _low-label="Sparse" _high-label="Full"
+            low="1" high="100" default="75"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+    <xscreensaver-updater />
+
+   </vgroup>
+   <vgroup>
+    <xscreensaver-text />
+   </vgroup>
+  </hgroup>
+
+  <_description>
+The "digital rain" effect, as seen on the computer monitors in
+"The Matrix".
+
+See also "GLMatrix" for a 3D rendering of the similar effect that
+appeared in the movie's title sequence.
+
+https://en.wikipedia.org/wiki/Matrix_digital_rain
+
+Written by Jamie Zawinski; 1999.
+  </_description>
+</screensaver>
