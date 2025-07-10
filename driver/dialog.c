@@ -2179,12 +2179,12 @@ handle_keypress (window_state *ws, XKeyEvent *event, Bool filter_p)
       Status s = 0;
       KeySym keysym2 = 0;
       int size2 = Xutf8LookupString (ws->ic, (XKeyPressedEvent *) event,
-                                     decoded2, sizeof(decoded2)-1
-                                     , &keysym2, &s);
+                                     decoded2, sizeof(decoded2)-1,
+                                     &keysym2, &s);
       decoded2[size2] = 0;
 
       switch (s) {
-      case XLookupChars:		/* Set 'c2' to a UTF8 string */
+      case XLookupChars:		/* Set 'decoded2' to a UTF8 string */
         if (*decoded2)
           {
             strcpy ((char *) decoded, (char *) decoded2);
@@ -2205,7 +2205,7 @@ handle_keypress (window_state *ws, XKeyEvent *event, Bool filter_p)
           }
         break;
       case XLookupNone:			/* No input yet */
-      case XBufferOverflow:		/* 'c2' was too small */
+      case XBufferOverflow:		/* 'decoded2' was too small */
         break;
       default:
         abort();

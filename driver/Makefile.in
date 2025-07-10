@@ -38,21 +38,45 @@ WAYLAND_LIBS	= @WAYLAND_LIBS@
 WAYLAND_DATADIR	= @WAYLAND_DATADIR@
 WAYLAND_GEN	= @WAYLAND_GEN@
 
-WAYLAND_GEN_XML	 = xdg-shell.xml \
-		   ext-idle-notify-v1.xml \
-		   idle.xml
-WAYLAND_GEN_HDRS = xdg-shell-v1-client-protocol.h \
-		   ext-idle-notify-v1-client-protocol.h \
-		   idle-client-protocol.h
-WAYLAND_GEN_SRCS = xdg-shell-v1-protocol.c \
-		   ext-idle-notify-v1-protocol.c \
-		   idle-protocol.c
+WAYLAND_PROTO	 = wayland-protocols
+WAYLAND_GEN_XML	 = $(WAYLAND_PROTO)/xdg-shell.xml \
+		   $(WAYLAND_PROTO)/ext-idle-notify-v1.xml \
+		   $(WAYLAND_PROTO)/idle.xml \
+		   $(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1.xml \
+		   $(WAYLAND_PROTO)/dpms.xml
+
+WAYLAND_GEN_HDRS = $(WAYLAND_PROTO)/xdg-shell-v1-client-protocol.h \
+		   $(WAYLAND_PROTO)/ext-idle-notify-v1-client-protocol.h \
+		   $(WAYLAND_PROTO)/idle-client-protocol.h \
+		   $(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1-client-protocol.h \
+		   $(WAYLAND_PROTO)/dpms-client-protocol.h
+
+WAYLAND_GEN_SRCS = $(WAYLAND_PROTO)/xdg-shell-v1-protocol.c \
+		   $(WAYLAND_PROTO)/ext-idle-notify-v1-protocol.c \
+		   $(WAYLAND_PROTO)/idle-protocol.c \
+		   $(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1-protocol.c \
+		   $(WAYLAND_PROTO)/dpms-protocol.c
+
+WAYLAND_DPY_OBJS   = @WAYLAND_DPY_OBJS@
+WAYLAND_DPY_SRCS   = wayland-dpy.c
+WAYLAND_DPY_OBJS_1 = wayland-dpy.o
 
 WAYLAND_IDLE_OBJS   = @WAYLAND_IDLE_OBJS@
 WAYLAND_IDLE_SRCS   = wayland-idle.c
 WAYLAND_IDLE_OBJS_1 = wayland-idle.o \
-		      ext-idle-notify-v1-protocol.o \
-		      idle-protocol.o
+		      $(WAYLAND_PROTO)/ext-idle-notify-v1-protocol.o \
+		      $(WAYLAND_PROTO)/idle-protocol.o
+
+WAYLAND_DPMS_OBJS   = @WAYLAND_DPMS_OBJS@
+WAYLAND_DPMS_SRCS   = wayland-dpms.c
+WAYLAND_DPMS_OBJS_1 = wayland-dpms.o \
+		      $(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1-protocol.o \
+		      $(WAYLAND_PROTO)/dpms-protocol.o
+
+WAYLAND_GTK_OBJS    = @WAYLAND_GTK_OBJS@
+WAYLAND_GTK_SRCS    = wayland-dpms.c
+WAYLAND_GTK_OBJS_1  = $(WAYLAND_DPY_OBJS) $(WAYLAND_IDLE_OBJS) \
+		      $(WAYLAND_DPMS_OBJS)
 
 HACKDIR		= @HACKDIR@
 HACK_CONF_DIR	= @HACK_CONF_DIR@
@@ -123,17 +147,20 @@ XML_LIBS	= @XML_LIBS@
 
 DAEMON_DEFS	= -DDEFAULT_PATH_PREFIX='"@HACKDIR@"' -DAD_DIR='"$(AD_DIR)"'
 DAEMON_SRCS	= xscreensaver.c blurb.c atoms.c clientmsg.c xinput.c prefs.c \
-		  $(WAYLAND_IDLE_SRCS)
+		  $(WAYLAND_DPY_SRCS) $(WAYLAND_IDLE_SRCS)
 DAEMON_OBJS	= xscreensaver.o blurb.o atoms.o clientmsg.o xinput.o prefs.o \
-		  $(UTILS_BIN)/xmu.o $(WAYLAND_IDLE_OBJS)
+		  $(UTILS_BIN)/xmu.o $(WAYLAND_DPY_OBJS) $(WAYLAND_IDLE_OBJS)
 DAEMON_LIBS	= $(LIBS_PRE) $(XINPUT_LIBS) -lX11 $(WAYLAND_LIBS) $(LIBS_POST)
 
-GFX_DEFS	= -DLOCALEDIR=\"$(localedir)\"
+GFX_DEFS	= @GL_CFLAGS@ -DLOCALEDIR=\"$(localedir)\"
+SUBP_DEFS	= @GL_CFLAGS@
 GFX_SRCS	= xscreensaver-gfx.c screens.c windows.c subprocs.c \
-		  exec.c prefsw.c dpms.c fade.c exts.c atomswm.c
+		  exec.c prefsw.c dpms.c fade.c exts.c atomswm.c \
+		  $(WAYLAND_DPY_SRCS) $(WAYLAND_DPMS_SRCS)
 GFX_OBJS	= xscreensaver-gfx.o screens.o windows.o subprocs.o \
 		  exec.o prefsw.o dpms.o fade.o exts.o atomswm.o \
 		  prefs.o blurb.o atoms.o clientmsg.o xinput.o \
+		  $(WAYLAND_DPY_OBJS) $(WAYLAND_DPMS_OBJS) \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/yarandom.o \
 		  $(UTILS_BIN)/resources.o \
@@ -146,9 +173,13 @@ GFX_OBJS	= xscreensaver-gfx.o screens.o windows.o subprocs.o \
 		  $(UTILS_BIN)/xft.o \
 		  $(UTILS_BIN)/utf8wc.o \
 		  $(UTILS_BIN)/xshm.o \
-		  $(UTILS_BIN)/aligned_malloc.o
+		  $(UTILS_BIN)/aligned_malloc.o \
+		  $(GFX_GL_OBJS)
+GFX_GL_OBJS	= @GFX_GL_OBJS@
+GFX_GL_OBJS_1	= $(UTILS_BIN)/visual-gl.o $(UTILS_BIN)/pow2.o
 GFX_LIBS	= $(LIBS_PRE) $(XFT_LIBS) $(XDPMS_LIBS) $(XINERAMA_LIBS) \
-		  @SAVER_LIBS@ -lXt -lX11 -lXext -lXi $(LIBS_POST) $(INTL_LIBS)
+		  @SAVER_LIBS@ -lXt -lX11 -lXext -lXi @GL_LIBS@ \
+		  $(WAYLAND_LIBS) $(LIBS_POST) $(INTL_LIBS)
 
 PWENT_SRCS	= passwd-pwent.c
 PWENT_OBJS	= passwd-pwent.o
@@ -199,7 +230,7 @@ GTK_SRCS	= demo-Gtk.c demo-Gtk-conf.c
 GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o demo-Gtk-resources.o \
 		  blurb.o exec.o prefs.o prefsw.o dpms.o remote.o screens.o \
 		  clientmsg.o atoms.o \
-		  $(WAYLAND_IDLE_OBJS) \
+		  $(WAYLAND_GTK_OBJS) \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/visual.o \
@@ -241,7 +272,8 @@ DESKS		= xscreensaver.desktop xscreensaver.service
 HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
 		  xscreensaver.h prefs.h remote.h exec.h \
 		  demo-Gtk-conf.h auth.h types.h blurb.h atoms.h clientmsg.h \
-		  screens.h xinput.h fade.h wayland-idle.h \
+		  screens.h xinput.h fade.h wayland-dpy.h wayland-dpyI.h \
+		  wayland-idle.h wayland-dpms.h \
 		  $(WAYLAND_GEN_HDRS)
 MENA		= xscreensaver.man xscreensaver-settings.man \
 		  xscreensaver-command.man
@@ -676,32 +708,6 @@ uninstall-xml:
 	rm -f $(install_prefix)$(HACK_CONF_DIR)/README
 
 
-# Generate .c and .h files for various Wayland APIs.
-#
-xdg-shell.xml: $(WAYLAND_DATADIR)/wayland-protocols/stable/xdg-shell/xdg-shell.xml
-	cp -p $< $@
-xdg-shell-v1-client-protocol.h: xdg-shell.xml
-	wayland-scanner client-header < $< > $@
-xdg-shell-v1-protocol.c: xdg-shell.xml
-	wayland-scanner private-code  < $< > $@
-
-ext-idle-notify-v1.xml: \
-	$(WAYLAND_DATADIR)/wayland-protocols/staging/ext-idle-notify/ext-idle-notify-v1.xml
-	cp -p $< $@
-ext-idle-notify-v1-client-protocol.h: ext-idle-notify-v1.xml
-	wayland-scanner client-header < $< > $@
-ext-idle-notify-v1-protocol.c: ext-idle-notify-v1.xml
-	wayland-scanner private-code  < $< > $@
-
-# org_kde_kwin_idle -- I don't know why this isn't in WAYLAND_DATADIR
-#idle.xml: $(WAYLAND_DATADIR)/wayland-protocols/stable/ext-idle-notify/idle.xml
-#	cp -p $< $@
-idle-client-protocol.h: idle.xml
-	wayland-scanner client-header < $< > $@
-idle-protocol.c: idle.xml
-	wayland-scanner private-code  < $< > $@
-
-
 ##############################################################################
 #
 # Clean and dependencies
@@ -832,6 +838,8 @@ $(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 $(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
 $(UTILS_BIN)/screenshot.o:	$(UTILS_SRC)/screenshot.c
+$(UTILS_BIN)/visual-gl.o:	$(UTILS_SRC)/visual-gl.c
+$(UTILS_BIN)/pow2.o:		$(UTILS_SRC)/pow2.c
 
 
 UTIL_OBJS	= $(UTILS_BIN)/overlay.o \
@@ -852,7 +860,9 @@ UTIL_OBJS	= $(UTILS_BIN)/overlay.o \
 		  $(UTILS_BIN)/font-retry.o \
 		  $(UTILS_BIN)/xshm.o \
 		  $(UTILS_BIN)/aligned_malloc.o \
-		  $(UTILS_BIN)/screenshot.o
+		  $(UTILS_BIN)/screenshot.o \
+		  $(UTILS_BIN)/visual-gl.o \
+		  $(UTILS_BIN)/pow2.o
 
 $(UTIL_OBJS):
 	$(MAKE2CC) -C $(UTILS_BIN) $(@F)
@@ -870,9 +880,11 @@ CC_ALL=$(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 .c.o:
 	$(CC) -c $(CC_ALL) $<
 
-# # subprocs takes an extra -D option.
-# subprocs.o: subprocs.c
-# 	$(CC) -c $(CC_ALL) $(SUBP_DEFS) $<
+# subprocs takes an extra -D option.
+subprocs.o: subprocs.c
+	$(CC) -c $(CC_ALL) $(SUBP_DEFS) $<
+fade.o: fade.c
+	$(CC) -c $(CC_ALL) $(SUBP_DEFS) $<
 
 # xscreensaver takes an extra -D option.
 xscreensaver.o: xscreensaver.c
@@ -981,6 +993,114 @@ XScreenSaver_Xm_ad.h::
 
 ##############################################################################
 #
+# Wayland protocols
+#
+##############################################################################
+
+# Generate .c and .h files for various Wayland APIs.
+#
+# Since this stuff never changes and is small, the tar file includes the
+# generated files in $(srcdir), so that client builds probably won't ever
+# need to run "wayland-scanner".  But we print a warning if the system's
+# XML files exist and differ from our own.
+
+# "xdg-shell" isn't used yet but probably will be.
+#
+$(srcdir)/$(WAYLAND_PROTO)/xdg-shell.xml::
+	@\
+  F=$(WAYLAND_DATADIR)/wayland-protocols/stable/xdg-shell/xdg-shell.xml ; \
+	if [ -e "$$F" ] && ! cmp -s "$$F" $@ ; then			\
+	  echo "WARNING: $$F and $@ differ" >&2 ;			\
+	fi
+$(srcdir)/$(WAYLAND_PROTO)/xdg-shell-v1-client-protocol.h: \
+$(srcdir)/$(WAYLAND_PROTO)/xdg-shell.xml
+	wayland-scanner client-header < $< > $@
+$(srcdir)/$(WAYLAND_PROTO)/xdg-shell-v1-protocol.c: \
+$(srcdir)/$(WAYLAND_PROTO)/xdg-shell.xml
+	wayland-scanner private-code  < $< > $@
+$(WAYLAND_PROTO)/xdg-shell-v1-protocol.o: \
+$(srcdir)/$(WAYLAND_PROTO)/xdg-shell-v1-protocol.c
+	$(CC) -c $(CC_ALL) $< -o $@
+
+# "idle-notify-v1" for wayland-idle.c
+#
+$(srcdir)/$(WAYLAND_PROTO)/ext-idle-notify-v1.xml::
+	@\
+  F=$(WAYLAND_DATADIR)/wayland-protocols/staging/ext-idle-notify/ext-idle-notify-v1.xml ; \
+	if [ -e "$$F" ] && ! cmp -s "$$F" $@ ; then			\
+	  echo "WARNING: $$F and $@ differ" >&2 ;			\
+	fi
+$(srcdir)/$(WAYLAND_PROTO)/ext-idle-notify-v1-client-protocol.h: \
+$(srcdir)/$(WAYLAND_PROTO)/ext-idle-notify-v1.xml
+	wayland-scanner client-header < $< > $@
+$(srcdir)/$(WAYLAND_PROTO)/ext-idle-notify-v1-protocol.c: \
+$(srcdir)/$(WAYLAND_PROTO)/ext-idle-notify-v1.xml
+	wayland-scanner private-code  < $< > $@
+$(WAYLAND_PROTO)/ext-idle-notify-v1-protocol.o: \
+$(srcdir)/$(WAYLAND_PROTO)/ext-idle-notify-v1-protocol.c
+	$(CC) -c $(CC_ALL) $< -o $@
+
+# "kde-idle" for wayland-idle.c
+# "apt install plasma-wayland-protocols" to get the system XML file.
+#
+$(srcdir)/$(WAYLAND_PROTO)/idle.xml::
+	@\
+	F="$(WAYLAND_DATADIR)/plasma-wayland-protocols/idle.xml" ;	\
+	if [ -e "$$F" ] && ! cmp -s "$$F" $@ ; then			\
+	  echo "WARNING: $$F and $@ differ" >&2 ;			\
+	fi
+$(srcdir)/$(WAYLAND_PROTO)/idle-client-protocol.h: \
+$(srcdir)/$(WAYLAND_PROTO)/idle.xml
+	wayland-scanner client-header < $< > $@
+$(srcdir)/$(WAYLAND_PROTO)/idle-protocol.c: \
+$(srcdir)/$(WAYLAND_PROTO)/idle.xml
+	wayland-scanner private-code  < $< > $@
+$(WAYLAND_PROTO)/idle-protocol.o: \
+$(srcdir)/$(WAYLAND_PROTO)/idle-protocol.c
+	$(CC) -c $(CC_ALL) $< -o $@
+
+# "wlr-output-power-management" for wayland-dpms.c
+# I don't know what to install to get this into $(WAYLAND_DATADIR)
+#
+$(srcdir)/$(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1.xml::
+	@\
+  F="$(WAYLAND_DATADIR)/wayland-protocols/staging/wlr-output-power-management-unstable-v1.xml" ; \
+	if [ -e "$$F" ] && ! cmp -s "$$F" $@ ; then			\
+	  echo "WARNING: $$F and $@ differ" >&2 ;			\
+	fi
+$(srcdir)/$(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1-client-protocol.h: \
+$(srcdir)/$(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1.xml
+	wayland-scanner client-header < $< > $@
+$(srcdir)/$(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1-protocol.c: \
+$(srcdir)/$(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1.xml
+	wayland-scanner private-code  < $< > $@
+$(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1-protocol.o: \
+$(srcdir)/$(WAYLAND_PROTO)/wlr-output-power-management-unstable-v1-protocol.c
+	$(CC) -c $(CC_ALL) $< -o $@
+
+# "kde-dpms" for wayland-idle.c
+# "apt install plasma-wayland-protocols" to get the system XML file.
+#
+$(srcdir)/$(WAYLAND_PROTO)/dpms.xml::
+	@\
+	F="$(WAYLAND_DATADIR)/plasma-wayland-protocols/dpms.xml" ;	\
+	if [ -e "$$F" ] && ! cmp -s "$$F" $@ ; then			\
+	  echo "WARNING: $$F and $@ differ" >&2 ;			\
+	fi
+$(srcdir)/$(WAYLAND_PROTO)/dpms-client-protocol.h: \
+$(srcdir)/$(WAYLAND_PROTO)/dpms.xml
+	wayland-scanner client-header < $< > $@
+$(srcdir)/$(WAYLAND_PROTO)/dpms-protocol.c: \
+$(srcdir)/$(WAYLAND_PROTO)/dpms.xml
+	wayland-scanner private-code  < $< > $@
+$(WAYLAND_PROTO)/dpms-protocol.o: \
+$(srcdir)/$(WAYLAND_PROTO)/dpms-protocol.c
+	$(CC) -c $(CC_ALL) $< -o $@
+
+
+
+##############################################################################
+#
 # Debugging utilities, not built by default
 #
 ##############################################################################
@@ -1028,7 +1148,7 @@ TEST_FADE_OBJS = test-fade.o fade.o blurb.o atoms.o clientmsg.o xinput.o \
 	$(UTILS_BIN)/visual.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 	$(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o $(UTILS_BIN)/xshm.o \
 	$(UTILS_BIN)/xmu.o $(UTILS_BIN)/aligned_malloc.o \
-	$(UTILS_BIN)/screenshot.o
+	$(UTILS_BIN)/screenshot.o $(GFX_GL_OBJS)
 test-fade: $(TEST_FADE_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(TEST_FADE_OBJS) $(GFX_LIBS)
 
@@ -1112,6 +1232,8 @@ fade.o: $(srcdir)/blurb.h
 fade.o: $(srcdir)/clientmsg.h
 fade.o: ../config.h
 fade.o: $(srcdir)/fade.h
+fade.o: $(UTILS_SRC)/pow2.h
+fade.o: $(UTILS_SRC)/screenshot.h
 fade.o: $(UTILS_SRC)/usleep.h
 fade.o: $(UTILS_SRC)/visual.h
 fade.o: $(UTILS_SRC)/xmu.h
@@ -1194,11 +1316,29 @@ test-xkb.o: ../config.h
 test-yarandom.o: $(srcdir)/blurb.h
 test-yarandom.o: ../config.h
 test-yarandom.o: $(UTILS_SRC)/yarandom.h
+wayland-dpms.o: $(srcdir)/blurb.h
+wayland-dpms.o: ../config.h
+wayland-dpms.o: $(srcdir)/types.h
+wayland-dpms.o: $(srcdir)/wayland-dpms.h
+wayland-dpms.o: $(srcdir)/wayland-dpyI.h
+wayland-dpms.o: $(srcdir)/wayland-dpy.h
+wayland-dpms.o: $(srcdir)/wayland-protocols/dpms-client-protocol.h
+wayland-dpms.o: $(srcdir)/wayland-protocols/wlr-output-power-management-unstable-v1-client-protocol.h
+wayland-dpy.o: $(srcdir)/blurb.h
+wayland-dpy.o: $(srcdir)/blurb.h
+wayland-dpy.o: ../config.h
+wayland-dpy.o: ../config.h
+wayland-dpy.o: $(srcdir)/wayland-dpyI.h
+wayland-dpy.o: $(srcdir)/wayland-dpyI.h
+wayland-dpy.o: $(srcdir)/wayland-dpy.h
+wayland-dpy.o: $(srcdir)/wayland-dpy.h
 wayland-idle.o: $(srcdir)/blurb.h
 wayland-idle.o: ../config.h
-wayland-idle.o: $(srcdir)/ext-idle-notify-v1-client-protocol.h
-wayland-idle.o: $(srcdir)/idle-client-protocol.h
+wayland-idle.o: $(srcdir)/wayland-dpyI.h
+wayland-idle.o: $(srcdir)/wayland-dpy.h
 wayland-idle.o: $(srcdir)/wayland-idle.h
+wayland-idle.o: $(srcdir)/wayland-protocols/ext-idle-notify-v1-client-protocol.h
+wayland-idle.o: $(srcdir)/wayland-protocols/idle-client-protocol.h
 windows.o: $(srcdir)/atoms.h
 windows.o: $(srcdir)/blurb.h
 windows.o: ../config.h

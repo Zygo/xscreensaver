@@ -27,7 +27,7 @@ HACK_CONF_DIR	= @HACK_CONF_DIR@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
-DEFS		= -DSTANDALONE -DUSE_GL @DEFS@
+DEFS		= -DSTANDALONE @GL_CFLAGS@ @DEFS@
 LIBS		= @LIBS@
 PERL		= @PERL@
 
@@ -633,7 +633,7 @@ xscreensaver-gl-visual:        $(GLH1) $(GLH2)
 # These hacks use a slightly-differently-compiled variant of recanim.c.
 # This is how to make the the other .o file from it.
 #
-XLM_CFLAGS=-DUSE_GL $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
+XLM_CFLAGS=@GL_CFLAGS@ $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 recanim-gl.o: $(HACK_SRC)/recanim.c
 	$(CC) -o $@ -c $(XLM_CFLAGS) $(HACK_SRC)/recanim.c
 
@@ -5386,10 +5386,12 @@ xlock-gl-utils.o: $(UTILS_SRC)/grabclient.h
 xlock-gl-utils.o: $(UTILS_SRC)/hsv.h
 xlock-gl-utils.o: $(UTILS_SRC)/resources.h
 xlock-gl-utils.o: $(UTILS_SRC)/usleep.h
+xlock-gl-utils.o: $(UTILS_SRC)/visual-gl.h
 xlock-gl-utils.o: $(UTILS_SRC)/visual.h
 xlock-gl-utils.o: $(UTILS_SRC)/xft.h
 xlock-gl-utils.o: $(UTILS_SRC)/yarandom.h
 xlock-gl-utils.o: $(HACK_SRC)/xlockmoreI.h
 xscreensaver-gl-visual.o: ../../config.h
+xscreensaver-gl-visual.o: $(UTILS_SRC)/visual-gl.h
 xscreensaver-gl-visual.o: $(UTILS_SRC)/visual.h
 

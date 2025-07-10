@@ -687,7 +687,10 @@ SETCAP_HACKS
 SETUID_HACKS
 SETUID_AUTH
 PROG_SETCAP
+WAYLAND_GTK_OBJS
+WAYLAND_DPMS_OBJS
 WAYLAND_IDLE_OBJS
+WAYLAND_DPY_OBJS
 WAYLAND_GEN
 WAYLAND_DATADIR
 WAYLAND_LIBS
@@ -698,6 +701,8 @@ PASSWD_LIBS
 XINERAMA_LIBS
 XDPMS_LIBS
 GLE_LIBS
+GFX_GL_OBJS
+GL_CFLAGS
 GL_LIBS
 PTY_LIBS
 HACK_LIBS
@@ -13487,9 +13492,9 @@ if test "$with_wayland" = yes; then
 
   pkgs=''
   ok="yes"
-  pkg_check_version       wayland-server  1.0
-  pkg_check_version       wayland-client  1.0
-  pkg_check_version       wayland-scanner 1.0
+  pkg_check_version       wayland-server  1.8
+  pkg_check_version       wayland-client  1.8
+ #pkg_check_version       wayland-scanner 1.8
   ac_wayland_version_string="$vers"
   have_wayland="$ok"
   wayland_pkgs="$pkgs"
@@ -13524,12 +13529,18 @@ printf "%s\n" "$ac_cv_wayland_config_libs" >&6; }
 
   WAYLAND_DATADIR=""
   WAYLAND_GEN=""
+  WAYLAND_DPY_OBJS=""
   WAYLAND_IDLE_OBJS=""
+  WAYLAND_DPMS_OBJS=""
+  WAYLAND_GTK_OBJS=""
   if test "$have_wayland" = yes; then
     WAYLAND_DATADIR=`$pkg_config --variable=prefix wayland-client`
     WAYLAND_DATADIR="$WAYLAND_DATADIR/share"
     WAYLAND_GEN='$(WAYLAND_GEN_HDRS) $(WAYLAND_GEN_SRCS)'
+    WAYLAND_DPY_OBJS='$(WAYLAND_DPY_OBJS_1)'
     WAYLAND_IDLE_OBJS='$(WAYLAND_IDLE_OBJS_1)'
+    WAYLAND_DPMS_OBJS='$(WAYLAND_DPMS_OBJS_1)'
+    WAYLAND_GTK_OBJS='$(WAYLAND_GTK_OBJS_1)'
   fi
 
   if test "$have_wayland" = yes; then
@@ -18247,6 +18258,9 @@ fi
 
     printf "%s\n" "#define HAVE_GL 1" >>confdefs.h
 
+    GL_CFLAGS="-DUSE_GL"
+    GFX_GL_OBJS='$(GFX_GL_OBJS_1)'
+
     # OpenGL 1.0 didn't have multiple textures.
 
   ac_save_CPPFLAGS="$CPPFLAGS"
@@ -22936,6 +22950,9 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 printf "%s\n" "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
+
+# Since there is no .in file to force its creation in a different build dir
+test -d driver/wayland-protocols || mkdir driver/wayland-protocols
 
 ###############################################################################
 #

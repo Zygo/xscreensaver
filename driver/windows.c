@@ -479,20 +479,25 @@ blank_screen (saver_info *si)
   Bool grabbing_supported_p = True;
 
   initialize_screensaver_window (si);
-  sync_server_dpms_settings (si->dpy, p);
+  sync_server_dpms_settings (si);
 
   /* Under Wayland, we can only grab screenshots if "grim" is installed,
      and even so, there's no way to grab screenshots under GNOME or KDE.
      See comment in xscreensaver-getimage.c, and discussion thread here:
      https://www.jwz.org/blog/2025/06/wayland-screenshots/#comment-260326
    */
-  if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
+  if (
+# ifdef HAVE_WAYLAND
+      si->wayland_dpy ||
+# endif
+      (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET")))
     {
       const char *prog = "grim";
       char *desk = getenv ("XDG_CURRENT_DESKTOP");
       if (desk &&
           (strcasestr (desk, "GNOME") ||
-           strcasestr (desk, "KDE")))
+           strcasestr (desk, "KDE") ||
+           strcasestr (desk, "plasma")))
         {
           grabbing_supported_p = False;
           if (p->verbose_p || p->fade_p || p->unfade_p || p->grab_desktop_p)
@@ -526,6 +531,8 @@ blank_screen (saver_info *si)
         ssi->screenshot =
           screenshot_grab (si->dpy, ssi->screensaver_window, False,
                            p->verbose_p);
+      if (ssi->screenshot)
+        screenshot_save (si->dpy, ssi->screensaver_window, ssi->screenshot);
     }
 
   if (p->fade_p &&
@@ -1058,17 +1065,16 @@ static void
 watchdog_timer (XtPointer closure, XtIntervalId *id)
 {
   saver_info *si = (saver_info *) closure;
-  saver_preferences *p = &si->prefs;
   Bool running_p, on_p, terminating_p;
 
   /* If the DPMS settings on the server have changed, change them back to
      what ~/.xscreensaver says they should be. */
-  sync_server_dpms_settings (si->dpy, p);
+  sync_server_dpms_settings (si);
 
   /* If the wall clock tells us that the monitor should be powered off now,
      and the auth dialog is not currently on screen, make sure that the
      monitor is off. */
-  brute_force_dpms (si->dpy, p,
+  brute_force_dpms (si,
                     (si->auth_p
                      ? 0
                      : si->activity_time));
@@ -1080,7 +1086,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
     raise_windows (si);
 
   running_p = any_screenhacks_running_p (si);
-  on_p = monitor_powered_on_p (si->dpy);
+  on_p = monitor_powered_on_p (si);
   terminating_p = si->terminating_p;
   if (running_p && !on_p)
     {

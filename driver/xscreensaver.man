@@ -338,16 +338,19 @@ This is because the GNOME compositor does not support either of the Wayland
 protocols that allow us to tell when the user is idle.  It works with KDE
 and most other compositors, however.
 .TP 3
-\fB2:\fP Even a single pixel of mouse motion will cause the screen to
-un-blank: there is no pointer hysteresis.
-.TP 3
-\fB2:\fP Fading in and out might not work; hacks that grab and manipulate
-a desktop screenshot might not work.
+\fB2:\fP No mouse hystersis.
 
-Under Wayland, these features depend on the program
+Even a single pixel of mouse motion will cause the screen to un-blank.
+
+.TP 3
+\fB3:\fP Fading and screenshots might not work.
+
+Under Wayland, Fading in and out, and allowing hacks to grab and 
+manipulate a desktop screenshot, depend on the program
 .BR grim (1)
-being installed to grab screenshots for us.  And \fBgrim\fP doesn't work
-under the GNOME or KDE compositors.
+being installed to grab screenshots for us.  And
+.BR grim (1)
+doesn't work under the GNOME or KDE compositors.
 .RE
 
 For XScreenSaver to be able to lock, you will need to switch off

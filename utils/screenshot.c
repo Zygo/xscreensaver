@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>		/* for waitpid() and associated macros */
@@ -84,6 +85,21 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
 }
 
 
+static double
+double_time (void)
+{
+  struct timeval now;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday(&now, &tzp);
+# else
+  gettimeofday(&now);
+# endif
+
+  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+
 /* Grab a screenshot and return it.
    It will be the size and extent of the given window,
    or the full screen, as requested.
@@ -102,6 +118,7 @@ screenshot_grab (Display *dpy, Window window, Bool full_screen_p,
   struct { int x, y, x2, y2; } root, win;
   XErrorHandler old_handler;
   Bool external_p = False;
+  double start = double_time();
 
   XGetWindowAttributes (dpy, window, &win_xgwa);
   root_window = XRootWindowOfScreen (win_xgwa.screen);
@@ -247,13 +264,24 @@ screenshot_grab (Display *dpy, Window window, Bool full_screen_p,
       XFreeGC (dpy, gc);
     }
 
-  if (verbose_p || !pixmap)
-    fprintf (stderr, "%s: %s screenshot 0x%lx %dx%d"
-             " for window 0x%lx %dx%d+%d+%d\n", blurb(),
-             (pixmap ? "saved" : "failed to save"),
-             (unsigned long) pixmap, win_xgwa.width, win_xgwa.height,
-             (unsigned long) window,
-             owin_xgwa.width, owin_xgwa.height, owin_xgwa.x, owin_xgwa.y);
+  {
+    double elapsed = double_time() - start;
+    char late[100];
+    if (elapsed >= 0.75)
+      sprintf (late, " -- took %.1f seconds", elapsed);
+    else
+      *late = 0;
+
+    if (verbose_p || !pixmap || *late)
+      fprintf (stderr, "%s: %s screenshot 0x%lx %dx%d"
+               " for window 0x%lx %dx%d+%d+%d%s\n", blurb(),
+               (pixmap ? "saved" : "failed to save"),
+               (unsigned long) pixmap, win_xgwa.width, win_xgwa.height,
+               (unsigned long) window,
+               owin_xgwa.width, owin_xgwa.height, owin_xgwa.x, owin_xgwa.y,
+               late);
+  }
+
   return pixmap;
 }
 
@@ -413,5 +441,6 @@ screenshot_load (Display *dpy, Window window, Bool verbose_p)
              (unsigned long) window,
              win_xgwa.width, win_xgwa.height, win_xgwa.x, win_xgwa.y,
              (unsigned long) screenshot, root.w, root.h);
+
   return p2;
 }

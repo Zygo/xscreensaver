@@ -12,26 +12,16 @@
 #ifndef __XSCREENSAVER_WAYLAND_IDLE_H__
 #define __XSCREENSAVER_WAYLAND_IDLE_H__
 
-typedef struct wayland_state wayland_state;
-
-/* Connects to Wayland and returns an opaque state object on success.
-   When user activity is detected, the callback will be run with the
-   provided object as its argument.  On failure, returns NULL and
-   an error message.
+/* Binds to Wayland idle-detection protocols and returns an opaque state
+   object on success.  When user activity is detected, the callback will
+   be run with the provided object as its argument.
  */
-extern wayland_state *
-wayland_idle_init (void (*activity_cb) (void *closure),
-                   void *closure,
-                   const char **error_ret);
-
-/* Returns the file descriptor of the Wayland display connection.
-   You may select on this to see if it needs attention. */
-extern int wayland_idle_get_fd (wayland_state *);
-
-/* Handle any notifications from the Wayland server and run callbacks. */
-extern void wayland_idle_process_events (wayland_state *);
+extern wayland_idle *
+wayland_idle_init (wayland_dpy *dpy,
+                   void (*activity_cb) (void *closure),
+                   void *closure);
 
 /* Shut it all down. */
-extern void wayland_idle_free (wayland_state *);
+extern void wayland_idle_free (wayland_idle *);
 
-#endif /* __XSCREENSAVER_WAYLAND_H__ */
+#endif /* __XSCREENSAVER_WAYLAND_IDLE_H__ */

@@ -37,13 +37,10 @@
      by running "xscreensaver-getimage" which in turn runs "grim", if it is
      installed, which it might not be.
 
+   - OpenGL: This is like XSHM but uses OpenGL for rendering.  Faster, but
+     same screenshot- and Wayland-related downsides.
+
    In summary, everything is terrible because X11 doesn't support alpha.
-
-
-   Another thing to consider is to implement fading with OpenGL: put the
-   screen shot in a textured quad and just change its color for fading.
-   That should be efficient on both X11 and Wayland.  However it would
-   require linking the OpenGL libraries into "xscreensaver-gfx".
 
 
    The fade process goes like this:
@@ -93,14 +90,30 @@
 # include <X11/Intrinsic.h>
 #endif /* !HAVE_JWXYZ */
 
+#ifdef USE_GL
+# include <GL/gl.h>
+# include <GL/glu.h>
+# ifdef HAVE_EGL
+#  include <EGL/egl.h>
+#  include <EGL/eglext.h>
+# else
+#  include <GL/glx.h>
+# endif
+#endif /* USE_GL */
+
 #include "blurb.h"
 #include "visual.h"
+#ifdef USE_GL
+#include "visual-gl.h"
+#endif
 #include "usleep.h"
 #include "fade.h"
 #include "xshm.h"
 #include "atoms.h"
 #include "clientmsg.h"
 #include "xmu.h"
+#include "pow2.h"
+#include "screenshot.h"
 
 /* Since gamma fading doesn't work on the Raspberry Pi, probably the single
    most popular desktop Linux system these days, let's not use this fade
@@ -133,9 +146,6 @@ typedef struct {
 } fade_state;
 
 
-/* #### There's a bunch of duplicated code in the back half of the
-   four _fade and _whack functions that could probably be combined.
- */
 #ifdef HAVE_SGI_VC_EXTENSION
 static int sgi_gamma_fade (XtAppContext, Display *, Window *wins, int count,
                            double secs, Bool out_p);
@@ -1516,21 +1526,36 @@ randr_whack_gamma (Display *dpy, int screen, randr_gamma_info *info,
 
 /****************************************************************************
 
-    XSHM screen-shot fading
+    XSHM or OpenGL screenshot fading
+    This module does one or the other, depending on USE_GL
 
  ****************************************************************************/
 
 typedef struct {
-  GC gc;
   Window window;
+  XImage *src;
   Pixmap screenshot;
-  XImage *src, *intermediate;
+# ifndef USE_GL
+  XImage *intermediate;
+  GC gc;
+# else /* USE_GL */
+  GLuint texid;
+  GLfloat texw, texh;
+#  ifdef HAVE_EGL
+  egl_data   *glx_context;
+#  else
+  GLXContext glx_context;
+#  endif
+# endif /* USE_GL */
 } xshm_fade_info;
 
 
+#ifdef USE_GL
+static int opengl_whack (Display *, xshm_fade_info *, float ratio);
+#else
 static int xshm_whack (Display *, XShmSegmentInfo *,
                        xshm_fade_info *, float ratio);
-
+#endif
 
 /* Grab a screenshot and return it.
    It will be the size and extent of the given window.
@@ -1544,12 +1569,19 @@ xshm_screenshot_grab (Display *dpy, Window window,
   XWindowAttributes xgwa;
   Pixmap pixmap = 0;
   Bool external_p = False;
+  double start = double_time();
 
 # ifdef HAVE_MACOS_X11
   external_p = True;
 # else  /* X11, possibly Wayland */
   external_p = getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET");
 # endif
+
+  if (from_desktop_p)
+    {
+      Pixmap p = screenshot_load (dpy, window, verbose_p);
+      if (p) return p;
+    }
 
   XGetWindowAttributes (dpy, window, &xgwa);
   pixmap = XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
@@ -1640,8 +1672,75 @@ xshm_screenshot_grab (Display *dpy, Window window,
     }
 # endif /* HAVE_MACOS_X11 */
 
+  {
+    double elapsed = double_time() - start;
+    char late[100];
+    if (elapsed >= 0.75)
+      sprintf (late, " -- took %.1f seconds", elapsed);
+    else
+      *late = 0;
+
+    if (verbose_p || !pixmap || *late)
+      fprintf (stderr, "%s: %s screenshot 0x%lx %dx%d"
+               " for window 0x%lx%s\n", blurb(),
+               (pixmap ? "saved" : "failed to save"),
+               (unsigned long) pixmap, xgwa.width, xgwa.height,
+               (unsigned long) window,
+               late);
+  }
+
   return pixmap;
 }
+
+
+#ifdef USE_GL
+static void
+opengl_make_current (Display *dpy, xshm_fade_info *info)
+{
+# ifdef HAVE_EGL
+  egl_data *d = info->glx_context;
+  if (! eglMakeCurrent (d->egl_display, d->egl_surface, d->egl_surface,
+                        d->egl_context))
+    abort();
+# else /* !HAVE_EGL */
+  glXMakeCurrent (dpy, info->window, info->glx_context);
+# endif /* !HAVE_EGL */
+
+}
+
+/* report a GL error. */
+static Bool
+check_gl_error (const char *type)
+{
+  char buf[100];
+  GLenum i;
+  const char *e;
+  switch ((i = glGetError())) {
+  case GL_NO_ERROR: return False;
+  case GL_INVALID_ENUM:          e = "invalid enum";      break;
+  case GL_INVALID_VALUE:         e = "invalid value";     break;
+  case GL_INVALID_OPERATION:     e = "invalid operation"; break;
+  case GL_STACK_OVERFLOW:        e = "stack overflow";    break;
+  case GL_STACK_UNDERFLOW:       e = "stack underflow";   break;
+  case GL_OUT_OF_MEMORY:         e = "out of memory";     break;
+#ifdef GL_INVALID_FRAMEBUFFER_OPERATION
+  case GL_INVALID_FRAMEBUFFER_OPERATION:
+    e = "invalid framebuffer operation";
+    break;
+#endif
+#ifdef GL_TABLE_TOO_LARGE_EXT
+  case GL_TABLE_TOO_LARGE_EXT:   e = "table too large";   break;
+#endif
+#ifdef GL_TEXTURE_TOO_LARGE_EXT
+  case GL_TEXTURE_TOO_LARGE_EXT: e = "texture too large"; break;
+#endif
+  default:
+    e = buf; sprintf (buf, "unknown error %d", (int) i); break;
+  }
+  fprintf (stderr, "%s: %s error: %s\n", progname, type, e);
+  return True;
+}
+#endif /* USE_GL */
 
 
 /* Returns:
@@ -1657,7 +1756,9 @@ xshm_fade (XtAppContext app, Display *dpy,
   int screen;
   int status = -1;
   xshm_fade_info *info = 0;
+# ifndef USE_GL
   XShmSegmentInfo shm_info;
+# endif
   Window saver_window = 0;
   XErrorHandler old_handler = 0;
 
@@ -1665,9 +1766,13 @@ xshm_fade (XtAppContext app, Display *dpy,
   old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
   error_handler_hit_p = False;  
 
+# ifdef USE_GL
   if (verbose_p > 1)
-    fprintf (stderr, "%s: SHM fade %s\n",
-             blurb(), (out_p ? "out" : "in"));
+    fprintf (stderr, "%s: GL fade %s\n", blurb(), (out_p ? "out" : "in"));
+# else /* !USE_GL */
+  if (verbose_p > 1)
+    fprintf (stderr, "%s: SHM fade %s\n", blurb(), (out_p ? "out" : "in"));
+# endif /* !USE_GL */
 
   info = (xshm_fade_info *) calloc(nwindows, sizeof(*info));
   if (!info) goto FAIL;
@@ -1684,22 +1789,45 @@ xshm_fade (XtAppContext app, Display *dpy,
     {
       XWindowAttributes xgwa;
       Window root;
-      XGCValues gcv;
-      unsigned long attrmask = 0;
+      Visual *visual;
       XSetWindowAttributes attrs;
+      unsigned long attrmask = 0;
+# ifndef USE_GL
+      XGCValues gcv;
+# endif /* USE_GL */
 
       XGetWindowAttributes (dpy, saver_windows[screen], &xgwa);
       root = RootWindowOfScreen (xgwa.screen);
+# ifdef USE_GL
+      visual = get_gl_visual (xgwa.screen);
+# else /* !USE_GL */
+      visual = xgwa.visual;
+# endif /* !USE_GL */
 
+# ifdef USE_GL
       info[screen].src =
-        create_xshm_image (dpy, xgwa.visual, xgwa.depth,
+        XCreateImage (dpy, visual, 32, ZPixmap, 0, NULL,
+                      xgwa.width, xgwa.height, 32, 0);
+      if (!info[screen].src) goto FAIL;
+      info[screen].src->data = (char *)
+        malloc (info[screen].src->height * info[screen].src->bytes_per_line);
+      info[screen].src->bitmap_bit_order =
+        info[screen].src->byte_order = MSBFirst;
+
+      while (glGetError() != GL_NO_ERROR)
+        ;  /* Flush */
+
+# else /* !USE_GL */
+      info[screen].src =
+        create_xshm_image (dpy, visual, xgwa.depth,
                            ZPixmap, &shm_info, xgwa.width, xgwa.height);
       if (!info[screen].src) goto FAIL;
 
       info[screen].intermediate =
-        create_xshm_image (dpy, xgwa.visual, xgwa.depth,
+        create_xshm_image (dpy, visual, xgwa.depth,
                            ZPixmap, &shm_info, xgwa.width, xgwa.height);
       if (!info[screen].intermediate) goto FAIL;
+# endif /* !USE_GL */
 
       if (!out_p)
         {
@@ -1722,12 +1850,82 @@ xshm_fade (XtAppContext app, Display *dpy,
       info[screen].window = 
         XCreateWindow (dpy, root, xgwa.x, xgwa.y,
                        xgwa.width, xgwa.height, xgwa.border_width, xgwa.depth,
-                       InputOutput, xgwa.visual,
+                       InputOutput, visual,
                        attrmask, &attrs);
       if (!info[screen].window) goto FAIL;
       /* XSelectInput (dpy, info[screen].window,
                        KeyPressMask | ButtonPressMask); */
 
+# ifdef USE_GL
+      /* Copy the screenshot pixmap to the texture XImage */
+      XGetSubImage (dpy, info[screen].screenshot,
+                    0, 0, xgwa.width, xgwa.height,
+                    ~0L, ZPixmap, info[screen].src, 0, 0);
+
+      /* Convert 0RGB to RGBA */
+      {
+        XImage *ximage = info[screen].src;
+        int x, y;
+        for (y = 0; y < ximage->height; y++)
+          for (x = 0; x < ximage->width; x++)
+            {
+              unsigned long p = XGetPixel (ximage, x, y);
+              unsigned long a = 0xFF;
+           /* unsigned long a = (p >> 24) & 0xFF; */
+              unsigned long r = (p >> 16) & 0xFF;
+              unsigned long g = (p >>  8) & 0xFF;
+              unsigned long b = (p >>  0) & 0xFF;
+              p = (r << 24) | (g << 16) | (b << 8) | (a << 0);
+              XPutPixel (ximage, x, y, p);
+            }
+      }
+
+      /* Connect the window to an OpenGL context */
+      info[screen].glx_context =
+        openGL_context_for_window (xgwa.screen, info[screen].window);
+      opengl_make_current (dpy, &info[screen]);
+      if (check_gl_error ("connect")) goto FAIL;
+
+      glEnable (GL_TEXTURE_2D);
+      glEnable (GL_NORMALIZE);
+      glGenTextures (1, &info[screen].texid);
+      glBindTexture (GL_TEXTURE_2D, info[screen].texid);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+      if (check_gl_error ("bind texture")) goto FAIL;
+
+      {
+        int tex_width  = (GLsizei) to_pow2 (info[screen].src->width);
+        int tex_height = (GLsizei) to_pow2 (info[screen].src->height);
+        /* Create power of 2 empty texture */
+        glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0,
+                      GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        if (check_gl_error ("glTexImage2D")) goto FAIL;
+        /* Load our non-power-of-2 image data into it. */
+        glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0,
+                         info[screen].src->width, info[screen].src->height,
+                           GL_RGBA, GL_UNSIGNED_BYTE, info[screen].src->data);
+        if (check_gl_error ("glTexSubImage2D")) goto FAIL;
+        info[screen].texw = info[screen].src->width  / (GLfloat) tex_width;
+        info[screen].texh = info[screen].src->height / (GLfloat) tex_height;
+      }
+
+      glViewport (0, 0, xgwa.width, xgwa.height);
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho (0, 1, 1, 0, -1, 1);
+      glMatrixMode (GL_MODELVIEW);
+      glLoadIdentity();
+      glClearColor (0, 0, 0, 1);
+      glClear (GL_COLOR_BUFFER_BIT);
+      glFrontFace (GL_CCW);
+      if (check_gl_error ("GL setup")) goto FAIL;
+
+# else /* !USE_GL */
       /* Copy the screenshot pixmap to the source image */
       if (! get_xshm_image (dpy, info[screen].screenshot, info[screen].src,
                             0, 0, ~0L, &shm_info))
@@ -1735,6 +1933,7 @@ xshm_fade (XtAppContext app, Display *dpy,
 
       gcv.function = GXcopy;
       info[screen].gc = XCreateGC (dpy, info[screen].window, GCFunction, &gcv);
+# endif /* !USE_GL */
     }
 
   /* If we're fading out from the desktop, save our screen shots for later use.
@@ -1759,6 +1958,7 @@ xshm_fade (XtAppContext app, Display *dpy,
 
   for (screen = 0; screen < nwindows; screen++)
     {
+# ifndef USE_GL
       if (out_p)
         /* Copy the screenshot to the fader window */
         XSetWindowBackgroundPixmap (dpy, info[screen].window,
@@ -1768,6 +1968,7 @@ xshm_fade (XtAppContext app, Display *dpy,
           XSetWindowBackgroundPixmap (dpy, info[screen].window, None);
           XSetWindowBackground (dpy, info[screen].window, BlackPixel (dpy, 0));
         }
+# endif /* USE_GL */
 
       XMapRaised (dpy, info[screen].window);
 
@@ -1799,8 +2000,13 @@ xshm_fade (XtAppContext app, Display *dpy,
         if (!out_p) ratio = 1-ratio;
 
         for (screen = 0; screen < nwindows; screen++)
+# ifdef USE_GL
+          if (opengl_whack (dpy, &info[screen], ratio))
+            goto FAIL;
+# else /* !USE_GL */
           if (xshm_whack (dpy, &shm_info, &info[screen], ratio))
             goto FAIL;
+# endif /* !USE_GL */
 
         if (error_handler_hit_p)
           goto FAIL;
@@ -1861,14 +2067,23 @@ xshm_fade (XtAppContext app, Display *dpy,
     {
       for (screen = 0; screen < nwindows; screen++)
         {
+# ifdef USE_GL
+          if (info[screen].src)
+            XDestroyImage (info[screen].src);
+          if (info[screen].texid)
+            glDeleteTextures (1, &info[screen].texid);
+          openGL_destroy_context (dpy, info[screen].glx_context);
+# else /* !USE_GL */
           if (info[screen].src)
             destroy_xshm_image (dpy, info[screen].src, &shm_info);
           if (info[screen].intermediate)
             destroy_xshm_image (dpy, info[screen].intermediate, &shm_info);
-          if (info[screen].window)
-            defer_XDestroyWindow (app, dpy, info[screen].window);
           if (info[screen].gc)
             XFreeGC (dpy, info[screen].gc);
+# endif /* !USE_GL */
+
+          if (info[screen].window)
+            defer_XDestroyWindow (app, dpy, info[screen].window);
         }
       free (info);
     }
@@ -1890,12 +2105,57 @@ xshm_fade (XtAppContext app, Display *dpy,
 
   if (error_handler_hit_p) status = -1;
   if (verbose_p > 1 && status)
+# ifdef HAVE_GL
+    fprintf (stderr, "%s: GL fade %s failed\n",
+             blurb(), (out_p ? "out" : "in"));
+# else /* !HAVE_GL */
     fprintf (stderr, "%s: SHM fade %s failed\n",
              blurb(), (out_p ? "out" : "in"));
+# endif /* !HAVE_GL */
 
   return status;
 }
 
+
+#ifdef USE_GL
+
+static int
+opengl_whack (Display *dpy, xshm_fade_info *info, float ratio)
+{
+  GLfloat w = info->texw;
+  GLfloat h = info->texh;
+
+  opengl_make_current (dpy, info);
+  glBindTexture (GL_TEXTURE_2D, info->texid);
+  glClear (GL_COLOR_BUFFER_BIT);
+
+  if (ratio < 0) ratio = 0;
+  if (ratio > 1) ratio = 1;
+
+  glColor3f (ratio, ratio, ratio);
+
+  glBegin (GL_QUADS);
+  glTexCoord2f (0, 0); glVertex3f (0, 0, 0);
+  glTexCoord2f (0, h); glVertex3f (0, 1, 0);
+  glTexCoord2f (w, h); glVertex3f (1, 1, 0);
+  glTexCoord2f (w, 0); glVertex3f (1, 0, 0);
+  glEnd();
+  glFinish();
+
+# ifdef HAVE_EGL
+  if (! eglSwapBuffers (info->glx_context->egl_display,
+                        info->glx_context->egl_surface))
+    return True;
+# else
+  glXSwapBuffers (dpy, info->window);
+# endif
+
+  if (check_gl_error ("gl whack")) return True;
+  return False;
+}
+
+
+#else /* !USE_GL */
 
 static int
 xshm_whack (Display *dpy, XShmSegmentInfo *shm_info,
@@ -1925,3 +2185,6 @@ xshm_whack (Display *dpy, XShmSegmentInfo *shm_info,
   XSync (dpy, False);
   return 0;
 }
+
+#endif /* !USE_GL */
+

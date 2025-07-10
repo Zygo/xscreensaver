@@ -39,9 +39,8 @@ extern char *progclass;
 extern Bool ensure_no_screensaver_running (Display *, Screen *);
 
 /* Display Power Management System (DPMS) interface. */
-extern Bool monitor_powered_on_p (Display *);
-extern void monitor_power_on (saver_info *si, Bool on_p);
-
+extern Bool monitor_powered_on_p (saver_info *);
+extern void monitor_power_on (saver_info *, Bool on_p);
 
 /* =======================================================================
    blanking

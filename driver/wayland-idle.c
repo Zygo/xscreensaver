@@ -10,6 +10,8 @@
  *
  * Detecting idleness via a connection to the Wayland server and the
  * "idle-notify-v1" protocol: https://wayland.app/protocols/ext-idle-notify-v1
+ * If the Wayland server does not implement this protocol, XScreenSaver cannot
+ * function.  KDE implements it, but GNOME does not.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -24,17 +26,19 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-/* #include <wayland-client-protocol.h> */
+
 #include <wayland-client.h>
 #include <wayland-server.h>
-/* #include <wayland-util.h> */
-#include "ext-idle-notify-v1-client-protocol.h"
-#include "idle-client-protocol.h"
-#include "wayland-idle.h"
+
 #include "blurb.h"
+#include "wayland-dpyI.h"
+#include "wayland-idle.h"
+#include "wayland-protocols/ext-idle-notify-v1-client-protocol.h"
+#include "wayland-protocols/idle-client-protocol.h"
 
 
-struct wayland_state {
+struct wayland_idle {
+  wayland_dpy          *parent;
   struct wl_display    *dpy;
   struct wl_registry   *reg;
   struct wl_event_loop *event_loop;
@@ -57,20 +61,20 @@ struct wayland_state {
 static void
 seat_handle_capabilities (void *data, struct wl_seat *seat, uint32_t caps)
 {
-  wayland_state *state = (wayland_state *) data;
+  wayland_idle *state = (wayland_idle *) data;
   state->seat_caps = caps;
   if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: seat caps: 0x%02lX\n", blurb(),
+    fprintf (stderr, "%s: wayland: idle: seat caps: 0x%02lX\n", blurb(),
              (unsigned long) caps);
 }
 
 static void
 seat_handle_name (void *data, struct wl_seat *seat, const char *name)
 {
-  wayland_state *state = (wayland_state *) data;
+  wayland_idle *state = (wayland_idle *) data;
   state->seat_name = strdup (name);
   if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: seat name: \"%s\"\n", blurb(), name);
+    fprintf (stderr, "%s: wayland: idle: seat name: \"%s\"\n", blurb(), name);
 }
 
 
@@ -81,7 +85,7 @@ static void
 handle_global (void *data, struct wl_registry *reg,
                uint32_t name, const char *iface, uint32_t version)
 {
-  wayland_state *state = (wayland_state *) data;
+  wayland_idle *state = (wayland_idle *) data;
 
   if (!strcmp (iface, wl_seat_interface.name))
     {
@@ -90,21 +94,21 @@ handle_global (void *data, struct wl_registry *reg,
 	.capabilities = seat_handle_capabilities,
       };
       if (verbose_p > 2)
-        fprintf (stderr, "%s: wayland: found: %s\n", blurb(), iface);
+        fprintf (stderr, "%s: wayland: idle: found: %s\n", blurb(), iface);
       state->seat = wl_registry_bind (reg, name, &wl_seat_interface, version);
       wl_seat_add_listener (state->seat, &seat_listener, state);
     }
   else if (!strcmp (iface, ext_idle_notifier_v1_interface.name))
     {
       if (verbose_p)
-        fprintf (stderr, "%s: wayland: found: %s\n", blurb(), iface);
+        fprintf (stderr, "%s: wayland: idle: found: %s\n", blurb(), iface);
       state->ext_idle_notifier =
         wl_registry_bind (reg, name, &ext_idle_notifier_v1_interface, 1);
     }
   else if (!strcmp (iface, org_kde_kwin_idle_interface.name))
     {
       if (verbose_p)
-        fprintf (stderr, "%s: wayland: found: %s\n", blurb(), iface);
+        fprintf (stderr, "%s: wayland: idle: found: %s\n", blurb(), iface);
       state->kde_idle_manager =
         wl_registry_bind (reg, name, &org_kde_kwin_idle_interface, 1);
     }
@@ -120,60 +124,64 @@ handle_global_remove (void *data, struct wl_registry *registry, uint32_t name)
 static void
 ext_handle_idled (void *data, struct ext_idle_notification_v1 *note)
 {
-  /* wayland_state *state = (wayland_state *) data; */
+  /* wayland_idle *state = (wayland_idle *) data; */
   if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: ext_idle: idle notification\n", blurb());
+    fprintf (stderr, "%s: wayland: idle: ext_idle notification\n", blurb());
 }
 
 /* Called when the user is no longer idle. */
 static void
 ext_handle_resumed (void *data, struct ext_idle_notification_v1 *note)
 {
-  wayland_state *state = (wayland_state *) data;
+  wayland_idle *state = (wayland_idle *) data;
   if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: ext_idle: active notification\n", blurb());
+    fprintf (stderr, "%s: wayland: idle: ext_idle active notification\n",
+             blurb());
   (*state->activity_cb) (state->closure);
 }
 
 static void
 kde_handle_idle (void *data, struct org_kde_kwin_idle_timeout *timer)
 {
-  /* wayland_state *state = (wayland_state *) data; */
+  /* wayland_idle *state = (wayland_idle *) data; */
   if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: kde_idle: idle notification\n", blurb());
+    fprintf (stderr, "%s: wayland: idle: kde_idle notification\n", blurb());
 }
 
 static void
 kde_handle_resumed (void *data, struct org_kde_kwin_idle_timeout *timer)
 {
-  wayland_state *state = (wayland_state *) data;
+  wayland_idle *state = (wayland_idle *) data;
   if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: kde_idle: active notification\n", blurb());
+    fprintf (stderr, "%s: wayland: idle: kde_idle active notification\n",
+             blurb());
   (*state->activity_cb) (state->closure);
 }
 
 
 static void
-destroy_timer (wayland_state *state)
+destroy_timer (wayland_idle *state)
 {
   if (state->ext_idle_notification)
     {
       ext_idle_notification_v1_destroy (state->ext_idle_notification);
       state->ext_idle_notification = 0;
       if (verbose_p > 2)
-        fprintf (stderr, "%s: wayland: destroyed kde_idle timer\n", blurb());
+        fprintf (stderr, "%s: wayland: idle: destroyed kde_idle timer\n",
+                 blurb());
     }
   if (state->kde_idle_timer)
     {
       org_kde_kwin_idle_timeout_release (state->kde_idle_timer);
       state->kde_idle_timer = 0;
       if (verbose_p > 2)
-        fprintf (stderr, "%s: wayland: destroyed ext_idle timer\n", blurb());
+        fprintf (stderr, "%s: wayland: idle: destroyed ext_idle timer\n",
+                 blurb());
     }
 }
 
 static void
-register_timer (wayland_state *state, int timeout)
+register_timer (wayland_idle *state, int timeout)
 {
   destroy_timer (state);
   if (state->ext_idle_notifier)
@@ -192,7 +200,8 @@ register_timer (wayland_state *state, int timeout)
                                              &ext_idle_notification_listener,
                                              state);
       if (verbose_p > 2)
-        fprintf (stderr, "%s: wayland: registered ext_idle timer\n", blurb());
+        fprintf (stderr, "%s: wayland: idle: registered ext_idle timer\n",
+                 blurb());
     }
   else
     {
@@ -210,143 +219,71 @@ register_timer (wayland_state *state, int timeout)
                                               &kde_idle_timer_listener,
                                               state);
       if (verbose_p > 2)
-        fprintf (stderr, "%s: wayland: registered kde_idle timer\n", blurb());
+        fprintf (stderr, "%s: wayland: idle: registered kde_idle timer\n",
+                 blurb());
     }
 }
 
 
-/* Dispatch any events that have been read. */
-static int
-dpy_handle_event (int fd, uint32_t mask, void *data)
-{
-  wayland_state *state = (wayland_state *) data;
-  int count = 0;
-
-  if ((mask & WL_EVENT_HANGUP) || (mask & WL_EVENT_ERROR))
-    {
-      /* Nothing good can come of this... */
-    }
-
-  if (mask & WL_EVENT_READABLE)
-    count = wl_display_dispatch (state->dpy);
-
-  if (mask & WL_EVENT_WRITABLE)
-    wl_display_flush (state->dpy);
-
-  if (mask == 0)
-    {
-      count = wl_display_dispatch_pending (state->dpy);
-      wl_display_flush (state->dpy);
-    }
-
-  return count;
-}
-
-
-/* Connects to Wayland and returns an opaque state object on success.
-   When user activity is detected, the callback will be run with the
-   provided object as its argument.  On failure, returns NULL and
-   an error message.
+/* Binds to Wayland idle-detection protocols and returns an opaque state
+   object on success.  When user activity is detected, the callback will
+   be run with the provided object as its argument.
  */
-wayland_state *
-wayland_idle_init (void (*activity_cb) (void *closure),
-                   void *closure,
-                   const char **error_ret)
+wayland_idle *
+wayland_idle_init (wayland_dpy *dpy,
+                   void (*activity_cb) (void *closure),
+                   void *closure)
 {
-  wayland_state *state = (wayland_state *) calloc (sizeof (*state), 1);
+  wayland_idle *state;
+  static const struct wl_registry_listener listener = {
+    .global        = handle_global,
+    .global_remove = handle_global_remove,
+  };
+
+  if (!dpy) return NULL;
+
+  state = (wayland_idle *) calloc (sizeof (*state), 1);
+  state->parent      = dpy;
   state->activity_cb = activity_cb;
-  state->closure = closure;
+  state->closure     = closure;
 
-  state->dpy = wl_display_connect (NULL);
-  if (!state->dpy)
-    {
-      free (state);
-      if (error_ret) *error_ret = "connection failed";
-      return NULL;
-    }
+  state->reg = wl_display_get_registry (dpy->dpy);
+  wl_registry_add_listener (state->reg, &listener, state);
 
-  if (verbose_p)
-    fprintf (stderr, "%s: wayland: server connected\n", blurb());
-
-  state->reg = wl_display_get_registry (state->dpy);
-
-  {
-    static const struct wl_registry_listener listener = {
-      .global        = handle_global,
-      .global_remove = handle_global_remove,
-    };
-    wl_registry_add_listener (state->reg, &listener, state);
-  }
-
-  wl_display_roundtrip (state->dpy);	/* First time to register seats */
-  wl_display_roundtrip (state->dpy);	/* Second time to register timers */
+  /* It takes two round trips: first to register seats, then timers. */
+  wayland_dpy_process_events (dpy, true);
 
   if (! state->seat)
     {
       wayland_idle_free (state);
-      if (error_ret) *error_ret = "server has no seats";
+      fprintf (stderr, "%s: wayland: idle: server has no seats\n", blurb());
       return NULL;
     }
 
   if (! (state->kde_idle_manager ||
          state->ext_idle_notifier))
     {
-      static char err[300];
-      sprintf (err, "server doesn't implement \"%.100s\" or \"%.100s\"",
+      fprintf (stderr,
+               "%s: wayland: idle: server doesn't implement \"%s\" or \"%s\"\n",
+               blurb(),
                ext_idle_notifier_v1_interface.name,
                org_kde_kwin_idle_interface.name);
       wayland_idle_free (state);
-      if (error_ret) *error_ret = err;
       return NULL;
     }
 
-  state->event_loop = wl_event_loop_create();
-
-  { /* Tell the event loop to select() on the display connection. */
-    struct wl_event_source *source =
-      wl_event_loop_add_fd (state->event_loop,
-                            wl_display_get_fd (state->dpy),
-                            WL_EVENT_READABLE,
-                            dpy_handle_event,
-                            state);
-    wl_event_source_check (source);
-    /* #### Do I need to free 'source'? */
-  }
-
   register_timer (state, 1000);  /* milliseconds */
 
-  wayland_idle_process_events (state);
-
-  if (error_ret) *error_ret = 0;
   return state;
 }
 
-int
-wayland_idle_get_fd (wayland_state *state)
-{
-  return wl_display_get_fd (state->dpy);
-}
-
-
-/* Handle any notifications from the Wayland server and run callbacks.
- */
 void
-wayland_idle_process_events (wayland_state *state)
+wayland_idle_free (wayland_idle *state)
 {
-  /* Process all outstanding events without blocking. */
-  wl_event_loop_dispatch (state->event_loop, 0);
-}
-
-
-void
-wayland_idle_free (wayland_state *state)
-{
-  wl_display_disconnect (state->dpy);
-  if (state->event_loop)
-    wl_event_loop_destroy (state->event_loop);
   if (state->seat_name)
     free (state->seat_name);
+  /* #### state->reg ? */
+  /* #### state->seat ? */
+  /* #### state->ext_idle_notifier, etc ? */
   free (state);
-  if (verbose_p)
-    fprintf (stderr, "%s: wayland: disconnected\n", blurb());
 }

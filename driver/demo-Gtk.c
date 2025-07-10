@@ -69,6 +69,7 @@
 #include "blurb.h"
 #include "xscreensaver-intl.h"
 #include "version.h"
+
 #include "types.h"
 #include "resources.h"		/* for parse_time() */
 #include "remote.h"		/* for xscreensaver_command() */
@@ -80,11 +81,12 @@
 #include "screenshot.h"
 #include "xmu.h"
 
+#include "demo-Gtk-conf.h"
+
 #ifdef HAVE_WAYLAND
 # include "wayland-idle.h"
+# include "wayland-dpms.h"
 #endif
-
-#include "demo-Gtk-conf.h"
 
 
 /* from exec.c */
@@ -125,6 +127,12 @@ typedef struct {
   Pixmap screenshot;
   Visual *gl_visual;
 
+# ifdef HAVE_WAYLAND
+  wayland_dpy  *wayland_dpy;
+  wayland_idle *wayland_idle;
+  wayland_dpms *wayland_dpms;
+# endif
+
   conf_data *cdata;		/* private data for per-hack configuration */
 
   Bool debug_p;			/* whether to print diagnostics */
@@ -132,6 +140,7 @@ typedef struct {
   Bool flushing_p;		/* flag for breaking recursion loops */
   Bool saving_p;		/* flag for breaking recursion loops */
   Bool dpms_supported_p;	/* Whether XDPMS is available */
+  Bool dpms_partial_p;		/* Whether DPMS only supports "Off" */
   Bool grabbing_supported_p;	/* Whether "Grab Desktop" and "Fade" work */
 
   char *desired_preview_cmd;	/* subprocess we intend to run */
@@ -1513,7 +1522,7 @@ flush_dialog_changes_and_save (state *s)
   if (changed)
     {
       if (s->dpy)
-        sync_server_dpms_settings (s->dpy, p);
+        sync_server_dpms_settings_1 (s->dpy, p);
       demo_write_init_file (s, p);
 
       /* Tell the xscreensaver daemon to wake up and reload the init file,
@@ -1602,8 +1611,12 @@ dpms_sanity_cb (GtkWidget *widget, gpointer user_data)
                                (double) ((LOWER) + 59) / (60 * 1000))
   MINUTES (standby, timeout, dpms_standby_spinbutton);
   MINUTES (suspend, standby, dpms_suspend_spinbutton);
-  MINUTES (off,     standby, dpms_off_spinbutton);
-  MINUTES (off,     suspend, dpms_off_spinbutton);
+  if (!s->dpms_partial_p)
+    {
+      /* Since standby and suspend are not editable, ignore them. */
+      MINUTES (off, standby, dpms_off_spinbutton);
+      MINUTES (off, suspend, dpms_off_spinbutton);
+    }
 # undef MINUTES
 
   return GDK_EVENT_PROPAGATE;
@@ -2564,6 +2577,7 @@ populate_prefs_page (state *s)
   saver_preferences *p = &s->prefs;
 
   Bool can_lock_p = TRUE;
+  Bool dpms_full_p;
 
 # ifdef NO_LOCKING
   can_lock_p = FALSE;
@@ -2610,16 +2624,14 @@ populate_prefs_page (state *s)
 # define TOGGLE_ACTIVE(NAME,ACTIVEP) \
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (win->NAME), (ACTIVEP))
 
-  TOGGLE_ACTIVE (lock_button,       p->lock_p);
-  TOGGLE_ACTIVE (dpms_button,       p->dpms_enabled_p && s->dpms_supported_p);
-  TOGGLE_ACTIVE (dpms_quickoff_button, (p->dpms_quickoff_p &&
-                                        s->dpms_supported_p));
-  TOGGLE_ACTIVE (grab_desk_button,  (p->grab_desktop_p &&
-                                     s->grabbing_supported_p));
-  TOGGLE_ACTIVE (grab_video_button, p->grab_video_p);
-  TOGGLE_ACTIVE (grab_image_button, p->random_image_p);
-  TOGGLE_ACTIVE (fade_button,       p->fade_p   && s->grabbing_supported_p);
-  TOGGLE_ACTIVE (unfade_button,     p->unfade_p && s->grabbing_supported_p);
+  TOGGLE_ACTIVE (lock_button,          p->lock_p);
+  TOGGLE_ACTIVE (dpms_button,          p->dpms_enabled_p);
+  TOGGLE_ACTIVE (dpms_quickoff_button, p->dpms_quickoff_p);
+  TOGGLE_ACTIVE (grab_desk_button,     p->grab_desktop_p);
+  TOGGLE_ACTIVE (grab_video_button,    p->grab_video_p);
+  TOGGLE_ACTIVE (grab_image_button,    p->random_image_p);
+  TOGGLE_ACTIVE (fade_button,          p->fade_p);
+  TOGGLE_ACTIVE (unfade_button,        p->unfade_p);
 
   switch (p->tmode)
     {
@@ -2744,16 +2756,17 @@ populate_prefs_page (state *s)
 
   /* DPMS
    */
+  dpms_full_p = s->dpms_supported_p && !s->dpms_partial_p;
   SENSITIZE (dpms_button,            s->dpms_supported_p);
-  SENSITIZE (dpms_standby_label,     s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_standby_mlabel,    s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_standby_spinbutton,s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_suspend_label,     s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_suspend_mlabel,    s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_suspend_spinbutton,s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_off_label,         s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_off_mlabel,        s->dpms_supported_p && p->dpms_enabled_p);
-  SENSITIZE (dpms_off_spinbutton,    s->dpms_supported_p && p->dpms_enabled_p);
+  SENSITIZE (dpms_standby_label,     p->dpms_enabled_p && dpms_full_p);
+  SENSITIZE (dpms_standby_mlabel,    p->dpms_enabled_p && dpms_full_p);
+  SENSITIZE (dpms_standby_spinbutton,p->dpms_enabled_p && dpms_full_p);
+  SENSITIZE (dpms_suspend_label,     p->dpms_enabled_p && dpms_full_p);
+  SENSITIZE (dpms_suspend_mlabel,    p->dpms_enabled_p && dpms_full_p);
+  SENSITIZE (dpms_suspend_spinbutton,p->dpms_enabled_p && dpms_full_p);
+  SENSITIZE (dpms_off_label,         p->dpms_enabled_p && s->dpms_supported_p);
+  SENSITIZE (dpms_off_mlabel,        p->dpms_enabled_p && s->dpms_supported_p);
+  SENSITIZE (dpms_off_spinbutton,    p->dpms_enabled_p && s->dpms_supported_p);
   SENSITIZE (dpms_quickoff_button,   s->dpms_supported_p);
 
   /* Fading
@@ -4287,40 +4300,31 @@ the_network_is_not_the_computer (gpointer data)
   if (s->backend != X11_BACKEND)
     {
 # ifdef HAVE_WAYLAND
-      /* Connect to the Wayland server in the same way that the XScreenSaver
-         daemon will, and if we are in a state where the daemon won't work
-         properly, pop up a dialog box explaining why.
+      /* If we are in a state where the daemon won't work properly, pop up a
+         dialog box explaining why.
        */
-      const char *wayland_err = 0;
-      wayland_state *wayland = wayland_idle_init (NULL, NULL, &wayland_err);
-
-      if (s->debug_p && wayland_err)
-        fprintf (stderr, "%s: wayland: %s\n", blurb(), wayland_err);
-
-      if (wayland)   /* Connected to Wayland, have necessary extensions. */
-        {
-          wayland_idle_free (wayland);
-        }
-      else if (wayland_err && !strcmp (wayland_err, "connection failed"))
-        {
-          if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
-            {
-              warning_dialog (s->window, _("Warning"),
-                _("Unable to connect to the Wayland server. "
-                  "The XScreenSaver daemon will not work.\n"));
-            }
-          /* Otherwise, presumably running under real X11. */
-        }
-      else if (wayland_err)
+      if (s->wayland_idle)
+        ;   /* Connected to Wayland and can detect activity. */
+      else if (s->wayland_dpy)
         {
           /* Connected but the necessary extensions are missing. */
-          char msg [1024];
-          sprintf (msg,
-                   _("Wayland error:\n\n"
-                     "%.100s\n\n"
-                     "The XScreenSaver daemon will not work.\n"),
-                   wayland_err);
-          warning_dialog (s->window, _("Warning"), msg);
+          warning_dialog (s->window, _("Warning"),
+            _("Wayland error: idle detection is impossible. "
+              "The XScreenSaver daemon will not work.\n"));
+        }
+      else if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
+        {
+          /* Running under Wayland, but unable to connect. */
+          warning_dialog (s->window, _("Warning"),
+            _("Unable to connect to the Wayland server. "
+              "The XScreenSaver daemon will not work.\n"));
+        }
+      else
+        {
+          if (verbose_p)
+            fprintf (stderr,
+                     "%s: wayland: connection failed; assuming real X11\n",
+                     blurb());
         }
 # else  /* !HAVE_WAYLAND */
       if (s->debug_p)
@@ -5134,11 +5138,35 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
 # endif
     }
 
+# ifdef HAVE_WAYLAND
+  /* Connect to the Wayland server in the same way that xscreensaver
+     and xscreensaver-gfx will, to see if blanking and DPMS will work.
+  */
+  s->wayland_dpy  = wayland_dpy_connect();
+  s->wayland_idle = wayland_idle_init (s->wayland_dpy, NULL, NULL);
+  s->wayland_dpms = wayland_dpms_init (s->wayland_dpy);
+# endif /* HAVE_WAYLAND */
+
   s->multi_screen_p = multi_screen_p (s->dpy);
 
   /* Let's see if the server supports DPMS.
    */
   s->dpms_supported_p = FALSE;
+  s->dpms_partial_p   = TRUE;
+
+# ifdef HAVE_WAYLAND
+  if (s->wayland_dpms)
+    {
+      s->dpms_supported_p = TRUE;
+      s->dpms_partial_p   = TRUE;
+    }
+  else if (s->wayland_dpy)
+    {
+      s->dpms_supported_p = FALSE;
+    }
+  else
+# endif /* HAVE_WAYLAND */
+
 # ifdef HAVE_DPMS_EXTENSION
   {
     int op = 0, event = 0, error = 0;
@@ -5169,12 +5197,11 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
     {
       const char *prog = "grim";
       char *desk = getenv ("XDG_CURRENT_DESKTOP");
-fprintf(stderr,"##A %s\n", desk);
       if (desk &&
           (strcasestr (desk, "GNOME") ||
-           strcasestr (desk, "KDE")))
+           strcasestr (desk, "KDE") ||
+           strcasestr (desk, "plasma")))
         {
-fprintf(stderr,"##B %s\n", desk);
           s->grabbing_supported_p = False;
           if (s->debug_p)
             fprintf (stderr,
@@ -5183,7 +5210,6 @@ fprintf(stderr,"##B %s\n", desk);
         }
       else if (! on_path_p (prog))
         {
-fprintf(stderr,"##C %s\n", desk);
           s->grabbing_supported_p = False;
           if (s->debug_p)
             fprintf (stderr,

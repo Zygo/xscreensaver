@@ -237,6 +237,7 @@
 #include <X11/extensions/XInput2.h>
 
 #ifdef HAVE_WAYLAND
+# include "wayland-dpy.h"
 # include "wayland-idle.h"
 #endif
 
@@ -354,6 +355,15 @@ saver_exit (int status)
   kill_all_subprocs();
   exit (status);
 }
+
+
+#ifdef HAVE_WAYLAND
+static void
+saver_wayland_exit (void *closure)
+{
+  saver_exit (1);
+}
+#endif
 
 
 static void
@@ -1526,39 +1536,33 @@ main_loop (Display *dpy)
 
 # ifdef HAVE_WAYLAND
   Bool wayland_active_p = False;
-  const char *wayland_err = 0;
-  wayland_state *wayland = wayland_idle_init (wayland_activity_cb,
-                                              &wayland_active_p,
-                                              &wayland_err);
-  if (wayland)
+  wayland_dpy *wdpy = wayland_dpy_connect();
+  wayland_idle *widle = wayland_idle_init (wdpy,
+                                           wayland_activity_cb,
+                                           &wayland_active_p);
+  if (widle)
     {
-      wayland_p = True;   /* Connected to Wayland */
+      wayland_p = True;   /* Connected to Wayland and can detect activity. */
     }
-  else if (wayland_err && !strcmp (wayland_err, "connection failed"))
+  else if (wdpy)
     {
-      if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
-        {
-          /* Running under Wayland, but unable to connect. */
-          fprintf (stderr, "%s: wayland: %s\n", blurb(), wayland_err);
-          exit (1);
-        }
-      else
-        {
-          /* Running under real X11, presumably. */
-          if (verbose_p)
-            fprintf (stderr, "%s: wayland: %s (assuming real X11)\n",
-                     blurb(), wayland_err);
-        }
+      /* Connected to Wayland, but no idle protocols available. */
+      fprintf (stderr, "%s: wayland: idle detection is impossible.\n",
+               blurb());
+      exit (1);
     }
-  else if (wayland_err)
+  else if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
     {
-      /* Connected to Wayland, but initialization failed. */
-      fprintf (stderr, "%s: wayland: %s\n", blurb(), wayland_err);
+      /* Running under Wayland, but unable to connect. */
+      fprintf (stderr, "%s: wayland: connection failed\n", blurb());
       exit (1);
     }
   else
-    abort();
-
+    {
+      if (verbose_p)
+        fprintf (stderr, "%s: wayland: connection failed; assuming real X11\n",
+                 blurb());
+    }
 # else /* !HAVE_WAYLAND */
 
   if (getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET"))
@@ -1574,6 +1578,11 @@ main_loop (Display *dpy)
 
   if (! init_xinput (dpy, &xi_opcode))
     saver_exit (1);
+
+# ifdef HAVE_WAYLAND
+  if (wdpy)
+    wayland_dpy_atexit (wdpy, saver_wayland_exit, NULL);
+# endif
 
   /* Disable server built-in screen saver. */
   XSetScreenSaver (dpy, 0, 0, 0, 0);
@@ -1715,9 +1724,9 @@ main_loop (Display *dpy)
 # ifdef HAVE_WAYLAND
           /* Stop blocking if there is activity on either the X11 socket
              or the Wayland socket. */
-          if (wayland)
+          if (wdpy)
             {
-              int wfd = wayland_idle_get_fd (wayland);
+              int wfd = wayland_dpy_get_fd (wdpy);
               FD_SET (wfd, &in_fds);
               fd = MAX (xfd, wfd);
             }
@@ -2122,9 +2131,9 @@ main_loop (Display *dpy)
 
 
 # ifdef HAVE_WAYLAND
-      if (wayland)
+      if (wdpy)
         {
-          wayland_idle_process_events (wayland);
+          wayland_dpy_process_events (wdpy, False);
           if (wayland_active_p)
             {
               active_at = now;

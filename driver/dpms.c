@@ -21,6 +21,10 @@
 
 #include "xscreensaver.h"
 
+#ifdef HAVE_WAYLAND
+# include "wayland-dpms.h"
+#endif
+
 /* Disable the X11 built-in screen saver. This is not directly related
    to DPMS, but it does need to be prevented from fighting with us.
   */
@@ -52,15 +56,25 @@ disable_builtin_saver (Display *dpy)
 #ifndef HAVE_DPMS_EXTENSION   /* almost the whole file */
 
 void
-sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
+sync_server_dpms_settings (saver_info *si)
+{
+  sync_server_dpms_settings_1 (si->dpy, &si->prefs);
+}
+
+void
+sync_server_dpms_settings_1 (Display *dpy, struct saver_preferences *p)
 {
   disable_builtin_saver (dpy);
   if (p->verbose_p)
     fprintf (stderr, "%s: DPMS not supported at compile time\n", blurb());
 }
 
-Bool monitor_powered_on_p (Display *dpy)
+Bool monitor_powered_on_p (saver_info *si)
 {
+# ifdef HAVE_WAYLAND
+  if (si->wayland_dpms)
+    return wayland_monitor_powered_on_p (si->wayland_dpms);
+# endif
   if (verbose_p > 1)
     fprintf (stderr,
              "%s: DPMS disabled at compile time, assuming monitor on\n",
@@ -70,6 +84,11 @@ Bool monitor_powered_on_p (Display *dpy)
 
 void monitor_power_on (saver_info *si, Bool on_p)
 {
+# ifdef HAVE_WAYLAND
+  if (si->wayland_dpms)
+    wayland_monitor_power_on (si->wayland_dpms, on_p);
+  else
+# endif
   if (verbose_p > 1)
     fprintf (stderr,
              "%s: DPMS disabled at compile time, not turning monitor %s\n",
@@ -94,7 +113,32 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
 
 
 void
-sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
+sync_server_dpms_settings (saver_info *si)
+{
+# ifdef HAVE_WAYLAND	/* The XDPMS extension is definitely not available */
+  if (si->wayland_dpy)
+    {
+      disable_builtin_saver (si->dpy);
+      return;
+    }
+# endif /* HAVE_WAYLAND */
+
+  /* If the monitor is currently powered off, defer any changes until we are
+     next called while it is powered on.  Making changes to the DPMS settings
+     can have the side-effect of powering the monitor back on.
+    */
+  if (! monitor_powered_on_p (si))
+    {
+      if (verbose_p > 1)
+        fprintf (stderr, "%s: DPMS: monitor off, skipping sync\n", blurb());
+      return;
+    }
+
+  sync_server_dpms_settings_1 (si->dpy, &si->prefs);
+}
+
+void
+sync_server_dpms_settings_1 (Display *dpy, struct saver_preferences *p)
 {
   int event = 0, error = 0;
   BOOL o_enabled = False;
@@ -111,17 +155,6 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
   int off_secs         = p->dpms_off / 1000;
   Bool verbose_p       = p->verbose_p;
   static Bool warned_p = False;
-
-  /* If the monitor is currently powered off, defer any changes until we are
-     next called while it is powered on.  Making changes to the DPMS settings
-     can have the side-effect of powering the monitor back on.
-    */
-  if (! monitor_powered_on_p (dpy))
-    {
-      if (verbose_p > 1)
-        fprintf (stderr, "%s: DPMS: monitor off, skipping sync\n", blurb());
-      return;
-    }
 
   changed_p = disable_builtin_saver (dpy);
 
@@ -241,14 +274,23 @@ sync_server_dpms_settings (Display *dpy, struct saver_preferences *p)
 }
 
 Bool
-monitor_powered_on_p (Display *dpy)
+monitor_powered_on_p (saver_info *si)
 {
   Bool result;
   int event_number, error_number;
   BOOL onoff = False;
   CARD16 state;
 
-  if (!DPMSQueryExtension(dpy, &event_number, &error_number))
+# ifdef HAVE_WAYLAND
+
+  if (si->wayland_dpms)
+    return wayland_monitor_powered_on_p (si->wayland_dpms);
+  else if (si->wayland_dpy)
+    return True;  /* Wayland server does not support DPMS */
+
+# endif /* HAVE_WAYLAND */
+
+  if (!DPMSQueryExtension(si->dpy, &event_number, &error_number))
     {
       /* Server doesn't know -- assume the monitor is on. */
       if (verbose_p > 1)
@@ -257,7 +299,7 @@ monitor_powered_on_p (Display *dpy)
       result = True;
     }
 
-  else if (!DPMSCapable(dpy))
+  else if (!DPMSCapable(si->dpy))
     {
       /* Server says the monitor doesn't do power management -- so it's on. */
       if (verbose_p > 1)
@@ -268,7 +310,7 @@ monitor_powered_on_p (Display *dpy)
 
   else
     {
-      DPMSInfo(dpy, &state, &onoff);
+      DPMSInfo(si->dpy, &state, &onoff);
       if (!onoff)
         {
           /* Server says DPMS is disabled -- so the monitor is on. */
@@ -301,11 +343,29 @@ void
 monitor_power_on (saver_info *si, Bool on_p)
 {
   Bool verbose_p = si->prefs.verbose_p;
-  if ((!!on_p) != monitor_powered_on_p (si->dpy))
+  if ((!!on_p) != monitor_powered_on_p (si))
     {
       XErrorHandler old_handler;
       int event_number, error_number;
       static Bool warned_p = False;
+
+# ifdef HAVE_WAYLAND
+      if (si->wayland_dpms)
+        {
+          wayland_monitor_power_on (si->wayland_dpms, on_p);
+          return;
+        }
+      else if (si->wayland_dpy)
+        {
+          if (verbose_p > 1 || (verbose_p && !warned_p))
+            fprintf (stderr,
+                     "%s: wayland: unable to power %s monitor\n",
+                     blurb(), (on_p ? "on" : "off"));
+          warned_p = True;
+          return;
+        }
+# endif /* HAVE_WAYLAND */
+
       if (!DPMSQueryExtension(si->dpy, &event_number, &error_number) ||
           !DPMSCapable(si->dpy))
         {
@@ -340,7 +400,7 @@ monitor_power_on (saver_info *si, Bool on_p)
       if (verbose_p > 1 && error_handler_hit_p)
         fprintf (stderr, "%s: DPMSForceLevel got an X11 error\n", blurb());
 
-      if ((!!on_p) != monitor_powered_on_p (si->dpy))  /* double-check */
+      if ((!!on_p) != monitor_powered_on_p (si))  /* double-check */
 	fprintf (stderr,
        "%s: DPMSForceLevel(dpy, %s) did not change monitor power state\n",
 		 blurb(),
@@ -355,30 +415,57 @@ monitor_power_on (saver_info *si, Bool on_p)
 /* Force the server DPMS state to be what the wall clock says it should be.
  */
 void
-brute_force_dpms (Display *dpy, struct saver_preferences *p,
-                  time_t activity_time)
+brute_force_dpms (saver_info *si, time_t activity_time)
 {
+  Display *dpy = si->dpy;
+  saver_preferences *p = &si->prefs;
   XErrorHandler old_handler;
   int event_number, error_number;
   BOOL onoff = False;
   CARD16 state;
   CARD16 target;
   time_t age = time ((time_t *) 0) - activity_time;
+  Bool enabled_p = (p->dpms_enabled_p && p->mode != DONT_BLANK);
 
   if (activity_time == 0)		/* Auth dialog is visible */
     target = DPMSModeOn;
   else if (p->mode == BLANK_ONLY && p->dpms_quickoff_p)
     target = DPMSModeOff;
-  else if (p->dpms_off     && age >= (p->dpms_off     / 1000))
+  else if (enabled_p && p->dpms_off     && age >= (p->dpms_off     / 1000))
     target = DPMSModeOff;
-  else if (p->dpms_suspend && age >= (p->dpms_suspend / 1000))
+  else if (enabled_p && p->dpms_suspend && age >= (p->dpms_suspend / 1000))
     target = DPMSModeSuspend;
-  else if (p->dpms_standby && age >= (p->dpms_standby / 1000))
+  else if (enabled_p && p->dpms_standby && age >= (p->dpms_standby / 1000))
     target = DPMSModeStandby;
   else
     /* We have no opinion about the desired DPMS state, so if it is off,
        leave it off. It may have been powered down manually with xset. */
     return;
+
+# ifdef HAVE_WAYLAND
+  {
+    Bool have = monitor_powered_on_p (si);
+    Bool want = (target == DPMSModeOn);
+
+    if (have == want)
+      ;
+    else if (si->wayland_dpms)
+      {
+        wayland_monitor_power_on (si->wayland_dpms, want);
+        if (p->verbose_p)
+          fprintf (stderr, "%s: powered %s monitor\n", blurb(),
+                   (want ? "on" : "off"));
+        return;
+      }
+    else if (si->wayland_dpy)
+      {
+        if (verbose_p)
+          fprintf (stderr, "%s: wayland: unable to power %s monitor\n",
+                   blurb(), (want ? "on" : "off"));
+        return;
+      }
+  }
+# endif /* HAVE_WAYLAND */
 
   if (!DPMSQueryExtension (dpy, &event_number, &error_number) ||
       !DPMSCapable (dpy))

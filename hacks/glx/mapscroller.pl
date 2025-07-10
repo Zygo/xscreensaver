@@ -29,7 +29,7 @@ BEGIN { eval 'use LWP::Simple' }
 
 my $progname = $0; $progname =~ s@.*/@@g;
 $progname =~ s@\.pl$@@g;
-my ($version) = ('$Revision: 1.9 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.10 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $url_template = undef;

@@ -39,7 +39,7 @@ To compile for a Unix system with X11:
 
         perl pkg-config gettext intltool libx11 libxext libxi libxt libxft
         libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk-3
-        libgdk-pixbuf2.0 libjpeg libxml2 libpam libsystemd elogind
+        libgdk-pixbuf2.0 libjpeg libxml2 libpam libsystemd elogind libwayland
 
     BSD systems might need gmake instead of make.
 
@@ -69,10 +69,14 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.12	* X11: DPMS works on Wayland.
+	* X11: Fading uses GL now which should be more performant.
+
 6.11	* X11: Now supports Wayland (blanking only, not locking).
 	* X11: More reliable and timely DPMS activation.
 	* X11: Dead keys work in password input.
 	* X11: Fixed a couple of minor Y2038 bugs.
+
 6.10	* New hacks, `dumpsterfire', `hopffibration', `platonicfolding' and
           `klondike'.
 	* Rewrote the VT100 emulator for 'apple2' and 'phosphor'.

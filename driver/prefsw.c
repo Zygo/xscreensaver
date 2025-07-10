@@ -1340,7 +1340,7 @@ stop_the_insanity (saver_preferences *p)
     p->fade_p = False;
   if (! p->fade_p) p->unfade_p = False;
 
-  /* DPMS settings may be zero, but otherwise, if they < 10 sec or negative,
+  /* DPMS settings may be zero, but otherwise, if they're < 10 sec or negative,
      set them to 2 minutes. */
 # define THROTTLE(FIELD) \
     if (p->FIELD != 0 && ((long) p->FIELD) < 10 * 1000) \
@@ -1360,8 +1360,9 @@ stop_the_insanity (saver_preferences *p)
       p->FIELD = p->LOWER
   THROTTLE (dpms_standby, timeout);
   THROTTLE (dpms_suspend, dpms_standby);
-  THROTTLE (dpms_off,     dpms_standby);
-  THROTTLE (dpms_off,     dpms_suspend);
+/* This requires a check for dpms_partial_p which demo-Gtk.c sets. */
+/*  THROTTLE (dpms_off,     dpms_standby); */
+/*  THROTTLE (dpms_off,     dpms_suspend); */
 #undef THROTTLE
 
   if (p->dpms_standby == 0 &&	   /* if *all* are 0, then DPMS is disabled */

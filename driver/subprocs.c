@@ -48,6 +48,11 @@
 # define _(S) (S)
 #endif
 
+#if defined(USE_GL) && !defined(HAVE_EGL)
+# include <OpenGL/gl.h>		/* For GLXContext in visual-gl.h */
+# include <GL/glx.h>
+#endif
+
 #include "xscreensaver.h"
 #include "exec.h"
 #include "yarandom.h"
@@ -55,6 +60,9 @@
 #include "atoms.h"
 #include "screenshot.h"
 
+#ifdef USE_GL
+# include "visual-gl.h"
+#endif
 
 enum job_status {
   job_running,	/* the process is still alive */
@@ -433,7 +441,7 @@ saver_sigterm_handler (int sig)
   catch_signal (sig, SIG_DFL);
 
   /* The first time a signal fires, inform Xt of that so that it will run
-     xt_signal_handler().  "XtNoticeSignal is the only Intrinsics function
+     xt_sigterm_handler().  "XtNoticeSignal is the only Intrinsics function
      that can safely be called from a signal handler". */
   if (xt_sigterm_id)
     XtNoticeSignal (xt_sigterm_id);
@@ -497,6 +505,26 @@ xt_sigterm_handler (XtPointer data, XtSignalId *id)
   kill (getpid(), sigterm_received);
   abort();
 }
+
+#ifdef HAVE_WAYLAND
+/* Called when the Wayland socket drops our connection.
+   We should also die with a SIGPIPE from the XWayland X11 socket,
+   and also a SIGTERM from xscreensaver, so it's a death race.
+ */
+static void
+gfx_wayland_exit (void *closure)
+{
+  saver_info *si = (saver_info *) closure;
+  int i;
+  si->terminating_p = True;
+  for (i = 0; i < si->nscreens; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      kill_screenhack (ssi);
+    }
+  exit (1);
+}
+#endif /* HAVE_WAYLAND */
 
 
 /* SIGCHLD handling.  Basically the same deal as SIGTERM.
@@ -683,6 +711,11 @@ init_sigchld (saver_info *si)
 
   xt_sigchld_id = XtAppAddSignal (si->app, xt_sigchld_handler, si);
   xt_sigterm_id = XtAppAddSignal (si->app, xt_sigterm_handler, si);
+
+# ifdef HAVE_WAYLAND
+  if (si->wayland_dpy)
+    wayland_dpy_atexit (si->wayland_dpy, gfx_wayland_exit, si);
+# endif /* HAVE_WAYLAND */
 }
 
 
@@ -845,7 +878,7 @@ spawn_screenhack (saver_screen_info *ssi)
   saver_preferences *p = &si->prefs;
   XFlush (si->dpy);
 
-  if (!monitor_powered_on_p (si->dpy))
+  if (!monitor_powered_on_p (si))
     {
       if (si->prefs.verbose_p)
         fprintf (stderr,
@@ -1159,6 +1192,27 @@ any_screenhacks_running_p (saver_info *si)
 }
 
 
+#ifdef USE_GL
+
+Visual *
+get_best_gl_visual (saver_info *si, Screen *screen)
+{
+  saver_preferences *p = &si->prefs;
+  Visual *v = get_gl_visual (screen);
+  if (!v)
+    fprintf (stderr, "%s: %d: no GL visual!\n", blurb(),
+             screen_number (screen));
+  else if (p->verbose_p)
+    fprintf (stderr, "%s: %d: GL visual is 0x%X%s\n",
+             blurb(), screen_number (screen),
+             (unsigned int) XVisualIDFromVisual (v),
+             (v == DefaultVisualOfScreen (screen)
+              ? " (default)" : ""));
+  return v;
+}
+
+#else /* !USE_GL */
+
 /* Fork "xscreensaver-gl-visual" and wait for it to print the IDs of
    the GL visual that should be used on this screen.
  */
@@ -1330,3 +1384,5 @@ get_best_gl_visual (saver_info *si, Screen *screen)
 
   abort();
 }
+
+#endif /* !USE_GL */

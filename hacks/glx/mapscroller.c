@@ -1,4 +1,4 @@
-/* mapscroller, Copyright © 2021-2023 Jamie Zawinski <jwz@jwz.org>
+/* mapscroller, Copyright © 2021-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -89,6 +89,7 @@ typedef struct {
 typedef struct {
   GLXContext *glx_context;
   char *url_template;
+  char *loader;
   int map_level;
   GLfloat speed;
   int duration;
@@ -102,7 +103,7 @@ typedef struct {
   Bool ocean_p;
 
   enum { FADE_OUT, RUN } mode;
-  time_t change_time;
+  time_t start_time, change_time;
   double opacity;
 
   pid_t pid;
@@ -658,7 +659,7 @@ fork_loader (ModeInfo *mi)
   int fd1[2], fd2[2];
   int ac = 0;
 
-  av[ac++] = get_string_resource (mi->dpy, "loaderProgram", "Program");
+  av[ac++] = bp->loader;
   if      (verbose_p == 1) av[ac++] = "-v";
   if      (verbose_p == 2) av[ac++] = "-vv";
   else if (verbose_p == 3) av[ac++] = "-vvv";
@@ -1097,6 +1098,7 @@ init_map (ModeInfo *mi)
 
   bp->font_data = load_texture_font (mi->dpy, "titleFont");
 
+  bp->loader = get_string_resource (mi->dpy, "loaderProgram", "Program");
   bp->url_template = url_template_arg;
   if (!bp->url_template ||
       !*bp->url_template ||
@@ -1155,7 +1157,8 @@ init_map (ModeInfo *mi)
 
   bp->mode = RUN;
   bp->opacity = 1;
-  bp->change_time = time ((time_t *) 0);
+  bp->start_time = time ((time_t *) 0);
+  bp->change_time = bp->start_time;
 
   fork_loader (mi);
   reshape_map (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
@@ -1187,6 +1190,7 @@ draw_map (ModeInfo *mi)
   map_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
+  time_t now = time ((time_t *) 0);
 
   if (!bp->glx_context)
     return;
@@ -1275,7 +1279,6 @@ draw_map (ModeInfo *mi)
       if (!strcasecmp (origin_arg, "random") ||
           !strcasecmp (origin_arg, "random-city"))
         {
-          time_t now = time ((time_t *) 0);
           if (force_change_p ||
               (bp->mode == RUN &&
                now > bp->change_time + bp->duration))
@@ -1407,23 +1410,35 @@ draw_map (ModeInfo *mi)
                            MI_WIDTH(mi), MI_HEIGHT(mi), 1, buf);
     }
 
-  if (bp->dead_p)
+  if (bp->dead_p ||
+      (bp->tile_count == 0 &&
+       now >= bp->start_time + 5))
     {
-      static char buf[1024] = "";
-      if (! *buf)
-        {
-          char *s = get_string_resource (mi->dpy, "loaderProgram", "Program");
-          sprintf (buf, "\n\n\n\n\n\n%.100s subprocess died.", s);
-          free (s);
-          if (bp->tile_count < 10)
-            strcat (buf,
-                    " Is Perl broken? Maybe try:\n\n"
-                    "sudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA");
-        }
+      char buf[1024];
+      char *s = buf;
+      *s = 0;
+      strcat (s, "\n\n\n\n\n\n");
+      s += strlen (s);
+      if (bp->dead_p)
+        sprintf (s, "%.100s subprocess died.", bp->loader);
+      else
+        sprintf (s, "%.100s subprocess produced no tiles.", bp->loader);
+      s += strlen (s);
+
+      if (! bp->dead_p)
+        strcat (s, " Network problem?");
+      s += strlen (s);
+
+      if (bp->tile_count < 10)
+        strcat (s,
+                " Is Perl broken? Maybe try:\n\n"
+                "sudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA");
+
       glColor3f (0.3, 0.3, 0.3);
       print_texture_label (mi->dpy, bp->font_data,
                            MI_WIDTH(mi), MI_HEIGHT(mi), 0, buf);
     }
+
 
   if (mi->fps_p && !bp->dead_p)
     {

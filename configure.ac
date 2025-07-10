@@ -1,18 +1,7 @@
-# configure.in --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
+# configure.ac --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
 #
 
-# Note: upgrading past 2.69_5 breaks the world, mostly the po/ shitshow.
 AC_PREREQ([2.69])
-
-# If you accidentally upgraded autoconf, re-install the 2019-08-23 version:
-#
-#    git clone --single-branch https://github.com/macports/macports-ports.git
-#    cd macports-ports/
-#    git checkout 1d802b48a7b00b6c154e971119a2a309550c79c2
-#    cd devel/autoconf
-#    sudo port install
-#    port installed autoconf
-
 AC_INIT
 AC_CONFIG_SRCDIR([driver/subprocs.c])
 AC_CONFIG_HEADERS([config.h])
@@ -2228,9 +2217,9 @@ if test "$with_wayland" = yes; then
   
   pkgs=''
   ok="yes"
-  pkg_check_version       wayland-server  1.0
-  pkg_check_version       wayland-client  1.0
-  pkg_check_version       wayland-scanner 1.0
+  pkg_check_version       wayland-server  1.8
+  pkg_check_version       wayland-client  1.8
+ #pkg_check_version       wayland-scanner 1.8
   ac_wayland_version_string="$vers"
   have_wayland="$ok"
   wayland_pkgs="$pkgs"
@@ -2247,12 +2236,18 @@ if test "$with_wayland" = yes; then
 
   WAYLAND_DATADIR=""
   WAYLAND_GEN=""
+  WAYLAND_DPY_OBJS=""
   WAYLAND_IDLE_OBJS=""
+  WAYLAND_DPMS_OBJS=""
+  WAYLAND_GTK_OBJS=""
   if test "$have_wayland" = yes; then
     WAYLAND_DATADIR=`$pkg_config --variable=prefix wayland-client`
     WAYLAND_DATADIR="$WAYLAND_DATADIR/share"
     WAYLAND_GEN='$(WAYLAND_GEN_HDRS) $(WAYLAND_GEN_SRCS)'
+    WAYLAND_DPY_OBJS='$(WAYLAND_DPY_OBJS_1)'
     WAYLAND_IDLE_OBJS='$(WAYLAND_IDLE_OBJS_1)'
+    WAYLAND_DPMS_OBJS='$(WAYLAND_DPMS_OBJS_1)'
+    WAYLAND_GTK_OBJS='$(WAYLAND_GTK_OBJS_1)'
   fi
 
   if test "$have_wayland" = yes; then
@@ -3518,6 +3513,8 @@ if test "$with_gl" = yes; then
   if test "$have_gl" = yes; then
 
     AC_DEFINE(HAVE_GL)
+    GL_CFLAGS="-DUSE_GL"
+    GFX_GL_OBJS='$(GFX_GL_OBJS_1)'
 
     # OpenGL 1.0 didn't have multiple textures.
     AC_CHECK_X_LIB($gl_lib_1, glBindTexture, [AC_DEFINE(HAVE_GLBINDTEXTURE)],
@@ -4515,6 +4512,8 @@ AC_SUBST(JPEG_LIBS)
 AC_SUBST(HACK_LIBS)
 AC_SUBST(PTY_LIBS)
 AC_SUBST(GL_LIBS)
+AC_SUBST(GL_CFLAGS)
+AC_SUBST(GFX_GL_OBJS)
 AC_SUBST(GLE_LIBS)
 AC_SUBST(XDPMS_LIBS)
 AC_SUBST(PTHREAD_LIBS)
@@ -4526,7 +4525,10 @@ AC_SUBST(WAYLAND_CFLAGS)
 AC_SUBST(WAYLAND_LIBS)
 AC_SUBST(WAYLAND_DATADIR)
 AC_SUBST(WAYLAND_GEN)
+AC_SUBST(WAYLAND_DPY_OBJS)
 AC_SUBST(WAYLAND_IDLE_OBJS)
+AC_SUBST(WAYLAND_DPMS_OBJS)
+AC_SUBST(WAYLAND_GTK_OBJS)
 AC_SUBST(PROG_SETCAP)
 AC_SUBST(SETUID_AUTH)
 AC_SUBST(SETUID_HACKS)
@@ -4601,6 +4603,10 @@ AC_CONFIG_FILES([Makefile
           driver/xscreensaver.pam
           driver/XScreenSaver.ad])
 AC_OUTPUT
+
+# Since there is no .in file to force its creation in a different build dir
+test -d driver/wayland-protocols || mkdir driver/wayland-protocols
+
 
 ###############################################################################
 #

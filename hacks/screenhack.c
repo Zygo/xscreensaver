@@ -290,7 +290,8 @@ MapNotify_event_p (Display *dpy, XEvent *event, XPointer window)
 }
 
 
-static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW, XA_NET_WM_PID;
+static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW, XA_NET_WM_PID,
+  XA_NET_WM_PING;
 
 /* Dead-trivial event handling: exits if "q" or "ESC" are typed.
    Exit if the WM_PROTOCOLS WM_DELETE_WINDOW ClientMessage is received.
@@ -327,7 +328,18 @@ screenhack_handle_event_1 (Display *dpy, XEvent *event)
             fprintf (stderr, "%s: unknown ClientMessage %s received!\n",
                      progname, s);
           }
-        else if (event->xclient.data.l[0] != XA_WM_DELETE_WINDOW)
+        else if (event->xclient.data.l[0] == XA_WM_DELETE_WINDOW)
+          {
+            return False;  /* exit */
+          }
+        else if (event->xclient.data.l[0] == XA_NET_WM_PING)
+          {
+            event->xclient.window = DefaultRootWindow (dpy);
+            if (! XSendEvent (dpy, event->xclient.window, False,
+                              PropertyChangeMask, event))
+              fprintf (stderr, "%s: WM_PONG failed\n", progname);
+          }
+        else
           {
             char *s1 = XGetAtomName(dpy, event->xclient.message_type);
             char *s2 = XGetAtomName(dpy, event->xclient.data.l[0]);
@@ -335,10 +347,6 @@ screenhack_handle_event_1 (Display *dpy, XEvent *event)
             if (!s2) s2 = "(null)";
             fprintf (stderr, "%s: unknown ClientMessage %s[%s] received!\n",
                      progname, s1, s2);
-          }
-        else
-          {
-            return False;  /* exit */
           }
       }
       break;
@@ -812,6 +820,7 @@ main (int argc, char **argv)
   XA_WM_PROTOCOLS = XInternAtom (dpy, "WM_PROTOCOLS", False);
   XA_WM_DELETE_WINDOW = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
   XA_NET_WM_PID = XInternAtom (dpy, "_NET_WM_PID", False);
+  XA_NET_WM_PING = XInternAtom (dpy, "_NET_WM_PING", False);
 
   {
     char *v = (char *) strdup(strchr(screensaver_id, ' '));

@@ -12,6 +12,10 @@
 #ifndef __XSCREENSAVER_TYPES_H__
 #define __XSCREENSAVER_TYPES_H__
 
+#ifdef HAVE_WAYLAND
+# include "wayland-dpy.h"
+#endif
+
 typedef struct saver_info saver_info;
 
 typedef struct screenhack screenhack;
@@ -123,6 +127,12 @@ struct saver_info {
   char *version;
   saver_preferences prefs;
 
+# ifdef HAVE_WAYLAND
+  wayland_dpy  *wayland_dpy;
+  wayland_idle *wayland_idle;
+  wayland_dpms *wayland_dpms;
+# endif /* HAVE_WAYLAND */
+
   int nscreens;
   int ssi_count;
   saver_screen_info *screens;
@@ -206,8 +216,9 @@ struct saver_screen_info {
 
 
 /* From dpms.c */
-extern void sync_server_dpms_settings (Display *, struct saver_preferences *);
-extern void brute_force_dpms (Display *, struct saver_preferences *, time_t);
+extern void sync_server_dpms_settings (saver_info *);
+extern void sync_server_dpms_settings_1 (Display *, struct saver_preferences *);
+extern void brute_force_dpms (saver_info *, time_t);
 
 
 const char *init_file_name (void);

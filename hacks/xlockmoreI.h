@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2021 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1997-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -44,13 +44,6 @@ typedef struct ModeInfo ModeInfo;
 #endif /* !HAVE_EGL */
 
 #if defined(HAVE_EGL) && defined(USE_GL)
-  typedef struct egl_data {
-    EGLDisplay egl_display;
-    EGLSurface egl_surface;
-    EGLContext egl_context;  /* Unused */
-    EGLConfig  egl_config;   /* Unused */
-  } egl_data;
-
   extern Bool glXMakeCurrent (Display *, GLXDrawable, GLXContext);
   extern void glXSwapBuffers (Display *, GLXDrawable);
 #endif /* HAVE_EGL && USE_GL */

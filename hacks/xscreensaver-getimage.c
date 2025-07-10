@@ -68,6 +68,66 @@
       or KDE.  They invented their own, incompatible APIs, which always
       play a camera noise and flash the screen white, and might also
       pop up a confirmation dialog.
+
+      ---------------------------------------------------------------------
+
+      Further notes on the Wayland screen-grabbing situation...
+      Which is absolute bugfuck insanity, I might add...
+
+      Rather than exec'ing "grim", which may not be installed, we could
+      instead connect to the Wayland server directly and do the thing that
+      grim does, but that is an *enormous* amount of code, requiring four
+      or five nonstandard "staging" protocols:
+
+        - "ext-image-capture-source-v1" and its required companion
+          "ext-image-copy-capture-v1" (and why they aren't the same thing,
+          I could not tell you);
+        - And "ext-foreign-toplevel-list-v1" which they also depend on;
+        - And "zxdg-output-manager-v1", because without that, a "wl_output"
+          will tell you its size but not its position. It's
+          Heisenbergisterical!
+
+      Once you've done that, you have to figure out what rectangle you want
+      from the source outputs. Easy right? Except that they might be rotated,
+      mirrored or scaled arbitrarily (e.g. "retina"), and you have to
+      recapitulate that in the grabbed image. Look at the madness in grim's
+      render.c.
+
+      So pretty much the only part you can leave out is the "write a PNG
+      file" bit. The rest of grim's ~1,800 lines of code is insanely
+      complicated and sadly necessary.
+
+      It would be easier for me to just include grim with XScreenSaver.
+  
+
+      Grim does not support GNOME or KDE, which provide four (4) different
+      interfaces for us to also not support:
+
+        - GNOME has a DBus endpoint, "org.gnome.Shell.Screenshot", but it's
+          not clear to me whether it is possible to use it without an
+          interactive dialog popping up, a shutter sound, and a screen flash:
+          https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/data/dbus-interfaces/org.gnome.Shell.Screenshot.xml
+
+        - KDE also has a DBus endpoint, "org.kde.KWin.ScreenShot2", which
+          says: "The application that requests the screenshot must have the
+          org.kde.KWin.ScreenShot2 interface listed in the
+          X-KDE-DBUS-Restricted-Interfaces desktop file entry." This may also
+          do the mandatory "ask for permission, shutter sound, flash" thing
+          that GNOME does, I can't tell:
+          https://invent.kde.org/plasma/kwin/-/blob/master/src/plugins/screenshot/org.kde.KWin.ScreenShot2.xml
+
+        - Supposedly KDE and GNOME also support the DBus endpoint
+          "org.freedesktop.portal.Screenshot", but I imagine that's just a
+          wrapper around their native versions with all the same downsides:
+          https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html
+
+        - Back in the Wayland world, there is "kde-zkde-screencast-unstable"
+          https://wayland.app/protocols/kde-zkde-screencast-unstable-v1
+          Does this one require the user to click OK first? Probably, but who
+          can tell?
+
+      More discussion and links in this thread:
+      https://www.jwz.org/blog/2025/06/wayland-screenshots/#comment-260369
  */
 
 #include "utils.h"
@@ -96,9 +156,7 @@
 #include "xmu.h"
 #include "vroot.h"
 #include "../driver/prefs.h"
-
-#include "../driver/blurb.c"	/* Eh, this is awful but so what */
-
+#include "../driver/blurb.c"
 
 #ifndef _XSCREENSAVER_VROOT_H_
 # error Error!  You have an old version of vroot.h!  Check -I args.
@@ -1122,11 +1180,10 @@ get_filename_1 (Screen *screen, Window window,
         sprintf (rect, "%d,%d,%d,%d", xgwa.x, xgwa.y, xgwa.width, xgwa.height);
 
         av[ac++] = GETIMAGE_SCREEN_PROGRAM;	/* "screencapture" */
-        av[ac++] = "-x";   /* no sound */
-        av[ac++] = "-C";   /* capture mouse */
-        av[ac++] = "-R";   /* rect */
+        av[ac++] = "-x";			/* no sound */
+        av[ac++] = "-R";			/* rect */
         av[ac++] = rect;
-        av[ac++] = "-t";   /* file type */
+        av[ac++] = "-t";			/* file type */
         av[ac++] = "png";
         av[ac++] = outfile;
 
@@ -1135,10 +1192,9 @@ get_filename_1 (Screen *screen, Window window,
         sprintf (rect, "%d,%d %dx%d", xgwa.x, xgwa.y, xgwa.width, xgwa.height);
 
         av[ac++] = GETIMAGE_SCREEN_PROGRAM;	/* "grim" */
-        av[ac++] = "-c";   /* capture mouse */
-        av[ac++] = "-g";   /* geometry */
+        av[ac++] = "-g";			/* geometry */
         av[ac++] = rect;
-        av[ac++] = "-t";   /* file type */
+        av[ac++] = "-t";			/* file type */
         av[ac++] = "png";
         av[ac++] = outfile;
 #  else

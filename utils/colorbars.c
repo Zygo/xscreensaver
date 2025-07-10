@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2018 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2001-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,6 +18,8 @@
 #include "colorbars.h"
 #include "../hacks/ximage-loader.h"
 
+#define LGBTQIA
+#ifndef LGBTQIA /* SMPTE ECR-1-1978 */
 static const char * const colors[7][18] = {
   { "#CCCCCC", "#FFFF00", "#00FFFF", "#00FF00",		/* tall bars */
     "#FF00FF", "#FF0000", "#0000FF", "#000000",
@@ -45,10 +47,56 @@ static const char * const colors[7][18] = {
     "#FFFFFF", "#FFFFFF", "#FFFFFF",
     "#0000AD", "#0000AD", "#0000AD",
     "#131313", "#131313", "#131313",
-    "#000000", "#000000", "#262626",
+    "#000000", "#131313", "#262626",			/* ramp */
     "#000000", "#000000", "#000000"
   }
 };
+
+#else /* LGBTQIA pride flag colorbars designed by
+         Cable Contributes to Life <https://bsky.app/profile/cctl.me> --
+         https://web.archive.org/web/20250701065803/https://bsky.app/profile/cctl.me/post/3lsthzde3h22g
+         "The first set of columns use the colors of the gay pride flag,
+         with the addition of the original SMPTE color on the final column.
+         The second set of columns contains two pride flags: the pansexual
+         flag horizontally, and the asexual flag flipped and horizontal.
+         The final set of columns contains the three colors of the
+         transgender flag and the two POC-inclusive colors, followed by
+         the original bar gradient from the SMPTE ECR-1-1978 pattern."
+       */
+
+static const char * const colors[7][18] = {
+  { "#E40303", "#FF8C00", "#FFED00", "#008026",		/* tall bars, pride */
+    "#004CFF", "#732982", "#0000FF",
+    0
+  }, {
+    "#FF218C", "#FFD800", "#21B1FF", "#800080",		/* short bars, pan a */
+    "#FFFFFF", "#A3A3A3", "#000000",
+    0
+  }, {
+    "#000000", 0					/* blank */
+  }, {
+    "#FFFFFF", "#EEEEEE", "#DDDDDD", "#CCCCCC",		/* gray ramp */
+    "#BBBBBB", "#AAAAAA", "#999999", "#888888",
+    "#777777", "#666666", "#555555", "#444444",
+    "#333333", "#222222", "#111111", "#000000"
+  }, {
+    "#000000", "#111111", "#222222", "#333333",		/* gray rev ramp */
+    "#444444", "#555555", "#666666", "#777777",
+    "#888888", "#999999", "#AAAAAA", "#BBBBBB",
+    "#CCCCCC", "#DDDDDD", "#EEEEEE", "#FFFFFF"
+  }, {
+    "#000000", 0					/* blank */
+  }, {
+    "#5BCEFA", "#5BCEFA", "#5BCEFA",			/* trans poc */
+    "#F5A9B8", "#F5A9B8", "#F5A9B8",
+    "#FFFFFF", "#FFFFFF", "#FFFFFF",
+    "#613704", "#613704", "#613704",
+    "#000000", "#131313", "#262626",			/* ramp */
+    "#000000", "#000000", "#000000"
+  }
+};
+#endif /* LGBTQIA */
+
 
 static const int heights[7] = { 63, 10, 1, 5, 5, 1, 15 };   /* percentages */
 

@@ -51,6 +51,11 @@
 # include <libintl.h>
 #endif
 
+#ifdef HAVE_WAYLAND
+# include "wayland-dpy.h"
+# include "wayland-dpms.h"
+#endif
+
 #include "xscreensaver.h"
 #include "version.h"
 #include "atoms.h"
@@ -103,7 +108,7 @@ maybe_reload_init_file (saver_info *si)
       /* If the DPMS settings in the init file have changed, change the
          settings on the server to match.  This also would have happened at
          the watchdog timer. */
-      sync_server_dpms_settings (si->dpy, p);
+      sync_server_dpms_settings (si);
     }
 }
 
@@ -193,14 +198,13 @@ connect_to_server (saver_info *si)
     }
   else
     {
-      if (p->verbose_p ||
-          !(getenv ("WAYLAND_DISPLAY") || getenv ("WAYLAND_SOCKET")))
+      if (p->verbose_p)
         fprintf (stderr, "%s: xscreensaver does not seem to be running!\n",
                  blurb());
 
-      /* Under normal circumstances, that window should have been created
-         by the "xscreensaver" process.  But if for some reason someone
-         has run "xscreensaver-gfx" directly (Wayland?) we need this window
+      /* Under normal circumstances, that window should have been created by
+         the "xscreensaver" process.  But if for some reason someone has run
+         "xscreensaver-gfx" directly (Wayland swayidle?) we need this window
          to exist for ClientMessages to be receivable.  So let's make one.
        */
       XClassHint class_hints;
@@ -222,14 +226,16 @@ connect_to_server (saver_info *si)
       daemon_window = XCreateWindow (si->dpy, RootWindow (si->dpy, 0),
                                      0, 0, 1, 1, 0,
                                      DefaultDepth (si->dpy, 0), InputOutput,
-                                     DefaultVisual (si->dpy, 0), attrmask, &attrs);
+                                     DefaultVisual (si->dpy, 0),
+                                     attrmask, &attrs);
       XStoreName (si->dpy, daemon_window, "XScreenSaver GFX");
       XSetClassHint (si->dpy, daemon_window, &class_hints);
       XChangeProperty (si->dpy, daemon_window, XA_WM_COMMAND, XA_STRING,
                        8, PropModeReplace, (unsigned char *) progname,
                        strlen (progname));
-      XChangeProperty (si->dpy, daemon_window, XA_SCREENSAVER_VERSION, XA_STRING,
-                       8, PropModeReplace, (unsigned char *) version_number,
+      XChangeProperty (si->dpy, daemon_window, XA_SCREENSAVER_VERSION,
+                       XA_STRING, 8, PropModeReplace,
+                       (unsigned char *) version_number,
                        strlen (version_number));
       XChangeProperty (si->dpy, daemon_window, XA_SCREENSAVER_ID, XA_STRING,
                        8, PropModeReplace, (unsigned char *) id, strlen (id));
@@ -451,6 +457,16 @@ debug_multiscreen_timer (XtPointer closure, XtIntervalId *id)
 #endif /* DEBUG_MULTISCREEN */
 
 
+#ifdef HAVE_WAYLAND
+static void
+wayland_dpy_cb (XtPointer closure, int *source, XtInputId *id)
+{
+  saver_info *si = (saver_info *) closure;
+  wayland_dpy_process_events (si->wayland_dpy, False);
+}
+#endif /* HAVE_WAYLAND */
+
+
 static void
 main_loop (saver_info *si, Bool init_p)
 {
@@ -458,6 +474,19 @@ main_loop (saver_info *si, Bool init_p)
 
   if (init_p && p->verbose_p)
     print_available_extensions (si);
+
+# ifdef HAVE_WAYLAND
+  si->wayland_dpy = wayland_dpy_connect();
+  if (si->wayland_dpy)
+    {
+      /* Process input on the Wayland socket. */
+      int fd = wayland_dpy_get_fd (si->wayland_dpy);
+      XtAppAddInput (si->app, fd,
+                     (XtPointer) (XtInputReadMask | XtInputExceptMask),
+                     wayland_dpy_cb, (XtPointer) si);
+      si->wayland_dpms = wayland_dpms_init (si->wayland_dpy);
+    }
+# endif /* HAVE_WAYLAND */
 
   initialize_randr (si);
   update_screen_layout (si);
