@@ -1,0 +1,26 @@
+#%PAM-1.0
+
+# Debian 12:
+# auth       requisite	pam_nologin.so
+# auth       optional	pam_group.so
+# @include common-auth
+# @include common-account
+# @include common-session
+# @include common-password
+
+# Ubuntu 18:
+# @include common-auth
+# @include common-account
+
+# AL2023:
+# auth       substack	system-auth
+# auth       include	postlogin
+
+# Fedora Core 5:
+# auth       include	system-auth
+
+# Distant past:
+# auth       required	/lib/security/pam_pwdb.so shadow nullok
+
+# Account validation
+@COMMENT_PAM_CHECK_ACCOUNT@account include system-auth

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="winduprobot" _label="Windup Robot" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=RmpsDx9MuUM"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="--speed %"
+            _label="Robot speed" _low-label="Slow" _high-label="Fast"
+            low="0.01" high="8.0" default="1.0"
+            convert="ratio"/>
+
+    <number id="count" type="slider" arg="--count %"
+            _label="Number of robots" _low-label="One" _high-label="Lots"
+            low="1" high="100" default="25"/>
+
+    <number id="size" type="slider" arg="--size %"
+            _label="Robot size" _low-label="Tiny" _high-label="Huge"
+            low="0.1" high="10.0" default="1.0"
+            convert="ratio"/>
+
+    <number id="opacity" type="slider" arg="--opacity %"
+            _label="Robot skin transparency" _low-label="Invisible" _high-label="Solid"
+            low="0.0" high="1.0" default="1.0"/>
+
+   </vgroup>
+
+   <vgroup>
+    <number id="talk" type="slider" arg="--talk %"
+            _label="Word bubbles" _low-label="Never" _high-label="Often"
+            low="0.0" high="1.0" default="0.2"/>
+
+    <xscreensaver-text />
+
+    <hgroup>
+      <boolean id="texture"  _label="Chrome"          arg-unset="--no-texture"/>
+      <boolean id="fade"     _label="Fade opacity"    arg-unset="--no-fade"/>
+      <boolean id="showfps"  _label="Show frame rate" arg-set="--fps"/>
+    </hgroup>
+
+   </vgroup>
+
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A swarm of wind-up toy robots wander around the table-top, bumping
+into each other. 
+
+Each robot contains a mechanically accurate gear system inside, which you can
+see when the robot's shell occasionally fades to transparency. Also, sometimes
+a cartoony word bubble pops up above a robot, full of random text.
+
+Written by Jamie Zawinski; 2014.
+  </_description>
+</screensaver>
