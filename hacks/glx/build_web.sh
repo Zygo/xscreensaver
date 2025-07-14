@@ -5,6 +5,18 @@
 
 set -e
 
+# Get the repository root directory (two levels up from this script)
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+# Source emsdk environment (adjust path as needed)
+if [ -f "$HOME/src/emsdk/emsdk_env.sh" ]; then
+    source "$HOME/src/emsdk/emsdk_env.sh"
+elif [ -f "$REPO_ROOT/emsdk/emsdk_env.sh" ]; then
+    source "$REPO_ROOT/emsdk/emsdk_env.sh"
+else
+    echo "Warning: emsdk_env.sh not found. Make sure emscripten is in your PATH."
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -12,7 +24,17 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+UTILS_DIR="$REPO_ROOT/utils"
+GLX_DIR="$REPO_ROOT/hacks/glx"
+HACKS_DIR="$REPO_ROOT/hacks"
+JWXYZ_DIR="$REPO_ROOT/jwxyz"
+
+
 echo -e "${BLUE}🚀 Building HexTrail for Web with Emscripten${NC}"
+echo -e "${YELLOW}📁 Repository root: $REPO_ROOT${NC}"
+echo -e "${YELLOW}📁 Utils directory: $UTILS_DIR${NC}"
+echo -e "${YELLOW}📁 GLX directory: $GLX_DIR${NC}"
+echo -e "${YELLOW}📁 JWXYZ directory: $JWXYZ_DIR${NC}"
 
 # Check if emscripten is available
 if ! command -v emcc &> /dev/null; then
@@ -22,8 +44,8 @@ if ! command -v emcc &> /dev/null; then
 fi
 
 # Check if we're in the right directory
-if [ ! -f "hextrail.c" ]; then
-    echo -e "${RED}❌ hextrail.c not found. Please run this script from the hacks/glx directory.${NC}"
+if [ ! -f "hextrail_web_main.c" ]; then
+    echo -e "${RED}❌ hextrail_web_main.c not found. Please run this script from the hacks/glx directory.${NC}"
     exit 1
 fi
 
@@ -33,40 +55,38 @@ cd build_web
 
 echo -e "${YELLOW}📦 Compiling HexTrail...${NC}"
 
-# Compile with emscripten
+# Compile with emscripten (no SDL)
 emcc \
-    -DUSE_SDL \
     -DSTANDALONE \
     -DUSE_GL \
     -DHAVE_CONFIG_H \
-    -s USE_SDL=3 \
+    -DWEB_BUILD \
     -s USE_WEBGL2=1 \
     -s FULL_ES3=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] \
-    -s EXPORTED_FUNCTIONS=['_main','_init_hextrail','_draw_hextrail','_reshape_hextrail','_free_hextrail'] \
+    -s EXPORTED_FUNCTIONS=['_main','_init_hextrail','_draw_hextrail','_reshape_hextrail','_free_hextrail','_set_speed','_set_thickness','_set_spin','_set_wander','_handle_mouse_drag','_handle_mouse_wheel'] \
     -s MIN_WEBGL_VERSION=2 \
     -O3 \
     -I. \
-    -I../../utils \
-    -I../../jwxyz \
-    -I.. \
-    -I../.. \
-    ../hextrail_web.c \
-    ../../utils/colors.c \
-    ../../utils/yarandom.c \
-    ../../utils/usleep.c \
-    ../../utils/visual-gl.c \
-    ../screenhack.c \
-    ../xlockmore.c \
-    ../fps.c \
-    ../rotator.c \
-    ../gltrackball.c \
-    ../normals.c \
+    -I$UTILS_DIR \
+    -I$GLX_DIR \
+    -I$JWXYZ_DIR \
+    $GLX_DIR/hextrail_web_main.c \
+    $UTILS_DIR/colors.c \
+    $UTILS_DIR/yarandom.c \
+    $UTILS_DIR/usleep.c \
+    $UTILS_DIR/visual-gl.c \
+    $HACKS_DIR/screenhack.c \
+    $HACKS_DIR/xlockmore.c \
+    $HACKS_DIR/fps.c \
+    $GLX_DIR/rotator.c \
+    $GLX_DIR/gltrackball.c \
+    $GLX_DIR/normals.c \
     -o hextrail_web.html \
-    --preload-file ../web/index.html@index.html \
-    --preload-file ../web/style.css@style.css \
-    --preload-file ../web/script.js@script.js
+    --preload-file $GLX_DIR/web/index.html@index.html \
+    --preload-file $GLX_DIR/web/style.css@style.css \
+    --preload-file $GLX_DIR/web/script.js@script.js
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Build successful!${NC}"
@@ -77,10 +97,10 @@ if [ $? -eq 0 ]; then
     
     echo -e "${YELLOW}🌐 To run locally:${NC}"
     echo -e "   python3 -m http.server 8000"
-    echo -e "   Then open http://localhost:8000/hextrail_web.html"
+    echo -e "   Then open http://localhost:8000/web/hextrail_web.html"
     
     # Copy files to web directory for easy access
-    cp hextrail_web.* ../web/
+    cp hextrail_web.* $GLX_DIR/web/
     echo -e "${GREEN}📋 Files copied to web/ directory${NC}"
     
 else
