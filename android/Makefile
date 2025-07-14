@@ -37,7 +37,7 @@ distdepend:: local.properties
 # E.g., if you are running an x86 emulator, there's no point in compiling
 # for a dozen other platforms.  Release builds override this to "all".
 #
-export APP_ABI = all
+export APP_ABI = arm64-v8a
 
 
 # TODO:
