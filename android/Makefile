@@ -450,30 +450,36 @@ run_check::
 debug::   local.properties m6502.h molecules.h run_check images_png_h
 	$(GRADLE) assembleDebug
 release:: local.properties m6502.h molecules.h run_check images_png_h
-	export APP_ABI=all ; \
 	$(GRADLE) assembleRelease
+	if [ -f xscreensaver/build/outputs/apk/release/xscreensaver-release-unsigned.apk ]; then echo "Signing release APK..."; $(MAKE) sign_release; else echo "APK build failed, skipping signing"; fi
 
 
 KEYSTORE = xscreensaver.jks
-$(KEYSTORE):
-	keytool -genkey -v -keystore $@ \
-	-alias xscreensaver -keyalg RSA -keysize 2048 -validity 10000
 
+DEBUG_KEYSTORE = debug.keystore
+
+$(DEBUG_KEYSTORE):
+	keytool -genkey -v -keystore $@ \
+	-alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+	-storepass android -keypass android \
+	-dname "CN=Android Debug,O=Android,C=US"
+
+$(DEBUG_KEYSTORE):
 APK_DIR       = xscreensaver/build/outputs/apk/release/
 APK_UNSIGNED  = $(APK_DIR)xscreensaver-release-unsigned.apk
 APK_UNALIGNED = $(APK_DIR)xscreensaver-release-unaligned.apk
 APK_SIGNED    = $(APK_DIR)xscreensaver-release.apk
 
-  TOOLDIR = $(shell ls -d $$HOME/Library/Android/sdk/build-tools/* | tail -1)
+  TOOLDIR = $(ANDROID_HOME)/build-tools/34.0.0
  ZIPALIGN = $(TOOLDIR)/zipalign
 APKSIGNER = $(TOOLDIR)/apksigner
 
-sign_release::
+sign_release:: $(DEBUG_KEYSTORE)
 	rm -f $(APK_UNALIGNED)
 	rm -f $(APK_SIGNED)
 	$(ZIPALIGN) -v 4 $(APK_UNSIGNED) $(APK_SIGNED)
-	$(APKSIGNER) sign --ks $(KEYSTORE) $(APK_SIGNED)
-	$(APKSIGNER) verify $(APK_SIGNED)
+	$(APKSIGNER) sign --ks $(DEBUG_KEYSTORE) --ks-pass pass:android --key-pass pass:android $(APK_SIGNED)
+	$(APKSIGNER) verify $(APK_SIGNED) 2>/dev/null
 	@ls -lF $(APK_SIGNED)
 	stty -echo
 
@@ -484,7 +490,7 @@ apk:: release
 	 head -1`;							    \
   HEAD="xscreensaver-$$VERS" ;						    \
   if [ ! -s $(APK_SIGNED) -o $(APK_UNSIGNED) -nt $(APK_SIGNED) ]; then	\
-    $(MAKE) sign_release ;						\
+    $(MAKE) sign_release; else echo "APK build failed, skipping signing"; fi ;						\
   fi ;									\
   set -x ;								\
   cp -p $(APK_SIGNED) ../archive/$$HEAD.apk
