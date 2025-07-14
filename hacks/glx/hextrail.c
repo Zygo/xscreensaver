@@ -24,6 +24,8 @@
 #include "gltrackball.h"
 #include <ctype.h>
 
+static void scale_corners(ModeInfo *mi);
+
 #ifdef USE_GL /* whole file */
 
 
@@ -66,7 +68,6 @@ typedef struct {
 
   int ncolors;
   XColor *colors;
-
 } hextrail_configuration;
 
 static hextrail_configuration *bps = NULL;
@@ -182,16 +183,14 @@ empty_hexagon_p (hexagon *h)
 }
 
 static int
-add_arms (ModeInfo *mi, hexagon *h0, Bool out_p)
+add_arms (ModeInfo *mi, hexagon *h0)
 {
   hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
   int i;
   int added = 0;
-  int target = 1 + (random() % 4);	/* Aim for 1-5 arms */
+  int target = 1 + (random() % 4);	/* Aim for 1-4 arms */
 
-  int idx[6];				/* Traverse in random order */
-  for (i = 0; i < 6; i++)
-    idx[i] = i;
+  int idx[6] = {0, 1, 2, 3, 4, 5};	/* Traverse in random order */
   for (i = 0; i < 6; i++)
     {
       int j = random() % 6;
@@ -200,8 +199,6 @@ add_arms (ModeInfo *mi, hexagon *h0, Bool out_p)
       idx[i] = swap;
     }
 
-  if (out_p) target--;
-
   for (i = 0; i < 6; i++)
     {
       int j = idx[i];
@@ -209,28 +206,27 @@ add_arms (ModeInfo *mi, hexagon *h0, Bool out_p)
       arm *a0 = &h0->arms[j];
       arm *a1;
       if (!h1) continue;			/* No neighboring cell */
-      if (! empty_hexagon_p (h1)) continue;	/* Occupado */
-      if (a0->state != EMPTY) continue;		/* Arm already exists */
+      if (h1->border_state != EMPTY) continue;	/* Occupado */
+      if (a0->state != EMPTY) continue;		/* Incoming arm */
 
       a1 = &h1->arms[(j + 3) % 6];		/* Opposite arm */
 
-      if (a1->state != EMPTY) abort();
-      a0->state = (out_p ? OUT : IN);
-      a1->state = WAIT;
+      if (a1->state != EMPTY) {
+        printf("DEBUG: a1->state is %d, expected EMPTY\n", a1->state);
+        abort();
+      }
+      a0->state = OUT;
       a0->ratio = 0;
       a1->ratio = 0;
       a0->speed = 0.05 * speed * (0.8 + frand(1.0));
       a1->speed = a0->speed;
 
-      if (h1->border_state == EMPTY)
-        {
-          h1->border_state = IN;
+      h1->border_state = IN;
 
-          /* Mostly keep the same color */
-          h1->ccolor = h0->ccolor;
-          if (! (random() % 5))
-            h1->ccolor = (h0->ccolor + 1) % bp->ncolors;
-        }
+      /* Mostly keep the same color */
+      h1->ccolor = h0->ccolor;
+      if (! (random() % 5))
+        h1->ccolor = (h0->ccolor + 1) % bp->ncolors;
 
       bp->live_count++;
       added++;
@@ -257,40 +253,63 @@ tick_hexagons (ModeInfo *mi)
           arm *a0 = &h0->arms[j];
           switch (a0->state) {
           case OUT:
-            if (a0->speed <= 0) abort();
-            a0->ratio += a0->speed;
+            if (a0->speed <= 0) {
+              printf("DEBUG: OUT arm speed is %f, expected > 0\n", a0->speed);
+              abort();
+            }
+            a0->ratio += a0->speed * speed;
             if (a0->ratio > 1)
               {
                 /* Just finished growing from center to edge.
                    Pass the baton to this waiting neighbor. */
                 hexagon *h1 = h0->neighbors[j];
                 arm *a1 = &h1->arms[(j + 3) % 6];
-                if (a1->state != WAIT) abort();
                 a0->state = DONE;
                 a0->ratio = 1;
                 a1->state = IN;
                 a1->ratio = 0;
                 a1->speed = a0->speed;
                 /* bp->live_count unchanged */
+              } else if (a0->ratio <= 0) {
+                a0->state = EMPTY;
+                a0->ratio = 0;
+                bp->live_count--;
+                if (bp->live_count < 0) abort();
               }
             break;
           case IN:
-            if (a0->speed <= 0) abort();
-            a0->ratio += a0->speed;
+            if (a0->speed <= 0) {
+              printf("DEBUG: IN arm speed is %f, expected > 0\n", a0->speed);
+              abort();
+            }
+            a0->ratio += a0->speed * speed;
             if (a0->ratio > 1)
               {
                 /* Just finished growing from edge to center.
                    Look for any available exits. */
-                a0->state = DONE;
-                a0->ratio = 1;
-                bp->live_count--;
-                if (bp->live_count < 0) abort();
-                add_arms (mi, h0, True);
+                if (add_arms (mi, h0)) {
+                  bp->live_count--;
+                  if (bp->live_count < 0) abort();
+                  a0->state = DONE;
+                  a0->ratio = 1;
+                } else { // nub grow
+                  a0->state = WAIT;
+                  a0->ratio = ((a0->ratio - 1) * 5) + 1; a0->speed *= 5;
+                }
               }
             break;
-          case EMPTY: case WAIT: case DONE:
+          case WAIT:
+            a0->ratio += a0->speed * speed * (2 - a0->ratio);
+            if (a0->ratio >= 1.999) {
+              a0->state = DONE;
+              a0->ratio = 1;
+              bp->live_count--;
+              if (bp->live_count < 0) abort();
+            }
+          case EMPTY: case DONE:
             break;
           default:
+            printf("DEBUG: Invalid arm state: %d\n", a0->state);
             abort(); break;
           }
         }
@@ -309,19 +328,17 @@ tick_hexagons (ModeInfo *mi)
         if (h0->border_ratio <= 0)
           {
             h0->border_ratio = 0;
-            h0->border_state = EMPTY;
+            h0->border_state = DONE;
           }
       case WAIT:
         if (! (random() % 50))
           h0->border_state = OUT;
         break;
       case EMPTY:
-/*
-        if (! (random() % 3000))
-          h0->border_state = IN;
- */
+      case DONE:
         break;
       default:
+        printf("DEBUG: Invalid border_state: %d\n", h0->border_state);
         abort();
         break;
       }
@@ -340,6 +357,7 @@ tick_hexagons (ModeInfo *mi)
             y = bp->grid_h / 2;
             bp->state = DRAW;
             bp->fade_ratio = 1;
+            scale_corners(mi);
           }
         else
           {
@@ -348,7 +366,7 @@ tick_hexagons (ModeInfo *mi)
           }
         h0 = &bp->hexagons[y * bp->grid_w + x];
         if (empty_hexagon_p (h0) &&
-            add_arms (mi, h0, True)) 
+            add_arms (mi, h0)) 
           break;
       }
 
@@ -367,6 +385,7 @@ tick_hexagons (ModeInfo *mi)
   else if (bp->state == FADE)
     {
       bp->fade_ratio -= 0.01 * speed;
+      scale_corners(mi);
       if (bp->fade_ratio <= 0)
         {
           make_plane (mi);
@@ -376,6 +395,39 @@ tick_hexagons (ModeInfo *mi)
     }
 }
 
+# define H 0.8660254037844386   /* sqrt(3)/2 */
+
+static const XYZ corners[] = {{  0, -1,   0 },       /*      0      */
+                              {  H, -0.5, 0 },       /*  5       1  */
+                              {  H,  0.5, 0 },       /*             */
+                              {  0,  1,   0 },       /*  4       2  */
+                              { -H,  0.5, 0 },       /*      3      */
+                              { -H, -0.5, 0 }};
+
+static XYZ scaled_corners[6][4];
+
+static void scale_corners(ModeInfo *mi) {
+  hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
+  GLfloat size = sqrt(3) / 3 / MI_COUNT(mi);
+  GLfloat margin = thickness * 0.4;
+  GLfloat size1 = size * (1 - margin * 2);
+  GLfloat size2 = size * (1 - margin * 3);
+  GLfloat thick2 = thickness * bp->fade_ratio;
+  GLfloat size3 = size * thick2 * 0.8;
+  GLfloat size4 = size3 * 2; // when total_arms == 1
+  
+  int i;
+  for (i = 0; i < 6; i++) {
+    scaled_corners[i][0].x = corners[i].x * size1;
+    scaled_corners[i][0].y = corners[i].y * size1;
+    scaled_corners[i][1].x = corners[i].x * size2;
+    scaled_corners[i][1].y = corners[i].y * size2;
+    scaled_corners[i][2].x = corners[i].x * size3;
+    scaled_corners[i][2].y = corners[i].y * size3;
+    scaled_corners[i][3].x = corners[i].x * size4;
+    scaled_corners[i][3].y = corners[i].y * size4;
+  }
+}
 
 static void
 draw_hexagons (ModeInfo *mi)
@@ -384,17 +436,10 @@ draw_hexagons (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   GLfloat length = sqrt(3) / 3;
   GLfloat size = length / MI_COUNT(mi);
+  GLfloat margin = thickness * 0.4;
+  GLfloat size2 = size * (1 - margin * 3);
   GLfloat thick2 = thickness * bp->fade_ratio;
   int i;
-
-# undef H
-# define H 0.8660254037844386   /* sqrt(3)/2 */
-  const XYZ corners[] = {{  0, -1,   0 },       /*      0      */
-                         {  H, -0.5, 0 },       /*  5       1  */
-                         {  H,  0.5, 0 },       /*             */
-                         {  0,  1,   0 },       /*  4       2  */
-                         { -H,  0.5, 0 },       /*      3      */
-                         { -H, -0.5, 0 }};
 
   glFrontFace (GL_CCW);
   glBegin (wire ? GL_LINES : GL_TRIANGLES);
@@ -405,13 +450,17 @@ draw_hexagons (ModeInfo *mi)
       hexagon *h = &bp->hexagons[i];
       int total_arms = 0;
       GLfloat color[4];
+      GLfloat nub_ratio = 0;
       int j;
 
       for (j = 0; j < 6; j++)
         {
           arm *a = &h->arms[j];
-          if (a->state == OUT || a->state == DONE)
+          if (a->state == OUT || a->state == DONE || a->state == WAIT) {
             total_arms++;
+            if (a->state == WAIT)
+              nub_ratio = a->ratio;
+          }
         }
       
 
@@ -426,13 +475,10 @@ draw_hexagons (ModeInfo *mi)
       for (j = 0; j < 6; j++)
         {
           arm *a = &h->arms[j];
-          GLfloat margin = thickness * 0.4;
-          GLfloat size1 = size * (1 - margin * 2);
-          GLfloat size2 = size * (1 - margin * 3);
           int k = (j + 1) % 6;
           XYZ p[6];
 
-          if (h->border_state != EMPTY)
+          if (h->border_state != EMPTY && h->border_state != DONE)
             {
               GLfloat color1[4];
               memcpy (color1, color, sizeof(color1));
@@ -444,20 +490,20 @@ draw_hexagons (ModeInfo *mi)
               glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color1);
 
               /* Outer edge of hexagon border */
-              p[0].x = h->pos.x + corners[j].x * size1;
-              p[0].y = h->pos.y + corners[j].y * size1;
+              p[0].x = h->pos.x + scaled_corners[j][0].x;
+              p[0].y = h->pos.y + scaled_corners[j][0].y;
               p[0].z = h->pos.z;
 
-              p[1].x = h->pos.x + corners[k].x * size1;
-              p[1].y = h->pos.y + corners[k].y * size1;
+              p[1].x = h->pos.x + scaled_corners[k][0].x;
+              p[1].y = h->pos.y + scaled_corners[k][0].y;
               p[1].z = h->pos.z;
 
               /* Inner edge of hexagon border */
-              p[2].x = h->pos.x + corners[k].x * size2;
-              p[2].y = h->pos.y + corners[k].y * size2;
+              p[2].x = h->pos.x + scaled_corners[k][1].x;
+              p[2].y = h->pos.y + scaled_corners[k][1].y;
               p[2].z = h->pos.z;
-              p[3].x = h->pos.x + corners[j].x * size2;
-              p[3].y = h->pos.y + corners[j].y * size2;
+              p[3].x = h->pos.x + scaled_corners[j][1].x;
+              p[3].y = h->pos.y + scaled_corners[j][1].y;
               p[3].z = h->pos.z;
 
               glVertex3f (p[0].x, p[0].y, p[0].z);
@@ -475,13 +521,13 @@ draw_hexagons (ModeInfo *mi)
 
           /* Line from center to edge, or edge to center.
            */
-          if (a->state == IN || a->state == OUT || a->state == DONE)
+          if (a->state == IN || a->state == OUT || a->state == DONE || a->state == WAIT)
             {
               GLfloat x   = (corners[j].x + corners[k].x) / 2;
               GLfloat y   = (corners[j].y + corners[k].y) / 2;
               GLfloat xoff = corners[k].x - corners[j].x;
               GLfloat yoff = corners[k].y - corners[j].y;
-              GLfloat line_length = h->arms[j].ratio;
+              GLfloat line_length = (a->state == WAIT) ? 1 : a->ratio;
               GLfloat start, end;
               GLfloat ncolor[4];
               GLfloat color1[4];
@@ -551,22 +597,24 @@ draw_hexagons (ModeInfo *mi)
 
           /* Hexagon (one triangle of) in center to hide line miter/bevels.
            */
-          if (total_arms)
+          if (total_arms && a->state != DONE && a->state != OUT)
             {
-              GLfloat size3 = size * thick2 * 0.8;
-              if (total_arms == 1)
-                size3 *= 2;
+              p[0] = h->pos; p[1].z = h->pos.z; p[2].z = h->pos.z;
 
-              p[0] = h->pos;
+              if (nub_ratio) {
+                p[1].x = h->pos.x + scaled_corners[j][2].x * nub_ratio;
+                p[1].y = h->pos.y + scaled_corners[j][2].y * nub_ratio;
+                p[2].x = h->pos.x + scaled_corners[k][2].x * nub_ratio;
+                p[2].y = h->pos.y + scaled_corners[k][2].y * nub_ratio;
+              } else {
+                int8_t s = (total_arms == 1) ? 3 : 2;
+                p[1].x = h->pos.x + scaled_corners[j][s].x;
+                p[1].y = h->pos.y + scaled_corners[j][s].y;
+                /* Inner edge of hexagon border */
+                p[2].x = h->pos.x + scaled_corners[k][s].x;
+                p[2].y = h->pos.y + scaled_corners[k][s].y;
+              }
 
-              p[1].x = h->pos.x + corners[j].x * size3;
-              p[1].y = h->pos.y + corners[j].y * size3;
-              p[1].z = h->pos.z;
-
-              /* Inner edge of hexagon border */
-              p[2].x = h->pos.x + corners[k].x * size3;
-              p[2].y = h->pos.y + corners[k].y * size3;
-              p[2].z = h->pos.z;
 
               glColor4fv (color);
               glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
@@ -638,11 +686,17 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
         ;
       else if (c == '>' || c == '.' || c == '+' || c == '=' ||
                keysym == XK_Right || keysym == XK_Up || keysym == XK_Next)
-        MI_COUNT(mi)++;
+        {
+          MI_COUNT(mi)++;
+          scale_corners(mi);
+        }
       else if (c == '<' || c == ',' || c == '-' || c == '_' ||
                c == '\010' || c == '\177' ||
                keysym == XK_Left || keysym == XK_Down || keysym == XK_Prior)
-        MI_COUNT(mi)--;
+        {
+          MI_COUNT(mi)--;
+          scale_corners(mi);
+        }
       else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
         ;
       else
@@ -650,6 +704,7 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
 
     RESET:
       if (MI_COUNT(mi) < 1) MI_COUNT(mi) = 1;
+      scale_corners(mi);
       free (bp->hexagons);
       bp->hexagons = 0;
       bp->state = FIRST;
