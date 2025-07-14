@@ -8,20 +8,14 @@
 #define XLOCKMORE_WEB_H
 
 #include "jwxyz.h"
+#include <math.h>
 
 // Essential macros and definitions
 #define ENTRYPOINT
 #define XSCREENSAVER_MODULE(name, func)
 
 // Common xscreensaver types and macros
-typedef struct {
-    int count;
-    int cycles;
-    int size;
-    int ncolors;
-    int fps_p;
-    void *fpst;  // fps_state*
-} ModeInfo;
+// ModeInfo is already defined in xscreensaver_web.c
 
 // Common function declarations
 extern void do_fps(ModeInfo *mi);
@@ -29,7 +23,42 @@ extern void screenhack_event_helper(void *display, void *window, void *event);
 
 // Common utility functions
 extern double frand(double max);
-extern int random(void);
+// random() is already defined in stdlib.h
+
+// Missing types and macros
+typedef struct {
+    char *option;
+    char *specifier;
+    int argKind;
+    void *value;
+} XrmOptionDescRec;
+
+typedef struct {
+    void *var;
+    char *name;
+    char *desc;
+    char *def;
+    int type;
+} argtype;
+
+typedef struct {
+    int count;
+    XrmOptionDescRec *opts;
+    int vars_count;
+    argtype *vars;
+    char *desc;
+} ModeSpecOpt;
+
+// Type constants
+#define t_Bool 1
+#define t_Float 2
+
+// Utility macros
+#define countof(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+// Missing ModeInfo macros
+#define MI_IS_WIREFRAME(mi) 0
+#define MI_WINDOW(mi) ((mi)->window)
 
 // Common constants
 #define XK_Up        0xFF52

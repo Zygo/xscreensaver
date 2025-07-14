@@ -29,6 +29,7 @@ typedef struct {
     void *display;  // Placeholder for Display*
     void *visual;   // Placeholder for Visual*
     void *colormap; // Placeholder for Colormap*
+    int polygon_count; // For polygon counting
 } ModeInfo;
 
 #define MI_SCREEN(mi) ((mi)->screen)
