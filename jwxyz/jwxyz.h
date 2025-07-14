@@ -315,6 +315,7 @@ typedef struct jwxyz_linked_point	linked_point;
 #define XA_CARDINAL              6
 #define PropModeReplace          0
 #define AllocNone                0
+#define StructureNotifyMask      16
 
 #define GXclear			0x0		/* 0 */
 #define GXand			0x1		/* src AND dst */
@@ -680,8 +681,10 @@ struct jwxyz_XWindowAttributes {
 #if 0
     Bool map_installed;		/* boolean, is color map currently installed*/
     int map_state;		/* IsUnmapped, IsUnviewable, IsViewable */
+#endif
     long all_event_masks;	/* set of events all people have interest in*/
     long your_event_mask;	/* my event mask */
+#if 0
     long do_not_propagate_mask; /* set of events that should not propagate */
     Bool override_redirect;	/* boolean value for override-redirect */
 #endif

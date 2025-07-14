@@ -756,6 +756,7 @@ init_window (Display *dpy, Widget toplevel, const char *title)
 #endif
 
 
+#ifndef HAVE_JWXYZ
 int
 main (int argc, char **argv)
 {
@@ -1105,3 +1106,4 @@ main (int argc, char **argv)
 
   return 0;
 }
+#endif
