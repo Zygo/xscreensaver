@@ -20,18 +20,14 @@
 // Common function declarations
 extern void do_fps(ModeInfo *mi);
 extern void screenhack_event_helper(void *display, void *window, void *event);
+extern GLXContext *init_GL(ModeInfo *mi);
 
 // Common utility functions
 extern double frand(double max);
 // random() is already defined in stdlib.h
 
 // Missing types and macros
-typedef struct {
-    char *option;
-    char *specifier;
-    int argKind;
-    void *value;
-} XrmOptionDescRec;
+// XrmOptionDescRec is already defined in jwxyz.h
 
 typedef struct {
     void *var;
@@ -59,6 +55,9 @@ typedef struct {
 // Missing ModeInfo macros
 #define MI_IS_WIREFRAME(mi) 0
 #define MI_WINDOW(mi) ((mi)->window)
+#define MI_DISPLAY(mi) ((mi)->display)
+#define MI_VISUAL(mi) ((mi)->visual)
+#define MI_COLORMAP(mi) ((mi)->colormap)
 
 // Common constants
 #define XK_Up        0xFF52

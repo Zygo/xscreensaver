@@ -20,16 +20,16 @@
 // Generic ModeInfo for web builds
 typedef struct {
     int screen;
-    int window;
-    void *data;
+    Window window;
+    Display *display;
+    Visual *visual;
+    Colormap colormap;
     int width;
     int height;
     int count;
     int fps_p;
-    void *display;  // Placeholder for Display*
-    void *visual;   // Placeholder for Visual*
-    void *colormap; // Placeholder for Colormap*
     int polygon_count; // For polygon counting
+    void *data;
 } ModeInfo;
 
 #define MI_SCREEN(mi) ((mi)->screen)
@@ -114,15 +114,15 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
 
     // Initialize ModeInfo
     web_mi.screen = 0;
-    web_mi.window = 0;
-    web_mi.data = NULL;
+    web_mi.window = (Window)1;
+    web_mi.display = (Display*)1;
+    web_mi.visual = (Visual*)1;
+    web_mi.colormap = (Colormap)1;
     web_mi.width = 800;
     web_mi.height = 600;
     web_mi.count = 20;
     web_mi.fps_p = 0;
-    web_mi.display = NULL;
-    web_mi.visual = NULL;
-    web_mi.colormap = NULL;
+    web_mi.data = NULL;
 
     // Initialize WebGL
     if (!init_webgl()) {
@@ -180,6 +180,13 @@ EMSCRIPTEN_KEEPALIVE
 void handle_mouse_wheel(int delta) {
     // This would need to be implemented per-hack
     printf("Mouse wheel: %d\n", delta);
+}
+
+// Dummy init_GL function for web builds
+GLXContext *init_GL(ModeInfo *mi) {
+    // Return a dummy context pointer
+    static GLXContext dummy_context = (GLXContext)1;
+    return &dummy_context;
 }
 
 // Cleanup function
