@@ -78,9 +78,13 @@ static const char vroot_rcsid[] =
  "#Id: vroot.h,v 1.4 1991/09/30 19:23:16 stolcke Exp stolcke #";
 #endif
 
-#include <X11/X.h>
-#include <X11/Xatom.h>
-#include <X11/Xlib.h>
+#ifdef HAVE_JWXYZ
+# include "jwxyz.h"
+#else  /* real X11 */
+# include <X11/X.h>
+# include <X11/Xatom.h>
+# include <X11/Xlib.h>
+#endif /* !HAVE_JWXYZ */
 
 static Window
 #ifdef __STDC__ /* ANSIfication added by jwz, to avoid superfluous warnings. */

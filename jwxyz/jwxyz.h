@@ -63,6 +63,7 @@ typedef struct jwxyz_XRectangle		XRectangle;
 typedef struct jwxyz_XArc		XArc;
 typedef struct jwxyz_XWindowAttributes	XWindowAttributes;
 typedef struct jwxyz_XrmOptionDescRec	XrmOptionDescRec;
+typedef struct jwxyz_XErrorEvent		XErrorEvent;
 typedef struct jwxyz_XrmDatabase *      XrmDatabase;
 typedef struct jwxyz_XImage		XImage;
 typedef struct jwxyz_XFontProp          XFontProp;
@@ -304,6 +305,16 @@ typedef struct jwxyz_linked_point	linked_point;
 #define XK_KP_Decimal		0xFFAE
 #define XK_KP_Divide		0xFFAF
 
+/* Additional X11 constants needed by screenhack.c */
+#define XA_WINDOW                1
+#define Success                  0
+#define MapNotify                19
+#define ClientMessage            33
+#define ConfigureNotify          22
+#define XA_ATOM                  4
+#define XA_CARDINAL              6
+#define PropModeReplace          0
+#define AllocNone                0
 
 #define GXclear			0x0		/* 0 */
 #define GXand			0x1		/* src AND dst */
@@ -434,6 +445,27 @@ extern int XDrawImageString (Display *, Drawable, GC, int x, int y,
                              const char *, int len);
 extern int XDrawString16 (Display *, Drawable, GC, int x, int y,
                           const XChar2b *, int len);
+
+/* Additional X11 functions needed by screenhack.c */
+extern Atom XInternAtom(Display *, const char *, Bool);
+extern Status XQueryTree(Display *, Window, Window *, Window *, Window **, unsigned int *);
+extern Status XGetWindowProperty(Display *, Window, Atom, long, long, Bool, Atom, Atom *, int *, unsigned long *, unsigned long *, unsigned char **);
+extern int XBell(Display *, int);
+extern char *XGetAtomName(Display *, Atom);
+
+/* Additional X11 functions needed by screenhack.c */
+extern int XVisualIDFromVisual(Visual *);
+extern int XPending(Display *);
+extern int XNextEvent(Display *, XEvent *);
+extern int XSelectInput(Display *, Window, long);
+extern int XChangeProperty(Display *, Window, Atom, Atom, int, int, const unsigned char *, int);
+extern int XGetWindowAttributes(Display *, Window, XWindowAttributes *);
+
+/* POSIX functions needed by screenhack.c */
+#ifndef HAVE_ANDROID
+extern int open(const char *, int);
+#endif
+#define O_RDWR 2
 
 extern Bool XQueryPointer (Display *, Window, Window *root_ret,
                            Window *child_ret,
@@ -690,14 +722,24 @@ struct jwxyz_XrmOptionDescRec {
   void *value;
 };
 
+struct jwxyz_XErrorEvent {
+  int type;
+  Display *display;
+  unsigned long serial;
+  unsigned char error_code;
+  unsigned char request_code;
+  unsigned char minor_code;
+  unsigned long resourceid;
+};
+
 struct jwxyz_XAnyEvent {
   int type;
 #if 0
   unsigned long serial;
   Bool send_event;
   Display *display;
-  Window window;
 #endif
+  Window window;
 };
 
 struct jwxyz_XKeyEvent {
@@ -770,6 +812,22 @@ union jwxyz_XEvent {
   XKeyEvent xkey;
   XButtonEvent xbutton;
   XMotionEvent xmotion;
+  struct {
+    int type;
+    Window window;
+  } xvisibility;
+  struct {
+    int type;
+    Atom message_type;
+    union {
+      long l[5];
+    } data;
+  } xclient;
+  struct {
+    int type;
+    Window window;
+    int width, height;
+  } xconfigure;
 };
 
 struct jwxyz_XImage {

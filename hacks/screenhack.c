@@ -360,11 +360,13 @@ pick_visual (Screen *screen)
 {
   struct xscreensaver_function_table *ft = xscreensaver_function_table;
 
+#ifndef HAVE_JWXYZ
   if (ft->pick_visual_hook)
     {
       Visual *v = ft->pick_visual_hook (screen);
       if (v) return v;
     }
+#endif
 
   return get_visual_resource (screen, "visualID", "VisualID", False);
 }
@@ -429,11 +431,13 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
                progname, win, (unsigned long) cmap);
     }
 
+#ifndef HAVE_JWXYZ
   if (ft->validate_visual_hook)
     {
       if (! ft->validate_visual_hook (screen, win, visual))
         exit (1);
     }
+#endif
 }
 
 
@@ -661,6 +665,7 @@ run_screenhack_table (Display *dpy,
 }
 
 
+#ifndef HAVE_JWXYZ
 static Widget
 make_shell (Screen *screen, Widget toplevel, int width, int height)
 {
@@ -723,7 +728,9 @@ make_shell (Screen *screen, Widget toplevel, int width, int height)
 
   return toplevel;
 }
+#endif
 
+#ifndef HAVE_JWXYZ
 static void
 init_window (Display *dpy, Widget toplevel, const char *title)
 {
@@ -746,6 +753,7 @@ init_window (Display *dpy, Widget toplevel, const char *title)
   XChangeProperty (dpy, window, XA_NET_WM_PID, XA_CARDINAL, 32,
                    PropModeReplace, (unsigned char *)&pid, 1);
 }
+#endif
 
 
 int
