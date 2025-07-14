@@ -17,7 +17,11 @@
 
 # define release_hextrail 0
 
+#ifdef WEB_BUILD
+#include "xlockmore_web.h"
+#else
 #include "xlockmore.h"
+#endif
 #include "colors.h"
 #include "normals.h"
 #include "rotator.h"

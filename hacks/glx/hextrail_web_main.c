@@ -6,6 +6,12 @@
 
 #include <emscripten.h>
 #include "xscreensaver_web.c"
+
+// Define WEB_BUILD and include our web headers
+#define WEB_BUILD
+#include "xlockmore_web.h"
+
+// Now include hextrail.c with our web headers already defined
 #include "hextrail.c"
 
 // Web-specific main function

@@ -64,7 +64,7 @@ static reshape_func hack_reshape = NULL;
 static free_func hack_free = NULL;
 
 // Main loop callback
-void main_loop(void* arg) {
+void main_loop(void) {
     if (hack_draw) {
         hack_draw(&web_mi);
     }
@@ -91,7 +91,7 @@ static int init_webgl() {
 
     webgl_context = emscripten_webgl_create_context("#canvas", &attrs);
     if (webgl_context < 0) {
-        printf("Failed to create WebGL context! Error: %d\n", webgl_context);
+        printf("Failed to create WebGL context! Error: %lu\n", webgl_context);
         return 0;
     }
 
