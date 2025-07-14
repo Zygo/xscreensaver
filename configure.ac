@@ -196,6 +196,9 @@ AH_TEMPLATE([HAVE_GLES3],
 AH_TEMPLATE([HAVE_JWZGLES],
             [Define this to emulate OpenGL 1.3 in terms of OpenGLES 1.x.])
 
+AH_TEMPLATE([HAVE_JWXYZ],
+            [Define this to use jwxyz X11 emulation (for Android/Web/iOS builds).])
+
 AH_TEMPLATE([HAVE_EGL],
 	    [Define this if OpenGL bindings are via EGL instead of GLX.])
 
@@ -3367,10 +3370,28 @@ HANDLE_X_PATH_ARG(with_jwzgles, --with-gles, JWZGLES)
 
 if test "$with_jwzgles" = yes; then
   have_jwzgles=yes
+  have_jwxyz=yes
   JWZGLES_OBJS='$(JWXYZ_BIN)/jwzgles.o'
   AC_MSG_RESULT(emulating OpenGL 1.3 in terms of OpenGLES 1.x.)
 elif test "$with_jwzgles" != no; then
   echo "error: must be yes or no: --with-gles=$with_jwzgles"
+  exit 1
+fi
+
+# Check for jwxyz (cross-platform X11 emulation)
+# This is used for Android, Web (Emscripten), and iOS builds
+have_jwxyz=${have_jwxyz:-no}
+AC_ARG_WITH(jwxyz,
+[  --with-jwxyz            Use jwxyz X11 emulation (for Android/Web/iOS builds)],
+  [with_jwxyz="$withval"],[with_jwxyz=no])
+
+if test "$with_jwxyz" = yes; then
+  have_jwxyz=yes
+  AC_DEFINE(HAVE_JWXYZ)
+  INCLUDES="$INCLUDES -I\${srcdir}/jwxyz"
+  AC_MSG_RESULT(using jwxyz X11 emulation)
+elif test "$with_jwxyz" != no; then
+  echo "error: must be yes or no: --with-jwxyz=$with_jwxyz"
   exit 1
 fi
 

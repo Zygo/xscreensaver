@@ -19,7 +19,7 @@
 
 // Common function declarations
 extern void do_fps(ModeInfo *mi);
-extern void screenhack_event_helper(void *display, void *window, void *event);
+extern Bool screenhack_event_helper(void *display, void *window, void *event);
 extern GLXContext *init_GL(ModeInfo *mi);
 
 // Common utility functions

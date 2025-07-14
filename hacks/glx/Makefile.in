@@ -75,7 +75,9 @@ JWXYZ_SRC	= $(HACK_SRC)/../jwxyz
 UTILS_BIN	= $(HACK_BIN)/../utils
 JWXYZ_BIN	= $(HACK_BIN)/../jwxyz
 
-INCLUDES_1	= -I. -I$(srcdir) -I$(UTILS_SRC) -I$(JWXYZ_SRC) -I$(HACK_SRC) -I$(HACK_BIN) -I../..
+# Conditionally include jwxyz only when HAVE_JWXYZ is defined
+# For native Linux builds, jwxyz is not needed and can cause conflicts
+INCLUDES_1	= -I. -I$(srcdir) -I$(UTILS_SRC) -I$(HACK_SRC) -I$(HACK_BIN) -I../..
 INCLUDES	= $(INCLUDES_1) @INCLUDES@
 
 UTILDIR_OBJS	= $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabclient.o \

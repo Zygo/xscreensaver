@@ -195,9 +195,13 @@ void xscreensaver_web_cleanup() {
     if (hack_free) {
         hack_free(&web_mi);
     }
-    
+
     if (webgl_context >= 0) {
         emscripten_webgl_destroy_context(webgl_context);
         webgl_context = -1;
     }
-} 
+}
+
+Bool screenhack_event_helper(void *display, void *window, void *event) {
+    return False;
+}

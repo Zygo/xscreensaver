@@ -61,6 +61,7 @@ emcc \
     -DUSE_GL \
     -DHAVE_CONFIG_H \
     -DWEB_BUILD \
+    -DHAVE_JWXYZ \
     -s USE_WEBGL2=1 \
     -s FULL_ES3=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
@@ -68,21 +69,22 @@ emcc \
     -s EXPORTED_FUNCTIONS=['_main','_init_hextrail','_draw_hextrail','_reshape_hextrail','_free_hextrail','_set_speed','_set_thickness','_set_spin','_set_wander','_handle_mouse_drag','_handle_mouse_wheel'] \
     -s MIN_WEBGL_VERSION=2 \
     -O3 \
+    -I$JWXYZ_DIR \
     -I. \
+    -I$REPO_ROOT \
     -I$UTILS_DIR \
     -I$GLX_DIR \
-    -I$JWXYZ_DIR \
     $GLX_DIR/hextrail_web_main.c \
     $UTILS_DIR/colors.c \
     $UTILS_DIR/yarandom.c \
     $UTILS_DIR/usleep.c \
-    $UTILS_DIR/visual-gl.c \
     $HACKS_DIR/screenhack.c \
     $HACKS_DIR/xlockmore.c \
     $HACKS_DIR/fps.c \
     $GLX_DIR/rotator.c \
     $GLX_DIR/gltrackball.c \
     $GLX_DIR/normals.c \
+    $JWXYZ_DIR/jwxyz-timers.c \
     -o hextrail_web.html \
     --preload-file $GLX_DIR/web/index.html@index.html \
     --preload-file $GLX_DIR/web/style.css@style.css \
