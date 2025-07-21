@@ -72,6 +72,7 @@ emcc \
     -I$JWXYZ_DIR \
     -I. \
     -I$REPO_ROOT \
+    -I$HACKS_DIR \
     -I$UTILS_DIR \
     -I$GLX_DIR \
     $GLX_DIR/hextrail_web_main.c \
@@ -79,8 +80,6 @@ emcc \
     $UTILS_DIR/yarandom.c \
     $UTILS_DIR/usleep.c \
     $HACKS_DIR/screenhack.c \
-    $HACKS_DIR/xlockmore.c \
-    $HACKS_DIR/fps.c \
     $GLX_DIR/rotator.c \
     $GLX_DIR/gltrackball.c \
     $GLX_DIR/normals.c \
