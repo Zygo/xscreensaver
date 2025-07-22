@@ -1,6 +1,9 @@
 // HexTrail Web Interface
+console.log('HexTrailWeb class definition loaded');
+
 class HexTrailWeb {
     constructor() {
+        console.log('HexTrailWeb constructor starting...');
         this.module = null;
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');

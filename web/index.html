@@ -69,60 +69,96 @@
         <button id="debug-toggle" onclick="document.getElementById('debug-panel').style.display='block'; this.style.display='none';" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; border: 1px solid #333; padding: 5px 10px; cursor: pointer; z-index: 1000; font-family: monospace; font-size: 12px;">Debug</button>
     </div>
     
-    <script>
-        // Set up the Module object like the generated HTML does
-        var statusElement = document.getElementById('loading');
-        var canvasElement = document.getElementById('canvas');
-        
-        // Configure the Module object
-        var Module = {
-            canvas: canvasElement,
-            setStatus: function(text) {
-                if (statusElement) {
-                    statusElement.textContent = text;
-                }
-                console.log('Status:', text);
-                // Also log to debug panel if available
+            <script>
+            // Global error handler
+            window.addEventListener('error', function(e) {
+                console.error('Global error:', e.error);
                 var debugLog = document.getElementById('debug-log');
                 if (debugLog) {
                     var timestamp = new Date().toLocaleTimeString();
-                    debugLog.innerHTML += `[${timestamp}] Status: ${text}<br>`;
+                    debugLog.innerHTML += `[${timestamp}] ERROR: ${e.error}<br>`;
                     debugLog.scrollTop = debugLog.scrollHeight;
                 }
-            },
-            print: function(...args) {
-                console.log(...args);
-                // Also log to debug panel if available
-                var debugLog = document.getElementById('debug-log');
-                if (debugLog) {
-                    var timestamp = new Date().toLocaleTimeString();
-                    debugLog.innerHTML += `[${timestamp}] Print: ${args.join(' ')}<br>`;
-                    debugLog.scrollTop = debugLog.scrollHeight;
+            });
+            
+            // Set up the Module object like the generated HTML does
+            var statusElement = document.getElementById('loading');
+            var canvasElement = document.getElementById('canvas');
+            
+            console.log('Setting up Module object...');
+            
+            // Configure the Module object
+            var Module = {
+                canvas: canvasElement,
+                setStatus: function(text) {
+                    if (statusElement) {
+                        statusElement.textContent = text;
+                    }
+                    console.log('Status:', text);
+                    // Also log to debug panel if available
+                    var debugLog = document.getElementById('debug-log');
+                    if (debugLog) {
+                        var timestamp = new Date().toLocaleTimeString();
+                        debugLog.innerHTML += `[${timestamp}] Status: ${text}<br>`;
+                        debugLog.scrollTop = debugLog.scrollHeight;
+                    }
+                },
+                print: function(...args) {
+                    console.log(...args);
+                    // Also log to debug panel if available
+                    var debugLog = document.getElementById('debug-log');
+                    if (debugLog) {
+                        var timestamp = new Date().toLocaleTimeString();
+                        debugLog.innerHTML += `[${timestamp}] Print: ${args.join(' ')}<br>`;
+                        debugLog.scrollTop = debugLog.scrollHeight;
+                    }
+                },
+                onRuntimeInitialized: function() {
+                    console.log('Module runtime initialized');
+                    // Hide loading screen
+                    document.getElementById('loading').style.display = 'none';
+                    // Log to debug panel
+                    var debugLog = document.getElementById('debug-log');
+                    if (debugLog) {
+                        var timestamp = new Date().toLocaleTimeString();
+                        debugLog.innerHTML += `[${timestamp}] Module runtime initialized<br>`;
+                        debugLog.scrollTop = debugLog.scrollHeight;
+                    }
+                    
+                    // Try to initialize HexTrailWeb after a short delay
+                    setTimeout(function() {
+                        console.log('Attempting to initialize HexTrailWeb...');
+                        if (typeof window.hextrailWeb === 'undefined') {
+                            console.log('Creating new HexTrailWeb instance...');
+                            window.hextrailWeb = new HexTrailWeb();
+                        }
+                    }, 100);
                 }
-            },
-            onRuntimeInitialized: function() {
-                console.log('Module runtime initialized');
-                // Hide loading screen
-                document.getElementById('loading').style.display = 'none';
-                // Log to debug panel
-                var debugLog = document.getElementById('debug-log');
-                if (debugLog) {
-                    var timestamp = new Date().toLocaleTimeString();
-                    debugLog.innerHTML += `[${timestamp}] Module runtime initialized<br>`;
-                    debugLog.scrollTop = debugLog.scrollHeight;
-                }
-            }
-        };
-        
-        // Load the emscripten module
-        var emscriptenScript = document.createElement('script');
-        emscriptenScript.src = 'hextrail_web.js';
-        document.head.appendChild(emscriptenScript);
-        
-        // Load our script after setting up Module
-        var script = document.createElement('script');
-        script.src = 'script.js';
-        document.head.appendChild(script);
-    </script>
+            };
+            
+            console.log('Loading hextrail_web.js...');
+            // Load the emscripten module
+            var emscriptenScript = document.createElement('script');
+            emscriptenScript.src = 'hextrail_web.js';
+            emscriptenScript.onload = function() {
+                console.log('hextrail_web.js loaded');
+            };
+            emscriptenScript.onerror = function() {
+                console.error('Failed to load hextrail_web.js');
+            };
+            document.head.appendChild(emscriptenScript);
+            
+            console.log('Loading script.js...');
+            // Load our script after setting up Module
+            var script = document.createElement('script');
+            script.src = 'script.js';
+            script.onload = function() {
+                console.log('script.js loaded');
+            };
+            script.onerror = function() {
+                console.error('Failed to load script.js');
+            };
+            document.head.appendChild(script);
+        </script>
 </body>
 </html> 
