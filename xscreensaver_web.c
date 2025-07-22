@@ -300,8 +300,28 @@ void main_loop(void) {
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Draw a simple test triangle to verify WebGL is working
+    if (frame_count == 1) {
+        printf("Drawing test triangle...\n");
+        glBegin(GL_TRIANGLES);
+        glColor3f(1.0f, 0.0f, 0.0f);  // Red
+        glVertex3f(-0.5f, -0.5f, 0.0f);
+        glColor3f(0.0f, 1.0f, 0.0f);  // Green
+        glVertex3f(0.5f, -0.5f, 0.0f);
+        glColor3f(0.0f, 0.0f, 1.0f);  // Blue
+        glVertex3f(0.0f, 0.5f, 0.0f);
+        glEnd();
+        printf("Test triangle drawn\n");
+    }
+
     if (hack_draw) {
+        if (frame_count % 60 == 0) {
+            printf("Calling hack_draw...\n");
+        }
         hack_draw(&web_mi);
+        if (frame_count % 60 == 0) {
+            printf("hack_draw completed\n");
+        }
     } else {
         if (frame_count % 60 == 0) {
             printf("hack_draw is NULL!\n");
@@ -416,6 +436,11 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
     web_mi.data = NULL;
 
     printf("ModeInfo initialized: width=%d, height=%d\n", web_mi.width, web_mi.height);
+
+    // Check canvas size
+    int canvas_width, canvas_height;
+    emscripten_get_canvas_element_size("#canvas", &canvas_width, &canvas_height);
+    printf("Canvas size: %dx%d\n", canvas_width, canvas_height);
 
     // Initialize WebGL
     printf("Initializing WebGL...\n");

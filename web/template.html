@@ -460,7 +460,7 @@
                 if (Module._handle_mouse_wheel) {
                     Module._handle_mouse_wheel(e.deltaY > 0 ? 1 : -1);
                 }
-            });
+            }, { passive: false });
             
             // Keyboard controls
             document.addEventListener('keydown', function(e) {

@@ -99,7 +99,7 @@ if [ $? -eq 0 ]; then
     echo -e "   Then open http://localhost:8000/web/"
     
     # Copy files to web directory for easy access
-    cp hextrail_web.* $REPO_ROOT/web/
+    cp index.* $REPO_ROOT/web/
     echo -e "${GREEN}📋 Files copied to web/ directory${NC}"
     
 else
