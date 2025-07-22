@@ -55,7 +55,7 @@ cd build_web
 
 echo -e "${YELLOW}📦 Compiling HexTrail...${NC}"
 
-# Compile with emscripten (no SDL)
+# Compile with emscripten using custom HTML template
 emcc \
     -DSTANDALONE \
     -DUSE_GL \
@@ -85,9 +85,7 @@ emcc \
     $GLX_DIR/normals.c \
     $JWXYZ_DIR/jwxyz-timers.c \
     -o hextrail_web.html \
-    --preload-file $REPO_ROOT/web/index.html@index.html \
-    --preload-file $REPO_ROOT/web/style.css@style.css \
-    --preload-file $REPO_ROOT/web/script.js@script.js
+    --shell-file $REPO_ROOT/web/template.html
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Build successful!${NC}"

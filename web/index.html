@@ -125,14 +125,14 @@
                         debugLog.scrollTop = debugLog.scrollHeight;
                     }
                     
-                    // Try to initialize HexTrailWeb after a short delay
-                    setTimeout(function() {
-                        console.log('Attempting to initialize HexTrailWeb...');
-                        if (typeof window.hextrailWeb === 'undefined') {
-                            console.log('Creating new HexTrailWeb instance...');
-                            window.hextrailWeb = new HexTrailWeb();
-                        }
-                    }, 100);
+                    // Let Emscripten handle everything - the C code's main() should be called automatically
+                    console.log('Emscripten runtime initialized - letting C code handle everything');
+                    var debugLog = document.getElementById('debug-log');
+                    if (debugLog) {
+                        var timestamp = new Date().toLocaleTimeString();
+                        debugLog.innerHTML += `[${timestamp}] Emscripten runtime initialized - letting C code handle everything<br>`;
+                        debugLog.scrollTop = debugLog.scrollHeight;
+                    }
                 }
             };
             
@@ -148,17 +148,7 @@
             };
             document.head.appendChild(emscriptenScript);
             
-            console.log('Loading script.js...');
-            // Load our script after setting up Module
-            var script = document.createElement('script');
-            script.src = 'script.js';
-            script.onload = function() {
-                console.log('script.js loaded');
-            };
-            script.onerror = function() {
-                console.error('Failed to load script.js');
-            };
-            document.head.appendChild(script);
+            // No need to load script.js - Emscripten handles everything
         </script>
 </body>
 </html> 

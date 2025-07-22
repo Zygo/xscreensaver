@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexTrail Screensaver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #333;
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+        }
+        
+        #debug-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 400px;
+            height: 300px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            border: 1px solid #333;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        #debug-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border: 1px solid #333;
+            padding: 5px 10px;
+            cursor: pointer;
+            z-index: 1000;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading">
+            <div class="spinner"></div>
+            <div>Loading HexTrail...</div>
+        </div>
+        
+        <canvas id="canvas" tabindex="-1"></canvas>
+        
+        <div id="info">
+            <p>Click and drag to rotate the view. Use mouse wheel to zoom.</p>
+            <p>Press 'F' for fullscreen, 'R' to reset, 'S' to toggle spin, 'W' to toggle wander.</p>
+        </div>
+        
+        <!-- Debug Panel -->
+        <div id="debug-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">Debug Output</h3>
+                <button onclick="document.getElementById('debug-panel').style.display='none'; document.getElementById('debug-toggle').style.display='block';" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer;">×</button>
+            </div>
+            <div id="debug-log"></div>
+        </div>
+        
+        <!-- Debug Toggle Button -->
+        <button id="debug-toggle" onclick="document.getElementById('debug-panel').style.display='block'; this.style.display='none';">Debug</button>
+    </div>
+    
+    <script>
+        // Global error handler
+        window.onerror = function(msg, url, line, col, error) {
+            var debugLog = document.getElementById('debug-log');
+            if (debugLog) {
+                var timestamp = new Date().toLocaleTimeString();
+                debugLog.innerHTML += '[' + timestamp + '] ERROR: ' + msg + ' at ' + url + ':' + line + '<br>';
+                debugLog.scrollTop = debugLog.scrollHeight;
+            }
+        };
+        
+        // Configure Module before loading the generated JS
+        var Module = {
+            canvas: document.getElementById('canvas'),
+            setStatus: function(text) {
+                var loading = document.getElementById('loading');
+                if (loading) {
+                    loading.innerHTML = '<div class="spinner"></div><div>' + text + '</div>';
+                }
+                
+                // Log to debug panel
+                var debugLog = document.getElementById('debug-log');
+                if (debugLog) {
+                    var timestamp = new Date().toLocaleTimeString();
+                    debugLog.innerHTML += '[' + timestamp + '] Status: ' + text + '<br>';
+                    debugLog.scrollTop = debugLog.scrollHeight;
+                }
+            },
+            print: function(...args) {
+                console.log(...args);
+                
+                // Log to debug panel
+                var debugLog = document.getElementById('debug-log');
+                if (debugLog) {
+                    var timestamp = new Date().toLocaleTimeString();
+                    debugLog.innerHTML += '[' + timestamp + '] Print: ' + args.join(' ') + '<br>';
+                    debugLog.scrollTop = debugLog.scrollHeight;
+                }
+            },
+            onRuntimeInitialized: function() {
+                console.log('Module runtime initialized');
+                
+                // Hide loading screen
+                var loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+                
+                // Log to debug panel
+                var debugLog = document.getElementById('debug-log');
+                if (debugLog) {
+                    var timestamp = new Date().toLocaleTimeString();
+                    debugLog.innerHTML += '[' + timestamp + '] Module runtime initialized<br>';
+                    debugLog.scrollTop = debugLog.scrollHeight;
+                }
+            }
+        };
+    </script>
+    
+    <!-- This will be replaced by the generated script tag -->
+    {{{ SCRIPT }}}
+</body>
+</html> 

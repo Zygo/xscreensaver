@@ -48,6 +48,34 @@ class HexTrailWeb {
                 this.module._main();
             }
             
+            // Also try calling xscreensaver_web_init directly
+            if (this.module._xscreensaver_web_init) {
+                this.log('Calling xscreensaver_web_init...');
+                this.log('Function pointers:');
+                this.log('  _init_hextrail: ' + this.module._init_hextrail);
+                this.log('  _draw_hextrail: ' + this.module._draw_hextrail);
+                this.log('  _reshape_hextrail: ' + this.module._reshape_hextrail);
+                this.log('  _free_hextrail: ' + this.module._free_hextrail);
+                
+                try {
+                    const result = this.module.ccall(
+                        'xscreensaver_web_init',
+                        'number',
+                        ['number', 'number', 'number', 'number'],
+                        [
+                            this.module._init_hextrail,
+                            this.module._draw_hextrail,
+                            this.module._reshape_hextrail,
+                            this.module._free_hextrail
+                        ]
+                    );
+                    this.log('xscreensaver_web_init returned: ' + result);
+                } catch (error) {
+                    this.log('ERROR calling xscreensaver_web_init: ' + error);
+                    this.log('Error stack: ' + error.stack);
+                }
+            }
+            
             // Set up controls
             this.setupControls();
             
