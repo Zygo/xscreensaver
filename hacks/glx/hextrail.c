@@ -366,8 +366,10 @@ tick_hexagons (ModeInfo *mi)
           }
         h0 = &bp->hexagons[y * bp->grid_w + x];
         if (empty_hexagon_p (h0) &&
-            add_arms (mi, h0)) 
+            add_arms (mi, h0)) {
+          h0->border_state = DONE;
           break;
+        }
       }
 
   if (bp->live_count <= 0 && bp->state != FADE)
