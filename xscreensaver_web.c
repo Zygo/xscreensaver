@@ -121,6 +121,7 @@ static void matrix_scale(Matrix4f *m, GLfloat x, GLfloat y, GLfloat z);
 static GLuint compile_shader(const char *source, GLenum type);
 static void init_shaders(void);
 static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XColor *colors, int *ncolorsP);
+static MatrixStack* get_current_matrix_stack(void);
 
 // OpenGL function forward declarations
 void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val);
@@ -184,6 +185,8 @@ static void matrix_scale(Matrix4f *m, GLfloat x, GLfloat y, GLfloat z) {
 // Shader compilation
 static GLuint compile_shader(const char *source, GLenum type) {
     GLuint shader = glCreateShader(type);
+    printf("Created shader %u of type %d\n", shader, type);
+
     glShaderSource(shader, 1, &source, NULL);
     glCompileShader(shader);
 
@@ -193,12 +196,17 @@ static GLuint compile_shader(const char *source, GLenum type) {
         GLchar info_log[512];
         glGetShaderInfoLog(shader, 512, NULL, info_log);
         printf("Shader compilation error: %s\n", info_log);
+        printf("Shader source:\n%s\n", source);
+    } else {
+        printf("Shader %u compiled successfully\n", shader);
     }
 
     return shader;
 }
 
 static void init_shaders() {
+    printf("Initializing shaders...\n");
+
     const char *vertex_source =
         "#version 300 es\n"
         "in vec3 position;\n"
@@ -227,9 +235,21 @@ static void init_shaders() {
     vertex_shader = compile_shader(vertex_source, GL_VERTEX_SHADER);
     fragment_shader = compile_shader(fragment_source, GL_FRAGMENT_SHADER);
 
+    printf("Vertex shader: %u, Fragment shader: %u\n", vertex_shader, fragment_shader);
+
     shader_program = glCreateProgram();
+    printf("Created shader program: %u\n", shader_program);
+
+    if (shader_program == 0) {
+        printf("ERROR: glCreateProgram failed! Returned 0\n");
+        return;
+    }
+
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
+
+    printf("Attached shaders to program %u\n", shader_program);
+
     glLinkProgram(shader_program);
 
     GLint success;
@@ -238,6 +258,21 @@ static void init_shaders() {
         GLchar info_log[512];
         glGetProgramInfoLog(shader_program, 512, NULL, info_log);
         printf("Shader linking error: %s\n", info_log);
+        printf("Shader program %u linking failed!\n", shader_program);
+    } else {
+        printf("Shader program %u linked successfully\n", shader_program);
+
+        // Validate the program
+        glValidateProgram(shader_program);
+        GLint valid;
+        glGetProgramiv(shader_program, GL_VALIDATE_STATUS, &valid);
+        if (!valid) {
+            GLchar info_log[512];
+            glGetProgramInfoLog(shader_program, 512, NULL, info_log);
+            printf("Shader validation error: %s\n", info_log);
+        } else {
+            printf("Shader program %u validated successfully\n", shader_program);
+        }
     }
 }
 
@@ -320,7 +355,37 @@ void main_loop(void) {
 
 void glMatrixMode(GLenum mode) {
     current_matrix_mode = mode;
+    printf("glMatrixMode: %d\n", mode);
 }
+
+
+
+void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val) {
+    printf("glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
+
+    MatrixStack *stack = get_current_matrix_stack();
+    if (stack && stack->top >= 0) {
+        // Create orthographic projection matrix
+        Matrix4f ortho;
+        matrix_identity(&ortho);
+
+        GLfloat tx = -(right + left) / (right - left);
+        GLfloat ty = -(top + bottom) / (top - bottom);
+        GLfloat tz = -(far_val + near_val) / (far_val - near_val);
+
+        ortho.m[0] = 2.0f / (right - left);
+        ortho.m[5] = 2.0f / (top - bottom);
+        ortho.m[10] = -2.0f / (far_val - near_val);
+        ortho.m[12] = tx;
+        ortho.m[13] = ty;
+        ortho.m[14] = tz;
+
+        matrix_multiply(&stack->stack[stack->top], &ortho, &stack->stack[stack->top]);
+        printf("Orthographic matrix applied\n");
+    }
+}
+
+
 
 void glLoadIdentity(void) {
     MatrixStack *stack;
@@ -375,6 +440,19 @@ static int init_webgl() {
     init_opengl_state();
 
     return 1;
+}
+
+static MatrixStack* get_current_matrix_stack() {
+    switch (current_matrix_mode) {
+        case GL_MODELVIEW:
+            return &modelview_stack;
+        case GL_PROJECTION:
+            return &projection_stack;
+        case GL_TEXTURE:
+            return &texture_stack;
+        default:
+            return &modelview_stack;
+    }
 }
 
 static void init_opengl_state() {
@@ -727,11 +805,43 @@ void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) {
     current_normal.z = nz;
 }
 
+void glColor3f(GLfloat r, GLfloat g, GLfloat b) {
+    current_color.r = r;
+    current_color.g = g;
+    current_color.b = b;
+    current_color.a = 1.0f;
+
+    static int color_count = 0;
+    color_count++;
+    if (color_count <= 10) { // Only log first 10 color changes
+        printf("glColor3f: RGB(%.3f, %.3f, %.3f)\n", r, g, b);
+    }
+}
+
+void glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
+    current_color.r = r;
+    current_color.g = g;
+    current_color.b = b;
+    current_color.a = a;
+
+    static int color_count = 0;
+    color_count++;
+    if (color_count <= 10) { // Only log first 10 color changes
+        printf("glColor4f: RGBA(%.3f, %.3f, %.3f, %.3f)\n", r, g, b, a);
+    }
+}
+
 void glColor4fv(const GLfloat *v) {
     current_color.r = v[0];
     current_color.g = v[1];
     current_color.b = v[2];
     current_color.a = v[3];
+
+    static int color_count = 0;
+    color_count++;
+    if (color_count <= 10) { // Only log first 10 color changes
+        printf("glColor4fv: RGBA(%.3f, %.3f, %.3f, %.3f)\n", v[0], v[1], v[2], v[3]);
+    }
 }
 
 void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {
@@ -764,6 +874,38 @@ void glEnd(void) {
         return;
     }
 
+    static int glEnd_count = 0;
+    glEnd_count++;
+    if (glEnd_count <= 5) { // Only log first 5 glEnd calls
+        printf("glEnd #%d: Drawing %d vertices with primitive type %d\n", glEnd_count, immediate.vertex_count, immediate.primitive_type);
+    }
+
+    // Draw a test triangle on the first frame to verify rendering works
+    static int test_triangle_drawn = 0;
+    if (glEnd_count == 1 && !test_triangle_drawn) {
+        printf("Drawing test triangle in bright red...\n");
+        test_triangle_drawn = 1;
+
+        // Temporarily override the current geometry with a bright red triangle
+        immediate.vertex_count = 3;
+        immediate.primitive_type = GL_TRIANGLES;
+
+        // Set bright red color
+        for (int i = 0; i < 3; i++) {
+            immediate.colors[i].r = 1.0f;
+            immediate.colors[i].g = 0.0f;
+            immediate.colors[i].b = 0.0f;
+            immediate.colors[i].a = 1.0f;
+        }
+
+        // Set triangle vertices (centered, visible)
+        immediate.vertices[0].x = -0.3f; immediate.vertices[0].y = -0.3f; immediate.vertices[0].z = 0.0f;
+        immediate.vertices[1].x =  0.3f; immediate.vertices[1].y = -0.3f; immediate.vertices[1].z = 0.0f;
+        immediate.vertices[2].x =  0.0f; immediate.vertices[2].y =  0.3f; immediate.vertices[2].z = 0.0f;
+
+        printf("Test triangle vertices set\n");
+    }
+
     // Create VBOs and render
     GLuint vbo_vertices, vbo_colors, vbo_normals;
     glGenBuffers(1, &vbo_vertices);
@@ -782,33 +924,76 @@ void glEnd(void) {
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Normal3f),
                  immediate.normals, GL_STATIC_DRAW);
 
-    // Use shader program
+    // Use our WebGL 2.0 wrapper
+    printf("Using WebGL 2.0 wrapper...\n");
+
+    // Use the pre-compiled shader program
     glUseProgram(shader_program);
 
-    // Set uniforms
-    GLint modelview_loc = glGetUniformLocation(shader_program, "modelview");
+    // Set up projection matrix (simple orthographic for now)
     GLint projection_loc = glGetUniformLocation(shader_program, "projection");
-    glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview_stack.stack[modelview_stack.top].m);
-    glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection_stack.stack[projection_stack.top].m);
+    if (projection_loc != -1) {
+        // Simple orthographic projection
+        GLfloat projection[16] = {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, -1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection);
+    }
+
+    // Set up modelview matrix (identity for now)
+    GLint modelview_loc = glGetUniformLocation(shader_program, "modelview");
+    if (modelview_loc != -1) {
+        GLfloat modelview[16] = {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview);
+    }
+
+    // Create and bind VBOs
+    glGenBuffers(1, &vbo_vertices);
+    glGenBuffers(1, &vbo_colors);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f), immediate.vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
+    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f), immediate.colors, GL_STATIC_DRAW);
 
     // Set up vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     GLint pos_attrib = glGetAttribLocation(shader_program, "position");
-    glEnableVertexAttribArray(pos_attrib);
-    glVertexAttribPointer(pos_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    if (pos_attrib != -1) {
+        glEnableVertexAttribArray(pos_attrib);
+        glVertexAttribPointer(pos_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
     GLint color_attrib = glGetAttribLocation(shader_program, "color");
-    glEnableVertexAttribArray(color_attrib);
-    glVertexAttribPointer(color_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    GLint normal_attrib = glGetAttribLocation(shader_program, "normal");
-    glEnableVertexAttribArray(normal_attrib);
-    glVertexAttribPointer(normal_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    if (color_attrib != -1) {
+        glEnableVertexAttribArray(color_attrib);
+        glVertexAttribPointer(color_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    }
 
     // Draw
     glDrawArrays(immediate.primitive_type, 0, immediate.vertex_count);
+
+    // Cleanup
+    glDeleteBuffers(1, &vbo_vertices);
+    glDeleteBuffers(1, &vbo_colors);
+
+    printf("WebGL 2.0 wrapper rendering completed\n");
+
+    // Check for WebGL errors after drawing
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        printf("WebGL error after glDrawArrays: %d\n", error);
+    }
 
     // Cleanup
     glDeleteBuffers(1, &vbo_vertices);
