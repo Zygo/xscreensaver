@@ -4049,7 +4049,7 @@ if test "$have_xft" = yes; then
 else
   XFT_LIBS=''
   XFT_SRCS='$(UTILS_SRC)/xft.c'
-  XFT_OBJS='$(UTILS_BIN)/xft.o'
+  XFT_OBJS='$(UTILS_BIN)/xft.o $(UTILS_BIN)/xftwrap.o'
 fi
 
 
