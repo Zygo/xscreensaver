@@ -293,37 +293,26 @@ void main_loop(void) {
     static int frame_count = 0;
     frame_count++;
 
-    if (frame_count % 60 == 0) { // Log every 60 frames (once per second)
-        printf("Main loop frame %d\n", frame_count);
+    // Stop debug output after frame 240 (4 seconds)
+    if (frame_count <= 240) {
+        if (frame_count % 60 == 0) { // Log every 60 frames (once per second)
+            printf("Main loop frame %d\n", frame_count);
+        }
     }
 
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Draw a simple test triangle to verify WebGL is working
-    if (frame_count == 1) {
-        printf("Drawing test triangle...\n");
-        glBegin(GL_TRIANGLES);
-        glColor3f(1.0f, 0.0f, 0.0f);  // Red
-        glVertex3f(-0.5f, -0.5f, 0.0f);
-        glColor3f(0.0f, 1.0f, 0.0f);  // Green
-        glVertex3f(0.5f, -0.5f, 0.0f);
-        glColor3f(0.0f, 0.0f, 1.0f);  // Blue
-        glVertex3f(0.0f, 0.5f, 0.0f);
-        glEnd();
-        printf("Test triangle drawn\n");
-    }
-
     if (hack_draw) {
-        if (frame_count % 60 == 0) {
+        if (frame_count <= 240 && frame_count % 60 == 0) {
             printf("Calling hack_draw...\n");
         }
         hack_draw(&web_mi);
-        if (frame_count % 60 == 0) {
+        if (frame_count <= 240 && frame_count % 60 == 0) {
             printf("hack_draw completed\n");
         }
     } else {
-        if (frame_count % 60 == 0) {
+        if (frame_count <= 240 && frame_count % 60 == 0) {
             printf("hack_draw is NULL!\n");
         }
     }

@@ -243,66 +243,78 @@
             <h1>HexTrail</h1>
             <p>A mesmerizing hexagonal cellular automaton from XScreenSaver</p>
         </div>
-        
+
         <div id="canvas-container">
             <canvas id="canvas" width="800" height="600"></canvas>
             <div id="loading">Loading HexTrail...</div>
         </div>
-        
+
         <div id="controls">
             <div class="control-group">
                 <label for="speed">Speed:</label>
                 <input type="range" id="speed" min="0.1" max="3.0" step="0.1" value="1.0">
                 <span id="speed-value">1.0</span>
             </div>
-            
+
             <div class="control-group">
                 <label for="thickness">Thickness:</label>
                 <input type="range" id="thickness" min="0.05" max="0.5" step="0.01" value="0.15">
                 <span id="thickness-value">0.15</span>
             </div>
-            
+
             <div class="control-group">
                 <label>
                     <input type="checkbox" id="spin" checked>
                     Spin
                 </label>
             </div>
-            
+
             <div class="control-group">
                 <label>
                     <input type="checkbox" id="wander" checked>
                     Wander
                 </label>
             </div>
-            
+
             <div class="control-group">
                 <button id="reset">Reset</button>
                 <button id="fullscreen">Fullscreen</button>
             </div>
         </div>
-        
+
         <div id="info">
             <p>Click and drag to rotate the view. Use mouse wheel to zoom.</p>
             <p>Press 'F' for fullscreen, 'R' to reset, 'S' to toggle spin, 'W' to toggle wander.</p>
         </div>
-        
+
         <!-- Debug Panel -->
         <div id="debug-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3 style="margin: 0;">Debug Output</h3>
-                <button onclick="document.getElementById('debug-panel').style.display='none'; document.getElementById('debug-toggle').style.display='block';" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer;">×</button>
+                <div>
+                    <button onclick="toggleDebugPause()" id="debug-pause-btn" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer; margin-right: 5px;">Pause</button>
+                    <button onclick="document.getElementById('debug-panel').style.display='none'; document.getElementById('debug-toggle').style.display='block';" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer;">×</button>
+                </div>
             </div>
             <div id="debug-log"></div>
         </div>
-        
+
         <!-- Debug Toggle Button -->
         <button id="debug-toggle" onclick="document.getElementById('debug-panel').style.display='block'; this.style.display='none';">Debug</button>
     </div>
-    
+
     <script>
+        // Debug pause functionality
+        var debugPaused = false;
+        function toggleDebugPause() {
+            debugPaused = !debugPaused;
+            var btn = document.getElementById('debug-pause-btn');
+            btn.textContent = debugPaused ? 'Resume' : 'Pause';
+        }
+
         // Global error handler
         window.onerror = function(msg, url, line, col, error) {
+            if (debugPaused) return;
             var debugLog = document.getElementById('debug-log');
             if (debugLog) {
                 var timestamp = new Date().toLocaleTimeString();
@@ -310,7 +322,7 @@
                 debugLog.scrollTop = debugLog.scrollHeight;
             }
         };
-        
+
         // Configure Module before loading the generated JS
         var Module = {
             canvas: document.getElementById('canvas'),
@@ -319,48 +331,54 @@
                 if (loading) {
                     loading.textContent = text;
                 }
-                
+
                 // Log to debug panel
-                var debugLog = document.getElementById('debug-log');
-                if (debugLog) {
-                    var timestamp = new Date().toLocaleTimeString();
-                    debugLog.innerHTML += '[' + timestamp + '] Status: ' + text + '<br>';
-                    debugLog.scrollTop = debugLog.scrollHeight;
+                if (!debugPaused) {
+                    var debugLog = document.getElementById('debug-log');
+                    if (debugLog) {
+                        var timestamp = new Date().toLocaleTimeString();
+                        debugLog.innerHTML += '[' + timestamp + '] Status: ' + text + '<br>';
+                        debugLog.scrollTop = debugLog.scrollHeight;
+                    }
                 }
             },
             print: function(...args) {
                 console.log(...args);
-                
+
                 // Log to debug panel
-                var debugLog = document.getElementById('debug-log');
-                if (debugLog) {
-                    var timestamp = new Date().toLocaleTimeString();
-                    debugLog.innerHTML += '[' + timestamp + '] Print: ' + args.join(' ') + '<br>';
-                    debugLog.scrollTop = debugLog.scrollHeight;
+                if (!debugPaused) {
+                    var debugLog = document.getElementById('debug-log');
+                    if (debugLog) {
+                        var timestamp = new Date().toLocaleTimeString();
+                        debugLog.innerHTML += '[' + timestamp + '] Print: ' + args.join(' ') + '<br>';
+                        debugLog.scrollTop = debugLog.scrollHeight;
+                    }
                 }
             },
             onRuntimeInitialized: function() {
                 console.log('Module runtime initialized');
-                
+
                 // Hide loading screen
                 var loading = document.getElementById('loading');
                 if (loading) {
                     loading.style.display = 'none';
                 }
-                
+
                 // Log to debug panel
-                var debugLog = document.getElementById('debug-log');
-                if (debugLog) {
-                    var timestamp = new Date().toLocaleTimeString();
-                    debugLog.innerHTML += '[' + timestamp + '] Module runtime initialized<br>';
-                    debugLog.scrollTop = debugLog.scrollHeight;
+                if (!debugPaused) {
+                    var debugLog = document.getElementById('debug-log');
+                    if (debugLog) {
+                        var timestamp = new Date().toLocaleTimeString();
+                        debugLog.innerHTML += '[' + timestamp + '] Module runtime initialized<br>';
+                        debugLog.scrollTop = debugLog.scrollHeight;
+                    }
                 }
-                
+
                 // Set up controls
                 setupControls();
             }
         };
-        
+
         // Set up control event listeners
         function setupControls() {
             // Speed control
@@ -373,7 +391,7 @@
                     Module._set_speed(parseFloat(value));
                 }
             });
-            
+
             // Thickness control
             var thicknessSlider = document.getElementById('thickness');
             var thicknessValue = document.getElementById('thickness-value');
@@ -384,7 +402,7 @@
                     Module._set_thickness(parseFloat(value));
                 }
             });
-            
+
             // Spin control
             var spinCheckbox = document.getElementById('spin');
             spinCheckbox.addEventListener('change', function() {
@@ -392,7 +410,7 @@
                     Module._set_spin(this.checked ? 1 : 0);
                 }
             });
-            
+
             // Wander control
             var wanderCheckbox = document.getElementById('wander');
             wanderCheckbox.addEventListener('change', function() {
@@ -400,7 +418,7 @@
                     Module._set_wander(this.checked ? 1 : 0);
                 }
             });
-            
+
             // Reset button
             var resetButton = document.getElementById('reset');
             resetButton.addEventListener('click', function() {
@@ -411,14 +429,14 @@
                 thicknessValue.textContent = '0.15';
                 spinCheckbox.checked = true;
                 wanderCheckbox.checked = true;
-                
+
                 // Apply reset values
                 if (Module._set_speed) Module._set_speed(1.0);
                 if (Module._set_thickness) Module._set_thickness(0.15);
                 if (Module._set_spin) Module._set_spin(1);
                 if (Module._set_wander) Module._set_wander(1);
             });
-            
+
             // Fullscreen button
             var fullscreenButton = document.getElementById('fullscreen');
             fullscreenButton.addEventListener('click', function() {
@@ -428,19 +446,19 @@
                     document.exitFullscreen();
                 }
             });
-            
+
             // Mouse controls
             var canvas = document.getElementById('canvas');
             var isDragging = false;
             var lastX = 0;
             var lastY = 0;
-            
+
             canvas.addEventListener('mousedown', function(e) {
                 isDragging = true;
                 lastX = e.clientX;
                 lastY = e.clientY;
             });
-            
+
             canvas.addEventListener('mousemove', function(e) {
                 if (isDragging && Module._handle_mouse_drag) {
                     var deltaX = e.clientX - lastX;
@@ -450,18 +468,18 @@
                     lastY = e.clientY;
                 }
             });
-            
+
             canvas.addEventListener('mouseup', function() {
                 isDragging = false;
             });
-            
+
             canvas.addEventListener('wheel', function(e) {
                 e.preventDefault();
                 if (Module._handle_mouse_wheel) {
                     Module._handle_mouse_wheel(e.deltaY > 0 ? 1 : -1);
                 }
             }, { passive: false });
-            
+
             // Keyboard controls
             document.addEventListener('keydown', function(e) {
                 switch(e.key.toLowerCase()) {
@@ -487,8 +505,8 @@
             });
         }
     </script>
-    
+
     <!-- This will be replaced by the generated script tag -->
     {{{ SCRIPT }}}
 </body>
-</html> 
+</html>
