@@ -1,151 +1,148 @@
 # HexTrail Web Version
 
-A web-based version of the HexTrail screensaver from XScreenSaver, compiled with Emscripten.
-
-## What is HexTrail?
-
-HexTrail is a mesmerizing hexagonal cellular automaton that creates beautiful, organic-looking patterns. It simulates the growth of hexagonal cells that spread across a grid, creating intricate trails and patterns.
+A web-based port of the HexTrail screensaver from XScreenSaver, compiled using Emscripten for WebGL 2.0.
 
 ## Features
 
-- **Real-time animation** with smooth 60fps rendering
-- **Interactive controls** for speed, thickness, spin, and wander
-- **Mouse controls** - click and drag to rotate, scroll to zoom
-- **Keyboard shortcuts** - F for fullscreen, R for reset, S/W to toggle effects
-- **Responsive design** that works on desktop and mobile
-- **Fullscreen mode** for immersive viewing
+- **Full WebGL 2.0 Support**: Hardware-accelerated 3D graphics
+- **Interactive Controls**: Adjust speed, thickness, spin, and wander
+- **Mouse Interaction**: Click and drag to rotate, mouse wheel to zoom
+- **Keyboard Shortcuts**: F (fullscreen), R (reset), S (toggle spin), W (toggle wander)
+- **Responsive Design**: Works on desktop and mobile devices
+- **Cross-Platform**: Runs in any modern web browser
 
-## Prerequisites
+## Quick Start
 
-To build the web version, you need:
-
-1. **Emscripten SDK** - Download and install from [emscripten.org](https://emscripten.org/docs/getting_started/downloads.html)
-2. **SDL3** - The build script will handle this via emscripten
-3. **A modern web browser** with WebGL 2.0 support
-
-## Building
-
-1. Navigate to the `hacks/glx` directory:
+1. **Build the project** (if not already built):
    ```bash
    cd hacks/glx
-   ```
-
-2. Run the build script:
-   ```bash
    ./build_web.sh
    ```
 
-3. The build will create:
-   - `hextrail_web.html` - Main HTML file
-   - `hextrail_web.js` - JavaScript module
-   - `hextrail_web.wasm` - WebAssembly binary
-
-## Running
-
-### Local Development Server
-
-1. Start a local web server:
+2. **Start a local server**:
    ```bash
+   cd web
    python3 -m http.server 8000
    ```
 
-2. Open your browser and go to:
-   ```
-   http://localhost:8000/web/hextrail_web.html
-   ```
-
-### Using a Different Server
-
-You can use any web server that supports serving static files. Some options:
-
-- **Node.js**: `npx serve web/`
-- **PHP**: `php -S localhost:8000 -t web/`
-- **Python**: `python3 -m http.server 8000`
+3. **Open in browser**:
+   Navigate to `http://localhost:8000/index.html`
 
 ## Controls
 
-### Mouse
-- **Click and drag** - Rotate the view
-- **Mouse wheel** - Zoom in/out
+### Mouse Controls
+- **Click and Drag**: Rotate the view
+- **Mouse Wheel**: Zoom in/out
 
-### Keyboard
-- **F** - Toggle fullscreen
-- **R** - Reset the animation
-- **S** - Toggle spin effect
-- **W** - Toggle wander effect
-- **Escape** - Exit fullscreen
+### Keyboard Shortcuts
+- **F**: Toggle fullscreen mode
+- **R**: Reset the animation
+- **S**: Toggle spin mode
+- **W**: Toggle wander mode
+- **ESC**: Exit fullscreen
 
 ### UI Controls
-- **Speed slider** - Control animation speed (0.1x to 3.0x)
-- **Thickness slider** - Control line thickness (0.05 to 0.5)
-- **Spin checkbox** - Enable/disable rotation
-- **Wander checkbox** - Enable/disable camera movement
-- **Reset button** - Restart the animation
-- **Fullscreen button** - Enter fullscreen mode
+- **Speed Slider**: Adjust animation speed (0.1x to 3.0x)
+- **Thickness Slider**: Adjust line thickness (0.05 to 0.5)
+- **Spin Checkbox**: Enable/disable automatic rotation
+- **Wander Checkbox**: Enable/disable wandering motion
+- **Reset Button**: Restart the animation
+- **Fullscreen Button**: Enter fullscreen mode
 
 ## Technical Details
 
 ### Architecture
-- **C/C++ core** - Original XScreenSaver code compiled to WebAssembly
-- **SDL3** - Cross-platform multimedia library (via emscripten)
-- **WebGL 2.0** - Hardware-accelerated graphics
-- **JavaScript interface** - Modern web UI with controls
+- **Frontend**: HTML5 Canvas + JavaScript
+- **Backend**: C/C++ compiled to WebAssembly via Emscripten
+- **Graphics**: WebGL 2.0 for hardware acceleration
+- **Abstraction Layer**: JWXYZ (JWXYZ Is Not Xlib) for cross-platform compatibility
 
-### Performance
-- **WebAssembly** provides near-native performance
-- **WebGL 2.0** enables hardware acceleration
-- **Optimized rendering** with efficient OpenGL calls
-- **Memory management** with automatic garbage collection
+### Build Process
+The build process compiles the original C code with the following modifications:
 
-### Browser Compatibility
-- **Chrome/Edge** 67+ (WebGL 2.0 support)
-- **Firefox** 51+ (WebGL 2.0 support)
-- **Safari** 15+ (WebGL 2.0 support)
-- **Mobile browsers** with WebGL 2.0 support
+1. **JWXYZ Abstraction**: Replaces X11 calls with web-compatible equivalents
+2. **WebGL Rendering**: Uses WebGL 2.0 instead of OpenGL
+3. **Event Handling**: Converts X11 events to web events
+4. **Memory Management**: Handles WebAssembly memory constraints
 
-## Troubleshooting
+### Files Generated
+- `hextrail_web.html`: Main HTML file (auto-generated by Emscripten)
+- `hextrail_web.js`: JavaScript glue code
+- `hextrail_web.wasm`: WebAssembly binary
+- `hextrail_web.data`: Preloaded assets
 
-### Build Issues
-- **Emscripten not found**: Install emscripten SDK
-- **SDL3 errors**: Make sure emscripten is properly configured
-- **Compilation errors**: Check that all source files are present
-
-### Runtime Issues
-- **Black screen**: Check WebGL 2.0 support in your browser
-- **Slow performance**: Try reducing the grid size or disabling effects
-- **No controls**: Check browser console for JavaScript errors
-
-### Browser Console Errors
-- **WebGL context lost**: Refresh the page
-- **Memory errors**: The app will automatically handle memory growth
-- **Module loading errors**: Check that all files are served correctly
+### Custom Web Interface
+- `index.html`: Custom web interface
+- `script.js`: JavaScript controller
+- `style.css`: Styling for the web interface
 
 ## Development
 
-### Modifying the C Code
-1. Edit `hextrail.c` in the parent directory
-2. Rebuild with `./build_web.sh`
-3. Refresh the browser
+### Prerequisites
+- **Emscripten SDK**: Required for compilation
+- **Python 3**: For local development server
+- **Modern Browser**: Chrome, Firefox, Safari, or Edge
 
-### Modifying the Web Interface
-1. Edit files in the `web/` directory
-2. Refresh the browser (no rebuild needed for HTML/CSS/JS changes)
+### Building from Source
+1. Install Emscripten:
+   ```bash
+   git clone https://github.com/emscripten-core/emsdk.git
+   cd emsdk
+   ./emsdk install latest
+   ./emsdk activate latest
+   source ./emsdk_env.sh
+   ```
 
-### Adding New Features
-- **C side**: Add functions and export them in the build script
-- **JavaScript side**: Add UI controls and call the exported functions
-- **Styling**: Modify `style.css` for visual changes
+2. Build the project:
+   ```bash
+   cd hacks/glx
+   ./build_web.sh
+   ```
+
+### Modifying the Code
+- **C/C++ Code**: Edit `hextrail.c` for core functionality
+- **Web Interface**: Edit `web/script.js` for UI behavior
+- **Styling**: Edit `web/style.css` for appearance
+- **Build Script**: Edit `build_web.sh` for compilation options
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Emscripten not found"**
+   - Install Emscripten SDK and source the environment
+
+2. **"Module not found"**
+   - Ensure the web server is running and serving files correctly
+   - Check browser console for specific error messages
+
+3. **"WebGL not supported"**
+   - Update your browser to a WebGL 2.0 compatible version
+   - Enable hardware acceleration in browser settings
+
+4. **"Build failed"**
+   - Check that all dependencies are installed
+   - Ensure you're running the build script from the correct directory
+
+### Performance Optimization
+- **Reduce Canvas Size**: Smaller canvases render faster
+- **Lower Quality Settings**: Reduce thickness and complexity
+- **Disable Effects**: Turn off spin and wander for better performance
 
 ## License
 
-This project is based on XScreenSaver, which is licensed under the same terms as the original XScreenSaver project.
-
-## Credits
-
-- **Original HexTrail**: Jamie Zawinski (jwz@jwz.org)
-- **Web Port**: Compiled with Emscripten
-- **Web Interface**: Modern responsive design with WebGL 2.0
+This project is based on XScreenSaver, which is licensed under the MIT License. See the main project README for details.
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests! The web version is designed to be easily extensible and modifiable. 
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## Acknowledgments
+
+- **Jamie Zawinski**: Original XScreenSaver creator
+- **Emscripten Team**: For making C/C++ web compilation possible
+- **WebGL Working Group**: For the WebGL specification 

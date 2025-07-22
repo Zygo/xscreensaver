@@ -231,79 +231,217 @@ typedef struct jwxyz_linked_point	linked_point;
 #define Button4Mask		(1<<11)
 #define Button5Mask		(1<<12)
 
+#ifndef XK_Shift_L
 #define XK_Shift_L		0xFFE1
+#endif
+#ifndef XK_Shift_R
 #define XK_Shift_R		0xFFE2
+#endif
+#ifndef XK_Control_L
 #define XK_Control_L		0xFFE3
+#endif
+#ifndef XK_Control_R
 #define XK_Control_R		0xFFE4
+#endif
+#ifndef XK_Caps_Lock
 #define XK_Caps_Lock		0xFFE5
+#endif
+#ifndef XK_Shift_Lock
 #define XK_Shift_Lock		0xFFE6
+#endif
+#ifndef XK_Meta_L
 #define XK_Meta_L		0xFFE7
+#endif
+#ifndef XK_Meta_R
 #define XK_Meta_R		0xFFE8
+#endif
+#ifndef XK_Alt_L
 #define XK_Alt_L		0xFFE9
+#endif
+#ifndef XK_Alt_R
 #define XK_Alt_R		0xFFEA
+#endif
+#ifndef XK_Super_L
 #define XK_Super_L		0xFFEB
+#endif
+#ifndef XK_Super_R
 #define XK_Super_R		0xFFEC
+#endif
+#ifndef XK_Hyper_L
 #define XK_Hyper_L		0xFFED
+#endif
+#ifndef XK_Hyper_R
 #define XK_Hyper_R		0xFFEE
+#endif
 
+#ifndef XK_Home
 #define XK_Home			0xFF50
+#endif
+#ifndef XK_Left
 #define XK_Left			0xFF51
+#endif
+#ifndef XK_Up
 #define XK_Up			0xFF52
+#endif
+#ifndef XK_Right
 #define XK_Right		0xFF53
+#endif
+#ifndef XK_Down
 #define XK_Down			0xFF54
+#endif
+#ifndef XK_Prior
 #define XK_Prior		0xFF55
+#endif
+#ifndef XK_Page_Up
 #define XK_Page_Up		0xFF55
+#endif
+#ifndef XK_Next
 #define XK_Next			0xFF56
+#endif
+#ifndef XK_Page_Down
 #define XK_Page_Down		0xFF56
+#endif
+#ifndef XK_End
 #define XK_End			0xFF57
+#endif
+#ifndef XK_Begin
 #define XK_Begin		0xFF58
+#endif
 
+#ifndef XK_F1
 #define XK_F1			0xFFBE
+#endif
+#ifndef XK_F2
 #define XK_F2			0xFFBF
+#endif
+#ifndef XK_F3
 #define XK_F3			0xFFC0
+#endif
+#ifndef XK_F4
 #define XK_F4			0xFFC1
+#endif
+#ifndef XK_F5
 #define XK_F5			0xFFC2
+#endif
+#ifndef XK_F6
 #define XK_F6			0xFFC3
+#endif
+#ifndef XK_F7
 #define XK_F7			0xFFC4
+#endif
+#ifndef XK_F8
 #define XK_F8			0xFFC5
+#endif
+#ifndef XK_F9
 #define XK_F9			0xFFC6
+#endif
+#ifndef XK_F10
 #define XK_F10			0xFFC7
+#endif
+#ifndef XK_F11
 #define XK_F11			0xFFC8
+#endif
+#ifndef XK_F12
 #define XK_F12			0xFFC9
+#endif
+#ifndef XK_F13
 #define XK_F13			0xFFCA
+#endif
+#ifndef XK_F14
 #define XK_F14			0xFFCB
+#endif
+#ifndef XK_F15
 #define XK_F15			0xFFCC
+#endif
+#ifndef XK_F16
 #define XK_F16			0xFFCD
+#endif
+#ifndef XK_F17
 #define XK_F17			0xFFCE
+#endif
+#ifndef XK_F18
 #define XK_F18			0xFFCF
+#endif
+#ifndef XK_F19
 #define XK_F19			0xFFD0
+#endif
+#ifndef XK_F20
 #define XK_F20			0xFFD1
+#endif
 
+#ifndef XK_KP_F1
 #define XK_KP_F1		0xFF91
+#endif
+#ifndef XK_KP_F2
 #define XK_KP_F2		0xFF92
+#endif
+#ifndef XK_KP_F3
 #define XK_KP_F3		0xFF93
+#endif
+#ifndef XK_KP_F4
 #define XK_KP_F4		0xFF94
+#endif
 
+#ifndef XK_KP_Home
 #define XK_KP_Home		0xFF95
+#endif
+#ifndef XK_KP_Left
 #define XK_KP_Left		0xFF96
+#endif
+#ifndef XK_KP_Up
 #define XK_KP_Up		0xFF97
+#endif
+#ifndef XK_KP_Right
 #define XK_KP_Right		0xFF98
+#endif
+#ifndef XK_KP_Down
 #define XK_KP_Down		0xFF99
+#endif
+#ifndef XK_KP_Prior
 #define XK_KP_Prior		0xFF9A
+#endif
+#ifndef XK_KP_Page_Up
 #define XK_KP_Page_Up		0xFF9A
+#endif
+#ifndef XK_KP_Next
 #define XK_KP_Next		0xFF9B
+#endif
+#ifndef XK_KP_Page_Down
 #define XK_KP_Page_Down		0xFF9B
+#endif
+#ifndef XK_KP_End
 #define XK_KP_End		0xFF9C
+#endif
+#ifndef XK_KP_Begin
 #define XK_KP_Begin		0xFF9D
+#endif
+#ifndef XK_KP_Insert
 #define XK_KP_Insert		0xFF9E
+#endif
+#ifndef XK_KP_Delete
 #define XK_KP_Delete		0xFF9F
+#endif
+#ifndef XK_KP_Equal
 #define XK_KP_Equal		0xFFBD
+#endif
+#ifndef XK_KP_Multiply
 #define XK_KP_Multiply		0xFFAA
+#endif
+#ifndef XK_KP_Add
 #define XK_KP_Add		0xFFAB
+#endif
+#ifndef XK_KP_Separator
 #define XK_KP_Separator		0xFFAC
+#endif
+#ifndef XK_KP_Subtract
 #define XK_KP_Subtract		0xFFAD
+#endif
+#ifndef XK_KP_Decimal
 #define XK_KP_Decimal		0xFFAE
+#endif
+#ifndef XK_KP_Divide
 #define XK_KP_Divide		0xFFAF
+#endif
 
 /* Additional X11 constants needed by screenhack.c */
 #define XA_WINDOW                1
@@ -316,6 +454,11 @@ typedef struct jwxyz_linked_point	linked_point;
 #define PropModeReplace          0
 #define AllocNone                0
 #define StructureNotifyMask      16
+#define PropertyChangeMask       0x00000004
+
+// Function declarations for web compatibility
+extern int XSendEvent(Display *display, Window window, Bool propagate, long event_mask, XEvent *event);
+extern char *XGetAtomName(Display *display, Atom atom);
 
 #define GXclear			0x0		/* 0 */
 #define GXand			0x1		/* src AND dst */
@@ -821,6 +964,7 @@ union jwxyz_XEvent {
   } xvisibility;
   struct {
     int type;
+    Window window;
     Atom message_type;
     union {
       long l[5];

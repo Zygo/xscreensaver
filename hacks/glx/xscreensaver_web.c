@@ -1230,3 +1230,22 @@ void do_fps(ModeInfo *mi) {
     // Dummy implementation for web builds
     // FPS is handled by the web main loop
 }
+
+// Missing X11 function stubs for web build
+int XSendEvent(Display *display, Window window, Bool propagate, long event_mask, XEvent *event) {
+    // Web stub - events are handled differently in web environment
+    (void)display;
+    (void)window;
+    (void)propagate;
+    (void)event_mask;
+    (void)event;
+    return 1; // Success
+}
+
+// Missing function that screenhack.c uses
+char *XGetAtomName(Display *display, Atom atom) {
+    // Web stub - return a default name
+    (void)display;
+    (void)atom;
+    return strdup("WEB_ATOM");
+}

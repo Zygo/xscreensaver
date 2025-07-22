@@ -132,8 +132,8 @@ class HexTrailWeb {
             speedValue.textContent = value.toFixed(1);
             
             // Update speed in the module
-            if (this.module) {
-                this.module.ccall('set_speed', 'number', ['number'], [value]);
+            if (this.module && this.module._set_speed) {
+                this.module._set_speed(value);
             }
         });
         
@@ -146,24 +146,24 @@ class HexTrailWeb {
             thicknessValue.textContent = value.toFixed(2);
             
             // Update thickness in the module
-            if (this.module) {
-                this.module.ccall('set_thickness', 'number', ['number'], [value]);
+            if (this.module && this.module._set_thickness) {
+                this.module._set_thickness(value);
             }
         });
         
         // Spin control
         const spinCheckbox = document.getElementById('spin');
         spinCheckbox.addEventListener('change', (e) => {
-            if (this.module) {
-                this.module.ccall('set_spin', 'number', ['number'], [e.target.checked ? 1 : 0]);
+            if (this.module && this.module._set_spin) {
+                this.module._set_spin(e.target.checked ? 1 : 0);
             }
         });
         
         // Wander control
         const wanderCheckbox = document.getElementById('wander');
         wanderCheckbox.addEventListener('change', (e) => {
-            if (this.module) {
-                this.module.ccall('set_wander', 'number', ['number'], [e.target.checked ? 1 : 0]);
+            if (this.module && this.module._set_wander) {
+                this.module._set_wander(e.target.checked ? 1 : 0);
             }
         });
         
@@ -230,7 +230,9 @@ class HexTrailWeb {
                 const deltaY = e.clientY - lastY;
                 
                 // Convert mouse movement to rotation
-                this.module.ccall('handle_mouse_drag', 'number', ['number', 'number'], [deltaX, deltaY]);
+                if (this.module._handle_mouse_drag) {
+                    this.module._handle_mouse_drag(deltaX, deltaY);
+                }
                 
                 lastX = e.clientX;
                 lastY = e.clientY;
@@ -250,9 +252,9 @@ class HexTrailWeb {
         // Mouse wheel for zoom
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            if (this.module) {
+            if (this.module && this.module._handle_mouse_wheel) {
                 const delta = e.deltaY > 0 ? -1 : 1;
-                this.module.ccall('handle_mouse_wheel', 'number', ['number'], [delta]);
+                this.module._handle_mouse_wheel(delta);
             }
         });
         
