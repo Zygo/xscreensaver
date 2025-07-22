@@ -186,7 +186,7 @@ static GLuint compile_shader(const char *source, GLenum type) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, NULL);
     glCompileShader(shader);
-    
+
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
@@ -194,12 +194,12 @@ static GLuint compile_shader(const char *source, GLenum type) {
         glGetShaderInfoLog(shader, 512, NULL, info_log);
         printf("Shader compilation error: %s\n", info_log);
     }
-    
+
     return shader;
 }
 
 static void init_shaders() {
-    const char *vertex_source = 
+    const char *vertex_source =
         "#version 300 es\n"
         "in vec3 position;\n"
         "in vec3 color;\n"
@@ -213,8 +213,8 @@ static void init_shaders() {
         "    frag_color = color;\n"
         "    frag_normal = normal;\n"
         "}\n";
-    
-    const char *fragment_source = 
+
+    const char *fragment_source =
         "#version 300 es\n"
         "precision mediump float;\n"
         "in vec3 frag_color;\n"
@@ -223,15 +223,15 @@ static void init_shaders() {
         "void main() {\n"
         "    out_color = vec4(frag_color, 1.0);\n"
         "}\n";
-    
+
     vertex_shader = compile_shader(vertex_source, GL_VERTEX_SHADER);
     fragment_shader = compile_shader(fragment_source, GL_FRAGMENT_SHADER);
-    
+
     shader_program = glCreateProgram();
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
-    
+
     GLint success;
     glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
     if (!success) {
@@ -290,11 +290,22 @@ static free_func hack_free = NULL;
 
 // Main loop callback
 void main_loop(void) {
+    static int frame_count = 0;
+    frame_count++;
+
+    if (frame_count % 60 == 0) { // Log every 60 frames (once per second)
+        printf("Main loop frame %d\n", frame_count);
+    }
+
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
     if (hack_draw) {
         hack_draw(&web_mi);
+    } else {
+        if (frame_count % 60 == 0) {
+            printf("hack_draw is NULL!\n");
+        }
     }
 }
 
@@ -317,7 +328,7 @@ void glLoadIdentity(void) {
         default:
             return;
     }
-    
+
     matrix_identity(&stack->stack[stack->top]);
 }
 
@@ -353,7 +364,7 @@ static int init_webgl() {
 
     // Initialize OpenGL state
     init_opengl_state();
-    
+
     return 1;
 }
 
@@ -365,14 +376,14 @@ static void init_opengl_state() {
     modelview_stack.top = 0;
     projection_stack.top = 0;
     texture_stack.top = 0;
-    
+
     // Initialize immediate mode
     immediate.in_begin_end = False;
     immediate.vertex_count = 0;
-    
+
     // Initialize shaders
     init_shaders();
-    
+
     // Set up basic OpenGL state
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -382,10 +393,15 @@ static void init_opengl_state() {
 // Generic web initialization
 EMSCRIPTEN_KEEPALIVE
 int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, free_func free) {
+    printf("xscreensaver_web_init called\n");
+
     hack_init = init;
     hack_draw = draw;
     hack_reshape = reshape;
     hack_free = free;
+
+    printf("Function pointers set: init=%p, draw=%p, reshape=%p, free=%p\n",
+           (void*)init, (void*)draw, (void*)reshape, (void*)free);
 
     // Initialize ModeInfo
     web_mi.screen = 0;
@@ -399,23 +415,38 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
     web_mi.fps_p = 0;
     web_mi.data = NULL;
 
+    printf("ModeInfo initialized: width=%d, height=%d\n", web_mi.width, web_mi.height);
+
     // Initialize WebGL
+    printf("Initializing WebGL...\n");
     if (!init_webgl()) {
+        printf("WebGL initialization failed!\n");
         return 0;
     }
+    printf("WebGL initialized successfully\n");
 
     // Call the hack's init function
     if (hack_init) {
+        printf("Calling hack_init...\n");
         hack_init(&web_mi);
+        printf("hack_init completed\n");
+    } else {
+        printf("hack_init is NULL!\n");
     }
 
     // Set up reshape
     if (hack_reshape) {
+        printf("Calling hack_reshape...\n");
         hack_reshape(&web_mi, web_mi.width, web_mi.height);
+        printf("hack_reshape completed\n");
+    } else {
+        printf("hack_reshape is NULL!\n");
     }
 
     // Set up the main loop (60 FPS)
+    printf("Setting up main loop...\n");
     emscripten_set_main_loop(main_loop, 60, 1);
+    printf("Main loop set up successfully\n");
 
     return 1;
 }
@@ -489,18 +520,19 @@ void jwxyz_abort(const char *fmt, ...) {
     va_end(args);
     fprintf(stderr, "\n");
     // In a real implementation, this would terminate the program
-    // For web, we'll just return (not noreturn)
+    // For web, we'll just exit the program
+    exit(1);
 }
 
 // Missing GLU functions for WebGL
 void gluPerspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar) {
     GLfloat xmin, xmax, ymin, ymax;
-    
+
     ymax = zNear * tan(fovy * M_PI / 360.0f);
     ymin = -ymax;
     xmin = ymin * aspect;
     xmax = ymax * aspect;
-    
+
     glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
 }
 
@@ -510,9 +542,9 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
     GLfloat m[16];
     GLfloat x[3], y[3], z[3];
     GLfloat mag;
-    
+
     /* Make rotation matrix */
-    
+
     /* Z vector */
     z[0] = eyex - centerx;
     z[1] = eyey - centery;
@@ -523,40 +555,40 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
         z[1] /= mag;
         z[2] /= mag;
     }
-    
+
     /* Y vector */
     y[0] = upx;
     y[1] = upy;
     y[2] = upz;
-    
+
     /* X vector = Y cross Z */
     x[0] = y[1] * z[2] - y[2] * z[1];
     x[1] = -y[0] * z[2] + y[2] * z[0];
     x[2] = y[0] * z[1] - y[1] * z[0];
-    
+
     /* Recompute Y = Z cross X */
     y[0] = z[1] * x[2] - z[2] * x[1];
     y[1] = -z[0] * x[2] + z[2] * x[0];
     y[2] = z[0] * x[1] - z[1] * x[0];
-    
+
     /* cross product gives area of parallelogram, which is < 1.0 for
      * non-perpendicular unit vectors; so normalize x, y here
      */
-    
+
     mag = sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
     if (mag) {
         x[0] /= mag;
         x[1] /= mag;
         x[2] /= mag;
     }
-    
+
     mag = sqrt(y[0] * y[0] + y[1] * y[1] + y[2] * y[2]);
     if (mag) {
         y[0] /= mag;
         y[1] /= mag;
         y[2] /= mag;
     }
-    
+
 #define M(row,col)  m[col*4+row]
     M(0,0) = x[0];  M(0,1) = x[1];  M(0,2) = x[2];  M(0,3) = 0.0;
     M(1,0) = y[0];  M(1,1) = y[1];  M(1,2) = y[2];  M(1,3) = 0.0;
@@ -564,7 +596,7 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
     M(3,0) = 0.0;   M(3,1) = 0.0;   M(3,2) = 0.0;   M(3,3) = 1.0;
 #undef M
     glMultMatrixd(m);
-    
+
     /* Translate Eye to Origin */
     glTranslated(-eyex, -eyey, -eyez);
 }
@@ -590,7 +622,7 @@ void glPushMatrix(void) {
         default:
             return;
     }
-    
+
     if (stack->top < MAX_MATRIX_STACK_DEPTH - 1) {
         stack->top++;
         stack->stack[stack->top] = stack->stack[stack->top - 1];
@@ -612,7 +644,7 @@ void glPopMatrix(void) {
         default:
             return;
     }
-    
+
     if (stack->top > 0) {
         stack->top--;
     }
@@ -633,7 +665,7 @@ void glTranslatef(GLfloat x, GLfloat y, GLfloat z) {
         default:
             return;
     }
-    
+
     matrix_translate(&stack->stack[stack->top], x, y, z);
 }
 
@@ -652,7 +684,7 @@ void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) {
         default:
             return;
     }
-    
+
     matrix_rotate(&stack->stack[stack->top], angle, x, y, z);
 }
 
@@ -671,7 +703,7 @@ void glScalef(GLfloat x, GLfloat y, GLfloat z) {
         default:
             return;
     }
-    
+
     matrix_scale(&stack->stack[stack->top], x, y, z);
 }
 
@@ -697,7 +729,7 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
     if (!immediate.in_begin_end || immediate.vertex_count >= MAX_VERTICES) {
         return;
     }
-    
+
     immediate.vertices[immediate.vertex_count].x = x;
     immediate.vertices[immediate.vertex_count].y = y;
     immediate.vertices[immediate.vertex_count].z = z;
@@ -717,58 +749,58 @@ void glEnd(void) {
         immediate.in_begin_end = False;
         return;
     }
-    
+
     // Create VBOs and render
     GLuint vbo_vertices, vbo_colors, vbo_normals;
     glGenBuffers(1, &vbo_vertices);
     glGenBuffers(1, &vbo_colors);
     glGenBuffers(1, &vbo_normals);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f), 
+    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f),
                  immediate.vertices, GL_STATIC_DRAW);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
-    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f), 
+    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f),
                  immediate.colors, GL_STATIC_DRAW);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Normal3f), 
+    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Normal3f),
                  immediate.normals, GL_STATIC_DRAW);
-    
+
     // Use shader program
     glUseProgram(shader_program);
-    
+
     // Set uniforms
     GLint modelview_loc = glGetUniformLocation(shader_program, "modelview");
     GLint projection_loc = glGetUniformLocation(shader_program, "projection");
     glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview_stack.stack[modelview_stack.top].m);
     glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection_stack.stack[projection_stack.top].m);
-    
+
     // Set up vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     GLint pos_attrib = glGetAttribLocation(shader_program, "position");
     glEnableVertexAttribArray(pos_attrib);
     glVertexAttribPointer(pos_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
     GLint color_attrib = glGetAttribLocation(shader_program, "color");
     glEnableVertexAttribArray(color_attrib);
     glVertexAttribPointer(color_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
     GLint normal_attrib = glGetAttribLocation(shader_program, "normal");
     glEnableVertexAttribArray(normal_attrib);
     glVertexAttribPointer(normal_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    
+
     // Draw
     glDrawArrays(immediate.primitive_type, 0, immediate.vertex_count);
-    
+
     // Cleanup
     glDeleteBuffers(1, &vbo_vertices);
     glDeleteBuffers(1, &vbo_colors);
     glDeleteBuffers(1, &vbo_normals);
-    
+
     immediate.in_begin_end = False;
 }
 
@@ -783,12 +815,12 @@ void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat
     // Create perspective projection matrix
     Matrix4f frustum;
     matrix_identity(&frustum);
-    
+
     GLfloat a = (right + left) / (right - left);
     GLfloat b = (top + bottom) / (top - bottom);
     GLfloat c = -(far_val + near_val) / (far_val - near_val);
     GLfloat d = -(2 * far_val * near_val) / (far_val - near_val);
-    
+
     frustum.m[0] = 2 * near_val / (right - left);
     frustum.m[5] = 2 * near_val / (top - bottom);
     frustum.m[8] = a;
@@ -797,8 +829,8 @@ void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat
     frustum.m[11] = -1;
     frustum.m[14] = d;
     frustum.m[15] = 0;
-    
-    matrix_multiply(&projection_stack.stack[projection_stack.top], 
+
+    matrix_multiply(&projection_stack.stack[projection_stack.top],
                    &projection_stack.stack[projection_stack.top], &frustum);
 }
 
@@ -807,7 +839,7 @@ void glMultMatrixd(const GLfloat *m) {
     for (int i = 0; i < 16; i++) {
         matrix.m[i] = m[i];
     }
-    
+
     MatrixStack *stack;
     switch (current_matrix_mode) {
         case GL_MODELVIEW:
@@ -822,7 +854,7 @@ void glMultMatrixd(const GLfloat *m) {
         default:
             return;
     }
-    
+
     matrix_multiply(&stack->stack[stack->top], &stack->stack[stack->top], &matrix);
 }
 
@@ -1065,7 +1097,7 @@ void hsv_to_rgb(int h, double s, double v, double *r, double *g, double *b) {
     double c = v * s;
     double x = c * (1 - fabs(fmod(h / 60.0, 2) - 1));
     double m = v - c;
-    
+
     if (h >= 0 && h < 60) {
         *r = c; *g = x; *b = 0;
     } else if (h >= 60 && h < 120) {
@@ -1079,7 +1111,7 @@ void hsv_to_rgb(int h, double s, double v, double *r, double *g, double *b) {
     } else {
         *r = c; *g = 0; *b = x;
     }
-    
+
     *r += m; *g += m; *b += m;
 }
 
@@ -1087,21 +1119,21 @@ void rgb_to_hsv(unsigned short r, unsigned short g, unsigned short b, int *h, do
     double rf = r / 65535.0;
     double gf = g / 65535.0;
     double bf = b / 65535.0;
-    
+
     double max = fmax(fmax(rf, gf), bf);
     double min = fmin(fmin(rf, gf), bf);
     double delta = max - min;
-    
+
     *v = max;
-    
+
     if (max == 0) {
         *s = 0;
         *h = 0;
         return;
     }
-    
+
     *s = delta / max;
-    
+
     if (delta == 0) {
         *h = 0;
     } else if (max == rf) {
@@ -1111,14 +1143,14 @@ void rgb_to_hsv(unsigned short r, unsigned short g, unsigned short b, int *h, do
     } else {
         *h = (int)(60 * (((rf - gf) / delta) + 4));
     }
-    
+
     if (*h < 0) *h += 360;
 }
 
 // Convert XColor to GLfloat array for OpenGL
 void xcolor_to_glfloat(const XColor *xcolor, GLfloat *rgba) {
     rgba[0] = xcolor->red / 65535.0f;   // Red
-    rgba[1] = xcolor->green / 65535.0f; // Green  
+    rgba[1] = xcolor->green / 65535.0f; // Green
     rgba[2] = xcolor->blue / 65535.0f;  // Blue
     rgba[3] = 1.0f;                     // Alpha
 }
@@ -1134,9 +1166,9 @@ void make_smooth_colormap_webgl(XColor *colors, int *ncolorsP, Bool allocate_p, 
     double total_s = 0;
     double total_v = 0;
     int loop = 0;
-    
+
     if (*ncolorsP <= 0) return;
-    
+
     // Randomly choose number of color points
     {
         int n = webgl_random() % 20;
@@ -1145,7 +1177,7 @@ void make_smooth_colormap_webgl(XColor *colors, int *ncolorsP, Bool allocate_p, 
         else if (n <= 18) npoints = 4;  /* 15% of the time */
         else             npoints = 5;   /*  5% of the time */
     }
-    
+
 REPICK_ALL_COLORS:
     for (i = 0; i < npoints; i++) {
     REPICK_THIS_COLOR:
@@ -1153,7 +1185,7 @@ REPICK_ALL_COLORS:
         h[i] = webgl_random() % 360;
         s[i] = ((double)(webgl_random() % 1000)) / 1000.0; // 0.0 to 1.0
         v[i] = ((double)(webgl_random() % 800)) / 1000.0 + 0.2; // 0.2 to 1.0
-        
+
         // Make sure adjacent colors aren't too close
         if (i > 0) {
             int j = (i+1 == npoints) ? 0 : (i-1);
@@ -1172,16 +1204,16 @@ REPICK_ALL_COLORS:
         total_s += s[i];
         total_v += v[i];
     }
-    
+
     // Ensure minimum saturation and value
     if (total_s / npoints < 0.2)
         goto REPICK_ALL_COLORS;
     if (total_v / npoints < 0.3)
         goto REPICK_ALL_COLORS;
-    
+
     // Generate smooth color path
     make_color_path_webgl(npoints, h, s, v, colors, &ncolors);
-    
+
     *ncolorsP = ncolors;
 }
 
@@ -1189,35 +1221,35 @@ REPICK_ALL_COLORS:
 static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XColor *colors, int *ncolorsP) {
     int ncolors = *ncolorsP;
     int i, j;
-    
+
     for (i = 0; i < ncolors; i++) {
         double t = (double)i / (ncolors - 1);
         int segment = (int)(t * (npoints - 1));
         double local_t = t * (npoints - 1) - segment;
-        
+
         if (segment >= npoints - 1) {
             segment = npoints - 2;
             local_t = 1.0;
         }
-        
+
         // Interpolate between two color points
         double h1 = h[segment], h2 = h[segment + 1];
         double s1 = s[segment], s2 = s[segment + 1];
         double v1 = v[segment], v2 = v[segment + 1];
-        
+
         // Handle hue wrapping
         double dh = h2 - h1;
         if (dh > 180) dh -= 360;
         if (dh < -180) dh += 360;
-        
+
         double interp_h = h1 + dh * local_t;
         double interp_s = s1 + (s2 - s1) * local_t;
         double interp_v = v1 + (v2 - v1) * local_t;
-        
+
         // Convert to RGB
         double r, g, b;
         hsv_to_rgb(interp_h, interp_s, interp_v, &r, &g, &b);
-        
+
         colors[i].red = (unsigned short)(r * 65535);
         colors[i].green = (unsigned short)(g * 65535);
         colors[i].blue = (unsigned short)(b * 65535);
@@ -1255,7 +1287,7 @@ float get_float_resource(Display *dpy, char *res_name, char *res_class) {
     // Return default values for common resources
     (void)dpy;
     (void)res_class;
-    
+
     if (strcmp(res_name, "speed") == 0) {
         return 1.0; // Default speed
     }

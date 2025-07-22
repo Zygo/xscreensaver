@@ -414,8 +414,8 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
         {
           fprintf (stderr, "%s: ignoring `-visual %s' because of `%s'.\n",
                    progname, visual_string, why);
-          fprintf (stderr, "%s: using %s's visual 0x%lx.\n",
-                   progname, win, XVisualIDFromVisual (visual));
+          fprintf (stderr, "%s: using %s's visual 0x%x.\n",
+                   progname, win, (int)XVisualIDFromVisual (visual));
         }
       free (visual_string);
     }
