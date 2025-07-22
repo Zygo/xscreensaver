@@ -5,10 +5,10 @@
  */
 
 #include <emscripten.h>
-#include "xscreensaver_web.c"
+#include "../xscreensaver_web.c"
 
 // Include our web headers (WEB_BUILD already defined by build script)
-#include "xlockmore_web.h"
+#include "../xlockmore_web.h"
 
 // Now include hextrail.c with our web headers already defined
 #include "hextrail.c"

@@ -15,7 +15,6 @@ A web-based port of the HexTrail screensaver from XScreenSaver, compiled using E
 
 1. **Build the project** (if not already built):
    ```bash
-   cd hacks/glx
    ./build_web.sh
    ```
 
@@ -95,9 +94,10 @@ The build process compiles the original C code with the following modifications:
 
 2. Build the project:
    ```bash
-   cd hacks/glx
    ./build_web.sh
    ```
+   
+   This will compile the C code and copy the output files to the `web/` directory.
 
 ### Modifying the Code
 - **C/C++ Code**: Edit `hextrail.c` for core functionality

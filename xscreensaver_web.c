@@ -1249,3 +1249,24 @@ char *XGetAtomName(Display *display, Atom atom) {
     (void)atom;
     return strdup("WEB_ATOM");
 }
+
+// Stub for get_float_resource
+float get_float_resource(Display *dpy, char *res_name, char *res_class) {
+    // Return default values for common resources
+    (void)dpy;
+    (void)res_class;
+    
+    if (strcmp(res_name, "speed") == 0) {
+        return 1.0; // Default speed
+    }
+    if (strcmp(res_name, "thickness") == 0) {
+        return 0.1; // Default thickness
+    }
+    if (strcmp(res_name, "spin") == 0) {
+        return 1.0; // Default spin
+    }
+    if (strcmp(res_name, "wander") == 0) {
+        return 1.0; // Default wander
+    }
+    return 1.0; // Default for unknown resources
+}

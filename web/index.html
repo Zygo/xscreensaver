@@ -55,8 +55,74 @@
             <p>Click and drag to rotate the view. Use mouse wheel to zoom.</p>
             <p>Press 'F' for fullscreen, 'R' to reset, 'S' to toggle spin, 'W' to toggle wander.</p>
         </div>
+        
+        <!-- Debug Panel -->
+        <div id="debug-panel" style="position: fixed; top: 10px; right: 10px; width: 400px; height: 300px; background: rgba(0,0,0,0.8); color: white; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #333; overflow-y: auto; z-index: 1000; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">Debug Output</h3>
+                <button onclick="document.getElementById('debug-panel').style.display='none'; document.getElementById('debug-toggle').style.display='block';" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer;">×</button>
+            </div>
+            <div id="debug-log"></div>
+        </div>
+        
+        <!-- Debug Toggle Button -->
+        <button id="debug-toggle" onclick="document.getElementById('debug-panel').style.display='block'; this.style.display='none';" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; border: 1px solid #333; padding: 5px 10px; cursor: pointer; z-index: 1000; font-family: monospace; font-size: 12px;">Debug</button>
     </div>
     
-    <script src="script.js"></script>
+    <script>
+        // Set up the Module object like the generated HTML does
+        var statusElement = document.getElementById('loading');
+        var canvasElement = document.getElementById('canvas');
+        
+        // Configure the Module object
+        var Module = {
+            canvas: canvasElement,
+            setStatus: function(text) {
+                if (statusElement) {
+                    statusElement.textContent = text;
+                }
+                console.log('Status:', text);
+                // Also log to debug panel if available
+                var debugLog = document.getElementById('debug-log');
+                if (debugLog) {
+                    var timestamp = new Date().toLocaleTimeString();
+                    debugLog.innerHTML += `[${timestamp}] Status: ${text}<br>`;
+                    debugLog.scrollTop = debugLog.scrollHeight;
+                }
+            },
+            print: function(...args) {
+                console.log(...args);
+                // Also log to debug panel if available
+                var debugLog = document.getElementById('debug-log');
+                if (debugLog) {
+                    var timestamp = new Date().toLocaleTimeString();
+                    debugLog.innerHTML += `[${timestamp}] Print: ${args.join(' ')}<br>`;
+                    debugLog.scrollTop = debugLog.scrollHeight;
+                }
+            },
+            onRuntimeInitialized: function() {
+                console.log('Module runtime initialized');
+                // Hide loading screen
+                document.getElementById('loading').style.display = 'none';
+                // Log to debug panel
+                var debugLog = document.getElementById('debug-log');
+                if (debugLog) {
+                    var timestamp = new Date().toLocaleTimeString();
+                    debugLog.innerHTML += `[${timestamp}] Module runtime initialized<br>`;
+                    debugLog.scrollTop = debugLog.scrollHeight;
+                }
+            }
+        };
+        
+        // Load the emscripten module
+        var emscriptenScript = document.createElement('script');
+        emscriptenScript.src = 'hextrail_web.js';
+        document.head.appendChild(emscriptenScript);
+        
+        // Load our script after setting up Module
+        var script = document.createElement('script');
+        script.src = 'script.js';
+        document.head.appendChild(script);
+    </script>
 </body>
 </html> 

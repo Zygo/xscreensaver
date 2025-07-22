@@ -5,8 +5,8 @@
 
 set -e
 
-# Get the repository root directory (two levels up from this script)
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# Get the repository root directory (same directory as this script)
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source emsdk environment (adjust path as needed)
 if [ -f "$HOME/src/emsdk/emsdk_env.sh" ]; then
@@ -44,8 +44,8 @@ if ! command -v emcc &> /dev/null; then
 fi
 
 # Check if we're in the right directory
-if [ ! -f "hextrail_web_main.c" ]; then
-    echo -e "${RED}❌ hextrail_web_main.c not found. Please run this script from the hacks/glx directory.${NC}"
+if [ ! -f "hacks/glx/hextrail_web_main.c" ]; then
+    echo -e "${RED}❌ hextrail_web_main.c not found. Please run this script from the project root directory.${NC}"
     exit 1
 fi
 
@@ -85,9 +85,9 @@ emcc \
     $GLX_DIR/normals.c \
     $JWXYZ_DIR/jwxyz-timers.c \
     -o hextrail_web.html \
-    --preload-file $GLX_DIR/web/index.html@index.html \
-    --preload-file $GLX_DIR/web/style.css@style.css \
-    --preload-file $GLX_DIR/web/script.js@script.js
+    --preload-file $REPO_ROOT/web/index.html@index.html \
+    --preload-file $REPO_ROOT/web/style.css@style.css \
+    --preload-file $REPO_ROOT/web/script.js@script.js
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Build successful!${NC}"
@@ -101,7 +101,7 @@ if [ $? -eq 0 ]; then
     echo -e "   Then open http://localhost:8000/web/hextrail_web.html"
     
     # Copy files to web directory for easy access
-    cp hextrail_web.* $GLX_DIR/web/
+    cp hextrail_web.* $REPO_ROOT/web/
     echo -e "${GREEN}📋 Files copied to web/ directory${NC}"
     
 else

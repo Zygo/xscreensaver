@@ -6,26 +6,44 @@ class HexTrailWeb {
         this.ctx = this.canvas.getContext('2d');
         this.isRunning = false;
         this.isFullscreen = false;
+        this.debugLog = document.getElementById('debug-log');
         
+        this.log('HexTrailWeb constructor called');
         this.init();
+    }
+    
+    log(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = `[${timestamp}] ${message}`;
+        console.log(logEntry);
+        
+        if (this.debugLog) {
+            this.debugLog.innerHTML += logEntry + '<br>';
+            this.debugLog.scrollTop = this.debugLog.scrollHeight;
+        }
     }
     
     async init() {
         try {
+            this.log('Initializing HexTrail Web...');
+            
             // Load the emscripten module
             this.module = await this.loadModule();
+            this.log('Module loaded successfully');
+            this.log('Available functions: ' + Object.keys(this.module).filter(k => k.startsWith('_')).join(', '));
             
-            // Initialize the module
-            this.module._main();
-            
-            // Set up the canvas
+            // Set up the canvas first
             this.setupCanvas();
             
-            // Initialize hextrail
-            this.module._init_hextrail();
+            // The main() function should have been called automatically by Emscripten
+            // and it should have set up the main loop. We just need to wait for it to be ready.
+            this.log('Waiting for Emscripten main loop to be ready...');
             
-            // Start the animation loop
-            this.startAnimation();
+            // Try calling main() if it hasn't been called yet
+            if (this.module._main && !this.module._xscreensaver_web_init) {
+                this.log('Calling main() function...');
+                this.module._main();
+            }
             
             // Set up controls
             this.setupControls();
@@ -35,37 +53,35 @@ class HexTrailWeb {
             
             // Hide loading screen
             document.getElementById('loading').style.display = 'none';
+            this.log('HexTrail Web initialized successfully');
             
         } catch (error) {
+            this.log('ERROR: Failed to initialize HexTrail: ' + error.message);
             console.error('Failed to initialize HexTrail:', error);
-            document.getElementById('loading').textContent = 'Failed to load HexTrail';
+            document.getElementById('loading').textContent = 'Failed to load HexTrail: ' + error.message;
         }
     }
     
     async loadModule() {
         return new Promise((resolve, reject) => {
-            // Create a script tag to load the emscripten module
-            const script = document.createElement('script');
-            script.src = 'hextrail_web.js';
-            script.onload = () => {
-                // The module should be available globally
-                if (typeof Module !== 'undefined') {
-                    Module.onRuntimeInitialized = () => {
-                        resolve(Module);
-                    };
-                } else {
-                    reject(new Error('Module not found'));
-                }
-            };
-            script.onerror = () => {
-                reject(new Error('Failed to load module'));
-            };
-            document.head.appendChild(script);
+            this.log('Checking for Module object...');
+            // The Module object should already be set up by the HTML
+            if (typeof Module !== 'undefined') {
+                this.log('Module already configured');
+                this.log('Module keys: ' + Object.keys(Module).join(', '));
+                resolve(Module);
+            } else {
+                this.log('ERROR: Module not configured');
+                reject(new Error('Module not configured'));
+            }
         });
     }
     
     setupCanvas() {
-        // Set canvas size
+        // Emscripten will create its own canvas and replace our canvas element
+        // We just need to set up the initial size and let Emscripten handle the rest
+        
+        // Set initial canvas size
         this.canvas.width = 800;
         this.canvas.height = 600;
         
@@ -93,8 +109,8 @@ class HexTrailWeb {
             this.canvas.style.width = width + 'px';
             this.canvas.style.height = height + 'px';
             
-            // Update emscripten canvas size
-            if (this.module) {
+            // Update emscripten canvas size if the module is ready
+            if (this.module && this.module._reshape_hextrail) {
                 this.module._reshape_hextrail(width, height);
             }
         };
@@ -103,24 +119,8 @@ class HexTrailWeb {
         window.addEventListener('resize', resizeCanvas);
     }
     
-    startAnimation() {
-        if (this.isRunning) return;
-        
-        this.isRunning = true;
-        
-        const animate = () => {
-            if (!this.isRunning) return;
-            
-            // Call the draw function
-            if (this.module) {
-                this.module._draw_hextrail();
-            }
-            
-            requestAnimationFrame(animate);
-        };
-        
-        animate();
-    }
+    // Animation is handled by Emscripten's main loop, so we don't need this method
+    // The main() function sets up emscripten_set_main_loop(main_loop, 60, 1)
     
     setupControls() {
         // Speed control

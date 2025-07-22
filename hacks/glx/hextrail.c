@@ -739,6 +739,10 @@ init_hextrail (ModeInfo *mi)
 
   reshape_hextrail (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
+  /* Initialize speed from resource */
+  speed = get_float_resource (MI_DISPLAY(mi), "speed", "Float");
+  if (speed <= 0) speed = 1.0;
+
   {
     double spin_speed   = 0.002;
     double wander_speed = 0.003;
