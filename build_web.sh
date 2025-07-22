@@ -84,19 +84,19 @@ emcc \
     $GLX_DIR/gltrackball.c \
     $GLX_DIR/normals.c \
     $JWXYZ_DIR/jwxyz-timers.c \
-    -o hextrail_web.html \
+    -o index.html \
     --shell-file $REPO_ROOT/web/template.html
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Build successful!${NC}"
     echo -e "${BLUE}📁 Output files:${NC}"
-    echo -e "   - hextrail_web.html (main HTML file)"
+    echo -e "   - index.html (main HTML file)"
     echo -e "   - hextrail_web.js (JavaScript module)"
     echo -e "   - hextrail_web.wasm (WebAssembly binary)"
     
     echo -e "${YELLOW}🌐 To run locally:${NC}"
     echo -e "   python3 -m http.server 8000"
-    echo -e "   Then open http://localhost:8000/web/hextrail_web.html"
+    echo -e "   Then open http://localhost:8000/web/"
     
     # Copy files to web directory for easy access
     cp hextrail_web.* $REPO_ROOT/web/
