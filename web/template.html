@@ -149,6 +149,17 @@
             opacity: 0.8;
         }
 
+        .control-group:has(button) {
+            flex-direction: row;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 20px;
+        }
+
+        .control-group:has(button) button {
+            min-width: 120px;
+        }
+
         button {
             background: linear-gradient(45deg, #4ecdc4, #45b7d1);
             color: white;
@@ -278,6 +289,7 @@
 
             <div class="control-group">
                 <button id="reset">Reset</button>
+                <button id="render-toggle">Stop Rendering</button>
                 <button id="fullscreen">Fullscreen</button>
             </div>
         </div>
@@ -437,13 +449,51 @@
                 if (Module._set_wander) Module._set_wander(1);
             });
 
+            // Render toggle button
+            var renderToggleButton = document.getElementById('render-toggle');
+            var renderingEnabled = true;
+            renderToggleButton.addEventListener('click', function() {
+                if (renderingEnabled) {
+                    if (Module._stop_rendering) {
+                        Module._stop_rendering();
+                        console.log('Rendering stopped');
+                    }
+                    renderToggleButton.textContent = 'Start Rendering';
+                    renderingEnabled = false;
+                } else {
+                    if (Module._start_rendering) {
+                        Module._start_rendering();
+                        console.log('Rendering started');
+                    }
+                    renderToggleButton.textContent = 'Stop Rendering';
+                    renderingEnabled = true;
+                }
+            });
+
             // Fullscreen button
             var fullscreenButton = document.getElementById('fullscreen');
             fullscreenButton.addEventListener('click', function() {
+                var canvas = document.getElementById('canvas');
                 if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen();
+                    if (canvas.requestFullscreen) {
+                        canvas.requestFullscreen();
+                    } else if (canvas.webkitRequestFullscreen) {
+                        canvas.webkitRequestFullscreen();
+                    } else if (canvas.mozRequestFullScreen) {
+                        canvas.mozRequestFullScreen();
+                    } else if (canvas.msRequestFullscreen) {
+                        canvas.msRequestFullscreen();
+                    }
                 } else {
-                    document.exitFullscreen();
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
                 }
             });
 
@@ -484,10 +534,27 @@
             document.addEventListener('keydown', function(e) {
                 switch(e.key.toLowerCase()) {
                     case 'f':
+                        var canvas = document.getElementById('canvas');
                         if (!document.fullscreenElement) {
-                            document.documentElement.requestFullscreen();
+                            if (canvas.requestFullscreen) {
+                                canvas.requestFullscreen();
+                            } else if (canvas.webkitRequestFullscreen) {
+                                canvas.webkitRequestFullscreen();
+                            } else if (canvas.mozRequestFullScreen) {
+                                canvas.mozRequestFullScreen();
+                            } else if (canvas.msRequestFullscreen) {
+                                canvas.msRequestFullscreen();
+                            }
                         } else {
-                            document.exitFullscreen();
+                            if (document.exitFullscreen) {
+                                document.exitFullscreen();
+                            } else if (document.webkitExitFullscreen) {
+                                document.webkitExitFullscreen();
+                            } else if (document.mozCancelFullScreen) {
+                                document.mozCancelFullScreen();
+                            } else if (document.msExitFullscreen) {
+                                document.msExitFullscreen();
+                            }
                         }
                         break;
                     case 'r':

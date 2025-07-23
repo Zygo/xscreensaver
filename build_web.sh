@@ -66,7 +66,7 @@ emcc \
     -s FULL_ES3=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] \
-    -s EXPORTED_FUNCTIONS=['_main','_init_hextrail','_draw_hextrail','_reshape_hextrail','_free_hextrail','_set_speed','_set_thickness','_set_spin','_set_wander','_handle_mouse_drag','_handle_mouse_wheel'] \
+    -s EXPORTED_FUNCTIONS=['_main','_init_hextrail','_draw_hextrail','_reshape_hextrail','_free_hextrail','_set_speed','_set_thickness','_set_spin','_set_wander','_stop_rendering','_start_rendering','_handle_mouse_drag','_handle_mouse_wheel'] \
     -s MIN_WEBGL_VERSION=2 \
     -O3 \
     -I$JWXYZ_DIR \
@@ -93,16 +93,16 @@ if [ $? -eq 0 ]; then
     echo -e "   - index.html (main HTML file)"
     echo -e "   - hextrail_web.js (JavaScript module)"
     echo -e "   - hextrail_web.wasm (WebAssembly binary)"
-    
+
     echo -e "${YELLOW}🌐 To run locally:${NC}"
     echo -e "   python3 -m http.server 8000"
     echo -e "   Then open http://localhost:8000/web/"
-    
+
     # Copy files to web directory for easy access
     cp index.* $REPO_ROOT/web/
     echo -e "${GREEN}📋 Files copied to web/ directory${NC}"
-    
+
 else
     echo -e "${RED}❌ Build failed!${NC}"
     exit 1
-fi 
+fi

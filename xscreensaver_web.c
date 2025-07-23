@@ -63,7 +63,7 @@ static double frand(double max) {
 
 // WebGL state management
 #define MAX_MATRIX_STACK_DEPTH 32
-#define MAX_VERTICES 10000
+#define MAX_VERTICES 100000
 
 typedef struct {
     GLfloat m[16];
@@ -102,6 +102,8 @@ static MatrixStack texture_stack;
 static GLenum current_matrix_mode = GL_MODELVIEW;
 static ImmediateMode immediate;
 static Color4f current_color = {1.0f, 1.0f, 1.0f, 1.0f};
+static int total_vertices_this_frame = 0;
+static Bool rendering_enabled = True;
 static Normal3f current_normal = {0.0f, 0.0f, 1.0f};
 static Bool lighting_enabled = False;
 static Bool depth_test_enabled = True;
@@ -182,7 +184,7 @@ static void matrix_scale(Matrix4f *m, GLfloat x, GLfloat y, GLfloat z) {
     matrix_multiply(m, m, &scale);
 }
 
-// Shader compilation
+// WebGL 2.0 shader compilation
 static GLuint compile_shader(const char *source, GLenum type) {
     GLuint shader = glCreateShader(type);
     printf("Created shader %u of type %d\n", shader, type);
@@ -205,7 +207,7 @@ static GLuint compile_shader(const char *source, GLenum type) {
 }
 
 static void init_shaders() {
-    printf("Initializing shaders...\n");
+    printf("Initializing WebGL 2.0 shaders...\n");
 
     const char *vertex_source =
         "#version 300 es\n"
@@ -569,6 +571,18 @@ void set_wander(int wander_enabled) {
 }
 
 EMSCRIPTEN_KEEPALIVE
+void stop_rendering() {
+    rendering_enabled = False;
+    printf("Rendering stopped\n");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void start_rendering() {
+    rendering_enabled = True;
+    printf("Rendering started\n");
+}
+
+EMSCRIPTEN_KEEPALIVE
 void handle_mouse_drag(int delta_x, int delta_y) {
     // This would need to be implemented per-hack
     printf("Mouse drag: %d, %d\n", delta_x, delta_y);
@@ -850,7 +864,12 @@ void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {
 }
 
 void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
-    if (!immediate.in_begin_end || immediate.vertex_count >= MAX_VERTICES) {
+    if (!immediate.in_begin_end) {
+        return;
+    }
+
+    if (immediate.vertex_count >= MAX_VERTICES) {
+        printf("WARNING: Vertex limit reached (%d), dropping vertex!\n", MAX_VERTICES);
         return;
     }
 
@@ -1352,10 +1371,19 @@ void xcolor_to_glfloat(const XColor *xcolor, GLfloat *rgba) {
     rgba[1] = xcolor->green / 65535.0f; // Green
     rgba[2] = xcolor->blue / 65535.0f;  // Blue
     rgba[3] = 1.0f;                     // Alpha
+    
+    static int xcolor_count = 0;
+    xcolor_count++;
+    if (xcolor_count <= 5) { // Log first 5 color conversions
+        printf("[%ld] xcolor_to_glfloat: XColor(%d,%d,%d) -> GLfloat(%.3f,%.3f,%.3f,%.3f)\n",
+               (long)(emscripten_get_now()), xcolor->red, xcolor->green, xcolor->blue, rgba[0], rgba[1], rgba[2], rgba[3]);
+    }
 }
 
 // Generate smooth color map for WebGL
 void make_smooth_colormap_webgl(XColor *colors, int *ncolorsP, Bool allocate_p, Bool *writable_pP, Bool verbose_p) {
+    printf("make_smooth_colormap_webgl called: allocate_p=%d, verbose_p=%d\n", allocate_p, verbose_p);
+    printf("make_smooth_colormap_webgl: ncolorsP=%d before call\n", *ncolorsP);
     int npoints;
     int ncolors = *ncolorsP;
     int i;
@@ -1453,6 +1481,11 @@ static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XCo
         colors[i].green = (unsigned short)(g * 65535);
         colors[i].blue = (unsigned short)(b * 65535);
         colors[i].flags = DoRed | DoGreen | DoBlue;
+        
+        if (i < 3) { // Log first 3 colors
+            printf("[%ld] make_color_path_webgl: Color[%d]: RGB(%d, %d, %d) from HSV(%.1f, %.2f, %.2f)\n", 
+                   (long)(emscripten_get_now()), i, colors[i].red, colors[i].green, colors[i].blue, interp_h, interp_s, interp_v);
+        }
     }
 }
 
