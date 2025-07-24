@@ -495,6 +495,11 @@ EMSCRIPTEN_KEEPALIVE
 int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, free_func free) {
     printf("xscreensaver_web_init called\n");
 
+    // Initialize random seed for consistent but varied colors
+    extern void ya_rand_init(unsigned int seed);
+    ya_rand_init(0);
+    printf("Random seed initialized\n");
+
     hack_init = init;
     hack_draw = draw;
     hack_reshape = reshape;
@@ -574,15 +579,21 @@ void set_thickness(GLfloat new_thickness) {
 EMSCRIPTEN_KEEPALIVE
 void set_spin(int new_spin_enabled) {
     extern Bool do_spin;
+    extern void update_hextrail_rotator(void);
+    printf("DEBUG: set_spin called with %d, current do_spin=%d\n", new_spin_enabled, do_spin);
     do_spin = new_spin_enabled;
-    printf("Spin %s\n", do_spin ? "enabled" : "disabled");
+    printf("Spin %s (do_spin now=%d)\n", do_spin ? "enabled" : "disabled", do_spin);
+    update_hextrail_rotator();
 }
 
 EMSCRIPTEN_KEEPALIVE
 void set_wander(int new_wander_enabled) {
     extern Bool do_wander;
+    extern void update_hextrail_rotator(void);
+    printf("DEBUG: set_wander called with %d, current do_wander=%d\n", new_wander_enabled, do_wander);
     do_wander = new_wander_enabled;
-    printf("Wander %s\n", do_wander ? "enabled" : "disabled");
+    printf("Wander %s (do_wander now=%d)\n", do_wander ? "enabled" : "disabled", do_wander);
+    update_hextrail_rotator();
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -968,8 +979,12 @@ void glEnd(void) {
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Normal3f),
                  immediate.normals, GL_STATIC_DRAW);
 
-    // Use our WebGL 2.0 wrapper
-    printf("Using WebGL 2.0 wrapper...\n");
+    // Use our WebGL 2.0 wrapper (limit messages to first 5 frames)
+    static int webgl_wrapper_count = 0;
+    if (webgl_wrapper_count < 5) {
+        printf("Using WebGL 2.0 wrapper...\n");
+        webgl_wrapper_count++;
+    }
 
     // Use the pre-compiled shader program
     glUseProgram(shader_program);
@@ -1031,12 +1046,19 @@ void glEnd(void) {
     glDeleteBuffers(1, &vbo_vertices);
     glDeleteBuffers(1, &vbo_colors);
 
-    printf("WebGL 2.0 wrapper rendering completed\n");
+    // Limit completion message to first 5 frames
+    static int webgl_complete_count = 0;
+    if (webgl_complete_count < 5) {
+        printf("WebGL 2.0 wrapper rendering completed\n");
+        webgl_complete_count++;
+    }
 
-    // Check for WebGL errors after drawing
+    // Check for WebGL errors after drawing (limit to first 5 frames)
+    static int webgl_error_count = 0;
     GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
+    if (error != GL_NO_ERROR && webgl_error_count < 5) {
         printf("WebGL error after glDrawArrays: %d\n", error);
+        webgl_error_count++;
     }
 
     // Cleanup

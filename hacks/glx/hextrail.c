@@ -5,15 +5,15 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  */
 
 #define DEFAULTS	"*delay:	30000       \n" \
-			"*showFPS:      False       \n" \
-			"*wireframe:    False       \n" \
-			"*count:        20          \n" \
-			"*suppressRotationAnimation: True\n" \
+            "*showFPS:      False       \n" \
+            "*wireframe:    False       \n" \
+            "*count:        20          \n" \
+            "*suppressRotationAnimation: True\n" \
 
 # define release_hextrail 0
 
@@ -27,6 +27,11 @@
 #include "rotator.h"
 #include "gltrackball.h"
 #include <ctype.h>
+
+// Rotator constants
+static const double SPIN_SPEED = 0.002;
+static const double WANDER_SPEED = 0.003;
+static const double SPIN_ACCEL = 1.0;
 
 static void scale_corners(ModeInfo *mi);
 
@@ -429,7 +434,7 @@ static void scale_corners(ModeInfo *mi) {
   GLfloat thick2 = thickness * bp->fade_ratio;
   GLfloat size3 = size * thick2 * 0.8;
   GLfloat size4 = size3 * 2; // when total_arms == 1
-  
+
   int i;
   for (i = 0; i < 6; i++) {
     scaled_corners[i][0].x = corners[i].x * size1;
@@ -476,7 +481,7 @@ draw_hexagons (ModeInfo *mi)
               nub_ratio = a->ratio;
           }
         }
-      
+
 
 # define HEXAGON_COLOR(V,H) do { \
           (V)[0] = bp->colors[(H)->ccolor].red   / 65535.0 * bp->fade_ratio; \
@@ -734,7 +739,21 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-ENTRYPOINT void 
+// Function to create rotator with current spin/wander settings
+rotator* create_hextrail_rotator(void) {
+#ifdef WEB_BUILD
+    printf("DEBUG: Creating rotator - do_spin=%d, do_wander=%d\n", do_spin, do_wander);
+#endif
+
+    return make_rotator(do_spin ? SPIN_SPEED : 0,
+                       do_spin ? SPIN_SPEED : 0,
+                       do_spin ? SPIN_SPEED : 0,
+                       SPIN_ACCEL,
+                       do_wander ? WANDER_SPEED : 0,
+                       False);
+}
+
+ENTRYPOINT void
 init_hextrail (ModeInfo *mi)
 {
   hextrail_configuration *bp;
@@ -752,16 +771,7 @@ init_hextrail (ModeInfo *mi)
   if (speed <= 0) speed = 1.0;
 
   {
-    double spin_speed   = 0.002;
-    double wander_speed = 0.003;
-    double spin_accel   = 1.0;
-
-    bp->rot = make_rotator (do_spin ? spin_speed : 0,
-                            do_spin ? spin_speed : 0,
-                            do_spin ? spin_speed : 0,
-                            spin_accel,
-                            do_wander ? wander_speed : 0,
-                            False);
+    bp->rot = create_hextrail_rotator();
     bp->trackball = gltrackball_init (True);
   }
 
@@ -804,7 +814,15 @@ draw_hextrail (ModeInfo *mi)
 
   {
     double x, y, z;
+    static int draw_count = 0;
+    draw_count++;
+    if (draw_count % 60 == 0) { // Log every 60 frames (once per second)
+        printf("DEBUG: Draw frame %d - do_spin=%d, do_wander=%d\n", draw_count, do_spin, do_wander);
+    }
     get_position (bp->rot, &x, &y, &z, !bp->button_down_p);
+    if (draw_count % 60 == 0) {
+        printf("DEBUG: Position - x=%f, y=%f, z=%f\n", x, y, z);
+    }
     glTranslatef((x - 0.5) * 6,
                  (y - 0.5) * 6,
                  (z - 0.5) * 12);
@@ -812,6 +830,9 @@ draw_hextrail (ModeInfo *mi)
     gltrackball_rotate (bp->trackball);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
+    if (draw_count % 60 == 0) {
+        printf("DEBUG: Rotation - x=%f, y=%f, z=%f\n", x, y, z);
+    }
     glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
@@ -848,6 +869,24 @@ free_hextrail (ModeInfo *mi)
   if (bp->colors) free (bp->colors);
   free (bp->hexagons);
 }
+
+#ifdef WEB_BUILD
+// Function to update rotator when spin/wander settings change
+void update_hextrail_rotator(void) {
+    extern hextrail_configuration *bps;
+    extern ModeInfo web_mi;
+
+    hextrail_configuration *bp = &bps[web_mi.screen];
+    if (!bp->rot) return;
+
+    // Free old rotator and create new one with updated settings
+    if (bp->rot) {
+        free_rotator(bp->rot);
+    }
+
+    bp->rot = create_hextrail_rotator();
+}
+#endif
 
 XSCREENSAVER_MODULE ("HexTrail", hextrail)
 

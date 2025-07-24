@@ -5,7 +5,7 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  */
 
@@ -46,7 +46,7 @@ struct rotator {
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 
-/* Stay in the range [0-1). 
+/* Stay in the range [0-1).
     1.01 => 0.01.
    -0.01 => 0.99
  */
@@ -74,7 +74,7 @@ rotate_1 (double *pos, double *v, double *dv, double speed, double max_v)
 
   /* tick position */
   if (ppos < 0)
-    /* Ignore but preserve the sign on ppos.  It's kind of like: 
+    /* Ignore but preserve the sign on ppos.  It's kind of like:
        ppos = old_sign * (abs(ppos) + (v * old_sign))
        This is why it would make more sense for that sign bit to be on v.
      */
@@ -98,20 +98,20 @@ rotate_1 (double *pos, double *v, double *dv, double speed, double max_v)
   else if (*v < 0)
     {
       if (random() % 4)
-	{
-	  *v = 0;	     /* don't let velocity be negative */
+    {
+      *v = 0;	     /* don't let velocity be negative */
 
-	  if (random() % 2)  /* stay stopped, and kill acceleration */
-	    *dv = 0;
-	  else if (*dv < 0)  /* was decelerating, accelerate instead */
-	    *dv = -*dv;
-	}
+      if (random() % 2)  /* stay stopped, and kill acceleration */
+        *dv = 0;
+      else if (*dv < 0)  /* was decelerating, accelerate instead */
+        *dv = -*dv;
+    }
       else
-	{
-	  *v = -*v;      /* switch to tiny positive velocity, or zero */
-	  *dv = -*dv;    /* toggle acceleration */
-	  *pos = -*pos;  /* reverse direction of motion */
-	}
+    {
+      *v = -*v;      /* switch to tiny positive velocity, or zero */
+      *dv = -*dv;    /* toggle acceleration */
+      *pos = -*pos;  /* reverse direction of motion */
+    }
     }
 
   /* Alter direction of rotational acceleration randomly. */
@@ -123,15 +123,15 @@ rotate_1 (double *pos, double *v, double *dv, double speed, double max_v)
     {
 #if 0 /* this might make more sense: */
       if (*dv > -EPSILON && *dv < EPSILON)
-	*dv += 10 * (*dv < 0 ? -EPSILON : EPSILON);
+    *dv += 10 * (*dv < 0 ? -EPSILON : EPSILON);
 #else
       if (*dv == 0)
-	*dv = 0.00001;
+    *dv = 0.00001;
 #endif
       else if (random() & 1)
-	*dv *= 1.2;
+    *dv *= 1.2;
       else
-	*dv *= 0.8;
+    *dv *= 0.8;
     }
 }
 
