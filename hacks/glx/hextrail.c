@@ -31,8 +31,6 @@ static const double SPIN_SPEED = 0.002;
 static const double WANDER_SPEED = 0.003;
 static const double SPIN_ACCEL = 1.0;
 
-static void scale_corners(ModeInfo *mi);
-
 #ifdef USE_GL /* whole file */
 
 
@@ -69,7 +67,7 @@ typedef struct {
 
   int grid_w, grid_h;
   hexagon *hexagons;
-  int live_count;
+  int live_count, size;
   enum { FIRST, DRAW, FADE } state;
   GLfloat fade_ratio;
 
@@ -81,15 +79,11 @@ static hextrail_configuration *bps = NULL;
 
 #ifdef WEB_BUILD
 // Make these accessible to web wrapper
-Bool do_spin;
-GLfloat speed;
-Bool do_wander;
-GLfloat thickness;
+Bool do_spin, do_wander;
+GLfloat speed, thickness;
 #else
-static Bool do_spin;
-static GLfloat speed;
-static Bool do_wander;
-static GLfloat thickness;
+static Bool do_spin, do_wander;
+static GLfloat speed, thickness;
 #endif
 
 static XrmOptionDescRec opts[] = {
@@ -186,17 +180,6 @@ make_plane (ModeInfo *mi)
       }
 }
 
-
-static Bool
-empty_hexagon_p (hexagon *h)
-{
-  int i;
-  for (i = 0; i < 6; i++)
-    if (h->arms[i].state != EMPTY)
-      return False;
-  return True;
-}
-
 static int
 add_arms (ModeInfo *mi, hexagon *h0)
 {
@@ -251,6 +234,39 @@ add_arms (ModeInfo *mi, hexagon *h0)
   return added;
 }
 
+# define H 0.8660254037844386   /* sqrt(3)/2 */
+
+static const XYZ corners[] = {{  0, -1,   0 },       /*      0      */
+                              {  H, -0.5, 0 },       /*  5       1  */
+                              {  H,  0.5, 0 },       /*             */
+                              {  0,  1,   0 },       /*  4       2  */
+                              { -H,  0.5, 0 },       /*      3      */
+                              { -H, -0.5, 0 }};
+
+static XYZ scaled_corners[6][4];
+
+static void scale_corners(ModeInfo *mi) {
+  hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
+  GLfloat size = sqrt(3) / 3 / MI_COUNT(mi);
+  GLfloat margin = thickness * 0.4;
+  GLfloat size1 = size * (1 - margin * 2);
+  GLfloat size2 = size * (1 - margin * 3);
+  GLfloat thick2 = thickness * bp->fade_ratio;
+  GLfloat size3 = size * thick2 * 0.8;
+  GLfloat size4 = size3 * 2; // when total_arms == 1
+
+  int i;
+  for (i = 0; i < 6; i++) {
+    scaled_corners[i][0].x = corners[i].x * size1;
+    scaled_corners[i][0].y = corners[i].y * size1;
+    scaled_corners[i][1].x = corners[i].x * size2;
+    scaled_corners[i][1].y = corners[i].y * size2;
+    scaled_corners[i][2].x = corners[i].x * size3;
+    scaled_corners[i][2].y = corners[i].y * size3;
+    scaled_corners[i][3].x = corners[i].x * size4;
+    scaled_corners[i][3].y = corners[i].y * size4;
+  }
+}
 
 static void
 tick_hexagons (ModeInfo *mi)
@@ -346,7 +362,7 @@ tick_hexagons (ModeInfo *mi)
             h0->border_state = DONE;
           }
       case WAIT:
-        if (! (random() % 50))
+        if (! (random() % (int)(50.0/speed)))
           h0->border_state = OUT;
         break;
       case EMPTY:
@@ -380,7 +396,7 @@ tick_hexagons (ModeInfo *mi)
             y = random() % bp->grid_h;
           }
         h0 = &bp->hexagons[y * bp->grid_w + x];
-        if (empty_hexagon_p (h0) &&
+        if (h0->border_state == EMPTY &&
             add_arms (mi, h0)) {
           h0->border_state = DONE;
           break;
@@ -410,40 +426,6 @@ tick_hexagons (ModeInfo *mi)
           bp->fade_ratio = 1;
         }
     }
-}
-
-# define H 0.8660254037844386   /* sqrt(3)/2 */
-
-static const XYZ corners[] = {{  0, -1,   0 },       /*      0      */
-                              {  H, -0.5, 0 },       /*  5       1  */
-                              {  H,  0.5, 0 },       /*             */
-                              {  0,  1,   0 },       /*  4       2  */
-                              { -H,  0.5, 0 },       /*      3      */
-                              { -H, -0.5, 0 }};
-
-static XYZ scaled_corners[6][4];
-
-static void scale_corners(ModeInfo *mi) {
-  hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
-  GLfloat size = sqrt(3) / 3 / MI_COUNT(mi);
-  GLfloat margin = thickness * 0.4;
-  GLfloat size1 = size * (1 - margin * 2);
-  GLfloat size2 = size * (1 - margin * 3);
-  GLfloat thick2 = thickness * bp->fade_ratio;
-  GLfloat size3 = size * thick2 * 0.8;
-  GLfloat size4 = size3 * 2; // when total_arms == 1
-
-  int i;
-  for (i = 0; i < 6; i++) {
-    scaled_corners[i][0].x = corners[i].x * size1;
-    scaled_corners[i][0].y = corners[i].y * size1;
-    scaled_corners[i][1].x = corners[i].x * size2;
-    scaled_corners[i][1].y = corners[i].y * size2;
-    scaled_corners[i][2].x = corners[i].x * size3;
-    scaled_corners[i][2].y = corners[i].y * size3;
-    scaled_corners[i][3].x = corners[i].x * size4;
-    scaled_corners[i][3].y = corners[i].y * size4;
-  }
 }
 
 static void
@@ -692,10 +674,13 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
 
   // Handle web parameter change events (NULL event means parameters changed)
   if (event == NULL) {
+    printf("DEBUG: hextrail_handle_event - NULL event (parameter change)\n");
     scale_corners(mi);  // Recalculate corners when thickness changes
     return True;
   }
-
+  
+  printf("DEBUG: hextrail_handle_event - event type: %d\n", event->xany.type);
+  
   if (gltrackball_event_handler (event, bp->trackball,
                                  MI_WIDTH (mi), MI_HEIGHT (mi),
                                  &bp->button_down_p))
@@ -706,46 +691,49 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
 
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-        ;
-      else if (c == '>' || c == '.' || c == '+' || c == '=' ||
-               keysym == XK_Right || keysym == XK_Up || keysym == XK_Next)
-        {
-          MI_COUNT(mi)++;
-          scale_corners(mi);
-        }
-      else if (c == '<' || c == ',' || c == '-' || c == '_' ||
-               c == '\010' || c == '\177' ||
-               keysym == XK_Left || keysym == XK_Down || keysym == XK_Prior)
-        {
-          MI_COUNT(mi)--;
-          scale_corners(mi);
-        }
-      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-        ;
-      else
-        return False;
+      printf("DEBUG: KeyPress event - char='%c' (code=%d), keysym=%u\n", c, (int)c, (unsigned int)keysym);
 
-    RESET:
-      if (MI_COUNT(mi) < 1) MI_COUNT(mi) = 1;
-      scale_corners(mi);
-      free (bp->hexagons);
-      bp->hexagons = 0;
-      bp->state = FIRST;
-      bp->fade_ratio = 1;
-      bp->live_count = 0;
-      make_plane (mi);
-      return True;
-    }
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n') ;
+      else if (c == '>' || c == '.' || c == '+' || c == '=' ||
+               keysym == XK_Up || keysym == XK_Next) {
+          printf("DEBUG: Increasing count from %ld to %ld\n", MI_COUNT(mi), MI_COUNT(mi) + 1);
+          MI_COUNT(mi)++;
+          bp->size = MI_COUNT(mi) * 2;
+          scale_corners(mi);
+      } else if (c == '<' || c == ',' || c == '-' || c == '_' ||
+               c == '\010' || c == '\177' || keysym == XK_Down || keysym == XK_Prior) {
+          printf("DEBUG: Decreasing count from %ld to %ld\n", MI_COUNT(mi), MI_COUNT(mi) - 1);
+          MI_COUNT(mi)--;
+          if (MI_COUNT(mi) < 1) {
+            printf("DEBUG: Count was %ld, resetting to 1\n", MI_COUNT(mi));
+            MI_COUNT(mi) = 1;
+          }
+          bp->size = MI_COUNT(mi) * 2;
+          scale_corners(mi);
+      } else if (keysym == XK_Right) {
+          printf("DEBUG: Increasing speed from %f to %f\n", speed, speed * 2);
+          speed *= 2; 
+          if (speed > 20) speed = 20;
+      } else if (keysym == XK_Left) {
+          printf("DEBUG: Decreasing speed from %f to %f\n", speed, speed / 2);
+          speed /= 2; 
+          if (speed < 0.0001) speed = 0.0001;
+      } else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event)) {
+          printf("DEBUG: Event handled by screenhack_event_helper\n");
+      } else {
+          printf("DEBUG: Unhandled key character '%c' (code=%d)\n", c, (int)c);
+          return False;
+      }
+    } // KeyPress
   else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
-    goto RESET;
+    return True;
 
   return False;
 }
 
 
 // Function to create rotator with current spin/wander settings
-rotator* create_hextrail_rotator(void) {
+static rotator* create_hextrail_rotator(void) {
 #ifdef WEB_BUILD
     printf("DEBUG: Creating rotator - do_spin=%d, do_wander=%d\n", do_spin, do_wander);
 #endif

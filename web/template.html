@@ -568,6 +568,15 @@
                         wanderCheckbox.checked = !wanderCheckbox.checked;
                         wanderCheckbox.dispatchEvent(new Event('change'));
                         break;
+                    default:
+                        // Pass other keys to the hack's event handler
+                        if (Module._handle_keypress) {
+                            // Use the actual key character, or keyCode for special keys
+                            var charCode = e.key.length === 1 ? e.key.charCodeAt(0) : e.keyCode;
+                            Module._handle_keypress(e.keyCode, charCode);
+                            console.log("Sending keypress: key='" + e.key + "', keyCode=" + e.keyCode + ", charCode=" + charCode);
+                        }
+                        break;
                 }
             });
         }

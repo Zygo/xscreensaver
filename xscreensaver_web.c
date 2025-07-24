@@ -330,6 +330,9 @@ static handle_event_func hack_handle_event = NULL;
 // Animation state (controlled by HexTrail's rotator system)
 static int spin_enabled = 1;
 static int wander_enabled = 1;
+
+// Keypress state for web events
+static char web_keypress_char = 0;
 static float animation_speed = 1.0f;
 
 // Main loop callback
@@ -595,7 +598,7 @@ void set_thickness(GLfloat new_thickness) {
     extern GLfloat thickness;
     thickness = new_thickness;
     printf("Thickness set to: %f\n", thickness);
-    
+
     // Send event to hack to update corners
     if (hack_handle_event) {
         // Create a dummy event to trigger corner recalculation
@@ -649,6 +652,25 @@ void handle_mouse_wheel(int delta) {
 }
 
 EMSCRIPTEN_KEEPALIVE
+void handle_keypress(int keycode, int charcode) {
+    if (hack_handle_event) {
+        // Create a dummy XEvent structure for keyboard events
+        XEvent event;
+        memset(&event, 0, sizeof(event));
+        event.type = KeyPress;
+        event.xkey.keycode = keycode;
+        event.xkey.state = 0;  // No modifiers for now
+
+        // Store the character for XLookupString to return
+        web_keypress_char = (char)charcode;
+
+        // Pass the event to the hack
+        hack_handle_event(&web_mi, &event);
+        printf("Keypress: keycode=%d, char=%c\n", keycode, (char)charcode);
+    }
+}
+
+EMSCRIPTEN_KEEPALIVE
 void reshape_hextrail_wrapper(int width, int height) {
     if (hack_reshape) {
         web_mi.width = width;
@@ -696,9 +718,13 @@ void jwxyz_abort(const char *fmt, ...) {
 
 // Missing X11 function for web builds
 int XLookupString(XKeyEvent *event_struct, char *buffer_return, int bytes_buffer, KeySym *keysym_return, XComposeStatus *status_in_out) {
-    // Stub implementation for web builds - not used since we pass NULL events
+    // Return the character stored by handle_keypress
+    if (buffer_return && bytes_buffer > 0) {
+        buffer_return[0] = web_keypress_char;
+        if (bytes_buffer > 1) buffer_return[1] = '\0';
+        return web_keypress_char ? 1 : 0;
+    }
     if (keysym_return) *keysym_return = 0;
-    if (buffer_return && bytes_buffer > 0) buffer_return[0] = '\0';
     return 0;
 }
 
@@ -1067,7 +1093,7 @@ void glEnd(void) {
         // Debug: Print raw matrix values to see what's in the stack
         static int raw_matrix_debug_count = 0;
         if (raw_matrix_debug_count < 2) {
-            printf("DEBUG: Raw matrix stack (frame %d): trans=(%.3f,%.3f,%.3f), scale=(%.3f,%.3f,%.3f)\n", 
+            printf("DEBUG: Raw matrix stack (frame %d): trans=(%.3f,%.3f,%.3f), scale=(%.3f,%.3f,%.3f)\n",
                    raw_matrix_debug_count, stack_matrix[12], stack_matrix[13], stack_matrix[14],
                    stack_matrix[0], stack_matrix[5], stack_matrix[10]);
             raw_matrix_debug_count++;
@@ -1076,7 +1102,7 @@ void glEnd(void) {
         // Scale down massive translations while keeping rotations and scales
         float translation_scale = 0.1f;
         stack_matrix[12] *= translation_scale;  // X translation
-        stack_matrix[13] *= translation_scale;  // Y translation  
+        stack_matrix[13] *= translation_scale;  // Y translation
         stack_matrix[14] *= translation_scale;  // Z translation
 
         // Check if the scaled matrix has reasonable values
@@ -1086,7 +1112,7 @@ void glEnd(void) {
 
             static int stack_debug_count = 0;
             if (stack_debug_count < 3) {
-                printf("DEBUG: Using scaled matrix stack (frame %d): trans=(%.3f,%.3f,%.3f)\n", 
+                printf("DEBUG: Using scaled matrix stack (frame %d): trans=(%.3f,%.3f,%.3f)\n",
                        stack_debug_count, stack_matrix[12], stack_matrix[13], stack_matrix[14]);
                 stack_debug_count++;
             }
