@@ -417,6 +417,17 @@
                 // Set up controls
                 setupControls();
                 setupFullscreenHandling();
+
+                // Initialize rotator with checkbox values after module is ready
+                setTimeout(function() {
+                    var spinCheckbox = document.getElementById('spin');
+                    var wanderCheckbox = document.getElementById('wander');
+                    if (Module._set_spin && Module._set_wander) {
+                        Module._set_spin(spinCheckbox.checked ? 1 : 0);
+                        Module._set_wander(wanderCheckbox.checked ? 1 : 0);
+                        console.log("DEBUG: Initialized rotator with spin=" + spinCheckbox.checked + ", wander=" + wanderCheckbox.checked);
+                    }
+                }, 100); // Small delay to ensure hack_init has completed
             }
         };
 

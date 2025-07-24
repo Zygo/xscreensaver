@@ -556,6 +556,9 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
         printf("hack_init is NULL!\n");
     }
 
+    // Rotator will be initialized by webpage with checkbox values
+    printf("DEBUG: Web rotator will be initialized by webpage\n");
+
     // Set up reshape
     if (hack_reshape) {
         printf("Calling hack_reshape...\n");
@@ -1036,8 +1039,29 @@ void glEnd(void) {
         // Note: We can't access hextrail internals from here due to circular dependencies
         // For now, use a simple approach without direct rotator access
 
-        // For now, just apply the scale factor
-        // TODO: Extract current frame's transformations from the matrix stack properly
+        // Try to use the matrix stack, but fall back to hardcoded if it's broken
+        GLfloat stack_matrix[16];
+        memcpy(stack_matrix, modelview_stack.stack[modelview_stack.top].m, 16 * sizeof(GLfloat));
+
+        // Check if the matrix has reasonable values (not massive translations)
+        if (fabs(stack_matrix[12]) < 100.0f && fabs(stack_matrix[13]) < 100.0f && fabs(stack_matrix[14]) < 100.0f) {
+            // Use the matrix stack (real transformations)
+            glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, stack_matrix);
+
+            static int stack_debug_count = 0;
+            if (stack_debug_count < 3) {
+                printf("DEBUG: Using matrix stack (frame %d): trans=(%.3f,%.3f,%.3f)\n",
+                       stack_debug_count, stack_matrix[12], stack_matrix[13], stack_matrix[14]);
+                stack_debug_count++;
+            }
+        } else {
+            // Fall back to hardcoded matrix (current working approach)
+            static int fallback_debug_count = 0;
+            if (fallback_debug_count < 3) {
+                printf("DEBUG: Using fallback matrix (frame %d): scale=%.1f\n", fallback_debug_count, scale);
+                fallback_debug_count++;
+            }
+        }
 
         glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview);
 
