@@ -348,6 +348,9 @@ void main_loop(void) {
         }
     }
 
+    // Don't reset the matrix - let it persist like the native version
+    // The native hextrail code uses glPushMatrix/glPopMatrix to manage transformations
+
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -417,6 +420,15 @@ void glLoadIdentity(void) {
     }
 
     matrix_identity(&stack->stack[stack->top]);
+
+    // Debug: Log when modelview matrix is reset
+    if (current_matrix_mode == GL_MODELVIEW) {
+        static int reset_count = 0;
+        reset_count++;
+        if (reset_count <= 3) {
+            printf("DEBUG: ModelView matrix reset to identity (count: %d)\n", reset_count);
+        }
+    }
 }
 
 // Initialize WebGL context and OpenGL state
@@ -1002,16 +1014,40 @@ void glEnd(void) {
         glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection);
     }
 
-    // Set up modelview matrix (identity for now)
+    // Set up modelview matrix - apply transformations directly
     GLint modelview_loc = glGetUniformLocation(shader_program, "modelview");
     if (modelview_loc != -1) {
+        // Start with identity matrix
         GLfloat modelview[16] = {
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f
         };
+
+        // Apply scale factor of 3 (native version uses 18)
+        GLfloat scale = 3.0f;
+        modelview[0] = scale;
+        modelview[5] = scale;
+        modelview[10] = scale;
+
+        // Apply current frame's transformations from the rotator
+        // We'll get these values from the debug output in hextrail.c
+        // Note: We can't access hextrail internals from here due to circular dependencies
+        // For now, use a simple approach without direct rotator access
+
+        // For now, just apply the scale factor
+        // TODO: Extract current frame's transformations from the matrix stack properly
+
         glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview);
+
+        // Debug: Print the applied transformations
+        static int transform_debug_count = 0;
+        if (transform_debug_count < 3) {
+            printf("DEBUG: Direct Transformations (frame %d): scale=%.1f\n",
+                   transform_debug_count, scale);
+            transform_debug_count++;
+        }
     }
 
     // Create and bind VBOs
@@ -1418,7 +1454,7 @@ void xcolor_to_glfloat(const XColor *xcolor, GLfloat *rgba) {
     rgba[1] = xcolor->green / 65535.0f; // Green
     rgba[2] = xcolor->blue / 65535.0f;  // Blue
     rgba[3] = 1.0f;                     // Alpha
-    
+
     static int xcolor_count = 0;
     xcolor_count++;
     if (xcolor_count <= 5) { // Log first 5 color conversions
@@ -1528,9 +1564,9 @@ static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XCo
         colors[i].green = (unsigned short)(g * 65535);
         colors[i].blue = (unsigned short)(b * 65535);
         colors[i].flags = DoRed | DoGreen | DoBlue;
-        
+
         if (i < 3) { // Log first 3 colors
-            printf("[%ld] make_color_path_webgl: Color[%d]: RGB(%d, %d, %d) from HSV(%.1f, %.2f, %.2f)\n", 
+            printf("[%ld] make_color_path_webgl: Color[%d]: RGB(%d, %d, %d) from HSV(%.1f, %.2f, %.2f)\n",
                    (long)(emscripten_get_now()), i, colors[i].red, colors[i].green, colors[i].blue, interp_h, interp_s, interp_v);
         }
     }
