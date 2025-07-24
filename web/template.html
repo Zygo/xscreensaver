@@ -418,14 +418,22 @@
                 setupControls();
                 setupFullscreenHandling();
 
-                // Initialize rotator with checkbox values after module is ready
+                // Initialize all controls with webpage values after module is ready
                 setTimeout(function() {
                     var spinCheckbox = document.getElementById('spin');
                     var wanderCheckbox = document.getElementById('wander');
-                    if (Module._set_spin && Module._set_wander) {
+                    var speedSlider = document.getElementById('speed');
+                    var thicknessSlider = document.getElementById('thickness');
+
+                    if (Module._set_spin && Module._set_wander && Module._set_speed && Module._set_thickness) {
                         Module._set_spin(spinCheckbox.checked ? 1 : 0);
                         Module._set_wander(wanderCheckbox.checked ? 1 : 0);
-                        console.log("DEBUG: Initialized rotator with spin=" + spinCheckbox.checked + ", wander=" + wanderCheckbox.checked);
+                        Module._set_speed(parseFloat(speedSlider.value));
+                        Module._set_thickness(parseFloat(thicknessSlider.value));
+                        console.log("DEBUG: Initialized all controls - spin=" + spinCheckbox.checked +
+                                   ", wander=" + wanderCheckbox.checked +
+                                   ", speed=" + speedSlider.value +
+                                   ", thickness=" + thicknessSlider.value);
                     }
                 }, 100); // Small delay to ensure hack_init has completed
             }

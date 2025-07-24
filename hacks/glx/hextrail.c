@@ -17,9 +17,7 @@
 
 # define release_hextrail 0
 
-#ifdef WEB_BUILD
-#include "xlockmore_web.h"
-#else
+#ifndef WEB_BUILD
 #include "xlockmore.h"
 #endif
 #include "colors.h"
@@ -691,6 +689,13 @@ ENTRYPOINT Bool
 hextrail_handle_event (ModeInfo *mi, XEvent *event)
 {
   hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  // Handle web parameter change events (NULL event means parameters changed)
+  if (event == NULL) {
+    scale_corners(mi);  // Recalculate corners when thickness changes
+    return True;
+  }
+
   if (gltrackball_event_handler (event, bp->trackball,
                                  MI_WIDTH (mi), MI_HEIGHT (mi),
                                  &bp->button_down_p))

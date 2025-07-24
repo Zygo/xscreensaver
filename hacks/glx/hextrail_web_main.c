@@ -18,9 +18,10 @@ EMSCRIPTEN_KEEPALIVE
 int main() {
     // Initialize the web wrapper with hextrail's functions
     return xscreensaver_web_init(
-        init_hextrail,      // init function
-        draw_hextrail,      // draw function  
-        reshape_hextrail,   // reshape function
-        free_hextrail       // free function
+        init_hextrail,         // init function
+        draw_hextrail,         // draw function
+        reshape_hextrail,      // reshape function
+        free_hextrail,         // free function
+        hextrail_handle_event  // handle_event function
     );
-} 
+}

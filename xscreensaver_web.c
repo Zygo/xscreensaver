@@ -319,11 +319,13 @@ typedef void (*init_func)(ModeInfo *);
 typedef void (*draw_func)(ModeInfo *);
 typedef void (*reshape_func)(ModeInfo *, int, int);
 typedef void (*free_func)(ModeInfo *);
+typedef Bool (*handle_event_func)(ModeInfo *, XEvent *);
 
 static init_func hack_init = NULL;
 static draw_func hack_draw = NULL;
 static reshape_func hack_reshape = NULL;
 static free_func hack_free = NULL;
+static handle_event_func hack_handle_event = NULL;
 
 // Animation state (controlled by HexTrail's rotator system)
 static int spin_enabled = 1;
@@ -340,6 +342,9 @@ void main_loop(void) {
     if (!rendering_enabled) {
         return; // Skip rendering entirely
     }
+
+    // Don't reset the matrix stack - let it accumulate transformations from glTranslatef/glRotatef
+    // The native code will call glLoadIdentity() when needed
 
     // Stop debug output after frame 240 (4 seconds)
     if (frame_count <= 240) {
@@ -504,7 +509,7 @@ static void init_opengl_state() {
 
 // Generic web initialization
 EMSCRIPTEN_KEEPALIVE
-int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, free_func free) {
+int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, free_func free, handle_event_func handle_event) {
     printf("xscreensaver_web_init called\n");
 
     // Initialize random seed for consistent but varied colors
@@ -516,9 +521,10 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
     hack_draw = draw;
     hack_reshape = reshape;
     hack_free = free;
+    hack_handle_event = handle_event;
 
-    printf("Function pointers set: init=%p, draw=%p, reshape=%p, free=%p\n",
-           (void*)init, (void*)draw, (void*)reshape, (void*)free);
+    printf("Function pointers set: init=%p, draw=%p, reshape=%p, free=%p, handle_event=%p\n",
+           (void*)init, (void*)draw, (void*)reshape, (void*)free, (void*)handle_event);
 
     // Initialize ModeInfo
     web_mi.screen = 0;
@@ -589,6 +595,13 @@ void set_thickness(GLfloat new_thickness) {
     extern GLfloat thickness;
     thickness = new_thickness;
     printf("Thickness set to: %f\n", thickness);
+    
+    // Send event to hack to update corners
+    if (hack_handle_event) {
+        // Create a dummy event to trigger corner recalculation
+        // The hack can check if thickness changed and call scale_corners()
+        hack_handle_event(&web_mi, NULL);  // NULL event means "parameter changed"
+    }
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -679,6 +692,14 @@ void jwxyz_abort(const char *fmt, ...) {
     // In a real implementation, this would terminate the program
     // For web, we'll just exit the program
     exit(1);
+}
+
+// Missing X11 function for web builds
+int XLookupString(XKeyEvent *event_struct, char *buffer_return, int bytes_buffer, KeySym *keysym_return, XComposeStatus *status_in_out) {
+    // Stub implementation for web builds - not used since we pass NULL events
+    if (keysym_return) *keysym_return = 0;
+    if (buffer_return && bytes_buffer > 0) buffer_return[0] = '\0';
+    return 0;
 }
 
 // Missing GLU functions for WebGL
@@ -1043,19 +1064,34 @@ void glEnd(void) {
         GLfloat stack_matrix[16];
         memcpy(stack_matrix, modelview_stack.stack[modelview_stack.top].m, 16 * sizeof(GLfloat));
 
-        // Check if the matrix has reasonable values (not massive translations)
+        // Debug: Print raw matrix values to see what's in the stack
+        static int raw_matrix_debug_count = 0;
+        if (raw_matrix_debug_count < 2) {
+            printf("DEBUG: Raw matrix stack (frame %d): trans=(%.3f,%.3f,%.3f), scale=(%.3f,%.3f,%.3f)\n", 
+                   raw_matrix_debug_count, stack_matrix[12], stack_matrix[13], stack_matrix[14],
+                   stack_matrix[0], stack_matrix[5], stack_matrix[10]);
+            raw_matrix_debug_count++;
+        }
+
+        // Scale down massive translations while keeping rotations and scales
+        float translation_scale = 0.1f;
+        stack_matrix[12] *= translation_scale;  // X translation
+        stack_matrix[13] *= translation_scale;  // Y translation  
+        stack_matrix[14] *= translation_scale;  // Z translation
+
+        // Check if the scaled matrix has reasonable values
         if (fabs(stack_matrix[12]) < 100.0f && fabs(stack_matrix[13]) < 100.0f && fabs(stack_matrix[14]) < 100.0f) {
-            // Use the matrix stack (real transformations)
+            // Use the scaled matrix stack (real transformations)
             glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, stack_matrix);
 
             static int stack_debug_count = 0;
             if (stack_debug_count < 3) {
-                printf("DEBUG: Using matrix stack (frame %d): trans=(%.3f,%.3f,%.3f)\n",
+                printf("DEBUG: Using scaled matrix stack (frame %d): trans=(%.3f,%.3f,%.3f)\n", 
                        stack_debug_count, stack_matrix[12], stack_matrix[13], stack_matrix[14]);
                 stack_debug_count++;
             }
         } else {
-            // Fall back to hardcoded matrix (current working approach)
+            // Fall back to hardcoded matrix (safety net)
             static int fallback_debug_count = 0;
             if (fallback_debug_count < 3) {
                 printf("DEBUG: Using fallback matrix (frame %d): scale=%.1f\n", fallback_debug_count, scale);
