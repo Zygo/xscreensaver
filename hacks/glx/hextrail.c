@@ -76,10 +76,18 @@ typedef struct {
 
 static hextrail_configuration *bps = NULL;
 
+#ifdef WEB_BUILD
+// Make these accessible to web wrapper
+Bool do_spin;
+GLfloat speed;
+Bool do_wander;
+GLfloat thickness;
+#else
 static Bool do_spin;
 static GLfloat speed;
 static Bool do_wander;
 static GLfloat thickness;
+#endif
 
 static XrmOptionDescRec opts[] = {
   { "-spin",   ".spin",   XrmoptionNoArg, "True" },

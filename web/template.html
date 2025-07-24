@@ -19,12 +19,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
         #container {
             max-width: 1200px;
             width: 100%;
             padding: 20px;
+            position: relative;
         }
 
         #header {
@@ -68,6 +70,7 @@
             background: #000;
             max-width: 100%;
             height: auto;
+            display: block;
         }
 
         #loading {
@@ -227,6 +230,31 @@
             font-size: 12px;
         }
 
+        /* Fullscreen styles */
+        #canvas:fullscreen {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            border-radius: 0;
+            max-width: none;
+        }
+
+        #canvas:-webkit-full-screen {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            border-radius: 0;
+            max-width: none;
+        }
+
+        #canvas:-moz-full-screen {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            border-radius: 0;
+            max-width: none;
+        }
+
         @media (max-width: 768px) {
             #container {
                 padding: 10px;
@@ -320,8 +348,7 @@
         var debugPaused = false;
         function toggleDebugPause() {
             debugPaused = !debugPaused;
-            var btn = document.getElementById('debug-pause-btn');
-            btn.textContent = debugPaused ? 'Resume' : 'Pause';
+            document.getElementById('debug-pause-btn').textContent = debugPaused ? 'Resume' : 'Pause';
         }
 
         // Global error handler
@@ -388,6 +415,7 @@
 
                 // Set up controls
                 setupControls();
+                setupFullscreenHandling();
             }
         };
 
@@ -470,33 +498,6 @@
                 }
             });
 
-            // Fullscreen button
-            var fullscreenButton = document.getElementById('fullscreen');
-            fullscreenButton.addEventListener('click', function() {
-                var canvas = document.getElementById('canvas');
-                if (!document.fullscreenElement) {
-                    if (canvas.requestFullscreen) {
-                        canvas.requestFullscreen();
-                    } else if (canvas.webkitRequestFullscreen) {
-                        canvas.webkitRequestFullscreen();
-                    } else if (canvas.mozRequestFullScreen) {
-                        canvas.mozRequestFullScreen();
-                    } else if (canvas.msRequestFullscreen) {
-                        canvas.msRequestFullscreen();
-                    }
-                } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
-                    } else if (document.mozCancelFullScreen) {
-                        document.mozCancelFullScreen();
-                    } else if (document.msExitFullscreen) {
-                        document.msExitFullscreen();
-                    }
-                }
-            });
-
             // Mouse controls
             var canvas = document.getElementById('canvas');
             var isDragging = false;
@@ -534,28 +535,7 @@
             document.addEventListener('keydown', function(e) {
                 switch(e.key.toLowerCase()) {
                     case 'f':
-                        var canvas = document.getElementById('canvas');
-                        if (!document.fullscreenElement) {
-                            if (canvas.requestFullscreen) {
-                                canvas.requestFullscreen();
-                            } else if (canvas.webkitRequestFullscreen) {
-                                canvas.webkitRequestFullscreen();
-                            } else if (canvas.mozRequestFullScreen) {
-                                canvas.mozRequestFullScreen();
-                            } else if (canvas.msRequestFullscreen) {
-                                canvas.msRequestFullscreen();
-                            }
-                        } else {
-                            if (document.exitFullscreen) {
-                                document.exitFullscreen();
-                            } else if (document.webkitExitFullscreen) {
-                                document.webkitExitFullscreen();
-                            } else if (document.mozCancelFullScreen) {
-                                document.mozCancelFullScreen();
-                            } else if (document.msExitFullscreen) {
-                                document.msExitFullscreen();
-                            }
-                        }
+                        toggleFullscreen();
                         break;
                     case 'r':
                         resetButton.click();
@@ -571,6 +551,78 @@
                 }
             });
         }
+
+        function setupFullscreenHandling() {
+            var canvas = document.getElementById('canvas');
+
+            // Handle fullscreen changes
+            document.addEventListener('fullscreenchange', resizeCanvas);
+            document.addEventListener('webkitfullscreenchange', resizeCanvas);
+            document.addEventListener('mozfullscreenchange', resizeCanvas);
+            document.addEventListener('MSFullscreenChange', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            var canvas = document.getElementById('canvas');
+            var isFullscreen = document.fullscreenElement ||
+                              document.webkitFullscreenElement ||
+                              document.mozFullScreenElement ||
+                              document.msFullscreenElement;
+
+            if (isFullscreen) {
+                // Set canvas to fullscreen resolution
+                canvas.width = window.screen.width;
+                canvas.height = window.screen.height;
+
+                // Notify the WebAssembly module of the resize
+                if (Module._reshape_hextrail_wrapper) {
+                    Module._reshape_hextrail_wrapper(canvas.width, canvas.height);
+                }
+            } else {
+                // Reset to default size
+                canvas.width = 800;
+                canvas.height = 600;
+
+                // Notify the WebAssembly module of the resize
+                if (Module._reshape_hextrail_wrapper) {
+                    Module._reshape_hextrail_wrapper(canvas.width, canvas.height);
+                }
+            }
+        }
+
+        function toggleFullscreen() {
+            var canvas = document.getElementById('canvas');
+
+            if (document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement) {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            } else {
+                // Enter fullscreen
+                if (canvas.requestFullscreen) {
+                    canvas.requestFullscreen();
+                } else if (canvas.webkitRequestFullscreen) {
+                    canvas.webkitRequestFullscreen();
+                } else if (canvas.mozRequestFullScreen) {
+                    canvas.mozRequestFullScreen();
+                } else if (canvas.msRequestFullscreen) {
+                    canvas.msRequestFullscreen();
+                }
+            }
+        }
+
+        // Fullscreen button
+        document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
     </script>
 
     <!-- This will be replaced by the generated script tag -->

@@ -559,26 +559,30 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
 // Web-specific function exports for UI controls
 EMSCRIPTEN_KEEPALIVE
 void set_speed(GLfloat new_speed) {
-    animation_speed = new_speed;
-    printf("Animation speed set to: %f\n", animation_speed);
+    extern GLfloat speed;
+    speed = new_speed;
+    printf("Animation speed set to: %f\n", speed);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void set_thickness(GLfloat new_thickness) {
-    // This would need to be implemented per-hack
-    printf("Thickness set to: %f\n", new_thickness);
+    extern GLfloat thickness;
+    thickness = new_thickness;
+    printf("Thickness set to: %f\n", thickness);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void set_spin(int new_spin_enabled) {
-    spin_enabled = new_spin_enabled;
-    printf("Spin %s\n", spin_enabled ? "enabled" : "disabled");
+    extern Bool do_spin;
+    do_spin = new_spin_enabled;
+    printf("Spin %s\n", do_spin ? "enabled" : "disabled");
 }
 
 EMSCRIPTEN_KEEPALIVE
 void set_wander(int new_wander_enabled) {
-    wander_enabled = new_wander_enabled;
-    printf("Wander %s\n", wander_enabled ? "enabled" : "disabled");
+    extern Bool do_wander;
+    do_wander = new_wander_enabled;
+    printf("Wander %s\n", do_wander ? "enabled" : "disabled");
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -603,6 +607,16 @@ EMSCRIPTEN_KEEPALIVE
 void handle_mouse_wheel(int delta) {
     // This would need to be implemented per-hack
     printf("Mouse wheel: %d\n", delta);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void reshape_hextrail_wrapper(int width, int height) {
+    if (hack_reshape) {
+        web_mi.width = width;
+        web_mi.height = height;
+        hack_reshape(&web_mi, width, height);
+        printf("Reshaped to %dx%d\n", width, height);
+    }
 }
 
 // Dummy init_GL function for web builds
