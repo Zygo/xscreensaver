@@ -325,10 +325,21 @@ static draw_func hack_draw = NULL;
 static reshape_func hack_reshape = NULL;
 static free_func hack_free = NULL;
 
+// Animation state (controlled by HexTrail's rotator system)
+static int spin_enabled = 1;
+static int wander_enabled = 1;
+static float animation_speed = 1.0f;
+
 // Main loop callback
 void main_loop(void) {
     static int frame_count = 0;
     frame_count++;
+    total_vertices_this_frame = 0; // Reset vertex counter each frame
+
+    // Check if rendering is disabled
+    if (!rendering_enabled) {
+        return; // Skip rendering entirely
+    }
 
     // Stop debug output after frame 240 (4 seconds)
     if (frame_count <= 240) {
@@ -548,8 +559,8 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
 // Web-specific function exports for UI controls
 EMSCRIPTEN_KEEPALIVE
 void set_speed(GLfloat new_speed) {
-    // This would need to be implemented per-hack
-    printf("Speed set to: %f\n", new_speed);
+    animation_speed = new_speed;
+    printf("Animation speed set to: %f\n", animation_speed);
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -559,14 +570,14 @@ void set_thickness(GLfloat new_thickness) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void set_spin(int spin_enabled) {
-    // This would need to be implemented per-hack
+void set_spin(int new_spin_enabled) {
+    spin_enabled = new_spin_enabled;
     printf("Spin %s\n", spin_enabled ? "enabled" : "disabled");
 }
 
 EMSCRIPTEN_KEEPALIVE
-void set_wander(int wander_enabled) {
-    // This would need to be implemented per-hack
+void set_wander(int new_wander_enabled) {
+    wander_enabled = new_wander_enabled;
     printf("Wander %s\n", wander_enabled ? "enabled" : "disabled");
 }
 
