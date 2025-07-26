@@ -217,6 +217,11 @@
             display: none;
         }
 
+        #debug-log {
+            /* Remove height constraint and overflow - let the panel handle scrolling */
+            overflow: visible;
+        }
+
         #debug-toggle {
             position: fixed;
             top: 10px;
@@ -345,6 +350,8 @@
     </div>
 
     <script>
+        console.log('DEBUG: Script starting...');
+
         // Debug pause functionality
         var debugPaused = false;
         function toggleDebugPause() {
@@ -352,20 +359,130 @@
             document.getElementById('debug-pause-btn').textContent = debugPaused ? 'Resume' : 'Pause';
         }
 
+        // Smart auto-scroll function - checks if user is at bottom and scrolls if needed
+        function smartScrollToBottom(debugLog) {
+            if (!debugLog) return;
+
+            // Check if user is already at the bottom (within 5px tolerance)
+            var scrollDiff = debugLog.scrollHeight - debugLog.scrollTop - debugLog.clientHeight;
+            var isAtBottom = scrollDiff < 5;
+
+            console.log('Scroll debug:', {
+                scrollHeight: debugLog.scrollHeight,
+                scrollTop: debugLog.scrollTop,
+                clientHeight: debugLog.clientHeight,
+                scrollDiff: scrollDiff,
+                isAtBottom: isAtBottom
+            });
+
+            // Only auto-scroll if they're already at the bottom
+            if (isAtBottom) {
+                debugLog.scrollTop = debugLog.scrollHeight;
+                console.log('Auto-scrolling to bottom');
+            } else {
+                console.log('Not auto-scrolling - user scrolled up');
+            }
+        }
+
+        // Helper function to add debug log with smart scrolling
+        function addDebugLog(message) {
+            // ALWAYS log to console first for debugging
+            console.log('DEBUG LOG:', message);
+
+            if (debugPaused) {
+                console.log('DEBUG: Paused, not adding to panel');
+                return;
+            }
+
+            var debugPanel = document.getElementById('debug-panel');
+            var debugLog = document.getElementById('debug-log');
+            if (!debugPanel || !debugLog) {
+                console.log('DEBUG: No debug panel or log element found!');
+                return;
+            }
+
+            // Check scroll position BEFORE adding content (use the panel, not the log)
+            var wasAtBottom = (debugPanel.scrollHeight - debugPanel.scrollTop - debugPanel.clientHeight) < 5;
+
+            console.log('DEBUG: Scroll check - wasAtBottom:', wasAtBottom, 'panel scrollHeight:', debugPanel.scrollHeight, 'scrollTop:', debugPanel.scrollTop, 'clientHeight:', debugPanel.clientHeight);
+
+            // Add the message
+            var timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += '[' + timestamp + '] ' + message + '<br>';
+
+            // Only scroll if user was already at the bottom
+            if (wasAtBottom) {
+                var oldScrollTop = debugPanel.scrollTop;
+                var targetScrollTop = debugPanel.scrollHeight;
+                debugPanel.scrollTop = targetScrollTop;
+                console.log('DEBUG: Auto-scroll attempt - old scrollTop:', oldScrollTop, 'target:', targetScrollTop, 'new scrollTop:', debugPanel.scrollTop);
+
+                // Check if the scroll actually worked
+                if (debugPanel.scrollTop !== targetScrollTop) {
+                    console.log('DEBUG: WARNING - Scroll did not work! Expected:', targetScrollTop, 'Got:', debugPanel.scrollTop);
+
+                    // Try to understand why it's not scrolling
+                    console.log('DEBUG: Panel properties - scrollTop:', debugPanel.scrollTop, 'scrollHeight:', debugPanel.scrollHeight, 'clientHeight:', debugPanel.clientHeight, 'offsetHeight:', debugPanel.offsetHeight);
+                    console.log('DEBUG: Computed styles - overflow:', window.getComputedStyle(debugPanel).overflow, 'overflowY:', window.getComputedStyle(debugPanel).overflowY);
+                } else {
+                    console.log('DEBUG: Auto-scroll successful');
+                }
+
+                // Check again after a short delay to see if something changed it back
+                setTimeout(function() {
+                    console.log('DEBUG: Delayed scroll check - scrollTop:', debugPanel.scrollTop, 'scrollHeight:', debugPanel.scrollHeight);
+                    if (debugPanel.scrollTop !== targetScrollTop) {
+                        console.log('DEBUG: WARNING - Scroll position was changed after we set it!');
+                    }
+                }, 100);
+            } else {
+                console.log('DEBUG: Did not auto-scroll - user was not at bottom');
+            }
+        }
+
+        // Test our debug system immediately
+        setTimeout(function() {
+            console.log('DEBUG: Testing debug system...');
+            addDebugLog('Debug system test - if you see this, it works!');
+
+            // Test manual scrolling and panel properties
+            var debugLog = document.getElementById('debug-log');
+            var debugPanel = document.getElementById('debug-panel');
+            if (debugLog && debugPanel) {
+                console.log('DEBUG: Testing manual scroll...');
+                console.log('DEBUG: Panel properties - height:', debugPanel.offsetHeight, 'scrollHeight:', debugPanel.scrollHeight);
+                console.log('DEBUG: Log properties - height:', debugLog.offsetHeight, 'scrollHeight:', debugLog.scrollHeight);
+
+                // Try scrolling the panel instead of the log
+                debugPanel.scrollTop = 9999;
+                console.log('DEBUG: Panel scroll result - scrollTop:', debugPanel.scrollTop);
+
+                // Try scrolling the log
+                debugLog.scrollTop = 9999;
+                console.log('DEBUG: Log scroll result - scrollTop:', debugLog.scrollTop);
+
+                // Check if content overflows
+                console.log('DEBUG: Content overflow check - scrollHeight > clientHeight:', debugLog.scrollHeight > debugLog.clientHeight);
+            }
+        }, 1000);
+
         // Global error handler
         window.onerror = function(msg, url, line, col, error) {
-            if (debugPaused) return;
-            var debugLog = document.getElementById('debug-log');
-            if (debugLog) {
-                var timestamp = new Date().toLocaleTimeString();
-                debugLog.innerHTML += '[' + timestamp + '] ERROR: ' + msg + ' at ' + url + ':' + line + '<br>';
-                debugLog.scrollTop = debugLog.scrollHeight;
-            }
+            addDebugLog('ERROR: ' + msg + ' at ' + url + ':' + line);
         };
 
         // Configure Module before loading the generated JS
         var Module = {
             canvas: document.getElementById('canvas'),
+
+            // Suppress WebGL errors to reduce console noise
+            printErr: function(text) {
+                // Only show non-WebGL errors
+                if (!text.includes('INVALID_ENUM') && !text.includes('getParameter') && !text.includes('enable')) {
+                    console.error('Module error:', text);
+                    addDebugLog('ERROR: ' + text);
+                }
+            },
             setStatus: function(text) {
                 var loading = document.getElementById('loading');
                 if (loading) {
@@ -373,27 +490,13 @@
                 }
 
                 // Log to debug panel
-                if (!debugPaused) {
-                    var debugLog = document.getElementById('debug-log');
-                    if (debugLog) {
-                        var timestamp = new Date().toLocaleTimeString();
-                        debugLog.innerHTML += '[' + timestamp + '] Status: ' + text + '<br>';
-                        debugLog.scrollTop = debugLog.scrollHeight;
-                    }
-                }
+                addDebugLog('Status: ' + text);
             },
             print: function(...args) {
                 console.log(...args);
 
                 // Log to debug panel
-                if (!debugPaused) {
-                    var debugLog = document.getElementById('debug-log');
-                    if (debugLog) {
-                        var timestamp = new Date().toLocaleTimeString();
-                        debugLog.innerHTML += '[' + timestamp + '] Print: ' + args.join(' ') + '<br>';
-                        debugLog.scrollTop = debugLog.scrollHeight;
-                    }
-                }
+                addDebugLog('Print: ' + args.join(' '));
             },
             onRuntimeInitialized: function() {
                 console.log('Module runtime initialized');
@@ -405,14 +508,7 @@
                 }
 
                 // Log to debug panel
-                if (!debugPaused) {
-                    var debugLog = document.getElementById('debug-log');
-                    if (debugLog) {
-                        var timestamp = new Date().toLocaleTimeString();
-                        debugLog.innerHTML += '[' + timestamp + '] Module runtime initialized<br>';
-                        debugLog.scrollTop = debugLog.scrollHeight;
-                    }
-                }
+                addDebugLog('Module runtime initialized');
 
                 // Set up controls
                 setupControls();
