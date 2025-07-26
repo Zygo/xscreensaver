@@ -284,7 +284,7 @@ typedef struct {
     Colormap colormap;
     int width;
     int height;
-    int count;
+    long count;
     int fps_p;
     int polygon_count; // For polygon counting
     void *data;
