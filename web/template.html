@@ -217,6 +217,15 @@
             display: none;
         }
 
+        /* Make the close button sticky */
+        #debug-panel > div:first-child {
+            position: sticky;
+            top: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1001;
+            padding-bottom: 5px;
+        }
+
         #debug-log {
             /* Remove height constraint and overflow - let the panel handle scrolling */
             overflow: visible;
