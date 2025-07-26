@@ -1191,10 +1191,6 @@ void glEnd(void) {
     // Draw
     glDrawArrays(immediate.primitive_type, 0, immediate.vertex_count);
 
-    // Cleanup
-    glDeleteBuffers(1, &vbo_vertices);
-    glDeleteBuffers(1, &vbo_colors);
-
     // Limit completion message to first 5 frames
     static int webgl_complete_count = 0;
     if (webgl_complete_count < 5) {
