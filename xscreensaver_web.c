@@ -59,7 +59,71 @@ static double frand(double max) {
 #define True 1
 #define False 0
 
-// WebGL state management
+// GLdouble is missing in WebGL, provide it
+#ifndef GLdouble
+typedef double GLdouble;
+#endif
+
+// These constants should be available, but define them if missing
+#ifndef GL_MODELVIEW_MATRIX
+#define GL_MODELVIEW_MATRIX  0x0BA6
+#endif
+#ifndef GL_PROJECTION_MATRIX
+#define GL_PROJECTION_MATRIX 0x0BA7
+#endif
+
+// Only provide gluProject if it's not working with the expected signature
+// We'll name it differently to avoid conflicts
+int gluProject_web(GLdouble objx, GLdouble objy, GLdouble objz,
+                   const GLdouble modelMatrix[16], const GLdouble projMatrix[16],
+                   const GLint viewport[4],
+                   GLdouble *winx, GLdouble *winy, GLdouble *winz) {
+    GLdouble in[4], out[4];
+
+    // Transform by model matrix
+    in[0] = objx; in[1] = objy; in[2] = objz; in[3] = 1.0;
+
+    // Model transformation
+    out[0] = modelMatrix[0]*in[0] + modelMatrix[4]*in[1] + modelMatrix[8]*in[2] + modelMatrix[12]*in[3];
+    out[1] = modelMatrix[1]*in[0] + modelMatrix[5]*in[1] + modelMatrix[9]*in[2] + modelMatrix[13]*in[3];
+    out[2] = modelMatrix[2]*in[0] + modelMatrix[6]*in[1] + modelMatrix[10]*in[2] + modelMatrix[14]*in[3];
+    out[3] = modelMatrix[3]*in[0] + modelMatrix[7]*in[1] + modelMatrix[11]*in[2] + modelMatrix[15]*in[3];
+
+    // Projection transformation
+    in[0] = out[0]; in[1] = out[1]; in[2] = out[2]; in[3] = out[3];
+    out[0] = projMatrix[0]*in[0] + projMatrix[4]*in[1] + projMatrix[8]*in[2] + projMatrix[12]*in[3];
+    out[1] = projMatrix[1]*in[0] + projMatrix[5]*in[1] + projMatrix[9]*in[2] + projMatrix[13]*in[3];
+    out[2] = projMatrix[2]*in[0] + projMatrix[6]*in[1] + projMatrix[10]*in[2] + projMatrix[14]*in[3];
+    out[3] = projMatrix[3]*in[0] + projMatrix[7]*in[1] + projMatrix[11]*in[2] + projMatrix[15]*in[3];
+
+    if (out[3] == 0.0) return 0; // GL_FALSE
+
+    // Perspective divide and viewport transform
+    out[0] /= out[3]; out[1] /= out[3]; out[2] /= out[3];
+    *winx = viewport[0] + (1.0 + out[0]) * viewport[2] / 2.0;
+    *winy = viewport[1] + (1.0 + out[1]) * viewport[3] / 2.0;
+    *winz = (1.0 + out[2]) / 2.0;
+
+    return 1; // GL_TRUE
+}
+
+// Provide glGetDoublev since WebGL only has glGetFloatv
+void glGetDoublev_web(GLenum pname, GLdouble *params) {
+    GLfloat float_params[16];
+    glGetFloatv(pname, float_params);
+
+    // Convert float to double
+    int count = (pname == GL_MODELVIEW_MATRIX || pname == GL_PROJECTION_MATRIX) ? 16 : 1;
+    for (int i = 0; i < count; i++) {
+        params[i] = (GLdouble)float_params[i];
+    }
+}
+
+// Override the function names for hextrail.c when building for web
+#define gluProject gluProject_web
+#define glGetDoublev glGetDoublev_web
+
+// Matrix stack management
 #define MAX_MATRIX_STACK_DEPTH 32
 #define MAX_VERTICES 100000
 

@@ -95,12 +95,11 @@ if [ $? -eq 0 ]; then
     echo -e "   - hextrail_web.wasm (WebAssembly binary)"
 
     echo -e "${YELLOW}🌐 To run locally:${NC}"
+    echo -e "   cd build_web"
     echo -e "   python3 -m http.server 8000"
-    echo -e "   Then open http://localhost:8000/web/"
+    echo -e "   Then open http://localhost:8000"
 
-    # Copy files to web directory for easy access
-    cp index.* $REPO_ROOT/web/
-    echo -e "${GREEN}📋 Files copied to web/ directory${NC}"
+    echo -e "${GREEN}📋 Files in build_web directory${NC}"
 
 else
     echo -e "${RED}❌ Build failed!${NC}"
