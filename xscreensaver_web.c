@@ -63,6 +63,26 @@ static double frand(double max) {
 #define GL_POLYGON 0x0009
 #endif
 
+// Fixed-function OpenGL constants not available in WebGL 2.0
+#ifndef GL_LIGHTING
+#define GL_LIGHTING 0x0B50
+#endif
+#ifndef GL_LIGHT0
+#define GL_LIGHT0 0x4000
+#endif
+#ifndef GL_LIGHT1
+#define GL_LIGHT1 0x4001
+#endif
+#ifndef GL_TEXTURE_2D
+#define GL_TEXTURE_2D 0x0DE1
+#endif
+#ifndef GL_FOG
+#define GL_FOG 0x0B60
+#endif
+#ifndef GL_COLOR_MATERIAL
+#define GL_COLOR_MATERIAL 0x0B57
+#endif
+
 // Color generation constants
 #define MAXPOINTS 10
 
@@ -196,6 +216,7 @@ static GLuint compile_shader(const char *source, GLenum type);
 static void init_shaders(void);
 static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XColor *colors, int *ncolorsP);
 static MatrixStack* get_current_matrix_stack(void);
+static void init_gl_function_pointers(void);
 
 // OpenGL function forward declarations
 void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val);
@@ -414,6 +435,15 @@ void main_loop(void) {
         return; // Skip rendering entirely
     }
 
+    // Check for any existing errors at the start of main loop
+    GLenum start_error = glGetError();
+    if (start_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error at start of main loop (frame %d): %d\n", frame_count, start_error);
+        if (start_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
+
     // Don't reset the matrix stack - let it accumulate transformations from glTranslatef/glRotatef
     // The native code will call glLoadIdentity() when needed
 
@@ -427,14 +457,49 @@ void main_loop(void) {
     // Don't reset the matrix - let it persist like the native version
     // The native hextrail code uses glPushMatrix/glPopMatrix to manage transformations
 
+    // Check for errors before glClear
+    GLenum before_clear_error = glGetError();
+    if (before_clear_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
+        if (before_clear_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
+
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Check for errors after glClear in main loop
+    GLenum clear_error = glGetError();
+    if (clear_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glClear in main loop: %d\n", clear_error);
+    }
+
+    // Check for any pending errors before hack_draw
+    GLenum before_hack_error = glGetError();
+    if (before_hack_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before hack_draw (after glClear): %d\n", before_hack_error);
+    }
 
     if (hack_draw) {
         if (frame_count <= 240 && frame_count % 60 == 0) {
             printf("Calling hack_draw...\n");
         }
+
+        // Check for errors before hack_draw
+        GLenum before_draw_error = glGetError();
+        if (before_draw_error != GL_NO_ERROR) {
+            printf("ERROR: WebGL error before hack_draw: %d\n", before_draw_error);
+        }
+
         hack_draw(&web_mi);
+
+        // Check for errors after hack_draw
+        GLenum after_draw_error = glGetError();
+        if (after_draw_error != GL_NO_ERROR) {
+            printf("ERROR: WebGL error after hack_draw: %d\n", after_draw_error);
+        }
+
         if (frame_count <= 240 && frame_count % 60 == 0) {
             printf("hack_draw completed\n");
         }
@@ -446,11 +511,35 @@ void main_loop(void) {
 }
 
 void glMatrixMode(GLenum mode) {
+    // Check for errors before glMatrixMode
+    GLenum before_matrix_error = glGetError();
+    if (before_matrix_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glMatrixMode: %d\n", before_matrix_error);
+    }
+
     current_matrix_mode = mode;
     printf("glMatrixMode: %d\n", mode);
+
+    // Check for errors after glMatrixMode
+    GLenum after_matrix_error = glGetError();
+    if (after_matrix_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glMatrixMode: %d\n", after_matrix_error);
+        if (after_matrix_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
 }
 
 void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val) {
+    // Check for errors before glOrtho
+    GLenum before_ortho_error = glGetError();
+    if (before_ortho_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glOrtho: %d\n", before_ortho_error);
+        if (before_ortho_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
+
     printf("glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
 
     MatrixStack *stack = get_current_matrix_stack();
@@ -473,9 +562,24 @@ void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat n
         matrix_multiply(&stack->stack[stack->top], &ortho, &stack->stack[stack->top]);
         printf("Orthographic matrix applied\n");
     }
+
+    // Check for errors after glOrtho
+    GLenum after_ortho_error = glGetError();
+    if (after_ortho_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glOrtho: %d\n", after_ortho_error);
+        if (after_ortho_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
 }
 
 void glLoadIdentity(void) {
+    // Check for errors before glLoadIdentity
+    GLenum before_identity_error = glGetError();
+    if (before_identity_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glLoadIdentity: %d\n", before_identity_error);
+    }
+
     MatrixStack *stack;
     switch (current_matrix_mode) {
         case GL_MODELVIEW:
@@ -500,6 +604,12 @@ void glLoadIdentity(void) {
         if (reset_count <= 3) {
             printf("DEBUG: ModelView matrix reset to identity (count: %d)\n", reset_count);
         }
+    }
+
+    // Check for errors after glLoadIdentity
+    GLenum after_identity_error = glGetError();
+    if (after_identity_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glLoadIdentity: %d\n", after_identity_error);
     }
 }
 
@@ -533,6 +643,9 @@ static int init_webgl() {
         return 0;
     }
 
+    // Initialize function pointers to real WebGL functions
+    init_gl_function_pointers();
+
     // Initialize OpenGL state
     init_opengl_state();
 
@@ -553,6 +666,15 @@ static MatrixStack* get_current_matrix_stack() {
 }
 
 static void init_opengl_state() {
+    // Check for any existing errors at the start of init_opengl_state
+    GLenum init_start_error = glGetError();
+    if (init_start_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error at start of init_opengl_state: %d\n", init_start_error);
+        if (init_start_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
+
     // Initialize matrix stacks
     matrix_identity(&modelview_stack.stack[0]);
     matrix_identity(&projection_stack.stack[0]);
@@ -570,8 +692,28 @@ static void init_opengl_state() {
 
     // Set up basic OpenGL state
     glEnable(GL_DEPTH_TEST);
+
+    // Check for errors after glEnable
+    GLenum state_error = glGetError();
+    if (state_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glEnable(GL_DEPTH_TEST): %d\n", state_error);
+    }
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // Check for errors after glClearColor
+    state_error = glGetError();
+    if (state_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glClearColor: %d\n", state_error);
+    }
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Check for errors after glClear
+    state_error = glGetError();
+    if (state_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glClear: %d\n", state_error);
+    }
 }
 
 // Generic web initialization
@@ -875,6 +1017,104 @@ void glShadeModel(GLenum mode) {
     // For now, just ignore - we'll use flat shading
 }
 
+// Function pointers to the real OpenGL functions
+void (*glEnable_real)(GLenum) = NULL;
+void (*glDisable_real)(GLenum) = NULL;
+
+// Add glEnable wrapper that handles unsupported capabilities in WebGL 2.0
+void glEnable(GLenum cap) {
+    // Check for unsupported capabilities in WebGL 2.0
+    switch (cap) {
+        case GL_NORMALIZE:
+            // GL_NORMALIZE is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glEnable(GL_NORMALIZE) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_LIGHTING:
+            // GL_LIGHTING is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glEnable(GL_LIGHTING) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_LIGHT0:
+        case GL_LIGHT1:
+            // Fixed-function lighting is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glEnable(GL_LIGHT%d) ignored - not supported in WebGL 2.0\n", cap - GL_LIGHT0);
+            return;
+        case GL_TEXTURE_2D:
+            // Fixed-function texturing is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glEnable(GL_TEXTURE_2D) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_FOG:
+            // Fixed-function fog is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glEnable(GL_FOG) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_COLOR_MATERIAL:
+            // Fixed-function materials are not supported in WebGL 2.0, ignore it
+            printf("WARNING: glEnable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
+            return;
+        default:
+            // For supported capabilities, call the real glEnable
+            if (glEnable_real) {
+                glEnable_real(cap);
+            } else {
+                printf("WARNING: glEnable(%d) ignored - real function not available\n", cap);
+            }
+            break;
+    }
+}
+
+// Add glDisable wrapper that handles unsupported capabilities in WebGL 2.0
+void glDisable(GLenum cap) {
+    // Check for unsupported capabilities in WebGL 2.0
+    switch (cap) {
+        case GL_NORMALIZE:
+            // GL_NORMALIZE is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glDisable(GL_NORMALIZE) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_LIGHTING:
+            // GL_LIGHTING is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glDisable(GL_LIGHTING) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_LIGHT0:
+        case GL_LIGHT1:
+            // Fixed-function lighting is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glDisable(GL_LIGHT%d) ignored - not supported in WebGL 2.0\n", cap - GL_LIGHT0);
+            return;
+        case GL_TEXTURE_2D:
+            // Fixed-function texturing is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glDisable(GL_TEXTURE_2D) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_FOG:
+            // Fixed-function fog is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glDisable(GL_FOG) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_COLOR_MATERIAL:
+            // Fixed-function materials are not supported in WebGL 2.0, ignore it
+            printf("WARNING: glDisable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
+            return;
+        default:
+            // For supported capabilities, call the real glDisable
+            if (glDisable_real) {
+                glDisable_real(cap);
+            } else {
+                printf("WARNING: glDisable(%d) ignored - real function not available\n", cap);
+            }
+            break;
+    }
+}
+
+// Initialize function pointers to real WebGL functions
+static void init_gl_function_pointers(void) {
+    // Get function pointers to the real WebGL functions
+    glEnable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glEnable");
+    glDisable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glDisable");
+
+    if (!glEnable_real) {
+        printf("WARNING: Could not get glEnable function pointer\n");
+    }
+    if (!glDisable_real) {
+        printf("WARNING: Could not get glDisable function pointer\n");
+    }
+}
+
 void glPushMatrix(void) {
     MatrixStack *stack;
     switch (current_matrix_mode) {
@@ -1008,6 +1248,12 @@ void glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
 }
 
 void glColor4fv(const GLfloat *v) {
+    // Check for errors before glColor4fv
+    GLenum before_color_error = glGetError();
+    if (before_color_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glColor4fv: %d\n", before_color_error);
+    }
+
     current_color.r = v[0];
     current_color.g = v[1];
     current_color.b = v[2];
@@ -1017,6 +1263,12 @@ void glColor4fv(const GLfloat *v) {
     color_count++;
     if (color_count <= 10) { // Only log first 10 color changes
         printf("glColor4fv: RGBA(%.3f, %.3f, %.3f, %.3f)\n", v[0], v[1], v[2], v[3]);
+    }
+
+    // Check for errors after glColor4fv
+    GLenum after_color_error = glGetError();
+    if (after_color_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glColor4fv: %d\n", after_color_error);
     }
 }
 
@@ -1035,6 +1287,16 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
         return;
     }
 
+    // Check for errors before glVertex3f (only on first few vertices to avoid spam)
+    static int vertex_error_check_count = 0;
+    if (vertex_error_check_count < 5) {
+        GLenum before_vertex_error = glGetError();
+        if (before_vertex_error != GL_NO_ERROR) {
+            printf("ERROR: WebGL error before glVertex3f (vertex %d): %d\n", vertex_error_check_count, before_vertex_error);
+        }
+        vertex_error_check_count++;
+    }
+
     immediate.vertices[immediate.vertex_count].x = x;
     immediate.vertices[immediate.vertex_count].y = y;
     immediate.vertices[immediate.vertex_count].z = z;
@@ -1044,6 +1306,15 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
 }
 
 void glBegin(GLenum mode) {
+    // Check for errors before glBegin
+    GLenum before_begin_error = glGetError();
+    if (before_begin_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glBegin: %d\n", before_begin_error);
+        if (before_begin_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
+
     immediate.in_begin_end = True;
     immediate.primitive_type = mode;
     immediate.vertex_count = 0;
@@ -1066,6 +1337,15 @@ void glEnd(void) {
     glEnd_count++;
     if (glEnd_count <= 5) { // Only log first 5 glEnd calls
         printf("glEnd #%d: Drawing %d vertices with primitive type %d\n", glEnd_count, immediate.vertex_count, immediate.primitive_type);
+    }
+
+    // Check for errors at the very start of glEnd
+    GLenum start_error = glGetError();
+    if (start_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error at start of glEnd: %d\n", start_error);
+        if (start_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
     }
 
     // Create VBOs and render
@@ -1094,6 +1374,17 @@ void glEnd(void) {
     }
 
     // Use the pre-compiled shader program
+    if (shader_program == 0) {
+        printf("ERROR: shader_program is 0, cannot render!\n");
+        return;
+    }
+
+    // Check WebGL context state
+    GLenum context_error = glGetError();
+    if (context_error != GL_NO_ERROR) {
+        printf("WARNING: WebGL context error before glUseProgram: %d\n", context_error);
+    }
+
     glUseProgram(shader_program);
 
     // Set up projection matrix (simple orthographic for now)
@@ -1107,6 +1398,12 @@ void glEnd(void) {
             0.0f, 0.0f, 0.0f, 1.0f
         };
         glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection);
+
+        // Check for errors after projection matrix
+        GLenum uniform_error = glGetError();
+        if (uniform_error != GL_NO_ERROR) {
+            printf("ERROR: WebGL error after projection matrix: %d\n", uniform_error);
+        }
     }
 
     // Set up modelview matrix - apply transformations directly
@@ -1151,7 +1448,7 @@ void glEnd(void) {
         stack_matrix[14] *= translation_scale;  // Z translation
 
         // Check if the scaled matrix has reasonable values
-        if (fabs(stack_matrix[12]) < 100.0f && fabs(stack_matrix[13]) < 100.0f && fabs(stack_matrix[14]) < 100.0f) {
+        if (fabs(stack_matrix[12]) < 10.0f && fabs(stack_matrix[13]) < 10.0f && fabs(stack_matrix[14]) < 10.0f) {
             // Use the scaled matrix stack (real transformations)
             glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, stack_matrix);
 
@@ -1163,6 +1460,8 @@ void glEnd(void) {
             }
         } else {
             // Fall back to hardcoded matrix (safety net)
+            glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview);
+
             static int fallback_debug_count = 0;
             if (fallback_debug_count < 3) {
                 printf("DEBUG: Using fallback matrix (frame %d): scale=%.1f\n", fallback_debug_count, scale);
@@ -1170,7 +1469,11 @@ void glEnd(void) {
             }
         }
 
-        glUniformMatrix4fv(modelview_loc, 1, GL_FALSE, modelview);
+        // Check for errors after modelview matrix
+        GLenum matrix_error = glGetError();
+        if (matrix_error != GL_NO_ERROR) {
+            printf("ERROR: WebGL error after modelview matrix: %d\n", matrix_error);
+        }
 
         // Debug: Print the applied transformations
         static int transform_debug_count = 0;
@@ -1185,11 +1488,31 @@ void glEnd(void) {
     glGenBuffers(1, &vbo_vertices);
     glGenBuffers(1, &vbo_colors);
 
+    printf("DEBUG: Created VBOs: vertices=%u, colors=%u\n", vbo_vertices, vbo_colors);
+
+    // Check for errors after VBO creation
+    GLenum vbo_error = glGetError();
+    if (vbo_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after VBO creation: %d\n", vbo_error);
+    }
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f), immediate.vertices, GL_STATIC_DRAW);
 
+    // Check for errors after vertex VBO setup
+    vbo_error = glGetError();
+    if (vbo_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after vertex VBO setup: %d\n", vbo_error);
+    }
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f), immediate.colors, GL_STATIC_DRAW);
+
+    // Check for errors after color VBO setup
+    vbo_error = glGetError();
+    if (vbo_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after color VBO setup: %d\n", vbo_error);
+    }
 
     // Set up vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
@@ -1197,6 +1520,9 @@ void glEnd(void) {
     if (pos_attrib != -1) {
         glEnableVertexAttribArray(pos_attrib);
         glVertexAttribPointer(pos_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        printf("DEBUG: Position attribute: location=%d, VBO=%u\n", pos_attrib, vbo_vertices);
+    } else {
+        printf("ERROR: Could not find 'position' attribute in shader!\n");
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
@@ -1204,6 +1530,9 @@ void glEnd(void) {
     if (color_attrib != -1) {
         glEnableVertexAttribArray(color_attrib);
         glVertexAttribPointer(color_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        printf("DEBUG: Color attribute: location=%d, VBO=%u\n", color_attrib, vbo_colors);
+    } else {
+        printf("ERROR: Could not find 'color' attribute in shader!\n");
     }
 
     // Draw
@@ -1246,7 +1575,14 @@ void glEnd(void) {
         }
     }
 
-    glDrawArrays(valid_primitive, 0, immediate.vertex_count);
+    // Check for zero vertex count
+    if (immediate.vertex_count == 0) {
+        printf("WARNING: glDrawArrays called with 0 vertices, skipping draw\n");
+    } else {
+        // Ensure we have a valid VBO bound for drawing
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+        glDrawArrays(valid_primitive, 0, immediate.vertex_count);
+    }
 
     // Limit completion message to first 5 frames
     static int webgl_complete_count = 0;
@@ -1259,8 +1595,19 @@ void glEnd(void) {
     static int webgl_error_count = 0;
     GLenum error = glGetError();
     if (error != GL_NO_ERROR && webgl_error_count < 5) {
-        printf("WebGL error after glDrawArrays: %d\n", error);
+        printf("WebGL error after glDrawArrays: %d (0x%x) - IGNORING FOR NOW\n", error, error);
+        if (error == 1280) {
+            printf("  GL_INVALID_ENUM - but rendering might still work\n");
+        }
         webgl_error_count++;
+    }
+
+    // Disable vertex attributes before cleanup
+    if (pos_attrib != -1) {
+        glDisableVertexAttribArray(pos_attrib);
+    }
+    if (color_attrib != -1) {
+        glDisableVertexAttribArray(color_attrib);
     }
 
     // Cleanup
@@ -1279,6 +1626,15 @@ void glXMakeCurrent(Display *display, Window window, GLXContext context) {
 
 // Missing OpenGL functions for WebGL compatibility
 void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val) {
+    // Check for errors before glFrustum
+    GLenum before_frustum_error = glGetError();
+    if (before_frustum_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glFrustum: %d\n", before_frustum_error);
+        if (before_frustum_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
+
     // Create perspective projection matrix
     Matrix4f frustum;
     matrix_identity(&frustum);
@@ -1299,6 +1655,15 @@ void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat
 
     matrix_multiply(&projection_stack.stack[projection_stack.top],
                    &projection_stack.stack[projection_stack.top], &frustum);
+
+    // Check for errors after glFrustum
+    GLenum after_frustum_error = glGetError();
+    if (after_frustum_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error after glFrustum: %d\n", after_frustum_error);
+        if (after_frustum_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+        }
+    }
 }
 
 void glMultMatrixd(const GLfloat *m) {
