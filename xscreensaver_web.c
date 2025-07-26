@@ -1050,32 +1050,6 @@ void glEnd(void) {
         printf("glEnd #%d: Drawing %d vertices with primitive type %d\n", glEnd_count, immediate.vertex_count, immediate.primitive_type);
     }
 
-    // Draw a test triangle on the first frame to verify rendering works
-    static int test_triangle_drawn = 0;
-    if (glEnd_count == 1 && !test_triangle_drawn) {
-        printf("Drawing test triangle in bright red...\n");
-        test_triangle_drawn = 1;
-
-        // Temporarily override the current geometry with a bright red triangle
-        immediate.vertex_count = 3;
-        immediate.primitive_type = GL_TRIANGLES;
-
-        // Set bright red color
-        for (int i = 0; i < 3; i++) {
-            immediate.colors[i].r = 1.0f;
-            immediate.colors[i].g = 0.0f;
-            immediate.colors[i].b = 0.0f;
-            immediate.colors[i].a = 1.0f;
-        }
-
-        // Set triangle vertices (centered, visible)
-        immediate.vertices[0].x = -0.3f; immediate.vertices[0].y = -0.3f; immediate.vertices[0].z = 0.0f;
-        immediate.vertices[1].x =  0.3f; immediate.vertices[1].y = -0.3f; immediate.vertices[1].z = 0.0f;
-        immediate.vertices[2].x =  0.0f; immediate.vertices[2].y =  0.3f; immediate.vertices[2].z = 0.0f;
-
-        printf("Test triangle vertices set\n");
-    }
-
     // Create VBOs and render
     GLuint vbo_vertices, vbo_colors, vbo_normals;
     glGenBuffers(1, &vbo_vertices);
