@@ -273,26 +273,22 @@ static void init_shaders() {
     const char *vertex_source =
         "#version 300 es\n"
         "in vec3 position;\n"
-        "in vec3 color;\n"
-        "in vec3 normal;\n"
+        "in vec4 color;\n"
         "uniform mat4 modelview;\n"
         "uniform mat4 projection;\n"
-        "out vec3 frag_color;\n"
-        "out vec3 frag_normal;\n"
+        "out vec4 frag_color;\n"
         "void main() {\n"
         "    gl_Position = projection * modelview * vec4(position, 1.0);\n"
         "    frag_color = color;\n"
-        "    frag_normal = normal;\n"
         "}\n";
 
     const char *fragment_source =
         "#version 300 es\n"
         "precision mediump float;\n"
-        "in vec3 frag_color;\n"
-        "in vec3 frag_normal;\n"
+        "in vec4 frag_color;\n"
         "out vec4 out_color;\n"
         "void main() {\n"
-        "    out_color = vec4(frag_color, 1.0);\n"
+        "    out_color = frag_color;\n"
         "}\n";
 
     vertex_shader = compile_shader(vertex_source, GL_VERTEX_SHADER);
