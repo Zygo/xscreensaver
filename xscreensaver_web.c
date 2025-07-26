@@ -52,8 +52,6 @@ static double frand(double max) {
 #define GL_NORMALIZE 0x0BA1
 #endif
 
-// X11 color constants (already defined in jwxyz.h, so we don't redefine them)
-
 // Color generation constants
 #define MAXPOINTS 10
 
@@ -95,7 +93,6 @@ typedef struct {
     Bool in_begin_end;
 } ImmediateMode;
 
-// Global state
 static MatrixStack modelview_stack;
 static MatrixStack projection_stack;
 static MatrixStack texture_stack;
@@ -382,8 +379,6 @@ void glMatrixMode(GLenum mode) {
     printf("glMatrixMode: %d\n", mode);
 }
 
-
-
 void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val) {
     printf("glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
 
@@ -408,8 +403,6 @@ void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat n
         printf("Orthographic matrix applied\n");
     }
 }
-
-
 
 void glLoadIdentity(void) {
     MatrixStack *stack;

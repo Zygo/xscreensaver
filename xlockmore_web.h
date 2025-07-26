@@ -10,24 +10,22 @@
 #include "jwxyz.h"
 #include <math.h>
 
+// GLdouble is missing in WebGL, provide it
+#ifndef GLdouble
+typedef double GLdouble;
+#endif
+
 // Essential macros and definitions
 #define ENTRYPOINT
 #define XSCREENSAVER_MODULE(name, func)
 
 // Common xscreensaver types and macros
-// ModeInfo is already defined in xscreensaver_web.c
-
-// Common function declarations
 extern void do_fps(ModeInfo *mi);
 extern Bool screenhack_event_helper(void *display, void *window, void *event);
 extern GLXContext *init_GL(ModeInfo *mi);
 
 // Common utility functions
 extern double frand(double max);
-// random() is already defined in stdlib.h
-
-// Missing types and macros
-// XrmOptionDescRec is already defined in jwxyz.h
 
 typedef struct {
     void *var;
@@ -67,4 +65,4 @@ typedef struct {
 #define XK_Prior     0xFF55
 #define XK_Next      0xFF56
 
-#endif /* XLOCKMORE_WEB_H */ 
+#endif /* XLOCKMORE_WEB_H */

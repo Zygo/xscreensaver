@@ -39,8 +39,6 @@ static const double SPIN_ACCEL = 1.0;
 #define DEF_SPEED       "1.0"
 #define DEF_THICKNESS   "0.15"
 
-#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
-
 typedef enum { EMPTY, IN, WAIT, OUT, DONE } state_t;
 
 typedef struct {
@@ -57,10 +55,13 @@ struct hexagon {
   int ccolor;
   state_t border_state;
   GLfloat border_ratio;
+  int invis;
 };
 
 typedef struct {
   GLXContext *glx_context;
+  GLdouble model[16], proj[16];
+  GLint viewport[4];
   rotator *rot;
   trackball_state *trackball;
   Bool button_down_p;
@@ -85,6 +86,7 @@ GLfloat speed, thickness;
 static Bool do_spin, do_wander;
 static GLfloat speed, thickness;
 #endif
+static int draw_invis = 1;
 
 static XrmOptionDescRec opts[] = {
   { "-spin",   ".spin",   XrmoptionNoArg, "True" },
@@ -103,8 +105,6 @@ static argtype vars[] = {
 };
 
 ENTRYPOINT ModeSpecOpt hextrail_opts = {countof(opts), opts, countof(vars), vars, NULL};
-
-
 
 static void
 make_plane (ModeInfo *mi)
@@ -247,7 +247,7 @@ static XYZ scaled_corners[6][4];
 
 static void scale_corners(ModeInfo *mi) {
   hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
-  GLfloat size = sqrt(3) / 3 / MI_COUNT(mi);
+  GLfloat size = H * 2 / 3 / MI_COUNT(mi);
   GLfloat margin = thickness * 0.4;
   GLfloat size1 = size * (1 - margin * 2);
   GLfloat size2 = size * (1 - margin * 3);
@@ -268,17 +268,63 @@ static void scale_corners(ModeInfo *mi) {
   }
 }
 
+static time_t now = 0;
+
+static int hex_invis(hextrail_configuration *bp, XYZ pos, int i, GLfloat *rad) {
+  GLdouble x, y, z;
+  /* Project point to screen coordinates */
+  gluProject(pos.x, pos.y, pos.z, bp->model, bp->proj, bp->viewport, &x, &y, &z);
+
+  static time_t debug = 0;
+  if (debug != now) {
+      printf("%s: pos=(%f,%f,%f) x=%f, y=%f, z=%.1f vp=%d,%d i=%d\n", __func__,
+              pos.x, pos.y, pos.z, x, y, z, bp->viewport[2], bp->viewport[3], i);
+      debug = now;
+  }
+
+  if (z <= 0 || z >= 1) return 2;
+
+  XYZ edge_posx = pos, edge_posy = pos;
+  GLfloat wid = 2.0 / bp->size, hgt = wid * H;
+  edge_posx.x += wid / 2;
+  edge_posy.y += hgt / 2;
+  GLdouble edge_xx, edge_xy, edge_yx, edge_yy, edge_z;
+  gluProject(edge_posx.x, edge_posx.y, edge_posx.z, bp->model, bp->proj, bp->viewport, &edge_xx, &edge_xy, &edge_z);
+  gluProject(edge_posy.x, edge_posy.y, edge_posy.z, bp->model, bp->proj, bp->viewport, &edge_yx, &edge_yy, &edge_z);
+  GLfloat xx_diff = edge_xx - x, xy_diff = edge_xy - y;
+  GLfloat yx_diff = edge_yx - x, yy_diff = edge_yy - y;
+  GLdouble radiusx = sqrt(xx_diff * xx_diff + xy_diff * xy_diff);
+  GLdouble radiusy = sqrt(yx_diff * yx_diff + yy_diff * yy_diff);
+  GLdouble radius = radiusx > radiusy ? radiusx : radiusy;
+  if (rad) *rad = radius;
+
+  if (x + radius < bp->viewport[0] || x - radius > bp->viewport[0] + bp->viewport[2] ||
+      y + radius < bp->viewport[1] || y - radius > bp->viewport[1] + bp->viewport[3])
+    return 2; // Fully offscreen
+
+  if (x < bp->viewport[0] || x > bp->viewport[0] + bp->viewport[2] ||
+      y < bp->viewport[1] || y > bp->viewport[1] + bp->viewport[3])
+    return 1; // Center is offscreen
+
+  return 0; // Center is onscreen
+}
+
 static void
 tick_hexagons (ModeInfo *mi)
 {
   hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
   int i, j;
+  static unsigned int ticks = 0;
+  now = time(NULL);
 
   /* Enlarge any still-growing arms.
    */
+  ticks++;
   for (i = 0; i < bp->grid_w * bp->grid_h; i++)
     {
       hexagon *h0 = &bp->hexagons[i];
+      if (! (ticks % 4)) h0->invis = hex_invis(bp, h0->pos, i, 0);
+
       for (j = 0; j < 6; j++)
         {
           arm *a0 = &h0->arms[j];
@@ -447,6 +493,7 @@ draw_hexagons (ModeInfo *mi)
   for (i = 0; i < bp->grid_w * bp->grid_h; i++)
     {
       hexagon *h = &bp->hexagons[i];
+      if (draw_invis < h->invis) continue;
       int total_arms = 0;
       GLfloat color[4];
       GLfloat nub_ratio = 0;
@@ -557,7 +604,6 @@ draw_hexagons (ModeInfo *mi)
 
               if (! h->neighbors[j]) abort();  /* arm/neighbor mismatch */
 
-
               /* Center */
               p[0].x = h->pos.x + xoff * size2 * thick2 + x * start;
               p[0].y = h->pos.y + yoff * size2 * thick2 + y * start;
@@ -614,7 +660,6 @@ draw_hexagons (ModeInfo *mi)
                 p[2].y = h->pos.y + scaled_corners[k][s].y;
               }
 
-
               glColor4fv (color);
               glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
               if (! wire)
@@ -666,7 +711,6 @@ reshape_hextrail (ModeInfo *mi, int width, int height)
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-
 ENTRYPOINT Bool
 hextrail_handle_event (ModeInfo *mi, XEvent *event)
 {
@@ -678,9 +722,7 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
     scale_corners(mi);  // Recalculate corners when thickness changes
     return True;
   }
-  
-  printf("DEBUG: hextrail_handle_event - event type: %d\n", event->xany.type);
-  
+
   if (gltrackball_event_handler (event, bp->trackball,
                                  MI_WIDTH (mi), MI_HEIGHT (mi),
                                  &bp->button_down_p))
@@ -690,8 +732,6 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
       KeySym keysym;
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
-
-      printf("DEBUG: KeyPress event - char='%c' (code=%d), keysym=%u\n", c, (int)c, (unsigned int)keysym);
 
       if (c == ' ' || c == '\t' || c == '\r' || c == '\n') ;
       else if (c == '>' || c == '.' || c == '+' || c == '=' ||
@@ -712,12 +752,18 @@ hextrail_handle_event (ModeInfo *mi, XEvent *event)
           scale_corners(mi);
       } else if (keysym == XK_Right) {
           printf("DEBUG: Increasing speed from %f to %f\n", speed, speed * 2);
-          speed *= 2; 
+          speed *= 2;
           if (speed > 20) speed = 20;
       } else if (keysym == XK_Left) {
           printf("DEBUG: Decreasing speed from %f to %f\n", speed, speed / 2);
-          speed /= 2; 
+          speed /= 2;
           if (speed < 0.0001) speed = 0.0001;
+      } else if (c == 'i') {
+          draw_invis = (draw_invis - 1) % 4;
+          printf("DEBUG: draw_invis = %d\n", draw_invis);
+      } else if (c == 'I') {
+          draw_invis = (draw_invis + 1) % 4;
+          printf("DEBUG: draw_invis = %d\n", draw_invis);
       } else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event)) {
           printf("DEBUG: Event handled by screenhack_event_helper\n");
       } else {
@@ -763,11 +809,8 @@ init_hextrail (ModeInfo *mi)
   speed = get_float_resource (MI_DISPLAY(mi), "speed", "Float");
   if (speed <= 0) speed = 1.0;
 
-  {
-    bp->rot = create_hextrail_rotator();
-    bp->trackball = gltrackball_init (True);
-  }
-
+  bp->rot = create_hextrail_rotator();
+  bp->trackball = gltrackball_init (True);
 
   /* Let's tilt the scene a little. */
   gltrackball_reset (bp->trackball,
@@ -787,11 +830,10 @@ ENTRYPOINT void
 draw_hextrail (ModeInfo *mi)
 {
   hextrail_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (!bp->glx_context) return;
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
-
-  if (!bp->glx_context)
-    return;
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *bp->glx_context);
 
@@ -804,28 +846,14 @@ draw_hextrail (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
-
   {
     double x, y, z;
-    static int draw_count = 0;
-    draw_count++;
-    if (draw_count % 60 == 0) { // Log every 60 frames (once per second)
-        printf("DEBUG: Draw frame %d - do_spin=%d, do_wander=%d\n", draw_count, do_spin, do_wander);
-    }
     get_position (bp->rot, &x, &y, &z, !bp->button_down_p);
-    if (draw_count % 60 == 0) {
-        printf("DEBUG: Position - x=%f, y=%f, z=%f\n", x, y, z);
-    }
     glTranslatef((x - 0.5) * 6,
                  (y - 0.5) * 6,
                  (z - 0.5) * 12);
-
     gltrackball_rotate (bp->trackball);
-
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
-    if (draw_count % 60 == 0) {
-        printf("DEBUG: Rotation - x=%f, y=%f, z=%f\n", x, y, z);
-    }
     glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
@@ -836,8 +864,11 @@ draw_hextrail (ModeInfo *mi)
     glScalef (s, s, s);
   }
 
-  if (! bp->button_down_p)
+  if (! bp->button_down_p){
+    glGetDoublev(GL_MODELVIEW_MATRIX, bp->model);
+    glGetDoublev(GL_PROJECTION_MATRIX, bp->proj);
     tick_hexagons (mi);
+  }
   draw_hexagons (mi);
 
   glPopMatrix ();
