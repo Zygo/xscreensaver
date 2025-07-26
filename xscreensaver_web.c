@@ -52,6 +52,17 @@ static double frand(double max) {
 #define GL_NORMALIZE 0x0BA1
 #endif
 
+// Legacy OpenGL constants not available in WebGL 2.0
+#ifndef GL_QUADS
+#define GL_QUADS 0x0007
+#endif
+#ifndef GL_QUAD_STRIP
+#define GL_QUAD_STRIP 0x0008
+#endif
+#ifndef GL_POLYGON
+#define GL_POLYGON 0x0009
+#endif
+
 // Color generation constants
 #define MAXPOINTS 10
 
@@ -1036,6 +1047,13 @@ void glBegin(GLenum mode) {
     immediate.in_begin_end = True;
     immediate.primitive_type = mode;
     immediate.vertex_count = 0;
+
+    static int glBegin_count = 0;
+    glBegin_count++;
+    if (glBegin_count <= 5) {
+        printf("DEBUG: glBegin called with mode=%d (GL_TRIANGLES=%d, GL_LINES=%d)\n",
+               mode, GL_TRIANGLES, GL_LINES);
+    }
 }
 
 void glEnd(void) {
@@ -1189,7 +1207,46 @@ void glEnd(void) {
     }
 
     // Draw
-    glDrawArrays(immediate.primitive_type, 0, immediate.vertex_count);
+    static int draw_debug_count = 0;
+    if (draw_debug_count < 5) {
+        printf("DEBUG: glDrawArrays called with primitive_type=%d, vertex_count=%d\n",
+               immediate.primitive_type, immediate.vertex_count);
+        draw_debug_count++;
+    }
+
+    // Validate primitive type for WebGL 2.0
+    GLenum valid_primitive = immediate.primitive_type;
+
+    // Check if primitive type is 0 (invalid)
+    if (immediate.primitive_type == 0) {
+        printf("ERROR: Primitive type is 0 (invalid), using GL_TRIANGLES\n");
+        valid_primitive = GL_TRIANGLES;
+    } else {
+        switch (immediate.primitive_type) {
+            case GL_POINTS:
+            case GL_LINE_STRIP:
+            case GL_LINE_LOOP:
+            case GL_LINES:
+            case GL_TRIANGLE_STRIP:
+            case GL_TRIANGLE_FAN:
+            case GL_TRIANGLES:
+                // These are valid in WebGL 2.0
+                break;
+            case GL_QUADS:
+            case GL_QUAD_STRIP:
+            case GL_POLYGON:
+                // These are not supported in WebGL 2.0, convert to triangles
+                printf("WARNING: Converting unsupported primitive type %d to GL_TRIANGLES\n", immediate.primitive_type);
+                valid_primitive = GL_TRIANGLES;
+                break;
+            default:
+                printf("ERROR: Unknown primitive type %d, using GL_TRIANGLES\n", immediate.primitive_type);
+                valid_primitive = GL_TRIANGLES;
+                break;
+        }
+    }
+
+    glDrawArrays(valid_primitive, 0, immediate.vertex_count);
 
     // Limit completion message to first 5 frames
     static int webgl_complete_count = 0;
