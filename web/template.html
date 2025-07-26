@@ -338,7 +338,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3 style="margin: 0;">Debug Output</h3>
                 <div>
-                    <button onclick="toggleDebugPause()" id="debug-pause-btn" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer; margin-right: 5px;">Pause</button>
+                    <!-- Pause button removed -->
                     <button onclick="document.getElementById('debug-panel').style.display='none'; document.getElementById('debug-toggle').style.display='block';" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer;">×</button>
                 </div>
             </div>
@@ -478,7 +478,7 @@
             // Suppress WebGL errors to reduce console noise
             printErr: function(text) {
                 // Only show non-WebGL errors
-                if (!text.includes('INVALID_ENUM') && !text.includes('getParameter') && !text.includes('enable')) {
+                if (!text.includes('INVALID_ENUM') && !text.includes('getParameter') && !text.includes('enable') && !text.includes('too many errors') && !text.includes('no more errors will be reported')) {
                     console.error('Module error:', text);
                     addDebugLog('ERROR: ' + text);
                 }
