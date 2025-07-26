@@ -408,7 +408,7 @@ void main_loop(void) {
 
     // Stop debug output after frame 240 (4 seconds)
     if (frame_count <= 240) {
-        if (frame_count % 60 == 0) { // Log every 60 frames (once per second)
+        if (frame_count % 30 == 0) { // Log every 30 frames (once per second at 30 FPS)
             printf("Main loop frame %d\n", frame_count);
         }
     }
@@ -630,9 +630,9 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
         printf("hack_reshape is NULL!\n");
     }
 
-    // Set up the main loop (60 FPS)
+    // Set up the main loop (30 FPS - matches hextrail.c timing better than 60 FPS)
     printf("Setting up main loop...\n");
-    emscripten_set_main_loop(main_loop, 60, 1);
+    emscripten_set_main_loop(main_loop, 30, 1);
     printf("Main loop set up successfully\n");
 
     return 1;
