@@ -86,6 +86,9 @@ static double frand(double max) {
 #ifndef GL_COLOR_MATERIAL
 #define GL_COLOR_MATERIAL 0x0B57
 #endif
+#ifndef GL_CULL_FACE
+#define GL_CULL_FACE 0x0B44
+#endif
 #ifndef GL_CCW
 #define GL_CCW 0x0901
 #endif
@@ -1122,7 +1125,7 @@ void glEnable(GLenum cap) {
         case GL_NORMALIZE:
             // Store normalize state for shader use
             normalize_enabled = True;
-            debugf("DEBUG: glEnable(GL_NORMALIZE) - will normalize normals in shader\n");
+            debugf("DEBUG: glEnable(GL_NORMALIZE=%d 0x%x) - will normalize normals in shader\n", cap, cap);
             return;
         case GL_LIGHTING:
             // Store lighting state for shader use
@@ -1147,6 +1150,7 @@ void glEnable(GLenum cap) {
             debugf("WARNING: glEnable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
             return;
         default:
+            debugf("DEBUG: glEnable default case for cap=%d (0x%x), GL_NORMALIZE=%d (0x%x)\n", cap, cap, GL_NORMALIZE, GL_NORMALIZE);
             // For supported capabilities, call the real glEnable
             if (glEnable_real) {
                 glEnable_real(cap);
@@ -1196,6 +1200,15 @@ void glDisable(GLenum cap) {
         case GL_COLOR_MATERIAL:
             // Fixed-function materials are not supported in WebGL 2.0, ignore it
             debugf("WARNING: glDisable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_CULL_FACE:
+            // Face culling is supported in WebGL 2.0, call the real function
+            debugf("DEBUG: glDisable(GL_CULL_FACE)\n");
+            if (glDisable_real) {
+                glDisable_real(cap);
+            } else {
+                debugf("WARNING: glDisable(GL_CULL_FACE) ignored - real function not available\n");
+            }
             return;
         default:
             // For supported capabilities, call the real glDisable
@@ -1430,6 +1443,30 @@ void glColor4fv(const GLfloat *v) {
 void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {
     // Store material properties for shader uniforms
     // For now, just ignore - we'll implement basic lighting later
+}
+
+void glLightfv(GLenum light, GLenum pname, const GLfloat *params) {
+    // Store lighting properties for shader uniforms
+    // For now, just ignore - we'll implement basic lighting later
+    debugf("DEBUG: glLightfv(light=%d, pname=%d) - lighting not implemented yet\n", light, pname);
+}
+
+void glLightf(GLenum light, GLenum pname, GLfloat param) {
+    // Store lighting properties for shader uniforms
+    // For now, just ignore - we'll implement basic lighting later
+    debugf("DEBUG: glLightf(light=%d, pname=%d, param=%f) - lighting not implemented yet\n", light, pname, param);
+}
+
+void glLightModelfv(GLenum pname, const GLfloat *params) {
+    // Store lighting model properties for shader uniforms
+    // For now, just ignore - we'll implement basic lighting later
+    debugf("DEBUG: glLightModelfv(pname=%d) - lighting model not implemented yet\n", pname);
+}
+
+void glFinish(void) {
+    // In WebGL 2.0, glFinish() is not needed as the browser handles synchronization
+    // But we'll call it for compatibility
+    debugf("DEBUG: glFinish() called - WebGL handles synchronization automatically\n");
 }
 
 void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
