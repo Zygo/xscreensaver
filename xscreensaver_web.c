@@ -482,6 +482,17 @@ static void handle_1280_error(const char *location) {
     }
 }
 
+// Helper function to check for OpenGL errors and handle them consistently
+static void check_gl_error_wrapper(const char *location) {
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error at %s: %d\n", location, error);
+        if (error == 1280) {
+            handle_1280_error(location);
+        }
+    }
+}
+
 // Main loop callback
 void main_loop(void) {
     static int frame_count = 0;
@@ -493,14 +504,7 @@ void main_loop(void) {
         return; // Skip rendering entirely
     }
 
-    // Check for any existing errors at the start of main loop
-    GLenum start_error = glGetError();
-    if (start_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error at start of main loop (frame %d): %d\n", frame_count, start_error);
-        if (start_error == 1280) {
-            handle_1280_error("start of main loop");
-        }
-    }
+    check_gl_error_wrapper("start of main loop");
 
     // Don't reset the matrix stack - let it accumulate transformations from glTranslatef/glRotatef
     // The native code will call glLoadIdentity() when needed
@@ -515,58 +519,18 @@ void main_loop(void) {
     // Don't reset the matrix - let it persist like the native version
     // The native hextrail code uses glPushMatrix/glPopMatrix to manage transformations
 
-    // Check for errors before glClear
-    GLenum before_clear_error = glGetError();
-    if (before_clear_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
-        if (before_clear_error == 1280) {
-            handle_1280_error("before glClear in main loop");
-        }
-    }
-
-    // Clear the screen
+    check_gl_error_wrapper("before glClear in main loop");
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Check for errors after glClear in main loop
-    GLenum clear_error = glGetError();
-    if (clear_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glClear in main loop: %d\n", clear_error);
-    }
-
-    // Check for any pending errors before hack_draw
-    GLenum before_hack_error = glGetError();
-    if (before_hack_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before hack_draw (after glClear): %d\n", before_hack_error);
-        if (before_hack_error == 1280) {
-            handle_1280_error("before hack_draw (after glClear)");
-        }
-    }
+    check_gl_error_wrapper("after glClear in main loop");
 
     if (hack_draw) {
         if (frame_count <= 240 && frame_count % 60 == 0) {
             debugf("Calling hack_draw...\n");
         }
 
-        // Check for errors before hack_draw
-        GLenum before_draw_error = glGetError();
-        if (before_draw_error != GL_NO_ERROR) {
-            debugf("ERROR: WebGL error before hack_draw: %d\n", before_draw_error);
-            if (before_draw_error == 1280) {
-                handle_1280_error("before hack_draw");
-            }
-        }
-
+        check_gl_error_wrapper("before hack_draw");
         hack_draw(&web_mi);
-
-        // Check for errors after hack_draw
-        GLenum after_draw_error = glGetError();
-        if (after_draw_error != GL_NO_ERROR) {
-            debugf("ERROR: WebGL error after hack_draw: %d\n", after_draw_error);
-            if (after_draw_error == 1280) {
-                handle_1280_error("after hack_draw");
-                return;
-            }
-        }
+        check_gl_error_wrapper("after hack_draw");
 
         if (frame_count <= 240 && frame_count % 60 == 0) {
             debugf("hack_draw completed\n");
@@ -1073,10 +1037,14 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
     M(2,0) = z[0];  M(2,1) = z[1];  M(2,2) = z[2];  M(2,3) = 0.0;
     M(3,0) = 0.0;   M(3,1) = 0.0;   M(3,2) = 0.0;   M(3,3) = 1.0;
 #undef M
+    
+    check_gl_error_wrapper("before glMultMatrixd in gluLookAt");
     glMultMatrixd(m);
+    check_gl_error_wrapper("after glMultMatrixd in gluLookAt");
 
     /* Translate Eye to Origin */
     glTranslated(-eyex, -eyey, -eyez);
+    check_gl_error_wrapper("after glTranslated in gluLookAt");
 }
 
 
@@ -1160,26 +1128,12 @@ void glEnable(GLenum cap) {
             break;
     }
 
-    // Check for errors after glEnable
-    GLenum after_error = glGetError();
-    if (after_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glEnable(%d): %d\n", cap, after_error);
-        if (after_error == 1280) {
-            handle_1280_error("after glEnable");
-        }
-    }
+    check_gl_error_wrapper("after glEnable");
 }
 
 // Add glDisable wrapper that handles unsupported capabilities in WebGL 2.0
 void glDisable(GLenum cap) {
-    // Check for errors before doing anything
-    GLenum err_before = glGetError();
-    if (err_before != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error at START of glDisable(%d): %d\n", cap, err_before);
-        if (err_before == 1280) {
-            handle_1280_error("start of glDisable");
-        }
-    }
+    check_gl_error_wrapper("start of glDisable");
     
     // Check for unsupported capabilities in WebGL 2.0
     switch (cap) {
@@ -1227,28 +1181,16 @@ void glDisable(GLenum cap) {
             break;
     }
 
-    GLenum err_after = glGetError();
-    if (err_after != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error at END of glDisable(%d): %d\n", cap, err_after);
-        if (err_after == 1280) {
-            handle_1280_error("end of glDisable");
-        }
-    }
+    check_gl_error_wrapper("end of glDisable");
 }
 
 void glClear(GLbitfield mask) {
-    // Check for errors before glClear
-    GLenum before_clear_error = glGetError();
-    if (before_clear_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
-        if (before_clear_error == 1280) {
-            handle_1280_error("before glClear wrapper");
-        }
-    }
+    check_gl_error_wrapper("before glClear wrapper");
 
     // Call the real glClear function
     if (glClear_real) {
         glClear_real(mask);
+        check_gl_error_wrapper("after glClear_real");
     } else {
         debugf("WARNING: glClear(%d) ignored - real function not available\n", mask);
     }
@@ -1258,14 +1200,7 @@ void glClear(GLbitfield mask) {
 static GLenum current_shade_model = GL_SMOOTH; // Default to smooth
 
 void glShadeModel(GLenum mode) {
-    // Check for errors before glShadeModel
-    GLenum before_error = glGetError();
-    if (before_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glShadeModel: %d\n", before_error);
-        if (before_error == 1280) {
-            handle_1280_error("before glShadeModel");
-        }
-    }
+    check_gl_error_wrapper("before glShadeModel");
 
     // Store the shading mode for shader use
     current_shade_model = mode;
@@ -1281,14 +1216,7 @@ static GLenum current_front_face = GL_CCW; // Default to CCW
 
 // Add glFrontFace wrapper
 void glFrontFace(GLenum mode) {
-    // Check for errors before glFrontFace
-    GLenum before_error = glGetError();
-    if (before_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glFrontFace: %d\n", before_error);
-        if (before_error == 1280) {
-            handle_1280_error("before glFrontFace");
-        }
-    }
+    check_gl_error_wrapper("before glFrontFace");
 
     // Store the front face mode for shader use
     current_front_face = mode;
@@ -1299,6 +1227,8 @@ void glFrontFace(GLenum mode) {
 }
 
 void glPushMatrix(void) {
+    check_gl_error_wrapper("before glPushMatrix");
+    
     MatrixStack *stack;
     switch (current_matrix_mode) {
         case GL_MODELVIEW:
@@ -1431,11 +1361,7 @@ void glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
 }
 
 void glColor4fv(const GLfloat *v) {
-    // Check for errors before glColor4fv
-    GLenum before_color_error = glGetError();
-    if (before_color_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glColor4fv: %d\n", before_color_error);
-    }
+    check_gl_error_wrapper("before glColor4fv");
 
     current_color.r = v[0];
     current_color.g = v[1];
@@ -1446,12 +1372,6 @@ void glColor4fv(const GLfloat *v) {
     color_count++;
     if (color_count <= 10) { // Only log first 10 color changes
         debugf("glColor4fv: RGBA(%.3f, %.3f, %.3f, %.3f)\n", v[0], v[1], v[2], v[3]);
-    }
-
-    // Check for errors after glColor4fv
-    GLenum after_color_error = glGetError();
-    if (after_color_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glColor4fv: %d\n", after_color_error);
     }
 }
 
@@ -1497,10 +1417,7 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
     // Check for errors before glVertex3f (only on first few vertices to avoid spam)
     static int vertex_error_check_count = 0;
     if (vertex_error_check_count < 5) {
-        GLenum before_vertex_error = glGetError();
-        if (before_vertex_error != GL_NO_ERROR) {
-            debugf("ERROR: WebGL error before glVertex3f (vertex %d): %d\n", vertex_error_check_count, before_vertex_error);
-        }
+        check_gl_error_wrapper("before glVertex3f");
         vertex_error_check_count++;
     }
 
@@ -1513,14 +1430,7 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
 }
 
 void glBegin(GLenum mode) {
-    // Check for errors before glBegin
-    GLenum before_begin_error = glGetError();
-    if (before_begin_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glBegin: %d\n", before_begin_error);
-        if (before_begin_error == 1280) {
-            handle_1280_error("before glBegin");
-        }
-    }
+    check_gl_error_wrapper("before glBegin");
 
     immediate.in_begin_end = True;
     immediate.primitive_type = mode;
@@ -1546,14 +1456,7 @@ void glEnd(void) {
         debugf("glEnd #%d: Drawing %d vertices with primitive type %d\n", glEnd_count, immediate.vertex_count, immediate.primitive_type);
     }
 
-    // Check for errors at the very start of glEnd
-    GLenum start_error = glGetError();
-    if (start_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error at start of glEnd: %d\n", start_error);
-        if (start_error == 1280) {
-            handle_1280_error("start of glEnd");
-        }
-    }
+    check_gl_error_wrapper("start of glEnd");
 
     // Create VBOs and render
     GLuint vbo_vertices, vbo_colors, vbo_normals;
@@ -1862,14 +1765,7 @@ void glXMakeCurrent(Display *display, Window window, GLXContext context) {
 
 // Missing OpenGL functions for WebGL compatibility
 void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val) {
-    // Check for errors before glFrustum
-    GLenum before_frustum_error = glGetError();
-    if (before_frustum_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glFrustum: %d\n", before_frustum_error);
-        if (before_frustum_error == 1280) {
-            handle_1280_error("before glFrustum");
-        }
-    }
+    check_gl_error_wrapper("before glFrustum");
 
     // Create perspective projection matrix
     Matrix4f frustum;
@@ -1892,14 +1788,7 @@ void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat
     matrix_multiply(&projection_stack.stack[projection_stack.top],
                    &projection_stack.stack[projection_stack.top], &frustum);
 
-    // Check for errors after glFrustum
-    GLenum after_frustum_error = glGetError();
-    if (after_frustum_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glFrustum: %d\n", after_frustum_error);
-        if (after_frustum_error == 1280) {
-            handle_1280_error("after glFrustum");
-        }
-    }
+    check_gl_error_wrapper("after glFrustum");
 }
 
 void glMultMatrixd(const GLfloat *m) {
@@ -1924,10 +1813,14 @@ void glMultMatrixd(const GLfloat *m) {
     }
 
     matrix_multiply(&stack->stack[stack->top], &stack->stack[stack->top], &matrix);
+
+    check_gl_error_wrapper("after glMultMatrixd");
 }
 
 void glTranslated(GLfloat x, GLfloat y, GLfloat z) {
     glTranslatef(x, y, z);
+
+    check_gl_error_wrapper("after glTranslated");
 }
 
 // Real trackball functions from trackball.c
@@ -2118,6 +2011,8 @@ void glMultMatrixf(const float *m) {
         gl_matrix[i] = m[i];
     }
     glMultMatrixd(gl_matrix);
+
+    check_gl_error_wrapper("after glMultMatrixf");
 }
 
 // Missing GLX function
