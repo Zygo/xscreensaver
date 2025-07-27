@@ -574,11 +574,6 @@
                             memoryDisplay.textContent = `Memory: ${memoryMB}MB / ${totalMB}MB`;
                         }
 
-                        // Log memory usage every 5 seconds
-                        if (Date.now() % 5000 < 100) {
-                            addDebugLog(`Memory: ${memoryMB}MB used, ${totalMB}MB total`);
-                        }
-
                         // Check for potential memory leak (if memory usage is growing rapidly)
                         if (window.lastMemoryUsage && usedMemory > window.lastMemoryUsage * 1.1) {
                             addDebugLog(`WARNING: Memory usage increased by ${((usedMemory - window.lastMemoryUsage) / (1024 * 1024)).toFixed(2)}MB`);
