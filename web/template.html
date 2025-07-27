@@ -437,7 +437,13 @@
             console.log('DEBUG: Scroll check - wasAtBottom:', wasAtBottom, 'panel scrollHeight:', debugPanel.scrollHeight, 'scrollTop:', debugPanel.scrollTop, 'clientHeight:', debugPanel.clientHeight);
 
             // Add the message
-            var timestamp = new Date().toLocaleTimeString();
+            var now = new Date();
+            var timestamp = now.toLocaleTimeString('en-US', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }) + '.' + now.getMilliseconds().toString().padStart(3, '0');
             debugLog.innerHTML += '[' + timestamp + '] ' + message + '<br>';
 
             // Only scroll if user was already at the bottom

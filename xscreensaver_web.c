@@ -1696,7 +1696,7 @@ void glEnd(void) {
         glVertexAttribPointer(normal_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
         DL(2, "DEBUG: Normal attribute: location=%d, VBO=%u\n", normal_attrib, vbo_normals);
     } else {
-        DL(0, "ERROR: Could not find 'normal' attribute in shader!\n");
+        DL(0, "Could not find 'normal' attribute in shader!\n");
     }
 
     // Draw
