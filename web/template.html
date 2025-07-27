@@ -354,6 +354,11 @@
 
         <!-- Debug Toggle Button -->
         <button id="debug-toggle" onclick="document.getElementById('debug-panel').style.display='block'; this.style.display='none';">Debug</button>
+
+        <!-- Memory Display -->
+        <div id="memory-display" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px 10px; border-radius: 5px; font-family: monospace; font-size: 12px; z-index: 1000;">
+            Memory: --MB / --MB
+        </div>
     </div>
 
     <script>
@@ -559,9 +564,53 @@
                                    ", speed=" + speedSlider.value +
                                    ", thickness=" + thicknessSlider.value);
                     }
+
+                    // Start memory monitoring
+                    startMemoryMonitoring();
                 }, 100); // Small delay to ensure hack_init has completed
             }
         };
+
+        // Memory monitoring
+        var memoryMonitorInterval;
+
+        function startMemoryMonitoring() {
+            if (memoryMonitorInterval) {
+                clearInterval(memoryMonitorInterval);
+            }
+
+            memoryMonitorInterval = setInterval(function() {
+                if (Module && Module.HEAPU8) {
+                    var totalMemory = Module.HEAPU8.length;
+                    var usedMemory = totalMemory;
+
+                    // Try to get more detailed memory info if available
+                    if (Module._emscripten_get_heap_size) {
+                        usedMemory = Module._emscripten_get_heap_size();
+                    }
+
+                    var memoryMB = (usedMemory / (1024 * 1024)).toFixed(2);
+                    var totalMB = (totalMemory / (1024 * 1024)).toFixed(2);
+
+                    // Update memory display if it exists
+                    var memoryDisplay = document.getElementById('memory-display');
+                    if (memoryDisplay) {
+                        memoryDisplay.textContent = `Memory: ${memoryMB}MB / ${totalMB}MB`;
+                    }
+
+                    // Log memory usage every 5 seconds
+                    if (Date.now() % 5000 < 100) {
+                        addDebugLog(`Memory: ${memoryMB}MB used, ${totalMB}MB total`);
+                    }
+
+                    // Check for potential memory leak (if memory usage is growing rapidly)
+                    if (window.lastMemoryUsage && usedMemory > window.lastMemoryUsage * 1.1) {
+                        addDebugLog(`WARNING: Memory usage increased by ${((usedMemory - window.lastMemoryUsage) / (1024 * 1024)).toFixed(2)}MB`);
+                    }
+                    window.lastMemoryUsage = usedMemory;
+                }
+            }, 1000); // Check every second
+        }
 
         // Set up control event listeners
         function setupControls() {

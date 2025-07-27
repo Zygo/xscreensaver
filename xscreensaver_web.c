@@ -197,6 +197,32 @@ void DL(int level, const char* format, ...) {
     }
 }
 
+// Memory tracking functions
+static size_t total_allocated = 0;
+static size_t total_freed = 0;
+static int allocation_count = 0;
+
+EMSCRIPTEN_KEEPALIVE
+void track_memory_allocation(size_t size) {
+    total_allocated += size;
+    allocation_count++;
+    DL(2, "MEMORY: Allocated %zu bytes (total: %zu, count: %d)\n",
+       size, total_allocated, allocation_count);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void track_memory_free(size_t size) {
+    total_freed += size;
+    DL(2, "MEMORY: Freed %zu bytes (total freed: %zu, net: %zu)\n",
+       size, total_freed, total_allocated - total_freed);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void print_memory_stats() {
+    DL(1, "MEMORY STATS: Allocated=%zu, Freed=%zu, Net=%zu, Count=%d\n",
+       total_allocated, total_freed, total_allocated - total_freed, allocation_count);
+}
+
 // Helper function to handle GL_INVALID_ENUM errors
 static void handle_1280_error(const char *location) {
     if (debug_logging_enabled) {
@@ -532,6 +558,11 @@ void main_loop(void) {
     // Check if rendering is disabled
     if (!rendering_enabled) {
         return; // Skip rendering entirely
+    }
+
+    // Print memory stats every 100 frames
+    if (frame_count % 100 == 0) {
+        print_memory_stats();
     }
 
     check_gl_error_wrapper("start of main loop");
@@ -1433,6 +1464,10 @@ void glEnd(void) {
     glGenBuffers(1, &vbo_colors);
     glGenBuffers(1, &vbo_normals);
 
+    // Track VBO memory allocation
+    size_t vbo_size = immediate.vertex_count * (sizeof(Vertex3f) + sizeof(Color4f) + sizeof(Normal3f));
+    track_memory_allocation(vbo_size);
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f),
                  immediate.vertices, GL_STATIC_DRAW);
@@ -1715,6 +1750,9 @@ void glEnd(void) {
     glDeleteBuffers(1, &vbo_vertices);
     glDeleteBuffers(1, &vbo_colors);
     // vbo_normals cleanup removed - not used in current shader
+
+    // Track VBO memory deallocation
+    track_memory_free(vbo_size);
 
     immediate.in_begin_end = False;
 }
