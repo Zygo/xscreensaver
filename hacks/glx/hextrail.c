@@ -150,14 +150,6 @@ make_plane (ModeInfo *mi)
         h0->ccolor = random() % bp->ncolors;
       }
 
-  // Debug: Print the generated colors
-  printf("hextrail: Generated %d colors. Start color=%d\n", bp->ncolors,
-          grid[bp->grid_h * bp->grid_w / 2 + bp->grid_w / 2].ccolor);
-  for (int i = 0; i < bp->ncolors; i++) {
-    printf("  Color %d: RGB: %d,%d,%d\n",
-           i, bp->colors[i].red >> 8, bp->colors[i].green >> 8, bp->colors[i].blue >> 8);
-  }
-
   for (y = 0; y < bp->grid_h; y++)
     for (x = 0; x < bp->grid_w; x++)
       {

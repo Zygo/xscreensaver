@@ -5,7 +5,7 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  */
 
@@ -29,9 +29,9 @@ free_colors (Screen *screen, Colormap cmap, XColor *colors, int ncolors)
   if (ncolors > 0)
     {
       unsigned long *pixels = (unsigned long *)
-	malloc(sizeof(*pixels) * ncolors);
+      malloc(sizeof(*pixels) * ncolors);
       for (i = 0; i < ncolors; i++)
-	pixels[i] = colors[i].pixel;
+        pixels[i] = colors[i].pixel;
       XFreeColors (dpy, cmap, pixels, ncolors, 0L);
       free(pixels);
     }
@@ -40,7 +40,7 @@ free_colors (Screen *screen, Colormap cmap, XColor *colors, int ncolors)
 
 void
 allocate_writable_colors (Screen *screen, Colormap cmap,
-			  unsigned long *pixels, int *ncolorsP)
+              unsigned long *pixels, int *ncolorsP)
 {
   Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   int desired = *ncolorsP;
@@ -50,26 +50,26 @@ allocate_writable_colors (Screen *screen, Colormap cmap,
 
   *ncolorsP = 0;
   while (got < desired
-	 && requested > 0)
+     && requested > 0)
     {
       if (desired - got < requested)
-	requested = desired - got;
+    requested = desired - got;
 
       if (XAllocColorCells (dpy, cmap, False, 0, 0, new_pixels, requested))
-	{
-	  /* Got all the pixels we asked for. */
-	  new_pixels += requested;
-	  got += requested;
-	}
+    {
+      /* Got all the pixels we asked for. */
+      new_pixels += requested;
+      got += requested;
+    }
       else
-	{
-	  /* We didn't get all/any of the pixels we asked for.  This time, ask
-	     for half as many.  (If we do get all that we ask for, we ask for
-	     the same number again next time, so we only do O(log(n)) server
-	     roundtrips.)
-	  */
-	  requested = requested / 2;
-	}
+    {
+      /* We didn't get all/any of the pixels we asked for.  This time, ask
+         for half as many.  (If we do get all that we ask for, we ask for
+         the same number again next time, so we only do O(log(n)) server
+         roundtrips.)
+      */
+      requested = requested / 2;
+    }
     }
   *ncolorsP += got;
 }
@@ -77,7 +77,7 @@ allocate_writable_colors (Screen *screen, Colormap cmap,
 
 static void
 complain (int wanted_colors, int got_colors,
-	  Bool wanted_writable, Bool got_writable)
+      Bool wanted_writable, Bool got_writable)
 {
   if (got_colors > wanted_colors - 10)
     /* don't bother complaining if we're within ten pixels. */
@@ -97,12 +97,12 @@ complain (int wanted_colors, int got_colors,
 
 void
 make_color_ramp (Screen *screen, Visual *visual, Colormap cmap,
-		 int h1, double s1, double v1,   /* 0-360, 0-1.0, 0-1.0 */
-		 int h2, double s2, double v2,   /* 0-360, 0-1.0, 0-1.0 */
-		 XColor *colors, int *ncolorsP,
-		 Bool closed_p,
-		 Bool allocate_p,
-		 Bool *writable_pP)
+         int h1, double s1, double v1,   /* 0-360, 0-1.0, 0-1.0 */
+         int h2, double s2, double v2,   /* 0-360, 0-1.0, 0-1.0 */
+         XColor *colors, int *ncolorsP,
+         Bool closed_p,
+         Bool allocate_p,
+         Bool *writable_pP)
 {
   Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   Bool verbose_p = True;  /* argh. */
@@ -142,7 +142,7 @@ make_color_ramp (Screen *screen, Visual *visual, Colormap cmap,
     {
       colors[i].flags = DoRed|DoGreen|DoBlue;
       hsv_to_rgb ((int) (h1 + (i*dh)), (s1 + (i*ds)), (v1 + (i*dv)),
-		  &colors[i].red, &colors[i].green, &colors[i].blue);
+          &colors[i].red, &colors[i].green, &colors[i].blue);
     }
 
   if (closed_p)
@@ -155,18 +155,18 @@ make_color_ramp (Screen *screen, Visual *visual, Colormap cmap,
   if (writable_pP && *writable_pP)
     {
       unsigned long *pixels = (unsigned long *)
-	malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
+    malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
 
       /* allocate_writable_colors() won't do here, because we need exactly this
-	 number of cells, or the color sequence we've chosen won't fit. */
+     number of cells, or the color sequence we've chosen won't fit. */
       if (! XAllocColorCells(dpy, cmap, False, 0, 0, pixels, *ncolorsP))
-	{
-	  free(pixels);
-	  goto FAIL;
-	}
+    {
+      free(pixels);
+      goto FAIL;
+    }
 
       for (i = 0; i < *ncolorsP; i++)
-	colors[i].pixel = pixels[i];
+    colors[i].pixel = pixels[i];
       free (pixels);
 
       XStoreColors (dpy, cmap, colors, *ncolorsP);
@@ -174,19 +174,19 @@ make_color_ramp (Screen *screen, Visual *visual, Colormap cmap,
   else
     {
       for (i = 0; i < *ncolorsP; i++)
-	{
-	  XColor color;
-	  color = colors[i];
-	  if (XAllocColor (dpy, cmap, &color))
-	    {
-	      colors[i].pixel = color.pixel;
-	    }
-	  else
-	    {
-	      free_colors (screen, cmap, colors, i);
-	      goto FAIL;
-	    }
-	}
+    {
+      XColor color;
+      color = colors[i];
+      if (XAllocColor (dpy, cmap, &color))
+        {
+          colors[i].pixel = color.pixel;
+        }
+      else
+        {
+          free_colors (screen, cmap, colors, i);
+          goto FAIL;
+        }
+    }
     }
 
   goto WARN;
@@ -208,11 +208,11 @@ make_color_ramp (Screen *screen, Visual *visual, Colormap cmap,
     goto AGAIN;
 
  WARN:
-  
+
   if (verbose_p &&
       /* don't warn if we got 0 writable colors -- probably TrueColor. */
       (ncolors != 0 || !wanted_writable))
-    complain (wanted, ncolors, wanted_writable, 
+    complain (wanted, ncolors, wanted_writable,
               (wanted_writable && writable_pP && *writable_pP));
 }
 
@@ -222,10 +222,10 @@ make_color_ramp (Screen *screen, Visual *visual, Colormap cmap,
 
 static void
 make_color_path (Screen *screen, Visual *visual, Colormap cmap,
-		 int npoints, int *h, double *s, double *v,
-		 XColor *colors, int *ncolorsP,
-		 Bool allocate_p,
-		 Bool *writable_pP)
+         int npoints, int *h, double *s, double *v,
+         XColor *colors, int *ncolorsP,
+         Bool allocate_p,
+         Bool *writable_pP)
 {
   Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   int i, j, k;
@@ -244,10 +244,10 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
   else if (npoints == 2)	/* using make_color_ramp() will be faster */
     {
       make_color_ramp (screen, visual, cmap,
-		       h[0], s[0], v[0], h[1], s[1], v[1],
-		       colors, ncolorsP,
-		       True,  /* closed_p */
-		       allocate_p, writable_pP);
+               h[0], s[0], v[0], h[1], s[1], v[1],
+               colors, ncolorsP,
+               True,  /* closed_p */
+               allocate_p, writable_pP);
       return;
     }
   else if (npoints >= MAXPOINTS)
@@ -259,10 +259,10 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
   {
     double DH[MAXPOINTS];	/* Distance between H values in the shortest
-				   direction around the circle, that is, the
-				   distance between 10 and 350 is 20.
-				   (Range is 0 - 360.0.)
-				*/
+                   direction around the circle, that is, the
+                   distance between 10 and 350 is 20.
+                   (Range is 0 - 360.0.)
+                */
     double edge[MAXPOINTS];	/* lengths of edges in unit HSV space. */
     double ratio[MAXPOINTS];	/* proportions of the edges (total 1.0) */
     double circum = 0;
@@ -270,20 +270,20 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
     for (i = 0; i < npoints; i++)
       {
-	int j = (i+1) % npoints;
-	double d = ((double) (h[i] - h[j])) / 360;
-	if (d < 0) d = -d;
-	if (d > 0.5) d = 0.5 - (d - 0.5);
-	DH[i] = d;
+    int j = (i+1) % npoints;
+    double d = ((double) (h[i] - h[j])) / 360;
+    if (d < 0) d = -d;
+    if (d > 0.5) d = 0.5 - (d - 0.5);
+    DH[i] = d;
       }
 
     for (i = 0; i < npoints; i++)
       {
-	int j = (i+1) % npoints;
-	edge[i] = sqrt((DH[i] * DH[j]) +
-		       ((s[j] - s[i]) * (s[j] - s[i])) +
-		       ((v[j] - v[i]) * (v[j] - v[i])));
-	circum += edge[i];
+    int j = (i+1) % npoints;
+    edge[i] = sqrt((DH[i] * DH[j]) +
+               ((s[j] - s[i]) * (s[j] - s[i])) +
+               ((v[j] - v[i]) * (v[j] - v[i])));
+    circum += edge[i];
       }
 
 #ifdef DEBUG
@@ -300,8 +300,8 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
     for (i = 0; i < npoints; i++)
       {
-	ratio[i] = edge[i] / circum;
-	one_point_oh += ratio[i];
+    ratio[i] = edge[i] / circum;
+    one_point_oh += ratio[i];
       }
 
 #ifdef DEBUG
@@ -330,14 +330,14 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
     for (i = 0; i < npoints; i++)
       {
-	int j = (i+1) % npoints;
+    int j = (i+1) % npoints;
 
-	if (ncolors[i] > 0)
-	  {
-	    dh[i] = 360 * (DH[i] / ncolors[i]);
-	    ds[i] = (s[j] - s[i]) / ncolors[i];
-	    dv[i] = (v[j] - v[i]) / ncolors[i];
-	  }
+    if (ncolors[i] > 0)
+      {
+        dh[i] = 360 * (DH[i] / ncolors[i]);
+        ds[i] = (s[j] - s[i]) / ncolors[i];
+        dv[i] = (v[j] - v[i]) / ncolors[i];
+      }
       }
   }
 
@@ -354,30 +354,30 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
 #ifdef DEBUG
       fprintf (stderr, "point %d: %3d %.2f %.2f\n",
-	       i, h[i], s[i], v[i]);
+           i, h[i], s[i], v[i]);
       fprintf(stderr, "  h[i]=%d  dh[i]=%.2f  ncolors[i]=%d\n",
-	      h[i], dh[i], ncolors[i]);
+          h[i], dh[i], ncolors[i]);
 #endif /* DEBUG */
       for (j = 0; j < ncolors[i]; j++, k++)
-	{
-	  double hh = (h[i] + (j * dh[i] * direction));
-	  if (hh < 0) hh += 360;
-	  else if (hh > 360) hh -= 0;
-	  colors[k].flags = DoRed|DoGreen|DoBlue;
-	  hsv_to_rgb ((int)
-		      hh,
-		      (s[i] + (j * ds[i])),
-		      (v[i] + (j * dv[i])),
-		      &colors[k].red, &colors[k].green, &colors[k].blue);
+    {
+      double hh = (h[i] + (j * dh[i] * direction));
+      if (hh < 0) hh += 360;
+      else if (hh > 360) hh -= 0;
+      colors[k].flags = DoRed|DoGreen|DoBlue;
+      hsv_to_rgb ((int)
+              hh,
+              (s[i] + (j * ds[i])),
+              (v[i] + (j * dv[i])),
+              &colors[k].red, &colors[k].green, &colors[k].blue);
 #ifdef DEBUG
-	  fprintf (stderr, "point %d+%d: %.2f %.2f %.2f  %04X %04X %04X\n",
-		   i, j,
-		   hh,
-		   (s[i] + (j * ds[i])),
-		   (v[i] + (j * dv[i])),
-		   colors[k].red, colors[k].green, colors[k].blue);
+      fprintf (stderr, "point %d+%d: %.2f %.2f %.2f  %04X %04X %04X\n",
+           i, j,
+           hh,
+           (s[i] + (j * ds[i])),
+           (v[i] + (j * dv[i])),
+           colors[k].red, colors[k].green, colors[k].blue);
 #endif /* DEBUG */
-	}
+    }
     }
 
   /* Floating-point round-off can make us decide to use fewer colors. */
@@ -391,10 +391,10 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 # if 0
       *ncolorsP = k;
       if (k <= 0)
-	return;
+    return;
 # else
       if (k <= 0)
-	return;
+    return;
       for (i = k; i < *ncolorsP; i++)
         /* #### Should duplicate the allocation of the color cell here
            to avoid a double-color-free on PseudoColor, but it's 2018
@@ -403,24 +403,37 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 # endif
     }
 
+  // Debug: Print the final generated colors
+  fprintf(stderr, "DEBUG: make_color_path - generated %d colors from %d control points\n", k, npoints);
+  for (int i = 0; i < k && i < 8; i++) {  // Show first 8 colors to avoid spam
+    fprintf(stderr, "  Color %d: RGB(%d,%d,%d) [HSV: %.1f,%.3f,%.3f]\n",
+            i, colors[i].red >> 8, colors[i].green >> 8, colors[i].blue >> 8,
+            (double)(colors[i].red >> 8) / 255.0 * 360,  // Rough HSV conversion for display
+            (double)(colors[i].green >> 8) / 255.0,
+            (double)(colors[i].blue >> 8) / 255.0);
+  }
+  if (k > 8) {
+    fprintf(stderr, "  ... and %d more colors\n", k - 8);
+  }
+
   if (!allocate_p)
     return;
 
   if (writable_pP && *writable_pP)
     {
       unsigned long *pixels = (unsigned long *)
-	malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
+    malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
 
       /* allocate_writable_colors() won't do here, because we need exactly this
-	 number of cells, or the color sequence we've chosen won't fit. */
+     number of cells, or the color sequence we've chosen won't fit. */
       if (! XAllocColorCells(dpy, cmap, False, 0, 0, pixels, *ncolorsP))
-	{
-	  free(pixels);
-	  goto FAIL;
-	}
+    {
+      free(pixels);
+      goto FAIL;
+    }
 
       for (i = 0; i < *ncolorsP; i++)
-	colors[i].pixel = pixels[i];
+    colors[i].pixel = pixels[i];
       free (pixels);
 
       XStoreColors (dpy, cmap, colors, *ncolorsP);
@@ -428,19 +441,19 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
   else
     {
       for (i = 0; i < *ncolorsP; i++)
-	{
-	  XColor color;
-	  color = colors[i];
-	  if (XAllocColor (dpy, cmap, &color))
-	    {
-	      colors[i].pixel = color.pixel;
-	    }
-	  else
-	    {
-	      free_colors (screen, cmap, colors, i);
-	      goto FAIL;
-	    }
-	}
+    {
+      XColor color;
+      color = colors[i];
+      if (XAllocColor (dpy, cmap, &color))
+        {
+          colors[i].pixel = color.pixel;
+        }
+      else
+        {
+          free_colors (screen, cmap, colors, i);
+          goto FAIL;
+        }
+    }
     }
 
   return;
@@ -450,12 +463,12 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
      decrease the requested number and try again.
    */
   total_ncolors = (total_ncolors > 170 ? total_ncolors - 20 :
-		   total_ncolors > 100 ? total_ncolors - 10 :
-		   total_ncolors >  75 ? total_ncolors -  5 :
-		   total_ncolors >  25 ? total_ncolors -  3 :
-		   total_ncolors >  10 ? total_ncolors -  2 :
-		   total_ncolors >   2 ? total_ncolors -  1 :
-		   0);
+           total_ncolors > 100 ? total_ncolors - 10 :
+           total_ncolors >  75 ? total_ncolors -  5 :
+           total_ncolors >  25 ? total_ncolors -  3 :
+           total_ncolors >  10 ? total_ncolors -  2 :
+           total_ncolors >   2 ? total_ncolors -  1 :
+           0);
   *ncolorsP = total_ncolors;
   if (total_ncolors > 0)
     goto AGAIN;
@@ -464,12 +477,12 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
 void
 make_color_loop (Screen *screen, Visual *visual, Colormap cmap,
-		 int h0, double s0, double v0,   /* 0-360, 0-1.0, 0-1.0 */
-		 int h1, double s1, double v1,   /* 0-360, 0-1.0, 0-1.0 */
-		 int h2, double s2, double v2,   /* 0-360, 0-1.0, 0-1.0 */
-		 XColor *colors, int *ncolorsP,
-		 Bool allocate_p,
-		 Bool *writable_pP)
+         int h0, double s0, double v0,   /* 0-360, 0-1.0, 0-1.0 */
+         int h1, double s1, double v1,   /* 0-360, 0-1.0, 0-1.0 */
+         int h2, double s2, double v2,   /* 0-360, 0-1.0, 0-1.0 */
+         XColor *colors, int *ncolorsP,
+         Bool allocate_p,
+         Bool *writable_pP)
 {
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
 
@@ -493,10 +506,10 @@ make_color_loop (Screen *screen, Visual *visual, Colormap cmap,
 
 void
 make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
-		      XColor *colors, int *ncolorsP,
-		      Bool allocate_p,
-		      Bool *writable_pP,
-		      Bool verbose_p)
+              XColor *colors, int *ncolorsP,
+              Bool allocate_p,
+              Bool *writable_pP,
+              Bool verbose_p)
 {
   int npoints;
   int ncolors = *ncolorsP;
@@ -519,10 +532,10 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
     else             npoints = 5;	/*  5% of the time */
   }
 
- REPICK_ALL_COLORS:
+  REPICK_ALL_COLORS:
   for (i = 0; i < npoints; i++)
     {
-    REPICK_THIS_COLOR:
+      REPICK_THIS_COLOR:
       if (++loop > 10000) {
         fprintf(stderr, "ERROR: make_smooth_colormap reached retry limit of 10000! This indicates poor color generation.\n");
         abort();
@@ -535,43 +548,57 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
       v[i] = frand(0.8) + 0.2;
 
       /* Make sure that no two adjascent colors are *too* close together.
-	 If they are, try again.
+         If they are, try again.
        */
-      if (i > 0)
-	{
-	  int j = (i+1 == npoints) ? 0 : (i-1);
-	  double hi = ((double) h[i]) / 360;
-	  double hj = ((double) h[j]) / 360;
-	  double dh = hj - hi;
-	  double distance;
-	  if (dh < 0) dh = -dh;
-	  if (dh > 0.5) dh = 0.5 - (dh - 0.5);
-	  distance = sqrt ((dh * dh) +
-			   ((s[j] - s[i]) * (s[j] - s[i])) +
-			   ((v[j] - v[i]) * (v[j] - v[i])));
-	  if (distance < 0.2)
-	    goto REPICK_THIS_COLOR;
-	}
+      if (i > 0) {
+        int j = (i+1 == npoints) ? 0 : (i-1);
+        double hi = ((double) h[i]) / 360;
+        double hj = ((double) h[j]) / 360;
+        double dh = hj - hi;
+        double distance;
+        if (dh < 0) dh = -dh;
+        if (dh > 0.5) dh = 0.5 - (dh - 0.5);
+        distance = sqrt ((dh * dh) +
+               ((s[j] - s[i]) * (s[j] - s[i])) +
+               ((v[j] - v[i]) * (v[j] - v[i])));
+        if (distance < 0.2) {
+          fprintf(stderr, "DEBUG: REPICK_THIS_COLOR - colors too close: h[%d]=%d, h[%d]=%d, s[%d]=%.3f, s[%d]=%.3f, v[%d]=%.3f, v[%d]=%.3f, distance=%.3f (need >=0.2)\n",
+              i, h[i], j, h[j], i, s[i], j, s[j], i, v[i], j, v[j], distance);
+          goto REPICK_THIS_COLOR;
+        }
+      }
       total_s += s[i];
       total_v += v[i];
     }
-
   /* If the average saturation or intensity are too low, repick the colors,
-     so that we don't end up with a black-and-white or too-dark map.
+    so that we don't end up with a black-and-white or too-dark map.
    */
-  if (total_s / npoints < 0.2)
+  if (total_s / npoints < 0.2) {
+    fprintf(stderr, "DEBUG: REPICK_ALL_COLORS - average saturation too low: total_s=%.3f, npoints=%d, avg=%.3f (need >=0.2)\n",
+          total_s, npoints, total_s / npoints);
     goto REPICK_ALL_COLORS;
-  if (total_v / npoints < 0.3)
+  }
+  if (total_v / npoints < 0.3) {
+    fprintf(stderr, "DEBUG: REPICK_ALL_COLORS - average brightness too low: total_v=%.3f, npoints=%d, avg=%.3f (need >=0.3)\n",
+          total_v, npoints, total_v / npoints);
     goto REPICK_ALL_COLORS;
+  }
 
   /* If this visual doesn't support writable cells, don't bother trying.
    */
   if (wanted_writable && !has_writable_cells(screen, visual))
     *writable_pP = False;
 
- RETRY_NON_WRITABLE:
+  // Debug: Print the control points that passed quality checks
+  fprintf(stderr, "DEBUG: make_smooth_colormap - npoints=%d, total_s/npoints=%.3f, total_v/npoints=%.3f\n",
+          npoints, total_s / npoints, total_v / npoints);
+  for (int i = 0; i < npoints; i++) {
+    fprintf(stderr, "  Control point %d: h=%d, s=%.3f, v=%.3f\n", i, h[i], s[i], v[i]);
+  }
+
+  RETRY_NON_WRITABLE:
   make_color_path (screen, visual, cmap, npoints, h, s, v, colors, &ncolors,
-		   allocate_p, writable_pP);
+                 allocate_p, writable_pP);
 
   /* If we tried for writable cells and got none, try for non-writable. */
   if (allocate_p && *ncolorsP == 0 && writable_pP && *writable_pP)
@@ -582,7 +609,7 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
   if (verbose_p)
     complain(*ncolorsP, ncolors, wanted_writable,
-	     wanted_writable && *writable_pP);
+             wanted_writable && *writable_pP);
 
   *ncolorsP = ncolors;
 }
@@ -590,10 +617,10 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
 void
 make_uniform_colormap (Screen *screen, Visual *visual, Colormap cmap,
-		       XColor *colors, int *ncolorsP,
-		       Bool allocate_p,
-		       Bool *writable_pP,
-		       Bool verbose_p)
+               XColor *colors, int *ncolorsP,
+               Bool allocate_p,
+               Bool *writable_pP,
+               Bool verbose_p)
 {
   int ncolors = *ncolorsP;
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
@@ -609,10 +636,10 @@ make_uniform_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
  RETRY_NON_WRITABLE:
   make_color_ramp(screen, visual, cmap,
-		  0,   S, V,
-		  359, S, V,
-		  colors, &ncolors,
-		  False, allocate_p, writable_pP);
+          0,   S, V,
+          359, S, V,
+          colors, &ncolors,
+          False, allocate_p, writable_pP);
 
   /* If we tried for writable cells and got none, try for non-writable. */
   if (allocate_p && *ncolorsP == 0 && writable_pP && *writable_pP)
@@ -624,7 +651,7 @@ make_uniform_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
   if (verbose_p)
     complain(*ncolorsP, ncolors, wanted_writable,
-	     wanted_writable && *writable_pP);
+         wanted_writable && *writable_pP);
 
   *ncolorsP = ncolors;
 }
@@ -632,11 +659,11 @@ make_uniform_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
 void
 make_random_colormap (Screen *screen, Visual *visual, Colormap cmap,
-		      XColor *colors, int *ncolorsP,
-		      Bool bright_p,
-		      Bool allocate_p,
-		      Bool *writable_pP,
-		      Bool verbose_p)
+              XColor *colors, int *ncolorsP,
+              Bool bright_p,
+              Bool allocate_p,
+              Bool *writable_pP,
+              Bool verbose_p)
 {
   Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
@@ -654,19 +681,19 @@ make_random_colormap (Screen *screen, Visual *visual, Colormap cmap,
     {
       colors[i].flags = DoRed|DoGreen|DoBlue;
       if (bright_p)
-	{
-	  int H = random() % 360;			   /* range 0-360    */
-	  double S = ((double) (random()%70) + 30)/100.0;  /* range 30%-100% */
-	  double V = ((double) (random()%34) + 66)/100.0;  /* range 66%-100% */
-	  hsv_to_rgb (H, S, V,
-		      &colors[i].red, &colors[i].green, &colors[i].blue);
-	}
+    {
+      int H = random() % 360;			   /* range 0-360    */
+      double S = ((double) (random()%70) + 30)/100.0;  /* range 30%-100% */
+      double V = ((double) (random()%34) + 66)/100.0;  /* range 66%-100% */
+      hsv_to_rgb (H, S, V,
+              &colors[i].red, &colors[i].green, &colors[i].blue);
+    }
       else
-	{
-	  colors[i].red   = random() % 0xFFFF;
-	  colors[i].green = random() % 0xFFFF;
-	  colors[i].blue  = random() % 0xFFFF;
-	}
+    {
+      colors[i].red   = random() % 0xFFFF;
+      colors[i].green = random() % 0xFFFF;
+      colors[i].blue  = random() % 0xFFFF;
+    }
     }
 
   /* If there are a small number of colors, make sure at least the first
@@ -685,30 +712,30 @@ make_random_colormap (Screen *screen, Visual *visual, Colormap cmap,
   if (!allocate_p)
     return;
 
- RETRY_NON_WRITABLE:
+  RETRY_NON_WRITABLE:
   if (writable_pP && *writable_pP)
     {
       unsigned long *pixels = (unsigned long *)
-	malloc(sizeof(*pixels) * (ncolors + 1));
+      malloc(sizeof(*pixels) * (ncolors + 1));
 
       allocate_writable_colors (screen, cmap, pixels, &ncolors);
       if (ncolors > 0)
-	for (i = 0; i < ncolors; i++)
-	  colors[i].pixel = pixels[i];
+        for (i = 0; i < ncolors; i++)
+          colors[i].pixel = pixels[i];
       free (pixels);
       if (ncolors > 0)
-	XStoreColors (dpy, cmap, colors, ncolors);
+        XStoreColors (dpy, cmap, colors, ncolors);
     }
   else
     {
       for (i = 0; i < ncolors; i++)
-	{
-	  XColor color;
-	  color = colors[i];
-	  if (!XAllocColor (dpy, cmap, &color))
-	    break;
-	  colors[i].pixel = color.pixel;
-	}
+        {
+          XColor color;
+          color = colors[i];
+          if (!XAllocColor (dpy, cmap, &color))
+            break;
+          colors[i].pixel = color.pixel;
+        }
       ncolors = i;
     }
 
@@ -722,7 +749,7 @@ make_random_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
   if (verbose_p)
     complain(*ncolorsP, ncolors, wanted_writable,
-	     wanted_writable && *writable_pP);
+         wanted_writable && *writable_pP);
 
   *ncolorsP = ncolors;
 }
@@ -730,7 +757,7 @@ make_random_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
 void
 rotate_colors (Screen *screen, Colormap cmap,
-	       XColor *colors, int ncolors, int distance)
+           XColor *colors, int ncolors, int distance)
 {
   Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   int i;
