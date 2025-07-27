@@ -1172,6 +1172,15 @@ void glEnable(GLenum cap) {
 
 // Add glDisable wrapper that handles unsupported capabilities in WebGL 2.0
 void glDisable(GLenum cap) {
+    // Check for errors before doing anything
+    GLenum err_before = glGetError();
+    if (err_before != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error at START of glDisable(%d): %d\n", cap, err_before);
+        if (err_before == 1280) {
+            handle_1280_error("start of glDisable");
+        }
+    }
+    
     // Check for unsupported capabilities in WebGL 2.0
     switch (cap) {
         case GL_NORMALIZE:
@@ -1202,14 +1211,8 @@ void glDisable(GLenum cap) {
             debugf("WARNING: glDisable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
             return;
         case GL_CULL_FACE:
-            // Face culling is supported in WebGL 2.0, call the real function
-            debugf("DEBUG: glDisable(GL_CULL_FACE)\n");
-            if (glDisable_real) {
-                glDisable_real(cap);
-            } else {
-                debugf("WARNING: glDisable(GL_CULL_FACE) ignored - real function not available\n");
-            }
-            return;
+            debugf("DEBUG: glDisable(GL_CULL_FACE), glDisable_real=%p\n", glDisable_real);
+            // fallthrough
         default:
             // For supported capabilities, call the real glDisable
             if (glDisable_real) {
@@ -1218,6 +1221,14 @@ void glDisable(GLenum cap) {
                 debugf("WARNING: glDisable(%d) ignored - real function not available\n", cap);
             }
             break;
+    }
+
+    GLenum err_after = glGetError();
+    if (err_after != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error at END of glDisable(%d): %d\n", cap, err_after);
+        if (err_after == 1280) {
+            handle_1280_error("end of glDisable");
+        }
     }
 }
 
