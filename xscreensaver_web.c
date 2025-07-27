@@ -1478,18 +1478,48 @@ void glEnd(void) {
         glUniform1i(front_face_ccw_loc, (current_front_face == GL_CCW) ? 1 : 0);
     }
 
-    // Set up projection matrix (simple orthographic for now)
+    // Set up orthographic projection matrix that scales to fill canvas
     GLint projection_loc = glGetUniformLocation(shader_program, "projection");
     if (projection_loc != -1) {
-        // Simple orthographic projection
-        GLfloat projection[16] = {
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, -1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f
-        };
-        glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection);
+        // Get current window dimensions
+        int canvas_width, canvas_height;
+        emscripten_get_canvas_element_size("#canvas", &canvas_width, &canvas_height);
 
+        // Calculate orthographic bounds based on canvas aspect ratio
+        GLfloat left = -1.0f, right = 1.0f, bottom = -1.0f, top = 1.0f;
+        GLfloat near = -1.0f, far = 1.0f;
+
+        if (canvas_width > 0 && canvas_height > 0) {
+            GLfloat canvas_aspect = (GLfloat)canvas_width / (GLfloat)canvas_height;
+
+            // Adjust orthographic bounds to maintain square content but fill canvas
+            if (canvas_aspect > 1.0f) {
+                // Wide canvas - expand horizontally
+                left = -canvas_aspect;
+                right = canvas_aspect;
+            } else {
+                // Tall canvas - expand vertically
+                bottom = -1.0f / canvas_aspect;
+                top = 1.0f / canvas_aspect;
+            }
+
+            DL(2, "DEBUG: Orthographic bounds: left=%f, right=%f, bottom=%f, top=%f (aspect=%f)\n",
+               left, right, bottom, top, canvas_aspect);
+        }
+
+        // Create orthographic projection matrix
+        GLfloat tx = -(right + left) / (right - left);
+        GLfloat ty = -(top + bottom) / (top - bottom);
+        GLfloat tz = -(far + near) / (far - near);
+
+        GLfloat projection[16] = {
+            2.0f / (right - left), 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f / (top - bottom), 0.0f, 0.0f,
+            0.0f, 0.0f, -2.0f / (far - near), 0.0f,
+            tx, ty, tz, 1.0f
+        };
+
+        glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection);
         check_gl_error_wrapper("after projection matrix");
     }
 
@@ -1505,7 +1535,7 @@ void glEnd(void) {
         };
 
         // Apply scale factor of 3 (native version uses 18)
-        GLfloat scale = 3.0f;
+        GLfloat scale = 2.0f;
         modelview[0] = scale;
         modelview[5] = scale;
         modelview[10] = scale;

@@ -693,25 +693,7 @@ reshape_hextrail (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-#ifdef WEB_BUILD
-  // For web builds, adjust field of view based on screen size to show more content
-  // without changing the scale of individual hexagons
-  GLfloat fov = 30.0f;
-  GLfloat screen_ratio = (GLfloat)width / (GLfloat)height;
-  GLfloat base_ratio = 800.0f / 600.0f;  // Original window ratio
-
-  // If screen is larger than original, increase field of view to show more content
-  if (width > 800 || height > 600) {
-    GLfloat scale_factor = (width * height) / (800.0f * 600.0f);
-    fov *= sqrt(scale_factor);
-    printf("DEBUG: Web build - adjusted FOV: %f (scale factor: %f)\n",
-           fov, scale_factor);
-  }
-
-  gluPerspective(fov, 1/h, 1.0, 100.0);
-#else
   gluPerspective (30.0, 1/h, 1.0, 100.0);
-#endif
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
