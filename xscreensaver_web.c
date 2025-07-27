@@ -48,6 +48,9 @@ static double frand(double max) {
 #ifndef GL_SMOOTH
 #define GL_SMOOTH 0x1D01
 #endif
+#ifndef GL_FLAT
+#define GL_FLAT 0x1D00
+#endif
 #ifndef GL_NORMALIZE
 #define GL_NORMALIZE 0x0BA1
 #endif
@@ -81,6 +84,12 @@ static double frand(double max) {
 #endif
 #ifndef GL_COLOR_MATERIAL
 #define GL_COLOR_MATERIAL 0x0B57
+#endif
+#ifndef GL_CCW
+#define GL_CCW 0x0901
+#endif
+#ifndef GL_CW
+#define GL_CW 0x0900
 #endif
 
 // Color generation constants
@@ -1011,15 +1020,39 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
     glTranslated(-eyex, -eyey, -eyez);
 }
 
-// Real OpenGL implementations for WebGL
-void glShadeModel(GLenum mode) {
-    // Store shading mode for shader selection
-    // For now, just ignore - we'll use flat shading
-}
 
 // Function pointers to the real OpenGL functions
 void (*glEnable_real)(GLenum) = NULL;
 void (*glDisable_real)(GLenum) = NULL;
+void (*glClear_real)(GLbitfield) = NULL;
+void (*glShadeModel_real)(GLenum) = NULL;
+void (*glFrontFace_real)(GLenum) = NULL;
+
+// Initialize function pointers to real WebGL functions
+static void init_gl_function_pointers(void) {
+    // Get function pointers to the real WebGL functions
+    glEnable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glEnable");
+    glDisable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glDisable");
+    glClear_real = (void (*)(GLbitfield))emscripten_webgl_get_proc_address("glClear");
+    glShadeModel_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glShadeModel");
+    glFrontFace_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glFrontFace");
+    
+    if (!glEnable_real) {
+        printf("WARNING: Could not get glEnable function pointer\n");
+    }
+    if (!glDisable_real) {
+        printf("WARNING: Could not get glDisable function pointer\n");
+    }
+    if (!glClear_real) {
+        printf("WARNING: Could not get glClear function pointer\n");
+    }
+    if (!glShadeModel_real) {
+        printf("WARNING: Could not get glShadeModel function pointer\n");
+    }
+    if (!glFrontFace_real) {
+        printf("WARNING: Could not get glFrontFace function pointer\n");
+    }
+}
 
 // Add glEnable wrapper that handles unsupported capabilities in WebGL 2.0
 void glEnable(GLenum cap) {
@@ -1101,17 +1134,67 @@ void glDisable(GLenum cap) {
     }
 }
 
-// Initialize function pointers to real WebGL functions
-static void init_gl_function_pointers(void) {
-    // Get function pointers to the real WebGL functions
-    glEnable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glEnable");
-    glDisable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glDisable");
-
-    if (!glEnable_real) {
-        printf("WARNING: Could not get glEnable function pointer\n");
+void glClear(GLbitfield mask) {
+    // Check for errors before glClear
+    GLenum before_clear_error = glGetError();
+    if (before_clear_error != GL_NO_ERROR) {
+        printf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
+        if (before_clear_error == 1280) {
+            printf("STOPPING due to GL_INVALID_ENUM error in glClear!\n");
+            emscripten_force_exit(1);
+        }
     }
-    if (!glDisable_real) {
-        printf("WARNING: Could not get glDisable function pointer\n");
+    
+    // Call the real glClear function
+    if (glClear_real) {
+        glClear_real(mask);
+    } else {
+        printf("WARNING: glClear(%d) ignored - real function not available\n", mask);
+    }
+}
+
+void glShadeModel(GLenum mode) {
+    // Check if this is a supported shading mode in WebGL 2.0
+    switch (mode) {
+        case GL_SMOOTH:
+            // GL_SMOOTH is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glShadeModel(GL_SMOOTH) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_FLAT:
+            // GL_FLAT is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glShadeModel(GL_FLAT) ignored - not supported in WebGL 2.0\n");
+            return;
+        default:
+            // For other modes, try to call the real glShadeModel
+            if (glShadeModel_real) {
+                glShadeModel_real(mode);
+            } else {
+                printf("WARNING: glShadeModel(%d) ignored - real function not available\n", mode);
+            }
+            break;
+    }
+}
+
+// Add glFrontFace wrapper
+void glFrontFace(GLenum mode) {
+    // Check if this is a supported front face mode in WebGL 2.0
+    switch (mode) {
+        case GL_CCW:
+            // GL_CCW is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glFrontFace(GL_CCW) ignored - not supported in WebGL 2.0\n");
+            return;
+        case GL_CW:
+            // GL_CW is not supported in WebGL 2.0, ignore it
+            printf("WARNING: glFrontFace(GL_CW) ignored - not supported in WebGL 2.0\n");
+            return;
+        default:
+            // For other modes, try to call the real glFrontFace
+            if (glFrontFace_real) {
+                glFrontFace_real(mode);
+            } else {
+                printf("WARNING: glFrontFace(%d) ignored - real function not available\n", mode);
+            }
+            break;
     }
 }
 
