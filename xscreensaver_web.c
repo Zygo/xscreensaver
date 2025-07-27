@@ -96,9 +96,6 @@ static double frand(double max) {
 #define GL_CW 0x0900
 #endif
 
-// Color generation constants
-#define MAXPOINTS 10
-
 #define Bool int
 #define True 1
 #define False 0
@@ -303,13 +300,8 @@ typedef struct {
 } Color4f;
 
 typedef struct {
-    GLfloat x, y, z;
-} Normal3f;
-
-typedef struct {
     Vertex3f vertices[MAX_VERTICES];
     Color4f colors[MAX_VERTICES];
-    Normal3f normals[MAX_VERTICES];
     int vertex_count;
     GLenum primitive_type;
     Bool in_begin_end;
@@ -323,7 +315,6 @@ static ImmediateMode immediate;
 static Color4f current_color = {1.0f, 1.0f, 1.0f, 1.0f};
 static int total_vertices_this_frame = 0;
 static Bool rendering_enabled = True;
-static Normal3f current_normal = {0.0f, 0.0f, 1.0f};
 
 // WebGL shader program
 static GLuint shader_program = 0;
@@ -1329,9 +1320,8 @@ void glScalef(GLfloat x, GLfloat y, GLfloat z) {
 }
 
 void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) {
-    current_normal.x = nx;
-    current_normal.y = ny;
-    current_normal.z = nz;
+    // Normals are not used in our WebGL implementation
+    // This function is called by hextrail but ignored
 }
 
 void glColor3f(GLfloat r, GLfloat g, GLfloat b) {
@@ -1425,7 +1415,6 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
     immediate.vertices[immediate.vertex_count].y = y;
     immediate.vertices[immediate.vertex_count].z = z;
     immediate.colors[immediate.vertex_count] = current_color;
-    immediate.normals[immediate.vertex_count] = current_normal;
     immediate.vertex_count++;
 }
 
@@ -1459,13 +1448,12 @@ void glEnd(void) {
     check_gl_error_wrapper("start of glEnd");
 
     // Create VBOs and render
-    GLuint vbo_vertices, vbo_colors, vbo_normals;
+    GLuint vbo_vertices, vbo_colors;
     glGenBuffers(1, &vbo_vertices);
     glGenBuffers(1, &vbo_colors);
-    glGenBuffers(1, &vbo_normals);
 
     // Track VBO memory allocation
-    size_t vbo_size = immediate.vertex_count * (sizeof(Vertex3f) + sizeof(Color4f) + sizeof(Normal3f));
+    size_t vbo_size = immediate.vertex_count * (sizeof(Vertex3f) + sizeof(Color4f));
     track_memory_allocation(vbo_size);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
@@ -1475,10 +1463,6 @@ void glEnd(void) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f),
                  immediate.colors, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Normal3f),
-                 immediate.normals, GL_STATIC_DRAW);
 
     // Use our WebGL 2.0 wrapper (limit messages to first 5 frames)
     static int webgl_wrapper_count = 0;
@@ -2122,115 +2106,6 @@ void xcolor_to_glfloat(const XColor *xcolor, GLfloat *rgba) {
     if (xcolor_count <= 5) { // Log first 5 color conversions
         DL(1, "[%ld] xcolor_to_glfloat: XColor(%d,%d,%d) -> GLfloat(%.3f,%.3f,%.3f,%.3f)\n",
                (long)(emscripten_get_now()), xcolor->red, xcolor->green, xcolor->blue, rgba[0], rgba[1], rgba[2], rgba[3]);
-    }
-}
-
-// Generate smooth color map for WebGL
-void make_smooth_colormap_webgl(XColor *colors, int *ncolorsP, Bool allocate_p, Bool *writable_pP, Bool verbose_p) {
-    DL(1, "make_smooth_colormap_webgl called: allocate_p=%d, verbose_p=%d\n", allocate_p, verbose_p);
-    DL(1, "make_smooth_colormap_webgl: ncolorsP=%d before call\n", *ncolorsP);
-    int npoints;
-    int ncolors = *ncolorsP;
-    int i;
-    int h[MAXPOINTS];
-    double s[MAXPOINTS];
-    double v[MAXPOINTS];
-    double total_s = 0;
-    double total_v = 0;
-    int loop = 0;
-
-    if (*ncolorsP <= 0) return;
-
-    // Randomly choose number of color points
-    {
-        int n = webgl_random() % 20;
-        if      (n <= 5)  npoints = 2;  /* 30% of the time */
-        else if (n <= 15) npoints = 3;  /* 50% of the time */
-        else if (n <= 18) npoints = 4;  /* 15% of the time */
-        else             npoints = 5;   /*  5% of the time */
-    }
-
-REPICK_ALL_COLORS:
-    for (i = 0; i < npoints; i++) {
-    REPICK_THIS_COLOR:
-        if (++loop > 10000) abort();
-        h[i] = webgl_random() % 360;
-        s[i] = ((double)(webgl_random() % 1000)) / 1000.0; // 0.0 to 1.0
-        v[i] = ((double)(webgl_random() % 800)) / 1000.0 + 0.2; // 0.2 to 1.0
-
-        // Make sure adjacent colors aren't too close
-        if (i > 0) {
-            int j = (i+1 == npoints) ? 0 : (i-1);
-            double hi = ((double) h[i]) / 360;
-            double hj = ((double) h[j]) / 360;
-            double dh = hj - hi;
-            double distance;
-            if (dh < 0) dh = -dh;
-            if (dh > 0.5) dh = 0.5 - (dh - 0.5);
-            distance = sqrt((dh * dh) +
-                          ((s[j] - s[i]) * (s[j] - s[i])) +
-                          ((v[j] - v[i]) * (v[j] - v[i])));
-            if (distance < 0.2)
-                goto REPICK_THIS_COLOR;
-        }
-        total_s += s[i];
-        total_v += v[i];
-    }
-
-    // Ensure minimum saturation and value
-    if (total_s / npoints < 0.2)
-        goto REPICK_ALL_COLORS;
-    if (total_v / npoints < 0.3)
-        goto REPICK_ALL_COLORS;
-
-    // Generate smooth color path
-    make_color_path_webgl(npoints, h, s, v, colors, &ncolors);
-
-    *ncolorsP = ncolors;
-}
-
-// Generate smooth color path for WebGL
-static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XColor *colors, int *ncolorsP) {
-    int ncolors = *ncolorsP;
-    int i, j;
-
-    for (i = 0; i < ncolors; i++) {
-        double t = (double)i / (ncolors - 1);
-        int segment = (int)(t * (npoints - 1));
-        double local_t = t * (npoints - 1) - segment;
-
-        if (segment >= npoints - 1) {
-            segment = npoints - 2;
-            local_t = 1.0;
-        }
-
-        // Interpolate between two color points
-        double h1 = h[segment], h2 = h[segment + 1];
-        double s1 = s[segment], s2 = s[segment + 1];
-        double v1 = v[segment], v2 = v[segment + 1];
-
-        // Handle hue wrapping
-        double dh = h2 - h1;
-        if (dh > 180) dh -= 360;
-        if (dh < -180) dh += 360;
-
-        double interp_h = h1 + dh * local_t;
-        double interp_s = s1 + (s2 - s1) * local_t;
-        double interp_v = v1 + (v2 - v1) * local_t;
-
-        // Convert to RGB
-        double r, g, b;
-        hsv_to_rgb(interp_h, interp_s, interp_v, &r, &g, &b);
-
-        colors[i].red = (unsigned short)(r * 65535);
-        colors[i].green = (unsigned short)(g * 65535);
-        colors[i].blue = (unsigned short)(b * 65535);
-        colors[i].flags = DoRed | DoGreen | DoBlue;
-
-        if (i < 3) { // Log first 3 colors
-            DL(1, "[%ld] make_color_path_webgl: Color[%d]: RGB(%d, %d, %d) from HSV(%.1f, %.2f, %.2f)\n",
-                   (long)(emscripten_get_now()), i, colors[i].red, colors[i].green, colors[i].blue, interp_h, interp_s, interp_v);
-        }
     }
 }
 
