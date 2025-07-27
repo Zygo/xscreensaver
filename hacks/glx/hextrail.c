@@ -154,9 +154,8 @@ make_plane (ModeInfo *mi)
   printf("hextrail: Generated %d colors. Start color=%d\n", bp->ncolors,
           grid[bp->grid_h * bp->grid_w / 2 + bp->grid_w / 2].ccolor);
   for (int i = 0; i < bp->ncolors; i++) {
-    printf("  Color %d: R=%04X G=%04X B=%04X (RGB: %d,%d,%d)\n",
-           i, bp->colors[i].red, bp->colors[i].green, bp->colors[i].blue,
-           bp->colors[i].red >> 8, bp->colors[i].green >> 8, bp->colors[i].blue >> 8);
+    printf("  Color %d: RGB: %d,%d,%d\n",
+           i, bp->colors[i].red >> 8, bp->colors[i].green >> 8, bp->colors[i].blue >> 8);
   }
 
   for (y = 0; y < bp->grid_h; y++)
@@ -165,8 +164,7 @@ make_plane (ModeInfo *mi)
         hexagon *h0 = &grid[y * bp->grid_w + x];
 # undef NEIGHBOR
 # define NEIGHBOR(I,XE,XO,Y) do {                                        \
-          int x1 = x + (y & 1 ? (XO) : (XE));                            \
-          int y1 = y + (Y);                                              \
+          int x1 = x + (y & 1 ? (XO) : (XE)); int y1 = y + (Y);          \
           if (x1 >= 0 && x1 < bp->grid_w && y1 >= 0 && y1 < bp->grid_h)  \
             h0->neighbors[(I)] = &grid [y1 * bp->grid_w + x1];           \
         } while (0)
