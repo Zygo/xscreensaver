@@ -226,9 +226,20 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 3px;
-            background: rgba(128, 128, 128, 0.3);
+            width: 8px; /* Wider invisible clickable area */
+            background: transparent;
             cursor: ew-resize;
+            z-index: 1002;
+        }
+
+        #debug-panel::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 1px; /* Thin visual line */
+            background: rgba(128, 128, 128, 0.3);
             z-index: 1002;
         }
 
@@ -877,8 +888,8 @@
 
             // Mouse down on the left edge
             debugPanel.addEventListener('mousedown', function(e) {
-                // Check if click is on the left edge (first 3px)
-                if (e.offsetX <= 3) {
+                // Check if click is on the left edge (first 8px)
+                if (e.offsetX <= 8) {
                     isResizing = true;
                     startX = e.clientX;
                     startWidth = debugPanel.offsetWidth;
