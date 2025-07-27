@@ -1081,8 +1081,7 @@ void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
 void (*glEnable_real)(GLenum) = NULL;
 void (*glDisable_real)(GLenum) = NULL;
 void (*glClear_real)(GLbitfield) = NULL;
-void (*glShadeModel_real)(GLenum) = NULL;
-void (*glFrontFace_real)(GLenum) = NULL;
+// Note: glShadeModel and glFrontFace don't exist in WebGL 2.0, so no function pointers needed
 
 // Initialize function pointers to real WebGL functions
 static void init_gl_function_pointers(void) {
@@ -1090,8 +1089,7 @@ static void init_gl_function_pointers(void) {
     glEnable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glEnable");
     glDisable_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glDisable");
     glClear_real = (void (*)(GLbitfield))emscripten_webgl_get_proc_address("glClear");
-    glShadeModel_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glShadeModel");
-    glFrontFace_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glFrontFace");
+    // Note: glShadeModel and glFrontFace don't exist in WebGL 2.0, so we don't try to get them
 
     if (!glEnable_real) {
         debugf("WARNING: Could not get glEnable function pointer\n");
@@ -1102,12 +1100,6 @@ static void init_gl_function_pointers(void) {
     if (!glClear_real) {
         debugf("WARNING: Could not get glClear function pointer\n");
     }
-    if (!glShadeModel_real) {
-        debugf("WARNING: Could not get glShadeModel function pointer\n");
-    }
-    if (!glFrontFace_real) {
-        debugf("WARNING: Could not get glFrontFace function pointer\n");
-    }
 }
 
 // OpenGL state tracking
@@ -1116,6 +1108,15 @@ static Bool lighting_enabled = False;
 
 // Add glEnable wrapper that handles unsupported capabilities in WebGL 2.0
 void glEnable(GLenum cap) {
+    // Check for errors before glEnable
+    GLenum before_error = glGetError();
+    if (before_error != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error before glEnable(%d): %d\n", cap, before_error);
+        if (before_error == 1280) {
+            handle_1280_error("before glEnable");
+        }
+    }
+
     // Check for unsupported capabilities in WebGL 2.0
     switch (cap) {
         case GL_NORMALIZE:
@@ -1153,6 +1154,15 @@ void glEnable(GLenum cap) {
                 debugf("WARNING: glEnable(%d) ignored - real function not available\n", cap);
             }
             break;
+    }
+
+    // Check for errors after glEnable
+    GLenum after_error = glGetError();
+    if (after_error != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error after glEnable(%d): %d\n", cap, after_error);
+        if (after_error == 1280) {
+            handle_1280_error("after glEnable");
+        }
     }
 }
 
@@ -1220,6 +1230,15 @@ void glClear(GLbitfield mask) {
 static GLenum current_shade_model = GL_SMOOTH; // Default to smooth
 
 void glShadeModel(GLenum mode) {
+    // Check for errors before glShadeModel
+    GLenum before_error = glGetError();
+    if (before_error != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error before glShadeModel: %d\n", before_error);
+        if (before_error == 1280) {
+            handle_1280_error("before glShadeModel");
+        }
+    }
+
     // Store the shading mode for shader use
     current_shade_model = mode;
     debugf("DEBUG: glShadeModel set to %d (GL_SMOOTH=%d, GL_FLAT=%d)\n", mode, GL_SMOOTH, GL_FLAT);
@@ -1234,6 +1253,15 @@ static GLenum current_front_face = GL_CCW; // Default to CCW
 
 // Add glFrontFace wrapper
 void glFrontFace(GLenum mode) {
+    // Check for errors before glFrontFace
+    GLenum before_error = glGetError();
+    if (before_error != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error before glFrontFace: %d\n", before_error);
+        if (before_error == 1280) {
+            handle_1280_error("before glFrontFace");
+        }
+    }
+
     // Store the front face mode for shader use
     current_front_face = mode;
     debugf("DEBUG: glFrontFace set to %d (GL_CCW=%d, GL_CW=%d)\n", mode, GL_CCW, GL_CW);
