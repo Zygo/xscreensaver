@@ -270,20 +270,20 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
     for (i = 0; i < npoints; i++)
       {
-    int j = (i+1) % npoints;
-    double d = ((double) (h[i] - h[j])) / 360;
-    if (d < 0) d = -d;
-    if (d > 0.5) d = 0.5 - (d - 0.5);
-    DH[i] = d;
+        int j = (i+1) % npoints;
+        double d = ((double) (h[i] - h[j])) / 360;
+        if (d < 0) d = -d;
+        if (d > 0.5) d = 0.5 - (d - 0.5);
+        DH[i] = d;
       }
 
     for (i = 0; i < npoints; i++)
       {
-    int j = (i+1) % npoints;
-    edge[i] = sqrt((DH[i] * DH[j]) +
+        int j = (i+1) % npoints;
+        edge[i] = sqrt((DH[i] * DH[j]) +
                ((s[j] - s[i]) * (s[j] - s[i])) +
                ((v[j] - v[i]) * (v[j] - v[i])));
-    circum += edge[i];
+        circum += edge[i];
       }
 
 #ifdef DEBUG
@@ -300,8 +300,8 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
     for (i = 0; i < npoints; i++)
       {
-    ratio[i] = edge[i] / circum;
-    one_point_oh += ratio[i];
+        ratio[i] = edge[i] / circum;
+        one_point_oh += ratio[i];
       }
 
 #ifdef DEBUG
@@ -359,25 +359,25 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
           h[i], dh[i], ncolors[i]);
 #endif /* DEBUG */
       for (j = 0; j < ncolors[i]; j++, k++)
-    {
-      double hh = (h[i] + (j * dh[i] * direction));
-      if (hh < 0) hh += 360;
-      else if (hh > 360) hh -= 0;
-      colors[k].flags = DoRed|DoGreen|DoBlue;
-      hsv_to_rgb ((int)
+        {
+          double hh = (h[i] + (j * dh[i] * direction));
+          if (hh < 0) hh += 360;
+          else if (hh > 360) hh -= 0;
+          colors[k].flags = DoRed|DoGreen|DoBlue;
+          hsv_to_rgb ((int)
               hh,
               (s[i] + (j * ds[i])),
               (v[i] + (j * dv[i])),
               &colors[k].red, &colors[k].green, &colors[k].blue);
 #ifdef DEBUG
-      fprintf (stderr, "point %d+%d: %.2f %.2f %.2f  %04X %04X %04X\n",
-           i, j,
-           hh,
-           (s[i] + (j * ds[i])),
-           (v[i] + (j * dv[i])),
-           colors[k].red, colors[k].green, colors[k].blue);
+          fprintf (stderr, "point %d+%d: %.2f %.2f %.2f  %04X %04X %04X\n",
+               i, j,
+               hh,
+               (s[i] + (j * ds[i])),
+               (v[i] + (j * dv[i])),
+               colors[k].red, colors[k].green, colors[k].blue);
 #endif /* DEBUG */
-    }
+        }
     }
 
   /* Floating-point round-off can make us decide to use fewer colors. */
@@ -394,7 +394,7 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
     return;
 # else
       if (k <= 0)
-    return;
+        return;
       for (i = k; i < *ncolorsP; i++)
         /* #### Should duplicate the allocation of the color cell here
            to avoid a double-color-free on PseudoColor, but it's 2018
@@ -422,18 +422,18 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
   if (writable_pP && *writable_pP)
     {
       unsigned long *pixels = (unsigned long *)
-    malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
+        malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
 
       /* allocate_writable_colors() won't do here, because we need exactly this
-     number of cells, or the color sequence we've chosen won't fit. */
+         number of cells, or the color sequence we've chosen won't fit. */
       if (! XAllocColorCells(dpy, cmap, False, 0, 0, pixels, *ncolorsP))
-    {
-      free(pixels);
-      goto FAIL;
-    }
+        {
+          free(pixels);
+          goto FAIL;
+        }
 
       for (i = 0; i < *ncolorsP; i++)
-    colors[i].pixel = pixels[i];
+        colors[i].pixel = pixels[i];
       free (pixels);
 
       XStoreColors (dpy, cmap, colors, *ncolorsP);
@@ -441,19 +441,19 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
   else
     {
       for (i = 0; i < *ncolorsP; i++)
-    {
-      XColor color;
-      color = colors[i];
-      if (XAllocColor (dpy, cmap, &color))
         {
-          colors[i].pixel = color.pixel;
+          XColor color;
+          color = colors[i];
+          if (XAllocColor (dpy, cmap, &color))
+            {
+              colors[i].pixel = color.pixel;
+            }
+          else
+            {
+              free_colors (screen, cmap, colors, i);
+              goto FAIL;
+            }
         }
-      else
-        {
-          free_colors (screen, cmap, colors, i);
-          goto FAIL;
-        }
-    }
     }
 
   return;
@@ -513,6 +513,7 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
 {
   int npoints;
   int ncolors = *ncolorsP;
+  int originally_requested = *ncolorsP;  // Save original request
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
   int i;
   int h[MAXPOINTS];
@@ -612,6 +613,25 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
              wanted_writable && *writable_pP);
 
   *ncolorsP = ncolors;
+
+  // Debug: Print final return values from make_smooth_colormap
+  fprintf(stderr, "DEBUG: make_smooth_colormap RETURNING - requested=%d, got=%d, allocate_p=%s, writable_p=%s\n",
+          originally_requested, ncolors, allocate_p ? "True" : "False", 
+          (writable_pP && *writable_pP) ? "True" : "False");
+  
+  // Show first few colors that were generated
+  int show_colors = (ncolors > 8) ? 8 : ncolors;
+  for (int i = 0; i < show_colors; i++) {
+    fprintf(stderr, "  Final color %d: RGB(%d,%d,%d) pixel=0x%lx\n",
+            i, colors[i].red >> 8, colors[i].green >> 8, colors[i].blue >> 8,
+            colors[i].pixel);
+  }
+  if (ncolors > 8) {
+    fprintf(stderr, "  ... and %d more colors\n", ncolors - 8);
+  }
+  if (ncolors == 0) {
+    fprintf(stderr, "  WARNING: make_smooth_colormap returned 0 colors!\n");
+  }
 }
 
 
