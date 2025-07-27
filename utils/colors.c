@@ -404,7 +404,7 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
     }
 
   // Debug: Print the final generated colors
-  fprintf(stderr, "DEBUG: make_color_path - generated %d colors from %d control points\n", k, npoints);
+  /*fprintf(stderr, "DEBUG: make_color_path - generated %d colors from %d control points\n", k, npoints);
   for (int i = 0; i < k && i < 8; i++) {  // Show first 8 colors to avoid spam
     fprintf(stderr, "  Color %d: RGB(%d,%d,%d) [HSV: %.1f,%.3f,%.3f]\n",
             i, colors[i].red >> 8, colors[i].green >> 8, colors[i].blue >> 8,
@@ -414,7 +414,7 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
   }
   if (k > 8) {
     fprintf(stderr, "  ... and %d more colors\n", k - 8);
-  }
+  }*/
 
   if (!allocate_p)
     return;
@@ -538,12 +538,12 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
     {
       REPICK_THIS_COLOR:
       if (++loop > 10000) {
-        fprintf(stderr, "ERROR: make_smooth_colormap reached retry limit of 10000! This indicates poor color generation.\n");
+        //fprintf(stderr, "ERROR: make_smooth_colormap reached retry limit of 10000! This indicates poor color generation.\n");
         abort();
       }
-      if (loop > 5000 && loop % 1000 == 0) {
+      /*if (loop > 5000 && loop % 1000 == 0) {
         fprintf(stderr, "WARNING: make_smooth_colormap retry count: %d/10000\n", loop);
-      }
+      }*/
       h[i] = random() % 360;
       s[i] = frand(1.0);
       v[i] = frand(0.8) + 0.2;
@@ -563,8 +563,8 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
                ((s[j] - s[i]) * (s[j] - s[i])) +
                ((v[j] - v[i]) * (v[j] - v[i])));
         if (distance < 0.2) {
-          fprintf(stderr, "DEBUG: REPICK_THIS_COLOR - colors too close: h[%d]=%d, h[%d]=%d, s[%d]=%.3f, s[%d]=%.3f, v[%d]=%.3f, v[%d]=%.3f, distance=%.3f (need >=0.2)\n",
-              i, h[i], j, h[j], i, s[i], j, s[j], i, v[i], j, v[j], distance);
+          /*fprintf(stderr, "DEBUG: REPICK_THIS_COLOR - colors too close: h[%d]=%d, h[%d]=%d, s[%d]=%.3f, s[%d]=%.3f, v[%d]=%.3f, v[%d]=%.3f, distance=%.3f (need >=0.2)\n",
+              i, h[i], j, h[j], i, s[i], j, s[j], i, v[i], j, v[j], distance);*/
           goto REPICK_THIS_COLOR;
         }
       }
@@ -575,13 +575,13 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
     so that we don't end up with a black-and-white or too-dark map.
    */
   if (total_s / npoints < 0.2) {
-    fprintf(stderr, "DEBUG: REPICK_ALL_COLORS - average saturation too low: total_s=%.3f, npoints=%d, avg=%.3f (need >=0.2)\n",
-          total_s, npoints, total_s / npoints);
+    /*fprintf(stderr, "DEBUG: REPICK_ALL_COLORS - average saturation too low: total_s=%.3f, npoints=%d, avg=%.3f (need >=0.2)\n",
+          total_s, npoints, total_s / npoints);*/
     goto REPICK_ALL_COLORS;
   }
   if (total_v / npoints < 0.3) {
-    fprintf(stderr, "DEBUG: REPICK_ALL_COLORS - average brightness too low: total_v=%.3f, npoints=%d, avg=%.3f (need >=0.3)\n",
-          total_v, npoints, total_v / npoints);
+    /*fprintf(stderr, "DEBUG: REPICK_ALL_COLORS - average brightness too low: total_v=%.3f, npoints=%d, avg=%.3f (need >=0.3)\n",
+          total_v, npoints, total_v / npoints);*/
     goto REPICK_ALL_COLORS;
   }
 
@@ -591,11 +591,11 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
     *writable_pP = False;
 
   // Debug: Print the control points that passed quality checks
-  fprintf(stderr, "DEBUG: make_smooth_colormap - npoints=%d, total_s/npoints=%.3f, total_v/npoints=%.3f\n",
+  /*fprintf(stderr, "DEBUG: make_smooth_colormap - npoints=%d, total_s/npoints=%.3f, total_v/npoints=%.3f\n",
           npoints, total_s / npoints, total_v / npoints);
   for (int i = 0; i < npoints; i++) {
     fprintf(stderr, "  Control point %d: h=%d, s=%.3f, v=%.3f\n", i, h[i], s[i], v[i]);
-  }
+  }*/
 
   RETRY_NON_WRITABLE:
   make_color_path (screen, visual, cmap, npoints, h, s, v, colors, &ncolors,
@@ -615,7 +615,7 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
   *ncolorsP = ncolors;
 
   // Debug: Print final return values from make_smooth_colormap
-  fprintf(stderr, "DEBUG: make_smooth_colormap RETURNING - requested=%d, got=%d, allocate_p=%s, writable_p=%s\n",
+  /*fprintf(stderr, "DEBUG: make_smooth_colormap RETURNING - requested=%d, got=%d, allocate_p=%s, writable_p=%s\n",
           originally_requested, ncolors, allocate_p ? "True" : "False", 
           (writable_pP && *writable_pP) ? "True" : "False");
   
@@ -631,7 +631,7 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
   }
   if (ncolors == 0) {
     fprintf(stderr, "  WARNING: make_smooth_colormap returned 0 colors!\n");
-  }
+  }*/
 }
 
 
