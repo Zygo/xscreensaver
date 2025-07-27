@@ -151,10 +151,73 @@ int gluProject_web(GLdouble objx, GLdouble objy, GLdouble objz,
     return 1; // GL_TRUE
 }
 
+// Debug logging control
+static Bool debug_logging_enabled = True;
+
+// Function to re-enable debug logging
+EMSCRIPTEN_KEEPALIVE
+void re_enable_debug_logging() {
+    debug_logging_enabled = True;
+    printf("Debug logging re-enabled\n");
+}
+
+// Function to toggle global debug output (affects all printf output)
+EMSCRIPTEN_KEEPALIVE
+void set_global_debug_enabled(int enabled) {
+    // Call JavaScript function to toggle global debug
+    EM_ASM({
+        if (window.setGlobalDebugEnabled) {
+            window.setGlobalDebugEnabled($0);
+        }
+    }, enabled);
+
+    // Also update our local debug flag
+    debug_logging_enabled = enabled;
+
+    printf("Global debug %s\n", enabled ? "enabled" : "disabled");
+}
+
+// Debug printf function that respects the logging flag
+static void debugf(const char *format, ...) {
+    if (!debug_logging_enabled) return;
+
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
+
+// Helper function to handle GL_INVALID_ENUM errors
+static void handle_1280_error(const char *location) {
+    if (debug_logging_enabled) {
+        printf("GL_INVALID_ENUM (1280) detected at %s - PAUSING debug logging\n", location);
+        debug_logging_enabled = False;
+
+        // Also disable global debug to stop all printf output
+        set_global_debug_enabled(0);
+    }
+}
+
+// Helper function to check for OpenGL errors and handle them consistently
+static void check_gl_error_wrapper_internal(const char *location, int line) {
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        debugf("ERROR: WebGL error at %s (line %d): %d\n", location, line, error);
+        if (error == 1280) {
+            handle_1280_error(location);
+        }
+    }
+}
+
+// Macro that automatically includes the line number
+#define check_gl_error_wrapper(location) check_gl_error_wrapper_internal(location, __LINE__)
+
 // Provide glGetDoublev since WebGL only has glGetFloatv
 void glGetDoublev_web(GLenum pname, GLdouble *params) {
+    check_gl_error_wrapper("before glGetFloatv");
     GLfloat float_params[16];
     glGetFloatv(pname, float_params);
+    check_gl_error_wrapper("after glGetFloatv");
 
     // Convert float to double
     int count = (pname == GL_MODELVIEW_MATRIX || pname == GL_PROJECTION_MATRIX) ? 16 : 1;
@@ -286,19 +349,6 @@ static void matrix_scale(Matrix4f *m, GLfloat x, GLfloat y, GLfloat z) {
     scale.m[5] = y;
     scale.m[10] = z;
     matrix_multiply(m, m, &scale);
-}
-
-// Debug logging control
-static Bool debug_logging_enabled = True;
-
-// Debug printf function that respects the logging flag
-static void debugf(const char *format, ...) {
-    if (!debug_logging_enabled) return;
-
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
 }
 
 // WebGL 2.0 shader compilation
@@ -447,54 +497,6 @@ static int wander_enabled = 1;
 // Keypress state for web events
 static char web_keypress_char = 0;
 static float animation_speed = 1.0f;
-
-// Function to re-enable debug logging
-EMSCRIPTEN_KEEPALIVE
-void re_enable_debug_logging() {
-    debug_logging_enabled = True;
-    debugf("Debug logging re-enabled\n");
-}
-
-// Function to toggle global debug output (affects all printf output)
-EMSCRIPTEN_KEEPALIVE
-void set_global_debug_enabled(int enabled) {
-    // Call JavaScript function to toggle global debug
-    EM_ASM({
-        if (window.setGlobalDebugEnabled) {
-            window.setGlobalDebugEnabled($0);
-        }
-    }, enabled);
-
-    // Also update our local debug flag
-    debug_logging_enabled = enabled;
-
-    printf("Global debug %s\n", enabled ? "enabled" : "disabled");
-}
-
-// Helper function to handle GL_INVALID_ENUM errors
-static void handle_1280_error(const char *location) {
-    if (debug_logging_enabled) {
-        printf("GL_INVALID_ENUM (1280) detected at %s - PAUSING debug logging\n", location);
-        debug_logging_enabled = False;
-
-        // Also disable global debug to stop all printf output
-        set_global_debug_enabled(0);
-    }
-}
-
-// Helper function to check for OpenGL errors and handle them consistently
-static void check_gl_error_wrapper_internal(const char *location, int line) {
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error at %s (line %d): %d\n", location, line, error);
-        if (error == 1280) {
-            handle_1280_error(location);
-        }
-    }
-}
-
-// Macro that automatically includes the line number
-#define check_gl_error_wrapper(location) check_gl_error_wrapper_internal(location, __LINE__)
 
 // Main loop callback
 void main_loop(void) {
