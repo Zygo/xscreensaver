@@ -129,14 +129,6 @@ make_plane (ModeInfo *mi)
                         bp->colors, &bp->ncolors,
                         False, 0, False);
 
-  // Debug: Print the generated colors
-  printf("hextrail: Generated %d colors:\n", bp->ncolors);
-  for (int i = 0; i < bp->ncolors; i++) {
-    printf("  Color %d: R=%04X G=%04X B=%04X (RGB: %d,%d,%d)\n",
-           i, bp->colors[i].red, bp->colors[i].green, bp->colors[i].blue,
-           bp->colors[i].red >> 8, bp->colors[i].green >> 8, bp->colors[i].blue >> 8);
-  }
-
   size = 2.0 / bp->grid_w;
   w = size;
   h = size * sqrt(3) / 2;
@@ -157,6 +149,15 @@ make_plane (ModeInfo *mi)
 
         h0->ccolor = random() % bp->ncolors;
       }
+
+  // Debug: Print the generated colors
+  printf("hextrail: Generated %d colors. Start color=%d\n", bp->ncolors,
+          grid[bp->grid_h * bp->grid_w / 2 + bp->grid_w / 2].ccolor);
+  for (int i = 0; i < bp->ncolors; i++) {
+    printf("  Color %d: R=%04X G=%04X B=%04X (RGB: %d,%d,%d)\n",
+           i, bp->colors[i].red, bp->colors[i].green, bp->colors[i].blue,
+           bp->colors[i].red >> 8, bp->colors[i].green >> 8, bp->colors[i].blue >> 8);
+  }
 
   for (y = 0; y < bp->grid_h; y++)
     for (x = 0; x < bp->grid_w; x++)
@@ -283,12 +284,12 @@ static int hex_invis(hextrail_configuration *bp, XYZ pos, int i, GLfloat *rad) {
   /* Project point to screen coordinates */
   gluProject(pos.x, pos.y, pos.z, bp->model, bp->proj, bp->viewport, &x, &y, &z);
 
-  static time_t debug = 0;
+  /*static time_t debug = 0;
   if (debug != now) {
       printf("%s: pos=(%f,%f,%f) x=%f, y=%f, z=%.1f vp=%d,%d i=%d\n", __func__,
               pos.x, pos.y, pos.z, x, y, z, bp->viewport[2], bp->viewport[3], i);
       debug = now;
-  }
+  }*/
 
   if (z <= 0 || z >= 1) return 2;
 
