@@ -1210,12 +1210,16 @@ void glDisable(GLenum cap) {
             // Fixed-function materials are not supported in WebGL 2.0, ignore it
             debugf("WARNING: glDisable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
             return;
+        case GL_DEPTH_TEST:
+            debugf("DEBUG: glDisable(GL_DEPTH_TEST), glDisable_real=%p\n", glDisable_real);
+            // fallthrough
         case GL_CULL_FACE:
             debugf("DEBUG: glDisable(GL_CULL_FACE), glDisable_real=%p\n", glDisable_real);
             // fallthrough
         default:
             // For supported capabilities, call the real glDisable
             if (glDisable_real) {
+                debugf("DEBUG: glDisable(%d) - calling real function\n", cap);
                 glDisable_real(cap);
             } else {
                 debugf("WARNING: glDisable(%d) ignored - real function not available\n", cap);
