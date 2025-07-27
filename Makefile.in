@@ -62,6 +62,22 @@ distclean:: clean
 	@$(MAKE_SUBDIR2)
 	-rm -f config.h Makefile config.status config.cache config.log TAGS *~ "#"* intltool-extract intltool-merge intltool-update
 
+# Delegation rules for building specific targets in subdirectories
+# These rules always delegate to ensure proper dependency checking in subdirectories
+hacks/glx/%: FORCE
+	@$(MAKE2) -C hacks/glx $*
+
+hacks/%: FORCE
+	@$(MAKE2) -C hacks $*
+
+utils/%: FORCE
+	@$(MAKE2) -C utils $*
+
+driver/%: FORCE
+	@$(MAKE2) -C driver $*
+
+FORCE:
+
 dist:: tar
 
 # This really makes me sick...

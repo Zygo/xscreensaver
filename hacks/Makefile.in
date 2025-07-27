@@ -3576,3 +3576,10 @@ zoom.o: $(UTILS_SRC)/visual.h
 zoom.o: $(UTILS_SRC)/xft.h
 zoom.o: $(UTILS_SRC)/yarandom.h
 
+# Delegation rules for building specific targets in subdirectories
+# These rules always delegate to ensure proper dependency checking in subdirectories
+glx/%: FORCE
+	@$(MAKE2) -C glx $*
+
+FORCE:
+
