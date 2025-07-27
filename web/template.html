@@ -216,6 +216,20 @@
             overflow-y: auto;
             z-index: 1000;
             display: none;
+            resize: horizontal;
+            overflow: hidden;
+        }
+
+        #debug-panel::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: rgba(128, 128, 128, 0.3);
+            cursor: ew-resize;
+            z-index: 1002;
         }
 
         /* Make the close button sticky */
@@ -851,6 +865,75 @@
 
         // Fullscreen button
         document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
+
+        // Debug panel resizing functionality
+        function setupDebugPanelResizing() {
+            var debugPanel = document.getElementById('debug-panel');
+            if (!debugPanel) return;
+
+            var isResizing = false;
+            var startX = 0;
+            var startWidth = 0;
+
+            // Mouse down on the left edge
+            debugPanel.addEventListener('mousedown', function(e) {
+                // Check if click is on the left edge (first 3px)
+                if (e.offsetX <= 3) {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startWidth = debugPanel.offsetWidth;
+
+                    // Prevent text selection during resize
+                    e.preventDefault();
+
+                    // Add resizing class for visual feedback
+                    debugPanel.style.cursor = 'ew-resize';
+                    debugPanel.style.userSelect = 'none';
+                }
+            });
+
+            // Mouse move for resizing
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+
+                var deltaX = startX - e.clientX;
+                var newWidth = startWidth + deltaX;
+
+                // Constrain width between 200px and 800px
+                newWidth = Math.max(200, Math.min(800, newWidth));
+
+                debugPanel.style.width = newWidth + 'px';
+
+                // Prevent text selection during resize
+                e.preventDefault();
+            });
+
+            // Mouse up to stop resizing
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    debugPanel.style.cursor = '';
+                    debugPanel.style.userSelect = '';
+
+                    // Save the width to localStorage for persistence
+                    localStorage.setItem('debugPanelWidth', debugPanel.offsetWidth);
+                }
+            });
+
+            // Restore saved width on page load
+            var savedWidth = localStorage.getItem('debugPanelWidth');
+            if (savedWidth) {
+                var width = parseInt(savedWidth);
+                if (width >= 200 && width <= 800) {
+                    debugPanel.style.width = width + 'px';
+                }
+            }
+        }
+
+        // Initialize debug panel resizing when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDebugPanelResizing();
+        });
     </script>
 
     <!-- This will be replaced by the generated script tag -->
