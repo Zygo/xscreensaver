@@ -217,7 +217,6 @@
             z-index: 1000;
             display: none;
             resize: horizontal;
-            overflow: hidden;
         }
 
         #debug-panel::before {
@@ -253,8 +252,9 @@
         }
 
         #debug-log {
-            /* Remove height constraint and overflow - let the panel handle scrolling */
-            overflow: visible;
+            /* Let the panel handle scrolling, but ensure content flows properly */
+            word-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         #debug-toggle {
@@ -475,25 +475,10 @@
 
             // Only scroll if user was already at the bottom
             if (wasAtBottom) {
-                var oldScrollTop = debugPanel.scrollTop;
-                var targetScrollTop = debugPanel.scrollHeight;
-                debugPanel.scrollTop = targetScrollTop;
-
-                // Check if the scroll actually worked
-                if (debugPanel.scrollTop !== targetScrollTop) {
-                    console.log('DEBUG: WARNING - Scroll did not work! Expected:', targetScrollTop, 'Got:', debugPanel.scrollTop);
-
-                    // Try to understand why it's not scrolling
-                    console.log('DEBUG: Panel properties - scrollTop:', debugPanel.scrollTop, 'scrollHeight:', debugPanel.scrollHeight, 'clientHeight:', debugPanel.clientHeight, 'offsetHeight:', debugPanel.offsetHeight);
-                    console.log('DEBUG: Computed styles - overflow:', window.getComputedStyle(debugPanel).overflow, 'overflowY:', window.getComputedStyle(debugPanel).overflowY);
-                }
-
-                // Check again after a short delay to see if something changed it back
-                setTimeout(function() {
-                    if (debugPanel.scrollTop !== targetScrollTop) {
-                        console.log('DEBUG: WARNING - Scroll position was changed after we set it!');
-                    }
-                }, 100);
+                // Use requestAnimationFrame to ensure DOM has updated
+                requestAnimationFrame(function() {
+                    debugPanel.scrollTop = debugPanel.scrollHeight;
+                });
             } else {
                 console.log('DEBUG: Did not auto-scroll - user was not at bottom');
             }
@@ -501,16 +486,7 @@
 
         // Test our debug system immediately
         setTimeout(function() {
-            // Test manual scrolling and panel properties
-            var debugLog = document.getElementById('debug-log');
-            var debugPanel = document.getElementById('debug-panel');
-            if (debugLog && debugPanel) {
-                // Try scrolling the panel instead of the log
-                debugPanel.scrollTop = 9999;
-
-                // Try scrolling the log
-                debugLog.scrollTop = 9999;
-            }
+            addDebugLog('Debug system initialized and ready!');
         }, 1000);
 
         // Global error handler
