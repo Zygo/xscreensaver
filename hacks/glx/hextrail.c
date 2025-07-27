@@ -129,6 +129,14 @@ make_plane (ModeInfo *mi)
                         bp->colors, &bp->ncolors,
                         False, 0, False);
 
+  // Debug: Print the generated colors
+  printf("hextrail: Generated %d colors:\n", bp->ncolors);
+  for (int i = 0; i < bp->ncolors; i++) {
+    printf("  Color %d: R=%04X G=%04X B=%04X (RGB: %d,%d,%d)\n",
+           i, bp->colors[i].red, bp->colors[i].green, bp->colors[i].blue,
+           bp->colors[i].red >> 8, bp->colors[i].green >> 8, bp->colors[i].blue >> 8);
+  }
+
   size = 2.0 / bp->grid_w;
   w = size;
   h = size * sqrt(3) / 2;
