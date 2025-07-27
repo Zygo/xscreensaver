@@ -445,11 +445,7 @@
 
         // Helper function to add debug log with smart scrolling
         function addDebugLog(message) {
-            // ALWAYS log to console first for debugging
-            console.log('DEBUG LOG:', message);
-
             if (debugPaused) {
-                console.log('DEBUG: Paused, not adding to panel');
                 return;
             }
 
@@ -479,8 +475,6 @@
                 requestAnimationFrame(function() {
                     debugPanel.scrollTop = debugPanel.scrollHeight;
                 });
-            } else {
-                console.log('DEBUG: Did not auto-scroll - user was not at bottom');
             }
         }
 

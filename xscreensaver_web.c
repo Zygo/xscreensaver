@@ -214,11 +214,7 @@ void track_memory_free(size_t size) {
        size, total_freed, total_allocated - total_freed);
 }
 
-EMSCRIPTEN_KEEPALIVE
-void print_memory_stats() {
-    DL(1, "MEMORY STATS: Allocated=%zu, Freed=%zu, Net=%zu, Count=%d\n",
-       total_allocated, total_freed, total_allocated - total_freed, allocation_count);
-}
+// Memory stats function will be defined later with VBO pool support
 
 // Helper function to handle GL_INVALID_ENUM errors
 static void handle_1280_error(const char *location) {
@@ -307,6 +303,15 @@ typedef struct {
     Bool in_begin_end;
 } ImmediateMode;
 
+// Add VBO pooling to prevent memory leaks
+#define MAX_VBO_POOL_SIZE 10
+typedef struct {
+    GLuint vbo_vertices;
+    GLuint vbo_colors;
+    size_t vertex_count;
+    Bool in_use;
+} VBOPoolEntry;
+
 static MatrixStack modelview_stack;
 static MatrixStack projection_stack;
 static MatrixStack texture_stack;
@@ -315,6 +320,11 @@ static ImmediateMode immediate;
 static Color4f current_color = {1.0f, 1.0f, 1.0f, 1.0f};
 static int total_vertices_this_frame = 0;
 static Bool rendering_enabled = True;
+
+// VBO pool variables
+static VBOPoolEntry vbo_pool[MAX_VBO_POOL_SIZE];
+static int vbo_pool_count = 0;
+static int vbo_pool_next = 0;
 
 // WebGL shader program
 static GLuint shader_program = 0;
@@ -333,6 +343,12 @@ static void init_shaders(void);
 static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XColor *colors, int *ncolorsP);
 static MatrixStack* get_current_matrix_stack(void);
 static void init_gl_function_pointers(void);
+
+// VBO pool function declarations
+static void init_vbo_pool(void);
+static VBOPoolEntry* get_vbo_from_pool(size_t required_vertex_count);
+static void return_vbo_to_pool(VBOPoolEntry* entry);
+static void cleanup_vbo_pool(void);
 
 // OpenGL function forward declarations
 void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val);
@@ -391,6 +407,132 @@ static void matrix_scale(Matrix4f *m, GLfloat x, GLfloat y, GLfloat z) {
     scale.m[5] = y;
     scale.m[10] = z;
     matrix_multiply(m, m, &scale);
+}
+
+// VBO pool function implementations
+static void init_vbo_pool(void) {
+    for (int i = 0; i < MAX_VBO_POOL_SIZE; i++) {
+        vbo_pool[i].vbo_vertices = 0;
+        vbo_pool[i].vbo_colors = 0;
+        vbo_pool[i].vertex_count = 0;
+        vbo_pool[i].in_use = False;
+    }
+    vbo_pool_count = 0;
+    vbo_pool_next = 0;
+}
+
+static VBOPoolEntry* get_vbo_from_pool(size_t required_vertex_count) {
+    // Safety check
+    if (required_vertex_count == 0 || required_vertex_count > MAX_VERTICES) {
+        DL(0, "ERROR: Invalid vertex count for VBO pool: %zu\n", required_vertex_count);
+        return NULL;
+    }
+
+    // First, try to find an existing VBO that's big enough and not in use
+    for (int i = 0; i < vbo_pool_count; i++) {
+        if (!vbo_pool[i].in_use && vbo_pool[i].vertex_count >= required_vertex_count) {
+            vbo_pool[i].in_use = True;
+            DL(2, "DEBUG: Reusing VBO pool entry %d (vertices: %zu)\n", i, vbo_pool[i].vertex_count);
+            return &vbo_pool[i];
+        }
+    }
+
+    // If no suitable VBO found, create a new one
+    if (vbo_pool_count < MAX_VBO_POOL_SIZE) {
+        VBOPoolEntry* entry = &vbo_pool[vbo_pool_count];
+
+        glGenBuffers(1, &entry->vbo_vertices);
+        glGenBuffers(1, &entry->vbo_colors);
+
+        // Check if VBO creation failed
+        if (entry->vbo_vertices == 0 || entry->vbo_colors == 0) {
+            DL(0, "ERROR: Failed to create VBOs for pool entry %d\n", vbo_pool_count);
+            return NULL;
+        }
+
+        entry->vertex_count = required_vertex_count;
+        entry->in_use = True;
+
+        DL(2, "DEBUG: Created new VBO pool entry %d (vertices: %zu)\n", vbo_pool_count, required_vertex_count);
+        vbo_pool_count++;
+        return entry;
+    }
+
+    // If pool is full, reuse the oldest entry (round-robin)
+    VBOPoolEntry* entry = &vbo_pool[vbo_pool_next];
+    entry->in_use = True;
+    entry->vertex_count = required_vertex_count;
+
+    DL(2, "DEBUG: Reusing oldest VBO pool entry %d (vertices: %zu)\n", vbo_pool_next, required_vertex_count);
+    vbo_pool_next = (vbo_pool_next + 1) % MAX_VBO_POOL_SIZE;
+    return entry;
+}
+
+static void return_vbo_to_pool(VBOPoolEntry* entry) {
+    if (entry) {
+        entry->in_use = False;
+        DL(2, "DEBUG: Returned VBO to pool (vertices: %zu)\n", entry->vertex_count);
+    }
+}
+
+static void cleanup_vbo_pool(void) {
+    for (int i = 0; i < vbo_pool_count; i++) {
+        if (vbo_pool[i].vbo_vertices) {
+            glDeleteBuffers(1, &vbo_pool[i].vbo_vertices);
+            vbo_pool[i].vbo_vertices = 0;
+        }
+        if (vbo_pool[i].vbo_colors) {
+            glDeleteBuffers(1, &vbo_pool[i].vbo_colors);
+            vbo_pool[i].vbo_colors = 0;
+        }
+        vbo_pool[i].vertex_count = 0;
+        vbo_pool[i].in_use = False;
+    }
+    vbo_pool_count = 0;
+    vbo_pool_next = 0;
+    DL(1, "VBO pool cleaned up\n");
+}
+
+// Enhanced memory stats with VBO pool information
+EMSCRIPTEN_KEEPALIVE
+void print_memory_stats() {
+    // Calculate VBO pool memory usage
+    size_t vbo_pool_memory = 0;
+    int vbo_pool_in_use = 0;
+    for (int i = 0; i < vbo_pool_count; i++) {
+        if (vbo_pool[i].in_use) {
+            vbo_pool_in_use++;
+            vbo_pool_memory += vbo_pool[i].vertex_count * (sizeof(Vertex3f) + sizeof(Color4f));
+        }
+    }
+
+    DL(1, "MEMORY STATS: Allocated=%zu, Freed=%zu, Net=%zu, Count=%d, VBO_Pool=%zu bytes (%d/%d in use)\n",
+       total_allocated, total_freed, total_allocated - total_freed, allocation_count,
+       vbo_pool_memory, vbo_pool_in_use, vbo_pool_count);
+}
+
+// Export VBO pool stats to JavaScript
+EMSCRIPTEN_KEEPALIVE
+void get_vbo_pool_stats(int* pool_size, int* in_use, size_t* total_memory) {
+    *pool_size = vbo_pool_count;
+    *in_use = 0;
+    *total_memory = 0;
+
+    for (int i = 0; i < vbo_pool_count; i++) {
+        if (vbo_pool[i].in_use) {
+            (*in_use)++;
+            *total_memory += vbo_pool[i].vertex_count * (sizeof(Vertex3f) + sizeof(Color4f));
+        }
+    }
+}
+
+// Force cleanup of VBO pool (emergency function)
+EMSCRIPTEN_KEEPALIVE
+void force_vbo_pool_cleanup() {
+    DL(1, "FORCE CLEANUP: Cleaning up VBO pool with %d entries\n", vbo_pool_count);
+    cleanup_vbo_pool();
+    init_vbo_pool();
+    DL(1, "FORCE CLEANUP: VBO pool reset complete\n");
 }
 
 // WebGL 2.0 shader compilation
@@ -731,6 +873,9 @@ static void init_opengl_state() {
     immediate.in_begin_end = False;
     immediate.vertex_count = 0;
 
+    // Initialize VBO pool to prevent memory leaks
+    init_vbo_pool();
+
     // Initialize shaders
     init_shaders();
 
@@ -929,6 +1074,9 @@ void xscreensaver_web_cleanup() {
     if (hack_free) {
         hack_free(&web_mi);
     }
+
+    // Clean up VBO pool to prevent memory leaks
+    cleanup_vbo_pool();
 
     if (webgl_context >= 0) {
         emscripten_webgl_destroy_context(webgl_context);
@@ -1447,20 +1595,33 @@ void glEnd(void) {
 
     check_gl_error_wrapper("start of glEnd");
 
-    // Create VBOs and render
-    GLuint vbo_vertices, vbo_colors;
-    glGenBuffers(1, &vbo_vertices);
-    glGenBuffers(1, &vbo_colors);
+    // Get VBOs from pool instead of creating new ones every time
+    VBOPoolEntry* vbo_entry = get_vbo_from_pool(immediate.vertex_count);
+    if (!vbo_entry) {
+        DL(0, "ERROR: Failed to get VBO from pool!\n");
+        immediate.in_begin_end = False;
+        return;
+    }
 
-    // Track VBO memory allocation
-    size_t vbo_size = immediate.vertex_count * (sizeof(Vertex3f) + sizeof(Color4f));
-    track_memory_allocation(vbo_size);
+    // Track VBO memory allocation (only for new VBOs)
+    static size_t total_vbo_memory = 0;
+    if (vbo_entry->vertex_count == immediate.vertex_count) {
+        // This is a new VBO or reused VBO with same size
+        size_t vbo_size = immediate.vertex_count * (sizeof(Vertex3f) + sizeof(Color4f));
+        if (vbo_entry->vbo_vertices == 0) {
+            // New VBO - track allocation
+            track_memory_allocation(vbo_size);
+            total_vbo_memory += vbo_size;
+        }
+    }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+    // Upload vertex data to VBO
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_entry->vbo_vertices);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f),
                  immediate.vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
+    // Upload color data to VBO
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_entry->vbo_colors);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f),
                  immediate.colors, GL_STATIC_DRAW);
 
@@ -1616,41 +1777,23 @@ void glEnd(void) {
         }
     }
 
-    // Create and bind VBOs
-    glGenBuffers(1, &vbo_vertices);
-    glGenBuffers(1, &vbo_colors);
-
-    DL(2, "DEBUG: Created VBOs: vertices=%u, colors=%u\n", vbo_vertices, vbo_colors);
-
-    check_gl_error_wrapper("after VBO creation");
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f), immediate.vertices, GL_STATIC_DRAW);
-
-    check_gl_error_wrapper("after vertex VBO setup");
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
-    glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f), immediate.colors, GL_STATIC_DRAW);
-
-    check_gl_error_wrapper("after color VBO setup");
-
-    // Set up vertex attributes
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+    // Set up vertex attributes using pooled VBOs
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_entry->vbo_vertices);
     GLint pos_attrib = glGetAttribLocation(shader_program, "position");
     if (pos_attrib != -1) {
         glEnableVertexAttribArray(pos_attrib);
         glVertexAttribPointer(pos_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        DL(2, "DEBUG: Position attribute: location=%d, VBO=%u\n", pos_attrib, vbo_vertices);
+        DL(2, "DEBUG: Position attribute: location=%d, VBO=%u\n", pos_attrib, vbo_entry->vbo_vertices);
     } else {
         DL(0, "ERROR: Could not find 'position' attribute in shader!\n");
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_entry->vbo_colors);
     GLint color_attrib = glGetAttribLocation(shader_program, "color");
     if (color_attrib != -1) {
         glEnableVertexAttribArray(color_attrib);
         glVertexAttribPointer(color_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        DL(2, "DEBUG: Color attribute: location=%d, VBO=%u\n", color_attrib, vbo_colors);
+        DL(2, "DEBUG: Color attribute: location=%d, VBO=%u\n", color_attrib, vbo_entry->vbo_colors);
     } else {
         DL(0, "ERROR: Could not find 'color' attribute in shader!\n");
     }
@@ -1703,7 +1846,7 @@ void glEnd(void) {
         DL(1, "WARNING: glDrawArrays called with 0 vertices, skipping draw\n");
     } else {
         // Ensure we have a valid VBO bound for drawing
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_entry->vbo_vertices);
         glDrawArrays(valid_primitive, 0, immediate.vertex_count);
     }
 
@@ -1728,15 +1871,9 @@ void glEnd(void) {
     if (color_attrib != -1) {
         glDisableVertexAttribArray(color_attrib);
     }
-    // Normal attribute cleanup removed - not used in current shader
 
-    // Cleanup
-    glDeleteBuffers(1, &vbo_vertices);
-    glDeleteBuffers(1, &vbo_colors);
-    // vbo_normals cleanup removed - not used in current shader
-
-    // Track VBO memory deallocation
-    track_memory_free(vbo_size);
+    // Return VBO to pool instead of deleting it
+    return_vbo_to_pool(vbo_entry);
 
     immediate.in_begin_end = False;
 }
