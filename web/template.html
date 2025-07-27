@@ -331,6 +331,7 @@
             <div class="control-group">
                 <button id="reset">Reset</button>
                 <button id="render-toggle">Stop Rendering</button>
+                <button id="debug-toggle-btn">Disable Debug</button>
                 <button id="fullscreen">Fullscreen</button>
             </div>
         </div>
@@ -358,6 +359,28 @@
 
     <script>
         console.log('DEBUG: Script starting...');
+
+        // Global debug toggle - can be controlled from C code
+        var globalDebugEnabled = true;
+
+        // Function to toggle debug output from C code
+        function setGlobalDebugEnabled(enabled) {
+            globalDebugEnabled = enabled;
+            console.log('Global debug ' + (enabled ? 'enabled' : 'disabled'));
+
+            // Update the button text and state to match
+            var debugToggleButton = document.getElementById('debug-toggle-btn');
+            if (debugToggleButton) {
+                if (enabled) {
+                    debugToggleButton.textContent = 'Disable Debug';
+                } else {
+                    debugToggleButton.textContent = 'Enable Debug';
+                }
+            }
+        }
+
+        // Make it available globally for C code to call
+        window.setGlobalDebugEnabled = setGlobalDebugEnabled;
 
         // Debug pause functionality
         var debugPaused = false;
@@ -502,8 +525,10 @@
             print: function(...args) {
                 console.log(...args);
 
-                // Log to debug panel
-                addDebugLog(args.join(' '));
+                // Only log to debug panel if global debug is enabled
+                if (globalDebugEnabled) {
+                    addDebugLog(args.join(' '));
+                }
             },
             onRuntimeInitialized: function() {
                 console.log('Module runtime initialized');
@@ -620,6 +645,36 @@
                     renderingEnabled = true;
                 }
             });
+
+            // Debug toggle button
+            var debugToggleButton = document.getElementById('debug-toggle-btn');
+            var debugEnabled = true;
+            debugToggleButton.addEventListener('click', function() {
+                if (debugEnabled) {
+                    if (Module._set_global_debug_enabled) {
+                        Module._set_global_debug_enabled(0);
+                        console.log('Debug disabled');
+                    }
+                    debugToggleButton.textContent = 'Enable Debug';
+                    debugEnabled = false;
+                } else {
+                    if (Module._set_global_debug_enabled) {
+                        Module._set_global_debug_enabled(1);
+                        console.log('Debug enabled');
+                    }
+                    debugToggleButton.textContent = 'Disable Debug';
+                    debugEnabled = true;
+                }
+            });
+
+            // Keep the local debugEnabled variable in sync with globalDebugEnabled
+            // This ensures the button state is correct when C code changes the global state
+            setInterval(function() {
+                if (debugEnabled !== globalDebugEnabled) {
+                    debugEnabled = globalDebugEnabled;
+                    console.log('Synced debug state: ' + (debugEnabled ? 'enabled' : 'disabled'));
+                }
+            }, 100);
 
             // Mouse controls
             var canvas = document.getElementById('canvas');
