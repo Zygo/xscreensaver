@@ -19,11 +19,11 @@
 static unsigned int random_seed = 1;
 static unsigned int webgl_random() {
     random_seed = random_seed * 1103515245 + 12345;
-    return (random_seed >> 16) & 0x7fff;
+    return random_seed;
 }
 
 static double frand(double max) {
-    return ((double)webgl_random() / 32767.0) * max;
+    return ((double)webgl_random() / (double)((unsigned int)~0)) * max;
 }
 
 // WebGL 2.0 function declarations (since we're using WebGL 2.0)
