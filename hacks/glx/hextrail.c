@@ -128,6 +128,20 @@ make_plane (ModeInfo *mi)
   make_smooth_colormap (0, 0, 0,
                         bp->colors, &bp->ncolors,
                         False, 0, False);
+  // Remove duplicate colors at the end of bp->colors and update bp->ncolors accordingly.
+  {
+    int unique = bp->ncolors;
+    while (unique > 1) {
+      XColor *a = &bp->colors[unique - 1];
+      XColor *b = &bp->colors[unique - 2];
+      if (a->red == b->red && a->green == b->green && a->blue == b->blue) {
+        unique--;
+      } else {
+        break;
+      }
+    }
+    bp->ncolors = unique;
+  }
 
   size = 2.0 / bp->grid_w;
   w = size;
