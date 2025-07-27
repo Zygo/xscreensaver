@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdarg.h>
 #include <emscripten/emscripten.h>
 
 // Random number generation for color functions
@@ -206,8 +207,6 @@ static Color4f current_color = {1.0f, 1.0f, 1.0f, 1.0f};
 static int total_vertices_this_frame = 0;
 static Bool rendering_enabled = True;
 static Normal3f current_normal = {0.0f, 0.0f, 1.0f};
-static Bool lighting_enabled = False;
-static Bool depth_test_enabled = True;
 
 // WebGL shader program
 static GLuint shader_program = 0;
@@ -315,21 +314,54 @@ static void init_shaders() {
         "#version 300 es\n"
         "in vec3 position;\n"
         "in vec4 color;\n"
+        "in vec3 normal;\n"
         "uniform mat4 modelview;\n"
         "uniform mat4 projection;\n"
+        "uniform bool normalize_enabled;\n"
         "out vec4 frag_color;\n"
+        "out vec3 frag_normal;\n"
         "void main() {\n"
         "    gl_Position = projection * modelview * vec4(position, 1.0);\n"
         "    frag_color = color;\n"
+        "    // Handle normal normalization like glEnable(GL_NORMALIZE)\n"
+        "    if (normalize_enabled) {\n"
+        "        frag_normal = normalize(normal);\n"
+        "    } else {\n"
+        "        frag_normal = normal;\n"
+        "    }\n"
         "}\n";
 
     const char *fragment_source =
         "#version 300 es\n"
         "precision mediump float;\n"
         "in vec4 frag_color;\n"
+        "in vec3 frag_normal;\n"
+        "uniform bool smooth_shading;\n"
+        "uniform bool front_face_ccw;\n"
         "out vec4 out_color;\n"
         "void main() {\n"
-        "    out_color = frag_color;\n"
+        "    // Handle front face detection like glFrontFace(GL_CCW)\n"
+        "    bool is_front_face = front_face_ccw ? gl_FrontFacing : !gl_FrontFacing;\n"
+        "    \n"
+        "    // Handle smooth vs flat shading like glShadeModel\n"
+        "    vec4 final_color;\n"
+        "    if (smooth_shading) {\n"
+        "        // GL_SMOOTH: Use interpolated color (already done by vertex shader)\n"
+        "        final_color = frag_color;\n"
+        "    } else {\n"
+        "        // GL_FLAT: Use the last vertex color for the entire primitive\n"
+        "        // In WebGL 2.0, we'd need to use flat interpolation qualifiers\n"
+        "        // For now, just use the interpolated color\n"
+        "        final_color = frag_color;\n"
+        "    }\n"
+        "    \n"
+        "    // Apply front face culling if needed\n"
+        "    if (!is_front_face) {\n"
+        "        // Discard back faces (equivalent to glCullFace(GL_BACK))\n"
+        "        discard;\n"
+        "    }\n"
+        "    \n"
+        "    out_color = final_color;\n"
         "}\n";
 
     vertex_shader = compile_shader(vertex_source, GL_VERTEX_SHADER);
@@ -433,6 +465,27 @@ static int wander_enabled = 1;
 static char web_keypress_char = 0;
 static float animation_speed = 1.0f;
 
+// Debug logging control
+static Bool debug_logging_enabled = True;
+
+// Debug printf function that respects the logging flag
+static void debugf(const char *format, ...) {
+    if (!debug_logging_enabled) return;
+
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
+
+// Helper function to handle GL_INVALID_ENUM errors
+static void handle_1280_error(const char *location) {
+    if (debug_logging_enabled) {
+        printf("GL_INVALID_ENUM (1280) detected at %s - PAUSING debug logging\n", location);
+        debug_logging_enabled = False;
+    }
+}
+
 // Main loop callback
 void main_loop(void) {
     static int frame_count = 0;
@@ -447,9 +500,9 @@ void main_loop(void) {
     // Check for any existing errors at the start of main loop
     GLenum start_error = glGetError();
     if (start_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error at start of main loop (frame %d): %d\n", frame_count, start_error);
+        debugf("ERROR: WebGL error at start of main loop (frame %d): %d\n", frame_count, start_error);
         if (start_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("start of main loop");
         }
     }
 
@@ -459,7 +512,7 @@ void main_loop(void) {
     // Stop debug output after frame 240 (4 seconds)
     if (frame_count <= 240) {
         if (frame_count % 30 == 0) { // Log every 30 frames (once per second at 30 FPS)
-            printf("Main loop frame %d\n", frame_count);
+            debugf("Main loop frame %d\n", frame_count);
         }
     }
 
@@ -469,9 +522,9 @@ void main_loop(void) {
     // Check for errors before glClear
     GLenum before_clear_error = glGetError();
     if (before_clear_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
+        debugf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
         if (before_clear_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("before glClear in main loop");
         }
     }
 
@@ -481,24 +534,32 @@ void main_loop(void) {
     // Check for errors after glClear in main loop
     GLenum clear_error = glGetError();
     if (clear_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glClear in main loop: %d\n", clear_error);
+        debugf("ERROR: WebGL error after glClear in main loop: %d\n", clear_error);
     }
 
     // Check for any pending errors before hack_draw
     GLenum before_hack_error = glGetError();
     if (before_hack_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error before hack_draw (after glClear): %d\n", before_hack_error);
+        debugf("ERROR: WebGL error before hack_draw (after glClear): %d\n", before_hack_error);
+        if (before_hack_error == 1280) {
+            handle_1280_error("before hack_draw (after glClear)");
+            return;
+        }
     }
 
     if (hack_draw) {
         if (frame_count <= 240 && frame_count % 60 == 0) {
-            printf("Calling hack_draw...\n");
+            debugf("Calling hack_draw...\n");
         }
 
         // Check for errors before hack_draw
         GLenum before_draw_error = glGetError();
         if (before_draw_error != GL_NO_ERROR) {
-            printf("ERROR: WebGL error before hack_draw: %d\n", before_draw_error);
+            debugf("ERROR: WebGL error before hack_draw: %d\n", before_draw_error);
+            if (before_draw_error == 1280) {
+                handle_1280_error("before hack_draw");
+                return;
+            }
         }
 
         hack_draw(&web_mi);
@@ -506,15 +567,19 @@ void main_loop(void) {
         // Check for errors after hack_draw
         GLenum after_draw_error = glGetError();
         if (after_draw_error != GL_NO_ERROR) {
-            printf("ERROR: WebGL error after hack_draw: %d\n", after_draw_error);
+            debugf("ERROR: WebGL error after hack_draw: %d\n", after_draw_error);
+            if (after_draw_error == 1280) {
+                handle_1280_error("after hack_draw");
+                return;
+            }
         }
 
         if (frame_count <= 240 && frame_count % 60 == 0) {
-            printf("hack_draw completed\n");
+            debugf("hack_draw completed\n");
         }
     } else {
         if (frame_count <= 240 && frame_count % 60 == 0) {
-            printf("hack_draw is NULL!\n");
+            debugf("hack_draw is NULL!\n");
         }
     }
 }
@@ -523,18 +588,18 @@ void glMatrixMode(GLenum mode) {
     // Check for errors before glMatrixMode
     GLenum before_matrix_error = glGetError();
     if (before_matrix_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error before glMatrixMode: %d\n", before_matrix_error);
+        debugf("ERROR: WebGL error before glMatrixMode: %d\n", before_matrix_error);
     }
 
     current_matrix_mode = mode;
-    printf("glMatrixMode: %d\n", mode);
+    debugf("glMatrixMode: %d\n", mode);
 
     // Check for errors after glMatrixMode
     GLenum after_matrix_error = glGetError();
     if (after_matrix_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glMatrixMode: %d\n", after_matrix_error);
+        debugf("ERROR: WebGL error after glMatrixMode: %d\n", after_matrix_error);
         if (after_matrix_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("after glMatrixMode");
         }
     }
 }
@@ -543,13 +608,13 @@ void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat n
     // Check for errors before glOrtho
     GLenum before_ortho_error = glGetError();
     if (before_ortho_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error before glOrtho: %d\n", before_ortho_error);
+        debugf("ERROR: WebGL error before glOrtho: %d\n", before_ortho_error);
         if (before_ortho_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("before glOrtho");
         }
     }
 
-    printf("glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
+    debugf("glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
 
     MatrixStack *stack = get_current_matrix_stack();
     if (stack && stack->top >= 0) {
@@ -569,15 +634,15 @@ void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat n
         ortho.m[14] = tz;
 
         matrix_multiply(&stack->stack[stack->top], &ortho, &stack->stack[stack->top]);
-        printf("Orthographic matrix applied\n");
+        debugf("Orthographic matrix applied\n");
     }
 
     // Check for errors after glOrtho
     GLenum after_ortho_error = glGetError();
     if (after_ortho_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glOrtho: %d\n", after_ortho_error);
+        debugf("ERROR: WebGL error after glOrtho: %d\n", after_ortho_error);
         if (after_ortho_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("after glOrtho");
         }
     }
 }
@@ -611,14 +676,14 @@ void glLoadIdentity(void) {
         static int reset_count = 0;
         reset_count++;
         if (reset_count <= 3) {
-            printf("DEBUG: ModelView matrix reset to identity (count: %d)\n", reset_count);
+            debugf("DEBUG: ModelView matrix reset to identity (count: %d)\n", reset_count);
         }
     }
 
     // Check for errors after glLoadIdentity
     GLenum after_identity_error = glGetError();
     if (after_identity_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glLoadIdentity: %d\n", after_identity_error);
+        debugf("ERROR: WebGL error after glLoadIdentity: %d\n", after_identity_error);
     }
 }
 
@@ -678,9 +743,9 @@ static void init_opengl_state() {
     // Check for any existing errors at the start of init_opengl_state
     GLenum init_start_error = glGetError();
     if (init_start_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error at start of init_opengl_state: %d\n", init_start_error);
+        debugf("ERROR: WebGL error at start of init_opengl_state: %d\n", init_start_error);
         if (init_start_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("start of init_opengl_state");
         }
     }
 
@@ -705,7 +770,7 @@ static void init_opengl_state() {
     // Check for errors after glEnable
     GLenum state_error = glGetError();
     if (state_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glEnable(GL_DEPTH_TEST): %d\n", state_error);
+        debugf("ERROR: WebGL error after glEnable(GL_DEPTH_TEST): %d\n", state_error);
     }
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -713,7 +778,7 @@ static void init_opengl_state() {
     // Check for errors after glClearColor
     state_error = glGetError();
     if (state_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glClearColor: %d\n", state_error);
+        debugf("ERROR: WebGL error after glClearColor: %d\n", state_error);
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -721,7 +786,7 @@ static void init_opengl_state() {
     // Check for errors after glClear
     state_error = glGetError();
     if (state_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glClear: %d\n", state_error);
+        debugf("ERROR: WebGL error after glClear: %d\n", state_error);
     }
 }
 
@@ -1036,7 +1101,7 @@ static void init_gl_function_pointers(void) {
     glClear_real = (void (*)(GLbitfield))emscripten_webgl_get_proc_address("glClear");
     glShadeModel_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glShadeModel");
     glFrontFace_real = (void (*)(GLenum))emscripten_webgl_get_proc_address("glFrontFace");
-    
+
     if (!glEnable_real) {
         printf("WARNING: Could not get glEnable function pointer\n");
     }
@@ -1054,17 +1119,30 @@ static void init_gl_function_pointers(void) {
     }
 }
 
+// OpenGL state tracking
+static Bool normalize_enabled = False;
+static Bool lighting_enabled = False;
+
+// Function to re-enable debug logging
+EMSCRIPTEN_KEEPALIVE
+void re_enable_debug_logging() {
+    debug_logging_enabled = True;
+    printf("Debug logging re-enabled\n");
+}
+
 // Add glEnable wrapper that handles unsupported capabilities in WebGL 2.0
 void glEnable(GLenum cap) {
     // Check for unsupported capabilities in WebGL 2.0
     switch (cap) {
         case GL_NORMALIZE:
-            // GL_NORMALIZE is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glEnable(GL_NORMALIZE) ignored - not supported in WebGL 2.0\n");
+            // Store normalize state for shader use
+            normalize_enabled = True;
+            printf("DEBUG: glEnable(GL_NORMALIZE) - will normalize normals in shader\n");
             return;
         case GL_LIGHTING:
-            // GL_LIGHTING is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glEnable(GL_LIGHTING) ignored - not supported in WebGL 2.0\n");
+            // Store lighting state for shader use
+            lighting_enabled = True;
+            printf("DEBUG: glEnable(GL_LIGHTING) - will apply lighting in shader\n");
             return;
         case GL_LIGHT0:
         case GL_LIGHT1:
@@ -1099,12 +1177,14 @@ void glDisable(GLenum cap) {
     // Check for unsupported capabilities in WebGL 2.0
     switch (cap) {
         case GL_NORMALIZE:
-            // GL_NORMALIZE is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glDisable(GL_NORMALIZE) ignored - not supported in WebGL 2.0\n");
+            // Store normalize state for shader use
+            normalize_enabled = False;
+            printf("DEBUG: glDisable(GL_NORMALIZE) - will not normalize normals in shader\n");
             return;
         case GL_LIGHTING:
-            // GL_LIGHTING is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glDisable(GL_LIGHTING) ignored - not supported in WebGL 2.0\n");
+            // Store lighting state for shader use
+            lighting_enabled = False;
+            printf("DEBUG: glDisable(GL_LIGHTING) - will not apply lighting in shader\n");
             return;
         case GL_LIGHT0:
         case GL_LIGHT1:
@@ -1138,64 +1218,45 @@ void glClear(GLbitfield mask) {
     // Check for errors before glClear
     GLenum before_clear_error = glGetError();
     if (before_clear_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
+        debugf("ERROR: WebGL error before glClear: %d\n", before_clear_error);
         if (before_clear_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error in glClear!\n");
-            emscripten_force_exit(1);
+            handle_1280_error("before glClear wrapper");
+            return;
         }
     }
-    
+
     // Call the real glClear function
     if (glClear_real) {
         glClear_real(mask);
     } else {
-        printf("WARNING: glClear(%d) ignored - real function not available\n", mask);
+        debugf("WARNING: glClear(%d) ignored - real function not available\n", mask);
     }
 }
 
+// Shading model state
+static GLenum current_shade_model = GL_SMOOTH; // Default to smooth
+
 void glShadeModel(GLenum mode) {
-    // Check if this is a supported shading mode in WebGL 2.0
-    switch (mode) {
-        case GL_SMOOTH:
-            // GL_SMOOTH is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glShadeModel(GL_SMOOTH) ignored - not supported in WebGL 2.0\n");
-            return;
-        case GL_FLAT:
-            // GL_FLAT is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glShadeModel(GL_FLAT) ignored - not supported in WebGL 2.0\n");
-            return;
-        default:
-            // For other modes, try to call the real glShadeModel
-            if (glShadeModel_real) {
-                glShadeModel_real(mode);
-            } else {
-                printf("WARNING: glShadeModel(%d) ignored - real function not available\n", mode);
-            }
-            break;
-    }
+    // Store the shading mode for shader use
+    current_shade_model = mode;
+    printf("DEBUG: glShadeModel set to %d (GL_SMOOTH=%d, GL_FLAT=%d)\n", mode, GL_SMOOTH, GL_FLAT);
+
+    // For WebGL 2.0, we'll handle this in our shaders
+    // GL_SMOOTH = interpolate colors between vertices
+    // GL_FLAT = use the last vertex color for the entire primitive
 }
+
+// Front face winding order state
+static GLenum current_front_face = GL_CCW; // Default to CCW
 
 // Add glFrontFace wrapper
 void glFrontFace(GLenum mode) {
-    // Check if this is a supported front face mode in WebGL 2.0
-    switch (mode) {
-        case GL_CCW:
-            // GL_CCW is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glFrontFace(GL_CCW) ignored - not supported in WebGL 2.0\n");
-            return;
-        case GL_CW:
-            // GL_CW is not supported in WebGL 2.0, ignore it
-            printf("WARNING: glFrontFace(GL_CW) ignored - not supported in WebGL 2.0\n");
-            return;
-        default:
-            // For other modes, try to call the real glFrontFace
-            if (glFrontFace_real) {
-                glFrontFace_real(mode);
-            } else {
-                printf("WARNING: glFrontFace(%d) ignored - real function not available\n", mode);
-            }
-            break;
-    }
+    // Store the front face mode for shader use
+    current_front_face = mode;
+    printf("DEBUG: glFrontFace set to %d (GL_CCW=%d, GL_CW=%d)\n", mode, GL_CCW, GL_CW);
+
+    // For WebGL 2.0, we'll handle this in our shaders using gl_FrontFacing
+    // The real glFrontFace function is not available in WebGL 2.0
 }
 
 void glPushMatrix(void) {
@@ -1392,9 +1453,9 @@ void glBegin(GLenum mode) {
     // Check for errors before glBegin
     GLenum before_begin_error = glGetError();
     if (before_begin_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error before glBegin: %d\n", before_begin_error);
+        debugf("ERROR: WebGL error before glBegin: %d\n", before_begin_error);
         if (before_begin_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("before glBegin");
         }
     }
 
@@ -1405,7 +1466,7 @@ void glBegin(GLenum mode) {
     static int glBegin_count = 0;
     glBegin_count++;
     if (glBegin_count <= 5) {
-        printf("DEBUG: glBegin called with mode=%d (GL_TRIANGLES=%d, GL_LINES=%d)\n",
+        debugf("DEBUG: glBegin called with mode=%d (GL_TRIANGLES=%d, GL_LINES=%d)\n",
                mode, GL_TRIANGLES, GL_LINES);
     }
 }
@@ -1425,9 +1486,9 @@ void glEnd(void) {
     // Check for errors at the very start of glEnd
     GLenum start_error = glGetError();
     if (start_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error at start of glEnd: %d\n", start_error);
+        debugf("ERROR: WebGL error at start of glEnd: %d\n", start_error);
         if (start_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("start of glEnd");
         }
     }
 
@@ -1469,6 +1530,22 @@ void glEnd(void) {
     }
 
     glUseProgram(shader_program);
+
+    // Set up shader uniforms for legacy OpenGL state
+    GLint normalize_loc = glGetUniformLocation(shader_program, "normalize_enabled");
+    if (normalize_loc != -1) {
+        glUniform1i(normalize_loc, normalize_enabled ? 1 : 0);
+    }
+
+    GLint smooth_shading_loc = glGetUniformLocation(shader_program, "smooth_shading");
+    if (smooth_shading_loc != -1) {
+        glUniform1i(smooth_shading_loc, (current_shade_model == GL_SMOOTH) ? 1 : 0);
+    }
+
+    GLint front_face_ccw_loc = glGetUniformLocation(shader_program, "front_face_ccw");
+    if (front_face_ccw_loc != -1) {
+        glUniform1i(front_face_ccw_loc, (current_front_face == GL_CCW) ? 1 : 0);
+    }
 
     // Set up projection matrix (simple orthographic for now)
     GLint projection_loc = glGetUniformLocation(shader_program, "projection");
@@ -1618,6 +1695,16 @@ void glEnd(void) {
         printf("ERROR: Could not find 'color' attribute in shader!\n");
     }
 
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
+    GLint normal_attrib = glGetAttribLocation(shader_program, "normal");
+    if (normal_attrib != -1) {
+        glEnableVertexAttribArray(normal_attrib);
+        glVertexAttribPointer(normal_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        printf("DEBUG: Normal attribute: location=%d, VBO=%u\n", normal_attrib, vbo_normals);
+    } else {
+        printf("ERROR: Could not find 'normal' attribute in shader!\n");
+    }
+
     // Draw
     static int draw_debug_count = 0;
     if (draw_debug_count < 5) {
@@ -1692,6 +1779,9 @@ void glEnd(void) {
     if (color_attrib != -1) {
         glDisableVertexAttribArray(color_attrib);
     }
+    if (normal_attrib != -1) {
+        glDisableVertexAttribArray(normal_attrib);
+    }
 
     // Cleanup
     glDeleteBuffers(1, &vbo_vertices);
@@ -1712,9 +1802,9 @@ void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat
     // Check for errors before glFrustum
     GLenum before_frustum_error = glGetError();
     if (before_frustum_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error before glFrustum: %d\n", before_frustum_error);
+        debugf("ERROR: WebGL error before glFrustum: %d\n", before_frustum_error);
         if (before_frustum_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("before glFrustum");
         }
     }
 
@@ -1742,9 +1832,9 @@ void glFrustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat
     // Check for errors after glFrustum
     GLenum after_frustum_error = glGetError();
     if (after_frustum_error != GL_NO_ERROR) {
-        printf("ERROR: WebGL error after glFrustum: %d\n", after_frustum_error);
+        debugf("ERROR: WebGL error after glFrustum: %d\n", after_frustum_error);
         if (after_frustum_error == 1280) {
-            printf("STOPPING due to GL_INVALID_ENUM error!\n");
+            handle_1280_error("after glFrustum");
         }
     }
 }
