@@ -501,8 +501,6 @@
                 addDebugLog('Status: ' + text);
             },
             print: function(...args) {
-                console.log(...args);
-
                 // Only log to debug panel if global debug is enabled
                 if (globalDebugEnabled) {
                     addDebugLog(args.join(' '));
