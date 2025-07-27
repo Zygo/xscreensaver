@@ -208,9 +208,10 @@ static void handle_1280_error(const char *location) {
     }
 }
 
+// Macro that automatically includes the line number - only compiled when FINDBUG_MODE is defined
+#ifdef FINDBUG_MODE
 // Helper function to check for OpenGL errors and handle them consistently
 static void check_gl_error_wrapper_internal(const char *location, int line) {
-#ifdef FINDBUG_MODE
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
         DL(0, "ERROR: WebGL error at %s (line %d): %d\n", location, line, error);
@@ -218,11 +219,12 @@ static void check_gl_error_wrapper_internal(const char *location, int line) {
             handle_1280_error(location);
         }
     }
-#endif
 }
 
-// Macro that automatically includes the line number
 #define check_gl_error_wrapper(location) check_gl_error_wrapper_internal(location, __LINE__)
+#else
+#define check_gl_error_wrapper(location) /* No-op when FINDBUG_MODE not defined */
+#endif
 
 // Provide glGetDoublev since WebGL only has glGetFloatv
 void glGetDoublev_web(GLenum pname, GLdouble *params) {
@@ -571,34 +573,16 @@ void main_loop(void) {
 }
 
 void glMatrixMode(GLenum mode) {
-    // Check for errors before glMatrixMode
-    GLenum before_matrix_error = glGetError();
-    if (before_matrix_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error before glMatrixMode: %d\n", before_matrix_error);
-    }
+    check_gl_error_wrapper("before glMatrixMode");
 
     current_matrix_mode = mode;
     DL(1, "glMatrixMode: %d\n", mode);
 
-    // Check for errors after glMatrixMode
-    GLenum after_matrix_error = glGetError();
-    if (after_matrix_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after glMatrixMode: %d\n", after_matrix_error);
-        if (after_matrix_error == 1280) {
-            handle_1280_error("after glMatrixMode");
-        }
-    }
+    check_gl_error_wrapper("after glMatrixMode");
 }
 
 void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near_val, GLfloat far_val) {
-    // Check for errors before glOrtho
-    GLenum before_ortho_error = glGetError();
-    if (before_ortho_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error before glOrtho: %d\n", before_ortho_error);
-        if (before_ortho_error == 1280) {
-            handle_1280_error("before glOrtho");
-        }
-    }
+    check_gl_error_wrapper("before glOrtho");
 
     DL(1, "glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
 
@@ -623,22 +607,11 @@ void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat n
         DL(1, "Orthographic matrix applied\n");
     }
 
-    // Check for errors after glOrtho
-    GLenum after_ortho_error = glGetError();
-    if (after_ortho_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after glOrtho: %d\n", after_ortho_error);
-        if (after_ortho_error == 1280) {
-            handle_1280_error("after glOrtho");
-        }
-    }
+    check_gl_error_wrapper("after glOrtho");
 }
 
 void glLoadIdentity(void) {
-    // Check for errors before glLoadIdentity
-    GLenum before_identity_error = glGetError();
-    if (before_identity_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error before glLoadIdentity: %d\n", before_identity_error);
-    }
+    check_gl_error_wrapper("before glLoadIdentity");
 
     MatrixStack *stack;
     switch (current_matrix_mode) {
@@ -666,11 +639,7 @@ void glLoadIdentity(void) {
         }
     }
 
-    // Check for errors after glLoadIdentity
-    GLenum after_identity_error = glGetError();
-    if (after_identity_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after glLoadIdentity: %d\n", after_identity_error);
-    }
+    check_gl_error_wrapper("after glLoadIdentity");
 }
 
 // Initialize WebGL context and OpenGL state
@@ -726,14 +695,7 @@ static MatrixStack* get_current_matrix_stack() {
 }
 
 static void init_opengl_state() {
-    // Check for any existing errors at the start of init_opengl_state
-    GLenum init_start_error = glGetError();
-    if (init_start_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error at start of init_opengl_state: %d\n", init_start_error);
-        if (init_start_error == 1280) {
-            handle_1280_error("start of init_opengl_state");
-        }
-    }
+    check_gl_error_wrapper("start of init_opengl_state");
 
     // Initialize matrix stacks
     matrix_identity(&modelview_stack.stack[0]);
@@ -753,27 +715,13 @@ static void init_opengl_state() {
     // Set up basic OpenGL state
     glEnable(GL_DEPTH_TEST);
 
-    // Check for errors after glEnable
-    GLenum state_error = glGetError();
-    if (state_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after glEnable(GL_DEPTH_TEST): %d\n", state_error);
-    }
+    check_gl_error_wrapper("after glEnable(GL_DEPTH_TEST)");
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-    // Check for errors after glClearColor
-    state_error = glGetError();
-    if (state_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after glClearColor: %d\n", state_error);
-    }
+    check_gl_error_wrapper("after glClearColor");
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Check for errors after glClear
-    state_error = glGetError();
-    if (state_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after glClear: %d\n", state_error);
-    }
+    check_gl_error_wrapper("after glClear");
 }
 
 // Generic web initialization
@@ -1107,14 +1055,7 @@ static Bool lighting_enabled = False;
 
 // Add glEnable wrapper that handles unsupported capabilities in WebGL 2.0
 void glEnable(GLenum cap) {
-    // Check for errors before glEnable
-    GLenum before_error = glGetError();
-    if (before_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error before glEnable(%d): %d\n", cap, before_error);
-        if (before_error == 1280) {
-            handle_1280_error("before glEnable");
-        }
-    }
+    check_gl_error_wrapper("before glEnable");
 
     // Check for unsupported capabilities in WebGL 2.0
     switch (cap) {
@@ -1517,11 +1458,7 @@ void glEnd(void) {
         return;
     }
 
-    // Check WebGL context state
-    GLenum context_error = glGetError();
-    if (context_error != GL_NO_ERROR) {
-        DL(1, "WARNING: WebGL context error before glUseProgram: %d\n", context_error);
-    }
+    check_gl_error_wrapper("before glUseProgram");
 
     glUseProgram(shader_program);
 
@@ -1553,11 +1490,7 @@ void glEnd(void) {
         };
         glUniformMatrix4fv(projection_loc, 1, GL_FALSE, projection);
 
-        // Check for errors after projection matrix
-        GLenum uniform_error = glGetError();
-        if (uniform_error != GL_NO_ERROR) {
-            DL(0, "ERROR: WebGL error after projection matrix: %d\n", uniform_error);
-        }
+        check_gl_error_wrapper("after projection matrix");
     }
 
     // Set up modelview matrix - apply transformations directly
@@ -1623,11 +1556,7 @@ void glEnd(void) {
             }
         }
 
-        // Check for errors after modelview matrix
-        GLenum matrix_error = glGetError();
-        if (matrix_error != GL_NO_ERROR) {
-            DL(0, "ERROR: WebGL error after modelview matrix: %d\n", matrix_error);
-        }
+        check_gl_error_wrapper("after modelview matrix");
 
         // Debug: Print the applied transformations
         static int transform_debug_count = 0;
@@ -1644,29 +1573,17 @@ void glEnd(void) {
 
     DL(2, "DEBUG: Created VBOs: vertices=%u, colors=%u\n", vbo_vertices, vbo_colors);
 
-    // Check for errors after VBO creation
-    GLenum vbo_error = glGetError();
-    if (vbo_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after VBO creation: %d\n", vbo_error);
-    }
+    check_gl_error_wrapper("after VBO creation");
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Vertex3f), immediate.vertices, GL_STATIC_DRAW);
 
-    // Check for errors after vertex VBO setup
-    vbo_error = glGetError();
-    if (vbo_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after vertex VBO setup: %d\n", vbo_error);
-    }
+    check_gl_error_wrapper("after vertex VBO setup");
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
     glBufferData(GL_ARRAY_BUFFER, immediate.vertex_count * sizeof(Color4f), immediate.colors, GL_STATIC_DRAW);
 
-    // Check for errors after color VBO setup
-    vbo_error = glGetError();
-    if (vbo_error != GL_NO_ERROR) {
-        DL(0, "ERROR: WebGL error after color VBO setup: %d\n", vbo_error);
-    }
+    check_gl_error_wrapper("after color VBO setup");
 
     // Set up vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
@@ -1750,12 +1667,8 @@ void glEnd(void) {
 
     // Check for WebGL errors after drawing (limit to first 5 frames)
     static int webgl_error_count = 0;
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR && webgl_error_count < 5) {
-        DL(1, "WebGL error after glDrawArrays: %d (0x%x) - IGNORING FOR NOW\n", error, error);
-        if (error == 1280) {
-            DL(1, "  GL_INVALID_ENUM - but rendering might still work\n");
-        }
+    if (webgl_error_count < 5) {
+        check_gl_error_wrapper("after glDrawArrays");
         webgl_error_count++;
     }
 
