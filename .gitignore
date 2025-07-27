@@ -12,6 +12,12 @@ driver/wayland-protocols/*.o
 driver/xscreensaver.desktop
 driver/xscreensaver.pam
 driver/xscreensaver.service
+driver/*.o
+hacks/[a-z]*
+!hacks/glx/
+hacks/glx/[a-z]*
+!hacks/glx/*.?
+!hacks/*.?
 hacks/*.o
 hacks/glx/*.o
 utils/*.o
