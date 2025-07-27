@@ -257,6 +257,16 @@
             white-space: pre-wrap;
         }
 
+        /* Styling for different output types */
+        .debug-stdout {
+            color: #4ecdc4; /* Teal for stdout */
+        }
+
+        .debug-stderr {
+            color: #ff6b6b; /* Red for stderr */
+            font-weight: bold;
+        }
+
         #debug-toggle {
             position: fixed;
             top: 50px;
@@ -358,18 +368,26 @@
                 <button id="render-toggle">Stop Rendering</button>
                 <button id="debug-toggle-btn">Disable Debug</button>
                 <button id="fullscreen">Fullscreen</button>
+                <button id="test-stderr">Test Stderr</button>
             </div>
         </div>
 
         <div id="info">
             <p>Click and drag to rotate the view. Use mouse wheel to zoom.</p>
             <p>Press 'F' for fullscreen, 'R' to reset, 'S' to toggle spin, 'W' to toggle wander.</p>
+            <p><strong>Debug Panel:</strong> Now captures both stdout (teal) and stderr (red) from the WebAssembly module!</p>
         </div>
 
         <!-- Debug Panel -->
         <div id="debug-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0;">Debug Output</h3>
+                <div>
+                    <h3 style="margin: 0;">Debug Output</h3>
+                    <small style="color: #888; font-size: 0.8em;">
+                        <span style="color: #4ecdc4;">●</span> stdout |
+                        <span style="color: #ff6b6b;">●</span> stderr
+                    </small>
+                </div>
                 <div>
                     <button onclick="document.getElementById('debug-panel').style.display='none'; document.getElementById('debug-toggle').style.display='block';" style="background: #333; color: white; border: 1px solid #666; padding: 2px 8px; cursor: pointer;">×</button>
                 </div>
@@ -411,6 +429,14 @@
         // Make it available globally for C code to call
         window.setGlobalDebugEnabled = setGlobalDebugEnabled;
 
+        // Function to test stderr output from C code
+        function testStderrOutput(message) {
+            addDebugLog('C code stderr test: ' + message, 'stderr');
+        }
+
+        // Make test function available globally
+        window.testStderrOutput = testStderrOutput;
+
         // Debug pause functionality
         var debugPaused = false;
         function toggleDebugPause() {
@@ -444,7 +470,7 @@
         }
 
         // Helper function to add debug log with smart scrolling
-        function addDebugLog(message) {
+        function addDebugLog(message, type) {
             if (debugPaused) {
                 return;
             }
@@ -459,7 +485,7 @@
             // Check scroll position BEFORE adding content (use the panel, not the log)
             var wasAtBottom = (debugPanel.scrollHeight - debugPanel.scrollTop - debugPanel.clientHeight) < 5;
 
-            // Add the message
+            // Add the message with appropriate styling
             var now = new Date();
             var timestamp = now.toLocaleTimeString('en-US', {
                 hour12: false,
@@ -467,7 +493,19 @@
                 minute: '2-digit',
                 second: '2-digit'
             }) + '.' + now.getMilliseconds().toString().padStart(3, '0');
-            debugLog.innerHTML += '[' + timestamp + '] ' + message + '<br>';
+
+            var cssClass = '';
+            if (type === 'stderr') {
+                cssClass = 'debug-stderr';
+            } else if (type === 'stdout') {
+                cssClass = 'debug-stdout';
+            }
+
+            var styledMessage = cssClass ?
+                '<span class="' + cssClass + '">' + message + '</span>' :
+                message;
+
+            debugLog.innerHTML += '[' + timestamp + '] ' + styledMessage + '<br>';
 
             // Only scroll if user was already at the bottom
             if (wasAtBottom) {
@@ -480,12 +518,14 @@
 
         // Test our debug system immediately
         setTimeout(function() {
-            addDebugLog('Debug system initialized and ready!');
+            addDebugLog('Debug system initialized and ready!', 'stdout');
+            addDebugLog('Testing stderr capture...', 'stderr');
+            addDebugLog('Both stdout and stderr should now be captured in the debug panel!', 'stdout');
         }, 1000);
 
         // Global error handler
         window.onerror = function(msg, url, line, col, error) {
-            addDebugLog('ERROR: ' + msg + ' at ' + url + ':' + line);
+            addDebugLog('ERROR: ' + msg + ' at ' + url + ':' + line, 'stderr');
         };
 
         // Configure Module before loading the generated JS
@@ -498,13 +538,17 @@
                 }
 
                 // Log to debug panel
-                addDebugLog('Status: ' + text);
+                addDebugLog('Status: ' + text, 'stdout');
             },
             print: function(...args) {
                 // Only log to debug panel if global debug is enabled
                 if (globalDebugEnabled) {
-                    addDebugLog(args.join(' '));
+                    addDebugLog(args.join(' '), 'stdout');
                 }
+            },
+            printErr: function(...args) {
+                // Always log stderr to debug panel (errors are important!)
+                addDebugLog(args.join(' '), 'stderr');
             },
             onRuntimeInitialized: function() {
                 console.log('Module runtime initialized');
@@ -516,7 +560,7 @@
                 }
 
                 // Log to debug panel
-                addDebugLog('Module runtime initialized');
+                addDebugLog('Module runtime initialized', 'stdout');
 
                 // Set up controls
                 setupControls();
@@ -576,7 +620,7 @@
 
                         // Check for potential memory leak (if memory usage is growing rapidly)
                         if (window.lastMemoryUsage && usedMemory > window.lastMemoryUsage * 1.1) {
-                            addDebugLog(`WARNING: Memory usage increased by ${((usedMemory - window.lastMemoryUsage) / (1024 * 1024)).toFixed(2)}MB`);
+                            addDebugLog(`WARNING: Memory usage increased by ${((usedMemory - window.lastMemoryUsage) / (1024 * 1024)).toFixed(2)}MB`, 'stderr');
                         }
                         window.lastMemoryUsage = usedMemory;
                     } else {
@@ -839,6 +883,13 @@
 
         // Fullscreen button
         document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
+
+        // Test stderr button
+        document.getElementById('test-stderr').addEventListener('click', function() {
+            addDebugLog('Manual stderr test from button click!', 'stderr');
+            addDebugLog('This should appear in red and bold.', 'stderr');
+            addDebugLog('And this should appear in teal (stdout).', 'stdout');
+        });
 
         // Debug panel resizing functionality
         function setupDebugPanelResizing() {
