@@ -269,7 +269,7 @@
 
         #debug-toggle {
             position: fixed;
-            top: 50px;
+            top: 10px;
             right: 10px;
             background: rgba(0,0,0,0.8);
             color: white;
@@ -368,14 +368,13 @@
                 <button id="render-toggle">Stop Rendering</button>
                 <button id="debug-toggle-btn">Disable Debug</button>
                 <button id="fullscreen">Fullscreen</button>
-                <button id="test-stderr">Test Stderr</button>
             </div>
         </div>
 
         <div id="info">
             <p>Click and drag to rotate the view. Use mouse wheel to zoom.</p>
             <p>Press 'F' for fullscreen, 'R' to reset, 'S' to toggle spin, 'W' to toggle wander.</p>
-            <p><strong>Debug Panel:</strong> Now captures both stdout (teal) and stderr (red) from the WebAssembly module!</p>
+            <p><strong>Debug Panel:</strong> Captures both stdout (teal) and stderr (red) from the WebAssembly module!</p>
         </div>
 
         <!-- Debug Panel -->
@@ -398,8 +397,8 @@
         <!-- Debug Toggle Button -->
         <button id="debug-toggle" onclick="document.getElementById('debug-panel').style.display='block'; this.style.display='none';">Debug</button>
 
-        <!-- Memory Display -->
-        <div id="memory-display" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px 10px; border-radius: 5px; font-family: monospace; font-size: 12px; z-index: 1000;">
+        <!-- Memory Display (only shown in debug builds) -->
+        <div id="memory-display" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px 10px; border-radius: 5px; font-family: monospace; font-size: 12px; z-index: 1000; display: none;">
             Memory: --MB / --MB
         </div>
     </div>
@@ -516,13 +515,6 @@
             }
         }
 
-        // Test our debug system immediately
-        setTimeout(function() {
-            addDebugLog('Debug system initialized and ready!', 'stdout');
-            addDebugLog('Testing stderr capture...', 'stderr');
-            addDebugLog('Both stdout and stderr should now be captured in the debug panel!', 'stdout');
-        }, 1000);
-
         // Global error handler
         window.onerror = function(msg, url, line, col, error) {
             addDebugLog('ERROR: ' + msg + ' at ' + url + ':' + line, 'stderr');
@@ -584,16 +576,28 @@
                                    ", thickness=" + thicknessSlider.value);
                     }
 
-                    // Start memory monitoring
-                    startMemoryMonitoring();
+                    // Memory monitoring is disabled by default
+                    // Call enableMemoryMonitoring() from C code if needed
                 }, 100); // Small delay to ensure hack_init has completed
             }
         };
 
-        // Memory monitoring
+        // Memory monitoring (disabled by default)
         var memoryMonitorInterval;
+        var memoryMonitoringEnabled = false;
+
+        function enableMemoryMonitoring() {
+            memoryMonitoringEnabled = true;
+            var memoryDisplay = document.getElementById('memory-display');
+            if (memoryDisplay) {
+                memoryDisplay.style.display = 'block';
+            }
+            startMemoryMonitoring();
+        }
 
         function startMemoryMonitoring() {
+            if (!memoryMonitoringEnabled) return;
+
             if (memoryMonitorInterval) {
                 clearInterval(memoryMonitorInterval);
             }
@@ -639,6 +643,9 @@
                 }
             }, 1000); // Check every second
         }
+
+        // Make memory monitoring enable function available globally for C code
+        window.enableMemoryMonitoring = enableMemoryMonitoring;
 
         // Set up control event listeners
         function setupControls() {
@@ -883,13 +890,6 @@
 
         // Fullscreen button
         document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
-
-        // Test stderr button
-        document.getElementById('test-stderr').addEventListener('click', function() {
-            addDebugLog('Manual stderr test from button click!', 'stderr');
-            addDebugLog('This should appear in red and bold.', 'stderr');
-            addDebugLog('And this should appear in teal (stdout).', 'stdout');
-        });
 
         // Debug panel resizing functionality
         function setupDebugPanelResizing() {
