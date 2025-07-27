@@ -1,9 +1,0 @@
-
-This directory contains various graphics hacks.  These are independent from
-the xscreensaver program (in the ../driver/ directory) but some of them use
-the utility functions found in the ../utils/ directory.
-
-If you have compilation problems, check the parameters in ../config.h.
-
-Writing a screen saver?  Make sure you have read ../README.hacking.
-

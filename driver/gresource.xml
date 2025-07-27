@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<gresources>
-  <gresource prefix="/org/jwz/xscreensaver">
-    <file preprocess="xml-stripblanks">demo.ui</file>
-    <file preprocess="xml-stripblanks">prefs.ui</file>
-  </gresource>
-</gresources>
