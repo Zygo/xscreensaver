@@ -5,6 +5,22 @@
 
 set -e
 
+# Parse command line arguments
+DEBUG_MODE=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -debug)
+            DEBUG_MODE=true
+            shift
+            ;;
+        *)
+            echo "Usage: $0 [-debug]"
+            echo "  -debug: Enable FINDBUG mode for GL error hunting"
+            exit 1
+            ;;
+    esac
+done
+
 # Get the repository root directory (same directory as this script)
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -31,6 +47,9 @@ JWXYZ_DIR="$REPO_ROOT/jwxyz"
 
 
 echo -e "${BLUE}🚀 Building HexTrail for Web with Emscripten${NC}"
+if [ "$DEBUG_MODE" = true ]; then
+    echo -e "${YELLOW}🐛 FINDBUG mode enabled - GL error checking will be active${NC}"
+fi
 echo -e "${YELLOW}📁 Repository root: $REPO_ROOT${NC}"
 echo -e "${YELLOW}📁 Utils directory: $UTILS_DIR${NC}"
 echo -e "${YELLOW}📁 GLX directory: $GLX_DIR${NC}"
@@ -55,37 +74,46 @@ cd build_web
 
 echo -e "${YELLOW}📦 Compiling HexTrail...${NC}"
 
-# Compile with emscripten using custom HTML template
-emcc \
-    -DSTANDALONE \
-    -DUSE_GL \
-    -DHAVE_CONFIG_H \
-    -DWEB_BUILD \
-    -DHAVE_JWXYZ \
-    -s USE_WEBGL2=1 \
-    -s FULL_ES3=1 \
-    -s ALLOW_MEMORY_GROWTH=1 \
-    -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] \
-    -s EXPORTED_FUNCTIONS=['_main','_init_hextrail','_draw_hextrail','_reshape_hextrail_wrapper','_free_hextrail','_set_speed','_set_thickness','_set_spin','_set_wander','_stop_rendering','_start_rendering','_handle_mouse_drag','_handle_mouse_wheel','_handle_keypress'] \
-    -s MIN_WEBGL_VERSION=2 \
-    -O3 \
-    -I$JWXYZ_DIR \
-    -I. \
-    -I$REPO_ROOT \
-    -I$HACKS_DIR \
-    -I$UTILS_DIR \
-    -I$GLX_DIR \
-    $GLX_DIR/hextrail_web_main.c \
-    $UTILS_DIR/colors.c \
-    $UTILS_DIR/yarandom.c \
-    $UTILS_DIR/usleep.c \
-    $HACKS_DIR/screenhack.c \
-    $GLX_DIR/rotator.c \
-    $GLX_DIR/gltrackball.c \
-    $GLX_DIR/normals.c \
-    $JWXYZ_DIR/jwxyz-timers.c \
-    -o index.html \
+# Build emcc command with conditional debug flag
+EMCC_ARGS=(
+    -DSTANDALONE
+    -DUSE_GL
+    -DHAVE_CONFIG_H
+    -DWEB_BUILD
+    -DHAVE_JWXYZ
+    -s USE_WEBGL2=1
+    -s FULL_ES3=1
+    -s ALLOW_MEMORY_GROWTH=1
+    -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap']
+    -s EXPORTED_FUNCTIONS=['_main','_init_hextrail','_draw_hextrail','_reshape_hextrail_wrapper','_free_hextrail','_set_speed','_set_thickness','_set_spin','_set_wander','_stop_rendering','_start_rendering','_handle_mouse_drag','_handle_mouse_wheel','_handle_keypress']
+    -s MIN_WEBGL_VERSION=2
+    -O3
+    -I$JWXYZ_DIR
+    -I.
+    -I$REPO_ROOT
+    -I$HACKS_DIR
+    -I$UTILS_DIR
+    -I$GLX_DIR
+    $GLX_DIR/hextrail_web_main.c
+    $UTILS_DIR/colors.c
+    $UTILS_DIR/yarandom.c
+    $UTILS_DIR/usleep.c
+    $HACKS_DIR/screenhack.c
+    $GLX_DIR/rotator.c
+    $GLX_DIR/gltrackball.c
+    $GLX_DIR/normals.c
+    $JWXYZ_DIR/jwxyz-timers.c
+    -o index.html
     --shell-file $REPO_ROOT/web/template.html
+)
+
+# Add debug flag if requested
+if [ "$DEBUG_MODE" = true ]; then
+    EMCC_ARGS=(-DFINDBUG_MODE "${EMCC_ARGS[@]}")
+fi
+
+# Compile with emscripten using custom HTML template
+emcc "${EMCC_ARGS[@]}"
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Build successful!${NC}"

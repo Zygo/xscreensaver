@@ -200,6 +200,7 @@ static void handle_1280_error(const char *location) {
 
 // Helper function to check for OpenGL errors and handle them consistently
 static void check_gl_error_wrapper_internal(const char *location, int line) {
+#ifdef FINDBUG_MODE
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
         debugf("ERROR: WebGL error at %s (line %d): %d\n", location, line, error);
@@ -207,6 +208,7 @@ static void check_gl_error_wrapper_internal(const char *location, int line) {
             handle_1280_error(location);
         }
     }
+#endif
 }
 
 // Macro that automatically includes the line number
