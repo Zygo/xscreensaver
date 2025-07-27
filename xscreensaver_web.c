@@ -153,6 +153,7 @@ int gluProject_web(GLdouble objx, GLdouble objy, GLdouble objz,
 
 // Debug logging control
 static Bool debug_logging_enabled = True;
+static int debug_level = 0; // Control debug output levels
 
 // Function to re-enable debug logging
 EMSCRIPTEN_KEEPALIVE
@@ -177,14 +178,23 @@ void set_global_debug_enabled(int enabled) {
     printf("Global debug %s\n", enabled ? "enabled" : "disabled");
 }
 
-// Debug printf function that respects the logging flag
-static void debugf(const char *format, ...) {
-    if (!debug_logging_enabled) return;
+// Function to set debug level (0=errors only, 1=warnings+info, 2+=detailed debug)
+EMSCRIPTEN_KEEPALIVE
+void set_debug_level(int level) {
+    debug_level = level;
+    printf("Debug level set to %d\n", level);
+}
 
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
+// Debug function - level 0 goes to stderr, level 1+ goes to stdout
+void DL(int level, const char* format, ...) {
+    if (!debug_logging_enabled) return;
+    if (level <= debug_level) {
+        va_list args;
+        va_start(args, format);
+        if (level == 0) vfprintf(stderr, format, args);
+        else vfprintf(stdout, format, args);
+        va_end(args);
+    }
 }
 
 // Helper function to handle GL_INVALID_ENUM errors
@@ -203,7 +213,7 @@ static void check_gl_error_wrapper_internal(const char *location, int line) {
 #ifdef FINDBUG_MODE
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error at %s (line %d): %d\n", location, line, error);
+        DL(0, "ERROR: WebGL error at %s (line %d): %d\n", location, line, error);
         if (error == 1280) {
             handle_1280_error(location);
         }
@@ -367,7 +377,7 @@ static void matrix_scale(Matrix4f *m, GLfloat x, GLfloat y, GLfloat z) {
 // WebGL 2.0 shader compilation
 static GLuint compile_shader(const char *source, GLenum type) {
     GLuint shader = glCreateShader(type);
-    debugf("Created shader %u of type %d\n", shader, type);
+    DL(1, "Created shader %u of type %d\n", shader, type);
 
     glShaderSource(shader, 1, &source, NULL);
     glCompileShader(shader);
@@ -377,17 +387,17 @@ static GLuint compile_shader(const char *source, GLenum type) {
     if (!success) {
         GLchar info_log[512];
         glGetShaderInfoLog(shader, 512, NULL, info_log);
-        debugf("Shader compilation error: %s\n", info_log);
-        debugf("Shader source:\n%s\n", source);
+        DL(1, "Shader compilation error: %s\n", info_log);
+        DL(1, "Shader source:\n%s\n", source);
     } else {
-        debugf("Shader %u compiled successfully\n", shader);
+        DL(1, "Shader %u compiled successfully\n", shader);
     }
 
     return shader;
 }
 
 static void init_shaders() {
-    debugf("Initializing WebGL 2.0 shaders...\n");
+    DL(1, "Initializing WebGL 2.0 shaders...\n");
 
     const char *vertex_source =
         "#version 300 es\n"
@@ -413,20 +423,20 @@ static void init_shaders() {
     vertex_shader = compile_shader(vertex_source, GL_VERTEX_SHADER);
     fragment_shader = compile_shader(fragment_source, GL_FRAGMENT_SHADER);
 
-    debugf("Vertex shader: %u, Fragment shader: %u\n", vertex_shader, fragment_shader);
+    DL(1, "Vertex shader: %u, Fragment shader: %u\n", vertex_shader, fragment_shader);
 
     shader_program = glCreateProgram();
-    debugf("Created shader program: %u\n", shader_program);
+    DL(1, "Created shader program: %u\n", shader_program);
 
     if (shader_program == 0) {
-        debugf("ERROR: glCreateProgram failed! Returned 0\n");
+        DL(0, "ERROR: glCreateProgram failed! Returned 0\n");
         return;
     }
 
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
 
-    debugf("Attached shaders to program %u\n", shader_program);
+    DL(1, "Attached shaders to program %u\n", shader_program);
 
     glLinkProgram(shader_program);
 
@@ -435,10 +445,10 @@ static void init_shaders() {
     if (!success) {
         GLchar info_log[512];
         glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-        debugf("Shader linking error: %s\n", info_log);
-        debugf("Shader program %u linking failed!\n", shader_program);
+        DL(1, "Shader linking error: %s\n", info_log);
+        DL(1, "Shader program %u linking failed!\n", shader_program);
     } else {
-        debugf("Shader program %u linked successfully\n", shader_program);
+        DL(1, "Shader program %u linked successfully\n", shader_program);
 
         // Validate the program
         glValidateProgram(shader_program);
@@ -447,9 +457,9 @@ static void init_shaders() {
         if (!valid) {
             GLchar info_log[512];
             glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-            debugf("Shader validation error: %s\n", info_log);
+            DL(1, "Shader validation error: %s\n", info_log);
         } else {
-            debugf("Shader program %u validated successfully\n", shader_program);
+            DL(1, "Shader program %u validated successfully\n", shader_program);
         }
     }
 }
@@ -530,7 +540,7 @@ void main_loop(void) {
     // Stop debug output after frame 240 (4 seconds)
     if (frame_count <= 240) {
         if (frame_count % 30 == 0) { // Log every 30 frames (once per second at 30 FPS)
-            debugf("Main loop frame %d\n", frame_count);
+            DL(1, "Main loop frame %d\n", frame_count);
         }
     }
 
@@ -543,7 +553,7 @@ void main_loop(void) {
 
     if (hack_draw) {
         if (frame_count <= 240 && frame_count % 60 == 0) {
-            debugf("Calling hack_draw...\n");
+            DL(1, "Calling hack_draw...\n");
         }
 
         check_gl_error_wrapper("before hack_draw");
@@ -551,11 +561,11 @@ void main_loop(void) {
         check_gl_error_wrapper("after hack_draw");
 
         if (frame_count <= 240 && frame_count % 60 == 0) {
-            debugf("hack_draw completed\n");
+            DL(1, "hack_draw completed\n");
         }
     } else {
         if (frame_count <= 240 && frame_count % 60 == 0) {
-            debugf("hack_draw is NULL!\n");
+            DL(1, "hack_draw is NULL!\n");
         }
     }
 }
@@ -564,16 +574,16 @@ void glMatrixMode(GLenum mode) {
     // Check for errors before glMatrixMode
     GLenum before_matrix_error = glGetError();
     if (before_matrix_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glMatrixMode: %d\n", before_matrix_error);
+        DL(0, "ERROR: WebGL error before glMatrixMode: %d\n", before_matrix_error);
     }
 
     current_matrix_mode = mode;
-    debugf("glMatrixMode: %d\n", mode);
+    DL(1, "glMatrixMode: %d\n", mode);
 
     // Check for errors after glMatrixMode
     GLenum after_matrix_error = glGetError();
     if (after_matrix_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glMatrixMode: %d\n", after_matrix_error);
+        DL(0, "ERROR: WebGL error after glMatrixMode: %d\n", after_matrix_error);
         if (after_matrix_error == 1280) {
             handle_1280_error("after glMatrixMode");
         }
@@ -584,13 +594,13 @@ void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat n
     // Check for errors before glOrtho
     GLenum before_ortho_error = glGetError();
     if (before_ortho_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glOrtho: %d\n", before_ortho_error);
+        DL(0, "ERROR: WebGL error before glOrtho: %d\n", before_ortho_error);
         if (before_ortho_error == 1280) {
             handle_1280_error("before glOrtho");
         }
     }
 
-    debugf("glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
+    DL(1, "glOrtho: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", left, right, bottom, top, near_val, far_val);
 
     MatrixStack *stack = get_current_matrix_stack();
     if (stack && stack->top >= 0) {
@@ -610,13 +620,13 @@ void glOrtho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat n
         ortho.m[14] = tz;
 
         matrix_multiply(&stack->stack[stack->top], &ortho, &stack->stack[stack->top]);
-        debugf("Orthographic matrix applied\n");
+        DL(1, "Orthographic matrix applied\n");
     }
 
     // Check for errors after glOrtho
     GLenum after_ortho_error = glGetError();
     if (after_ortho_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glOrtho: %d\n", after_ortho_error);
+        DL(0, "ERROR: WebGL error after glOrtho: %d\n", after_ortho_error);
         if (after_ortho_error == 1280) {
             handle_1280_error("after glOrtho");
         }
@@ -627,7 +637,7 @@ void glLoadIdentity(void) {
     // Check for errors before glLoadIdentity
     GLenum before_identity_error = glGetError();
     if (before_identity_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glLoadIdentity: %d\n", before_identity_error);
+        DL(0, "ERROR: WebGL error before glLoadIdentity: %d\n", before_identity_error);
     }
 
     MatrixStack *stack;
@@ -652,14 +662,14 @@ void glLoadIdentity(void) {
         static int reset_count = 0;
         reset_count++;
         if (reset_count <= 3) {
-            debugf("DEBUG: ModelView matrix reset to identity (count: %d)\n", reset_count);
+            DL(2, "DEBUG: ModelView matrix reset to identity (count: %d)\n", reset_count);
         }
     }
 
     // Check for errors after glLoadIdentity
     GLenum after_identity_error = glGetError();
     if (after_identity_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glLoadIdentity: %d\n", after_identity_error);
+        DL(0, "ERROR: WebGL error after glLoadIdentity: %d\n", after_identity_error);
     }
 }
 
@@ -684,12 +694,12 @@ static int init_webgl() {
 
     webgl_context = emscripten_webgl_create_context("#canvas", &attrs);
     if (webgl_context < 0) {
-        debugf("Failed to create WebGL context! Error: %lu\n", webgl_context);
+        DL(1, "Failed to create WebGL context! Error: %lu\n", webgl_context);
         return 0;
     }
 
     if (emscripten_webgl_make_context_current(webgl_context) != EMSCRIPTEN_RESULT_SUCCESS) {
-        debugf("Failed to make WebGL context current!\n");
+        DL(1, "Failed to make WebGL context current!\n");
         return 0;
     }
 
@@ -719,7 +729,7 @@ static void init_opengl_state() {
     // Check for any existing errors at the start of init_opengl_state
     GLenum init_start_error = glGetError();
     if (init_start_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error at start of init_opengl_state: %d\n", init_start_error);
+        DL(0, "ERROR: WebGL error at start of init_opengl_state: %d\n", init_start_error);
         if (init_start_error == 1280) {
             handle_1280_error("start of init_opengl_state");
         }
@@ -746,7 +756,7 @@ static void init_opengl_state() {
     // Check for errors after glEnable
     GLenum state_error = glGetError();
     if (state_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glEnable(GL_DEPTH_TEST): %d\n", state_error);
+        DL(0, "ERROR: WebGL error after glEnable(GL_DEPTH_TEST): %d\n", state_error);
     }
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -754,7 +764,7 @@ static void init_opengl_state() {
     // Check for errors after glClearColor
     state_error = glGetError();
     if (state_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glClearColor: %d\n", state_error);
+        DL(0, "ERROR: WebGL error after glClearColor: %d\n", state_error);
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -762,19 +772,19 @@ static void init_opengl_state() {
     // Check for errors after glClear
     state_error = glGetError();
     if (state_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after glClear: %d\n", state_error);
+        DL(0, "ERROR: WebGL error after glClear: %d\n", state_error);
     }
 }
 
 // Generic web initialization
 EMSCRIPTEN_KEEPALIVE
 int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, free_func free, handle_event_func handle_event) {
-    debugf("xscreensaver_web_init called\n");
+    DL(1, "xscreensaver_web_init called\n");
 
     // Initialize random seed for consistent but varied colors
     extern void ya_rand_init(unsigned int seed);
     ya_rand_init(0);
-    debugf("Random seed initialized\n");
+    DL(1, "Random seed initialized\n");
 
     hack_init = init;
     hack_draw = draw;
@@ -782,7 +792,7 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
     hack_free = free;
     hack_handle_event = handle_event;
 
-    debugf("Function pointers set: init=%p, draw=%p, reshape=%p, free=%p, handle_event=%p\n",
+    DL(1, "Function pointers set: init=%p, draw=%p, reshape=%p, free=%p, handle_event=%p\n",
            (void*)init, (void*)draw, (void*)reshape, (void*)free, (void*)handle_event);
 
     // Initialize ModeInfo
@@ -797,46 +807,46 @@ int xscreensaver_web_init(init_func init, draw_func draw, reshape_func reshape, 
     web_mi.fps_p = 0;
     web_mi.data = NULL;
 
-    debugf("ModeInfo initialized: width=%d, height=%d\n", web_mi.width, web_mi.height);
+    DL(1, "ModeInfo initialized: width=%d, height=%d\n", web_mi.width, web_mi.height);
 
     // Check canvas size
     int canvas_width, canvas_height;
     emscripten_get_canvas_element_size("#canvas", &canvas_width, &canvas_height);
-    debugf("Canvas size: %dx%d\n", canvas_width, canvas_height);
+    DL(1, "Canvas size: %dx%d\n", canvas_width, canvas_height);
 
     // Initialize WebGL
-    debugf("Initializing WebGL...\n");
+    DL(1, "Initializing WebGL...\n");
     if (!init_webgl()) {
-        debugf("WebGL initialization failed!\n");
+        DL(1, "WebGL initialization failed!\n");
         return 0;
     }
-    debugf("WebGL initialized successfully\n");
+    DL(1, "WebGL initialized successfully\n");
 
     // Call the hack's init function
     if (hack_init) {
-        debugf("Calling hack_init...\n");
+        DL(1, "Calling hack_init...\n");
         hack_init(&web_mi);
-        debugf("hack_init completed\n");
+        DL(1, "hack_init completed\n");
     } else {
-        debugf("hack_init is NULL!\n");
+        DL(1, "hack_init is NULL!\n");
     }
 
     // Rotator will be initialized by webpage with checkbox values
-    debugf("DEBUG: Web rotator will be initialized by webpage\n");
+    DL(2, "DEBUG: Web rotator will be initialized by webpage\n");
 
     // Set up reshape
     if (hack_reshape) {
-        debugf("Calling hack_reshape...\n");
+        DL(1, "Calling hack_reshape...\n");
         hack_reshape(&web_mi, web_mi.width, web_mi.height);
-        debugf("hack_reshape completed\n");
+        DL(1, "hack_reshape completed\n");
     } else {
-        debugf("hack_reshape is NULL!\n");
+        DL(1, "hack_reshape is NULL!\n");
     }
 
     // Set up the main loop (30 FPS - matches hextrail.c timing better than 60 FPS)
-    debugf("Setting up main loop...\n");
+    DL(1, "Setting up main loop...\n");
     emscripten_set_main_loop(main_loop, 30, 1);
-    debugf("Main loop set up successfully\n");
+    DL(1, "Main loop set up successfully\n");
 
     return 1;
 }
@@ -846,14 +856,14 @@ EMSCRIPTEN_KEEPALIVE
 void set_speed(GLfloat new_speed) {
     extern GLfloat speed;
     speed = new_speed;
-    debugf("Animation speed set to: %f\n", speed);
+    DL(1, "Animation speed set to: %f\n", speed);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void set_thickness(GLfloat new_thickness) {
     extern GLfloat thickness;
     thickness = new_thickness;
-    debugf("Thickness set to: %f\n", thickness);
+    DL(1, "Thickness set to: %f\n", thickness);
 
     // Send event to hack to update corners
     if (hack_handle_event) {
@@ -867,9 +877,9 @@ EMSCRIPTEN_KEEPALIVE
 void set_spin(int new_spin_enabled) {
     extern Bool do_spin;
     extern void update_hextrail_rotator(void);
-    debugf("DEBUG: set_spin called with %d, current do_spin=%d\n", new_spin_enabled, do_spin);
+    DL(2, "DEBUG: set_spin called with %d, current do_spin=%d\n", new_spin_enabled, do_spin);
     do_spin = new_spin_enabled;
-    debugf("Spin %s (do_spin now=%d)\n", do_spin ? "enabled" : "disabled", do_spin);
+    DL(1, "Spin %s (do_spin now=%d)\n", do_spin ? "enabled" : "disabled", do_spin);
     update_hextrail_rotator();
 }
 
@@ -877,34 +887,34 @@ EMSCRIPTEN_KEEPALIVE
 void set_wander(int new_wander_enabled) {
     extern Bool do_wander;
     extern void update_hextrail_rotator(void);
-    debugf("DEBUG: set_wander called with %d, current do_wander=%d\n", new_wander_enabled, do_wander);
+    DL(2, "DEBUG: set_wander called with %d, current do_wander=%d\n", new_wander_enabled, do_wander);
     do_wander = new_wander_enabled;
-    debugf("Wander %s (do_wander now=%d)\n", do_wander ? "enabled" : "disabled", do_wander);
+    DL(1, "Wander %s (do_wander now=%d)\n", do_wander ? "enabled" : "disabled", do_wander);
     update_hextrail_rotator();
 }
 
 EMSCRIPTEN_KEEPALIVE
 void stop_rendering() {
     rendering_enabled = False;
-    debugf("Rendering stopped\n");
+    DL(1, "Rendering stopped\n");
 }
 
 EMSCRIPTEN_KEEPALIVE
 void start_rendering() {
     rendering_enabled = True;
-    debugf("Rendering started\n");
+    DL(1, "Rendering started\n");
 }
 
 EMSCRIPTEN_KEEPALIVE
 void handle_mouse_drag(int delta_x, int delta_y) {
     // This would need to be implemented per-hack
-    debugf("Mouse drag: %d, %d\n", delta_x, delta_y);
+    DL(1, "Mouse drag: %d, %d\n", delta_x, delta_y);
 }
 
 EMSCRIPTEN_KEEPALIVE
 void handle_mouse_wheel(int delta) {
     // This would need to be implemented per-hack
-    debugf("Mouse wheel: %d\n", delta);
+    DL(1, "Mouse wheel: %d\n", delta);
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -922,7 +932,7 @@ void handle_keypress(int keycode, int charcode) {
 
         // Pass the event to the hack
         hack_handle_event(&web_mi, &event);
-        debugf("Keypress: keycode=%d, char=%c\n", keycode, (char)charcode);
+        DL(1, "Keypress: keycode=%d, char=%c\n", keycode, (char)charcode);
     }
 }
 
@@ -932,7 +942,7 @@ void reshape_hextrail_wrapper(int width, int height) {
         web_mi.width = width;
         web_mi.height = height;
         hack_reshape(&web_mi, width, height);
-        debugf("Reshaped to %dx%d\n", width, height);
+        DL(1, "Reshaped to %dx%d\n", width, height);
     }
 }
 
@@ -1081,13 +1091,13 @@ static void init_gl_function_pointers(void) {
     // Note: glShadeModel and glFrontFace don't exist in WebGL 2.0, so we don't try to get them
 
     if (!glEnable_real) {
-        debugf("WARNING: Could not get glEnable function pointer\n");
+        DL(1, "WARNING: Could not get glEnable function pointer\n");
     }
     if (!glDisable_real) {
-        debugf("WARNING: Could not get glDisable function pointer\n");
+        DL(1, "WARNING: Could not get glDisable function pointer\n");
     }
     if (!glClear_real) {
-        debugf("WARNING: Could not get glClear function pointer\n");
+        DL(1, "WARNING: Could not get glClear function pointer\n");
     }
 }
 
@@ -1100,7 +1110,7 @@ void glEnable(GLenum cap) {
     // Check for errors before glEnable
     GLenum before_error = glGetError();
     if (before_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error before glEnable(%d): %d\n", cap, before_error);
+        DL(0, "ERROR: WebGL error before glEnable(%d): %d\n", cap, before_error);
         if (before_error == 1280) {
             handle_1280_error("before glEnable");
         }
@@ -1111,37 +1121,37 @@ void glEnable(GLenum cap) {
         case GL_NORMALIZE:
             // Store normalize state for shader use
             normalize_enabled = True;
-            debugf("DEBUG: glEnable(GL_NORMALIZE=%d 0x%x) - will normalize normals in shader\n", cap, cap);
+            DL(2, "DEBUG: glEnable(GL_NORMALIZE=%d 0x%x) - will normalize normals in shader\n", cap, cap);
             return;
         case GL_LIGHTING:
             // Store lighting state for shader use
             lighting_enabled = True;
-            debugf("DEBUG: glEnable(GL_LIGHTING) - will apply lighting in shader\n");
+            DL(2, "DEBUG: glEnable(GL_LIGHTING) - will apply lighting in shader\n");
             return;
         case GL_LIGHT0:
         case GL_LIGHT1:
             // Fixed-function lighting is not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glEnable(GL_LIGHT%d) ignored - not supported in WebGL 2.0\n", cap - GL_LIGHT0);
+            DL(1, "WARNING: glEnable(GL_LIGHT%d) ignored - not supported in WebGL 2.0\n", cap - GL_LIGHT0);
             return;
         case GL_TEXTURE_2D:
             // Fixed-function texturing is not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glEnable(GL_TEXTURE_2D) ignored - not supported in WebGL 2.0\n");
+            DL(1, "WARNING: glEnable(GL_TEXTURE_2D) ignored - not supported in WebGL 2.0\n");
             return;
         case GL_FOG:
             // Fixed-function fog is not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glEnable(GL_FOG) ignored - not supported in WebGL 2.0\n");
+            DL(1, "WARNING: glEnable(GL_FOG) ignored - not supported in WebGL 2.0\n");
             return;
         case GL_COLOR_MATERIAL:
             // Fixed-function materials are not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glEnable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
+            DL(1, "WARNING: glEnable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
             return;
         default:
-            debugf("DEBUG: glEnable default case for cap=%d (0x%x), GL_NORMALIZE=%d (0x%x)\n", cap, cap, GL_NORMALIZE, GL_NORMALIZE);
+            DL(2, "DEBUG: glEnable default case for cap=%d (0x%x), GL_NORMALIZE=%d (0x%x)\n", cap, cap, GL_NORMALIZE, GL_NORMALIZE);
             // For supported capabilities, call the real glEnable
             if (glEnable_real) {
                 glEnable_real(cap);
             } else {
-                debugf("WARNING: glEnable(%d) ignored - real function not available\n", cap);
+                DL(1, "WARNING: glEnable(%d) ignored - real function not available\n", cap);
             }
             break;
     }
@@ -1158,43 +1168,43 @@ void glDisable(GLenum cap) {
         case GL_NORMALIZE:
             // Store normalize state for shader use
             normalize_enabled = False;
-            debugf("DEBUG: glDisable(GL_NORMALIZE) - will not normalize normals in shader\n");
+            DL(2, "DEBUG: glDisable(GL_NORMALIZE) - will not normalize normals in shader\n");
             return;
         case GL_LIGHTING:
             // Store lighting state for shader use
             lighting_enabled = False;
-            debugf("DEBUG: glDisable(GL_LIGHTING) - will not apply lighting in shader\n");
+            DL(2, "DEBUG: glDisable(GL_LIGHTING) - will not apply lighting in shader\n");
             return;
         case GL_LIGHT0:
         case GL_LIGHT1:
             // Fixed-function lighting is not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glDisable(GL_LIGHT%d) ignored - not supported in WebGL 2.0\n", cap - GL_LIGHT0);
+            DL(1, "WARNING: glDisable(GL_LIGHT%d) ignored - not supported in WebGL 2.0\n", cap - GL_LIGHT0);
             return;
         case GL_TEXTURE_2D:
             // Fixed-function texturing is not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glDisable(GL_TEXTURE_2D) ignored - not supported in WebGL 2.0\n");
+            DL(1, "WARNING: glDisable(GL_TEXTURE_2D) ignored - not supported in WebGL 2.0\n");
             return;
         case GL_FOG:
             // Fixed-function fog is not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glDisable(GL_FOG) ignored - not supported in WebGL 2.0\n");
+            DL(1, "WARNING: glDisable(GL_FOG) ignored - not supported in WebGL 2.0\n");
             return;
         case GL_COLOR_MATERIAL:
             // Fixed-function materials are not supported in WebGL 2.0, ignore it
-            debugf("WARNING: glDisable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
+            DL(1, "WARNING: glDisable(GL_COLOR_MATERIAL) ignored - not supported in WebGL 2.0\n");
             return;
         case GL_DEPTH_TEST:
-            debugf("DEBUG: glDisable(GL_DEPTH_TEST), glDisable_real=%p\n", glDisable_real);
+            DL(2, "DEBUG: glDisable(GL_DEPTH_TEST), glDisable_real=%p\n", glDisable_real);
             // fallthrough
         case GL_CULL_FACE:
-            debugf("DEBUG: glDisable(GL_CULL_FACE), glDisable_real=%p\n", glDisable_real);
+            DL(2, "DEBUG: glDisable(GL_CULL_FACE), glDisable_real=%p\n", glDisable_real);
             // fallthrough
         default:
             // For supported capabilities, call the real glDisable
             if (glDisable_real) {
-                debugf("DEBUG: glDisable(%d) - calling real function\n", cap);
+                DL(2, "DEBUG: glDisable(%d) - calling real function\n", cap);
                 glDisable_real(cap);
             } else {
-                debugf("WARNING: glDisable(%d) ignored - real function not available\n", cap);
+                DL(1, "WARNING: glDisable(%d) ignored - real function not available\n", cap);
             }
             break;
     }
@@ -1210,7 +1220,7 @@ void glClear(GLbitfield mask) {
         glClear_real(mask);
         check_gl_error_wrapper("after glClear_real");
     } else {
-        debugf("WARNING: glClear(%d) ignored - real function not available\n", mask);
+        DL(1, "WARNING: glClear(%d) ignored - real function not available\n", mask);
     }
 }
 
@@ -1222,7 +1232,7 @@ void glShadeModel(GLenum mode) {
 
     // Store the shading mode for shader use
     current_shade_model = mode;
-    debugf("DEBUG: glShadeModel set to %d (GL_SMOOTH=%d, GL_FLAT=%d)\n", mode, GL_SMOOTH, GL_FLAT);
+    DL(2, "DEBUG: glShadeModel set to %d (GL_SMOOTH=%d, GL_FLAT=%d)\n", mode, GL_SMOOTH, GL_FLAT);
 
     // For WebGL 2.0, we'll handle this in our shaders
     // GL_SMOOTH = interpolate colors between vertices
@@ -1238,7 +1248,7 @@ void glFrontFace(GLenum mode) {
 
     // Store the front face mode for shader use
     current_front_face = mode;
-    debugf("DEBUG: glFrontFace set to %d (GL_CCW=%d, GL_CW=%d)\n", mode, GL_CCW, GL_CW);
+    DL(2, "DEBUG: glFrontFace set to %d (GL_CCW=%d, GL_CW=%d)\n", mode, GL_CCW, GL_CW);
 
     // For WebGL 2.0, we'll handle this in our shaders using gl_FrontFacing
     // The real glFrontFace function is not available in WebGL 2.0
@@ -1361,7 +1371,7 @@ void glColor3f(GLfloat r, GLfloat g, GLfloat b) {
     static int color_count = 0;
     color_count++;
     if (color_count <= 10) { // Only log first 10 color changes
-        debugf("glColor3f: RGB(%.3f, %.3f, %.3f)\n", r, g, b);
+        DL(1, "glColor3f: RGB(%.3f, %.3f, %.3f)\n", r, g, b);
     }
 }
 
@@ -1374,7 +1384,7 @@ void glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
     static int color_count = 0;
     color_count++;
     if (color_count <= 10) { // Only log first 10 color changes
-        debugf("glColor4f: RGBA(%.3f, %.3f, %.3f, %.3f)\n", r, g, b, a);
+        DL(1, "glColor4f: RGBA(%.3f, %.3f, %.3f, %.3f)\n", r, g, b, a);
     }
 }
 
@@ -1389,7 +1399,7 @@ void glColor4fv(const GLfloat *v) {
     static int color_count = 0;
     color_count++;
     if (color_count <= 10) { // Only log first 10 color changes
-        debugf("glColor4fv: RGBA(%.3f, %.3f, %.3f, %.3f)\n", v[0], v[1], v[2], v[3]);
+        DL(1, "glColor4fv: RGBA(%.3f, %.3f, %.3f, %.3f)\n", v[0], v[1], v[2], v[3]);
     }
 }
 
@@ -1401,25 +1411,25 @@ void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) {
 void glLightfv(GLenum light, GLenum pname, const GLfloat *params) {
     // Store lighting properties for shader uniforms
     // For now, just ignore - we'll implement basic lighting later
-    debugf("DEBUG: glLightfv(light=%d, pname=%d) - lighting not implemented yet\n", light, pname);
+    DL(2, "DEBUG: glLightfv(light=%d, pname=%d) - lighting not implemented yet\n", light, pname);
 }
 
 void glLightf(GLenum light, GLenum pname, GLfloat param) {
     // Store lighting properties for shader uniforms
     // For now, just ignore - we'll implement basic lighting later
-    debugf("DEBUG: glLightf(light=%d, pname=%d, param=%f) - lighting not implemented yet\n", light, pname, param);
+    DL(2, "DEBUG: glLightf(light=%d, pname=%d, param=%f) - lighting not implemented yet\n", light, pname, param);
 }
 
 void glLightModelfv(GLenum pname, const GLfloat *params) {
     // Store lighting model properties for shader uniforms
     // For now, just ignore - we'll implement basic lighting later
-    debugf("DEBUG: glLightModelfv(pname=%d) - lighting model not implemented yet\n", pname);
+    DL(2, "DEBUG: glLightModelfv(pname=%d) - lighting model not implemented yet\n", pname);
 }
 
 void glFinish(void) {
     // In WebGL 2.0, glFinish() is not needed as the browser handles synchronization
     // But we'll call it for compatibility
-    debugf("DEBUG: glFinish() called - WebGL handles synchronization automatically\n");
+    DL(2, "DEBUG: glFinish() called - WebGL handles synchronization automatically\n");
 }
 
 void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
@@ -1428,7 +1438,7 @@ void glVertex3f(GLfloat x, GLfloat y, GLfloat z) {
     }
 
     if (immediate.vertex_count >= MAX_VERTICES) {
-        debugf("WARNING: Vertex limit reached (%d), dropping vertex!\n", MAX_VERTICES);
+        DL(1, "WARNING: Vertex limit reached (%d), dropping vertex!\n", MAX_VERTICES);
         return;
     }
 
@@ -1457,7 +1467,7 @@ void glBegin(GLenum mode) {
     static int glBegin_count = 0;
     glBegin_count++;
     if (glBegin_count <= 5) {
-        debugf("DEBUG: glBegin called with mode=%d (GL_TRIANGLES=%d, GL_LINES=%d)\n",
+        DL(2, "DEBUG: glBegin called with mode=%d (GL_TRIANGLES=%d, GL_LINES=%d)\n",
                mode, GL_TRIANGLES, GL_LINES);
     }
 }
@@ -1471,7 +1481,7 @@ void glEnd(void) {
     static int glEnd_count = 0;
     glEnd_count++;
     if (glEnd_count <= 5) { // Only log first 5 glEnd calls
-        debugf("glEnd #%d: Drawing %d vertices with primitive type %d\n", glEnd_count, immediate.vertex_count, immediate.primitive_type);
+        DL(1, "glEnd #%d: Drawing %d vertices with primitive type %d\n", glEnd_count, immediate.vertex_count, immediate.primitive_type);
     }
 
     check_gl_error_wrapper("start of glEnd");
@@ -1497,20 +1507,20 @@ void glEnd(void) {
     // Use our WebGL 2.0 wrapper (limit messages to first 5 frames)
     static int webgl_wrapper_count = 0;
     if (webgl_wrapper_count < 5) {
-        debugf("Using WebGL 2.0 wrapper...\n");
+        DL(1, "Using WebGL 2.0 wrapper...\n");
         webgl_wrapper_count++;
     }
 
     // Use the pre-compiled shader program
     if (shader_program == 0) {
-        debugf("ERROR: shader_program is 0, cannot render!\n");
+        DL(0, "ERROR: shader_program is 0, cannot render!\n");
         return;
     }
 
     // Check WebGL context state
     GLenum context_error = glGetError();
     if (context_error != GL_NO_ERROR) {
-        debugf("WARNING: WebGL context error before glUseProgram: %d\n", context_error);
+        DL(1, "WARNING: WebGL context error before glUseProgram: %d\n", context_error);
     }
 
     glUseProgram(shader_program);
@@ -1546,7 +1556,7 @@ void glEnd(void) {
         // Check for errors after projection matrix
         GLenum uniform_error = glGetError();
         if (uniform_error != GL_NO_ERROR) {
-            debugf("ERROR: WebGL error after projection matrix: %d\n", uniform_error);
+            DL(0, "ERROR: WebGL error after projection matrix: %d\n", uniform_error);
         }
     }
 
@@ -1579,7 +1589,7 @@ void glEnd(void) {
         // Debug: Print raw matrix values to see what's in the stack
         static int raw_matrix_debug_count = 0;
         if (raw_matrix_debug_count < 2) {
-            debugf("DEBUG: Raw matrix stack (frame %d): trans=(%.3f,%.3f,%.3f), scale=(%.3f,%.3f,%.3f)\n",
+            DL(2, "DEBUG: Raw matrix stack (frame %d): trans=(%.3f,%.3f,%.3f), scale=(%.3f,%.3f,%.3f)\n",
                    raw_matrix_debug_count, stack_matrix[12], stack_matrix[13], stack_matrix[14],
                    stack_matrix[0], stack_matrix[5], stack_matrix[10]);
             raw_matrix_debug_count++;
@@ -1598,7 +1608,7 @@ void glEnd(void) {
 
             static int stack_debug_count = 0;
             if (stack_debug_count < 3) {
-                debugf("DEBUG: Using scaled matrix stack (frame %d): trans=(%.3f,%.3f,%.3f)\n",
+                DL(2, "DEBUG: Using scaled matrix stack (frame %d): trans=(%.3f,%.3f,%.3f)\n",
                        stack_debug_count, stack_matrix[12], stack_matrix[13], stack_matrix[14]);
                 stack_debug_count++;
             }
@@ -1608,7 +1618,7 @@ void glEnd(void) {
 
             static int fallback_debug_count = 0;
             if (fallback_debug_count < 3) {
-                debugf("DEBUG: Using fallback matrix (frame %d): scale=%.1f\n", fallback_debug_count, scale);
+                DL(2, "DEBUG: Using fallback matrix (frame %d): scale=%.1f\n", fallback_debug_count, scale);
                 fallback_debug_count++;
             }
         }
@@ -1616,13 +1626,13 @@ void glEnd(void) {
         // Check for errors after modelview matrix
         GLenum matrix_error = glGetError();
         if (matrix_error != GL_NO_ERROR) {
-            debugf("ERROR: WebGL error after modelview matrix: %d\n", matrix_error);
+            DL(0, "ERROR: WebGL error after modelview matrix: %d\n", matrix_error);
         }
 
         // Debug: Print the applied transformations
         static int transform_debug_count = 0;
         if (transform_debug_count < 3) {
-            debugf("DEBUG: Direct Transformations (frame %d): scale=%.1f\n",
+            DL(2, "DEBUG: Direct Transformations (frame %d): scale=%.1f\n",
                    transform_debug_count, scale);
             transform_debug_count++;
         }
@@ -1632,12 +1642,12 @@ void glEnd(void) {
     glGenBuffers(1, &vbo_vertices);
     glGenBuffers(1, &vbo_colors);
 
-    debugf("DEBUG: Created VBOs: vertices=%u, colors=%u\n", vbo_vertices, vbo_colors);
+    DL(2, "DEBUG: Created VBOs: vertices=%u, colors=%u\n", vbo_vertices, vbo_colors);
 
     // Check for errors after VBO creation
     GLenum vbo_error = glGetError();
     if (vbo_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after VBO creation: %d\n", vbo_error);
+        DL(0, "ERROR: WebGL error after VBO creation: %d\n", vbo_error);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
@@ -1646,7 +1656,7 @@ void glEnd(void) {
     // Check for errors after vertex VBO setup
     vbo_error = glGetError();
     if (vbo_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after vertex VBO setup: %d\n", vbo_error);
+        DL(0, "ERROR: WebGL error after vertex VBO setup: %d\n", vbo_error);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
@@ -1655,7 +1665,7 @@ void glEnd(void) {
     // Check for errors after color VBO setup
     vbo_error = glGetError();
     if (vbo_error != GL_NO_ERROR) {
-        debugf("ERROR: WebGL error after color VBO setup: %d\n", vbo_error);
+        DL(0, "ERROR: WebGL error after color VBO setup: %d\n", vbo_error);
     }
 
     // Set up vertex attributes
@@ -1664,9 +1674,9 @@ void glEnd(void) {
     if (pos_attrib != -1) {
         glEnableVertexAttribArray(pos_attrib);
         glVertexAttribPointer(pos_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        debugf("DEBUG: Position attribute: location=%d, VBO=%u\n", pos_attrib, vbo_vertices);
+        DL(2, "DEBUG: Position attribute: location=%d, VBO=%u\n", pos_attrib, vbo_vertices);
     } else {
-        debugf("ERROR: Could not find 'position' attribute in shader!\n");
+        DL(0, "ERROR: Could not find 'position' attribute in shader!\n");
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_colors);
@@ -1674,9 +1684,9 @@ void glEnd(void) {
     if (color_attrib != -1) {
         glEnableVertexAttribArray(color_attrib);
         glVertexAttribPointer(color_attrib, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        debugf("DEBUG: Color attribute: location=%d, VBO=%u\n", color_attrib, vbo_colors);
+        DL(2, "DEBUG: Color attribute: location=%d, VBO=%u\n", color_attrib, vbo_colors);
     } else {
-        debugf("ERROR: Could not find 'color' attribute in shader!\n");
+        DL(0, "ERROR: Could not find 'color' attribute in shader!\n");
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
@@ -1684,15 +1694,15 @@ void glEnd(void) {
     if (normal_attrib != -1) {
         glEnableVertexAttribArray(normal_attrib);
         glVertexAttribPointer(normal_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        debugf("DEBUG: Normal attribute: location=%d, VBO=%u\n", normal_attrib, vbo_normals);
+        DL(2, "DEBUG: Normal attribute: location=%d, VBO=%u\n", normal_attrib, vbo_normals);
     } else {
-        debugf("ERROR: Could not find 'normal' attribute in shader!\n");
+        DL(0, "ERROR: Could not find 'normal' attribute in shader!\n");
     }
 
     // Draw
     static int draw_debug_count = 0;
     if (draw_debug_count < 5) {
-        debugf("DEBUG: glDrawArrays called with primitive_type=%d, vertex_count=%d\n",
+        DL(2, "DEBUG: glDrawArrays called with primitive_type=%d, vertex_count=%d\n",
                immediate.primitive_type, immediate.vertex_count);
         draw_debug_count++;
     }
@@ -1702,7 +1712,7 @@ void glEnd(void) {
 
     // Check if primitive type is 0 (invalid)
     if (immediate.primitive_type == 0) {
-        debugf("ERROR: Primitive type is 0 (invalid), using GL_TRIANGLES\n");
+        DL(0, "ERROR: Primitive type is 0 (invalid), using GL_TRIANGLES\n");
         valid_primitive = GL_TRIANGLES;
     } else {
         switch (immediate.primitive_type) {
@@ -1719,11 +1729,11 @@ void glEnd(void) {
             case GL_QUAD_STRIP:
             case GL_POLYGON:
                 // These are not supported in WebGL 2.0, convert to triangles
-                debugf("WARNING: Converting unsupported primitive type %d to GL_TRIANGLES\n", immediate.primitive_type);
+                DL(1, "WARNING: Converting unsupported primitive type %d to GL_TRIANGLES\n", immediate.primitive_type);
                 valid_primitive = GL_TRIANGLES;
                 break;
             default:
-                debugf("ERROR: Unknown primitive type %d, using GL_TRIANGLES\n", immediate.primitive_type);
+                DL(0, "ERROR: Unknown primitive type %d, using GL_TRIANGLES\n", immediate.primitive_type);
                 valid_primitive = GL_TRIANGLES;
                 break;
         }
@@ -1731,7 +1741,7 @@ void glEnd(void) {
 
     // Check for zero vertex count
     if (immediate.vertex_count == 0) {
-        debugf("WARNING: glDrawArrays called with 0 vertices, skipping draw\n");
+        DL(1, "WARNING: glDrawArrays called with 0 vertices, skipping draw\n");
     } else {
         // Ensure we have a valid VBO bound for drawing
         glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
@@ -1741,7 +1751,7 @@ void glEnd(void) {
     // Limit completion message to first 5 frames
     static int webgl_complete_count = 0;
     if (webgl_complete_count < 5) {
-        debugf("WebGL 2.0 wrapper rendering completed\n");
+        DL(1, "WebGL 2.0 wrapper rendering completed\n");
         webgl_complete_count++;
     }
 
@@ -1749,9 +1759,9 @@ void glEnd(void) {
     static int webgl_error_count = 0;
     GLenum error = glGetError();
     if (error != GL_NO_ERROR && webgl_error_count < 5) {
-        debugf("WebGL error after glDrawArrays: %d (0x%x) - IGNORING FOR NOW\n", error, error);
+        DL(1, "WebGL error after glDrawArrays: %d (0x%x) - IGNORING FOR NOW\n", error, error);
         if (error == 1280) {
-            debugf("  GL_INVALID_ENUM - but rendering might still work\n");
+            DL(1, "  GL_INVALID_ENUM - but rendering might still work\n");
         }
         webgl_error_count++;
     }
@@ -2138,15 +2148,15 @@ void xcolor_to_glfloat(const XColor *xcolor, GLfloat *rgba) {
     static int xcolor_count = 0;
     xcolor_count++;
     if (xcolor_count <= 5) { // Log first 5 color conversions
-        debugf("[%ld] xcolor_to_glfloat: XColor(%d,%d,%d) -> GLfloat(%.3f,%.3f,%.3f,%.3f)\n",
+        DL(1, "[%ld] xcolor_to_glfloat: XColor(%d,%d,%d) -> GLfloat(%.3f,%.3f,%.3f,%.3f)\n",
                (long)(emscripten_get_now()), xcolor->red, xcolor->green, xcolor->blue, rgba[0], rgba[1], rgba[2], rgba[3]);
     }
 }
 
 // Generate smooth color map for WebGL
 void make_smooth_colormap_webgl(XColor *colors, int *ncolorsP, Bool allocate_p, Bool *writable_pP, Bool verbose_p) {
-    debugf("make_smooth_colormap_webgl called: allocate_p=%d, verbose_p=%d\n", allocate_p, verbose_p);
-    debugf("make_smooth_colormap_webgl: ncolorsP=%d before call\n", *ncolorsP);
+    DL(1, "make_smooth_colormap_webgl called: allocate_p=%d, verbose_p=%d\n", allocate_p, verbose_p);
+    DL(1, "make_smooth_colormap_webgl: ncolorsP=%d before call\n", *ncolorsP);
     int npoints;
     int ncolors = *ncolorsP;
     int i;
@@ -2246,7 +2256,7 @@ static void make_color_path_webgl(int npoints, int *h, double *s, double *v, XCo
         colors[i].flags = DoRed | DoGreen | DoBlue;
 
         if (i < 3) { // Log first 3 colors
-            debugf("[%ld] make_color_path_webgl: Color[%d]: RGB(%d, %d, %d) from HSV(%.1f, %.2f, %.2f)\n",
+            DL(1, "[%ld] make_color_path_webgl: Color[%d]: RGB(%d, %d, %d) from HSV(%.1f, %.2f, %.2f)\n",
                    (long)(emscripten_get_now()), i, colors[i].red, colors[i].green, colors[i].blue, interp_h, interp_s, interp_v);
         }
     }

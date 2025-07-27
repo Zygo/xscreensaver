@@ -713,6 +713,13 @@ extern void Log(const char *format, ...)
   ;
 
 extern void jwxyz_logv(Bool error, const char *fmt, va_list args);
+
+// Debug logging function for hacks
+extern void DL(int level, const char *format, ...)
+#if defined __GNUC__ || defined __clang__
+  __attribute__((format(printf, 2, 3)))
+#endif
+  ;
 #define Logv(format, args) (jwxyz_logv(False, format, args))
 
 // Xt timers and fds
