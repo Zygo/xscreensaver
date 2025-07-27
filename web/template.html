@@ -203,7 +203,7 @@
 
         #debug-panel {
             position: fixed;
-            top: 10px;
+            top: 50px;
             right: 10px;
             width: 400px;
             height: 300px;
@@ -234,7 +234,7 @@
 
         #debug-toggle {
             position: fixed;
-            top: 10px;
+            top: 50px;
             right: 10px;
             background: rgba(0,0,0,0.8);
             color: white;
@@ -438,8 +438,6 @@
             // Check scroll position BEFORE adding content (use the panel, not the log)
             var wasAtBottom = (debugPanel.scrollHeight - debugPanel.scrollTop - debugPanel.clientHeight) < 5;
 
-            console.log('DEBUG: Scroll check - wasAtBottom:', wasAtBottom, 'panel scrollHeight:', debugPanel.scrollHeight, 'scrollTop:', debugPanel.scrollTop, 'clientHeight:', debugPanel.clientHeight);
-
             // Add the message
             var now = new Date();
             var timestamp = now.toLocaleTimeString('en-US', {
@@ -455,7 +453,6 @@
                 var oldScrollTop = debugPanel.scrollTop;
                 var targetScrollTop = debugPanel.scrollHeight;
                 debugPanel.scrollTop = targetScrollTop;
-                console.log('DEBUG: Auto-scroll attempt - old scrollTop:', oldScrollTop, 'target:', targetScrollTop, 'new scrollTop:', debugPanel.scrollTop);
 
                 // Check if the scroll actually worked
                 if (debugPanel.scrollTop !== targetScrollTop) {
@@ -464,13 +461,10 @@
                     // Try to understand why it's not scrolling
                     console.log('DEBUG: Panel properties - scrollTop:', debugPanel.scrollTop, 'scrollHeight:', debugPanel.scrollHeight, 'clientHeight:', debugPanel.clientHeight, 'offsetHeight:', debugPanel.offsetHeight);
                     console.log('DEBUG: Computed styles - overflow:', window.getComputedStyle(debugPanel).overflow, 'overflowY:', window.getComputedStyle(debugPanel).overflowY);
-                } else {
-                    console.log('DEBUG: Auto-scroll successful');
                 }
 
                 // Check again after a short delay to see if something changed it back
                 setTimeout(function() {
-                    console.log('DEBUG: Delayed scroll check - scrollTop:', debugPanel.scrollTop, 'scrollHeight:', debugPanel.scrollHeight);
                     if (debugPanel.scrollTop !== targetScrollTop) {
                         console.log('DEBUG: WARNING - Scroll position was changed after we set it!');
                     }
@@ -482,27 +476,15 @@
 
         // Test our debug system immediately
         setTimeout(function() {
-            console.log('DEBUG: Testing debug system...');
-            addDebugLog('Debug system test - if you see this, it works!');
-
             // Test manual scrolling and panel properties
             var debugLog = document.getElementById('debug-log');
             var debugPanel = document.getElementById('debug-panel');
             if (debugLog && debugPanel) {
-                console.log('DEBUG: Testing manual scroll...');
-                console.log('DEBUG: Panel properties - height:', debugPanel.offsetHeight, 'scrollHeight:', debugPanel.scrollHeight);
-                console.log('DEBUG: Log properties - height:', debugLog.offsetHeight, 'scrollHeight:', debugLog.scrollHeight);
-
                 // Try scrolling the panel instead of the log
                 debugPanel.scrollTop = 9999;
-                console.log('DEBUG: Panel scroll result - scrollTop:', debugPanel.scrollTop);
 
                 // Try scrolling the log
                 debugLog.scrollTop = 9999;
-                console.log('DEBUG: Log scroll result - scrollTop:', debugLog.scrollTop);
-
-                // Check if content overflows
-                console.log('DEBUG: Content overflow check - scrollHeight > clientHeight:', debugLog.scrollHeight > debugLog.clientHeight);
             }
         }, 1000);
 
@@ -580,34 +562,48 @@
             }
 
             memoryMonitorInterval = setInterval(function() {
-                if (Module && Module.HEAPU8) {
-                    var totalMemory = Module.HEAPU8.length;
-                    var usedMemory = totalMemory;
+                try {
+                    if (Module && Module.HEAPU8) {
+                        var totalMemory = Module.HEAPU8.length;
+                        var usedMemory = totalMemory;
 
-                    // Try to get more detailed memory info if available
-                    if (Module._emscripten_get_heap_size) {
-                        usedMemory = Module._emscripten_get_heap_size();
+                        // Try to get more detailed memory info if available
+                        if (Module._emscripten_get_heap_size) {
+                            usedMemory = Module._emscripten_get_heap_size();
+                        }
+
+                        var memoryMB = (usedMemory / (1024 * 1024)).toFixed(2);
+                        var totalMB = (totalMemory / (1024 * 1024)).toFixed(2);
+
+                        // Update memory display if it exists
+                        var memoryDisplay = document.getElementById('memory-display');
+                        if (memoryDisplay) {
+                            memoryDisplay.textContent = `Memory: ${memoryMB}MB / ${totalMB}MB`;
+                        }
+
+                        // Log memory usage every 5 seconds
+                        if (Date.now() % 5000 < 100) {
+                            addDebugLog(`Memory: ${memoryMB}MB used, ${totalMB}MB total`);
+                        }
+
+                        // Check for potential memory leak (if memory usage is growing rapidly)
+                        if (window.lastMemoryUsage && usedMemory > window.lastMemoryUsage * 1.1) {
+                            addDebugLog(`WARNING: Memory usage increased by ${((usedMemory - window.lastMemoryUsage) / (1024 * 1024)).toFixed(2)}MB`);
+                        }
+                        window.lastMemoryUsage = usedMemory;
+                    } else {
+                        // Fallback if HEAPU8 is not available
+                        var memoryDisplay = document.getElementById('memory-display');
+                        if (memoryDisplay) {
+                            memoryDisplay.textContent = `Memory: Monitoring unavailable`;
+                        }
                     }
-
-                    var memoryMB = (usedMemory / (1024 * 1024)).toFixed(2);
-                    var totalMB = (totalMemory / (1024 * 1024)).toFixed(2);
-
-                    // Update memory display if it exists
+                } catch (error) {
+                    console.log('Memory monitoring error:', error);
                     var memoryDisplay = document.getElementById('memory-display');
                     if (memoryDisplay) {
-                        memoryDisplay.textContent = `Memory: ${memoryMB}MB / ${totalMB}MB`;
+                        memoryDisplay.textContent = `Memory: Error`;
                     }
-
-                    // Log memory usage every 5 seconds
-                    if (Date.now() % 5000 < 100) {
-                        addDebugLog(`Memory: ${memoryMB}MB used, ${totalMB}MB total`);
-                    }
-
-                    // Check for potential memory leak (if memory usage is growing rapidly)
-                    if (window.lastMemoryUsage && usedMemory > window.lastMemoryUsage * 1.1) {
-                        addDebugLog(`WARNING: Memory usage increased by ${((usedMemory - window.lastMemoryUsage) / (1024 * 1024)).toFixed(2)}MB`);
-                    }
-                    window.lastMemoryUsage = usedMemory;
                 }
             }, 1000); // Check every second
         }
