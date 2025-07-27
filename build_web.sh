@@ -127,7 +127,6 @@ if [ "$MEMORY_DEBUG" = true ]; then
         -g
         -s ASSERTIONS=1
         -s SAFE_HEAP=1
-        -s DEMANGLE_SUPPORT=1
         -s STACK_OVERFLOW_CHECK=1
         -s INITIAL_MEMORY=16777216     # 16MB
         -s MAXIMUM_MEMORY=268435456    # 256MB
