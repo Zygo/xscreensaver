@@ -1689,15 +1689,8 @@ void glEnd(void) {
         DL(0, "ERROR: Could not find 'color' attribute in shader!\n");
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    GLint normal_attrib = glGetAttribLocation(shader_program, "normal");
-    if (normal_attrib != -1) {
-        glEnableVertexAttribArray(normal_attrib);
-        glVertexAttribPointer(normal_attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        DL(2, "DEBUG: Normal attribute: location=%d, VBO=%u\n", normal_attrib, vbo_normals);
-    } else {
-        DL(0, "Could not find 'normal' attribute in shader!\n");
-    }
+    // Note: Normal attribute not used in current shader - removed to eliminate error
+    // If lighting is needed in the future, add "in vec3 normal;" to vertex shader
 
     // Draw
     static int draw_debug_count = 0;
@@ -1773,14 +1766,12 @@ void glEnd(void) {
     if (color_attrib != -1) {
         glDisableVertexAttribArray(color_attrib);
     }
-    if (normal_attrib != -1) {
-        glDisableVertexAttribArray(normal_attrib);
-    }
+    // Normal attribute cleanup removed - not used in current shader
 
     // Cleanup
     glDeleteBuffers(1, &vbo_vertices);
     glDeleteBuffers(1, &vbo_colors);
-    glDeleteBuffers(1, &vbo_normals);
+    // vbo_normals cleanup removed - not used in current shader
 
     immediate.in_begin_end = False;
 }
