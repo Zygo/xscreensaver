@@ -523,7 +523,13 @@ make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
   for (i = 0; i < npoints; i++)
     {
     REPICK_THIS_COLOR:
-      if (++loop > 10000) abort();
+      if (++loop > 10000) {
+        fprintf(stderr, "ERROR: make_smooth_colormap reached retry limit of 10000! This indicates poor color generation.\n");
+        abort();
+      }
+      if (loop > 5000 && loop % 1000 == 0) {
+        fprintf(stderr, "WARNING: make_smooth_colormap retry count: %d/10000\n", loop);
+      }
       h[i] = random() % 360;
       s[i] = frand(1.0);
       v[i] = frand(0.8) + 0.2;
