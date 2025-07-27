@@ -330,14 +330,14 @@ make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 
     for (i = 0; i < npoints; i++)
       {
-    int j = (i+1) % npoints;
+        int j = (i+1) % npoints;
 
-    if (ncolors[i] > 0)
-      {
-        dh[i] = 360 * (DH[i] / ncolors[i]);
-        ds[i] = (s[j] - s[i]) / ncolors[i];
-        dv[i] = (v[j] - v[i]) / ncolors[i];
-      }
+        if (ncolors[i] > 0)
+          {
+            dh[i] = 360 * (DH[i] / ncolors[i]);
+            ds[i] = (s[j] - s[i]) / ncolors[i];
+            dv[i] = (v[j] - v[i]) / ncolors[i];
+          }
       }
   }
 
