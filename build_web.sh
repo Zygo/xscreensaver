@@ -105,6 +105,7 @@ EMCC_ARGS=(
     -I$GLX_DIR
     $GLX_DIR/hextrail_web_main.c
     $UTILS_DIR/colors.c
+    $UTILS_DIR/hsv.c
     $UTILS_DIR/yarandom.c
     $UTILS_DIR/usleep.c
     $HACKS_DIR/screenhack.c

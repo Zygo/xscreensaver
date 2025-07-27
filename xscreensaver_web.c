@@ -2175,62 +2175,6 @@ Bool has_writable_cells(Screen *screen, Visual *visual) {
     return True;
 }
 
-// Color utility functions for WebGL
-void hsv_to_rgb(int h, double s, double v, double *r, double *g, double *b) {
-    // Simple HSV to RGB conversion
-    double c = v * s;
-    double x = c * (1 - fabs(fmod(h / 60.0, 2) - 1));
-    double m = v - c;
-
-    if (h >= 0 && h < 60) {
-        *r = c; *g = x; *b = 0;
-    } else if (h >= 60 && h < 120) {
-        *r = x; *g = c; *b = 0;
-    } else if (h >= 120 && h < 180) {
-        *r = 0; *g = c; *b = x;
-    } else if (h >= 180 && h < 240) {
-        *r = 0; *g = x; *b = c;
-    } else if (h >= 240 && h < 300) {
-        *r = x; *g = 0; *b = c;
-    } else {
-        *r = c; *g = 0; *b = x;
-    }
-
-    *r += m; *g += m; *b += m;
-}
-
-void rgb_to_hsv(unsigned short r, unsigned short g, unsigned short b, int *h, double *s, double *v) {
-    double rf = r / 65535.0;
-    double gf = g / 65535.0;
-    double bf = b / 65535.0;
-
-    double max = fmax(fmax(rf, gf), bf);
-    double min = fmin(fmin(rf, gf), bf);
-    double delta = max - min;
-
-    *v = max;
-
-    if (max == 0) {
-        *s = 0;
-        *h = 0;
-        return;
-    }
-
-    *s = delta / max;
-
-    if (delta == 0) {
-        *h = 0;
-    } else if (max == rf) {
-        *h = (int)(60 * fmod(((gf - bf) / delta), 6));
-    } else if (max == gf) {
-        *h = (int)(60 * (((bf - rf) / delta) + 2));
-    } else {
-        *h = (int)(60 * (((rf - gf) / delta) + 4));
-    }
-
-    if (*h < 0) *h += 360;
-}
-
 // Convert XColor to GLfloat array for OpenGL
 void xcolor_to_glfloat(const XColor *xcolor, GLfloat *rgba) {
     rgba[0] = xcolor->red / 65535.0f;   // Red
