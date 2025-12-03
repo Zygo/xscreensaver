@@ -37,8 +37,8 @@
 "*demoCommand: xscreensaver-settings",
 "*helpURL: https://www.jwz.org/xscreensaver/man.html",
 "*loadURL: x-www-browser '%s' || firefox '%s' || chromium-browser '%s'",
-"*manualCommand: lxterminal -T '%s manual' \
-		    -e /bin/sh -c 'man \"%s\" ; read foo'",
+"*manualCommand: xdg-open man:%s || \
+		    x-terminal-emulator -e /bin/sh -c 'man \"%s\"'",
 "*dateFormat:		%I:%M %p, %a %b %e",
 "*newLoginCommand:	no-such-login-manager",
 "XScreenSaver.pointerHysteresis:		10",
