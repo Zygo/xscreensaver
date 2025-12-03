@@ -56,6 +56,7 @@ The minimum speed of each mass point. Default: 0.001
 .TP 8
 .B \-\-maxspeed \fInumber\fP
 The maximum speed of each mass point. Default: 0.02
+.TP 8
 .B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000
 .TP 8

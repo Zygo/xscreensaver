@@ -1,8 +1,8 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-Eruption \- eruption of pieces of hot volcanic rock
+eruption \- eruption of pieces of hot volcanic rock
 .SH SYNOPSIS
-.B Eruption
+.B eruption
 [\-\-display \fIhost:display.screen\fP]
 [\-\-visual \fIvisual\fP]
 [\-\-window]

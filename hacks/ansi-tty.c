@@ -51,7 +51,7 @@ struct tty_state {
 
      However, this only applies to cursor coordinates caused by text insertion.
      Inserting "X" at column 80 lets cursor.x go to 81; but if at column 70
-     and you do "move right by 20", the cursot ends up at 80, not 81.  Fun!
+     and you do "move right by 20", the cursor ends up at 80, not 81.  Fun!
 
      Details: https://github.com/mattiase/wraptest
    */

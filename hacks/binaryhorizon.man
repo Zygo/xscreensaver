@@ -1,6 +1,6 @@
 .TH "Binary Horizon" 1 "23-Mar-20" "X Version 11"
 .SH NAME
-binaryhorizon - A system of path tracing particles evolves continuously. 
+binaryhorizon \- A system of path tracing particles evolves continuously. 
 .SH SYNOPSIS
 .B binaryhorizon
 [\-\-fps]

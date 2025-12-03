@@ -2,7 +2,7 @@
 .SH NAME
 celtic \- draws celtic cross-stich patterns
 .SH SYNOPSIS
-.B ifs
+.B celtic
 [\-\-display \fIhost:display.screen\fP]
 [\-\-visual \fIvisual\fP]
 [\-\-window]

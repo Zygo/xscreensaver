@@ -2,7 +2,7 @@
 .SH NAME
 noof \- draw rotatey patterns
 .SH SYNOPSIS
-.B dangerball
+.B noof
 [\-\-display \fIhost:display.screen\fP]
 [\-\-visual \fIvisual\fP]
 [\-\-window]

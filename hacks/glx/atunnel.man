@@ -2,7 +2,7 @@
 .SH NAME
 atunnel \- hypnotic GL tunnel journey
 .SH SYNOPSIS
-.B sballs
+.B atunnel
 [\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
 [\-\-window\-id \fInumber\fP]
 [\-\-visual \fIvisual\fP] [\-\-delay \fImicroseconds\fP]
