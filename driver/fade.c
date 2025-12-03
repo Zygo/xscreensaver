@@ -113,6 +113,7 @@
 #include "clientmsg.h"
 #include "xmu.h"
 #include "pow2.h"
+#include "doubletime.h"
 #include "screenshot.h"
 
 /* Since gamma fading doesn't work on the Raspberry Pi, probably the single
@@ -163,21 +164,6 @@ static int colormap_fade (XtAppContext, Display *, Window *wins, int count,
 static int xshm_fade (XtAppContext, Display *,
                       Window *wins, int count, double secs,
                       Bool out_p, Bool from_desktop_p, fade_state *);
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 #ifdef HAVE_XINPUT

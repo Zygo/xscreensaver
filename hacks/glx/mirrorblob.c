@@ -52,6 +52,7 @@
 
 #ifdef USE_GL /* whole file */
 
+#include "doubletime.h"
 
 #define DEF_DELAY            "10000"
 #define DEF_FPS              "False"
@@ -310,26 +311,6 @@ typedef struct {
 } mirrorblobstruct;
 
 static mirrorblobstruct *Mirrorblob = NULL;
-
-/******************************************************************************
- *
- * Returns the current time in seconds as a double.  Shamelessly borrowed from
- * glslideshow.
- *
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 /******************************************************************************
  *

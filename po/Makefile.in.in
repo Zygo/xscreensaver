@@ -61,8 +61,6 @@
 #       The install-data-yes rule made no provision for this, and would
 #       just error out when the .gmo files were not there.
 #
-#     - $(DESTDIR) was being used where $(install_prefix) should have been.
-#
 #     - For xscreensaver, $(prefix) is generally /usr/X11R6/, but some files
 #	need to go under /usr/ instead of under /usr/X11R6/ -- for those, we
 #	use @PO_DATADIR@ instead of @prefix@.  So I changed $(datadir) and
@@ -111,7 +109,7 @@ localedir = $(datadir)/locale
 gnulocaledir = $(localedir)
 #gettextsrcdir = $(prefix)/share/glib-2.0/gettext/po
 subdir = po
-DESTDIR = $(install_prefix)
+DESTDIR = 
 
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -225,7 +223,7 @@ install-data-yes: all
 	    *)     destdir=$(localedir);; \
 	  esac; \
 	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
-	  dir=$(install_prefix)$$destdir/$$lang/LC_MESSAGES; \
+	  dir=$(DESTDIR)$$destdir/$$lang/LC_MESSAGES; \
 	  dest=$$dir/$(GETTEXT_PACKAGE)$(INSTOBJEXT); \
 	  if test -r $$cat -o -r $$cat.m; then \
 	    echo $(MKINSTALLDIRS) $$dir; \
@@ -256,10 +254,10 @@ uninstall:
 	  cat=`basename $$cat`; \
 	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
 	  suffix="$$lang/LC_MESSAGES/$(GETTEXT_PACKAGE)$(INSTOBJEXT)"; \
-	  for f in $(install_prefix)$(localedir)/$$suffix \
-		   $(install_prefix)$(localedir)/$$suffix.m \
-		   $(install_prefix)$(gnulocaledir)/$$suffix \
-		   $(install_prefix)$(gnulocaledir)/$$suffix.m; do \
+	  for f in $(DESTDIR)$(localedir)/$$suffix \
+		   $(DESTDIR)$(localedir)/$$suffix.m \
+		   $(DESTDIR)$(gnulocaledir)/$$suffix \
+		   $(DESTDIR)$(gnulocaledir)/$$suffix.m; do \
 	    if [ -f $$f ]; then \
 	      echo rm -f $$f; \
 	           rm -f $$f; \

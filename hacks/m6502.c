@@ -15,6 +15,7 @@
 #include "screenhack.h"
 #include "analogtv.h"
 #include "asm6502.h"
+#include "doubletime.h"
 
 #include <string.h>
 
@@ -86,24 +87,6 @@ start_rand_bin_prog(machine_6502 *machine, struct state *st){
     n = random() % st->demos;
   st->which = n;
   m6502_start_eval_string(machine, demo_files[st->which], plot6502, st);
-}
-
-
-/*
- * double_time ()
- *
- * returns the current time as a floating-point value
- */
-static double double_time(void) {
-  struct timeval t;
-  double f;
-#if GETTIMEOFDAY_TWO_ARGS
-  gettimeofday(&t, NULL);
-#else
-  gettimeofday(&t);
-#endif
-  f = ((double)t.tv_sec) + t.tv_usec*1e-6;
-  return f;
 }
 
 static void *

@@ -128,9 +128,8 @@ typedef struct {
   Visual *gl_visual;
 
 # ifdef HAVE_WAYLAND
-  wayland_dpy  *wayland_dpy;
-  wayland_idle *wayland_idle;
-  wayland_dpms *wayland_dpms;
+  Bool have_wayland_p;
+  Bool have_wayland_idle_p;
 # endif
 
   conf_data *cdata;		/* private data for per-hack configuration */
@@ -139,9 +138,11 @@ typedef struct {
   Bool initializing_p;		/* flag for breaking recursion loops */
   Bool flushing_p;		/* flag for breaking recursion loops */
   Bool saving_p;		/* flag for breaking recursion loops */
+  Bool locking_supported_p;	/* Whether locking is possible */
   Bool dpms_supported_p;	/* Whether XDPMS is available */
   Bool dpms_partial_p;		/* Whether DPMS only supports "Off" */
   Bool grabbing_supported_p;	/* Whether "Grab Desktop" and "Fade" work */
+  const char *lock_why, *dpms_why, *grab_why;
 
   char *desired_preview_cmd;	/* subprocess we intend to run */
   char *running_preview_cmd;	/* subprocess we are currently running */
@@ -2184,6 +2185,7 @@ file_chooser (GtkWindow *parent, GtkEntry *entry, char **retP,
             fprintf (stderr, "%s:   chooser: default \"%s\"\n", blurb(), p2);
         }
       free (p2);
+      if (! gf) abort();
       g_object_unref (gf);
     }
 
@@ -2395,7 +2397,7 @@ server_current_hack (state *s)
                           &dataP)
       == Success
       && type == XA_INTEGER
-      && nitems >= 3
+      && nitems >= 4
       && dataP)
     {
       PROP32 *data = (PROP32 *) dataP;
@@ -2472,6 +2474,7 @@ populate_hack_list (state *s)
     {
       model = gtk_list_store_new (COL_LAST, G_TYPE_BOOLEAN, G_TYPE_STRING);
       g_object_set (G_OBJECT (list), "model", model, NULL);
+      if (! model) abort();
       g_object_unref (model);
 
       ren = gtk_cell_renderer_toggle_new ();
@@ -2576,16 +2579,20 @@ populate_prefs_page (state *s)
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
   saver_preferences *p = &s->prefs;
 
-  Bool can_lock_p = TRUE;
   Bool dpms_full_p;
+  char *lock_why = 0;
 
 # ifdef NO_LOCKING
-  can_lock_p = FALSE;
+  s->locking_supported_p = FALSE;
+  lock_why = _("Not compiled with support for locking");
 # endif
 
   if (s->backend == WAYLAND_BACKEND ||
       s->backend == XWAYLAND_BACKEND)
-    can_lock_p = FALSE;
+    {
+      s->locking_supported_p = FALSE;
+      lock_why = _("Locking not supported under Wayland");
+    }
 
   /* If there is only one screen, the mode menu contains
      "random" but not "random-same".
@@ -2750,9 +2757,17 @@ populate_prefs_page (state *s)
 
   /* Blanking and Locking
    */
-  SENSITIZE (lock_button,     can_lock_p);
-  SENSITIZE (lock_spinbutton, can_lock_p && p->lock_p);
-  SENSITIZE (lock_mlabel,     can_lock_p && p->lock_p);
+  SENSITIZE (lock_button,     s->locking_supported_p);
+  SENSITIZE (lock_spinbutton, s->locking_supported_p && p->lock_p);
+  SENSITIZE (lock_mlabel,     s->locking_supported_p && p->lock_p);
+
+  if (!s->locking_supported_p && lock_why)
+    {
+      gtk_widget_set_tooltip_text (win->lock_menuitem,   lock_why);
+      gtk_widget_set_tooltip_text (win->lock_button,     lock_why);
+      gtk_widget_set_tooltip_text (win->lock_spinbutton, lock_why);
+      gtk_widget_set_tooltip_text (win->lock_mlabel,     lock_why);
+    }
 
   /* DPMS
    */
@@ -2777,12 +2792,36 @@ populate_prefs_page (state *s)
                                s->grabbing_supported_p));
   SENSITIZE (fade_spinbutton, ((p->fade_p || p->unfade_p) &&
                                s->grabbing_supported_p));
+  SENSITIZE (grab_desk_button, (s->grabbing_supported_p));
 
 # undef SENSITIZE
 
   if (!s->dpms_supported_p)
-    gtk_frame_set_label (GTK_FRAME (win->dpms_frame),
-      _("Display Power Management (not supported by this display)"));
+    {
+      gtk_frame_set_label (GTK_FRAME (win->dpms_frame),
+        (s->dpms_why ? s->dpms_why :
+         _("Display Power Management (not supported by this display)")));
+    }
+  else if (s->dpms_partial_p)
+    {
+      const char *s1 = _("Wayland doesn't implement \"Standby\"");
+      const char *s2 = _("Wayland doesn't implement \"Suspend\"");
+      gtk_widget_set_tooltip_text (win->dpms_standby_label,      s1);
+      gtk_widget_set_tooltip_text (win->dpms_standby_mlabel,     s1);
+      gtk_widget_set_tooltip_text (win->dpms_standby_spinbutton, s1);
+      gtk_widget_set_tooltip_text (win->dpms_suspend_label,      s2);
+      gtk_widget_set_tooltip_text (win->dpms_suspend_mlabel,     s2);
+      gtk_widget_set_tooltip_text (win->dpms_suspend_spinbutton, s2);
+    }
+
+  if (!s->grabbing_supported_p && s->grab_why)
+    {
+      gtk_widget_set_tooltip_text (win->fade_button, s->grab_why);
+      gtk_widget_set_tooltip_text (win->unfade_button, s->grab_why);
+      gtk_widget_set_tooltip_text (win->fade_label, s->grab_why);
+      gtk_widget_set_tooltip_text (win->fade_spinbutton, s->grab_why);
+      gtk_widget_set_tooltip_text (win->grab_desk_button, s->grab_why);
+    }
 }
 
 
@@ -2937,7 +2976,8 @@ sensitize_menu_items (state *s, Bool force_p)
     }
 
   gtk_widget_set_sensitive (win->activate_menuitem, running_p);
-  gtk_widget_set_sensitive (win->lock_menuitem, running_p);
+  gtk_widget_set_sensitive (win->lock_menuitem, (running_p &&
+                                                 s->locking_supported_p));
   gtk_widget_set_sensitive (win->kill_menuitem, running_p);
 
   gtk_menu_item_set_label (GTK_MENU_ITEM (win->restart_menuitem),
@@ -4303,9 +4343,9 @@ the_network_is_not_the_computer (gpointer data)
       /* If we are in a state where the daemon won't work properly, pop up a
          dialog box explaining why.
        */
-      if (s->wayland_idle)
+      if (s->have_wayland_idle_p)
         ;   /* Connected to Wayland and can detect activity. */
-      else if (s->wayland_dpy)
+      else if (s->have_wayland_p)
         {
           /* Connected but the necessary extensions are missing. */
           warning_dialog (s->window, _("Warning"),
@@ -5045,10 +5085,16 @@ const gchar *accels[][2] = {
 static void
 xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
 {
-  GdkDisplay *gdpy = gdk_display_get_default();
   XScreenSaverWindow *win = XSCREENSAVER_WINDOW (self);
+  GdkDisplay *gdpy = gdk_display_get_default();
   state *s = &win->state;
   saver_preferences *p = &s->prefs;
+
+# ifdef HAVE_WAYLAND
+  wayland_dpy  *wayland_dpy;
+  wayland_idle *wayland_idle;
+  wayland_dpms *wayland_dpms;
+# endif
 
   s->initializing_p = TRUE;
   s->short_version = XSCREENSAVER_VERSION;
@@ -5142,9 +5188,9 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
   /* Connect to the Wayland server in the same way that xscreensaver
      and xscreensaver-gfx will, to see if blanking and DPMS will work.
   */
-  s->wayland_dpy  = wayland_dpy_connect();
-  s->wayland_idle = wayland_idle_init (s->wayland_dpy, NULL, NULL);
-  s->wayland_dpms = wayland_dpms_init (s->wayland_dpy);
+  wayland_dpy  = wayland_dpy_connect();
+  wayland_idle = wayland_idle_init (wayland_dpy, NULL, NULL);
+  wayland_dpms = wayland_dpms_init (wayland_dpy);
 # endif /* HAVE_WAYLAND */
 
   s->multi_screen_p = multi_screen_p (s->dpy);
@@ -5152,17 +5198,26 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
   /* Let's see if the server supports DPMS.
    */
   s->dpms_supported_p = FALSE;
-  s->dpms_partial_p   = TRUE;
+  s->dpms_partial_p   = FALSE;
 
 # ifdef HAVE_WAYLAND
-  if (s->wayland_dpms)
+  if (wayland_dpy)  s->have_wayland_p      = TRUE;
+  if (wayland_idle) s->have_wayland_idle_p = TRUE;
+
+  if (wayland_dpms)
     {
       s->dpms_supported_p = TRUE;
       s->dpms_partial_p   = TRUE;
     }
-  else if (s->wayland_dpy)
+  else if (wayland_dpy)
     {
+      char *desk = getenv ("XDG_CURRENT_DESKTOP");
       s->dpms_supported_p = FALSE;
+      if (desk && strcasestr (desk, "GNOME"))
+        s->dpms_why = _("Power management not supported by Wayland GNOME");
+      else
+        s->dpms_why =
+          _("Power management not supported by this Wayland display");
     }
   else
 # endif /* HAVE_WAYLAND */
@@ -5171,17 +5226,47 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
   {
     int op = 0, event = 0, error = 0;
     if (s->dpy && XQueryExtension (s->dpy, "DPMS", &op, &event, &error))
-      /* Technically this should also check DPMSCapable(), but this is
-         almost certainly close enough. */
-      s->dpms_supported_p = TRUE;
-    else if (s->debug_p)
-      fprintf (stderr, "%s: server does not support power management\n",
-               blurb());
+      {
+        /* Technically this should also check DPMSCapable(), but this is
+           almost certainly close enough. */
+        s->dpms_supported_p = TRUE;
+        s->dpms_partial_p   = FALSE;
+      }
+    else
+      {
+        s->dpms_why = _("Power management not supported by this X11 display");
+        if (s->debug_p)
+          fprintf (stderr, "%s: %s\n", blurb(), s->dpms_why);
+      }
   }
 # else  /* !HAVE_DPMS_EXTENSION */
   if (s->debug_p)
     fprintf (stderr, "%s: DPMS not supported at compile time\n", blurb());
 # endif /* !HAVE_DPMS_EXTENSION */
+
+# ifdef HAVE_WAYLAND
+  /* Disconnect from Wayland to release the wlr DPMS protocol, since,
+     stupidly, only one client can connect at a time and the daemon needs it.
+     It does not release until the Wayland display is fully shut down: merely
+     doing wayland_dpms_free() is insufficient.
+   */
+  if (wayland_dpms)
+    {
+      wayland_dpms_free (wayland_dpms);
+      wayland_dpms = 0;
+    }
+  if (wayland_idle)
+    {
+      wayland_idle_free (wayland_idle);
+      wayland_idle = 0;
+    }
+  if (wayland_dpy)
+    {
+      wayland_dpy_close (wayland_dpy);
+      wayland_dpy = 0;
+    }
+# endif /* !HAVE_WAYLAND */
+
 
 # if defined(__APPLE__) && !defined(HAVE_COCOA) && !defined(__OPTIMIZE__)
   s->dpms_supported_p = TRUE;  /* macOS X11: debugging kludge */
@@ -5197,24 +5282,30 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
     {
       const char *prog = "grim";
       char *desk = getenv ("XDG_CURRENT_DESKTOP");
-      if (desk &&
-          (strcasestr (desk, "GNOME") ||
-           strcasestr (desk, "KDE") ||
-           strcasestr (desk, "plasma")))
+      if (desk && strcasestr (desk, "GNOME"))
         {
           s->grabbing_supported_p = False;
+          s->grab_why =
+            _("Screenshots and fading not supported on Wayland GNOME");
           if (s->debug_p)
-            fprintf (stderr,
-                     "%s: screenshots and fading not supported on Wayland %s\n",
-                     blurb(), desk);
+            fprintf (stderr, "%s:  %s\n", blurb(), s->grab_why);
+        }
+      else if (desk && (strcasestr (desk, "KDE") ||
+                        strcasestr (desk, "plasma")))
+        {
+          s->grabbing_supported_p = False;
+          s->grab_why =
+            _("Screenshots and fading not supported on Wayland KDE");
+          if (s->debug_p)
+            fprintf (stderr, "%s:  %s\n", blurb(), s->grab_why);
         }
       else if (! on_path_p (prog))
         {
           s->grabbing_supported_p = False;
+          s->grab_why =
+            _("Screenshots and fading on Wayland require \"grim\"");
           if (s->debug_p)
-            fprintf (stderr,
-                     "%s: screenshots and fading on Wayland require \"%s\"\n",
-                     blurb(), prog);
+            fprintf (stderr, "%s:  %s\n", blurb(), s->grab_why);
         }
     }
 
@@ -5231,10 +5322,10 @@ xscreensaver_window_realize (GtkWidget *self, gpointer user_data)
 
   gtk_window_set_transient_for (GTK_WINDOW (s->dialog), GTK_WINDOW (win));
 
-  sensitize_menu_items (s, TRUE);
   populate_hack_list (s);
   populate_prefs_page (s);
   sensitize_demo_widgets (s, FALSE);
+  sensitize_menu_items (s, TRUE);
   scroll_to_current_hack (s);
   if (s->dpy && s->backend != WAYLAND_BACKEND)
     fix_preview_visual (s);

@@ -1,5 +1,4 @@
-/* hydrostat, Copyright (C) 2012 by Justin Windle
- * Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+/* hydrostat, Copyright © 2012-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +38,7 @@
 #include "colors.h"
 #include "sphere.h"
 #include "normals.h"
+#include "easing.h"
 #include "gltrackball.h"
 #include <ctype.h>
 
@@ -217,27 +217,6 @@ move_tentacle (squid *sq, tentacle *t)
 }
 
 
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-/* Squirty motion: fast acceleration, then fade. */
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.05;
-  GLfloat ease2 = 1-ease;
-  if      (r <= 0)     r = 0;
-  else if (r >= 1)     r = 1;
-  else if (r <= ease)  r =     ease  * ease_fn (r / ease);
-  else                 r = 1 - ease2 * ease_fn ((1 - r) / ease2);
-  return r;
-}
-
-
 static void
 move_squid (ModeInfo *mi, squid *sq)
 {
@@ -263,7 +242,7 @@ move_squid (ModeInfo *mi, squid *sq)
           sq->to.z = 250 - frand(500);
         }
 
-      r = sq->ratio > 0 ? ease_ratio (sq->ratio) : 0;
+      r = sq->ratio > 0 ? ease (EASE_IN_OUT_SINE, sq->ratio) : 0;
       sq->pos.x = sq->from.x + r * (sq->to.x - sq->from.x);
       sq->pos.y = sq->from.y + r * (sq->to.y - sq->from.y);
       sq->pos.z = sq->from.z + r * (sq->to.z - sq->from.z);

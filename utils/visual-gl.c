@@ -58,9 +58,27 @@ get_gl_visual (Screen *screen)
   EGLConfig egl_config = 0;
   int egl_major = -1, egl_minor = -1;
 
+  /* If you pass in a non-NULL EGLAttrib list to eglGetPlatformDisplay --
+     even one with no elements, that is, the single terminator { EGL_NONE } --
+     you get the error, "no matching EGL config for X11 visual 0x21".
+     So it is impossible for us to inform EGL which X11 screen number
+     is in use, for any weirdos still using Zaphod multi-head.
+   */
+# if 1
+  EGLAttrib *av = NULL;
+# else
+  EGLAttrib av[10];
+  int ac = 0;
+#  ifdef EGL_PLATFORM_X11_SCREEN_KHR
+  av[ac++] = EGL_PLATFORM_X11_SCREEN_KHR;
+  av[ac++] = (EGLAttrib) screen_number (screen);
+#  endif
+  av[ac] = EGL_NONE;
+#endif
+
   /* This is re-used, no need to close it. */
-  egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR,
-                                       (void *) dpy, NULL);
+  egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR, (void *) dpy, av);
+
   if (!egl_display)
     {
       fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);

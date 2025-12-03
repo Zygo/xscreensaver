@@ -1,4 +1,4 @@
-/* vfeedback, Copyright (c) 2018 Jamie Zawinski <jwz@jwz.org>
+/* vfeedback, Copyright © 2018-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,6 +25,8 @@
 
 #include "screenhack.h"
 #include "analogtv.h"
+#include "easing.h"
+#include "doubletime.h"
 
 #include <time.h>
 
@@ -150,25 +152,6 @@ vfeedback_init (Display *dpy, Window window)
 }
 
 
-static double
-ease_fn (double r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static double
-ease_ratio (double r)
-{
-  double ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 static XImage *
 grab_rectangle (struct state *st)
 {
@@ -190,7 +173,7 @@ grab_rectangle (struct state *st)
       double r = (st->svalue <    p ? st->svalue/p :
                   st->svalue >= 1-p ? (1-st->svalue)/p :
                   1);
-      double s = st->specular.s * ease_ratio (r * 2);
+      double s = st->specular.s * ease (EASE_IN_OUT_SINE, r * 2);
       XFillArc (st->dpy, st->pix, st->gc,
                 st->specular.x - s/2,
                 st->specular.y - s/2,
@@ -286,21 +269,6 @@ grab_rectangle (struct state *st)
 }
 
 
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
-
-
 static unsigned long
 vfeedback_draw (Display *dpy, Window window, void *closure)
 {
@@ -312,11 +280,14 @@ vfeedback_draw (Display *dpy, Window window, void *closure)
   switch (st->state) {
   case POWERUP: case IDLE: break;
   case MOVE:
-    st->rect.x  = st->orect.x  + st->dx  * ease_ratio (st->value);
-    st->rect.y  = st->orect.y  + st->dy  * ease_ratio (st->value);
-    st->rect.th = st->orect.th + st->dth * ease_ratio (st->value);
-    st->rect.w  = st->orect.w * (1 + (st->ds * ease_ratio (st->value)));
-    st->rect.h  = st->orect.h * (1 + (st->ds * ease_ratio (st->value)));
+    {
+      double v = ease (EASE_IN_OUT_SINE, st->value);
+      st->rect.x  = st->orect.x  + st->dx  * v;
+      st->rect.y  = st->orect.y  + st->dy  * v;
+      st->rect.th = st->orect.th + st->dth * v;
+      st->rect.w  = st->orect.w * (1 + (st->ds * v));
+      st->rect.h  = st->orect.h * (1 + (st->ds * v));
+    }
     break;
   default:
     abort();

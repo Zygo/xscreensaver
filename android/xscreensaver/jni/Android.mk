@@ -174,6 +174,8 @@ LOCAL_SRC_FILES += \
     utils/aligned_malloc.c \
     utils/colorbars.c \
     utils/colors.c \
+    utils/doubletime.c \
+    utils/easing.c \
     utils/erase.c \
     utils/font-retry.c \
     utils/grabclient.c \

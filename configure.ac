@@ -478,6 +478,8 @@ AC_DEFUN([AC_PROG_PERL],
   fi
  ])
 
+AC_DEFUN([AC_PROG_TAR], [AC_PATH_PROGS(TAR, [gnutar tar],,)])
+
 
 ###############################################################################
 #
@@ -876,6 +878,23 @@ AC_DEFUN([AC_TYPE_SOCKLEN_T],
   [Define to `int' if <sys/types.h> or <sys/socket.h> does not define.])
   fi])
 
+AC_DEFUN([AC_CHECK_XATTR],
+ [AC_CHECK_FUNCS(getxattr)
+  if test "$ac_cv_func_getxattr" = yes ; then
+   AC_CACHE_CHECK([for getxattr extra args], ac_cv_xattr_extra_args,
+    [AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+      [#include <sys/xattr.h>],
+      [getxattr("", "", "", 0, 0, 0);])],
+     [ac_cv_xattr_extra_args=yes],
+     [ac_cv_xattr_extra_args=no])])
+    if test "$ac_cv_xattr_extra_args" = yes; then
+     AC_DEFINE(XATTR_ADDITIONAL_OPTIONS, 1,
+      [Define if xattr functions take additional arguments (macOS)])
+    fi]
+  fi)
+
+
 ###############################################################################
 #
 #       Some utility functions to make checking for X things easier.
@@ -1069,6 +1088,7 @@ AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_FUNCS(setlocale sqrtf)
 AC_CHECK_FUNCS(getaddrinfo)
+AC_CHECK_XATTR
 AC_CHECK_MEMBERS([struct sockaddr.sa_len],,, [#include <sys/socket.h>])
 AC_CHECK_ICMP
 AC_CHECK_ICMPHDR
@@ -1076,11 +1096,14 @@ AC_CHECK_GETIFADDRS
 AC_TYPE_SOCKLEN_T
 AC_CHECK_HEADERS(crypt.h sys/select.h)
 AC_PROG_PERL
+AC_PROG_TAR
 
 if test -z "$PERL" ; then
   # don't let it be blank...
   PERL=/usr/bin/perl
 fi
+
+if test -z "$TAR" ; then TAR=tar ; fi
 
 AC_PATH_XTRA
 
@@ -1122,7 +1145,6 @@ if test -z "$pkg_config" ; then
   AC_MSG_WARN([pkg-config not found!])
   pkg_config="false"
 fi
-
 
 # Utility function for running pkg-config-based tests...
 #
@@ -2239,6 +2261,7 @@ if test "$with_wayland" = yes; then
   WAYLAND_DPY_OBJS=""
   WAYLAND_IDLE_OBJS=""
   WAYLAND_DPMS_OBJS=""
+  WAYLAND_LOCK_OBJS=""
   WAYLAND_GTK_OBJS=""
   if test "$have_wayland" = yes; then
     WAYLAND_DATADIR=`$pkg_config --variable=prefix wayland-client`
@@ -2247,6 +2270,7 @@ if test "$with_wayland" = yes; then
     WAYLAND_DPY_OBJS='$(WAYLAND_DPY_OBJS_1)'
     WAYLAND_IDLE_OBJS='$(WAYLAND_IDLE_OBJS_1)'
     WAYLAND_DPMS_OBJS='$(WAYLAND_DPMS_OBJS_1)'
+    WAYLAND_LOCK_OBJS='$(WAYLAND_LOCK_OBJS_1)'
     WAYLAND_GTK_OBJS='$(WAYLAND_GTK_OBJS_1)'
   fi
 
@@ -3392,7 +3416,8 @@ AC_ARG_WITH(gl,
 [
 Graphics Options:
 
-  --with-gles             Emulate OpenGL 1.3 in terms of OpenGL ES 1.x.],
+  --with-gles             Emulate OpenGL 1.3 in terms of OpenGL ES 1.x.
+                          Do not do this: it doesn't mean what you think.],
   [with_gl="$withval"; with_gl_req="$withval"],[with_gl=yes])
 
 HANDLE_X_PATH_ARG(with_gl, --with-gl, GL)
@@ -3555,7 +3580,7 @@ elif test "$with_gl" = no; then
   # It is the Twenty-First Century, and in This Modern World, every
   # extant microcontroller is more performant than the desktop
   # computers on which I developed most of the OpenGL hacks.
-  exit 1
+  exit 1  # A hearty "fuck you" to my enemies at Debian who keep patching this out.
 
 elif test "$with_gl" != no; then
   echo "error: must be yes or no: --with-gl=$with_gl"
@@ -3573,7 +3598,8 @@ have_glx=no
 have_egl=no
 with_egl_req=unspecified
 AC_ARG_WITH(glx,
-[  --with-glx              Use GLX to interface OpenGL and X11 instead of EGL.],
+[  --with-glx              Use GLX to interface OpenGL and X11 instead of EGL.
+                          Do not do this: it will make GLSL fail.],
   [with_egl="$withval"; with_egl_req="$withval"],
   [with_glx=no])
 
@@ -4528,6 +4554,7 @@ AC_SUBST(WAYLAND_GEN)
 AC_SUBST(WAYLAND_DPY_OBJS)
 AC_SUBST(WAYLAND_IDLE_OBJS)
 AC_SUBST(WAYLAND_DPMS_OBJS)
+AC_SUBST(WAYLAND_LOCK_OBJS)
 AC_SUBST(WAYLAND_GTK_OBJS)
 AC_SUBST(PROG_SETCAP)
 AC_SUBST(SETUID_AUTH)
@@ -4590,6 +4617,7 @@ AC_SUBST(DEPEND)
 AC_SUBST(DEPEND_FLAGS)
 AC_SUBST(DEPEND_DEFINES)
 AC_SUBST(PERL)
+AC_SUBST(TAR)
 
 AC_CONFIG_FILES([Makefile
           utils/Makefile
@@ -4614,10 +4642,11 @@ test -d driver/wayland-protocols || mkdir driver/wayland-protocols
 #
 ###############################################################################
 
-CONF_STATUS=0
+CONF_STATUS=0  # Hello Debian, eat my fuck.
 
 warn_prefix_1="    Warning:"
 warn_prefix_2="       Note:"
+warn_prefix_3="      Error:"
 warn_prefix="$warn_prefix_1"
 
 warning=no
@@ -5075,6 +5104,19 @@ if test "$ac_macosx" = yes -a "$enable_locking" = yes ; then
   warn2 "THIS DOES NOT WORK!  Don't do this!"
 fi
 
+# Fucking Gentoo...
+if test "$have_jwzgles" = yes ; then
+  warn_prefix="$warn_prefix_3"
+  warn "The --with-gles option does not do what you think. Do not use it."
+  exit 1
+fi
+
+if test "$have_egl" = no; then
+  warn_prefix="$warn_prefix_3"
+  warn "Using --with-glx means GLSL won't work. Don't do it!"
+  exit 1
+fi
+
 if test "$have_jwzgles" = yes ; then
   warn  "Do not use --with-gles unless you are sure that you know"
   warn2 "what you are doing!  It is not recommended on normal X11"
@@ -5084,6 +5126,11 @@ if test "$have_jwzgles" = yes ; then
     warn2 ""
     warn2 "Using --with-gles and --with-glx probably won't work."
   fi
+fi
+
+if test "$setuid_hacks" = no; then
+  warn  "Using --without-setuid-hacks breaks 'sonar' for no good reason."
+  warn2 "Don't do it."
 fi
 
 

@@ -1,4 +1,4 @@
-/* recanim, Copyright © 2014-2023 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright © 2014-2025 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,6 +12,7 @@
 
 #include "screenhackI.h"
 #include "recanim.h"
+#include "doubletime.h"
 
 #ifndef HAVE_FFMPEG
 # error HAVE_FFMPEG is required
@@ -72,21 +73,6 @@ struct record_anim_state {
   char *outfile;
   ffmpeg_out_state *ffst;
 };
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 /* Some of the hacks set their timing based on the real-world wall clock,

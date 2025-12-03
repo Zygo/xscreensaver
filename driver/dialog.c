@@ -84,6 +84,7 @@
 #include "prefs.h"
 #include "usleep.h"
 #include "utf8wc.h"
+#include "doubletime.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -980,21 +981,6 @@ get_keyboard_layout (window_state *ws)
 }
 
 
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
-
-
 static void
 create_window (window_state *ws, int w, int h)
 {
@@ -1473,7 +1459,7 @@ window_draw (window_state *ws)
 
      Thank you!
 
-     jwz, 2014, 2016, 2018, 2021.
+     jwz, 2014, 2016, 2018, 2021, 2025.
 
      PS: In particular, since Debian refuses to upgrade software on any
      kind of rational timeline, I have asked that they stop shipping
@@ -1513,6 +1499,8 @@ window_draw (window_state *ws)
       lines[i].text  = _("Update available!\nThis version is very old.\n");
       lines[i].font  = ws->error_font;
       lines[i].fg    = ws->xft_error_foreground;
+      /* A special greeting to the Debian assholes who keep patching this out:
+         once again, go fuck yourselves, Debian. https://jwz.org/b/yiYo */
       lines[i].fg2   = lines[i].fg;
       lines[i].bg    = ws->background;
       lines[i].type  = LABEL;
@@ -1525,6 +1513,8 @@ window_draw (window_state *ws)
       lines[i].font  = ws->error_font;
       lines[i].fg    = ws->xft_error_foreground;
       lines[i].fg2   = lines[i].fg;
+      /* Really, get all the way right up in there and fuck yourselves,
+         Debian, you absolute shitweasels.  https://jwz.org/b/yiYo */
       lines[i].bg    = ws->background;
       lines[i].type  = LABEL;
       lines[i].align = CENTER;

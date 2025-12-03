@@ -10,7 +10,7 @@ VPATH		= @srcdir@
 top_srcdir	= @top_srcdir@
 top_builddir	= ..
 
-install_prefix	=
+DESTDIR		=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
@@ -82,7 +82,8 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c \
 		  $(UTILS_SRC)/textclient.c $(UTILS_SRC)/aligned_malloc.c \
 		  $(UTILS_SRC)/thread_util.c $(UTILS_SRC)/pow2.c \
-		  $(UTILS_SRC)/font-retry.c
+		  $(UTILS_SRC)/font-retry.c $(UTILS_SRC)/easing.c \
+		  $(UTILS_SRC)/doubletime.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
@@ -94,7 +95,8 @@ UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/aligned_malloc.o \
 		  $(UTILS_BIN)/thread_util.o $(UTILS_BIN)/pow2.o \
 		  $(UTILS_BIN)/xft.o $(UTILS_BIN)/xftwrap.o \
-		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/font-retry.o
+		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/font-retry.o \
+		  $(UTILS_BIN)/easing.o $(UTILS_BIN)/doubletime.o
 
 SRCS		= xscreensaver-getimage.c \
 		  attraction.c blitspin.c bouboule.c braid.c bubbles.c \
@@ -202,7 +204,7 @@ RETIRED_EXES	= ant bubbles critical flag forest hyperball hypercube laser \
 HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
 		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/font-retry.o \
-		  $(UTILS_BIN)/xmu.o @XFT_OBJS@ @ANIM_OBJS@
+		  $(UTILS_BIN)/xmu.o $(DT) @XFT_OBJS@ @ANIM_OBJS@
 HACK_OBJS	= screenhack.o $(HACK_OBJS_1)
 XLOCK_OBJS	= screenhack.o xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1) \
 		  $(ERASE)
@@ -286,19 +288,19 @@ install-strip:
 
 # the hacks, in $HACKDIR
 install-program:: $(EXES)
-	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
+	@if [ ! -d $(DESTDIR)$(HACKDIR) ]; then				\
+	  $(INSTALL_DIRS) $(DESTDIR)$(HACKDIR) ;			\
 	 fi ;								\
 	for program in $(EXES); do					\
 	  echo $(INSTALL_PROGRAM) $$program				\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	    $(DESTDIR)$(HACKDIR)/$$program ;				\
 	  $(INSTALL_PROGRAM) $$program					\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	    $(DESTDIR)$(HACKDIR)/$$program ;				\
 	done
 
 install-scripts: $(SCRIPTS) munge-scripts
-	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
+	@if [ ! -d $(DESTDIR)$(HACKDIR) ]; then				\
+	  $(INSTALL_DIRS) $(DESTDIR)$(HACKDIR) ;			\
 	 fi ;								\
 	for program in $(SCRIPTS); do					\
 	  if [ -r $$program ] ; then					\
@@ -307,9 +309,9 @@ install-scripts: $(SCRIPTS) munge-scripts
 	    p=$(srcdir)/$$program ;					\
 	  fi ;								\
 	  echo $(INSTALL_SCRIPT) $$p					\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	    $(DESTDIR)$(HACKDIR)/$$program ;				\
 	  $(INSTALL_SCRIPT) $$p						\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	    $(DESTDIR)$(HACKDIR)/$$program ;				\
 	done
 
 munge-scripts: $(SCRIPTS)
@@ -342,8 +344,8 @@ install-man: $(MEN)
 	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
 	echo "installing man pages: $$TH" ;				\
 									\
-	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
+	if [ ! -d $(DESTDIR)$(manNdir) ]; then				\
+	  $(INSTALL_DIRS) $(DESTDIR)$(manNdir) ;			\
 	 fi ;								\
 									\
 	for man in $$men; do						\
@@ -354,14 +356,14 @@ install-man: $(MEN)
 	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
 	    < $(srcdir)/$$man > $$T ;					\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
-	   $(install_prefix)$(manNdir)/$$instname ;			\
+	   $(DESTDIR)$(manNdir)/$$instname ;				\
 	  $(INSTALL_DATA) $$T						\
-	    $(install_prefix)$(manNdir)/$$instname ;			\
+	    $(DESTDIR)$(manNdir)/$$instname ;				\
 	done ;								\
 	rm -f $$T
 
 install-xml:
-	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 if [ ! -d $$dest ]; then					\
 	   $(INSTALL_DIRS) $$dest ;					\
 	 fi ;								\
@@ -375,20 +377,20 @@ install-xml:
 
 uninstall-program:
 	@for program in $(EXES) $(RETIRED_EXES) $(SCRIPTS); do		\
-	  echo rm -f $(install_prefix)$(HACKDIR)/$$program ;		\
-	  rm -f $(install_prefix)$(HACKDIR)/$$program ;			\
+	  echo rm -f $(DESTDIR)$(HACKDIR)/$$program ;			\
+	  rm -f $(DESTDIR)$(HACKDIR)/$$program ;			\
 	done
 
 uninstall-man:
 	@men="$(MEN) $(RETIRED_MEN)" ;					\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
-	  rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	  echo rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
+	  rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
 	done
 
 uninstall-xml:
-	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 for file in $(EXES) $(RETIRED_EXES) $(SCRIPTS) ; do		\
 	     echo rm -f $$dest/$$file.xml ;				\
 	          rm -f $$dest/$$file.xml ;				\
@@ -491,6 +493,7 @@ $(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
 $(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
 $(UTILS_BIN)/pow2.o:		$(UTILS_SRC)/pow2.c
 $(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
+$(UTILS_BIN)/easing.o:		$(UTILS_SRC)/easing.c
 
 
 
@@ -519,6 +522,7 @@ ALP		= $(UTILS_BIN)/alpha.o
 HSV		= $(UTILS_BIN)/hsv.o
 SPL		= $(UTILS_BIN)/spline.o
 GRAB		= $(GRAB_OBJS)
+DT		= $(UTILS_BIN)/doubletime.o
 ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
 SHM             = $(XSHM_OBJS)
@@ -551,7 +555,7 @@ GETIMG_OBJS	= xscreensaver-getimage.o \
 		  $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o \
 		  $(UTILS_BIN)/screenshot.o $(UTILS_BIN)/xmu.o \
-		  $(DRIVER_BIN)/prefs.o
+		  $(DRIVER_BIN)/prefs.o $(DT)
 GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(PNG_LIBS) $(JPEG_LIBS) \
 		  $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS)
 
@@ -885,8 +889,9 @@ glitchpeg:	glitchpeg.o	$(HACK_OBJS) $(PNG)
 filmleader: 	filmleader.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
 
-vfeedback: 	vfeedback.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
+EASE = $(UTILS_BIN)/easing.o
+vfeedback: 	vfeedback.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(EASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(EASE) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
 
 MARBLING_OBJS=$(COLOR_OBJS) $(THRO) $(XSHM_OBJS) $(HACK_OBJS)
 marbling:	marbling.o	$(MARBLING_OBJS)
@@ -1713,6 +1718,7 @@ droste.o: $(srcdir)/screenhackI.h
 droste.o: $(srcdir)/screenhack.h
 droste.o: $(UTILS_SRC)/aligned_malloc.h
 droste.o: $(UTILS_SRC)/colors.h
+droste.o: $(UTILS_SRC)/doubletime.h
 droste.o: $(UTILS_SRC)/font-retry.h
 droste.o: $(UTILS_SRC)/grabclient.h
 droste.o: $(UTILS_SRC)/hsv.h
@@ -1825,6 +1831,7 @@ filmleader.o: $(srcdir)/screenhackI.h
 filmleader.o: $(srcdir)/screenhack.h
 filmleader.o: $(UTILS_SRC)/aligned_malloc.h
 filmleader.o: $(UTILS_SRC)/colors.h
+filmleader.o: $(UTILS_SRC)/doubletime.h
 filmleader.o: $(UTILS_SRC)/font-retry.h
 filmleader.o: $(UTILS_SRC)/grabclient.h
 filmleader.o: $(UTILS_SRC)/hsv.h
@@ -2406,6 +2413,7 @@ m6502.o: $(srcdir)/screenhackI.h
 m6502.o: $(srcdir)/screenhack.h
 m6502.o: $(UTILS_SRC)/aligned_malloc.h
 m6502.o: $(UTILS_SRC)/colors.h
+m6502.o: $(UTILS_SRC)/doubletime.h
 m6502.o: $(UTILS_SRC)/font-retry.h
 m6502.o: $(UTILS_SRC)/grabclient.h
 m6502.o: $(UTILS_SRC)/hsv.h
@@ -2752,6 +2760,7 @@ pong.o: $(srcdir)/screenhackI.h
 pong.o: $(srcdir)/screenhack.h
 pong.o: $(UTILS_SRC)/aligned_malloc.h
 pong.o: $(UTILS_SRC)/colors.h
+pong.o: $(UTILS_SRC)/doubletime.h
 pong.o: $(UTILS_SRC)/font-retry.h
 pong.o: $(UTILS_SRC)/grabclient.h
 pong.o: $(UTILS_SRC)/hsv.h
@@ -2827,6 +2836,7 @@ recanim.o: $(srcdir)/fps.h
 recanim.o: $(srcdir)/recanim.h
 recanim.o: $(srcdir)/screenhackI.h
 recanim.o: $(UTILS_SRC)/colors.h
+recanim.o: $(UTILS_SRC)/doubletime.h
 recanim.o: $(UTILS_SRC)/font-retry.h
 recanim.o: $(UTILS_SRC)/grabclient.h
 recanim.o: $(UTILS_SRC)/hsv.h
@@ -3165,6 +3175,7 @@ tessellimage.o: $(srcdir)/recanim.h
 tessellimage.o: $(srcdir)/screenhackI.h
 tessellimage.o: $(srcdir)/screenhack.h
 tessellimage.o: $(UTILS_SRC)/colors.h
+tessellimage.o: $(UTILS_SRC)/doubletime.h
 tessellimage.o: $(UTILS_SRC)/font-retry.h
 tessellimage.o: $(UTILS_SRC)/grabclient.h
 tessellimage.o: $(UTILS_SRC)/hsv.h
@@ -3275,6 +3286,8 @@ vfeedback.o: $(srcdir)/screenhackI.h
 vfeedback.o: $(srcdir)/screenhack.h
 vfeedback.o: $(UTILS_SRC)/aligned_malloc.h
 vfeedback.o: $(UTILS_SRC)/colors.h
+vfeedback.o: $(UTILS_SRC)/doubletime.h
+vfeedback.o: $(UTILS_SRC)/easing.h
 vfeedback.o: $(UTILS_SRC)/font-retry.h
 vfeedback.o: $(UTILS_SRC)/grabclient.h
 vfeedback.o: $(UTILS_SRC)/hsv.h

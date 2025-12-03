@@ -1,4 +1,4 @@
-/* cubestack, Copyright (c) 2016 Jamie Zawinski <jwz@jwz.org>
+/* cubestack, Copyright © 2016-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,6 +20,7 @@
 #include "colors.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "easing.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -120,25 +121,6 @@ draw_face (ModeInfo *mi)
 }
 
 
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 static int
 draw_cube_1 (ModeInfo *mi, GLfloat state, GLfloat color[4], Bool bottom_p)
 {
@@ -147,7 +129,7 @@ draw_cube_1 (ModeInfo *mi, GLfloat state, GLfloat color[4], Bool bottom_p)
   GLfloat r = state - istate;
   GLfloat a = color[3];
 
-  r = ease_ratio (r);
+  r = ease (EASE_IN_OUT_SINE, r);
 
 # define COLORIZE(R) \
       color[3] = a * R; \

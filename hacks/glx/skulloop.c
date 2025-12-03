@@ -1,4 +1,4 @@
-/* skulloop, Copyright © 2023-2024 Jamie Zawinski <jwz@jwz.org>
+/* skulloop, Copyright © 2023-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,6 +30,7 @@
 #include "gltrackball.h"
 #include "gllist.h"
 #include "texfont.h"
+#include "easing.h"
 
 #ifdef USE_GL /* whole file */
 
@@ -215,25 +216,6 @@ draw_obj (ModeInfo *mi, obj *o)
 }
 
 
-static double
-ease_fn (double r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static double
-ease_ratio (double r)
-{
-  double ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 static void
 draw_objs (ModeInfo *mi)
 {
@@ -242,7 +224,7 @@ draw_objs (ModeInfo *mi)
   obj cur;
   GLfloat s;
   int i;
-  GLfloat r = ease_ratio (bp->ratio);
+  GLfloat r = ease (EASE_IN_OUT_SINE, bp->ratio);
 
   cur.id = -1;
 # undef R

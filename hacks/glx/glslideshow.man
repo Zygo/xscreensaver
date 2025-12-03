@@ -9,22 +9,20 @@ glslideshow \- slideshow of images using smooth zooming and fades
 [\-\-root]
 [\-\-window\-id \fInumber\fP]
 [\-\-duration \fIseconds\fP]
-[\-\-zoom \fIpercent\fP]
+[\-\-transition \fIseconds\fP]
 [\-\-pan \fIseconds\fP]
 [\-\-fade \fIseconds\fP]
-[\-\-titles]
 [\-\-letterbox | \-\-clip]
+[\-\-zoom \fIpercent\fP]
+[\-\-titles]
 [\-\-delay \fIusecs\fP]
 [\-\-fps]
+[\-\-verbose]
 [\-\-debug]
 [\-\-wireframe]
-[\-\-cutoff \fIint\fP]
 .SH DESCRIPTION
-Loads a random sequence of images and smoothly scans and zooms around
-in each, fading from pan to pan.  
-
-This program requires a good video card capable of supporting large
-textures.
+Displays a slideshow of images, with panning, zooming and crossfading
+effects.
 
 To specify the directory that images are loaded from, run
 .BR xscreensaver\-settings (1)
@@ -48,58 +46,50 @@ Draw on the specified window.
 How long each image will be displayed before loading a new one.
 Default 30 seconds.
 .TP 8
+.B \-\-transition \fIseconds\fP
+When a new image is loaded, it transitions onto the screen by sliding
+in from the edges, spinning or flipping.  This is how long that transition
+takes.  Set it to 0 to disable the transition effects.  Default 3 seconds.
+.TP 8
 .B \-\-pan \fIseconds\fP
-How long each pan-and-zoom should last.  Default 6 seconds.
-
-With the default settings of \fI\-\-pan 6 \-\-duration 30\fP, each image
-will be displayed five times (30/6), and then a new image will be loaded.
-If you want a new image to be loaded at each fade, then set \fI\-\-pan\fP
-and \fI\-\-duration\fP to the same value.
+Once an image has been loaded, it is panned, zoomed and cross-faded against
+itself.  This is how fast those pans are.  Set this to 0 to disable the
+panning-and-crossfading effect.  Default 6 seconds.
 .TP 8
 .B \-\-fade \fIseconds\fP
-How long each cross-fade between images should last.  Default 2 seconds.
-If set to 0, then no cross-fading will be done (all transitions
-will be jump-cuts.)
-
-Note that fades are included in the pan time, so \fI\-\-fade\fP cannot
-be larger than \fI\-\-pan\fP.
-.TP 8
-.B \-\-zoom \fInumber\fP
-Amount to zoom and pan as a percentage. Default: 75, meaning that
-75% or more of each image will always be visible.  If set to 100%,
-then the images will always fill the screen, and no panning or 
-zooming will occur.  (Images will still smoothly fade from one
-to another if \fI\-\-fade\fP is non-zero.)
-.TP 8
-.B \-\-titles
-Whether to print the file name of the current image in the upper left corner.
+When zooming and cross-fading, this is how long the "fade" portion takes.
+This value must be less than the "pan" option (it is inclusive).
+Set this to 0 to disable the panning-and-crossfading effect.
+Default 2 seconds.
 .TP 8
 .B \-\-letterbox
-In "letterbox" mode, when an image is not the same aspect ratio as the screen,
-black bars will appear at the top/bottom or left/right so that the whole
-image can be displayed.  This is the default.
+Whether to fit the image on the screen (adding horizontal or vertical
+black bars) or to fill the screen (cropping the image).  This is
+the default.
 .TP 8
 .B \-\-clip
-In "clip" mode, when an image is not the same aspect ratio as the screen,
-we will zoom in further until the image takes up the whole screen.
-This is the opposite of \fI\-\-letterbox\fP.
+The opposite of \fB\-\-letterbox\fP.
+.TP 8
+.B \-\-zoom \fInumber\fP
+Zoom in on the image a little bit.  This applies both to "transitions" and to
+"panning-and-crossfading". Default: 75, meaning that 75% or more of each image
+will always be visible.  If you always want to see 100% of every image, then
+use "letterbox" and set "zoom" to 100%.
+.TP 8
+.B \-\-titles
+Whether to show the file name of the current image in the upper left corner.
 .TP 8
 .B \-\-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
 .TP 8
 .B \-\-fps
 Display the current frame rate, CPU load, and polygon count.
 .TP 8
-.B \-\-cutoff \fInumber\fP
-If the frame rate we are achieving is lower than this, then panning,
-fading, and zooming will be disabled.  Default 5 FPS.
-
-The idea here is that if your machine can't maintain a decent frame
-rate, then it must not have fast 3D hardware, so we might as well
-behave in a simpler manner.  Set this to 0 to disable this check.
+.B \-\-verbose
+Prints debugging info to stderr.
 .TP 8
 .B \-\-debug
-Prints debugging info to stderr.
+Draw some diagnostic rectangles.
 .TP 8
 .B \-\-wireframe
 Another debug mode.
@@ -123,16 +113,12 @@ The window ID to use with \fI\-\-root\fP.
 .BR carousel (MANSUFFIX)
 .BR photopile (MANSUFFIX)
 .SH COPYRIGHT
-Copyright \(co 2003-2005 by Jamie Zawinski, based on an earlier version
-that was
-Copyright \(co 2002 by Mike Oliphant.
-
-Permission to use, copy, modify, distribute, and sell this software and
-its documentation for any purpose is hereby granted without fee,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation.  No representations are made about the
-suitability of this software for any purpose.  It is provided "as is"
-without express or implied warranty.
+Copyright \(co 2003-2025 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
 .SH AUTHOR
-Jamie Zawinski and Mike Oliphant.
+Jamie Zawinski.

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2016-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2016-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -51,6 +51,7 @@
 #include "textclient.h"
 #include "grabclient.h"
 #include "pow2.h"
+#include "doubletime.h"
 
 
 #undef countof
@@ -714,24 +715,6 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
 
 #undef DEBUG_FPS
-
-#ifdef DEBUG_FPS
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
-
-#endif
 
 // Animates a single frame of the current hack.
 //

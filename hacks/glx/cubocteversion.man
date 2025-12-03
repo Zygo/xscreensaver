@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-cubocteversion - Displays a cuboctahedron eversion.
+cubocteversion \- Displays a cuboctahedron eversion.
 .SH SYNOPSIS
 .B cubocteversion
 [\-\-display \fIhost:display.screen\fP]

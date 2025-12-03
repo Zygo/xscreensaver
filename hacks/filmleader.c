@@ -1,4 +1,4 @@
-/* filmleader, Copyright (c) 2018-2019 Jamie Zawinski <jwz@jwz.org>
+/* filmleader, Copyright © 2018-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,6 +13,7 @@
 
 #include "screenhack.h"
 #include "analogtv.h"
+#include "doubletime.h"
 
 #include <time.h>
 
@@ -129,21 +130,6 @@ filmleader_init (Display *dpy, Window window)
   if (s) free (s);
 
   return st;
-}
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
 }
 
 

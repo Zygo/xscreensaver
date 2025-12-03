@@ -38,6 +38,7 @@
 #include "xlockmore.h"
 #include "ximage-loader.h"
 #include "texfont.h"
+#include "easing.h"
 #include "../images/gen/oceantiles_12_png.h"
 
 #ifdef USE_GL /* whole file */
@@ -1165,25 +1166,6 @@ init_map (ModeInfo *mi)
 }
 
 
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 ENTRYPOINT void
 draw_map (ModeInfo *mi)
 {
@@ -1334,7 +1316,7 @@ draw_map (ModeInfo *mi)
                 th0 += M_PI*2;
             }
 
-          th2 = th0 + (th1 - th0) * ease_ratio (bp->heading_ratio);
+          th2 = th0 + (th1 - th0) * ease (EASE_IN_OUT_SINE, bp->heading_ratio);
           bp->heading[2].x = sin (th2);
           bp->heading[2].y = cos (th2);
         }

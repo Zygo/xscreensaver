@@ -8,6 +8,17 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 6.13</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.13.dmg</link>
+   <description><![CDATA[&bull; Added a number of historical full chess games to `endgame`. <BR>&bull; Rewrote `glslideshow' to add more image-transition effects. <BR>&bull; Hacks that display images and their filenames will display their titles intead, if the image originated in an RSS feed (or has the "user.dublincore.title" xattr). ]]></description>
+   <pubDate>Tue, 02 Dec 2025 17:09:25 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.13.dmg"
+    sparkle:version="6.13"
+    sparkle:edSignature="zQn7puQXjOWX0VQ05W9IUETdCkfAWOtugFaeqKnWT5E4d5+GCV1Aq6DMSOMqXzKjisKCXcsqAz5duVp7P8/kDw=="
+    length="102813232"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 6.10</title>
    <link>https://www.jwz.org/xscreensaver/xscreensaver-6.10.dmg</link>
    <description><![CDATA[&bull; New hacks, `dumpsterfire', `hopffibration', `platonicfolding' and `klondike'. <BR>&bull; Rewrote the VT100 emulator for 'apple2' and 'phosphor'. Supports inverse and DEC Special Graphics. <BR>&bull; BSOD supports systemd and bitlocker. ]]></description>

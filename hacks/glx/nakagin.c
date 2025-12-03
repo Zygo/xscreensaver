@@ -1,4 +1,4 @@
-/* nakagin, Copyright © 2022 Jamie Zawinski <jwz@jwz.org>
+/* nakagin, Copyright © 2022-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,9 @@
 #include "colors.h"
 #include "rotator.h"
 #include "normals.h"
+#include "easing.h"
 #include "gltrackball.h"
+#include "doubletime.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -113,21 +115,6 @@ static argtype vars[] = {
 
 ENTRYPOINT ModeSpecOpt nakagin_opts = {
   countof(opts), opts, countof(vars), vars, NULL };
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 static void
@@ -934,25 +921,6 @@ draw_capsule (ModeInfo *mi, capsule *c, GLfloat y)
 
 
 static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
-static GLfloat
 max_stack_height (ModeInfo *mi)
 {
   nakagin_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -1089,7 +1057,7 @@ move_capsules (ModeInfo *mi)
                   moving++;
                 c->ratio += slide_speed * c->speed;
                 if (bp->ffwd) c->ratio = 1;
-                r = ease_ratio (c->ratio);
+                r = ease (EASE_IN_OUT_SINE, c->ratio);
                 c->pos.x = c->start_pos.x + r * (c->end_pos.x - c->start_pos.x);
                 c->pos.y = c->start_pos.y + r * (c->end_pos.y - c->start_pos.y);
                 c->pos.z = c->start_pos.z + r * (c->end_pos.z - c->start_pos.z);
@@ -1254,7 +1222,7 @@ move_capsules (ModeInfo *mi)
           GLfloat r;
           t->ratio += slide_speed * t->speed;
           if (bp->ffwd) t->ratio = 1;
-          r = ease_ratio (t->ratio);
+          r = ease (EASE_IN_OUT_SINE, t->ratio);
           t->pos.x = t->start_pos.x + r * (t->end_pos.x - t->start_pos.x);
           t->pos.y = t->start_pos.y + r * (t->end_pos.y - t->start_pos.y);
           t->pos.z = t->start_pos.z + r * (t->end_pos.z - t->start_pos.z);

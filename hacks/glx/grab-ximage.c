@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Modified by Richard Weeks <rtweeks21@gmail.com> Copyright (c) 2020
  *
@@ -18,6 +18,7 @@
 #include "pow2.h"
 #include "visual.h"
 #include "xshm.h"
+#include "doubletime.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -484,23 +485,6 @@ struct texture_loader_t {
   int stripes;      /* number of stripes put into the texture so far */
   double loaded_time, work_seconds;
 };
-
-
-/* Returns the current time in seconds as a double.
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 /* Loads the given XImage into GL's texture memory.

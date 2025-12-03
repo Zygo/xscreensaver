@@ -1,5 +1,5 @@
 /* dymaxionmap --- Buckminster Fuller's unwrapped icosahedral globe.
- * Copyright © 2016-2022 Jamie Zawinski.
+ * Copyright © 2016-2025 Jamie Zawinski.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -31,6 +31,8 @@
 
 #include "sphere.h"
 #include "normals.h"
+#include "easing.h"
+#include "doubletime.h"
 #include "texfont.h"
 #include "dymaxionmap-coords.h"
 
@@ -154,21 +156,6 @@ typedef struct {
 
 
 static planetstruct *planets = NULL;
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 /* Draw faint latitude and longitude lines into the RGBA XImage.
@@ -1494,25 +1481,6 @@ init_planet (ModeInfo * mi)
 }
 
 
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.35;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 ENTRYPOINT void
 draw_planet (ModeInfo * mi)
 {
@@ -1696,7 +1664,7 @@ draw_planet (ModeInfo * mi)
     case STEL_IN:  fold_ratio = 1; stel_ratio = gp->ratio; break;
     case STEL_OUT: fold_ratio = 1; stel_ratio = 1 - gp->ratio; break;
     case STARTUP:      /* Tilt in from flat */
-      glRotatef (-90 * ease_ratio (1 - gp->ratio), 1, 0, 0);
+      glRotatef (-90 * ease (EASE_IN_OUT_SINE, 1 - gp->ratio), 1, 0, 0);
       break;
 
     default: break;
@@ -1704,7 +1672,7 @@ draw_planet (ModeInfo * mi)
 
 # ifdef HAVE_MOBILE  /* Enlarge the icosahedron a bit to make it more visible */
     {
-      GLfloat s = 1 + 1.3 * ease_ratio (fold_ratio);
+      GLfloat s = 1 + 1.3 * ease (EASE_IN_OUT_SINE, fold_ratio);
       glScalef (s, s, s);
     }
 # endif
@@ -1712,11 +1680,13 @@ draw_planet (ModeInfo * mi)
     if (gp->state == SPIN)
       {
         align_axis (mi, 0);
-        glRotatef (ease_ratio (gp->ratio) * 360 * 3, 0, 0, 1);
+        glRotatef (ease (EASE_IN_OUT_SINE, gp->ratio) * 360 * 3, 0, 0, 1);
         align_axis (mi, 1);
       }
 
-    draw_triangles (mi, ease_ratio (fold_ratio), ease_ratio (stel_ratio));
+    draw_triangles (mi,
+                    ease (EASE_IN_OUT_SINE, fold_ratio),
+                    ease (EASE_IN_OUT_SINE, stel_ratio));
 
     if (gp->state == AXIS)
       draw_axis(mi);

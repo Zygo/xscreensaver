@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 6.12
+%define	version 6.13
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -33,7 +33,7 @@ BuildRequires:	libXxf86vm-devel
 BuildRequires:	xorg-x11-proto-devel
 BuildRequires:	mesa-libGL-devel
 BuildRequires:	mesa-libGLU-devel
-#BuildRequires:	libgle-devel
+BuildRequires:	libgle-devel
 BuildRequires:	pam-devel
 BuildRequires:	systemd-devel
 BuildRequires:	gtk3-devel
@@ -50,6 +50,8 @@ Requires: /etc/pam.d/system-auth
 #Requires: desktop-backgrounds-basic
 Requires: xdg-utils
 Requires: systemd-libs
+Requires: perl
+Requires: (attr or xattr)
 
 Provides: xscreensaver
 

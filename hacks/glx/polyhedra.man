@@ -92,7 +92,7 @@ Select a new polyhedron at random.
 .B + \fIor\fP >
 Select the next-higher-numbered polyhedron.
 .TP 12
-.B - \fIor\fP <
+.B \- \fIor\fP <
 Select the next-lower-numbered polyhedron.
 .TP 12
 .B ESC \fIor\fP ^C

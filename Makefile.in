@@ -14,10 +14,22 @@ TARFILES	= README README.hacking INSTALL \
 		  install-sh config.guess config.rpath aclocal.m4 \
 		  ax_pthread.m4 config.sub \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
-		  xscreensaver.spec
+		  xscreensaver.spec $(DEBFILES)
 
-TAR		= gnutar
-TAR_ARGS	= --owner=0 --group=0 --posix --no-acls --no-xattrs --no-selinux
+DEBFILES	= debian/changelog \
+		  debian/control \
+		  debian/copyright \
+		  debian/docs \
+		  debian/postinst \
+		  debian/prerm \
+		  debian/README \
+		  debian/rules \
+		  debian/source/format \
+		  debian/watch
+
+TAR		= @TAR@
+TAR_ARGS	= -v --owner=0 --group=0 --posix --no-acls --no-xattrs --no-selinux
+TAR_DIR		= archive
 
 
 # Using $(MAKE) directly means the shell executes things even with "make -n"
@@ -83,7 +95,8 @@ _tar:
   NAME="xscreensaver-$$VERS" ;						    \
   rm -rf $$NAME ; ln -s . $$NAME ;					    \
   LIST="tar$$$$.txt" ;							    \
-  ADIR=archive/ ;							    \
+  ADIR="$(TAR_DIR)" ;							    \
+  [ -d "$$ADIR" ] || mkdir "$$ADIR" ;					    \
   rm -f "$$LIST" ;							    \
   for subdir in . $(SUBDIRS2) ; do					    \
     ( cd $$subdir ;							    \
@@ -93,10 +106,10 @@ _tar:
         | sed -e "s@/\./@/@g"						    \
     ) >> "$$LIST" ;							    \
   done ;								    \
-  echo creating tar file $$ADIR$$NAME.tar.gz... ;			    \
+  echo creating tar file $$ADIR/$$NAME.tar.gz... ;			    \
   export COPYFILE_DISABLE=true ;					    \
   export GZIP="-9v" ;							    \
-  $(TAR) -vczf $$ADIR$$NAME.tar.gz -T "$$LIST" $(TAR_ARGS) ;		    \
+  $(TAR) -czf $$ADIR/$$NAME.tar.gz -T "$$LIST" $(TAR_ARGS) ;		    \
   rm "$$LIST" "$$NAME"
 
 
@@ -234,20 +247,25 @@ version-date::
 
 
 update_spec_version::
-	@S=$(srcdir)/xscreensaver.spec ;				    \
+	@								    \
+	S1=$(srcdir)/xscreensaver.spec ;				    \
+	S2=$(srcdir)/debian/changelog ;					    \
 	U=$(srcdir)/utils/version.h ;					    \
 	VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U |	    \
 	  head -1` ;							    \
-	/bin/echo -n "Updating $$S to \"$$VERS\"... " ;			    \
 	T=/tmp/xs.$$$$ ;						    \
-	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"		    \
-	  < $$S > $$T ;							    \
-	if cmp -s $$S $$T ; then					    \
-	  echo "unchanged." ;						    \
-	else								    \
-	  cat $$T > $$S ;						    \
-	  echo "done." ;						    \
-	fi ;								    \
+	for F in "$$S1" "$$S2" ; do					    \
+	  /bin/echo -n "Updating $$F to \"$$VERS\"... " ;		    \
+	  sed -e "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"	    \
+	      -e "s/([-0-9.]*)/($$VERS-1)/"				    \
+	    < "$$F" > "$$T" ;						    \
+	  if cmp -s "$$F" "$$T" ; then					    \
+	    echo "unchanged." ;						    \
+	  else								    \
+	    cat "$$T" > "$$F" ;						    \
+	    echo "done." ;						    \
+	  fi ;								    \
+	done ;								    \
 	rm $$T
 
 rpm::
@@ -259,7 +277,7 @@ rpm::
   ADIR=archive/ ;							   \
   TGZ=xscreensaver-$$VERS.tar.gz ;					   \
   if [ ! -f $${ADIR}$$TGZ ]; then					   \
-    echo "$${ADIR}$$TGZ does not exist!  Did you forget to \`make tar'?" ; \
+    echo "$${ADIR}$$TGZ does not exist: do 'make tar' first." ;		   \
     exit 1 ; 								   \
   fi ;									   \
   rm -rf /var/tmp/xscreensaver-$$VERS-root ;				   \
@@ -283,6 +301,39 @@ rpm::
   rm -rf $$DIR ;							   \
   echo '' ;								   \
   ls -lFG xscreensaver*-$$VERS-*.rpm
+
+deb::
+	@								   \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h |  \
+	  head -1` ;							   \
+  DIR=debian/build ;							   \
+  ADIR=archive/ ;							   \
+  TGZ=xscreensaver-$$VERS.tar.gz ;					   \
+  TGZ2=xscreensaver_$$VERS.orig.tar.gz ;				   \
+  if [ ! -f $${ADIR}$$TGZ ]; then					   \
+    echo "$${ADIR}$$TGZ does not exist: do 'make tar' first." ;		   \
+    exit 1 ; 								   \
+  fi ;									   \
+									   \
+  set -e ;								   \
+  set -x ;								   \
+  rm -rf $$DIR ;							   \
+  mkdir $$DIR ;								   \
+  cp -p "$${ADIR}$$TGZ" "$$DIR/$$TGZ2" ;				   \
+									   \
+  ( cd $$DIR ;								   \
+    $(TAR) -zxf "$$TGZ2" ;						   \
+    cd xscreensaver-$$VERS ;						   \
+    dpkg-buildpackage -us -uc ;						   \
+  ) ;									   \
+  set +x ;								   \
+  echo '' ;								   \
+  echo 'DEB build complete' ;						   \
+  echo '' ;								   \
+  rm -rf "$$DIR/xscreensaver-$$VERS" ;					   \
+  rm -f  "$$DIR/$$TGZ2" ;						   \
+  echo '' ;								   \
+  ls -lFGd "$$DIR/xscreensaver"*
 
 dmg::
 	$(MAKE2) -C OSX release dmg
@@ -458,12 +509,10 @@ install_links::
 
 
 cerebrum::
-	rsync -vax . 10.0.1.37:xscreensaver/ \
+	rsync -vax . 10.0.1.42:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \
-	--exclude OSX \
-	--exclude android \
 	--exclude archive \
 	--exclude build \
 	--exclude gen \
@@ -473,10 +522,12 @@ cerebrum::
 	--include xscreensaver-getimage-file \
 	--include xscreensaver-getimage-video \
 	--include xscreensaver-text \
-	--exclude xscreensaver-5.45 \
-	--exclude xscreensaver-6.00 \
-	--exclude xscreensaver-6.01 \
-	--exclude xscreensaver-6.02 \
+	--exclude android/gradle \
+	--exclude android/xscreensaver/obj \
+	--exclude android/xscreensaver/res \
+	--exclude android/xscreensaver/libs \
+	--exclude android/.gradle \
+	--exclude android/.idea \
 	--exclude '*~' \
 	--include '*.asm' \
 	--include '*.c' \
@@ -508,6 +559,20 @@ cerebrum::
 	--include 'ad2c' \
 	--include 'vidwhacker' \
 	--include 'webcollage' \
+	--include 'debian/*' \
+	--include 'README' \
+	--include 'README.hacking' \
+	--include 'INSTALL' \
+	--include 'ChangeLog' \
+	--include '*.pdf' \
+	--include '*.pov' \
+	--include '*.txt' \
+	--include '*.tex' \
+	--include '*.dxf' \
+	--include '*.dtd' \
+	--include '*.xsd' \
+	--include '*.pbxproj' \
+	--include '.gdbinit' \
 	--include '*/' \
 	--exclude '*'
 

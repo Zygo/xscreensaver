@@ -1,4 +1,4 @@
-/* unknownpleasures, Copyright © 2013-2019 Jamie Zawinski <jwz@jwz.org>
+/* unknownpleasures, Copyright © 2013-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -54,6 +54,8 @@
 #include "gltrackball.h"
 #include "ximage-loader.h"
 #include "grab-ximage.h"
+#include "easing.h"
+#include "doubletime.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -119,23 +121,6 @@ static argtype vars[] = {
 
 ENTRYPOINT ModeSpecOpt unk_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
-
-
-/* Returns the current time in seconds as a double.
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 static void
@@ -623,25 +608,6 @@ init_unk (ModeInfo *mi)
 }
 
 
-static double
-ease_fn (double r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static double
-ease_ratio (double r)
-{
-  double ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 ENTRYPOINT void
 draw_unk (ModeInfo *mi)
 {
@@ -703,8 +669,8 @@ draw_unk (ModeInfo *mi)
   for (i = 0; i < bp->count; i++)
     {
       int j = i * bp->frames * 2 + frame * 2;
-      GLfloat s  = ease_ratio (bp->heights[i]);
-      GLfloat s2 = ease_ratio (bp->heights[i] * 1.5);
+      GLfloat s  = ease (EASE_IN_OUT_SINE, bp->heights[i]);
+      GLfloat s2 = ease (EASE_IN_OUT_SINE, bp->heights[i] * 1.5);
 
       glPushMatrix();
       glScalef (1, 1, s);

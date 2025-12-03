@@ -1,4 +1,4 @@
-/* esper, Copyright © 2017-2021 Jamie Zawinski <jwz@jwz.org>
+/* esper, Copyright © 2017-2025 Jamie Zawinski <jwz@jwz.org>
  * Enhance 224 to 176. Pull out track right. Center in pull back.
  * Pull back. Wait a minute. Go right. Stop. Enhance 57 19. Track 45 left.
  * Gimme a hardcopy right there.
@@ -164,6 +164,7 @@
 
 #include "grab-ximage.h"
 #include "texfont.h"
+#include "doubletime.h"
 
 #ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"  /* to get <sys/shm.h> */
@@ -290,22 +291,6 @@ static argtype vars[] = {
 
 ENTRYPOINT ModeSpecOpt esper_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
-
-/* Returns the current time in seconds as a double.
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 static const char *
 state_name (anim_state s)

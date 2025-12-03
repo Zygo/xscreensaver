@@ -83,7 +83,6 @@ wayland_dpy_connect (void)
                             wl_display_get_fd (state->dpy),
                             WL_EVENT_READABLE, handle_event, state);
     wl_event_source_check (source);
-    /* #### Do I need to free 'source'? */
   }
 
   wayland_dpy_process_events (state, 0);
@@ -133,6 +132,7 @@ wayland_dpy_process_events (wayland_dpy *state, int sync_p)
 void
 wayland_dpy_close (wayland_dpy *state)
 {
+  wayland_dpy_process_events (state, 0);
   wl_display_disconnect (state->dpy);
   if (state->event_loop)
     wl_event_loop_destroy (state->event_loop);

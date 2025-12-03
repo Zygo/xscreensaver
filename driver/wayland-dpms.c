@@ -23,6 +23,13 @@
  * there is user activity.  So if this program crashes with the screens off,
  * good luck getting them to turn back on.  KDE does the right thing.
  *
+ * Also also! Under "wlr", there can be only one listener at a time!
+ * That's right, it's vitally important that two different programs be
+ * unable to interrogate the DPMS state simultaneously!  So if someone
+ * else is already listening to this, we're screwed.  Also also also!
+ * Calling 'destroy' does not release the lock.  The lock is held until
+ * the entire Wayland display connection terminates.  Because reasons?
+ *
  * GNOME does the following crap, because they have never seen a Wayland
  * protocol that they didn't think should be replaced with DBus instead:
  *
@@ -78,11 +85,11 @@ typedef struct dpms_output {
   Bool wl_done;	/* wl_output: all info about this output has been sent */
 
   struct zwlr_output_power_v1   *wlr_out;
-  enum zwlr_output_power_v1_mode wlr_mode;
-  Bool wlr_failed; /* I have no idea what this means */
+  enum zwlr_output_power_v1_mode wlr_mode;  /* On, Off */
+  Bool wlr_failed;
 
   struct org_kde_kwin_dpms   *kde_out;
-  enum org_kde_kwin_dpms_mode kde_mode;
+  enum org_kde_kwin_dpms_mode kde_mode;     /* On, Standby, Suspend, Off */
   Bool kde_done;
 
 } dpms_output;
@@ -154,8 +161,8 @@ wlr_handle_failed (void *data, struct zwlr_output_power_v1 *wlr_output_power)
   dpms_output *out = (dpms_output *) data;
   out->wlr_failed = True;
   if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: dpms: output %s is FAILED?\n", blurb(),
-             out->name);
+    fprintf (stderr, "%s: wayland: dpms: output %s is in FAILED state\n",
+             blurb(), out->name);
 }
 
 
@@ -218,6 +225,8 @@ handle_global (void *data, struct wl_registry *reg,
       };
 
       dpms_output *out = (dpms_output *) calloc (sizeof (*out), 1);
+      out->wlr_mode = ZWLR_OUTPUT_POWER_V1_MODE_ON;
+      out->kde_mode = ORG_KDE_KWIN_DPMS_MODE_ON;
       wl_list_insert (&state->outputs, &out->link);
 
       if (verbose_p > 2)
@@ -327,13 +336,22 @@ wayland_dpms_free (wayland_dpms *state)
   wl_list_for_each_safe (out, tmp, &state->outputs, link)
     {
       wl_list_remove (&out->link);
-      /* #### out->wl_output ? */
-      /* #### out->zwlr_output_power_v1, etc ? */
+      if (out->wlr_out)
+        zwlr_output_power_v1_destroy (out->wlr_out);
+      if (out->kde_out)
+        org_kde_kwin_dpms_destroy (out->kde_out);
+      if (out->wl_output)
+        wl_output_destroy (out->wl_output);
       free (out);
     }
 
-  /* #### state->reg ? */
-  /* #### state->zwlr_output_power_manager_v1, etc ? */
+  if (state->wlr_mgr)
+    zwlr_output_power_manager_v1_destroy (state->wlr_mgr);
+  if (state->kde_mgr)
+    org_kde_kwin_dpms_manager_destroy (state->kde_mgr);
+  if (state->reg)
+    wl_proxy_destroy ((struct wl_proxy *) state->reg);
+
   free (state);
 }
 
@@ -343,29 +361,43 @@ wayland_dpms_free (wayland_dpms *state)
 Bool
 wayland_monitor_powered_on_p (wayland_dpms *state)
 {
-  Bool on_p = False;
+  Bool off_p = False;
+  Bool failed_p = False;
   dpms_output *out;
 
-  if (!state) return on_p;
+  if (!state) return !off_p;
 
   wayland_dpy_process_events (state->parent, True);
   wl_list_for_each (out, &state->outputs, link)
     {
       if (out->wlr_out)
         {
-          if (out->wlr_mode == ZWLR_OUTPUT_POWER_V1_MODE_ON)
-            on_p = True;
+          if (out->wlr_mode != ZWLR_OUTPUT_POWER_V1_MODE_ON)
+            off_p = True;
+          if (out->wlr_failed)
+            failed_p = True;
         }
       else if (out->kde_out)
         {
-          if (out->kde_mode == ORG_KDE_KWIN_DPMS_MODE_ON)
-            on_p = True;
+          if (out->kde_mode != ORG_KDE_KWIN_DPMS_MODE_ON)
+            off_p = True;
         }
       else
         abort();
     }
 
-  return on_p;
+  if (failed_p)
+    {
+      /* if (verbose_p) */
+        fprintf (stderr, "%s: wayland: dpms: outputs entered 'failed' state\n",
+                 blurb());
+      /* If the outputs are in 'failed' state, assume they are on.  If there
+         was another listener to "wlr", we will always get "failed", because
+         there can be only one listener. */
+      off_p = False;
+    }
+
+  return !off_p;
 }
 
 

@@ -1,8 +1,8 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-MetaBalls \- draws 2D metaballs
+metaballs \- draws 2D metaballs
 .SH SYNOPSIS
-.B MetaBalls
+.B metaballs
 [\-\-display \fIhost:display.screen\fP]
 [\-\-visual \fIvisual\fP]
 [\-\-window]
@@ -37,7 +37,7 @@ Draw on the specified window.
 Number of Colors.  Default: 256.
 .TP 8
 .B \-\-count \fInumber\fP
-Number of MetaBalls.	2 - 255.  Default: 10.
+Number of metaballs.	2 - 255.  Default: 10.
 .TP 8
 .B \-\-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 5000 (0.005 seconds.).
@@ -46,10 +46,10 @@ Per-frame delay, in microseconds.  Default: 5000 (0.005 seconds.).
 Duration.  100 - 3000.  Default: 1000.
 .TP 8
 .B \-\-radius \fInumber\fP
-MetaBall Radius.  2 - 100.  Default: 100.
+metaball Radius.  2 - 100.  Default: 100.
 .TP 8
 .B \-\-delta \fInumber\fP
-MetaBall Movement.  1 - 20.  Default: 3.
+metaball Movement.  1 - 20.  Default: 3.
 .TP 8
 .B \-\-fps
 Display the current frame rate and CPU load.

@@ -1,4 +1,4 @@
-/* tronbit, Copyright (c) 2011-2014 Jamie Zawinski <jwz@jwz.org>
+/* tronbit, Copyright © 2011-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,6 +21,7 @@
 #include "sphere.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "doubletime.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -90,23 +91,6 @@ static argtype vars[] = {
 };
 
 ENTRYPOINT ModeSpecOpt bit_opts = {countof(opts), opts, countof(vars), vars, NULL};
-
-
-/* Returns the current time in seconds as a double.
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 static int

@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "20-Mar-2005 (4.21)" "X Version 11"
 .SH NAME
-xscreensaver-getimage-file - select a random image file for use by screen savers
+xscreensaver-getimage-file \- select a random image file for use by screen savers
 .SH SYNOPSIS
 .B xscreensaver-getimage-file
 [\--verbose]

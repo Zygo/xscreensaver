@@ -1657,6 +1657,12 @@
 		AF2D86B62DB2100A00B4F248 /* klondike-game.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D86AD2DB2100A00B4F248 /* klondike-game.c */; };
 		AF2D8F321CEBA10300198014 /* jwxyz-timers.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2D8F301CEBA10300198014 /* jwxyz-timers.c */; };
 		AF2D8F331CEBA10300198014 /* jwxyz-timers.h in Headers */ = {isa = PBXBuildFile; fileRef = AF2D8F311CEBA10300198014 /* jwxyz-timers.h */; };
+		AF2DBDFE2EDE7D1D008774B9 /* easing.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2DBDFD2EDE7D1D008774B9 /* easing.c */; };
+		AF2DBDFF2EDE7D1D008774B9 /* easing.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2DBDFD2EDE7D1D008774B9 /* easing.c */; };
+		AF2DBE002EDE7D1D008774B9 /* easing.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2DBDFD2EDE7D1D008774B9 /* easing.c */; };
+		AF2DBE022EDE97C1008774B9 /* doubletime.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2DBE012EDE97C1008774B9 /* doubletime.c */; };
+		AF2DBE032EDE97C1008774B9 /* doubletime.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2DBE012EDE97C1008774B9 /* doubletime.c */; };
+		AF2DBE042EDE97C1008774B9 /* doubletime.c in Sources */ = {isa = PBXBuildFile; fileRef = AF2DBE012EDE97C1008774B9 /* doubletime.c */; };
 		AF32D9E70F3AD0B40080F535 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF32D9FB0F3AD1200080F535 /* rubikblocks.c in Sources */ = {isa = PBXBuildFile; fileRef = AF32D9FA0F3AD1200080F535 /* rubikblocks.c */; };
 		AF32D9FD0F3AD1330080F535 /* rubikblocks.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF32D9FC0F3AD1330080F535 /* rubikblocks.xml */; };
@@ -9046,6 +9052,8 @@
 		AF2D86AD2DB2100A00B4F248 /* klondike-game.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = "klondike-game.c"; path = "../hacks/glx/klondike-game.c"; sourceTree = SOURCE_ROOT; };
 		AF2D8F301CEBA10300198014 /* jwxyz-timers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "jwxyz-timers.c"; path = "../jwxyz/jwxyz-timers.c"; sourceTree = "<group>"; };
 		AF2D8F311CEBA10300198014 /* jwxyz-timers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "jwxyz-timers.h"; path = "../jwxyz/jwxyz-timers.h"; sourceTree = "<group>"; };
+		AF2DBDFD2EDE7D1D008774B9 /* easing.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = easing.c; path = utils/easing.c; sourceTree = "<group>"; };
+		AF2DBE012EDE97C1008774B9 /* doubletime.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = doubletime.c; path = utils/doubletime.c; sourceTree = "<group>"; };
 		AF32D9F40F3AD0B40080F535 /* RubikBlocks.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RubikBlocks.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF32D9FA0F3AD1200080F535 /* rubikblocks.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = rubikblocks.c; path = hacks/glx/rubikblocks.c; sourceTree = "<group>"; };
 		AF32D9FC0F3AD1330080F535 /* rubikblocks.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = rubikblocks.xml; sourceTree = "<group>"; };
@@ -15373,6 +15381,8 @@
 				AF9D473709B52EE0006E59CF /* colorbars.h */,
 				AFC25B990988BC08000655EE /* colors.c */,
 				AFC25B9A0988BC08000655EE /* colors.h */,
+				AF2DBE012EDE97C1008774B9 /* doubletime.c */,
+				AF2DBDFD2EDE7D1D008774B9 /* easing.c */,
 				AFE1FD530981E3CB00F7970E /* erase.c */,
 				AFE1FD540981E3CB00F7970E /* erase.h */,
 				AF939AD220351BFC0032DD23 /* font-retry.c */,
@@ -31000,6 +31010,7 @@
 				AFBF893E0E41D930006A2D66 /* fps.c in Sources */,
 				AFBF89AF0E423FC3006A2D66 /* fps-gl.c in Sources */,
 				5501D1961DBDCC3D00624BE9 /* xshm.c in Sources */,
+				AF2DBE022EDE97C1008774B9 /* doubletime.c in Sources */,
 				AF4808C9098C3BEC00FB32B8 /* jwxyz.m in Sources */,
 				AFDA11251934424D003D397F /* aligned_malloc.c in Sources */,
 				AF4808CC098C3BF200FB32B8 /* spline.c in Sources */,
@@ -31020,6 +31031,7 @@
 				AFDA11271934424D003D397F /* thread_util.c in Sources */,
 				AF975C93099C929800B05160 /* ximage-loader.c in Sources */,
 				CE8EA1C21C35CF10002D1020 /* jwxyz-common.c in Sources */,
+				AF2DBDFE2EDE7D1D008774B9 /* easing.c in Sources */,
 				AF4774E8099D8D8C001F091E /* logo.c in Sources */,
 				AF4775C0099D9E79001F091E /* resources.c in Sources */,
 				AF9D468F09B51567006E59CF /* grabclient-osx.m in Sources */,
@@ -31252,6 +31264,7 @@
 				AF568A5326E7060500CCBA38 /* slip.c in Sources */,
 				AF568A5426E7060500CCBA38 /* strange.c in Sources */,
 				AF568A5526E7060500CCBA38 /* swirl.c in Sources */,
+				AF2DBE032EDE97C1008774B9 /* doubletime.c in Sources */,
 				AF568A5626E7060500CCBA38 /* textclient-mobile.c in Sources */,
 				AF568A5726E7060500CCBA38 /* tessellimage.c in Sources */,
 				AF568A5826E7060500CCBA38 /* triangle.c in Sources */,
@@ -31337,6 +31350,7 @@
 				AF568AA226E7060500CCBA38 /* gears.c in Sources */,
 				AF568AA326E7060500CCBA38 /* geodesicgears.c in Sources */,
 				AF568AA426E7060500CCBA38 /* gflux.c in Sources */,
+				AF2DBDFF2EDE7D1D008774B9 /* easing.c in Sources */,
 				AF568AA526E7060500CCBA38 /* gibson.c in Sources */,
 				AF568AA626E7060500CCBA38 /* glblur.c in Sources */,
 				AF568AA726E7060500CCBA38 /* glcells.c in Sources */,
@@ -32062,6 +32076,7 @@
 				AF918A1F158FC38A002B5D1E /* slip.c in Sources */,
 				AF918A22158FC38A002B5D1E /* strange.c in Sources */,
 				AF918A23158FC38A002B5D1E /* swirl.c in Sources */,
+				AF2DBE042EDE97C1008774B9 /* doubletime.c in Sources */,
 				AFA211891CD1AA2E00C0D2A1 /* textclient-mobile.c in Sources */,
 				AF68A49A19196E3E00D41CD1 /* tessellimage.c in Sources */,
 				AF918A25158FC38A002B5D1E /* triangle.c in Sources */,
@@ -32147,6 +32162,7 @@
 				AF918A5A158FC3E5002B5D1E /* gears.c in Sources */,
 				AFDDCCED19FF0EBD0072365B /* geodesicgears.c in Sources */,
 				AF918A5B158FC3E5002B5D1E /* gflux.c in Sources */,
+				AF2DBE002EDE7D1D008774B9 /* easing.c in Sources */,
 				AFA0B137241CE7B60071E35D /* gibson.c in Sources */,
 				AF918A5C158FC3E5002B5D1E /* glblur.c in Sources */,
 				AF918A5D158FC3E5002B5D1E /* glcells.c in Sources */,
@@ -41867,6 +41883,8 @@
 					"HAVE_ICMP=1",
 					"HAVE_GETIFADDRS=1",
 					"HAVE_FORKPTY=1",
+					"HAVE_GETXATTR=1",
+					"XATTR_ADDITIONAL_OPTIONS=1",
 					"HAVE_UTIL_H=1",
 					"HAVE_PTHREAD=1",
 					"HAVE_GETADDRINFO=1",
@@ -41984,6 +42002,8 @@
 					"HAVE_ICMP=1",
 					"HAVE_GETIFADDRS=1",
 					"HAVE_FORKPTY=1",
+					"HAVE_GETXATTR=1",
+					"XATTR_ADDITIONAL_OPTIONS=1",
 					"HAVE_UTIL_H=1",
 					"HAVE_PTHREAD=1",
 					"HAVE_GETADDRINFO=1",

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 6.12
-!                              07-Jul-2025
+!                              version 6.13
+!                              02-Dec-2025
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -98,8 +98,10 @@
 !   non-Gnome systems:
 !
 @NOGNOME@*loadURL: x-www-browser '%s' || firefox '%s' || chromium-browser '%s'
-@NOGNOME@*manualCommand: lxterminal -T '%s manual' \
-@NOGNOME@		    -e /bin/sh -c 'man "%s" ; read foo'
+!@NOGNOME@*manualCommand: lxterminal -T '%s manual' \
+!@NOGNOME@		    -e /bin/sh -c 'man "%s" ; read foo'
+@NOGNOME@*manualCommand: xdg-open man:%s || \
+@NOGNOME@		    x-terminal-emulator -e /bin/sh -c 'man "%s"'
 
 
 ! The strftime(3) format string for printing the time on the password dialog.

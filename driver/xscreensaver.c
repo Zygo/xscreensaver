@@ -1699,7 +1699,7 @@ main_loop (Display *dpy)
           
         if (verbose_p > 3)
           {
-            if (!tv.tv_sec && tv.tv_usec)
+            if (!tv.tv_sec && !tv.tv_usec)
               fprintf (stderr, "%s: block until input\n", blurb());
             else
               {

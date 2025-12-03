@@ -147,8 +147,10 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
   XImage *image = 0;
   unsigned char *data = (unsigned char *) calloc (w2 * 2, (h2 + 1));
   unsigned char *out = data;
+# ifndef HAVE_IPHONE
   GLint rowpack = 0;
   GLint alignment = 0;
+# endif /* HAVE_IPHONE */
 
   /* OpenGLES doesn't support GL_INTENSITY, so instead of using a
      texture with 1 byte per pixel, the intensity value, we have
@@ -260,11 +262,14 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
 
   image = 0;
 
+# ifndef HAVE_IPHONE
+  /* iOS gives us "invalid enum" when trying to read or write these. */
   glGetIntegerv (GL_UNPACK_ROW_LENGTH, &rowpack);
   glGetIntegerv (GL_UNPACK_ALIGNMENT, &alignment);
 
   glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+# endif /* HAVE_IPHONE */
 
   {
 # ifdef GL_INTENSITY
@@ -295,8 +300,10 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
       }
   }
 
+# ifndef HAVE_IPHONE
   glPixelStorei (GL_UNPACK_ROW_LENGTH, rowpack);
   glPixelStorei (GL_UNPACK_ALIGNMENT, alignment);
+# endif /* HAVE_IPHONE */
 
   {
     char msg[100];

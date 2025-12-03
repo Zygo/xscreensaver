@@ -51,6 +51,12 @@
 # define HAVE_AVCODEC_GET_SUPPORTED_CONFIG
 #endif
 
+#ifndef  AV_PROFILE_H264_BASELINE /* ffmpeg < 8.0 */
+# define AV_PROFILE_H264_BASELINE FF_PROFILE_H264_BASELINE
+# define AV_PROFILE_H264_MAIN     FF_PROFILE_H264_MAIN
+# define AV_PROFILE_H264_HIGH     FF_PROFILE_H264_HIGH
+#endif
+
 struct av_stream {
   const AVCodec *codec;
   AVStream *st;
@@ -403,7 +409,7 @@ ffmpeg_out_init (const char *outfile, const char *audiofile,
   ffst->video_ost.ctx->time_base    = ffst->video_ost.st->time_base;
   ffst->video_ost.ctx->gop_size     = 250;
   ffst->video_ost.ctx->pix_fmt      = pix_fmt;
-  ffst->video_ost.ctx->profile      = FF_PROFILE_H264_HIGH;
+  ffst->video_ost.ctx->profile      = AV_PROFILE_H264_HIGH;
 
   av_log_set_level (AV_LOG_ERROR);  /* Before open_stream */
 

@@ -107,6 +107,9 @@
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>		/* for waitpid() and associated macros */
 #endif
+#ifdef HAVE_GETXATTR
+# include <sys/xattr.h>
+#endif
 
 
 extern char *progname;
@@ -243,7 +246,7 @@ get_name_from_xprops (Display *dpy, Window window)
   int format;
   unsigned long nitems, bytesafter;
   unsigned char *name = 0;
-  Atom atom = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME, False);
+  Atom atom = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_TITLE, False);
   if (XGetWindowProperty (dpy, window, atom,
                           0, 1024, False, XA_STRING,
                           &type, &format, &nitems, &bytesafter,
@@ -251,8 +254,17 @@ get_name_from_xprops (Display *dpy, Window window)
       == Success
       && type != None)
     return (char *) name;
-  else
-    return 0;
+
+  atom = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME, False);
+  if (XGetWindowProperty (dpy, window, atom,
+                          0, 1024, False, XA_STRING,
+                          &type, &format, &nitems, &bytesafter,
+                          &name)
+      == Success
+      && type != None)
+    return (char *) name;
+
+  return 0;
 }
 
 
@@ -577,6 +589,40 @@ open_image_name_pipe (const char *dir)
 }
 
 
+/* Returns the URL and title of the given file, if present in xattrs.
+   Duplicated in xscreensaver-getimage.c.
+ */
+static void
+get_file_xattrs (const char *file, char **urlP, char **titleP)
+{
+# ifdef HAVE_GETXATTR
+
+#  ifdef XATTR_ADDITIONAL_OPTIONS
+#   define GETXATTR(F,K,B,S) getxattr (F, K, B, S, 0, 0)
+#  else
+#   define GETXATTR(F,K,B,S) getxattr (F, K, B, S)
+#  endif
+
+  char url[1024], title[1024];
+  ssize_t s;
+
+  s = GETXATTR (file, "user.xdg.origin.url", url, sizeof(url)-1);
+  if (s > 0)
+    {
+      url[s] = 0;
+      *urlP = strdup (url);
+    }
+
+  s = GETXATTR (file, "user.dublincore.title", title, sizeof(title)-1);
+  if (s > 0)
+    {
+      title[s] = 0;
+      *titleP = strdup (title);
+    }
+# endif /* HAVE_GETXATTR */
+}
+
+
 static void
 xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
 {
@@ -587,6 +633,8 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
   const char *dir = clo2->directory;
   char *absfile = 0;
   int i = 0;
+  char *xattr_url   = 0;
+  char *xattr_title = 0;
 
   *buf = 0;
   do {
@@ -650,20 +698,24 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
     geom.height = h;
   }
 
-  /* Take the extension off of the file name. */
-  /* Duplicated in driver/xscreensaver-getimage.c. */
-  if (*buf)
+  get_file_xattrs ((absfile ? absfile : buf), &xattr_url, &xattr_title);
+  if (xattr_title)
+    sprintf (buf, "%.100s", xattr_title);
+  else if (xattr_url)
+    sprintf (buf, "%.100s", xattr_url);
+  else if (*buf)
     {
+      /* Take the extension off of the file name. */
+      /* Duplicated in driver/xscreensaver-getimage.c. */
       char *slash = strrchr (buf, '/');
       char *dot = strrchr ((slash ? slash : buf), '.');
       if (dot) *dot = 0;
-      /* Replace slashes with newlines */
-      /* while (dot = strchr(buf, '/')) *dot = '\n'; */
-      /* Replace slashes with spaces */
-      /* while ((dot = strchr(buf, '/'))) *dot = ' '; */
     }
 
-  if (absfile) free (absfile);
+  if (xattr_title) free (xattr_title);
+  if (xattr_url)   free (xattr_url);
+  if (absfile)     free (absfile);
+
   clo2->callback (clo2->screen, clo2->window, clo2->drawable, buf, &geom,
                   clo2->closure);
   clo2->callback = 0;
