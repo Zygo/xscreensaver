@@ -15,6 +15,7 @@
 typedef struct wayland_dpy  wayland_dpy;
 typedef struct wayland_idle wayland_idle;
 typedef struct wayland_dpms wayland_dpms;
+typedef struct wayland_lock wayland_lock;
 
 /* Connects to Wayland and returns a state object on success. */
 extern wayland_dpy *wayland_dpy_connect (void);

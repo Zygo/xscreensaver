@@ -688,6 +688,7 @@ SETUID_HACKS
 SETUID_AUTH
 PROG_SETCAP
 WAYLAND_GTK_OBJS
+WAYLAND_LOCK_OBJS
 WAYLAND_DPMS_OBJS
 WAYLAND_IDLE_OBJS
 WAYLAND_DPY_OBJS
@@ -13630,6 +13631,7 @@ printf "%s\n" "$ac_cv_wayland_config_libs" >&6; }
   WAYLAND_DPY_OBJS=""
   WAYLAND_IDLE_OBJS=""
   WAYLAND_DPMS_OBJS=""
+  WAYLAND_LOCK_OBJS=""
   WAYLAND_GTK_OBJS=""
   if test "$have_wayland" = yes; then
     WAYLAND_DATADIR=`$pkg_config --variable=prefix wayland-client`
@@ -13638,6 +13640,7 @@ printf "%s\n" "$ac_cv_wayland_config_libs" >&6; }
     WAYLAND_DPY_OBJS='$(WAYLAND_DPY_OBJS_1)'
     WAYLAND_IDLE_OBJS='$(WAYLAND_IDLE_OBJS_1)'
     WAYLAND_DPMS_OBJS='$(WAYLAND_DPMS_OBJS_1)'
+    WAYLAND_LOCK_OBJS='$(WAYLAND_LOCK_OBJS_1)'
     WAYLAND_GTK_OBJS='$(WAYLAND_GTK_OBJS_1)'
   fi
 

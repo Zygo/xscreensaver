@@ -42,13 +42,10 @@ struct wayland_idle {
   struct wl_display    *dpy;
   struct wl_registry   *reg;
   struct wl_event_loop *event_loop;
+  struct wl_seat       *seat;
 
   void (*activity_cb) (void *closure);
   void *closure;
-
-  struct wl_seat *seat;
-  char           *seat_name;
-  uint32_t        seat_caps;
 
   struct ext_idle_notifier_v1      *ext_idle_notifier;
   struct ext_idle_notification_v1  *ext_idle_notification;
@@ -56,26 +53,6 @@ struct wayland_idle {
   struct org_kde_kwin_idle         *kde_idle_manager;
   struct org_kde_kwin_idle_timeout *kde_idle_timer;
 };
-
-
-static void
-seat_handle_capabilities (void *data, struct wl_seat *seat, uint32_t caps)
-{
-  wayland_idle *state = (wayland_idle *) data;
-  state->seat_caps = caps;
-  if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: idle: seat caps: 0x%02lX\n", blurb(),
-             (unsigned long) caps);
-}
-
-static void
-seat_handle_name (void *data, struct wl_seat *seat, const char *name)
-{
-  wayland_idle *state = (wayland_idle *) data;
-  state->seat_name = strdup (name);
-  if (verbose_p > 2)
-    fprintf (stderr, "%s: wayland: idle: seat name: \"%s\"\n", blurb(), name);
-}
 
 
 /* This is an iterator for all of the extensions that Wayland provides,
@@ -89,14 +66,9 @@ handle_global (void *data, struct wl_registry *reg,
 
   if (!strcmp (iface, wl_seat_interface.name))
     {
-      static const struct wl_seat_listener seat_listener = {
-	.name         = seat_handle_name,
-	.capabilities = seat_handle_capabilities,
-      };
       if (verbose_p > 2)
         fprintf (stderr, "%s: wayland: idle: found: %s\n", blurb(), iface);
       state->seat = wl_registry_bind (reg, name, &wl_seat_interface, version);
-      wl_seat_add_listener (state->seat, &seat_listener, state);
     }
   else if (!strcmp (iface, ext_idle_notifier_v1_interface.name))
     {
@@ -250,7 +222,6 @@ wayland_idle_init (wayland_dpy *dpy,
   state->reg = wl_display_get_registry (dpy->dpy);
   wl_registry_add_listener (state->reg, &listener, state);
 
-  /* It takes two round trips: first to register seats, then timers. */
   wayland_dpy_process_events (dpy, true);
 
   if (! state->seat)
@@ -280,10 +251,14 @@ wayland_idle_init (wayland_dpy *dpy,
 void
 wayland_idle_free (wayland_idle *state)
 {
-  if (state->seat_name)
-    free (state->seat_name);
-  /* #### state->reg ? */
-  /* #### state->seat ? */
-  /* #### state->ext_idle_notifier, etc ? */
+  if (state->seat)
+    wl_seat_destroy (state->seat);
+  if (state->ext_idle_notifier)
+    ext_idle_notifier_v1_destroy (state->ext_idle_notifier);
+  if (state->ext_idle_notification)
+    ext_idle_notification_v1_destroy (state->ext_idle_notification);
+  if (state->reg)
+    wl_proxy_destroy ((struct wl_proxy *) state->reg);
+
   free (state);
 }
