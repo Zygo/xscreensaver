@@ -10,7 +10,7 @@ VPATH		= @srcdir@
 top_srcdir	= @top_srcdir@
 top_builddir	= ..
 
-install_prefix	=
+DESTDIR		=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
@@ -315,30 +315,30 @@ install-strip:
 	$(MAKE2) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 install-program:: $(EXES)
-	@if [ ! -d $(install_prefix)$(bindir) ]; then			      \
-	   $(INSTALL_DIRS) $(install_prefix)$(bindir) ;			      \
+	@if [ ! -d $(DESTDIR)$(bindir) ]; then				      \
+	   $(INSTALL_DIRS) $(DESTDIR)$(bindir) ;			      \
 	 fi ;								      \
-	 if [ ! -d $(install_prefix)$(HACKDIR) ]; then			      \
-	   $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;		      \
+	 if [ ! -d $(DESTDIR)$(HACKDIR) ]; then				      \
+	   $(INSTALL_DIRS) $(DESTDIR)$(HACKDIR) ;			      \
 	 fi
 
 install-program:: $(EXES)
 	@inst="$(INSTALL_PROGRAM)" ;					      \
 	for exe in $(EXES); do						      \
-	  echo $$inst $$exe $(install_prefix)$(bindir)/$$exe ;		      \
-	       $$inst $$exe $(install_prefix)$(bindir)/$$exe ;		      \
+	  echo $$inst $$exe $(DESTDIR)$(bindir)/$$exe ;			      \
+	       $$inst $$exe $(DESTDIR)$(bindir)/$$exe ;			      \
 	done
 
 install-program:: $(UTIL_EXES)
 	@inst="$(INSTALL_PROGRAM)" ;					      \
 	 for exe in $(UTIL_EXES); do					      \
-	    echo $$inst $$exe $(install_prefix)$(HACKDIR)/$$exe ;	      \
-	         $$inst $$exe $(install_prefix)$(HACKDIR)/$$exe ;	      \
+	    echo $$inst $$exe $(DESTDIR)$(HACKDIR)/$$exe ;		      \
+	         $$inst $$exe $(DESTDIR)$(HACKDIR)/$$exe ;		      \
 	 done
 
 install-program:: $(SETUID_EXES)
 	@inst="$(INSTALL_PROGRAM)" ;					      \
-	 idir="$(install_prefix)$(HACKDIR)" ;				      \
+	 idir="$(DESTDIR)$(HACKDIR)" ;					      \
 	 if [ @SETUID_AUTH@ = yes ]; then				      \
 	   inst="$(INSTALL_SETUID)" ;					      \
 	 else								      \
@@ -366,25 +366,25 @@ install-program:: $(SETUID_EXES)
 
 # Symlink from xscreensaver-demo -> xscreensaver-settings in /usr/bin/
 install-program::
-	@D=$(install_prefix)$(bindir) ;					      \
+	@D=$(DESTDIR)$(bindir) ;					      \
 	 echo ln -sf xscreensaver-settings $$D/xscreensaver-demo ; 	      \
 	      ln -sf xscreensaver-settings $$D/xscreensaver-demo
 
 install-ad: XScreenSaver.ad
-	@if [ ! -d $(install_prefix)$(AD_DIR) ]; then			      \
-	  $(INSTALL_DIRS) $(install_prefix)$(AD_DIR) ;			      \
+	@if [ ! -d $(DESTDIR)$(AD_DIR) ]; then				      \
+	  $(INSTALL_DIRS) $(DESTDIR)$(AD_DIR) ;				      \
 	 fi ;								      \
 	echo $(INSTALL_DATA) XScreenSaver.ad				      \
-	  $(install_prefix)$(AD_DIR)/XScreenSaver ;			      \
+	  $(DESTDIR)$(AD_DIR)/XScreenSaver ;				      \
 	if $(INSTALL_DATA) XScreenSaver.ad				      \
-	  $(install_prefix)$(AD_DIR)/XScreenSaver ; then		      \
+	  $(DESTDIR)$(AD_DIR)/XScreenSaver ; then			      \
 	  true ;							      \
 	else								      \
 	  e=echo ;							      \
-	  if [ -f $(install_prefix)$(AD_DIR)/XScreenSaver ]; then	      \
+	  if [ -f $(DESTDIR)$(AD_DIR)/XScreenSaver ]; then		      \
  $$e ""									     ;\
  $$e "  ####################################################################";\
- $$e "  Warning: unable to install $(install_prefix)$(AD_DIR)/XScreenSaver"  ;\
+ $$e "  Warning: unable to install $(DESTDIR)$(AD_DIR)/XScreenSaver"	     ;\
  $$e "           That file exists, and is unwritable.  It is probably from"  ;\
  $$e "           an older version of xscreensaver, and could cause things"   ;\
  $$e "           to malfunction.  Please delete it!"			     ;\
@@ -394,7 +394,7 @@ install-ad: XScreenSaver.ad
 	  else								      \
  $$e ""									     ;\
  $$e "  ####################################################################";\
- $$e "  Warning: unable to install $(install_prefix)$(AD_DIR)/XScreenSaver"  ;\
+ $$e "  Warning: unable to install $(DESTDIR)$(AD_DIR)/XScreenSaver"	     ;\
  $$e "           This is probably ok; it should work without that file."     ;\
  $$e "  ####################################################################";\
  $$e ""									     ;\
@@ -420,7 +420,7 @@ install-man:: $(MENA) $(MENB)
 									\
 	INST() {							\
 	  TH=".TH XScreenSaver $$SUF \"$$V\" \"X Version 11\"" ;	\
-	  DIR="$(install_prefix)$(mandir)/man$$SUF" ;			\
+	  DIR="$(DESTDIR)$(mandir)/man$$SUF" ;				\
 	  if [ ! -d $$DIR ]; then					\
 	    echo $(INSTALL_DIRS) $$DIR ;				\
 	         $(INSTALL_DIRS) $$DIR ;				\
@@ -441,7 +441,7 @@ install-man:: $(MENA) $(MENB)
 
 # Symlink from xscreensaver-demo.1 -> xscreensaver-settings.1 in /usr/man/man1/
 install-man::
-	@D=$(install_prefix)$(mandir)/man$(mansuffixA) ;		\
+	@D=$(DESTDIR)$(mandir)/man$(mansuffixA) ;			\
 	 F1=xscreensaver-settings.$(mansuffixA) ;			\
 	 F2=xscreensaver-demo.$(mansuffixA) ;				\
 	 echo ln -sf $$F1 $$D/$$F2 ;					\
@@ -457,32 +457,32 @@ OLD_MEN  = xscreensaver-getimage.man xscreensaver-getimage-file.man \
 	   xscreensaver-demo.man
 uninstall-program::
 	@for program in $(EXES) $(OLD_EXES); do				\
-	  echo rm -f $(install_prefix)$(bindir)/$$program ;		\
-	  rm -f $(install_prefix)$(bindir)/$$program ;			\
+	  echo rm -f $(DESTDIR)$(bindir)/$$program ;			\
+	  rm -f $(DESTDIR)$(bindir)/$$program ;				\
 	done
 
 uninstall-program::
 	@for program in $(UTIL_EXES) $(SETUID_EXES); do			\
-	  echo rm -f $(install_prefix)$(HACKDIR)/$$program ;		\
-	       rm -f $(install_prefix)$(HACKDIR)/$$program ;		\
+	  echo rm -f $(DESTDIR)$(HACKDIR)/$$program ;			\
+	       rm -f $(DESTDIR)$(HACKDIR)/$$program ;			\
 	done
 
 uninstall-ad:
-	rm -f $(install_prefix)$(AD_DIR)/XScreenSaver
+	rm -f $(DESTDIR)$(AD_DIR)/XScreenSaver
 
 uninstall-man:
 	@men="$(MEN) $(OLD_MEN)" ;					\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(install_prefix)$(manAdir)/$$instname* ;		\
-	       rm -f $(install_prefix)$(manAdir)/$$instname* ;		\
+	  echo rm -f $(DESTDIR)$(manAdir)/$$instname* ;			\
+	       rm -f $(DESTDIR)$(manAdir)/$$instname* ;			\
 	done
 
 install-pam: xscreensaver.pam
 	@src="xscreensaver.pam" ;					\
 	name=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
 	   < ../config.h` ;						\
-	dir="$(install_prefix)$(PAM_DIR)" ;				\
+	dir="$(DESTDIR)$(PAM_DIR)" ;					\
 	conf="$(PAM_CONF)" ;						\
 									\
 	if [ -z "$$name" ]; then					\
@@ -490,9 +490,9 @@ install-pam: xscreensaver.pam
 	  exit 0 ;							\
 	fi ;								\
 									\
-	if [ ! -d $(install_prefix)$(PAM_ROOT) ]; then			\
-	  echo $(INSTALL_DIRS) $(install_prefix)$(PAM_ROOT) ;		\
-	       $(INSTALL_DIRS) $(install_prefix)$(PAM_ROOT) ;		\
+	if [ ! -d $(DESTDIR)$(PAM_ROOT) ]; then				\
+	  echo $(INSTALL_DIRS) $(DESTDIR)$(PAM_ROOT) ;			\
+	       $(INSTALL_DIRS) $(DESTDIR)$(PAM_ROOT) ;			\
 	fi ;								\
 									\
 	if [ -d $$dir ] ; then						\
@@ -575,20 +575,20 @@ install-pam: xscreensaver.pam
 # into /usr/share/applications/
 install-gnome:: xscreensaver.desktop xscreensaver-settings.desktop
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
-	   if [ ! -d "$(install_prefix)$(GTK_APPDIR)" ]; then		      \
-	     echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_APPDIR)"	     ;\
-		  $(INSTALL_DIRS) "$(install_prefix)$(GTK_APPDIR)"	     ;\
+	   if [ ! -d "$(DESTDIR)$(GTK_APPDIR)" ]; then			      \
+	     echo $(INSTALL_DIRS) "$(DESTDIR)$(GTK_APPDIR)"		     ;\
+		  $(INSTALL_DIRS) "$(DESTDIR)$(GTK_APPDIR)"		     ;\
 	   fi								     ;\
 	   old=xscreensaver-properties.desktop				     ;\
-	   if [ -f "$(install_prefix)$(GTK_APPDIR)/$$old" ]; then	      \
-	     echo rm -f "$(install_prefix)$(GTK_APPDIR)/$$old"		     ;\
-		  rm -f "$(install_prefix)$(GTK_APPDIR)/$$old"		     ;\
+	   if [ -f "$(DESTDIR)$(GTK_APPDIR)/$$old" ]; then		      \
+	     echo rm -f "$(DESTDIR)$(GTK_APPDIR)/$$old"			     ;\
+		  rm -f "$(DESTDIR)$(GTK_APPDIR)/$$old"			     ;\
 	   fi								     ;\
 	   for name in xscreensaver.desktop xscreensaver-settings.desktop ; do\
-	    echo $(INSTALL_DATA) $$name $(install_prefix)$(GTK_APPDIR)/$$name;\
-		 $(INSTALL_DATA) $$name $(install_prefix)$(GTK_APPDIR)/$$name;\
-	    echo chmod a+x $(install_prefix)$(GTK_APPDIR)/$$name	     ;\
-		 chmod a+x $(install_prefix)$(GTK_APPDIR)/$$name	     ;\
+	    echo $(INSTALL_DATA) $$name $(DESTDIR)$(GTK_APPDIR)/$$name	     ;\
+		 $(INSTALL_DATA) $$name $(DESTDIR)$(GTK_APPDIR)/$$name	     ;\
+	    echo chmod a+x $(DESTDIR)$(GTK_APPDIR)/$$name		     ;\
+		 chmod a+x $(DESTDIR)$(GTK_APPDIR)/$$name		     ;\
 	   done								     ;\
 	 fi
 
@@ -599,27 +599,27 @@ install-gnome:: xscreensaver.desktop xscreensaver-settings.desktop
 # Or would that make it be enabled by default?
 #
 install-gnome:: xscreensaver.service
-	@if [ ! -d "$(install_prefix)$(GTK_SHAREDIR)" ]; then		      \
-	   echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_SHAREDIR)"	     ;\
-		$(INSTALL_DIRS) "$(install_prefix)$(GTK_SHAREDIR)"	     ;\
+	@if [ ! -d "$(DESTDIR)$(GTK_SHAREDIR)" ]; then			      \
+	   echo $(INSTALL_DIRS) "$(DESTDIR)$(GTK_SHAREDIR)"		     ;\
+		$(INSTALL_DIRS) "$(DESTDIR)$(GTK_SHAREDIR)"		     ;\
 	 fi								     ;\
 	 name=xscreensaver.service					     ;\
-	 echo $(INSTALL_DATA) $$name $(install_prefix)$(GTK_SHAREDIR)/$$name ;\
-	      $(INSTALL_DATA) $$name $(install_prefix)$(GTK_SHAREDIR)/$$name
+	 echo $(INSTALL_DATA) $$name $(DESTDIR)$(GTK_SHAREDIR)/$$name	     ;\
+	      $(INSTALL_DATA) $$name $(DESTDIR)$(GTK_SHAREDIR)/$$name
 
 # xscreensaver.png
 # into /usr/share/pixmaps/
 install-gnome:: $(LOGO)
 	@if [ "$(GTK_DATADIR)" != "" ]; then                                  \
-           if [ ! -d "$(install_prefix)$(GTK_ICONDIR)" ]; then                \
-             echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
-                  $(INSTALL_DIRS) "$(install_prefix)$(GTK_ICONDIR)"          ;\
+           if [ ! -d "$(DESTDIR)$(GTK_ICONDIR)" ]; then			      \
+             echo $(INSTALL_DIRS) "$(DESTDIR)$(GTK_ICONDIR)"		     ;\
+                  $(INSTALL_DIRS) "$(DESTDIR)$(GTK_ICONDIR)"		     ;\
            fi                                                                ;\
 	   target=xscreensaver.png                                           ;\
 	   echo $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
+	          $(DESTDIR)$(GTK_ICONDIR)/$$target			     ;\
 	        $(INSTALL_DATA) $(LOGO)					      \
-	          $(install_prefix)$(GTK_ICONDIR)/$$target		     ;\
+	          $(DESTDIR)$(GTK_ICONDIR)/$$target			     ;\
         fi
 
 install-gnome:: uninstall-old-gnome-icons
@@ -645,12 +645,12 @@ uninstall-gnome::
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
 	  old=xscreensaver-properties.desktop				     ;\
 	  if [ -f "$old" ]; then					      \
-	    echo rm -f $(install_prefix)$(GTK_APPDIR)/$$old		     ;\
-		 rm -f $(install_prefix)$(GTK_APPDIR)/$$old		     ;\
+	    echo rm -f $(DESTDIR)$(GTK_APPDIR)/$$old			     ;\
+		 rm -f $(DESTDIR)$(GTK_APPDIR)/$$old			     ;\
 	  fi								     ;\
 	  for f in xscreensaver.desktop xscreensaver-settings.desktop; do     \
-	    echo rm -f $(install_prefix)$(GTK_APPDIR)/$$f		     ;\
-	         rm -f $(install_prefix)$(GTK_APPDIR)/$$f		     ;\
+	    echo rm -f $(DESTDIR)$(GTK_APPDIR)/$$f			     ;\
+	         rm -f $(DESTDIR)$(GTK_APPDIR)/$$f			     ;\
 	  done								     ;\
 	fi
 
@@ -659,15 +659,15 @@ uninstall-gnome::
 uninstall-gnome::
 	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
 	  target=xscreensaver.xpm                                            ;\
-	  echo rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
-	       rm -f $(install_prefix)$(GTK_ICONDIR)/$$target                ;\
+	  echo rm -f $(DESTDIR)$(GTK_ICONDIR)/$$target			     ;\
+	       rm -f $(DESTDIR)$(GTK_ICONDIR)/$$target			     ;\
 	 fi
 
 # /usr/share/xscreensaver/ui/*.png and *.ui no longer used as of 2022, 6.05.
 uninstall-gnome::
 	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
-	  echo rm -rf $(install_prefix)$(GTK_SHAREDIR)/ui		     ;\
-	       rm -rf $(install_prefix)$(GTK_SHAREDIR)/ui		     ;\
+	  echo rm -rf $(DESTDIR)$(GTK_SHAREDIR)/ui			     ;\
+	       rm -rf $(DESTDIR)$(GTK_SHAREDIR)/ui			     ;\
 	 fi
 
 # What is all this crap with the wrong logo?
@@ -676,10 +676,10 @@ uninstall-gnome::
 uninstall-gnome:: uninstall-old-gnome-icons
 uninstall-old-gnome-icons::
 	@for f in							      \
-	   "$(install_prefix)$(GTK_DATADIR)/icons"/*/*/apps/xscreensaver.png  \
-	   "$(install_prefix)$(GTK_DATADIR)/icons"/*/*/apps/xscreensaver.svg  \
-	   "$(install_prefix)$(GTK_ICONDIR)/xscreensaver.xpm"		      \
-	   "$(install_prefix)$(GTK_ICONDIR)/xscreensaver.svg"		     ;\
+	   "$(DESTDIR)$(GTK_DATADIR)/icons"/*/*/apps/xscreensaver.png	      \
+	   "$(DESTDIR)$(GTK_DATADIR)/icons"/*/*/apps/xscreensaver.svg	      \
+	   "$(DESTDIR)$(GTK_ICONDIR)/xscreensaver.xpm"			      \
+	   "$(DESTDIR)$(GTK_ICONDIR)/xscreensaver.svg"			     ;\
 	 do								      \
 	   if [ -f "$$f" ]; then					      \
 	     echo rm -f "$$f"						     ;\
@@ -694,7 +694,7 @@ uninstall-gnome::
 
 # /usr/share/xscreensaver/config/README
 install-xml:
-	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 if [ ! -d $$dest ]; then					\
 	   $(INSTALL_DIRS) $$dest ;					\
 	 fi ;								\
@@ -705,7 +705,7 @@ install-xml:
 
 # /usr/share/xscreensaver/config/README
 uninstall-xml:
-	rm -f $(install_prefix)$(HACK_CONF_DIR)/README
+	rm -f $(DESTDIR)$(HACK_CONF_DIR)/README
 
 
 ##############################################################################

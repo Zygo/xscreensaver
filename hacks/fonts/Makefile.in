@@ -1,4 +1,4 @@
-# hacks/fonts/Makefile.in --- xscreensaver, Copyright © 2021-2023 Jamie Zawinski.
+# hacks/fonts/Makefile.in --- xscreensaver, Copyright © 2021-2025 Jamie Zawinski.
 # the `../configure' script generates `hacks/fonts/Makefile' from this file.
 
 @SET_MAKE@
@@ -7,7 +7,7 @@ VPATH		= ${srcdir}
 top_srcdir	= @top_srcdir@
 top_builddir	= ..
 
-install_prefix	=
+DESTDIR		=
 prefix		= @prefix@
 datarootdir	= @datarootdir@
 datadir		= @datadir@
@@ -66,7 +66,7 @@ install-fonts:
 	@if [ -z "$(FONT_DIR)" ]; then					\
 	   echo "not installing fonts" ;				\
 	 else								\
-	   dest="$(install_prefix)$(FONT_DIR)" ;			\
+	   dest="$(DESTDIR)$(FONT_DIR)" ;				\
 	   if [ ! -d "$$dest" ]; then					\
 	     echo $(INSTALL_DIRS) "$$dest" ;				\
 		  $(INSTALL_DIRS) "$$dest" ;				\
@@ -80,12 +80,12 @@ install-fonts:
 uninstall:: uninstall-fonts
 uninstall-fonts:
 	@if ! [ -z "$(FONT_DIR)" ]; then				\
-	   dest="$(install_prefix)$(FONT_DIR)" ;			\
+	   dest="$(DESTDIR)$(FONT_DIR)" ;				\
 	   for f in $(FONTS) ; do					\
 	     echo $(RM) $$dest/$$f ;					\
 		  $(RM) $$dest/$$f ;					\
 	   done ;							\
-	   rmdir "$(install_prefix)$(FONT_DIR)" ;			\
+	   rmdir "$(DESTDIR)$(FONT_DIR)" ;				\
 	   exit 0 ;							\
 	 fi
 

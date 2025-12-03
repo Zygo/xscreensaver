@@ -10,7 +10,7 @@ VPATH		= @srcdir@
 top_srcdir	= @top_srcdir@
 top_builddir	= ..
 
-install_prefix	=
+DESTDIR		=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
@@ -339,7 +339,7 @@ install-strip:
 # the hacks, in $HACKDIR
 install-program:: $(EXES)
 	@exes="$(HACK_EXES_1) @GL_UTIL_EXES@" ;				\
-	 idir="$(install_prefix)$(HACKDIR)" ;				\
+	 idir="$(DESTDIR)$(HACKDIR)" ;					\
 	 if ( echo $$exes | grep -q . ); then				\
 	   if [ ! -d $$idir ]; then					\
 	     $(INSTALL_DIRS) $$idir ;					\
@@ -393,8 +393,8 @@ install-program:: $(EXES)
 install-scripts: $(SCRIPTS) munge-scripts
 	@								\
 	if ! ( echo $(HACK_EXES_1) | grep -q . ); then exit 0 ; fi ;	\
-	if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
+	if [ ! -d $(DESTDIR)$(HACKDIR) ]; then				\
+	  $(INSTALL_DIRS) $(DESTDIR)$(HACKDIR) ;			\
 	 fi ;								\
 	for program in $(SCRIPTS); do					\
 	  if [ -r $$program ] ; then					\
@@ -403,9 +403,9 @@ install-scripts: $(SCRIPTS) munge-scripts
 	    p=$(srcdir)/$$program ;					\
 	  fi ;								\
 	  echo $(INSTALL_SCRIPT) $$p					\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	    $(DESTDIR)$(HACKDIR)/$$program ;				\
 	  $(INSTALL_SCRIPT) $$p						\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	    $(DESTDIR)$(HACKDIR)/$$program ;				\
 	done
 
 munge-scripts: $(SCRIPTS)
@@ -439,8 +439,8 @@ install-man: $(MEN)
 	if ! ( echo $(HACK_EXES_1) | grep -q . ); then exit 0 ; fi ;	\
 	echo "installing man pages: $$TH" ;				\
 									\
-	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
+	if [ ! -d $(DESTDIR)$(manNdir) ]; then				\
+	  $(INSTALL_DIRS) $(DESTDIR)$(manNdir) ;			\
 	 fi ;								\
 									\
 	for man in $$men; do						\
@@ -451,14 +451,14 @@ install-man: $(MEN)
 	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
 	    < $(srcdir)/$$man > $$T ;					\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
-	   $(install_prefix)$(manNdir)/$$instname ;			\
+	   $(DESTDIR)$(manNdir)/$$instname ;				\
 	  $(INSTALL_DATA) $$T						\
-	    $(install_prefix)$(manNdir)/$$instname ;			\
+	    $(DESTDIR)$(manNdir)/$$instname ;				\
 	done ;								\
 	rm -f $$T
 
 install-xml:
-	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 if [ ! -d $$dest ]; then					\
 	   $(INSTALL_DIRS) $$dest ;					\
 	 fi ;								\
@@ -473,7 +473,7 @@ install-xml:
 # the hacks, in $HACKDIR
 uninstall-program::
 	@exes="$(HACK_EXES) $(RETIRED_EXES) $(SCRIPTS) @GL_UTIL_EXES@" ;\
-	 idir="$(install_prefix)$(HACKDIR)" ;				\
+	 idir="$(DESTDIR)$(HACKDIR)" ;					\
 	 for program in $$exes; do					\
 	   echo rm -f $$idir/$$program ;				\
 		rm -f $$idir/$$program ;				\
@@ -481,18 +481,18 @@ uninstall-program::
 
 # $HACKDIR/xscreensaver-gl-visual used to be $bindir/xscreensaver-gl-helper
 uninstall-program::
-	rm -f $(install_prefix)$(bindir)/xscreensaver-gl-helper
+	rm -f $(DESTDIR)$(bindir)/xscreensaver-gl-helper
 
 uninstall-man:
 	@men="$(MEN) $(RETIRED_MEN)" ;					\
 	for man in $$men; do						\
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
-	       rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	  echo rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
+	       rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
 	done
 
 uninstall-xml:
-	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 for file in $(EXES) $(RETIRED_EXES) $(SCRIPTS) ; do		\
 	     echo rm -f $$dest/$$file.xml ;				\
 	          rm -f $$dest/$$file.xml ;				\
