@@ -495,12 +495,12 @@ install-pam: xscreensaver.pam
 	       $(INSTALL_DIRS) $(DESTDIR)$(PAM_ROOT) ;			\
 	fi ;								\
 									\
-	if [ -d $$dir ] ; then						\
+	if [ -d $(PAM_DIR) ] ; then					\
 									\
-	  if [ -f $$dir/xdm ]; then					\
-	    src2=$$dir/xdm ;						\
-	  elif [ -f $$dir/login ]; then					\
-	    src2=$$dir/login ;						\
+	  if [ -f $(PAM_DIR)/xdm ]; then				\
+	    src2=$(PAM_DIR)/xdm ;					\
+	  elif [ -f $(PAM_DIR)/login ]; then				\
+	    src2=$(PAM_DIR)/login ;					\
 	  fi ;								\
 									\
 	  if [ -z "$$src2" ]; then					\
