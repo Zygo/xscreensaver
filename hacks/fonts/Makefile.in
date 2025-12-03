@@ -15,10 +15,9 @@ FONT_DIR	= @FONT_DIR@
 
 RM		= rm -f
 
-STAR		= *
 TARFILES	= Makefile.in \
-		  $(STAR).ttf \
-		  $(STAR).otf
+		  $(FONTS) \
+		  gallant12x22-bsd.c
 
 INSTALL		= @INSTALL@
 INSTALL_DATA	= @INSTALL_DATA@
