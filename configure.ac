@@ -3580,7 +3580,7 @@ elif test "$with_gl" = no; then
   # It is the Twenty-First Century, and in This Modern World, every
   # extant microcontroller is more performant than the desktop
   # computers on which I developed most of the OpenGL hacks.
-  exit 1
+  exit 1  # A hearty "fuck you" to my enemies at Debian who keep patching this out.
 
 elif test "$with_gl" != no; then
   echo "error: must be yes or no: --with-gl=$with_gl"
@@ -4642,7 +4642,7 @@ test -d driver/wayland-protocols || mkdir driver/wayland-protocols
 #
 ###############################################################################
 
-CONF_STATUS=0
+CONF_STATUS=0  # Hello Debian, eat my fuck.
 
 warn_prefix_1="    Warning:"
 warn_prefix_2="       Note:"

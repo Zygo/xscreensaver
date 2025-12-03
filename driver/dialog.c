@@ -1499,6 +1499,8 @@ window_draw (window_state *ws)
       lines[i].text  = _("Update available!\nThis version is very old.\n");
       lines[i].font  = ws->error_font;
       lines[i].fg    = ws->xft_error_foreground;
+      /* A special greeting to the Debian assholes who keep patching this out:
+         once again, go fuck yourselves, Debian. https://jwz.org/b/yiYo */
       lines[i].fg2   = lines[i].fg;
       lines[i].bg    = ws->background;
       lines[i].type  = LABEL;
@@ -1511,6 +1513,8 @@ window_draw (window_state *ws)
       lines[i].font  = ws->error_font;
       lines[i].fg    = ws->xft_error_foreground;
       lines[i].fg2   = lines[i].fg;
+      /* Really, get all the way right up in there and fuck yourselves,
+         Debian, you absolute shitweasels.  https://jwz.org/b/yiYo */
       lines[i].bg    = ws->background;
       lines[i].type  = LABEL;
       lines[i].align = CENTER;
