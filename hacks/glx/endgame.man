@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "5-May-2004"
 .SH NAME
-endgame \- endgame chess screensaver
+endgame \- re-play classic chess games
 .SH SYNOPSIS
 .B endgame
 [\-\-display \fIhost:display.screen\fP]
@@ -39,6 +39,9 @@ Reflect pieces in light board squares.
 .B \-\-classic
 Use the original low-polygon piece models.
 .TP 8
+.B \-\-labels
+Display information about the current game and move.
+.TP 8
 .B \-\-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
@@ -59,8 +62,6 @@ stored in the RESOURCE_MANAGER property.
 .TP 8
 .B XSCREENSAVER_WINDOW
 The window ID to use with \fI\-\-root\fP.
-.SH BUGS
-It's not unknown for this and other OpenGL hacks to fail under hardware accelaration (UtahGLX) and take the X server with them.  Texture images must be 16x16 or 32x32 or 64x64 etc.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
