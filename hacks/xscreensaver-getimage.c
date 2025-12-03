@@ -144,6 +144,10 @@
 # include <sys/wait.h>		/* for waitpid() and associated macros */
 #endif
 
+#ifdef HAVE_GETXATTR
+# include <sys/xattr.h>
+#endif
+
 #include "version.h"
 #include "../driver/blurb.h"
 #include "yarandom.h"
@@ -1902,6 +1906,40 @@ drawable_miniscule_p (Display *dpy, Drawable drawable)
 }
 
 
+/* Returns the URL and title of the given file, if present in xattrs.
+   Duplicated in grabclient.c.
+ */
+static void
+get_file_xattrs (const char *file, char **urlP, char **titleP)
+{
+# ifdef HAVE_GETXATTR
+
+#  ifdef XATTR_ADDITIONAL_OPTIONS
+#   define GETXATTR(F,K,B,S) getxattr (F, K, B, S, 0, 0)
+#  else
+#   define GETXATTR(F,K,B,S) getxattr (F, K, B, S)
+#  endif
+
+  char url[1024], title[1024];
+  ssize_t s;
+
+  s = GETXATTR (file, "user.xdg.origin.url", url, sizeof(url)-1);
+  if (s > 0)
+    {
+      url[s] = 0;
+      *urlP = strdup (url);
+    }
+
+  s = GETXATTR (file, "user.dublincore.title", title, sizeof(title)-1);
+  if (s > 0)
+    {
+      title[s] = 0;
+      *titleP = strdup (title);
+    }
+# endif /* HAVE_GETXATTR */
+}
+
+
 /* Grabs an image (from a file, video, or the desktop) and renders it on
    the Drawable.  If 'file' is specified, always use that file.  Otherwise,
    select randomly, based on the other arguments.
@@ -1921,6 +1959,8 @@ get_image (Screen *screen,
   grab_type which = GRAB_BARS;
   struct stat st;
   const char *file_prop = 0;
+  char *xattr_url   = 0;
+  char *xattr_title = 0;
   char *absfile = 0;
   XRectangle geom = { 0, 0, 0, 0 };
 
@@ -2081,6 +2121,7 @@ get_image (Screen *screen,
                           verbose_p, &geom))
         goto COLORBARS;
       file_prop = file;
+      get_file_xattrs (file, &xattr_url, &xattr_title);
       break;
 
     case GRAB_VIDEO:
@@ -2096,7 +2137,10 @@ get_image (Screen *screen,
 
   {
     Atom a = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME, False);
-    if (file_prop && *file_prop)
+    if (xattr_url)
+      XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
+                       (unsigned char *) xattr_url, strlen(xattr_url));
+    else if (file_prop && *file_prop)
       {
         char *f2 = strdup (file_prop);
 
@@ -2105,15 +2149,17 @@ get_image (Screen *screen,
         char *slash = strrchr (f2, '/');
         char *dot = strrchr ((slash ? slash : f2), '.');
         if (dot) *dot = 0;
-        /* Replace slashes with newlines */
-        /* while ((dot = strchr(f2, '/'))) *dot = '\n'; */
-        /* Replace slashes with spaces */
-        /* while ((dot = strchr(f2, '/'))) *dot = ' '; */
-
         XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
                          (unsigned char *) f2, strlen(f2));
         free (f2);
       }
+    else
+      XDeleteProperty (dpy, window, a);
+
+    a = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_TITLE, False);
+    if (xattr_title)
+      XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
+                       (unsigned char *) xattr_title, strlen(xattr_title));
     else
       XDeleteProperty (dpy, window, a);
 
@@ -2132,6 +2178,9 @@ get_image (Screen *screen,
   if (absfile) free (absfile);
 
   XSync (dpy, False);
+
+  if (xattr_url)   free (xattr_url);
+  if (xattr_title) free (xattr_title);
 }
 
 

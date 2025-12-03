@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple; use LWP::UserAgent;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.70 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.71 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -102,6 +102,7 @@ my $min_image_height = 500;
 
 my @all_files = ();         # list of "good" files we've collected
 my %seen_inodes;            # for breaking recursive symlink loops
+my $setfattr = 'setfattr';
 
 # For diagnostic messages:
 #
@@ -113,6 +114,17 @@ my $skip_count_stat = 0;    # number of files skipped after stat
 my $config_file = $ENV{HOME} . "/.xscreensaver";
 my $image_directory = undef;
 
+sub which($) {
+  my ($cmd) = @_;
+  if ($cmd =~ m@^\./|^/@) {
+    return undef unless (-x $cmd);
+  }
+  foreach my $dir (split (/:/, $ENV{PATH})) {
+    my $cmd2 = "$dir/$cmd";
+    return $cmd2 if (-x "$cmd2");
+  }
+  return undef;
+}
 
 sub find_all_files($);
 sub find_all_files($) {
@@ -532,8 +544,16 @@ sub parse_feed($) {
 
   foreach my $item (@items) {
     my $iurl = undef;
+    my $title = undef;
     my $id = undef;
     my $kind = '?';
+
+    ($title) = ($item =~ m@<TITLE\b[^<>]*>(.*?)</TITLE>@si);
+    if ($title) {
+      $title =~ s/<.*?>//gs;
+      $title = html_unquote ($title);
+      $title =~ s/^\s+|\s+$//gs;
+    }
 
     # The <media:group> container groups the same content in different
     # representations.  So first, edit each of those to contain only the
@@ -668,7 +688,7 @@ sub parse_feed($) {
       my $o = $ids{$id};
       if (! $o) {
         $ids{$id} = $iurl;
-        my @P = ($iurl, $id);
+        my @P = ($iurl, $id, $title);
         push @imgs, \@P;
         print STDERR "$progname:   $kind: $iurl\n" if ($verbose > 4);
       } elsif ($iurl ne $o) {
@@ -1059,6 +1079,47 @@ sub download_image($$$) {
 }
 
 
+# Write some xattrs on the file saying where we downloaded it from:
+# "user.xdg.origin.url" and "user.dublincore.title".
+#
+sub store_xattrs($$$) {
+  my ($file, $url, $title) = @_;
+
+  # Sometimes we have 'setfattr', sometimes 'xattr', sometimes neither.
+  # And they take different command-line options. Yay!
+  #
+  # Also, the macOS and Linux versions of 'xattr' have similar but not
+  # identical options (but close enough for our purposes).  The macOS
+  # version is a binary while the Linux version is a Python script.
+  # Mac weirdness is due to resource forks.
+  #
+  # What about BSD? Solaris? Who knows!
+  #
+  # There's also the File::ExtAttr perl module, but it is not installed
+  # by default, so using that would not improve matters in any way.
+
+  return unless $setfattr;
+
+  if ($url) {
+    my $key = 'user.xdg.origin.url';
+    my @cmd = ($setfattr =~ m/setfattr/
+               ? ($setfattr, '-n', $key, '-v', $url, $file)	# setfattr
+               : ($setfattr, '-w', $key,       $url, $file));	# xattr
+    print STDERR "$progname: exec: @cmd\n" if ($verbose);
+    system (@cmd);  # Ignore errors
+  }
+
+  if ($title) {
+    my $key = 'user.dublincore.title';
+    my @cmd = ($setfattr =~ m/setfattr/
+               ? ($setfattr, '-n', $key, '-v', $title, $file)	# setfattr
+               : ($setfattr, '-w', $key,       $title, $file));	# xattr
+    print STDERR "$progname: exec: @cmd\n" if ($verbose);
+    system (@cmd);  # Ignore errors
+  }
+}
+
+
 sub mirror_feed($) {
   my ($url) = @_;
 
@@ -1144,9 +1205,12 @@ sub mirror_feed($) {
     my @urls = parse_feed ($url);
     print STDERR "$progname: " . ($#urls + 1) . " images\n"
       if ($verbose > 1);
+
+    $setfattr = which ('setfattr') || which ('xattr');
+
     my %seen_src_urls;
     foreach my $p (@urls) {
-      my ($furl, $id) = @$p;
+      my ($furl, $id, $title) = @$p;
       $furl = expand_url ($furl, $url);
 
       # No need to download the same image twice, even if it was in the feed
@@ -1158,6 +1222,8 @@ sub mirror_feed($) {
       next unless $f;
       $files{$f} = 1;    # Got it, don't delete
       $count++;
+
+      store_xattrs ("$dir/$f", $furl, $title);
     }
 
     my $empty_p = ($count <= 0);
