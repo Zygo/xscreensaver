@@ -3392,7 +3392,8 @@ AC_ARG_WITH(gl,
 [
 Graphics Options:
 
-  --with-gles             Emulate OpenGL 1.3 in terms of OpenGL ES 1.x.],
+  --with-gles             Emulate OpenGL 1.3 in terms of OpenGL ES 1.x.
+                          Do not do this: it doesn't mean what you think.],
   [with_gl="$withval"; with_gl_req="$withval"],[with_gl=yes])
 
 HANDLE_X_PATH_ARG(with_gl, --with-gl, GL)
@@ -3573,7 +3574,8 @@ have_glx=no
 have_egl=no
 with_egl_req=unspecified
 AC_ARG_WITH(glx,
-[  --with-glx              Use GLX to interface OpenGL and X11 instead of EGL.],
+[  --with-glx              Use GLX to interface OpenGL and X11 instead of EGL.
+                          Do not do this: it will make GLSL fail.],
   [with_egl="$withval"; with_egl_req="$withval"],
   [with_glx=no])
 
@@ -4618,6 +4620,7 @@ CONF_STATUS=0
 
 warn_prefix_1="    Warning:"
 warn_prefix_2="       Note:"
+warn_prefix_3="      Error:"
 warn_prefix="$warn_prefix_1"
 
 warning=no
@@ -5075,6 +5078,19 @@ if test "$ac_macosx" = yes -a "$enable_locking" = yes ; then
   warn2 "THIS DOES NOT WORK!  Don't do this!"
 fi
 
+# Fucking Gentoo...
+if test "$have_jwzgles" = yes ; then
+  warn_prefix="$warn_prefix_3"
+  warn "The --with-gles option does not do what you think. Do not use it."
+  exit 1
+fi
+
+if test "$have_egl" = no; then
+  warn_prefix="$warn_prefix_3"
+  warn "Using --with-glx means GLSL won't work. Don't do it!"
+  exit 1
+fi
+
 if test "$have_jwzgles" = yes ; then
   warn  "Do not use --with-gles unless you are sure that you know"
   warn2 "what you are doing!  It is not recommended on normal X11"
@@ -5084,6 +5100,11 @@ if test "$have_jwzgles" = yes ; then
     warn2 ""
     warn2 "Using --with-gles and --with-glx probably won't work."
   fi
+fi
+
+if test "$setuid_hacks" = no; then
+  warn  "Using --without-setuid-hacks breaks 'sonar' for no good reason."
+  warn2 "Don't do it."
 fi
 
 
