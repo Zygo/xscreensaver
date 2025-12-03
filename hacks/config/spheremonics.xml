@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="spheremonics" _label="Spheremonics" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=KrNVwyWi0io"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="duration" type="slider" arg="--duration %"
+            _label="Duration" _low-label="Short" _high-label="Long"
+            low="5" high="1000" default="200"/>
+
+    <number id="resolution" type="slider" arg="--resolution %"
+            _label="Resolution" _low-label="Low" _high-label="High"
+            low="5" high="100" default="64"/>
+
+   </vgroup>
+   <vgroup>
+    <boolean id="wander" _label="Wander" arg-set="--wander"/>
+
+    <select id="rotation">
+      <option id="no"  _label="Don't rotate"               arg-set="--spin 0"/>
+      <option id="x"   _label="Rotate around X axis"       arg-set="--spin X"/>
+      <option id="y"   _label="Rotate around Y axis"       arg-set="--spin Y"/>
+      <option id="z"   _label="Rotate around Z axis"       arg-set="--spin Z"/>
+      <option id="xy"  _label="Rotate around X and Y axes" arg-set="--spin XY"/>
+      <option id="xz"  _label="Rotate around X and Z axes" arg-set="--spin XZ"/>
+      <option id="yz"  _label="Rotate around Y and Z axes" arg-set="--spin YZ"/>
+      <option id="xyz" _label="Rotate around all three axes"/>
+    </select>
+
+    <boolean id="smooth" _label="Smoothed lines"  arg-unset="--no-smooth"/>
+    <boolean id="grid" _label="Draw grid"         arg-unset="--no-grid"/>
+    <boolean id="bbox" _label="Draw bounding box" arg-set="--bbox"/>
+
+    <boolean id="wire"    _label="Wireframe"              arg-set="--wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+  </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+These closed objects are commonly called spherical harmonics,
+although they are only remotely related to the mathematical
+definition found in the solution to certain wave functions, most
+notably the eigenfunctions of angular momentum operators.
+
+https://en.wikipedia.org/wiki/Spherical_harmonics#Visualization_of_the_spherical_harmonics
+
+Written by Paul Bourke and Jamie Zawinski; 2002.
+  </_description>
+</screensaver>

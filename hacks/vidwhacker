@@ -1,0 +1,525 @@
+#!/usr/bin/perl -w
+# vidwhacker, for xscreensaver.  Copyright © 1998-2023 Jamie Zawinski.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# Distorts an image using a random series of filters: edge detection,
+# subtracting the image from a rotated version of itself, etc.
+#
+# Someone really ought to translate these filters to use ImageMagick
+# instead of PPM. (Sorry Jef.)
+#
+# Created: 14-Apr-2001.
+
+require 5;
+use diagnostics;
+use strict;
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my ($version) = ('$Revision: 1.41 $' =~ m/\s(\d[.\d]+)\s/s);
+
+# Command line switches
+#
+my $verbose = 0;
+my $use_stdin = 0;
+my $use_stdout = 0;
+my $video_p = 0;
+my $file_p = 1;
+my $delay = 5;
+my $imagedir;
+
+my $screen_width = -1;
+
+my $displayer = "xscreensaver-getimage --root --file";
+
+sub which($);
+
+# apparently some versions of netpbm call it "pamoil" instead of "pgmoil"...
+#
+my $pgmoil = (which("pamoil") ? "pamoil" : "pgmoil");
+
+
+# List of interesting PPM filter pipelines.
+# In this list, the following magic words may be used:
+#
+#  COLORS       a randomly-selected pair of RGB foreground/background colors.
+#  FILE1        the (already-existing) input PPM file (ok to overwrite it).
+#  FILE2-FILE4  names of other tmp files you can use.
+#
+# These commands should read from FILE1, and write to stdout.
+# All tmp files will be deleted afterward.
+#
+my @filters = (
+  "ppmtopgm FILE1 | pgmedge | pgmtoppm COLORS | ppmnorm",
+  "ppmtopgm FILE1 | pgmenhance | pgmtoppm COLORS",
+  "ppmtopgm FILE1 | $pgmoil | pgmtoppm COLORS",
+  "ppmtopgm FILE1 | pgmbentley | pgmtoppm COLORS",
+
+  "ppmrelief FILE1 | ppmtopgm | pgmedge | ppmrelief | ppmtopgm |" .
+   " pgmedge | pnminvert | pgmtoppm COLORS",
+
+  "ppmspread 71 FILE1 > FILE2 ; " .
+  " pnmarith -add FILE1 FILE2",
+
+  "pnmflip -lr < FILE1 > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2 > FILE3 ; " .
+  " pnmflip -tb FILE3 | ppmnorm > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2",
+
+  "pnmflip -lr FILE1 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "pnmflip -tb FILE1 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "pnmflip -lr FILE1 | pnmflip -tb > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmtopgm < FILE1 | pgmedge > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 > FILE3 ; " .
+  " cp FILE3 FILE1 ; " .
+  " ppmtopgm < FILE1 | pgmedge > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 > FILE3 ; " .
+  " ppmnorm < FILE1",
+
+  "pnmflip -lr < FILE1 > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2 | ppmrelief | ppmnorm | pnminvert",
+
+  "pnmflip -lr FILE1 > FILE2 ; " .
+  " pnmarith -subtract FILE1 FILE2 | ppmrelief | ppmtopgm | pgmedge",
+
+  "pgmcrater -number 20000 -width WIDTH -height HEIGHT FILE1 | " .
+  "   pgmtoppm COLORS > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 > FILE3 ; " .
+  " pnmflip -tb FILE3 | ppmnorm > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2",
+
+  "ppmshift 30 FILE1 | ppmtopgm | $pgmoil | pgmedge | " .
+  "   pgmtoppm COLORS > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmpat -madras WIDTH HEIGHT | pnmdepth 255 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmpat -tartan WIDTH HEIGHT | pnmdepth 255 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmpat -camo WIDTH HEIGHT | pnmdepth 255 | ppmshift 50 > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2",
+
+  "pgmnoise WIDTH HEIGHT | pgmedge | pgmtoppm COLORS > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 | pnmdepth 255 | pnmsmooth",
+);
+
+
+# Anything placed on this list gets unconditionally deleted when this
+# script exits, even if abnormally.
+#
+my %rm_f;
+END { rmf(); }
+
+sub rmf() {
+  foreach my $f (sort keys %rm_f) {
+    if (-e $f) {
+      print STDERR "$progname: rm $f\n" if ($verbose > 1);
+      unlink $f;
+    }
+  }
+  %rm_f = ();
+}
+
+sub signal_cleanup($) {
+  my ($s) = @_;
+  print STDERR "$progname: SIG$s\n" if ($verbose > 1);
+  rmf();
+  # Propagate the signal and die. This does not cause END to run.
+  $SIG{$s} = 'DEFAULT';
+  kill ($s, $$);
+}
+
+$SIG{TERM} = \&signal_cleanup;  # kill
+$SIG{INT}  = \&signal_cleanup;  # shell ^C
+$SIG{QUIT} = \&signal_cleanup;  # shell ^|
+$SIG{KILL} = \&signal_cleanup;  # nope
+$SIG{ABRT} = \&signal_cleanup;
+$SIG{HUP}  = \&signal_cleanup;
+$SIG{PIPE} = 'IGNORE';  # So that if giftopnm dies, we don't die.
+
+# Add the file to the rm_f list, since you can't export hash variables.
+sub rm_atexit($) {
+  my ($file) = @_;
+  $rm_f{$file} = 1;
+}
+
+
+# returns the full path of the named program, or undef.
+#
+sub which($) {
+  my ($prog) = @_;
+  foreach my $d (split (/:/, $ENV{PATH})) {
+    my $path = "$d/$prog";
+    if (-x $path) {
+      return $path;
+    }
+  }
+  return undef;
+}
+
+
+# Choose random foreground and background colors
+#
+sub randcolors() {
+  return sprintf ("#%02x%02x%02x-#%02x%02x%02x",
+                  int(rand()*60),
+                  int(rand()*60),
+                  int(rand()*60),
+                  120+int(rand()*135),
+                  120+int(rand()*135),
+                  120+int(rand()*135));
+}
+
+
+sub filter_subst($$$@) {
+  my ($filter, $width, $height, @tmpfiles) = @_;
+  my $colors = randcolors();
+  $filter =~ s/\bWIDTH\b/$width/g;
+  $filter =~ s/\bHEIGHT\b/$height/g;
+  $filter =~ s/\bCOLORS\b/'$colors'/g;
+  my $i = 1;
+  foreach my $t (@tmpfiles) {
+    $filter =~ s/\bFILE$i\b/$t/g;
+    $i++;
+  }
+  if ($filter =~ m/([A-Z]+)/) {
+    error ("internal error: what is \"$1\"?");
+  }
+  $filter =~ s/  +/ /g;
+  return $filter;
+}
+
+
+# Frobnicate the image in some random way.
+#
+sub frob_ppm($) {
+  my ($ppm_data) = @_;
+
+  error ("0-length data") if (!defined($ppm_data) || $ppm_data eq  "");
+  error ("not a PPM file") unless ($ppm_data =~ m/^P\d\n/s);
+  my ($width, $height) = ($ppm_data =~ m/^P\d\n(?:#.*\n)*(\d+) (\d+)\n/s);
+  error ("got a bogus PPM") unless ($width && $height);
+
+  my $tmpdir = $ENV{TMPDIR};
+  $tmpdir = "/tmp" unless $tmpdir;
+  my $fn =  sprintf ("%s/vidwhacker-0-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my $fn1 = sprintf ("%s/vidwhacker-1-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my $fn2 = sprintf ("%s/vidwhacker-2-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my $fn3 = sprintf ("%s/vidwhacker-3-%08x", $tmpdir, rand(0xFFFFFFFF));
+  my @files = ( "$fn", "$fn1", "$fn2", "$fn3" );
+  foreach my $f (@files) { rm_atexit ($f); }
+
+  my $n = int(rand(@filters));
+  my $filter = $filters[$n];
+
+  if ($verbose == 1) {
+    printf STDERR "$progname: running filter $n\n";
+  } elsif ($verbose > 1) {
+    my $f = $filter;
+    $f =~ s/  +/ /g;
+    $f =~ s/^ */\t/;
+    $f =~ s/ *\|/\n\t|/g;
+    $f =~ s/ *\; */ ;\n\t/g;
+    print STDERR "$progname: filter $n:\n\n$f\n\n" if $verbose;
+  }
+
+  # 15-Sep-2022: xscreensaver-getimage can't necessarily load PPM, so
+  # make the final form always be JPEG.
+  $filter .= ' | pnmtojpeg';
+
+  $filter = filter_subst ($filter, $width, $height, @files);
+
+  unlink @files;
+
+  open (my $out, '>:raw', $files[0]) || error ("writing $files[0]: $!");
+  print $out $ppm_data;
+  close $out;
+
+  $filter = "( $filter )";
+  $filter .= "2>&-" unless ($verbose > 1);
+
+  open (my $in, "$filter |") || error ("opening pipe: $!");
+  $ppm_data = "";
+  local $/ = undef;  # read entire file
+  while (<$in>) { $ppm_data .= $_; }
+  close $in;
+
+  unlink @files;
+  return $ppm_data;
+}
+
+
+sub read_config() {
+  my $conf = "$ENV{HOME}/.xscreensaver";
+
+  my $had_dir = defined($imagedir);
+
+  open (my $in, '<', $conf) ||  error ("reading $conf: $!");
+  while (<$in>) {
+    if (!$imagedir && m/^imageDirectory:\s+(.*)\s*$/i) { $imagedir = $1; }
+    elsif (m/^grabVideoFrames:\s+true\s*$/i)     { $video_p = 1; }
+    elsif (m/^grabVideoFrames:\s+false\s*$/i)    { $video_p = 0; }
+    elsif (m/^chooseRandomImages:\s+true\s*$/i)  { $file_p  = 1; }
+    elsif (m/^chooseRandomImages:\s+false\s*$/i) { $file_p  = 0; }
+  }
+  close $in;
+
+  $file_p = 1 if $had_dir;
+
+  $imagedir = undef unless ($imagedir && $imagedir ne '');
+
+  if (!$file_p && !$video_p) {
+    # Sadly, vidwhacker has no way to get the desktop screenshot image
+    # from the "_SCREENSAVER_SCREENSHOT" property on $
+    # There's no straightforward way to convert a pixmap ID to a PPM.
+    $file_p = 1;
+  }
+
+  $imagedir =~ s@^~/@$ENV{HOME}/@s;
+
+  if ($file_p) {
+    error ("no imageDirectory set in $conf") unless $imagedir;
+    error ("imageDirectory $imagedir doesn't exist")
+      unless ($imagedir =~ m@^https://@s || -d $imagedir);
+  }
+
+  if ($verbose > 1) {
+    printf STDERR "$progname: grab video: $video_p\n";
+    printf STDERR "$progname: grab images: $file_p\n";
+    printf STDERR "$progname: directory: $imagedir\n";
+  }
+
+}
+
+
+sub get_ppm() {
+  if ($use_stdin) {
+    print STDERR "$progname: reading from stdin\n" if ($verbose > 1);
+    my $ppm = "";
+    local $/ = undef;  # read entire file
+    while (<STDIN>) { $ppm .= $_; }
+    return $ppm;
+
+  } else {
+
+    my $do_file_p;
+
+    if ($file_p && $video_p) {
+      $do_file_p = (int(rand(2)) == 0);
+      print STDERR "$progname: doing " . ($do_file_p ? "files" : "video") ."\n"
+        if ($verbose);
+    }
+    elsif ($file_p)  { $do_file_p = 1; }
+    elsif ($video_p) { $do_file_p = 0; }
+    else {
+      error ("internal error: not grabbing files or video?");
+    }
+
+    my $v = ($verbose <= 1 ? "" : "-" . ("v" x ($verbose-1)));
+    my $cmd;
+    if ($do_file_p) {
+      $cmd = "xscreensaver-getimage-file  $v --name \"$imagedir\"";
+    } else {
+      $cmd = "xscreensaver-getimage-video $v";
+    }
+
+    my $ppm;
+
+    print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
+    my $fn = `$cmd`;
+    $fn =~ s/\n$//s;
+    error ("didn't get a file?") if ($fn eq "");
+    $fn = "$imagedir/$fn" unless ($fn =~ m@^/@s);
+
+    print STDERR "$progname: selected file $fn\n" if ($verbose > 1);
+
+    if (which('convert')) { $cmd = "convert \"$fn\" -auto-orient ppm:-"; }
+    elsif ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < \"$fn\""; }
+    elsif ($fn =~ m/\.jpe?g/i) { $cmd = "exiftran -o /dev/stdout -a \"$fn\" | djpeg"; }
+    elsif ($fn =~ m/\.png/i)   { $cmd = "pngtopnm < \"$fn\""; }
+    elsif ($fn =~ m/\.xpm/i)   { $cmd = "xpmtoppm < \"$fn\""; }
+    elsif ($fn =~ m/\.bmp/i)   { $cmd = "bmptoppm < \"$fn\""; }
+    elsif ($fn =~ m/\.tiff?/i) { $cmd = "tifftopnm < \"$fn\""; }
+    elsif ($fn =~ m/\.p[bgp]m/i) { $cmd = "cat \"$fn\""; }
+    else {
+      print STDERR "$progname: $fn: unrecognized file extension\n";
+      # go around the loop and get another
+      return undef;
+    }
+
+    print STDERR "$progname: converting with: $cmd\n" if ($verbose > 1);
+    $cmd .= " 2>/dev/null" unless ($verbose > 1);
+    $ppm = `$cmd`;
+
+    unlink $fn if (!$do_file_p);
+
+
+    return $ppm;
+  }
+}
+
+sub dispose_ppm($) {
+  my ($ppm) = @_;
+
+  error ("0-length data") if (!defined($ppm) || $ppm eq  "");
+  #error ("not a PPM file") unless ($ppm =~ m/^P\d\n/s);
+
+  if ($use_stdout) {
+    print STDERR "$progname: writing to stdout\n" if ($verbose > 1);
+    print $ppm;
+
+  } else {
+    my $tmpdir = $ENV{TMPDIR};
+    $tmpdir = "/tmp" unless $tmpdir;
+    my $fn =  sprintf ("%s/vidwhacker-%08x.jpg", $tmpdir, rand(0xFFFFFFFF));
+    unlink $fn;
+    rm_atexit ($fn);
+    open (my $out, '>:raw', $fn) || error ("writing $fn: $!");
+    print $out $ppm;
+    close $out;
+
+    my @cmd = split (/ +/, $displayer);
+    push @cmd, $fn;
+    print STDERR "$progname: executing \"" . join(" ", @cmd) . "\"\n"
+      if ($verbose);
+    system (@cmd);
+
+    my $exit_value  = $? >> 8;
+    my $signal_num  = $? & 127;
+    my $dumped_core = $? & 128;
+
+    unlink $fn;
+
+    error ("$cmd[0]: core dumped!") if ($dumped_core);
+    error ("$cmd[0]: signal $signal_num!") if ($signal_num);
+    error ("$cmd[0]: exited with $exit_value!") if ($exit_value);
+  }
+}
+
+
+my $stdin_ppm = undef;
+
+sub vidwhack() {
+  my $ppm;
+  if ($use_stdin) {
+    if (!defined($stdin_ppm)) {
+      $stdin_ppm = get_ppm();
+    }
+    $ppm = $stdin_ppm;
+  } else {
+    my $max_err_count = 20;
+    my $err_count = 0;
+    while (!defined($ppm)) {
+      $ppm = get_ppm();
+      if (!defined ($ppm)) {
+        $err_count++ 
+      } else {
+        $ppm = frob_ppm ($ppm);
+        undef $ppm if (defined ($ppm) && $ppm eq "");
+        $err_count++ if (!defined ($ppm));
+      };
+      error ("too many errors, too few images!")
+        if ($err_count > $max_err_count);
+    }
+  }
+
+  dispose_ppm ($ppm);
+  $ppm = undef;
+}
+
+
+sub error($) {
+  my ($err) = @_;
+  print STDERR "$progname: $err\n";
+  exit 1;
+}
+
+sub usage() {
+  print STDERR "VidWhacker, Copyright (c) 2001 Jamie Zawinski <jwz\@jwz.org>\n";
+  print STDERR "            https://www.jwz.org/xscreensaver/";
+  print STDERR "\n";
+  print STDERR "usage: $0 [--display dpy] [--verbose]\n";
+  print STDERR "\t[--root | --window | --window-id 0xXXXXX ]\n";
+  print STDERR "\t[--stdin] [--stdout] [--delay secs]\n";
+  print STDERR "\t[--directory image_directory]\n";
+  exit 1;
+}
+
+sub main() {
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if (m/^--?verbose$/) { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif (m/^(-display|-disp|-dis|-dpy|-d)$/) { $ENV{DISPLAY} = shift @ARGV; }
+    elsif (m/^--?stdin$/) { $use_stdin = 1; }
+    elsif (m/^--?stdout$/) { $use_stdout = 1; }
+    elsif (m/^--?delay$/) { $delay = shift @ARGV; }
+    elsif (m/^--?dir(ectory)?$/) { $imagedir = shift @ARGV; }
+    elsif (m/^--?root$/) {
+      my $id = $ENV{XSCREENSAVER_WINDOW};
+      $displayer =~ s/--?root\b/$id/s if ($id);
+    }
+    elsif (m/^--?window-id$/) {
+      my $id = shift @ARGV;
+      error ("unparsable window id: $id")
+        unless ($id =~ m/^\d+$|^0x[\da-f]+$/i);
+      $displayer =~ s/--?root\b/$id/s;
+    }
+    elsif (m/^--?window$/) {
+      print STDERR "$progname: sorry, \"-window\" is unimplemented.\n";
+      print STDERR "$progname: use \"-stdout\" and pipe to a displayer.\n";
+      exit 1;
+    }
+    elsif (m/^-./) { usage; }
+    else { usage; }
+  }
+
+  read_config();
+
+  # sanity checking - is pbm installed?
+  # (this is a non-exhaustive but representative list)
+  my @needed = ("ppmtopgm", "pgmenhance", "pnmarith", "pnmdepth", "pnmtopng");
+  push @needed, ("djpeg", "exiftran") unless (which ("convert"));
+  foreach my $p (@needed) {
+    which ($p) ||
+      error ("$p not on \$PATH" .
+             ($p =~ m/p[bgpn]m/ ? "; install the 'netpbm' package" : ""));
+  }
+
+  if (!$use_stdout) {
+    my $res = `xrandr 2>&-`;
+    # Let's hope all the screens are the same size.
+    $screen_width = $1 if ($res =~ m/ primary +(\d+) *x *(\d+)/);
+    if ($screen_width <= 0) {
+      $res = `xdpyinfo 2>&-`;
+      $screen_width = $1 if ($res =~ m/ dimensions: +(\d+)x(\d+) pixels/);
+      $screen_width = 800 if ($screen_width <= 0);
+    }
+  }
+
+  if ($use_stdout) {
+    vidwhack();
+  } else {
+    while (1) {
+      vidwhack();
+      sleep $delay;
+    }
+  }
+}
+
+main();
+exit 0;

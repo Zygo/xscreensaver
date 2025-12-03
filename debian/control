@@ -1,0 +1,57 @@
+Source: xscreensaver
+Section: x11
+Priority: optional
+Maintainer: Jamie Zawinski <jwz@jwz.org>
+Build-Depends: debhelper-compat (= 13),
+               autotools-dev,
+               perl,
+               pkg-config,
+               gettext,
+               intltool,
+               libx11-dev,
+               libxext-dev,
+               libxi-dev,
+               libxt-dev,
+               libxft-dev,
+               libxinerama-dev,
+               libxrandr-dev,
+               libxxf86vm-dev,
+               libgl-dev,
+               libglu-dev,
+               libgle-dev,
+               libgtk-3-dev,
+               libgdk-pixbuf2.0-dev,
+               libjpeg-dev,
+               libxml2-dev,
+               libpam-dev,
+               libsystemd-dev,
+               libwayland-dev
+Standards-Version: 4.6.2
+Homepage: https://www.jwz.org/xscreensaver/
+Rules-Requires-Root: no
+
+Package: xscreensaver
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         attr | xattr,
+         perl
+Recommends: miscfiles | wordlist,
+          fonts-urw-base35 | xfonts-100dpi
+Suggests: gdm3 | kdm-gdmcompat,
+          qcam | streamer,
+          www-browser,
+          xdaliclock
+Breaks:   xscreensaver-gl,
+          xscreensaver-data,
+          xscreensaver-data-extra,
+          xscreensaver-gl-extra,
+          xscreensaver-screensaver-webcollage,
+          xscreensaver-screensaver-bsod
+Replaces: xscreensaver-gl,
+          xscreensaver-data,
+          xscreensaver-data-extra,
+          xscreensaver-gl-extra,
+          xscreensaver-screensaver-webcollage,
+          xscreensaver-screensaver-bsod
+Description: XScreenSaver is screen saver and locker for X11.

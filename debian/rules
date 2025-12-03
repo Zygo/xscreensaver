@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+
+DH_VERBOSE = 1
+export DH_OPTIONS=-v
+
+%:
+	dh $@ --without autoreconf
+
+override_dh_auto_configure:
+	./configure --prefix=/usr
+
+override_dh_installdirs:
+	dh_installdirs
+	mkdir -p debian/xscreensaver/etc/pam.d
+
+override_dh_fixperms-arch:
+	dh_fixperms
+	chmod 4755 debian/xscreensaver/usr/libexec/xscreensaver/xscreensaver-auth
+	chmod 4755 debian/xscreensaver/usr/libexec/xscreensaver/sonar

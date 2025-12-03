@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="klondike" _label="Klondike" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=9F5YBnepT4Y"/>
+
+  <hgroup>
+   <vgroup>
+
+    <number id="delay" type="slider" arg="--delay %"
+              _label="Frame rate" _low-label="Low" _high-label="High"
+              low="0" high="100000" default="30000"
+              convert="invert"/>
+
+    <number id="animation_speed" type="slider" arg="--speed %"
+            _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+            low="15" high="200" default="50"
+            convert="invert"/>
+
+    <number id="camera_speed" type="slider" arg="--camera_speed %"
+            _label="Camera Speed" _low-label="Slow" _high-label="Fast"
+            low="10" high="100" default="50"/>
+
+   </vgroup>
+   <vgroup>
+
+    <select id="draw_count">
+      <option id="3"  _label="Deal 3 cards to waste pile"/>
+      <option id="1"  _label="Deal 1 card to waste pile" arg-set="--draw 1"/>
+    </select>
+
+    <hgroup>
+    <boolean id="sloppy" _label="Sloppy card placement" arg-unset="--no-sloppy"/>
+    </hgroup>
+
+    <hgroup>
+     <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+    </hgroup>
+
+    <xscreensaver-updater />
+   </vgroup>
+  </hgroup>
+
+  <_description>
+The screen saver plays solitaire.
+
+Written by Joshua Timmons; 2024.
+  </_description>
+</screensaver>
