@@ -5388,6 +5388,49 @@ then :
 
 fi
 
+ac_fn_c_check_func "$LINENO" "getxattr" "ac_cv_func_getxattr"
+if test "x$ac_cv_func_getxattr" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETXATTR 1" >>confdefs.h
+
+fi
+
+  if test "$ac_cv_func_getxattr" = yes ; then
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for getxattr extra args" >&5
+printf %s "checking for getxattr extra args... " >&6; }
+if test ${ac_cv_xattr_extra_args+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/xattr.h>
+int
+main (void)
+{
+getxattr("", "", "", 0, 0, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_xattr_extra_args=yes
+else case e in #(
+  e) ac_cv_xattr_extra_args=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_xattr_extra_args" >&5
+printf "%s\n" "$ac_cv_xattr_extra_args" >&6; }
+    if test "$ac_cv_xattr_extra_args" = yes; then
+
+printf "%s\n" "#define XATTR_ADDITIONAL_OPTIONS 1" >>confdefs.h
+
+    fi
+  fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr" "sa_len" "ac_cv_member_struct_sockaddr_sa_len" "#include <sys/socket.h>
 "
 if test "x$ac_cv_member_struct_sockaddr_sa_len" = xyes

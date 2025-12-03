@@ -878,6 +878,23 @@ AC_DEFUN([AC_TYPE_SOCKLEN_T],
   [Define to `int' if <sys/types.h> or <sys/socket.h> does not define.])
   fi])
 
+AC_DEFUN([AC_CHECK_XATTR],
+ [AC_CHECK_FUNCS(getxattr)
+  if test "$ac_cv_func_getxattr" = yes ; then
+   AC_CACHE_CHECK([for getxattr extra args], ac_cv_xattr_extra_args,
+    [AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+      [#include <sys/xattr.h>],
+      [getxattr("", "", "", 0, 0, 0);])],
+     [ac_cv_xattr_extra_args=yes],
+     [ac_cv_xattr_extra_args=no])])
+    if test "$ac_cv_xattr_extra_args" = yes; then
+     AC_DEFINE(XATTR_ADDITIONAL_OPTIONS, 1,
+      [Define if xattr functions take additional arguments (macOS)])
+    fi]
+  fi)
+
+
 ###############################################################################
 #
 #       Some utility functions to make checking for X things easier.
@@ -1071,6 +1088,7 @@ AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_FUNCS(setlocale sqrtf)
 AC_CHECK_FUNCS(getaddrinfo)
+AC_CHECK_XATTR
 AC_CHECK_MEMBERS([struct sockaddr.sa_len],,, [#include <sys/socket.h>])
 AC_CHECK_ICMP
 AC_CHECK_ICMPHDR

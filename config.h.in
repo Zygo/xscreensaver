@@ -90,6 +90,9 @@
 /* Define to 1 if you have the 'getwd' function. */
 #undef HAVE_GETWD
 
+/* Define to 1 if you have the 'getxattr' function. */
+#undef HAVE_GETXATTR
+
 /* Define this if you have OpenGL. */
 #undef HAVE_GL
 
@@ -384,6 +387,9 @@
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
+
+/* Define if xattr functions take additional arguments (macOS) */
+#undef XATTR_ADDITIONAL_OPTIONS
 
 /* Stare into the void. */
 #undef XPointer
