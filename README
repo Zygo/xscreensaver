@@ -41,6 +41,8 @@ To compile for a Unix system with X11:
         libxinerama libxrandr libxxf86vm libgl libglu libgle libgtk-3
         libgdk-pixbuf2.0 libjpeg libxml2 libpam libsystemd elogind libwayland
 
+    You can build a package-manager version with "make rpm" or "make deb".
+
     BSD systems might need gmake instead of make.
 
 

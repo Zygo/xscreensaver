@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    configure)
+      killall -HUP xscreensaver 2>&-
+    ;;
+esac

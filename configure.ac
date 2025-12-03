@@ -478,6 +478,8 @@ AC_DEFUN([AC_PROG_PERL],
   fi
  ])
 
+AC_DEFUN([AC_PROG_TAR], [AC_PATH_PROGS(TAR, [gnutar tar],,)])
+
 
 ###############################################################################
 #
@@ -1076,11 +1078,14 @@ AC_CHECK_GETIFADDRS
 AC_TYPE_SOCKLEN_T
 AC_CHECK_HEADERS(crypt.h sys/select.h)
 AC_PROG_PERL
+AC_PROG_TAR
 
 if test -z "$PERL" ; then
   # don't let it be blank...
   PERL=/usr/bin/perl
 fi
+
+if test -z "$TAR" ; then TAR=tar ; fi
 
 AC_PATH_XTRA
 
@@ -1122,7 +1127,6 @@ if test -z "$pkg_config" ; then
   AC_MSG_WARN([pkg-config not found!])
   pkg_config="false"
 fi
-
 
 # Utility function for running pkg-config-based tests...
 #
@@ -4592,6 +4596,7 @@ AC_SUBST(DEPEND)
 AC_SUBST(DEPEND_FLAGS)
 AC_SUBST(DEPEND_DEFINES)
 AC_SUBST(PERL)
+AC_SUBST(TAR)
 
 AC_CONFIG_FILES([Makefile
           utils/Makefile

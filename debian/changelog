@@ -1,0 +1,5 @@
+xscreensaver (6.13-1) unstable; urgency=medium
+
+  * Splitting this into multiple packages is a support nightmare, please don't.
+
+ -- Jamie Zawinski <jwz@jwz.org>  Mon, 11 Aug 2025 16:28:39 -0700
