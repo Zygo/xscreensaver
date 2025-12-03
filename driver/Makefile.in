@@ -956,6 +956,7 @@ xscreensaver-settings: @PREFERRED_DEMO_PROGRAM@
 	       "therefore no xscreensaver-settings!"		      ; \
 	  rm -f $@@EXEEXT@					      ;	\
 	else								\
+	       rm -f $@@EXEEXT@					      ;	\
 	  echo cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@      ;	\
 	       cp -p @PREFERRED_DEMO_PROGRAM@@EXEEXT@ $@@EXEEXT@      ;	\
 	fi
