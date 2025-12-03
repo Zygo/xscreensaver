@@ -1,5 +1,5 @@
 /* erase.c: Erase the screen in various more or less interesting ways.
- * Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
+ * Copyright © 1997-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,6 +20,7 @@
 #include "usleep.h"
 #include "resources.h"
 #include "erase.h"
+#include "doubletime.h"
 #include <sys/time.h> /* for gettimeofday() */
 
 extern char *progname;
@@ -57,21 +58,6 @@ struct eraser_state {
   unsigned short *fizzle_rnd;
 
 };
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 static void

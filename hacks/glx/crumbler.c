@@ -1,4 +1,4 @@
-/* crumbler, Copyright (c) 2018 Jamie Zawinski <jwz@jwz.org>
+/* crumbler, Copyright © 2018-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,6 +21,7 @@
 #include "rotator.h"
 #include "quickhull.h"
 #include "gltrackball.h"
+#include "easing.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -563,25 +564,6 @@ tick_crumbler (ModeInfo *mi)
 }
 
 
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.35;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 /* Window management, etc
  */
 ENTRYPOINT void
@@ -840,7 +822,7 @@ draw_crumbler (ModeInfo *mi)
       switch (bp->state) {
         case FLEE:
           {
-            GLfloat r = ease_ratio (bp->tick);
+            GLfloat r = ease (EASE_IN_OUT_SINE, bp->tick);
             /* Move everybody toward the origin, so that chunk #0 ends up
                centered there. */
             glTranslatef (-r * c->mid.x,
@@ -865,7 +847,7 @@ draw_crumbler (ModeInfo *mi)
           GLfloat Z = (c->max.z - c->min.z);
           GLfloat size0 = MAX(X, MAX(Y, Z));
           GLfloat size1 = 1.0;
-          GLfloat r = 1 - ease_ratio (bp->tick);
+          GLfloat r = 1 - ease (EASE_IN_OUT_SINE, bp->tick);
           GLfloat s = 1 / (size0 + r * (size1 - size0));
           glScalef (s, s, s);
         }
@@ -885,8 +867,8 @@ draw_crumbler (ModeInfo *mi)
       GLfloat s;
       /* alpha = 1 - bp->tick; */
       alpha = 1;
-      /* s = 0.7 + (0.3 * ease_ratio (1-bp->tick)); */
-      s = 2 * ease_ratio ((1-bp->tick) / 2);
+      /* s = 0.7 + (0.3 * ease (EASE_IN_OUT_SINE, 1-bp->tick)); */
+      s = 2 * ease (EASE_IN_OUT_SINE, (1-bp->tick) / 2);
       s *= 1.01;
       glScalef (s, s, s);
       draw_chunk (mi, bp->ghost, alpha);

@@ -34,6 +34,7 @@
 #include "rotator.h"
 #include "gltrackball.h"
 #include "gllist.h"
+#include "easing.h"
 #include <ctype.h>
 
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
@@ -638,26 +639,6 @@ draw_component (ModeInfo *mi, int i, Bool half_p)
 }
 
 
-static double
-easeOutBounce (double i)
-{
-  double n1 = 7.5625;
-  double d1 = 2.75;
-  if (i < 1 / d1) {
-    return n1 * i * i;
-  } else if (i < 2 / d1) {
-    i -= (1.5 / d1);
-    return n1 * i * i + 0.75;
-  } else if (i < 2.5 / d1) {
-    i -= (2.25 / d1);
-    return n1 * i * i + 0.9375;
-  } else {
-    i -= (2.625 / d1);
-    return n1 * i * i + 0.984375;
-  }
-}
-
-
 static void
 tick_dumpster (ModeInfo *mi)
 {
@@ -735,7 +716,7 @@ draw_box (ModeInfo *mi)
   switch (bp->state) {
   case DROP:
     bp->pos.x = bp->pos.y = 0;
-    bp->pos.z = (1 - easeOutBounce (bp->tick)) * 3;
+    bp->pos.z = (1 - ease (EASE_OUT_BOUNCE, (bp->tick))) * 3;
     break;
   case OPEN:
     bp->lid_angle[(bp->lid_angle[0] == 0.0 ? 1 : 0)] = bp->tick     + 0.0001;
@@ -767,8 +748,8 @@ draw_box (ModeInfo *mi)
       const GLfloat deg = 115;
       const XYZ off = { 0, 0.63, -0.25 };
       double a2 = (bp->state == CLOSE
-                   ? 1 - easeOutBounce (1 - bp->lid_angle[i])
-                   :     easeOutBounce (    bp->lid_angle[i]));
+                   ? 1 - ease (EASE_OUT_BOUNCE, (1 - bp->lid_angle[i]))
+                   :     ease (EASE_OUT_BOUNCE, (    bp->lid_angle[i])));
 
       glPushMatrix();
       glTranslatef (off.x, off.y, off.z);
@@ -817,6 +798,8 @@ draw_dumpster (ModeInfo *mi)
     glRotatef (y * 360, 0.0, 1.0, 0.0);
  /* glRotatef (z * 360, 0.0, 0.0, 1.0); */
   }
+
+  glRotatef (current_device_rotation(), 0, 0, 1);
 
   mi->polygon_count = 0;
 

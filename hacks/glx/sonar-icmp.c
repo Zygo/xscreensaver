@@ -13,6 +13,7 @@
 
 #include "screenhackI.h"
 #include "sonar.h"
+#include "doubletime.h"
 #include "version.h"
 #include "async_netdb.h"
 
@@ -1316,23 +1317,6 @@ ping_free_bogie_data (sonar_sensor_data *sd, void *closure)
   free (pb->fallback);
 
   free (closure);
-}
-
-
-/* Returns the current time in seconds as a double.
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
 }
 
 

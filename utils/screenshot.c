@@ -31,6 +31,7 @@
 
 #include "screenshot.h"
 #include "visual.h"
+#include "doubletime.h"
 #include "../driver/blurb.h"
 
 #if defined(__APPLE__) && !defined(HAVE_COCOA)
@@ -82,21 +83,6 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
 {
   error_handler_hit_p = True;
   return 0;
-}
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
 }
 
 

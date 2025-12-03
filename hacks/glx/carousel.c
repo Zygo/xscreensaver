@@ -1,4 +1,4 @@
-/* carousel, Copyright © 2005-2023 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright © 2005-2025 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -30,6 +30,7 @@
 
 # define release_carousel 0
 # include "xlockmore.h"
+# include "easing.h"
 
 #ifdef USE_GL
 
@@ -63,7 +64,7 @@ typedef struct {
 } rect;
 
 typedef enum { EARLY, NORMAL, LOADING, OUT, IN, DEAD } fade_mode;
-static int fade_ticks = 60;
+static int fade_ticks = 30 * 5;
 
 typedef struct {
   char *title;			/* the filename of this image */
@@ -758,8 +759,10 @@ draw_frame (ModeInfo *mi, image_frame *frame, time_t now, Bool body_p)
                    ? frame->mode_tick / (fade_ticks / speed)
                    : (((fade_ticks / speed) - frame->mode_tick + 1) /
                       (fade_ticks / speed)));
-      t = 5 * (1 - t);
+      t = 1-t;
+      t = ease (EASE_IN_OUT_BACK, t);
       if (frame->from_top_p) t = -t;
+      t *= 5;
       glTranslatef (0, t, 0);
     }
 

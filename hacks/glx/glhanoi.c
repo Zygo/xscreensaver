@@ -15,6 +15,7 @@
 #include <assert.h>
 
 #include "rotator.h"
+#include "doubletime.h"
 
 #define DEF_LIGHT     "True"
 #define DEF_FOG       "False"
@@ -66,17 +67,6 @@ enum {
 #ifdef USE_GL					/* whole file */
 
 typedef struct timeval glhtime;
-
-static double getTime(void)
-{
-	struct timeval t;
-#ifdef GETTIMEOFDAY_TWO_ARGS
-	gettimeofday(&t, NULL);
-#else							/* !GETTIMEOFDAY_TWO_ARGS */
-	gettimeofday(&t);
-#endif							/* !GETTIMEOFDAY_TWO_ARGS */
-	return t.tv_sec + t.tv_usec / 1000000.0;
-}
 
 typedef enum {
 	START,
@@ -614,7 +604,7 @@ static void enQTrail(glhcfg *glhanoi, GLfloat *posn)
 {	
 	if (glhanoi->trailQSize && glhanoi->state != MONEY_SHOT)  {
 		TrailPoint *tp = &(glhanoi->trailQ[glhanoi->trailQBack]);
-		double t = getTime();
+		double t = double_time();
 		
 		tp->position[0] = posn[0];
 		tp->position[1] = posn[1] + glhanoi->diskHeight;
@@ -702,7 +692,7 @@ static void updateView(glhcfg *glhanoi)
 static void changeState(glhcfg *glhanoi, State state)
 {
 	glhanoi->state = state;
-	glhanoi->startTime = getTime();
+	glhanoi->startTime = double_time();
 }
 
 static Bool finishedHanoi(glhcfg *glhanoi) {
@@ -714,7 +704,7 @@ static Bool finishedHanoi(glhcfg *glhanoi) {
 
 static void update_glhanoi(glhcfg *glhanoi)
 {
-	double t = getTime() - glhanoi->startTime;
+	double t = double_time() - glhanoi->startTime;
 	int i;
 	Bool done;
 
@@ -1824,7 +1814,7 @@ static int drawTrails1(glhcfg *glhanoi, double t, double thickness, double alpha
 
 static int drawTrails(glhcfg *glhanoi) {
 	int lines = 0;
-	double t = getTime();
+	double t = double_time();
 
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

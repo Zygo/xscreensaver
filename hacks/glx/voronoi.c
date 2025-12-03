@@ -1,4 +1,4 @@
-/* voronoi, Copyright (c) 2007-2018 Jamie Zawinski <jwz@jwz.org>
+/* voronoi, Copyright © 2007-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,6 +22,8 @@
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
+
+#include "doubletime.h"
 
 #define DEF_POINTS      "25"
 #define DEF_POINT_SIZE  "9"
@@ -84,23 +86,6 @@ static argtype vars[] = {
 
 ENTRYPOINT ModeSpecOpt voronoi_opts =
   {countof(opts), opts, countof(vars), vars, NULL};
-
-
-/* Returns the current time in seconds as a double.
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 static node *

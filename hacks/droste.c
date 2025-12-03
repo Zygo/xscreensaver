@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2023-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,6 +13,7 @@
 #include "pow2.h"
 #include "thread_util.h"
 #include "xshm.h"
+#include "doubletime.h"
 
 #define DO_LOG_TABLES /* Dave's hairier and faster version */
 
@@ -120,21 +121,6 @@ struct thread {
   float zr_i0;
 # endif /* DO_LOG_TABLES */
 };
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 /* Called for each thread, once at startup. */

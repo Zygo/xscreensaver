@@ -1,4 +1,4 @@
-/* gibson, Copyright (c) 2020-2021 Jamie Zawinski <jwz@jwz.org>
+/* gibson, Copyright © 2020-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,6 +31,7 @@
 #include "colors.h"
 #include "rotator.h"
 #include "texfont.h"
+#include "easing.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -405,25 +406,6 @@ cmp_towers (const void *aa, const void *bb)
   const tower *b = (tower *) bb;
   return ((int) (b->y * 10000) -
           (int) (a->y * 10000));
-}
-
-
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
 }
 
 
@@ -1253,7 +1235,8 @@ draw_gibson (ModeInfo *mi)
     {
       tower *t = &bp->towers[i];
       glPushMatrix();
-      glTranslatef (t->x, t->y-1, -grid_height * ease_ratio (1 - t->h));
+      glTranslatef (t->x, t->y-1,
+                    -grid_height * ease (EASE_IN_OUT_SINE, 1 - t->h));
 
       glCallList (bp->tower_dlist);
       mi->polygon_count += bp->tower_polys;

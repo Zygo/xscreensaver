@@ -88,7 +88,7 @@ UTILDIR_OBJS	= $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/async_netdb.o \
 		  $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/pow2.o \
-		  $(UTILS_BIN)/font-retry.o
+		  $(UTILS_BIN)/font-retry.o $(UTILS_BIN)/easing.o
 JWXYZ_OBJS	= $(JWXYZ_BIN)/jwzgles.o
 HACKDIR_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/xlockmore.o \
 		  $(HACK_BIN)/fps.o $(HACK_BIN)/ximage-loader.o \
@@ -242,8 +242,10 @@ JWZGLES_OBJS	= @JWZGLES_OBJS@
 HACK_EXES_1	= @GL_EXES@ @GLE_EXES@
 HACK_EXES	= $(HACK_EXES_1) @SUID_EXES@
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o $(UTILS_BIN)/aligned_malloc.o
+DT		= $(UTILS_BIN)/doubletime.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o $(XSHM_OBJS)
 ANIM_OBJS	= recanim-gl.o $(HACK_BIN)/ffmpeg-out.o
+
 EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
 
 RETIRED_EXES	= @RETIRED_GL_EXES@
@@ -265,6 +267,7 @@ HACK_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/yarandom.o \
+		  $(UTILS_BIN)/doubletime.o \
 		  $(FPS_OBJS) $(JWZGLES_OBJS) $(HACK_GLSL_OBJS) @ANIM_OBJS@
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h \
@@ -595,6 +598,7 @@ $(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
 $(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
 $(UTILS_BIN)/pow2.o:		$(UTILS_SRC)/pow2.c
 $(UTILS_BIN)/font-retry.o:	$(UTILS_SRC)/font-retry.c
+$(UTILS_BIN)/easing.o:		$(UTILS_SRC)/easing.c
 $(HACK_BIN)/screenhack.o:	$(HACK_SRC)/screenhack.c
 $(HACK_BIN)/xlockmore.o:	$(HACK_SRC)/xlockmore.c
 $(HACK_BIN)/fps.o:		$(HACK_SRC)/fps.c
@@ -713,7 +717,7 @@ PLANET_OBJS=sphere.o gllist.o timezones.o $(PNG) $(HACK_TRACK_OBJS)
 glplanet:	glplanet.o	$(PLANET_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(PLANET_OBJS) $(PNG_LIBS)
 
-DYMAXIOBJS=dymaxionmap-coords.o normals.o $(PLANET_OBJS)
+DYMAXIOBJS=dymaxionmap-coords.o normals.o $(EASE) $(PLANET_OBJS)
 dymaxionmap:	dymaxionmap.o	$(DYMAXIOBJS)
 	$(CC_HACK) -o $@ $@.o   $(DYMAXIOBJS) $(PNG_LIBS)
 
@@ -782,8 +786,8 @@ lavalite:	lavalite.o	$(LL_OBJS)
 queens:		queens.o	chessmodels.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   chessmodels.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-endgame:	endgame.o	chessmodels.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   chessmodels.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+endgame:	endgame.o	chessmodels.o $(EASE) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   chessmodels.o $(EASE) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 glblur:	glblur.o		$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -833,8 +837,10 @@ vigilance:			$(CAM_OBJS)
 seccam_dxf::
 	./dxf2gl.pl --smooth --layers seccam.dxf seccam.c
 
-glslideshow:	glslideshow.o	$(HACK_GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_GRAB_OBJS) $(HACK_LIBS)
+EASE = $(UTILS_BIN)/easing.o
+SLIDE_OBJS = $(HACK_GRAB_OBJS) $(EASE)
+glslideshow:	glslideshow.o	$(SLIDE_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(SLIDE_OBJS) $(HACK_LIBS)
 
 jigglypuff:	jigglypuff.o	$(PNG) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(PNG) $(HACK_TRACK_OBJS) $(PNG_LIBS)
@@ -928,8 +934,8 @@ moebiusgears:	moebiusgears.o	$(GEARS_OBJS)
 boing:		boing.o		normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-carousel:	carousel.o	$(HACK_TRACK_GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+carousel:	carousel.o	$(EASE) $(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(EASE) $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
 fliptext:	fliptext.o	$(TEXT) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(TEXT) $(HACK_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
@@ -1018,10 +1024,10 @@ CCUBE2=gllist.o $(HACK_TRACK_OBJS)
 companioncube:			$(CCUBE1) $(CCUBE2)
 	$(CC_HACK) -o $@	$(CCUBE1) $(CCUBE2) $(HACK_LIBS)
 
-TBIT1=tronbit.o tronbit_idle1.o tronbit_idle2.o tronbit_no.o tronbit_yes.o
-TBIT2=gllist.o $(HACK_TRACK_OBJS)
-tronbit:			$(TBIT1) $(TBIT2)
-	$(CC_HACK) -o $@	$(TBIT1) $(TBIT2) $(HACK_LIBS)
+TBIT = tronbit.o tronbit_idle1.o tronbit_idle2.o tronbit_no.o tronbit_yes.o \
+       gllist.o $(HACK_TRACK_OBJS)
+tronbit:			$(TBIT)
+	$(CC_HACK) -o $@	$(TBIT) $(HACK_LIBS)
 
 KALEIDOCYCLE_OBJS=kaleidocycle.o normals.o $(HACK_TRACK_OBJS)
 kaleidocycle:			$(KALEIDOCYCLE_OBJS)
@@ -1030,8 +1036,9 @@ kaleidocycle:			$(KALEIDOCYCLE_OBJS)
 quasicrystal:	quasicrystal.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-unknownpleasures: unknownpleasures.o	$(PNG) $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o $(PNG) $(HACK_TRACK_OBJS) $(HACK_LIBS) $(PNG_LIBS)
+UNKOBJS = $(PNG) $(EASE) $(HACK_TRACK_OBJS)
+unknownpleasures: unknownpleasures.o $(UNKOBJS)
+	$(CC_HACK) -o $@ $@.o $(UNKOBJS) $(HACK_LIBS) $(PNG_LIBS)
 
 geodesic: geodesic.o		 normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -1056,21 +1063,21 @@ ES_OBJS=$(PNG) $(HACK_TRACK_OBJS)
 energystream:	energystream.o	$(ES_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(ES_OBJS) $(PNG_LIBS) $(HACK_LIBS)
 
-raverhoop:	raverhoop.o	$(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+raverhoop:	raverhoop.o	$(EASE) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(EASE) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-HSTAT_OBJS=sphere.o normals.o $(HACK_TRACK_OBJS)
+HSTAT_OBJS=sphere.o normals.o $(EASE) $(HACK_TRACK_OBJS)
 hydrostat:	hydrostat.o	$(HSTAT_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HSTAT_OBJS) $(HACK_LIBS)
 
 discoball:	discoball.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-cubetwist:	cubetwist.o	$(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+cubetwist:	cubetwist.o	$(HACK_TRACK_OBJS) $(EASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(EASE) $(HACK_LIBS)
 
-cubestack:	cubestack.o	$(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+cubestack:	cubestack.o	$(HACK_TRACK_OBJS) $(EASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(EASE) $(HACK_LIBS)
 
 splodesic:	splodesic.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -1091,8 +1098,8 @@ razzledazzle:	razzledazzle.o	$(DAZ_OBJS)
 peepers:	peepers.o	 normals.o $(PNG) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 normals.o $(PNG) $(PNG_LIBS) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-crumbler:	crumbler.o	quickhull.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	quickhull.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+crumbler:	crumbler.o	quickhull.o $(HACK_TRACK_OBJS) $(EASE)
+	$(CC_HACK) -o $@ $@.o	quickhull.o $(HACK_TRACK_OBJS) $(EASE) $(HACK_LIBS)
 
 maze3d:	maze3d.o		 $(PNG) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(PNG) $(PNG_LIBS) $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -1110,8 +1117,8 @@ gravitywell:	gravitywell.o	$(HACK_TRACK_OBJS)
 deepstars:	deepstars.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-gibson:		gibson.o	$(PNG) $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(PNG) $(HACK_TRACK_OBJS) $(PNG_LIBS)
+gibson:		gibson.o	$(PNG) $(EASE) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(PNG) $(EASE) $(HACK_TRACK_OBJS) $(PNG_LIBS)
 
 covid19:	covid19.o	$(DB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(DB_OBJS) $(HACK_LIBS)
@@ -1128,17 +1135,18 @@ headroom_dxf::
 beats:		beats.o		sphere.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_OBJS) $(HACK_LIBS)
 
-mapscroller:	mapscroller.o	$(PNG) $(HACK_GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(PNG) $(HACK_GRAB_OBJS) $(PNG_LIBS)
+mapscroller:	mapscroller.o	$(PNG) $(EASE) $(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(PNG) $(EASE) $(HACK_GRAB_OBJS) $(PNG_LIBS)
 
-SQOBJ = normals.o $(UTILS_BIN)/spline.o
+SQOBJ = normals.o $(UTILS_BIN)/spline.o $(EASE)
 squirtorus:	squirtorus.o	$(SQOBJ) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(SQOBJ) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-nakagin:	nakagin.o	$(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+nakagin:	nakagin.o	$(EASE) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(EASE) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-CHOBJS = gllist.o teeth_model.o normals.o sphere.o $(UTILS_BIN)/spline.o
+CHOBJS = gllist.o teeth_model.o normals.o sphere.o $(UTILS_BIN)/spline.o \
+	 $(EASE)
 chompytower:	chompytower.o	$(CHOBJS) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(CHOBJS) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
@@ -1155,7 +1163,7 @@ CUBOCT_OBJS=$(PNG) $(HACK_TRACK_OBJS)
 cubocteversion:	cubocteversion.o $(CUBOCT_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(CUBOCT_OBJS) $(HACK_LIBS) $(PNG_LIBS)
 
-SKULLOOP_OBJS=gllist.o skull_model.o normals.o $(HACK_TRACK_OBJS)
+SKULLOOP_OBJS=gllist.o skull_model.o normals.o $(EASE) $(HACK_TRACK_OBJS)
 skulloop:	skulloop.o	 $(SKULLOOP_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(SKULLOOP_OBJS) $(HACK_LIBS)
 
@@ -1200,7 +1208,7 @@ klondike:	klondike.o $(KLONDIKE_OBJS)
 
 dumpster_dxf::
 	./dxf2gl.pl --smooth --layers --normalize dumpster.dxf dumpster_model.c
-DUMPSTERFIRE=dumpsterfire.o dumpster_model.o gllist.o $(HACK_TRACK_OBJS)
+DUMPSTERFIRE=dumpsterfire.o dumpster_model.o gllist.o $(EASE) $(HACK_TRACK_OBJS)
 dumpsterfire:			$(DUMPSTERFIRE)
 	$(CC_HACK) -o $@	$(DUMPSTERFIRE) $(HACK_LIBS)
 
@@ -1519,6 +1527,7 @@ carousel.o: $(srcdir)/rotator.h
 carousel.o: $(HACK_SRC)/screenhackI.h
 carousel.o: $(srcdir)/texfont.h
 carousel.o: $(UTILS_SRC)/colors.h
+carousel.o: $(UTILS_SRC)/easing.h
 carousel.o: $(UTILS_SRC)/erase.h
 carousel.o: $(UTILS_SRC)/font-retry.h
 carousel.o: $(UTILS_SRC)/grabclient.h
@@ -1554,6 +1563,8 @@ chompytower.o: $(srcdir)/rotator.h
 chompytower.o: $(HACK_SRC)/screenhackI.h
 chompytower.o: $(srcdir)/sphere.h
 chompytower.o: $(UTILS_SRC)/colors.h
+chompytower.o: $(UTILS_SRC)/doubletime.h
+chompytower.o: $(UTILS_SRC)/easing.h
 chompytower.o: $(UTILS_SRC)/erase.h
 chompytower.o: $(UTILS_SRC)/font-retry.h
 chompytower.o: $(UTILS_SRC)/grabclient.h
@@ -1828,6 +1839,7 @@ crumbler.o: $(HACK_SRC)/recanim.h
 crumbler.o: $(srcdir)/rotator.h
 crumbler.o: $(HACK_SRC)/screenhackI.h
 crumbler.o: $(UTILS_SRC)/colors.h
+crumbler.o: $(UTILS_SRC)/easing.h
 crumbler.o: $(UTILS_SRC)/erase.h
 crumbler.o: $(UTILS_SRC)/font-retry.h
 crumbler.o: $(UTILS_SRC)/grabclient.h
@@ -1881,6 +1893,7 @@ cubestack.o: $(HACK_SRC)/recanim.h
 cubestack.o: $(srcdir)/rotator.h
 cubestack.o: $(HACK_SRC)/screenhackI.h
 cubestack.o: $(UTILS_SRC)/colors.h
+cubestack.o: $(UTILS_SRC)/easing.h
 cubestack.o: $(UTILS_SRC)/erase.h
 cubestack.o: $(UTILS_SRC)/font-retry.h
 cubestack.o: $(UTILS_SRC)/grabclient.h
@@ -1918,6 +1931,7 @@ cubetwist.o: $(HACK_SRC)/recanim.h
 cubetwist.o: $(srcdir)/rotator.h
 cubetwist.o: $(HACK_SRC)/screenhackI.h
 cubetwist.o: $(UTILS_SRC)/colors.h
+cubetwist.o: $(UTILS_SRC)/easing.h
 cubetwist.o: $(UTILS_SRC)/erase.h
 cubetwist.o: $(UTILS_SRC)/font-retry.h
 cubetwist.o: $(UTILS_SRC)/grabclient.h
@@ -2087,6 +2101,7 @@ dumpsterfire.o: $(HACK_SRC)/recanim.h
 dumpsterfire.o: $(srcdir)/rotator.h
 dumpsterfire.o: $(HACK_SRC)/screenhackI.h
 dumpsterfire.o: $(UTILS_SRC)/colors.h
+dumpsterfire.o: $(UTILS_SRC)/easing.h
 dumpsterfire.o: $(UTILS_SRC)/erase.h
 dumpsterfire.o: $(UTILS_SRC)/font-retry.h
 dumpsterfire.o: $(UTILS_SRC)/grabclient.h
@@ -2131,6 +2146,8 @@ dymaxionmap.o: $(HACK_SRC)/screenhackI.h
 dymaxionmap.o: $(srcdir)/sphere.h
 dymaxionmap.o: $(srcdir)/texfont.h
 dymaxionmap.o: $(UTILS_SRC)/colors.h
+dymaxionmap.o: $(UTILS_SRC)/doubletime.h
+dymaxionmap.o: $(UTILS_SRC)/easing.h
 dymaxionmap.o: $(UTILS_SRC)/erase.h
 dymaxionmap.o: $(UTILS_SRC)/font-retry.h
 dymaxionmap.o: $(UTILS_SRC)/grabclient.h
@@ -2150,7 +2167,9 @@ endgame.o: $(HACK_SRC)/fps.h
 endgame.o: $(srcdir)/gltrackball.h
 endgame.o: $(HACK_SRC)/recanim.h
 endgame.o: $(HACK_SRC)/screenhackI.h
+endgame.o: $(srcdir)/texfont.h
 endgame.o: $(UTILS_SRC)/colors.h
+endgame.o: $(UTILS_SRC)/easing.h
 endgame.o: $(UTILS_SRC)/erase.h
 endgame.o: $(UTILS_SRC)/font-retry.h
 endgame.o: $(UTILS_SRC)/grabclient.h
@@ -2209,6 +2228,7 @@ esper.o: $(HACK_SRC)/recanim.h
 esper.o: $(HACK_SRC)/screenhackI.h
 esper.o: $(srcdir)/texfont.h
 esper.o: $(UTILS_SRC)/colors.h
+esper.o: $(UTILS_SRC)/doubletime.h
 esper.o: $(UTILS_SRC)/erase.h
 esper.o: $(UTILS_SRC)/font-retry.h
 esper.o: $(UTILS_SRC)/grabclient.h
@@ -2643,6 +2663,7 @@ gibson.o: $(srcdir)/rotator.h
 gibson.o: $(HACK_SRC)/screenhackI.h
 gibson.o: $(srcdir)/texfont.h
 gibson.o: $(UTILS_SRC)/colors.h
+gibson.o: $(UTILS_SRC)/easing.h
 gibson.o: $(UTILS_SRC)/erase.h
 gibson.o: $(UTILS_SRC)/font-retry.h
 gibson.o: $(UTILS_SRC)/grabclient.h
@@ -2732,6 +2753,7 @@ glhanoi.o: $(HACK_SRC)/recanim.h
 glhanoi.o: $(srcdir)/rotator.h
 glhanoi.o: $(HACK_SRC)/screenhackI.h
 glhanoi.o: $(UTILS_SRC)/colors.h
+glhanoi.o: $(UTILS_SRC)/doubletime.h
 glhanoi.o: $(UTILS_SRC)/erase.h
 glhanoi.o: $(UTILS_SRC)/font-retry.h
 glhanoi.o: $(UTILS_SRC)/grabclient.h
@@ -2867,6 +2889,8 @@ glslideshow.o: $(HACK_SRC)/recanim.h
 glslideshow.o: $(HACK_SRC)/screenhackI.h
 glslideshow.o: $(srcdir)/texfont.h
 glslideshow.o: $(UTILS_SRC)/colors.h
+glslideshow.o: $(UTILS_SRC)/doubletime.h
+glslideshow.o: $(UTILS_SRC)/easing.h
 glslideshow.o: $(UTILS_SRC)/erase.h
 glslideshow.o: $(UTILS_SRC)/font-retry.h
 glslideshow.o: $(UTILS_SRC)/grabclient.h
@@ -2983,6 +3007,7 @@ grab-ximage.o: $(srcdir)/grab-ximage.h
 grab-ximage.o: $(HACK_SRC)/recanim.h
 grab-ximage.o: $(HACK_SRC)/screenhackI.h
 grab-ximage.o: $(UTILS_SRC)/colors.h
+grab-ximage.o: $(UTILS_SRC)/doubletime.h
 grab-ximage.o: $(UTILS_SRC)/erase.h
 grab-ximage.o: $(UTILS_SRC)/font-retry.h
 grab-ximage.o: $(UTILS_SRC)/grabclient.h
@@ -3039,6 +3064,7 @@ handsy.o: $(HACK_SRC)/screenhackI.h
 handsy.o: $(srcdir)/sphere.h
 handsy.o: $(srcdir)/tube.h
 handsy.o: $(UTILS_SRC)/colors.h
+handsy.o: $(UTILS_SRC)/doubletime.h
 handsy.o: $(UTILS_SRC)/erase.h
 handsy.o: $(UTILS_SRC)/font-retry.h
 handsy.o: $(UTILS_SRC)/grabclient.h
@@ -3207,6 +3233,7 @@ hydrostat.o: $(HACK_SRC)/recanim.h
 hydrostat.o: $(HACK_SRC)/screenhackI.h
 hydrostat.o: $(srcdir)/sphere.h
 hydrostat.o: $(UTILS_SRC)/colors.h
+hydrostat.o: $(UTILS_SRC)/easing.h
 hydrostat.o: $(UTILS_SRC)/erase.h
 hydrostat.o: $(UTILS_SRC)/font-retry.h
 hydrostat.o: $(UTILS_SRC)/grabclient.h
@@ -3575,6 +3602,7 @@ mapscroller.o: $(HACK_SRC)/recanim.h
 mapscroller.o: $(HACK_SRC)/screenhackI.h
 mapscroller.o: $(srcdir)/texfont.h
 mapscroller.o: $(UTILS_SRC)/colors.h
+mapscroller.o: $(UTILS_SRC)/easing.h
 mapscroller.o: $(UTILS_SRC)/erase.h
 mapscroller.o: $(UTILS_SRC)/font-retry.h
 mapscroller.o: $(UTILS_SRC)/grabclient.h
@@ -3650,6 +3678,7 @@ mirrorblob.o: $(srcdir)/grab-ximage.h
 mirrorblob.o: $(HACK_SRC)/recanim.h
 mirrorblob.o: $(HACK_SRC)/screenhackI.h
 mirrorblob.o: $(UTILS_SRC)/colors.h
+mirrorblob.o: $(UTILS_SRC)/doubletime.h
 mirrorblob.o: $(UTILS_SRC)/erase.h
 mirrorblob.o: $(UTILS_SRC)/font-retry.h
 mirrorblob.o: $(UTILS_SRC)/grabclient.h
@@ -3747,6 +3776,8 @@ nakagin.o: $(HACK_SRC)/recanim.h
 nakagin.o: $(srcdir)/rotator.h
 nakagin.o: $(HACK_SRC)/screenhackI.h
 nakagin.o: $(UTILS_SRC)/colors.h
+nakagin.o: $(UTILS_SRC)/doubletime.h
+nakagin.o: $(UTILS_SRC)/easing.h
 nakagin.o: $(UTILS_SRC)/erase.h
 nakagin.o: $(UTILS_SRC)/font-retry.h
 nakagin.o: $(UTILS_SRC)/grabclient.h
@@ -4074,6 +4105,7 @@ raverhoop.o: $(HACK_SRC)/recanim.h
 raverhoop.o: $(srcdir)/rotator.h
 raverhoop.o: $(HACK_SRC)/screenhackI.h
 raverhoop.o: $(UTILS_SRC)/colors.h
+raverhoop.o: $(UTILS_SRC)/easing.h
 raverhoop.o: $(UTILS_SRC)/erase.h
 raverhoop.o: $(UTILS_SRC)/font-retry.h
 raverhoop.o: $(UTILS_SRC)/grabclient.h
@@ -4415,6 +4447,7 @@ skulloop.o: $(HACK_SRC)/recanim.h
 skulloop.o: $(HACK_SRC)/screenhackI.h
 skulloop.o: $(srcdir)/texfont.h
 skulloop.o: $(UTILS_SRC)/colors.h
+skulloop.o: $(UTILS_SRC)/easing.h
 skulloop.o: $(UTILS_SRC)/erase.h
 skulloop.o: $(UTILS_SRC)/font-retry.h
 skulloop.o: $(UTILS_SRC)/grabclient.h
@@ -4455,6 +4488,7 @@ sonar-icmp.o: $(srcdir)/sonar.h
 sonar-icmp.o: $(UTILS_SRC)/aligned_malloc.h
 sonar-icmp.o: $(UTILS_SRC)/async_netdb.h
 sonar-icmp.o: $(UTILS_SRC)/colors.h
+sonar-icmp.o: $(UTILS_SRC)/doubletime.h
 sonar-icmp.o: $(UTILS_SRC)/font-retry.h
 sonar-icmp.o: $(UTILS_SRC)/grabclient.h
 sonar-icmp.o: $(UTILS_SRC)/hsv.h
@@ -4475,6 +4509,7 @@ sonar.o: $(srcdir)/sonar.h
 sonar.o: $(srcdir)/texfont.h
 sonar.o: $(UTILS_SRC)/aligned_malloc.h
 sonar.o: $(UTILS_SRC)/colors.h
+sonar.o: $(UTILS_SRC)/doubletime.h
 sonar.o: $(UTILS_SRC)/erase.h
 sonar.o: $(UTILS_SRC)/font-retry.h
 sonar.o: $(UTILS_SRC)/grabclient.h
@@ -4695,6 +4730,7 @@ squirtorus.o: $(srcdir)/normals.h
 squirtorus.o: $(HACK_SRC)/recanim.h
 squirtorus.o: $(HACK_SRC)/screenhackI.h
 squirtorus.o: $(UTILS_SRC)/colors.h
+squirtorus.o: $(UTILS_SRC)/easing.h
 squirtorus.o: $(UTILS_SRC)/erase.h
 squirtorus.o: $(UTILS_SRC)/font-retry.h
 squirtorus.o: $(UTILS_SRC)/grabclient.h
@@ -5204,6 +5240,7 @@ tronbit.o: $(srcdir)/rotator.h
 tronbit.o: $(HACK_SRC)/screenhackI.h
 tronbit.o: $(srcdir)/sphere.h
 tronbit.o: $(UTILS_SRC)/colors.h
+tronbit.o: $(UTILS_SRC)/doubletime.h
 tronbit.o: $(UTILS_SRC)/erase.h
 tronbit.o: $(UTILS_SRC)/font-retry.h
 tronbit.o: $(UTILS_SRC)/grabclient.h
@@ -5286,6 +5323,8 @@ unknownpleasures.o: $(srcdir)/grab-ximage.h
 unknownpleasures.o: $(HACK_SRC)/recanim.h
 unknownpleasures.o: $(HACK_SRC)/screenhackI.h
 unknownpleasures.o: $(UTILS_SRC)/colors.h
+unknownpleasures.o: $(UTILS_SRC)/doubletime.h
+unknownpleasures.o: $(UTILS_SRC)/easing.h
 unknownpleasures.o: $(UTILS_SRC)/erase.h
 unknownpleasures.o: $(UTILS_SRC)/font-retry.h
 unknownpleasures.o: $(UTILS_SRC)/grabclient.h
@@ -5323,6 +5362,7 @@ voronoi.o: $(HACK_SRC)/fps.h
 voronoi.o: $(HACK_SRC)/recanim.h
 voronoi.o: $(HACK_SRC)/screenhackI.h
 voronoi.o: $(UTILS_SRC)/colors.h
+voronoi.o: $(UTILS_SRC)/doubletime.h
 voronoi.o: $(UTILS_SRC)/erase.h
 voronoi.o: $(UTILS_SRC)/font-retry.h
 voronoi.o: $(UTILS_SRC)/grabclient.h

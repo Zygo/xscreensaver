@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2017 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,6 +29,7 @@
 #include <sys/select.h>
 #include "jwxyz.h"
 #include "jwxyz-timers.h"
+#include "doubletime.h"
 
 #ifdef HAVE_ANDROID
 extern void Log(const char *format, ...);
@@ -100,21 +101,6 @@ struct jwxyz_XtInputId {
   XtPointer closure;
   int fd;
 };
-
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
 
 
 jwxyz_sources_data *

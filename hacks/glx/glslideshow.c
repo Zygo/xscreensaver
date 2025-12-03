@@ -77,6 +77,8 @@
 
 #include "grab-ximage.h"
 #include "texfont.h"
+#include "easing.h"
+#include "doubletime.h"
 
 # ifndef HAVE_JWXYZ
 #  include <X11/Intrinsic.h>     /* for XrmDatabase in -verbose mode */
@@ -228,23 +230,6 @@ blurb (void)
   strcpy(buf+n+9, ": ");
   return buf;
 # endif
-}
-
-
-/* Returns the current time in seconds as a double.
- */
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
 }
 
 

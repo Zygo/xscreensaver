@@ -1,4 +1,4 @@
-/* chompytower, Copyright © 2022 Jamie Zawinski <jwz@jwz.org>
+/* chompytower, Copyright © 2022-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,6 +43,8 @@
 #include "spline.h"
 #include "gltrackball.h"
 #include "gllist.h"
+#include "easing.h"
+#include "doubletime.h"
 #include <ctype.h>
 
 extern const struct gllist
@@ -151,21 +153,6 @@ ENTRYPOINT ModeSpecOpt chompytower_opts = {
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 #define SPLINE_SCALE 1000
 #define FUNHOLE_HEIGHT 0.2
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
-}
-
 
 static void
 parse_color (ModeInfo *mi, char *key, GLfloat color[4])
@@ -896,25 +883,6 @@ draw_component (ModeInfo *mi, int i)
 }
 
 
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 static int
 draw_funhole (ModeInfo *mi, slice *s, Bool shadow_p)
 {
@@ -944,10 +912,10 @@ draw_funhole (ModeInfo *mi, slice *s, Bool shadow_p)
 
   switch (s->funhole.state) {
   case HIDDEN:     dist  = 0; break;
-  case EXTENDING:  dist *= ease_ratio (s->funhole.ratio);     break;
-  case RETRACTING: dist *= ease_ratio (1 - s->funhole.ratio); break;
-  case OPENING:    tilt  = ease_ratio (s->funhole.ratio);     break;
-  case CLOSING:    tilt  = ease_ratio (1 - s->funhole.ratio); break;
+  case EXTENDING:  dist *= ease(EASE_IN_OUT_SINE,   s->funhole.ratio); break;
+  case RETRACTING: dist *= ease(EASE_IN_OUT_SINE, 1-s->funhole.ratio); break;
+  case OPENING:    tilt  = ease(EASE_IN_OUT_SINE,   s->funhole.ratio); break;
+  case CLOSING:    tilt  = ease(EASE_IN_OUT_SINE, 1-s->funhole.ratio); break;
   case OPEN:       tilt  = 1; break;
   case CLOSED:     tilt  = 0; break;
   default: abort(); break;

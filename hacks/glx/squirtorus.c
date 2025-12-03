@@ -1,4 +1,4 @@
-/* squirtorus, Copyright (c) 2022 Jamie Zawinski <jwz@jwz.org>
+/* squirtorus, Copyright © 2022-2025 Jamie Zawinski <jwz@jwz.org>
  * Eat stars, shit rainbows.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -36,6 +36,7 @@
 #include "hsv.h"
 #include "spline.h"
 #include "normals.h"
+#include "easing.h"
 
 #include <ctype.h>
 
@@ -179,25 +180,6 @@ new_sphincter (ModeInfo *mi, sphincter *s, Bool early_p)
       depth += 0.1;  /* If we're having trouble placing, go farther back */
     }
 
-}
-
-
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.35;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
 }
 
 
@@ -362,7 +344,7 @@ render_sphincter (ModeInfo *mi, spline *sp, int rez, int frame)
   int i, j;
 
   GLfloat sc = frame / (GLfloat) SPHINCTER_FRAMES;
-  sc = ease_ratio (sc);
+  sc = ease (EASE_IN_OUT_SINE, sc);
   sc *= SPHINCTER_OPEN;
 
   /* Compute each vertex */

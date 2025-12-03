@@ -1,4 +1,4 @@
-/* cubetwist, Copyright (c) 2016-2017 Jamie Zawinski <jwz@jwz.org>
+/* cubetwist, Copyright © 2016-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,6 +20,7 @@
 #include "normals.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "easing.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -211,25 +212,6 @@ make_cubes (ModeInfo *mi)
 }
 
 
-static GLfloat
-ease_fn (GLfloat r)
-{
-  return cos ((r/2 + 1) * M_PI) + 1; /* Smooth curve up, end at slope 1. */
-}
-
-
-static GLfloat
-ease_ratio (GLfloat r)
-{
-  GLfloat ease = 0.5;
-  if      (r <= 0)     return 0;
-  else if (r >= 1)     return 1;
-  else if (r <= ease)  return     ease * ease_fn (r / ease);
-  else if (r > 1-ease) return 1 - ease * ease_fn ((1 - r) / ease);
-  else                 return r;
-}
-
-
 static void
 tick_oscillators (ModeInfo *mi)
 {
@@ -245,7 +227,7 @@ tick_oscillators (ModeInfo *mi)
       if (a->ratio > 1)
         a->ratio = 1;
 
-      *a->var = a->from + (a->to - a->from) * ease_ratio (a->ratio);
+      *a->var = a->from + (a->to - a->from) * ease(EASE_IN_OUT_SINE, a->ratio);
 
       if (a->ratio < 1)			/* mid cycle */
         prev = a;

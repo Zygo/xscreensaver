@@ -57,6 +57,8 @@
 
 #include "screenhack.h"
 #include "analogtv.h"
+#include "doubletime.h"
+
 #include <time.h>
 #ifndef HAVE_JWXYZ
 # include <X11/keysym.h>
@@ -888,20 +890,6 @@ paint_net(struct state *st)
                         st->field_ntsc);
 
   }
-}
-
-static double
-double_time (void)
-{
-  struct timeval now;
-# ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-# else
-  gettimeofday(&now);
-# endif
-
-  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
 }
 
 static unsigned long
