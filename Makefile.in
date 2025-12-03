@@ -509,12 +509,10 @@ install_links::
 
 
 cerebrum::
-	rsync -vax . 10.0.1.37:xscreensaver/ \
+	rsync -vax . 10.0.1.42:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \
-	--exclude OSX \
-	--exclude android \
 	--exclude archive \
 	--exclude build \
 	--exclude gen \
@@ -524,10 +522,12 @@ cerebrum::
 	--include xscreensaver-getimage-file \
 	--include xscreensaver-getimage-video \
 	--include xscreensaver-text \
-	--exclude xscreensaver-5.45 \
-	--exclude xscreensaver-6.00 \
-	--exclude xscreensaver-6.01 \
-	--exclude xscreensaver-6.02 \
+	--exclude android/gradle \
+	--exclude android/xscreensaver/obj \
+	--exclude android/xscreensaver/res \
+	--exclude android/xscreensaver/libs \
+	--exclude android/.gradle \
+	--exclude android/.idea \
 	--exclude '*~' \
 	--include '*.asm' \
 	--include '*.c' \
@@ -559,6 +559,20 @@ cerebrum::
 	--include 'ad2c' \
 	--include 'vidwhacker' \
 	--include 'webcollage' \
+	--include 'debian/*' \
+	--include 'README' \
+	--include 'README.hacking' \
+	--include 'INSTALL' \
+	--include 'ChangeLog' \
+	--include '*.pdf' \
+	--include '*.pov' \
+	--include '*.txt' \
+	--include '*.tex' \
+	--include '*.dxf' \
+	--include '*.dtd' \
+	--include '*.xsd' \
+	--include '*.pbxproj' \
+	--include '.gdbinit' \
 	--include '*/' \
 	--exclude '*'
 
