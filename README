@@ -71,6 +71,17 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.13	* Added a number of historical full chess games to `endgame`.
+	* Rewrote `glslideshow' to add more image-transition effects.
+        * Hacks that display images and their filenames will display their
+          titles intead, if the image originated in an RSS feed (or has
+          the "user.dublincore.title" xattr).
+	* X11: Wayland fixes.
+	* X11: Some hacks were calling glXSwapBuffers before the first call
+	  to glXMakeCurrent; allow it.
+	* X11: Added configuration files to allow building of a non-insane
+          `.deb' installer package.
+
 6.12	* X11: DPMS works on Wayland.
 	* X11: Fading uses GL now which should be more performant.
 
