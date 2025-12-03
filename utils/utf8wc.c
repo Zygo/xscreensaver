@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2014-2024 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2014-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -816,6 +816,11 @@ main (int argc, char **argv)
       URC URC URC URC URC URC URC URC URC URC URC URC URC URC URC URC URC
       URC URC URC URC URC URC URC URC URC URC URC URC URC URC URC URC URC
       URC URC URC URC URC URC URC URC URC URC URC URC },
+
+    { "7.0", /* RFC 9839 */
+        /* "\u0089\uDEAD\uD9BF\uDFFF" */
+        "\211\355\272\255\355\246\277\355\277\277",
+        URC URC URC URC },
   };
 
   int i;

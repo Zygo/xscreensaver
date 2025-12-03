@@ -206,7 +206,7 @@ void
 glXSwapBuffers (Display *dpy, GLXDrawable win)
 {
   egl_data *d = global_egl_kludge;
-  if (!d) abort();
+  if (!d) return; /* Called glXSwapBuffers before glXMakeCurrent? */
   if (! eglSwapBuffers (d->egl_display, d->egl_surface))
     abort();
 }

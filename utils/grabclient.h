@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -65,6 +65,7 @@ extern async_load_state *load_image_async_simple (async_load_state *,
 /* Don't use these: this is how "xscreensaver-getimage" and "grabclient.c"
    pass the file name around. */
 #define XA_XSCREENSAVER_IMAGE_FILENAME "_SCREENSAVER_IMAGE_FILENAME"
+#define XA_XSCREENSAVER_IMAGE_TITLE    "_SCREENSAVER_IMAGE_TITLE"
 #define XA_XSCREENSAVER_IMAGE_GEOMETRY "_SCREENSAVER_IMAGE_GEOMETRY"
 
 #ifdef HAVE_JWXYZ
