@@ -2581,10 +2581,13 @@ populate_prefs_page (state *s)
 
   Bool dpms_full_p;
   char *lock_why = 0;
+  static Bool logged_p = FALSE;
 
 # ifdef NO_LOCKING
   s->locking_supported_p = FALSE;
   lock_why = _("Not compiled with support for locking");
+# else
+  s->locking_supported_p = TRUE;
 # endif
 
   if (s->backend == WAYLAND_BACKEND ||
@@ -2600,6 +2603,11 @@ populate_prefs_page (state *s)
   if (!s->multi_screen_p && p->mode == RANDOM_HACKS_SAME)
     p->mode = RANDOM_HACKS;
 
+  if (s->debug_p && lock_why && !logged_p)
+    {
+      fprintf (stderr, "%s: %s\n", blurb(), lock_why);
+      logged_p = TRUE;
+    }
 
   /* The file supports timeouts of less than a minute, but the GUI does
      not, so throttle the values to be at least one minute (since "0" is
@@ -2826,21 +2834,20 @@ populate_prefs_page (state *s)
 
 
 /* Creates a human-readable anchor to put on a URL.
+   Duplicated in OSX/XScreenSaverConfigSheet.m.
  */
 static char *
 anchorize (const char *url)
 {
-  const char *wiki1 =  "http://en.wikipedia.org/wiki/";
-  const char *wiki2 = "https://en.wikipedia.org/wiki/";
-  const char *math1 =  "http://mathworld.wolfram.com/";
-  const char *math2 = "https://mathworld.wolfram.com/";
-  if (!strncmp (wiki1, url, strlen(wiki1)) ||
-      !strncmp (wiki2, url, strlen(wiki2))) {
+  const char *wiki  = "https://en.wikipedia.org/wiki/";
+  const char *math  = "https://mathworld.wolfram.com/";
+  const char *shade = "https://www.shadertoy.com/view/";
+  if (!strncmp (wiki, url, strlen(wiki))) {
     char *anchor = (char *) malloc (strlen(url) * 3 + 10);
     const char *in;
     char *out;
     strcpy (anchor, "Wikipedia: \"");
-    in = url + strlen(!strncmp (wiki1, url, strlen(wiki1)) ? wiki1 : wiki2);
+    in = url + strlen(wiki);
     out = anchor + strlen(anchor);
     while (*in) {
       if (*in == '_') {
@@ -2866,13 +2873,12 @@ anchorize (const char *url)
     *out = 0;
     return anchor;
 
-  } else if (!strncmp (math1, url, strlen(math1)) ||
-             !strncmp (math2, url, strlen(math2))) {
+  } else if (!strncmp (math, url, strlen(math))) {
     char *anchor = (char *) malloc (strlen(url) * 3 + 10);
     const char *start, *in;
     char *out;
     strcpy (anchor, "MathWorld: \"");
-    start = url + strlen(!strncmp (math1, url, strlen(math1)) ? math1 : math2);
+    start = url + strlen(math);
     in = start;
     out = anchor + strlen(anchor);
     while (*in) {
@@ -2890,6 +2896,16 @@ anchorize (const char *url)
     }
     *out++ = '"';
     *out = 0;
+    return anchor;
+
+  } else if (!strncmp (shade, url, strlen(shade))) {
+    char *anchor = (char *) malloc (strlen(url) * 3 + 10);
+    const char *in;
+    char *out;
+    strcpy (anchor, "Shadertoy: ");
+    in = url + strlen(shade);
+    out = anchor + strlen(anchor);
+    strcat (out, in);
     return anchor;
 
   } else {

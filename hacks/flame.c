@@ -397,26 +397,6 @@ flame_draw (Display *dpy, Window window, void *closure)
   return this_delay;
 }
 
-
-#if defined(__hpux) && defined(PLOSS)
-/* I don't understand why this is necessary, but I'm told that this program
-   does nothing at all on HP-sUX without it.
-
-   I'm further told that HPUX 11.0 doesn't define PLOSS, and works ok without
-   this section.  Go figure.
- */
-#undef random
-#undef srandom
-#include <math.h>
-int matherr(x)
-   register struct exception *x;
-{
-  if (x->type == PLOSS) return 1;
-  else return 0;
-}
-#endif /* __hpux */
-
-
 
 static const char *flame_defaults [] = {
   ".background:	black",

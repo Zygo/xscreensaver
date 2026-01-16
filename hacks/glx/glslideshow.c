@@ -142,7 +142,8 @@ typedef struct {
   int nsprites;			/* how many sprites are animating right now */
   sprite *sprites[10];		/* pointers to the live sprites */
 
-  anim_state state;
+  anim_state state;		/* state of the overall animation */
+  double title_opacity;		/* the state of the image title */
 
   double now;			/* current time in seconds */
   double dawn_of_time;		/* when the program launched */
@@ -1219,7 +1220,8 @@ tick_sprites (ModeInfo *mi)
                   ostate == IN_PANZOOM     ? "IN_PANZOOM" :
                   ostate == MID_PANZOOM    ? "MID_PANZOOM" :
                   ostate == RECENTER       ? "RECENTER" :
-                  ostate == TRANSITION_OUT ? "TRANSITION_OUT" : "???"),
+                  ostate == TRANSITION_OUT ? "TRANSITION_OUT" :
+                  ostate == TRANSITION_PANZOOM ? "TRANSITION_PANZOOM" : "???"),
                  (ss->state == LOADING        ? "LOADING" :
                   ss->state == FIRST_IN       ? "FIRST_IN" :
                   ss->state == IN_PANZOOM     ? "IN_PANZOOM" :
@@ -1395,6 +1397,58 @@ tick_sprites (ModeInfo *mi)
       fprintf (stderr, "%s: %d sprites\n", blurb(), ss->nsprites);
       abort();
     }
+
+  /* The state machine for drawing titles is a bit disconnected from the
+     rest of the state machine, since there's a single title that spans
+     multiple sprites. We want to start it fading in once an image is
+     fully visible, and start it fading out before the transition to a
+     new image.  And either or both of transition_seconds or fade_seconds
+     might be 0.
+   */
+  if (do_titles)
+    {
+      double oopacity = ss->title_opacity;
+      double t = ss->now - ss->start_time;
+
+      /* When should the title start fading in? */
+      double start = (transition_seconds
+                      ? transition_seconds
+                      : fade_seconds);
+
+      /* When should the title finish fading out? */
+      double end = (transition_seconds && fade_seconds
+                    ? image_seconds + fade_seconds
+                    : transition_seconds
+                    ? image_seconds
+                    : image_seconds - fade_seconds);
+
+      double sec_fade = 3;	/* Duration of fade for titles */
+      double dur;
+
+      /* Try to show titles even if --duration is very short. */
+      dur = end - start;
+      if (sec_fade > dur / 2)
+        sec_fade = dur / 2;
+
+      if (transition_seconds == 0 && fade_seconds == 0)
+        sec_fade = 0;  /* If images are doing jump cuts, so do titles. */
+
+      if (dur <= 0.5 && sec_fade > 0)
+        ss->title_opacity = 0;					/* DEAD */
+      else if (t <= start)
+        ss->title_opacity = 0;					/* NEW  */
+      else if (t <= start + sec_fade)
+        ss->title_opacity = (t - start) / sec_fade;		/* IN   */
+      else if (t <= end - sec_fade)
+        ss->title_opacity = 1;					/* FULL */
+      else if (t <= end)
+        ss->title_opacity = (end - t) / sec_fade;		/* OUT  */
+      else
+        ss->title_opacity = 0;					/* DEAD */
+
+      if (ss->title_opacity != oopacity)
+        ss->redisplay_needed_p = True;
+    }
 }
 
 
@@ -1427,7 +1481,7 @@ draw_sprites (ModeInfo *mi)
   for (i = 0; i < ss->nsprites; i++)
     draw_sprite (mi, ss->sprites[i]);
 
-  if (do_titles)
+  if (do_titles && ss->title_opacity > 0)
     {
       sprite *sp = (ss->nsprites > 0
                     ? ss->sprites[ss->nsprites-1]
@@ -1435,20 +1489,7 @@ draw_sprites (ModeInfo *mi)
       if (sp && sp->img && sp->img->loaded_p &&
           sp->img->title && *sp->img->title)
         {
-          double start = (transition_seconds
-                          ? transition_seconds : fade_seconds);
-          double end   = (image_seconds -
-                          (transition_seconds ? 0 : pan_seconds));
-          double secs = ss->now - ss->start_time;
-          double sec_fade = 3;
-          GLfloat alpha = 1;
-          if (secs - start <= sec_fade)
-            alpha = (secs - start) / sec_fade;
-          else if (secs + sec_fade >= end)
-            alpha = (end - secs) / sec_fade;
-          if (alpha < 0) alpha = 0;
-          if (alpha > 1) alpha = 1;
-          glColor4f (1, 1, 1, alpha);
+          glColor4f (1, 1, 1, ss->title_opacity);
           print_texture_label (mi->dpy, ss->font_data,
                                mi->xgwa.width, mi->xgwa.height,
                                1, sp->img->title);
@@ -1742,7 +1783,7 @@ init_slideshow (ModeInfo *mi)
              blurb(), transition_seconds, pan_seconds, fade_seconds,
              image_seconds, zoom);
 
-  sanity_check(mi);
+  sanity_check (mi);
 
   if (verbose_p)
     fprintf (stderr,

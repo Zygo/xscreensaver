@@ -29,14 +29,6 @@
 #include <X11/Intrinsic.h>
 #include <time.h>
 
-#ifdef HAVE_XF86VMODE
-# include <X11/extensions/xf86vmode.h>
-#endif /* HAVE_XF86VMODE */
-
-#ifdef HAVE_XINERAMA
-# include <X11/extensions/Xinerama.h>
-#endif /* HAVE_XINERAMA */
-
 #include "xscreensaver.h"
 #include "atoms.h"
 #include "visual.h"

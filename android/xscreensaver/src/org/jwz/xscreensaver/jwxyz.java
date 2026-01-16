@@ -1,5 +1,5 @@
 /* -*- Mode: java; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * xscreensaver, Copyright © 2016-2024 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2016-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -786,6 +786,37 @@ public class jwxyz
     BitmapFactory.Options opts = new BitmapFactory.Options();
     opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
     return BitmapFactory.decodeByteArray (data, 0, data.length, opts);
+  }
+
+
+  // Returns a list of the asset files under the named subdir.
+  public String[] listAssetFiles (String dir) {
+    AssetManager am = app.getAssets();
+    String[] files = null;
+    try { files = am.list(dir); }
+    catch (Exception e) { LOG("listing assets: %s", e.toString()); }
+    LOG("listed assets in %s", dir);
+    return files;
+  }
+
+  // Returns the contents of the asset files "dir/file".
+  public String readAssetFile (String dir, String file) {
+    if (dir == null || file == null)
+      return null;
+    file = dir.concat("/").concat(file);
+    AssetManager am = app.getAssets();
+    try {
+      InputStream stream = am.open(file);
+      int size = stream.available();
+      byte[] buffer = new byte[size];
+      stream.read(buffer);
+      stream.close();
+      LOG("read asset %s", file);
+      return new String(buffer);
+    } catch (Exception e) {
+      LOG("reading asset %s: %s", file, e.toString());
+      return null;
+    }
   }
 
 

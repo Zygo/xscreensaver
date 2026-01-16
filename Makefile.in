@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright © 1999-2025 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright © 1999-2026 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -93,39 +93,38 @@ _tar:
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h |   \
 	head -1` ;							    \
   NAME="xscreensaver-$$VERS" ;						    \
-  rm -rf $$NAME ; ln -s . $$NAME ;					    \
+  rm -rf "$$NAME" ; ln -s . "$$NAME" ;					    \
   LIST="tar$$$$.txt" ;							    \
   ADIR="$(TAR_DIR)" ;							    \
   [ -d "$$ADIR" ] || mkdir "$$ADIR" ;					    \
   rm -f "$$LIST" ;							    \
   for subdir in . $(SUBDIRS2) ; do					    \
-    ( cd $$subdir ;							    \
+    ( cd "$$subdir" || exit 1 ;						    \
       $(MAKE2) list_tarfiles						    \
         | grep -v '^.*make\['						    \
         | sed -e "s@^@$$NAME/$$subdir/@g"				    \
         | sed -e "s@/\./@/@g"						    \
     ) >> "$$LIST" ;							    \
   done ;								    \
-  echo creating tar file $$ADIR/$$NAME.tar.gz... ;			    \
+  echo "creating tar file $$ADIR/$$NAME.tar.gz..." ;			    \
   export COPYFILE_DISABLE=true ;					    \
   export GZIP="-9v" ;							    \
-  $(TAR) -czf $$ADIR/$$NAME.tar.gz -T "$$LIST" $(TAR_ARGS) ;		    \
+  $(TAR) -czf "$$ADIR/$$NAME.tar.gz" -T "$$LIST" $(TAR_ARGS) ;		    \
   rm "$$LIST" "$$NAME"
 
+# Getting a warning about "GZIP environment variable is deprecated";
+# maybe use tar --options='compression-level=9'
 
-# This also makes me sick...
-# autoconf generates a configure script that begins with a very hard to read,
-# nearly impossible to customize --help blurb.  This horrid set of regexps
-# go through and clean up the help text, by inserting whitespace and ripping
-# out options we don't use.  Odds are good that this will fail with any version
-# of autoconf other than the ones I've tried (2.12 and 2.13.)
-#
+
 configure::
 	rm -f configure
 	aclocal
 	autoconf
 	autoheader
 
+# Remove inapplicable lines from the "configure --help" message,
+# to make it less confusing.
+#
 configure::
 	@TMP=configure.$$$$ ;						     \
 	echo "munging configure's --help message..." ;			     \
@@ -134,20 +133,32 @@ configure::
 		while (<>) { $$file .= $$_; }				     \
 		$$_ = $$file;						     \
 									     \
-		s/\nInstallation directories:.*?\n\n/\n/s;		     \
+		s/\nFine tuning .*?:.*?\n\n/\n/si;			     \
+		s/\nBy default, .*?:.*?\n\n/\n/si;			     \
 		s/\nOptional Features:.*?\n\n/\n/s;			     \
 		s/\nOptional Packages:.*?\n\n/\n/s;			     \
 									     \
+		s/^ +--help=short.*\n//m;				     \
+		s/^ +--help=recursive.*\n//m;				     \
 		s/^ +--sbindir=.*\n//m;					     \
 		s/^ +--sysconfdir.*\n//m;				     \
 		s/^ +--sharedstatedir.*\n.*\n//m;			     \
 		s/^ +--oldincludedir.*\n//m;				     \
+		s/^ +--includedir.*\n//m;				     \
 		s/^ +--infodir.*\n//m;					     \
 		s/^ +--htmldir.*\n//m;					     \
 		s/^ +--dvidir.*\n//m;					     \
 		s/^ +--pdfdir.*\n//m;					     \
 		s/^ +--psdir.*\n//m;					     \
+		s/^ +--runstatedir.*\n//m;				     \
+		s/^ +--docdir.*\n//m;					     \
+		s/^ +--libdir.*\n//m;					     \
+		s/^ +--localedir.*\n//m;				     \
 		s/^ +--with-x .*\n//m;					     \
+		s/^ +--enable-year2038.*\n//m;				     \
+		s/^ +--with-xinput.*\n//m;				     \
+		s/^ +XMKMF.*\n//m;					     \
+		s/^ *Report bugs to.*\n//m;				     \
 									     \
 		s/(\n\n)\n+/$$1/gs;					     \
 									     \
@@ -155,9 +166,9 @@ configure::
 									     \
 		print;'							     \
 	< configure							     \
-	> $$TMP &&							     \
-	cat $$TMP > configure ) ;					     \
-	rm -f $$TMP
+	> "$$TMP" &&							     \
+	cat "$$TMP" > configure ) ;					     \
+	rm -f "$$TMP"
 
 # WARNING: This stands a good chance of breaking the world.
 # Be prepared to roll back all of /opt/local/ from Time Machine.
@@ -182,13 +193,13 @@ bump-version::
   if [ -z "$$SUF" ]; then						    \
     MINOR=`echo $$((MINOR + 1)) | sed 's/^\(.\)$$/0\1/'` ;		    \
   else									    \
-    set - `echo $$SUF | sed 's/^\([^0-9]*\)/\1 /'` ;			    \
+    set - `echo "$$SUF" | sed 's/^\([^0-9]*\)/\1 /'` ;			    \
     AA="$$1"; BB="$$2";							    \
     BB=$$((BB + 1)) ;							    \
     SUF="$$AA$$BB" ;							    \
   fi ;									    \
   VERS2="$$MAJOR.$$MINOR$$SUF" ;					    \
-  ADIR=archive/ ;							    \
+  ADIR="archive/" ;							    \
   if [ ! -f "$${ADIR}xscreensaver-$$VERS.tar.gz" ]; then		    \
    echo "WARNING: $${ADIR}xscreensaver-$$VERS.tar.gz does not exist.";	    \
   fi ;									    \
@@ -196,8 +207,8 @@ bump-version::
     echo "WARNING: $${ADIR}xscreensaver-$$VERS2.tar.gz already exists.";    \
   fi ;									    \
   /bin/echo -n "Bumping $$VERS to $$VERS2, ok? ";			    \
-  read line;								    \
-  if [ "x$$line" != "xyes" -a  "x$$line" != "xy" ]; then		    \
+  read -r line;								    \
+  if [ "$$line" != "yes" ] &&  [ "$$line" != "y" ]; then		    \
     exit 1 ; 								    \
   fi ;									    \
 									    \
@@ -213,7 +224,7 @@ bump-version::
 									    \
   VERS3=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. \"]*\).*/\1/p' < $$SRC |	    \
 	 tail -1`;							    \
-  if [ x"$$VERS2" != x"$$VERS3" ]; then					    \
+  if [ "$$VERS2" != "$$VERS3" ]; then					    \
     echo "ERROR! \"$$VERS2\" vs \"$$VERS3\"!" ;				    \
     exit 1 ;								    \
   fi ;									    \
@@ -238,12 +249,12 @@ version-date::
   sed -e "s/\([0-9]\.[0-9][^. \"]*\)/$$VERS/"				    \
       -e "s/([0-9][^()]*)/($$D)/"					    \
       -e "s/\(_RELEASED  *\)[0-9][0-9]*/\1$$TIME_T/"			    \
-    < $$SRC > $$TMP ;							    \
-  if ! cmp -s $$SRC $$TMP ; then					    \
-    cat $$TMP > $$SRC ;							    \
+    < "$$SRC" > "$$TMP" ;						    \
+  if ! cmp -s "$$SRC" "$$TMP" ; then					    \
+    cat "$$TMP" > "$$SRC" ;						    \
     echo "Updated $$SRC date to \"$$D\"" ;				    \
   fi ;									    \
-  rm -f $$TMP
+  rm -f "$$TMP"
 
 
 update_spec_version::
@@ -253,7 +264,7 @@ update_spec_version::
 	U=$(srcdir)/utils/version.h ;					    \
 	VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U |	    \
 	  head -1` ;							    \
-	T=/tmp/xs.$$$$ ;						    \
+	T="/tmp/xs.$$$$" ;						    \
 	for F in "$$S1" "$$S2" ; do					    \
 	  /bin/echo -n "Updating $$F to \"$$VERS\"... " ;		    \
 	  sed -e "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"	    \
@@ -266,7 +277,7 @@ update_spec_version::
 	    echo "done." ;						    \
 	  fi ;								    \
 	done ;								    \
-	rm $$T
+	rm "$$T"
 
 rpm::
 	@								   \
@@ -275,17 +286,19 @@ rpm::
   DIR=`pwd`/rpm_build ;							   \
   ARCH=`rpm --showrc | sed -n 's/^build arch *: //p'` ;			   \
   ADIR=archive/ ;							   \
-  TGZ=xscreensaver-$$VERS.tar.gz ;					   \
-  if [ ! -f $${ADIR}$$TGZ ]; then					   \
+  TGZ="xscreensaver-$$VERS.tar.gz" ;					   \
+  if [ ! -f "$${ADIR}$$TGZ" ]; then					   \
     echo "$${ADIR}$$TGZ does not exist: do 'make tar' first." ;		   \
     exit 1 ; 								   \
   fi ;									   \
-  rm -rf /var/tmp/xscreensaver-$$VERS-root ;				   \
-  rm -rf $$DIR ;							   \
-  mkdir $$DIR ;								   \
-  ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
-  cp -p $${ADIR}$$TGZ $$DIR/SOURCES/ ;					   \
+  rm -rf "/var/tmp/xscreensaver-$$VERS-root" ;				   \
+  rm -rf "$$DIR" ;							   \
+  mkdir "$$DIR" ;							   \
+  ( cd "$$DIR" || exit 1 ;						   \
+    mkdir BUILD RPMS RPMS/"$$ARCH" SOURCES SPECS SRPMS ) ;		   \
+  cp -p "$${ADIR}$$TGZ" "$$DIR/SOURCES/" ;				   \
   set -x ;								   \
+  set -e ;								   \
   rpmbuild --define "_topdir $$DIR"					   \
            --define "USE_GL yes"					   \
            --nodeps							   \
@@ -294,13 +307,11 @@ rpm::
   echo '' ;								   \
   echo 'RPM build complete' ;						   \
   echo '' ;								   \
-  rm -f $$DIR/$$TGZ ;							   \
-  rm -rf $$DIR/BUILD/xscreensaver-$$VERS ;				   \
-  mv $$DIR/SRPMS/xscreensaver*-$$VERS-*.rpm . ;				   \
-  mv $$DIR/RPMS/$$ARCH/xscreensaver*-$$VERS-*.rpm . ;			   \
-  rm -rf $$DIR ;							   \
+  mv "$$DIR/SRPMS/xscreensaver"*-"$$VERS"-*.rpm . ;			   \
+  mv "$$DIR/RPMS/$$ARCH/xscreensaver"*-"$$VERS"-*.rpm . ;		   \
+  rm -rf "$$DIR" ;							   \
   echo '' ;								   \
-  ls -lFG xscreensaver*-$$VERS-*.rpm
+  ls -lFG xscreensaver*-"$$VERS"-*.rpm
 
 deb::
 	@								   \
@@ -308,22 +319,22 @@ deb::
 	  head -1` ;							   \
   DIR=debian/build ;							   \
   ADIR=archive/ ;							   \
-  TGZ=xscreensaver-$$VERS.tar.gz ;					   \
-  TGZ2=xscreensaver_$$VERS.orig.tar.gz ;				   \
-  if [ ! -f $${ADIR}$$TGZ ]; then					   \
+  TGZ="xscreensaver-$$VERS.tar.gz" ;					   \
+  TGZ2="xscreensaver_$$VERS.orig.tar.gz" ;				   \
+  if [ ! -f "$${ADIR}$$TGZ" ]; then					   \
     echo "$${ADIR}$$TGZ does not exist: do 'make tar' first." ;		   \
     exit 1 ; 								   \
   fi ;									   \
 									   \
   set -e ;								   \
   set -x ;								   \
-  rm -rf $$DIR ;							   \
-  mkdir $$DIR ;								   \
+  rm -rf "$$DIR" ;							   \
+  mkdir "$$DIR" ;							   \
   cp -p "$${ADIR}$$TGZ" "$$DIR/$$TGZ2" ;				   \
 									   \
-  ( cd $$DIR ;								   \
+  ( cd "$$DIR" || exit 1 ;						   \
     $(TAR) -zxf "$$TGZ2" ;						   \
-    cd xscreensaver-$$VERS ;						   \
+    cd "xscreensaver-$$VERS" ;						   \
     dpkg-buildpackage -us -uc ;						   \
   ) ;									   \
   set +x ;								   \
@@ -347,7 +358,7 @@ www_versions::
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' utils/version.h |   \
 	  head -1` ;							    \
   TMP=/tmp/xd.$$$$ ;							    \
-  for f in $$DEST/*.html ; do						    \
+  for f in "$$DEST"/*.html ; do						    \
     sed "s/\(CLASS=.latest.>\)[^<>]*\(<\)/\1$$VERS\2/gi" < "$$f" > "$$TMP" ;\
     if ! cmp -s "$$f" "$$TMP" ; then					    \
       diff -U0 "$$f" "$$TMP" ;						    \
@@ -381,37 +392,37 @@ www::
   $(MAKE2) www_versions ;						    \
   $(MAKE2) -C OSX updates.xml ;						    \
 									    \
-  if [ ! -f $$NAME ]; then						    \
+  if [ ! -f "$$NAME" ]; then						    \
     echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
     exit 1 ; 								    \
   fi ;									    \
-  if [ ! -f $$NAME2 ]; then						    \
+  if [ ! -f "$$NAME2" ]; then						    \
     echo "$$NAME2 does not exist!  Did you forget to \`make dmg'?" ;	    \
     exit 1 ; 								    \
   fi ;									    \
-  if [ ! -f $$NAME3 ]; then						    \
+  if [ ! -f "$$NAME3" ]; then						    \
     echo "$$NAME3 does not exist!  Did you forget to \`make apk'?" ;	    \
     exit 1 ; 								    \
   fi ;									    \
-  chmod a-w $$NAME ;							    \
-  if [ -f $$DNAME ]; then						    \
+  chmod a-w "$$NAME" ;							    \
+  if [ -f "$$DNAME" ]; then						    \
     /bin/echo -n "WARNING: $$DNAME already exists!  Overwrite? ";	    \
-    read line;								    \
-    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+    read -r line;							    \
+    if [ "$$line" != "yes" ] && [ "$$line" != "y" ]; then		    \
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
-  if [ -f $$DNAME2 ]; then						    \
+  if [ -f "$$DNAME2" ]; then						    \
     /bin/echo -n "WARNING: $$DNAME2 already exists!  Overwrite? ";	    \
-    read line;								    \
-    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+    read -r line;							    \
+    if [ "$$line" != "yes" ] && [ "$$line" != "y" ]; then		    \
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
-  if [ -f $$DNAME3 ]; then						    \
+  if [ -f "$$DNAME3" ]; then						    \
     /bin/echo -n "WARNING: $$DNAME3 already exists!  Overwrite? ";	    \
-    read line;								    \
-    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+    read -r line;							    \
+    if [ "$$line" != "yes" ] && [ "$$line" != "y" ]; then		    \
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
@@ -419,49 +430,49 @@ www::
   git tag -a "v$$VERS" -m "$$VERS" ;					    \
   git commit -m "$$VERS" . ;						    \
 									    \
-  ( cd $$DEST ;	git pull ) ;						    \
+  ( cd "$$DEST" || exit 1 ; git pull ) ;				    \
 									    \
-  cp -p $$NAME $$DNAME ;						    \
-  cp -p $$NAME2 $$DNAME2 ;						    \
-  cp -p $$NAME3 $$DNAME3 ;						    \
-  chmod u+w $$DNAME $$DNAME2 $$DNAME3 ;					    \
-  cp -p OSX/updates.xml $$DEST ;					    \
-  cd $$DEST ;								    \
+  cp -p "$$NAME" "$$DNAME" ;						    \
+  cp -p "$$NAME2" "$$DNAME2" ;						    \
+  cp -p "$$NAME3" "$$DNAME3" ;						    \
+  chmod u+w "$$DNAME" "$$DNAME2" "$$DNAME3" ;				    \
+  cp -p OSX/updates.xml "$$DEST" ;					    \
+  cd "$$DEST" || exit 1 ;						    \
 									    \
-  TMP=/tmp/xd.$$$$ ;							    \
-  sed "s/xscreensaver-[56]\.[0-9][0-9ab]*/$$HEAD/g" download.html > $$TMP ; \
+  TMP="/tmp/xd.$$$$" ;							    \
+  sed "s/xscreensaver-[56]\.[0-9][0-9ab]*/$$HEAD/g" download.html > "$$TMP" ; \
   echo '' ;								    \
-  diff -U0 download.html $$TMP ;					    \
+  diff -U0 download.html "$$TMP" ;					    \
   echo '' ;								    \
 									    \
   for EXT in tar.gz dmg apk ; do					    \
     OLDEST=`ls xscreensaver*.$$EXT | 					    \
-      fgrep -v 5.14 |							    \
-      fgrep -v 5.34 |							    \
-      fgrep -v 6.00 |							    \
+      grep -F -v 5.14 |							    \
+      grep -F -v 5.34 |							    \
+      grep -F -v 6.00 |							    \
       head -n 1` ;							    \
     /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
-    read line;								    \
-    if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \
+    read -r line;							    \
+    if [ "$$line" = "yes" ] || [ "$$line" = "y" ]; then			    \
       set -x ;								    \
-      rm $$OLDEST ;							    \
-      git rm $$OLDEST ;							    \
+      rm "$$OLDEST" ;							    \
+      git rm "$$OLDEST" ;						    \
       set +x ;								    \
     fi ;								    \
   done ;								    \
   set -x ;								    \
-  cat $$TMP > download.html ;						    \
-  rm -f $$TMP ;								    \
+  cat "$$TMP" > download.html ;						    \
+  rm -f "$$TMP" ;							    \
 									    \
-  git add $$BNAME $$BNAME2 $$BNAME3 ;					    \
+  git add "$$BNAME" "$$BNAME2" "$$BNAME3" ;				    \
 									    \
   $(MAKE2) -C ../ xscreensaver/changelog.html xscreensaver/screenshots/index.html; \
   git diff changelog.html ;						    \
   set +x ;								    \
 									    \
   /bin/echo -n "Ok? ";							    \
-  read line;								    \
-  if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then			    \
+  read -r line;								    \
+  if [ "$$line" != "yes" ] && [ "$$line" != "y" ]; then			    \
     exit 1 ;								    \
   fi ;									    \
 									    \
@@ -473,11 +484,11 @@ www::
 count::
 	@ \
   echo "Current hack count: " ;						\
-  A=`cd hacks ;     ( make -s INSTALL=true install-man |		\
-    grep true | grep -v helper | grep -v ljlatest | wc -l )` ;		\
+  A=`make -C hacks     -s INSTALL=true install-man |			\
+    grep -F .man | grep -v xscreensaver- | wc -l` ;			\
   echo "    X11:" $$A ;							\
-  B=`cd hacks/glx ; ( make -s INSTALL=true install-man |		\
-    grep true | grep -v helper | grep -v ljlatest | wc -l )` ;		\
+  B=`make -C hacks/glx -s INSTALL=true install-man |			\
+    grep -F .man | grep -v xscreensaver- | wc -l` ;			\
   echo "    GLX:" $$B ;							\
   C=$$((A + B)) ;							\
   echo "  Total:" $$C ;							\
@@ -492,9 +503,9 @@ install_links::
 	  set -e ;							\
 	  $(MAKE2) install -k INSTALL=true INSTALL_DATA=true		\
 	       INSTALL_DIRS=false SUID_FLAGS= 2>&- |			\
-	  while read s ; do						\
+	  while read -r s ; do						\
 	    set - $$s ;							\
-	    if [ $$1 = true ]; then					\
+	    if [ "$$1" = true ]; then					\
 	      a="$$cwd/$$d/$$2" ;					\
 	      b="$$3" ;							\
 	      d2=`dirname "$$b"` ;					\
@@ -509,12 +520,13 @@ install_links::
 
 
 cerebrum::
-	rsync -vax . 10.0.1.42:xscreensaver/ \
+	rsync -vax . 10.0.1.37:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \
 	--exclude archive \
 	--exclude build \
+	--exclude rpm_build \
 	--exclude gen \
 	--exclude videos \
 	--exclude config.h \
@@ -531,6 +543,7 @@ cerebrum::
 	--exclude '*~' \
 	--include '*.asm' \
 	--include '*.c' \
+	--include '*.glsl' \
 	--include '*.gif' \
 	--include '*.h' \
 	--include '*.in' \
@@ -550,6 +563,7 @@ cerebrum::
 	--include '*.pl' \
 	--include '*.spec' \
 	--include '*.ad' \
+	--include '*.pam' \
 	--include 'configure*' \
 	--include 'config.sub' \
 	--include 'config.guess' \
@@ -560,6 +574,7 @@ cerebrum::
 	--include 'vidwhacker' \
 	--include 'webcollage' \
 	--include 'debian/*' \
+	--include 'debian/*/*' \
 	--include 'README' \
 	--include 'README.hacking' \
 	--include 'INSTALL' \

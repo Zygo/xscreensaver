@@ -2121,7 +2121,7 @@ get_image (Screen *screen,
                           verbose_p, &geom))
         goto COLORBARS;
       file_prop = file;
-      get_file_xattrs (file, &xattr_url, &xattr_title);
+      get_file_xattrs ((absfile ? absfile : file), &xattr_url, &xattr_title);
       break;
 
     case GRAB_VIDEO:

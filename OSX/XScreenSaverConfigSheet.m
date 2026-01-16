@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -292,7 +292,11 @@ typedef enum { SimpleXMLCommentKind,
 #if defined(HAVE_IPHONE) && defined(USE_HTML_LABELS)
 
 
-@interface HTMLLabel : UIView <UIWebViewDelegate>
+@interface HTMLLabel : UIView <UIWebViewDelegate
+# ifdef USE_WEBKIT
+                                 , WKNavigationDelegate
+# endif
+                              >
 {
   NSString *html;
   UIFont *font;
@@ -323,6 +327,7 @@ typedef enum { SimpleXMLCommentKind,
   webView = [[UIWebView alloc] init];
 # ifdef USE_WEBKIT
   webView.UIDelegate = self;
+  webView.navigationDelegate = self;
 # else
   webView.delegate = self;
   webView.dataDetectorTypes = UIDataDetectorTypeNone;
@@ -501,6 +506,7 @@ static char *anchorize (const char *url);
         navigationType:(UIWebViewNavigationType)type
 {
   // Force clicked links to open in Safari, not in this window.
+  // Old way, 2020-ish?
   if (type == UIWebViewNavigationTypeLinkClicked) {
     UIApplication *app = [UIApplication sharedApplication];
     NSURL *url = [req URL];
@@ -519,6 +525,26 @@ static char *anchorize (const char *url);
   }
   return YES;
 }
+
+
+#ifdef USE_WEBKIT
+- (void)webView:(WKWebView *)wv
+        decidePolicyForNavigationAction:(WKNavigationAction *)na
+        decisionHandler:(void (^)(WKNavigationActionPolicy))dh
+{
+  // Force clicked links to open in Safari, not in this window.
+  // New way, 2025-ish.
+  if (na.navigationType == WKNavigationTypeLinkActivated) {
+#   pragma clang diagnostic push   // "openURL deprecated in iOS 10"
+#   pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [[UIApplication sharedApplication] openURL:na.request.URL];
+#   pragma clang diagnostic pop
+    dh (WKNavigationActionPolicyCancel);
+  } else {
+    dh (WKNavigationActionPolicyAllow);
+  }
+}
+#endif // USE_WEBKIT
 
 
 - (void) setFrame: (CGRect)r
@@ -1133,21 +1159,21 @@ boldify (NSText *nstext)
 
 
 /* Creates a human-readable anchor to put on a URL.
+   Duplicated in driver/demo-Gtk.c.
  */
 static char *
 anchorize (const char *url)
 {
-  const char *wiki1 =  "http://en.wikipedia.org/wiki/";
-  const char *wiki2 = "https://en.wikipedia.org/wiki/";
-  const char *math1 =  "http://mathworld.wolfram.com/";
-  const char *math2 = "https://mathworld.wolfram.com/";
-  if (!strncmp (wiki1, url, strlen(wiki1)) ||
-      !strncmp (wiki2, url, strlen(wiki2))) {
+  const char *wiki  = "https://en.wikipedia.org/wiki/";
+  const char *math  = "https://mathworld.wolfram.com/";
+  const char *shade = "https://www.shadertoy.com/view/";
+  if (!strncmp (wiki, url, strlen(wiki))) {
     char *anchor = (char *) malloc (strlen(url) * 3 + 10);
+    const char *in;
+    char *out;
     strcpy (anchor, "Wikipedia: \"");
-    const char *in = url + strlen(!strncmp (wiki1, url, strlen(wiki1))
-                                  ? wiki1 : wiki2);
-    char *out = anchor + strlen(anchor);
+    in = url + strlen(wiki);
+    out = anchor + strlen(anchor);
     while (*in) {
       if (*in == '_') {
         *out++ = ' ';
@@ -1156,10 +1182,10 @@ anchorize (const char *url)
         *out++ = ' ';
       } else if (*in == '%') {
         char hex[3];
+        unsigned int n = 0;
         hex[0] = in[1];
         hex[1] = in[2];
         hex[2] = 0;
-        int n = 0;
         sscanf (hex, "%x", &n);
         *out++ = (char) n;
         in += 2;
@@ -1172,14 +1198,14 @@ anchorize (const char *url)
     *out = 0;
     return anchor;
 
-  } else if (!strncmp (math1, url, strlen(math1)) ||
-             !strncmp (math2, url, strlen(math2))) {
+  } else if (!strncmp (math, url, strlen(math))) {
     char *anchor = (char *) malloc (strlen(url) * 3 + 10);
+    const char *start, *in;
+    char *out;
     strcpy (anchor, "MathWorld: \"");
-    const char *start = url + strlen(!strncmp (math1, url, strlen(math1))
-                                     ? math1 : math2);
-    const char *in = start;
-    char *out = anchor + strlen(anchor);
+    start = url + strlen(math);
+    in = start;
+    out = anchor + strlen(anchor);
     while (*in) {
       if (*in == '_') {
         *out++ = ' ';
@@ -1195,6 +1221,16 @@ anchorize (const char *url)
     }
     *out++ = '"';
     *out = 0;
+    return anchor;
+
+  } else if (!strncmp (shade, url, strlen(shade))) {
+    char *anchor = (char *) malloc (strlen(url) * 3 + 10);
+    const char *in;
+    char *out;
+    strcpy (anchor, "Shadertoy: ");
+    in = url + strlen(shade);
+    out = anchor + strlen(anchor);
+    strcat (out, in);
     return anchor;
 
   } else {

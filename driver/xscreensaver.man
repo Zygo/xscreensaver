@@ -241,9 +241,11 @@ If you are not using GNOME, KDE or LXDE, the way to launch XScreenSaver
 at login is probably
 .BR systemd (1).
 
-Copy the file \fI/usr/share/xscreensaver/xscreensaver.service\fP into
-the directory \fI~/.config/systemd/user/\fP.  Create that directory first
-if it doesn't exist.  Then enable it with:
+If the file \fI/usr/lib/systemd/user/xscreensaver.service\fP does not
+already exist, copy the file \fI/usr/share/xscreensaver/xscreensaver.service\fP
+to there or to \fI~/.config/systemd/user/\fP.
+
+Then enable it with:
 .nf
 .sp
 	systemctl \-\-user enable xscreensaver
@@ -288,7 +290,7 @@ in, and kill it as soon as someone does log in.  (The user will then
 be responsible for starting XScreenSaver on their own, if they want.)
 
 If that doesn't work, you can edit the config file directly. Edit
-\fI/etc/X11/gdm/gdm.conf\fP to include:
+\fI/etc/X11/gdm/gdm.conf\fP or maybe \fI/etc/gdm3/custom.conf\fP to include:
 .nf
 .sp
 	Greeter=/usr/bin/gdmlogin
@@ -359,8 +361,8 @@ Wayland and use the X Window System like in the "good old days".
 The login screen should have a gear-icon menu that lets you change the session
 type from "GNOME" (the Wayland session) to "GNOME on Xorg" (the X11 session).
 
-Alternately, edit \fI/etc/gdm/custom.conf\fP and make sure it includes this
-line:
+Alternately, edit \fI/etc/X11/gdm/gdm.conf\fP or maybe
+\fI/etc/gdm3/custom.conf\fP to include:
 .nf
 .sp
 	WaylandEnable=false

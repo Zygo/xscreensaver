@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.49 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.51 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -59,6 +59,27 @@ $analogtv_default_opts .= $thread_default_opts;
 
 
 
+sub shaders_for_saver($) {
+  my ($saver) = @_;
+
+  my @shaders = ();
+  my $ext = 'glsl';
+  my @dirs = ('glx/glsl', '../hacks/glx/glsl');
+
+  $saver = lc($saver);
+  for (my $i = 0; $i < 6; $i++) {
+    my $suf = ($i == 0 ? 'c' : $i-1);
+    my $f1 = ($i == 1 ? "$saver.$ext" : undef);
+    my $f2 = "$saver-$suf.$ext";
+    foreach my $d (@dirs) {
+      if ($f1 && -f "$d/$f1") { push @shaders, "$d/$f1"; last; }
+      elsif     (-f "$d/$f2") { push @shaders, "$d/$f2"; last; }
+    }
+  }
+  return @shaders;
+}
+
+
 # Returns two tables:
 # - A table of the default resource values.
 # - A table of "--switch" => "resource: value", or "--switch" => "resource: %"
@@ -74,12 +95,16 @@ sub parse_src($) {
   $file = 'polyhedra-gl.c' if ($file eq 'polyhedra.c');
   $file = 'companion.c' if ($file eq 'companioncube.c');
 
+  my @shaders = shaders_for_saver ($saver);
+  $file = 'xshadertoy.c' if (@shaders);
+
   my $ofile = $file;
   $file = "glx/$ofile"          unless (-f $file);
   $file = "../hacks/$ofile"     unless (-f $file);
   $file = "../hacks/glx/$ofile" unless (-f $file);
   my $body = '';
   open (my $in, '<:utf8', $file) || error ("$ofile: $!");
+  local $/ = undef;  # read entire file
   while (<$in>) { $body .= $_; }
   close $in;
   $file =~ s@^.*/@@;
@@ -223,6 +248,7 @@ sub parse_xml($$$) {
   $file = "../hacks/$ofile" unless (-f $file);
   my $body = '';
   open (my $in, '<:utf8', $file) || error ("$ofile: $!");
+  local $/ = undef;  # read entire file
   while (<$in>) { $body .= $_; }
   close $in;
   $file =~ s@^.*/@@;
@@ -448,6 +474,7 @@ sub check_config($$) {
   # kludge
   return 0 if ($saver =~ m/(-helper)$/);
   return 0 if ($saver =~ m/(xscreensaver-)/);
+  return 0 if ($saver =~ m/xshadertoy$/);
 
   my ($src_opts, $switchmap) = parse_src ($saver);
   my ($saver_title, $gl_p, $xml_opts, $widgets) =
@@ -589,33 +616,6 @@ sub write_file_if_changed($$;$) {
 }
 
 
-# Read the template file and splice in the @KEYWORDS@ in the hash.
-#
-sub read_template($$) {
-  my ($file, $subs) = @_;
-  my $body = '';
-  open (my $in, '<:utf8', $file) || error ("$file: $!");
-  while (<$in>) { $body .= $_; }
-  close $in;
-
-  $body =~ s@/\*.*?\*/@@gs;  # omit comments
-  $body =~ s@//.*$@@gm;
-
-  foreach my $key (keys %$subs) {
-    my $val = $subs->{$key};
-    $body =~ s/@\Q$key\E@/$val/gs;
-  }
-
-  if ($body =~ m/(@[-_A-Z\d]+@)/s) {
-    error ("$file: unmatched: $1 [$body]");
-  }
-
-  $body =~ s/[ \t]+$//gm;
-  $body =~ s/(\n\n)\n+/$1/gs;
-  return $body;
-}
-
-
 # This is duplicated in OSX/update-info-plist.pl
 #
 sub munge_blurb($$$$) {
@@ -711,6 +711,8 @@ sub build_android(@) {
   my $xml_dir     = "$project_dir/res/xml";
   my $values_dir  = "$project_dir/res/values";
   my $java_dir    = "$project_dir/src/org/jwz/xscreensaver/gen";
+  my $asset_dir   = "$project_dir/assets";
+  my $shader_dir  = "$asset_dir/glsl";
   my $gen_dir     = "gen";
 
   my $xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
@@ -731,6 +733,7 @@ sub build_android(@) {
     my $file = "../utils/version.h";
     my $body = '';
     open (my $in, '<:utf8', $file) || error ("$file: $!");
+    local $/ = undef;  # read entire file
     while (<$in>) { $body .= $_; }
     close $in;
     ($vers) = ($body =~ m@ (\d+\.[0-9a-z]+) @s);
@@ -741,7 +744,10 @@ sub build_android(@) {
   foreach my $saver (@savers) {
     next if ($saver =~ m/(-helper)$/);
 
-    my ($src_opts, $switchmap) = parse_src ($saver);
+    my @shaders = shaders_for_saver ($saver);
+    my $saver2 = @shaders ? 'xshadertoy' : $saver;
+
+    my ($src_opts, $switchmap) = parse_src ($saver2);
     my ($saver_title, $gl_p, $xml_opts, $widgets) =
       parse_xml ($saver, $switchmap, $src_opts);
 
@@ -764,6 +770,27 @@ sub build_android(@) {
     if (lc($saver_class) ne lc($saver)) {
       $saver_class = $saver;
       $saver_class =~ s/^(.)/\U$1/s;
+    }
+
+    # Write all referenced shaders to "xscreensaver/assets/glsl/".
+    foreach my $file (@shaders) {
+      my $body = '';
+      open (my $in, '<:utf8', $file) || error ("$file: $!");
+      local $/ = undef;  # read entire file
+      while (<$in>) { $body .= $_; }
+      close $in;
+
+      # Omit comments in shaders.
+      $body =~ s@//[^\n]*@@gs;
+      $body =~ s@/\*.*?\*/@@gs;
+      $body =~ s/^[ \t]+|[ \t]+$//gm;
+      $body =~ s/\n\n+/\n/gs;
+      $body =~ s/^\s+|\s+$//gs;
+      $body .= "\n";
+
+      my $fn = $file;
+      $fn =~ s@^.*/@@gs;
+      $write_files{"$shader_dir/$fn"} = $body;
     }
 
     my $settings = '';
@@ -1038,8 +1065,8 @@ sub build_android(@) {
     $fntable_h2 .= ",\n  " if $fntable_h2 ne '';
     $fntable_h3 .= ",\n  " if $fntable_h3 ne '';
 
-    $fntable_h2 .= "${saver}_xscreensaver_function_table";
-    $fntable_h3 .= "{\"${saver}\", &${saver}_xscreensaver_function_table}";
+    $fntable_h2 .= "${saver2}_xscreensaver_function_table";
+    $fntable_h3 .= "{\"${saver}\", &${saver2}_xscreensaver_function_table}";
   }
 
   $arrays =~ s/^/  /gm;
@@ -1228,7 +1255,7 @@ sub build_android(@) {
   # if a hack is removed from $ANDROID_HACKS in android/Makefile but
   # the old XML files remain behind, the build blows up.
   #
-  foreach my $dd ($xml_dir, $gen_dir, $java_dir) {
+  foreach my $dd ($xml_dir, $gen_dir, $java_dir, $shader_dir) {
     opendir (my $dirp, $dd) || error ("$dd: $!");
     my @files = readdir ($dirp);
     closedir $dirp;
@@ -1237,7 +1264,8 @@ sub build_android(@) {
       $f = "$dd/$f";
       next if (defined ($write_files{$f}));
       if ($f =~ m/_(settings|wallpaper|dream)\.xml$/s ||
-          $f =~ m/(Settings|Daydream)\.java$/s) {
+          $f =~ m/(Settings|Daydream)\.java$/s ||
+          $f =~ m/\.glsl$/s) {
         print STDERR "$progname: rm $f\n";
         unlink ($f) unless ($debug_p);
       } else {

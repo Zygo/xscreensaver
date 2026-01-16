@@ -1,4 +1,4 @@
-/* texfont, Copyright © 2005-2025 Jamie Zawinski <jwz@jwz.org>
+/* texfont, Copyright © 2005-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,6 +32,15 @@
 # include "glsl-utils.h"
 #endif /* HAVE_GLSL */
 
+/* OpenGLES doesn't support GL_INTENSITY, so instead of using a
+   texture with 1 byte per pixel, the intensity value, we have
+   to use 2 bytes per pixel: solid white, and an alpha value.
+ */
+#ifdef HAVE_JWZGLES
+# undef GL_INTENSITY
+#endif
+
+
 #undef HAVE_XSHM_EXTENSION  /* doesn't actually do any good here */
 
 extern void clear_gl_error (void);		/* xlock-gl.c */
@@ -43,58 +52,64 @@ extern float jwxyz_font_scale (Window);		/* jwxyz-cocoa.m */
 /* Shader programs for rendering text textures when the caller is using
    GLSL and the GLES 3.x API rather than the OpenGL 3.1 or GLES 1.x APIs.
  */
-static const GLchar *shader_version_2_1 = "#version 120\n";
-static const GLchar *shader_version_3_0 = "#version 130\n";
-static const GLchar *shader_version_3_0_es = "#version 300 es		\n\
-   precision highp float;						\n\
-   precision highp int;							\n\
-";
-static const GLchar *vertex_shader_attribs_2_1 = "\
-   attribute vec2 VertexCoord;						\n\
-   attribute vec2 VertexTex;						\n\
-   varying vec2 TexCoord;						\n\
-   varying vec4 Color;							\n\
-";
-static const GLchar *vertex_shader_attribs_3_0 = "\
-   in vec2 VertexCoord;							\n\
-   in vec2 VertexTex;							\n\
-   out vec2 TexCoord;							\n\
-   out vec4 Color;							\n\
-";
-static const GLchar *vertex_shader_main = "\
-   uniform mat4 ProjMat;						\n\
-   uniform vec4 FontColor;						\n\
-   void main (void)							\n\
-   {									\n\
-     gl_Position = ProjMat*vec4 (VertexCoord, 0, 1);			\n\
-     TexCoord = VertexTex;						\n\
-     Color = FontColor;							\n\
-   }									\n\
-";
-static const GLchar *fragment_shader_attribs_2_1 = "\
-   varying vec4 Color;							\n\
-   varying vec2 TexCoord;						\n\
-";
-static const GLchar *fragment_shader_attribs_3_0 = "\
-   in vec4 Color;							\n\
-   in vec2 TexCoord;							\n\
-   out vec4 FragColor;							\n\
-";
-static const GLchar *fragment_shader_main = "\
-   uniform sampler2D TexSampler;					\n\
-   void main (void)							\n\
-   {									\n\
-     const float MinAlpha = 0.01;					\n\
-     const float LODBias = 0.25;					\n\
-     if (Color.a <= MinAlpha)						\n\
-       discard;								\n\
-";
-static const GLchar *fragment_shader_out_2_1 = "\
-     gl_FragColor = Color*texture2D (TexSampler, TexCoord.st, LODBias); \n\
-   }\n";
-static const GLchar *fragment_shader_out_3_0 = "\
-     FragColor = Color*texture (TexSampler, TexCoord.st, LODBias);	\n\
-   }\n";
+static const GLchar *vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec2 VertexCoord;                                              \n\
+attribute vec2 VertexTex;                                                \n\
+varying vec2 TexCoord;                                                   \n\
+varying vec4 Color;                                                      \n\
+#else                                                                    \n\
+in vec2 VertexCoord;                                                     \n\
+in vec2 VertexTex;                                                       \n\
+out vec2 TexCoord;                                                       \n\
+out vec4 Color;                                                          \n\
+#endif                                                                   \n\
+uniform mat4 ProjMat;                                                    \n\
+uniform vec4 FontColor;                                                  \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  gl_Position = ProjMat*vec4(VertexCoord,0.0,1.0);                       \n\
+  TexCoord = VertexTex;                                                  \n\
+  Color = FontColor;                                                     \n\
+}                                                                        \n";
+static const GLchar *fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec4 Color;                                                      \n\
+varying vec2 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec4 Color;                                                           \n\
+in vec2 TexCoord;                                                        \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+uniform sampler2D TexSampler;                                            \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  const float MinAlpha = 0.01;                                           \n\
+  const float LODBias = 0.25;                                            \n\
+  if (Color.a <= MinAlpha)                                               \n\
+    discard;                                                             \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = Color*texture2D(TexSampler,TexCoord.st,LODBias).rrrr;   \n\
+#else                                                                    \n\
+#ifdef GL_ES                                                             \n\
+  FragColor = Color*texture(TexSampler,TexCoord.st,LODBias).rrrg;        \n\
+#else                                                                    \n\
+  FragColor = Color*texture(TexSampler,TexCoord.st,LODBias).rrrr;        \n\
+#endif                                                                   \n\
+#endif                                                                   \n\
+}                                                                        \n";
 #endif /* HAVE_GLSL */
 
 
@@ -118,8 +133,11 @@ struct texture_font_data {
   Bool dropshadow_p;
   Bool mipmap_p;
 # ifdef HAVE_GLSL
-  Bool shaders_initialized, use_shaders;
+  Bool shaders_initialized, use_shaders, use_vao;
   GLuint shader_program;
+  GLuint vertex_array_object;
+  GLuint vertex_coord_buffer, vertex_tex_buffer;
+  GLuint indices_buffer;
   GLint vertex_coord_index, vertex_tex_index;
   GLint proj_mat_index, font_color_index, tex_sampler_index;
 # endif /* HAVE_GLSL */
@@ -151,14 +169,6 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
   GLint rowpack = 0;
   GLint alignment = 0;
 # endif /* HAVE_IPHONE */
-
-  /* OpenGLES doesn't support GL_INTENSITY, so instead of using a
-     texture with 1 byte per pixel, the intensity value, we have
-     to use 2 bytes per pixel: solid white, and an alpha value.
-   */
-# ifdef HAVE_JWZGLES
-#  undef GL_INTENSITY
-# endif
 
 # ifdef HAVE_XSHM_EXTENSION
   Bool use_shm = get_boolean_resource (dpy, "useSHM", "Boolean");
@@ -272,25 +282,34 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
 # endif /* HAVE_IPHONE */
 
   {
-# ifdef GL_INTENSITY
-    GLuint iformat = GL_INTENSITY;
-    GLuint format  = GL_LUMINANCE;
-# else
-    GLuint iformat = GL_LUMINANCE_ALPHA;
-    GLuint format  = GL_LUMINANCE_ALPHA;
-# endif
-    GLuint type    = GL_UNSIGNED_BYTE;
-
-#ifdef HAVE_GLSL
+# ifdef HAVE_GLSL
     if (tfdata->use_shaders)
       {
+#  ifdef GL_INTENSITY
+        GLuint iformat = GL_R8;
+        GLuint format  = GL_RED;
+#  else
+        GLuint iformat = GL_RG8;
+        GLuint format  = GL_RG;
+#  endif
+        GLuint type    = GL_UNSIGNED_BYTE;
+
         glTexImage2D (GL_TEXTURE_2D, 0, iformat, w2, h2, 0, format,
                       type, data);
         glGenerateMipmap (GL_TEXTURE_2D);
       }
     else
-#endif /* HAVE_GLSL */
+# endif /* HAVE_GLSL */
       {
+# ifdef GL_INTENSITY
+        GLuint iformat = GL_INTENSITY;
+        GLuint format  = GL_LUMINANCE;
+# else
+        GLuint iformat = GL_LUMINANCE_ALPHA;
+        GLuint format  = GL_LUMINANCE_ALPHA;
+# endif
+        GLuint type    = GL_UNSIGNED_BYTE;
+
         if (tfdata->mipmap_p)
           gluBuild2DMipmaps (GL_TEXTURE_2D, iformat, w2, h2, format, 
                              type, data);
@@ -415,7 +434,9 @@ load_texture_font (Display *dpy, char *res)
      first. */
   data->shaders_initialized = False;
   data->use_shaders = False;
+  data->use_vao = False;
   data->shader_program = 0;
+  data->vertex_array_object = 0;
   data->vertex_coord_index = -1;
   data->vertex_tex_index = -1;
   data->proj_mat_index = -1;
@@ -934,28 +955,42 @@ print_texture_string (texture_font_data *data, const char *string)
         v[2][0] = qx1; v[2][1] = qy1; t[2][0] = tx1; t[2][1] = ty1;
         v[3][0] = qx0; v[3][1] = qy1; t[3][0] = tx0; t[3][1] = ty1;
 
+        if (data->use_vao)
+          glBindVertexArray (data->vertex_array_object);
+
         glEnableVertexAttribArray (data->vertex_coord_index);
-        glVertexAttribPointer (data->vertex_coord_index, 2, GL_FLOAT, GL_FALSE,
-                               2 * sizeof(GLfloat), v);
+        glBindBuffer (GL_ARRAY_BUFFER, data->vertex_coord_buffer);
+        glBufferData (GL_ARRAY_BUFFER, sizeof(v), v, GL_STATIC_DRAW);
+        glVertexAttribPointer (data->vertex_coord_index, 2, GL_FLOAT,
+                               GL_FALSE, 0, 0);
 
         glEnableVertexAttribArray (data->vertex_tex_index);
-        glVertexAttribPointer (data->vertex_tex_index, 2, GL_FLOAT, GL_FALSE,
-                               2 * sizeof(GLfloat), t);
+        glBindBuffer (GL_ARRAY_BUFFER, data->vertex_tex_buffer);
+        glBufferData (GL_ARRAY_BUFFER, sizeof(t), t, GL_STATIC_DRAW);
+        glVertexAttribPointer(data->vertex_tex_index, 2, GL_FLOAT,
+                              GL_FALSE, 0, 0);
+
+        glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, data->indices_buffer);
+        glBufferData (GL_ELEMENT_ARRAY_BUFFER, 6*sizeof(GLuint),
+                      indices, GL_STATIC_DRAW);
 
         glEnable (GL_CULL_FACE);
         glFrontFace (GL_CCW);
-        glDrawElements (GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
+        glDrawElements (GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         if (draw_back_face_p)
           {
             glFrontFace (GL_CW);
-            glDrawElements (GL_TRIANGLE_STRIP, 2, GL_UNSIGNED_INT, indices);
+            glDrawElements (GL_TRIANGLE_STRIP, 2, GL_UNSIGNED_INT, 0);
           }
 
         glDisableVertexAttribArray (data->vertex_coord_index);
         glDisableVertexAttribArray (data->vertex_tex_index);
 
-        glDisable(GL_CULL_FACE);
+        if (data->use_vao)
+          glBindVertexArray (0);
+
+        glDisable (GL_CULL_FACE);
       }
     else
 # endif /* HAVE_GLSL */
@@ -1035,10 +1070,12 @@ initialize_textfont_shaders_glsl (texture_font_data *data)
 {
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
-  const GLchar *vertex_shader_source[3];
-  const GLchar *fragment_shader_source[4];
+  const GLchar *vertex_shader_source[2];
+  const GLchar *fragment_shader_source[2];
 
   data->use_shaders = False;
+  data->use_vao = False;
+  data->vertex_array_object = 0;
 
   if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
                                  &gl_gles3))
@@ -1047,56 +1084,12 @@ initialize_textfont_shaders_glsl (texture_font_data *data)
       return;
     }
 
-  if (!gl_gles3)
-    {
-      if (gl_major < 3 ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-        {
-          if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-              (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-            {
-              data->shaders_initialized = True;
-              return;
-            }
-          /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-          vertex_shader_source[0] = shader_version_2_1;
-          vertex_shader_source[1] = vertex_shader_attribs_2_1;
-          vertex_shader_source[2] = vertex_shader_main;
-          fragment_shader_source[0] = shader_version_2_1;
-          fragment_shader_source[1] = fragment_shader_attribs_2_1;
-          fragment_shader_source[2] = fragment_shader_main;
-          fragment_shader_source[3] = fragment_shader_out_2_1;
-        }
-      else
-        {
-          /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-          vertex_shader_source[0] = shader_version_3_0;
-          vertex_shader_source[1] = vertex_shader_attribs_3_0;
-          vertex_shader_source[2] = vertex_shader_main;
-          fragment_shader_source[0] = shader_version_3_0;
-          fragment_shader_source[1] = fragment_shader_attribs_3_0;
-          fragment_shader_source[2] = fragment_shader_main;
-          fragment_shader_source[3] = fragment_shader_out_3_0;
-        }
-    }
-  else /* gl_gles3 */
-    {
-      if (gl_major < 3 || glsl_major < 3)
-        {
-          data->shaders_initialized = True;
-          return;
-        }
-      /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-      vertex_shader_source[0] = shader_version_3_0_es;
-      vertex_shader_source[1] = vertex_shader_attribs_3_0;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_3_0_es;
-      fragment_shader_source[1] = fragment_shader_attribs_3_0;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_3_0;
-    }
-  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
-                                  4,fragment_shader_source,
+  vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  vertex_shader_source[1] = vertex_shader;
+  fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  fragment_shader_source[1] = fragment_shader;
+  if (!glsl_CompileAndLinkShaders(2,vertex_shader_source,
+                                  2,fragment_shader_source,
                                   &data->shader_program))
     {
       data->shaders_initialized = True;
@@ -1126,6 +1119,14 @@ initialize_textfont_shaders_glsl (texture_font_data *data)
       data->shader_program = 0;
       data->shaders_initialized = True;
     }
+
+  glGenBuffers(1,&data->vertex_coord_buffer);
+  glGenBuffers(1,&data->vertex_tex_buffer);
+  glGenBuffers(1,&data->indices_buffer);
+
+  data->use_vao = glsl_IsCoreProfile();
+  if (data->use_vao)
+    glGenVertexArrays(1,&data->vertex_array_object);
 }
 #endif /* HAVE_GLSL */
 
@@ -1429,6 +1430,12 @@ texfont_unicode_character_name (texture_font_data *data, unsigned long uc)
 #endif /* HAVE_JWXYZ */
 
 
+XftFont *
+texfont_xft (texture_font_data *data)
+{
+  return data->xftfont;
+}
+
 
 /* Releases the font and texture.
  */
@@ -1453,6 +1460,11 @@ free_texture_font (texture_font_data *data)
     {
       glUseProgram (0);
       glDeleteProgram (data->shader_program);
+      glDeleteBuffers(1,&data->vertex_coord_buffer);
+      glDeleteBuffers(1,&data->vertex_tex_buffer);
+      glDeleteBuffers(1,&data->indices_buffer);
+      if (data->use_vao)
+        glDeleteVertexArrays(1,&data->vertex_array_object);
     }
 # endif /* HAVE_GLSL */
 

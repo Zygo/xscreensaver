@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2021 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -31,6 +31,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
  * C. Steger - 20/11/19: Remove all unnecessary global variables
  * C. Steger - 20/12/06: Moved all GLSL support code into glsl-utils.[hc]
  * C. Steger - 20/12/30: Make the shader code work under iOS
+ * C. Steger - 25/12/31: Make the code work in an OpenGL core profile
  */
 
 /*
@@ -243,7 +244,7 @@ typedef struct {
   GLfloat uv[(NUMU+1)*(NUMV+1)][2];
   GLfloat col[(NUMU+1)*(NUMV+1)][4];
   GLuint indices[4*NUMU*NUMV];
-  Bool use_shaders, buffers_initialized;
+  Bool use_shaders, buffers_initialized, use_vao;
   GLuint shader_program;
   GLint vertex_uv_index, color_index;
   GLint mat_rot_index, mat_p_index, bool_persp_index;
@@ -256,6 +257,7 @@ typedef struct {
   GLint specular_index, shininess_index;
   GLuint vertex_uv_buffer;
   GLuint color_buffer, indices_buffer;
+  GLuint vertex_array_object;
   GLint ni, ne, nt;
 #endif /* HAVE_GLSL */
 } hypertorusstruct;
@@ -266,146 +268,138 @@ static hypertorusstruct *hyper = (hypertorusstruct *) NULL;
 
 #ifdef HAVE_GLSL
 
-/* The GLSL versions that correspond to different versions of OpenGL. */
-static const GLchar *shader_version_2_1 =
-  "#version 120\n";
-static const GLchar *shader_version_3_0 =
-  "#version 130\n";
-static const GLchar *shader_version_3_0_es =
-  "#version 300 es\n"
-  "precision highp float;\n"
-  "precision highp int;\n";
+/* The vertex shader code. */
+static const GLchar *vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec2 VertexUV;                                                 \n\
+attribute vec4 VertexColor;                                              \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+#else                                                                    \n\
+in vec2 VertexUV;                                                        \n\
+in vec4 VertexColor;                                                     \n\
+out vec3 Normal;                                                         \n\
+out vec4 Color;                                                          \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatRot4D;                                                   \n\
+uniform mat4 MatProj;                                                    \n\
+uniform bool BoolPersp;                                                  \n\
+uniform vec4 Offset4D;                                                   \n\
+uniform vec4 Offset3D;                                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec3 p, pu, pv;                                                        \n\
+  float su = sin(VertexUV.x);                                            \n\
+  float cu = cos(VertexUV.x);                                            \n\
+  float sv = sin(VertexUV.y);                                            \n\
+  float cv = cos(VertexUV.y);                                            \n\
+  vec4 xx = vec4(cu,su,cv,sv);                                           \n\
+  vec4 xxu = vec4(-su,cu,0.0,0.0);                                       \n\
+  vec4 xxv = vec4(0.0,0.0,-sv,cv);                                       \n\
+  vec4 x = MatRot4D*xx+Offset4D;                                         \n\
+  vec4 xu = MatRot4D*xxu;                                                \n\
+  vec4 xv = MatRot4D*xxv;                                                \n\
+  if (BoolPersp)                                                         \n\
+  {                                                                      \n\
+    vec3 r = x.xyz;                                                      \n\
+    float s = x.w;                                                       \n\
+    float t = s*s;                                                       \n\
+    p = r/s+Offset3D.xyz;                                                \n\
+    pu = (s*xu.xyz-r*xu.w)/t;                                            \n\
+    pv = (s*xv.xyz-r*xv.w)/t;                                            \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    p = x.xyz/1.5f+Offset3D.xyz;                                         \n\
+    pu = xu.xyz;                                                         \n\
+    pv = xv.xyz;                                                         \n\
+  }                                                                      \n\
+  vec4 Position = vec4(p,1.0);                                           \n\
+  Normal = normalize(cross(pu,pv));                                      \n\
+  gl_Position = MatProj*Position;                                        \n\
+  Color = VertexColor;                                                   \n\
+}                                                                        \n";
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *vertex_shader_attribs_2_1 =
-  "attribute vec2 VertexUV;\n"
-  "attribute vec4 VertexColor;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "\n";
-static const GLchar *vertex_shader_attribs_3_0 =
-  "in vec2 VertexUV;\n"
-  "in vec4 VertexColor;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 Color;\n"
-  "\n";
-static const GLchar *vertex_shader_main =
-  "uniform mat4 MatRot4D;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform bool BoolPersp;\n"
-  "uniform vec4 Offset4D;\n"
-  "uniform vec4 Offset3D;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec3 p, pu, pv;\n"
-  "  float su = sin(VertexUV.x)\n;"
-  "  float cu = cos(VertexUV.x)\n;"
-  "  float sv = sin(VertexUV.y)\n;"
-  "  float cv = cos(VertexUV.y)\n;"
-  "  vec4 xx = vec4(cu,su,cv,sv);"
-  "  vec4 xxu = vec4(-su,cu,0.0,0.0);"
-  "  vec4 xxv = vec4(0.0,0.0,-sv,cv);"
-  "  vec4 x = MatRot4D*xx+Offset4D;\n"
-  "  vec4 xu = MatRot4D*xxu;\n"
-  "  vec4 xv = MatRot4D*xxv;\n"
-  "  if (BoolPersp)\n"
-  "  {\n"
-  "    vec3 r = x.xyz;\n"
-  "    float s = x.w;\n"
-  "    float t = s*s;\n"
-  "    p = r/s+Offset3D.xyz;\n"
-  "    pu = (s*xu.xyz-r*xu.w)/t;\n"
-  "    pv = (s*xv.xyz-r*xv.w)/t;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    p = x.xyz/1.5f+Offset3D.xyz;\n"
-  "    pu = xu.xyz;\n"
-  "    pv = xv.xyz;\n"
-  "  }\n"
-  "  vec4 Position = vec4(p,1.0);\n"
-  "  Normal = normalize(cross(pu,pv));\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  Color = VertexColor;\n"
-  "}\n";
-
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl_glsl(). */
-static const GLchar *fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "\n";
-static const GLchar *fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 Color;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *fragment_shader_main =
-  "uniform bool DrawLines;\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatFrontAmbient, MatBackAmbient;\n"
-  "uniform vec4 MatFrontDiffuse, MatBackDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec4 color;\n"
-  "  if (DrawLines)\n"
-  "  {\n"
-  "    color = Color;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    vec3 normalDirection;\n"
-  "    vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "    vec4 ambientLighting, diffuseReflection, specularReflection;\n"
-  "    float ndotl, ndoth, pf;\n"
-  "    \n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      normalDirection = normalize(Normal);\n"
-  "      sceneColor = Color*MatFrontAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatFrontAmbient;\n"
-  "      diffuseColor = Color*MatFrontDiffuse;\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      normalDirection = -normalize(Normal);\n"
-  "      sceneColor = Color*MatBackAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatBackAmbient;\n"
-  "      diffuseColor = Color*MatBackDiffuse;\n"
-  "    }\n"
-  "    \n"
-  "    ndotl = max(0.0,dot(normalDirection,LtDirection));\n"
-  "    ndoth = max(0.0,dot(normalDirection,LtHalfVector));\n"
-  "    if (ndotl == 0.0)\n"
-  "      pf = 0.0;\n"
-  "    else\n"
-  "      pf = pow(ndoth,MatShininess);\n"
-  "    ambientLighting = ambientColor*LtAmbient;\n"
-  "    diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "    specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "    color = (sceneColor+ambientLighting+diffuseReflection+\n"
-  "             specularReflection);\n"
-  "  }\n";
-static const GLchar *fragment_shader_out_2_1 =
-  "  gl_FragColor = clamp(color,0.0,1.0);\n"
-  "}\n";
-static const GLchar *fragment_shader_out_3_0 =
-  "  FragColor = clamp(color,0.0,1.0);\n"
-  "}\n";
+/* The fragment shader code. */
+static const GLchar *fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 Color;                                                           \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform bool DrawLines;                                                  \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatFrontAmbient, MatBackAmbient;                            \n\
+uniform vec4 MatFrontDiffuse, MatBackDiffuse;                            \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec4 color;                                                            \n\
+  if (DrawLines)                                                         \n\
+  {                                                                      \n\
+    color = Color;                                                       \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    vec3 normalDirection;                                                \n\
+    vec4 ambientColor, diffuseColor, sceneColor;                         \n\
+    vec4 ambientLighting, diffuseReflection, specularReflection;         \n\
+    float ndotl, ndoth, pf;                                              \n\
+                                                                         \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+      normalDirection = normalize(Normal);                               \n\
+      sceneColor = Color*MatFrontAmbient*LtGlblAmbient;                  \n\
+      ambientColor = Color*MatFrontAmbient;                              \n\
+      diffuseColor = Color*MatFrontDiffuse;                              \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+      normalDirection = -normalize(Normal);                              \n\
+      sceneColor = Color*MatBackAmbient*LtGlblAmbient;                   \n\
+      ambientColor = Color*MatBackAmbient;                               \n\
+      diffuseColor = Color*MatBackDiffuse;                               \n\
+    }                                                                    \n\
+                                                                         \n\
+    ndotl = max(0.0,dot(normalDirection,LtDirection));                   \n\
+    ndoth = max(0.0,dot(normalDirection,LtHalfVector));                  \n\
+    if (ndotl == 0.0)                                                    \n\
+      pf = 0.0;                                                          \n\
+    else                                                                 \n\
+      pf = pow(ndoth,MatShininess);                                      \n\
+    ambientLighting = ambientColor*LtAmbient;                            \n\
+    diffuseReflection = LtDiffuse*diffuseColor*ndotl;                    \n\
+    specularReflection = LtSpecular*MatSpecular*pf;                      \n\
+    color = (sceneColor+ambientLighting+diffuseReflection+               \n\
+             specularReflection);                                        \n\
+    color.a = diffuseColor.a;                                            \n\
+  }                                                                      \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = clamp(color,0.0,1.0);                                   \n\
+#else                                                                    \n\
+  FragColor = clamp(color,0.0,1.0);                                      \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 #endif /* HAVE_GLSL */
 
@@ -1417,6 +1411,9 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
     }
   }
 
+  if (hp->use_vao)
+    glBindVertexArray(hp->vertex_array_object);
+
   glEnableVertexAttribArray(hp->vertex_uv_index);
   glBindBuffer(GL_ARRAY_BUFFER,hp->vertex_uv_buffer);
   glVertexAttribPointer(hp->vertex_uv_index,2,GL_FLOAT,GL_FALSE,0,0);
@@ -1471,6 +1468,9 @@ static int hypertorus_pf(ModeInfo *mi, double umin, double umax, double vmin,
   glBindBuffer(GL_ARRAY_BUFFER,0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
+  if (hp->use_vao)
+    glBindVertexArray(0);
+
   glUseProgram(0);
 
   polys = 2*numu*numv;
@@ -1485,8 +1485,8 @@ static void init_glsl(ModeInfo *mi)
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
-  const GLchar *vertex_shader_source[3];
-  const GLchar *fragment_shader_source[4];
+  const GLchar *vertex_shader_source[2];
+  const GLchar *fragment_shader_source[2];
 
   /* Determine whether to use shaders to render the hypertorus. */
   hp->use_shaders = False;
@@ -1495,54 +1495,18 @@ static void init_glsl(ModeInfo *mi)
   hp->ni = 0;
   hp->ne = 0;
   hp->nt = 0;
+  hp->use_vao = False;
 
   if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
                                  &gl_gles3))
     return;
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      vertex_shader_source[0] = shader_version_2_1;
-      vertex_shader_source[1] = vertex_shader_attribs_2_1;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_2_1;
-      fragment_shader_source[1] = fragment_shader_attribs_2_1;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_2_1;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      vertex_shader_source[0] = shader_version_3_0;
-      vertex_shader_source[1] = vertex_shader_attribs_3_0;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_3_0;
-      fragment_shader_source[1] = fragment_shader_attribs_3_0;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_3_0;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    vertex_shader_source[0] = shader_version_3_0_es;
-    vertex_shader_source[1] = vertex_shader_attribs_3_0;
-    vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0_es;
-    fragment_shader_source[1] = fragment_shader_attribs_3_0;
-    fragment_shader_source[2] = fragment_shader_main;
-    fragment_shader_source[3] = fragment_shader_out_3_0;
-  }
-  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
-                                  4,fragment_shader_source,
+
+  vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  vertex_shader_source[1] = vertex_shader;
+  fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  fragment_shader_source[1] = fragment_shader;
+  if (!glsl_CompileAndLinkShaders(2,vertex_shader_source,
+                                  2,fragment_shader_source,
                                   &hp->shader_program))
     return;
   hp->vertex_uv_index = glGetAttribLocation(hp->shader_program,"VertexUV");
@@ -1605,6 +1569,10 @@ static void init_glsl(ModeInfo *mi)
   glGenBuffers(1,&hp->vertex_uv_buffer);
   glGenBuffers(1,&hp->color_buffer);
   glGenBuffers(1,&hp->indices_buffer);
+
+  hp->use_vao = glsl_IsCoreProfile();
+  if (hp->use_vao)
+    glGenVertexArrays(1,&hp->vertex_array_object);
 
   hp->use_shaders = True;
 }
@@ -1970,6 +1938,8 @@ ENTRYPOINT void free_hypertorus(ModeInfo *mi)
     glDeleteBuffers(1,&hp->vertex_uv_buffer);
     glDeleteBuffers(1,&hp->color_buffer);
     glDeleteBuffers(1,&hp->indices_buffer);
+    if (hp->use_vao)
+      glDeleteVertexArrays(1,&hp->vertex_array_object);
     if (hp->shader_program != 0)
     {
       glUseProgram(0);

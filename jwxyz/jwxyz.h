@@ -472,6 +472,11 @@ extern void jwxyz_draw_NSImage_or_CGImage (Display *, Drawable,
                                            int exif_rotation);
 extern XImage *jwxyz_png_to_ximage (Display *, Visual *,
                                     const unsigned char *, unsigned long size);
+#ifdef HAVE_ANDROID
+extern char **android_list_asset_files (Window, const char *dir);
+extern char *android_read_asset_file (Window, const char *dir,
+                                      const char *file);
+#endif
 
 extern int XSetGraphicsExposures (Display *, GC, Bool);
 extern Bool XTranslateCoordinates (Display *, Window src_w, Window dest_w,

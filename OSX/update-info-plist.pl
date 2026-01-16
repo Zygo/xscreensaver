@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.60 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.62 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -306,6 +306,19 @@ sub compress_all_xml_files($) {
 }
 
 
+sub safe_system(@) {
+  my (@cmd) = @_;
+  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n" if ($verbose > 1);
+  system @cmd;
+  my $exit_value  = $? >> 8;
+  my $signal_num  = $? & 127;
+  my $dumped_core = $? & 128;
+  error ("$cmd[0]: core dumped!") if ($dumped_core);
+  error ("$cmd[0]: signal $signal_num!") if ($signal_num);
+  error ("$cmd[0]: exit $exit_value") if ($exit_value);
+  return $exit_value;
+}
+
 sub minimize_scripts($) {
   my ($dir) = @_;
   my $d2 = $dir . '/Contents/Resources';
@@ -319,13 +332,36 @@ sub minimize_scripts($) {
     $f = "$dir/$f";
     next if ($f =~ m/\.(xml|png|jpg|ttf)$/s);
     next if (-d $f);
-    next unless (-x $f);	# Assume executable files are Perl scripts
-    my @cmd = "$exec_dir/perl-minimize.pl";
-    push @cmd, '--verbose' if ($verbose > 2);
-    push @cmd, ($f, $f);
-    print STDERR "$progname: exec: " . join(' ', @cmd) . "\n"
-      if ($verbose > 1);
-    system (@cmd);
+    if (-x $f) {	# Assume executable files are Perl scripts
+      my @cmd = "$exec_dir/perl-minimize.pl";
+      push @cmd, '--verbose' if ($verbose > 2);
+      push @cmd, ($f, $f);
+      safe_system (@cmd);
+    } elsif ($f =~ m/\.glsl$/si) {
+      open (my $in, '<:utf8', $f) || error ("$f: $!");
+      my $body = '';
+      local $/ = undef;  # read entire file
+      while (<$in>) { $body .= $_; }
+      close $in;
+      my $obody = $body;
+
+      # Omit comments in shaders.
+      $body =~ s@//[^\n]*@@gs;
+      $body =~ s@/\*.*?\*/@@gs;
+      $body =~ s/^[ \t]+|[ \t]+$//gm;
+      $body =~ s/\n\n+/\n/gs;
+      $body =~ s/^\s+|\s+$//gs;
+      $body .= "\n";
+
+      if ($body eq $obody) {
+        print STDERR "$progname: $f unchanged\n" if ($verbose > 2);
+      } else {
+        open (my $out, '>:utf8', $f);
+        print $out $body;
+        close $out;
+        print STDERR "$progname: stripped $f\n" if ($verbose);
+      }
+    }
   }
 }
 

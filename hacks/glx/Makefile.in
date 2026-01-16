@@ -1,4 +1,4 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2025 Jamie Zawinski.
+# hacks/glx/Makefile.in --- xscreensaver, Copyright © 1999-2026 Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
 @SET_MAKE@
@@ -88,7 +88,8 @@ UTILDIR_OBJS	= $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/async_netdb.o \
 		  $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/pow2.o \
-		  $(UTILS_BIN)/font-retry.o $(UTILS_BIN)/easing.o
+		  $(UTILS_BIN)/font-retry.o $(UTILS_BIN)/easing.o \
+		  $(UTILS_BIN)/xftwrap.o
 JWXYZ_OBJS	= $(JWXYZ_BIN)/jwzgles.o
 HACKDIR_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/xlockmore.o \
 		  $(HACK_BIN)/fps.o $(HACK_BIN)/ximage-loader.o \
@@ -150,7 +151,17 @@ SRCS		= xscreensaver-gl-visual.c normals.c erase-gl.c fps-gl.c \
 		  skulloop.c kallisti.c kallisti_model.c highvoltage.c \
 		  highvoltage_model.c hopffibration.c hopfanimations.c \
 		  platonicfolding.c klondike.c klondike-game.c dumpsterfire.c \
-		  dumpster_model.c
+		  dumpster_model.c xshadertoy.c
+
+GLSL_SRCS	= glsl/alienbeacon.glsl glsl/batteredplanet.glsl \
+		  glsl/elementalring.glsl glsl/fluxcore.glsl \
+		  glsl/gimbalharmonics.glsl glsl/hexplasma.glsl \
+		  glsl/logarithmiccircles.glsl glsl/neongravity-0.glsl \
+		  glsl/neongravity-1.glsl glsl/neontriangulator.glsl \
+		  glsl/protophore.glsl glsl/selfreflect.glsl \
+		  glsl/skyline.glsl glsl/stardome.glsl glsl/starnest.glsl \
+		  glsl/stripeytorus.glsl glsl/synthwavecity.glsl \
+		  glsl/topologica.glsl glsl/truchetzoom.glsl
 
 SCRIPTS		= mapscroller.pl
 
@@ -208,7 +219,7 @@ OBJS		= xscreensaver-gl-visual.o normals.o erase-gl.o fps-gl.o \
 		  teeth_model.o hextrail.o papercube.o cubocteversion.o \
 		  skulloop.o kallisti.o kallisti_model.o highvoltage.o \
 		  highvoltage_model.o platonicfolding.o klondike.o \
-		  klondike-game.o dumpsterfire.o 
+		  klondike-game.o dumpsterfire.o xshadertoy.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -233,13 +244,17 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  sphereeversion covid19 headroom beats mapscroller \
 		  squirtorus nakagin chompytower hextrail papercube \
 		  cubocteversion skulloop kallisti highvoltage hopffibration \
-		  platonicfolding klondike dumpsterfire
+		  platonicfolding klondike dumpsterfire xshadertoy
 GLE_EXES	= extrusion
+GLSL_EXES	= alienbeacon batteredplanet elementalring fluxcore \
+		  gimbalharmonics hexplasma logarithmiccircles neongravity \
+		  neontriangulator protophore selfreflect skyline stardome \
+		  starnest stripeytorus synthwavecity topologica truchetzoom
 SUID_EXES	= sonar
 SETCAP_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-visual
 JWZGLES_OBJS	= @JWZGLES_OBJS@
-HACK_EXES_1	= @GL_EXES@ @GLE_EXES@
+HACK_EXES_1	= @GL_EXES@ @GLE_EXES@ $(GLSL_EXES)
 HACK_EXES	= $(HACK_EXES_1) @SUID_EXES@
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o $(UTILS_BIN)/aligned_malloc.o
 DT		= $(UTILS_BIN)/doubletime.o
@@ -318,13 +333,21 @@ GL_MEN		= xscreensaver-gl-visual.man \
 		  mapscroller.man squirtorus.man nakagin.man chompytower.man \
 		  hextrail.man papercube.man cubocteversion.man skulloop.man \
 		  kallisti.man highvoltage.man hopffibration.man \
-		  platonicfolding.man
+		  platonicfolding.man xshadertoy.man \
+		  alienbeacon.man batteredplanet.man elementalring.man \
+		  fluxcore.man gimbalharmonics.man hexplasma.man \
+		  logarithmiccircles.man neongravity.man neontriangulator.man \
+		  protophore.man selfreflect.man skyline.man stardome.man \
+		  starnest.man stripeytorus.man synthwavecity.man \
+		  topologica.man truchetzoom.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
-		  molecules.sh starwars.txt zalgo.txt *.dxf
+		  xshadertoy-download.pl xshadertoy-compile.pl \
+		  molecules.sh starwars.txt zalgo.txt *.dxf glsl/README
 
-TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(GL_MEN) $(RETIRED_MEN) $(EXTRAS)
+TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(GLSL_SRCS) $(GL_MEN) \
+		  $(RETIRED_MEN) $(EXTRAS)
 
 # Using $(MAKE) directly means the shell executes things even with "make -n"
 MAKE2 = $(MAKE)
@@ -343,13 +366,14 @@ install-strip:
 install-program:: $(EXES)
 	@exes="$(HACK_EXES_1) @GL_UTIL_EXES@" ;				\
 	 idir="$(DESTDIR)$(HACKDIR)" ;					\
-	 if ( echo $$exes | grep -q . ); then				\
-	   if [ ! -d $$idir ]; then					\
-	     $(INSTALL_DIRS) $$idir ;					\
+	 if ( echo "$$exes" | grep -q . ); then				\
+	   if [ ! -d "$$idir" ]; then					\
+	     echo $(INSTALL_DIRS) "$$idir" ;				\
+	          $(INSTALL_DIRS) "$$idir" ;				\
 	   fi ;								\
 	   for program in $$exes; do					\
-	     echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
-		  $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+	     echo $(INSTALL_PROGRAM) "$$program" "$$idir/$$program" ;	\
+		  $(INSTALL_PROGRAM) "$$program" "$$idir/$$program" ;	\
 	   done ;							\
 									\
 	   exes="$(SUID_EXES)" ;					\
@@ -359,12 +383,12 @@ install-program:: $(EXES)
 	     sinst="$(INSTALL_PROGRAM)" ;				\
 	   fi ;								\
 	   for program in $$exes; do					\
-	     echo $$sinst $$program $$idir/$$program ;			\
-	     if   $$sinst $$program $$idir/$$program ; then		\
+	     echo $$sinst "$$program" "$$idir/$$program" ;		\
+	     if   $$sinst "$$program" "$$idir/$$program" ; then		\
 	        true ;							\
-	     elif [ @SETUID_HACKS@ = yes ]; then			\
-	       echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
-	       if   $(INSTALL_PROGRAM) $$program $$idir/$$program ; then\
+	     elif [ "@SETUID_HACKS@" = yes ]; then			\
+	       echo $(INSTALL_PROGRAM) "$$program" "$$idir/$$program" ;	\
+	       if   $(INSTALL_PROGRAM) "$$program" "$$idir/$$program" ; then\
 	         echo "" ;						\
 	         echo "WARNING: unable to install $$program setuid:"	\
 	              "installed non-setuid instead." ;			\
@@ -378,10 +402,10 @@ install-program:: $(EXES)
 	   done ;							\
 									\
 	   exes="$(SETCAP_EXES)" ;					\
-	   if [ @SETCAP_HACKS@ = yes ]; then				\
+	   if [ "@SETCAP_HACKS@" = yes ]; then				\
 	     for program in $$exes; do					\
-	       echo $(PROG_SETCAP) $(SETCAP_FLAGS) $$idir/$$program ;	\
-	       if   $(PROG_SETCAP) $(SETCAP_FLAGS) $$idir/$$program ; then \
+	       echo $(PROG_SETCAP) $(SETCAP_FLAGS) "$$idir/$$program" ;	\
+	       if   $(PROG_SETCAP) $(SETCAP_FLAGS) "$$idir/$$program" ; then \
 	         true ;							\
 	       else							\
 	         echo "" ;						\
@@ -395,35 +419,35 @@ install-program:: $(EXES)
 
 install-scripts: $(SCRIPTS) munge-scripts
 	@								\
-	if ! ( echo $(HACK_EXES_1) | grep -q . ); then exit 0 ; fi ;	\
-	if [ ! -d $(DESTDIR)$(HACKDIR) ]; then				\
-	  $(INSTALL_DIRS) $(DESTDIR)$(HACKDIR) ;			\
+	dir="$(DESTDIR)$(HACKDIR)" ;					\
+	if ! ( echo "$(HACK_EXES_1)" | grep -q . ); then exit 0 ; fi ;	\
+	if [ ! -d "$$dir" ]; then					\
+	  echo $(INSTALL_DIRS) "$$dir" ;				\
+	       $(INSTALL_DIRS) "$$dir" ;				\
 	 fi ;								\
 	for program in $(SCRIPTS); do					\
 	  if [ -r $$program ] ; then					\
-	    p=$$program ;						\
+	    p="$$program" ;						\
 	  else								\
-	    p=$(srcdir)/$$program ;					\
+	    p="$(srcdir)/$$program" ;					\
 	  fi ;								\
-	  echo $(INSTALL_SCRIPT) $$p					\
-	    $(DESTDIR)$(HACKDIR)/$$program ;				\
-	  $(INSTALL_SCRIPT) $$p						\
-	    $(DESTDIR)$(HACKDIR)/$$program ;				\
+	  echo $(INSTALL_SCRIPT) "$$p" "$$dir/$$program" ;		\
+	       $(INSTALL_SCRIPT) "$$p" "$$dir/$$program" ;		\
 	done
 
 munge-scripts: $(SCRIPTS)
 	@tmp=/tmp/mf.$$$$ ;						\
 	perl="$(PERL)" ;						\
-	rm -f $$tmp ;							\
+	rm -f "$$tmp" ;							\
 	for program in $(SCRIPTS); do					\
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
-	      < $(srcdir)/$$program > $$tmp ;				\
-	  if ! cmp -s $(srcdir)/$$program $$tmp ; then			\
+	      < "$(srcdir)/$$program" > "$$tmp" ;			\
+	  if ! cmp -s "$(srcdir)/$$program" "$$tmp" ; then		\
 	    echo "$$program: setting interpreter to $$perl" >&2 ;	\
-	    cat $$tmp > ./$$program ;					\
+	    cat "$$tmp" > "./$$program" ;				\
 	  fi ;								\
 	done ;								\
-	rm -f $$tmp
+	rm -f "$$tmp"
 
 # When installing man pages, we install "foo.man" as "foo.N" and update
 # the .TH line in the installed file with one like
@@ -434,42 +458,43 @@ munge-scripts: $(SCRIPTS)
 #
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	U=$(UTILS_SRC)/version.h ;					\
-	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;	\
-	T=/tmp/xs$$$$.$(mansuffix) ;					\
+	U="$(UTILS_SRC)/version.h" ;					\
+	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U |	\
+	    head -1`;							\
+	T="/tmp/xs$$$$.$(mansuffix)" ;					\
 	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+	dir="$(DESTDIR)$(manNdir)" ;					\
 									\
-	if ! ( echo $(HACK_EXES_1) | grep -q . ); then exit 0 ; fi ;	\
+	if ! ( echo "$(HACK_EXES_1)" | grep -q . ); then exit 0 ; fi ;	\
 	echo "installing man pages: $$TH" ;				\
 									\
-	if [ ! -d $(DESTDIR)$(manNdir) ]; then				\
-	  $(INSTALL_DIRS) $(DESTDIR)$(manNdir) ;			\
+	if [ ! -d "$$dir" ]; then					\
+	  echo $(INSTALL_DIRS) "$$dir" ;				\
+	       $(INSTALL_DIRS) "$$dir" ;				\
 	 fi ;								\
 									\
 	for man in $$men; do						\
-	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  manbase=`echo $$man | sed 's/\.man$$//'` ;    \
+	  instname="`echo "$$man" | sed 's/\.man$$/\.$(mansuffix)/'`" ;	\
+	  manbase="`echo "$$man" | sed 's/\.man$$//'`" ;		\
 	  TH=".TH $$manbase $(mansuffix) \"$$V\" \"X Version 11\" \"XScreenSaver manual\"" ;   \
 	  sed -e "s/^\.TH.*/$$TH/"					\
 	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
-	    < $(srcdir)/$$man > $$T ;					\
-	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
-	   $(DESTDIR)$(manNdir)/$$instname ;				\
-	  $(INSTALL_DATA) $$T						\
-	    $(DESTDIR)$(manNdir)/$$instname ;				\
+	    < "$(srcdir)/$$man" > "$$T" ;				\
+	  echo $(INSTALL_DATA) "$(srcdir)/$$man" "$$dir/$$instname" ;	\
+	       $(INSTALL_DATA) "$$T"             "$$dir/$$instname" ;	\
 	done ;								\
-	rm -f $$T
+	rm -f "$$T"
 
 install-xml:
-	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
-	 if [ ! -d $$dest ]; then					\
-	   $(INSTALL_DIRS) $$dest ;					\
+	@dest="$(DESTDIR)$(HACK_CONF_DIR)" ;				\
+	 if [ ! -d "$$dest" ]; then					\
+	   $(INSTALL_DIRS) "$$dest" ;					\
 	 fi ;								\
-	 src=$(srcdir)/../config ;					\
+	 src="$(srcdir)/../config" ;					\
 	 for file in $(EXES) $(SCRIPTS) ; do				\
-	   if [ -f $$src/$$file.xml ]; then				\
-	     echo $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
-	          $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	   if [ -f "$$src/$$file.xml" ]; then				\
+	     echo $(INSTALL_DATA) "$$src/$$file.xml" "$$dest/$$file.xml" ; \
+	          $(INSTALL_DATA) "$$src/$$file.xml" "$$dest/$$file.xml" ; \
 	   fi ;								\
 	done
 
@@ -478,34 +503,34 @@ uninstall-program::
 	@exes="$(HACK_EXES) $(RETIRED_EXES) $(SCRIPTS) @GL_UTIL_EXES@" ;\
 	 idir="$(DESTDIR)$(HACKDIR)" ;					\
 	 for program in $$exes; do					\
-	   echo rm -f $$idir/$$program ;				\
-		rm -f $$idir/$$program ;				\
+	   echo rm -f "$$idir/$$program" ;				\
+		rm -f "$$idir/$$program" ;				\
 	 done
 
 # $HACKDIR/xscreensaver-gl-visual used to be $bindir/xscreensaver-gl-helper
 uninstall-program::
-	rm -f $(DESTDIR)$(bindir)/xscreensaver-gl-helper
+	rm -f "$(DESTDIR)$(bindir)/xscreensaver-gl-helper"
 
 uninstall-man:
 	@men="$(MEN) $(RETIRED_MEN)" ;					\
 	for man in $$men; do						\
-	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
-	       rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
+	  instname="`echo "$$man" | sed 's/\.man$$/\.$(mansuffix)/'`" ;	\
+	  echo rm -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
+	       rm -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
 	done
 
 uninstall-xml:
 	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 for file in $(EXES) $(RETIRED_EXES) $(SCRIPTS) ; do		\
-	     echo rm -f $$dest/$$file.xml ;				\
-	          rm -f $$dest/$$file.xml ;				\
+	     echo rm -f "$$dest/$$file.xml" ;				\
+	          rm -f "$$dest/$$file.xml" ;				\
 	done
 
 clean::
-	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) molecules.h
+	-rm -f ./*.o a.out core $(EXES) $(RETIRED_EXES) molecules.h
 
 distclean: clean
-	-rm -f Makefile TAGS *~ "#"*
+	-rm -f Makefile TAGS ./*~ "#"*
 
 # Adds all current dependencies to Makefile
 depend:
@@ -519,7 +544,7 @@ depend:
 # to include only dependencies on files which are themselves a part of this
 # package.
 distdepend:: molecules.h
-	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	@echo "updating dependencies in `pwd`/Makefile.in..." ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \
@@ -567,8 +592,9 @@ check_men:
 	   done ;							\
 	 fi
 
+VX = @GL_UTIL_EXES@ @GL_EXES@ @GLE_EXES@ @SUID_EXES@ $(RETIRED_EXES)
 validate_xml:
-	@cd $(HACK_SRC) && $(PERL) check-configs.pl --force $(EXES) $(RETIRED_EXES)
+	@cd $(HACK_SRC) && $(PERL) check-configs.pl --force $(VX)
 
 distdepend:: check_men validate_xml
 
@@ -603,6 +629,7 @@ $(HACK_BIN)/screenhack.o:	$(HACK_SRC)/screenhack.c
 $(HACK_BIN)/xlockmore.o:	$(HACK_SRC)/xlockmore.c
 $(HACK_BIN)/fps.o:		$(HACK_SRC)/fps.c
 $(HACK_BIN)/ffmpeg-out.o:	$(HACK_SRC)/ffmpeg-out.c
+$(UTILS_BIN)/xftwrap.o:		$(UTILS_SRC)/xftwrap.c
 
 $(UTILDIR_OBJS):
 	$(MAKE2CC) -C $(UTILS_BIN) $(@F)
@@ -702,8 +729,11 @@ LAMENTOBJS = gllist.o lament_model.o $(HACK_TRACK_OBJS) $(PNG) normals.o
 lament:		lament.o	$(LAMENTOBJS)
 	$(CC_HACK) -o $@ $@.o	$(LAMENTOBJS) $(PNG_LIBS)
 
+
+DXF2GL = $(srcdir)/dxf2gl.pl
+
 lament_dxf::
-	./dxf2gl.pl --smooth --layers lament.dxf lament_model.c
+	$(DXF2GL) --smooth --layers lament.dxf lament_model.c
 
 
 B3D_OBJS = b_sphere.o b_draw.o b_lockglue.o $(HACK_OBJS)
@@ -711,7 +741,7 @@ bubble3d:	bubble3d.o	$(B3D_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(B3D_OBJS) $(HACK_LIBS)
 
 timezones_dxf::
-	./dxf2gl.pl --normalize --wireframe timezones.dxf timezones.c
+	$(DXF2GL) --normalize --wireframe timezones.dxf timezones.c
 
 PLANET_OBJS=sphere.o gllist.o timezones.o $(PNG) $(HACK_TRACK_OBJS)
 glplanet:	glplanet.o	$(PLANET_OBJS)
@@ -813,7 +843,7 @@ toaster_dxf::
 	  toast2.dxf \
 	; do \
 	  f2=`echo $$f | sed 's/dxf$$/c/'` ; \
-	  ./dxf2gl.pl --normalize --smooth $$f $$f2 ; \
+	  $(DXF2GL) --normalize --smooth $$f $$f2 ; \
 	done ; \
 
 COW1=cow_face.o cow_hide.o cow_hoofs.o cow_horns.o cow_tail.o cow_udder.o
@@ -827,15 +857,15 @@ winduprobot:			$(ROBO1) $(ROBO2)
 	$(CC_HACK) -o $@	$(ROBO1) $(ROBO2) $(PNG_LIBS) $(TEXT_LIBS)
 
 winduprobot_dxf::
-	./dxf2gl.pl --smooth --layers robot.dxf robot.c
-	./dxf2gl.pl --wireframe robot-wireframe.dxf robot-wireframe.c
+	$(DXF2GL) --smooth --layers robot.dxf robot.c
+	$(DXF2GL) --wireframe robot-wireframe.dxf robot-wireframe.c
 
 CAM_OBJS=seccam.o gllist.o vigilance.o $(HACK_TRACK_OBJS)
 vigilance:			$(CAM_OBJS)
 	$(CC_HACK) -o $@	$(CAM_OBJS) $(HACK_LIBS)
 
 seccam_dxf::
-	./dxf2gl.pl --smooth --layers seccam.dxf seccam.c
+	$(DXF2GL) --smooth --layers seccam.dxf seccam.c
 
 EASE = $(UTILS_BIN)/easing.o
 SLIDE_OBJS = $(HACK_GRAB_OBJS) $(EASE)
@@ -934,8 +964,10 @@ moebiusgears:	moebiusgears.o	$(GEARS_OBJS)
 boing:		boing.o		normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-carousel:	carousel.o	$(EASE) $(HACK_TRACK_GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(EASE) $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+XFTWRAP = $(UTILS_BIN)/xftwrap.o
+CAROUSEL_OBJS = $(EASE) $(XFTWRAP) $(HACK_TRACK_GRAB_OBJS)
+carousel:	carousel.o	$(CAROUSEL_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(CAROUSEL_OBJS) $(HACK_LIBS)
 
 fliptext:	fliptext.o	$(TEXT) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(TEXT) $(HACK_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
@@ -1000,7 +1032,7 @@ sonar-icmp.o: sonar-icmp.c
 	$(CC) -c $(HACK_CFLAGS_BASE) $(THREAD_CFLAGS) $<
 sonar:		sonar.o		$(SONAR_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(THREAD_CFLAGS) $(SONAR_OBJS) $(LIBCAP_LIBS) $(THREAD_LIBS) $(HACK_LIBS)
-	@if [ "$$USER" = jwz ]; then \
+	@if [ "$$USER" = jwz -a -z "$$RPM_PACKAGE_NAME" ]; then \
 	  set -x ; sudo chown root $@ ; sudo chmod u+s $@ ; \
 	fi
 
@@ -1008,7 +1040,7 @@ JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o $(HACK_TRACK_GRAB_OBJS)
 jigsaw:		jigsaw.o	$(JIGSAW_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(JIGSAW_OBJS) $(HACK_LIBS)
 
-PHOTOPILE_OBJS=dropshadow.o  $(HACK_GRAB_OBJS)
+PHOTOPILE_OBJS=dropshadow.o $(XFTWRAP) $(HACK_GRAB_OBJS)
 photopile:	photopile.o	$(PHOTOPILE_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(PHOTOPILE_OBJS) $(HACK_LIBS)
 
@@ -1050,7 +1082,7 @@ cityflow:	cityflow.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 splitflap_dxf::
-	./dxf2gl.pl --normalize --smooth --layers splitflap.dxf splitflap_obj.c
+	$(DXF2GL) --normalize --smooth --layers splitflap.dxf splitflap_obj.c
 
 FLAP_OBJS=splitflap_obj.o gllist.o splitflap.o $(TEXT) $(HACK_TRACK_OBJS)
 splitflap:			$(FLAP_OBJS)
@@ -1089,7 +1121,7 @@ esper:	esper.o			$(HACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_GRAB_OBJS) $(HACK_LIBS)
 
 ships_dxf::
-	./dxf2gl.pl --normalize --layers ships.dxf ships.c
+	$(DXF2GL) --normalize --layers ships.dxf ships.c
 
 DAZ_OBJS=ships.o gllist.o $(HACK_TRACK_OBJS)
 razzledazzle:	razzledazzle.o	$(DAZ_OBJS)
@@ -1109,7 +1141,7 @@ handsy:	handsy.o		 $(HANDSY_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(HANDSY_OBJS) $(HACK_LIBS)
 
 handsy_dxf::
-	./dxf2gl.pl --smooth 28 --layers handsy.dxf handsy_model.c
+	$(DXF2GL) --smooth 28 --layers handsy.dxf handsy_model.c
 
 gravitywell:	gravitywell.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -1129,8 +1161,8 @@ headroom:	headroom.o	 $(HEADROOM_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(HEADROOM_OBJS) $(HACK_LIBS)
 
 headroom_dxf::
-	./dxf2gl.pl --layers headroom.dxf headroom_model.c
-	./dxf2gl.pl --layers skull.dxf skull_model.c
+	$(DXF2GL) --layers headroom.dxf headroom_model.c
+	$(DXF2GL) --layers skull.dxf skull_model.c
 
 beats:		beats.o		sphere.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_OBJS) $(HACK_LIBS)
@@ -1151,7 +1183,7 @@ chompytower:	chompytower.o	$(CHOBJS) $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(CHOBJS) $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 teeth_dxf::
-	./dxf2gl.pl --layers --smooth --normalize teeth.dxf teeth_model.c
+	$(DXF2GL) --layers --smooth --normalize teeth.dxf teeth_model.c
 
 hextrail:	hextrail.o	 normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -1168,7 +1200,7 @@ skulloop:	skulloop.o	 $(SKULLOOP_OBJS)
 	$(CC_HACK) -o $@ $@.o	 $(SKULLOOP_OBJS) $(HACK_LIBS)
 
 kallisti_dxf::
-	./dxf2gl.pl --smooth --normalize kallisti.dxf kallisti_model.c
+	$(DXF2GL) --smooth --normalize kallisti.dxf kallisti_model.c
 KALLISTI=kallisti.o kallisti_model.o gllist.o $(HACK_TRACK_OBJS)
 kallisti:			$(KALLISTI)
 	$(CC_HACK) -o $@	$(KALLISTI) $(HACK_LIBS)
@@ -1178,13 +1210,13 @@ kallisti:			$(KALLISTI)
 # highvoltage3.dxf: export pole cables as lines
 # highvoltage4.dxf: export pole connections as lines
 highvoltage_dxf::
-	./dxf2gl.pl --wireframe --layers highvoltage.dxf  highvoltage_model.c
+	$(DXF2GL) --wireframe --layers highvoltage.dxf  highvoltage_model.c
 	mv highvoltage_model.c highvoltage_tmp1.c
-	./dxf2gl.pl --smooth highvoltage2.dxf highvoltage_model_tower_j_body.c
+	$(DXF2GL) --smooth highvoltage2.dxf highvoltage_model_tower_j_body.c
 	mv highvoltage_model_tower_j_body.c highvoltage_tmp2.c
-	./dxf2gl.pl --wireframe --layers highvoltage3.dxf highvoltage_model.c
+	$(DXF2GL) --wireframe --layers highvoltage3.dxf highvoltage_model.c
 	mv highvoltage_model.c highvoltage_tmp3.c
-	./dxf2gl.pl --wireframe --layers highvoltage4.dxf highvoltage_model.c
+	$(DXF2GL) --wireframe --layers highvoltage4.dxf highvoltage_model.c
 	mv highvoltage_model.c highvoltage_tmp4.c
 	cat highvoltage_tmp[1234].c > highvoltage_model.c
 	rm highvoltage_tmp[1234].c
@@ -1207,10 +1239,75 @@ klondike:	klondike.o $(KLONDIKE_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(KLONDIKE_OBJS) $(HACK_LIBS) $(PNG_LIBS)
 
 dumpster_dxf::
-	./dxf2gl.pl --smooth --layers --normalize dumpster.dxf dumpster_model.c
+	$(DXF2GL) --smooth --layers --normalize dumpster.dxf dumpster_model.c
 DUMPSTERFIRE=dumpsterfire.o dumpster_model.o gllist.o $(EASE) $(HACK_TRACK_OBJS)
 dumpsterfire:			$(DUMPSTERFIRE)
 	$(CC_HACK) -o $@	$(DUMPSTERFIRE) $(HACK_LIBS)
+
+xshadertoy:	xshadertoy.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+
+
+# Shadertoy-based savers:
+
+
+SHCC = $(srcdir)/xshadertoy-compile.pl
+CC_GLSL = $(SHCC) --quiet --name
+
+alienbeacon: glsl/alienbeacon.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+batteredplanet: glsl/batteredplanet.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+elementalring: glsl/elementalring.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+fluxcore: glsl/fluxcore.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+gimbalharmonics: glsl/gimbalharmonics.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+hexplasma: glsl/hexplasma.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+logarithmiccircles: glsl/logarithmiccircles.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+neongravity: glsl/neongravity-0.glsl glsl/neongravity-1.glsl $(SHCC)
+	$(CC_GLSL) $@ $< $(srcdir)/glsl/neongravity-1.glsl
+
+neontriangulator: glsl/neontriangulator.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+protophore: glsl/protophore.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+selfreflect: glsl/selfreflect.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+skyline: glsl/skyline.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+stardome: glsl/stardome.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+starnest: glsl/starnest.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+stripeytorus: glsl/stripeytorus.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+synthwavecity: glsl/synthwavecity.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+topologica: glsl/topologica.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
+
+truchetzoom: glsl/truchetzoom.glsl $(SHCC)
+	$(CC_GLSL) $@ $<
 
 
 ##############################################################################
@@ -1536,6 +1633,7 @@ carousel.o: $(UTILS_SRC)/resources.h
 carousel.o: $(UTILS_SRC)/usleep.h
 carousel.o: $(UTILS_SRC)/visual.h
 carousel.o: $(UTILS_SRC)/xft.h
+carousel.o: $(UTILS_SRC)/xftwrap.h
 carousel.o: $(UTILS_SRC)/yarandom.h
 carousel.o: $(HACK_SRC)/xlockmoreI.h
 carousel.o: $(HACK_SRC)/xlockmore.h
@@ -3876,6 +3974,7 @@ photopile.o: $(UTILS_SRC)/resources.h
 photopile.o: $(UTILS_SRC)/usleep.h
 photopile.o: $(UTILS_SRC)/visual.h
 photopile.o: $(UTILS_SRC)/xft.h
+photopile.o: $(UTILS_SRC)/xftwrap.h
 photopile.o: $(UTILS_SRC)/yarandom.h
 photopile.o: $(HACK_SRC)/xlockmoreI.h
 photopile.o: $(HACK_SRC)/xlockmore.h
@@ -5434,4 +5533,23 @@ xlock-gl-utils.o: $(HACK_SRC)/xlockmoreI.h
 xscreensaver-gl-visual.o: ../../config.h
 xscreensaver-gl-visual.o: $(UTILS_SRC)/visual-gl.h
 xscreensaver-gl-visual.o: $(UTILS_SRC)/visual.h
+xshadertoy.o: ../../config.h
+xshadertoy.o: $(HACK_SRC)/fps.h
+xshadertoy.o: $(srcdir)/glsl-utils.h
+xshadertoy.o: $(HACK_SRC)/recanim.h
+xshadertoy.o: $(srcdir)/rotator.h
+xshadertoy.o: $(HACK_SRC)/screenhackI.h
+xshadertoy.o: $(UTILS_SRC)/colors.h
+xshadertoy.o: $(UTILS_SRC)/doubletime.h
+xshadertoy.o: $(UTILS_SRC)/erase.h
+xshadertoy.o: $(UTILS_SRC)/font-retry.h
+xshadertoy.o: $(UTILS_SRC)/grabclient.h
+xshadertoy.o: $(UTILS_SRC)/hsv.h
+xshadertoy.o: $(UTILS_SRC)/resources.h
+xshadertoy.o: $(UTILS_SRC)/usleep.h
+xshadertoy.o: $(UTILS_SRC)/visual.h
+xshadertoy.o: $(UTILS_SRC)/xft.h
+xshadertoy.o: $(UTILS_SRC)/yarandom.h
+xshadertoy.o: $(HACK_SRC)/xlockmoreI.h
+xshadertoy.o: $(HACK_SRC)/xlockmore.h
 

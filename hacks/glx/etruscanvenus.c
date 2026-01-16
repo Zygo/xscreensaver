@@ -7,7 +7,7 @@
 static const char sccsid[] = "@(#)etruscanvenus.c  1.1 05/01/20 xlockmore";
 #endif
 
-/* Copyright (c) 2019-2021 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2019-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -26,6 +26,7 @@ static const char sccsid[] = "@(#)etruscanvenus.c  1.1 05/01/20 xlockmore";
  * C. Steger - 05/01/20: Initial version
  * C. Steger - 20/12/20: Added per-fragment shading
  * C. Steger - 20/12/30: Make the shader code work under macOS and iOS
+ * C. Steger - 25/12/31: Make the code work in an OpenGL core profile
  */
 
 /*
@@ -362,7 +363,7 @@ typedef struct {
 #ifdef HAVE_GLSL
   GLfloat *uv;
   GLuint *indices;
-  Bool use_shaders, buffers_initialized;
+  Bool use_shaders, buffers_initialized, use_vao;
   GLuint shader_program;
   GLint vertex_uv_index, vertex_t_index, color_index;
   GLint mat_mv_index, mat_p_index, db_index, dl_index;
@@ -376,6 +377,7 @@ typedef struct {
   GLint texture_sampler_index;
   GLuint vertex_uv_buffer, vertex_t_buffer;
   GLuint color_buffer, indices_buffer;
+  GLuint vertex_array_object;
   GLint ni, ne, nt;
 #endif /* HAVE_GLSL */
 } etruscanvenusstruct;
@@ -385,211 +387,208 @@ static etruscanvenusstruct *etruscanvenus = (etruscanvenusstruct *) NULL;
 
 #ifdef HAVE_GLSL
 
-/* The GLSL versions that correspond to different versions of OpenGL. */
-static const GLchar *shader_version_2_1 =
-  "#version 120\n";
-static const GLchar *shader_version_3_0 =
-  "#version 130\n";
-static const GLchar *shader_version_3_0_es =
-  "#version 300 es\n"
-  "precision highp float;\n"
-  "precision highp int;\n";
-
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexUV;\n"
-  "attribute vec4 VertexT;\n"
-  "attribute vec4 VertexColor;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec4 TexCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_attribs_3_0 =
-  "in vec3 VertexUV;\n"
-  "in vec4 VertexT;\n"
-  "in vec4 VertexColor;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 Color;\n"
-  "out vec4 TexCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform float DB;\n"
-  "uniform float DL;\n"
-  "uniform bool BoolTextures;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  const float EPSILON = 1.19e-6f;\n"
-  "  const float M_SQRT2 = 1.41421356237f;\n"
-  "  float u = VertexUV.x;\n"
-  "  float v = VertexUV.y;\n"
-  "  float bosqrt2 = DB/M_SQRT2;\n"
-  "  float b2osqrt2 = 2.0f*bosqrt2;\n"
-  "  float b3osqrt2 = 3.0f*bosqrt2;\n"
-  "  float cu = cos(u);\n"
-  "  float su = sin(u);\n"
-  "  float c2u = cos(2.0f*u);\n"
-  "  float s2u = sin(2.0f*u);\n"
-  "  float c3u = cos(3.0f*u);\n"
-  "  float s3u = sin(3.0f*u);\n"
-  "  float cv = cos(v);\n"
-  "  float sv = sin(v);\n"
-  "  float c2v = cos(2.0f*v);\n"
-  "  float s2v = sin(2.0f*v);\n"
-  "  float nom = (1.0f-DL+DL*cv);\n"
-  "  float den = (1.0f-bosqrt2*s3u*s2v);\n"
-  "  float f = nom/den;\n"
-  "  float fx = c2u*cv+cu*sv;\n"
-  "  float fy = s2u*cv-su*sv;\n"
-  "  float fz = M_SQRT2*cv;\n"
-  "  vec3 x = f*vec3(fx,fy,fz);\n"
-  "  float nomv = -DL*sv;\n"
-  "  float denu = -b3osqrt2*c3u*s2v;\n"
-  "  float denv = -b2osqrt2*s3u*c2v;\n"
-  "  float den2 = 1.0f/(den*den);\n"
-  "  float fu = -nom*denu*den2;\n"
-  "  float fv = (den*nomv-nom*denv)*den2;\n"
-  "  float fxu = -su*sv-2.0f*s2u*cv;\n"
-  "  float fxv = cu*cv-c2u*sv;\n"
-  "  float fyu = 2.0f*c2u*cv-cu*sv;\n"
-  "  float fyv = -s2u*sv-su*cv;\n"
-  "  float fzv = -M_SQRT2*sv;\n"
-  "  vec3 xu = vec3(fu*fx+f*fxu,fu*fy+f*fyu,fu*fz);\n"
-  "  vec3 xv = vec3(fv*fx+f*fxv,fv*fy+f*fyv,fv*fz+f*fzv);\n"
-  "  vec3 n = cross(xu,xv);\n"
-  "  float t = length(n);\n"
-  "  if (t < EPSILON)\n"
-  "  {\n"
-  "    u += 0.01f;\n"
-  "    v += 0.01f;\n"
-  "    cu = cos(u);\n"
-  "    su = sin(u);\n"
-  "    c2u = cos(2.0f*u);\n"
-  "    s2u = sin(2.0f*u);\n"
-  "    c3u = cos(3.0f*u);\n"
-  "    s3u = sin(3.0f*u);\n"
-  "    cv = cos(v);\n"
-  "    sv = sin(v);\n"
-  "    c2v = cos(2.0f*v);\n"
-  "    s2v = sin(2.0f*v);\n"
-  "    nom = (1.0f-DL+DL*cv);\n"
-  "    den = (1.0f-bosqrt2*s3u*s2v);\n"
-  "    f = nom/den;\n"
-  "    fx = c2u*cv+cu*sv;\n"
-  "    fy = s2u*cv-su*sv;\n"
-  "    fz = M_SQRT2*cv;\n"
-  "    nomv = -DL*sv;\n"
-  "    denu = -b3osqrt2*c3u*s2v;\n"
-  "    denv = -b2osqrt2*s3u*c2v;\n"
-  "    den2 = 1.0f/(den*den);\n"
-  "    fu = -nom*denu*den2;\n"
-  "    fv = (den*nomv-nom*denv)*den2;\n"
-  "    fxu = -su*sv-2.0f*s2u*cv;\n"
-  "    fxv = cu*cv-c2u*sv;\n"
-  "    fyu = 2.0f*c2u*cv-cu*sv;\n"
-  "    fyv = -s2u*sv-su*cv;\n"
-  "    fzv = -M_SQRT2*sv;\n"
-  "    xu = vec3(fu*fx+f*fxu,fu*fy+f*fyu,fu*fz);\n"
-  "    xv = vec3(fv*fx+f*fxv,fv*fy+f*fyv,fv*fz+f*fzv);\n"
-  "  }\n"
-  "  vec4 Position = MatModelView*vec4(x,1.0f);\n"
-  "  vec4 pu = MatModelView*vec4(xu,0.0f);\n"
-  "  vec4 pv = MatModelView*vec4(xv,0.0f);\n"
-  "  Normal = normalize(cross(pu.xyz,pv.xyz));\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  Color = VertexColor;\n"
-  "  if (BoolTextures)\n"
-  "    TexCoord = VertexT;\n"
-  "}\n";
+/* The vertex shader code. */
+static const GLchar *vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexUV;                                                 \n\
+attribute vec4 VertexT;                                                  \n\
+attribute vec4 VertexColor;                                              \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec4 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 VertexUV;                                                        \n\
+in vec4 VertexT;                                                         \n\
+in vec4 VertexColor;                                                     \n\
+out vec3 Normal;                                                         \n\
+out vec4 Color;                                                          \n\
+out vec4 TexCoord;                                                       \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform float DB;                                                        \n\
+uniform float DL;                                                        \n\
+uniform bool BoolTextures;                                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  const float EPSILON = 1.19e-6f;                                        \n\
+  const float M_SQRT2 = 1.41421356237f;                                  \n\
+  float u = VertexUV.x;                                                  \n\
+  float v = VertexUV.y;                                                  \n\
+  float bosqrt2 = DB/M_SQRT2;                                            \n\
+  float b2osqrt2 = 2.0f*bosqrt2;                                         \n\
+  float b3osqrt2 = 3.0f*bosqrt2;                                         \n\
+  float cu = cos(u);                                                     \n\
+  float su = sin(u);                                                     \n\
+  float c2u = cos(2.0f*u);                                               \n\
+  float s2u = sin(2.0f*u);                                               \n\
+  float c3u = cos(3.0f*u);                                               \n\
+  float s3u = sin(3.0f*u);                                               \n\
+  float cv = cos(v);                                                     \n\
+  float sv = sin(v);                                                     \n\
+  float c2v = cos(2.0f*v);                                               \n\
+  float s2v = sin(2.0f*v);                                               \n\
+  float nom = (1.0f-DL+DL*cv);                                           \n\
+  float den = (1.0f-bosqrt2*s3u*s2v);                                    \n\
+  float f = nom/den;                                                     \n\
+  float fx = c2u*cv+cu*sv;                                               \n\
+  float fy = s2u*cv-su*sv;                                               \n\
+  float fz = M_SQRT2*cv;                                                 \n\
+  vec3 x = f*vec3(fx,fy,fz);                                             \n\
+  float nomv = -DL*sv;                                                   \n\
+  float denu = -b3osqrt2*c3u*s2v;                                        \n\
+  float denv = -b2osqrt2*s3u*c2v;                                        \n\
+  float den2 = 1.0f/(den*den);                                           \n\
+  float fu = -nom*denu*den2;                                             \n\
+  float fv = (den*nomv-nom*denv)*den2;                                   \n\
+  float fxu = -su*sv-2.0f*s2u*cv;                                        \n\
+  float fxv = cu*cv-c2u*sv;                                              \n\
+  float fyu = 2.0f*c2u*cv-cu*sv;                                         \n\
+  float fyv = -s2u*sv-su*cv;                                             \n\
+  float fzv = -M_SQRT2*sv;                                               \n\
+  vec3 xu = vec3(fu*fx+f*fxu,fu*fy+f*fyu,fu*fz);                         \n\
+  vec3 xv = vec3(fv*fx+f*fxv,fv*fy+f*fyv,fv*fz+f*fzv);                   \n\
+  vec3 n = cross(xu,xv);                                                 \n\
+  float t = length(n);                                                   \n\
+  if (t < EPSILON)                                                       \n\
+  {                                                                      \n\
+    u += 0.01f;                                                          \n\
+    v += 0.01f;                                                          \n\
+    cu = cos(u);                                                         \n\
+    su = sin(u);                                                         \n\
+    c2u = cos(2.0f*u);                                                   \n\
+    s2u = sin(2.0f*u);                                                   \n\
+    c3u = cos(3.0f*u);                                                   \n\
+    s3u = sin(3.0f*u);                                                   \n\
+    cv = cos(v);                                                         \n\
+    sv = sin(v);                                                         \n\
+    c2v = cos(2.0f*v);                                                   \n\
+    s2v = sin(2.0f*v);                                                   \n\
+    nom = (1.0f-DL+DL*cv);                                               \n\
+    den = (1.0f-bosqrt2*s3u*s2v);                                        \n\
+    f = nom/den;                                                         \n\
+    fx = c2u*cv+cu*sv;                                                   \n\
+    fy = s2u*cv-su*sv;                                                   \n\
+    fz = M_SQRT2*cv;                                                     \n\
+    nomv = -DL*sv;                                                       \n\
+    denu = -b3osqrt2*c3u*s2v;                                            \n\
+    denv = -b2osqrt2*s3u*c2v;                                            \n\
+    den2 = 1.0f/(den*den);                                               \n\
+    fu = -nom*denu*den2;                                                 \n\
+    fv = (den*nomv-nom*denv)*den2;                                       \n\
+    fxu = -su*sv-2.0f*s2u*cv;                                            \n\
+    fxv = cu*cv-c2u*sv;                                                  \n\
+    fyu = 2.0f*c2u*cv-cu*sv;                                             \n\
+    fyv = -s2u*sv-su*cv;                                                 \n\
+    fzv = -M_SQRT2*sv;                                                   \n\
+    xu = vec3(fu*fx+f*fxu,fu*fy+f*fyu,fu*fz);                            \n\
+    xv = vec3(fv*fx+f*fxv,fv*fy+f*fyv,fv*fz+f*fzv);                      \n\
+  }                                                                      \n\
+  vec4 Position = MatModelView*vec4(x,1.0f);                             \n\
+  vec4 pu = MatModelView*vec4(xu,0.0f);                                  \n\
+  vec4 pv = MatModelView*vec4(xv,0.0f);                                  \n\
+  Normal = normalize(cross(pu.xyz,pv.xyz));                              \n\
+  gl_Position = MatProj*Position;                                        \n\
+  Color = VertexColor;                                                   \n\
+  if (BoolTextures)                                                      \n\
+    TexCoord = VertexT;                                                  \n\
+}                                                                        \n";
 
 /* The fragment shader code is composed of code fragments that depend on
    the OpenGL version and code fragments that are version-independent.
    They are concatenated by glsl_CompileAndLinkShaders in the function
    init_glsl(). */
-static const GLchar *fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec4 TexCoord;\n"
-  "\n";
-static const GLchar *fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 Color;\n"
-  "in vec4 TexCoord;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *fragment_shader_main =
-  "uniform bool DrawLines;\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatFrontAmbient, MatBackAmbient;\n"
-  "uniform vec4 MatFrontDiffuse, MatBackDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool BoolTextures;\n"
-  "uniform sampler2D TextureSampler;"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec4 color;\n"
-  "  if (DrawLines)\n"
-  "  {\n"
-  "    color = Color;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    vec3 normalDirection;\n"
-  "    vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "    vec4 ambientLighting, diffuseReflection, specularReflection;\n"
-  "    float ndotl, ndoth, pf;\n"
-  "    \n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      normalDirection = normalize(Normal);\n"
-  "      sceneColor = Color*MatFrontAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatFrontAmbient;\n"
-  "      diffuseColor = Color*MatFrontDiffuse;\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      normalDirection = -normalize(Normal);\n"
-  "      sceneColor = Color*MatBackAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatBackAmbient;\n"
-  "      diffuseColor = Color*MatBackDiffuse;\n"
-  "    }\n"
-  "    \n"
-  "    ndotl = max(0.0,dot(normalDirection,LtDirection));\n"
-  "    ndoth = max(0.0,dot(normalDirection,LtHalfVector));\n"
-  "    if (ndotl == 0.0)\n"
-  "      pf = 0.0;\n"
-  "    else\n"
-  "      pf = pow(ndoth,MatShininess);\n"
-  "    ambientLighting = ambientColor*LtAmbient;\n"
-  "    diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "    specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "    color = sceneColor+ambientLighting+diffuseReflection;\n";
-static const GLchar *fragment_shader_out_2_1 =
-  "    if (BoolTextures)\n"
-  "      color *= texture2D(TextureSampler,TexCoord.st);"
-  "    color += specularReflection;\n"
-  "  }\n"
-  "  gl_FragColor = clamp(color,0.0,1.0);\n"
-  "}\n";
-static const GLchar *fragment_shader_out_3_0 =
-  "    if (BoolTextures)\n"
-  "      color *= texture(TextureSampler,TexCoord.st);"
-  "    color += specularReflection;\n"
-  "  }\n"
-  "  FragColor = clamp(color,0.0,1.0);\n"
-  "}\n";
+static const GLchar *fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec4 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 Color;                                                           \n\
+in vec4 TexCoord;                                                        \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform bool DrawLines;                                                  \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatFrontAmbient, MatBackAmbient;                            \n\
+uniform vec4 MatFrontDiffuse, MatBackDiffuse;                            \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool BoolTextures;                                               \n\
+uniform sampler2D TextureSampler;                                        \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec4 color;                                                            \n\
+  if (DrawLines)                                                         \n\
+  {                                                                      \n\
+    color = Color;                                                       \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    vec3 normalDirection;                                                \n\
+    vec4 ambientColor, diffuseColor, sceneColor;                         \n\
+    vec4 ambientLighting, diffuseReflection, specularReflection;         \n\
+    float ndotl, ndoth, pf;                                              \n\
+                                                                         \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+      normalDirection = normalize(Normal);                               \n\
+      sceneColor = Color*MatFrontAmbient*LtGlblAmbient;                  \n\
+      ambientColor = Color*MatFrontAmbient;                              \n\
+      diffuseColor = Color*MatFrontDiffuse;                              \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+      normalDirection = -normalize(Normal);                              \n\
+      sceneColor = Color*MatBackAmbient*LtGlblAmbient;                   \n\
+      ambientColor = Color*MatBackAmbient;                               \n\
+      diffuseColor = Color*MatBackDiffuse;                               \n\
+    }                                                                    \n\
+                                                                         \n\
+    ndotl = max(0.0,dot(normalDirection,LtDirection));                   \n\
+    ndoth = max(0.0,dot(normalDirection,LtHalfVector));                  \n\
+    if (ndotl == 0.0)                                                    \n\
+      pf = 0.0;                                                          \n\
+    else                                                                 \n\
+      pf = pow(ndoth,MatShininess);                                      \n\
+    ambientLighting = ambientColor*LtAmbient;                            \n\
+    diffuseReflection = LtDiffuse*diffuseColor*ndotl;                    \n\
+    specularReflection = LtSpecular*MatSpecular*pf;                      \n\
+    color = sceneColor+ambientLighting+diffuseReflection;                \n\
+    if (BoolTextures)                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSampler,TexCoord.st).rrra;               \n\
+#else                                                                    \n\
+      color *= texture(TextureSampler,TexCoord.st).rrra;                 \n\
+#endif                                                                   \n\
+    color += specularReflection;                                         \n\
+    color.a = diffuseColor.a;                                            \n\
+  }                                                                      \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = clamp(color,0.0,1.0);                                   \n\
+#else                                                                    \n\
+  FragColor = clamp(color,0.0,1.0);                                      \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 #endif /* HAVE_GLSL */
 
@@ -1127,6 +1126,7 @@ static int etruscan_venus_ff(ModeInfo *mi, double umin, double umax,
   if (ev->marks)
   {
     glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 #ifndef HAVE_JWZGLES
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
 #endif
@@ -2090,6 +2090,9 @@ static int etruscan_venus_pf(ModeInfo *mi, double umin, double umax,
     }
   }
 
+  if (ev->use_vao)
+    glBindVertexArray(ev->vertex_array_object);
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,ev->tex_name);
   glUniform1i(ev->texture_sampler_index,0);
@@ -2140,6 +2143,9 @@ static int etruscan_venus_pf(ModeInfo *mi, double umin, double umax,
   glBindBuffer(GL_ARRAY_BUFFER,0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
+  if (ev->use_vao)
+    glBindVertexArray(0);
+
   glUseProgram(0);
 
   if (ev->appearance == APPEARANCE_DISTANCE_BANDS)
@@ -2171,9 +2177,14 @@ static void gen_texture(ModeInfo *mi)
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-  glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,TEX_DIMENSION,TEX_DIMENSION,0,
-               GL_LUMINANCE,GL_UNSIGNED_BYTE,texture);
+#ifdef HAVE_GLSL
+  if (ev->use_shaders)
+    glTexImage2D(GL_TEXTURE_2D,0,GL_R8,TEX_DIMENSION,TEX_DIMENSION,0,
+                 GL_RED,GL_UNSIGNED_BYTE,texture);
+  else
+#endif /* HAVE_GLSL */
+    glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,TEX_DIMENSION,TEX_DIMENSION,0,
+                 GL_LUMINANCE,GL_UNSIGNED_BYTE,texture);
 }
 
 
@@ -2184,8 +2195,8 @@ static void init_glsl(ModeInfo *mi)
   etruscanvenusstruct *ev = &etruscanvenus[MI_SCREEN(mi)];
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
-  const GLchar *vertex_shader_source[3];
-  const GLchar *fragment_shader_source[4];
+  const GLchar *vertex_shader_source[2];
+  const GLchar *fragment_shader_source[2];
 
   ev->uv = calloc(2*(NUMU+1)*(NUMV+1),sizeof(float));
   ev->indices = calloc(4*(NUMU+1)*(NUMV+1),sizeof(float));
@@ -2197,54 +2208,18 @@ static void init_glsl(ModeInfo *mi)
   ev->ni = 0;
   ev->ne = 0;
   ev->nt = 0;
+  ev->use_vao = False;
 
   if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
                                  &gl_gles3))
     return;
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      vertex_shader_source[0] = shader_version_2_1;
-      vertex_shader_source[1] = vertex_shader_attribs_2_1;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_2_1;
-      fragment_shader_source[1] = fragment_shader_attribs_2_1;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_2_1;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      vertex_shader_source[0] = shader_version_3_0;
-      vertex_shader_source[1] = vertex_shader_attribs_3_0;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_3_0;
-      fragment_shader_source[1] = fragment_shader_attribs_3_0;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_3_0;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    vertex_shader_source[0] = shader_version_3_0_es;
-    vertex_shader_source[1] = vertex_shader_attribs_3_0;
-    vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0_es;
-    fragment_shader_source[1] = fragment_shader_attribs_3_0;
-    fragment_shader_source[2] = fragment_shader_main;
-    fragment_shader_source[3] = fragment_shader_out_3_0;
-  }
-  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
-                                  4,fragment_shader_source,
+
+  vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  vertex_shader_source[1] = vertex_shader;
+  fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  fragment_shader_source[1] = fragment_shader;
+  if (!glsl_CompileAndLinkShaders(2,vertex_shader_source,
+                                  2,fragment_shader_source,
                                   &ev->shader_program))
     return;
   ev->vertex_uv_index = glGetAttribLocation(ev->shader_program,"VertexUV");
@@ -2314,6 +2289,10 @@ static void init_glsl(ModeInfo *mi)
   glGenBuffers(1,&ev->color_buffer);
   glGenBuffers(1,&ev->indices_buffer);
 
+  ev->use_vao = glsl_IsCoreProfile();
+  if (ev->use_vao)
+    glGenVertexArrays(1,&ev->vertex_array_object);
+
   ev->use_shaders = True;
 }
 
@@ -2369,12 +2348,12 @@ static void init(ModeInfo *mi)
   ev->col = calloc(4*(NUMU+1)*(NUMV+1),sizeof(float));
   ev->tex = calloc(2*(NUMU+1)*(NUMV+1),sizeof(float));
 
-  gen_texture(mi);
-  setup_etruscan_venus_color_texture(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,NUMU,NUMV);
-
 #ifdef HAVE_GLSL
   init_glsl(mi);
 #endif /* HAVE_GLSL */
+
+  gen_texture(mi);
+  setup_etruscan_venus_color_texture(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,NUMU,NUMV);
 
 #ifdef HAVE_ANDROID
   /* glPolygonMode(...,GL_LINE) is not supported for an OpenGL ES 1.1
@@ -2763,6 +2742,8 @@ ENTRYPOINT void free_etruscanvenus(ModeInfo *mi)
     glDeleteBuffers(1,&ev->vertex_t_buffer);
     glDeleteBuffers(1,&ev->color_buffer);
     glDeleteBuffers(1,&ev->indices_buffer);
+    if (ev->use_vao)
+      glDeleteVertexArrays(1,&ev->vertex_array_object);
     if (ev->shader_program != 0)
     {
       glUseProgram(0);

@@ -1,5 +1,5 @@
 /* glsl-utils.h --- support functions for GLSL in OpenGL hacks.
- * Copyright (c) 2020-2021 Carsten Steger <carsten@mirsanmir.org>
+ * Copyright (c) 2020-2026 Carsten Steger <carsten@mirsanmir.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -67,6 +67,13 @@ extern GLboolean glsl_GetGlAndGlslVersions(GLint *gl_major,
                                            GLint *glsl_major,
                                            GLint *glsl_minor,
                                            GLboolean *gl_gles3);
+
+/* Return the #version string for a shader program depending on the GLSL
+   version that is being used. */
+const GLchar *glsl_GetGLSLVersionString(void);
+
+/* Determine whether the OpenGL context is a core profile. */
+extern GLboolean glsl_IsCoreProfile(void);
 
 /* Compile and link a vertex and a Fragment shader into a GLSL program. */
 extern GLboolean glsl_CompileAndLinkShaders(GLsizei vertex_shader_count,

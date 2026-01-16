@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -181,6 +181,18 @@ extern void check_gl_error (const char *type);
 
 - (NSOpenGLPixelFormat *) getGLPixelFormat
 {
+
+  // Jan 2024: for hacks that set "prefersGLSL":
+  // With this we get: OpenGL 4.1, GLSL 4.10, #version 150
+  // Without it:       OpenGL 2.1, GLSL 1.20, #version 120
+  //
+# define USE_OPENGL_3_2
+
+# ifdef USE_OPENGL_3_2
+  PrefsReader *prefs = [self prefsReader];
+  BOOL gles3p = [prefs getBooleanResource:"prefersGLSL"];
+# endif
+
   NSOpenGLPixelFormatAttribute attrs[40];
   int i = 0;
   attrs[i++] = NSOpenGLPFAColorSize; attrs[i++] = 24;
@@ -226,11 +238,23 @@ extern void check_gl_error (const char *type);
 
 # pragma clang diagnostic push   // "NSOpenGLPFAWindow deprecated in 10.9"
 # pragma clang diagnostic ignored "-Wdeprecated"
-  attrs[i++] = NSOpenGLPFAWindow;
+
+# ifdef USE_OPENGL_3_2
+  if (!gles3p)  // Why??
+# endif
+    attrs[i++] = NSOpenGLPFAWindow;
+
 # pragma clang diagnostic pop
 
 # ifdef JWXYZ_GL
   attrs[i++] = NSOpenGLPFAPixelBuffer;
+# endif
+
+# ifdef USE_OPENGL_3_2
+  if (gles3p) {
+    attrs[i++] = NSOpenGLPFAOpenGLProfile;
+    attrs[i++] = NSOpenGLProfileVersion3_2Core;
+  }
 # endif
 
   attrs[i] = 0;

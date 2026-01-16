@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2021-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -12,11 +12,6 @@
  * trade secrets or any patents by this file or any part thereof.  In no
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
- */
-
-/* This header makes outsidein be a mode of sphereeversion rather than
-   a standalone hack, since they are so similar in effect (if not
-   implementation).
  */
 
 #ifndef __SPHEREEVERSION_H__
@@ -62,7 +57,7 @@
 #define ANIM_TURN   1
 
 /* Angle of a single turn step */
-#define TURN_STEP 1.0
+#define TURN_STEP 0.5
 
 
 #ifdef USE_GL
@@ -131,7 +126,7 @@ typedef struct {
   /* Indices for uniform variables and attributes */
   GLuint *solid_indices, *parallel_indices;
   GLuint *meridian_indices, *line_indices;
-  Bool use_shaders, use_mipmaps, buffers_initialized;
+  Bool use_shaders, use_mipmaps, buffers_initialized, use_vao, use_fbo;
   GLuint poly_shader_program;
   GLint poly_pos_index, poly_normal_index;
   GLint poly_colorf_index, poly_colorb_index, poly_vertex_tex_index;
@@ -157,6 +152,11 @@ typedef struct {
   GLuint vertex_tex_coord_buffer;
   GLuint solid_indices_buffer, parallel_indices_buffer;
   GLuint meridian_indices_buffer, line_indices_buffer;
+  GLuint blend_pos_buffer, blend_tex_coord_buffer;
+  GLuint blend_indices_buffer;
+  GLuint blend_fbo[2], blend_depth_tex[2], blend_color_tex[2];
+  GLuint default_draw_fbo, default_read_fbo;
+  GLuint vertex_array_object;
   GLint num_solid_strips, num_solid_triangles;
   GLint num_parallel_strips, num_parallel_triangles;
   GLint num_meridian_strips, num_meridian_triangles;

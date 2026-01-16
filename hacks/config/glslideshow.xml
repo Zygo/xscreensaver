@@ -15,13 +15,13 @@
  
     <number id="duration" type="slider" arg="--duration %"
             _label="Time until loading a new image"
-            _low-label="10 seconds" _high-label="5 minutes"
-            low="10" high="300" default="30"/>
+            _low-label="1 second" _high-label="5 minutes"
+            low="1" high="300" default="30"/>
 
     <number id="pan" type="slider" arg="--transition %"
             _label="Image loading animation duration"
-            _low-label="1 second" _high-label="30 seconds"
-            low="1" high="30" default="3"/>
+            _low-label="None" _high-label="30 seconds"
+            low="0" high="30" default="3"/>
    </vgroup>
    <vgroup>
     <number id="zoom" type="slider" arg="--zoom %"
@@ -31,8 +31,8 @@
  
     <number id="pan" type="slider" arg="--pan %"
             _label="Pan / zoom duration"
-            _low-label="1 second" _high-label="30 seconds"
-            low="1" high="30" default="6"/>
+            _low-label="None" _high-label="30 seconds"
+            low="0" high="30" default="6"/>
  
     <number id="fade" type="slider" arg="--fade %"
             _label="Crossfade duration"

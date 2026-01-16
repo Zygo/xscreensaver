@@ -68,35 +68,14 @@ AH_TEMPLATE([XPointer],
 AH_TEMPLATE([HAVE_XINPUT],
 	    [Define this if you have the XInput2 extension.])
 
-# This only ever existed in X11R4 and X11R5.
-AH_TEMPLATE([HAVE_XIDLE_EXTENSION],
-	    [Define this if you have the X11R5 XIDLE extension.])
-
-# This only ever existed on SGI hardware.
-AH_TEMPLATE([HAVE_SGI_SAVER_EXTENSION],
-	    [Define this if you have the SGI SCREEN_SAVER extension.])
-
-# This only ever existed on SGI hardware.
-AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
-	    [Define this if you have the SGI-VIDEO-CONTROL extension.])
-
-AH_TEMPLATE([HAVE_MIT_SAVER_EXTENSION],
-	    [Using the MIT-SCREEN-SAVER extension means that the X server
-            will crash at random times, and fading and hysteresis won't work.
-            Don't use this.  You'll be sorry.  See comment in xscreensaver.c.])
-
 AH_TEMPLATE([HAVE_DPMS_EXTENSION],
 	    [Define this if you have the XDPMS extension.])
 
-AH_TEMPLATE([HAVE_XF86VMODE],
-	    [Define this if you have XF86VidModeGetViewPort, for
-            virtual desktops.])
+#AH_TEMPLATE([HAVE_XF86VMODE_GAMMA],
+#	    [Define this if you have XF86VidModeSetGamma, for fading.])
 
-AH_TEMPLATE([HAVE_XF86VMODE_GAMMA],
-	    [Define this if you have XF86VidModeSetGamma, for fading.])
-
-AH_TEMPLATE([HAVE_XF86VMODE_GAMMA_RAMP],
-	    [Define this if you have XF86VidModeSetGammaRamp, for fading.])
+#AH_TEMPLATE([HAVE_XF86VMODE_GAMMA_RAMP],
+#	    [Define this if you have XF86VidModeSetGammaRamp, for fading.])
 
 AH_TEMPLATE([HAVE_XINERAMA],
 	    [Define this if you have the Xinerama extension.])
@@ -128,11 +107,6 @@ AH_TEMPLATE([HAVE_LIBSYSTEMD],
 
 AH_TEMPLATE([HAVE_LIBELOGIND],
 	    [Define this if you have libelogind.])
-
-AH_TEMPLATE([HAVE_PROC_INTERRUPTS],
-	    [Define this if you have a Linux-like /proc/interrupts file which
-	    can be examined to determine when keyboard activity has
-	    occurred, and you use PS/2 input devices instead of USB.])
 
 AH_TEMPLATE([HAVE_PROC_OOM],
 	    [Define this if you have a Linux-like /proc/.../oom_score_adj file
@@ -202,6 +176,9 @@ AH_TEMPLATE([HAVE_EGL],
 AH_TEMPLATE([HAVE_GLSL],
 	    [Define this if OpenGL supports the OpenGL Shading Language.])
 
+AH_TEMPLATE([HAVE_GLXGETPROCADDRESSARB],
+	    [Define this if you have the function glXGetProcAddressARB.])
+
 AH_TEMPLATE([HAVE_GLBINDTEXTURE],
 	    [Define this if the OpenGL version is 1.1 or newer.])
 
@@ -236,10 +213,6 @@ AH_TEMPLATE([PAM_SERVICE_NAME],
 AH_TEMPLATE([HAVE_PAM_FAIL_DELAY],
 	    [Define this if you have pam_fail_delay.])
 
-AH_TEMPLATE([PAM_CHECK_ACCOUNT_TYPE],
-            [Whether PAM should check the result of account modules
-	    when authenticating.])
-
 AH_TEMPLATE([PAM_STRERROR_TWO_ARGS],
 	    [Define if pam_strerror requires two arguments.])
 
@@ -250,8 +223,8 @@ AH_TEMPLATE([HAVE_KERBEROS],
 AH_TEMPLATE([HAVE_KERBEROS5],
 	    [Define this if you have Kerberos 5.])
 
-AH_TEMPLATE([ALLOW_ROOT_PASSWD],
-	    [Define this to allow root to unlock, when not using PAM.])
+#AH_TEMPLATE([ALLOW_ROOT_PASSWD],
+#	    [Define this to allow root to unlock, when not using PAM.])
 
 AH_TEMPLATE([HAVE_SHADOW_PASSWD],
 	    [Define this if your system uses /etc/shadow.])
@@ -1333,6 +1306,8 @@ have_dpms=no
 with_dpms_req=unspecified
 AC_ARG_WITH(dpms-ext,
 [
+Most of the following options default to "yes" if available.
+
 Server Extension Options:
 
   --with-dpms-ext         Include support for power management.],
@@ -1370,50 +1345,6 @@ if test "$with_dpms" = yes; then
 
 elif test "$with_dpms" != no; then
   echo "error: must be yes or no: --with-dpms-ext=$with_dpms"
-  exit 1
-fi
-
-
-###############################################################################
-#
-#       Check for the XF86VMODE server extension (for virtual screens.)
-#
-###############################################################################
-
-have_xf86vmode=no
-with_xf86vmode_req=unspecified
-AC_ARG_WITH(xf86vmode-ext,
-[  --with-xf86vmode-ext    Include support for virtual screens.],
-  [with_xf86vmode="$withval"; with_xf86vmode_req="$withval"],
-  [with_xf86vmode=yes])
-
-HANDLE_X_PATH_ARG(with_xf86vmode, --with-xf86vmode-ext, xf86vmode)
-
-VIDMODE_LIBS=""
-
-if test "$with_xf86vmode" = yes; then
-
-  # first check for xf86vmode.h
-  AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86vmode=yes],,
-                    [#include <X11/Xlib.h>])
-
-  # if that succeeded, then check for the -lXxf86vm
-  if test "$have_xf86vmode" = yes; then
-    have_xf86vmode=no
-    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeGetViewPort,
-                  [have_xf86vmode=yes;
-                   VIDMODE_LIBS="-lXxf86vm";
-                   SAVER_LIBS="$SAVER_LIBS $VIDMODE_LIBS"],
-                   [true], -lXext -lX11)
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_xf86vmode" = yes; then
-    AC_DEFINE(HAVE_XF86VMODE)
-  fi
-
-elif test "$with_xf86vmode" != no; then
-  echo "error: must be yes or no: --with-xf86vmode-ext=$with_xf86vmode"
   exit 1
 fi
 
@@ -1594,206 +1525,60 @@ fi
 #
 ###############################################################################
 
-have_xf86gamma=no
-have_xf86gamma_ramp=no
-with_xf86gamma_req=unspecified
-AC_ARG_WITH(xf86gamma-ext,
-[  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
-  [with_xf86gamma="$withval"; with_xf86gamma_req="$withval"],
-  [with_xf86gamma=yes])
-
-HANDLE_X_PATH_ARG(with_xf86gamma, --with-xf86gamma-ext, xf86gamma)
-
-if test "$with_xf86gamma" = yes; then
-
-  # first check for xf86vmode.h, if we haven't already
-  if test "$have_xf86vmode" = yes; then
-    have_xf86gamma=yes
-  else
-    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes],,
-                      [#include <X11/Xlib.h>])
-  fi
-
-  # if that succeeded, then check for the -lXxf86vm
-  if test "$have_xf86gamma" = yes; then
-    have_xf86gamma=no
-    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGamma,
-                  [have_xf86gamma=yes],
-                   [true], -lXext -lX11)
-  fi
-
-  # check for the Ramp versions of the functions too.
-  if test "$have_xf86gamma" = yes; then
-    have_xf86gamma_ramp=no
-    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGammaRamp,
-                  [have_xf86gamma_ramp=yes],
-                   [true], -lXext -lX11)
-  fi
-
-  # if those tests succeeded, then we've really got the functions.
-  if test "$have_xf86gamma" = yes; then
-    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
-  fi
-
-  if test "$have_xf86gamma_ramp" = yes; then
-    AC_DEFINE(HAVE_XF86VMODE_GAMMA_RAMP)
-  fi
-
-  # pull in the lib, if we haven't already
-  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
-    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
-  fi
-
-elif test "$with_xf86gamma" != no; then
-  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
-  exit 1
-fi
-
-
-###############################################################################
+#have_xf86gamma=no
+#have_xf86gamma_ramp=no
+#with_xf86gamma_req=unspecified
+#AC_ARG_WITH(xf86gamma-ext,
+#[  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
+#  [with_xf86gamma="$withval"; with_xf86gamma_req="$withval"],
+#  [with_xf86gamma=yes])
 #
-#       Check for the XIDLE server extension.
+#HANDLE_X_PATH_ARG(with_xf86gamma, --with-xf86gamma-ext, xf86gamma)
 #
-###############################################################################
-
-have_xidle=no
-with_xidle_req=unspecified
-AC_ARG_WITH(xidle-ext,
-[  --with-xidle-ext        Include support for the X11R5 XIDLE extension.],
-  [with_xidle="$withval"; with_xidle_req="$withval"],[with_xidle=yes])
-
-HANDLE_X_PATH_ARG(with_xidle, --with-xidle-ext, XIDLE)
-
-if test "$with_xidle" = yes; then
-  AC_CHECK_X_HEADER(X11/extensions/xidle.h,
-                    [have_xidle=yes
-                     AC_DEFINE(HAVE_XIDLE_EXTENSION)],,
-                    [#include <X11/Xlib.h>])
-elif test "$with_xidle" != no; then
-  echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
-  exit 1
-fi
-
-
-###############################################################################
+#if test "$with_xf86gamma" = yes; then
 #
-#       Check for the MIT-SCREEN-SAVER server extension.
+#  # first check for xf86vmode.h, if we haven't already
+#  if test "$have_xf86vmode" = yes; then
+#    have_xf86gamma=yes
+#  else
+#    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes],,
+#                      [#include <X11/Xlib.h>])
+#  fi
 #
-###############################################################################
-
-have_mit=no
-with_mit=no
-with_mit_req=unspecified
-#AC_ARG_WITH(mit-ext,
-#[  --with-mit-ext          Include support for the MIT-SCREEN-SAVER extension.],
-#  [with_mit="$withval"; with_mit_req="$withval"],[with_mit=no])
-#HANDLE_X_PATH_ARG(with_mit, --with-mit-ext, MIT-SCREEN-SAVER)
-
-if test "$with_mit" = yes; then
-  AC_CHECK_X_HEADER(X11/extensions/scrnsaver.h, [have_mit=yes],,
-                    [#include <X11/Xlib.h>])
-
-  # Now check to see if it's really in the library; XF86Free-3.3 ships
-  # scrnsaver.h, but doesn't include the code in libXext.a, the idiots!
-  #
-  if test "$have_mit" = yes; then
-    AC_CHECK_X_LIB(Xext, XScreenSaverRegister, [true], [have_mit=no], -lm)
-
-    if test "$have_mit" = no; then
-      # Fuck!  Looks like XF86Free-3.3 actually puts it in XExExt instead
-      # of in Xext.  Thank you master, may I have another.
-      AC_CHECK_X_LIB(XExExt, XScreenSaverRegister,
-                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXExExt"],
-                     [true], -lX11 -lXext -lm)
-    fi
-
-    if test "$have_mit" = no; then
-      # Double fuck!  Looks like some versions of XFree86 (whichever version
-      # it is that comes with RedHat Linux 2.0 -- I can't find a version 
-      # number) put this garbage in Xss instead of Xext.  Thank you master,
-      #  may I have another.
-      AC_CHECK_X_LIB(Xss, XScreenSaverRegister,
-                     [have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXss"],
-                     [true], -lX11 -lXext -lm)
-    fi
-
-    if test "$have_mit" = yes; then
-#     AC_DEFINE(HAVE_MIT_SAVER_EXTENSION)
-      echo "Using the MIT-SCREEN-SAVER extension will crash your server. Don't."
-      exit 1
-    fi
-
-  fi
-
-elif test "$with_mit" != no; then
-  echo "error: must be yes or no: --with-mit-ext=$with_mit"
-  exit 1
-fi
-
-
-###############################################################################
+#  # if that succeeded, then check for the -lXxf86vm
+#  if test "$have_xf86gamma" = yes; then
+#    have_xf86gamma=no
+#    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGamma,
+#                  [have_xf86gamma=yes],
+#                   [true], -lXext -lX11)
+#  fi
 #
-#       Check for the SGI SCREEN_SAVER server extension.
+#  # check for the Ramp versions of the functions too.
+#  if test "$have_xf86gamma" = yes; then
+#    have_xf86gamma_ramp=no
+#    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGammaRamp,
+#                  [have_xf86gamma_ramp=yes],
+#                   [true], -lXext -lX11)
+#  fi
 #
-###############################################################################
-
-have_sgi=no
-with_sgi_req=unspecified
-AC_ARG_WITH(sgi-ext,
-[  --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.],
-  [with_sgi="$withval"; with_sgi_req="$withval"],[with_sgi=$ac_irix])
-
-HANDLE_X_PATH_ARG(with_sgi, --with-sgi-ext, SGI SCREEN_SAVER)
-
-if test "$with_sgi" = yes; then
-  AC_CHECK_X_HEADER(X11/extensions/XScreenSaver.h,
-                    [have_sgi=yes
-                     AC_DEFINE(HAVE_SGI_SAVER_EXTENSION)],,
-                    [#include <X11/Xlib.h>])
-
-elif test "$with_sgi" != no; then
-  echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
-  exit 1
-fi
-
-
-###############################################################################
+#  # if those tests succeeded, then we've really got the functions.
+#  if test "$have_xf86gamma" = yes; then
+#    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
+#  fi
 #
-#       Check for the SGI-VIDEO-CONTROL server extension.
+#  if test "$have_xf86gamma_ramp" = yes; then
+#    AC_DEFINE(HAVE_XF86VMODE_GAMMA_RAMP)
+#  fi
 #
-###############################################################################
-
-have_sgivc=no
-with_sgivc_req=unspecified
-AC_ARG_WITH(sgivc-ext,
-[  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.],
-  [with_sgivc="$withval"; with_sgivc_req="$withval"],[with_sgivc=$ac_irix])
-
-HANDLE_X_PATH_ARG(with_sgivc, --with-sgivc-ext, SGI-VIDEO-CONTROL)
-
-if test "$with_sgivc" = yes; then
-
-  # first check for XSGIvc.h
-  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes],,
-                    [#include <X11/Xlib.h>])
-
-  # if that succeeded, then check for the -lXsgivc
-  if test "$have_sgivc" = yes; then
-    have_sgivc=no
-    AC_CHECK_X_LIB(Xsgivc, XSGIvcQueryGammaMap,
-                  [have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"], [true],
-                  -lXext -lX11)
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_sgivc" = yes; then
-    AC_DEFINE(HAVE_SGI_VC_EXTENSION)
-  fi
-
-elif test "$with_sgivc" != no; then
-  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
-  exit 1
-fi
+#  # pull in the lib, if we haven't already
+#  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
+#    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
+#  fi
+#
+#elif test "$with_xf86gamma" != no; then
+#  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
+#  exit 1
+#fi
 
 
 ###############################################################################
@@ -1959,49 +1744,6 @@ AC_EGREP_X_HEADER(XHPDisableReset, X11/XHPlib.h,
 
 ###############################################################################
 #
-#       Check for /proc/interrupts.
-#
-###############################################################################
-
-have_proc_interrupts=no
-with_proc_interrupts_req=unspecified
-AC_ARG_WITH(proc-interrupts,
-[  --with-proc-interrupts  Include support for consulting /proc/interrupts to
-                          notice activity on PS/2 keyboards and mice.],
-  [with_proc_interrupts="$withval"; with_proc_interrupts_req="$withval"],
-  [with_proc_interrupts=no])
-
-if test "$with_proc_interrupts" = yes; then
-
-  # Note that we may be building in an environment (e.g. Debian buildd chroot)
-  # without a proper /proc filesystem. If /proc/interrupts exists, then we'll
-  # check that it has the bits we need, but otherwise we'll just go on faith.
-  #
-  have_proc_interrupts=yes
-
-  if test -f /proc/interrupts; then
-   AC_CACHE_CHECK([whether /proc/interrupts contains keyboard data],
-    ac_cv_have_proc_interrupts,
-    [ac_cv_have_proc_interrupts=no
-     if grep 'keyboard\|i8042' /proc/interrupts >/dev/null 2>&1 ; then
-       ac_cv_have_proc_interrupts=yes
-     fi
-    ])
-   have_proc_interrupts=$ac_cv_have_proc_interrupts
-  fi
-
-  if test "$have_proc_interrupts" = yes; then
-    AC_DEFINE(HAVE_PROC_INTERRUPTS)
-  fi
-
-elif test "$with_proc_interrupts" != no; then
-  echo "error: must be yes or no: --with-proc-interrupts=$with_proc_interrupts"
-  exit 1
-fi
-
-
-###############################################################################
-#
 #       Check for /proc/*/oom_score_adj.
 #
 ###############################################################################
@@ -2010,7 +1752,7 @@ setuid_auth=no
 have_proc_oom=no
 with_proc_oom_req=unspecified
 AC_ARG_WITH(proc-oom,
-[  --with-proc-oom         Include support to duck the out-of-memory killer.],
+[  --with-proc-oom         Include support to avoid the out-of-memory killer.],
   [with_proc_oom="$withval"; with_proc_oom_req="$withval"],
   [with_proc_oom=yes])
 
@@ -2144,7 +1886,7 @@ with_elogind_req=unspecified
 elogind_halfassed=no
 elogind_too_old=no
 AC_ARG_WITH(elogind,
-[  --with-elogind          Use elogind instead of systemd.],
+[  --with-elogind          Use elogind for that instead of systemd.],
   [with_elogind="$withval"; with_elogind_req="$withval"],
   [with_elogind=yes])
 
@@ -2329,16 +2071,17 @@ fi
 #
 ###############################################################################
 
-AC_ARG_ENABLE(root-passwd,
-[],  # This is documented elsewhere because of --enable/--with option sorting.
-  [enable_root_passwd="$enableval"],[enable_root_passwd=no])
-if test "$enable_root_passwd" = yes; then
-  AC_DEFINE(ALLOW_ROOT_PASSWD)
-  true
-elif test "$enable_root_passwd" != no; then
-  echo "error: must be yes or no: --enable-root-passwd=$enable_root_passwd"
-  exit 1
-fi
+# Survey says no.
+#AC_ARG_ENABLE(root-passwd,
+#[],  # This is documented elsewhere because of --enable/--with option sorting.
+#  [enable_root_passwd="$enableval"],[enable_root_passwd=no])
+#if test "$enable_root_passwd" = yes; then
+#  AC_DEFINE(ALLOW_ROOT_PASSWD)
+#  true
+#elif test "$enable_root_passwd" != no; then
+#  echo "error: must be yes or no: --enable-root-passwd=$enable_root_passwd"
+#  exit 1
+#fi
 
 
 ###############################################################################
@@ -2375,26 +2118,12 @@ Screen Locking Options:
   --with-pam              Use Pluggable Authentication Modules.],
   [with_pam="$withval"; with_pam_req="$withval"],[with_pam=$with_pam_default])
 
-AC_ARG_WITH([pam_service_name],
-[  --with-pam-service-name Set the name of the xscreensaver PAM service.
-  --enable-pam-check-account-type
-                          Whether PAM should check the result of account
-                          modules when authenticating.  Only do this if you
-                          have "account" modules configured on your system.
-  --enable-root-passwd    Allow the root password to unlock, if not using PAM.],
-  [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
-
-AC_ARG_ENABLE(pam-check-account-type,
-[],  # This is documented elsewhere because of --enable/--with option sorting.
-  [enable_pam_check_account_type="$enableval"],
-  [enable_pam_check_account_type=no])
-if test "$enable_pam_check_account_type" = yes ; then
-  AC_DEFINE(PAM_CHECK_ACCOUNT_TYPE)
-  true
-elif test "$enable_pam_check_account_type" != no ; then
-  echo "error: must be yes or no: --enable-pam-check-account-type=$enable_pam_check_account_type"
-  exit 1
-fi
+# There's no good argument for ever changing this.
+pam_service_name="xscreensaver"
+#AC_ARG_WITH([pam_service_name],
+#[  --with-pam-service-name Set the name of the xscreensaver PAM service.
+#  --enable-root-passwd    Allow the root password to unlock, if not using PAM.],
+#  [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
 
 HANDLE_X_PATH_ARG(with_pam, --with-pam, PAM)
 
@@ -2488,7 +2217,7 @@ have_kerberos5=no
 with_kerberos_req=unspecified
 
 AC_ARG_WITH(kerberos, 
-[  --with-kerberos         Include support for Kerberos authentication.],
+[  --with-kerberos         Use Kerberos authentication instead.],
   [with_kerberos="$withval"; with_kerberos_req="$withval"],[with_kerberos=yes])
 
 HANDLE_X_PATH_ARG(with_kerberos, --with-kerberos, Kerberos)
@@ -2567,7 +2296,7 @@ have_shadow=no
 with_shadow_req=unspecified
 
 AC_ARG_WITH(shadow,
-[  --with-shadow           Include support for shadow password authentication.],
+[  --with-shadow           Use shadow password authentication instead.],
   [with_shadow="$withval"; with_shadow_req="$withval"],[with_shadow=yes])
 
 HANDLE_X_PATH_ARG(with_shadow, --with-shadow, shadow password)
@@ -3596,11 +3325,10 @@ fi
 
 have_glx=no
 have_egl=no
-with_egl_req=unspecified
+with_glx_req=unspecified
 AC_ARG_WITH(glx,
-[  --with-glx              Use GLX to interface OpenGL and X11 instead of EGL.
-                          Do not do this: it will make GLSL fail.],
-  [with_egl="$withval"; with_egl_req="$withval"],
+[  --with-glx              Use GLX to interface OpenGL and X11 instead of EGL.],
+  [with_glx="$withval"; with_glx_req="$withval"],
   [with_glx=no])
 
 HANDLE_X_PATH_ARG(with_glx, --with-glx, GLX)
@@ -3614,30 +3342,29 @@ fi
 
 if test "$have_gl" = yes; then
 
-  # See if GLX functions are in -LGL.
-  AC_CHECK_X_LIB($gl_lib_1, glXCreateContext,
-                 [have_glx=yes],
-                 [have_glx=no],
-                 $GL_LIBS -lm)
-
   # See if EGL functions are in -LGL.
   egl_lib=""
-  AC_CHECK_X_LIB($gl_lib_1, eglCreatePlatformWindowSurface,
-                 [have_egl=yes],
-                 [have_egl=no],
-                 $GL_LIBS -lm)
-  if test "$have_egl" = no; then
-    # See if EGL functions are in -lEGL.
-    AC_CHECK_X_LIB(EGL, eglCreatePlatformWindowSurface,
-                   [have_egl=yes
-                    egl_lib="EGL"],
+  if test "$with_glx" = no; then
+    AC_CHECK_X_LIB($gl_lib_1, eglCreatePlatformWindowSurface,
+                   [have_egl=yes],
                    [have_egl=no],
                    $GL_LIBS -lm)
+    if test "$have_egl" = no; then
+      # See if EGL functions are in -lEGL.
+      AC_CHECK_X_LIB(EGL, eglCreatePlatformWindowSurface,
+                     [have_egl=yes
+                      egl_lib="EGL"],
+                     [have_egl=no],
+                     $GL_LIBS -lm)
+    fi
   fi
 
-  # If both GLX and EGL exist, use GLX only if requested.
-  if test "$with_glx" = yes -a "$have_glx" = yes; then
-    have_egl=no
+  # See if GLX functions are in -LGL.
+  if test "$have_egl" = no; then
+    AC_CHECK_X_LIB($gl_lib_1, glXCreateContext,
+                   [have_glx=yes],
+                   [have_glx=no],
+                   $GL_LIBS -lm)
   fi
 
   if test "$have_egl" = yes; then
@@ -3652,18 +3379,14 @@ if test "$have_gl" = yes; then
     have_gl=no
     gl_halfassed=yes
   fi
-
-  # --with-gles means that we are emulating a system that supports GLES but
-  # does not support OpenGL 1.3 (e.g., using Linux to simulate an Android-like
-  # environment).  On such a system, GLE is required and GLX wouldn't exist.
-  # There is no way to request a GLES 3.0 runtime context using GLX.
-  #
-  if test "$have_jwzgles" = yes -a "$have_egl" = no; then
-    AC_MSG_WARN([Using --with-glx and --with-gles together is a bad idea.])
-  fi
-
 fi
 
+if test "$have_glx" = yes; then
+    AC_CHECK_X_LIB($gl_lib_1, glXGetProcAddressARB,
+                   [AC_DEFINE(HAVE_GLXGETPROCADDRESSARB)],
+                   [],
+                   $GL_LIBS -lm)
+fi
 
 # Restore flags after testing OpenGL libraries.
 #
@@ -4352,7 +4075,7 @@ if test "$record_anim" = yes; then
   if test "$have_ffmpeg" != yes; then
     AC_MSG_WARN(--with-record-animation requires the ffmpeg libraries)
   else
-    AC_MSG_RESULT(enabling --with-record-animation)
+    AC_MSG_RESULT(enabling --record-animation)
     AC_DEFINE(HAVE_RECORD_ANIM)
     ANIM_OBJS='$(ANIM_OBJS)'
     ANIM_LIBS='$(ANIM_LIBS)'
@@ -4401,11 +4124,6 @@ if test "$have_pam" = yes; then
   PASSWD_SRCS="$PASSWD_SRCS \$(PAM_SRCS)"
   PASSWD_OBJS="$PASSWD_OBJS \$(PAM_OBJS)"
   INSTALL_PAM="install-pam"
-fi
-if test "$enable_pam_check_account_type" = yes; then
-  COMMENT_PAM_CHECK_ACCOUNT=""
-else
-  COMMENT_PAM_CHECK_ACCOUNT="#"
 fi
 PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
 PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
@@ -4564,7 +4282,6 @@ AC_SUBST(INSTALL_DIRS)
 AC_SUBST(INSTALL_PAM)
 AC_SUBST(GLIB_COMPILE_RESOURCES)
 AC_SUBST(HAVE_PAM_FAIL_DELAY)
-AC_SUBST(COMMENT_PAM_CHECK_ACCOUNT)
 AC_SUBST(NEW_LOGIN_COMMAND)
 AC_SUBST(NEW_LOGIN_COMMAND_P)
 AC_SUBST(DEFAULT_IMAGES_P)
@@ -4628,7 +4345,6 @@ AC_CONFIG_FILES([Makefile
           hacks/glx/Makefile
           po/Makefile.in
           driver/Makefile
-          driver/xscreensaver.pam
           driver/XScreenSaver.ad])
 AC_OUTPUT
 
@@ -4714,11 +4430,6 @@ if test "$with_sgi_req" = yes -a "$have_sgi" = no ; then
   CONF_STATUS=1
 fi
 
-if test "$with_xidle_req" = yes -a "$have_xidle" = no ; then
-  warn 'The XIdle extension was requested, but was not found.'
-  CONF_STATUS=1
-fi
-
 if test "$with_mit_req" = yes -a "$have_mit" = no ; then
   warn 'The MIT-SCREEN-SAVER extension was requested, but was not found.'
   CONF_STATUS=1
@@ -4759,18 +4470,8 @@ if test "$with_xinerama_req" = yes -a "$have_xinerama" = no ; then
   CONF_STATUS=1
 fi
 
-if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
-  warn 'The XF86VMODE extension was requested, but was not found.'
-  CONF_STATUS=1
-fi
-
 if test "$with_randr_req" = yes -a "$have_randr" = no ; then
   warn 'The RANDR extension was requested, but was not found.'
-  CONF_STATUS=1
-fi
-
-if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
-  warn "Checking of /proc/interrupts was requested, but it's bogus."
   CONF_STATUS=1
 fi
 
@@ -5035,7 +4736,9 @@ if test "$have_gl" = no ; then
   echo ''
   warn2 'Those demos which use 3D will not be built or installed.'
   warn2 'That is most of them.'
+
 fi
+
 
 if test "$have_gl" = yes -a "$have_gle" = no ; then
 
@@ -5107,25 +4810,8 @@ fi
 # Fucking Gentoo...
 if test "$have_jwzgles" = yes ; then
   warn_prefix="$warn_prefix_3"
-  warn "The --with-gles option does not do what you think. Do not use it."
-  exit 1
-fi
-
-if test "$have_egl" = no; then
-  warn_prefix="$warn_prefix_3"
-  warn "Using --with-glx means GLSL won't work. Don't do it!"
-  exit 1
-fi
-
-if test "$have_jwzgles" = yes ; then
-  warn  "Do not use --with-gles unless you are sure that you know"
-  warn2 "what you are doing!  It is not recommended on normal X11"
-  warn2 "systems."
-
-  if test "$have_egl" = no; then
-    warn2 ""
-    warn2 "Using --with-gles and --with-glx probably won't work."
-  fi
+  warn "The --with-gles option doesn't do what you think. Don't use it."
+  CONF_STATUS=1
 fi
 
 if test "$setuid_hacks" = no; then

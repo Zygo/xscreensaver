@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)hopffibration.c  1.1 25/02/01 xlockmore";
 #endif
 
-/* Copyright (c) 2025 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2025-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -21,6 +21,7 @@ static const char sccsid[] = "@(#)hopffibration.c  1.1 25/02/01 xlockmore";
  *
  * REVISION HISTORY:
  * C. Steger - 25/02/06: Initial version
+ * C. Steger - 26/01/02: Make the code work in an OpenGL core profile
  */
 
 /*
@@ -490,7 +491,7 @@ typedef struct {
   float *norm;
   int *tri;
   Bool use_shaders, use_msaa_fbo, use_shadow_fbo;
-  Bool shadow_fbo_req_col_tex;
+  Bool shadow_fbo_req_col_tex, use_vao;
   GLuint shader_program, shadow_program;
   GLint pos_index, normal_index, color_index;
   GLint mv_index, proj_index, lmvp_index;
@@ -513,6 +514,7 @@ typedef struct {
   GLuint base_point_num_tri;
   GLuint default_draw_fbo, default_read_fbo;
   GLuint msaa_fbo, msaa_rb_color, msaa_rb_depth;
+  GLuint vertex_array_object;
   GLint msaa_samples;
   GLuint shadow_fbo;
   GLuint shadow_tex, shadow_col_tex, shadow_dummy_tex;
@@ -539,180 +541,169 @@ static float base_offset[3] = {
 
 #ifdef HAVE_GLSL
 
-/* The GLSL versions that correspond to different versions of OpenGL. */
-static const GLchar *shader_version_2_1 =
-  "#version 120\n";
-static const GLchar *shader_version_3_0 =
-  "#version 130\n";
-static const GLchar *shader_version_3_0_es =
-  "#version 300 es\n"
-  "precision highp float;\n"
-  "precision highp int;\n"
-  "precision highp sampler2DShadow;\n";
+/* The vertex shader code. */
+static const GLchar *vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2DShadow;                                         \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+attribute vec3 VertexNormal;                                             \n\
+attribute vec4 VertexColor;                                              \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec4 ShadowCoord;                                                \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+in vec3 VertexNormal;                                                    \n\
+in vec4 VertexColor;                                                     \n\
+out vec3 Normal;                                                         \n\
+out vec4 Color;                                                          \n\
+out vec4 ShadowCoord;                                                    \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform mat4 MatLightMVP;                                                \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  Color = VertexColor;                                                   \n\
+  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;          \n\
+  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);                \n\
+  gl_Position = MatProj*Position;                                        \n\
+  ShadowCoord = 0.5f*MatLightMVP*vec4(VertexPosition,1.0f)+0.5f;         \n\
+}                                                                        \n";
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init_glsl(). */
-static const GLchar *vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "attribute vec3 VertexNormal;\n"
-  "attribute vec4 VertexColor;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec4 ShadowCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "in vec3 VertexNormal;\n"
-  "in vec4 VertexColor;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 Color;\n"
-  "out vec4 ShadowCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform mat4 MatLightMVP;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  Color = VertexColor;\n"
-  "  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;\n"
-  "  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  ShadowCoord = 0.5f*MatLightMVP*vec4(VertexPosition,1.0f)+0.5f;\n"
-  "}\n";
-
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec4 ShadowCoord;\n"
-  "\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatAmbient;\n"
-  "uniform vec4 MatDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool UseShadows;\n"
-  "uniform float ShadowPixSize;\n"
-  "uniform sampler2DShadow ShadowTex;\n"
-  "\n"
-  "float SampleShadowPCF(int x, int y)\n"
-  "{\n"
-  "  vec4 offset;\n"
-  "  \n"
-  "  offset = vec4(x*ShadowPixSize,y*ShadowPixSize,0.0f,0.0f);\n"
-  "  return shadow2DProj(ShadowTex,ShadowCoord+offset).x;\n"
-  "}\n"
-  "\n";
-static const GLchar *fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 Color;\n"
-  "in vec4 ShadowCoord;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatAmbient;\n"
-  "uniform vec4 MatDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool UseShadows;\n"
-  "uniform float ShadowPixSize;\n"
-  "uniform sampler2DShadow ShadowTex;\n"
-  "\n"
-  "float SampleShadowPCF(int x, int y)\n"
-  "{\n"
-  "  vec4 offset;\n"
-  "  \n"
-  "  offset = vec4(float(x)*ShadowPixSize,float(y)*ShadowPixSize,0.0f,0.0f);\n"
-  "  return textureProj(ShadowTex,ShadowCoord+offset);\n"
-  "}\n"
-  "\n";
-static const GLchar *fragment_shader_main =
-  "void main (void)\n"
-  "{\n"
-  "  vec3 normalDirection;\n"
-  "  vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "  vec4 ambientLighting, diffuseReflection, specularReflection, color;\n"
-  "  float ndotl, ndoth, pf, shadowPCF;\n"
-  "  int i, j;\n"
-  "  \n"
-  "  if (gl_FrontFacing)\n"
-  "    normalDirection = normalize(Normal);\n"
-  "  else\n"
-  "    normalDirection = -normalize(Normal);\n"
-  "  sceneColor = Color*MatAmbient*LtGlblAmbient;\n"
-  "  ambientColor = Color*MatAmbient;\n"
-  "  diffuseColor = Color*MatDiffuse;\n"
-  "  \n"
-  "  if (UseShadows)\n"
-  "  {\n"
-  "    shadowPCF = 0.0f;\n"
-  "    for (i=-1; i<=1; i++)\n"
-  "      for (j=-1; j<=1; j++)\n"
-  "        shadowPCF += SampleShadowPCF(i,j);\n"
-  "    shadowPCF *= 1.0f/9.0f;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    shadowPCF = 1.0f;\n"
-  "  }\n"
-  "  \n"
-  "  ndotl = max(0.0f,dot(normalDirection,LtDirection));\n"
-  "  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));\n"
-  "  if (ndotl == 0.0f)\n"
-  "    pf = 0.0f;\n"
-  "  else\n"
-  "    pf = pow(ndoth,MatShininess);\n"
-  "  ambientLighting = ambientColor*LtAmbient;\n"
-  "  diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "  specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "  color = sceneColor+ambientLighting;\n"
-  "  color += shadowPCF*(diffuseReflection+specularReflection);\n"
-  "  color.a = diffuseColor.a;\n";
-static const GLchar *fragment_shader_out_2_1 =
-  "  gl_FragColor = clamp(color,0.0f,1.0f);\n"
-  "}\n";
-static const GLchar *fragment_shader_out_3_0 =
-  "  FragColor = clamp(color,0.0f,1.0f);\n"
-  "}\n";
+/* The fragment shader code. */
+static const GLchar *fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2DShadow;                                         \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec4 ShadowCoord;                                                \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 Color;                                                           \n\
+in vec4 ShadowCoord;                                                     \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatAmbient;                                                 \n\
+uniform vec4 MatDiffuse;                                                 \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool UseShadows;                                                 \n\
+uniform float ShadowPixSize;                                             \n\
+uniform sampler2DShadow ShadowTex;                                       \n\
+                                                                         \n\
+float SampleShadowPCF(int x, int y)                                      \n\
+{                                                                        \n\
+  vec4 offset;                                                           \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+  offset = vec4(x*ShadowPixSize,y*ShadowPixSize,0.0f,0.0f);              \n\
+  return shadow2DProj(ShadowTex,ShadowCoord+offset).x;                   \n\
+#else                                                                    \n\
+  offset = vec4(float(x)*ShadowPixSize,float(y)*ShadowPixSize,           \n\
+                0.0f,0.0f);                                              \n\
+  return textureProj(ShadowTex,ShadowCoord+offset);                      \n\
+#endif                                                                   \n\
+}                                                                        \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec3 normalDirection;                                                  \n\
+  vec4 ambientColor, diffuseColor, sceneColor;                           \n\
+  vec4 ambientLighting, diffuseReflection, specularReflection, color;    \n\
+  float ndotl, ndoth, pf, shadowPCF;                                     \n\
+  int i, j;                                                              \n\
+                                                                         \n\
+  if (gl_FrontFacing)                                                    \n\
+    normalDirection = normalize(Normal);                                 \n\
+  else                                                                   \n\
+    normalDirection = -normalize(Normal);                                \n\
+  sceneColor = Color*MatAmbient*LtGlblAmbient;                           \n\
+  ambientColor = Color*MatAmbient;                                       \n\
+  diffuseColor = Color*MatDiffuse;                                       \n\
+                                                                         \n\
+  if (UseShadows)                                                        \n\
+  {                                                                      \n\
+    shadowPCF = 0.0f;                                                    \n\
+    for (i=-1; i<=1; i++)                                                \n\
+      for (j=-1; j<=1; j++)                                              \n\
+        shadowPCF += SampleShadowPCF(i,j);                               \n\
+    shadowPCF *= 1.0f/9.0f;                                              \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    shadowPCF = 1.0f;                                                    \n\
+  }                                                                      \n\
+                                                                         \n\
+  ndotl = max(0.0f,dot(normalDirection,LtDirection));                    \n\
+  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));                   \n\
+  if (ndotl == 0.0f)                                                     \n\
+    pf = 0.0f;                                                           \n\
+  else                                                                   \n\
+    pf = pow(ndoth,MatShininess);                                        \n\
+  ambientLighting = ambientColor*LtAmbient;                              \n\
+  diffuseReflection = LtDiffuse*diffuseColor*ndotl;                      \n\
+  specularReflection = LtSpecular*MatSpecular*pf;                        \n\
+  color = sceneColor+ambientLighting;                                    \n\
+  color += shadowPCF*(diffuseReflection+specularReflection);             \n\
+  color.a = diffuseColor.a;                                              \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = clamp(color,0.0f,1.0f);                                 \n\
+#else                                                                    \n\
+  FragColor = clamp(color,0.0f,1.0f);                                    \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 
-/* The shadow vertex shader code is composed of code fragments that depend
-   on the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init_glsl(). */
-static const GLchar *shadow_vertex_shader_attribs_2_1 =
-  "attribute vec4 VertexPosition;\n"
-  "\n";
-static const GLchar *shadow_vertex_shader_attribs_3_0 =
-  "in vec4 VertexPosition;\n"
-  "\n";
-static const GLchar *shadow_vertex_shader_main =
-  "uniform mat4 MatLightMVP;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  gl_Position = MatLightMVP*VertexPosition;\n"
-  "}\n";
+/* The shadow vertex shader code. */
+static const GLchar *shadow_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2DShadow;                                         \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec4 VertexPosition;                                           \n\
+#else                                                                    \n\
+in vec4 VertexPosition;                                                  \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatLightMVP;                                                \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  gl_Position = MatLightMVP*VertexPosition;                              \n\
+}                                                                        \n";
 
-/* The shadow fragment shader code is composed of a single code fragment
-   that does not depend on the OpenGL version. */
-static const GLchar *shadow_fragment_shader_main =
-  "void main (void)\n"
-  "{\n"
-  "  // Nothing to do since depth is handled automatically by OpenGL.\n"
-  "}\n";
+/* The shadow fragment shader code. */
+static const GLchar *shadow_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2DShadow;                                         \n\
+#endif                                                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  // Nothing to do since depth is handled automatically by OpenGL.       \n\
+}                                                                        \n";
 
 #endif /* HAVE_GLSL */
 
@@ -2156,6 +2147,9 @@ static int draw_hopf_circles_pf(ModeInfo *mi)
 
   hf->num_poly = 0;
 
+  if (hf->use_vao)
+    glBindVertexArray(hf->vertex_array_object);
+
   len = norm(light_pos);
   light_direction[0] = light_pos[0]/len;
   light_direction[1] = light_pos[1]/len;
@@ -2489,6 +2483,9 @@ static int draw_hopf_circles_pf(ModeInfo *mi)
   }
 
   glBindTexture(GL_TEXTURE_2D,0);
+
+  if (hf->use_vao)
+    glBindVertexArray(0);
 
   return hf->num_poly;
 }
@@ -3041,8 +3038,8 @@ static void init_glsl(ModeInfo *mi)
   hopffibrationstruct *hf = &hopffibration[MI_SCREEN(mi)];
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
-  const GLchar *vertex_shader_source[3];
-  const GLchar *fragment_shader_source[4];
+  const GLchar *vertex_shader_source[2];
+  const GLchar *fragment_shader_source[2];
   GLint samples, sample_buffers;
   const char *gl_ext;
   static float one = 1.0f;
@@ -3052,56 +3049,18 @@ static void init_glsl(ModeInfo *mi)
   hf->use_shadow_fbo = False;
   hf->shader_program = 0;
   hf->shadow_program = 0;
+  hf->use_vao = False;
 
   if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
                                  &gl_gles3))
     return;
 
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      vertex_shader_source[0] = shader_version_2_1;
-      vertex_shader_source[1] = vertex_shader_attribs_2_1;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_2_1;
-      fragment_shader_source[1] = fragment_shader_attribs_2_1;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_2_1;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      vertex_shader_source[0] = shader_version_3_0;
-      vertex_shader_source[1] = vertex_shader_attribs_3_0;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_3_0;
-      fragment_shader_source[1] = fragment_shader_attribs_3_0;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_3_0;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    vertex_shader_source[0] = shader_version_3_0_es;
-    vertex_shader_source[1] = vertex_shader_attribs_3_0;
-    vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0_es;
-    fragment_shader_source[1] = fragment_shader_attribs_3_0;
-    fragment_shader_source[2] = fragment_shader_main;
-    fragment_shader_source[3] = fragment_shader_out_3_0;
-  }
-
-  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
-                                  4,fragment_shader_source,
+  vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  vertex_shader_source[1] = vertex_shader;
+  fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  fragment_shader_source[1] = fragment_shader;
+  if (!glsl_CompileAndLinkShaders(2,vertex_shader_source,
+                                  2,fragment_shader_source,
                                   &hf->shader_program))
     return;
 
@@ -3168,44 +3127,11 @@ static void init_glsl(ModeInfo *mi)
     return;
   }
 
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      vertex_shader_source[0] = shader_version_2_1;
-      vertex_shader_source[1] = shadow_vertex_shader_attribs_2_1;
-      vertex_shader_source[2] = shadow_vertex_shader_main;
-      fragment_shader_source[0] = shader_version_2_1;
-      fragment_shader_source[1] = shadow_fragment_shader_main;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      vertex_shader_source[0] = shader_version_3_0;
-      vertex_shader_source[1] = shadow_vertex_shader_attribs_3_0;
-      vertex_shader_source[2] = shadow_vertex_shader_main;
-      fragment_shader_source[0] = shader_version_3_0;
-      fragment_shader_source[1] = shadow_fragment_shader_main;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    vertex_shader_source[0] = shader_version_3_0_es;
-    vertex_shader_source[1] = shadow_vertex_shader_attribs_3_0;
-    vertex_shader_source[2] = shadow_vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0_es;
-    fragment_shader_source[1] = shadow_fragment_shader_main;
-  }
-
-  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
+  vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  vertex_shader_source[1] = shadow_vertex_shader;
+  fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  fragment_shader_source[1] = shadow_fragment_shader;
+  if (!glsl_CompileAndLinkShaders(2,vertex_shader_source,
                                   2,fragment_shader_source,
                                   &hf->shadow_program))
   {
@@ -3310,6 +3236,10 @@ static void init_glsl(ModeInfo *mi)
   hf->vert = calloc(3*MAX_CIRCLE_PNT*hf->num_tube,sizeof(*hf->vert));
   hf->norm = calloc(3*MAX_CIRCLE_PNT*hf->num_tube,sizeof(*hf->norm));
   hf->tri = calloc(2*3*MAX_CIRCLE_PNT*hf->num_tube,sizeof(*hf->tri));
+
+  hf->use_vao = glsl_IsCoreProfile();
+  if (hf->use_vao)
+    glGenVertexArrays(1,&hf->vertex_array_object);
 
   hf->use_shaders = True;
 }
@@ -3628,6 +3558,8 @@ ENTRYPOINT void free_hopffibration(ModeInfo *mi)
     glDeleteBuffers(hf->max_base_points,hf->fiber_normal_buffer);
     glDeleteBuffers(hf->max_base_points,hf->fiber_indices_buffer);
     glDeleteTextures(1,&hf->shadow_dummy_tex);
+    if (hf->use_vao)
+      glDeleteVertexArrays(1,&hf->vertex_array_object);
     delete_msaa_fbo(mi);
     delete_shadow_fbo(mi);
     free(hf->fiber_pos_buffer);

@@ -1,5 +1,5 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
- * xscreensaver, Copyright © 1993-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2025 Jamie Zawinski <jwz@jwz.org>
  * By Bill Nottingham <notting@redhat.com> and jwz.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -68,17 +68,6 @@
 #include "blurb.h"
 #include "auth.h"
 
-
-/* Some time between Red Hat 4.2 and 7.0, the words were transposed 
-   in the various PAM_x_CRED macro names.  Yay!
- */
-#if !defined(PAM_REFRESH_CRED) && defined(PAM_CRED_REFRESH)
-# define PAM_REFRESH_CRED PAM_CRED_REFRESH
-#endif
-#if !defined(PAM_REINITIALIZE_CRED) && defined(PAM_CRED_REINITIALIZE)
-# define PAM_REINITIALIZE_CRED PAM_CRED_REINITIALIZE
-#endif
-
 static int pam_conversation (int nmsgs,
                              const struct pam_message **msg,
                              struct pam_response **resp,
@@ -115,16 +104,6 @@ typedef struct {
 #endif /* !PAM_STRERROR_TWO_ARGS */
 
 
-/* On SunOS 5.6, the `pam_conv.appdata_ptr' slot seems to be ignored, and
-   the `closure' argument to pc.conv always comes in as random garbage.
-   So we get around this by using a global variable instead.  Shoot me!
-
-   (I've been told this is bug 4092227, and is fixed in Solaris 7.)
-   (I've also been told that it's fixed in Solaris 2.6 by patch 106257-05.)
- */
-static void *suns_pam_implementation_blows = 0;
-
-
 /* This function invokes the PAM conversation.  It conducts a full
    authentication round by presenting the GUI with various prompts.
  */
@@ -153,11 +132,6 @@ pam_try_unlock (void *closure,
   conv_closure.conv_fn_closure = closure;
   pc.appdata_ptr = &conv_closure;
   pc.conv = &pam_conversation;
-
-  /* On SunOS 5.6, the `appdata_ptr' slot seems to be ignored, and the
-     `closure' argument to pc.conv always comes in as random garbage. */
-  suns_pam_implementation_blows = pc.appdata_ptr;
-
 
   /* Initialize PAM.
    */
@@ -190,66 +164,42 @@ pam_try_unlock (void *closure,
 
   if (status == PAM_SUCCESS)  /* So far so good... */
     {
-      int status2;
-
-      /* On most systems, it doesn't matter whether the account modules
-         are run, or whether they fail or succeed.
-
-         On some systems, the account modules fail, because they were
-         never configured properly, but it's necessary to run them anyway
-         because certain PAM modules depend on side effects of the account
-         modules having been run.
-
-         And on still other systems, the account modules are actually
-         used, and failures in them should be considered to be true!
-
-         So:
-         - We run the account modules on all systems.
-         - Whether we ignore them is a configure option.
-
-         It's all kind of a mess.
+      /* In the distant past, some systems required that we not call
+         pam_acct_mgmt(), and some other systems required that we call
+         it but ignore the error code it returned.  I'm going to assume
+         that this nonsense is no longer ongoing.  -- jwz 2025.
        */
-      status2 = pam_acct_mgmt (pamh, 0);
+      status = pam_acct_mgmt (pamh, 0);
 
       if (verbose_p)
         fprintf (stderr, "%s:   pam_acct_mgmt (...) ==> %d (%s)\n",
-                 blurb(), status2, PAM_STRERROR(pamh, status2));
+                 blurb(), status, PAM_STRERROR(pamh, status));
 
-      /* HPUX for some reason likes to make PAM defines different from
-       * everyone else's. */
-#ifdef PAM_AUTHTOKEN_REQD
-      if (status2 == PAM_AUTHTOKEN_REQD)
-#else
-      if (status2 == PAM_NEW_AUTHTOK_REQD)
-#endif
+      if (status == PAM_NEW_AUTHTOK_REQD)
         {
-          status2 = pam_chauthtok (pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
+          status = pam_chauthtok (pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
           if (verbose_p)
             fprintf (stderr, "%s: pam_chauthtok (...) ==> %d (%s)\n",
-                     blurb(), status2, PAM_STRERROR(pamh, status2));
+                     blurb(), status, PAM_STRERROR(pamh, status));
         }
+    }
 
-      /* If 'configure' requested that we believe the results of PAM
-         account module failures, then obey that status code.
-         Otherwise ignore it.
-       */
-#ifdef PAM_CHECK_ACCOUNT_TYPE
-       status = status2;
-#endif
-
+  if (status == PAM_SUCCESS)  /* So far so good... */
+    {
       /* Each time we successfully authenticate, refresh credentials,
          for Kerberos/AFS/DCE/etc.  If this fails, just ignore that
          failure and blunder along; it shouldn't matter.
        */
+      int status2;
 
-#if defined(__linux__)
-      /* Apparently the Linux PAM library ignores PAM_REFRESH_CRED and only
-         refreshes credentials when using PAM_REINITIALIZE_CRED. */
-      status2 = pam_setcred (pamh, PAM_REINITIALIZE_CRED);
-#else
-      /* But Solaris requires PAM_REFRESH_CRED or extra prompts appear. */
+# if defined(__sun) && defined(__SVR4)  /* Solaris */
       status2 = pam_setcred (pamh, PAM_REFRESH_CRED);
-#endif
+# else
+      /* Apparently the Linux PAM library ignores PAM_REFRESH_CRED and only
+         refreshes credentials when using PAM_REINITIALIZE_CRED.  Let's
+         assume that other OSes are more like Linux than like Solaris. */
+      status2 = pam_setcred (pamh, PAM_REINITIALIZE_CRED);
+# endif
 
       if (verbose_p)
         fprintf (stderr, "%s:   pam_setcred (...) ==> %d (%s)\n",
@@ -347,11 +297,7 @@ pam_conversation (int nmsgs,
   auth_message *messages = 0;
   auth_response *authresp = 0;
   struct pam_response *pam_responses;
-  pam_conv_closure *conv_closure;
-
-  /* On SunOS 5.6, the `closure' argument always comes in as random garbage. */
-  closure = suns_pam_implementation_blows;
-  conv_closure = closure;
+  pam_conv_closure *conv_closure = closure;
 
   /* Converting the PAM prompts into the XScreenSaver native format.
    * It was a design goal to collapse (INFO,PROMPT) pairs from PAM

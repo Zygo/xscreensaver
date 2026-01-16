@@ -1,4 +1,4 @@
-# Auto-generated: Tue Dec  2 17:18:02 PST 2025
+# Auto-generated: Thu Jan 15 14:28:57 PST 2026
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/demo.ui
@@ -8,6 +8,7 @@ driver/subprocs.c
 driver/xscreensaver-settings.desktop.in
 driver/xscreensaver.desktop.in
 hacks/config/abstractile.xml
+hacks/config/alienbeacon.xml
 hacks/config/anemone.xml
 hacks/config/anemotaxis.xml
 hacks/config/ant.xml
@@ -20,6 +21,7 @@ hacks/config/atlantis.xml
 hacks/config/attraction.xml
 hacks/config/atunnel.xml
 hacks/config/barcode.xml
+hacks/config/batteredplanet.xml
 hacks/config/beats.xml
 hacks/config/binaryhorizon.xml
 hacks/config/binaryring.xml
@@ -76,6 +78,7 @@ hacks/config/drift.xml
 hacks/config/droste.xml
 hacks/config/dumpsterfire.xml
 hacks/config/dymaxionmap.xml
+hacks/config/elementalring.xml
 hacks/config/endgame.xml
 hacks/config/energystream.xml
 hacks/config/engine.xml
@@ -97,6 +100,7 @@ hacks/config/fliptext.xml
 hacks/config/flow.xml
 hacks/config/fluidballs.xml
 hacks/config/flurry.xml
+hacks/config/fluxcore.xml
 hacks/config/flyingtoasters.xml
 hacks/config/fontglide.xml
 hacks/config/forest.xml
@@ -107,6 +111,7 @@ hacks/config/geodesic.xml
 hacks/config/geodesicgears.xml
 hacks/config/gflux.xml
 hacks/config/gibson.xml
+hacks/config/gimbalharmonics.xml
 hacks/config/glblur.xml
 hacks/config/glcells.xml
 hacks/config/gleidescope.xml
@@ -130,6 +135,7 @@ hacks/config/handsy.xml
 hacks/config/headroom.xml
 hacks/config/helix.xml
 hacks/config/hexadrop.xml
+hacks/config/hexplasma.xml
 hacks/config/hexstrut.xml
 hacks/config/hextrail.xml
 hacks/config/highvoltage.xml
@@ -166,6 +172,7 @@ hacks/config/lisa.xml
 hacks/config/lissie.xml
 hacks/config/lmorph.xml
 hacks/config/lockward.xml
+hacks/config/logarithmiccircles.xml
 hacks/config/loop.xml
 hacks/config/m6502.xml
 hacks/config/mapscroller.xml
@@ -186,6 +193,8 @@ hacks/config/morph3d.xml
 hacks/config/mountain.xml
 hacks/config/munch.xml
 hacks/config/nakagin.xml
+hacks/config/neongravity.xml
+hacks/config/neontriangulator.xml
 hacks/config/nerverot.xml
 hacks/config/noof.xml
 hacks/config/noseguy.xml
@@ -208,6 +217,7 @@ hacks/config/polytopes.xml
 hacks/config/pong.xml
 hacks/config/popsquares.xml
 hacks/config/projectiveplane.xml
+hacks/config/protophore.xml
 hacks/config/providence.xml
 hacks/config/pulsar.xml
 hacks/config/pyro.xml
@@ -226,10 +236,12 @@ hacks/config/rubik.xml
 hacks/config/rubikblocks.xml
 hacks/config/sballs.xml
 hacks/config/scooter.xml
+hacks/config/selfreflect.xml
 hacks/config/shadebobs.xml
 hacks/config/sierpinski.xml
 hacks/config/sierpinski3d.xml
 hacks/config/skulloop.xml
+hacks/config/skyline.xml
 hacks/config/skytentacles.xml
 hacks/config/slidescreen.xml
 hacks/config/slip.xml
@@ -246,14 +258,18 @@ hacks/config/sproingies.xml
 hacks/config/squiral.xml
 hacks/config/squirtorus.xml
 hacks/config/stairs.xml
+hacks/config/stardome.xml
 hacks/config/starfish.xml
+hacks/config/starnest.xml
 hacks/config/starwars.xml
 hacks/config/stonerview.xml
 hacks/config/strange.xml
+hacks/config/stripeytorus.xml
 hacks/config/substrate.xml
 hacks/config/superquadrics.xml
 hacks/config/surfaces.xml
 hacks/config/swirl.xml
+hacks/config/synthwavecity.xml
 hacks/config/t3d.xml
 hacks/config/tangram.xml
 hacks/config/tessellimage.xml
@@ -261,9 +277,11 @@ hacks/config/testx11.xml
 hacks/config/thornbird.xml
 hacks/config/timetunnel.xml
 hacks/config/topblock.xml
+hacks/config/topologica.xml
 hacks/config/triangle.xml
 hacks/config/tronbit.xml
 hacks/config/truchet.xml
+hacks/config/truchetzoom.xml
 hacks/config/twang.xml
 hacks/config/unicrud.xml
 hacks/config/unknownpleasures.xml

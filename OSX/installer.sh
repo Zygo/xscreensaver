@@ -25,7 +25,7 @@ REQUIRED_SPACE=260  # MB
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:$PATH"
 
 function error() {
-  echo "XScreenSaver Installer: Error: $@" >&2
+  echo "XScreenSaver Installer: Error:" "$@" >&2
 
   # Using "System Events" says "No user interaction allowed" on 10.9.
   # But using "SystemUIServer" or "Automator Runner" still seems to work.
@@ -51,9 +51,9 @@ __EOF__
 }
 
 
-if [ x"$DSTVOLUME"    = x ]; then DSTVOLUME="/";              fi
-if [ x"$PACKAGE_PATH" = x ]; then error "PACKAGE_PATH unset"; fi
-if [ x"$HOME"         = x ]; then error "HOME unset";         fi
+if [ -z "$DSTVOLUME"    ]; then DSTVOLUME="/";              fi
+if [ -z "$PACKAGE_PATH" ]; then error "PACKAGE_PATH unset"; fi
+if [ -z "$HOME"         ]; then error "HOME unset";         fi
 
 
 echo "Destination: $DSTVOLUME" >&2
@@ -83,12 +83,12 @@ You can't copy the installer out of the Disk Image!"
 
 free=`df -k "$DSTVOLUME" |
      tail -1 | head -1 | awk '{print $4}'`
-need=$(( $REQUIRED_SPACE * 1024 ))
+need=$(( REQUIRED_SPACE * 1024 ))
 if [ "$free" -lt "$need" ]; then
- free=$(( $free / 1024 ))
+ free=$(( free / 1024 ))
  error "Not enough disk space: $free MB available, $REQUIRED_SPACE MB required."
 else
- free=$(( $free / 1024 ))
+ free=$(( free / 1024 ))
  echo "Free space: $free MB" >&2
 fi
 
@@ -112,7 +112,7 @@ for f in *.{saver,app} "$UPDATER_SRC" ; do
     DST="$DST1"
   fi
 
-  DD="$DST/$f"
+  DD="${DST:?}/$f"
 
   echo "Installing $DD" >&2
   rm -rf "$DD" || error "Unable to delete $DD"
@@ -159,12 +159,12 @@ done
 # would be wiped by the upgrade.
 #
 V=`sw_vers -productVersion`
-V0=`echo $V | sed 's/^\([^.]*\).*/\1/'`
-V1=`echo $V | sed 's/^[^.]*\.\([^.]*\).*$/\1/'`
+V0=`echo "$V" | sed 's/^\([^.]*\).*/\1/'`
+V1=`echo "$V" | sed 's/^[^.]*\.\([^.]*\).*$/\1/'`
 
-if [ "$V0" -ge 11 -o \
-     "$V0" -eq 10 -a "$V1" -ge 15 ] ; then	# If >= 10.15
-  for HOME2 in "$DSTVOLUME/Users/"* ; do	# for each user
+if [ "$V0" -ge 11 ] ||
+   ( [ "$V0" -eq 10 ] && [ "$V1" -ge 15 ] ) ; then	# If >= 10.15
+  for HOME2 in "$DSTVOLUME/Users/"* ; do		# for each user
 
     CON="$HOME2/Library/Containers"
     LEG="$CON/com.apple.ScreenSaver.Engine.legacyScreenSaver"
@@ -193,8 +193,8 @@ fi
 pid=`ps -Ac -o pid,comm | grep legacyScreenSaver | \
      sed -e 's/^ *//' -e 's/ .*//'`
 if [ ! -z "$pid" ]; then
-  kill $pid   # Sometimes it will not die.
-  ( sleep 5 ; kill -9 $pid ) &
+  kill "$pid"   # Sometimes it will not die.
+  ( sleep 5 ; kill -9 "$pid" ) &
 fi
 
 
@@ -215,7 +215,7 @@ sleep 5
 pid=`ps -Ac -o pid,comm | grep 'System Settings' | \
      sed -e 's/^ *//' -e 's/ .*//'`
 if [ ! -z "$pid" ]; then
-  kill $pid
+  kill "$pid"
 fi
 
 

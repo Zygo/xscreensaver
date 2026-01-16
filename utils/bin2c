@@ -30,7 +30,7 @@ NAME=`echo "$OUT" | sed \
   -e 's/[-.]/_/g' \
   -e 's/^\([^a-zA-Z]\)/_\1/'`;
 
-if [ x"$PERL" = "x" ]; then PERL=perl ; fi
+if [ -z "$PERL" ]; then PERL=perl ; fi
 
 # Perl fails if set to run in UTF-8 mode
 unset PERL5OPTS

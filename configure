@@ -678,7 +678,6 @@ DEFAULT_IMAGE_DIRECTORY
 DEFAULT_IMAGES_P
 NEW_LOGIN_COMMAND_P
 NEW_LOGIN_COMMAND
-COMMENT_PAM_CHECK_ACCOUNT
 HAVE_PAM_FAIL_DELAY
 GLIB_COMPILE_RESOURCES
 INSTALL_PAM
@@ -864,27 +863,18 @@ with_hackdir
 with_configdir
 with_fontdir
 with_dpms_ext
-with_xf86vmode_ext
 with_xinerama_ext
 with_randr_ext
 with_xinput_ext
-with_xf86gamma_ext
-with_xidle_ext
-with_sgi_ext
-with_sgivc_ext
 with_xshm_ext
 with_xdbe_ext
 with_xkb_ext
-with_proc_interrupts
 with_proc_oom
 with_systemd
 with_elogind
 with_wayland
 enable_locking
-enable_root_passwd
 with_pam
-with_pam_service_name
-enable_pam_check_account_type
 with_kerberos
 with_shadow
 with_gtk
@@ -1472,8 +1462,6 @@ Defaults for the options are specified in brackets.
 
 Configuration:
   -h, --help              display this help and exit
-      --help=short        display options specific to this package
-      --help=recursive    display the short help of all the included packages
   -V, --version           display version information and exit
   -q, --quiet, --silent   do not print 'checking ...' messages
       --cache-file=FILE   cache test results in FILE [disabled]
@@ -1481,31 +1469,11 @@ Configuration:
   -n, --no-create         do not create output files
       --srcdir=DIR        find the sources in DIR [configure dir or '..']
 
-By default, 'make install' will install all the files in
-'$ac_default_prefix/bin', '$ac_default_prefix/lib' etc.  You can specify
-an installation prefix other than '$ac_default_prefix' using '--prefix',
-for instance '--prefix=\$HOME'.
-
-For better control, use the options below.
-
-Fine tuning of the installation directories:
-  --bindir=DIR            user executables [EPREFIX/bin]
-  --libexecdir=DIR        program executables [EPREFIX/libexec]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-  --libdir=DIR            object code libraries [EPREFIX/lib]
-  --includedir=DIR        C header files [PREFIX/include]
-  --datarootdir=DIR       read-only arch.-independent data root [PREFIX/share]
-  --datadir=DIR           read-only architecture-independent data [DATAROOTDIR]
-  --localedir=DIR         locale-dependent data [DATAROOTDIR/locale]
-  --mandir=DIR            man documentation [DATAROOTDIR/man]
-  --docdir=DIR            documentation root [DATAROOTDIR/doc/PACKAGE]
-_ACEOF
-
-  cat <<\_ACEOF
-
-X features:
-  --x-includes=DIR    X include files are in DIR
-  --x-libraries=DIR   X library files are in DIR
+Installation directories:
+  --prefix=PREFIX         install architecture-independent files in PREFIX
+                          [$ac_default_prefix]
+  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+                          [PREFIX]
 
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
@@ -1518,8 +1486,6 @@ if test -n "$ac_init_help"; then
 
   cat <<\_ACEOF
 
-  --enable-year2038       support timestamps after 2038
-
 Installation Options:
 
   --prefix=PREFIX         Install root of architecture-independent files.
@@ -1529,40 +1495,28 @@ Installation Options:
   --with-configdir=DIR    Where to install the GUI configuration files.
   --with-fontdir=DIR      Where to install the extra font files.
 
+Most of the following options default to "yes" if available.
+
 Server Extension Options:
 
   --with-dpms-ext         Include support for power management.
-  --with-xf86vmode-ext    Include support for virtual screens.
   --with-xinerama-ext     Include support for multiple monitors.
   --with-randr-ext        Include support for multiple monitors.
-  --with-xinput-ext       The XInput2 extension is required.
-  --with-xf86gamma-ext    Include support for XFree86 gamma fading.
-  --with-xidle-ext        Include support for the X11R5 XIDLE extension.
-  --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.
-  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-xkb-ext          Include support for the X Keyboard extension.
-  --with-proc-interrupts  Include support for consulting /proc/interrupts to
-                          notice activity on PS/2 keyboards and mice.
-  --with-proc-oom         Include support to duck the out-of-memory killer.
+  --with-proc-oom         Include support to avoid the out-of-memory killer.
   --with-systemd          Support systemd requests to lock on suspend, and to
                           allow video players to inhibit the screen saver.
-  --with-elogind          Use elogind instead of systemd.
+  --with-elogind          Use elogind for that instead of systemd.
   --with-wayland          Use native Wayland when available.
 
 Screen Locking Options:
 
   --disable-locking       Do not allow locking of the display at all.
   --with-pam              Use Pluggable Authentication Modules.
-  --with-pam-service-name Set the name of the xscreensaver PAM service.
-  --enable-pam-check-account-type
-                          Whether PAM should check the result of account
-                          modules when authenticating.  Only do this if you
-                          have "account" modules configured on your system.
-  --enable-root-passwd    Allow the root password to unlock, if not using PAM.
-  --with-kerberos         Include support for Kerberos authentication.
-  --with-shadow           Include support for shadow password authentication.
+  --with-kerberos         Use Kerberos authentication instead.
+  --with-shadow           Use shadow password authentication instead.
 
 User Interface Options:
 
@@ -1579,7 +1533,6 @@ Graphics Options:
   --with-gles             Emulate OpenGL 1.3 in terms of OpenGL ES 1.x.
                           Do not do this: it doesn't mean what you think.
   --with-glx              Use GLX to interface OpenGL and X11 instead of EGL.
-                          Do not do this: it will make GLSL fail.
   --with-gle              Include support for the GL Extrusion library.
   --with-jpeg             Include support for the JPEG library.
   --with-png              Include support for the PNG library.
@@ -1600,12 +1553,10 @@ Some influential environment variables:
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
-  XMKMF       Path to xmkmf, Makefile generator for X Window System
 
 Use these variables to override the choices made by 'configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
-Report bugs to the package provider.
 _ACEOF
 ac_status=$?
 fi
@@ -2894,11 +2845,11 @@ fi
 # X11 server stuff.
 #
 
-# This only ever existed in X11R4 and X11R5.
+#AH_TEMPLATE([HAVE_XF86VMODE_GAMMA],
+#	    [Define this if you have XF86VidModeSetGamma, for fading.])
 
-# This only ever existed on SGI hardware.
-
-# This only ever existed on SGI hardware.
+#AH_TEMPLATE([HAVE_XF86VMODE_GAMMA_RAMP],
+#	    [Define this if you have XF86VidModeSetGammaRamp, for fading.])
 
 #AH_TEMPLATE([HAVE_XCOMPOSITE_EXTENSION],
 #	    [Define this if you have the X Composite Extension.])
@@ -2918,6 +2869,9 @@ fi
 #
 # Locking.
 #
+
+#AH_TEMPLATE([ALLOW_ROOT_PASSWD],
+#	    [Define this to allow root to unlock, when not using PAM.])
 
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
@@ -10624,180 +10578,6 @@ fi
 
 ###############################################################################
 #
-#       Check for the XF86VMODE server extension (for virtual screens.)
-#
-###############################################################################
-
-have_xf86vmode=no
-with_xf86vmode_req=unspecified
-
-# Check whether --with-xf86vmode-ext was given.
-if test ${with_xf86vmode_ext+y}
-then :
-  withval=$with_xf86vmode_ext; with_xf86vmode="$withval"; with_xf86vmode_req="$withval"
-else case e in #(
-  e) with_xf86vmode=yes ;;
-esac
-fi
-
-   case "$with_xf86vmode" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xf86vmode headers" >&5
-printf %s "checking for xf86vmode headers... " >&6; }
-     d=$with_xf86vmode/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xf86vmode libs" >&5
-printf %s "checking for xf86vmode libs... " >&6; }
-     d=$with_xf86vmode/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_xf86vmode_req="yes"
-     with_xf86vmode=$with_xf86vmode_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-xf86vmode-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-VIDMODE_LIBS=""
-
-if test "$with_xf86vmode" = yes; then
-
-  # first check for xf86vmode.h
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/extensions/xf86vmode.h" "ac_cv_header_X11_extensions_xf86vmode_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_extensions_xf86vmode_h" = xyes
-then :
-  have_xf86vmode=yes
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-  # if that succeeded, then check for the -lXxf86vm
-  if test "$have_xf86vmode" = yes; then
-    have_xf86vmode=no
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XF86VidModeGetViewPort in -lXxf86vm" >&5
-printf %s "checking for XF86VidModeGetViewPort in -lXxf86vm... " >&6; }
-if test ${ac_cv_lib_Xxf86vm_XF86VidModeGetViewPort+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXxf86vm -lXext -lX11 $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XF86VidModeGetViewPort (void);
-int
-main (void)
-{
-return XF86VidModeGetViewPort ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_Xxf86vm_XF86VidModeGetViewPort=yes
-else case e in #(
-  e) ac_cv_lib_Xxf86vm_XF86VidModeGetViewPort=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xxf86vm_XF86VidModeGetViewPort" >&5
-printf "%s\n" "$ac_cv_lib_Xxf86vm_XF86VidModeGetViewPort" >&6; }
-if test "x$ac_cv_lib_Xxf86vm_XF86VidModeGetViewPort" = xyes
-then :
-  have_xf86vmode=yes;
-                   VIDMODE_LIBS="-lXxf86vm";
-                   SAVER_LIBS="$SAVER_LIBS $VIDMODE_LIBS"
-else case e in #(
-  e) true ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_xf86vmode" = yes; then
-    printf "%s\n" "#define HAVE_XF86VMODE 1" >>confdefs.h
-
-  fi
-
-elif test "$with_xf86vmode" != no; then
-  echo "error: must be yes or no: --with-xf86vmode-ext=$with_xf86vmode"
-  exit 1
-fi
-
-###############################################################################
-#
 #       Check for the XINERAMA server extension.
 #
 ###############################################################################
@@ -11608,884 +11388,60 @@ fi
 #
 ###############################################################################
 
-have_xf86gamma=no
-have_xf86gamma_ramp=no
-with_xf86gamma_req=unspecified
-
-# Check whether --with-xf86gamma-ext was given.
-if test ${with_xf86gamma_ext+y}
-then :
-  withval=$with_xf86gamma_ext; with_xf86gamma="$withval"; with_xf86gamma_req="$withval"
-else case e in #(
-  e) with_xf86gamma=yes ;;
-esac
-fi
-
-   case "$with_xf86gamma" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xf86gamma headers" >&5
-printf %s "checking for xf86gamma headers... " >&6; }
-     d=$with_xf86gamma/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xf86gamma libs" >&5
-printf %s "checking for xf86gamma libs... " >&6; }
-     d=$with_xf86gamma/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_xf86gamma_req="yes"
-     with_xf86gamma=$with_xf86gamma_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-xf86gamma-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-if test "$with_xf86gamma" = yes; then
-
-  # first check for xf86vmode.h, if we haven't already
-  if test "$have_xf86vmode" = yes; then
-    have_xf86gamma=yes
-  else
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/extensions/xf86vmode.h" "ac_cv_header_X11_extensions_xf86vmode_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_extensions_xf86vmode_h" = xyes
-then :
-  have_xf86gamma=yes
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  fi
-
-  # if that succeeded, then check for the -lXxf86vm
-  if test "$have_xf86gamma" = yes; then
-    have_xf86gamma=no
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XF86VidModeSetGamma in -lXxf86vm" >&5
-printf %s "checking for XF86VidModeSetGamma in -lXxf86vm... " >&6; }
-if test ${ac_cv_lib_Xxf86vm_XF86VidModeSetGamma+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXxf86vm -lXext -lX11 $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XF86VidModeSetGamma (void);
-int
-main (void)
-{
-return XF86VidModeSetGamma ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_Xxf86vm_XF86VidModeSetGamma=yes
-else case e in #(
-  e) ac_cv_lib_Xxf86vm_XF86VidModeSetGamma=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xxf86vm_XF86VidModeSetGamma" >&5
-printf "%s\n" "$ac_cv_lib_Xxf86vm_XF86VidModeSetGamma" >&6; }
-if test "x$ac_cv_lib_Xxf86vm_XF86VidModeSetGamma" = xyes
-then :
-  have_xf86gamma=yes
-else case e in #(
-  e) true ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-  fi
-
-  # check for the Ramp versions of the functions too.
-  if test "$have_xf86gamma" = yes; then
-    have_xf86gamma_ramp=no
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XF86VidModeSetGammaRamp in -lXxf86vm" >&5
-printf %s "checking for XF86VidModeSetGammaRamp in -lXxf86vm... " >&6; }
-if test ${ac_cv_lib_Xxf86vm_XF86VidModeSetGammaRamp+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXxf86vm -lXext -lX11 $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XF86VidModeSetGammaRamp (void);
-int
-main (void)
-{
-return XF86VidModeSetGammaRamp ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_Xxf86vm_XF86VidModeSetGammaRamp=yes
-else case e in #(
-  e) ac_cv_lib_Xxf86vm_XF86VidModeSetGammaRamp=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xxf86vm_XF86VidModeSetGammaRamp" >&5
-printf "%s\n" "$ac_cv_lib_Xxf86vm_XF86VidModeSetGammaRamp" >&6; }
-if test "x$ac_cv_lib_Xxf86vm_XF86VidModeSetGammaRamp" = xyes
-then :
-  have_xf86gamma_ramp=yes
-else case e in #(
-  e) true ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-  fi
-
-  # if those tests succeeded, then we've really got the functions.
-  if test "$have_xf86gamma" = yes; then
-    printf "%s\n" "#define HAVE_XF86VMODE_GAMMA 1" >>confdefs.h
-
-  fi
-
-  if test "$have_xf86gamma_ramp" = yes; then
-    printf "%s\n" "#define HAVE_XF86VMODE_GAMMA_RAMP 1" >>confdefs.h
-
-  fi
-
-  # pull in the lib, if we haven't already
-  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
-    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
-  fi
-
-elif test "$with_xf86gamma" != no; then
-  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
-  exit 1
-fi
-
-###############################################################################
+#have_xf86gamma=no
+#have_xf86gamma_ramp=no
+#with_xf86gamma_req=unspecified
+#AC_ARG_WITH(xf86gamma-ext,
+#[  --with-xf86gamma-ext    Include support for XFree86 gamma fading.],
+#  [with_xf86gamma="$withval"; with_xf86gamma_req="$withval"],
+#  [with_xf86gamma=yes])
 #
-#       Check for the XIDLE server extension.
+#HANDLE_X_PATH_ARG(with_xf86gamma, --with-xf86gamma-ext, xf86gamma)
 #
-###############################################################################
-
-have_xidle=no
-with_xidle_req=unspecified
-
-# Check whether --with-xidle-ext was given.
-if test ${with_xidle_ext+y}
-then :
-  withval=$with_xidle_ext; with_xidle="$withval"; with_xidle_req="$withval"
-else case e in #(
-  e) with_xidle=yes ;;
-esac
-fi
-
-   case "$with_xidle" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XIDLE headers" >&5
-printf %s "checking for XIDLE headers... " >&6; }
-     d=$with_xidle/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XIDLE libs" >&5
-printf %s "checking for XIDLE libs... " >&6; }
-     d=$with_xidle/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_xidle_req="yes"
-     with_xidle=$with_xidle_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-xidle-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-if test "$with_xidle" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/extensions/xidle.h" "ac_cv_header_X11_extensions_xidle_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_extensions_xidle_h" = xyes
-then :
-  have_xidle=yes
-                     printf "%s\n" "#define HAVE_XIDLE_EXTENSION 1" >>confdefs.h
-
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-elif test "$with_xidle" != no; then
-  echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
-  exit 1
-fi
-
-###############################################################################
+#if test "$with_xf86gamma" = yes; then
 #
-#       Check for the MIT-SCREEN-SAVER server extension.
+#  # first check for xf86vmode.h, if we haven't already
+#  if test "$have_xf86vmode" = yes; then
+#    have_xf86gamma=yes
+#  else
+#    AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86gamma=yes],,
+#                      [#include <X11/Xlib.h>])
+#  fi
 #
-###############################################################################
-
-have_mit=no
-with_mit=no
-with_mit_req=unspecified
-#AC_ARG_WITH(mit-ext,
-#[  --with-mit-ext          Include support for the MIT-SCREEN-SAVER extension.],
-#  [with_mit="$withval"; with_mit_req="$withval"],[with_mit=no])
-#HANDLE_X_PATH_ARG(with_mit, --with-mit-ext, MIT-SCREEN-SAVER)
-
-if test "$with_mit" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/extensions/scrnsaver.h" "ac_cv_header_X11_extensions_scrnsaver_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_extensions_scrnsaver_h" = xyes
-then :
-  have_mit=yes
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-  # Now check to see if it's really in the library; XF86Free-3.3 ships
-  # scrnsaver.h, but doesn't include the code in libXext.a, the idiots!
-  #
-  if test "$have_mit" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XScreenSaverRegister in -lXext" >&5
-printf %s "checking for XScreenSaverRegister in -lXext... " >&6; }
-if test ${ac_cv_lib_Xext_XScreenSaverRegister+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXext -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XScreenSaverRegister (void);
-int
-main (void)
-{
-return XScreenSaverRegister ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_Xext_XScreenSaverRegister=yes
-else case e in #(
-  e) ac_cv_lib_Xext_XScreenSaverRegister=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xext_XScreenSaverRegister" >&5
-printf "%s\n" "$ac_cv_lib_Xext_XScreenSaverRegister" >&6; }
-if test "x$ac_cv_lib_Xext_XScreenSaverRegister" = xyes
-then :
-  true
-else case e in #(
-  e) have_mit=no ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-    if test "$have_mit" = no; then
-      # Fuck!  Looks like XF86Free-3.3 actually puts it in XExExt instead
-      # of in Xext.  Thank you master, may I have another.
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XScreenSaverRegister in -lXExExt" >&5
-printf %s "checking for XScreenSaverRegister in -lXExExt... " >&6; }
-if test ${ac_cv_lib_XExExt_XScreenSaverRegister+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXExExt -lX11 -lXext -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XScreenSaverRegister (void);
-int
-main (void)
-{
-return XScreenSaverRegister ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_XExExt_XScreenSaverRegister=yes
-else case e in #(
-  e) ac_cv_lib_XExExt_XScreenSaverRegister=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_XExExt_XScreenSaverRegister" >&5
-printf "%s\n" "$ac_cv_lib_XExExt_XScreenSaverRegister" >&6; }
-if test "x$ac_cv_lib_XExExt_XScreenSaverRegister" = xyes
-then :
-  have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXExExt"
-else case e in #(
-  e) true ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-    fi
-
-    if test "$have_mit" = no; then
-      # Double fuck!  Looks like some versions of XFree86 (whichever version
-      # it is that comes with RedHat Linux 2.0 -- I can't find a version
-      # number) put this garbage in Xss instead of Xext.  Thank you master,
-      #  may I have another.
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XScreenSaverRegister in -lXss" >&5
-printf %s "checking for XScreenSaverRegister in -lXss... " >&6; }
-if test ${ac_cv_lib_Xss_XScreenSaverRegister+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXss -lX11 -lXext -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XScreenSaverRegister (void);
-int
-main (void)
-{
-return XScreenSaverRegister ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_Xss_XScreenSaverRegister=yes
-else case e in #(
-  e) ac_cv_lib_Xss_XScreenSaverRegister=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xss_XScreenSaverRegister" >&5
-printf "%s\n" "$ac_cv_lib_Xss_XScreenSaverRegister" >&6; }
-if test "x$ac_cv_lib_Xss_XScreenSaverRegister" = xyes
-then :
-  have_mit=yes; SAVER_LIBS="$SAVER_LIBS -lXss"
-else case e in #(
-  e) true ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-    fi
-
-    if test "$have_mit" = yes; then
-#     AC_DEFINE(HAVE_MIT_SAVER_EXTENSION)
-      echo "Using the MIT-SCREEN-SAVER extension will crash your server. Don't."
-      exit 1
-    fi
-
-  fi
-
-elif test "$with_mit" != no; then
-  echo "error: must be yes or no: --with-mit-ext=$with_mit"
-  exit 1
-fi
-
-###############################################################################
+#  # if that succeeded, then check for the -lXxf86vm
+#  if test "$have_xf86gamma" = yes; then
+#    have_xf86gamma=no
+#    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGamma,
+#                  [have_xf86gamma=yes],
+#                   [true], -lXext -lX11)
+#  fi
 #
-#       Check for the SGI SCREEN_SAVER server extension.
+#  # check for the Ramp versions of the functions too.
+#  if test "$have_xf86gamma" = yes; then
+#    have_xf86gamma_ramp=no
+#    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeSetGammaRamp,
+#                  [have_xf86gamma_ramp=yes],
+#                   [true], -lXext -lX11)
+#  fi
 #
-###############################################################################
-
-have_sgi=no
-with_sgi_req=unspecified
-
-# Check whether --with-sgi-ext was given.
-if test ${with_sgi_ext+y}
-then :
-  withval=$with_sgi_ext; with_sgi="$withval"; with_sgi_req="$withval"
-else case e in #(
-  e) with_sgi=$ac_irix ;;
-esac
-fi
-
-   case "$with_sgi" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SGI SCREEN_SAVER headers" >&5
-printf %s "checking for SGI SCREEN_SAVER headers... " >&6; }
-     d=$with_sgi/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SGI SCREEN_SAVER libs" >&5
-printf %s "checking for SGI SCREEN_SAVER libs... " >&6; }
-     d=$with_sgi/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_sgi_req="yes"
-     with_sgi=$with_sgi_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-sgi-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-if test "$with_sgi" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XScreenSaver.h" "ac_cv_header_X11_extensions_XScreenSaver_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_extensions_XScreenSaver_h" = xyes
-then :
-  have_sgi=yes
-                     printf "%s\n" "#define HAVE_SGI_SAVER_EXTENSION 1" >>confdefs.h
-
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-elif test "$with_sgi" != no; then
-  echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
-  exit 1
-fi
-
-###############################################################################
+#  # if those tests succeeded, then we've really got the functions.
+#  if test "$have_xf86gamma" = yes; then
+#    AC_DEFINE(HAVE_XF86VMODE_GAMMA)
+#  fi
 #
-#       Check for the SGI-VIDEO-CONTROL server extension.
+#  if test "$have_xf86gamma_ramp" = yes; then
+#    AC_DEFINE(HAVE_XF86VMODE_GAMMA_RAMP)
+#  fi
 #
-###############################################################################
-
-have_sgivc=no
-with_sgivc_req=unspecified
-
-# Check whether --with-sgivc-ext was given.
-if test ${with_sgivc_ext+y}
-then :
-  withval=$with_sgivc_ext; with_sgivc="$withval"; with_sgivc_req="$withval"
-else case e in #(
-  e) with_sgivc=$ac_irix ;;
-esac
-fi
-
-   case "$with_sgivc" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SGI-VIDEO-CONTROL headers" >&5
-printf %s "checking for SGI-VIDEO-CONTROL headers... " >&6; }
-     d=$with_sgivc/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SGI-VIDEO-CONTROL libs" >&5
-printf %s "checking for SGI-VIDEO-CONTROL libs... " >&6; }
-     d=$with_sgivc/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $d" >&5
-printf "%s\n" "$d" >&6; }
-     else
-       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
-printf "%s\n" "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_sgivc_req="yes"
-     with_sgivc=$with_sgivc_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-sgivc-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-if test "$with_sgivc" = yes; then
-
-  # first check for XSGIvc.h
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  ac_fn_c_check_header_compile "$LINENO" "X11/extensions/XSGIvc.h" "ac_cv_header_X11_extensions_XSGIvc_h" "#include <X11/Xlib.h>
-"
-if test "x$ac_cv_header_X11_extensions_XSGIvc_h" = xyes
-then :
-  have_sgivc=yes
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-  # if that succeeded, then check for the -lXsgivc
-  if test "$have_sgivc" = yes; then
-    have_sgivc=no
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for XSGIvcQueryGammaMap in -lXsgivc" >&5
-printf %s "checking for XSGIvcQueryGammaMap in -lXsgivc... " >&6; }
-if test ${ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXsgivc -lXext -lX11 $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XSGIvcQueryGammaMap (void);
-int
-main (void)
-{
-return XSGIvcQueryGammaMap ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap=yes
-else case e in #(
-  e) ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap" >&5
-printf "%s\n" "$ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap" >&6; }
-if test "x$ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap" = xyes
-then :
-  have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"
-else case e in #(
-  e) true ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_sgivc" = yes; then
-    printf "%s\n" "#define HAVE_SGI_VC_EXTENSION 1" >>confdefs.h
-
-  fi
-
-elif test "$with_sgivc" != no; then
-  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
-  exit 1
-fi
+#  # pull in the lib, if we haven't already
+#  if test "$have_xf86gamma" = yes -a "$have_xf86vmode" = no; then
+#    SAVER_LIBS="$SAVER_LIBS -lXxf86vm"
+#  fi
+#
+#elif test "$with_xf86gamma" != no; then
+#  echo "error: must be yes or no: --with-xf86gamma-ext=$with_xf86vmode"
+#  exit 1
+#fi
 
 ###############################################################################
 #
@@ -12943,61 +11899,6 @@ fi
 rm -rf conftest*
 
   CPPFLAGS="$ac_save_CPPFLAGS"
-
-###############################################################################
-#
-#       Check for /proc/interrupts.
-#
-###############################################################################
-
-have_proc_interrupts=no
-with_proc_interrupts_req=unspecified
-
-# Check whether --with-proc-interrupts was given.
-if test ${with_proc_interrupts+y}
-then :
-  withval=$with_proc_interrupts; with_proc_interrupts="$withval"; with_proc_interrupts_req="$withval"
-else case e in #(
-  e) with_proc_interrupts=no ;;
-esac
-fi
-
-if test "$with_proc_interrupts" = yes; then
-
-  # Note that we may be building in an environment (e.g. Debian buildd chroot)
-  # without a proper /proc filesystem. If /proc/interrupts exists, then we'll
-  # check that it has the bits we need, but otherwise we'll just go on faith.
-  #
-  have_proc_interrupts=yes
-
-  if test -f /proc/interrupts; then
-   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether /proc/interrupts contains keyboard data" >&5
-printf %s "checking whether /proc/interrupts contains keyboard data... " >&6; }
-if test ${ac_cv_have_proc_interrupts+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_cv_have_proc_interrupts=no
-     if grep 'keyboard\|i8042' /proc/interrupts >/dev/null 2>&1 ; then
-       ac_cv_have_proc_interrupts=yes
-     fi
-     ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_proc_interrupts" >&5
-printf "%s\n" "$ac_cv_have_proc_interrupts" >&6; }
-   have_proc_interrupts=$ac_cv_have_proc_interrupts
-  fi
-
-  if test "$have_proc_interrupts" = yes; then
-    printf "%s\n" "#define HAVE_PROC_INTERRUPTS 1" >>confdefs.h
-
-  fi
-
-elif test "$with_proc_interrupts" != no; then
-  echo "error: must be yes or no: --with-proc-interrupts=$with_proc_interrupts"
-  exit 1
-fi
 
 ###############################################################################
 #
@@ -13796,24 +12697,17 @@ fi
 #
 ###############################################################################
 
-# Check whether --enable-root-passwd was given.
-if test ${enable_root_passwd+y}
-then :
-  enableval=$enable_root_passwd; # This is documented elsewhere because of --enable/--with option sorting.
-  enable_root_passwd="$enableval"
-else case e in #(
-  e) enable_root_passwd=no ;;
-esac
-fi
-
-if test "$enable_root_passwd" = yes; then
-  printf "%s\n" "#define ALLOW_ROOT_PASSWD 1" >>confdefs.h
-
-  true
-elif test "$enable_root_passwd" != no; then
-  echo "error: must be yes or no: --enable-root-passwd=$enable_root_passwd"
-  exit 1
-fi
+# Survey says no.
+#AC_ARG_ENABLE(root-passwd,
+#[],  # This is documented elsewhere because of --enable/--with option sorting.
+#  [enable_root_passwd="$enableval"],[enable_root_passwd=no])
+#if test "$enable_root_passwd" = yes; then
+#  AC_DEFINE(ALLOW_ROOT_PASSWD)
+#  true
+#elif test "$enable_root_passwd" != no; then
+#  echo "error: must be yes or no: --enable-root-passwd=$enable_root_passwd"
+#  exit 1
+#fi
 
 ###############################################################################
 #
@@ -13851,33 +12745,12 @@ else case e in #(
 esac
 fi
 
-# Check whether --with-pam_service_name was given.
-if test ${with_pam_service_name+y}
-then :
-  withval=$with_pam_service_name; pam_service_name="$withval"
-else case e in #(
-  e) pam_service_name="xscreensaver" ;;
-esac
-fi
-
-# Check whether --enable-pam-check-account-type was given.
-if test ${enable_pam_check_account_type+y}
-then :
-  enableval=$enable_pam_check_account_type; # This is documented elsewhere because of --enable/--with option sorting.
-  enable_pam_check_account_type="$enableval"
-else case e in #(
-  e) enable_pam_check_account_type=no ;;
-esac
-fi
-
-if test "$enable_pam_check_account_type" = yes ; then
-  printf "%s\n" "#define PAM_CHECK_ACCOUNT_TYPE 1" >>confdefs.h
-
-  true
-elif test "$enable_pam_check_account_type" != no ; then
-  echo "error: must be yes or no: --enable-pam-check-account-type=$enable_pam_check_account_type"
-  exit 1
-fi
+# There's no good argument for ever changing this.
+pam_service_name="xscreensaver"
+#AC_ARG_WITH([pam_service_name],
+#[  --with-pam-service-name Set the name of the xscreensaver PAM service.
+#  --enable-root-passwd    Allow the root password to unlock, if not using PAM.],
+#  [pam_service_name="$withval"],[pam_service_name="xscreensaver"])
 
    case "$with_pam" in
     yes) ;;
@@ -18721,12 +17594,12 @@ fi
 
 have_glx=no
 have_egl=no
-with_egl_req=unspecified
+with_glx_req=unspecified
 
 # Check whether --with-glx was given.
 if test ${with_glx+y}
 then :
-  withval=$with_glx; with_egl="$withval"; with_egl_req="$withval"
+  withval=$with_glx; with_glx="$withval"; with_glx_req="$withval"
 else case e in #(
   e) with_glx=no ;;
 esac
@@ -18800,85 +17673,9 @@ fi
 
 if test "$have_gl" = yes; then
 
-  # See if GLX functions are in -LGL.
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  as_ac_Lib=`printf "%s\n" "ac_cv_lib_$gl_lib_1""_glXCreateContext" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for glXCreateContext in -l$gl_lib_1" >&5
-printf %s "checking for glXCreateContext in -l$gl_lib_1... " >&6; }
-if eval test \${$as_ac_Lib+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-l$gl_lib_1 $GL_LIBS -lm $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char glXCreateContext (void);
-int
-main (void)
-{
-return glXCreateContext ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_Lib=yes"
-else case e in #(
-  e) eval "$as_ac_Lib=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-eval ac_res=\$$as_ac_Lib
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_Lib"\" = x"yes"
-then :
-  have_glx=yes
-else case e in #(
-  e) have_glx=no ;;
-esac
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
   # See if EGL functions are in -LGL.
   egl_lib=""
+  if test "$with_glx" = no; then
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LDFLAGS="$LDFLAGS"
@@ -18955,8 +17752,8 @@ fi
   LDFLAGS="$ac_save_LDFLAGS"
 #  LIBS="$ac_save_LIBS"
 
-  if test "$have_egl" = no; then
-    # See if EGL functions are in -lEGL.
+    if test "$have_egl" = no; then
+      # See if EGL functions are in -lEGL.
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LDFLAGS="$LDFLAGS"
@@ -19022,7 +17819,7 @@ printf "%s\n" "$ac_cv_lib_EGL_eglCreatePlatformWindowSurface" >&6; }
 if test "x$ac_cv_lib_EGL_eglCreatePlatformWindowSurface" = xyes
 then :
   have_egl=yes
-                    egl_lib="EGL"
+                      egl_lib="EGL"
 else case e in #(
   e) have_egl=no ;;
 esac
@@ -19032,11 +17829,87 @@ fi
   LDFLAGS="$ac_save_LDFLAGS"
 #  LIBS="$ac_save_LIBS"
 
+    fi
   fi
 
-  # If both GLX and EGL exist, use GLX only if requested.
-  if test "$with_glx" = yes -a "$have_glx" = yes; then
-    have_egl=no
+  # See if GLX functions are in -LGL.
+  if test "$have_egl" = no; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  as_ac_Lib=`printf "%s\n" "ac_cv_lib_$gl_lib_1""_glXCreateContext" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for glXCreateContext in -l$gl_lib_1" >&5
+printf %s "checking for glXCreateContext in -l$gl_lib_1... " >&6; }
+if eval test \${$as_ac_Lib+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$gl_lib_1 $GL_LIBS -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char glXCreateContext (void);
+int
+main (void)
+{
+return glXCreateContext ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_Lib=yes"
+else case e in #(
+  e) eval "$as_ac_Lib=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+eval ac_res=\$$as_ac_Lib
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"
+then :
+  have_glx=yes
+else case e in #(
+  e) have_glx=no ;;
+esac
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
   fi
 
   if test "$have_egl" = yes; then
@@ -19052,16 +17925,82 @@ fi
     have_gl=no
     gl_halfassed=yes
   fi
+fi
 
-  # --with-gles means that we are emulating a system that supports GLES but
-  # does not support OpenGL 1.3 (e.g., using Linux to simulate an Android-like
-  # environment).  On such a system, GLE is required and GLX wouldn't exist.
-  # There is no way to request a GLES 3.0 runtime context using GLX.
-  #
-  if test "$have_jwzgles" = yes -a "$have_egl" = no; then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: Using --with-glx and --with-gles together is a bad idea." >&5
-printf "%s\n" "$as_me: WARNING: Using --with-glx and --with-gles together is a bad idea." >&2;}
+if test "$have_glx" = yes; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
   fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  as_ac_Lib=`printf "%s\n" "ac_cv_lib_$gl_lib_1""_glXGetProcAddressARB" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for glXGetProcAddressARB in -l$gl_lib_1" >&5
+printf %s "checking for glXGetProcAddressARB in -l$gl_lib_1... " >&6; }
+if eval test \${$as_ac_Lib+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$gl_lib_1 $GL_LIBS -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char glXGetProcAddressARB (void);
+int
+main (void)
+{
+return glXGetProcAddressARB ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_Lib=yes"
+else case e in #(
+  e) eval "$as_ac_Lib=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+eval ac_res=\$$as_ac_Lib
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"
+then :
+  printf "%s\n" "#define HAVE_GLXGETPROCADDRESSARB 1" >>confdefs.h
+
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
 
 fi
 
@@ -21448,8 +20387,8 @@ if test "$record_anim" = yes; then
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: --with-record-animation requires the ffmpeg libraries" >&5
 printf "%s\n" "$as_me: WARNING: --with-record-animation requires the ffmpeg libraries" >&2;}
   else
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: enabling --with-record-animation" >&5
-printf "%s\n" "enabling --with-record-animation" >&6; }
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: enabling --record-animation" >&5
+printf "%s\n" "enabling --record-animation" >&6; }
     printf "%s\n" "#define HAVE_RECORD_ANIM 1" >>confdefs.h
 
     ANIM_OBJS='$(ANIM_OBJS)'
@@ -21495,11 +20434,6 @@ if test "$have_pam" = yes; then
   PASSWD_SRCS="$PASSWD_SRCS \$(PAM_SRCS)"
   PASSWD_OBJS="$PASSWD_OBJS \$(PAM_OBJS)"
   INSTALL_PAM="install-pam"
-fi
-if test "$enable_pam_check_account_type" = yes; then
-  COMMENT_PAM_CHECK_ACCOUNT=""
-else
-  COMMENT_PAM_CHECK_ACCOUNT="#"
 fi
 PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
 PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
@@ -21617,7 +20551,7 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 
 APPDEFAULTS=$ac_x_app_defaults
 
-ac_config_files="$ac_config_files Makefile utils/Makefile jwxyz/Makefile hacks/Makefile hacks/fonts/Makefile hacks/images/Makefile hacks/glx/Makefile po/Makefile.in driver/Makefile driver/xscreensaver.pam driver/XScreenSaver.ad"
+ac_config_files="$ac_config_files Makefile utils/Makefile jwxyz/Makefile hacks/Makefile hacks/fonts/Makefile hacks/images/Makefile hacks/glx/Makefile po/Makefile.in driver/Makefile driver/XScreenSaver.ad"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -22325,7 +21259,6 @@ do
     "hacks/glx/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/glx/Makefile" ;;
     "po/Makefile.in") CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
     "driver/Makefile") CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;
-    "driver/xscreensaver.pam") CONFIG_FILES="$CONFIG_FILES driver/xscreensaver.pam" ;;
     "driver/XScreenSaver.ad") CONFIG_FILES="$CONFIG_FILES driver/XScreenSaver.ad" ;;
     "po/stamp-it") CONFIG_COMMANDS="$CONFIG_COMMANDS po/stamp-it" ;;
 
@@ -23132,11 +22065,6 @@ if test "$with_sgi_req" = yes -a "$have_sgi" = no ; then
   CONF_STATUS=1
 fi
 
-if test "$with_xidle_req" = yes -a "$have_xidle" = no ; then
-  warn 'The XIdle extension was requested, but was not found.'
-  CONF_STATUS=1
-fi
-
 if test "$with_mit_req" = yes -a "$have_mit" = no ; then
   warn 'The MIT-SCREEN-SAVER extension was requested, but was not found.'
   CONF_STATUS=1
@@ -23177,18 +22105,8 @@ if test "$with_xinerama_req" = yes -a "$have_xinerama" = no ; then
   CONF_STATUS=1
 fi
 
-if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
-  warn 'The XF86VMODE extension was requested, but was not found.'
-  CONF_STATUS=1
-fi
-
 if test "$with_randr_req" = yes -a "$have_randr" = no ; then
   warn 'The RANDR extension was requested, but was not found.'
-  CONF_STATUS=1
-fi
-
-if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
-  warn "Checking of /proc/interrupts was requested, but it's bogus."
   CONF_STATUS=1
 fi
 
@@ -23444,6 +22362,7 @@ if test "$have_gl" = no ; then
   echo ''
   warn2 'Those demos which use 3D will not be built or installed.'
   warn2 'That is most of them.'
+
 fi
 
 if test "$have_gl" = yes -a "$have_gle" = no ; then
@@ -23515,25 +22434,8 @@ fi
 # Fucking Gentoo...
 if test "$have_jwzgles" = yes ; then
   warn_prefix="$warn_prefix_3"
-  warn "The --with-gles option does not do what you think. Do not use it."
-  exit 1
-fi
-
-if test "$have_egl" = no; then
-  warn_prefix="$warn_prefix_3"
-  warn "Using --with-glx means GLSL won't work. Don't do it!"
-  exit 1
-fi
-
-if test "$have_jwzgles" = yes ; then
-  warn  "Do not use --with-gles unless you are sure that you know"
-  warn2 "what you are doing!  It is not recommended on normal X11"
-  warn2 "systems."
-
-  if test "$have_egl" = no; then
-    warn2 ""
-    warn2 "Using --with-gles and --with-glx probably won't work."
-  fi
+  warn "The --with-gles option doesn't do what you think. Don't use it."
+  CONF_STATUS=1
 fi
 
 if test "$setuid_hacks" = no; then

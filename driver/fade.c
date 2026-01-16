@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1680,6 +1680,7 @@ xshm_screenshot_grab (Display *dpy, Window window,
 
 
 #ifdef USE_GL
+#ifndef HAVE_JWZGLES
 static void
 opengl_make_current (Display *dpy, xshm_fade_info *info)
 {
@@ -1726,6 +1727,7 @@ check_gl_error (const char *type)
   fprintf (stderr, "%s: %s error: %s\n", progname, type, e);
   return True;
 }
+#endif /* HAVE_JWZGLES */
 #endif /* USE_GL */
 
 
@@ -1843,6 +1845,7 @@ xshm_fade (XtAppContext app, Display *dpy,
                        KeyPressMask | ButtonPressMask); */
 
 # ifdef USE_GL
+#  ifndef HAVE_JWZGLES
       /* Copy the screenshot pixmap to the texture XImage */
       XGetSubImage (dpy, info[screen].screenshot,
                     0, 0, xgwa.width, xgwa.height,
@@ -1869,6 +1872,7 @@ xshm_fade (XtAppContext app, Display *dpy,
       /* Connect the window to an OpenGL context */
       info[screen].glx_context =
         openGL_context_for_window (xgwa.screen, info[screen].window);
+      if (!info[screen].glx_context) goto FAIL;
       opengl_make_current (dpy, &info[screen]);
       if (check_gl_error ("connect")) goto FAIL;
 
@@ -1911,6 +1915,7 @@ xshm_fade (XtAppContext app, Display *dpy,
       glFrontFace (GL_CCW);
       if (check_gl_error ("GL setup")) goto FAIL;
 
+#  endif /* !HAVE_JWZGLES */
 # else /* !USE_GL */
       /* Copy the screenshot pixmap to the source image */
       if (! get_xshm_image (dpy, info[screen].screenshot, info[screen].src,
@@ -2058,7 +2063,8 @@ xshm_fade (XtAppContext app, Display *dpy,
             XDestroyImage (info[screen].src);
           if (info[screen].texid)
             glDeleteTextures (1, &info[screen].texid);
-          openGL_destroy_context (dpy, info[screen].glx_context);
+          if (info[screen].glx_context)
+            openGL_destroy_context (dpy, info[screen].glx_context);
 # else /* !USE_GL */
           if (info[screen].src)
             destroy_xshm_image (dpy, info[screen].src, &shm_info);
@@ -2108,6 +2114,7 @@ xshm_fade (XtAppContext app, Display *dpy,
 static int
 opengl_whack (Display *dpy, xshm_fade_info *info, float ratio)
 {
+# ifndef HAVE_JWZGLES
   GLfloat w = info->texw;
   GLfloat h = info->texh;
 
@@ -2138,6 +2145,9 @@ opengl_whack (Display *dpy, xshm_fade_info *info, float ratio)
 
   if (check_gl_error ("gl whack")) return True;
   return False;
+#else /* HAVE_JWZGLES */
+  return True;
+#endif
 }
 
 

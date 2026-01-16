@@ -29,6 +29,9 @@ INSTALL_DIRS	= @INSTALL_DIRS@
 #
 # "Gallant" was the original Solaris 2.x console font.  It is used by BSOD.
 # BSD licensed: https://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/sys/dev/wsfont/gallant12x22.h
+# (See also https://github.com/Prince213/gallant and
+# https://github.com/Prince213/gallant/blob/push-zyzpprmmslrt/gallant.ttf
+# for a full Unicode recreation, also BSD licensed, but not included here.)
 #
 # "Luxi Mono" was the Red Hat console font; it is very similar to "Gallant".
 # Also used by BSOD.
@@ -55,7 +58,7 @@ default: all
 all:
 clean:
 distclean:: clean
-	-rm -f Makefile TAGS *~ "#"*
+	-rm -f Makefile TAGS ./*~ "#"*
 
 list_tarfiles:
 	@find $(TARFILES) -type f -print | sort
@@ -71,8 +74,8 @@ install-fonts:
 		  $(INSTALL_DIRS) "$$dest" ;				\
 	   fi ;								\
 	   for f in $(FONTS) ; do					\
-	     echo $(INSTALL_DATA) $(srcdir)/$$f $$dest/$$f ;		\
-		  $(INSTALL_DATA) $(srcdir)/$$f $$dest/$$f ;		\
+	     echo $(INSTALL_DATA) "$(srcdir)/$$f" "$$dest/$$f" ;	\
+		  $(INSTALL_DATA) "$(srcdir)/$$f" "$$dest/$$f" ;	\
 	   done ;							\
 	 fi
 
@@ -81,10 +84,11 @@ uninstall-fonts:
 	@if ! [ -z "$(FONT_DIR)" ]; then				\
 	   dest="$(DESTDIR)$(FONT_DIR)" ;				\
 	   for f in $(FONTS) ; do					\
-	     echo $(RM) $$dest/$$f ;					\
-		  $(RM) $$dest/$$f ;					\
+	     echo $(RM) "$$dest/$$f" ;					\
+		  $(RM) "$$dest/$$f" ;					\
 	   done ;							\
-	   rmdir "$(DESTDIR)$(FONT_DIR)" ;				\
+	   echo rmdir "$(DESTDIR)$(FONT_DIR)" ;				\
+	        rmdir "$(DESTDIR)$(FONT_DIR)" ;				\
 	   exit 0 ;							\
 	 fi
 

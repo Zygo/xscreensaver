@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1999-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1999-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,6 +43,39 @@
 extern char *progname;
 
 
+#ifdef HAVE_EGL
+static EGLDisplay *
+get_egl_display (Screen *screen)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  EGLDisplay *egl_display;
+  EGLAttrib av[10];
+  int ac = 0;
+
+# ifdef EGL_PLATFORM_X11_SCREEN_KHR
+  av[ac++] = EGL_PLATFORM_X11_SCREEN_KHR;
+  av[ac++] = (EGLAttrib) screen_number (screen);
+# endif
+  av[ac] = EGL_NONE;
+
+  egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR, (void *) dpy, av);
+  if (!egl_display)
+    {
+      /* If you pass in a non-NULL EGLAttrib list to eglGetPlatformDisplay --
+         even an empty one, that is, the single terminator { EGL_NONE } --
+         you get the error, "no matching EGL config for X11 visual 0x21".
+         So it is impossible for us to inform EGL which X11 screen number
+         is in use, for any weirdos still using Zaphod multi-head. Oh well.
+       */
+      egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR, (void *) dpy,
+                                           NULL);
+    }
+
+  return egl_display;
+}
+#endif /* HAVE_EGL */
+
+
 Visual *
 get_gl_visual (Screen *screen)
 {
@@ -58,30 +91,12 @@ get_gl_visual (Screen *screen)
   EGLConfig egl_config = 0;
   int egl_major = -1, egl_minor = -1;
 
-  /* If you pass in a non-NULL EGLAttrib list to eglGetPlatformDisplay --
-     even one with no elements, that is, the single terminator { EGL_NONE } --
-     you get the error, "no matching EGL config for X11 visual 0x21".
-     So it is impossible for us to inform EGL which X11 screen number
-     is in use, for any weirdos still using Zaphod multi-head.
-   */
-# if 1
-  EGLAttrib *av = NULL;
-# else
-  EGLAttrib av[10];
-  int ac = 0;
-#  ifdef EGL_PLATFORM_X11_SCREEN_KHR
-  av[ac++] = EGL_PLATFORM_X11_SCREEN_KHR;
-  av[ac++] = (EGLAttrib) screen_number (screen);
-#  endif
-  av[ac] = EGL_NONE;
-#endif
-
   /* This is re-used, no need to close it. */
-  egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR, (void *) dpy, av);
+  egl_display = get_egl_display (screen);
 
   if (!egl_display)
     {
-      fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);
+      fprintf (stderr, "%s: eglGetPlatformDisplay failed (1)\n", progname);
       return 0;
     }
 
@@ -170,7 +185,8 @@ get_gl_visual (Screen *screen)
   int i = 0;
 
 # ifdef SB
-  if (! get_boolean_resource (dpy, "multiSample", "MultiSample"))
+  if (! get_boolean_resource (dpy, "multiSample", "MultiSample") ||
+      get_boolean_resource (dpy, "forceSingleSample", "ForceSingleSample"))
     i = SB_COUNT;  /* skip over the multibuffer entries in 'attrs' */
 # endif /* SB */
 
@@ -257,7 +273,8 @@ get_egl_config (Display *dpy, EGLDisplay *egl_display,
 
   i_start = 0;
 # ifdef SB
-  if (! get_boolean_resource (dpy, "multiSample", "MultiSample"))
+  if (! get_boolean_resource (dpy, "multiSample", "MultiSample") ||
+      get_boolean_resource (dpy, "forceSingleSample", "ForceSingleSample"))
     i_start = SB_COUNT;  /* skip over the multibuffer entries in 'attrs' */
 # endif /* SB */
 
@@ -343,11 +360,10 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
 # ifdef HAVE_EGL
 
     /* This is re-used, no need to close it. */
-    egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR,
-                                         (void *) dpy, NULL);
+    egl_display = get_egl_display (screen);
     if (!egl_display)
       {
-        fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);
+        /* fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname); */
         return;
       }
 
@@ -635,7 +651,9 @@ static Bool got_error = 0;
 static int
 BadValue_ehandler (Display *dpy, XErrorEvent *error)
 {
-  if (error->error_code == BadValue)
+  if (error->error_code == BadValue ||
+      /* GLXBadFBConfig == 167, but glxproto.h defines it as 9...? */
+      error->error_code == 167)
     {
       got_error = True;
       return 0;
@@ -644,6 +662,25 @@ BadValue_ehandler (Display *dpy, XErrorEvent *error)
     return orig_ehandler (dpy, error);
 }
 #endif /* !HAVE_EGL */
+
+
+/* Under GLX, it is possible to request an OpenGL 3.2 core profile context
+   by calling glXCreateContextAttribsARB(), however, that doesn't work.
+   On Raspberry Pi 4b Debian 13, the driver supports no core profile
+   contexts and only supports OpenGL up to 3.1.  On macOS X11 it returns
+   an OpenGL 2.1 context.  Whereas the standard glXCreateContext() seems
+   to return the highest-available OpenGL compatibility context by default.
+ */
+#undef USE_GLXCREATECONTEXTATTRIBSARB
+
+#if !defined(HAVE_EGL) && \
+    defined(HAVE_GLXGETPROCADDRESSARB) && \
+    defined(USE_GLXCREATECONTEXTATTRIBSARB)
+typedef GLXContext (*glXCreateContextAttribsARBProc) (Display *,
+                                                      GLXFBConfig,
+                                                      GLXContext, Bool,
+                                                      const int *);
+#endif
 
 
 /* Initializes OpenGL and returns a GLXContext or egl_data for the window.
@@ -711,11 +748,10 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
 # endif /* HAVE_GLES3 */
 
     /* This is re-used, no need to close it. */
-    d->egl_display = eglGetPlatformDisplay (EGL_PLATFORM_X11_KHR,
-                                            (void *) dpy, NULL);
+    d->egl_display = get_egl_display (screen);
     if (!d->egl_display)
       {
-        fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname);
+        fprintf (stderr, "%s: eglGetPlatformDisplay failed (2)\n", progname);
         abort();
       }
 
@@ -790,7 +826,77 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
   {
     XSync (dpy, False);
     orig_ehandler = XSetErrorHandler (BadValue_ehandler);
-    glx_context = glXCreateContext (dpy, vi_out, 0, GL_TRUE);
+
+#  if defined(HAVE_GLXGETPROCADDRESSARB) && \
+      defined(USE_GLXCREATECONTEXTATTRIBSARB)
+  if (get_boolean_resource (dpy, "prefersGLSL", "PrefersGLSL"))
+    {
+      glXCreateContextAttribsARBProc fn =
+        (glXCreateContextAttribsARBProc)
+        glXGetProcAddressARB ((const GLubyte *) "glXCreateContextAttribsARB");
+      if (fn)
+        {
+          GLXFBConfig *confs;
+          int nconfs = 0;
+          int av[100];
+          int ac = 0;
+
+          /* Request a GLXFBConfig that matches our Visual. */
+#   define PUSH(FIELD) do { \
+            int value;                                          \
+            if (! glXGetConfig (dpy, vi_out, FIELD, &value)) {  \
+              av[ac++] = FIELD;                                 \
+              av[ac++] = value;                                 \
+            }} while (0)
+          PUSH (GLX_RED_SIZE);
+          PUSH (GLX_GREEN_SIZE);
+          PUSH (GLX_BLUE_SIZE);
+          PUSH (GLX_ALPHA_SIZE);
+          /* Removed from OpenGL 3.2 core profile.
+          PUSH (GLX_ACCUM_RED_SIZE);
+          PUSH (GLX_ACCUM_GREEN_SIZE);
+          PUSH (GLX_ACCUM_BLUE_SIZE);
+          PUSH (GLX_ACCUM_ALPHA_SIZE); */
+          PUSH (GLX_BUFFER_SIZE);
+          PUSH (GLX_LEVEL);
+          PUSH (GLX_DOUBLEBUFFER);
+          PUSH (GLX_DEPTH_SIZE);
+          PUSH (GLX_STENCIL_SIZE);
+          av[ac] = 0;
+          confs = glXChooseFBConfig (dpy, vi_in.screen, av, &nconfs);
+#   undef PUSH
+
+          if (nconfs)
+            {
+              /* Request OpenGL 3.2+ for GLSL 1.5+ */
+              ac = 0;
+              av[ac++] = GLX_CONTEXT_MAJOR_VERSION_ARB; av[ac++] = 3;
+              av[ac++] = GLX_CONTEXT_MINOR_VERSION_ARB; av[ac++] = 2;
+              av[ac++] = GLX_CONTEXT_PROFILE_MASK_ARB;
+              av[ac++] = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+              av[ac] = 0;
+
+              glx_context = fn (dpy, confs[0], NULL, GL_TRUE, av);
+
+              /* We get a "GLXBadFBConfig" X error if we have requested
+                 a newer version of OpenGL than the server supports.
+                 Ignore it and make a default context instead. */
+              XSync (dpy, False);
+              if (got_error)
+                {
+                  glx_context = 0;
+                  got_error = False;
+                }
+            }
+
+          if (confs) XFree (confs);
+        }
+    }
+#  endif /* HAVE_GLXGETPROCADDRESSARB && USE_GLXCREATECONTEXTATTRIBSARB */
+
+    if (! glx_context)
+      glx_context = glXCreateContext (dpy, vi_out, 0, GL_TRUE);
+
     XSync (dpy, False);
     XSetErrorHandler (orig_ehandler);
     if (got_error)
@@ -820,6 +926,7 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
   XFree((char *) vi_out);
 
 
+# ifndef HAVE_JWZGLES
   /* jwz: the doc for glDrawBuffer says "The initial value is GL_FRONT
      for single-buffered contexts, and GL_BACK for double-buffered
      contexts."  However, I find that this is not always the case,
@@ -839,6 +946,7 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
     else
       glDrawBuffer (GL_FRONT);
   }
+# endif /* !HAVE_JWZGLES */
 
   /* Sometimes glDrawBuffer() throws "invalid op". Dunno why. Ignore. */
   while (glGetError() != GL_NO_ERROR)

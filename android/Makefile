@@ -61,6 +61,7 @@ ANDROID_BASE_HACKS=		\
 export ANDROID_HACKS=		\
 	$(ANDROID_BASE_HACKS)	\
 	abstractile		\
+	alienbeacon		\
 	anemone			\
 	anemotaxis		\
 	antinspect		\
@@ -71,6 +72,7 @@ export ANDROID_HACKS=		\
 	attraction		\
 	atunnel			\
 	barcode			\
+	batteredplanet		\
 	beats			\
 	binaryhorizon		\
 	binaryring		\
@@ -124,6 +126,7 @@ export ANDROID_HACKS=		\
 	droste			\
 	dumpsterfire		\
 	dymaxionmap		\
+	elementalring		\
 	endgame			\
 	energystream		\
 	engine			\
@@ -142,6 +145,7 @@ export ANDROID_HACKS=		\
 	fliptext		\
 	flow			\
 	fluidballs		\
+	fluxcore		\
 	flyingtoasters		\
 	fontglide		\
 	fuzzyflakes		\
@@ -151,6 +155,7 @@ export ANDROID_HACKS=		\
 	geodesicgears		\
 	gflux			\
 	gibson			\
+	gimbalharmonics		\
 	glblur			\
 	glcells			\
 	gleidescope		\
@@ -172,12 +177,14 @@ export ANDROID_HACKS=		\
 	headroom		\
 	helix			\
 	hexadrop		\
+	hexplasma		\
 	hexstrut		\
 	hextrail		\
 	highvoltage		\
 	hilbert			\
 	hopalong		\
 	hopffibration		\
+	hydrostat		\
 	hypertorus		\
 	hypnowheel		\
 	ifs			\
@@ -197,6 +204,8 @@ export ANDROID_HACKS=		\
 	kumppa			\
 	lament			\
 	lavalite		\
+	lockward		\
+	logarithmiccircles	\
 	loop			\
 	m6502			\
 	marbling		\
@@ -215,6 +224,8 @@ export ANDROID_HACKS=		\
 	mountain		\
 	munch			\
 	nakagin			\
+	neongravity		\
+	neontriangulator	\
 	nerverot		\
 	noof			\
 	noseguy			\
@@ -233,6 +244,7 @@ export ANDROID_HACKS=		\
 	pong			\
 	popsquares		\
 	projectiveplane		\
+	protophore		\
 	providence		\
 	pulsar			\
 	pyro			\
@@ -250,10 +262,12 @@ export ANDROID_HACKS=		\
 	rubikblocks		\
 	sballs			\
 	scooter			\
+	selfreflect		\
 	shadebobs		\
 	sierpinski		\
 	sierpinski3d		\
 	skulloop		\
+	skyline			\
 	skytentacles		\
 	slidescreen		\
 	slip			\
@@ -265,20 +279,26 @@ export ANDROID_HACKS=		\
 	squiral			\
 	squirtorus		\
 	stairs			\
+	stardome		\
+	starnest		\
 	starwars		\
 	stonerview		\
 	strange			\
+	stripeytorus		\
 	substrate		\
 	superquadrics		\
 	surfaces		\
 	swirl			\
+	synthwavecity		\
 	tangram			\
 	tessellimage		\
 	timetunnel		\
 	topblock		\
+	topologica		\
 	triangle		\
 	tronbit			\
 	truchet			\
+	truchetzoom		\
 	twang			\
 	unicrud			\
 	unknownpleasures	\
@@ -303,11 +323,17 @@ export ANDROID_HACKS=		\
 # These don't work well enough to turn on by default:
 #
 ANDROID_TODO=			\
+	extrusion		\
+	flurry			\
+	lcdscrub		\
 	pedal			\
 	phosphor		\
 	qix			\
 	speedmine		\
 	starfish		\
+	mapscroller		\
+	vidwhacker		\
+	webcollage		\
 
 
 # If we are making the m6502 hack, create the header file for Android
@@ -326,7 +352,7 @@ images_png_h:
 # Largely duplicated in OSX/Makefile.
 # This saves us having to include 4MB of images in the tar file that
 # will only be used by a vast minority of people building from source.
-# Android actually wants these to be 160x160 but our source is 720p.
+# Android wants these to be 256x256 but our source is 720p.
 
 BASE = xscreensaver/screenshots/
 URL = https://cdn.jwz.org/$(BASE)
@@ -438,6 +464,7 @@ list_tarfiles:
 		-o -name obj			\
 		-o -name settings.xml		\
 		-o -name strings.xml		\
+		-o -name '*.glsl'		\
 		\) -prune \)			\
 		-o \( \( -type f -o -type l \)	\
 		      -print \)			\

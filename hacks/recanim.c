@@ -1,4 +1,4 @@
-/* recanim, Copyright © 2014-2025 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright © 2014-2026 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -8,6 +8,25 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * When configured --with-record-animation, each screenhack takes a
+ * "-record-animation DUR" arg that will cause it to run for exactly that
+ * many frames, and write a "progname.mp4" file into the current directory.
+ * "DUR" may be a number of frames, or a time specified as H:MM:SS, "N sec",
+ * etc. at 30 FPS.
+ *
+ * The MP4 file will be written at 30 FPS, and it is therefore assumed that
+ * each frame of the screenhack took 1/30th second to render and display,
+ * regardless of the --delay option, or how long it actually took; so using
+ * --delay 0 will speed up encoding.
+ *
+ * Likewise, any calls the saver makes to time(), double_time() or
+ * gettimeofday() will be falsified to maintain this timing illusion.
+ * Even if it takes 2 minutes to write out 30 seconds of video, the
+ * screenhack will only see the wall clock advance by 30 seconds.
+ *
+ * This is how I generate the videos for the XScreenSaver YouTube playlist:
+ * https://www.youtube.com/playlist?list=PLbe67PprBSpqM_-HU49fmIS8ncApw4i08
  */
 
 #include "screenhackI.h"
@@ -50,6 +69,8 @@
 
 #undef gettimeofday  /* wrapped by recanim.h */
 #undef time
+#undef double_time
+extern double double_time(void);
 
 struct record_anim_state {
   Screen *screen;
@@ -80,7 +101,7 @@ struct record_anim_state {
    down that clock by discounting the time taken up by snapshotting and
    saving the frame.
  */
-static double recanim_time_warp = 0;
+static double recanim_current_time = 0;
 
 void
 screenhack_record_anim_gettimeofday (struct timeval *tv
@@ -89,13 +110,10 @@ screenhack_record_anim_gettimeofday (struct timeval *tv
 # endif
                                      )
 {
-  gettimeofday (tv
-# ifdef GETTIMEOFDAY_TWO_ARGS
-                , tz
-# endif
-                );
-  tv->tv_sec  -= (time_t) recanim_time_warp;
-  tv->tv_usec -= 1000000 * (recanim_time_warp - (time_t) recanim_time_warp);
+  /* recanim_current_time == 0 if we are not recording. */
+  double now = (recanim_current_time ? recanim_current_time : double_time());
+  tv->tv_sec  = (time_t) now;
+  tv->tv_usec = 1000000 * (now - tv->tv_sec);
 }
 
 time_t
@@ -112,6 +130,22 @@ screenhack_record_anim_time (time_t *o)
                                        );
   if (o) *o = tv.tv_sec;
   return tv.tv_sec;
+}
+
+
+double
+screenhack_record_anim_double_time (void)
+{
+  struct timeval tv;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tz;
+# endif
+  screenhack_record_anim_gettimeofday (&tv
+# ifdef GETTIMEOFDAY_TWO_ARGS
+                                       , &tz
+# endif
+                                       );
+  return (tv.tv_sec + ((double) tv.tv_usec * 0.000001));
 }
 
 
@@ -136,6 +170,8 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
   st->start_time = double_time();
   st->frame_count = 0;
   st->fade_frames = st->fps * 1.5;
+
+  recanim_current_time = st->start_time;
 
   if (st->fade_frames >= (st->target_frames / 2) - st->fps)
     st->fade_frames = 0;
@@ -214,7 +250,6 @@ fade_frame (record_anim_state *st, unsigned char *data, double ratio)
 void
 screenhack_record_anim (record_anim_state *st)
 {
-  double start_time = double_time();
   int obpl    = st->img->bytes_per_line;
   char *odata = st->img->data;
 
@@ -350,7 +385,8 @@ screenhack_record_anim (record_anim_state *st)
   if (++st->frame_count >= st->target_frames)
     screenhack_record_anim_free (st);
 
-  recanim_time_warp += double_time() - start_time;
+  /* Report to screenhack that each frame took exactly 1/30th second. */
+  recanim_current_time += 1.0 / st->fps;
 }
 
 
@@ -361,8 +397,11 @@ screenhack_record_anim_free (record_anim_state *st)
   Display *dpy = DisplayOfScreen (st->screen);
 # endif /* !USE_GL */
   struct stat s;
-
-  fprintf (stderr, "%s: wrote %d frames\n", progname, st->frame_count);
+  double real_end     = double_time();
+  double virt_end     = screenhack_record_anim_double_time();
+  double real_elapsed = real_end - st->start_time;
+  double virt_elapsed = virt_end - st->start_time;
+  double video_dur    = st->frame_count / (double) st->fps;
 
 # ifdef USE_GL
   free (st->data2);
@@ -378,12 +417,28 @@ screenhack_record_anim_free (record_anim_state *st)
 
   if (stat (st->outfile, &s))
     {
-      fprintf (stderr, "%s: %s was not created\n", progname, st->outfile);
+      fprintf (stderr, "%s: error writing %s\n", progname, st->outfile);
       exit (1);
     }
 
-  fprintf (stderr, "%s: wrote %s (%.1f MB)\n", progname, st->outfile,
+# define FMT "%-24.24s %d:%02d:%02d  %5.1f fps"
+  fprintf (stderr, FMT ", %d frames, %.1f MB\n", st->outfile,
+           (((int)video_dur)/60/60),
+           (((int)video_dur)/60)%60,
+           ((int)video_dur)%60,
+           (double) st->fps,
+           st->frame_count,
            s.st_size / (float) (1024 * 1024));
+  fprintf (stderr, FMT "\n", "elapsed virtual",
+           (((int)virt_elapsed)/60/60),
+           (((int)virt_elapsed)/60)%60,
+           ((int)virt_elapsed)%60,
+           st->frame_count / virt_elapsed);
+  fprintf (stderr, FMT "\n", "elapsed actual",
+           (((int)real_elapsed)/60/60),
+           (((int)real_elapsed)/60)%60,
+           ((int)real_elapsed)%60,
+           st->frame_count / real_elapsed);
 
   if (st->title)
     free (st->title);

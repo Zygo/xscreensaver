@@ -382,19 +382,27 @@
 				hexadrop --root				    \\n\
   GL: 				kaleidocycle --root			    \\n\
   GL: 				quasicrystal --root			    \\n\
+  GL: 				starnest --root				    \\n\
   GL: 				unknownpleasures --root			    \\n\
+  GL: 				alienbeacon --root			    \\n\
 				binaryring --root			    \\n\
   GL: 				cityflow --root				    \\n\
   GL: 				geodesicgears --root			    \\n\
   GL: 				projectiveplane --root			    \\n\
   GL: 				romanboy --root				    \\n\
 				tessellimage --root			    \\n\
+  GL: 				topologica --root			    \\n\
   GL: 				winduprobot --root			    \\n\
+  GL: 				fluxcore --root				    \\n\
+  GL: 				gimbalharmonics --root			    \\n\
+  GL: 				protophore --root			    \\n\
+  GL: 				skyline --root				    \\n\
   GL: 				splitflap --root			    \\n\
   GL: 				cubestack --root			    \\n\
   GL: 				cubetwist --root			    \\n\
   GL: 				discoball --root			    \\n\
   GL: 				dymaxionmap --root			    \\n\
+  GL: 				elementalring --root			    \\n\
   GL: 				energystream --root			    \\n\
   GL: 				hexstrut --root				    \\n\
   GL: 				hydrostat --root			    \\n\
@@ -413,6 +421,8 @@
 				vfeedback --root			    \\n\
   GL: 				deepstars --root			    \\n\
   GL: 				gravitywell --root			    \\n\
+  GL: 				synthwavecity --root			    \\n\
+  GL: 				batteredplanet --root			    \\n\
   GL: 				beats --root				    \\n\
   GL: 				covid19 --root				    \\n\
   GL: 				etruscanvenus --root			    \\n\
@@ -421,25 +431,35 @@
   GL: 				sphereeversion --root			    \\n\
 				binaryhorizon --root			    \\n\
 				marbling --root				    \\n\
+  GL: 				neontriangulator --root			    \\n\
+  GL: 				stripeytorus --root			    \\n\
   GL: 				chompytower --root			    \\n\
   GL: 				hextrail --root				    \\n\
   GL: 				mapscroller --root			    \\n\
   GL: 				nakagin --root				    \\n\
   GL: 				squirtorus --root			    \\n\
+  GL: 				stardome --root				    \\n\
   GL: 				cubocteversion --root			    \\n\
 				droste --root				    \\n\
+  GL: 				logarithmiccircles --root		    \\n\
+  GL: 				neongravity --root			    \\n\
   GL: 				papercube --root			    \\n\
   GL: 				skulloop --root				    \\n\
   GL: 				highvoltage --root			    \\n\
   GL: 				kallisti --root				    \\n\
   GL: 				klondike --root				    \\n\
+  GL: 				selfreflect --root			    \\n\
+  GL: 				truchetzoom --root			    \\n\
   GL: 				dumpsterfire --root			    \\n\
+  GL: 				hexplasma --root			    \\n\
   GL: 				hopffibration --root			    \\n\
   GL: 				platonicfolding --root			    \\n",
+"*hacks.alienbeacon.name:    Alien Beacon",
 "*hacks.antinspect.name:     Ant Inspect",
 "*hacks.antmaze.name:        Ant Maze",
 "*hacks.antspotlight.name:   Ant Spotlight",
 "*hacks.apple2.name:         Apple ][",
+"*hacks.batteredplanet.name: Battered Planet",
 "*hacks.binaryhorizon.name:  Binary Horizon",
 "*hacks.binaryring.name:     Binary Ring",
 "*hacks.blinkbox.name:       Blink Box",
@@ -468,6 +488,7 @@
 "*hacks.dnalogo.name:        DNA Logo",
 "*hacks.dumpsterfire.name:   Dumpster Fire",
 "*hacks.dymaxionmap.name:    Dymaxion Map",
+"*hacks.elementalring.name:  Elemental Ring",
 "*hacks.energystream.name:   Energy Stream",
 "*hacks.etruscanvenus.name:  Etruscan Venus",
 "*hacks.euler2d.name:        Euler 2D",
@@ -478,11 +499,13 @@
 "*hacks.flipscreen3d.name:   Flip Screen 3D",
 "*hacks.fliptext.name:       Flip Text",
 "*hacks.fluidballs.name:     Fluid Balls",
+"*hacks.fluxcore.name:       Flux Core",
 "*hacks.flyingtoasters.name: Flying Toasters",
 "*hacks.fontglide.name:      Font Glide",
 "*hacks.fuzzyflakes.name:    Fuzzy Flakes",
 "*hacks.geodesicgears.name:  Geodesic Gears",
 "*hacks.gflux.name:          GFlux",
+"*hacks.gimbalharmonics.name:Gimbal Harmonics",
 "*hacks.glblur.name:         GL Blur",
 "*hacks.glcells.name:        GL Cells",
 "*hacks.gleidescope.name:    Gleidescope",
@@ -497,6 +520,7 @@
 "*hacks.glsnake.name:        GL Snake",
 "*hacks.gltext.name:         GL Text",
 "*hacks.gravitywell.name:    Gravity Well",
+"*hacks.hexplasma.name:      Hex Plasma",
 "*hacks.hexstrut.name:       Hex Strut",
 "*hacks.hextrail.name:       Hex Trail",
 "*hacks.highvoltage.name:    High Voltage",
@@ -507,6 +531,7 @@
 "*hacks.juggler3d.name:      Juggler 3D",
 "*hacks.lcdscrub.name:       LCD Scrub",
 "*hacks.lmorph.name:         LMorph",
+"*hacks.logarithmiccircles.name:Logarithmic Circles",
 "*hacks.m6502.name:          m6502",
 "*hacks.mapscroller.name:    Map Scroller",
 "*hacks.maze3d.name:         Maze 3D",
@@ -518,6 +543,8 @@
 "*hacks.moire.name:          Moiré",
 "*hacks.moire2.name:         Moiré 2",
 "*hacks.morph3d.name:        Morph 3D",
+"*hacks.neongravity.name:    Neon Gravity",
+"*hacks.neontriangulator.name:Neon Triangulator",
 "*hacks.nerverot.name:       Nerve Rot",
 "*hacks.noseguy.name:        Nose Guy",
 "*hacks.pacman.name:         Pac-Man",
@@ -534,6 +561,7 @@
 "*hacks.rotzoomer.name:      Rot Zoomer",
 "*hacks.rubikblocks.name:    Rubik Blocks",
 "*hacks.sballs.name:         SBalls",
+"*hacks.selfreflect.name:    Self Reflect",
 "*hacks.shadebobs.name:      Shade Bobs",
 "*hacks.sierpinski3d.name:   Sierpinski 3D",
 "*hacks.skytentacles.name:   Sky Tentacles",
@@ -541,13 +569,18 @@
 "*hacks.speedmine.name:      Speed Mine",
 "*hacks.sphereeversion.name: Sphere Eversion",
 "*hacks.splitflap.name:      Split-Flap",
+"*hacks.stardome.name:       Star Dome",
+"*hacks.starnest.name:       Star Nest",
 "*hacks.starwars.name:       Star Wars",
 "*hacks.stonerview.name:     Stoner View",
+"*hacks.stripeytorus.name:   Stripey Torus",
+"*hacks.synthwavecity.name:  Synthwave City",
 "*hacks.t3d.name:            T3D",
 "*hacks.testx11.name:        Test X11",
 "*hacks.timetunnel.name:     Time Tunnel",
 "*hacks.topblock.name:       Top Block",
 "*hacks.tronbit.name:        Tron Bit",
+"*hacks.truchetzoom.name:    Truchet Zoom",
 "*hacks.unknownpleasures.name:Unknown Pleasures",
 "*hacks.vfeedback.name:      VFeedback",
 "*hacks.vidwhacker.name:     Vid Whacker",

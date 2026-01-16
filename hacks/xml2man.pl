@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2002-2023 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2002-2025 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.15 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.16 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -90,11 +90,10 @@ sub xml2man($) {
   error ("$xml does not exist") if (! -f $xml);
   error ("$man already exists") if (-f $man);
 
-  local *IN;
-  open (IN, "<$xml") || error ("$xml: $!");
+  open (my $in, '<:utf8', $xml) || error ("$xml: $!");
   my $xmltxt = "";
-  while (<IN>) { $xmltxt .= $_; }
-  close IN;
+  while (<$in>) { $xmltxt .= $_; }
+  close ($in);
 
   my $args = "";
   my $body = "";
@@ -215,6 +214,8 @@ sub xml2man($) {
 
   $desc =~ s@https?://en\.wikipedia\.org/[^\s]+@@gs;
 
+  my $url = ($desc =~ s@(https?://www\.shadertoy\.com/[^\s]+)@@gs) ? $1 : undef;
+
   $desc = wrap ("", "", $desc);
 
   $body = (".TH XScreenSaver 1 \"\" \"X Version 11\"\n" .
@@ -231,16 +232,18 @@ sub xml2man($) {
            $body .
            $man_suffix);
 
+  $body =~ s/(\n\.BR[^\n]+)(\n\.SH)/$1,\n.BR $url$2/s
+    if ($url);
+
   my $year = $1 if ($author =~ s/; (\d{4})$//s);
   $year = (localtime)[5] + 1900 unless $year;
 
   $body =~ s/%AUTHOR%/$author/g;
   $body =~ s/%YEAR%/$year/g;
 
-  local *OUT;
-  open (OUT, ">$man") || error ("$man: $!");
-  print OUT $body || error ("$man: $!");
-  close OUT || error ("$man: $!");
+  open (my $out, '>:utf8', $man) || error ("$man: $!");
+  print $out $body || error ("$man: $!");
+  close ($out) || error ("$man: $!");
   print STDERR "$progname: wrote $man\n";
 }
 

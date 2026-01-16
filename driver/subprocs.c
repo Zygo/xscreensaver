@@ -49,7 +49,7 @@
 #endif
 
 #if defined(USE_GL) && !defined(HAVE_EGL)
-# include <OpenGL/gl.h>		/* For GLXContext in visual-gl.h */
+# include <GL/gl.h>		/* For GLXContext in visual-gl.h */
 # include <GL/glx.h>
 #endif
 

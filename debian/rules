@@ -9,9 +9,13 @@ export DH_OPTIONS=-v
 override_dh_auto_configure:
 	./configure --prefix=/usr
 
+override_dh_auto_install:
+	dh_auto_install -- UPDATE_ICON_CACHE=true SUID_FLAGS=
+
 override_dh_installdirs:
 	dh_installdirs
 	mkdir -p debian/xscreensaver/etc/pam.d
+	mkdir -p debian/xscreensaver/usr/lib/systemd/user
 
 override_dh_fixperms-arch:
 	dh_fixperms

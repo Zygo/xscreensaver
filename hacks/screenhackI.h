@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -102,6 +102,12 @@
 # if defined(HAVE_COCOA) && !defined(HAVE_IPHONE)  /* macOS */
 #  include <OpenGL/gl.h>
 #  include <OpenGL/glu.h>
+#  define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#  ifndef GL_SILENCE_DEPRECATION
+#   define GL_SILENCE_DEPRECATION
+#  endif
+#  include <OpenGL/gl3.h>
+#  undef GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 # elif defined(HAVE_IPHONE)
 #  ifdef HAVE_GLES3
 #   include "OpenGLES/ES3/gl.h"

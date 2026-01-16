@@ -7,7 +7,7 @@
 static const char sccsid[] = "@(#)sphereeversion.c  1.1 20/03/22 xlockmore";
 #endif
 
-/* Copyright (c) 2020-2022 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2020-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -35,6 +35,7 @@ static const char sccsid[] = "@(#)sphereeversion.c  1.1 20/03/22 xlockmore";
  *                       multiple render passes
  * C. Steger - 21/12/23: Added the earth color mode
  * C. Steger - 22/02/25: Added the corrugations sphere eversion
+ * C. Steger - 26/01/03: Make the code work in an OpenGL core profile
  */
 
 /*
@@ -187,250 +188,247 @@ sphereeversionstruct *sphereeversion = (sphereeversionstruct *) NULL;
 
 #ifdef HAVE_GLSL
 
-/* The GLSL versions that correspond to different versions of OpenGL. */
-static const GLchar *shader_version_2_1 =
-  "#version 120\n";
-static const GLchar *shader_version_3_0 =
-  "#version 130\n";
-static const GLchar *shader_version_3_0_es =
-  "#version 300 es\n"
-  "precision highp float;\n"
-  "precision highp int;\n";
+/* The polygon vertex shader code. */
+static const GLchar *poly_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+attribute vec3 VertexNormal;                                             \n\
+attribute vec4 VertexColorF;                                             \n\
+attribute vec4 VertexColorB;                                             \n\
+attribute vec4 VertexTexCoord;                                           \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec4 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+in vec3 VertexNormal;                                                    \n\
+in vec4 VertexColorF;                                                    \n\
+in vec4 VertexColorB;                                                    \n\
+in vec4 VertexTexCoord;                                                  \n\
+out vec3 Normal;                                                         \n\
+out vec4 ColorF;                                                         \n\
+out vec4 ColorB;                                                         \n\
+out vec4 TexCoord;                                                       \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform bool BoolTextures;                                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  ColorF = VertexColorF;                                                 \n\
+  ColorB = VertexColorB;                                                 \n\
+  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;          \n\
+  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);                \n\
+  gl_Position = MatProj*Position;                                        \n\
+  if (BoolTextures)                                                      \n\
+    TexCoord = VertexTexCoord;                                           \n\
+}                                                                        \n";
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init_glsl(). */
-static const GLchar *poly_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "attribute vec3 VertexNormal;\n"
-  "attribute vec4 VertexColorF;\n"
-  "attribute vec4 VertexColorB;\n"
-  "attribute vec4 VertexTexCoord;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec4 TexCoord;\n"
-  "\n";
-static const GLchar *poly_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "in vec3 VertexNormal;\n"
-  "in vec4 VertexColorF;\n"
-  "in vec4 VertexColorB;\n"
-  "in vec4 VertexTexCoord;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 ColorF;\n"
-  "out vec4 ColorB;\n"
-  "out vec4 TexCoord;\n"
-  "\n";
-static const GLchar *poly_vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform bool BoolTextures;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  ColorF = VertexColorF;\n"
-  "  ColorB = VertexColorB;\n"
-  "  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;\n"
-  "  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  if (BoolTextures)\n"
-  "    TexCoord = VertexTexCoord;\n"
-  "}\n";
+/* The polygon fragment shader code. */
+static const GLchar *poly_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec4 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 ColorF;                                                          \n\
+in vec4 ColorB;                                                          \n\
+in vec4 TexCoord;                                                        \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatFrontAmbient, MatBackAmbient;                            \n\
+uniform vec4 MatFrontDiffuse, MatBackDiffuse;                            \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool BoolTextures;                                               \n\
+uniform sampler2D TextureSamplerFront;                                   \n\
+uniform sampler2D TextureSamplerBack;                                    \n\
+uniform sampler2D TextureSamplerWater;                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec3 normalDirection;                                                  \n\
+  vec4 ambientColor, diffuseColor, sceneColor;                           \n\
+  vec4 ambientLighting, diffuseReflection, specularReflection, color;    \n\
+  float ndotl, ndoth, pf;                                                \n\
+                                                                         \n\
+  if (gl_FrontFacing)                                                    \n\
+  {                                                                      \n\
+    normalDirection = normalize(Normal);                                 \n\
+    sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;                   \n\
+    ambientColor = ColorF*MatFrontAmbient;                               \n\
+    diffuseColor = ColorF*MatFrontDiffuse;                               \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    normalDirection = -normalize(Normal);                                \n\
+    sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;                    \n\
+    ambientColor = ColorB*MatBackAmbient;                                \n\
+    diffuseColor = ColorB*MatBackDiffuse;                                \n\
+  }                                                                      \n\
+                                                                         \n\
+  ndotl = max(0.0f,dot(normalDirection,LtDirection));                    \n\
+  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));                   \n\
+  if (ndotl == 0.0f)                                                     \n\
+    pf = 0.0f;                                                           \n\
+  else                                                                   \n\
+    pf = pow(ndoth,MatShininess);                                        \n\
+  ambientLighting = ambientColor*LtAmbient;                              \n\
+  diffuseReflection = LtDiffuse*diffuseColor*ndotl;                      \n\
+  specularReflection = LtSpecular*MatSpecular*pf;                        \n\
+  color = sceneColor+ambientLighting+diffuseReflection;                  \n\
+  if (BoolTextures)                                                      \n\
+  {                                                                      \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSamplerFront,TexCoord.st);               \n\
+      specularReflection *= texture2D(TextureSamplerWater,TexCoord.st);  \n\
+#else                                                                    \n\
+      color *= texture(TextureSamplerFront,TexCoord.st);                 \n\
+      specularReflection *= texture(TextureSamplerWater,TexCoord.st);    \n\
+#endif                                                                   \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSamplerBack,TexCoord.st);                \n\
+#else                                                                    \n\
+      color *= texture(TextureSamplerBack,TexCoord.st);                  \n\
+#endif                                                                   \n\
+      specularReflection *= 0.0f;                                        \n\
+    }                                                                    \n\
+  }                                                                      \n\
+  color += specularReflection;                                           \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = clamp(color,0.0f,1.0f);                                 \n\
+  gl_FragColor.a = diffuseColor.a;                                       \n\
+#else                                                                    \n\
+  FragColor = clamp(color,0.0f,1.0f);                                    \n\
+  FragColor.a = diffuseColor.a;                                          \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *poly_fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec4 TexCoord;\n"
-  "\n";
-static const GLchar *poly_fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 ColorF;\n"
-  "in vec4 ColorB;\n"
-  "in vec4 TexCoord;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *poly_fragment_shader_main =
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatFrontAmbient, MatBackAmbient;\n"
-  "uniform vec4 MatFrontDiffuse, MatBackDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool BoolTextures;\n"
-  "uniform sampler2D TextureSamplerFront;"
-  "uniform sampler2D TextureSamplerBack;"
-  "uniform sampler2D TextureSamplerWater;"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec3 normalDirection;\n"
-  "  vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "  vec4 ambientLighting, diffuseReflection, specularReflection, color;\n"
-  "  float ndotl, ndoth, pf;\n"
-  "  \n"
-  "  if (gl_FrontFacing)\n"
-  "  {\n"
-  "    normalDirection = normalize(Normal);\n"
-  "    sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;\n"
-  "    ambientColor = ColorF*MatFrontAmbient;\n"
-  "    diffuseColor = ColorF*MatFrontDiffuse;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    normalDirection = -normalize(Normal);\n"
-  "    sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;\n"
-  "    ambientColor = ColorB*MatBackAmbient;\n"
-  "    diffuseColor = ColorB*MatBackDiffuse;\n"
-  "  }\n"
-  "  \n"
-  "  ndotl = max(0.0f,dot(normalDirection,LtDirection));\n"
-  "  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));\n"
-  "  if (ndotl == 0.0f)\n"
-  "    pf = 0.0f;\n"
-  "  else\n"
-  "    pf = pow(ndoth,MatShininess);\n"
-  "  ambientLighting = ambientColor*LtAmbient;\n"
-  "  diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "  specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "  color = sceneColor+ambientLighting+diffuseReflection;\n";
-static const GLchar *poly_fragment_shader_out_2_1 =
-  "  if (BoolTextures)\n"
-  "  {\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color *= texture2D(TextureSamplerFront,TexCoord.st);\n"
-  "      specularReflection *= texture2D(TextureSamplerWater,TexCoord.st);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      color *= texture2D(TextureSamplerBack,TexCoord.st);\n"
-  "      specularReflection *= 0.0f;\n"
-  "    }\n"
-  "  }\n"
-  "  color += specularReflection;\n"
-  "  gl_FragColor = clamp(color,0.0f,1.0f);\n"
-  "}\n";
-static const GLchar *poly_fragment_shader_out_3_0 =
-  "  if (BoolTextures)\n"
-  "  {\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerFront,TexCoord.st);\n"
-  "      specularReflection *= texture(TextureSamplerWater,TexCoord.st);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerBack,TexCoord.st);\n"
-  "      specularReflection *= 0.0f;\n"
-  "    }\n"
-  "  }\n"
-  "  color += specularReflection;\n"
-  "  FragColor = clamp(color,0.0f,1.0f);\n"
-  "}\n";
+/* The line vertex shader code. */
+static const GLchar *line_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);                \n\
+  gl_Position = MatProj*Position;                                        \n\
+}                                                                        \n";
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *line_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *line_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *line_vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);\n"
-  "  gl_Position = MatProj*Position;\n"
-  "}\n";
+/* The line fragment shader code. */
+static const GLchar *line_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ >= 130                                                   \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform vec4 LineColor;                                                  \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = LineColor;                                              \n\
+#else                                                                    \n\
+  FragColor = LineColor;                                                 \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *line_fragment_shader_attribs_2_1 =
-  "";
-static const GLchar *line_fragment_shader_attribs_3_0 =
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *line_fragment_shader_main =
-  "uniform vec4 LineColor;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n";
-static const GLchar *line_fragment_shader_out_2_1 =
-  "  gl_FragColor = LineColor;\n"
-  "}\n";
-static const GLchar *line_fragment_shader_out_3_0 =
-  "  FragColor = LineColor;\n"
-  "}\n";
+/* The blend vertex shader code. */
+static const GLchar *blend_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec2 VertexP;                                                  \n\
+attribute vec2 VertexT;                                                  \n\
+varying vec2 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec2 VertexP;                                                         \n\
+in vec2 VertexT;                                                         \n\
+out vec2 TexCoord;                                                       \n\
+#endif                                                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  gl_Position = vec4(VertexP,0.0f,1.0f);                                 \n\
+  TexCoord = VertexT;                                                    \n\
+}                                                                        \n";
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *blend_vertex_shader_attribs_2_1 =
-  "attribute vec2 VertexP;\n"
-  "attribute vec2 VertexT;\n"
-  "\n"
-  "varying vec2 TexCoord;\n"
-  "\n";
-static const GLchar *blend_vertex_shader_attribs_3_0 =
-  "in vec2 VertexP;\n"
-  "in vec2 VertexT;\n"
-  "\n"
-  "out vec2 TexCoord;\n"
-  "\n";
-static const GLchar *blend_vertex_shader_main =
-  "void main (void)\n"
-  "{\n"
-  "  gl_Position = vec4(VertexP,0.0f,1.0f);\n"
-  "  TexCoord = VertexT;\n"
-  "}\n";
-
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *blend_fragment_shader_attribs_2_1 =
-  "varying vec2 TexCoord;\n"
-  "\n";
-static const GLchar *blend_fragment_shader_attribs_3_0 =
-  "in vec2 TexCoord;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *blend_fragment_shader_main =
-  "uniform sampler2D TextureSampler0;"
-  "uniform sampler2D TextureSampler1;"
-  "uniform float T;"
-  "\n"
-  "void main (void)\n"
-  "{\n";
-static const GLchar *blend_fragment_shader_out_2_1 =
-  "  vec3 Color0 = texture2D(TextureSampler0,TexCoord.st).rgb;\n"
-  "  vec3 Color1 = texture2D(TextureSampler1,TexCoord.st).rgb;\n"
-  "  gl_FragColor = vec4(T*Color0+(1.0f-T)*Color1,1.0f);\n"
-  "}\n";
-static const GLchar *blend_fragment_shader_out_3_0 =
-  "  vec3 Color0 = texture(TextureSampler0,TexCoord.st).rgb;\n"
-  "  vec3 Color1 = texture(TextureSampler1,TexCoord.st).rgb;\n"
-  "  FragColor = vec4(T*Color0+(1.0f-T)*Color1,1.0f);\n"
-  "}\n";
+/* The blend fragment shader code. */
+static const GLchar *blend_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec2 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec2 TexCoord;                                                        \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform sampler2D TextureSampler0;                                       \n\
+uniform sampler2D TextureSampler1;                                       \n\
+uniform float T;                                                         \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+#if __VERSION__ <= 120                                                   \n\
+  vec3 Color0 = texture2D(TextureSampler0,TexCoord.st).rgb;              \n\
+  vec3 Color1 = texture2D(TextureSampler1,TexCoord.st).rgb;              \n\
+  gl_FragColor = vec4(T*Color0+(1.0f-T)*Color1,1.0f);                    \n\
+#else                                                                    \n\
+  vec3 Color0 = texture(TextureSampler0,TexCoord.st).rgb;                \n\
+  vec3 Color1 = texture(TextureSampler1,TexCoord.st).rgb;                \n\
+  FragColor = vec4(T*Color0+(1.0f-T)*Color1,1.0f);                       \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 #endif /* HAVE_GLSL */
 
@@ -694,23 +692,95 @@ void gen_textures(ModeInfo *mi)
 }
 
 
+/* Delete the framebuffer objects that are used for blending. */
+static void delete_blend_framebuffer_objects(ModeInfo *mi)
+{
+  sphereeversionstruct *se = &sphereeversion[MI_SCREEN(mi)];
+
+  if (se->use_fbo)
+  {
+    glDeleteFramebuffers(2,se->blend_fbo);
+    glDeleteTextures(2,se->blend_depth_tex);
+    glDeleteTextures(2,se->blend_color_tex);
+  }
+}
+
+
+/* Initialize the framebuffer objects that are used for blending. */
+static void init_blend_framebuffer_objects(ModeInfo *mi)
+{
+  sphereeversionstruct *se = &sphereeversion[MI_SCREEN(mi)];
+  GLenum status;
+  Bool all_fbo_complete = True;
+  int i;
+
+  if (se->use_fbo)
+  {
+    glGenFramebuffers(2,se->blend_fbo);
+    glGenTextures(2,se->blend_depth_tex);
+    glGenTextures(2,se->blend_color_tex);
+
+    for (i=0; i<2; i++)
+    {
+      glBindTexture(GL_TEXTURE_2D,se->blend_depth_tex[i]);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,se->WindW,se->WindH,
+                   0,GL_DEPTH_COMPONENT,GL_UNSIGNED_INT,0);
+      
+      glBindTexture(GL_TEXTURE_2D,se->blend_color_tex[i]);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,se->WindW,se->WindH,0,GL_RGBA,
+                   GL_UNSIGNED_BYTE,0);
+      
+      glBindFramebuffer(GL_FRAMEBUFFER,se->blend_fbo[i]);
+      glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,
+                             GL_TEXTURE_2D,se->blend_depth_tex[i],0);
+      glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,
+                             GL_TEXTURE_2D,se->blend_color_tex[i],0);
+      status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+      if (status != GL_FRAMEBUFFER_COMPLETE)
+        all_fbo_complete = False;
+    }
+
+    glBindTexture(GL_TEXTURE_2D,0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,se->default_draw_fbo);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER,se->default_read_fbo);
+
+    if (!all_fbo_complete)
+    {
+      delete_blend_framebuffer_objects(mi);
+      se->use_fbo = False;
+    }
+  }
+}
+
+
 void init_glsl(ModeInfo *mi)
 {
   sphereeversionstruct *se = &sphereeversion[MI_SCREEN(mi)];
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
+  const char *gl_ext;
   int i, wt, ht;
-  const GLchar *poly_vertex_shader_source[3];
-  const GLchar *poly_fragment_shader_source[4];
-  const GLchar *line_vertex_shader_source[3];
-  const GLchar *line_fragment_shader_source[4];
-  const GLchar *blend_vertex_shader_source[3];
-  const GLchar *blend_fragment_shader_source[4];
+  const GLchar *poly_vertex_shader_source[2];
+  const GLchar *poly_fragment_shader_source[2];
+  const GLchar *line_vertex_shader_source[2];
+  const GLchar *line_fragment_shader_source[2];
+  const GLchar *blend_vertex_shader_source[2];
+  const GLchar *blend_fragment_shader_source[2];
 
   /* Determine whether to use shaders to render the sphere eversion. */
   se->use_shaders = False;
   se->use_mipmaps = False;
   se->buffers_initialized = False;
+  se->use_vao = False;
+  se->use_fbo = False;
   se->poly_shader_program = 0;
   se->line_shader_program = 0;
   se->blend_shader_program = 0;
@@ -719,99 +789,24 @@ void init_glsl(ModeInfo *mi)
   if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
                                  &gl_gles3))
     return;
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      poly_vertex_shader_source[0] = shader_version_2_1;
-      poly_vertex_shader_source[1] = poly_vertex_shader_attribs_2_1;
-      poly_vertex_shader_source[2] = poly_vertex_shader_main;
-      poly_fragment_shader_source[0] = shader_version_2_1;
-      poly_fragment_shader_source[1] = poly_fragment_shader_attribs_2_1;
-      poly_fragment_shader_source[2] = poly_fragment_shader_main;
-      poly_fragment_shader_source[3] = poly_fragment_shader_out_2_1;
 
-      line_vertex_shader_source[0] = shader_version_2_1;
-      line_vertex_shader_source[1] = line_vertex_shader_attribs_2_1;
-      line_vertex_shader_source[2] = line_vertex_shader_main;
-      line_fragment_shader_source[0] = shader_version_2_1;
-      line_fragment_shader_source[1] = line_fragment_shader_attribs_2_1;
-      line_fragment_shader_source[2] = line_fragment_shader_main;
-      line_fragment_shader_source[3] = line_fragment_shader_out_2_1;
+  poly_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  poly_vertex_shader_source[1] = poly_vertex_shader;
+  poly_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  poly_fragment_shader_source[1] = poly_fragment_shader;
 
-      blend_vertex_shader_source[0] = shader_version_2_1;
-      blend_vertex_shader_source[1] = blend_vertex_shader_attribs_2_1;
-      blend_vertex_shader_source[2] = blend_vertex_shader_main;
-      blend_fragment_shader_source[0] = shader_version_2_1;
-      blend_fragment_shader_source[1] = blend_fragment_shader_attribs_2_1;
-      blend_fragment_shader_source[2] = blend_fragment_shader_main;
-      blend_fragment_shader_source[3] = blend_fragment_shader_out_2_1;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      poly_vertex_shader_source[0] = shader_version_3_0;
-      poly_vertex_shader_source[1] = poly_vertex_shader_attribs_3_0;
-      poly_vertex_shader_source[2] = poly_vertex_shader_main;
-      poly_fragment_shader_source[0] = shader_version_3_0;
-      poly_fragment_shader_source[1] = poly_fragment_shader_attribs_3_0;
-      poly_fragment_shader_source[2] = poly_fragment_shader_main;
-      poly_fragment_shader_source[3] = poly_fragment_shader_out_3_0;
+  line_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  line_vertex_shader_source[1] = line_vertex_shader;
+  line_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  line_fragment_shader_source[1] = line_fragment_shader;
 
-      line_vertex_shader_source[0] = shader_version_3_0;
-      line_vertex_shader_source[1] = line_vertex_shader_attribs_3_0;
-      line_vertex_shader_source[2] = line_vertex_shader_main;
-      line_fragment_shader_source[0] = shader_version_3_0;
-      line_fragment_shader_source[1] = line_fragment_shader_attribs_3_0;
-      line_fragment_shader_source[2] = line_fragment_shader_main;
-      line_fragment_shader_source[3] = line_fragment_shader_out_3_0;
+  blend_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  blend_vertex_shader_source[1] = blend_vertex_shader;
+  blend_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  blend_fragment_shader_source[1] = blend_fragment_shader;
 
-      blend_vertex_shader_source[0] = shader_version_3_0;
-      blend_vertex_shader_source[1] = blend_vertex_shader_attribs_3_0;
-      blend_vertex_shader_source[2] = blend_vertex_shader_main;
-      blend_fragment_shader_source[0] = shader_version_3_0;
-      blend_fragment_shader_source[1] = blend_fragment_shader_attribs_3_0;
-      blend_fragment_shader_source[2] = blend_fragment_shader_main;
-      blend_fragment_shader_source[3] = blend_fragment_shader_out_3_0;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    poly_vertex_shader_source[0] = shader_version_3_0_es;
-    poly_vertex_shader_source[1] = poly_vertex_shader_attribs_3_0;
-    poly_vertex_shader_source[2] = poly_vertex_shader_main;
-    poly_fragment_shader_source[0] = shader_version_3_0_es;
-    poly_fragment_shader_source[1] = poly_fragment_shader_attribs_3_0;
-    poly_fragment_shader_source[2] = poly_fragment_shader_main;
-    poly_fragment_shader_source[3] = poly_fragment_shader_out_3_0;
-
-    line_vertex_shader_source[0] = shader_version_3_0_es;
-    line_vertex_shader_source[1] = line_vertex_shader_attribs_3_0;
-    line_vertex_shader_source[2] = line_vertex_shader_main;
-    line_fragment_shader_source[0] = shader_version_3_0_es;
-    line_fragment_shader_source[1] = line_fragment_shader_attribs_3_0;
-    line_fragment_shader_source[2] = line_fragment_shader_main;
-    line_fragment_shader_source[3] = line_fragment_shader_out_3_0;
-
-    blend_vertex_shader_source[0] = shader_version_3_0_es;
-    blend_vertex_shader_source[1] = blend_vertex_shader_attribs_3_0;
-    blend_vertex_shader_source[2] = blend_vertex_shader_main;
-    blend_fragment_shader_source[0] = shader_version_3_0_es;
-    blend_fragment_shader_source[1] = blend_fragment_shader_attribs_3_0;
-    blend_fragment_shader_source[2] = blend_fragment_shader_main;
-    blend_fragment_shader_source[3] = blend_fragment_shader_out_3_0;
-  }
-
-  if (!glsl_CompileAndLinkShaders(3,poly_vertex_shader_source,
-                                  4,poly_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,poly_vertex_shader_source,
+                                  2,poly_fragment_shader_source,
                                   &se->poly_shader_program))
     return;
   se->poly_pos_index = glGetAttribLocation(se->poly_shader_program,
@@ -888,8 +883,8 @@ void init_glsl(ModeInfo *mi)
     return;
   }
 
-  if (!glsl_CompileAndLinkShaders(3,line_vertex_shader_source,
-                                  4,line_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,line_vertex_shader_source,
+                                  2,line_fragment_shader_source,
                                   &se->line_shader_program))
   {
     glDeleteProgram(se->poly_shader_program);
@@ -913,8 +908,8 @@ void init_glsl(ModeInfo *mi)
     return;
   }
 
-  if (!glsl_CompileAndLinkShaders(3,blend_vertex_shader_source,
-                                  4,blend_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,blend_vertex_shader_source,
+                                  2,blend_fragment_shader_source,
                                   &se->blend_shader_program))
   {
     glDeleteProgram(se->poly_shader_program);
@@ -976,6 +971,33 @@ void init_glsl(ModeInfo *mi)
   glGenBuffers(1,&se->parallel_indices_buffer);
   glGenBuffers(1,&se->meridian_indices_buffer);
   glGenBuffers(1,&se->line_indices_buffer);
+  glGenBuffers(1,&se->blend_pos_buffer);
+  glGenBuffers(1,&se->blend_tex_coord_buffer);
+  glGenBuffers(1,&se->blend_indices_buffer);
+
+  se->use_vao = glsl_IsCoreProfile();
+  if (se->use_vao)
+    glGenVertexArrays(1,&se->vertex_array_object);
+
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,(GLint *)&se->default_draw_fbo);
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,(GLint *)&se->default_read_fbo);
+
+  if (!gl_gles3 && gl_major < 3)
+  {
+    /* On OpenGL 2.1 systems, we need the GL_ARB_framebuffer_object
+       extension for the more efficient blending mode. */
+    gl_ext = (const char *)glGetString(GL_EXTENSIONS);
+    if (gl_ext != NULL)
+    {
+      if (strstr(gl_ext,"GL_ARB_framebuffer_object") != NULL)
+        se->use_fbo = True;
+    }
+  }
+  else
+  {
+    se->use_fbo = True;
+  }
+  init_blend_framebuffer_objects(mi);
 
   se->use_shaders = True;
   if ((!gl_gles3 && gl_major >= 3) || gl_gles3)
@@ -1031,6 +1053,9 @@ ENTRYPOINT void reshape_sphereeversion(ModeInfo *mi, int width, int height)
                    NULL);
     }
   }
+
+  delete_blend_framebuffer_objects(mi);
+  init_blend_framebuffer_objects(mi);
 #endif /* HAVE_GLSL */
 }
 
@@ -1380,6 +1405,12 @@ ENTRYPOINT void free_sphereeversion(ModeInfo *mi)
     glDeleteBuffers(1,&se->parallel_indices_buffer);
     glDeleteBuffers(1,&se->meridian_indices_buffer);
     glDeleteBuffers(1,&se->line_indices_buffer);
+    glDeleteBuffers(1,&se->blend_pos_buffer);
+    glDeleteBuffers(1,&se->blend_tex_coord_buffer);
+    glDeleteBuffers(1,&se->blend_indices_buffer);
+    if (se->use_vao)
+      glDeleteVertexArrays(1,&se->vertex_array_object);
+    delete_blend_framebuffer_objects(mi);
   }
 #endif /* HAVE_GLSL */
 }

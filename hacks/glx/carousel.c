@@ -30,7 +30,6 @@
 
 # define release_carousel 0
 # include "xlockmore.h"
-# include "easing.h"
 
 #ifdef USE_GL
 
@@ -46,6 +45,8 @@
 #include "gltrackball.h"
 #include "grab-ximage.h"
 #include "texfont.h"
+#include "xftwrap.h"
+#include "easing.h"
 
 # ifndef HAVE_JWXYZ
 #  include <X11/Intrinsic.h>     /* for XrmDatabase in -debug mode */
@@ -800,7 +801,10 @@ draw_frame (ModeInfo *mi, image_frame *frame, time_t now, Bool body_p)
       XCharStruct e;
       int sw, sh;
       GLfloat scale = 0.05;
-      char *title = frame->current.title ? frame->current.title : "(untitled)";
+      char *title = frame->current.title;
+      char *token, *line;
+      int lineno = 0;
+
       texture_string_metrics (ss->texfont, title, &e, 0, 0);
       sw = e.width;
       sh = e.ascent + e.descent;
@@ -809,26 +813,42 @@ draw_frame (ModeInfo *mi, image_frame *frame, time_t now, Bool body_p)
 
       scale /= sh;
       glScalef (scale, scale, scale);
-
-      glTranslatef (((1/scale) - sw) / 2, 0, 0);
       glColor3f (1, 1, 1);
 
-      if (!wire)
+      /* Wrap long lines */
+      title = xft_word_wrap (MI_DISPLAY(mi), texfont_xft (ss->texfont),
+                             title, 1 / scale);
+      token = title;
+
+      /* print_texture_string() does flushleft for newlines,
+         but we want the lines centered. */
+      while ((line = strtok (token, "\n")))
         {
-          glEnable (GL_TEXTURE_2D);
+          token = 0;
+          texture_string_metrics (ss->texfont, line, &e, 0, 0);
+          sw = e.width;
+          glPushMatrix();
+          glTranslatef (((1/scale) - sw) / 2, -sh * lineno, 0);
+          if (!wire)
+            {
 # ifndef HAVE_ANDROID   /* Doesn't work -- photo displays as static */
-          print_texture_string (ss->texfont, title);
+              print_texture_string (ss->texfont, line);
 # endif
+            }
+          else
+            {
+              glBegin (GL_LINE_LOOP);
+              glVertex3f (0,  0,  0);
+              glVertex3f (sw, 0,  0);
+              glVertex3f (sw, sh, 0);
+              glVertex3f (0,  sh, 0);
+              glEnd();
+            }
+          glPopMatrix();
+          lineno++;
         }
-      else
-        {
-          glBegin (GL_LINE_LOOP);
-          glVertex3f (0,  0,  0);
-          glVertex3f (sw, 0,  0);
-          glVertex3f (sw, sh, 0);
-          glVertex3f (0,  sh, 0);
-          glEnd();
-        }
+
+      free (title);
     }
 
   glPopMatrix();

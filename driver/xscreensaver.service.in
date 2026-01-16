@@ -12,6 +12,9 @@ Conflicts=org.gnome.ScreenSaver org.cinnamon.ScreenSaver org.mate.ScreenSaver or
 ExecStart=/usr/bin/xscreensaver
 Restart=on-failure
 OOMScoreAdjust=-1000
+Type=dbus
+BusName=org.jwz.XScreenSaver
+NotifyAccess=all
 
 [Install]
 Alias=org.jwz.xscreensaver.service

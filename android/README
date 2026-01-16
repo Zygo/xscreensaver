@@ -164,6 +164,7 @@ us know:
         xscreensaver/res/values/strings.xml
         xscreensaver/res/xml/*.xml
         xscreensaver/src/org/jwz/xscreensaver/gen/*.java
+        xscreensaver/assets/glsl/ (copied and stripped from hacks/glx/glsl/)
 
     Other files generated as a part of the build process:
 
@@ -302,6 +303,12 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
     - petri is similar, except with tons of XFillRectangle, which, at two
       triangles each, is a lot of geometry.
 
+    - extrusion doesn't work because no libGLE.
+    - glitchpeg is just too hard.
+    - mapscroller requires perl.
+    - vidwhacker requires perl.
+    - webcollage requires perl.
+
   - Undiagnosed problems:
 
       - antinspect has some kind of masking problem. Maybe only in emulator?
@@ -309,6 +316,7 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
       - discoball doesn't draw rays.
       - endgame is insanely slow.
       - esper images display as black.
+      - flurry is all black.
       - glblur is grayscale instead of color.  Endian or packing problem?
       - queens is insanely slow.
       - sonar doesn't display properly, but once it does, test icmp.

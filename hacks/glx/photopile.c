@@ -1,5 +1,4 @@
-/* photopile, Copyright © 2008-2018 Jens Kilian <jjk@acm.org>
- * Based on carousel, Copyright © 2005-2008 Jamie Zawinski <jwz@jwz.org>
+/* photopile, Copyright © 2008-2025 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -38,6 +37,7 @@
 #include "grab-ximage.h"
 #include "texfont.h"
 #include "dropshadow.h"
+#include "xftwrap.h"
 
 #ifdef USE_GL
 
@@ -547,9 +547,9 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
         }
       else
         {
-          GLfloat scale = minSize / maxSize;
-          w *= scale;
-          h *= scale;
+          GLfloat s2 = minSize / maxSize;
+          w *= s2;
+          h *= s2;
         }
 
       w1 = minSize * 1.16;      /* enlarge frame border */
@@ -651,74 +651,89 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
     {
       int sw = 0, sh = 0;
       int ascent, descent;
-      GLfloat tw = w * 2;
-      GLfloat th = h1 - h;
-      GLfloat scale = 1;
-      const char *title = frame->title ? frame->title : "(untitled)";
+      char *title = frame->title ? frame->title : strdup ("(untitled)");
+      char *token, *line;
+      int lineno = 0;
       XCharStruct e;
+      GLfloat tpad = w * 0.05;
+      GLfloat tboxh = h1 - h - tpad * 2;
+      GLfloat tscale;
+      int nlines = 1;
 
       texture_string_metrics (ss->texfont, title, &e, &ascent, &descent);
       sw = e.width;
-      sh = ascent; /* + descent; */
+      sh = ascent + descent;
 
-      /* Scale the text to match the pixel size of the photo */
-      scale *= w / 150.0;
+      if (!polaroid_p)
+        tboxh = sh * 3;
 
-# if defined(HAVE_COCOA)
-      scale /= 2;
-      if (MI_WIDTH(mi) > 2560) scale /= 2;  /* Retina displays */
-# endif
+      glTranslatef (0, -(h + tpad), 0);
 
-# if defined(HAVE_MOBILE)
-      scale /= 2;
-# endif
-
-      /* Clip characters off the left end of the string until it fits. */
-      if (clip_p || polaroid_p)
-        while (sw * scale > tw && strlen (title) > 10)
-          {
-            title++;
-            texture_string_metrics (ss->texfont, title, &e, &ascent, &descent);
-            sw = e.width;
-          }
-
-      if (th <= 0)  /* Non-polaroid */
-        th = -sh * 1.2;
-
-      glTranslatef (-w, -h1, 0);
-      glTranslatef ((tw - sw*scale) / 2, (th - sh*scale) / 2, 0);
-
-      glScalef (scale, scale, 1);
+      /* Set the text height to fit 3 lines in the available space. */
+      tscale = tboxh / (sh * 3);
 
       if (wire || !polaroid_p)
-        {
-          glColor3f (1, 1, 1);
-        }
+        glColor3f (1, 1, 1);
       else
-        {
-          glColor3f (0.5, 0.5, 0.5);
-        }
+        glColor3f (0.5, 0.5, 0.5);
+
+      title = xft_word_wrap (MI_DISPLAY(mi), texfont_xft (ss->texfont),
+                             title, (w * 2) / tscale);
+      token = title;
+
+      glScalef (tscale, tscale, 1);
+      glTranslatef (0, -ascent, 0);
+
+      for (line = token; *line; line++)
+        if (*line == '\n') nlines++;
+
+      if (nlines == 1)
+        glTranslatef (0, -sh, 0);
+      else if (nlines == 2)
+        glTranslatef (0, -sh * 0.5, 0);
 
       if (!wire)
         {
           glEnable (GL_TEXTURE_2D);
           glEnable (GL_BLEND);
           glDisable (GL_DEPTH_TEST);
-# ifndef HAVE_ANDROID   /* Doesn't work -- photo displays as static */
-          print_texture_string (ss->texfont, title);
-# endif
-          glEnable (GL_DEPTH_TEST);
-        }
-      else
-        {
-          glBegin (GL_LINE_LOOP);
-          glVertex3f (0,  0,  0);
-          glVertex3f (sw, 0,  0);
-          glVertex3f (sw, sh, 0);
-          glVertex3f (0,  sh, 0);
-          glEnd();
         }
 
+      /* print_texture_string() does flushleft for newlines,
+         but we want the lines centered. */
+      while ((line = strtok (token, "\n")))
+        {
+          token = 0;
+          texture_string_metrics (ss->texfont, line, &e, 0, 0);
+          sw = e.width;
+
+          glPushMatrix();
+          glTranslatef (-sw/2, -sh * lineno, 0);
+
+          if (!wire)
+            {
+# ifndef HAVE_ANDROID   /* Doesn't work -- photo displays as static */
+              print_texture_string (ss->texfont, line);
+# endif
+            }
+          else
+            {
+              glBegin (GL_LINE_LOOP);
+              glVertex3f (0,  0,  0);
+              glVertex3f (sw, 0,  0);
+              glVertex3f (sw, sh, 0);
+              glVertex3f (0,  sh, 0);
+              glEnd();
+            }
+          glPopMatrix();
+          lineno++;
+
+          if (polaroid_p &&
+              (sh * (lineno + 1) - descent) * tscale > tboxh)
+            break;  /* Ran out of room for lines */
+        }
+
+      free (title);
     }
 
   glPopMatrix();

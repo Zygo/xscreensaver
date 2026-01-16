@@ -1078,7 +1078,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     p = [dir stringByAppendingPathComponent: p];
 
     NSString *classname = [[p lastPathComponent] stringByDeletingPathExtension];
-    NSString *title;
+    NSString *title = 0;
 
     // Get the title's capitalization right by reading the XML file.
 

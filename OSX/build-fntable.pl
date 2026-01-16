@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2022 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2025 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.14 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.15 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -75,10 +75,20 @@ sub build_h($) {
 
   my %names = ();
 
-  foreach my $var (
-    (values %{ parse_makefile_vars ('../hacks/Makefile.in', 'EXES') }),
-    (values %{ parse_makefile_vars ('../hacks/glx/Makefile.in', 'GL_EXES',
-                                 'SUID_EXES') })) {
+  my @exes =
+    (values %{ parse_makefile_vars ('../hacks/Makefile.in', 'EXES') },
+     values %{ parse_makefile_vars ('../hacks/glx/Makefile.in', 'GL_EXES',
+                                    'SUID_EXES') });
+  my @slexes = values %{ parse_makefile_vars ('../hacks/glx/Makefile.in',
+                                              'GLSL_EXES') };
+  my %slexes;
+  foreach my $var (@slexes) {
+    foreach my $name (split (/\s+/, $var)) {
+      $slexes{$name} = 1;
+    }
+  }
+
+  foreach my $var (@exes, @slexes) {
     $var =~ s/covid19/co____9/gs;
     foreach my $name (split (/\s+/, $var)) {
       if ($name =~ /@/ || $disable{$name}) {
@@ -109,6 +119,7 @@ sub build_h($) {
 
   $body .= "extern struct $suf";
   foreach my $s (@names, 'testx11') {
+    next if ($slexes{$s});
     my $s2 = $s;
     $s2 =~ s/-/_/g;
     $body .= "\n ${s2}_${suf},";
@@ -118,6 +129,7 @@ sub build_h($) {
   sub line($$) {
     my ($s, $suf) = @_;
 
+    next if ($s eq 'xshadertoy');
     my $xml_file = "../hacks/config/$s.xml";
     open (my $in, '<:utf8', $xml_file) || error ("$xml_file: $!");
     local $/ = undef;  # read entire file
@@ -126,6 +138,7 @@ sub build_h($) {
     my ($title) = ($body =~ m@<screensaver[^<>]*?[ \t]_label=\"([^\"]+)\"@m);
     error ("$xml_file: no title") unless $title;
 
+    $s = 'xshadertoy' if ($slexes{$s});
     return "\t@\"${title}\":\t[NSValue valueWithPointer:&${s}_${suf}],\n";
   }
 

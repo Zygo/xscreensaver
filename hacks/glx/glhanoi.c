@@ -14,9 +14,6 @@
 
 #include <assert.h>
 
-#include "rotator.h"
-#include "doubletime.h"
-
 #define DEF_LIGHT     "True"
 #define DEF_FOG       "False"
 #define DEF_TEXTURE   "True"
@@ -63,6 +60,8 @@ enum {
 
 #include <math.h>
 #include "xlockmore.h"
+#include "rotator.h"
+#include "doubletime.h"
 
 #ifdef USE_GL					/* whole file */
 

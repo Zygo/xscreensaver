@@ -1,5 +1,5 @@
 /* glsl-utils.c --- support functions for GLSL in OpenGL hacks.
- * Copyright (c) 2020-2021 Carsten Steger <carsten@mirsanmir.org>
+ * Copyright (c) 2020-2026 Carsten Steger <carsten@mirsanmir.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -316,18 +316,105 @@ GLboolean glsl_GetGlAndGlslVersions(GLint *gl_major, GLint *gl_minor,
 
  DONE:
 
-#if 0/*# ifndef __OPTIMIZE__*/
-  if (err)
-    fprintf (stderr, "%s: GLSL: %s\n", progname, err);
-  else
-    fprintf (stderr, "%s: GLSL available: GL=%d.%d, GLSL=%d.%d GLES3=%d\n",
-             progname,
-             *gl_major, *gl_minor, 
-             *glsl_major, *glsl_minor,
-             *gl_gles3 ? 1 : 0);
+# ifndef __OPTIMIZE__
+  {
+    static Bool printed_p = False;
+    if (printed_p)
+      ;
+    else if (err)
+      fprintf (stderr, "%s: GLSL: %s\n", progname, err);
+    else
+      fprintf (stderr, "%s: OpenGL %d.%d, GLSL %d.%d GLES3 = %s\n",
+               progname,
+               *gl_major, *gl_minor, 
+               *glsl_major, *glsl_minor,
+               *gl_gles3 ? "yes" : "no");
+    printed_p = True;
+  }
 # endif
 
   return (err ? GL_FALSE : GL_TRUE);
+}
+
+
+/* Return the #version string for a shader program depending on the GLSL
+   version that is being used. */
+const GLchar *glsl_GetGLSLVersionString(void)
+{
+  /* The GLSL version strings that correspond to different supported
+   versions of OpenGL. */
+  static const GLchar *shader_version_2_1 =      "#version 120\n";
+  static const GLchar *shader_version_3_0 =      "#version 130\n";
+  static const GLchar *shader_version_3_0_es =   "#version 300 es\n";
+#ifndef HAVE_JWZGLES
+  static const GLchar *shader_version_3_2_core = "#version 150\n";
+#endif
+  GLint gl_major, gl_minor, glsl_major, glsl_minor;
+  GLboolean gl_gles3;
+#ifndef HAVE_JWZGLES
+  GLint gl_profile;
+#endif
+
+  if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
+                                 &gl_gles3))
+    return NULL;
+  
+  if (gl_gles3 && gl_major == 3)
+    return shader_version_3_0_es;
+  
+  if (gl_major == 2 && gl_minor == 1)
+    return shader_version_2_1;
+  
+  if (gl_major == 3 && gl_minor < 2)
+    return shader_version_3_0;
+  
+  if (gl_major >= 4 || (gl_major == 3 && gl_minor >= 2))
+  {
+#ifndef HAVE_JWZGLES
+    glGetIntegerv(GL_CONTEXT_PROFILE_MASK,&gl_profile);
+    if ((gl_profile & GL_CONTEXT_CORE_PROFILE_BIT) != 0)
+      return shader_version_3_2_core;
+    else
+#endif
+      return shader_version_3_0;
+  }
+  
+  fprintf (stderr,
+           "%s: Unsupported OpenGL version: GL=%d.%d, GLSL=%d.%d GLES3=%d\n",
+           progname,
+           gl_major, gl_minor,
+           glsl_major, glsl_minor,
+           gl_gles3 ? 1 : 0);
+  return NULL;
+}
+
+
+/* Determine whether the OpenGL context is a core profile. */
+extern GLboolean glsl_IsCoreProfile(void)
+{
+  GLint gl_major, gl_minor, glsl_major, glsl_minor;
+  GLboolean gl_gles3;
+#ifndef HAVE_JWZGLES
+  GLint gl_profile;
+#endif
+
+  if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
+                                 &gl_gles3))
+    return GL_FALSE;
+  
+  if (gl_major < 3)
+    return GL_FALSE;
+  
+#ifndef HAVE_JWZGLES
+  if (gl_major >= 4 || (gl_major == 3 && gl_minor >= 2))
+  {
+    glGetIntegerv(GL_CONTEXT_PROFILE_MASK,&gl_profile);
+      if ((gl_profile & GL_CONTEXT_CORE_PROFILE_BIT) != 0)
+        return GL_TRUE;
+  }
+#endif
+
+  return GL_FALSE;
 }
 
 

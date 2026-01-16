@@ -891,8 +891,7 @@ acquireClass (JNIEnv *env, const char *className, jobject *globalRef)
 
 
 /* Note: to find signature strings for native methods:
-   cd ./project/xscreensaver/build/intermediates/classes/debug/
-   javap -s -p org.jwz.xscreensaver.jwxyz
+   javap -s -p xscreensaver/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/org/jwz/xscreensaver/jwxyz.class
  */
 
 
@@ -1915,6 +1914,71 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
   img->blue_mask  = c2.pixel;
 
   return img;
+}
+
+// Returns a list of the asset files under the named subdir.
+// NULL if the directory does not exist.
+//
+char **
+android_list_asset_files (Window window, const char *dir)
+{
+  JNIEnv *env = window->window.rh->jni_env;
+  jobject obj = window->window.rh->jobject;
+
+  if ((*env)->ExceptionOccurred(env)) abort();
+  jstring jstr = (*env)->NewStringUTF (env, dir);
+  jclass     c = (*env)->GetObjectClass (env, obj);
+  jmethodID  m = (*env)->GetMethodID (env, c, "listAssetFiles",
+                           "(Ljava/lang/String;)[Ljava/lang/String;");
+  if ((*env)->ExceptionOccurred(env)) abort();
+
+  jobjectArray array = (m
+                        ? (*env)->CallObjectMethod (env, obj, m, jstr)
+                        : NULL);
+  (*env)->DeleteLocalRef (env, c);
+  (*env)->DeleteLocalRef (env, jstr);
+
+  char **ret = 0;
+  if (array) {
+    int len = (*env)->GetArrayLength (env, array);
+    ret = (char **) calloc (len + 1, sizeof(*ret));
+    for (int i = 0; i < len; i++) {
+      jobject jvalue =
+        (jstring) ((*env)->GetObjectArrayElement (env, array, i));
+      if ((*env)->ExceptionOccurred(env)) abort();
+      ret[i] = jstring_dup (env, jvalue);
+    }
+  }
+
+  return ret;
+}
+
+// Returns the contents of the asset file "dir/file".
+// NULL if the file does not exist.
+//
+char *
+android_read_asset_file (Window window, const char *dir, const char *file)
+{
+  JNIEnv *env = window->window.rh->jni_env;
+  jobject obj = window->window.rh->jobject;
+
+  if ((*env)->ExceptionOccurred(env)) abort();
+  jstring jstr1 = (*env)->NewStringUTF (env, dir);
+  jstring jstr2 = (*env)->NewStringUTF (env, file);
+  jclass      c = (*env)->GetObjectClass (env, obj);
+  jmethodID   m = (*env)->GetMethodID (env, c, "readAssetFile",
+                 "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+  if ((*env)->ExceptionOccurred(env)) abort();
+
+  jobject body = (m
+                  ? (*env)->CallObjectMethod (env, obj, m, jstr1, jstr2)
+                  : NULL);
+  (*env)->DeleteLocalRef (env, c);
+  (*env)->DeleteLocalRef (env, jstr1);
+  (*env)->DeleteLocalRef (env, jstr2);
+
+  char *ret = (body ? jstring_dup (env, body) : NULL);
+  return ret;
 }
 
 #endif /* HAVE_ANDROID */

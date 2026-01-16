@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -142,7 +142,17 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 # ifndef HAVE_IPHONE
   // CFBundleGetDataPointerForName doesn't work in "Archive" builds.
   // I'm guessing that symbol-stripping is mandatory.  Fuck.
+
+# ifdef USE_SHADERTOY
+  // On macOS Cocoa, the XScreenSaverView inside a Shadertoy.saver was
+  // compiled with -DUSE_SHADERTOY so that we know to load the shared
+  // "xshadertoy_xscreensaver_function_table".  (On iOS, that knowledge
+  // is encoded into the "ios-function-table.m" file.)
+  NSString *classname = @"XShadertoy";
+# else
   NSString *classname = [[nsb executablePath] lastPathComponent];
+# endif
+
   NSString *table_name = [[classname lowercaseString]
                            stringByAppendingString:
                              @"_xscreensaver_function_table"];
@@ -215,6 +225,16 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
   if (setenv ("XSCREENSAVER_CLASSPATH", s, 1)) {
     perror ("setenv");
     NSAssert1 (0, @"setenv \"XSCREENSAVER_CLASSPATH=%s\" failed", s);
+  }
+
+  // Set $BUNDLE_RESPATH for xshadertoy.c to find the GLSL files.
+  NSBundle *nsb = [NSBundle bundleForClass:[self class]];
+  NSAssert1 (nsb, @"no bundle for class %@", [self class]);
+  NSString *nsrespath = [nsb resourcePath];    // "Contents/Resources"
+  const char *respath = [nsrespath cStringUsingEncoding:NSUTF8StringEncoding];
+  if (setenv ("BUNDLE_RESPATH", respath, 1)) {
+    perror ("setenv");
+    NSAssert1 (0, @"setenv \"BUNDLE_RESPATH=%s\" failed", respath);
   }
 }
 
@@ -486,6 +506,7 @@ static NSMutableArray *all_saver_views = NULL;
 # ifdef CATCH_SIGNALS
   catch_signals();
 # endif
+
   xsft = [self findFunctionTable: saver_title];
   if (! xsft) {
     [self release];
@@ -502,9 +523,25 @@ static NSMutableArray *all_saver_views = NULL;
      $HOME/Library/Preferences/ByHost/ in a file named like
      "org.jwz.xscreensaver.<CLASSNAME>.<NUMBERS>.plist"
    */
-  NSString *name = [NSString stringWithCString:xsft->progclass
-                             encoding:NSUTF8StringEncoding];
-  name = [@"org.jwz.xscreensaver." stringByAppendingString:name];
+  NSString *progclass2;
+  Bool shader_p = !strcasecmp (xsft->progclass, "xshadertoy");
+
+  if (!shader_p) {
+    // Normal saver: use the name that came from the function table.
+    progclass2 = [NSString stringWithCString:xsft->progclass
+                                    encoding:NSUTF8StringEncoding];
+  } else {
+    // Shadertoy saver: we are using the "XShaderToy" function table,
+    // so set our progclass back to the real hack name instead.
+    // This path happens on both macOS and iOS.
+    progclass2 = [_title stringByReplacingOccurrencesOfString:@" "
+                                                   withString:@""];
+    xsft->progclass =
+      strdup ([progclass2 cStringUsingEncoding:NSUTF8StringEncoding]);
+  }
+
+  NSString *name = [@"org.jwz.xscreensaver."
+                       stringByAppendingString:progclass2];
   [self setResourcesEnv:name];
   [self loadCustomFonts];
   
@@ -516,7 +553,7 @@ static NSMutableArray *all_saver_views = NULL;
   free (defs);
   // free (opts);  // bah, we need these! #### leak!
   xsft->options = opts;
-  
+
   progname = progclass = xsft->progclass;
 
   next_frame_time = 0;

@@ -5,7 +5,7 @@
 static const char sccsid[] = "@(#)platonicfolding.c  1.1 25/03/18 xlockmore";
 #endif
 
-/* Copyright (c) 2025 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2025-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -22,6 +22,7 @@ static const char sccsid[] = "@(#)platonicfolding.c  1.1 25/03/18 xlockmore";
  *
  * REVISION HISTORY:
  * C. Steger - 25/03/18: Initial version
+ * C. Steger - 26/01/02: Make the code work in an OpenGL core profile
  */
 
 /*
@@ -630,7 +631,7 @@ typedef struct {
   texcoord tex[NUM_VERTEX];
   int num[NUM_VERTEX];
 #ifdef HAVE_GLSL
-  bool use_shaders, use_mipmaps;
+  bool use_shaders, use_mipmaps, use_vao;
   GLuint shader_program;
   GLint pos_index, normal_index, color_index, tex_index;
   GLint mv_index, proj_index;
@@ -642,6 +643,7 @@ typedef struct {
   GLint bool_textures_index, north_up_index, magma_offs_index;
   GLint samp_mgm_index, samp_day_index, samp_ngt_index, samp_wtr_index;
   GLuint vertex_buffer, normal_buffer, color_buffer, tex_buffer;
+  GLuint vertex_array_object;
   GLuint magma_tex, earth_tex[3];
   GLubyte *magma_tex_rg;
   GLfloat magma_tex_offset[3];
@@ -970,237 +972,202 @@ static inline void get_sun_direction(double jd, float sun[4])
 
 #ifdef HAVE_GLSL
 
-/* The GLSL versions that correspond to different versions of OpenGL. */
-static const GLchar *shader_version_2_1 =
-  "#version 120\n";
-static const GLchar *shader_version_3_0 =
-  "#version 130\n";
-static const GLchar *shader_version_3_0_es =
-  "#version 300 es\n"
-  "precision highp float;\n"
-  "precision highp int;\n"
-  "precision highp sampler2D;\n"
-  "precision highp sampler3D;\n";
+/* The vertex shader code. */
+static const GLchar *vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+precision highp sampler3D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec4 VertexPosition;                                           \n\
+attribute vec4 VertexNormal;                                             \n\
+attribute vec4 VertexColor;                                              \n\
+attribute vec3 VertexTexCoord;                                           \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec3 EarthTexCoord;                                              \n\
+varying vec3 LightTexCoord;                                              \n\
+varying vec3 MagmaTexCoord;                                              \n\
+#else                                                                    \n\
+in vec4 VertexPosition;                                                  \n\
+in vec4 VertexNormal;                                                    \n\
+in vec4 VertexColor;                                                     \n\
+in vec3 VertexTexCoord;                                                  \n\
+out vec3 Normal;                                                         \n\
+out vec4 Color;                                                          \n\
+out vec3 EarthTexCoord;                                                  \n\
+out vec3 LightTexCoord;                                                  \n\
+out vec3 MagmaTexCoord;                                                  \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform vec3 TexOffsetMagma;                                             \n\
+uniform bool NorthUp;                                                    \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  Color = VertexColor;                                                   \n\
+  Normal = normalize(MatModelView*VertexNormal).xyz;                     \n\
+  vec4 Position = MatModelView*VertexPosition;                           \n\
+  gl_Position = MatProj*Position;                                        \n\
+  if (NorthUp)                                                           \n\
+    EarthTexCoord = VertexTexCoord;                                      \n\
+  else                                                                   \n\
+    EarthTexCoord = vec3(-1.0f,1.0f,-1.0f)*VertexTexCoord;               \n\
+  LightTexCoord = (MatModelView*vec4(VertexTexCoord,0.0f)).xyz;          \n\
+  MagmaTexCoord = 0.4f*(VertexTexCoord+1.0f)+TexOffsetMagma;             \n\
+}                                                                        \n";
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init_glsl(). */
-static const GLchar *vertex_shader_attribs_2_1 =
-  "attribute vec4 VertexPosition;\n"
-  "attribute vec4 VertexNormal;\n"
-  "attribute vec4 VertexColor;\n"
-  "attribute vec3 VertexTexCoord;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec3 EarthTexCoord;\n"
-  "varying vec3 LightTexCoord;\n"
-  "varying vec3 MagmaTexCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_attribs_3_0 =
-  "in vec4 VertexPosition;\n"
-  "in vec4 VertexNormal;\n"
-  "in vec4 VertexColor;\n"
-  "in vec3 VertexTexCoord;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 Color;\n"
-  "out vec3 EarthTexCoord;\n"
-  "out vec3 LightTexCoord;\n"
-  "out vec3 MagmaTexCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform vec3 TexOffsetMagma;\n"
-  "uniform bool NorthUp;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  Color = VertexColor;\n"
-  "  Normal = normalize(MatModelView*VertexNormal).xyz;\n"
-  "  vec4 Position = MatModelView*VertexPosition;\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  if (NorthUp)\n"
-  "    EarthTexCoord = VertexTexCoord;\n"
-  "  else\n"
-  "    EarthTexCoord = vec3(-1.0f,1.0f,-1.0f)*VertexTexCoord;\n"
-  "  LightTexCoord = (MatModelView*vec4(VertexTexCoord,0.0f)).xyz;\n"
-  "  MagmaTexCoord = 0.4f*(VertexTexCoord+1.0f)+TexOffsetMagma;\n"
-  "}\n";
-
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec3 EarthTexCoord;\n"
-  "varying vec3 LightTexCoord;\n"
-  "varying vec3 MagmaTexCoord;\n"
-  "\n";
-static const GLchar *fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 Color;\n"
-  "in vec3 EarthTexCoord;\n"
-  "in vec3 LightTexCoord;\n"
-  "in vec3 MagmaTexCoord;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *fragment_shader_main =
-  "const float I_M_PI_F = 0.318309886184f;\n"
-  "const float I_M_2PI_F = 0.159154943092f;\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatAmbient;\n"
-  "uniform vec4 MatDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool BoolTextures;\n"
-  "uniform sampler3D TextureSamplerMagma;\n"
-  "uniform sampler2D TextureSamplerDay;\n"
-  "uniform sampler2D TextureSamplerNight;\n"
-  "uniform sampler2D TextureSamplerWater;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec3 normalDirection;\n"
-  "  vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "  vec4 ambientLighting, diffuseReflection, specularReflection;\n"
-  "  vec4 color, colord, colorn, specd, specn;\n"
-  "  vec3 normTexCoord, normLightCoord\n;"
-  "  vec2 texCoor;\n"
-  "  float ndotl, ldotls, ndoth, attd, attn, pf, lat, lon;\n"
-  "  \n"
-  "  if (!BoolTextures)\n"
-  "  {\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      normalDirection = normalize(Normal);\n"
-  "      sceneColor = Color*MatAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatAmbient;\n"
-  "      diffuseColor = Color*MatDiffuse;\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      normalDirection = -normalize(Normal);\n"
-  "      sceneColor = Color*MatAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatAmbient;\n"
-  "      diffuseColor = Color*MatDiffuse;\n"
-  "    }\n"
-  "    \n"
-  "    ndotl = max(0.0f,dot(normalDirection,LtDirection));\n"
-  "    ndoth = max(0.0f,dot(normalDirection,LtHalfVector));\n"
-  "    if (ndotl == 0.0f)\n"
-  "      pf = 0.0f;\n"
-  "    else\n"
-  "      pf = pow(ndoth,MatShininess);\n"
-  "    ambientLighting = ambientColor*LtAmbient;\n"
-  "    diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "    specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "    color = sceneColor+ambientLighting+diffuseReflection+\n"
-  "            specularReflection;\n"
-  "    color.a = diffuseColor.a;\n"
-  "  }\n";
-static const GLchar *fragment_shader_out_2_1 =
-  "  else\n"
-  "  {\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color = texture3D(TextureSamplerMagma,MagmaTexCoord);\n"
-  "      sceneColor = color*MatAmbient*LtGlblAmbient;\n"
-  "      ambientColor = color*MatAmbient;\n"
-  "      diffuseColor = color*MatDiffuse;\n"
-  "      specularReflection = vec4(0.0f,0.0f,0.0f,0.0f);\n"
-  "      diffuseReflection = LtDiffuse*diffuseColor;\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      normTexCoord = normalize(EarthTexCoord);\n"
-  "      normLightCoord = normalize(LightTexCoord);\n"
-  "      lat = asin(normTexCoord.z);\n"
-  "      lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "      texCoor = vec2(0.5f+lon*I_M_2PI_F,0.5f+lat*I_M_PI_F);\n"
-  "      ndotl = max(0.0f,dot(normLightCoord,LtDirection));\n"
-  "      ndoth = max(0.0f,dot(normLightCoord,LtHalfVector));\n"
-  "      if (ndotl == 0.0f)\n"
-  "        pf = 0.0f;\n"
-  "      else\n"
-  "        pf = pow(ndoth,MatShininess);\n"
-  "      specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "      ldotls = dot(normLightCoord,LtDirection);\n"
-  "      colord = texture2D(TextureSamplerDay,texCoor);\n"
-  "      attd = smoothstep(-0.2f,0.2f,ldotls);\n"
-  "      colorn = texture2D(TextureSamplerNight,texCoor);\n"
-  "      attn = smoothstep(-0.2f,0.2f,-ldotls);\n"
-  "      color = attd*colord+attn*colorn;\n"
-  "      specd = texture2D(TextureSamplerWater,texCoor);\n"
-  "      specn = vec4(0.0f,0.0f,0.0f,1.0f);\n"
-  "      specularReflection *= attd*specd+attn*specn;\n"
-  "      sceneColor = color*MatAmbient*LtGlblAmbient;\n"
-  "      ambientColor = color*MatAmbient;\n"
-  "      diffuseColor = color*MatDiffuse;\n"
-  "      diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "    }\n"
-  "    \n"
-  "    ambientLighting = ambientColor*LtAmbient;\n"
-  "    color = sceneColor+ambientLighting+diffuseReflection+\n"
-  "            specularReflection;\n"
-  "    color.a = diffuseColor.a;\n"
-  "  }\n"
-  "  gl_FragColor = clamp(color,0.0f,1.0f);\n"
-  "}\n";
-static const GLchar *fragment_shader_out_3_0 =
-  "  else\n"
-  "  {\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color = texture(TextureSamplerMagma,MagmaTexCoord);\n"
-  "      sceneColor = color*MatAmbient*LtGlblAmbient;\n"
-  "      ambientColor = color*MatAmbient;\n"
-  "      diffuseColor = color*MatDiffuse;\n"
-  "      specularReflection = vec4(0.0f,0.0f,0.0f,0.0f);\n"
-  "      diffuseReflection = LtDiffuse*diffuseColor;\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      normTexCoord = normalize(EarthTexCoord);\n"
-  "      normLightCoord = normalize(LightTexCoord);\n"
-  "      lat = asin(normTexCoord.z);\n"
-  "      lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "      texCoor = vec2(0.5f+lon*I_M_2PI_F,0.5f+lat*I_M_PI_F);\n"
-  "      ndotl = max(0.0f,dot(normLightCoord,LtDirection));\n"
-  "      ndoth = max(0.0f,dot(normLightCoord,LtHalfVector));\n"
-  "      if (ndotl == 0.0f)\n"
-  "        pf = 0.0f;\n"
-  "      else\n"
-  "        pf = pow(ndoth,MatShininess);\n"
-  "      specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "      ldotls = dot(normLightCoord,LtDirection);\n"
-  "      colord = texture(TextureSamplerDay,texCoor);\n"
-  "      attd = smoothstep(-0.2f,0.2f,ldotls);\n"
-  "      colorn = texture(TextureSamplerNight,texCoor);\n"
-  "      attn = smoothstep(-0.2f,0.2f,-ldotls);\n"
-  "      color = attd*colord+attn*colorn;\n"
-  "      specd = texture(TextureSamplerWater,texCoor);\n"
-  "      specn = vec4(0.0f,0.0f,0.0f,1.0f);\n"
-  "      specularReflection *= attd*specd+attn*specn;\n"
-  "      sceneColor = color*MatAmbient*LtGlblAmbient;\n"
-  "      ambientColor = color*MatAmbient;\n"
-  "      diffuseColor = color*MatDiffuse;\n"
-  "      diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "    }\n"
-  "    \n"
-  "    ambientLighting = ambientColor*LtAmbient;\n"
-  "    color = sceneColor+ambientLighting+diffuseReflection+\n"
-  "            specularReflection;\n"
-  "    color.a = diffuseColor.a;\n"
-  "  }\n"
-  "  FragColor = clamp(color,0.0f,1.0f);\n"
-  "}\n";
+/* The fragment shader code. */
+static const GLchar *fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+precision highp sampler3D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec3 EarthTexCoord;                                              \n\
+varying vec3 LightTexCoord;                                              \n\
+varying vec3 MagmaTexCoord;                                              \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 Color;                                                           \n\
+in vec3 EarthTexCoord;                                                   \n\
+in vec3 LightTexCoord;                                                   \n\
+in vec3 MagmaTexCoord;                                                   \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+const float I_M_PI_F = 0.318309886184f;                                  \n\
+const float I_M_2PI_F = 0.159154943092f;                                 \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatAmbient;                                                 \n\
+uniform vec4 MatDiffuse;                                                 \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool BoolTextures;                                               \n\
+uniform sampler3D TextureSamplerMagma;                                   \n\
+uniform sampler2D TextureSamplerDay;                                     \n\
+uniform sampler2D TextureSamplerNight;                                   \n\
+uniform sampler2D TextureSamplerWater;                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec3 normalDirection;                                                  \n\
+  vec4 ambientColor, diffuseColor, sceneColor;                           \n\
+  vec4 ambientLighting, diffuseReflection, specularReflection;           \n\
+  vec4 color, colord, colorn, specd, specn;                              \n\
+  vec3 normTexCoord, normLightCoord;                                     \n\
+  vec2 texCoor;                                                          \n\
+  float ndotl, ldotls, ndoth, attd, attn, pf, lat, lon;                  \n\
+                                                                         \n\
+  if (!BoolTextures)                                                     \n\
+  {                                                                      \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+      normalDirection = normalize(Normal);                               \n\
+      sceneColor = Color*MatAmbient*LtGlblAmbient;                       \n\
+      ambientColor = Color*MatAmbient;                                   \n\
+      diffuseColor = Color*MatDiffuse;                                   \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+      normalDirection = -normalize(Normal);                              \n\
+      sceneColor = Color*MatAmbient*LtGlblAmbient;                       \n\
+      ambientColor = Color*MatAmbient;                                   \n\
+      diffuseColor = Color*MatDiffuse;                                   \n\
+    }                                                                    \n\
+                                                                         \n\
+    ndotl = max(0.0f,dot(normalDirection,LtDirection));                  \n\
+    ndoth = max(0.0f,dot(normalDirection,LtHalfVector));                 \n\
+    if (ndotl == 0.0f)                                                   \n\
+      pf = 0.0f;                                                         \n\
+    else                                                                 \n\
+      pf = pow(ndoth,MatShininess);                                      \n\
+    ambientLighting = ambientColor*LtAmbient;                            \n\
+    diffuseReflection = LtDiffuse*diffuseColor*ndotl;                    \n\
+    specularReflection = LtSpecular*MatSpecular*pf;                      \n\
+    color = sceneColor+ambientLighting+diffuseReflection+                \n\
+            specularReflection;                                          \n\
+    color.a = diffuseColor.a;                                            \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color = texture3D(TextureSamplerMagma,MagmaTexCoord);              \n\
+#else                                                                    \n\
+      color = texture(TextureSamplerMagma,MagmaTexCoord);                \n\
+#endif                                                                   \n\
+      sceneColor = color*MatAmbient*LtGlblAmbient;                       \n\
+      ambientColor = color*MatAmbient;                                   \n\
+      diffuseColor = color*MatDiffuse;                                   \n\
+      specularReflection = vec4(0.0f,0.0f,0.0f,0.0f);                    \n\
+      diffuseReflection = LtDiffuse*diffuseColor;                        \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+      normTexCoord = normalize(EarthTexCoord);                           \n\
+      normLightCoord = normalize(LightTexCoord);                         \n\
+      lat = asin(normTexCoord.z);                                        \n\
+      lon = atan(normTexCoord.y,normTexCoord.x);                         \n\
+      texCoor = vec2(0.5f+lon*I_M_2PI_F,0.5f+lat*I_M_PI_F);              \n\
+      ndotl = max(0.0f,dot(normLightCoord,LtDirection));                 \n\
+      ndoth = max(0.0f,dot(normLightCoord,LtHalfVector));                \n\
+      if (ndotl == 0.0f)                                                 \n\
+        pf = 0.0f;                                                       \n\
+      else                                                               \n\
+        pf = pow(ndoth,MatShininess);                                    \n\
+      specularReflection = LtSpecular*MatSpecular*pf;                    \n\
+      ldotls = dot(normLightCoord,LtDirection);                          \n\
+#if __VERSION__ <= 120                                                   \n\
+      colord = texture2D(TextureSamplerDay,texCoor);                     \n\
+#else                                                                    \n\
+      colord = texture(TextureSamplerDay,texCoor);                       \n\
+#endif                                                                   \n\
+      attd = smoothstep(-0.2f,0.2f,ldotls);                              \n\
+#if __VERSION__ <= 120                                                   \n\
+      colorn = texture2D(TextureSamplerNight,texCoor);                   \n\
+#else                                                                    \n\
+      colorn = texture(TextureSamplerNight,texCoor);                     \n\
+#endif                                                                   \n\
+      attn = smoothstep(-0.2f,0.2f,-ldotls);                             \n\
+      color = attd*colord+attn*colorn;                                   \n\
+#if __VERSION__ <= 120                                                   \n\
+      specd = texture2D(TextureSamplerWater,texCoor);                    \n\
+#else                                                                    \n\
+      specd = texture(TextureSamplerWater,texCoor);                      \n\
+#endif                                                                   \n\
+      specn = vec4(0.0f,0.0f,0.0f,1.0f);                                 \n\
+      specularReflection *= attd*specd+attn*specn;                       \n\
+      sceneColor = color*MatAmbient*LtGlblAmbient;                       \n\
+      ambientColor = color*MatAmbient;                                   \n\
+      diffuseColor = color*MatDiffuse;                                   \n\
+      diffuseReflection = LtDiffuse*diffuseColor*ndotl;                  \n\
+    }                                                                    \n\
+                                                                         \n\
+    ambientLighting = ambientColor*LtAmbient;                            \n\
+    color = sceneColor+ambientLighting+diffuseReflection+                \n\
+            specularReflection;                                          \n\
+    color.a = diffuseColor.a;                                            \n\
+  }                                                                      \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = clamp(color,0.0f,1.0f);                                 \n\
+#else                                                                    \n\
+  FragColor = clamp(color,0.0f,1.0f);                                    \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 #endif /* HAVE_GLSL */
 
@@ -2478,6 +2445,9 @@ static int polygon_folding_pf(ModeInfo *mi)
   for (i=0; i<num_poly; i++)
     n += pf->num[i];
 
+  if (pf->use_vao)
+    glBindVertexArray(pf->vertex_array_object);
+
   /* Copy the collected polygon data to the respective buffer. */
   glBindBuffer(GL_ARRAY_BUFFER,pf->vertex_buffer);
   glBufferData(GL_ARRAY_BUFFER,4*n*sizeof(GLfloat),pf->vtx,GL_STREAM_DRAW);
@@ -2633,6 +2603,9 @@ static int polygon_folding_pf(ModeInfo *mi)
   glDisableVertexAttribArray(pf->color_index);
   glDisableVertexAttribArray(pf->tex_index);
   glBindBuffer(GL_ARRAY_BUFFER,0);
+
+  if (pf->use_vao)
+    glBindVertexArray(0);
 
   glUseProgram(0);
 
@@ -3031,11 +3004,12 @@ static void init_glsl(ModeInfo *mi)
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
   const char *gl_ext;
-  const GLchar *vertex_shader_source[3];
-  const GLchar *fragment_shader_source[4];
+  const GLchar *vertex_shader_source[2];
+  const GLchar *fragment_shader_source[2];
 
   pf->use_textures = false;
   pf->use_mipmaps = false;
+  pf->use_vao = False;
 
   pf->magma_tex_offset[0] = 0.0f;
   pf->magma_tex_offset[1] = 0.0f;
@@ -3050,51 +3024,12 @@ static void init_glsl(ModeInfo *mi)
                                  &gl_gles3))
     return;
 
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      vertex_shader_source[0] = shader_version_2_1;
-      vertex_shader_source[1] = vertex_shader_attribs_2_1;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_2_1;
-      fragment_shader_source[1] = fragment_shader_attribs_2_1;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_2_1;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      vertex_shader_source[0] = shader_version_3_0;
-      vertex_shader_source[1] = vertex_shader_attribs_3_0;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_3_0;
-      fragment_shader_source[1] = fragment_shader_attribs_3_0;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_3_0;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    vertex_shader_source[0] = shader_version_3_0_es;
-    vertex_shader_source[1] = vertex_shader_attribs_3_0;
-    vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0_es;
-    fragment_shader_source[1] = fragment_shader_attribs_3_0;
-    fragment_shader_source[2] = fragment_shader_main;
-    fragment_shader_source[3] = fragment_shader_out_3_0;
-  }
-
-  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
-                                  4,fragment_shader_source,
+  vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  vertex_shader_source[1] = vertex_shader;
+  fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  fragment_shader_source[1] = fragment_shader;
+  if (!glsl_CompileAndLinkShaders(2,vertex_shader_source,
+                                  2,fragment_shader_source,
                                   &pf->shader_program))
     return;
 
@@ -3219,6 +3154,10 @@ static void init_glsl(ModeInfo *mi)
     gen_magma_texture(mi);
     gen_earth_textures(mi);
   }
+
+  pf->use_vao = glsl_IsCoreProfile();
+  if (pf->use_vao)
+    glGenVertexArrays(1,&pf->vertex_array_object);
 
   pf->use_shaders = true;
 #if 0
@@ -3506,6 +3445,8 @@ ENTRYPOINT void free_platonicfolding(ModeInfo *mi)
     glDeleteBuffers(1,&pf->normal_buffer);
     glDeleteBuffers(1,&pf->color_buffer);
     glDeleteBuffers(1,&pf->tex_buffer);
+    if (pf->use_vao)
+      glDeleteVertexArrays(1,&pf->vertex_array_object);
     if (pf->textures_supported)
     {
       glDeleteTextures(1,&pf->magma_tex);

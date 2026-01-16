@@ -6,7 +6,7 @@
 static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
 #endif
 
-/* Copyright (c) 2014-2021 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2014-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -26,6 +26,7 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
  * C. Steger - 20/01/06: Added the changing colors mode
  * C. Steger - 20/12/19: Added per-fragment shading
  * C. Steger - 20/12/30: Make the shader code work under macOS and iOS
+ * C. Steger - 26/01/02: Make the code work in an OpenGL core profile
  */
 
 /*
@@ -388,7 +389,7 @@ typedef struct {
 #ifdef HAVE_GLSL
   GLfloat *uv;
   GLuint *indices;
-  Bool use_shaders, buffers_initialized;
+  Bool use_shaders, buffers_initialized, use_vao;
   GLuint shader_program;
   GLint vertex_uv_index, vertex_t_index, color_index;
   GLint mat_mv_index, mat_p_index, g_index, d_index;
@@ -402,6 +403,7 @@ typedef struct {
   GLint texture_sampler_index;
   GLuint vertex_uv_buffer,  vertex_t_buffer;
   GLuint color_buffer, indices_buffer;
+  GLuint vertex_array_object;
   GLint ni, ne, nt;
 #endif /* HAVE_GLSL */
 } romanboystruct;
@@ -411,197 +413,189 @@ static romanboystruct *romanboy = (romanboystruct *) NULL;
 
 #ifdef HAVE_GLSL
 
-/* The GLSL versions that correspond to different versions of OpenGL. */
-static const GLchar *shader_version_2_1 =
-  "#version 120\n";
-static const GLchar *shader_version_3_0 =
-  "#version 130\n";
-static const GLchar *shader_version_3_0_es =
-  "#version 300 es\n"
-  "precision highp float;\n"
-  "precision highp int;\n";
+/* The vertex shader code. */
+static const GLchar *vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec2 VertexUV;                                                 \n\
+attribute vec4 VertexT;                                                  \n\
+attribute vec4 VertexColor;                                              \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec4 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec2 VertexUV;                                                        \n\
+in vec4 VertexT;                                                         \n\
+in vec4 VertexColor;                                                     \n\
+out vec3 Normal;                                                         \n\
+out vec4 Color;                                                          \n\
+out vec4 TexCoord;                                                       \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform int G;                                                           \n\
+uniform float D;                                                         \n\
+uniform bool BoolTextures;                                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  const float EPSILON = 1.19e-6f;                                        \n\
+  const float M_PI = 3.14159265359f;                                     \n\
+  const float M_SQRT2 = 1.41421356237f;                                  \n\
+  float g = float(G);                                                    \n\
+  float u = VertexUV.x;                                                  \n\
+  float v = VertexUV.y;                                                  \n\
+  float sqrt2og = M_SQRT2/g;                                             \n\
+  float h1m1og = 0.5f*(1.0f-1.0f/g);                                     \n\
+  float gm1 = g-1.0f;                                                    \n\
+  float cu = cos(u);                                                     \n\
+  float su = sin(u);                                                     \n\
+  float cgu = cos(g*u);                                                  \n\
+  float sgu = sin(g*u);                                                  \n\
+  float cgm1u = cos(gm1*u);                                              \n\
+  float sgm1u = sin(gm1*u);                                              \n\
+  float cv = cos(v);                                                     \n\
+  float c2v = cos(2.0f*v);                                               \n\
+  float s2v = sin(2.0f*v);                                               \n\
+  float cv2 = cv*cv;                                                     \n\
+  float nomx = sqrt2og*cv2*cgm1u+h1m1og*s2v*cu;                          \n\
+  float nomy = sqrt2og*cv2*sgm1u-h1m1og*s2v*su;                          \n\
+  float nomux = -sqrt2og*cv2*gm1*sgm1u-h1m1og*s2v*su;                    \n\
+  float nomuy = sqrt2og*cv2*gm1*cgm1u-h1m1og*s2v*cu;                     \n\
+  float nomvx = -sqrt2og*s2v*cgm1u+2.0f*h1m1og*c2v*cu;                   \n\
+  float nomvy = -sqrt2og*s2v*sgm1u-2.0f*h1m1og*c2v*su;                   \n\
+  float den = 1.0f/(1.0f-0.5f*M_SQRT2*D*s2v*sgu);                        \n\
+  float den2 = den*den;                                                  \n\
+  float denu = 0.5f*M_SQRT2*D*g*cgu*s2v;                                 \n\
+  float denv = M_SQRT2*D*sgu*c2v;                                        \n\
+  vec3 x = vec3(nomx*den,nomy*den,cv2*den);                              \n\
+  if (0.5f*M_PI-abs(v) < EPSILON)                                        \n\
+  {                                                                      \n\
+    if (0.5f*M_PI-v < EPSILON)                                           \n\
+      v = 0.5f*M_PI-EPSILON;                                             \n\
+    else                                                                 \n\
+      v = -0.5f*M_PI+EPSILON;                                            \n\
+    cv = cos(v);                                                         \n\
+    c2v = cos(2.0f*v);                                                   \n\
+    s2v = sin(2.0f*v);                                                   \n\
+    cv2 = cv*cv;                                                         \n\
+    nomx = sqrt2og*cv2*cgm1u+h1m1og*s2v*cu;                              \n\
+    nomy = sqrt2og*cv2*sgm1u-h1m1og*s2v*su;                              \n\
+    nomux = -sqrt2og*cv2*gm1*sgm1u-h1m1og*s2v*su;                        \n\
+    nomuy = sqrt2og*cv2*gm1*cgm1u-h1m1og*s2v*cu;                         \n\
+    nomvx = -sqrt2og*s2v*cgm1u+2.0f*h1m1og*c2v*cu;                       \n\
+    nomvy = -sqrt2og*s2v*sgm1u-2.0f*h1m1og*c2v*su;                       \n\
+    den = 1.0f/(1.0f-0.5f*M_SQRT2*D*s2v*sgu);                            \n\
+    den2 = den*den;                                                      \n\
+    denu = 0.5f*M_SQRT2*D*g*cgu*s2v;                                     \n\
+    denv = M_SQRT2*D*sgu*c2v;                                            \n\
+  }                                                                      \n\
+  vec3 xu = vec3(nomux*den+nomx*denu*den2,                               \n\
+                 nomuy*den+nomy*denu*den2,                               \n\
+                 cv2*denu*den2);                                         \n\
+  vec3 xv = vec3(nomvx*den+nomx*denv*den2,                               \n\
+                 nomvy*den+nomy*denv*den2,                               \n\
+                 -s2v*den+cv2*denv*den2);                                \n\
+  vec4 Position = MatModelView*vec4(x,1.0f);                             \n\
+  vec4 pu = MatModelView*vec4(xu,0.0f);                                  \n\
+  vec4 pv = MatModelView*vec4(xv,0.0f);                                  \n\
+  Normal = normalize(cross(pu.xyz,pv.xyz));                              \n\
+  gl_Position = MatProj*Position;                                        \n\
+  Color = VertexColor;                                                   \n\
+  if (BoolTextures)                                                      \n\
+    TexCoord = VertexT;                                                  \n\
+}                                                                        \n";
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *vertex_shader_attribs_2_1 =
-  "attribute vec2 VertexUV;\n"
-  "attribute vec4 VertexT;\n"
-  "attribute vec4 VertexColor;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec4 TexCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_attribs_3_0 =
-  "in vec2 VertexUV;\n"
-  "in vec4 VertexT;\n"
-  "in vec4 VertexColor;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 Color;\n"
-  "out vec4 TexCoord;\n"
-  "\n";
-static const GLchar *vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform int G;\n"
-  "uniform float D;\n"
-  "uniform bool BoolTextures;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  const float EPSILON = 1.19e-6f;\n"
-  "  const float M_PI = 3.14159265359f;\n"
-  "  const float M_SQRT2 = 1.41421356237f;\n"
-  "  float g = float(G);\n"
-  "  float u = VertexUV.x;\n"
-  "  float v = VertexUV.y;\n"
-  "  float sqrt2og = M_SQRT2/g;\n"
-  "  float h1m1og = 0.5f*(1.0f-1.0f/g);\n"
-  "  float gm1 = g-1.0f;\n"
-  "  float cu = cos(u);\n"
-  "  float su = sin(u);\n"
-  "  float cgu = cos(g*u);\n"
-  "  float sgu = sin(g*u);\n"
-  "  float cgm1u = cos(gm1*u);\n"
-  "  float sgm1u = sin(gm1*u);\n"
-  "  float cv = cos(v);\n"
-  "  float c2v = cos(2.0f*v);\n"
-  "  float s2v = sin(2.0f*v);\n"
-  "  float cv2 = cv*cv;\n"
-  "  float nomx = sqrt2og*cv2*cgm1u+h1m1og*s2v*cu;\n"
-  "  float nomy = sqrt2og*cv2*sgm1u-h1m1og*s2v*su;\n"
-  "  float nomux = -sqrt2og*cv2*gm1*sgm1u-h1m1og*s2v*su;\n"
-  "  float nomuy = sqrt2og*cv2*gm1*cgm1u-h1m1og*s2v*cu;\n"
-  "  float nomvx = -sqrt2og*s2v*cgm1u+2.0f*h1m1og*c2v*cu;\n"
-  "  float nomvy = -sqrt2og*s2v*sgm1u-2.0f*h1m1og*c2v*su;\n"
-  "  float den = 1.0f/(1.0f-0.5f*M_SQRT2*D*s2v*sgu);\n"
-  "  float den2 = den*den;\n"
-  "  float denu = 0.5f*M_SQRT2*D*g*cgu*s2v;\n"
-  "  float denv = M_SQRT2*D*sgu*c2v;\n"
-  "  vec3 x = vec3(nomx*den,\n"
-  "                nomy*den,\n"
-  "                cv2*den);\n"
-  "  if (0.5f*M_PI-abs(v) < EPSILON)\n"
-  "  {\n"
-  "    if (0.5f*M_PI-v < EPSILON)\n"
-  "      v = 0.5f*M_PI-EPSILON;\n"
-  "    else\n"
-  "      v = -0.5f*M_PI+EPSILON;\n"
-  "    cv = cos(v);\n"
-  "    c2v = cos(2.0f*v);\n"
-  "    s2v = sin(2.0f*v);\n"
-  "    cv2 = cv*cv;\n"
-  "    nomx = sqrt2og*cv2*cgm1u+h1m1og*s2v*cu;\n"
-  "    nomy = sqrt2og*cv2*sgm1u-h1m1og*s2v*su;\n"
-  "    nomux = -sqrt2og*cv2*gm1*sgm1u-h1m1og*s2v*su;\n"
-  "    nomuy = sqrt2og*cv2*gm1*cgm1u-h1m1og*s2v*cu;\n"
-  "    nomvx = -sqrt2og*s2v*cgm1u+2.0f*h1m1og*c2v*cu;\n"
-  "    nomvy = -sqrt2og*s2v*sgm1u-2.0f*h1m1og*c2v*su;\n"
-  "    den = 1.0f/(1.0f-0.5f*M_SQRT2*D*s2v*sgu);\n"
-  "    den2 = den*den;\n"
-  "    denu = 0.5f*M_SQRT2*D*g*cgu*s2v;\n"
-  "    denv = M_SQRT2*D*sgu*c2v;\n"
-  "  }\n"
-  "  vec3 xu = vec3(nomux*den+nomx*denu*den2,\n"
-  "                 nomuy*den+nomy*denu*den2,\n"
-  "                 cv2*denu*den2);\n"
-  "  vec3 xv = vec3(nomvx*den+nomx*denv*den2,\n"
-  "                 nomvy*den+nomy*denv*den2,\n"
-  "                 -s2v*den+cv2*denv*den2);\n"
-  "  vec4 Position = MatModelView*vec4(x,1.0f);\n"
-  "  vec4 pu = MatModelView*vec4(xu,0.0f);\n"
-  "  vec4 pv = MatModelView*vec4(xv,0.0f);\n"
-  "  Normal = normalize(cross(pu.xyz,pv.xyz));\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  Color = VertexColor;\n"
-  "  if (BoolTextures)\n"
-  "    TexCoord = VertexT;\n"
-  "}\n";
-
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 Color;\n"
-  "varying vec4 TexCoord;\n"
-  "\n";
-static const GLchar *fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 Color;\n"
-  "in vec4 TexCoord;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *fragment_shader_main =
-  "uniform bool DrawLines;\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatFrontAmbient, MatBackAmbient;\n"
-  "uniform vec4 MatFrontDiffuse, MatBackDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool BoolTextures;\n"
-  "uniform sampler2D TextureSampler;"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec4 color;\n"
-  "  if (DrawLines)\n"
-  "  {\n"
-  "    color = Color;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    vec3 normalDirection;\n"
-  "    vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "    vec4 ambientLighting, diffuseReflection, specularReflection;\n"
-  "    float ndotl, ndoth, pf;\n"
-  "    \n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      normalDirection = normalize(Normal);\n"
-  "      sceneColor = Color*MatFrontAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatFrontAmbient;\n"
-  "      diffuseColor = Color*MatFrontDiffuse;\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      normalDirection = -normalize(Normal);\n"
-  "      sceneColor = Color*MatBackAmbient*LtGlblAmbient;\n"
-  "      ambientColor = Color*MatBackAmbient;\n"
-  "      diffuseColor = Color*MatBackDiffuse;\n"
-  "    }\n"
-  "    \n"
-  "    ndotl = max(0.0,dot(normalDirection,LtDirection));\n"
-  "    ndoth = max(0.0,dot(normalDirection,LtHalfVector));\n"
-  "    if (ndotl == 0.0)\n"
-  "      pf = 0.0;\n"
-  "    else\n"
-  "      pf = pow(ndoth,MatShininess);\n"
-  "    ambientLighting = ambientColor*LtAmbient;\n"
-  "    diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "    specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "    color = sceneColor+ambientLighting+diffuseReflection;\n";
-static const GLchar *fragment_shader_out_2_1 =
-  "    if (BoolTextures)\n"
-  "      color *= texture2D(TextureSampler,TexCoord.st);"
-  "    color += specularReflection;\n"
-  "  }\n"
-  "  gl_FragColor = clamp(color,0.0,1.0);\n"
-  "}\n";
-static const GLchar *fragment_shader_out_3_0 =
-  "    if (BoolTextures)\n"
-  "      color *= texture(TextureSampler,TexCoord.st);"
-  "    color += specularReflection;\n"
-  "  }\n"
-  "  FragColor = clamp(color,0.0,1.0);\n"
-  "}\n";
+/* The fragment shader code. */
+static const GLchar *fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 Color;                                                      \n\
+varying vec4 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 Color;                                                           \n\
+in vec4 TexCoord;                                                        \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform bool DrawLines;                                                  \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatFrontAmbient, MatBackAmbient;                            \n\
+uniform vec4 MatFrontDiffuse, MatBackDiffuse;                            \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool BoolTextures;                                               \n\
+uniform sampler2D TextureSampler;                                        \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec4 color;                                                            \n\
+  if (DrawLines)                                                         \n\
+  {                                                                      \n\
+    color = Color;                                                       \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    vec3 normalDirection;                                                \n\
+    vec4 ambientColor, diffuseColor, sceneColor;                         \n\
+    vec4 ambientLighting, diffuseReflection, specularReflection;         \n\
+    float ndotl, ndoth, pf;                                              \n\
+                                                                         \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+      normalDirection = normalize(Normal);                               \n\
+      sceneColor = Color*MatFrontAmbient*LtGlblAmbient;                  \n\
+      ambientColor = Color*MatFrontAmbient;                              \n\
+      diffuseColor = Color*MatFrontDiffuse;                              \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+      normalDirection = -normalize(Normal);                              \n\
+      sceneColor = Color*MatBackAmbient*LtGlblAmbient;                   \n\
+      ambientColor = Color*MatBackAmbient;                               \n\
+      diffuseColor = Color*MatBackDiffuse;                               \n\
+    }                                                                    \n\
+                                                                         \n\
+    ndotl = max(0.0,dot(normalDirection,LtDirection));                   \n\
+    ndoth = max(0.0,dot(normalDirection,LtHalfVector));                  \n\
+    if (ndotl == 0.0)                                                    \n\
+      pf = 0.0;                                                          \n\
+    else                                                                 \n\
+      pf = pow(ndoth,MatShininess);                                      \n\
+    ambientLighting = ambientColor*LtAmbient;                            \n\
+    diffuseReflection = LtDiffuse*diffuseColor*ndotl;                    \n\
+    specularReflection = LtSpecular*MatSpecular*pf;                      \n\
+    color = sceneColor+ambientLighting+diffuseReflection;                \n\
+    if (BoolTextures)                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSampler,TexCoord.st).rrra;               \n\
+#else                                                                    \n\
+      color *= texture(TextureSampler,TexCoord.st).rrra;                 \n\
+#endif                                                                   \n\
+    color += specularReflection;                                         \n\
+    color.a = diffuseColor.a;                                            \n\
+  }                                                                      \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = clamp(color,0.0,1.0);                                   \n\
+#else                                                                    \n\
+  FragColor = clamp(color,0.0,1.0);                                      \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 #endif /* HAVE_GLSL */
 
@@ -1088,6 +1082,7 @@ static int roman_boy_ff(ModeInfo *mi, double umin, double umax,
   if (pp->marks)
   {
     glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 #ifndef HAVE_JWZGLES
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
 #endif
@@ -1905,6 +1900,9 @@ static int roman_boy_pf(ModeInfo *mi, double umin, double umax,
     }
   }
 
+  if (pp->use_vao)
+    glBindVertexArray(pp->vertex_array_object);
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,pp->tex_name);
   glUniform1i(pp->texture_sampler_index,0);
@@ -1954,6 +1952,9 @@ static int roman_boy_pf(ModeInfo *mi, double umin, double umax,
   glBindBuffer(GL_ARRAY_BUFFER,0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
+  if (pp->use_vao)
+    glBindVertexArray(0);
+
   glUseProgram(0);
 
   if (pp->appearance != APPEARANCE_DIRECTION_BANDS)
@@ -1985,9 +1986,14 @@ static void gen_texture(ModeInfo *mi)
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-  glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,TEX_DIMENSION,TEX_DIMENSION,0,
-               GL_LUMINANCE,GL_UNSIGNED_BYTE,texture);
+#ifdef HAVE_GLSL
+  if (pp->use_shaders)
+    glTexImage2D(GL_TEXTURE_2D,0,GL_R8,TEX_DIMENSION,TEX_DIMENSION,0,
+                 GL_RED,GL_UNSIGNED_BYTE,texture);
+  else
+#endif /* HAVE_GLSL */
+    glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE,TEX_DIMENSION,TEX_DIMENSION,0,
+                 GL_LUMINANCE,GL_UNSIGNED_BYTE,texture);
 }
 
 
@@ -1998,8 +2004,8 @@ static void init_glsl(ModeInfo *mi)
   romanboystruct *pp = &romanboy[MI_SCREEN(mi)];
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
-  const GLchar *vertex_shader_source[3];
-  const GLchar *fragment_shader_source[4];
+  const GLchar *vertex_shader_source[2];
+  const GLchar *fragment_shader_source[2];
 
   pp->uv = calloc(2*pp->g*(NUMU+1)*(NUMV+1),sizeof(float));
   pp->indices = calloc(4*pp->g*(NUMU+1)*(NUMV+1),sizeof(float));
@@ -2011,54 +2017,18 @@ static void init_glsl(ModeInfo *mi)
   pp->ni = 0;
   pp->ne = 0;
   pp->nt = 0;
+  pp->use_vao = False;
 
   if (!glsl_GetGlAndGlslVersions(&gl_major,&gl_minor,&glsl_major,&glsl_minor,
                                  &gl_gles3))
     return;
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      vertex_shader_source[0] = shader_version_2_1;
-      vertex_shader_source[1] = vertex_shader_attribs_2_1;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_2_1;
-      fragment_shader_source[1] = fragment_shader_attribs_2_1;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_2_1;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      vertex_shader_source[0] = shader_version_3_0;
-      vertex_shader_source[1] = vertex_shader_attribs_3_0;
-      vertex_shader_source[2] = vertex_shader_main;
-      fragment_shader_source[0] = shader_version_3_0;
-      fragment_shader_source[1] = fragment_shader_attribs_3_0;
-      fragment_shader_source[2] = fragment_shader_main;
-      fragment_shader_source[3] = fragment_shader_out_3_0;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    vertex_shader_source[0] = shader_version_3_0_es;
-    vertex_shader_source[1] = vertex_shader_attribs_3_0;
-    vertex_shader_source[2] = vertex_shader_main;
-    fragment_shader_source[0] = shader_version_3_0_es;
-    fragment_shader_source[1] = fragment_shader_attribs_3_0;
-    fragment_shader_source[2] = fragment_shader_main;
-    fragment_shader_source[3] = fragment_shader_out_3_0;
-  }
-  if (!glsl_CompileAndLinkShaders(3,vertex_shader_source,
-                                  4,fragment_shader_source,
+
+  vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  vertex_shader_source[1] = vertex_shader;
+  fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  fragment_shader_source[1] = fragment_shader;
+  if (!glsl_CompileAndLinkShaders(2,vertex_shader_source,
+                                  2,fragment_shader_source,
                                   &pp->shader_program))
     return;
   pp->vertex_uv_index = glGetAttribLocation(pp->shader_program,"VertexUV");
@@ -2128,6 +2098,10 @@ static void init_glsl(ModeInfo *mi)
   glGenBuffers(1,&pp->color_buffer);
   glGenBuffers(1,&pp->indices_buffer);
 
+  pp->use_vao = glsl_IsCoreProfile();
+  if (pp->use_vao)
+    glGenVertexArrays(1,&pp->vertex_array_object);
+
   pp->use_shaders = True;
 }
 
@@ -2187,12 +2161,12 @@ static void init(ModeInfo *mi)
   pp->col = calloc(4*pp->g*(NUMU+1)*(NUMV+1),sizeof(float));
   pp->tex = calloc(2*pp->g*(NUMU+1)*(NUMV+1),sizeof(float));
 
-  gen_texture(mi);
-  setup_roman_boy_color_texture(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,pp->g*NUMU,NUMV);
-
 #ifdef HAVE_GLSL
   init_glsl(mi);
 #endif /* HAVE_GLSL */
+
+  gen_texture(mi);
+  setup_roman_boy_color_texture(mi,0.0,2.0*M_PI,0.0,2.0*M_PI,pp->g*NUMU,NUMV);
 
 #ifdef HAVE_ANDROID
   /* glPolygonMode(...,GL_LINE) is not supported for an OpenGL ES 1.1
@@ -2573,6 +2547,8 @@ ENTRYPOINT void free_romanboy(ModeInfo *mi)
     glDeleteBuffers(1,&pp->vertex_t_buffer);
     glDeleteBuffers(1,&pp->color_buffer);
     glDeleteBuffers(1,&pp->indices_buffer);
+    if (pp->use_vao)
+      glDeleteVertexArrays(1,&pp->vertex_array_object);
     if (pp->shader_program != 0)
     {
       glUseProgram(0);

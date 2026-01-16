@@ -4,6 +4,22 @@ set -e
 
 case "$1" in
     configure)
+
       killall -HUP xscreensaver 2>&-
+
+      # I think that without this, newly-installed icons don't show up in
+      # desktop menus or in xscreensaver-settings.  Is there a better way?
+      #
+      for f in /usr/share/icons/index.theme     \
+               /usr/share/icons/*/index.theme   \
+               /usr/share/pixmaps/index.theme   \
+               /usr/share/pixmaps/*/index.theme \
+      ; do
+        if [ -f "$f" ]; then
+          f=`dirname "$f"`
+          gtk-update-icon-cache --force --quiet "$f"
+        fi
+      done
+
     ;;
 esac

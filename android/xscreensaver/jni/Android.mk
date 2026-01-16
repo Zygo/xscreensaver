@@ -131,6 +131,16 @@ LOCAL_SRC_FILES += \
     hacks/glx/whale.c \
     hacks/glx/sphereeversion-analytic.c \
     hacks/glx/sphereeversion-corrugations.c \
+    hacks/glx/xshadertoy.c \
+
+# These don't work well enough to turn on by default:
+#
+LOCAL_SRC_FILES_TODO = \
+    hacks/glx/flurry-smoke.c \
+    hacks/glx/flurry-spark.c \
+    hacks/glx/flurry-star.c \
+    hacks/glx/flurry-texture.c \
+
 
 # The source files of the currently active GL hacks:
 LOCAL_SRC_FILES += $(shell \

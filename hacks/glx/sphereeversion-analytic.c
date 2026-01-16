@@ -4,7 +4,7 @@
    transversally.  However, no creases or pinch points are allowed to
    occur. */
 
-/* Copyright (c) 2020-2022 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2020-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -21,6 +21,8 @@
  *
  * REVISION HISTORY:
  * C. Steger - 22/02/25: Moved the analytic sphere eversion code to this file
+ * C. Steger - 26/01/03: Make the code work in an OpenGL core profile
+ * C. Steger - 26/01/11: Use framebuffer objects for blending if possible
  */
 
 /*
@@ -1192,7 +1194,7 @@ static int bednorz_sphere_eversion_ff(ModeInfo *mi, float phi_min,
   numb_dir_min = numb_dir/4;
   numb_dir_max = 3*numb_dir/4;
 
-  glClearColor(0.0f,0.0f,0.0f,1.0f);
+  glClearColor(0.0f,0.0f,0.0f,0.0f);
   glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -1464,6 +1466,11 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
     { { -1.0, -1.0 }, { 1.0, -1.0 }, { 1.0, 1.0 }, { -1.0, 1.0 } };
   static const GLfloat blend_t[4][2] =
     { { 0.0, 0.0 }, { 1.0, 0.0 }, { 1.0, 1.0 }, { 0.0, 1.0 } };
+  static const GLenum draw_buffers[2] =
+  {
+    GL_COLOR_ATTACHMENT0,
+    GL_BACK
+  };
   GLfloat light_direction[3], half_vector[3], len;
   GLfloat p_mat[16], mv_mat[16], rot_mat[16];
   float mat[3][3];
@@ -1594,6 +1601,19 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,se->line_indices_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,ni*sizeof(GLuint),
                  se->line_indices,GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+
+    glBindBuffer(GL_ARRAY_BUFFER,se->blend_pos_buffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(blend_p),blend_p,GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+
+    glBindBuffer(GL_ARRAY_BUFFER,se->blend_tex_coord_buffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(blend_t),blend_t,GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,se->blend_indices_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(blend_indices),
+                 blend_indices,GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
     se->buffers_initialized = True;
@@ -1760,9 +1780,44 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
 
   for (pass=0; pass<num_passes; pass++)
   {
+    if (se->use_fbo)
+    {
+      if (num_passes == 2)
+      {
+        glBindFramebuffer(GL_FRAMEBUFFER,se->blend_fbo[pass]);
+        glDrawBuffers(1,&draw_buffers[0]);
+      }
+      else
+      {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER,se->default_draw_fbo);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER,se->default_read_fbo);
+        glDrawBuffers(1,&draw_buffers[1]);
+      }
+    }
+
+    if (se->display_mode[pass] == DISP_SURFACE)
+    {
+      glDisable(GL_CULL_FACE);
+      glEnable(GL_DEPTH_TEST);
+      glDepthFunc(GL_LESS);
+      glDepthMask(GL_TRUE);
+      glDisable(GL_BLEND);
+    }
+    else /* se->display_mode[pass] == DISP_TRANSPARENT */
+    {
+      glDisable(GL_CULL_FACE);
+      glDisable(GL_DEPTH_TEST);
+      glDepthMask(GL_FALSE);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+    }
+
     glUseProgram(se->poly_shader_program);
 
-    glClearColor(0.0f,0.0f,0.0f,1.0f);
+    if (se->use_vao)
+      glBindVertexArray(se->vertex_array_object);
+
+    glClearColor(0.0f,0.0f,0.0f,0.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -1776,44 +1831,17 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
     glVertexAttrib4f(se->poly_colorf_index,1.0f,1.0f,1.0f,1.0f);
     glVertexAttrib4f(se->poly_colorb_index,1.0f,1.0f,1.0f,1.0f);
 
-    if (se->display_mode[pass] == DISP_SURFACE)
-    {
-      glDisable(GL_CULL_FACE);
-      glEnable(GL_DEPTH_TEST);
-      glDepthFunc(GL_LESS);
-      glDepthMask(GL_TRUE);
-      glDisable(GL_BLEND);
-      glUniform4fv(se->poly_glbl_ambient_index,1,light_model_ambient);
-      if (se->colors[pass] != COLORS_EARTH)
-        glUniform4fv(se->poly_lt_ambient_index,1,light_ambient);
-      else
-        glUniform4fv(se->poly_lt_ambient_index,1,light_ambient_earth);
-      glUniform4fv(se->poly_lt_diffuse_index,1,light_diffuse);
-      glUniform4fv(se->poly_lt_specular_index,1,light_specular);
-      glUniform3fv(se->poly_lt_direction_index,1,light_direction);
-      glUniform3fv(se->poly_lt_halfvect_index,1,half_vector);
-      glUniform4fv(se->poly_specular_index,1,mat_specular);
-      glUniform1f(se->poly_shininess_index,50.0f);
-    }
-    else /* se->display_mode[pass] == DISP_TRANSPARENT */
-    {
-      glDisable(GL_CULL_FACE);
-      glDisable(GL_DEPTH_TEST);
-      glDepthMask(GL_FALSE);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-      glUniform4fv(se->poly_glbl_ambient_index,1,light_model_ambient);
-      if (se->colors[pass] != COLORS_EARTH)
-        glUniform4fv(se->poly_lt_ambient_index,1,light_ambient);
-      else
-        glUniform4fv(se->poly_lt_ambient_index,1,light_ambient_earth);
-      glUniform4fv(se->poly_lt_diffuse_index,1,light_diffuse);
-      glUniform4fv(se->poly_lt_specular_index,1,light_specular);
-      glUniform3fv(se->poly_lt_direction_index,1,light_direction);
-      glUniform3fv(se->poly_lt_halfvect_index,1,half_vector);
-      glUniform4fv(se->poly_specular_index,1,mat_specular);
-      glUniform1f(se->poly_shininess_index,50.0f);
-    }
+    glUniform4fv(se->poly_glbl_ambient_index,1,light_model_ambient);
+    if (se->colors[pass] != COLORS_EARTH)
+      glUniform4fv(se->poly_lt_ambient_index,1,light_ambient);
+    else
+      glUniform4fv(se->poly_lt_ambient_index,1,light_ambient_earth);
+    glUniform4fv(se->poly_lt_diffuse_index,1,light_diffuse);
+    glUniform4fv(se->poly_lt_specular_index,1,light_specular);
+    glUniform3fv(se->poly_lt_direction_index,1,light_direction);
+    glUniform3fv(se->poly_lt_halfvect_index,1,half_vector);
+    glUniform4fv(se->poly_specular_index,1,mat_specular);
+    glUniform1f(se->poly_shininess_index,50.0f);
 
     if (se->colors[pass] == COLORS_TWOSIDED)
     {
@@ -1850,15 +1878,15 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
       }
     }
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,se->tex_names[0]);
-    glUniform1i(se->poly_tex_samp_f_index,0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D,se->tex_names[1]);
-    glUniform1i(se->poly_tex_samp_b_index,1);
     glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D,se->tex_names[0]);
+    glUniform1i(se->poly_tex_samp_f_index,2);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D,se->tex_names[1]);
+    glUniform1i(se->poly_tex_samp_b_index,3);
+    glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D,se->tex_names[2]);
-    glUniform1i(se->poly_tex_samp_w_index,2);
+    glUniform1i(se->poly_tex_samp_w_index,4);
     glUniform1i(se->poly_bool_textures_index,se->colors[pass] == COLORS_EARTH);
 
     glEnable(GL_POLYGON_OFFSET_FILL);
@@ -1957,11 +1985,17 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
     glDisable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(0.0f,0.0f);
 
+    if (se->use_vao)
+      glBindVertexArray(0);
+
     glUseProgram(0);
 
     if (se->graticule[pass])
     {
       glUseProgram(se->line_shader_program);
+
+      if (se->use_vao)
+        glBindVertexArray(se->vertex_array_object);
 
       glUniformMatrix4fv(se->line_mv_index,1,GL_FALSE,mv_mat);
       glUniformMatrix4fv(se->line_proj_index,1,GL_FALSE,p_mat);
@@ -1983,23 +2017,36 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
       glBindBuffer(GL_ARRAY_BUFFER,0);
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 
+      if (se->use_vao)
+        glBindVertexArray(0);
+
       glUseProgram(0);
     }
  
-    if (num_passes == 2)
+    if (!se->use_fbo)
     {
-      /* Copy the rendered image to a texture. */
-      glGetIntegerv(GL_DRAW_BUFFER0,&draw_buf);
-      glGetIntegerv(GL_READ_BUFFER,&read_buf);
-      glReadBuffer(draw_buf);
-      glBindTexture(GL_TEXTURE_2D,se->color_textures[pass]);
-      glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,se->WindW,se->WindH);
-      glReadBuffer(read_buf);
+      if (num_passes == 2)
+      {
+        /* Copy the rendered image to a texture. */
+        glGetIntegerv(GL_DRAW_BUFFER0,&draw_buf);
+        glGetIntegerv(GL_READ_BUFFER,&read_buf);
+        glReadBuffer(draw_buf);
+        glBindTexture(GL_TEXTURE_2D,se->color_textures[pass]);
+        glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,se->WindW,se->WindH);
+        glReadBuffer(read_buf);
+      }
     }
   }
 
   if (num_passes == 2)
   {
+    if (se->use_fbo)
+    {
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER,se->default_draw_fbo);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER,se->default_read_fbo);
+      glDrawBuffers(1,&draw_buffers[1]);
+    }
+
     t = (float)se->turn_step/(float)se->num_turn;
     /* Apply an easing function to t. */
     t = (3.0-2.0*t)*t*t;
@@ -2016,25 +2063,44 @@ static int bednorz_sphere_eversion_pf(ModeInfo *mi, float phi_min,
 
     glUniform1f(se->blend_t_index,t);
 
+    if (se->use_vao)
+      glBindVertexArray(se->vertex_array_object);
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,se->color_textures[0]);
+    if (se->use_fbo)
+      glBindTexture(GL_TEXTURE_2D,se->blend_color_tex[0]);
+    else
+      glBindTexture(GL_TEXTURE_2D,se->color_textures[0]);
     glUniform1i(se->blend_sampler0_index,0);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D,se->color_textures[1]);
+    if (se->use_fbo)
+      glBindTexture(GL_TEXTURE_2D,se->blend_color_tex[1]);
+    else
+      glBindTexture(GL_TEXTURE_2D,se->color_textures[1]);
     glUniform1i(se->blend_sampler1_index,1);
 
     glEnableVertexAttribArray(se->blend_vertex_p_index);
-    glVertexAttribPointer(se->blend_vertex_p_index,2,GL_FLOAT,GL_FALSE,
-                          2*sizeof(GLfloat),blend_p);
+    glBindBuffer(GL_ARRAY_BUFFER,se->blend_pos_buffer);
+    glVertexAttribPointer(se->blend_vertex_p_index,2,GL_FLOAT,GL_FALSE,0,0);
 
     glEnableVertexAttribArray(se->blend_vertex_t_index);
-    glVertexAttribPointer(se->blend_vertex_t_index,2,GL_FLOAT,GL_FALSE,
-                          2*sizeof(GLfloat),blend_t);
+    glBindBuffer(GL_ARRAY_BUFFER,se->blend_tex_coord_buffer);
+    glVertexAttribPointer(se->blend_vertex_t_index,2,GL_FLOAT,GL_FALSE,0,0);
 
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,blend_indices);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,se->blend_indices_buffer);
+
+    index_offset = 0;
+    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,
+                   (const void *)index_offset);
 
     glActiveTexture(GL_TEXTURE0);
+
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
+
+    if (se->use_vao)
+      glBindVertexArray(0);
 
     glUseProgram(0);
   }

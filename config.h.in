@@ -6,9 +6,6 @@
  */
 
 
-/* Define this to allow root to unlock, when not using PAM. */
-#undef ALLOW_ROOT_PASSWD
-
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
@@ -117,6 +114,9 @@
 /* Define this if OpenGL supports the OpenGL Shading Language. */
 #undef HAVE_GLSL
 
+/* Define this if you have the function glXGetProcAddressARB. */
+#undef HAVE_GLXGETPROCADDRESSARB
+
 /* Define this if you have Gtk 2.x. */
 #undef HAVE_GTK
 
@@ -160,11 +160,6 @@
 /* Define this if you have libsystemd. */
 #undef HAVE_LIBSYSTEMD
 
-/* Using the MIT-SCREEN-SAVER extension means that the X server will crash at
-   random times, and fading and hysteresis won't work. Don't use this. You'll
-   be sorry. See comment in xscreensaver.c. */
-#undef HAVE_MIT_SAVER_EXTENSION
-
 /* Define this if you have Motif. */
 #undef HAVE_MOTIF
 
@@ -179,11 +174,6 @@
 
 /* Define this if you have pam_fail_delay. */
 #undef HAVE_PAM_FAIL_DELAY
-
-/* Define this if you have a Linux-like /proc/interrupts file which can be
-   examined to determine when keyboard activity has occurred, and you use PS/2
-   input devices instead of USB. */
-#undef HAVE_PROC_INTERRUPTS
 
 /* Define this if you have a Linux-like /proc/.../oom_score_adj file which can
    be adjusted by root to exempt us from the out-of-memory killer. */
@@ -230,12 +220,6 @@
 
 /* Define to 1 if you have the 'setrlimit' function. */
 #undef HAVE_SETRLIMIT
-
-/* Define this if you have the SGI SCREEN_SAVER extension. */
-#undef HAVE_SGI_SAVER_EXTENSION
-
-/* Define this if you have the SGI-VIDEO-CONTROL extension. */
-#undef HAVE_SGI_VC_EXTENSION
 
 /* Define this if your system uses /etc/shadow. */
 #undef HAVE_SHADOW_PASSWD
@@ -305,24 +289,12 @@
 /* Define this if you have the Wayland libraries. */
 #undef HAVE_WAYLAND
 
-/* Define this if you have XF86VidModeGetViewPort, for virtual desktops. */
-#undef HAVE_XF86VMODE
-
-/* Define this if you have XF86VidModeSetGamma, for fading. */
-#undef HAVE_XF86VMODE_GAMMA
-
-/* Define this if you have XF86VidModeSetGammaRamp, for fading. */
-#undef HAVE_XF86VMODE_GAMMA_RAMP
-
 /* Define this if you have libXft2. */
 #undef HAVE_XFT
 
 /* Define this if you have XHPDisableReset, which allows Ctrl-Sh-Reset to be
    temporarily disabled. */
 #undef HAVE_XHPDISABLERESET
-
-/* Define this if you have the X11R5 XIDLE extension. */
-#undef HAVE_XIDLE_EXTENSION
 
 /* Define this if you have the Xinerama extension. */
 #undef HAVE_XINERAMA
@@ -365,10 +337,6 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
-
-/* Whether PAM should check the result of account modules when authenticating.
-   */
-#undef PAM_CHECK_ACCOUNT_TYPE
 
 /* The name of the "xscreensaver" PAM service. */
 #undef PAM_SERVICE_NAME

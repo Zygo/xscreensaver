@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2022 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.16 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.17 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -106,10 +106,12 @@ sub munge_ad($) {
     local $/ = undef;  # read entire file
     my $b = <$in>;
     close $in;
+    my ($oname) = ($xml =~ m@/([^/]+)\.xml$@si);
     my ($name)  = ($b =~ m@<screensaver[^<>]* \b name   = \" ([^<>\"]+) \"@sx);
     my ($label) = ($b =~ m@<screensaver[^<>]* \b _label = \" ([^<>\"]+) \"@sx);
     error ("$xml: no name") unless $name;
     error ("$xml: no label") unless $label;
+    error ("$xml: mismatched name: $oname") unless ($name eq $oname);
 
     my $label2 = lc($name);
     $label2 =~ s/^((x|gl)?[a-z])/\U$1/s;  # what prefs.c (make_hack_name) does
@@ -151,6 +153,8 @@ sub munge_ad($) {
     my $glep = ($hack eq 'extrusion');
     if (-f "$hack.c" || -f "$hack") { $glp = 0; }
     elsif (-f "glx/$hack.c") { $glp = 1; }
+    elsif (-f "glx/glsl/$hack.glsl") { $glp = 1; }
+    elsif (-f "glx/glsl/$hack-0.glsl") { $glp = 1; }
     elsif ($hack eq 'companioncube') { $glp = 1; }  # kludge
     elsif ($dis != 2) { error ("is $hack X or GL?"); }
 

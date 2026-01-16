@@ -7,7 +7,7 @@
 static const char sccsid[] = "@(#)cubocteversion.c  1.1 23/03/02 xlockmore";
 #endif
 
-/* Copyright (c) 2023-2025 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2023-2026 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -24,6 +24,7 @@ static const char sccsid[] = "@(#)cubocteversion.c  1.1 23/03/02 xlockmore";
  *
  * REVISION HISTORY:
  * C. Steger - 23/03/06: Initial version
+ * C. Steger - 26/01/04: Make the code work in an OpenGL core profile
  */
 
 /*
@@ -290,7 +291,7 @@ typedef struct {
   GLuint self_tri_strips;
   Bool use_shaders;
 #ifdef HAVE_GLSL
-  Bool use_mipmaps;
+  Bool use_mipmaps, use_vao;
   /* The precomputed texture coordinates of the cuboctahedron */
   GLfloat tex[3*3*NUM_FACE];
   /* The textures of earth by day (index 0), earth by night (index 1), and
@@ -369,6 +370,7 @@ typedef struct {
   GLint wa_finl_tex_samp_color, wa_finl_tex_samp_num;
   GLint wa_finl_tex_samp_opaque;
   GLuint quad_buffer;
+  GLuint vertex_array_object;
 #endif /* HAVE_GLSL */
 } cubocteversionstruct;
 
@@ -1261,863 +1263,776 @@ static float vert_denner[NUM_MODELS_DENNER][NUM_VERT][3] =
 
 #ifdef HAVE_GLSL
 
-/* The GLSL versions that correspond to different versions of OpenGL. */
-static const GLchar *shader_version_2_1 =
-  "#version 120\n";
-static const GLchar *shader_version_3_0 =
-  "#version 130\n";
-static const GLchar *shader_version_3_0_es =
-  "#version 300 es\n"
-  "precision highp float;\n"
-  "precision highp int;\n"
-  "precision highp sampler2D;\n";
+/* The polygon vertex shader code. */
+static const GLchar *poly_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+attribute vec3 VertexNormal;                                             \n\
+attribute vec4 VertexColorF;                                             \n\
+attribute vec4 VertexColorB;                                             \n\
+attribute vec3 VertexTexCoord;                                           \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec3 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+in vec3 VertexNormal;                                                    \n\
+in vec4 VertexColorF;                                                    \n\
+in vec4 VertexColorB;                                                    \n\
+in vec3 VertexTexCoord;                                                  \n\
+out vec3 Normal;                                                         \n\
+out vec4 ColorF;                                                         \n\
+out vec4 ColorB;                                                         \n\
+out vec3 TexCoord;                                                       \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform bool BoolTextures;                                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  ColorF = VertexColorF;                                                 \n\
+  ColorB = VertexColorB;                                                 \n\
+  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;          \n\
+  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);                \n\
+  gl_Position = MatProj*Position;                                        \n\
+  if (BoolTextures)                                                      \n\
+    TexCoord = VertexTexCoord;                                           \n\
+}                                                                        \n";
+
+/* The polygon fragment shader code. */
+static const GLchar *poly_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec3 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 ColorF;                                                          \n\
+in vec4 ColorB;                                                          \n\
+in vec3 TexCoord;                                                        \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+const float M_PI_F  = 3.14159265359f;                                    \n\
+const float M_2PI_F = 6.28318530718f;                                    \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatFrontAmbient, MatBackAmbient;                            \n\
+uniform vec4 MatFrontDiffuse, MatBackDiffuse;                            \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool BoolTextures;                                               \n\
+uniform sampler2D TextureSamplerFront;                                   \n\
+uniform sampler2D TextureSamplerBack;                                    \n\
+uniform sampler2D TextureSamplerWater;                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec3 normalDirection;                                                  \n\
+  vec4 ambientColor, diffuseColor, sceneColor;                           \n\
+  vec4 ambientLighting, diffuseReflection, specularReflection, color;    \n\
+  vec3 normTexCoord;                                                     \n\
+  vec2 texCoor;                                                          \n\
+  float ndotl, ndoth, pf, lat, lon;                                      \n\
+                                                                         \n\
+  if (gl_FrontFacing)                                                    \n\
+  {                                                                      \n\
+    normalDirection = normalize(Normal);                                 \n\
+    sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;                   \n\
+    ambientColor = ColorF*MatFrontAmbient;                               \n\
+    diffuseColor = ColorF*MatFrontDiffuse;                               \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    normalDirection = -normalize(Normal);                                \n\
+    sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;                    \n\
+    ambientColor = ColorB*MatBackAmbient;                                \n\
+    diffuseColor = ColorB*MatBackDiffuse;                                \n\
+  }                                                                      \n\
+                                                                         \n\
+  ndotl = max(0.0f,dot(normalDirection,LtDirection));                    \n\
+  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));                   \n\
+  if (ndotl == 0.0f)                                                     \n\
+    pf = 0.0f;                                                           \n\
+  else                                                                   \n\
+    pf = pow(ndoth,MatShininess);                                        \n\
+  ambientLighting = ambientColor*LtAmbient;                              \n\
+  diffuseReflection = LtDiffuse*diffuseColor*ndotl;                      \n\
+  specularReflection = LtSpecular*MatSpecular*pf;                        \n\
+  color = sceneColor+ambientLighting+diffuseReflection;                  \n\
+  if (BoolTextures)                                                      \n\
+  {                                                                      \n\
+    normTexCoord = normalize(TexCoord);                                  \n\
+    lat = asin(normTexCoord.z);                                          \n\
+    lon = atan(normTexCoord.y,normTexCoord.x);                           \n\
+    texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);                    \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSamplerFront,texCoor);                   \n\
+      specularReflection *= texture2D(TextureSamplerWater,texCoor);      \n\
+#else                                                                    \n\
+      color *= texture(TextureSamplerFront,texCoor);                     \n\
+      specularReflection *= texture(TextureSamplerWater,texCoor);        \n\
+#endif                                                                   \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSamplerBack,texCoor);                    \n\
+#else                                                                    \n\
+      color *= texture(TextureSamplerBack,texCoor);                      \n\
+#endif                                                                   \n\
+      specularReflection *= 0.0f;                                        \n\
+    }                                                                    \n\
+  }                                                                      \n\
+  color += specularReflection;                                           \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = clamp(color,0.0f,1.0f);                                 \n\
+  gl_FragColor.a = diffuseColor.a;                                       \n\
+#else                                                                    \n\
+  FragColor = clamp(color,0.0f,1.0f);                                    \n\
+  FragColor.a = diffuseColor.a;                                          \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init_glsl(). */
-static const GLchar *poly_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "attribute vec3 VertexNormal;\n"
-  "attribute vec4 VertexColorF;\n"
-  "attribute vec4 VertexColorB;\n"
-  "attribute vec3 VertexTexCoord;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec3 TexCoord;\n"
-  "\n";
-static const GLchar *poly_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "in vec3 VertexNormal;\n"
-  "in vec4 VertexColorF;\n"
-  "in vec4 VertexColorB;\n"
-  "in vec3 VertexTexCoord;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 ColorF;\n"
-  "out vec4 ColorB;\n"
-  "out vec3 TexCoord;\n"
-  "\n";
-static const GLchar *poly_vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform bool BoolTextures;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  ColorF = VertexColorF;\n"
-  "  ColorB = VertexColorB;\n"
-  "  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;\n"
-  "  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  if (BoolTextures)\n"
-  "    TexCoord = VertexTexCoord;\n"
-  "}\n";
+/* The vertex shader code for the initialization stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_init_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);                \n\
+  gl_Position = MatProj*Position;                                        \n\
+}                                                                        \n";
 
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *poly_fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec3 TexCoord;\n"
-  "\n";
-static const GLchar *poly_fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 ColorF;\n"
-  "in vec4 ColorB;\n"
-  "in vec3 TexCoord;\n"
-  "\n"
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *poly_fragment_shader_main =
-  "const float M_PI_F  = 3.14159265359f;\n"
-  "const float M_2PI_F = 6.28318530718f;\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatFrontAmbient, MatBackAmbient;\n"
-  "uniform vec4 MatFrontDiffuse, MatBackDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool BoolTextures;\n"
-  "uniform sampler2D TextureSamplerFront;\n"
-  "uniform sampler2D TextureSamplerBack;\n"
-  "uniform sampler2D TextureSamplerWater;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec3 normalDirection;\n"
-  "  vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "  vec4 ambientLighting, diffuseReflection, specularReflection, color;\n"
-  "  vec3 normTexCoord\n;"
-  "  vec2 texCoor;\n"
-  "  float ndotl, ndoth, pf, lat, lon;\n"
-  "  \n"
-  "  if (gl_FrontFacing)\n"
-  "  {\n"
-  "    normalDirection = normalize(Normal);\n"
-  "    sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;\n"
-  "    ambientColor = ColorF*MatFrontAmbient;\n"
-  "    diffuseColor = ColorF*MatFrontDiffuse;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    normalDirection = -normalize(Normal);\n"
-  "    sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;\n"
-  "    ambientColor = ColorB*MatBackAmbient;\n"
-  "    diffuseColor = ColorB*MatBackDiffuse;\n"
-  "  }\n"
-  "  \n"
-  "  ndotl = max(0.0f,dot(normalDirection,LtDirection));\n"
-  "  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));\n"
-  "  if (ndotl == 0.0f)\n"
-  "    pf = 0.0f;\n"
-  "  else\n"
-  "    pf = pow(ndoth,MatShininess);\n"
-  "  ambientLighting = ambientColor*LtAmbient;\n"
-  "  diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "  specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "  color = sceneColor+ambientLighting+diffuseReflection;\n";
-static const GLchar *poly_fragment_shader_out_2_1 =
-  "  if (BoolTextures)\n"
-  "  {\n"
-  "    normTexCoord = normalize(TexCoord);\n"
-  "    lat = asin(normTexCoord.z);\n"
-  "    lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "    texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color *= texture2D(TextureSamplerFront,texCoor);\n"
-  "      specularReflection *= texture2D(TextureSamplerWater,texCoor);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      color *= texture2D(TextureSamplerBack,texCoor);\n"
-  "      specularReflection *= 0.0f;\n"
-  "    }\n"
-  "  }\n"
-  "  color += specularReflection;\n"
-  "  gl_FragColor = clamp(color,0.0f,1.0f);\n"
-  "  gl_FragColor.a = diffuseColor.a;\n"
-  "}\n";
-static const GLchar *poly_fragment_shader_out_3_0 =
-  "  if (BoolTextures)\n"
-  "  {\n"
-  "    normTexCoord = normalize(TexCoord);\n"
-  "    lat = asin(normTexCoord.z);\n"
-  "    lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "    texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerFront,texCoor);\n"
-  "      specularReflection *= texture(TextureSamplerWater,texCoor);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerBack,texCoor);\n"
-  "      specularReflection *= 0.0f;\n"
-  "    }\n"
-  "  }\n"
-  "  color += specularReflection;\n"
-  "  FragColor = clamp(color,0.0f,1.0f);\n"
-  "  FragColor.a = diffuseColor.a;\n"
-  "}\n";
+/* The fragment shader code for the initialization stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_init_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ >= 130                                                   \n\
+out vec2 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+const float MAX_DEPTH = 1.0f;                                            \n\
+uniform vec2 TexScale;                                                   \n\
+uniform sampler2D TexSamplerOpaqueDepth;                                 \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec2 texCoord = gl_FragCoord.xy*TexScale;                              \n\
+#if __VERSION__ <= 120                                                   \n\
+  float opaqueDepth = texture2D(TexSamplerOpaqueDepth,texCoord.st).x;    \n\
+  if (opaqueDepth != 1.0f && gl_FragCoord.z > opaqueDepth)               \n\
+    gl_FragColor.rg = vec2(-MAX_DEPTH,opaqueDepth);                      \n\
+  else                                                                   \n\
+    gl_FragColor.rg = vec2(-gl_FragCoord.z,gl_FragCoord.z);              \n\
+#else                                                                    \n\
+  float opaqueDepth = texture(TexSamplerOpaqueDepth,texCoord.st).x;      \n\
+  if (opaqueDepth != 1.0f && gl_FragCoord.z > opaqueDepth)               \n\
+    FragColor = vec2(-MAX_DEPTH,opaqueDepth);                            \n\
+  else                                                                   \n\
+    FragColor = vec2(-gl_FragCoord.z,gl_FragCoord.z);                    \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *dp_init_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *dp_init_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *dp_init_vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);\n"
-  "  gl_Position = MatProj*Position;\n"
-  "}\n";
+/* The vertex shader code for the peeling stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_peel_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+attribute vec3 VertexNormal;                                             \n\
+attribute vec4 VertexColorF;                                             \n\
+attribute vec4 VertexColorB;                                             \n\
+attribute vec3 VertexTexCoord;                                           \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec3 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+in vec3 VertexNormal;                                                    \n\
+in vec4 VertexColorF;                                                    \n\
+in vec4 VertexColorB;                                                    \n\
+in vec3 VertexTexCoord;                                                  \n\
+out vec3 Normal;                                                         \n\
+out vec4 ColorF;                                                         \n\
+out vec4 ColorB;                                                         \n\
+out vec3 TexCoord;                                                       \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform bool BoolTextures;                                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  ColorF = VertexColorF;                                                 \n\
+  ColorB = VertexColorB;                                                 \n\
+  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;          \n\
+  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);                \n\
+  gl_Position = MatProj*Position;                                        \n\
+  if (BoolTextures)                                                      \n\
+    TexCoord = VertexTexCoord;                                           \n\
+}                                                                        \n";
 
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *dp_init_fragment_shader_attribs_2_1 =
-  "";
-static const GLchar *dp_init_fragment_shader_attribs_3_0 =
-  "out vec2 FragColor;\n"
-  "\n";
-static const GLchar *dp_init_fragment_shader_main =
-  "const float MAX_DEPTH = 1.0f;\n"
-  "uniform vec2 TexScale;\n"
-  "uniform sampler2D TexSamplerOpaqueDepth;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec2 texCoord = gl_FragCoord.xy*TexScale;\n";
-static const GLchar *dp_init_fragment_shader_out_2_1 =
-  "  float opaqueDepth = texture2D(TexSamplerOpaqueDepth,texCoord.st).x;\n"
-  "  if (opaqueDepth != 1.0f && gl_FragCoord.z > opaqueDepth)\n"
-  "    gl_FragColor.rg = vec2(-MAX_DEPTH,opaqueDepth);\n"
-  "  else\n"
-  "    gl_FragColor.rg = vec2(-gl_FragCoord.z,gl_FragCoord.z);\n"
-  "}\n";
-static const GLchar *dp_init_fragment_shader_out_3_0 =
-  "  float opaqueDepth = texture(TexSamplerOpaqueDepth,texCoord.st).x;\n"
-  "  if (opaqueDepth != 1.0f && gl_FragCoord.z > opaqueDepth)\n"
-  "    FragColor = vec2(-MAX_DEPTH,opaqueDepth);\n"
-  "  else\n"
-  "    FragColor = vec2(-gl_FragCoord.z,gl_FragCoord.z);\n"
-  "}\n";
-
-
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init_glsl(). */
-static const GLchar *dp_peel_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "attribute vec3 VertexNormal;\n"
-  "attribute vec4 VertexColorF;\n"
-  "attribute vec4 VertexColorB;\n"
-  "attribute vec3 VertexTexCoord;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec3 TexCoord;\n"
-  "\n";
-static const GLchar *dp_peel_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "in vec3 VertexNormal;\n"
-  "in vec4 VertexColorF;\n"
-  "in vec4 VertexColorB;\n"
-  "in vec3 VertexTexCoord;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 ColorF;\n"
-  "out vec4 ColorB;\n"
-  "out vec3 TexCoord;\n"
-  "\n";
-static const GLchar *dp_peel_vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform bool BoolTextures;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  ColorF = VertexColorF;\n"
-  "  ColorB = VertexColorB;\n"
-  "  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;\n"
-  "  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  if (BoolTextures)\n"
-  "    TexCoord = VertexTexCoord;\n"
-  "}\n";
-
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *dp_peel_fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec3 TexCoord;\n"
-  "\n";
-static const GLchar *dp_peel_fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 ColorF;\n"
-  "in vec4 ColorB;\n"
-  "in vec3 TexCoord;\n"
-  "\n";
-static const GLchar *dp_peel_fragment_shader_attribs_3_0_es =
-  "in vec3 Normal;\n"
-  "in vec4 ColorF;\n"
-  "in vec4 ColorB;\n"
-  "in vec3 TexCoord;\n"
-  "\n"
-  "layout(location = 0) out vec4 FragData0;\n"
-  "layout(location = 1) out vec4 FragData1;\n"
-  "layout(location = 2) out vec4 FragData2;\n"
-  "\n";
-static const GLchar *dp_peel_fragment_shader_main =
-  "const float M_PI_F  = 3.14159265359f;\n"
-  "const float M_2PI_F = 6.28318530718f;\n"
-  "const float MAX_DEPTH = 1.0f;\n"
-  "const float EPS = 1.0e-7f;\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatFrontAmbient, MatBackAmbient;\n"
-  "uniform vec4 MatFrontDiffuse, MatBackDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool BoolTextures;\n"
-  "uniform vec2 TexScale;\n"
-  "uniform sampler2D TexSamplerDepthBlender;\n"
-  "uniform sampler2D TexSamplerFrontBlender;\n"
-  "uniform sampler2D TexSamplerFront;\n"
-  "uniform sampler2D TexSamplerBack;\n"
-  "uniform sampler2D TexSamplerWater;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  float fragDepth, nearestDepth, farthestDepth, alphaMultiplier;\n"
-  "  vec2 depthBlender, peelTexCoord;\n"
-  "  vec4 forwardTemp;\n"
-  "  \n"
-  "  vec3 normalDirection;\n"
-  "  vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "  vec4 ambientLighting, diffuseReflection, specularReflection, color;\n"
-  "  vec3 normTexCoord\n;"
-  "  vec2 texCoor;\n"
-  "  float ndotl, ndoth, pf, lat, lon;\n"
-  "  \n";
-static const GLchar *dp_peel_fragment_shader_peel_2_1 =
-  "  peelTexCoord = gl_FragCoord.xy*TexScale;\n"
-  "  fragDepth = gl_FragCoord.z;\n"
-  "  depthBlender = texture2D(TexSamplerDepthBlender,peelTexCoord.st).xy;\n"
-  "  forwardTemp = texture2D(TexSamplerFrontBlender,peelTexCoord.st);\n"
-  "  gl_FragData[0].xy = depthBlender;\n"
-  "  gl_FragData[1] = forwardTemp;\n"
-  "  gl_FragData[2] = vec4(0.0f);\n"
-  "  nearestDepth = -depthBlender.x;\n"
-  "  farthestDepth = depthBlender.y;\n"
-  "  alphaMultiplier = 1.0f-forwardTemp.a;\n"
-  "  if (fragDepth < nearestDepth-EPS || fragDepth > farthestDepth+EPS)\n"
-  "  {\n"
-  "    gl_FragData[0].xy = vec2(-MAX_DEPTH);\n"
-  "  }\n"
-  "  else if (fragDepth > nearestDepth+EPS && fragDepth < farthestDepth-EPS)\n"
-  "  {\n"
-  "    gl_FragData[0].xy = vec2(-fragDepth,fragDepth);\n"
-  "  }\n"
-  "  else\n"
-  "  {\n";
-static const GLchar *dp_peel_fragment_shader_peel_3_0 =
-  "  peelTexCoord = gl_FragCoord.xy*TexScale;\n"
-  "  fragDepth = gl_FragCoord.z;\n"
-  "  depthBlender = texture(TexSamplerDepthBlender,peelTexCoord.st).xy;\n"
-  "  forwardTemp = texture(TexSamplerFrontBlender,peelTexCoord.st);\n"
-  "  gl_FragData[0].xy = depthBlender;\n"
-  "  gl_FragData[1] = forwardTemp;\n"
-  "  gl_FragData[2] = vec4(0.0f);\n"
-  "  nearestDepth = -depthBlender.x;\n"
-  "  farthestDepth = depthBlender.y;\n"
-  "  alphaMultiplier = 1.0f-forwardTemp.a;\n"
-  "  if (fragDepth < nearestDepth-EPS || fragDepth > farthestDepth+EPS)\n"
-  "  {\n"
-  "    gl_FragData[0].xy = vec2(-MAX_DEPTH);\n"
-  "  }\n"
-  "  else if (fragDepth > nearestDepth+EPS && fragDepth < farthestDepth-EPS)\n"
-  "  {\n"
-  "    gl_FragData[0].xy = vec2(-fragDepth,fragDepth);\n"
-  "  }\n"
-  "  else\n"
-  "  {\n";
-static const GLchar *dp_peel_fragment_shader_peel_3_0_es =
-  "  peelTexCoord = gl_FragCoord.xy*TexScale;\n"
-  "  fragDepth = gl_FragCoord.z;\n"
-  "  depthBlender = texture(TexSamplerDepthBlender,peelTexCoord.st).xy;\n"
-  "  forwardTemp = texture(TexSamplerFrontBlender,peelTexCoord.st);\n"
-  "  FragData0.xy = depthBlender;\n"
-  "  FragData1 = forwardTemp;\n"
-  "  FragData2 = vec4(0.0f);\n"
-  "  nearestDepth = -depthBlender.x;\n"
-  "  farthestDepth = depthBlender.y;\n"
-  "  alphaMultiplier = 1.0f-forwardTemp.a;\n"
-  "  if (fragDepth < nearestDepth-EPS || fragDepth > farthestDepth+EPS)\n"
-  "  {\n"
-  "    FragData0.xy = vec2(-MAX_DEPTH);\n"
-  "  }\n"
-  "  else if (fragDepth > nearestDepth+EPS && fragDepth < farthestDepth-EPS)\n"
-  "  {\n"
-  "    FragData0.xy = vec2(-fragDepth,fragDepth);\n"
-  "  }\n"
-  "  else\n"
-  "  {\n";
-static const GLchar *dp_peel_fragment_shader_col =
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      normalDirection = normalize(Normal);\n"
-  "      sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;\n"
-  "      ambientColor = ColorF*MatFrontAmbient;\n"
-  "      diffuseColor = ColorF*MatFrontDiffuse;\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      normalDirection = -normalize(Normal);\n"
-  "      sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;\n"
-  "      ambientColor = ColorB*MatBackAmbient;\n"
-  "      diffuseColor = ColorB*MatBackDiffuse;\n"
-  "    }\n"
-  "    \n"
-  "    ndotl = max(0.0f,dot(normalDirection,LtDirection));\n"
-  "    ndoth = max(0.0f,dot(normalDirection,LtHalfVector));\n"
-  "    if (ndotl == 0.0f)\n"
-  "      pf = 0.0f;\n"
-  "    else\n"
-  "      pf = pow(ndoth,MatShininess);\n"
-  "    ambientLighting = ambientColor*LtAmbient;\n"
-  "    diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "    specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "    color = sceneColor+ambientLighting+diffuseReflection;\n";
-static const GLchar *dp_peel_fragment_shader_col_2_1 =
-  "    if (BoolTextures)\n"
-  "    {\n"
-  "      normTexCoord = normalize(TexCoord);\n"
-  "      lat = asin(normTexCoord.z);\n"
-  "      lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "      texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);\n"
-  "      if (gl_FrontFacing)\n"
-  "      {\n"
-  "        color *= texture2D(TexSamplerFront,texCoor);\n"
-  "        specularReflection *= texture2D(TexSamplerWater,texCoor);\n"
-  "      }\n"
-  "      else\n"
-  "      {\n"
-  "        color *= texture2D(TexSamplerBack,texCoor);\n"
-  "        specularReflection *= 0.0f;\n"
-  "      }\n"
-  "    }\n"
-  "    color += specularReflection;\n"
-  "    color = clamp(color,0.0f,1.0f);\n"
-  "    color.a = diffuseColor.a;\n"
-  "    \n";
-static const GLchar *dp_peel_fragment_shader_col_3_0 =
-  "    if (BoolTextures)\n"
-  "    {\n"
-  "      normTexCoord = normalize(TexCoord);\n"
-  "      lat = asin(normTexCoord.z);\n"
-  "      lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "      texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);\n"
-  "      if (gl_FrontFacing)\n"
-  "      {\n"
-  "        color *= texture(TexSamplerFront,texCoor);\n"
-  "        specularReflection *= texture(TexSamplerWater,texCoor);\n"
-  "      }\n"
-  "      else\n"
-  "      {\n"
-  "        color *= texture(TexSamplerBack,texCoor);\n"
-  "        specularReflection *= 0.0f;\n"
-  "      }\n"
-  "    }\n"
-  "    color += specularReflection;\n"
-  "    color = clamp(color,0.0f,1.0f);\n"
-  "    color.a = diffuseColor.a;\n"
-  "    \n";
-static const GLchar *dp_peel_fragment_shader_out_2_1 =
-  "    gl_FragData[0].xy = vec2(-MAX_DEPTH);\n"
-  "    if (fragDepth >= nearestDepth-EPS && fragDepth <= nearestDepth+EPS)\n"
-  "    {\n"
-  "      gl_FragData[1].rgb += color.rgb*color.a*alphaMultiplier;\n"
-  "      gl_FragData[1].a = 1.0f-alphaMultiplier*(1.0f-color.a);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      gl_FragData[2] += color;\n"
-  "    }\n"
-  "  }\n"
-  "}\n";
-static const GLchar *dp_peel_fragment_shader_out_3_0 =
-  "    gl_FragData[0].xy = vec2(-MAX_DEPTH);\n"
-  "    if (fragDepth >= nearestDepth-EPS && fragDepth <= nearestDepth+EPS)\n"
-  "    {\n"
-  "      gl_FragData[1].rgb += color.rgb*color.a*alphaMultiplier;\n"
-  "      gl_FragData[1].a = 1.0f-alphaMultiplier*(1.0f-color.a);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      gl_FragData[2] += color;\n"
-  "    }\n"
-  "  }\n"
-  "}\n";
-static const GLchar *dp_peel_fragment_shader_out_3_0_es =
-  "    FragData0.xy = vec2(-MAX_DEPTH);\n"
-  "    if (fragDepth >= nearestDepth-EPS && fragDepth <= nearestDepth+EPS)\n"
-  "    {\n"
-  "      FragData1.rgb += color.rgb*color.a*alphaMultiplier;\n"
-  "      FragData1.a = 1.0f-alphaMultiplier*(1.0f-color.a);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      FragData2 += color;\n"
-  "    }\n"
-  "  }\n"
-  "}\n";
+/* The fragment shader code for the peeling stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_peel_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec3 TexCoord;                                                   \n\
+#define FragData0 gl_FragData[0]                                         \n\
+#define FragData1 gl_FragData[1]                                         \n\
+#define FragData2 gl_FragData[2]                                         \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 ColorF;                                                          \n\
+in vec4 ColorB;                                                          \n\
+in vec3 TexCoord;                                                        \n\
+#if defined(GL_ES)                                                       \n\
+layout(location = 0) out vec4 FragData0;                                 \n\
+layout(location = 1) out vec4 FragData1;                                 \n\
+layout(location = 2) out vec4 FragData2;                                 \n\
+#elif __VERSION__ >= 150 && !defined(GL_compatibility_profile)           \n\
+out vec4 FragData[3];                                                    \n\
+#define FragData0 FragData[0]                                            \n\
+#define FragData1 FragData[1]                                            \n\
+#define FragData2 FragData[2]                                            \n\
+#else                                                                    \n\
+#define FragData0 gl_FragData[0]                                         \n\
+#define FragData1 gl_FragData[1]                                         \n\
+#define FragData2 gl_FragData[2]                                         \n\
+#endif                                                                   \n\
+#endif                                                                   \n\
+                                                                         \n\
+const float M_PI_F  = 3.14159265359f;                                    \n\
+const float M_2PI_F = 6.28318530718f;                                    \n\
+const float MAX_DEPTH = 1.0f;                                            \n\
+const float EPS = 1.0e-7f;                                               \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatFrontAmbient, MatBackAmbient;                            \n\
+uniform vec4 MatFrontDiffuse, MatBackDiffuse;                            \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool BoolTextures;                                               \n\
+uniform vec2 TexScale;                                                   \n\
+uniform sampler2D TexSamplerDepthBlender;                                \n\
+uniform sampler2D TexSamplerFrontBlender;                                \n\
+uniform sampler2D TexSamplerFront;                                       \n\
+uniform sampler2D TexSamplerBack;                                        \n\
+uniform sampler2D TexSamplerWater;                                       \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  float fragDepth, nearestDepth, farthestDepth, alphaMultiplier;         \n\
+  vec2 depthBlender, peelTexCoord;                                       \n\
+  vec4 forwardTemp;                                                      \n\
+                                                                         \n\
+  vec3 normalDirection;                                                  \n\
+  vec4 ambientColor, diffuseColor, sceneColor;                           \n\
+  vec4 ambientLighting, diffuseReflection, specularReflection, color;    \n\
+  vec3 normTexCoord;                                                     \n\
+  vec2 texCoor;                                                          \n\
+  float ndotl, ndoth, pf, lat, lon;                                      \n\
+                                                                         \n\
+  peelTexCoord = gl_FragCoord.xy*TexScale;                               \n\
+  fragDepth = gl_FragCoord.z;                                            \n\
+#if __VERSION__ <= 120                                                   \n\
+  depthBlender = texture2D(TexSamplerDepthBlender,peelTexCoord.st).xy;   \n\
+  forwardTemp = texture2D(TexSamplerFrontBlender,peelTexCoord.st);       \n\
+#else                                                                    \n\
+  depthBlender = texture(TexSamplerDepthBlender,peelTexCoord.st).xy;     \n\
+  forwardTemp = texture(TexSamplerFrontBlender,peelTexCoord.st);         \n\
+#endif                                                                   \n\
+  FragData0.xy = depthBlender;                                           \n\
+  FragData1 = forwardTemp;                                               \n\
+  FragData2 = vec4(0.0f);                                                \n\
+  nearestDepth = -depthBlender.x;                                        \n\
+  farthestDepth = depthBlender.y;                                        \n\
+  alphaMultiplier = 1.0f-forwardTemp.a;                                  \n\
+  if (fragDepth < nearestDepth-EPS || fragDepth > farthestDepth+EPS)     \n\
+  {                                                                      \n\
+    FragData0.xy = vec2(-MAX_DEPTH);                                     \n\
+  }                                                                      \n\
+  else if (fragDepth > nearestDepth+EPS && fragDepth < farthestDepth-EPS)\n\
+  {                                                                      \n\
+    FragData0.xy = vec2(-fragDepth,fragDepth);                           \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+      normalDirection = normalize(Normal);                               \n\
+      sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;                 \n\
+      ambientColor = ColorF*MatFrontAmbient;                             \n\
+      diffuseColor = ColorF*MatFrontDiffuse;                             \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+      normalDirection = -normalize(Normal);                              \n\
+      sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;                  \n\
+      ambientColor = ColorB*MatBackAmbient;                              \n\
+      diffuseColor = ColorB*MatBackDiffuse;                              \n\
+    }                                                                    \n\
+                                                                         \n\
+    ndotl = max(0.0f,dot(normalDirection,LtDirection));                  \n\
+    ndoth = max(0.0f,dot(normalDirection,LtHalfVector));                 \n\
+    if (ndotl == 0.0f)                                                   \n\
+      pf = 0.0f;                                                         \n\
+    else                                                                 \n\
+      pf = pow(ndoth,MatShininess);                                      \n\
+    ambientLighting = ambientColor*LtAmbient;                            \n\
+    diffuseReflection = LtDiffuse*diffuseColor*ndotl;                    \n\
+    specularReflection = LtSpecular*MatSpecular*pf;                      \n\
+    color = sceneColor+ambientLighting+diffuseReflection;                \n\
+    if (BoolTextures)                                                    \n\
+    {                                                                    \n\
+      normTexCoord = normalize(TexCoord);                                \n\
+      lat = asin(normTexCoord.z);                                        \n\
+      lon = atan(normTexCoord.y,normTexCoord.x);                         \n\
+      texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);                  \n\
+      if (gl_FrontFacing)                                                \n\
+      {                                                                  \n\
+#if __VERSION__ <= 120                                                   \n\
+        color *= texture2D(TexSamplerFront,texCoor);                     \n\
+        specularReflection *= texture2D(TexSamplerWater,texCoor);        \n\
+#else                                                                    \n\
+        color *= texture(TexSamplerFront,texCoor);                       \n\
+        specularReflection *= texture(TexSamplerWater,texCoor);          \n\
+#endif                                                                   \n\
+      }                                                                  \n\
+      else                                                               \n\
+      {                                                                  \n\
+#if __VERSION__ <= 120                                                   \n\
+        color *= texture2D(TexSamplerBack,texCoor);                      \n\
+#else                                                                    \n\
+        color *= texture(TexSamplerBack,texCoor);                        \n\
+#endif                                                                   \n\
+        specularReflection *= 0.0f;                                      \n\
+      }                                                                  \n\
+    }                                                                    \n\
+    color += specularReflection;                                         \n\
+    color = clamp(color,0.0f,1.0f);                                      \n\
+    color.a = diffuseColor.a;                                            \n\
+                                                                         \n\
+    FragData0.xy = vec2(-MAX_DEPTH);                                     \n\
+    if (fragDepth >= nearestDepth-EPS && fragDepth <= nearestDepth+EPS)  \n\
+    {                                                                    \n\
+      FragData1.rgb += color.rgb*color.a*alphaMultiplier;                \n\
+      FragData1.a = 1.0f-alphaMultiplier*(1.0f-color.a);                 \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+      FragData2 += color;                                                \n\
+    }                                                                    \n\
+  }                                                                      \n\
+}                                                                        \n";
 
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *dp_blnd_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *dp_blnd_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *dp_blnd_vertex_shader_main =
-  "void main (void)\n"
-  "{\n"
-  "  gl_Position = vec4(VertexPosition,1.0f);\n"
-  "}\n";
+/* The vertex shader code for the blending stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_blnd_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+#endif                                                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  gl_Position = vec4(VertexPosition,1.0f);                               \n\
+}                                                                        \n";
 
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *dp_blnd_fragment_shader_attribs_2_1 =
-  "";
-static const GLchar *dp_blnd_fragment_shader_attribs_3_0 =
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *dp_blnd_fragment_shader_main =
-  "uniform vec2 TexScale;\n"
-  "uniform sampler2D TexSamplerTemp;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec2 TexCoord = gl_FragCoord.xy*TexScale;\n";
-static const GLchar *dp_blnd_fragment_shader_out_2_1 =
-  "  gl_FragColor = texture2D(TexSamplerTemp,TexCoord.st);\n"
-  "  if (gl_FragColor.a == 0.0f)\n"
-  "    discard;\n"
-  "}\n";
-static const GLchar *dp_blnd_fragment_shader_out_3_0 =
-  "  FragColor = texture(TexSamplerTemp,TexCoord.st);\n"
-  "  if (FragColor.a == 0.0f)\n"
-  "    discard;\n"
-  "}\n";
-
-
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *dp_finl_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *dp_finl_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *dp_finl_vertex_shader_main =
-  "void main (void)\n"
-  "{\n"
-  "  gl_Position = vec4(VertexPosition,1.0f);\n"
-  "}\n";
-
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *dp_finl_fragment_shader_attribs_2_1 =
-  "";
-static const GLchar *dp_finl_fragment_shader_attribs_3_0 =
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *dp_finl_fragment_shader_main =
-  "uniform vec2 TexScale;\n"
-  "uniform sampler2D TexSamplerFrontBlender;\n"
-  "uniform sampler2D TexSamplerBackBlender;\n"
-  "uniform sampler2D TexSamplerOpaqueBlender;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec4 transColor;\n"
-  "  vec2 TexCoord = gl_FragCoord.xy*TexScale;\n";
-static const GLchar *dp_finl_fragment_shader_out_2_1 =
-  "  vec4 frontColor = texture2D(TexSamplerFrontBlender,TexCoord.st);\n"
-  "  vec4 backColor = texture2D(TexSamplerBackBlender,TexCoord.st);\n"
-  "  vec4 opaqueColor = texture2D(TexSamplerOpaqueBlender,TexCoord.st);\n"
-  "  frontColor.a = 1.0f-frontColor.a;\n"
-  "  transColor.rgb = frontColor.rgb+backColor.rgb*frontColor.a;\n"
-  "  transColor.a = (1.0f-frontColor.a*(1.0f-backColor.a));\n"
-  "  gl_FragColor.rgb = transColor.rgb+opaqueColor.rgb*(1.0f-transColor.a);\n"
-  "  gl_FragColor.a = transColor.a+opaqueColor.a*(1.0f-transColor.a);\n"
-  "}\n";
-static const GLchar *dp_finl_fragment_shader_out_3_0 =
-  "  vec4 frontColor = texture(TexSamplerFrontBlender,TexCoord.st);\n"
-  "  vec4 backColor = texture(TexSamplerBackBlender,TexCoord.st);\n"
-  "  vec4 opaqueColor = texture(TexSamplerOpaqueBlender,TexCoord.st);\n"
-  "  frontColor.a = 1.0f-frontColor.a;\n"
-  "  transColor.rgb = frontColor.rgb+backColor.rgb*frontColor.a;\n"
-  "  transColor.a = (1.0f-frontColor.a*(1.0f-backColor.a));\n"
-  "  FragColor.rgb = transColor.rgb+opaqueColor.rgb*(1.0f-transColor.a);\n"
-  "  FragColor.a = transColor.a+opaqueColor.a*(1.0f-transColor.a);\n"
-  "}\n";
+/* The fragment shader code for the blending stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_blnd_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ >= 130                                                   \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform vec2 TexScale;                                                   \n\
+uniform sampler2D TexSamplerTemp;                                        \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec2 TexCoord = gl_FragCoord.xy*TexScale;                              \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor = texture2D(TexSamplerTemp,TexCoord.st);                  \n\
+  if (gl_FragColor.a == 0.0f)                                            \n\
+    discard;                                                             \n\
+#else                                                                    \n\
+  FragColor = texture(TexSamplerTemp,TexCoord.st);                       \n\
+  if (FragColor.a == 0.0f)                                               \n\
+    discard;                                                             \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glShaderSource in the function init_glsl(). */
-static const GLchar *wa_init_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "attribute vec3 VertexNormal;\n"
-  "attribute vec4 VertexColorF;\n"
-  "attribute vec4 VertexColorB;\n"
-  "attribute vec3 VertexTexCoord;\n"
-  "\n"
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec3 TexCoord;\n"
-  "\n";
-static const GLchar *wa_init_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "in vec3 VertexNormal;\n"
-  "in vec4 VertexColorF;\n"
-  "in vec4 VertexColorB;\n"
-  "in vec3 VertexTexCoord;\n"
-  "\n"
-  "out vec3 Normal;\n"
-  "out vec4 ColorF;\n"
-  "out vec4 ColorB;\n"
-  "out vec3 TexCoord;\n"
-  "\n";
-static const GLchar *wa_init_vertex_shader_main =
-  "uniform mat4 MatModelView;\n"
-  "uniform mat4 MatProj;\n"
-  "uniform bool BoolTextures;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  ColorF = VertexColorF;\n"
-  "  ColorB = VertexColorB;\n"
-  "  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;\n"
-  "  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);\n"
-  "  gl_Position = MatProj*Position;\n"
-  "  if (BoolTextures)\n"
-  "    TexCoord = VertexTexCoord;\n"
-  "}\n";
+/* The vertex shader code for the final stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_finl_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+#endif                                                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  gl_Position = vec4(VertexPosition,1.0f);                               \n\
+}                                                                        \n";
 
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *wa_init_fragment_shader_attribs_2_1 =
-  "varying vec3 Normal;\n"
-  "varying vec4 ColorF;\n"
-  "varying vec4 ColorB;\n"
-  "varying vec3 TexCoord;\n"
-  "\n";
-static const GLchar *wa_init_fragment_shader_attribs_3_0 =
-  "in vec3 Normal;\n"
-  "in vec4 ColorF;\n"
-  "in vec4 ColorB;\n"
-  "in vec3 TexCoord;\n"
-  "\n";
-static const GLchar *wa_init_fragment_shader_attribs_3_0_es =
-  "in vec3 Normal;\n"
-  "in vec4 ColorF;\n"
-  "in vec4 ColorB;\n"
-  "in vec3 TexCoord;\n"
-  "\n"
-  "layout(location = 0) out vec4 FragData0;\n"
-  "layout(location = 1) out vec4 FragData1;\n"
-  "\n";
-static const GLchar *wa_init_fragment_shader_main =
-  "const float M_PI_F  = 3.14159265359f;\n"
-  "const float M_2PI_F = 6.28318530718f;\n"
-  "uniform vec4 LtGlblAmbient;\n"
-  "uniform vec4 LtAmbient, LtDiffuse, LtSpecular;\n"
-  "uniform vec3 LtDirection, LtHalfVector;\n"
-  "uniform vec4 MatFrontAmbient, MatBackAmbient;\n"
-  "uniform vec4 MatFrontDiffuse, MatBackDiffuse;\n"
-  "uniform vec4 MatSpecular;\n"
-  "uniform float MatShininess;\n"
-  "uniform bool BoolTextures;\n"
-  "uniform sampler2D TextureSamplerFront;\n"
-  "uniform sampler2D TextureSamplerBack;\n"
-  "uniform sampler2D TextureSamplerWater;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec3 normalDirection;\n"
-  "  vec4 ambientColor, diffuseColor, sceneColor;\n"
-  "  vec4 ambientLighting, diffuseReflection, specularReflection, color;\n"
-  "  vec3 normTexCoord\n;"
-  "  vec2 texCoor;\n"
-  "  float ndotl, ndoth, pf, lat, lon;\n"
-  "  \n"
-  "  if (gl_FrontFacing)\n"
-  "  {\n"
-  "    normalDirection = normalize(Normal);\n"
-  "    sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;\n"
-  "    ambientColor = ColorF*MatFrontAmbient;\n"
-  "    diffuseColor = ColorF*MatFrontDiffuse;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    normalDirection = -normalize(Normal);\n"
-  "    sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;\n"
-  "    ambientColor = ColorB*MatBackAmbient;\n"
-  "    diffuseColor = ColorB*MatBackDiffuse;\n"
-  "  }\n"
-  "  \n"
-  "  ndotl = max(0.0f,dot(normalDirection,LtDirection));\n"
-  "  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));\n"
-  "  if (ndotl == 0.0f)\n"
-  "    pf = 0.0f;\n"
-  "  else\n"
-  "    pf = pow(ndoth,MatShininess);\n"
-  "  ambientLighting = ambientColor*LtAmbient;\n"
-  "  diffuseReflection = LtDiffuse*diffuseColor*ndotl;\n"
-  "  specularReflection = LtSpecular*MatSpecular*pf;\n"
-  "  color = sceneColor+ambientLighting+diffuseReflection;\n";
-static const GLchar *wa_init_fragment_shader_out_2_1 =
-  "  if (BoolTextures)\n"
-  "  {\n"
-  "    normTexCoord = normalize(TexCoord);\n"
-  "    lat = asin(normTexCoord.z);\n"
-  "    lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "    texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color *= texture2D(TextureSamplerFront,texCoor);\n"
-  "      specularReflection *= texture2D(TextureSamplerWater,texCoor);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      color *= texture2D(TextureSamplerBack,texCoor);\n"
-  "      specularReflection *= 0.0f;\n"
-  "    }\n"
-  "  }\n"
-  "  color += specularReflection;\n"
-  "  color = clamp(color,0.0f,1.0f);\n"
-  "  color.a = diffuseColor.a;\n"
-  "  gl_FragData[0] = vec4(color.rgb*color.a,color.a);\n"
-  "  gl_FragData[1] = vec4(1.0f);\n"
-  "}\n";
-static const GLchar *wa_init_fragment_shader_out_3_0 =
-  "  if (BoolTextures)\n"
-  "  {\n"
-  "    normTexCoord = normalize(TexCoord);\n"
-  "    lat = asin(normTexCoord.z);\n"
-  "    lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "    texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerFront,texCoor);\n"
-  "      specularReflection *= texture(TextureSamplerWater,texCoor);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerBack,texCoor);\n"
-  "      specularReflection *= 0.0f;\n"
-  "    }\n"
-  "  }\n"
-  "  color += specularReflection;\n"
-  "  color = clamp(color,0.0f,1.0f);\n"
-  "  color.a = diffuseColor.a;\n"
-  "  gl_FragData[0] = vec4(color.rgb*color.a,color.a);\n"
-  "  gl_FragData[1] = vec4(1.0f);\n"
-  "}\n";
-static const GLchar *wa_init_fragment_shader_out_3_0_es =
-  "  if (BoolTextures)\n"
-  "  {\n"
-  "    normTexCoord = normalize(TexCoord);\n"
-  "    lat = asin(normTexCoord.z);\n"
-  "    lon = atan(normTexCoord.y,normTexCoord.x);\n"
-  "    texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);\n"
-  "    if (gl_FrontFacing)\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerFront,texCoor);\n"
-  "      specularReflection *= texture(TextureSamplerWater,texCoor);\n"
-  "    }\n"
-  "    else\n"
-  "    {\n"
-  "      color *= texture(TextureSamplerBack,texCoor);\n"
-  "      specularReflection *= 0.0f;\n"
-  "    }\n"
-  "  }\n"
-  "  color += specularReflection;\n"
-  "  color = clamp(color,0.0f,1.0f);\n"
-  "  color.a = diffuseColor.a;\n"
-  "  FragData0 = vec4(color.rgb*color.a,color.a);\n"
-  "  FragData1 = vec4(1.0f);\n"
-  "}\n";
+/* The fragment shader code for the final stage of the dual depth
+   peeling algorithm. */
+static const GLchar *dp_finl_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ >= 130                                                   \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform vec2 TexScale;                                                   \n\
+uniform sampler2D TexSamplerFrontBlender;                                \n\
+uniform sampler2D TexSamplerBackBlender;                                 \n\
+uniform sampler2D TexSamplerOpaqueBlender;                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec4 transColor;                                                       \n\
+  vec2 TexCoord = gl_FragCoord.xy*TexScale;                              \n\
+#if __VERSION__ <= 120                                                   \n\
+  vec4 frontColor = texture2D(TexSamplerFrontBlender,TexCoord.st);       \n\
+  vec4 backColor = texture2D(TexSamplerBackBlender,TexCoord.st);         \n\
+  vec4 opaqueColor = texture2D(TexSamplerOpaqueBlender,TexCoord.st);     \n\
+#else                                                                    \n\
+  vec4 frontColor = texture(TexSamplerFrontBlender,TexCoord.st);         \n\
+  vec4 backColor = texture(TexSamplerBackBlender,TexCoord.st);           \n\
+  vec4 opaqueColor = texture(TexSamplerOpaqueBlender,TexCoord.st);       \n\
+#endif                                                                   \n\
+  frontColor.a = 1.0f-frontColor.a;                                      \n\
+  transColor.rgb = frontColor.rgb+backColor.rgb*frontColor.a;            \n\
+  transColor.a = (1.0f-frontColor.a*(1.0f-backColor.a));                 \n\
+#if __VERSION__ <= 120                                                   \n\
+  gl_FragColor.rgb = transColor.rgb+opaqueColor.rgb*(1.0f-transColor.a); \n\
+  gl_FragColor.a = transColor.a+opaqueColor.a*(1.0f-transColor.a);       \n\
+#else                                                                    \n\
+  FragColor.rgb = transColor.rgb+opaqueColor.rgb*(1.0f-transColor.a);    \n\
+  FragColor.a = transColor.a+opaqueColor.a*(1.0f-transColor.a);          \n\
+#endif                                                                   \n\
+}                                                                        \n";
 
 
-/* The vertex shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *wa_finl_vertex_shader_attribs_2_1 =
-  "attribute vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *wa_finl_vertex_shader_attribs_3_0 =
-  "in vec3 VertexPosition;\n"
-  "\n";
-static const GLchar *wa_finl_vertex_shader_main =
-  "void main (void)\n"
-  "{\n"
-  "  gl_Position = vec4(VertexPosition,1.0f);\n"
-  "}\n";
+/* The vertex shader code for the initial stage of the weighted averaging
+   transparency algorithm. */
+static const GLchar *wa_init_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+attribute vec3 VertexNormal;                                             \n\
+attribute vec4 VertexColorF;                                             \n\
+attribute vec4 VertexColorB;                                             \n\
+attribute vec3 VertexTexCoord;                                           \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec3 TexCoord;                                                   \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+in vec3 VertexNormal;                                                    \n\
+in vec4 VertexColorF;                                                    \n\
+in vec4 VertexColorB;                                                    \n\
+in vec3 VertexTexCoord;                                                  \n\
+out vec3 Normal;                                                         \n\
+out vec4 ColorF;                                                         \n\
+out vec4 ColorB;                                                         \n\
+out vec3 TexCoord;                                                       \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform mat4 MatModelView;                                               \n\
+uniform mat4 MatProj;                                                    \n\
+uniform bool BoolTextures;                                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  ColorF = VertexColorF;                                                 \n\
+  ColorB = VertexColorB;                                                 \n\
+  Normal = normalize(MatModelView*vec4(VertexNormal,0.0f)).xyz;          \n\
+  vec4 Position = MatModelView*vec4(VertexPosition,1.0f);                \n\
+  gl_Position = MatProj*Position;                                        \n\
+  if (BoolTextures)                                                      \n\
+    TexCoord = VertexTexCoord;                                           \n\
+}                                                                        \n";
 
-/* The fragment shader code is composed of code fragments that depend on
-   the OpenGL version and code fragments that are version-independent.
-   They are concatenated by glsl_CompileAndLinkShaders in the function
-   init_glsl(). */
-static const GLchar *wa_finl_fragment_shader_attribs_2_1 =
-  "";
-static const GLchar *wa_finl_fragment_shader_attribs_3_0 =
-  "out vec4 FragColor;\n"
-  "\n";
-static const GLchar *wa_finl_fragment_shader_main =
-  "uniform vec2 TexScale;\n"
-  "uniform sampler2D TexSamplerColorBlender;\n"
-  "uniform sampler2D TexSamplerNumBlender;\n"
-  "uniform sampler2D TexSamplerOpaqueBlender;\n"
-  "\n"
-  "void main (void)\n"
-  "{\n"
-  "  vec2 TexCoord = gl_FragCoord.xy*TexScale;\n";
-static const GLchar *wa_finl_fragment_shader_out_2_1 =
-  "  vec4 backColor = texture2D(TexSamplerOpaqueBlender,TexCoord.st);\n"
-  "  vec4 sumColor = texture2D(TexSamplerColorBlender,TexCoord.st);\n"
-  "  float n = texture2D(TexSamplerNumBlender,TexCoord.st).r;\n"
-  "  if (n == 0.0)\n"
-  "  {\n"
-  "    gl_FragColor = backColor;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    vec3 avgColor = sumColor.rgb/sumColor.a;\n"
-  "    float avgAlpha = sumColor.a/n;\n"
-  "    float t = pow(1.0f-avgAlpha,n);\n"
-  "    gl_FragColor.rgb = avgColor*(1.0f-t)+backColor.rgb*t;\n"
-  "    gl_FragColor.a = 1.0f-t;\n"
-  "  }\n"
-  "}\n";
-static const GLchar *wa_finl_fragment_shader_out_3_0 =
-  "  vec4 backColor = texture(TexSamplerOpaqueBlender,TexCoord.st);\n"
-  "  vec4 sumColor = texture(TexSamplerColorBlender,TexCoord.st);\n"
-  "  float n = texture(TexSamplerNumBlender,TexCoord.st).r;\n"
-  "  if (n == 0.0)\n"
-  "  {\n"
-  "    FragColor = backColor;\n"
-  "  }\n"
-  "  else\n"
-  "  {\n"
-  "    vec3 avgColor = sumColor.rgb/sumColor.a;\n"
-  "    float avgAlpha = sumColor.a/n;\n"
-  "    float t = pow(1.0f-avgAlpha,n);\n"
-  "    FragColor.rgb = avgColor*(1.0f-t)+backColor.rgb*t;\n"
-  "    FragColor.a = 1.0f-t;\n"
-  "  }\n"
-  "}\n";
+/* The fragment shader code for the initial stage of the weighted averaging
+   transparency algorithm. */
+static const GLchar *wa_init_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+varying vec3 Normal;                                                     \n\
+varying vec4 ColorF;                                                     \n\
+varying vec4 ColorB;                                                     \n\
+varying vec3 TexCoord;                                                   \n\
+#define FragData0 gl_FragData[0]                                         \n\
+#define FragData1 gl_FragData[1]                                         \n\
+#else                                                                    \n\
+in vec3 Normal;                                                          \n\
+in vec4 ColorF;                                                          \n\
+in vec4 ColorB;                                                          \n\
+in vec3 TexCoord;                                                        \n\
+#if defined(GL_ES)                                                       \n\
+layout(location = 0) out vec4 FragData0;                                 \n\
+layout(location = 1) out vec4 FragData1;                                 \n\
+#elif __VERSION__ >= 150 && !defined(GL_compatibility_profile)           \n\
+out vec4 FragData[2];                                                    \n\
+#define FragData0 FragData[0]                                            \n\
+#define FragData1 FragData[1]                                            \n\
+#else                                                                    \n\
+#define FragData0 gl_FragData[0]                                         \n\
+#define FragData1 gl_FragData[1]                                         \n\
+#endif                                                                   \n\
+#endif                                                                   \n\
+                                                                         \n\
+const float M_PI_F  = 3.14159265359f;                                    \n\
+const float M_2PI_F = 6.28318530718f;                                    \n\
+uniform vec4 LtGlblAmbient;                                              \n\
+uniform vec4 LtAmbient, LtDiffuse, LtSpecular;                           \n\
+uniform vec3 LtDirection, LtHalfVector;                                  \n\
+uniform vec4 MatFrontAmbient, MatBackAmbient;                            \n\
+uniform vec4 MatFrontDiffuse, MatBackDiffuse;                            \n\
+uniform vec4 MatSpecular;                                                \n\
+uniform float MatShininess;                                              \n\
+uniform bool BoolTextures;                                               \n\
+uniform sampler2D TextureSamplerFront;                                   \n\
+uniform sampler2D TextureSamplerBack;                                    \n\
+uniform sampler2D TextureSamplerWater;                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec3 normalDirection;                                                  \n\
+  vec4 ambientColor, diffuseColor, sceneColor;                           \n\
+  vec4 ambientLighting, diffuseReflection, specularReflection, color;    \n\
+  vec3 normTexCoord;                                                     \n\
+  vec2 texCoor;                                                          \n\
+  float ndotl, ndoth, pf, lat, lon;                                      \n\
+                                                                         \n\
+  if (gl_FrontFacing)                                                    \n\
+  {                                                                      \n\
+    normalDirection = normalize(Normal);                                 \n\
+    sceneColor = ColorF*MatFrontAmbient*LtGlblAmbient;                   \n\
+    ambientColor = ColorF*MatFrontAmbient;                               \n\
+    diffuseColor = ColorF*MatFrontDiffuse;                               \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    normalDirection = -normalize(Normal);                                \n\
+    sceneColor = ColorB*MatBackAmbient*LtGlblAmbient;                    \n\
+    ambientColor = ColorB*MatBackAmbient;                                \n\
+    diffuseColor = ColorB*MatBackDiffuse;                                \n\
+  }                                                                      \n\
+                                                                         \n\
+  ndotl = max(0.0f,dot(normalDirection,LtDirection));                    \n\
+  ndoth = max(0.0f,dot(normalDirection,LtHalfVector));                   \n\
+  if (ndotl == 0.0f)                                                     \n\
+    pf = 0.0f;                                                           \n\
+  else                                                                   \n\
+    pf = pow(ndoth,MatShininess);                                        \n\
+  ambientLighting = ambientColor*LtAmbient;                              \n\
+  diffuseReflection = LtDiffuse*diffuseColor*ndotl;                      \n\
+  specularReflection = LtSpecular*MatSpecular*pf;                        \n\
+  color = sceneColor+ambientLighting+diffuseReflection;                  \n\
+  if (BoolTextures)                                                      \n\
+  {                                                                      \n\
+    normTexCoord = normalize(TexCoord);                                  \n\
+    lat = asin(normTexCoord.z);                                          \n\
+    lon = atan(normTexCoord.y,normTexCoord.x);                           \n\
+    texCoor = vec2(0.5f+lon/M_2PI_F,0.5f+lat/M_PI_F);                    \n\
+    if (gl_FrontFacing)                                                  \n\
+    {                                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSamplerFront,texCoor);                   \n\
+      specularReflection *= texture2D(TextureSamplerWater,texCoor);      \n\
+#else                                                                    \n\
+      color *= texture(TextureSamplerFront,texCoor);                     \n\
+      specularReflection *= texture(TextureSamplerWater,texCoor);        \n\
+#endif                                                                   \n\
+    }                                                                    \n\
+    else                                                                 \n\
+    {                                                                    \n\
+#if __VERSION__ <= 120                                                   \n\
+      color *= texture2D(TextureSamplerBack,texCoor);                    \n\
+#else                                                                    \n\
+      color *= texture(TextureSamplerBack,texCoor);                      \n\
+#endif                                                                   \n\
+      specularReflection *= 0.0f;                                        \n\
+    }                                                                    \n\
+  }                                                                      \n\
+  color += specularReflection;                                           \n\
+  color = clamp(color,0.0f,1.0f);                                        \n\
+  color.a = diffuseColor.a;                                              \n\
+  FragData0 = vec4(color.rgb*color.a,color.a);                           \n\
+  FragData1 = vec4(1.0f);                                                \n\
+}                                                                        \n";
+
+
+/* The vertex shader code for the final stage of the weighted averaging
+   transparency algorithm. */
+static const GLchar *wa_finl_vertex_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ <= 120                                                   \n\
+attribute vec3 VertexPosition;                                           \n\
+#else                                                                    \n\
+in vec3 VertexPosition;                                                  \n\
+#endif                                                                   \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  gl_Position = vec4(VertexPosition,1.0f);                               \n\
+}                                                                        \n";
+
+/* The fragment shader code for the final stage of the weighted averaging
+   transparency algorithm. */
+static const GLchar *wa_finl_fragment_shader = "\
+#ifdef GL_ES                                                             \n\
+precision highp float;                                                   \n\
+precision highp int;                                                     \n\
+precision highp sampler2D;                                               \n\
+#endif                                                                   \n\
+                                                                         \n\
+#if __VERSION__ >= 130                                                   \n\
+out vec4 FragColor;                                                      \n\
+#endif                                                                   \n\
+                                                                         \n\
+uniform vec2 TexScale;                                                   \n\
+uniform sampler2D TexSamplerColorBlender;                                \n\
+uniform sampler2D TexSamplerNumBlender;                                  \n\
+uniform sampler2D TexSamplerOpaqueBlender;                               \n\
+                                                                         \n\
+void main(void)                                                          \n\
+{                                                                        \n\
+  vec2 TexCoord = gl_FragCoord.xy*TexScale;                              \n\
+#if __VERSION__ <= 120                                                   \n\
+  vec4 backColor = texture2D(TexSamplerOpaqueBlender,TexCoord.st);       \n\
+  vec4 sumColor = texture2D(TexSamplerColorBlender,TexCoord.st);         \n\
+  float n = texture2D(TexSamplerNumBlender,TexCoord.st).r;               \n\
+#else                                                                    \n\
+  vec4 backColor = texture(TexSamplerOpaqueBlender,TexCoord.st);         \n\
+  vec4 sumColor = texture(TexSamplerColorBlender,TexCoord.st);           \n\
+  float n = texture(TexSamplerNumBlender,TexCoord.st).r;                 \n\
+#endif                                                                   \n\
+  if (n == 0.0)                                                          \n\
+  {                                                                      \n\
+#if __VERSION__ <= 120                                                   \n\
+    gl_FragColor = backColor;                                            \n\
+#else                                                                    \n\
+    FragColor = backColor;                                               \n\
+#endif                                                                   \n\
+  }                                                                      \n\
+  else                                                                   \n\
+  {                                                                      \n\
+    vec3 avgColor = sumColor.rgb/sumColor.a;                             \n\
+    float avgAlpha = sumColor.a/n;                                       \n\
+    float t = pow(1.0f-avgAlpha,n);                                      \n\
+#if __VERSION__ <= 120                                                   \n\
+    gl_FragColor.rgb = avgColor*(1.0f-t)+backColor.rgb*t;                \n\
+    gl_FragColor.a = 1.0f-t;                                             \n\
+#else                                                                    \n\
+    FragColor.rgb = avgColor*(1.0f-t)+backColor.rgb*t;                   \n\
+    FragColor.a = 1.0f-t;                                                \n\
+#endif                                                                   \n\
+  }                                                                      \n\
+}                                                                        \n";
 
 
 #endif /* HAVE_GLSL */
@@ -3459,6 +3374,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
     glUseProgram(ce->poly_shader_program);
 
+    if (ce->use_vao)
+      glBindVertexArray(ce->vertex_array_object);
+
     glUniformMatrix4fv(ce->poly_mv_index,1,GL_FALSE,mv_mat);
     glUniformMatrix4fv(ce->poly_proj_index,1,GL_FALSE,p_mat);
 
@@ -3658,6 +3576,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
+    if (ce->use_vao)
+      glBindVertexArray(0);
+
     glUseProgram(0);
 
     glDisable(GL_CULL_FACE);
@@ -3682,6 +3603,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
     glDisable(GL_BLEND);
 
     glUseProgram(ce->poly_shader_program);
+
+    if (ce->use_vao)
+      glBindVertexArray(ce->vertex_array_object);
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D,ce->tex_names[0]);
@@ -3803,6 +3727,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
     }
 
+    if (ce->use_vao)
+      glBindVertexArray(0);
+
     glUseProgram(0);
 
     /* Initialize the dual depth peeling. */
@@ -3831,6 +3758,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
     glUseProgram(ce->dp_init_shader_program);
 
+    if (ce->use_vao)
+      glBindVertexArray(ce->vertex_array_object);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,ce->dp_opaque_depth_tex);
     glUniform1i(ce->dp_init_tex_samp_depth,0);
@@ -3848,6 +3778,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
     polys += NUM_FACE;
 
     glDisableVertexAttribArray(ce->dp_init_pos_index);
+
+    if (ce->use_vao)
+      glBindVertexArray(0);
 
     glUseProgram(0);
 
@@ -3873,6 +3806,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
       glBlendEquation(GL_MAX);
 
       glUseProgram(ce->dp_peel_shader_program);
+
+      if (ce->use_vao)
+        glBindVertexArray(ce->vertex_array_object);
 
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D,ce->dp_depth_tex[prev]);
@@ -3971,6 +3907,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
       glBindBuffer(GL_ARRAY_BUFFER,0);
 
+      if (ce->use_vao)
+        glBindVertexArray(0);
+
       glUseProgram(0);
 
       glBindFramebuffer(GL_FRAMEBUFFER,ce->dp_back_blender_fbo);
@@ -3985,6 +3924,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 #endif
 
       glUseProgram(ce->dp_blnd_shader_program);
+
+      if (ce->use_vao)
+        glBindVertexArray(ce->vertex_array_object);
 
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D,ce->dp_back_temp_tex[curr]);
@@ -4002,6 +3944,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
       glBindBuffer(GL_ARRAY_BUFFER,0);
 
       glDisableVertexAttribArray(ce->dp_blnd_pos_index);
+
+      if (ce->use_vao)
+        glBindVertexArray(0);
 
       glUseProgram(0);
 
@@ -4029,6 +3974,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
     glUseProgram(ce->dp_finl_shader_program);
 
+    if (ce->use_vao)
+      glBindVertexArray(ce->vertex_array_object);
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D,ce->dp_front_blender_tex[curr]);
     glUniform1i(ce->dp_finl_tex_samp_front,1);
@@ -4051,6 +3999,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
     glDisableVertexAttribArray(ce->dp_finl_pos_index);
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
+
+    if (ce->use_vao)
+      glBindVertexArray(0);
 
     glUseProgram(0);
 
@@ -4076,6 +4027,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
     glDisable(GL_BLEND);
 
     glUseProgram(ce->poly_shader_program);
+
+    if (ce->use_vao)
+      glBindVertexArray(ce->vertex_array_object);
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D,ce->tex_names[0]);
@@ -4197,6 +4151,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
     }
 
+    if (ce->use_vao)
+      glBindVertexArray(0);
+
     glUseProgram(0);
 
     /* Accumulate colors and depth complexity. */
@@ -4214,6 +4171,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
     glBlendFunc(GL_ONE,GL_ONE);
 
     glUseProgram(ce->wa_init_shader_program);
+
+    if (ce->use_vao)
+      glBindVertexArray(ce->vertex_array_object);
 
     glUniformMatrix4fv(ce->wa_init_proj_index,1,GL_FALSE,p_mat);
 
@@ -4295,6 +4255,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
+    if (ce->use_vao)
+      glBindVertexArray(0);
+
     glUseProgram(0);
 
     glDisable(GL_BLEND);
@@ -4309,6 +4272,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
     glDrawBuffers(1,&draw_buffers[3]);
 #endif
     glUseProgram(ce->wa_finl_shader_program);
+
+    if (ce->use_vao)
+      glBindVertexArray(ce->vertex_array_object);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D,ce->wa_color_tex);
@@ -4334,6 +4300,9 @@ static int cuboctahedron_eversion_pf(ModeInfo *mi)
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
     glUseProgram(0);
+
+    if (ce->use_vao)
+      glBindVertexArray(0);
 
     glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -4673,20 +4642,20 @@ static void init_glsl(ModeInfo *mi)
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
   const char *gl_ext;
-  const GLchar *poly_vertex_shader_source[3];
-  const GLchar *poly_fragment_shader_source[4];
-  const GLchar *dp_init_vertex_shader_source[3];
-  const GLchar *dp_init_fragment_shader_source[4];
-  const GLchar *dp_peel_vertex_shader_source[3];
-  const GLchar *dp_peel_fragment_shader_source[7];
-  const GLchar *dp_blnd_vertex_shader_source[3];
-  const GLchar *dp_blnd_fragment_shader_source[4];
-  const GLchar *dp_finl_vertex_shader_source[3];
-  const GLchar *dp_finl_fragment_shader_source[4];
-  const GLchar *wa_init_vertex_shader_source[3];
-  const GLchar *wa_init_fragment_shader_source[4];
-  const GLchar *wa_finl_vertex_shader_source[3];
-  const GLchar *wa_finl_fragment_shader_source[4];
+  const GLchar *poly_vertex_shader_source[2];
+  const GLchar *poly_fragment_shader_source[2];
+  const GLchar *dp_init_vertex_shader_source[2];
+  const GLchar *dp_init_fragment_shader_source[2];
+  const GLchar *dp_peel_vertex_shader_source[2];
+  const GLchar *dp_peel_fragment_shader_source[2];
+  const GLchar *dp_blnd_vertex_shader_source[2];
+  const GLchar *dp_blnd_fragment_shader_source[2];
+  const GLchar *dp_finl_vertex_shader_source[2];
+  const GLchar *dp_finl_fragment_shader_source[2];
+  const GLchar *wa_init_vertex_shader_source[2];
+  const GLchar *wa_init_fragment_shader_source[2];
+  const GLchar *wa_finl_vertex_shader_source[2];
+  const GLchar *wa_finl_fragment_shader_source[2];
   static const GLfloat quad_verts[] =
   {
     -1.0f, -1.0f,
@@ -4698,6 +4667,7 @@ static void init_glsl(ModeInfo *mi)
   /* Determine whether to use shaders to render the cuboctahedron eversion. */
   ce->use_shaders = False;
   ce->use_mipmaps = False;
+  ce->use_vao = False;
   ce->poly_shader_program = 0;
   ce->dp_init_shader_program = 0;
   ce->dp_peel_shader_program = 0;
@@ -4710,204 +4680,43 @@ static void init_glsl(ModeInfo *mi)
                                  &gl_gles3))
     return;
 
-  if (!gl_gles3)
-  {
-    if (gl_major < 3 ||
-        (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 30)))
-    {
-      if ((gl_major < 2 || (gl_major == 2 && gl_minor < 1)) ||
-          (glsl_major < 1 || (glsl_major == 1 && glsl_minor < 20)))
-        return;
-      /* We have at least OpenGL 2.1 and at least GLSL 1.20. */
-      poly_vertex_shader_source[0] = shader_version_2_1;
-      poly_vertex_shader_source[1] = poly_vertex_shader_attribs_2_1;
-      poly_vertex_shader_source[2] = poly_vertex_shader_main;
-      poly_fragment_shader_source[0] = shader_version_2_1;
-      poly_fragment_shader_source[1] = poly_fragment_shader_attribs_2_1;
-      poly_fragment_shader_source[2] = poly_fragment_shader_main;
-      poly_fragment_shader_source[3] = poly_fragment_shader_out_2_1;
+  poly_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  poly_vertex_shader_source[1] = poly_vertex_shader;
+  poly_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  poly_fragment_shader_source[1] = poly_fragment_shader;
 
-      dp_init_vertex_shader_source[0] = shader_version_2_1;
-      dp_init_vertex_shader_source[1] = dp_init_vertex_shader_attribs_2_1;
-      dp_init_vertex_shader_source[2] = dp_init_vertex_shader_main;
-      dp_init_fragment_shader_source[0] = shader_version_2_1;
-      dp_init_fragment_shader_source[1] = dp_init_fragment_shader_attribs_2_1;
-      dp_init_fragment_shader_source[2] = dp_init_fragment_shader_main;
-      dp_init_fragment_shader_source[3] = dp_init_fragment_shader_out_2_1;
+  dp_init_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_init_vertex_shader_source[1] = dp_init_vertex_shader;
+  dp_init_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_init_fragment_shader_source[1] = dp_init_fragment_shader;
 
-      dp_peel_vertex_shader_source[0] = shader_version_2_1;
-      dp_peel_vertex_shader_source[1] = dp_peel_vertex_shader_attribs_2_1;
-      dp_peel_vertex_shader_source[2] = dp_peel_vertex_shader_main;
-      dp_peel_fragment_shader_source[0] = shader_version_2_1;
-      dp_peel_fragment_shader_source[1] = dp_peel_fragment_shader_attribs_2_1;
-      dp_peel_fragment_shader_source[2] = dp_peel_fragment_shader_main;
-      dp_peel_fragment_shader_source[3] = dp_peel_fragment_shader_peel_2_1;
-      dp_peel_fragment_shader_source[4] = dp_peel_fragment_shader_col;
-      dp_peel_fragment_shader_source[5] = dp_peel_fragment_shader_col_2_1;
-      dp_peel_fragment_shader_source[6] = dp_peel_fragment_shader_out_2_1;
+  dp_peel_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_peel_vertex_shader_source[1] = dp_peel_vertex_shader;
+  dp_peel_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_peel_fragment_shader_source[1] = dp_peel_fragment_shader;
 
-      dp_blnd_vertex_shader_source[0] = shader_version_2_1;
-      dp_blnd_vertex_shader_source[1] = dp_blnd_vertex_shader_attribs_2_1;
-      dp_blnd_vertex_shader_source[2] = dp_blnd_vertex_shader_main;
-      dp_blnd_fragment_shader_source[0] = shader_version_2_1;
-      dp_blnd_fragment_shader_source[1] = dp_blnd_fragment_shader_attribs_2_1;
-      dp_blnd_fragment_shader_source[2] = dp_blnd_fragment_shader_main;
-      dp_blnd_fragment_shader_source[3] = dp_blnd_fragment_shader_out_2_1;
+  dp_blnd_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_blnd_vertex_shader_source[1] = dp_blnd_vertex_shader;
+  dp_blnd_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_blnd_fragment_shader_source[1] = dp_blnd_fragment_shader;
 
-      dp_finl_vertex_shader_source[0] = shader_version_2_1;
-      dp_finl_vertex_shader_source[1] = dp_finl_vertex_shader_attribs_2_1;
-      dp_finl_vertex_shader_source[2] = dp_finl_vertex_shader_main;
-      dp_finl_fragment_shader_source[0] = shader_version_2_1;
-      dp_finl_fragment_shader_source[1] = dp_finl_fragment_shader_attribs_2_1;
-      dp_finl_fragment_shader_source[2] = dp_finl_fragment_shader_main;
-      dp_finl_fragment_shader_source[3] = dp_finl_fragment_shader_out_2_1;
+  dp_finl_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_finl_vertex_shader_source[1] = dp_finl_vertex_shader;
+  dp_finl_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  dp_finl_fragment_shader_source[1] = dp_finl_fragment_shader;
 
-      wa_init_vertex_shader_source[0] = shader_version_2_1;
-      wa_init_vertex_shader_source[1] = wa_init_vertex_shader_attribs_2_1;
-      wa_init_vertex_shader_source[2] = wa_init_vertex_shader_main;
-      wa_init_fragment_shader_source[0] = shader_version_2_1;
-      wa_init_fragment_shader_source[1] = wa_init_fragment_shader_attribs_2_1;
-      wa_init_fragment_shader_source[2] = wa_init_fragment_shader_main;
-      wa_init_fragment_shader_source[3] = wa_init_fragment_shader_out_2_1;
+  wa_init_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  wa_init_vertex_shader_source[1] = wa_init_vertex_shader;
+  wa_init_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  wa_init_fragment_shader_source[1] = wa_init_fragment_shader;
 
-      wa_finl_vertex_shader_source[0] = shader_version_2_1;
-      wa_finl_vertex_shader_source[1] = wa_finl_vertex_shader_attribs_2_1;
-      wa_finl_vertex_shader_source[2] = wa_finl_vertex_shader_main;
-      wa_finl_fragment_shader_source[0] = shader_version_2_1;
-      wa_finl_fragment_shader_source[1] = wa_finl_fragment_shader_attribs_2_1;
-      wa_finl_fragment_shader_source[2] = wa_finl_fragment_shader_main;
-      wa_finl_fragment_shader_source[3] = wa_finl_fragment_shader_out_2_1;
-    }
-    else
-    {
-      /* We have at least OpenGL 3.0 and at least GLSL 1.30. */
-      poly_vertex_shader_source[0] = shader_version_3_0;
-      poly_vertex_shader_source[1] = poly_vertex_shader_attribs_3_0;
-      poly_vertex_shader_source[2] = poly_vertex_shader_main;
-      poly_fragment_shader_source[0] = shader_version_3_0;
-      poly_fragment_shader_source[1] = poly_fragment_shader_attribs_3_0;
-      poly_fragment_shader_source[2] = poly_fragment_shader_main;
-      poly_fragment_shader_source[3] = poly_fragment_shader_out_3_0;
+  wa_finl_vertex_shader_source[0] = glsl_GetGLSLVersionString();
+  wa_finl_vertex_shader_source[1] = wa_finl_vertex_shader;
+  wa_finl_fragment_shader_source[0] = glsl_GetGLSLVersionString();
+  wa_finl_fragment_shader_source[1] = wa_finl_fragment_shader;
 
-      dp_init_vertex_shader_source[0] = shader_version_3_0;
-      dp_init_vertex_shader_source[1] = dp_init_vertex_shader_attribs_3_0;
-      dp_init_vertex_shader_source[2] = dp_init_vertex_shader_main;
-      dp_init_fragment_shader_source[0] = shader_version_3_0;
-      dp_init_fragment_shader_source[1] = dp_init_fragment_shader_attribs_3_0;
-      dp_init_fragment_shader_source[2] = dp_init_fragment_shader_main;
-      dp_init_fragment_shader_source[3] = dp_init_fragment_shader_out_3_0;
-
-      dp_peel_vertex_shader_source[0] = shader_version_3_0;
-      dp_peel_vertex_shader_source[1] = dp_peel_vertex_shader_attribs_3_0;
-      dp_peel_vertex_shader_source[2] = dp_peel_vertex_shader_main;
-      dp_peel_fragment_shader_source[0] = shader_version_3_0;
-      dp_peel_fragment_shader_source[1] = dp_peel_fragment_shader_attribs_3_0;
-      dp_peel_fragment_shader_source[2] = dp_peel_fragment_shader_main;
-      dp_peel_fragment_shader_source[3] = dp_peel_fragment_shader_peel_3_0;
-      dp_peel_fragment_shader_source[4] = dp_peel_fragment_shader_col;
-      dp_peel_fragment_shader_source[5] = dp_peel_fragment_shader_col_3_0;
-      dp_peel_fragment_shader_source[6] = dp_peel_fragment_shader_out_3_0;
-
-      dp_blnd_vertex_shader_source[0] = shader_version_3_0;
-      dp_blnd_vertex_shader_source[1] = dp_blnd_vertex_shader_attribs_3_0;
-      dp_blnd_vertex_shader_source[2] = dp_blnd_vertex_shader_main;
-      dp_blnd_fragment_shader_source[0] = shader_version_3_0;
-      dp_blnd_fragment_shader_source[1] = dp_blnd_fragment_shader_attribs_3_0;
-      dp_blnd_fragment_shader_source[2] = dp_blnd_fragment_shader_main;
-      dp_blnd_fragment_shader_source[3] = dp_blnd_fragment_shader_out_3_0;
-
-      dp_finl_vertex_shader_source[0] = shader_version_3_0;
-      dp_finl_vertex_shader_source[1] = dp_finl_vertex_shader_attribs_3_0;
-      dp_finl_vertex_shader_source[2] = dp_finl_vertex_shader_main;
-      dp_finl_fragment_shader_source[0] = shader_version_3_0;
-      dp_finl_fragment_shader_source[1] = dp_finl_fragment_shader_attribs_3_0;
-      dp_finl_fragment_shader_source[2] = dp_finl_fragment_shader_main;
-      dp_finl_fragment_shader_source[3] = dp_finl_fragment_shader_out_3_0;
-
-      wa_init_vertex_shader_source[0] = shader_version_3_0;
-      wa_init_vertex_shader_source[1] = wa_init_vertex_shader_attribs_3_0;
-      wa_init_vertex_shader_source[2] = wa_init_vertex_shader_main;
-      wa_init_fragment_shader_source[0] = shader_version_3_0;
-      wa_init_fragment_shader_source[1] = wa_init_fragment_shader_attribs_3_0;
-      wa_init_fragment_shader_source[2] = wa_init_fragment_shader_main;
-      wa_init_fragment_shader_source[3] = wa_init_fragment_shader_out_3_0;
-
-      wa_finl_vertex_shader_source[0] = shader_version_3_0;
-      wa_finl_vertex_shader_source[1] = wa_finl_vertex_shader_attribs_3_0;
-      wa_finl_vertex_shader_source[2] = wa_finl_vertex_shader_main;
-      wa_finl_fragment_shader_source[0] = shader_version_3_0;
-      wa_finl_fragment_shader_source[1] = wa_finl_fragment_shader_attribs_3_0;
-      wa_finl_fragment_shader_source[2] = wa_finl_fragment_shader_main;
-      wa_finl_fragment_shader_source[3] = wa_finl_fragment_shader_out_3_0;
-    }
-  }
-  else /* gl_gles3 */
-  {
-    if (gl_major < 3 || glsl_major < 3)
-      return;
-    /* We have at least OpenGL ES 3.0 and at least GLSL ES 3.0. */
-    poly_vertex_shader_source[0] = shader_version_3_0_es;
-    poly_vertex_shader_source[1] = poly_vertex_shader_attribs_3_0;
-    poly_vertex_shader_source[2] = poly_vertex_shader_main;
-    poly_fragment_shader_source[0] = shader_version_3_0_es;
-    poly_fragment_shader_source[1] = poly_fragment_shader_attribs_3_0;
-    poly_fragment_shader_source[2] = poly_fragment_shader_main;
-    poly_fragment_shader_source[3] = poly_fragment_shader_out_3_0;
-
-    dp_init_vertex_shader_source[0] = shader_version_3_0_es;
-    dp_init_vertex_shader_source[1] = dp_init_vertex_shader_attribs_3_0;
-    dp_init_vertex_shader_source[2] = dp_init_vertex_shader_main;
-    dp_init_fragment_shader_source[0] = shader_version_3_0_es;
-    dp_init_fragment_shader_source[1] = dp_init_fragment_shader_attribs_3_0;
-    dp_init_fragment_shader_source[2] = dp_init_fragment_shader_main;
-    dp_init_fragment_shader_source[3] = dp_init_fragment_shader_out_3_0;
-
-    dp_peel_vertex_shader_source[0] = shader_version_3_0_es;
-    dp_peel_vertex_shader_source[1] = dp_peel_vertex_shader_attribs_3_0;
-    dp_peel_vertex_shader_source[2] = dp_peel_vertex_shader_main;
-    dp_peel_fragment_shader_source[0] = shader_version_3_0_es;
-    dp_peel_fragment_shader_source[1] = dp_peel_fragment_shader_attribs_3_0_es;
-    dp_peel_fragment_shader_source[2] = dp_peel_fragment_shader_main;
-    dp_peel_fragment_shader_source[3] = dp_peel_fragment_shader_peel_3_0_es;
-    dp_peel_fragment_shader_source[4] = dp_peel_fragment_shader_col;
-    dp_peel_fragment_shader_source[5] = dp_peel_fragment_shader_col_3_0;
-    dp_peel_fragment_shader_source[6] = dp_peel_fragment_shader_out_3_0_es;
-
-    dp_blnd_vertex_shader_source[0] = shader_version_3_0_es;
-    dp_blnd_vertex_shader_source[1] = dp_blnd_vertex_shader_attribs_3_0;
-    dp_blnd_vertex_shader_source[2] = dp_blnd_vertex_shader_main;
-    dp_blnd_fragment_shader_source[0] = shader_version_3_0_es;
-    dp_blnd_fragment_shader_source[1] = dp_blnd_fragment_shader_attribs_3_0;
-    dp_blnd_fragment_shader_source[2] = dp_blnd_fragment_shader_main;
-    dp_blnd_fragment_shader_source[3] = dp_blnd_fragment_shader_out_3_0;
-
-    dp_finl_vertex_shader_source[0] = shader_version_3_0_es;
-    dp_finl_vertex_shader_source[1] = dp_finl_vertex_shader_attribs_3_0;
-    dp_finl_vertex_shader_source[2] = dp_finl_vertex_shader_main;
-    dp_finl_fragment_shader_source[0] = shader_version_3_0_es;
-    dp_finl_fragment_shader_source[1] = dp_finl_fragment_shader_attribs_3_0;
-    dp_finl_fragment_shader_source[2] = dp_finl_fragment_shader_main;
-    dp_finl_fragment_shader_source[3] = dp_finl_fragment_shader_out_3_0;
-
-    wa_init_vertex_shader_source[0] = shader_version_3_0_es;
-    wa_init_vertex_shader_source[1] = wa_init_vertex_shader_attribs_3_0;
-    wa_init_vertex_shader_source[2] = wa_init_vertex_shader_main;
-    wa_init_fragment_shader_source[0] = shader_version_3_0_es;
-    wa_init_fragment_shader_source[1] = wa_init_fragment_shader_attribs_3_0_es;
-    wa_init_fragment_shader_source[2] = wa_init_fragment_shader_main;
-    wa_init_fragment_shader_source[3] = wa_init_fragment_shader_out_3_0_es;
-
-    wa_finl_vertex_shader_source[0] = shader_version_3_0_es;
-    wa_finl_vertex_shader_source[1] = wa_finl_vertex_shader_attribs_3_0;
-    wa_finl_vertex_shader_source[2] = wa_finl_vertex_shader_main;
-    wa_finl_fragment_shader_source[0] = shader_version_3_0_es;
-    wa_finl_fragment_shader_source[1] = wa_finl_fragment_shader_attribs_3_0;
-    wa_finl_fragment_shader_source[2] = wa_finl_fragment_shader_main;
-    wa_finl_fragment_shader_source[3] = wa_finl_fragment_shader_out_3_0;
-  }
-
-  if (!glsl_CompileAndLinkShaders(3,poly_vertex_shader_source,
-                                  4,poly_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,poly_vertex_shader_source,
+                                  2,poly_fragment_shader_source,
                                   &ce->poly_shader_program))
     return;
 
@@ -5001,8 +4810,8 @@ static void init_glsl(ModeInfo *mi)
   glGenBuffers(1,&ce->self_index_buffer);
 
   /* Initialize dual depth peeling data. */
-  if (!glsl_CompileAndLinkShaders(3,dp_init_vertex_shader_source,
-                                  4,dp_init_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,dp_init_vertex_shader_source,
+                                  2,dp_init_fragment_shader_source,
                                   &ce->dp_init_shader_program))
   {
     glDeleteProgram(ce->poly_shader_program);
@@ -5030,8 +4839,8 @@ static void init_glsl(ModeInfo *mi)
     return;
   }
 
-  if (!glsl_CompileAndLinkShaders(3,dp_peel_vertex_shader_source,
-                                  7,dp_peel_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,dp_peel_vertex_shader_source,
+                                  2,dp_peel_fragment_shader_source,
                                   &ce->dp_peel_shader_program))
   {
     glDeleteProgram(ce->poly_shader_program);
@@ -5123,8 +4932,8 @@ static void init_glsl(ModeInfo *mi)
     return;
   }
 
-  if (!glsl_CompileAndLinkShaders(3,dp_blnd_vertex_shader_source,
-                                  4,dp_blnd_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,dp_blnd_vertex_shader_source,
+                                  2,dp_blnd_fragment_shader_source,
                                   &ce->dp_blnd_shader_program))
   {
     glDeleteProgram(ce->poly_shader_program);
@@ -5150,8 +4959,8 @@ static void init_glsl(ModeInfo *mi)
     return;
   }
 
-  if (!glsl_CompileAndLinkShaders(3,dp_finl_vertex_shader_source,
-                                  4,dp_finl_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,dp_finl_vertex_shader_source,
+                                  2,dp_finl_fragment_shader_source,
                                   &ce->dp_finl_shader_program))
   {
     glDeleteProgram(ce->poly_shader_program);
@@ -5187,8 +4996,8 @@ static void init_glsl(ModeInfo *mi)
 
   glGenQueries(1,&ce->dp_query);
 
-  if (!glsl_CompileAndLinkShaders(3,wa_init_vertex_shader_source,
-                                  4,wa_init_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,wa_init_vertex_shader_source,
+                                  2,wa_init_fragment_shader_source,
                                   &ce->wa_init_shader_program))
     return;
 
@@ -5270,8 +5079,8 @@ static void init_glsl(ModeInfo *mi)
     return;
   }
 
-  if (!glsl_CompileAndLinkShaders(3,wa_finl_vertex_shader_source,
-                                  4,wa_finl_fragment_shader_source,
+  if (!glsl_CompileAndLinkShaders(2,wa_finl_vertex_shader_source,
+                                  2,wa_finl_fragment_shader_source,
                                   &ce->wa_finl_shader_program))
   {
     glDeleteProgram(ce->poly_shader_program);
@@ -5314,6 +5123,10 @@ static void init_glsl(ModeInfo *mi)
   glBindBuffer(GL_ARRAY_BUFFER,ce->quad_buffer);
   glBufferData(GL_ARRAY_BUFFER,sizeof(quad_verts),quad_verts,GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER,0);
+
+  ce->use_vao = glsl_IsCoreProfile();
+  if (ce->use_vao)
+    glGenVertexArrays(1,&ce->vertex_array_object);
 
   ce->use_shaders = True;
   if (!gl_gles3 && gl_major < 3)
@@ -5831,6 +5644,8 @@ ENTRYPOINT void free_cubocteversion(ModeInfo *mi)
     glDeleteBuffers(1,&ce->self_index_buffer);
     glDeleteBuffers(1,&ce->quad_buffer);
     glDeleteQueries(1,&ce->dp_query);
+    if (ce->use_vao)
+      glDeleteVertexArrays(1,&ce->vertex_array_object);
     delete_dual_peeling_render_targets(mi);
     delete_weighted_average_render_targets(mi);
   }

@@ -4,6 +4,8 @@ set -e
 
 case "$1" in 
   remove|purge)
-	killall -q /usr/bin/xscreensaver || true
-	;;
+    killall -q /usr/bin/xscreensaver          || true
+    killall -q /usr/bin/xscreensaver-settings || true
+    killall -q /usr/bin/xscreensaver-command  || true
+  ;;
 esac

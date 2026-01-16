@@ -45,8 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "flurry.h"
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+/* #include <GL/gl.h> */
+/* #include <GL/glu.h> */
 
 #include <stdlib.h>
 #include <math.h>

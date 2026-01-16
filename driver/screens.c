@@ -127,10 +127,6 @@
 # include <X11/extensions/Xinerama.h>
 #endif /* HAVE_XINERAMA */
 
-#ifdef HAVE_XF86VMODE
-# include <X11/extensions/xf86vmode.h>
-#endif /* HAVE_XF86VMODE */
-
 #include "blurb.h"
 #include "screens.h"
 

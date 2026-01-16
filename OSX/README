@@ -99,7 +99,8 @@ Building for older operating systems:
   my benefit.  I tried to automate some of this with Applescript but that
   appears to be impossible.
 
-  1: Duplicate a target (Dangerball for GL, or Attraction for X11).
+  1: Duplicate a target (Dangerball for GL, Attraction for X11,
+     StarNest for Shadertoy).
   2: Rename it, and drag it to the right spot in the list.
   3: Delete the "DangerBall copy-Info.plist" file that got created.
   4: Delete the dangerball.c and dangerball.xml files from Build Phases.
@@ -109,20 +110,21 @@ Building for older operating systems:
   8. Scheme / Profile / Info: Executable: SaverTester.app.
      Scheme / Run / Info: Executable: SaverTester.app.
   9: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
- 10: File / Add Files / [x] Reference In Place / the new .c and .xml.
+ 10: File / Add Files / [x] Reference In Place / the new .c, .xml and .glsl.
      Add To Targets: the new target, and "XScreenSaver-iOS" and "-tvOS".
- 11: Re-order the two files in the file list on the left.
- 12: The files might not have moved. This means Xcode is gonna crash soon.
-     It will repair itself after.
- 13: In target "All Savers (OpenGL)" add the new target as Build Phases /
+ 11: Re-order the new files in the file list on the left.
+ 12: In target "All Savers (OpenGL)" add the new target as Build Phases /
      Target Dependency.
- 14: In target "XScreenSaver-iOS", reorder new files in Build Phases /
+ 13: In target "XScreenSaver-iOS", reorder new files in Build Phases /
      "Copy" and "Compile", since they showed up in a random place.
- 15: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
- 16: Put a 720p screen shot in ~/www/xscreensaver/screenshots/
- 17: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
+ 14: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
+ 15: Put a 720p screen shot in ~/www/xscreensaver/screenshots/
+     convert -crop 2560x1440+0+44 -resize 1280x \
+       grab-NNNNNN.png ~/www/xscreensaver/screenshots/NEW.jpg
+ 16: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
            ~/Library/Screen\ Savers/
- 18: git add xscreensaver.xcodeproj/xcshareddata/xcschemes/*.xcscheme
- 19: Create a man page from the XML with xml2man.pl, and update Makefile.in.
- 20: Upload a YouTube video: -record-animation 2min -geom 1920x1080+128+64
+ 17: git add xscreensaver.xcodeproj/xcshareddata/xcschemes/*.xcscheme
+ 18: Create a man page from the XML with xml2man.pl, and update Makefile.in.
+ 19: Upload a YouTube video:
+     --record-animation 2min --delay 0 -geom 1920x1080+128+64
      ./upload-video.pl NAME
