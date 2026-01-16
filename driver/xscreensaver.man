@@ -1,0 +1,884 @@
+.TH XScreenSaver 1 "6-Jan-2022 (6.00)" "X Version 11"
+.SH NAME
+xscreensaver - extensible screen saver and screen locking framework
+.SH SYNOPSIS
+.B xscreensaver
+[\-\-display \fIhost:display.screen\fP] \
+[\-\-verbose] \
+[\-\-version] \
+[\-\-no\-splash] \
+[\-\-log \fIfilename\fP]
+.SH DESCRIPTION
+XScreenSaver waits until the user is idle, and then runs graphics demos chosen
+at random.  It can also lock your screen, and provides configuration and
+control of display power management.
+
+XScreenSaver is also available on macOS, iOS and Android.
+.SH GETTING STARTED
+XScreenSaver is a daemon that runs in the background.  You configure it
+with the
+.BR xscreensaver\-settings (1)
+program.
+.nf
+.sp
+	xscreensaver &
+	xscreensaver-settings
+.sp
+.fi
+.SH HOW IT WORKS
+When it is time to activate the screensaver, a full-screen black window is
+created that covers each monitor.  A sub-process is launched for each one
+running a graphics demo, pointed at the appropriate window.  Because of this,
+any program which can draw on a provided window can be used as a screensaver.
+The various graphics demos are, in fact, just standalone programs that do
+that.
+
+When the user becomes active again, the screensaver windows are unmapped, and
+the running subprocesses are killed.
+
+The display modes are run at a low process priority, and spend most of their
+time sleeping/idle by default, so they should not consume significant system
+resources.
+.SH COMMAND-LINE OPTIONS
+.TP 8
+.B \-\-display\fP \fIhost:display.screen\fP
+The X display to use.  For displays with multiple screens, XScreenSaver
+will manage all screens on the display simultaneously.
+.TP 8
+.B \-\-verbose
+Print diagnostics to stderr.
+.TP 8
+.B \-\-version\fP
+Print the version number and exit.
+.TP 8
+.B \-\-log\fP \fIfilename\fP
+Append all diagnostic output to the given file.  This also 
+implies \fI\-\-verbose\fP.  Use this when reporting bugs.
+.TP 8
+.B \-\-no\-splash
+Don't display the splash screen at startup.
+.SH POWER MANAGEMENT
+The
+.BR xscreensaver\-settings (1)
+program is where you configure if and when your monitor should power off.
+It saves the settings in your \fI~/.xscreensaver\fP file.
+Do not use
+.BR xset (1)
+to manually change the power management settings, that won't work.
+
+When the monitor is powered down, the display hacks will stop running
+(though it may take a minute or two for XScreenSaver to notice).
+.SH LAPTOP LIDS
+If your system uses
+.BR systemd (1)
+or
+.BR elogind (8),
+then closing the lid of your laptop will cause the screen to lock immediately.
+
+If not, then the screen might not lock until a few seconds \fIafter\fP you
+re-open the lid.  Which is less than ideal.  So if you do not have
+.BR systemd (1),
+you might want to get in the habit of manually locking your screen
+\fIbefore\fP closing the lid (\fIxscreensaver\-command\ \-\-lock\fP).
+.SH PLAYING VIDEOS
+Likewise, if you have
+.BR systemd (1)
+or
+.BR elogind (8),
+then all of the popular video players and web browsers will
+prevent XScreenSaver from blanking the screen while video is playing.
+
+Both of these features require that
+.BR xscreensaver\-systemd (MANSUFFIX)
+be able connect to D-Bus.
+.SH INSTALLATION
+Each desktop environment has its own system for launching long-running
+daemons like XScreenSaver, and since many of them come bundled with
+their own (buggy, insecure, inferior) screen-locking frameworks, it is
+also necessary to disable those other frameworks before XScreenSaver
+can work.
+.SS INSTALLING XSCREENSAVER ON GNOME OR UNITY
+For many years, GNOME included XScreenSaver as-is, and everything just worked.
+Not any more!
+.RS 4
+.TP 3
+\fB1: Fully uninstall the other screen saver packages:\fP
+.nf
+.sp
+	sudo apt remove gnome-screensaver
+	sudo apt remove mate-screensaver
+	sudo apt remove cinnamon-screensaver
+	sudo apt remove light-locker
+or
+	sudo rpm -e gnome-screensaver
+	sudo rpm -e mate-screensaver
+	sudo rpm -e cinnamon-screensaver
+	sudo rpm -e light-locker
+.sp
+.fi
+Be careful that it doesn't try to uninstall all of GNOME.
+.TP 3
+\fB2: Turn off GNOME's built-in blanking.\fP
+Set all of the following settings to "\fINever\fP" or "\fIOff\fP", as
+these are all controlled by
+.BR xscreensaver\-settings (1)
+now:
+
+"\fISettings / Privacy / Screen Lock / Blank Screen Delay\fP"
+.br
+"\fISettings / Privacy / Screen Lock / Automatic Screen Lock\fP"
+.br
+"\fISettings / Power / Blank Screen\fP"
+.br
+"\fISettings / Power / Automatic Suspend\fP"
+.TP 3
+\fB3: Launch XScreenSaver at login.\fP
+Launch "\fITweaks\fP", select "\fIStartup Applications\fP", click the plus
+sign, and select "\fIXScreenSaver\fP" (not "\fIXScreenSaver Settings\fP")
+from the (very long) menu.
+
+Or, see the "\fILAUNCHING XSCREENSAVER FROM SYSTEMD\fP" section below.
+That works too.
+.TP 3
+\fB4: Make GNOME's "Lock" icon use XScreenSaver.\fP
+This used to work, but no longer does with GNOME 3.38.  If you figure it out,
+let me know!  This still works for Cinnamon 4.8 and MATE 1.24:
+.nf
+.sp
+	sudo ln -sf /usr/bin/xscreensaver-command \\
+	       /usr/bin/gnome-screensaver-command
+	sudo ln -sf /usr/bin/xscreensaver-command \\
+	    /usr/bin/cinnamon-screensaver-command
+	sudo ln -sf /usr/bin/xscreensaver-command \\
+	        /usr/bin/mate-screensaver-command
+	sudo ln -sf /usr/bin/xscreensaver-command \\
+	       /usr/bin/xfce4-screensaver-command
+	sudo ln -sf /usr/bin/xscreensaver-command \\
+	            /usr/bin/light-locker-command
+.sp
+.fi
+This change will get blown away when you upgrade.
+.SS INSTALLING XSCREENSAVER ON KDE
+Like GNOME, KDE also decided to re-invent the wheel.  To replace the KDE
+screen saver with XScreenSaver, do the following:
+.RS 4
+.TP 3
+\fB1: Turn off KDE's built-in blanking.\fP
+In \fISystem Settings\fP, un-check the following items, as these are
+controlled by
+.BR xscreensaver\-settings (1)
+now:
+
+"\fIWorkspace Behavior / Screen Locking / Lock automatically\fP"
+.br
+"\fIWorkspace Behavior / Screen Locking / After waking from sleep\fP"
+.br
+"\fIWorkspace Behavior / Screen Locking / Keyboard shortcut\fP"
+.br
+"\fIHardware / Power Management / Screen Energy Saving\fP"
+.br
+"\fIHardware / Power Management / Suspend session\fP"
+.br
+"\fIHardware / Power Management / Laptop lid closed" = Do Nothing\fP
+
+If there are multiple tabs, you may need to change these settings on all
+three of them: "On AC power", "Battery" and "Low Battery".
+.TP 3
+\fB2: Launch XScreenSaver at login.\fP
+Copy the file \fI/usr/share/applications/xscreensaver.desktop\fP into
+the directory \fI~/.config/autostart/\fP
+.TP 3
+\fB3: Make KDE's "Lock" icon use XScreenSaver.\fP
+Find the "\fIkscreenlocker_greet\fP" program.  It might be in 
+"\fI/usr/lib/*/libexec/\fP", or it might be somewhere else.
+Delete that file and replace it with a file containing these two lines.
+Make it executable (chmod a+x).
+.nf
+.sp
+	#!/bin/sh
+	xscreensaver-command \-\-lock &
+.sp
+.fi
+This change will get blown away when you upgrade.
+.TP 3
+\fB4: Turn off KDE's built-in locking on suspend, even harder.\fP
+Even after disabling KDE's screen locking, above, it is \fIpossible\fP that
+KDE will still use its built-in locker when you close your laptop's lid.  If
+that is happening, double-check the settings above, but if those are correct,
+try the following.  First, ensure you are running KDE 5.21 or newer.  Next,
+enable \fI"systemd user sessions"\fP for KDE so that you can edit the
+parameters for \fIksmserver:\fP
+.nf
+.sp
+	kwriteconfig5 \-\-file startkderc \-\-group General \\
+	  \-\-key systemdBoot true
+.sp
+.fi
+Log out and back in.
+
+Next, edit the \fIplasma-ksmserver\fP service to change how \fIksmserver\fP
+is launched:
+.nf
+.sp
+	systemctl edit --user plasma-ksmserver.service
+.sp
+.fi
+Replace the contents of the file that lets you edit with this:
+.nf
+.sp
+	[Service]
+	ExecStart=
+	ExecStart=/usr/bin/ksmserver \-\-no\-lockscreen
+.sp
+.fi
+Then log out and back in \fIagain\fP.
+.SS LAUNCHING XSCREENSAVER FROM LXDE
+Add the line \fI@xscreensaver\fP to
+\fI/etc/xdg/lxsession/LXDE/autostart\fP or
+\fI/etc/xdg/lxsession/LXDE-pi/autostart\fP.
+.SS LAUNCHING XSCREENSAVER FROM SYSTEMD
+If you are not using GNOME, KDE or LXDE, the way to launch XScreenSaver
+at login is probably
+.BR systemd (1).
+
+If the file \fI/usr/lib/systemd/user/xscreensaver.service\fP does not
+already exist, copy the file \fI/usr/share/xscreensaver/xscreensaver.service\fP
+to there or to \fI~/.config/systemd/user/\fP.
+
+Then enable it with:
+.nf
+.sp
+	systemctl \-\-user enable xscreensaver
+.sp
+.fi
+.SS LAUNCHING XSCREENAVER FROM UPSTART
+If you are not using GNOME, KDE or LXDE, and your system uses
+.BR upstart (7)
+instead of
+.BR systemd (1),
+launch the \fI"Startup Applications"\fP applet, click \fI"Add"\fP, and enter
+these lines:
+.nf
+.sp
+	Name: XScreenSaver
+	Command: xscreensaver
+	Comment: XScreenSaver
+.sp
+.fi
+.SS LAPTOP LIDS WITHOUT SYSTEMD
+BSD systems or other systems without
+.BR systemd (1)
+or
+.BR elogind (8)
+might have luck by adding "\fIxscreensaver\-command \-\-suspend\fP" to
+some appropriate spot in \fI/etc/acpi/events/anything\fP or in
+\fI/etc/acpi/handler.sh\fP, if those files exist.
+.SS LAUNCHING XSCREENSAVER FROM GDM
+You can run \fIxscreensaver\fP from your 
+.BR gdm (1)
+session, so that the screensaver will run even when nobody is logged 
+in on the console.  To do this, run
+.BR gdmconfig (1).
+
+On the \fIGeneral\fP page set the \fILocal Greeter\fP to
+\fIStandard Greeter\fP.
+
+On the \fIBackground\fP page, type the
+command \fI"xscreensaver \-\-no\-splash"\fP into the \fIBackground Program\fP
+field.  That will cause gdm to run XScreenSaver while nobody is logged
+in, and kill it as soon as someone does log in.  (The user will then
+be responsible for starting XScreenSaver on their own, if they want.)
+
+If that doesn't work, you can edit the config file directly. Edit
+\fI/etc/X11/gdm/gdm.conf\fP or maybe \fI/etc/gdm3/custom.conf\fP to include:
+.nf
+.sp
+	Greeter=/usr/bin/gdmlogin
+	BackgroundProgram=xscreensaver \-\-no\-splash
+	RunBackgroundProgramAlways=true
+.sp
+.fi
+In this situation, the \fIxscreensaver\fP process will be running as user
+\fIgdm\fP.  You can configure the settings for this nobody-logged-in
+state (timeouts, DPMS, etc.) by editing the \fI~gdm/.xscreensaver\fP file.
+
+If you get "connection refused" errors when running \fIxscreensaver\fP
+from \fIgdm\fP, then this probably means that you are having
+.BR xauth (1)
+problems.  For information on the X server's access control mechanisms,
+see the man pages for
+.BR X (1),
+.BR Xsecurity (1),
+.BR xauth (1),
+and
+.BR xhost (1).
+
+There might be a way to accomplish this with other display managers.
+It's a mystery!
+.SH THE WAYLAND PROBLEM
+Wayland is a completely different window system that is intended to replace
+X11.  After 16+ years of trying, some Linux distros have finally begun
+enabling it by default.  Most deployments of it also include XWayland, which
+is a compatibility layer that allows \fIsome\fP X11 programs to continue to
+work within a Wayland environment.
+
+Unfortunately, XScreenSaver is not one of those programs.
+
+If your system is running Wayland, XScreenSaver will malfunction in a
+few ways, some small but one quite serious:
+.RS 0
+.TP 3
+\fB1:\fP It will be unable to lock the screen.
+
+This is because X11 grabs don't work properly under XWayland, so there is no
+way for XScreenSaver to prevent the user from switching away from the screen
+locker to another application.
+.TP 3
+\fB2:\fP It won't work at all under GNOME.
+
+This is because the GNOME compositor does not support either of the Wayland
+protocols that allow us to tell when the user is idle.  It works with KDE
+and most other compositors, however.
+.TP 3
+\fB2:\fP No mouse hystersis.
+
+Even a single pixel of mouse motion will cause the screen to un-blank.
+
+.TP 3
+\fB3:\fP Fading and screenshots might not work.
+
+Under Wayland, Fading in and out, and allowing hacks to grab and 
+manipulate a desktop screenshot, depend on the program
+.BR grim (1)
+being installed to grab screenshots for us.  And
+.BR grim (1)
+doesn't work under the GNOME or KDE compositors.
+.RE
+
+For XScreenSaver to be able to lock, you will need to switch off
+Wayland and use the X Window System like in the "good old days".
+.SS TO DISABLE WAYLAND UNDER GNOME
+The login screen should have a gear-icon menu that lets you change the session
+type from "GNOME" (the Wayland session) to "GNOME on Xorg" (the X11 session).
+
+Alternately, edit \fI/etc/X11/gdm/gdm.conf\fP or maybe
+\fI/etc/gdm3/custom.conf\fP to include:
+.nf
+.sp
+	WaylandEnable=false
+.fi
+.SS TO DISABLE WAYLAND UNDER KDE
+The login screen should have a menu that lets you change the session type to
+"Plasma (X11)".
+
+Alternately, edit \fI/etc/sddm.conf\fP and change the \fISessionDir\fP line
+under the \fI[Wayland]\fP section to say:
+.nf
+.sp
+	SessionDir=/dev/null
+.fi
+.SH SECURITY CONCERNS
+XScreenSaver has a decades-long track record of securely locking your screen.
+However, there are many things that can go wrong.  X11 is a very old system,
+and has a number of design flaws that make it susceptible to foot-shooting.
+.SS MAGIC BACKDOOR KEYSTROKES
+The Xorg and XFree86 X servers, as well as the Linux kernel, both trap
+certain magic keystrokes before X11 client programs ever see them.
+If you care about keeping your screen locked, this is a big problem.
+.TP 3
+.B Ctrl+Alt+Backspace
+This keystroke kills the X server, and on some systems, leaves you at
+a text console.  If the user launched X11 manually, that text console
+will still be logged in.  To disable this keystroke globally and
+permanently, you need to set the \fBDontZap\fP flag in your
+.BR xorg.conf (5)
+or
+.BR XF86Config (5)
+file.
+.TP 3
+.B Ctrl-Alt-F1, Ctrl-Alt-F2, etc.
+These keystrokes will switch to a different virtual console, while leaving the
+console that X11 is running on locked.  If you left a shell logged in on
+another virtual console, it is unprotected.  So don't leave yourself logged in
+on other consoles.  You can disable VT switching globally and permanently by
+setting \fBDontVTSwitch\fP in your
+.BR xorg.conf (5),
+but that might make your system harder to use, since VT switching is an actual
+useful feature.
+
+There is no way to disable VT switching only when the screen is
+locked.  It's all or nothing.
+.TP 3
+.B Ctrl-Alt-KP_Multiply
+This keystroke kills any X11 app that holds a lock, so typing this will kill
+XScreenSaver and unlock the screen.  You can disable it by turning off
+\fBAllowClosedownGrabs\fP in
+.BR xorg.conf (5).
+.TP 3
+.B Alt-SysRq-F
+This is the Linux kernel "OOM-killer" keystroke.  It shoots down random
+long-running programs of its choosing, and so might target and kill
+XScreenSaver.  You can disable this keystroke globally with:
+.nf
+.sp
+	echo 176 > /proc/sys/kernel/sysrq
+.sp
+.fi
+There's little that I can do to make the screen locker be secure so long
+as the kernel and X11 developers are \fIactively\fP working against
+security like this.  The strength of the lock on your front door
+doesn't matter much so long as someone else in the house insists on
+leaving a key under the welcome mat.
+.SS THE OOM-KILLER
+Even if you have disabled the \fBAlt-SysRq-F\fP OOM-killer keystroke, the
+OOM-killer might still decide to assassinate XScreenSaver at random, which
+will unlock your screen.  If the
+.BR xscreensaver\-auth (MANSUFFIX)
+program is installed setuid, it attempts to tell the OOM-killer to leave
+the XScreenSaver daemon alone, but that may or may not work.
+
+You would think that the OOM-killer would pick the process using the most
+memory, but most of the time it seems to pick the process that would be most
+comically inconvenient, such as your screen locker, or
+.BR crond (8).
+You can disable the OOM-killer entirely with:
+.nf
+.sp
+	echo 2 > /proc/sys/vm/overcommit_memory
+	echo vm.overcommit_memory = 2 >> /etc/sysctl.conf
+.sp
+.fi
+In addition to the kernel's OOM-killer, 
+.BR systemd (1)
+has its own.  The included \fIxscreensaver.service\fP file attempts to
+evade it, but you may want to just turn it off anyway:
+.nf
+.sp
+	sudo systemctl disable --now systemd-oomd
+	sudo systemctl mask systemd-oomd
+.sp
+.fi
+.SS X SERVER ACCESS IS GAME OVER
+X11's security model is all-or-nothing.  If a program can connect to your X
+server at all, either locally or over the network, it can log all of your
+keystrokes, simulate keystrokes, launch arbitrary programs, and change the
+settings of other programs.  Assume that anything that can connect to your X
+server can execute arbitrary code as the logged-in user.  See
+.BR Xsecurity (1)
+and 
+.BR xauth (1).
+.SS PAM PASSWORDS
+If your system uses PAM (Pluggable Authentication Modules), then PAM must be
+configured for XScreenSaver.  If it is not, then you \fImight\fP be in a
+situation where you can't unlock.  Probably the file you need 
+is \fI/etc/pam.d/xscreensaver\fP.
+.SS DON'T LOG IN AS ROOT
+Never log in as root.  Log in as a normal user and use
+.BR sudo (1)
+as necessary.  If you are logged in as root, XScreenSaver will not lock your
+screen or run display modes, for numerous good and proper reasons.
+.SH MULTI-USER OR SITE-WIDE CONFIGURATION
+For a single user, the proper way to configure XScreenSaver is to simply
+run the
+.BR xscreensaver\-settings (1)
+program, and change the settings through the GUI.  Changes are written
+to the \fI~/.xscreensaver\fP file.
+
+If you want to set the system-wide defaults, then make your edits to
+\fI/etc/X11/app-defaults/XScreenSaver\fP instead.  The two files have
+similar (but not identical) syntax.
+
+You can also make changes via the X Resource Database and
+.BR xrdb (1),
+but that can be very confusing and is not really recommended. 
+
+Options in \fI~/.xscreensaver\fP override any settings in the resource
+database or app-defaults file.
+
+If you change a setting in the \fI.xscreensaver\fP file while XScreenSaver
+is already running, it will notice this, and reload the file as needed.
+But if you change a setting in the X Resource Database, you will need to
+restart XScreenSaver for those changes to take effect:
+.nf
+.sp
+	xrdb < ~/.Xdefaults
+	xscreensaver-command \-\-restart
+.sp
+.fi
+.SH X RESOURCES
+These are the X resources use by XScreenSaver program.  You probably won't
+need to change these manually: that's what the
+.BR xscreensaver\-settings (1)
+program is for.
+.TP 8
+.B timeout\fP (class \fBTime\fP)
+The screensaver will activate (blank the screen) after the keyboard and
+mouse have been idle for this many minutes.  Default 10 minutes.
+.TP 8
+.B cycle\fP (class \fBTime\fP)
+After the screensaver has been running for this many minutes, the currently
+running graphics-hack sub-process will be killed (with \fBSIGTERM\fP), and a
+new one started.  If this is 0, then the graphics hack will never be changed:
+only one demo will run until the screensaver is deactivated by user activity.
+Default 10 minutes.
+
+If there are multiple screens, the savers are staggered slightly so
+that while they all change every \fIcycle\fP minutes, they don't all
+change at the same time.
+.TP 8
+.B lock\fP (class \fBBoolean\fP)
+Enable locking: before the screensaver will turn off, it will require you 
+to type the password of the logged-in user.
+.TP 8
+.B lockTimeout\fP (class \fBTime\fP)
+If locking is enabled, this controls the length of the "grace period"
+between when the screensaver activates, and when the screen becomes locked.
+For example, if this is 5, and \fItimeout\fP is 10, then after 10 minutes,
+the screen would blank.  If there was user activity at 12 minutes, no password
+would be required to un-blank the screen.  But, if there was user activity
+at 15 minutes or later (that is, \fIlockTimeout\fP minutes after 
+activation) then a password would be required.  The default is 0, meaning
+that if locking is enabled, then a password will be required as soon as the 
+screen blanks.
+.TP 8
+.B passwdTimeout\fP (class \fBTime\fP)
+If the screen is locked, then this is how many seconds the password dialog box
+should be left on the screen before giving up (default 30 seconds).  A few
+seconds are added each time you type a character.
+.TP 8
+.B dpmsEnabled\fP (class \fBBoolean\fP)
+Whether power management is enabled.
+.TP 8
+.B dpmsStandby\fP (class \fBTime\fP)
+If power management is enabled, how long until the monitor goes solid black.
+.TP 8
+.B dpmsSuspend\fP (class \fBTime\fP)
+If power management is enabled, how long until the monitor goes into
+power-saving mode.
+.TP 8
+.B dpmsOff\fP (class \fBTime\fP)
+If power management is enabled, how long until the monitor powers down
+completely.  Note that these settings will have no effect unless both
+the X server and the display hardware support power management; not 
+all do.  See the \fIPower Management\fP section, below, for more 
+information.
+.TP 8
+.B dpmsQuickOff\fP (class \fBBoolean\fP)
+If \fImode\fP is \fIblank\fP and this is true, then the screen will be
+powered down immediately upon blanking, regardless of other
+power-management settings.
+.TP 8
+.B verbose\fP (class \fBBoolean\fP)
+Whether to print diagnostics.  Default false.
+.TP 8
+.B splash\fP (class \fBBoolean\fP)
+Whether to display a splash screen at startup.  Default true.
+.TP 8
+.B splashDuration\fP (class \fBTime\fP)
+How long the splash screen should remain visible; default 5 seconds.
+.TP 8
+.B helpURL\fP (class \fBURL\fP)
+The splash screen has a \fIHelp\fP button on it.  When you press it, it will
+display the web page indicated here in your web browser.
+.TP 8
+.B loadURL\fP (class \fBLoadURL\fP)
+This is the shell command used to load a URL into your web browser.
+.TP 8
+.B demoCommand\fP (class \fBDemoCommand\fP)
+This is the shell command run when the \fIDemo\fP button on the splash window
+is pressed.  It defaults to
+.BR xscreensaver\-settings (1).
+.TP 8
+.B newLoginCommand\fP (class \fBNewLoginCommand\fP)
+If set, this is the shell command that is run when the "New Login" button
+is pressed on the unlock dialog box, in order to create a new desktop
+session without logging out the user who has locked the screen.
+Typically this will be some variant of
+.BR gdmflexiserver (1),
+.BR kdmctl (1),
+.BR lxdm (1)
+or
+.BR dm-tool (1).
+.TP 8
+.B nice\fP (class \fBNice\fP)
+The sub-processes launched by XScreenSaver will be "niced" to this level, so
+that they are given lower priority than other processes on the system, and
+don't increase the load unnecessarily.  The default is 10.  (Higher numbers
+mean lower priority; see
+.BR nice (1)
+for details.)
+.TP 8
+.B fade\fP (class \fBBoolean\fP)
+If this is true, then when the screensaver activates, the desktop will fade to
+black instead of simply winking out.  Default: true.
+.TP 8
+.B unfade\fP (class \fBBoolean\fP)
+If this is true, then when the screensaver deactivates, desktop will fade back
+ininstead of appearing immediately.  This is only done if \fIfade\fP is true
+as well.  Default: true.
+.TP 8
+.B fadeSeconds\fP (class \fBTime\fP)
+If \fIfade\fP is true, this is how long the fade will be in 
+seconds. Default 3 seconds.
+.TP 8
+.B ignoreUninstalledPrograms\fP (class \fBBoolean\fP)
+There may be programs in the list that are not installed on the system,
+yet are marked as "enabled".  If this preference is true, then such 
+programs will simply be ignored.  If false, then a warning will be printed
+if an attempt is made to run the nonexistent program.  Also, the
+.BR xscreensaver\-settings (1)
+program will suppress the non-existent programs from the list if this
+is true.  Default: false.
+.TP 8
+.B authWarningSlack\fP (class \fBInteger\fP)
+After you successfully unlock the screen, a dialog may pop up informing
+you of previous failed login attempts.  If all of those login attemps
+were within this amount of time, they are ignored.  The assumption
+is that incorrect passwords entered within a few seconds of a correct
+one are user error, rather than hostile action.  Default 20 seconds.
+.TP 8
+.B mode\fP (class \fBMode\fP)
+Controls the screen-saving behavior.  Valid values are:
+.RS 8
+.TP 8
+.B random
+When blanking the screen, select a random display mode from among those
+that are enabled and applicable.  This is the default.
+.TP 8
+.B random-same
+Like \fIrandom\fP, but if there are multiple screens, each screen
+will run the \fIsame\fP random display mode, instead of each screen
+running a different one.
+.TP 8
+.B one
+When blanking the screen, only ever use one particular display mode (the
+one indicated by the \fIselected\fP setting).
+.TP 8
+.B blank
+When blanking the screen, just go black: don't run any graphics hacks.
+.TP 8
+.B off
+Don't ever blank the screen, and don't ever allow the monitor to power down.
+.RE
+.TP 8
+.B selected\fP (class \fBInteger\fP)
+When \fImode\fP is set to \fIone\fP, this is the one, indicated by its
+index in the \fIprograms\fP list.  You're crazy if you count them and
+set this number by hand: let
+.BR xscreensaver\-settings (1)
+do it for you!
+.TP 8
+.B programs\fP (class \fBPrograms\fP)
+The graphics hacks which XScreenSaver runs when the user is idle.
+The value of this resource is a multi-line string, one \fIsh\fP-syntax
+command per line.  Each line must contain exactly one command: no
+semicolons, no ampersands.
+
+When the screensaver starts up, one of these is selected (according to
+the \fBmode\fP setting), and run.  After the \fIcycle\fP period
+expires, it is killed, and another is selected and run.
+
+If a line begins with a dash (-) then that particular program is
+disabled: it won't be selected at random (though you can still select
+it explicitly using the
+.BR xscreensaver\-settings (1)
+program).
+
+If all programs are disabled, then the screen will just be made blank,
+as when \fImode\fP is set to \fIblank\fP.
+
+To disable a program, you must mark it as disabled with a dash instead
+of removing it from the list.  This is because the system-wide (app-defaults)
+and per-user (.xscreensaver) settings are merged together, and if a user
+just \fIdeletes\fP an entry from their programs list, but that entry still
+exists in the system-wide list, then it will come back.  However, if the
+user \fIdisables\fP it, then their setting takes precedence.
+
+The default XScreenSaver hacks directory (typically
+\fI/usr/libexec/xscreensaver/\fP) is prepended to \fB$PATH\fP
+before searching for these programs.
+
+To use a program as a screensaver, it must be able to render onto
+the window provided to it in the \fB$XSCREENSAVER_WINDOW\fP environment
+variable.  If it creates and maps its own window instead, it won't work.
+It must render onto the provided window.
+
+.B Visuals:
+
+Because XScreenSaver was created back when dinosaurs roamed the earth,
+it still contains support for some things you've probably never seen,
+such as 1-bit monochrome monitors, grayscale monitors, and monitors
+capable of displaying only 8-bit colormapped images.
+
+If there are some programs that you want to run only when using a color
+display, and others that you want to run only when using a monochrome
+display, you can specify that like this:
+.nf
+.sp
+	mono:   mono-program  -root        \\n\\
+	color:  color-program -root        \\n\\
+.sp
+.fi
+More generally, you can specify the kind of visual that should be used for
+the window on which the program will be drawing.  For example, if one 
+program works best if it has a colormap, but another works best if it has
+a 24-bit visual, both can be accommodated:
+.nf
+.sp
+	PseudoColor: cmap-program  -root   \\n\\
+	TrueColor:   24bit-program -root   \\n\\
+.sp
+.fi
+In addition to the symbolic visual names described above (in the discussion
+of the \fIvisualID\fP resource) one other visual name is supported in
+the \fIprograms\fP list:
+.RS 1
+.TP 4
+.B default-n
+This is like \fBdefault\fP, but also requests the use of the default colormap,
+instead of a private colormap.
+.RE
+.PP
+If you specify a particular visual for a program, and that visual does not
+exist on the screen, then that program will not be chosen to run.  This
+means that on displays with multiple screens of different depths, you can
+arrange for appropriate hacks to be run on each.  For example, if one screen
+is color and the other is monochrome, hacks that look good in mono can be 
+run on one, and hacks that only look good in color will show up on the other.
+.RE
+.TP 8
+.B visualID\fP (class \fBVisualID\fP)
+This is an historical artifact left over from when 8-bit
+displays were still common.  You should probably ignore this.
+
+Specify which X visual to use by default.  (Note carefully that this resource
+is called \fBvisualID\fP, not merely \fBvisual\fP; if you set the \fBvisual\fP
+resource instead, things will malfunction in obscure ways for obscure reasons.)
+
+Valid values for the \fBVisualID\fP resource are:
+.RS 8
+.TP 8
+.B default
+Use the screen's default visual (the visual of the root window).  
+This is the default.
+.TP 8
+.B best
+Use the visual which supports the most colors.  Note, however, that the
+visual with the most colors might be a TrueColor visual, which does not
+support colormap animation.  Some programs have more interesting behavior
+when run on PseudoColor visuals than on TrueColor.
+.TP 8
+.B mono
+Use a monochrome visual, if there is one.
+.TP 8
+.B gray
+Use a grayscale or staticgray visual, if there is one and it has more than
+one plane (that is, it's not monochrome).
+.TP 8
+.B color
+Use the best of the color visuals, if there are any.
+.TP 8
+.B GL
+Use the visual that is best for OpenGL programs.  (OpenGL programs have
+somewhat different requirements than other X programs.)
+.TP 8
+.I class
+where \fIclass\fP is one of \fBStaticGray\fP, \fBStaticColor\fP, 
+\fBTrueColor\fP, \fBGrayScale\fP, \fBPseudoColor\fP, or \fBDirectColor\fP.
+Selects the deepest visual of the given class.
+.TP 8
+.I N
+where \fInumber\fP (decimal or hex) is interpreted as a visual id number, 
+as reported by the
+.BR xdpyinfo (1)
+program; in this way you can have finer control over exactly which visual
+gets used, for example, to select a shallower one than would otherwise
+have been chosen.
+.RE
+.RS 8
+.PP
+Note that this option specifies only the \fIdefault\fP visual that will
+be used: the visual used may be overridden on a program-by-program basis.
+See the description of the \fBprograms\fP resource, above.
+.RE
+.TP 8
+.B installColormap\fP (class \fBBoolean\fP)
+This is an historical artifact left over from when 8-bit displays were still
+common.  On PseudoColor (8-bit) displays, install a private colormap while the
+screensaver is active, so that the graphics hacks can get as many colors as
+possible.  This is the default.  (This only applies when the screen's default
+visual is being used, since non-default visuals get their own colormaps
+automatically.)  This can also be overridden on a per-hack basis: see the
+discussion of the \fBdefault\-n\fP name in the section about the
+\fBprograms\fP resource.
+
+This does nothing if you have a TrueColor (16-bit or deeper) display.
+(Which, in this century, you do.)
+.TP 8
+.B pointerHysteresis\fP (class \fBInteger\fP)
+If the mouse moves less than this-many pixels in a second, ignore it
+(do not consider that to be "activity").  This is so that the screen
+doesn't un-blank (or fail to blank) just because you bumped the desk.
+Default: 10 pixels.
+
+A single pixel of motion will still cause the monitor to power back on,
+but not un-blank. This is because the X11 server itself unfortunately handles
+power-management-related activity detection rather than XScreenSaver.
+.SH BUGS
+https://www.jwz.org/xscreensaver/bugs.html explains how to write the most
+useful bug reports.  If you find a bug, please let me know!
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number, and to inform the sub-programs
+of the screen on which to draw.
+.TP 8
+.B XSCREENSAVER_WINDOW
+Passed to sub-programs to indicate the ID of the window on which they
+should draw.
+.TP 8
+.B PATH
+to find the sub-programs to run, including the display modes.
+.TP 8
+.B HOME
+for the directory in which to read the \fI.xscreensaver\fP file.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH UPGRADES
+The latest version of XScreenSaver, an online version of this manual,
+and a FAQ can always be found at https://www.jwz.org/xscreensaver/
+.SH SEE ALSO
+.BR X (1),
+.BR Xsecurity (1),
+.BR xauth (1),
+.BR xdm (1),
+.BR gdm (1),
+.BR xhost (1),
+.BR systemd (1),
+.BR elogind (8),
+.BR xscreensaver\-settings (1),
+.BR xscreensaver\-command (1),
+.BR xscreensaver\-systemd (MANSUFFIX),
+.BR xscreensaver\-gl\-helper (MANSUFFIX),
+.BR xscreensaver\-getimage (MANSUFFIX),
+.BR xscreensaver\-text (MANSUFFIX).
+.SH COPYRIGHT
+Copyright \(co 1991-2022 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software
+and its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>
+
+Please let me know if you find any bugs or make any improvements.
+
+And a huge thank you to the hundreds of people who have contributed, in
+large ways and small, to the XScreenSaver collection over the past
+three decades!

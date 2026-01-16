@@ -1,0 +1,65 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+batteredplanet \- screen saver.
+.SH SYNOPSIS
+.B batteredplanet
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-delay \fInumber\fP]
+[\-\-speed \fInumber\fP]
+[\-\-scale \fInumber\fP]
+[\-\-fps]
+.SH DESCRIPTION
+An alien planet full of craters, with other celestial objects in the sky. 
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
+.TP 8
+.B \-\-speed \fInumber\fP
+Animation speed.  2.0 means twice as fast, 0.5 means half as fast.
+.TP 8
+.B \-\-scale \fInumber\fP
+Frame buffer resolution.  0.5 means halve the resolution for better
+performance but lower quality output.  Default 1.0, full quality.
+.TP 8
+.B \-\-fps | \-\-no\-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR https://www.shadertoy.com/view/wsjBD3
+.SH COPYRIGHT
+Copyright \(co 2020 by Otavio Good.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Otavio Good.

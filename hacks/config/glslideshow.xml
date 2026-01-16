@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glslideshow" _label="GL Slideshow" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=Hi0xUWnqBhQ"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+ 
+    <number id="duration" type="slider" arg="--duration %"
+            _label="Time until loading a new image"
+            _low-label="1 second" _high-label="5 minutes"
+            low="1" high="300" default="30"/>
+
+    <number id="pan" type="slider" arg="--transition %"
+            _label="Image loading animation duration"
+            _low-label="None" _high-label="30 seconds"
+            low="0" high="30" default="3"/>
+   </vgroup>
+   <vgroup>
+    <number id="zoom" type="slider" arg="--zoom %"
+            _label="Always show at least this much of the image"
+            _low-label="50%" _high-label="100%"
+            low="50" high="100" default="75"/>
+ 
+    <number id="pan" type="slider" arg="--pan %"
+            _label="Pan / zoom duration"
+            _low-label="None" _high-label="30 seconds"
+            low="0" high="30" default="6"/>
+ 
+    <number id="fade" type="slider" arg="--fade %"
+            _label="Crossfade duration"
+            _low-label="None" _high-label="30 seconds"
+            low="0" high="30" default="2"/>
+   </vgroup>
+   <vgroup>
+
+    <hgroup>
+     <boolean id="letterbox" _label="Letterbox" arg-unset="--no-letterbox"/>
+     <boolean id="titles" _label="Show file names" arg-set="--titles"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+    </hgroup>
+
+    <xscreensaver-image />
+
+    <xscreensaver-updater />
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Displays a slideshow of images, with panning, zooming and crossfading
+effects.
+
+When a new image is loaded, it transitions onto the screen by sliding
+in from the edges, spinning or flipping.  Turn off "Image Loading Animation"
+to disable those effects.
+
+Once an image has been loaded, it is panned, zoomed and cross-faded against
+itself.  Turn off "Crossfade" to disable those effects.
+
+Written by Jamie Zawinski; 2003.
+  </_description>
+</screensaver>

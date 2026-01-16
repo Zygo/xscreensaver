@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="petri" _label="Petri">
+
+ <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=QkJ9cN0QQd8"/>
+
+ <hgroup>
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+ </hgroup>
+
+ <hgroup>
+  <vgroup>
+   <number id="diaglim" type="slider" arg="--diaglim %"
+           _label="Colony shape" _low-label="Square" _high-label="Diamond"
+           low="1.0" high="2.0" default="1.414"
+           convert="invert"/>
+
+   <number id="anychan" type="slider" arg="--anychan %"
+           _label="Fertility" _low-label="Low" _high-label="High"
+           low="0.0" high="0.25" default="0.0015"/>
+
+   <number id="minorchan" type="slider" arg="--minorchan %"
+           _label="Offspring" _low-label="Few" _high-label="Many"
+           low="0.0" high="1.0" default="0.5"/>
+
+   <number id="instantdeathchan" type="slider" arg="--instantdeathchan %"
+           _label="Death comes" _low-label="Slowly" _high-label="Quickly"
+           low="0.0" high="1.0" default="0.2"/>
+  </vgroup>
+
+  <vgroup>
+   <number id="minlifespeed" type="slider" arg="--minlifespeed %"
+           _label="Minimum rate of growth" _low-label="Slow" _high-label="Fast"
+           low="0.0" high="1.0" default="0.04"/>
+
+   <number id="maxlifespeed" type="slider" arg="--maxlifespeed %"
+           _label="Maximum rate of growth" _low-label="Slow" _high-label="Fast"
+           low="0.0" high="1.0" default="0.13"/>
+
+   <number id="mindeathspeed" type="slider" arg="--mindeathspeed %"
+           _label="Minimum rate of death" _low-label="Slow" _high-label="Fast"
+           low="0.0" high="1.0" default="0.42"/>
+
+   <number id="maxdeathspeed" type="slider" arg="--maxdeathspeed %"
+           _label="Maximum rate of death" _low-label="Slow" _high-label="Fast"
+           low="0.0" high="1.0" default="0.46"/>
+  </vgroup>
+
+  <vgroup>
+   <number id="minlifespan" type="slider" arg="--minlifespan %"
+           _label="Minimum lifespan" _low-label="Short" _high-label="Long"
+           low="0" high="3000" default="500"/>
+
+   <number id="maxlifespan" type="slider" arg="--maxlifespan %"
+           _label="Maximum lifespan" _low-label="Short" _high-label="Long"
+           low="0" high="3000" default="1500"/>
+
+   <number id="size" type="spinbutton" arg="--size %"
+             _label="Cell size" low="0" high="100" default="2"/>
+
+   <number id="count" type="spinbutton" arg="--count %"
+           _label="Mold varieties" low="0" high="20" default="20"/>
+
+  </vgroup>
+ </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Colonies of mold grow in a petri dish.  Growing colored circles
+overlap and leave spiral interference in their wake.
+
+Written by Dan Bornstein; 1999.
+  </_description>
+</screensaver>

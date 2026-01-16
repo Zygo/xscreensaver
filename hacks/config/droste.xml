@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="droste" _label="Droste">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=C0ZXw3gG70c"/>
+<!-- <video href="https://www.youtube.com/watch?v=izM4ERr2aPw"/> -->
+<!-- <video href="https://www.youtube.com/watch?v=yc94uzwNxdg"/> -->
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="duration" type="slider" arg="--duration %"
+            _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+            low="10" high="600" default="120"/>
+
+    <xscreensaver-image />
+
+   </vgroup>
+   <vgroup>
+    <number id="speed" type="slider" arg="--speed %"
+            _label="Zoom speed" _low-label="Out" _high-label="In"
+            low="-10.0" high="10.0" default="1.0" />
+
+    <number id="r1" type="slider" arg="--r1 %"
+            _label="Radius One" _low-label="0.0" _high-label="1.0"
+            low="0.0" high="1.0" default="0.2" />
+
+    <number id="r2" type="slider" arg="--r2 %"
+            _label="Radius Two" _low-label="0.0" _high-label="1.0"
+            low="0.0" high="1.0" default="0.7" />
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+    <xscreensaver-updater />
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Mise en abyme: infinite spiral recursion within images.
+
+https://en.wikipedia.org/wiki/Droste_effect
+https://en.wikipedia.org/wiki/Maurits_Cornelis_Escher
+
+Written by Jamie Zawinski; 2023.
+  </_description>
+</screensaver>

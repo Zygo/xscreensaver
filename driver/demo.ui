@@ -1,0 +1,2630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="XScreenSaverWindow" parent="GtkApplicationWindow">
+    <property name="title" translatable="yes">XScreenSaver Settings</property>
+    <property name="type">GTK_WINDOW_TOPLEVEL</property>
+    <property name="window-position">GTK_WIN_POS_NONE</property>
+    <property name="modal">False</property>
+    <property name="resizable">True</property>
+    <property name="destroy-with-parent">False</property>
+    <property name="decorated">True</property>
+    <property name="skip-taskbar-hint">False</property>
+    <property name="skip-pager-hint">False</property>
+    <property name="type-hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
+    <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
+    <property name="focus-on-map">True</property>
+    <property name="urgency-hint">False</property>
+    <child>
+      <object class="GtkAdjustment" id="adjustment1">
+        <property name="upper">720</property>
+        <property name="lower">1</property>
+        <property name="page-increment">15</property>
+        <property name="step-increment">1</property>
+        <property name="page-size">0</property>
+        <property name="value">1</property>
+      </object>
+      <object class="GtkAdjustment" id="adjustment2">
+        <property name="upper">720</property>
+        <property name="lower">0</property>
+        <property name="page-increment">15</property>
+        <property name="step-increment">1</property>
+        <property name="page-size">0</property>
+        <property name="value">0</property>
+      </object>
+      <object class="GtkAdjustment" id="adjustment3">
+        <property name="upper">720</property>
+        <property name="lower">0</property>
+        <property name="page-increment">15</property>
+        <property name="step-increment">1</property>
+        <property name="page-size">0</property>
+        <property name="value">0</property>
+      </object>
+      <object class="GtkAdjustment" id="adjustment4">
+        <property name="upper">1440</property>
+        <property name="lower">0</property>
+        <property name="page-increment">15</property>
+        <property name="step-increment">1</property>
+        <property name="page-size">0</property>
+        <property name="value">0</property>
+      </object>
+      <object class="GtkAdjustment" id="adjustment5">
+        <property name="upper">1440</property>
+        <property name="lower">0</property>
+        <property name="page-increment">15</property>
+        <property name="step-increment">1</property>
+        <property name="page-size">0</property>
+        <property name="value">0</property>
+      </object>
+      <object class="GtkAdjustment" id="adjustment6">
+        <property name="upper">1440</property>
+        <property name="lower">0</property>
+        <property name="page-increment">15</property>
+        <property name="step-increment">1</property>
+        <property name="page-size">0</property>
+        <property name="value">0</property>
+      </object>
+      <object class="GtkAdjustment" id="adjustment7">
+        <property name="upper">10</property>
+        <property name="lower">0</property>
+        <property name="page-increment">1</property>
+        <property name="step-increment">1</property>
+        <property name="page-size">0</property>
+        <property name="value">0</property>
+      </object>
+      <object class="GtkListStore" id="mode_menu_model">
+        <columns>
+          <column type="gchararray"/>
+        </columns>
+        <data>
+          <row>
+            <col id="0" translatable="yes">Disable Screen Saver</col>
+          </row>
+          <row>
+            <col id="0" translatable="yes">Blank Screen Only</col>
+          </row>
+          <row>
+            <col id="0" translatable="yes">Only One Screen Saver</col>
+          </row>
+          <row>
+            <col id="0" translatable="yes">Random Screen Saver</col>
+          </row>
+          <row>
+            <col id="0" translatable="yes">Same Random Savers</col>
+          </row>
+        </data>
+      </object>
+      <object class="GtkListStore" id="theme_menu_model">
+        <columns>
+          <column type="gchararray"/>
+        </columns>
+        <data>
+          <row>
+            <col id="0" translatable="yes">Default</col>
+          </row>
+        </data>
+      </object>
+      <object class="GtkBox" id="content_box">
+        <property name="name">content_box</property>
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkBox" id="outer_vbox">
+            <property name="name">outer_vbox</property>
+            <property name="visible">True</property>
+            <property name="homogeneous">False</property>
+            <property name="spacing">5</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkMenuBar" id="menubar">
+                <property name="name">menubar</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <child>
+                  <object class="GtkImageMenuItem">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label">gtk-file</property>
+                    <property name="use-stock">True</property>
+                    <property name="use-underline">True</property>
+                    <signal handler="file_menu_cb" name="activate"/>
+                    <child type="submenu">
+                      <object class="GtkMenu">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <child>
+                          <object class="GtkImageMenuItem" id="activate_menuitem">
+                            <property name="name">activate_menuitem</property>
+                            <property name="label" translatable="yes">_Blank Screen Now</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="activate_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem" id="lock_menuitem">
+                            <property name="name">lock_menuitem</property>
+                            <property name="label" translatable="yes">_Lock Screen Now</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="lock_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem" id="kill_menuitem">
+                            <property name="name">kill_menuitem</property>
+                            <property name="label" translatable="yes">_Kill Daemon</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="kill_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem" id="restart_menuitem">
+                            <property name="name">restart_menuitem</property>
+                            <property name="label" translatable="yes">_Restart Daemon</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="restart_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-quit</property>
+                            <property name="use-stock">True</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="quit_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+
+<!--
+                <child>
+                  <object class="GtkImageMenuItem">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label">gtk-edit</property>
+                    <property name="use-stock">True</property>
+                    <property name="use-underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-undo</property>
+                            <property name="use-stock">True</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="undo_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-redo</property>
+                            <property name="use-stock">True</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="redo_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSeparatorMenuItem">
+                            <property name="visible">True</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-cut</property>
+                            <property name="use-stock">True</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="cut_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-copy</property>
+                            <property name="use-stock">True</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="copy_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-paste</property>
+                            <property name="use-stock">True</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="paste_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-delete</property>
+                            <property name="use-stock">True</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="delete_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+-->
+
+                <child>
+                  <object class="GtkImageMenuItem">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label">gtk-help</property>
+                    <property name="use-stock">True</property>
+                    <property name="use-underline">True</property>
+                    <child type="submenu">
+                      <object class="GtkMenu">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label">gtk-about</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <property name="use-stock">True</property>
+                            <signal handler="about_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImageMenuItem">
+                            <property name="label" translatable="yes">Documentation...</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="use-underline">True</property>
+                            <signal handler="doc_menu_cb" name="activate"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkNotebook" id="notebook">
+                <property name="name">notebook</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="show-tabs">True</property>
+                <property name="show-border">True</property>
+                <property name="tab-pos">GTK_POS_TOP</property>
+                <property name="scrollable">False</property>
+                <property name="enable-popup">False</property>
+                <signal handler="switch_page_cb" name="switch_page"/>
+
+                <!-- Display Modes page -->
+                <child>
+                  <object class="GtkGrid" id="demos_table">
+                    <property name="name">demos_table</property>
+                    <property name="visible">True</property>
+                    <property name="margin-top">12</property>
+                    <property name="margin-bottom">12</property>
+                    <property name="margin-start">12</property>
+                    <property name="margin-end">12</property>
+                    <property name="column-homogeneous">False</property>
+                    <child>
+                      <object class="GtkBox" id="list_vbox">
+                        <property name="name">list_vbox</property>
+                        <property name="border-width">10</property>
+                        <property name="visible">True</property>
+                        <property name="homogeneous">False</property>
+                        <property name="spacing">4</property>
+                        <property name="orientation">vertical</property>
+                        <property name="hexpand">False</property>
+                        <property name="vexpand">True</property>
+                        <child>
+                          <object class="GtkBox" id="mode_hbox">
+                            <property name="name">mode_hbox</property>
+                            <property name="visible">True</property>
+                            <property name="homogeneous">False</property>
+                            <property name="spacing">0</property>
+                            <property name="orientation">horizontal</property>
+                            <child>
+                              <object class="GtkLabel" id="mode_label">
+                                <property name="name">mode_label</property>
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">_Mode:</property>
+                                <property name="use-underline">True</property>
+                                <property name="use-markup">False</property>
+                                <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                <property name="wrap">False</property>
+                                <property name="selectable">False</property>
+                                <property name="xalign">0</property>
+                                <property name="yalign">0.5</property>
+                                <property name="xpad">0</property>
+                                <property name="ypad">0</property>
+                                <property name="mnemonic-widget">mode_menu</property>
+                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                <property name="width-chars">-1</property>
+                                <property name="single-line-mode">False</property>
+                                <property name="angle">0</property>
+                                <accessibility>
+                                  <relation target="mode_menu" type="label-for"/>
+                                </accessibility>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBox" id="mode_menu">
+                                <property name="name">mode_menu</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="has-entry">False</property>
+                                <property name="model">mode_menu_model</property>
+                                <signal handler="mode_menu_item_cb" name="changed"/>
+                                <accessibility>
+                                  <relation target="mode_label" type="labelled-by"/>
+                                </accessibility>
+                                <child>
+                                  <object class="GtkCellRendererText" id="renderer1"/>
+                                  <attributes>
+                                    <attribute name="text">0</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="padding">4</property>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="padding">10</property>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow" id="scroller">
+                            <property name="name">scroller</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
+                            <property name="vscrollbar-policy">GTK_POLICY_ALWAYS</property>
+                            <property name="shadow-type">GTK_SHADOW_IN</property>
+                            <property name="window-placement">GTK_CORNER_TOP_LEFT</property>
+                            <child>
+                              <object class="GtkTreeView" id="list">
+                                <property name="name">list</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="headers-visible">False</property>
+                                <property name="rules-hint">True</property>
+                                <property name="reorderable">False</property>
+                                <property name="enable-search">True</property>
+                                <property name="fixed-height-mode">False</property>
+                                <property name="hover-selection">False</property>
+                                <property name="hover-expand">False</property>
+                                <property name="search-column">1</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="padding">0</property>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkBox" id="centering_hbox">
+                            <property name="name">centering_hbox</property>
+                            <property name="visible">True</property>
+                            <property name="homogeneous">True</property>
+                            <property name="spacing">0</property>
+                            <property name="orientation">horizontal</property>
+                            <property name="margin-top">4</property>
+                            <property name="margin-bottom">8</property>
+                            <child>
+                              <object class="GtkBox" id="next_prev_hbox">
+                                <property name="name">next_prev_hbox</property>
+                                <property name="visible">True</property>
+                                <property name="homogeneous">False</property>
+                                <property name="spacing">8</property>
+                                <property name="orientation">horizontal</property>
+                                <child>
+                                  <object class="GtkButton" id="next">
+                                    <property name="name">next</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">Run the next screen saver in the list in full-screen mode (click the mouse to return).</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="relief">GTK_RELIEF_NORMAL</property>
+                                    <property name="focus-on-click">True</property>
+                                    <signal handler="run_next_cb" name="clicked"/>
+                                    <child>
+                                      <object class="GtkArrow" id="arrow1">
+                                        <property name="name">arrow1</property>
+                                        <property name="visible">True</property>
+                                        <property name="arrow-type">GTK_ARROW_DOWN</property>
+                                        <property name="shadow-type">GTK_SHADOW_OUT</property>
+                                        <property name="xalign">0.5</property>
+                                        <property name="yalign">0.5</property>
+                                        <property name="xpad">0</property>
+                                        <property name="ypad">0</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">0</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="prev">
+                                    <property name="name">prev</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">Run the previous screen saver in the list in full-screen mode.</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="relief">GTK_RELIEF_NORMAL</property>
+                                    <property name="focus-on-click">True</property>
+                                    <signal handler="run_prev_cb" name="clicked"/>
+                                    <child>
+                                      <object class="GtkArrow" id="arrow2">
+                                        <property name="name">arrow2</property>
+                                        <property name="visible">True</property>
+                                        <property name="arrow-type">GTK_ARROW_UP</property>
+                                        <property name="shadow-type">GTK_SHADOW_OUT</property>
+                                        <property name="xalign">0.5</property>
+                                        <property name="yalign">0.5</property>
+                                        <property name="xpad">0</property>
+                                        <property name="ypad">0</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">0</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="padding">0</property>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="pack-type">GTK_PACK_END</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkGrid" id="blanking_table">
+                        <property name="name">blanking_table</property>
+                        <property name="visible">True</property>
+                        <property name="row-spacing">2</property>
+                        <property name="margin-start">8</property>
+                        <property name="margin-end">8</property>
+                        <child>
+                          <object class="GtkLabel" id="timeout_label">
+                            <property name="name">timeout_label</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">_Blank After</property>
+                            <property name="use-underline">True</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_RIGHT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">1</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">8</property>
+                            <property name="ypad">0</property>
+                            <property name="mnemonic-widget">timeout_spinbutton</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="timeout_spinbutton" type="label-for"/>
+                              <relation target="timeout_spinbutton" type="flows-to"/>
+                            </accessibility>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="timeout_spinbutton">
+                            <property name="name">timeout_spinbutton</property>
+                            <property name="visible">True</property>
+                            <property name="tooltip-text" translatable="yes">How long before the screen saver activates.</property>
+                            <property name="can-focus">True</property>
+                            <property name="climb-rate">15</property>
+                            <property name="digits">0</property>
+                            <property name="numeric">True</property>
+                            <property name="update-policy">GTK_UPDATE_ALWAYS</property>
+                            <property name="snap-to-ticks">True</property>
+                            <property name="wrap">False</property>
+                            <property name="adjustment">adjustment1</property>
+                            <accessibility>
+                              <relation target="timeout_label" type="labelled-by"/>
+                              <relation target="timeout_mlabel" type="labelled-by"/>
+                              <relation target="timeout_label" type="flows-from"/>
+                              <relation target="timeout_mlabel" type="flows-to"/>
+                            </accessibility>
+                            <signal handler="pref_changed_cb" name="activate"/>
+                            <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                            <signal handler="pref_changed_cb" name="value_changed"/>
+                            <signal handler="dpms_sanity_cb" name="activate"/>
+                            <signal handler="dpms_sanity_cb" name="value_changed"/>
+                            <signal handler="dpms_sanity_event_cb" name="focus_out_event"/>
+                          </object>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="timeout_mlabel">
+                            <property name="name">timeout_mlabel</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">minutes</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">8</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="timeout_spinbutton" type="label-for"/>
+                              <relation target="timeout_spinbutton" type="flows-from"/>
+                            </accessibility>
+                          </object>
+                          <packing>
+                            <property name="left-attach">2</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="cycle_label">
+                            <property name="name">cycle_label</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">_Cycle After</property>
+                            <property name="use-underline">True</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_RIGHT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">1</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">8</property>
+                            <property name="ypad">0</property>
+                            <property name="mnemonic-widget">cycle_spinbutton</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="cycle_spinbutton" type="label-for"/>
+                              <relation target="cycle_spinbutton" type="flows-to"/>
+                            </accessibility>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="cycle_spinbutton">
+                            <property name="name">cycle_spinbutton</property>
+                            <property name="visible">True</property>
+                            <property name="tooltip-text" translatable="yes">How long each display mode should run before choosing a new one (in Random mode).</property>
+                            <property name="can-focus">True</property>
+                            <property name="climb-rate">15</property>
+                            <property name="digits">0</property>
+                            <property name="numeric">True</property>
+                            <property name="update-policy">GTK_UPDATE_ALWAYS</property>
+                            <property name="snap-to-ticks">True</property>
+                            <property name="wrap">False</property>
+                            <property name="adjustment">adjustment3</property>
+                            <accessibility>
+                              <relation target="cycle_label" type="labelled-by"/>
+                              <relation target="cycle_mlabel" type="labelled-by"/>
+                              <relation target="cycle_label" type="flows-from"/>
+                              <relation target="cycle_mlabel" type="flows-to"/>
+                            </accessibility>
+                            <signal handler="pref_changed_cb" name="activate"/>
+                            <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                            <signal handler="pref_changed_cb" name="value_changed"/>
+                          </object>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="cycle_mlabel">
+                            <property name="name">cycle_mlabel</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">minutes</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">8</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="cycle_spinbutton" type="label-for"/>
+                              <relation target="cycle_spinbutton" type="flows-from"/>
+                            </accessibility>
+                          </object>
+                          <packing>
+                            <property name="left-attach">2</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEventBox" id="lock_button_eventbox">
+                            <property name="name">lock_button_eventbox</property>
+                            <property name="visible">True</property>
+                            <property name="tooltip-text" translatable="yes">Whether a password should be required to un-blank the screen.</property>
+                            <property name="visible-window">False</property>
+                            <property name="above-child">False</property>
+                            <child>
+                              <object class="GtkCheckButton" id="lock_button">
+                                <property name="name">lock_button</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Lock Screen After  </property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <accessibility>
+                                  <relation target="lock_spinbutton" type="controller-for"/>
+                                  <relation target="lock_spinbutton" type="label-for"/>
+                                  <relation target="lock_spinbutton" type="flows-to"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                                <child internal-child="accessible">
+                                  <object class="AtkObject" id="a11y-lock_button1">
+                                    <property name="AtkObject::accessible-name" translatable="yes">Lock Screen</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="lock_spinbutton">
+                            <property name="name">lock_spinbutton</property>
+                            <property name="visible">True</property>
+                            <property name="tooltip-text" translatable="yes">How long after the screen blanks until a password will be required.</property>
+                            <property name="can-focus">True</property>
+                            <property name="climb-rate">15</property>
+                            <property name="digits">0</property>
+                            <property name="numeric">True</property>
+                            <property name="update-policy">GTK_UPDATE_ALWAYS</property>
+                            <property name="snap-to-ticks">True</property>
+                            <property name="wrap">False</property>
+                            <property name="adjustment">adjustment2</property>
+                            <accessibility>
+                              <relation target="lock_button" type="controlled-by"/>
+                              <relation target="lock_button" type="labelled-by"/>
+                              <relation target="lock_mlabel" type="labelled-by"/>
+                              <relation target="lock_button" type="flows-from"/>
+                              <relation target="lock_mlabel" type="flows-to"/>
+                            </accessibility>
+                            <signal handler="pref_changed_cb" name="activate"/>
+                            <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                            <signal handler="pref_changed_cb" name="value_changed"/>
+                            <child internal-child="accessible">
+                              <object class="AtkObject" id="a11y-lock_spinbutton1">
+                                <property name="AtkObject::accessible-name" translatable="yes">Lock Screen After</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="lock_mlabel">
+                            <property name="name">lock_mlabel</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">minutes</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">8</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="lock_spinbutton" type="label-for"/>
+                              <relation target="lock_spinbutton" type="flows-to"/>
+                            </accessibility>
+                          </object>
+                          <packing>
+                            <property name="left-attach">2</property>
+                            <property name="top-attach">2</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="preview_frame">
+                        <property name="name">preview_frame</property>
+                        <property name="visible">True</property>
+                        <property name="label-xalign">0</property>
+                        <property name="label-yalign">0.5</property>
+                        <property name="shadow-type">GTK_SHADOW_ETCHED_IN</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <accessibility>
+                          <relation target="label1" type="labelled-by"/>
+                        </accessibility>
+                        <child>
+                          <object class="GtkBox" id="preview_vbox">
+                            <property name="name">preview_vbox</property>
+                            <property name="border-width">5</property>
+                            <property name="visible">True</property>
+                            <property name="homogeneous">False</property>
+                            <property name="spacing">5</property>
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkNotebook" id="preview_notebook">
+                                <property name="name">preview_notebook</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="show-tabs">False</property>
+                                <property name="show-border">False</property>
+                                <property name="tab-pos">GTK_POS_BOTTOM</property>
+                                <property name="scrollable">False</property>
+                                <property name="enable-popup">False</property>
+
+                                <child>
+                                  <object class="GtkAspectFrame" id="preview_aspectframe">
+                                    <property name="name">preview_aspectframe</property>
+                                    <property name="border-width">8</property>
+                                    <property name="visible">True</property>
+                                    <property name="label-xalign">0</property>
+                                    <property name="label-yalign">0.5</property>
+                                    <property name="shadow-type">GTK_SHADOW_ETCHED_IN</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="ratio">1.777777</property>
+                                    <property name="obey-child">False</property>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="preview">
+                                        <property name="name">preview</property>
+                                        <property name="visible">True</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="preview_tab">
+                                    <property name="name">preview_tab</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Preview</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+
+                                <child>
+                                  <object class="GtkLabel" id="no_preview_label">
+                                    <property name="name">no_preview_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">No Preview
+Available</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="no_preview_tab">
+                                    <property name="name">no_preview_tab</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">No Preview</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+
+                                <child>
+                                  <object class="GtkLabel" id="not_installed_label">
+                                    <property name="name">not_installed_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Not
+Installed</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="not_installed_tab">
+                                    <property name="name">not_installed_tab</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Not Installed</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+
+                                <child>
+                                  <object class="GtkLabel" id="nothing_label">
+                                    <property name="name">nothing_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Very few (or no) screen savers appear to be available.
+
+This probably means that the "xscreensaver-extras" and
+"xscreensaver-gl-extras" packages are not installed.</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="nothing_tab">
+                                    <property name="name">nothing_tab</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Nothing Installed</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+
+                                <child>
+                                  <object class="GtkLabel" id="wayland_label">
+                                    <property name="name">wayland_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">No Previews Available
+Under Wayland.</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel" id="wayland_tab">
+                                    <property name="name">wayland_tab</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">No Previews Under Wayland</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                  <packing>
+                                    <property name="tab-expand">False</property>
+                                    <property name="tab-fill">False</property>
+                                  </packing>
+                                </child>
+
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+
+                            <child>
+                              <object class="GtkLabel" id="short_preview_label">
+                                <property name="name">short_preview_label</property>
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes"></property>
+                                <property name="use-underline">False</property>
+                                <property name="use-markup">False</property>
+                                <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                <property name="wrap">True</property>
+                                <property name="selectable">False</property>
+                                <property name="xalign">0.5</property>
+                                <property name="yalign">0.0</property>
+                                <property name="xpad">0</property>
+                                <property name="ypad">0</property>
+                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                <property name="width-chars">72</property>
+                                <property name="single-line-mode">False</property>
+                                <property name="angle">0</property>
+                                <accessibility>
+                                  <relation target="preview_aspectframe" type="label-for"/>
+                                </accessibility>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+
+                            <child>
+                              <object class="GtkLabel" id="preview_author_label">
+                                <property name="name">preview_author_label</property>
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes"></property>
+                                <property name="use-underline">False</property>
+                                <property name="use-markup">False</property>
+                                <property name="justify">GTK_JUSTIFY_CENTER</property>
+                                <property name="wrap">True</property>
+                                <property name="selectable">False</property>
+                                <property name="xalign">0.5</property>
+                                <property name="yalign">0.0</property>
+                                <property name="xpad">0</property>
+                                <property name="ypad">0</property>
+                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                <property name="width-chars">72</property>
+                                <property name="single-line-mode">False</property>
+                                <property name="angle">0</property>
+                                <accessibility>
+                                  <relation target="preview_aspectframe" type="label-for"/>
+                                </accessibility>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="label">
+                          <object class="GtkLabel" id="label1">
+                            <property name="name">label1</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">Description</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0.5</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">0</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="preview_frame" type="label-for"/>
+                            </accessibility>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkHButtonBox" id="demo_manual_hbbox">
+                        <property name="name">demo_manual_hbbox</property>
+                        <property name="visible">True</property>
+                        <property name="layout-style">GTK_BUTTONBOX_SPREAD</property>
+                        <property name="spacing">30</property>
+                        <child>
+                          <object class="GtkButton" id="demo">
+                            <property name="name">demo</property>
+                            <property name="visible">True</property>
+                            <property name="tooltip-text" translatable="yes">Demo the selected screen saver in full-screen mode.</property>
+                            <property name="can-default">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="label" translatable="yes">_Preview</property>
+                            <property name="use-underline">True</property>
+                            <property name="relief">GTK_RELIEF_NORMAL</property>
+                            <property name="focus-on-click">True</property>
+                            <signal handler="run_this_cb" name="clicked"/>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="settings">
+                            <property name="name">settings</property>
+                            <property name="visible">True</property>
+                            <property name="tooltip-text" translatable="yes">Customization and explanation of the selected screen saver.</property>
+                            <property name="can-default">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="label" translatable="yes">_Settings...</property>
+                            <property name="use-underline">True</property>
+                            <property name="relief">GTK_RELIEF_NORMAL</property>
+                            <property name="focus-on-click">True</property>
+                            <signal handler="settings_cb" name="clicked"/>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="tab-expand">False</property>
+                    <property name="tab-fill">False</property>
+                  </packing>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel" id="demo_tab">
+                    <property name="name">demo_tab</property>
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">_Display Modes</property>
+                    <property name="use-underline">True</property>
+                    <property name="use-markup">False</property>
+                    <property name="justify">GTK_JUSTIFY_CENTER</property>
+                    <property name="wrap">False</property>
+                    <property name="selectable">False</property>
+                    <property name="xalign">0.5</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xpad">0</property>
+                    <property name="ypad">0</property>
+                    <property name="mnemonic-widget">notebook</property>
+                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                    <property name="width-chars">-1</property>
+                    <property name="single-line-mode">False</property>
+                    <property name="angle">0</property>
+                  </object>
+                  <packing>
+                    <property name="tab-expand">False</property>
+                    <property name="tab-fill">False</property>
+                  </packing>
+                </child>
+
+                <!-- Advanced page -->
+                <child>
+                  <object class="GtkGrid" id="options_table">
+                    <property name="name">options_table</property>
+                    <property name="visible">True</property>
+                    <property name="margin-start">8</property>
+                    <property name="margin-end">8</property>
+                    <property name="column-homogeneous">True</property>
+                    <child>
+                      <object class="GtkFrame" id="grab_frame">
+                        <property name="name">grab_frame</property>
+                        <property name="border-width">10</property>
+                        <property name="visible">True</property>
+                        <property name="label-xalign">0</property>
+                        <property name="label-yalign">0.5</property>
+                        <property name="shadow-type">GTK_SHADOW_ETCHED_IN</property>
+                        <property name="hexpand">True</property>
+                        <accessibility>
+                          <relation target="label2" type="labelled-by"/>
+                        </accessibility>
+                        <child>
+                          <object class="GtkBox" id="grab_vbox">
+                            <property name="name">grab_vbox</property>
+                            <property name="visible">True</property>
+                            <property name="homogeneous">False</property>
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">4</property>
+                            <property name="margin-start">12</property>
+                            <property name="margin-end">12</property>
+                            <property name="margin-top">12</property>
+                            <property name="margin-bottom">12</property>
+                            <child>
+                              <object class="GtkCheckButton" id="grab_desk_button">
+                                <property name="name">grab_desk_button</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Whether the image-manipulating modes should be allowed to operate on an image of your desktop.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">Grab Desktop _Images</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="grab_video_button">
+                                <property name="name">grab_video_button</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Whether the image-manipulating modes should operate on images captured from the camera (if there is one).</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">Grab _Video Frames</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="grab_image_button">
+                                <property name="name">grab_image_button</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Whether the image-manipulating modes should load image files.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">Choose _Random Image:</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <accessibility>
+                                  <relation target="image_text" type="controller-for"/>
+                                  <relation target="image_browse_button" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox" id="image_hbox">
+                                <property name="name">image_hbox</property>
+                                <property name="visible">True</property>
+                                <property name="homogeneous">False</property>
+                                <property name="spacing">0</property>
+                                <property name="orientation">horizontal</property>
+                                <child>
+                                  <object class="GtkLabel" id="grab_dummy">
+                                    <property name="name">grab_dummy</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes"/>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">8</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">0</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="image_text">
+                                    <property name="name">image_text</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">The local directory, RSS feed or Atom feed from which images will be randomly chosen.</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="editable">True</property>
+                                    <property name="visibility">True</property>
+                                    <property name="max-length">0</property>
+                                    <property name="text" translatable="yes"/>
+                                    <property name="has-frame">True</property>
+                                    <property name="invisible-char">*</property>
+                                    <property name="activates-default">False</property>
+                                    <accessibility>
+                                      <relation target="grab_image_button" type="labelled-by"/>
+                                      <relation target="grab_image_button" type="controlled-by"/>
+                                    </accessibility>
+                                    <signal handler="pref_changed_cb" name="activate"/>
+                                    <signal handler="image_text_pref_changed_event_cb" name="focus_out_event"/>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">2</property>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="image_browse_button">
+                                    <property name="name">image_browse_button</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="label" translatable="yes">_Browse</property>
+                                    <property name="use-underline">True</property>
+                                    <property name="relief">GTK_RELIEF_NORMAL</property>
+                                    <property name="focus-on-click">True</property>
+                                    <signal handler="browse_image_dir_cb" name="clicked"/>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">0</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label8">
+                                <property name="name">label8</property>
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Local directory, or URL of RSS or Atom feed.</property>
+                                <property name="use-underline">False</property>
+                                <property name="use-markup">False</property>
+                                <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                <property name="wrap">False</property>
+                                <property name="selectable">False</property>
+                                <property name="xalign">0</property>
+                                <property name="yalign">0.5</property>
+                                <property name="xpad">20</property>
+                                <property name="ypad">0</property>
+                                <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                <property name="width-chars">-1</property>
+                                <property name="single-line-mode">False</property>
+                                <property name="angle">0</property>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="label">
+                          <object class="GtkLabel" id="label2">
+                            <property name="name">label2</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">Image Manipulation</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0.5</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">0</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="grab_frame" type="label-for"/>
+                            </accessibility>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="text_frame">
+                        <property name="name">text_frame</property>
+                        <property name="border-width">10</property>
+                        <property name="visible">True</property>
+                        <property name="label-xalign">0</property>
+                        <property name="label-yalign">0.5</property>
+                        <property name="shadow-type">GTK_SHADOW_ETCHED_IN</property>
+                        <property name="expand">False</property>
+                        <property name="hexpand">True</property>
+                        <accessibility>
+                          <relation target="label3" type="labelled-by"/>
+                        </accessibility>
+                        <child type="label">
+                          <object class="GtkLabel" id="label3">
+                            <property name="name">label3</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">Text Manipulation</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0.5</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">0</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="text_frame" type="label-for"/>
+                            </accessibility>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkGrid" id="text_table">
+                            <property name="name">text_table</property>
+                            <property name="visible">True</property>
+                            <property name="row-spacing">4</property>
+                            <property name="column-spacing">4</property>
+                            <property name="margin-start">12</property>
+                            <property name="margin-end">12</property>
+                            <property name="margin-top">12</property>
+                            <property name="margin-bottom">12</property>
+                            <child>
+                              <object class="GtkRadioButton" id="text_host_radio">
+                                <property name="name">text_host_radio</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the local host name, date, and time.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Host Name and Time</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">True</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <property name="group">text_radio</property>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">0</property>
+                                <property name="width">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkRadioButton" id="text_radio">
+                                <property name="name">text_radio</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the text typed here.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Text</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <accessibility>
+                                  <relation target="text_entry" type="controller-for"/>
+                                  <relation target="text_entry" type="label-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="text_entry">
+                                <property name="name">text_entry</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the text typed here.</property>
+                                <property name="can-focus">True</property>
+                                <property name="editable">True</property>
+                                <property name="visibility">True</property>
+                                <property name="max-length">0</property>
+                                <property name="text" translatable="yes"/>
+                                <property name="has-frame">True</property>
+                                <property name="invisible-char">*</property>
+                                <property name="activates-default">False</property>
+                                <property name="expand">True</property>
+                                <accessibility>
+                                  <relation target="text_program_radio" type="labelled-by"/>
+                                  <relation target="text_program_radio" type="controlled-by"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="activate"/>
+                                <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">1</property>
+                                <property name="width">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkRadioButton" id="text_file_radio">
+                                <property name="name">text_file_radio</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the contents of this file.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">Text _file</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <property name="group">text_radio</property>
+                                <accessibility>
+                                  <relation target="text_file_entry" type="label-for"/>
+                                  <relation target="text_file_entry" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="text_file_entry">
+                                <property name="name">text_file_entry</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the contents of this file.</property>
+                                <property name="can-focus">True</property>
+                                <property name="editable">True</property>
+                                <property name="visibility">True</property>
+                                <property name="max-length">0</property>
+                                <property name="text" translatable="yes"/>
+                                <property name="has-frame">True</property>
+                                <property name="invisible-char">*</property>
+                                <property name="activates-default">False</property>
+                                <property name="expand">True</property>
+                                <accessibility>
+                                  <relation target="text_file_radio" type="labelled-by"/>
+                                  <relation target="text_file_radio" type="controlled-by"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="activate"/>
+                                <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="text_file_browse">
+                                <property name="name">text_file_browse</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Browse</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="expand">False</property>
+                                <accessibility>
+                                  <relation target="text_file_radio" type="controlled-by"/>
+                                </accessibility>
+                                <signal handler="browse_text_file_cb" name="clicked"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">2</property>
+                                <property name="top-attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkRadioButton" id="text_program_radio">
+                                <property name="name">text_program_radio</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the output of this program.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Program</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <property name="group">text_radio</property>
+                                <accessibility>
+                                  <relation target="text_program_entry" type="label-for"/>
+                                  <relation target="text_program_entry" type="controller-for"/>
+                                  <relation target="text_program_browse" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="text_program_entry">
+                                <property name="name">text_program_entry</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the output of this program.</property>
+                                <property name="can-focus">True</property>
+                                <property name="editable">True</property>
+                                <property name="visibility">True</property>
+                                <property name="max-length">0</property>
+                                <property name="text" translatable="yes"/>
+                                <property name="has-frame">True</property>
+                                <property name="invisible-char">*</property>
+                                <property name="activates-default">False</property>
+                                <property name="expand">True</property>
+                                <accessibility>
+                                  <relation target="text_program_radio" type="labelled-by"/>
+                                  <relation target="text_program_radio" type="controlled-by"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="activate"/>
+                                <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="text_program_browse">
+                                <property name="name">text_program_browse</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Browse</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="expand">False</property>
+                                <accessibility>
+                                  <relation target="text_program_radio" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="browse_text_program_cb" name="clicked"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">2</property>
+                                <property name="top-attach">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkRadioButton" id="text_url_radio">
+                                <property name="name">text_url_radio</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the contents of this URL (HTML or RSS).</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_URL</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <property name="group">text_radio</property>
+                                <accessibility>
+                                  <relation target="text_url_entry" type="label-for"/>
+                                  <relation target="text_url_entry" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">4</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="text_url_entry">
+                                <property name="name">text_url_entry</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Text-displaying modes will display the contents of this URL (HTML or RSS).</property>
+                                <property name="can-focus">True</property>
+                                <property name="editable">True</property>
+                                <property name="visibility">True</property>
+                                <property name="max-length">0</property>
+                                <property name="text" translatable="yes"/>
+                                <property name="has-frame">True</property>
+                                <property name="invisible-char">*</property>
+                                <property name="activates-default">False</property>
+                                <property name="expand">True</property>
+                                <accessibility>
+                                  <relation target="text_url_radio" type="controlled-by"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="activate"/>
+                                <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                              </object>
+                              <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">4</property>
+                                <property name="width">2</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="dpms_frame">
+                        <property name="name">dpms_frame</property>
+                        <property name="border-width">10</property>
+                        <property name="visible">True</property>
+                        <property name="label-xalign">0</property>
+                        <property name="label-yalign">0.5</property>
+                        <property name="shadow-type">GTK_SHADOW_ETCHED_IN</property>
+                        <property name="expand">False</property>
+                        <child>
+                          <object class="GtkBox" id="vbox6">
+                            <property name="name">vbox6</property>
+                            <property name="visible">True</property>
+                            <property name="homogeneous">False</property>
+                            <property name="spacing">4</property>
+                            <property name="margin-start">12</property>
+                            <property name="margin-end">12</property>
+                            <property name="margin-top">12</property>
+                            <property name="margin-bottom">12</property>
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkCheckButton" id="dpms_button">
+                                <property name="name">dpms_button</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Whether the monitor should be powered down after a while.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Power Management Enabled</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">True</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <accessibility>
+                                  <relation target="dpms_suspend_spinbutton" type="controller-for"/>
+                                  <relation target="dpms_standby_spinbutton" type="controller-for"/>
+                                  <relation target="dpms_off_spinbutton" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkGrid" id="dpms_table">
+                                <property name="name">dpms_table</property>
+                                <property name="visible">True</property>
+                                <property name="row-spacing">2</property>
+                                <property name="column-spacing">4</property>
+                                <child>
+                                  <object class="GtkLabel" id="dpms_standby_label">
+                                    <property name="name">dpms_standby_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Stand_by After</property>
+                                    <property name="use-underline">True</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">1</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">10</property>
+                                    <property name="ypad">0</property>
+                                    <property name="mnemonic-widget">dpms_standby_spinbutton</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="dpms_standby_spinbutton" type="label-for"/>
+                                      <relation target="dpms_standby_spinbutton" type="flows-to"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="dpms_suspend_label">
+                                    <property name="name">dpms_suspend_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">Sus_pend After</property>
+                                    <property name="use-underline">True</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">1</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">10</property>
+                                    <property name="ypad">0</property>
+                                    <property name="mnemonic-widget">dpms_suspend_spinbutton</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="dpms_suspend_spinbutton" type="label-for"/>
+                                      <relation target="dpms_suspend_spinbutton" type="flows-to"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="dpms_off_label">
+                                    <property name="name">dpms_off_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">_Off After</property>
+                                    <property name="use-underline">True</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">1</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">10</property>
+                                    <property name="ypad">0</property>
+                                    <property name="mnemonic-widget">dpms_off_spinbutton</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="dpms_off_spinbutton" type="label-for"/>
+                                      <relation target="dpms_off_spinbutton" type="flows-to"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="dpms_standby_mlabel">
+                                    <property name="name">dpms_standby_mlabel</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">minutes</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="dpms_standby_spinbutton" type="label-for"/>
+                                      <relation target="dpms_standby_spinbutton" type="flows-from"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">2</property>
+                                    <property name="top-attach">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="dpms_suspend_mlabel">
+                                    <property name="name">dpms_suspend_mlabel</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">minutes</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="dpms_suspend_spinbutton" type="label-for"/>
+                                      <relation target="dpms_suspend_spinbutton" type="flows-from"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">2</property>
+                                    <property name="top-attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="dpms_off_mlabel">
+                                    <property name="name">dpms_off_mlabel</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">minutes</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="dpms_off_spinbutton" type="label-for"/>
+                                      <relation target="dpms_off_spinbutton" type="flows-from"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">2</property>
+                                    <property name="top-attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkSpinButton" id="dpms_off_spinbutton">
+                                    <property name="name">dpms_off_spinbutton</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">How long until the monitor powers down.</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="climb-rate">15</property>
+                                    <property name="digits">0</property>
+                                    <property name="numeric">True</property>
+                                    <property name="update-policy">GTK_UPDATE_ALWAYS</property>
+                                    <property name="snap-to-ticks">True</property>
+                                    <property name="wrap">False</property>
+                                    <property name="adjustment">adjustment4</property>
+                                    <accessibility>
+                                      <relation target="dpms_button" type="controlled-by"/>
+                                      <relation target="dpms_off_label" type="labelled-by"/>
+                                      <relation target="dpms_off_mlabel" type="labelled-by"/>
+                                      <relation target="dpms_off_label" type="flows-from"/>
+                                      <relation target="dpms_off_mlabel" type="flows-to"/>
+                                    </accessibility>
+                                    <signal handler="pref_changed_cb" name="activate"/>
+                                    <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                                    <signal handler="pref_changed_cb" name="value_changed"/>
+                                    <signal handler="dpms_sanity_cb" name="activate"/>
+                                    <signal handler="dpms_sanity_cb" name="value_changed"/>
+                                    <signal handler="dpms_sanity_event_cb" name="focus_out_event"/>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">1</property>
+                                    <property name="top-attach">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkSpinButton" id="dpms_suspend_spinbutton">
+                                    <property name="name">dpms_suspend_spinbutton</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">How long until the monitor goes into power-saving mode.</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="climb-rate">15</property>
+                                    <property name="digits">0</property>
+                                    <property name="numeric">True</property>
+                                    <property name="update-policy">GTK_UPDATE_ALWAYS</property>
+                                    <property name="snap-to-ticks">True</property>
+                                    <property name="wrap">False</property>
+                                    <property name="adjustment">adjustment5</property>
+                                    <accessibility>
+                                      <relation target="dpms_button" type="controlled-by"/>
+                                      <relation target="dpms_suspend_label" type="labelled-by"/>
+                                      <relation target="dpms_suspend_mlabel" type="labelled-by"/>
+                                      <relation target="dpms_suspend_label" type="flows-from"/>
+                                      <relation target="dpms_suspend_mlabel" type="flows-to"/>
+                                    </accessibility>
+                                    <signal handler="pref_changed_cb" name="activate"/>
+                                    <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                                    <signal handler="pref_changed_cb" name="value_changed"/>
+                                    <signal handler="dpms_sanity_cb" name="activate"/>
+                                    <signal handler="dpms_sanity_cb" name="value_changed"/>
+                                    <signal handler="dpms_sanity_event_cb" name="focus_out_event"/>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">1</property>
+                                    <property name="top-attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkSpinButton" id="dpms_standby_spinbutton">
+                                    <property name="name">dpms_standby_spinbutton</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">How long until the monitor goes completely black.</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="climb-rate">15</property>
+                                    <property name="digits">0</property>
+                                    <property name="numeric">True</property>
+                                    <property name="update-policy">GTK_UPDATE_ALWAYS</property>
+                                    <property name="snap-to-ticks">True</property>
+                                    <property name="wrap">False</property>
+                                    <property name="adjustment">adjustment6</property>
+                                    <accessibility>
+                                      <relation target="dpms_button" type="controlled-by"/>
+                                      <relation target="dpms_standby_label" type="labelled-by"/>
+                                      <relation target="dpms_standby_mlabel" type="labelled-by"/>
+                                      <relation target="dpms_standby_label" type="flows-from"/>
+                                      <relation target="dpms_standby_mlabel" type="flows-to"/>
+                                    </accessibility>
+                                    <signal handler="pref_changed_cb" name="activate"/>
+                                    <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                                    <signal handler="pref_changed_cb" name="value_changed"/>
+                                    <signal handler="dpms_sanity_cb" name="activate"/>
+                                    <signal handler="dpms_sanity_cb" name="value_changed"/>
+                                    <signal handler="dpms_sanity_event_cb" name="focus_out_event"/>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">1</property>
+                                    <property name="top-attach">0</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="dpms_quickoff_button">
+                                <property name="name">dpms_quickoff_button</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Whether the monitor should be powered off immediately in "Blank Screen Only" mode, regardless of the above power-management timeouts.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">_Quick Power-off in Blank Only Mode</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="label">
+                          <object class="GtkLabel" id="label4">
+                            <property name="name">label4</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">Display Power Management</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0.5</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">0</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="dpms_frame" type="label-for"/>
+                            </accessibility>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="blanking_frame">
+                        <property name="name">blanking_frame</property>
+                        <property name="border-width">10</property>
+                        <property name="visible">True</property>
+                        <property name="label-xalign">0</property>
+                        <property name="label-yalign">0.5</property>
+                        <property name="shadow-type">GTK_SHADOW_ETCHED_IN</property>
+                        <property name="expand">False</property>
+                        <accessibility>
+                          <relation target="label5" type="labelled-by"/>
+                        </accessibility>
+                        <child>
+                          <object class="GtkBox" id="vbox7">
+                            <property name="name">vbox7</property>
+                            <property name="visible">True</property>
+                            <property name="homogeneous">False</property>
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">4</property>
+                            <property name="margin-start">12</property>
+                            <property name="margin-end">12</property>
+                            <property name="margin-top">12</property>
+                            <property name="margin-bottom">12</property>
+                            <child>
+                              <object class="GtkCheckButton" id="fade_button">
+                                <property name="name">fade_button</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Whether the screen should slowly fade to black when the screen saver activates.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">Fade to Black when _Blanking</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <accessibility>
+                                  <relation target="fade_spinbutton" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkCheckButton" id="unfade_button">
+                                <property name="name">unfade_button</property>
+                                <property name="visible">True</property>
+                                <property name="tooltip-text" translatable="yes">Whether the screen should slowly fade in from black when the screen saver deactivates.</property>
+                                <property name="can-focus">True</property>
+                                <property name="label" translatable="yes">Fade from Black When _Unblanking</property>
+                                <property name="use-underline">True</property>
+                                <property name="relief">GTK_RELIEF_NORMAL</property>
+                                <property name="focus-on-click">True</property>
+                                <property name="active">False</property>
+                                <property name="inconsistent">False</property>
+                                <property name="draw-indicator">True</property>
+                                <accessibility>
+                                  <relation target="fade_spinbutton" type="controller-for"/>
+                                </accessibility>
+                                <signal handler="pref_changed_cb" name="toggled"/>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox" id="fade_hbox">
+                                <property name="name">fade_hbox</property>
+                                <property name="visible">True</property>
+                                <property name="homogeneous">False</property>
+                                <property name="spacing">0</property>
+                                <property name="orientation">horizontal</property>
+                                <child>
+                                  <object class="GtkLabel" id="fade_dummy">
+                                    <property name="name">fade_dummy</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes"/>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0.5</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">3</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">0</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="fade_label">
+                                    <property name="name">fade_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">F_ade Duration</property>
+                                    <property name="use-underline">True</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="mnemonic-widget">fade_spinbutton</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="fade_spinbutton" type="label-for"/>
+                                      <relation target="fade_spinbutton" type="flows-to"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">14</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkSpinButton" id="fade_spinbutton">
+                                    <property name="name">fade_spinbutton</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">How long it should take for the screen to fade in and out.</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="climb-rate">1</property>
+                                    <property name="digits">0</property>
+                                    <property name="numeric">True</property>
+                                    <property name="update-policy">GTK_UPDATE_ALWAYS</property>
+                                    <property name="snap-to-ticks">True</property>
+                                    <property name="wrap">False</property>
+                                    <property name="adjustment">adjustment7</property>
+                                    <accessibility>
+                                      <relation target="unfade_button" type="controlled-by"/>
+                                      <relation target="fade_button" type="controlled-by"/>
+                                      <relation target="fade_label" type="labelled-by"/>
+                                      <relation target="fade_sec_label" type="labelled-by"/>
+                                      <relation target="fade_label" type="flows-from"/>
+                                      <relation target="fade_sec_label" type="flows-to"/>
+                                    </accessibility>
+                                    <signal handler="pref_changed_cb" name="activate"/>
+                                    <signal handler="pref_changed_event_cb" name="focus_out_event"/>
+                                    <signal handler="pref_changed_cb" name="value_changed"/>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">4</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="fade_sec_label">
+                                    <property name="name">fade_sec_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">seconds</property>
+                                    <property name="use-underline">False</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="fade_spinbutton" type="label-for"/>
+                                      <relation target="fade_spinbutton" type="flows-from"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">2</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="padding">0</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkHSeparator" id="blanking_hr">
+                                <property name="name">blanking_hr</property>
+                                <property name="visible">True</property>
+                              </object>
+                              <packing>
+                                <property name="padding">8</property>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox" id="theme_hbox">
+                                <property name="name">theme_hbox</property>
+                                <property name="visible">True</property>
+                                <property name="homogeneous">False</property>
+                                <property name="spacing">0</property>
+                                <property name="orientation">horizontal</property>
+                                <child>
+                                  <object class="GtkLabel" id="theme_label">
+                                    <property name="name">theme_label</property>
+                                    <property name="visible">True</property>
+                                    <property name="label" translatable="yes">_Theme:</property>
+                                    <property name="tooltip-text" translatable="yes">The color scheme to use on the unlock dialog.</property>
+                                    <property name="use-underline">True</property>
+                                    <property name="use-markup">False</property>
+                                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                                    <property name="wrap">False</property>
+                                    <property name="selectable">False</property>
+                                    <property name="xalign">0</property>
+                                    <property name="yalign">0.5</property>
+                                    <property name="xpad">0</property>
+                                    <property name="ypad">0</property>
+                                    <property name="mnemonic-widget">theme_menu</property>
+                                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                                    <property name="width-chars">-1</property>
+                                    <property name="single-line-mode">False</property>
+                                    <property name="angle">0</property>
+                                    <accessibility>
+                                      <relation target="theme_menu" type="label-for"/>
+                                    </accessibility>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">0</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBox" id="theme_menu">
+                                    <property name="name">theme_menu</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="has-entry">False</property>
+                                    <property name="model">theme_menu_model</property>
+                                    <accessibility>
+                                      <relation target="theme_label" type="labelled-by"/>
+                                    </accessibility>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="renderer2"/>
+                                      <attributes>
+                                        <attribute name="text">0</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">4</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="theme_preview">
+                                    <property name="name">theme_preview</property>
+                                    <property name="visible">True</property>
+                                    <property name="tooltip-text" translatable="yes">Show the what the unlock dialog will look like.</property>
+                                    <property name="can-default">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="label" translatable="yes">_Preview</property>
+                                    <property name="use-underline">True</property>
+                                    <property name="relief">GTK_RELIEF_NORMAL</property>
+                                    <property name="focus-on-click">True</property>
+                                    <signal handler="preview_theme_cb" name="clicked"/>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">0</property>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="padding">10</property>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="label">
+                          <object class="GtkLabel" id="label5">
+                            <property name="name">label5</property>
+                            <property name="visible">True</property>
+                            <property name="label" translatable="yes">Blanking</property>
+                            <property name="use-underline">False</property>
+                            <property name="use-markup">False</property>
+                            <property name="justify">GTK_JUSTIFY_LEFT</property>
+                            <property name="wrap">False</property>
+                            <property name="selectable">False</property>
+                            <property name="xalign">0.5</property>
+                            <property name="yalign">0.5</property>
+                            <property name="xpad">0</property>
+                            <property name="ypad">0</property>
+                            <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                            <property name="width-chars">-1</property>
+                            <property name="single-line-mode">False</property>
+                            <property name="angle">0</property>
+                            <accessibility>
+                              <relation target="blanking_frame" type="label-for"/>
+                            </accessibility>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="tab-expand">False</property>
+                    <property name="tab-fill">False</property>
+                  </packing>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel" id="options_tab">
+                    <property name="name">options_tab</property>
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">_Advanced</property>
+                    <property name="use-underline">True</property>
+                    <property name="use-markup">False</property>
+                    <property name="justify">GTK_JUSTIFY_LEFT</property>
+                    <property name="wrap">False</property>
+                    <property name="selectable">False</property>
+                    <property name="xalign">0.5</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xpad">0</property>
+                    <property name="ypad">0</property>
+                    <property name="mnemonic-widget">notebook</property>
+                    <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+                    <property name="width-chars">-1</property>
+                    <property name="single-line-mode">False</property>
+                    <property name="angle">0</property>
+                  </object>
+                  <packing>
+                    <property name="tab-expand">False</property>
+                    <property name="tab-fill">False</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="padding">0</property>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHButtonBox" id="hbuttonbox2">
+                <property name="name">hbuttonbox2</property>
+                <property name="border-width">5</property>
+                <property name="layout-style">GTK_BUTTONBOX_EDGE</property>
+                <property name="spacing">10</property>
+                <child>
+                  <object class="GtkButton" id="helpbutton">
+                    <property name="name">helpbutton</property>
+                    <property name="visible">True</property>
+                    <property name="can-default">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="label">gtk-help</property>
+                    <property name="use-stock">True</property>
+                    <property name="relief">GTK_RELIEF_NORMAL</property>
+                    <property name="focus-on-click">True</property>
+                    <signal handler="doc_menu_cb" name="clicked"/>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="closebutton">
+                    <property name="name">closebutton</property>
+                    <property name="visible">True</property>
+                    <property name="can-default">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="label">gtk-close</property>
+                    <property name="use-stock">True</property>
+                    <property name="relief">GTK_RELIEF_NORMAL</property>
+                    <property name="focus-on-click">True</property>
+                    <signal handler="quit_menu_cb" name="clicked"/>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="padding">0</property>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack-type">GTK_PACK_END</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
