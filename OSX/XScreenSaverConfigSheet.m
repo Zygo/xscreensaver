@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -292,7 +292,11 @@ typedef enum { SimpleXMLCommentKind,
 #if defined(HAVE_IPHONE) && defined(USE_HTML_LABELS)
 
 
-@interface HTMLLabel : UIView <UIWebViewDelegate>
+@interface HTMLLabel : UIView <UIWebViewDelegate
+# ifdef USE_WEBKIT
+                                 , WKNavigationDelegate
+# endif
+                              >
 {
   NSString *html;
   UIFont *font;
@@ -323,6 +327,7 @@ typedef enum { SimpleXMLCommentKind,
   webView = [[UIWebView alloc] init];
 # ifdef USE_WEBKIT
   webView.UIDelegate = self;
+  webView.navigationDelegate = self;
 # else
   webView.delegate = self;
   webView.dataDetectorTypes = UIDataDetectorTypeNone;
@@ -501,6 +506,7 @@ static char *anchorize (const char *url);
         navigationType:(UIWebViewNavigationType)type
 {
   // Force clicked links to open in Safari, not in this window.
+  // Old way, 2020-ish?
   if (type == UIWebViewNavigationTypeLinkClicked) {
     UIApplication *app = [UIApplication sharedApplication];
     NSURL *url = [req URL];
@@ -519,6 +525,26 @@ static char *anchorize (const char *url);
   }
   return YES;
 }
+
+
+#ifdef USE_WEBKIT
+- (void)webView:(WKWebView *)wv
+        decidePolicyForNavigationAction:(WKNavigationAction *)na
+        decisionHandler:(void (^)(WKNavigationActionPolicy))dh
+{
+  // Force clicked links to open in Safari, not in this window.
+  // New way, 2025-ish.
+  if (na.navigationType == WKNavigationTypeLinkActivated) {
+#   pragma clang diagnostic push   // "openURL deprecated in iOS 10"
+#   pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [[UIApplication sharedApplication] openURL:na.request.URL];
+#   pragma clang diagnostic pop
+    dh (WKNavigationActionPolicyCancel);
+  } else {
+    dh (WKNavigationActionPolicyAllow);
+  }
+}
+#endif // USE_WEBKIT
 
 
 - (void) setFrame: (CGRect)r
