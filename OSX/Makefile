@@ -50,7 +50,7 @@ release::
 
 Sparkle.framework:
 	rm -rf bin sparkle-bin
-	tar -vxjf ../archive/Sparkle-2.5.0.tar.xz \
+	tar -vxjf ../archive/Sparkle-2.8.1.tar.xz \
 	  --exclude __MACOSX \
 	  --exclude CHANGELOG \
 	  --exclude LICENSE \
