@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright © 1999-2025 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright © 1999-2026 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
