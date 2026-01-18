@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright © 1997-2026 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -288,45 +288,45 @@ install-strip:
 
 # the hacks, in $HACKDIR
 install-program:: $(EXES)
-	@if [ ! -d $(DESTDIR)$(HACKDIR) ]; then				\
-	  $(INSTALL_DIRS) $(DESTDIR)$(HACKDIR) ;			\
+	@dir="$(DESTDIR)$(HACKDIR)" ;					\
+	 if [ ! -d $$dir ]; then					\
+	  echo $(INSTALL_DIRS) "$$dir" ;				\
+	       $(INSTALL_DIRS) "$$dir" ;				\
 	 fi ;								\
-	for program in $(EXES); do					\
-	  echo $(INSTALL_PROGRAM) $$program				\
-	    $(DESTDIR)$(HACKDIR)/$$program ;				\
-	  $(INSTALL_PROGRAM) $$program					\
-	    $(DESTDIR)$(HACKDIR)/$$program ;				\
-	done
+	 for program in $(EXES); do					\
+	   echo $(INSTALL_PROGRAM) "$$program" "$$dir/$$program" ;	\
+	        $(INSTALL_PROGRAM) "$$program" "$$dir/$$program" ;	\
+	 done
 
 install-scripts: $(SCRIPTS) munge-scripts
-	@if [ ! -d $(DESTDIR)$(HACKDIR) ]; then				\
-	  $(INSTALL_DIRS) $(DESTDIR)$(HACKDIR) ;			\
+	@dir="$(DESTDIR)$(HACKDIR)" ;					\
+	 if [ ! -d $$dir ]; then					\
+	  echo $(INSTALL_DIRS) "$$dir" ;				\
+	       $(INSTALL_DIRS) "$$dir" ;				\
 	 fi ;								\
-	for program in $(SCRIPTS); do					\
-	  if [ -r $$program ] ; then					\
-	    p=$$program ;						\
-	  else								\
-	    p=$(srcdir)/$$program ;					\
-	  fi ;								\
-	  echo $(INSTALL_SCRIPT) $$p					\
-	    $(DESTDIR)$(HACKDIR)/$$program ;				\
-	  $(INSTALL_SCRIPT) $$p						\
-	    $(DESTDIR)$(HACKDIR)/$$program ;				\
-	done
+	 for program in $(SCRIPTS); do					\
+	   if [ -r "$$program" ] ; then					\
+	     p="$$program" ;						\
+	   else								\
+	     p="$(srcdir)/$$program" ;					\
+	   fi ;								\
+	   echo $(INSTALL_SCRIPT) "$$p" "$$dir/$$program" ;		\
+	        $(INSTALL_SCRIPT) "$$p" "$$dir/$$program" ;		\
+	 done
 
 munge-scripts: $(SCRIPTS)
-	@tmp=/tmp/mf.$$$$ ;						\
+	@tmp="/tmp/mf.$$$$" ;						\
 	perl="$(PERL)" ;						\
-	rm -f $$tmp ;							\
+	rm -f "$$tmp" ;							\
 	for program in $(SCRIPTS); do					\
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
-	      < $(srcdir)/$$program > $$tmp ;				\
-	  if ! cmp -s $(srcdir)/$$program $$tmp ; then			\
+	      < "$(srcdir)/$$program" > "$$tmp" ;			\
+	  if ! cmp -s "$(srcdir)/$$program" "$$tmp" ; then		\
 	    echo "$$program: setting interpreter to $$perl" >&2 ;	\
-	    cat $$tmp > ./$$program ;					\
+	    cat "$$tmp" > "./$$program" ;				\
 	  fi ;								\
 	done ;								\
-	rm -f $$tmp
+	rm -f "$$tmp"
 
 # When installing man pages, we install "foo.man" as "foo.N" and update
 # the .TH line in the installed file with one like
@@ -337,30 +337,31 @@ munge-scripts: $(SCRIPTS)
 #
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	U=$(UTILS_SRC)/version.h ;					\
+	U="$(UTILS_SRC)/version.h" ;					\
 	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U |	\
 	    head -1`;							\
-	T=/tmp/xs$$$$.$(mansuffix) ;					\
+	T="/tmp/xs$$$$.$(mansuffix)" ;					\
 	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+	dir="$(DESTDIR)$(manNdir)" ;					\
+									\
 	echo "installing man pages: $$TH" ;				\
 									\
-	if [ ! -d $(DESTDIR)$(manNdir) ]; then				\
-	  $(INSTALL_DIRS) $(DESTDIR)$(manNdir) ;			\
+	if [ ! -d "$$dir" ]; then					\
+	  echo $(INSTALL_DIRS) "$$dir" ;				\
+	       $(INSTALL_DIRS) "$$dir" ;				\
 	 fi ;								\
 									\
 	for man in $$men; do						\
-	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  manbase=`echo $$man | sed 's/\.man$$//'` ;    \
+	  instname="`echo "$$man" | sed 's/\.man$$/\.$(mansuffix)/'`" ;	\
+	  manbase="`echo "$$man" | sed 's/\.man$$//'`" ;		\
 	  TH=".TH $$manbase $(mansuffix) \"$$V\" \"X Version 11\" \"XScreenSaver manual\"" ;    \
 	  sed -e "s/^\.TH.*/$$TH/"					\
 	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
-	    < $(srcdir)/$$man > $$T ;					\
-	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
-	   $(DESTDIR)$(manNdir)/$$instname ;				\
-	  $(INSTALL_DATA) $$T						\
-	    $(DESTDIR)$(manNdir)/$$instname ;				\
+	    < "$(srcdir)/$$man" > "$$T" ;				\
+	  echo $(INSTALL_DATA) "$(srcdir)/$$man" "$$dir/$$instname" ;	\
+	       $(INSTALL_DATA) "$$T"             "$$dir/$$instname" ;	\
 	done ;								\
-	rm -f $$T
+	rm -f "$$T"
 
 install-xml:
 	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
@@ -369,38 +370,38 @@ install-xml:
 	 fi ;								\
 	 src=$(srcdir)/config ;						\
 	 for file in $(EXES) $(SCRIPTS) ; do				\
-	   if [ -f $$src/$$file.xml ]; then				\
-	     echo $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
-	          $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	   if [ -f "$$src/$$file.xml" ]; then				\
+	     echo $(INSTALL_DATA) "$$src/$$file.xml" "$$dest/$$file.xml" ;\
+	          $(INSTALL_DATA) "$$src/$$file.xml" "$$dest/$$file.xml" ;\
 	   fi ;								\
 	done
 
 uninstall-program:
 	@for program in $(EXES) $(RETIRED_EXES) $(SCRIPTS); do		\
-	  echo rm -f $(DESTDIR)$(HACKDIR)/$$program ;			\
-	  rm -f $(DESTDIR)$(HACKDIR)/$$program ;			\
+	  echo rm -f "$(DESTDIR)$(HACKDIR)/$$program" ;			\
+	       rm -f "$(DESTDIR)$(HACKDIR)/$$program" ;			\
 	done
 
 uninstall-man:
 	@men="$(MEN) $(RETIRED_MEN)" ;					\
 	for man in $$men; do						\
-	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
-	  rm -f $(DESTDIR)$(manNdir)/$$instname* ;			\
+	  instname=`echo "$$man" | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
+	       rm -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
 	done
 
 uninstall-xml:
 	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 for file in $(EXES) $(RETIRED_EXES) $(SCRIPTS) ; do		\
-	     echo rm -f $$dest/$$file.xml ;				\
-	          rm -f $$dest/$$file.xml ;				\
+	     echo rm -f "$$dest/$$file.xml" ;				\
+	          rm -f "$$dest/$$file.xml" ;				\
 	done
 
 clean::
-	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) m6502.h testx11
+	-rm -f ./*.o a.out core $(EXES) $(RETIRED_EXES) m6502.h testx11
 
 distclean: clean
-	-rm -f Makefile TAGS *~ "#"*
+	-rm -f Makefile TAGS ./*~ "#"*
 
 # Adds all current dependencies to Makefile
 depend:
@@ -414,7 +415,7 @@ depend:
 # to include only dependencies on files which are themselves a part of this
 # package.
 distdepend:: m6502.h
-	@echo updating dependencies in `pwd`/Makefile.in... ;				  \
+	@echo "updating dependencies in `pwd`/Makefile.in..." ;				  \
 	$(DEPEND) -w 0 -f - 								  \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- 		  \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) $(FFMPEG_CFLAGS) -- \
@@ -445,8 +446,8 @@ list_tarfiles:
 check_men:
 	@badmen="" ;							\
 	 for exe in $(EXES) $(SCRIPTS); do				\
-	   if ! [ -f $(srcdir)/$$exe.man				\
-		  -o "$$exe" = webcollage-helper ]; then		\
+	   if ! [ -f "$(srcdir)/$$exe.man" ] &&				\
+	      ! [ "$$exe" = webcollage-helper ]; then			\
 	     badmen="$$badmen $$exe" ;					\
 	   fi ;								\
 	 done ;								\

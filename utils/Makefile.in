@@ -166,7 +166,7 @@ depend:
 # to include only dependencies on files which are themselves a part of this
 # package.
 distdepend::
-	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	@echo "updating dependencies in `pwd`/Makefile.in..." ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \

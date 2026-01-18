@@ -1,4 +1,4 @@
-# utils/Makefile.in --- xscreensaver, Copyright © 1997-2023 Jamie Zawinski.
+# utils/Makefile.in --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
 # the `../configure' script generates `jwxyz/Makefile' from this file.
 
 # JWXYZ Is Not Xlib.
@@ -79,7 +79,7 @@ depend:
 # to include only dependencies on files which are themselves a part of this
 # package.
 distdepend::
-	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	@echo "updating dependencies in `pwd`/Makefile.in..." ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
 	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \
@@ -92,8 +92,8 @@ distdepend::
 	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
 	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
 	  echo ''							    \
-	) > /tmp/distdepend.$$$$ &&					    \
-	mv /tmp/distdepend.$$$$ Makefile.in
+	) > "/tmp/distdepend.$$$$" &&					    \
+	mv "/tmp/distdepend.$$$$" Makefile.in
 
 TAGS: tags
 tags:
