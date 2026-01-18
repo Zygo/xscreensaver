@@ -17,17 +17,17 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>6.13</string>
+	<string>6.14</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.13</string>
+	<string>6.14</string>
 	<key>CFBundleLongVersionString</key>
-	<string>6.13</string>
+	<string>6.14</string>
 	<key>CFBundleGetInfoString</key>
-	<string>6.13</string>
+	<string>6.14</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>6.13</string>
+	<string>6.14</string>
 	<key>NSMainNibFile</key>
 	<string>iSaverRunner</string>
 	<key>CFBundleDisplayName</key>

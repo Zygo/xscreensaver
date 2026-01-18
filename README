@@ -71,7 +71,19 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
-6.13	* Added a number of historical full chess games to `endgame`.
+6.14	* Added the ability to run shadertoy.com programs as screen savers.
+	* New shader-based savers: `alienbeacon', `batteredplanet',
+	  `elementalring', `fluxcore', `gimbalharmonics', `hexplasma',
+	  `logarithmiccircles', `neongravity', `neontriangulator',
+	  `protophore', `selfreflect', `skyline', `stardome', `starnest',
+	  `stripeytorus', `synthwavecity', `topologica' and `truchetzoom'.
+	* Better label wrapping in `carousel' and `photopile'.
+	* Fixed `glslideshow' preferences and title display.
+	* X11: Decrufted PAM, including /etc/pam.d/xscreensaver.
+	* macOS: Sparkle 2.8.
+	* iOS: Clicking links in preferences opens in Safari again.
+
+6.13	* Added a number of historical full chess games to `endgame'.
 	* Rewrote `glslideshow' to add more image-transition effects.
         * Hacks that display images and their filenames will display their
           titles intead, if the image originated in an RSS feed (or has

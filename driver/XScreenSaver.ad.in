@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 6.13
-!                              02-Dec-2025
+!                              version 6.14
+!                              15-Jan-2026
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -530,19 +530,27 @@ XScreenSaver.bourneShell:		/bin/sh
 				hexadrop --root				    \n\
 @GL_KLUDGE@ GL: 				kaleidocycle --root			    \n\
 @GL_KLUDGE@ GL: 				quasicrystal --root			    \n\
+@GL_KLUDGE@ GL: 				starnest --root				    \n\
 @GL_KLUDGE@ GL: 				unknownpleasures --root			    \n\
+@GL_KLUDGE@ GL: 				alienbeacon --root			    \n\
 				binaryring --root			    \n\
 @GL_KLUDGE@ GL: 				cityflow --root				    \n\
 @GL_KLUDGE@ GL: 				geodesicgears --root			    \n\
 @GL_KLUDGE@ GL: 				projectiveplane --root			    \n\
 @GL_KLUDGE@ GL: 				romanboy --root				    \n\
 				tessellimage --root			    \n\
+@GL_KLUDGE@ GL: 				topologica --root			    \n\
 @GL_KLUDGE@ GL: 				winduprobot --root			    \n\
+@GL_KLUDGE@ GL: 				fluxcore --root				    \n\
+@GL_KLUDGE@ GL: 				gimbalharmonics --root			    \n\
+@GL_KLUDGE@ GL: 				protophore --root			    \n\
+@GL_KLUDGE@ GL: 				skyline --root				    \n\
 @GL_KLUDGE@ GL: 				splitflap --root			    \n\
 @GL_KLUDGE@ GL: 				cubestack --root			    \n\
 @GL_KLUDGE@ GL: 				cubetwist --root			    \n\
 @GL_KLUDGE@ GL: 				discoball --root			    \n\
 @GL_KLUDGE@ GL: 				dymaxionmap --root			    \n\
+@GL_KLUDGE@ GL: 				elementalring --root			    \n\
 @GL_KLUDGE@ GL: 				energystream --root			    \n\
 @GL_KLUDGE@ GL: 				hexstrut --root				    \n\
 @GL_KLUDGE@ GL: 				hydrostat --root			    \n\
@@ -561,6 +569,8 @@ XScreenSaver.bourneShell:		/bin/sh
 				vfeedback --root			    \n\
 @GL_KLUDGE@ GL: 				deepstars --root			    \n\
 @GL_KLUDGE@ GL: 				gravitywell --root			    \n\
+@GL_KLUDGE@ GL: 				synthwavecity --root			    \n\
+@GL_KLUDGE@ GL: 				batteredplanet --root			    \n\
 @GL_KLUDGE@ GL: 				beats --root				    \n\
 @GL_KLUDGE@ GL: 				covid19 --root				    \n\
 @GL_KLUDGE@ GL: 				etruscanvenus --root			    \n\
@@ -569,19 +579,27 @@ XScreenSaver.bourneShell:		/bin/sh
 @GL_KLUDGE@ GL: 				sphereeversion --root			    \n\
 				binaryhorizon --root			    \n\
 				marbling --root				    \n\
+@GL_KLUDGE@ GL: 				neontriangulator --root			    \n\
+@GL_KLUDGE@ GL: 				stripeytorus --root			    \n\
 @GL_KLUDGE@ GL: 				chompytower --root			    \n\
 @GL_KLUDGE@ GL: 				hextrail --root				    \n\
 @GL_KLUDGE@ GL: 				mapscroller --root			    \n\
 @GL_KLUDGE@ GL: 				nakagin --root				    \n\
 @GL_KLUDGE@ GL: 				squirtorus --root			    \n\
+@GL_KLUDGE@ GL: 				stardome --root				    \n\
 @GL_KLUDGE@ GL: 				cubocteversion --root			    \n\
 				droste --root				    \n\
+@GL_KLUDGE@ GL: 				logarithmiccircles --root		    \n\
+@GL_KLUDGE@ GL: 				neongravity --root			    \n\
 @GL_KLUDGE@ GL: 				papercube --root			    \n\
 @GL_KLUDGE@ GL: 				skulloop --root				    \n\
 @GL_KLUDGE@ GL: 				highvoltage --root			    \n\
 @GL_KLUDGE@ GL: 				kallisti --root				    \n\
 @GL_KLUDGE@ GL: 				klondike --root				    \n\
+@GL_KLUDGE@ GL: 				selfreflect --root			    \n\
+@GL_KLUDGE@ GL: 				truchetzoom --root			    \n\
 @GL_KLUDGE@ GL: 				dumpsterfire --root			    \n\
+@GL_KLUDGE@ GL: 				hexplasma --root			    \n\
 @GL_KLUDGE@ GL: 				hopffibration --root			    \n\
 @GL_KLUDGE@ GL: 				platonicfolding --root			    \n
 
@@ -594,10 +612,12 @@ XScreenSaver.bourneShell:		/bin/sh
 !
 !=============================================================================
 
+*hacks.alienbeacon.name:    Alien Beacon
 *hacks.antinspect.name:     Ant Inspect
 *hacks.antmaze.name:        Ant Maze
 *hacks.antspotlight.name:   Ant Spotlight
 *hacks.apple2.name:         Apple ][
+*hacks.batteredplanet.name: Battered Planet
 *hacks.binaryhorizon.name:  Binary Horizon
 *hacks.binaryring.name:     Binary Ring
 *hacks.blinkbox.name:       Blink Box
@@ -626,6 +646,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.dnalogo.name:        DNA Logo
 *hacks.dumpsterfire.name:   Dumpster Fire
 *hacks.dymaxionmap.name:    Dymaxion Map
+*hacks.elementalring.name:  Elemental Ring
 *hacks.energystream.name:   Energy Stream
 *hacks.etruscanvenus.name:  Etruscan Venus
 *hacks.euler2d.name:        Euler 2D
@@ -636,11 +657,13 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.flipscreen3d.name:   Flip Screen 3D
 *hacks.fliptext.name:       Flip Text
 *hacks.fluidballs.name:     Fluid Balls
+*hacks.fluxcore.name:       Flux Core
 *hacks.flyingtoasters.name: Flying Toasters
 *hacks.fontglide.name:      Font Glide
 *hacks.fuzzyflakes.name:    Fuzzy Flakes
 *hacks.geodesicgears.name:  Geodesic Gears
 *hacks.gflux.name:          GFlux
+*hacks.gimbalharmonics.name:Gimbal Harmonics
 *hacks.glblur.name:         GL Blur
 *hacks.glcells.name:        GL Cells
 *hacks.gleidescope.name:    Gleidescope
@@ -655,6 +678,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.glsnake.name:        GL Snake
 *hacks.gltext.name:         GL Text
 *hacks.gravitywell.name:    Gravity Well
+*hacks.hexplasma.name:      Hex Plasma
 *hacks.hexstrut.name:       Hex Strut
 *hacks.hextrail.name:       Hex Trail
 *hacks.highvoltage.name:    High Voltage
@@ -665,6 +689,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.juggler3d.name:      Juggler 3D
 *hacks.lcdscrub.name:       LCD Scrub
 *hacks.lmorph.name:         LMorph
+*hacks.logarithmiccircles.name:Logarithmic Circles
 *hacks.m6502.name:          m6502
 *hacks.mapscroller.name:    Map Scroller
 *hacks.maze3d.name:         Maze 3D
@@ -676,6 +701,8 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.moire.name:          Moiré
 *hacks.moire2.name:         Moiré 2
 *hacks.morph3d.name:        Morph 3D
+*hacks.neongravity.name:    Neon Gravity
+*hacks.neontriangulator.name:Neon Triangulator
 *hacks.nerverot.name:       Nerve Rot
 *hacks.noseguy.name:        Nose Guy
 *hacks.pacman.name:         Pac-Man
@@ -692,6 +719,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.rotzoomer.name:      Rot Zoomer
 *hacks.rubikblocks.name:    Rubik Blocks
 *hacks.sballs.name:         SBalls
+*hacks.selfreflect.name:    Self Reflect
 *hacks.shadebobs.name:      Shade Bobs
 *hacks.sierpinski3d.name:   Sierpinski 3D
 *hacks.skytentacles.name:   Sky Tentacles
@@ -699,13 +727,18 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.speedmine.name:      Speed Mine
 *hacks.sphereeversion.name: Sphere Eversion
 *hacks.splitflap.name:      Split-Flap
+*hacks.stardome.name:       Star Dome
+*hacks.starnest.name:       Star Nest
 *hacks.starwars.name:       Star Wars
 *hacks.stonerview.name:     Stoner View
+*hacks.stripeytorus.name:   Stripey Torus
+*hacks.synthwavecity.name:  Synthwave City
 *hacks.t3d.name:            T3D
 *hacks.testx11.name:        Test X11
 *hacks.timetunnel.name:     Time Tunnel
 *hacks.topblock.name:       Top Block
 *hacks.tronbit.name:        Tron Bit
+*hacks.truchetzoom.name:    Truchet Zoom
 *hacks.unknownpleasures.name:Unknown Pleasures
 *hacks.vfeedback.name:      VFeedback
 *hacks.vidwhacker.name:     Vid Whacker

@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 6.13
+%define	version 6.14
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -146,6 +146,8 @@ rm -rf ${RPM_BUILD_ROOT}
 %defattr(-,root,root)
 
 %changelog
+* Tue Dec 02 2025 jwz
+- Cleanup.
 * Mon Jul 31 2023 jwz
 - Splitting this into multiple packages is a support nightmare, please don't.
 * Mon Nov 16 1998 jwz
