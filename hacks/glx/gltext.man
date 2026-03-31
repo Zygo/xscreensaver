@@ -1,0 +1,150 @@
+.TH XScreenSaver 1 "25-Jul-98" "X Version 11"
+.SH NAME
+gltext \- draws text spinning around in 3D
+.SH SYNOPSIS
+.B gltext
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-visual \fIvisual\fP] [\-\-delay \fImicroseconds\fP]
+[\-\-text \fIstring\fP]
+[\-\-program \fIcommand\fP]
+[\-\-wander] [\-\-no-wander]
+[\-\-spin \fIaxes\fP]
+[\-\-no-spin]
+[\-\-front] [\-\-no\-front]
+[\-\-wireframe]
+[\-\-fps]
+.SH DESCRIPTION
+The \fIgltext\fP program draws some text spinning around in 3D, using
+a font that appears to be made of solid tubes.  
+.SH OPTIONS
+.I gltext
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-text \fIstring\fP
+The text to display.  This may contain newlines, but it shouldn't be
+very long.  The default is to display the machine name and OS version.
+
+This may also be a format string acceptable to
+.BR date (1)
+and
+.BR strftime (3) ,
+in which case, it will be updated once a second.  So to make this
+program display a spinning digital clock, you could do this:
+.nf
+.sp
+	gltext -text "%A%n%d %b %Y%n%l:%M:%S %p"
+.sp
+.fi
+To include a literal `%', you must double it: `%%'.
+
+See the man page for
+.BR strftime (3)
+for more details.
+.TP 8
+.B \-\-program \fIcommand\fP
+The given program is run, and its output is displayed.
+If specified, this overrides \fI\-\-text\fP.
+The output of this program will be repeatedely displayed, with new
+pages of text shifting in every few seconds.  Lines should be relatively
+short.  You might try:
+.nf
+.sp
+	-program 'xscreensaver-text --cols 20'
+.sp
+.fi
+.TP 8
+.B \-\-maxlines
+Set the number of lines of text to display.  By default, 
+.I gltext
+will print 8 lines of text at a time.  Use this option to increase or
+decrease that number.  Be aware that 
+.I gltext
+is designed to work with a fairly small amount of text, so setting this
+value too high might result in slow performance or strange behaviour
+stemming from buffer overflows.  Increase at your own risk.
+.TP 8
+.B \-\-mono
+Display the text in a monospace font.  Default is a variable-width font.
+.TP 8
+.B \-\-no\-mono
+Display the text in a variable-width font.  This is the default.  
+.TP 8
+.B \-\-wander
+Move the text around the screen.  This is the default.
+.TP 8
+.B \-\-no\-wander
+Keep the text centered on the screen.
+.TP 8
+.B \-\-wander\-speed
+Sets the speed at which the text wanders around.  Default is 0.02.  
+.TP 8
+.B \-\-spin
+Which axes around which the text should spin.  The default is "XYZ",
+meaning rotate it freely in space.  "\fB\-\-spin Z\fP" would rotate the
+text in the plane of the screen while not rotating it into or out
+of the screen; etc.
+.TP 8
+.B \-\-no\-spin
+Don't spin the text at all: the same as \fB\-\-spin ""\fP.
+.TP 8
+.B \-\-front
+When spinning, never spin all the way around or upside down:
+always face mostly forward so that the text is easily readable.
+.TP 8
+.B \-\-no\-front
+Allow spins to go all the way around or upside down.  This is the default.
+.TP 8
+.B \-\-wireframe
+Render in wireframe instead of solid.
+.TP 8
+.B \-\-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-\-scale
+Sets the scale at which the text is rendered.  Bigger values will result
+in bigger text; smaller values will result in smaller text.  The default
+value is 0.01.  
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.BR xscreensaver\-text (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co 2001-2014 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>

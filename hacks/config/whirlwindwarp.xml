@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="whirlwindwarp" _label="Whirlwind Warp">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=eWrRhSYzimY"/>
+
+  <number id="points" type="slider" arg="--points %"
+          _label="Particles" _low-label="Few" _high-label="Many"
+          low="10" high="1000" default="400"/>
+
+  <number id="tails" type="slider" arg="--tails %"
+          _label="Trail size" _low-label="Short" _high-label="Long"
+          low="1" high="50" default="8"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Floating stars are acted upon by a mixture of simple 2D
+force  fields.  The strength of each force field changes
+continuously, and it is also switched on and off at random.
+
+Written by Paul 'Joey' Clark; 2001.
+  </_description>
+</screensaver>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="stairs" _label="Stairs" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=Y1ceRT30qr0"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Escher's infinite staircase.
+
+https://en.wikipedia.org/wiki/Maurits_Cornelis_Escher
+
+Written by Marcelo Vianna and Jamie Zawinski; 1998.
+  </_description>
+</screensaver>

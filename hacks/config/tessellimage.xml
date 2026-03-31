@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="tessellimage" _label="Tessellimage">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=JNgybysnYU8"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="duration2" type="slider" arg="--duration2 %"
+            _label="Speed" _low-label="0.1 second" _high-label="4 seconds"
+            low="0.1" high="4.0" default="0.4"/>
+
+    <number id="duration" type="slider" arg="--duration %"
+            _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+            low="10" high="600" default="120"/>
+
+    <number id="depth" type="slider" arg="--max-depth %"
+            _label="Complexity" _low-label="Shallow" _high-label="Deep"
+            low="1000" high="100000" default="30000"/>
+   </vgroup>
+
+   <vgroup>
+
+    <select id="mode">
+     <option id="random" _label="Delaunay or voronoi"/>
+     <option _label="Delaunay" arg-set="--mode delaunay"/>
+     <option _label="Voronoi"  arg-set="--mode voronoi"/>
+    </select>
+
+    <xscreensaver-image />
+
+    <boolean id="fill"    _label="Fill screen" arg-unset="--no-fill-screen"/>
+    <boolean id="outline" _label="Outline triangles" arg-unset="--no-outline"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+    <xscreensaver-updater />
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Converts an image to triangles using Delaunay tessellation, or to
+polygons using Voronoi tesselation, and animates the result at
+various depths.
+
+More polygons are allocated to visually complex parts of the image.
+This is accomplished by first computing the first derivative of the
+image: the distance between each pixel and its neighbors (which is
+essentially edge detection or embossing).  Then the Delaunay or
+Voronoi control points are chosen by selecting those pixels whose
+distance value is above a certain threshold: those are the pixels that
+have the largest change in color/brightness.
+
+https://en.wikipedia.org/wiki/Delaunay_triangulation
+https://en.wikipedia.org/wiki/Voronoi_diagram
+https://en.wikipedia.org/wiki/Tessellation
+
+Written by Jamie Zawinski; 2014.
+  </_description>
+</screensaver>

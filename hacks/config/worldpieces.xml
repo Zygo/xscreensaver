@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="worldpieces" _label="World Pieces" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=3sv3-uqI5VE"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+    <number id="speed" type="slider" arg="--speed %"
+            _label="Animation speed" _low-label="Slow" _high-label="Fast"
+            low="0.01" high="8.0" default="1.0"
+            convert="ratio"/>
+
+  <file id="image"  _label="Surface image" arg="--image %"  />
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="--no-wander"/>
+   <boolean id="rotate" _label="Rotate"    arg-unset="--no-rotate"/>
+   <boolean id="roll"   _label="Roll"      arg-unset="--no-roll"/>
+   <boolean id="stars"  _label="Stars"     arg-unset="--no-stars"/>
+   <boolean id="underground" _label="Show Underground"
+                                           arg-unset="--underground"/>
+   <boolean id="ffwd"   _label="Impatient" arg-unset="--fastforward"/>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="wire"    _label="Wireframe"       arg-set="--wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The Earth fills up with countries one at a time, solving international
+relations like a jigsaw puzzle.
+
+Written by Jamie Zawinski; 2026.
+  </_description>
+</screensaver>

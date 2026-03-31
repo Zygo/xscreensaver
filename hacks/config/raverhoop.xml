@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="raverhoop" _label="Raver Hoop" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=0k2sP_Imb80" />
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="ncolors" type="slider" arg="--ncolors %"
+            _label="Colors" _low-label="1" _high-label="64"
+            low="1" high="64" default="12"/>
+
+    <number id="lights" type="slider" arg="--lights %"
+            _label="Lights" _low-label="Sparse" _high-label="Dense"
+            low="3" high="512" default="200"/>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="speed" type="slider" arg="--speed %"
+            _label="Speed, motion" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="5.0" default="1.0"
+            convert="ratio"/>
+
+    <number id="light-speed" type="slider" arg="--light-speed %"
+            _label="Speed, lights" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="5.0" default="1.0"
+            convert="ratio"/>
+
+    <number id="sustain" type="slider" arg="--sustain %"
+            _label="Sustain" _low-label="Brief" _high-label="Long"
+            low="0.1" high="5.0" default="1.0"
+            convert="ratio"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-set="--wander"/>
+   <boolean id="spin"   _label="Spin"      arg-set="--spin"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Simulates an LED hula hoop in a dark room. Oontz oontz oontz.
+
+Written by Jamie Zawinski; 2016.
+  </_description>
+</screensaver>

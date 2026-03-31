@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="strange" _label="Strange">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=F1qna7UAxC0"/>
+
+  <hgroup>
+    <vgroup>
+      <number id="delay" type="slider" arg="--delay %"
+              _label="Frame rate" _low-label="Low" _high-label="High"
+              low="0" high="100000" default="10000"
+              convert="invert"/>
+
+      <number id="curve" type="slider" arg="--curve %"
+                _label="Curviness" _low-label="Low" _high-label="High"
+                low="1" high="50" default="10"/>
+
+      <number id="points" type="slider" arg="--points %"
+                _label="Number of points" _low-label="1k" _high-label="500k"
+                low="1000" high="500000" default="5500"/>
+
+      <number id="pointSize" type="slider" arg="--point-size %"
+                _label="Point size" _low-label="1" _high-label="8"
+                low="1" high="8" default="1"/>
+    </vgroup>
+    <vgroup>
+      <number id="zoom" type="slider" arg="--zoom %"
+                _label="Zoom" _low-label="10%" _high-label="400%"
+                low="0.1" high="4.0" default="0.9"/>
+
+      <number id="brightness" type="slider" arg="--brightness %"
+                _label="Brightness" _low-label="10%" _high-label="400%"
+                low="0.1" high="4.0" default="1.0"
+                convert="ratio"/>
+
+      <number id="motionBlur" type="slider" arg="--motion-blur %"
+                _label="Motion blur" _low-label="1" _high-label="10"
+                low="1.0" high="10.0" default="3.0"/>
+
+      <number id="ncolors" type="slider" arg="--ncolors %"
+                _label="Number of colors" _low-label="Two" _high-label="Many"
+                low="1" high="255" default="100"/>
+
+      <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+    </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Strange attractors: a swarm of dots swoops and twists around.
+
+https://en.wikipedia.org/wiki/Attractor#Strange_attractor
+
+Written by Massimino Pascal; 1997.
+  </_description>
+</screensaver>

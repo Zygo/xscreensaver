@@ -1,0 +1,84 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+piecewise \- lots of moving circles intersecting in interesting ways.
+.SH SYNOPSIS
+.B piecewise
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-count \fInumber\fP]
+[\-\-ncolors \fInumber\fP]
+[\-\-colorspeed \fInumber\fP]
+[\-\-minradius \fInumber\fP]
+[\-\-maxradius \fInumber\fP]
+[\-\-no-db]
+[\-\-fps]
+.SH DESCRIPTION
+This draws a bunch of moving circles which switch from visibility to invisibility
+when they intersect.
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 5000 (0.01 seconds.).
+.TP 8
+.B \-\-count \fInumber\fP
+Number of circles.  Default: 32.
+.TP 8
+.B \-\-ncolors \fInumber\fP
+Number of colors, only one of which is used at a time.  Default: 256.
+.TP 8
+.B \-\-colorspeed \fInumber\fP
+How fast the color changes (0 - 100).  Default: 10.
+.TP 8
+.B \-\-minradius \fInumber\fP
+Minimum circle radius (as a proportion of screen height). Default: 0.05.
+.TP 8
+.B \-\-maxradius \fInumber\fP
+Maximum circle radius (as a proportion of screen height). Default: 0.2.
+.TP 8
+.B \-\-db | \-\-no-db
+Whether to double buffer.
+.TP 8
+.B \-\-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2003 by Geoffrey Irving.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Geoffrey Irving.

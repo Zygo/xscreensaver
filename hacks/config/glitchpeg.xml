@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glitchpeg" _label="GlitchPEG">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=Xl5vKJ65_xM"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="duration" type="slider" arg="--duration %"
+            _label="Duration" _low-label="1 second" _high-label="10 minutes"
+            low="1" high="600" default="120"/>
+
+    <number id="count" type="slider" arg="--count %"
+            _label="Glitchiness" _low-label="Low" _high-label="High"
+            low="1" high="1024" default="400"/>
+
+   </vgroup>
+
+   <vgroup>
+    <xscreensaver-image />
+    <xscreensaver-updater />
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Loads an image, corrupts it, and then displays the corrupted version,
+several times a second.  After a while, finds a new image to corrupt.
+
+Written by Jamie Zawinski; 2018.
+  </_description>
+</screensaver>

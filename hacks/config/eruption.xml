@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="eruption" _label="Eruption">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=CQ6jDBnumT8"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="ncolors" type="slider" arg="--ncolors %"
+              _label="Number of colors" _low-label="Few" _high-label="Many"
+              low="16" high="256" default="256"/>
+
+    <number id="nparticles" type="slider" arg="--particles %"
+              _label="Number of particles" _low-label="Little" _high-label="Many"
+              low="100" high="2000" default="300"/>
+
+    <number id="cooloff" type="slider" arg="--cooloff %"
+              _label="Cooling factor" _low-label="Slow" _high-label="Fast"
+              low="0" high="10" default="2"/>
+   </vgroup>
+   <vgroup>
+    <number id="heat" type="slider" arg="--heat %"
+              _label="Heat" _low-label="Pleasant" _high-label="Inferno"
+              low="64" high="256" default="256"/>
+
+    <number id="gravity" type="slider" arg="--gravity %"
+              _label="Gravity" _low-label="Negative" _high-label="Positive"
+              low="-5" high="5" default="1"/>
+
+    <number id="cycles" type="slider" arg="--cycles %"
+             _label="Duration" _low-label="Short" _high-label="Long"
+            low="10" high="3000" default="80"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Exploding fireworks.  
+
+See also the "Fireworkx", "XFlame" and "Pyro" screen savers.
+
+Written by W.P. van Paassen; 2003.
+  </_description>
+</screensaver>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<screensaver name="sphereeversion" _label="Sphere Eversion" gl="yes">
+
+  <video href="https://www.youtube.com/watch?v=CbmIggJ5GdA"/>
+
+  <command arg="--root"/>
+
+  <hgroup>
+
+    <vgroup>
+      <select id="deformation-style">
+        <option id="random"    _label="Random deformation"/>
+        <option id="analytic"  _label="Analytic"   arg-set="--eversion-method analytic"/>
+        <option id="corrugations" _label="Corrugations" arg-set="--eversion-method corrugations"/>
+      </select>
+
+      <number id="deform-speed" type="slider" arg="--deformation-speed %"
+              _label="Deformation speed"
+              _low-label="1.0" _high-label="100.0"
+              low="1.0" high="100.0" default="10.0"/>
+    </vgroup>
+
+    <vgroup>
+      <select id="display-mode">
+        <option id="random"      _label="Random surface"/>
+        <option id="surface"     _label="Solid surface"       arg-set="--mode surface"/>
+        <option id="transparent" _label="Transparent surface" arg-set="--mode transparent"/>
+      </select>
+
+      <select id="appearance">
+        <option id="random" _label="Random pattern"/>
+        <option id="solid"  _label="Solid object"   arg-set="--appearance solid"/>
+        <option id="pbands" _label="Parallel bands" arg-set="--appearance parallel-bands"/>
+        <option id="mbands" _label="Meridian bands" arg-set="--appearance meridian-bands"/>
+      </select>
+
+      <!-- sphereeversion only, not outsidein -->
+      <select id="graticule">
+        <option id="random" _label="Random graticule"/>
+        <option id="wgrat"  _label="With graticule"    arg-set="--graticule on"/>
+        <option id="wograt" _label="Without graticule" arg-set="--graticule off"/>
+      </select>
+
+      <select id="colors">
+        <option id="random"   _label="Random coloration"/>
+        <option id="twosided" _label="Two-sided"       arg-set="--colors two-sided"/>
+        <option id="parallel" _label="Parallel colors" arg-set="--colors parallel"/>
+        <option id="meridian" _label="Meridian colors" arg-set="--colors meridian"/>
+        <option id="earth"    _label="Earth colors"    arg-set="--colors earth"/>
+      </select>
+
+      <select id="projection">
+        <option id="random"       _label="Random projection"/>
+        <option id="perspective"  _label="Perspective"  arg-set="--projection perspective"/>
+        <option id="orthographic" _label="Orthographic" arg-set="--projection orthographic"/>
+      </select>
+    </vgroup>
+
+    <vgroup>
+      <!-- sphereeversion only, not outsidein -->
+      <select id="surface-order">
+        <option id="random" _label="Random surface order"/>
+        <option id="2"      _label="Surface order 2" arg-set="--surface-order 2"/>
+        <option id="3"      _label="Surface order 3" arg-set="--surface-order 3"/>
+        <option id="4"      _label="Surface order 4" arg-set="--surface-order 4"/>
+        <option id="5"      _label="Surface order 5" arg-set="--surface-order 5"/>
+      </select>
+
+      <!-- outsidein only, not sphereeversion -->
+      <select id="lunes">
+        <option id="lunes8" _label="8 lunes"/>
+        <option id="lunes4" _label="4 lunes" arg-set="--lunes-4"/>
+        <option id="lunes2" _label="2 lunes" arg-set="--lunes-2"/>
+        <option id="lunes1" _label="1 lune" arg-set="--lunes-1"/>
+      </select>
+
+      <!-- outsidein only, not sphereeversion -->
+      <select id="hemispheres">
+        <option id="hemispheres2" _label="2 hemispheres"/>
+        <option id="hemispheres1" _label="1 hemisphere" arg-set="--hemispheres-1"/>
+      </select>
+    </vgroup>
+
+    <vgroup>
+      <number id="speed-x" type="slider" arg="--speed-x %"
+              _label="X rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="0.0"/>
+
+      <number id="speed-y" type="slider" arg="--speed-y %"
+              _label="Y rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="0.0"/>
+
+      <number id="speed-z" type="slider" arg="--speed-z %"
+              _label="Z rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="0.0"/>
+    </vgroup>
+
+    <vgroup>
+     <xscreensaver-updater />
+     <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+    </vgroup>
+
+  </hgroup>
+
+  <_description>
+Turns a sphere inside out: a smooth deformation (homotopy).  During the
+eversion, the deformed sphere is allowed to intersect itself transversally,
+however, no creases or pinch points occur.
+
+Inspired by the following paper: Adam Bednorz, Witold Bednorz:
+"Analytic sphere eversion using ruled surfaces", Differential Geometry
+and its Applications 64:59-79, 2019.
+
+Also by the video "Outside In" by The Geometry Center (Bill Thurston, Silvio
+Levy, Delle Maxwell, Tamara Munzner, Nathaniel Thurston, David Ben-Zvi, Matt
+Headrick, et al.), 1994, and the accompanying booklet Silvio Levy: "Making
+Waves — A Guide to the Ideas Behind Outside In", A K Peters, Wellesley, MA,
+1995.
+
+https://en.wikipedia.org/wiki/Sphere_eversion
+
+Written by Carsten Steger; 2020.
+  </_description>
+</screensaver>

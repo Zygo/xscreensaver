@@ -1,0 +1,124 @@
+.TH XScreenSaver 1 "04-Feb-09" "X Version 11"
+.SH NAME
+rubikblocks \- animates the Rubik's Mirror Blocks puzzle
+.SH SYNOPSIS
+.B rubikblocks
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-install]
+[\-\-delay \fImicroseconds\fP]
+[\-\-texture] [\-\-no\-texture]
+[\-\-mono]
+[\-\-wireframe]
+[\-\-spin] [\-\-no\-spin]
+[\-\-wander] [\-\-no\-wander]
+[\-\-randomize] [\-\-no\-randomize]
+[\-\-spinspeed \fInumber\fP]
+[\-\-rotspeed \fInumber\fP]
+[\-\-wanderspeed \fInumber\fP]
+[\-\-wait \fInumber\fP]
+[\-\-cubesize \fInumber\fP]
+[\-\-fps]
+.SH DESCRIPTION
+This program animates a puzzle called Rubik's Mirror Blocks.
+The moves are chosen randomly.
+.SH OPTIONS
+.I rubikblocks
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-delay \fImicroseconds\fP
+How long to pause between frames.  Default is 20000, or 0.02 second.
+.TP 8
+.B \-\-texture
+Use texture maps.  This is the default.
+.TP 8
+.B \-\-no\-texture
+Use solid colors.  Looks a bit weird.
+.TP 8
+.B \-\-mono
+Disable both texture maps and colors.  Ditto.
+.TP 8
+.B \-\-wireframe
+Only draw outlines.  Outlines of each piece, not only the whole object, are drawn.
+.TP 8
+.B \-\-spin
+Spin the whole object around X, Y and Z axes.  This is the default.
+.TP 8
+.B \-\-no\-spin
+Do not spin, stay in the same tilt all the time.
+.TP 8
+.B \-\-wander
+Move the object around the screen.  This is the default.
+.TP 8
+.B \-\-no\-wander
+Keep the object centered on the screen.
+.TP 8
+.B \-\-randomize
+Shuffle the puzzle randomly at startup.  This is the default.
+.TP 8
+.B \-\-no\-randomize
+Do not shuffle at startup, begin at the shape of cube.
+.TP 8
+.B \-\-spinspeed \fInumber\fP
+The relative speed of spinning.  Default is 1.0.
+.TP 8
+.B \-\-rotspeed \fInumber\fP
+The relative speed of the moves.  Default is 3.0.  Setting to \(<= 0.0
+makes the object stay at one configuration.
+.TP 8
+.B \-\-wanderspeed \fInumber\fP
+The relative speed of wandering around the screen.  Default is 0.02.
+.TP 8
+.B \-\-wait \fInumber\fP
+How long to stay at final position after each move.  The meaning of
+the argument is again relative.  Default is 40.0.
+.TP 8
+.B \-\-cubesize \fInumber\fP
+Size of the object.  Value of 3.0 fills roughly all the screen.
+.TP 8
+.B \-\-fps
+Display the current frame rate, CPU load, and polygon count.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2009 by Vasek Potocek.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Vasek Potocek <vasek.potocek@post.cz>, 04-Feb-09.

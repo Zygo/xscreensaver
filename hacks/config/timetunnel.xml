@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="timetunnel" _label="Time Tunnel" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=GZe5rk_7TnA"/>
+
+  <number id="start" type="slider" arg="--start %"
+          _label="Start sequence time" _low-label="0 sec" _high-label="30 sec"
+          low="0.00" high="27.79" default="0.00"/>
+
+  <number id="end" type="slider" arg="--end %"
+          _label="End sequence time" _low-label="0 sec" _high-label="30 sec"
+          low="0.00" high="27.79" default="27.79"/>
+
+  <hgroup>
+   <vgroup>
+    <boolean id="logo"    _label="Draw logo"       arg-unset="--no-logo"/>
+    <boolean id="reverse" _label="Run backward"    arg-set="--reverse"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+An animation similar to the title sequence of Dr. Who in the 70s.
+
+Written by Sean P. Brennan; 2005.
+  </_description>
+</screensaver>

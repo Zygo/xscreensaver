@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="bsod" _label="BSOD">
+
+ <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=YIqbMCfR3r0"/>
+
+ <hgroup>
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Duration" _low-label="5 seconds" _high-label="2 minutes"
+          low="5" high="120" default="45"/>
+ </hgroup>
+
+ <hgroup>
+  <vgroup>
+   <boolean id="windows"    _label="Windows 3.1"     arg-unset="--no-windows"/>
+   <boolean id="nt"         _label="Windows NT"      arg-unset="--no-nt"/>
+   <boolean id="2k"         _label="Windows 2000  "  arg-unset="--no-2k"/>
+   <boolean id="win10"      _label="Windows 10    "  arg-unset="--no-win10"/>
+   <boolean id="bitlocker"  _label="BitLocker"       arg-unset="--no-bitlocker"/>   
+  </vgroup>
+  <vgroup>
+   <boolean id="msdos"      _label="MS-DOS"         arg-unset="--no-msdos"/>
+   <boolean id="glados"     _label="GLaDOS"         arg-unset="--no-glados"/>
+   <boolean id="amiga"      _label="AmigaDOS"       arg-unset="--no-amiga"/>
+   <boolean id="android"    _label="Android"        arg-set="--android"/>
+   <boolean id="vmwareArm"  _label="VMware ESXi-Arm" arg-unset="--no-vmwarearm"/>   
+  </vgroup>
+  <vgroup>
+   <boolean id="apple2"     _label="Apple ]["       arg-unset="--no-apple2"/>
+   <boolean id="ransomware" _label="Ransomware"     arg-unset="--no-ransomware"/>
+   <boolean id="nvidia"     _label="NVidia"         arg-unset="--no-nvidia"/>
+   <boolean id="os2"        _label="OS/2"           arg-unset="--no-os2"/>
+  </vgroup>
+  <vgroup>
+   <boolean id="mac"        _label="Sad Mac"        arg-unset="--no-mac"/>
+   <boolean id="mac1"       _label="Mac bomb"       arg-unset="--no-mac1"/>
+   <boolean id="macsbug"    _label="MacsBug"        arg-unset="--no-macsbug"/>
+   <boolean id="macx"       _label="MacOS X"        arg-unset="--no-macx"/>
+  </vgroup>
+  <vgroup>
+   <boolean id="vmware"     _label="VMware"         arg-unset="--no-vmware"/>
+   <boolean id="atari"      _label="Atari"          arg-set="--atari"/>
+   <boolean id="os390"      _label="OS/390"         arg-unset="--no-os390"/>
+   <boolean id="hvx"        _label="HVX/GCOS"       arg-unset="--no-hvx"/>
+  </vgroup>
+  <vgroup>
+   <boolean id="encom"      _label="Encom"          arg-unset="--no-encom"/>
+   <boolean id="blitdamage" _label="NCD XTerm"      arg-unset="--no-blitdamage"/>
+   <boolean id="atm"        _label="ATM"            arg-unset="--no-atm"/>
+   <boolean id="dvd"        _label="DVD"            arg-unset="--no-dvd"/>
+  </vgroup>
+  <vgroup>
+   <boolean id="nintendo"   _label="Nintendo"       arg-unset="--no-nintendo"/>
+   <boolean id="tivo"       _label="Tivo"           arg-unset="--no-tivo"/>
+   <boolean id="vms"        _label="VMS"            arg-unset="--no-vms"/>
+   <boolean id="bsd"        _label="BSD"            arg-set="--bsd"/>
+  </vgroup>
+  <vgroup>
+   <boolean id="linux"      _label="Linux (fsck)"   arg-unset="--no-linux"/>
+   <boolean id="sparclinux" _label="Linux (sparc)"  arg-set="--sparclinux"/>
+   <boolean id="hppalinux"  _label="Linux (hppa)"   arg-unset="--no-hppalinux"/>
+   <boolean id="solaris"    _label="Solaris"        arg-unset="--no-solaris"/>
+  </vgroup>
+  <vgroup>
+   <boolean id="sco"        _label="SCO"            arg-unset="--no-sco"/>
+   <boolean id="hpux"       _label="HPUX"           arg-unset="--no-hpux"/>
+   <boolean id="tru64"      _label="Tru64"          arg-unset="--no-tru64"/>
+   <boolean id="gnome"      _label="GNOME"          arg-unset="--no-gnome"/>
+   <boolean id="systemd"    _label="Systemd"        arg-unset="--no-systemd"/>
+  </vgroup>
+ </hgroup>
+
+ <hgroup>
+  <vgroup>
+   <xscreensaver-image />
+  </vgroup>
+  <xscreensaver-updater />
+ </hgroup>
+
+ <_description>
+Blue Screen of Death: a large collection of simulated crashes from
+various other operating systems.
+
+https://en.wikipedia.org/wiki/Blue_Screen_of_Death
+https://en.wikipedia.org/wiki/Screen_of_death
+https://en.wikipedia.org/wiki/Guru_Meditation
+https://en.wikipedia.org/wiki/Row_of_Bombs
+https://en.wikipedia.org/wiki/Bomb_%28symbol%29
+
+Written by Jamie Zawinski; 1998.
+ </_description>
+</screensaver>

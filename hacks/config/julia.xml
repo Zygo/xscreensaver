@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="julia" _label="Julia">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=cA4Rgq-rmy8"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="count" type="slider" arg="--count %"
+           _label="Count" _low-label="Few" _high-label="Lots"
+          low="10" high="20000" default="1000"/>
+
+  <number id="cycles" type="slider" arg="--cycles %"
+           _label="Iterations" _low-label="Small" _high-label="Large"
+          low="1" high="100" default="20"/>
+
+  <number id="ncolors" type="slider" arg="--ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+The Julia set is a close relative of the Mandelbrot set.  The
+small moving dot indicates the control point from which the rest of
+the image was generated.
+
+See also the "Discrete" screen saver.
+
+https://en.wikipedia.org/wiki/Julia_set
+
+Written by Sean McCullough; 1997.
+  </_description>
+</screensaver>

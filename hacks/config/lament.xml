@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lament" _label="Lament" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=-TBqI4YKOKI"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="tex"     _label="Textured"  arg-unset="--no-texture"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="--wireframe"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Lemarchand's Box, the Lament Configuration.
+
+Warning: occasionally opens doors.
+
+https://en.wikipedia.org/wiki/Lemarchand%27s_box
+
+Written by Jamie Zawinski; 1998.
+  </_description>
+</screensaver>

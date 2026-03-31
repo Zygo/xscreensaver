@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xspirograph" _label="XSpirograph">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=XWCeQqzNavY"/>
+
+  <number id="delay" type="slider" arg="--subdelay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Linger" _low-label="1 second" _high-label="1 minute"
+          low="1" high="60" default="5"/>
+
+  <number id="layers" type="spinbutton" arg="--layers %"
+          _label="Layers" low="1" high="10" default="2"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Simulates that pen-in-nested-plastic-gears toy from your childhood.
+
+https://en.wikipedia.org/wiki/Spirograph
+
+Written by Rohit Singh; 2000.
+  </_description>
+</screensaver>

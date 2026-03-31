@@ -1,0 +1,85 @@
+.TH XScreenSaver 1 "14-Aug-2004" "X Version 11"
+.SH NAME
+memscroller \- scrolls a dump of its own RAM across the screen
+.SH SYNOPSIS
+.B memscroller
+[\-\-display \fIhost:display.screen\fP]
+[\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install] [\-\-visual \fIvisual\fP]
+[\-\-font \fIfont\fP]
+[\-\-delay \fIint\fP]
+[\-\-mono | -color]
+[\-\-ram | -random | \-\-filename \fIfile\fP]
+[\-\-fps]
+.SH DESCRIPTION
+The \fImemscroller\fP program scrolls a dump of its own process memory
+across the screen in three windows at three different rates.
+.SH OPTIONS
+.I memscroller
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-color
+Render each three bytes of memory as R, G, B.  This is the default.
+.TP 8
+.B \-\-mono 
+Render each byte of memory in shades of green.
+.TP 8
+.B \-\-ram
+Read from the process's address space.  This is the default.
+.TP 8
+.B \-\-random
+Instead of reading from memory, generate random numbers.
+.TP 8
+.B \-\-filename \fIfile\fP
+Instead of reading from memory, read from the given file until EOF, then
+re-open it.  If you have permission, /dev/mem is an interesting choice here.
+(Note that /dev/null won't ever display anything, because it returns EOF
+without ever returning any data.)
+.TP 8
+.B \-\-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the animation.
+Default 10000.
+.TP 8
+.B \-\-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2004 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 14-Aug-2004.

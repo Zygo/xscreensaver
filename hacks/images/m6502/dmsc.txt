@@ -1,0 +1,768 @@
+;
+; 6502 Assembler Demo.
+; Copyright (C) 2007  Daniel Serpell <daniel.serpell@gmail.com>
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+; 1. Redistributions of source code must retain the above copyright notice,
+; this list of conditions and the following disclaimer.
+;
+; 2. Redistributions in binary form must reproduce the above copyright notice,
+; this list of conditions and the following disclaimer in the documentation
+; and/or other materials provided with the distribution.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+;
+
+; Variable definitions
+    temp0 = $20
+    temp1 = $21
+    temp2 = $22
+    temp3 = $23
+    temp4 = $24
+    temp5 = $25
+    
+    param0 = $10
+    param1 = $11
+    param2 = $12
+    param3 = $13
+
+
+; Output file
+    !to "all.bin", plain
+
+; Start of code
+    *= $600
+    jmp main
+
+; Used in "gira" and "circ"
+
+    gira_pos = $30
+    gira_scr = $200
+    circ_pos = $30
+    circ_scr = $210
+    show_pos = $31
+    show_source = $a000
+    show_dest = $500
+    text_state = $40
+    text_scr = $a000
+;    text_scr = $480
+    moire_buf = $a000
+    moire_scr = $200
+    moire_temp = $20
+
+; Include routines and macros
+
+: ===========================================================================
+:    !source "fillRect.asm"
+: ===========================================================================
+
+    !zone {
+    
+; Uses the following:
+;  params: param0, param1
+;  temps: temp0
+
+
+; Locals
+    .color = temp0
+
+; Params
+    fillRect_buffer = param0
+    .buf = fillRect_buffer
+
+; fillRect:
+;   Fill a rectangle of 8x8 pixels with a color.
+; input: A  = color index
+;        .buffer = output buffer (address)
+    !macro fillRect .buffer {
+        ldx  #<.buffer
+        stx  fillRect_buffer
+        ldx  #>.buffer
+        stx  fillRect_buffer+1
+        jsr  fillRect_code
+    }
+
+; fillRect:
+;   Fill a rectangle of 8x8 pixels with a color.
+; input: .color  = color index
+;        .buffer = output buffer (address)    
+    !macro fillRect .buffer, .color {
+        lda  #.color
+        +fillRect .buffer
+    }
+    
+fillRect_code:
+	sta	.color
+	ldx	#8
+--
+	ldy	#8
+-
+	sta	(.buf),y
+	dey
+	bne	-
+
+	lda	.buf
+	clc
+	adc	#32
+	sta	.buf
+    lda .buf+1
+    adc #0
+    sta .buf+1
+	lda	.color
+	dex
+	bne	--
+
+	rts
+
+}
+
+
+: ===========================================================================
+:    !source "gira.asm"
+: ===========================================================================
+
+    !zone {
+
+;
+; define "gira_pos" and "gira_scr" before including
+;
+    .pos = gira_pos
+    .scr00 = gira_scr
+    .scr01 = gira_scr + $8
+    .scr10 = gira_scr + $100
+    .scr11 = gira_scr + $108
+
+; gira:
+    !macro gira {
+        jsr  gira_code
+    }
+
+; init code:
+    !macro giraInit {
+        +fillRect gira_scr-1, 1
+        +fillRect gira_scr+7, 2
+        +fillRect gira_scr+$107, 3
+    }
+
+gira_code:
+
+    inc  .pos
+    lda  .pos
+    and  #63
+    sta  .pos
+    tax
+
+    lda  .tabla,x
+    tax
+    lda  .scr11,x
+    adc  #1
+    and  #3
+ 
+    sta  .scr11,x    
+    txa
+    eor  #$E7
+    tax
+    lda  .scr00,x
+    adc  #1
+    and  #3
+    sta  .scr00,x
+
+    lda  .pos
+    eor #63
+    tax
+    lda  .tabla,x
+    eor  #$E0
+    tax
+    lda  .scr01,x
+    adc  #1
+    and  #3
+    sta  .scr01,x
+
+    txa
+    eor  #$E7
+    tax
+    lda  .scr10,x
+    adc  #1
+    and  #3
+    sta  .scr10,x
+
+    rts
+
+.tabla
+    !byte 224, 192, 160, 128,  96, 225,  64, 193, 161, 226, 129,  32, 194,  97, 162, 227
+    !byte 195, 130, 228,  65, 163, 196,  98, 229, 131, 164, 197, 230, 231, 132, 165, 198
+    !byte  99,  66,  33,   0, 199, 166, 133, 100, 167,  67, 134, 101, 135,  34,  68, 102
+    !byte 103,  69,  35,  70,  71,  36,   1,  37,  38,  39,   2,   3,   4,   5,   6,   7
+
+}
+
+: ===========================================================================
+:    !source "circ.asm"
+: ===========================================================================
+
+    !zone {
+;
+; define "circ_pos" before including
+;
+
+    .pos = circ_pos
+    .scr00 = circ_scr
+    .scr01 = circ_scr + $8
+    .scr10 = circ_scr + $100
+    .scr11 = circ_scr + $108
+
+; circ:
+    !macro circ {
+        jsr  circ_code
+    }
+
+circ_code:
+
+	ldx	.pos
+    lda .tabla,x
+    tax
+	inc	.scr11,x
+    eor #07
+    tax
+	inc	.scr10,x
+    eor #$e7
+    tax
+	inc	.scr01,x
+    eor #07
+    tax
+	inc	.scr00,x
+
+    rts
+
+.tabla
+	!byte   0,  32,   1,  33,  64,   2,  65,  34,  96,  66,   3,  97,  35,  98,  67, 128
+	!byte   4, 129,  36,  99, 130,  68, 160,   5, 161, 131, 100,  37, 162,  69, 132, 192
+	!byte 163, 101,   6, 193,  38, 194,  70, 164, 133, 195, 102, 224,   7, 225,  39, 165
+	!byte 226, 196, 134,  71, 227, 103, 197, 166, 228, 135, 198, 229, 167, 230, 199, 231
+
+}
+
+
+: ===========================================================================
+    !source "mapcopy.asm"
+: ===========================================================================
+
+    !zone {
+
+;
+; define "show_pos" and "show_scr" before including
+;
+    .pos = show_pos
+    .source = show_source
+    .dest = show_dest
+
+; show:
+    !macro show {
+        jsr  show_code
+    }
+
+show_code
+    ldx .pos
+    lda .tabla,x
+    tax
+.source_label
+    lda .source,x
+.dest_label
+    sta .dest,x
+    inc .pos
+    rts
+
+    show_source_addr = .source_label + 1
+    show_dest_addr = .dest_label + 1
+
+.tabla
+    !byte 195, 227, 194, 162, 228,  97, 226, 128, 129, 130, 225,  64, 161, 163, 224,  96
+    !byte 160, 193, 196,  32,  98, 192,  65,   0, 131, 229, 164,  33,  99, 197,  66, 132
+    !byte   1, 230,  34, 165,  67, 100, 198,   2,   3,  68,   6,  35, 133, 166,   5, 101
+    !byte   4, 199,   7,  36, 231,  69, 134, 167,  37,  38, 102, 135,  70, 232,  71,  39
+    !byte 103, 136, 200, 168,   8,  11,  10, 169, 233, 104,   9,  12, 137, 201,  13,  40
+    !byte  44,  72,  43, 170,  42,  45,  41, 105,  73, 202,  14, 138, 234,  74,  75, 106
+    !byte 203,  76, 171,  46,  77, 235, 107, 139,  15, 108, 172, 174, 140, 173, 141, 142
+    !byte 204, 109, 206, 207, 205,  78, 175,  47, 236, 239, 143, 237, 238, 110, 240, 241
+    !byte 111, 208,  16,  79, 176, 209, 242,  48, 144, 243,  80, 177, 244, 112, 210,  17
+    !byte  49, 178, 179,  52,  53, 147,  18,  81, 211, 145,  19, 146,  51,  85, 180,  20
+    !byte  54, 113, 148,  22,  50,  84, 212,  21,  55, 115, 245,  83, 114, 116,  23,  82
+    !byte  86,  88,  89,  87, 118, 117, 119, 149, 213,  56,  57, 181, 214,  90, 121, 122
+    !byte 150, 151, 182, 183, 215, 246,  58, 120, 247,  24, 153, 184, 152, 216,  25,  26
+    !byte  59,  91, 248, 123, 185,  27,  60, 217, 154,  28,  92, 249,  29, 155, 186,  61
+    !byte 218,  93, 124, 250, 187,  30, 251,  62, 156,  94, 125, 219, 188,  31, 252, 254
+    !byte 220, 253,  63, 126, 255, 157, 221,  95, 159, 191, 222, 127, 189, 223, 158, 190
+
+}
+
+
+: ===========================================================================
+    !source "text.asm"
+: ===========================================================================
+
+    !zone {
+
+;
+; define:
+;  "text_state": 8 bytes of internal state
+;  "text_scr"  : output screen address
+;  "text_data" : text character data
+;
+    text_char  = text_state + 0
+    .fps = text_state + 1
+    text_pixel = text_state + 2
+    text_skip  = text_state + 3
+    .cb  = text_state + 4
+    .fsz = text_state + 5
+    text_endFlag = text_state + 6
+    .scr = text_scr
+    .data = text_data    
+    
+    ; abbreviations
+    .pos = text_char
+    .cxy = text_pixel
+    .skp = text_skip
+
+; "pos" pointer to the next character
+; "cxy" screen position
+; "fps" position in font data of current character
+; "fsz" remaining bytes of current character
+; "skp" skip data, used in spaces, begining and ending
+; "cb"  current output byte (8 bits, one column)
+
+; text:
+    !macro text {
+        jsr  text_code
+    }
+
+    !macro textInit1 {
+        lda #$1f
+        sta text_pixel
+        lda #0
+        sta text_endFlag
+        sta text_skip
+        sta text_char
+        lda #1
+        sta text_base_color
+        lda #<text_scr
+        sta text_dest_addr
+        lda #>text_scr
+        sta text_dest_addr+1
+    }
+
+    !macro textInit2 .scrOut {
+        lda #$1f
+        sta text_pixel
+        lda #0
+        sta text_endFlag
+        sta text_skip
+        sta text_base_color
+        lda #<.scrOut
+        sta text_dest_addr
+        lda #>.scrOut
+        sta text_dest_addr+1
+    }
+
+
+text_code
+
+    lda .cxy
+    and #$e0
+    bne .putpixel     ; If we have more pixels, put them
+
+    ; To next x coord
+    lda .cxy
+    clc
+    adc #1
+    and #$1f
+    sta .cxy
+
+    ; If we are in "skip" mode, skip :-)
+    lda .skp
+    beq .noskip
+
+.doSkip
+    ; skip this step (filling with blanks)
+    dec .skp
+    
+.storeColumn0
+    lda #0
+    jmp .storeColumn
+    
+.noskip
+    ; Continue font data
+    dec .fsz
+
+    ; Skip just one column if just at the end of character
+    beq .storeColumn0
+    
+    bpl .nextcolumn ; More columns
+    
+    ; Get next character
+    ldx .pos
+    inc .pos
+    lda .data, x
+    bpl .fontdata
+    
+    ; A > 128, skip "A-128" characters
+    and #$7F
+    sta .skp
+    
+    ; If skip == 127 (value=255), signal the end of text data
+    eor #$7F
+    bne .storeColumn0
+    
+    lda #1
+    sta text_endFlag
+    jmp .storeColumn0
+    
+.fontdata
+    tax
+	lda .font_size,x
+	sta .fsz
+	dec .fsz
+
+	lda .font_pos,x
+	sta .fps
+    
+.nextcolumn
+    ldx .fps
+    inc .fps
+    lda .font_data, x
+
+.storeColumn
+    sta .cb
+    ; skip over to putpixel
+
+.putpixel
+    lda .cxy
+    clc
+    adc #$e0
+	sta .cxy
+    ldx .cxy
+.base_color
+	lda #1
+	ror .cb
+	rol
+.dest_label
+	sta .scr,x
+	rts
+
+    text_base_color = .base_color + 1
+    text_dest_addr  = .dest_label + 1
+    
+; font
+.font_size:
+	!byte 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 2, 3, 3, 3, 3, 3, 1, 2, 3, 1
+	!byte 5, 3, 3, 3, 3, 3, 2, 2, 3, 3, 5, 4, 3, 3, 5, 4, 4, 4, 3, 3, 4, 4
+	!byte 1, 3, 4, 3, 5, 5, 5, 4, 5, 4, 4, 3, 4, 4, 7, 4, 4, 4, 2, 1
+.font_pos:
+	!byte   0,   3,   6,   9,  12,  15,  18,  21,  24,  27,  30,  32,  35
+	!byte  35,  38,  40,  43,  46,  49,  50,  52,   4,  55,  55,  60,  63
+	!byte  65,  68,  71,  73,  75,  78,  78,  33,  83,  86,  89,  94,  98
+	!byte 102, 106, 109, 112, 116,  94, 120, 123, 127, 130, 134, 139, 144
+	!byte 148, 153, 157, 161, 164, 167, 171, 178, 171, 182, 186,   5
+.font_data:
+	!byte  56, 68, 56, 36,124,  4, 76, 84, 36, 68, 84, 40, 24, 40,124,100
+	!byte  84, 88, 56, 84, 72, 76, 80, 96, 40, 84, 40, 36, 84, 56, 44, 28
+	!byte 124, 36, 24, 24, 36,124, 24, 52, 16, 60, 80, 24, 37, 30,124, 32
+ 	!byte  28,188,  1,190,124, 24, 36, 60, 32, 28, 32, 28, 24, 36, 24, 63
+ 	!byte  36, 24, 36, 63, 60, 16, 32, 52, 44,120, 36, 56,  4, 60, 56,  4
+ 	!byte  56,  4, 56, 57,  6, 56, 44, 52, 36, 12, 48,208, 48, 12,252,164
+ 	!byte 164, 88,120,132,132, 72,252,132,132,120,252,164,132,252,160,128
+ 	!byte 120,132,164, 56,252, 32, 32,252,  8,  4,248,252, 48, 80,140,252
+ 	!byte   4, 4, 252, 64, 60, 64,252, 64, 48,  8,252,120,132,132,132,120
+ 	!byte 252,144,144, 96,120,132,134,133,120,252,144,144,108, 68,164,164
+ 	!byte 152,128,252,128,248,  4,  4,248,  4,  8,240,224, 28, 16,224, 28
+ 	!byte  16,224,204, 48, 48,204,140,148,164,196,  0,  0
+
+
+text_data
+    !byte (128+5), 41, 10, 28, 29, 63, 63, 63
+    !byte (128+8), 15, 10, 28, 29, 14, 27, 63, 63, 63
+    !byte (128+4), 55, 17, 18, 28, 62, 18, 28, 62, 10
+    !byte (128+8), 27, 14, 10, 21, 21, 34
+    !byte (128+15), 15, 10, 28, 29
+    !byte (128+14), 39, 40, 48, 50
+    !byte (128+21)
+    !byte (128+17), 10, 23, 13, 62, 23, 24, 32
+    !byte (128+8), 28, 24, 22, 14
+    !byte (128+8), 11, 14, 10, 30, 29, 18, 15, 30, 21
+    !byte (128+0), 14, 15, 15, 14, 12, 29, 28, 63, 63, 63
+    !byte (128+16)
+    !byte (128+31)
+    !byte 255
+    !byte       55, 17, 18, 28, 62, 18, 28, 62, 10, 21, 21
+    !byte (128+1), 15, 24, 27, 62, 23, 24, 32
+    !byte (128+8), 11, 34, 14, 63, 63, 63
+    !byte (128+13), 63, 63, 63, 11, 34, 14
+    !byte (128+22)
+    !byte (128+31)
+    !byte (128+15), 11, 34, 62, 39, 48, 54, 38
+    !byte       2, 0, 0, 7, 63, 5, 63, 2, 9
+    !byte       11, 34, 62, 39, 48, 54, 38
+    !byte       2, 0, 0, 7, 63, 5, 63, 2, 9
+    !byte       11, 34, 62, 39, 48, 54, 38
+    !byte       2, 0, 0, 7, 63, 5, 63, 2, 9
+    !byte (128+15)
+    !byte (128+31)
+    !byte 255
+
+}
+
+
+: ===========================================================================
+    !source "moireSmooth.asm"
+: ===========================================================================
+
+    !zone {
+
+; Parameters (consts)
+    .scr = moire_scr
+    .buf = moire_buf
+; Variables
+    .p1 = moire_temp
+    .o1 = moire_temp + 2
+    .o2 = moire_temp + 4
+    .o3 = moire_temp + 6
+    .o4 = moire_temp + 8
+    .iter = moire_temp + 10
+    .valStartX = moire_temp + 11
+    .deltaX = moire_temp + 12
+    .deltaY = moire_temp + 13
+    .yPos = moire_temp + 14
+    
+; moire!:
+    !macro moire {
+        jsr  moire_code
+    }
+
+    !macro add16 .var, .value {
+        lda .var
+        clc
+        adc #<.value
+        sta .var
+        lda .var+1
+        adc #>.value
+        sta .var+1
+    }
+    
+    !macro sto16 .var, .value {
+        lda #<.value
+        sta .var
+        lda #>.value
+        sta .var+1
+    }
+
+moire_code:
+    
+    lda #0
+    sta .iter
+
+.loop:
+
+    lda #1
+    sta .deltaX
+    sta .deltaY
+
+    +sto16 .p1, .buf
+
+    lda .iter
+    sta .valStartX
+
+    ldx #15
+--
+    ldy #15
+-
+    sta (.p1),y
+    clc
+    adc .deltaX
+    inc .deltaX
+    dey
+    bpl -
+
+    +add16 .p1, $0020
+
+    lda #1
+    sta .deltaX
+    
+    lda .valStartX
+    clc
+    adc .deltaY
+    sta .valStartX
+    inc .deltaY
+
+    dex
+    bpl --
+    
+
+; update screen
+    +sto16 .p1, .buf
+    +sto16 .o1, .scr + $01E0
+    +sto16 .o2, .scr + $0200
+    +sto16 .o3, .scr + $01F0
+    +sto16 .o4, .scr + $0210
+
+    lda #15
+    sta .yPos
+--
+    ldy #15
+-
+    lda (.p1),y
+    lsr
+    lsr
+    lsr
+    lsr
+    tax
+    lda .tabCol,x
+
+    cmp (.o1),y
+    beq .noCopy
+    sta (.o1),y
+    sta (.o2),y
+    tax
+    tya
+    eor #15
+    tay
+    txa
+    sta (.o3),y
+    sta (.o4),y
+    tya
+    eor #15
+    tay
+.noCopy:
+    dey
+    bpl -
+
+    +add16 .p1, $0020
+    +add16 .o1, $FFE0
+    +add16 .o2, $0020
+    +add16 .o3, $FFE0
+    +add16 .o4, $0020
+
+    dec .yPos
+    bpl --
+
+    inc .iter
+    lda .iter
+    and #$3f
+    beq +
+    jmp .loop
++
+    rts
+
+.tabCol
+    !byte 0,11,12,15,1,15,12,11
+    !byte 0,11,12,15,1,15,12,11
+    !byte 0,11,12,15,1,15,12,11
+    !byte 0,11,12,15,1,15,12,11
+
+}
+
+: ===========================================================================
+
+
+; Main loop
+
+main
+    
+    +giraInit
+    +textInit1
+    lda #63
+    sta gira_pos
+    
+    ; Start show-pos from middle of screen
+    lda #128
+    sta show_pos
+    
+    ; First color is 3
+    lda #3
+    sta text_base_color
+
+    ; Clear old text image
+    lda #0
+    tax
+-
+    sta text_scr,x
+    inx
+    bne -
+    
+loop
+    +gira
+    +circ
+    +show
+    +text
+    
+    lda text_pixel
+    eor #$1f
+    bne notChangeTextColor
+    lda text_base_color
+    clc
+    adc #2
+    and #3
+    adc #3
+    sta text_base_color
+    
+notChangeTextColor
+
+    lda show_pos
+    bne loop
+    
+    lda show_dest_addr+1
+    eor #1
+    sta show_dest_addr+1
+
+    lda text_endFlag
+    beq loop
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; End of first text, do moire!
+    jsr clearScr
+    +moire
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; End of moire, do ending text
+    +textInit2 $300
+    jsr clearScr
+    
+; loop text output
+-
+    +text
+
+    lda text_pixel
+    eor #$1f
+    bne -
+    lda text_dest_addr+1
+    eor #7
+    sta text_dest_addr+1
+
+    lda text_endFlag
+    beq -
+
+    jmp main
+
+clearScr    
+    ; Clear screen
+    lda #0
+    tax
+-
+    sta $200,x
+    sta $300,x
+    sta $400,x
+    sta $500,x
+    inx
+    bne -
+    rts
+

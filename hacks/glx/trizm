@@ -1,0 +1,65 @@
+#!/bin/bash
+# XScreenSaver, Copyright © 2026 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+PATH="$PATH":"$(dirname "$0")"
+exec -a "trizm" \
+xshadertoy "$@" \
+ --program0 - \
+<< "_XSCREENSAVER_EOF_"
+
+// Title:  Trizm
+// Author: Matt Vianueva <diatribes@gmail.com>
+// URL:    https://www.shadertoy.com/view/3fcBD8
+// Date:   14-Dec-2025
+// Desc:   Trizm
+
+// Relicensed as MIT License, by permission, 8-Mar-2026.
+
+/*
+    I thought @OldEclipse's "Cyber Conduits"
+    was so cool I had to play with triangle
+    waves more.
+    
+    @OldEclipse - "Cyber Conduits"
+        https://www.shadertoy.com/view/tf3fR7
+
+    Can also use them to create cool surfaces:
+        https://www.shadertoy.com/view/tXX3RX
+
+    Which was learned from @Shane's "Abstract Corridor":
+        https://www.shadertoy.com/view/MlXSWX
+
+    See also forked shader here for similar thing to this shader:
+        https://www.shadertoy.com/view/3ftBWr
+
+*/
+
+	void mainImage(out vec4 o, vec2 u) {
+	o = vec4(0,0,0,0);
+	float i=0.,
+	s=0.,
+	t = iTime * .5,
+	d = .05*dot(fract(sin(u)), sin(u))
+	+ (9.+2.*sin(t));
+	vec3  p,r = iResolution;
+	for (o *= i; i++ < 2e1; ) {
+	p = vec3((u+u-r.xy)/r.y * d, d );
+	p.xy *= mat2(cos(.1*p.z+.1*t+vec4(0,33,11,0)));
+	for(s=0.; s++<3.;)
+	p.xy -= asin(sin(.6*t+p.yx*s))/s;
+	d += s =  dot(abs(fract(p)-.5), vec3(.08));
+	o += 14./s + (1e1*(1.+cos(p.y*.1+p.z+vec4(3,1,0,0)))/s)
+	* abs(1. / dot(cos(t+t+p*.35),vec3(1)));
+	}
+	o = tanh(o/3e4);
+	}
+
+_XSCREENSAVER_EOF_

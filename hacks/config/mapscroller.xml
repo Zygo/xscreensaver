@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<screensaver name="mapscroller" _label="Map Scroller" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=99w8VfCU3Pg"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="--speed %"
+            _label="Scroll speed" _low-label="Slow" _high-label="Fast"
+            low="0.01" high="10.0" default="1.0"
+            convert="ratio"/>
+   </vgroup>
+   <vgroup>
+    <number id="level" type="slider" arg="--level %"
+            _label="Zoom level" _low-label="Countries" _high-label="Streets"
+            low="5" high="18" default="15"/>
+
+    <number id="duration" type="slider" arg="--duration %"
+            _label="Re-randomize every"
+             _low-label="1 minute" _high-label="2 hours"
+            low="60" high="7200" default="1800"/>
+   </vgroup>
+
+   <vgroup>
+    <!-- List of map servers:
+         https://wiki.openstreetmap.org/wiki/Raster_tile_providers
+         https://www.strasis.com/documentation/limelight-xe/reference/tile-map-servers
+         Map comparator: https://mc.bbbike.org/mc/
+      -->
+    <select id="map">
+
+     <option id="osm"         _label="Open Street Map"/>	 <!-- Default: "-\-url-template https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png" -->
+
+     <option id="osmhot"      _label="OSM Humanitarian Map"		arg-set="--url-template https://{a-b}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"/>
+     <option id="opentopo"    _label="Open Topographic Map"		arg-set="--url-template https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png"/>
+     <option id="natgeo"      _label="National Geographic Map"		arg-set="--url-template https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}.jpg"/>
+     <option id="worldimg"    _label="World Imagery Firefly Map"	arg-set="--url-template https://fly.maptiles.arcgis.com/arcgis/rest/services/World_Imagery_Firefly/MapServer/Tile/{z}/{y}/{x}.jpg"/>
+
+     <option id="googroad"    _label="Google Road Map"			arg-set="--url-template 'https://mt1.google.com/vt/lyrs=m&amp;x={x}&amp;y={y}&amp;z={z}'"/>
+     <option id="googroadhi"  _label="Google Road High Contrast Map"	arg-set="--url-template 'https://mt1.google.com/vt/lyrs=h&amp;x={x}&amp;y={y}&amp;z={z}'"/>
+     <option id="googsat"     _label="Google Satellite Map"		arg-set="--url-template 'https://mt1.google.com/vt/lyrs=s&amp;x={x}&amp;y={y}&amp;z={z}'"/>
+     <option id="googsat2"    _label="Google Hybrid Satellite Map"	arg-set="--url-template 'https://mt1.google.com/vt/lyrs=y&amp;x={x}&amp;y={y}&amp;z={z}'"/>
+
+<!-- Free usage for up to 75,000 map views per month: -->
+     <option id="cartovger"   _label="Carto Voyager Map"		arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartovgerno" _label="Carto Voyager No Labels Map"	arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartolight"  _label="Carto Light Map"			arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartodark"   _label="Carto Dark Map"			arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartolightn" _label="Carto Light No Labels Map"	arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.jpg"/>
+     <option id="cartodarkn"  _label="Carto Dark No Labels Map"		arg-set="--url-template https://{a-d}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.jpg"/>
+
+<!-- These work but only go down to zoom level 8:
+     <option id="usgsimagery" _label="USGS Imagery Map"			arg-set="-\-url-template https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"/>
+     <option id="usgstopo"    _label="USGS Toppgraphic Map"		arg-set="-\-url-template https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"/>
+  -->
+
+<!-- Stopped working some time between 2023 and 2026:
+     <option id="toner"       _label="Stamen Toner B&amp;W Map"		arg-set="-\-url-template https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.jpg"/>
+     <option id="sterrain"    _label="Stamen Terrain Map"		arg-set="-\-url-template https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.jpg"/>
+     <option id="swatercolor" _label="Stamen Watercolor Map"		arg-set="-\-url-template https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}{r}.jpg"/>
+  -->
+    </select>
+
+    <select id="origin">
+     <option id="random" _label="Fully random location" arg-set="--origin random"/>
+     <option id="randomcity" _label="Random city"/>
+
+     <!-- New York, London, Paris, Munich, everybody talk about pop muzik -->
+     <option id="amsterdam"	_label="Amsterdam"	arg-set="--origin Amsterdam"/>
+     <option id="athens"	_label="Athens"		arg-set="--origin Athens"/>
+     <option id="austin"	_label="Austin"		arg-set="--origin Austin"/>
+     <option id="barcelona"	_label="Barcelona"	arg-set="--origin Barcelona"/>
+     <option id="berlin"	_label="Berlin"		arg-set="--origin Berlin"/>
+     <option id="boston"	_label="Boston"		arg-set="--origin Boston"/>
+     <option id="budapest"	_label="Budapest"	arg-set="--origin Budapest"/>
+     <option id="buenosaires"	_label="Buenos Aires"	arg-set="--origin 'Buenos Aires'"/>
+     <option id="cairo"		_label="Cairo"		arg-set="--origin Cairo"/>
+     <option id="casablanca"	_label="Casablanca"	arg-set="--origin Casablanca"/>
+     <option id="chicago"	_label="Chicago"	arg-set="--origin Chicago"/>
+     <option id="havana"	_label="Havana"		arg-set="--origin Havana"/>
+     <option id="hongkong"	_label="Hong Kong"	arg-set="--origin 'Hong Kong'"/>
+     <option id="honolulu"	_label="Honolulu"	arg-set="--origin Honolulu"/>
+     <option id="lasvegas"	_label="Las Vegas"	arg-set="--origin 'Las Vegas'"/>
+     <option id="london"	_label="London"		arg-set="--origin London"/>
+     <option id="losangeles"	_label="Los Angeles"	arg-set="--origin 'Los Angeles'"/>
+     <option id="luxembourg"	_label="Luxembourg"	arg-set="--origin Luxembourg"/>
+     <option id="madrid"	_label="Madrid"		arg-set="--origin Madrid"/>
+     <option id="melbourne"	_label="Melbourne"	arg-set="--origin Melbourne"/>
+     <option id="mexicocity"	_label="Mexico City"	arg-set="--origin 'Mexico City'"/>
+     <option id="moscow"	_label="Moscow"		arg-set="--origin Moscow"/>
+     <option id="mumbai"	_label="Mumbai"		arg-set="--origin Mumbai"/>
+     <option id="munich"	_label="Munich"		arg-set="--origin Munich"/>
+     <option id="neworleans"	_label="New Orleans"	arg-set="--origin 'New Orleans'"/>
+     <option id="newyork"	_label="New York City"	arg-set="--origin 'New York City'"/>
+     <option id="paris"		_label="Paris"		arg-set="--origin Paris"/>
+     <option id="portland"	_label="Portland"	arg-set="--origin Portland"/>
+     <option id="prague"	_label="Prague"		arg-set="--origin Prague"/>
+     <option id="rome"		_label="Rome"		arg-set="--origin Rome"/>
+     <option id="sanfrancisco"	_label="San Francisco"	arg-set="--origin 'San Francisco'"/>
+     <option id="seattle"	_label="Seattle"	arg-set="--origin Seattle"/>
+     <option id="seoul"		_label="Seoul"		arg-set="--origin Seoul"/>
+     <option id="shanghai"	_label="Shanghai"	arg-set="--origin Shanghai"/>
+     <option id="stockholm"	_label="Stockholm"	arg-set="--origin Stockholm"/>
+     <option id="sydney"	_label="Sydney"		arg-set="--origin Sydney"/>
+     <option id="saopaulo"	_label="São Paulo"	arg-set="--origin 'São Paulo'"/>
+     <option id="tokyo"		_label="Tokyo"		arg-set="--origin Tokyo"/>
+     <option id="toronto"	_label="Toronto"	arg-set="--origin Toronto"/>
+     <option id="washington"	_label="Washington"	arg-set="--origin Washington"/>
+    </select>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="titles" _label="Show coordinates" arg-unset="--no-titles"/>
+   <boolean id="arrow"  _label="Show arrow"       arg-unset="--no-arrow"/>
+   <boolean id="showfps"  _label="Show frame rate" arg-set="--fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A slowly-scrolling map of a random place on Earth.  The map images are loaded
+from openstreetmap.org, or any compatible service.
+
+The Earth is very big, and full of Things.
+
+As you ponder these maps, remember that traffic always expands to fill all
+available lanes, every car is a policy failure, and the concept of
+"jaywalking" was invented for profit by auto industry lobbyists in the 1920s.
+
+OpenStreetMap data is © OpenStreetMap contributors.
+
+Written by Jamie Zawinski; 2022.
+  </_description>
+</screensaver>

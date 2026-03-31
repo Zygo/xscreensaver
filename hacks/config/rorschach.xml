@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="rorschach" _label="Rorschach">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=G1OLn4Mdk5Y"/>
+
+  <number id="iterations" type="slider" arg="--iterations %"
+          _label="Iterations" _low-label="Small" _high-label="Large"
+          low="0" high="10000" default="4000"/>
+
+  <number id="offset" type="slider" arg="--offset %"
+          _label="Offset" _low-label="Small" _high-label="Large"
+          low="0" high="50" default="7"/>
+
+  <boolean id="xsymmetry" _label="With X symmetry" arg-unset="--no-xsymmetry"/>
+  <boolean id="ysymmetry" _label="With Y symmetry" arg-set="--ysymmetry"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Linger" _low-label="1 second" _high-label="1 minute"
+          low="1" high="60" default="5"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Inkblot patterns via a reflected random walk.
+
+https://en.wikipedia.org/wiki/Rorschach_inkblot_test
+https://en.wikipedia.org/wiki/Random_walk
+
+Written by Jamie Zawinski; 1992.
+  </_description>
+</screensaver>

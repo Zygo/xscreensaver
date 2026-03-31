@@ -1,0 +1,119 @@
+.TH XScreenSaver 1 "12-May-04" "X Version 11"
+.SH NAME
+fuzzyflakes \- falling snowflakes/flower shapes
+.SH SYNOPSIS
+.B fuzzyflakes
+[\-\-display \fIhost:display.screen\fP] [\-\-foreground \fIcolor\fP]
+[\-\-background \fIcolor\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-mono] [\-\-install]
+[\-\-visual \fIvisual\fP] 
+[\-\-delay \fIusecs\fP]
+[\-\-speed \fIint\fP]
+[\-\-arms \fIint\fP]
+[\-\-thickness \fIint\fP]
+[\-\-bthickness \fIint\fP]
+[\-\-radius \fIint\fP]
+[\-\-layers \fIint\fP]
+[\-\-density \fIint\fP]
+[\-\-no-db]
+(\-color \fIstring\fP)
+(\-random-colors)
+[\-\-fps]
+.SH DESCRIPTION
+The
+.I fuzzyflakes
+program draws falling pastel colored snowflake/flower shapes.
+Inspired by the credits of the anime "Azumanga Daioh".
+.SH OPTIONS
+.I fuzzyflakes
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-delay \fIusecs\fP
+The delay between steps of the animation, in microseconds.  Default: 250000.
+.TP 8
+.B \-\-speed \fIint\fP
+How fast, 1-50.  Default 10.
+.TP 8
+.B \-\-arms \fIint\fP
+How many arms on the flakes; default 5.
+.TP 8
+.B \-\-thickness \fIint\fP
+How thick to make the lines; default 10 pixels.
+.TP 8
+.B \-\-bthickness \fIint\fP
+How thick to make the borders; default 3 pixels.
+.TP 8
+.B \-\-radius \fIint\fP
+Radius of the objects; default 20 pixels.
+.TP 8
+.B \-\-layers \fIint\fP
+How many layers of objects; default 3.
+.TP 8
+.B \-\-density \fIint\fP
+Default 5.
+.TP 8
+.B \-\-no-db
+Disable double-buffering.
+.TP 8
+.B \-\-color \fIstring\fP
+The base color for the color scheme.  Typed as a hexadecimal triplet
+with or with out the leading #. ie. fa4563 & #43cd12 are both acceptable.
+If the saturation of you color is too low (<0.03) the random color
+generator will kick in.
+The default color is #efbea5
+.TP 8
+.B \-\-random-colors
+This enables the random color generation.  It is disabled by default.
+It overrides anything from -color
+.TP 8
+.B \-\-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2004 Barry Dmytro.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any
+purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Barry Dmytro <badcherry@mailc.net>
+.SH CREDITS
+The color generation algorithm was borrowed from a friend <ZoeB>
+from #vegans@irc.blitzed.org.  Her site was [REDACTED].
+To see her original code in action visit her site.

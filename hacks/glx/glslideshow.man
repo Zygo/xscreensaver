@@ -1,0 +1,124 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+glslideshow \- slideshow of images using smooth zooming and fades
+.SH SYNOPSIS
+.B glslideshow
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-duration \fIseconds\fP]
+[\-\-transition \fIseconds\fP]
+[\-\-pan \fIseconds\fP]
+[\-\-fade \fIseconds\fP]
+[\-\-letterbox | \-\-clip]
+[\-\-zoom \fIpercent\fP]
+[\-\-titles]
+[\-\-delay \fIusecs\fP]
+[\-\-fps]
+[\-\-verbose]
+[\-\-debug]
+[\-\-wireframe]
+.SH DESCRIPTION
+Displays a slideshow of images, with panning, zooming and crossfading
+effects.
+
+To specify the directory that images are loaded from, run
+.BR xscreensaver\-settings (1)
+and click on the "Advanced" tab.
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-duration \fIseconds\fP
+How long each image will be displayed before loading a new one.
+Default 30 seconds.
+.TP 8
+.B \-\-transition \fIseconds\fP
+When a new image is loaded, it transitions onto the screen by sliding
+in from the edges, spinning or flipping.  This is how long that transition
+takes.  Set it to 0 to disable the transition effects.  Default 3 seconds.
+.TP 8
+.B \-\-pan \fIseconds\fP
+Once an image has been loaded, it is panned, zoomed and cross-faded against
+itself.  This is how fast those pans are.  Set this to 0 to disable the
+panning-and-crossfading effect.  Default 6 seconds.
+.TP 8
+.B \-\-fade \fIseconds\fP
+When zooming and cross-fading, this is how long the "fade" portion takes.
+This value must be less than the "pan" option (it is inclusive).
+Set this to 0 to disable the panning-and-crossfading effect.
+Default 2 seconds.
+.TP 8
+.B \-\-letterbox
+Whether to fit the image on the screen (adding horizontal or vertical
+black bars) or to fill the screen (cropping the image).  This is
+the default.
+.TP 8
+.B \-\-clip
+The opposite of \fB\-\-letterbox\fP.
+.TP 8
+.B \-\-zoom \fInumber\fP
+Zoom in on the image a little bit.  This applies both to "transitions" and to
+"panning-and-crossfading". Default: 75, meaning that 75% or more of each image
+will always be visible.  If you always want to see 100% of every image, then
+use "letterbox" and set "zoom" to 100%.
+.TP 8
+.B \-\-titles
+Whether to show the file name of the current image in the upper left corner.
+.TP 8
+.B \-\-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
+.TP 8
+.B \-\-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-\-verbose
+Prints debugging info to stderr.
+.TP 8
+.B \-\-debug
+Draw some diagnostic rectangles.
+.TP 8
+.B \-\-wireframe
+Another debug mode.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver\-settings (1),
+.BR xscreensaver\-getimage (MANSUFFIX),
+.BR xscreensaver (1),
+.BR carousel (MANSUFFIX)
+.BR photopile (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co 2003-2025 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.

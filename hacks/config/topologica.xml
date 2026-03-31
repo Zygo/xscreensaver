@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="topologica" _label="Topologica" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=wBJD2NZTzgI"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+    
+  <number id="speed" type="slider" arg="--speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.01" high="10.0" default="1.0"
+          convert="ratio"/>
+    
+  <number id="scale" type="slider" arg="--scale %"
+          _label="Resolution" _low-label="Low" _high-label="Full"
+          low="0.1" high="1.0" default="1.0" />
+    
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Pulsing lines of light.
+
+https://www.shadertoy.com/view/4djXzz
+
+Written by Otavio Good; 2014.
+  </_description>
+</screensaver>

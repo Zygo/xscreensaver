@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="maze3d" _label="Maze 3D" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=VTAwxTVdyLc"/>
+
+  <number id="speed" type="slider" arg="--speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.02" high="4.0" default="1.0"
+          convert="ratio"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+    _label="Frame rate" _low-label="Low" _high-label="High"
+    low="0" high="100000" default="20000"
+    convert="invert"/>
+
+  <hgroup>
+   <boolean id="showOverlay" _label="Show Overlay" arg-set="--overlay"/>
+   <boolean id="acid" _label="Acid" arg-set="--drop-acid"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+  </hgroup>
+
+  <hgroup>
+    <number id="numRows" type="spinbutton" arg="--rows %"
+      _label="Rows" low="2" high="24" default="12"/>
+    <number id="numColumns" type="spinbutton" arg="--columns %"
+      _label="Columns" low="2" high="24" default="12"/>
+  </hgroup>
+
+  <hgroup>
+    <number id="numInverters" type="spinbutton"
+      arg="--inverters %" _label="Inverters" low="0"
+      high="100" default="10"/>
+    <number id="numRats" type="spinbutton"
+      arg="--rats %" _label="Rats" low="0" high="100"
+      default="1"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A re-creation of the 3D Maze screensaver from Windows 95.
+
+Written by Sudoer; 2018.
+</_description>
+</screensaver>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="truchet" _label="Truchet">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=hoJ23JSsUD8"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="1000000" default="400000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Line- and arc-based truchet patterns that tile the screen.
+
+https://en.wikipedia.org/wiki/Tessellation
+
+Written by Adrian Likins; 1998.
+  </_description>
+</screensaver>

@@ -1,0 +1,112 @@
+.TH XScreenSaver 1 "30-Oct-99" "X Version 11"
+.SH NAME
+boing \- draws a bouncing ball like the ancient Amiga demo
+.SH SYNOPSIS
+.B boing
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP][\-\-install]
+[\-\-visual \fIvisual\fP] 
+[\-\-delay \fIusecs\fP] 
+[\-\-smooth]
+[\-\-lighting]
+[\-\-scanlines]
+[\-\-speed]
+[\-\-no\-spin]
+[\-\-angle \fIdegrees\fP]
+[\-\-size \fIratio\fP]
+[\-\-parallels \fIn\fP]
+[\-\-meridians \fIn\fP]
+[\-\-wireframe]
+[\-\-fps]
+.SH DESCRIPTION
+The \fIboing\fP program draws a bouncing checkered ball on a grid.
+
+This is a clone of the first graphics demo for the Amiga 1000, which
+was written by Dale Luck and RJ Mical during a break at the 1984
+Consumer Electronics Show (or so the legend goes.)  The boing ball was
+briefly the official logo of Amiga Inc., until they were bought by
+Commodore later that year.
+
+With no arguments, this program looks a lot like the original Amiga
+demo. With "-smooth -lighting", it looks... less old.
+.SH OPTIONS
+.I boing
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-delay \fIusecs\fP
+The delay between frames of the animation, in microseconds: default 15000.
+.TP 8
+.B \-\-smooth
+Draw a smooth sphere instead of a faceted polyhedron.
+.TP 8
+.B \-\-lighting
+Do shaded lighting instead of flat colors.
+.TP 8
+.B \-\-scanlines
+If the window is large enough, draw horizontal lines to simulate the
+scanlines on a low resolution monitor.
+.TP 8
+.B \-\-speed \fIratio\fP
+Change the animation speed; 0.5 to go half as fast, 2.0 to go twice as fast.
+.TP 8
+.B \-\-no\-spin
+Don't rotate the ball.
+.TP 8
+.B \-\-angle \fIdegrees\fP
+The jaunty angle at which the ball sits.  Default 15 degrees.
+.TP 8
+.B \-\-size \fIratio\fP
+How big the ball is; default 0.5 meaning about half the size of the window.
+.TP 8
+.B \-\-parallels \fIn\fP
+.B \-\-meridians \fIn\fP
+The pattern of rectangles on the ball.  Default 8x16.
+.TP 8
+.B \-\-wireframe
+Look crummy.
+.TP 8
+.B \-\-fps
+Display the current frame rate, CPU load, and polygon count.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR bsod (MANSUFFIX),
+.BR pong (MANSUFFIX),
+.BR xscreensaver (1),
+.BR X (1)
+.SH COPYRIGHT
+Copyright \(co 2005 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 19-Feb-2005.

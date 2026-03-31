@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="epicycle" _label="Epicycle">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=rpk3zxQxaR8"/>
+
+  <hgroup>
+   <vgroup> 
+    <number id="delay" type="slider" arg="--delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="ncolors" type="slider" arg="--colors %"
+              _label="Number of colors" _low-label="Two" _high-label="Many"
+              low="1" high="255" default="100"/>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="holdtime" type="slider" arg="--holdtime %"
+            _label="Linger" _low-label="1 second" _high-label="30 seconds"
+            low="1" high="30" default="2"/>
+
+    <hgroup>
+     <number id="linewidth" type="spinbutton" arg="--linewidth %"
+             _label="Line thickness" low="1" high="50" default="4"/>
+
+     <number id="harmonics" type="spinbutton" arg="--harmonics %"
+             _label="Harmonics" low="1" high="20" default="8"/>
+    </hgroup>
+
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+   <xscreensaver-updater />
+  </hgroup>
+
+  <_description>
+A pre-heliocentric model of planetary motion.
+
+This draws the path traced out by a point on the edge of a
+circle.  That circle rotates around a point on the rim of another
+circle, and so on, several times.
+
+The geometry of epicycles was perfected by Hipparchus of Rhodes at some time
+around 125 B.C., 185 years after the birth of Aristarchus of Samos, the
+inventor of the heliocentric universe model.  Hipparchus applied epicycles to
+the Sun and the Moon.  Ptolemy of Alexandria went on to apply them to what was
+then the known universe, at around 150 A.D.  Copernicus went on to apply them
+to the heliocentric model at the beginning of the sixteenth century.  Johannes
+Kepler discovered that the planets actually move in elliptical orbits in about
+1602.  The inverse-square law of gravity was suggested by Boulliau in 1645.
+Isaac Newton's Principia Mathematica was published in 1687, and proved that
+Kepler's laws derived from Newtonian gravitation.
+
+https://en.wikipedia.org/wiki/Deferent_and_epicycle
+
+Written by James Youngman; 1998.
+  </_description>
+</screensaver>

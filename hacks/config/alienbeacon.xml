@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="alienbeacon" _label="Alien Beacon" gl="yes">
+
+  <command arg="--root"/>
+
+  <video href="https://www.youtube.com/watch?v=na3do17whcw"/>
+
+  <number id="delay" type="slider" arg="--delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+    
+  <number id="speed" type="slider" arg="--speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.01" high="10.0" default="1.0"
+          convert="ratio"/>
+    
+  <number id="scale" type="slider" arg="--scale %"
+          _label="Resolution" _low-label="Low" _high-label="Full"
+          low="0.1" high="1.0" default="1.0" />
+    
+  <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Our investigation of the signal from the planet's surface brought us to what
+seems to be an alien beacon. Based on the rock formation around the beacon, it
+was probably left here millions of years ago.
+
+https://www.shadertoy.com/view/ld2SzK
+
+Written by Otavio Good; 2014.
+  </_description>
+</screensaver>
