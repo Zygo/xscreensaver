@@ -1179,9 +1179,7 @@ draw_text_sprite (ModeInfo *mi, sprite *sp)
   if (wire)
     glEnable (GL_TEXTURE_2D);
 
-#ifndef HAVE_ANDROID  /* Doesn't work -- prevents image loading? */
   print_texture_string (ss->font_data, text);
-# endif
   mi->polygon_count++;
 
   if (wire)

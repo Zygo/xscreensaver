@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1657,12 +1657,7 @@ jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
 {
   char *ret = 0;
   NSFont *nsfont = (NSFont *) jwxyz_native_font (fid);
-  CTFontRef ctfont =
-    CTFontCreateWithName ((CFStringRef) [nsfont fontName],
-                          [nsfont pointSize],
-                          NULL);
-  Assert (ctfont, "no CTFontRef for UIFont");
-
+  CTFontRef ctfont = (__bridge CTFontRef) nsfont;
   CGGlyph cgglyph;
   if (CTFontGetGlyphsForCharacters (ctfont, (UniChar *) &uc, &cgglyph, 1)) {
     CGFontRef cgfont = CTFontCopyGraphicsFont (ctfont, 0);
@@ -1671,8 +1666,6 @@ jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
     CGFontRelease (cgfont);
     [name release];
   }
-
-  CFRelease (ctfont);
   return ret;
 }
 
@@ -1734,9 +1727,13 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
   // Test case: "Combining Double Tilde" U+0360 (\315\240) followed by
   // a letter.
   //
-  CGFloat xoff = CTLineGetOffsetForStringIndex (dl, 0, NULL);
-  Assert (xoff >= 0, "unexpected CTLineOffset");
-  x -= xoff;
+  // Mar 2026: No, this is wrong. If we do this, right-to-left text like
+  // Arabic doesn't work. Also I cannot reproduce the U+0360 problem
+  // described above.
+  //
+  //  CGFloat xoff = CTLineGetOffsetForStringIndex (dl, 0, NULL);
+  //  Assert (xoff >= 0, "unexpected CTLineOffset");
+  //  x -= xoff;
 
   CGContextSetTextPosition (cgc,
                             wr.x + x,

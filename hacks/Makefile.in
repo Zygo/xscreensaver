@@ -44,6 +44,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT  = @INSTALL_SCRIPT@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
+RM		= rm
 
 X_CFLAGS	= @X_CFLAGS@
 X_LIBS		= @X_LIBS@
@@ -73,8 +74,8 @@ DRIVER_BIN	= ../driver
 INCLUDES_1	= -I. -I$(srcdir) -I$(UTILS_SRC) -I..
 INCLUDES	= $(INCLUDES_1) @INCLUDES@
 
-UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
-		  $(UTILS_SRC)/grabclient.c \
+UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/blurb.c \
+		  $(UTILS_SRC)/colors.c $(UTILS_SRC)/grabclient.c \
 		  $(UTILS_SRC)/hsv.c $(UTILS_SRC)/resources.c \
 		  $(UTILS_SRC)/spline.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c \
@@ -84,8 +85,8 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/thread_util.c $(UTILS_SRC)/pow2.c \
 		  $(UTILS_SRC)/font-retry.c $(UTILS_SRC)/easing.c \
 		  $(UTILS_SRC)/doubletime.c
-UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
-		  $(UTILS_BIN)/grabclient.o \
+UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/blurb.o \
+		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o \
@@ -201,10 +202,11 @@ RETIRED_EXES	= ant bubbles critical flag forest hyperball hypercube laser \
 		  lightning lisa lissie lmorph rotor sphere spiral t3d vines \
 		  whirlygig worm xsublim juggle thornbird
 
-HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
-		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
-		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/font-retry.o \
-		  $(UTILS_BIN)/xmu.o $(DT) @XFT_OBJS@ @ANIM_OBJS@
+HACK_OBJS_1	= fps.o $(UTILS_BIN)/blurb.o $(UTILS_BIN)/resources.o \
+		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/utf8wc.o \
+		  $(UTILS_BIN)/font-retry.o $(UTILS_BIN)/xmu.o \
+		  $(DT) @XFT_OBJS@ @ANIM_OBJS@
 HACK_OBJS	= screenhack.o $(HACK_OBJS_1)
 XLOCK_OBJS	= screenhack.o xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1) \
 		  $(ERASE)
@@ -317,7 +319,7 @@ install-scripts: $(SCRIPTS) munge-scripts
 munge-scripts: $(SCRIPTS)
 	@tmp="/tmp/mf.$$$$" ;						\
 	perl="$(PERL)" ;						\
-	rm -f "$$tmp" ;							\
+	$(RM) -f "$$tmp" ;						\
 	for program in $(SCRIPTS); do					\
 	  sed "s@^\(#!\)\(/[^ ]*/perl[^ ]*\)\(.*\)\$$@\1$$perl\3@"	\
 	      < "$(srcdir)/$$program" > "$$tmp" ;			\
@@ -326,7 +328,7 @@ munge-scripts: $(SCRIPTS)
 	    cat "$$tmp" > "./$$program" ;				\
 	  fi ;								\
 	done ;								\
-	rm -f "$$tmp"
+	$(RM) -f "$$tmp"
 
 # When installing man pages, we install "foo.man" as "foo.N" and update
 # the .TH line in the installed file with one like
@@ -361,7 +363,7 @@ install-man: $(MEN)
 	  echo $(INSTALL_DATA) "$(srcdir)/$$man" "$$dir/$$instname" ;	\
 	       $(INSTALL_DATA) "$$T"             "$$dir/$$instname" ;	\
 	done ;								\
-	rm -f "$$T"
+	$(RM) -f "$$T"
 
 install-xml:
 	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
@@ -378,36 +380,37 @@ install-xml:
 
 uninstall-program:
 	@for program in $(EXES) $(RETIRED_EXES) $(SCRIPTS); do		\
-	  echo rm -f "$(DESTDIR)$(HACKDIR)/$$program" ;			\
-	       rm -f "$(DESTDIR)$(HACKDIR)/$$program" ;			\
+	  echo $(RM) -f "$(DESTDIR)$(HACKDIR)/$$program" ;		\
+	       $(RM) -f "$(DESTDIR)$(HACKDIR)/$$program" ;		\
 	done
 
 uninstall-man:
 	@men="$(MEN) $(RETIRED_MEN)" ;					\
 	for man in $$men; do						\
 	  instname=`echo "$$man" | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
-	       rm -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
+	  echo $(RM) -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
+	       $(RM) -f "$(DESTDIR)$(manNdir)/$$instname"* ;		\
 	done
 
 uninstall-xml:
 	@dest=$(DESTDIR)$(HACK_CONF_DIR) ;				\
 	 for file in $(EXES) $(RETIRED_EXES) $(SCRIPTS) ; do		\
-	     echo rm -f "$$dest/$$file.xml" ;				\
-	          rm -f "$$dest/$$file.xml" ;				\
+	     echo $(RM) -f "$$dest/$$file.xml" ;			\
+	          $(RM) -f "$$dest/$$file.xml" ;			\
 	done
 
 clean::
-	-rm -f ./*.o a.out core $(EXES) $(RETIRED_EXES) m6502.h testx11
+	-$(RM) -f ./*.o a.out core $(EXES) $(RETIRED_EXES) m6502.h testx11
 
 distclean: clean
-	-rm -f Makefile TAGS ./*~ "#"*
+	-$(RM) -f Makefile TAGS ./*~ "#"*
 
 # Adds all current dependencies to Makefile
 depend:
-	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'				\
-	$(DEPEND_FLAGS) --								\
-	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) $(FFMPEG_CFLAGS) --	\
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		\
+	$(DEPEND_FLAGS) --						\
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS)	\
+	$(FFMPEG_CFLAGS) --						\
 	$(SRCS)
 
 # Adds some dependencies to Makefile.in -- not totally accurate, but pretty
@@ -415,24 +418,27 @@ depend:
 # to include only dependencies on files which are themselves a part of this
 # package.
 distdepend:: m6502.h
-	@echo "updating dependencies in `pwd`/Makefile.in..." ;				  \
-	$(DEPEND) -w 0 -f - 								  \
-	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- 		  \
-	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) $(FFMPEG_CFLAGS) -- \
-	$(SRCS) 2>/dev/null |								  \
-	sort -d |									  \
-	(										  \
-	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ;		  \
-	  sed -e '/^#.*/d'								  \
-	      -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'					  \
-	      -e 's@\.\./utils@$$(UTILS_SRC)@g'						  \
-	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'					  \
-	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'					  \
-	      -e 's@ $$(srcdir)/\(m6502.h\)@ \1@g'					  \
-	      -e 's@ $$(srcdir)/\(images/gen/\)@ \1@g'					  \
-	      -e 's@ $$(HACK_SRC)/\(images/gen/\)@ \1@g' ;				  \
-	  echo ''									  \
-	) > /tmp/distdepend.$$$$ &&							  \
+	@echo "updating dependencies in `pwd`/Makefile.in..." ;		\
+	$(DEPEND) -w 0 -f - 						\
+	-s '# DO NOT DELETE: updated by make distdepend'		\
+	$(DEPEND_FLAGS) --						\
+	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS)	\
+	$(FFMPEG_CFLAGS) --						\
+	$(SRCS) 2>/dev/null |						\
+	sort -d |							\
+	(								\
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/'		\
+	    < Makefile.in ;						\
+	  sed -e '/^#.*/d'						\
+	      -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			\
+	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				\
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			\
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'			\
+	      -e 's@ $$(srcdir)/\(m6502.h\)@ \1@g'			\
+	      -e 's@ $$(srcdir)/\(images/gen/\)@ \1@g'			\
+	      -e 's@ $$(HACK_SRC)/\(images/gen/\)@ \1@g' ;		\
+	  echo ''							\
+	) > /tmp/distdepend.$$$$ &&					\
 	mv /tmp/distdepend.$$$$ Makefile.in
 
 TAGS: tags
@@ -509,7 +515,8 @@ $(DRIVER_BIN)/prefs.o:
 
 
 # How we build object files in this directory.
-HACK_CFLAGS_BASE=$(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $(FFMPEG_CFLAGS)
+HACK_CFLAGS_BASE = $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) \
+		   $(X_CFLAGS) $(FFMPEG_CFLAGS)
 .c.o:
 	$(CC) -c $(HACK_CFLAGS_BASE) $<
 
@@ -550,10 +557,10 @@ images/gen/som_png.h images/gen/6x10font_png.h:
 	fi
 
 GETIMG_OBJS	= xscreensaver-getimage.o \
-		  $(UTILS_BIN)/colorbars.o $(UTILS_BIN)/resources.o \
-		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/visual.o \
-		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/hsv.o \
-		  $(UTILS_BIN)/colors.o \
+		  $(UTILS_BIN)/blurb.o $(UTILS_BIN)/colorbars.o \
+		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/yarandom.o \
+		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o \
 		  $(UTILS_BIN)/screenshot.o $(UTILS_BIN)/xmu.o \
 		  $(DRIVER_BIN)/prefs.o $(DT)
@@ -685,7 +692,7 @@ apple2:	 	apple2.o apple2-main.o        $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(PN
 	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(PNG) $(PNG_LIBS) $(TEXT_LIBS) $(THRL) $(TTY)
 
 xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(THRL)
 
 ATVCLI_CFLAGS=-DANALOGTV_SCALE=1 -DNO_CONSTRAIN_RATIO $(HACK_CFLAGS_BASE)
 analogtv2.o: Makefile
@@ -696,13 +703,13 @@ analogtv2.o: $(srcdir)/analogtv.c
 analogtv-cli.o: $(srcdir)/analogtv-cli.c
 	$(CC) -o $@ -c $(ATVCLI_CFLAGS) $<
 
-ATVCLI = analogtv2.o $(UTILS_BIN)/yarandom.o \
-	 $(UTILS_BIN)/aligned_malloc.o $(THRO) $(PNG) \
+ATVCLI = analogtv2.o $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/blurb.o \
+	 $(UTILS_BIN)/aligned_malloc.o $(THRO) $(PNG) $(DT) \
 	 $(UTILS_BIN)/font-retry.o $(ANIM_OBJS)
 analogtv-cli: 	analogtv-cli.o	$(ATVCLI)
 	$(CC_HACK) -o $@ $@.o	$(ATVCLI) $(THRL) $(PNG_LIBS)
 clean::
-	-rm -f analogtv-cli
+	-$(RM) -f analogtv-cli
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(THRL)
@@ -825,7 +832,7 @@ fontglide:	fontglide.o	$(HACK_OBJS) $(DBE) $(TEXT)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(TEXT) $(HACK_LIBS) $(TEXT_LIBS)
 
 pong: 	pong.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(THRL)
 
 wormhole: 	wormhole.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -888,11 +895,11 @@ glitchpeg:	glitchpeg.o	$(HACK_OBJS) $(PNG)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(PNG) $(PNG_LIBS)
 
 filmleader: 	filmleader.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(PNG_LIBS) $(THRL)
 
 EASE = $(UTILS_BIN)/easing.o
 vfeedback: 	vfeedback.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(EASE)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(EASE) $(PNG_LIBS) $(HACK_LIBS) $(THRL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(PNG) $(EASE) $(PNG_LIBS) $(THRL)
 
 MARBLING_OBJS=$(COLOR_OBJS) $(THRO) $(XSHM_OBJS) $(HACK_OBJS)
 marbling:	marbling.o	$(MARBLING_OBJS)
@@ -1128,20 +1135,8 @@ anemotaxis.o: $(UTILS_SRC)/xft.h
 anemotaxis.o: $(UTILS_SRC)/yarandom.h
 ansi-tty.o: $(srcdir)/ansi-tty.h
 ansi-tty.o: ../config.h
-ansi-tty.o: $(srcdir)/fps.h
-ansi-tty.o: $(srcdir)/recanim.h
-ansi-tty.o: $(srcdir)/screenhackI.h
-ansi-tty.o: $(srcdir)/screenhack.h
-ansi-tty.o: $(UTILS_SRC)/colors.h
-ansi-tty.o: $(UTILS_SRC)/font-retry.h
-ansi-tty.o: $(UTILS_SRC)/grabclient.h
-ansi-tty.o: $(UTILS_SRC)/hsv.h
-ansi-tty.o: $(UTILS_SRC)/resources.h
-ansi-tty.o: $(UTILS_SRC)/usleep.h
+ansi-tty.o: $(UTILS_SRC)/blurb.h
 ansi-tty.o: $(UTILS_SRC)/utf8wc.h
-ansi-tty.o: $(UTILS_SRC)/visual.h
-ansi-tty.o: $(UTILS_SRC)/xft.h
-ansi-tty.o: $(UTILS_SRC)/yarandom.h
 ant.o: $(srcdir)/automata.h
 ant.o: ../config.h
 ant.o: $(srcdir)/fps.h
@@ -1385,6 +1380,7 @@ bsod.o: $(UTILS_SRC)/hsv.h
 bsod.o: $(UTILS_SRC)/resources.h
 bsod.o: $(UTILS_SRC)/thread_util.h
 bsod.o: $(UTILS_SRC)/usleep.h
+bsod.o: $(UTILS_SRC)/utf8wc.h
 bsod.o: $(UTILS_SRC)/visual.h
 bsod.o: $(UTILS_SRC)/xft.h
 bsod.o: $(UTILS_SRC)/xftwrap.h
@@ -3538,10 +3534,8 @@ xrayswarm.o: $(UTILS_SRC)/visual.h
 xrayswarm.o: $(UTILS_SRC)/xft.h
 xrayswarm.o: $(UTILS_SRC)/yarandom.h
 xscreensaver-getimage.o: ../config.h
-xscreensaver-getimage.o: $(srcdir)/../driver/blurb.c
-xscreensaver-getimage.o: $(srcdir)/../driver/blurb.h
-xscreensaver-getimage.o: $(srcdir)/../driver/blurb.h
 xscreensaver-getimage.o: $(srcdir)/../driver/prefs.h
+xscreensaver-getimage.o: $(UTILS_SRC)/blurb.h
 xscreensaver-getimage.o: $(UTILS_SRC)/colorbars.h
 xscreensaver-getimage.o: $(UTILS_SRC)/colors.h
 xscreensaver-getimage.o: $(UTILS_SRC)/grabclient.h
@@ -3569,6 +3563,7 @@ xspirograph.o: $(UTILS_SRC)/visual.h
 xspirograph.o: $(UTILS_SRC)/xft.h
 xspirograph.o: $(UTILS_SRC)/yarandom.h
 xsublim.o: ../config.h
+xsublim.o: $(UTILS_SRC)/blurb.h
 xsublim.o: $(UTILS_SRC)/font-retry.h
 xsublim.o: $(UTILS_SRC)/resources.h
 xsublim.o: $(UTILS_SRC)/usleep.h

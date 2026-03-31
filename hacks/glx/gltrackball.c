@@ -1,4 +1,4 @@
-/* gltrackball, Copyright © 2002-2025 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright © 2002-2026 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -41,7 +41,7 @@ struct trackball_state {
   int ow, oh;
   double x, y;
   double dx, dy, ddx, ddy;
-  GLfloat q[4];
+  quat q;
   int button_down_p;
   int ignore_device_rotation_p;
 };
@@ -55,7 +55,7 @@ gltrackball_init (int ignore_device_rotation_p)
   trackball_state *ts = (trackball_state *) calloc (1, sizeof (*ts));
   if (!ts) return 0;
   ts->ignore_device_rotation_p = ignore_device_rotation_p;
-  trackball (ts->q, 0, 0, 0, 0);
+  ts->q = trackball (0, 0, 0, 0);
   return ts;
 }
 
@@ -133,7 +133,7 @@ gltrackball_track_1 (trackball_state *ts,
   double Y = y;
   double W = w, W2 = w;
   double H = h, H2 = h;
-  float q2[4];
+  quat q2;
   double ox = ts->x;
   double oy = ts->y;
 
@@ -145,13 +145,13 @@ gltrackball_track_1 (trackball_state *ts,
       adjust_for_device_rotation (ts, &ox, &oy, &W,  &H);
       adjust_for_device_rotation (ts, &X,  &Y,  &W2, &H2);
     }
-  trackball (q2,
-             (2 * ox - W) / W,
-             (H - 2 * oy) / H,
-             (2 * X - W)  / W,
-             (H - 2 * Y)  / H);
 
-  add_quats (q2, ts->q, ts->q);
+  q2 = trackball ((2 * ox - W) / W,
+                  (H - 2 * oy) / H,
+                  (2 * X - W)  / W,
+                  (H - 2 * Y)  / H);
+
+  ts->q = quat_normalize (quat_mult (q2, ts->q));
 }
 
 
@@ -183,6 +183,28 @@ gltrackball_dampen (double *n, double *dn)
 }
 
 
+/* Apply inertia: keep moving in the same direction as the last move.
+ */
+static void
+gltrackball_inertia (trackball_state *ts)
+{
+  if (!ts->button_down_p &&
+      (ts->ddx != 0 ||
+       ts->ddy != 0))
+    {
+      gltrackball_track_1 (ts, 
+                           ts->x + ts->dx,
+                           ts->y + ts->dy,
+                           ts->ow, ts->oh,
+                           False);
+
+      /* Dampen inertia: gradually stop spinning. */
+      gltrackball_dampen (&ts->dx, &ts->ddx);
+      gltrackball_dampen (&ts->dy, &ts->ddy);
+    }
+}
+
+
 /* Reset the trackball to the default unrotated state,
    plus an optional initial rotation.
  */
@@ -194,7 +216,7 @@ gltrackball_reset (trackball_state *ts, float x, float y)
   memset (ts, 0, sizeof(*ts));
   ts->button_down_p = bd;
   ts->ignore_device_rotation_p = ig;
-  trackball (ts->q, 0, 0, x, y);
+  ts->q = trackball (0, 0, x, y);
 }
 
 
@@ -204,31 +226,21 @@ gltrackball_reset (trackball_state *ts, float x, float y)
 void
 gltrackball_rotate (trackball_state *ts)
 {
-  GLfloat m[4][4];
-  if (!ts->button_down_p &&
-      (ts->ddx != 0 ||
-       ts->ddy != 0))
-    {
-      /* Apply inertia: keep moving in the same direction as the last move. */
-      gltrackball_track_1 (ts, 
-                           ts->x + ts->dx,
-                           ts->y + ts->dy,
-                           ts->ow, ts->oh,
-                           False);
+  double m[16];
 
-      /* Dampen inertia: gradually stop spinning. */
-      gltrackball_dampen (&ts->dx, &ts->ddx);
-      gltrackball_dampen (&ts->dy, &ts->ddy);
-    }
-
-  build_rotmatrix (m, ts->q);
+  gltrackball_inertia (ts);
+  quat_to_rotmatrix (ts->q, m);
 
 # ifndef HAVE_ANDROID
   /* This crashes in the Android emulator, presumably because of the hellscape
      that is OpenGLES 3.0. But since Android has no way to interact with hacks
      as either screen savers or live wallpapers, the trackball code is all a
      no-op anyway. */
-  glMultMatrixf (&m[0][0]);
+  GLfloat m2[16];
+  int i;
+  for (i = 0; i < 16; i++)	/* Unlikely but GLfloat might not be double */
+    m2[i] = m[i];
+  glMultMatrixf (m2);
 # endif
 }
 
@@ -276,12 +288,22 @@ gltrackball_mousewheel (trackball_state *ts,
   gltrackball_track (ts, mx, my, scale*2, scale*2);
 }
 
+quat
+gltrackball_get_quat (trackball_state *ts)
+{
+  gltrackball_inertia (ts);
+  return ts->q;
+}
+
+
 void
 gltrackball_get_quaternion (trackball_state *ts, float q[4])
 {
-  int i;
-  for (i=0; i<4; i++)
-    q[i] = ts->q[i];
+  quat q2 = gltrackball_get_quat (ts);
+  q[0] = q2.x;
+  q[1] = q2.y;
+  q[2] = q2.z;
+  q[3] = q2.w;
 }
 
 

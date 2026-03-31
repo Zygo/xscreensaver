@@ -1445,11 +1445,12 @@ draw_labels (ModeInfo *mi)
         s = 1.0 / h;			/* Scale to unit */
         s *= mc->overall_scale;		/* Scale to size of atom */
         s *= 0.5;			/* Shrink a bit */
+# ifdef HAVE_MOBILE
+        s *= 0.5;
+# endif
         glScalef (s, s, 1);
         glTranslatef (-w/2, -h/2, 0);
-#ifndef HAVE_ANDROID   /* Doesn't work -- causes whole scene to be black */
         print_texture_string (mc->atom_font, a->label);
-#endif
       }
 
       glPopMatrix();
@@ -1649,11 +1650,9 @@ draw_molecule (ModeInfo *mi)
       if (do_titles && m->label && *m->label)
         {
           set_atom_color (mi, 0, True, 1);
-#ifndef HAVE_ANDROID   /* Doesn't work -- causes whole scene to be black */
           print_texture_label (mi->dpy, mc->title_font,
                                mi->xgwa.width, mi->xgwa.height,
                                1, m->label);
-#endif
         }
     }
   glPopMatrix();

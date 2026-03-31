@@ -513,6 +513,7 @@ draw_topBlock (ModeInfo *mi)
         mi->polygon_count += tb->block_polys;
   	glPopMatrix();	/* restore state */
   } 
+  glColor3f(1,1,1);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

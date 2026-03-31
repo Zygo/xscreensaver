@@ -38,7 +38,8 @@ Depends: ${misc:Depends},
          perl
 Recommends: miscfiles | wordlist,
           fonts-urw-base35 | xfonts-100dpi
-Suggests: gdm3 | kdm-gdmcompat,
+Suggests: fonts-noto,
+          gdm3 | kdm-gdmcompat,
           qcam | streamer,
           www-browser,
           xdaliclock

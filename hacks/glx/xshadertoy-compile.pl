@@ -20,63 +20,89 @@ use strict;
 use utf8;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.02 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.03 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
 sub compile($@) {
   my ($outfile, @files) = @_;
-  my ($common, @progs);
+
+  my %variants;
+
   foreach my $f (@files) {
     error ("$f: not a GLSL file") unless ($f =~ m/\.glsl$/s);
-    if ($f =~ m/-c(ommon)?\.glsl$/s) {
-      error ("multiple common files: $common, $f") if ($common);
-      $common = $f;
+    my ($variant, $idx);
+    if ($f =~ m@^.*[^-](\d)-(\d|c(?:ommon)?)\.glsl$@s) {	# nameI-J.glsl
+      ($variant, $idx) = ($1, $2);
+    } elsif ($f =~ m@^.*[^-](\d)\.glsl$@s) {			# nameI.glsl
+      ($variant, $idx) = ($1, 0);
+    } elsif ($f =~ m@^.*[^-\d]-(\d|c(?:ommon)?)\.glsl$@s) {	# name-J.glsl
+      ($variant, $idx) = (0, $1);
+    } elsif ($f =~ m@^.*[^-\d]\.glsl$@s) {			# name.glsl
+      ($variant, $idx) = (0, 0);
     } else {
-      push @progs, $f;
-      error ("max of 5 programs: @progs") if (@progs > 5);
+      error ("unparsable: $f");
     }
+
+    error ("max of 5 programs: $f") if ($idx =~ m/^\d+$/ && $idx > 5);
+
+    my $set = $variants{$variant} || {};
+    error ("$variant-$idx already exists") if ($set->{$idx});
+    $set->{$idx} = $f;
+    $variants{$variant} = $set;
   }
 
   my $out = '';
+  my @switches = ();
 
   my $comment = undef;
-  my $i = 0;
-  foreach my $f ($common, @progs) {
-    next unless defined ($f);
-    my $commonp = (defined($common) && $f eq $common);
-    my $body = '';
-    open (my $in, '<:utf8', $f) || error ("$f: $!");
-    local $/ = undef;  # read entire file
-    while (<$in>) { $body .= $_; }
+  my $nvariants = scalar (keys %variants);
+  my $total = 0;
+  foreach my $variant (sort keys %variants) {
+    my $set = $variants{$variant};
+    my $nfiles = scalar (keys %$set);
+    foreach my $idx (sort keys %$set) {
+      my $f = $set->{$idx};
+      my $common = ($set->{'common'} || $set->{'c'});
+      my $commonp = ($common && $f eq $common);
+      my $body = '';
+      open (my $in, '<:utf8', $f) || error ("$f: $!");
+      local $/ = undef;         # read entire file
+      while (<$in>) { $body .= $_; }
 
-    # Extract the first comment from the first file.
+      # Extract the first comment from the first file.
 
-    ($comment) = ($body =~ m@^((\s*//[^\n]*\n|\s*/\*.*?\*/[ \t]*)+)@si)
-      unless ($comment);
+      ($comment) = ($body =~ m@^((\s*//[^\n]*\n|\s*/\*.*?\*/[ \t]*)+)@si)
+        unless ($comment);
 
-    # Omit the rest of the comments.
+      # Omit the rest of the comments.
 
-    $body =~ s@//[^\n]*@@gs;	# It seems that // is parsed before /*
-    $body =~ s@/\*.*?\*/@@gs;
-    $body =~ s/^[ \t]+|[ \t]+$//gm;
-    $body =~ s/\n\n+/\n/gs;
-    $body =~ s/^\s+|\s+$//gs;
+      $body =~ s@//[^\n]*@@gs;	# It seems that // is parsed before /*
+      $body =~ s@/\*.*?\*/@@gs;
+      $body =~ s/^[ \t]+|[ \t]+$//gm;
+      $body =~ s/\n\n+/\n/gs;
+      $body =~ s/^\s+|\s+$//gs;
 
-    $out .= "\n.\n" if ($i);	# EOF marker between files.
+      $out .= "\n.\n" unless ($total == 0);	# EOF marker between files.
 
-    if (@files > 1) {
-      my $j = defined($common) ? $i-1 : $i;
-      my $name = ($commonp ? 'Common' :
-                  $i == @files-1
-                  ? 'Image'
-                  : 'Buffer' . chr(ord('A') + $j));
-      $out .= "// $name\n\n";
+      if ($nvariants > 1 || $nfiles > 1) {
+        my $name = (($nvariants > 1 ? "$variant " : "") .
+                    ($commonp ? 'Common' :
+                     $idx == $nfiles-1
+                     ? 'Image'
+                     : 'Buffer' . chr(ord('A') + $idx)));
+        $out .= "// $name\n\n";
+      }
+
+      my $switch = (" --program" .
+                    ($nvariants > 1 ? "$variant-$idx" : "$idx") .
+                    " -");
+      push @switches, $switch;
+
+      $body =~ s/^/\t/gm;
+      $out .= $body . "\n";
+      $total++;
     }
-
-    $body =~ s/^/\t/gm;
-    $out .= $body . "\n";
-    $i++;
   }
 
   $out = "$comment\n\n$out" if ($comment);
@@ -101,15 +127,11 @@ exec -a "' . $title . '" \
 xshadertoy "$@" \
 ';
 
-  $head .= " --program-common - \\\n" if (defined ($common));
-  $i = 0;
-  foreach my $p (@progs) {
-    $head .= " --program$i - \\\n";
-    $i++;
-  }
+  $head .= join (" \\\n", @switches) . " \\\n";
+
   $head .= "<< \"_XSCREENSAVER_EOF_\"\n\n";
   $out = "$head$out\n_XSCREENSAVER_EOF_\n";
-
+ 
   open (my $of, '>:utf8', $outfile) || error ("$outfile: $!");
   print $of $out;
   chmod (oct("0755"), $of);

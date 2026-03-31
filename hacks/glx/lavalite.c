@@ -1524,6 +1524,7 @@ draw_lavalite (ModeInfo *mi)
   glCallList (bp->ball_list);
   glPopMatrix ();
 
+  glColor3f(1,1,0);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

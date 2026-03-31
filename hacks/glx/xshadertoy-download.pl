@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2025 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2025-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -30,7 +30,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.02 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.03 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 my $debug_p = 0;
@@ -235,7 +235,7 @@ sub download($$) {
     }
   }
 
-  $base = "glsl/$base";
+  $base = "glsl/todo/$base";
 
   my @out;
   push @out, [ "$base.json", $body, '' ];

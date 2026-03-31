@@ -764,6 +764,7 @@ ENTRYPOINT void draw_antspotlight(ModeInfo * mi)
   
   glPopMatrix();
   
+  glColor3f (1, 1, 1);
   if (MI_IS_FPS(mi)) do_fps (mi);
   glFlush();
   

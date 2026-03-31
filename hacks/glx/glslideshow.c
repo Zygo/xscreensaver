@@ -1,4 +1,4 @@
-/* glslideshow, Copyright © 2003-2025 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright © 2003-2026 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
@@ -160,6 +160,9 @@ typedef struct {
   GLfloat theoretical_fps;      /* maximum frame rate that might be possible */
   Bool checked_fps_p;		/* Whether we have checked for a low
                                    frame rate. */
+# ifdef HAVE_RECORD_ANIM
+  Bool recanim_p;
+# endif
 
   texture_font_data *font_data;	/* for printing image file names */
 
@@ -1818,6 +1821,13 @@ init_slideshow (ModeInfo *mi)
   ss->dawn_of_time = ss->now;
   ss->prev_frame_time = ss->now;
 
+# ifdef HAVE_RECORD_ANIM
+  {
+    char *s = get_string_resource (MI_DISPLAY(mi), "recordAnim", "Time");
+    ss->recanim_p = (s && *s);
+  }
+# endif
+
   get_image (mi, TRUE);
 }
 
@@ -1837,6 +1847,11 @@ draw_slideshow (ModeInfo *mi)
 
   slideshow_idle (mi);
   tick_sprites (mi);
+
+# ifdef HAVE_RECORD_ANIM
+  if (ss->recanim_p)
+    ss->redisplay_needed_p = True;  /* Glitches otherwise */
+# endif
 
   if (!ss->redisplay_needed_p)
     /* Nothing to do! Don't bother drawing a texture or even swapping the

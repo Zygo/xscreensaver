@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.9.1'
+        classpath 'com.android.tools.build:gradle:9.1.0'
     }
 
 }
@@ -14,7 +14,7 @@ allprojects {
   repositories {
     google()
     mavenCentral()
-    maven { url 'https://maven.google.com' }
+    maven { url = 'https://maven.google.com' }
   }
 }
 

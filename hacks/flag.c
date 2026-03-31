@@ -32,11 +32,7 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
  * 01-May-96: written.
  */
 
-#ifdef HAVE_COCOA
-# define DEF_FONT "Monaco 15"
-#else
-# define DEF_FONT "-*-fixed-medium-r-*-*-*-100-*-*-c-*-*-*"
-#endif
+#define DEF_FONT "-*-fixed-medium-r-*-*-*-100-*-*-c-*-*-*"
 
 #ifdef STANDALONE
 # define DEFAULTS	"*delay:		50000   \n"		\
@@ -332,7 +328,7 @@ make_flag_bits(ModeInfo *mi)
 	  text2 = strdup(text);
 
 	  if (!fn) fn = strdup (def_fn);
-      font = load_font_retry (dpy, fn);
+      font = XLoadQueryFont (dpy, fn);
       free (fn);
 
 	  memset(&overall, 0, sizeof(overall));

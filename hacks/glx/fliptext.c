@@ -975,7 +975,11 @@ draw_fliptext (ModeInfo *mi)
 
   glPopMatrix();
 
-  if (mi->fps_p) do_fps (mi);
+  if (mi->fps_p)
+    {
+      glColor3fv (sc->color);
+      do_fps (mi);
+    }
   glFinish();
   glXSwapBuffers(dpy, window);
 }

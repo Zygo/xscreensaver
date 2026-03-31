@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright © 1993-2025 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1993-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -157,6 +157,7 @@ typedef struct {
   int *list_elt_to_hack_number;	/* table for sorting the hack list */
   int *hack_number_to_list_elt;	/* the inverse table */
   Bool *hacks_available_p;	/* whether hacks are on $PATH */
+  char **hack_descs;		/* Description strings from the XML */
   int total_available;		/* how many are on $PATH */
   int list_count;		/* how many items are in the list: this may be
                                    less than p->screenhacks_count, if some are
@@ -197,6 +198,7 @@ G_DEFINE_TYPE (XScreenSaverApp, xscreensaver_app, GTK_TYPE_APPLICATION)
   W(lock_menuitem)		\
   W(kill_menuitem)		\
   W(restart_menuitem)		\
+  W(saver_search)		\
   W(list)			\
   W(scroller)			\
   W(preview_frame)		\
@@ -312,6 +314,9 @@ static void hack_subproc_environment (Window preview_window_id, Bool debug_p);
 static void populate_demo_window (state *, int list_elt);
 static void populate_prefs_page (state *);
 static void populate_popup_window (state *);
+static void populate_hack_list (state *);
+static void initialize_sort_map (state *);
+static void clear_preview_window (state *);
 
 static Bool flush_dialog_changes_and_save (state *);
 static Bool flush_popup_changes_and_save (state *);
@@ -328,6 +333,7 @@ static void schedule_preview_check (state *);
 static void sensitize_demo_widgets (state *, Bool sensitive_p);
 static void kill_gnome_screensaver (state *);
 static void kill_kde_screensaver (state *);
+
 
 /* Some pathname utilities */
 
@@ -1077,13 +1083,20 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
   if (!was) gtk_widget_set_sensitive (parent, TRUE);
   model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
   if (!model) abort();
-  if (gtk_tree_model_iter_nth_child (model, &iter, NULL, list_elt))
+
+  if (list_elt < 0)
+    {
+      selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
+      gtk_tree_selection_unselect_all (selection);      
+    }
+  else if (gtk_tree_model_iter_nth_child (model, &iter, NULL, list_elt))
     {
       selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
       gtk_tree_selection_select_iter (selection, &iter);
       if (s->debug_p)
         fprintf (stderr, "%s: select list elt %d\n", blurb(), list_elt);
     }
+
   if (scroll_p) ensure_selected_item_visible (s, GTK_WIDGET (list));
   if (!was) gtk_widget_set_sensitive (parent, FALSE);
 }
@@ -1578,6 +1591,41 @@ pref_changed_event_cb (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 }
 
 
+/* Called when text is changed in the search field. */
+G_MODULE_EXPORT gboolean
+search_text_changed_event_cb (GtkWidget *widget, gpointer user_data)
+{
+  XScreenSaverWindow *win = XSCREENSAVER_WINDOW (user_data);
+  state *s = &win->state;
+  int list_elt = selected_list_element (s);
+  int hack_number = (list_elt >= 0
+                     ? s->list_elt_to_hack_number[list_elt]
+                     : -1);
+
+  if (s->debug_p)
+    fprintf (stderr, "%s: search: %s\n", blurb(),
+             gtk_entry_get_text (GTK_ENTRY (widget)));
+
+  populate_hack_list (s);
+
+  /* Keep the same hack selected if it matched the search. */
+  list_elt = (hack_number >= 0
+              ? s->hack_number_to_list_elt[hack_number]
+              : -1);
+
+  if (list_elt >= 0)
+    force_list_select_item (s, win->list, list_elt, TRUE);
+  else
+    {
+      s->_selected_list_element = -1;
+      force_list_select_item (s, win->list, -1, False);
+      schedule_preview (s, NULL);
+    }
+
+  return GDK_EVENT_PROPAGATE;
+}
+
+
 /* Called when the timeout or DPMS spinbuttons are changed, by demo.ui.
  */
 G_MODULE_EXPORT gboolean
@@ -1607,9 +1655,12 @@ dpms_sanity_cb (GtkWidget *widget, gpointer user_data)
      off     >= suspend
    */
 # define MINUTES(V,LOWER,WIDGET) \
-  if ((V) != 0 && (V) < LOWER) \
+  if ((V) != 0 && (V) < LOWER) do { \
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (win->WIDGET), \
-                               (double) ((LOWER) + 59) / (60 * 1000))
+                               (double) ((LOWER) + 59) / (60 * 1000)); \
+    if (widget != win->WIDGET) \
+      pref_changed_cb (win->WIDGET, user_data); \
+  } while(0)
   MINUTES (standby, timeout, dpms_standby_spinbutton);
   MINUTES (suspend, standby, dpms_suspend_spinbutton);
   if (!s->dpms_partial_p)
@@ -2456,20 +2507,42 @@ scroll_to_current_hack (state *s)
 }
 
 
+static Bool
+hack_matches_search_p (state *s, int hack_number)
+{
+  saver_preferences *p = &s->prefs;
+  XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
+  const char *search = gtk_entry_get_text (GTK_ENTRY (win->saver_search));
+  screenhack *hack = (hack_number < 0 ? 0 : p->screenhacks[hack_number]);
+  char *pretty_name = (!hack ? 0 :
+                       hack->name
+                       ? strdup (hack->name)
+                       : make_hack_name (s->dpy, hack->command));
+  const char *desc = (hack ? s->hack_descs[hack_number] : 0);
+  Bool match_p = (hack &&
+                  (!search ||
+                   !*search ||
+                   strcasestr (pretty_name, search) ||
+                   strcasestr (hack->command, search) ||
+                   (desc && strcasestr (desc, search))));
+  free (pretty_name);
+  return match_p;
+}
+
+
 static void
 populate_hack_list (state *s)
 {
   saver_preferences *p = &s->prefs;
-  GtkTreeView *list = GTK_TREE_VIEW (XSCREENSAVER_WINDOW (s->window)->list);
+  XScreenSaverWindow *win = XSCREENSAVER_WINDOW (s->window);
+  GtkTreeView *list = GTK_TREE_VIEW (win->list);
   GtkListStore *model;
   GtkTreeSelection *selection;
   GtkCellRenderer *ren;
   GtkTreeIter iter;
   int i;
 
-  g_object_get (G_OBJECT (list),
-		"model", &model,
-		NULL);
+  g_object_get (G_OBJECT (list), "model", &model, NULL);
   if (!model)
     {
       model = gtk_list_store_new (COL_LAST, G_TYPE_BOOLEAN, G_TYPE_STRING);
@@ -2504,6 +2577,21 @@ populate_hack_list (state *s)
 
     }
 
+  /* gtk_list_store_clear is insanely slow -- it sometimes takes 2+ seconds.
+     We can avoid that by detaching the model from the list and then
+     re-attaching it after, but have to be careful to not let it get GC'd
+     in the meantime.
+   */
+  g_object_ref (model);
+  g_object_set (G_OBJECT (list), "model", NULL, NULL);
+
+  gtk_list_store_clear (model);
+
+  g_object_set (G_OBJECT (list), "model", model, NULL);
+  g_object_unref (model);
+
+  initialize_sort_map (s);
+
   for (i = 0; i < s->list_count; i++)
     {
       int hack_number = s->list_elt_to_hack_number[i];
@@ -2515,6 +2603,9 @@ populate_hack_list (state *s)
 
       /* If we're to suppress uninstalled hacks, check $PATH now. */
       if (p->ignore_uninstalled_p && !available_p)
+        continue;
+
+      if (!hack_matches_search_p (s, hack_number))
         continue;
 
       pretty_name = (hack->name
@@ -3112,13 +3203,6 @@ populate_demo_window (state *s, int list_elt)
 }
 
 
-static void
-widget_deleter (GtkWidget *widget, gpointer data)
-{
-  gtk_widget_destroy (widget);
-}
-
-
 static char **sort_hack_cmp_names_kludge;
 static int
 sort_hack_cmp (const void *a, const void *b)
@@ -3164,14 +3248,25 @@ initialize_sort_map (state *s)
       s->total_available += on;
     }
 
+  if (!s->hack_descs)
+    {
+      s->hack_descs = (char **)
+        calloc (sizeof(char **), p->screenhacks_count + 1);
+      for (i = 0; i < p->screenhacks_count; i++)
+        {
+          screenhack *hack = p->screenhacks[i];
+          s->hack_descs[i] = load_description (hack->command);
+        }
+    }
+
   /* Initialize list->hack table to unsorted mapping, omitting nonexistent
      hacks, if desired.
    */
   j = 0;
   for (i = 0; i < p->screenhacks_count; i++)
     {
-      if (!p->ignore_uninstalled_p ||
-          s->hacks_available_p[i])
+      if ((!p->ignore_uninstalled_p || s->hacks_available_p[i]) &&
+          hack_matches_search_p (s, i))
         s->list_elt_to_hack_number[j++] = i;
     }
   s->list_count = j;
@@ -3213,9 +3308,11 @@ initialize_sort_map (state *s)
 
   /* Build inverse table */
   for (i = 0; i < p->screenhacks_count; i++)
+    s->hack_number_to_list_elt[i] = -1;
+  for (i = 0; i < p->screenhacks_count; i++)
     {
       int n = s->list_elt_to_hack_number[i];
-      if (n != -1)
+      if (n >= 0)
         s->hack_number_to_list_elt[n] = i;
     }
 }
@@ -3250,7 +3347,6 @@ maybe_reload_init_file (state *s)
 
       list_elt = selected_list_element (s);
       list = win->list;
-      gtk_container_foreach (GTK_CONTAINER (list), widget_deleter, NULL);
       populate_hack_list (s);
       force_list_select_item (s, list, list_elt, TRUE);
       populate_prefs_page (s);

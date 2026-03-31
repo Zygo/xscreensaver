@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1998-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1998-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -38,6 +38,7 @@
 #include "screenhack.h"
 #include "xft.h"
 #include "xftwrap.h"
+#include "utf8wc.h"
 #include "ximage-loader.h"
 #include "apple2.h"
 
@@ -462,10 +463,12 @@ set_xft_color (Display *dpy, Colormap cmap, XftColor *c, unsigned long pixel)
 }
 
 
+/* Expects a UTF-8 string containing a single fixed-width character,
+   no matter how many bytes long that character is. */
 static void
-draw_char (struct bsod_state *bst, char c)
+draw_char (struct bsod_state *bst, const char *s, int char_len)
 {
-  if (!c)
+  if (!s || !*s || char_len <= 0)
     abort();
   else if (bst->crop_p && bst->y >=
            (bst->xgwa.height - bst->bottom_margin - bst->yoff))
@@ -473,12 +476,12 @@ draw_char (struct bsod_state *bst, char c)
       /* reached the bottom of the drawing area, and crop_p = True */
       return;
     }
-  else if (c == '\r')
+  else if (*s == '\r')
     {
       bst->x = bst->current_left;
       bst->last_nonwhite = bst->x;
     }
-  else if (c == '\n')
+  else if (*s == '\n')
     {
       if (bst->macx_eol_kludge)
         {
@@ -494,7 +497,7 @@ draw_char (struct bsod_state *bst, char c)
         }
       bst_crlf (bst);
     }
-  else if (c == '\b')	/* backspace */
+  else if (*s == '\b')	/* backspace -- assumes fixed width "n". */
     {
       XGlyphInfo ov;
       XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) "n", 1, &ov);
@@ -505,10 +508,15 @@ draw_char (struct bsod_state *bst, char c)
   else
     {
       XGlyphInfo ov;
-      Bool cursorp = (c == '\033');  /* apparently \e is non-standard now! */
+      Bool cursorp = (*s == '\033');  /* apparently \e is non-standard now! */
 
-      if (cursorp) c = ' ';
-      XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) &c, 1, &ov);
+      if (cursorp)
+        {
+          s = " ";
+          char_len = 1;
+        }
+
+      XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) s, char_len, &ov);
 
       if (bst->x < bst->left_margin)
         bst->x = bst->left_margin;
@@ -571,7 +579,7 @@ draw_char (struct bsod_state *bst, char c)
           XSetBackground (bst->dpy, bst->gc, bst->bg);
         }
 
-      XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) &c, 1, &ov);
+      XftTextExtentsUtf8 (bst->dpy, bst->font, (FcChar8 *) s, char_len, &ov);
       XSetForeground (bst->dpy, bst->gc, bst->bg);
       XFillRectangle (bst->dpy, bst->window, bst->gc,
                       bst->x,
@@ -580,7 +588,7 @@ draw_char (struct bsod_state *bst, char c)
                       bst->font->ascent + bst->font->descent);
       XSetForeground (bst->dpy, bst->gc, bst->fg);
       XftDrawStringUtf8 (bst->xftdraw, &bst->xft_fg, bst->font,
-                         bst->x, bst->y, (FcChar8 *) &c, 1);
+                         bst->x, bst->y, (FcChar8 *) s, char_len);
 
       if (cursorp)
         {
@@ -592,14 +600,15 @@ draw_char (struct bsod_state *bst, char c)
           bst->xft_bg = cswap;
           XSetForeground (bst->dpy, bst->gc, bst->fg);
           XSetBackground (bst->dpy, bst->gc, bst->bg);
-          c = ' ';
+          s = " ";
+          char_len = 1;
         }
 
       bst->x += ov.xOff;
 
       if (bst->word_wrap_p)
         {
-          if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+          if (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
             {
               bst->word_buf[0] = 0;
               bst->last_nonwhite = bst->x;
@@ -607,9 +616,14 @@ draw_char (struct bsod_state *bst, char c)
           else
             {
               int L = strlen (bst->word_buf);
-              if (L >= sizeof(bst->word_buf)-1) abort();
-              bst->word_buf[L] = c;
-              bst->word_buf[L+1] = 0;
+              int i;
+              for (i = 0; i < char_len; i++)
+                {
+                  if (L >= sizeof(bst->word_buf)-1) abort();
+                  bst->word_buf[L] = s[i];
+                  bst->word_buf[L+1] = 0;
+                  L++;
+                }
             }
         }
     }
@@ -634,7 +648,8 @@ bsod_pop (struct bsod_state *bst)
   case RIGHT:  case RIGHT_FULL:
     {
       const char *s = (const char *) bst->queue[bst->pos].arg2;
-      char c;
+      long char_len;
+      int delay;
 
       if (! *s)
         {
@@ -674,14 +689,16 @@ bsod_pop (struct bsod_state *bst)
             }
         }
 
-      c = *s++;
-      draw_char (bst, c);
+      delay = (*s == '\r' || *s == '\n'
+               ? bst->line_delay
+               : bst->char_delay);
+      char_len = utf8_decode_combining ((unsigned char *) s, strlen (s), NULL);
+      draw_char (bst, s, char_len);
+      s += char_len;
       bst->queue[bst->pos].arg2 = (void *) s;
       bst->queue[bst->pos].arg3 = (void *) 1;  /* "done once" */
 
-      return (c == '\r' || c == '\n'
-              ? bst->line_delay
-              : bst->char_delay);
+      return delay;
     }
   case INVERT:
     {
@@ -846,12 +863,12 @@ bsod_pop (struct bsod_state *bst)
                           bst->x, bst->y - bst->font->ascent,
                           ov.width,
                           bst->font->ascent + bst->font->descent);
-          draw_char (bst, ' ');
+          draw_char (bst, " ", 1);
         }
       else
         {
-          draw_char (bst, (count & 1 ? ' ' : '_'));
-          draw_char (bst, ' ');
+          draw_char (bst, (count & 1 ? " " : "_"), 1);
+          draw_char (bst, " ", 1);
         }
 
       bst->x = ox;
@@ -2017,7 +2034,8 @@ windows_10 (Display *dpy, Window window)
     "Stop code CRITICAL_PROCESS_DIED",
   };
   const char * const lines2[] = {
-    "-\\_(:/)_/-",   /* ¯\\_(ツ)_/¯   BSOD_TEXT() does not support UTF-8. */
+    /* "¯\\_(ツ)_/¯", */	/* The font doesn't always contain ツ */
+       "-\\_(:/)_/-",
 
     "\n"
     "Your PC ran into a ClownStrike and needs to restart 15 or more times."
@@ -2270,9 +2288,24 @@ windows_sb (Display *dpy, Window window)
   BSOD_COLOR (bst, fg, bg2);
   BSOD_MARGINS (bst, left, bst->xgwa.width);
 
-  /* Really these should be lines from Unicode Box Drawing Block 2500-257F,
-     but BSOD_TEXT doesn't support UTF-8 in strings.  Also the font might
-     not have those. Close enough. */
+  /* How likely is it that the font might not have the characters from
+     Unicode Box Drawing Block 2500-257F? */
+#if 1
+  BSOD_TEXT (bst, LEFT,
+             "┌─────────── Secure Boot Violation ──────────┐\n"
+             "│                                            │\n"
+             "│  Invalid signature detected. Check Secure  │\n"
+             "│            Boot Policy in Setup            │\n"
+             "│                                            │\n"
+             "├────────────────────────────────────────────┤\n"
+             "│                     ");
+  BSOD_COLOR (bst, fg, bg);
+  BSOD_TEXT (bst, LEFT,            "Ok");
+  BSOD_COLOR (bst, fg, bg2);
+  BSOD_TEXT (bst, LEFT,              "                     │\n"
+             "└────────────────────────────────────────────┘\n"
+    );
+#else
   BSOD_TEXT (bst, LEFT,
              "|----------- Secure Boot Violation ----------|\n"
              "|                                            |\n"
@@ -2287,6 +2320,7 @@ windows_sb (Display *dpy, Window window)
   BSOD_TEXT (bst, LEFT,              "                     |\n"
              "|--------------------------------------------|\n"
     );
+#endif
   XClearWindow (dpy, window);
   return bst;
 }

@@ -805,13 +805,16 @@ xscreensaver_inhibit_cb (sd_bus_message *m, void *arg,
 
   if (!application_name || !*application_name) {
     fprintf (stderr, "%s: no app name in method call\n", blurb());
-    return -1;
+    return sd_bus_error_set(ret_error, SD_BUS_ERROR_INVALID_ARGS,
+                            "no app name in method call");
   }
 
   if (!inhibit_reason || !*inhibit_reason) {
     fprintf (stderr, "%s: no reason in method call from \"%s\"\n",
              blurb(), application_name);
-    return -1;
+    return sd_bus_error_setf(ret_error, SD_BUS_ERROR_INVALID_ARGS,
+                            "no reason in method call from \"%s\"",
+                            application_name);
   }
 
   sender = sd_bus_message_get_sender (m);
@@ -857,7 +860,11 @@ xscreensaver_uninhibit_cb (sd_bus_message *m, void *arg,
 
   sprintf (cookie_str, "%08X", cookie);
   sender = sd_bus_message_get_sender (m);
-  remove_matching_entry (ctx, cookie_str, sender, 0);
+  if (!remove_matching_entry (ctx, cookie_str, sender, 0)) {
+    return sd_bus_error_setf(ret_error, SD_BUS_ERROR_INVALID_ARGS,
+                            "no match for cookie \"%s\"",
+                            remove_dir(cookie_str));
+  }
 
   return sd_bus_reply_method_return (m, "");
 }

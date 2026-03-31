@@ -216,9 +216,7 @@ static const char sccsid[] = "@(#)platonicfolding.c  1.1 25/03/18 xlockmore";
 #include "glsl-utils.h"
 #include "gltrackball.h"
 
-#include "images/gen/earth_png.h"
-#include "images/gen/earth_night_png.h"
-#include "images/gen/earth_water_png.h"
+#include "earth.h"
 #include "ximage-loader.h"
 
 
@@ -2937,15 +2935,15 @@ static void gen_earth_textures(ModeInfo *mi)
 
   /* Set up the earth by day texture. */
   glBindTexture(GL_TEXTURE_2D,pf->earth_tex[0]);
-  setup_xpm_texture(mi,earth_png,sizeof(earth_png));
+  setup_xpm_texture(mi,earth_png,earth_png_size);
 
   /* Set up the earth by night texture. */
   glBindTexture(GL_TEXTURE_2D,pf->earth_tex[1]);
-  setup_xpm_texture(mi,earth_night_png,sizeof(earth_night_png));
+  setup_xpm_texture(mi,earth_night_png,earth_night_png_size);
 
   /* Set up the earth water texture. */
   glBindTexture(GL_TEXTURE_2D,pf->earth_tex[2]);
-  setup_xpm_texture(mi,earth_water_png,sizeof(earth_water_png));
+  setup_xpm_texture(mi,earth_water_png,earth_water_png_size);
 
   glBindTexture(GL_TEXTURE_2D,0);
 }
@@ -3394,6 +3392,7 @@ ENTRYPOINT void draw_platonicfolding(ModeInfo *mi)
 
   display_platonicfolding(mi);
 
+  glColor3f (1, 1, 1);
   if (MI_IS_FPS(mi))
     do_fps (mi);
 

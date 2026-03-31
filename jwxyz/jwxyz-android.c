@@ -311,19 +311,19 @@ get_egl_config_android(Window window, EGLDisplay *egl_display,
       { 1, EGL_CONFIG_CAVEAT,		"caveat:"	 },
       { 1, EGL_CONFORMANT,		"conformant:"	 },
       { 0, EGL_COLOR_BUFFER_TYPE,	"buffer type:"	 },
-      { 0, EGL_RED_SIZE,		"color size:"	 },
+      { 0, EGL_RED_SIZE,		"rgba size:"	 },
       { 0, EGL_TRANSPARENT_RED_VALUE,	"transparency:"	 },
-      { 0, EGL_BUFFER_SIZE,		"buffer size:"	 },
       { 0, EGL_DEPTH_SIZE,		"depth size:"	 },
-      { 0, EGL_LUMINANCE_SIZE,	"lum size:"	 },
+      { 0, EGL_BUFFER_SIZE,		"buffer size:"	 },
       { 0, EGL_STENCIL_SIZE,		"stencil size:"	 },
-      { 0, EGL_ALPHA_MASK_SIZE,	"alpha mask:"	 },
+      { 0, EGL_LUMINANCE_SIZE,		"lum size:"	 },
+      { 0, EGL_ALPHA_MASK_SIZE,		"alpha mask:"	 },
       { 0, EGL_LEVEL,			"level:"	 },
-      { 0, EGL_SAMPLES,		"samples:"	 },
-      { 0, EGL_SAMPLE_BUFFERS,	"sample bufs:"	 },
+      { 0, EGL_SAMPLES,			"samples:"	 },
+      { 0, EGL_SAMPLE_BUFFERS,		"sample bufs:"	 },
       { 0, EGL_NATIVE_RENDERABLE,	"native render:" },
       { 1, EGL_NATIVE_VISUAL_TYPE,	"native type:"	 },
-      { 1, EGL_RENDERABLE_TYPE,	"render type:"	 },
+      { 1, EGL_RENDERABLE_TYPE,		"render type:"	 },
       { 0, EGL_SURFACE_TYPE,		"surface type:"	 },
       { 0, EGL_BIND_TO_TEXTURE_RGB,	"bind RGB:"	 },
       { 0, EGL_BIND_TO_TEXTURE_RGBA,	"bind RGBA:"	 },
@@ -486,11 +486,20 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
     { "doubleBuffer", "True" },
     { "multiSample",  "False" },
     { "texFontCacheSize", "30" },
-    { "textMode", "date" },
+    { "textMode", "url" },
     { "textURL",
       "https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss" },
     { "grabDesktopImages",  "True" },
     { "chooseRandomImages", "True" },
+
+# ifndef __OPTIMIZE__
+    /* Gradle is such a piece of shit.  Android always does -O builds, even in
+       debug, and there's no way to stop that.  I tried all kinds of nonsense
+       in xscreensaver/build.gradle "buildTypes { debug { cmake {" and nothing
+       works. There's no way to conditionally compile on debug versus release.
+     */
+    { "doFPS", "True" },
+# endif
   };
 
   for (int i = 0; i < countof(default_defaults); i++) {
@@ -1241,7 +1250,7 @@ Java_org_jwz_xscreensaver_jwxyz_sendKeyEvent (JNIEnv *env, jobject thiz,
 static void
 finish_bind_drawable (Display *dpy, Drawable dst)
 {
-  jwxyz_assert_gl ();
+  check_gl_error("finish_bind_drawable");
 
   glViewport (0, 0, dst->frame.width, dst->frame.height);
   jwxyz_set_matrices (dpy, dst->frame.width, dst->frame.height, False);
@@ -1332,7 +1341,7 @@ jwxyz_gl_copy_area (Display *dpy, Drawable src, Drawable dst, GC gc,
   jwxyz_gl_copy_area_read_pixels (dpy, src, dst, gc, src_x, src_y,
                                   width, height, dst_x, dst_y);
 #endif
-  jwxyz_assert_gl ();
+  check_gl_error("jwxyz_gl_copy_area");
 }
 
 
@@ -1340,13 +1349,6 @@ void
 jwxyz_assert_drawable (Window main_window, Drawable d)
 {
   check_gl_error("jwxyz_assert_drawable");
-}
-
-
-void
-jwxyz_assert_gl (void)
-{
-  check_gl_error("jwxyz_assert_gl");
 }
 
 
@@ -1504,6 +1506,8 @@ get_string_resource_window (Window window, char *name)
   if (jvalue)
     ret = jstring_dup (env, jvalue);
 
+  if (!strcmp (name, "doFPS")) ret = strdup("true");  // ####
+
   Log("pref %s = %s", name, (ret ? ret : "(null)"));
   return ret;
 }
@@ -1543,7 +1547,8 @@ textclient_mobile_url_string (Display *dpy, const char *url)
     memcpy (body2, body, L);
     body2[L] = 0;
   } else {
-    body2 = strdup ("ERROR");
+    // Returns null when the background URL has not yet finished loading.
+    body2 = strdup ("");
   }
 
   if (buf)

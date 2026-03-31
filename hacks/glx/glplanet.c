@@ -115,13 +115,11 @@ ModStruct   planet_description =
  "Animates texture mapped sphere (planet)", 0, NULL};
 #endif
 
-#include "images/gen/earth_png.h"
-#include "images/gen/earth_night_png.h"
-
 #include "ximage-loader.h"
 #include "rotator.h"
 #include "gltrackball.h"
 #include "gllist.h"
+#include "earth.h"
 
 extern const struct gllist *timezones;
 
@@ -224,7 +222,7 @@ setup_texture (ModeInfo * mi)
 	  !strcmp(which_image, "BUILTIN"))
     {
     BUILTIN1:
-      setup_xpm_texture (mi, earth_png, sizeof(earth_png));
+      setup_xpm_texture (mi, earth_png, earth_png_size);
     }
   else
     {
@@ -249,7 +247,7 @@ setup_texture (ModeInfo * mi)
 	  !strcmp(which_image2, "BUILTIN"))
     {
     BUILTIN2:
-      setup_xpm_texture (mi, earth_night_png, sizeof(earth_night_png));
+      setup_xpm_texture (mi, earth_night_png, earth_night_png_size);
     }
   else
     {
@@ -655,6 +653,11 @@ init_planet (ModeInfo * mi)
 
   if (do_stars)
     init_stars (mi);
+
+  if (do_texture)
+    /* Without this, unit_sphere() doesn't emit tex coords.
+       Must be outside of glNewList. */
+    glEnable (GL_TEXTURE_2D);
 
   /* construct the polygons of the planet
    */

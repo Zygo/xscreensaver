@@ -556,9 +556,7 @@ loading_msg (ModeInfo *mi, int n)
   glColor3f (1, 1, 0);
   glEnable (GL_TEXTURE_2D);
   glDisable (GL_DEPTH_TEST);
-# ifndef HAVE_ANDROID   /* Doesn't work -- photo displays as static */
   print_texture_string (ss->titlefont, text);
-# endif
   glEnable (GL_DEPTH_TEST);
   glPopMatrix();
 
@@ -830,11 +828,7 @@ draw_frame (ModeInfo *mi, image_frame *frame, time_t now, Bool body_p)
           glPushMatrix();
           glTranslatef (((1/scale) - sw) / 2, -sh * lineno, 0);
           if (!wire)
-            {
-# ifndef HAVE_ANDROID   /* Doesn't work -- photo displays as static */
-              print_texture_string (ss->texfont, line);
-# endif
-            }
+            print_texture_string (ss->texfont, line);
           else
             {
               glBegin (GL_LINE_LOOP);

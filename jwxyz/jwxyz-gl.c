@@ -170,7 +170,7 @@ jwxyz_assert_display(Display *dpy)
 {
   if(!dpy)
     return;
-  jwxyz_assert_gl ();
+  check_gl_error("jwxyz_assert_display");
   jwxyz_assert_drawable (dpy->main_window, dpy->main_window);
 }
 
@@ -1732,26 +1732,28 @@ PutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
 
   unsigned tex_w = src_w, tex_h = h;
   glBindTexture (dpy->gl_texture_target, dpy->textures[tex_index]);
+  check_gl_error("PutImage glBindTexture");
 
   // A fun project: reimplement xshm.c by means of a PBO using
   // GL_MAP_UNSYNCHRONIZED_BIT.
 
   tex_image (dpy, tex_internalformat, &tex_w, &tex_h, tex_format, tex_type,
              tex_data);
+  check_gl_error("PutImage tex_image");
 
   if (bpp == 1)
     free(tex_data);
 
   jwxyz_gl_draw_image (dpy, gc, dpy->gl_texture_target, tex_w, tex_h,
                        0, 0, bpp, w, h, dest_x, dest_y, True);
+  check_gl_error("PutImage jwxyz_gl_draw_image");
 # else
   glRasterPos2i (dest_x, dest_y);
   glPixelZoom (1, -1);
   jwxyz_assert_display (dpy);
   glDrawPixels (w, h, dpy->pixel_format, gl_pixel_type(dpy), data);
+  check_gl_error("PutImage glDrawPixels");
 # endif
-
-  jwxyz_assert_gl ();
 
   return 0;
 }
@@ -1940,6 +1942,7 @@ SetClipMask (Display *dpy, GC gc, Pixmap m)
   jwxyz_bind_drawable (dpy, dpy->main_window, m);
   glReadPixels (0, 0, frame->width, frame->height, GL_RGBA, GL_UNSIGNED_BYTE,
                 rgba);
+  check_gl_error("SetClipMask glReadPixels");
 
   for (unsigned y = 0; y != frame->height; ++y) {
     for (unsigned x = 0; x != frame->width; ++x)
@@ -1964,6 +1967,7 @@ SetClipMask (Display *dpy, GC gc, Pixmap m)
   unsigned tex_w = frame->width + 2, tex_h = frame->height + 2;
   tex_image (dpy, GL_ALPHA, &tex_w, &tex_h, GL_ALPHA, GL_UNSIGNED_BYTE,
              alpha0);
+  check_gl_error("SetClipMask tex_image");
 
   free(data);
 

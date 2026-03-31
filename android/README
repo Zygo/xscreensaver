@@ -24,12 +24,15 @@ us know:
       "build-tools/", etc.)  That is, it should be "sdk/ndk/".
 
       Update 2023: these seem to be DMGs now?  Sigh.  Mount it and then do:
-      cp -pr /Volumes/Android\ NDK\ r25c/AndroidNDK*.app/Contents/NDK \
-        ~/Library/Android/sdk/android-ndk-r25c
+        cp -pr /Volumes/Android\ NDK\ r25c/AndroidNDK*.app/Contents/NDK \
+          ~/Library/Android/sdk/android-ndk-r25c
+        ln -sf sdk/ndk/ndk-build .
+        cd sdk ; ln -sf android-ndk-r* ndk
+        Delete any old NDKs or they get used anyway.
 
-    ln -sf sdk/ndk/ndk-build .
-    cd sdk ; ln -sf android-ndk-r* ndk
-    Delete any old NDKs or they get used anyway.
+      Update 2026: I had to delete "android-ndk-r25c" and let Android Studio
+      re-install ndk-29.0.14206865, and then had to edit local.properties.
+      NDK 25 was unable to compile countries.c for some reason.
 
     Set $ANDROID_HOME to where your SDK is installed, or
     set "sdk.dir" in the file local.properties.
@@ -213,60 +216,14 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
       - fontglide
       - phosphor
 
- - Rendering text into textures doesn't work.  Possible causes include:
-   the pixmap problem, above; and that retrieving the GL_TEXTURE_MATRIX
-   seems to not work.  Affects:
-
-      Any hack that uses print_texture_label:
-
-      - FPS displays on every OpenGL hack
-      - engine (engine names)
-      - geodesicgears (number of teeth)
-      - glslideshow (file names)
-      - glsnake (shape names)
-      - juggler3d (pattern names)
-      - molecule (descriptions)
-      - pinion (number of teeth)
-      - polyhedra (object descriptions)
-      - spheremonics (object descriptions)
-      - tangram (object descriptions)
-      - unicrud (character descriptions)
-
-      Any hack that uses print_texture_string:
-
-      - carousel (file names)
-      - circuit (labels on components)
-      - esper (coordinates and file names)
-      - fliptext (the whole thing)
-      - geodesicgears (gear numbers)
-      - gibson (text on the towers)
-      - jigsaw (loading message)
-      - molecule (atom names)
-      - photopile (file names)
-      - sonar (everything)
-      - starwars (everything)
-      - unicrud (everything)
-      - winduprobot (word bubbles)
-
-      Interestingly, splitflap uses print_texture_string successfully,
-      so that bears investigation.
-
-  - Retrieving GL_MODELVIEW_MATRIX doesn't seem to work.  Affects:
-
-      - discoball (back faces not masked out, billboarded lights)
-      - energystream -- blank in emulator, works on real devices?
-      - glsnake -- blank in emulator, works on real devices?
-      - molecule (billboarded atom labels)
-      - raverhoop -- blank in emulator, works on real devices?
-      - starwars (blank)
-      - winduprobot (billboarded word bubbles)
-
  - Pixmap masks don't work.  Affects:
 
       - barcode -- fails in emulator, works on real devices?
       - bsod (logos and such)
-      - noseguy (character display as rectangle)
-      - pacman (characters display as rectangles)
+      - fontglide (nothing shows up)
+      - maze (logo background stays solid)
+      - noseguy (full-screen-static)
+      - pacman (characters display as rectangles, or full-screen-static)
       - polyominoes (can't texture the objects)
       - spotlight (everything)
 
@@ -284,14 +241,18 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
       - speedmine
       - starfish
 
-  - The code that attempts to grab a screen shot before the Daydream begins
-    doesn't work.  Affects every image-loading hack that wants to manipulate
-    the "desktop".
+      Possibly we could leverage triangle.c for this, but it doesn't do
+      winding rules, required by pedal.
 
-  - Alpha blending of GL objects doesn't seem to work.  Affects:
+  - Alpha blending in glMaterial doesn't work.  Affects:
 
       - beats (blur isn't transparent)
+      - blinkbox (no blurs, looks terrible)
+      - endgame (no reflections)
       - molecule (shells are not transparent)
+      - peepers (super creepy with no irises)
+      - queens (no reflections)
+      - sonar (hosts are hidden under the dome)
       - winduprobot (dome is not transparent)
 
   - Weird outliers:
@@ -309,18 +270,22 @@ When adding a new hack, edit android/Makefile, then "make clean" and "make".
     - vidwhacker requires perl.
     - webcollage requires perl.
 
+  - The code that attempts to grab a screen shot before the Daydream begins
+    doesn't work.  Affects every image-loading hack that wants to manipulate
+    the "desktop".
+
   - Undiagnosed problems:
 
       - antinspect has some kind of masking problem. Maybe only in emulator?
       - cityflow colors and shading are all wrong.
-      - discoball doesn't draw rays.
+      - discoball doesn't draw rays. Alpha problem, probably.
       - endgame is insanely slow.
-      - esper images display as black.
       - flurry is all black.
       - glblur is grayscale instead of color.  Endian or packing problem?
       - queens is insanely slow.
-      - sonar doesn't display properly, but once it does, test icmp.
+      - sonar gets no icmp replies in the emulator; what about in real life?
       - xmatrix is pretty slow.
+
 
 ############################################################################
 #

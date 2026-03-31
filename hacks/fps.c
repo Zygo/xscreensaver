@@ -83,6 +83,11 @@ fps_init (Display *dpy, Window window)
     }
 # endif
 
+# ifdef HAVE_ANDROID	/* Same -- stupid curved corners. */
+  st->x += st->font->ascent * 2;
+# endif
+
+
   strcpy (st->string, "FPS: ... ");
 
   return st;

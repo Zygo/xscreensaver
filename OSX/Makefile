@@ -1,4 +1,4 @@
-# XScreenSaver for MacOS X, Copyright © 2006-2025 Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright © 2006-2026 Jamie Zawinski.
 
 XCODE_APP  = /Applications/Xcode.app
 TARGETS    = All Savers
@@ -363,6 +363,7 @@ _dmg::
      if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
    done ;								      \
    if [ "$$ff" = testx11 ]; then ok=no ; fi ;				      \
+   if [ "$$ff" = xshadertoy ]; then ok=no ; fi ;			      \
    if [ "$$f2" = "XScreenSaverUpdater.app" ]; then			      \
      DST_HACK="XScreenSaver.updater" ;					      \
      echo + tar ... "$$DST/$$DST_HACK" ;				      \

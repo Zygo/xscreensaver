@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2002-2025 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2002-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.16 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.17 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -86,7 +86,10 @@ sub xml2man($) {
   my $xml = "$cfgdir/$exe.xml";
   my $man = "$exe.man";
 
-  error ("$exe does not exist") if (! -f $exe);
+  error ("$exe does not exist") if (! (-f $exe ||
+                                       -f "glsl/$exe.glsl" ||
+                                       -f "glsl/$exe-0.glsl" ||
+                                       -f "glsl/${exe}0-0.glsl"));
   error ("$xml does not exist") if (! -f $xml);
   error ("$man already exists") if (-f $man);
 

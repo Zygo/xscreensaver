@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2014-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2014-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,6 +11,7 @@
 
 /* Compatibility layer using XDrawString, XDrawString16() or Xutf8DrawString().
    This layer is used by X11 systems without Xft, and by MacOS / iOS.
+   (Though as of XScreenSaver 6, real Xft is required on X11 systems.)
  */
 
 #ifndef __XSCREENSAVER_XFT_H__
@@ -121,13 +122,29 @@ typedef struct _XftColor {
   XRenderColor color;
 } XftColor;
 
+typedef enum {
+  XftResultMatch,
+  XftResultNoMatch,
+  XftResultTypeMismatch,
+  XftResultNoId
+} XftResult;
+
+typedef struct _XftPattern XftPattern;
+
 typedef struct _XftDraw XftDraw;
 
 typedef unsigned char FcChar8;
 
 
-XftFont *XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd);
+XftPattern *XftPatternCreate (void);
+XftPattern *XftPatternDuplicate (const XftPattern *);
+void XftPatternDestroy (XftPattern *);
+XftPattern *XftNameParse (const char *name);
+XftPattern *XftFontMatch (Display *, int screen, const XftPattern *,
+                          XftResult *);
+XftFont *XftFontOpenPattern (Display *, XftPattern *);
 XftFont *XftFontOpenName (Display *dpy, int screen, _Xconst char *name);
+/* XftFont *XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd); */
 
 void XftFontClose (Display *dpy, XftFont *font);
 

@@ -359,6 +359,7 @@ draw_deepstars (ModeInfo * mi)
 
   glMatrixMode(GL_MODELVIEW);
 
+  glColor3f (1, 1, 1);
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers(dpy, window);

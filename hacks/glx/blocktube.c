@@ -443,6 +443,7 @@ draw_blocktube (ModeInfo *mi)
     }
     tick(lp);
 
+    glColor3f (1, 1, 1);
     if (mi->fps_p) do_fps (mi);
     glFinish();
     glXSwapBuffers(dpy, window);

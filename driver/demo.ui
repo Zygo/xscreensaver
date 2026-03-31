@@ -410,6 +410,29 @@
                           </packing>
                         </child>
                         <child>
+                          <object class="GtkEntry" id="saver_search">
+                            <property name="name">saver_search</property>
+                            <property name="visible">True</property>
+                            <property name="tooltip-text" translatable="yes">Search in the saver list.</property>
+                            <property name="placeholder-text" translatable="yes">Search...</property>
+                            <property name="can-focus">True</property>
+                            <property name="editable">True</property>
+                            <property name="visibility">True</property>
+                            <property name="max-length">0</property>
+                            <property name="text" translatable="yes"/>
+                            <property name="has-frame">True</property>
+                            <property name="invisible-char">*</property>
+                            <property name="activates-default">False</property>
+                            <signal handler="pref_changed_cb" name="activate"/>
+                            <signal handler="search_text_changed_event_cb" name="changed"/>
+                          </object>
+                          <packing>
+                            <property name="padding">2</property>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkScrolledWindow" id="scroller">
                             <property name="name">scroller</property>
                             <property name="visible">True</property>
@@ -426,7 +449,7 @@
                                 <property name="headers-visible">False</property>
                                 <property name="rules-hint">True</property>
                                 <property name="reorderable">False</property>
-                                <property name="enable-search">True</property>
+                                <property name="enable-search">False</property>
                                 <property name="fixed-height-mode">False</property>
                                 <property name="hover-selection">False</property>
                                 <property name="hover-expand">False</property>

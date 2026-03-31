@@ -211,6 +211,7 @@ draw_bubble3d(ModeInfo * mi)
         glPopMatrix();
         mi->polygon_count = glb_config.polygon_count;
 
+        glColor3f (1,1,0);
         if (mi->fps_p) do_fps (mi);
 	glFinish();
 	glXSwapBuffers(display, window);

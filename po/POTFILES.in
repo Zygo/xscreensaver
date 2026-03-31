@@ -1,4 +1,4 @@
-# Auto-generated: Thu Jan 15 14:28:57 PST 2026
+# Auto-generated: Mon Mar 30 17:51:52 PDT 2026
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/demo.ui
@@ -23,6 +23,7 @@ hacks/config/atunnel.xml
 hacks/config/barcode.xml
 hacks/config/batteredplanet.xml
 hacks/config/beats.xml
+hacks/config/bestill.xml
 hacks/config/binaryhorizon.xml
 hacks/config/binaryring.xml
 hacks/config/blaster.xml
@@ -37,6 +38,7 @@ hacks/config/boxfit.xml
 hacks/config/braid.xml
 hacks/config/bsod.xml
 hacks/config/bubble3d.xml
+hacks/config/bubblecolors.xml
 hacks/config/bubbles.xml
 hacks/config/bumps.xml
 hacks/config/cage.xml
@@ -65,6 +67,7 @@ hacks/config/cubocteversion.xml
 hacks/config/cwaves.xml
 hacks/config/cynosure.xml
 hacks/config/dangerball.xml
+hacks/config/darktransit.xml
 hacks/config/decayscreen.xml
 hacks/config/deco.xml
 hacks/config/deepstars.xml
@@ -74,7 +77,9 @@ hacks/config/discoball.xml
 hacks/config/discrete.xml
 hacks/config/distort.xml
 hacks/config/dnalogo.xml
+hacks/config/downfall.xml
 hacks/config/drift.xml
+hacks/config/driftclouds.xml
 hacks/config/droste.xml
 hacks/config/dumpsterfire.xml
 hacks/config/dymaxionmap.xml
@@ -125,6 +130,7 @@ hacks/config/glschool.xml
 hacks/config/glslideshow.xml
 hacks/config/glsnake.xml
 hacks/config/gltext.xml
+hacks/config/goldenapollian.xml
 hacks/config/goop.xml
 hacks/config/grav.xml
 hacks/config/gravitywell.xml
@@ -198,6 +204,7 @@ hacks/config/neontriangulator.xml
 hacks/config/nerverot.xml
 hacks/config/noof.xml
 hacks/config/noseguy.xml
+hacks/config/noxfire.xml
 hacks/config/pacman.xml
 hacks/config/papercube.xml
 hacks/config/pedal.xml
@@ -216,6 +223,7 @@ hacks/config/polyominoes.xml
 hacks/config/polytopes.xml
 hacks/config/pong.xml
 hacks/config/popsquares.xml
+hacks/config/prococean.xml
 hacks/config/projectiveplane.xml
 hacks/config/protophore.xml
 hacks/config/providence.xml
@@ -226,6 +234,7 @@ hacks/config/quasicrystal.xml
 hacks/config/queens.xml
 hacks/config/raverhoop.xml
 hacks/config/razzledazzle.xml
+hacks/config/rigrekt.xml
 hacks/config/ripples.xml
 hacks/config/rocks.xml
 hacks/config/romanboy.xml
@@ -278,12 +287,15 @@ hacks/config/thornbird.xml
 hacks/config/timetunnel.xml
 hacks/config/topblock.xml
 hacks/config/topologica.xml
+hacks/config/trainmandala.xml
 hacks/config/triangle.xml
+hacks/config/trizm.xml
 hacks/config/tronbit.xml
 hacks/config/truchet.xml
 hacks/config/truchetzoom.xml
 hacks/config/twang.xml
 hacks/config/unicrud.xml
+hacks/config/universeball.xml
 hacks/config/unknownpleasures.xml
 hacks/config/vermiculate.xml
 hacks/config/vfeedback.xml
@@ -296,6 +308,7 @@ hacks/config/webcollage.xml
 hacks/config/whirlwindwarp.xml
 hacks/config/whirlygig.xml
 hacks/config/winduprobot.xml
+hacks/config/worldpieces.xml
 hacks/config/worm.xml
 hacks/config/wormhole.xml
 hacks/config/xanalogtv.xml

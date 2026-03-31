@@ -1986,6 +1986,7 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 	}
 	
 	if(mi->fps_p) {
+        glColor3f (1, 1, 1);
 		do_fps(mi);
 	}
 	glFinish();

@@ -1497,7 +1497,9 @@ maze_init (Display *dpy_arg, Window window_arg)
                                            &st->logo_width, &st->logo_height,
                                            &logo_mask);
     if (logo_mask) {
+# ifndef HAVE_ANDROID /* Clip masks cause the whole screen to be static */
       XSetClipMask (st->dpy, st->logo_gc, logo_mask);
+# endif
       XFreePixmap (st->dpy, logo_mask);
     }
   }

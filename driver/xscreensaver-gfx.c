@@ -223,6 +223,8 @@ connect_to_server (saver_info *si)
       attrs.override_redirect = True;
       attrs.event_mask = PropertyChangeMask;
 
+      /* Note that this is on screen 0, not on DefaultScreen; but
+         find_screensaver_window() will work if it is on any screen. */
       daemon_window = XCreateWindow (si->dpy, RootWindow (si->dpy, 0),
                                      0, 0, 1, 1, 0,
                                      DefaultDepth (si->dpy, 0), InputOutput,

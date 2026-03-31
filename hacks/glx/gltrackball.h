@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002-2017 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright © 2002-2026 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -12,6 +12,8 @@
 
 #ifndef __GLTRACKBALL_H__
 #define __GLTRACKBALL_H__
+
+#include "quaternion.h"
 
 typedef struct trackball_state trackball_state;
 
@@ -54,7 +56,8 @@ void gltrackball_mousewheel (trackball_state *ts,
 
 /* Return the quaternion encapsulated by the trackball state.
  */
-extern void gltrackball_get_quaternion (trackball_state *ts, float q[4]);
+extern quat gltrackball_get_quat (trackball_state *);
+extern void gltrackball_get_quaternion (trackball_state *, float q[4]);/*XYZW*/
 
 /* Reset the trackball to the default unrotated state,
    plus an optional initial rotation.

@@ -104,15 +104,15 @@ android {
         // to change it because I managed to lose the signing key...
         // Note that the Java class tree is still "org.jwz.xscreensaver".
         applicationId "org.jwz.android.xscreensaver"
-        namespace "org.jwz.xscreensaver"
-        minSdkVersion 18
-        targetSdkVersion 33
+        namespace = "org.jwz.xscreensaver"
+        minSdkVersion = 18
+        targetSdkVersion = 36
     }
     productFlavors {
     }
     buildTypes {
         debug {
-            debuggable true
+            debuggable = true
         }
     }
 }

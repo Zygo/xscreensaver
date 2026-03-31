@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2025 Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2026 Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -47,7 +47,7 @@ use LWP::UserAgent;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.196 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.198 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright © 1999-2024" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  https://www.jwz.org/webcollage/\n";
@@ -404,8 +404,9 @@ sub get_document_1($$$) {
       $url =~ m@^https?://www\.livejournal\.com/@s ||
       $url =~ m@^https?://([^./]+\.)?imgur\.com/@s) {
     # block this, you turkeys.
-    $user_agent = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)' .
-                  ' Gecko/20070914 Firefox/2.0.0.7';
+    $user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' .
+                  ' AppleWebKit/605.1.15 (KHTML, like Gecko)' .
+                  ' Version/15.4 Safari/605.1.15';
   }
 
   my $ua = LWP::UserAgent->new ( agent => $user_agent,
@@ -1461,8 +1462,10 @@ sub pick_from_google_images($;$$) {
     $words = random_word();   # only one word for Google
   }
 
-  my $off = int(rand(40));
-  my $search_url = $google_images_url . $words . "&start=" . $off;
+  # my $off = int(rand(40));
+  my $off = 0;
+  my $search_url = $google_images_url . $words;
+  $search_url .= "&start=" . $off if ($off);
 
   my ($search_hit_count, @subpages) =
     pick_from_search_engine ($timeout, $search_url, $words);
@@ -3303,7 +3306,7 @@ sub x_or_image_output($) {
     } elsif (-r $background) {
       $bgimage = $background;
 
-    } elsif (! $background =~ m@^[-a-z0-9 ]+$@i) {
+    } elsif (! ($background =~ m@^[-a-z0-9 ]+$@i)) {
       error ("not a color or readable file: $background");
 
     } else {

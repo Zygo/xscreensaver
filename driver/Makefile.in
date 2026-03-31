@@ -1,4 +1,4 @@
-# driver/Makefile.in --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
+# driver/Makefile.in --- xscreensaver, Copyright © 1997-2026 Jamie Zawinski.
 # the `../configure' script generates `driver/Makefile' from this file.
 
 @SET_MAKE@
@@ -107,7 +107,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SETUID	= $(INSTALL_PROGRAM) $(SUID_FLAGS)
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
-HACKDIR		= @HACKDIR@
+RM		= rm
 
 X_CFLAGS	= @X_CFLAGS@
 X_LIBS		= @X_LIBS@
@@ -154,10 +154,11 @@ XINPUT_LIBS	= -lXi
 XML_LIBS	= @XML_LIBS@
 
 DAEMON_DEFS	= -DDEFAULT_PATH_PREFIX='"@HACKDIR@"' -DAD_DIR='"$(AD_DIR)"'
-DAEMON_SRCS	= xscreensaver.c blurb.c atoms.c clientmsg.c xinput.c prefs.c \
+DAEMON_SRCS	= xscreensaver.c atoms.c clientmsg.c xinput.c prefs.c \
 		  $(WAYLAND_DPY_SRCS) $(WAYLAND_IDLE_SRCS)
-DAEMON_OBJS	= xscreensaver.o blurb.o atoms.o clientmsg.o xinput.o prefs.o \
-		  $(UTILS_BIN)/xmu.o $(WAYLAND_DPY_OBJS) $(WAYLAND_IDLE_OBJS)
+DAEMON_OBJS	= xscreensaver.o atoms.o clientmsg.o xinput.o prefs.o \
+		  $(UTILS_BIN)/blurb.o $(UTILS_BIN)/xmu.o \
+		  $(WAYLAND_DPY_OBJS) $(WAYLAND_IDLE_OBJS)
 DAEMON_LIBS	= $(LIBS_PRE) $(XINPUT_LIBS) -lX11 $(WAYLAND_LIBS) $(LIBS_POST)
 
 GFX_DEFS	= @GL_CFLAGS@ -DLOCALEDIR=\"$(localedir)\"
@@ -167,8 +168,9 @@ GFX_SRCS	= xscreensaver-gfx.c screens.c windows.c subprocs.c \
 		  $(WAYLAND_DPMS_SRCS)
 GFX_OBJS	= xscreensaver-gfx.o screens.o windows.o subprocs.o \
 		  exec.o prefsw.o dpms.o fade.o exts.o atomswm.o \
-		  prefs.o blurb.o atoms.o clientmsg.o xinput.o \
+		  prefs.o atoms.o clientmsg.o xinput.o \
 		  $(WAYLAND_DPY_OBJS) $(WAYLAND_DPMS_OBJS) \
+		  $(UTILS_BIN)/blurb.o \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/yarandom.o \
 		  $(UTILS_BIN)/resources.o \
@@ -187,7 +189,7 @@ GFX_OBJS	= xscreensaver-gfx.o screens.o windows.o subprocs.o \
 GFX_GL_OBJS	= @GFX_GL_OBJS@
 GFX_GL_OBJS_1	= $(UTILS_BIN)/visual-gl.o $(UTILS_BIN)/pow2.o
 GFX_LIBS	= $(LIBS_PRE) $(XFT_LIBS) $(XDPMS_LIBS) $(XINERAMA_LIBS) \
-		  @SAVER_LIBS@ -lXt -lX11 -lXext -lXi @GL_LIBS@ \
+		  @SAVER_LIBS@ -lXt -lX11 -lXext @GL_LIBS@ \
 		  $(WAYLAND_LIBS) $(LIBS_POST) $(INTL_LIBS)
 
 PWENT_SRCS	= passwd-pwent.c
@@ -207,7 +209,8 @@ AUTH_SRCS	= xscreensaver-auth.c dialog.c passwd.c setuid.c
 AUTH_OBJS	= xscreensaver-auth.o $(AUTH_OBJS_1)
 AUTH_OBJS_1	= dialog.o passwd.o setuid.o \
 		  @PASSWD_OBJS@ \
-		  blurb.o screens.o xinput.o prefs.o atoms.o atomswm.o \
+		  screens.o xinput.o prefs.o atoms.o atomswm.o \
+		  $(UTILS_BIN)/blurb.o \
 		  $(UTILS_BIN)/xft.o \
 		  $(UTILS_BIN)/xftwrap.o \
 		  $(UTILS_BIN)/utf8wc.o \
@@ -218,18 +221,20 @@ AUTH_OBJS_1	= dialog.o passwd.o setuid.o \
 		  $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/logo.o \
 		  $(UTILS_BIN)/minixpm.o
-AUTH_LIBS	= $(LIBS_PRE) $(XFT_LIBS) $(XINPUT_LIBS) $(XINERAMA_LIBS) \
-		  $(XDPMS_LIBS) @SAVER_LIBS@ -lXt -lX11 -lXext -lXi \
+AUTH_LIBS	= $(LIBS_PRE) $(XFT_LIBS) $(XINERAMA_LIBS) \
+		  $(XDPMS_LIBS) @SAVER_LIBS@ -lXt -lX11 -lXext \
 		  @PASSWD_LIBS@ $(LIBS_POST) $(INTL_LIBS)
 
 SYSTEMD_DEFS	= 
 SYSTEMD_SRCS	= xscreensaver-systemd.c
-SYSTEMD_OBJS	= xscreensaver-systemd.o blurb.o $(UTILS_BIN)/yarandom.o
+SYSTEMD_OBJS	= xscreensaver-systemd.o  $(UTILS_BIN)/blurb.o \
+		  $(UTILS_BIN)/yarandom.o
 SYSTEMD_LIBS	= $(LIBS_PRE) @SYSTEMD_LIBS@ -lX11 $(LIBS_POST)
 
 CMD_DEFS	= 
 CMD_SRCS	= remote.c xscreensaver-command.c
-CMD_OBJS	= remote.o xscreensaver-command.o blurb.o atoms.o clientmsg.o
+CMD_OBJS	= remote.o xscreensaver-command.o atoms.o clientmsg.o \
+		  $(UTILS_BIN)/blurb.o
 CMD_LIBS	= $(LIBS_PRE) $(XINPUT_LIBS) -lX11 -lXext $(LIBS_POST)
 
 GTK_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"' \
@@ -238,25 +243,27 @@ GTK_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"' \
 		  -I$(ICON_SRC)
 GTK_SRCS	= demo-Gtk.c demo-Gtk-conf.c
 GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o demo-Gtk-resources.o \
-		  blurb.o exec.o prefs.o prefsw.o dpms.o remote.o screens.o \
+		  exec.o prefs.o prefsw.o dpms.o remote.o screens.o \
 		  clientmsg.o atoms.o \
 		  $(WAYLAND_GTK_OBJS) \
+		  $(UTILS_BIN)/blurb.o \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/screenshot.o \
 		  $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/doubletime.o
-GTK_LIBS	= $(LIBS_PRE) $(INTL_LIBS) $(XDPMS_LIBS) \
+GTK_LIBS	= $(LIBS_PRE) $(XDPMS_LIBS) \
 		  $(XINERAMA_LIBS) $(XML_LIBS) @GTK_LIBS@ \
-		  -lXt -lX11 -lXext -lXi $(LIBS_POST)
+		  -lXt -lX11 -lXext $(LIBS_POST)
 
 MOTIF_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"' \
 		  -DDEFAULT_PATH_PREFIX='"@HACKDIR@"'
 MOTIF_SRCS	= demo-Xm.c demo-Xm-widgets.c
 MOTIF_OBJS	= demo-Xm.o demo-Xm-widgets.o \
-		  blurb.o exec.o prefs.o prefsw.o dpms.o remote.o \
+		  exec.o prefs.o prefsw.o dpms.o remote.o \
 		  clientmsg.o atoms.o \
+		  $(UTILS_BIN)/blurb.o \
 		  $(UTILS_BIN)/xmu.o \
 		  $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/visual.o \
@@ -284,7 +291,7 @@ DESKS		= xscreensaver.desktop \
 
 HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
 		  xscreensaver.h prefs.h remote.h exec.h \
-		  demo-Gtk-conf.h auth.h types.h blurb.h atoms.h clientmsg.h \
+		  demo-Gtk-conf.h auth.h types.h atoms.h clientmsg.h \
 		  screens.h xinput.h fade.h wayland-dpy.h wayland-dpyI.h \
 		  wayland-idle.h wayland-dpms.h wayland-lock.h \
 		  $(WAYLAND_GEN_HDRS)
@@ -319,10 +326,10 @@ tests::   $(TEST_EXES)
 #
 ##############################################################################
 
-install:   install-program   install-ad   install-man   install-xml    \
-	   install-pam	install-gnome install-systemd
-uninstall: uninstall-program uninstall-ad uninstall-man uninstall-xml  \
-	   uninstall-gnome uninstall-systemd
+install::     install-program   install-ad   install-man   install-xml
+uninstall:: uninstall-program uninstall-ad uninstall-man uninstall-xml
+install::     install-pam   install-gnome   install-systemd
+uninstall:: uninstall-pam uninstall-gnome uninstall-systemd
 
 install-strip:
 	$(MAKE2) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
@@ -449,7 +456,7 @@ install-man:: $(MENA) $(MENB)
 									\
 	SUF="$$SUFA" ; for man in $(MENA); do INST ; done ;		\
 	SUF="$$SUFB" ; for man in $(MENB); do INST ; done ;		\
-	rm -f "$$T"
+	$(RM) -f "$$T"
 
 # Symlink from xscreensaver-demo.1 -> xscreensaver-settings.1 in /usr/man/man1/
 install-man::
@@ -469,25 +476,25 @@ OLD_MEN  = xscreensaver-getimage.man xscreensaver-getimage-file.man \
 	   xscreensaver-demo.man
 uninstall-program::
 	@for program in $(EXES) $(OLD_EXES); do				\
-	  echo rm -f "$(DESTDIR)$(bindir)/$$program" ;			\
-	       rm -f "$(DESTDIR)$(bindir)/$$program" ;			\
+	  echo $(RM) -f "$(DESTDIR)$(bindir)/$$program" ;		\
+	       $(RM) -f "$(DESTDIR)$(bindir)/$$program" ;		\
 	done
 
 uninstall-program::
 	@for program in $(UTIL_EXES) $(SETUID_EXES); do			\
-	  echo rm -f "$(DESTDIR)$(HACKDIR)/$$program" ;			\
-	       rm -f "$(DESTDIR)$(HACKDIR)/$$program" ;			\
+	  echo $(RM) -f "$(DESTDIR)$(HACKDIR)/$$program" ;		\
+	       $(RM) -f "$(DESTDIR)$(HACKDIR)/$$program" ;		\
 	done
 
 uninstall-ad:
-	rm -f "$(DESTDIR)$(AD_DIR)/XScreenSaver"
+	$(RM) -f "$(DESTDIR)$(AD_DIR)/XScreenSaver"
 
 uninstall-man:
 	@men="$(MEN) $(OLD_MEN)" ;					\
 	for man in $$men; do						\
-	  instname=`echo "$$man" | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f "$(DESTDIR)$(manAdir)/$$instname"* ;		\
-	       rm -f "$(DESTDIR)$(manAdir)/$$instname"* ;		\
+	  instname=`echo "$$man" | sed 's/\.man$$/\./'` ;		\
+	  echo $(RM) -f "$(DESTDIR)$(mandir)/$$instname"* ;		\
+	       $(RM) -f "$(DESTDIR)$(mandir)/$$instname"* ;		\
 	done
 
 # xscreensaver.pam
@@ -512,6 +519,14 @@ install-pam: xscreensaver.pam
 	      $(INSTALL_DATA) "$$src" "$(DESTDIR)$$dst" ;		\
 
 
+uninstall-pam:
+	@name=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
+	   < ../config.h` ;						\
+	 dst="$(PAM_DIR)/$$name" ;					\
+	echo $(RM) -f "$(DESTDIR)$$dst" ;				\
+	     $(RM) -f "$(DESTDIR)$$dst"
+
+
 # xscreensaver.desktop
 # xscreensaver-settings.desktop
 # into /usr/share/applications/
@@ -523,8 +538,8 @@ install-gnome:: xscreensaver.desktop xscreensaver-settings.desktop
 	   fi								     ;\
 	   old="xscreensaver-properties.desktop"			     ;\
 	   if [ -f "$(DESTDIR)$(GTK_APPDIR)/$$old" ]; then		      \
-	     echo rm -f "$(DESTDIR)$(GTK_APPDIR)/$$old"			     ;\
-		  rm -f "$(DESTDIR)$(GTK_APPDIR)/$$old"			     ;\
+	     echo $(RM) -f "$(DESTDIR)$(GTK_APPDIR)/$$old"		     ;\
+		  $(RM) -f "$(DESTDIR)$(GTK_APPDIR)/$$old"		     ;\
 	   fi								     ;\
 	   for name in xscreensaver.desktop xscreensaver-settings.desktop ; do\
 	    echo $(INSTALL_DATA) "$$name" "$(DESTDIR)$(GTK_APPDIR)/$$name"   ;\
@@ -545,6 +560,10 @@ install-systemd:: xscreensaver.service
 	   echo $(INSTALL_DATA) "$$name" "$$dir/$$name"			     ;\
 	        $(INSTALL_DATA) "$$name" "$$dir/$$name"			     ;\
 	 fi
+
+uninstall-systemd:
+	$(RM) -f "$(DESTDIR)$(SYSTEMD_DIR)/xscreensaver.service"
+
 
 # xscreensaver.service
 # into /usr/share/xscreensaver/
@@ -595,12 +614,12 @@ uninstall-gnome::
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
 	  old="xscreensaver-properties.desktop"				     ;\
 	  if [ -f "$old" ]; then					      \
-	    echo rm -f "$(DESTDIR)$(GTK_APPDIR)/$$old"			     ;\
-		 rm -f "$(DESTDIR)$(GTK_APPDIR)/$$old"			     ;\
+	    echo $(RM) -f "$(DESTDIR)$(GTK_APPDIR)/$$old"		     ;\
+		 $(RM) -f "$(DESTDIR)$(GTK_APPDIR)/$$old"		     ;\
 	  fi								     ;\
 	  for f in xscreensaver.desktop xscreensaver-settings.desktop; do     \
-	    echo rm -f "$(DESTDIR)$(GTK_APPDIR)/$$f"			     ;\
-	         rm -f "$(DESTDIR)$(GTK_APPDIR)/$$f"			     ;\
+	    echo $(RM) -f "$(DESTDIR)$(GTK_APPDIR)/$$f"			     ;\
+	         $(RM) -f "$(DESTDIR)$(GTK_APPDIR)/$$f"			     ;\
 	  done								     ;\
 	fi
 
@@ -608,16 +627,16 @@ uninstall-gnome::
 # from /usr/share/pixmaps/
 uninstall-gnome::
 	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
-	  target="xscreensaver.xpm"                                           ;\
-	  echo rm -f "$(DESTDIR)$(GTK_ICONDIR)/$$target"		     ;\
-	       rm -f "$(DESTDIR)$(GTK_ICONDIR)/$$target"		     ;\
+	  target="xscreensaver.xpm"					     ;\
+	  echo $(RM) -f "$(DESTDIR)$(GTK_ICONDIR)/$$target"		     ;\
+	       $(RM) -f "$(DESTDIR)$(GTK_ICONDIR)/$$target"		     ;\
 	 fi
 
 # /usr/share/xscreensaver/ui/*.png and *.ui no longer used as of 2022, 6.05.
 uninstall-gnome::
 	@if [ "$(GTK_ICONDIR)" != "" ]; then				      \
-	  echo rm -rf "$(DESTDIR)$(GTK_SHAREDIR)/ui"			     ;\
-	       rm -rf "$(DESTDIR)$(GTK_SHAREDIR)/ui"			     ;\
+	  echo $(RM) -rf "$(DESTDIR)$(GTK_SHAREDIR)/ui"			     ;\
+	       $(RM) -rf "$(DESTDIR)$(GTK_SHAREDIR)/ui"			     ;\
 	 fi
 
 # What is all this crap with the wrong logo?
@@ -632,14 +651,14 @@ uninstall-old-gnome-icons::
 	   "$(DESTDIR)$(GTK_ICONDIR)/xscreensaver.svg"			     ;\
 	 do								      \
 	   if [ -f "$$f" ]; then					      \
-	     echo rm -f "$$f"						     ;\
-		  rm -f "$$f"						     ;\
+	     echo $(RM) -f "$$f"					     ;\
+		  $(RM) -f "$$f"					     ;\
 	   fi								     ;\
 	 done
 
 # /usr/share/xscreensaver/glade/ no longer used as of 2022.
 uninstall-gnome::
-	-rm -rf "$(GTK_DATADIR)/xscreensaver/glade"
+	-$(RM) -rf "$(GTK_DATADIR)/xscreensaver/glade"
 
 
 # /usr/share/xscreensaver/config/README
@@ -656,7 +675,7 @@ install-xml:
 
 # /usr/share/xscreensaver/config/README
 uninstall-xml:
-	-rm -f "$(DESTDIR)$(HACK_CONF_DIR)/README"
+	-$(RM) -f "$(DESTDIR)$(HACK_CONF_DIR)/README"
 
 
 ##############################################################################
@@ -666,12 +685,12 @@ uninstall-xml:
 ##############################################################################
 
 clean:
-	-rm -f ./*.o a.out core $(EXES) $(UTIL_EXES) $(SETUID_EXES) \
+	-$(RM) -f ./*.o a.out core $(EXES) $(UTIL_EXES) $(SETUID_EXES) \
 	$(DEMO_EXES) $(TEST_EXES) \
 	XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 
 distclean: clean
-	-rm -f \
+	-$(RM) -f \
 	TAGS ./*~ "#"* ./*.rej ./*.orig \
 	Makefile \
 	XScreenSaver.ad \
@@ -737,7 +756,7 @@ update_ad_version::
       echo "updated $$S to $$V $$D" ;					    \
     fi ;								    \
   done ;								    \
-  rm "$$T"
+  $(RM) "$$T"
 
 TAGS: tags
 tags:
@@ -907,9 +926,9 @@ xscreensaver-settings: @PREFERRED_DEMO_PROGRAM@
 	@if [ "@PREFERRED_DEMO_PROGRAM@" = "" ]; then			\
 	  echo "WARNING: neither GTK nor Motif are available,"		\
 	       "therefore no xscreensaver-settings!"		      ; \
-	  rm -f $@@EXEEXT@					      ;	\
+	  $(RM) -f $@@EXEEXT@					      ;	\
 	else								\
-	       rm -f "$@@EXEEXT@"				      ;	\
+	       $(RM) -f "$@@EXEEXT@"				      ;	\
 	  echo cp -p "@PREFERRED_DEMO_PROGRAM@@EXEEXT@" "$@@EXEEXT@"  ;	\
 	       cp -p "@PREFERRED_DEMO_PROGRAM@@EXEEXT@" "$@@EXEEXT@"  ;	\
 	fi
@@ -923,7 +942,7 @@ XScreenSaver_ad.h::
 	OUT=XScreenSaver_ad.h ;						\
 	$(UTILS_SRC)/ad2c $$IN > $$TMP ;				\
 	if cmp -s "$$TMP" "$$OUT" ; then				\
-	  rm -f "$$TMP" ;						\
+	  $(RM) -f "$$TMP" ;						\
 	else								\
 	  echo $(UTILS_SRC)/ad2c "$$IN" \> "$$OUT" ;			\
 	  mv "$$TMP" "$$OUT" ;						\
@@ -935,7 +954,7 @@ XScreenSaver_Xm_ad.h::
 	OUT=XScreenSaver_Xm_ad.h ;					\
 	$(UTILS_SRC)/ad2c "$$IN" > "$$TMP" ;				\
 	if cmp -s "$$TMP" "$$OUT" ; then				\
-	  rm -f "$$TMP" ;						\
+	  $(RM) -f "$$TMP" ;						\
 	else								\
 	  echo $(UTILS_SRC)/ad2c "$$IN" \> "$$OUT" ;			\
 	  mv "$$TMP" "$$OUT" ;						\
@@ -1090,52 +1109,53 @@ test-uid: test-uid.o
 	$(CC) $(LDFLAGS) -o $@ test-uid.o
 
 TESTDPMS_LIBS = $(LIBS_PRE) $(XDPMS_LIBS) -lXt -lX11 -lXext $(LIBS_POST)
-test-xdpms: test-xdpms.o blurb.o
-	$(CC) $(LDFLAGS) -o $@ test-xdpms.o blurb.o $(TESTDPMS_LIBS)
+test-xdpms: test-xdpms.o $(UTILS_BIN)/blurb.o
+	$(CC) $(LDFLAGS) -o $@ test-xdpms.o $(UTILS_BIN)/blurb.o $(TESTDPMS_LIBS)
 
-TESTXINPUT_OBJS = test-xinput.o blurb.o xinput.o
+TESTXINPUT_OBJS = test-xinput.o xinput.o $(UTILS_BIN)/blurb.o
 TESTXINPUT_LIBS = $(LIBS_PRE) $(XDPMS_LIBS) -lXi -lXt -lX11 -lXext $(LIBS_POST)
 test-xinput: $(TESTXINPUT_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(TESTXINPUT_OBJS) $(TESTXINPUT_LIBS)
 
 TESTXIN_LIBS = $(LIBS_PRE) $(XINERAMA_LIBS) -lXi -lXt -lX11 -lXext $(LIBS_POST)
-test-xinerama: test-xinerama.o blurb.o
-	$(CC) $(LDFLAGS) -o $@ test-xinerama.o blurb.o $(TESTXIN_LIBS)
+test-xinerama: test-xinerama.o $(UTILS_BIN)/blurb.o
+	$(CC) $(LDFLAGS) -o $@ test-xinerama.o $(UTILS_BIN)/blurb.o $(TESTXIN_LIBS)
 
-TESTXKB_OBJS = test-xkb.o blurb.o
+TESTXKB_OBJS = test-xkb.o $(UTILS_BIN)/blurb.o
 TESTXKB_LIBS = $(LIBS_PRE) $(XDPMS_LIBS) -lXi -lXt -lX11 -lXext $(LIBS_POST)
 test-xkb: $(TESTXKB_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(TESTXKB_OBJS) $(TESTXKB_LIBS)
 
-test-vp: test-vp.o blurb.o
-	$(CC) $(LDFLAGS) -o $@ test-vp.o blurb.o $(GFX_LIBS)
+test-vp: test-vp.o $(UTILS_BIN)/blurb.o
+	$(CC) $(LDFLAGS) -o $@ test-vp.o $(UTILS_BIN)/blurb.o $(GFX_LIBS) -lXxf86vm
 
-test-randr: test-randr.o blurb.o
-	$(CC) $(LDFLAGS) -o $@ test-randr.o blurb.o $(GFX_LIBS)
+test-randr: test-randr.o $(UTILS_BIN)/blurb.o
+	$(CC) $(LDFLAGS) -o $@ test-randr.o $(UTILS_BIN)/blurb.o $(GFX_LIBS)
 
 TESTGRAB_LIBS = $(LIBS_PRE) -lXt -lX11 -lXext $(LIBS_POST)
-test-grab: test-grab.o blurb.o
-	$(CC) $(LDFLAGS) -o $@ test-grab.o blurb.o $(TESTGRAB_LIBS)
+test-grab: test-grab.o $(UTILS_BIN)/blurb.o
+	$(CC) $(LDFLAGS) -o $@ test-grab.o $(UTILS_BIN)/blurb.o $(TESTGRAB_LIBS)
 
-TEST_FADE_OBJS = test-fade.o fade.o blurb.o atoms.o clientmsg.o xinput.o \
+TEST_FADE_OBJS = test-fade.o fade.o atoms.o clientmsg.o xinput.o \
 	$(UTILS_BIN)/visual.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 	$(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o $(UTILS_BIN)/xshm.o \
 	$(UTILS_BIN)/xmu.o $(UTILS_BIN)/aligned_malloc.o \
-	$(UTILS_BIN)/screenshot.o $(UTILS_BIN)/doubletime.o $(GFX_GL_OBJS)
+	$(UTILS_BIN)/screenshot.o $(UTILS_BIN)/doubletime.o \
+	$(UTILS_BIN)/blurb.o $(GFX_GL_OBJS)
 test-fade: $(TEST_FADE_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(TEST_FADE_OBJS) $(GFX_LIBS)
 
-TEST_SCREENS_OBJS = test-screens.o screens.o blurb.o
+TEST_SCREENS_OBJS = test-screens.o screens.o $(UTILS_BIN)/blurb.o
 test-screens: $(TEST_SCREENS_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(TEST_SCREENS_OBJS) $(GFX_LIBS)
 
-test-yarandom: test-yarandom.o blurb.o
-	$(CC) -DTEST $(LDFLAGS) -o $@ test-yarandom.o blurb.o $(UTILS_BIN)/yarandom.o
+test-yarandom: test-yarandom.o $(UTILS_BIN)/blurb.o
+	$(CC) -DTEST $(LDFLAGS) -o $@ test-yarandom.o $(UTILS_BIN)/blurb.o $(UTILS_BIN)/yarandom.o
 
-TEST_WLOCK_OBJS = test-wayland-lock.o blurb.o atoms.o \
+TEST_WLOCK_OBJS = test-wayland-lock.o atoms.o \
 	$(WAYLAND_DPY_OBJS) $(WAYLAND_LOCK_OBJS) \
 	$(UTILS_BIN)/visual.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
-	$(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o
+	$(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o $(UTILS_BIN)/blurb.o
 
 test-wayland-lock: $(TEST_WLOCK_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(TEST_WLOCK_OBJS) $(GFX_LIBS)
@@ -1155,24 +1175,22 @@ atoms.o: $(srcdir)/atoms.h
 atoms.o: ../config.h
 atomswm.o: $(srcdir)/atoms.h
 atomswm.o: ../config.h
-blurb.o: $(srcdir)/blurb.h
-blurb.o: ../config.h
 clientmsg.o: $(srcdir)/atoms.h
-clientmsg.o: $(srcdir)/blurb.h
 clientmsg.o: $(srcdir)/clientmsg.h
 clientmsg.o: ../config.h
-demo-Gtk-conf.o: $(srcdir)/blurb.h
+clientmsg.o: $(UTILS_SRC)/blurb.h
 demo-Gtk-conf.o: ../config.h
 demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
+demo-Gtk-conf.o: $(UTILS_SRC)/blurb.h
 demo-Gtk-conf.o: $(UTILS_SRC)/xscreensaver-intl.h
 demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk.o: $(srcdir)/atoms.h
-demo-Gtk.o: $(srcdir)/blurb.h
 demo-Gtk.o: ../config.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
 demo-Gtk.o: $(srcdir)/remote.h
 demo-Gtk.o: $(srcdir)/screens.h
 demo-Gtk.o: $(srcdir)/types.h
+demo-Gtk.o: $(UTILS_SRC)/blurb.h
 demo-Gtk.o: $(UTILS_SRC)/resources.h
 demo-Gtk.o: $(UTILS_SRC)/screenshot.h
 demo-Gtk.o: $(UTILS_SRC)/usleep.h
@@ -1184,10 +1202,10 @@ demo-Xm.o: ../config.h
 demo-Xm-widgets.o: ../config.h
 dialog.o: $(srcdir)/atoms.h
 dialog.o: $(srcdir)/auth.h
-dialog.o: $(srcdir)/blurb.h
 dialog.o: ../config.h
 dialog.o: $(srcdir)/prefs.h
 dialog.o: $(srcdir)/screens.h
+dialog.o: $(UTILS_SRC)/blurb.h
 dialog.o: $(UTILS_SRC)/doubletime.h
 dialog.o: $(UTILS_SRC)/font-retry.h
 dialog.o: $(UTILS_SRC)/resources.h
@@ -1198,21 +1216,21 @@ dialog.o: $(UTILS_SRC)/visual.h
 dialog.o: $(UTILS_SRC)/xft.h
 dialog.o: $(UTILS_SRC)/xftwrap.h
 dialog.o: $(srcdir)/xinput.h
-dpms.o: $(srcdir)/blurb.h
 dpms.o: ../config.h
 dpms.o: $(srcdir)/types.h
+dpms.o: $(UTILS_SRC)/blurb.h
 dpms.o: $(srcdir)/xscreensaver.h
 exec.o: ../config.h
 exec.o: $(srcdir)/exec.h
-exts.o: $(srcdir)/blurb.h
 exts.o: ../config.h
 exts.o: $(srcdir)/types.h
+exts.o: $(UTILS_SRC)/blurb.h
 exts.o: $(srcdir)/xscreensaver.h
 fade.o: $(srcdir)/atoms.h
-fade.o: $(srcdir)/blurb.h
 fade.o: $(srcdir)/clientmsg.h
 fade.o: ../config.h
 fade.o: $(srcdir)/fade.h
+fade.o: $(UTILS_SRC)/blurb.h
 fade.o: $(UTILS_SRC)/doubletime.h
 fade.o: $(UTILS_SRC)/pow2.h
 fade.o: $(UTILS_SRC)/screenshot.h
@@ -1222,149 +1240,149 @@ fade.o: $(UTILS_SRC)/xmu.h
 fade.o: $(UTILS_SRC)/xshm.h
 fade.o: $(srcdir)/xinput.h
 passwd-kerberos.o: $(srcdir)/auth.h
-passwd-kerberos.o: $(srcdir)/blurb.h
 passwd-kerberos.o: ../config.h
+passwd-kerberos.o: $(UTILS_SRC)/blurb.h
 passwd.o: $(srcdir)/auth.h
-passwd.o: $(srcdir)/blurb.h
 passwd.o: ../config.h
 passwd.o: $(srcdir)/types.h
+passwd.o: $(UTILS_SRC)/blurb.h
 passwd.o: $(srcdir)/xscreensaver.h
 passwd-pam.o: $(srcdir)/auth.h
-passwd-pam.o: $(srcdir)/blurb.h
 passwd-pam.o: ../config.h
+passwd-pam.o: $(UTILS_SRC)/blurb.h
 passwd-pwent.o: $(srcdir)/auth.h
-passwd-pwent.o: $(srcdir)/blurb.h
 passwd-pwent.o: ../config.h
-prefs.o: $(srcdir)/blurb.h
+passwd-pwent.o: $(UTILS_SRC)/blurb.h
 prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h
-prefsw.o: $(srcdir)/blurb.h
+prefs.o: $(UTILS_SRC)/blurb.h
 prefsw.o: ../config.h
 prefsw.o: $(srcdir)/prefs.h
 prefsw.o: $(srcdir)/types.h
+prefsw.o: $(UTILS_SRC)/blurb.h
 prefsw.o: $(UTILS_SRC)/resources.h
 prefsw.o: $(UTILS_SRC)/version.h
 remote.o: $(srcdir)/atoms.h
-remote.o: $(srcdir)/blurb.h
 remote.o: $(srcdir)/clientmsg.h
 remote.o: ../config.h
 remote.o: $(srcdir)/remote.h
-screens.o: $(srcdir)/blurb.h
+remote.o: $(UTILS_SRC)/blurb.h
 screens.o: ../config.h
 screens.o: $(srcdir)/screens.h
+screens.o: $(UTILS_SRC)/blurb.h
 setuid.o: $(srcdir)/auth.h
-setuid.o: $(srcdir)/blurb.h
 setuid.o: ../config.h
+setuid.o: $(UTILS_SRC)/blurb.h
 subprocs.o: $(srcdir)/atoms.h
-subprocs.o: $(srcdir)/blurb.h
 subprocs.o: ../config.h
 subprocs.o: $(srcdir)/exec.h
 subprocs.o: $(srcdir)/types.h
+subprocs.o: $(UTILS_SRC)/blurb.h
 subprocs.o: $(UTILS_SRC)/screenshot.h
 subprocs.o: $(UTILS_SRC)/visual.h
 subprocs.o: $(UTILS_SRC)/yarandom.h
 subprocs.o: $(srcdir)/xscreensaver.h
 test-fade.o: $(srcdir)/atoms.h
-test-fade.o: $(srcdir)/blurb.h
 test-fade.o: ../config.h
 test-fade.o: $(srcdir)/fade.h
 test-fade.o: $(srcdir)/screens.h
 test-fade.o: $(srcdir)/types.h
+test-fade.o: $(UTILS_SRC)/blurb.h
 test-fade.o: $(UTILS_SRC)/resources.h
 test-fade.o: $(UTILS_SRC)/screenshot.h
 test-fade.o: $(srcdir)/xscreensaver.h
-test-grab.o: $(srcdir)/blurb.h
 test-grab.o: ../config.h
+test-grab.o: $(UTILS_SRC)/blurb.h
 test-passwd.o: $(srcdir)/auth.h
-test-passwd.o: $(srcdir)/blurb.h
 test-passwd.o: ../config.h
-test-randr.o: $(srcdir)/blurb.h
+test-passwd.o: $(UTILS_SRC)/blurb.h
 test-randr.o: ../config.h
-test-screens.o: $(srcdir)/blurb.h
+test-randr.o: $(UTILS_SRC)/blurb.h
 test-screens.o: ../config.h
 test-screens.o: $(srcdir)/screens.h
+test-screens.o: $(UTILS_SRC)/blurb.h
 test-screens.o: $(UTILS_SRC)/visual.h
 test-uid.o: ../config.h
-test-vp.o: $(srcdir)/blurb.h
 test-vp.o: ../config.h
+test-vp.o: $(UTILS_SRC)/blurb.h
 test-wayland-lock.o: $(srcdir)/atoms.h
-test-wayland-lock.o: $(srcdir)/blurb.h
 test-wayland-lock.o: ../config.h
 test-wayland-lock.o: $(srcdir)/screens.h
 test-wayland-lock.o: $(srcdir)/types.h
+test-wayland-lock.o: $(UTILS_SRC)/blurb.h
 test-wayland-lock.o: $(UTILS_SRC)/resources.h
 test-wayland-lock.o: $(srcdir)/wayland-dpy.h
 test-wayland-lock.o: $(srcdir)/wayland-lock.h
 test-wayland-lock.o: $(srcdir)/xscreensaver.h
-test-xdpms.o: $(srcdir)/blurb.h
 test-xdpms.o: ../config.h
-test-xinerama.o: $(srcdir)/blurb.h
+test-xdpms.o: $(UTILS_SRC)/blurb.h
 test-xinerama.o: ../config.h
+test-xinerama.o: $(UTILS_SRC)/blurb.h
 test-xinput.o: ../config.h
 test-xinput.o: $(srcdir)/xinput.h
-test-xkb.o: $(srcdir)/blurb.h
 test-xkb.o: ../config.h
-test-yarandom.o: $(srcdir)/blurb.h
+test-xkb.o: $(UTILS_SRC)/blurb.h
 test-yarandom.o: ../config.h
+test-yarandom.o: $(UTILS_SRC)/blurb.h
 test-yarandom.o: $(UTILS_SRC)/yarandom.h
-wayland-dpms.o: $(srcdir)/blurb.h
 wayland-dpms.o: ../config.h
 wayland-dpms.o: $(srcdir)/types.h
+wayland-dpms.o: $(UTILS_SRC)/blurb.h
 wayland-dpms.o: $(srcdir)/wayland-dpms.h
 wayland-dpms.o: $(srcdir)/wayland-dpyI.h
 wayland-dpms.o: $(srcdir)/wayland-dpy.h
 wayland-dpms.o: $(srcdir)/wayland-protocols/dpms-client-protocol.h
 wayland-dpms.o: $(srcdir)/wayland-protocols/wlr-output-power-management-unstable-v1-client-protocol.h
-wayland-dpy.o: $(srcdir)/blurb.h
 wayland-dpy.o: ../config.h
+wayland-dpy.o: $(UTILS_SRC)/blurb.h
 wayland-dpy.o: $(srcdir)/wayland-dpyI.h
 wayland-dpy.o: $(srcdir)/wayland-dpy.h
-wayland-idle.o: $(srcdir)/blurb.h
 wayland-idle.o: ../config.h
+wayland-idle.o: $(UTILS_SRC)/blurb.h
 wayland-idle.o: $(srcdir)/wayland-dpyI.h
 wayland-idle.o: $(srcdir)/wayland-dpy.h
 wayland-idle.o: $(srcdir)/wayland-idle.h
 wayland-idle.o: $(srcdir)/wayland-protocols/ext-idle-notify-v1-client-protocol.h
 wayland-idle.o: $(srcdir)/wayland-protocols/idle-client-protocol.h
 windows.o: $(srcdir)/atoms.h
-windows.o: $(srcdir)/blurb.h
 windows.o: ../config.h
 windows.o: $(srcdir)/exec.h
 windows.o: $(srcdir)/fade.h
 windows.o: $(srcdir)/screens.h
 windows.o: $(srcdir)/types.h
+windows.o: $(UTILS_SRC)/blurb.h
 windows.o: $(UTILS_SRC)/font-retry.h
 windows.o: $(UTILS_SRC)/resources.h
 windows.o: $(UTILS_SRC)/screenshot.h
 windows.o: $(UTILS_SRC)/visual.h
 windows.o: $(UTILS_SRC)/xft.h
 windows.o: $(srcdir)/xscreensaver.h
-xinput.o: $(srcdir)/blurb.h
 xinput.o: ../config.h
+xinput.o: $(UTILS_SRC)/blurb.h
 xinput.o: $(srcdir)/xinput.h
 xscreensaver-auth.o: XScreenSaver_ad.h
 xscreensaver-auth.o: $(srcdir)/atoms.h
 xscreensaver-auth.o: $(srcdir)/auth.h
-xscreensaver-auth.o: $(srcdir)/blurb.h
 xscreensaver-auth.o: ../config.h
 xscreensaver-auth.o: $(srcdir)/types.h
+xscreensaver-auth.o: $(UTILS_SRC)/blurb.h
 xscreensaver-auth.o: $(UTILS_SRC)/resources.h
 xscreensaver-auth.o: $(UTILS_SRC)/version.h
 xscreensaver-auth.o: $(UTILS_SRC)/visual.h
 xscreensaver-auth.o: $(UTILS_SRC)/yarandom.h
 xscreensaver-auth.o: $(srcdir)/xscreensaver.h
 xscreensaver-command.o: $(srcdir)/atoms.h
-xscreensaver-command.o: $(srcdir)/blurb.h
 xscreensaver-command.o: ../config.h
 xscreensaver-command.o: $(srcdir)/remote.h
+xscreensaver-command.o: $(UTILS_SRC)/blurb.h
 xscreensaver-command.o: $(UTILS_SRC)/version.h
 xscreensaver-gfx.o: XScreenSaver_ad.h
 xscreensaver-gfx.o: $(srcdir)/atoms.h
-xscreensaver-gfx.o: $(srcdir)/blurb.h
 xscreensaver-gfx.o: $(srcdir)/clientmsg.h
 xscreensaver-gfx.o: ../config.h
 xscreensaver-gfx.o: $(srcdir)/screens.h
 xscreensaver-gfx.o: $(srcdir)/types.h
+xscreensaver-gfx.o: $(UTILS_SRC)/blurb.h
 xscreensaver-gfx.o: $(UTILS_SRC)/resources.h
 xscreensaver-gfx.o: $(UTILS_SRC)/version.h
 xscreensaver-gfx.o: $(UTILS_SRC)/visual.h
@@ -1372,15 +1390,15 @@ xscreensaver-gfx.o: $(UTILS_SRC)/xmu.h
 xscreensaver-gfx.o: $(UTILS_SRC)/yarandom.h
 xscreensaver-gfx.o: $(srcdir)/xscreensaver.h
 xscreensaver.o: $(srcdir)/atoms.h
-xscreensaver.o: $(srcdir)/blurb.h
 xscreensaver.o: $(srcdir)/clientmsg.h
 xscreensaver.o: ../config.h
 xscreensaver.o: $(srcdir)/prefs.h
+xscreensaver.o: $(UTILS_SRC)/blurb.h
 xscreensaver.o: $(UTILS_SRC)/version.h
 xscreensaver.o: $(UTILS_SRC)/xmu.h
 xscreensaver.o: $(srcdir)/xinput.h
-xscreensaver-systemd.o: $(srcdir)/blurb.h
 xscreensaver-systemd.o: ../config.h
+xscreensaver-systemd.o: $(UTILS_SRC)/blurb.h
 xscreensaver-systemd.o: $(UTILS_SRC)/queue.h
 xscreensaver-systemd.o: $(UTILS_SRC)/version.h
 xscreensaver-systemd.o: $(UTILS_SRC)/yarandom.h

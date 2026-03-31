@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1991-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1175,6 +1175,8 @@ create_daemon_window (Display *dpy)
   attrs.override_redirect = True;
   attrs.event_mask = PropertyChangeMask;
 
+  /* Note that this is on screen 0, not on DefaultScreen; but
+     find_screensaver_window() will work if it is on any screen. */
   daemon_window = XCreateWindow (dpy, RootWindow (dpy, 0),
                                  0, 0, 1, 1, 0,
                                  DefaultDepth (dpy, 0), InputOutput,
@@ -1228,7 +1230,7 @@ grab_kbd (Screen *screen)
 
 
 static int
-grab_mouse (Screen *screen, Cursor cursor)
+grab_mouse (Screen *screen, Cursor cursor, Bool quiet_p)
 {
   Display *dpy = DisplayOfScreen (screen);
   Window w = RootWindowOfScreen (screen);
@@ -1241,7 +1243,8 @@ grab_mouse (Screen *screen, Cursor cursor)
                               Button5MotionMask | ButtonMotionMask),
                              GrabModeAsync, GrabModeAsync, w,
                              cursor, CurrentTime);
-  if (verbose_p)
+  if (verbose_p > 3 ||
+      (verbose_p && !quiet_p))
     fprintf (stderr, "%s: grabbing mouse on 0x%lx... %s\n",
              blurb(), (unsigned long) w, grab_string (status));
   return status;
@@ -1355,7 +1358,7 @@ grab_keyboard_and_mouse (Screen *screen)
   for (i = 0; i < retries; i++)
     {
       XSync (dpy, False);
-      mstatus = grab_mouse (screen, blank_cursor);
+      mstatus = grab_mouse (screen, blank_cursor, False);
       if (mstatus == GrabSuccess)
         break;
 
@@ -1529,6 +1532,7 @@ main_loop (Display *dpy)
   Bool authenticated_p = False;
   Bool ignore_motion_p = False;
   Bool wayland_p = False;
+  const char *active_how = 0;
 
   enum { UNBLANKED, BLANKED, LOCKED, AUTH } current_state = UNBLANKED;
 
@@ -1683,7 +1687,7 @@ main_loop (Display *dpy)
               {
                 if (verbose_p > 3)
                   fprintf (stderr, "%s: re-blanking cursor\n", blurb());
-                grab_mouse (mouse_screen (dpy), blank_cursor);
+                grab_mouse (mouse_screen (dpy), blank_cursor, True);
                 cursor_blanked_at = now;
                 blank_cursor_at = cursor_blanked_at + cursor_blank_interval;
               }
@@ -1874,6 +1878,7 @@ main_loop (Display *dpy)
                 }
               else if (msg == XA_DEACTIVATE)
                 {
+                  active_how = "ClientMessage";
                   if (current_state == UNBLANKED)
                     {
                       clientmessage_response (dpy, &xev, True,
@@ -2026,11 +2031,13 @@ main_loop (Display *dpy)
                  (verbose_p && now - active_at > 1)))
               print_xinput_event (dpy, &xev, NULL, "");
             active_at = now;
+            active_how = "kbd";
             continue;
             break;
           case ButtonPress:
           case ButtonRelease:
             active_at = now;
+            active_how = "mouse";
             if (verbose_p)
               print_xinput_event (dpy, &xev, NULL, "");
             continue;
@@ -2064,11 +2071,15 @@ main_loop (Display *dpy)
           switch (xev.xcookie.evtype) {
           case XI_RawKeyPress:
           case XI_RawKeyRelease:
+            active_how = "kbd";
+            goto XI_ACTIVE;
           case XI_RawButtonPress:
           case XI_RawButtonRelease:
           case XI_RawTouchBegin:
           case XI_RawTouchEnd:
           case XI_RawTouchUpdate:
+            active_how = "mouse";
+          XI_ACTIVE:
             if (current_state != AUTH &&  /* logged by xscreensaver-auth */
                 (verbose_p > 1 ||
                  (verbose_p && now - active_at > 1)))
@@ -2110,6 +2121,7 @@ main_loop (Display *dpy)
                       last_mouse.time = now;
                       last_mouse.x = root_x;
                       last_mouse.y = root_y;
+                      active_how = "motion";
                     }
 
                   if (verbose_p > 1 ||
@@ -2137,6 +2149,7 @@ main_loop (Display *dpy)
           if (wayland_active_p)
             {
               active_at = now;
+              active_how = "wayland";
               wayland_active_p = False;
               if (verbose_p)
                 fprintf (stderr,"%s: wayland reports user activity\n",
@@ -2156,7 +2169,7 @@ main_loop (Display *dpy)
       if (now >= last_checked_init_file + 60)
         {
           last_checked_init_file = now;
-          if (verbose_p)
+          if (verbose_p > 1)
             fprintf(stderr,"%s: checking init file\n", blurb());
           read_init_files (False);
         }
@@ -2272,7 +2285,9 @@ main_loop (Display *dpy)
           {
           UNBLANK:
             if (verbose_p)
-              fprintf (stderr, "%s: unblanking\n", blurb());
+              fprintf (stderr, "%s: unblanking (%s)\n", blurb(),
+                       (active_how ? active_how : "?"));
+            active_how = 0;
             current_state = UNBLANKED;
             ignore_motion_p = False;
             store_saver_status (dpy, False, False, False, now);
@@ -2333,13 +2348,15 @@ main_loop (Display *dpy)
               }
 
             if (verbose_p)
-              fprintf (stderr, "%s: authorizing\n", blurb());
+              fprintf (stderr, "%s: authorizing (%s)\n", blurb(),
+                       (active_how ? active_how : "?"));
+            active_how = 0;
             current_state = AUTH;
 
             /* We already hold the mouse grab, but try to re-grab it with
                a different mouse pointer, so that the pointer shows up while
                the auth dialog is raised.  We can ignore failures here. */
-            grab_mouse (mouse_screen (dpy), auth_cursor);
+            grab_mouse (mouse_screen (dpy), auth_cursor, True);
 
             store_saver_status (dpy, True, True, True, locked_at);
 
@@ -2377,7 +2394,7 @@ main_loop (Display *dpy)
             /* We already hold the mouse grab, but try to re-grab it with
                a different mouse pointer, to hide the pointer again now that
                the auth dialog is gone.  We can ignore failures here. */
-            grab_mouse (mouse_screen (dpy), blank_cursor);
+            grab_mouse (mouse_screen (dpy), blank_cursor, True);
             cursor_blanked_at = now;
 
             /* When the unlock dialog is dismissed, ignore any input for a

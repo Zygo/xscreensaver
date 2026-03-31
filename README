@@ -75,6 +75,20 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.15	* New hacks, `worldpieces', `bestill', `bubblecolors', `darktransit',
+	  `downfall', `driftclouds', `goldenapollian', `noxfire', `prococean',
+	  `rigrekt', `trainmandala', `trizm' and `universeball'.
+	* `mapscroller' shows the name of the nearest major city, and has an
+          updated list of available map tile servers.
+	* Higher resolution Earth imagery in `glplanet', `dymaxionmap'
+	  `sphereeversion', `cubocteversion' and `platonicfolding'.
+	* X11: `xscreensaver-settings' has a search field.
+	* X11: Excised the last remnants of XLFD-style font parsing.
+	* macOS, iOS: Text in right-to-left languages is rendered properly.
+	* Android: Most things display text properly.
+
+6.14.1	* macOS: the new shader savers were crashing at startup.
+
 6.14	* Added the ability to run shadertoy.com programs as screen savers.
 	* New shader-based savers: `alienbeacon', `batteredplanet',
 	  `elementalring', `fluxcore', `gimbalharmonics', `hexplasma',

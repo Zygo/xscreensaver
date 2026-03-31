@@ -965,24 +965,25 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
        vertically to scale well.
    */
 
-  NSLog(@"screen: %.0fx%0.f",
-        [[screen currentMode] size].width,
-        [[screen currentMode] size].height);
-  NSLog(@"bounds: %.0fx%0.f x %.1f = %.0fx%0.f",
-        [screen bounds].size.width,
-        [screen bounds].size.height,
+  /* Also NSLog treats %.0f or %.1f or %6.2f as %f, how very. */
+  NSLog(@"screen: %d x %d",
+        (int) [[screen currentMode] size].width,
+        (int) [[screen currentMode] size].height);
+  NSLog(@"bounds: %d x %d x %.1f = %d x %d",
+        (int) [screen bounds].size.width,
+        (int) [screen bounds].size.height,
         [screen scale],
-        [screen scale] * [screen bounds].size.width,
-        [screen scale] * [screen bounds].size.height);
+        (int) ([screen scale] * [screen bounds].size.width),
+        (int) ([screen scale] * [screen bounds].size.height));
 
 #  ifdef __IPHONE_8_0
   if ([screen respondsToSelector:@selector(nativeBounds)])
-    NSLog(@"native: %.0fx%0.f / %.1f = %.0fx%0.f",
-          [screen nativeBounds].size.width,
-          [screen nativeBounds].size.height,
+    NSLog(@"native: %d x %d / %.1f = %d x %d",
+          (int) [screen nativeBounds].size.width,
+          (int) [screen nativeBounds].size.height,
           [screen nativeScale],
-          [screen nativeBounds].size.width  / [screen nativeScale],
-          [screen nativeBounds].size.height / [screen nativeScale]);
+          (int) ([screen nativeBounds].size.width  / [screen nativeScale]),
+          (int) ([screen nativeBounds].size.height / [screen nativeScale]));
 #  endif
 # endif // TARGET_IPHONE_SIMULATOR
 

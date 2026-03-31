@@ -1,4 +1,4 @@
-# configure.ac --- xscreensaver, Copyright © 1997-2025 Jamie Zawinski.
+# configure.ac --- xscreensaver, Copyright © 1997-2026 Jamie Zawinski.
 #
 
 AC_PREREQ([2.69])
@@ -3750,6 +3750,8 @@ if test "$with_xft" = yes; then
   ok="yes"
   pkg_check_version xft 2.1.0
   have_xft="$ok"
+  pkg_check_version fontconfig 2.0.0
+  have_fontconfig="$ok"
 
   if test "$have_xft" = yes; then
     AC_CACHE_CHECK([for Xft includes], ac_cv_xft_config_cflags,
@@ -4670,7 +4672,10 @@ if test "$have_xinput" = no ; then
 fi
 
 
-if test "$have_xft" = no ; then
+if test "$have_fontconfig" = no ; then
+  warnL 'The fontconfig library was not found.  It is required.'
+  CONF_STATUS=1
+elif test "$have_xft" = no ; then
   warnL 'The XFreeType library was not found.  It is required.'
   if test "$xft_halfassed" = yes ; then halfassery ; else echo '' ; fi
   CONF_STATUS=1

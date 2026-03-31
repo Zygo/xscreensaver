@@ -1446,6 +1446,7 @@ ENTRYPOINT void draw_crackberg (ModeInfo *mi)
     mi->polygon_count = cberg->ntris * 
       triles_foreach(cberg->trile_head, trile_draw,(void *) cberg);
     
+    glColor3f (1, 1, 1);
     if (mi->fps_p)  
         do_fps(mi);
 

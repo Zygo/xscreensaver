@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2000-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2000-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,10 +30,10 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
 
+#include "blurb.h"
 #include "visual.h"
 #include "visual-gl.h"
 
-char *progname = 0;
 char *progclass = "XScreenSaver";
 
 int

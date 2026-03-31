@@ -436,6 +436,10 @@ init_toasters (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
     }
 
+# ifdef HAVE_JWZGLES /* No SPHERE_MAP */
+  do_texture = False;
+# endif
+
 # ifdef HAVE_TEXTURE
   if (!wire && do_texture)
     load_textures (mi);
@@ -478,7 +482,7 @@ init_toasters (ModeInfo *mi)
 #ifdef HAVE_TEXTURE
           if (do_texture)
             {
-#ifndef HAVE_JWZGLES /* No SPHERE_MAP yet */
+#ifndef HAVE_JWZGLES /* No SPHERE_MAP */
               glEnable (GL_TEXTURE_2D);
               glEnable (GL_TEXTURE_GEN_S);
               glEnable (GL_TEXTURE_GEN_T);

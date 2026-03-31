@@ -1,4 +1,4 @@
-/* sonar, Copyright © 1998-2025 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright © 1998-2026 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -921,8 +921,10 @@ init_sensor (ModeInfo *mi)
                                ping_arg, ping_timeout, resolve_p, times_p,
                                debug_p);
 
+# ifndef HAVE_ANDROID
   /* Might have done this already, but disavow in simulation mode too. */
   if (setuid(getuid()) == -1) abort();
+# endif
 
   sp->start_time = double_time ();  /* for error message timing */
 
@@ -1093,8 +1095,10 @@ draw_sonar (ModeInfo *mi)
   mi->polygon_count += draw_bogies (mi);
   glPopMatrix();
 
+# ifndef HAVE_ANDROID /* alpha not working */
   glCallList (sp->screen_list);				/* glass */
   mi->polygon_count += sp->screen_polys;
+# endif
 
   glTranslatef (0, 0, 0.004);				/* sweep */
   glPushMatrix();
@@ -1142,6 +1146,7 @@ draw_sonar (ModeInfo *mi)
 
   glPopMatrix ();
 
+  glColor3f (0.5, 0.5, 0.5);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

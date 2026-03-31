@@ -1,5 +1,5 @@
 /* screens.c --- dealing with RANDR, Xinerama, and VidMode Viewports.
- * xscreensaver, Copyright © 1991-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -596,6 +596,9 @@ scan_monitors (Display *dpy)
         }
     }
 
+  if (ScreenCount (dpy) != 1)
+    err = append (err, "WARNING: 80s-style multi-screen");
+
   if (monitors && *monitors && err) monitors[0]->err = err;
 
   return monitors;
@@ -817,7 +820,7 @@ describe_monitor_layout (monitor **monitors)
         {
           monitor *m = monitors[i];
           if (m->sanity != S_SANE) continue;
-          fprintf (stderr, "%s:     %3d/%d: %dx%d+%d+%d",
+          fprintf (stderr, "%s:     %4d/%d: %dx%d+%d+%d",
                    blurb(), m->id, screen_number (m->screen),
                    m->width, m->height, m->x, m->y);
           if (m->desc && *m->desc) fprintf (stderr, " (%s)", m->desc);

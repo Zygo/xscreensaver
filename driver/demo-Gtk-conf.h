@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,6 +31,7 @@ extern conf_data *load_configurator (const char *cmd_line,
 extern char *get_configurator_command_line (conf_data *, gboolean default_p);
 extern void  set_configurator_command_line (conf_data *, const char *cmd_line);
 extern void free_conf_data (conf_data *);
+extern char *load_description (const char *program);
 
 /* Referenced from demo.ui and prefs.ui; defined in demo-Gtk.c.
  */
@@ -48,6 +49,7 @@ extern void run_next_cb (GtkButton *, gpointer user_data);
 extern void run_prev_cb (GtkButton *, gpointer user_data);
 extern gboolean pref_changed_cb (GtkWidget *, gpointer user_data);
 extern gboolean pref_changed_event_cb (GtkWidget *, GdkEvent *, gpointer data);
+extern gboolean search_text_changed_event_cb (GtkWidget *, gpointer user_data);
 extern gboolean dpms_sanity_cb (GtkWidget *, gpointer user_data);
 extern gboolean dpms_sanity_event_cb (GtkWidget *, GdkEvent *, gpointer data);
 extern gboolean image_text_pref_changed_event_cb (GtkWidget *, GdkEvent *,

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -540,6 +540,40 @@ textclient_reshape (text_data *d,
 }
 
 
+/* Add @HACKDIR@ to $PATH so that if someone runs e.g.
+   /usr/libexec/xscreensaver/phosphor directly, we find
+   /usr/libexec/xscreensaver/xscreensaver-text.
+ */
+static void
+set_path (void)
+{
+# ifdef DEFAULT_PATH_PREFIX
+  static Bool done_once = False;
+  static const char *def_path = DEFAULT_PATH_PREFIX;
+  const char *opath;
+  char *npath;
+  if (done_once) return;
+  done_once = True;
+
+  opath = getenv("PATH");
+  if (! opath) opath = "/bin:/usr/bin";  /* WTF */
+  npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
+  strcpy (npath, "PATH=");
+  strcat (npath, def_path);
+  strcat (npath, ":");
+  strcat (npath, opath);
+
+  /* Can fail if out of memory, I guess. Ignore errors. */
+  putenv (npath);
+
+  /* don't free (npath) -- some implementations of putenv (BSD 4.4,
+     glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2)
+     do not.  So we must leak it (and/or the previous setting). Yay.
+   */
+# endif /* DEFAULT_PATH_PREFIX */
+}
+
+
 text_data *
 textclient_open (Display *dpy)
 {
@@ -598,6 +632,7 @@ textclient_open (Display *dpy)
   }
 # endif
 
+  set_path();
   putenv ("TERM=vt100");
   unsetenv ("TERMCAP");
   unsetenv ("INSIDE_EMACS");

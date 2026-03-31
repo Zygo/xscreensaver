@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright © 1991-2025 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1991-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -876,6 +876,7 @@ spawn_screenhack (saver_screen_info *ssi)
 {
   saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
+  Bool printed_p = False;
   XFlush (si->dpy);
 
   if (!monitor_powered_on_p (si))
@@ -885,6 +886,7 @@ spawn_screenhack (saver_screen_info *ssi)
                  "%s: %d: X says monitor has powered down; "
                  "not launching a hack\n", blurb(), ssi->number);
       ssi->current_hack = -1;
+      printed_p = True;
 
       /* Hooray, this doesn't actually clear the window if it was OpenGL.
          And some X servers apparently ignore XClearWindow if the monitor is
@@ -1123,7 +1125,9 @@ spawn_screenhack (saver_screen_info *ssi)
               cycle_at = prev_at + off / 1000;
               how_long = 1000 * (cycle_at - now);
 
-              if (p->verbose_p && cycle_at - old > 2)
+              if ((p->verbose_p > 1 ||
+                   (p->verbose_p && !printed_p)) &&
+                  cycle_at - old > 2)
                 fprintf (stderr, "%s: %d: offsetting cycle time by %ld sec\n",
                          blurb(), ssi->number,
                          cycle_at - old);
@@ -1140,7 +1144,8 @@ spawn_screenhack (saver_screen_info *ssi)
         XtAppAddTimeOut (si->app, how_long, cycle_timer, (XtPointer) ssi);
       ssi->cycle_at = now + how_long / 1000;
 
-      if (p->verbose_p)
+      if (p->verbose_p > 1 ||
+          (p->verbose_p && !printed_p))
         fprintf (stderr, "%s: %d: next cycle in %d:%02d:%02d at %s\n",
                  blurb(), ssi->number,
                  (int)  (how_long / 1000) / (60 * 60),

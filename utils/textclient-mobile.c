@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -91,7 +91,9 @@ textclient_close (text_data *d)
 static char *
 decode_entities (const char *html)
 {
-  char *ret = (char *) malloc ((strlen(html) * 4) + 1);  // room for UTF8
+  int L = (strlen(html) * 4);  // room for UTF8
+  char *ret = (char *) malloc (L+1);
+  const char *end = ret + L;
   const char *in = html;
   char *out = ret;
   *out = 0;
@@ -258,16 +260,16 @@ decode_entities (const char *html)
                           *in - '0');
           in++;
         }
-        *out += utf8_encode (i, out, strlen(out));
+        out += utf8_encode (i, out, end-out);
         done = 1;
       } else if (in[1] == '#') {				// &#65;
         unsigned long i = 0;
-        in++;
+        in += 2;
         while (*in >= '0' && *in <= '9') {
           i = (i * 10) + (*in - '0');
           in++;
         }
-        *out += utf8_encode (i, out, strlen(out));
+        out += utf8_encode (i, out, end-out);
         done = 1;
       } else {
         int i;
@@ -520,6 +522,8 @@ strip_wiki (char *text)
         in += 4;
       else if (!strncmp (in, "'''", 3)) 	/* omit ''' */
         in += 3;
+      else if (!strncmp (in, "}", 1))	 	/* omit } */
+        in += 1;
       else if (!strncmp (in, "''", 2) ||	/* '' or `` or "" -> " */
                !strncmp (in, "``", 2) ||
                !strncmp (in, "\"\"", 2))

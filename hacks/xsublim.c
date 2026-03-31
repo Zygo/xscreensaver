@@ -108,6 +108,7 @@
 #include <X11/SGIScheme.h>
 #endif
 
+#include "blurb.h"
 #include "usleep.h"
 #include "yarandom.h"
 #include "resources.h"
@@ -117,7 +118,6 @@
 
 
 /* Globals *******************************************************************/
-char*        progname;
 char*        progclass = XSUBLIM_NAME;
 
 # ifdef __GNUC__
@@ -426,7 +426,10 @@ int main(int argc,char* argv[])
           }
 
 	dpy = XtDisplay(app_App);
-	XtGetApplicationNameAndClass(dpy,&progname,&progclass);
+        {
+          char *progname2;
+          XtGetApplicationNameAndClass(dpy,&progname2,&progclass);
+        }
 	win_Root = RootWindowOfScreen(XtScreen(app_App));
 	XtDestroyWidget(app_App);
 
@@ -561,12 +564,12 @@ int main(int argc,char* argv[])
 	}
 
 	/* Load the font */
-	font_Font = load_font_retry(dpy,
+	font_Font = XLoadQueryFont(dpy,
 	 get_string_resource(dpy, XSUBLIM_ARG_FONT,"Font"));
 	font_Index = 0;
 	while ((font_Font == NULL) && (font_List[font_Index] != NULL))
 	{
-		font_Font = load_font_retry(dpy,font_List[font_Index]);
+		font_Font = XLoadQueryFont(dpy,font_List[font_Index]);
 		font_Index++;
 	}
 	if (font_Font == NULL)

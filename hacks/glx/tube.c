@@ -114,13 +114,16 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
       if (out >= arraysize) abort();
     }
 
-  glEnableClientState (GL_VERTEX_ARRAY);
-  glEnableClientState (GL_NORMAL_ARRAY);
-  glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
   glVertexPointer   (3, GL_FLOAT, sizeof(*array), &array[0].p);
   glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
   glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
+
+  glEnableClientState (GL_VERTEX_ARRAY);
+  glEnableClientState (GL_NORMAL_ARRAY);
+
+  if (glIsEnabled (GL_TEXTURE_2D))
+    /* Android fuckery; see comment in unit_sphere(). */
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
   glFrontFace(GL_CCW);
   glDrawArrays ((wire_p ? GL_LINES :
@@ -258,13 +261,16 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
       polys++;
     }
 
-  glEnableClientState (GL_VERTEX_ARRAY);
-  glEnableClientState (GL_NORMAL_ARRAY);
-  glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
   glVertexPointer   (3, GL_FLOAT, sizeof(*array), &array[0].p);
   glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
   glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
+
+  glEnableClientState (GL_VERTEX_ARRAY);
+  glEnableClientState (GL_NORMAL_ARRAY);
+
+  if (glIsEnabled (GL_TEXTURE_2D))
+    /* Android fuckery; see comment in unit_sphere(). */
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
   glFrontFace(GL_CCW);
   glDrawArrays ((wire_p ? GL_LINES : GL_TRIANGLES), 0, out);

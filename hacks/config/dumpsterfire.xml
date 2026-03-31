@@ -4,7 +4,7 @@
 
   <command arg="--root"/>
 
-  <video href="https://www.youtube.com/watch?v=9XZQ3xLS4O8"/>
+  <video href="https://www.youtube.com/watch?v=odBVYPqvhNY"/>
 
   <number id="delay" type="slider" arg="--delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"

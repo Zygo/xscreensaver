@@ -1,4 +1,4 @@
-/* sonar, Copyright © 1998-2025 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright © 1998-2026 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1731,7 +1731,7 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
         fprintf (stderr, "%s: re-using icmp socket\n", progname);
 
     } 
-# if defined(__APPLE__) && defined(__MACH__)
+# if (defined(__APPLE__) && defined(__MACH__)) || defined(HAVE_ANDROID)
   /* As of Debian 11.1 (kernel 5.10) this call *succeeds* but no ping
      responses are received, even when sonar is setuid root.  Previously,
      this call would fail on Linux, and would only succeed on macOS, and
@@ -1741,7 +1741,7 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
     {
       socket_initted_p = True;
     }
-# endif /* macOS */
+# endif /* macOS || Android */
   else if (set_ping_capability() &&
            (pd->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0)
     {
@@ -1761,7 +1761,9 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
     fprintf (stderr, "%s: unable to open icmp socket\n", progname);
 
   /* Disavow privs */
+# ifndef HAVE_ANDROID /* "lol" as the kids say */
   if (setuid(getuid()) == -1) abort();
+# endif
 
 
   /* Feb 2025: On macOS 14.7, sometimes sendto() gives us a free SIGPIPE,

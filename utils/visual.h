@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1993-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1993-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,7 @@ extern int visual_pixmap_depth (Screen *, Visual *);
 extern int visual_class (Screen *, Visual *);
 extern int visual_cells (Screen *, Visual *);
 extern int screen_number (Screen *);
-extern Visual *find_similar_visual (Screen *, Visual *old);
+extern Visual *find_similar_visual (Screen *, Screen *, Visual *old);
 extern void describe_visual (FILE *f, Screen *, Visual *, Bool private_cmap_p);
 extern Visual *get_overlay_visual (Screen *, unsigned long *pixel_return);
 extern Bool has_writable_cells (Screen *, Visual *);

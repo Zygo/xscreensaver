@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -57,7 +57,7 @@ extern struct xscreensaver_function_table *xscreensaver_function_table;
 
 /* Global variables used by the screen savers
  */
-const char *progname;
+// const char *progname;  // Defined in utils/blurb.c
 const char *progclass;
 int mono_p = 0;
 
@@ -430,7 +430,7 @@ static void sighandler (int sig)
 # ifdef HAVE_IPHONE
   jwxyz_abort ("Signal: %s", s);	// Throw NSException, show dialog
 # else
-  NSLog (@"Signal: %s", s);		// Just make sure it is logged
+  NSLog (@"%s: signal: %s", progclass, s);	// Just make sure it is logged
 
   // Log stack trace too.
   // Same info shows up in Library/Logs/DiagnosticReports/ScreenSaverEngine*
@@ -523,7 +523,7 @@ static NSMutableArray *all_saver_views = NULL;
      $HOME/Library/Preferences/ByHost/ in a file named like
      "org.jwz.xscreensaver.<CLASSNAME>.<NUMBERS>.plist"
    */
-  NSString *progclass2;
+  NSString *progclass2 = NULL;
   Bool shader_p = !strcasecmp (xsft->progclass, "xshadertoy");
 
   if (!shader_p) {
@@ -533,9 +533,45 @@ static NSMutableArray *all_saver_views = NULL;
   } else {
     // Shadertoy saver: we are using the "XShaderToy" function table,
     // so set our progclass back to the real hack name instead.
-    // This path happens on both macOS and iOS.
-    progclass2 = [_title stringByReplacingOccurrencesOfString:@" "
-                                                   withString:@""];
+    //
+    if (_title && _title.length) {
+      progclass2 = _title;
+    } else {
+# ifdef HAVE_IPHONE
+      progclass2 = [_title stringByReplacingOccurrencesOfString:@" "
+                                                     withString:@""];
+# else // !HAVE_IPHONE
+
+      // If we are running under SaverRunner, it passed in the title: arg.
+      // That happens on iOS, and on macOS SaverTester.app, but does not
+      // happen when we are launched by ScreenSaverEngine!  So in that case,
+      // we have to figure out the name of the Shadertoy hack by parsing
+      // our class name.  Auuuughhhh.
+      //
+      // "XScreenSaverHACKView" => "HACK"
+      NSString *prefix = @"XScreenSaver";
+      NSString *suffix = @"View";
+      NSString *cn = self.className;
+      NSRange r1 = [cn rangeOfString:prefix options:NSAnchoredSearch];
+      NSRange r2 = [cn rangeOfString:suffix options:
+                         NSAnchoredSearch|NSBackwardsSearch];
+      if (r1.location >= 0 && r2.location >= 0)
+        progclass2 = [cn substringWithRange:
+                           NSMakeRange (r1.length, r2.location - r1.length)];
+# endif // HAVE_IPHONE
+    }
+
+    if (!progclass2 || !progclass2.length) {
+# ifndef HAVE_IPHONE
+        NSLog(@"Class name unparsable: %@", self.className);
+# endif
+        abort();
+    } else {
+      NSLog(@"Shader %@", progclass2);
+    }
+
+    progclass2 = [progclass2 stringByReplacingOccurrencesOfString:@" "
+                                                       withString:@""];
     xsft->progclass =
       strdup ([progclass2 cStringUsingEncoding:NSUTF8StringEncoding]);
   }
@@ -682,7 +718,7 @@ static NSMutableArray *all_saver_views = NULL;
    We keep track of each ScreenSaverView that was created; and then a little
    while after startup, we check to see which of those views have not been
    attached to windows, or have the wrong geometry.
-   Duplicated in XScreenSaverView.m.
+   Duplicated in Randomizer.m.
  */
 - (void) venturaLaunchKludge: (NSTimer *) timer
 {
@@ -1910,7 +1946,8 @@ gl_check_ver (const struct gl_version *caps,
   jwxyz_window_resized (xdpy);
 
 # if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
-  NSLog(@"reshape %.0fx%.0f %.1fx", new_size.width, new_size.height, s);
+  NSLog(@"reshape %d x %d %.1fx",
+        (int) new_size.width, (int) new_size.height, s);
 # endif
 
   // Next time render_x11 is called, run the saver's reshape_cb.

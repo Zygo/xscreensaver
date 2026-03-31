@@ -1,5 +1,5 @@
 /* dymaxionmap --- Buckminster Fuller's unwrapped icosahedral globe.
- * Copyright © 2016-2025 Jamie Zawinski.
+ * Copyright © 2016-2026 Jamie Zawinski.
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -34,7 +34,12 @@
 #include "easing.h"
 #include "doubletime.h"
 #include "texfont.h"
+#include "ximage-loader.h"
+#include "rotator.h"
+#include "gltrackball.h"
 #include "dymaxionmap-coords.h"
+#include "earth.h"
+#include "images/gen/ground_png.h"
 
 #define DEF_ROTATE  "True"
 #define DEF_ROLL    "True"
@@ -112,22 +117,6 @@ ModStruct   planet_description =
  1000, 1, 2, 1, 4, 1.0, "",
  "Buckminster Fuller's unwrapped icosahedral globe", 0, NULL};
 #endif
-
-# ifdef __GNUC__
-  __extension__	 /* don't warn about "string length is greater than the length
-		    ISO C89 compilers are required to support" when including
-		    the following XPM file... */
-# endif
-
-#include "images/gen/earth_flat_png.h"
-#include "images/gen/earth_png.h"
-#include "images/gen/earth_night_png.h"
-#include "images/gen/ground_png.h"
-
-#include "ximage-loader.h"
-#include "rotator.h"
-#include "gltrackball.h"
-
 
 typedef struct {
   GLXContext *glx_context;
@@ -351,13 +340,13 @@ load_images (ModeInfo *mi)
       if (!strcmp (s, "BUILTIN_DAY"))
         {
           image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                        earth_png, sizeof(earth_png));
+                                        earth_png, earth_png_size);
           builtin_p = True;
         }
       else if (!strcmp (s, "BUILTIN_NIGHT"))
         {
           image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                     earth_night_png, sizeof(earth_night_png));
+                                     earth_night_png, earth_night_png_size);
           builtin_p = True;
         }
       else if (!strcmp (s, "BUILTIN") ||
@@ -365,7 +354,7 @@ load_images (ModeInfo *mi)
                (i == 0 && !strcmp (s, "")))
         {
           image = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
-                                       earth_flat_png, sizeof(earth_flat_png));
+                                       earth_flat_png, earth_flat_png_size);
           builtin_p = True;
         }
       else if (!strcmp (s, "NONE"))
@@ -1181,7 +1170,9 @@ triangle (ModeInfo *mi, int which, Bool frontp,
 
       glDisable (GL_TEXTURE_2D);
       glDisable (GL_LIGHTING);
+# ifndef HAVE_ANDROID
       glLineWidth (2);
+# endif
       glColor4fv (c);
       glBegin (GL_LINES);
       if (edges & 1<<0)
@@ -1348,7 +1339,9 @@ draw_axis (ModeInfo *mi)
   s = 0.96;
   glScalef (s, s, s);   /* tighten up the enclosing sphere */
 
+# ifndef HAVE_ANDROID
   glLineWidth (1);
+# endif
   glColor3f (0.5, 0.5, 0);
 
   glRotatef (90,  1, 0, 0);    /* unit_sphere is off by 90 */

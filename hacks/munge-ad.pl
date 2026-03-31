@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.17 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.18 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -155,6 +155,7 @@ sub munge_ad($) {
     elsif (-f "glx/$hack.c") { $glp = 1; }
     elsif (-f "glx/glsl/$hack.glsl") { $glp = 1; }
     elsif (-f "glx/glsl/$hack-0.glsl") { $glp = 1; }
+    elsif (-f "glx/glsl/${hack}0-0.glsl") { $glp = 1; }
     elsif ($hack eq 'companioncube') { $glp = 1; }  # kludge
     elsif ($dis != 2) { error ("is $hack X or GL?"); }
 

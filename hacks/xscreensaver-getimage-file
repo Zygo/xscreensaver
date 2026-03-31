@@ -53,7 +53,7 @@ BEGIN { eval 'use LWP::Simple; use LWP::UserAgent;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.71 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.72 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -475,6 +475,12 @@ sub parse_feed($) {
   # In xscreensaver-text we just disabled certificate checks. However,
   # malicious images really do exist, so for xscreensaver-getimage-file,
   # let's actually require that SSL be installed properly.
+
+  #### This should send an If-Modified-Since with the date at which we
+  #    last checked the feed.  That is the date on the .timestamp file
+  #    in the feed cache directory.  Return value needs to distinguish
+  #    between "unchanged" and "empty".
+
 
   print STDERR "$progname: loading $url\n" if ($verbose);
   my $body = (LWP::Simple::get($url) || '');

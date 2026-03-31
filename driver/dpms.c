@@ -1,5 +1,5 @@
 /* dpms.c --- syncing the X Display Power Management System values
- * xscreensaver, Copyright © 2001-2025 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -268,7 +268,8 @@ sync_server_dpms_settings_1 (Display *dpy, struct saver_preferences *p)
   if (change_count > 3)
     {
       fprintf (stderr, "%s: WARNING: some other program keeps changing"
-               " the DPMS settings. That's bad.\n", blurb());
+               " the DPMS settings to %d %d %d. That's bad.\n", blurb(),
+               o_standby, o_suspend, o_off);
       change_count = 0;
     }
 }

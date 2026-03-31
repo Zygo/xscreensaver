@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2001-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2001-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -149,7 +149,7 @@
 #endif
 
 #include "version.h"
-#include "../driver/blurb.h"
+#include "blurb.h"
 #include "yarandom.h"
 #include "grabclient.h"
 #include "screenshot.h"
@@ -160,7 +160,6 @@
 #include "xmu.h"
 #include "vroot.h"
 #include "../driver/prefs.h"
-#include "../driver/blurb.c"
 
 #ifndef _XSCREENSAVER_VROOT_H_
 # error Error!  You have an old version of vroot.h!  Check -I args.

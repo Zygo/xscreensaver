@@ -103,8 +103,11 @@ When \fBMode\fP is set to \fBRandom Screen Saver\fP, each name in the list
 has a checkbox next to it: this controls whether this display mode is
 enabled.  If it is unchecked, then that mode will not be chosen.  (Though
 you can still run it explicitly by double-clicking on its name.)
-
-If the list has focus, you can type any character to search within it.
+.SS Search Field
+Savers will be hidden from the list unless they match the text in the search
+field above the list.  It matches on the name of the saver as well as on any
+text in the description.  This means you can, for example, search by author or
+by year.
 .SS Arrow Buttons
 Beneath the list are a pair of up and down arrows. Clicking on the down 
 arrow will select the next item in the list, and then run it in full-screen

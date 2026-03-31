@@ -905,6 +905,7 @@ draw_gears (ModeInfo *mi)
           g->th -= off;
       }
 
+  glColor3f (1, 1, 1);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

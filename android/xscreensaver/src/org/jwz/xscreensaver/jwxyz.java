@@ -60,6 +60,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.Manifest;
 import android.support.v4.app.ActivityCompat;
+//import android.app.Activity;
 import android.support.v4.content.ContextCompat;
 import android.os.Build;
 import android.content.pm.PackageManager;
@@ -669,15 +670,51 @@ public class jwxyz
                                    boolean rotate_p) {
 
         String permission = "";
-        if (Build.VERSION.SDK_INT >= 33) {
+
+        if (Build.VERSION.SDK_INT >= 34) {
+            permission = Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED;
+        } else if (Build.VERSION.SDK_INT >= 33) {
             permission = Manifest.permission.READ_MEDIA_IMAGES;
         } else {
             permission = Manifest.permission.READ_EXTERNAL_STORAGE;
         }
 
         if (havePermission(permission)) {
+            LOG ("loading random image");
             return loadRandomImage(target_width,target_height,rotate_p);
         } else {
+            LOG ("no image loading permission: SDK %d: %s",
+                 Build.VERSION.SDK_INT,
+                 permission == Manifest.permission.READ_MEDIA_IMAGES
+                 ? "READ_MEDIA_IMAGES" :
+                 permission == Manifest.permission.READ_EXTERNAL_STORAGE
+                 ? "READ_EXTERNAL_STORAGE" :
+                 permission ==
+                 Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                 ? "READ_MEDIA_VISUAL_USER_SELECTED" : "???");
+
+            /* Maybe we need to do something like this now?
+               I can't figure out where requestPermissions.launch is
+               defined. None of the "androidx" packages seem to be 
+               available even if "android.useAndroidX=true" is in
+               gradle.properties.
+               https://developer.android.com/about/versions/14/changes/partial-photo-video-access
+             */
+            /*
+            if (Build.VERSION.SDK_INT >= 34) {
+              requestPermissions.launch (new String[]{
+                  Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED },
+                1);
+            } else if (Build.VERSION.SDK_INT >= 33) {
+              requestPermissions.launch (new String[]{
+                  Manifest.permission.READ_MEDIA_IMAGES });
+            } else {
+              requestPermissions.launch (new String[]{
+                  Manifest.permission.READ_EXTERNAL_STORAGE });
+            }
+            */
+
             return null;
         }
   }

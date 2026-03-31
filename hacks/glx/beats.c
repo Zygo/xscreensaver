@@ -196,10 +196,6 @@ init_beats (ModeInfo *mi)
   bp->use_tick = tick_arg;
   bp->use_blur = blur_arg;
   
-# ifdef HAVE_ANDROID
-  bp->use_blur = False; /* Works on iOS but not Android */
-# endif
-
   bp->ncolors = 128;
   bp->colors = (XColor *) calloc(bp->ncolors, sizeof(XColor));
   make_smooth_colormap (0, 0, 0,
@@ -418,6 +414,7 @@ draw_beats (ModeInfo *mi)
     }
   }
   glPopMatrix();
+  glColor3f(1,1,0);
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers(dpy, window);

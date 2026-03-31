@@ -630,6 +630,7 @@ ENTRYPOINT void draw_surface(ModeInfo * mi)
 
   glXMakeCurrent(display, window, *sp->glx_context);
   draw(mi);
+  glColor3f(1,1,0);
   if (mi->fps_p)
     do_fps(mi);
   glFinish();

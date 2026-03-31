@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.62 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.63 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -100,6 +100,7 @@ sub read_saver_xml($) {
   return () if ($name eq 'SaverTester');
   return () if ($name eq 'XScreenSaverUpdater');
   return () if ($name eq 'RandomXScreenSaver');
+  return () if ($name eq 'XShadertoy');
 
   my $file  = "$app_dir/Contents/Resources/" . lc($name) . ".xml";
   my $file2 = "$app_dir/" . lc($name) . ".xml";

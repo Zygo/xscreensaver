@@ -127,13 +127,19 @@ textclient_mobile_date_string (void)
       time_t now = time ((time_t *) 0);
       char *ts = ctime (&now);
       char *buf, *s;
-      if ((s = strchr(uts.nodename, '.')))
+      if ((s = strchr(uts.nodename, '.')))	// Phones aren't named
+        *s = 0;
+      if ((s = strchr(uts.release, '-')) &&
+          (s = strchr(s+1, '-')) &&
+          (s = strchr(s+1, '-')))
+        // E.g. "6.6.66-android15-8-gb66429556fb8-ab13070261-4k"
         *s = 0;
       buf = (char *) malloc(strlen(uts.machine) +
                             strlen(uts.sysname) +
                             strlen(uts.release) +
                             strlen(ts) + 10);
-      sprintf (buf, "%s %s %s\n%s", uts.machine, uts.sysname, uts.release, ts);
+      sprintf (buf, "%s %s\n%s\n%s\n",
+               uts.sysname, uts.machine, uts.release, ts);
       return buf;
     }
 }

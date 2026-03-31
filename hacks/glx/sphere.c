@@ -1,5 +1,5 @@
 /* sphere, Copyright (c) 2002 Paul Bourke <pbourke@swin.edu.au>,
- *         Copyright (c) 2010-2014 Jamie Zawinski <jwz@jwz.org>
+ *         Copyright (c) 2010-2026 Jamie Zawinski <jwz@jwz.org>
  * Utility function to create a unit sphere in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -112,13 +112,48 @@ unit_sphere_1 (int stacks, int slices, int wire_p, int half_p)
 
  END:
 
-  glEnableClientState (GL_VERTEX_ARRAY);
-  glEnableClientState (GL_NORMAL_ARRAY);
-  glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
   glVertexPointer   (3, GL_FLOAT, sizeof(*array), &array[0].p);
   glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
   glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
+
+  glEnableClientState (GL_VERTEX_ARRAY);
+  glEnableClientState (GL_NORMAL_ARRAY);
+
+  /* On Android -- and only Android -- if GL_TEXTURE_2D has *ever* been
+     enabled in this session (even just once and then immediately disabled!)
+     then enabling GL_TEXTURE_COORD_ARRAY implicitly turns on texturing.
+     So if we don't want textures, GL_TEXTURE_COORD_ARRAY has to be disabled
+     before calling glDrawArrays.
+
+     The *hack* I have implemented for this is to omit GL_TEXTURE_COORD_ARRAY
+     unless GL_TEXTURE_2D was enabled at the time that unit_sphere() was
+     called.
+
+     Note that glIsEnabled checks the prevailing state, and is not recorded
+     inside display lists, so callers who want a textured sphere have to
+     enable GL_TEXTURE_2D outside of glNewList before calling unit_sphere.
+
+     unit_tube() and jwzgles_glEnd() have the same hack.
+
+     Without this, any hack that display text (including implicitly via FPS)
+     and also uses unit_sphere() screws up, since text uses textures:
+
+       - antspotlight body is textured instead of white
+       - beats is black
+       - blinkbox has no ball
+       - covid19 is black
+       - dangerball is black-ish
+       - glschool fish are black
+       - gltext is black (also tube.c)
+       - hilbert is black (also tube.c)
+       - juggler3d has no body parts (also tube.c)
+       - moebius ants are black
+       - molecule is black
+       - stairs ball is brown instead of yellow
+       - topblock has black pegs (also tube.c)
+   */
+  if (glIsEnabled (GL_TEXTURE_2D))
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
   glDrawArrays (mode, 0, out);
 

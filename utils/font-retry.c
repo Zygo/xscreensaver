@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2018-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2018-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -14,8 +14,8 @@
 
        Helvetica Bold Italic 12
 
-   We parse that into an XLFD and pass that along to the underlying systems:
-   XftFontOpenXlfd or jwxyz.
+   We parse that into Xft's syntax and pass that along to the underlying
+   systems: XftFontOpenPattern or jwxyz.
 
    Xft does aggressive substitution of unknown fonts, so if we don't get an
    exact match on the font name, we move on to the next element in the list.
@@ -45,17 +45,17 @@
      See android/xscreensaver/src/org/jwz/xscreensaver/jwxyz.java
 
 
-   In XScreenSaver 6, USE_XFT is always true, as all programs now use Xft.
+   In XScreenSaver 6, all programs now use Xft via XftFontOpenPattern.
+
+   In XScreenSaver 6.14 and earlier, XftFontOpenXlfd was used instead.
+   This was a bad idea.
 
    In XScreenSaver 5, this file was compiled in two different ways:
    - As font-retry.o for programs that did not link with libXft;
    - As font-retry-xft.o for programs that did.
 
-   #ifdef USE_XFT is whether Xft code should be called.
-   #ifdef HAVE_XFT is whether libXft is natively available.
-
-   The reason there are two defines is that if HAVE_XFT is not defined,
-   the Xft API is still available through emulation provided by "xft.h".
+   #ifdef HAVE_XFT is whether libXft is natively available (as opposed
+   to the partially-emulated version provided by "xft.h").
  */
 
 #define _GNU_SOURCE  /* Why is this here? */
@@ -73,27 +73,29 @@ extern const char *progname;
 #undef DEBUG
 #undef SELFTEST
 
-#ifdef HAVE_JWXYZ
-# define USE_XFT 1
-#endif
-
 #ifdef SELFTEST
 static void xft_selftest (Display *dpy, int screen);
 #endif
 
 
-/* Parse font names of the form "Helvetica Neue Bold Italic 12".
+/* Parse font names of the form "Helvetica Neue Bold Italic 12"
+   to XFT style, "Helvetica Neue-12:style=Bold Italic"
  */
 static char *
-font_name_to_xlfd (const char *font_name)
+font_name_to_xft_name (const char *font_name)
 {
-  char *name = strdup (font_name);
-  char *xlfd = 0;
+  char *name = 0;
+  char *out = 0;
   char *s, *s2, *b, *i, *o, c;
   float size;
 
-  if (name[0] == '-' || name[0] == '*')
-    return name;  /* Already an XLFD */
+  if (font_name[0] == '-' || font_name[0] == '*')
+    goto FAIL;  /* Looks like an XLFD. */
+
+  if (!strcmp (font_name, "fixed"))
+    font_name = "fixed 12";
+
+  name = strdup (font_name);
 
   /* Downcase ASCII; dash to space */
   for (s = name; *s; s++)
@@ -119,24 +121,28 @@ font_name_to_xlfd (const char *font_name)
   if (i) *i = 0;
   if (o) *o = 0;
 
-  xlfd = (char *) malloc (strlen(name) + 80);
-  sprintf (xlfd, "-*-%s-%s-%s-*-*-*-%d-*-*-*-*-*-*",
-           name,
-           (b ? "bold" : "medium"),
-           (i ? "i" : o ? "o" : "r"),
-           (int) (size * 10));
+  out = (char *) malloc (strlen(name) + 80);
+  sprintf (out, "%s-%d", name, (int) size);
+  if (b && i)
+    strcat (out, ":style=Bold Italic");
+  if (b && o)
+    strcat (out, ":style=Bold Oblique");
+  else if (b)
+    strcat (out, ":style=Bold");
+  else if (i)
+    strcat (out, ":style=Italic");
+  else if (o)
+    strcat (out, ":style=Oblique");
   free (name);
-  return xlfd;
+  return out;
 
  FAIL:
   fprintf (stderr, "%s: XFT: unparsable: \"%s\"\n", progname, font_name);
   if (name) free (name);
-  if (xlfd) free (xlfd);
+  if (out) free (out);
   return 0;
 }
 
-
-#ifdef USE_XFT
 
 /* Xft silently substitutes fonts if the one you requested wasn't available.
    This leads to the deplorable situation where we ask for a fixed width font
@@ -172,8 +178,14 @@ font_name_to_xlfd (const char *font_name)
      - XftXlfdParse does not translate "spacing" from XLFD to XftPattern,
        but that doesn't matter since XftFontMatch ignores it anyway.
 
+   During the transition from XFontStruct to Xft, I initially made an effort
+   to allow XLFD names to be used, which is why I was messing around with the
+   extremely troublesome Xft*Xlfd routines.
+
    Xft source is here:
    https://opensource.apple.com/source/X11ForMacOSXSource/X11ForMacOSXSource-1.0/xc/lib/Xft1/
+
+   Doc: https://www.keithp.com/~keithp/render/Xft.tutorial
 
    Courier, Helvetica and the other historical PostScript font names seem to
    be special-cased in /etc/fonts/conf.d/ in the files 30-metric-aliases.conf,
@@ -193,89 +205,37 @@ font_name_to_xlfd (const char *font_name)
    In summary, everything is terrible, and it's a wonder anything works at all.
  */
 static Bool
-xlfd_substituted_p (XftFont *f, const char *xlfd)
+xft_substituted_p (XftFont *f, XftPattern *pat)
 {
 # ifndef HAVE_XFT
   return False;		/* No substitutions in the Xft emulator. */
-# else /* HAVE_XFT */
+#else /* HAVE_XFT */
+  Bool ok = False;
+  const char *ofam = 0, *nfam = 0;
+  XftPatternGetString (pat, XFT_FAMILY, 0, &ofam);
+  XftPatternGetString (f->pattern, XFT_FAMILY, 0, &nfam);
 
-  Bool ret = True;
-  const char *oxlfd = xlfd;
-  char *s = 0;
-  char *xname = 0;
-  char fname[1024];
-
-  if (*xlfd == '-' || strchr (xlfd, '*'))	/* it's an xlfd */
-    {
-      if (*xlfd != '-') goto FAIL;
-      xlfd++;
-      s = strchr (xlfd, '-'); if (!s) goto FAIL;	/* skip foundry */
-      xlfd = s+1;
-      s = strchr (xlfd, '-'); if (!s) goto FAIL;	/* skip family */
-
-      {
-        char buf[1024];
-        XftPattern *pat = XftXlfdParse (oxlfd, True, True);
-        XftNameUnparse (pat, buf, sizeof(buf)-1);
-      }
-    }
-  else						/* It's an Xft name */
-    {
-      s = strchr (xlfd, '-'); if (!s) goto FAIL;	/* skip family */
-    }
-
-  xname = strdup (xlfd);
-  xname[s - xlfd] = 0;
-
-  *fname = 0;
-  XftNameUnparse (f->pattern, fname, sizeof(fname)-1);
-  s = strchr (fname, ':');   /* Strip to "Family-NN" */
-  if (s) *s = 0;
-  s = strrchr (fname, '-');  /* Strip to family */
-  if (s) *s = 0;
-
-  ret = !strcasestr (fname, xname);
+  if (!ofam) ofam = "NULL";
+  if (!nfam) nfam = "NULL";
+  ok = (!strcasecmp (ofam, nfam));
 
 #  ifdef DEBUG
-  if (ret)
+  if (!ok)
     fprintf (stderr, "%s: XFT: requested \"%s\" but got \"%s\"\n",
-             progname, xname, fname);
+             progname, ofam, nfam);
 #  endif
 
- FAIL:
-
-  if (!s)
-    fprintf (stderr, "%s: unparsable XLFD: %s\n", progname, oxlfd);
-  if (xname) free (xname);
-  return ret;
-# endif /* HAVE_XFT */
+  return !ok;
+#endif /* HAVE_XFT */
 }
-#endif /* USE_XFT */
 
 
-static void *
-load_font_retry_1 (Display *dpy, int screen, const char *font_list, Bool xft_p)
+XftFont *
+load_xft_font_retry (Display *dpy, int screen, const char *font_list)
 {
-
-# ifdef USE_XFT
-#  define LOADFONT(F) (xft_p \
-                      ? (void *) XftFontOpenXlfd (dpy, screen, (F))  \
-                      : (void *) XLoadQueryFont (dpy, (F)))
-#  define UNLOADFONT(F) (xft_p \
-                         ? (void) XftFontClose (dpy, (F)) \
-                         : (void) XFreeFont (dpy, (F)))
-# else
-#  define LOADFONT(F) ((void *) XLoadQueryFont (dpy, (F)))
-#  define UNLOADFONT(F) XFreeFont (dpy, (F))
-# endif
-
   char *font_name = 0;
-  void *f = 0;
-  void *fallback = 0;
-
-# ifndef USE_XFT
-  if (xft_p) abort();
-# endif
+  XftFont *f = 0;
+  XftFont *fallback = 0;
 
 # ifdef SELFTEST
   xft_selftest (dpy, screen);
@@ -284,7 +244,7 @@ load_font_retry_1 (Display *dpy, int screen, const char *font_list, Bool xft_p)
   if (! font_list) font_list = "<null>";
 
   /* Treat the string as a comma-separated list of font names.
-     Names are XLFDs or the XScreenSaver syntax described above.
+     Names are in the XScreenSaver syntax described above.
      Try to load each of them in order.
      If a substitution was made, keep going, unless this is the last.
    */
@@ -308,30 +268,39 @@ load_font_retry_1 (Display *dpy, int screen, const char *font_list, Bool xft_p)
             name2[--L] = 0;
 
           if (font_name) free (font_name);
-          font_name = font_name_to_xlfd (name2);
+          font_name = font_name_to_xft_name (name2);
 
 # ifdef DEBUG
           fprintf (stderr, "%s: trying \"%s\" as \"%s\"\n", progname,
                    name2, font_name);
 # endif
 
-          f = LOADFONT (font_name);
-
-# ifdef USE_XFT
-          /* If we did not get an exact match for the font family we requested,
-             reject this font and try the next one in the list. */
-          if (f && xft_p && xlfd_substituted_p (f, font_name))
+          if (font_name)
             {
-              if (fallback)
-                UNLOADFONT (fallback);
-              fallback = f;
-              f = 0;
+              XftResult ret;
+              XftPattern *pat1 = XftNameParse (font_name);
+              XftPattern *pat2 = XftFontMatch (dpy, screen, pat1, &ret);
+              f = XftFontOpenPattern (dpy, pat2);
+
+              /* If we did not get an exact match for the font family we
+                 requested, reject this font and try the next one in the
+                 list. */
+              if (f && xft_substituted_p (f, pat1))
+                {
+                  if (fallback)
+                    XftFontClose (dpy, fallback);
+                  fallback = f;
+                  f = 0;
+                }
+
+              XftPatternDestroy (pat1);
+              /* XftFontOpenPattern seems to retain a pointer to pat2? */
+              /* XftPatternDestroy (pat2); */
             }
-#  ifdef DEBUG
+# ifdef DEBUG
           else if (!f)
             fprintf (stderr, "%s: no match for \"%s\"\n", progname, font_name);
-#  endif
-# endif /* USE_XFT */
+# endif
 
           if (f) break;
         }
@@ -350,36 +319,19 @@ load_font_retry_1 (Display *dpy, int screen, const char *font_list, Bool xft_p)
   if (!font_name) abort();
 
 # if !defined(HAVE_XFT) && !defined(HAVE_JWXYZ)
-  /* Xft is now REQUIRED. All of XScreenSaver's resource settings use
-     font names that assume that it is available. However, this lets you
-     limp along without it. But, really, don't do that to yourself. */
-#   define FALLBACK2(F) do {    \
-      free (font_name);         \
-      font_name = (strdup(F));  \
-      f = LOADFONT (font_name); \
-      if (f) fprintf (stderr, "%s: non-XFT fallback \"%s\"\n", \
-                      progname, font_name);                    \
-    } while (0)
-    if (!f && !strcasestr (font_name, "mono")) {
-      if (!f) FALLBACK2 ("-*-sans serif-medium-r-*-*-*-180-*-*-*-*-*-*");
-      if (!f) FALLBACK2 ("-*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*");
-      if (!f) FALLBACK2 ("-*-nimbus sans l-medium-r-*-*-*-180-*-*-*-*-*-*");
-    }
-    if (!f) FALLBACK2 ("-*-courier-medium-r-*-*-*-180-*-*-*-*-*-*");
-    if (!f) FALLBACK2 ("fixed");
+  abort();  /* Real Xft is required under real X11. */
 # endif
 
   if (!f) abort();
 
 # ifdef DEBUG
   if (f && font_name)
-    fprintf (stderr, "%s:%s loaded %s\n", progname,
-             (xft_p ? " XFT:" : ""), font_name);
-#  if defined(USE_XFT) && defined(HAVE_XFT)
-   if (xft_p && f)
+    fprintf (stderr, "%s: XFT: loaded %s\n", progname, font_name);
+#  ifdef HAVE_XFT
+   if (f)
      {
-       XftPattern *p = ((XftFont *) f)->pattern;
-       char name[1024];
+       XftPattern *p = f->pattern;
+       char name[2048];
        char *s, *s1, *s2, *s3;
        XftNameUnparse (p, name, sizeof(name)-1);
        s = strstr (name, ":style=");
@@ -389,32 +341,15 @@ load_font_retry_1 (Display *dpy, int screen, const char *font_list, Bool xft_p)
        if (s3) strcpy (s3+1, " [...]");
        fprintf (stderr, "%s: XFT name: %s\n", progname, name);
      }
-#  endif /* USE_XFT && HAVE_XFT */
+#  else  /* !HAVE_XFT */
+   fprintf (stderr, "%s: X11 name: %s\n", progname, f->name);
+#  endif /* HAVE_XFT */
 # endif /* DEBUG */
 
-   if (fallback) UNLOADFONT (fallback);
+   if (fallback) XftFontClose (dpy, fallback);
    if (font_name) free (font_name);
   return f;
 }
-
-
-#if 1  /* No longer used in XScreenSaver 6.
-          (Used by retired flag, juggle, xsublim) */
-XFontStruct *
-load_font_retry (Display *dpy, const char *font_list)
-{
-  return (XFontStruct *) load_font_retry_1 (dpy, 0, font_list, 0);
-}
-#endif
-
-#if defined(USE_XFT) || defined(HAVE_JWXYZ)
-XftFont *
-load_xft_font_retry (Display *dpy, int screen, const char *font_list)
-{
-  return (XftFont *) load_font_retry_1 (dpy, screen, font_list, 1);
-}
-#endif
-
 
 
 #ifdef SELFTEST
@@ -491,7 +426,8 @@ xft_selftest (Display *dpy, int screen)
       pat1 = XftXlfdParse (name1, True, True);
     else
       pat1 = XftNameParse (name1);
-    XftNameUnparse (pat1, name2, sizeof(name2)-1);
+    if (pat1)
+      XftNameUnparse (pat1, name2, sizeof(name2)-1);
     TRUNC(name2);
     fprintf (stderr, "%s (\"%s\")\n\t-> \"%s\"\n",
              (xlfd_p ? "XftXlfdParse" : "XftNameParse"),
@@ -516,7 +452,8 @@ xft_selftest (Display *dpy, int screen)
     /* Name to pattern to Match */
 
     pat2 = XftFontMatch (dpy, screen, pat1, &ret);
-    XftNameUnparse (pat2, name3, sizeof(name3)-1);
+    if (pat2)
+      XftNameUnparse (pat2, name3, sizeof(name3)-1);
     TRUNC(name3);
     fprintf (stderr, "XftFontMatch (\"%s\")\n\t-> \"%s\", %s\n",
              name2, name3,

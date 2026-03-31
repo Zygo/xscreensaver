@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2021-2023 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2021-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -29,11 +29,12 @@ BEGIN { eval 'use LWP::Simple' }
 
 my $progname = $0; $progname =~ s@.*/@@g;
 $progname =~ s@\.pl$@@g;
-my ($version) = ('$Revision: 1.10 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.12 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $url_template = undef;
 my $cache_size = '20M';
+my $cache_clean_every = 45;
 my $cache_dir = undef;
 my $current_cache_size = 0;
 my %cached_files;
@@ -233,6 +234,7 @@ sub load_tile($$$$) {
   my $site = lc($url_template);
   $site =~ s/[?#].*$//s;
   my ($suf) = ($site =~ m@\.([^./?#]+)$@si);
+  $suf = 'jpg' unless $suf;
   error ("no suffix in url template: $url_template") unless $suf;
 
   $site =~ s@{.*?}@@gs;
@@ -260,6 +262,10 @@ sub load_tile($$$$) {
   #
   my $tmpfile = sprintf("%s/%08x.%s", $cache_dir, rand() * 0xFFFFFFFF, $suf);
   rm_atexit ($tmpfile);
+
+  # Add a little delay to try and avoid the situation where on two screens,
+  # one screen gets every tile before the other screen gets any.
+  select (undef, undef, undef, 0.1);
 
   acquire_lock();
   print STDERR blurb() . "downloading $url\n" if ($verbose > 1);
@@ -349,7 +355,8 @@ sub scan_cache_dir($) {
     my @st = stat($f);
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
         $atime,$mtime,$ctime,$blksize,$blocks) = @st;
-    if (S_ISDIR($mode)) {
+    if (!@st) {
+    } elsif (S_ISDIR($mode)) {
       scan_cache_dir ($f);
     } else {
       $cached_files{$f} = $atime;
@@ -372,6 +379,7 @@ sub clean_cache() {
   my $slack = $cache_size * 0.5;
   $slack = 2*1024*1024 if ($slack > 2*1024*1024);
 
+  print STDERR blurb() . "cleaning cache\n" if ($verbose > 2);
   foreach my $f (sort { $cached_files{$a} <=> $cached_files{$b} }
                  keys %cached_files) {
 
@@ -382,8 +390,13 @@ sub clean_cache() {
         $atime,$mtime,$ctime,$blksize,$blocks) = @st;
     next unless defined ($size);    # File aready missing
     next if ($mtime >= $now - 60);  # Keep file if less than a minute old
-    unlink ($f); # || error ("rm $f: $!");
-    print STDERR blurb() . "rm $f (" . localtime($cached_files{$f}) . ")\n"
+    if (! unlink ($f)) {
+      print STDERR (blurb() . "rm $f: $!") if ($verbose);
+      delete $cached_files{$f};
+      next;
+    }
+    print STDERR blurb() . "rm $f (" . localtime($cached_files{$f}) . ", " .
+                  sprintf("%.1f KB", $size/1024) . ")\n"
       if ($verbose > 2);
     delete $cached_files{$f};
     $current_cache_size -= $size;
@@ -404,10 +417,10 @@ sub clean_cache() {
   }
 
   if ($deleted_files && $verbose) {
-    my $b  = sprintf ("%.1f MB", $deleted_bytes / (1024*1024));
-    my $b2 = sprintf ("%.1f MB", $osize         / (1024*1024));
-    print STDERR blurb() . "deleted $deleted_files cached tiles" .
-                 " ($b of $b2)\n";
+    my $b  = sprintf ("%.1f MB", $deleted_bytes      / (1024*1024));
+    my $b2 = sprintf ("%.1f MB", $osize              / (1024*1024));
+    my $b3 = sprintf ("%.1f MB", $current_cache_size / (1024*1024));
+    print STDERR blurb() . "deleted $deleted_files cached tiles ($b2 - $b = $b3)\n";
   }
 }
 
@@ -421,7 +434,6 @@ sub mapscroller() {
 
   my $scanned_p = 0;
   my $last_cleaned = time();
-  my $clean_every = 45;
 
   while (<STDIN>) {
     my $line = $_;
@@ -433,10 +445,16 @@ sub mapscroller() {
     # Don't prune the cache more often than every N seconds.
     # And don't do it on the first run, as we are probably loading
     # a burst of tiles.
-    if (time() > $last_cleaned + $clean_every) {
+    if (time() > $last_cleaned + $cache_clean_every) {
       if (acquire_cache_lock()) {
         if (! $scanned_p) {
-          $scanned_p = 1;
+
+          # Shit, we have to scan every time, because if there are two screens
+          # running, we aren't adding up the files added by the other screen,
+          # so our $current_cache_size is about half of reality.
+          #
+          #  $scanned_p = 1;
+
           undef %cached_files;	# Clear it, as scan is definitive.
           $current_cache_size = 0;
           scan_cache_dir ($cache_dir);

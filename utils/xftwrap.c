@@ -1,5 +1,5 @@
 /* xftwrap.c --- XftDrawStringUtf8 with multi-line strings.
- * xscreensaver, Copyright © 2021-2025 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2021-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,6 +18,7 @@
 #include "utils.h"
 #include "xft.h"
 #include "xftwrap.h"
+#include "utf8wc.h"
 
 #undef MAX
 #undef MIN
@@ -27,12 +28,20 @@
 
 #ifdef DEBUG
 static void
-LOG(const char *ss, const char *s, int n)
+LOG(const char *ss, const unsigned char *s, int n)
 {
   int i;
   fprintf(stderr,"####%s [", ss);
-  for (i = 0; i < n; i++) fprintf(stderr, "%c", s[i]);
-  fprintf(stderr,"]\n");
+  for (i = 0; i < n; i++)
+    if (s[i] == '\n')
+      fprintf (stderr, "\\n");
+    else if (s[i] == '\t')
+      fprintf (stderr, "\\t");
+    else if (s[i] < ' ' /* || s[i] > 0177 */ )
+      fprintf (stderr, "\\x%02X", s[i]);
+    else
+      fprintf (stderr, "%c", s[i]);
+  fprintf (stderr,"]\n");
 }
 #else
 # define LOG(ss,s,n) /**/
@@ -46,23 +55,29 @@ LOG(const char *ss, const char *s, int n)
 char *
 xft_word_wrap (Display *dpy, XftFont *font, const char *str, int pixels)
 {
-  const char *in = str;
-  char *ret = (char *) malloc (strlen(in) * 2);
-  char *out = ret;
+  const unsigned char *in  = (unsigned char *) str;
+  const unsigned char *end = (unsigned char *) str + strlen (str);
+  unsigned char *ret = (unsigned char *) malloc (strlen(str) * 2);
+  unsigned char *out = ret;
 
-  const char *splitpoint_in = in;
-  char *splitpoint_out      = out;
-  const char *start_of_line = out;
+  const unsigned char *splitpoint_in = in;
+  unsigned char *splitpoint_out      = out;
+  const unsigned char *start_of_line = out;
 
-  /* Ideally this would use utf8_split() and would wrap at Unicrud dashes
-     as well as ASCII, but this is probably good enough. */
-
-  for (in = str; *in; in++)
+  while (in < end)
     {
+      unsigned long uc = 0;
+      long ucbytes = utf8_decode_combining (in, end-in, &uc);
       XGlyphInfo overall;
-      *out++ = *in;
+      int i;
 
-      if (isspace(*in) || ispunct(*in))
+      for (i = 0; i < ucbytes; i++)
+        *out++ = in[i];
+
+      in += ucbytes;
+
+      if (isspace (*in)   || ispunct (*in) ||
+          uc_isspace (uc) || uc_ispunct (uc))
         {
           splitpoint_in  = in;
           splitpoint_out = out;
@@ -82,12 +97,17 @@ xft_word_wrap (Display *dpy, XftFont *font, const char *str, int pixels)
              Insert a newline and restart.
            */
           LOG("split", start_of_line, splitpoint_out - start_of_line);
+          LOG("sp B2", splitpoint_out, out - splitpoint_out);
           if (splitpoint_out == start_of_line)
             {
               /* Breaking in the middle of a long word. */
               LOG("long", splitpoint_in, in - splitpoint_in);
+
+              /* Trim trailing horizontal whitespace on line; does not work
+                 on Unicode whitespace. */
               while (out > ret && (isblank (out[-1])))
-                out--;  /* Trim trailing horizontal whitespace on line */
+                out--;
+
               *out++ = '\n';
               splitpoint_out = out;
               start_of_line = out;
@@ -97,24 +117,36 @@ xft_word_wrap (Display *dpy, XftFont *font, const char *str, int pixels)
               LOG("back", splitpoint_in, in - splitpoint_in);
               out = splitpoint_out;
               in  = splitpoint_in;
+
+              /* Trim trailing whitespace and blank lines; does not work
+                 on Unicode whitespace. */
               while (out > ret && (isblank (out[-1])))
-                out--;  /* Trim trailing horizontal whitespace on line */
+                out--;
+
               *out++ = '\n';
               splitpoint_out = out;
               start_of_line = out;
-              while (isblank (*in) && isblank (in[1]))
-                in++;  /* Swallow horizontal whitespace after breaking line. */
+
+              /* Swallow horizontal whitespace after breaking line. */
+              ucbytes = utf8_decode_combining (in, end-in, &uc);
+              while (uc_isspace (uc))
+                {
+                  in += ucbytes;
+                  ucbytes = utf8_decode_combining (in, end-in, &uc);
+                }
             }
         }
     }
 
+  /* Trim trailing whitespace and blank lines; does not work on Unicode. */
   while (out > ret && (isspace (out[-1])))
-    out--;  /* Trim trailing whitespace and blank lines */
+    out--;
+
   *out = 0;
 
-  LOG("DONE",ret,strlen(ret));
+  LOG("DONE", ret, strlen((char *) ret));
 
-  return ret;
+  return (char *) ret;
 }
 
 

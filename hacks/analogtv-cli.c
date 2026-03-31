@@ -1,4 +1,4 @@
-/* xanalogtv-cli, Copyright © 2018-2025 Jamie Zawinski <jwz@jwz.org>
+/* xanalogtv-cli, Copyright © 2018-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -58,7 +58,6 @@
 #include "analogtv.h"
 #include "ffmpeg-out.h"
 
-const char *progname;
 const char *progclass;
 int mono_p = 0;
 static Bool verbose_p = 0;

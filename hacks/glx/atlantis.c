@@ -561,6 +561,7 @@ draw_atlantis(ModeInfo * mi)
         Animate(ap);
         glPopMatrix();
 
+        glColor3f (1, 1, 1);
         if (mi->fps_p) do_fps (mi);
 	glXSwapBuffers(display, window);
 }

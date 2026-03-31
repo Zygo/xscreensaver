@@ -405,7 +405,7 @@ fade_screens (XtAppContext app, Display *dpy,
 # endif
 
   if (has_writable_cells (DefaultScreenOfDisplay (dpy),
-                          DefaultVisual (dpy, 0)))
+                          DefaultVisual (dpy, DefaultScreen (dpy))))
     {
       /* Do it the old-fashioned way, which only really worked on
          8-bit displays. */

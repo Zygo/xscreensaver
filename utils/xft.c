@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2014-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2014-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,6 +11,7 @@
 
 /* Compatibility layer using XDrawString, XDrawString16() or Xutf8DrawString().
    This layer is used by X11 systems without Xft, and by MacOS / iOS.
+   (Though as of XScreenSaver 6, real Xft is required on X11 systems.)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -34,6 +35,10 @@ struct _XftDraw {
   Font fid;
   Visual *visual;
   Colormap  colormap;
+};
+
+struct _XftPattern {
+  char *name;
 };
 
 
@@ -81,24 +86,109 @@ XftDrawSetClip (XftDraw *draw, Region region)
 }
 
 
+XftPattern *
+XftPatternCreate (void)
+{
+  XftPattern *p = (XftPattern *) calloc (1, sizeof (*p));
+  return p;
+}
+
+void
+XftPatternDestroy (XftPattern *p)
+{
+  if (p->name) free (p->name);
+  free (p);
+}
+
+XftPattern *
+XftPatternDuplicate (const XftPattern *p)
+{
+  XftPattern *p2 = XftPatternCreate();
+  p2->name = p->name ? strdup (p->name) : "";
+  return p2;
+}
+
+XftPattern *
+XftNameParse (const char *name)
+{
+  XftPattern *p = XftPatternCreate();
+  p->name = strdup (name);
+  return p;
+}
+
+XftPattern *
+XftFontMatch (Display *dpy, int screen, const XftPattern *p, XftResult *ret)
+{
+  if (ret) *ret = XftResultMatch;
+  return XftPatternDuplicate (p);
+}
+
+
+
 XftFont *
-XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
+XftFontOpenPattern (Display *dpy, XftPattern *p)
 {
   XftFont *ff = (XftFont *) calloc (1, sizeof(*ff));
+  char *xlfd = 0;
 
-  if (!dpy || !xlfd) abort();
+  if (!dpy || !p) abort();
   if (!ff) return 0;
-  ff->xfont = XLoadQueryFont (dpy, xlfd);
+
+  /* Very approximately convert an XFT-style name to an XLFD-style name. */
+  {
+    char *name = strdup (p->name);
+    char *s, *b, *i, *o, *c;
+    int size;
+    char dummy;
+
+    /* Ignore any ":keywords=" */
+    c = strchr (name, ':');
+    if (c) *c = 0;
+
+    /* Downcase ASCII */
+    for (s = name; *s; s++)
+      if (*s >= 'A' && *s <= 'Z')
+        *s += 'a'-'A';
+
+    /* "Family-NN" */
+    s = strrchr (name, '-');
+    if (s &&
+        1 == sscanf (s+1, " %d %c", &size, &dummy) &&
+        size > 0)
+      {
+        *s = 0;
+
+        /* "Family Bold", etc. */
+        b = strcasestr (name, " bold");
+        i = strcasestr (name, " italic");
+        o = strcasestr (name, " oblique");
+        if (b) *b = 0;
+        if (i) *i = 0;
+        if (o) *o = 0;
+
+        xlfd = (char *) malloc (strlen(name) + 80);
+        sprintf (xlfd, "-*-%s-%s-%s-*-*-*-%d-*-*-*-*-*-*",
+                 name,
+                 (b ? "bold" : "medium"),
+                 (i ? "i" : o ? "o" : "r"),
+                 size * 10);
+      }
+    free (name);
+  }
+
+  ff->xfont = xlfd ? XLoadQueryFont (dpy, xlfd) : 0;
+
   if (!ff->xfont)
     {
+      if (xlfd) free (xlfd);
       free (ff);
       return 0;
     }
 
-  ff->name = strdup (xlfd);
+  ff->name    = strdup (p->name);
   ff->ascent  = ff->xfont->ascent;
   ff->descent = ff->xfont->descent;
-  ff->height = ff->ascent + ff->descent;
+  ff->height  = ff->ascent + ff->descent;
 
 # ifdef HAVE_XUTF8DRAWSTRING
   {
@@ -123,6 +213,12 @@ XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
         break;
       }
     }
+
+    if (xlfd_resolved)
+      {
+        free (ff->name);
+        ff->name = strdup (xlfd_resolved);
+      }
 
     ss = (char *) malloc (strlen(xlfd) + 10);
     strcpy (ss, xlfd);
@@ -156,61 +252,17 @@ XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
 }
 
 
-/* Very approximately convert an XFT-style name to an XLFD style name
-   and then call XftFontOpenXlfd on that.
- */
 XftFont *
-XftFontOpenName (Display *dpy, int screen, _Xconst char *xft_name)
+XftFontOpenName (Display *dpy, int screen, const char *name)
 {
-  XftFont *font;
-  char *name = strdup (xft_name);
-  char *xlfd = 0;
-  char *s, *b, *i, *o, *c;
-  int size;
-  char dummy;
-
-  /* Ignore any ":keywords=" */
-  c = strchr (name, ':');
-  if (c) *c = 0;
-
-  /* Downcase ASCII */
-  for (s = name; *s; s++)
-    if (*s >= 'A' && *s <= 'Z')
-      *s += 'a'-'A';
-
-  /* "Family-NN" */
-  s = strrchr (name, '-');
-  if (!s) goto FAIL;
-  if (1 != sscanf (s+1, " %d %c", &size, &dummy)) goto FAIL;
-  if (size <= 0) goto FAIL;
-  *s = 0;
-
-  /* "Family Bold", etc. */
-  b = strstr (name, " bold");
-  i = strstr (name, " italic");
-  o = strstr (name, " oblique");
-  if (b) *b = 0;
-  if (i) *i = 0;
-  if (o) *o = 0;
-
-  xlfd = (char *) malloc (strlen(name) + 80);
-  sprintf (xlfd, "-*-%s-%s-%s-*-*-*-%d-*-*-*-*-*-*",
-           name,
-           (b ? "bold" : "medium"),
-           (i ? "i" : o ? "o" : "r"),
-           size * 10);
-  font = XftFontOpenXlfd (dpy, screen, xlfd);
-  free (name);
-  free (xlfd);
-  return font;
-
- FAIL:
-  fprintf (stderr, "%s: XFT: unparsable: \"%s\"\n", progname, xft_name);
-  if (name) free (name);
-  if (xlfd) free (xlfd);
-  return 0;
+  XftResult ret;
+  XftPattern *pat1 = XftNameParse (name);
+  XftPattern *pat2 = XftFontMatch (dpy, screen, pat1, &ret);
+  XftFont *f = (ret == XftResultMatch ? XftFontOpenPattern (dpy, pat2) : 0);
+  if (pat1) XftPatternDestroy (pat1);
+  if (pat2) XftPatternDestroy (pat2);
+  return f;
 }
-
 
 void
 XftFontClose (Display *dpy, XftFont *font)

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2017 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1993-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -502,16 +502,17 @@ visual_cells (Screen *screen, Visual *visual)
 }
 
 Visual *
-find_similar_visual(Screen *screen, Visual *old_visual)
+find_similar_visual (Screen *old_screen, Screen *new_screen,
+                     Visual *old_visual)
 {
-  Display *dpy = DisplayOfScreen (screen);
+  Display *dpy = DisplayOfScreen (old_screen);
   XVisualInfo vi_in, *vi_out;
   Visual *result = 0;
   int out_count;
 
-  vi_in.screen = screen_number (screen);
-  vi_in.class  = visual_class (screen, old_visual);
-  vi_in.depth  = visual_depth (screen, old_visual);
+  vi_in.screen = screen_number (new_screen);
+  vi_in.class  = visual_class (old_screen, old_visual);
+  vi_in.depth  = visual_depth (old_screen, old_visual);
 
   /* Look for a visual of the same class and depth.
    */
@@ -537,7 +538,7 @@ find_similar_visual(Screen *screen, Visual *old_visual)
 
   /* Failing that, return the default visual. */
   if (!result)
-    result = DefaultVisualOfScreen (screen);
+    result = DefaultVisualOfScreen (new_screen);
 
   return result;
 }

@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright © 2001-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 2001-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1504,7 +1504,7 @@ compare_opts (const char *option, const char *value,
               const char *template)
 {
   int ol;
-  char *c;
+  const char *c;
 
   /* -arg and --arg are the same. */
   if (option[0]   == '-' && option[1]   == '-') option++;
@@ -1527,10 +1527,18 @@ compare_opts (const char *option, const char *value,
 
   if (!value)
     return (template[ol] == 0);
-  if (strcmp (template + ol + 1, value))
-    return FALSE;
 
-  return TRUE;
+  c = template + ol + 1;
+
+  if (!strcmp (c, value))
+    return TRUE;
+
+  if (c[0] == '\'' &&					/* "x" == "'x'" */
+      strlen(value) == strlen(c)-2 &&
+      !strncmp (c+1, value, strlen(value)))
+    return TRUE;
+
+  return FALSE;
 }
 
 
@@ -1774,6 +1782,56 @@ restore_defaults (const char *progname, GList *parms)
  */
 
 static char *
+reformat_description (const char *desc)
+{
+  char *d = strdup (desc);
+  char *s;
+  char *p;
+  for (s = d; *s; s++)
+    if (s[0] == '\n')
+      {
+        if (s[1] == '\n')      /* blank line: leave it */
+          s++;
+        else if (s[1] == ' ' || s[1] == '\t')
+          s++;                 /* next line is indented: leave newline */
+        else if (!strncmp(s+1, "http:", 5) ||
+                 !strncmp(s+1, "https:", 5))
+          s++;                 /* next line begins a URL: leave newline */
+        else
+          s[0] = ' ';          /* delete newline to un-fold this line */
+      }
+
+  /* strip off leading whitespace on first line only */
+  for (s = d; *s && (*s == ' ' || *s == '\t'); s++)
+    ;
+  while (*s == '\n')   /* strip leading newlines */
+    s++;
+  if (s != d)
+    memmove (d, s, strlen(s)+1);
+
+  /* strip off trailing whitespace and newlines */
+  {
+    int L = strlen(d);
+    while (L && isspace(d[L-1]))
+      d[--L] = 0;
+  }
+
+  /* strip off duplicated whitespaces */
+  for (s = d; *s; s++)
+    if (s[0] == ' ')
+      {
+        p = s+1;
+        while (*s == ' ')
+          s++;
+        if (*p && (s != p))
+          memmove (p, s, strlen(s)+1);
+      }
+
+  return d;
+}
+
+
+static char *
 get_description (GList *parms, gboolean verbose_p)
 {
   parameter *doc = 0;
@@ -1790,61 +1848,7 @@ get_description (GList *parms, gboolean verbose_p)
   if (!doc || !doc->string)
     return 0;
   else
-    {
-      char *d = strdup ((char *) doc->string);
-      char *s;
-      char *p;
-      for (s = d; *s; s++)
-        if (s[0] == '\n')
-          {
-            if (s[1] == '\n')      /* blank line: leave it */
-              s++;
-            else if (s[1] == ' ' || s[1] == '\t')
-              s++;                 /* next line is indented: leave newline */
-            else if (!strncmp(s+1, "http:", 5) ||
-                     !strncmp(s+1, "https:", 5))
-              s++;                 /* next line begins a URL: leave newline */
-            else
-              s[0] = ' ';          /* delete newline to un-fold this line */
-          }
-
-      /* strip off leading whitespace on first line only */
-      for (s = d; *s && (*s == ' ' || *s == '\t'); s++)
-        ;
-      while (*s == '\n')   /* strip leading newlines */
-        s++;
-      if (s != d)
-        memmove (d, s, strlen(s)+1);
-
-      /* strip off trailing whitespace and newlines */
-      {
-        int L = strlen(d);
-        while (L && isspace(d[L-1]))
-          d[--L] = 0;
-      }
-
-      /* strip off duplicated whitespaces */
-      for (s = d; *s; s++)
-	  if (s[0] == ' ')
-	  {
-	    p = s+1;
-	    while (*s == ' ')
-	      s++;
-            if (*p && (s != p))
-              memmove (p, s, strlen(s)+1);
-	  }
-
-#if 0
-      /*if (verbose_p)*/
-        {
-          fprintf (stderr, "%s: text read   is \"%s\"\n", blurb(),doc->string);
-          fprintf (stderr, "%s: description is \"%s\"\n", blurb(), d);
-          fprintf (stderr, "%s: translation is \"%s\"\n", blurb(), _(d));
-        }
-#endif /* 0 */
-
-      return (d);
-    }
+    return reformat_description ((char *) doc->string);
 }
 
 static int
@@ -1879,23 +1883,14 @@ get_year (const char *desc)
 }
 
 
-
-/* External interface.
- */
-
-static conf_data *
-load_configurator_1 (const char *program, const char *arguments,
-                     void (*changed_cb) (GtkWidget *, gpointer),
-                     gpointer changed_data,
-                     gboolean verbose_p)
+static char *
+hack_xml_file (const char *program)
 {
   const char *dir = HACK_CONFIGURATION_PATH;
   char *base_program;
   int L = strlen (dir);
   char *file;
   char *s;
-  FILE *f;
-  conf_data *data;
 
   if (L == 0) return 0;
 
@@ -1904,7 +1899,6 @@ load_configurator_1 (const char *program, const char *arguments,
   if (!base_program) base_program = (char *) program;
 
   file = (char *) malloc (L + strlen (base_program) + 10);
-  data = (conf_data *) calloc (1, sizeof(*data));
 
   strcpy (file, dir);
   if (file[L-1] != '/')
@@ -1918,8 +1912,23 @@ load_configurator_1 (const char *program, const char *arguments,
       *s = tolower (*s);
 
   strcat (file+L, ".xml");
+  return file;
+}
 
-  f = fopen (file, "r");
+
+/* External interface.
+ */
+
+static conf_data *
+load_configurator_1 (const char *program, const char *arguments,
+                     void (*changed_cb) (GtkWidget *, gpointer),
+                     gpointer changed_data,
+                     gboolean verbose_p)
+{
+  conf_data *data = (conf_data *) calloc (1, sizeof(*data));
+  char *file = hack_xml_file (program);
+  FILE *f = file ? fopen (file, "r") : 0;
+
   if (f)
     {
       int res, size = 1024;
@@ -2098,5 +2107,75 @@ free_conf_data (conf_data *data)
   free (data);
 }
 
+/* Loads the description string from the XML file.
+ */
+char *
+load_description (const char *program)
+{
+  char *prog, *args;
+  char *file;
+  FILE *f;
+  int res, size = 1024;
+  char chars[1024];
+  xmlParserCtxtPtr ctxt;
+  xmlDocPtr doc = 0;
+  xmlNodePtr node;
+  const char *name = 0, *desc = 0;
+
+  split_command_line (program, &prog, &args);
+  file = hack_xml_file (prog);
+
+  if (!file) goto DONE;
+  f = fopen (file, "r");
+  if (!f) goto DONE;
+
+  if (verbose_p)
+    fprintf (stderr, "%s: reading %s...\n", blurb(), file);
+
+  res = fread (chars, 1, 4, f);
+  if (res <= 0)
+    goto DONE;
+
+  ctxt = xmlCreatePushParserCtxt (NULL, NULL, chars, res, file);
+  while ((res = fread(chars, 1, size, f)) > 0)
+    xmlParseChunk (ctxt, chars, res, 0);
+  xmlParseChunk (ctxt, chars, 0, 1);
+  doc = ctxt->myDoc;
+  xmlFreeParserCtxt (ctxt);
+  fclose (f);
+
+  for (node = doc->xmlRootNode; node; node = node->next)
+    if (!strcmp ((char *) node->name, "screensaver"))
+      {
+        xmlNodePtr node2;
+        name = (char *) xmlGetProp (node, (xmlChar *) "_label");
+        for (node2 = node->xmlChildrenNode; node2; node2 = node2->next)
+          if (!strcmp ((char *) node2->name, "_description"))
+            desc = (char *) node2->xmlChildrenNode->content;
+      }
+
+ DONE:
+  if (file) free (file);
+  if (prog) free (prog);
+  if (args) free (args);
+  if (!name && !desc)
+    {
+      xmlFreeDoc (doc);
+      return 0;
+    }
+  else
+    {
+      char *d = desc ? reformat_description (desc) : 0;
+      char *s = (char *) malloc ((name ? strlen(name) : 0) +
+                                 (d ? strlen(d) : 0) + 10);
+      *s = 0;
+      if (name) strcat (s, name);
+      if (name && d) strcat (s, "\n");
+      if (d) strcat (s, d);
+      if (d) free (d);
+      xmlFreeDoc (doc);
+      return s;
+    }
+}
 
 #endif /* HAVE_GTK -- whole file */

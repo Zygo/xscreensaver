@@ -22,6 +22,7 @@
 
 #include "utils.h"
 #include "resources.h"
+#include "blurb.h"
 
 #ifdef HAVE_GL
 # include <GL/gl.h>
@@ -40,10 +41,11 @@
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 
 
-extern char *progname;
-
-
 #ifdef HAVE_EGL
+
+static void get_egl_config (Screen *, EGLDisplay *, EGLint x11_visual_id,
+                            EGLConfig *);
+
 static EGLDisplay *
 get_egl_display (Screen *screen)
 {
@@ -80,12 +82,10 @@ Visual *
 get_gl_visual (Screen *screen)
 {
 #ifdef HAVE_GL
-
-  Display *dpy = DisplayOfScreen (screen);
-
+  Visual *v = 0;
 # ifdef HAVE_EGL
 
-  Visual *v;
+  Display *dpy = DisplayOfScreen (screen);
   EGLint vid;
   EGLDisplay *egl_display;
   EGLConfig egl_config = 0;
@@ -96,40 +96,64 @@ get_gl_visual (Screen *screen)
 
   if (!egl_display)
     {
-      fprintf (stderr, "%s: eglGetPlatformDisplay failed (1)\n", progname);
-      return 0;
+      fprintf (stderr, "%s: %d: eglGetPlatformDisplay failed (1)\n",
+               blurb(), screen_number (screen));
+      goto DONE;
     }
 
   if (! eglInitialize (egl_display, &egl_major, &egl_minor))
     {
       /* The library already printed this, but without progname:
          "libEGL warning: DRI2: failed to create any config" */
-      /* fprintf (stderr, "%s: eglInitialize failed\n", progname); */
-      return 0;  /* We get here if running Xephyr in 8-bit pseudocolor */
+      /* fprintf (stderr, "%s: %d: eglInitialize failed\n",
+                  blurb(), screen_number (screen)); */
+      goto DONE;  /* We get here in 8-bit pseudocolor */
     }
 
   /* Get the best EGL config on any visual, then see what visual it used. */
-  get_egl_config (dpy, egl_display, -1, &egl_config);
+  get_egl_config (screen, egl_display, -1, &egl_config);
   if (!egl_config) abort();
 
   if (!eglGetConfigAttrib (egl_display, egl_config,
                            EGL_NATIVE_VISUAL_ID, &vid))
     {
-      fprintf (stderr, "%s: EGL: no native visual ID\n", progname);
+      fprintf (stderr, "%s: %d: EGL: no native visual ID\n",
+               blurb(), screen_number (screen));
       abort();
     }
         
   v = id_to_visual (screen, vid);
-  if (!v)
+  if (v) goto DONE;
+
+  /* Since it is impossible to inform EGL which X11 screen number is in use
+     (see get_egl_display) we always end up with an EGLDisplay for screen 0,
+     which means the visuals are also from screen 0.  So if we didn't get
+     a visual that matches this screen, see if it's on screen 0, and try to
+     find the closest-matching visual from the actual screen.  Maybe this
+     will work? */
+  if (screen != DefaultScreenOfDisplay (dpy))
     {
-      fprintf (stderr, "%s: EGL: no X11 visual 0x%x\n", progname, vid);
-      abort();
+      Screen *ds = DefaultScreenOfDisplay (dpy);
+      Visual *v0 = id_to_visual (ds, vid);
+      if (v0)
+        {
+          v = find_similar_visual (ds, screen, v0);
+          if (v)
+            fprintf (stderr,
+                     "%s: %d: EGL: swapped visual %d:0x%x to %d:0x%lx\n",
+                     blurb(), screen_number (screen),
+                     screen_number (ds), vid,
+                     screen_number (screen), XVisualIDFromVisual (v));
+        }
     }
 
-    return v;
+  if (!v)
+    fprintf (stderr, "%s: %d: EGL: no X11 visual 0x%x\n", blurb(), 
+             screen_number (screen), vid);
 
 # else  /* !HAVE_EGL -- GLX */
 
+  Display *dpy = DisplayOfScreen (screen);
   int screen_num = screen_number (screen);
 
 # define R GLX_RED_SIZE
@@ -195,14 +219,19 @@ get_gl_visual (Screen *screen)
       XVisualInfo *vi = glXChooseVisual (dpy, screen_num, attrs[i]);
       if (vi)
         {
-          Visual *v = vi->visual;
+          v = vi->visual;
           XFree (vi);
           /* describe_gl_visual (stderr, screen, v, False); */
-          return v;
+          goto DONE;
         }
     }
 
 # endif  /* !HAVE_EGL -- GLX */
+
+ DONE:
+  if (!v) v = DefaultVisualOfScreen (screen);
+  return v;
+
 #endif /* !HAVE_GL */
 
   return 0;
@@ -231,10 +260,12 @@ get_gl_visual (Screen *screen)
    SGI solved this problem in like 1988, and like so many things, GLES went
    and fucked it all up again.
  */
-void
-get_egl_config (Display *dpy, EGLDisplay *egl_display,
+static void
+get_egl_config (Screen *screen, EGLDisplay *egl_display,
                 EGLint x11_visual_id, EGLConfig *egl_config)
 {
+  Display *dpy = DisplayOfScreen (screen);
+
 # define COMMON \
     EGL_SURFACE_TYPE,      EGL_WINDOW_BIT, \
     EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER
@@ -323,8 +354,8 @@ get_egl_config (Display *dpy, EGLDisplay *egl_display,
 
   if (! *egl_config)
     {
-      fprintf (stderr, "%s: no matching EGL config for X11 visual 0x%lx\n",
-               progname, (unsigned long) x11_visual_id);
+      fprintf (stderr, "%s: %d: no matching EGL config for X11 visual 0x%lx\n",
+               blurb(), screen_number (screen), (unsigned long) x11_visual_id);
       return;
     }
 }
@@ -363,15 +394,17 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
     egl_display = get_egl_display (screen);
     if (!egl_display)
       {
-        /* fprintf (stderr, "%s: eglGetPlatformDisplay failed\n", progname); */
+        /* fprintf (stderr, "%s: %d: eglGetPlatformDisplay failed\n",
+                    blurb(), screen_number (screen)); */
         return;
       }
 
-    get_egl_config (dpy, egl_display, vi_out->visualid, &config);
+    get_egl_config (screen, egl_display, vi_out->visualid, &config);
     if (!config)
       {
-        fprintf (stderr, "%s: no matching EGL config for X11 visual 0x%lx\n",
-                 progname, vi_out->visualid);
+        fprintf (stderr,
+                 "%s: %d: no matching EGL config for X11 visual 0x%lx\n",
+                 blurb(), screen_number (screen), vi_out->visualid);
         abort();
       }
 
@@ -615,14 +648,14 @@ validate_gl_visual (FILE *out, Screen *screen, const char *window_desc,
   if (status == GLX_NO_EXTENSION)
     {
       fprintf (out, "%s: display \"%s\" does not support the GLX extension.\n",
-               progname, DisplayString (dpy));
+               blurb(), DisplayString (dpy));
       return False;
     }
   else if (status == GLX_BAD_VISUAL || value == False)
     {
       fprintf (out,
                "%s: %s's visual 0x%x does not support the GLX extension.\n",
-               progname, window_desc, id);
+               blurb(), window_desc, id);
       return False;
     }
   else
@@ -634,7 +667,7 @@ validate_gl_visual (FILE *out, Screen *screen, const char *window_desc,
 #else  /* !HAVE_GL */
 
   fprintf (out, "%s: GL support was not compiled in to this program.\n",
-           progname);
+           blurb());
   return False;
 
 #endif  /* !HAVE_GL */
@@ -751,16 +784,18 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
     d->egl_display = get_egl_display (screen);
     if (!d->egl_display)
       {
-        fprintf (stderr, "%s: eglGetPlatformDisplay failed (2)\n", progname);
+        fprintf (stderr, "%s: %d: eglGetPlatformDisplay failed (2)\n",
+                 blurb(), screen_number (screen));
         abort();
       }
 
-    get_egl_config (dpy, d->egl_display, vid, &d->egl_config);
+    get_egl_config (screen, d->egl_display, vid, &d->egl_config);
     if (!d->egl_config)
       {
         /* get_egl_config already printed this:
-        fprintf (stderr, "%s: no matching EGL config for X11 visual 0x%lx\n",
-                 progname, vi_out->visualid); */
+        fprintf (stderr,
+                 "%s: %d: no matching EGL config for X11 visual 0x%lx\n",
+                 blurb(), screen_number (screen), vi_out->visualid); */
         /* returning 0 might be reasonable, but makes all the GL hacks
            simply draw nothing in a loop. */
         exit (1);
@@ -771,8 +806,9 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
                                                      &window, NULL);
     if (! d->egl_surface)
       {
-        fprintf (stderr, "%s: eglCreatePlatformWindowSurface failed:"
-                 " window 0x%lx visual 0x%x\n", progname, window, vid);
+        fprintf (stderr, "%s: %d: eglCreatePlatformWindowSurface failed:"
+                 " window 0x%lx visual 0x%x\n",
+                 blurb(), screen_number (screen), window, vid);
         abort();
       }
 
@@ -783,7 +819,8 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
      */
     if (!eglBindAPI (EGL_OPENGL_ES_API))
       {
-        fprintf (stderr, "%s: eglBindAPI failed\n", progname);
+        fprintf (stderr, "%s: %d: eglBindAPI failed\n",
+                 blurb(), screen_number (screen));
       }
 #else /* !HAVE_JWZGLES */
     /* This is necessary to get a OpenGL context instead of an OpenGLES
@@ -791,7 +828,8 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
      */
     if (!eglBindAPI (EGL_OPENGL_API))
       {
-        fprintf (stderr, "%s: eglBindAPI failed\n", progname);
+        fprintf (stderr, "%s: %d: eglBindAPI failed\n", blurb(),
+                 screen_number (screen));
       }
 #endif /* !HAVE_JWZGLES */
 
@@ -802,7 +840,8 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
     /* If creation of a GLES 3.0 context failed, fall back to GLES 1.x. */
     if (!d->egl_context && ctxattr != ctxattr1)
       {
-        /* fprintf (stderr, "%s: eglCreateContext 3.0 failed\n", progname); */
+        /* fprintf (stderr, "%s: %d: eglCreateContext 3.0 failed\n",
+                    blurb(), screen_number (screen)); */
         d->egl_context = eglCreateContext (d->egl_display, d->egl_config,
                                            EGL_NO_CONTEXT, ctxattr1);
       }
@@ -810,7 +849,8 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
 
     if (!d->egl_context)
       {
-        fprintf (stderr, "%s: eglCreateContext failed\n", progname);
+        fprintf (stderr, "%s: %d: eglCreateContext failed\n", blurb(),
+                 screen_number (screen));
         abort();
       }
 
@@ -905,8 +945,9 @@ GLXContext openGL_context_for_window (Screen *screen, Window window)
 
   if (!glx_context)
     {
-      fprintf(stderr, "%s: couldn't create GL context for visual 0x%x.\n",
-	      progname, (unsigned int) XVisualIDFromVisual (visual));
+      fprintf(stderr, "%s: %d: couldn't create GL context for visual 0x%x.\n",
+	      blurb(), screen_number (screen),
+              (unsigned int) XVisualIDFromVisual (visual));
       exit(1);
     }
 

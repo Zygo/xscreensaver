@@ -1,4 +1,4 @@
-/* mapscroller, Copyright © 2021-2025 Jamie Zawinski <jwz@jwz.org>
+/* mapscroller, Copyright © 2021-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,7 +29,6 @@
 			"*titleFont:     sans-serif 18"  "\n" \
 			"*loaderProgram: mapscroller.pl" "\n" \
 			"*cacheSize:     20MB"           "\n" \
-			"*texFontOmitDropShadow: True     \n" \
 			"*suppressRotationAnimation: True \n" \
 
 # define release_map 0
@@ -39,6 +38,7 @@
 #include "ximage-loader.h"
 #include "texfont.h"
 #include "easing.h"
+#include "utf8wc.h"
 #include "../images/gen/oceantiles_12_png.h"
 
 #ifdef USE_GL /* whole file */
@@ -72,7 +72,7 @@ typedef struct { double lat, lon; } LL;
 typedef struct { double x, y; } XY;
 typedef struct { long x, y; } XYi;
 
-static const LL cities[] = {
+static const struct { LL pos; char *name; } cities[] = {
 # include "mapcities.h"
 };
 
@@ -85,6 +85,7 @@ typedef struct {
   int retries;
   GLuint texid;   /* Non-zero if we have the texture image data */
   GLfloat opacity;
+  GLfloat brightness;
 } tile;
 
 typedef struct {
@@ -100,6 +101,8 @@ typedef struct {
   int grid_w, grid_h;
   tile *tiles;
   texture_font_data *font_data;
+  char *nearest_city;
+  time_t nearest_city_time;
   XImage *oceans;
   Bool ocean_p;
 
@@ -162,7 +165,8 @@ static argtype vars[] = {
   {&verbose_p,        "verbose",     "Verbose",     DEF_VERBOSE,      t_Int},
 };
 
-ENTRYPOINT ModeSpecOpt map_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ENTRYPOINT ModeSpecOpt map_opts = {
+  countof(opts), opts, countof(vars), vars, NULL};
 
 
 static const char *
@@ -213,11 +217,70 @@ static Bool
 constrain_mercator (LL *ll)
 {
   Bool changed = False;
-  if (ll->lat >=  85) changed = True, ll->lat =  85;  /* Mercator max */
-  if (ll->lat <= -85) changed = True, ll->lat = -85;
-  while (ll->lon >   180) ll->lon -= 180;
-  while (ll->lon <= -180) ll->lon += 180;
+  /* The map tiles use the Mercator projection with an aspect ratio of 1,
+     meaning that any areas +-85.05113° latitude are inaccessible.
+  https://en.wikipedia.org/wiki/Mercator_projection#Truncation_and_aspect_ratio
+   */
+  if (ll->lat >  85) changed = True, ll->lat =  85;
+  if (ll->lat < -85) changed = True, ll->lat = -85;
+  while (ll->lon >   180) ll->lon -=  360;
+  while (ll->lon <= -180) ll->lon -= -360;
   return changed;
+}
+
+
+/* Distance between two lat/long coords in meters. */
+static double
+lat_lon_distance (LL a, LL b)
+{
+  double dlat = (b.lat - a.lat) * M_PI/180;
+  double dlon = (b.lon - a.lon) * M_PI/180; 
+  double aa = (sin(dlat/2) * sin(dlat/2) +
+               cos(a.lat * M_PI/180) * cos(b.lat * M_PI/180) *
+               sin(dlon/2) * sin(dlon/2));
+  double cc = 2 * atan2(sqrt(aa), sqrt(1-aa)); 
+
+  double R = 6371;		/* Radius of Earth in KM */
+  double d = R * cc * 1000;	/* Distance in M */
+  return d;
+}
+
+
+static char *
+nearest_city (ModeInfo *mi)
+{
+  map_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i;
+  int nearest_i = 0;
+  double nearest_d = -1;
+  int km;
+
+  for (i = 0; i < countof(cities); i++)
+    {
+      double dist = lat_lon_distance (cities[i].pos, bp->pos);
+      if (nearest_d < 0 || dist < nearest_d)
+        {
+          nearest_d = dist;
+          nearest_i = i;
+        }
+    }
+
+  if (nearest_d < 0) abort();
+
+  km = (nearest_d / 1000) + 0.5;
+  if (km < 10)
+    return strdup (cities[nearest_i].name);
+  else
+    {
+      char buf[1024];
+      char kmb[20];
+      if (km > 1000)
+        sprintf (kmb, "%d,%03d", km/1000, km%1000);
+      else
+        sprintf (kmb, "%d", km);
+      sprintf (buf, "%.20s km from %.200s", kmb, cities[nearest_i].name);
+      return strdup (buf);
+    }
 }
 
 
@@ -334,10 +397,15 @@ reshape_tiles (ModeInfo *mi)
         t->map.y = topleft_tile.y + y;
         t->grid.x = x;
         t->grid.y = y;
-        while (t->map.x < 0) t->map.x += map_w;
-        while (t->map.y < 0) t->map.y += map_h;
-        while (t->map.x >= map_w) t->map.x -= map_w;
-        while (t->map.y >= map_h) t->map.y -= map_h;
+        t->brightness = 1.0;
+
+        /* Wrap horizontally. */
+        while (t->map.x < 0)      t->map.x = map_w + t->map.x;
+        while (t->map.x >= map_w) t->map.x = t->map.x - map_w;
+
+        /* Hard edge vertically. */
+        if (t->map.y < 0 || t->map.y >= map_h)
+          t->map.x = t->map.y = -1;
       }
 
 
@@ -402,6 +470,10 @@ reshape_tiles (ModeInfo *mi)
         tile *t = queue[i];
         int L;
         char buf[1024];
+
+        if (t->map.x == -1 && t->map.y == -1)	/* Too far North or South */
+          continue;
+
         t->status = LOADING;
         sprintf (buf, "%ld %ld %d\n", t->map.x, t->map.y, t->map_level);
         L = strlen (buf);
@@ -518,7 +590,7 @@ draw_tile (ModeInfo *mi, tile *t)
       texture_string_metrics (bp->font_data, buf, &c, &ascent, &descent);
       glPushMatrix();
       glTranslatef (ascent / 2, w - (ascent + descent), 0);
-      glColor3f (1, 1, 0);
+      glColor3f (0.5, 0.5, 0.5);
       print_texture_string (bp->font_data, buf);
       glPopMatrix();
     }
@@ -856,6 +928,25 @@ read_loader (ModeInfo *mi)
               }
 
             t->status = OK;
+
+            {
+              int y;
+              double total = 0;
+              for (y = 0; y < image->height; y++)
+                for (x = 0; x < image->width; x++)
+                  {
+                    unsigned long rgba = XGetPixel (image, x, y);
+                 /* int a = (rgba >> 24) & 0xFF; */
+                    int r = (rgba >> 16) & 0xFF;
+                    int g = (rgba >>  8) & 0xFF;
+                    int b = (rgba >>  0) & 0xFF;
+                    double gray = r * 0.2126 + g * 0.7152 + b * 0.0722;
+                    total += gray / 0xFF;
+                  }
+              t->brightness = total / (image->width * image->height);
+              t->brightness *= 0.7;  /* Tweak cutoff */
+            }
+
             if (t->texid) abort();
             glGenTextures (1, &t->texid);
             if (!t->texid) abort();
@@ -941,6 +1032,17 @@ map_handle_event (ModeInfo *mi, XEvent *event)
           if (verbose_p)
             fprintf (stderr, "%s: level %d\n", blurb(mi), bp->map_level);
         }
+      else
+        {
+          bp->heading[0] = bp->heading[2];
+          bp->heading[1] = bp->heading[2];
+          bp->heading[1].x =  (event->xbutton.x - MI_WIDTH(mi)/2);
+          bp->heading[1].y = -(event->xbutton.y - MI_HEIGHT(mi)/2);
+          bp->heading_ratio = 0;
+          if (verbose_p)
+            fprintf (stderr, "%s: click heading %s\n", blurb(mi),
+                     heading_str(mi));
+        }
 
       bp->drag_start_deg = bp->pos;
       bp->drag_start_px.x = event->xbutton.x;
@@ -955,11 +1057,11 @@ map_handle_event (ModeInfo *mi, XEvent *event)
         {
           bp->heading[0] = bp->heading[2];
           bp->heading[1] = bp->heading[2];
-          bp->heading[1].x =  (event->xbutton.x - MI_WIDTH(mi)/2);
-          bp->heading[1].y = -(event->xbutton.y - MI_HEIGHT(mi)/2);
+          bp->heading[1].x =  (bp->drag_start_px.x - MI_WIDTH(mi)/2);
+          bp->heading[1].y = -(bp->drag_start_px.y - MI_HEIGHT(mi)/2);
           bp->heading_ratio = 0;
           if (verbose_p)
-            fprintf (stderr, "%s: click heading %s\n", blurb(mi),
+            fprintf (stderr, "%s: release heading %s\n", blurb(mi),
                      heading_str(mi));
         }
 
@@ -1068,15 +1170,17 @@ randomize_position (ModeInfo *mi)
     {
       if (city_p)
         {
-          if (i == 0)
-            pos = cities[random() % countof(cities)];  /* Random city center */
+          if (i == 0)  /* Random city center */
+            pos = cities[random() % (countof(cities) - NONCITIES_COUNT)].pos;
           /* Offset by a few miles, but not into the ocean */
           bp->pos.lat = pos.lat + frand(0.05) - 0.025;
           bp->pos.lon = pos.lon + frand(0.05) - 0.025;
         }
       else
         {
-          bp->pos.lat = frand (180)  - 90;
+          int north =  70;				/* Greenland */
+          int south = -55;				/* Chile */
+          bp->pos.lat = frand (north-south) + south;
           bp->pos.lon = frand (360) - 180;
         }
       constrain_mercator (&bp->pos);
@@ -1084,6 +1188,41 @@ randomize_position (ModeInfo *mi)
       if (! bp->ocean_p)
         break;
     }
+
+  if (bp->nearest_city)
+    free (bp->nearest_city);
+  bp->nearest_city = 0;
+  bp->nearest_city_time = time((time_t *) 0) + 1;
+}
+
+
+static int
+qsort_strcasecmp (const void *a, const void *b)
+{ 
+  const char *aa = *(const char **) a;
+  const char *bb = *(const char **) b;
+  char *c = utf8_to_latin1 (aa, True);
+  char *d = utf8_to_latin1 (bb, True);
+  int ret = strcasecmp (c, d);
+  free (c);
+  free (d);
+  return ret;
+}
+
+static void
+list_cities (ModeInfo *mi)
+{
+  int i;
+  int n = countof(cities) - NONCITIES_COUNT;
+  char **c2 = (char **) calloc (n + 1, sizeof (*c2));
+  for (i = 0; i < n; i++)
+    c2[i] = cities[i].name;
+  qsort (c2, i, sizeof(*c2), qsort_strcasecmp);
+  fprintf (stdout, "%s: built-in city names:\n\n", progname);
+  for (i = 0; i < n; i++)
+    fprintf (stdout, "\t%s\n", c2[i]);
+  fprintf (stdout, "\n");
+  free (c2);
 }
 
 
@@ -1115,8 +1254,8 @@ init_map (ModeInfo *mi)
   if (bp->speed > 10)    bp->speed = 10;
 
   bp->duration = duration_arg;
-  if (bp->duration < 30) bp->duration = 30;
-  bp->duration *= 1 + frand(0.2);  /* Keep multiple instances out of sync */
+  if (bp->duration < 5) bp->duration = 5;
+  bp->duration += frand(10);  /* Keep multiple instances out of sync */
 
   bp->oceans = image_data_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
                                      oceantiles_12_png,
@@ -1137,16 +1276,53 @@ init_map (ModeInfo *mi)
         bp->pos.lon = lon;
         constrain_mercator (&bp->pos);
       }
+    else if (!strcasecmp (origin_arg, "help") ||
+             !strcasecmp (origin_arg, "list"))
+      {
+        list_cities (mi);
+        exit (0);
+      }
     else
       {
-        if (strcasecmp (origin_arg, "random") &&
-            strcasecmp (origin_arg, "random-city"))
+        int i;
+        if (!strcasecmp (origin_arg, "random") ||
+            !strcasecmp (origin_arg, "random-city"))
           {
-            fprintf (stderr, "%s: unparsable origin: \"%s\"\n",
-                     blurb(mi), origin_arg);
-            origin_arg = "random-city";
+            randomize_position (mi);
+            goto DONE;
           }
+        for (i = 0; i < countof(cities); i++)
+          {
+            const char *name1 = cities[i].name;
+            char *name2 = utf8_to_latin1 (name1, True);
+            const char *comma1 = strrchr (name1, ',');
+            const char *comma2 = strrchr (name2, ',');
+            if (!strcasecmp (origin_arg, name1) ||
+                !strcasecmp (origin_arg, name2) ||
+                (comma1 &&
+                 strlen (origin_arg) == comma1 - name1 &&
+                 !strncasecmp (origin_arg, name1,
+                               strlen (origin_arg))) ||
+                (comma2 &&
+                 strlen (origin_arg) == comma2 - name2 &&
+                 !strncasecmp (origin_arg, name2,
+                               strlen (origin_arg))))
+              {
+                bp->pos = cities[i].pos;
+                constrain_mercator (&bp->pos);
+                goto DONE;
+              }
+            free (name2);
+          }
+  
+        fprintf (stderr, "%s: origin must be 'random', 'random-city', "
+                 " a lat/lon pair, or a city name.\n", progname);
+        fprintf (stderr, "%s: Use '--origin help' for the available names.\n",
+                 blurb(mi));
+
+        origin_arg = "random-city";
         randomize_position (mi);
+      DONE: ;
       }
   }
 
@@ -1173,6 +1349,9 @@ draw_map (ModeInfo *mi)
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   time_t now = time ((time_t *) 0);
+  GLfloat text_color_1[4] = { 0.3, 0.3, 0.3, 1 };
+  GLfloat text_color_2[4] = { 1.0, 1.0, 1.0, 1 };
+  GLfloat *text_color;
 
   if (!bp->glx_context)
     return;
@@ -1192,6 +1371,19 @@ draw_map (ModeInfo *mi)
 
   mi->polygon_count = 0;   /* This counts loaded tiles, not polygons */
   mi->recursion_depth = bp->map_level;
+
+  /* Pick a tile and decide the text color based on its brightness. */
+  {
+    int x = bp->grid_w / 2;	/* Center */
+    int y = bp->grid_h / 2;
+    tile *t;
+# if 1
+    if (x > 2) x = 2;	/* Upper left fully visible tile (2 tile border) */
+    if (y > 2) y = 2;
+# endif
+    t = &bp->tiles[y * bp->grid_w + x];
+    text_color = (t->brightness > 0.5 ? text_color_1 : text_color_2);
+  }
 
   if (bp->mode == RUN && !bp->button_down_p)
     {
@@ -1296,30 +1488,30 @@ draw_map (ModeInfo *mi)
             fprintf (stderr, "%s: new heading %s\n", blurb(mi),
                      heading_str(mi));
         }
+    }
 
-      if (bp->heading_ratio < 1)
+  if (bp->mode == RUN && bp->heading_ratio < 1)
+    {
+      double th0, th1, th2;
+      bp->heading_ratio += (bp->button_down_p ? 0.1 : 0.003);
+      if (bp->heading_ratio > 1)
+        bp->heading_ratio = 1;
+
+      th0 = atan2 (bp->heading[0].x, bp->heading[0].y);
+      th1 = atan2 (bp->heading[1].x, bp->heading[1].y);
+      while (th0 < 0) th0 += M_PI*2;
+      while (th1 < 0) th1 += M_PI*2;
+      if (th1 - th0 > M_PI || th1 - th0 <= -M_PI)
         {
-          double th0, th1, th2;
-          bp->heading_ratio += 0.003;
-          if (bp->heading_ratio > 1)
-            bp->heading_ratio = 1;
-
-          th0 = atan2 (bp->heading[0].x, bp->heading[0].y);
-          th1 = atan2 (bp->heading[1].x, bp->heading[1].y);
-          while (th0 < 0) th0 += M_PI*2;
-          while (th1 < 0) th1 += M_PI*2;
-          if (th1 - th0 > M_PI || th1 - th0 <= -M_PI)
-            {
-              if (th1 < th0)
-                th1 += M_PI*2;
-              else
-                th0 += M_PI*2;
-            }
-
-          th2 = th0 + (th1 - th0) * ease (EASE_IN_OUT_SINE, bp->heading_ratio);
-          bp->heading[2].x = sin (th2);
-          bp->heading[2].y = cos (th2);
+          if (th1 < th0)
+            th1 += M_PI*2;
+          else
+            th0 += M_PI*2;
         }
+
+      th2 = th0 + (th1 - th0) * ease (EASE_IN_OUT_SINE, bp->heading_ratio);
+      bp->heading[2].x = sin (th2);
+      bp->heading[2].y = cos (th2);
     }
 
   if (bp->mode == FADE_OUT)
@@ -1331,13 +1523,21 @@ draw_map (ModeInfo *mi)
         {
           bp->opacity = 1;
           bp->mode = RUN;
-          bp->change_time = time ((time_t *) 0);
+          bp->change_time = now;
           randomize_position (mi);
           if (verbose_p)
             fprintf (stderr, "%s: new position %.4f, %.4f%s\n", blurb(mi),
                      bp->pos.lat, bp->pos.lon,
                      (bp->ocean_p ? " (ocean)" : ""));
         }
+    }
+
+  if (bp->nearest_city_time < now)
+    {
+      /* Only update this once a second. */
+      if (bp->nearest_city) free (bp->nearest_city);
+      bp->nearest_city = nearest_city (mi);
+      bp->nearest_city_time = now;
     }
 
   if (bp->input_available_p && !bp->dead_p)
@@ -1363,14 +1563,14 @@ draw_map (ModeInfo *mi)
       double alat = bp->pos.lat >= 0 ? bp->pos.lat : -bp->pos.lat;
       double alon = bp->pos.lon >= 0 ? bp->pos.lon : -bp->pos.lon;
       sprintf (buf,
-               "%.0f\xC2\xB0 %.0f' %.2f\" %c, "
-               "%.0f\xC2\xB0 %.0f' %.2f\" %c",
-               alat,
-               (alat - (int) alat) * 60,
+               "%d\xC2\xB0 %d' %.2f\" %c, "
+               "%d\xC2\xB0 %d' %.2f\" %c",
+               (int) alat,
+               (int) ((alat - (int) alat) * 60),
                ((alat * 60) - (int) (alat * 60)) * 60,
                (bp->pos.lat >= 0 ? 'N' : 'S'),
-               alon,
-               (alon - (int) alon) * 60,
+               (int) alon,
+               (int) ((alon - (int) alon) * 60),
                ((alon * 60) - (int) (alon * 60)) * 60,
                (bp->pos.lon >= 0 ? 'E' : 'W'));
 # else
@@ -1378,16 +1578,20 @@ draw_map (ModeInfo *mi)
       double alat = bp->pos.lat >= 0 ? bp->pos.lat : -bp->pos.lat;
       double alon = bp->pos.lon >= 0 ? bp->pos.lon : -bp->pos.lon;
       sprintf (buf,
-               "%.0f\xC2\xB0 %.0f' %c, "
-               "%.0f\xC2\xB0 %.0f' %c",
-               alat,
-               (alat - (int) alat) * 60,
+               "%d\xC2\xB0 %d' %c, "
+               "%d\xC2\xB0 %d' %c",
+               (int) alat,
+               (int) ((alat - (int) alat) * 60),
                (bp->pos.lat >= 0 ? 'N' : 'S'),
-               alon,
-               (alon - (int) alon) * 60,
+               (int) alon,
+               (int) ((alon - (int) alon) * 60),
                (bp->pos.lon >= 0 ? 'E' : 'W'));
 # endif
-      glColor3f (0.3, 0.3, 0.3);
+
+      if (bp->nearest_city && *bp->nearest_city)
+        sprintf (buf + strlen(buf), "\n%.200s", bp->nearest_city);
+
+      glColor4fv (text_color);
       print_texture_label (mi->dpy, bp->font_data,
                            MI_WIDTH(mi), MI_HEIGHT(mi), 1, buf);
     }
@@ -1416,7 +1620,7 @@ draw_map (ModeInfo *mi)
                 " Is Perl broken? Maybe try:\n\n"
                 "sudo cpan LWP::Simple LWP::Protocol::https Mozilla::CA");
 
-      glColor3f (0.3, 0.3, 0.3);
+      glColor4fv (text_color);
       print_texture_label (mi->dpy, bp->font_data,
                            MI_WIDTH(mi), MI_HEIGHT(mi), 0, buf);
     }
@@ -1424,25 +1628,7 @@ draw_map (ModeInfo *mi)
 
   if (mi->fps_p && !bp->dead_p)
     {
-      if (!MI_IS_WIREFRAME(mi))
-        {
-          /* Put a gray box behind the FPS text, but on top of the map. */
-          glPushMatrix();
-          glTranslatef (-0.5, -0.5, 0);
-          glScalef (1.0 / MI_WIDTH(mi),
-                    1.0 / MI_HEIGHT(mi),
-                    1);
-          glScalef (320, 190, 1);
-          glDisable (GL_TEXTURE_2D);
-          glColor4f (0, 0, 0, 0.4);
-          glBegin(GL_QUADS);
-          glVertex3f(0, 0, 0);
-          glVertex3f(0, 1, 0);
-          glVertex3f(1, 1, 0);
-          glVertex3f(1, 0, 0);
-          glEnd();
-          glPopMatrix();
-        }
+      glColor4fv (text_color);
       do_fps (mi);
     }
   glFinish();
@@ -1463,6 +1649,8 @@ free_map (ModeInfo *mi)
     free_tiles (mi);
   if (bp->oceans)
     XDestroyImage (bp->oceans);
+  if (bp->nearest_city)
+    free (bp->nearest_city);
 
   close (bp->pipe_in);
   close (bp->pipe_out);

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -158,7 +158,6 @@
 extern struct xscreensaver_function_table *xscreensaver_function_table;
 
 
-const char *progname;   /* used by hacks in error messages */
 const char *progclass;  /* used by ../utils/resources.c */
 Bool mono_p;		/* used by hacks */
 

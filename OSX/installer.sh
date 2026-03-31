@@ -20,7 +20,7 @@
 #set -x
 
 DEBUG=0
-REQUIRED_SPACE=260  # MB
+REQUIRED_SPACE=400  # MB
 
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:$PATH"
 

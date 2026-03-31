@@ -36,7 +36,7 @@ Draw on the root window.
 Draw on the specified window.
 .TP 8
 .B \-\-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
 .TP 8
 .B \-\-image \fIfile\fP
 The day texture map to wrap around the planet's surface.

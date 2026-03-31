@@ -36,6 +36,12 @@
  *   iChannel2 to a different pass instead.  Likewise, self-access to
  *   previously-generated frames is not supported.
  *
+ *   It can also randomly choose a program at startup:
+ *
+ *   xshadertoy --program0-0 FIRST-PROGRAM-0.glsl	\
+ *		--program0-1 FIRST-PROGRAM-1.glsl	\
+ *		--program1-0 SECOND-PROGRAM.glsl	\
+ *		--program2-0 THIRD-PROGRAM.glsl
  *
  * LICENSING:
  *
@@ -116,23 +122,19 @@
 #define DEF_AUTOMOUSE "False"
 #define DEF_AUTOMOUSE_SPEED "1.0"
 #define DEF_SCALE "1.0"
-#define DEF_SHADER_FILE0 "(none)"
-#define DEF_SHADER_FILE1 "(none)"
-#define DEF_SHADER_FILE2 "(none)"
-#define DEF_SHADER_FILE3 "(none)"
-#define DEF_SHADER_FILE4 "(none)"
-#define DEF_SHADER_FILE_COMMON "(none)"
+#define DEF_SHADER_FILE "(none)"
+#define DEF_DURATION "120"
 
 static GLfloat speed;
 static GLfloat scale;
 static Bool automouse_p;
 static GLfloat automouse_speed;
-static char *shader_file0 = 0;
-static char *shader_file1 = 0;
-static char *shader_file2 = 0;
-static char *shader_file3 = 0;
-static char *shader_file4 = 0;
-static char *shader_file_common = 0;
+static int duration;
+
+#define BUFFERS  6	/* BufferA, B, C, D, Image, Common */
+#define VARIANTS 10	/* N different sets of buffers */
+
+static char *shader_files[VARIANTS][BUFFERS];
 
 typedef struct {
   GLXContext *glx_context;
@@ -140,7 +142,8 @@ typedef struct {
   GLint gl_major, gl_minor, glsl_major, glsl_minor;
   GLboolean gl_gles3;
 
-  char *shader_program[6];		/* BufferA, B, C, D, Image, Common */
+  int variant, nvariants;
+  char *shader_program[VARIANTS][BUFFERS];
 
   GLuint vertex_pos_buffer;
   GLuint win_draw_fbo, win_read_fbo;
@@ -157,7 +160,7 @@ typedef struct {
     GLint frag_idate;
     GLint frag_imouse;
     GLint frag_ichan[4];
-  } channels[5];
+  } channels[BUFFERS-1];	/* BufferA, B, C, D, Image; omit Common */
 
   double start_time, last_time, last_tm, midnight;
   struct tm now;
@@ -170,38 +173,62 @@ typedef struct {
 
 static xshadertoy_configuration *bps = NULL;
 
+#define STR(S) #S
+
 static XrmOptionDescRec opts[] = {
   {"-speed",          ".speed",          XrmoptionSepArg, 0 },
   {"-scale",          ".scale",          XrmoptionSepArg, 0 },
   {"-automouse",      ".automouse",      XrmoptionNoArg, "True"  },
   {"+automouse",      ".automouse",      XrmoptionNoArg, "False" },
   {"-automouse-speed",".automouseSpeed", XrmoptionSepArg, 0 },
-  {"-program",        ".shaderChannel0", XrmoptionSepArg, 0 },
-  {"-program-common", ".shaderCommon",   XrmoptionSepArg, 0 },
-  {"-program0",       ".shaderChannel0", XrmoptionSepArg, 0 },
-  {"-program1",       ".shaderChannel1", XrmoptionSepArg, 0 },
-  {"-program2",       ".shaderChannel2", XrmoptionSepArg, 0 },
-  {"-program3",       ".shaderChannel3", XrmoptionSepArg, 0 },
-  {"-program4",       ".shaderChannel4", XrmoptionSepArg, 0 },
+  {"-duration",       ".duration",       XrmoptionSepArg, 0 },
+
+  {"-program",        ".shader0Channel0", XrmoptionSepArg, 0 },
+
+  {"-program0",       ".shader0Channel0", XrmoptionSepArg, 0 },
+  {"-program1",       ".shader0Channel1", XrmoptionSepArg, 0 },
+  {"-program2",       ".shader0Channel2", XrmoptionSepArg, 0 },
+  {"-program3",       ".shader0Channel3", XrmoptionSepArg, 0 },
+  {"-program4",       ".shader0Channel4", XrmoptionSepArg, 0 },
+  {"-program-common", ".shader0Common",   XrmoptionSepArg, 0 },
+
+# define SHADER_OPT(N) \
+  {"-program" STR(N) "-0",     ".shader" STR(N) "Channel0",XrmoptionSepArg,0},\
+  {"-program" STR(N) "-1",     ".shader" STR(N) "Channel1",XrmoptionSepArg,0},\
+  {"-program" STR(N) "-2",     ".shader" STR(N) "Channel2",XrmoptionSepArg,0},\
+  {"-program" STR(N) "-3",     ".shader" STR(N) "Channel3",XrmoptionSepArg,0},\
+  {"-program" STR(N) "-4",     ".shader" STR(N) "Channel4",XrmoptionSepArg,0},\
+  {"-program" STR(N) "-common",".shader" STR(N) "Common",  XrmoptionSepArg,0}
+  SHADER_OPT(0),
+  SHADER_OPT(1),
+  SHADER_OPT(2),
+  SHADER_OPT(3),
+  SHADER_OPT(4),
+  SHADER_OPT(5),
+  SHADER_OPT(6),
+  SHADER_OPT(7),
+  SHADER_OPT(8),
+  SHADER_OPT(9),
 };
 
 static argtype vars[] = {
-  { &speed, "speed", "Speed", DEF_SPEED, t_Float },
-  { &scale, "scale", "Scale", DEF_SCALE, t_Float },
-  { &automouse_p, "automouse", "Automouse", DEF_AUTOMOUSE, t_Bool },
+  { &speed, "speed",  "Speed", DEF_SPEED, t_Float },
+  { &scale, "scale",  "Scale", DEF_SCALE, t_Float },
+  { &automouse_p,     "automouse", "Automouse", DEF_AUTOMOUSE, t_Bool },
   { &automouse_speed, "automouseSpeed", "Speed", DEF_AUTOMOUSE_SPEED, t_Float },
-  { &shader_file0, "shaderChannel0", "ShaderChannel",
-      DEF_SHADER_FILE0, t_String },
-  { &shader_file1, "shaderChannel1", "ShaderChannel",
-      DEF_SHADER_FILE1, t_String },
-  { &shader_file2, "shaderChannel2", "ShaderChannel",
-      DEF_SHADER_FILE2, t_String },
-  { &shader_file3, "shaderChannel3", "ShaderChannel",
-      DEF_SHADER_FILE3, t_String },
-  { &shader_file4, "shaderChannel4", "ShaderChannel",
-      DEF_SHADER_FILE4, t_String },
-  { &shader_file_common, "shaderCommon", "ShaderChannel",
-      DEF_SHADER_FILE_COMMON, t_String },
+  { &duration,        "duration", "Duration", DEF_DURATION, t_Int },
+
+# define SHADER_ARG0(N,M,S) \
+  { &shader_files[N][M], "shader" STR(N) S, "ShaderChannel", \
+      DEF_SHADER_FILE, t_String }
+# define SHADER_ARG1(N,M) SHADER_ARG0(N, M, "Channel" STR(M))
+
+# define SHADER_ARG(N) \
+  SHADER_ARG1(N,0), SHADER_ARG1(N,1), SHADER_ARG1(N,2), \
+  SHADER_ARG1(N,3), SHADER_ARG1(N,4), SHADER_ARG0(N,5,"Common")
+
+  SHADER_ARG(0), SHADER_ARG(1), SHADER_ARG(2), SHADER_ARG(3), SHADER_ARG(4),
+  SHADER_ARG(5), SHADER_ARG(6), SHADER_ARG(7), SHADER_ARG(8), SHADER_ARG(9),
 };
 
 ENTRYPOINT ModeSpecOpt xshadertoy_opts = {
@@ -371,9 +398,13 @@ static const GLchar *fragment_shader_head = "\
         // int max(int a, float b) { return a > b ? a : int(b); }	\n\
         // int max(float a, int b) { return a > b ? int(a) : b; }	\n\
 									\n\
+	// Another common compatibility problem that I have noticed	\n\
+	// is that for things to work on version 120, variables need	\n\
+	// to be initialized, not assumed to be zero.			\n\
+									\n\
 	#endif   // __VERSION__ > 120					\n\
 									\n\
-	#line 1								\n\
+	#line 0								\n\
 ";
 static const char *fragment_shader_tail = "\
 									\n\
@@ -389,6 +420,240 @@ static const char *fragment_shader_tail = "\
 ";
 
 #endif /* HAVE_GLSL */
+
+
+static void
+parse_program_args (ModeInfo *mi)
+{
+  xshadertoy_configuration *bp = &bps[MI_SCREEN(mi)];
+  int i, j, k;
+
+# ifndef HAVE_ANDROID
+  FILE *real_stdin = 0;
+# endif
+
+  /* Pack the programs to the left, if they did --program0 --program2 */
+  for (i = 0; i < countof(shader_files); i++)
+    {
+      char *p[countof(shader_files[i])];
+      memset (p, 0, sizeof(p));
+      k = 0;
+      for (j = 0; j < countof(shader_files[i]) - 1; j++)
+        {
+          char *s = shader_files[i][j];
+          if (s && !!strcasecmp (s, DEF_SHADER_FILE))
+            p[k++] = s;
+        }
+      for (j = 0; j < countof(shader_files[i]) - 1; j++)
+        shader_files[i][j] = p[j];
+    }
+
+  /* Pack the variants to the left, if they did --program0-0 --program2-0 */
+  for (i = VARIANTS - 1; i > 0; i--)
+    if (shader_files[i][0] && !shader_files[i-1][0])
+      for (j = 0; j < BUFFERS; j++)
+        {
+          shader_files[i-1][j] = shader_files[i][j];
+          shader_files[i][j] = 0;
+        }
+
+  for (i = 0; i < countof(shader_files); i++)
+    {
+# ifdef HAVE_COCOA
+      /* When xshadertoy is run under a macOS Cocoa .saver bundle, we search
+         in the $BUNDLE_RESPATH directory for any files whose names match
+         "progname-N.glsl", etc.
+       */
+      {
+        const char *dir = getenv ("BUNDLE_RESPATH");
+        const char *ext = "glsl";
+        char *name = strdup (progname);
+        char *s;
+        for (s = name; *s; s++) *s = tolower(*s);
+
+        if (!dir)
+          {
+            fprintf (stderr, "%s: BUNDLE_RESPATH is unset\n", name);
+            abort();
+          }
+
+        for (j = 0; j < countof(bp->shader_program[i]); j++)
+          {
+            char *fn = (char *)
+              malloc (strlen(dir) + strlen(name) + strlen(ext) + 20);
+            struct stat st;
+
+            /* nameI-J.glsl */
+            if (j == countof(bp->shader_program[i]) - 1)
+              sprintf (fn, "%s/%s%d-%s.%s", dir, name, i, "c", ext);
+            else
+              sprintf (fn, "%s/%s%d-%d.%s", dir, name, i, j, ext);
+
+            /* name-J.glsl */
+            if (i == 0 && !!stat (fn, &st))
+              {
+                if (j == countof(bp->shader_program[i]) - 1)
+                  sprintf (fn, "%s/%s-%s.%s", dir, name, "c", ext);
+                else
+                  sprintf (fn, "%s/%s-%d.%s", dir, name, j, ext);
+              }
+
+            /* name.glsl */
+            if (i == 0 && j == 0 && !!stat (fn, &st))
+              sprintf (fn, "%s/%s.%s", dir, name, ext);
+
+            if (!stat (fn, &st))
+              shader_files[i][j] = strdup (fn);
+
+            free (fn);
+          }
+        free (name);
+      }
+
+# elif defined(HAVE_ANDROID)
+      /* Under Android, search for any files whose names match
+         "progname-N.glsl", except that these pseudo-files are
+         "assets" instead.
+       */
+      {
+        const char *ext = "glsl";
+        const char *dir = ext;
+        char *name = strdup (progname);
+        char *s;
+        for (s = name; *s; s++) *s = tolower(*s);
+
+        for (j = 0; j < countof(bp->shader_program[i]); j++)
+          {
+            char *body;
+            char *fn = (char *) malloc (strlen(name) + strlen(ext) + 20);
+  
+            /* nameI-J.glsl */
+            if (j == countof(bp->shader_program[i]) - 1)
+              sprintf (fn, "%s%d-%s.%s", name, i, "c", ext);
+            else
+              sprintf (fn, "%s%d-%d.%s", name, i, j, ext);
+
+            body = android_read_asset_file (MI_WINDOW(mi), dir, fn);
+
+            /* name-J.glsl */
+            if (i == 0 && !body)
+              {
+                if (j == countof(bp->shader_program[i]) - 1)
+                  sprintf (fn, "%s-%s.%s", name, "c", ext);
+                else
+                  sprintf (fn, "%s-%d.%s", name, j, ext);
+
+                body = android_read_asset_file (MI_WINDOW(mi), dir, fn);
+              }
+
+            /* name.glsl */
+            if (i == 0 && j == 0 && !body)
+              {
+                sprintf (fn, "%s.%s", name, ext);
+                body = android_read_asset_file (MI_WINDOW(mi), dir, fn);
+              }
+  
+            if (body)
+              {
+                shader_files[i][j] = strdup (fn);
+                bp->shader_program[i][j] = body;
+              }
+            free (fn);
+          }
+        free (name);
+      }
+
+# endif /* HAVE_ANDROID */
+
+
+# ifndef HAVE_ANDROID /* X11, Cocoa and iOS read files with fopen. */
+      {
+        FILE *in = 0;
+        Bool nl_p = True;
+        int order[] = { 5, 0, 1, 2, 3, 4 };  /* Read "common" first on stdin */
+
+        for (k = 0; k < countof (bp->shader_program[i]); k++)
+          {
+            int j = order[k];
+            const char *fn = shader_files[i][j];
+            char buf[255];
+            int res;
+            int len = 0;
+            int size = 0;
+
+            if (!fn || !*fn || !strcasecmp (fn, DEF_SHADER_FILE))
+              continue;
+
+            if (!!strcmp (fn, "-"))
+              in = fopen (fn, "r");
+            else
+              {
+                in = (real_stdin ? real_stdin : fdopen (STDIN_FILENO, "r"));
+                real_stdin = in;
+              }
+
+            if (!in)
+              {
+                sprintf (buf, "%s: error reading \"%.200s\"", progname, fn);
+                perror (buf);
+                exit (1);
+              }
+
+            bp->shader_program[i][j] = NULL;
+
+            while (fgets (buf, sizeof(buf)-1, in))
+              {
+                res = strlen (buf);
+                if (nl_p && real_stdin &&
+                    !strcmp (buf, ".\n"))	/* "." alone on a line is EOF */
+                  break;
+                nl_p = (res > 0 && buf[res-1] == '\n');
+
+                if (len + res >= size)
+                  {
+                    size += sizeof(buf);
+                    bp->shader_program[i][j] =
+                      (bp->shader_program[i][j]
+                       ? realloc (bp->shader_program[i][j], size)
+                       : malloc (size));
+                    if (!bp->shader_program[i][j]) abort();
+                  }
+                memcpy (bp->shader_program[i][j] + len, buf, res);
+                len += res;
+                bp->shader_program[i][j][len] = 0;
+              }
+
+            if (!real_stdin)
+              {
+                fclose (in);
+                in = 0;
+              }
+
+            if (!bp->shader_program[i][j] || !*bp->shader_program[i][j] ||
+                strlen (bp->shader_program[i][j]) < 10)
+              {
+                fprintf (stderr, "%s: no program in %d-%d \"%s\"\n", progname,
+                         i, j, fn);
+                exit (1);
+              }
+          }
+      }
+
+# endif /* !HAVE_ANDROID */
+    }
+
+  if (!bp->shader_program[0][0] || !*bp->shader_program[0][0])
+    {
+      fprintf (stderr, "%s: no --program specified\n", progname);
+      exit (1);
+    }
+
+  /* Choose a variant once at startup. */
+  for (i = 0; i < VARIANTS; i++)
+    if (bp->shader_program[i][0])
+      bp->nvariants++;
+  bp->variant = random() % bp->nvariants;
+}
 
 
 static void
@@ -422,7 +687,8 @@ gen_framebuffers (ModeInfo *mi)
 
   for (i = 0; i < countof(bp->channels); i++)
     {
-      if (!bp->shader_program[i] || !*bp->shader_program[i])
+      if (! bp->shader_program[bp->variant][i] ||
+          !*bp->shader_program[bp->variant][i])
         continue;
 
       glGenFramebuffers (1, &bp->channels[i].fbo);
@@ -489,31 +755,38 @@ init_glsl (ModeInfo *mi)
       exit (1);
     }
 
-  if (glsl_IsCoreProfile())
+  bp->total_frames = 0;
+  bp->start_time   = double_time();
+  bp->last_time    = bp->start_time;
+  {
+    time_t t = bp->start_time;
+    struct tm *tm = localtime (&t);
+    bp->now = *tm;
+  }
+
+  if (glsl_IsCoreProfile() && !bp->vao)
     glGenVertexArrays (1, &bp->vao);
 
   /* The FBOs of the output window, before channel FBOs were created. */
-  glGetIntegerv (GL_DRAW_FRAMEBUFFER_BINDING, (GLint *) &bp->win_draw_fbo);
-  glGetIntegerv (GL_READ_FRAMEBUFFER_BINDING, (GLint *) &bp->win_read_fbo);
+  if (! bp->win_draw_fbo)
+    glGetIntegerv (GL_DRAW_FRAMEBUFFER_BINDING, (GLint *) &bp->win_draw_fbo);
+  if (! bp->win_read_fbo)
+    glGetIntegerv (GL_READ_FRAMEBUFFER_BINDING, (GLint *) &bp->win_read_fbo);
 
   if (scale > 1 || scale <= 0)  /* Scale down only */
     scale = 1;
 
   for (i = 0; i < countof(bp->channels); i++)
     {
-      const char *fn = (i == 0 ? shader_file0 :
-                        i == 1 ? shader_file1 :
-                        i == 2 ? shader_file2 :
-                        i == 3 ? shader_file3 :
-                        i == 4 ? shader_file4 : "???");
+      const char *fn = shader_files[bp->variant][i];
       GLuint p;
       const GLchar *vertex_shader_source[2];
       const GLchar *fragment_shader_source[6];
-      const GLchar *common =
-        bp->shader_program[countof(bp->shader_program) - 1];
+      const GLchar *common = bp->shader_program[bp->variant][BUFFERS - 1];
       if (!common) common = "";
 
-      if (!bp->shader_program[i] || !*bp->shader_program[i])
+      if (! bp->shader_program[bp->variant][i] ||
+          !*bp->shader_program[bp->variant][i])
         continue;
 
       vertex_shader_source[0]   = glsl_GetGLSLVersionString();
@@ -521,17 +794,50 @@ init_glsl (ModeInfo *mi)
       fragment_shader_source[0] = glsl_GetGLSLVersionString();
       fragment_shader_source[1] = fragment_shader_head;
       fragment_shader_source[2] = common;
-      fragment_shader_source[3] = "\n#line 1\n";
-      fragment_shader_source[4] = bp->shader_program[i];
+      fragment_shader_source[3] = "\n#line 0\n";
+      fragment_shader_source[4] = bp->shader_program[bp->variant][i];
       fragment_shader_source[5] = fragment_shader_tail;
+
+      if (bp->channels[i].poly_shader_program)
+        glDeleteProgram (bp->channels[i].poly_shader_program);
+
       if (!glsl_CompileAndLinkShaders(
            countof(vertex_shader_source),   vertex_shader_source,
            countof(fragment_shader_source), fragment_shader_source,
            &bp->channels[i].poly_shader_program))
         {
-          fprintf (stderr,
-                   "%s: GLSL compilation of --program%d \"%s\" failed\n",
-                   progname, i, fn);
+          if (bp->variant == 0)
+            fprintf (stderr,
+                     "%s: GLSL compilation of --program%d \"%s\" failed\n",
+                     progname, i, fn);
+          else
+            fprintf (stderr,
+                     "%s: GLSL compilation of --program%d-%d \"%s\" failed\n",
+                     progname, bp->variant, i, fn);
+# if 0
+          {
+            /* Dump the whole thing, with adjusted line numbers. */
+            int i, lineno = 1;
+            fprintf (stderr, "\n");
+            for (i = 0; i < countof(fragment_shader_source); i++)
+              {
+                char *line = strdup (fragment_shader_source[i]);
+                if (!*line) continue;
+                while (1)
+                  {
+                    char *end = strchr (line, '\n');
+                    if (end) *end = 0;
+                    if (strstr (line, "#line 0")) lineno = 0;
+                    fprintf (stderr, "%3d: %s\n", lineno++, line);
+                    if (end && end[1])
+                      line = end+1;
+                    else
+                      break;
+                  }
+              }
+            fprintf (stderr, "\n");
+          }
+# endif
           exit (1);
         }
 
@@ -552,8 +858,6 @@ init_glsl (ModeInfo *mi)
       bp->channels[i].frag_ichan[3] = glGetUniformLocation (p, "iChannel3");
     }
 
-  gen_framebuffers (mi);
-
   {
     static const GLfloat verts[] = {
       -1, -1,
@@ -563,7 +867,8 @@ init_glsl (ModeInfo *mi)
        1, -1,
        1,  1,
     };
-    glGenBuffers (1, &bp->vertex_pos_buffer);
+    if (! bp->vertex_pos_buffer)
+      glGenBuffers (1, &bp->vertex_pos_buffer);
     glBindBuffer (GL_ARRAY_BUFFER, bp->vertex_pos_buffer);
     glBufferData (GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
   }
@@ -607,231 +912,21 @@ ENTRYPOINT void
 init_xshadertoy (ModeInfo *mi)
 {
   xshadertoy_configuration *bp;
-  int i;
 
   MI_INIT (mi, bps);
   bp = &bps[MI_SCREEN(mi)];
 
   bp->glx_context = init_GL(mi);
 
+  parse_program_args (mi);
+  init_glsl (mi);
   reshape_xshadertoy (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
-  /* Pack the programs to the left, if they did --program0 --program2 */
-  {
-    char *p[countof(bp->channels)];
-    memset (p, 0, sizeof(p));
-    i = 0;
-# define PUSH(S) if (S && *S && !!strcasecmp (S, DEF_SHADER_FILE0)) p[i++] = S
-    PUSH (shader_file0);
-    PUSH (shader_file1);
-    PUSH (shader_file2);
-    PUSH (shader_file3);
-    PUSH (shader_file4);
-# undef PUSH
-    shader_file0 = p[0];
-    shader_file1 = p[1];
-    shader_file2 = p[2];
-    shader_file3 = p[3];
-    shader_file4 = p[4];
-  }
-
-# ifdef HAVE_COCOA
-  /* When xshadertoy is run under a macOS Cocoa .saver bundle, we search
-     in the $BUNDLE_RESPATH directory for any files whose names match
-     "progname-N.glsl", etc.
-   */
-  {
-    const char *dir = getenv ("BUNDLE_RESPATH");
-    const char *ext = "glsl";
-    char *name = strdup (progname);
-    char *s;
-    for (s = name; *s; s++) *s = tolower(*s);
-
-    if (!dir)
-      {
-        fprintf (stderr, "%s: BUNDLE_RESPATH is unset\n", name);
-        abort();
-      }
-
-    for (i = 0; i < countof(bp->shader_program); i++)
-      {
-        char *fn = (char *)
-          malloc (strlen(dir) + strlen(name) + strlen(ext) + 20);
-        struct stat st;
-
-        if (i == countof(bp->shader_program) - 1)
-          sprintf (fn, "%s/%s-%s.%s", dir, name, "c", ext);
-        else
-          sprintf (fn, "%s/%s-%d.%s", dir, name, i, ext);
-
-        if (i == 0 && !!stat (fn, &st))
-          sprintf (fn, "%s/%s.%s", dir, name, ext);
-
-        if (!stat (fn, &st))
-          switch (i) {
-          case 0: shader_file0 = strdup (fn); break;
-          case 1: shader_file1 = strdup (fn); break;
-          case 2: shader_file2 = strdup (fn); break;
-          case 3: shader_file3 = strdup (fn); break;
-          case 4: shader_file4 = strdup (fn); break;
-          case 5: shader_file_common = strdup (fn); break;
-          default: abort(); break;
-          }
-        free (fn);
-      }
-    free (name);
-  }
-# elif defined(HAVE_ANDROID)
-  /* Under Android, search for any files whose names match "progname-N.glsl",
-     except that these pseudo-files are "assets" instead.
-   */
-  {
-    const char *ext = "glsl";
-    const char *dir = ext;
-    char *name = strdup (progname);
-    char *s;
-    for (s = name; *s; s++) *s = tolower(*s);
-
-    for (i = 0; i < countof(bp->shader_program); i++)
-      {
-        char *body;
-        char *fn = (char *) malloc (strlen(name) + strlen(ext) + 20);
-  
-        if (i == countof(bp->shader_program) - 1)
-          sprintf (fn, "%s-c.%s", name, ext);
-        else
-          sprintf (fn, "%s-%d.%s", name, i, ext);
-  
-        body = android_read_asset_file (MI_WINDOW(mi), dir, fn);
-        if (i == 0 && !body)
-          {
-            sprintf (fn, "%s.%s", name, ext);
-            body = android_read_asset_file (MI_WINDOW(mi), dir, fn);
-          }
-  
-        if (body)
-          {
-            bp->shader_program[i] = body;
-            switch (i) {
-            case 0: shader_file0 = strdup (fn); break;
-            case 1: shader_file1 = strdup (fn); break;
-            case 2: shader_file2 = strdup (fn); break;
-            case 3: shader_file3 = strdup (fn); break;
-            case 4: shader_file4 = strdup (fn); break;
-            case 5: shader_file_common = strdup (fn); break;
-            default: abort(); break;
-            }
-          }
-        free (fn);
-      }
-    free (name);
-  }
-# endif /* HAVE_ANDROID */
-
-
-# ifndef HAVE_ANDROID /* X11, Cocoa and iOS read files with fopen. */
-  {
-    int j;
-    FILE *in = 0, *stdin = 0;
-    Bool nl_p = True;
-    int order[] = { 5, 0, 1, 2, 3, 4 };    /* Read "common" first on stdin */
-
-    for (j = 0; j < countof (bp->shader_program); j++)
-      {
-        int i = order[j];
-        const char *fn = (i == 0 ? shader_file0 :
-                          i == 1 ? shader_file1 :
-                          i == 2 ? shader_file2 :
-                          i == 3 ? shader_file3 :
-                          i == 4 ? shader_file4 :
-                          i == 5 ? shader_file_common : 0);
-
-        char buf[255];
-        int res;
-        int len = 0;
-        int size = 0;
-
-        if (!fn || !*fn || !strcasecmp (fn, DEF_SHADER_FILE0))
-          continue;
-        else if (!!strcmp (fn, "-"))
-          in = fopen (fn, "r");
-        else
-          {
-            in = (stdin ? stdin : fdopen (STDIN_FILENO, "r"));
-            stdin = in;
-          }
-
-        if (!in)
-          {
-            sprintf (buf, "%s: error reading \"%.200s\"", progname, fn);
-            perror (buf);
-            exit (1);
-          }
-
-        bp->shader_program[i] = NULL;
-
-        while (fgets (buf, sizeof(buf)-1, in))
-          {
-            res = strlen (buf);
-            if (nl_p && stdin &&
-                !strcmp (buf, ".\n"))	/* "." alone on a line is EOF */
-              break;
-            nl_p = (res > 0 && buf[res-1] == '\n');
-            if (len + res >= size)
-              {
-                size += sizeof(buf);
-                bp->shader_program[i] =
-                  (bp->shader_program[i]
-                   ? realloc (bp->shader_program[i], size)
-                   : malloc (size));
-                if (!bp->shader_program[i]) abort();
-              }
-            memcpy (bp->shader_program[i] + len, buf, res);
-            len += res;
-            bp->shader_program[i][len] = 0;
-          }
-
-        if (!stdin)
-          {
-            fclose (in);
-            in = 0;
-          }
-
-        if (!bp->shader_program[i] || !*bp->shader_program[i] ||
-            strlen (bp->shader_program[i]) < 10)
-          {
-            fprintf (stderr, "%s: no program in \"%s\"\n", progname,
-                     fn);
-            exit (1);
-          }
-      }
-
-    if (in)
-      fclose (in);
-  }
-
-# endif /* !HAVE_ANDROID */
-
-  if (!bp->shader_program[0] || !*bp->shader_program[0])
-    {
-      fprintf (stderr, "%s: no --program specified\n", progname);
-      exit (1);
-    }
+  if (duration < 1) duration = 1;
 
   {
     double mouse_speed = 0.01 * speed * automouse_speed;
     bp->rot = make_rotator (0, 0, 0, 0, mouse_speed, False);
-  }
-
-  init_glsl (mi);
-
-  bp->total_frames = 0;
-  bp->start_time   = double_time();
-  bp->last_time    = bp->start_time;
-  {
-    time_t t = bp->start_time;
-    struct tm *tm = localtime (&t);
-    bp->now = *tm;
   }
   
 # ifndef HAVE_JWXYZ
@@ -879,6 +974,14 @@ draw_xshadertoy (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
+
+  if (bp->nvariants > 1 && now > bp->start_time + duration)
+    {
+      /* bp->variant = random() % bp->nvariants; */
+      bp->variant = (bp->variant + 1) % bp->nvariants;
+      init_glsl (mi);
+      reshape_xshadertoy (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    }
 
   now = bp->start_time + (now - bp->start_time) * speed;  /* Time warp */
 
@@ -980,7 +1083,7 @@ draw_xshadertoy (ModeInfo *mi)
   for (i = 0; i < countof(bp->channels); i++)
     {
       Bool last_p = (i == countof(bp->channels) - 1 ||
-                     !bp->shader_program[i + 1]);
+                     !bp->shader_program[bp->variant][i + 1]);
       int j;
 
       if (!bp->channels[i].poly_shader_program)
@@ -1050,9 +1153,7 @@ draw_xshadertoy (ModeInfo *mi)
   bp->last_time = now;
   bp->total_frames++;
 
-#ifndef HAVE_MOBILE  // #### texfont not working with GLSL
   if (mi->fps_p) do_fps (mi);
-#endif
   glFinish();
 
   glXSwapBuffers(dpy, window);
@@ -1063,10 +1164,11 @@ ENTRYPOINT void
 free_xshadertoy (ModeInfo *mi)
 {
   xshadertoy_configuration *bp = &bps[MI_SCREEN(mi)];
-  int i;
+  int i, j;
   if (!bp->glx_context) return;
   for (i = 0; i < countof(bp->shader_program); i++)
-    if (bp->shader_program[i]) free (bp->shader_program[i]);
+    for (j = 0; j < countof(bp->shader_program[i]); j++)
+      if (bp->shader_program[i][j]) free (bp->shader_program[i][j]);
   if (bp->rot) free_rotator (bp->rot);
 # ifdef HAVE_GLSL
   glUseProgram (0);

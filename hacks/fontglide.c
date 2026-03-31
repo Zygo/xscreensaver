@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2003-2021 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2003-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -94,7 +94,6 @@ typedef struct {
   Bool dbuf;            /* Whether we're using double buffering. */
 
   int border_width;     /* size of the font outline */
-  char *charset;        /* registry and encoding for font lookups */
   double speed;		/* frame rate multiplier */
   double linger;	/* multiplier for how long to leave words on screen */
   Bool trails_p;
@@ -185,7 +184,7 @@ append_font_name(Display *dpy, char *dest, const XFontStruct *font)
  */
 }
 
-#endif
+#endif /* HAVE_JWXYZ */
 
 
 /* Finds the set of scalable fonts on the system; picks one;
@@ -278,190 +277,34 @@ pick_font_1 (state *s, sentence *se)
       goto DONE_2;
     }
 
-# elif !defined(HAVE_JWXYZ)			/* No Xft but real Xlib */
-
-  char **names = 0;
-  char **names2 = 0;
-  XFontStruct *info = 0;
-  int count = 0, count2 = 0;
-  int i;
-
-  if (se->xftfont)
-    {
-      XftFontClose (s->dpy, se->xftfont);
-      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
-                    &se->xftcolor_fg);
-      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
-                    &se->xftcolor_bg);
-
-      free (se->font_name);
-      se->xftfont = 0;
-      se->font_name = 0;
-    }
-
-  if (s->font_override)
-    sprintf (pattern, "%.200s", s->font_override);
-  else
-    sprintf (pattern, "-%s-%s-%s-%s-%s-%s-%s-%s-%s-%s-%s-%s-%s",
-             "*",         /* foundry */
-             "*",         /* family */
-             "*",         /* weight */
-             "*",         /* slant */
-             "*",         /* swidth */
-             "*",         /* adstyle */
-             "0",         /* pixel size */
-             "0",         /* point size */
-             "0",         /* resolution x */
-             "0",         /* resolution y */
-             "p",         /* spacing */
-             "0",         /* avg width */
-             s->charset); /* registry + encoding */
-
-
-  names = XListFonts (s->dpy, pattern, 1000, &count);
-
-  if (count <= 0)
-    {
-      if (s->font_override)
-        fprintf (stderr, "%s: -font option bogus: %s\n", progname, pattern);
-      else
-        fprintf (stderr, "%s: no scalable fonts found!  (pattern: %s)\n",
-                 progname, pattern);
-      exit (1);
-    }
-
-  i = random() % count;
-
-  names2 = XListFontsWithInfo (s->dpy, names[i], 1000, &count2, &info);
-  if (count2 <= 0)
-    {
-# ifdef DEBUG
-      if (s->debug_p)
-        fprintf (stderr, "%s: pattern %s\n"
-                 "     gave unusable %s\n\n",
-                 progname, pattern, names[i]);
-# endif /* DEBUG */
-      goto FAIL;
-    }
-
-  {
-    XFontStruct *font = &info[0];
-    unsigned long value = 0;
-    char *foundry=0, *family=0, *weight=0, *slant=0, *setwidth=0, *add_style=0;
-    unsigned long pixel=0, point=0, res_x=0, res_y=0;
-    char *spacing=0;
-    unsigned long avg_width=0;
-    char *registry=0, *encoding=0;
-    Atom a;
-    char *bogus = "\"?\"";
-
-# define STR(ATOM,VAR)					\
-  bogus = (ATOM);					\
-  a = XInternAtom (s->dpy, (ATOM), False);		\
-  if (XGetFontProperty (font, a, &value))		\
-    VAR = XGetAtomName (s->dpy, value);			\
-  else							\
-    goto FAIL2
-
-# define INT(ATOM,VAR)					\
-  bogus = (ATOM);					\
-  a = XInternAtom (s->dpy, (ATOM), False);		\
-  if (!XGetFontProperty (font, a, &VAR) ||		\
-      VAR > 9999)					\
-    goto FAIL2
-
-    STR ("FOUNDRY",          foundry);
-    STR ("FAMILY_NAME",      family);
-    STR ("WEIGHT_NAME",      weight);
-    STR ("SLANT",            slant);
-    STR ("SETWIDTH_NAME",    setwidth);
-    STR ("ADD_STYLE_NAME",   add_style);
-    INT ("PIXEL_SIZE",       pixel);
-    INT ("POINT_SIZE",       point);
-    INT ("RESOLUTION_X",     res_x);
-    INT ("RESOLUTION_Y",     res_y);
-    STR ("SPACING",          spacing);
-    INT ("AVERAGE_WIDTH",    avg_width);
-    STR ("CHARSET_REGISTRY", registry);
-    STR ("CHARSET_ENCODING", encoding);
-
-#undef INT
-#undef STR
-
-    pixel = pick_font_size (s);
-
-#if 0
-    /* Occasionally change the aspect ratio of the font, by increasing
-       either the X or Y resolution (while leaving the other alone.)
-
-       #### Looks like this trick doesn't really work that well: the
-            metrics of the individual characters are ok, but the
-            overall font ascent comes out wrong (unscaled.)
-     */
-    if (! (random() % 8))
-      {
-        double n = 2.5 / 3;
-        double scale = 1 + (frand(n) + frand(n) + frand(n));
-        if (random() % 2)
-          res_x *= scale;
-        else
-          res_y *= scale;
-      }
-# endif
-
-    sprintf (pattern,
-             "-%s-%s-%s-%s-%s-%s-%ld-%s-%ld-%ld-%s-%s-%s-%s",
-             foundry, family, weight, slant, setwidth, add_style,
-             pixel, "*", /* point, */
-             res_x, res_y, spacing,
-             "*", /* avg_width */
-             registry, encoding);
-    ok = True;
-
-  FAIL2:
-    if (!ok)
-      fprintf (stderr, "%s: font has bogus %s property: %s\n",
-               progname, bogus, names[i]);
-
-    if (foundry)   XFree (foundry);
-    if (family)    XFree (family);
-    if (weight)    XFree (weight);
-    if (slant)     XFree (slant);
-    if (setwidth)  XFree (setwidth);
-    if (add_style) XFree (add_style);
-    if (spacing)   XFree (spacing);
-    if (registry)  XFree (registry);
-    if (encoding)  XFree (encoding);
-  }
-
- FAIL: 
-
-  XFreeFontInfo (names2, info, count2);
-  XFreeFontNames (names);
-
-# else  /* HAVE_JWXYZ -- no Xft on macOS, iOS or Android */
+# elif defined(HAVE_JWXYZ)   /* Emulated Xft on macOS, iOS or Android */
 
   if (s->font_override)
     sprintf (pattern, "%.200s", s->font_override);
   else
     {
       const char *family = "random";
-      const char *weight = ((random() % 2)  ? "regular" : "bold");
-      const char *slant  = ((random() % 2)  ? "o" : "r");
-      int size = 10 * pick_font_size (s);
-      sprintf (pattern, "*-%s-%s-%s-*-*-*-%d-*", family, weight, slant, size);
+      Bool bold_p   = !(random() % 2);
+      Bool italic_p = !(random() % 2);
+      int size = pick_font_size (s);
+      sprintf (pattern, "%s%s-%d",
+               family,
+               (bold_p && italic_p ? " Bold Oblique" :
+                bold_p ? " Bold" :
+                italic_p ? " Oblique" : ""),
+               size);
     }
   ok = True;
-# endif /* HAVE_JWXYZ */
+
+# else  /* No Xft but real Xlib */
+#  error Xft is required under X11
+
+# endif /* !HAVE_JWXYZ */
 
   _DONE_1
 
   if (! ok) return False;
 
-  /* Try pattern as an XLFD first, then if that fails, as Xft "Name Size". */
-  if (! se->xftfont)
-    se->xftfont = XftFontOpenXlfd (s->dpy, screen_number (s->xgwa.screen),
-                                   pattern);
   if (! se->xftfont)
     se->xftfont = load_xft_font_retry (s->dpy, screen_number (s->xgwa.screen),
                                        pattern);
@@ -474,7 +317,7 @@ pick_font_1 (state *s, sentence *se)
       if (s->debug_p)
         fprintf (stderr, "%s: unable to load font %s\n",
                  progname, pattern);
-#endif
+# endif /* DEBUG */
       return False;
     }
 
@@ -488,13 +331,13 @@ pick_font_1 (state *s, sentence *se)
     out[0] = ')';
     out[1] = 0;
   }
-# endif
+# endif /* HAVE_JWXYZ */
 
 # ifdef DEBUG
   if (s->prev_font_name) free (s->prev_font_name);
   s->prev_font_name = s->next_font_name;
   s->next_font_name = strdup (pattern2);
-# endif
+# endif /* DEBUG */
 
   /* Sometimes we get fonts with screwed up metrics.  For example:
      -b&h-lucida-medium-r-normal-sans-40-289-100-100-p-0-iso8859-1
@@ -566,7 +409,7 @@ pick_font_1 (state *s, sentence *se)
     if (s->debug_p)
       fprintf (stderr, "%s: M ratio %.2f (%d %d): %s\n", progname,
                ratio, rbearing, width, pattern2);
-# endif
+# endif /* DEBUG */
 
     if (ratio < min && !s->font_override)
       {
@@ -574,7 +417,7 @@ pick_font_1 (state *s, sentence *se)
         if (s->debug_p)
           fprintf (stderr, "%s: skipping font with broken metrics: %s\n",
                    progname, pattern2);
-# endif
+# endif /* DEBUG */
         return False;
       }
   }
@@ -585,15 +428,15 @@ pick_font_1 (state *s, sentence *se)
     utf8_decode ((const unsigned char *) "M", 1, &uc);
     if (!XftCharExists (s->dpy, se->xftfont, (FcChar32) uc))
       {
-# ifdef DEBUG
+#  ifdef DEBUG
         if (s->debug_p)
           fprintf (stderr, "%s: skipping font without ASCII: %s\n",
                    progname, pattern2);
-# endif
+#  endif /* DEBUG */
         return False;
       }
   }
-# endif
+# endif /* HAVE_XFT && !HAVE_JWXYZ */
 
 
 # ifdef DEBUG
@@ -941,11 +784,30 @@ split_words (state *s, sentence *se)
   int i, j;
 
   char ***word_chars = (char ***) malloc (se->nwords * sizeof(*word_chars));
+
   for (i = 0; i < se->nwords; i++)
     {
-      int L;
       word *ow = se->words[i];
-      word_chars[i] = utf8_split (ow->text, &L);
+
+      const unsigned char *in = (const unsigned char *) ow->text;
+      long len = strlen (ow->text);
+      const unsigned char *end = in + len;
+      char **ret = (char **) malloc ((len+1) * sizeof(*ret));
+      int L = 0;
+
+      while (in < end)
+        {
+          long len2 = utf8_decode_combining (in, len, NULL);
+          char *out = malloc (len2 + 1);
+          memcpy (out, (char *) in, len2);
+          out[len2] = 0;
+          ret[L++] = out;
+          in += len2;
+          len -= len2;
+        }
+      ret[L] = 0;
+
+      word_chars[i] = ret;
       nwords2 += L;
     }
 
@@ -1722,6 +1584,12 @@ fontglide_draw_metrics (state *s)
   txt[1] = 0;
 
   /* Convert Unicode code point to UTF-8. */
+
+# if 0
+  s->debug_metrics_p = 0x644;		/* #### ل U+0644 Arabic RTL */
+  s->debug_metrics_p = 0x1F4A9;		/* #### 💩 */
+# endif
+
   utxt[utf8_encode(s->debug_metrics_p, utxt, 4)] = 0;
 
   txt3 = utf8_to_XChar2b (utxt, 0);
@@ -1804,7 +1672,7 @@ fontglide_draw_metrics (state *s)
                  name, strlen(name));
     free (name);
   }
-# endif
+# endif /* HAVE_JWXYZ */
 
   /* i 0, j 0: top left,  XDrawString,       char metrics
      i 1, j 0: bot left,  XDrawString,       overall metrics, ink escape
@@ -1953,18 +1821,18 @@ fontglide_draw_metrics (state *s)
                 /* ...And wasted space. */
                 if (w && h)
                   {
-                    if (check_edge (s->dpy, dest, gc, 120, 60, "left",
+                    if (check_edge (s->dpy, dest, gc, 210, 90, "left",
                                     img, margin, margin, 1, h) |
-                        check_edge (s->dpy, dest, gc, 160, 60, "right",
+                        check_edge (s->dpy, dest, gc, 280, 90, "right",
                                     img, margin + w - 1, margin, 1, h) |
-                        check_edge (s->dpy, dest, gc, 200, 60, "top",
+                        check_edge (s->dpy, dest, gc, 360, 90, "top",
                                     img, margin, margin, 0, w) |
-                        check_edge (s->dpy, dest, gc, 240, 60, "bottom",
+                        check_edge (s->dpy, dest, gc, 420, 90, "bottom",
                                     img, margin, margin + h - 1, 0, w))
                       {
                         XSetFont (s->dpy, gc, s->metrics_font2->fid);
                         XDrawString (s->dpy, dest, gc, 
-                                     xoff + 10, 60,
+                                     xoff + 10, 90,
                                      "Wasted space: ", 14);
                       }
                   }
@@ -2033,7 +1901,8 @@ fontglide_draw_metrics (state *s)
 # ifdef HAVE_JWXYZ
           jwxyz_XSetAntiAliasing (s->dpy, gc, s->debug_metrics_antialiasing_p);
 # endif
-          sprintf (txt2, "%s        [XX%sXX]    [%s%s%s%s]",
+ sprintf (txt2, "%s        [XX%sXX]    [%s%s%s%s]    [12%s34]",
+                   (xft_p ? utxt : txt),
                    (xft_p ? utxt : txt),
                    (xft_p ? utxt : txt),
                    (xft_p ? utxt : txt),
@@ -2298,7 +2167,7 @@ drain_input (state *s)
   s->buf[s->buf_tail] = 0;
 }
 
-
+
 /* Window setup and resource loading */
 
 static void *
@@ -2318,7 +2187,6 @@ fontglide_init (Display *dpy, Window window)
     s->font_override = 0;
   }
 
-  s->charset = get_string_resource (dpy, "fontCharset", "FontCharset");
   s->border_width = get_integer_resource (dpy, "fontBorderWidth", "Integer");
   if (s->border_width < 0 || s->border_width > 20)
     s->border_width = 1;
@@ -2530,7 +2398,6 @@ fontglide_free (Display *dpy, Window window, void *closure)
 /*  if (s->b && s->b != s->window) XFreePixmap (dpy, s->b); */
 /*  if (s->ba && s->ba != s->b) XFreePixmap (dpy, s->ba); */
   XFreeGC (dpy, s->bg_gc);
-  if (s->charset) free (s->charset);
   if (s->font_override) free (s->font_override);
   for (i = 0;i < s->nsentences; i++)
     if (s->sentences[i])
@@ -2547,7 +2414,7 @@ fontglide_free (Display *dpy, Window window, void *closure)
   if (s->prev_font_name) free (s->prev_font_name);
   if (s->next_font_name) free (s->next_font_name);
   if (s->label_gc) XFreeGC (dpy, s->label_gc);
-#endif
+#endif /* DEBUG */
 
   free (s);
 }
@@ -2562,12 +2429,6 @@ static const char *fontglide_defaults [] = {
   "*usePty:             false",
   "*mode:               random",
   ".font:               (default)",
-
-  /* I'm not entirely clear on whether the charset of an XLFD has any
-     meaning when Xft is being used. */
-  "*fontCharset:        iso8859-1",
-/*"*fontCharset:        iso10646-1", */
-/*"*fontCharset:        *-*",*/
 
   "*fontBorderWidth:    2",
   "*speed:              1.0",

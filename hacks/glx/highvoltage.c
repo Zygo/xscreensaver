@@ -918,6 +918,7 @@ draw_highvoltage (ModeInfo *mi)
 
   glPopMatrix ();
 
+  glColor3f (0.5, 0.5, 0.5);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

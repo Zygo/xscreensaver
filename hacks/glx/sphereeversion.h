@@ -181,6 +181,7 @@ extern char *surface_order;
 extern char *lunes;
 extern char *hemispheres;
 
+#define quat_slerp sphereeversion_quat_slerp /* conflict with quaternion.h */
 
 extern void rotatex(float m[3][3], float phi);
 extern void rotatey(float m[3][3], float phi);

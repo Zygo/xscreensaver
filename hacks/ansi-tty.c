@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2025-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,9 +20,24 @@
  *   https://github.com/mattiase/wraptest
  */
 
-#include "screenhack.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "blurb.h"
 #include "ansi-tty.h"
 #include "utf8wc.h"
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+#define Bool  int
+#define True  1
+#define False 0
 
 #define ESC  0x1B
 #define CSI "\x1B["
@@ -1900,6 +1915,12 @@ ansi_tty_print (ansi_tty *tty, unsigned long c)
             ch->fg    = st->fg;
             ch->bg    = st->bg;
             tty->x++;
+
+            /* I wonder what the proper way to handle Combining Diacriticals
+               and Zero Width Joiners is.  Currently each of those Unicode
+               characters will take up a cell in the output grid, and will be
+               rendered as individual glyphs rather than being combined into
+               single glyph.  No TTY Blackulas! */
           }
         break;
       }

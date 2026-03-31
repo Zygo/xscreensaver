@@ -12,8 +12,8 @@ mapscroller \- a slowly-scrolling map of a random place on Earth.
 [\-\-speed \fInumber\fP]
 [\-\-duration \fIseconds\fP]
 [\-\-map\-level \fInumber\fP]
-[\-\-url-template URL]
-[\-\-origin LAT/LON]
+[\-\-url-template \fIURL\fP]
+[\-\-origin \fIlocation\fP]
 [\-\-no-titles]
 [\-\-no-arrow]
 [\-\-fps]
@@ -67,10 +67,14 @@ the oceans.
 "Random-city" means to select from a built-in list of several hundred
 major cities.  This is the default.
 
-Otherwise, this must be a latitude/longitude pair, as floats.
+A location can be specified as a latitude/longitude pair (floats) or as the
+name of one of the built-in cities (case insensitive).
+
+Use \fI\-\-origin help\fP to see the full list.
 .TP 8
 .B \-\-titles | \-\-no-titles
-Whether to show the current coordinates in the upper left.  Default true.
+Whether to show the current coordinates and nearest city in the upper left.
+Default true.
 .TP 8
 .B \-\-arrow | \-\-no-arrow
 Whether to show a directional arrow in the middle of the screen.  Default true.

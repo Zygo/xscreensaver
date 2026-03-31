@@ -70,82 +70,82 @@ print_available_extensions (saver_info *si)
   int i, j;
   static struct {
     const char *name; const char *desc; 
-    Bool useful_p;
+    Bool important_p, useful_p;
     Status (*version_fn) (Display *, int *majP, int *minP);
   } exts[] = {
 
 # if 0
-   { "MIT-SCREEN-SAVER",                        "MIT Screen-Saver",
+   { "MIT-SCREEN-SAVER",                        "MIT Screen-Saver", False,
         False, 0
    },
 # endif
-   { "MIT-SHM",                                 "Shared Memory",
+   { "MIT-SHM",                                 "Shared Memory", True,
 #     ifdef HAVE_XSHM_EXTENSION
         True, (Status (*) (Display*,int*,int*)) XShmQueryVersion /* 4 args */
 #     else
         False, 0
 #     endif
-   }, { "DOUBLE-BUFFER",                        "Double-Buffering",
+   }, { "DOUBLE-BUFFER",                        "Double-Buffering", False,
 #     ifdef HAVE_DOUBLE_BUFFER_EXTENSION
         True, XdbeQueryExtension
 #     else
         False, 0
 #     endif
-   }, { "DPMS",                                 "Power Management",
+   }, { "DPMS",                                 "Power Management", True,
 #     ifdef HAVE_DPMS_EXTENSION
         True,  DPMSGetVersion
 #     else
         False, 0
 #     endif
-   }, { "GLX",                                  "GLX",
+   }, { "GLX",                                  "GLX", False,
 #     ifdef HAVE_GL
         True,  0
 #     else
         False, 0
 #     endif
-   }, { "XFree86-VidModeExtension",             "XF86 Video-Mode",
+   }, { "XFree86-VidModeExtension",             "XF86 Video-Mode", False,
 #     ifdef HAVE_XF86VMODE
         True,  XF86VidModeQueryVersion
 #     else
         False, 0
 #     endif
-   }, { "XC-VidModeExtension",                  "XC Video-Mode",
+   }, { "XC-VidModeExtension",                  "XC Video-Mode", False,
 #     ifdef HAVE_XF86VMODE
         True,  XF86VidModeQueryVersion
 #     else
         False, 0
 #     endif
-   }, { "XINERAMA",                             "Xinerama",
+   }, { "XINERAMA",                             "Xinerama", True,
 #     ifdef HAVE_XINERAMA
         True,  XineramaQueryVersion
 #     else
         False, 0
 #     endif
-   }, { "RANDR",                                "Resize-and-Rotate",
+   }, { "RANDR",                                "Resize-and-Rotate", True,
 #     ifdef HAVE_RANDR
         True,  XRRQueryVersion
 #     else
         False, 0
 #     endif
-   }, { "Composite",                            "Composite",
+   }, { "Composite",                            "Composite", False,
 #     ifdef HAVE_XCOMPOSITE_EXTENSION
         True,  XCompositeQueryVersion
 #     else
         True, 0
 #     endif
-   }, { "XKEYBOARD",                            "XKeyboard",
+   }, { "XKEYBOARD",                            "XKeyboard", False,
 #     ifdef HAVE_XKB
         True,  0,
 #     else
         False, 0
 #     endif
-   }, { "DRI",			"DRI",		True, 0
-   }, { "NV-CONTROL",		"NVidia",	True, 0
-   }, { "NV-GLX",		"NVidia GLX",	True, 0
-   }, { "Apple-DRI",		"Apple-DRI",	True, 0
-   }, { "Apple-WM",		"Apple-WM",	True, 0
-   }, { "XInputExtension",	"XInput",	True, 0
-   }, { "XWAYLAND",		"XWayland",	True, 0
+   }, { "DRI",			"DRI",		False, True, 0
+   }, { "NV-CONTROL",		"NVidia",	False, True, 0
+   }, { "NV-GLX",		"NVidia GLX",	False, True, 0
+   }, { "Apple-DRI",		"Apple-DRI",	False, True, 0
+   }, { "Apple-WM",		"Apple-WM",	False, True, 0
+   }, { "XInputExtension",	"XInput",	True,  True, 0
+   }, { "XWAYLAND",		"XWayland",	False, True, 0
    },
   };
   static const char * const envs[] = {
@@ -178,13 +178,16 @@ print_available_extensions (saver_info *si)
        */
       Status (*version_fn_2) (Display*,int*,int*,int*,int*,int*) =
         (Status (*) (Display*,int*,int*,int*,int*,int*)) exts[i].version_fn;
-
-      if (!XQueryExtension (si->dpy, exts[i].name, &op, &event, &error))
+      Bool avail_p = XQueryExtension (si->dpy, exts[i].name, &op, &event,
+                                      &error);
+      if (!avail_p && !exts[i].important_p)
         continue;
       sprintf (buf, "%s:   ", blurb());
       strcat (buf, exts[i].desc);
 
-      if (!strcmp (exts[i].desc, "XInput"))
+      if (!avail_p && exts[i].important_p)
+        strcat (buf, " (unavailable)");
+      else if (!strcmp (exts[i].desc, "XInput"))
         {
           int maj = 999, min = 999;              /* Desired */
           XIQueryVersion (si->dpy, &maj, &min);  /* Actual */

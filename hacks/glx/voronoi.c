@@ -514,6 +514,7 @@ draw_voronoi (ModeInfo *mi)
   prune_points (vp);
   state_change (mi);
 
+  glColor3f (1, 1, 1);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

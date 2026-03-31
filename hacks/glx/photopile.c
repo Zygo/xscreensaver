@@ -842,6 +842,7 @@ draw_photopile (ModeInfo *mi)
     glPopMatrix();
   }
 
+  glColor3f (1, 1, 1);
   if (mi->fps_p) do_fps (mi);
   glFinish();
   glXSwapBuffers (MI_DISPLAY (mi), MI_WINDOW(mi));

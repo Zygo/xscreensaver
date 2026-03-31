@@ -524,6 +524,7 @@ draw_flurry(ModeInfo * mi)
 	GLRenderScene(global, flurry, brite * flurry->briteFactor);
     }
 
+	glColor3f (1, 1, 1);
     if (mi->fps_p) do_fps (mi);
 
     glFinish();

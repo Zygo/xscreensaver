@@ -2993,12 +2993,10 @@ draw_juggle (ModeInfo *mi)
 	}
   }
 
-#ifndef HAVE_ANDROID   /* Doesn't work -- causes whole scene to be black */
   glColor3f (1, 1, 0);
   print_texture_label (mi->dpy, sp->font_data,
                        mi->xgwa.width, mi->xgwa.height,
                        1, sp->pattern);
-#endif
 
 #ifdef MEMTEST
   if((int)(sp->time/10) % 1000 == 0)
@@ -3013,6 +3011,7 @@ draw_juggle (ModeInfo *mi)
 
   glPopMatrix ();
 
+  glColor3f (1, 1, 1);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

@@ -1571,6 +1571,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
   
   if (MI_IS_FPS(mi)) {
     glViewport(0, 0, MI_WIDTH(mi), MI_HEIGHT(mi));
+    glColor3f (1, 1, 1);
     do_fps (mi);
   }
   glFlush();

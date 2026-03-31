@@ -267,6 +267,7 @@ ENTRYPOINT void draw_gflux(ModeInfo * mi)
 
     calcGrid(gp);
     mi->polygon_count = gp->drawFunc(gp);
+    glColor3f (1, 1, 1);
     if (mi->fps_p) do_fps (mi);
     glXSwapBuffers(display, window);
 }

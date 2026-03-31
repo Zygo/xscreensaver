@@ -1,4 +1,4 @@
-/* starwars, Copyright (c) 1998-2018 Jamie Zawinski <jwz@jwz.org> and
+/* starwars, Copyright © 1998-2026 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -437,10 +437,9 @@ draw_string (sws_configuration *sc, GLfloat x, GLfloat y, const char *s)
   if (debug_p)
     {
       GLfloat h = sc->line_height / sc->font_scale;
-      char **chars = utf8_split (os, 0);
-      int i, w = 0;
-      char *s2 = (char *) malloc (strlen(s) + 1);
-      *s2 = 0;
+      int w = 0;
+      const char *in = os;
+      int len = strlen(in);
 
       if (textures_p) glDisable (GL_TEXTURE_2D);
       glLineWidth (1);
@@ -449,13 +448,14 @@ draw_string (sws_configuration *sc, GLfloat x, GLfloat y, const char *s)
 
       glBegin (GL_LINES);
 
-      for (i = 0; chars[i]; i++)
+      while (in < os + len)
         {
+          long len2 = utf8_decode_combining ((unsigned char *) in, len, NULL);
+          in  += len2;
+          len -= len2;
           glVertex3f (x + w, y - sc->descent, 0);	/* char left */
           glVertex3f (x + w, y - sc->descent + h, 0);
-          strcat (s2, chars[i]);
-          w = sw_string_width (sc, s2);
-          free (chars[i]);
+          w = sw_string_width2 (sc, in, len);
         }
 
       glVertex3f (x + w, y - sc->descent, 0);		/* char right */
@@ -471,9 +471,6 @@ draw_string (sws_configuration *sc, GLfloat x, GLfloat y, const char *s)
       glVertex3f (x + w, y - sc->descent, 0);
 
       glEnd();
-
-      free (s2);
-      free (chars);
 
       if (textures_p) glEnable (GL_TEXTURE_2D);
     }

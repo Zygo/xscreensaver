@@ -458,6 +458,7 @@ ENTRYPOINT void draw_pulsar(ModeInfo * mi)
 
   glXMakeCurrent(display, window, *gp->glx_context);
   drawScene(mi);
+  glColor3f(1,1,0);
   if (mi->fps_p) do_fps (mi);
   glXSwapBuffers(display, window);
 }

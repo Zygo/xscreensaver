@@ -316,10 +316,10 @@ draw_position (ModeInfo * mi, int x, int y, int color)
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
-    char *f_name = "Utopia 60, Helvetica 60";
+    char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
     char *s = NULL;
 
-    font = load_font_retry (display, f_name);
+    font = XLoadQueryFont (display, f_name);
     assert (font != NULL);
 
     s = (char *) malloc (256);
@@ -339,10 +339,10 @@ draw_number (ModeInfo * mi, int x, int y, int num, int color)
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
-    char *f_name = "Utopia 60, Helvetica 60";
+    char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
     char *s = NULL;
 
-    font = load_font_retry (display, f_name);
+    font = XLoadQueryFont (display, f_name);
     assert (font != NULL);
 
     s = (char *) malloc (256);
@@ -391,9 +391,9 @@ draw_string (ModeInfo * mi, int x, int y, char *s, int color)
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
-    char *f_name = "Utopia 60, Helvetica 60";
+    char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
 
-    font = load_font_retry (display, f_name);
+    font = XLoadQueryFont (display, f_name);
     assert (font != NULL);
 
     assert (s != NULL);
@@ -694,6 +694,11 @@ drawlevel (ModeInfo * mi)
  else if (xl>x) \
   (x>(xl-(xs)))?XFillRectangle(d,w,g,x+xs,yl,xl-(x),ys): \
   XFillRectangle(d,w,g,xl,yl,xs,ys)
+
+
+#ifdef HAVE_ANDROID /* Clip masks cause the whole screen to be static */
+# define XSetClipMask(D,G,M) /* */
+#endif
 
 
 /* Draws the pacman sprite, removing the previous location. */

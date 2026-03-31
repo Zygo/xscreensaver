@@ -349,7 +349,11 @@ draw_ball (ModeInfo *mi)
   draw_spikes (mi);
   glPopMatrix ();
 
-  if (mi->fps_p) do_fps (mi);
+  if (mi->fps_p)
+    {
+      glColor3f (1, 1, 1);
+      do_fps (mi);
+    }
   glFinish();
 
   glXSwapBuffers(dpy, window);

@@ -182,7 +182,7 @@ extern void check_gl_error (const char *type);
 - (NSOpenGLPixelFormat *) getGLPixelFormat
 {
 
-  // Jan 2024: for hacks that set "prefersGLSL":
+  // Jan 2026: for hacks that set "prefersGLSL":
   // With this we get: OpenGL 4.1, GLSL 4.10, #version 150
   // Without it:       OpenGL 2.1, GLSL 1.20, #version 120
   //

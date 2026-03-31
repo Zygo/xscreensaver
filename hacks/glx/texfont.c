@@ -133,7 +133,7 @@ struct texture_font_data {
   Bool dropshadow_p;
   Bool mipmap_p;
 # ifdef HAVE_GLSL
-  Bool shaders_initialized, use_shaders, use_vao;
+  Bool shaders_initialized, prefer_shaders, use_shaders, use_vao;
   GLuint shader_program;
   GLuint vertex_array_object;
   GLuint vertex_coord_buffer, vertex_tex_buffer;
@@ -165,8 +165,10 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
   XImage *image = 0;
   unsigned char *data = (unsigned char *) calloc (w2 * 2, (h2 + 1));
   unsigned char *out = data;
-# ifndef HAVE_IPHONE
+# if !defined(HAVE_IPHONE) && !defined(HAVE_ANDROID)
   GLint rowpack = 0;
+# endif
+# ifndef HAVE_IPHONE
   GLint alignment = 0;
 # endif /* HAVE_IPHONE */
 
@@ -229,7 +231,7 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
       pixel = ((r >> 24) | (r >> 16) | (r >> 8) | r) & 0xFF;
 
 # ifdef DUMP_BITMAPS
-      if (sx < ow && sy < oh && sx <= 79 && sy <= 40)
+      if (sx < ow && sy < oh && sx <= 79 /* && sy <= 40 */)
 #  ifdef HAVE_JWXYZ
         fprintf (stderr, "%c", 
                  r >= 0xFF000000 ? '#' : 
@@ -254,7 +256,7 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
       *out++ = pixel;
     }
 # ifdef DUMP_BITMAPS
-    if (y * scale <= 40) fprintf (stderr, "\n");
+    /* if (y * scale <= 40) */ fprintf (stderr, "\n");
 # endif
   }
 
@@ -274,12 +276,14 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
 
 # ifndef HAVE_IPHONE
   /* iOS gives us "invalid enum" when trying to read or write these. */
-  glGetIntegerv (GL_UNPACK_ROW_LENGTH, &rowpack);
   glGetIntegerv (GL_UNPACK_ALIGNMENT, &alignment);
-
-  glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
 # endif /* HAVE_IPHONE */
+
+# if !defined(HAVE_IPHONE) && !defined(HAVE_ANDROID)
+  glGetIntegerv (GL_UNPACK_ROW_LENGTH, &rowpack);
+  glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
+# endif /* !HAVE_IPHONE && !HAVE_ANDROID */
 
   {
 # ifdef HAVE_GLSL
@@ -319,10 +323,13 @@ bitmap_to_texture (const texture_font_data *tfdata, Pixmap p,
       }
   }
 
-# ifndef HAVE_IPHONE
+# if !defined(HAVE_IPHONE) && !defined(HAVE_ANDROID)
   glPixelStorei (GL_UNPACK_ROW_LENGTH, rowpack);
+# endif
+
+# ifndef HAVE_IPHONE
   glPixelStorei (GL_UNPACK_ALIGNMENT, alignment);
-# endif /* HAVE_IPHONE */
+# endif
 
   {
     char msg[100];
@@ -432,6 +439,8 @@ load_texture_font (Display *dpy, char *res)
      if necessary.  If strings are displayed by print_texture_string, the
      caller is responsible for calling initialize_textfont_shaders_glsl
      first. */
+  data->prefer_shaders =
+    get_boolean_resource (dpy, "prefersGLSL", "PrefersGLSL");
   data->shaders_initialized = False;
   data->use_shaders = False;
   data->use_vao = False;
@@ -466,7 +475,9 @@ iterate_texture_string (texture_font_data *data,
                         XCharStruct *metrics_ret)
 {
   int line_height = data->xftfont->ascent + data->xftfont->descent;
+  int half_line_height = line_height / 2;
   int subscript_offset = line_height * 0.3;
+  const char *start = s;
   const char *os = s;
   Bool sub_p = False, osub_p = False;
   int cw = 0, tabs = 0;
@@ -515,7 +526,9 @@ iterate_texture_string (texture_font_data *data,
           if (*s == '\n')
             {
               x = 0;
-              y += line_height;
+              y += (s > start && s[-1] == '\n'
+                    ? half_line_height	/* Tighter spacing for blank lines */
+                    : line_height);
               sub_p = False;
             }
           else if (*s == '\t')
@@ -787,9 +800,9 @@ blank_character_p (texture_font_data *data, const char *string)
           *     *  .      *****   1       ****   1       ****   1
 
      So "131" is the pattern for a hollow rectangle, which is what most
-     fonts use for missing characters.  It also gets a false positive on
-     capital or lower case O, and on 0 without a slash, but I can live
-     with that.
+     fonts use for missing characters.  Unfortunately, it gets a false
+     positive on capital or lower case O, and on 0 without a slash, as
+     well as these for some reason: ι τ т ւ נ ། 국
    */
 
   if (j <= 1)
@@ -839,9 +852,10 @@ enable_texture_string_parameters (texture_font_data *data)
   clear_gl_error();  /* invalid enum on iPad 3 */
 
   /* Don't write the transparent parts of the quad into the depth buffer. */
-# ifndef HAVE_ANDROID /* WTF? */
+# ifndef HAVE_ANDROID /* WTF: "glAlphaFunc: invalid operation" */
   glAlphaFunc (GL_GREATER, 0.01);
 # endif
+
   glEnable (GL_ALPHA_TEST);
   glDisable (GL_LIGHTING);
   glDisable (GL_TEXTURE_GEN_S);
@@ -1167,7 +1181,8 @@ print_texture_label (Display *dpy,
                      int position,
                      const char *string)
 {
-  GLfloat color[4] = { 1, 1, 1, 1 };
+  GLfloat color[4]  = { 1, 1, 1, 1 };
+  GLfloat color2[4] = { 0, 0, 0, 1 };
   Bool tex_p = False, texs_p = False, text_p = False;
   Bool depth_p = False, fog_p = False, cull_p = False;
   GLint ovp[4];
@@ -1186,11 +1201,16 @@ print_texture_label (Display *dpy,
      error afterwards. */
   clear_gl_error();
   glGetFloatv (GL_CURRENT_COLOR, color);
-  clear_gl_error ();
-#ifdef HAVE_ANDROID
-  Log ("texfont current color 0x%04X (%5.3f,%5.3f,%5.3f,%5.3f)",
-       GL_CURRENT_COLOR,color[0], color[1], color[2], color[3]);
-#endif
+
+  /* Should the outline be light or dark? */
+  if ((color[0] * 0.2126 + color[1] * 0.7152 + color[2] * 0.0722) > 0.4)
+    color2[0] = color2[1] = color2[2] = 0;
+  else
+    color2[0] = color2[1] = color2[2] = 1;
+
+  /* White text with solid black outline looks good, but black text with
+     solid white outline looks weird; giving the outline alpha helps. */
+  color2[3] = color[3] * 0.5;
 
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1198,11 +1218,8 @@ print_texture_label (Display *dpy,
 
 
 # ifdef HAVE_GLSL
-  if (!data->shaders_initialized)
-    {
-      if (get_boolean_resource (dpy, "prefersGLSL", "PrefersGLSL"))
-        initialize_textfont_shaders_glsl (data);
-    }
+  if (!data->shaders_initialized && data->prefer_shaders)
+    initialize_textfont_shaders_glsl (data);
 
   if (data->use_shaders)
     {
@@ -1218,6 +1235,8 @@ print_texture_label (Display *dpy,
       text_p  = glIsEnabled (GL_TEXTURE_GEN_T);
       fog_p   = glIsEnabled (GL_FOG);
 
+      /* I guess these have to be earlier than our call to 
+         enable_texture_string_parameters ? */
       glDisable (GL_TEXTURE_GEN_S);
       glDisable (GL_TEXTURE_GEN_T);
       glDisable (GL_CULL_FACE);
@@ -1336,6 +1355,11 @@ print_texture_label (Display *dpy,
       abort();
     }
 
+# ifdef HAVE_ANDROID
+    if (position != 0)  /* Clipped by the rounded corner of the screen. */
+      x += ascent*2;
+# endif
+
     texfont_transrot (data, proj_mat,
                       x, y, 0,
                       0, 0, 0, 1);
@@ -1351,10 +1375,10 @@ print_texture_label (Display *dpy,
 
 # ifdef HAVE_GLSL
       if (data->use_shaders)
-        glUniform4f (data->font_color_index, 0, 0, 0, color[3]);
+        glUniform4fv (data->font_color_index, 1, color2);
       else
 # endif /* HAVE_GLSL */
-        glColor4f (0, 0, 0, color[3]);
+        glColor4fv (color2);
 
       for (i = (data->dropshadow_p ? 0 : countof(offsets)-1);
            i < countof(offsets); i++)

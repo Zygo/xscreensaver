@@ -2,7 +2,7 @@
 # The rest of this Makefile is in xscreensaver/jni/Android.mk
 
 export TERM=dumb
-GRADLE = ./gradlew
+GRADLE = ./gradlew --warning-mode all $(GRADLE_FLAGS)
 THUMBDIR = .
 
 default:: debug
@@ -74,6 +74,7 @@ export ANDROID_HACKS=		\
 	barcode			\
 	batteredplanet		\
 	beats			\
+	bestill			\
 	binaryhorizon		\
 	binaryring		\
 	blaster			\
@@ -87,6 +88,7 @@ export ANDROID_HACKS=		\
 	boxfit			\
 	braid			\
 	bsod			\
+	bubblecolors		\
 	bumps			\
 	cage			\
 	carousel		\
@@ -113,6 +115,7 @@ export ANDROID_HACKS=		\
 	cwaves			\
 	cynosure		\
 	dangerball		\
+	darktransit		\
 	decayscreen		\
 	deco			\
 	deepstars		\
@@ -122,7 +125,9 @@ export ANDROID_HACKS=		\
 	discrete		\
 	distort			\
 	dnalogo			\
+	downfall		\
 	drift			\
+	driftclouds		\
 	droste			\
 	dumpsterfire		\
 	dymaxionmap		\
@@ -167,6 +172,7 @@ export ANDROID_HACKS=		\
 	glslideshow		\
 	glsnake			\
 	gltext			\
+	goldenapollian		\
 	goop			\
 	grav			\
 	gravitywell		\
@@ -229,6 +235,7 @@ export ANDROID_HACKS=		\
 	nerverot		\
 	noof			\
 	noseguy			\
+	noxfire			\
 	papercube		\
 	peepers			\
 	penetrate		\
@@ -243,6 +250,7 @@ export ANDROID_HACKS=		\
 	polytopes		\
 	pong			\
 	popsquares		\
+	prococean		\
 	projectiveplane		\
 	protophore		\
 	providence		\
@@ -253,6 +261,7 @@ export ANDROID_HACKS=		\
 	raverhoop		\
 	razzledazzle		\
 	rdbomb			\
+	rigrekt			\
 	ripples			\
 	rocks			\
 	romanboy		\
@@ -295,12 +304,15 @@ export ANDROID_HACKS=		\
 	timetunnel		\
 	topblock		\
 	topologica		\
+	trainmandala		\
 	triangle		\
+	trizm			\
 	tronbit			\
 	truchet			\
 	truchetzoom		\
 	twang			\
 	unicrud			\
+	universeball		\
 	unknownpleasures	\
 	vermiculate		\
 	vfeedback		\
@@ -309,6 +321,7 @@ export ANDROID_HACKS=		\
 	wander			\
 	whirlwindwarp		\
 	winduprobot		\
+	worldpieces		\
 	wormhole		\
 	xanalogtv		\
 	xflame			\
@@ -445,6 +458,7 @@ list_tarfiles:
 	@find . $(EXTRA_TARFILES) \( \(		\
 		   -name .DS_Store		\
 		-o -name '*~'			\
+		-o -name '*.hprof'		\
 		-o -name '*.jks'		\
 		-o -name '*.keystore'		\
 		-o -name '*_dream.xml'		\
@@ -474,11 +488,14 @@ list_tarfiles:
 run_check::
 	../hacks/check-configs.pl --build-android $(ANDROID_HACKS)
 
-debug::   local.properties m6502.h molecules.h run_check images_png_h
+# Requires $ANDROID_HACKS in the environment
+assembledebug:
 	$(GRADLE) assembleDebug
-release:: local.properties m6502.h molecules.h run_check images_png_h
-	export APP_ABI=all ; \
-	$(GRADLE) assembleRelease
+assemblerelease:
+	APP_ABI=all $(GRADLE) assembleRelease
+ALL_DEPS = local.properties m6502.h molecules.h run_check images_png_h
+debug::	  $(ALL_DEPS) assembledebug
+release:: $(ALL_DEPS) assemblerelease
 
 
 KEYSTORE = xscreensaver.jks

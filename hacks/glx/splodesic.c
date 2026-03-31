@@ -394,6 +394,9 @@ draw_triangles (ModeInfo *mi)
     glColor4fv (c);
   else
     {
+# ifdef HAVE_ANDROID  /* Fucking GLES1 */
+      glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+# else
       glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, c);
 
       c[0] = bp->colors[c1].red    / 65536.0;
@@ -401,6 +404,7 @@ draw_triangles (ModeInfo *mi)
       c[2] = bp->colors[c1].blue   / 65536.0;
       c[3] = 1;
       glMaterialfv (GL_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+# endif
     }
 
   glFrontFace (GL_CCW);

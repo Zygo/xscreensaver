@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,10 +18,12 @@
    work in an OpenGLES environment, where almost every OpenGL 1.3 function
    has been "deprecated".
 
-   There are two major operations going on here:
+   There are three major operations going on here:
 
      - Converting calls to glBegin + glVertex3f + glEnd to glDrawArrays
      - Implementing display lists.
+     - Tracking every call to glRotatef, etc. to have a second copy of
+       the prevailing matrix values.
 
 
    From an API point of view, OpenGL 1.3 and earlier code looks like this:
@@ -142,22 +144,23 @@
 
       atlantis        Uses EYE_PLANE.
       blocktube       Uses SPHERE_MAP.
-      dnalogo         Uses GLUtesselator.
+      dnalogo         Uses GLUtesselator (has a workaround).
       extrusion       Uses all kinds of GLUT crap.
       flyingtoasters  Uses SPHERE_MAP.
       winduprobot     Uses SPHERE_MAP.
       jigglypuff      Uses SPHERE_MAP (in chrome mode), GL_LINE (in wireframe)
-      jigsaw          Uses GLUtesselator.
+      jigsaw          Uses GLUtesselator (has a workaround).
       pinion	      Uses glSelectBuffer and gluPickMatrix for mouse-clicks.
       pipes           Uses glMap2f for the Utah Teapot.
       polyhedra       Uses GLUtesselator (concave objects); also Utah Teapot.
       skytentacles    Uses GL_LINE in -cel mode.
       timetunnel      Uses GL_CONSTANT_ALPHA and all kinds of other stuff.
+
+   Probably GLUtesselator could be implemented with glx/triangle.c.
 */
 
 
 #undef DEBUG
-
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -175,6 +178,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <math.h>
+#include <float.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
@@ -205,6 +209,7 @@
 # endif /* HAVE_GLES3 */
 #endif
 
+#include "jwxyz.h"
 #include "jwzglesI.h"
 
 #include "pow2.h"
@@ -216,23 +221,8 @@
 
 #undef  Assert
 
-#ifdef HAVE_COCOA
-  extern void jwxyz_abort (const char *fmt, ...) __dead2;
-# define Assert(C,S) do { if (!(C)) { jwxyz_abort ("%s",S); }} while(0)
-#elif defined HAVE_ANDROID
-# define Assert(C,S) do { \
-    if (!(C)) { \
-      __android_log_print (ANDROID_LOG_ERROR, "xscreensaver", "jwzgles: %s\n", S); \
-      abort(); \
-    }} while(0)
-#else
-# define Assert(C,S) do { \
-    if (!(C)) { \
-      fprintf (stderr, "jwzgles: %s\n", S); \
-      abort(); \
-    }} while(0)
-#endif
-
+//extern void jwxyz_abort (const char *fmt, ...) __dead2;
+#define Assert(C,S) do { if (!(C)) { jwxyz_abort("jwzgles: %s",S); }} while(0)
 
 typedef struct { GLfloat x, y, z; }    XYZ;
 typedef struct { GLfloat x, y, z, w; } XYZW;
@@ -352,6 +342,25 @@ typedef struct {
 } texgen_state;
 
 
+#ifdef HAVE_ANDROID
+# define TRACK_MATRIXES		/* See comment above jwzgles_glPushMatrix */
+#endif
+
+#ifdef TRACK_MATRIXES
+
+/* "There is a stack of matrices for each of the matrix modes.
+   In GL_MODELVIEW mode, the stack depth is at least 32.
+   In the other two modes, GL_PROJECTION and GL_TEXTURE, the
+   depth is at least 2."
+ */
+typedef struct {
+  GLuint depth;
+  GLfloat stack[64][16];
+} jwzgles_matrix_stack;
+
+#endif // TRACK_MATRIXES
+
+
 struct jwzgles_state {  /* global state */
 
   vert_set set;		/* set being built */
@@ -370,6 +379,12 @@ struct jwzgles_state {  /* global state */
   /* Implementing glPushClientAttrib? Don't forget about these! */
   draw_array varray, narray, carray, tarray;
 
+# ifdef TRACK_MATRIXES
+  GLuint matrix_mode;
+  jwzgles_matrix_stack matrix_stack[3];
+# endif // TRACK_MATRIXES
+
+  GLfloat current_color[4];
 };
 
 
@@ -378,38 +393,24 @@ static jwzgles_state *state = 0;
 
 #ifdef DEBUG
 
-void
-Log(const char *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-#ifdef HAVE_ANDROID
-  /* setprop log.redirect-stdio true is another possibility, but that
-     apparently only works on rooted devices.
-   */
-  __android_log_vprint(ANDROID_LOG_DEBUG, "xscreensaver", fmt, args);
-# else
-  vfprintf(stderr, fmt, args);
-# endif
-  va_end (args);
-}
+/* Remember that Log() provides a trailing newline. */
 
-# define LOG(A)                Log("jwzgles: " A "\n")
-# define LOG1(A,B)             Log("jwzgles: " A "\n",B)
-# define LOG2(A,B,C)           Log("jwzgles: " A "\n",B,C)
-# define LOG3(A,B,C,D)         Log("jwzgles: " A "\n",B,C,D)
-# define LOG4(A,B,C,D,E)       Log("jwzgles: " A "\n",B,C,D,E)
-# define LOG5(A,B,C,D,E,F)     Log("jwzgles: " A "\n",B,C,D,E,F)
-# define LOG6(A,B,C,D,E,F,G)   Log("jwzgles: " A "\n",B,C,D,E,F,G)
-# define LOG7(A,B,C,D,E,F,G,H) Log("jwzgles: " A "\n",B,C,D,E,F,G,H)
+# define LOG(A)                Log("jwzgles: " A)
+# define LOG1(A,B)             Log("jwzgles: " A,B)
+# define LOG2(A,B,C)           Log("jwzgles: " A,B,C)
+# define LOG3(A,B,C,D)         Log("jwzgles: " A,B,C,D)
+# define LOG4(A,B,C,D,E)       Log("jwzgles: " A,B,C,D,E)
+# define LOG5(A,B,C,D,E,F)     Log("jwzgles: " A,B,C,D,E,F)
+# define LOG6(A,B,C,D,E,F,G)   Log("jwzgles: " A,B,C,D,E,F,G)
+# define LOG7(A,B,C,D,E,F,G,H) Log("jwzgles: " A,B,C,D,E,F,G,H)
 # define LOG8(A,B,C,D,E,F,G,H,I)\
-         Log("jwzgles: "A "\n",B,C,D,E,F,G,H,I)
+         Log("jwzgles: "A,B,C,D,E,F,G,H,I)
 # define LOG9(A,B,C,D,E,F,G,H,I,J)\
-         Log("jwzgles: "A "\n",B,C,D,E,F,G,H,I,J)
+         Log("jwzgles: "A,B,C,D,E,F,G,H,I,J)
 # define LOG10(A,B,C,D,E,F,G,H,I,J,K)\
-         Log("jwzgles: "A "\n",B,C,D,E,F,G,H,I,J,K)
+         Log("jwzgles: "A,B,C,D,E,F,G,H,I,J,K)
 # define LOG17(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R)\
-         Log("jwzgles: "A "\n",B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R)
+         Log("jwzgles: "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R)
 # define CHECK(S) jwzgles_check_gl_error(S)
 #else
 # define LOG(A)                       /* */
@@ -453,6 +454,10 @@ mode_desc (int mode)	/* for debugging messages */
   SS(CLAMP)
   SS(COLOR_ARRAY)
   SS(COLOR_ARRAY_BUFFER_BINDING);
+  SS(COLOR_ARRAY_POINTER)
+  SS(COLOR_ARRAY_SIZE)
+  SS(COLOR_ARRAY_STRIDE)
+  SS(COLOR_ARRAY_TYPE)
   SS(COLOR_MATERIAL)
   SS(COLOR_MATERIAL_FACE)
   SS(COLOR_MATERIAL_PARAMETER)
@@ -467,6 +472,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(DST_ALPHA)
   SS(DST_COLOR)
   SS(DYNAMIC_DRAW)
+  SS(EDGE_FLAG_ARRAY_POINTER)
   SS(ELEMENT_ARRAY_BUFFER)
   SS(EYE_LINEAR)
   SS(EYE_PLANE)
@@ -477,7 +483,11 @@ mode_desc (int mode)	/* for debugging messages */
   SS(FOG)
   SS(FRONT)
   SS(FRONT_AND_BACK)
+  SS(FRONT_FACE)
   SS(GREATER)
+  SS(INDEX_ARRAY_POINTER)
+  SS(INDEX_ARRAY_STRIDE)
+  SS(INDEX_ARRAY_TYPE)
   SS(INTENSITY)
   SS(INVALID_ENUM)
   SS(INVALID_OPERATION)
@@ -502,6 +512,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(LUMINANCE)
   SS(LUMINANCE_ALPHA)
   SS(MATRIX_MODE)
+  SS(MAX_TEXTURE_SIZE)
   SS(MODELVIEW)
   SS(MODULATE)
   SS(N3F_V3F)
@@ -511,6 +522,9 @@ mode_desc (int mode)	/* for debugging messages */
   SS(NORMALIZE)
   SS(NORMAL_ARRAY)
   SS(NORMAL_ARRAY_BUFFER_BINDING);
+  SS(NORMAL_ARRAY_POINTER)
+  SS(NORMAL_ARRAY_STRIDE)
+  SS(NORMAL_ARRAY_TYPE)
   SS(OBJECT_LINEAR)
   SS(OBJECT_PLANE)
   SS(ONE_MINUS_DST_ALPHA)
@@ -571,6 +585,10 @@ mode_desc (int mode)	/* for debugging messages */
   SS(TEXTURE_COMPONENTS)
   SS(TEXTURE_COORD_ARRAY)
   SS(TEXTURE_COORD_ARRAY_BUFFER_BINDING);
+  SS(TEXTURE_COORD_ARRAY_POINTER)
+  SS(TEXTURE_COORD_ARRAY_SIZE)
+  SS(TEXTURE_COORD_ARRAY_STRIDE)
+  SS(TEXTURE_COORD_ARRAY_TYPE)
   SS(TEXTURE_ENV)
   SS(TEXTURE_ENV_COLOR)
   SS(TEXTURE_ENV_MODE)
@@ -600,6 +618,11 @@ mode_desc (int mode)	/* for debugging messages */
   SS(V3F)
   SS(VERTEX_ARRAY)
   SS(VERTEX_ARRAY_BUFFER_BINDING);
+  SS(VERTEX_ARRAY_POINTER)
+  SS(VERTEX_ARRAY_SIZE)
+  SS(VERTEX_ARRAY_STRIDE)
+  SS(VERTEX_ARRAY_TYPE)
+  SS(VIEWPORT)
 /*SS(COLOR_BUFFER_BIT) -- same value as GL_LIGHT0 */
 # undef SS
   case (GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT):
@@ -626,7 +649,7 @@ jwzgles_check_gl_error (const char *s)
 {
   GLenum i = glGetError();
   if (i == GL_NO_ERROR) return;
-  fprintf (stderr, "jwzgles: GL ERROR: %s: %s\n", s, mode_desc(i));
+  Log ("jwzgles: GL ERROR: %s: %s", s, mode_desc(i));
 }
 
 #endif /* DEBUG */
@@ -683,6 +706,22 @@ jwzgles_make_state (void)
   s->s.mode = s->t.mode = s->r.mode = s->q.mode = GL_EYE_LINEAR;
   s->s.obj[0] = s->s.eye[0] = 1;  /* s = 1 0 0 0 */
   s->t.obj[1] = s->t.eye[1] = 1;  /* t = 0 1 0 0 */
+
+# ifdef TRACK_MATRIXES
+  s->matrix_mode = GL_MODELVIEW;
+  {
+    int i, j;
+    for (i = 0; i < countof(s->matrix_stack); i++)
+      for (j = 0; j < countof(s->matrix_stack[i].stack); j++)
+        {
+          GLfloat *m = (GLfloat *) &s->matrix_stack[i].stack[j];
+          m[0] = 1; m[4] = 0; m[8]  = 0; m[12] = 0;
+          m[1] = 0; m[5] = 1; m[9]  = 0; m[13] = 0;
+          m[2] = 0; m[6] = 0; m[10] = 1; m[14] = 0;
+          m[3] = 0; m[7] = 0; m[11] = 0; m[15] = 1;
+        }
+  }
+# endif // TRACK_MATRIXES
 
   return s;
 }
@@ -883,10 +922,10 @@ list_push (const char * const name,
     break;
   case PROTO_FV16:
     LOG17 ("  push %-12s ["
-           "%8.3f %8.3f %8.3f %8.3f "	"\n\t\t\t       "
-           "%8.3f %8.3f %8.3f %8.3f "	"\n\t\t\t       "
-           "%8.3f %8.3f %8.3f %8.3f "	"\n\t\t\t       "
-           "%8.3f %8.3f %8.3f %8.3f ]",
+           "%7.3f %7.3f %7.3f %7.3f "	"\n\t\t\t       "
+           "%7.3f %7.3f %7.3f %7.3f "	"\n\t\t\t       "
+           "%7.3f %7.3f %7.3f %7.3f "	"\n\t\t\t       "
+           "%7.3f %7.3f %7.3f %7.3f ]",
            name,
            av[0].f,  av[1].f,  av[2].f,  av[3].f,
            av[4].f,  av[5].f,  av[6].f,  av[7].f,
@@ -1191,6 +1230,7 @@ jwzgles_glColor4fv (const GLfloat *v)
         {
           glColor4f (v[0], v[1], v[2], v[3]);
           CHECK("glColor4");
+          memcpy (state->current_color, v, sizeof(state->current_color));
         }
     }
 }
@@ -1967,13 +2007,44 @@ jwzgles_glEnd (void)
       jwzgles_glDisableClientState (GL_NORMAL_ARRAY);
     }
 
-  if (s->tcount > 1 ||
-      ((state->compiling_list ? state->list_enabled : state->enabled)
+  if (((state->compiling_list ? state->list_enabled : state->enabled)
        & (ISENABLED_TEXTURE_GEN_S | ISENABLED_TEXTURE_GEN_T |
-          ISENABLED_TEXTURE_GEN_R | ISENABLED_TEXTURE_GEN_Q)))
+          ISENABLED_TEXTURE_GEN_R | ISENABLED_TEXTURE_GEN_Q)) ||
+      (s->tcount > 1
+# if 0
+       && ((state->compiling_list ? state->list_enabled : state->enabled)
+           & ISENABLED_TEXTURE_2D)
+# endif
+       ))
     {
-      /* Enable texture coords if any were specified; or if generation
-         is on in immediate mode; or if this list turned on generation. */
+      /* Enable texture coords if:
+         - generation is on in immediate mode; or
+         - this list turned on generation; or
+         - texture coords were specified *and* GL_TEXTURE_2D is enabled.
+
+         On Android -- and only Android -- if GL_TEXTURE_2D has *ever* been
+         enabled in this session (even just once and then immediately
+         disabled!)  then enabling GL_TEXTURE_COORD_ARRAY implicitly turns on
+         texturing.  So if we don't want textures, GL_TEXTURE_COORD_ARRAY has
+         to be disabled before calling glDrawArrays.
+    
+         The *hack* I have implemented for this is to omit
+         GL_TEXTURE_COORD_ARRAY unless GL_TEXTURE_2D was enabled at the time
+         that glEndList() was called.
+    
+         So callers who want texture coordinates to be respected have to
+         enable GL_TEXTURE_2D before calling glBegin while recording a list.
+         This is, again, wrong and awful.
+
+         Without this, any hack that display text (including implicitly via
+         FPS) and also uses display lists screws up, since text uses textures:
+
+           - flipflop is black
+           - lavalite has no base
+
+         unit_sphere() and unit_tube() have the same hack.  The list of hacks
+         affected by this bug in that context is longer.
+       */
       is_tex = 1;
       jwzgles_glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     }
@@ -2131,13 +2202,9 @@ optimize_arrays (void)
 
 # ifdef DEBUG
 #  if 0
-  for (i = 0; i < combo_count; i++)
-    {
-      if (i % 4 == 0)
-        fprintf (stderr, "\njwzgles:    %4d: ", i);
-      fprintf (stderr, " %7.3f", combo[i]);
-    }
-  fprintf (stderr, "\n");
+  for (i = 0; i < combo_count; i += 4)
+    Log ("jwzgles: %4d: %7.3f %7.3f %7.3f %7.3f",
+         i, combo[i], combo[i+1], combo[i+2], combo[i+3]);
 #  endif
 # endif /* DEBUG */
 
@@ -2164,7 +2231,7 @@ jwzgles_glCallList (int id)
       state->replaying_list++;
 
 # ifdef DEBUG
-      fprintf (stderr, "\n");
+      LOG ("");
       LOG1 ("glCallList %d", id);
 # endif
 
@@ -2333,10 +2400,10 @@ jwzgles_glCallList (int id)
               for (i = 0; i < countof(m); i++)
                 m[i] = av[i].f;
               LOG17 ("  call %-12s ["
-                     "%8.3f %8.3f %8.3f %8.3f "	"\n\t\t\t       "
-                     "%8.3f %8.3f %8.3f %8.3f "	"\n\t\t\t       "
-                     "%8.3f %8.3f %8.3f %8.3f "	"\n\t\t\t       "
-                     "%8.3f %8.3f %8.3f %8.3f ]",
+                     "%7.3f %7.3f %7.3f %7.3f "	"\n\t\t\t       "
+                     "%7.3f %7.3f %7.3f %7.3f "	"\n\t\t\t       "
+                     "%7.3f %7.3f %7.3f %7.3f "	"\n\t\t\t       "
+                     "%7.3f %7.3f %7.3f %7.3f ]",
                      F->name,
                      m[0],  m[1],  m[2],  m[3],
                      m[4],  m[5],  m[6],  m[7],
@@ -2352,7 +2419,7 @@ jwzgles_glCallList (int id)
           }
         }
 
-      LOG1 ("glCallList %d done\n", id);
+      LOG1 ("glCallList %d done", id);
 
       state->replaying_list--;
       Assert (state->replaying_list >= 0, "glCallList corrupted");
@@ -2435,23 +2502,22 @@ dump_array_data (draw_array *A, int count,
 
   if (A->binding)
     {
-      fprintf (stderr, 
-               "jwzgles:     %s %s %d %s %2d, %4d = %5d   bind %d @ %d\n", 
-               action, name,
-               A->size, mode_desc(A->type), A->stride, 
-               count, bytes, A->binding, (int) A->data);
+      Log ("jwzgles:     %s %s %d %s %2d, %4d = %5d   bind %d @ %lu",
+           action, name,
+           A->size, mode_desc(A->type), A->stride, 
+           count, bytes, A->binding, (unsigned long) A->data);
     }
   else
     {
       Assert (bytes == A->bytes, "array data corrupted");
-
-      fprintf (stderr, "jwzgles:     %s %s %d %s %2d, %4d = %5d @ %lX", 
-               action, name,
-               A->size, mode_desc(A->type), A->stride, 
-               count, bytes, (unsigned long) A->data);
+      char buf[200];
+      sprintf (buf, "jwzgles:     %s %s %d %s %2d, %4d = %5d @ %lX", 
+           action, name,
+           A->size, mode_desc(A->type), A->stride, 
+           count, bytes, (unsigned long) A->data);
       if (old)
-        fprintf (stderr, " / %lX", (unsigned long) old);
-      fprintf (stderr, "\n");
+        sprintf (buf + strlen(buf), " / %lX", (unsigned long) old);
+      Log ("%s", buf);
     }
 
   if (A->binding)
@@ -2465,19 +2531,15 @@ dump_array_data (draw_array *A, int count,
          was helpful for debugging on real OpenGL... */
       GLfloat *d;
       int i;
-      fprintf (stderr, "jwzgles: read back:\n");
+      Log ("jwzgles: read back:");
       d = (GLfloat *) malloc (A->bytes);
       glGetBufferSubData (GL_ARRAY_BUFFER, (int) A->data,
                           count * A->stride, (void *) d);
       CHECK("glGetBufferSubData");
-      for (i = 0; i < count * A->size; i++)
-        {
-          if (i % 4 == 0)
-            fprintf (stderr, "\njwzgles:    %4d: ", 
-                     i + (int) A->data / sizeof(GLfloat));
-          fprintf (stderr, " %7.3f", d[i]);
-        }
-      fprintf (stderr, "\n");
+      for (i = 0; i < count * A->size; i += 4)
+        Log ("jwzgles: %4d: %7.3f %7.3f %7.3f %7.3f",
+             i + (int) A->data / sizeof(GLfloat),
+             d[i], d[i+1], d[i+2], d[i+3]);
       free (d);
 # endif
     }
@@ -2497,10 +2559,18 @@ dump_array_data (draw_array *A, int count,
           GLfloat *f = (GLfloat *) b;
           int s = A->size;
           if (s == 0) s = 3;  /* normals */
-          fprintf (stderr, "jwzgles:    ");
-          for (j = 0; j < s; j++)
-            fprintf (stderr, " %7.3f", f[j]);
-          fprintf (stderr, "\n");
+          switch (s) {
+          case 1: Log ("jwzgles:    %7.3f", f[j]); break;
+          case 2: Log ("jwzgles:    %7.3f %7.3f", f[j], f[j+1]); break;
+          case 3: Log ("jwzgles:    %7.3f %7.3f %7.3f", f[j], f[j+1], f[j+2]);
+            break;
+          case 4: Log ("jwzgles:    %7.3f %7.3f %7.3f %7.3f",
+                       f[j], f[j+1], f[j+2], f[j+3]);
+            break;
+          default: Log ("jwzgles:    %7.3f %7.3f %7.3f %7.3f ...",
+                        f[j], f[j+1], f[j+2], f[j+3]);
+            break;
+          }
           b += A->stride;
         }
     }
@@ -2922,30 +2992,6 @@ jwzgles_glInterleavedArrays (GLenum format, GLsizei stride, const void *data)
 # undef F
 }
 
-
-
-void
-jwzgles_glMultMatrixf (const GLfloat *m)
-{
-  Assert (!state->compiling_verts,
-          "glMultMatrixf not allowed inside glBegin");
-  if (state->compiling_list)
-    {
-      void_int vv[16];
-      int i;
-      for (i = 0; i < countof(vv); i++)
-        vv[i].f = m[i];
-      list_push ("glMultMatrixf", (list_fn_cb) &jwzgles_glMultMatrixf,
-                 PROTO_FV16, vv);
-    }
-  else
-    {
-      if (! state->replaying_list)
-        LOG1 ("direct %-12s", "glMultMatrixf");
-      glMultMatrixf (m);  /* the real one */
-      CHECK("glMultMatrixf");
-    }
-}
 
 
 void
@@ -3374,8 +3420,8 @@ generate_texture_coords (GLuint first, GLuint count)
           k++;
         }
 
-      /* fprintf (stderr, "%4d: V %-5.1f %-5.1f %-5.1f  T %-5.1f %-5.1f\n",
-               i, vert[0], vert[1], vert[2], tex_out[0], tex_out[1]); */
+      /* Log ("%4d: V %-5.1f %-5.1f %-5.1f  T %-5.1f %-5.1f",
+             i, vert[0], vert[1], vert[2], tex_out[0], tex_out[1]); */
 
       /* Move verts_in and tex_out forward to the next vertex by stride. */
       verts_in += A.stride;
@@ -3643,10 +3689,98 @@ jwzgles_glDisableClientState (GLuint cap)
 }
 
 
-#define GET(pname, value) \
-  case pname: \
-    *params = value; \
-    break;
+#ifdef TRACK_MATRIXES
+
+static jwzgles_matrix_stack *
+get_matrix_stack (int mode)
+{
+  int i;
+  switch (mode) {
+  case GL_MODELVIEW:  case GL_MODELVIEW_MATRIX:  i = 0; break;
+  case GL_PROJECTION: case GL_PROJECTION_MATRIX: i = 1; break;
+  case GL_TEXTURE:    case GL_TEXTURE_MATRIX:    i = 2; break;
+  default: abort(); break;
+  }
+  return &state->matrix_stack[i];
+}
+
+
+/* Verify that our saved copy of the prevailing transformation matrix matches
+   OpenGL's idea of that matrix is.
+ */
+#ifdef DEBUG_MATRIX
+static int
+validate_matrix_1 (int mode)
+{
+  const char *n = mode_desc (mode);
+  jwzgles_matrix_stack *s = get_matrix_stack (mode);
+  GLfloat *m = s->stack[s->depth];
+  GLfloat m2[16];
+  int j;
+  int ok = 1;
+
+  glGetFloatv ((mode == GL_MODELVIEW  ? GL_MODELVIEW_MATRIX  :
+                mode == GL_PROJECTION ? GL_PROJECTION_MATRIX :
+                GL_TEXTURE_MATRIX),
+               m2);
+# undef FLT_EPSILON
+# define FLT_EPSILON 0.001  // Apparently we're close but not that close...
+  for (j = 0; j < 16; j++)
+    if (fabs (m[j] - m2[j]) > FLT_EPSILON)
+      ok = 0;
+  if (ok)
+    {
+# if 0
+      Log (" %7.3f %7.3f %7.3f %7.3f\t%s ok\n"
+           " %7.3f %7.3f %7.3f %7.3f\n"
+           " %7.3f %7.3f %7.3f %7.3f\n"
+           " %7.3f %7.3f %7.3f %7.3f\n",
+           m2[0],  m2[1],  m2[2],  m2[3], n,
+           m2[4],  m2[5],  m2[6],  m2[7],
+           m2[8],  m2[9],  m2[10], m2[11],
+           m2[12], m2[13], m2[14], m2[15]);
+# endif
+    }
+  else
+    {
+      Log (" %7.3f %7.3f %7.3f %7.3f\t%s have\n"
+           " %7.3f %7.3f %7.3f %7.3f\n"
+           " %7.3f %7.3f %7.3f %7.3f\n"
+           " %7.3f %7.3f %7.3f %7.3f\n\n"
+           " %7.3f %7.3f %7.3f %7.3f\t%s expected\n"
+           " %7.3f %7.3f %7.3f %7.3f\n"
+           " %7.3f %7.3f %7.3f %7.3f\n"
+           " %7.3f %7.3f %7.3f %7.3f\n",
+           m[0],   m[1],   m[2],   m[3], n,
+           m[4],   m[5],   m[6],   m[7],
+           m[8],   m[9],   m[10],  m[11],
+           m[12],  m[13],  m[14],  m[15],
+
+           m2[0],  m2[1],  m2[2],  m2[3], n,
+           m2[4],  m2[5],  m2[6],  m2[7],
+           m2[8],  m2[9],  m2[10], m2[11],
+           m2[12], m2[13], m2[14], m2[15]);
+    }
+  return ok;
+}
+
+static void
+validate_matrix (void)
+{
+# ifndef HAVE_ANDROID  // glGetFloatv is fake
+  int ok = 1;
+  if (!validate_matrix_1 (GL_MODELVIEW))  ok = 0;
+  if (!validate_matrix_1 (GL_PROJECTION)) ok = 0;
+  if (!validate_matrix_1 (GL_TEXTURE))    ok = 0;
+  if (!ok) abort();
+# endif
+}
+#else  /* !DEBUG */
+# define validate_matrix() /* */
+#endif /* !DEBUG */
+
+#endif // TRACK_MATRIXES
+
 
 /* The spec says that OpenGLES 1.0 doesn't implement glGetFloatv.
 
@@ -3654,14 +3788,320 @@ jwzgles_glDisableClientState (GLuint cap)
 
    Android goes down to 1.0. In particular, this includes the emulator when
    running without GPU emulation. Actual devices that don't support 1.1 are
-   extremely rare at this point.
+   extremely rare at this point.  Maybe?  But the Android simulator, running
+   2026 Android 16 on Pixel 9a, does not implement glGetFloatv.  And without
+   that, there is no way to retrieve the prevailing matrixes.
 
-   OpenGL ES 1.0 sucks because without glGetFloatv there is no way to retrieve
-   the prevailing matrixes.  To implement this, we'd have to keep track of
-   them all on the client side by combining in all the actions of
-   glMultMatrixf, glRotatef, etc.  Right now, we're only keeping track of the
-   gl*Pointer functions.
+   So we wrap all of the matrix-manipulation functions.  The only way we can
+   make glGetFloatv(GL_MODELVIEW_MATRIX) work is to track all changes to the
+   matrixes on the stack in parallel to what OpenGL itself is doing.  This
+   doubles the number of instructions on any glScale, etc.  Which probably
+   doesn't matter much, but does offend.
  */
+
+void jwzgles_glPushMatrix (void)
+{
+  Assert (!state->compiling_verts, "glPushMatrix not allowed inside glBegin");
+  if (state->compiling_list)
+    {
+      void_int vv[1];
+      list_push ("glPushMatrix", (list_fn_cb) &jwzgles_glPushMatrix,
+                 PROTO_VOID, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG("glPushMatrix");
+      glPushMatrix();
+      CHECK("glPushMatrix");
+
+# ifdef TRACK_MATRIXES
+      jwzgles_matrix_stack *s = get_matrix_stack (state->matrix_mode);
+      Assert (s->depth < countof (s->stack[0]) - 1,
+              "glPushMatrix max stack depth exceeded");
+      if (s->depth < countof (s->stack[0]) - 1)
+        s->depth++;
+
+      memcpy (s->stack[s->depth],
+              s->stack[s->depth-1],
+              sizeof(s->stack[0]));
+      validate_matrix();
+# endif // TRACK_MATRIXES
+    }
+}
+
+void jwzgles_glPopMatrix (void)
+{
+  Assert (!state->compiling_verts, "glPopMatrix not allowed inside glBegin");
+  if (state->compiling_list)
+    {
+      void_int vv[1];
+      list_push ("glPopMatrix", (list_fn_cb) &jwzgles_glPopMatrix,
+                 PROTO_VOID, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG("glPopMatrix");
+      glPopMatrix();
+      CHECK("glPopMatrix");
+
+# ifdef TRACK_MATRIXES
+      jwzgles_matrix_stack *s = get_matrix_stack (state->matrix_mode);
+      // Let's let this one slide.
+#  ifdef DEBUG
+      Assert (s->depth > 0, "glPopMatrix stack underflow");
+#  endif
+      if (s->depth > 0) s->depth--;
+      validate_matrix();
+# endif // TRACK_MATRIXES
+    }
+}
+
+
+void jwzgles_glMatrixMode (GLuint mode)
+{
+  Assert (!state->compiling_verts, "glMatrixMode not allowed inside glBegin");
+  Assert (mode == GL_MODELVIEW || mode == GL_PROJECTION || mode == GL_TEXTURE,
+          "glMatrixMode bogus arg");
+  if (state->compiling_list)
+    {
+      void_int vv[1];
+      vv[0].i = mode;
+      list_push ("glMatrixMode", (list_fn_cb) &jwzgles_glMatrixMode,
+                 PROTO_I, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG1("glMatrixMode %s",
+             (mode == GL_MODELVIEW  ? "GL_MODELVIEW"  :
+              mode == GL_PROJECTION ? "GL_PROJECTION" :
+              mode == GL_TEXTURE    ? "GL_TEXTURE"    : "???"));
+      glMatrixMode (mode);
+      CHECK("glMatrixMode");
+# ifdef TRACK_MATRIXES
+      state->matrix_mode = mode;
+# endif
+    }
+}
+
+
+# ifdef TRACK_MATRIXES
+
+/* c = c * m, 4x4 */
+static void
+mult_matrix (GLfloat *c, const GLfloat *m)
+{
+  int i, j;
+  GLfloat t[16];
+  memcpy (t, c, sizeof(t));
+# define M(A,X,Y)  A[Y * 4 + X]
+  for (j = 0; j < 4; j++)
+    for (i = 0; i < 4; i++)
+      M(c,i,j) = (M(t,i,0)*M(m,0,j) +
+                  M(t,i,1)*M(m,1,j) +
+                  M(t,i,2)*M(m,2,j) +
+                  M(t,i,3)*M(m,3,j));
+# undef M
+}
+# endif // TRACK_MATRIXES
+
+
+void jwzgles_glRotatef (GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+{
+  Assert (!state->compiling_verts, "glRotatef not allowed inside glBegin");
+  if (state->compiling_list)
+    {
+      void_int vv[4];
+      vv[0].f = angle;
+      vv[1].f = x;
+      vv[2].f = y;
+      vv[3].f = z;
+      list_push ("glRotatef", (list_fn_cb) &jwzgles_glRotatef,
+                 PROTO_FFFF, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG4 ("glRotatef %7.3f %7.3f %7.3f %7.3f", angle, x, y, z);
+      // validate_matrix();
+      glRotatef (angle, x, y, z);
+      CHECK("glRotatef");
+
+# ifdef TRACK_MATRIXES
+      {
+        GLfloat m[16];
+        GLfloat th = angle * M_PI/180;
+        GLfloat c = cos(th);
+        GLfloat s = sin(th);
+        GLfloat ic = 1 - c;
+
+#  if 0 // Normalizing does not seem to be necessary
+        GLfloat L = sqrt (x*x + y*y + z*z);
+        x /= L;
+        y /= L;
+        z /= L;
+#  endif
+        m[0] = x*x*ic+c;   m[4] = x*y*ic-z*s; m[8]  = x*z*ic+y*s; m[12] = 0;
+        m[1] = x*y*ic+z*s; m[5] = y*y*ic+c;   m[9]  = y*z*ic-x*s; m[13] = 0;
+        m[2] = x*z*ic-y*s; m[6] = y*z*ic+x*s; m[10] = z*z*ic+c;   m[14] = 0;
+        m[3] = 0;          m[7] = 0;          m[11] = 0;          m[15] = 1;
+        {
+          jwzgles_matrix_stack *s = get_matrix_stack (state->matrix_mode);
+          mult_matrix (s->stack[s->depth], m);
+          validate_matrix();
+        }
+      }
+# endif // TRACK_MATRIXES
+    }
+}
+
+
+void jwzgles_glTranslatef (GLfloat x, GLfloat y, GLfloat z)
+{
+  Assert (!state->compiling_verts, "glTranslatef not allowed inside glBegin");
+  if (state->compiling_list)
+    {
+      void_int vv[4];
+      vv[0].f = x;
+      vv[1].f = y;
+      vv[2].f = z;
+      list_push ("glTranslatef", (list_fn_cb) &jwzgles_glTranslatef,
+                 PROTO_FFF, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG3 ("glTranslatef %7.3f %7.3f %7.3f", x, y, z);
+      glTranslatef (x, y, z);
+      CHECK("glTranslatef");
+
+# ifdef TRACK_MATRIXES
+      jwzgles_matrix_stack *s = get_matrix_stack (state->matrix_mode);
+      GLfloat m[16];
+
+      m[0] = 1; m[4] = 0; m[8]  = 0; m[12] = x;
+      m[1] = 0; m[5] = 1; m[9]  = 0; m[13] = y;
+      m[2] = 0; m[6] = 0; m[10] = 1; m[14] = z;
+      m[3] = 0; m[7] = 0; m[11] = 0; m[15] = 1;
+
+      mult_matrix (s->stack[s->depth], m);
+      validate_matrix();
+# endif // TRACK_MATRIXES
+    }
+}
+
+
+void jwzgles_glScalef (GLfloat x, GLfloat y, GLfloat z)
+{
+  Assert (!state->compiling_verts, "glScalef not allowed inside glBegin");
+  if (state->compiling_list)
+    {
+      void_int vv[4];
+      vv[0].f = x;
+      vv[1].f = y;
+      vv[2].f = z;
+      list_push ("glScalef", (list_fn_cb) &jwzgles_glScalef,
+                 PROTO_FFF, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG3 ("glScalef %7.3f %7.3f %7.3f", x, y, z);
+      glScalef (x, y, z);
+      CHECK("glScalef");
+
+# ifdef TRACK_MATRIXES
+      jwzgles_matrix_stack *s = get_matrix_stack (state->matrix_mode);
+      GLfloat m[16];
+
+      m[0] = x; m[4] = 0; m[8]  = 0; m[12] = 0;
+      m[1] = 0; m[5] = y; m[9]  = 0; m[13] = 0;
+      m[2] = 0; m[6] = 0; m[10] = z; m[14] = 0;
+      m[3] = 0; m[7] = 0; m[11] = 0; m[15] = 1;
+
+      mult_matrix (s->stack[s->depth], m);
+      validate_matrix();
+# endif // TRACK_MATRIXES
+    }
+}
+
+
+void
+jwzgles_glMultMatrixf (const GLfloat *m)
+{
+  Assert (!state->compiling_verts,
+          "glMultMatrixf not allowed inside glBegin");
+  if (state->compiling_list)
+    {
+      void_int vv[16];
+      int i;
+      for (i = 0; i < countof(vv); i++)
+        vv[i].f = m[i];
+      list_push ("glMultMatrixf", (list_fn_cb) &jwzgles_glMultMatrixf,
+                 PROTO_FV16, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG17 ("direct %-12s ["
+               " %7.3f %7.3f %7.3f %7.3f" "\n\t\t\t       "
+               " %7.3f %7.3f %7.3f %7.3f" "\n\t\t\t       "
+               " %7.3f %7.3f %7.3f %7.3f" "\n\t\t\t       "
+               " %7.3f %7.3f %7.3f %7.3f" "]",
+               "glMultMatrixf",
+               m[0],  m[1],  m[2],  m[3],
+               m[4],  m[5],  m[6],  m[7],
+               m[8],  m[9],  m[10], m[11],
+               m[12], m[13], m[14], m[15]);
+      // validate_matrix();
+      glMultMatrixf (m);  /* the real one */
+      CHECK("glMultMatrixf");
+
+# ifdef TRACK_MATRIXES
+      jwzgles_matrix_stack *s = get_matrix_stack (state->matrix_mode);
+      mult_matrix (s->stack[s->depth], m);
+      validate_matrix();
+# endif // TRACK_MATRIXES
+    }
+}
+
+
+void jwzgles_glLoadIdentity (void)
+{
+  Assert (!state->compiling_verts, "glLoadIdentity not allowed inside glBegin");
+  if (state->compiling_list)
+    {
+      void_int vv[1];
+      list_push ("glLoadIdentity", (list_fn_cb) &jwzgles_glLoadIdentity,
+                 PROTO_VOID, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG("glLoadIdentity");
+      glLoadIdentity();
+      CHECK("glLoadIdentity");
+
+# ifdef TRACK_MATRIXES
+      jwzgles_matrix_stack *s = get_matrix_stack (state->matrix_mode);
+      GLfloat *m = s->stack[s->depth];
+      m[0] = 1; m[4] = 0; m[8]  = 0; m[12] = 0;
+      m[1] = 0; m[5] = 1; m[9]  = 0; m[13] = 0;
+      m[2] = 0; m[6] = 0; m[10] = 1; m[14] = 0;
+      m[3] = 0; m[7] = 0; m[11] = 0; m[15] = 1;
+      validate_matrix();
+# endif // TRACK_MATRIXES
+    }
+}
+
+
+#define GET(pname, value) \
+  case pname: \
+    *params = value; \
+    break;
+
 void
 jwzgles_glGetFloatv (GLenum pname, GLfloat *params)
 {
@@ -3693,6 +4133,45 @@ jwzgles_glGetFloatv (GLenum pname, GLfloat *params)
   GET(GL_TEXTURE_COORD_ARRAY_SIZE,           state->tarray.size)
   GET(GL_TEXTURE_COORD_ARRAY_TYPE,           state->tarray.type)
   GET(GL_TEXTURE_COORD_ARRAY_STRIDE,         state->tarray.stride)
+
+  case GL_CURRENT_COLOR:
+    memcpy (params, state->current_color, sizeof (state->current_color));
+    break;
+
+# ifdef TRACK_MATRIXES
+  case GL_MODELVIEW_MATRIX:
+  case GL_PROJECTION_MATRIX:
+  case GL_TEXTURE_MATRIX:
+    {
+      /* Return our independently-computed copy of the prevailing matrixes,
+         instead of what the fixed-function pipeline has computed on its own.
+       */
+      jwzgles_matrix_stack *s = get_matrix_stack (pname);
+      memcpy (params, s->stack[s->depth], sizeof (s->stack[s->depth]));
+    }
+    break;
+# endif // TRACK_MATRIXES
+
+  /* XScreenSaver also reads these:
+
+     GL_BLEND_DST			texfont.c
+     GL_CONTEXT_PROFILE_MASK		glsl-utils.c
+     GL_DRAW_BUFFER0			sphereeversion
+     GL_DRAW_FRAMEBUFFER_BINDING	GLSL stuff
+     GL_FRONT_FACE			texfont.c
+     GL_MAX_SAMPLES			hopffibration in GLSL mode
+     GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT	if GL_EXT_texture_filter_anisotropic
+     GL_MAX_TEXTURE_SIZE		texfont.c and others
+     GL_POLYGON_MODE			texfont.c
+     GL_READ_BUFFER			sphereeversion
+     GL_READ_FRAMEBUFFER_BINDING	GLSL stuff
+     GL_SAMPLES				cubocteversion, hopffibration
+     GL_SAMPLE_BUFFERS			hopffibration
+     GL_TEXTURE_BINDING_2D		texfont.c, mirrorblob.c
+     GL_UNPACK_ALIGNMENT		anything using textures
+     GL_UNPACK_ROW_LENGTH		anything using textures
+     GL_VIEWPORT			texfont.c and others
+   */
 
   default:
     glGetFloatv (pname, params);  /* the real one */
@@ -4231,7 +4710,7 @@ jwzgles_gluCheckExtension (const GLubyte *ext_name, const GLubyte *ext_string)
 void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 {
 # if TARGET_IPHONE_SIMULATOR
-/*  fprintf (stderr, "glViewport %dx%d\n", w, h); */
+/*  Log ("glViewport %dx%d", w, h); */
 # endif
   glViewport (x, y, w, h);  /* the real one */
 }
@@ -4249,7 +4728,7 @@ void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 #define TYPE_V    GLuint
 #define ARGS_V    void
 #define VARS_V    /* */
-#define LOGS_V    "\n"
+#define LOGS_V    "", n
 #define FILL_V    /* */
 
 #define TYPE_I    GLuint
@@ -4260,10 +4739,10 @@ void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 #define ARGS_II   TYPE_I a, TYPE_I b
 #define ARGS_III  TYPE_I a, TYPE_I b, TYPE_I c
 #define ARGS_IIII TYPE_I a, TYPE_I b, TYPE_I c, TYPE_I d
-#define LOGS_I    "%s\n", mode_desc(a)
-#define LOGS_II   "%s %d\n", mode_desc(a), b
-#define LOGS_III  "%s %s %s\n", mode_desc(a), mode_desc(b), mode_desc(c)
-#define LOGS_IIII "%d %d %d %d\n", a, b, c, d
+#define LOGS_I    "%s", n, mode_desc(a)
+#define LOGS_II   "%s %d", n, mode_desc(a), b
+#define LOGS_III  "%s %s %s", n, mode_desc(a), mode_desc(b), mode_desc(c)
+#define LOGS_IIII "%d %d %d %d", n, a, b, c, d
 #define VARS_I    a
 #define VARS_II   a, b
 #define VARS_III  a, b, c
@@ -4281,10 +4760,10 @@ void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 #define ARGS_FF   TYPE_F a, TYPE_F b
 #define ARGS_FFF  TYPE_F a, TYPE_F b, TYPE_F c
 #define ARGS_FFFF TYPE_F a, TYPE_F b, TYPE_F c, TYPE_F d
-#define LOGS_F    "%7.3f\n", a
-#define LOGS_FF   "%7.3f %7.3f\n", a, b
-#define LOGS_FFF  "%7.3f %7.3f %7.3f\n", a, b, c
-#define LOGS_FFFF "%7.3f %7.3f %7.3f %7.3f\n", a, b, c, d
+#define LOGS_F    "%7.3f", n, a
+#define LOGS_FF   "%7.3f %7.3f", n, a, b
+#define LOGS_FFF  "%7.3f %7.3f %7.3f", n, a, b, c
+#define LOGS_FFFF "%7.3f %7.3f %7.3f %7.3f", n, a, b, c, d
 #define VARS_F    VARS_I
 #define VARS_FF   VARS_II
 #define VARS_FFF  VARS_III
@@ -4296,25 +4775,25 @@ void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 
 #define ARGS_IF   TYPE_I a, TYPE_F b
 #define VARS_IF   VARS_II
-#define LOGS_IF   "%s %7.3f\n", mode_desc(a), b
+#define LOGS_IF   "%s %7.3f", n, mode_desc(a), b
 #define FILL_IF   vv[0].i = a; vv[1].f = b;
 
 #define ARGS_IIF  TYPE_I a, TYPE_I b, TYPE_F c
 #define VARS_IIF  VARS_III
-#define LOGS_IIF  "%s %s %7.3f\n", mode_desc(a), mode_desc(b), c
+#define LOGS_IIF  "%s %s %7.3f", n, mode_desc(a), mode_desc(b), c
 #define FILL_IIF  vv[0].i = a; vv[1].i = b; vv[2].f = c;
 
 #define TYPE_IV   GLint
 #define ARGS_IIV  TYPE_I a, const TYPE_IV *b
 #define VARS_IIV  VARS_II
-#define LOGS_IIV  "%s %d %d %d %d\n", mode_desc(a), b[0], b[1], b[2], b[3]
+#define LOGS_IIV  "%s %d %d %d %d", n, mode_desc(a), b[0], b[1], b[2], b[3]
 #define FILL_IIV  vv[0].i = a; \
 		  vv[1].i = b[0]; vv[2].i = b[1]; \
 		  vv[3].i = b[2]; vv[4].i = b[3];
 
 #define ARGS_IFV  TYPE_I a, const TYPE_F *b
 #define VARS_IFV  VARS_II
-#define LOGS_IFV  "%s %7.3f %7.3f %7.3f %7.3f\n", mode_desc(a), \
+#define LOGS_IFV  "%s %7.3f %7.3f %7.3f %7.3f", n, mode_desc(a), \
 		  b[0], b[1], b[2], b[3]
 #define FILL_IFV  vv[0].i = a; \
 		  vv[1].f = b[0]; vv[2].f = b[1]; \
@@ -4322,7 +4801,7 @@ void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 
 #define ARGS_IIIV TYPE_I a, TYPE_I b, const TYPE_IV *c
 #define VARS_IIIV VARS_III
-#define LOGS_IIIV "%s %-8s %3d %3d %3d %3d\n", mode_desc(a), mode_desc(b), \
+#define LOGS_IIIV "%s %-8s %3d %3d %3d %3d", n, mode_desc(a), mode_desc(b),\
 		  c[0], c[1], c[2], c[3]
 #define FILL_IIIV vv[0].i = a; vv[1].i = b; \
 		  vv[2].i = c[0]; vv[3].i = c[1]; \
@@ -4330,7 +4809,7 @@ void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 
 #define ARGS_IIFV TYPE_I a, TYPE_I b, const TYPE_F *c
 #define VARS_IIFV VARS_III
-#define LOGS_IIFV "%s %-8s %7.3f %7.3f %7.3f %7.3f\n", \
+#define LOGS_IIFV "%s %-8s %7.3f %7.3f %7.3f %7.3f", n, \
 		  mode_desc(a), mode_desc(b), \
 		  c[0], c[1], c[2], c[3]
 #define FILL_IIFV vv[0].i = a; vv[1].i = b; \
@@ -4338,9 +4817,10 @@ void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
 		  vv[4].f = c[2]; vv[5].f = c[3];
 
 #ifdef DEBUG
-# define WLOG(NAME,ARGS) \
-  fprintf (stderr, "jwzgles: direct %-12s ", NAME); \
-  fprintf (stderr, ARGS)
+# define WLOG(NAME,ARGS) do {            \
+    const char *n = STRINGIFY(NAME);     \
+    Log ("jwzgles: direct %-12s " ARGS); \
+  } while(0)
 #else
 # define WLOG(NAME,ARGS) /* */
 #endif
@@ -4356,9 +4836,8 @@ void jwzgles_##NAME (ARGS_##SIG)					\
     list_push (STRINGIFY(NAME), (list_fn_cb) &jwzgles_##NAME,		\
 	       PROTO_##SIG, vv);					\
   } else {                                                          	\
-    if (! state->replaying_list) {                                   	\
-      WLOG (STRINGIFY(NAME), LOGS_##SIG);		        	\
-    }									\
+    if (! state->replaying_list)                                   	\
+      WLOG (NAME, LOGS_##SIG);				        	\
     NAME (VARS_##SIG);							\
     CHECK(STRINGIFY(NAME));						\
   }									\
@@ -4387,16 +4866,10 @@ WRAP (glLightModelfv,	IFV)
 WRAP (glLightf,		IIF)
 WRAP (glLightfv,	IIFV)
 WRAP (glLineWidth,	F)
-WRAP (glLoadIdentity,	V)
 WRAP (glLogicOp,	I)
-WRAP (glMatrixMode,	I)
 WRAP (glPixelStorei,	II)
 WRAP (glPointSize,	F)
 WRAP (glPolygonOffset,	FF)
-WRAP (glPopMatrix,	V)
-WRAP (glPushMatrix,	V)
-WRAP (glRotatef,	FFFF)
-WRAP (glScalef,		FFF)
 WRAP (glScissor,	IIII)
 WRAP (glShadeModel,	I)
 WRAP (glStencilFunc,	III)
@@ -4404,7 +4877,6 @@ WRAP (glStencilMask,	I)
 WRAP (glStencilOp,	III)
 WRAP (glTexEnvf,	IIF)
 WRAP (glTexEnvi,	III)
-WRAP (glTranslatef,	FFF)
 #undef  TYPE_IV
 #define TYPE_IV GLuint
 WRAP (glDeleteTextures,	IIV)

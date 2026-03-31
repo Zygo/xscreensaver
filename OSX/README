@@ -112,12 +112,11 @@ Building for older operating systems:
   9: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
  10: File / Add Files / [x] Reference In Place / the new .c, .xml and .glsl.
      Add To Targets: the new target, and "XScreenSaver-iOS" and "-tvOS".
- 11: Re-order the new files in the file list on the left.
+ 11: Move the new files in the list on the left into the proper sub-folders.
  12: In target "All Savers (OpenGL)" add the new target as Build Phases /
      Target Dependency.
- 13: In target "XScreenSaver-iOS", reorder new files in Build Phases /
-     "Copy" and "Compile", since they showed up in a random place.
- 14: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
+ 13: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
+ 14: Run ./xcode-sort.pl
  15: Put a 720p screen shot in ~/www/xscreensaver/screenshots/
      convert -crop 2560x1440+0+44 -resize 1280x \
        grab-NNNNNN.png ~/www/xscreensaver/screenshots/NEW.jpg

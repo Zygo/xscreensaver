@@ -263,6 +263,10 @@ move (struct state *st)
     st->next_fn = move;
 }
 
+#ifdef HAVE_ANDROID /* Clip masks cause the whole screen to be static */
+# define XSetClipMask(D,G,M) /* */
+#endif
+
 # define COPY(dpy,frame,window,gc,x,y,w,h,x2,y2) do {\
   int X2 = (x2), Y2 = (y2); \
   PM *FRAME = (frame); \

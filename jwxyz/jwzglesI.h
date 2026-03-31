@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -119,7 +119,34 @@
 # define GL_INT					0x1404
 # define GL_DOUBLE				0x140A
 # define GL_CONSTANT_ALPHA			0x8003
-
+# define GL_VERTEX_ARRAY_TYPE			0x807B
+# define GL_VERTEX_ARRAY_STRIDE			0x807C
+# define GL_NORMAL_ARRAY_TYPE			0x807E
+# define GL_NORMAL_ARRAY_STRIDE			0x807F
+# define GL_COLOR_ARRAY_SIZE			0x8081
+# define GL_COLOR_ARRAY_TYPE			0x8082
+# define GL_COLOR_ARRAY_STRIDE			0x8083
+# define GL_INDEX_ARRAY_TYPE			0x8085
+# define GL_INDEX_ARRAY_STRIDE			0x8086
+# define GL_TEXTURE_COORD_ARRAY_SIZE		0x8088
+# define GL_TEXTURE_COORD_ARRAY_TYPE		0x8089
+# define GL_TEXTURE_COORD_ARRAY_STRIDE		0x808A
+# define GL_EDGE_FLAG_ARRAY_STRIDE		0x808C
+# define GL_VERTEX_ARRAY_POINTER		0x808E
+# define GL_NORMAL_ARRAY_POINTER		0x808F
+# define GL_COLOR_ARRAY_POINTER			0x8090
+# define GL_INDEX_ARRAY_POINTER			0x8091
+# define GL_TEXTURE_COORD_ARRAY_POINTER		0x8092
+# define GL_EDGE_FLAG_ARRAY_POINTER		0x8093
+# define GL_CURRENT_COLOR			0x0B00
+# define GL_POINT_SMOOTH			0x0B10
+# define GL_LINE_SMOOTH				0x0B20
+# define GL_VIEWPORT				0x0BA2
+# define GL_MODELVIEW_MATRIX			0x0BA6
+# define GL_PROJECTION_MATRIX			0x0BA7
+# define GL_TEXTURE_MATRIX			0x0BA8
+# define GL_FRONT_FACE				0x0B46
+# define GL_MAX_TEXTURE_SIZE			0x0D33
 #endif
 
 

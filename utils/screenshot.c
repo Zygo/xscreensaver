@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright © 2022-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright © 2022-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,7 +32,7 @@
 #include "screenshot.h"
 #include "visual.h"
 #include "doubletime.h"
-#include "../driver/blurb.h"
+#include "blurb.h"
 
 #if defined(__APPLE__) && !defined(HAVE_COCOA)
 # define HAVE_MACOS_X11

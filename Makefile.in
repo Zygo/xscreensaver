@@ -268,7 +268,7 @@ update_spec_version::
 	for F in "$$S1" "$$S2" ; do					    \
 	  /bin/echo -n "Updating $$F to \"$$VERS\"... " ;		    \
 	  sed -e "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"	    \
-	      -e "s/([-0-9.]*)/($$VERS-1)/"				    \
+	      -e "s/([-0-9.a-z]*)/($$VERS-1)/"				    \
 	    < "$$F" > "$$T" ;						    \
 	  if cmp -s "$$F" "$$T" ; then					    \
 	    echo "unchanged." ;						    \
@@ -520,7 +520,7 @@ install_links::
 
 
 cerebrum::
-	rsync -vax . 10.0.1.37:xscreensaver/ \
+	rsync -vax . 10.0.1.42:xscreensaver/ \
 	--omit-dir-times \
 	--delete-during \
 	--exclude .git \

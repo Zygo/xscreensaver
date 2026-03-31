@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 6.14
+%define	version 6.15
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -13,7 +13,7 @@ Vendor:		Jamie Zawinski <jwz@jwz.org>
 Buildroot:	%{_tmppath}/%{name}-root
 
 # Red Hat uses an epoch number to make RPM believe that their old RPM with
-# number "1:5.45" is newer than your "6.00".  The technical term for this
+# number "1:5.45" is newer than your "6.14".  The technical term for this
 # is "a dick move".  If that's happening to you, increment this number:
 #
 # Epoch:	2
@@ -87,12 +87,12 @@ Obsoletes: xscreensaver-screensaver-webcollage	< %{version}
 
 %description
 A modular screen saver and locker for the X Window System.
-More than 260 display modes are included in this package.
+More than 270 display modes are included in this package.
 
 %prep
 %setup -q
 
-autoreconf -v -f
+autoreconf -v -f -I /usr/share/gettext/m4
 
 if [ -x %{_datadir}/libtool/config.guess ]; then
   # use system-wide copy
@@ -135,7 +135,7 @@ dd=%{_builddir}/%{name}-%{version}
   sed 's@^@/@'  |
   sort |
   sed -e 's@^\(.*/app-defaults/\)@%config \1@' \
-      -e 's@^\(.*/pam\.d/\)@%config(missingok) \1@' \
+      -e 's@^\(.*/pam\.d/\)@%config(6.15-1) \1@' \
       -e 's@^\(.*/xscreensaver-auth\)$@%attr(4755,root,root) \1@' \
       -e 's@^\(.*/sonar\)$@%attr(4755,root,root) \1@' \
       -e 's@\(.*/man/.*\)@\1\*@' \
@@ -181,6 +181,8 @@ fi
 exit 0
 
 %changelog
+* Fri Jan 16 2026 jwz
+- Fedora 43 broke autoreconf because hey why not.
 * Tue Dec 02 2025 jwz
 - Cleanup.
 * Mon Jul 31 2023 jwz

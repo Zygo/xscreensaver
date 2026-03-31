@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2025 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.51 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.52 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -67,13 +67,16 @@ sub shaders_for_saver($) {
   my @dirs = ('glx/glsl', '../hacks/glx/glsl');
 
   $saver = lc($saver);
-  for (my $i = 0; $i < 6; $i++) {
-    my $suf = ($i == 0 ? 'c' : $i-1);
-    my $f1 = ($i == 1 ? "$saver.$ext" : undef);
-    my $f2 = "$saver-$suf.$ext";
-    foreach my $d (@dirs) {
-      if ($f1 && -f "$d/$f1") { push @shaders, "$d/$f1"; last; }
-      elsif     (-f "$d/$f2") { push @shaders, "$d/$f2"; last; }
+  for (my $variant = -1; $variant < 10; $variant++) {
+      my $v = ($variant == -1 ? '' : $variant);
+    for (my $buffer = 0; $buffer < 6; $buffer++) {
+      my $suf = ($buffer == 0 ? 'c' : $buffer-1);
+      my $f1  = ($buffer == 1 ? "$saver$v.$ext" : undef);
+      my $f2  = "$saver$v-$suf.$ext";
+      foreach my $d (@dirs) {
+        if ($f1 && -f "$d/$f1") { push @shaders, "$d/$f1"; last; }
+        elsif     (-f "$d/$f2") { push @shaders, "$d/$f2"; last; }
+      }
     }
   }
   return @shaders;
@@ -200,6 +203,7 @@ sub parse_src($) {
       s/\s*$//s;
       next if m/^$/s;
       next if m/^\{\s*0\s*,/s;
+      next unless (m/^\s*\{/s);
       my ($switch, $res, $type, $v0, $v1, $v2) =
         m@^ \s* { \s * \"([^\"]+)\" \s* ,
                   \s * \"([^\"]+)\" \s* ,
@@ -238,8 +242,8 @@ my %video_dups;
 #
 # Also a hash of the simplified XML contents.
 #
-sub parse_xml($$$) {
-  my ($saver, $switch_to_res, $src_opts) = @_;
+sub parse_xml($$$$) {
+  my ($saver, $switch_to_res, $src_opts, $android_p) = @_;
 
   my $saver_title = undef;
   my $gl_p = 0;
@@ -455,7 +459,7 @@ sub parse_xml($$$) {
   }
 
 #  error ("$file: no video") unless $video;
-  print STDERR "\n$file: WARNING: no video\n\n" unless $video;
+  print STDERR "\n$file: WARNING: no video\n\n" unless ($video || $android_p);
 
   if ($video && $video_dups{$video} && 
       $video_dups{$video} ne $saver_title) {
@@ -478,7 +482,7 @@ sub check_config($$) {
 
   my ($src_opts, $switchmap) = parse_src ($saver);
   my ($saver_title, $gl_p, $xml_opts, $widgets) =
-    parse_xml ($saver, $switchmap, $src_opts);
+    parse_xml ($saver, $switchmap, $src_opts, $android_p);
 
   my $failures = 0;
   foreach my $claim (@$xml_opts) {
@@ -749,7 +753,7 @@ sub build_android(@) {
 
     my ($src_opts, $switchmap) = parse_src ($saver2);
     my ($saver_title, $gl_p, $xml_opts, $widgets) =
-      parse_xml ($saver, $switchmap, $src_opts);
+      parse_xml ($saver, $switchmap, $src_opts, 1);
 
     # The Android daydream list sorts the $saver_title strings with strcmp,
     # meaning capitals come before lower case, and "ö" comes after "z".
@@ -1176,10 +1180,21 @@ sub build_android(@) {
 
                "  <uses-permission android:name=\"" .
                    "android.permission.INTERNET\" />\n" .
+
+               # Devices running Android 12L (API level 32) or lower
                "  <uses-permission android:name=\"" .
-                   "android.permission.READ_EXTERNAL_STORAGE\" />\n" .
+                   "android.permission.READ_EXTERNAL_STORAGE\"" .
+                   " android:maxSdkVersion=\"32\" />\n" .
+
+               # Devices running Android 13 (API level 33) or higher
                "  <uses-permission android:name=\"" .
                    "android.permission.READ_MEDIA_IMAGES\" />\n" .
+
+               # To handle the reselection within the app on devices running
+               # Android 14 or higher if your app targets Android 14
+               # (API level 34) or higher.
+               "  <uses-permission android:name=\"" .
+                   "android.permission.READ_MEDIA_VISUAL_USER_SELECTED\" />\n" .
 
                "  <application android:icon=\"\@drawable/thumbnail\"\n" .
                "    android:banner=\"\@drawable/thumbnail\"\n" .

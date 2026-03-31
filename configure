@@ -19250,6 +19250,8 @@ if test "$with_xft" = yes; then
   ok="yes"
   pkg_check_version xft 2.1.0
   have_xft="$ok"
+  pkg_check_version fontconfig 2.0.0
+  have_fontconfig="$ok"
 
   if test "$have_xft" = yes; then
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for Xft includes" >&5
@@ -22298,7 +22300,10 @@ if test "$have_xinput" = no ; then
   CONF_STATUS=1
 fi
 
-if test "$have_xft" = no ; then
+if test "$have_fontconfig" = no ; then
+  warnL 'The fontconfig library was not found.  It is required.'
+  CONF_STATUS=1
+elif test "$have_xft" = no ; then
   warnL 'The XFreeType library was not found.  It is required.'
   if test "$xft_halfassed" = yes ; then halfassery ; else echo '' ; fi
   CONF_STATUS=1

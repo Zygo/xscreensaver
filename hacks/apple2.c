@@ -503,7 +503,7 @@ a2_make_font(apple2_sim_t *sim)
   GC gc;
   XGCValues gcv;
 
-  font = load_font_retry (sim->dpy, def_font);
+  font = XLoadQueryFont (sim->dpy, def_font);
   if (!font) {
     fprintf(stderr, "%s: can't load font %s\n", progname, def_font);
     abort();

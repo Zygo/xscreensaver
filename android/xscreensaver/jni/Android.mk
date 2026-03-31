@@ -24,6 +24,7 @@ SHARED_CFLAGS = \
     -DHAVE_PTHREAD=1 \
     -DHAVE_GLSL=1 \
     -DHAVE_GLES3=1 \
+    -DHAVE_GETIFADDRS=1
 
 SHARED_C_INCLUDES = \
     $(LOCAL_PATH) \
@@ -49,6 +50,7 @@ LOCAL_SRC_FILES := \
     hacks/glx/grab-ximage.c \
     hacks/glx/marching.c \
     hacks/glx/normals.c \
+    hacks/glx/quaternion.c \
     hacks/glx/rotator.c \
     hacks/glx/sphere.c \
     hacks/glx/texfont.c \
@@ -62,9 +64,10 @@ LOCAL_SRC_FILES += \
     hacks/glx/b_lockglue.c \
     hacks/glx/b_sphere.c \
     hacks/glx/buildlwo.c \
-    hacks/glx/companion_quad.c \
     hacks/glx/companion_disc.c \
     hacks/glx/companion_heart.c \
+    hacks/glx/companion_quad.c \
+    hacks/glx/countries.c \
     hacks/glx/cow_face.c \
     hacks/glx/cow_hide.c \
     hacks/glx/cow_hoofs.c \
@@ -74,6 +77,7 @@ LOCAL_SRC_FILES += \
     hacks/glx/dolphin.c \
     hacks/glx/dumpster_model.c \
     hacks/glx/dymaxionmap-coords.c \
+    hacks/glx/earth.c \
     hacks/glx/gllist.c \
     hacks/glx/glschool_alg.c \
     hacks/glx/glschool_gl.c \
@@ -86,10 +90,10 @@ LOCAL_SRC_FILES += \
     hacks/glx/klondike-game.c \
     hacks/glx/lament_model.c \
     hacks/glx/pipeobjs.c \
-    hacks/glx/quickhull.c \
-    hacks/glx/robot.c \
-    hacks/glx/robot-wireframe.c \
     hacks/glx/polyhedra-gl.c \
+    hacks/glx/quickhull.c \
+    hacks/glx/robot-wireframe.c \
+    hacks/glx/robot.c \
     hacks/glx/s1_1.c \
     hacks/glx/s1_2.c \
     hacks/glx/s1_3.c \
@@ -101,8 +105,10 @@ LOCAL_SRC_FILES += \
     hacks/glx/shark.c \
     hacks/glx/ships.c \
     hacks/glx/skull_model.c \
-    hacks/glx/sonar-sim.c \
     hacks/glx/sonar-icmp.c \
+    hacks/glx/sonar-sim.c \
+    hacks/glx/sphereeversion-analytic.c \
+    hacks/glx/sphereeversion-corrugations.c \
     hacks/glx/splitflap_obj.c \
     hacks/glx/sproingiewrap.c \
     hacks/glx/stonerview-move.c \
@@ -123,14 +129,13 @@ LOCAL_SRC_FILES += \
     hacks/glx/toaster_knob.c \
     hacks/glx/toaster_slots.c \
     hacks/glx/toaster_wing.c \
+    hacks/glx/triangle.c \
     hacks/glx/tronbit_idle1.c \
     hacks/glx/tronbit_idle2.c \
     hacks/glx/tronbit_no.c \
     hacks/glx/tronbit_yes.c \
     hacks/glx/tunnel_draw.c \
     hacks/glx/whale.c \
-    hacks/glx/sphereeversion-analytic.c \
-    hacks/glx/sphereeversion-corrugations.c \
     hacks/glx/xshadertoy.c \
 
 # These don't work well enough to turn on by default:

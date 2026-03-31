@@ -1272,6 +1272,7 @@ draw_gibson (ModeInfo *mi)
   if (bp->startup_p && bp->towers[bp->ntowers-1].h >= 1)
     bp->startup_p = False;
 
+  glColor3f (1, 1, 1);
   if (mi->fps_p) do_fps (mi);
   glFinish();
 

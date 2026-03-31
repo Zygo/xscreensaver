@@ -401,6 +401,7 @@
   GL: 				cubestack --root			    \\n\
   GL: 				cubetwist --root			    \\n\
   GL: 				discoball --root			    \\n\
+  GL: 				driftclouds --root			    \\n\
   GL: 				dymaxionmap --root			    \\n\
   GL: 				elementalring --root			    \\n\
   GL: 				energystream --root			    \\n\
@@ -410,6 +411,7 @@
   GL: 				splodesic --root			    \\n\
   GL: 				unicrud --root				    \\n\
   GL: 				esper --root				    \\n\
+  GL: 				prococean --root			    \\n\
   GL: 				vigilance --root			    \\n\
   GL: 				crumbler --root				    \\n\
 				filmleader --root			    \\n\
@@ -430,6 +432,7 @@
   GL: 				headroom --root				    \\n\
   GL: 				sphereeversion --root			    \\n\
 				binaryhorizon --root			    \\n\
+  GL: 				goldenapollian --root			    \\n\
 				marbling --root				    \\n\
   GL: 				neontriangulator --root			    \\n\
   GL: 				stripeytorus --root			    \\n\
@@ -445,21 +448,32 @@
   GL: 				neongravity --root			    \\n\
   GL: 				papercube --root			    \\n\
   GL: 				skulloop --root				    \\n\
+  GL: 				trainmandala --root			    \\n\
   GL: 				highvoltage --root			    \\n\
   GL: 				kallisti --root				    \\n\
   GL: 				klondike --root				    \\n\
   GL: 				selfreflect --root			    \\n\
   GL: 				truchetzoom --root			    \\n\
+  GL: 				bestill --root				    \\n\
+  GL: 				bubblecolors --root			    \\n\
+  GL: 				darktransit --root			    \\n\
+  GL: 				downfall --root				    \\n\
   GL: 				dumpsterfire --root			    \\n\
   GL: 				hexplasma --root			    \\n\
   GL: 				hopffibration --root			    \\n\
-  GL: 				platonicfolding --root			    \\n",
+  GL: 				noxfire --root				    \\n\
+  GL: 				platonicfolding --root			    \\n\
+  GL: 				rigrekt --root				    \\n\
+  GL: 				trizm --root				    \\n\
+  GL: 				universeball --root			    \\n\
+  GL: 				worldpieces --root			    \\n",
 "*hacks.alienbeacon.name:    Alien Beacon",
 "*hacks.antinspect.name:     Ant Inspect",
 "*hacks.antmaze.name:        Ant Maze",
 "*hacks.antspotlight.name:   Ant Spotlight",
 "*hacks.apple2.name:         Apple ][",
 "*hacks.batteredplanet.name: Battered Planet",
+"*hacks.bestill.name:        Be Still",
 "*hacks.binaryhorizon.name:  Binary Horizon",
 "*hacks.binaryring.name:     Binary Ring",
 "*hacks.blinkbox.name:       Blink Box",
@@ -469,6 +483,7 @@
 "*hacks.boxfit.name:         Box Fit",
 "*hacks.bsod.name:           BSOD",
 "*hacks.bubble3d.name:       Bubble 3D",
+"*hacks.bubblecolors.name:   Bubble Colors",
 "*hacks.ccurve.name:         C Curve",
 "*hacks.chompytower.name:    Chompy Tower",
 "*hacks.cityflow.name:       City Flow",
@@ -483,9 +498,11 @@
 "*hacks.cubocteversion.name: Cuboctahedron Eversion",
 "*hacks.cwaves.name:         C Waves",
 "*hacks.dangerball.name:     Danger Ball",
+"*hacks.darktransit.name:    Dark Transit",
 "*hacks.decayscreen.name:    Decay Screen",
 "*hacks.deepstars.name:      Deep Stars",
 "*hacks.dnalogo.name:        DNA Logo",
+"*hacks.driftclouds.name:    Drift Clouds",
 "*hacks.dumpsterfire.name:   Dumpster Fire",
 "*hacks.dymaxionmap.name:    Dymaxion Map",
 "*hacks.elementalring.name:  Elemental Ring",
@@ -519,6 +536,7 @@
 "*hacks.glslideshow.name:    GL Slideshow",
 "*hacks.glsnake.name:        GL Snake",
 "*hacks.gltext.name:         GL Text",
+"*hacks.goldenapollian.name: Golden Apollian",
 "*hacks.gravitywell.name:    Gravity Well",
 "*hacks.hexplasma.name:      Hex Plasma",
 "*hacks.hexstrut.name:       Hex Strut",
@@ -547,16 +565,19 @@
 "*hacks.neontriangulator.name:Neon Triangulator",
 "*hacks.nerverot.name:       Nerve Rot",
 "*hacks.noseguy.name:        Nose Guy",
+"*hacks.noxfire.name:        Nox Fire",
 "*hacks.pacman.name:         Pac-Man",
 "*hacks.papercube.name:      Paper Cube",
 "*hacks.photopile.name:      Photo Pile",
 "*hacks.platonicfolding.name:Platonic Folding",
 "*hacks.popsquares.name:     Pop Squares",
+"*hacks.prococean.name:      Proc Ocean",
 "*hacks.projectiveplane.name:Projective Plane",
 "*hacks.quasicrystal.name:   Quasi-Crystal",
 "*hacks.raverhoop.name:      Raver Hoop",
 "*hacks.razzledazzle.name:   Razzle Dazzle",
 "*hacks.rdbomb.name:         RD-Bomb",
+"*hacks.rigrekt.name:        Rig Rekt",
 "*hacks.romanboy.name:       Roman Boy",
 "*hacks.rotzoomer.name:      Rot Zoomer",
 "*hacks.rubikblocks.name:    Rubik Blocks",
@@ -579,13 +600,16 @@
 "*hacks.testx11.name:        Test X11",
 "*hacks.timetunnel.name:     Time Tunnel",
 "*hacks.topblock.name:       Top Block",
+"*hacks.trainmandala.name:   Train Mandala",
 "*hacks.tronbit.name:        Tron Bit",
 "*hacks.truchetzoom.name:    Truchet Zoom",
+"*hacks.universeball.name:   Universe Ball",
 "*hacks.unknownpleasures.name:Unknown Pleasures",
 "*hacks.vfeedback.name:      VFeedback",
 "*hacks.vidwhacker.name:     Vid Whacker",
 "*hacks.webcollage.name:     Web Collage",
 "*hacks.whirlwindwarp.name:  Whirlwind Warp",
 "*hacks.winduprobot.name:    Windup Robot",
+"*hacks.worldpieces.name:    World Pieces",
 "*hacks.xanalogtv.name:      XAnalogTV",
 "*hacks.xrayswarm.name:      XRaySwarm",
