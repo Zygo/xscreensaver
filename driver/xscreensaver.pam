@@ -1,0 +1,14 @@
+#%PAM-1.0
+# Configuration used by XScreenSaver to unlock the screen.
+
+# Use the same mechanisms and restrictions as for logging in on the console:
+
+auth     include login
+account  include login
+password include login
+session  include login
+
+# Do this to unlock GNOME Keyring and KDE Wallet when the screen unlocks:
+
+# auth   optional pam_gnome_keyring.so 
+# auth   optional pam_kwallet5.so

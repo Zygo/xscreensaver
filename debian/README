@@ -1,0 +1,17 @@
+Here is a build config for Debian that packages XScreenSaver the correct way.
+
+The way Debian packages XScreenSaver is an absolute atrocity: it divides it
+into half a dozen sub-packages, ensuring that some users will accidentally
+end up with a half-installed, nonfunctional installation of XScreenSaver.
+XScreenSaver is a single software package.  That is how I wrote it, how I
+test it, and how it should be distributed.  I have been asking them to
+change this for years and they refuse.
+
+		-- jwz
+
+To build a .deb file, do this in the root of the xscreensaver tree:
+
+	make tar
+	make deb
+
+Files will appear in debian/build/

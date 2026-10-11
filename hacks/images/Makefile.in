@@ -1,0 +1,183 @@
+# hacks/images/Makefile.in --- xscreensaver, Copyright © 2018-2026 Jamie Zawinski.
+# the `../configure' script generates `hacks/images/Makefile' from this file.
+
+@SET_MAKE@
+srcdir		= @srcdir@
+top_srcdir	= @top_srcdir@
+UTILS_SRC	= $(top_srcdir)/utils
+RM		= rm -f
+
+STAR		= *
+TARFILES	= Makefile \
+		  Makefile.in \
+		  $(STAR).png \
+		  $(STAR).gif \
+		  $(STAR)/$(STAR).png \
+		  $(STAR)/$(STAR).asm \
+		  $(STAR)/$(STAR).pdb \
+		  $(STAR)/$(STAR).pov \
+		  $(STAR)/$(STAR).txt \
+
+default: all
+
+all: _gen
+
+_gen:
+	@\
+	DIR="gen" ;							\
+	if ! [ -d "$$DIR" ]; then					\
+	   echo mkdir "$$DIR" ;						\
+	        mkdir "$$DIR" ;						\
+	fi ;								\
+									\
+	for png in $$(find $(srcdir) -name \*.png); do			\
+	  h="$${png%.png}";						\
+	  h="$${h##*/}";						\
+	  h="$$DIR/$${h}_png.h";					\
+	  if [ ! -f "$$h" -o "$$png" -nt "$$h" ] ; then			\
+	    echo $(UTILS_SRC)/bin2c "$$png" "$$h";			\
+	         $(UTILS_SRC)/bin2c "$$png" "$$h";			\
+	  fi ;								\
+	done
+
+clean::
+	$(RM) -r gen
+
+# Note: don't remove the generated Makefile.  We include that in the tar file
+# so that OSX and Android can run 'make' in this directory without 'configure'.
+distclean:: clean
+	-rm -f TAGS ./*~ "#"*
+
+list_tarfiles:
+	@find $(TARFILES) -type f -print | sort
+
+install:
+install-program:
+install-man:
+install-strip:
+uninstall:
+uninstall-program:
+uninstall-man:
+depend:
+distdepend:
+tags:
+
+##############################################################################
+#
+# This recipe reconstructs earth.png, earth_night.png and earth_water.png
+# from the public domain NASA "Blue Marble" and "Black Marble" data sets.
+#
+# Problem 1: NASA broke their web site.
+#
+#   As of late 2025, the "Blue Marble 2002" page:
+#   https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution/
+#   links to "Visible Earth" which is 404, along with the images:
+#   http://visibleearth.nasa.gov/view.php?id=57730
+#
+#   Archive.org to the rescue:
+#   https://web.archive.org/web/20120107191339/https%3A//visibleearth.nasa.gov/view.php?id=57730
+#
+# NASA has newer data sets, maybe we should use those instead?
+#
+#   - "Blue Marble: Next Generation", 2025, has images for each month,
+#     with correspondingly-different ice and snow coverage.
+#     https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/
+#
+#   - "Black Marble", 2012 and 2026, contains night images.
+#     https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/
+#
+# Problem 2:
+#   The 2012-2025 images omit all of the North polar ice, which is just weird.
+#
+# Problem 3:
+#   The 2025 daytime oceans are colored completely flat, whereas the 2002
+#   images contained more detail.
+#
+# Problem 4:
+#   There is no pairing of 2025 day images and 2002, 2012 or 2016 night images
+#   where the pair have the same ice extents.  This means that when we blend
+#   between the day and night images, it looks very weird.
+#
+#
+# From 2002 (4.01) through 2026 (6.14) the earth imagery was 2048x1024.
+# In 6.15, the files were regenerated as 4096x2048.
+#
+# The source TIFs have an alpha channel for the oceans, but it omits most
+# of the large lakes, so instead, Carsten Steger came up with an image
+# processing recipe to pull a better water map out of the blue channel of
+# Blue Marble 2002.
+#
+# Note that "earth_water.png" and "oceantiles_12.png" have similar goals
+# but are different projections. "earth_water.png" is an equirectangular
+# projection, which lends itself well to wrapping onto a sphere; but
+# "oceantiles_12.png" is in the aspect-1 Mercator projection used by
+# the various map-tile servers.  In that projection, nothing +-85.05113°
+# latitude is accessible.
+
+
+# Blue Marble 2002.
+land_ocean_ice_8192.tif:
+	curl -f -o $@ 'https://web.archive.org/web/20130403005832/http%3A//eoimages.gsfc.nasa.gov/images/imagerecords/57000/57730/land_ocean_ice_8192.tif'
+clean::
+	rm -f land_ocean_ice_8192.tif
+
+# City Lights 2000.
+land_ocean_ice_lights_8192.tif:
+	curl -f -o $@ 'https://web.archive.org/web/20120611211535/https%3A//eoimages.gsfc.nasa.gov/images/imagerecords/55000/55167/land_ocean_ice_lights_8192.tif'
+clean::
+	rm -f land_ocean_ice_lights_8192.tif
+
+# Blue Marble: Next Generation, July 2025 image.
+world.200407.3x21600x10800_geo.tif:
+	curl -f -o $@ 'https://assets.science.nasa.gov/content/dam/science/esd/eo/images/bmng/bmng-base/july/world.200407.3x21600x10800_geo.tif'
+clean::
+	rm -f world.200407.3x21600x10800_geo.tif
+
+# Black Marble, Original processing, 2012.
+# The "2012 original" image has brighter lights than the "2016" image.
+dnb_land_ocean_ice.2012.54000x27000_geo.tif:
+	curl -f -o $@ 'https://assets.science.nasa.gov/content/dam/science/cds/svs/a030000/a030000/a030028/dnb_land_ocean_ice.2012.54000x27000_geo.tif'
+clean::
+	rm -f dnb_land_ocean_ice.2012.54000x27000_geo.tif
+
+
+# Blue Marble 2002 paired with City Lights 2000:
+DAY_SRC   = land_ocean_ice_8192.tif
+NIGHT_SRC = land_ocean_ice_lights_8192.tif
+
+# Blue Marble 2025 paired with Black Marble 2012, not great:
+# DAY_SRC   = world.200407.3x21600x10800_geo.tif
+# NIGHT_SRC = land_ocean_ice_lights_8192.tif
+
+earth_rebuild:: $(DAY_SRC) $(NIGHT_SRC)
+	@\
+  DAY_OUT="earth.png"							; \
+  NIGHT_OUT="earth_night.png"						; \
+  WATER_OUT="earth_water.png"						; \
+  SIZE="4096x"								; \
+  FILT="-alpha off -filter box -resize $$SIZE -strip"			; \
+  CSP="-alpha off -colorspace HSV -depth 8"				; \
+									  \
+  REGH1="region_h1.$$$$.pgm"						; \
+  REGH2="region_h2.$$$$.pgm"						; \
+  REGS="region_s.$$$$.pgm"						; \
+  REGW="region_water.$$$$.pgm"						; \
+  IMGH="image_h.$$$$.pgm"						; \
+  IMGS="image_s.$$$$.pgm"						; \
+									  \
+  set -x -e								; \
+									  \
+  convert "$(DAY_SRC)"   $$FILT "$$DAY_OUT"				; \
+  convert "$(NIGHT_SRC)" $$FILT "$$NIGHT_OUT"				; \
+									  \
+  convert "$(DAY_SRC)" $$CSP -channel R -separate "$$IMGH"		; \
+  convert "$(DAY_SRC)" $$CSP -channel G -separate "$$IMGS"		; \
+  convert "$$IMGS" -threshold 58.82% "$$REGS"				; \
+  convert "$$IMGH" -threshold 43.13% "$$REGH1"				; \
+  convert "$$IMGH" -negate -threshold 31.37% "$$REGH2"			; \
+  convert "$$REGS" "$$REGH1" "$$REGH2" -evaluate-sequence min "$$REGW"	; \
+  convert "$$REGW" $$FILT "$$WATER_OUT"					; \
+									  \
+  rm "$$IMGH" "$$IMGS" "$$REGH1" "$$REGH2" "$$REGS" "$$REGW"		; \
+  ls -ldFh "$$NIGHT_OUT" "$$WATER_OUT" "$$DAY_OUT"
+

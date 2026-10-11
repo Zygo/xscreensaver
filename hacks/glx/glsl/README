@@ -1,0 +1,4 @@
+
+This directory contains the graphics hacks following the Shadertoy API,
+as implemented by ../xshadertoy.c.
+

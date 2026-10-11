@@ -1,0 +1,165 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+platonicfolding \- Draws the unfolding and folding of the Platonic solids
+.SH SYNOPSIS
+.B platonicfolding
+[\-\-display \fIhost:display.screen\fP]
+[\-\-install]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-fps]
+[\-\-rotate]
+[\-\-colors \fIcolor-scheme\fP]
+[\-\-face-colors]
+[\-\-earth-colors]
+[\-\-foldings \fInum-foldings\fP]
+.SH DESCRIPTION
+The \fIplatonicfolding\fP program shows the unfolding and folding of
+the Platonic solids.  For the five Platonic solids (the tetrahedron,
+cube, octahedron, dodecahedron, and icosahedron), all unfoldings of
+its faces are non-overlapping: they form a net. The tetrahedron has 16
+unfoldings, of which two are essentially different (non-isomorphic),
+the cube and octahedron each have 384 unfoldings, of which eleven are
+non-isomorphic, and the dodecahedron and icosahedron each have
+5,184,000 unfoldings, of which 43,380 are non-isomorphic. This program
+displays randomly selected unfoldings for the five Platonic solids.
+Note that while it is guaranteed that the nets of the Platonic solids
+are non-overlapping, their faces occasionally intersect during the
+unfolding and folding.
+.PP
+The program displays the Platonic solids either using different colors
+for each face (face colors) or with a illuminated view of the earth
+(earth colors).  When using face colors, the colors of the faces are
+randomly chosen each time a new Platonic solid is selected.  When
+using earth colors, the Platonic solid is displayed as if the sphere
+of the earth were illuminated with the current position of the sun at
+the time the program is run.  The hemisphere the sun is currently
+illuminating is displayed with a satellite image of the earth by day
+and the other hemisphere is displayed with a satellite image of the
+earth by night.  The specular highlight on the illuminated hemisphere
+(which is only shown over bodies of water) is the subsolar point (the
+point on earth above which the sun is perpendicular).  The earth's
+sphere is then projected onto the Platonic solid via a gnomonic
+projection.  The program randomly selects whether the north pole or
+the south pole is facing upwards.  The inside of the earth is
+displayed with a magma-like texture.
+.PP
+At the beginning of each cycle, the program selects one of the five
+Platonic solids randomly and moves it to the center of the screen.  It
+then repeatedly selects a random net of the polyhedron and unfolds and
+folds the polyhedron.  The unfolding and folding can occur around each
+edge of the net successively or around all edges simultaneously.  At
+the end of each cycle, the Platonic solid is moved offscreen and the
+next cycle begins.
+.PP
+While the Platonic solid is moved on the screen or is unfolded or
+folded, it is rotated by default.  If earth colors are used, the
+rotation is always performed in the direction the earth is rotating
+(counterclockwise as viewed from the north pole towards the center of
+the earth).  This rotation optionally can be switched off.
+.SH OPTIONS
+.I platonicfolding
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual
+class, or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the
+animation.  Default 25000, or 1/40th second.
+.PP
+The following options determine whether the Platonic solid is being
+rotated.
+.TP 8
+.B \-\-rotate
+Rotate the Platonic solid (default).
+.TP 8
+.B \-\-no-rotate
+Do not rotate the Platonic solid.
+.PP
+The following three options are mutually exclusive.  They determine
+how to color the Platonic solid.
+.TP 8
+.B \-\-colors random
+Display the Platonic solid with a random color scheme (default).
+.TP 8
+.B \-\-colors face \fP(Shortcut: \fB\-\-face-colors\fP)
+Display the Platonic solid with different colors for each face.  The
+colors of the faces are identical on the inside and outside of the
+Platonic solid.
+.TP 8
+.B \-\-colors earth \fP(Shortcut: \fB\-\-earth-colors\fP)
+Display the Platonic solid with a texture of earth as illuminated by
+the sun at the time the program is run.
+.PP
+The following option determines how many unfoldings and foldings to
+perform per cycle.
+.TP 8
+.B \-\-foldings random
+Use a random number of unfoldings and foldings per cycle (default).
+.TP 8
+.B \-\-foldings \fIint\fP
+If an integer number is specified, it is clipped to the range 1...20
+and the clipped number is used as the number of unfoldings and
+foldings per cycle.
+.SH INTERACTION
+If you run this program in standalone mode, you can rotate the
+Platonic solid by dragging the mouse while pressing the left mouse
+button.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.SH FURTHER INFORMATION
+Takashi Horiyama, Wataru Shoji: Edge Unfoldings of Platonic Solids
+Never Overlap.  In: 23rd Canadian Conference on Computational
+Geometry, 2011.
+.PP
+Takashi Horiyama, Wataru Shoji: The Number of Different Unfoldings of
+Polyhedra.  In: 24th International Symposium on Algorithms and
+Computation, pp. 623-633, 2013.
+.PP
+Taiping Zhang, Paul W. Stackhouse Jr., Bradley Macpherson, J. Colleen
+Mikovitz: A solar azimuth formula that renders circumstantial
+treatment unnecessary without compromising mathematical rigor:
+Mathematical setup, application and extension of a formula based on
+the subsolar point and atan2 function.  Renewable Energy
+172:1333-1340, 2021.
+.SH COPYRIGHT
+Copyright \(co 2025 by Carsten Steger.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Carsten Steger <carsten@mirsanmir.org>, 18-mar-2025.

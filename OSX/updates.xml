@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>https://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 6.17a1</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.17a1.dmg</link>
+   <description><![CDATA[&bull; Added missing localization strings (largely auto-translated). <BR>&bull; macOS, iOS, Android: Now localized. <BR>&bull; Possible workarounds for longstanding Apple bugs where the legacyScreenSaver process would start using 100% CPU and savers would never run again. <BR>&bull; macOS 14.6 or later and iOS 17.6 or later are now required, since Xcode 6 can no longer build executables that work on older OSes.]]></description>
+   <pubDate>Thu, 08 Oct 2026 16:19:41 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.17a1.dmg"
+    sparkle:version="6.17a1"
+    sparkle:edSignature="38fzC1Mc7viV96X280qLu7G3XvK2iKn3Tf8vDnhBgGWNdN/RZ374jOCWrilIOoD7Ufg8Og6eWxWXS7fQUUOOCg=="
+    length="215310613"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.16</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.16.dmg</link>
+   <description><![CDATA[&bull; New hacks, `floppy', `graphstat', `amigajuggler' and `polarnight'. <BR>&bull; New display modes in `hypertorus'. ]]></description>
+   <pubDate>Thu, 03 Sep 2026 15:31:04 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.16.dmg"
+    sparkle:version="6.16"
+    sparkle:edSignature="i6auoPTIluMbWMrsmyo3h2JaSXkXkhehpWmgK4hC89H3RALLQrCS9auDos74zvje7xURO6Z6HEjfVpuTSmk+Dw=="
+    length="212439960"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.15</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.15.dmg</link>
+   <description><![CDATA[&bull; New hacks, `worldpieces', `bestill', `bubblecolors', `darktransit', `downfall', `driftclouds', `goldenapollian', `noxfire', `prococean', `rigrekt', `trainmandala', `trizm' and `universeball'. <BR>&bull; `mapscroller' shows the name of the nearest major city, and has an updated list of available map tile servers. <BR>&bull; Higher resolution Earth imagery in `glplanet', `dymaxionmap' `sphereeversion', `cubocteversion' and `platonicfolding'. <BR>&bull; macOS, iOS: Text in right-to-left languages is rendered properly. ]]></description>
+   <pubDate>Mon, 30 Mar 2026 17:50:43 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.15.dmg"
+    sparkle:version="6.15"
+    sparkle:edSignature="Eo2Bvvhn70y8/xSCGChfa//oJQOwjvbyOdyEi0q0fjFfN7npDvf1ftMCK7OkAemkAXt6aGXkvXvRfv9dRQGeBw=="
+    length="211238509"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.14.1</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.14.1.dmg</link>
+   <description><![CDATA[&bull; the new shader savers were crashing at startup.]]></description>
+   <pubDate>Fri, 16 Jan 2026 21:06:21 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.14.1.dmg"
+    sparkle:version="6.14.1"
+    sparkle:edSignature="B8LfPRAbKMFoAjQockvkBYc4dS47u4OxxogKN4Lu3pA5lGCQyZne9qNj5Cf22ApnC5LZgnQ0vmThOSRgZmPNCg=="
+    length="107844238"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.14</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.14.dmg</link>
+   <description><![CDATA[&bull; Added the ability to run shadertoy.com programs as screen savers. <BR>&bull; New shader-based savers: `alienbeacon', `batteredplanet', `elementalring', `fluxcore', `gimbalharmonics', `hexplasma', `logarithmiccircles', `neongravity', `neontriangulator', `protophore', `selfreflect', `skyline', `stardome', `starnest', `stripeytorus', `synthwavecity', `topologica' and `truchetzoom'. <BR>&bull; Better label wrapping in `carousel' and `photopile'. <BR>&bull; Fixed `glslideshow' preferences and title display. <BR>&bull; Sparkle 2.8. ]]></description>
+   <pubDate>Thu, 15 Jan 2026 14:28:13 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.14.dmg"
+    sparkle:version="6.14"
+    sparkle:edSignature="Ma7AhSeRvs+zcku/MrDDadXyb3ocHjUqISHr1TIzqid7keI06j7EycT+/885K9Bu/9DkLIDQZRBG4BX5IeUVAQ=="
+    length="107466525"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 6.13</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-6.13.dmg</link>
+   <description><![CDATA[&bull; Added a number of historical full chess games to `endgame'. <BR>&bull; Rewrote `glslideshow' to add more image-transition effects. <BR>&bull; Hacks that display images and their filenames will display their titles intead, if the image originated in an RSS feed (or has the "user.dublincore.title" xattr). ]]></description>
+   <pubDate>Tue, 02 Dec 2025 17:09:25 -0800</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-6.13.dmg"
+    sparkle:version="6.13"
+    sparkle:edSignature="zQn7puQXjOWX0VQ05W9IUETdCkfAWOtugFaeqKnWT5E4d5+GCV1Aq6DMSOMqXzKjisKCXcsqAz5duVp7P8/kDw=="
+    length="102813232"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

@@ -1,0 +1,107 @@
+HEADER    Tetrahydrocannabinol: Delta 9-THC, an hallucinogen
+ATOM      1  O   UNK     0      -1.791  -1.420   0.434
+ATOM      2  C   UNK     0      -0.536  -1.012   0.033
+ATOM      3  C   UNK     0       0.565  -1.346   0.828
+ATOM      4  C   UNK     0       1.855  -0.978   0.446
+ATOM      5  C   UNK     0       2.038  -0.295  -0.757
+ATOM      6  C   UNK     0       0.940   0.052  -1.556
+ATOM      7  C   UNK     0      -0.363  -0.272  -1.148
+ATOM      8  C   UNK     0      -1.599   0.113  -1.985
+ATOM      9  C   UNK     0      -1.568   1.523  -2.537
+ATOM     10  C   UNK     0      -2.681   2.231  -2.781
+ATOM     11  C   UNK     0      -4.068   1.708  -2.479
+ATOM     12  C   UNK     0      -4.085   0.222  -2.091
+ATOM     13  C   UNK     0      -2.892  -0.061  -1.162
+ATOM     14  C   UNK     0      -2.908  -1.421  -0.435
+ATOM     15  O   UNK     0       1.151   0.702  -2.747
+ATOM     16  C   UNK     0      -2.610   3.628  -3.338
+ATOM     17  C   UNK     0      -2.824  -2.642  -1.364
+ATOM     18  C   UNK     0      -4.125  -1.570   0.485
+ATOM     19  C   UNK     0       3.056  -1.332   1.325
+ATOM     20  C   UNK     0       3.365  -0.156   2.260
+ATOM     21  C   UNK     0       4.569  -0.467   3.158
+ATOM     22  C   UNK     0       4.872   0.726   4.074
+ATOM     23  C   UNK     0       6.079   0.425   4.969
+ATOM     24  H   UNK     0       0.400  -1.896   1.747
+ATOM     25  H   UNK     0      -1.626  -0.566  -2.849
+ATOM     26  H   UNK     0      -4.720   1.866  -3.352
+ATOM     27  H   UNK     0      -4.004  -0.399  -2.997
+ATOM     28  H   UNK     0       2.079   0.837  -2.898
+ATOM     29  H   UNK     0      -3.163   4.315  -2.681
+ATOM     30  H   UNK     0      -2.839  -3.562  -0.762
+ATOM     31  H   UNK     0      -3.995  -2.460   1.119
+ATOM     32  H   UNK     0      -4.210  -0.687   1.134
+ATOM     33  H   UNK     0       2.828  -2.232   1.917
+ATOM     34  H   UNK     0       2.480   0.048   2.884
+ATOM     35  H   UNK     0       4.349  -1.356   3.772
+ATOM     36  H   UNK     0       3.994   0.938   4.706
+ATOM     37  H   UNK     0       6.286   1.290   5.618
+ATOM     38  H   UNK     0       3.036  -0.022  -1.076
+ATOM     39  H   UNK     0      -0.602   1.973  -2.755
+ATOM     40  H   UNK     0      -5.037  -0.005  -1.590
+ATOM     41  H   UNK     0      -2.881   0.709  -0.374
+ATOM     42  H   UNK     0      -1.565   3.966  -3.407
+ATOM     43  H   UNK     0      -3.058   3.644  -4.342
+ATOM     44  H   UNK     0      -1.884  -2.619  -1.933
+ATOM     45  H   UNK     0      -3.674  -2.652  -2.061
+ATOM     46  H   UNK     0      -5.048  -1.683  -0.102
+ATOM     47  H   UNK     0       3.928  -1.546   0.687
+ATOM     48  H   UNK     0       3.578   0.739   1.654
+ATOM     49  H   UNK     0       5.449  -0.681   2.531
+ATOM     50  H   UNK     0       5.086   1.616   3.462
+ATOM     51  H   UNK     0       5.873  -0.453   5.600
+ATOM     52  H   UNK     0       6.967   0.224   4.351
+ATOM     53  H   UNK     0      -4.467   2.295  -1.638
+CONECT    1    2   14
+CONECT    2    1    3    7
+CONECT    3    2    4   24
+CONECT    4    3    5   19
+CONECT    5    4    6   38
+CONECT    6    5    7   15
+CONECT    7    2    6    8
+CONECT    8    7    9   13   25
+CONECT    9    8   10   39
+CONECT   10    9   11   16
+CONECT   11   10   12   26   53
+CONECT   12   11   27   40   13
+CONECT   13    8   12   41   14
+CONECT   14    1   13   17   18
+CONECT   15    6   28
+CONECT   16   10   29   42   43
+CONECT   17   14   30   44   45
+CONECT   18   14   31   32   46
+CONECT   19    4   20   33   47
+CONECT   20   19   21   34   48
+CONECT   21   20   22   35   49
+CONECT   22   21   23   36   50
+CONECT   23   22   37   51   52
+CONECT   24    3
+CONECT   25    8
+CONECT   26   11
+CONECT   27   12
+CONECT   28   15
+CONECT   29   16
+CONECT   30   17
+CONECT   31   18
+CONECT   32   18
+CONECT   33   19
+CONECT   34   20
+CONECT   35   21
+CONECT   36   22
+CONECT   37   23
+CONECT   38    5
+CONECT   39    9
+CONECT   40   12
+CONECT   41   13
+CONECT   42   16
+CONECT   43   16
+CONECT   44   17
+CONECT   45   17
+CONECT   46   18
+CONECT   47   19
+CONECT   48   20
+CONECT   49   21
+CONECT   50   22
+CONECT   51   23
+CONECT   52   23
+CONECT   53   11

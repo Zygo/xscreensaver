@@ -1,0 +1,76 @@
+.TH XScreenSaver 1 "20-Mar-2005 (4.21)" "X Version 11"
+.SH NAME
+xscreensaver-getimage \- loads a randomly-selected image onto an X11 Drawable
+for use by screen savers
+.SH SYNOPSIS
+.B xscreensaver-getimage
+[\-\-display \fIhost:display.screen\fP]
+[\-\-verbose]
+window-id
+[pixmap-id]
+.SH DESCRIPTION
+The \fIxscreensaver\-getimage\fP program is a helper program for the
+xscreensaver hacks that manipulate images.
+
+This program selects a random image, and puts it on the specified
+window or pixmap.  This image might be a snapshot of the desktop; or
+a frame captured from the system's video input; or a randomly-selected
+image from disk.
+
+If only a window ID is specified, the image will be painted there.
+If both a window ID and a pixmap ID are specified, then the image will
+be painted on the pixmap; and the window \fImay\fP be modified as a
+side-effect.
+.SH OPTIONS
+.I xscreensaver-getimage
+reads the \fI~/.xscreensaver\fP file for configuration information.
+It uses these settings:
+.TP 4
+.B grabDesktopImages
+Whether it is acceptable to grab snapshots of the desktop.
+The security paranoid might want to turn this off, to avoid letting
+people see (but not touch!) your desktop while the screen is locked.
+.TP 4
+.B grabVideoFrames
+Whether it is acceptable to grab frames of video from the system's video
+input.  Grabbing of video is done by invoking the
+.BR xscreensaver\-getimage\-video (MANSUFFIX)
+program.
+.TP 4
+.B chooseRandomImages
+Whether it is acceptable to display random images found on disk.
+Selection and loading of images is done by invoking the
+.BR xscreensaver\-getimage\-file (MANSUFFIX)
+program.
+.TP 4
+.B imageDirectory
+When loading images from disk, this is the directory to find them in.
+The directory will be searched recursively for images.
+
+It may also be the URL of an RSS or Atom feed, in which case a
+random image from that feed will be selected instead.  The contents
+of the feed will be cached locally and refreshed periodically as needed.
+.PP
+If none of the three options are set to True, then video
+colorbars will be displayed instead.
+.SH BUGS
+When grabbing desktop images, the \fIwindow\fP argument will be unmapped
+and have its contents modified, causing flicker.  (This does not happen
+when loading image files or video frames.)
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.BR xscreensaver\-settings (1)
+.BR xscreensaver\-getimage\-file (MANSUFFIX)
+.BR xscreensaver\-getimage\-video (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co 2001-2021 by Jamie Zawinski.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 14-Apr-2001

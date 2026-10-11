@@ -1,0 +1,307 @@
+#!/bin/bash
+# XScreenSaver, Copyright © 2026 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+PATH="$PATH":"$(dirname "$0")"
+exec -a "alienbeacon" \
+xshadertoy "$@" \
+ --program0 - \
+<< "_XSCREENSAVER_EOF_"
+
+// Title:  Alien Beacon
+// Author: otaviogood
+// URL:    https://www.shadertoy.com/view/ld2SzK
+// Date:   26-Oct-2014
+// Desc:   Our investigation of the signal from the planet's surface brought us to what seems to be an alien beacon. Based on the rock formation around the beacon, it was probably left here millions of years ago.
+
+/*--------------------------------------------------------------------------------------
+License CC0 - http://creativecommons.org/publicdomain/zero/1.0/
+To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
+----------------------------------------------------------------------------------------
+-Otavio Good
+*/
+
+// The noise function in this was inspired by IQ's "Terrain Tubes" shader. I never really figured out
+// his function completely, so I'm not sure of the exact similarities. It's nice though because it
+// works the same on all computers (I think). It's not based on a hash that changes from computer to 
+// computer. That means I can finally rely on the terrain being the same and make a camera path. :)
+// It's also a much faster noise function, although it can look a bit repetitive.
+
+
+	#define MOTION_BLUR
+	#define MOVING_SUN
+	float Hash2d(vec2 uv)
+	{
+	float f = uv.x + uv.y * 47.0;
+	return fract(cos(f*3.333)*100003.9);
+	}
+	float Hash3d(vec3 uv)
+	{
+	float f = uv.x + uv.y * 37.0 + uv.z * 521.0;
+	return fract(cos(f*3.333)*100003.9);
+	}
+	float PI=3.14159265;
+	vec3 saturate(vec3 a) { return clamp(a, 0.0, 1.0); }
+	vec2 saturate(vec2 a) { return clamp(a, 0.0, 1.0); }
+	float saturate(float a) { return clamp(a, 0.0, 1.0); }
+	vec3 RotateX(vec3 v, float rad)
+	{
+	float cos = cos(rad);
+	float sin = sin(rad);
+	return vec3(v.x, cos * v.y + sin * v.z, -sin * v.y + cos * v.z);
+	}
+	vec3 RotateY(vec3 v, float rad)
+	{
+	float cos = cos(rad);
+	float sin = sin(rad);
+	return vec3(cos * v.x - sin * v.z, v.y, sin * v.x + cos * v.z);
+	}
+	vec3 RotateZ(vec3 v, float rad)
+	{
+	float cos = cos(rad);
+	float sin = sin(rad);
+	return vec3(cos * v.x + sin * v.y, -sin * v.x + cos * v.y, v.z);
+	}
+	vec3 sunCol = vec3(258.0, 208.0, 100.0) / 4255.0;
+	vec3 GetSunColorReflection(vec3 rayDir, vec3 sunDir)
+	{
+	vec3 localRay = normalize(rayDir);
+	float dist = 1.0 - (dot(localRay, sunDir) * 0.5 + 0.5);
+	float sunIntensity = 0.015 / dist;
+	sunIntensity = pow(sunIntensity, 0.3)*100.0;
+	sunIntensity += exp(-dist*12.0)*300.0;
+	sunIntensity = min(sunIntensity, 40000.0);
+	return sunCol * sunIntensity*0.0425;
+	}
+	vec3 GetSunColorSmall(vec3 rayDir, vec3 sunDir)
+	{
+	vec3 localRay = normalize(rayDir);
+	float dist = 1.0 - (dot(localRay, sunDir) * 0.5 + 0.5);
+	float sunIntensity = 0.05 / dist;
+	sunIntensity += exp(-dist*12.0)*300.0;
+	sunIntensity = min(sunIntensity, 40000.0);
+	return sunCol * sunIntensity*0.025;
+	}
+	vec4 CatmullRom(vec4 p0, vec4 p1, vec4 p2, vec4 p3, float t)
+	{
+	float t2 = t*t;
+	float t3 = t*t*t;
+	return 0.5 *((2.0 * p1) +
+	(-p0 + p2) * t +
+	(2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
+	(-p0 + 3.0 * p1- 3.0 * p2 + p3) * t3);
+	}
+	const float nudge = 0.739513;
+	float normalizer = 1.0 / sqrt(1.0 + nudge*nudge);
+	float SpiralNoiseC(vec3 p)
+	{
+	float n = 0.0;
+	float iter = 1.0;
+	for (int i = 0; i < 8; i++)
+	{
+	n += -abs(sin(p.y*iter) + cos(p.x*iter)) / iter;
+	p.xy += vec2(p.y, -p.x) * nudge;
+	p.xy *= normalizer;
+	p.xz += vec2(p.z, -p.x) * nudge;
+	p.xz *= normalizer;
+	iter *= 1.733733;
+	}
+	return n;
+	}
+	float SpiralNoiseD(vec3 p)
+	{
+	float n = 0.0;
+	float iter = 1.0;
+	for (int i = 0; i < 6; i++)
+	{
+	n += abs(sin(p.y*iter) + cos(p.x*iter)) / iter;
+	p.xy += vec2(p.y, -p.x) * nudge;
+	p.xy *= normalizer;
+	p.xz += vec2(p.z, -p.x) * nudge;
+	p.xz *= normalizer;
+	iter *= 1.733733;
+	}
+	return n;
+	}
+	float SpiralNoise3D(vec3 p)
+	{
+	float n = 0.0;
+	float iter = 1.0;
+	for (int i = 0; i < 5; i++)
+	{
+	n += (sin(p.y*iter) + cos(p.x*iter)) / iter;
+	p.xz += vec2(p.z, -p.x) * nudge;
+	p.xz *= normalizer;
+	iter *= 1.33733;
+	}
+	return n;
+	}
+	vec4 c00 = vec4(3.5, 2.0, 13.1, 0.0);
+	vec4 c01 = vec4(12.5, 2.2, 17.0, 0.0);
+	vec4 c02 = vec4(21.5, 4.0, 8.1, 0.0);
+	vec4 c03 = vec4(21.0, 5.0, 1.1, -0.5);
+	vec4 c04 = vec4(17.8, 5.4, -0.2, 0.0);
+	vec4 c05 = vec4(14.7, 2.5, 1.4, 0.0);
+	vec4 c06 = vec4(7.9, 2.3, -2.1, 0.0);
+	vec4 c07 = vec4(0.5, -0.7, -3.5, 1.0);
+	vec4 c08 = vec4(-3.0, -1.0, -3.5, 1.3);
+	vec4 c09 = vec4(-3.5, -1.0, 4.0, 1.3);
+	vec4 c10 = vec4(3.0, -0.7, 3.3, 0.8);
+	vec4 c11 = vec4(3.5, -1.0, -4.75, 0.0);
+	vec4 c12 = vec4(-6.0, -0.2, 1.0, 3.14);
+	vec4 c13 = vec4(-6.0, -1.0, 5.5, 0.0);
+	vec4 cXX = vec4(0.0, 3.0, 0.0, 0.0);
+	float camPathOffset = 0.0;
+	vec3 camPos = vec3(0.0), camFacing;
+	vec3 camLookat=vec3(0,0.0,0);
+	float waterLevel = 1.5;
+	vec4 CamPos(float t)
+	{
+	t = mod(t, 14.0);
+	float bigTime = floor(t);
+	float smallTime = fract(t);
+	if (bigTime == 0.0) return CatmullRom(c00, c01, c02, c03, smallTime);
+	if (bigTime == 1.0) return CatmullRom(c01, c02, c03, c04, smallTime);
+	if (bigTime == 2.0) return CatmullRom(c02, c03, c04, c05, smallTime);
+	if (bigTime == 3.0) return CatmullRom(c03, c04, c05, c06, smallTime);
+	if (bigTime == 4.0) return CatmullRom(c04, c05, c06, c07, smallTime);
+	if (bigTime == 5.0) return CatmullRom(c05, c06, c07, c08, smallTime);
+	if (bigTime == 6.0) return CatmullRom(c06, c07, c08, c09, smallTime);
+	if (bigTime == 7.0) return CatmullRom(c07, c08, c09, c10, smallTime);
+	if (bigTime == 8.0) return CatmullRom(c08, c09, c10, c11, smallTime);
+	if (bigTime == 9.0) return CatmullRom(c09, c10, c11, c12, smallTime);
+	if (bigTime == 10.0) return CatmullRom(c10, c11, c12, c13, smallTime);
+	if (bigTime == 11.0) return CatmullRom(c11, c12, c13, c00, smallTime);
+	if (bigTime == 12.0) return CatmullRom(c12, c13, c00, c01, smallTime);
+	if (bigTime == 13.0) return CatmullRom(c13, c00, c01, c02, smallTime);
+	return vec4(0.0);
+	}
+	float DistanceToObject(vec3 p)
+	{
+	float final = p.y + 4.5;
+	final -= SpiralNoiseC(p.xyz);
+	final += SpiralNoiseC(p.zxy*0.123+100.0)*3.0;
+	final -= SpiralNoise3D(p);
+	final -= SpiralNoise3D(p*49.0)*0.0625*0.125;
+	final = min(final, length(p) - 1.99);
+	final = min(final, p.y + waterLevel);
+	return final;
+	}
+	void mainImage( out vec4 fragColor, in vec2 fragCoord )
+	{
+	vec2 uv = fragCoord.xy/iResolution.xy * 2.0 - 1.0;
+	vec3 camUp=vec3(0,1,0);
+	camLookat=vec3(0,0.0,0);
+	float mx=iMouse.x/iResolution.x*PI*2.0;
+	float my=-iMouse.y/iResolution.y*10.0;
+	camPos += vec3(cos(my)*cos(mx),sin(my),cos(my)*sin(mx))*(5.2);
+	float timeLine = iTime*0.2 + camPathOffset;
+	camFacing = camLookat + camPos;
+	if (iTime != -1.0)
+	{
+	vec4 catmullA = CamPos(timeLine);
+	vec4 catmullB = CamPos(timeLine + 0.3);
+	#ifdef MOTION_BLUR
+	vec4 catmullC = CamPos(timeLine + 0.004);
+	vec4 catmullBlur = mix(catmullA, catmullC, Hash2d(uv));
+	camPos = catmullBlur.xyz;
+	camFacing = normalize(catmullB.xyz - catmullA.xyz);
+	camFacing = RotateY(camFacing, -catmullBlur.w);
+	#else
+	camPos = catmullA.xyz;
+	camFacing = normalize(catmullB.xyz - catmullA.xyz);
+	camFacing = RotateY(camFacing, -catmullA.w);
+	#endif
+	camFacing = RotateY(camFacing, -mx);
+	camLookat = camPos + camFacing;
+	}
+	vec3 camVec=normalize(camLookat - camPos);
+	vec3 sideNorm=normalize(cross(camUp, camVec));
+	vec3 upNorm=cross(camVec, sideNorm);
+	vec3 worldFacing=(camPos + camVec);
+	vec3 worldPix = worldFacing + uv.x * sideNorm * (iResolution.x/iResolution.y) + uv.y * upNorm;
+	vec3 relVec = normalize(worldPix - camPos);
+	float dist = 0.05;
+	float t = 0.0;
+	float inc = 0.02;
+	float maxDepth = 110.0;
+	vec3 pos = vec3(0,0,0);
+	for (int i = 0; i < 200; i++)
+	{
+	if ((t > maxDepth) || (abs(dist) < 0.0075)) break;
+	pos = camPos + relVec * t;
+	dist = DistanceToObject(pos);
+	t += dist * 0.25;
+	}
+	#ifdef MOVING_SUN
+	vec3 sunDir = normalize(vec3(sin(iTime*0.047-1.5), cos(iTime*0.047-1.5), -0.5));
+	#else
+	vec3 sunDir = normalize(vec3(0.93, 1.0, -1.5));
+	#endif
+	float skyMultiplier = saturate(sunDir.y+0.7);
+	vec3 finalColor = vec3(0.0);
+	if (abs(dist) < 0.75)
+	{
+	vec3 smallVec = vec3(0.005, 0, 0);
+	vec3 normal = vec3(dist - DistanceToObject(pos - smallVec.xyy),
+	dist - DistanceToObject(pos - smallVec.yxy),
+	dist - DistanceToObject(pos - smallVec.yyx));
+	normal = normalize(normal);
+	float ambientS = 1.0;
+	ambientS *= saturate(DistanceToObject(pos + normal * 0.2)*5.0);
+	ambientS *= saturate(DistanceToObject(pos + normal * 0.4)*2.5);
+	ambientS *= saturate(DistanceToObject(pos + normal * 0.8)*1.25);
+	float ambient = ambientS * saturate(DistanceToObject(pos + normal * 1.6)*1.25*0.5);
+	ambient *= saturate(DistanceToObject(pos + normal * 3.2)*1.25*0.25);
+	ambient *= saturate(DistanceToObject(pos + normal * 6.4)*1.25*0.125);
+	ambient = saturate(ambient);
+	float sunShadow = 1.0;
+	float iter = 0.2;
+	for (int i = 0; i < 10; i++)
+	{
+	float tempDist = DistanceToObject(pos + sunDir * iter);
+	sunShadow *= saturate(tempDist*10.0);
+	if (tempDist <= 0.0) break;
+	iter *= 1.5;
+	}
+	float sunSet = saturate(sunDir.y*4.0);
+	sunShadow = saturate(sunShadow) * sunSet;
+	vec3 ref = reflect(relVec, normal);
+	vec3 ballGlow = vec3(0.1, 0.97, 0.1) * abs(SpiralNoise3D(vec3(iTime*1.3)));
+	vec3 texColor = mix(vec3(0.95, 1.0, 1.0),  vec3(0.9, 0.7, 0.5), pow(abs(SpiralNoise3D(pos*1.0)-1.0), 0.6) );
+	texColor = mix(vec3(0.2, 0.2, 0.1), texColor, saturate(normal.y));
+	texColor = mix(texColor, vec3(0.64, 0.2, 0.1) , saturate(-0.4-pos.y));
+	texColor = mix(texColor, vec3(0.2, 0.13, 0.02) , pow(saturate(pos.y*0.125+0.5), 2.0));
+	float rockLayers = abs(cos(pos.y*1.5+ SpiralNoiseD(pos*vec3(1.0, 2.0, 1.0)*4.0)*0.2 ));
+	texColor += vec3(0.7, 0.4, 0.3)*(1.0-pow(rockLayers, 0.3));
+	texColor = mix(texColor, vec3(1.4, 0.15, 0.05) + SpiralNoise3D(pos)*0.025, saturate((-pos.y-1.45)*17.0));
+	if (length(pos) <= 2.01) texColor = vec3(1.0);
+	texColor = max(texColor, 0.05);
+	vec3 lightColor = vec3(1.0, 0.75, 0.75) * saturate(dot(sunDir, normal)) * sunShadow*1.5;
+	lightColor += vec3(1.0,0.3,0.6) * ( dot(sunDir, normal) * 0.5 + 0.5 ) * ambient * 0.25 * skyMultiplier;
+	float lp = length(pos) - 1.0;
+	lightColor += ambientS*(ballGlow*1.2 * saturate(dot(normal, -pos)*0.5+0.5) / (lp*lp*lp*lp));
+	finalColor = texColor * lightColor;
+	vec3 refColor = GetSunColorReflection(ref, sunDir)*0.68;
+	finalColor += refColor * sunShadow * saturate(normal.y*normal.y) * saturate(-(pos.y+1.35)*16.0);
+	finalColor += pow(saturate(1.0 - length(pos)*0.4925), 0.65) * ballGlow*6.1;
+	finalColor = mix(vec3(1.0, 0.41, 0.41)*skyMultiplier + min(vec3(0.25),GetSunColorSmall(relVec, sunDir))*2.0*sunSet, finalColor, exp(-t*0.03));
+	}
+	else
+	{
+	finalColor = mix(vec3(1.0, 0.5, 0.5), vec3(0.40, 0.25, 0.91), saturate(relVec.y))*skyMultiplier;
+	finalColor += GetSunColorSmall(relVec, sunDir);
+	}
+	finalColor *= vec3(1.0) * saturate(1.0 - length(uv/2.5));
+	finalColor *= 1.3;
+	fragColor = vec4(sqrt(clamp(finalColor, 0.0, 1.0)),1.0);
+	}
+
+_XSCREENSAVER_EOF_

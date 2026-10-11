@@ -1,0 +1,216 @@
+#!/bin/bash
+# XScreenSaver, Copyright © 2026 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+PATH="$PATH":"$(dirname "$0")"
+exec -a "gimbalharmonics" \
+xshadertoy "$@" \
+ --program0 - \
+<< "_XSCREENSAVER_EOF_"
+
+// Title:  Gimbal Harmonics
+// Author: otaviogood
+// URL:    https://www.shadertoy.com/view/llS3zd
+// Date:   12-May-2015
+// Desc:   I like visualizations of different frequencies next to each other. So I tried one with discs. I stuck with the same lighting and materials as my last shader.
+
+/*--------------------------------------------------------------------------------------
+License CC0 - http://creativecommons.org/publicdomain/zero/1.0/
+To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
+----------------------------------------------------------------------------------------
+^This means do anything you want with this code. Because we are programmers, not lawyers.
+
+-Otavio Good
+*/
+
+	float localTime = 0.0;
+	float marchCount;
+	float PI=3.14159265;
+	vec3 saturate(vec3 a) { return clamp(a, 0.0, 1.0); }
+	vec2 saturate(vec2 a) { return clamp(a, 0.0, 1.0); }
+	float saturate(float a) { return clamp(a, 0.0, 1.0); }
+	vec3 RotateX(vec3 v, float rad)
+	{
+	float cos = cos(rad);
+	float sin = sin(rad);
+	return vec3(v.x, cos * v.y + sin * v.z, -sin * v.y + cos * v.z);
+	}
+	vec3 RotateY(vec3 v, float rad)
+	{
+	float cos = cos(rad);
+	float sin = sin(rad);
+	return vec3(cos * v.x - sin * v.z, v.y, sin * v.x + cos * v.z);
+	}
+	vec3 RotateZ(vec3 v, float rad)
+	{
+	float cos = cos(rad);
+	float sin = sin(rad);
+	return vec3(cos * v.x + sin * v.y, -sin * v.x + cos * v.y, v.z);
+	}
+	vec3 GetEnvColor2(vec3 rayDir, vec3 sunDir)
+	{
+	vec3 final = vec3(1.0) * dot(-rayDir, sunDir) * 0.5 + 0.5;
+	final *= 0.125;
+	if ((rayDir.y > abs(rayDir.x)*1.0) && (rayDir.y > abs(rayDir.z*0.25))) final = vec3(2.0)*rayDir.y;
+	float roundBox = length(max(abs(rayDir.xz/max(0.0,rayDir.y))-vec2(0.9, 4.0),0.0))-0.1;
+	final += vec3(0.8)* pow(saturate(1.0 - roundBox*0.5), 6.0);
+	final += vec3(8.0,6.0,7.0) * saturate(0.001/(1.0 - abs(rayDir.x)));
+	final += vec3(8.0,7.0,6.0) * saturate(0.001/(1.0 - abs(rayDir.z)));
+	return vec3(final);
+	}
+	vec3 camPos = vec3(0.0), camFacing;
+	vec3 camLookat=vec3(0,0.0,0);
+	float smin( float a, float b, float k )
+	{
+	float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
+	return mix( b, a, h ) - k*h*(1.0-h);
+	}
+	vec2 matMin(vec2 a, vec2 b)
+	{
+	if (a.x < b.x) return a;
+	else return b;
+	}
+	float spinTime;
+	const float thick = 0.85;
+	const float spacer = 0.01;
+	const float thickSpace = thick - spacer;
+	float Disc(vec3 p, float scale)
+	{
+	float len = length(p.xz);
+	float dist = len - scale;
+	dist = max(dist, -(len - thick*scale));
+	dist = max(dist, -p.z);
+	dist = -smin(-dist, -(abs(p.y)-0.025), 0.015*scale);
+	return dist;
+	}
+	vec2 DistanceToObject(vec3 p)
+	{
+	float dist = 1000000.0;
+	float currentThick = 8.0;
+	float harmonicTime = spinTime*0.125*3.14159*4.0;
+	for (int i = 0; i < 15; i++)
+	{
+	dist = min(dist, Disc(p, currentThick));
+	p = RotateX(p, harmonicTime);
+	p = RotateZ(p, harmonicTime);
+	currentThick *= thickSpace;
+	}
+	vec2 distMat = vec2(dist, 0.0);
+	distMat = matMin(distMat, vec2(length(p) - 0.45, 6.0));
+	return distMat;
+	}
+	float SphereIntersect(vec3 pos, vec3 dirVecPLZNormalizeMeFirst, vec3 spherePos, float rad)
+	{
+	vec3 radialVec = pos - spherePos;
+	float b = dot(radialVec, dirVecPLZNormalizeMeFirst);
+	float c = dot(radialVec, radialVec) - rad * rad;
+	float h = b * b - c;
+	if (h < 0.0) return -1.0;
+	return -b - sqrt(h);
+	}
+	void mainImage( out vec4 fragColor, in vec2 fragCoord )
+	{
+	localTime = iTime - 0.0;
+	vec2 uv = fragCoord.xy/iResolution.xy * 2.0 - 1.0;
+	float zoom = 1.7;
+	uv /= zoom;
+	vec3 camUp=vec3(0,1,0);
+	camLookat=vec3(0,0.0,0);
+	float mx=iMouse.x/iResolution.x*PI*2.0-0.7 + localTime*3.1415 * 0.0625*0.666;
+	float my=-iMouse.y/iResolution.y*10.0 - sin(localTime * 0.31)*0.5;
+	camPos += vec3(cos(my)*cos(mx),sin(my),cos(my)*sin(mx))*(12.2);
+	vec3 camVec=normalize(camLookat - camPos);
+	vec3 sideNorm=normalize(cross(camUp, camVec));
+	vec3 upNorm=cross(camVec, sideNorm);
+	vec3 worldFacing=(camPos + camVec);
+	vec3 worldPix = worldFacing + uv.x * sideNorm * (iResolution.x/iResolution.y) + uv.y * upNorm;
+	vec3 rayVec = normalize(worldPix - camPos);
+	localTime = iTime*0.125;
+	float rampStep = min(3.0,max(1.0, abs((fract(localTime)-0.5)*1.0)*8.0))*0.5-0.5;
+	rampStep = smoothstep(0.0, 1.0, rampStep);
+	float step31 = (max(0.0, (fract(localTime+0.125)-0.25)) - min(0.0,(fract(localTime+0.125)-0.25))*3.0)*0.333;
+	spinTime = step31 + localTime - 0.125;
+	vec2 distAndMat = vec2(0.5, 0.0);
+	float t = 0.0;
+	float maxDepth = 21.0;
+	vec3 pos = vec3(0,0,0);
+	marchCount = 0.0;
+	float hit = SphereIntersect(camPos, rayVec, vec3(0.0), 8.0);
+	if (hit >= 0.0)
+	{
+	t = hit;
+	for (int i = 0; i < 120; i++)
+	{
+	pos = camPos + rayVec * t;
+	distAndMat = DistanceToObject(pos);
+	t += distAndMat.x;
+	if ((t > maxDepth) || (abs(distAndMat.x) < 0.0025)) break;
+	}
+	}
+	else
+	{
+	t = maxDepth + 1.0;
+	distAndMat.x = 1000000.0;
+	}
+	vec3 sunDir = normalize(vec3(3.93, 10.82, -1.5));
+	vec3 finalColor = vec3(0.0);
+	if (t <= maxDepth)
+	{
+	vec3 smallVec = vec3(0.005, 0, 0);
+	vec3 normalU = vec3(distAndMat.x - DistanceToObject(pos - smallVec.xyy).x,
+	distAndMat.x - DistanceToObject(pos - smallVec.yxy).x,
+	distAndMat.x - DistanceToObject(pos - smallVec.yyx).x);
+	vec3 normal = normalize(normalU);
+	float ambientS = 1.0;
+	ambientS *= saturate(DistanceToObject(pos + normal * 0.1).x*10.0);
+	ambientS *= saturate(DistanceToObject(pos + normal * 0.2).x*5.0);
+	ambientS *= saturate(DistanceToObject(pos + normal * 0.4).x*2.5);
+	ambientS *= saturate(DistanceToObject(pos + normal * 0.8).x*1.25);
+	float ambient = ambientS * saturate(DistanceToObject(pos + normal * 1.6).x*1.25*0.5);
+	ambient *= saturate(DistanceToObject(pos + normal * 3.2).x*1.25*0.25);
+	ambient *= saturate(DistanceToObject(pos + normal * 6.4).x*1.25*0.125);
+	ambient = max(0.035, pow(ambient, 0.3));
+	ambient = saturate(ambient);
+	vec3 ref = reflect(rayVec, normal);
+	ref = normalize(ref);
+	float sunShadow = 1.0;
+	float iter = 0.1;
+	vec3 nudgePos = pos + ref*0.3;
+	for (int i = 0; i < 40; i++)
+	{
+	float tempDist = DistanceToObject(nudgePos + ref * iter).x;
+	sunShadow *= saturate(tempDist*50.0);
+	if (tempDist <= 0.0) break;
+	iter += max(0.00, tempDist)*1.0;
+	if (iter > 9.0) break;
+	}
+	sunShadow = saturate(sunShadow);
+	vec3 texColor;
+	texColor = vec3(1.0);
+	texColor = vec3(0.85, 0.945 - distAndMat.y * 0.15, 0.93 + distAndMat.y * 0.35)*0.951;
+	if (distAndMat.y == 6.0) texColor = vec3(0.91, 0.1, 0.41)*10.5;
+	texColor = max(texColor, vec3(0.0));
+	texColor *= 0.25;
+	vec3 lightColor = vec3(0.0);
+	lightColor += vec3(0.1,0.35,0.95) * (normal.y * 0.5 + 0.5) * ambient * 0.2;
+	lightColor += vec3(1.0) * ((-normal.y) * 0.5 + 0.5) * ambient * 0.2;
+	finalColor = texColor * lightColor;
+	vec3 refColor = GetEnvColor2(ref, sunDir)*sunShadow;
+	finalColor += refColor * 0.35 * ambient;
+	finalColor = mix(vec3(1.0, 0.41, 0.41) + vec3(1.0), finalColor, exp(-t*0.0007));
+	}
+	else
+	{
+	finalColor = GetEnvColor2(rayVec, sunDir);
+	}
+	fragColor = vec4(sqrt(clamp(finalColor, 0.0, 1.0)),1.0);
+	}
+
+_XSCREENSAVER_EOF_

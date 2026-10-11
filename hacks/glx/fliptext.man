@@ -1,0 +1,121 @@
+.TH XScreenSaver 1 "20-Mar-2005" "X Version 11"
+.SH NAME
+fliptext \- draws pages of text whose lines transparently flip around
+.SH SYNOPSIS
+.B fliptext
+[\-\-display \fIhost:display.screen\fP] [\-\-window] [\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-delay \fImicroseconds\fP]
+[\-\-program \fIcommand\fP]
+[\-\-size \fIinteger\fP ]
+[\-\-columns \fIinteger\fP]
+[\-\-left | \-\-center | \-\-right]
+[\-\-lines \fIinteger\fP]
+[\-\-speed \fIfloat\fP]
+[\-\-delay \fIusecs\fP]
+[\-\-font \fIxlfd\fP]
+[\-\-wireframe]
+[\-\-fps]
+.SH DESCRIPTION
+The \fIfliptext\fP program runs another program to generate a stream of
+text, then animates the lines of that text transparently flipping in
+and out in 3D.
+.SH OPTIONS
+.I fliptext
+accepts the following options:
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-install
+Install a private colormap for the window.
+.TP 8
+.B \-\-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-program \fIsh-command\fP
+This program will be run periodically, and its output will be the text
+that is displayed.  Default \fIxscreensaver\-text\fP.
+
+You can configure the text printed through the "Advanced" tab of
+.BR xscreensaver\-settings (1),
+or by editing your ~/.xscreensaver file.
+.TP 8
+.B \-\-size \fIinteger\fP
+How large a font to use, in points.  (Well, in some arbitrary unit 
+we're calling "points" for the sake of argument.)  Default: 20.
+.TP 8
+.B \-\-columns \fIinteger\fP
+At (approximately) what column to wrap lines.  Default 80.  Wrapping is
+done by pixels, not characters, and lines will always wrap at the
+edge of the screen regardless.
+.TP 8
+.B \-\-left | \-\-center | \-\-right
+Whether to align the text flush left, centered, or flush right.
+The default is to choose randomly each time a new screen of text 
+is displayed.
+.TP 8
+.B \-\-lines \fIinteger\fP
+How many lines of text should be shown at once.  Default 8.
+.TP 8
+.B \-\-speed \fIratio\fP
+Change the animation speed; 0.5 to go half as fast, 2.0 to go twice as fast.
+.TP 8
+.B \-\-delay \fIusecs\fP
+The delay between frames of the animation; default is 10000 (1/10th second.)
+.TP 8
+.B \-\-font \fIfont-name\fP
+The name of the font to use.  For best effect, this should be a large
+font (at least 36 points.)  The bigger the font, the better looking the
+characters will be.  Note that the size of this font affects only the
+clarity of the characters, not their size on the screen: for that, use
+the \fI\-\-size\fP or \fI\-\-columns\fP options.
+
+Default: -*-utopia-bold-r-normal-*-*-720-*-*-*-*-iso8859-1
+.TP 8
+.B \-\-fps
+Display the current frame rate, CPU load, and polygon count.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR xscreensaver (1),
+.BR xscreensaver\-text (MANSUFFIX),
+.BR fortune (1),
+.BR phosphor (MANSUFFIX),
+.BR apple2 (MANSUFFIX),
+.BR fontglide (MANSUFFIX),
+.BR ljlatest (MANSUFFIX),
+.BR dadadodo (1),
+.BR webcollage (MANSUFFIX),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
+.SH COPYRIGHT
+Copyright \(co 2005 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>

@@ -1,0 +1,92 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+winduprobot \- screen saver.
+.SH SYNOPSIS
+.B winduprobot
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-count \fInumber\fP]
+[\-\-speed \fIratio\fP]
+[\-\-size \fIratio\fP]
+[\-\-opacity \fIratio\fP]
+[\-\-talk \fIratio\fP]
+[\-\-no-texture]
+[\-\-no-fade]
+[\-\-fps]
+.SH DESCRIPTION
+A swarm of wind-up toy robots wander around the table-top, bumping into
+each other. Each robot contains a mechanically accurate gear system inside,
+which you can see when the robot's shell occasionally fades to
+transparency.
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds).
+.TP 8
+.B \-\-count \fInumber\fP
+Number of robots.  1 - 100.  Default: 25.
+.TP 8
+.B \-\-speed \fIratio\fP
+Animation speed.  2.0 means twice as fast, 0.5 means half as fast.
+.TP 8
+.B \-\-size \fIratio\fP
+Robot size.  2.0 means twice as big, 0.5 means half as big.
+.TP 8
+.B \-\-opacity \fIratio\fP
+Robot skin transparency.  0.0 - 1.0.  Default: 1.0.
+.TP 8
+.B \-\-talk \fIratio\fP
+How often to occasionally pop up a word bubble with random text in it.
+0.0 means never. 1.0 means often.
+.TP 8
+.B \-\-texture | \-\-no-texture
+Whether the robot's surface should be reflective chrome.
+.TP 8
+.B \-\-fade | \-\-no-fade
+Whether to sometimes fade the robot's opacity to show the inner mechanism.
+.TP 8
+.B \-\-fps | \-\-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.BR xscreensaver\-text (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co 2014 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.

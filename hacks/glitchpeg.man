@@ -1,0 +1,86 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+glitchpeg \- glitched image screen saver.
+.SH SYNOPSIS
+.B glitchpeg
+[\-\-display \fIhost:display.screen\fP]
+[\-\-visual \fIvisual\fP]
+[\-\-window]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-delay \fInumber\fP]
+[\-\-duration \fInumber\fP]
+[\-\-count \fInumber\fP]
+.SH DESCRIPTION
+Loads an image, corrupts it, and then displays the corrupted version,
+several times a second. After a while, finds a new image to corrupt.
+
+It glitches the image by altering random bytes in the compressed image
+file before de-compressing it. This creates interesting visual effects
+on JPEG files, but doesn't work well on PNG files, since PNG contains
+checksums that detect simple corruption.
+.SH OPTIONS
+.TP 8
+.B \-\-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-\-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-\-root
+Draw on the root window.
+.TP 8
+.B \-\-window\-id \fInumber\fP
+Draw on the specified window.
+.TP 8
+.B \-\-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds).
+.TP 8
+.B \-\-duration \fInumber\fP
+How many seconds before loading a new image.  Default: 120.
+.TP 8
+.B \-\-count \fInumber\fP
+Number of glitches to introduce per iteration. Default: 400.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.SH SECURITY
+Because this program is feeding intentionally-invalid data into your
+operating system's image-decoding libraries, it is possible that it
+may crash as a result of that corrupted data.  
+
+That should not be possible -- but it might be.
+
+Please note that if this happens, that indicates a serious security
+bug in your system's image libraries!  It likely means that your
+libraries are susceptible to buffer overflow attacks or similar, which
+can lead to remote code execution.  You should report that bug to the
+maintainers of those image libraries.
+
+In the context of xscreensaver, when configured to load only local
+image files, this should not be a direct security concern: this screen
+saver crashing will not affect the xscreensaver daemon and will not
+unlock your screen.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2018 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.

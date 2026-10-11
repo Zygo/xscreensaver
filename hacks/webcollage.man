@@ -1,0 +1,172 @@
+.TH XScreenSaver 1 "17-Jun-99" "X Version 11"
+.SH NAME
+webcollage \- a collage of random images from the World Wide Web
+.SH SYNOPSIS
+.B webcollage
+[\-\-display \fIhost:display.screen\fP]
+[\-\-root]
+[\-\-window\-id \fInumber\fP]
+[\-\-window\-id \fIid\fP]
+[\-\-verbose]
+[\-\-timeout \fIsecs\fP]
+[\-\-delay \fIsecs\fP]
+[\-\-background \fIbg\fP]
+[\-\-no-output]
+[\-\-urls-only]
+[\-\-imagemap \fIfilename-base\fP]
+[\-\-size \fIWxH\fP]
+[\-\-opacity \fIratio\fP]
+[\-\-filter \fIcommand\fP]
+[\-\-filter2 \fIcommand\fP]
+[\-\-http\-proxy host[:port]]
+[\-\-dictionary \fIdictionary-file\fP]
+[\-\-directory \fIdir\fP]
+[\-\-fps]
+.SH DESCRIPTION
+This screen saver creates collages out of random images from the World Wide
+Web.  It finds the images by feeding random words into various search engines,
+then pulling images (or sections of images) out of the pages returned.
+One satisfied customer described it as "a nonstop pop culture brainbath".
+
+You can also see it in action at
+\fIhttps://www.jwz.org/webcollage/\fP
+.SH OPTIONS
+.I webcollage
+accepts the following options:
+.TP 8
+.B \-\-root \fRor\fP \fB\-\-window\-id\fP \fInumber\fP
+Draw on the specified window.  Images are placed on the root window using the
+.BR xscreensaver\-getimage (MANSUFFIX)
+program.
+.TP 8
+.B \-\-verbose \fRor\fP \-\-v
+Print diagnostics to stderr.  Multiple \fI-v\fP switches increase the
+amount of output.  \fI-v\fP will print out the URLs of the images,
+and where they were placed; \fI-vv\fP will print out any warnings,
+and all URLs being loaded; \fI-vvv\fP will print information on
+what URLs were rejected; and so on.
+.TP 8
+.B \-\-timeout \fIseconds\fP
+How long to wait for a URL to complete before giving up on it and
+moving on to the next one.
+Default 30 seconds.
+.TP 8
+.B \-\-delay \fIseconds\fP
+How long to sleep between images.  Default 2 seconds.  (Remember that
+this program probably spends a lot of time waiting for the network.)
+.TP 8
+.B \-\-background \fIcolor-or-file\fP
+What to use for the background onto which images are pasted.  This may be
+a color name, a hexadecimal RGB specification in the form '#rrggbb', or 
+the name of an image file.
+.TP 8
+.B \-\-size \fIWxH\fP
+Normally, the output image will be made to be the size of the
+screen (or target window).  This lets you specify the desired size.
+.TP 8
+.B \-\-opacity \fIratio\fP
+How transparently to paste the images together, with 0.0 meaning
+"completely transparent" and 1.0 meaning "opaque."  Default 0.85.
+A value of around 0.3 will produce an interestingly blurry image
+after a while.
+.TP 8
+.B \-\-no-output
+If this option is specified, then no composite output image will be
+generated.  This is only useful when used in conjunction 
+with \fB\-\-verbose\fP.
+.TP 8
+.B \-\-urls-only
+If this option is specified, then no composite output image will be
+generated: instead, a list of image URLs will be printed on stdout.
+.TP 8
+.B \-\-imagemap \fIfilename-base\fP
+If this option is specified, then instead of writing an image to the
+root window, two files will be created: "\fIbase\fP.html" and "\fIbase\fP.jpg".
+The JPEG will be the collage; the HTML file will include that image, and
+a series of clickable rectangles linking the sub-images to the pages on which
+they were found, as seen on the web version of WebCollage at
+\fIhttps://www.jwz.org/webcollage/\fP
+.TP 8
+.B \-\-filter \fIcommand\fP
+Filter all source images through this command.  The command must take
+a PPM file on stdin, and write a new PPM file to stdout.  One good 
+choice for a filter would be:
+.nf
+.sp
+	webcollage -root -filter 'vidwhacker -stdin -stdout'
+.sp
+.fi
+.TP 8
+.B \-\-filter2 \fIcommand\fP
+Filter the \fIcomposite\fP image through this command.  The \fI-filter\fP
+option applies to the sub-images; the \fI-filter2\fP applies to the
+final, full-screen image.
+.TP 8
+.B \-\-http\-proxy \fIhost:port\fP
+If you must go through a proxy to connect to the web, you can specify it 
+with this option, or with the \fB$http_proxy\fP or \fB$HTTP_PROXY\fP 
+environment variables.
+.TP 8
+.B \-\-dictionary \fIfile\fP
+Webcollage normally looks at the system's default spell-check dictionary
+to generate words to feed into the search engines.  You can specify an
+alternate dictionary with this option.
+
+Note that by default, webcollage searches for images using several
+different methods, not all of which involve dictionary words, so
+using a "topical" dictionary file will not, in itself, be as effective
+as you might be hoping.
+.TP 8
+.B \-\-directory \fIdir\fP
+Instead of searching the web for images, use the contents of
+the given directory.
+.TP 8
+.B \-\-fps
+Display the current frame rate and CPU load (MacOS only).
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.TP 8
+.B XSCREENSAVER_WINDOW
+The window ID to use with \fI\-\-root\fP.
+.TP 8
+.B http_proxy\fR or \fPHTTP_PROXY
+to get the default HTTP proxy host and port.
+.SH FILES AND URLS
+.I /usr/dict/words,
+.I /usr/share/lib/dict/words,
+or
+.I /usr/share/dict/words
+to find the random words to feed into to various search fields, including
+Google, Bing, Flickr, Imgur and Tumblr.
+.SH BOOBIES
+The Internet being what it is, absolutely anything might show up in the
+collage including -- quite possibly -- pornography, or even nudity.
+.SH BUGS
+Animating GIFs are not supported: only the first frame will be used.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR convert (1),
+.BR vidwhacker (MANSUFFIX),
+.BR dadadodo (1),
+.BR driftnet (1),
+.BR EtherPEG ,
+.BR EtherPeek ,
+https://www.jwz.org/webcollage/
+.SH COPYRIGHT
+Copyright \(co 1998-2022 by Jamie Zawinski.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 24-May-1998.

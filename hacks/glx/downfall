@@ -1,0 +1,46 @@
+#!/bin/bash
+# XScreenSaver, Copyright © 2026 Jamie Zawinski <jwz@jwz.org>
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+PATH="$PATH":"$(dirname "$0")"
+exec -a "downfall" \
+xshadertoy "$@" \
+ --program0 - \
+<< "_XSCREENSAVER_EOF_"
+
+// Title:  Downfall
+// Author: Matt Vianueva <diatribes@gmail.com>
+// URL:    https://www.shadertoy.com/view/w3sBWl
+// Date:   01-Nov-2025
+// Desc:   Downfall
+
+// Relicensed as MIT License, by permission, 8-Mar-2026.
+
+
+	void mainImage(out vec4 o, vec2 u) {
+	o = vec4(0,0,0,0);
+	float i=0.,d=0.,s=0.,t = iTime;
+	vec3 p = iResolution;
+	mat2 r = mat2(cos(1.2+vec4(0,33,11,0)));
+	u = (u+u-p.xy)/p.y;
+	for(o=vec4(0); i++<1e2;) {
+	p = vec3(u * d, d-24.),
+	p.yz *= r;
+	p.z += t*3e1;
+	for(s = .03; s < 4.; s += s )
+	p.yz -= abs(dot(sin(t+t+.32*p / s ), vec3(s)));
+	p *= vec3(.2, .6, 1),
+	d += s = .3+.3*abs(2. - length(p.xy)),
+	o += 1./s;
+	}
+	o = tanh(o*o/1e4);
+	}
+
+_XSCREENSAVER_EOF_
