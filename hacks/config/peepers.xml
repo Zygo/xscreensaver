@@ -40,7 +40,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 Floating eyeballs. Anatomically correct, and they also track the pointer.
 
 Written by Jamie Zawinski; 2018.

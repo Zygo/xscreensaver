@@ -1,12 +1,14 @@
-# Auto-generated: Thu Sep  3 15:49:18 PDT 2026
+# Auto-generated: Sat Oct 10 11:58:07 PDT 2026
 driver/demo-Gtk-conf.c
+driver/demo-Gtk-resources.c
 driver/demo-Gtk.c
-driver/demo.ui
+[type: gettext/glade]driver/demo.ui
 driver/dialog.c
-driver/prefs.ui
+[type: gettext/glade]driver/prefs.ui
 driver/subprocs.c
 driver/xscreensaver-settings.desktop.in
 driver/xscreensaver.desktop.in
+hacks/barcode.c
 hacks/config/abstractile.xml
 hacks/config/alienbeacon.xml
 hacks/config/amigajuggler.xml
@@ -323,3 +325,23 @@ hacks/config/xmatrix.xml
 hacks/config/xrayswarm.xml
 hacks/config/xspirograph.xml
 hacks/config/zoom.xml
+hacks/fps.c
+hacks/glx/carousel.c
+hacks/glx/chessgames.h
+hacks/glx/countries.c
+hacks/glx/engine.c
+hacks/glx/gibson.c
+hacks/glx/glsnake.c
+hacks/glx/graphstat.h
+hacks/glx/jigsaw.c
+hacks/glx/juggler3d.c
+hacks/glx/mapcities.h
+hacks/glx/mapscroller.c
+hacks/glx/pinion.c
+hacks/glx/polyhedra-gl.c
+hacks/glx/polyhedra.c
+hacks/glx/unicrud.c
+hacks/penetrate.c
+hacks/screenhack.c
+hacks/ximage-loader.c
+po/osx.h

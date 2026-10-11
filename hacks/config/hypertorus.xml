@@ -115,7 +115,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A Clifford Torus is a torus lying on the surface of a 4D hypersphere.
 
 Inspired by Thomas Banchoff's book "Beyond the Third Dimension:

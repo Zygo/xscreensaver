@@ -22,7 +22,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Generates self-similar linear fractals, including the classic "C Curve".
 
 https://en.wikipedia.org/wiki/Levy_C_curve

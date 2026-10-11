@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.63 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.67 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -100,7 +100,6 @@ sub read_saver_xml($) {
   return () if ($name eq 'SaverTester');
   return () if ($name eq 'XScreenSaverUpdater');
   return () if ($name eq 'RandomXScreenSaver');
-  return () if ($name eq 'XShadertoy');
 
   my $file  = "$app_dir/Contents/Resources/" . lc($name) . ".xml";
   my $file2 = "$app_dir/" . lc($name) . ".xml";
@@ -197,6 +196,11 @@ sub munge_blurb($$$$) {
                $desc .
                "\n");
 
+  my $desc3 = ($desc . "\n" .				# iOS
+               "\n" . 
+               "Written by $authors; $year.\n");
+
+
   # unwrap lines, but only when it's obviously ok: leave blank lines,
   # and don't unwrap if that would compress leading whitespace on a line.
   #
@@ -204,7 +208,30 @@ sub munge_blurb($$$$) {
   1 while ($desc2 =~ s/([^\s])[ \t]*\n([^\s])/$1 $2/gs);
   $desc2 =~ s/\n\n(From |https?:)/\n$1/gs;
 
-  return ($desc1, $desc2);
+  return ($desc1, $desc2, $desc3);
+}
+
+
+sub update_saver_xml_1($$$$$) {
+  my ($app_dir, $filename, $name, $vers, $body) = @_;
+
+  $body =~ m@<_description[^<>]*>(.*?)</_description>@s ||
+    error ("$filename: no description tag");
+  my $desc = $1;
+
+  error ("$filename: description contains non-ASCII and is not UTF-8: $1")
+    if ($body !~ m/\Q<?xml version="1.0" encoding="UTF-8"/s &&
+        $desc =~ m/([^\000-\176])/s);
+
+  my ($desc1, $desc2, $desc3) = munge_blurb ($filename, $name, $vers, $desc);
+
+  $body =~ s@(<_description[^<>]*>)(.*?)(</_description>)@$1$desc1$3@s;
+
+  # NSXMLParser doesn't seem to work properly on Latin1 XML documents,
+  # so we convert these to UTF8 when embedding them in the .saver bundle.
+  $body =~ s@encoding="ISO-8859-1"@encoding="UTF-8"@gsi;
+
+  return ($body, $desc1, $desc2, $desc3);
 }
 
 
@@ -219,21 +246,10 @@ sub update_saver_xml($$) {
     error ("$filename: no name label");
   my $name = $1;
 
-  $body =~ m@<_description>(.*?)</_description>@s ||
-    error ("$filename: no description tag");
-  my $desc = $1;
+  my ($desc1, $desc2, $desc3);
+  ($body, $desc1, $desc2, $desc3) =
+    update_saver_xml_1 ($app_dir, $filename, $name, $vers, $body);
 
-  error ("$filename: description contains non-ASCII and is not UTF-8: $1")
-    if ($body !~ m/\Q<?xml version="1.0" encoding="UTF-8"/s &&
-        $desc =~ m/([^\000-\176])/s);
-
-  my ($desc1, $desc2) = munge_blurb ($filename, $name, $vers, $desc);
-
-  $body =~ s@(<_description>)(.*?)(</_description>)@$1$desc1$3@s;
-
-  # NSXMLParser doesn't seem to work properly on Latin1 XML documents,
-  # so we convert these to UTF8 when embedding them in the .saver bundle.
-  $body =~ s@encoding="ISO-8859-1"@encoding="UTF-8"@gsi;
 
   # Make sure "xscreensaver-text" is included if and only if the XML 
   # contains "<xscreensaver-text>".
@@ -246,6 +262,7 @@ sub update_saver_xml($$) {
     if (!!$text_p != !!(-f $textf));
   error ($image_p ? "$imagef does not exist" : "$imagef should not exist")
     if (!!$image_p != !!(-f $imagef));
+
 
   if ($obody eq $body && $was_compressed_p) {
     print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);
@@ -272,14 +289,14 @@ sub update_saver_xml($$) {
 }
 
 
-sub compress_all_xml_files($) {
-  my ($dir) = @_;
-  opendir (my $dirp, $dir) || error ("$dir: $!");
+sub compress_all_xml_files($$) {
+  my ($app_dir, $vers) = @_;
+  opendir (my $dirp, $app_dir) || error ("$app_dir: $!");
   my @files = readdir ($dirp);
   closedir $dirp;
   foreach my $f (sort @files) {
-    next unless ($f =~ m/\.xml$/si);
-    my $filename = "$dir/$f";
+    next unless ($f =~ m/.xml$/si);
+    my $filename = "$app_dir/$f";
     open (my $in, '<', $filename) || error ("$filename: $!");
     print STDERR "$progname: read $filename\n" if ($verbose > 2);
     local $/ = undef;  # read entire file
@@ -287,6 +304,16 @@ sub compress_all_xml_files($) {
     close $in;
 
     if ($body =~ m/^<\?xml/s) {
+
+      $body =~ m@<screensaver[^<>]*?[ \t]_label=\"([^\"]+)\"@m ||
+        error ("$filename: no name label");
+      my $name = $1;
+
+      my ($desc0, $desc1, $desc2, $desc3) =
+        update_saver_xml_1 ($app_dir, $filename, $name, $vers, $body);
+      ($body =~ s@(<_description[^<>]*>)(.*?)(</_description>)@$1$desc3$3@s) ||
+        error ("$filename: unable to splice desc");
+
       my $body2 = '';
       gzip (\$body, \$body2) || error ("$filename: xml gzip: $GzipError");
       $body = $body2;
@@ -440,6 +467,41 @@ sub set_thumb($) {
 }
 
 
+# Insert the CFBundleLocalizations into the plist.
+# CFBundleDevelopmentRegion is also required.
+#
+sub set_languages($$) {
+  my ($filename, $plist) = @_;
+
+  # Read po/LINGUAS for the list of languages.
+  #
+  my $body = '';
+  my $file = '../po/LINGUAS';
+  open (my $in, '<:utf8', $file) || error ("$file: $!");
+  print STDERR "$progname: reading $file...\n" if ($verbose);
+  local $/ = undef;  # read entire file
+  while (<$in>) { $body .= $_; }
+  close $in;
+
+  $body =~ s/^\s+|\s+$//gs;
+  my @all_langs = split (/\s+/, $body);
+
+  my $locs = ("\t<key>CFBundleLocalizations</key>\n" .
+              "\t<array>\n" .
+              "\t  <string>" .
+                    join ("</string>\n\t  <string>", @all_langs) .
+                  "</string>\n" .
+              "\t</array>\n");
+
+  $plist = set_plist_key ($filename, $plist, "CFBundleDevelopmentRegion", "en");
+
+  $plist =~ s@[ \t]*<key>CFBundleLocalizations</key>.*?</array>\n@@gs;
+  $plist =~ s@(</dict>\s*</plist>)@$locs$1@gs;
+
+  return $plist;
+}
+
+
 sub update($) {
   my ($app_dir) = @_;
 
@@ -457,12 +519,14 @@ sub update($) {
   my ($ignore, $info_str, $name) = update_saver_xml ($app_dir, $vers);
 
   if ($app_name eq 'XScreenSaver') {
-    compress_all_xml_files ($app_dir);
+    compress_all_xml_files ($app_dir, $vers);
   } else {
 
     $plist = set_plist_key ($filename, $plist,
                             "CFBundleIdentifier",
                             "org.jwz.xscreensaver." . $app_name);
+
+    $plist = set_languages ($filename, $plist);
 
     error ("$filename: no bundle identifier")
       unless ($plist =~ m@>CFBundleIdentifier</key>\s*<string>[^<>]*@s);
@@ -509,6 +573,10 @@ sub update($) {
   }
 
   minimize_scripts ($app_dir);
+
+  # Install localizations in this bundle.
+  safe_system ('./build-locales.pl', $app_dir);
+  
 
   # MacOS 10.12: codesign says "resource fork, Finder information, or
   # similar detritus not allowed" if any bundle has an Icon\r file.

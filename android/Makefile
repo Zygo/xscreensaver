@@ -364,10 +364,6 @@ molecules.h::
 	cd ../hacks/glx && \
 	./molecules.sh molecules.h ../images/molecules/*.pdb
 
-graphstat.h::
-	cd ../hacks/glx && \
-	./../../utils/bin2c graphstat.txt graphstat.h
-
 images_png_h:
 	cd ../hacks/images && make
 
@@ -519,7 +515,7 @@ assemblerelease:
 	   echo "no .so in $(APK_UNSIGNED)" >&2 ; exit 1 ; \
 	 fi
 
-ALL_DEPS = local.properties m6502.h molecules.h graphstat.h \
+ALL_DEPS = local.properties m6502.h molecules.h \
 	   run_check images_png_h
 debug::	  $(ALL_DEPS) assembledebug
 release:: $(ALL_DEPS) assemblerelease

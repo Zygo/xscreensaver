@@ -16,7 +16,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Pulsing fire.  It can also take an arbitrary image and set it on fire too.
 
 Written by Carsten Haitzler and many others; 1999.

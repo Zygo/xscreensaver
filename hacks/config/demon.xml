@@ -30,7 +30,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A cellular automaton that starts with a random field, and organizes
 it into stripes and spirals.
 

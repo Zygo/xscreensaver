@@ -751,7 +751,7 @@ static void Improve(struct state *st)
 
 static void NewLevel(struct state *st, int xlim, int ylim)
 {
-  char buf[32];
+  char buf[1024];
   int width, i, sumlive = 0;
   int liv[kNumCities];
   int freecity = 0;
@@ -782,12 +782,12 @@ static void NewLevel(struct state *st, int xlim, int ylim)
   XFillRectangle(st->dpy, st->window, st->erase_gc,
 				  0, 0, xlim, ylim);
   if (st->bround)
-	 sprintf(buf, "Bonus Round Over");
+	 sprintf(buf, "%.100s", _("Bonus Round Over"));
   else {
 	 if (sumlive || freecity)
-		sprintf(buf, "Level %d Cleared", st->level);
+		sprintf(buf, _("Level %d Cleared"), st->level);
 	 else
-		sprintf(buf, "GAME OVER");
+		sprintf(buf, "%.100s", _("GAME OVER"));
   }
   if (st->level > 0) {
          XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) buf, 
@@ -889,7 +889,7 @@ static void NewLevel(struct state *st, int xlim, int ylim)
 		st->levFreq = 10;
 		for (i=0;i<kNumCities;i++)
 		  st->blive[i] = st->city[i].alive;
-		sprintf(buf, "Bonus Round");
+		sprintf(buf, "%.100s", _("Bonus Round"));
                 XftTextExtentsUtf8 (st->dpy, st->font, (FcChar8 *) buf, 
                                     strlen(buf), &overall);
                 width = overall.xOff;

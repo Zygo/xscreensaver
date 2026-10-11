@@ -40,7 +40,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A grid of hexagons composed of rotating Y-shaped struts.
 Waves of rotation and color changes randomly propagate across the plane.
 

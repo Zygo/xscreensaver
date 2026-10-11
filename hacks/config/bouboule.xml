@@ -25,7 +25,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A deforming balloon with varying-sized spots painted on its invisible surface.
 
 Written by Jeremie Petit; 1997.

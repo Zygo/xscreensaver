@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2002-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2002-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -318,7 +318,11 @@ more_bits (state *st, scroller *sc)
     case SEED_RAM:
       if (himem == 0)
         {
-          lomem = (unsigned char *) progname; /* not first malloc, but early */
+          /* 'progname' comes from argv[0] so I'd expect it to be in heap,
+             but on some systems it is in BSS.  I guess the earliest pointer
+             we have that we are sure came out of 'malloc' is 'dpy'. */
+
+          lomem = (unsigned char *) st->dpy;  /* not first malloc, but early */
           himem = (unsigned char *)           /* not last malloc, but late */
             st->scrollers[st->nscrollers-1].image->data;
         }
@@ -342,9 +346,9 @@ more_bits (state *st, scroller *sc)
          Does malloc() draw from more than one heap? */
       if ((unsigned long) himem - (unsigned long) lomem > 0x0FFFFFFF) {
 # if 0
-        fprintf (stderr, "%s: wonky: 0x%08x - 0x%08x = 0x%08x\n", progname,
-                 (unsigned int) himem,  (unsigned int) lomem,
-                 (unsigned int) himem - (unsigned int) lomem);
+        fprintf (stderr, "%s: wonky: 0x%08lx - 0x%08lx = 0x%08lx\n", progname,
+                 (unsigned long) himem,  (unsigned long) lomem,
+                 (unsigned long) himem - (unsigned long) lomem);
 # endif
         himem = lomem + 0xFFFF;
       }

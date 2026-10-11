@@ -775,6 +775,12 @@ main (int argc, char **argv)
   progname = argv[0];   /* reset later */
   progclass = ft->progclass;
 
+# ifdef ENABLE_NLS
+  bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+  textdomain (GETTEXT_PACKAGE);
+  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+# endif /* ENABLE_NLS */
+
   if (ft->setup_cb)
     ft->setup_cb (ft, ft->setup_arg);
 
@@ -832,7 +838,8 @@ main (int argc, char **argv)
     *s2 = 0;
     *s4 = 0;
     if (ot && !*ot) ot = 0;
-    sprintf (version, "%.50s%s%s: from the XScreenSaver %s distribution (%s)",
+    sprintf (version, 
+             _("%.50s%s%s: from the XScreenSaver %s distribution (%s)"),
              (ot ? ot : ""),
              (ot ? ": " : ""),
 	     progclass, s1, s3);
@@ -850,8 +857,8 @@ main (int argc, char **argv)
       fprintf (stderr, "\n\thttps://www.jwz.org/xscreensaver/\n\n");
 
       if (!help_p)
-	fprintf(stderr, "Unrecognised option: %s\n", argv[1]);
-      fprintf (stderr, "Options include: ");
+	fprintf(stderr, _("Unrecognised option: %s\n"), argv[1]);
+      fprintf (stderr, _("Options include: "));
       for (i = 0; i < merged_options_size; i++)
 	{
 	  char *sw = merged_options [i].option;
@@ -864,7 +871,7 @@ main (int argc, char **argv)
 	    }
 	  x += size;
 	  fprintf (stderr, "-%s", sw);  /* two dashes */
-	  if (argp) fprintf (stderr, " <arg>");
+	  if (argp) fprintf (stderr, _(" <arg>"));
 	  if (i != merged_options_size - 1) fprintf (stderr, ", ");
 	}
 
@@ -1068,7 +1075,7 @@ main (int argc, char **argv)
     else
       {
       FAIL:
-        fprintf (stderr, "%s: unparsable duration: %s\n", progname, str);
+        fprintf (stderr, _("%s: unparsable duration: %s\n"), progname, str);
         exit (1);
       }
 

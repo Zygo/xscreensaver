@@ -69,7 +69,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 A wobbly blob distorts images behind it.
 
 Written by Jon Dowdall; 2003.

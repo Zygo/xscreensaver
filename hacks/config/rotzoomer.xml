@@ -33,7 +33,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Distorts an image by rotating and scaling random sections of it.
 
 Written by Claudio Matsuoka and Jamie Zawinski; 2001.

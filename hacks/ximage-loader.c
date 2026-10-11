@@ -1,5 +1,5 @@
 /* ximage-loader.c --- converts image files or data to XImages or Pixmap.
- * xscreensaver, Copyright © 1998-2022 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright © 1998-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -118,7 +118,7 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
 
       if (! pb)
         {
-          /* fprintf (stderr, "%s: GDK unable to parse image data: %s\n",
+          /* fprintf (stderr, _("%s: GDK unable to parse image data: %s\n"),
                    progname, (gerr ? gerr->message : "?")); */
           return 0;
         }
@@ -147,7 +147,7 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
 
     if (!image->data)
       {
-        fprintf (stderr, "%s: out of memory (%d x %d)\n", progname, w, h);
+        fprintf (stderr, _("%s: out of memory (%d x %d)\n"), progname, w, h);
         return 0;
       }
 
@@ -218,7 +218,7 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
 
       if (! osx_load_image_file (screen, window, pixmap, filename, &geom))
         {
-          fprintf (stderr, "%s: %s failed\n", progname, filename);
+          fprintf (stderr, _("%s: %s failed\n"), progname, filename);
           return 0;
         }
 
@@ -243,7 +243,7 @@ make_ximage (Display *dpy, Visual *visual, const char *filename,
       XFreePixmap (dpy, pixmap);
 
 # else   /* !HAVE_COCOA -- iOS or Android. */
-      fprintf (stderr, "%s: image file loading not supported\n", progname);
+      fprintf (stderr, _("%s: image file loading not supported\n"), progname);
       return 0;
 # endif  /* !HAVE_COCOA */
     }
@@ -318,7 +318,7 @@ make_ximage (Display *dpy, Visual *visual,
       fp = fopen (filename, "r");
       if (! fp)
         {
-          fprintf (stderr, "%s: unable to read %s\n", progname, filename);
+          fprintf (stderr, _("%s: unable to read %s\n"), progname, filename);
           return 0;
         }
       png_init_io (png_ptr, fp);
@@ -403,7 +403,7 @@ make_ximage (Display *dpy, Visual *visual,
 
     if (!image->data)
       {
-        fprintf (stderr, "%s: out of memory (%lu x %lu)\n",
+        fprintf (stderr, _("%s: out of memory (%lu x %lu)\n"),
                  progname, (unsigned long)width, (unsigned long)height);
         return 0;
       }
@@ -465,7 +465,7 @@ make_ximage (Display *dpy, Visual *visual,
              const char *filename, const unsigned char *image_data,
              unsigned long data_size)
 {
-  fprintf (stderr, "%s: no image loading support!\n", progname);
+  fprintf (stderr, _("%s: no image loading support!\n"), progname);
   return 0;
 }
 

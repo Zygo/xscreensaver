@@ -84,7 +84,7 @@
 
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 Turns a cuboctahedron inside out: a smooth deformation (homotopy). During
 the eversion, the deformed cuboctahedron is allowed to intersect itself
 transversally, however, no fold edges or non-injective neighborhoods of

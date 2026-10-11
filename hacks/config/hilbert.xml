@@ -59,7 +59,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The recursive Hilbert space-filling curve, both 2D and 3D variants.
 
 The Hilbert path is a single contiguous line that can fill a volume

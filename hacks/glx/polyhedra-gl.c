@@ -1,4 +1,4 @@
-/* polyhedra, Copyright (c) 2004-2014 Jamie Zawinski <jwz@jwz.org>
+/* polyhedra, Copyright © 2004-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -166,7 +166,7 @@ static void
 startup_blurb (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
-  const char *s = "Computing polyhedra...";
+  const char *s = _("Computing polyhedra...");
   texture_font_data *f = bp->font1_data;
   GLfloat color[4] = {0.8, 0.8, 00, 1.0};
 
@@ -257,30 +257,28 @@ draw_label (ModeInfo *mi)
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
   polyhedron *p = bp->which >= 0 ? bp->polyhedra[bp->which] : 0;
   char label[1024];
-  char name2[255];
+  char name2[1024];
   GLfloat color[4] = { 0.8, 0.8, 0.8, 1 };
   texture_font_data *f;
 
   if (!p || !do_titles) return;
 
-  strcpy (name2, p->name);
+  strcpy (name2, _(p->name));
   if (*p->class)
-    sprintf (name2 + strlen(name2), "  (%s)", p->class);
+    sprintf (name2 + strlen(name2), "  (%s)", _(p->class));
 
-  sprintf (label,
+  sprintf (label, _(
            "Polyhedron %d:   \t%s\n\n"
            "Wythoff Symbol:\t%s\n"
            "Vertex Configuration:\t%s\n"
            "Symmetry Group:\t%s\n"
-        /* "Dual of:              \t%s\n" */
            "\n"
            "Faces:\t  %d\n"
            "Edges:\t  %d\n"
            "Vertices:\t  %d\n"
            "Density:\t  %d\n"
-           "Euler:\t%s%d\n",
-           bp->which, name2, p->wythoff, p->config, p->group,
-        /* p->dual, */
+           "Euler:\t%s%d\n"),
+           bp->which, name2, p->wythoff, p->config, _(p->group),
            p->logical_faces, p->nedges, p->logical_vertices,
            p->density, (p->chi < 0 ? "" : "  "), p->chi);
 
@@ -433,11 +431,11 @@ construct_teapot (ModeInfo *mi)
   polyhedron *p = (polyhedron *) calloc (1, sizeof(*p));
   p->number = n;
   p->wythoff = strdup("X00398|1984");
-  p->name = strdup("Teapot");
+  p->name = strdup(_("Teapot"));
   p->dual = strdup("");
-  p->config = strdup("Melitta");
-  p->group = strdup("Teapotahedral (Newell[1975])");
-  p->class = strdup("Utah Teapotahedron");
+  p->config = strdup(_("Melitta"));
+  p->group = strdup(_("Teapotahedral (Newell[1975])"));
+  p->class = strdup(_("Utah Teapotahedron"));
   bp->polyhedra[n] = p;
 }
 

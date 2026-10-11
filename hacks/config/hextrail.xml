@@ -40,7 +40,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A network of colorful lines grows upon a hexagonal substrate.
 
 Written by Jamie Zawinski; 2022.

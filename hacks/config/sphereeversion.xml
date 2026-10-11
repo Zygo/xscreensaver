@@ -106,7 +106,7 @@
 
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 Turns a sphere inside out: a smooth deformation (homotopy).  During the
 eversion, the deformed sphere is allowed to intersect itself transversally,
 however, no creases or pinch points occur.

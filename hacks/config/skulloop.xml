@@ -22,7 +22,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Recursive descent into a Platonic unit skull.
 
 Written by Jamie Zawinski; 2023.

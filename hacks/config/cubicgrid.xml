@@ -30,7 +30,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A rotating lattice of colored points.
 
 Written by Vasek Potocek; 2007.

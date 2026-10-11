@@ -112,7 +112,7 @@
 
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 A 3D immersion of the real projective plane that smoothly deforms
 between the Roman surface and the Boy surface.
 

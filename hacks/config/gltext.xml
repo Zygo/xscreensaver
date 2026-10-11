@@ -45,7 +45,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A few lines of text spinning around in a solid 3D font.
 
 The text can use strftime() escape codes to display the current 

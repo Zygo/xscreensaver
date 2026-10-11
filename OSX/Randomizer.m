@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2020-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2020-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,6 +17,7 @@
 #import "XScreenSaverView.h"
 #import "yarandom.h"
 #include <sys/sysctl.h>
+#import <execinfo.h>
 #import "nslog.h"
 
 #define VENTURA_KLUDGE
@@ -29,9 +30,23 @@
 #import <IOKit/graphics/IOGraphicsLib.h>  // For IODisplayCreateInfoDictionary
 #import <CommonCrypto/CommonDigest.h>
 #import <CommonCrypto/CommonHMAC.h>
+#import <ExceptionHandling/NSExceptionHandler.h>
 
 #define CYCLE_TIME "cycleTime"
 #define CYCLE_DEFAULT (5 * 60)
+
+
+// On macOS, the strings need to be read from the .saver bundle, not from
+// the SaverTester.app bundle, or from whatever legacyScreenSaver is doing.
+//
+#undef NSLocalizedString
+#define NSLocalizedString xss_NSLocalizedString
+static NSString *
+NSLocalizedString (NSString *key, NSString *comment)
+{
+  NSBundle *nsb = [NSBundle bundleForClass:[Randomizer class]];
+  return NSLocalizedStringFromTableInBundle (key, @"", nsb, comment);
+}
 
 
 // Returns a string that (hopefully) uniquely identifies the display hardware
@@ -115,7 +130,7 @@ screen_id (NSScreen *screen)
     if (@available (macOS 10.15, *))
       name = [screen localizedName];
     if (!name || !name.length)
-      name = @"unknown";
+      name = NSLocalizedString (@"unknown", @"");
   }
 
   if (! edid) {
@@ -262,8 +277,10 @@ static NSMutableArray *all_saver_views = NULL;
   first_time_p   = TRUE;
   crossfade_mode = CROSSFADE;  // Maybe make this a preference?
   fade_duration  = 5;
-  launch_time    = time ((time_t *) 0);
-  cycle_time     = launch_time;
+
+  if (!launch_time)
+    launch_time = time ((time_t *) 0);
+  cycle_time = time ((time_t *) 0);
 
   NSBundle *nsb = [NSBundle bundleForClass:[self class]];
   NSAssert1 (nsb, @"no bundle for class %@", [self class]);
@@ -604,7 +621,28 @@ static NSMutableArray *all_saver_views = NULL;
   [self initSignalHandlers];
 # endif
 
+  // 2026: Looks like macOS 27 legacyScreenSaver is somehow receiving the
+  // exceptions instead of our @catch blocks somehow.  Let's try harder:
+  //
+  // NSSetUncaughtExceptionHandler (NULL);
+  NSExceptionHandler *handler = [NSExceptionHandler defaultExceptionHandler];
+  // Using NSHandleUncaught* | NSLogUncaught* does not work, we need "Every".
+  [handler setExceptionHandlingMask: NSLogAndHandleEveryExceptionMask];
+  [handler setDelegate: self];
+
   return saver2;
+}
+
+
+// NSExceptionHandler calls this delegate method.
+- (BOOL)exceptionHandler:(NSExceptionHandler *)sender
+   shouldHandleException:(NSException *)e
+                    mask:(NSUInteger)mask
+{
+  // This *sounds* like a predicate method rather than one from which we
+  // should be doing side-effects, and yet here we are...
+  [self handleException:e in:nil];
+  return TRUE;
 }
 
 
@@ -616,40 +654,71 @@ static NSMutableArray *all_saver_views = NULL;
          (o ? [o className] : @"<null>"),
          [e reason]);
 
-  if (! crash_label.stringValue.length) {
-    struct tm *tm = localtime (&launch_time);
-    time_t dur = time ((time_t *) 0) - cycle_time;
-    NSString *s = [NSString stringWithFormat:
-                                  @"Launched at: %02d:%02d:%02d; "
-                                   "Cycles: %d; "
-                                   "Duration: %d:%02d:%02d",
-                            tm->tm_hour, tm->tm_min, tm->tm_sec,
-                            cycle_count,
-                            (int) (dur / (60*60)),
-                            (int) (dur / (60) % 60),
-                            (int) (dur % 60)];
-    [crash_label setStringValue:
-                   (o
-                    ? [NSString stringWithFormat:
-                                @"Error in %@:\n"
-                                "%@\n"
-                                "%@\n\n"
-                                "%@",
-                                [o className],
-                                s,
-                                [e reason],
-                                [[e callStackSymbols]
-                                  componentsJoinedByString: @"\n"]]
-                    : [NSString stringWithFormat: @"Error: %@\n%@",
-                                [e reason], s])];
-  } else {
+  if (crash_label.stringValue.length) {
     [crash_label setStringValue:
                    [NSString stringWithFormat: @"Double Exception: %@\n\n%@",
                              [e reason], crash_label.stringValue]];
+  } else {
+    NSString *stack = nil;
+
+    if ([e callStackSymbols]) {
+      stack = [[e callStackSymbols] componentsJoinedByString: @"\n"];
+    } else {
+      // The NSException from the NSExceptionHandler delegate does not
+      // contain callStackSymbols. It has some numbers in userInfo
+      // NSStackTraceKey but the only way to convert those to symbols
+      // is by invoking the "atos" program, WTAF?
+      void *frames[64];
+      int nframes = backtrace (frames, countof(frames));
+      if (nframes > 2) {
+        stack = @"";
+        char **syms = backtrace_symbols (frames, nframes);
+        for (int i = 2; i < nframes; i++) {
+          stack = [NSString stringWithFormat:@"%@%s\n", stack, syms[i]];
+        }
+        free (syms);
+      }
+    }
+
+    time_t now = time ((time_t *) 0);
+    time_t dur = now - cycle_time;
+    struct tm *tm;
+    NSString *ltm, *ctm, *ntm;
+    tm  = localtime (&launch_time);
+    ltm = [NSString stringWithFormat:@"%02d:%02d:%02d",
+                    tm->tm_hour, tm->tm_min, tm->tm_sec];
+    tm  = localtime (&cycle_time);
+    ctm = [NSString stringWithFormat:@"%02d:%02d:%02d",
+                    tm->tm_hour, tm->tm_min, tm->tm_sec];
+    tm  = localtime (&now);
+    ntm = [NSString stringWithFormat:@"%02d:%02d:%02d",
+                    tm->tm_hour, tm->tm_min, tm->tm_sec];
+
+    [crash_label setStringValue:
+                   [NSString stringWithFormat:
+                     @"Error in %@:\n"
+                      "Launched at: %@\n"
+                      "Cycled at:   %@\n"
+                      "Crashed at:  %@\n"
+                      "Duration:    %02d:%02d:%02d (%d cycles)\n"
+                      "Reason:      %@\n\n"
+                      "%@",
+                     (o ? [o className] : @"<unknown>"),
+                     ltm, ctm, ntm,
+                     (int) (dur / (60*60)),
+                     (int) (dur / (60) % 60),
+                     (int) (dur % 60),
+                     cycle_count,
+                     [e reason],
+                     stack]];
   }
 
   [crash_label removeFromSuperview];
   [self addSubview: crash_label];
+
+  // Make sure we have a cycle_timer queued and this doesn't just stay
+  // on the screen forever.
+  if (!cycle_timer) [self launchCycleTimer];
 }
 
 
@@ -1036,7 +1105,7 @@ catch_signal (int sig, void (*handler) (int))
   }
 
   if (! [self isPreview]) {
-    NSLog (@"%@: cycle_timer %.1f", [self blurb], interval);
+    NSLog (@"%@: cycle_timer in %.1f sec", [self blurb], interval);
     cycle_timer =
       [NSTimer scheduledTimerWithTimeInterval: interval
                                        target: self
@@ -1063,7 +1132,7 @@ catch_signal (int sig, void (*handler) (int))
   cycle_time = time ((time_t *) 0);
   cycle_count++;
 
-  NSLog(@"%@: cycle timer", [self blurb]);
+  NSLog(@"%@: cycle timer fired", [self blurb]);
   [self fadeSaverOut];
 }
 
@@ -1636,7 +1705,9 @@ catch_signal (int sig, void (*handler) (int))
       NSString *id   = [aa objectAtIndex:0];
       NSString *desc = [aa objectAtIndex:1];
       NSString *name = [NSString stringWithFormat:
+                                   NSLocalizedString (
                                    @"Screen %d - %d x %d @ %d, %d (%@)",
+                                   @""),
                                  (ord + 1),
                                  (int) sc.frame.size.width,
                                  (int) sc.frame.size.height,
@@ -1707,7 +1778,7 @@ catch_signal (int sig, void (*handler) (int))
   NSButton *ball = [[NSButton alloc] initWithFrame:frame];
   ball.font = [NSFont systemFontOfSize: [NSFont systemFontSize]];
   ball.title = NSLocalizedString(@"Select all", @"");
-  ball.bezelStyle = NSRoundedBezelStyle;
+  ball.bezelStyle = NSBezelStylePush;
   [ball sizeToFit];
   ball.autoresizingMask = NSViewMinXMargin | NSViewMaxXMargin |
     NSViewMaxYMargin;
@@ -1725,7 +1796,7 @@ catch_signal (int sig, void (*handler) (int))
   NSButton *bnone = [[NSButton alloc] initWithFrame:frame];
   bnone.font = [NSFont systemFontOfSize: [NSFont systemFontSize]];
   bnone.title = NSLocalizedString(@"Unselect all", @"");
-  bnone.bezelStyle = NSRoundedBezelStyle;
+  bnone.bezelStyle = NSBezelStylePush;
   [bnone sizeToFit];
   bnone.autoresizingMask = NSViewMinXMargin | NSViewMaxXMargin |
     NSViewMaxYMargin;
@@ -1743,7 +1814,7 @@ catch_signal (int sig, void (*handler) (int))
   NSButton *bok = [[NSButton alloc] initWithFrame:frame];
   bok.font = [NSFont systemFontOfSize: [NSFont systemFontSize]];
   bok.title = NSLocalizedString(@"OK", @"");
-  bok.bezelStyle = NSRoundedBezelStyle;
+  bok.bezelStyle = NSBezelStylePush;
   [bok sizeToFit];
   bok.autoresizingMask =  NSViewMinXMargin | NSViewMaxXMargin |
     NSViewMaxYMargin;
@@ -1814,10 +1885,15 @@ catch_signal (int sig, void (*handler) (int))
   // int si = secs; NSLog(@"%d:%02d:%02d", si/60/60, (si/60)%60, si%60);
   return
     (min == 1 ? @"1 minute" :
-     min < 60 ? [NSString stringWithFormat:@"%d minutes", min] :
-     hr == 1  ? [NSString stringWithFormat:@"%d hour %d minutes", hr, min%60] :
-     min2 == 0? [NSString stringWithFormat:@"%d hours", hr] :
-                [NSString stringWithFormat:@"%d hours %d minutes",hr, min2]);
+     min < 60 ? [NSString stringWithFormat:
+                            NSLocalizedString (@"%d minutes", @""), min] :
+     hr == 1  ?
+       [NSString stringWithFormat:
+         NSLocalizedString (@"%d hour %d minutes", @""), hr, min%60] :
+     min2 == 0? [NSString stringWithFormat:
+                   NSLocalizedString (@"%d hours", @""), hr] :
+                [NSString stringWithFormat:
+                   NSLocalizedString (@"%d hours %d minutes", @""), hr, min2]);
 }
 
 
@@ -1851,7 +1927,7 @@ catch_signal (int sig, void (*handler) (int))
     NSButtonCell *cell = [[NSButtonCell alloc] init];
     [cell setTitle: @""];
     [cell setAllowsMixedState: YES];
-    [cell setButtonType: NSSwitchButton];
+    [cell setButtonType: NSButtonTypeSwitch];
     //[cell release];  // Analyzer says this leaks?
     return cell;
   } else {
@@ -1895,7 +1971,7 @@ catch_signal (int sig, void (*handler) (int))
     NSString *res = [self resourceKeyForTableView:tv tableColumn:tc row:y];
     BOOL v = get_boolean (res, prefs);
     BOOL checked = !v;  // Invert the sense of the checkbox for "disabled"
-    return [NSNumber numberWithInteger: (checked ? NSOnState : NSOffState)];
+    return [NSNumber numberWithInteger: (checked ? NSControlStateValueOn : NSControlStateValueOff)];
 
   } else {
     return s;   // The text in the "name" column

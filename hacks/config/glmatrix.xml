@@ -41,7 +41,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The 3D "digital rain" effect, as seen in the title sequence of "The Matrix".
 
 See also "xmatrix" for a 2D rendering of the similar effect that

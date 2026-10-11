@@ -31,7 +31,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Iterative fractals.
 
 Written by Scott Draves; 1993.

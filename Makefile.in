@@ -35,8 +35,8 @@ TAR_DIR		= archive
 # Using $(MAKE) directly means the shell executes things even with "make -n"
 MAKE2 = $(MAKE)
 
-MAKE_SUBDIR  = for dir in $(SUBDIRS);  do (cd $$dir && $(MAKE2) $@) || exit 5; done
-MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do (cd $$dir && $(MAKE2) $@) || exit 5; done
+MAKE_SUBDIR  = for dir in $(SUBDIRS);  do $(MAKE2) -C $$dir $@ || exit 5; done
+MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do $(MAKE2) -C $$dir $@ || exit 5; done
 
 default::
 	@+$(MAKE_SUBDIR)
@@ -61,7 +61,7 @@ depend::
 distdepend::
 	@$(MAKE2) update_spec_version
 	@$(MAKE_SUBDIR2)
-	@cd po ; $(MAKE2) update-po
+	@$(MAKE2) -C po update-po
 
 TAGS:: tags
 tags::
@@ -99,12 +99,15 @@ _tar:
   [ -d "$$ADIR" ] || mkdir "$$ADIR" ;					    \
   rm -f "$$LIST" ;							    \
   for subdir in . $(SUBDIRS2) ; do					    \
-    ( cd "$$subdir" || exit 1 ;						    \
-      $(MAKE2) list_tarfiles						    \
-        | grep -v '^.*make\['						    \
-        | sed -e "s@^@$$NAME/$$subdir/@g"				    \
-        | sed -e "s@/\./@/@g"						    \
-    ) >> "$$LIST" ;							    \
+    if ! [ -d "$$subdir" ]; then					    \
+     echo "WARNING: $$subdir/ does not exist." >&2 ;			    \
+   else									    \
+     $(MAKE2) -C "$$subdir" list_tarfiles				    \
+       | grep -v '^.*make\['						    \
+       | sed -e "s@^@$$NAME/$$subdir/@g"				    \
+       | sed -e "s@/\./@/@g"						    \
+       >> "$$LIST" ;							    \
+   fi ;									    \
   done ;								    \
   echo "creating tar file $$ADIR/$$NAME.tar.gz..." ;			    \
   export COPYFILE_DISABLE=true ;					    \
@@ -447,9 +450,10 @@ www::
 									    \
   for EXT in tar.gz dmg apk ; do					    \
     OLDEST=`ls xscreensaver*.$$EXT | 					    \
-      grep -F -v 5.14 |							    \
-      grep -F -v 5.34 |							    \
-      grep -F -v 6.00 |							    \
+      grep -F -v 5.14.dmg |						    \
+      grep -F -v 5.34.dmg |						    \
+      grep -F -v 6.00.dmg |						    \
+      grep -F -v 6.16.dmg |						    \
       head -n 1` ;							    \
     /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
     read -r line;							    \
@@ -550,9 +554,12 @@ cerebrum::
 	--include '*.jpg' \
 	--include '*.m' \
 	--include '*.m4' \
+	--include '*.md' \
 	--include '*.pdb' \
 	--include '*.png' \
 	--include '*.po' \
+	--include '*.gmo' \
+	--include 'LINGUAS' \
 	--include '*.xml' \
 	--include '*.xpm' \
 	--include '*.man' \
@@ -588,6 +595,8 @@ cerebrum::
 	--include '*.xsd' \
 	--include '*.pbxproj' \
 	--include '.gdbinit' \
+	--include 'OSX/Makefile' \
+	--include 'android/Makefile' \
 	--include '*/' \
 	--exclude '*'
 

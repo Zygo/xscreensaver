@@ -95,7 +95,7 @@
 
   <xscreensaver-updater />
 
- <_description>
+ <_description xml:space="preserve">
 The six regular 4D polytopes rotating in 4D.
 
 Inspired by H.S.M Coxeter's book "Regular Polytopes", 3rd Edition,

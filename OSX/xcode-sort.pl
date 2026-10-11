@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.01 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.02 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -33,7 +33,7 @@ sub write_if_changed($$$) {
     open (my $out, '>:utf8', $tmp) || error ("$tmp: $!");
     print $out $body;
     close $out;
-    system ("diff -U4 $tmp $file");
+    system ("diff -U4 $file $tmp");
     unlink ($tmp);
   } else {
     open (my $out, '>:utf8', $file) || error ("$file: $!");

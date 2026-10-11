@@ -1,4 +1,4 @@
-/* gibson, Copyright © 2020-2025 Jamie Zawinski <jwz@jwz.org>
+/* gibson, Copyright © 2020-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -46,6 +46,11 @@
 #define DEF_COLUMNS	 "5"
 
 #define GROUND_QUAD_SIZE 30
+
+/* ENABLE_NLS: define this blank so that we can use it to tag static strings.
+   We call gettext manually. */
+# undef _
+# define _(S) S
 
 typedef struct {
   GLfloat x, y, h;
@@ -761,20 +766,20 @@ animate_towers (ModeInfo *mi)
   if (bp->billboard_y < min || !bp->billboard_text)
     {
       const char *const ss[] = {
-        "ACCESS GRANTED",
-        "ACCESS GRANTED",
-        "ACCESS DENIED",
-        "ACCESS DENIED",
-        "ACCESS DENIED",
-        "ACCESS DENIED",
-        "ACCESS DENIED",
-        "PASSWORD ACCEPTED",
-        " GIVE ME\nA COOKIE",
-        "MESS WITH THE BEST\n  DIE LIKE THE REST",
+        _("ACCESS GRANTED"),
+        _("ACCESS GRANTED"),
+        _("ACCESS DENIED"),
+        _("ACCESS DENIED"),
+        _("ACCESS DENIED"),
+        _("ACCESS DENIED"),
+        _("ACCESS DENIED"),
+        _("PASSWORD ACCEPTED"),
+        _(" GIVE ME\nA COOKIE"),
+        _("MESS WITH THE BEST\n  DIE LIKE THE REST"),
       };
 
       bp->billboard_y = max * (1 + frand(8));
-      bp->billboard_text = ss[random() % countof(ss)];
+      bp->billboard_text = gettext (ss[random() % countof(ss)]);
     }
 }
 
@@ -850,86 +855,86 @@ init_text (ModeInfo *mi)
   char *s;
 
   const char *const ss[] = {
-   "\n"
-   "ACCESS TO THIS COMPUTER AND\n"
-   "ITS DATA IS RESTRICTED TO\n"
-   "AUTHORIZED PERSONNEL ONLY\n"
-   "\n",
-   "\n"
-   "  PASSWORD ACCEPTED\n"
-   "             GOD\n"
-   "\n",
-   "PERSONNEL   >>>\n",
-   "SEA ROUTINGS   >>>\n",
-   "GARBAGE   >>>\n",
-   "COMP. SERVICING   >>>\n",
-   "COMPANY BUDGETS   >>>\n",
-   "SCIENTIFIC BUDGETS   >>>\n",
-   "COMPANY POLICIES   >>>\n",
-   "ANNUAL RETURNS   >>>\n",
-   "MINE RESEARCH   >>>\n",
-   "CENTRAL LIBRARY   >>>\n",
-   "QUANTATIVE SPEC.   >>>\n",
-   "PAYMENT LEVELS   >>>\n",
-   "CENTRAL SERVER   >>>\n",
-   "GARBAGE   >>>\n",
-   "KNMTS. DVPNT.   >>>\n",
-   "LICENSING   >>>\n",
-   "RELATIONS   >>>\n",
-   "TIME SHEET RECS.   >>>\n",
-   "RD. PRT. ROUTINGS   >>>\n",
-   "RECRUITMENT   >>>\n",
-   "TNKR. EXPENDITURE   >>>\n",
-   "MINE DEVELOPMENT   >>>\n",
-   "GARBAGE   >>>\n",
-   "ANNUAL BUDGETS   >>>\n",
-   "OIL LOCATIONS   >>>\n",
-   "TIME SHEET RECS.   >>>\n",
-   "RD. PRT. ROUTINGS   >>>\n",
-   "KINEMATICS   >>>\n",
-   "TPS. REPORTS   >>>\n",
-   "BLAST FRNC. STATUS   >>>\n",
-   "ACCOUNTANTS   >>>\n",
-   "SHIPPING FORCASTS   >>>\n",
-   "INDST. REPORTS   >>>\n",
-   "EXPLOR. DVLT.   >>>\n",
-   "WRHSE. EXPEND.   >>>\n",
-   "GARBAGE   >>>\n",
-   "RELOCATIONS   >>>\n",
-   "AIRFREIGHT STATUS   >>>\n",
-   "TPGC. EXPEND.   >>>\n",
-   "SEA-BOARD LAWS   >>>\n",
-   "COMPOSITE PLANTS   >>>\n",
-   "NUCLEAR RESEARCH   >>>\n",
-   "BALLAST REPORTS   >>>\n",
-   "\n"
-   "CONFIDENTAL\n"
-   "FILES\n"
-   "DO NOT DELETE\n"
-   "BEFORE FINAL\n"
-   "BACKUP IS COMPLETED\n"
-   "\n",
-   "\n"
-   "FILE 1\n"
-   "WAITING FOR BACK-UP\n"
-   "\n"
-   "FILE 2\n"
-   "WAITING FOR BACK-UP\n"
-   "\n"
-   "FILE 3\n"
-   "WAITING FOR BACK-UP\n"
-   "\n"
-   "FILE 4\n"
-   "WAITING FOR BACK-UP\n"
-   "\n"
+   _("\n"
+     "ACCESS TO THIS COMPUTER AND\n"
+     "ITS DATA IS RESTRICTED TO\n"
+     "AUTHORIZED PERSONNEL ONLY\n"
+     "\n"),
+   _("\n"
+     "  PASSWORD ACCEPTED\n"
+     "             GOD\n"
+     "\n"),
+   _("PERSONNEL   >>>\n"),
+   _("SEA ROUTINGS   >>>\n"),
+   _("GARBAGE   >>>\n"),
+   _("COMP. SERVICING   >>>\n"),
+   _("COMPANY BUDGETS   >>>\n"),
+   _("SCIENTIFIC BUDGETS   >>>\n"),
+   _("COMPANY POLICIES   >>>\n"),
+   _("ANNUAL RETURNS   >>>\n"),
+   _("MINE RESEARCH   >>>\n"),
+   _("CENTRAL LIBRARY   >>>\n"),
+   _("QUANTATIVE SPEC.   >>>\n"),
+   _("PAYMENT LEVELS   >>>\n"),
+   _("CENTRAL SERVER   >>>\n"),
+   _("GARBAGE   >>>\n"),
+   _("KNMTS. DVPNT.   >>>\n"),
+   _("LICENSING   >>>\n"),
+   _("RELATIONS   >>>\n"),
+   _("TIME SHEET RECS.   >>>\n"),
+   _("RD. PRT. ROUTINGS   >>>\n"),
+   _("RECRUITMENT   >>>\n"),
+   _("TNKR. EXPENDITURE   >>>\n"),
+   _("MINE DEVELOPMENT   >>>\n"),
+   _("GARBAGE   >>>\n"),
+   _("ANNUAL BUDGETS   >>>\n"),
+   _("OIL LOCATIONS   >>>\n"),
+   _("TIME SHEET RECS.   >>>\n"),
+   _("RD. PRT. ROUTINGS   >>>\n"),
+   _("KINEMATICS   >>>\n"),
+   _("TPS. REPORTS   >>>\n"),
+   _("BLAST FRNC. STATUS   >>>\n"),
+   _("ACCOUNTANTS   >>>\n"),
+   _("SHIPPING FORCASTS   >>>\n"),
+   _("INDST. REPORTS   >>>\n"),
+   _("EXPLOR. DVLT.   >>>\n"),
+   _("WRHSE. EXPEND.   >>>\n"),
+   _("GARBAGE   >>>\n"),
+   _("RELOCATIONS   >>>\n"),
+   _("AIRFREIGHT STATUS   >>>\n"),
+   _("TPGC. EXPEND.   >>>\n"),
+   _("SEA-BOARD LAWS   >>>\n"),
+   _("COMPOSITE PLANTS   >>>\n"),
+   _("NUCLEAR RESEARCH   >>>\n"),
+   _("BALLAST REPORTS   >>>\n"),
+   _("\n"
+     "CONFIDENTAL\n"
+     "FILES\n"
+     "DO NOT DELETE\n"
+     "BEFORE FINAL\n"
+     "BACKUP IS COMPLETED\n"
+     "\n"),
+   _("\n"
+     "FILE 1\n"
+     "WAITING FOR BACK-UP\n"
+     "\n"
+     "FILE 2\n"
+     "WAITING FOR BACK-UP\n"
+     "\n"
+     "FILE 3\n"
+     "WAITING FOR BACK-UP\n"
+     "\n"
+     "FILE 4\n"
+     "WAITING FOR BACK-UP\n"
+     "\n")
    };
 
 
-  bp->text[1].text = s = calloc (countof(ss) * 2 * 40, 1);
+  bp->text[1].text = s = calloc (countof(ss) * 2 * 100, 1);
   for (i = 0; i < countof(ss); i++)
     {
       int n = random() % countof(ss);
-      strcat (s, ss[n]);
+      strcat (s, gettext (ss[n]));
       s += strlen(s);
     }
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2012-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,6 +16,7 @@
 
 #import "SaverListController.h"
 #import "SaverRunner.h"
+#import "nslog.h"
 #import "yarandom.h"
 #import "version.h"
 
@@ -24,6 +25,27 @@
 
 
 @implementation SaverListController
+{
+  UIView *v;
+  UILabel *label1;
+  UILabel *label2;
+  UISearchBar *search;
+
+  int active_section_count;
+  NSMutableArray *list_by_letter[26];  // 27 to get "#" after "Z".
+  NSMutableArray *letter_sections;
+  NSMutableArray *section_titles;
+  NSArray *names;
+  NSDictionary *descriptions;
+  NSMutableDictionary *delocalize;
+
+  int tap_count;
+  NSTimer *tap_timer;
+  NSIndexPath *last_tap;
+
+  SaverRunner *saver_runner;
+}
+
 
 - (void) titleTapped:(id) sender
 {
@@ -171,11 +193,43 @@
   [super viewWillLayoutSubviews];
 }
 
-- (id)initWithNames:(NSArray *)_names descriptions:(NSDictionary *)_descs;
+- (NSString *)localizeName:(NSString *)name
+{
+  NSString *loc = NSLocalizedString (name, @"");
+  if ([name isEqualToString: loc])
+    return name;
+  else
+    return [NSString stringWithFormat: @"%@ (%@)", name, loc];
+}
+
+
+- (id)initWithNames:(NSArray *)_names
+       descriptions:(NSDictionary *)_descs
+             runner:(NSObject *)r;
 {
   self = [self init];
   if (! self) return 0;
-  [self reload:_names descriptions:_descs search:nil];
+
+  NSAssert ([r isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
+  saver_runner = (SaverRunner *) r;
+
+  delocalize = [[NSMutableDictionary dictionaryWithCapacity:[_descs count]]
+                 retain];
+
+  // Put all three possible keys in the dict.
+  NSMutableDictionary *descs2 = 
+    [NSMutableDictionary dictionaryWithCapacity:[_descs count] * 3];
+  for (NSString *key1 in [_descs allKeys]) {
+    NSString *val  = [_descs objectForKey: key1];
+    NSString *key2 = NSLocalizedString (key1, @"");
+    NSString *key3 = [self localizeName: key1];
+    [descs2 setObject:val forKey:key1];
+    [descs2 setObject:val forKey:key2];
+    [descs2 setObject:val forKey:key3];
+    [delocalize setObject:key1 forKey:key3];
+  }
+
+  [self reload:_names descriptions:descs2 search:nil];
   [self makeTitleBar];
   return self;
 }
@@ -225,13 +279,15 @@
 
   for (NSString *name in names) {
 
+    NSString *name2 = [self localizeName: name];
+
     // If we're searching, omit any items that don't have a match in the
     // title or description.
     //
     BOOL matchp = (!search || [search length] == 0);
     if (! matchp) {
-      matchp = ([name rangeOfString:search
-                            options:NSCaseInsensitiveSearch].location
+      matchp = ([name2 rangeOfString:search
+                             options:NSCaseInsensitiveSearch].location
                 != NSNotFound);
     }
     if (! matchp) {
@@ -243,14 +299,14 @@
     if (! matchp)
       continue;
 
-    int index = ([name cStringUsingEncoding: NSUTF8StringEncoding])[0];
+    int index = ([name2 cStringUsingEncoding: NSUTF8StringEncoding])[0];
     if (index >= 'a' && index <= 'z')
       index -= 'a'-'A';
     if (index >= 'A' && index <= 'Z')
       index -= 'A';
     else
       index = n-1;
-    [list_by_letter[index] addObject: name];
+    [list_by_letter[index] addObject: name2];
   }
 
   active_section_count = 0;
@@ -337,15 +393,15 @@
         didSelectRowAtIndexPath:(NSIndexPath *)ip
 {
   UITableViewCell *cell = [tv cellForRowAtIndexPath: ip];
-  SaverRunner *s = 
-    (SaverRunner *) [[UIApplication sharedApplication] delegate];
-  if (! s) return;
 
   // Dismiss the search field's keyboard before launching a saver.
   [self.tableView.tableHeaderView resignFirstResponder];
 
-  NSAssert ([s isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
-  [s loadSaver: cell.textLabel.text];
+  NSString *name = cell.textLabel.text;
+  NSString *deloc = [delocalize objectForKey: name];
+  if (deloc) name = deloc;
+
+  [saver_runner loadSaver: name];
 }
 
 /* Selecting a row's Disclosure Button opens the preferences.
@@ -354,11 +410,13 @@
         accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)ip
 {
   UITableViewCell *cell = [tv cellForRowAtIndexPath: ip];
-  SaverRunner *s = 
-    (SaverRunner *) [[UIApplication sharedApplication] delegate];
-  if (! s) return;
-  NSAssert ([s isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
-  [s openPreferences: cell.textLabel.text];
+
+  // The cell has localized text in it. We need the English name.
+  NSString *name = cell.textLabel.text;
+  NSString *deloc = [delocalize objectForKey: name];
+  if (deloc) name = deloc;
+
+  [saver_runner openPreferences: name];
 }
 
 
@@ -367,6 +425,7 @@
   int i = 0;
   int j = 0;
   Bool ok = NO;
+  name = [self localizeName: name];
   for (NSArray *a in letter_sections) {
     j = 0;
     for (NSString *n in a) {
@@ -443,12 +502,8 @@
   if (! n) return;
   NSString *which = [a objectAtIndex: (random() % n)];
 
-  SaverRunner *s = 
-    (SaverRunner *) [[UIApplication sharedApplication] delegate];
-  if (! s) return;
-  NSAssert ([s isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
   [self scrollTo: which];
-  [s loadSaver: which];
+  [saver_runner loadSaver: which];
 }
 
 
@@ -459,6 +514,7 @@
   [letter_sections release];
   [section_titles release];
   [descriptions release];
+  [delocalize release];
   [super dealloc];
 }
 

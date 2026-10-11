@@ -42,7 +42,7 @@
 
  <xscreensaver-updater />
 
- <_description>
+ <_description xml:space="preserve">
 Solves the Towers of Hanoi puzzle. Move N disks from one pole to
 another, one disk at a time, with no disk ever resting on a disk
 smaller than itself.

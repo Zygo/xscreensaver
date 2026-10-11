@@ -1,5 +1,5 @@
 #!/bin/bash
-# XScreenSaver, Copyright © 2013-2025 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,7 @@
 #set -x
 
 DEBUG=0
-REQUIRED_SPACE=400  # MB
+REQUIRED_SPACE=450  # MB
 
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:$PATH"
 
@@ -198,12 +198,10 @@ if [ ! -z "$pid" ]; then
 fi
 
 
-# Launch the updater so that the user gets these dialogs now, instead of them
-# happening the first time a screen saver activates, and that screen saver
-# failing to run and showing up black.  (I'm not sure if this is working.)
-#
-#   - "XScreenSaverUpdater was downloaded from the internet, are you sure?"
-#   - "Rosetta 2 must be installed to run this software. Install it?”
+# Launch the updater so that the user gets the dialog nagging them that
+# "XScreenSaverUpdater was downloaded from the internet, are you sure?"
+# right now, instead of it popping up the first time a screen saver
+# activates, and that screen saver failing to run and showing up black.
 #
 su "$USER" -c "open \"$DST1/$UPDATER_DST\"" &
 sleep 5
@@ -219,13 +217,30 @@ if [ ! -z "$pid" ]; then
 fi
 
 
-# Launch System Preferences with the "Desktop" pane selected.  In the olden
-# days, this was a single pane with two tabs, "Desktop" and "Screen Saver",
-# and it would always come up with "Desktop" selected.  As of macOS 13, these
-# are two top-level pages, and this still opens the "Desktop" one.  There is
-# still no way to open the "Screen Saver" page directly.  I'm guessing they
-# are the same code, despite displaying two tabs.  Well, at least this scrolls
-# the list of pages to *approximately* the right spot...
+# Blow away the icon cache so that the .saver bundles' thumbnails show up.
+# This seems to be necessary as of macOS 27.
+# Update: nope that doesn't work.
+#
+#for DIR in \
+#  /var/folders/*/*/*/com.apple.wallpaper.extension.legacy/com.apple.wallpaper.legacy.thumbnails \
+#; do
+#  if [ -d "$DIR" ]; then
+#    echo "Clearing icon cache $DIR" >&2
+#    rm -f "$DIR"/*
+#  else
+#    echo "No icon cache in $DIR" >&2
+#  fi
+#done
+
+
+# Launch System Preferences with the saver-related pane selected.  In
+# macOS 12 and earlier, this was a single pane with two tabs, "Desktop"
+# and "Screen Saver", and it would always come up with "Desktop" selected.
+# In macOS 10.13, these became two top-level panes, and this opened the
+# "Desktop" pane instead of the "Screen Saver" pane. Then in macOS 26,
+# this became the "Wallpaper" pane, but you still have to click the
+# "Screen Saver..." button at the top to get to the list of savers.
+# Everything is terrible.
 #
 su "$USER" -c \
  "open /System/Library/PreferencePanes/DesktopScreenEffectsPref.prefPane" &

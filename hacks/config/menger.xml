@@ -37,7 +37,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The Menger Gasket is a cube-based recursive fractal object
 analogous to the Sierpinski Tetrahedron.
 

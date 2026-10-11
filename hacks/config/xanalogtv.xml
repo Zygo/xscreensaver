@@ -37,7 +37,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 An old TV set, including artifacts like snow, bloom, distortion,
 ghosting, and hash noise.  It also simulates the TV warming up. It
 will cycle through 12 channels, some with images you give it, and some

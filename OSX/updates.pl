@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2013-2023 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2013-2026 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use open ":encoding(utf8)";
 use POSIX;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.13 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.14 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -137,7 +137,7 @@ sub generate_xml($$$$) {
     foreach my $ext ('dmg') {
       foreach my $v ($v1, $v2) {
         next if ($app_name =~ m/xscreensaver/i
-                 ? $v le '6.00'   # Skip the really old DMGs (5.14 PPC, etc.)
+                 ? $v le '6.12'   # Skip the really old DMGs (5.14 PPC, etc.)
                  : $v le '243');
         foreach my $name ($app_name, "x" . lc($app_name)) {
           my $f = "$name-$v.$ext";
@@ -151,7 +151,8 @@ sub generate_xml($$$$) {
 
     error ("no dmg for $v1") if (!$zip && $count == 0);
 
-    my $publishedp = ($zip && -f "$www_dir/$zip");
+   #my $publishedp = ($zip && -f "$www_dir/$zip");
+    my $publishedp = !!$zip;
     $publishedp = 1 if ($count == 0);
 
     my $url = ("${base_url}$app_name/" . ($publishedp && $zip ? $zip : ""));

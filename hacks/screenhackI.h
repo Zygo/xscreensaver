@@ -182,6 +182,18 @@
 # include "recanim.h"
 #endif
 
+#ifdef ENABLE_NLS
+# include <locale.h>
+# include <libintl.h>
+# define _(S) gettext(S)
+#elif defined(HAVE_COCOA)
+  extern const char *gettext(const char *msgid); /* OSX/XScreenSaverView.m */
+# define _(S) gettext(S)
+#else
+# define _(S) (S)
+# define gettext(S) (S)
+#endif
+
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 

@@ -44,7 +44,7 @@
     </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 The Hopf fibration of the 4d hypersphere S³.
 
 The Hopf fibration is based on the Hopf map, a many-to-one continuous

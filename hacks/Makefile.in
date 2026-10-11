@@ -16,6 +16,7 @@ exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 datarootdir	= @datarootdir@
 datadir		= @datadir@
+localedir	= @PO_DATADIR@/locale
 mandir		= @mandir@
 libexecdir	= @libexecdir@
 mansuffix	= 6
@@ -27,7 +28,7 @@ HACK_CONF_DIR	= @HACK_CONF_DIR@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
-DEFS		= -DSTANDALONE @DEFS@
+DEFS		= -DSTANDALONE @DEFS@ -DLOCALEDIR=\"$(localedir)\"
 LIBS		= @LIBS@
 PERL		= @PERL@
 
@@ -1241,6 +1242,7 @@ barcode.o: $(UTILS_SRC)/grabclient.h
 barcode.o: $(UTILS_SRC)/hsv.h
 barcode.o: $(UTILS_SRC)/resources.h
 barcode.o: $(UTILS_SRC)/usleep.h
+barcode.o: $(UTILS_SRC)/utf8wc.h
 barcode.o: $(UTILS_SRC)/visual.h
 barcode.o: $(UTILS_SRC)/xft.h
 barcode.o: $(UTILS_SRC)/yarandom.h

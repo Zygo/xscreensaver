@@ -41,7 +41,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 2D meta-balls: overlapping and merging balls with fuzzy edges.
 
 https://en.wikipedia.org/wiki/Metaballs

@@ -47,7 +47,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Strange attractors formed of flows in a 3D differential equation phase
 space.  Features the popular attractors described by Lorentz,
 Roessler, Birkhoff and Duffing, and can discover entirely new

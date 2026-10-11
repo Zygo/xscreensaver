@@ -120,7 +120,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A Klein bottle is the 4D analog of a möbius strip.
 
 You can walk on the surface of the bottle or rotate it in 4D or walk

@@ -45,7 +45,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A colorful random-walk.
 
 https://en.wikipedia.org/wiki/Random_walk

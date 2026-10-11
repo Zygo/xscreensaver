@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -70,11 +70,11 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-implementations"
+
 - (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
 {
   return allowRotation;				/* Deprecated in iOS 6 */
 }
-#pragma clang diagnostic pop
 
 # ifndef HAVE_TVOS
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
@@ -87,6 +87,8 @@
   return UIInterfaceOrientationMaskAll;
 }
 # endif // !HAVE_TVOS
+
+#pragma clang diagnostic pop
 
 @end
 
@@ -396,11 +398,11 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-implementations"
+
 - (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
 {
   return NO;					/* Deprecated in iOS 6 */
 }
-#pragma clang diagnostic pop
 
 
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
@@ -410,6 +412,8 @@
     ![_saverView suppressRotationAnimation] :
     YES;
 }
+
+#pragma clang diagnostic pop
 
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations	/* Added in iOS 6 */
@@ -486,15 +490,6 @@
   }];
   // No code goes here, as it would execute before the above completes.
 }
-
-/* Not called
-- (void)willTransitionToTraitCollection:(UITraitCollection *)collection
-              withTransitionCoordinator:
-                (id<UIViewControllerTransitionCoordinator>)coordinator
-{
-  NSLog(@"#### %@ %@", collection, coordinator);
-}
-*/
 
 @end
 
@@ -742,25 +737,26 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 # ifndef HAVE_TVOS
   // Rotate the graphics context to match current hardware rotation.
   //
+  UIWindow *win = saver_window;
   switch (orient) {
   case UIInterfaceOrientationPortraitUpsideDown:
-    CGContextTranslateCTM (ctx,  [window center].x,  [window center].y);
+    CGContextTranslateCTM (ctx,  [win center].x,  [win center].y);
     CGContextRotateCTM (ctx, M_PI);
-    CGContextTranslateCTM (ctx, -[window center].x, -[window center].y);
+    CGContextTranslateCTM (ctx, -[win center].x, -[win center].y);
     break;
   case UIInterfaceOrientationLandscapeLeft:
   case UIInterfaceOrientationLandscapeRight:
     CGContextTranslateCTM (ctx,  
-                           ([window frame].size.height -
-                            [window frame].size.width) / 2,
-                           ([window frame].size.width -
-                            [window frame].size.height) / 2);
-    CGContextTranslateCTM (ctx,  [window center].x,  [window center].y);
+                           ([win frame].size.height -
+                            [win frame].size.width) / 2,
+                           ([win frame].size.width -
+                            [win frame].size.height) / 2);
+    CGContextTranslateCTM (ctx,  [win center].x,  [win center].y);
     CGContextRotateCTM (ctx, 
                         (orient == UIInterfaceOrientationLandscapeLeft
                          ?  M_PI/2
                          : -M_PI/2));
-    CGContextTranslateCTM (ctx, -[window center].x, -[window center].y);
+    CGContextTranslateCTM (ctx, -[win center].x, -[win center].y);
     break;
   default:
     break;
@@ -770,7 +766,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
   // Iterate over every window from back to front
   //
-  for (UIWindow *win in [[UIApplication sharedApplication] windows]) {
+  UIWindowScene *scene = (UIWindowScene *)
+    [[[[UIApplication sharedApplication] connectedScenes]
+       allObjects] firstObject];
+  for (UIWindow *win in scene.windows) {
     if (![win respondsToSelector:@selector(screen)] ||
         [win screen] == [UIScreen mainScreen]) {
 
@@ -1226,17 +1225,33 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   desc = [XScreenSaverView decompressXML:xmld];
   if (! desc) goto FAIL;
 
-  NSRange r = [desc rangeOfString:@"<_description>"
+  NSRange r = [desc rangeOfString:@"<_description"
                           options:NSCaseInsensitiveSearch];
   if (r.length == 0) {
     desc = 0;
     goto FAIL;
   }
+
+  r = [desc rangeOfString: @">" options:0
+                    range: NSMakeRange (NSMaxRange(r),
+                                        desc.length - NSMaxRange(r))];
+  if (r.length == 0) {
+    desc = 0;
+    goto FAIL;
+  }
+
   desc = [desc substringFromIndex: r.location + r.length];
   r = [desc rangeOfString:@"</_description>"
             options:NSCaseInsensitiveSearch];
   if (r.length > 0)
     desc = [desc substringToIndex: r.location];
+
+  // We use "_HACKNAME_description" as the localization key.
+  NSString *key = [[[@"_" stringByAppendingString:classname] lowercaseString]
+                      stringByAppendingString:@"_description"];
+  NSString *loc = NSLocalizedString(key, @"");
+  if ([key isEqualToString:loc])
+    loc = nil;
 
   // Leading and trailing whitespace.
   desc = [desc stringByTrimmingCharactersInSet:
@@ -1253,6 +1268,17 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     int n = [word doubleValue];
     if (n > 1970 && n < 2100)
       year = word;
+  }
+
+  // Now that we have found the year from the English text,
+  // swap in the localized version.
+  //
+  if (loc) {
+    desc = loc;
+
+    // Leading and trailing whitespace again.
+    desc = [desc stringByTrimmingCharactersInSet:
+                   [NSCharacterSet whitespaceAndNewlineCharacterSet]];
   }
 
   // Delete everything after the first blank line.
@@ -1406,7 +1432,7 @@ FAIL:
     rect.size.width = rect.size.height = 10;
     pb = [[NSButton alloc] initWithFrame:rect];
     [pb setTitle:NSLocalizedString(@"Preferences", @"")];
-    [pb setBezelStyle:NSRoundedBezelStyle];
+    [pb setBezelStyle:NSBezelStylePush];
     [pb sizeToFit];
 
     rect.origin.x = ([sv frame].size.width -
@@ -1444,7 +1470,8 @@ FAIL:
     rect.size.height = [gbox frame].size.height + [gbox frame].origin.y;
     pbox = [[NSBox alloc] initWithFrame:rect];
     [pbox setTitlePosition:NSNoTitle];
-    [pbox setBorderType:NSNoBorder];
+  //[pbox setBorderType:NSNoBorder];
+    pbox.transparent = TRUE;
     [pbox addSubview:gbox];
     [gbox release];
     if (menu) [pbox addSubview:menu];
@@ -1507,11 +1534,10 @@ FAIL:
 # endif // !HAVE_IPHONE
 
 
-- (void)applicationDidFinishLaunching:
 # ifndef HAVE_IPHONE
-    (NSNotification *) notif
+- (void) applicationDidFinishLaunching: (NSNotification *) notif
 # else  // HAVE_IPHONE
-    (UIApplication *) application
+- (void) didFinishLaunching_1: (UIWindowScene *) scene
 # endif // HAVE_IPHONE
 {
   [self listSaverBundleNames];
@@ -1547,7 +1573,7 @@ FAIL:
   ya_rand_init (0);	// Now's a good time.
 
 
-# ifndef HAVE_TVOS
+#  ifndef HAVE_TVOS
   /* iOS docs say:
      "You must call this method before attempting to get orientation data from
       the receiver. This method enables the device's accelerometer hardware
@@ -1556,7 +1582,7 @@ FAIL:
      Adding or removing this doesn't seem to make any difference. It's
      probably getting called by the UINavigationController. Still... */
   [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-# endif // !HAVE_TVOS
+#  endif // !HAVE_TVOS
 
   rotating_nav = [[[RotateyViewController alloc] initWithRotation:YES]
                          retain];
@@ -1564,21 +1590,33 @@ FAIL:
   if ([prefs boolForKey:@"wasRunning"]) // Prevents menu flicker on startup.
     rotating_nav.view.hidden = YES;
 
-  [window setRootViewController: rotating_nav];
-  [window setAutoresizesSubviews:YES];
-  [window setAutoresizingMask: 
+  // I think that it used to be that 'saver_window' was created when
+  // iSaverRunner.xib was loaded, since it is an IBOutlet.  But I guess
+  // now we need to create it by hand to connect it to the UIWindowScene.
+  //
+  // #### Does this mean that iSaverRunner.xib is no longer used at all?
+
+  // UIWindow *win = saver_window;
+  UIWindow *win = [[UIWindow alloc] initWithWindowScene: scene];
+  saver_window = win;
+
+  [win setRootViewController: rotating_nav];
+  [win setAutoresizesSubviews:YES];
+  [win setAutoresizingMask: 
             (UIViewAutoresizingFlexibleWidth | 
              UIViewAutoresizingFlexibleHeight)];
+  [win makeKeyAndVisible];
 
   SaverListController *menu = [[SaverListController alloc] 
-                                initWithNames:[saverNames allKeys]
-                                descriptions:[self makeDescTable]];
+                                initWithNames: [saverNames allKeys]
+                                 descriptions: [self makeDescTable]
+                                       runner: self];
   [rotating_nav pushViewController:menu animated:YES];
   [menu becomeFirstResponder];
   [menu autorelease];
 
 # ifndef HAVE_TVOS
-  application.applicationSupportsShakeToEdit = YES;
+  [UIApplication sharedApplication].applicationSupportsShakeToEdit = YES;
 # endif // !HAVE_TVOS
 
 
@@ -1685,6 +1723,8 @@ FAIL:
 }
 
 
+# pragma mark UIApplicationDelegate and NSWindowDelegate methods
+
 #ifndef HAVE_IPHONE
 
 /* When the window closes, exit (even if prefs still open.)
@@ -1710,17 +1750,115 @@ FAIL:
 
 - (void)applicationWillResignActive:(UIApplication *)app
 {
-  [(XScreenSaverView *)view setScreenLocked:YES];
+  [(XScreenSaverView *)saver_view setScreenLocked:YES];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)app
 {
-  [(XScreenSaverView *)view setScreenLocked:NO];
+  [(XScreenSaverView *)saver_view setScreenLocked:NO];
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
-  [(XScreenSaverView *)view setScreenLocked:YES];
+  [(XScreenSaverView *)saver_view setScreenLocked:YES];
+}
+
+#endif // HAVE_IPHONE
+
+
+
+#ifdef HAVE_IPHONE
+
+# pragma mark UISceneDelegate methods
+
+// Scene-based launch nonsense, required as of 2026.
+//
+- (void) scene:(UIScene *) scene 
+  willConnectToSession:(UISceneSession *) sess
+       options:(UISceneConnectionOptions *) opts
+{
+  // This seems to be the closest analog of applicationDidFinishLaunching
+  if (!rotating_nav && !nonrotating_controller)
+    [self didFinishLaunching_1: (UIWindowScene *) scene];
+}
+
+/*
+- (void) sceneDidDisconnect:(UIScene *) scene
+{
+  // Maybe this should do stopAnimation?
+}
+
+- (void) sceneWillResignActive:(UIScene *) scene
+{
+  // Maybe this should do stopAnimation?
+}
+
+- (void) sceneDidEnterBackground:(UIScene *) scene
+{
+  // Maybe this should do stopAnimation?
+}
+
+- (void) sceneWillEnterForeground:(UIScene *) scene
+{
+  // Maybe this should do startAnimation?
+}
+
+- (void) sceneDidBecomeActive:(UIScene *) scene
+{
+  // Maybe this should do startAnimation?
+}
+*/
+
+
+/*
+// These are only called if iSaverRunner.plist does not contain
+// UIApplicationSceneManifest.UISceneConfigurations, which only
+// works on iOS 18, not on iOS 27.
+//
+- (BOOL) application:(UIApplication *) app
+willFinishLaunchingWithOptions:(NSDictionary<NSString *,id> *) opts
+{
+  return TRUE;
+}
+
+- (BOOL) application:(UIApplication *) app
+   didFinishLaunchingWithOptions:(NSDictionary<NSString *,id> *) opts
+{
+  return TRUE;
+}
+
+// This is never called.
+//
+- (UISceneConfiguration *) application:(UIApplication *) app
+  configurationForConnectingSceneSession: (UISceneSession *) sess 
+                                 options:(UISceneConnectionOptions *) opt
+{
+  return [UISceneConfiguration
+           configurationWithName: @"Default Configuration"
+                     sessionRole: UIWindowSceneSessionRoleApplication];
+}
+*/
+
+
+# pragma mark UIWindowSceneDelegate methods
+
+- (UIWindow *) window
+{
+  return saver_window;
+}
+
+/*
+- (void) windowScene:(UIWindowScene *) scene
+  didUpdateEffectiveGeometry:(UIWindowSceneGeometry *) prev
+{
+}
+*/
+
+// Maybe this is the default?
+- (UIInterfaceOrientationMask)
+  supportedInterfaceOrientationsForWindowScene: (UIWindowScene *) scene
+{
+  return UIInterfaceOrientationMaskAll;
 }
 
 #endif // HAVE_IPHONE

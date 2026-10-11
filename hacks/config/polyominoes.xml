@@ -25,7 +25,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Repeatedly attempts to completely fill a rectangle with
 irregularly-shaped puzzle pieces.
 

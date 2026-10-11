@@ -34,7 +34,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Chooses a random Unicode character and displays it full screen,
 along with some information about it.  If you only see squares,
 install better fonts.

@@ -1146,8 +1146,17 @@ static void set_description(Chesscreen *cs) {
     if (!labels)
         return;
 
-    for (int i = 0; i < DESC_STR_LEN + SAN_STR_LEN + 1; i++)
-        cs->game_desc[i] = cs->game.desc[i];
+    /* Copy a localized version of the label from the game template */
+    {
+      char *label = _(cs->game.desc);
+      int L = strlen(label);
+      if (L >= DESC_STR_LEN-1)
+        L = DESC_STR_LEN-1;
+      memset (cs->game_desc, 0, sizeof(cs->game_desc));
+      memcpy (cs->game_desc, label, L);
+    }
+
+    /* Append the move to the label */
     for (move_index = 0; move_index <= DESC_STR_LEN; move_index++) {
         if (cs->game_desc[move_index] == '\0')
             break;

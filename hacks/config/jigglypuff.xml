@@ -70,7 +70,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Quasi-spherical objects are distorted.
 
 You have a tetrahedron with tesselated faces.  The vertices on these

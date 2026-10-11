@@ -48,7 +48,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Loads several random images, and displays them flying in a circular
 formation.  Images are replaced periodically.
 

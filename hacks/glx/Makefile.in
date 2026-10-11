@@ -16,6 +16,7 @@ exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 datarootdir	= @datarootdir@
 datadir		= @datadir@
+localedir	= @PO_DATADIR@/locale
 mandir		= @mandir@
 libexecdir	= @libexecdir@
 mansuffix	= 6
@@ -27,7 +28,7 @@ HACK_CONF_DIR	= @HACK_CONF_DIR@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
-DEFS		= -DSTANDALONE @GL_CFLAGS@ @DEFS@
+DEFS		= -DSTANDALONE @GL_CFLAGS@ @DEFS@ -DLOCALEDIR=\"$(localedir)\"
 LIBS		= @LIBS@
 PERL		= @PERL@
 
@@ -314,7 +315,8 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h \
 		  dropshadow.h starwars.h teapot2.h dnapizza.h curlicue.h \
 		  quickhull.h dymaxionmap-coords.h handsy_anim.h \
 		  glsl-utils.h mapcities.h sphereeversion.h hopfanimations.h \
-		  klondike-game.h quaternion.h triangle.h countries.h
+		  klondike-game.h quaternion.h triangle.h countries.h \
+		  graphstat.h
 GL_MEN		= xscreensaver-gl-visual.man \
 		  atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
@@ -366,7 +368,7 @@ RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
 		  xshadertoy-download.pl xshadertoy-compile.pl \
 		  molecules.sh countries-build.pl starwars.txt zalgo.txt \
-		  graphstat.txt *.dxf glsl/README
+		  *.dxf glsl/README
 
 TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(GLSL_SRCS) $(GL_MEN) \
 		  $(RETIRED_MEN) $(EXTRAS)
@@ -1286,9 +1288,7 @@ FLOPPY=floppy.o floppy_model.o gllist.o $(EASE) $(HACK_TRACK_OBJS)
 floppy:				$(FLOPPY)
 	$(CC_HACK) -o $@	$(FLOPPY) $(HACK_LIBS)
 
-graphstat.h: graphstat.txt
-	$(UTILS_SRC)/bin2c $< $@
-graphstat.o: graphstat.h
+graphstat.o:	graphstat.h
 graphstat:	graphstat.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 

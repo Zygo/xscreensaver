@@ -41,7 +41,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Carves an image up into a jigsaw puzzle, shuffles it, and solves it.
 
 https://en.wikipedia.org/wiki/Jigsaw_puzzle

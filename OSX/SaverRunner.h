@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2020 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -55,7 +55,8 @@
 
 @interface SaverRunner : NSObject
 # ifdef HAVE_IPHONE
-  <XScreenSaverViewDelegate>
+  <UISceneDelegate, UIWindowSceneDelegate, UIApplicationDelegate,
+   XScreenSaverViewDelegate>
 # else
   <NSWindowDelegate>
 # endif
@@ -74,8 +75,8 @@
 # else  // HAVE_IPHONE
 
   UINavigationController *rotating_nav;		// Hierarchy 1 (UI)
-  IBOutlet UIWindow *window;
-  IBOutlet UIView *view;
+  IBOutlet UIWindow *saver_window;
+  IBOutlet UIView *saver_view;
 
   SaverViewController *nonrotating_controller;	// Hierarchy 2 (savers)
 

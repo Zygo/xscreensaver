@@ -36,6 +36,11 @@
 #include "tangram_shapes.h"
 #include "texfont.h"
 
+/* Arithmetic between floating-point type 'double' and enumeration type 'enum'
+ */
+#pragma clang diagnostic ignored "-Wenum-float-conversion"
+
+
 typedef struct {
     GLubyte r;
     GLubyte g;

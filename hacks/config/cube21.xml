@@ -66,7 +66,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The "Cube 21" Rubik-like puzzle, also known as "Square-1".
 The rotations are chosen randomly.  
 

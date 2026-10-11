@@ -22,7 +22,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="--fps"/>
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Rising, undulating 3D bubbles, with transparency and specular reflections. 
 
 Written by Richard Jones; 1998.

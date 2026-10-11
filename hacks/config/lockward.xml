@@ -57,7 +57,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A translucent spinning, blinking thing.  Sort of a cross between the wards
 in an old combination lock and those old backlit information displays that
 animated and changed color via polarized light.

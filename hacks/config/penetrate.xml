@@ -24,7 +24,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Simulates (something like) the classic arcade game Missile Command.
 
 https://en.wikipedia.org/wiki/Missile_Command

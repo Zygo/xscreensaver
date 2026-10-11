@@ -19,7 +19,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The Lyapunov exponent makes pretty fractal pictures.
 
 https://en.wikipedia.org/wiki/Lyapunov_exponent

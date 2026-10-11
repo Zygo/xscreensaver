@@ -27,7 +27,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Marble-like or cloud-like patterns generated using Perlin Noise and Fractal
 Brownian Motion.
 

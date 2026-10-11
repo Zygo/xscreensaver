@@ -61,7 +61,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Bounces a series of line segments around the screen with various
 presentations.
 

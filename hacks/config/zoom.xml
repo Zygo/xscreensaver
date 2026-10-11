@@ -44,7 +44,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Fatbits!  Zooms in on a part of an image and scrolls,
 distorting each pixel with its own lens.
 

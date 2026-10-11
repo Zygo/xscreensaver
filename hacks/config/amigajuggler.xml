@@ -24,7 +24,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A real-time recreation of Eric Graham's 1987 Amiga "Juggler" demo: a GLSL
 port of his recursive ray tracer. The robot, the balls, the checkerboard
 floor and the mirror reflections are all generated and raytraced procedurally.

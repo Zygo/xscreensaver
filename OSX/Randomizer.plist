@@ -11,13 +11,13 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>&#x200b; Random XScreenSaver</string>
+	<string>&#x200b;&#x2605; Random XScreenSaver</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>NSPrincipalClass</key>
@@ -25,12 +25,12 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>CFBundleLongVersionString</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>CFBundleGetInfoString</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>6.16</string>
+	<string>6.17</string>
 </dict>
 </plist>

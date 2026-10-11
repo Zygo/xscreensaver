@@ -17,7 +17,7 @@
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
         <customObject id="3" userLabel="SaverRunner" customClass="SaverRunner">
             <connections>
-                <outlet property="window" destination="2" id="5"/>
+                <outlet property="saver_window" destination="2" id="5"/>
             </connections>
         </customObject>
         <window opaque="NO" clearsContextBeforeDrawing="NO" multipleTouchEnabled="YES" contentMode="scaleToFill" visibleAtLaunch="YES" id="2">

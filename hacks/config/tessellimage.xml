@@ -44,7 +44,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 Converts an image to triangles using Delaunay tessellation, or to
 polygons using Voronoi tesselation, and animates the result at
 various depths.

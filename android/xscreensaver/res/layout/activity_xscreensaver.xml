@@ -22,18 +22,18 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="XScreenSaver"
+            android:text="@string/app_name"
             android:textSize="32sp" />
         <Button
             android:id="@+id/apply_wallpaper"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Open live wallpaper list" />
+            android:text="@string/open_live_wallpaper_list" />
         <Button
             android:id="@+id/apply_daydream"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Open screen saver list" />
+            android:text="@string/open_screensaver_list" />
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

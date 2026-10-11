@@ -47,7 +47,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A Voronoi tessellation.  Periodically zooms in and adds new points.
 The existing points also wander around.
 

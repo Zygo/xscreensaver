@@ -37,7 +37,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 An old terminal with large pixels and long-sustain phosphor.
 
 On MacOS and Linux, this program is also a fully-functional VT100

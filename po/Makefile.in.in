@@ -1,10 +1,10 @@
 # Makefile for program source directory in GNU NLS utilities package.
 # Copyright (C) 1995, 1996, 1997 by Ulrich Drepper <drepper@gnu.ai.mit.edu>
+# Copyright (C) 2004-2008 Rodney Dawes <dobey.pwns@gmail.com>
 #
-# This file file be copied and used freely without restrictions.  It can
-# be used in projects which are not available under the GNU Public License
+# This file may be copied and used freely without restrictions.  It may
+# be used in projects which are not available under a GNU Public License,
 # but which still want to provide support for the GNU gettext functionality.
-# Please note that the actual code is *not* freely available.
 #
 # - Modified by Owen Taylor <otaylor@redhat.com> to use GETTEXT_PACKAGE
 #   instead of PACKAGE and to look for po2tbl in ./ not in intl/
@@ -12,381 +12,283 @@
 # - Modified by jacob berkman <jacob@ximian.com> to install
 #   Makefile.in.in and po2tbl.sed.in for use with glib-gettextize
 #
-# - Modified by jwz to not suck wet farts from dead pigeons.
-#   This is truly one of the worst-written Makefiles I've ever seen.
-#   Problems I (tried to) fix:
+# - Modified by Rodney Dawes <dobey.pwns@gmail.com> for use with intltool
 #
-#     - MKINSTALLDIRS was $(top_srcdir)/@MKINSTALLDIRS@, but the
-#       configure script already put $(top_srcdir) into @MKINSTALLDIRS@,
-#       so the result was an absolute path that didn't work at all.
-#
-#     - GMSGFMT and XGETTEXT set $PATH to some random value before
-#       running the program.  That's completely stupid, and anyway,
-#       the hardcoded $PATH value they were using (../src) do not
-#       apply to xscreensaver.
-#
-#     - the .po.gmo, .po.cat, .po.pox, .pot, install-data-yes, update-po, and
-#	uninstall rules didn't actually print the commands they were
-#	executing: they just dumped a bunch of sh code at you, and expected
-#	you to figure it out yourself.  This is typical behavior of Makefile
-#	rules written by morons.
-#
-#     - intltool-update prints a lot of useless crap to both stderr and
-#	stdout and has no command-line argument meaning "be quiet, and only
-#	print errors", so I just redirected the whole thing to /dev/null.
-#
-#     - Demonstrating a total misunderstanding of build-directories and
-#       VPATH, the .po.gmo rule was writing output to $(srcdir).  When
-#       the current directory is not $(srcdir), one *never* writes to
-#       $(srcdir) -- it is to be considered read-only.
-#
-#     - Likewise, install-data-yes was looking for .gmo files in both the
-#       current directory, and in $(srcdir).  In the case where those are
-#       not the same directory, there must be no .gmo files in $(srcdir).
-#
-#     - The update-po rule was explicitly writing to $(srcdir).  I changed
-#       it to just work in the current directory.  As I understand it, it
-#       only makes sense to run this rule while in the srcdir, e.g., from
-#       distdepend -- so it should be allowed to error out when run in an
-#       inappropriate directory.
-#
-#     - install-data-yes went through great code-duplication-contortions
-#       to cope with the file mentioned by MKINSTALLDIRS not actually
-#       existing!  Instead of assuming that MKINSTALLDIRS will be set to
-#       an actual, correct value, it had a hardcoded check to look for it
-#       in $(top_srcdir) as well!  WTF!
-#
-#     - It turns out that "msgfmt" silently fails to write a .gmo file
-#       if the source .po file is empty (or otherwise not yet written.)
-#       The install-data-yes rule made no provision for this, and would
-#       just error out when the .gmo files were not there.
-#
-#     - For xscreensaver, $(prefix) is generally /usr/X11R6/, but some files
-#	need to go under /usr/ instead of under /usr/X11R6/ -- for those, we
-#	use @PO_DATADIR@ instead of @prefix@.  So I changed $(datadir) and
-#	$(gnulocaledir) appropriately.
-#
-#     - WTF is $(gettextsrcdir) doing in here?
-#
-#     - added  "*.gmo *.pot" to "distclean".
-#
-#     - I added a rule to po/POTFILES.in so that I wouldn't have to maintain
-#       that list of files in two places.
-#   
-#     - I removed the rule to auto-regenerate Makefile from Makefile.in.in
-#       because it made my top-level "make distdepend" rule fail: things
-#       were executing in the wrong order.
-#
-#     - the .po.cat rule has a hardcoded "../intl/po2msg.sed" in it.
-#       Guess what, I don't have any such directory.  And that should be
-#       refering to $(srcdir) anyway.  So I just commented (my half-fixed
-#       version of) this rule out.
-#
-
-# config.status complains if "po/Makefile.in.in was not created by intltoolize".
+# We have the following line for use by intltoolize:
 # INTLTOOL_MAKEFILE
 
-GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
-PACKAGE = @PACKAGE@
-VERSION = @VERSION@
+# Using $(MAKE) directly means the shell executes things even with "make -n"
+MAKE2 = $(MAKE)
 
-SHELL = /bin/sh
-@SET_MAKE@
+GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
+
+# Sep 2026, jwz: WTF?
+# PACKAGE = @PACKAGE@
+# VERSION = @VERSION@
+PACKAGE = xscreensaver
+VERSION = $(shell sed -n 's/[^0-9]*\([0-9]\.[0-9][^. \"]*\).*/\1/p'	\
+		../utils/version.h | head -1 )
+
+SHELL = @SHELL@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
-top_builddir = ..
+top_builddir = @top_builddir@
 VPATH = @srcdir@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
-#datadir = $(prefix)/@DATADIRNAME@      -- not for xscreensaver
-datadir = @PO_DATADIR@
+datadir = @datadir@
 datarootdir = @datarootdir@
-localedir = $(datadir)/locale
-#localedir = $(prefix)/share/locale
-#gnulocaledir = $(prefix)/share/locale  -- not for xscreensaver
-gnulocaledir = $(localedir)
-#gettextsrcdir = $(prefix)/share/glib-2.0/gettext/po
+libdir = @libdir@
+localedir = @localedir@
 subdir = po
-DESTDIR = 
+
+# Sep 2026, jwz: WTF?
+# install_sh = @install_sh@
+install_sh = @INSTALL@
+
+# Automake >= 1.8 provides @mkdir_p@.
+# Until it can be supposed, use the safe fallback:
+mkdir_p = $(install_sh) -d
 
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
-# #### NO.  This gets me "..//usr/bin/install: No such file or directory".
-# The @MKINSTALLDIRS@ variable must have the absolute (or unqualified)
-# path of the install program.  --jwz.
-# MKINSTALLDIRS = $(top_builddir)/@MKINSTALLDIRS@
-
-MKINSTALLDIRS = @MKINSTALLDIRS@
-
-CC = @CC@
-#GENCAT = @GENCAT@
 GMSGFMT = @GMSGFMT@
 MSGFMT = @MSGFMT@
 XGETTEXT = @XGETTEXT@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
-MSGMERGE = $(INTLTOOL_UPDATE) --gettext-package $(GETTEXT_PACKAGE) --dist
-GENPOT   = $(INTLTOOL_UPDATE) --gettext-package $(GETTEXT_PACKAGE) --pot
+MSGMERGE = INTLTOOL_EXTRACT="$(INTLTOOL_EXTRACT)" XGETTEXT="$(XGETTEXT)" srcdir=$(srcdir) $(INTLTOOL_UPDATE) --gettext-package $(GETTEXT_PACKAGE) --dist
+GENPOT   = INTLTOOL_EXTRACT="$(INTLTOOL_EXTRACT)" XGETTEXT="$(XGETTEXT)" srcdir=$(srcdir) $(INTLTOOL_UPDATE) --gettext-package $(GETTEXT_PACKAGE) --pot
 
-DEFS = @DEFS@
-CFLAGS = @CFLAGS@
-CPPFLAGS = @CPPFLAGS@
+ALL_LINGUAS = @ALL_LINGUAS@
 
-INCLUDES = -I.. -I$(top_srcdir)/intl
+PO_LINGUAS=$(shell if test -r $(srcdir)/LINGUAS; then grep -v "^\#" $(srcdir)/LINGUAS; else echo "$(ALL_LINGUAS)"; fi)
 
-COMPILE = $(CC) -c $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(XCFLAGS)
+USER_LINGUAS=$(shell if test -n "$(LINGUAS)"; then LLINGUAS="$(LINGUAS)"; ALINGUAS="$(ALL_LINGUAS)"; for lang in $$LLINGUAS; do if test -n "`grep \^$$lang$$ $(srcdir)/LINGUAS 2>/dev/null`" -o -n "`echo $$ALINGUAS|tr ' ' '\n'|grep \^$$lang$$`"; then printf "$$lang "; fi; done; fi)
 
-SOURCES = 
-# Feb 2022, jwz: now these are undefined. WTF.
-#POFILES = @POFILES@
-#GMOFILES = @GMOFILES@
-POFILES = $(shell echo *.po)
-GMOFILES = $(shell echo *.gmo)
+USE_LINGUAS=$(shell if test -n "$(USER_LINGUAS)" -o -n "$(LINGUAS)"; then LLINGUAS="$(USER_LINGUAS)"; else if test -n "$(PO_LINGUAS)"; then LLINGUAS="$(PO_LINGUAS)"; else LLINGUAS="$(ALL_LINGUAS)"; fi; fi; for lang in $$LLINGUAS; do printf "$$lang "; done)
 
-DISTFILES_1 = ChangeLog Makefile.in.in POTFILES.in update.sh
-DISTFILES = $(DISTFILES_1) $(GETTEXT_PACKAGE).pot \
-	    $(POFILES) $(GMOFILES) $(SOURCES)
+POFILES=$(shell LINGUAS="$(PO_LINGUAS)"; for lang in $$LINGUAS; do printf "$$lang.po "; done)
 
-TARFILES = $(DISTFILES_1) $(POFILES) $(SOURCES)
+DISTFILES = Makefile.in.in POTFILES.in $(POFILES)
+EXTRA_DISTFILES = ChangeLog POTFILES.skip Makevars LINGUAS
 
 POTFILES = \
 # This comment gets stripped out
 
-CATALOGS = @CATALOGS@
-CATOBJEXT = @CATOBJEXT@
-INSTOBJEXT = @INSTOBJEXT@
+CATALOGS=$(shell LINGUAS="$(USE_LINGUAS)"; for lang in $$LINGUAS; do printf "$$lang.gmo "; done)
 
 .SUFFIXES:
-.SUFFIXES: .c .o .po .pox .gmo .mo .msg .cat
+.SUFFIXES: .po .pox .gmo .mo .msg .cat
 
-.c.o:
-	$(COMPILE) $<
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+INTLTOOL_V_MSGFMT = $(INTLTOOL__v_MSGFMT_$(V))
+INTLTOOL__v_MSGFMT_= $(INTLTOOL__v_MSGFMT_$(AM_DEFAULT_VERBOSITY))
+INTLTOOL__v_MSGFMT_0 = @echo "  MSGFMT" $@;
 
 .po.pox:
-	$(MAKE) $(GETTEXT_PACKAGE).pot
-	INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) ; \
-	export INTLTOOL_EXTRACT ; \
-	echo $(MSGMERGE) $< $(srcdir)/$(GETTEXT_PACKAGE).pot -o $*.pox ; \
-	     $(MSGMERGE) $< $(srcdir)/$(GETTEXT_PACKAGE).pot -o $*.pox
+	$(MAKE2) $(GETTEXT_PACKAGE).pot
+	$(MSGMERGE) $* $(GETTEXT_PACKAGE).pot -o $*.pox
 
 .po.mo:
-	$(MSGFMT) -o $@ $<
+	$(INTLTOOL_V_MSGFMT)$(MSGFMT) -o $@ $<
 
-# jwz: the "-" means "ignore any errors here, because I don't give a shit."
 .po.gmo:
-	@-file=`echo $* | sed 's,.*/,,'`.gmo ; \
-	 rm -f "$$file" ; \
-	 echo $(GMSGFMT) -o "$$file" $< ; \
-	      $(GMSGFMT) -o "$$file" $<
+	$(INTLTOOL_V_MSGFMT)file=`echo $* | sed 's,.*/,,'`.gmo \
+	  && rm -f $$file && $(GMSGFMT) -o $$file $<
 
-#.po.cat:
-#	@echo "sed -f ../intl/po2msg.sed < $< > $*.msg" ; \
-#	       sed -f ../intl/po2msg.sed < $< > $*.msg && \
-#	 rm -f $@ && \
-#	 echo $(GENCAT) "$@" "$*.msg" ; \
-#	      $(GENCAT) "$@" "$*.msg"
+.po.cat:
+	sed -f ../intl/po2msg.sed < $< > $*.msg \
+	  && rm -f $@ && gencat $@ $*.msg
 
 
 all: all-@USE_NLS@
-default: all
 
 all-yes: $(CATALOGS)
 all-no:
 
 $(GETTEXT_PACKAGE).pot: $(POTFILES)
-	@INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) ; \
-	export INTLTOOL_EXTRACT ; \
-	echo top_srcdir=$(top_srcdir) $(GENPOT) ; \
-	     top_srcdir=$(top_srcdir) $(GENPOT)
+	$(GENPOT)
 
-install-strip: install
-
-install: install-exec install-data
-install-exec:
-install-program:
-install-man:
-install-strip:
-tags:
+install: install-data
 install-data: install-data-@USE_NLS@
 install-data-no: all
 install-data-yes: all
-	@set -e; \
-	catalogs='$(CATALOGS)'; \
-	losers=""; \
-	for cat in $$catalogs; do \
-	  cat=`basename $$cat`; \
-	  case "$$cat" in \
-	    *.gmo) destdir=$(gnulocaledir);; \
-	    *)     destdir=$(localedir);; \
-	  esac; \
-	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
-	  dir=$(DESTDIR)$$destdir/$$lang/LC_MESSAGES; \
-	  dest=$$dir/$(GETTEXT_PACKAGE)$(INSTOBJEXT); \
-	  if test -r $$cat -o -r $$cat.m; then \
-	    echo $(MKINSTALLDIRS) $$dir; \
-	         $(MKINSTALLDIRS) $$dir; \
+	@\
+	linguas="$(USE_LINGUAS)"; \
+	for lang in $$linguas; do \
+	  dir=$(DESTDIR)$(localedir)/$$lang/LC_MESSAGES; \
+	  $(mkdir_p) $$dir; \
+	  if test -r $$lang.gmo; then \
+	    $(INSTALL_DATA) $$lang.gmo $$dir/$(GETTEXT_PACKAGE).mo; \
+	    echo "installing $$lang.gmo as $$dir/$(GETTEXT_PACKAGE).mo"; \
 	  else \
-	    losers="$$losers $$lang"; \
-	  fi ; \
-	  if test -r $$cat; then \
-	    echo $(INSTALL_DATA) $$cat $$dest; \
-		 $(INSTALL_DATA) $$cat $$dest; \
+	    $(INSTALL_DATA) $(srcdir)/$$lang.gmo $$dir/$(GETTEXT_PACKAGE).mo; \
+	    echo "installing $(srcdir)/$$lang.gmo as" \
+		 "$$dir/$(GETTEXT_PACKAGE).mo"; \
 	  fi; \
-	  if test -r $$cat.m; then \
-	    echo $(INSTALL_DATA) $$cat.m $$dest.m; \
-		 $(INSTALL_DATA) $$cat.m $$dest.m; \
-	  fi; \
-	done; \
-	if [ "$$losers" != '' ]; then \
-	  echo "Warning: these catalogs were not installed:" >&2 ; \
-	  echo "	$$losers" >&2; \
-	fi
-
-# Define this as empty until I found a useful application.
-installcheck:
-
-uninstall:
-	@catalogs='$(CATALOGS)'; \
-	for cat in $$catalogs; do \
-	  cat=`basename $$cat`; \
-	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
-	  suffix="$$lang/LC_MESSAGES/$(GETTEXT_PACKAGE)$(INSTOBJEXT)"; \
-	  for f in $(DESTDIR)$(localedir)/$$suffix \
-		   $(DESTDIR)$(localedir)/$$suffix.m \
-		   $(DESTDIR)$(gnulocaledir)/$$suffix \
-		   $(DESTDIR)$(gnulocaledir)/$$suffix.m; do \
-	    if [ -f $$f ]; then \
-	      echo rm -f $$f; \
-	           rm -f $$f; \
+	  if test -r $$lang.gmo.m; then \
+	    $(INSTALL_DATA) $$lang.gmo.m $$dir/$(GETTEXT_PACKAGE).mo.m; \
+	    echo "installing $$lang.gmo.m as $$dir/$(GETTEXT_PACKAGE).mo.m"; \
+	  else \
+	    if test -r $(srcdir)/$$lang.gmo.m ; then \
+	      $(INSTALL_DATA) $(srcdir)/$$lang.gmo.m \
+		$$dir/$(GETTEXT_PACKAGE).mo.m; \
+	      echo "installing $(srcdir)/$$lang.gmo.m as" \
+		   "$$dir/$(GETTEXT_PACKAGE).mo.m"; \
+	    else \
+	      true; \
 	    fi; \
-	  done; \
+	  fi; \
 	done
 
-uninstall-program:
-uninstall-man:
+# Empty stubs to satisfy archaic automake needs
+dvi info ctags tags CTAGS TAGS ID:
 
-check: all
+# Define this as empty until I found a useful application.
+install-exec installcheck:
 
-dvi info tags TAGS ID:
+uninstall:
+	linguas="$(USE_LINGUAS)"; \
+	for lang in $$linguas; do \
+	  rm -f $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(GETTEXT_PACKAGE).mo; \
+	  rm -f $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(GETTEXT_PACKAGE).mo.m; \
+	done
+
+check: all $(GETTEXT_PACKAGE).pot
+	rm -f missing notexist
+	srcdir=$(srcdir) $(INTLTOOL_UPDATE) -m
+	if [ -r missing -o -r notexist ]; then \
+	  exit 1; \
+	fi
 
 mostlyclean:
-	rm -f core core.* *.pox $(GETTEXT_PACKAGE).po *.old.po cat-id-tbl.tmp
-	rm -fr *.o
+	rm -f *.pox $(GETTEXT_PACKAGE).pot *.old.po cat-id-tbl.tmp
+	rm -f .intltool-merge-cache
 
 clean: mostlyclean
 
 distclean: clean
-	rm -f Makefile Makefile.in POTFILES *.mo *.msg *.cat *.cat.m *.gmo *.pot
-	rm -f stamp-it
+	rm -f Makefile Makefile.in POTFILES stamp-it
+	rm -f *.mo *.msg *.cat *.cat.m *.gmo
 
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
-	rm -f $(GMOFILES)
+	rm -f Makefile.in.in
 
-depend:
-distdepend: generate_potfiles_in update-po $(DISTFILES)
-
-
-# jwz: Generates po/POTFILES.in by examining the source tree:
-# that way we don't have to keep this list up to date as files are added.
-#
-generate_potfiles_in:
-	@tmp=po.$$$$ ;				\
-	 file=POTFILES.in ;			\
-	 ( cd $(top_srcdir);			\
-	   echo "# Auto-generated: `LANG=C date`" ;	\
-	   ( grep -l '_("' driver/*.[ch] ;	\
-	     ls driver/*.ui			\
-		driver/*.desktop.in		\
-		hacks/config/*.xml ) |		\
-	   grep -v rdbomb |			\
-	   grep -v co____9 |			\
-	   sort					\
-	  ) > $$tmp &&				\
-	 mv $$tmp $$file &&			\
-	 echo "created `pwd`/$$file"
-
-list_tarfiles:
-	@find $(TARFILES) -type f -print | sort
-
-distdir = ../$(GETTEXT_PACKAGE)-$(VERSION)/$(subdir)
-dist distdir: update-po $(DISTFILES)
+distdir = ../$(PACKAGE)-$(VERSION)/$(subdir)
+dist distdir: $(DISTFILES)
 	dists="$(DISTFILES)"; \
+	extra_dists="$(EXTRA_DISTFILES)"; \
+	for file in $$extra_dists; do \
+	  test -f $(srcdir)/$$file && dists="$$dists $(srcdir)/$$file"; \
+	done; \
 	for file in $$dists; do \
-	  ln $(srcdir)/$$file $(distdir) 2> /dev/null \
-	    || cp -p $(srcdir)/$$file $(distdir); \
+	  test -f $$file || file="$(srcdir)/$$file"; \
+	  ln $$file $(distdir) 2> /dev/null \
+	    || cp -p $$file $(distdir); \
 	done
 
+# jwz: modified this to ignore "POT-Creation-Date" when comparing files.
 update-po: Makefile
-	$(MAKE) $(GETTEXT_PACKAGE).pot
-	@catalogs='$(CATALOGS)'; \
-	INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) ; \
-	export INTLTOOL_EXTRACT ; \
-	for cat in $$catalogs; do \
-	  cat=`basename $$cat`; \
-	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
-          if [ ! -f $$lang.po ] ; then \
-             cp $(srcdir)/$$lang.po . ; \
-          fi ; \
-	  cp $$lang.po $$lang.old.po; \
-	  echo $(MSGMERGE) $$lang; \
-	  if   $(MSGMERGE) $$lang >/dev/null 2>&1; then \
-	    rm -f $$lang.old.po; \
+	$(MAKE2) $(GETTEXT_PACKAGE).pot
+	@\
+	tmpdir=`pwd`; \
+	linguas="$(USE_LINGUAS)"; \
+	for lang in $$linguas; do \
+	  echo "$$lang:"; \
+	  result="`$(MSGMERGE) -o $$tmpdir/$$lang.new.po $$lang`"; \
+	  if $$result; then \
+	    grep -vi POT-Creation-Date $(srcdir)/$$lang.po    > $$tmpdir/$$lang.cmp1.po ; \
+	    grep -vi POT-Creation-Date $$tmpdir/$$lang.new.po > $$tmpdir/$$lang.cmp2.po ; \
+	    if cmp -s $$tmpdir/$$lang.cmp1.po $$tmpdir/$$lang.cmp2.po; then \
+	      echo "$$lang.po unchanged" >&2; \
+	      rm -f $$tmpdir/$$lang.new.po; \
+            else \
+	      if mv -f $$tmpdir/$$lang.new.po $$lang.po; then \
+	        :; \
+	      else \
+	        echo "msgmerge for $$lang.po failed: cannot move $$tmpdir/$$lang.new.po to $$lang.po" 1>&2; \
+	        rm -f $$tmpdir/$$lang.new.po; \
+	        exit 1; \
+	      fi; \
+	    fi; \
+	    rm $$tmpdir/$$lang.cmp1.po $$tmpdir/$$lang.cmp2.po ; \
 	  else \
-	    echo "msgmerge for $$cat failed!"; \
-	    rm -f $$lang.po; \
-	    mv $$lang.old.po $$lang.po; \
+	    echo "msgmerge for $$lang.gmo failed!"; \
+	    rm -f $$tmpdir/$$lang.new.po; \
 	  fi; \
 	done
+	@rm -f .intltool-merge-cache.lock
 
-.po: Makefile
-	$(MAKE)  $(PACKAGE).pot;
-	INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) ; \
-	export INTLTOOL_EXTRACT ; \
-	echo; printf "$*: "; \
-	if $(MSGMERGE) $*; then \
-	  rm -f $*.old.po; \
-	  else \
-	    echo "msgmerge for * failed!"; \
-	    mv $*.old.po $*.po; \
-	fi; \
-	msgfmt --statistics $*.po; echo;
-
-
-# POTFILES is created from POTFILES.in by stripping comments, empty lines
-# and Intltool tags (enclosed in square brackets), and appending a full
-# relative path to them
-POTFILES: POTFILES.in
-	( if test 'x$(srcdir)' != 'x.'; then \
-	    posrcprefix='$(top_srcdir)/'; \
-	  else \
-	    posrcprefix="../"; \
-	  fi; \
-	  rm -f $@-t $@ \
-	    && (sed -e '/^#/d' 						\
-		    -e "s/^\[.*\] +//" 					\
-		    -e '/^[ 	]*$$/d' 				\
-		    -e "s@.*@	$$posrcprefix& \\\\@" < $@.in		\
-		| sed -e '$$s/\\$$//') > $@-t \
-	    && chmod a-w $@-t \
-	    && mv $@-t $@ )
-
-# jwz: depending on stamp-it breaks distclean.
-Makefile:
+Makefile POTFILES: stamp-it
 	@if test ! -f $@; then \
-		rm -f stamp-it; \
-		$(MAKE) stamp-it; \
+	  rm -f stamp-it; \
+	  $(MAKE2) stamp-it; \
 	fi
 
-stamp-it: Makefile.in.in ../config.status POTFILES
-	cd .. \
-	  && CONFIG_FILES=$(subdir)/Makefile.in CONFIG_HEADERS= \
+stamp-it: Makefile.in.in $(top_builddir)/config.status POTFILES.in
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$(subdir)/Makefile.in CONFIG_HEADERS= CONFIG_LINKS= \
 	       $(SHELL) ./config.status
 
 # Tell versions [3.59,3.63) of GNU make not to export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
+
+
+#############################################################################
+# jwz
+
+DISTFILES_1 = Makefile.in.in POTFILES.in LINGUAS autotranslate.pl osx.h
+DISTFILES = $(DISTFILES_1) $(GETTEXT_PACKAGE).pot \
+	    $(POFILES) $(SOURCES)
+TARFILES = $(DISTFILES_1) $(POFILES) $(SOURCES)
+
+depend:
+distdepend: generate_potfiles_in generate_linguas update-po $(DISTFILES)
+
+# jwz: Generates po/POTFILES.in by examining the source tree:
+# that way we don't have to keep this list up to date as files are added.
+#
+generate_potfiles_in:
+	@tmp=po.$$$$ ;							\
+	 file=POTFILES.in ;						\
+	 ( cd $(top_srcdir);						\
+	   echo "# Auto-generated: `LANG=C date`" ;			\
+	   ( grep -l '_("' {driver,utils,hacks,hacks/glx}/*.[ch] ;	\
+	     grep -l 'gresource_resource_data' driver/*.[ch] ;		\
+	     ls driver/*.ui						\
+		driver/*.desktop.in					\
+		hacks/config/*.xml					\
+		po/osx.h ) |						\
+	   grep -v rdbomb |						\
+	   grep -v co____9 |						\
+	   sort |							\
+	   uniq |							\
+	   sed -e 's!^\(.*\.ui\)$$![type: gettext/glade]\1!'		\
+	  ) > $$tmp &&							\
+	 mv $$tmp $$file &&						\
+	 echo "created `pwd`/$$file" ;					\
+									\
+	 POT="$(GETTEXT_PACKAGE).pot" ;					\
+	 rm -f $$POT ;							\
+	 $(MAKE2) $$POT ;						\
+	 if ! ( grep -q '^#.*driver/demo.ui\(\.h\)*:' $$POT ); then	\
+	   echo "ERROR: the .ui strings are not present in $$POT" >&2 ;	\
+	   exit 1 ;							\
+	 fi
+
+generate_linguas:
+	@file=LINGUAS ;							\
+	 echo *.po | sed 's/\.po//g' > "$$file" ;			\
+	 echo "created `pwd`/$$file"
+
+list_tarfiles:
+	@find $(TARFILES) -type f -print | sort
+
+default:: all

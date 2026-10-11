@@ -51,7 +51,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 A set of robotic hands communicate non-verbally.
 
 Written by Jamie Zawinski; 2018.

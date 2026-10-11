@@ -29,9 +29,14 @@ typedef struct {
     } moves[128];
 } ChessGame;
 
+/* ENABLE_NLS: define this blank so that we can use it to tag static strings.
+   We call gettext manually. */
+# undef _
+# define _(S) S
+
 #define GAMES_NUMBER 34
 static ChessGame games[GAMES_NUMBER] = {
-    {.desc = "A. Anderssen / L. Kieseritzky / 1851\n\"The immortal game\"",
+    {.desc = _("A. Anderssen / L. Kieseritzky / 1851\n\"The immortal game\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 45,
      .moves =
@@ -60,7 +65,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "f3f6", .san = "Qf6+"},  {.uci = "g8f6", .san = "Nxf6"},
              {.uci = "d6e7", .san = "Be7#"},
          }},
-    {.desc = "A. Hoffmann / A. Petrov / 1844\n\"Petrov's immortal\"",
+    {.desc = _("A. Hoffmann / A. Petrov / 1844\n\"Petrov's immortal\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 40,
      .moves =
@@ -86,7 +91,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "g5g4", .san = "Kg4"},  {.uci = "h7h5", .san = "h5+"},
              {.uci = "g4h3", .san = "Kh3"},  {.uci = "f5f3", .san = "Rf3#"},
          }},
-    {.desc = "A. Anderssen / J. Dufresne / 1852\n\"The evergreen game\"",
+    {.desc = _("A. Anderssen / J. Dufresne / 1852\n\"The evergreen game\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 47,
      .moves =
@@ -116,7 +121,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "f5d7", .san = "Bd7+"},  {.uci = "e8f8", .san = "Kf8"},
              {.uci = "a3e7", .san = "Bxe7#"},
          }},
-    {.desc = "P. Morphy / D. Karl / 1858\n\"The opera game\"",
+    {.desc = _("P. Morphy / D. Karl / 1858\n\"The opera game\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 33,
      .moves =
@@ -139,7 +144,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "b3b8", .san = "Qb8+"},  {.uci = "d7b8", .san = "Nxb8"},
              {.uci = "d1d8", .san = "Rd8#"},
          }},
-    {.desc = "G. Rotlewi / A. Rubinstein / 1907\n\"Rotlewi's immortal game\"",
+    {.desc = _("G. Rotlewi / A. Rubinstein / 1907\n\"Rotlewi's immortal game\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 50,
      .moves =
@@ -170,7 +175,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e2d2", .san = "Qxd2"}, {.uci = "b7e4", .san = "Bxe4+"},
              {.uci = "d2g2", .san = "Qg2"},  {.uci = "c3h3", .san = "Rh3"},
          }},
-    {.desc = "E. Bogoljubov / A. Alekhine / 1922.09.21 / Hastings",
+    {.desc = _("E. Bogoljubov / A. Alekhine / 1922.09.21 / Hastings"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 106,
      .moves =
@@ -282,7 +287,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e3e4", .san = "Ke4"},
              {.uci = "d6d5", .san = "d5+"},
          }},
-    {.desc = "Glucksberg / M. Najdorf / 1929\n\"The Polish immortal\"",
+    {.desc = _("Glucksberg / M. Najdorf / 1929\n\"The Polish immortal\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 44,
      .moves =
@@ -310,7 +315,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "f3g4", .san = "Kxg4"}, {.uci = "g6e5", .san = "Ne5+"},
              {.uci = "f4e5", .san = "fxe5"}, {.uci = "h7h5", .san = "h5#"},
          }},
-    {.desc = "D. Byrne / R. J. Fischer / 1956\n\"The game of the century\"",
+    {.desc = _("D. Byrne / R. J. Fischer / 1956\n\"The game of the century\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 82,
      .moves =
@@ -357,7 +362,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "c1b1", .san = "Kb1"},  {.uci = "e2c3", .san = "Nc3+"},
              {.uci = "b1c1", .san = "Kc1"},  {.uci = "a2c2", .san = "Rc2#"},
          }},
-    {.desc = "G. Kasparov / V. Topalov / 1999\n\"Kasparov's immortal\"",
+    {.desc = _("G. Kasparov / V. Topalov / 1999\n\"Kasparov's immortal\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 87,
      .moves =
@@ -407,7 +412,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "b1c1", .san = "Kc1"},   {.uci = "d3d2", .san = "Rd2"},
              {.uci = "a4a7", .san = "Qa7"},
          }},
-    {.desc = "W. Yi / L. B. Bruzon / 2015.07.03\n6th Hainan Danzhou",
+    {.desc = _("W. Yi / L. B. Bruzon / 2015.07.03\n6th Hainan Danzhou"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 71,
      .moves =
@@ -449,7 +454,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e3f2", .san = "Bf2+"},  {.uci = "h4h3", .san = "Kh3"},
              {.uci = "f2e1", .san = "Be1"},
          }},
-    {.desc = "L. Polugaevsky / R. G. Nezhmetdinov / 1958 / Sochi",
+    {.desc = _("L. Polugaevsky / R. G. Nezhmetdinov / 1958 / Sochi"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 66,
      .moves =
@@ -489,7 +494,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "a8b8", .san = "Rb8+"},   {.uci = "b5a5", .san = "Ka5"},
              {.uci = "b4c6", .san = "Nc6+"},
          }},
-    {.desc = "M. Botvinnik / J. R. Capablanca / 1938.11.22 / Rotterdam",
+    {.desc = _("M. Botvinnik / J. R. Capablanca / 1938.11.22 / Rotterdam"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 81,
      .moves =
@@ -536,7 +541,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e2e4", .san = "Qe4+"}, {.uci = "g2g4", .san = "g4"},
              {.uci = "e4e1", .san = "Qe1+"}, {.uci = "h4h5", .san = "Kh5"},
          }},
-    {.desc = "V. Bagirov / E. Gufeld / 1973\n\"Mona Lisa\"",
+    {.desc = _("V. Bagirov / E. Gufeld / 1973\n\"Mona Lisa\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 64,
      .moves =
@@ -574,7 +579,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "b3c2", .san = "Kc2"},   {.uci = "b8b2", .san = "Qb2+"},
              {.uci = "c2d3", .san = "Kd3"},   {.uci = "b2b5", .san = "Qb5+"},
          }},
-    {.desc = "A. Beliavsky / J. Nunn / 1985",
+    {.desc = _("A. Beliavsky / J. Nunn / 1985"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 54,
      .moves =
@@ -607,7 +612,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "h1g1", .san = "Rg1"},  {.uci = "e3c2", .san = "Nc2"},
              {.uci = "e2d1", .san = "Kd1"},  {.uci = "f5d3", .san = "Bxd3"},
          }},
-    {.desc = "A. Shirov / J. Polgar / 1994 / Buenos Aires",
+    {.desc = _("A. Shirov / J. Polgar / 1994 / Buenos Aires"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 58,
      .moves =
@@ -642,7 +647,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "d3c4", .san = "Kc4"},  {.uci = "e8e7", .san = "Ke7"},
              {.uci = "h1a1", .san = "Ra1"},  {.uci = "d4c6", .san = "Nc6"},
          }},
-    {.desc = "V. Ivanchuk / A. Yusupov / 1991\n\"Ivanchuck's immortal\"",
+    {.desc = _("V. Ivanchuk / A. Yusupov / 1991\n\"Ivanchuck's immortal\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 78,
      .moves =
@@ -687,7 +692,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "b7b8", .san = "Rb8+"},  {.uci = "h2b8", .san = "Qxb8"},
              {.uci = "g2h3", .san = "Bxh3"},  {.uci = "b8g3", .san = "Qg3"},
          }},
-    {.desc = "M. Krasenkow / H. Nakamura / 2007 / Barcelona",
+    {.desc = _("M. Krasenkow / H. Nakamura / 2007 / Barcelona"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 56,
      .moves =
@@ -721,7 +726,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e1e5", .san = "Rxe5"}, {.uci = "e8e5", .san = "Rxe5+"},
              {.uci = "h5h4", .san = "Kh4"},  {.uci = "a6c8", .san = "Bc8"},
          }},
-    {.desc = "A. Karpov / V. Topalov / 1994\n\"Karpov's immortal\"",
+    {.desc = _("A. Karpov / V. Topalov / 1994\n\"Karpov's immortal\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 77,
      .moves =
@@ -766,7 +771,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "b2b3", .san = "b3"},    {.uci = "d2b2", .san = "Rb2"},
              {.uci = "g1g2", .san = "Kg2"},
          }},
-    {.desc = "M. Carlsen / S. Ernst / 2004\n\"The Magnus effect\"",
+    {.desc = _("M. Carlsen / S. Ernst / 2004\n\"The Magnus effect\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 57,
      .moves =
@@ -801,7 +806,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e5f5", .san = "Qf5+"},  {.uci = "g6f6", .san = "Rf6"},
              {.uci = "f5d7", .san = "Qd7#"},
          }},
-    {.desc = "N. Short / J. Timman / 1991\n\"The king's walk\"",
+    {.desc = _("N. Short / J. Timman / 1991\n\"The king's walk\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 67,
      .moves =
@@ -841,7 +846,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "g3f4", .san = "Kf4"},  {.uci = "b7c8", .san = "Bc8"},
              {.uci = "f4g5", .san = "Kg5"},
          }},
-    {.desc = "L. Aronian / V. Anand / 2013\n\"Nerves of steel\"",
+    {.desc = _("L. Aronian / V. Anand / 2013\n\"Nerves of steel\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 46,
      .moves =
@@ -870,7 +875,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "c2e2", .san = "Qe2"},  {.uci = "g6h5", .san = "Qh5"},
              {.uci = "e2d3", .san = "Qd3"},  {.uci = "d4e3", .san = "Be3"},
          }},
-    {.desc = "Jinshi Bai / Ding Liren / 2017.11.04\nChinese Chess League",
+    {.desc = _("Jinshi Bai / Ding Liren / 2017.11.04\nChinese Chess League"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 64,
      .moves =
@@ -908,7 +913,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e5f7", .san = "Nxf7"}, {.uci = "f5g6", .san = "Bg6+"},
              {.uci = "h5g4", .san = "Kxg4"}, {.uci = "c6e5", .san = "Ne5+"},
          }},
-    {.desc = "E. Geller / M. Euwe / 1953.08.31",
+    {.desc = _("E. Geller / M. Euwe / 1953.08.31"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 52,
      .moves =
@@ -940,7 +945,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "g1f1", .san = "Kf1"},   {.uci = "e6b3", .san = "Qb3"},
              {.uci = "f1e1", .san = "Ke1"},   {.uci = "b3f3", .san = "Qf3"},
          }},
-    {.desc = "S. Levitsky / F. J. Marshall / 1912\n\"The Gold coin game\"",
+    {.desc = _("S. Levitsky / F. J. Marshall / 1912\n\"The Gold coin game\""),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 46,
      .moves =
@@ -969,7 +974,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "h5g5", .san = "Qg5"},  {.uci = "h6h3", .san = "Rxh3"},
              {.uci = "e5c5", .san = "Rc5"},  {.uci = "c3g3", .san = "Qg3"},
          }},
-    {.desc = "E. N. Somov-Nasimovitsch / 1928 / Zadachi I Etiudi",
+    {.desc = _("E. N. Somov-Nasimovitsch / 1928 / Zadachi I Etiudi"),
      .fen = "5k2/p1p1p3/2p1p2N/P1R5/P3KP2/8/p6P/b7",
      .movecount = 19,
      .moves =
@@ -985,7 +990,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e6d8", .san = "Nd8+"},  {.uci = "c6c5", .san = "Kc5"},
              {.uci = "d2b2", .san = "Rxb2"},
          }},
-    {.desc = "J. Hendel / 1859\nPayne's family journal",
+    {.desc = _("J. Hendel / 1859\nPayne's family journal"),
      .fen = "8/K1N1p3/2k1N3/4P3/8/8/1P6/8",
      .movecount = 9,
      .moves =
@@ -1000,7 +1005,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "d7c6", .san = "Kc6"},
              {.uci = "b7b8n", .san = "b8=N#"},
          }},
-    {.desc = "J. Hasek / 1929\nLa strategie",
+    {.desc = _("J. Hasek / 1929\nLa strategie"),
      .fen = "3N3N/1Kpp4/8/1k6/1P3p2/P1P5/8/8",
      .movecount = 9,
      .moves =
@@ -1015,7 +1020,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "f2f1q", .san = "f1=Q"},
              {.uci = "d3b2", .san = "Nb2"},
          }},
-    {.desc = "K. A. L. Kubbel / 1936\nChess in the USSR",
+    {.desc = _("K. A. L. Kubbel / 1936\nChess in the USSR"),
      .fen = "8/7p/4pK1k/5R2/8/1b2r1P1/8/5B2",
      .movecount = 9,
      .moves =
@@ -1030,7 +1035,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e2h2", .san = "Rxh2"},
              {.uci = "g4g5", .san = "g5"},
          }},
-    {.desc = "M. B. Newman / 1913\nChess amateur",
+    {.desc = _("M. B. Newman / 1913\nChess amateur"),
      .fen = "4q3/n7/8/7P/k1B1N3/P3N3/8/K7",
      .movecount = 11,
      .moves =
@@ -1047,7 +1052,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "d6c4", .san = "Nxc4"},
              {.uci = "h6h7", .san = "h7"},
          }},
-    {.desc = "V. A. Korolikov / 1935 / Truda",
+    {.desc = _("V. A. Korolikov / 1935 / Truda"),
      .fen = "2B5/pR6/2pP1k2/8/6Kb/4p1P1/5p2/8",
      .movecount = 19,
      .moves =
@@ -1063,7 +1068,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e2f3", .san = "Bf3"},    {.uci = "b7a8", .san = "Kxa8"},
              {.uci = "f3c6", .san = "Bxc6#"},
          }},
-    {.desc = "Gorgiev / 1929 / 64",
+    {.desc = _("Gorgiev / 1929 / 64"),
      .fen = "6N1/n7/3kn3/K7/6N1/8/8/4B3",
      .movecount = 11,
      .moves =
@@ -1080,7 +1085,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "e6c7", .san = "Nxc7"},
              {.uci = "g4e5", .san = "Ne5"},
          }},
-    {.desc = "K. A. L. Kubbel / 1922\nSchachmatny Listok",
+    {.desc = _("K. A. L. Kubbel / 1922\nSchachmatny Listok"),
      .fen = "1N6/8/K7/3k4/3p3B/p7/2PP4/8",
      .movecount = 11,
      .moves =
@@ -1097,7 +1102,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "a2a1q", .san = "a1=Q"},
              {.uci = "f6e7", .san = "Be7#"},
          }},
-    {.desc = "M. Carlsen / G. Kasparov / 2004 / Reykjavik",
+    {.desc = _("M. Carlsen / G. Kasparov / 2004 / Reykjavik"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 103,
      .moves =
@@ -1155,7 +1160,7 @@ static ChessGame games[GAMES_NUMBER] = {
              {.uci = "c7c6", .san = "Rc6"},   {.uci = "a6f1", .san = "Bf1"},
              {.uci = "b6f2", .san = "Bf2"},
          }},
-    {.desc = "M. Carlsen / V. Kramnik / 2016 / Norway",
+    {.desc = _("M. Carlsen / V. Kramnik / 2016 / Norway"),
      .fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
      .movecount = 99,
      .moves =

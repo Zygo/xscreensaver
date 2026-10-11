@@ -25,7 +25,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A geodesic sphere experiences a series of eruptions.
 
 Written by Jamie Zawinski; 2016.

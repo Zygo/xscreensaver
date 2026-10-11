@@ -135,7 +135,7 @@
 
 
 
-  <_description>
+  <_description xml:space="preserve">
 A 4D embedding of the real projective plane.
 
 You can walk on the surface of the real projective plane or rotate it

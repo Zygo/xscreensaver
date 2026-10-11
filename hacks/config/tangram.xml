@@ -35,7 +35,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Solves tangram puzzles.
 
 https://en.wikipedia.org/wiki/Tangram

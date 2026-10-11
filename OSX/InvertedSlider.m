@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,6 +12,7 @@
  * the high value is on the left and the low value is on the right.
  */
 
+#import "nslog.h"
 #import "InvertedSlider.h"
 
 #ifndef HAVE_TVOS

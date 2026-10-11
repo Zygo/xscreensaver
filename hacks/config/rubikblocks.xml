@@ -57,7 +57,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The "Rubik's Mirror Blocks" puzzle.
 
 See also the "Rubik", "Cube21", and "GLSnake" screen savers.

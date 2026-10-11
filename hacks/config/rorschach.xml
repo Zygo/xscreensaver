@@ -25,7 +25,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Inkblot patterns via a reflected random walk.
 
 https://en.wikipedia.org/wiki/Rorschach_inkblot_test

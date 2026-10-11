@@ -44,7 +44,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Draw a ring composed of tetrahedra connected at the edges that twists
 and rotates toroidally.
 

@@ -34,7 +34,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A star field via 3D kaliset fractal and volumetric rendering.
 
 https://www.shadertoy.com/view/XlfGRj

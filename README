@@ -75,6 +75,15 @@ Interested in writing a new screen saver?
 Version History
 ===============================================================================
 
+6.17	* Added missing localization strings (largely auto-translated).
+	* X11: Localizations are being installed again.
+	* macOS, iOS, Android: Now localized.
+	* macOS: Possible workarounds for longstanding Apple bugs where the
+	  legacyScreenSaver process would start using 100% CPU and savers
+	  would never run again.
+	* macOS 14.6 or later and iOS 17.6 or later are now required, since
+	  Xcode 6 can no longer build executables that work on older OSes.
+
 6.16	* New hacks, `floppy', `graphstat', `amigajuggler' and `polarnight'.
         * iOS: image loading works even if the images in the photo roll need
           to be downloaded from iCloud first.  Images can display file names.

@@ -44,7 +44,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Colored tiles swap with each other.
 
 Written by Kevin Ogden and Sergio Gutierrez; 2003.

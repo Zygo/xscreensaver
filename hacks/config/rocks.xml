@@ -33,7 +33,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 An asteroid field zooms by.
 
 Written by Jamie Zawinski; 1992.

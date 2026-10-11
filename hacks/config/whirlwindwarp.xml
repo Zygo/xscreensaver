@@ -18,7 +18,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Floating stars are acted upon by a mixture of simple 2D
 force  fields.  The strength of each force field changes
 continuously, and it is also switched on and off at random.

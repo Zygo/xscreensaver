@@ -38,7 +38,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 Randomly subdivides a ball into voronoi chunks, then further subdivides
 one of the remaining pieces.
 

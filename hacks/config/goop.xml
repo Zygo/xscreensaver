@@ -52,7 +52,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Translucent amoeba-like blobs wander the screen.
 
 Written by Jamie Zawinski; 1997.

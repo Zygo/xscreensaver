@@ -19,7 +19,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Generates random mountain ranges using iterative subdivision of
 triangles.
 

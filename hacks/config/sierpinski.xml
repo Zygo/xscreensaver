@@ -27,7 +27,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The 2D Sierpinski triangle fractal.
 
 See also the "Sierpinski3D" screen saver.

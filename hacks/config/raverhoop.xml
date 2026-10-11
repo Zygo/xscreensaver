@@ -49,7 +49,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Simulates an LED hula hoop in a dark room. Oontz oontz oontz.
 
 Written by Jamie Zawinski; 2016.

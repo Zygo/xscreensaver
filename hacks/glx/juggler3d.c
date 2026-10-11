@@ -1,4 +1,4 @@
-/* juggle, Copyright (c) 1996-2009 Tim Auckland <tda10.geo@yahoo.com>
+/* juggle, Copyright © 1996-2026 Tim Auckland <tda10.geo@yahoo.com>
  * and Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -453,6 +453,12 @@ typedef struct {
   const char * name;
 } patternstruct;
 
+/* ENABLE_NLS: define this blank so that we can use it to tag static strings.
+   We call gettext manually. */
+# undef _
+# define _(S) S
+
+
 /* List of popular patterns, in any order */
 /* Patterns should be given in Adam notation so the generator can
    concatenate them safely.  Null descriptions are ok.  Height
@@ -460,33 +466,33 @@ typedef struct {
 /* Can't const this because it is qsorted.  This *should* be reentrant,
    I think... */
 static /*const*/ patternstruct portfolio[] = {
-  {"[+2 1]", /* +3 1 */ "Typical 2 ball juggler"},
-  {"[2 0]", /* 4 0 */ "2 in 1 hand"},
+  {"[+2 1]", /* +3 1 */ _("Typical 2 ball juggler")},
+  {"[2 0]", /* 4 0 */ _("2 in 1 hand")},
   {"[2 0 1]", /* 5 0 1 */},
   {"[+2 0 +2 0 0]" /* +5 0 +5 0 0 */},
   {"[+2 0 1 2 2]", /* +4 0 1 2 3 */},
   {"[2 0 1 1]", /* 6 0 1 1 */},
 
-  {"[3]", /* 3 */ "3 cascade"},
-  {"[+3]", /* +3 */ "reverse 3 cascade"},
-  {"[=3]", /* =3 */ "cascade 3 under arm"},
-  {"[&3]", /* &3 */ "cascade 3 catching under arm"},
-  {"[_3]", /* _3 */ "bouncing 3 cascade"},
-  {"[+3 x3 =3]", /* +3 x3 =3 */ "Mill's mess"},
+  {"[3]", /* 3 */ _("3 cascade")},
+  {"[+3]", /* +3 */ _("reverse 3 cascade")},
+  {"[=3]", /* =3 */ _("cascade 3 under arm")},
+  {"[&3]", /* &3 */ _("cascade 3 catching under arm")},
+  {"[_3]", /* _3 */ _("bouncing 3 cascade")},
+  {"[+3 x3 =3]", /* +3 x3 =3 */ _("Mill's mess")},
   {"[3 2 1]", /* 5 3 1" */},
   {"[3 3 1]", /* 4 4 1" */},
-  {"[3 1 2]", /* 6 1 2 */ "See-saw"},
+  {"[3 1 2]", /* 6 1 2 */ _("See-saw")},
   {"[=3 3 1 2]", /* =4 5 1 2 */},
-  {"[=3 2 2 3 1 2]", /* =6 2 2 5 1 2 */ "=4 5 1 2 stretched"},
-  {"[+3 3 1 3]", /* +4 4 1 3 */ "anemic shower box"},
+  {"[=3 2 2 3 1 2]", /* =6 2 2 5 1 2 */ _("=4 5 1 2 stretched")},
+  {"[+3 3 1 3]", /* +4 4 1 3 */ _("anemic shower box")},
   {"[3 3 1]", /* 4 4 1 */},
   {"[+3 2 3]", /* +4 2 3 */},
-  {"[+3 1]", /* +5 1 */ "3 shower"},
-  {"[_3 1]", /* _5 1 */ "bouncing 3 shower"},
-  {"[3 0 3 0 3]", /* 5 0 5 0 5 */ "shake 3 out of 5"},
-  {"[3 3 3 0 0]", /* 5 5 5 0 0 */ "flash 3 out of 5"},
-  {"[3 3 0]", /* 4 5 0 */ "complete waste of a 5 ball juggler"},
-  {"[3 3 3 0 0 0 0]", /* 7 7 7 0 0 0 0 */ "3 flash"},
+  {"[+3 1]", /* +5 1 */ _("3 shower")},
+  {"[_3 1]", /* _5 1 */ _("bouncing 3 shower")},
+  {"[3 0 3 0 3]", /* 5 0 5 0 5 */ _("shake 3 out of 5")},
+  {"[3 3 3 0 0]", /* 5 5 5 0 0 */ _("flash 3 out of 5")},
+  {"[3 3 0]", /* 4 5 0 */ _("complete waste of a 5 ball juggler")},
+  {"[3 3 3 0 0 0 0]", /* 7 7 7 0 0 0 0 */ _("3 flash")},
   {"[+3 0 +3 0 +3 0 0]", /* +7 0 +7 0 +7 0 0 */},
   {"[3 2 2 0 3 2 0 2 3 0 2 2 0]", /* 7 3 3 0 7 3 0 3 7 0 3 3 0 */},
   {"[3 0 2 0]", /* 8 0 4 0 */},
@@ -495,17 +501,17 @@ static /*const*/ patternstruct portfolio[] = {
   {"[1 _3 1 _3 0 1 _3 0]", /* 1 _7 1 _7 0 1 _7 0 */},
   {"[_3 2 1 _3 1 2 1]", /* _6 3 1 _6 1 3 1 */},
 
-  {"[4]", /* 4 */ "4 cascade"},
-  {"[+4 3]", /* +5 3 */ "4 ball half shower"},
+  {"[4]", /* 4 */ _("4 cascade")},
+  {"[+4 3]", /* +5 3 */ _("4 ball half shower")},
   {"[4 4 2]", /* 5 5 2 */},
-  {"[+4 4 4 +4]", /* +4 4 4 +4 */ "4 columns"},
+  {"[+4 4 4 +4]", /* +4 4 4 +4 */ _("4 columns")},
   {"[+4 3 +4]", /* +5 3 +4 */},
   {"[4 3 4 4]", /* 5 3 4 4 */},
   {"[4 3 3 4]", /* 6 3 3 4 */},
   {"[4 3 2 4", /* 6 4 2 4 */},
-  {"[+4 1]", /* +7 1 */ "4 shower"},
-  {"[4 4 4 4 0]", /* 5 5 5 5 0 */ "learning 5"},
-  {"[+4 x4 =4]", /* +4 x4 =4 */ "Mill's mess for 4"},
+  {"[+4 1]", /* +7 1 */ _("4 shower")},
+  {"[4 4 4 4 0]", /* 5 5 5 5 0 */ _("learning 5")},
+  {"[+4 x4 =4]", /* +4 x4 =4 */ _("Mill's mess for 4")},
   {"[+4 2 1 3]", /* +9 3 1 3 */},
   {"[4 4 1 4 1 4]", /* 6 6 1 5 1 5, by Allen Knutson */},
   {"[_4 _4 _4 1 _4 1]", /* _5 _6 _6 1 _5 1 */},
@@ -516,12 +522,12 @@ static /*const*/ patternstruct portfolio[] = {
   {"[_4 1 3 1]", /* _9 1 5 1 */},
   {"[_4 1 3 1 2]", /* _10 1 6 1 2 */},
 
-  {"[5]", /* 5 */ "5 cascade"},
+  {"[5]", /* 5 */ _("5 cascade")},
   {"[_5 _5 _5 _5 _5 5 5 5 5 5]", /* _5 _5 _5 _5 _5 5 5 5 5 5 */},
-  {"[+5 x5 =5]", /* +5 x5 =5 */ "Mill's mess for 5"},
+  {"[+5 x5 =5]", /* +5 x5 =5 */ _("Mill's mess for 5")},
   {"[5 4 4]", /* 7 4 4 */},
   {"[_5 4 4]", /* _7 4 4 */},
-  {"[1 2 3 4 5 5 5 5 5]", /* 1 2 3 4 5 6 7 8 9 */ "5 ramp"},
+  {"[1 2 3 4 5 5 5 5 5]", /* 1 2 3 4 5 6 7 8 9 */ _("5 ramp")},
   {"[5 4 5 3 1]", /* 8 5 7 4 1, by Allen Knutson */},
   {"[_5 4 1 +4]", /* _9 5 1 5 */},
   {"[_5 4 +4 +4]", /* _8 4 +4 +4 */},
@@ -529,7 +535,7 @@ static /*const*/ patternstruct portfolio[] = {
   {"[_5 4 4 5 1]",},
   {"[_5 4 4 +4 4 0]", /*_10 5 5 +5 5 0 */},
 
-  {"[6]", /* 6 */ "6 cascade"},
+  {"[6]", /* 6 */ _("6 cascade")},
   {"[+6 5]", /* +7 5 */},
   {"[6 4]", /* 8 4 */},
   {"[+6 3]", /* +9 3 */},
@@ -538,9 +544,9 @@ static /*const*/ patternstruct portfolio[] = {
   {"[6 0 6]", /* 9 0 9 */},
   {"[_6 0 _6]", /* _9 0 _9 */},
 
-  {"[_7]", /* _7 */ "bouncing 7 cascade"},
-  {"[7]", /* 7 */ "7 cascade"},
-  {"[7 6 6 6 6]", /* 11 6 6 6 6 */ "Gatto's High Throw"},
+  {"[_7]", /* _7 */ _("bouncing 7 cascade")},
+  {"[7]", /* 7 */ _("7 cascade")},
+  {"[7 6 6 6 6]", /* 11 6 6 6 6 */ _("Gatto's High Throw")},
 
 };
 
@@ -2996,7 +3002,7 @@ draw_juggle (ModeInfo *mi)
 
   print_texture_label (mi->dpy, sp->font_data,
                        mi->xgwa.width, mi->xgwa.height,
-                       1, sp->pattern, color);
+                       1, gettext (sp->pattern), color);
 
 #ifdef MEMTEST
   if((int)(sp->time/10) % 1000 == 0)

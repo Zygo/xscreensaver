@@ -12,7 +12,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Distorts an image using a random series of filters: edge detection,
 subtracting the image from a rotated version of itself, etc.
 

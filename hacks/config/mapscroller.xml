@@ -126,7 +126,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A slowly-scrolling map of a random place on Earth.  The map images are loaded
 from openstreetmap.org, or any compatible service.
 

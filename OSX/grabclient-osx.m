@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 1992-2022 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 1992-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -199,11 +199,18 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
   // Grab a screen shot of those windows below this one
   // (hey, X11 can't do that!)
   //
-  CGImageRef img = 
+  // #### Deprecated in macOS 14.0; not sure how to replace it.
+  //      Maybe CGDisplayCreateImageForRect?
+  //
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
+  CGImageRef img =
     CGWindowListCreateImage (cgrect,
                              kCGWindowListOptionOnScreenBelowWindow,
                              windowNumber,
                              kCGWindowImageDefault);
+# pragma clang diagnostic pop
 
   if (! img) return False;
 

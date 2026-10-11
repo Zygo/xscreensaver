@@ -54,7 +54,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 Displays a slideshow of images, with panning, zooming and crossfading
 effects.
 

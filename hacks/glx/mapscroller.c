@@ -72,9 +72,20 @@ typedef struct { double lat, lon; } LL;
 typedef struct { double x, y; } XY;
 typedef struct { long x, y; } XYi;
 
+/* ENABLE_NLS: define this blank so that we can use it to tag static strings.
+   We call gettext manually. */
+# undef _
+# define _(S) S
+
 static const struct { LL pos; char *name; } cities[] = {
 # include "mapcities.h"
 };
+
+#ifdef ENABLE_NLS	/* Now put it back */
+# undef _
+# define _(S) gettext(S)
+#endif
+
 
 typedef struct {
   int id;
@@ -218,7 +229,7 @@ constrain_mercator (LL *ll)
 {
   Bool changed = False;
   /* The map tiles use the Mercator projection with an aspect ratio of 1,
-     meaning that any areas +-85.05113° latitude are inaccessible.
+     meaning that any areas ±85.05113° latitude are inaccessible.
   https://en.wikipedia.org/wiki/Mercator_projection#Truncation_and_aspect_ratio
    */
   if (ll->lat >  85) changed = True, ll->lat =  85;
@@ -269,7 +280,7 @@ nearest_city (ModeInfo *mi)
 
   km = (nearest_d / 1000) + 0.5;
   if (km < 10)
-    return strdup (cities[nearest_i].name);
+    return strdup (gettext (cities[nearest_i].name));
   else
     {
       char buf[1024];
@@ -278,7 +289,8 @@ nearest_city (ModeInfo *mi)
         sprintf (kmb, "%d,%03d", km/1000, km%1000);
       else
         sprintf (kmb, "%d", km);
-      sprintf (buf, "%.20s km from %.200s", kmb, cities[nearest_i].name);
+      sprintf (buf, _("%.20s km from %.200s"), kmb, 
+               gettext (cities[nearest_i].name));
       return strdup (buf);
     }
 }
@@ -1207,8 +1219,8 @@ qsort_strcasecmp (const void *a, const void *b)
 { 
   const char *aa = *(const char **) a;
   const char *bb = *(const char **) b;
-  char *c = utf8_to_latin1 (aa, True);
-  char *d = utf8_to_latin1 (bb, True);
+  char *c = utf8_to_latin1 (gettext (aa), True);
+  char *d = utf8_to_latin1 (gettext (bb), True);
   int ret = strcasecmp (c, d);
   free (c);
   free (d);
@@ -1224,9 +1236,9 @@ list_cities (ModeInfo *mi)
   for (i = 0; i < n; i++)
     c2[i] = cities[i].name;
   qsort (c2, i, sizeof(*c2), qsort_strcasecmp);
-  fprintf (stdout, "%s: built-in city names:\n\n", progname);
+  fprintf (stdout, _("%s: built-in city names:\n\n"), progname);
   for (i = 0; i < n; i++)
-    fprintf (stdout, "\t%s\n", c2[i]);
+    fprintf (stdout, "\t%s\n", gettext (c2[i]));
   fprintf (stdout, "\n");
   free (c2);
 }
@@ -1299,31 +1311,41 @@ init_map (ModeInfo *mi)
           }
         for (i = 0; i < countof(cities); i++)
           {
-            const char *name1 = cities[i].name;
-            char *name2 = utf8_to_latin1 (name1, True);
-            const char *comma1 = strrchr (name1, ',');
-            const char *comma2 = strrchr (name2, ',');
-            if (!strcasecmp (origin_arg, name1) ||
-                !strcasecmp (origin_arg, name2) ||
-                (comma1 &&
-                 strlen (origin_arg) == comma1 - name1 &&
-                 !strncasecmp (origin_arg, name1,
-                               strlen (origin_arg))) ||
-                (comma2 &&
-                 strlen (origin_arg) == comma2 - name2 &&
-                 !strncasecmp (origin_arg, name2,
-                               strlen (origin_arg))))
+            int j;
+            for (j = 0; j < 2; j++)
               {
-                bp->pos = cities[i].pos;
-                constrain_mercator (&bp->pos);
-                goto DONE;
+                const char *name1 = (j == 0
+                                     ? cities[i].name
+                                     : gettext (cities[i].name));
+                char *name2 = utf8_to_latin1 (name1, True);
+                const char *comma1 = strrchr (name1, ',');
+                const char *comma2 = strrchr (name2, ',');
+                if (!strcasecmp (origin_arg, name1) ||
+                    !strcasecmp (origin_arg, name2) ||
+                    (comma1 &&
+                     strlen (origin_arg) == comma1 - name1 &&
+                     !strncasecmp (origin_arg, name1,
+                                   strlen (origin_arg))) ||
+                    (comma2 &&
+                     strlen (origin_arg) == comma2 - name2 &&
+                     !strncasecmp (origin_arg, name2,
+                                   strlen (origin_arg))))
+                  {
+                    bp->pos = cities[i].pos;
+                    constrain_mercator (&bp->pos);
+                    free (name2);
+                    goto DONE;
+                  }
+                free (name2);
               }
-            free (name2);
           }
   
-        fprintf (stderr, "%s: origin must be 'random', 'random-city', "
-                 " a lat/lon pair, or a city name.\n", progname);
-        fprintf (stderr, "%s: Use '--origin help' for the available names.\n",
+        fprintf (stderr, 
+                 _("%s: origin must be 'random', 'random-city', "
+                   " a lat/lon pair, or a city name.\n"),
+                 progname);
+        fprintf (stderr,
+                 _("%s: Use '--origin help' for the available names.\n"),
                  blurb(mi));
 
         origin_arg = "random-city";

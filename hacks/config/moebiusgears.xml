@@ -35,7 +35,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 An interlinked loop of rotating gears.  The layout of the gears
 follows the path of a möbius strip.  
 

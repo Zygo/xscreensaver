@@ -128,10 +128,10 @@ X11_SRC_FILES += \
   hacks/pacman_level.c \
 
 GL_SRC_FILES += \
-  hacks/glx/buildlwo.c \
   hacks/glx/b_draw.c \
   hacks/glx/b_lockglue.c \
   hacks/glx/b_sphere.c \
+  hacks/glx/buildlwo.c \
   hacks/glx/chessmodels.c \
   hacks/glx/companion_disc.c \
   hacks/glx/companion_heart.c \
@@ -148,6 +148,7 @@ GL_SRC_FILES += \
   hacks/glx/dumpster_model.c \
   hacks/glx/dymaxionmap-coords.c \
   hacks/glx/earth.c \
+  hacks/glx/floppy_model.c \
   hacks/glx/glschool_alg.c \
   hacks/glx/glschool_gl.c \
   hacks/glx/glut_stroke.c \

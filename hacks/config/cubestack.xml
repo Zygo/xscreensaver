@@ -37,7 +37,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 An endless stack of unfolding, translucent cubes.
 
 Written by Jamie Zawinski; 2016.

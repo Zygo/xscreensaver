@@ -33,7 +33,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Draws figures that move around at a slightly different rate from
 each other, creating interesting chaotic and ordered patterns.
 

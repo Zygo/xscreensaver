@@ -124,6 +124,8 @@ Building for older operating systems:
            ~/Library/Screen\ Savers/
  17: git add xscreensaver.xcodeproj/xcshareddata/xcschemes/*.xcscheme
  18: Create a man page from the XML with xml2man.pl, and update Makefile.in.
- 19: Upload a YouTube video:
+ 19: Generate localizations:
+     cd ../po && make distdepend && ./autotranslate.pl -v *.po
+ 20: Upload a YouTube video:
      --record-animation 2min --delay 0 -geom 1920x1080+128+64
      ./upload-video.pl NAME

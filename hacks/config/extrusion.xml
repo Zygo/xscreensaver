@@ -32,7 +32,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Various extruded shapes twist and turn inside out.
 
 Written by Linas Vepstas, David Konerding, and Jamie Zawinski; 1999.

@@ -57,7 +57,7 @@
   </hgroup>
 
 
-  <_description>
+  <_description xml:space="preserve">
 Generates random mazes, with three different algorithms: Kruskal,
 Prim, and a depth-first recursive backtracker.
 

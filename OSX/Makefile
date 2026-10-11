@@ -3,13 +3,15 @@
 XCODE_APP  = /Applications/Xcode.app
 TARGETS    = All Savers
 ARCH       = -destination platform=macOS
-CERT	   = 'Developer ID Installer: Jamie Zawinski (4627ATJELP)'
-CERT2	   = 'Developer ID Application: Jamie Zawinski (4627ATJELP)'
+TEAMID     = 4627ATJELP
+CERT	   = "Developer ID Installer: Jamie Zawinski ($(TEAMID))"
+CERT2	   = "Developer ID Application: Jamie Zawinski ($(TEAMID))"
 PKGID	   = org.jwz.xscreensaver
 THUMBDIR   = build/screenshots
 XCODEBUILD = $(XCODE_APP)/Contents/Developer/usr/bin/xcodebuild
 SETFILE    = $(XCODE_APP)/Contents/Developer/Tools/SetFile
 SETICON    = ./seticon.pl
+TAR        = gnutar
 
 # Using $(MAKE) directly means the shell executes things even with "make -n"
 MAKE2 = $(MAKE)
@@ -32,10 +34,10 @@ distclean:
 distdepend:: Sparkle.framework
 distdepend:: update_plist_version
 
-_debug: distdepend
+_debug: distdepend check_keychain
 	$(XCODEBUILD) $(ARCH) -scheme "$(TARGETS)" -configuration Debug   build
 
-_release:: distdepend
+_release:: distdepend check_keychain
 	$(XCODEBUILD) $(ARCH) -scheme "$(TARGETS)" -configuration Release build
 
 _release:: check_versions
@@ -50,7 +52,7 @@ release::
 
 Sparkle.framework:
 	rm -rf bin sparkle-bin
-	tar -vxjf ../archive/Sparkle-2.8.1.tar.xz \
+	$(TAR) -vxjf ../archive/Sparkle-2.8.1.tar.xz \
 	  --exclude __MACOSX \
 	  --exclude CHANGELOG \
 	  --exclude LICENSE \
@@ -261,7 +263,7 @@ test_sig::
 #
 # "codesign -vv --deep --strict" complains: "resource fork, Finder
 # information, or similar detritus not allowed".  Maybe it is complaining
-# about the "Icon\r" file?
+# about the "Icon\r" file?  (No, I think it was complaining about xattrs.)
 
 build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.png ../utils/version.h
 	@\
@@ -308,17 +310,19 @@ update_installer_size::
 	@								\
   SIZE=`du -ks build/Release/ | sed 's/[^0-9].*//'` ;			\
   SIZE=`perl -e "print int($$SIZE / 10240 * 1.08 + 0.999) * 10;"` ;	\
-  FILE="installer.sh" ;							\
   TMP="/tmp/installer.$$$$.sh" ;					\
-  sed -e "s/^\(REQUIRED_SPACE=\)[0-9]*\(.*\)/\1$$SIZE\2/"		\
-	 < "$$FILE" > "$$TMP" ;						\
-  if cmp -s "$$FILE" "$$TMP" ; then					\
-    echo "$$FILE unchanged (required space $$SIZE MB)" ;		\
-  else									\
-    cat "$$TMP" > "$$FILE" ;						\
-    echo "$$FILE updated (required space $$SIZE MB)" ;			\
-  fi ;									\
-  rm -f "$$TMP"
+  for f in installer.sh installer.rtf ; do				\
+    sed -e "s/^\(REQUIRED_SPACE=\)[0-9]*\(.*\)/\1$$SIZE\2/"		\
+        -e "s/ [0-9][0-9]* MB/ $$SIZE MB/"				\
+	< "$$f" > "$$TMP" ;						\
+    if cmp -s "$$f" "$$TMP" ; then					\
+      echo "$$f unchanged (required space $$SIZE MB)" ;			\
+    else								\
+      cat "$$TMP" > "$$f" ;						\
+      echo "$$f updated (required space $$SIZE MB)" ;			\
+    fi ;								\
+    rm -f "$$TMP" ;							\
+  done
 
 
 dmg:: distdepend check_versions
@@ -368,7 +372,7 @@ _dmg::
      DST_HACK="XScreenSaver.updater" ;					      \
      echo + tar ... "$$DST/$$DST_HACK" ;				      \
      CWD=`pwd` ;							      \
-     ( cd $$SRC ; tar -czf "$$CWD/$$DST/$$DST_HACK" "$$f2" ) ;		      \
+     ( cd $$SRC ; $(TAR) -czf "$$CWD/$$DST/$$DST_HACK" "$$f2" ) ;	      \
      echo ' fuck you apple' >> $$DST/$$DST_HACK ;			      \
    elif [ "$$ok" = yes ]; then						      \
      echo + cp -pR "$$f" "$$DST/" ;					      \
@@ -426,7 +430,7 @@ _dmg::
   echo "Deleting..." ;							      \
   sudo rm -rf "$$STAGE" ;						      \
 									      \
-  hdiutil convert -quiet -ov -format UDBZ -imagekey zlib-level=9	      \
+  hdiutil convert -quiet -ov -format ULMO -imagekey zlib-level=9	      \
     "$$TMPDMG" -o "$$DMG" ;						      \
   xattr -w com.apple.quarantine "0000;00000000;;" "$$DMG" ;		      \
   rm -f "$$TMPDMG" ;							      \
@@ -478,7 +482,7 @@ notarize::
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
   CMD="xcrun notarytool submit $$DMG" ;					      \
   CMD="$$CMD --keychain-profile altool-notarizer" ;			      \
-  CMD="$$CMD --apple-id jwz@jwz.org --team-id 4627ATJELP --wait" ;	      \
+  CMD="$$CMD --apple-id jwz@jwz.org --team-id $(TEAMID) --wait" ;	      \
   echo "+ $$CMD" ;  							      \
   echo "" ;								      \
   RET=`$$CMD` ;  							      \
@@ -520,6 +524,126 @@ staple::
   set -x ;								      \
   xcrun stapler staple "$$DMG" ;					      \
   xcrun stapler validate "$$DMG" ;					      \
+
+
+# When building via ssh, the keychain must be unlocked in the ssh session or
+# we get the oh-so-obvious error "errSecInternalComponent".  Before building,
+# this rule tests whether signing works at all.
+#
+# This also requires "codesign" and "productsign" to be on the Access Control
+# list for the private keys of the Developer certs in Keychain Access.
+#
+check_keychain::
+	@TMP="/tmp/check_keychain.$$$$" ;				\
+  echo "test signing $$$$" > "$$TMP" ;					\
+  if ! ( codesign --force --sign $(CERT2) --timestamp -o runtime	\
+	   "$$TMP" 2>&- ) ; then					\
+    echo "codesign failed; try: security unlock-keychain" >&2 ;		\
+    rm "$$TMP" ;							\
+    exit 1 ;								\
+  else									\
+    echo "codesign works" >&2 ;						\
+  fi ;									\
+  rm "$$TMP"
+
+
+# In 2026, Apple let their "Developer ID Certification Authority" expire,
+# and for previously-created .pkg files to continue to be installable, they
+# need to be re-signed with the new cert.  Old .dmg, .app and .saver bundles
+# can still remain signed with the expired authority, but only if they used
+# '--timestamp', which I seem to have added in 5.42.
+#
+# UDZO is zlib/deflate (supports -imagekey zlib-level=9)
+# UDBZ is bzip2, first supported in 10.4, "deprecated"
+# ULFO is lzfse, first supported in 10.11
+# ULMO is lzma,  first supported in 10.15
+#
+re_sign_old_dmgs::
+	@set -e ;							\
+  STAGE="build/Release/pkg_stage" ;					\
+									\
+  for V in 5.14 5.34 6.00 6.16 ; do					\
+    DMG="../archive/xscreensaver-$$V.dmg" ;				\
+    SUF="4" ;								\
+    DMG2="../archive/xscreensaver-$$V.$$SUF.dmg" ;			\
+    VOLNAME="XScreenSaver $$V" ;					\
+    MNT="/Volumes/$$VOLNAME" ;						\
+    PKG="$$STAGE/Install Everything.pkg" ;				\
+    TMPDIR="build" ;							\
+									\
+    echo '' ; echo "##### $$DMG2" ; echo '' ;				\
+									\
+    hdiutil attach -nobrowse -readonly "$$DMG" ;			\
+    rm -rf "$$STAGE" ;							\
+    rsync -ax --xattrs --acls --delete-during "$$MNT/" "$$STAGE/" ;	\
+    hdiutil detach "$$MNT" ;						\
+									\
+    if [ "$$V" \< 5.42 ]; then						\
+      echo '' >&2 ;							\
+      echo "Re-signing savers..." >&2 ;					\
+      for F in "$$STAGE"/*.saver/Contents/Resources/*-*			\
+	       "$$STAGE"/*/*.saver/Contents/Resources/*-*		\
+               "$$STAGE"/*.saver					\
+	       "$$STAGE"/*/*.saver					\
+	       "$$STAGE"/*/*.app/Contents/*/*.saver			\
+	       "$$STAGE"/*/*.app ; do					\
+        if ! [ -e "$$F" ]; then continue ; fi ;				\
+        xattr -rc "$$F" ;						\
+	echo "Re-signing $$F" ;						\
+        codesign --force --deep --sign $(CERT2) --timestamp		\
+	  -o runtime "$$F" ;						\
+      done ;								\
+    fi ;								\
+									\
+    if [ -f "$$PKG" ]; then						\
+      echo '' >&2 ;							\
+      echo "Re-signing $$PKG..." >&2 ;					\
+      PKG2=`echo "$$PKG" | sed "s/\./.$$SUF./"` ;			\
+      productsign --sign $(CERT) "$$PKG" "$$PKG2" ;			\
+      if ! ( pkgutil --check-signature "$$PKG2" >&- ); then		\
+	echo "Failed!" ; exit 1 ;					\
+      fi ;								\
+      echo + mv "$$PKG2" "$$PKG" ;					\
+             mv "$$PKG2" "$$PKG" ;					\
+    fi ;								\
+									\
+    echo '' >&2 ;							\
+    echo "Creating $$DMG2 from $$STAGE..." >&2 ;			\
+									\
+    TMPDMG="$$TMPDIR/tmp.dmg" ;						\
+    hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	\
+      -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;		\
+    rm -rf "$$STAGE" ;							\
+									\
+    if [ "$$V" \< 5.34 ]; then						\
+      FMT="UDZO" ;							\
+    elif [ "$$V" \< 6.16 ]; then					\
+      FMT="UDBZ" ;							\
+    elif [ "$$V" \< 6.17 ]; then					\
+      FMT="UDFO" ;							\
+    else								\
+      FMT="ULMO" ;							\
+    fi ;								\
+    hdiutil convert -quiet -ov -format $$FMT -imagekey zlib-level=9	\
+      "$$TMPDMG" -o "$$DMG2" ;						\
+    xattr -w com.apple.quarantine "0000;00000000;;" "$$DMG2" ;		\
+    rm -f "$$TMPDMG" ;							\
+    codesign --sign $(CERT2) "$$DMG2" ;					\
+    codesign -vvv --deep --strict "$$DMG2" ;				\
+    ls -ldhgF "$$DMG" "$$DMG2" ;					\
+    set +x ;								\
+									\
+    echo '' >&2 ;							\
+    echo "Notarizing $$DMG2..." >&2 ;					\
+    xcrun notarytool submit "$$DMG2"					\
+	  --keychain-profile altool-notarizer				\
+	  --apple-id jwz@jwz.org --team-id $(TEAMID) --wait ;		\
+									\
+    echo '' >&2 ;							\
+    echo "Stapling $$DMG2..." >&2 ;					\
+    xcrun stapler staple "$$DMG2" ;					\
+    xcrun stapler validate "$$DMG2" ;					\
+  done
 
 
 # When running under legacyScreenSaver or System Settings, saver preferences

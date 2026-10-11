@@ -39,7 +39,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Emulates a 6502 microprocessor, and runs some example programs on it.
 
 The family of 6502 chips were used throughout the 70's and 80's in

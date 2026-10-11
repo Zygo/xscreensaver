@@ -23,7 +23,6 @@
 #include "xlockmore.h"
 #include "texfont.h"
 #include "hsv.h"
-#include "graphstat.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -40,6 +39,15 @@
 #define DEF_DURATION	"5"
 
 #define SUBTITLE_SCALE 0.7
+
+/* ENABLE_NLS: define this blank so that we can use it to tag static strings.
+   We call gettext manually. */
+# undef _
+# define _(S) S
+
+static const unsigned char graphstat_words[] =
+#include "graphstat.h"
+;
 
 typedef struct {
   struct { GLfloat x, y, z; } *points;
@@ -169,7 +177,7 @@ static void
 init_strings (ModeInfo *mi)
 {
   graphstat_configuration *bp = &bps[MI_SCREEN(mi)];
-  const char *head = (const char *) graphstat;
+  const char *head = (const char *) graphstat_words;
   const char *tail = head;
   int i = 0, j = 0;
 
@@ -204,7 +212,7 @@ init_strings (ModeInfo *mi)
   while (*tail)
     {
       const char *eol = strchr (tail, '\n');
-      char *s;
+      char *s, *s2;
       int L;
       Bool done = False;
 
@@ -222,7 +230,9 @@ init_strings (ModeInfo *mi)
       s[--L] = 0;
       while (s[L-1] == '\n')
         s [--L] = 0;
-      bp->strings[i].strings[j] = s;
+      s2 = strdup (gettext (s));
+      free (s);
+      bp->strings[i].strings[j] = s2;
       j++;
       tail = eol;
 

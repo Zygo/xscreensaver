@@ -44,7 +44,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Square-spiral-producing automata.  The spirals grow outward until they
 hit something, then they go around it.
 

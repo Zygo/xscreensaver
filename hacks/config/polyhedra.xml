@@ -188,7 +188,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The 75 uniform polyhedra and their duals, plus 5 prisms
 and antiprisms, and some information about each.
 

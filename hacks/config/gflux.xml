@@ -42,7 +42,7 @@
   <xscreensaver-image />
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Undulating waves on a rotating grid.
 
 Written by Josiah Pease; 2000.

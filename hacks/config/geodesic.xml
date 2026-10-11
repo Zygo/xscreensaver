@@ -42,7 +42,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A mesh geodesic sphere of increasing and decreasing complexity.
 
 A geodesic sphere is an icosohedron whose equilateral faces are

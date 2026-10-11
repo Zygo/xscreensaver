@@ -17,17 +17,17 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>CFBundleLongVersionString</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>CFBundleGetInfoString</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>6.16</string>
+	<string>6.17</string>
 	<key>NSMainNibFile</key>
 	<string>iSaverRunner</string>
 	<key>CFBundleDisplayName</key>
@@ -71,5 +71,22 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+	    <key>UIApplicationSupportsMultipleScenes</key>
+	    <false/>
+	    <key>UISceneConfigurations</key>
+	    <dict>
+		<key>UIWindowSceneSessionRoleApplication</key>
+		<array>
+		    <dict>
+			<key>UISceneConfigurationName</key>
+			<string>Default Configuration</string>
+			<key>UISceneDelegateClassName</key>
+			<string>SaverRunner</string>
+		    </dict>
+		</array>
+	    </dict>
+	</dict>
 </dict>
 </plist>

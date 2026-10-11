@@ -1,5 +1,5 @@
 /* webcollage-helper-cocoa --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002-2018 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -85,7 +85,7 @@ load_ppm_image (const char *file)
                       hasAlpha: NO
                       isPlanar: NO
                 colorSpaceName: NSDeviceRGBColorSpace
-                  bitmapFormat: NSAlphaFirstBitmapFormat
+                  bitmapFormat: NSBitmapFormatAlphaFirst
                    bytesPerRow: w * 3
                   bitsPerPixel: 8 * 3];
 
@@ -153,7 +153,7 @@ bevel_image (NSImage *img, int bevel_pct,
                       hasAlpha: YES
                       isPlanar: NO
                 colorSpaceName: NSDeviceRGBColorSpace
-                  bitmapFormat: NSAlphaFirstBitmapFormat
+                  bitmapFormat: NSBitmapFormatAlphaFirst
                    bytesPerRow: 0
                   bitsPerPixel: 0];
 
@@ -215,10 +215,9 @@ bevel_image (NSImage *img, int bevel_pct,
   y = [img size].height - (y + h);
   [bevel_img drawAtPoint: NSMakePoint (x, y)
                 fromRect: NSMakeRect (0, 0, w, h)
-               operation: NSCompositingOperationDestinationIn /* Destination image
-                                                      wherever both images are
-                                                      opaque, transparent
-                                                      elsewhere. */
+               operation: NSCompositingOperationDestinationIn
+                          /* Destination image wherever both images are opaque,
+                             transparent elsewhere. */
                 fraction: 1.0];
   [img unlockFocus];
 
@@ -368,8 +367,10 @@ write_image (NSImage *img, const char *file)
     [NSGraphicsContext setCurrentContext:
                          [NSGraphicsContext
                            graphicsContextWithBitmapImageRep:bit_rep]];
-    [img drawInRect:NSMakeRect(0, 0, [img size].width, [img size].height)
-           fromRect:NSZeroRect operation:NSCompositingOperationCopy fraction:1.0];
+    [img drawInRect: NSMakeRect(0, 0, [img size].width, [img size].height)
+           fromRect: NSZeroRect
+          operation: NSCompositingOperationCopy
+           fraction: 1.0];
     [NSGraphicsContext restoreGraphicsState];
 #endif
 
@@ -384,10 +385,11 @@ write_image (NSImage *img, const char *file)
     fprintf (stderr, "%s: writing %s (q=%d%%) ", progname, file, 
              (int) (jpeg_quality * 100));
 
-  NSData *jpeg_data = [bit_rep representationUsingType:NSJPEGFileType
-                               properties:@{ NSImageCompressionFactor: 
-                                             [NSNumber numberWithFloat:
-                                                         jpeg_quality] }];
+  NSData *jpeg_data =
+    [bit_rep representationUsingType: NSBitmapImageFileTypeJPEG
+                          properties: @{ NSImageCompressionFactor: 
+                                          [NSNumber numberWithFloat:
+                                                      jpeg_quality] }];
   [jpeg_data writeToFile:
                [NSString stringWithCString:file
                                   encoding:NSISOLatin1StringEncoding]

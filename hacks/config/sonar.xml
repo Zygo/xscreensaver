@@ -65,7 +65,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A sonar display pings (get it?) the hosts on your local network, and
 plots their distance (response time) from you.
 

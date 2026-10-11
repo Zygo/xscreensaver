@@ -21,7 +21,7 @@ fi
 ###############################################################################
 
 AH_TOP([
-/* xscreensaver, Copyright © 1991-2025 Jamie Zawinski.
+/* xscreensaver, Copyright © 1991-2026 Jamie Zawinski.
  * Generate this file by running 'configure' rather than editing it by hand.
  */
 ])
@@ -338,11 +338,11 @@ AC_DEFUN([AC_PROG_CC_ANSI],
     AC_CHECK_GCC_ARG(gnu99, -std=gnu99)
     AC_CHECK_GCC_ARG(pedantic, -pedantic)
     AC_CHECK_GCC_ARG(Wall, -Wall)
-    AC_CHECK_GCC_ARG(wnested_externs,       -Wnested-externs)
-    AC_CHECK_GCC_ARG(wstrict_prototypes,    -Wstrict-prototypes)
-    AC_CHECK_GCC_ARG(wmissing_prototypes,   -Wmissing-prototypes)
+    AC_CHECK_GCC_ARG(Wnested_externs,       -Wnested-externs)
+    AC_CHECK_GCC_ARG(Wstrict_prototypes,    -Wstrict-prototypes)
+    AC_CHECK_GCC_ARG(Wmissing_prototypes,   -Wmissing-prototypes)
     # "string length is greater than ISO C89 compilers required to support"
-    AC_CHECK_GCC_ARG(no_overlength_strings, -Wno-overlength-strings)
+    AC_CHECK_GCC_ARG(Wno_overlength_strings, -Wno-overlength-strings)
   fi
 ])
 
@@ -672,9 +672,22 @@ AC_DEFUN([AC_XT],
                                    [ac_cv_libxt=no])])])
 
 
-# Random special-cases for X on certain pathological OSes.
-# You know who you are.
+# Special case paths to find X.
 #
+AC_DEFUN([AC_PATHOLOGICAL_XTRA],
+ [case "$host" in
+    *-darwin*)
+      for d in /opt/local /sw /opt/homebrew /usr/local ; do
+        if test "x$x_includes" = xNONE; then
+          if test -d "$d/include" ; then
+            x_includes="$d/include"
+            x_libraries="$d/lib"
+          fi
+        fi
+      done
+    ;;
+  esac])
+
 AC_DEFUN([AC_X_RANDOM_PATHS],
  [case "$host" in
     *-hpux*)
@@ -1078,13 +1091,14 @@ fi
 
 if test -z "$TAR" ; then TAR=tar ; fi
 
+AC_PATHOLOGICAL_XTRA
 AC_PATH_XTRA
+AC_X_RANDOM_PATHS
 
 if test "$have_x" != yes; then
   AC_MSG_ERROR(Couldn't find X11 headers/libs.  Try `$0 --help'.)
 fi
 
-AC_X_RANDOM_PATHS
 AC_XPOINTER
 AC_XT
 
@@ -1167,8 +1181,22 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
 		   [This is the name of the gettext package to use.])
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+# Replaced by the file po/LINGUAS
+# ALL_LINGUAS="da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+
+# Sep 2026:
+# Apparently you are expected to run "autopoint" before "aclocal" now,
+# but MacPorts doesn't have it.  It also inexplicably says gettext is
+# version 1.0, which doesn't exist (probably it's 0.23?)
+#
+# So I downgraded by doing:
+#
+#   port activate gettext @0.22.5_0 gettext-runtime @0.22.5_0 gettext-tools-libs @0.22.5_0
+#
+#
+AM_GNU_GETTEXT_VERSION(0.22.5)
 AM_GNU_GETTEXT([external])
+
 MKINSTALLDIRS="$INSTALL_DIRS"
 
 # The library is there, but neither $INTLLIBS nor $LIBINTL are getting set.

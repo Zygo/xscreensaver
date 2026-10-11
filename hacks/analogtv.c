@@ -121,6 +121,12 @@ do { \
 #define FASTRND_C 12345
 #define FASTRND (fastrnd = fastrnd*FASTRND_A+FASTRND_C)
 
+/* We do this a lot:
+   Arithmetic between floating-point type 'double' and enumeration type 'enum'
+ */
+#pragma clang diagnostic ignored "-Wenum-float-conversion"
+
+
 static void analogtv_ntsc_to_yiq(const analogtv *it, int lineno, const float *signal,
                                  int start, int end, struct analogtv_yiq_s *it_yiq);
 

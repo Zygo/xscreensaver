@@ -27,7 +27,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 
 Cloud-like formations based on a variant of Conway's Life. 
 

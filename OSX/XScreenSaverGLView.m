@@ -17,6 +17,7 @@
 
 #import "XScreenSaverGLView.h"
 #import "XScreenSaverConfigSheet.h"
+#import "nslog.h"
 #import "jwxyz-cocoa.h"
 #import "jwxyzI.h"
 #import "screenhackI.h"
@@ -155,10 +156,15 @@ extern void check_gl_error (const char *type);
     CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
     int w = 8;
     int h = 8;
+
+    // 2026: see comment in jwxyz/jwxyz.c:jwxyz_png_to_ximage
+    const uint32_t bitmap_info =
+    (uint32_t) kCGBitmapByteOrder32Little |
+    (uint32_t) kCGImageAlphaNoneSkipLast;
+
     backbuffer = CGBitmapContextCreate (NULL, w, h,   // yup, only 8px x 8px.
                                         8, w*4, cs,
-                                        (kCGBitmapByteOrder32Little |
-                                         kCGImageAlphaNoneSkipLast));
+                                        bitmap_info);
     CGColorSpaceRelease (cs);
   }
 #endif // JWXYZ_QUARTZ

@@ -1150,7 +1150,7 @@ tick_planet (ModeInfo *mi)
       /* Generate the label string for this country. */
       int idx = gp->country_order[gp->country_idx];
       country_dlist *cc = &gp->countries[idx];
-      const char *name = cc->geom->name;
+      const char *name = gettext (cc->geom->name);
       const char *endonym = (printable_p (gp->label_font, cc->geom->endonym)
                              ? cc->geom->endonym :
                              printable_p (gp->label_font, cc->geom->endonym2)

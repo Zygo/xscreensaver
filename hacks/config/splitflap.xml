@@ -60,7 +60,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 Simulates a split-flap display, an old style of electromechanical 
 sign as seen in airports and train stations, and commonly used in
 alarm clocks in the 1960s and 1970s.

@@ -35,7 +35,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Subdivides and colors rectangles randomly, for a Mondrian-esque effect.
 
 https://en.wikipedia.org/wiki/Piet_Mondrian#Paris_1919.E2.80.931938

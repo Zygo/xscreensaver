@@ -28,7 +28,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A fractal packing of circles with smaller circles, demonstrating
 Descartes's theorem.
 

@@ -56,7 +56,7 @@
   <xscreensaver-image />
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Loads images as polaroids and drops them in a pile.
 
 Written by Jens Kilian and Jamie Zawinski; 2008.

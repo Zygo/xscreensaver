@@ -29,7 +29,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A set of meshed gears arranged on the surface of a sphere.
 
 https://en.wikipedia.org/wiki/Geodesic_dome

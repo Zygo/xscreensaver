@@ -24,7 +24,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Random dropshadowed rectangles pop onto the screen in lockstep.
 
 Written by Ozymandias G. Desiderata, Jamie Zawinski, and Stephen Linhart; 1998.

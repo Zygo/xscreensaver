@@ -31,7 +31,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.12 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.13 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -497,6 +497,9 @@ sub build_countries($$@) {
 #define P static const country_polys
 #define G static const country_geom
 
+# undef _
+# define _(S) S
+
 ';
 
   my %dups;
@@ -720,7 +723,8 @@ sub build_countries($$@) {
       $out .= ('static const country_polys ' . $pn . '[]={' .
                join(',', @polys) . "};\n" .
                'static const country_geom ' . $pn2 . '={' .
-               "\"$code\",\"$name\",\"$endonym\",\"$endonym2\",$pop,$area," .
+               "\"$code\",_(\"$name\"),\"$endonym\",\"$endonym2\"," .
+               "$pop,$area," .
                scalar(@polys) . ",$pn};\n\n");
     }
   }

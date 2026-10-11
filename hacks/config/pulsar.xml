@@ -34,7 +34,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Intersecting planes, with alpha blending, fog, textures, and mipmaps.
 
 Written by David Konerding; 1999.

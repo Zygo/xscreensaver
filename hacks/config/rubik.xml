@@ -28,7 +28,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A Rubik's Cube that repeatedly shuffles and solves itself.
 
 See also the "GLSnake" and "Cube21" screen savers.

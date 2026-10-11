@@ -46,7 +46,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 This screen saver was removed from the XScreenSaver distribution as of
 version 5.10.  It has been replaced by the more general "Polytopes"
 screen saver, which can display this object as well as others.

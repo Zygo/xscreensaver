@@ -39,7 +39,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Melts an image in various ways. Warning, if the effect continues after
 the screen saver is off, seek medical attention.
 

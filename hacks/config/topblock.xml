@@ -57,7 +57,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Creates a 3D world with dropping blocks that build up and up.
 
 Written by rednuht; 2006.

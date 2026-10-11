@@ -22,7 +22,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Scrolling UPC-A, UPC-E, EAN-8 and EAN-13 barcodes.  CONSUME!
 
 https://en.wikipedia.org/wiki/Universal_Product_Code

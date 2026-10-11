@@ -23,7 +23,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Discrete map fractal systems, including variants of Hopalong, Julia,
 and others.
 

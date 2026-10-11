@@ -262,246 +262,251 @@ static const float colour[][2][4] = {
       { 46/255.0, 205/255.0, 227/255.0, 1.0 } }
 };
 
+/* ENABLE_NLS: define this blank so that we can use it to tag static strings.
+   We call gettext manually. */
+# undef _
+# define _(S) S
+
 static const struct model_s model[] = {
 #define STRAIGHT_MODEL 0
-    { "straight",
+    { _("straight"),
       { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO, ZERO }
     },
     /* the models in the Rubik's snake manual */
-    { "ball",
+    { _("ball"),
       { RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT,
 	RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT,
 	RIGHT, LEFT, RIGHT, LEFT, ZERO }
     },
 #define START_MODEL 2
-    { "snow",
+    { _("snow"),
       { RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT,
 	RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT,
 	RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
-    { "propellor",
+    { _("propellor"),
       { ZERO, ZERO, ZERO, RIGHT, LEFT, RIGHT, ZERO, LEFT, ZERO, ZERO,
 	ZERO, RIGHT, LEFT, RIGHT, ZERO, LEFT, ZERO, ZERO, ZERO, RIGHT,
 	LEFT, RIGHT, ZERO, LEFT }
     },
-    { "flamingo",
+    { _("flamingo"),
       { ZERO, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, RIGHT, PIN,
 	RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, ZERO, ZERO,
 	ZERO, PIN, ZERO }
     },
-    { "cat",
+    { _("cat"),
       { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN,
 	ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO }
     },
-    { "rooster",
+    { _("rooster"),
       { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, LEFT, RIGHT, PIN, RIGHT,
 	ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, LEFT, ZERO,
 	PIN, ZERO }
     },
     /* These models were taken from Andrew and Peter's original snake.c
      * as well as some newer ones made up by Jamie, Andrew and Peter. */
-    { "half balls",
+    { _("half balls"),
       { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT,
 	LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT,
 	RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
-    { "zigzag1",
+    { _("zigzag1"),
       { RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT,
 	LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT,
 	RIGHT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "zigzag2",
+    { _("zigzag2"),
       { PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN,
 	ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN,
 	ZERO }
     },
-    { "zigzag3",
+    { _("zigzag3"),
       { PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN,
 	LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN,
 	ZERO }
     },
-    { "caterpillar",
+    { _("caterpillar"),
       { RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT,
 	LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN,
 	LEFT, LEFT, ZERO }
     },
-    { "bow",
+    { _("bow"),
       { RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT,
 	LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT,
 	RIGHT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "turtle",
+    { _("turtle"),
       { ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT,
 	LEFT, RIGHT, LEFT, LEFT, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT,
 	RIGHT, RIGHT, RIGHT, ZERO }
     },
-    { "basket",
+    { _("basket"),
       { RIGHT, PIN, ZERO, ZERO, PIN, LEFT, ZERO, LEFT, LEFT, ZERO,
 	LEFT, PIN, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO,
 	PIN, LEFT, ZERO }
     },
-    { "thing",
+    { _("thing"),
       { PIN, RIGHT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT,
 	LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT,
 	RIGHT, LEFT, LEFT, ZERO }
     },
-    { "hexagon",
+    { _("hexagon"),
       { ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO,
 	ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO,
 	LEFT, ZERO, ZERO, RIGHT }
     },
-    { "tri1",
+    { _("tri1"),
       { ZERO, ZERO, LEFT, RIGHT, ZERO, LEFT, ZERO, RIGHT, ZERO, ZERO,
 	LEFT, RIGHT, ZERO, LEFT, ZERO, RIGHT, ZERO, ZERO, LEFT, RIGHT,
 	ZERO, LEFT, ZERO, RIGHT }
     },
-    { "triangle",
+    { _("triangle"),
       { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO,
 	ZERO, ZERO, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO, LEFT, RIGHT }
     },
-    { "flower",
+    { _("flower"),
       { ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT,
 	RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN,
 	RIGHT, RIGHT, PIN }
     },
-    { "crucifix",
+    { _("crucifix"),
       { ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN,
 	PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN }
     },
-    { "kayak",
+    { _("kayak"),
       { PIN, RIGHT, LEFT, PIN, LEFT, PIN, ZERO, ZERO, RIGHT, PIN, LEFT,
 	ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO,
 	PIN, RIGHT }
     },
-    { "bird",
+    { _("bird"),
       { ZERO, ZERO, ZERO, ZERO, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT,
 	ZERO, RIGHT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT,
 	LEFT, ZERO, PIN, ZERO }
     },
-    { "seal",
+    { _("seal"),
       { RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO,
 	LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, PIN, RIGHT,
 	RIGHT, LEFT, ZERO }
     },
-    { "dog",
+    { _("dog"),
       { ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN,
 	ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO }
     },
-    { "frog",
+    { _("frog"),
       { RIGHT, RIGHT, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN, LEFT, PIN,
 	RIGHT, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT,
 	RIGHT, LEFT, LEFT, ZERO }
     },
-    { "quavers",
+    { _("quavers"),
       { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO, ZERO, ZERO,
 	RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, ZERO, LEFT, LEFT,
 	RIGHT, LEFT, RIGHT, RIGHT, ZERO }
     },
-    { "fly",
+    { _("fly"),
       { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO, PIN, ZERO, ZERO,
 	LEFT, PIN, RIGHT, ZERO, ZERO, PIN, ZERO, LEFT, LEFT, RIGHT, LEFT,
 	RIGHT, RIGHT, ZERO }
     },
-    { "puppy",
+    { _("puppy"),
       { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO,
 	RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT,
 	LEFT, ZERO, ZERO }
     },
-    { "stars",
+    { _("stars"),
       { LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT,
 	ZERO, ZERO, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN,
 	RIGHT, LEFT, ZERO }
     },
-    { "mountains",
+    { _("mountains"),
       { RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN,
 	LEFT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT,
 	PIN, LEFT, PIN }
     },
-    { "quad1",
+    { _("quad1"),
       { RIGHT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN,
 	LEFT, PIN, RIGHT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, LEFT,
 	LEFT, PIN, LEFT, PIN }
     },
-    { "quad2",
+    { _("quad2"),
       { ZERO, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN,
 	ZERO, PIN, ZERO, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT,
 	PIN, ZERO, PIN }
     },
-    { "glasses",
+    { _("glasses"),
       { ZERO, PIN, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO, PIN,
 	ZERO, PIN, ZERO, PIN, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO,
 	PIN, ZERO, PIN }
     },
-    { "em",
+    { _("em"),
       { ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN,
 	ZERO, PIN, ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO,
 	PIN, ZERO, PIN }
     },
-    { "quad3",
+    { _("quad3"),
       { ZERO, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT,
 	ZERO, PIN, ZERO, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO,
 	LEFT, ZERO, PIN }
     },
-    { "vee",
+    { _("vee"),
       { ZERO, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO,
 	ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO,
 	ZERO, ZERO, PIN }
     },
-    { "square",
+    { _("square"),
       { ZERO, ZERO, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO, ZERO,
 	ZERO, PIN, ZERO, ZERO, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO,
 	ZERO, ZERO, PIN }
     },
-    { "eagle",
+    { _("eagle"),
       { RIGHT, ZERO, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO, ZERO,
 	LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT,
 	ZERO, ZERO, LEFT, PIN }
     },
-    { "volcano",
+    { _("volcano"),
       { RIGHT, ZERO, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT,
 	ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, RIGHT, RIGHT, PIN, LEFT,
 	LEFT, RIGHT, ZERO, LEFT, PIN }
     },
-    { "saddle",
+    { _("saddle"),
       { RIGHT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO,
 	LEFT, PIN, RIGHT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT,
 	ZERO, LEFT, PIN }
     },
-    { "c3d",
+    { _("c3d"),
       { ZERO, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, LEFT, ZERO,
 	ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, LEFT,
 	ZERO, ZERO, PIN }
     },
-    { "block",
+    { _("block"),
       { ZERO, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN,
 	RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, LEFT,
 	PIN, RIGHT }
     },
-    { "duck",
+    { _("duck"),
       { LEFT, PIN, LEFT, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, LEFT,
 	PIN, RIGHT, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN,
 	LEFT, ZERO }
     },
-    { "prayer",
+    { _("prayer"),
       { RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, ZERO,
 	ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, RIGHT, RIGHT, LEFT,
 	RIGHT, LEFT, LEFT, LEFT, PIN }
     },
-    { "giraffe",
+    { _("giraffe"),
       { ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, RIGHT,
 	RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT,
 	PIN, LEFT, LEFT, LEFT }
     },
-    { "tie fighter",
+    { _("tie fighter"),
       { PIN, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, LEFT,
 	ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, LEFT, ZERO,
 	LEFT, RIGHT, ZERO, ZERO }
     },
-    { "Strong Arms",
+    { _("Strong Arms"),
       { PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, RIGHT,
 	RIGHT, PIN, RIGHT, RIGHT, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO,
 	ZERO, PIN, PIN, ZERO }
@@ -509,129 +514,129 @@ static const struct model_s model[] = {
 
     /* the following modesl were created during the slug/compsoc codefest
      * febrray 2003 */
-    { "cool looking gegl",
+    { _("cool looking gegl"),
       { PIN, PIN, ZERO, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT,
 	ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, ZERO,
 	ZERO, ZERO }
     },
-    { "knuckledusters",
+    { _("knuckledusters"),
       { ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN,
 	PIN, ZERO, RIGHT, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO,
 	RIGHT, ZERO }
     },
-    { "k's turd",
+    { _("k's turd"),
       { RIGHT, RIGHT, PIN, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT,
 	RIGHT, PIN, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, PIN,
 	RIGHT, LEFT, RIGHT, PIN, ZERO }
     },
-    { "lightsabre",
+    { _("lightsabre"),
       { ZERO, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO }
     },
-    { "not a stairway",
+    { _("not a stairway"),
       { LEFT, ZERO, RIGHT, LEFT, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO,
 	RIGHT, LEFT, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT,
 	RIGHT, ZERO, LEFT, ZERO }
     },
-    { "not very good (but accurate) gegl",
+    { _("not very good (but accurate) gegl"),
       { ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO,
 	PIN, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, ZERO, PIN, PIN, ZERO,
 	PIN, ZERO }
     },
-    { "box",
+    { _("box"),
       { ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, PIN, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO, ZERO }
     },
-    { "kissy box",
+    { _("kissy box"),
       { PIN, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, PIN, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO,
 	ZERO, PIN, ZERO }
     },
-    { "erect penis",     /* thanks benno */
+    { _("erect penis"),     /* thanks benno */
       { PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, PIN,
 	PIN, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO }
     },
-    { "flaccid penis",
+    { _("flaccid penis"),
       { PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, PIN,
 	PIN, ZERO, ZERO, ZERO, RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO }
     },
-    { "vagina",
+    { _("vagina"),
       { RIGHT, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO,
 	LEFT, ZERO, ZERO, ZERO, LEFT, ZERO, LEFT, PIN, LEFT, PIN, RIGHT,
 	PIN, RIGHT, ZERO }
     },
-    { "mask",
+    { _("mask"),
       { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO, PIN,
 	ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO,
 	ZERO, ZERO, ZERO }
     },
-    { "poles or columns or something",
+    { _("poles or columns or something"),
       { LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO,
 	ZERO, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO,
 	ZERO, LEFT, ZERO }
     },
-    { "crooked v",
+    { _("crooked v"),
       { ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO,
 	ZERO, LEFT, ZERO, LEFT, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO,
 	ZERO, ZERO, ZERO }
     },
-    { "dog leg",
+    { _("dog leg"),
       { ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO,
 	LEFT, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO,
 	ZERO, ZERO }
     },
-    { "scrubby",
+    { _("scrubby"),
       { ZERO, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO,
 	LEFT, RIGHT, ZERO, ZERO, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO,
 	LEFT, PIN, ZERO, ZERO }
     },
-    { "voltron's eyes",
+    { _("voltron's eyes"),
       { ZERO, ZERO, PIN, RIGHT, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO,
 	LEFT, PIN, ZERO, ZERO, PIN, ZERO, LEFT, ZERO, RIGHT, LEFT, ZERO,
 	RIGHT, ZERO, ZERO }
     },
-    { "flying toaster",
+    { _("flying toaster"),
       { PIN, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO,
 	RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO,
 	PIN, ZERO }
     },
-    { "dubbya",
+    { _("dubbya"),
       { PIN, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO,
 	ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO,
 	PIN, ZERO }
     },
-    { "tap handle",
+    { _("tap handle"),
       { PIN, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO,
 	LEFT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO,
 	PIN, ZERO }
     },
-    { "wingnut",
+    { _("wingnut"),
       { PIN, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO,
 	PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO,
 	PIN, ZERO }
     },
-    { "tight twist",
+    { _("tight twist"),
       { RIGHT, ZERO, ZERO, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT,
 	RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT,
 	ZERO, ZERO, RIGHT, ZERO }
     },
-    { "double helix",
+    { _("double helix"),
       { RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, RIGHT,
 	ZERO, RIGHT, ZERO, RIGHT, LEFT, RIGHT, PIN, ZERO, RIGHT, ZERO,
 	RIGHT, ZERO, RIGHT, ZERO, ZERO }
     },
 
     /* Models by stixpjr@gmail.com */
-    { "begging dog",
+    { _("begging dog"),
       { ZERO, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT,
 	LEFT, PIN, RIGHT, RIGHT, ZERO, LEFT, PIN, LEFT, RIGHT, PIN,
 	RIGHT, LEFT, PIN, LEFT }
     },
-    { "swan",
+    { _("swan"),
       { ZERO, PIN, ZERO, ZERO, ZERO, LEFT, ZERO, LEFT, ZERO, ZERO,
 	RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO,
 	LEFT, ZERO, LEFT }
@@ -640,634 +645,640 @@ static const struct model_s model[] = {
     /* These models come from the website at 
      * http://www.geocities.com/stigeide/snake */
 #if 0
-    { "Abstract",
+    { _("Abstract"),
       { RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO, ZERO }
     },
 #endif
-    { "toadstool",
+    { _("toadstool"),
       { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, ZERO }
     },
-    { "AlanH2",
+    { _("AlanH2"),
       { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, ZERO }
     },
-    { "AlanH3",
+    { _("AlanH3"),
       { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, ZERO }
     },
-    { "AlanH4",
+    { _("AlanH4"),
       { ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, PIN, ZERO, ZERO, ZERO }
     },
-    { "Alien",
+    { _("Alien"),
       { RIGHT, LEFT, RIGHT, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO, PIN, PIN, ZERO }
     },
-    { "Angel",
+    { _("Angel"),
       { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO }
     },
-    { "AnotherFigure",
+    { _("AnotherFigure"),
       { LEFT, PIN, RIGHT, ZERO, ZERO, PIN, RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO }
     },
-    { "Ball",
+    { _("Ball"),
         { LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT , ZERO }
     },
-    { "Basket",
+    { _("Basket"),
         { ZERO, RIGHT, RIGHT, ZERO, RIGHT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, ZERO, LEFT , ZERO }
     },
-    { "Beetle",
+    { _("Beetle"),
         { PIN, LEFT, RIGHT, ZERO, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO, LEFT, RIGHT, PIN, RIGHT , ZERO }
     },
-    { "bone",
+    { _("bone"),
         { PIN, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, PIN , ZERO }
     },
-    { "Bow",
+    { _("Bow"),
         { LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT , ZERO }
     },
-    { "bra",
+    { _("bra"),
         { RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT , ZERO }
     },
-    { "bronchosaurus",
+    { _("bronchosaurus"),
         { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, PIN , ZERO }
     },
-    { "Cactus",
+    { _("Cactus"),
         { PIN, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, ZERO , ZERO }
     },
-    { "Camel",
+    { _("Camel"),
         { RIGHT, ZERO, PIN, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, ZERO, ZERO, LEFT , ZERO }
     },
-    { "Candlestick",
+    { _("Candlestick"),
         { LEFT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT , ZERO }
     },
-    { "Cat",
+    { _("Cat"),
         { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO , ZERO }
     },
-    { "Cave",
+    { _("Cave"),
         { RIGHT, ZERO, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO , ZERO }
     },
-    { "Chains",
+    { _("Chains"),
         { PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO , ZERO }
     },
-    { "Chair",
+    { _("Chair"),
         { RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, LEFT, RIGHT, LEFT, LEFT , ZERO }
     },
-    { "Chick",
+    { _("Chick"),
         { RIGHT, RIGHT, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, LEFT, LEFT , ZERO }
     },
-    { "Clockwise",
+    { _("Clockwise"),
         { RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT , ZERO }
     },
-    { "cobra",
+    { _("cobra"),
         { ZERO, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, LEFT, ZERO, LEFT, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT , ZERO }
     },
 #if 0
-    { "Cobra2",
+    { _("Cobra2"),
         { LEFT, ZERO, PIN, ZERO, PIN, LEFT, ZERO, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, PIN, ZERO, RIGHT , ZERO }
     },
 #endif
-    { "Cobra3",
+    { _("Cobra3"),
         { ZERO, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, LEFT , ZERO }
     },
-    { "Compact1",
+    { _("Compact1"),
         { ZERO, ZERO, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN , ZERO }
     },
-    { "Compact2",
+    { _("Compact2"),
         { LEFT, PIN, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO , ZERO }
     },
-    { "Compact3",
+    { _("Compact3"),
         { ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN , ZERO }
     },
-    { "Compact4",
+    { _("Compact4"),
         { PIN, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO , ZERO }
     },
-    { "Compact5",
+    { _("Compact5"),
         { LEFT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT , ZERO }
     },
-    { "Contact",
+    { _("Contact"),
         { PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO, PIN, RIGHT, PIN , ZERO }
     },
-    { "Contact2",
+    { _("Contact2"),
         { RIGHT, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, LEFT , ZERO }
     },
-    { "Cook",
+    { _("Cook"),
         { ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO, PIN , ZERO }
     },
-    { "Counterclockwise",
+    { _("Counterclockwise"),
         { LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT , ZERO }
     },
-    { "Cradle",
+    { _("Cradle"),
         { LEFT, LEFT, ZERO, PIN, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, PIN, ZERO, RIGHT, RIGHT, LEFT, LEFT, ZERO, ZERO, RIGHT , ZERO }
     },
-    { "Crankshaft",
+    { _("Crankshaft"),
         { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, PIN, RIGHT , ZERO }
     },
-    { "Cross",
+    { _("Cross"),
         { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN , ZERO }
     },
-    { "Cross2",
+    { _("Cross2"),
         { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO , ZERO }
     },
-    { "Cross3",
+    { _("Cross3"),
         { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "CrossVersion1",
+    { _("CrossVersion1"),
         { PIN, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, ZERO }
     },
-    { "CrossVersion2",
+    { _("CrossVersion2"),
         { RIGHT, LEFT, PIN, LEFT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
-    { "Crown",
+    { _("Crown"),
         { LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, PIN, ZERO, ZERO }
     },
-    { "DNAStrand",
+    { _("DNAStrand"),
         { RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, ZERO }
     },
-    { "Diamond",
+    { _("Diamond"),
         { ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO }
     },
-    { "Dog",
+    { _("Dog"),
         { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, LEFT, RIGHT, ZERO }
     },
-    { "DogFace",
+    { _("DogFace"),
         { ZERO, ZERO, PIN, PIN, ZERO, LEFT, LEFT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, RIGHT, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO }
     },
-    { "DoublePeak",
+    { _("DoublePeak"),
         { ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, LEFT, ZERO, PIN, ZERO, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
-    { "DoubleRoof",
+    { _("DoubleRoof"),
         { ZERO, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO }
     },
-    { "txoboggan",
+    { _("txoboggan"),
         { ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO }
     },
-    { "Doubled",
+    { _("Doubled"),
         { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO }
     },
-    { "Doubled1",
+    { _("Doubled1"),
         { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO, RIGHT, ZERO, RIGHT, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO }
     },
-    { "Doubled2",
+    { _("Doubled2"),
         { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, RIGHT, ZERO, RIGHT, LEFT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO }
     },
-    { "DumblingSpoon",
+    { _("DumblingSpoon"),
         { PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
-    { "Embrace",
+    { _("Embrace"),
         { PIN, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO }
     },
-    { "EndlessBelt",
+    { _("EndlessBelt"),
         { ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, LEFT, RIGHT, ZERO, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO }
     },
-    { "Entrance",
+    { _("Entrance"),
         { LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, ZERO }
     },
-    { "Esthetic",
+    { _("Esthetic"),
         { LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, ZERO }
     },
-    { "Explosion",
+    { _("Explosion"),
         { RIGHT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
-    { "F-ZeroXCar",
+    { _("F-ZeroXCar"),
         { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
-    { "Face",
+    { _("Face"),
         { ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO }
     },
-    { "Fantasy",
+    { _("Fantasy"),
         { LEFT, LEFT, RIGHT, PIN, ZERO, RIGHT, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, LEFT, ZERO, PIN, LEFT, RIGHT, RIGHT, RIGHT, PIN, ZERO }
     },
-    { "Fantasy1",
+    { _("Fantasy1"),
         { PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO }
     },
-    { "FaserGun",
+    { _("FaserGun"),
         { ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, RIGHT, ZERO, PIN, ZERO }
     },
-    { "FelixW",
+    { _("FelixW"),
         { ZERO, RIGHT, ZERO, PIN, LEFT, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, RIGHT, PIN, ZERO, LEFT, ZERO, ZERO }
     },
-    { "Flamingo",
+    { _("Flamingo"),
         { ZERO, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, ZERO, ZERO, ZERO, PIN, ZERO }
     },
-    { "FlatOnTheTop",
+    { _("FlatOnTheTop"),
         { ZERO, PIN, PIN, ZERO, PIN, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO }
     },
-    { "Fly",
+    { _("Fly"),
         { ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO }
     },
-    { "Fountain",
+    { _("Fountain"),
         { LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO }
     },
-    { "Frog",
+    { _("Frog"),
         { LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, RIGHT, LEFT, RIGHT, RIGHT, ZERO }
     },
-    { "Frog2",
+    { _("Frog2"),
         { LEFT, ZERO, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, ZERO, RIGHT, ZERO }
     },
-    { "Furby",
+    { _("Furby"),
         { PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO }
     },
-    { "Gate",
+    { _("Gate"),
         { ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "Ghost",
+    { _("Ghost"),
         { LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO }
     },
-    { "Globus",
+    { _("Globus"),
         { RIGHT, LEFT, ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, PIN, ZERO, RIGHT, LEFT, ZERO, ZERO }
     },
-    { "Grotto",
+    { _("Grotto"),
         { PIN, PIN, ZERO, LEFT, RIGHT, LEFT, ZERO, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO }
     },
-    { "H",
+    { _("H"),
         { PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "HeadOfDevil",
+    { _("HeadOfDevil"),
         { PIN, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
-    { "Heart",
+    { _("Heart"),
         { RIGHT, ZERO, ZERO, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, RIGHT, ZERO, PIN, ZERO, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO, ZERO, ZERO, LEFT, ZERO }
     },
-    { "Heart2",
+    { _("Heart2"),
         { ZERO, PIN, ZERO, ZERO, LEFT, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO }
     },
-    { "Hexagon",
+    { _("Hexagon"),
         { ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO }
     },
-    { "HoleInTheMiddle1",
+    { _("HoleInTheMiddle1"),
         { ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO }
     },
-    { "HoleInTheMiddle2",
+    { _("HoleInTheMiddle2"),
         { ZERO, LEFT, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO }
     },
-    { "HouseBoat",
+    { _("HouseBoat"),
         { RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, ZERO }
     },
-    { "HouseByHouse",
+    { _("HouseByHouse"),
         { LEFT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, ZERO }
     },
-    { "Infinity",
+    { _("Infinity"),
         { LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "Integral",
+    { _("Integral"),
         { RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "Iron",
+    { _("Iron"),
         { ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO }
     },
-    { "just squares",
+    { _("just squares"),
         { RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "Kink",
+    { _("Kink"),
         { ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "Knot",
+    { _("Knot"),
         { LEFT, LEFT, PIN, LEFT, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, RIGHT, PIN, RIGHT, RIGHT, LEFT, ZERO }
     },
-    { "Leaf",
+    { _("Leaf"),
         { ZERO, PIN, PIN, ZERO, ZERO, LEFT, ZERO, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO }
     },
-    { "LeftAsRight",
+    { _("LeftAsRight"),
         { RIGHT, PIN, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, PIN, LEFT, ZERO }
     },
-    { "Long-necked",
+    { _("Long-necked"),
         { PIN, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "lunar module",
+    { _("lunar module"),
         { PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, ZERO }
     },
-    { "magnifying glass",
+    { _("magnifying glass"),
         { ZERO, ZERO, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, ZERO }
     },
-    { "Mask",
+    { _("Mask"),
         { ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, ZERO }
     },
-    { "Microscope",
+    { _("Microscope"),
         { PIN, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO }
     },
-    { "Mirror",
+    { _("Mirror"),
         { PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "MissPiggy",
+    { _("MissPiggy"),
         { ZERO, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO, LEFT, PIN, RIGHT, RIGHT, ZERO, RIGHT, ZERO }
     },
-    { "Mole",
+    { _("Mole"),
         { ZERO, RIGHT, ZERO, RIGHT, LEFT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, ZERO, RIGHT, RIGHT, PIN, LEFT, ZERO }
     },
-    { "Monk",
+    { _("Monk"),
         { LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "Mountain",
+    { _("Mountain"),
         { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, LEFT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO }
     },
-    { "mountains",
+    { _("mountains"),
         { ZERO, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO }
     },
-    { "MouseWithoutTail",
+    { _("MouseWithoutTail"),
         { ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "mushroom",
+    { _("mushroom"),
         { PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, ZERO }
     },
-    { "necklace",
+    { _("necklace"),
         { ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO }
     },
-    { "NestledAgainst",
+    { _("NestledAgainst"),
         { LEFT, ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
-    { "NoClue",
+    { _("NoClue"),
         { ZERO, RIGHT, PIN, LEFT, LEFT, LEFT, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO }
     },
-    { "Noname",
+    { _("Noname"),
         { LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, ZERO }
     },
-    { "Obelisk",
+    { _("Obelisk"),
         { PIN, ZERO, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO, ZERO, ZERO }
     },
-    { "Ostrich",
+    { _("Ostrich"),
         { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, ZERO }
     },
-    { "Ostrich2",
+    { _("Ostrich2"),
         { PIN, PIN, ZERO, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
-    { "pair of glasses",
+    { _("pair of glasses"),
         { ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
-    { "Parrot",
+    { _("Parrot"),
         { ZERO, ZERO, ZERO, ZERO, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, ZERO, PIN, ZERO }
     },
-    { "Penis",
+    { _("Penis"),
         { PIN, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, PIN, ZERO }
     },
-    { "PictureComingSoon",
+    { _("PictureComingSoon"),
         { LEFT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, RIGHT, RIGHT, ZERO }
     },
-    { "Pitti",
+    { _("Pitti"),
         { LEFT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, ZERO }
     },
-    { "Plait",
+    { _("Plait"),
         { LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, ZERO }
     },
-    { "Platform",
+    { _("Platform"),
         { RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO }
     },
-    { "PodRacer",
+    { _("PodRacer"),
         { ZERO, PIN, ZERO, PIN, RIGHT, PIN, ZERO, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, ZERO, PIN, LEFT, ZERO }
     },
 #if 0
-    { "Pokemon",
+    { _("Pokemon"),
         { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO }
     },
 #endif
-    { "Prawn",
+    { _("Prawn"),
         { RIGHT, PIN, ZERO, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, PIN, ZERO, PIN, LEFT, ZERO }
     },
-    { "Propeller",
+    { _("Propeller"),
         { ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, ZERO }
     },
-    { "Pyramid",
+    { _("Pyramid"),
         { ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, LEFT, ZERO }
     },
-    { "QuarterbackTiltedAndReadyToHut",
+    { _("QuarterbackTiltedAndReadyToHut"),
         { PIN, ZERO, RIGHT, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, LEFT, ZERO, PIN, ZERO }
     },
-    { "Ra",
+    { _("Ra"),
         { PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "Rattlesnake",
+    { _("Rattlesnake"),
         { LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, RIGHT, ZERO, PIN, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, ZERO }
     },
-    { "Revelation",
+    { _("Revelation"),
         { ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, ZERO }
     },
-    { "Revolution1",
+    { _("Revolution1"),
         { LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, ZERO }
     },
-    { "Ribbon",
+    { _("Ribbon"),
         { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "Rocket",
+    { _("Rocket"),
         { RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, ZERO }
     },
-    { "Roofed",
+    { _("Roofed"),
         { ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO }
     },
-    { "Roofs",
+    { _("Roofs"),
         { PIN, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, PIN, ZERO }
     },
-    { "RowHouses",
+    { _("RowHouses"),
         { RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO }
     },
-    { "Sculpture",
+    { _("Sculpture"),
         { RIGHT, LEFT, PIN, ZERO, ZERO, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO }
     },
-    { "Seal",
+    { _("Seal"),
         { LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO }
     },
-    { "Seal2",
+    { _("Seal2"),
         { RIGHT, PIN, ZERO, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, ZERO }
     },
-    { "Sheep",
+    { _("Sheep"),
         { RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT, ZERO }
     },
-    { "Shelter",
+    { _("Shelter"),
         { LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO }
     },
-    { "Ship",
+    { _("Ship"),
         { PIN, RIGHT, LEFT, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, LEFT, ZERO, PIN, PIN, ZERO }
     },
-    { "Shpongle",
+    { _("Shpongle"),
         { LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, ZERO }
     },
-    { "Slide",
+    { _("Slide"),
         { LEFT, RIGHT, LEFT, RIGHT, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, RIGHT, LEFT, ZERO }
     },
-    { "SmallShip",
+    { _("SmallShip"),
         { ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, LEFT, ZERO }
     },
-    { "SnakeReadyToStrike",
+    { _("SnakeReadyToStrike"),
         { LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, LEFT, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO }
     },
-    { "Snakes14",
+    { _("Snakes14"),
         { RIGHT, RIGHT, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO }
     },
-    { "Snakes15",
+    { _("Snakes15"),
         { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, PIN, RIGHT, ZERO }
     },
-    { "Snakes18",
+    { _("Snakes18"),
         { PIN, PIN, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO }
     },
-    { "Snowflake",
+    { _("Snowflake"),
         { LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, ZERO }
     },
-    { "Snowman",
+    { _("Snowman"),
         { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "Source",
+    { _("Source"),
         { PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, ZERO }
     },
-    { "Spaceship",
+    { _("Spaceship"),
         { PIN, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, PIN, ZERO }
     },
-    { "Spaceship2",
+    { _("Spaceship2"),
         { PIN, PIN, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, LEFT, LEFT, PIN, PIN, ZERO }
     },
-    { "Speedboat",
+    { _("Speedboat"),
         { LEFT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, ZERO }
     },
-    { "Speedboat2",
+    { _("Speedboat2"),
         { PIN, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, ZERO, RIGHT, PIN, LEFT, ZERO }
     },
-    { "Spider",
+    { _("Spider"),
         { RIGHT, RIGHT, ZERO, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, RIGHT, LEFT, RIGHT, ZERO, ZERO, LEFT, ZERO }
     },
-    { "Spitzbergen",
+    { _("Spitzbergen"),
         { PIN, LEFT, ZERO, RIGHT, RIGHT, LEFT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, LEFT, LEFT, ZERO, ZERO }
     },
-    { "Square",
+    { _("Square"),
         { ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, ZERO }
     },
-    { "SquareHole",
+    { _("SquareHole"),
         { PIN, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO }
     },
-    { "Stage",
+    { _("Stage"),
         { RIGHT, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, ZERO }
     },
-    { "Stairs",
+    { _("Stairs"),
         { ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, ZERO }
     },
-    { "Stairs2",
+    { _("Stairs2"),
         { ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
-    { "Straight",
+    { _("Straight"),
         { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
-    { "Swan",
+    { _("Swan"),
         { ZERO, PIN, ZERO, PIN, LEFT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
-    { "Swan2",
+    { _("Swan2"),
         { PIN, ZERO, PIN, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO }
     },
-    { "Swan3",
+    { _("Swan3"),
         { PIN, PIN, ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO }
     },
-    { "Symbol",
+    { _("Symbol"),
         { RIGHT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, RIGHT, ZERO }
     },
-    { "Symmetry",
+    { _("Symmetry"),
         { RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, LEFT, ZERO }
     },
-    { "Symmetry2",
+    { _("Symmetry2"),
         { ZERO, PIN, LEFT, LEFT, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, PIN, LEFT, ZERO }
     },
-    { "TableFireworks",
+    { _("TableFireworks"),
         { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, RIGHT, PIN, ZERO }
     },
-    { "Tapering",
+    { _("Tapering"),
         { ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
-    { "TaperingTurned",
+    { _("TaperingTurned"),
         { ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
-    { "TeaLightStick",
+    { _("TeaLightStick"),
         { RIGHT, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, ZERO }
     },
-    { "thighmaster",
+    { _("thighmaster"),
         { RIGHT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
-    { "Terraces",
+    { _("Terraces"),
         { RIGHT, LEFT, ZERO, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO }
     },
-    { "Terrier",
+    { _("Terrier"),
         { PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
-    { "Three-Legged",
+    { _("Three-Legged"),
         { RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, PIN, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, ZERO }
     },
-    { "ThreePeaks",
+    { _("ThreePeaks"),
         { RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, ZERO }
     },
-    { "ToTheFront",
+    { _("ToTheFront"),
         { ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, LEFT, LEFT, PIN, ZERO, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, ZERO }
     },
-    { "Top",
+    { _("Top"),
         { PIN, LEFT, LEFT, PIN, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO }
     },
-    { "Transport",
+    { _("Transport"),
         { PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO }
     },
-    { "Triangle",
+    { _("Triangle"),
         { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO }
     },
-    { "Tripple",
+    { _("Tripple"),
         { PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, ZERO }
     },
 #if 0
-    { "Turtle",
+    { _("Turtle"),
         { RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO }
     },
 #endif
-    { "Twins",
+    { _("Twins"),
         { ZERO, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO, ZERO }
     },
-    { "TwoSlants",
+    { _("TwoSlants"),
         { ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, ZERO }
     },
-    { "TwoWings",
+    { _("TwoWings"),
         { PIN, LEFT, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, ZERO, ZERO }
     },
-    { "UFO",
+    { _("UFO"),
         { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "USS Enterprise",
+    { _("USS Enterprise"),
         { LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO }
     },
-    { "UpAndDown",
+    { _("UpAndDown"),
         { ZERO, PIN, ZERO, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, ZERO }
     },
-    { "Upright",
+    { _("Upright"),
         { ZERO, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, ZERO }
     },
-    { "Upside-down",
+    { _("Upside-down"),
         { PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO }
     },
-    { "Valley",
+    { _("Valley"),
         { ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO }
     },
-    { "Viaduct",
+    { _("Viaduct"),
         { PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO, PIN, RIGHT, ZERO, RIGHT, RIGHT, ZERO, RIGHT, PIN, ZERO, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, ZERO }
     },
-    { "View",
+    { _("View"),
         { ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, ZERO }
     },
-    { "Waterfall",
+    { _("Waterfall"),
         { LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO }
     },
-    { "windwheel",
+    { _("windwheel"),
         { PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO }
     },
-    { "Window",
+    { _("Window"),
         { PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
-    { "WindowToTheWorld",
+    { _("WindowToTheWorld"),
         { PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
-    { "Windshield",
+    { _("Windshield"),
         { PIN, PIN, ZERO, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, PIN, ZERO }
     },
-    { "WingNut",
+    { _("WingNut"),
         { ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
-    { "Wings2",
+    { _("Wings2"),
         { RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO }
     },
-    { "WithoutName",
+    { _("WithoutName"),
         { PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, ZERO }
     },
-    { "Wolf",
+    { _("Wolf"),
         { ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO }
     },
-    { "X",
+    { _("X"),
         { LEFT, ZERO, ZERO, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, ZERO, ZERO, ZERO }
     },
 };
 
 static size_t models = sizeof(model) / sizeof(struct model_s);
+
+#ifdef ENABLE_NLS	/* Now put it back */
+# undef _
+# define _(S) gettext(S)
+#endif
+
 
 #define VOFFSET 0.045
 
@@ -1701,7 +1712,7 @@ static void draw_title(
 
     glColor4fv(color);
     {
-	char interactstr[] = "interactive";
+	const char *interactstr = _("interactive");
 	const char * s;
 #ifdef HAVE_GLUT
 	int w;
@@ -1710,7 +1721,7 @@ static void draw_title(
 	if (interactive)
 	    s = interactstr;
 	else
-	    s = model[bp->next_model].name;
+	    s = gettext (model[bp->next_model].name);
 	
 #ifdef HAVE_GLUT
 	{

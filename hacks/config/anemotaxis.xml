@@ -27,7 +27,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Searches for a source of odor in a turbulent atmosphere.  The searcher
 is able to sense the odor and determine local instantaneous wind
 direction.  The goal is to find the source in the shortest mean time.

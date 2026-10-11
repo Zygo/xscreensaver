@@ -24,7 +24,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A looping, distorting truchet chain with scanlines.
 
 https://www.shadertoy.com/view/4cBcDy

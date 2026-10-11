@@ -31,7 +31,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A looping countdown based on the SMPTE Universal Film leader
 on a simulation of an old analog television.
 

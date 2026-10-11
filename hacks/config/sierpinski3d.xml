@@ -24,7 +24,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The recursive Sierpinski tetrahedron fractal.
 
 https://en.wikipedia.org/wiki/Sierpinski_triangle#Analogs_in_higher_dimension

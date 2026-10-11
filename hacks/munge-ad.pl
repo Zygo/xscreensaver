@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.18 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.19 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -124,7 +124,7 @@ sub munge_ad($) {
 
     # Grab the year.
     my ($year) =
-      ($b =~ m/<_description>.*Written by.*?;\s+(19[6-9]\d|20\d\d)\b/si);
+      ($b =~ m/<_description[^<>]*>.*Written by.*?;\s+(19[6-9]\d|20\d\d)\b/si);
     error ("no year in $name.xml") unless $year;
     $hacks{$name} = $year;
   }

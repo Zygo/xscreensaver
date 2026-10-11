@@ -35,7 +35,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A jet engine consumes the image, then puts it through a spin cycle.
 
 Written by Scott Draves and Jamie Zawinski; 1997.

@@ -8,7 +8,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Test platform for JWXYZ - the X11 compatibility shim for OS X and iOS.
 End users shouldn't normally see this one.
 

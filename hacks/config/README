@@ -4,8 +4,8 @@
             a screen saver and locker for the X window system
                             by Jamie Zawinski
 
-                              version 6.16
-                               03-Sep-2026
+                              version 6.17
+                               10-Oct-2026
 
                      https://www.jwz.org/xscreensaver/
 
@@ -256,7 +256,7 @@ The tags and parameters used here are:
 
 -----------------------------------------------------------------------
 
-  <_description>
+  <_description xml:space="preserve">
         FREE TEXT
   </_description>
 
@@ -265,8 +265,8 @@ The tags and parameters used here are:
         by blank lines.  Lines that begin with whitespace will not be
         wrapped (see "munch.xml" for an example of why.)
 
-        Make sure you use "&lt;" instead of "<", etc.  Character
-        entities are allowed; HTML (and other markup) is not.
+        Make sure you use "&lt;" instead of "<", etc.  Character entities
+	and Unicode are allowed; HTML (and other markup) is not.
 
 -----------------------------------------------------------------------
 

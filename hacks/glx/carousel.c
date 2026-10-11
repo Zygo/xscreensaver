@@ -1,4 +1,4 @@
-/* carousel, Copyright © 2005-2025 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright © 2005-2026 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -510,9 +510,9 @@ loading_msg (ModeInfo *mi, int n)
   if (wire) return;
 
   if (n == 0)
-    sprintf (text, "Loading images...");
+    sprintf (text, "%.90s", _("Loading images..."));
   else
-    sprintf (text, "Loading images...  (%d%%)",
+    sprintf (text, _("Loading images...  (%d%%)"),
              (int) (n * 100 / MI_COUNT(mi)));
 
   if (ss->loading_sw == 0)

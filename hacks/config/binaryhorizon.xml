@@ -24,7 +24,7 @@
   <boolean id="fps" _label="Show frame rate" arg-set="--fps"/>
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A system of path tracing particles evolves continuously from an
 initial horizon, alternating between colors.
 

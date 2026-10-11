@@ -22,7 +22,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="XScreenSaver"
+            android:text="@string/app_name"
             android:textSize="32sp" />
         <!-- TODO: Either figure out how to open daydream settings directly on
              Android TV, or change this to say "Open Settings". -->
@@ -30,7 +30,7 @@
             android:id="@+id/apply_daydream"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Open screen saver list" />
+            android:text="@string/open_screensaver_list" />
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

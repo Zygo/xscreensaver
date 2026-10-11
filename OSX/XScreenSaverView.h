@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2023 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -71,11 +71,6 @@
 # define BACKBUFFER_OPENGL
 
 @interface XScreenSaverView : ScreenSaverView
-# if defined(HAVE_TVOS)
-			      <UIApplicationDelegate>
-# elif defined(HAVE_IPHONE)
-			      <UIAlertViewDelegate>
-# endif
 {
   struct xscreensaver_function_table *xsft;
   PrefsReader *prefsReader;

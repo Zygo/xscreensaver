@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright © 2006-2025 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2006-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1339,6 +1339,21 @@ hreffify (NSText *nstext)
 #pragma mark Creating controls from XML
 
 
+// On macOS, the strings need to be read from the .saver bundle, not from
+// the SaverTester.app bundle, or from whatever legacyScreenSaver is doing.
+//
+#ifndef HAVE_IPHONE
+# undef NSLocalizedString
+# define NSLocalizedString xss_NSLocalizedString
+static NSString *
+NSLocalizedString (NSString *key, NSString *comment)
+{
+  NSBundle *nsb = [NSBundle bundleForClass:[XScreenSaverView class]];
+  return NSLocalizedStringFromTableInBundle (key, @"", nsb, comment);
+}
+#endif // !HAVE_IPHONE
+
+
 /* Parse the attributes of an XML tag into a dictionary.
    For input, the dictionary should have as attributes the keys, each
    with @"" as their value.
@@ -1389,6 +1404,8 @@ hreffify (NSText *nstext)
   // spaces, divide them.
   NSString *lab = [dict objectForKey:@"_label"];
   NSString *low = [dict objectForKey:@"_low-label"];
+  if (lab) lab = NSLocalizedString (lab, @"");
+  if (low) low = NSLocalizedString (low, @"");
   if (low && !lab) {
     NSArray *split =
       [[[low stringByTrimmingCharactersInSet:
@@ -1397,8 +1414,10 @@ hreffify (NSText *nstext)
         filteredArrayUsingPredicate:
           [NSPredicate predicateWithFormat:@"length > 0"]];
     if (split && [split count] == 2) {
-      [dict setValue:[split objectAtIndex:0] forKey:@"_label"];
-      [dict setValue:[split objectAtIndex:1] forKey:@"_low-label"];
+      [dict setValue:NSLocalizedString ([split objectAtIndex:0], @"")
+              forKey:@"_label"];
+      [dict setValue:NSLocalizedString ([split objectAtIndex:1], @"")
+              forKey:@"_low-label"];
     }
   }
 # endif // HAVE_IPHONE
@@ -1482,6 +1501,8 @@ hreffify (NSText *nstext)
     NSAssert1 (0, @"no _label in %@", [node name]);
     return;
   }
+  label = NSLocalizedString (label, @"");
+
   if (!arg_set && !arg_unset) {
     NSAssert1 (0, @"neither arg-set nor arg-unset provided in \"%@\"", 
                label);
@@ -1509,7 +1530,7 @@ hreffify (NSText *nstext)
 # ifndef HAVE_IPHONE
 
   NSButton *button = [[NSButton alloc] initWithFrame:rect];
-  [button setButtonType:NSSwitchButton];
+  [button setButtonType:NSButtonTypeSwitch];
   [button setTitle:label];
   [button sizeToFit];
   [self placeChild:button on:parent];
@@ -1568,6 +1589,11 @@ hreffify (NSText *nstext)
   [dict release];
   dict = 0;
   
+  if (label)      label      = NSLocalizedString (label, @"");
+  if (low_label)  low_label  = NSLocalizedString (low_label, @"");
+  if (high_label) high_label = NSLocalizedString (high_label, @"");
+
+
   NSAssert1 (arg,  @"no arg in %@", label);
   NSAssert1 (type, @"no type in %@", label);
 
@@ -1927,6 +1953,8 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
       continue;
     }
 
+    label = NSLocalizedString (label, @"");
+
 # ifndef HAVE_IPHONE
     // create the menu item (and then get a pointer to it)
     [popup addItemWithTitle:label];
@@ -2107,6 +2135,35 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
       text = s;
   }
   
+  NSString *loc = NSLocalizedString (text, @"");
+
+  if ([[text lowercaseString] isEqualToString:[loc lowercaseString]]) {
+
+    // The <_description> text in the OSX XML files does not precisely
+    // match the Unix XML files (The hack name is prepended, and the
+    // authorship is tweaked.)  So we use "_HACKNAME_description" as
+    // the OSX strings key, and preserve the old, unlocalized prefix text.
+    // The adjusted authorship is just un-tweaked in the localized versions.
+    // 
+    NSString *prefix = nil;
+# ifndef HAVE_IPHONE			// No prefix string on iOS
+    NSRange r = [text rangeOfString:@"\n\n"];
+    if (r.length)
+      prefix = [text substringWithRange:NSMakeRange(0, r.location + r.length)];
+# endif
+
+    NSString *key = [[[@"_" stringByAppendingString:classname] lowercaseString]
+                      stringByAppendingString:@"_description"];
+    loc = NSLocalizedString(key, @"");
+    if ([key isEqualToString:loc])
+      loc = nil;
+    if (prefix && loc && [loc length])
+      loc = [prefix stringByAppendingString:loc];
+  }
+
+  if (loc && [loc length])
+      text = loc;
+
   text = unwrap (text);
   
   NSRect rect = [parent frame];
@@ -2181,6 +2238,8 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
     NSAssert1 (0, @"no _label in %@", [node name]);
     return;
   }
+
+  if (label) label = NSLocalizedString (label, @"");
 
   NSAssert1 (arg, @"no arg in %@", label);
 
@@ -2366,6 +2425,8 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
     return;
   }
 
+  if (label) label = NSLocalizedString (label, @"");
+
   NSAssert1 (arg, @"no arg in %@", label);
 
   NSRect rect;
@@ -2415,7 +2476,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   rect.size.width = rect.size.height = 10;
   NSButton *choose = [[NSButton alloc] initWithFrame:rect];
   [choose setTitle:NSLocalizedString(@"Choose...", @"")];
-  [choose setBezelStyle:NSRoundedBezelStyle];
+  [choose setBezelStyle:NSBezelStylePush];
   [choose sizeToFit];
 
   [self placeChild:choose on:parent right:YES];
@@ -2590,7 +2651,7 @@ find_text_field_of_button (NSButton *button)
   // This is how you link radio buttons together.
   //
   NSButtonCell *proto = [[NSButtonCell alloc] init];
-  [proto setButtonType:NSRadioButton];
+  [proto setButtonType:NSButtonTypeRadio];
 
   rect.origin.x = rect.origin.y = 0;
   rect.size.width = rect.size.height = 10;
@@ -2638,6 +2699,7 @@ find_text_field_of_button (NSButton *button)
   node2 = [[NSXMLElement alloc] initWithName:@"select"];
   [node2 setAttributesAsDictionary:@{ @"id": @"textMode" }];
 
+  // Do not call NSLocalizedString on these XML strings; translated later.
   NSXMLNode *node3 = [[NSXMLElement alloc] initWithName:@"option"];
   [node3 setAttributesAsDictionary:
            @{ @"id":	  @"date",
@@ -2785,7 +2847,7 @@ find_text_field_of_button (NSButton *button)
   rect.size.width = rect.size.height = 0;
   NSBox *box = [[NSBox alloc] initWithFrame:rect];
   [box setTitlePosition:NSAtTop];
-  [box setBorderType:NSBezelBorder];
+//[box setBorderType:NSBezelBorder];  // Deprecated
   [box setTitle:NSLocalizedString(@"Display Text", @"")];
 
   rect.size.width = rect.size.height = 12;
@@ -2817,29 +2879,40 @@ find_text_field_of_button (NSButton *button)
 
   NSXMLElement *node2;
 
-# ifndef HAVE_IPHONE
-#  define SCREENS "Grab desktop images"
-#  define PHOTOS  "Choose random images"
-# else
-#  define SCREENS "Grab screenshots"
-#  define PHOTOS  "Use photo library"
-# endif
-
+  // Do not call NSLocalizedString on these XML strings; translated later.
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
+# ifdef HAVE_IPHONE
   [node2 setAttributesAsDictionary:
            @{ @"id":        @"grabDesktopImages",
-              @"_label":    @ SCREENS,
+              @"_label":    @"Grab screenshots",
               @"arg-unset": @"-no-grab-desktop",
             }];
+# else  // !HAVE_IPHONE
+  [node2 setAttributesAsDictionary:
+           @{ @"id":        @"grabDesktopImages",
+              @"_label":    @"Grab desktop images",
+              @"arg-unset": @"-no-grab-desktop",
+            }];
+# endif // !HAVE_IPHONE
+
   [self makeCheckbox:node2 on:parent];
   [node2 release];
 
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
+# ifdef HAVE_IPHONE
   [node2 setAttributesAsDictionary:
            @{ @"id":      @"chooseRandomImages",
-              @"_label":  @ PHOTOS,
+              @"_label":  @"Use photo library",
               @"arg-set": @"-choose-random-images",
             }];
+# else  // !HAVE_IPHONE
+  [node2 setAttributesAsDictionary:
+           @{ @"id":      @"chooseRandomImages",
+              @"_label":  @"Choose random images",
+              @"arg-set": @"-choose-random-images",
+            }];
+# endif // !HAVE_IPHONE
+
   [self makeCheckbox:node2 on:parent];
   [node2 release];
 
@@ -2852,9 +2925,6 @@ find_text_field_of_button (NSButton *button)
   [self makeFileSelector:node2 on:parent
         dirsOnly:YES withLabel:YES editable:YES imagedir:YES];
   [node2 release];
-
-# undef SCREENS
-# undef PHOTOS
 
 # ifndef HAVE_IPHONE
   // Add a second, explanatory label below the file/URL selector.
@@ -2902,6 +2972,7 @@ find_text_field_of_button (NSButton *button)
 
   // <boolean ...>
 
+  // Do not call NSLocalizedString on these XML strings; translated later.
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
   [node2 setAttributesAsDictionary:
            @{ @"id":        @SUSUEnableAutomaticChecksKey,
@@ -2978,7 +3049,8 @@ find_text_field_of_button (NSButton *button)
   rect.size.width = rect.size.height = 0;
   NSBox *box = [[NSBox alloc] initWithFrame:rect];
   [box setTitlePosition:NSNoTitle];
-  [box setBorderType:NSNoBorder];
+//[box setBorderType:NSNoBorder];
+  box.transparent = TRUE;
   [box setContentViewMargins:rect.size];
   [box setContentView:group];
   [box sizeToFit];
@@ -3011,7 +3083,7 @@ find_text_field_of_button (NSButton *button)
             _high-label="4 hours"
             low="300" high="14400" default="3600" step="300" />
    <boolean id="globalCycleSelected"
-            _label="Include this saver in \"random\" mode"
+            _label="Include this saver in 'random' mode"
             arg-set="-global-cycle-selected" />
    */
 
@@ -3021,6 +3093,7 @@ find_text_field_of_button (NSButton *button)
 
   // <boolean ...>
 
+  // Do not call NSLocalizedString on these XML strings; translated later.
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
   [node2 setAttributesAsDictionary:
            @{ @"id":        @"globalCycle",
@@ -3053,7 +3126,7 @@ find_text_field_of_button (NSButton *button)
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
   [node2 setAttributesAsDictionary:
            @{ @"id":        @"globalCycleSelected",
-              @"_label":    @"Include this saver in \"random\" mode",
+              @"_label":    @"Include this saver in 'random' mode",
               @"arg-unset": @"-no-global-cycle-selected"
             }];
   [self makeCheckbox:node2 on:parent];
@@ -3203,7 +3276,8 @@ last_child (NSView *parent)
   rect.size.width = rect.size.height = 0;
   NSBox *box = [[NSBox alloc] initWithFrame:rect];
   [box setTitlePosition:NSNoTitle];
-  [box setBorderType:NSNoBorder];
+//[box setBorderType:NSNoBorder];
+  box.transparent = TRUE;
   [box setContentViewMargins:rect.size];
   [box setContentView:group];
   [box sizeToFit];
@@ -3501,21 +3575,22 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   rect.size.height = 10;
   NSBox *bbox = [[NSBox alloc] initWithFrame:rect];
   [bbox setTitlePosition:NSNoTitle];  
-  [bbox setBorderType:NSNoBorder];
-  
+//[bbox setBorderType:NSNoBorder];
+  bbox.transparent = TRUE;
+
   // Make some buttons: Default, Cancel, OK
   //
   rect.origin.x = rect.origin.y = 0;
   rect.size.width = rect.size.height = 10;
   NSButton *reset = [[NSButton alloc] initWithFrame:rect];
   [reset setTitle:NSLocalizedString(@"Reset to Defaults", @"")];
-  [reset setBezelStyle:NSRoundedBezelStyle];
+  [reset setBezelStyle:NSBezelStylePush];
   [reset sizeToFit];
 
   rect = [reset frame];
   NSButton *ok = [[NSButton alloc] initWithFrame:rect];
   [ok setTitle:NSLocalizedString(@"OK", @"")];
-  [ok setBezelStyle:NSRoundedBezelStyle];
+  [ok setBezelStyle:NSBezelStylePush];
   [ok sizeToFit];
   rect = [bbox frame];
   rect.origin.x = rect.size.width - [ok frame].size.width;
@@ -3524,7 +3599,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   rect = [ok frame];
   NSButton *cancel = [[NSButton alloc] initWithFrame:rect];
   [cancel setTitle:NSLocalizedString(@"Cancel", @"")];
-  [cancel setBezelStyle:NSRoundedBezelStyle];
+  [cancel setBezelStyle:NSBezelStylePush];
   [cancel sizeToFit];
   rect.origin.x -= [cancel frame].size.width + 10;
   [cancel setFrameOrigin:rect.origin];
@@ -3558,7 +3633,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   rect.origin.y += rect.size.height;
   NSBox *pbox = [[NSBox alloc] initWithFrame:rect];
   [pbox setTitlePosition:NSNoTitle];
-  [pbox setBorderType:NSBezelBorder];
+//[pbox setBorderType:NSBezelBorder]; // Deprecated
 
   // Enforce a max height on the dialog, so that it's obvious to me
   // (on a big screen) when the dialog will fall off the bottom of
@@ -3621,7 +3696,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   }
 
   saver_title = [[self parseXScreenSaverTag: node] retain];
-  
+
 # ifndef HAVE_IPHONE
 
   NSRect rect;
@@ -3650,7 +3725,15 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 # else  // HAVE_IPHONE
 
   CGRect r = [parent frame];
-  r.size = [[UIScreen mainScreen] bounds].size;
+
+  // UIScreen.mainScreen has been deprecated:
+  //   r.size = [[UIScreen mainScreen] bounds].size;
+  //
+  UIWindowScene *scene = (UIWindowScene *)
+    [[[[UIApplication sharedApplication] connectedScenes]
+       allObjects] firstObject];
+  r.size = scene.screen.bounds.size;
+
   [parent setFrame:r];
 
   [self traverseChildren:node on:parent];
@@ -3820,8 +3903,14 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
                              target:self
                              action:@selector(resetAction:)]];
   NSString *s = saver_title;
+  NSString *loc = NSLocalizedString (s, @"");
+  if (! [s isEqualToString: loc])
+    s = [NSString stringWithFormat: @"%@ (%@)", s, loc];
+
   if ([self view].frame.size.width > 320)
-    s = [s stringByAppendingString: @" Settings"];
+    s = [NSString stringWithFormat:
+                    NSLocalizedString (@"%@ Settings", @""), s];
+
   [self navigationItem].title = s;
 }
 
@@ -3830,16 +3919,19 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-implementations"
+
 - (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
 {
   return YES;					/* Deprecated in iOS 6 */
 }
-#pragma clang diagnostic pop
 
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
 {
   return YES;
 }
+
+#pragma clang diagnostic pop
+
 # endif // !HAVE_TVOS
 
 
@@ -3861,7 +3953,10 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 {
   // Titles above each vertically-stacked white box.
 //  if (section == 0)
-//    return [saver_title stringByAppendingString:@" Settings"];
+//    return [NSString stringWithFormat:
+//                       NSLocalizedString (@"%@ Settings", @""),
+//                     saver_title];
+
   return nil;
 }
 
@@ -4267,7 +4362,9 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   xml_root = 0;
 
 # ifdef HAVE_IPHONE
-  self.title = [saver_title stringByAppendingString:@" Settings"];
+  self.title = [NSString stringWithFormat:
+                           NSLocalizedString (@"%@ Settings", @""),
+                         saver_title];
   [self addResetButton];
 # endif
 

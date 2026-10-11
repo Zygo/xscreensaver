@@ -53,7 +53,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Parametric surfaces.
 
 https://en.wikipedia.org/wiki/Dini%27s_surface

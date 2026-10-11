@@ -35,7 +35,7 @@
 
   <xscreensaver-updater />
 
- <_description>
+ <_description xml:space="preserve">
 A school of fish, using the classic "Boids" algorithm by Craig Reynolds.
 
 https://en.wikipedia.org/wiki/Boids

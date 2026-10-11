@@ -31,7 +31,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A kaleidoscope that operates on a loaded image.
 
 https://en.wikipedia.org/wiki/Kaleidoscope

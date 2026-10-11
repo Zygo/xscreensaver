@@ -29,7 +29,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Pulsing stars, circles, and lines.
 
 Written by Jamie Zawinski; 1999.

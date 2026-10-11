@@ -34,7 +34,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Recursive cloud-like fractal patterns.
 
 Written by Juergen Nickelsen and Jamie Zawinski; 1992.

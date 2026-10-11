@@ -53,7 +53,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Divides the screen into a grid, and plucks them.
 
 Written by Dan Bornstein; 2002.

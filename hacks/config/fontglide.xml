@@ -46,7 +46,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Puts text on the screen using large characters that glide in from the
 edges, assemble, then disperse.  Alternately, it can simply scroll whole 
 sentences from right to left.  

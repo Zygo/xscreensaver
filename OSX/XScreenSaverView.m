@@ -17,6 +17,7 @@
 
 #import <QuartzCore/QuartzCore.h>
 #import <sys/mman.h>
+#import <math.h>
 #import <zlib.h>
 #ifdef LOG_STACK
 # include <execinfo.h>
@@ -42,6 +43,8 @@
 #ifndef HAVE_IPHONE
 # define VENTURA_KLUDGE
 # define SONOMA_KLUDGE
+# define WATCHDOG_KLUDGE
+# define GOLDEN_GATE_KLUDGE
 #endif
 #undef CATCH_SIGNALS
 
@@ -120,6 +123,17 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 @end
 
 @implementation XScreenSaverView
+{
+# ifdef WATCHDOG_KLUDGE
+  time_t heartbeat;
+  NSThread *watchdog;
+# endif
+
+# ifdef GOLDEN_GATE_KLUDGE
+  BOOL animation_deferred_p;     // Animation requested before usable geometry
+  BOOL follows_preview_parent_p; // Preview requested with null geometry
+# endif
+}
 
 // Given a lower-cased saver name, returns the function table for it.
 // If no name, guess the name from the class's bundle name.
@@ -420,8 +434,9 @@ add_default_options (const XrmOptionDescRec *opts,
 
 #ifdef CATCH_SIGNALS
 //
-// This doesn't work.  We display backtraces for exceptions, but not for
+// This doesn't work.  It displays backtraces for exceptions, but not for
 // signals, including for abort() unless it was wrapped with jwxyz_abort().
+// There is better backtrace-displaying code in Randomizer.m.
 //
 static void sighandler (int sig)
 {
@@ -502,10 +517,24 @@ static NSMutableArray *all_saver_views = NULL;
   if (! (self = [super initWithFrame:frame isPreview:p]))
     return 0;
   
+  if (!_title) // Not passed in by legacyScreenSaver or Randomizer.
+    _title = [[[NSBundle bundleForClass:[self class]] infoDictionary]
+                   objectForKey:@"CFBundleName"];
+
   saver_title = [_title retain];
 # ifdef CATCH_SIGNALS
   catch_signals();
 # endif
+
+# ifdef GOLDEN_GATE_KLUDGE
+  // macOS 27 may size only the preview container, leaving its child at 0x0.
+  // Opt in only when the host supplied no initial preview geometry.
+  // Thanks to Stefan Prandl @redezem@aus.social for figuring this out.
+  //
+  follows_preview_parent_p = (p && NSIsEmptyRect(frame));
+  if (follows_preview_parent_p)
+    [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+# endif // GOLDEN_GATE_KLUDGE
 
   xsft = [self findFunctionTable: saver_title];
   if (! xsft) {
@@ -700,10 +729,17 @@ static NSMutableArray *all_saver_views = NULL;
  */
 - (void) viewDidMoveToWindow
 {
+# ifdef GOLDEN_GATE_KLUDGE
+  [self fitInitialPreviewParent];
+# endif
   if (self.window &&
-      self.window.frame.size.width  > 0 &&
-      self.window.frame.size.height > 0)
-    [self startAnimation];
+      (
+# ifdef GOLDEN_GATE_KLUDGE
+       follows_preview_parent_p ||
+# endif
+       (self.window.frame.size.width  > 0 &&
+        self.window.frame.size.height > 0)))
+   [self startAnimation];
 }
 
 - (void) viewWillMoveToWindow:(NSWindow *)window
@@ -835,6 +871,34 @@ static NSMutableArray *all_saver_views = NULL;
 #endif // VENTURA_KLUDGE
 
 
+
+#ifdef GOLDEN_GATE_KLUDGE
+
+/* Adopt an already-sized container on attachment.  Later, parent resizes
+   use AppKit's autoresizing machinery and our existing geometry callbacks.
+ */
+- (void) fitInitialPreviewParent
+{
+  if (!follows_preview_parent_p ||
+      !NSIsEmptyRect(self.frame) ||
+      !self.superview)
+    return;
+  NSRect bounds = self.superview.bounds;
+  if (isfinite(bounds.origin.x)   && isfinite(bounds.origin.y) &&
+      isfinite(bounds.size.width) && isfinite(bounds.size.height) &&
+      bounds.size.width > 0 && bounds.size.height > 0)
+    [self setFrame:bounds];
+}
+
+- (void) viewDidMoveToSuperview
+{
+  [super viewDidMoveToSuperview];
+  [self fitInitialPreviewParent];
+}
+
+#endif // GOLDEN_GATE_KLUDGE
+
+
 #ifdef HAVE_IPHONE
 + (Class) layerClass
 {
@@ -924,7 +988,112 @@ static NSMutableArray *all_saver_views = NULL;
   [prefs synchronize];
 }
 
+#endif  // HAVE_IPHONE
 
+
+# ifdef WATCHDOG_KLUDGE
+
+/* On macOS 14+, legacyScreenSaver often loses its mind: it stops running
+   savers, uses 100% CPU, and stays that way forever.  So we spawn a watchdog
+   thread to see when we have gone catatonic.  If the main thread ever stops
+   updating, we take the nuclear option.  This does not *always* cause the
+   screen savers to immediately start running again, only sometimes.  But,
+   they will at least behave normally at next activation.
+ */
+- (void) watchdog: (NSThread *) parent
+{
+  NSThread *thread = [NSThread currentThread];
+  double death_after = 60;
+  double sleep_for   = 1.0 / 30;
+
+  while (! [thread isCancelled]) {
+    long elapsed = time((time_t *) 0) - heartbeat;
+
+    if (elapsed >= death_after) {
+      pid_t pid = getpid();
+      NSLog (@"watchdog: last updated %ld sec ago, killing pid %lu",
+             elapsed, (unsigned long) pid);
+
+      const char cmd[] =
+        ("/bin/sh -c '"
+           "("
+             // Definitely need to kill legacyScreenSaver and WallpaperAgent
+             // to bring things back to normal...
+             " killall -m"
+               " WallpaperAgent"
+               " ScreenSaverEngine"
+               " legacyScreenSaver ;"
+  
+             // This *may* start savers running again:
+             " sleep 2 ;"
+             " open -a ScreenSaverEngine ;"
+
+             // But sometimes legacyScreenSaver is running but WallpaperAgent 
+             // is somehow preventing it from being visible, so kill it again.
+             // This trick may only work once per activation?
+             " sleep 5 ;"
+             " killall -m WallpaperAgent ;"
+           " )"
+
+           // Make sure we are well detached to avoid SIGPIPE and whatnot.
+           " </dev/null >/dev/null 2>/dev/null &"
+           "'");
+      // NSLog (@"watchdog: exec: %s", cmd);
+      system (cmd);
+      kill (pid, SIGTERM);
+      [NSThread exit];
+    }
+
+    // NSLog (@"watchdog: updated %ld sec ago", elapsed);
+    [NSThread sleepForTimeInterval: sleep_for];
+
+    // At startup there are a few false starts where the system calls
+    // startAnimation and stopAnimation a few times, before it settles in.
+    //
+    sleep_for *= 2;
+    if (sleep_for > 30) sleep_for = 30;
+  }
+
+  [NSThread exit];
+}
+
+// On a multi-screen system, only one saver needs to run the watchdog.
+static Bool watchdog_lock = FALSE;
+
+- (void) startWatchdog
+{
+  if (watchdog)
+    [self stopWatchdog];
+
+  if (watchdog_lock)
+    return;
+
+  watchdog = [[[NSThread alloc]
+                initWithTarget: self
+                      selector: @selector(watchdog:)
+                        object: [NSThread currentThread]]
+               retain];
+  watchdog_lock = TRUE;
+
+  heartbeat = time((time_t *) 0);
+  NSLog (@"watchdog: start");
+  [watchdog start];
+}
+
+- (void) stopWatchdog
+{
+  if (!watchdog) return;
+  NSLog (@"watchdog: stop");
+  [watchdog cancel];
+  [watchdog autorelease];
+  watchdog = nil;
+  watchdog_lock = FALSE;
+}
+
+# endif // WATCHDOG_KLUDGE
+
+
+# ifdef HAVE_IPHONE
 - (void) resizeGL
 {
   if (!ogl_ctx)
@@ -965,9 +1134,31 @@ static NSMutableArray *all_saver_views = NULL;
 #endif // HAVE_IPHONE
 
 
+
+#ifdef GOLDEN_GATE_KLUDGE
+/* The host may request animation before attaching or sizing the view.
+   A nil window has scale zero, which would produce a zero-sized bitmap.
+   Direct GL savers also require an attached drawable. */
+- (BOOL) drawableReady
+{
+  if (!self.window) return NO;
+  NSSize size = self.bounds.size;
+  CGFloat scale = [self hackedContentScaleFactor];
+  CGFloat width = size.width * scale, height = size.height * scale;
+  return (isfinite(width) && isfinite(height) &&
+          width >= 1 && height >= 1);
+}
+#endif // GOLDEN_GATE_KLUDGE
+
 - (void) startAnimation
 {
   if ([self isAnimating]) return;  // macOS 10.15 stupidity
+
+# ifdef GOLDEN_GATE_KLUDGE
+  animation_deferred_p = YES;
+  if (![self drawableReady]) return;
+  animation_deferred_p = NO;
+# endif // GOLDEN_GATE_KLUDGE
 
   NSAssert(![self isAnimating], @"already animating");
   NSAssert(!initted_p && !xdata, @"already initialized");
@@ -975,7 +1166,10 @@ static NSMutableArray *all_saver_views = NULL;
   // See comment in render_x11() for why this value is important:
   [self setAnimationTimeInterval: 1.0 / 240.0];
 
+# ifndef GOLDEN_GATE_KLUDGE
   [super startAnimation];
+# endif
+
   /* We can't draw on the window from this method, so we actually do the
      initialization of the screen saver (xsft->init_cb) in the first call
      to animateOneFrame() instead.
@@ -998,7 +1192,12 @@ static NSMutableArray *all_saver_views = NULL;
   if (cycle_timer)
     [cycle_timer invalidate];
   cycle_timer = 0;
+
 # endif // HAVE_IPHONE
+
+# ifdef WATCHDOG_KLUDGE
+  [self startWatchdog];
+# endif
 
   // Never automatically turn the screen off if we are docked,
   // and an animation is running.
@@ -1008,6 +1207,10 @@ static NSMutableArray *all_saver_views = NULL;
   [UIApplication sharedApplication].idleTimerDisabled =
     ([UIDevice currentDevice].batteryState != UIDeviceBatteryStateUnplugged);
 #  endif // !HAVE_TVOS
+# endif
+
+# ifdef GOLDEN_GATE_KLUDGE
+  @try {
 # endif
 
   xwindow = (Window) calloc (1, sizeof(*xwindow));
@@ -1037,19 +1240,26 @@ static NSMutableArray *all_saver_views = NULL;
 
       // Sync refreshes to the vertical blanking interval
       GLint r = 1;
-      [ogl_ctx setValues:&r forParameter:NSOpenGLCPSwapInterval];
+      [ogl_ctx setValues:&r forParameter:NSOpenGLContextParameterSwapInterval];
 //    check_gl_error ("NSOpenGLCPSwapInterval");  // SEGV sometimes. Too early?
     }
 
     [ogl_ctx makeCurrentContext];
     check_gl_error ("makeCurrentContext");
 
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
     // NSOpenGLContext logs an 'invalid drawable' when this is called
     // from initWithFrame.
+    // #### deprecated in 10.14 "Use NSOpenGLView to provide OpenGL content"
     [ogl_ctx setView:self];
 
     // Get device pixels instead of points.
+    // #### deprecated in macOS 10.14: "Use NSOpenGLView instead"
     self.wantsBestResolutionOpenGLSurface = YES;
+
+# pragma clang diagnostic pop
 
     // This may not be necessary if there's FBO support.
 #  ifdef JWXYZ_GL
@@ -1094,7 +1304,15 @@ static NSMutableArray *all_saver_views = NULL;
       eagl_layer.drawableProperties = [self getGLProperties];
 
       // Without this, the GL frame buffer is half the screen resolution!
-      eagl_layer.contentsScale = [UIScreen mainScreen].scale;
+
+      // UIScreen.mainScreen has been deprecated:
+      //   eagl_layer.contentsScale = [UIScreen mainScreen].scale;
+      //
+      UIWindowScene *scene = (UIWindowScene *)
+        [[[[UIApplication sharedApplication] connectedScenes]
+           allObjects] firstObject];
+      eagl_layer.contentsScale = scene.screen.scale;
+
 
       PrefsReader *prefs = [self prefsReader];
       BOOL gles3p = [prefs getBooleanResource:"prefersGLSL"];
@@ -1145,6 +1363,15 @@ static NSMutableArray *all_saver_views = NULL;
 
   [self setViewport];
   [self createBackbuffer:new_backbuffer_size];
+
+# ifdef GOLDEN_GATE_KLUDGE
+  } @catch (NSException *error) {
+    [self stopAnimationWithException:error];
+    @throw;
+  }
+  // Start the framework timer only after resource initialization succeeds.
+  [super startAnimation];
+# endif // GOLDEN_GATE_KLUDGE
 }
 
 
@@ -1170,11 +1397,27 @@ static NSMutableArray *all_saver_views = NULL;
   cycle_timer = 0;
 # endif // HAVE_IPHONE
 
+# ifdef WATCHDOG_KLUDGE
+  [self stopWatchdog];
+# endif
+
+# ifdef GOLDEN_GATE_KLUDGE
+  animation_deferred_p = NO;
+  [super stopAnimation];
+  if (!xwindow && !xdpy) return;
+# else  // !GOLDEN_GATE_KLUDGE
   if (![self isAnimating]) return;  // macOS 10.15 stupidity
+# endif // !GOLDEN_GATE_KLUDGE
 
   if (initted_p) {
 
-    [self lockFocus];       // in case something tries to draw from here
+    // Deprecated 10.14
+    // [self lockFocus];       // in case something tries to draw from here
+
+    /* The service host may already have retired this view's drawable.
+       AppKit lockFocus can then assert even while self.window is non-nil.
+       Cleanup uses our retained GL context and X11/backbuffer resources. */
+
     [self prepareContext];
 
     /* All of the xlockmore hacks need to have their release functions
@@ -1185,18 +1428,27 @@ static NSMutableArray *all_saver_views = NULL;
      */
      if (xdata)
        xsft->free_cb (xdpy, xwindow, xdata);
-    [self unlockFocus];
 
-    jwxyz_quartz_free_display (xdpy);
-    xdpy = NULL;
+    // Deprecated 10.14
+    // [self unlockFocus];
+
+    /* Startup allocates the window before the first frame creates xdpy.
+       An early stop must release either stage. */
+    if (xdpy) {
+      jwxyz_quartz_free_display (xdpy);
+      xdpy = NULL;
+    }
+
+    if (xwindow) {
 # if defined JWXYZ_GL && !defined HAVE_IPHONE
-    CFRelease (xwindow->ogl_ctx);
+      if (xwindow->ogl_ctx) CFRelease (xwindow->ogl_ctx);
 # endif
-    CFRelease (xwindow->window.view);
-    free (xwindow);
-    xwindow = NULL;
+      CFRelease (xwindow->window.view);
+      free (xwindow);
+      xwindow = NULL;
+    }
 
-//  setup_p = NO; // #### wait, do we need this?
+//    setup_p = NO; // #### wait, do we need this?
     initted_p = NO;
     xdata = 0;
   }
@@ -1210,7 +1462,9 @@ static NSMutableArray *all_saver_views = NULL;
   [prefs synchronize];
 # endif // HAVE_IPHONE
 
+# ifndef GOLDEN_GATE_KLUDGE
   [super stopAnimation];
+# endif
 
   // When an animation is no longer running (e.g., looking at the list)
   // then it's ok to power off the screen when docked.
@@ -1351,9 +1605,18 @@ current_device_rotation (void)
           description): "rotating the device requires rotating the content in
           the opposite direction."
 	 */
-    /* statusBarOrientation deprecated in iOS 9 */
+
+    UIWindowScene *scene = (UIWindowScene *)
+      [[[[UIApplication sharedApplication] connectedScenes]
+         allObjects] firstObject];
     o = (UIDeviceOrientation)  // from UIInterfaceOrientation
-      [UIApplication sharedApplication].statusBarOrientation;
+      // statusBarOrientation deprecated in iOS 13
+      // [UIApplication sharedApplication].statusBarOrientation;
+
+      // effectiveGeometry is only available on iOS 13 or newer
+      // scene.effectiveGeometry.interfaceOrientation;
+
+      scene.interfaceOrientation;
   }
 
   switch (o) {
@@ -1393,8 +1656,19 @@ current_device_rotation (void)
         [self stopAndClose:NO];
       }]];
 
-  UIViewController *vc =
-    [UIApplication sharedApplication].keyWindow.rootViewController;
+  // keyWindow deprecated as of tvOS 13.0; this probably doesn't matter
+  // since we do not have multiple top level windows?
+  //   NSWindow *kw = [UIApplication sharedApplication].keyWindow;
+  //
+  UIWindowScene *scene = (UIWindowScene *)
+    [[[[UIApplication sharedApplication] connectedScenes]
+       allObjects] firstObject];
+  NSWindow *key_win = scene.windows.firstObject;
+  for (NSWindow *w in scene.windows) {
+    if (w.isKeyWindow) key_win = w;
+  }
+
+  UIViewController *vc = key_win.rootViewController;
   while (vc.presentedViewController)
     vc = vc.presentedViewController;
   [vc presentViewController:c animated:YES completion:nil];
@@ -1701,8 +1975,11 @@ gl_check_ver (const struct gl_version *caps,
     order_little_p ^= YES;
 #endif
 
-  CGBitmapInfo bitmap_info =
-    (alpha_first_p ? kCGImageAlphaNoneSkipFirst : kCGImageAlphaNoneSkipLast) |
+  // 2026: see comment in jwxyz/jwxyz.c:jwxyz_png_to_ximage
+  const uint32_t bitmap_info =
+    (uint32_t)
+    (alpha_first_p  ? kCGImageAlphaNoneSkipFirst : kCGImageAlphaNoneSkipLast) |
+    (uint32_t)
     (order_little_p ? kCGBitmapByteOrder32Little : kCGBitmapByteOrder32Big);
 
   backbuffer = CGBitmapContextCreate (backbuffer_data,
@@ -1890,6 +2167,9 @@ gl_check_ver (const struct gl_version *caps,
 - (void) resize_x11
 {
   if (!xdpy) return;     // early
+# ifdef GOLDEN_GATE_KLUDGE
+  if (![self drawableReady]) return;
+# endif
 
   NSSize new_size;	// pixels, not points
 
@@ -1986,6 +2266,11 @@ gl_check_ver (const struct gl_version *caps,
 
 - (void) render_x11
 {
+# ifdef GOLDEN_GATE_KLUDGE
+  // Hosts may deliver a final callback after stop, or while resizing.
+  if (!xwindow || ![self drawableReady]) return;
+# endif
+
 # ifdef HAVE_IPHONE
   @try {
 # endif
@@ -2181,8 +2466,12 @@ gl_check_ver (const struct gl_version *caps,
     // Xlib drawing takes place under the animation timer.
 
 # ifndef HAVE_IPHONE
+    // #### deprecated in 10.14 "Use NSOpenGLView to provide OpenGL content"
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdeprecated-declarations"
     if (ogl_ctx)
       [ogl_ctx setView:self];
+#  pragma clang diagnostic pop
 # endif // !HAVE_IPHONE
 
     [self reshape_x11];
@@ -2220,13 +2509,18 @@ gl_check_ver (const struct gl_version *caps,
   }
 # endif // HAVE_IPHONE
 
+# ifdef WATCHDOG_KLUDGE
+  heartbeat = time((time_t *) 0);
+# endif
+
 # if 0
   {
     static int frame = 0;
     if (++frame == 100) {
-      fprintf(stderr,"BOOM\n");
-      //    int aa = *((int*)y);
-      int x = 30/y;
+      NSLog(@"BOOM");
+      // int y = 0; int a = *((int*)y);
+      // int y = 0; int x = 30/y;
+      jwxyz_abort("BOOM");
     }
   }
 # endif
@@ -2249,6 +2543,10 @@ gl_check_ver (const struct gl_version *caps,
 {
   // Render X11 into the backing store bitmap...
 
+# ifdef GOLDEN_GATE_KLUDGE
+  if (!xwindow || ![self drawableReady]) return;
+# endif
+
 # ifdef JWXYZ_QUARTZ
   NSAssert (backbuffer, @"no back buffer");
 
@@ -2267,7 +2565,21 @@ gl_check_ver (const struct gl_version *caps,
 
 - (BOOL)isAnimating
 {
+# ifdef GOLDEN_GATE_KLUDGE
+  // Resource startup precedes the first frame; xdpy alone misses that state.
+  return !!xwindow;
+# else
   return !!xdpy;
+# endif
+}
+
+
+- (void) drawableGeometryChanged
+{
+# ifdef GOLDEN_GATE_KLUDGE
+  if (animation_deferred_p) [self startAnimation];
+# endif
+  if (xwindow) [self resize_x11];
 }
 
 
@@ -2276,16 +2588,31 @@ gl_check_ver (const struct gl_version *caps,
 - (void) setFrame:(NSRect) newRect
 {
   [super setFrame:newRect];
-
-  if (xwindow)     // inform Xlib that the window has changed now.
-    [self resize_x11];
+  [self drawableGeometryChanged];
 }
 
 - (void) setFrameSize:(NSSize) newSize
 {
   [super setFrameSize:newSize];
-  if (xwindow)
-    [self resize_x11];
+  [self drawableGeometryChanged];
+}
+
+- (void) setBounds:(NSRect) newRect
+{
+  [super setBounds:newRect];
+  [self drawableGeometryChanged];
+}
+
+- (void) setBoundsSize:(NSSize) newSize
+{
+  [super setBoundsSize:newSize];
+  [self drawableGeometryChanged];
+}
+
+- (void) viewDidChangeBackingProperties
+{
+  [super viewDidChangeBackingProperties];
+  [self drawableGeometryChanged];
 }
 
 # else // HAVE_IPHONE
@@ -3501,7 +3828,12 @@ gl_check_ver (const struct gl_version *caps,
   }
 
   if (! app_path)
-    app_path = [workspace fullPathForApplication:updater];
+    // We only get here if it is not in any of the usual places.
+    //   Deprecated in macOS 11:
+    //   app_path = [workspace fullPathForApplication:updater];
+    app_path = [[workspace URLForApplicationWithBundleIdentifier:
+                 @"org.jwz.xscreensaver.XScreenSaverUpdater"]
+                path];
 
   if (app_path && [app_path hasPrefix:@"/Volumes/XScreenSaver "])
     app_path = 0;  // The DMG version will not do.
@@ -3584,7 +3916,7 @@ gl_check_ver (const struct gl_version *caps,
 
   NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
 
-#  if 1  // Deprecated as of macOS 11.0:
+#  if 0  // Deprecated as of macOS 11.0:
   NSError *err = nil;
   if ([workspace launchApplicationAtURL: [NSURL fileURLWithPath:app_path]
                            options: (NSWorkspaceLaunchWithoutAddingToRecents |
@@ -3660,4 +3992,24 @@ double
 get_float_resource (Display *dpy, char *name, char *class)
 {
   return [get_prefsReader(dpy) getFloatResource:name];
+}
+
+// A few hacks call this via _()
+const char *
+gettext (const char *msgid)
+{
+  NSString *msgid2 = [NSString stringWithCString: msgid
+                                        encoding: NSUTF8StringEncoding];
+
+  // NSString *msgstr2 = NSLocalizedString (msgid2, @"");
+
+  // The strings are in the .saver bundle, not the SaverTester.app bundle.
+  NSBundle *nsb = [NSBundle bundleForClass:[XScreenSaverView class]];
+  NSString *msgstr2 =
+    NSLocalizedStringFromTableInBundle (msgid2, @"", nsb, @"");
+
+  if (!msgstr2 || [msgid2 isEqualToString: msgstr2])
+    return msgid;
+  else
+    return [msgstr2 cStringUsingEncoding: NSUTF8StringEncoding];
 }

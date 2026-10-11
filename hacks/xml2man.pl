@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.17 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.18 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -192,7 +192,7 @@ sub xml2man($) {
       $body .= ".TP 8\n.B $arg\n$label";
       $body .= "\n";
 
-    } elsif (m@^<_description>\s*(.*)\s*</_description>@) {
+    } elsif (m@^<_description[^<>]*>\s*(.*)\s*</_description>@) {
       $desc = $1;
     } elsif (m@^<xscreensaver-updater@) {
     } elsif (m@^<video\b@) {

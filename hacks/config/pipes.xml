@@ -41,7 +41,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A growing plumbing system, with bolts and valves.
 
 Written by Marcelo Vianna and Jamie Zawinski; 1997.

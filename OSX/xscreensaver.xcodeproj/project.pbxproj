@@ -388,7 +388,6 @@
 				AFAF12CB2F134EFB00449DD7 /* PBXTargetDependency */,
 				AFAF12CD2F134EFB00449DD7 /* PBXTargetDependency */,
 				AFAF12CF2F134EFB00449DD7 /* PBXTargetDependency */,
-				AF98C07D2F00601700484F29 /* PBXTargetDependency */,
 			);
 			name = "All Savers (Shadertoy)";
 			packageProductDependencies = (
@@ -2864,6 +2863,16 @@
 		AF69E20D270BA62C00358595 /* binaryhorizon.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF69E20C270BA62C00358595 /* binaryhorizon.xml */; };
 		AF69E20E270BA62C00358595 /* binaryhorizon.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF69E20C270BA62C00358595 /* binaryhorizon.xml */; };
 		AF69E20F270BA62C00358595 /* binaryhorizon.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF69E20C270BA62C00358595 /* binaryhorizon.xml */; };
+		AF6A0BF530716E5F00C9D42A /* nslog.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6A0BF330716E5F00C9D42A /* nslog.h */; };
+		AF6A0BF630716E5F00C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BF73071703200C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BF8307171C500C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BF93071722600C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BFA3071722B00C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BFB3071723300C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BFC3071723700C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BFD3071726200C9D42A /* nslog.m in Sources */ = {isa = PBXBuildFile; fileRef = AF6A0BF430716E5F00C9D42A /* nslog.m */; };
+		AF6A0BFF3079774600C9D42A /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF6A0BFE3079774600C9D42A /* ExceptionHandling.framework */; };
 		AF6C07C121D6ECCE00083862 /* Sparkle.framework in Resources */ = {isa = PBXBuildFile; fileRef = AF1ADA171850180E00932759 /* Sparkle.framework */; };
 		AF6C6D7B226AE4FC0065A748 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF6C6D7D226AE4FC0065A748 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
@@ -4027,16 +4036,7 @@
 		AF98C05F2F005F6000484F29 /* starnest.glsl in Resources */ = {isa = PBXBuildFile; fileRef = AF98C05E2F005F6000484F29 /* starnest.glsl */; };
 		AF98C0602F005F6000484F29 /* starnest.glsl in Resources */ = {isa = PBXBuildFile; fileRef = AF98C05E2F005F6000484F29 /* starnest.glsl */; };
 		AF98C0612F005F6000484F29 /* starnest.glsl in Resources */ = {isa = PBXBuildFile; fileRef = AF98C05E2F005F6000484F29 /* starnest.glsl */; };
-		AF98C0692F005FB900484F29 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
-		AF98C06B2F005FB900484F29 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
-		AF98C06C2F005FB900484F29 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
-		AF98C06D2F005FB900484F29 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
-		AF98C06E2F005FB900484F29 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		AF98C06F2F005FB900484F29 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
-		AF98C0702F005FB900484F29 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEE0BC611A6B0D6200C098BF /* OpenGL.framework */; };
-		AF98C0712F005FB900484F29 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
 		AF98C0832F00615700484F29 /* xshadertoy.c in Sources */ = {isa = PBXBuildFile; fileRef = AF98C0802F00615700484F29 /* xshadertoy.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
-		AF98C0842F00615700484F29 /* xshadertoy.c in Sources */ = {isa = PBXBuildFile; fileRef = AF98C0802F00615700484F29 /* xshadertoy.c */; };
 		AF98C0862F00615700484F29 /* xshadertoy.c in Sources */ = {isa = PBXBuildFile; fileRef = AF98C0802F00615700484F29 /* xshadertoy.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF98C08E2F00644500484F29 /* xshadertoy.c in Sources */ = {isa = PBXBuildFile; fileRef = AF98C0802F00615700484F29 /* xshadertoy.c */; };
 		AF98C08F2F00644500484F29 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
@@ -8110,20 +8110,6 @@
 			remoteGlobalIDString = AF7DD06D304A00D8003D7449;
 			remoteInfo = GraphStat;
 		};
-		AF7DD091304A046C003D7449 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF7DD08D304A0433003D7449;
-			remoteInfo = graphstat.h;
-		};
-		AF7DD093304A04E4003D7449 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF7DD08D304A0433003D7449;
-			remoteInfo = graphstat.h;
-		};
 		AF7E07FD15925DF200D81407 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -8466,20 +8452,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
-		};
-		AF98C0642F005FB900484F29 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
-			remoteInfo = jwxyz;
-		};
-		AF98C07C2F00601700484F29 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF98C0622F005FB900484F29;
-			remoteInfo = XShadertoy;
 		};
 		AF98C07E2F00604D00484F29 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -10483,6 +10455,9 @@
 		AF69E206270BA54600358595 /* BinaryHorizon.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BinaryHorizon.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF69E208270BA61E00358595 /* binaryhorizon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = binaryhorizon.c; path = hacks/binaryhorizon.c; sourceTree = "<group>"; };
 		AF69E20C270BA62C00358595 /* binaryhorizon.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = binaryhorizon.xml; sourceTree = "<group>"; };
+		AF6A0BF330716E5F00C9D42A /* nslog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = nslog.h; sourceTree = "<group>"; };
+		AF6A0BF430716E5F00C9D42A /* nslog.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = nslog.m; sourceTree = "<group>"; };
+		AF6A0BFE3079774600C9D42A /* ExceptionHandling.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExceptionHandling.framework; path = System/Library/Frameworks/ExceptionHandling.framework; sourceTree = SDKROOT; };
 		AF6C6D89226AE4FC0065A748 /* GravityWell.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GravityWell.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF6C6D8B226AE6120065A748 /* gravitywell.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gravitywell.c; path = hacks/glx/gravitywell.c; sourceTree = "<group>"; };
 		AF6C6D8D226AE6370065A748 /* gravitywell.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = gravitywell.xml; sourceTree = "<group>"; };
@@ -10663,7 +10638,6 @@
 		AF9771D70989DC4A001F8B92 /* SaverTester.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SaverTester.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF9771D90989DC4A001F8B92 /* SaverRunner.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = SaverRunner.plist; sourceTree = "<group>"; };
 		AF98C05E2F005F6000484F29 /* starnest.glsl */ = {isa = PBXFileReference; lastKnownFileType = text; name = starnest.glsl; path = ../hacks/glx/glsl/starnest.glsl; sourceTree = SOURCE_ROOT; };
-		AF98C0762F005FB900484F29 /* XShadertoy.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XShadertoy.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF98C0802F00615700484F29 /* xshadertoy.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = xshadertoy.c; path = ../hacks/glx/xshadertoy.c; sourceTree = SOURCE_ROOT; };
 		AF98C09C2F00644500484F29 /* StarNest.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StarNest.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF98C09F2F00657700484F29 /* starnest.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = starnest.xml; sourceTree = "<group>"; };
@@ -13283,6 +13257,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF6A0BFF3079774600C9D42A /* ExceptionHandling.framework in Frameworks */,
 				AF81E00A25845C2A00CFC475 /* ScreenSaver.framework in Frameworks */,
 				AF81E00B25845C2A00CFC475 /* QuartzCore.framework in Frameworks */,
 				AF81E00C25845C2A00CFC475 /* Cocoa.framework in Frameworks */,
@@ -13752,20 +13727,6 @@
 				AF918B99158FF045002B5D1E /* Cocoa.framework in Frameworks */,
 				AF918B9A158FF04C002B5D1E /* Carbon.framework in Frameworks */,
 				AF78369717DB9F25003B9FC0 /* libz.dylib in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF98C06A2F005FB900484F29 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AF98C06B2F005FB900484F29 /* libjwxyz.a in Frameworks */,
-				AF98C06C2F005FB900484F29 /* ScreenSaver.framework in Frameworks */,
-				AF98C06D2F005FB900484F29 /* QuartzCore.framework in Frameworks */,
-				AF98C06E2F005FB900484F29 /* Cocoa.framework in Frameworks */,
-				AF98C06F2F005FB900484F29 /* Carbon.framework in Frameworks */,
-				AF98C0702F005FB900484F29 /* OpenGL.framework in Frameworks */,
-				AF98C0712F005FB900484F29 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -15986,6 +15947,8 @@
 				AF6048F8157C07C600CA21E4 /* jwzgles.c */,
 				AF6048F9157C07C600CA21E4 /* jwzgles.h */,
 				AF6048FA157C07C600CA21E4 /* jwzglesI.h */,
+				AF6A0BF330716E5F00C9D42A /* nslog.h */,
+				AF6A0BF430716E5F00C9D42A /* nslog.m */,
 				AFE1FD470981E32E00F7970E /* PrefsReader.h */,
 				AFE1FD480981E32E00F7970E /* PrefsReader.m */,
 				32CA4F630368D1EE00C91783 /* xscreensaver_Prefix.pch */,
@@ -16327,7 +16290,6 @@
 				AF568B3026E7060500CCBA38 /* XScreenSaver-tvOS.app */,
 				AF91898F158FC00A002B5D1E /* XScreenSaver.app */,
 				AF1AD9E218500F9F00932759 /* XScreenSaverUpdater.app */,
-				AF98C0762F005FB900484F29 /* XShadertoy.saver */,
 				AF4776BA099DABDD001F091E /* XSpirograph.saver */,
 				AF9D476F09B53166006E59CF /* Zoom.saver */,
 			);
@@ -16390,6 +16352,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AF6A0BFE3079774600C9D42A /* ExceptionHandling.framework */,
 				AFCA3EEC25856B6200CBCF16 /* IOKit.framework */,
 				AFD5E98425672E8500704C83 /* WebKit.framework */,
 				AF142BB01EFEFBA20005C0A8 /* Photos.framework */,
@@ -17376,6 +17339,7 @@
 				AF6048FD157C07C600CA21E4 /* jwzglesI.h in Headers */,
 				AFA55867099324D800F3E977 /* minixpm.h in Headers */,
 				AFA55A96099336D800F3E977 /* normals.h in Headers */,
+				AF6A0BF530716E5F00C9D42A /* nslog.h in Headers */,
 				55374E331E1582D2005E2362 /* pow2.h in Headers */,
 				AF4775C1099D9E79001F091E /* resources.h in Headers */,
 				AFC7592E158D8E8B00C5458E /* textclient.h in Headers */,
@@ -17400,20 +17364,6 @@
 			dependencies = (
 			);
 			name = m6502.h;
-			passBuildSettingsInEnvironment = 1;
-			productName = molecules.h;
-		};
-		AF7DD08D304A0433003D7449 /* graphstat.h */ = {
-			isa = PBXLegacyTarget;
-			buildArgumentsString = "../../utils/bin2c graphstat.txt $(PRODUCT_NAME)";
-			buildConfigurationList = AF7DD08E304A0433003D7449 /* Build configuration list for PBXLegacyTarget "graphstat.h" */;
-			buildPhases = (
-			);
-			buildToolPath = /bin/sh;
-			buildWorkingDirectory = ../hacks/glx/;
-			dependencies = (
-			);
-			name = graphstat.h;
 			passBuildSettingsInEnvironment = 1;
 			productName = molecules.h;
 		};
@@ -20003,7 +19953,6 @@
 			);
 			dependencies = (
 				AF7DD06E304A00D8003D7449 /* PBXTargetDependency */,
-				AF7DD092304A046C003D7449 /* PBXTargetDependency */,
 			);
 			name = GraphStat;
 			productName = DangerBall;
@@ -20292,7 +20241,6 @@
 			dependencies = (
 				AF918978158FC00A002B5D1E /* PBXTargetDependency */,
 				AF7E07FE15925DF200D81407 /* PBXTargetDependency */,
-				AF7DD094304A04E4003D7449 /* PBXTargetDependency */,
 				AF7E080015925DFE00D81407 /* PBXTargetDependency */,
 				AFAC36BD202E80E5001A684C /* PBXTargetDependency */,
 			);
@@ -20680,25 +20628,6 @@
 			productName = SaverTester;
 			productReference = AF9771D70989DC4A001F8B92 /* SaverTester.app */;
 			productType = "com.apple.product-type.application";
-		};
-		AF98C0622F005FB900484F29 /* XShadertoy */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AF98C0732F005FB900484F29 /* Build configuration list for PBXNativeTarget "XShadertoy" */;
-			buildPhases = (
-				AF98C0652F005FB900484F29 /* Resources */,
-				AF98C0672F005FB900484F29 /* Sources */,
-				AF98C06A2F005FB900484F29 /* Frameworks */,
-				AF98C0722F005FB900484F29 /* Run Update Info Plist */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AF98C0632F005FB900484F29 /* PBXTargetDependency */,
-			);
-			name = XShadertoy;
-			productName = DangerBall;
-			productReference = AF98C0762F005FB900484F29 /* XShadertoy.saver */;
-			productType = "com.apple.product-type.bundle";
 		};
 		AF98C0882F00644500484F29 /* StarNest */ = {
 			isa = PBXNativeTarget;
@@ -24789,7 +24718,6 @@
 				AFA55C77099349A600F3E977 /* GLSnake */,
 				AFD56DF10996A03800BA26F7 /* GLText */,
 				AF7DD06D304A00D8003D7449 /* GraphStat */,
-				AF7DD08D304A0433003D7449 /* graphstat.h */,
 				AF6C6D74226AE4FC0065A748 /* GravityWell */,
 				AF62D6182180070600C57C42 /* Handsy */,
 				AF96013E25758F9F007FA31B /* Headroom */,
@@ -24868,7 +24796,6 @@
 				AF39E282198A11F60064A58D /* WindupRobot */,
 				AF1D927E2F4A9F4100C5F9CC /* WorldPieces */,
 				AF98C0782F00600400484F29 /* All Savers (Shadertoy) */,
-				AF98C0622F005FB900484F29 /* XShadertoy */,
 				AFAF11992F13446500449DD7 /* AlienBeacon */,
 				AF681AD130357CD500437505 /* AmigaJuggler */,
 				AFAF11B82F13459500449DD7 /* BatteredPlanet */,
@@ -27005,13 +26932,6 @@
 			files = (
 				AF51FD3915845FCB00E5741F /* SaverRunner.icns in Resources */,
 				AF9772E30989DFC6001F8B92 /* SaverRunner.nib in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF98C0652F005FB900484F29 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -29652,23 +29572,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
-			showEnvVarsInLog = 0;
-		};
-		AF98C0722F005FB900484F29 /* Run Update Info Plist */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}",
-			);
-			name = "Run Update Info Plist";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "$SOURCE_ROOT/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX\n";
 			showEnvVarsInLog = 0;
 		};
 		AF98C0982F00644500484F29 /* Run Update Info Plist */ = {
@@ -34090,6 +33993,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF1ADA141850132600932759 /* main.m in Sources */,
+				AF6A0BFD3071726200C9D42A /* nslog.m in Sources */,
 				AF3633FD18530DD90086A439 /* Updater.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -34761,6 +34665,7 @@
 				AF4774E8099D8D8C001F091E /* logo.c in Sources */,
 				AFA55866099324D800F3E977 /* minixpm.c in Sources */,
 				AFA55A95099336D800F3E977 /* normals.c in Sources */,
+				AF6A0BF630716E5F00C9D42A /* nslog.m in Sources */,
 				55374E321E1582C6005E2362 /* pow2.c in Sources */,
 				AFC9921C2F5179FC0077CE4F /* quaternion.c in Sources */,
 				AF4775C0099D9E79001F091E /* resources.c in Sources */,
@@ -35293,6 +35198,7 @@
 				AF63F3301C3465BE0033E133 /* apple2.c in Sources */,
 				AF63F43F1C3465BE0033E133 /* ios-function-table.m in Sources */,
 				AF63F3291C3465BE0033E133 /* main.m in Sources */,
+				AF6A0BF93071722600C9D42A /* nslog.m in Sources */,
 				AF63F32A1C3465BE0033E133 /* SaverListController.m in Sources */,
 				AF63F3281C3465BE0033E133 /* SaverRunner.m in Sources */,
 				AFA2118B1CD1AA3F00C0D2A1 /* textclient-mobile.c in Sources */,
@@ -35305,6 +35211,7 @@
 			files = (
 				AF63F4651C34682A0033E133 /* ios-function-table.m in Sources */,
 				AF63F4601C34682A0033E133 /* main.m in Sources */,
+				AF6A0BFB3071723300C9D42A /* nslog.m in Sources */,
 				AF63F4771C3469570033E133 /* phosphor.c in Sources */,
 				AF63F4611C34682A0033E133 /* SaverListController.m in Sources */,
 				AF63F45F1C34682A0033E133 /* SaverRunner.m in Sources */,
@@ -35716,6 +35623,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF6A0BF8307171C500C9D42A /* nslog.m in Sources */,
 				AF81E01825845D1600CFC475 /* Randomizer.m in Sources */,
 				AFAC5F772584666400C0F575 /* yarandom.c in Sources */,
 			);
@@ -36370,17 +36278,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF9772C80989DCD5001F8B92 /* main.m in Sources */,
+				AF6A0BF73071703200C9D42A /* nslog.m in Sources */,
 				AF84AF2015829AF000607E4C /* SaverListController.m in Sources */,
 				AF9771DF0989DC88001F8B92 /* SaverRunner.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF98C0672F005FB900484F29 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AF98C0692F005FB900484F29 /* XScreenSaverSubclass.m in Sources */,
-				AF98C0842F00615700484F29 /* xshadertoy.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -37312,6 +37212,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFBFE753178642DC00432B21 /* main.m in Sources */,
+				AF6A0BFA3071722B00C9D42A /* nslog.m in Sources */,
 				AFBFE754178642DC00432B21 /* SaverListController.m in Sources */,
 				AFBFE752178642DC00432B21 /* SaverRunner.m in Sources */,
 			);
@@ -37322,6 +37223,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFBFE773178647FE00432B21 /* main.m in Sources */,
+				AF6A0BFC3071723700C9D42A /* nslog.m in Sources */,
 				AFBFE774178647FE00432B21 /* SaverListController.m in Sources */,
 				AFBFE772178647FE00432B21 /* SaverRunner.m in Sources */,
 			);
@@ -39826,16 +39728,6 @@
 			target = AF7DD06D304A00D8003D7449 /* GraphStat */;
 			targetProxy = AF7DD08B304A01DF003D7449 /* PBXContainerItemProxy */;
 		};
-		AF7DD092304A046C003D7449 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF7DD08D304A0433003D7449 /* graphstat.h */;
-			targetProxy = AF7DD091304A046C003D7449 /* PBXContainerItemProxy */;
-		};
-		AF7DD094304A04E4003D7449 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF7DD08D304A0433003D7449 /* graphstat.h */;
-			targetProxy = AF7DD093304A04E4003D7449 /* PBXContainerItemProxy */;
-		};
 		AF7E07FE15925DF200D81407 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4FF4930D52CA0800666F98 /* m6502.h */;
@@ -40080,16 +39972,6 @@
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF975D54099CA0F000B05160 /* PBXContainerItemProxy */;
-		};
-		AF98C0632F005FB900484F29 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
-			targetProxy = AF98C0642F005FB900484F29 /* PBXContainerItemProxy */;
-		};
-		AF98C07D2F00601700484F29 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF98C0622F005FB900484F29 /* XShadertoy */;
-			targetProxy = AF98C07C2F00601700484F29 /* PBXContainerItemProxy */;
 		};
 		AF98C07F2F00604D00484F29 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -43614,20 +43496,6 @@
 			};
 			name = Release;
 		};
-		AF7DD08F304A0433003D7449 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		AF7DD090304A0433003D7449 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 		AF7F060C2A50BFAB00E35B45 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -44256,28 +44124,6 @@
 				INFOPLIST_FILE = SaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				WRAPPER_EXTENSION = app;
-			};
-			name = Release;
-		};
-		AF98C0742F005FB900484F29 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
-					"USE_GL=1",
-					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		AF98C0752F005FB900484F29 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
-					"USE_GL=1",
-					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -47256,14 +47102,15 @@
 				);
 				INFOPLIST_FILE = XScreenSaver.plist;
 				INSTALL_PATH = "$(HOME)/Library/Screen Savers";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LIBRARY_SEARCH_PATHS = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[sdk=macosx*]" = "$(OBJC_GC_CFLAGS)";
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				"OTHER_LDFLAGS[sdk=macosx*]" = "-headerpad_max_install_names";
+				OTHER_LIBTOOLFLAGS = "-no_warning_for_no_symbols";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -47374,15 +47221,16 @@
 				);
 				INFOPLIST_FILE = XScreenSaver.plist;
 				INSTALL_PATH = "$(HOME)/Library/Screen Savers";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LIBRARY_SEARCH_PATHS = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				LLVM_LTO = NO;
 				"LLVM_LTO[sdk=macosx*]" = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[sdk=macosx*]" = "$(OBJC_GC_CFLAGS)";
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				"OTHER_LDFLAGS[sdk=macosx*]" = "-headerpad_max_install_names";
+				OTHER_LIBTOOLFLAGS = "-no_warning_for_no_symbols";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -48676,15 +48524,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AF7DD08E304A0433003D7449 /* Build configuration list for PBXLegacyTarget "graphstat.h" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AF7DD08F304A0433003D7449 /* Debug */,
-				AF7DD090304A0433003D7449 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		AF7F060B2A50BFAB00E35B45 /* Build configuration list for PBXNativeTarget "Droste" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -48996,15 +48835,6 @@
 			buildConfigurations = (
 				AF9771DB0989DC4B001F8B92 /* Debug */,
 				AF9771DC0989DC4B001F8B92 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		AF98C0732F005FB900484F29 /* Build configuration list for PBXNativeTarget "XShadertoy" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AF98C0742F005FB900484F29 /* Debug */,
-				AF98C0752F005FB900484F29 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

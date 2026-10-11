@@ -19,7 +19,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Spins and deforms an image.
 
 Written by Ben Buxton and Jamie Zawinski; 2001.

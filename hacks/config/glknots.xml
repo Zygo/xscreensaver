@@ -54,7 +54,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Generates some twisting 3d knot patterns.  Spins 'em around.
 
 https://en.wikipedia.org/wiki/Knot_theory

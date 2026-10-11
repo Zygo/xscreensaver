@@ -348,7 +348,6 @@ and most other compositors, however.
 \fB2:\fP No mouse hystersis.
 
 Even a single pixel of mouse motion will cause the screen to un-blank.
-
 .TP 3
 \fB3:\fP Fading and screenshots might not work.
 
@@ -365,16 +364,6 @@ is \fIquite\fP slow.)
 
 For XScreenSaver to be able to lock, you will need to switch off
 Wayland and use the X Window System like in the "good old days".
-.SS TO DISABLE WAYLAND UNDER GNOME
-The login screen should have a gear-icon menu that lets you change the session
-type from "GNOME" (the Wayland session) to "GNOME on Xorg" (the X11 session).
-
-Alternately, edit \fI/etc/X11/gdm/gdm.conf\fP or maybe
-\fI/etc/gdm3/custom.conf\fP to include:
-.nf
-.sp
-	WaylandEnable=false
-.fi
 .SS TO DISABLE WAYLAND UNDER KDE
 The login screen should have a menu that lets you change the session
 type to \fI"Plasma (X11)"\fP.  If that isn't there, you might need to
@@ -386,6 +375,21 @@ under the \fI[Wayland]\fP section to say:
 .sp
 	SessionDir=/dev/null
 .fi
+.SS TO DISABLE WAYLAND UNDER GNOME
+In GNOME 49 and earlier, the login screen has a gear-icon menu that lets you
+change the session type to "GNOME on Xorg" (the X11 session).
+
+Alternately, edit \fI/etc/X11/gdm/gdm.conf\fP or maybe
+\fI/etc/gdm3/custom.conf\fP to include:
+.nf
+.sp
+	WaylandEnable=false
+.fi
+.PP
+If the "GNOME on Xorg" session does not exist, that means you are using
+a version of GNOME from which all X11 support has been intentionally removed.
+Your choices include: downgrade to GNOME 49 or earlier; or use something
+other than GNOME.
 .SH SECURITY CONCERNS
 XScreenSaver has a decades-long track record of securely locking your screen.
 However, there are many things that can go wrong.  X11 is a very old system,

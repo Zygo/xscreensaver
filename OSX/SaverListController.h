@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright © 2012-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,27 +15,15 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SaverListController : UITableViewController <UISearchBarDelegate> {
-
-  UIView *v;
-  UILabel *label1;
-  UILabel *label2;
-  UISearchBar *search;
-
-  int active_section_count;
-  NSMutableArray *list_by_letter[26];  // 27 to get "#" after "Z".
-  NSMutableArray *letter_sections;
-  NSMutableArray *section_titles;
-  NSArray *names;
-  NSDictionary *descriptions;
-
-  int tap_count;
-  NSTimer *tap_timer;
-  NSIndexPath *last_tap;
+@interface SaverListController : UITableViewController <UISearchBarDelegate>
+{
 }
 
-- (id)initWithNames:(NSArray *)names descriptions:(NSDictionary *)descs;
+- (id)initWithNames:(NSArray *)names
+       descriptions:(NSDictionary *)descs
+             runner:(NSObject *)r;
 - (void) scrollTo:(NSString *)name;
+
 @end
 
 #endif // HAVE_IPHONE

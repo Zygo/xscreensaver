@@ -31,7 +31,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Displays extremely serious looking but meaningless graphs.
 Inspired by the 1990 After Dark module of the same name.
 

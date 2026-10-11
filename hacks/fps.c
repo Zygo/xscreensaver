@@ -1,4 +1,4 @@
-/* fps, Copyright © 2001-2021 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright © 2001-2026 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -156,8 +156,8 @@ fps_compute (fps_state *st, unsigned long polys, double depth)
       st->last_fps    = fps;
 
       sprintf (st->string, (polys 
-                            ? "FPS:   %.1f \nLoad:  %.1f%% "
-                            : "FPS:  %.1f \nLoad: %.1f%% "),
+                            ? _("FPS:   %.1f \nLoad:  %.1f%% ")
+                            : _("FPS:  %.1f \nLoad: %.1f%% ")),
                fps, load);
 
       if (polys > 0)
@@ -168,7 +168,7 @@ fps_compute (fps_state *st, unsigned long polys, double depth)
           else if (polys >= 2048)          polys >>= 10, s = "K";
 # endif
 
-          strcat (st->string, "\nPolys: ");
+          strcat (st->string, _("\nPolys: "));
           if (polys >= 1000000)
             sprintf (st->string + strlen(st->string), "%lu,%03lu,%03lu%s ",
                      (polys / 1000000), ((polys / 1000) % 1000),
@@ -190,7 +190,7 @@ fps_compute (fps_state *st, unsigned long polys, double depth)
           else if (depth >= (1024 * 1024)) ldepth >>= 20, s = "M";
           else if (depth >= 2048)          ldepth >>= 10, s = "K";
 # endif
-          strcat (st->string, "\nDepth: ");
+          strcat (st->string, _("\nDepth: "));
           if (ldepth >= 1000000000)
             sprintf (st->string + strlen(st->string),
                      "%lu,%03lu,%03lu,%03lu%s ",

@@ -18,7 +18,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Simulates a game of Pac-Man on a randomly-created level.
 
 https://en.wikipedia.org/wiki/Pac-Man

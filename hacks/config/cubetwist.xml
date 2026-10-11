@@ -39,7 +39,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 A series of nested cubes rotate and slide recursively.
 
 Written by Jamie Zawinski; 2016.

@@ -18,7 +18,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 The N-Queens problem: how to place N queens on an NxN chessboard
 such that no queen can attack a sister?
 

@@ -43,7 +43,7 @@
    </vgroup>
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 A "fifteen puzzle" variant, dividing the image into a grid and shuffling.
 
 https://en.wikipedia.org/wiki/Fifteen_puzzle

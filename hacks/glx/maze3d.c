@@ -64,6 +64,12 @@
 
 #include "ximage-loader.h"
 
+/* We do this a lot:
+   Arithmetic between floating-point type 'double' and enumeration type 'enum'
+ */
+#pragma clang diagnostic ignored "-Wenum-float-conversion"
+
+
 static int dropAcid, dropAcidWalls, dropAcidCeiling, dropAcidFloor, numInverters, numRats;
 #ifdef USE_FLOATING_IMAGES
 static int numGl3dTexts, numGlRedbooks;

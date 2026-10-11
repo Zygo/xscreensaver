@@ -193,41 +193,52 @@ typedef struct
     int includedAngle;
     int pistonAngle[12];  /* twelve cylinders should suffice... */
     int speed;		/*  step size in degrees for engine speed */
-    const char *engineName;  /* currently unused */
+    const char *engineName;
 } engine_type;
+
+/* ENABLE_NLS: define this blank so that we can use it to tag static strings.
+   We call gettext manually. */
+# undef _
+# define _(S) S
 
 static const engine_type engines[] = {
     { 3,   0, { 0, 240, 480,   0,   0,   0,
                 0,   0,   0,   0,   0,   0 }, 12,
-     "Honda Insight" },
+     _("Honda Insight") },
     { 4,   0, { 0, 180, 540, 360,   0,   0,
                 0,   0,   0,   0,   0,   0 }, 12,
-     "BMW M3" },
+     _("BMW M3") },
     { 4, 180, { 0, 360, 180, 540,   0,   0,
                 0,   0,   0,   0,   0,   0 }, 12,
-     "VW Beetle" },
+     _("VW Beetle") },
     { 5,   0, { 0, 576, 144, 432, 288,   0,
                 0,   0,   0,   0,   0,   0 }, 12,
-     "Audi Quattro" },
+     _("Audi Quattro") },
     { 6,   0, { 0, 240, 480, 120, 600, 360,
                 0,   0,   0,   0,   0,   0 }, 12,
-     "BMW M5" },
+     _("BMW M5") },
     { 6,  90, { 0, 360, 480, 120, 240, 600,
                 0,   0,   0,   0,   0,   0 }, 12,
-     "Subaru XT" },
+     _("Subaru XT") },
     { 6, 180, { 0, 360, 240, 600, 480, 120,
                 0,   0,   0,   0,   0,   0 }, 12,
-     "Porsche 911" },
+     _("Porsche 911") },
     { 8,  90, { 0, 450,  90, 180, 270, 360,
               540, 630,   0,   0,   0,   0 }, 15,
-     "Corvette Z06" },
+     _("Corvette Z06") },
     {10,  90, { 0,  72, 432, 504, 288, 360,
               144, 216, 576, 648,   0,   0 }, 12,
-     "Dodge Viper" },
+     _("Dodge Viper") },
     {12,  60, { 0, 300, 240, 540, 480,  60,
               120, 420, 600, 180, 360, 660 }, 12,
-     "Jaguar XKE" },
+     _("Jaguar XKE") },
 };
+
+#ifdef ENABLE_NLS	/* Now put it back */
+# undef _
+# define _(S) gettext(S)
+#endif
+
 
 /* this define is just a little shorter way of referring to members of the 
  * table above
@@ -252,17 +263,16 @@ find_engine(char *name)
       return i;
   }
 
-  fprintf (stderr, "%s: unknown engine type \"%s\"\n", progname, name);
-  fprintf (stderr, "%s: available models are:\n", progname);
+  fprintf (stderr, _("%s: unknown engine type \"%s\"\n"), progname, name);
+  fprintf (stderr, _("%s: available models are:\n"), progname);
   for (i = 0; i < countof(engines); i++) {
-    fprintf (stderr, "\t %-13s (%d cylinders",
-             engines[i].engineName, engines[i].cylinders);
-    if (engines[i].includedAngle == 0)
-      fprintf (stderr, ")\n");
-    else if (engines[i].includedAngle == 180)
-      fprintf (stderr, ", flat)\n");
-    else
-      fprintf (stderr, ", V)\n");
+    const char *fmt =
+      (engines[i].includedAngle == 0   ? _("\t %-13s (%d cylinders)\n")       :
+       engines[i].includedAngle == 180 ? _("\t %-13s (%d cylinders, flat)\n") :
+					 _("\t %-13s (%d cylinders, V)\n"));
+    fprintf (stderr, fmt, 
+             gettext (engines[i].engineName),
+             engines[i].cylinders);
   }
   exit(1);
 }
@@ -925,14 +935,16 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
 
  if (!e->engine_name)
    e->engine_name = malloc(200);
- sprintf (e->engine_name,
-          "%s\n%s%d%s",
-          engines[e->engineType].engineName,
-          (engines[e->engineType].includedAngle == 0 ? "" :
-           engines[e->engineType].includedAngle == 180 ? "Flat " : "V"),
-          engines[e->engineType].cylinders,
-          (engines[e->engineType].includedAngle == 0 ? " Cylinder" : "")
-          );
+
+ {
+   const char *fmt =
+     (engines[e->engineType].includedAngle == 0   ? _("%s\n%d Cylinder") :
+      engines[e->engineType].includedAngle == 180 ? _("%s\n Flat %d") :
+						    _("%s\nV%d"));
+   sprintf (e->engine_name, fmt,
+            engines[e->engineType].engineName,
+            engines[e->engineType].cylinders);
+ }
 
  e->shaft_polys = makeshaft(e);
  e->piston_polys = makepiston(e);

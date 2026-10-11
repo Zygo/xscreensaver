@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.52 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.56 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -280,7 +280,8 @@ sub parse_xml($$$$) {
 
   $body =~ s/<!--.*?-->/ /gsi;
 
-  $body =~ s@(<(_description)>.*?</\2>)@{ $_ = $1; s/\n/\002/gs; $_; }@gsexi;
+  $body =~ s@(<(_description)[^<>]*>.*?</\2>)@{
+               $_ = $1; s/\n/\002/gs; s/ /\003/gs; $_; }@gsexi;
 
   $body =~ s/\s+/ /gs;
   $body =~ s/</\001</gs;
@@ -293,7 +294,8 @@ sub parse_xml($$$$) {
   print STDERR "$progname: $file: options:\n" if ($verbose > 2);
   foreach (split (m/\001/, $body)) {
     next if (m/^\s*$/s);
-    my ($type, $args) = m@^<([?/]?[-_a-z]+)\b\s*(.*)$@si;
+    my ($type, $args) = m@^<([?/]?[-_a-z]+)\b(.*)$@si;
+
     error ("$progname: $file: unparsable: $_") unless $type;
     next if ($type =~ m@^/@);
 
@@ -310,8 +312,8 @@ sub parse_xml($$$$) {
 
     } elsif ($type eq '_description') {
       $args =~ s/\002/\n/gs;
-      $args =~ s@^>\s*@@s;
-      $args =~ s/^\n*|\s*$//gs;
+      $args =~ s/\003/ /gs;
+      $args =~ s@^[^<>]*>@@s;
       $ctrl->{text} = $args;
 
     } elsif ($type eq 'screensaver') {
@@ -707,6 +709,77 @@ sub munge_blurb($$$$) {
 }
 
 
+# Duplicated in po/autotranslate.pl and OSX/build-locales.pl
+sub unquote_c_string($) {
+  my ($str) = @_;
+
+  $str =~ s/\\\"/\001/gs;		   # Protect literal \"
+  $str = join('', ($str =~ m/"(.*?)"/g));  # "ABC\n" "DEF\n" => "ABC\nDEF\n"
+  $str =~ s/\001/\"/gs;
+
+  $str =~ s/\\n/\n/gs;
+  $str =~ s/\\t/\t/gs;
+  $str =~ s/\\([-\"\'])/$1/gs;		   # Other backslashes
+  error ("mystery backslashes: $str") if ($str =~ m/\\/s);
+  return $str;
+}
+
+
+sub load_translations() {
+
+  # Read po/LINGUAS for the list of languages.
+  #
+  my $body = '';
+  my $podir = '../po';
+  my $file = "$podir/LINGUAS";
+  open (my $in, '<:utf8', $file) || error ("$file: $!");
+  print STDERR "$progname: reading $file...\n" if ($verbose);
+  local $/ = undef;  # read entire file
+  while (<$in>) { $body .= $_; }
+  close $in;
+
+  $body =~ s/^\s+|\s+$//gs;
+  my @all_langs = split (/\s+/, $body);
+  foreach (@all_langs) { s/^(..)_(..)$/$1-r$2/s; }  # "values-zh-rCN"
+
+  # Read po/*.po for the translations.
+  #
+  my %translations;
+  foreach my $lang (@all_langs) {
+    my $lang2 = $lang;
+    $lang2 =~ s/[-_]r/_/gs;
+    $file = "$podir/$lang2.po";
+    open (my $in, '<:utf8', $file) || error ("$file: $!");
+    print STDERR "$progname: reading $file...\n" if ($verbose);
+    local $/ = undef;  # read entire file
+    $body = '';
+    while (<$in>) { $body .= $_; }
+    close $in;
+
+    my %strings;
+
+    $body =~ s/\\\"/\001/gs;  # Protect literal \"
+    $body =~ s@( (?: \# [^\n]* \n )+ )
+              msgid  \s+ ( (?: "[^\"]* " \s* )+ ) \s* \n
+              msgstr \s+ ( (?: "[^\"]* " \s* )+ ) \s* \n? @{
+      my ($comm, $msgid, $msgstr) = ($1, $2, $3);
+      foreach ($comm, $msgid, $msgstr) { s/\001/\\\"/gs; }
+
+      my $msgid2  = unquote_c_string ($msgid);
+      my $msgstr2 = unquote_c_string ($msgstr);
+
+      $strings{$msgid2} = $msgstr2 if ($msgid2);
+
+      "${comm}msgid $msgid\nmsgstr $msgstr\n";
+    }@gsexi;
+
+    $translations{$lang} = \%strings;
+  }
+
+  return \%translations;
+}
+
+
 sub build_android(@) {
   my (@savers) = @_;
 
@@ -728,9 +801,18 @@ sub build_android(@) {
   my $fntable_h2 = '';
   my $fntable_h3 = '';
   my $arrays   = '';
-  my $strings  = '';
+  my %strings  = ();		# Indexed by lang code
   my %write_files;
   my %string_dups;
+  my $saver_year = undef;
+
+  my $translations = load_translations();
+  my @all_langs = sort keys %$translations;
+  my $base_lang = 'en';
+
+  foreach my $lang ($base_lang, @all_langs) {
+    $strings{$lang} = '';
+  }
 
   my $vers;
   {
@@ -799,10 +881,11 @@ sub build_android(@) {
 
     my $settings = '';
 
+    # Stores $strings{$lang}{$key} = "<string>...</string>\n"
+    # Returns "@string/$key"
+    #
     my $localize0 = sub($$) {
       my ($key, $string) = @_;
-      $string =~ s@([\\\"\'])@\\$1@gs;		# backslashify
-      $string =~ s@\n@\\n@gs;			# quote newlines
       $key =~ s@[^a-z\d_]+@_@gsi;		# illegal characters
 
       my $old = $string_dups{$key};
@@ -810,9 +893,36 @@ sub build_android(@) {
         if (defined($old) && $old ne $string);
       $string_dups{$key} = $string;
 
-      my $fmt = ($string =~ m/%/ ? ' formatted="false"' : '');
-      $strings .= "<string name=\"${key}\"$fmt>$string</string>\n"
-        unless defined($old);
+      if (! defined($old)) {
+
+        my $str2 = $string;
+        $str2 =~ s/\bhttps?:[^\s]+//gs; # Wipe URLs before searching for %
+        my $fmt   = ($str2 =~ m/%/ ? ' formatted="false"' : '');
+
+        my $open  = "<string name=\"${key}\"$fmt>";
+        my $close = "</string>\n";
+
+        my $qstring = $string;
+        $qstring =~ s@([\\\"\'])@\\$1@gs;		# backslashify
+        $qstring =~ s@\n@\\n@gs;			# quote newlines
+        $qstring =~ s@&@&amp;@gs;
+        $qstring =~ s@<@&lt;@gs;
+        $qstring =~ s@>@&gt;@gs;
+        $strings{$base_lang} .= $open . $qstring . $close;
+
+        foreach my $lang (@all_langs) {
+          my $string2 = $translations->{$lang}->{$string} || $string;
+
+          my $qstring2 = $string2;
+          $qstring2 =~ s@([\\\"\'])@\\$1@gs;		# backslashify
+          $qstring2 =~ s@\n@\\n@gs;			# quote newlines
+          $qstring2 =~ s@&@&amp;@gs;
+          $qstring2 =~ s@<@&lt;@gs;
+          $qstring2 =~ s@>@&gt;@gs;
+          $strings{$lang} .= $open . $qstring2 . $close;
+        }
+      }
+
       return "\@string/$key";
     };
 
@@ -825,7 +935,11 @@ sub build_android(@) {
                      "\"\n" .
                   " />\n");
 
-    my $daydream_desc = '';
+    # These are used in android/xscreensaver/res/layout/activity_*.xml
+    $localize0->('open_live_wallpaper_list', 'Open live wallpaper list');
+    $localize0->('open_screensaver_list',    'Open screen saver list');
+    
+
     foreach my $widget (@$widgets) {
       my $type  = $widget->{type};
       my $rsrc  = $widget->{resource};
@@ -837,6 +951,9 @@ sub build_android(@) {
       #### The menus don't actually have titles on X11 or Cocoa...
       $label = $widget->{resource} unless $label;
 
+      # Stores $strings{$lang}{$saver_$key_$suf} = "<string>...</string>\n"
+      # Returns "@string/$saver_$key_$suf"
+      #
       my $localize = sub($;$) {
         my ($string, $suf) = @_;
         $suf = 'title' unless $suf;
@@ -904,6 +1021,9 @@ sub build_android(@) {
               unless defined($val);
           }
           $val =~ s@([\\\"\'])@\\$1@gs;		# backslashify
+          $val =~ s@&@&amp;@gs;
+          $val =~ s@<@&lt;@gs;
+          $val =~ s@>@&gt;@gs;
           $a1 .= "  <item>$val</item>\n";
         }
 
@@ -915,8 +1035,12 @@ sub build_android(@) {
                   "</item>\n");
         }
 
-        my $fmt1 = ($a1 =~ m/%/ ? ' formatted="false"' : '');
-        my $fmt2 = ($a2 =~ m/%/ ? ' formatted="false"' : '');
+        my ($str1, $str2) = ($a1, $a2);
+        $str1 =~ s/\bhttps?:[^\s]+//gs; # Wipe URLs before searching for %
+        $str2 =~ s/\bhttps?:[^\s]+//gs;
+
+        my $fmt1 = ($str1 =~ m/%/ ? ' formatted="false"' : '');
+        my $fmt2 = ($str2 =~ m/%/ ? ' formatted="false"' : '');
         $arrays .= ("<string-array name=\"${key}_values\"$fmt1>\n" .
                     $a1 .
                     "</string-array>\n" .
@@ -940,21 +1064,14 @@ sub build_android(@) {
         $type = 'description';
         $rsrc = $type;
         my $desc = $widget->{text};
-        (undef, $desc) = munge_blurb ($saver, $saver_title, $vers, $desc);
 
-        # Lose the Wikipedia URLs.
-        $desc =~ s@https?:.*?\b(wikipedia|mathworld)\b[^\s]+[ \t]*\n?@@gm;
-        $desc =~ s/(\n\n)\n+/$1/s;
-        $desc =~ s/\s*$/\n\n\n/s;
+        # Store the un-munged text; we adjust it later.
+        my $tag = $localize->($desc);
 
-        $daydream_desc = $desc;
-
-        my ($year) = ($daydream_desc =~ m/\b((19|20)\d\d)\b/s);
-        error ("$saver: no year") unless $year;
-        $daydream_desc =~ s/^.*?\n\n//gs;
-        $daydream_desc =~ s/\n.*$//gs;
-        $daydream_desc = "$year: $daydream_desc";
-        $daydream_desc =~ s/^(.{72}).+$/$1.../s;
+        if (! $saver_year) {
+          ($saver_year) = ($desc =~ m/\b((19|20)\d\d)\b/s);
+          error ("$saver: no year") unless $saver_year;
+        }
 
         $settings .=
           ("<Preference\n" .
@@ -963,7 +1080,7 @@ sub build_android(@) {
 #           "  android:selectable=\"false\"\n" .
            "  android:persistent=\"false\"\n" .
            "  android:layout=\"\@layout/preference_blurb\"\n" .
-           "  android:summary=\"" . $localize->($desc) . "\">\n" .
+           "  android:summary=\"" . $tag . "\">\n" .
            "  <intent android:action=\"android.intent.action.VIEW\"\n" .
            "    android:data=\"https://www.jwz.org/xscreensaver/\" />\n" .
            "</Preference>\n");
@@ -993,9 +1110,14 @@ sub build_android(@) {
                                   $saver_title) .
                      "\"\n" .
                   "  android:summary=\"" .
-                       $localize0->("${saver_underscore}_saver_desc",
-                                    $daydream_desc) . "\"\n" .
+                       "\@string/${saver_underscore}_saver_desc" .
+                    "\"\n" .
                   "  android:name=\".gen.Daydream\$$saver_class\"\n" .
+
+                  # Suppress "Resources referenced from the manifest
+                  # cannot vary by configuration"
+                  "  tools:ignore=\"ManifestResource\"\n" .
+
                   "  android:permission=\"android.permission" .
                        ".BIND_DREAM_SERVICE\"\n" .
                   "  android:exported=\"true\"\n" .
@@ -1014,9 +1136,14 @@ sub build_android(@) {
                                   $saver_title) .
                      "\"\n" .
                   "  android:summary=\"" .
-                       $localize0->("${saver_underscore}_saver_desc",
-                                    $daydream_desc) . "\"\n" .
+                         "\@string/${saver_underscore}_saver_desc" .
+                       "\"\n" .
                   "  android:name=\".gen.Wallpaper\$$saver_class\"\n" .
+
+                  # Suppress "Resources referenced from the manifest
+                  # cannot vary by configuration"
+                  "  tools:ignore=\"ManifestResource\"\n" .
+
                   "  android:exported=\"true\"\n" .
                   "  android:permission=\"android.permission" .
                        ".BIND_WALLPAPER\">\n" .
@@ -1071,6 +1198,57 @@ sub build_android(@) {
 
     $fntable_h2 .= "${saver2}_xscreensaver_function_table";
     $fntable_h3 .= "{\"${saver}\", &${saver2}_xscreensaver_function_table}";
+
+
+    # Munge the description and short description in each language.
+    #
+    foreach my $lang ($base_lang, @all_langs) {
+      my ($a, $b, $desc, $c, $d) = ($strings{$lang} =~
+        m@^( .* )
+           ( <string \s+ name=" $saver_underscore _description_title"> )
+           ( .*? )
+           ( </string> )
+           ( .* ) $ @six);
+
+      $desc =~ s/\\n/\n/gs;
+      $desc =~ s/\\t/\n/gs;
+      $desc =~ s/\\"/"/gs;
+      $desc =~ s/\\'/'/gs;
+
+      if ($lang eq $base_lang) {
+        # We can only do this munging in English.
+        (undef, $desc) = munge_blurb ($saver, $saver_title, $vers, $desc);
+      }
+
+      # Lose the Wikipedia URLs.
+      $desc =~ s@https?:.*?\b(wikipedia|mathworld)\b[^\s]+[ \t]*\n?@@gm;
+      $desc =~ s/(\n\n)\n+/$1/s;
+      $desc =~ s/\s*$/\n\n\n/s;
+
+      # Also store a truncated, localized version for the Daydreams.
+      #
+      my $daydream_desc = $desc;
+
+      $daydream_desc =~ s/^.*?\n\n//gs;
+      $daydream_desc =~ s/\n.*$//gs;
+      $daydream_desc = "$saver_year: $daydream_desc";
+      $daydream_desc =~ s/^(.{72}).+$/$1.../s;
+
+      foreach ($desc, $daydream_desc) {
+        s@([\\\"\'])@\\$1@gs;		# backslashify
+        s@\n@\\n@gs;			# quote newlines
+        s@&@&amp;@gs;
+        s@<@&lt;@gs;
+        s@>@&gt;@gs;
+      }
+
+      $c .= ("\n" .
+             "<string name=\"${saver_underscore}_saver_desc\">" .
+             $daydream_desc .
+             "</string>");
+
+      $strings{$lang} = $a . $b . $desc . $c . $d;
+    }
   }
 
   $arrays =~ s/^/  /gm;
@@ -1080,11 +1258,13 @@ sub build_android(@) {
              $arrays .
              "</resources>\n");
 
-  $strings =~ s/^/  /gm;
-  $strings = ($xml_header .
-              "<resources>\n" .
-              $strings .
-              "</resources>\n");
+  foreach my $lang ($base_lang, @all_langs) {
+    $strings{$lang} =~ s/^/  /gm;
+    $strings{$lang} = ($xml_header .
+                       "<resources>\n" .
+                       $strings{$lang} .
+                       "</resources>\n");
+  }
 
   $manifest .= "<activity android:name=\"$package.Settings\" />\n";
 
@@ -1150,6 +1330,7 @@ sub build_android(@) {
   $manifest = ($xml_header .
                "<manifest xmlns:android=\"" .
                "http://schemas.android.com/apk/res/android\"\n" .
+               "  xmlns:tools=\"http://schemas.android.com/tools\"\n" .
 #              "  package=\"$package\"\n" .
                "  android:versionCode=\"$versb\"\n" .
                "  android:versionName=\"$vers\">\n" .
@@ -1229,8 +1410,14 @@ sub build_android(@) {
                     "}\n");
 
   $write_files{"$project_dir/AndroidManifest.xml"}     = $manifest;
+
   $write_files{"$values_dir/settings.xml"} = $arrays;
-  $write_files{"$values_dir/strings.xml"}  = $strings;
+  $write_files{"$values_dir/strings.xml"}  = $strings{$base_lang};
+
+  foreach my $lang (@all_langs) {
+    $write_files{"$values_dir-$lang/strings.xml"} = $strings{$lang};
+  }
+
   $write_files{"$java_dir/Daydream.java"}  = $daydream_java;
   $write_files{"$java_dir/Wallpaper.java"} = $wallpaper_java;
   $write_files{"$java_dir/Settings.java"}  = $settings_java;

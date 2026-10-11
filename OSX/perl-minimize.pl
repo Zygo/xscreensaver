@@ -16,7 +16,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.03 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.04 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -35,6 +35,15 @@ sub minimize($$) {
   local $/ = undef;  # read entire file
   my $body = <$inf>;
   close $inf;
+
+  # Perl::Tidy has some undefined-value references, but using
+  #   no warnings 'uninitialized';
+  # fails to suppress them. So do it the hard way:
+  $SIG{__WARN__} = sub {
+    my $warn = shift;
+    return if $warn =~ /Use of uninitialized value/si;
+    warn $warn;
+  };
 
   my $body2;
   my $err = Perl::Tidy::perltidy (

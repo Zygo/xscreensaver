@@ -104,7 +104,7 @@
    <xscreensaver-updater />
   </hgroup>
 
-  <_description>
+  <_description xml:space="preserve">
 A 3D immersion of a Klein bottle that smoothly deforms between the
 Etruscan Venus surface, the Roman surface, the Boy surface, and the
 Ida surface.

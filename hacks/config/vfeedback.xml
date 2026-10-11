@@ -31,7 +31,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Simulates video feedback: pointing a video camera at an NTSC television.
 
 Written by Jamie Zawinski; 2018.

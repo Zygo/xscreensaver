@@ -1521,7 +1521,7 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
   size_t ibpp = [bm bitsPerPixel];
   size_t ibpl = [bm bytesPerRow];
   const unsigned char *data = [bm bitmapData];
-  convert_mode_t mode = (([bm bitmapFormat] & NSAlphaFirstBitmapFormat)
+  convert_mode_t mode = (([bm bitmapFormat] & NSBitmapFormatAlphaFirst)
                          ? CONVERT_MODE_ROTATE_MASK
                          : 0);
 #else  // HAVE_IPHONE
@@ -1535,8 +1535,20 @@ jwxyz_png_to_ximage (Display *dpy, Visual *visual,
   size_t ibpp = 32;
   size_t ibpl = ibpp/4 * width;
   unsigned char *data = (unsigned char *) calloc (ibpl, height);
-  const CGBitmapInfo bitmap_info =
-    kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast;
+
+  const uint32_t bitmap_info =
+    //
+    // CGBitmapContextCreate is type uint32_t.
+    // kCGImageAlphaPremultipliedLast is from enum CGImageAlphaInfo.
+    // kCGBitmapByteOrder32Big is from enum CGBitmapInfo.
+    //
+    // We (sensibly) get a warning when trying to | values from different
+    // enums, since it's not clear that their values are in the same
+    // namespace.  But I think that we are intended to do that anyway?
+    //
+    (uint32_t) kCGBitmapByteOrder32Big |
+    (uint32_t) kCGImageAlphaPremultipliedLast;
+
   CGContextRef cgc =
     CGBitmapContextCreate (data, width, height,
                            8, /* bits per component */

@@ -1,4 +1,4 @@
-/* pinion, Copyright © 2004-2022 Jamie Zawinski <jwz@jwz.org>
+/* pinion, Copyright © 2004-2026 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -135,10 +135,11 @@ draw_label (ModeInfo *mi)
     *label = 0;
   else
     {
-      sprintf (label, "%d teeth\n", (int) g->nteeth);
+      sprintf (label, _("%d teeth\n"), (int) g->nteeth);
       rpm_string (g->rpm, label + strlen(label));
       if (debug_p)
-        sprintf (label + strlen (label), "\nPolys:  %d\nModel:  %s  (%.2f)\n",
+        sprintf (label + strlen (label),
+                 _("\nPolys:  %d\nModel:  %s  (%.2f)\n"),
                  g->polygons,
                  (g->size == INVOLUTE_SMALL ? "small" :
                   g->size == INVOLUTE_MEDIUM ? "medium"

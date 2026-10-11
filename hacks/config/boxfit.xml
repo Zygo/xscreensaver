@@ -54,7 +54,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Packs the screen with growing squares or circles which grow until they touch,
 then stop.
 

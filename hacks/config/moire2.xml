@@ -22,7 +22,7 @@
 
   <xscreensaver-updater />
 
-  <_description>
+  <_description xml:space="preserve">
 Generates fields of concentric circles or ovals, and combines the
 planes with various operations.  The planes are moving independently
 of one another, causing the interference lines to spray.
